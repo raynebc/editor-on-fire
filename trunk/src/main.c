@@ -168,7 +168,6 @@ EOF_LYRIC   eof_pen_lyric;
 char        eof_filename[1024] = {0};	//The full path of the EOF file that is loaded
 char        eof_song_path[1024] = {0};
 char        eof_songs_path[1024] = {0};
-char        eof_rs_toolkit_path[1024] = {0};
 char        eof_last_ogg_path[1024] = {0};
 char        eof_last_eof_path[1024] = {0};
 char        eof_loaded_song_name[1024] = {0};
@@ -265,6 +264,7 @@ eof_color eof_color_green_struct, eof_color_red_struct, eof_color_yellow_struct,
 EOF_SCREEN_LAYOUT eof_screen_layout;
 BITMAP * eof_screen = NULL;
 unsigned long eof_screen_width, eof_screen_height;	//Used to track the EOF window size, for when the 3D projection is altered
+unsigned long eof_screen_width_default;				//Stores the default width based on the current window height
 int eof_vanish_x = 0, eof_vanish_y = 0;				//Used to allow the user to control the vanishing point for the 3D preview
 char eof_full_screen_3d = 0;						//If nonzero, directs the render logic to scale the 3D window to fit the entire program window
 char eof_3d_fretboard_coordinates_cached = 0;		//Tracks the validity of the 3D window rendering's cache of the fretboard's 2D coordinates
@@ -569,9 +569,33 @@ void eof_fix_catalog_selection(void)
 	}
 }
 
-int eof_set_display_mode(int mode)
+int eof_set_display_mode_preset(int mode)
+{
+	switch(mode)
+	{
+		case EOF_DISPLAY_640:
+			eof_set_display_mode(640, 480);
+		break;
+
+		case EOF_DISPLAY_800:
+			eof_set_display_mode(800, 600);
+		break;
+
+		case EOF_DISPLAY_1024:
+			eof_set_display_mode(1024, 768);
+		break;
+
+		default:
+		return 0;	//Invalid display mode
+	}
+
+	return 1;
+}
+
+int eof_set_display_mode(unsigned long width, unsigned long height)
 {
 	unsigned long default_zoom_level;
+	int mode;
 
 	eof_log("eof_set_display_mode() entered", 1);
 
@@ -603,10 +627,12 @@ int eof_set_display_mode(int mode)
 	}
 
 	eof_3d_fretboard_coordinates_cached = 0;	//The 3D rendering logic will need to rebuild the fretboard's 2D coordinate projections
-	switch(mode)
+	switch(height)
 	{
-		case EOF_DISPLAY_640:
-			eof_screen_width = 640;
+		case 480:
+			mode = EOF_DISPLAY_640;
+			eof_screen_width_default = 640;
+			eof_screen_width = width;
 			eof_screen_height = 480;
 			default_zoom_level = 10;
 			eof_screen_layout.string_space_unscaled = 20;
@@ -624,8 +650,10 @@ int eof_set_display_mode(int mode)
 			eof_screen_layout.note_kick_size = 2;
 		break;
 
-		case EOF_DISPLAY_800:
-			eof_screen_width = 800;
+		case 600:
+			mode = EOF_DISPLAY_800;
+			eof_screen_width_default = 800;
+			eof_screen_width = width;
 			eof_screen_height = 600;
 			default_zoom_level = 8;
 			eof_screen_layout.string_space_unscaled = 30;
@@ -643,8 +671,10 @@ int eof_set_display_mode(int mode)
 			eof_screen_layout.note_kick_size = 3;
 		break;
 
-		case EOF_DISPLAY_1024:
-			eof_screen_width = 1024;
+		case 768:
+			mode = EOF_DISPLAY_1024;
+			eof_screen_width_default = 1024;
+			eof_screen_width = width;
 			eof_screen_height = 768;
 			default_zoom_level = 5;
 			eof_screen_layout.string_space_unscaled = 48;
@@ -699,7 +729,7 @@ int eof_set_display_mode(int mode)
 		allegro_message("Unable to create information windows!");
 		return 0;
 	}
-	eof_window_3d = eof_window_create(eof_screen_width / 2, eof_screen_height / 2, eof_screen_width / 2, eof_screen_height / 2, eof_screen);
+	eof_window_3d = eof_window_create(eof_screen_width - (eof_screen_width_default / 2), eof_screen_height / 2, eof_screen_width_default / 2, eof_screen_height / 2, eof_screen);
 	if(!eof_window_3d)
 	{
 		allegro_message("Unable to create 3D preview window!");
@@ -718,7 +748,7 @@ int eof_set_display_mode(int mode)
 	eof_screen_layout.mode = mode;
 	eof_menu_edit_zoom_level(default_zoom_level);
 	eof_vanish_x = 160;
-	ocd3d_set_projection((float)eof_screen_width / 640.0, (float)eof_screen_height / 480.0, (float)eof_vanish_x, (float)eof_vanish_y, 320.0, 320.0);
+	eof_set_3d_projection();
 	set_display_switch_mode(SWITCH_BACKGROUND);
 	set_display_switch_callback(SWITCH_OUT, eof_switch_out_callback);
 	set_display_switch_callback(SWITCH_IN, eof_switch_in_callback);
@@ -1262,7 +1292,7 @@ unsigned long eof_count_selected_notes(unsigned long * total, char v)
 
 int eof_figure_part(void)
 {
-	int part[EOF_TRACKS_MAX] = {0};
+	int part[EOF_TRACKS_MAX] = {-1};	//Ensure that any tracks FoF don't support reflect -1 being returned
 
 	eof_log("eof_figure_part() entered", 1);
 
@@ -1300,7 +1330,7 @@ int eof_load_ogg_quick(char * filename)
 			loaded = 1;
 			if(!eof_silence_loaded)
 			{	//Only display song channel and sample rate warnings if chart audio is loaded
-				if(!eof_write_rb_files)
+				if(!eof_write_rs_files)
 				{	//If not authoring for Rocksmith
 					if(alogg_get_wave_freq_ogg(eof_music_track) != 44100)
 					{
@@ -1398,7 +1428,7 @@ int eof_load_ogg(char * filename, char silence_failover)
 			loaded = 1;
 			if(!eof_silence_loaded)
 			{	//Only display song channel and sample rate warnings if chart audio is loaded
-				if(!eof_write_rb_files)
+				if(!eof_write_rs_files)
 				{	//If not authoring for Rocksmith
 					if(alogg_get_wave_freq_ogg(eof_music_track) != 44100)
 					{
@@ -3432,7 +3462,7 @@ int eof_initialize(int argc, char * argv[])
 	{
 		set_color_depth(desktop_color_depth() != 0 ? desktop_color_depth() : 8);
 	}
-	if(!eof_set_display_mode(eof_screen_layout.mode))
+	if(!eof_set_display_mode_preset(eof_screen_layout.mode))
 	{
 		allegro_message("Unable to set display mode!");
 		return 0;
@@ -4680,6 +4710,11 @@ void eof_set_color_set(void)
 	{
 		eof_edit_claps_menu[x + 1].text = eof_colors[x].colorname;
 	}
+}
+
+void eof_set_3d_projection(void)
+{
+	ocd3d_set_projection((float)eof_screen_width_default / 640.0, (float)eof_screen_height / 480.0, (float)eof_vanish_x, (float)eof_vanish_y, 320.0, 320.0);
 }
 
 END_OF_MAIN()

@@ -652,7 +652,7 @@ if(key[KEY_PAUSE])
 					eof_vanish_y = 260;
 				}
 				eof_3d_fretboard_coordinates_cached = 0;	//The 3D rendering logic will need to rebuild the fretboard's 2D coordinate projections
-				ocd3d_set_projection((float)eof_screen_width / 640.0, (float)eof_screen_height / 480.0, (float)eof_vanish_x, (float)eof_vanish_y, 320.0, 320.0);
+				eof_set_3d_projection();
 			}
 		}
 		else if(KEY_EITHER_SHIFT)
@@ -684,7 +684,7 @@ if(key[KEY_PAUSE])
 					eof_vanish_y = -500;
 				}
 				eof_3d_fretboard_coordinates_cached = 0;	//The 3D rendering logic will need to rebuild the fretboard's 2D coordinate projections
-				ocd3d_set_projection((float)eof_screen_width / 640.0, (float)eof_screen_height / 480.0, (float)eof_vanish_x, (float)eof_vanish_y, 320.0, 320.0);
+				eof_set_3d_projection();
 			}
 		}
 		else if(KEY_EITHER_SHIFT)
@@ -708,7 +708,7 @@ if(key[KEY_PAUSE])
 		}
 		eof_vanish_y = 0;
 		eof_3d_fretboard_coordinates_cached = 0;	//The 3D rendering logic will need to rebuild the fretboard's 2D coordinate projections
-		ocd3d_set_projection((float)eof_screen_width / 640.0, (float)eof_screen_height / 480.0, (float)eof_vanish_x, (float)eof_vanish_y, 320.0, 320.0);
+		eof_set_3d_projection();
 		key[KEY_ENTER_PAD] = 0;
 		key[KEY_BACKSLASH] = 0;
 	}
