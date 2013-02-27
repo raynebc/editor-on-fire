@@ -471,6 +471,7 @@ int eof_figure_difficulty(void);	//Returns -1 if the active track difficulty has
 int eof_figure_part(void);	//Returns the active track number in terms of FoF's command line play functionality, or -1 on error
 int d_hackish_edit_proc (int msg, DIALOG *d, int c);
 int eof_set_display_mode_preset(int mode);	//Sets one of the pre-set window sizes by calling eof_set_display_mode()
+int eof_set_display_mode_preset_custom_width(int mode, unsigned long width);	//Sets one of pre-set window heights and uses the specified width
 int eof_set_display_mode(unsigned long width, unsigned long height);	//Sets the program window size, rebuilds sub-windows and sets related variables
 void eof_set_3d_projection(void);	//Sets the 3d projection by calling ocd3d_set_projection() with the screen dimensions and vanishing coordinate
 void eof_debug_message(char * text);

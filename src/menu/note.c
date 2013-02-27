@@ -3678,14 +3678,17 @@ int eof_menu_note_edit_pro_guitar_note(void)
 								}
 							}
 							if(fretvalue != eof_song->pro_guitar_track[tracknum]->note[i]->frets[ctr])
-							{	//If this fret value changed
+							{	//If this fret value (or the string's muting) changed
 								if(!undo_made)
 								{	//If an undo state hasn't been made yet
 									eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 									undo_made = 1;
 								}
 								eof_song->pro_guitar_track[tracknum]->note[i]->frets[ctr] = fretvalue;
-								memset(eof_song->pro_guitar_track[tracknum]->note[i]->finger, 0, 8);	//Initialize all fingers to undefined
+								if((fretvalue & 0x7F) != (eof_song->pro_guitar_track[tracknum]->note[i]->frets[ctr] & 0x7F))
+								{	//If this fret value (ignoring the MSB indicating string muting) changed
+									memset(eof_song->pro_guitar_track[tracknum]->note[i]->finger, 0, 8);	//Initialize all fingers to undefined
+								}
 							}
 							if(fretvalue != 0xFF)
 							{	//Track whether the all used strings in this note/chord are muted
@@ -4109,12 +4112,12 @@ DIALOG eof_pro_guitar_note_frets_dialog[] =
 	{eof_verified_edit_proc,74,  224, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_1,  "0123456789Xx",NULL },
 
 	{d_agup_text_proc,      120, 80,  64,  8,  2,   23,  0,    0,      0,         0,   "Finger #",     NULL,          NULL },
-	{eof_verified_edit_proc,140, 104, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_6, "12345",NULL },
-	{eof_verified_edit_proc,140, 128, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_5, "12345",NULL },
-	{eof_verified_edit_proc,140, 152, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_4, "12345",NULL },
-	{eof_verified_edit_proc,140, 176, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_3, "12345",NULL },
-	{eof_verified_edit_proc,140, 200, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_2, "12345",NULL },
-	{eof_verified_edit_proc,140, 224, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_1, "12345",NULL },
+	{eof_verified_edit_proc,140, 104, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_6, "12345Xx",NULL },
+	{eof_verified_edit_proc,140, 128, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_5, "12345Xx",NULL },
+	{eof_verified_edit_proc,140, 152, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_4, "12345Xx",NULL },
+	{eof_verified_edit_proc,140, 176, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_3, "12345Xx",NULL },
+	{eof_verified_edit_proc,140, 200, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_2, "12345Xx",NULL },
+	{eof_verified_edit_proc,140, 224, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_1, "12345Xx",NULL },
 
 	{d_agup_button_proc,    12,  256, 68,  28, 2,   23,  '\r', D_EXIT, 0,         0,   "OK",         NULL,          NULL },
 	{d_agup_button_proc,    104, 256, 68,  28, 2,   23,  0,    D_EXIT, 0,         0,   "Cancel",     NULL,          NULL },
@@ -4175,18 +4178,28 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 				if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] == 0xFF)
 				{	//If this string is muted with no fret value specified
 					(void) snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "X");
+					eof_finger_strings[ctr][0] = '\0';	//Empty the fingering string
 				}
 				else
-				{
+				{	//If this string has a fret value specified
 					(void) snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "%d", eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] & 0x7F);	//Mask out the MSB to obtain the fret value
-				}
-				if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->finger[ctr] != 0)
-				{	//If the finger used to fret this string is defined
-					(void) snprintf(eof_finger_strings[ctr], sizeof(eof_finger_strings[ctr]) - 1, "%d", eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->finger[ctr]);	//Create the finger string
-				}
-				else
-				{
-					eof_finger_strings[ctr][0] = '\0';	//Otherwise empty the string
+
+					if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] & 0x80)
+					{	//If the fret number's MSB is set, the string is muted
+						eof_finger_strings[ctr][0] = 'X';	//Set the fingering to X to reflect string muting
+						eof_finger_strings[ctr][1] = '\0';
+					}
+					else
+					{	//Otherwise use the string's defined fingering, if any
+						if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->finger[ctr] != 0)
+						{	//If the finger used to fret this string is defined
+							(void) snprintf(eof_finger_strings[ctr], sizeof(eof_finger_strings[ctr]) - 1, "%d", eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->finger[ctr]);	//Create the finger string
+						}
+						else
+						{
+							eof_finger_strings[ctr][0] = '\0';	//Otherwise empty the string
+						}
+					}
 				}
 			}
 			else
@@ -4240,17 +4253,40 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 			{	//If any fingering fields are defined, they have to be valid
 				for(i = 0; i < 6; i++)
 				{	//For each of the supported strings
-					if(	((eof_fret_strings[i][0] != '\0') && (eof_finger_strings[i][0] == '\0') && (atol(eof_fret_strings[i]) != 0)) ||
-						((eof_fret_strings[i][0] == '\0') && (eof_finger_strings[i][0] != '\0')) ||
-						((eof_fret_strings[i][0] != '\0') && ((eof_finger_strings[i][0] != '\0') && (atol(eof_fret_strings[i]) == 0))))
-					{	//If this string has a fret value but no finger value for a string that isn't played open, a finger value for a string that isn't played or a finger is specified for a string that is played open
-						allegro_message("If any fingering is specified, it must be done for all fretted strings, and only the fretted strings.\nCorrect or erase the finger numbers before clicking OK.");
-						retry = 1;	//Flag that the user must enter valid finger information
-						break;
+					if(eof_fret_strings[i][0] != '\0')
+					{	//If this string has a fret value
+						if(atol(eof_fret_strings[i]) != 0)
+						{	//If the value doesn't indicate that it is played open or muted
+							if(eof_finger_strings[i][0] == '\0')
+							{	//If no finger value is given
+								allegro_message("If any fingering is specified, it must be done for all fretted strings.\nCorrect or erase the finger numbers before clicking OK.");
+								retry = 1;	//Flag that the user must enter valid finger information
+								break;
+							}
+						}
+						else
+						{	//The string is played open or muted
+							if((eof_finger_strings[i][0] != '\0') && (toupper(eof_finger_strings[i][0]) != 'X'))
+							{	//If a fingering was given that doesn't indicate muting
+								allegro_message("If any fingering is specified, it must be done for all fretted strings.\nCorrect or erase the finger numbers before clicking OK.");
+								retry = 1;
+								break;
+							}
+						}
 					}
-				}
-			}
-			//Validate and store the input
+					else
+					{	//There is no fret value defined
+						if(eof_finger_strings[i][0] != '\0')
+						{	//If there is a fingering defined
+							allegro_message("If any fingering is specified, it must be done only for the fretted strings.\nCorrect or erase the finger numbers before clicking OK.");
+							retry = 1;
+							break;
+						}
+					}
+				}//For each of the supported strings
+			}//If any fingering fields are defined, they have to be valid
+
+			//Apply changes
 			if(!retry)
 			{	//If the finger entries weren't invalid
 				if(eof_count_selected_notes(NULL, 0) > 1)
@@ -4279,7 +4315,14 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 								fretvalue = fingervalue = 0;
 								if(eof_finger_strings[ctr][0] != '\0')
 								{	//If there is a finger value specified for this string
-									fingervalue = eof_finger_strings[ctr][0] - '0';	//Convert the ASCII numerical character to decimal
+									if(toupper(eof_finger_strings[ctr][0]) == 'X')
+									{	//If the character is an X, it defines that the string is muted
+										fretvalue |= 0x80;	//Set the fret value's MSB, leave the finger value at 0 (undefined)
+									}
+									else
+									{	//Otherwise it defines the fingering for the string
+										fingervalue = eof_finger_strings[ctr][0] - '0';	//Convert the ASCII numerical character to decimal
+									}
 								}
 								bitmask |= (1 << ctr);	//Set the appropriate bit for this lane
 								for(ctr2 = 0;eof_fret_strings[ctr][ctr2] != '\0';ctr2++)
@@ -4290,13 +4333,17 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 										break;
 									}
 								}
-								if(!fretvalue)
-								{	//If the string didn't contain an X, convert it to an integer value
-									fretvalue = atol(eof_fret_strings[ctr]);
-									if((fretvalue < 0) || (fretvalue > eof_song->pro_guitar_track[tracknum]->numfrets))
+								if(fretvalue != 0xFF)
+								{	//If the fret string didn't contain an X, convert it to an integer value
+									fretvalue += atol(eof_fret_strings[ctr]);	//Add the converted number so that string muting can be retained
+									if((fretvalue < 0) || ((fretvalue & 0x7F) > eof_song->pro_guitar_track[tracknum]->numfrets))
 									{	//If the conversion to number failed, or an invalid fret number was entered, enter a value of (muted) for the string
 										fretvalue = 0xFF;
 									}
+								}
+								if(fretvalue == 0xFF)
+								{	//If this string is muted
+									fingervalue = 0;	//It doesn't have a fingering
 								}
 								if(fretvalue != eof_song->pro_guitar_track[tracknum]->note[i]->frets[ctr])
 								{	//If this fret value changed
@@ -4308,7 +4355,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 									eof_song->pro_guitar_track[tracknum]->note[i]->frets[ctr] = fretvalue;
 								}
 								if(fingervalue != eof_song->pro_guitar_track[tracknum]->note[i]->finger[ctr])
-								{	//IF the finger value changed
+								{	//If the finger value changed
 									if(!*undo_made)
 									{	//If an undo state hasn't been made yet
 										eof_prepare_undo(EOF_UNDO_TYPE_NONE);

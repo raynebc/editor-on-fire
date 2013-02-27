@@ -1438,7 +1438,7 @@ int eof_pro_guitar_note_fingering_valid(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 	{	//For each string supported by this track
 		if(tp->note[note]->note & bitmask)
 		{	//If this string is used
-			if(tp->note[note]->frets[ctr] != 0)
+			if((tp->note[note]->frets[ctr] & 0x7F) != 0)
 			{	//If the string isn't being played open
 				all_strings_open = 0;	//Track that the note used at least one fretted string
 				if(tp->note[note]->finger[ctr] != 0)
