@@ -5314,8 +5314,8 @@ int eof_get_pro_guitar_note_fret_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 		if(tp->note[note]->note & bitmask)
 		{	//If the string is populated for the selected pro guitar note
 			fretvalue = tp->note[note]->frets[i];
-			if(fretvalue == 0xFF)
-			{	//If this string is muted
+			if(fretvalue & 0x80)
+			{	//If this string is muted (MSB set)
 				pro_guitar_string[index++] = 'X';	//Write a capital x to indicate muted string
 			}
 			else

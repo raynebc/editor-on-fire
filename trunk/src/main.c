@@ -592,6 +592,29 @@ int eof_set_display_mode_preset(int mode)
 	return 1;
 }
 
+int eof_set_display_mode_preset_custom_width(int mode, unsigned long width)
+{
+	switch(mode)
+	{
+		case EOF_DISPLAY_640:
+			eof_set_display_mode(width, 480);
+		break;
+
+		case EOF_DISPLAY_800:
+			eof_set_display_mode(width, 600);
+		break;
+
+		case EOF_DISPLAY_1024:
+			eof_set_display_mode(width, 768);
+		break;
+
+		default:
+		return 0;	//Invalid display mode
+	}
+
+	return 1;
+}
+
 int eof_set_display_mode(unsigned long width, unsigned long height)
 {
 	unsigned long default_zoom_level;
@@ -696,10 +719,21 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 		return 0;	//Invalid display mode
 	}
 
+	if(eof_screen_width < eof_screen_width_default)
+	{	//If the specified width is invalid
+		eof_screen_width = eof_screen_width_default;
+	}
+
 	if(set_gfx_mode(GFX_AUTODETECT_WINDOWED, eof_screen_width, eof_screen_height, 0, 0))
 	{
 		if(set_gfx_mode(GFX_AUTODETECT, eof_screen_width, eof_screen_height, 0, 0))
 		{
+			if(eof_screen_width != eof_screen_width_default)
+			{	//If the custom width failed to be applied
+				eof_set_display_mode(eof_screen_width_default, height);
+				allegro_message("Warning:  Failed to set custom display width, reverted to default");
+				return 1;
+			}
 			if(set_gfx_mode(GFX_SAFE, eof_screen_width, eof_screen_height, 0, 0))
 			{
 				allegro_message("Can't set up screen!  Error: %s",allegro_error);
@@ -3462,9 +3496,13 @@ int eof_initialize(int argc, char * argv[])
 	{
 		set_color_depth(desktop_color_depth() != 0 ? desktop_color_depth() : 8);
 	}
-	if(!eof_set_display_mode_preset(eof_screen_layout.mode))
+	if(!eof_set_display_mode_preset_custom_width(eof_screen_layout.mode, eof_screen_width))
 	{
-		allegro_message("Unable to set display mode!");
+		allegro_message("Unable to set display mode, reverting to default width!");
+		if(!eof_set_display_mode_preset(eof_screen_layout.mode))
+		{
+			allegro_message("Unable to set display mode!");
+		}
 		return 0;
 	}
 	eof_window_note = eof_window_note_lower_left;	//By default, the info panel is at the lower left corner

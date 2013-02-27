@@ -317,7 +317,6 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 	}
 	else if(format == RS_FORMAT)
 	{
-		Lyrics.nohyphens=3;	//Disable hyphen output
 		Lyrics.noplus=1;	//Disable plus output
 		Lyrics.filter=DuplicateString("^=%#/");	//Use default filter list
 		Lyrics.defaultfilter = 1;	//Track that the above string will need to be freed
