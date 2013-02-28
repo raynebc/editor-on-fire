@@ -9,6 +9,8 @@ Playback and Seek controls:
     
         Hold Ctrl when pressing Space to play at 50% speed
 
+        Hold Ctrl and Shift when pressing Space to play at 25% speed
+
 	Hold D when pressing Space to play at 100% speed
     
         Hold Shift when pressing Space to play the current fret catalog entry (see manual for

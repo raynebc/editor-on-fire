@@ -3677,12 +3677,17 @@ int eof_pro_guitar_set_fret_hand_position(void)
 			position = atol(eof_etext);
 			if(position > eof_song->pro_guitar_track[tracknum]->numfrets)
 			{	//If the given fret position is higher than this track's supported number of frets
-				allegro_message("You cannot specify a fret hand position that is higher than this track's number of frets (%u)", eof_song->pro_guitar_track[tracknum]->numfrets);
+				allegro_message("You cannot specify a fret hand position that is higher than this track's number of frets (%u).", eof_song->pro_guitar_track[tracknum]->numfrets);
+				return 1;
+			}
+			else if(position > 19)
+			{	//19 is the highest valid anchor because fret 22 is the highest supported fret in both Rock Band and Rocksmith
+				allegro_message("You cannot specify a fret hand position higher than 19 (it will cause Rocksmith to crash).");
 				return 1;
 			}
 			else if(!position)
 			{	//If the user gave a fret position of 0
-				allegro_message("You cannot specify a fret hand position of 0");
+				allegro_message("You cannot specify a fret hand position of 0.");
 				return 1;
 			}
 			else
@@ -4373,10 +4378,10 @@ DIALOG eof_manage_rs_phrases_dialog[] =
    /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                 (dp2) (dp3) */
    { d_agup_window_proc,0,   48,  400, 237, 2,   23,  0,    0,      0,   0,   "Manage RS phrases", NULL, NULL },
    { d_agup_list_proc,  12,  84,  300, 144, 2,   23,  0,    0,      0,   0,   (void *)eof_magage_rs_phrases_list,NULL, NULL },
-   { d_agup_push_proc,  325, 84, 68,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "Add level",        NULL, (void *)eof_manage_rs_phrases_add_level },
-//   { d_agup_push_proc,  425, 124,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "Del level",         NULL, (void *)eof_events_dialog_add },
-   { d_agup_push_proc,  325, 164, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "&Seek to",      NULL, (void *)eof_manage_rs_phrases_seek },
-   { d_agup_button_proc,12,  245, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
+   { d_agup_push_proc,  325, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add level",        NULL, (void *)eof_manage_rs_phrases_add_level },
+   { d_agup_push_proc,  325, 124, 68,  28,  2,   23,  'd',  D_EXIT, 0,   0,   "&Del level",        NULL, (void *)eof_manage_rs_phrases_remove_level },
+   { d_agup_push_proc,  325, 164, 68,  28,  2,   23,  's',  D_EXIT, 0,   0,   "&Seek to",          NULL, (void *)eof_manage_rs_phrases_seek },
+   { d_agup_button_proc,12,  245, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",              NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -4495,17 +4500,33 @@ int eof_manage_rs_phrases_seek(DIALOG * d)
 
 int eof_manage_rs_phrases_add_level(DIALOG * d)
 {
-	unsigned long ctr, ctr2, numphrases, targetbeat = 0, instancectr, tracknum;
-	unsigned long startpos, endpos;		//Track the start and end position of the each instance of the phrase
-	char *phrasename = NULL, undo_made = 0;
-	EOF_PRO_GUITAR_TRACK *tp;
-	EOF_PHRASE_SECTION *ptr;
-	char prompt = 0, prompt2 = 0;
-
 	if(!d)
 	{	//Satisfy Splint by checking value of d
 		return D_O_K;
 	}
+
+	return eof_manage_rs_phrases_add_or_remove_level(1);	//Call the add level logic
+}
+
+int eof_manage_rs_phrases_remove_level(DIALOG * d)
+{
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
+
+	return eof_manage_rs_phrases_add_or_remove_level(-1);	//Call the remove level logic
+}
+
+int eof_manage_rs_phrases_add_or_remove_level(int function)
+{
+	unsigned long ctr, ctr2, ctr3, numphrases, targetbeat = 0, instancectr, tracknum;
+	unsigned long startpos, endpos;		//Track the start and end position of the each instance of the phrase
+	char *phrasename = NULL, undo_made = 0;
+	EOF_PRO_GUITAR_TRACK *tp;
+	EOF_PHRASE_SECTION *ptr;
+	char prompt = 0;
+
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return D_O_K;
 
@@ -4562,7 +4583,7 @@ int eof_manage_rs_phrases_add_level(DIALOG * d)
 				endpos = eof_song->beat[ctr]->pos - 1;	//Track this as the end position of the previous phrase marker
 
 				//Increment the difficulty level of all notes and phrases that fall within the phrase that are in the active difficulty or higher
-				//Parse in reverse order so that new notes can be appended to the track in the same loop
+				//Parse in reverse order so that notes can be appended to or deleted from the track in the same loop
 				for(ctr2 = eof_get_track_size(eof_song, eof_selected_track); ctr2 > 0; ctr2--)
 				{	//For each note in the track (in reverse order)
 					unsigned long notepos = eof_get_note_pos(eof_song, eof_selected_track, ctr2 - 1);
@@ -4570,7 +4591,9 @@ int eof_manage_rs_phrases_add_level(DIALOG * d)
 					if((notetype >= eof_note_type) && (notepos < startpos) && (notepos + 10 >= startpos))
 					{	//If this note is 1 to 10 milliseconds before the beginning of the phrase
 						if(!prompt)
-						{	//If the user wasn't prompted about how to handle this condition yet
+						{	//If the user wasn't prompted about how to handle this condition yet, seek to the note in question and prompt the user whether to take action
+							eof_set_seek_position(notepos + eof_av_delay);	//Seek to the note's position
+							eof_render();
 							if(alert("At least one note is between 1 and 10 ms before the phrase.", NULL, "Move such notes to the start of the phrase?", "&Yes", "&No", 'y', 'n') == 1)
 							{	//If the user opts to correct the note positions
 								prompt = 1;	//Store a "yes" response
@@ -4587,32 +4610,15 @@ int eof_manage_rs_phrases_add_level(DIALOG * d)
 								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 								undo_made = 1;
 							}
-							eof_set_note_pos(eof_song, eof_selected_track, ctr2 - 1, startpos);	//Re-position the note to the start of the phrase
-							notepos = startpos;
-						}
-					}
-					if((notetype >= eof_note_type) && (notepos > endpos) && (notepos - 10 <= endpos))
-					{	//If this note is 1 to 10 milliseconds after the end of the phrase
-						if(!prompt2)
-						{	//If the user wasn't prompted about how to handle this condition yet
-							if(alert("At least one note is between 1 and 10 ms after the phrase.", NULL, "Move such notes to the end the phrase?", "&Yes", "&No", 'y', 'n') == 1)
-							{	//If the user opts to correct the note positions
-								prompt2 = 1;	//Store a "yes" response
+							for(ctr3 = eof_get_track_size(eof_song, eof_selected_track); ctr3 > 0; ctr3--)
+							{	//For each note in the track (in reverse order)
+								unsigned long notepos2 = eof_get_note_pos(eof_song, eof_selected_track, ctr3 - 1);
+								if((notepos2 < startpos) && (notepos2 + 10 >= startpos))
+								{	//If this note is 1 to 10 milliseconds before the beginning of the phrase
+									eof_set_note_pos(eof_song, eof_selected_track, ctr3 - 1, startpos);	//Re-position the note to the start of the phrase
+								}
 							}
-							else
-							{
-								prompt2 = 2;	//Store a "no" response
-							}
-						}
-						if(prompt2 == 1)
-						{	//If the user opted to correct the note positions
-							if(!undo_made)
-							{	//If an undo state hasn't been made yet
-								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-								undo_made = 1;
-							}
-							eof_set_note_pos(eof_song, eof_selected_track, ctr2 - 1, endpos);	//Re-position the note to the end of the phrase
-							notepos = endpos;
+							notepos = startpos;	//Update the stored position for the note
 						}
 					}
 					if((notetype >= eof_note_type) && (notepos >= startpos) && (notepos <= endpos))
@@ -4622,35 +4628,61 @@ int eof_manage_rs_phrases_add_level(DIALOG * d)
 							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 							undo_made = 1;
 						}
-						if(notetype + 1 >= eof_song->track[eof_selected_track]->numdiffs)
-						{	//If this operation needs to increase the track's difficulty count
-							eof_song->track[eof_selected_track]->numdiffs++;
-						}
 						if(notetype == eof_note_type)
-						{	//If this note is in the active difficulty, it will be duplicated into the next higher difficulty instead of just having its difficulty incremented
-							long length = eof_get_note_length(eof_song, eof_selected_track, ctr2 - 1);
-							(void) eof_copy_note(eof_song, eof_selected_track, ctr2 - 1, eof_selected_track, notepos, length, eof_note_type + 1);
+						{	//If this note is in the active difficulty
+							if(function < 0)
+							{	//If the delete level function is being performed, this note will be deleted
+								eof_track_delete_note(eof_song, eof_selected_track, ctr2 - 1);
+							}
+							else
+							{	//The add level function is being performed, this note will be duplicated into the next higher difficulty instead of just having its difficulty incremented
+								long length = eof_get_note_length(eof_song, eof_selected_track, ctr2 - 1);
+								(void) eof_copy_note(eof_song, eof_selected_track, ctr2 - 1, eof_selected_track, notepos, length, eof_note_type + 1);
+							}
 						}
 						else
 						{
-							eof_set_note_type(eof_song, eof_selected_track, ctr2 - 1, notetype + 1);	//Increment the note's difficulty
+							if(function < 0)
+							{	//If the delete level function is being performed, this note will have its difficulty decremented
+								eof_set_note_type(eof_song, eof_selected_track, ctr2 - 1, notetype - 1);	//Decrement the note's difficulty
+							}
+							else
+							{	//The add level function is being performed, this note will have its difficulty incremented
+								eof_set_note_type(eof_song, eof_selected_track, ctr2 - 1, notetype + 1);	//Increment the note's difficulty
+							}
 						}
 					}
-				}
+				}//For each note in the track (in reverse order)
+
+				//Update arpeggios and fret hand positions
 				tracknum = eof_song->track[eof_selected_track]->tracknum;
 				tp = eof_song->pro_guitar_track[tracknum];
 				for(ctr2 = eof_get_num_arpeggios(eof_song, eof_selected_track); ctr2 > 0; ctr2--)
 				{	//For each arpeggio section in the track (in reverse order)
 					ptr = &eof_song->pro_guitar_track[tracknum]->arpeggio[ctr2 - 1];	//Simplify
 					if((ptr->difficulty >= eof_note_type) && (ptr->start_pos <= endpos) && (ptr->end_pos >= startpos))
-					{	//If this arpeggio overlaps at all with the phrase being manipulated
-						if(ptr->difficulty >= eof_note_type)
-						{	//If this arpeggio is in the active difficulty, it will be duplicated into the next higher difficulty instead of just having its difficulty incremented
-							(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
+					{	//If this arpeggio overlaps at all with the phrase being manipulated and is in a difficulty level that this function affects
+						if(ptr->difficulty == eof_note_type)
+						{	//If this arpeggio is in the active difficulty
+							if(function < 0)
+							{	//If the delete level function is being performed, this arpeggio will be deleted
+								eof_track_delete_arpeggio(eof_song, eof_selected_track, ctr2 - 1);
+							}
+							else
+							{	//The add level function is being performed, this arpeggio will be duplicated into the next higher difficulty instead of just having its difficulty incremented
+								(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
+							}
 						}
 						else
 						{
-							ptr->difficulty++;	//Increment the arpeggio's difficulty
+							if(function < 0)
+							{	//If the delete level function is being performed, this arpeggio will have its difficulty decremented
+								ptr->difficulty--;	//Decrement the arpeggio's difficulty
+							}
+							else
+							{	//The add level function is being performed, this arpeggio will have its difficulty incremented
+								ptr->difficulty++;	//Increment the arpeggio's difficulty
+							}
 						}
 					}
 				}
@@ -4658,14 +4690,28 @@ int eof_manage_rs_phrases_add_level(DIALOG * d)
 				{	//For each fret hand position in the track (in reverse order)
 					ptr = &tp->handposition[ctr2 - 1];	//Simplify
 					if((ptr->difficulty >= eof_note_type) && (ptr->start_pos >= startpos) && (ptr->start_pos <= endpos))
-					{	//If this fret hand position is within the phrase being manipulated
-						if(ptr->difficulty >= eof_note_type)
+					{	//If this fret hand position is within the phrase being manipulated and is in a difficulty level that this function affects
+						if(ptr->difficulty == eof_note_type)
 						{	//If this fret hand position is in the active difficulty, it will be duplicated into the next higher difficulty instead of just having its difficulty incremented
-							(void) eof_track_add_section(eof_song, eof_selected_track, EOF_FRET_HAND_POS_SECTION, eof_note_type + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
+							if(function < 0)
+							{	//If the delete level function is being performed, this fret hand position will be deleted
+								eof_pro_guitar_track_delete_hand_position(tp, ctr2 - 1);
+							}
+							else
+							{	//The add level function is being performed, this fret hand position will be duplicated into the next higher difficulty instead of just having its difficulty incremented
+								(void) eof_track_add_section(eof_song, eof_selected_track, EOF_FRET_HAND_POS_SECTION, eof_note_type + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
+							}
 						}
 						else
 						{
-							ptr->difficulty++;	//Increment the fret hand position's difficulty
+							if(function < 0)
+							{	//If the delete level function is being performed, this fret hand position will have its difficulty decremented
+								ptr->difficulty--;	//Decrement the fret hand position's difficulty
+							}
+							else
+							{	//The add level function is being performed, this fret hand position will have its difficulty incremented
+								ptr->difficulty++;	//Increment the fret hand position's difficulty
+							}
 						}
 					}
 				}
@@ -4684,21 +4730,20 @@ int eof_manage_rs_phrases_add_level(DIALOG * d)
 					startpos = eof_song->beat[ctr]->pos;	//Track the starting position of the phrase
 				}
 			}
-		}
-	}
+		}//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
+	}//For each beat in the chart (starting from the one ctr is referring to)
 
 	if(!undo_made)
 	{	//If no notes were within the selected phrase instance(s)
-		allegro_message("The selected phrase instance(s) had no notes so a new level was not created.");
+		allegro_message("The selected phrase instance(s) had no notes at or above the current difficulty, so no alterations were performed.");
 	}
 	else
 	{	//Otherwise remove the difficulty limit since this operation has modified the chart
+		eof_track_sort_notes(eof_song, eof_selected_track);
 		eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//Remove the difficulty limit for this track
+		eof_song->track[eof_selected_track]->numdiffs = eof_detect_difficulties(eof_song, eof_selected_track);	//Update the number of difficulties used in this track
 	}
 
-	//Re-render EOF
-	eof_track_sort_notes(eof_song, eof_selected_track);
-	eof_detect_difficulties(eof_song, eof_selected_track);
 	eof_render();
 
 	//Release and rebuild the strings for the dialog menu

@@ -908,7 +908,7 @@ if(key[KEY_PAUSE])
 	/* play catalog entry (SHIFT+Space) */
 	if(key[KEY_SPACE] && !eof_silence_loaded)
 	{	//Only allow playback controls when chart audio is loaded
-		if(KEY_EITHER_SHIFT)
+		if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 		{
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_catalog_play();

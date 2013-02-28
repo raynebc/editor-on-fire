@@ -171,9 +171,16 @@ int eof_manage_rs_phrases(void);
 	//Displays the phrases defined for the current pro guitar/bass track, along with the maxdifficulty of each
 int eof_manage_rs_phrases_seek(DIALOG * d);
 	//Seeks to the beat containing the selected phrase
+int eof_manage_rs_phrases_add_or_remove_level(int function);
+	//Used by eof_manage_rs_phrases_add_level() and eof_manage_rs_phrases_delete_level() to manipulate the difficulties for the selected RS phrase
+	//If function is negative, the notes, arpeggios and hand positions in the active difficulty are deleted, and those of higher difficulties are decremented
+	//If function is >= 0, the notes, arpeggios and hand postions in the active difficulty are duplicated into the next difficulty, and those of higher difficulties are incremented
 int eof_manage_rs_phrases_add_level(DIALOG * d);
-	//Increments the notes within the selected phrase (either the selected instance or within all instances, depending on user selection)
-	//and copies the affected notes back into the current difficulty, making it convenient to author a new difficulty level for the notes in question.
+	//Increments the difficulty level of the notes, arpeggios and hand positions in the selected phrase (either the selected instance or within all instances, depending on user selection)
+	//and copies the now higher-difficulty's content back into the active difficulty, making it convenient to author a new difficulty level for the notes in question.
+int eof_manage_rs_phrases_remove_level(DIALOG * d);
+	//Decrements the notes within the selected phrase (either the selected instance or within all instances, depending on user selection)
+	//and deletes the affected notes in the current difficulty, making it convenient to remove a difficulty level for the notes in question.
 int eof_menu_song_rs_popup_add(void);
 	//Allows the user to add a popup message displayed in-game in Rocksmith
 int eof_menu_song_rs_popup_messages(void);

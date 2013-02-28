@@ -3193,7 +3193,7 @@ void eof_render(void)
 
 	if(eof_full_screen_3d && eof_song_loaded)
 	{	//If the user enabled full screen 3D view, scale it to fill the program window
-		stretch_blit(eof_window_3d->screen, eof_screen, 0, 0, eof_screen_width / 2, eof_screen_height / 2, 0, 0, SCREEN_W, SCREEN_H);
+		stretch_blit(eof_window_3d->screen, eof_screen, 0, 0, eof_screen_width_default / 2, eof_screen_height / 2, 0, 0, SCREEN_W, SCREEN_H);
 		eof_window_note->y = 0;	//Re-position the note window to the top left corner of EOF's program window
 		eof_render_note_window();
 		if((eof_count_selected_notes(NULL, 0) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))

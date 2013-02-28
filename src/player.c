@@ -22,8 +22,16 @@ void eof_music_play(void)
 	}
 	eof_music_paused = 1 - eof_music_paused;
 	if(KEY_EITHER_CTRL)
-	{
-		speed = 500;
+	{	//If CTRL is being held
+		if(KEY_EITHER_SHIFT)
+		{	//If SHIFT is also being held
+			eof_shift_used = 1;	//Track that the SHIFT key was used
+			speed = 250;
+		}
+		else
+		{
+			speed = 500;
+		}
 	}
 	else if(key[KEY_D])	//Force full playback speed
 	{
