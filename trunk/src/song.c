@@ -941,10 +941,11 @@ void eof_sort_notes(EOF_SONG *sp)
 	}
 }
 
-void eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
+unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 {
 	unsigned long i;
 	int note_type;
+	unsigned char numdiffs = 5;
 
  	eof_log("eof_detect_difficulties() entered", 1);
 
@@ -978,9 +979,12 @@ void eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 			{
 				note_type = eof_get_note_type(sp, track, i);
 				eof_track_diff_populated_status[note_type] = 1;
+				if(note_type >= numdiffs)
+				{	//If this note's difficulty is the highest encountered in the track so far
+					numdiffs = note_type + 1;
+				}
 				if((note_type >= 0) && (note_type < EOF_MAX_DIFFICULTIES))
 				{	//If this note has a valid type (difficulty) in the traditional 5 difficulty system
-
 					if(track == EOF_TRACK_DANCE)
 					{	//If this is the dance track, update the dance track tabs
 						eof_dance_tab_name[note_type][0] = '*';
@@ -993,6 +997,8 @@ void eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 			}
 		}
 	}
+
+	return numdiffs;
 }
 
 int eof_lyric_is_freestyle(EOF_VOCAL_TRACK * tp, unsigned long lyricnumber)
