@@ -59,8 +59,8 @@ MENU eof_beat_rocksmith_menu[] =
     {"Place RS Phrase\tShift+P", eof_rocksmith_phrase_dialog_add, NULL, 0, NULL},
     {"Place RS &Section\tShift+S", eof_rocksmith_section_dialog_add, NULL, 0, NULL},
     {"Place RS &Event\tShift+E", eof_rocksmith_event_dialog_add, NULL, 0, NULL},
-    {"&Copy phrase/section\t" CTRL_NAME "+SHIFT+C", eof_menu_beat_copy_rs_events, NULL, 0, NULL},
-    {"&Paste phrase/section\t" CTRL_NAME "+SHIFT+V", eof_menu_beat_paste_rs_events, NULL, 0, NULL},
+    {"&Copy phrase/section\t" CTRL_NAME "+Shift+C", eof_menu_beat_copy_rs_events, NULL, 0, NULL},
+    {"&Paste phrase/section\t" CTRL_NAME "+Shift+V", eof_menu_beat_paste_rs_events, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
