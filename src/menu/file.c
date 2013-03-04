@@ -1271,15 +1271,18 @@ int eof_menu_file_exit(void)
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
+	eof_clear_input();
 	if(alert(NULL, "Want to Quit?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
 		if(eof_changes)
 		{
+			eof_clear_input();
 			ret = alert3(NULL, "Save changes before quitting?", NULL, "&Yes", "&No", "Cancel", 'y', 'n', 0);
 			if(ret == 1)
 			{
 				if(eof_menu_file_save() == 2)
 				{
+					eof_clear_input();
 					ret2 = alert3(NULL, "Save failed! Exit without saving?", NULL, "&Yes", "&No", NULL, 'y', 'n', 0);
 				}
 			}
@@ -2360,7 +2363,7 @@ int eof_save_helper(char *destfilename)
 					EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,RS_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
 				}
 			}
-			eof_detect_difficulties(eof_song, eof_selected_track);		//Update eof_track_diff_populated_status[] to reflect the currently selected difficulty
+			(void) eof_detect_difficulties(eof_song, eof_selected_track);		//Update eof_track_diff_populated_status[] to reflect the currently selected difficulty
 			eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
 
 			//Determine if "[song name].wav" exists, if not, export the chart audio in WAV format

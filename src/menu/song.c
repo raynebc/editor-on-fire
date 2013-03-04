@@ -169,6 +169,7 @@ MENU eof_song_rocksmith_menu[] =
     {"Insert new difficulty", eof_song_proguitar_insert_difficulty, NULL, 0, NULL},
     {"Delete active difficulty", eof_song_proguitar_delete_difficulty, NULL, 0, NULL},
     {"&Manage RS phrases\t" CTRL_NAME "+Shift+M", eof_manage_rs_phrases, NULL, 0, NULL},
+    {"Rename &Track", eof_song_rename_track, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -190,11 +191,11 @@ MENU eof_song_menu[] =
     {"Enable open strum bass", eof_menu_song_open_bass, NULL, 0, NULL},
     {"Enable five lane drums", eof_menu_song_five_lane_drums, NULL, 0, NULL},
     {"Lock tempo map", eof_menu_song_lock_tempo_map, NULL, 0, NULL},
+    {"Disable click and drag", eof_menu_song_disable_click_drag, NULL, 0, NULL},
     {"Disable expert+ bass drum", eof_menu_song_disable_double_bass_drums, NULL, 0, NULL},
     {"Pro &Guitar", NULL, eof_song_proguitar_menu, 0, NULL},
     {"&Rocksmith", NULL, eof_song_rocksmith_menu, 0, NULL},
     {"Manage raw MIDI tracks", eof_menu_song_raw_MIDI_tracks, NULL, 0, NULL},
-    {"Rename track", eof_song_rename_track, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"T&est in FOF\tF12", eof_menu_song_test_fof, NULL, EOF_LINUX_DISABLE, NULL},
     {"Test I&n Phase Shift", eof_menu_song_test_ps, NULL, EOF_LINUX_DISABLE, NULL},
@@ -602,21 +603,31 @@ void eof_prepare_song_menu(void)
 			eof_song_menu[15].flags = 0;
 		}
 
-		/* Disable expert+ bass drum */
-		if(eof_song->tags->double_bass_drum_disabled)
+		/* disable click and drag */
+		if(eof_song->tags->click_drag_disabled)
 		{
-			eof_song_menu[16].flags = D_SELECTED;	//Song>Disable expert+ bass drum
+			eof_song_menu[16].flags = D_SELECTED;	//Song>Disable click and drag
 		}
 		else
 		{
 			eof_song_menu[16].flags = 0;
 		}
 
+		/* Disable expert+ bass drum */
+		if(eof_song->tags->double_bass_drum_disabled)
+		{
+			eof_song_menu[17].flags = D_SELECTED;	//Song>Disable expert+ bass drum
+		}
+		else
+		{
+			eof_song_menu[17].flags = 0;
+		}
+
 		/* enable pro guitar and rocksmith submenus */
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is active
-			eof_song_menu[17].flags = 0;			//Song>Pro Guitar> submenu
-			eof_song_menu[18].flags = 0;			//Song>Rocksmith> submenu
+			eof_song_menu[18].flags = 0;			//Song>Pro Guitar> submenu
+			eof_song_menu[19].flags = 0;			//Song>Rocksmith> submenu
 
 			if(eof_enable_chord_cache && (eof_chord_lookup_count > 1))
 			{	//If an un-named note is selected and it has at least two chord matches
@@ -640,8 +651,8 @@ void eof_prepare_song_menu(void)
 		}
 		else
 		{	//Otherwise disable these menu items
-			eof_song_menu[17].flags = D_DISABLED;
 			eof_song_menu[18].flags = D_DISABLED;
+			eof_song_menu[19].flags = D_DISABLED;
 		}
 	}//If a chart is loaded
 }
@@ -1311,7 +1322,7 @@ int eof_menu_track_selected_track_number(int tracknum)
 		//Track numbering begins at one instead of zero
 		eof_track_selected_menu[tracknum-1].flags = D_SELECTED;
 		eof_selected_track = tracknum;
-		eof_detect_difficulties(eof_song, eof_selected_track);
+		(void) eof_detect_difficulties(eof_song, eof_selected_track);
 		eof_fix_window_title();
 		eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 		eof_set_3D_lane_positions(0);
@@ -3422,6 +3433,14 @@ int eof_menu_song_lock_tempo_map(void)
 	return 1;
 }
 
+int eof_menu_song_disable_click_drag(void)
+{
+	if(eof_song)
+		eof_song->tags->click_drag_disabled ^= 1;	//Toggle this boolean variable
+	eof_fix_window_title();
+	return 1;
+}
+
 int eof_menu_song_disable_double_bass_drums(void)
 {
 	if(eof_song)
@@ -4000,7 +4019,7 @@ int eof_song_proguitar_toggle_difficulty_limit(void)
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
-	eof_detect_difficulties(eof_song, eof_selected_track);	//Determine which difficulties are populated for the active track
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Determine which difficulties are populated for the active track
 	if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 	{	//If the active track already had the difficulty limit removed, toggle this flag off
 		for(ctr = 5; ctr < 256; ctr++)
@@ -4094,7 +4113,7 @@ int eof_song_proguitar_insert_difficulty(void)
 	}
 
 	//Prompt whether to clone an adjacent difficulty if applicable
-	eof_detect_difficulties(eof_song, eof_selected_track);	//Find which difficulties are populated
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Find which difficulties are populated
 	if((newdiff > 0) && (eof_track_diff_populated_status[newdiff - 1]))
 	{	//If there's a populated difficulty below the newly inserted difficulty
 		lower = 1;
@@ -4136,7 +4155,7 @@ int eof_song_proguitar_insert_difficulty(void)
 	eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//Remove the difficulty limit for this track
 	eof_pro_guitar_track_sort_fret_hand_positions(tp);
 	eof_song->track[eof_selected_track]->numdiffs++;	//Increment the track's difficulty counter
-	eof_detect_difficulties(eof_song, eof_selected_track);
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);
 	eof_fix_window_title();	//Redraw the window title in case the active difficulty was incremented to compensate for inserting a difficulty below the active difficulty
 	return 1;
 }
@@ -4208,7 +4227,7 @@ int eof_song_proguitar_delete_difficulty(void)
 
 	eof_pro_guitar_track_sort_fret_hand_positions(tp);
 	eof_song->track[eof_selected_track]->numdiffs--;	//Decrement the track's difficulty counter
-	eof_detect_difficulties(eof_song, eof_selected_track);
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);
 	(void) eof_menu_track_selected_track_number(eof_note_type - 1);
 	return 1;
 }
@@ -5109,7 +5128,7 @@ int eof_rs_popup_messages_edit(DIALOG * d)
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					eof_rs_popup_messages_dialog_undo_made = 1;
 				}
-				ustrncpy(ptr->name, eof_etext, EOF_SECTION_NAME_LENGTH);	//Update the popup message string
+				(void) ustrncpy(ptr->name, eof_etext, EOF_SECTION_NAME_LENGTH);	//Update the popup message string
 				ptr->name[EOF_SECTION_NAME_LENGTH] = '\0';	//Guarantee NULL termination
 				ptr->start_pos = start;				//Update start timestamp
 				ptr->end_pos = start + duration;	//Update end timestamp

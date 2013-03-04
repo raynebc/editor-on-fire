@@ -897,7 +897,7 @@ if(key[KEY_PAUSE])
 				}
 			}
 			eof_fix_window_title();
-			eof_detect_difficulties(eof_song, eof_selected_track);
+			(void) eof_detect_difficulties(eof_song, eof_selected_track);
 		}
 		eof_mix_find_claps();
 		eof_mix_start_helper();
@@ -1357,7 +1357,8 @@ if(key[KEY_PAUSE])
 	}
 
 	/* toggle claps (C) */
-	/* paste from catalog (CTRL+SHIFT+C) */
+	/* paste from catalog (SHIFT+C) */
+	/* copy Rocksmith phrase/section */
 	if(key[KEY_C])
 	{
 		if(!KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
@@ -1365,28 +1366,44 @@ if(key[KEY_PAUSE])
 			(void) eof_menu_edit_claps();
 			key[KEY_C] = 0;
 		}
-		else if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
-		{	//Both CTRL and SHIFT held
+		else if(!KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+		{	//If only SHIFT is held
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			(void) eof_menu_edit_paste_from_catalog();
+			key[KEY_C] = 0;
+		}
+		else if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+		{	//If both CTRL and SHIFT are held
+			eof_shift_used = 1;	//Track that the SHIFT key was used
+			(void) eof_menu_beat_copy_rs_events();
 			key[KEY_C] = 0;
 		}
 	}
 
 	/* toggle vocal tones (V) */
 	/* toggle vibrato (SHIFT+V in a pro guitar track) */
-	if(key[KEY_V] && !KEY_EITHER_CTRL)
+	/* paste Rocksmith phrase/section */
+	if(key[KEY_V])
 	{
-		if(!KEY_EITHER_SHIFT)
-		{
-			(void) eof_menu_edit_vocal_tones();
+		if(!KEY_EITHER_CTRL)
+		{	//If CTRL is not held
+			if(!KEY_EITHER_SHIFT)
+			{	//If SHIFT is not held
+				(void) eof_menu_edit_vocal_tones();
+			}
+			else
+			{	//SHIFT is held
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				(void) eof_menu_note_toggle_vibrato();
+			}
+			key[KEY_V] = 0;
 		}
-		else
-		{	//SHIFT is held
+		else if(KEY_EITHER_SHIFT)
+		{	//If both CTRL and SHIFT are held
 			eof_shift_used = 1;	//Track that the SHIFT key was used
-			(void) eof_menu_note_toggle_vibrato();
+			(void) eof_menu_beat_paste_rs_events();
+			key[KEY_V] = 0;
 		}
-		key[KEY_V] = 0;
 	}
 
 	/* toggle full screen 3D view (CTRL+F)*/
@@ -1520,7 +1537,7 @@ if(key[KEY_PAUSE])
 					{	//If the user opted to make all new yellow drum notes as one of the specialized hi hat types automatically
 						eof_mark_new_note_as_special_hi_hat(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
 					}
-					eof_detect_difficulties(eof_song, eof_selected_track);
+					(void) eof_detect_difficulties(eof_song, eof_selected_track);
 					eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 				}
 				key[KEY_ENTER] = 0;
@@ -1548,7 +1565,7 @@ if(key[KEY_PAUSE])
 						}
 						eof_entering_note_note = new_note;
 						eof_entering_note = 1;
-						eof_detect_difficulties(eof_song, eof_selected_track);
+						(void) eof_detect_difficulties(eof_song, eof_selected_track);
 					}
 				}
 				else
@@ -1657,7 +1674,7 @@ if(key[KEY_PAUSE])
 				}
 				if(new_note)
 				{
-					eof_detect_difficulties(eof_song, eof_selected_track);
+					(void) eof_detect_difficulties(eof_song, eof_selected_track);
 					eof_track_sort_notes(eof_song, eof_selected_track);
 				}
 			}
@@ -1685,7 +1702,7 @@ if(key[KEY_PAUSE])
 					{
 						eof_entering_note_lyric = new_lyric;
 						eof_entering_note = 1;
-						eof_detect_difficulties(eof_song, eof_selected_track);
+						(void) eof_detect_difficulties(eof_song, eof_selected_track);
 						eof_track_sort_notes(eof_song, eof_selected_track);
 					}
 				}
@@ -1758,7 +1775,7 @@ if(key[KEY_PAUSE])
 							}
 							eof_entering_note_note = new_note;
 							eof_entering_note = 1;
-							eof_detect_difficulties(eof_song, eof_selected_track);
+							(void) eof_detect_difficulties(eof_song, eof_selected_track);
 							eof_track_sort_notes(eof_song, eof_selected_track);
 						}
 					}
@@ -2468,7 +2485,7 @@ if(key[KEY_PAUSE])
 									eof_track_sort_notes(eof_song, eof_selected_track);
 									eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 									eof_determine_phrase_status(eof_song, eof_selected_track);
-									eof_detect_difficulties(eof_song, eof_selected_track);
+									(void) eof_detect_difficulties(eof_song, eof_selected_track);
 								}
 							}
 
@@ -2530,7 +2547,7 @@ if(key[KEY_PAUSE])
 								eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes and retain note selection
 								eof_determine_phrase_status(eof_song, eof_selected_track);
 								eof_selection.multi[eof_selection.current] = 1;	//Add new note to the selection
-								eof_detect_difficulties(eof_song, eof_selected_track);
+								(void) eof_detect_difficulties(eof_song, eof_selected_track);
 							}
 						}
 					}//If user has pressed any key from 1 through 6
@@ -2690,7 +2707,7 @@ if(key[KEY_PAUSE])
 	/* paste (CTRL+V, in non Feedback input modes) */
 	/* paste (CTRL+P, in Feedback input mode) */
 		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && key[KEY_V])
-		{
+		{	//If CTRL is held and SHIFT is not
 			if(eof_input_mode == EOF_INPUT_FEEDBACK)
 			{
 				do_old_paste = 1;
@@ -2705,7 +2722,7 @@ if(key[KEY_PAUSE])
 	/* old paste (CTRL+P, in non Feedback input modes) */
 	/* old paste (CTRL+V, in Feedback input mode */
 		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && key[KEY_P])
-		{	//CTRL+P is "Old Paste"
+		{	//If CTRL is held and SHIFT is not
 			if(eof_input_mode == EOF_INPUT_FEEDBACK)
 			{
 				do_new_paste = 1;
@@ -2829,7 +2846,7 @@ void eof_editor_drum_logic(void)
 				eof_set_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, eof_snap.pos);
 				eof_entering_note_note = new_note;
 				eof_entering_note = 1;
-				eof_detect_difficulties(eof_song, eof_selected_track);
+				(void) eof_detect_difficulties(eof_song, eof_selected_track);
 				eof_track_sort_notes(eof_song, eof_selected_track);
 			}
 		}
@@ -3154,8 +3171,8 @@ void eof_editor_logic(void)
 					}
 				}
 			}//If the left mouse button is NOT pressed
-			if(!eof_full_screen_3d && (mouse_b & 1) && !eof_lclick_released && (lpos >= 0))
-			{	//If full screen 3D view is not in effect, the left mouse button is being held and the mouse is right of the left edge of the piano roll
+			if(!eof_full_screen_3d && !eof_song->tags->click_drag_disabled && (mouse_b & 1) && !eof_lclick_released && (lpos >= 0))
+			{	//If neither full screen 3D view is in use nor is click and drag disabled, the left mouse button is being held and the mouse is right of the left edge of the piano roll
 				if(eof_mouse_drug && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 				{
 					eof_mouse_drug++;
@@ -3259,7 +3276,7 @@ void eof_editor_logic(void)
 						}
 					}
 				}
-			}//If the left mouse button is being held
+			}//If neither full screen 3D view is in use nor is click and drag disabled, the left mouse button is being held and the mouse is right of the left edge of the piano roll
 			if(!eof_full_screen_3d && ((mouse_b & 2) || key[KEY_INSERT]) && eof_rclick_released && eof_pen_note.note && (eof_pen_note.pos < eof_chart_length))
 			{	//Full screen 3D view is not in effect, right mouse click or Insert key pressed, and the pen note is valid
 				eof_selection.range_pos_1 = 0;
@@ -3307,7 +3324,7 @@ void eof_editor_logic(void)
 									eof_track_sort_notes(eof_song, eof_selected_track);
 									eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes and retain note selection
 									eof_determine_phrase_status(eof_song, eof_selected_track);
-									eof_detect_difficulties(eof_song, eof_selected_track);
+									(void) eof_detect_difficulties(eof_song, eof_selected_track);
 								}
 								else if(note & bitmask)
 								{	//If toggling this lane on, create a new note at the hover note's position, with the same length and type as the hover note
@@ -3387,7 +3404,7 @@ void eof_editor_logic(void)
 							eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes and retain note selection
 							eof_determine_phrase_status(eof_song, eof_selected_track);
 							eof_selection.multi[eof_selection.current] = 1;	//Add new note to the selection
-							eof_detect_difficulties(eof_song, eof_selected_track);
+							(void) eof_detect_difficulties(eof_song, eof_selected_track);
 						}
 					}
 				}
@@ -3511,7 +3528,7 @@ void eof_editor_logic(void)
 			eof_mix_find_claps();
 			eof_mix_start_helper();
 			eof_fix_window_title();
-			eof_detect_difficulties(eof_song, eof_selected_track);
+			(void) eof_detect_difficulties(eof_song, eof_selected_track);
 		}
 	}
 	else
@@ -3919,8 +3936,8 @@ void eof_vocal_editor_logic(void)
 					}
 				}
 			}
-			if(!eof_full_screen_3d && (mouse_b & 1) && !eof_lclick_released && (lpos >= eof_peg_x))
-			{	//If full screen 3D view is not in effect, the left mouse button is being held and the mouse is right of the left edge of the piano roll
+			if(!eof_full_screen_3d && (mouse_b & 1) && !eof_song->tags->click_drag_disabled && !eof_lclick_released && (lpos >= eof_peg_x))
+			{	//If neither full screen 3D view is is use nor is click and drag disabled, the left mouse button is being held and the mouse is right of the left edge of the piano roll
 				if(eof_mouse_drug)
 				{
 					eof_mouse_drug++;
@@ -4016,7 +4033,7 @@ void eof_vocal_editor_logic(void)
 						}
 					}
 				}
-			}//If full screen 3D view is not in effect, the left mouse button is being held and the mouse is right of the left edge of the piano roll
+			}//If neither full screen 3D view is is use nor is click and drag disabled, the left mouse button is being held and the mouse is right of the left edge of the piano roll
 			if(!eof_full_screen_3d && ((((eof_input_mode != EOF_INPUT_REX) && ((mouse_b & 2) || key[KEY_INSERT])) || (((eof_input_mode == EOF_INPUT_REX) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL && (key[KEY_1] || key[KEY_2] || key[KEY_3] || key[KEY_4] || key[KEY_5] || key[KEY_6])) && eof_rclick_released && (eof_pen_lyric.pos < eof_chart_length))) || key[KEY_BACKSPACE]))
 			{	//If full screen 3D view is not in effect and input to add a note is provided
 				eof_selection.range_pos_1 = 0;
@@ -5359,7 +5376,7 @@ void eof_editor_logic_common(void)
 				}
 			}
 			if(!eof_full_screen_3d && (mouse_b & 1))
-			{
+			{	//If full screen 3d is not in use and the left mouse button is held
 				if(eof_mouse_drug)
 				{
 					eof_mouse_drug++;
@@ -5384,80 +5401,83 @@ void eof_editor_logic_common(void)
 					eof_mouse_drug = 0;
 				}
 
-				if((eof_mouse_drug > 10) && !eof_blclick_released && (eof_selected_beat == 0) && (eof_mickeys_x != 0) && (eof_hover_beat == eof_selected_beat) && !((eof_mickeys_x * eof_zoom < 0) && (eof_song->beat[0]->pos == 0)))
-				{	//If moving the first beat marker
-					int rdiff = eof_mickeys_x * eof_zoom;
+				if(!eof_song->tags->click_drag_disabled)
+				{	//If click and drag isn't disabled, check whether a beat marker is being moved
+					if((eof_mouse_drug > 10) && !eof_blclick_released && (eof_selected_beat == 0) && (eof_mickeys_x != 0) && (eof_hover_beat == eof_selected_beat) && !((eof_mickeys_x * eof_zoom < 0) && (eof_song->beat[0]->pos == 0)))
+					{	//If moving the first beat marker
+						int rdiff = eof_mickeys_x * eof_zoom;
 
-					if(!eof_undo_toggle)
-					{
-						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-						eof_moving_anchor = 1;
-						eof_last_midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
-					}
-					if((int)eof_song->beat[0]->pos + rdiff < 0)
-					{
-						rdiff = -eof_song->beat[0]->pos;
-					}
-					else
-					{
-						if(!KEY_EITHER_CTRL)
-						{
-							for(i = 0; i < eof_song->beats; i++)
-							{
-								eof_song->beat[i]->fpos += rdiff;
-								eof_song->beat[i]->pos = eof_song->beat[i]->fpos + 0.5;	//Round up to nearest ms
-							}
-						}
-						else
-						{
-							eof_song->beat[0]->fpos += rdiff;
-							eof_song->beat[0]->pos = eof_song->beat[0]->fpos + 0.5;	//Round up to nearest ms
-						}
-					}
-					eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
-				}
-				else if((eof_mouse_drug > 10) && !eof_blclick_released && (eof_selected_beat > 0) && (eof_mickeys_x != 0) && ((eof_beat_is_anchor(eof_song, eof_hover_beat) || eof_anchor_all_beats || (eof_moving_anchor && (eof_hover_beat == eof_selected_beat)))))
-				{	//If moving a beat marker other than the first
-					if(!eof_song->tags->tempo_map_locked)
-					{	//If the tempo map is not locked, allow the marker to be moved
 						if(!eof_undo_toggle)
 						{
 							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 							eof_moving_anchor = 1;
 							eof_last_midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
-							eof_adjusted_anchor = 1;
-							if((eof_note_auto_adjust && !KEY_EITHER_SHIFT) || (!eof_note_auto_adjust && KEY_EITHER_SHIFT))
-							{
-								if(KEY_EITHER_SHIFT)
-								{
-									eof_shift_used = 1;	//Track that the SHIFT key was used
-								}
-								(void) eof_menu_edit_cut(eof_selected_beat, 0);
-							}
 						}
-						eof_song->beat[eof_selected_beat]->fpos += eof_mickeys_x * eof_zoom;
-						eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos + 0.5;	//Round up to nearest ms
-						if(((eof_selected_beat > 0) && (eof_song->beat[eof_selected_beat]->pos <= eof_song->beat[eof_selected_beat - 1]->pos + 50)) || ((eof_selected_beat + 1 < eof_song->beats) && (eof_song->beat[eof_selected_beat]->pos >= eof_song->beat[eof_selected_beat + 1]->pos - 50)))
-						{	//If the beat being drug was moved to within within 50ms of the previous/next beat marker, undo the move
-							eof_song->beat[eof_selected_beat]->fpos -= eof_mickeys_x * eof_zoom;
-							eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos + 0.5;	//Round up to nearest ms
+						if((int)eof_song->beat[0]->pos + rdiff < 0)
+						{
+							rdiff = -eof_song->beat[0]->pos;
 						}
 						else
 						{
-							eof_recalculate_beats(eof_song, eof_selected_beat);
+							if(!KEY_EITHER_CTRL)
+							{
+								for(i = 0; i < eof_song->beats; i++)
+								{
+									eof_song->beat[i]->fpos += rdiff;
+									eof_song->beat[i]->pos = eof_song->beat[i]->fpos + 0.5;	//Round up to nearest ms
+								}
+							}
+							else
+							{
+								eof_song->beat[0]->fpos += rdiff;
+								eof_song->beat[0]->pos = eof_song->beat[0]->fpos + 0.5;	//Round up to nearest ms
+							}
 						}
-						eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
-						eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
-					}
-				}
-			}
+						eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
+					}//If moving the first beat marker
+					else if((eof_mouse_drug > 10) && !eof_blclick_released && (eof_selected_beat > 0) && (eof_mickeys_x != 0) && ((eof_beat_is_anchor(eof_song, eof_hover_beat) || eof_anchor_all_beats || (eof_moving_anchor && (eof_hover_beat == eof_selected_beat)))))
+					{	//If moving a beat marker other than the first
+						if(!eof_song->tags->tempo_map_locked)
+						{	//If the tempo map is not locked
+							if(!eof_undo_toggle)
+							{
+								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+								eof_moving_anchor = 1;
+								eof_last_midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
+								eof_adjusted_anchor = 1;
+								if((eof_note_auto_adjust && !KEY_EITHER_SHIFT) || (!eof_note_auto_adjust && KEY_EITHER_SHIFT))
+								{
+									if(KEY_EITHER_SHIFT)
+									{
+										eof_shift_used = 1;	//Track that the SHIFT key was used
+									}
+									(void) eof_menu_edit_cut(eof_selected_beat, 0);
+								}
+							}
+							eof_song->beat[eof_selected_beat]->fpos += eof_mickeys_x * eof_zoom;
+							eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos + 0.5;	//Round up to nearest ms
+							if(((eof_selected_beat > 0) && (eof_song->beat[eof_selected_beat]->pos <= eof_song->beat[eof_selected_beat - 1]->pos + 50)) || ((eof_selected_beat + 1 < eof_song->beats) && (eof_song->beat[eof_selected_beat]->pos >= eof_song->beat[eof_selected_beat + 1]->pos - 50)))
+							{	//If the beat being drug was moved to within within 50ms of the previous/next beat marker, undo the move
+								eof_song->beat[eof_selected_beat]->fpos -= eof_mickeys_x * eof_zoom;
+								eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos + 0.5;	//Round up to nearest ms
+							}
+							else
+							{
+								eof_recalculate_beats(eof_song, eof_selected_beat);
+							}
+							eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
+							eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+						}
+					}//If moving a beat marker other than the first
+				}//If click and drag isn't disabled, check whether a beat marker is being moved
+			}//If full screen 3d is not in use and the left mouse button is held
 			if(!(mouse_b & 1))
 			{	//If the left mouse button is not held
 				if(!eof_blclick_released)
 				{	//If the release of the left mouse button has not been processed
 					eof_blclick_released = 1;
-					if(!eof_song->tags->tempo_map_locked || (eof_selected_beat == 0))
-					{	//If the tempo map is not locked, or the first beat marker was manipulated, allow the marker to be moved
+					if(!eof_song->tags->click_drag_disabled && (!eof_song->tags->tempo_map_locked || (eof_selected_beat == 0)))
+					{	//If click and drag is not disabled and either the tempo map is not locked or the first beat marker was manipulated, allow the marker to be moved
 						if(eof_mouse_drug && (eof_song->tags->ogg[eof_selected_ogg].midi_offset != eof_last_midi_offset))
 						{
 							if((eof_note_auto_adjust && !KEY_EITHER_SHIFT) || (!eof_note_auto_adjust && KEY_EITHER_SHIFT))
@@ -5490,7 +5510,7 @@ void eof_editor_logic_common(void)
 				eof_adjusted_anchor = 0;
 			}//If the left mouse button is not held
 			if(!eof_full_screen_3d && ((mouse_b & 2) || key[KEY_INSERT]) && eof_rclick_released && (eof_hover_beat >= 0))
-			{
+			{	//If full screen 3d is not in use and the right mouse key or insert are held over a beat marker
 				eof_select_beat(eof_hover_beat);
 				alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->beat[eof_hover_beat]->pos + eof_av_delay);
 				eof_music_actual_pos = eof_song->beat[eof_hover_beat]->pos + eof_av_delay;

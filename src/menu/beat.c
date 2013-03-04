@@ -54,6 +54,16 @@ MENU eof_beat_key_signature_menu[] =
     {NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_beat_rocksmith_menu[] =
+{
+    {"Place RS Phrase\tShift+P", eof_rocksmith_phrase_dialog_add, NULL, 0, NULL},
+    {"Place RS &Section\tShift+S", eof_rocksmith_section_dialog_add, NULL, 0, NULL},
+    {"Place RS &Event\tShift+E", eof_rocksmith_event_dialog_add, NULL, 0, NULL},
+    {"&Copy phrase/section\t" CTRL_NAME "+SHIFT+C", eof_menu_beat_copy_rs_events, NULL, 0, NULL},
+    {"&Paste phrase/section\t" CTRL_NAME "+SHIFT+V", eof_menu_beat_paste_rs_events, NULL, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_beat_menu[] =
 {
     {"&BPM Change", eof_menu_beat_bpm_change, NULL, 0, NULL},
@@ -68,19 +78,17 @@ MENU eof_beat_menu[] =
     {"&Anchor Beat\tShift+A", eof_menu_beat_anchor, NULL, 0, NULL},
     {"Toggle Anchor\tA", eof_menu_beat_toggle_anchor, NULL, 0, NULL},
     {"&Delete Anchor", eof_menu_beat_delete_anchor, NULL, 0, NULL},
-    {"&Reset BPM", eof_menu_beat_reset_bpm, NULL, 0, NULL},
+    {"Reset BPM", eof_menu_beat_reset_bpm, NULL, 0, NULL},
     {"&Calculate BPM", eof_menu_beat_calculate_bpm, NULL, 0, NULL},
     {"Double BPM", eof_menu_beat_double_tempo, NULL, 0, NULL},
     {"Halve BPM", eof_menu_beat_halve_tempo, NULL, 0, NULL},
-    {"Adjust tempo for RBN", eof_menu_beat_set_RBN_tempos, NULL, 0, NULL},
+    {"Fix tempo for RBN", eof_menu_beat_set_RBN_tempos, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
+    {"&Rocksmith", NULL, eof_beat_rocksmith_menu, 0, NULL},
     {"All E&vents", eof_menu_beat_all_events, NULL, 0, NULL},
     {"&Events", eof_menu_beat_events, NULL, 0, NULL},
     {"Clear Events", eof_menu_beat_clear_events, NULL, 0, NULL},
     {"Place &Trainer Event", eof_menu_beat_trainer_event, NULL, 0, NULL},
-    {"Place RS &Phrase\tShift+P", eof_rocksmith_phrase_dialog_add, NULL, 0, NULL},
-    {"Place RS section\tShift+S", eof_rocksmith_section_dialog_add, NULL, 0, NULL},
-    {"Place RS event\tShift+E", eof_rocksmith_event_dialog_add, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -300,28 +308,24 @@ void eof_prepare_beat_menu(void)
 //Beat>All Events and Clear Events validation
 		if(eof_song->text_events > 0)
 		{	//If there is at least one defined text event, enable Beat>All Events and Clear Events
-			eof_beat_menu[18].flags = 0;
-			eof_beat_menu[20].flags = 0;
+			eof_beat_menu[19].flags = 0;
+			eof_beat_menu[21].flags = 0;
 		}
 		else
 		{
-			eof_beat_menu[18].flags = D_DISABLED;
-			eof_beat_menu[20].flags = D_DISABLED;
+			eof_beat_menu[19].flags = D_DISABLED;
+			eof_beat_menu[21].flags = D_DISABLED;
 		}
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar/bass track is active
-			eof_beat_menu[21].flags = 0;	//Place Trainer Event
-			eof_beat_menu[22].flags = 0;	//Place RS phrase
-			eof_beat_menu[23].flags = 0;	//Place RS section
-			eof_beat_menu[24].flags = 0;	//Place RS event
+			eof_beat_menu[18].flags = 0;	//Beat>Rocksmith>
+			eof_beat_menu[22].flags = 0;	//Place Trainer Event
 		}
 		else
 		{
-			eof_beat_menu[21].flags = D_DISABLED;
+			eof_beat_menu[18].flags = D_DISABLED;
 			eof_beat_menu[22].flags = D_DISABLED;
-			eof_beat_menu[23].flags = D_DISABLED;
-			eof_beat_menu[24].flags = D_DISABLED;
 		}
 //Re-flag the active Time Signature for the selected beat
 		for(i = 0; i < 6; i++)
@@ -2175,4 +2179,99 @@ int eof_rocksmith_event_dialog_add(void)
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 
 	return D_O_K;
+}
+
+int eof_menu_beat_copy_rs_events(void)
+{
+	PACKFILE * fp;
+	int contained_rs_phrase_event, contained_rs_section_event;
+	char write_rs_phrase = 0, write_rs_section = 0;
+	unsigned long num = 0;
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_selected_beat >= eof_song->beats))
+		return 1;	//Error
+
+	//Determine which events are to be written
+	eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache RS phrase and section information into the beat structures (from the perspective of the active track)
+	contained_rs_phrase_event = eof_song->beat[eof_selected_beat]->contained_section_event;
+	contained_rs_section_event = eof_song->beat[eof_selected_beat]->contained_rs_section_event;
+	if(contained_rs_phrase_event >= 0)
+	{	//If this beat has a valid RS phrase in effect
+		num++;
+		write_rs_phrase = 1;
+	}
+	if((contained_rs_section_event >= 0) && (contained_rs_section_event != contained_rs_phrase_event))
+	{	//If this beat has a RS section in effect, and it's not the same text event as the above RS phrase
+		num++;
+		write_rs_section = 1;
+	}
+	if(!num)
+	{
+		allegro_message("This track has no applicable Rocksmith phrases or sections");
+		return 1;
+	}
+
+	//Create clipboard file
+	fp = pack_fopen("eof.events.clipboard", "w");
+	if(!fp)
+	{
+		allegro_message("Clipboard error!");
+		return 1;
+	}
+	(void) pack_iputl(num, fp);	//Write the number of events this clipboard file will contain
+	if(write_rs_phrase)
+	{	//If the RS phrase is to be written
+		(void) eof_save_song_string_pf(eof_song->text_event[contained_rs_phrase_event]->text, fp);	//Write the event's name
+		(void) pack_iputl(eof_song->text_event[contained_rs_phrase_event]->track, fp);				//Write the event's track
+		(void) pack_iputl(eof_song->text_event[contained_rs_phrase_event]->flags, fp);				//Write the event's flags
+	}
+	if(write_rs_section)
+	{	//If the RS section is to be written
+		(void) eof_save_song_string_pf(eof_song->text_event[contained_rs_section_event]->text, fp);	//Write the event's name
+		(void) pack_iputl(eof_song->text_event[contained_rs_section_event]->track, fp);				//Write the event's track
+		(void) pack_iputl(eof_song->text_event[contained_rs_section_event]->flags, fp);				//Write the event's flags
+	}
+	(void) pack_fclose(fp);
+
+	return 1;
+}
+
+int eof_menu_beat_paste_rs_events(void)
+{
+	PACKFILE * fp;
+	char text[256];
+	unsigned long ctr, num, flags, track;
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_selected_beat >= eof_song->beats))
+		return 1;	//Error
+
+	//Open the clipboard
+	fp = pack_fopen("eof.events.clipboard", "r");
+	if(!fp)
+	{
+		allegro_message("Clipboard error!\nNothing to paste!");
+		return 1;
+	}
+
+	//Load contents of clipboard into the chart
+	num = pack_igetl(fp);	//Read the number of events in the clipboard
+	if(num)
+	{	//If there's at least one text event
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		for(ctr = 0; ctr < num; ctr++)
+		{	//For each event in the clipboard
+			(void) eof_load_song_string_pf(text, fp, sizeof(text));	//Read the event's name (this function guarantees buffer overflow protection and NULL termination)
+			track = pack_igetl(fp);	//Read the track number
+			flags = pack_igetl(fp);	//Read the flags
+			if(track)
+			{	//If the event is track specific, it will be apply to the active track
+				track = eof_selected_track;
+			}
+			(void) eof_song_add_text_event(eof_song, eof_selected_beat, text, track, flags, 0);	//Add the event to the track
+		}
+		eof_sort_events(eof_song);	//Sort the events
+	}
+	(void) pack_fclose(fp);
+
+	return 1;
 }
