@@ -856,6 +856,10 @@ void eof_fix_window_title(void)
 		{	//If the tempo map is locked
 			(void) ustrcat(eof_window_title, "(Tempo map locked)");
 		}
+		if(eof_song->tags->click_drag_disabled)
+		{	//If click and drag is disabled
+			(void) ustrcat(eof_window_title, "(Click+drag disabled)");
+		}
 		if(eof_song->tags->double_bass_drum_disabled)
 		{	//If expert+ bass drum is disabled
 			(void) ustrcat(eof_window_title, "(Expert+ drums off)");
@@ -2047,6 +2051,17 @@ void eof_logic(void)
 					eof_music_pos += 10;
 				else if(eof_mix_speed == 500)	//Force half speed playback
 					eof_music_pos += 5;
+				else if(eof_mix_speed == 250)	//Force quarter speed playback
+				{
+					if(eof_frame % 2 == 0)
+					{	//Round up every even frame
+						eof_music_pos += 3;
+					}
+					else
+					{	//Round down every odd frame
+						eof_music_pos += 2;
+					}
+				}
 				else							//Something unexpected is going on
 					eof_playback_speed = eof_mix_speed;
 			}
@@ -2062,12 +2077,12 @@ void eof_logic(void)
 					case 750:
 					{
 						if(eof_frame % 2 == 0)
-						{
-							eof_music_pos += 7;
+						{	//Round up every even frame
+							eof_music_pos += 8;
 						}
 						else
-						{
-							eof_music_pos += 8;
+						{	//Round down every odd frame
+							eof_music_pos += 7;
 						}
 						break;
 					}
@@ -2079,11 +2094,11 @@ void eof_logic(void)
 					case 250:
 					{
 						if(eof_frame % 2 == 0)
-						{
+						{	//Round up every even frame
 							eof_music_pos += 3;
 						}
 						else
-						{
+						{	//Round down every odd frame
 							eof_music_pos += 2;
 						}
 						break;
@@ -4178,7 +4193,7 @@ void eof_init_after_load(char initaftersavestate)
 		eof_song->track[EOF_TRACK_DRUM]->flags &= ~0xF0000000;	//Clear the high nibble of the normal drum track's flags
 		eof_song->track[EOF_TRACK_DRUM]->flags |= 0xF0000000;	//Set the high nibble of the normal drum track's flags of 0xF
 	}
-	eof_detect_difficulties(eof_song, eof_selected_track);
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);
 	eof_reset_lyric_preview_lines();
 	eof_prepare_menus();
 	eof_sort_notes(eof_song);

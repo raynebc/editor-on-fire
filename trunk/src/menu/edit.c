@@ -393,7 +393,7 @@ void eof_prepare_edit_menu(void)
 		}
 
 		/* paste from difficulty */
-		eof_detect_difficulties(eof_song, eof_selected_track);	//Determine which track difficulties are populated
+		(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Determine which track difficulties are populated
 		for(i = 0; i < 256; i++)
 		{	//For each possible difficulty
 			if(eof_track_diff_populated_status[i] && (i != eof_note_type))
@@ -1454,7 +1454,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	eof_track_sort_notes(eof_song, eof_selected_track);
 	eof_fixup_notes(eof_song);
 	eof_determine_phrase_status(eof_song, eof_selected_track);
-	eof_detect_difficulties(eof_song, eof_selected_track);
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);
 	if((paste_count > 0) && (eof_selection.track != eof_selected_track))
 	{
 		eof_selection.track = eof_selected_track;
@@ -2400,7 +2400,7 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 	}//If this is a pro guitar track
 
 	eof_track_sort_notes(eof_song, eof_selected_track);
-	eof_detect_difficulties(eof_song, eof_selected_track);
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);
 	return 1;
 }
 
@@ -2654,7 +2654,7 @@ int eof_menu_edit_paste_from_catalog(void)
 		eof_track_sort_notes(eof_song, eof_selected_track);
 		eof_track_fixup_notes(eof_song, eof_selected_track, 0);
 		eof_determine_phrase_status(eof_song, eof_selected_track);
-		eof_detect_difficulties(eof_song, eof_selected_track);
+		(void) eof_detect_difficulties(eof_song, eof_selected_track);
 		eof_selection.current_pos = 0;
 		(void) eof_menu_edit_deselect_all();	//Clear the seek selection and notes array
 		for(i = 0; i < paste_count; i++)
@@ -2992,7 +2992,7 @@ char * eof_menu_song_paste_from_difficulty_list(int index, int * size)
 {
 	unsigned long ctr, diffcount = 0;
 
-	eof_detect_difficulties(eof_song, eof_selected_track);
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);
 	for(ctr = 0; ctr < 256; ctr++)
 	{	//For each possible difficulty
 		if(eof_track_diff_populated_status[ctr] && (ctr != eof_note_type))
@@ -3024,7 +3024,7 @@ int eof_menu_song_paste_from_difficulty(void)
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
 
-	eof_detect_difficulties(eof_song, eof_selected_track);
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);
 	for(ctr = 0; ctr < 256; ctr++)
 	{	//For each possible difficulty
 		if(eof_track_diff_populated_status[ctr] && (ctr != eof_note_type))

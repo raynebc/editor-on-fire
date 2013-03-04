@@ -389,6 +389,7 @@ typedef struct
 	char eof_fret_hand_pos_1_pg;
 	char eof_fret_hand_pos_1_pb;
 	char tempo_map_locked;
+	char click_drag_disabled;
 	char double_bass_drum_disabled;
 
 	EOF_OGG_INFO ogg[EOF_MAX_OGGS];

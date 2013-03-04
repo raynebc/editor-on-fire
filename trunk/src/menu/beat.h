@@ -99,4 +99,10 @@ char * eof_rs_section_add_list(int index, int * size);
 char * eof_rs_event_add_list(int index, int * size);
 	//List box function for eof_rocksmith_event_dialog_add()
 
+int eof_menu_beat_copy_rs_events(void);
+	//Copies the RS section and RS phrase applicable to the selected beat in the current track to an event clipboard file
+	//If the applicable RS section and phrase are the same event, only one event is stored on the clipboard
+int eof_menu_beat_paste_rs_events(void);
+	//Adds the events stored in the event clipboard to the selected beat
+
 #endif

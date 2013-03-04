@@ -332,7 +332,7 @@ MENU eof_note_rocksmith_menu[] =
     {"Remove &Pop", eof_menu_note_remove_pop, NULL, 0, NULL},
     {"Toggle slap\t" CTRL_NAME "+Shift+S", eof_menu_note_toggle_slap, NULL, 0, NULL},
     {"Remove slap", eof_menu_note_remove_slap, NULL, 0, NULL},
-    {"&String->palm mutes", eof_rocksmith_convert_string_mute_to_palm_mute, NULL, 0, NULL},
+    {"&Mute->Single note P.M.", eof_rocksmith_convert_mute_to_palm_mute_single_note, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -1345,7 +1345,7 @@ int eof_menu_note_delete(void)
 		eof_selection.current = EOF_MAX_NOTES - 1;
 		eof_track_fixup_notes(eof_song, eof_selected_track, 0);
 		eof_reset_lyric_preview_lines();
-		eof_detect_difficulties(eof_song, eof_selected_track);
+		(void) eof_detect_difficulties(eof_song, eof_selected_track);
 		eof_determine_phrase_status(eof_song, eof_selected_track);
 	}
 	return 1;
@@ -3159,7 +3159,7 @@ int eof_new_lyric_dialog(void)
 		memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 		eof_track_sort_notes(eof_song, eof_selected_track);
 		eof_track_fixup_notes(eof_song, eof_selected_track, 0);
-		eof_detect_difficulties(eof_song, eof_selected_track);
+		(void) eof_detect_difficulties(eof_song, eof_selected_track);
 		eof_reset_lyric_preview_lines();
 	}
 	eof_cursor_visible = 1;
@@ -7633,11 +7633,12 @@ int eof_menu_remove_statuses(void)
 	return 1;
 }
 
-int eof_rocksmith_convert_string_mute_to_palm_mute(void)
+int eof_rocksmith_convert_mute_to_palm_mute_single_note(void)
 {
 	unsigned long i, ctr, bitmask;
 	EOF_PRO_GUITAR_TRACK *tp;
 	char undo_made = 0;	//Set to nonzero if an undo state was saved
+	char first_string = 0;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -7657,9 +7658,32 @@ int eof_rocksmith_convert_string_mute_to_palm_mute(void)
 						eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
 						undo_made = 1;
 					}
-					tp->note[i]->frets[ctr] &= ~0x80;	//Clear the MSB to remove the string mute status
+					if(tp->note[i]->frets[ctr] == 0xFF)
+					{	//If this gem has no fret value
+						tp->note[i]->frets[ctr] = 0;	//Set to 0
+					}
+					else
+					{	//Otherwise just remove the string muting
+						tp->note[i]->frets[ctr] &= ~0x80;	//Clear the MSB to remove the string mute status
+					}
 					tp->note[i]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;	//Clear the string mute status
-					tp->note[i]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;	//Set the palm mute status
+					tp->note[i]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;		//Set the palm mute status
+				}
+				if(tp->note[i]->flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
+				{	//If the note was already a palm mute or was just marked as one
+					if(first_string)
+					{	//If this isn't the first string in the note that had a gem
+						if(!undo_made)
+						{	//If an undo state hasn't been made yet
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+							undo_made = 1;
+						}
+						tp->note[i]->note &= ~bitmask;	//Erase the gem
+						tp->note[i]->ghost &= ~bitmask;	//Erase the ghost flag for this gem
+						tp->note[i]->frets[ctr] = 0;	//Clear the fret number for this string
+						tp->note[i]->finger[ctr] = 0;	//Clear the fingering for this string
+					}
+					first_string = 1;
 				}
 			}
 		}
