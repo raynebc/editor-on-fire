@@ -4909,12 +4909,12 @@ void eof_render_editor_window_common(void)
 			if(i == eof_selected_beat)
 			{	//Draw selected beat's tempo
 				current_bpm = (double)60000000.0 / (double)eof_song->beat[i]->ppqn;
-				textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord - 28, EOF_EDITOR_RENDER_OFFSET + 6 - (i % 2 == 0 ? 0 : 10), i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "<%03.2f>", current_bpm);
+				textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord - 28, EOF_EDITOR_RENDER_OFFSET + 7 - (i % 2 == 0 ? 0 : 10), i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "<%03.2f>", current_bpm);
 			}
 			else if(eof_song->beat[i]->contains_tempo_change)
 			{	//Draw tempo if this beat has a tempo change
 				current_bpm = (double)60000000.0 / (double)eof_song->beat[i]->ppqn;
-				textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20, EOF_EDITOR_RENDER_OFFSET + 6 - (i % 2 == 0 ? 0 : 10), i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "%03.2f", current_bpm);
+				textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20, EOF_EDITOR_RENDER_OFFSET + 7 - (i % 2 == 0 ? 0 : 10), i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "%03.2f", current_bpm);
 			}
 			else
 			{	//Draw beat arrow
@@ -4950,8 +4950,8 @@ void eof_render_editor_window_common(void)
 		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
 		{	//If this beat has any text events
 			line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
-			if(eof_2d_render_top_option == 33)
-			{	//If the user has opted to render section names (Rocksmith phrases) at the top of the 2D window
+			if((eof_2d_render_top_option == 33) || (eof_2d_render_top_option == 36))
+			{	//If the user has opted to render section names (Rocksmith phrases) at the top of the 2D window, either by themselves or in combination with RS sections
 				if(eof_song->beat[i]->contained_section_event >= 0)
 				{	//If this beat has a section event
 					int bg_color = eof_color_gray;	//By default, section names will render with a gray background
@@ -4986,18 +4986,25 @@ void eof_render_editor_window_common(void)
 							}
 						}
 					}
-					textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 5, eof_color_yellow, bg_color, "%s", eof_song->text_event[eof_song->beat[i]->contained_section_event]->text);	//Display it
+					if(eof_2d_render_top_option == 33)
+					{	//If the RS phrases are being rendered by themselves, place them at the top of the piano roll
+						textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 30, eof_color_yellow, bg_color, "%s", eof_song->text_event[eof_song->beat[i]->contained_section_event]->text);	//Display it
+					}
+					else
+					{	//Otherwise draw them them one line below the absolute top
+						textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 30 + 12, eof_color_yellow, bg_color, "%s", eof_song->text_event[eof_song->beat[i]->contained_section_event]->text);	//Display it
+					}
 				}
 				else if(eof_song->beat[i]->contains_end_event)
 				{	//Or if this beat contains an end event
 					textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 5, eof_color_red, eof_color_black, "[end]");	//Display it
 				}
 			}
-			else if(eof_2d_render_top_option == 35)
-			{	//If the user has opted to render Rocksmith sections at the top of the 2D window
+			if((eof_2d_render_top_option == 35) || (eof_2d_render_top_option == 36))
+			{	//If the user has opted to render Rocksmith sections at the top of the 2D window, either by themselves or in combination with RS phrases
 				if(eof_song->beat[i]->contained_rs_section_event >= 0)
 				{	//If this beat has a Rocksmith section, display the section name and instance number
-					textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 5, eof_color_white, eof_color_black, "%s %d", eof_song->text_event[eof_song->beat[i]->contained_rs_section_event]->text, eof_song->beat[i]->contained_rs_section_event_instance_number);
+					textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 5, eof_color_white, -1, "%s %d", eof_song->text_event[eof_song->beat[i]->contained_rs_section_event]->text, eof_song->beat[i]->contained_rs_section_event_instance_number);
 				}
 			}
 		}

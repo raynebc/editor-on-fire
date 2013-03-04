@@ -7638,7 +7638,7 @@ int eof_rocksmith_convert_mute_to_palm_mute_single_note(void)
 	unsigned long i, ctr, bitmask;
 	EOF_PRO_GUITAR_TRACK *tp;
 	char undo_made = 0;	//Set to nonzero if an undo state was saved
-	char first_string = 0;
+	char first_string;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -7649,6 +7649,7 @@ int eof_rocksmith_convert_mute_to_palm_mute_single_note(void)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
+			first_string = 0;	//Reset this status
 			for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
 			{	//For each of the 6 supported strings
 				if((tp->note[i]->note & bitmask) && (tp->note[i]->frets[ctr] & 0x80))

@@ -2126,7 +2126,10 @@ int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track)
 				(void) eof_menu_track_selected_track_number(track);		//Change the active track
 				eof_selected_beat = ctr;					//Change the selected beat
 				eof_set_seek_position(sp->beat[ctr]->pos + eof_av_delay);	//Seek to the beat
-				eof_2d_render_top_option = 35;					//Change the user preference to render RS sections at the top of the piano roll
+				if(eof_2d_render_top_option != 36)
+				{	//If the piano roll isn't already displaying both RS sections and phrases
+					eof_2d_render_top_option = 35;					//Change the user preference to render RS sections at the top of the piano roll
+				}
 				eof_render();							//Render the track so the user can see where the correction needs to be made, along with the RS section in question
 
 				while(1)

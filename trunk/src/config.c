@@ -131,6 +131,10 @@ void eof_load_config(char * fn)
 	eof_inverted_chords_slash = get_config_int("preferences", "eof_inverted_chords_slash", 0);
 	enable_logging = get_config_int("preferences", "enable_logging", 1);
 	eof_2d_render_top_option = get_config_int("preferences", "eof_2d_render_top_option", 32);
+	if((eof_2d_render_top_option < 32) || (eof_2d_render_top_option > 36))
+	{	//If eof_2d_render_top_option is invalid
+		eof_2d_render_top_option = 32;	//Reset to default of displaying note names
+	}
 	eof_color_set = get_config_int("preferences", "eof_color_set", 0);
 	eof_add_new_notes_to_selection = get_config_int("preferences", "eof_add_new_notes_to_selection", 0);
 	eof_drum_modifiers_affect_all_difficulties = get_config_int("preferences", "eof_drum_modifiers_affect_all_difficulties", 1);

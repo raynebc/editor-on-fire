@@ -83,7 +83,7 @@ DIALOG eof_settings_dialog[] =
 DIALOG eof_preferences_dialog[] =
 {
    /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-   { d_agup_window_proc,0,   48,  480, 365, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
+   { d_agup_window_proc,0,   48,  480, 380, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
    { d_agup_check_proc, 16,  75,  110, 16,  2,   23,  0,    0,      1,   0,   "Inverted Notes",      NULL, NULL },
    { d_agup_check_proc, 150, 75,  92 , 16,  2,   23,  0,    0,      1,   0,   "Lefty Mode",          NULL, NULL },
    { d_agup_check_proc, 306, 75,  128, 16,  2,   23,  0,    0,      1,   0,   "Note Auto-Adjust",    NULL, NULL },
@@ -105,22 +105,23 @@ DIALOG eof_preferences_dialog[] =
    { eof_verified_edit_proc,170,185,30,20,  0,   0,   0,    0,      3,   0,   eof_etext2,     "0123456789", NULL },
    { d_agup_text_proc,  248, 185, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note length (ms):",NULL,NULL },
    { eof_verified_edit_proc,392,185,30,20,  0,   0,   0,    0,      3,   0,   eof_etext,     "0123456789", NULL },
-   { d_agup_check_proc, 248, 237, 214, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
-   { d_agup_check_proc, 248, 253, 184, 16,  2,   23,  0,    0,      1,   0,   "Use dB style seek controls",NULL, NULL },
-   { d_agup_text_proc,  24,  237, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
-   { d_agup_list_proc,  16,  255, 100, 110, 2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
-   { d_agup_text_proc,  150, 255, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
-   { d_agup_list_proc,  129, 270, 100, 95,  2,   23,  0,    0,      0,   0,   eof_colors_list,       NULL, NULL },
-   { d_agup_button_proc,12,  370, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-   { d_agup_button_proc,86,  370, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-   { d_agup_button_proc,160, 370, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+   { d_agup_check_proc, 248, 252, 214, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
+   { d_agup_check_proc, 248, 268, 184, 16,  2,   23,  0,    0,      1,   0,   "Use dB style seek controls",NULL, NULL },
+   { d_agup_text_proc,  24,  252, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
+   { d_agup_list_proc,  16,  270, 100, 110, 2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
+   { d_agup_text_proc,  150, 270, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
+   { d_agup_list_proc,  129, 285, 100, 95,  2,   23,  0,    0,      0,   0,   eof_colors_list,       NULL, NULL },
+   { d_agup_button_proc,12,  385, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+   { d_agup_button_proc,86,  385, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+   { d_agup_button_proc,160, 385, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
    { d_agup_text_proc,  16,  206, 120, 12,  0,   0,   0,    0,      0,   0,   "Top of 2D pane shows:",NULL,NULL },
    { d_agup_radio_proc, 161, 206, 60,  16,  2,   23,  0,    0,      1,   0,   "Names",               NULL, NULL },
    { d_agup_radio_proc, 224, 206, 72,  16,  2,   23,  0,    0,      1,   0,   "Sections",            NULL, NULL },
    { d_agup_radio_proc, 301, 206, 78,  16,  2,   23,  0,    0,      1,   0,   "Hand pos",            NULL, NULL },
    { d_agup_radio_proc, 384, 206, 92,  16,  2,   23,  0,    0,      1,   0,   "RS sections",         NULL, NULL },
-   { d_agup_check_proc, 248, 269, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are made 1ms long",NULL, NULL },
-   { d_agup_check_proc, 16,  221, 340, 16,  2,   23,  0,    0,      1,   0,   "GP import beat text as sections, markers as phrases",NULL, NULL },
+   { d_agup_radio_proc, 161, 221, 150, 16,  2,   23,  0,    0,      1,   0,   "RS sections+phrases",         NULL, NULL },
+   { d_agup_check_proc, 248, 284, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are made 1ms long",NULL, NULL },
+   { d_agup_check_proc, 16,  236, 340, 16,  2,   23,  0,    0,      1,   0,   "GP import beat text as sections, markers as phrases",NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -935,10 +936,10 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[16].flags = eof_add_new_notes_to_selection ? D_SELECTED : 0;	//Add new notes to selection
 	eof_preferences_dialog[17].flags = eof_drum_modifiers_affect_all_difficulties ? D_SELECTED : 0;	//Drum modifiers affect all diff's
 	eof_preferences_dialog[23].flags = eof_fb_seek_controls ? D_SELECTED : 0;			//Use dB style seek controls
-	eof_preferences_dialog[32].flags = eof_preferences_dialog[33].flags = eof_preferences_dialog[34].flags = eof_preferences_dialog[35].flags = 0;	//Options for what to display at top of 2D panel
+	eof_preferences_dialog[32].flags = eof_preferences_dialog[33].flags = eof_preferences_dialog[34].flags = eof_preferences_dialog[35].flags = eof_preferences_dialog[36].flags = 0;	//Options for what to display at top of 2D panel
 	eof_preferences_dialog[eof_2d_render_top_option].flags = D_SELECTED;
-	eof_preferences_dialog[36].flags = eof_new_note_length_1ms ? D_SELECTED : 0;		//New notes are made 1ms long
-	eof_preferences_dialog[37].flags = eof_gp_import_preference_1 ? D_SELECTED : 0;		//GP import beat text as sections, markers as phrases
+	eof_preferences_dialog[37].flags = eof_new_note_length_1ms ? D_SELECTED : 0;		//New notes are made 1ms long
+	eof_preferences_dialog[38].flags = eof_gp_import_preference_1 ? D_SELECTED : 0;		//GP import beat text as sections, markers as phrases
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1017,8 +1018,12 @@ int eof_menu_file_preferences(void)
 			{	//User opted to display Rocksmith sections at top of 2D panel
 				eof_2d_render_top_option = 35;
 			}
-			eof_new_note_length_1ms = (eof_preferences_dialog[36].flags == D_SELECTED ? 1 : 0);
-			eof_gp_import_preference_1 = (eof_preferences_dialog[37].flags == D_SELECTED ? 1 : 0);
+			else if(eof_preferences_dialog[36].flags == D_SELECTED)
+			{	//User opted to display both Rocksmith sections and Rocksmith phrases at top of 2D panel
+				eof_2d_render_top_option = 36;
+			}
+			eof_new_note_length_1ms = (eof_preferences_dialog[37].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_preference_1 = (eof_preferences_dialog[38].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 29)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1047,9 +1052,9 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[25].d1 = EOF_INPUT_PIANO_ROLL;	//Input method
 			eof_preferences_dialog[27].d1 = EOF_COLORS_DEFAULT;		//Color set
 			eof_preferences_dialog[32].flags = D_SELECTED;			//Display note names at top of 2D panel
-			eof_preferences_dialog[33].flags = eof_preferences_dialog[34].flags = eof_preferences_dialog[35].flags = 0;	//Display sections/fret hand positions at top of 2D panel
-			eof_preferences_dialog[36].flags = 0;					//New notes are made 1ms long
-			eof_preferences_dialog[37].flags = 0;					//GP import beat text as sections, markers as phrases
+			eof_preferences_dialog[33].flags = eof_preferences_dialog[34].flags = eof_preferences_dialog[35].flags = eof_preferences_dialog[36].flags = 0;	//Display sections/fret hand positions at top of 2D panel
+			eof_preferences_dialog[37].flags = 0;					//New notes are made 1ms long
+			eof_preferences_dialog[38].flags = 0;					//GP import beat text as sections, markers as phrases
 		}//If the user clicked "Default
 	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
