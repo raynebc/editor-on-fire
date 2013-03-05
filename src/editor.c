@@ -4922,7 +4922,7 @@ void eof_render_editor_window_common(void)
 			}
 			if(eof_song->beat[i]->contains_ts_change && eof_get_ts_text(i, buffer))
 			{	//If this beat has a time signature
-				textprintf_centre_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20 + 19, EOF_EDITOR_RENDER_OFFSET + 7 - (i % 2 == 0 ? 0 : 10) - 12, i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "(%s)", buffer);
+				textprintf_centre_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20 + 19, EOF_EDITOR_RENDER_OFFSET - 4 - (i % 2 == 0 ? 0 : 10), i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "(%s)", buffer);
 			}
 
 			//Only render vertical lines if the x position is visible on-screen, otherwise the entire line will not be visible anyway
@@ -4952,8 +4952,11 @@ void eof_render_editor_window_common(void)
 			line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
 			if((eof_2d_render_top_option == 33) || (eof_2d_render_top_option == 36))
 			{	//If the user has opted to render section names (Rocksmith phrases) at the top of the 2D window, either by themselves or in combination with RS sections
+				char *string = "%s";	//If the phrase isn't track specific, it will display normally
+				char *string2 = "*%s";	//Otherwise it will be prefixed by an asterisk
+				char *ptr = string;
 				if(eof_song->beat[i]->contained_section_event >= 0)
-				{	//If this beat has a section event
+				{	//If this beat has a section (RS phrase) event
 					int bg_color = eof_color_gray;	//By default, section names will render with a gray background
 
 					if(eof_write_rs_files && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
@@ -4975,7 +4978,7 @@ void eof_render_editor_window_common(void)
 								{	//If there's a higher difficulty than the active difficulty
 									if(!eof_time_range_is_populated(eof_song, eof_selected_track, startpos, endpos, eof_note_type + 1))
 									{	//If the next difficulty is empty, render the section name with a green background
-										bg_color = eof_color_green;
+										bg_color = eof_color_dark_green;
 									}
 									else if(!retval)
 									{	//If this phrase is identical among this difficulty and the next, render the section name with a red background
@@ -4986,13 +4989,17 @@ void eof_render_editor_window_common(void)
 							}
 						}
 					}
+					if(eof_song->text_event[eof_song->beat[i]->contained_section_event]->track != 0)
+					{	//If this RS phrase is track specific
+						ptr = string2;
+					}
 					if(eof_2d_render_top_option == 33)
 					{	//If the RS phrases are being rendered by themselves, place them at the top of the piano roll
-						textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 30, eof_color_yellow, bg_color, "%s", eof_song->text_event[eof_song->beat[i]->contained_section_event]->text);	//Display it
+						textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 30, eof_color_yellow, bg_color, ptr, eof_song->text_event[eof_song->beat[i]->contained_section_event]->text);	//Display it
 					}
 					else
 					{	//Otherwise draw them them one line below the absolute top
-						textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 30 + 12, eof_color_yellow, bg_color, "%s", eof_song->text_event[eof_song->beat[i]->contained_section_event]->text);	//Display it
+						textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 30 + 12, eof_color_yellow, bg_color, ptr, eof_song->text_event[eof_song->beat[i]->contained_section_event]->text);	//Display it
 					}
 				}
 				else if(eof_song->beat[i]->contains_end_event)
@@ -5002,9 +5009,16 @@ void eof_render_editor_window_common(void)
 			}
 			if((eof_2d_render_top_option == 35) || (eof_2d_render_top_option == 36))
 			{	//If the user has opted to render Rocksmith sections at the top of the 2D window, either by themselves or in combination with RS phrases
+				char *string = "%s %d";		//If the RS section isn't track specific, it will display normally
+				char *string2 = "*%s %d";	//Otherwise it will be prefixed by an asterisk
+				char *ptr = string;
 				if(eof_song->beat[i]->contained_rs_section_event >= 0)
 				{	//If this beat has a Rocksmith section, display the section name and instance number
-					textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 5, eof_color_white, -1, "%s %d", eof_song->text_event[eof_song->beat[i]->contained_rs_section_event]->text, eof_song->beat[i]->contained_rs_section_event_instance_number);
+					if(eof_song->text_event[eof_song->beat[i]->contained_rs_section_event]->track != 0)
+					{	//If this RS section is track specific
+						ptr = string2;
+					}
+					textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 5, eof_color_white, -1, ptr, eof_song->text_event[eof_song->beat[i]->contained_rs_section_event]->text, eof_song->beat[i]->contained_rs_section_event_instance_number);
 				}
 			}
 		}

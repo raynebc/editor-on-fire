@@ -392,6 +392,7 @@ extern int eof_color_gray;
 extern int eof_color_light_gray;
 extern int eof_color_red;
 extern int eof_color_green;
+extern int eof_color_dark_green;
 extern int eof_color_blue;
 extern int eof_color_dark_blue;
 extern int eof_color_light_blue;

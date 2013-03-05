@@ -1122,7 +1122,8 @@ char * eof_events_list(int index, int * size)
 {
 	int i;
 	int ecount = 0;
-	char trackname[25] = {0};
+	char trackname[26] = {0};
+	char eventflags[30] = {0};
 
 	for(i = 0; i < eof_song->text_events; i++)
 	{
@@ -1130,15 +1131,40 @@ char * eof_events_list(int index, int * size)
 		{
 			if(ecount < EOF_MAX_TEXT_EVENTS)
 			{
-				if((eof_song->text_event[i]->track != 0) && (eof_song->text_event[i]->track < eof_song->tracks))
-				{	//If this is a track specific event
-					(void) snprintf(trackname, sizeof(trackname) - 1, "(%s) ", eof_song->track[eof_song->text_event[i]->track]->name);
+				if((eof_song->text_event[i]->track != 0) || (eof_song->text_event[i]->flags != 0))
+				{	//If this event is track specific or has any flags set
+					if((eof_song->text_event[i]->track != 0) && (eof_song->text_event[i]->track < eof_song->tracks))
+					{	//If this is a track specific event
+						(void) snprintf(trackname, sizeof(trackname) - 1, "%s", eof_song->track[eof_song->text_event[i]->track]->name);
+						if(eof_song->text_event[i]->flags != 0)
+						{	//If the event has any other flags set
+							(void) strncat(trackname, ", ", sizeof(trackname) - 1);	//Append a comma
+						}
+					}
+					else
+					{
+						trackname[0] = '\0';	//Empty the string
+					}
+					(void) snprintf(eventflags, sizeof(eventflags) - 1, "(%s", trackname);	//Start building the full flags string
+					if(eof_song->text_event[i]->flags & EOF_EVENT_FLAG_RS_PHRASE)
+					{	//If the event is an RS phrase
+						(void) strncat(eventflags, "P", sizeof(trackname) - 1);	//Append a P
+					}
+					if(eof_song->text_event[i]->flags & EOF_EVENT_FLAG_RS_SECTION)
+					{
+						(void) strncat(eventflags, "S", sizeof(trackname) - 1);	//Append an S
+					}
+					if(eof_song->text_event[i]->flags & EOF_EVENT_FLAG_RS_EVENT)
+					{
+						(void) strncat(eventflags, "E", sizeof(trackname) - 1);	//Append an E
+					}
+					(void) strncat(eventflags, ") ", sizeof(trackname) - 1);
 				}
 				else
 				{
-					trackname[0] = '\0';	//Empty the string
+					eventflags[0] = '\0';	//Empty the string
 				}
-				(void) snprintf(eof_event_list_text[ecount], sizeof(eof_event_list_text[ecount]) - 1, "%s%s", trackname, eof_song->text_event[i]->text);
+				(void) snprintf(eof_event_list_text[ecount], sizeof(eof_event_list_text[ecount]) - 1, "%s%s", eventflags, eof_song->text_event[i]->text);
 				ecount++;
 			}
 		}
@@ -1170,7 +1196,8 @@ char * eof_events_list(int index, int * size)
 
 char * eof_events_list_all(int index, int * size)
 {
-	char trackname[22] = {0};
+	char trackname[26] = {0};
+	char eventflags[30] = {0};
 	unsigned long x, count = 0, realindex;
 
 	if(index < 0)
@@ -1228,15 +1255,40 @@ char * eof_events_list_all(int index, int * size)
 		{	//Something bad happened, repair the event
 			eof_song->text_event[realindex]->beat = eof_song->beats - 1;	//Reset the text event to be at the last beat marker
 		}
-		if((eof_song->text_event[realindex]->track != 0) && (eof_song->text_event[realindex]->track < eof_song->tracks))
-		{	//If this is a track specific event
-			(void) snprintf(trackname, sizeof(trackname) - 1, " %s", eof_song->track[eof_song->text_event[realindex]->track]->name);
+		if((eof_song->text_event[realindex]->track != 0) || (eof_song->text_event[realindex]->flags != 0))
+		{	//If this event is track specific or has any flags set
+			if((eof_song->text_event[realindex]->track != 0) && (eof_song->text_event[realindex]->track < eof_song->tracks))
+			{	//If this is a track specific event
+				(void) snprintf(trackname, sizeof(trackname) - 1, "%s", eof_song->track[eof_song->text_event[realindex]->track]->name);
+				if(eof_song->text_event[realindex]->flags != 0)
+				{	//If the event has any other flags set
+					(void) strncat(trackname, ", ", sizeof(trackname) - 1);	//Append a comma
+				}
+			}
+			else
+			{
+				trackname[0] = '\0';	//Empty the string
+			}
+			(void) snprintf(eventflags, sizeof(eventflags) - 1, " %s", trackname);	//Start building the full flags string
+			if(eof_song->text_event[realindex]->flags & EOF_EVENT_FLAG_RS_PHRASE)
+			{	//If the event is an RS phrase
+				(void) strncat(eventflags, "P", sizeof(trackname) - 1);	//Append a P
+			}
+			if(eof_song->text_event[realindex]->flags & EOF_EVENT_FLAG_RS_SECTION)
+			{
+				(void) strncat(eventflags, "S", sizeof(trackname) - 1);	//Append an S
+			}
+			if(eof_song->text_event[realindex]->flags & EOF_EVENT_FLAG_RS_EVENT)
+			{
+				(void) strncat(eventflags, "E", sizeof(trackname) - 1);	//Append an E
+			}
 		}
 		else
 		{
-			trackname[0] = '\0';	//Empty the string
+			eventflags[0] = '\0';	//Empty the string
 		}
-		(void) snprintf(eof_event_list_text[index], sizeof(eof_event_list_text[index]) - 1, "(%02lu:%02lu.%03lu%s) %s", eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 60000, (eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 1000) % 60, eof_song->beat[eof_song->text_event[realindex]->beat]->pos % 1000, trackname, eof_song->text_event[realindex]->text);
+
+		(void) snprintf(eof_event_list_text[index], sizeof(eof_event_list_text[index]) - 1, "(%02lu:%02lu.%03lu%s) %s", eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 60000, (eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 1000) % 60, eof_song->beat[eof_song->text_event[realindex]->beat]->pos % 1000, eventflags, eof_song->text_event[realindex]->text);
 		return eof_event_list_text[index];
 	}
 	return NULL;
@@ -2270,6 +2322,7 @@ int eof_menu_beat_paste_rs_events(void)
 			(void) eof_song_add_text_event(eof_song, eof_selected_beat, text, track, flags, 0);	//Add the event to the track
 		}
 		eof_sort_events(eof_song);	//Sort the events
+		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	}
 	(void) pack_fclose(fp);
 

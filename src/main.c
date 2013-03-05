@@ -241,6 +241,7 @@ int eof_color_gray;
 int eof_color_light_gray;
 int eof_color_red;
 int eof_color_green;
+int eof_color_dark_green;
 int eof_color_blue;
 int eof_color_dark_blue;
 int eof_color_light_blue;
@@ -3372,6 +3373,7 @@ int eof_load_data(void)
 	eof_color_light_gray = makecol(224, 224, 224);
 	eof_color_red = makecol(255, 0, 0);
 	eof_color_green = makecol(0, 255, 0);
+	eof_color_dark_green = makecol(0, 128, 0);
 	eof_color_blue = makecol(0, 0, 255);
 	eof_color_dark_blue = makecol(0, 0, 96);
 	eof_color_light_blue = makecol(96, 96, 255);
@@ -3727,6 +3729,7 @@ int eof_initialize(int argc, char * argv[])
 	gametime_init(100); // 100hz timer
 
 	MIDIqueue=MIDIqueuetail=NULL;	//Initialize the MIDI queue as empty
+	set_volume_per_voice(0);		//By default, Allegro halves the volume of each voice so that it won't clip if played fully panned to either the left or right channels.  EOF doesn't use panning, so force full volume.
 	set_volume(eof_global_volume, eof_global_volume);
 
 	/* check for a previous crash condition of EOF */
