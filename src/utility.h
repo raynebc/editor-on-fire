@@ -11,7 +11,7 @@ void * eof_buffer_file(const char * fn, char appendnull);
 int eof_copy_file(char * src, char * dest);	//Copies the source file to the destination file.  Returns 0 upon error
 int eof_file_compare(char *file1, char *file2);	//Returns zero if the two files are the same
 
-int eof_check_string(char * tp);	//Returns nonzero if the string contains any non space ' ' characters and is at least one character long
+int eof_check_string(char * tp);	//Returns nonzero if the string contains at least one non space ' ' character before it terminates
 
 void eof_allocate_ucode_table(void);
 void eof_free_ucode_table(void);
