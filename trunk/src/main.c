@@ -1380,13 +1380,6 @@ int eof_load_ogg_quick(char * filename)
 						allegro_message("OGG is not stereo.\nSong may not play back\ncorrectly in FOF.");
 					}
 				}
-				else
-				{	//If authoring for Rocksmith
-					if(alogg_get_wave_freq_ogg(eof_music_track) != 48000)
-					{
-						allegro_message("OGG sampling rate is not 48khz.\nThe audio will need to be re-sampled before or during the process of preparing it for use in Rocksmith with Wwise");
-					}
-				}
 			}
 		}
 	}
@@ -1476,13 +1469,6 @@ int eof_load_ogg(char * filename, char silence_failover)
 					if(!alogg_get_wave_is_stereo_ogg(eof_music_track))
 					{
 						allegro_message("OGG is not stereo.\nSong may not play back\ncorrectly in FOF.");
-					}
-				}
-				else
-				{	//If authoring for Rocksmith
-					if(alogg_get_wave_freq_ogg(eof_music_track) != 48000)
-					{
-						allegro_message("OGG sampling rate is not 48khz.\nThe audio will need to be re-sampled before or during the process of preparing it for use in Rocksmith with Wwise");
 					}
 				}
 			}

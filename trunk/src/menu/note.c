@@ -7652,39 +7652,42 @@ int eof_rocksmith_convert_mute_to_palm_mute_single_note(void)
 			first_string = 0;	//Reset this status
 			for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
 			{	//For each of the 6 supported strings
-				if((tp->note[i]->note & bitmask) && (tp->note[i]->frets[ctr] & 0x80))
-				{	//If this string is used and is marked as string muted
-					if(!undo_made)
-					{	//If an undo state hasn't been made yet
-						eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
-						undo_made = 1;
-					}
-					if(tp->note[i]->frets[ctr] == 0xFF)
-					{	//If this gem has no fret value
-						tp->note[i]->frets[ctr] = 0;	//Set to 0
-					}
-					else
-					{	//Otherwise just remove the string muting
-						tp->note[i]->frets[ctr] &= ~0x80;	//Clear the MSB to remove the string mute status
-					}
-					tp->note[i]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;	//Clear the string mute status
-					tp->note[i]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;		//Set the palm mute status
-				}
-				if(tp->note[i]->flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
-				{	//If the note was already a palm mute or was just marked as one
-					if(first_string)
-					{	//If this isn't the first string in the note that had a gem
+				if(tp->note[i]->note & bitmask)
+				{	//If this string is used
+					if(tp->note[i]->frets[ctr] & 0x80)
+					{	//If this string is marked as string muted
 						if(!undo_made)
 						{	//If an undo state hasn't been made yet
 							eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
 							undo_made = 1;
 						}
-						tp->note[i]->note &= ~bitmask;	//Erase the gem
-						tp->note[i]->ghost &= ~bitmask;	//Erase the ghost flag for this gem
-						tp->note[i]->frets[ctr] = 0;	//Clear the fret number for this string
-						tp->note[i]->finger[ctr] = 0;	//Clear the fingering for this string
+						if(tp->note[i]->frets[ctr] == 0xFF)
+						{	//If this gem has no fret value
+							tp->note[i]->frets[ctr] = 0;	//Set to 0
+						}
+						else
+						{	//Otherwise just remove the string muting
+							tp->note[i]->frets[ctr] &= ~0x80;	//Clear the MSB to remove the string mute status
+						}
+						tp->note[i]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;	//Clear the string mute status
+						tp->note[i]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;		//Set the palm mute status
 					}
-					first_string = 1;
+					if(tp->note[i]->flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
+					{	//If the note was already a palm mute or was just marked as one
+						if(first_string)
+						{	//If this isn't the first string in the note that had a gem
+							if(!undo_made)
+							{	//If an undo state hasn't been made yet
+								eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+								undo_made = 1;
+							}
+							tp->note[i]->note &= ~bitmask;	//Erase the gem
+							tp->note[i]->ghost &= ~bitmask;	//Erase the ghost flag for this gem
+							tp->note[i]->frets[ctr] = 0;	//Clear the fret number for this string
+							tp->note[i]->finger[ctr] = 0;	//Clear the fingering for this string
+						}
+						first_string = 1;
+					}
 				}
 			}
 		}
