@@ -4019,6 +4019,8 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 		}
 	}
 
+	eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Ensure fret hand positions are sorted
+
 	if(!sel)
 	{
 		if(eof_selection.current < tp->notes)

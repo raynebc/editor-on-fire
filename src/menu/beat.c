@@ -61,6 +61,7 @@ MENU eof_beat_rocksmith_menu[] =
     {"Place RS &Event\tShift+E", eof_rocksmith_event_dialog_add, NULL, 0, NULL},
     {"&Copy phrase/section\t" CTRL_NAME "+Shift+C", eof_menu_beat_copy_rs_events, NULL, 0, NULL},
     {"&Paste phrase/section\t" CTRL_NAME "+Shift+V", eof_menu_beat_paste_rs_events, NULL, 0, NULL},
+    {"Clear non RS events", eof_menu_beat_clear_non_rs_events, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -113,15 +114,17 @@ DIALOG eof_all_events_dialog[] =
    /* (proc)                    (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
    { d_agup_window_proc,         0,   48,  500, 282, 2,   23,  0,    0,      0,   0,   "All Events",           NULL, NULL },
    { d_agup_list_proc,           12,  84,  475, 140, 2,   23,  0,    0,      0,   0,   (void *)eof_events_list_all,  NULL, NULL },
-   { d_agup_button_proc,         12,  273, 70,  28,  2,   23,  'f',  D_EXIT, 0,   0,   "&Find",                NULL, NULL },
-   { d_agup_button_proc,         95,  273, 70,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",                 NULL, NULL },
-   { d_agup_button_proc,         182, 273, 150, 28,  2,   23,  0,    D_EXIT, 0,   0,   "Copy to selected beat",NULL, NULL },
+   { d_agup_button_proc,         12,  275, 70,  28,  2,   23,  'f',  D_EXIT, 0,   0,   "&Find",                NULL, NULL },
+   { d_agup_button_proc,         95,  275, 70,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",                 NULL, NULL },
+   { d_agup_button_proc,         182, 275, 150, 28,  2,   23,  0,    D_EXIT, 0,   0,   "Copy to selected beat",NULL, NULL },
    { eof_all_events_radio_proc,	 340, 243, 85,  15,  2,   23,  0, D_SELECTED,0,   0,   "All Events",           (void *)5,    NULL },	//Use dp2 to store the object number, for use in eof_all_events_radio_proc()
    { eof_all_events_radio_proc,	 340, 259, 142, 15,  2,   23,  0,    0,      0,   0,   "This Track's Events",  (void *)6,    NULL },
    { eof_all_events_radio_proc,	 340, 275, 152, 15,  2,   23,  0,    0,      0,   0,   "Sections (RS phrases)",(void *)7,    NULL },
    { eof_all_events_radio_proc,	 340, 291, 152, 15,  2,   23,  0,    0,      0,   0,   "RS sections",          (void *)8,    NULL },
    { eof_all_events_radio_proc,	 340, 307, 152, 15,  2,   23,  0,    0,      0,   0,   "RS events",            (void *)9,    NULL },
    { d_agup_text_proc,           12,  228, 64,  8,   2,   23,  0,    0,      0,   0,   ""      ,                NULL, NULL },
+   { d_agup_button_proc,         12,  243, 70,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",                 NULL, NULL },
+   { d_agup_button_proc,         95,  243, 70,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete",                 NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1026,11 +1029,11 @@ int eof_menu_beat_all_events(void)
 	while(1)
 	{	//Until the user closes the dialog
 		retval = eof_popup_dialog(eof_all_events_dialog, 0);
+		realindex = eof_retrieve_text_event(eof_all_events_dialog[1].d1);	//Find the actual event, taking the display filter into account
 		if(retval == 2)
 		{	//User clicked Find
-			realindex = eof_retrieve_text_event(eof_all_events_dialog[1].d1);	//Find the actual event, taking the display filter into account
 			if(realindex < eof_song->text_events)
-			{
+			{	//If a valid text event is selected
 				eof_set_seek_position(eof_song->beat[eof_song->text_event[realindex]->beat]->pos + eof_av_delay);
 				eof_selected_beat = eof_song->text_event[realindex]->beat;
 				track = eof_song->text_event[realindex]->track;
@@ -1043,9 +1046,8 @@ int eof_menu_beat_all_events(void)
 		}
 		else if(retval == 4)
 		{	//User clicked Copy to selected beat
-			realindex = eof_retrieve_text_event(eof_all_events_dialog[1].d1);	//Find the actual event, taking the display filter into account
 			if(realindex < eof_song->text_events)
-			{
+			{	//If a valid text event is selected
 				flags = eof_song->text_event[realindex]->flags;
 				track = eof_song->text_event[realindex]->track;
 				if((track != 0) && (track < eof_song->tracks))
@@ -1058,6 +1060,36 @@ int eof_menu_beat_all_events(void)
 					undo_made = 1;
 				}
 				(void) eof_song_add_text_event(eof_song, eof_selected_beat, eof_song->text_event[realindex]->text, track, flags, 0);
+				eof_sort_events(eof_song);
+				eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+				eof_render();
+			}
+		}
+		else if(retval == 11)
+		{	//User clicked Edit
+			if(realindex < eof_song->text_events)
+			{	//If a valid text event is selected
+				eof_add_or_edit_text_event(eof_song->text_event[realindex], 0, &undo_made);	//Run logic to edit an existing event
+				eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+				eof_render();
+			}
+		}
+		else if(retval == 12)
+		{	//User clicked Delete
+			if(realindex < eof_song->text_events)
+			{	//If a valid text event is selected
+				unsigned long c = eof_events_dialog_delete_events_count();
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				eof_song_delete_text_event(eof_song, realindex);
+				eof_sort_events(eof_song);
+				if((realindex >= c) && (c > 0))
+				{
+					eof_all_events_dialog[1].d1--;
+				}
 				eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 				eof_render();
 			}
@@ -1115,6 +1147,36 @@ int eof_menu_beat_clear_events(void)
 	}
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	eof_clear_input();
+	return 1;
+}
+
+int eof_menu_beat_clear_non_rs_events(void)
+{
+	unsigned long i;
+	char undo_made = 0;
+
+	if(eof_song->text_events == 0)
+	{
+		allegro_message("No events to clear!");
+		return 1;
+	}
+	if(alert(NULL, "Erase all non Rocksmith events?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+	{
+		for(i = eof_song->text_events; i > 0; i--)
+		{	//For each text event, in reverse
+			if(!(eof_song->text_event[i - 1]->flags & EOF_EVENT_FLAG_RS_PHRASE) && !(eof_song->text_event[i - 1]->flags & EOF_EVENT_FLAG_RS_SECTION) && !(eof_song->text_event[i - 1]->flags & EOF_EVENT_FLAG_RS_EVENT))
+			{	//If this event isn't any of the Rocksmith text event types
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				eof_song_delete_text_event(eof_song, i - 1);
+			}
+		}
+	}
+	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+	eof_sort_events(eof_song);
 	return 1;
 }
 
@@ -1308,114 +1370,28 @@ int eof_rocksmith_phrase_dialog_add(void)
 	return eof_events_dialog_add_function(EOF_EVENT_FLAG_RS_PHRASE);	//Call the add text event dialog, automatically checking the RS phrase marker option
 }
 
-int eof_events_dialog_add_function(char function)
+int eof_events_dialog_add_function(unsigned long function)
 {
 	int i;
-	unsigned long track = 0, flags = 0;
-	char *rssectionname;
+	char undo_made = 0;
 
-	eof_cursor_visible = 0;
-	eof_render();
-	eof_color_dialog(eof_events_add_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_events_add_dialog);
-	(void) ustrcpy(eof_etext, "");
-	(void) snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string) - 1, "Specific to %s", eof_song->track[eof_selected_track]->name);
-	eof_events_add_dialog[3].flags = 0;	//By default, this is not a track specific event
-	if(function & EOF_EVENT_FLAG_RS_PHRASE)
-	{	//If the calling function wanted to automatically enable the "Rocksmith phrase marker" checkbox
-		eof_events_add_dialog[4].flags = D_SELECTED;
-	}
-	else
-	{	//Otherwise clear it
-		eof_events_add_dialog[4].flags = 0;
-	}
-	if(function & EOF_EVENT_FLAG_RS_SECTION)
-	{	//If the calling function wanted to automatically enable the "Rocksmith section marker" checkbox
-		eof_events_add_dialog[5].flags = D_SELECTED;
-	}
-	else
-	{	//Otherwise clear it
-		eof_events_add_dialog[5].flags = 0;
-	}
-	if(function & EOF_EVENT_FLAG_RS_EVENT)
-	{	//If the calling function wanted to automatically enable the "Rocksmith event marker" checkbox
-		eof_events_add_dialog[6].flags = D_SELECTED;
-	}
-	else
-	{	//Otherwise clear it
-		eof_events_add_dialog[6].flags = 0;
-	}
-	if(eof_popup_dialog(eof_events_add_dialog, 2) == 7)
-	{	//User clicked OK
-		char *effective_text = eof_etext;	//By default, use the user-input string
-
-		if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext))
-		{	//User entered text that isn't all space characters
-			if((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_events_add_dialog[3].flags & D_SELECTED) && (eof_events_add_dialog[4].flags & D_SELECTED))
-			{	//If the user is tried to add a track specific phrase marker in a non pro guitar/bass track
-				allegro_message("You cannot add a track-specific Rocksmith phrase marker in a non pro guitar/bass track");
-				return D_REDRAW;
-			}
-			if(eof_events_add_dialog[3].flags & D_SELECTED)
-			{	//User opted to make this a track specific event
-				track = eof_selected_track;
-			}
-			if(eof_events_add_dialog[4].flags & D_SELECTED)
-			{	//User opted to make this a Rocksmith phrase marker
-				flags |= EOF_EVENT_FLAG_RS_PHRASE;
-			}
-			if(eof_events_add_dialog[5].flags & D_SELECTED)
-			{	//User opted to make this a Rocksmith section marker
-				rssectionname = eof_rs_section_text_valid(eof_etext);	//Determine whether this is a valid Rocksmith section name
-				if(rssectionname && ustrcmp(rssectionname, eof_etext) && !(eof_events_add_dialog[4].flags & D_SELECTED) && !(eof_events_add_dialog[6].flags & D_SELECTED))
-				{	//If this doesn't match a valid RS native name (case sensitive), but matches a valid Rocksmith section native/display name (case insensitive) and isn't marked as a RS phrase/event
-					effective_text = rssectionname;	//Use the matching RS section's native name instead of the user-supplied text
-				}
-				else if(!rssectionname || ustrcmp(rssectionname, eof_etext))
-				{	//Otherwise if this isn't a valid Rocksmith native section name (case sensitive), the user will have to resolve the conflict manually
-					allegro_message("Warning:  This is not a valid Rocksmith section.  Please edit it appropriately or remove it and re-add it using Beat>Place Rocksmith Section");
-				}
-				flags |= EOF_EVENT_FLAG_RS_SECTION;
-			}
-			if(eof_events_add_dialog[6].flags & D_SELECTED)
-			{	//User opted to make this a Rocksmith event marker
-				if(!eof_rs_event_text_valid(eof_etext))
-				{	//If this isn't a valid Rocksmith event name
-					allegro_message("Warning:  This is not a valid Rocksmith event.  Please edit it appropriately or remove it and re-add it using Beat>Place Rocksmith Event");
-				}
-				flags |= EOF_EVENT_FLAG_RS_EVENT;
-			}
-			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			(void) eof_song_add_text_event(eof_song, eof_selected_beat, effective_text, track, flags, 0);
-			eof_sort_events(eof_song);
-			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
-		}
-	}
+	eof_add_or_edit_text_event(NULL, function, &undo_made);	//Run logic to add a new event
 	eof_render();
 	(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
-	eof_cursor_visible = 1;
-	eof_pen_visible = 1;
-	eof_show_mouse(screen);
 	return D_O_K;
 }
 
 int eof_events_dialog_edit(DIALOG * d)
 {
-	int i, trackflag, phraseflag, sectionflag, eventflag;
+	int i;
 	short ecount = 0;
 	short event = -1;
-	unsigned long track = 0, flags = 0;
-	char *rssectionname;
+	char undo_made = 0;
 
 	if(!d)
 	{	//Satisfy Splint by checking value of d
 		return D_O_K;
 	}
-
-	eof_cursor_visible = 0;
-	eof_render();
-	eof_color_dialog(eof_events_add_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_events_add_dialog);
 
 	/* find the event */
 	for(i = 0; i < eof_song->text_events; i++)
@@ -1437,16 +1413,36 @@ int eof_events_dialog_edit(DIALOG * d)
 		}
 	}
 
-	if((eof_song->text_event[event]->track != 0) && (eof_song->text_event[event]->track != eof_selected_track))
-	{	//If this is a track specific event, and it doesn't belong to the active track
-		(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
-		eof_cursor_visible = 1;
-		eof_pen_visible = 1;
-		eof_show_mouse(screen);
-		return D_O_K;	//Don't allow it to be edited here
+	eof_add_or_edit_text_event(eof_song->text_event[event], 0, &undo_made);	//Run logic to edit an existing event
+	eof_render();
+	(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
+	return D_O_K;
+}
+
+void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *undo_made)
+{
+	EOF_TEXT_EVENT temp = {{0}, 0, 0, 0, 0};
+	unsigned long newflags = 0;
+	unsigned long newtrack = 0;
+
+	if(!ptr)
+	{	//If a new event is to be added
+		ptr = &temp;
+		ptr->flags = flags;
 	}
+
+	if(!undo_made)
+	{
+		return;	//Invalid parameter
+	}
+	if((ptr->track != 0) && (ptr->track != eof_selected_track))
+	{	//If this is a track specific event, and it doesn't belong to the active track
+		return;	//Don't allow it to be edited here
+	}
+
+	//Initialize the dialog
 	(void) snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string) - 1, "Specific to %s", eof_song->track[eof_selected_track]->name);
-	if(eof_song->text_event[event]->track == eof_selected_track)
+	if(ptr->track == eof_selected_track)
 	{	//If this event is specific to this track
 		eof_events_add_dialog[3].flags = D_SELECTED;	//Set the checkbox specifying the event is track specific
 	}
@@ -1454,95 +1450,103 @@ int eof_events_dialog_edit(DIALOG * d)
 	{	//Otherwise clear the checkbox
 		eof_events_add_dialog[3].flags = 0;
 	}
-	if(eof_song->text_event[event]->flags & EOF_EVENT_FLAG_RS_PHRASE)
-	{	//If this event is flagged as a Rocksmith phrase marker
-		eof_events_add_dialog[4].flags = D_SELECTED;	//Set the checkbox specifying the event is a Rocksmith phrase marker
+
+	if(ptr->flags & EOF_EVENT_FLAG_RS_PHRASE)
+	{	//If the calling function wanted to automatically enable the "Rocksmith phrase marker" checkbox, or the event being edited already has this flag
+		eof_events_add_dialog[4].flags = D_SELECTED;
 	}
 	else
-	{
+	{	//Otherwise clear it
 		eof_events_add_dialog[4].flags = 0;
 	}
-	if(eof_song->text_event[event]->flags & EOF_EVENT_FLAG_RS_SECTION)
-	{	//If this event is flagged as a Rocksmith section marker
-		eof_events_add_dialog[5].flags = D_SELECTED;	//Set the checkbox specifying the event is a Rocksmith section marker
+	if(ptr->flags & EOF_EVENT_FLAG_RS_SECTION)
+	{	//If the calling function wanted to automatically enable the "Rocksmith section marker" checkbox, or the event being edited already has this flag
+		eof_events_add_dialog[5].flags = D_SELECTED;
 	}
 	else
-	{
+	{	//Otherwise clear it
 		eof_events_add_dialog[5].flags = 0;
 	}
-	if(eof_song->text_event[event]->flags & EOF_EVENT_FLAG_RS_EVENT)
-	{	//If this event is flagged as a Rocksmith event marker
-		eof_events_add_dialog[6].flags = D_SELECTED;	//Set the checkbox specifying the event is a Rocksmith event marker
+	if(ptr->flags & EOF_EVENT_FLAG_RS_EVENT)
+	{	//If the calling function wanted to automatically enable the "Rocksmith event marker" checkbox, or the event being edited already has this flag
+		eof_events_add_dialog[6].flags = D_SELECTED;
 	}
 	else
-	{
+	{	//Otherwise clear it
 		eof_events_add_dialog[6].flags = 0;
 	}
+	(void) ustrcpy(eof_etext, ptr->text);
 
-	(void) ustrcpy(eof_etext, eof_song->text_event[event]->text);	//Save the original event text
-	trackflag = eof_events_add_dialog[3].flags;				//Save the track specifier flag
-	phraseflag = eof_events_add_dialog[4].flags;			//Save the RS phrase flag
-	sectionflag = eof_events_add_dialog[5].flags;			//Save the RS section flag
-	eventflag = eof_events_add_dialog[6].flags;				//Save the RS event flag
+	//Run and process the dialog results
+	eof_color_dialog(eof_events_add_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_events_add_dialog);
 	if(eof_popup_dialog(eof_events_add_dialog, 2) == 7)
 	{	//User clicked OK
 		char *effective_text = eof_etext;	//By default, use the user-input string
+		char *rssectionname;
 
-		if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext) && (ustrcmp(eof_song->text_event[event]->text, eof_etext) || (eof_events_add_dialog[3].flags != trackflag) || (eof_events_add_dialog[4].flags != phraseflag) || (eof_events_add_dialog[5].flags != sectionflag)|| (eof_events_add_dialog[6].flags != eventflag)))
-		{	//User entered text that isn't all space characters, and either the event's text was changed or one of it's flags were
-			if((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_events_add_dialog[3].flags & D_SELECTED) && (eof_events_add_dialog[4].flags & D_SELECTED))
-			{	//If the user is tried to add a track specific phrase marker in a non pro guitar/bass track
-				allegro_message("You cannot add a track-specific Rocksmith phrase marker in a non pro guitar/bass track");
-				return D_REDRAW;
-			}
-			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			if(eof_events_add_dialog[3].flags & D_SELECTED)
-			{	//User opted to make this a track specific event
-				track = eof_selected_track;
-			}
-			if(eof_events_add_dialog[4].flags & D_SELECTED)
-			{	//User opted to make this a Rocksmith phrase marker
-				flags |= EOF_EVENT_FLAG_RS_PHRASE;
-			}
-			if(eof_events_add_dialog[5].flags & D_SELECTED)
-			{	//User opted to make this a Rocksmith section marker
-				rssectionname = eof_rs_section_text_valid(eof_etext);	//Determine whether this is a valid Rocksmith section name
-				if(rssectionname && ustrcmp(rssectionname, eof_etext) && !(eof_events_add_dialog[4].flags & D_SELECTED) && !(eof_events_add_dialog[6].flags & D_SELECTED))
-				{	//If this doesn't match a valid RS native name (case sensitive), but matches a valid Rocksmith section native/display name (case insensitive) and isn't marked as a RS phrase/event
-					effective_text = rssectionname;	//Use the matching RS section's native name instead of the user-supplied text
-				}
-				else if(!rssectionname || ustrcmp(rssectionname, eof_etext))
-				{	//Otherwise if this isn't a valid Rocksmith native section name (case sensitive), the user will have to resolve the conflict manually
-					allegro_message("Warning:  This is not a valid Rocksmith section.  Please edit it appropriately or remove it and re-add it using Beat>Place Rocksmith Section");
-				}
-				flags |= EOF_EVENT_FLAG_RS_SECTION;
-			}
-			if(eof_events_add_dialog[6].flags & D_SELECTED)
-			{	//User opted to make this a Rocksmith event marker
-				if(!eof_rs_event_text_valid(eof_etext))
-				{	//If this isn't a valid Rocksmith event name
-					allegro_message("Warning:  This is not a valid Rocksmith event.  Please edit it appropriately or remove it and re-add it using Beat>Place Rocksmith Event");
-				}
-				flags |= EOF_EVENT_FLAG_RS_EVENT;
-			}
-			(void) ustrcpy(eof_song->text_event[event]->text, effective_text);
-			eof_song->text_event[event]->track = track;
-			eof_song->text_event[event]->flags = flags;
-			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+		if(eof_events_add_dialog[4].flags & D_SELECTED)
+		{	//User opted to make this a Rocksmith phrase marker
+			newflags |= EOF_EVENT_FLAG_RS_PHRASE;
 		}
-	}//User clicked OK
-	eof_render();
-	(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
-	eof_cursor_visible = 1;
-	eof_pen_visible = 1;
-	eof_show_mouse(screen);
-	return D_O_K;
+		if(eof_events_add_dialog[6].flags & D_SELECTED)
+		{	//User opted to make this a Rocksmith event marker
+			if(!eof_rs_event_text_valid(eof_etext))
+			{	//If this isn't a valid Rocksmith event name
+				allegro_message("Warning:  This is not a valid Rocksmith event.  Please edit it appropriately or remove it and re-add it using Beat>Place Rocksmith Event");
+			}
+			newflags |= EOF_EVENT_FLAG_RS_EVENT;
+		}
+		if(eof_events_add_dialog[5].flags & D_SELECTED)
+		{	//User opted to make this a Rocksmith section marker
+			newflags |= EOF_EVENT_FLAG_RS_SECTION;
+			rssectionname = eof_rs_section_text_valid(eof_etext);	//Determine whether this is a valid Rocksmith section name
+			if(rssectionname && ustrcmp(rssectionname, eof_etext) && !(newflags & EOF_EVENT_FLAG_RS_PHRASE) && !(newflags & EOF_EVENT_FLAG_RS_EVENT))
+			{	//If this doesn't match a valid RS native name (case sensitive), but matches a valid Rocksmith section native/display name (case insensitive) and isn't marked as a RS phrase/event
+				effective_text = rssectionname;	//Use the matching RS section's native name instead of the user-supplied text
+			}
+			else if(!rssectionname || ustrcmp(rssectionname, eof_etext))
+			{	//Otherwise if this isn't a valid Rocksmith native section name (case sensitive), the user will have to resolve the conflict manually
+				allegro_message("Warning:  This is not a valid Rocksmith section.\nPlease edit it appropriately or remove it and re-add it using Beat>Rocksmith>Place Rocksmith Section");
+			}
+		}
+		if(eof_events_add_dialog[3].flags & D_SELECTED)
+		{	//User opted to make this a track specific event
+			if((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (newflags & EOF_EVENT_FLAG_RS_PHRASE))
+			{	//If the user is tried to add a track specific RS phrase marker in a non pro guitar/bass track
+				allegro_message("You cannot add a track-specific Rocksmith phrase marker in a non pro guitar/bass track");
+				return;
+			}
+			newtrack = eof_selected_track;
+		}
+
+		if(eof_check_string(eof_etext) && (ustrcmp(ptr->text, eof_etext) || (newtrack != ptr->track) || (newflags != ptr->flags)))
+		{	//If the user entered any nonspace characters, and (in the case of editing an existing event) any of the fields were altered
+			if(*undo_made == 0)
+			{	//If an undo state hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				*undo_made = 1;
+			}
+			if(ptr == &temp)
+			{	//If a new event is to be added
+				(void) eof_song_add_text_event(eof_song, eof_selected_beat, effective_text, newtrack, newflags, 0);	//Add it
+				eof_sort_events(eof_song);
+			}
+			else
+			{	//Otherwise edit the existing event
+				(void) ustrcpy(ptr->text, effective_text);
+				ptr->track = newtrack;
+				ptr->flags = newflags;
+			}
+			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+
+		}
+	}
 }
 
-int eof_events_dialog_delete_events_count(void)
+unsigned long eof_events_dialog_delete_events_count(void)
 {
-	int i;
-	int count = 0;
+	unsigned long i, count = 0;
 
 	for(i = 0; i < eof_song->text_events; i++)
 	{
@@ -1556,7 +1560,8 @@ int eof_events_dialog_delete_events_count(void)
 
 int eof_events_dialog_delete(DIALOG * d)
 {
-	int i, c;
+	int i;
+	unsigned long c;
 	int ecount = 0;
 
 	if(!d)
