@@ -3883,6 +3883,7 @@ char * eof_fret_hand_position_list(int index, int * size)
 		return NULL;
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	eof_pro_guitar_track_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);
 	for(i = 0; i < eof_song->pro_guitar_track[tracknum]->handpositions; i++)
 	{	//For each fret hand position
 		if(eof_song->pro_guitar_track[tracknum]->handposition[i].difficulty == eof_note_type)
@@ -4125,21 +4126,21 @@ int eof_song_proguitar_insert_difficulty(void)
 	eof_note_type = newdiff;
 	if(lower && !upper)
 	{	//If only the lower difficulty is populated, offer to copy it into the new difficulty
-		if(alert(NULL, "Would you like to seek copy the lower difficulty's contents?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+		if(alert(NULL, "Would you like to copy the lower difficulty's contents?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 		{	//If user opted to copy the lower difficulty
 			(void) eof_menu_edit_paste_from_difficulty(newdiff - 1, &undo_made);
 		}
 	}
 	else if(!lower && upper)
 	{	//If only the upper difficulty is populated, offer to copy it into the new difficulty
-		if(alert(NULL, "Would you like to seek copy the upper difficulty's contents?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+		if(alert(NULL, "Would you like to copy the upper difficulty's contents?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 		{	//If user opted to copy the upper difficulty
 			(void) eof_menu_edit_paste_from_difficulty(newdiff + 1, &undo_made);
 		}
 	}
 	else if(lower && upper)
 	{	//If both the upper and lower difficulties are populated, prompt whether to copy either into the new difficulty
-		if(alert(NULL, "Would you like to seek copy an adjacent difficulty's contents?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+		if(alert(NULL, "Would you like to copy an adjacent difficulty's contents?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 		{	//If user opted to copy either the upper or lower difficulty
 			if(alert(NULL, "Copy the upper difficulty or the lower difficulty?", NULL, "&Upper", "&Lower", 'u', 'l') == 1)
 			{	//If user opted to copy the upper difficulty
@@ -4759,6 +4760,7 @@ int eof_manage_rs_phrases_add_or_remove_level(int function)
 	else
 	{	//Otherwise remove the difficulty limit since this operation has modified the chart
 		eof_track_sort_notes(eof_song, eof_selected_track);
+		eof_pro_guitar_track_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Sort the positions, since they must be in order for displaying to the user
 		eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//Remove the difficulty limit for this track
 		eof_song->track[eof_selected_track]->numdiffs = eof_detect_difficulties(eof_song, eof_selected_track);	//Update the number of difficulties used in this track
 	}

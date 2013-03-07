@@ -25,15 +25,10 @@ extern char eof_display_flats;
 //These functions are defined by source files in the /menu folder
 char * eof_input_list(int index, int * size);		//Dialog logic to display the usable input methods in a list box
 char * eof_ini_list(int index, int * size);			//Dialog logic to display the chart's INI definitions in a list box
-char * eof_events_list(int index, int * size);		//Dialog logic to display the chart's text events in the "Events" list box
-char * eof_events_list_all(int index, int * size);	//Dialog logic to display the chart's text events in the "All Events" list box
 char * eof_colors_list(int index, int * size);		//Dialog logic to display the usable color sets in the Preferences dialog
 int eof_ogg_settings(void);		//Launches the MP3->OGG conversion dialog window
 int eof_ini_dialog_add(DIALOG * d);		//Performs the INI setting add action presented in the INI settings dialog
 int eof_ini_dialog_delete(DIALOG * d);	//Performs the INI setting delete action presented in the INI settings dialog
-int eof_events_dialog_add(DIALOG * d);	//Performs the Text event add action presented in the Events dialog
-int eof_events_dialog_edit(DIALOG * d);	//Performs the Text event edit action presented in the Events dialog
-int eof_events_dialog_delete(DIALOG * d);	//Performs the Text event delete action presented in the Events dialog
 int eof_new_lyric_dialog(void);		//Launches the input box to accept the text for a newly created lyric
 int eof_edit_lyric_dialog(void);	//Performs the Edit Lyric action presented in the note menu
 
