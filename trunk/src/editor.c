@@ -5021,7 +5021,7 @@ void eof_render_editor_window_common(void)
 					textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 5, eof_color_white, -1, ptr, eof_song->text_event[eof_song->beat[i]->contained_rs_section_event]->text, eof_song->beat[i]->contained_rs_section_event_instance_number);
 				}
 			}
-		}
+		}//If this beat has any text events
 
 		if((eof_song->beat[i]->measurenum != 0) && (eof_song->beat[i]->beat_within_measure == 0))
 		{	//If this is a measure marker, draw the measure number to the right of the beat line

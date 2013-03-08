@@ -2137,6 +2137,7 @@ int eof_save_helper(char *destfilename)
 {
 	unsigned long ctr, ctr2, notes_after_chart_audio;
 	char newfolderpath[1024] = {0};
+	char tempfilename2[1024] = {0};
 	char oggfn[1024] = {0};
 	char function;		//Will be set to 1 for "Save" or 2 for "Save as"
 	int jumpcode = 0;
@@ -2292,8 +2293,35 @@ int eof_save_helper(char *destfilename)
 		}
 	}
 
+	/* rotate out the last save file (filename).previous_save.eof */
+	(void) replace_extension(eof_temp_filename, eof_temp_filename, "eof", 1024);	//Ensure the chart's file path has a .eof extension
+	(void) replace_extension(tempfilename2, eof_temp_filename, "previous_save.eof", 1024);	//(filename).previous_save.eof will be store the last save operation
+	if(exists(tempfilename2))
+	{	//If the lastsave file exists
+		(void) delete_file(tempfilename2);	//Delete it
+		if(exists(tempfilename2))
+		{	//Make sure it's gone
+			allegro_message("Warning:  Could not delete the previous_save backup file.  Aborting save.  Please use \"Save as\" to save to a new location.");
+			return 1;	//Return failure
+		}
+	}
+	if(exists(eof_temp_filename))
+	{	//If the target of the save operation already exists
+		eof_copy_file(eof_temp_filename, tempfilename2);	//Back it up as (filename).previous_save.eof
+		if(!exists(tempfilename2))
+		{	//Make sure it was created
+			allegro_message("Warning:  Could not create the previous_save backup file.  Aborting save.  Please use \"Save as\" to save to a new location.");
+			return 1;	//Return failure
+		}
+		(void) delete_file(eof_temp_filename);	//Delete the target file name
+		if(exists(eof_temp_filename))
+		{	//Make sure it was deleted
+			allegro_message("Warning:  Could not delete the last save file.  Aborting save.  Please use \"Save as\" to save to a new location.");
+			return 1;	//Return failure
+		}
+	}
+
 	/* save the chart */
-	(void) replace_extension(eof_temp_filename, eof_temp_filename, "eof", 1024);	//Ensure the chart is saved with a .eof extension
 	eof_song->tags->revision++;
 	if(!eof_save_song(eof_song, eof_temp_filename))
 	{
@@ -2301,6 +2329,11 @@ int eof_save_helper(char *destfilename)
 		eof_show_mouse(NULL);
 		eof_cursor_visible = 1;
 		eof_pen_visible = 1;
+		return 1;	//Return failure
+	}
+	if(!exists(eof_temp_filename))
+	{	//Make sure the target file was created
+		allegro_message("Warning:  Could not delete the last save file.  Aborting save.  Please use \"Save as\" to save to a new location.");
 		return 1;	//Return failure
 	}
 	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_temp_filename));

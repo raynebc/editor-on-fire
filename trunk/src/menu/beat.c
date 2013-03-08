@@ -1367,7 +1367,18 @@ int eof_events_dialog_add(DIALOG * d)
 
 int eof_rocksmith_phrase_dialog_add(void)
 {
-	return eof_events_dialog_add_function(EOF_EVENT_FLAG_RS_PHRASE);	//Call the add text event dialog, automatically checking the RS phrase marker option
+	char undo_made = 0;
+	int contained_section_event = eof_song->beat[eof_selected_beat]->contained_section_event;
+
+	if(contained_section_event >= 0)
+	{	//If the selected beat already has an RS phrase defined
+		eof_add_or_edit_text_event(eof_song->text_event[contained_section_event], 0, &undo_made);	//Run logic to edit an existing event
+		return D_O_K;
+	}
+	else
+	{	//Launch the add text event dialog to add a new event, automatically checking the RS phrase marker option
+		return eof_events_dialog_add_function(EOF_EVENT_FLAG_RS_PHRASE);
+	}
 }
 
 int eof_events_dialog_add_function(unsigned long function)
@@ -1377,7 +1388,10 @@ int eof_events_dialog_add_function(unsigned long function)
 
 	eof_add_or_edit_text_event(NULL, function, &undo_made);	//Run logic to add a new event
 	eof_render();
-	(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
+	if(!function)
+	{	//If this function was launched from within Beat>Events
+		(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);	//Redraw that menu
+	}
 	return D_O_K;
 }
 
@@ -2172,8 +2186,11 @@ char * eof_rs_event_add_list(int index, int * size)
 
 int eof_rocksmith_section_dialog_add(void)
 {
-	unsigned long flags;
-	unsigned char track = 0;	//By default, new sections won't be track specific
+	unsigned long flags = 0, newflags = 0, ctr;
+	unsigned char track = 0, newtrack = 0;	//By default, new sections won't be track specific
+	char *emptystring = "";
+	char *string = emptystring, *newstring;
+	EOF_TEXT_EVENT *ptr = NULL;
 
 	eof_cursor_visible = 0;
 	eof_render();
@@ -2182,20 +2199,66 @@ int eof_rocksmith_section_dialog_add(void)
 
 	(void) snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string) - 1, "Specific to %s", eof_song->track[eof_selected_track]->name);
 
+	if(eof_song->beat[eof_selected_beat]->contained_rs_section_event >= 0)
+	{	//If the selected beat already has an RS section defined
+		ptr = eof_song->text_event[eof_song->beat[eof_selected_beat]->contained_rs_section_event];
+		flags = ptr->flags;	//Store these values
+		track = ptr->track;
+		string = ptr->text;
+		for(ctr = 0; ctr < EOF_NUM_RS_PREDEFINED_SECTIONS; ctr++)
+		{	//For each of the valid RS section names
+			if(!ustrcmp(eof_rs_predefined_sections[ctr].string, ptr->text))
+			{	//If the name matches the RS section on the selected beat
+				eof_rocksmith_section_dialog[1].d1 = ctr;	//Select it in the dialog's list
+				break;
+			}
+		}
+		if(ptr->track != 0)
+		{	//If the RS section is specific to this track
+			eof_rocksmith_section_dialog[3].flags = D_SELECTED;	//Check that option in the dialog
+		}
+		else
+		{
+			eof_rocksmith_section_dialog[3].flags = 0;	//Otherwise clear it
+		}
+		if(ptr->flags & EOF_EVENT_FLAG_RS_PHRASE)
+		{	//If the RS section is also an RS phrase
+			eof_rocksmith_section_dialog[2].flags = D_SELECTED;	//Check that option in the dialog
+		}
+		else
+		{
+			eof_rocksmith_section_dialog[2].flags = 0;	//Otherwise clear it
+		}
+	}
+
 	if(eof_popup_dialog(eof_rocksmith_section_dialog, 0) == 4)
 	{	//User clicked OK
-		eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
-		flags = EOF_EVENT_FLAG_RS_SECTION;	//By default, the event will only be a RS section
+		newstring = eof_rs_predefined_sections[eof_rocksmith_section_dialog[1].d1].string;
+		newflags = EOF_EVENT_FLAG_RS_SECTION;	//By default, the event will only be a RS section
 		if(eof_rocksmith_section_dialog[2].flags == D_SELECTED)
 		{	//If the user also opted to add it as a RS phrase
-			flags |= EOF_EVENT_FLAG_RS_PHRASE;	//The event will be both a RS phrase and a RS section
+			newflags |= EOF_EVENT_FLAG_RS_PHRASE;	//The event will be both a RS phrase and a RS section
 		}
 		if(eof_rocksmith_section_dialog[3].flags == D_SELECTED)
 		{	//If the user also opted to make it specific to the active track
-			track = eof_selected_track;
+			newtrack = eof_selected_track;
 		}
-		(void) eof_song_add_text_event(eof_song, eof_selected_beat, eof_rs_predefined_sections[eof_rocksmith_section_dialog[1].d1].string, track, flags, 0);
-		eof_sort_events(eof_song);
+
+		if(ustrcmp(string, newstring) || (flags != newflags) || (track != newtrack))
+		{	//If a new RS section was added, or changes were made to an existing one
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
+			if(ptr)
+			{	//If an existing RS section is being edited
+				ustrcpy(ptr->text, newstring);
+				ptr->flags = newflags;
+				ptr->track = newtrack;
+			}
+			else
+			{	//If a new RS section is being added
+				(void) eof_song_add_text_event(eof_song, eof_selected_beat, newstring, newtrack, newflags, 0);
+				eof_sort_events(eof_song);
+			}
+		}
 	}
 
 	eof_cursor_visible = 1;

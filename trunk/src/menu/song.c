@@ -169,7 +169,13 @@ MENU eof_song_rocksmith_menu[] =
     {"Insert new difficulty", eof_song_proguitar_insert_difficulty, NULL, 0, NULL},
     {"Delete active difficulty", eof_song_proguitar_delete_difficulty, NULL, 0, NULL},
     {"&Manage RS phrases\t" CTRL_NAME "+Shift+M", eof_manage_rs_phrases, NULL, 0, NULL},
-    {"Rename &Track", eof_song_rename_track, NULL, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_song_phaseshift_menu[] =
+{
+    {"Enable &Open strum bass", eof_menu_song_open_bass, NULL, 0, NULL},
+    {"Enable &Five lane drums", eof_menu_song_five_lane_drums, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -185,16 +191,16 @@ MENU eof_song_menu[] =
     {"", NULL, NULL, 0, NULL},
     {"&Catalog", NULL, eof_catalog_menu, 0, NULL},
     {"&INI Settings", eof_menu_song_ini_settings, NULL, 0, NULL},
-    {"&Properties\tF9", eof_menu_song_properties, NULL, 0, NULL},
+    {"Properties\tF9", eof_menu_song_properties, NULL, 0, NULL},
     {"Set track &Difficulty", eof_song_track_difficulty_dialog, NULL, 0, NULL},
     {"&Leading Silence", eof_menu_song_add_silence, NULL, 0, NULL},
-    {"Enable open strum bass", eof_menu_song_open_bass, NULL, 0, NULL},
-    {"Enable five lane drums", eof_menu_song_five_lane_drums, NULL, 0, NULL},
     {"Lock tempo map", eof_menu_song_lock_tempo_map, NULL, 0, NULL},
     {"Disable click and drag", eof_menu_song_disable_click_drag, NULL, 0, NULL},
     {"Disable expert+ bass drum", eof_menu_song_disable_double_bass_drums, NULL, 0, NULL},
+    {"Rename track", eof_song_rename_track, NULL, 0, NULL},
     {"Pro &Guitar", NULL, eof_song_proguitar_menu, 0, NULL},
     {"&Rocksmith", NULL, eof_song_rocksmith_menu, 0, NULL},
+    {"&Phase Shift", NULL, eof_song_phaseshift_menu, 0, NULL},
     {"Manage raw MIDI tracks", eof_menu_song_raw_MIDI_tracks, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"T&est in FOF\tF12", eof_menu_song_test_fof, NULL, EOF_LINUX_DISABLE, NULL},
@@ -576,58 +582,58 @@ void eof_prepare_song_menu(void)
 		/* enable open strum bass */
 		if(eof_open_bass_enabled())
 		{
-			eof_song_menu[13].flags = D_SELECTED;	//Song>Enable open strum bass
+			eof_song_phaseshift_menu[0].flags = D_SELECTED;	//Song>Phase Shift>Enable open strum bass
+		}
+		else
+		{
+			eof_song_phaseshift_menu[0].flags = 0;
+		}
+
+		/* enable five lane drums */
+		if(eof_five_lane_drums_enabled())
+		{
+			eof_song_phaseshift_menu[1].flags = D_SELECTED;	//Song>Enable five lane drums
+		}
+		else
+		{
+			eof_song_phaseshift_menu[1].flags = 0;
+		}
+
+		/* lock tempo map */
+		if(eof_song->tags->tempo_map_locked)
+		{
+			eof_song_menu[13].flags = D_SELECTED;	//Song>Lock tempo map
 		}
 		else
 		{
 			eof_song_menu[13].flags = 0;
 		}
 
-		/* enable five lane drums */
-		if(eof_five_lane_drums_enabled())
+		/* disable click and drag */
+		if(eof_song->tags->click_drag_disabled)
 		{
-			eof_song_menu[14].flags = D_SELECTED;	//Song>Enable five lane drums
+			eof_song_menu[14].flags = D_SELECTED;	//Song>Disable click and drag
 		}
 		else
 		{
 			eof_song_menu[14].flags = 0;
 		}
 
-		/* lock tempo map */
-		if(eof_song->tags->tempo_map_locked)
+		/* Disable expert+ bass drum */
+		if(eof_song->tags->double_bass_drum_disabled)
 		{
-			eof_song_menu[15].flags = D_SELECTED;	//Song>Lock tempo map
+			eof_song_menu[15].flags = D_SELECTED;	//Song>Disable expert+ bass drum
 		}
 		else
 		{
 			eof_song_menu[15].flags = 0;
 		}
 
-		/* disable click and drag */
-		if(eof_song->tags->click_drag_disabled)
-		{
-			eof_song_menu[16].flags = D_SELECTED;	//Song>Disable click and drag
-		}
-		else
-		{
-			eof_song_menu[16].flags = 0;
-		}
-
-		/* Disable expert+ bass drum */
-		if(eof_song->tags->double_bass_drum_disabled)
-		{
-			eof_song_menu[17].flags = D_SELECTED;	//Song>Disable expert+ bass drum
-		}
-		else
-		{
-			eof_song_menu[17].flags = 0;
-		}
-
 		/* enable pro guitar and rocksmith submenus */
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is active
-			eof_song_menu[18].flags = 0;			//Song>Pro Guitar> submenu
-			eof_song_menu[19].flags = 0;			//Song>Rocksmith> submenu
+			eof_song_menu[17].flags = 0;			//Song>Pro Guitar> submenu
+			eof_song_menu[18].flags = 0;			//Song>Rocksmith> submenu
 
 			if(eof_enable_chord_cache && (eof_chord_lookup_count > 1))
 			{	//If an un-named note is selected and it has at least two chord matches
@@ -651,8 +657,8 @@ void eof_prepare_song_menu(void)
 		}
 		else
 		{	//Otherwise disable these menu items
+			eof_song_menu[17].flags = D_DISABLED;
 			eof_song_menu[18].flags = D_DISABLED;
-			eof_song_menu[19].flags = D_DISABLED;
 		}
 	}//If a chart is loaded
 }

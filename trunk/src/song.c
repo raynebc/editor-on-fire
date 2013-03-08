@@ -2679,6 +2679,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				break;
 				case EOF_PRO_KEYS_TRACK_FORMAT:	//Pro Keys
 					allegro_message("Error: Pro Keys not supported yet.  Aborting");
+					pack_fclose(fp);
 				return 0;
 				case EOF_PRO_GUITAR_TRACK_FORMAT:	//Pro Guitar/Bass
 					(void) pack_putc(sp->pro_guitar_track[tracknum]->numfrets, fp);	//Write the number of frets used in this track
@@ -2842,9 +2843,11 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				break;//Pro Guitar/Bass
 				case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:	//Variable Lane Legacy (not implemented yet)
 					allegro_message("Error: Variable lane not supported yet.  Aborting");
+					pack_fclose(fp);
 				return 0;
 				default://Unknown track type
 					allegro_message("Error: Unsupported track type.  Aborting");
+					pack_fclose(fp);
 				return 0;
 			}//Perform the appropriate logic to write this format of track
 		}//Write other tracks
@@ -3972,6 +3975,14 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 			}
 
 			/* cleanup Rocksmith related slide/bend statuses */
+			if(tp->note[i-1]->slideend > tp->numfrets)
+			{	//If the slide end position is invalid
+				tp->note[i-1]->slideend = 0;	//Clear it
+			}
+			if(tp->note[i-1]->bendstrength)
+			{	//If the bend strength is invalid
+				tp->note[i-1]->bendstrength = 0;	//Clear it
+			}
 			if(!tp->note[i-1]->slideend && !tp->note[i-1]->bendstrength)
 			{	//If this note has no slide end fret number or bend strength defined
 				tp->note[i-1]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag
