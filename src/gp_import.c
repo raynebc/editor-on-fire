@@ -2349,7 +2349,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	if(eof_song->beats < totalbeats + 2)
 	{	//If there will be beats appended to the project to encompass the guitar pro file's tracks
 #ifdef GP_IMPORT_DEBUG
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAppending %lu beats to project so that guitar pro transcriptions will fit", totalbeats + 2 - eof_song->beats);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tTranscription uses %lu beats, but project only has %lu beats.  Appending %lu beats to project so that guitar pro transcriptions and 2 bytes of padding will fit.", totalbeats, eof_song->beats, totalbeats + 2 - eof_song->beats);
 		eof_log(eof_log_string, 1);
 #endif
 		while(eof_song->beats < totalbeats + 2)
@@ -3414,7 +3414,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					if((bitmask & gp->track[ctr]->note[ctr2]->note) && (bitmask & gp->track[ctr]->note[ctr2 + 1]->note))
 					{	//If this string is used on this note as well as the next
 						startfret = gp->track[ctr]->note[ctr2]->frets[ctr3];	//Record the fret number used on this note
-						endfret = gp->track[ctr]->note[ctr2 + 1]->frets[ctr3];	//Record the fret number used on the next note
+						if(gp->track[ctr]->note[ctr2 + 1]->frets[ctr3] & 0x80)
+						{	//If the end of the slide is defined by a mute note
+							endfret =  0;	//Force it to be a downward slide, the end fret of the slide will be undefined
+						}
+						else
+						{
+							endfret = gp->track[ctr]->note[ctr2 + 1]->frets[ctr3];	//Record the fret number used on the next note
+						}
 						if(startfret == endfret)
 						{	//If both strings use the same fret
 							continue;	//Check the next string instead (this one might be being played open)
@@ -3454,7 +3461,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 //Unwrap repeat sections if necessary
 	for(ctr = 0; ctr < gp->numtracks; ctr++)
 	{	//For each imported track
-		eof_unwrap_gp_track(gp, ctr, import_ts);
+		if(eof_unwrap_gp_track(gp, ctr, import_ts))
+		{	//If the track failed to unwrap
+			allegro_message("Warning:  Failed to unwrap repeats for track #%lu (%s).", ctr + 1, gp->names[ctr]);
+		}
 		import_ts = 0;	//Only unwrap the time signatures on the first pass
 	}
 
@@ -3542,7 +3552,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	return gp;
 }
 
-void eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, char import_ts)
+int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, char import_ts)
 {
 	unsigned long ctr, currentmeasure, beatctr, last_start_of_repeat;
 	unsigned char has_repeats = 0;
@@ -3558,7 +3568,7 @@ void eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, 
 	if(!gp || (track >= gp->numtracks))
 	{
 		eof_log("\tInvalid parameters", 1);
-		return;	//Invalid parameters
+		return 1;	//Invalid parameters
 	}
 
 	//First parse the measures[] array to determine if any end of repeats are present
@@ -3573,7 +3583,7 @@ void eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, 
 	if(!has_repeats)
 	{	//If this GP file has no repeats
 		eof_log("\tNo repeats detected", 1);
-		return;	//Return without altering the gp structure
+		return 0;	//Return without altering the gp structure
 	}
 
 	//Create a working array tracking the number of repeats left for each measure
@@ -3581,7 +3591,7 @@ void eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, 
 	if(!working_num_of_repeats)
 	{	//Error allocating memory
 		eof_log("\tError allocating memory to unwrap GP track (1)", 1);
-		return;
+		return 1;
 	}
 	for(ctr = 0; ctr < gp->measures; ctr++)
 	{	//For each measure in the GP file
@@ -3594,12 +3604,13 @@ void eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, 
 	{
 		eof_log("\tError allocating memory to unwrap GP track (2)", 1);
 		free(working_num_of_repeats);
-		return;
+		return 2;
 	}
 	memset(tp, 0, sizeof(EOF_PRO_GUITAR_TRACK));	//Initialize memory block to 0
 	tp->numfrets = gp->track[track]->numfrets;
 	tp->numstrings = gp->track[track]->numstrings;
 	tp->parent = NULL;
+	memcpy(tp->tuning, gp->track[track]->tuning, sizeof(char) * EOF_TUNING_LENGTH);
 
 	//Build an array tracking the beat number marking the start of each measure
 	measuremap = malloc(sizeof(unsigned long) * gp->measures);	//Allocate enough memory to store this information for each measure imported from the gp file
@@ -3608,7 +3619,7 @@ void eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, 
 		eof_log("\tError allocating memory to unwrap GP track (3)", 1);
 		free(tp);
 		free(working_num_of_repeats);
-		return;
+		return 3;
 	}
 	memset(measuremap, 0, sizeof(unsigned long) * gp->measures);	//Initialize this memory to 0
 	for(ctr = 0, beatctr = 0; ctr < gp->measures; ctr++)
@@ -3648,6 +3659,13 @@ void eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, 
 		}
 
 		//Ensure the active project has enough beats to hold the next unwrapped measure
+		if(eof_song->beats < beatctr + gp->measure[currentmeasure].num + 2)
+		{
+#ifdef GP_IMPORT_DEBUG
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUnwrapping measure #%lu requires %lu beats, but project only has %lu beats.  Appending %lu beats to the project to allow for this measure and two beats of padding.", currentmeasure + 1, beatctr + gp->measure[currentmeasure].num, eof_song->beats, beatctr + gp->measure[currentmeasure].num + 2 - eof_song->beats);
+			eof_log(eof_log_string, 1);
+#endif
+		}
 		while(eof_song->beats < beatctr + gp->measure[currentmeasure].num + 2)
 		{	//Until the loaded project has enough beats to contain the unwrapped measure, and two extra to allow room for processing beat lengths later
 			double beat_length;
@@ -3662,7 +3680,7 @@ void eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, 
 				{	//For each unwrapped text event
 					free(newevent[ctr]);	//Free it
 				}
-				return;
+				return 4;
 			}
 			eof_song->beat[eof_song->beats - 1]->ppqn = eof_song->beat[eof_song->beats - 2]->ppqn;	//Match the tempo of the previously last beat
 			beat_length = (double)60000.0 / ((double)60000000.0 / (double)eof_song->beat[eof_song->beats - 2]->ppqn);	//Get the length of the previously last beat
@@ -3686,7 +3704,7 @@ void eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, 
 			{	//For each unwrapped text event
 				free(newevent[ctr]);	//Free it
 			}
-			return;
+			return 5;
 		}
 
 		//Update the time signature if necessary
@@ -3718,7 +3736,7 @@ void eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, 
 							{	//For each unwrapped text event
 								free(newevent[ctr]);	//Free it
 							}
-							return;
+							return 6;
 						}
 						memcpy(newevent[newevents], gp->text_event[ctr], sizeof(EOF_TEXT_EVENT));	//Copy the text event
 						newevent[newevents]->beat = beatctr;	//Correct the beat number
@@ -3773,6 +3791,7 @@ void eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, 
 	}
 
 	eof_log("\tGP track successfully unwrapped", 1);
+	return 0;
 }
 
 char eof_copy_notes_in_beat_range(EOF_PRO_GUITAR_TRACK *source, unsigned long startbeat, unsigned long numbeats, EOF_PRO_GUITAR_TRACK *dest, unsigned long destbeat)
@@ -3797,6 +3816,29 @@ char eof_copy_notes_in_beat_range(EOF_PRO_GUITAR_TRACK *source, unsigned long st
 			endbeatnum = eof_get_beat(eof_song, source->note[ctr]->pos + source->note[ctr]->length);	//Find which beat this note ends within
 			if((beatnum >= 0) && (endbeatnum >= 0))
 			{	//The beat positions were found
+				if(eof_song->beats < destbeat + endbeatnum - startbeat + 2)
+				{
+#ifdef GP_IMPORT_DEBUG
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tUnwrapping note #%lu requires %lu beats, but project only has %lu beats.  Appending %lu beats to the project to allow for this note and 2 bytes of padding.", ctr, destbeat + endbeatnum - startbeat, eof_song->beats, destbeat + endbeatnum - startbeat + 2 - eof_song->beats);
+					eof_log(eof_log_string, 1);
+#endif
+					while(eof_song->beats < destbeat + endbeatnum - startbeat + 2)
+					{	//Until the loaded project has enough beats to contain the unwrapped note, and two extra to allow room for processing beat lengths later
+						double beat_length;
+
+						if(!eof_song_add_beat(eof_song))
+						{
+							eof_log("\tError allocating memory to unwrap GP track (6)", 1);
+							return 0;	//Return error
+						}
+						eof_song->beat[eof_song->beats - 1]->ppqn = eof_song->beat[eof_song->beats - 2]->ppqn;	//Match the tempo of the previously last beat
+						beat_length = (double)60000.0 / ((double)60000000.0 / (double)eof_song->beat[eof_song->beats - 2]->ppqn);	//Get the length of the previously last beat
+						eof_song->beat[eof_song->beats - 1]->fpos = eof_song->beat[eof_song->beats - 2]->fpos + beat_length;
+						eof_song->beat[eof_song->beats - 1]->pos = eof_song->beat[eof_song->beats - 1]->fpos + 0.5;	//Round up
+					}
+					eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
+				}
+
 				notepos = eof_get_porpos(source->note[ctr]->pos);									//Get the note's position as a percentage within its beat
 				noteendpos = eof_get_porpos(source->note[ctr]->pos + source->note[ctr]->length);	//Get the note end's end position as a percentage within its beat
 				newpos = eof_put_porpos(destbeat + beatnum - startbeat, notepos, 0.0);				//Get the position for the copied note
