@@ -2342,7 +2342,7 @@ int eof_save_helper(char *destfilename)
 	eof_check_vocals(eof_song, &fixvoxpitches, &fixvoxphrases);
 	(void) append_filename(eof_temp_filename, newfolderpath, "notes.mid", 1024);
 	if(eof_export_midi(eof_song, eof_temp_filename, 0, fixvoxpitches, fixvoxphrases))
-	{	//If saving the normal MIDI succeeded, proceed with saving song.ini and additional files if applicable
+	{	//If saving the normal MIDI succeeded, proceed with saving song.ini and additional MIDI files if applicable
 		if(eof_write_rb_files)
 		{	//If the user opted to also save RBN2 and RB3 pro guitar upgrade compliant MIDIs
 			(void) append_filename(eof_temp_filename, newfolderpath, "notes_rbn.mid", 1024);
@@ -2368,55 +2368,6 @@ int eof_save_helper(char *destfilename)
 			}
 		}
 
-		if(eof_write_rs_files)
-		{	//If the user wants to save Rocksmith capable files
-			char user_warned = 0;	//Tracks whether the user was warned about hand positions being undefined and auto-generated during export
-			(void) append_filename(eof_temp_filename, newfolderpath, "xmlpath.xml", 1024);	//Re-acquire the save's target folder
-
-			eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS, &user_warned);
-			eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS_22, &user_warned);
-			eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR, &user_warned);
-			eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_22, &user_warned);
-			if(eof_song->vocal_track[0]->lyrics)
-			{	//If there are lyrics, export them in Rocksmith format as well
-				char *arrangement_name;	//This will point to the track's native name unless it has an alternate name defined
-				if((eof_song->track[EOF_TRACK_VOCALS]->flags & EOF_TRACK_FLAG_ALT_NAME) && (eof_song->track[EOF_TRACK_VOCALS]->altname[0] != '\0'))
-				{	//If the vocal track has an alternate name
-					arrangement_name = eof_song->track[EOF_TRACK_VOCALS]->altname;
-				}
-				else
-				{	//Otherwise use the track's native name
-					arrangement_name = eof_song->track[EOF_TRACK_VOCALS]->name;
-				}
-				(void) append_filename(eof_temp_filename, newfolderpath, arrangement_name, 1024);
-				(void) replace_extension(eof_temp_filename, eof_temp_filename, "xml", 1024);
-				jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
-				if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
-				{	//Lyric export failed
-					(void) puts("Assert() handled sucessfully!");
-					allegro_message("Rocksmith lyric export failed");
-				}
-				else
-				{
-					EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,RS_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
-				}
-			}
-			(void) eof_detect_difficulties(eof_song, eof_selected_track);		//Update eof_track_diff_populated_status[] to reflect the currently selected difficulty
-			eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
-
-			//Determine if "[song name].wav" exists, if not, export the chart audio in WAV format
-			eof_get_rocksmith_wav_path(eof_temp_filename, newfolderpath, sizeof(eof_temp_filename));	//Build the path to the target WAV file
-			if(!exists(eof_temp_filename) && !eof_silence_loaded)
-			{	//If the WAV file does not exist, and chart audio is loaded
-				set_window_title("Saving WAV file for use with Wwise.  Please wait.");
-				SAMPLE *decoded = alogg_create_sample_from_ogg(eof_music_track);	//Create PCM data from the loaded chart audio
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Writing RS WAV file (%s)", eof_temp_filename);
-				eof_log(eof_log_string, 1);
-				save_wav_with_silence_appended(eof_temp_filename, decoded, 8000);	//Write a WAV file with it, appending 8 seconds of silence to it
-				eof_fix_window_title();
-			}
-		}
-
 		/* Save INI file */
 		(void) append_filename(eof_temp_filename, newfolderpath, "song.ini", 1024);
 		(void) eof_save_ini(eof_song, eof_temp_filename);
@@ -2435,6 +2386,55 @@ int eof_save_helper(char *destfilename)
 			{
 				EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,SCRIPT_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
 			}
+		}
+	}
+
+	if(eof_write_rs_files)
+	{	//If the user wants to save Rocksmith capable files
+		char user_warned = 0;	//Tracks whether the user was warned about hand positions being undefined and auto-generated during export
+		(void) append_filename(eof_temp_filename, newfolderpath, "xmlpath.xml", 1024);	//Re-acquire the save's target folder
+
+		eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS, &user_warned);
+		eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS_22, &user_warned);
+		eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR, &user_warned);
+		eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_22, &user_warned);
+		if(eof_song->vocal_track[0]->lyrics)
+		{	//If there are lyrics, export them in Rocksmith format as well
+			char *arrangement_name;	//This will point to the track's native name unless it has an alternate name defined
+			if((eof_song->track[EOF_TRACK_VOCALS]->flags & EOF_TRACK_FLAG_ALT_NAME) && (eof_song->track[EOF_TRACK_VOCALS]->altname[0] != '\0'))
+			{	//If the vocal track has an alternate name
+				arrangement_name = eof_song->track[EOF_TRACK_VOCALS]->altname;
+			}
+			else
+			{	//Otherwise use the track's native name
+				arrangement_name = eof_song->track[EOF_TRACK_VOCALS]->name;
+			}
+			(void) append_filename(eof_temp_filename, newfolderpath, arrangement_name, 1024);
+			(void) replace_extension(eof_temp_filename, eof_temp_filename, "xml", 1024);
+			jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
+			if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
+			{	//Lyric export failed
+				(void) puts("Assert() handled sucessfully!");
+				allegro_message("Rocksmith lyric export failed");
+			}
+			else
+			{
+				EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,RS_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
+			}
+		}
+		(void) eof_detect_difficulties(eof_song, eof_selected_track);		//Update eof_track_diff_populated_status[] to reflect the currently selected difficulty
+		eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
+
+		//Determine if "[song name].wav" exists, if not, export the chart audio in WAV format
+		eof_get_rocksmith_wav_path(eof_temp_filename, newfolderpath, sizeof(eof_temp_filename));	//Build the path to the target WAV file
+		if(!exists(eof_temp_filename) && !eof_silence_loaded)
+		{	//If the WAV file does not exist, and chart audio is loaded
+			set_window_title("Saving WAV file for use with Wwise.  Please wait.");
+			SAMPLE *decoded = alogg_create_sample_from_ogg(eof_music_track);	//Create PCM data from the loaded chart audio
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Writing RS WAV file (%s)", eof_temp_filename);
+			eof_log(eof_log_string, 1);
+			save_wav_with_silence_appended(eof_temp_filename, decoded, 8000);	//Write a WAV file with it, appending 8 seconds of silence to it
+			eof_fix_window_title();
 		}
 	}
 

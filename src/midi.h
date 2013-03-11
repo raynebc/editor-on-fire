@@ -154,6 +154,7 @@ void eof_add_midi_text_event(unsigned long pos, char * text, char allocation);
 	//The allocation boolean value specifies whether the string is using dynamically allocated memory and should be freed when the array is emptied
 void eof_clear_midi_events(void);
 	//Frees the memory for all structures in eof_midi_event[], including any dynamically allocated strings
+	//Resets the eof_midi_event_full variable to zero
 void WriteVarLen(unsigned long value, PACKFILE * fp);
 	//Writes the specified value in variable length format to the specified file handle
 int qsort_helper3(const void * e1, const void * e2);

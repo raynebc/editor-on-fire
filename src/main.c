@@ -1119,63 +1119,63 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 
 	/* delete star power phrases with no notes */
 	numphrases = eof_get_num_star_power_paths(sp, track);
-	for(j = 0; j < numphrases; j++)
-	{	//For each star power section in the active track
-		if(!st[j])
+	for(j = numphrases; j > 0; j--)
+	{	//For each star power section in the active track (in reverse order)
+		if(!st[j - 1])
 		{	//If the section's note count taken above was 0
-			eof_track_delete_star_power_path(sp, track, j);
+			eof_track_delete_star_power_path(sp, track, j - 1);
 		}
 	}
 
 	/* delete solos with no notes */
 	numphrases = eof_get_num_solos(sp, track);
-	for(j = 0; j < numphrases; j++)
-	{	//For each solo section in the active track
-		if(!so[j])
+	for(j = numphrases; j > 0; j--)
+	{	//For each solo section in the active track (in reverse order)
+		if(!so[j - 1])
 		{	//If the section's note count taken above was 0
-			eof_track_delete_solo(sp, track, j);
+			eof_track_delete_solo(sp, track, j - 1);
 		}
 	}
 
 	/* delete trills with no notes */
 	numphrases = eof_get_num_trills(sp, track);
-	for(j = 0; j < numphrases; j++)
-	{	//For each trill section in the active track
-		if(!trills[j])
+	for(j = numphrases; j > 0; j--)
+	{	//For each trill section in the active track (in reverse order)
+		if(!trills[j - 1])
 		{	//If the section's note count taken above was 0
-			eof_track_delete_trill(sp, track, j);
+			eof_track_delete_trill(sp, track, j - 1);
 		}
 	}
 
 	/* delete tremolos with no notes */
 	numphrases = eof_get_num_tremolos(sp, track);
-	for(j = 0; j < numphrases; j++)
-	{	//For each tremolo section in the active track
-		if(!tremolos[j])
+	for(j = numphrases; j > 0; j--)
+	{	//For each tremolo section in the active track (in reverse order)
+		if(!tremolos[j - 1])
 		{	//If the section's note count taken above was 0
-			eof_track_delete_tremolo(sp, track, j);
+			eof_track_delete_tremolo(sp, track, j - 1);
 		}
 	}
 
 	/* delete arpeggios with no notes */
 	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If this is a pro guitar track
-		for(j = 0; j < sp->pro_guitar_track[tracknum]->arpeggios; j++)
-		{	//For each arpeggio section in the active track
-			if(!arpeggios[j])
+		for(j = sp->pro_guitar_track[tracknum]->arpeggios; j > 0; j--)
+		{	//For each arpeggio section in the active track (in reverse order)
+			if(!arpeggios[j - 1])
 			{	//If the section's note count taken above was 0
-				eof_pro_guitar_track_delete_arpeggio(sp->pro_guitar_track[tracknum], j);
+				eof_pro_guitar_track_delete_arpeggio(sp->pro_guitar_track[tracknum], j - 1);
 			}
 		}
 	}
 
 	/* delete sliders with no notes */
 	numphrases = eof_get_num_sliders(sp, track);
-	for(j = 0; j < numphrases; j++)
-	{	//For each slider section in the active track
-		if(!sliders[j])
+	for(j = numphrases; j > 0; j--)
+	{	//For each slider section in the active track (in reverse order)
+		if(!sliders[j - 1])
 		{	//If the section's note count taken above was 0
-			eof_track_delete_slider(sp, track, j);
+			eof_track_delete_slider(sp, track, j - 1);
 		}
 	}
 }

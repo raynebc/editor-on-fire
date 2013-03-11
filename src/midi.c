@@ -24,6 +24,7 @@
 
 static EOF_MIDI_EVENT * eof_midi_event[EOF_MAX_MIDI_EVENTS];
 static unsigned long eof_midi_events = 0;
+static char eof_midi_event_full = 0;			//Is set to nonzero when an overflow of the eof_midi_event[] array was prevented, is reset by eof_clear_midi_events()
 static char eof_midi_note_status[128] = {0};	//Used by some functions to track the on/off status of notes 0 through 127
 unsigned long enddelta = 0, endbeatnum = 0;		//If these becomes nonzero, they define the position of a user-defined end event
 
@@ -48,27 +49,38 @@ void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int
 		note_on = 1;
 	}
 
-	eof_midi_event[eof_midi_events] = malloc(sizeof(EOF_MIDI_EVENT));
-	if(eof_midi_event[eof_midi_events])
-	{
-		eof_midi_event[eof_midi_events]->pos = pos;
-		eof_midi_event[eof_midi_events]->type = type;
-		eof_midi_event[eof_midi_events]->note = note;
-		eof_midi_event[eof_midi_events]->velocity = velocity;
-		eof_midi_event[eof_midi_events]->channel = channel;
-		eof_midi_event[eof_midi_events]->allocation = 0;
-		eof_midi_event[eof_midi_events]->filtered = 0;
-		eof_midi_event[eof_midi_events]->dp = NULL;
-		eof_midi_event[eof_midi_events]->on = note_on;
-		eof_midi_event[eof_midi_events]->off = note_off;
-		eof_midi_events++;
+	if(eof_midi_events < EOF_MAX_MIDI_EVENTS)
+	{	//If eof_midi_event[] is able to store more events
+		eof_midi_event[eof_midi_events] = malloc(sizeof(EOF_MIDI_EVENT));
+		if(eof_midi_event[eof_midi_events])
+		{
+			eof_midi_event[eof_midi_events]->pos = pos;
+			eof_midi_event[eof_midi_events]->type = type;
+			eof_midi_event[eof_midi_events]->note = note;
+			eof_midi_event[eof_midi_events]->velocity = velocity;
+			eof_midi_event[eof_midi_events]->channel = channel;
+			eof_midi_event[eof_midi_events]->allocation = 0;
+			eof_midi_event[eof_midi_events]->filtered = 0;
+			eof_midi_event[eof_midi_events]->dp = NULL;
+			eof_midi_event[eof_midi_events]->on = note_on;
+			eof_midi_event[eof_midi_events]->off = note_off;
+			eof_midi_events++;
 
-		if((note >= 0) && (note <= 127))
-		{	//If the note is in bounds of a legal MIDI note, track the writing of each on/off status
-			if(note_off)	//Note Off
-				eof_midi_note_status[note] = 0;
-			else if(note_on)	//Note On
-				eof_midi_note_status[note] = 1;
+			if((note >= 0) && (note <= 127))
+			{	//If the note is in bounds of a legal MIDI note, track the writing of each on/off status
+				if(note_off)	//Note Off
+					eof_midi_note_status[note] = 0;
+				else if(note_on)	//Note On
+					eof_midi_note_status[note] = 1;
+			}
+		}
+	}
+	else
+	{
+		if(!eof_midi_event_full)
+		{
+			eof_log("Error:  The number of MIDI events that can be handled has been exceeded.", 1);
+			eof_midi_event_full = 1;
 		}
 	}
 }
@@ -82,17 +94,28 @@ void eof_add_midi_lyric_event(unsigned long pos, char * text)
 
 	if(text)
 	{
-		eof_midi_event[eof_midi_events] = malloc(sizeof(EOF_MIDI_EVENT));
-		if(eof_midi_event[eof_midi_events])
-		{
-			eof_midi_event[eof_midi_events]->pos = pos;
-			eof_midi_event[eof_midi_events]->type = 0x05;
-			eof_midi_event[eof_midi_events]->dp = text;
-			eof_midi_event[eof_midi_events]->allocation = 1;	//At this time, all lyrics are being copied into new arrays in case they need to be altered
-			eof_midi_event[eof_midi_events]->filtered = 0;
-			eof_midi_event[eof_midi_events]->on = 0;
-			eof_midi_event[eof_midi_events]->off = 0;
-			eof_midi_events++;
+		if(eof_midi_events < EOF_MAX_MIDI_EVENTS)
+		{	//If eof_midi_event[] is able to store more events
+			eof_midi_event[eof_midi_events] = malloc(sizeof(EOF_MIDI_EVENT));
+			if(eof_midi_event[eof_midi_events])
+			{
+				eof_midi_event[eof_midi_events]->pos = pos;
+				eof_midi_event[eof_midi_events]->type = 0x05;
+				eof_midi_event[eof_midi_events]->dp = text;
+				eof_midi_event[eof_midi_events]->allocation = 1;	//At this time, all lyrics are being copied into new arrays in case they need to be altered
+				eof_midi_event[eof_midi_events]->filtered = 0;
+				eof_midi_event[eof_midi_events]->on = 0;
+				eof_midi_event[eof_midi_events]->off = 0;
+				eof_midi_events++;
+			}
+			else
+			{
+				if(!eof_midi_event_full)
+				{
+					eof_log("Error:  The number of MIDI events that can be handled has been exceeded.", 1);
+					eof_midi_event_full = 1;
+				}
+			}
 		}
 	}
 }
@@ -106,17 +129,68 @@ void eof_add_midi_text_event(unsigned long pos, char * text, char allocation)
 
 	if(text)
 	{
-		eof_midi_event[eof_midi_events] = malloc(sizeof(EOF_MIDI_EVENT));
-		if(eof_midi_event[eof_midi_events])
-		{
-			eof_midi_event[eof_midi_events]->pos = pos;
-			eof_midi_event[eof_midi_events]->type = 0x01;
-			eof_midi_event[eof_midi_events]->dp = text;
-			eof_midi_event[eof_midi_events]->allocation = allocation;
-			eof_midi_event[eof_midi_events]->filtered = 0;
-			eof_midi_event[eof_midi_events]->on = 0;
-			eof_midi_event[eof_midi_events]->off = 0;
-			eof_midi_events++;
+		if(eof_midi_events < EOF_MAX_MIDI_EVENTS)
+		{	//If eof_midi_event[] is able to store more events
+			eof_midi_event[eof_midi_events] = malloc(sizeof(EOF_MIDI_EVENT));
+			if(eof_midi_event[eof_midi_events])
+			{
+				eof_midi_event[eof_midi_events]->pos = pos;
+				eof_midi_event[eof_midi_events]->type = 0x01;
+				eof_midi_event[eof_midi_events]->dp = text;
+				eof_midi_event[eof_midi_events]->allocation = allocation;
+				eof_midi_event[eof_midi_events]->filtered = 0;
+				eof_midi_event[eof_midi_events]->on = 0;
+				eof_midi_event[eof_midi_events]->off = 0;
+				eof_midi_events++;
+			}
+			else
+			{
+				if(!eof_midi_event_full)
+				{
+					eof_log("Error:  The number of MIDI events that can be handled has been exceeded.", 1);
+					eof_midi_event_full = 1;
+				}
+			}
+		}
+	}
+}
+
+void eof_add_sysex_event(unsigned long pos, int size, void *data)
+{	//To avoid rounding issues during timing conversion, this should be called with the MIDI tick position of the event being stored
+	void *datacopy = NULL;
+
+	eof_log("eof_add_sysex_event() entered", 2);	//Only log this if verbose logging is on
+
+	if((size > 0) && data)
+	{
+		if(eof_midi_events < EOF_MAX_MIDI_EVENTS)
+		{	//If eof_midi_event[] is able to store more events
+			eof_midi_event[eof_midi_events] = malloc(sizeof(EOF_MIDI_EVENT));
+			if(eof_midi_event[eof_midi_events])
+			{
+				datacopy = malloc((size_t)size);
+				if(datacopy)
+				{
+					memcpy(datacopy, data, (size_t)size);	//Copy the input data into the new buffer
+					eof_midi_event[eof_midi_events]->pos = pos;
+					eof_midi_event[eof_midi_events]->type = 0xF0;
+					eof_midi_event[eof_midi_events]->note = size;	//Store the size of the Sysex message in the note variable
+					eof_midi_event[eof_midi_events]->dp = (char *)datacopy;	//Store the newly buffered data
+					eof_midi_event[eof_midi_events]->allocation = 1;	//At this time, all Sysex data chunks are stored in dynamically allocated memory
+					eof_midi_event[eof_midi_events]->filtered = 0;
+					eof_midi_event[eof_midi_events]->on = 0;
+					eof_midi_event[eof_midi_events]->off = 0;
+					eof_midi_events++;
+				}
+			}
+			else
+			{
+				if(!eof_midi_event_full)
+				{
+					eof_log("Error:  The number of MIDI events that can be handled has been exceeded.", 1);
+					eof_midi_event_full = 1;
+				}
+			}
 		}
 	}
 }
@@ -136,6 +210,7 @@ void eof_clear_midi_events(void)
 		free(eof_midi_event[i]);
 	}
 	eof_midi_events = 0;
+	eof_midi_event_full = 0;
 }
 
 void WriteVarLen(unsigned long value, PACKFILE * fp)
@@ -848,6 +923,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				}
 			}
 
+			if(eof_midi_event_full)
+			{	//If the track exceeded the number of MIDI events that could be written
+				allegro_message("Error:  Too many MIDI events, aborting MIDI export.");
+				return 0;	//Return failure
+			}
+
 			for(i=0;i < 128;i++)
 			{	//Ensure that any notes that are still on are terminated
 				if(eof_midi_note_status[i] != 0)	//If this note was left on, send an alert message, as this is abnormal
@@ -1001,7 +1082,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			/* write the MTrk MIDI data to a temp file
 			use size of the file as the MTrk header length */
 			for(i = 0; i < sp->vocal_track[tracknum]->lyrics; i++)
-			{
+			{	//For each lyric
 				//Copy each lyric string into a new array, perform correction on it if necessary
 				tempstring = malloc(sizeof(sp->vocal_track[tracknum]->lyric[i]->text));
 				if(tempstring == NULL)	//If allocation failed
@@ -1040,7 +1121,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{
 					free(tempstring);
 				}
-			}
+			}//For each lyric
+
 			/* fill in lyric lines */
 			for(i = 0; i < sp->vocal_track[tracknum]->lines; i++)
 			{
@@ -1091,6 +1173,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						}
 					}
 				}
+			}
+
+			if(eof_midi_event_full)
+			{	//If the track exceeded the number of MIDI events that could be written
+				allegro_message("Error:  Too many MIDI events, aborting MIDI export.");
+				return 0;	//Return failure
 			}
 
 			qsort(eof_midi_event, (size_t)eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
@@ -1246,6 +1334,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					{
 						midi_note_offset = 120;
 						break;
+					}
+					default:	//Other note difficulties aren't supported for MIDI export
+					{
+						continue;
 					}
 				}
 
@@ -1592,6 +1684,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				}
 				eof_add_midi_event(deltapos, 0x90, 127, vel, 0);	//Note 127 denotes a trill marker
 				eof_add_midi_event(deltapos + deltalength, 0x80, 127, vel, 0);
+			}
+
+			if(eof_midi_event_full)
+			{	//If the track exceeded the number of MIDI events that could be written
+				allegro_message("Error:  Too many MIDI events, aborting MIDI export.");
+				return 0;	//Return failure
 			}
 
 			for(i=0;i < 128;i++)
@@ -2580,35 +2678,6 @@ void eof_write_text_event(unsigned long deltas, const char *str, PACKFILE *fp)
 			(void) pack_putc(0x01, fp);
 			(void) pack_putc(length, fp);
 			(void) pack_fwrite(str, length, fp);
-		}
-	}
-}
-
-void eof_add_sysex_event(unsigned long pos, int size, void *data)
-{	//To avoid rounding issues during timing conversion, this should be called with the MIDI tick position of the event being stored
-	void *datacopy = NULL;
-
-	eof_log("eof_add_sysex_event() entered", 2);	//Only log this if verbose logging is on
-
-	if((size > 0) && data)
-	{
-		eof_midi_event[eof_midi_events] = malloc(sizeof(EOF_MIDI_EVENT));
-		if(eof_midi_event[eof_midi_events])
-		{
-			datacopy = malloc((size_t)size);
-			if(datacopy)
-			{
-				memcpy(datacopy, data, (size_t)size);	//Copy the input data into the new buffer
-				eof_midi_event[eof_midi_events]->pos = pos;
-				eof_midi_event[eof_midi_events]->type = 0xF0;
-				eof_midi_event[eof_midi_events]->note = size;	//Store the size of the Sysex message in the note variable
-				eof_midi_event[eof_midi_events]->dp = (char *)datacopy;	//Store the newly buffered data
-				eof_midi_event[eof_midi_events]->allocation = 1;	//At this time, all Sysex data chunks are stored in dynamically allocated memory
-				eof_midi_event[eof_midi_events]->filtered = 0;
-				eof_midi_event[eof_midi_events]->on = 0;
-				eof_midi_event[eof_midi_events]->off = 0;
-				eof_midi_events++;
-			}
 		}
 	}
 }
