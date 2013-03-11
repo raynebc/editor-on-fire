@@ -815,7 +815,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 //Validate parameters
 	tracknum = eof_song->track[track]->tracknum;
 	if((track == 0) || (track >= eof_song->tracks) || ((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)) || (notenum >= eof_get_track_size(eof_song, track)))
-	{	//If an invalid track or note number was passsed
+	{	//If an invalid track or note number was passed
 		return -1;	//Error, signal to stop rendering (3D window renders last note to first)
 	}
 	notepos = eof_get_note_pos(eof_song, track, notenum);
@@ -870,17 +870,20 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			point[6] = ocd3d_project_x(bx + 232, rz);
 			point[7] = point[1];
 
-			if(noteflags & EOF_NOTE_FLAG_SP)			//If this bass drum note is star power, render it in silver
-				polygon(eof_window_3d->screen, 4, point, p ? eof_color_white : eof_color_silver);
-			else if(noteflags & EOF_NOTE_FLAG_DBASS)
-			{	//Or if it is double bass
-				if(!eof_song->tags->double_bass_drum_disabled)	//If the user has not disabled expert+ bass drum notes
-					polygon(eof_window_3d->screen, 4, point, p ? makecol(255, 192, 192) : eof_color_red);	//Render it in red
-				else
-					polygon(eof_window_3d->screen, 4, point, p ? makecol(192, 192, 255) : eof_color_blue);	//Render it in blue
+			if((point[0] != -65536) && (point[1] != -65536) && (point[2] != -65536) && (point[3] != -65536) && (point[4] != -65536) && (point[6] != -65536))
+			{	//If none of the coordinate projections failed
+				if(noteflags & EOF_NOTE_FLAG_SP)			//If this bass drum note is star power, render it in silver
+					polygon(eof_window_3d->screen, 4, point, p ? eof_color_white : eof_color_silver);
+				else if(noteflags & EOF_NOTE_FLAG_DBASS)
+				{	//Or if it is double bass
+					if(!eof_song->tags->double_bass_drum_disabled)	//If the user has not disabled expert+ bass drum notes
+						polygon(eof_window_3d->screen, 4, point, p ? makecol(255, 192, 192) : eof_color_red);	//Render it in red
+					else
+						polygon(eof_window_3d->screen, 4, point, p ? makecol(192, 192, 255) : eof_color_blue);	//Render it in blue
+				}
+				else										//Otherwise render it in the standard lane one color for the current color set
+					polygon(eof_window_3d->screen, 4, point, p ? eof_colors[0].hit : eof_colors[0].color);
 			}
-			else										//Otherwise render it in the standard lane one color for the current color set
-				polygon(eof_window_3d->screen, 4, point, p ? eof_colors[0].hit : eof_colors[0].color);
 		}
 		for(ctr=1,mask=2;ctr<numlanes;ctr++,mask=mask<<1)
 		{	//Render for each of the available fret colors after 1 (bass drum)
@@ -930,10 +933,13 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 					point[6] = ocd3d_project_x(bx + 232, rz);
 					point[7] = point[1];
 
-					if(noteflags & EOF_NOTE_FLAG_SP)			//If this open bass note is star power, render it in silver
-						polygon(eof_window_3d->screen, 4, point, p ? eof_color_white : eof_color_silver);
-					else										//Otherwise render it in the standard lane six color for the current color set
-						polygon(eof_window_3d->screen, 4, point, p ? eof_colors[5].hit : eof_colors[5].color);
+					if((point[0] != -65536) && (point[1] != -65536) && (point[2] != -65536) && (point[3] != -65536) && (point[4] != -65536) && (point[6] != -65536))
+					{	//If none of the coordinate projections failed
+						if(noteflags & EOF_NOTE_FLAG_SP)			//If this open bass note is star power, render it in silver
+							polygon(eof_window_3d->screen, 4, point, p ? eof_color_white : eof_color_silver);
+						else										//Otherwise render it in the standard lane six color for the current color set
+							polygon(eof_window_3d->screen, 4, point, p ? eof_colors[5].hit : eof_colors[5].color);
+					}
 				}
 				else
 				{
