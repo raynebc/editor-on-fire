@@ -154,10 +154,11 @@ int save_wav(const char * fn, SAMPLE * sp)
     /* open file */
     file = pack_fopen(fn, "w");
     if(file == NULL)
-    {
-		(void) pack_fclose(file);
-        return 0;
-    }
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving WAV:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		eof_log(eof_log_string, 1);
+		return 0;
+	}
 
     /* save WAV to the file */
     if(!save_wav_fp(sp, file))
@@ -276,7 +277,12 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	//Load OGG file into memory
 	fp=fopen(oggfn,"rb");
 	if(fp == NULL)
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading WAV:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		eof_log(eof_log_string, 1);
+		allegro_message(eof_log_string);
 		return 0;	//Return failure
+	}
 	oggfile=alogg_create_ogg_from_file(fp);
 	if(oggfile == NULL)
 	{

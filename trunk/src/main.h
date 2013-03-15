@@ -456,8 +456,10 @@ extern long xchart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D render
 extern long ychart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D rendering, updated by eof_set_2D_lane_positions()
 
 void eof_show_mouse(BITMAP * bp);	//Shows the software mouse if it is being used
-float eof_get_porpos(unsigned long pos);	//Returns the timestamp position within a beat (percentage)?
-long eof_put_porpos(unsigned long beat, float porpos, float offset);	//Returns the timestamp of the specified position within a beat, or -1 on error
+float eof_get_porpos(unsigned long pos);	//Returns the timestamp's position within a beat (percentage)
+long eof_put_porpos(unsigned long beat, float porpos, float offset);
+	//Returns the timestamp of the specified position within a beat, or -1 on error
+	//porpos can be a positive or negative value larger in magnitude than 100.0
 void eof_reset_lyric_preview_lines(void);	//Resets the preview line variables to 0
 void eof_find_lyric_preview_lines(void);	//Sets the first and second preview line variables
 void eof_emergency_stop_music(void);	//Stops audio playback

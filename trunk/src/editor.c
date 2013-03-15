@@ -1129,7 +1129,7 @@ if(key[KEY_PAUSE])
 		}
 	}
 
-	/* transpose mini piano visible area up one octave (CTRL+SHIFT+Up) */
+	/* transpose mini piano visible area up one octave (CTRL+SHIFT+Up in a vocal track) */
 	/* transpose mini piano visible area up one (SHIFT+Up in a vocal track, non Feedback input modes) */
 	/* transpose lyric up one octave (CTRL+Up in a vocal track) */
 	/* toggle pro guitar slide up (CTRL+Up in a pro guitar track) */

@@ -13,6 +13,8 @@ extern EOF_RS_PREDEFINED_SECTION eof_rs_predefined_sections[EOF_NUM_RS_PREDEFINE
 #define EOF_NUM_RS_PREDEFINED_EVENTS 4
 extern EOF_RS_PREDEFINED_SECTION eof_rs_predefined_events[EOF_NUM_RS_PREDEFINED_EVENTS];
 
+extern char *eof_rs_arrangement_names[5];
+
 int eof_is_string_muted(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//Returns nonzero if all used strings in the note are fret hand muted
 
@@ -97,6 +99,10 @@ void eof_get_rocksmith_wav_path(char *buffer, const char *parent_folder, size_t 
 	//Builds the path to the WAV file (used for Rocksmith) that is written to specified parent folder path during save
 	//num defines the buffer's maximum size
 	//This is (song name).wav if the song title song property is defined, otherwise guitar.wav
+
+void eof_delete_rocksmith_wav(void);
+	//Deletes the Rocksmith WAV file based on the path created by the chart's song title
+	//If such a file does not exist (this includes if the song title has characters that are invalid for a file name), "guitar.wav" is deleted
 
 char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsigned long track, unsigned long start, unsigned long stop, unsigned char diff, char compareto);
 	//Returns 1 if the notes in the specified track and time range don't match with those in the previous (if compareto is negative) or next difficulty (if compareto is >= 0)

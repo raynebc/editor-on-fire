@@ -64,6 +64,8 @@ EOF_RS_PREDEFINED_SECTION eof_rs_predefined_events[EOF_NUM_RS_PREDEFINED_EVENTS]
 
 unsigned char *eof_fret_range_tolerances = NULL;	//A dynamically allocated array that defines the fretting hand's range for each fret on the guitar neck, numbered where fret 1's range is defined at eof_fret_range_tolerances[1]
 
+char *eof_rs_arrangement_names[5] = {"Undefined", "Combo", "Rhythm", "Lead", "Bass"};	//Indexes 1 through 4 represent the valid arrangement names for Rocksmith arrangements
+
 int eof_is_string_muted(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	unsigned long ctr, bitmask;
@@ -374,6 +376,12 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	{
 		eof_log("\tError saving:  Cannot open file for writing", 1);
 		return 0;	//Return failure
+	}
+
+	//Update the track's arrangement name
+	if(tp->arrangement)
+	{	//If the track's arrangement type has been defined
+		arrangement_name = eof_rs_arrangement_names[tp->arrangement];	//Use the corresponding string in the XML file
 	}
 
 	//Get the smaller of the chart length and the music length, this will be used to write the songlength tag
@@ -1876,6 +1884,22 @@ void eof_get_rocksmith_wav_path(char *buffer, const char *parent_folder, size_t 
 	}
 	(void) ustrncat(buffer, ".wav", (int)num - 1);
 	buffer[num - 1] = '\0';	//Ensure the finalized string is terminated
+}
+
+void eof_delete_rocksmith_wav(void)
+{
+	char checkfn[1024] = {0};
+
+	eof_get_rocksmith_wav_path(checkfn, eof_song_path, sizeof(checkfn));	//Build the path to the WAV file written for Rocksmith during save
+	if(exists(checkfn))
+	{	//If the path based on the song title exists
+		(void) delete_file(checkfn);	//Delete it, if it exists, since changing the chart's OGG will necessitate rewriting the WAV file during save
+	}
+	else
+	{	//Otherwise delete guitar.wav because this is the name it will use if the song title has characters invalid for a filename
+		(void) replace_filename(checkfn, eof_song_path, "guitar.wav", sizeof(checkfn));
+		(void) delete_file(checkfn);
+	}
 }
 
 char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsigned long track, unsigned long start, unsigned long stop, unsigned char diff, char compareto)

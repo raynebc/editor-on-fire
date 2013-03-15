@@ -160,10 +160,21 @@ MENU eof_song_proguitar_popup_menu[] =
     {NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_song_rocksmith_arrangement_menu[] =
+{
+    {"&Undefined", eof_song_rocksmith_arrangement_undefined, NULL, 0, NULL},
+    {"&Combo", eof_song_rocksmith_arrangement_combo, NULL, 0, NULL},
+    {"&Rhythm", eof_song_rocksmith_arrangement_rhythm, NULL, 0, NULL},
+    {"&Lead", eof_song_rocksmith_arrangement_lead, NULL, 0, NULL},
+    {"&Bass", eof_song_rocksmith_arrangement_bass, NULL, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_song_rocksmith_menu[] =
 {
     {"Fret &Hand positions", NULL, eof_song_proguitar_fret_hand_menu, 0, NULL},
     {"&Popup messages", NULL, eof_song_proguitar_popup_menu, 0, NULL},
+    {"&Arrangement type", NULL, eof_song_rocksmith_arrangement_menu, 0, NULL},
     {"&Correct chord fingerings", eof_correct_chord_fingerings_menu, NULL, 0, NULL},
     {"Remove difficulty limit", eof_song_proguitar_toggle_difficulty_limit, NULL, 0, NULL},
     {"Insert new difficulty", eof_song_proguitar_insert_difficulty, NULL, 0, NULL},
@@ -646,9 +657,22 @@ void eof_prepare_song_menu(void)
 				eof_song_proguitar_menu[4].flags = D_DISABLED;
 			}
 
+			//Update checkmarks on the arrangement type submenu
+			for(i = 0; i < 5; i++)
+			{	//For each of the arrangement types
+				if(eof_song->pro_guitar_track[tracknum]->arrangement == i)
+				{	//If the active track is set to this arrangement type
+					eof_song_rocksmith_arrangement_menu[i].flags = D_SELECTED;	//Check it
+				}
+				else
+				{	//Otherwise uncheck it
+					eof_song_rocksmith_arrangement_menu[i].flags = 0;
+				}
+			}
+
 			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 			{	//If the active track has already had the difficulty limit removed
-				eof_song_rocksmith_menu[3].flags = D_SELECTED;	//Song>Pro Guitar>Remove difficulty limit
+				eof_song_rocksmith_menu[3].flags = D_SELECTED;	//Song>Rocksmith>Remove difficulty limit
 			}
 			else
 			{
@@ -981,9 +1005,8 @@ int eof_menu_song_properties(void)
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			undo_made = 1;
 			if(ustricmp(eof_song->tags->title, eof_etext))
-			{	//If the song title field was changed
-				eof_get_rocksmith_wav_path(eof_temp_filename, eof_song_path, sizeof(eof_temp_filename));	//Build the path to the WAV file written for Rocksmith during save
-				(void) delete_file(eof_temp_filename);	//Delete it, if it exists, since changing the title will cause a new WAV file to be written
+			{	//If the song title field was changed, delete the Rocksmith WAV file, since changing the title will cause a new WAV file to be written
+				eof_delete_rocksmith_wav();
 			}
 		}
 		else if(eof_is_number(eof_etext4) && (eof_song->tags->ogg[eof_selected_ogg].midi_offset != atol(eof_etext4)))
@@ -1690,8 +1713,7 @@ int eof_menu_song_add_silence(void)
 
 	if(eof_popup_dialog(eof_leading_silence_dialog, 7) == 11)			//User clicked OK
 	{
-		eof_get_rocksmith_wav_path(fn, eof_song_path, sizeof(fn));	//Build the path to the WAV file written for Rocksmith during save
-		(void) delete_file(fn);	//Delete it, if it exists, since changing the chart's OGG will necessitate rewriting the WAV file during save
+		eof_delete_rocksmith_wav();		//Delete the Rocksmith WAV file since changing silence will require a new WAV file to be written
 
 		(void) snprintf(fn, sizeof(fn) - 1, "%s.backup", eof_loaded_ogg_name);
 		current_length = get_ogg_length(eof_loaded_ogg_name);
@@ -5215,4 +5237,46 @@ int eof_rs_popup_messages_seek(DIALOG * d)
 	(void) dialog_message(eof_rs_popup_messages_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
 
 	return D_O_K;
+}
+
+int eof_song_rocksmith_arrangement_set(unsigned char num)
+{
+	unsigned long tracknum;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	if(num > 4)
+	{	//If the specified arrangement number is invalid
+		num = 0;	//Make it undefined
+	}
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	eof_song->pro_guitar_track[tracknum]->arrangement = num;
+	return 1;
+}
+
+int eof_song_rocksmith_arrangement_undefined(void)
+{
+	return eof_song_rocksmith_arrangement_set(0);
+}
+
+int eof_song_rocksmith_arrangement_combo(void)
+{
+	return eof_song_rocksmith_arrangement_set(1);
+}
+
+int eof_song_rocksmith_arrangement_rhythm(void)
+{
+	return eof_song_rocksmith_arrangement_set(2);
+}
+
+int eof_song_rocksmith_arrangement_lead(void)
+{
+	return eof_song_rocksmith_arrangement_set(3);
+}
+
+int eof_song_rocksmith_arrangement_bass(void)
+{
+	return eof_song_rocksmith_arrangement_set(4);
 }

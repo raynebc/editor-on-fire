@@ -1333,8 +1333,9 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 					ptr4->numfrets = 17;
 				}
 				if((trackdetails->track_type == EOF_TRACK_PRO_BASS) || (trackdetails->track_type == EOF_TRACK_PRO_BASS_22))
-				{	//By default, set a pro bass track to 4 strings
-					ptr4->numstrings = 4;
+				{
+					ptr4->numstrings = 4;	//By default, set a pro bass track to 4 strings
+					ptr4->arrangement = 4;	//And the arrangement type is "Bass"
 				}
 				else
 				{
@@ -1883,7 +1884,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 
 		custom_data_count = pack_igetl(fp);		//Read the number of custom data blocks
 		for(custom_data_ctr=0; custom_data_ctr<custom_data_count; custom_data_ctr++)
-		{	//For each custom data block in the project
+		{	//For each custom data block in the track
 			custom_data_size = pack_igetl(fp);	//Read the size of the custom data block
 			custom_data_id = pack_igetl(fp);	//Read the ID of the custom data block
 			switch(custom_data_id)
@@ -1916,6 +1917,19 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					}
 				break;
 
+				case 3:		//Pro guitar track arrangement type
+					if(custom_data_size != 5)
+					{	//This data block is expected to be 5 bytes long
+						allegro_message("Error:  Invalid custom data block size.  Aborting");
+						return 0;
+					}
+					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+					{	//Ensure this logic only runs for a pro guitar track
+						EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track_ctr]->tracknum];	//Get pointer to this pro guitar track
+						tp->arrangement = pack_getc(fp);	//Read the track arrangement type
+					}
+				break;
+
 				default:	//Unknown custom data block ID
 					if(custom_data_size < 4)
 					{	//This is invalid, the size needed to have included the 4 byte ID
@@ -1929,7 +1943,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					}
 				break;
 			}
-		}
+		}//For each custom data block in the track
 	}//For each track in the project
 	return 1;	//Return success
 }
@@ -2232,7 +2246,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};
 	unsigned long count,ctr,ctr2,tracknum;
 	unsigned long track_count,track_ctr,bookmark_count,bitmask,fingerdefinitions;
-	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages;
+	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement;
 
 	#define EOFNUMINISTRINGTYPES 9
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
@@ -2851,7 +2865,9 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				return 0;
 			}//Perform the appropriate logic to write this format of track
 		}//Write other tracks
-		fingerdefinitions = 0;
+
+		//Write custom track data blocks
+		fingerdefinitions = has_fingerdefinitions = has_arrangement = 0;
 		if(track_ctr && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 		{	//If this is a pro guitar track, count the number of notes with finger definitions
 			for(ctr = 0; ctr < sp->pro_guitar_track[tracknum]->notes; ctr++)
@@ -2861,24 +2877,41 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					if(sp->pro_guitar_track[tracknum]->note[ctr]->note & bitmask)
 					{	//If this string is used
 						fingerdefinitions++;	//Increment the counter representing the number of finger usage bytes to write in this block
+						has_fingerdefinitions = 1;
 					}
 				}
 			}
 		}
-		if(fingerdefinitions)
-		{	//If at least one finger definition was found
-			(void) pack_iputl(1, fp);		//Write one custom data block
-			(void) pack_iputl(fingerdefinitions + 4, fp);	//Write the number of bytes this block will contain (finger data and a 4 byte block ID)
-			(void) pack_iputl(2, fp);		//Write the pro guitar finger array custom data block ID
-			for(ctr = 0; ctr < sp->pro_guitar_track[tracknum]->notes; ctr++)
-			{	//For each note in the track
-				for(ctr2 = 0, bitmask = 1; ctr2 < sp->pro_guitar_track[tracknum]->numstrings; ctr2++, bitmask <<= 1)
-				{	//For each supported string in the track
-					if(sp->pro_guitar_track[tracknum]->note[ctr]->note & bitmask)
-					{	//If this string is used
-						(void) pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->finger[ctr2], fp);	//Write this string's finger value
+		if(track_ctr && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If this is a pro guitar track
+			if(sp->pro_guitar_track[tracknum]->arrangement)
+			{	//If this track has a Rocksmith arrangement type defined
+				has_arrangement = 1;
+			}
+		}
+		if(has_fingerdefinitions || has_arrangement)
+		{	//If writing data in a custom data block
+			(void) pack_iputl(has_fingerdefinitions + has_arrangement, fp);		//Write the number of custom data blocks
+			if(has_fingerdefinitions)
+			{	//Write finger definitions
+				(void) pack_iputl(fingerdefinitions + 4, fp);	//Write the number of bytes this block will contain (finger data and a 4 byte block ID)
+				(void) pack_iputl(2, fp);		//Write the pro guitar finger array custom data block ID
+				for(ctr = 0; ctr < sp->pro_guitar_track[tracknum]->notes; ctr++)
+				{	//For each note in the track
+					for(ctr2 = 0, bitmask = 1; ctr2 < sp->pro_guitar_track[tracknum]->numstrings; ctr2++, bitmask <<= 1)
+					{	//For each supported string in the track
+						if(sp->pro_guitar_track[tracknum]->note[ctr]->note & bitmask)
+						{	//If this string is used
+							(void) pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->finger[ctr2], fp);	//Write this string's finger value
+						}
 					}
 				}
+			}
+			if(has_arrangement)
+			{	//Write track arrangement type
+				(void) pack_iputl(5, fp);		//Write the number of bytes this block will contain (1 byte arrangement type and a 4 byte block ID)
+				(void) pack_iputl(3, fp);		//Write the pro guitar track arrangement type custom data block ID
+				(void) pack_putc(sp->pro_guitar_track[tracknum]->arrangement, fp);	//Write the pro guitar track arrangement type
 			}
 		}
 		else
@@ -4031,6 +4064,11 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 	}
 
 	eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Ensure fret hand positions are sorted
+
+	if(tp->arrangement > 4)
+	{	//If the track's arrangement type is invalid
+		tp->arrangement = 0;	//Reset it to undefined
+	}
 
 	if(!sel)
 	{

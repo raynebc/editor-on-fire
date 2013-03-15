@@ -26,11 +26,12 @@ MENU eof_main_menu[] =
 
 void eof_prepare_main_menu(void)
 {
+	eof_main_menu[3].flags = D_DISABLED; //The note menu is always disabled unless at least one note is selected
+
 	if(eof_song && eof_song_loaded)
 	{
 		eof_main_menu[1].flags = 0; // Edit
 		eof_main_menu[2].flags = 0; // Song
-		eof_main_menu[3].flags = 0; // Note
 		eof_main_menu[4].flags = 0; // Beat
 
 		/* disable Note menu when no notes are selected */
@@ -38,16 +39,11 @@ void eof_prepare_main_menu(void)
 		{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
 			eof_main_menu[3].flags = 0; // Note
 		}
-		else
-		{
-			eof_main_menu[3].flags = D_DISABLED; // Note
-		}
 	}
 	else
 	{
 		eof_main_menu[1].flags = D_DISABLED; // Edit
 		eof_main_menu[2].flags = D_DISABLED; // Song
-		eof_main_menu[3].flags = D_DISABLED; // Note
 		eof_main_menu[4].flags = D_DISABLED; // Beat
 	}
 }
