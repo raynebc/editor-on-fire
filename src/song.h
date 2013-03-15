@@ -313,10 +313,11 @@ typedef struct
 
 typedef struct
 {
-	unsigned char numfrets;		//The number of frets in this track
-	unsigned char numstrings;	//The number of strings/lanes in this track
+	unsigned char numfrets;			//The number of frets in this track
+	unsigned char numstrings;		//The number of strings/lanes in this track
+	unsigned char arrangement;		//The arrangement type of this track  (0 = Undefined, 1 = Combo, 2 = Rhythm, 3 = Lead, 4 = Bass)
 	char tuning[EOF_TUNING_LENGTH];	//An array with at least (numstrings) elements, each of which defines the string's relative tuning as the +/- number of half steps from standard tuning (tuning[0] refers to lane 1's string, which is low E)
-	EOF_TRACK_ENTRY * parent;	//Allows an easy means to look up the global track using a pro guitar track pointer
+	EOF_TRACK_ENTRY * parent;		//Allows an easy means to look up the global track using a pro guitar track pointer
 
 	EOF_PRO_GUITAR_NOTE * note[EOF_MAX_NOTES];
 	unsigned long notes;

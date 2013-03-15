@@ -155,7 +155,7 @@ TRACK CHUNK, for each track:
 *	TRACK CUSTOM DATA BLOCK CHUNK, for each custom data block
 *	{
 *		4 bytes:	The number of bytes this custom data block consumes  (including the block ID and the custom data itself)
-*		4 bytes:	Custom data block ID (1 = Extra note data, 2= pro guitar finger arrays, 0xFFFFFFFF = Empty debugging block)
+*		4 bytes:	Custom data block ID (1 = Extra note data, 2 = pro guitar finger arrays, 3 = pro guitar track arrangement type, 0xFFFFFFFF = Empty debugging block)
 *		[varies:]	(Custom data block, can store anything)
 *	}
 =========================================
@@ -169,6 +169,8 @@ Custom track data block definitions
 		{
 			1 byte:	Finger number used for this string (0 = unused/undefined, 1 = index, 2 = middle, 3= ring, 4 = pinky, 5 = thumb)
 		}
+	Custom data block ID 3:  Pro guitar track arrangement type
+		1 byte:		Arrangement type (1 = Combo, 2 = Rhythm, 3 = Lead, 4 = Bass)
 =========================================		
 }
 (End of file)

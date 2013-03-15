@@ -205,4 +205,13 @@ int eof_find_effective_rs_popup_message(unsigned long pos, unsigned long *popupn
 	//The corresponding popup message number for the track is returned through popupnum
 	//Zero is returned if no popup message is in effect or upon error
 
+int eof_song_rocksmith_arrangement_set(unsigned char num);
+	//Validates that the active track is a pro guitar track and sets the track's arrangement type to the specified number
+	//If num is > 4, a value of 0 is set instead
+int eof_song_rocksmith_arrangement_undefined(void);	//Sets an undefined arrangement type
+int eof_song_rocksmith_arrangement_combo(void);		//Sets a combo arrangement type
+int eof_song_rocksmith_arrangement_rhythm(void);	//Sets a rhythm arrangement type
+int eof_song_rocksmith_arrangement_lead(void);		//Sets a lead arrangement type
+int eof_song_rocksmith_arrangement_bass(void);		//Sets a bass arrangement type
+
 #endif

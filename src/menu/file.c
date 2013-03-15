@@ -534,8 +534,7 @@ int eof_menu_file_load_ogg(void)
 	eof_clear_input();
 	if(returnedfn)
 	{	//If the user selected an OGG file
-		eof_get_rocksmith_wav_path(checkfn, eof_song_path, sizeof(checkfn));	//Build the path to the WAV file written for Rocksmith during save
-		(void) delete_file(checkfn);	//Delete it, if it exists, since changing the chart's OGG will necessitate rewriting the WAV file during save
+		eof_delete_rocksmith_wav();		//Delete the Rocksmith WAV file since loading different audio will require a new WAV file to be written
 
 		/* make sure selected file is in the same path as the current chart */
 		(void) replace_filename(checkfn, returnedfn, "", 1024);
@@ -2154,14 +2153,14 @@ int eof_save_helper(char *destfilename)
 		function = 1;
 		if((eof_song_path == NULL) || (eof_loaded_song_name == NULL))
 			return 1;	//Return failure
-		(void) append_filename(eof_temp_filename, eof_song_path, eof_loaded_song_name, 1024);
+		(void) append_filename(eof_temp_filename, eof_song_path, eof_loaded_song_name, sizeof(eof_temp_filename));
 		(void) replace_filename(newfolderpath, eof_song_path, "", 1024);	//Obtain the destination path
 	}
 	else
 	{	//Perform save as
 		function = 2;
 		(void) replace_extension(destfilename, destfilename, "eof", 1024);	//Ensure the chart is saved with a .eof extension
-		(void) ustrncpy(eof_temp_filename, destfilename, 1024 - 1);
+		(void) ustrncpy(eof_temp_filename, destfilename, sizeof(eof_temp_filename) - 1);
 		if(eof_temp_filename[1022] != '\0')	//If the source filename was too long to store in the array
 			return 1;			//Return failure
 		(void) replace_filename(newfolderpath, destfilename, "", 1024);	//Obtain the destination path
@@ -2294,7 +2293,7 @@ int eof_save_helper(char *destfilename)
 	}
 
 	/* rotate out the last save file (filename).previous_save.eof */
-	(void) replace_extension(eof_temp_filename, eof_temp_filename, "eof", 1024);	//Ensure the chart's file path has a .eof extension
+	(void) replace_extension(eof_temp_filename, eof_temp_filename, "eof", sizeof(eof_temp_filename));	//Ensure the chart's file path has a .eof extension
 	(void) replace_extension(tempfilename2, eof_temp_filename, "previous_save.eof", 1024);	//(filename).previous_save.eof will be store the last save operation
 	if(exists(tempfilename2))
 	{	//If the lastsave file exists
@@ -2340,16 +2339,16 @@ int eof_save_helper(char *destfilename)
 
 	/* save the MIDI, INI and other files*/
 	eof_check_vocals(eof_song, &fixvoxpitches, &fixvoxphrases);
-	(void) append_filename(eof_temp_filename, newfolderpath, "notes.mid", 1024);
+	(void) append_filename(eof_temp_filename, newfolderpath, "notes.mid", sizeof(eof_temp_filename));
 	if(eof_export_midi(eof_song, eof_temp_filename, 0, fixvoxpitches, fixvoxphrases))
 	{	//If saving the normal MIDI succeeded, proceed with saving song.ini and additional MIDI files if applicable
 		if(eof_write_rb_files)
 		{	//If the user opted to also save RBN2 and RB3 pro guitar upgrade compliant MIDIs
-			(void) append_filename(eof_temp_filename, newfolderpath, "notes_rbn.mid", 1024);
+			(void) append_filename(eof_temp_filename, newfolderpath, "notes_rbn.mid", sizeof(eof_temp_filename));
 			(void) eof_export_midi(eof_song, eof_temp_filename, 1, fixvoxpitches, fixvoxphrases);	//Write a RBN2 compliant MIDI
 			if(eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS) || eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS_22) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR_22))
 			{	//If any of the pro guitar tracks are populated
-				(void) append_filename(eof_temp_filename, newfolderpath, "notes_pro.mid", 1024);
+				(void) append_filename(eof_temp_filename, newfolderpath, "notes_pro.mid", sizeof(eof_temp_filename));
 				(void) eof_export_midi(eof_song, eof_temp_filename, 2, fixvoxpitches, fixvoxphrases);	//Write a RB3 pro guitar upgrade compliant MIDI
 				(void) ustrcpy(eof_temp_filename, newfolderpath);
 				put_backslash(eof_temp_filename);
@@ -2363,19 +2362,19 @@ int eof_save_helper(char *destfilename)
 					}
 				}
 				put_backslash(eof_temp_filename);
-				(void) replace_filename(eof_temp_filename, eof_temp_filename, "upgrades.dta", 1024);
+				(void) replace_filename(eof_temp_filename, eof_temp_filename, "upgrades.dta", sizeof(eof_temp_filename));
 				eof_save_upgrades_dta(eof_song, eof_temp_filename);		//Create the upgrades.dta file in the songs_upgrades folder if it does not already exist
 			}
 		}
 
 		/* Save INI file */
-		(void) append_filename(eof_temp_filename, newfolderpath, "song.ini", 1024);
+		(void) append_filename(eof_temp_filename, newfolderpath, "song.ini", sizeof(eof_temp_filename));
 		(void) eof_save_ini(eof_song, eof_temp_filename);
 
 		/* save script lyrics if applicable) */
 		if(eof_song->tags->lyrics && eof_song->vocal_track[0]->lyrics)							//If user enabled the Lyrics checkbox in song properties and there are lyrics defined
 		{
-			(void) append_filename(eof_temp_filename, newfolderpath, "script.txt", 1024);
+			(void) append_filename(eof_temp_filename, newfolderpath, "script.txt", sizeof(eof_temp_filename));
 			jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 			if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 			{	//Lyric export failed
@@ -2392,7 +2391,7 @@ int eof_save_helper(char *destfilename)
 	if(eof_write_rs_files)
 	{	//If the user wants to save Rocksmith capable files
 		char user_warned = 0;	//Tracks whether the user was warned about hand positions being undefined and auto-generated during export
-		(void) append_filename(eof_temp_filename, newfolderpath, "xmlpath.xml", 1024);	//Re-acquire the save's target folder
+		(void) append_filename(eof_temp_filename, newfolderpath, "xmlpath.xml", sizeof(eof_temp_filename));	//Re-acquire the save's target folder
 
 		eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS, &user_warned);
 		eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS_22, &user_warned);
@@ -2409,8 +2408,8 @@ int eof_save_helper(char *destfilename)
 			{	//Otherwise use the track's native name
 				arrangement_name = eof_song->track[EOF_TRACK_VOCALS]->name;
 			}
-			(void) append_filename(eof_temp_filename, newfolderpath, arrangement_name, 1024);
-			(void) replace_extension(eof_temp_filename, eof_temp_filename, "xml", 1024);
+			(void) append_filename(eof_temp_filename, newfolderpath, arrangement_name, sizeof(eof_temp_filename));
+			(void) replace_extension(eof_temp_filename, eof_temp_filename, "xml", sizeof(eof_temp_filename));
 			jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 			if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 			{	//Lyric export failed
@@ -2425,23 +2424,37 @@ int eof_save_helper(char *destfilename)
 		(void) eof_detect_difficulties(eof_song, eof_selected_track);		//Update eof_track_diff_populated_status[] to reflect the currently selected difficulty
 		eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
 
-		//Determine if "[song name].wav" exists, if not, export the chart audio in WAV format
-		eof_get_rocksmith_wav_path(eof_temp_filename, newfolderpath, sizeof(eof_temp_filename));	//Build the path to the target WAV file
-		if(!exists(eof_temp_filename) && !eof_silence_loaded)
-		{	//If the WAV file does not exist, and chart audio is loaded
-			set_window_title("Saving WAV file for use with Wwise.  Please wait.");
-			SAMPLE *decoded = alogg_create_sample_from_ogg(eof_music_track);	//Create PCM data from the loaded chart audio
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Writing RS WAV file (%s)", eof_temp_filename);
-			eof_log(eof_log_string, 1);
-			save_wav_with_silence_appended(eof_temp_filename, decoded, 8000);	//Write a WAV file with it, appending 8 seconds of silence to it
-			eof_fix_window_title();
+		//Determine if the Rocksmith WAV file exists, if not, export the chart audio in WAV format
+		if(!eof_silence_loaded)
+		{	//If chart audio is loaded
+			eof_get_rocksmith_wav_path(eof_temp_filename, newfolderpath, sizeof(eof_temp_filename));	//Build the path to the target WAV file
+			if(!exists(eof_temp_filename))
+			{	//If the WAV file does not exist
+				(void) replace_filename(eof_temp_filename, newfolderpath, "guitar.wav", sizeof(eof_temp_filename));
+				if(!exists(eof_temp_filename))
+				{	//If "guitar.wav" also does not exist
+					set_window_title("Saving WAV file for use with Wwise.  Please wait.");
+					SAMPLE *decoded = alogg_create_sample_from_ogg(eof_music_track);	//Create PCM data from the loaded chart audio
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Writing RS WAV file (%s)", eof_temp_filename);
+					eof_log(eof_log_string, 1);
+					if(!save_wav_with_silence_appended(eof_temp_filename, decoded, 8000))	//Write a WAV file with it, appending 8 seconds of silence to it
+					{	//If it didn't save, try saving again as "guitar.wav", just in case the user put invalid characters in the song title
+						(void) append_filename(eof_temp_filename, newfolderpath, "guitar.wav", sizeof(eof_temp_filename));
+						if(!save_wav_with_silence_appended(eof_temp_filename, decoded, 8000))
+						{	//If it didn't save again
+							allegro_message("Error saving WAV file, check the log for the OS' reason");
+						}
+					}
+					eof_fix_window_title();
+				}
+			}
 		}
 	}
 
 	/* save OGG file if necessary*/
 	if(!eof_silence_loaded)
 	{	//Only try to save an audio file if one is loaded
-		(void) append_filename(eof_temp_filename, newfolderpath, "guitar.ogg", 1024);
+		(void) append_filename(eof_temp_filename, newfolderpath, "guitar.ogg", sizeof(eof_temp_filename));
 		if(function == 1)
 		{	//If performing "Save" function, only write guitar.ogg if it is missing
 			if(!exists(eof_temp_filename))
@@ -2457,7 +2470,7 @@ int eof_save_helper(char *destfilename)
 	{
 		if(eof_song->tags->ogg[ctr].modified)
 		{
-			(void) replace_filename(eof_temp_filename, eof_temp_filename, eof_song->tags->ogg[ctr].filename, 1024);
+			(void) replace_filename(eof_temp_filename, eof_temp_filename, eof_song->tags->ogg[ctr].filename, sizeof(eof_temp_filename));
 			(void) snprintf(oggfn, sizeof(oggfn) - 1, "%s.lastsaved", eof_temp_filename);
 			(void) eof_copy_file(eof_temp_filename, oggfn);
 			eof_song->tags->ogg[ctr].modified = 0;
