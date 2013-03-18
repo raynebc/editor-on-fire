@@ -3355,8 +3355,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							np[ctr2]->type = eof_note_type;
 
 	//Determine the correct timestamp position and duration
-							beat_position = measure_position * curnum + 0.5;				//How many whole beats into the current measure the position is
-							partial_beat_position = measure_position * curnum - beat_position;	//How far into this beat the note begins
+							beat_position = measure_position * curnum;								//How many whole beats into the current measure the position is
+							partial_beat_position = (measure_position * curnum) - beat_position;	//How far into this beat the note begins
 							beat_position += curbeat;	//Add the number of beats into the track the current measure is
 							beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
 							np[ctr2]->pos = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position);	//Define the position of this note

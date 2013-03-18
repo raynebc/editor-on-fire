@@ -1053,6 +1053,10 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 									tremolo = (flags & EOF_NOTE_FLAG_IS_TREMOLO) ? 1 : 0;
 									pop = (flags & EOF_PRO_GUITAR_NOTE_FLAG_POP) ? 1 : -1;
 									slap = (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLAP) ? 1 : -1;
+									if(pop || slap)
+									{	//If the note has pop or slap notation
+										length = 0;	//Remove all sustain for the note, because Rocksmith will crash if a sustain note has either of these techniques
+									}
 									if(!eof_pro_guitar_note_lowest_fret(tp, ctr3))
 									{	//If this note contains no fretted strings
 										if(bend || (slideto >= 0))
@@ -1897,7 +1901,7 @@ void eof_delete_rocksmith_wav(void)
 	}
 	else
 	{	//Otherwise delete guitar.wav because this is the name it will use if the song title has characters invalid for a filename
-		(void) replace_filename(checkfn, eof_song_path, "guitar.wav", sizeof(checkfn));
+		(void) replace_filename(checkfn, eof_song_path, "guitar.wav", 1024);
 		(void) delete_file(checkfn);
 	}
 }

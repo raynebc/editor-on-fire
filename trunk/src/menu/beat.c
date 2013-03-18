@@ -2249,7 +2249,7 @@ int eof_rocksmith_section_dialog_add(void)
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
 			if(ptr)
 			{	//If an existing RS section is being edited
-				ustrcpy(ptr->text, newstring);
+				(void) ustrcpy(ptr->text, newstring);
 				ptr->flags = newflags;
 				ptr->track = newtrack;
 			}

@@ -1585,8 +1585,8 @@ void eof_read_global_keys(void)
 		return;
 	}
 
-	/* activate the menu when ALT and the appropriate letter key are both pressed */
-	if(KEY_EITHER_ALT && (key[KEY_F] || key[KEY_E] || key[KEY_S] || key[KEY_N] || key[KEY_B] || key[KEY_H]))
+	/* activate the menu when ALT is pressed */
+	if(KEY_EITHER_ALT)
 	{
 		clear_keybuf();
 		eof_cursor_visible = 0;
