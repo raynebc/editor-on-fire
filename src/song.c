@@ -2693,7 +2693,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				break;
 				case EOF_PRO_KEYS_TRACK_FORMAT:	//Pro Keys
 					allegro_message("Error: Pro Keys not supported yet.  Aborting");
-					pack_fclose(fp);
+					(void) pack_fclose(fp);
 				return 0;
 				case EOF_PRO_GUITAR_TRACK_FORMAT:	//Pro Guitar/Bass
 					(void) pack_putc(sp->pro_guitar_track[tracknum]->numfrets, fp);	//Write the number of frets used in this track
@@ -2857,11 +2857,11 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				break;//Pro Guitar/Bass
 				case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:	//Variable Lane Legacy (not implemented yet)
 					allegro_message("Error: Variable lane not supported yet.  Aborting");
-					pack_fclose(fp);
+					(void) pack_fclose(fp);
 				return 0;
 				default://Unknown track type
 					allegro_message("Error: Unsupported track type.  Aborting");
-					pack_fclose(fp);
+					(void) pack_fclose(fp);
 				return 0;
 			}//Perform the appropriate logic to write this format of track
 		}//Write other tracks
@@ -5705,9 +5705,15 @@ void eof_truncate_chart(EOF_SONG *sp)
 	if(sp->beat[sp->beats - 1]->pos < targetpos)
 	{	//If there aren't enough beats so that at least one starts at or after the target position
 		double beat_length = (double)60000.0 / ((double)60000000.0 / (double)sp->beat[sp->beats - 1]->ppqn);	//Get the length of the current last beat
+
+		eof_log("\tAdding beats", 1);
 		while(sp->beat[sp->beats - 1]->pos < targetpos)
 		{	//While there aren't enough beats so that at least one starts at or after the target position
-			(void) eof_song_add_beat(sp);
+			if(!eof_song_add_beat(sp))
+			{	//If there was an error adding a beat
+				eof_log("\tError adding beat.  Aborting", 1);
+				return;
+			}
 			sp->beat[sp->beats - 1]->ppqn = sp->beat[sp->beats - 2]->ppqn;		//Set this beat's tempo to match the previous beat
 			sp->beat[sp->beats - 1]->fpos = sp->beat[sp->beats - 2]->fpos + beat_length;	//Set this beat's position to one beat length after the previous beat
 			sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos + 0.5;	//Round up
@@ -5718,6 +5724,7 @@ void eof_truncate_chart(EOF_SONG *sp)
 	{	//Find the beat that precedes the target position
 		double beat_length;
 
+		eof_log("\tDeleting beats", 1);
 		for(targetbeat = 0; targetbeat < sp->beats; targetbeat++)
 		{	//For each beat
 			if((targetbeat + 1 >= sp->beats) || (sp->beat[targetbeat + 1]->pos > targetpos))
@@ -5738,6 +5745,8 @@ void eof_truncate_chart(EOF_SONG *sp)
 			}
 		}
 	}
+
+ 	eof_log("eof_truncate_chart() exiting", 1);
 }
 
 unsigned long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long note)

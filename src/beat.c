@@ -340,7 +340,9 @@ void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 
 EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp)
 {
-	if((sp == NULL) || (sp->beat == NULL))
+ 	eof_log("eof_song_add_beat() entered", 2);
+
+ 	if((sp == NULL) || (sp->beat == NULL))
 		return NULL;
 
 	if(sp->beats < EOF_MAX_BEATS)
@@ -373,7 +375,7 @@ void eof_song_delete_beat(EOF_SONG * sp, unsigned long beat)
 {
 	unsigned long i;
 
- 	eof_log("eof_song_delete_beat() entered", 1);
+ 	eof_log("eof_song_delete_beat() entered", 2);
 
 	if(sp)
 	{

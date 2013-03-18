@@ -1749,7 +1749,7 @@ int eof_menu_note_clear_yellow(void)
 			{	//Otherwise check the note's normal bitmask
 				note = eof_get_note_note(eof_song, eof_selected_track, i);
 			}
-			if(note & 3)
+			if(note & 4)
 			{	//If this note has a yellow gem
 				if(!u)
 				{	//Make a back up before changing the first note

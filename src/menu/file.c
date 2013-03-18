@@ -1078,7 +1078,7 @@ int eof_menu_file_display(void)
 	eof_display_dialog[1].flags = eof_soft_cursor ? D_SELECTED : 0;
 	eof_display_dialog[2].flags = (eof_desktop == 0) ? D_SELECTED : 0;
 	if(eof_popup_dialog(eof_display_dialog, 0) == 5)
-	{
+	{	//User clicked OK
 		eof_soft_cursor = (eof_display_dialog[1].flags & D_SELECTED) ? 1 : 0;
 		eof_desktop = (eof_display_dialog[2].flags & D_SELECTED) ? 0 : 1;
 		eof_apply_display_settings(eof_display_dialog[4].d1);
@@ -1101,11 +1101,6 @@ void eof_apply_display_settings(int mode)
 	{
 		set_color_depth(8);
 	}
-	if(!eof_load_data())
-	{
-		allegro_message("Could not reload program data!");
-		exit(0);
-	}
 	eof_set_display_mode_preset(mode);
 	set_palette(eof_palette);
 	if(!eof_soft_cursor)
@@ -1118,6 +1113,11 @@ void eof_apply_display_settings(int mode)
 	else
 	{
 		show_os_cursor(0);
+	}
+	if(!eof_load_data())
+	{	//Load images AFTER the graphics mode has been set, to avoid performance issues in Allegro
+		allegro_message("Could not reload program data!");
+		exit(0);
 	}
 
 	//Update coordinate related items
@@ -2783,8 +2783,10 @@ int eof_menu_file_gp_import(void)
 			allegro_message("Failure");
 		}
 
+		eof_log("Cleaning up beats", 1);
 		eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
 		eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
+		eof_log("Cleaning up imported notes", 1);
 		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to clean up the track
 		(void) eof_menu_track_selected_track_number(eof_selected_track);	//Re-select the active track to allow for a change in string count
 	}
