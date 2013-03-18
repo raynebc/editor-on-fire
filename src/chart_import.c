@@ -4,7 +4,6 @@
 #include "beat.h"
 #include "chart_import.h"
 #include "event.h"
-#include "feedback.h"
 #include "midi.h"	//For eof_apply_ts()
 #include "ini_import.h"	//For eof_import_ini()
 #include "menu/beat.h"
@@ -529,7 +528,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 	char songparsed=0,syncparsed=0,eventsparsed=0;
 		//Flags to indicate whether each of the mentioned sections had already been parsed
 	char currentsection=0;					//Will be set to 1 for [Song], 2 for [SyncTrack], 3 for [Events] or 4 for an instrument section
-	size_t maxlinelength=0;			//I will count the length of the longest line (including NULL char/newline) in the
+	size_t maxlinelength=0;					//I will count the length of the longest line (including NULL char/newline) in the
 	char *buffer=NULL,*buffer2=NULL;		//Will be an array large enough to hold the largest line of text from input file
 	unsigned long index=0,index2=0;			//Indexes for buffer and buffer2, respectively
 	char *substring=NULL,*substring2=NULL;	//Used with strstr() to find tag strings in the input file

@@ -16,7 +16,6 @@
 #include "../midi.h"
 #include "../ini.h"
 #include "../ini_import.h"
-#include "../feedback.h"
 #include "../dialog/proc.h"
 #include "../mix.h"
 #include "../tuning.h"
