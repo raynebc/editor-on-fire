@@ -1053,7 +1053,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 									tremolo = (flags & EOF_NOTE_FLAG_IS_TREMOLO) ? 1 : 0;
 									pop = (flags & EOF_PRO_GUITAR_NOTE_FLAG_POP) ? 1 : -1;
 									slap = (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLAP) ? 1 : -1;
-									if(pop || slap)
+									if((pop > 0) || (slap > 0))
 									{	//If the note has pop or slap notation
 										length = 0;	//Remove all sustain for the note, because Rocksmith will crash if a sustain note has either of these techniques
 									}
