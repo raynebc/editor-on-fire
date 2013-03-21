@@ -1802,7 +1802,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				for(ctr=0; ctr<count; ctr++)
 				{	//For each note in this track
 					(void) eof_load_song_string_pf(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->name,fp,EOF_NAME_LENGTH);	//Read the note's name
-					(void) pack_getc(fp);																		//Read the chord's number (not supported yet)
+					(void) pack_getc(fp);																//Read the chord's number (not supported yet)
 					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->type = pack_getc(fp);		//Read the note's difficulty
 					if(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->type >= numdiffs)
 					{	//If this note's difficulty is the highest encountered in the track so far
@@ -2709,7 +2709,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 						(void) pack_putc(0, fp);													//Write the chord's number (not supported yet)
 						(void) pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->type, fp);		//Write the note's difficulty
 						(void) pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->note, fp);		//Write the note's bitflags
-						(void) pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->ghost, fp);	//Write the note's ghost bitflags
+						(void) pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->ghost, fp);		//Write the note's ghost bitflags
 						for(ctr2=0, bitmask=1; ctr2 < 8; ctr2++, bitmask <<= 1)
 						{	//For each of the 8 bits in the note bitflag
 							if(sp->pro_guitar_track[tracknum]->note[ctr]->note & bitmask)

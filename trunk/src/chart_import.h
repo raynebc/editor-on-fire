@@ -90,6 +90,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error);
 unsigned long FindLongestLineLength_ALLEGRO(char *filename,char exit_on_empty);
 	//An adaptation of FoFLC's FindLongestLineLength() function that uses Allegro's file I/O routines in order to
 	//avoid problems with the standard C functions being unable to handle filenames with special characters
+	//Returns 0 on error
 EOF_SONG * eof_import_chart(const char * fn);
 	//Invokes ImportFeedback() and transfers the chart data to EOF
 

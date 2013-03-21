@@ -1820,7 +1820,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	char import_ts = 0;		//Will be set to nonzero if user opts to import time signatures
 
 	eof_log("\tImporting Guitar Pro file", 1);
-	eof_log("eof_import_gp() entered", 1);
+	eof_log("eof_load_gp() entered", 1);
 
 
 //Initialize pointers and handles
@@ -1831,6 +1831,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	inf = pack_fopen(fn, "rb");
 	if(!inf)
 	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError loading:  Cannot open input GP file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		eof_log(eof_log_string, 1);
 		return NULL;
 	}
 	gp = malloc(sizeof(struct eof_guitar_pro_struct));
@@ -3500,7 +3502,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			}
 		}
 	}
-
 
 //Create tremolo phrases
 	for(ctr = 0; ctr < gp->numtracks; ctr++)

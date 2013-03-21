@@ -776,6 +776,7 @@ int eof_menu_file_lyrics_import(void)
 			}
 		}
 	}
+	eof_truncate_chart(eof_song);	//Add beats to the chart if necessary to encompass the imported lyrics
 	eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
 	eof_reset_lyric_preview_lines();
 	eof_show_mouse(NULL);
@@ -2782,11 +2783,8 @@ int eof_menu_file_gp_import(void)
 			allegro_message("Failure");
 		}
 
-		eof_log("Cleaning up beats", 1);
-		eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
-		eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
-		eof_log("Cleaning up imported notes", 1);
-		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to clean up the track
+		eof_log("Cleaning up", 1);
+		eof_init_after_load(0);
 		(void) eof_menu_track_selected_track_number(eof_selected_track);	//Re-select the active track to allow for a change in string count
 	}
 	return 1;
