@@ -67,6 +67,7 @@ NCDFS_FILTER_LIST * eof_filter_dB_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_gh_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_gp_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_text_files = NULL;
+NCDFS_FILTER_LIST * eof_filter_rs_files = NULL;
 
 PALETTE     eof_palette;
 BITMAP *    eof_image[EOF_MAX_IMAGES] = {NULL};
@@ -1638,7 +1639,7 @@ void eof_read_global_keys(void)
 		}
 
 		/* redo (CTRL+R) */
-		if(KEY_EITHER_CTRL && key[KEY_R] && eof_redo_toggle)
+		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && key[KEY_R] && eof_redo_toggle)
 		{
 			eof_menu_edit_redo();
 			key[KEY_R] = 0;
@@ -3571,6 +3572,14 @@ int eof_initialize(int argc, char * argv[])
 	}
 	ncdfs_filter_list_add(eof_filter_text_files, "txt", "Guitar Pro lyric text files (*.txt)", 1);
 
+	eof_filter_rs_files = ncdfs_filter_list_create();
+	if(!eof_filter_rs_files)
+	{
+		allegro_message("Could not create file list filter (*.xml)!");
+		return 0;
+	}
+	ncdfs_filter_list_add(eof_filter_rs_files, "xml", "Rocksmith chart files (*.xml)", 1);
+
 	/* check availability of MP3 conversion tools */
 	if(!eof_supports_mp3)
 	{
@@ -3959,6 +3968,8 @@ void eof_exit(void)
 	eof_filter_gp_files = NULL;
 	free(eof_filter_text_files);
 	eof_filter_text_files = NULL;
+	free(eof_filter_rs_files);
+	eof_filter_rs_files = NULL;
 	//Free command line storage variables (for Windows build)
 	#ifdef ALLEGRO_WINDOWS
 	for(i = 0; i < eof_windows_argc; i++)
@@ -4153,7 +4164,7 @@ void eof_init_after_load(char initaftersavestate)
 	}
 	eof_menu_edit_zoom_level(eof_zoom);
 	eof_calculate_beats(eof_song);
-	eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
+	eof_truncate_chart(eof_song);	//Add or remove beat markers as necessary and update the eof_chart_length variable
 	if(!initaftersavestate)
 	{	//If this wasn't cleanup after an undo/redo state, reset more variables
 		eof_music_pos = eof_av_delay;

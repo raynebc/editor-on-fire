@@ -136,15 +136,31 @@ int ReadTrackHeader(FILE *inf,struct Track_chunk *tchunk)
 		//NULL, so when the first Set Tempo is encountered, the default tempo will be scrapped
 
 //Attempt to read one more byte, if EOF was triggered, we reached the end of the MIDI
-	c=fgetc(inf);
-	if(c==EOF)	//On failure to read, this function returns error instead of exiting
-		return 1;
+	while(1)
+	{
+		c=fgetc(inf);
+		if(c==EOF)	//On failure to read, this function returns error instead of exiting
+			return 1;
 
-	header[0]=c;	//If we're here, there's a track header, and the first byte of it has been read
-	fread_err(&(header[1]),3,1,inf);	//Read the other 3 bytes of the header
-	header[4]='\0';	//Terminate string, which is now expected to be "MTrk"
-	if(strcmp(header,"MTrk") != 0)
-		return -1;	//Return invalid track header
+		header[0]=c;	//If we're here, there's a track header, and the first byte of it has been read
+		fread_err(&(header[1]),3,1,inf);	//Read the other 3 bytes of the header
+		header[4]='\0';	//Terminate string, which is now expected to be "MTrk"
+		if(!strcmp(header,"MTrk"))
+		{	//If this is a MIDI track header
+			break;
+		}
+		else
+		{	//In rare cases, a MIDI might end a track with multiple END OF TRACK events instead of one
+			if((header[0] == 0) && (header[1] == -1) && (header[2] == 47) && (header[3] == 0))
+			{	//If this indicates another end of track event (0x00FF2F00)
+				continue;	//Try to load another 4 bytes to see if it's a track header
+			}
+			else
+			{
+				return -1;	//Return invalid track header
+			}
+		}
+	}
 
 	ReadDWORDBE(inf,&(tchunk->chunksize));
 

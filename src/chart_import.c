@@ -574,6 +574,12 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 
 //Allocate memory buffers large enough to hold any line in this file
 	maxlinelength=FindLongestLineLength_ALLEGRO(filename,1);
+	if(!maxlinelength)
+	{
+		eof_log("\tError finding the largest line in the file.  Aborting", 1);
+		(void) pack_fclose(inf);
+		return NULL;
+	}
 	buffer=(char *)malloc_err(maxlinelength);
 	buffer2=(char *)malloc_err(maxlinelength);
 
@@ -1584,10 +1590,15 @@ unsigned long FindLongestLineLength_ALLEGRO(char *filename,char exit_on_empty)
 	int inputchar=0;
 	PACKFILE *inf;
 
-	assert_wrapper(filename != NULL);	//This must not be NULL
+	if(filename == NULL)
+		return 0;	//Return error
 	inf = pack_fopen(filename, "rt");
 	if(inf == NULL)
-		exit_wrapper(1);	//File open failed
+	{	//File open failed
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError loading:  Cannot open input file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		eof_log(eof_log_string, 1);
+		return 0;	//Return error
+	}
 
 	do{
 		ctr=0;			//Reset line length counter

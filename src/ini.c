@@ -23,7 +23,6 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	char slidesfound = 0;
 	char hihatmarkersfound = 0;
 	char rimshotmarkersfound = 0;
-	int populated_track = 0;
 
 	eof_log("eof_save_ini() entered", 1);
 
@@ -249,49 +248,66 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	/* write tuning tags */
 	if(eof_get_track_size(sp, EOF_TRACK_PRO_GUITAR))
 	{	//If the 17 fret pro guitar track is populated
-		populated_track = EOF_TRACK_PRO_GUITAR;
-	}
-	if(eof_get_track_size(sp, EOF_TRACK_PRO_GUITAR_22))
-	{	//If the 22 fret pro guitar track is populated
-		populated_track = EOF_TRACK_PRO_GUITAR_22;
-	}
-	if(populated_track)
-	{	//If either pro guitar track was populated (22 fret version taking priority)
 		(void) ustrcat(ini_string, "\r\n");
-		tracknum = sp->track[populated_track]->tracknum;
+		tracknum = sp->track[EOF_TRACK_PRO_GUITAR]->tracknum;
 		(void) ustrcat(ini_string, "real_guitar_tuning =");	//Write the pro guitar tuning tag
 		for(i = 0; i < sp->pro_guitar_track[tracknum]->numstrings; i++)
 		{	//For each string used in the track
 			(void) snprintf(buffer, sizeof(buffer) - 1, " %d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
 			(void) ustrcat(ini_string, buffer);	//Append the string's tuning value to the ongoing INI string
 		}
-		tuning_name = eof_lookup_tuning_name(sp, populated_track, sp->pro_guitar_track[tracknum]->tuning);	//Check to see if this track's tuning has a defined name
+		tuning_name = eof_lookup_tuning_name(sp, EOF_TRACK_PRO_GUITAR, sp->pro_guitar_track[tracknum]->tuning);	//Check to see if this track's tuning has a defined name
 		if(tuning_name != eof_tuning_unknown)
 		{	//If the lookup found a name
 			(void) snprintf(buffer, sizeof(buffer) - 1, " \"%s\"", tuning_name);
 			(void) ustrcat(ini_string, buffer);
 		}
 	}
-	populated_track = 0;
+	if(eof_get_track_size(sp, EOF_TRACK_PRO_GUITAR_22))
+	{	//If the 22 fret pro guitar track is populated
+		(void) ustrcat(ini_string, "\r\n");
+		tracknum = sp->track[EOF_TRACK_PRO_GUITAR_22]->tracknum;
+		(void) ustrcat(ini_string, "real_guitar_22_tuning =");	//Write the pro guitar tuning tag
+		for(i = 0; i < sp->pro_guitar_track[tracknum]->numstrings; i++)
+		{	//For each string used in the track
+			(void) snprintf(buffer, sizeof(buffer) - 1, " %d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
+			(void) ustrcat(ini_string, buffer);	//Append the string's tuning value to the ongoing INI string
+		}
+		tuning_name = eof_lookup_tuning_name(sp, EOF_TRACK_PRO_GUITAR_22, sp->pro_guitar_track[tracknum]->tuning);	//Check to see if this track's tuning has a defined name
+		if(tuning_name != eof_tuning_unknown)
+		{	//If the lookup found a name
+			(void) snprintf(buffer, sizeof(buffer) - 1, " \"%s\"", tuning_name);
+			(void) ustrcat(ini_string, buffer);
+		}
+	}
 	if(eof_get_track_size(sp, EOF_TRACK_PRO_BASS))
 	{	//If the 17 fret pro bass track is populated
-		populated_track = EOF_TRACK_PRO_BASS;
-	}
-	if(eof_get_track_size(sp, EOF_TRACK_PRO_BASS_22))
-	{	//If the 22 fret pro bass track is populated
-		populated_track = EOF_TRACK_PRO_BASS_22;
-	}
-	if(populated_track)
-	{	//If either pro bass track was populated (22 fret version taking priority)
 		(void) ustrcat(ini_string, "\r\n");
-		tracknum = sp->track[populated_track]->tracknum;
+		tracknum = sp->track[EOF_TRACK_PRO_BASS]->tracknum;
 		(void) ustrcat(ini_string, "real_bass_tuning =");	//Write the pro bass tuning tag
 		for(i = 0; i < sp->pro_guitar_track[tracknum]->numstrings; i++)
 		{	//For each string used in the track
 			(void) snprintf(buffer, sizeof(buffer) - 1, " %d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
 			(void) ustrcat(ini_string, buffer);	//Append the string's tuning value to the ongoing INI string
 		}
-		tuning_name = eof_lookup_tuning_name(sp, populated_track, sp->pro_guitar_track[tracknum]->tuning);	//Check to see if this track's tuning has a defined name
+		tuning_name = eof_lookup_tuning_name(sp, EOF_TRACK_PRO_BASS, sp->pro_guitar_track[tracknum]->tuning);	//Check to see if this track's tuning has a defined name
+		if(tuning_name != eof_tuning_unknown)
+		{	//If the lookup found a name
+			(void) snprintf(buffer, sizeof(buffer) - 1, " \"%s\"", tuning_name);
+			(void) ustrcat(ini_string, buffer);
+		}
+	}
+	if(eof_get_track_size(sp, EOF_TRACK_PRO_BASS_22))
+	{	//If the 22 fret pro bass track is populated
+		(void) ustrcat(ini_string, "\r\n");
+		tracknum = sp->track[EOF_TRACK_PRO_BASS_22]->tracknum;
+		(void) ustrcat(ini_string, "real_bass_22_tuning =");	//Write the pro bass tuning tag
+		for(i = 0; i < sp->pro_guitar_track[tracknum]->numstrings; i++)
+		{	//For each string used in the track
+			(void) snprintf(buffer, sizeof(buffer) - 1, " %d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
+			(void) ustrcat(ini_string, buffer);	//Append the string's tuning value to the ongoing INI string
+		}
+		tuning_name = eof_lookup_tuning_name(sp, EOF_TRACK_PRO_BASS_22, sp->pro_guitar_track[tracknum]->tuning);	//Check to see if this track's tuning has a defined name
 		if(tuning_name != eof_tuning_unknown)
 		{	//If the lookup found a name
 			(void) snprintf(buffer, sizeof(buffer) - 1, " \"%s\"", tuning_name);

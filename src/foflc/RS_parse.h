@@ -8,5 +8,6 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 	//Copies the input string into the specified buffer of the given size.  Any of the characters that XML requires to be escaped
 	//are converted into the appropriate character sequence (ie. ' becomes &apos;).  If the expanded string's length is longer
 	//than the given warning value, the user is given a warning message that the string will need to be shortened.
+	//The buffer is guaranteed to be NULL terminated
 
 #endif //#ifndef _rs_parse_h_
