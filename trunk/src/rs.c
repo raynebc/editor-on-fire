@@ -861,7 +861,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	}
 	if(tp->popupmessages)
 	{	//If at least one popup message is to be written
-		(void) snprintf(buffer, sizeof(buffer) - 1, "  <controls count =\"%lu\">\n", tp->popupmessages * 2);	//Each will need one control to display and one control to clear
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <controls count=\"%lu\">\n", tp->popupmessages * 2);	//Each will need one control to display and one control to clear
 		(void) pack_fputs(buffer, fp);
 		for(ctr = 0; ctr < tp->popupmessages; ctr++)
 		{	//For each popup message
@@ -1048,7 +1048,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 									hammeron = (flags & EOF_PRO_GUITAR_NOTE_FLAG_HO) ? 1 : 0;
 									pulloff = (flags & EOF_PRO_GUITAR_NOTE_FLAG_PO) ? 1 : 0;
 									harmonic = (flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC) ? 1 : 0;
-									hopo = (hammeron & pulloff) ? 1 : 0;
+									hopo = (hammeron | pulloff) ? 1 : 0;
 									palmmute = (flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE) ? 1 : 0;
 									tremolo = (flags & EOF_NOTE_FLAG_IS_TREMOLO) ? 1 : 0;
 									pop = (flags & EOF_PRO_GUITAR_NOTE_FLAG_POP) ? 1 : -1;

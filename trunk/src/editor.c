@@ -456,7 +456,7 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 		{	//Don't reference a negative index of eof_song->beat[]
 			sp->beat_length = eof_song->beat[sp->beat - 1]->pos - eof_song->beat[sp->beat - 2]->pos;
 		}
-		else if(sp->beat + 1 < eof_song->beats)
+		else if((sp->beat + 1 < eof_song->beats) && (sp->beat >= 0))
 		{	//Don't read out of bounds
 			sp->beat_length = eof_song->beat[sp->beat + 1]->pos - eof_song->beat[sp->beat]->pos;
 		}

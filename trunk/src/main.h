@@ -505,6 +505,7 @@ void eof_exit(void);		//Formally exits the program, releasing all data structure
 
 void eof_init_after_load(char initaftersavestate);
 	//Initializes variables and cleans up notes, should be used after loading or creating a chart
+	//Functions that import into a track (lyrics, GP, etc) should not use this function as it will do things like erase all undo information
 	//If initaftersavestate is zero (as should be used when loading/importing a chart/MIDI/etc), more variables are forcibly initialized
 void eof_cleanup_beat_flags(EOF_SONG *sp);	//Repairs the text event and anchor statuses for beats in the specified chart
 
