@@ -20,6 +20,7 @@
 #include "../mix.h"
 #include "../tuning.h"
 #include "../rs.h"
+#include "../rs_import.h"
 #include "../silence.h"	//For save_wav_with_silence_appended
 #include "beat.h"	//For eof_menu_beat_reset_offset()
 #include "file.h"
@@ -30,6 +31,13 @@
 #ifdef USEMEMWATCH
 #include "../memwatch.h"
 #endif
+
+MENU eof_file_display_menu[] =
+{
+    {"&Display", eof_menu_file_display, NULL, 0, NULL},
+    {"Set display &Width", eof_set_display_width, NULL, EOF_LINUX_DISABLE, NULL},
+    {NULL, NULL, NULL, 0, NULL}
+};
 
 MENU eof_file_menu[] =
 {
@@ -45,11 +53,11 @@ MENU eof_file_menu[] =
     {"&GH Import", eof_menu_file_gh_import, NULL, 0, NULL},
     {"Lyric Import\tF8", eof_menu_file_lyrics_import, NULL, 0, NULL},
     {"Guitar Pro Import", eof_menu_file_gp_import, NULL, 0, NULL},
+    {"Rocksmith Import", eof_menu_file_rs_import, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"Settings\tF10", eof_menu_file_settings, NULL, 0, NULL},
     {"&Preferences\tF11", eof_menu_file_preferences, NULL, 0, NULL},
-    {"&Display", eof_menu_file_display, NULL, 0, NULL},
-    {"Set display width", eof_set_display_width, NULL, EOF_LINUX_DISABLE, NULL},
+    {"&Display", NULL, eof_file_display_menu, 0, NULL},
     {"&Controllers", eof_menu_file_controllers, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"Song Folder", eof_menu_file_song_folder, NULL, 0, NULL},
@@ -237,10 +245,12 @@ void eof_prepare_file_menu(void)
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{
 			eof_file_menu[11].flags = 0; // Guitar Pro Import
+			eof_file_menu[12].flags = 0; // Rocksmith Import
 		}
 		else
 		{
 			eof_file_menu[11].flags = D_DISABLED;
+			eof_file_menu[12].flags = D_DISABLED;
 		}
 	}
 	else
@@ -250,6 +260,7 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[5].flags = D_DISABLED; // Load OGG
 		eof_file_menu[10].flags = D_DISABLED; // Lyric Import
 		eof_file_menu[11].flags = D_DISABLED; // Guitar Pro Import
+		eof_file_menu[12].flags = D_DISABLED; // Rocksmith Import
 	}
 }
 
@@ -2783,8 +2794,11 @@ int eof_menu_file_gp_import(void)
 			allegro_message("Failure");
 		}
 
-		eof_log("Cleaning up", 1);
-		eof_init_after_load(0);
+		eof_log("Cleaning up beats", 1);
+		eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
+		eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
+		eof_log("Cleaning up imported notes", 1);
+		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to clean up the track
 		(void) eof_menu_track_selected_track_number(eof_selected_track);	//Re-select the active track to allow for a change in string count
 	}
 	return 1;
@@ -2854,6 +2868,62 @@ int eof_set_display_width(void)
 	eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 	eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case the display window size was changed
 	eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case the display window size was changed
+
+	return D_O_K;
+}
+
+int eof_menu_file_rs_import(void)
+{
+	char * returnedfn = NULL;
+	EOF_PRO_GUITAR_TRACK *tp = NULL;
+	unsigned long ctr;
+
+	if(!eof_song || !eof_song_loaded)
+		return 1;	//For now, don't do anything unless a project is active
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Don't do anything unless the active track is a pro guitar/bass track
+
+	if(eof_get_track_size(eof_song, eof_selected_track) && alert("This track already has notes", "Importing this Rocksmith track will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+	{	//If the active track is already populated and the user doesn't opt to overwrite it
+		return 0;
+	}
+
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	returnedfn = ncd_file_select(0, eof_last_eof_path, "Import Rocksmith", eof_filter_rs_files);
+	eof_clear_input();
+	if(returnedfn)
+	{
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state because the tempo map will be overwritten
+		tp = eof_load_rs(returnedfn);
+
+		if(tp)
+		{	//If the track was imported, replace the active track
+			unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+
+			tp->parent = eof_song->pro_guitar_track[tracknum]->parent;
+			for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
+			{	//For each note in the active track
+				free(eof_song->pro_guitar_track[tracknum]->note[ctr]);	//Free its memory
+			}
+			free(eof_song->pro_guitar_track[tracknum]);	//Free the active track
+			eof_song->pro_guitar_track[tracknum] = tp;	//Replace it with the track imported from the Rocksmith file
+
+			eof_log("Cleaning up beats", 1);
+			eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
+			eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
+			eof_log("Cleaning up imported notes", 1);
+			eof_song->track[eof_selected_track]->numdiffs = eof_detect_difficulties(eof_song, eof_selected_track);	//Update the number of difficulties used in this track
+			eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to clean up the track
+			(void) eof_menu_track_selected_track_number(eof_selected_track);	//Re-select the active track to allow for a change in string count
+		}
+		else
+		{
+			allegro_message("Failure");
+		}
+	}
 
 	return D_O_K;
 }

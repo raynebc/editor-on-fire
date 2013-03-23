@@ -115,5 +115,8 @@ int eof_menu_file_gp_import(void);
 	//Loads each track from a Guitar Pro file and prompts user which to import into the active project
 char * eof_gp_tracks_list(int index, int * size);
 	//Dialog logic to display the imported pro guitar tracks present in the eof_parsed_gp_file global pointer
+int eof_menu_file_rs_import(void);
+	//Replaces the active pro guitar/bass track with the content of the arrangement in the user's selected Rocksmith XML file
+	//Beat timings in the active project are replaced with the timings in the XML file
 
 #endif
