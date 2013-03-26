@@ -1,4 +1,4 @@
-foflc 2.39b Notes:
+foflc 2.39 Notes:
 
 PURPOSE:
 --------
@@ -17,7 +17,7 @@ foflc	[-offset #] [-nohyphens [1|2|3]] [-noplus] [-marklines] [-nolyrics]
 -The use of the "detect" or "id3tag" parameters will cause the program to run the requested function and end, ignoring any conversion specified by the other parameters.
 -There must be white space (simply a space) between each parameter.  Parameters inside curly braces {} are required.  Parameters inside brackets [] are optional.  Parameters inside parantheses () are conditional based on the input or output format.  The lyrics parameter, for example, should only be provided when importing/exporting vocal rhythm format.  When typing parameters, do not type the curly braces {}, parantheses () or brackets [] themselves.
 -Use "foflc -help" for a command-line summary of parameter syntax and descriptions.
--infile is the name of the input file.  If the FORMAT of the input file is specified, the file must be in the specified FORMAT that precedes it.  If the input FORMAT is omitted, it can be automatically detected.  If there is only one detected set of lyrics in the input file, that format will automatically be selected for import, otherwise the program will report that you need to specify the desired import format.  Automatic format detection isn't allowed for vocal rhythm, the format and both input files must be specified.  To correctly provide the input format and file to foflc, you must specify "-in" without quotation marks to designate that the following parameter(s) pertain to the input file, followed by the optional format that the file is in:  "script", "vl", "midi", "ustar", "lrc", "vrhythm", "kar", "skar", "id3", "srt", "xml" or "jb" (without quotation marks), followed by the input file name.  If the input file is a MIDI file, a text/lyric event in an imported MIDI track will be interpreted as a lyric event as long as the event's text does not begin with an open bracket '['.  The input file is not allowed to begin with a hyphen.  RS import is not currently supported.
+-infile is the name of the input file.  If the FORMAT of the input file is specified, the file must be in the specified FORMAT that precedes it.  If the input FORMAT is omitted, it can be automatically detected.  If there is only one detected set of lyrics in the input file, that format will automatically be selected for import, otherwise the program will report that you need to specify the desired import format.  Automatic format detection isn't allowed for vocal rhythm, the format and both input files must be specified.  To correctly provide the input format and file to foflc, you must specify "-in" without quotation marks to designate that the following parameter(s) pertain to the input file, followed by the optional format that the file is in:  "script", "vl", "midi", "ustar", "lrc", "vrhythm", "kar", "skar", "id3", "srt", "xml", "jb" or "rs" (without quotation marks), followed by the input file name.  If the input file is a MIDI file, a text/lyric event in an imported MIDI track will be interpreted as a lyric event as long as the event's text does not begin with an open bracket '['.  The input file is not allowed to begin with a hyphen.
 -If the input format is vrhythm, a source rhythm MIDI file (infile) containing the vocal timings must be specified, followed by either the input pitched lyrics file or the vrhythm track identifier.  Both files are unique in format to this import method.  An example of usage syntax for importing vocal rhythm is as follows:
 	foflc -in vrhythm chart.mid pitchedlyrics.txt -out midi chartwithvocals.mid
 If the vrhythm track ID is given instead of the pitched lyrics file, asterisks (*) are used in place of lyrics, similarly to how KAR/RB MIDIs are loaded when the -nolyrics parameter is used.  This allows you to create the vocal rhythm track, import it and export it back to vrhythm in order to create a pitched lyric file with the correct number of entries.  For example:
@@ -100,7 +100,7 @@ XML-
 JB-
 	This is a text based format used by the JamBand video game in order to store pitched, syllable synced lyrics.
 RS-
-	This is an XML based format used by the Rocksmith video game in order to store pitched, syllable synced lyrics.
+	This is an XML based format used by the Rocksmith video game in order to store pitched, syllable synced lyrics.  This format does not store line sync information.
 
 
 OPTIONAL PARAMETERS:

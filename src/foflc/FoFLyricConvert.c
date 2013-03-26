@@ -161,6 +161,8 @@ int main(int argc, char *argv[])
 					Lyrics.in_format=XML_FORMAT;
 				else if(strcasecmp(argv[ctr+1],"c9c") == 0)
 					Lyrics.in_format=C9C_FORMAT;
+				else if(strcasecmp(argv[ctr+1],"rs") == 0)
+					Lyrics.in_format=RS_FORMAT;
 				else
 					Input_failed(ctr+1,NULL);
 
@@ -938,6 +940,11 @@ int main(int argc, char *argv[])
 		case C9C_FORMAT:	//Load JamBand file
 			inf=fopen_err(Lyrics.infilename,"rt");	//JamBand is a text format
 			JB_Load(inf);
+		break;
+
+		case RS_FORMAT:		//Load Rocksmith XML file
+			inf=fopen_err(Lyrics.infilename,"rt");	//Rocksmith XML is a text format
+			RS_Load(inf);
 		break;
 
 		default:

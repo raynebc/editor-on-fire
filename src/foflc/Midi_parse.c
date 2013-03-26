@@ -150,15 +150,8 @@ int ReadTrackHeader(FILE *inf,struct Track_chunk *tchunk)
 			break;
 		}
 		else
-		{	//In rare cases, a MIDI might end a track with multiple END OF TRACK events instead of one
-			if((header[0] == 0) && (header[1] == -1) && (header[2] == 47) && (header[3] == 0))
-			{	//If this indicates another end of track event (0x00FF2F00)
-				continue;	//Try to load another 4 bytes to see if it's a track header
-			}
-			else
-			{
-				return -1;	//Return invalid track header
-			}
+		{
+			return -1;	//Return invalid track header
 		}
 	}
 
@@ -296,6 +289,43 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 		vars.endindex=0;		//0 until we have read the index of the next delta value
 
 		if(Lyrics.verbose>=2)	printf("Delta file pos=0x%lX\t",vars.startindex);
+
+//Check if the we have reached past the end of the track, some malformed MIDI files don't define end of track events between each track
+		if(vars.startindex >= tchunk->fileposition + tchunk->chunksize + 8)
+		{
+			(void) puts("Warning:  This MIDI did not properly end this track.  Correcting.");
+			if(Lyrics.verbose)
+			{
+				printf("Forcing end of track.  %lu events processed\n",vars.processed);
+				if(tchunk->textcount || tchunk->notecount)
+				{
+					if(tchunk->textcount)
+						printf("(%lu viable lyric/text events found)",tchunk->textcount);
+					if(tchunk->notecount)
+						printf("\t(%lu Note On events found)",tchunk->textcount);
+					(void) putchar('\n');
+				}
+			}
+
+			if(MIDIstruct.hchunk.tempomap == NULL)	//If a tempo was never set
+			{
+				if(Lyrics.verbose)	(void) puts("No tempo defined.  120BPM is assumed");
+				MIDIstruct.hchunk.tempomap=&DEFAULTTEMPO;	//Define tempo linked list to be a single link with a tempo of 120BPM
+			}
+
+			if((tchunk->trackname != NULL) && (Lyrics.inputtrack != NULL))
+				if(strcasecmp(tchunk->trackname,Lyrics.inputtrack) == 0)
+					MIDIstruct.endtime=MIDIstruct.realtime+((double)MIDIstruct.deltacounter / (double)MIDIstruct.hchunk.division * ((double)60000.0 / MIDIstruct.BPM));
+
+			if(vars.trackname != NULL)	//If there's a track name being remembered
+				vars.trackname=NULL;	//forget it now that the end of the track has been reached
+
+			if(Lyrics.verbose)
+				(void) printf("Seeking to next track chunk (file position 0x%lX)\n", tchunk->fileposition+tchunk->chunksize+8);
+			fseek_err(inf,tchunk->fileposition+tchunk->chunksize+8,SEEK_SET);		//Explicitly seek to the first byte after this track, as some improperly formatted MIDIs will include events after the end of track event
+
+			return vars.processed;
+		}
 
 //Expected input is the variable length delta value
 		deltalength=ReadVarLength(inf,&(vars.delta));
@@ -571,6 +601,10 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 
 							if(vars.trackname != NULL)	//If there's a track name being remembered
 								vars.trackname=NULL;	//forget it now that the end of the track has been reached
+
+							if(Lyrics.verbose)
+								(void) printf("Seeking to next track chunk (file position 0x%lX)\n", tchunk->fileposition+tchunk->chunksize+8);
+							fseek_err(inf,tchunk->fileposition+tchunk->chunksize+8,SEEK_SET);		//Explicitly seek to the first byte after this track, as some improperly formatted MIDIs will include events after the end of track event
 
 						return vars.processed;
 

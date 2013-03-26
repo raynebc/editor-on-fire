@@ -1871,6 +1871,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 	struct Lyric_Format *curdetection=NULL;		//The conductor for the above linked list (used in the MIDI detection logic)
 	struct ID3Tag tag={NULL,0,0,0,0,0,0.0,NULL,0,NULL,NULL,NULL,NULL};	//Used for ID3 detection
 	static const struct Lyric_Format emptyLyric_Format;	//Auto-initialize all members to 0/NULL
+	char isxml=0;	//Tracks whether an XML file header was read
 
 	assert_wrapper(file != NULL);
 	InitLyrics();	//Initialize all variables in the Lyrics structure
@@ -1914,19 +1915,34 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 		return detectionlist;
 	}
 
-	temp=strstr(buffer,"<?xml");	//Search for indication of XML comment tag
+	temp=strstr(buffer,"<?xml version");	//Search for indication of XML header tag
 	if(temp)
 	{
-		free(buffer);
-		fclose_err(inf);
-		detectionlist->format=XML_FORMAT;
-		return detectionlist;
+		isxml = 1;
 	}
 
 //Continue reading lines until one begins with something other than #, then test for the text based formats (Script, UltraStar, LRC/ELRC)
 	while(!feof(inf))		//Until end of file is reached
 	{
 		processedctr++;
+
+		temp=strstr(buffer,"<lyrics>");	//Search for lyrics XML tag used in Guitar Praise lyrics
+		if(temp && isxml)
+		{	//If this tag AND the XML header tag were read
+			free(buffer);
+			fclose_err(inf);
+			detectionlist->format=XML_FORMAT;
+			return detectionlist;
+		}
+
+		temp=strstr(buffer,"<vocals count");	//Search for vocals XML tag used in Rocksmith lyrics
+		if(temp && isxml)
+		{	//If this tag AND the XML header tag were read
+			free(buffer);
+			fclose_err(inf);
+			detectionlist->format=RS_FORMAT;
+			return detectionlist;
+		}
 
 		for(index=0;buffer[index]!='\0';index++)	//Skip leading whitespace
 			if(!isspace(buffer[index]))				//If this character is the first non whitespace character in the line
@@ -2320,6 +2336,7 @@ void EnumerateFormatDetectionList(struct Lyric_Format *detectionlist)
 			case SRT_FORMAT:
 			case XML_FORMAT:
 			case C9C_FORMAT:
+			case RS_FORMAT:
 				if(lasttype == 1)
 				{
 					(void) puts("Logic error:  A file cannot be both a MIDI format and a non MIDI format");

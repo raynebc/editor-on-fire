@@ -49,7 +49,7 @@ Export functions are expected to:
 //
 //Global Macros- All relevant source/header files will include this header file to obtain these declarations
 //
-#define PROGVERSION "foflc2.39b"
+#define PROGVERSION "foflc2.39"
 #define LYRIC_NOTE_ON 50
 	//Previously, if note #s 60-100 were used for Note On events for lyrics, FoF interpreted
 	//those notes to indicate playable instrument difficulties.  This was fixed, but I will

@@ -1797,8 +1797,6 @@ if(key[KEY_PAUSE])
 
 	if(eof_music_paused && !eof_music_catalog_playback)
 	{	//If the chart is paused and no catalog entries are playing
-		unsigned char do_new_paste = 0, do_old_paste = 0;
-
 	/* lower playback speed (;) */
 		if(key[KEY_SEMICOLON])
 		{
@@ -2703,44 +2701,18 @@ if(key[KEY_PAUSE])
 			key[KEY_C] = 0;
 		}
 
-	/* Normally, CTRL+V and CTRL+P do paste and new paste, but these are swapped in Feedback input mode */
-	/* paste (CTRL+V, in non Feedback input modes) */
-	/* paste (CTRL+P, in Feedback input mode) */
+	/* paste (CTRL+V) */
 		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && key[KEY_V])
 		{	//If CTRL is held and SHIFT is not
-			if(eof_input_mode == EOF_INPUT_FEEDBACK)
-			{
-				do_old_paste = 1;
-			}
-			else
-			{
-				do_new_paste = 1;
-			}
+			(void) eof_menu_edit_paste();
 			key[KEY_V] = 0;
 		}
 
-	/* old paste (CTRL+P, in non Feedback input modes) */
-	/* old paste (CTRL+V, in Feedback input mode */
+	/* old paste (CTRL+P) */
 		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && key[KEY_P])
 		{	//If CTRL is held and SHIFT is not
-			if(eof_input_mode == EOF_INPUT_FEEDBACK)
-			{
-				do_new_paste = 1;
-			}
-			else
-			{
-				do_old_paste = 1;
-			}
-			key[KEY_P] = 0;
-		}
-
-		if(do_old_paste)
-		{
 			(void) eof_menu_edit_old_paste();
-		}
-		else if(do_new_paste)
-		{
-			(void) eof_menu_edit_paste();
+			key[KEY_P] = 0;
 		}
 	}//If the chart is paused and no catalog entries are playing
 }

@@ -1,7 +1,7 @@
 #include <allegro.h>
-#include <ctype.h>
 #include "chart_import.h"
-#include "foflc/Lyric_storage.h"
+#include "foflc/Lyric_storage.h"	//For FindLongestLineLength()
+#include "foflc/RS_parse.h"	//For XML parsing functions
 #include "main.h"
 #include "rs.h"
 #include "rs_import.h"
@@ -12,152 +12,6 @@
 #endif
 
 #define RS_IMPORT_DEBUG
-
-void eof_shrink_xml_text(char *buffer, size_t size, char *input)
-{
-	size_t input_length, index = 0, ctr;
-	char *ptr;
-
-	if(!buffer || !input)
-		return;	//Invalid parameters
-
-	input_length = strlen(input);
-	for(ctr = 0; ctr < input_length; ctr++)
-	{	//For each character of the input string
-		if(index + 1 >= size)
-		{	//If there isn't enough buffer left to copy this character and terminate the string
-			buffer[index] = '\0';	//Terminate the buffer
-			return;			//And return
-		}
-		if(input[ctr] == '&')
-		{	//If this is an escape character sequence
-			ptr = &(input[ctr]);	//The address to the current position in the input buffer
-			if(strstr(&(input[ctr]), "&quot;") == ptr)
-			{	//If this is the quotation mark escape sequence
-				buffer[index++] = '\"';
-				ctr += 5;	//Seek past the sequence in the input buffer
-			}
-			else if(strstr(&(input[ctr]), "&apos;") == ptr)
-			{	//If this is the apostrophe mark escape sequence
-				buffer[index++] = '\'';
-				ctr += 5;	//Seek past the sequence in the input buffer
-			}
-			else if(strstr(&(input[ctr]), "&lt;") == ptr)
-			{	//If this is the less than escape sequence
-				buffer[index++] = '<';
-				ctr += 3;	//Seek past the sequence in the input buffer
-			}
-			else if(strstr(&(input[ctr]), "&gt;") == ptr)
-			{	//If this is the greater than escape sequence
-				buffer[index++] = '>';
-				ctr += 5;	//Seek past the sequence in the input buffer
-			}
-			else if(strstr(&(input[ctr]), "&amp;") == ptr)
-			{	//If this is the ampersand escape sequence
-				buffer[index++] = '\"';
-				ctr += 4;	//Seek past the sequence in the input buffer
-			}
-			else
-			{
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tUnrecognized escape sequence in string \"%s\"", input);
-				eof_log(eof_log_string, 1);
-			}
-		}
-		else
-		{	//This is a normal character
-			buffer[index++] = input[ctr];	//Append it to the buffer
-		}
-	}
-	buffer[index++] = '\0';	//Terminate the buffer
-}
-
-int eof_parse_xml_attribute_text(char *buffer, size_t size, char *target, char *input)
-{
-	char *ptr;
-	unsigned long index = 0;
-
-	if(!buffer || !target || !input)
-		return 0;	//Invalid parameters
-
-	if(size == 0)
-		return 1;	//Do nothing if buffer size is 0
-
-	ptr = strcasestr_spec(input, target);	//Get the pointer to the first byte after the target attribute
-	if(!ptr)
-	{	//If the attribute is not present
-		return 0;	//Return failure
-	}
-	while((*ptr != '\0') && isspace(*ptr))
-	{	//While the end of the string hasn't been reached
-		ptr++;	//Skip whitespace
-	}
-	if(*ptr != '=')
-	{	//The next character is expected to be an equal sign
-		return 0;	//If not, return failure
-	}
-	ptr++;
-	while((*ptr != '\0') && isspace(*ptr))
-	{	//While the end of the string hasn't been reached
-		ptr++;	//Skip whitespace
-	}
-	if(*ptr != '\"')
-	{	//The next character is expected to be a quotation mark
-		return 0;	//If not, return failure
-	}
-	ptr++;
-
-	while((*ptr != '\0') && (*ptr != '\"') && (index + 1 < size))
-	{	//Until the end of the string or another quotation mark character is reached and the buffer isn't full
-		buffer[index++] = *ptr;	//Copy the next character to the buffer
-		ptr++;	//Iterate to next input character
-	}
-
-	buffer[index++] = '\0';	//Terminate the buffer
-	return 1;	//Return success
-}
-
-int eof_parse_xml_attribute_number(char *target, char *input, long *output)
-{
-	char buffer[11];
-
-	if(!target || !input || !output)
-		return 0;	//Invalid parameters
-
-	if(!eof_parse_xml_attribute_text(buffer, sizeof(buffer), target, input))
-	{	//If the attribute's text wasn't parsed
-		return 0;	//Return failure
-	}
-
-	*output = atol(buffer);
-	return 1;	//Return success
-}
-
-int eof_parse_xml_rs_timestamp(char *target, char *input, long *output)
-{
-	char buffer[11], buffer2[11];
-	unsigned long index = 0, index2 = 0;
-
-	if(!target || !input || !output)
-		return 0;	//Invalid parameters
-
-	if(!eof_parse_xml_attribute_text(buffer, sizeof(buffer), target, input))
-	{	//If the attribute's text wasn't parsed
-		return 0;	//Return failure
-	}
-
-	while(buffer[index] != '\0')
-	{	//For each character in the parsed timestamp
-		if(buffer[index] != '.')
-		{	//If it's not a period
-			buffer2[index2++] = buffer[index];	//Copy it to the second buffer
-		}
-		index++;
-	}
-	buffer2[index2] = '\0';	//Terminate the second buffer
-
-	*output = atol(buffer2);
-	return 1;	//Return success
-}
 
 #define EOF_RS_PHRASE_IMPORT_LIMIT 200
 #define EOF_RS_EVENT_IMPORT_LIMIT 200
@@ -244,7 +98,6 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 	tp->numstrings = 6;	//The number of strings that will be used in the arrangement is unknown, default to 6
 	tp->numfrets = 22;	//The number of frets that will be used in the arrangement is unknown, default to 22
 	tp->parent = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum]->parent;	//Initialize the parent so that the alternate track name can be set if appropriate
-	tp->parent->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//Remove the difficulty limit for this track
 
 	//Read first line of text, capping it to prevent buffer overflow
 	if(!pack_fgets(buffer, maxlinelength, inf))
@@ -285,16 +138,36 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 			continue;
 		}
 
-		if(strcasestr_spec(buffer, "<title>"))
+		if(strcasestr_spec(buffer, "<song>"))
+		{	//If this is the song tag
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state because the tempo map will be overwritten
+			for(ctr = eof_song->text_events; ctr > 0; ctr--)
+			{	//For each of the project's text events (in reverse order)
+				if(eof_song->text_event[ctr - 1]->track == eof_selected_track)
+				{	//If the text event is assigned to the track being replaced
+					eof_song_delete_text_event(eof_song, ctr - 1);	//Delete it
+				}
+			}
+		}
+		else if(strcasestr_spec(buffer, "<vocals "))
+		{	//If this is the vocals tag
+			allegro_message("This is a lyric file, not a guitar or bass arrangement.\nChange to PART VOCALS and use File>Lyric Import to load this file.");
+			eof_log("\tError:  This is a lyric file, not a guitar or bass arrangement.", 1);
+			free(buffer);
+			free(buffer2);
+			free(tp);
+			return NULL;
+		}
+		else if(strcasestr_spec(buffer, "<title>"))
 		{	//If this is the title tag
-			eof_shrink_xml_text(tag, sizeof(tag), buffer2);	//Convert any escape sequences in the tag content to normal text
+			shrink_xml_text(tag, sizeof(tag), buffer2);	//Convert any escape sequences in the tag content to normal text
 			strncpy(eof_song->tags->title, tag, sizeof(eof_song->tags->title) - 1);
 		}
 		else if(strcasestr_spec(buffer, "<arrangement>"))
 		{	//If this is the arrangement tag
 			char match = 0;
 
-			eof_shrink_xml_text(tag, sizeof(tag), buffer2);	//Convert any escape sequences in the tag content to normal text
+			shrink_xml_text(tag, sizeof(tag), buffer2);	//Convert any escape sequences in the tag content to normal text
 			for(ctr = 1; ctr < EOF_TRACKS_MAX; ctr++)
 			{	//Compare the arrangement name against EOF's natively supported tracks
 				if(!ustricmp(tag, eof_midi_tracks[ctr].name))
@@ -333,17 +206,17 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 			int success_count = 0;
 			long output;
 
-			success_count += eof_parse_xml_attribute_number("string0", buffer, &output);	//Read the value of string 0's tuning from the opening tag
+			success_count += parse_xml_attribute_number("string0", buffer, &output);	//Read the value of string 0's tuning from the opening tag
 			tp->tuning[0] = output;	//Store the tuning
-			success_count += eof_parse_xml_attribute_number("string1", buffer, &output);	//Read the value of string 1's tuning from the opening tag
+			success_count += parse_xml_attribute_number("string1", buffer, &output);	//Read the value of string 1's tuning from the opening tag
 			tp->tuning[1] = output;	//Store the tuning
-			success_count += eof_parse_xml_attribute_number("string2", buffer, &output);	//Read the value of string 2's tuning from the opening tag
+			success_count += parse_xml_attribute_number("string2", buffer, &output);	//Read the value of string 2's tuning from the opening tag
 			tp->tuning[2] = output;	//Store the tuning
-			success_count += eof_parse_xml_attribute_number("string3", buffer, &output);	//Read the value of string 3's tuning from the opening tag
+			success_count += parse_xml_attribute_number("string3", buffer, &output);	//Read the value of string 3's tuning from the opening tag
 			tp->tuning[3] = output;	//Store the tuning
-			success_count += eof_parse_xml_attribute_number("string4", buffer, &output);	//Read the value of string 4's tuning from the opening tag
+			success_count += parse_xml_attribute_number("string4", buffer, &output);	//Read the value of string 4's tuning from the opening tag
 			tp->tuning[4] = output;	//Store the tuning
-			success_count += eof_parse_xml_attribute_number("string5", buffer, &output);	//Read the value of string 5's tuning from the opening tag
+			success_count += parse_xml_attribute_number("string5", buffer, &output);	//Read the value of string 5's tuning from the opening tag
 			tp->tuning[5] = output;	//Store the tuning
 
 			if(success_count != 6)
@@ -355,17 +228,17 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		}
 		else if(strcasestr_spec(buffer, "<artistName>"))
 		{	//If this is the artistName tag
-			eof_shrink_xml_text(tag, sizeof(tag), buffer2);	//Convert any escape sequences in the tag content to normal text
+			shrink_xml_text(tag, sizeof(tag), buffer2);	//Convert any escape sequences in the tag content to normal text
 			strncpy(eof_song->tags->artist, tag, sizeof(eof_song->tags->artist) - 1);
 		}
 		else if(strcasestr_spec(buffer, "<albumName>"))
 		{	//If this is the albumName tag
-			eof_shrink_xml_text(tag, sizeof(tag), buffer2);	//Convert any escape sequences in the tag content to normal text
+			shrink_xml_text(tag, sizeof(tag), buffer2);	//Convert any escape sequences in the tag content to normal text
 			strncpy(eof_song->tags->album, tag, sizeof(eof_song->tags->album) - 1);
 		}
 		else if(strcasestr_spec(buffer, "<albumYear>"))
 		{	//If this is the albumYear tag
-			eof_shrink_xml_text(tag, sizeof(tag), buffer2);	//Convert any escape sequences in the tag content to normal text
+			shrink_xml_text(tag, sizeof(tag), buffer2);	//Convert any escape sequences in the tag content to normal text
 			strncpy(eof_song->tags->year, tag, sizeof(eof_song->tags->year) - 1);
 		}
 		else if(strcasestr_spec(buffer, "<phrases"))
@@ -377,7 +250,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 				eof_log(eof_log_string, 1);
 			#endif
 
-			if(eof_parse_xml_attribute_number("count", buffer, &output) && output)
+			if(parse_xml_attribute_number("count", buffer, &output) && output)
 			{	//If the count attribute of this tag is readable and greater than 0
 				pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
 				linectr++;
@@ -389,7 +262,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 					}
 					if(phraselist_count < EOF_RS_PHRASE_IMPORT_LIMIT)
 					{	//If another phrase name can be stored
-						if(!eof_parse_xml_attribute_text(tag, sizeof(tag), "name", buffer))
+						if(!parse_xml_attribute_text(tag, sizeof(tag), "name", buffer))
 						{	//If the phrase name could not be read
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading phrase name on line #%lu.  Aborting", linectr);
 							eof_log(eof_log_string, 1);
@@ -423,7 +296,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 				eof_log(eof_log_string, 1);
 			#endif
 
-			if(eof_parse_xml_attribute_number("count", buffer, &output) && output)
+			if(parse_xml_attribute_number("count", buffer, &output) && output)
 			{	//If the count attribute of this tag is readable and greater than 0
 				pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
 				linectr++;
@@ -435,14 +308,14 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 					}
 					if(eventlist_count < EOF_RS_EVENT_IMPORT_LIMIT)
 					{	//If another text event can be stored
-						if(!eof_parse_xml_rs_timestamp("time", buffer, &timestamp))
+						if(!parse_xml_rs_timestamp("time", buffer, &timestamp))
 						{	//If the timestamp was not readable
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
 							eof_log(eof_log_string, 1);
 							error = 1;
 							break;	//Break from inner loop
 						}
-						if(!eof_parse_xml_attribute_number("phraseId", buffer, &id))
+						if(!parse_xml_attribute_number("phraseId", buffer, &id))
 						{	//If the phrase ID was not readable
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading phrase ID on line #%lu.  Aborting", linectr);
 							eof_log(eof_log_string, 1);
@@ -490,7 +363,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 				eof_log(eof_log_string, 1);
 			#endif
 
-			if(eof_parse_xml_attribute_number("count", buffer, &output) && output)
+			if(parse_xml_attribute_number("count", buffer, &output) && output)
 			{	//If the count attribute of this tag is readable and greater than 0
 				pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
 				linectr++;
@@ -503,7 +376,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 					if(chordlist_count < EOF_RS_CHORD_TEMPLATE_IMPORT_LIMIT)
 					{	//If another chord can be stored
 						//Read chord name
-						if(!eof_parse_xml_attribute_text(tag, sizeof(tag), "chordName", buffer))
+						if(!parse_xml_attribute_text(tag, sizeof(tag), "chordName", buffer))
 						{	//If the chord name could not be read
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading chord name on line #%lu.  Aborting", linectr);
 							eof_log(eof_log_string, 1);
@@ -513,17 +386,17 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 
 						//Read chord fingering
 						success_count = 0;
-						success_count += eof_parse_xml_attribute_number("finger0", buffer, &output);	//Read the fingering for string 0
+						success_count += parse_xml_attribute_number("finger0", buffer, &output);	//Read the fingering for string 0
 						finger[0] = output;	//Store the tuning
-						success_count += eof_parse_xml_attribute_number("finger1", buffer, &output);	//Read the fingering for string 1
+						success_count += parse_xml_attribute_number("finger1", buffer, &output);	//Read the fingering for string 1
 						finger[1] = output;	//Store the tuning
-						success_count += eof_parse_xml_attribute_number("finger2", buffer, &output);	//Read the fingering for string 2
+						success_count += parse_xml_attribute_number("finger2", buffer, &output);	//Read the fingering for string 2
 						finger[2] = output;	//Store the tuning
-						success_count += eof_parse_xml_attribute_number("finger3", buffer, &output);	//Read the fingering for string 3
+						success_count += parse_xml_attribute_number("finger3", buffer, &output);	//Read the fingering for string 3
 						finger[3] = output;	//Store the tuning
-						success_count += eof_parse_xml_attribute_number("finger4", buffer, &output);	//Read the fingering for string 4
+						success_count += parse_xml_attribute_number("finger4", buffer, &output);	//Read the fingering for string 4
 						finger[4] = output;	//Store the tuning
-						success_count += eof_parse_xml_attribute_number("finger5", buffer, &output);	//Read the fingering for string 5
+						success_count += parse_xml_attribute_number("finger5", buffer, &output);	//Read the fingering for string 5
 						finger[5] = output;	//Store the tuning
 						if(success_count != 6)
 						{	//If 6 finger values were not read
@@ -542,17 +415,17 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 
 						//Read chord fretting
 						success_count = 0;
-						success_count += eof_parse_xml_attribute_number("fret0", buffer, &output);	//Read the fretting for string 0
+						success_count += parse_xml_attribute_number("fret0", buffer, &output);	//Read the fretting for string 0
 						frets[0] = output;	//Store the tuning
-						success_count += eof_parse_xml_attribute_number("fret1", buffer, &output);	//Read the fretting for string 1
+						success_count += parse_xml_attribute_number("fret1", buffer, &output);	//Read the fretting for string 1
 						frets[1] = output;	//Store the tuning
-						success_count += eof_parse_xml_attribute_number("fret2", buffer, &output);	//Read the fretting for string 2
+						success_count += parse_xml_attribute_number("fret2", buffer, &output);	//Read the fretting for string 2
 						frets[2] = output;	//Store the tuning
-						success_count += eof_parse_xml_attribute_number("fret3", buffer, &output);	//Read the fretting for string 3
+						success_count += parse_xml_attribute_number("fret3", buffer, &output);	//Read the fretting for string 3
 						frets[3] = output;	//Store the tuning
-						success_count += eof_parse_xml_attribute_number("fret4", buffer, &output);	//Read the fretting for string 4
+						success_count += parse_xml_attribute_number("fret4", buffer, &output);	//Read the fretting for string 4
 						frets[4] = output;	//Store the tuning
-						success_count += eof_parse_xml_attribute_number("fret5", buffer, &output);	//Read the fretting for string 5
+						success_count += parse_xml_attribute_number("fret5", buffer, &output);	//Read the fretting for string 5
 						frets[5] = output;	//Store the tuning
 						if(success_count != 6)
 						{	//If 6 finger values were not read
@@ -608,7 +481,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 				eof_log(eof_log_string, 1);
 			#endif
 
-			if(eof_parse_xml_attribute_number("count", buffer, &output) && output)
+			if(parse_xml_attribute_number("count", buffer, &output) && output)
 			{	//If the count attribute of this tag is readable and greater than 0
 				pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
 				linectr++;
@@ -618,7 +491,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 					{	//If this is the end of the ebeats tag
 						break;	//Break from loop
 					}
-					if(!eof_parse_xml_rs_timestamp("time", buffer, &output))
+					if(!parse_xml_rs_timestamp("time", buffer, &output))
 					{	//If the timestamp was not readable
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
 						eof_log(eof_log_string, 1);
@@ -666,7 +539,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 				eof_log(eof_log_string, 1);
 			#endif
 
-			if(eof_parse_xml_attribute_number("count", buffer, &output) && output)
+			if(parse_xml_attribute_number("count", buffer, &output) && output)
 			{	//If the count attribute of this tag is readable and greater than 0
 				pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
 				linectr++;
@@ -676,7 +549,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 					{	//If this is the end of the controls tag
 						break;	//Break from loop
 					}
-					if(!eof_parse_xml_rs_timestamp("time", buffer, &output))
+					if(!parse_xml_rs_timestamp("time", buffer, &output))
 					{	//If the timestamp was not readable
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
 						eof_log(eof_log_string, 1);
@@ -756,7 +629,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 				eof_log(eof_log_string, 1);
 			#endif
 
-			if(eof_parse_xml_attribute_number("count", buffer, &output) && output)
+			if(parse_xml_attribute_number("count", buffer, &output) && output)
 			{	//If the count attribute of this tag is readable and greater than 0
 				pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
 				linectr++;
@@ -768,7 +641,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 					}
 					if(eventlist_count < EOF_RS_EVENT_IMPORT_LIMIT)
 					{	//If another text event can be stored
-						if(!eof_parse_xml_attribute_text(tag, sizeof(tag), "name", buffer))
+						if(!parse_xml_attribute_text(tag, sizeof(tag), "name", buffer))
 						{	//If the section name could not be read
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading section name on line #%lu.  Aborting", linectr);
 							eof_log(eof_log_string, 1);
@@ -780,7 +653,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWarning:  Invalid section name on line #%lu.", linectr);
 							eof_log(eof_log_string, 1);
 						}
-						if(!eof_parse_xml_rs_timestamp("startTime", buffer, &output))
+						if(!parse_xml_rs_timestamp("startTime", buffer, &output))
 						{	//If the timestamp was not readable
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
 							eof_log(eof_log_string, 1);
@@ -817,7 +690,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 				eof_log(eof_log_string, 1);
 			#endif
 
-			if(eof_parse_xml_attribute_number("count", buffer, &output) && output)
+			if(parse_xml_attribute_number("count", buffer, &output) && output)
 			{	//If the count attribute of this tag is readable and greater than 0
 				pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
 				linectr++;
@@ -829,14 +702,14 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 					}
 					if(eventlist_count < EOF_RS_EVENT_IMPORT_LIMIT)
 					{	//If another text event can be stored
-						if(!eof_parse_xml_rs_timestamp("time", buffer, &output))
+						if(!parse_xml_rs_timestamp("time", buffer, &output))
 						{	//If the timestamp was not readable
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
 							eof_log(eof_log_string, 1);
 							error = 1;
 							break;	//Break from inner loop
 						}
-						if(!eof_parse_xml_attribute_text(tag, sizeof(tag), "code", buffer))
+						if(!parse_xml_attribute_text(tag, sizeof(tag), "code", buffer))
 						{	//If the event code could not be read
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading event code on line #%lu.  Aborting", linectr);
 							eof_log(eof_log_string, 1);
@@ -875,7 +748,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 				eof_log(eof_log_string, 1);
 			#endif
 
-			if(eof_parse_xml_attribute_number("count", buffer, &output) && output)
+			if(parse_xml_attribute_number("count", buffer, &output) && output)
 			{	//If the count attribute of this tag is readable and greater than 0
 				pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
 				linectr++;
@@ -896,7 +769,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 							eof_log(eof_log_string, 1);
 						#endif
 
-						if(!eof_parse_xml_attribute_number("difficulty", buffer, &curdiff))
+						if(!parse_xml_attribute_number("difficulty", buffer, &curdiff))
 						{	//If the difficulty number was not readable
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading difficulty number on line #%lu.  Aborting", linectr);
 							eof_log(eof_log_string, 1);
@@ -922,7 +795,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 									eof_log(eof_log_string, 1);
 								#endif
 
-								if(eof_parse_xml_attribute_number("count", buffer, &output) && output)
+								if(parse_xml_attribute_number("count", buffer, &output) && output)
 								{	//If the count attribute of this tag is readable and greater than 0
 									pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
 									linectr++;
@@ -943,31 +816,31 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 												pluck = slap = slideto = -1;	//Init these to Rocksmith's undefined value
 
 												//Read note attributes
-												if(!eof_parse_xml_rs_timestamp("time", buffer, &time))
+												if(!parse_xml_rs_timestamp("time", buffer, &time))
 												{	//If the timestamp was not readable
 													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading start timestamp on line #%lu.  Aborting", linectr);
 													eof_log(eof_log_string, 1);
 													error = 1;
 													break;	//Break from inner loop
 												}
-												eof_parse_xml_attribute_number("bend", buffer, &bend);
-												eof_parse_xml_attribute_number("fret", buffer, &fret);
-												eof_parse_xml_attribute_number("hammerOn", buffer, &hammeron);
-												eof_parse_xml_attribute_number("harmonic", buffer, &harmonic);
-												eof_parse_xml_attribute_number("palmMute", buffer, &palmmute);
-												eof_parse_xml_attribute_number("pluck", buffer, &pluck);
-												eof_parse_xml_attribute_number("pullOff", buffer, &pulloff);
-												eof_parse_xml_attribute_number("slap", buffer, &slap);
-												eof_parse_xml_attribute_number("slideTo", buffer, &slideto);
-												eof_parse_xml_attribute_number("string", buffer, &string);
-												if(!eof_parse_xml_rs_timestamp("sustain", buffer, &sustain))
+												parse_xml_attribute_number("bend", buffer, &bend);
+												parse_xml_attribute_number("fret", buffer, &fret);
+												parse_xml_attribute_number("hammerOn", buffer, &hammeron);
+												parse_xml_attribute_number("harmonic", buffer, &harmonic);
+												parse_xml_attribute_number("palmMute", buffer, &palmmute);
+												parse_xml_attribute_number("pluck", buffer, &pluck);
+												parse_xml_attribute_number("pullOff", buffer, &pulloff);
+												parse_xml_attribute_number("slap", buffer, &slap);
+												parse_xml_attribute_number("slideTo", buffer, &slideto);
+												parse_xml_attribute_number("string", buffer, &string);
+												if(!parse_xml_rs_timestamp("sustain", buffer, &sustain))
 												{	//If the timestamp was not readable
 													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading sustain time on line #%lu.  Aborting", linectr);
 													eof_log(eof_log_string, 1);
 													error = 1;
 													break;	//Break from inner loop
 												}
-												eof_parse_xml_attribute_number("tremolo", buffer, &tremolo);
+												parse_xml_attribute_number("tremolo", buffer, &tremolo);
 
 												//Add note and set attributes
 												np = eof_pro_guitar_track_add_note(tp);	//Allocate, initialize and add the new note to the note array
@@ -1040,7 +913,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 									eof_log(eof_log_string, 1);
 								#endif
 
-								if(eof_parse_xml_attribute_number("count", buffer, &output) && output)
+								if(parse_xml_attribute_number("count", buffer, &output) && output)
 								{	//If the count attribute of this tag is readable and greater than 0
 									pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
 									linectr++;
@@ -1060,14 +933,14 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 												flags = 0;
 
 												//Read chord attributes
-												if(!eof_parse_xml_rs_timestamp("time", buffer, &time))
+												if(!parse_xml_rs_timestamp("time", buffer, &time))
 												{	//If the timestamp was not readable
 													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
 													eof_log(eof_log_string, 1);
 													error = 1;
 													break;	//Break from inner loop
 												}
-												if(!eof_parse_xml_attribute_number("chordId", buffer, &id))
+												if(!parse_xml_attribute_number("chordId", buffer, &id))
 												{	//If the chord ID was not readable
 													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading chord ID on line #%lu.  Aborting", linectr);
 													eof_log(eof_log_string, 1);
@@ -1081,7 +954,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 													error = 1;
 													break;	//Break from inner loop
 												}
-												if(!eof_parse_xml_attribute_text(tag, sizeof(tag), "strum", buffer))
+												if(!parse_xml_attribute_text(tag, sizeof(tag), "strum", buffer))
 												{	//If the strum direction could not be read
 													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading strum direction on line #%lu.  Aborting", linectr);
 													eof_log(eof_log_string, 1);
@@ -1125,7 +998,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 									eof_log(eof_log_string, 1);
 								#endif
 
-								if(eof_parse_xml_attribute_number("count", buffer, &output) && output)
+								if(parse_xml_attribute_number("count", buffer, &output) && output)
 								{	//If the count attribute of this tag is readable and greater than 0
 									pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
 									linectr++;
@@ -1142,14 +1015,14 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 										{	//If this is an anchor tag
 											if(tp->handpositions < EOF_MAX_NOTES)
 											{	//If another chord can be stored
-												if(!eof_parse_xml_rs_timestamp("time", buffer, &time))
+												if(!parse_xml_rs_timestamp("time", buffer, &time))
 												{	//If the timestamp was not readable
 													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
 													eof_log(eof_log_string, 1);
 													error = 1;
 													break;	//Break from inner loop
 												}
-												if(!eof_parse_xml_attribute_number("fret", buffer, &fret))
+												if(!parse_xml_attribute_number("fret", buffer, &fret))
 												{	//If the fret number was not readable
 													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading fret number on line #%lu.  Aborting", linectr);
 													eof_log(eof_log_string, 1);

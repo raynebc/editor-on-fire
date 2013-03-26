@@ -1,8 +1,9 @@
-Changelog: 2.38 to 2.39 (beta stage, in progress)
+Changelog: 2.38 to 2.39
 	Some code cleanup.
-	Added support for exporting Rocksmith format lyrics.
+	Added support for detecting, importing and exporting Rocksmith format lyrics.
 	Minor improvements to MIDI parse logging and added a warning if no input track is specified during KAR import.
 	Updated the MIDI format exports' logic so that if a default tempo track is created, it is given a track name based on the input song's title (otherwise "Tempo map" if there's no song title defined).  This may be necessary for some programs that use MIDI files.
+	Added handling for improperly formatted MIDIs that don't formally end MIDI tracks, or which include data after the end of a track, either of which would cause such a MIDI to not parse fully during lyric import.
 
 Changelog: 2.37 to 2.38
 	Added support for detecting and importing JamBand format lyrics.

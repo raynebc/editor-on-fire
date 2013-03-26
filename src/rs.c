@@ -1014,7 +1014,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 								if((flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) == 0)
 								{	//At this point, it doesn't seem Rocksmith supports string muted notes
 									if((length == 1) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
-									{	//If the note is has the absolute minimum length and isn't a bend or a slide note
+									{	//If the note is has the absolute minimum length and isn't a bend or a slide note (bend and slide notes are required to have a length > 0 or Rocksmith will crash)
 										length = 0;	//Convert to a length of 0 so that it doesn't display as a sustain note in-game
 									}
 									fret = tp->note[ctr3]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
