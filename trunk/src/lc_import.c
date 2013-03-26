@@ -172,6 +172,11 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 			JB_Load(inf);
 		break;
 
+		case RS_FORMAT:		//Load Rocksmith XML file
+			inf=fopen_err(Lyrics.infilename,"rt");	//Rocksmith XML is a text format
+			RS_Load(inf);
+		break;
+
 		default:
 		return 0;	//Return failure
 	}//switch(Lyrics.in_format)

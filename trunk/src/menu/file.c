@@ -2200,21 +2200,24 @@ int eof_save_helper(char *destfilename)
 		eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
 
 		/* pre-parse the lyrics to determine if any of them are not contained within a lyric phrase */
-		for(ctr = 0; ctr < eof_song->vocal_track[0]->lyrics; ctr++)
-		{
-			if((eof_song->vocal_track[0]->lyric[ctr]->note != EOF_LYRIC_PERCUSSION) && (eof_find_lyric_line(ctr) == NULL))
-			{	//If any of the non vocal percussion lyrics are not within a line
-				eof_cursor_visible = 0;
-				eof_pen_visible = 0;
-				eof_show_mouse(screen);
-				if(alert("Warning: One or more lyrics aren't within lyric phrases.", "These lyrics won't export to FoF script format.", "Continue?", "&Yes", "&No", 'y', 'n') == 2)
-				{	//If user opts cancel the save
-					eof_show_mouse(NULL);
-					eof_cursor_visible = 1;
-					eof_pen_visible = 1;
-					return 2;	//Return cancellation
+		if(eof_song->tags->lyrics)
+		{	//If user enabled the Lyrics checkbox in song properties
+			for(ctr = 0; ctr < eof_song->vocal_track[0]->lyrics; ctr++)
+			{
+				if((eof_song->vocal_track[0]->lyric[ctr]->note != EOF_LYRIC_PERCUSSION) && (eof_find_lyric_line(ctr) == NULL))
+				{	//If any of the non vocal percussion lyrics are not within a line
+					eof_cursor_visible = 0;
+					eof_pen_visible = 0;
+					eof_show_mouse(screen);
+					if(alert("Warning: One or more lyrics aren't within lyric phrases.", "These lyrics won't export to FoF script format.", "Continue?", "&Yes", "&No", 'y', 'n') == 2)
+					{	//If user opts cancel the save
+						eof_show_mouse(NULL);
+						eof_cursor_visible = 1;
+						eof_pen_visible = 1;
+						return 2;	//Return cancellation
+					}
+					break;
 				}
-				break;
 			}
 		}
 	}
@@ -2693,6 +2696,13 @@ int eof_gp_import_track(DIALOG * d)
 			free(eof_song->pro_guitar_track[tracknum]->note[ctr]);	//Free its memory
 		}
 		free(eof_song->pro_guitar_track[tracknum]);	//Free the active track
+		for(ctr = eof_song->text_events; ctr > 0; ctr--)
+		{	//For each of the project's text events (in reverse order)
+			if(eof_song->text_event[ctr - 1]->track == eof_selected_track)
+			{	//If the text event is assigned to the track being replaced
+				eof_song_delete_text_event(eof_song, ctr - 1);	//Delete it
+			}
+		}
 		eof_song->pro_guitar_track[tracknum] = eof_parsed_gp_file->track[selected];	//Replace it with the track imported from the Guitar Pro file
 		free(eof_parsed_gp_file->names[selected]);	//Free the imported track's name
 		for(ctr = selected + 1; ctr < eof_parsed_gp_file->numtracks; ctr++)
@@ -2896,7 +2906,6 @@ int eof_menu_file_rs_import(void)
 	eof_clear_input();
 	if(returnedfn)
 	{
-		eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state because the tempo map will be overwritten
 		tp = eof_load_rs(returnedfn);
 
 		if(tp)
@@ -2904,6 +2913,7 @@ int eof_menu_file_rs_import(void)
 			unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 			tp->parent = eof_song->pro_guitar_track[tracknum]->parent;
+			tp->parent->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//Remove the difficulty limit for this track
 			for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
 			{	//For each note in the active track
 				free(eof_song->pro_guitar_track[tracknum]->note[ctr]);	//Free its memory

@@ -1015,6 +1015,8 @@ set_window_title(debugtext);
 			struct eof_MIDI_data_track *ptr;
 			char *tempotrackname = "(TEMPO)";
 			ptr = eof_get_raw_MIDI_data(eof_work_midi, 0, 0);	//Parse the tempo track out of the file
+			if(!ptr)		//If the import failed
+				return 0;	//return error
 			if(ptr->trackname)
 			{	//If the track had a name
 				free(ptr->trackname);	//release it as it will be replaced
