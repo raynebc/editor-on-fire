@@ -233,7 +233,7 @@ void shrink_xml_text(char *buffer, size_t size, char *input)
 int parse_xml_attribute_text(char *buffer, size_t size, char *target, char *input)
 {
 	char *ptr;
-	unsigned long index = 0;
+	size_t index = 0;
 
 	if(!buffer || !target || !input)
 		return 0;	//Invalid parameters
@@ -245,7 +245,7 @@ int parse_xml_attribute_text(char *buffer, size_t size, char *target, char *inpu
 	}
 
 	if(size == 0)
-		return 1;	//Do nothing if buffer size is 0
+		return 1;	//Do nothing more than the search if buffer size is 0
 
 	while((*ptr != '\0') && isspace(*ptr))
 	{	//While the end of the string hasn't been reached
@@ -351,7 +351,7 @@ void RS_Load(FILE *inf)
 			CreateLyricLine();	//Start a line of lyrics
 			if(parse_xml_attribute_number("count", buffer, &count) && count)
 			{	//If the count attribute of this tag is readable and greater than 0
-				fgets_err(buffer, (int)maxlinelength, inf);	//Read next line of text
+				(void) fgets_err(buffer, (int)maxlinelength, inf);	//Read next line of text
 				processedctr++;
 				while(!feof(inf))
 				{	//Until there was an error reading from the file or end of file is reached
@@ -384,7 +384,7 @@ void RS_Load(FILE *inf)
 					Lyrics.last_pitch=note;	//Consider this the last defined pitch
 					AddLyricPiece(lyric2, time , time + length, note, 0);	//Add lyric
 
-					fgets_err(buffer, (int)maxlinelength, inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+					(void) fgets_err(buffer, (int)maxlinelength, inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 					processedctr++;
 				}
 			}

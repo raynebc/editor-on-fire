@@ -53,17 +53,21 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 {
 //	eof_log("chartpos_to_msec() entered");
 
+	double offset;
+	double curpos;
+	unsigned long lastchartpos = 0;
+	double beat_length = 500.0;
+	double beat_count;
+	double convert;
+	struct dBAnchor * current_anchor;
 	if(!chart)
 	{
 		return 0;
 	}
-	double offset = chart->offset * 1000.0;
-	double curpos = offset;
-	unsigned long lastchartpos = 0;
-	double beat_length = 500.0;
-	double beat_count;
-	double convert = beat_length / (double)chart->resolution; // current conversion rate of chartpos to milliseconds
-	struct dBAnchor * current_anchor = chart->anchors;
+	current_anchor = chart->anchors;
+	offset = chart->offset * 1000.0;
+	curpos = offset;
+	convert = beat_length / (double)chart->resolution; // current conversion rate of chartpos to milliseconds
 	while(current_anchor)
 	{
 		/* find current BPM */
@@ -111,6 +115,24 @@ EOF_SONG * eof_import_chart(const char * fn)
 	char oldoggpath[1024] = {0};
 	struct al_ffblk info; // for file search
 	int ret=0;
+	struct dBAnchor * current_anchor;
+	struct dbText * current_event;
+	unsigned long chartpos, max_chartpos;
+	EOF_BEAT_MARKER * new_beat = NULL;
+	struct dBAnchor *ptr, *ptr2;
+	unsigned curnum=4,curden=4;		//Stores the current time signature details (default is 4/4)
+	char midbeatchange;
+	unsigned long nextbeat;
+	unsigned long curppqn = 500000;	//Stores the current tempo (default is 120BPM)
+	double beatlength, chartfpos = 0;
+	char tschange;
+	struct dbTrack * current_track;
+	int track;
+	int difficulty;
+	long b = 0;
+	double solo_on = 0.0, solo_off = 0.0;
+	char solo_status = 0;	//0 = Off and awaiting a solo on marker, 1 = On and awaiting a solo off marker
+	unsigned long ctr, tracknum;
 
 	eof_log("\tImporting Feedback chart", 1);
 	eof_log("eof_import_chart() entered", 1);
@@ -213,9 +235,9 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 		/* set up beat markers */
 		sp->tags->ogg[0].midi_offset = chart->offset * 1000.0;
-		struct dBAnchor * current_anchor = chart->anchors;
-		struct dbText * current_event = chart->events;
-		unsigned long chartpos = 0, max_chartpos = 0;
+		current_anchor = chart->anchors;
+		current_event = chart->events;
+		chartpos = max_chartpos = 0;
 
 		/* find the highest chartpos for beat markers */
 		while(current_anchor)
@@ -237,14 +259,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 
 		/* create beat markers */
-		EOF_BEAT_MARKER * new_beat = NULL;
-		struct dBAnchor *ptr, *ptr2;
-		unsigned curnum=4,curden=4;		//Stores the current time signature details (default is 4/4)
-		char midbeatchange;
-		unsigned long nextbeat;
-		unsigned long curppqn = 500000;	//Stores the current tempo (default is 120BPM)
-		double beatlength = chart->resolution, chartfpos = 0;
-		char tschange;
+		beatlength = chart->resolution;
 		while(chartpos <= max_chartpos)
 		{	//Add new beats until enough have been added to encompass the last item in the chart
 			new_beat = eof_song_add_beat(sp);
@@ -310,9 +325,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		eof_calculate_beats(sp);		//Set the beats' timestamps based on their tempo changes
 
 		/* fill in notes */
-		struct dbTrack * current_track = chart->tracks;
-		int track;
-		int difficulty;
+		current_track = chart->tracks;
 		while(current_track)
 		{
 
@@ -390,7 +403,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 					/* import star power */
 					if(current_note->gemcolor == '2')
 					{
-						eof_legacy_track_add_star_power(sp->legacy_track[tracknum], chartpos_to_msec(chart, current_note->chartpos), chartpos_to_msec(chart, current_note->chartpos + current_note->duration));
+						(void) eof_legacy_track_add_star_power(sp->legacy_track[tracknum], chartpos_to_msec(chart, current_note->chartpos), chartpos_to_msec(chart, current_note->chartpos + current_note->duration));
 					}
 
 					/* skip face-off sections for now */
@@ -433,9 +446,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 
 		/* load text events */
-		long b = 0;
-		double solo_on = 0.0, solo_off = 0.0;
-		char solo_status = 0;	//0 = Off and awaiting a solo on marker, 1 = On and awaiting a solo off marker
 		current_event = chart->events;
 		while(current_event)
 		{
@@ -504,7 +514,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 	eof_selected_ogg = 0;
 
 	/* check if there were lane 5 drums imported */
-	unsigned long ctr, tracknum;
 	tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
 	for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
 	{	//For each note in the drum track
@@ -573,7 +582,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 	chart->resolution=192;	//Default this to 192
 
 //Allocate memory buffers large enough to hold any line in this file
-	maxlinelength=FindLongestLineLength_ALLEGRO(filename,1);
+	maxlinelength=(size_t)FindLongestLineLength_ALLEGRO(filename,1);
 	if(!maxlinelength)
 	{
 		eof_log("\tError finding the largest line in the file.  Aborting", 1);
@@ -584,7 +593,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 	buffer2=(char *)malloc_err(maxlinelength);
 
 //Read first line of text, capping it to prevent buffer overflow
-	if(!pack_fgets(buffer,maxlinelength,inf))
+	if(!pack_fgets(buffer,(int)maxlinelength,inf))
 	{	//I/O error
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Feedback import failed on line #%lu:  Unable to read from file:  \"%s\"", chart->linesprocessed, strerror(errno));
 		eof_log(eof_log_string, 1);
@@ -614,7 +623,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 
 		if((buffer[index] == '\n') || (buffer[index] == '\r') || (buffer[index] == '\0') || (buffer[index] == '{'))
 		{	//If this line was empty, or contained characters we're ignoring
-			pack_fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			(void) pack_fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 			continue;							//Skip ahead to the next line
 		}
 
@@ -724,7 +733,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				}
 			}
 
-			pack_fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			(void) pack_fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 			continue;				//Skip ahead to the next line
 		}//If the line begins an open bracket...
 
@@ -741,7 +750,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				return NULL;					//Malformed file, return error
 			}
 			currentsection=0;
-			pack_fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			(void) pack_fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 			continue;							//Skip ahead to the next line
 		}
 
@@ -1105,7 +1114,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				break;
 
 				case 'E':		//Text event, skip it
-					pack_fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+					(void) pack_fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 				continue;
 
 				case 'N':		//Note indicator, and increment index
@@ -1201,7 +1210,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			return NULL;					//Malformed file, return error
 		}
 
-		pack_fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+		(void) pack_fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 	}//Until end of file is reached
 
 	if(error)

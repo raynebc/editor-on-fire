@@ -1,6 +1,7 @@
 #include <allegro.h>
 #include <ctype.h>
 #include "../agup/agup.h"
+#include "../main.h"
 #include "../foflc/Lyric_storage.h"
 #include "../foflc/ID3_parse.h"
 #include "../lc_import.h"
@@ -8,7 +9,6 @@
 #include "../chart_import.h"
 #include "../gh_import.h"
 #include "../gp_import.h"
-#include "../main.h"
 #include "../player.h"
 #include "../dialog.h"
 #include "../undo.h"
@@ -115,9 +115,9 @@ DIALOG eof_preferences_dialog[] =
    { d_agup_check_proc, 248, 252, 214, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
    { d_agup_check_proc, 248, 268, 184, 16,  2,   23,  0,    0,      1,   0,   "Use dB style seek controls",NULL, NULL },
    { d_agup_text_proc,  24,  252, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
-   { d_agup_list_proc,  16,  270, 100, 110, 2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
+   { d_agup_list_proc,  16,  270, 100, 110, 2,   23,  0,    0,      0,   0,   (void *)eof_input_list,        NULL, NULL },
    { d_agup_text_proc,  150, 270, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
-   { d_agup_list_proc,  129, 285, 100, 95,  2,   23,  0,    0,      0,   0,   eof_colors_list,       NULL, NULL },
+   { d_agup_list_proc,  129, 285, 100, 95,  2,   23,  0,    0,      0,   0,   (void *)eof_colors_list,       NULL, NULL },
    { d_agup_button_proc,12,  385, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
    { d_agup_button_proc,86,  385, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
    { d_agup_button_proc,160, 385, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
@@ -140,7 +140,7 @@ DIALOG eof_display_dialog[] =
    { d_agup_check_proc, 16,  80, 160,  16, 2,   23,  0,    0, 1,   0,   "Use Software Cursor",               NULL, NULL },
    { d_agup_check_proc, 16,  100, 128,  16, 2,   23,  0,    0, 1,   0,   "Force 8-Bit Color",               NULL, NULL },
    { d_agup_text_proc,   56, 124,  48,  8,   2,   23,  0,    0,      0,   0,   "Window Size",            NULL, NULL },
-   { d_agup_list_proc,   43, 140,  110,  94 - 45,  2,   23,  0,    0,      0,   0,   eof_display_list, NULL, NULL },
+   { d_agup_list_proc,   43, 140,  110,  94 - 45,  2,   23,  0,    0,      0,   0,   (void *)eof_display_list, NULL, NULL },
    { d_agup_button_proc, 12,  202, 174,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
@@ -152,8 +152,8 @@ DIALOG eof_guitar_settings_dialog[] =
 
    { d_agup_text_proc,    16, 240,  64,  8,  2,   23,  0,    0,      0,   0,   "Delay (ms):",         NULL, NULL },
    { eof_verified_edit_proc,   104, 236,  64,  20,  2,   23,  0,    0,      5,   0,   eof_etext,           "0123456789", NULL },
-   { d_agup_list_proc,   13, 266,  170 + 32 + 85 + 28,  96 + 13,  2,   23,  0,    0,      0,   0,   eof_guitar_list, NULL, NULL },
-   { d_agup_push_proc, 13,  176 + 64 + 22 + 16 + 24 + 24 + 24 + 36, 170 + 32 + 85 + 28,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Redefine",               NULL, eof_guitar_controller_redefine },
+   { d_agup_list_proc,   13, 266,  170 + 32 + 85 + 28,  96 + 13,  2,   23,  0,    0,      0,   0,   (void *)eof_guitar_list, NULL, NULL },
+   { d_agup_push_proc, 13,  176 + 64 + 22 + 16 + 24 + 24 + 24 + 36, 170 + 32 + 85 + 28,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Redefine",               NULL, (void *)eof_guitar_controller_redefine },
    { d_agup_button_proc, 13, 176 + 64 + 22 + 16 + 24 + 24 + 24 + 36 + 32 + 8, 170 + 32 + 85 + 28,  28, 2,   23,  0,    D_EXIT, 0,   0,   "OK",               NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
@@ -165,8 +165,8 @@ DIALOG eof_drum_settings_dialog[] =
 
    { d_agup_text_proc,    16, 240,  64,  8,  2,   23,  0,    0,      0,   0,   "Delay (ms):",         NULL, NULL },
    { eof_verified_edit_proc,   104, 236,  64,  20,  2,   23,  0,    0,      5,   0,   eof_etext,           "0123456789", NULL },
-   { d_agup_list_proc,   13, 266,  170 + 32 + 85 + 28,  79,  2,   23,  0,    0,      0,   0,   eof_drum_list, NULL, NULL },
-   { d_agup_push_proc, 13,  176 + 64 + 22 + 16 + 24 + 24 + 24 + 36 - 30, 170 + 32 + 85 + 28,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Redefine",               NULL, eof_drum_controller_redefine },
+   { d_agup_list_proc,   13, 266,  170 + 32 + 85 + 28,  79,  2,   23,  0,    0,      0,   0,   (void *)eof_drum_list, NULL, NULL },
+   { d_agup_push_proc, 13,  176 + 64 + 22 + 16 + 24 + 24 + 24 + 36 - 30, 170 + 32 + 85 + 28,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Redefine",               NULL, (void *)eof_drum_controller_redefine },
    { d_agup_button_proc, 13, 176 + 64 + 22 + 16 + 24 + 24 + 24 + 36 + 32 + 8 - 30, 170 + 32 + 85 + 28,  28, 2,   23,  0,    D_EXIT, 0,   0,   "OK",               NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
@@ -175,8 +175,8 @@ DIALOG eof_controller_settings_dialog[] =
 {
    /* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
    { d_agup_window_proc, 0,   200, 222, 144, 2,   23,  0,    0,      0,   0,   "Controller Settings", NULL, NULL },
-   { d_agup_push_proc,   12,  236, 198, 28,  2,   23,  'g',  D_EXIT, 0,   0,   "&Guitar",             NULL, eof_controller_settings_guitar },
-   { d_agup_push_proc,   12,  266, 198, 28,  2,   23,  'd',  D_EXIT, 0,   0,   "&Drums",              NULL, eof_controller_settings_drums },
+   { d_agup_push_proc,   12,  236, 198, 28,  2,   23,  'g',  D_EXIT, 0,   0,   "&Guitar",             NULL, (void *)eof_controller_settings_guitar },
+   { d_agup_push_proc,   12,  266, 198, 28,  2,   23,  'd',  D_EXIT, 0,   0,   "&Drums",              NULL, (void *)eof_controller_settings_drums },
    { d_agup_button_proc, 12,  304, 198, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",                NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
@@ -214,7 +214,7 @@ DIALOG eof_ogg_settings_dialog[] =
    { d_agup_shadow_box_proc,    4,  236 + 24 - 32 - 20 - 8,  192, 190, 2,   23,  0,    0,      0,   0,   NULL,               NULL, NULL },
    { d_agup_text_proc,   58,  236 + 24 - 32 - 20,  128, 8,  2,   23,  0,    0,      0,   0,   "OGG Settings", NULL, NULL },
    { d_agup_text_proc,   49, 236 + 24 - 32,  48,  8,   2,   23,  0,    0,      0,   0,   "Encoder Quality",            NULL, NULL },
-   { d_agup_list_proc,   43, 252 + 24 - 32,  110,  96,  2,   23,  0,    0,      0,   0,   eof_ogg_list, NULL, NULL },
+   { d_agup_list_proc,   43, 252 + 24 - 32,  110,  96,  2,   23,  0,    0,      0,   0,   (void *)eof_ogg_list, NULL, NULL },
    { d_agup_button_proc, 16,  176 + 64 + 22 + 16 + 24 + 24 + 24, 68,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
    { d_agup_button_proc, 116, 176 + 64 + 22 + 16 + 24 + 24 + 24, 68,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
@@ -224,7 +224,7 @@ DIALOG eof_lyric_detections_dialog[]=
 {
 	/*(proc)				(x)			(y)			(w)			(h)			(fg)	(bg)	(key)	(flags)	(d1)(d2)	(dp)							(dp2)(dp3)*/
 	{d_agup_window_proc,	0,			48,			216+110+20,	160+72+2,	2,		23,		0,		0,		0,	0,		"Select track to import",		NULL,NULL},
-	{d_agup_list_proc,		12,			84,			110*2+20+80,69*2+2,		2,		23,		0,		0,		0,	0,		eof_lyric_detections_list_all,	NULL,NULL},
+	{d_agup_list_proc,		12,			84,			110*2+20+80,69*2+2,		2,		23,		0,		0,		0,	0,		(void *)eof_lyric_detections_list_all,	NULL,NULL},
 	{d_agup_button_proc,	12,			166+69+2,	160-6,		28,			2,		23,		0,		D_EXIT,	0,	0,		"Import",						NULL,NULL},
 	{d_agup_button_proc,	12+160+6,	166+69+2,	160-6,		28,			2,		23,		0,		D_EXIT,	0,	0,		"Cancel",						NULL,NULL},
 	{NULL,					0,			0,			0,			0,			0,		0,		0,		0,		0,	0,		NULL,							NULL,NULL}
@@ -401,7 +401,7 @@ int eof_menu_file_load(void)
 			eof_song = NULL;
 			eof_song_loaded = 0;
 		}
-		eof_destroy_ogg();
+		(void) eof_destroy_ogg();
 
 		/* load the specified project */
 		eof_song = eof_load_song(eof_filename);
@@ -783,7 +783,7 @@ int eof_menu_file_lyrics_import(void)
 			if(returncode == 0)
 			{	//This was initialized to nonzero, so if it's zero now, the import above failed, undo the import by loading the last undo state
 				(void) alert("Error", NULL, "Invalid lyric file", "OK", NULL, 0, KEY_ENTER);
-				eof_menu_edit_undo();
+				(void) eof_menu_edit_undo();
 			}
 		}
 	}
@@ -821,7 +821,7 @@ int eof_menu_file_midi_import(void)
 			eof_song = NULL;
 			eof_song_loaded = 0;
 		}
-		eof_destroy_ogg();
+		(void) eof_destroy_ogg();
 		(void) ustrcpy(eof_filename, returnedfn);
 		(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 		(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
@@ -1112,7 +1112,7 @@ void eof_apply_display_settings(int mode)
 	{
 		set_color_depth(8);
 	}
-	eof_set_display_mode_preset(mode);
+	(void) eof_set_display_mode_preset(mode);
 	set_palette(eof_palette);
 	if(!eof_soft_cursor)
 	{
@@ -1123,7 +1123,7 @@ void eof_apply_display_settings(int mode)
 	}
 	else
 	{
-		show_os_cursor(0);
+		(void) show_os_cursor(0);
 	}
 	if(!eof_load_data())
 	{	//Load images AFTER the graphics mode has been set, to avoid performance issues in Allegro
@@ -1510,6 +1510,10 @@ char * eof_display_list(int index, int * size)
 
 int eof_controller_settings_guitar(DIALOG * d)
 {
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
 	eof_color_dialog(eof_guitar_settings_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_guitar_settings_dialog);
 	eof_guitar_settings_dialog[1].d1 = 0;
@@ -1525,6 +1529,10 @@ int eof_controller_settings_guitar(DIALOG * d)
 
 int eof_controller_settings_drums(DIALOG * d)
 {
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
 	eof_color_dialog(eof_drum_settings_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_drum_settings_dialog);
 	eof_drum_settings_dialog[1].d1 = 0;
@@ -1541,16 +1549,21 @@ int eof_controller_settings_drums(DIALOG * d)
 int eof_guitar_controller_redefine(DIALOG * d)
 {
 	int i;
+
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
 	redefine_index = eof_guitar_settings_dialog[3].d1;
 	(void) dialog_message(eof_guitar_settings_dialog, MSG_DRAW, 0, &i);
-	eof_controller_set_button(&eof_guitar.button[eof_guitar_settings_dialog[3].d1]);
+	(void) eof_controller_set_button(&eof_guitar.button[eof_guitar_settings_dialog[3].d1]);
 	eof_clear_input();
 	redefine_index = -1;
 
 	//Wait for user to release button 0 or 1 on the first controller to prevent Allegro from hijacking the controller input
 	while((joy[0].button[0].b) || (joy[0].button[1].b))
 	{
-		poll_joystick();
+		(void) poll_joystick();
 	}
 
 	(void) dialog_message(eof_guitar_settings_dialog, MSG_DRAW, 0, &i);
@@ -1564,16 +1577,21 @@ int eof_guitar_controller_redefine(DIALOG * d)
 int eof_drum_controller_redefine(DIALOG * d)
 {
 	int i;
+
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
 	redefine_index = eof_drum_settings_dialog[3].d1;
 	(void) dialog_message(eof_drum_settings_dialog, MSG_DRAW, 0, &i);
-	eof_controller_set_button(&eof_drums.button[eof_drum_settings_dialog[3].d1]);
+	(void) eof_controller_set_button(&eof_drums.button[eof_drum_settings_dialog[3].d1]);
 	eof_clear_input();
 	redefine_index = -1;
 
 	//Wait for user to release button 0 or 1 on the first controller to prevent Allegro from hijacking the controller input
 	while((joy[0].button[0].b) || (joy[0].button[1].b))
 	{
-		poll_joystick();
+		(void) poll_joystick();
 	}
 
 	(void) dialog_message(eof_drum_settings_dialog, MSG_DRAW, 0, &i);
@@ -1739,7 +1757,7 @@ int eof_menu_file_feedback_import(void)
 				eof_song = NULL;
 				eof_song_loaded = 0;
 			}
-			eof_destroy_ogg();
+			(void) eof_destroy_ogg();
 			(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 			(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 			(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
@@ -1868,11 +1886,11 @@ int eof_mp3_to_ogg(char *file, char *directory)
 			put_backslash(directory);
 			#ifdef ALLEGRO_WINDOWS
 				(void) eof_copy_file(file, "eoftemp.mp3");
-				(void) uszprintf(syscommand, sizeof(syscommand), "mp3toogg \"eoftemp.mp3\" %s \"%sguitar.ogg\" \"%s\"", eof_ogg_quality[(int)eof_ogg_setting], directory, file);
+				(void) uszprintf(syscommand, (int) sizeof(syscommand), "mp3toogg \"eoftemp.mp3\" %s \"%sguitar.ogg\" \"%s\"", eof_ogg_quality[(int)eof_ogg_setting], directory, file);
 			#elif defined(ALLEGRO_MACOSX)
-				(void) uszprintf(syscommand, sizeof(syscommand), "./lame --decode \"%s\" - | ./oggenc --quiet -q %s --resample 44100 -s 0 - -o \"%sguitar.ogg\"", file, eof_ogg_quality[(int)eof_ogg_setting], directory);
+				(void) uszprintf(syscommand, (int) sizeof(syscommand), "./lame --decode \"%s\" - | ./oggenc --quiet -q %s --resample 44100 -s 0 - -o \"%sguitar.ogg\"", file, eof_ogg_quality[(int)eof_ogg_setting], directory);
 			#else
-				(void) uszprintf(syscommand, sizeof(syscommand), "lame --decode \"%s\" - | oggenc --quiet -q %s --resample 44100 -s 0 - -o \"%sguitar.ogg\"", file, eof_ogg_quality[(int)eof_ogg_setting], directory);
+				(void) uszprintf(syscommand, (int) sizeof(syscommand), "lame --decode \"%s\" - | oggenc --quiet -q %s --resample 44100 -s 0 - -o \"%sguitar.ogg\"", file, eof_ogg_quality[(int)eof_ogg_setting], directory);
 			#endif
 			(void) eof_system(syscommand);
 			#ifdef ALLEGRO_WINDOWS
@@ -1949,15 +1967,15 @@ int eof_new_chart(char * filename)
 	if(!ustricmp("ogg", get_extension(oggfilename)))
 	{
 		temp_buffer = eof_buffer_file(oggfilename, 0);
-		temp_buffer_size = file_size_ex(oggfilename);
+		temp_buffer_size = (int) file_size_ex(oggfilename);
 		if(temp_buffer)
 		{
 			temp_ogg = alogg_create_ogg_from_buffer(temp_buffer, temp_buffer_size);
 			if(temp_ogg)
 			{
-				alogg_get_ogg_comment(temp_ogg, "ARTIST", eof_etext);
-				alogg_get_ogg_comment(temp_ogg, "TITLE", eof_etext2);
-				alogg_get_ogg_comment(temp_ogg, "ALBUM", album);
+				(void) alogg_get_ogg_comment(temp_ogg, "ARTIST", eof_etext);
+				(void) alogg_get_ogg_comment(temp_ogg, "TITLE", eof_etext2);
+				(void) alogg_get_ogg_comment(temp_ogg, "ALBUM", album);
 			}
 		}
 	}
@@ -1970,10 +1988,10 @@ int eof_new_chart(char * filename)
 
 			if(ID3FrameProcessor(&tag))		//If ID3v2 frames are found
 			{
-				GrabID3TextFrame(&tag,"TPE1",eof_etext,sizeof(eof_etext)/sizeof(char));		//Store the Artist info in eof_etext[]
-				GrabID3TextFrame(&tag,"TIT2",eof_etext2,sizeof(eof_etext2)/sizeof(char));	//Store the Title info in eof_etext2[]
-				GrabID3TextFrame(&tag,"TYER",year,sizeof(year)/sizeof(char));				//Store the Year info in year[]
-				GrabID3TextFrame(&tag,"TALB",album,sizeof(album)/sizeof(char));			//Store the Album info in album[]
+				(void) GrabID3TextFrame(&tag,"TPE1",eof_etext,(unsigned long)(sizeof(eof_etext)/sizeof(char)));		//Store the Artist info in eof_etext[]
+				(void) GrabID3TextFrame(&tag,"TIT2",eof_etext2,(unsigned long)(sizeof(eof_etext2)/sizeof(char)));	//Store the Title info in eof_etext2[]
+				(void) GrabID3TextFrame(&tag,"TYER",year,(unsigned long)(sizeof(year)/sizeof(char)));				//Store the Year info in year[]
+				(void) GrabID3TextFrame(&tag,"TALB",album,(unsigned long)(sizeof(album)/sizeof(char)));			//Store the Album info in album[]
 			}
 
 			//If any of the information was not found in the ID3v2 tag, check for it from an ID3v1 tag
@@ -2079,7 +2097,7 @@ int eof_new_chart(char * filename)
 		eof_song = NULL;
 		eof_song_loaded = 0;
 	}
-	eof_destroy_ogg();
+	(void) eof_destroy_ogg();
 
 	/* create new song */
 	eof_song = eof_create_song_populated();
@@ -2093,11 +2111,11 @@ int eof_new_chart(char * filename)
 	}
 
 	/* fill in information */
-	(void) ustrncpy(eof_song->tags->artist, eof_etext, sizeof(eof_song->tags->artist) - 1);	//Prevent buffer overflow
-	(void) ustrncpy(eof_song->tags->title, eof_etext2, sizeof(eof_song->tags->title) - 1);
-	(void) ustrncpy(eof_song->tags->frettist, eof_last_frettist, sizeof(eof_song->tags->frettist) - 1);
-	(void) ustrncpy(eof_song->tags->year, year, sizeof(eof_song->tags->year) - 1);	//The year tag that was read from an MP3 (if applicable)
-	(void) ustrncpy(eof_song->tags->album, album, sizeof(eof_song->tags->album) - 1);
+	(void) ustrncpy(eof_song->tags->artist, eof_etext, (int) sizeof(eof_song->tags->artist) - 1);	//Prevent buffer overflow
+	(void) ustrncpy(eof_song->tags->title, eof_etext2, (int) sizeof(eof_song->tags->title) - 1);
+	(void) ustrncpy(eof_song->tags->frettist, eof_last_frettist, (int) sizeof(eof_song->tags->frettist) - 1);
+	(void) ustrncpy(eof_song->tags->year, year, (int) sizeof(eof_song->tags->year) - 1);	//The year tag that was read from an MP3 (if applicable)
+	(void) ustrncpy(eof_song->tags->album, album, (int) sizeof(eof_song->tags->album) - 1);
 	(void) ustrcpy(oggfilename, filename);
 	(void) replace_filename(eof_last_ogg_path, oggfilename, "", 1024);
 
@@ -2138,7 +2156,7 @@ int eof_new_chart(char * filename)
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);
 
-	eof_menu_file_quick_save();
+	(void) eof_menu_file_quick_save();
 
 	return 0;	//Return success
 }
@@ -2164,14 +2182,14 @@ int eof_save_helper(char *destfilename)
 		function = 1;
 		if((eof_song_path == NULL) || (eof_loaded_song_name == NULL))
 			return 1;	//Return failure
-		(void) append_filename(eof_temp_filename, eof_song_path, eof_loaded_song_name, sizeof(eof_temp_filename));
+		(void) append_filename(eof_temp_filename, eof_song_path, eof_loaded_song_name, (int) sizeof(eof_temp_filename));
 		(void) replace_filename(newfolderpath, eof_song_path, "", 1024);	//Obtain the destination path
 	}
 	else
 	{	//Perform save as
 		function = 2;
 		(void) replace_extension(destfilename, destfilename, "eof", 1024);	//Ensure the chart is saved with a .eof extension
-		(void) ustrncpy(eof_temp_filename, destfilename, sizeof(eof_temp_filename) - 1);
+		(void) ustrncpy(eof_temp_filename, destfilename, (int) sizeof(eof_temp_filename) - 1);
 		if(eof_temp_filename[1022] != '\0')	//If the source filename was too long to store in the array
 			return 1;			//Return failure
 		(void) replace_filename(newfolderpath, destfilename, "", 1024);	//Obtain the destination path
@@ -2185,7 +2203,7 @@ int eof_save_helper(char *destfilename)
 	notes_after_chart_audio = eof_check_if_notes_exist_beyond_audio_end(eof_song);
 	if(notes_after_chart_audio && !eof_silence_loaded)
 	{	//Only display this warning if there is chart audio loaded
-		snprintf(oggfn, sizeof(oggfn) - 1, "Warning:  Track \"%s\" contains notes/lyrics extending beyond the chart's audio.", eof_song->track[notes_after_chart_audio]->name);
+		(void) snprintf(oggfn, sizeof(oggfn) - 1, "Warning:  Track \"%s\" contains notes/lyrics extending beyond the chart's audio.", eof_song->track[notes_after_chart_audio]->name);
 		if(alert(oggfn, NULL, "This chart may not work properly.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user doesn't opt to continue due to this error condition
 			return 2;	//Return cancellation
@@ -2276,7 +2294,7 @@ int eof_save_helper(char *destfilename)
 	/* check if any chords have undefined fingering */
 	if(eof_write_rs_files)
 	{	//If the user wants to save Rocksmith capable files
-		eof_correct_chord_fingerings();			//Ensure all chords in each pro guitar track have valid finger arrays, prompt user to provide any that are missing
+		(void) eof_correct_chord_fingerings();			//Ensure all chords in each pro guitar track have valid finger arrays, prompt user to provide any that are missing
 	}
 
 	/* check if there is a MIDI delay, offer to use Reset offset to zero */
@@ -2286,7 +2304,7 @@ int eof_save_helper(char *destfilename)
 		{	//If there is a MIDI delay
 			if(alert("Warning:  The first beat marker (the MIDI delay) is not positioned at 0 seconds.", "This might prevent the song from playing from the beginning in Rocksmith.", "Correct this condition with \"Reset offset to zero\"?", "&Yes", "&No", 'y', 'n') == 1)
 			{	//If the user opts to correct the issue
-				eof_menu_beat_reset_offset();	//Run the "Reset offset to zero" function.  If the tempo map is locked, the function will offer to unlock it before proceeding
+				(void) eof_menu_beat_reset_offset();	//Run the "Reset offset to zero" function.  If the tempo map is locked, the function will offer to unlock it before proceeding
 			}
 		}
 	}
@@ -2307,7 +2325,7 @@ int eof_save_helper(char *destfilename)
 	}
 
 	/* rotate out the last save file (filename).previous_save.eof */
-	(void) replace_extension(eof_temp_filename, eof_temp_filename, "eof", sizeof(eof_temp_filename));	//Ensure the chart's file path has a .eof extension
+	(void) replace_extension(eof_temp_filename, eof_temp_filename, "eof", (int) sizeof(eof_temp_filename));	//Ensure the chart's file path has a .eof extension
 	(void) replace_extension(tempfilename2, eof_temp_filename, "previous_save.eof", 1024);	//(filename).previous_save.eof will be store the last save operation
 	if(exists(tempfilename2))
 	{	//If the lastsave file exists
@@ -2320,7 +2338,7 @@ int eof_save_helper(char *destfilename)
 	}
 	if(exists(eof_temp_filename))
 	{	//If the target of the save operation already exists
-		eof_copy_file(eof_temp_filename, tempfilename2);	//Back it up as (filename).previous_save.eof
+		(void) eof_copy_file(eof_temp_filename, tempfilename2);	//Back it up as (filename).previous_save.eof
 		if(!exists(tempfilename2))
 		{	//Make sure it was created
 			allegro_message("Warning:  Could not create the previous_save backup file.  Aborting save.  Please use \"Save as\" to save to a new location.");
@@ -2353,16 +2371,16 @@ int eof_save_helper(char *destfilename)
 
 	/* save the MIDI, INI and other files*/
 	eof_check_vocals(eof_song, &fixvoxpitches, &fixvoxphrases);
-	(void) append_filename(eof_temp_filename, newfolderpath, "notes.mid", sizeof(eof_temp_filename));
+	(void) append_filename(eof_temp_filename, newfolderpath, "notes.mid", (int) sizeof(eof_temp_filename));
 	if(eof_export_midi(eof_song, eof_temp_filename, 0, fixvoxpitches, fixvoxphrases))
 	{	//If saving the normal MIDI succeeded, proceed with saving song.ini and additional MIDI files if applicable
 		if(eof_write_rb_files)
 		{	//If the user opted to also save RBN2 and RB3 pro guitar upgrade compliant MIDIs
-			(void) append_filename(eof_temp_filename, newfolderpath, "notes_rbn.mid", sizeof(eof_temp_filename));
+			(void) append_filename(eof_temp_filename, newfolderpath, "notes_rbn.mid", (int) sizeof(eof_temp_filename));
 			(void) eof_export_midi(eof_song, eof_temp_filename, 1, fixvoxpitches, fixvoxphrases);	//Write a RBN2 compliant MIDI
 			if(eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS) || eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS_22) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR_22))
 			{	//If any of the pro guitar tracks are populated
-				(void) append_filename(eof_temp_filename, newfolderpath, "notes_pro.mid", sizeof(eof_temp_filename));
+				(void) append_filename(eof_temp_filename, newfolderpath, "notes_pro.mid", (int) sizeof(eof_temp_filename));
 				(void) eof_export_midi(eof_song, eof_temp_filename, 2, fixvoxpitches, fixvoxphrases);	//Write a RB3 pro guitar upgrade compliant MIDI
 				(void) ustrcpy(eof_temp_filename, newfolderpath);
 				put_backslash(eof_temp_filename);
@@ -2376,19 +2394,19 @@ int eof_save_helper(char *destfilename)
 					}
 				}
 				put_backslash(eof_temp_filename);
-				(void) replace_filename(eof_temp_filename, eof_temp_filename, "upgrades.dta", sizeof(eof_temp_filename));
-				eof_save_upgrades_dta(eof_song, eof_temp_filename);		//Create the upgrades.dta file in the songs_upgrades folder if it does not already exist
+				(void) replace_filename(eof_temp_filename, eof_temp_filename, "upgrades.dta", (int) sizeof(eof_temp_filename));
+				(void) eof_save_upgrades_dta(eof_song, eof_temp_filename);		//Create the upgrades.dta file in the songs_upgrades folder if it does not already exist
 			}
 		}
 
 		/* Save INI file */
-		(void) append_filename(eof_temp_filename, newfolderpath, "song.ini", sizeof(eof_temp_filename));
+		(void) append_filename(eof_temp_filename, newfolderpath, "song.ini", (int) sizeof(eof_temp_filename));
 		(void) eof_save_ini(eof_song, eof_temp_filename);
 
 		/* save script lyrics if applicable) */
 		if(eof_song->tags->lyrics && eof_song->vocal_track[0]->lyrics)							//If user enabled the Lyrics checkbox in song properties and there are lyrics defined
 		{
-			(void) append_filename(eof_temp_filename, newfolderpath, "script.txt", sizeof(eof_temp_filename));
+			(void) append_filename(eof_temp_filename, newfolderpath, "script.txt", (int) sizeof(eof_temp_filename));
 			jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 			if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 			{	//Lyric export failed
@@ -2397,7 +2415,7 @@ int eof_save_helper(char *destfilename)
 			}
 			else
 			{
-				EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,SCRIPT_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
+				(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,SCRIPT_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
 			}
 		}
 	}
@@ -2405,12 +2423,12 @@ int eof_save_helper(char *destfilename)
 	if(eof_write_rs_files)
 	{	//If the user wants to save Rocksmith capable files
 		char user_warned = 0;	//Tracks whether the user was warned about hand positions being undefined and auto-generated during export
-		(void) append_filename(eof_temp_filename, newfolderpath, "xmlpath.xml", sizeof(eof_temp_filename));	//Re-acquire the save's target folder
+		(void) append_filename(eof_temp_filename, newfolderpath, "xmlpath.xml", (int) sizeof(eof_temp_filename));	//Re-acquire the save's target folder
 
-		eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS, &user_warned);
-		eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS_22, &user_warned);
-		eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR, &user_warned);
-		eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_22, &user_warned);
+		(void) eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS, &user_warned);
+		(void) eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS_22, &user_warned);
+		(void) eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR, &user_warned);
+		(void) eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_22, &user_warned);
 		if(eof_song->vocal_track[0]->lyrics)
 		{	//If there are lyrics, export them in Rocksmith format as well
 			char *arrangement_name;	//This will point to the track's native name unless it has an alternate name defined
@@ -2422,8 +2440,8 @@ int eof_save_helper(char *destfilename)
 			{	//Otherwise use the track's native name
 				arrangement_name = eof_song->track[EOF_TRACK_VOCALS]->name;
 			}
-			(void) append_filename(eof_temp_filename, newfolderpath, arrangement_name, sizeof(eof_temp_filename));
-			(void) replace_extension(eof_temp_filename, eof_temp_filename, "xml", sizeof(eof_temp_filename));
+			(void) append_filename(eof_temp_filename, newfolderpath, arrangement_name, (int) sizeof(eof_temp_filename));
+			(void) replace_extension(eof_temp_filename, eof_temp_filename, "xml", (int) sizeof(eof_temp_filename));
 			jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 			if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 			{	//Lyric export failed
@@ -2432,7 +2450,7 @@ int eof_save_helper(char *destfilename)
 			}
 			else
 			{
-				EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,RS_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
+				(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,RS_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
 			}
 		}
 		(void) eof_detect_difficulties(eof_song, eof_selected_track);		//Update eof_track_diff_populated_status[] to reflect the currently selected difficulty
@@ -2444,16 +2462,16 @@ int eof_save_helper(char *destfilename)
 			eof_get_rocksmith_wav_path(eof_temp_filename, newfolderpath, sizeof(eof_temp_filename));	//Build the path to the target WAV file
 			if(!exists(eof_temp_filename))
 			{	//If the WAV file does not exist
-				(void) replace_filename(eof_temp_filename, newfolderpath, "guitar.wav", sizeof(eof_temp_filename));
+				(void) replace_filename(eof_temp_filename, newfolderpath, "guitar.wav", (int) sizeof(eof_temp_filename));
 				if(!exists(eof_temp_filename))
 				{	//If "guitar.wav" also does not exist
-					set_window_title("Saving WAV file for use with Wwise.  Please wait.");
 					SAMPLE *decoded = alogg_create_sample_from_ogg(eof_music_track);	//Create PCM data from the loaded chart audio
+					set_window_title("Saving WAV file for use with Wwise.  Please wait.");
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Writing RS WAV file (%s)", eof_temp_filename);
 					eof_log(eof_log_string, 1);
 					if(!save_wav_with_silence_appended(eof_temp_filename, decoded, 8000))	//Write a WAV file with it, appending 8 seconds of silence to it
 					{	//If it didn't save, try saving again as "guitar.wav", just in case the user put invalid characters in the song title
-						(void) append_filename(eof_temp_filename, newfolderpath, "guitar.wav", sizeof(eof_temp_filename));
+						(void) append_filename(eof_temp_filename, newfolderpath, "guitar.wav", (int) sizeof(eof_temp_filename));
 						if(!save_wav_with_silence_appended(eof_temp_filename, decoded, 8000))
 						{	//If it didn't save again
 							allegro_message("Error saving WAV file, check the log for the OS' reason");
@@ -2468,14 +2486,14 @@ int eof_save_helper(char *destfilename)
 	/* save OGG file if necessary*/
 	if(!eof_silence_loaded)
 	{	//Only try to save an audio file if one is loaded
-		(void) append_filename(eof_temp_filename, newfolderpath, "guitar.ogg", sizeof(eof_temp_filename));
+		(void) append_filename(eof_temp_filename, newfolderpath, "guitar.ogg", (int) sizeof(eof_temp_filename));
 		if(function == 1)
 		{	//If performing "Save" function, only write guitar.ogg if it is missing
 			if(!exists(eof_temp_filename))
-				eof_save_ogg(eof_temp_filename);
+				(void) eof_save_ogg(eof_temp_filename);
 		}
 		else	//"Save as" requires the guitar.ogg to be overwritten to ensure it's the correct audio
-			eof_save_ogg(eof_temp_filename);
+			(void) eof_save_ogg(eof_temp_filename);
 	}
 
 	/* finish up */
@@ -2484,7 +2502,7 @@ int eof_save_helper(char *destfilename)
 	{
 		if(eof_song->tags->ogg[ctr].modified)
 		{
-			(void) replace_filename(eof_temp_filename, eof_temp_filename, eof_song->tags->ogg[ctr].filename, sizeof(eof_temp_filename));
+			(void) replace_filename(eof_temp_filename, eof_temp_filename, eof_song->tags->ogg[ctr].filename, (int) sizeof(eof_temp_filename));
 			(void) snprintf(oggfn, sizeof(oggfn) - 1, "%s.lastsaved", eof_temp_filename);
 			(void) eof_copy_file(eof_temp_filename, oggfn);
 			eof_song->tags->ogg[ctr].modified = 0;
@@ -2566,7 +2584,7 @@ int eof_menu_prompt_save_changes(void)
 	ret = alert3(NULL, "You have unsaved changes.", NULL, "Save", "Discard", "Cancel", 0, 0, 0);
 	if(ret == 1)
 	{
-		eof_menu_file_save();
+		(void) eof_menu_file_save();
 	}
 	else
 	{
@@ -2600,7 +2618,7 @@ int eof_menu_file_gh_import(void)
 			eof_song = NULL;
 			eof_song_loaded = 0;
 		}
-		eof_destroy_ogg();
+		(void) eof_destroy_ogg();
 		(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 		(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 		(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
@@ -2662,8 +2680,8 @@ DIALOG eof_gp_import_dialog[] =
 {
    /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
    { d_agup_window_proc,0,   48,  500, 232, 2,   23,  0,    0,      0,   0,   "Import which GP track into the project's active track?",       NULL, NULL },
-   { d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   eof_gp_tracks_list, NULL, NULL },
-   { d_agup_push_proc,  425, 84,  68,  28,  2,   23,  'i',  D_EXIT, 0,   0,   "&Import",      NULL, eof_gp_import_track },
+   { d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_gp_tracks_list, NULL, NULL },
+   { d_agup_push_proc,  425, 84,  68,  28,  2,   23,  'i',  D_EXIT, 0,   0,   "&Import",      NULL, (void *)eof_gp_import_track },
    { d_agup_button_proc,12,  235, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
@@ -2852,7 +2870,7 @@ int eof_set_display_width(void)
 {
 	int width;
 
-	snprintf(eof_etext, sizeof(eof_etext) - 1, "Set display width (>= %lu)", eof_screen_width_default);
+	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "Set display width (>= %lu)", eof_screen_width_default);
 	eof_set_display_width_dialog[0].dp = eof_etext;	//Update the dialog window's title
 
 	eof_etext2[0] = '\0';
@@ -2866,7 +2884,7 @@ int eof_set_display_width(void)
 
 			if(width >= eof_screen_width_default)
 			{	//If the specified width is valid
-				eof_set_display_mode(width, eof_screen_height);	//Resize the program window to the specified width and the current height
+				(void) eof_set_display_mode(width, eof_screen_height);	//Resize the program window to the specified width and the current height
 			}
 		}
 	}

@@ -60,7 +60,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 	}
 
 	//Allocate memory buffers large enough to hold any line in this file
-	maxlinelength=FindLongestLineLength_ALLEGRO(fn, 1);
+	maxlinelength=(size_t)FindLongestLineLength_ALLEGRO(fn, 1);
 	if(!maxlinelength)
 	{
 		eof_log("\tError finding the largest line in the file.  Aborting", 1);
@@ -100,7 +100,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 	tp->parent = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum]->parent;	//Initialize the parent so that the alternate track name can be set if appropriate
 
 	//Read first line of text, capping it to prevent buffer overflow
-	if(!pack_fgets(buffer, maxlinelength, inf))
+	if(!pack_fgets(buffer, (int)maxlinelength, inf))
 	{	//I/O error
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Rocksmith import failed on line #%lu:  Unable to read from file:  \"%s\"", linectr, strerror(errno));
 		eof_log(eof_log_string, 1);
@@ -133,7 +133,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		}
 		else
 		{	//This line had no XML, skip it
-			pack_fgets(buffer, maxlinelength, inf);	//Read next line of text, so the EOF condition can be checked
+			(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text, so the EOF condition can be checked
 			linectr++;
 			continue;
 		}
@@ -252,7 +252,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 
 			if(parse_xml_attribute_number("count", buffer, &output) && output)
 			{	//If the count attribute of this tag is readable and greater than 0
-				pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 				linectr++;
 				while(!error || !pack_feof(inf))
 				{	//Until there was an error reading from the file or end of file is reached
@@ -280,7 +280,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						phraselist_count++;
 					}
 
-					pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+					(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 					linectr++;	//Increment line counter
 				}
 				if(error)
@@ -298,7 +298,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 
 			if(parse_xml_attribute_number("count", buffer, &output) && output)
 			{	//If the count attribute of this tag is readable and greater than 0
-				pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 				linectr++;
 				while(!error || !pack_feof(inf))
 				{	//Until there was an error reading from the file or end of file is reached
@@ -343,7 +343,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						eventlist_count++;
 					}
 
-					pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+					(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 					linectr++;	//Increment line counter
 				}
 				if(error)
@@ -365,7 +365,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 
 			if(parse_xml_attribute_number("count", buffer, &output) && output)
 			{	//If the count attribute of this tag is readable and greater than 0
-				pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 				linectr++;
 				while(!error || !pack_feof(inf))
 				{	//Until there was an error reading from the file or end of file is reached
@@ -465,7 +465,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						chordlist_count++;
 					}//If another chord can be stored
 
-					pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+					(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 					linectr++;	//Increment line counter
 				}//Until there was an error reading from the file or end of file is reached
 				if(error)
@@ -483,7 +483,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 
 			if(parse_xml_attribute_number("count", buffer, &output) && output)
 			{	//If the count attribute of this tag is readable and greater than 0
-				pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 				linectr++;
 				while(!error || !pack_feof(inf))
 				{	//Until there was an error reading from the file or end of file is reached
@@ -515,7 +515,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 					}
 					beat_count++;
 
-					pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+					(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 					linectr++;	//Increment line counter
 				}//Until there was an error reading from the file or end of file is reached
 				if(error)
@@ -541,7 +541,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 
 			if(parse_xml_attribute_number("count", buffer, &output) && output)
 			{	//If the count attribute of this tag is readable and greater than 0
-				pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 				linectr++;
 				while(!error || !pack_feof(inf))
 				{	//Until there was an error reading from the file or end of file is reached
@@ -602,7 +602,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						break;	//Break from inner loop
 					}
 
-					pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+					(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 					linectr++;	//Increment line counter
 				}//Until there was an error reading from the file or end of file is reached
 				if(error)
@@ -631,7 +631,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 
 			if(parse_xml_attribute_number("count", buffer, &output) && output)
 			{	//If the count attribute of this tag is readable and greater than 0
-				pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 				linectr++;
 				while(!error || !pack_feof(inf))
 				{	//Until there was an error reading from the file or end of file is reached
@@ -674,7 +674,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						eventlist_count++;
 					}
 
-					pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+					(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 					linectr++;	//Increment line counter
 				}
 				if(error)
@@ -692,7 +692,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 
 			if(parse_xml_attribute_number("count", buffer, &output) && output)
 			{	//If the count attribute of this tag is readable and greater than 0
-				pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 				linectr++;
 				while(!error || !pack_feof(inf))
 				{	//Until there was an error reading from the file or end of file is reached
@@ -730,7 +730,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						eventlist_count++;
 					}
 
-					pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+					(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 					linectr++;	//Increment line counter
 				}
 				if(error)
@@ -750,7 +750,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 
 			if(parse_xml_attribute_number("count", buffer, &output) && output)
 			{	//If the count attribute of this tag is readable and greater than 0
-				pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 				linectr++;
 				while(!error || !pack_feof(inf))
 				{	//Until there was an error reading from the file or end of file is reached
@@ -776,7 +776,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 							error = 1;
 							break;	//Break from inner loop
 						}
-						pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+						(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 						linectr++;
 						while(!error || !pack_feof(inf))
 						{	//Until there was an error reading from the file or end of file is reached
@@ -797,7 +797,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 
 								if(parse_xml_attribute_number("count", buffer, &output) && output)
 								{	//If the count attribute of this tag is readable and greater than 0
-									pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+									(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 									linectr++;
 									while(!error || !pack_feof(inf))
 									{	//Until there was an error reading from the file or end of file is reached
@@ -823,16 +823,16 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 													error = 1;
 													break;	//Break from inner loop
 												}
-												parse_xml_attribute_number("bend", buffer, &bend);
-												parse_xml_attribute_number("fret", buffer, &fret);
-												parse_xml_attribute_number("hammerOn", buffer, &hammeron);
-												parse_xml_attribute_number("harmonic", buffer, &harmonic);
-												parse_xml_attribute_number("palmMute", buffer, &palmmute);
-												parse_xml_attribute_number("pluck", buffer, &pluck);
-												parse_xml_attribute_number("pullOff", buffer, &pulloff);
-												parse_xml_attribute_number("slap", buffer, &slap);
-												parse_xml_attribute_number("slideTo", buffer, &slideto);
-												parse_xml_attribute_number("string", buffer, &string);
+												(void) parse_xml_attribute_number("bend", buffer, &bend);
+												(void) parse_xml_attribute_number("fret", buffer, &fret);
+												(void) parse_xml_attribute_number("hammerOn", buffer, &hammeron);
+												(void) parse_xml_attribute_number("harmonic", buffer, &harmonic);
+												(void) parse_xml_attribute_number("palmMute", buffer, &palmmute);
+												(void) parse_xml_attribute_number("pluck", buffer, &pluck);
+												(void) parse_xml_attribute_number("pullOff", buffer, &pulloff);
+												(void) parse_xml_attribute_number("slap", buffer, &slap);
+												(void) parse_xml_attribute_number("slideTo", buffer, &slideto);
+												(void) parse_xml_attribute_number("string", buffer, &string);
 												if(!parse_xml_rs_timestamp("sustain", buffer, &sustain))
 												{	//If the timestamp was not readable
 													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading sustain time on line #%lu.  Aborting", linectr);
@@ -840,63 +840,66 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 													error = 1;
 													break;	//Break from inner loop
 												}
-												parse_xml_attribute_number("tremolo", buffer, &tremolo);
+												(void) parse_xml_attribute_number("tremolo", buffer, &tremolo);
 
 												//Add note and set attributes
-												np = eof_pro_guitar_track_add_note(tp);	//Allocate, initialize and add the new note to the note array
-												if(!np)
-												{
-													eof_log("\tError allocating memory.  Aborting", 1);
-													error = 1;
-													break;	//Break from inner loop
-												}
-												np->type = curdiff;
-												np->note = 1 << string;
-												np->frets[string] = fret;
-												np->pos = time;
-												np->length = sustain;
-												if(bend)
-												{
-													flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
-													flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
-													np->bendstrength = bend;
-												}
-												if(hammeron)
-													flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;
-												if(harmonic)
-													flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
-												if(palmmute)
-													flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
-												if(pulloff)
-													flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;
-												if(tremolo)
-													flags |= EOF_NOTE_FLAG_IS_TREMOLO;
-												if(pluck > 0)
-													flags |= EOF_PRO_GUITAR_NOTE_FLAG_POP;
-												if(slap > 0)
-													flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLAP;
-												if(slideto > 0)
-												{
-													flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
-													np->slideend = slideto;
-													if(slideto > fret)
-													{	//The slide ends above the starting fret
-														flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+												if((string >= 0) && (string < 6))
+												{	//As long as the string number is valid
+													np = eof_pro_guitar_track_add_note(tp);	//Allocate, initialize and add the new note to the note array
+													if(!np)
+													{
+														eof_log("\tError allocating memory.  Aborting", 1);
+														error = 1;
+														break;	//Break from inner loop
 													}
-													else
-													{	//The slide ends below the starting fret
-														flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+													np->type = curdiff;
+													np->note = 1 << (unsigned long) string;
+													np->frets[(unsigned long) string] = fret;
+													np->pos = time;
+													np->length = sustain;
+													if(bend)
+													{
+														flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+														flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
+														np->bendstrength = bend;
 													}
-												}
-												np->flags = flags;
-												note_count++;
+													if(hammeron)
+														flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;
+													if(harmonic)
+														flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
+													if(palmmute)
+														flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
+													if(pulloff)
+														flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;
+													if(tremolo)
+														flags |= EOF_NOTE_FLAG_IS_TREMOLO;
+													if(pluck > 0)
+														flags |= EOF_PRO_GUITAR_NOTE_FLAG_POP;
+													if(slap > 0)
+														flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLAP;
+													if(slideto > 0)
+													{
+														flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
+														np->slideend = slideto;
+														if(slideto > fret)
+														{	//The slide ends above the starting fret
+															flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+														}
+														else
+														{	//The slide ends below the starting fret
+															flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+														}
+													}
+													np->flags = flags;
+													note_count++;
 
-												if(fret > tp->numfrets)
-													tp->numfrets = fret;	//Track the highest used fret number
+													if(fret > tp->numfrets)
+														tp->numfrets = fret;	//Track the highest used fret number
+												}//As long as the string number is valid
 											}//If another note can be stored
 										}//If this is a note tag
 
-										pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+										(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 										linectr++;
 									}//Until there was an error reading from the file or end of file is reached
 									if(error)
@@ -915,7 +918,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 
 								if(parse_xml_attribute_number("count", buffer, &output) && output)
 								{	//If the count attribute of this tag is readable and greater than 0
-									pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+									(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 									linectr++;
 									while(!error || !pack_feof(inf))
 									{	//Until there was an error reading from the file or end of file is reached
@@ -982,7 +985,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 											}
 										}//If this is a chord tag
 
-										pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+										(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 										linectr++;	//Increment line counter
 									}
 									if(error)
@@ -1000,7 +1003,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 
 								if(parse_xml_attribute_number("count", buffer, &output) && output)
 								{	//If the count attribute of this tag is readable and greater than 0
-									pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+									(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 									linectr++;
 									while(!error || !pack_feof(inf))
 									{	//Until there was an error reading from the file or end of file is reached
@@ -1036,7 +1039,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 											}
 										}//If this is an anchor tag
 
-										pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+										(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 										linectr++;	//Increment line counter
 									}
 									if(error)
@@ -1044,20 +1047,20 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 								}//If the count attribute of this tag is readable and greater than 0
 							}//If this is an anchors tag
 
-							pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+							(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 							linectr++;
 						}//Until there was an error reading from the file or end of file is reached
 						if(error)
 							break;	//Break from outer loop
 					}//If this is a level tag
 
-					pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+					(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 					linectr++;
 				}//Until there was an error reading from the file or end of file is reached
 			}//If the count attribute of this tag is readable and greater than 0
 		}//If this is the levels tag
 
-		pack_fgets(buffer, maxlinelength, inf);	//Read next line of text
+		(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 		linectr++;	//Increment line counter
 	}//Until there was an error reading from the file or end of file is reached
 
@@ -1140,7 +1143,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		{	//For each beat in the project
 			if((ctr2 + 1 >= eof_song->beats) || (eventlist[ctr]->beat < eof_song->beat[ctr2 + 1]->pos))
 			{	//If this text event falls before the next beat, or if there isn't another beat
-				eof_song_add_text_event(eof_song, ctr2, eventlist[ctr]->text, eof_selected_track, eventlist[ctr]->flags, 0);	//Add the event to this beat
+				(void) eof_song_add_text_event(eof_song, ctr2, eventlist[ctr]->text, eof_selected_track, eventlist[ctr]->flags, 0);	//Add the event to this beat
 				break;
 			}
 		}
