@@ -1506,10 +1506,11 @@ void eof_song_fix_fingerings(EOF_SONG *sp, char *undo_made)
 
 void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, char difficulty, char warnuser, char dynamic)
 {
-	unsigned long ctr, tracknum, count;
+	unsigned long ctr, ctr2, tracknum, count, bitmask;
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned char current_low, current_high, last_anchor = 0;
 	EOF_PRO_GUITAR_NOTE *current_note = NULL;	//Tracks the first note in the set of notes having its hand position found
+	char force_change;
 
 	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return;	//Invalid parameters
@@ -1566,17 +1567,33 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 	}
 
 	//Iterate through this track difficulty's notes and determine efficient hand positions
+	current_low = current_high = 0;	//Reset these at the start of generating hand positions
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the track
 		if(tp->note[ctr]->type == difficulty)
 		{	//If it is in the specified difficulty
 			if(!current_note)
-			{	//If this is the first in the track difficulty
+			{	//If this is the first note since the last hand position
 				current_note = tp->note[ctr];	//Store its address
-				current_low = current_high = 0;	//Reset these at the start of tracking a new hand position
 			}
-			if(!eof_note_can_be_played_within_fret_tolerance(tp, ctr, &current_low, &current_high))
-			{	//If this note can't be included in the set of notes played with a single fret hand position
+			force_change = 0;	//Reset this condition
+			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+			{	//For each of the 6 supported strings
+				if((tp->note[ctr]->note & bitmask) && (tp->note[ctr]->finger[ctr2] == 1))
+				{	//If this note uses this string, and the string is defined as being fretted by the index finger
+					if(eof_pro_guitar_note_lowest_fret(tp, ctr) != last_anchor)
+					{	//If this note's lowest fret would indicate a change in hand position
+						if(current_note == tp->note[ctr])
+						{	//If this is a forced position changed following another forced change
+							current_low = 0;	//The logic below will set the position to reflect this change
+						}
+						force_change = 1;
+						break;
+					}
+				}
+			}
+			if(force_change || !eof_note_can_be_played_within_fret_tolerance(tp, ctr, &current_low, &current_high))
+			{	//If a position change was determined to be necessary based on fingering, or this note can't be included in the set of notes played with a single fret hand position
 				if(!current_low)
 				{	//If a fret hand position hasn't been placed yet
 					current_low = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Track this note's high and low frets
@@ -1591,8 +1608,22 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 					(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, current_note->pos, current_low, 0, NULL);	//Add the best determined fret hand position
 					last_anchor = current_low;
 				}
-				current_note = tp->note[ctr];
-				current_low = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Initialize the low and high fret used for this note
+				if(force_change)
+				{	//If a fret hand position change was forced due to note fingering
+					if(current_note != tp->note[ctr])
+					{	//If the position for this note was not written yet
+						current_low = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Initialize the low fret used for this note
+						current_note = tp->note[ctr];	//Store this note's address
+						(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, current_note->pos, current_low, 0, NULL);	//Add the fret hand position for this forced position change
+						last_anchor = current_low;
+					}
+					current_note = NULL;	//This note's position will not receive another hand position, the next loop iteration will look for any necessary position changes starting with the next note's location
+				}
+				else
+				{
+					current_note = tp->note[ctr];	//Store this note's address
+				}
+				current_low = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Track this note's high and low frets
 				current_high = eof_pro_guitar_note_highest_fret(tp, ctr);
 			}
 		}
@@ -1607,8 +1638,8 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 	{	//Ensure the fret hand position is capped at 19, since 22 is the highest fret supported in either Rock Band or Rocksmith
 		current_low = 19;
 	}
-	if(current_low != last_anchor)
-	{	//As long as the hand position being written is different from the previous one
+	if((current_low != last_anchor) && current_note)
+	{	//If the last parsed note requires a position change
 		(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, current_note->pos, current_low, 0, NULL);	//Add the best determined fret hand position
 	}
 
@@ -1660,18 +1691,6 @@ int eof_note_can_be_played_within_fret_tolerance(EOF_PRO_GUITAR_TRACK *tp, unsig
 		*current_low = effective_lowest;
 		*current_high = effective_highest;
 		return 1;	//Return note can be played without an additional hand position
-	}
-
-	if(eof_note_count_colors_bitmask(tp->note[note]->note) == 1)
-	{	//If this is a single note instead of a chord, it's used fret only needs to be within range of the current fret hand position
-		if((*current_low + eof_fret_range_tolerances[*current_low] >= effective_lowest) && (*current_low <= effective_lowest))
-		{	//If the single note is within range and isn't left of the current fret hand position
-			return 1;	//Return note can be played without an additional hand position
-		}
-		else
-		{
-			return 0;	//Return note cannot be played without an additional hand position
-		}
 	}
 
 	if(eof_pro_guitar_note_is_barre_chord(tp, note))
