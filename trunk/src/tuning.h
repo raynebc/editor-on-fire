@@ -37,7 +37,7 @@ extern int eof_enable_chord_cache;	//Will be set to nonzero when an un-named not
 typedef struct
 {
 	char *name;
-	char isbass;				//Is nonzero if this is a bass guitar tuning
+	char is_bass;				//Is nonzero if this is a bass guitar tuning
 	unsigned char numstrings;	//The number of strings defined for this tuning
 	char tuning[EOF_TUNING_LENGTH];
 } EOF_TUNING_DEFINITION;
@@ -56,9 +56,11 @@ extern EOF_CHORD_DEFINITION eof_chord_names[EOF_NUM_DEFINED_CHORDS];
 
 char *eof_lookup_tuning_name(EOF_SONG *sp, unsigned long track, char *tuning);
 	//This returns a string to a pre-defined string naming the track's tuning
+	//The track's configured arrangement type will override the normal logic determining whether the track uses bass or guitar tuning
 	//The tuning array is passed by reference, making it useful for the edit tuning dialog functions
 int eof_lookup_default_string_tuning(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long stringnum);
 	//Determines the default tuning of the given string for the given pro guitar/bass track, taking the number of strings into account for pro bass
+	//The track's configured arrangement type will override the normal logic determining whether the track uses bass or guitar tuning
 	//The returned number is the number of half steps above A (a value from 0 to 11) upon success (usable with eof_note_names[])
 	//-1 is returned upon error
 int eof_lookup_default_string_tuning_absolute(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long stringnum);
@@ -99,5 +101,8 @@ char *eof_get_key_signature(EOF_SONG *sp, unsigned long beatnum, char failureopt
 	//If scale is 0, the key from the major scale is returned, otherwise the key from the minor scale is
 	//If the beat contains a KS change, the appropriate index into either eof_key_names_major[] or eof_key_names_minor[] is returned
 	//If the beat does not have a KS change, then the string "None" is returned if failureoption is nonzero, otherwise NULL is returned
+
+int eof_track_is_bass_arrangement(EOF_PRO_GUITAR_TRACK *tp, unsigned long track);
+	//Returns nonzero if the track number reflects a bass track, or if the track's arrangement type is set to 4 (Bass)
 
 #endif

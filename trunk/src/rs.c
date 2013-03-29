@@ -311,6 +311,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	char notename[EOF_NAME_LENGTH+1];	//String large enough to hold any chord name supported by EOF
 	int scale, chord, isslash, bassnote;	//Used for power chord detection
 	int standard_tuning = 0, non_standard_chords = 0, barre_chords = 0, power_chords = 0, notenum, dropd_tuning = 1, dropd_power_chords = 0, open_chords = 0, double_stops = 0, palm_mutes = 0, harmonics = 0, hopo = 0, tremolo = 0, slides = 0, bends = 0, tapping = 0, vibrato = 0, slappop = 0, octaves = 0, fifths_and_octaves = 0;	//Used for technique detection
+	char is_bass = 0;	//Is set to nonzero if the specified track is to be considered a bass guitar track
 
 	eof_log("eof_export_rocksmith() entered", 1);
 
@@ -438,7 +439,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 			break;
 		}
 	}
-	if(isebtuning && !((track == EOF_TRACK_PRO_BASS) && (tp->numstrings > 4)))
+	is_bass = eof_track_is_bass_arrangement(tp, track);
+	if(isebtuning && !(is_bass && (tp->numstrings > 4)))
 	{	//If all strings were tuned down a half step (except for bass tracks with more than 4 strings, since in those cases, the lowest string is not tuned to E)
 		tuning = eb;	//Remap 4 or 5 string Eb tuning as {-1,-1,-1,-1,-1,-1}
 	}
@@ -517,8 +519,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 			{	//If the chord is a double stop (only if this condition hasn't been found already)
 				double_stops = 1;
 			}
-			if((track == EOF_TRACK_PRO_BASS) || (EOF_TRACK_PRO_BASS_22))
-			{	//If the track being exported is a pro bass track
+			if(is_bass)
+			{	//If the arrangement being exported is bass
 				int thisnote, lastnote = -1, failed = 0;
 				for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
 				{	//For each of the 6 supported strings
@@ -576,8 +578,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 			slappop = 1;
 		}
 	}//For each note in the track
-	if((track == EOF_TRACK_PRO_BASS) || (track == EOF_TRACK_PRO_BASS_22))
-	{	//If the track being exported is a pro bass track
+	if(is_bass)
+	{	//If the arrangement being exported is bass
 		if(double_stops || octaves)
 		{	//If either of these techniques were detected
 			fifths_and_octaves = 1;
