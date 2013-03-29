@@ -104,7 +104,7 @@ char *eof_lookup_tuning_name(EOF_SONG *sp, unsigned long track, char *tuning)
 {
 	unsigned long tracknum, ctr, ctr2;
 	char matchfailed;
-	char isbass = 0;	//By default, assume this is not a pro bass track
+	char is_bass = 0;	//Is set to nonzero if the specified track is to be considered a bass guitar track
 
 	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return eof_tuning_unknown;	//Invalid song pointer or track number
@@ -112,15 +112,12 @@ char *eof_lookup_tuning_name(EOF_SONG *sp, unsigned long track, char *tuning)
 	if(sp->pro_guitar_track[tracknum]->numstrings > EOF_TUNING_LENGTH)
 		return eof_tuning_unknown;	//Unsupported number of strings
 
-	if((track == EOF_TRACK_PRO_BASS) || (track == EOF_TRACK_PRO_BASS_22))
-	{
-		isbass = 1;
-	}
+	is_bass = eof_track_is_bass_arrangement(sp->pro_guitar_track[tracknum], track);	//Determine whether the tuning reflects bass standard tuning
 
 	for(ctr = 0; ctr < EOF_NUM_TUNING_DEFINITIONS; ctr++)
 	{	//For each defined tuning
 		matchfailed = 0;	//Reset this failure status
-		if((eof_tuning_definitions[ctr].numstrings == sp->pro_guitar_track[tracknum]->numstrings) && (isbass == eof_tuning_definitions[ctr].isbass))
+		if((eof_tuning_definitions[ctr].numstrings == sp->pro_guitar_track[tracknum]->numstrings) && (is_bass == eof_tuning_definitions[ctr].is_bass))
 		{	//If this is a valid tuning definition to check against (matching number of strings and guitar type)
 			for(ctr2 = 0; ctr2 < eof_tuning_definitions[ctr].numstrings; ctr2++)
 			{	//For each string in the definition
@@ -146,17 +143,25 @@ int eof_lookup_default_string_tuning(EOF_PRO_GUITAR_TRACK *tp, unsigned long tra
 	int default_tuning_4_string_bass[] = {7,0,5,10};	//Half steps above note A, representing "EADG";
 	int default_tuning_5_string_bass[] = {2,7,0,5,10};	//Half steps above note A, representing "BEADG";
 	int default_tuning_6_string_bass[] = {2,7,0,5,10,3};//Half steps above note A, representing "BEADGC";
+	char is_bass = 0;	//Is set to nonzero if the specified track is to be considered a bass guitar track
 
 	if(tp == NULL)
 		return -1;	//Invalid track pointer
 	if(stringnum >= tp->numstrings)
 		return -1;	//Invalid string number
-	if((track == EOF_TRACK_PRO_GUITAR) || (track == EOF_TRACK_PRO_GUITAR_22))
-	{	//Standard tuning is EADGBe
+	if((track != EOF_TRACK_PRO_BASS) && (track != EOF_TRACK_PRO_BASS_22) && (track != EOF_TRACK_PRO_GUITAR) && (track != EOF_TRACK_PRO_GUITAR_22))
+	{	//If the track is not one of EOF's pro guitar or bass tracks
+		return -1;	//Invalid track number
+	}
+
+	is_bass = eof_track_is_bass_arrangement(tp, track);	//Determine whether the tuning reflects bass standard tuning
+
+	if(!is_bass)
+	{	//Standard tuning for guitar tracks is EADGBe
 		return default_tuning_6_string[stringnum];	//Return this string's default tuning
 	}
-	else if((track == EOF_TRACK_PRO_BASS) || (track == EOF_TRACK_PRO_BASS_22))
-	{
+	else
+	{	//Standard tuning for bass tracks depends on the number of strings
 		if(tp->numstrings == 4)
 		{	//Standard tuning for 4 string bass is EADG
 			return default_tuning_4_string_bass[stringnum];	//Return this string's default tuning
@@ -171,25 +176,29 @@ int eof_lookup_default_string_tuning(EOF_PRO_GUITAR_TRACK *tp, unsigned long tra
 		}
 	}
 
-	return -1;	//Unsupported pro guitar track
+	return -1;	//Error (ie. invalid string count)
 }
 
 int eof_lookup_default_string_tuning_absolute(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long stringnum)
 {
 	int default_tuning_6_string[] = {40,45,50,55,59,64};		//MIDI note values, representing "EADGBE"
-	int default_tuning_4_string_bass[] = {28,33,38,43};	//MIDI note values, representing "EADG";
-	int default_tuning_5_string_bass[] = {23,28,33,38,43};	//MIDI note values, representing "BEADG";
-	int default_tuning_6_string_bass[] = {23,28,33,38,43,48};//MIDI note values, representing "BEADGC";
+	int default_tuning_4_string_bass[] = {28,33,38,43};			//MIDI note values, representing "EADG";
+	int default_tuning_5_string_bass[] = {23,28,33,38,43};		//MIDI note values, representing "BEADG";
+	int default_tuning_6_string_bass[] = {23,28,33,38,43,48};	//MIDI note values, representing "BEADGC";
+	char is_bass = 0;	//Is set to nonzero if the specified track is to be considered a bass guitar track
 
 	if(tp == NULL)
 		return -1;	//Invalid track pointer
 	if(stringnum >= tp->numstrings)
 		return -1;	//Invalid string number
-	if((track == EOF_TRACK_PRO_GUITAR) || (track == EOF_TRACK_PRO_GUITAR_22))
-	{	//Standard tuning is EADGBe
+
+	is_bass = eof_track_is_bass_arrangement(tp, track);	//Determine whether the tuning reflects bass standard tuning
+
+	if(!is_bass)
+	{	//Guitar standard tuning is EADGBe
 		return default_tuning_6_string[stringnum];	//Return this string's default tuning
 	}
-	else if((track == EOF_TRACK_PRO_BASS) || (track == EOF_TRACK_PRO_BASS_22))
+	else
 	{
 		if(tp->numstrings == 4)
 		{	//Standard tuning for 4 string bass is EADG
@@ -583,4 +592,34 @@ char *eof_get_key_signature(EOF_SONG *sp, unsigned long beatnum, char failureopt
 		return eof_none_string;
 	else
 		return NULL;
+}
+
+int eof_track_is_bass_arrangement(EOF_PRO_GUITAR_TRACK *tp, unsigned long track)
+{
+	int is_bass = 0;
+
+	if(!tp)
+		return 0;	//Invalid parameter
+
+	if((track == EOF_TRACK_PRO_BASS) || (track == EOF_TRACK_PRO_BASS_22))
+	{	//If the native track type is bass
+		is_bass = 1;
+	}
+	else if((track != EOF_TRACK_PRO_GUITAR) && (track != EOF_TRACK_PRO_GUITAR_22))
+	{	//If the track is not one of EOF's pro guitar or bass tracks
+		return 0;	//Invalid track number
+	}
+	if(tp->arrangement)
+	{	//If the track's arrangement type has been defined
+		if(tp->arrangement == 4)
+		{	//If it's explicitly defined as a bass arrangement
+			is_bass = 1;	//It will override the native track type
+		}
+		else
+		{	//If the arrangement is defined as a combo, rhythm or lead guitar track
+			is_bass = 0;	//It will override the native track type
+		}
+	}
+
+	return is_bass;
 }
