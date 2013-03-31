@@ -365,7 +365,11 @@ void Export_UStar(FILE *outf)
 			pitch_num=current->pitch;
 
 		rawpitch=pitch_num;	//Store the pitch into a signed int variable
-		rawpitch-=24;		//Remap to UltraStar numbering
+		if((unsigned char)rawpitch != PITCHLESS)	//If this lyric has a pitch
+			rawpitch-=24;			//Remap it to UltraStar numbering
+		else
+			rawpitch=PITCHLESS;	//Store it as the positive value representing a pitchless lyric
+
 		if(fprintf(outf,"%c %lu %lu %d ",pitch_char,start-linetime,dur,rawpitch) < 0)
 			errornumber=1;
 		if(!newline && !current->prev->groupswithnext)	//If this piece doesn't group with previous piece and isn't the first lyric in this line
@@ -701,13 +705,20 @@ void UStar_Load(FILE *inf)
 
 //Parse pitch
 		rawpitch=ParseLongInt(buffer,&index,processedctr,NULL);
-		rawpitch+=24;	//UltraStar pitches map note C1 as 0 instead of 24, remap to match the MIDI note standard
-		if((rawpitch<0) || (rawpitch>127))
-		{
-			printf("Error: Pitch %d in the UltraStar file cannot be converted to another pitch numbering system\nAborting\n",rawpitch-24);
-			exit_wrapper(3);
+		if((unsigned char)rawpitch != PITCHLESS)
+		{	//If this lyric has a pitch
+			rawpitch+=24;	//UltraStar pitches map note C1 as 0 instead of 24, remap to match the MIDI note standard
+			if((rawpitch<0) || (rawpitch>127))
+			{
+				printf("Error: Pitch %d in the UltraStar file cannot be converted to another pitch numbering system\nAborting\n",rawpitch-24);
+				exit_wrapper(3);
+			}
+			pitch=(unsigned char)rawpitch & 0xFF;	//Store the remapped pitch
 		}
-		pitch=(unsigned char)rawpitch & 0xFF;	//Store the remapped pitch
+		else
+		{
+			pitch=rawpitch;	//Store the lyric as pitchless
+		}
 
 //Track for pitch changes, enabling Lyrics.pitch_tracking if applicable
 		if((Lyrics.last_pitch != 0) && (Lyrics.last_pitch != pitch))	//There's a pitch change

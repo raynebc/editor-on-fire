@@ -1930,6 +1930,19 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					}
 				break;
 
+				case 4:		//Track tuning not honored
+					if(custom_data_size != 5)
+					{	//This data block is expected to be 5 bytes long
+						allegro_message("Error:  Invalid custom data block size.  Aborting");
+						return 0;
+					}
+					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+					{	//Ensure this logic only runs for a pro guitar track
+						EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track_ctr]->tracknum];	//Get pointer to this pro guitar track
+						tp->ignore_tuning = pack_getc(fp);	//Read the option of whether the chord detection does not honor the track's defined tuning
+					}
+				break;
+
 				default:	//Unknown custom data block ID
 					if(custom_data_size < 4)
 					{	//This is invalid, the size needed to have included the 4 byte ID
@@ -2246,7 +2259,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};
 	unsigned long count,ctr,ctr2,tracknum;
 	unsigned long track_count,track_ctr,bookmark_count,bitmask,fingerdefinitions;
-	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement;
+	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,ignore_tuning;
 
 	#define EOFNUMINISTRINGTYPES 9
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
@@ -2259,7 +2272,6 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	unsigned long *ininumberbuffer[EOFNUMININUMBERTYPES] = {NULL};
 		//Store the pointers to each of the 5 number type INI settings (number 0 is reserved) to simplify the loading code
 
- 	eof_log("\tSaving project", 1);
  	eof_log("eof_save_song() entered", 1);
 
 	if((sp == NULL) || (fn == NULL))
@@ -2867,9 +2879,10 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		}//Write other tracks
 
 		//Write custom track data blocks
-		fingerdefinitions = has_fingerdefinitions = has_arrangement = 0;
+		fingerdefinitions = has_fingerdefinitions = has_arrangement = ignore_tuning = 0;
 		if(track_ctr && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-		{	//If this is a pro guitar track, count the number of notes with finger definitions
+		{	//If this is a pro guitar track
+			//Count the number of notes with finger definitions
 			for(ctr = 0; ctr < sp->pro_guitar_track[tracknum]->notes; ctr++)
 			{	//For each note in the track
 				for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
@@ -2881,17 +2894,18 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					}
 				}
 			}
-		}
-		if(track_ctr && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-		{	//If this is a pro guitar track
 			if(sp->pro_guitar_track[tracknum]->arrangement)
 			{	//If this track has a Rocksmith arrangement type defined
 				has_arrangement = 1;
 			}
+			if(sp->pro_guitar_track[tracknum]->ignore_tuning)
+			{	//If this track's tuning is ignored for chord detection
+				ignore_tuning = 1;
+			}
 		}
-		if(has_fingerdefinitions || has_arrangement)
+		if(has_fingerdefinitions || has_arrangement || ignore_tuning)
 		{	//If writing data in a custom data block
-			(void) pack_iputl(has_fingerdefinitions + has_arrangement, fp);		//Write the number of custom data blocks
+			(void) pack_iputl(has_fingerdefinitions + has_arrangement + ignore_tuning, fp);		//Write the number of custom data blocks
 			if(has_fingerdefinitions)
 			{	//Write finger definitions
 				(void) pack_iputl(fingerdefinitions + 4, fp);	//Write the number of bytes this block will contain (finger data and a 4 byte block ID)
@@ -2913,6 +2927,12 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				(void) pack_iputl(3, fp);		//Write the pro guitar track arrangement type custom data block ID
 				(void) pack_putc(sp->pro_guitar_track[tracknum]->arrangement, fp);	//Write the pro guitar track arrangement type
 			}
+			if(ignore_tuning)
+			{	//Write track tuning not honored
+				(void) pack_iputl(5, fp);		//Write the number of bytes this block will contain (1 byte arrangement type and a 4 byte block ID)
+				(void) pack_iputl(4, fp);		//Write the track tuning not honored custom data block ID
+				(void) pack_putc(1, fp);		//Write the track tuning not honored option
+			}
 		}
 		else
 		{	//Otherwise write a debug custom data block
@@ -2923,7 +2943,6 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	}//For each track in the project
 
 	(void) pack_fclose(fp);
-	eof_log("\tProject saved", 1);
 	return 1;	//Return success
 }
 

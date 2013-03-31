@@ -910,6 +910,7 @@ void eof_prepare_undo(int type)
 	if(eof_change_count % 10 == 0)
 	{
 		(void) replace_extension(eof_temp_filename, eof_filename, "backup.eof", 1024);
+		eof_log("\tSaving periodic backup", 1);
 		if(!eof_save_song(eof_song, eof_temp_filename))
 		{
 			allegro_message("Undo state error!");

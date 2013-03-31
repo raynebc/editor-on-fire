@@ -1354,7 +1354,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		{	//If new paste logic is being used, this note pastes into a position relative to the start and end of a beat marker
 			if(i == 0)
 			{	//If this is the first note being pasted
-				newpasteoffset = newpasteoffset - temp_note.porpos;	//Find the percentage offset that needs to be applied to all start/stop timestamps
+				newpasteoffset = newpasteoffset - first_note.porpos;	//Find the percentage offset that needs to be applied to all start/stop timestamps
 			}
 			clear_start = eof_put_porpos(first_note.beat - first_beat + this_beat, first_note.porpos, newpasteoffset) + 2;	//The position that "new paste" would paste the first note at (plus 2ms to avoid deleting a note ending on the position being pasted to)
 			clear_end = eof_put_porpos(last_note.beat - first_beat + this_beat, last_note.porpos, newpasteoffset) - 2;		//The position where "new paste" would paste the last note at (minus 2ms to avoid deleting a note starting right after where the pasted notes end)

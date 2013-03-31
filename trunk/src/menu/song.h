@@ -214,4 +214,7 @@ int eof_song_rocksmith_arrangement_rhythm(void);	//Sets a rhythm arrangement typ
 int eof_song_rocksmith_arrangement_lead(void);		//Sets a lead arrangement type
 int eof_song_rocksmith_arrangement_bass(void);		//Sets a bass arrangement type
 
+int eof_song_proguitar_toggle_ignore_tuning(void);
+	//Toggles the option to have the chord name detection disregard the track's defined tuning and base it on standard tuning instead
+
 #endif
