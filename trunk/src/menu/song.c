@@ -1667,13 +1667,25 @@ static long get_ogg_length(const char * fn)
 {
 	ALOGG_OGG * ogg;
 	unsigned long length = 0;
-	FILE * fp = fopen(fn, "rb");
-	if(fp)
+	void * oggbuffer = NULL;
+
+	oggbuffer = eof_buffer_file(fn, 0);	//Decode the OGG from buffer instead of from file because the latter cannot support special characters in the file path due to limitations with fopen()
+	if(!oggbuffer)
 	{
-		ogg = alogg_create_ogg_from_file(fp);
-		length = alogg_get_length_msecs_ogg(ogg);
-		alogg_destroy_ogg(ogg);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading OGG:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		eof_log(eof_log_string, 1);
+		return 0;	//Return failure
 	}
+	ogg = alogg_create_ogg_from_buffer(oggbuffer, (int)file_size_ex(fn));
+	free(oggbuffer);
+	if(ogg == NULL)
+	{
+		eof_log("ALOGG failed to open input audio file", 1);
+		return 0;	//Return failure
+	}
+	length = alogg_get_length_msecs_ogg(ogg);
+	alogg_destroy_ogg(ogg);
+
 	return length;
 }
 

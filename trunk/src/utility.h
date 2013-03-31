@@ -3,7 +3,7 @@
 
 int eof_chdir(const char * dir);
 int eof_mkdir(const char * dir);
-int eof_system(const char * command);
+int eof_system(const char * command);	//Runs the specified system command, after reformatting the command string accordingly
 
 void * eof_buffer_file(const char * fn, char appendnull);
 	//Loads the specified file into a memory buffer and returns the buffer, or NULL upon error

@@ -587,6 +587,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 	{
 		eof_log("\tError finding the largest line in the file.  Aborting", 1);
 		(void) pack_fclose(inf);
+		free(chart);
 		return NULL;
 	}
 	buffer=(char *)malloc_err(maxlinelength);
