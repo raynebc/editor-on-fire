@@ -707,6 +707,7 @@ int eof_menu_file_quick_save(void)
 	(void) append_filename(temp_filename, eof_song_path, eof_loaded_song_name, 1024);
 
 	eof_song->tags->revision++;
+ 	eof_log("\tSaving project", 1);
 	if(!eof_save_song(eof_song, temp_filename))
 	{
 		allegro_message("Could not save song!");
@@ -715,6 +716,7 @@ int eof_menu_file_quick_save(void)
 		eof_pen_visible = 1;
 		return 1;
 	}
+	eof_log("\tProject saved", 1);
 	eof_changes = 0;
 	eof_undo_last_type = 0;
 	eof_change_count = 0;
@@ -2354,6 +2356,7 @@ int eof_save_helper(char *destfilename)
 
 	/* save the chart */
 	eof_song->tags->revision++;
+ 	eof_log("\tSaving project", 1);
 	if(!eof_save_song(eof_song, eof_temp_filename))
 	{
 		allegro_message("Could not save song!");
@@ -2362,6 +2365,7 @@ int eof_save_helper(char *destfilename)
 		eof_pen_visible = 1;
 		return 1;	//Return failure
 	}
+	eof_log("\tProject saved", 1);
 	if(!exists(eof_temp_filename))
 	{	//Make sure the target file was created
 		allegro_message("Warning:  Could not delete the last save file.  Aborting save.  Please use \"Save as\" to save to a new location.");

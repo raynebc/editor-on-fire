@@ -73,6 +73,7 @@ int eof_lookup_tuned_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigne
 	//-1 is returned upon error
 int eof_lookup_played_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long stringnum, unsigned long fretnum);
 	//Looks up the tuning for the track and returns the note played by the specified string at the specified fret
+	//The track's option whether or not to honor the defined tuning or assume default tuning is taken into account
 	//The returned number is the number of half steps above A (a value from 0 to 11) upon success (usable with eof_note_names[])
 	//If fretnum is 0xFF (muted), it should cause a -1 to be returned, as the guitar track will not have been set to use that many strings
 	//-1 is returned upon error

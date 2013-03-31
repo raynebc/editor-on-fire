@@ -171,6 +171,8 @@ Custom track data block definitions
 		}
 	Custom data block ID 3:  Pro guitar track arrangement type
 		1 byte:		Arrangement type (1 = Combo, 2 = Rhythm, 3 = Lead, 4 = Bass)
+	Custom data block ID 4:  Track tuning not honored
+		1 byte:		If nonzero, indicates that the chord name detection reflects the DEFAULT tuning for the arrangement, and not the track's actual specified tuning.
 =========================================		
 }
 (End of file)

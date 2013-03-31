@@ -150,6 +150,7 @@ MENU eof_song_proguitar_menu[] =
     {"Enable &Legacy view\tShift+L", eof_menu_song_legacy_view, NULL, 0, NULL},
     {"&Previous chord name\t" CTRL_NAME "+Shift+W", eof_menu_previous_chord_result, NULL, 0, NULL},
     {"&Next chord name\t" CTRL_NAME "+Shift+E", eof_menu_next_chord_result, NULL, 0, NULL},
+    {"Ignore this track's tuning", eof_song_proguitar_toggle_ignore_tuning, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -657,6 +658,15 @@ void eof_prepare_song_menu(void)
 				eof_song_proguitar_menu[4].flags = D_DISABLED;
 			}
 
+			if(eof_song->pro_guitar_track[tracknum]->ignore_tuning)
+			{
+				eof_song_proguitar_menu[5].flags = D_SELECTED;	//Song>Pro Guitar>Ignore this track's tuning
+			}
+			else
+			{
+				eof_song_proguitar_menu[5].flags = 0;
+			}
+
 			//Update checkmarks on the arrangement type submenu
 			for(i = 0; i < 5; i++)
 			{	//For each of the arrangement types
@@ -672,11 +682,11 @@ void eof_prepare_song_menu(void)
 
 			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 			{	//If the active track has already had the difficulty limit removed
-				eof_song_rocksmith_menu[3].flags = D_SELECTED;	//Song>Rocksmith>Remove difficulty limit
+				eof_song_rocksmith_menu[4].flags = D_SELECTED;	//Song>Rocksmith>Remove difficulty limit
 			}
 			else
 			{
-				eof_song_rocksmith_menu[3].flags = 0;
+				eof_song_rocksmith_menu[4].flags = 0;
 			}
 		}
 		else
@@ -3705,6 +3715,8 @@ DIALOG eof_pro_guitar_set_fret_hand_position_dialog[] =
 int eof_pro_guitar_set_fret_hand_position(void)
 {
 	unsigned long position, tracknum, ctr;
+	EOF_PHRASE_SECTION *ptr = NULL;	//If the seek position has a fret hand position defined, this will reference it
+	unsigned long index = 0;	//Will store the index number of the existing fret hand position being edited
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
@@ -3716,7 +3728,26 @@ int eof_pro_guitar_set_fret_hand_position(void)
 	centre_dialog(eof_pro_guitar_set_fret_hand_position_dialog);
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	eof_etext[0] = '\0';	//Empty this string
+	for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->handpositions; ctr++)
+	{	//For each existing fret hand position in the track
+		if(eof_song->pro_guitar_track[tracknum]->handposition[ctr].difficulty == eof_note_type)
+		{	//If the fret hand position is in the active difficulty
+			if(eof_song->pro_guitar_track[tracknum]->handposition[ctr].start_pos == eof_music_pos - eof_av_delay)
+			{	//If the fret hand position already exists at the current seek position
+				ptr = &eof_song->pro_guitar_track[tracknum]->handposition[ctr];	//Store its address
+				index = ctr;	//Store its index
+				break;
+			}
+		}
+	}
+	if(ptr)
+	{	//If an existing fret hand position is to be edited
+		snprintf(eof_etext, 5, "%lu", ptr->end_pos);	//Populate the input box with it
+	}
+	else
+	{
+		eof_etext[0] = '\0';	//Empty this string
+	}
 	if(eof_popup_dialog(eof_pro_guitar_set_fret_hand_position_dialog, 2) == 3)
 	{	//User clicked OK
 		if(eof_etext[0] != '\0')
@@ -3739,25 +3770,26 @@ int eof_pro_guitar_set_fret_hand_position(void)
 			}
 			else
 			{	//If the user gave a valid position
-				for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->handpositions; ctr++)
-				{	//For each existing fret hand position in the track
-					if(eof_song->pro_guitar_track[tracknum]->handposition[ctr].difficulty == eof_note_type)
-					{	//If the fret hand position is in the active difficulty
-						if(eof_song->pro_guitar_track[tracknum]->handposition[ctr].start_pos == eof_music_pos - eof_av_delay)
-						{	//If the fret hand position already exists at the current seek position
-							if(eof_song->pro_guitar_track[tracknum]->handposition[ctr].end_pos != position)
-							{	//And it defines a different fret hand position than the user just gave
-								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-								eof_song->pro_guitar_track[tracknum]->handposition[ctr].end_pos = position;	//Update the existing fret hand position entry
-							}
-							return 0;
-						}
+				if(ptr)
+				{	//If an existing fret hand position was being edited
+					if(ptr->end_pos != position)
+					{	//And it defines a different fret hand position than the user just gave
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						ptr->end_pos = position;	//Update the existing fret hand position entry
 					}
+					return 0;
 				}
+
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				(void) eof_track_add_section(eof_song, eof_selected_track, EOF_FRET_HAND_POS_SECTION, eof_note_type, eof_music_pos - eof_av_delay, position, 0, NULL);
 				eof_pro_guitar_track_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Sort the positions, since they must be in order for displaying to the user
 			}
+		}
+		else if(ptr)
+		{	//If the user left the input box empty and was editing an existing hand position
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			eof_pro_guitar_track_delete_hand_position(eof_song->pro_guitar_track[tracknum], index);	//Delete the existing fret hand position
+			eof_pro_guitar_track_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Sort the positions, since they must be in order for displaying to the user
 		}
 	}
 	return 0;
@@ -5279,4 +5311,30 @@ int eof_song_rocksmith_arrangement_lead(void)
 int eof_song_rocksmith_arrangement_bass(void)
 {
 	return eof_song_rocksmith_arrangement_set(4);
+}
+
+int eof_song_proguitar_toggle_ignore_tuning(void)
+{
+	unsigned long tracknum;
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 1;	//Invalid parameters
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	if(tp->ignore_tuning)
+	{
+		tp->ignore_tuning = 0;
+	}
+	else
+	{
+		tp->ignore_tuning = 1;
+	}
+	eof_chord_lookup_note = 0;	//Reset the cached chord lookup count
+
+	return 1;
 }

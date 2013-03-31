@@ -247,7 +247,14 @@ int eof_lookup_played_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsign
 	if((stringnum >= tp->numstrings) || (fretnum > tp->numfrets))
 		return -1;	//Invalid string number or fret number
 
-	notenum = eof_lookup_tuned_note(tp, track, stringnum, tp->tuning[stringnum]);	//Look up the open note this string plays
+	if(tp->ignore_tuning)
+	{	//If the chord detection is to ignore this track's tuning and assume standard
+		notenum = eof_lookup_default_string_tuning(tp, track, stringnum);	//Look up the default tuning for this string
+	}
+	else
+	{	//Normal chord lookup, using the track's defined tuning
+		notenum = eof_lookup_tuned_note(tp, track, stringnum, tp->tuning[stringnum]);	//Look up the open note this string plays
+	}
 	if(notenum < 0)	//If lookup failed,
 		return -1;	//Return error
 	notenum += fretnum;	//Take the fret number into account
