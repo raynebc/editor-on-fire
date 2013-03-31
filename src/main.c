@@ -3647,7 +3647,7 @@ int eof_initialize(int argc, char * argv[])
 					{	//If the OGG file was succesfully created
 					if(eof_copy_file("silence.ogg","silence2.ogg") && exists("silence2.ogg"))
 					{	//If the OGG file was successfully duplicated
-						if(!system("oggCat silence3.ogg silence.ogg silence2.ogg") && exists("silence3.ogg"))
+						if(!eof_system("oggCat silence3.ogg silence.ogg silence2.ogg") && exists("silence3.ogg"))
 						{	//If oggCat successfully concatenated the two files
 							eof_supports_oggcat = 1;
 							(void) delete_file("silence3.ogg");
