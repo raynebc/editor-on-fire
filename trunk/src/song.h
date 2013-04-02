@@ -188,7 +188,7 @@ typedef struct
 	unsigned long end_pos;	//Will store other data in items that don't use an end position (such as the fret number for fret hand positions)
 	unsigned long flags;
 	char name[EOF_SECTION_NAME_LENGTH+1];
-	char difficulty;	//The difficulty this phrase applies to (ie. arpeggios, hand positions)
+	unsigned char difficulty;	//The difficulty this phrase applies to (ie. arpeggios, hand positions), or 0xFF if it otherwise applies to all difficulties
 
 } EOF_PHRASE_SECTION;
 
@@ -408,7 +408,7 @@ typedef struct
 typedef struct
 {
 	unsigned long track;
-	char type;
+	unsigned char type;
 	unsigned long start_pos;
 	unsigned long end_pos;
 	char name[EOF_NAME_LENGTH+1];
@@ -547,7 +547,7 @@ void eof_track_delete_star_power_path(EOF_SONG *sp, unsigned long track, unsigne
 int eof_track_add_solo(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 void eof_track_delete_solo(EOF_SONG *sp, unsigned long track, unsigned long pathnum);	//Deletes the specified solo phrase and moves all phrases that follow back in the array one position
 void eof_note_set_tail_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos);	//Sets the note's length value to (pos - [note]->pos)
-int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, char difficulty, unsigned long start, unsigned long end, unsigned long flags, char *name);
+int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, unsigned char difficulty, unsigned long start, unsigned long end, unsigned long flags, char *name);
 	//Adds the specified section to the specified track if it's valid for the track
 	//For bookmark sections, the end variable represents which bookmark number is being set
 	//For fret catalog sections, the flags variable represents which track the catalog entry belongs to, otherwise it's only used for lyric sections

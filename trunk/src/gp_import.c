@@ -3530,6 +3530,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					gp->track[ctr]->tremolo[count].end_pos = endpos;
 					gp->track[ctr]->tremolo[count].flags = 0;
 					gp->track[ctr]->tremolo[count].name[0] = '\0';
+					if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+					{	//If the active project's active track already had the difficulty limit removed
+						gp->track[ctr]->tremolo[count].difficulty = eof_note_type;	//The tremolo will be made specific to the active track difficulty
+					}
+					else
+					{	//Otherwise it will apply to all track difficulties
+						gp->track[ctr]->tremolo[count].difficulty = 0xFF;
+					}
 					gp->track[ctr]->tremolos++;
 				}
 			}
