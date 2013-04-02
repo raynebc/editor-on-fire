@@ -1961,7 +1961,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	return 1;	//Return success
 }
 
-int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, char difficulty, unsigned long start, unsigned long end, unsigned long flags, char *name)
+int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, unsigned char difficulty, unsigned long start, unsigned long end, unsigned long flags, char *name)
 {
 	unsigned long count,tracknum;	//Used to de-obfuscate the track handling
 
@@ -2124,6 +2124,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 							sp->legacy_track[tracknum]->tremolo[count].start_pos = start;
 							sp->legacy_track[tracknum]->tremolo[count].end_pos = end;
 							sp->legacy_track[tracknum]->tremolo[count].flags = 0;
+							sp->legacy_track[tracknum]->tremolo[count].difficulty = difficulty;
 							if(name == NULL)
 							{
 								sp->legacy_track[tracknum]->tremolo[count].name[0] = '\0';
@@ -2143,6 +2144,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 							sp->pro_guitar_track[tracknum]->tremolo[count].start_pos = start;
 							sp->pro_guitar_track[tracknum]->tremolo[count].end_pos = end;
 							sp->pro_guitar_track[tracknum]->tremolo[count].flags = 0;
+							sp->pro_guitar_track[tracknum]->tremolo[count].difficulty = difficulty;
 							if(name == NULL)
 							{
 								sp->pro_guitar_track[tracknum]->tremolo[count].name[0] = '\0';
@@ -2612,7 +2614,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 						for(ctr=0; ctr < sp->legacy_track[tracknum]->solos; ctr++)
 						{	//For each solo section in the track
 							(void) eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
-							(void) pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
+							(void) pack_putc(0xFF, fp);						//Write an associated difficulty of "all difficulties"
 							(void) pack_iputl(sp->legacy_track[tracknum]->solo[ctr].start_pos, fp);	//Write the solo's position
 							(void) pack_iputl(sp->legacy_track[tracknum]->solo[ctr].end_pos, fp);		//Write the solo's end position
 							(void) pack_iputl(0, fp);						//Write section flags (not used)
@@ -2625,7 +2627,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 						for(ctr=0; ctr < sp->legacy_track[tracknum]->star_power_paths; ctr++)
 						{	//For each star power section in the track
 							(void) eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
-							(void) pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
+							(void) pack_putc(0xFF, fp);						//Write an associated difficulty of "all difficulties"
 							(void) pack_iputl(sp->legacy_track[tracknum]->star_power_path[ctr].start_pos, fp);	//Write the SP phrase's position
 							(void) pack_iputl(sp->legacy_track[tracknum]->star_power_path[ctr].end_pos, fp);	//Write the SP phrase's end position
 							(void) pack_iputl(0, fp);						//Write section flags (not used)
@@ -2638,7 +2640,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 						for(ctr=0; ctr < sp->legacy_track[tracknum]->trills; ctr++)
 						{	//For each trill section in the track
 							(void) eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
-							(void) pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
+							(void) pack_putc(0xFF, fp);						//Write an associated difficulty of "all difficulties"
 							(void) pack_iputl(sp->legacy_track[tracknum]->trill[ctr].start_pos, fp);	//Write the trill phrase's position
 							(void) pack_iputl(sp->legacy_track[tracknum]->trill[ctr].end_pos, fp);		//Write the trill phrase's end position
 							(void) pack_iputl(0, fp);						//Write section flags (not used)
@@ -2651,7 +2653,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 						for(ctr=0; ctr < sp->legacy_track[tracknum]->tremolos; ctr++)
 						{	//For each tremolo section in the track
 							(void) eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
-							(void) pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
+							(void) pack_putc(0xFF, fp);						//Write an associated difficulty of "all difficulties"
 							(void) pack_iputl(sp->legacy_track[tracknum]->tremolo[ctr].start_pos, fp);	//Write the tremolo phrase's position
 							(void) pack_iputl(sp->legacy_track[tracknum]->tremolo[ctr].end_pos, fp);		//Write the tremolo phrase's end position
 							(void) pack_iputl(0, fp);						//Write section flags (not used)
@@ -2664,7 +2666,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 						for(ctr=0; ctr < sp->legacy_track[tracknum]->sliders; ctr++)
 						{	//For each slider section in the track
 							(void) eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
-							(void) pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
+							(void) pack_putc(0xFF, fp);						//Write an associated difficulty of "all difficulties"
 							(void) pack_iputl(sp->legacy_track[tracknum]->slider[ctr].start_pos, fp);	//Write the slider phrase's position
 							(void) pack_iputl(sp->legacy_track[tracknum]->slider[ctr].end_pos, fp);	//Write the slider phrase's end position
 							(void) pack_iputl(0, fp);						//Write section flags (not used)
@@ -2834,9 +2836,9 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 						for(ctr=0; ctr < sp->pro_guitar_track[tracknum]->tremolos; ctr++)
 						{	//For each tremolo section in the track
 							(void) eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
-							(void) pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
+							(void) pack_putc(sp->pro_guitar_track[tracknum]->tremolo[ctr].difficulty, fp);	//Write the tremolo phrase's difficulty
 							(void) pack_iputl(sp->pro_guitar_track[tracknum]->tremolo[ctr].start_pos, fp);	//Write the tremolo phrase's position
-							(void) pack_iputl(sp->pro_guitar_track[tracknum]->tremolo[ctr].end_pos, fp);		//Write the tremolo phrase's end position
+							(void) pack_iputl(sp->pro_guitar_track[tracknum]->tremolo[ctr].end_pos, fp);	//Write the tremolo phrase's end position
 							(void) pack_iputl(0, fp);						//Write section flags (not used)
 						}
 					}
@@ -4076,8 +4078,11 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 		for(ctr = 0; ctr < tp->notes; ctr++)
 		{	//For each note in the track
 			if((tp->note[ctr]->pos >= tp->tremolo[i].start_pos) && (tp->note[ctr]->pos <= tp->tremolo[i].end_pos))
-			{	//If the note is within a tremolo phrase
-				tp->note[ctr]->flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_HO);	//Clear the hammer on flag, which RB3 charts set needlessly
+			{	//If the note is within the tremolo phrase
+				if((tp->tremolo[i].difficulty == 0xFF) || (tp->tremolo[i].difficulty == tp->note[ctr]->type))
+				{	//If the tremolo phrase applies to all difficulties or if it applies to the note's difficulty
+					tp->note[ctr]->flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_HO);	//Clear the hammer on flag, which RB3 charts set needlessly
+				}
 			}
 		}
 	}

@@ -4657,7 +4657,7 @@ void eof_render_editor_window_common(void)
 			for(i = 0; i < eof_song->pro_guitar_track[tracknum]->arpeggios; i++)
 			{	//For each arpeggio section in the track
 				sectionptr = &eof_song->pro_guitar_track[tracknum]->arpeggio[i];
-				if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop) && (sectionptr->difficulty == eof_note_type))
+				if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop) && ((sectionptr->difficulty == eof_note_type) || (sectionptr->difficulty == 0xFF)))
 				{	//If the arpeggio section would render between the left and right edges of the piano roll, and the section applies to the active difficulty, fill the bottom lane with turquoise
 					rectfill(eof_window_editor->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 2], lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 1], eof_color_turquoise);
 				}
@@ -4784,6 +4784,10 @@ void eof_render_editor_window_common(void)
 				{	//If the section exists
 					if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop))
 					{	//If the trill or tremolo section would render between the left and right edges of the piano roll
+						if(j && (sectionptr->difficulty != 0xFF) && (sectionptr->difficulty != eof_note_type))
+						{	//If tremolo sections are being rendered, and this tremolo section doesn't apply to either all tracks or the active track difficulty
+							continue;	//Skip rendering it
+						}
 						usedlanes = eof_get_used_lanes(eof_selected_track, sectionptr->start_pos, sectionptr->end_pos, eof_note_type);	//Determine which lane(s) use this phrase
 						if(usedlanes == 0)
 						{	//If there are no notes in this marker, render the marker in all lanes

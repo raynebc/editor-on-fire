@@ -1011,6 +1011,7 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 	char arpeggios[EOF_MAX_PHRASES] = {0};
 	char sliders[EOF_MAX_PHRASES] = {0};
 	unsigned long notepos, flags, numphrases, numnotes;
+	unsigned char notetype;
 	EOF_PHRASE_SECTION *sectionptr = NULL;
 
 	eof_log("eof_determine_phrase_status() entered", 2);
@@ -1026,6 +1027,7 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 	{	//For each note in the active track
 		/* clear the flags */
 		notepos = eof_get_note_pos(sp, track, i);
+		notetype = eof_get_note_type(sp, track, i);
 		flags = eof_get_note_flags(sp, track, i);
 		flags &= (~EOF_NOTE_FLAG_HOPO);
 		flags &= (~EOF_NOTE_FLAG_SP);
@@ -1084,8 +1086,11 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 			sectionptr = eof_get_tremolo(sp, track, j);
 			if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
 			{	//If the note is in this tremolo section
-				flags |= EOF_NOTE_FLAG_IS_TREMOLO;
-				tremolos[j] = 1;
+				if((sectionptr->difficulty == 0xFF) || (sectionptr->difficulty == notetype))
+				{	//If the tremolo section applies to all difficulties or if it applies to this note's track difficulty
+					flags |= EOF_NOTE_FLAG_IS_TREMOLO;
+					tremolos[j] = 1;
+				}
 			}
 		}
 
@@ -1096,7 +1101,10 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 			{	//For each arpeggio section in the active track
 				if((notepos >= sp->pro_guitar_track[tracknum]->arpeggio[j].start_pos) && (notepos <= sp->pro_guitar_track[tracknum]->arpeggio[j].end_pos))
 				{	//If the note is in this arpeggio section
-					arpeggios[j] = 1;
+					if((sectionptr->difficulty == 0xFF) || (sectionptr->difficulty == notetype))
+					{	//If the arpeggio section applies to all difficulties or if it applies to this note's track difficulty
+						arpeggios[j] = 1;
+					}
 				}
 			}
 		}
@@ -3013,6 +3021,10 @@ void eof_render_3d_window(void)
 				}
 				if(sectionptr != NULL)
 				{	//If the section exists
+					if(j && (sectionptr->difficulty != 0xFF) && (sectionptr->difficulty != eof_note_type))
+					{	//If tremolo sections are being rendered, and this tremolo section doesn't apply to either all tracks or the active track difficulty
+						continue;	//Skip rendering it
+					}
 					sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 					sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 					spz = sz < -100 ? -100 : sz;

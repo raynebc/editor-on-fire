@@ -515,7 +515,10 @@ void eof_prepare_note_menu(void)
 					sectionptr = eof_get_tremolo(eof_song, eof_selected_track, j);
 					if((sel_end >= sectionptr->start_pos) && (sel_start <= sectionptr->end_pos))
 					{
-						intremolo = 1;
+						if((sectionptr->difficulty == 0xFF) || (sectionptr->difficulty == eof_note_type))
+						{	//If the tremolo section applies to all difficulties or if it applies to the active track difficulty
+							intremolo = 1;
+						}
 					}
 				}
 				for(j = 0; j < eof_get_num_sliders(eof_song, eof_selected_track); j++)
@@ -5293,14 +5296,22 @@ int eof_menu_tremolo_mark(void)
 		sectionptr = eof_get_tremolo(eof_song, eof_selected_track, j);
 		if((sel_end >= sectionptr->start_pos) && (sel_start <= sectionptr->end_pos))
 		{	//If the selection of notes is within this tremolo section's start and end position
-			existingphrase = 1;	//Note it
-			existingphrasenum = j;
+			if((sectionptr->difficulty == 0xFF) || (sectionptr->difficulty == eof_note_type))
+			{	//If the tremolo section applies to all difficulties or if it applies to the active track difficulty
+				existingphrase = 1;	//Note it
+				existingphrasenum = j;
+			}
 		}
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(!existingphrase)
 	{	//If the selected notes are not within an existing tremolo phrase, create one
-		(void) eof_track_add_section(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, 0, sel_start, sel_end, 0, NULL);
+		unsigned char targetdiff = 0xFF;	//By default, tremolo phrases apply to all difficulties
+		if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+		{	//If this track has had its difficulty limit removed (Rocksmith authoring)
+			targetdiff = eof_note_type;	//A new tremolo phrase will apply to the active track difficulty instead
+		}
+		(void) eof_track_add_section(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, targetdiff, sel_start, sel_end, 0, NULL);
 	}
 	else
 	{	//Otherwise edit the existing phrase
