@@ -508,7 +508,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						}
 					}
 					eof_song->beat[beat_count]->pos = output;			//Store the integer timestamp
-					eof_song->beat[beat_count]->fpos = (double)output / 1000.0;	//Store the floating point timestamp
+					eof_song->beat[beat_count]->fpos = (double)output;	//Store the floating point timestamp
 					if(!beat_count)
 					{	//If this is the first beat, update the chart's MIDI delay
 						eof_song->tags->ogg[eof_selected_ogg].midi_offset = output;

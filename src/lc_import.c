@@ -126,6 +126,7 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 		break;
 
 		case LRC_FORMAT:	//Load LRC format file as input
+		case ELRC_FORMAT:
 			inf=fopen_err(Lyrics.infilename,"rt");	//LRC is a text format
 			LRC_Load(inf);
 		break;
