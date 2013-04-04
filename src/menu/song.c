@@ -1199,10 +1199,10 @@ int eof_menu_song_test(char application)
 	{	//If the user wants to test the chart in FoF
 		(void) ustrcpy(syscommand, executablename);
 		(void) ustrcat(syscommand, " -p \"EOFTemp\" -D ");
-		(void) snprintf(temppath, sizeof(temppath) - 1, "%d", difficulty);
+		(void) uszprintf(temppath, sizeof(temppath) - 1, "%d", difficulty);
 		(void) ustrcat(syscommand, temppath);
 		(void) ustrcat(syscommand, " -P ");
-		(void) snprintf(temppath, sizeof(temppath) - 1, "%d", part);
+		(void) uszprintf(temppath, sizeof(temppath) - 1, "%d", part);
 		(void) ustrcat(syscommand, temppath);
 		(void) eof_system(syscommand);
 	}
@@ -3726,7 +3726,7 @@ DIALOG eof_pro_guitar_set_fret_hand_position_dialog[] =
 
 int eof_pro_guitar_set_fret_hand_position(void)
 {
-	unsigned long position, tracknum, ctr;
+	unsigned long position, tracknum;
 	EOF_PHRASE_SECTION *ptr = NULL;	//If the seek position has a fret hand position defined, this will reference it
 	unsigned long index = 0;	//Will store the index number of the existing fret hand position being edited
 
@@ -3739,19 +3739,9 @@ int eof_pro_guitar_set_fret_hand_position(void)
 	eof_color_dialog(eof_pro_guitar_set_fret_hand_position_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_pro_guitar_set_fret_hand_position_dialog);
 
+	//Find the pointer to the fret hand position at the current seek position in this difficulty, if there is one
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->handpositions; ctr++)
-	{	//For each existing fret hand position in the track
-		if(eof_song->pro_guitar_track[tracknum]->handposition[ctr].difficulty == eof_note_type)
-		{	//If the fret hand position is in the active difficulty
-			if(eof_song->pro_guitar_track[tracknum]->handposition[ctr].start_pos == eof_music_pos - eof_av_delay)
-			{	//If the fret hand position already exists at the current seek position
-				ptr = &eof_song->pro_guitar_track[tracknum]->handposition[ctr];	//Store its address
-				index = ctr;	//Store its index
-				break;
-			}
-		}
-	}
+	ptr = eof_pro_guitar_track_find_effective_fret_hand_position_definition(eof_song->pro_guitar_track[tracknum], eof_note_type, eof_music_pos - eof_av_delay, NULL, NULL, 1);
 	if(ptr)
 	{	//If an existing fret hand position is to be edited
 		snprintf(eof_etext, 5, "%lu", ptr->end_pos);	//Populate the input box with it
@@ -4013,7 +4003,7 @@ DIALOG eof_fret_hand_position_list_dialog[] =
 
 int eof_menu_song_fret_hand_positions(void)
 {
-	unsigned long tracknum;
+	unsigned long tracknum, diffindex = 0;
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
@@ -4026,7 +4016,8 @@ int eof_menu_song_fret_hand_positions(void)
 	centre_dialog(eof_fret_hand_position_list_dialog);
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	eof_fret_hand_position_list_dialog[1].d1 = eof_pro_guitar_track_find_effective_fret_hand_position_definition(eof_song->pro_guitar_track[tracknum], eof_note_type, eof_music_pos - eof_av_delay);	//Pre-select the hand position in effect (if one exists) at the current seek position
+	(void) eof_pro_guitar_track_find_effective_fret_hand_position_definition(eof_song->pro_guitar_track[tracknum], eof_note_type, eof_music_pos - eof_av_delay, NULL, &diffindex, 0);	//Determine if a hand position exists at the current seek position
+	eof_fret_hand_position_list_dialog[1].d1 = diffindex;	//Pre-select the hand position in effect (if one exists) at the current seek position
 	eof_fret_hand_position_list_dialog[0].dp = eof_fret_hand_position_list_dialog_title_string;	//Replace the string used for the title bar with a dynamic one
 	eof_fret_hand_position_list_dialog_undo_made = 0;			//Reset this condition
 	(void) eof_popup_dialog(eof_fret_hand_position_list_dialog, 1);	//Launch the dialog

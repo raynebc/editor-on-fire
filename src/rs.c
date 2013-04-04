@@ -1808,29 +1808,43 @@ unsigned char eof_pro_guitar_track_find_effective_fret_hand_position(EOF_PRO_GUI
 	return effective;	//Return the last hand position definition that was found (if any) in this track difficulty
 }
 
-unsigned long eof_pro_guitar_track_find_effective_fret_hand_position_definition(EOF_PRO_GUITAR_TRACK *tp, unsigned char difficulty, unsigned long position)
+EOF_PHRASE_SECTION *eof_pro_guitar_track_find_effective_fret_hand_position_definition(EOF_PRO_GUITAR_TRACK *tp, unsigned char difficulty, unsigned long position, unsigned long *index, unsigned long *diffindex, char function)
 {
-	unsigned long ctr, effective = 0;
+	unsigned long ctr, ctr2 = 0;
+	EOF_PHRASE_SECTION *ptr = NULL;
 
 	if(!tp)
-		return 0;
+		return 0;	//Invalid parameters
 
 	for(ctr = 0; ctr < tp->handpositions; ctr++)
 	{	//For each hand position in the track
-		if(tp->handposition[ctr].start_pos <= position)
-		{	//If the hand position is at or before the specified timestamp
-			if(tp->handposition[ctr].difficulty == difficulty)
-			{	//If the hand position is in the specified difficulty
-				effective = ctr;	//Track this fret hand position definition number
+		if(tp->handposition[ctr].difficulty == difficulty)
+		{	//If the hand position is in the specified difficulty
+			if(tp->handposition[ctr].start_pos <= position)
+			{	//If the hand position is at or before the specified timestamp
+				if(function && (tp->handposition[ctr].start_pos != position))
+				{	//If the calling function only wanted to identify the fret hand position exactly at the target time stamp
+					continue;	//Skip to next position if this one isn't at the target time
+				}
+				ptr = &tp->handposition[ctr];	//Store its address
+				if(index)
+				{	//If index isn't NULL
+					*index = ctr;		//Track this fret hand position definition number
+				}
+				if(diffindex)
+				{	//If diffindex isn't NULL
+					*diffindex = ctr2;	//Track the position number this is within the target difficulty
+				}
 			}
-		}
-		else
-		{	//This hand position is beyond the specified timestamp
-			return effective;	//Return the last hand position definition that was found (if any) in this track difficulty
+			else
+			{	//This hand position is beyond the specified timestamp
+				return ptr;		//Return any hand position address that has been found
+			}
+			ctr2++;
 		}
 	}
 
-	return effective;	//Return the last hand position definition that was found (if any) in this track difficulty
+	return ptr;	//Return any hand position address that has been found
 }
 
 char *eof_rs_section_text_valid(char *string)
