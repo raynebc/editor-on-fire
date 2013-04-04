@@ -796,6 +796,7 @@ int eof_menu_file_lyrics_import(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	DestroyLyricFormatList(lyricdetectionlist);	//Free the detection list
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Refresh track populated status in case the vocal track is active
 	return 1;
 }
 

@@ -283,10 +283,10 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 		return 0;	//Return failure
 	}
 	oggfile=alogg_create_ogg_from_buffer(oggbuffer, (int)file_size_ex(oggfn));
-	free(oggbuffer);
 	if(oggfile == NULL)
 	{
 		eof_log("ALOGG failed to open input audio file", 1);
+		free(oggbuffer);
 		return 0;	//Return failure
 	}
 
@@ -295,6 +295,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	if(decoded == NULL)
 	{
 		alogg_destroy_ogg(oggfile);
+		free(oggbuffer);
 		return 0;	//Return failure
 	}
 
@@ -347,6 +348,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 
 	/* encode the audio */
 	destroy_sample(decoded);	//This is no longer needed
+	free(oggbuffer);
 	(void) replace_filename(wavfn, eof_song_path, "encode.wav", 1024);
 	(void) save_wav(wavfn, combined);
 	destroy_sample(combined);	//This is no longer needed
