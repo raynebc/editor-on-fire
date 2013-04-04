@@ -1677,14 +1677,15 @@ static long get_ogg_length(const char * fn)
 		return 0;	//Return failure
 	}
 	ogg = alogg_create_ogg_from_buffer(oggbuffer, (int)file_size_ex(fn));
-	free(oggbuffer);
 	if(ogg == NULL)
 	{
 		eof_log("ALOGG failed to open input audio file", 1);
+		free(oggbuffer);
 		return 0;	//Return failure
 	}
 	length = alogg_get_length_msecs_ogg(ogg);
 	alogg_destroy_ogg(ogg);
+	free(oggbuffer);
 
 	return length;
 }
