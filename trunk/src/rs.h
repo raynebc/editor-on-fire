@@ -73,9 +73,11 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 unsigned char eof_pro_guitar_track_find_effective_fret_hand_position(EOF_PRO_GUITAR_TRACK *tp, unsigned char difficulty, unsigned long position);
 	//Returns the fret hand position in effect (at or before) at the specified timestamp in the specified track difficulty
 	//Returns nonzero if a fret hand position is in effect
-unsigned long eof_pro_guitar_track_find_effective_fret_hand_position_definition(EOF_PRO_GUITAR_TRACK *tp, unsigned char difficulty, unsigned long position);
-	//Similar to eof_pro_guitar_track_find_effective_fret_hand_position(), but returns the hand position definition number in effect, or 0 if none are in effect
-	//This is for use in eof_menu_song_fret_hand_positions() to pre-select the hand position in effect at the current seek position when the dialog is launched
+EOF_PHRASE_SECTION *eof_pro_guitar_track_find_effective_fret_hand_position_definition(EOF_PRO_GUITAR_TRACK *tp, unsigned char difficulty, unsigned long position, unsigned long *index, unsigned long *diffindex, char function);
+	//Similar to eof_pro_guitar_track_find_effective_fret_hand_position(), but returns a pointer to the hand position in effect, or NULL if none are in effect
+	//If function is nonzero, then the hand position must be exactly at the specified time position to be considered "in effect"
+	//If non NULL is returned, the index of the effective fret hand position is returned through *index if its pointer isn't NULL, and the position index within the specified difficulty is returned through *diffindex if its pointer isn't NULL
+	//If NULL is returned, neither *index nor *diffindex are altered
 unsigned long eof_find_effective_rs_phrase(unsigned long position);
 	//Returns the phrase number in effect (at or before) at the specified timestamp, or 0 if no phrase was in effect at that position
 	//This function assumes that the beat statistics are properly cached for the active track
