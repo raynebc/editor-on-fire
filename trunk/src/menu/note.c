@@ -513,12 +513,19 @@ void eof_prepare_note_menu(void)
 				for(j = 0; j < eof_get_num_tremolos(eof_song, eof_selected_track); j++)
 				{	//For each tremolo phrase in the active track
 					sectionptr = eof_get_tremolo(eof_song, eof_selected_track, j);
+					if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+					{	//If the track's difficulty limit has been removed
+						if(sectionptr->difficulty != eof_note_type)	//And the tremolo section does not apply to the active track difficulty
+							continue;
+					}
+					else
+					{
+						if(sectionptr->difficulty != 0xFF)	//Otherwise if the tremolo section does not apply to all track difficulties
+							continue;
+					}
 					if((sel_end >= sectionptr->start_pos) && (sel_start <= sectionptr->end_pos))
 					{
-						if((sectionptr->difficulty == 0xFF) || (sectionptr->difficulty == eof_note_type))
-						{	//If the tremolo section applies to all difficulties or if it applies to the active track difficulty
-							intremolo = 1;
-						}
+						intremolo = 1;
 					}
 				}
 				for(j = 0; j < eof_get_num_sliders(eof_song, eof_selected_track); j++)
@@ -5294,13 +5301,20 @@ int eof_menu_tremolo_mark(void)
 	for(j = 0; j < eof_get_num_tremolos(eof_song, eof_selected_track); j++)
 	{	//For each tremolo section in the track
 		sectionptr = eof_get_tremolo(eof_song, eof_selected_track, j);
+		if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+		{	//If the track's difficulty limit has been removed
+			if(sectionptr->difficulty != eof_note_type)	//And the tremolo section does not apply to the active track difficulty
+				continue;
+		}
+		else
+		{
+			if(sectionptr->difficulty != 0xFF)	//Otherwise if the tremolo section does not apply to all track difficulties
+				continue;
+		}
 		if((sel_end >= sectionptr->start_pos) && (sel_start <= sectionptr->end_pos))
 		{	//If the selection of notes is within this tremolo section's start and end position
-			if((sectionptr->difficulty == 0xFF) || (sectionptr->difficulty == eof_note_type))
-			{	//If the tremolo section applies to all difficulties or if it applies to the active track difficulty
-				existingphrase = 1;	//Note it
-				existingphrasenum = j;
-			}
+			existingphrase = 1;	//Note it
+			existingphrasenum = j;
 		}
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -5445,6 +5459,16 @@ int eof_menu_tremolo_unmark(void)
 			for(j = 0; j < eof_get_num_tremolos(eof_song, eof_selected_track); j++)
 			{	//For each tremolo section in the track
 				sectionptr = eof_get_tremolo(eof_song, eof_selected_track, j);
+				if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+				{	//If the track's difficulty limit has been removed
+					if(sectionptr->difficulty != eof_note_type)	//And the tremolo section does not apply to the active track difficulty
+						continue;
+				}
+				else
+				{
+					if(sectionptr->difficulty != 0xFF)	//Otherwise if the tremolo section does not apply to all track difficulties
+						continue;
+				}
 				if((eof_get_note_pos(eof_song, eof_selected_track, i) >= sectionptr->start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= sectionptr->end_pos))
 				{	//If the note is encompassed within this tremolo section
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);

@@ -343,7 +343,7 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 	}
 
 //EndLyricLine() now handles pieces that have a duration of 0, but negative durations still need to cause an abort
-	if(start > end)
+	if(start-Lyrics.realoffset > end-Lyrics.realoffset)
 	{
 		(void) puts("Error: Cannot add piece with a negative duration\nAborting");
 		exit_wrapper(2);

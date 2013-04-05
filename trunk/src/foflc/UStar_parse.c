@@ -681,7 +681,7 @@ void UStar_Load(FILE *inf)
 
 			default:
 				printf("Error: Invalid line type '%c' in line #%lu\nAborting\n",buffer[index],processedctr);
-				exit_wrapper(2);
+				exit_wrapper(3);
 			break;
 		}
 
@@ -699,6 +699,13 @@ void UStar_Load(FILE *inf)
 
 		starttime=(long int)(((double)starttime * stepping)+0.5);	//Convert from quarterbeats to milliseconds (round up)
 
+//Ensure that the lyric timestamp is not negative once the offset is taken into account
+		if(starttime-Lyrics.realoffset < 0)
+		{
+			printf("Error: Offsetted lyric has negative timestamp\nAborting\n");
+			exit_wrapper(4);
+		}
+
 //Parse duration
 		duration=ParseLongInt(buffer,&index,processedctr,NULL);
 		duration=(long int)(((double)duration * stepping)+0.5);		//Convert from quarterbeats to milliseconds (round up)
@@ -711,7 +718,7 @@ void UStar_Load(FILE *inf)
 			if((rawpitch<0) || (rawpitch>127))
 			{
 				printf("Error: Pitch %d in the UltraStar file cannot be converted to another pitch numbering system\nAborting\n",rawpitch-24);
-				exit_wrapper(3);
+				exit_wrapper(5);
 			}
 			pitch=(unsigned char)rawpitch & 0xFF;	//Store the remapped pitch
 		}
@@ -729,7 +736,7 @@ void UStar_Load(FILE *inf)
 		if(!isspace((unsigned char)buffer[index]))
 		{
 			printf("Error: Whitespace expected after pitch in line #%lu\nAborting\n",processedctr);
-			exit_wrapper(4);
+			exit_wrapper(6);
 		}
 		index++;	//Advance to next character
 

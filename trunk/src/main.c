@@ -1086,11 +1086,18 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 			sectionptr = eof_get_tremolo(sp, track, j);
 			if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
 			{	//If the note is in this tremolo section
-				if((sectionptr->difficulty == 0xFF) || (sectionptr->difficulty == notetype))
-				{	//If the tremolo section applies to all difficulties or if it applies to this note's track difficulty
-					flags |= EOF_NOTE_FLAG_IS_TREMOLO;
-					tremolos[j] = 1;
+				if(eof_song->track[track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+				{	//If the track's difficulty limit has been removed
+					if(sectionptr->difficulty == notetype)	//And the tremolo section applies to this note's track difficulty
+						flags |= EOF_NOTE_FLAG_IS_TREMOLO;
 				}
+				else
+				{
+					if(sectionptr->difficulty == 0xFF)	//Otherwise if the tremolo section applies to all track difficulties
+						flags |= EOF_NOTE_FLAG_IS_TREMOLO;
+				}
+
+				tremolos[j] = 1;
 			}
 		}
 
@@ -3021,9 +3028,18 @@ void eof_render_3d_window(void)
 				}
 				if(sectionptr != NULL)
 				{	//If the section exists
-					if(j && (sectionptr->difficulty != 0xFF) && (sectionptr->difficulty != eof_note_type))
-					{	//If tremolo sections are being rendered, and this tremolo section doesn't apply to either all tracks or the active track difficulty
-						continue;	//Skip rendering it
+					if(j)
+					{	//If tremolo sections are being rendered
+						if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+						{	//If the track's difficulty limit has been removed
+							if(sectionptr->difficulty != eof_note_type)	//And the tremolo section does not apply to the active track difficulty
+								continue;	//Skip rendering it
+						}
+						else
+						{
+							if(sectionptr->difficulty != 0xFF)	//Otherwise if the tremolo section does not apply to all track difficulties
+								continue;	//Skip rendering it
+						}
 					}
 					sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 					sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;

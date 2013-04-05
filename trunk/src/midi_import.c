@@ -1488,6 +1488,7 @@ set_window_title(debugtext);
 						{	//Tremolos are marked with note 126
 							phraseptr = eof_get_tremolo(sp, picked_track, eof_get_num_tremolos(sp, picked_track));
 							phraseptr->start_pos = event_realtime;
+							phraseptr->difficulty = 0xFF;	//Tremolo phrases imported from MIDI apply to all difficulties
 						}
 						else if((eof_import_events[i]->event[j]->d1 == 127) && (eof_get_num_trills(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//Trills are marked with note 127
@@ -2077,6 +2078,7 @@ set_window_title(debugtext);
 						{	//Tremolos are marked with note 126
 							phraseptr = eof_get_tremolo(sp, picked_track, eof_get_num_tremolos(sp, picked_track));
 							phraseptr->start_pos = event_realtime;
+							phraseptr->difficulty = 0xFF;	//Tremolo phrases imported from MIDI apply to all difficulties
 						}
 						else if((eof_import_events[i]->event[j]->d1 == 127) && (eof_get_num_trills(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//Trills are marked with note 127

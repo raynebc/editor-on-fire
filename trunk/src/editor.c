@@ -4784,9 +4784,18 @@ void eof_render_editor_window_common(void)
 				{	//If the section exists
 					if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop))
 					{	//If the trill or tremolo section would render between the left and right edges of the piano roll
-						if(j && (sectionptr->difficulty != 0xFF) && (sectionptr->difficulty != eof_note_type))
-						{	//If tremolo sections are being rendered, and this tremolo section doesn't apply to either all tracks or the active track difficulty
-							continue;	//Skip rendering it
+						if(j)
+						{	//If tremolo sections are being rendered
+							if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+							{	//If the track's difficulty limit has been removed
+								if(sectionptr->difficulty != eof_note_type)	//And the tremolo section does not apply to the active track difficulty
+									continue;	//Skip rendering it
+							}
+							else
+							{
+								if(sectionptr->difficulty != 0xFF)	//Otherwise if the tremolo section does not apply to all track difficulties
+									continue;	//Skip rendering it
+							}
 						}
 						usedlanes = eof_get_used_lanes(eof_selected_track, sectionptr->start_pos, sectionptr->end_pos, eof_note_type);	//Determine which lane(s) use this phrase
 						if(usedlanes == 0)
