@@ -257,7 +257,7 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 			if(temp == NULL)
 				return -1;	//Return error (out of memory)
 
-			if(curpiece->pitch == PITCHLESS)
+			if((curpiece->pitch == PITCHLESS) || (!lp->pitch_tracking))	//If this lyric has no defined pitch, or all imported lyrics have the same pitch
 				temp->note=0;				//Store with EOF's notation of a non defined pitch
 			else
 				temp->note=(char)curpiece->pitch;	//curpiece->pitch is an unsigned char between the values of 0 and 127

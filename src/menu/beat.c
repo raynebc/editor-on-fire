@@ -100,11 +100,13 @@ DIALOG eof_events_dialog[] =
    /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
    { d_agup_window_proc,0,   48,  500, 237, 2,   23,  0,    0,      0,   0,   "Events",       NULL, NULL },
    { d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_events_list,NULL, NULL },
-   { d_agup_push_proc,  425, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",         NULL, (void *)eof_events_dialog_add },
-   { d_agup_push_proc,  425, 124, 68,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",        NULL, (void *)eof_events_dialog_edit },
-   { d_agup_push_proc,  425, 164, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, (void *)eof_events_dialog_delete },
+   { d_agup_push_proc,  416, 84,  76,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",         NULL, (void *)eof_events_dialog_add },
+   { d_agup_push_proc,  416, 124, 76,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",        NULL, (void *)eof_events_dialog_edit },
+   { d_agup_push_proc,  416, 164, 76,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, (void *)eof_events_dialog_delete },
    { d_agup_text_proc,  12,  225, 64,  8,   2,   23,  0,    0,      0,   0,   ""      ,       NULL, NULL },
    { d_agup_button_proc,12,  245, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
+   { d_agup_push_proc,  416, 204, 76,  28,  2,   23,  'u',  D_EXIT, 0,   0,   "Move &Up",     NULL, (void *)eof_events_dialog_move_up },
+   { d_agup_push_proc,  416, 244, 76,  28,  2,   23,  'd',  D_EXIT, 0,   0,   "Move &Down",   NULL, (void *)eof_events_dialog_move_down },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1553,7 +1555,6 @@ void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *
 				ptr->flags = newflags;
 			}
 			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
-
 		}
 	}
 }
@@ -2395,4 +2396,91 @@ int eof_menu_beat_paste_rs_events(void)
 	(void) pack_fclose(fp);
 
 	return 1;
+}
+
+int eof_events_dialog_move(char direction)
+{
+	long previous = -1, selected = -1, next = -1;	//Stores the indexes of the selected text event, as well as the previous and next ones if applicable
+	unsigned long ecount = 0, i;
+	int junk;
+	EOF_TEXT_EVENT *ptr;
+
+	/* find the relevant event indexes */
+	for(i = 0; i < eof_song->text_events; i++)
+	{	//For each text event
+		if(eof_song->text_event[i]->beat == eof_selected_beat)
+		{	//If the text event is applied to the selected beat
+			if(eof_events_dialog[1].d1 == ecount)
+			{	//If the text event is the one selected in the Events dialog
+				selected = i;
+			}
+			else
+			{	//The text event is one of the non selected events in the dialog
+				if(selected == -1)
+				{	//If the selected one hasn't been reached yet
+					previous = i;	//It's one of the previous entries
+				}
+				else
+				{	//Otherwise it's the one immediately after it
+					next = i;
+					break;	//Stop parsing, since the selected entry has been found, and any previous and next event has been identified
+				}
+			}
+			ecount++;	//Count the number of events at the selected beat that have been reached
+		}
+	}
+
+	if(selected >= 0)
+	{	//If the selected event was found
+		if(direction < 0)
+		{	//If the selected event is being moved up in the list of events at the selected beat
+			if(previous >= 0)
+			{	//If there was an event listed before the selected event
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				ptr = eof_song->text_event[previous];	//Store this pointer
+				eof_song->text_event[previous] = eof_song->text_event[selected];	//Swap the selected event with the one before it
+				eof_song->text_event[selected] = ptr;
+				eof_events_dialog[1].d1--;	//Move the selected index to compensate
+				eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current, since event order matters for Rocksmith phrases and sections
+				eof_render();
+				(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &junk);
+			}
+		}
+		else
+		{	//Otherwise move it down in the list
+			if(next >= 0)
+			{	//If there was an event listed after the selected event
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				ptr = eof_song->text_event[next];	//Store this pointer
+				eof_song->text_event[next] = eof_song->text_event[selected];	//Swap the selected event with the one after it
+				eof_song->text_event[selected] = ptr;
+				eof_events_dialog[1].d1++;	//Move the selected index to compensate
+				eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current, since event order matters for Rocksmith phrases and sections
+				eof_render();
+				(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &junk);
+			}
+		}
+	}
+
+	return D_O_K;
+}
+
+int eof_events_dialog_move_up(DIALOG * d)
+{
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
+
+	return eof_events_dialog_move(-1);
+}
+
+int eof_events_dialog_move_down(DIALOG * d)
+{
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
+
+	return eof_events_dialog_move(1);
 }

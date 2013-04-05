@@ -217,4 +217,6 @@ int eof_song_rocksmith_arrangement_bass(void);		//Sets a bass arrangement type
 int eof_song_proguitar_toggle_ignore_tuning(void);
 	//Toggles the option to have the chord name detection disregard the track's defined tuning and base it on standard tuning instead
 
+int eof_song_flatten_difficulties(void);	//Launches a dialog to specify a threshold distance and calls eof_flatten_difficulties on the active track difficulty
+
 #endif

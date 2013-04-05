@@ -22,7 +22,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 	char *buffer = NULL,*buffer2 = NULL;		//Will be an array large enough to hold the largest line of text from input file
 	EOF_PRO_GUITAR_TRACK *tp = NULL;
 	size_t maxlinelength;
-	unsigned long linectr = 1;
+	unsigned long linectr = 1, tagctr;
 	PACKFILE *inf = NULL;
 	char *ptr, *ptr2, tag[256];
 	char error = 0;
@@ -797,12 +797,17 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 
 								if(parse_xml_attribute_number("count", buffer, &output) && output)
 								{	//If the count attribute of this tag is readable and greater than 0
+									tagctr = 0;
 									(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 									linectr++;
 									while(!error || !pack_feof(inf))
 									{	//Until there was an error reading from the file or end of file is reached
 										if(strcasestr_spec(buffer, "</notes"))
 										{	//If this is the end of the notes tag
+											#ifdef RS_IMPORT_DEBUG
+												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tAdded %lu notes", tagctr);
+												eof_log(eof_log_string, 1);
+											#endif
 											break;	//Break from loop
 										}
 
@@ -892,6 +897,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 													}
 													np->flags = flags;
 													note_count++;
+													tagctr++;
 
 													if(fret > tp->numfrets)
 														tp->numfrets = fret;	//Track the highest used fret number
@@ -918,12 +924,17 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 
 								if(parse_xml_attribute_number("count", buffer, &output) && output)
 								{	//If the count attribute of this tag is readable and greater than 0
+									tagctr = 0;
 									(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 									linectr++;
 									while(!error || !pack_feof(inf))
 									{	//Until there was an error reading from the file or end of file is reached
 										if(strcasestr_spec(buffer, "</chords"))
 										{	//If this is the end of the events tag
+											#ifdef RS_IMPORT_DEBUG
+												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tAdded %lu chords", tagctr);
+												eof_log(eof_log_string, 1);
+											#endif
 											break;	//Break from loop
 										}
 
@@ -981,7 +992,9 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 													strum_dir = 1;	//Track that this arrangement defines chord strum directions
 												}
 												np->flags = flags;
+												np->type = curdiff;
 												note_count++;
+												tagctr++;
 											}
 										}//If this is a chord tag
 
@@ -1003,12 +1016,17 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 
 								if(parse_xml_attribute_number("count", buffer, &output) && output)
 								{	//If the count attribute of this tag is readable and greater than 0
+									tagctr = 0;
 									(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 									linectr++;
 									while(!error || !pack_feof(inf))
 									{	//Until there was an error reading from the file or end of file is reached
 										if(strcasestr_spec(buffer, "</anchors"))
 										{	//If this is the end of the anchors tag
+											#ifdef RS_IMPORT_DEBUG
+												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tAdded %lu anchors", tagctr);
+												eof_log(eof_log_string, 1);
+											#endif
 											break;	//Break from loop
 										}
 
@@ -1041,6 +1059,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 
 										(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 										linectr++;	//Increment line counter
+										tagctr++;
 									}
 									if(error)
 										break;	//Break from inner loop

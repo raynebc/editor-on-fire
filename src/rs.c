@@ -662,12 +662,14 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		char * currentphrase = NULL;
 		unsigned long startpos = 0, endpos = 0;		//Track the start and end position of the each instance of the phrase
 		unsigned char maxdiff, ongoingmaxdiff = 0;	//Track the highest fully leveled difficulty used among all phraseinstances
+		char started = 0;
 
 		//Determine the highest maxdifficulty present among all instances of this phrase
 		for(ctr2 = 0; ctr2 < sp->beats; ctr2++)
 		{	//For each beat
-			if((sp->beat[ctr2]->contained_section_event >= 0) || ((ctr2 + 1 >= eof_song->beats) && (startpos > endpos)))
+			if((sp->beat[ctr2]->contained_section_event >= 0) || ((ctr2 + 1 >= eof_song->beats) && started))
 			{	//If this beat contains a section event (Rocksmith phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
+				started = 0;
 				endpos = sp->beat[ctr2]->pos - 1;	//Track this as the end position of the previous phrase marker
 				if(currentphrase)
 				{	//If the first instance of the phrase was already encountered
@@ -680,6 +682,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 						}
 					}
 				}
+				started = 1;
 				startpos = sp->beat[ctr2]->pos;	//Track the starting position
 				currentphrase = sp->text_event[eof_song->beat[ctr2]->contained_section_event]->text;	//Track which phrase is being examined
 			}
@@ -964,15 +967,15 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 			{	//For each note in the track
 				if(eof_get_note_type(sp, track, ctr3) == ctr)
 				{	//If the note is in this difficulty
-					unsigned long lanecount = eof_note_count_non_ghosted_lanes(sp, track, ctr3);	//Count the number of non ghosted gems for this note
-					if(lanecount == 1)
-					{	//If the note has only one gem
-						numsinglenotes++;	//Increment counter
-					}
-					else if(lanecount > 1)
-					{	//If the note has multiple gems
-						if(!eof_is_string_muted(sp, track, ctr3))
-						{	//If the chord is not fully string muted
+					if(!eof_is_string_muted(sp, track, ctr3))
+					{	//If the note is not fully string muted
+						unsigned long lanecount = eof_note_count_non_ghosted_lanes(sp, track, ctr3);	//Count the number of non ghosted gems for this note
+						if(lanecount == 1)
+						{	//If the note has only one gem
+							numsinglenotes++;	//Increment counter
+						}
+						else if(lanecount > 1)
+						{	//If the note has multiple gems
 							numchords++;	//Increment counter
 						}
 					}

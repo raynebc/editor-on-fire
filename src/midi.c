@@ -120,7 +120,7 @@ void eof_add_midi_lyric_event(unsigned long pos, char * text)
 	}
 }
 
-void eof_add_midi_text_event(unsigned long pos, char * text, char allocation)
+void eof_add_midi_text_event(unsigned long pos, char * text, char allocation, unsigned long index)
 {	//To avoid rounding issues during timing conversion, this should be called with the MIDI tick position of the event being stored
 	eof_log("eof_add_midi_lyric_event() entered", 2);	//Only log this if verbose logging is on
 
@@ -141,6 +141,7 @@ void eof_add_midi_text_event(unsigned long pos, char * text, char allocation)
 				eof_midi_event[eof_midi_events]->filtered = 0;
 				eof_midi_event[eof_midi_events]->on = 0;
 				eof_midi_event[eof_midi_events]->off = 0;
+				eof_midi_event[eof_midi_events]->index = index;
 				eof_midi_events++;
 			}
 			else
@@ -340,6 +341,15 @@ int qsort_helper3(const void * e1, const void * e2)
 	if(((*thing1)->type == 0x80) && ((*thing2)->type == 0x90))
 	{
 		return -1;
+	}
+
+	/* if two text events are at the same position, their index number determines their sort order */
+	if(((*thing1)->type == 0x01) && ((*thing2)->type == 0x01))
+	{
+		if((*thing1)->index < (*thing2)->index)
+			return -1;
+		if((*thing2)->index < (*thing1)->index)
+			return 1;
 	}
 
     // they are equal...
@@ -565,7 +575,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					sp->text_event[i]->beat = sp->beats - 1;	//Repair it by assigning it to the last beat marker
 				}
 				deltapos = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,tslist,timedivision,1);	//Store the tick position of the note
-				eof_add_midi_text_event(deltapos, sp->text_event[i]->text, 0);	//Send 0 for the allocation flag, because the text string is being stored in static memory
+				eof_add_midi_text_event(deltapos, sp->text_event[i]->text, 0, i);	//Send 0 for the allocation flag, because the text string is being stored in static memory
 			}
 		}
 		if(eof_get_note_pos(sp, j, 0) < 2450)
@@ -878,7 +888,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			{	//For each tremolo in the track
 				sectionptr = eof_get_tremolo(sp, j, i);
 				if(sectionptr->difficulty == 0xFF)
-				{	//If the tremolo section applies to all difficulties
+				{	//Only export a tremolo section to MIDI if it applies to all difficulties
 					deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,timedivision,1);	//Store the tick position of the phrase
 					deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,timedivision,0) - deltapos;	//Store the number of delta ticks representing the phrase's length
 					if(deltalength < 1)
@@ -1370,7 +1380,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						if(tempstring != NULL)
 						{	//If allocation was successful
 							memcpy(tempstring, chordname, (size_t)ustrsizez(chordname));	//Copy the string to the newly allocated memory
-							eof_add_midi_text_event(deltapos, tempstring, 1);			//Store the new string in a text event, send 1 for the allocation flag, because the text string is being stored in dynamic memory
+							eof_add_midi_text_event(deltapos, tempstring, 1, 0xFFFFFFFF);	//Store the new string in a text event, send 1 for the allocation flag, because the text string is being stored in dynamic memory (provide a high index to ensure it doesn't influence sort order)
 						}
 					}
 				}
@@ -1665,14 +1675,17 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			for(i = 0; i < eof_get_num_tremolos(sp, j); i++)
 			{	//For each tremolo in the track
 				sectionptr = eof_get_tremolo(sp, j, i);
-				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,timedivision,1);	//Store the tick position of the phrase
-				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,timedivision,0) - deltapos;	//Store the number of delta ticks representing the phrase's length
-				if(deltalength < 1)
-				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
-					deltalength = 1;
+				if(sectionptr->difficulty == 0xFF)
+				{	//Only export a tremolo section to MIDI if it applies to all difficulties
+					deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,timedivision,1);	//Store the tick position of the phrase
+					deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,timedivision,0) - deltapos;	//Store the number of delta ticks representing the phrase's length
+					if(deltalength < 1)
+					{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+						deltalength = 1;
+					}
+					eof_add_midi_event(deltapos, 0x90, 126, vel, 0);	//Note 126 denotes a tremolo marker
+					eof_add_midi_event(deltapos + deltalength, 0x80, 126, vel, 0);
 				}
-				eof_add_midi_event(deltapos, 0x90, 126, vel, 0);	//Note 126 denotes a tremolo marker
-				eof_add_midi_event(deltapos + deltalength, 0x80, 126, vel, 0);
 			}
 
 			/* fill in trills */

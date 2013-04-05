@@ -120,8 +120,14 @@ int eof_song_resize_text_events(EOF_SONG * sp, unsigned long events)
 
 void eof_sort_events(EOF_SONG * sp)
 {
+	unsigned long ctr;
+
  	eof_log("eof_sort_events() entered", 1);
 
+	for(ctr = 0; ctr < sp->text_events; ctr++)
+	{	//For each text event in the project
+		sp->text_event[ctr]->index = ctr;	//Store the native index into the event to prevent qsort() from corrupting the order of events that otherwise have matching sort criteria
+	}
 	if(sp)
 	{
 		qsort(sp->text_event, (size_t)sp->text_events, sizeof(EOF_TEXT_EVENT *), eof_song_qsort_events);
@@ -139,7 +145,10 @@ int eof_song_qsort_events(const void * e1, const void * e2)
 	}
 	else if((*thing1)->beat == (*thing2)->beat)
 	{
-		return 0;
+		if((*thing1)->index < ((*thing2)->index))
+			return -1;	//If the first event's index is lower, it will sort earlier
+		else
+			return 1;
 	}
 	else
 	{

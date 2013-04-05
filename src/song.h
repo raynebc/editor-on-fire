@@ -188,7 +188,7 @@ typedef struct
 	unsigned long end_pos;	//Will store other data in items that don't use an end position (such as the fret number for fret hand positions)
 	unsigned long flags;
 	char name[EOF_SECTION_NAME_LENGTH+1];
-	unsigned char difficulty;	//The difficulty this phrase applies to (ie. arpeggios, hand positions), or 0xFF if it otherwise applies to all difficulties
+	unsigned char difficulty;	//The difficulty this phrase applies to (ie. arpeggios, hand positions, RS tremolos), or 0xFF if it otherwise applies to all difficulties
 
 } EOF_PHRASE_SECTION;
 
@@ -422,6 +422,7 @@ typedef struct
 	unsigned long track;	//The track this event is tied to, or 0 if it goes into the EVENTS track (such as a generic section marker)
 	char is_temporary;		//This is nonzero if the event is considered temporary (doesn't trigger undo/redo when added/deleted), required RBN events are added this way during save
 	unsigned char flags;
+	unsigned long index;	//Populated with the event's index in eof_sort_events(), since the quicksort algorithm can and will re-order list items that have equivalent sorting order
 
 } EOF_TEXT_EVENT;
 
@@ -575,7 +576,7 @@ void eof_track_delete_slider(EOF_SONG *sp, unsigned long track, unsigned long in
 unsigned long eof_get_num_lyric_sections(EOF_SONG *sp, unsigned long track);	//Returns the number of lyric sections in the specified track, or 0 on error
 EOF_PHRASE_SECTION *eof_get_lyric_section(EOF_SONG *sp, unsigned long track, unsigned long sectionnum);	//Returns a pointer to the specified lyric section, or NULL on error
 void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourcenote, unsigned long desttrack, unsigned long pos, long length, char type);
-	//Copies the specified note to the specified track, returning a pointer to the newly created note structure, or NULL on error
+	//Copies the specified note to the specified track as a new note, returning a pointer to the newly created note structure, or NULL on error
 	//The specified position, length and type are applied to the new note.  Other note variables such as the bitmask/pitch and name/lyric text are copied as-is
 	//If the source is a pro guitar track and the destination is not, the source note's legacy bitmask is used if defined
 	//If the source and destination are both pro guitar tracks, the source note's fret array, finger array, ghost bitmask, legacy bitmask, bend strength and slide end position are copied
@@ -638,7 +639,7 @@ int eof_detect_string_gem_conflicts(EOF_PRO_GUITAR_TRACK *tp, unsigned long newn
 	//0 is returned if there are no conflicts
 	//-1 is returned on error
 unsigned long eof_get_pro_guitar_note_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);		//Returns the note bitflag of the specified pro guitar note, or 0 on error
-void eof_pro_guitar_track_sort_fret_hand_positions(EOF_PRO_GUITAR_TRACK* tp);	//Sorts the specified tracks fret hand positions
+void eof_pro_guitar_track_sort_fret_hand_positions(EOF_PRO_GUITAR_TRACK* tp);	//Sorts the specified tracks fret hand positions by difficulty and then by timestamp
 void eof_pro_guitar_track_delete_hand_position(EOF_PRO_GUITAR_TRACK *tp, unsigned long index);	//Deletes the specified fret hand position
 
 void eof_sort_notes(EOF_SONG *sp);	//Sorts the notes in all tracks
@@ -749,5 +750,11 @@ void eof_truncate_chart(EOF_SONG *sp);
 int eof_check_if_notes_exist_beyond_audio_end(EOF_SONG *sp);
 	//Checks whether any notes/lyrics in the chart extend beyond the end of the chart audio
 	//If so, the first offending track number is returned.  Otherwise, or if no audio is loaded, zero is returned.
+
+void eof_flatten_difficulties(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long threshold);
+	//Builds a cumulative set of notes in the specified track that exist at or below the specified track difficulty, placing them in difficulty #diff
+	//The set is built by using the highest difficulty note at each position (notes within the threshold number of milliseconds are considered to be in the same position)
+	//The input track is expected to be authored in the style of Rocksmith, where notes in one difficulty replace or add to the notes in the lower difficulty
+	//The resulting notes are suitable for a flat difficulty system (like that used in Guitar Hero or Rock Band)
 
 #endif

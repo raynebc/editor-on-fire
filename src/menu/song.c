@@ -181,6 +181,7 @@ MENU eof_song_rocksmith_menu[] =
     {"Insert new difficulty", eof_song_proguitar_insert_difficulty, NULL, 0, NULL},
     {"Delete active difficulty", eof_song_proguitar_delete_difficulty, NULL, 0, NULL},
     {"&Manage RS phrases\t" CTRL_NAME "+Shift+M", eof_manage_rs_phrases, NULL, 0, NULL},
+    {"Flatten this difficulty", eof_song_flatten_difficulties, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -4117,6 +4118,7 @@ int eof_song_proguitar_toggle_difficulty_limit(void)
 		}
 	}
 	eof_fix_window_title();
+	eof_determine_phrase_status(eof_song, eof_selected_track);	//Update note flags because tremolo phrases behave different depending on the difficulty numbering in effect
 	return 1;
 }
 
@@ -4476,6 +4478,7 @@ void eof_rebuild_manage_rs_phrases_strings(void)
 	unsigned long startpos = 0, endpos = 0;		//Track the start and end position of the each instance of the phrase
 	unsigned char maxdiff;
 	char *currentphrase = NULL;
+	char started = 0;
 
 	//Count the number of phrases in the active track
 	eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
@@ -4495,10 +4498,11 @@ void eof_rebuild_manage_rs_phrases_strings(void)
 	}
 	for(ctr = 0, index = 0; ctr < eof_song->beats; ctr++)
 	{	//For each beat in the chart
-		if((eof_song->beat[ctr]->contained_section_event >= 0) || ((ctr + 1 >= eof_song->beats) && (startpos > endpos)))
+		if((eof_song->beat[ctr]->contained_section_event >= 0) || ((ctr + 1 >= eof_song->beats) && started))
 		{	//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
 			if(currentphrase)
 			{	//If another phrase has been read
+				started = 0;
 				endpos = eof_song->beat[ctr]->pos - 1;	//Track this as the end position of the previous phrase marker
 				maxdiff = eof_find_fully_leveled_rs_difficulty_in_time_range(eof_song, eof_selected_track, startpos, endpos, 1);	//Find the maxdifficulty value for this phrase instance, converted to relative numbering
 				stringlen = (size_t)snprintf(NULL, 0, "%s : maxDifficulty = %u", currentphrase, maxdiff) + 1;	//Find the number of characters needed to snprintf this string
@@ -4517,6 +4521,7 @@ void eof_rebuild_manage_rs_phrases_strings(void)
 				(void) snprintf(eof_manage_rs_phrases_strings[index], stringlen, "%s : maxDifficulty = %u", currentphrase, maxdiff);
 				index++;
 			}
+			started = 1;
 			startpos = eof_song->beat[ctr]->pos;	//Track the starting position of the phrase
 			currentphrase = eof_song->text_event[eof_song->beat[ctr]->contained_section_event]->text;	//Track which phrase is being examined
 		}
@@ -4610,6 +4615,7 @@ int eof_manage_rs_phrases_add_or_remove_level(int function)
 	EOF_PRO_GUITAR_TRACK *tp;
 	EOF_PHRASE_SECTION *ptr;
 	char prompt = 0;
+	char started = 0;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return D_O_K;
@@ -4660,10 +4666,11 @@ int eof_manage_rs_phrases_add_or_remove_level(int function)
 	startpos = endpos = 0;	//Reset these to indicate that a phrase is being looked for
 	for(; ctr < eof_song->beats; ctr++)
 	{	//For each beat in the chart (starting from the one ctr is referring to)
-		if((eof_song->beat[ctr]->contained_section_event >= 0) || ((ctr + 1 >= eof_song->beats) && (startpos > endpos)))
+		if((eof_song->beat[ctr]->contained_section_event >= 0) || ((ctr + 1 >= eof_song->beats) && started))
 		{	//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
-			if(startpos != endpos)
+			if(started)
 			{	//If this beat marks the end of a phrase instance that needs to be modified
+				started = 0;
 				endpos = eof_song->beat[ctr]->pos - 1;	//Track this as the end position of the previous phrase marker
 
 				//Increment the difficulty level of all notes and phrases that fall within the phrase that are in the active difficulty or higher
@@ -4738,7 +4745,7 @@ int eof_manage_rs_phrases_add_or_remove_level(int function)
 					}
 				}//For each note in the track (in reverse order)
 
-				//Update arpeggios and fret hand positions
+				//Update arpeggios
 				tracknum = eof_song->track[eof_selected_track]->tracknum;
 				tp = eof_song->pro_guitar_track[tracknum];
 				for(ctr2 = eof_get_num_arpeggios(eof_song, eof_selected_track); ctr2 > 0; ctr2--)
@@ -4770,6 +4777,7 @@ int eof_manage_rs_phrases_add_or_remove_level(int function)
 						}
 					}
 				}
+				//Update fret hand positions
 				for(ctr2 = tp->handpositions; ctr2 > 0; ctr2--)
 				{	//For each fret hand position in the track (in reverse order)
 					ptr = &tp->handposition[ctr2 - 1];	//Simplify
@@ -4799,6 +4807,40 @@ int eof_manage_rs_phrases_add_or_remove_level(int function)
 						}
 					}
 				}
+				//Update tremolos
+				for(ctr2 = eof_get_num_tremolos(eof_song, eof_selected_track); ctr2 > 0; ctr2--)
+				{	//For each tremolo section in the track (in reverse order)
+					ptr = &eof_song->pro_guitar_track[tracknum]->tremolo[ctr2 - 1];	//Simplify
+					if((ptr->difficulty >= eof_note_type) && (ptr->start_pos <= endpos) && (ptr->end_pos >= startpos))
+					{	//If this tremolo overlaps at all with the phrase being manipulated and is in a difficulty level that this function affects
+						if(ptr->difficulty == 0xFF)
+						{	//If this tremolo is not difficulty specific
+							continue;	//Don't manipulate it in this function
+						}
+						if(ptr->difficulty == eof_note_type)
+						{	//If this tremolo is in the active difficulty
+							if(function < 0)
+							{	//If the delete level function is being performed, this tremolo will be deleted
+								eof_track_delete_tremolo(eof_song, eof_selected_track, ctr2 - 1);
+							}
+							else
+							{	//The add level function is being performed, this tremolo will be duplicated into the next higher difficulty instead of just having its difficulty incremented
+								(void) eof_track_add_section(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, eof_note_type + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
+							}
+						}
+						else
+						{
+							if(function < 0)
+							{	//If the delete level function is being performed, this tremolo will have its difficulty decremented
+								ptr->difficulty--;	//Decrement the tremolo's difficulty
+							}
+							else
+							{	//The add level function is being performed, this tremolo will have its difficulty incremented
+								ptr->difficulty++;	//Increment the tremolo's difficulty
+							}
+						}
+					}
+				}
 
 				if(!instancectr)
 				{	//If only the selected phrase instance was to be modified
@@ -4810,7 +4852,8 @@ int eof_manage_rs_phrases_add_or_remove_level(int function)
 			if(eof_song->beat[ctr]->contained_section_event >= 0)
 			{	//If this beat has a phrase assigned to it
 				if(!ustrcmp(eof_song->text_event[eof_song->beat[ctr]->contained_section_event]->text, phrasename))
-				{	//If the section event matched the one that was selected
+				{	//If the phrase matched the one that was selected to be leveled up
+					started = 1;
 					startpos = eof_song->beat[ctr]->pos;	//Track the starting position of the phrase
 				}
 			}
@@ -4827,6 +4870,7 @@ int eof_manage_rs_phrases_add_or_remove_level(int function)
 		eof_pro_guitar_track_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Sort the positions, since they must be in order for displaying to the user
 		eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//Remove the difficulty limit for this track
 		eof_song->track[eof_selected_track]->numdiffs = eof_detect_difficulties(eof_song, eof_selected_track);	//Update the number of difficulties used in this track
+		eof_determine_phrase_status(eof_song, eof_selected_track);	//Update note flags, since notes in a new level may no longer be within tremolos
 	}
 
 	eof_render();
@@ -5073,7 +5117,7 @@ int eof_song_qsort_popup_messages(const void * e1, const void * e2)
 
 void eof_pro_guitar_track_sort_popup_messages(EOF_PRO_GUITAR_TRACK* tp)
 {
- 	eof_log("eof_pro_guitar_track_sort_fret_hand_positions() entered", 1);
+ 	eof_log("eof_pro_guitar_track_sort_popup_messages() entered", 1);
 
 	if(tp)
 	{
@@ -5084,7 +5128,7 @@ void eof_pro_guitar_track_sort_popup_messages(EOF_PRO_GUITAR_TRACK* tp)
 void eof_pro_guitar_track_delete_popup_message(EOF_PRO_GUITAR_TRACK *tp, unsigned long index)
 {
 	unsigned long ctr;
- 	eof_log("eof_pro_guitar_track_delete_hand_position() entered", 1);
+ 	eof_log("eof_pro_guitar_track_delete_popup_message() entered", 1);
 
 	if(tp && (index < tp->popupmessages))
 	{
@@ -5339,6 +5383,42 @@ int eof_song_proguitar_toggle_ignore_tuning(void)
 		tp->ignore_tuning = 1;
 	}
 	eof_chord_lookup_note = 0;	//Reset the cached chord lookup count
+
+	return 1;
+}
+
+char eof_song_flatten_difficulties_threshold[10] = "2";
+DIALOG eof_song_flatten_difficulties_dialog[] =
+{
+   /* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
+   { d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Merge notes that are within", NULL, NULL },
+   { d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "This # of ms:",NULL, NULL },
+   { eof_verified_edit_proc,12,  56,  90,  20,  0,   0,   0,    0,      7,   0,   eof_song_flatten_difficulties_threshold,     "0123456789",  NULL },
+   { d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                         NULL, NULL },
+   { d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                     NULL, NULL },
+   { NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                         NULL, NULL }
+};
+
+int eof_song_flatten_difficulties(void)
+{
+	unsigned long threshold;
+
+	if(!eof_song || !eof_song_loaded)
+		return 1;
+
+	eof_cursor_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_song_flatten_difficulties_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_song_flatten_difficulties_dialog);
+
+	if(eof_popup_dialog(eof_song_flatten_difficulties_dialog, 2) == 3)	//User hit OK
+	{
+		if(eof_song_flatten_difficulties_threshold[0] != '\0')
+		{	//If a threshold was specified
+			threshold = atol(eof_song_flatten_difficulties_threshold);
+			eof_flatten_difficulties(eof_song, eof_selected_track, eof_note_type, threshold);
+		}
+	}
 
 	return 1;
 }

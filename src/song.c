@@ -8,8 +8,9 @@
 #include "legacy.h"
 #include "midi_data_import.h"
 #include "mix.h"
-#include "undo.h"
+#include "rs.h"			//For eof_pro_guitar_track_find_effective_fret_hand_position_definition()
 #include "tuning.h"
+#include "undo.h"
 #include "utility.h"
 #include "menu/edit.h"
 #include "menu/file.h"
@@ -3755,7 +3756,7 @@ void eof_pro_guitar_track_sort_fret_hand_positions(EOF_PRO_GUITAR_TRACK* tp)
 void eof_pro_guitar_track_delete_hand_position(EOF_PRO_GUITAR_TRACK *tp, unsigned long index)
 {
 	unsigned long ctr;
- 	eof_log("eof_pro_guitar_track_delete_hand_position() entered", 1);
+ 	eof_log("eof_pro_guitar_track_delete_hand_position() entered", 2);
 
 	if(tp && (index < tp->handpositions))
 	{
@@ -5838,3 +5839,90 @@ int eof_check_if_notes_exist_beyond_audio_end(EOF_SONG *sp)
 	return 0;
 }
 
+void eof_flatten_difficulties(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long threshold)
+{
+	unsigned long ctr, notecount, poscount, targetnote, targetpos;
+	long targetlength;
+	char undo_made = 0;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return;	//Invalid parameters
+
+	//Flatten notes
+	eof_track_sort_notes(sp, track);		//This logic relies on notes being sorted by time and then by difficulty
+	notecount = eof_get_track_size(sp, track);	//Cache this value, since any new notes will be appended to the track
+	ctr = 0;
+	while(ctr < notecount)
+	{	//For each pre-existing note in the track
+		if(eof_get_note_type(sp, track, ctr) <=  diff)
+		{	//If this note is at or below the target difficulty
+			targetnote = ctr;	//Track which note is to be copied to the target difficulty
+			targetpos = eof_get_note_pos(sp, track, ctr);	//Track this note's position
+			targetlength = eof_get_note_length(sp, track, ctr);	//This this note's length
+			for(; ctr < notecount; ctr++)
+			{	//For each of the remaining pre-existing notes in the track
+				if(eof_get_note_pos(sp, track, ctr) <= targetpos + threshold)
+				{	//If this note is within 2ms of the note to be copied to the target difficulty
+					targetnote = ctr;	//This note is higher in difficulty and is a more suitable note to copy to the target difficulty
+					targetlength = eof_get_note_length(sp, track, ctr);
+				}
+				else
+				{	//This note is too far away, consider it a different note
+					break;
+				}
+			}
+			if(eof_get_note_type(sp, track, targetnote) != diff)
+			{	//If the candidate note to be copied to the target difficulty isn't already the note in the target difficulty
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				eof_copy_note(sp, track, targetnote, track, targetpos, targetlength, diff);	//Copy the note to the target difficulty
+			}
+		}
+	}
+	eof_track_sort_notes(sp, track);
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);
+
+	//Flatten fret hand positions
+	if(sp->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If this is a pro guitar/bass track
+		EOF_PRO_GUITAR_TRACK *tp;
+		EOF_PHRASE_SECTION *ptr;
+		unsigned long tracknum = sp->track[eof_selected_track]->tracknum;
+
+		tp = sp->pro_guitar_track[tracknum];
+		poscount = tp->handpositions;
+		for(ctr = 0; ctr < poscount; ctr++)
+		{	//For each pre-existing fret hand position in the track
+			if(tp->handposition[ctr].difficulty <= diff)
+			{	//If this hand position is at or below the target difficulty
+				ptr = eof_pro_guitar_track_find_effective_fret_hand_position_definition(tp, diff, tp->handposition[ctr].start_pos, NULL, NULL, 1);
+				if(ptr)
+				{	//If there is already a fret hand position at this position in the target difficulty
+					ptr->end_pos = tp->handposition[ctr].end_pos;	//Update the existing fret hand position entry
+				}
+				else
+				{	//Otherwise add the fret hand to the target difficulty
+					(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, diff, tp->handposition[ctr].start_pos, tp->handposition[ctr].end_pos, 0, NULL);
+					eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions
+				}
+			}
+		}
+		//Remove consecutive hand positions using the same fret number
+		for(ctr = tp->handpositions; ctr > 0; ctr--)
+		{	//For each fret hand position, in reverse order
+			if(ctr > 1)
+			{	//If there's a fret hand position before this one
+				if(tp->handposition[ctr - 2].difficulty == tp->handposition[ctr - 1].difficulty)
+				{	//And it's in the same difficulty
+					if(tp->handposition[ctr - 2].end_pos == tp->handposition[ctr - 1].end_pos)
+					{	//And has the same fret number
+						eof_pro_guitar_track_delete_hand_position(tp, ctr - 1);	//Delete this fret hand position and keep the earlier one
+					}
+				}
+			}
+		}
+	}
+}

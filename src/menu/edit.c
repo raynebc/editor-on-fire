@@ -2312,7 +2312,7 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 	unsigned long pos;
 	long length;
 	EOF_PHRASE_SECTION *ptr;
-	char has_arpeggios = 0, has_handpositions = 0;
+	char has_arpeggios = 0, has_handpositions = 0, has_tremolos = 0;
 
 	if(!undo_made || (eof_note_type == source_difficulty))
 		return 1;	//Invalid parameters
@@ -2357,7 +2357,7 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 		EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 
 		if(eof_get_num_arpeggios(eof_song, eof_selected_track))
-		{	//If this track has at least one arpeggio section, delete them and offer to copy the arpeggio sections from the source difficulty
+		{	//If this track has at least one arpeggio section, delete them from the destination difficulty and offer to copy the arpeggio sections from the source difficulty
 			for(i = eof_get_num_arpeggios(eof_song, eof_selected_track); i > 0; i--)
 			{	//For each arpeggio phrase in the source track, in reverse order
 				ptr = eof_get_arpeggio(eof_song, eof_selected_track, i - 1);
@@ -2413,7 +2413,41 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 		eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions, since they must be in order for displaying to the user
 	}//If this is a pro guitar track
 
+	if(eof_get_num_tremolos(eof_song, eof_selected_track))
+	{	//If this track has at least one tremolo section, delete them and offer to copy the arpeggio sections from the source difficulty
+		for(i = eof_get_num_tremolos(eof_song, eof_selected_track); i > 0; i--)
+		{	//For each tremolo phrase in the source track, in reverse order
+			ptr = eof_get_tremolo(eof_song, eof_selected_track, i - 1);
+			if(ptr)
+			{	//If this phrase could be found
+				if(ptr->difficulty == source_difficulty)
+				{	//If this is a tremolo section defined in the source difficulty
+					has_tremolos = 1;
+				}
+				else if(ptr->difficulty == eof_note_type)
+				{	//If this is a tremolo section defined in the destination difficulty
+					eof_track_delete_tremolo(eof_song, eof_selected_track, i - 1);	//Delete it
+				}
+			}
+		}
+	}
+	if(has_tremolos && (alert(NULL, "Would you like to also copy the difficulty-specific tremolo sections?", NULL, "&Yes", "&No", 'y', 'n') == 1))
+	{	//If there are any tremolo sections in the difficulty being copied, and the user opts to copy them to the active difficulty
+		for(i = 0; i < eof_get_num_tremolos(eof_song, eof_selected_track); i++)
+		{	//For each tremolo phrase in the source track
+			ptr = eof_get_tremolo(eof_song, eof_selected_track, i);
+			if(ptr)
+			{	//If this phrase could be found
+				if(ptr->difficulty == source_difficulty)
+				{	//If this is a tremolo section defined in the source difficulty
+					(void) eof_track_add_section(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, eof_note_type, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the active difficulty
+				}
+			}
+		}
+	}
+
 	eof_track_sort_notes(eof_song, eof_selected_track);
+	eof_determine_phrase_status(eof_song, eof_selected_track);	//Update note flags, since pasted notes may no longer be within tremolos
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);
 	return 1;
 }

@@ -21,10 +21,11 @@ typedef struct
 	int velocity;
 	int channel;
 	char * dp;
-	char allocation;	//This tracks whether dp points to allocated that should be freed after it is written to file
-	char filtered;		//This is set to nonzero if the event should be dropped instead of being written to MIDI
-	char on;			//Simplifies the use of running status by indicating if this is a note on event
-	char off;			//Simplifies the use of running status by indicating if this is a note off event
+	char allocation;		//This tracks whether dp points to allocated that should be freed after it is written to file
+	char filtered;			//This is set to nonzero if the event should be dropped instead of being written to MIDI
+	char on;				//Simplifies the use of running status by indicating if this is a note on event
+	char off;				//Simplifies the use of running status by indicating if this is a note off event
+	unsigned long index;	//For text events, a tie in the sorting order will be broken by whichever has the lower index number
 } EOF_MIDI_EVENT;
 
 
@@ -149,8 +150,9 @@ void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int
 	//Note on/off events are also tracked in the eof_midi_note_status[] array
 void eof_add_midi_lyric_event(unsigned long pos, char * text);
 	//Creates a new structure to store the specified lyric event and appends it to eof_midi_event[]
-void eof_add_midi_text_event(unsigned long pos, char * text, char allocation);
+void eof_add_midi_text_event(unsigned long pos, char * text, char allocation, unsigned long index);
 	//Creates a new structure to store the specified text event and appends it to eof_midi_event[]
+	//The index parameter should be the event's index in the project, as it is used to resolve ties in MIDI event sorting
 	//The allocation boolean value specifies whether the string is using dynamically allocated memory and should be freed when the array is emptied
 void eof_clear_midi_events(void);
 	//Frees the memory for all structures in eof_midi_event[], including any dynamically allocated strings
