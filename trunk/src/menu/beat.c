@@ -131,10 +131,12 @@ DIALOG eof_all_events_dialog[] =
 };
 
 char eof_events_add_dialog_string[100] = {0};
+char eof_events_add_dialog_string1[] = "Add event";
+char eof_events_add_dialog_string2[] = "Edit event";
 DIALOG eof_events_add_dialog[] =
 {
    /* (proc)            (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,0,  48,  314, 186, 2,   23,  0,    0,      0,   0,   "Event Name",  NULL, NULL },
+   { d_agup_window_proc,0,  48,  314, 186, 2,   23,  0,    0,      0,   0,   eof_events_add_dialog_string1,  NULL, NULL },
    { d_agup_text_proc,  12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",       NULL, NULL },
    { d_agup_edit_proc,  48, 80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,     NULL, NULL },
    { d_agup_check_proc, 12, 110, 250, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string, NULL, NULL },
@@ -188,10 +190,12 @@ DIALOG eof_place_trainer_dialog[] =
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
+char eof_rocksmith_section_dialog_string1[] = "Add Rocksmith section";
+char eof_rocksmith_section_dialog_string2[] = "Edit Rocksmith section";
 DIALOG eof_rocksmith_section_dialog[] =
 {
    /* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                     (dp2) (dp3) */
-   { d_agup_window_proc, 0,   0,   290, 450, 2,   23,  0,    0,      0,   0,   "Add Rocksmith section", NULL, NULL },
+   { d_agup_window_proc, 0,   0,   290, 450, 2,   23,  0,    0,      0,   0,   eof_rocksmith_section_dialog_string1, NULL, NULL },
    { d_agup_list_proc,   12,  35,  260, 320, 2,   23,  0,    0,      0,   0,   (void *)eof_rs_section_add_list, NULL, NULL },
    { d_agup_check_proc,  12,  364, 164, 16,  0,   0,   0,    0,      1,   0,   "Also add as RS phrase",  NULL, NULL },
    { d_agup_check_proc,  12,  384, 250, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string,  NULL, NULL },
@@ -1445,6 +1449,11 @@ void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *
 	{	//If a new event is to be added
 		ptr = &temp;
 		ptr->flags = flags;
+		eof_events_add_dialog[0].dp = eof_events_add_dialog_string1;	//Update the dialog window title to reflect that a new event is being added
+	}
+	else
+	{	//An existing event is being edited
+		eof_events_add_dialog[0].dp = eof_events_add_dialog_string2;	//Update the dialog window title to reflect that an event is being edited
 	}
 
 	if(!undo_made)
@@ -2230,6 +2239,11 @@ int eof_rocksmith_section_dialog_add(void)
 		{
 			eof_rocksmith_section_dialog[2].flags = 0;	//Otherwise clear it
 		}
+		eof_rocksmith_section_dialog[0].dp = eof_rocksmith_section_dialog_string2;	//Update the dialog window title to reflect that a section is being edited
+	}
+	else
+	{	//Otherwise update the dialog window title to reflect that a new section is being added
+		eof_rocksmith_section_dialog[0].dp = eof_rocksmith_section_dialog_string1;
 	}
 
 	if(eof_popup_dialog(eof_rocksmith_section_dialog, 0) == 4)

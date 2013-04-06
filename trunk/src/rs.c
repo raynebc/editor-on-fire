@@ -312,6 +312,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	int scale, chord, isslash, bassnote;	//Used for power chord detection
 	int standard_tuning = 0, non_standard_chords = 0, barre_chords = 0, power_chords = 0, notenum, dropd_tuning = 1, dropd_power_chords = 0, open_chords = 0, double_stops = 0, palm_mutes = 0, harmonics = 0, hopo = 0, tremolo = 0, slides = 0, bends = 0, tapping = 0, vibrato = 0, slappop = 0, octaves = 0, fifths_and_octaves = 0;	//Used for technique detection
 	char is_bass = 0;	//Is set to nonzero if the specified track is to be considered a bass guitar track
+	char end_phrase_found = 0;	//Will track if there was a manually defined END phrase
 
 	eof_log("eof_export_rocksmith() entered", 1);
 
@@ -614,7 +615,27 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		eof_log("\t! Adding missing COUNT phrase", 1);
 		(void) eof_song_add_text_event(sp, 0, "COUNT", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it as a temporary event at the first beat
 	}
-	if(!eof_song_contains_event(sp, "END", 0, EOF_EVENT_FLAG_RS_PHRASE))
+	for(ctr = 0; ctr < sp->beats; ctr++)
+	{	//For each beat
+		if((sp->beat[ctr]->contained_section_event >= 0) && !strcmpi(sp->text_event[sp->beat[ctr]->contained_section_event]->text, "END"))
+		{	//If this beat contains an "END" RS phrase
+			for(ctr2 = ctr + 1; ctr2 < sp->beats; ctr2++)
+			{	//For each remaining beat
+				if((sp->beat[ctr2]->contained_section_event >= 0) || (sp->beat[ctr2]->contained_rs_section_event >= 0))
+				{	//If the beat contains an RS phrase or RS section
+					eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
+					eof_set_seek_position(sp->beat[ctr]->pos + eof_av_delay);	//Seek to the beat containing the offending END phrase
+					eof_selected_beat = ctr;		//Select it
+					eof_render();					//Redraw the screen
+					allegro_message("Warning:  Beat #%lu contains an END phrase, but there's at least one more phrase or section after it.\nThis will cause dynamic difficulty and/or riff repeater to not work correctly.", ctr);
+					break;
+				}
+			}
+			end_phrase_found = 1;
+			break;
+		}
+	}
+	if(!end_phrase_found)
 	{	//If the user did not define a END phrase
 		if(sp->beat[endbeat]->contained_section_event >= 0)
 		{	//If there is already a phrase defined on the beat following the last note
@@ -1619,8 +1640,11 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 					{	//If the position for this note was not written yet
 						current_low = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Initialize the low fret used for this note
 						current_note = tp->note[ctr];	//Store this note's address
-						(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, current_note->pos, current_low, 0, NULL);	//Add the fret hand position for this forced position change
-						last_anchor = current_low;
+						if(current_low != last_anchor)
+						{	//As long as the hand position being written is different from the previous one
+							(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, current_note->pos, current_low, 0, NULL);	//Add the fret hand position for this forced position change
+							last_anchor = current_low;
+						}
 					}
 					current_note = NULL;	//This note's position will not receive another hand position, the next loop iteration will look for any necessary position changes starting with the next note's location
 				}
