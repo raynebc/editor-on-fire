@@ -3715,10 +3715,12 @@ int eof_menu_song_catalog_edit(void)
 	return 1;
 }
 
+char eof_pro_guitar_set_fret_hand_position_dialog_string1[] = "Set fret hand position";
+char eof_pro_guitar_set_fret_hand_position_dialog_string2[] = "Edit fret hand position";
 DIALOG eof_pro_guitar_set_fret_hand_position_dialog[] =
 {
    /* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
-   { d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Set fret hand position",      NULL, NULL },
+   { d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   eof_pro_guitar_set_fret_hand_position_dialog_string1,      NULL, NULL },
    { d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "At fret #",                NULL, NULL },
    { eof_verified_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      2,   0,   eof_etext,     "0123456789", NULL },
    { d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",               NULL, NULL },
@@ -3730,7 +3732,7 @@ int eof_pro_guitar_set_fret_hand_position(void)
 {
 	unsigned long position, tracknum;
 	EOF_PHRASE_SECTION *ptr = NULL;	//If the seek position has a fret hand position defined, this will reference it
-	unsigned long index = 0;	//Will store the index number of the existing fret hand position being edited
+	unsigned long index;			//Will store the index number of the existing fret hand position being edited
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
@@ -3743,13 +3745,15 @@ int eof_pro_guitar_set_fret_hand_position(void)
 
 	//Find the pointer to the fret hand position at the current seek position in this difficulty, if there is one
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	ptr = eof_pro_guitar_track_find_effective_fret_hand_position_definition(eof_song->pro_guitar_track[tracknum], eof_note_type, eof_music_pos - eof_av_delay, NULL, NULL, 1);
+	ptr = eof_pro_guitar_track_find_effective_fret_hand_position_definition(eof_song->pro_guitar_track[tracknum], eof_note_type, eof_music_pos - eof_av_delay, &index, NULL, 1);
 	if(ptr)
 	{	//If an existing fret hand position is to be edited
 		snprintf(eof_etext, 5, "%lu", ptr->end_pos);	//Populate the input box with it
+		eof_pro_guitar_set_fret_hand_position_dialog[0].dp = eof_pro_guitar_set_fret_hand_position_dialog_string2;	//Update the dialog window title to reflect that a hand position is being edited
 	}
 	else
 	{
+		eof_pro_guitar_set_fret_hand_position_dialog[0].dp = eof_pro_guitar_set_fret_hand_position_dialog_string1;	//Update the dialog window title to reflect that a new hand position is being added
 		eof_etext[0] = '\0';	//Empty this string
 	}
 	if(eof_popup_dialog(eof_pro_guitar_set_fret_hand_position_dialog, 2) == 3)

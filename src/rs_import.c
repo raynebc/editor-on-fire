@@ -489,6 +489,10 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 				{	//Until there was an error reading from the file or end of file is reached
 					if(strcasestr_spec(buffer, "</ebeats"))
 					{	//If this is the end of the ebeats tag
+						for(ctr = eof_song->beats; ctr > beat_count; ctr--)
+						{	//For each of the remaining beats in the project (which weren't initialized), in reverse order
+							eof_song_delete_beat(eof_song, ctr - 1);	//Delete it.  eof_truncate_chart() will be run by the calling function to add beats as necessary
+						}
 						break;	//Break from loop
 					}
 					if(!parse_xml_rs_timestamp("time", buffer, &output))
@@ -1153,9 +1157,9 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 					count++;	//Increment counter
 				}
 			}
-			if((count > 1) && !(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP))
+			if((count > 1) && !(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM))
 			{	//If this note is a chord that isn't already marked to strum upward
-				tp->note[ctr]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//Mark it to strum downward
+				tp->note[ctr]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;	//Mark it to strum downward
 			}
 		}
 	}
