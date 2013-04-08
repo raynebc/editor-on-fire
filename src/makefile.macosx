@@ -11,7 +11,11 @@ all : $(BUNDLE).app
 
 $(BUNDLE).app : ../bin/$(EXENAME)
 	@rm -rf -f $(BUNDLE).app
-	@fixbundle ../bin/$(EXENAME) -o $(BUNDLE) icon.tga
+	@mkdir $(BUNDLE).app
+	@mkdir $(BUNDLE).app/Contents
+	@mkdir $(BUNDLE).app/Contents/MacOS
+	@mkdir $(BUNDLE).app/Contents/Resources
+	@cp ../bin/$(EXENAME) $(BUNDLE).app/Contents/MacOS
 	@cp EOF.icns $(BUNDLE).app/Contents/Resources
 	@mkdir $(BUNDLE).app/Contents/Resources/eof
 	@mkdir $(BUNDLE).app/Contents/Resources/eof/AVDelay
@@ -32,6 +36,8 @@ $(BUNDLE).app : ../bin/$(EXENAME)
 	@cp ../bin/manual/*.* $(BUNDLE).app/Contents/Resources/eof/manual
 	@cp ../bin/tutorial/*.* $(BUNDLE).app/Contents/Resources/eof/tutorial
 	@cp ../bin/vocaltutorial/*.* $(BUNDLE).app/Contents/Resources/eof/vocaltutorial
+	@cp ../Info.plist $(BUNDLE).app/Contents
+	@cp ../PkgInfo $(BUNDLE).app/Contents
 	@echo Application bundle created!
 
 ../bin/$(EXENAME) : $(MENUOFILES) $(OFILES) $(AGUPOFILES) $(ALOGGOFILES) $(LCOFILES)
