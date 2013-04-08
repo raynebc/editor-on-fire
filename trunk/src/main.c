@@ -3626,10 +3626,10 @@ int eof_initialize(int argc, char * argv[])
 			allegro_message("MP3 support disabled.\n\nPlease install LAME and Vorbis Tools if you want MP3 support.");
 		}
 	#elif defined(ALLEGRO_MACOSX)
-		if((eof_system("./lame -S check.wav >foo") == 0) && (eof_system("./oggenc -h >foo") == 0))
+		if((eof_system("lame -S check.wav >foo") == 0) && (eof_system("oggenc -h >foo") == 0))
 		{
 			eof_supports_mp3 = 1;
-			(void) delete_file("check.wav.mp3");
+			(void) delete_file("check.mp3");
 			(void) delete_file("foo");
 		}
 		else

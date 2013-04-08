@@ -1924,8 +1924,6 @@ int eof_mp3_to_ogg(char *file, char *directory)
 			#ifdef ALLEGRO_WINDOWS
 				(void) eof_copy_file(file, "eoftemp.mp3");
 				(void) uszprintf(syscommand, (int) sizeof(syscommand), "mp3toogg \"eoftemp.mp3\" %s \"%sguitar.ogg\" \"%s\"", eof_ogg_quality[(int)eof_ogg_setting], directory, file);
-			#elif defined(ALLEGRO_MACOSX)
-				(void) uszprintf(syscommand, (int) sizeof(syscommand), "./lame --decode \"%s\" - | ./oggenc --quiet -q %s --resample 44100 -s 0 - -o \"%sguitar.ogg\"", file, eof_ogg_quality[(int)eof_ogg_setting], directory);
 			#else
 				(void) uszprintf(syscommand, (int) sizeof(syscommand), "lame --decode \"%s\" - | oggenc --quiet -q %s --resample 44100 -s 0 - -o \"%sguitar.ogg\"", file, eof_ogg_quality[(int)eof_ogg_setting], directory);
 			#endif
