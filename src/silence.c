@@ -176,10 +176,14 @@ int save_wav(const char * fn, SAMPLE * sp)
 int eof_add_silence(const char * oggfn, unsigned long ms)
 {
 	char sys_command[1024] = {0};
-	char backupfn[1024] = {0};
-	char wavfn[1024] = {0};
-	char soggfn[1024] = {0};
+	char backupfn[1024] = {0};	//The file path of the backup of the target audio file
+	char wavfn[1024] = {0};		//The file path of the silent WAV file created
+	char soggfn[1024] = {0};	//The file path of the silent OGG file created
+	char oggcfn[1024] = {0};	//The file path to the oggCat utility
+	char *rel_oggfn;			//Relative file path to the target audio file
+	char *rel_backupfn;			//Relative file path to the backup of the target audio file
 	SAMPLE * silence_sample;
+	int retval;
 
 	if(!oggfn || (ms == 0) || eof_silence_loaded)
 	{
@@ -220,10 +224,31 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	}
 
 	/* stitch the original file to the silence file */
-	(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggCat \"%s\" \"%s\" \"%s\"", oggfn, soggfn, backupfn);
-	if(eof_system(sys_command))
-	{
-		(void) eof_copy_file(backupfn, (char *)oggfn);
+	(void) eof_chdir(eof_song_path);	//Change directory to the project's folder, since oggCat does not support paths that have any Unicode/extended ASCII, relative paths will be given
+	get_executable_name(oggcfn, 1024);
+	(void) replace_filename(oggcfn, oggcfn, "oggCat.exe", 1024);	//Build the full path to oggCat
+	rel_oggfn = get_filename(oggfn);		//Get the relative path to the target OGG file
+	rel_backupfn = get_filename(backupfn);	//Get the relative path to the backup of the target OGG file
+	//Call oggCat while the current working directory is the project folder.  This way, if the project folder's path contains any Unicode or extended ASCII, oggCat won't fail
+	(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "\"\"%s\" \"%s\" \"silence.ogg\" \"%s\"\"", oggcfn, rel_oggfn, rel_backupfn);	//Use oggCat to overwrite the target OGG file with the silent audio concatenated with the backup of the target OGG file
+	retval = eof_system(sys_command)
+
+	/* change back to the project directory */
+	#ifndef ALLEGRO_MACOSX
+		get_executable_name(backupfn, 1024);
+		(void) replace_filename(backupfn, backupfn, "", 1024);
+		if(eof_chdir(backupfn))
+		{
+			allegro_message("Could not change directory to EOF's program folder!\n%s", backupfn);
+			return 1;
+		}
+	#endif
+
+	if(retval)
+	{	//If the command failed
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError issuing command \"%s\" from path \"%s\"", sys_command, eof_song_path);
+		eof_log(eof_log_string, 1);
+		(void) eof_copy_file(backupfn, (char *)oggfn);	//Restore the original OGG file
 		eof_fix_window_title();
 		return 0;
 	}

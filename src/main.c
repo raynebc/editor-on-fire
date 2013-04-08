@@ -3487,9 +3487,9 @@ int eof_initialize(int argc, char * argv[])
 	#endif
 
 	if(argc > 1)
-	{
+	{	//If there are command line parameters
 		if(!file_exists("eof.dat", 0, NULL))
-		{
+		{	//If eof.dat doesn't exist in the current working directory (ie. opening a file with EOF over command line)
 			get_executable_name(temp_filename, 1024);
 			(void) replace_filename(temp_filename, temp_filename, "", 1024);
 			if(eof_chdir(temp_filename))
