@@ -231,7 +231,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	rel_backupfn = get_filename(backupfn);	//Get the relative path to the backup of the target OGG file
 	//Call oggCat while the current working directory is the project folder.  This way, if the project folder's path contains any Unicode or extended ASCII, oggCat won't fail
 	(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "\"\"%s\" \"%s\" \"silence.ogg\" \"%s\"\"", oggcfn, rel_oggfn, rel_backupfn);	//Use oggCat to overwrite the target OGG file with the silent audio concatenated with the backup of the target OGG file
-	retval = eof_system(sys_command)
+	retval = eof_system(sys_command);
 
 	/* change back to the project directory */
 	#ifndef ALLEGRO_MACOSX
