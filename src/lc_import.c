@@ -229,7 +229,6 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 	char startfound=0;		//Used to help skip adding vocal percussion notes to lyric lines
 	char overdrive=0;		//Used to track the overdrive status of a lyric line
 
-	eof_log("\tImporting lyrics", 1);
 	eof_log("EOF_TRANSFER_FROM_LC() entered", 1);
 
 	if((tp == NULL) || (lp == NULL))

@@ -734,6 +734,11 @@ int eof_menu_file_lyrics_import(void)
 	int selectedformat=0;
 	char *selectedtrack;
 	int returncode = 1;	//Stores the return value of EOF_IMPORT_VIA_LC() to check for error
+	char tempfile = 0;	//Is set to nonzero if the selected lyric file's path contains any extended ASCII or Unicode characters, as a temporary file is created as a workaround
+	char templyricfile[] = "lyricfile.tmp";	//The name of the temporary file created as per the above condition
+	unsigned long ctr;
+
+	eof_log("\tImporting lyrics", 1);
 
 	if(eof_song == NULL)	//Do not import lyrics if no chart is open
 		return 0;
@@ -744,29 +749,52 @@ int eof_menu_file_lyrics_import(void)
 	returnedfn = ncd_file_select(0, eof_filename, "Import Lyrics", eof_filter_lyrics_files);
 	eof_clear_input();
 	if(returnedfn)
-	{
-		(void) ustrcpy(eof_filename, returnedfn);
+	{	//If the user selected a file
+		for(ctr = 0; ctr < ustrlen(returnedfn); ctr++)
+		{	//For each character of the user-selected file
+			if(ugetat(returnedfn, ctr) > 127)
+			{	//If the character is not normal ASCII (if it is extended ASCII or Unicode)
+				eof_log("\t\tUnicode or extended ASCII file path detected.  Creating temporarily copy to use for import.", 1);
+				tempfile = 1;	//Track that EOF will create a temporary file to pass to FoFLC, since FoFLC uses standard C file I/O and cannot open file paths that aren't normal ASCII
+				(void) eof_copy_file(returnedfn, "lyricfile.tmp");	//Copy this to a temporary file containing normal ASCII characters
+				returnedfn = templyricfile;	//Change the target file path to the temporary file
+				break;
+			}
+		}
+		(void) ustrcpy(eof_filename, returnedfn);	//Store another copy of the lyric file name, since if it's a vocal rhythm file, the user will have to select a MIDI file, whose path will be stored in returnedfn
 		jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 		if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
-		{
+		{	//If the import failed
 			(void) puts("Assert() handled sucessfully!");
 			eof_show_mouse(NULL);
 			eof_cursor_visible = 1;
 			eof_pen_visible = 1;
+			if(tempfile)
+			{	//If a temporary file was created
+				(void) delete_file("lyricfile.tmp");	//Delete it
+			}
+			eof_log("\t\tError:  Could not import lyrics.  Undetermined error.", 1);
+			(void) alert("Error", NULL, "Could not import lyrics.  Undetermined error.", "OK", NULL, 0, KEY_ENTER);
 			return 1;
 		}
 		else
 		{
 		//Detect if the selected file has lyrics
+			eof_log("\t\tDetecting lyric format.", 1);
 			lyricdetectionlist=DetectLyricFormat(returnedfn);	//Auto detect the lyric format of the chosen file
 			ReleaseMemory(1);	//Release memory allocated during lyric import
 			if(lyricdetectionlist == NULL)
 			{
+				if(tempfile)
+				{	//If a temporary file was created
+					(void) delete_file("lyricfile.tmp");	//Delete it
+				}
 				(void) alert("Error", NULL, "No lyrics detected", "OK", NULL, 0, KEY_ENTER);
 				return 0;	//return error
 			}
 
 		//Import lyrics
+			eof_log("\t\tParsing lyrics.", 1);
 			if(lyricdetectionlist->next == NULL)	//If this file had only one detected lyric format
 			{
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make a generic undo state
@@ -784,11 +812,17 @@ int eof_menu_file_lyrics_import(void)
 			}
 			if(returncode == 0)
 			{	//This was initialized to nonzero, so if it's zero now, the import above failed, undo the import by loading the last undo state
+				eof_log("\t\tError:  Invalid lyric file", 1);
 				(void) alert("Error", NULL, "Invalid lyric file", "OK", NULL, 0, KEY_ENTER);
 				(void) eof_menu_edit_undo();
 			}
 		}
-	}
+		if(tempfile)
+		{	//If a temporary file was created
+			(void) delete_file("lyricfile.tmp");	//Delete it
+		}
+	}//If the user selected a file
+	eof_log("\tLyric import successful", 1);
 	eof_truncate_chart(eof_song);	//Add beats to the chart if necessary to encompass the imported lyrics
 	eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
 	eof_reset_lyric_preview_lines();

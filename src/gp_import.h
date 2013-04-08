@@ -12,7 +12,7 @@
 	#define EOF_SONG char
 	#define pack_feof feof
 	void eof_gp_debug_log(FILE *inf, char *text);		//Prints the current file position and the specified string to the console
-	extern char **eof_note_names;
+	extern char *eof_note_names[12];
 #else
 	struct eof_gp_measure
 	{

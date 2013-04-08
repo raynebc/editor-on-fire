@@ -617,7 +617,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	}
 	for(ctr = 0; ctr < sp->beats; ctr++)
 	{	//For each beat
-		if((sp->beat[ctr]->contained_section_event >= 0) && !strcmpi(sp->text_event[sp->beat[ctr]->contained_section_event]->text, "END"))
+		if((sp->beat[ctr]->contained_section_event >= 0) && !ustricmp(sp->text_event[sp->beat[ctr]->contained_section_event]->text, "END"))
 		{	//If this beat contains an "END" RS phrase
 			for(ctr2 = ctr + 1; ctr2 < sp->beats; ctr2++)
 			{	//For each remaining beat
