@@ -511,7 +511,7 @@ void eof_find_lyric_preview_lines(void)
 
 void eof_emergency_stop_music(void)
 {
-	eof_log("eof_emergency_stop_music() entered", 1);
+	eof_log("eof_emergency_stop_music() entered", 2);
 
 	if(eof_song_loaded)
 	{
@@ -535,7 +535,7 @@ void eof_emergency_stop_music(void)
 
 void eof_switch_out_callback(void)
 {
-	eof_log("eof_switch_out_callback() entered", 1);
+	eof_log("eof_switch_out_callback() entered", 2);
 
 	eof_emergency_stop_music();
 	key[KEY_TAB] = 0;
@@ -547,7 +547,7 @@ void eof_switch_out_callback(void)
 
 void eof_switch_in_callback(void)
 {
-	eof_log("eof_switch_in_callback() entered", 1);
+	eof_log("eof_switch_in_callback() entered", 2);
 
 	key[KEY_TAB] = 0;
 	eof_has_focus = 1;

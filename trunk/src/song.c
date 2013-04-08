@@ -5878,7 +5878,7 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long track, unsigned char d
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					undo_made = 1;
 				}
-				eof_copy_note(sp, track, targetnote, track, targetpos, targetlength, diff);	//Copy the note to the target difficulty
+				(void) eof_copy_note(sp, track, targetnote, track, targetpos, targetlength, diff);	//Copy the note to the target difficulty
 			}
 		}
 	}

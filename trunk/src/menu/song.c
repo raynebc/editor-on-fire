@@ -1200,10 +1200,10 @@ int eof_menu_song_test(char application)
 	{	//If the user wants to test the chart in FoF
 		(void) ustrcpy(syscommand, executablename);
 		(void) ustrcat(syscommand, " -p \"EOFTemp\" -D ");
-		(void) uszprintf(temppath, sizeof(temppath) - 1, "%d", difficulty);
+		(void) uszprintf(temppath, (int) sizeof(temppath) - 1, "%d", difficulty);
 		(void) ustrcat(syscommand, temppath);
 		(void) ustrcat(syscommand, " -P ");
-		(void) uszprintf(temppath, sizeof(temppath) - 1, "%d", part);
+		(void) uszprintf(temppath, (int) sizeof(temppath) - 1, "%d", part);
 		(void) ustrcat(syscommand, temppath);
 		(void) eof_system(syscommand);
 	}
@@ -3748,7 +3748,7 @@ int eof_pro_guitar_set_fret_hand_position(void)
 	ptr = eof_pro_guitar_track_find_effective_fret_hand_position_definition(eof_song->pro_guitar_track[tracknum], eof_note_type, eof_music_pos - eof_av_delay, &index, NULL, 1);
 	if(ptr)
 	{	//If an existing fret hand position is to be edited
-		snprintf(eof_etext, 5, "%lu", ptr->end_pos);	//Populate the input box with it
+		(void) snprintf(eof_etext, 5, "%lu", ptr->end_pos);	//Populate the input box with it
 		eof_pro_guitar_set_fret_hand_position_dialog[0].dp = eof_pro_guitar_set_fret_hand_position_dialog_string2;	//Update the dialog window title to reflect that a hand position is being edited
 	}
 	else

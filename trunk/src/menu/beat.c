@@ -1441,7 +1441,7 @@ int eof_events_dialog_edit(DIALOG * d)
 
 void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *undo_made)
 {
-	EOF_TEXT_EVENT temp = {{0}, 0, 0, 0, 0};
+	EOF_TEXT_EVENT temp = {{0}, 0, 0, 0, 0, 0};
 	unsigned long newflags = 0;
 	unsigned long newtrack = 0;
 

@@ -209,9 +209,9 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	destroy_sample(silence_sample);
 	(void) replace_filename(soggfn, eof_song_path, "silence.ogg", 1024);
 	#ifdef ALLEGRO_WINDOWS
-		(void) uszprintf(sys_command, sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
 	#else
-		(void) uszprintf(sys_command, sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
 	#endif
 	if(eof_system(sys_command))
 	{
@@ -220,7 +220,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	}
 
 	/* stitch the original file to the silence file */
-	(void) uszprintf(sys_command, sizeof(sys_command) - 1, "oggCat \"%s\" \"%s\" \"%s\"", oggfn, soggfn, backupfn);
+	(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggCat \"%s\" \"%s\" \"%s\"", oggfn, soggfn, backupfn);
 	if(eof_system(sys_command))
 	{
 		(void) eof_copy_file(backupfn, (char *)oggfn);
@@ -354,9 +354,9 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	destroy_sample(combined);	//This is no longer needed
 	(void) replace_filename(soggfn, eof_song_path, "encode.ogg", 1024);
 	#ifdef ALLEGRO_WINDOWS
-		(void) uszprintf(sys_command, sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
 	#else
-		(void) uszprintf(sys_command, sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
 	#endif
 	if(eof_system(sys_command))
 	{
@@ -415,7 +415,7 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	/* decode MP3 */
 	(void) replace_filename(wavfn, eof_song_path, "decode.wav", 1024);
 	(void) replace_filename(mp3fn, eof_song_path, "original.mp3", 1024);
-	(void) uszprintf(sys_command, sizeof(sys_command) - 1, "lame --decode \"%s\" \"%s\"", mp3fn, wavfn);
+	(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "lame --decode \"%s\" \"%s\"", mp3fn, wavfn);
 	(void) eof_system(sys_command);
 
 	/* insert silence */
@@ -484,9 +484,9 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	printf("%s\n%s\n", eof_song_path, wavfn);
 	(void) replace_filename(soggfn, eof_song_path, "encode.ogg", 1024);
 	#ifdef ALLEGRO_WINDOWS
-		(void) uszprintf(sys_command, sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
 	#else
-		(void) uszprintf(sys_command, sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
 	#endif
 
 	if(eof_system(sys_command))
