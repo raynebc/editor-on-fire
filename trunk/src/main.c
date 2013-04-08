@@ -3475,28 +3475,14 @@ int eof_initialize(int argc, char * argv[])
 	install_joystick(JOY_TYPE_AUTODETECT);
 	alogg_detect_endianess(); // make sure OGG player works for PPC
 
-	/* make sure we are in the proper directory before loading external data (don't do this on OS X) */
-	#ifndef ALLEGRO_MACOSX
+	if(!file_exists("eof.dat", 0, NULL))
+	{	//If eof.dat doesn't exist in the current working directory (ie. opening a file with EOF over command line)
 		get_executable_name(temp_filename, 1024);
 		(void) replace_filename(temp_filename, temp_filename, "", 1024);
 		if(eof_chdir(temp_filename))
 		{
-			allegro_message("Could not change directory to EOF's program folder!\n%s", temp_filename);
+			allegro_message("Could not load program data!\n%s", temp_filename);
 			return 1;
-		}
-	#endif
-
-	if(argc > 1)
-	{	//If there are command line parameters
-		if(!file_exists("eof.dat", 0, NULL))
-		{	//If eof.dat doesn't exist in the current working directory (ie. opening a file with EOF over command line)
-			get_executable_name(temp_filename, 1024);
-			(void) replace_filename(temp_filename, temp_filename, "", 1024);
-			if(eof_chdir(temp_filename))
-			{
-				allegro_message("Could not load program data!\n%s", temp_filename);
-				return 1;
-			}
 		}
 	}
 
