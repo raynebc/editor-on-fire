@@ -108,7 +108,7 @@ MENU eof_catalog_menu[] =
     {"&Previous\tW", eof_menu_catalog_previous, NULL, 0, NULL},
     {"&Next\tE", eof_menu_catalog_next, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
-    {"Find Previous\t" CTRL_NAME "+SHIFT+F3", eof_menu_catalog_find_prev, NULL, 0, NULL},
+    {"Find Previous\t" CTRL_NAME "+SHIFT+G", eof_menu_catalog_find_prev, NULL, 0, NULL},
     {"Find Next\tF3", eof_menu_catalog_find_next, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
@@ -5420,7 +5420,7 @@ int eof_song_flatten_difficulties(void)
 		if(eof_song_flatten_difficulties_threshold[0] != '\0')
 		{	//If a threshold was specified
 			threshold = atol(eof_song_flatten_difficulties_threshold);
-			eof_flatten_difficulties(eof_song, eof_selected_track, eof_note_type, threshold);
+			eof_flatten_difficulties(eof_song, eof_selected_track, eof_note_type, eof_selected_track, eof_note_type, threshold);	//Flatten the difficulties in the active track into itself
 		}
 	}
 

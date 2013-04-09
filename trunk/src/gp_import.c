@@ -1922,7 +1922,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read copyright string
 	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read tab string
 	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read instructions string
-	pack_ReadDWORDLE(inf, &dword);				//Read the number of notice entries
+	pack_ReadDWORDLE(inf, &dword);						//Read the number of notice entries
 	while(dword > 0)
 	{	//Read each notice entry
 		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read notice string
@@ -2070,7 +2070,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	np = malloc(sizeof(EOF_PRO_GUITAR_NOTE *) * tracks);	//Allocate memory for the array of last created notes
 	hopo = malloc(sizeof(char) * tracks);					//Allocate memory for storing HOPO information
 	nonshiftslide = malloc(7 * sizeof(char) * tracks);		//Allocate a 7 byte array for each track to store string slide information
-	if(!gp->names || !np || !hopo || !nonshiftslide)
+	gp->capos = malloc(sizeof(unsigned long) * tracks);		//Allocate memory to store the capo position of each track
+	if(!gp->names || !np || !hopo || !nonshiftslide || !gp->capos)
 	{
 		eof_log("Error allocating memory (4)", 1);
 		(void) pack_fclose(inf);
@@ -2081,6 +2082,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	memset(np, 0, sizeof(EOF_PRO_GUITAR_NOTE *) * tracks);				//Set all last created note pointers to NULL
 	memset(hopo, -1, sizeof(char) * tracks);							//Set all tracks to have no HOPO status
 	memset(nonshiftslide, 0, sizeof(char) * 7 * tracks);				//Clear all string slide statuses
+	memset(gp->capos, 0, sizeof(unsigned long) * tracks);				//Initialize all capo positions to 0
 	gp->track = malloc(sizeof(EOF_PRO_GUITAR_TRACK *) * tracks);		//Allocate memory for pro guitar track pointers
 	gp->text_events = 0;
 	if(!gp->track )
@@ -2092,6 +2094,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		free(np);
 		free(hopo);
 		free(nonshiftslide);
+		free(gp->capos);
 		free(gp);
 		free(tsarray);
 		return NULL;
@@ -2114,6 +2117,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(np);
 			free(hopo);
 			free(nonshiftslide);
+			free(gp->capos);
 			free(gp);
 			free(tsarray);
 			return NULL;
@@ -2140,6 +2144,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		free(np);
 		free(hopo);
 		free(nonshiftslide);
+		free(gp->capos);
 		free(gp);
 		free(tsarray);
 		return NULL;
@@ -2228,6 +2233,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							free(np);
 							free(hopo);
 							free(nonshiftslide);
+							free(gp->capos);
 							free(gp);
 							free(tsarray);
 							return NULL;
@@ -2283,6 +2289,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							free(np);
 							free(hopo);
 							free(nonshiftslide);
+							free(gp->capos);
 							free(gp);
 							free(tsarray);
 							return NULL;
@@ -2375,6 +2382,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				free(np);
 				free(hopo);
 				free(nonshiftslide);
+				free(gp->capos);
 				free(gp);
 				free(tsarray);
 				free(strings);
@@ -2488,6 +2496,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(np);
 			free(hopo);
 			free(nonshiftslide);
+			free(gp->capos);
 			free(gp);
 			free(tsarray);
 			free(strings);
@@ -2542,11 +2551,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		eof_log(eof_log_string, 1);
 #endif
 		gp->track[ctr]->numfrets = dword;
-		pack_ReadDWORDLE(inf, &dword);			//Read the capo position for this track
-		(void) pack_getc(inf);					//Track color (Red intensity)
-		(void) pack_getc(inf);					//Track color (Green intensity)
-		(void) pack_getc(inf);					//Track color (Blue intensity)
-		(void) pack_getc(inf);					//Read unused value
+		pack_ReadDWORDLE(inf, &(gp->capos[ctr]));	//Read the capo position for this track
+#ifdef GP_IMPORT_DEBUG
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tCapo position: %lu", gp->capos[ctr]);
+		eof_log(eof_log_string, 1);
+#endif
+		(void) pack_getc(inf);						//Track color (Red intensity)
+		(void) pack_getc(inf);						//Track color (Green intensity)
+		(void) pack_getc(inf);						//Track color (Blue intensity)
+		(void) pack_getc(inf);						//Read unused value
 		if(fileversion > 500)
 		{
 			bytemask = pack_getc(inf);			//Track properties 1 bitmask
@@ -2807,6 +2820,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								free(np);
 								free(hopo);
 								free(nonshiftslide);
+								free(gp->capos);
 								free(gp);
 								free(tsarray);
 								return NULL;
@@ -2908,6 +2922,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								free(np);
 								free(hopo);
 								free(nonshiftslide);
+								free(gp->capos);
 								free(gp);
 								free(tsarray);
 								free(strings);
@@ -3188,6 +3203,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										free(np);
 										free(hopo);
 										free(nonshiftslide);
+										free(gp->capos);
 										free(gp);
 										free(tsarray);
 										free(strings);
@@ -3324,6 +3340,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								free(np);
 								free(hopo);
 								free(nonshiftslide);
+								free(gp->capos);
 								free(gp);
 								free(tsarray);
 								free(strings);
@@ -3337,7 +3354,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//If this is a 7 string Guitar Pro track
 									convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
 								}
-								np[ctr2]->frets[ctr4] = frets[convertednum];	//Copy the fret number for this string
+								np[ctr2]->frets[ctr4] = frets[convertednum] + gp->capos[ctr];	//Copy the fret number for this string, adding the capo's fret position
 								np[ctr2]->finger[ctr4] = finger[convertednum];	//Copy the finger number used to fret the string (is nonzero if defined)
 							}
 							np[ctr2]->legacymask = 0;

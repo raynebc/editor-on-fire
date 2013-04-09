@@ -30,6 +30,7 @@
 		struct eof_gp_measure *measure;		//An array of measure data from the Guitar Pro file
 		unsigned long measures;				//The number of elements in the above array
 		unsigned long text_events;			//The size of the text_event[] array
+		unsigned long *capos;				//The capo position (0 if unused) for each imported track
 	};
 
 	void eof_gp_debug_log(PACKFILE *inf, char *text);

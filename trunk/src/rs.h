@@ -33,7 +33,8 @@ unsigned long eof_build_section_list(EOF_SONG *sp, unsigned long **results, unsi
 
 int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, char *user_warned);
 	//Writes the specified pro guitar track in Rocksmith's XML format, if the track is populated
-	//fn is expected to point to an array at least 1024 bytes in size.  It's filename is altered to reflect the track's name (ie /PART REAL_GUITAR.xml)
+	//fn is expected to point to an array at least 1024 bytes in size, and is the target path for the exported XML file.
+	//	It is used to build an appropriate name for the XML file, based on the track's defined arrangement type or the presence of an alternate track name
 	//If *user_warned is zero, the user is alerted that a track difficulty has no defined fret hand positions and they will be automatically generated, then *user_warned is set to nonzero
 
 void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_made);

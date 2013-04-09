@@ -180,7 +180,22 @@ Note and Beat Editing:
     
         Hold shift in addition to Tab or Ctrl+Tab to cycle through difficulties or tracks in
         reverse.
-    
+
+
+    Ctrl+Shift+~ , Ctrl+Shift+#, Ctrl+Shift+Fn #:
+
+        Changes the active difficulty to 0 (Ctrl+Shift+~), 1 through 10 (Ctrl+Shift+1 through 0), or 11 through 22 (Ctrl+Shift+F1 through F12). Difficulty levels higher than 4 are used to author tracks for Rocksmith.
+
+
+    Ctrl+~ , Ctrl+#, Ctrl+Fn #, Ctrl+X:
+
+        Changes the fret number for all gems of all selected notes to 0 (Ctrl+~), 1 through 10 (Ctrl+1 through 0), or 11 through 22 (Ctrl+F1 through F12), or X (Ctrl+X, to denote string mutes).  These shortcuts are used for authoring real guitar transcriptions for Rock Band 3, Phase Shift and Rocksmith.
+
+
+    Ctrl+G:
+
+        Enables ghost status for all gems of all selected notes.  This note mechanic is used for authoring real guitar transcriptions for Rock Band 3 and Phase Shift.
+
 
     Comma/Period:
 
@@ -216,7 +231,7 @@ Vocal Track Editing:
     Shift+1-4 (Not Number Pad)
     
         Shift the piano roll directly to a specific octave.
-    
+
 
 Miscellaneous Controls:
 

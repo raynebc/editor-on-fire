@@ -751,8 +751,8 @@ int eof_check_if_notes_exist_beyond_audio_end(EOF_SONG *sp);
 	//Checks whether any notes/lyrics in the chart extend beyond the end of the chart audio
 	//If so, the first offending track number is returned.  Otherwise, or if no audio is loaded, zero is returned.
 
-void eof_flatten_difficulties(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long threshold);
-	//Builds a cumulative set of notes in the specified track that exist at or below the specified track difficulty, placing them in difficulty #diff
+void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned char srcdiff, unsigned long desttrack, unsigned char destdiff, unsigned long threshold);
+	//Builds a cumulative set of notes in the specified track that exist at or below the specified source track difficulty, placing them in specified destination track difficulty
 	//The set is built by using the highest difficulty note at each position (notes within the threshold number of milliseconds are considered to be in the same position)
 	//The input track is expected to be authored in the style of Rocksmith, where notes in one difficulty replace or add to the notes in the lower difficulty
 	//The resulting notes are suitable for a flat difficulty system (like that used in Guitar Hero or Rock Band)

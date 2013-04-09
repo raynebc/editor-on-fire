@@ -1732,20 +1732,22 @@ void eof_read_global_keys(void)
 		key[KEY_S] = 0;
 	}
 
-	/* find next (F3) */
-	/* find previous (CTRL+SHIFT+F3) */
+	/* find next catalog match (F3) */
 	if(key[KEY_F3])
 	{
 		if(!KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
-		{	//Neither CTRL nor SHIFT held
+		{	//Neither CTRL nor SHIFT are held
 			eof_menu_catalog_find_next();
+			key[KEY_F3] = 0;
 		}
-		else if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
-		{	//Both CTRL and SHIFT held
-			eof_shift_used = 1;	//Track that the SHIFT key was used
-			eof_menu_catalog_find_prev();
-		}
-		key[KEY_F3] = 0;
+	}
+
+	/* find previous catalog match (CTRL+SHIFT+G) */
+	if(key[KEY_G] && KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
+	{
+		eof_shift_used = 1;	//Track that the SHIFT key was used
+		eof_menu_catalog_find_prev();
+		key[KEY_G] = 0;
 	}
 
 	/* load chart (CTRL+O) */
