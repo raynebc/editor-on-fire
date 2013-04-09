@@ -3354,7 +3354,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//If this is a 7 string Guitar Pro track
 									convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
 								}
-								np[ctr2]->frets[ctr4] = frets[convertednum] + gp->capos[ctr];	//Copy the fret number for this string, adding the capo's fret position
+								np[ctr2]->frets[ctr4] = frets[convertednum] + gp->capos[ctr2];	//Copy the fret number for this string, adding this track's capo position (if any)
 								np[ctr2]->finger[ctr4] = finger[convertednum];	//Copy the finger number used to fret the string (is nonzero if defined)
 							}
 							np[ctr2]->legacymask = 0;
@@ -3387,7 +3387,31 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							np[ctr2]->length = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position) - np[ctr2]->pos + 0.5;	//Define the length of this note
 
 #ifdef GP_IMPORT_DEBUG
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Start: %lums\tLength: %lums", gp->track[ctr2]->notes - 1, np[ctr2]->pos, np[ctr2]->length);
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Start: %lums\tLength: %lums\tFrets+capo: ", gp->track[ctr2]->notes - 1, np[ctr2]->pos, np[ctr2]->length);
+							for(ctr4 = 0, bitmask = 1; ctr4 < strings[ctr2]; ctr4++, bitmask <<= 1)
+							{	//For each of this track's natively supported strings
+								char temp[10];
+								if(np[ctr2]->note & bitmask)
+								{	//If this string is used
+									if(np[ctr2]->frets[ctr4] & 0x80)
+									{	//If this string is muted
+										snprintf(temp, sizeof(temp) - 1, "X");
+									}
+									else
+									{
+										snprintf(temp, sizeof(temp) - 1, "%u", np[ctr2]->frets[ctr4]);
+									}
+								}
+								else
+								{
+									snprintf(temp, sizeof(temp) - 1, "_");
+								}
+								if(ctr4 + 1 < strings[ctr2])
+								{	//If there is another string
+									(void) strncat(temp, ", ", sizeof(temp) - 1);
+								}
+								(void) strncat(eof_log_string, temp, sizeof(eof_log_string) - 1);
+							}
 							eof_log(eof_log_string, 1);
 #endif
 
