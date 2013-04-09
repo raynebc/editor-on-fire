@@ -120,4 +120,8 @@ void eof_update_seek_selection(unsigned long start, unsigned long stop);
 void eof_feedback_input_mode_update_selected_beat(void);
 	//If Feedback input mode is in use, update eof_selected_beat and measure to correspond with the beat at or immediately before the current seek position
 
+unsigned char eof_set_active_difficulty(unsigned char diff);
+	//Changes the active difficulty of the active track, if the given difficulty is valid
+	//Returns the maximum number of difficulty levels supported by the active track
+
 #endif

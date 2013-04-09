@@ -865,35 +865,29 @@ if(key[KEY_PAUSE])
 		}
 		else
 		{
-			int eof_note_type_max = EOF_NOTE_AMAZING;	//By default, assume this track has 4 usable difficulties
-			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
-			{	//If this track is not limited to 5 difficulties
-				eof_note_type_max = eof_song->track[eof_selected_track]->numdiffs - 1;	//All the track's usable difficulties (numbered starting from 0) can be tabbed to
-			}
-			else if(eof_selected_track == EOF_TRACK_DANCE)
-			{
-				eof_note_type_max = EOF_NOTE_CHALLENGE;	//However, the dance track has 5 usable difficulties
-			}
-			else if(eof_selected_track == EOF_TRACK_VOCALS)
-			{	//The vocal track only has 1 usable difficulty
-				eof_note_type_max = EOF_NOTE_SUPAEASY;
-			}
+			unsigned char eof_note_type_max = eof_set_active_difficulty(eof_note_type);	//Determine the number of usable difficulties in the active track
 
 			if(KEY_EITHER_SHIFT)
 			{
 				eof_shift_used = 1;	//Track that the SHIFT key was used
-				eof_note_type--;
-				if(eof_note_type < 0)
-				{
+				if(eof_note_type == 0)
+				{	//Wrap around
 					eof_note_type = eof_note_type_max;
+				}
+				else
+				{
+					eof_note_type--;
 				}
 			}
 			else
 			{
-				eof_note_type++;
-				if(eof_note_type > eof_note_type_max)
-				{
+				if(eof_note_type >= eof_note_type_max)
+				{	//Wrap around
 					eof_note_type = 0;
+				}
+				else
+				{
+					eof_note_type++;
 				}
 			}
 			eof_fix_window_title();
@@ -2092,11 +2086,13 @@ if(key[KEY_PAUSE])
 			}
 
 	/* set pro guitar fret values (CTRL+#, CTRL+Fn #, CTRL+X, CTRL+~, CTRL++, CTRL+-) */
+	/* change active difficulty number (CTRL+SHIFT+~, CTRL+SHIFT+#, CTRL+SHIFT+Fn #) */
 	/* toggle pro guitar ghost status (CTRL+G) */
 			if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 			{	//If CTRL is held but SHIFT is not
 				//CTRL+# or CTRL+Fn # in a pro guitar track sets the fret values of selected notes
 				//CTRL+~ sets fret values to 0 and CTRL+X sets fret values to (muted)
+				//CTRL+G sets the used frets of selected notes to be ghosted
 				if(key[KEY_TILDE])
 				{
 					eof_set_pro_guitar_fret_number(0,0);
@@ -2233,6 +2229,148 @@ if(key[KEY_PAUSE])
 					key[KEY_G] = 0;
 				}
 			}//If CTRL is held but SHIFT is not
+			else if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+			{	//If both CTRL and SHIFT are held
+				//CTRL+SHIFT+~, CTRL+SHIFT+# and CTRL+SHIFT+Fn # change the active difficulty
+				if(key[KEY_TILDE])
+				{
+					(void) eof_set_active_difficulty(0);
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_TILDE] = 0;
+				}
+				if(key[KEY_1])
+				{
+					(void) eof_set_active_difficulty(1);
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_1] = 0;
+				}
+				else if(key[KEY_2])
+				{
+					(void) eof_set_active_difficulty(2);
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_2] = 0;
+				}
+				else if(key[KEY_3])
+				{
+					(void) eof_set_active_difficulty(3);
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_3] = 0;
+				}
+				else if(key[KEY_4])
+				{
+					(void) eof_set_active_difficulty(4);
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_4] = 0;
+				}
+				else if(key[KEY_5])
+				{
+					(void) eof_set_active_difficulty(5);
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_5] = 0;
+				}
+				else if(key[KEY_6])
+				{
+					(void) eof_set_active_difficulty(6);
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_6] = 0;
+				}
+				else if(key[KEY_7])
+				{
+					(void) eof_set_active_difficulty(7);
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_7] = 0;
+				}
+				else if(key[KEY_8])
+				{
+					(void) eof_set_active_difficulty(8);
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_8] = 0;
+				}
+				else if(key[KEY_9])
+				{
+					(void) eof_set_active_difficulty(9);
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_9] = 0;
+				}
+				else if(key[KEY_0])
+				{
+					(void) eof_set_active_difficulty(10);
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_0] = 0;
+				}
+				else if(key[KEY_F1])
+				{
+					(void) eof_set_active_difficulty(11);
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_F1] = 0;
+				}
+				else if(key[KEY_F2])
+				{
+					(void) eof_set_active_difficulty(12);
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_F2] = 0;
+				}
+				else if(key[KEY_F3])
+				{
+					(void) eof_set_active_difficulty(13);
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_F3] = 0;
+				}
+				else if(key[KEY_F4])
+				{
+					(void) eof_set_active_difficulty(14);
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_F4] = 0;
+				}
+				else if(key[KEY_F5])
+				{
+					(void) eof_set_active_difficulty(15);
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_F5] = 0;
+				}
+				else if(key[KEY_F6])
+				{
+					(void) eof_set_active_difficulty(16);
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_F6] = 0;
+				}
+				else if(key[KEY_F7])
+				{
+					(void) eof_set_active_difficulty(17);
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_F7] = 0;
+				}
+				else if(key[KEY_F8])
+				{
+					(void) eof_set_active_difficulty(18);
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_F8] = 0;
+				}
+				else if(key[KEY_F9])
+				{
+					(void) eof_set_active_difficulty(19);
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_F9] = 0;
+				}
+				else if(key[KEY_F10])
+				{
+					(void) eof_set_active_difficulty(20);
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_F10] = 0;
+				}
+				else if(key[KEY_F11])
+				{
+					(void) eof_set_active_difficulty(21);
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_F11] = 0;
+				}
+				else if(key[KEY_F12])
+				{
+					(void) eof_set_active_difficulty(22);
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_F12] = 0;
+				}
+			}//If both CTRL and SHIFT are held
 			else if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 			{	//If SHIFT is held, but CTRL is not
 	/* set fret value shortcut bitmask (SHIFT+Esc, SHIFT+Fn #) */
@@ -5799,4 +5937,28 @@ void eof_feedback_input_mode_update_selected_beat(void)
 			lastbeat = beat;
 		}
 	}
+}
+
+unsigned char eof_set_active_difficulty(unsigned char diff)
+{
+	unsigned char eof_note_type_max = EOF_NOTE_AMAZING;	//By default, assume this track has 4 usable difficulties
+
+	if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+	{	//If this track is not limited to 5 difficulties
+		eof_note_type_max = eof_song->track[eof_selected_track]->numdiffs - 1;	//All the track's usable difficulties (numbered starting from 0) can be tabbed to
+	}
+	else if(eof_selected_track == EOF_TRACK_DANCE)
+	{
+		eof_note_type_max = EOF_NOTE_CHALLENGE;	//However, the dance track has 5 usable difficulties
+	}
+	else if(eof_selected_track == EOF_TRACK_VOCALS)
+	{	//The vocal track only has 1 usable difficulty
+		eof_note_type_max = EOF_NOTE_SUPAEASY;
+	}
+
+	if(diff <= eof_note_type_max)
+	{	//If the specified track difficulty is valid
+		eof_note_type = diff;	//Make it the active difficulty
+	}
+	return eof_note_type_max;
 }

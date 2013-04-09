@@ -2852,8 +2852,9 @@ int eof_menu_file_gp_import(void)
 			}
 			free(eof_parsed_gp_file->names);
 			free(eof_parsed_gp_file->track);
+			free(eof_parsed_gp_file->capos);
 			free(eof_parsed_gp_file);
-		}
+		}////The file was successfully parsed...
 		else
 		{
 			allegro_message("Failure");
