@@ -2748,6 +2748,14 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 	if((flags == NULL) || (desttrack >= eof_song->tracks) || (sourcetrack >= eof_song->tracks))
 		return;
 
+	if((eof_song->track[sourcetrack]->track_format == EOF_LEGACY_TRACK_FORMAT) && (eof_song->track[desttrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+	{	//If the note is copying from a legacy track to a pro guitar track
+		if(*flags & EOF_NOTE_FLAG_F_HOPO)
+		{	//If the forced HOPO flag is set
+			*flags &= ~EOF_NOTE_FLAG_F_HOPO;		//Clear that flag
+			*flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//Set the pro guitar hammer on flag
+		}
+	}
 	if(eof_song->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If the note is copying from a pro guitar track
 		if(eof_song->track[desttrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -2771,11 +2779,6 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 		}
 		else
 		{	//If it is pasting into a pro guitar track
-			if((*flags & EOF_NOTE_FLAG_F_HOPO) && (eof_song->track[sourcetrack]->track_format == EOF_LEGACY_TRACK_FORMAT))
-			{	//If the forced HOPO flag is set (the note is from a legacy track)
-				*flags &= ~EOF_NOTE_FLAG_F_HOPO;		//Clear that flag
-				*flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//Set the pro guitar hammer on flag
-			}
 			if((*flags & EOF_PRO_GUITAR_NOTE_FLAG_HO) && (*flags & EOF_PRO_GUITAR_NOTE_FLAG_PO))
 			{	//If both the hammer on AND the pull off flags are set, clear both
 				*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;
@@ -2831,6 +2834,11 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;
 					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
 				}
+				if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+				{	//If the tap flag is also set, clear both
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;
+				}
 			}
 			if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
 			{	//If the vibrato flag is set
@@ -2848,6 +2856,16 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 				{	//If the harmonic flag is also set, clear both
 					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
 					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
+				}
+				if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+				{	//If the tap flag is also set, clear both
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;
+				}
+				if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+				{	//If the bend flag is also set, clear both
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;
 				}
 			}
 			if((*flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && (*flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))

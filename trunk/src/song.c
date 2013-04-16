@@ -5841,7 +5841,7 @@ int eof_check_if_notes_exist_beyond_audio_end(EOF_SONG *sp)
 
 void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned char srcdiff, unsigned long desttrack, unsigned char destdiff, unsigned long threshold)
 {
-	unsigned long ctr, notecount, poscount, targetnote, targetpos;
+	unsigned long ctr, ctr2, notecount, phrasecount, targetnote, targetpos;
 	long targetlength;
 	char undo_made = 0;
 
@@ -5849,8 +5849,9 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 		return;	//Invalid parameters
 
 	//Flatten notes
-	eof_track_sort_notes(sp, srctrack);		//This logic relies on notes being sorted by time and then by difficulty
+	eof_track_sort_notes(sp, srctrack);				//This logic relies on notes being sorted by time and then by difficulty
 	notecount = eof_get_track_size(sp, srctrack);	//Cache this value, since any new notes will be appended to the track
+	eof_determine_phrase_status(sp, srctrack);		//Update the tremolo status of each note
 	ctr = 0;
 	while(ctr < notecount)
 	{	//For each pre-existing note in the source track
@@ -5862,7 +5863,7 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 			for(; ctr < notecount; ctr++)
 			{	//For each of the remaining pre-existing notes in the track
 				if(eof_get_note_pos(sp, srctrack, ctr) <= targetpos + threshold)
-				{	//If this note is within 2ms of the note to be copied to the source difficulty
+				{	//If this note is within the threshold of the note to be copied to the source difficulty
 					targetnote = ctr;	//This note is higher in difficulty and is a more suitable note to copy to the destination difficulty
 					targetlength = eof_get_note_length(sp, srctrack, ctr);
 				}
@@ -5871,7 +5872,7 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 					break;
 				}
 			}
-			if(eof_get_note_type(sp, srctrack, targetnote) != destdiff)
+			if((eof_get_note_type(sp, srctrack, targetnote) != destdiff) || (srctrack != desttrack))
 			{	//If the candidate note to be copied to the destination difficulty isn't already the note in the destination difficulty
 				if(!undo_made)
 				{	//If an undo state hasn't been made yet
@@ -5879,6 +5880,11 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 					undo_made = 1;
 				}
 				(void) eof_copy_note(sp, srctrack, targetnote, desttrack, targetpos, targetlength, destdiff);	//Copy the note to the destination track difficulty
+				if(eof_get_note_flags(sp, srctrack, targetnote) & EOF_NOTE_FLAG_IS_TREMOLO)
+				{	//If the copied note has tremolo status
+					targetpos = eof_get_note_pos(sp, srctrack, targetnote);
+					(void) eof_track_add_section(sp, desttrack, EOF_TREMOLO_SECTION, destdiff, targetpos, targetpos + targetlength, 0, NULL);	//Add a tremolo phrase in the destination track difficulty
+				}
 			}
 		}
 	}
@@ -5893,8 +5899,8 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 
 		tp = sp->pro_guitar_track[sp->track[srctrack]->tracknum];	//Pointer to source track
 		dtp = sp->pro_guitar_track[sp->track[desttrack]->tracknum];	//Pointer to destination track
-		poscount = tp->handpositions;
-		for(ctr = 0; ctr < poscount; ctr++)
+		phrasecount = tp->handpositions;
+		for(ctr = 0; ctr < phrasecount; ctr++)
 		{	//For each pre-existing fret hand position in the source track
 			if(tp->handposition[ctr].difficulty <= srcdiff)
 			{	//If this hand position is at or below the target difficulty
@@ -5924,5 +5930,41 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 				}
 			}
 		}
-	}
+
+	//Flatten arpeggio sections
+		phrasecount = tp->arpeggios;
+		for(ctr = 0; ctr < phrasecount; ctr++)
+		{	//For each pre-existing arpeggio in the source track
+			if(tp->arpeggio[ctr].difficulty <= srcdiff)
+			{	//If this arpeggio is at or below the target difficulty, determine if this arpeggio overlaps with one already added to the destination track difficulty
+				ptr = NULL;
+				for(ctr2 = 0; ctr2 < dtp->arpeggios; ctr2++)
+				{	//For each arpeggio in the destination track
+					if(dtp->arpeggio[ctr].difficulty == destdiff)
+					{	//If the arpeggio is in the destination track difficulty
+						if((tp->arpeggio[ctr].start_pos <= dtp->arpeggio[ctr].end_pos) && (tp->arpeggio[ctr].end_pos >= dtp->arpeggio[ctr].start_pos))
+						{	//If the arpeggio section in the source track and the destination track difficulty overlap
+							ptr = &dtp->arpeggio[ctr];	//Store this arpeggio's address
+							break;
+						}
+					}
+				}
+				if(ptr)
+				{	//If there is already an arpeggio at this position in the destination track difficulty
+					if(tp->arpeggio[ctr].start_pos < ptr->start_pos)
+					{	//Update the starting position to the earlier of the arpeggios
+						ptr->start_pos = tp->arpeggio[ctr].start_pos;
+					}
+					if(tp->arpeggio[ctr].end_pos > ptr->end_pos)
+					{	//Update the ending position to the later of the arpeggios
+						ptr->end_pos = tp->arpeggio[ctr].end_pos;
+					}
+				}
+				else
+				{	//Otherwise add the arpeggio to the destination track difficulty by copying it from the source track
+					(void) eof_track_add_section(sp, desttrack, EOF_ARPEGGIO_SECTION, destdiff, tp->arpeggio[ctr].start_pos, tp->arpeggio[ctr].end_pos, 0, NULL);
+				}
+			}
+		}
+	}//If this is a pro guitar/bass track
 }

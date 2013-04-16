@@ -1372,29 +1372,37 @@ int eof_menu_note_toggle_green(void)
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
+	{	//For each note in the active track, in reverse order
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
 		{
-			note = eof_get_note_note(eof_song, eof_selected_track, i);
 			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If legacy view is in effect, alter the note's legacy bitmask
-				eof_song->pro_guitar_track[tracknum]->note[i]->legacymask ^= 1;
+				eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 1;
+				if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
+				{	//If all gems in the note have been toggled off
+					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
+				}
 			}
 			else
 			{	//Otherwise alter the note's normal bitmask
-				eof_set_note_note(eof_song, eof_selected_track, i, note ^ 1);
-			}
-			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-			{	//If green drum is being toggled on/off
-				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-				flags &= (~EOF_NOTE_FLAG_DBASS);		//Clear the Expert+ status if it is set
-				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
-			}
-			else if(eof_selected_track == EOF_TRACK_BASS)
-			{	//When a lane 1 bass note is added, open bass must be forced clear, because they use conflicting MIDI notation
-				note &= ~(32);	//Clear the bit for lane 6 (open bass)
-				eof_set_note_note(eof_song, eof_selected_track, i, note);
+				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
+				note ^= 1;	//Toggle off lane 1
+				if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+				{	//If green drum is being toggled on/off
+					flags = eof_get_note_flags(eof_song, eof_selected_track, i - 1);
+					flags &= (~EOF_NOTE_FLAG_DBASS);		//Clear the Expert+ status if it is set
+					eof_set_note_flags(eof_song, eof_selected_track, i - 1, flags);
+				}
+				else if(eof_selected_track == EOF_TRACK_BASS)
+				{	//When a lane 1 bass note is added, open bass must be forced clear, because they use conflicting MIDI notation
+					note &= ~(32);	//Clear the bit for lane 6 (open bass)
+				}
+				eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+				if(!note)
+				{	//If all gems in the note have been toggled off
+					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
+				}
 			}
 		}
 	}
@@ -1418,18 +1426,27 @@ int eof_menu_note_toggle_red(void)
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
+	{	//For each note in the active track, in reverse order
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
 		{
 			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If legacy view is in effect, alter the note's legacy bitmask
-				eof_song->pro_guitar_track[tracknum]->note[i]->legacymask ^= 2;
+				eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 2;
+				if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
+				{	//If all gems in the note have been toggled off
+					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
+				}
 			}
 			else
 			{	//Otherwise alter the note's normal bitmask
-				note = eof_get_note_note(eof_song, eof_selected_track, i);
-				eof_set_note_note(eof_song, eof_selected_track, i, note ^ 2);
+				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
+				note ^= 2;	//Toggle off lane 2
+				eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+				if(!note)
+				{	//If all gems in the note have been toggled off
+					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
+				}
 			}
 		}
 	}
@@ -1454,27 +1471,36 @@ int eof_menu_note_toggle_yellow(void)
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
+	{	//For each note in the active track, in reverse order
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
 		{	//If this note is in the currently active track, is selected and is in the active difficulty
-			note = eof_get_note_note(eof_song, eof_selected_track, i);
 			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If legacy view is in effect, alter the note's legacy bitmask
-				eof_song->pro_guitar_track[tracknum]->note[i]->legacymask ^= 4;
+				eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 4;
+				if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
+				{	//If all gems in the note have been toggled off
+					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
+				}
 			}
 			else
 			{	//Otherwise alter the note's normal bitmask
-				eof_set_note_note(eof_song, eof_selected_track, i, note ^ 4);
-			}
-			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-			{	//If yellow drum is being toggled on/off
-				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-				flags &= (~EOF_NOTE_FLAG_Y_CYMBAL);	//Clear the Pro yellow cymbal status if it is set
-				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
-				if(eof_mark_drums_as_cymbal && (note & 4))
-				{	//If user specified to mark new notes as cymbals, and this note was toggled on
-					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,1,0);	//Set the yellow cymbal flag on all drum notes at this position
+				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
+				note ^= 4;	//Toggle off lane 3
+				eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+				if(!note)
+				{	//If all gems in the note have been toggled off
+					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
+				}
+				if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+				{	//If yellow drum is being toggled on/off
+					flags = eof_get_note_flags(eof_song, eof_selected_track, i - 1);
+					flags &= (~EOF_NOTE_FLAG_Y_CYMBAL);	//Clear the Pro yellow cymbal status if it is set
+					eof_set_note_flags(eof_song, eof_selected_track, i - 1, flags);
+					if(eof_mark_drums_as_cymbal && (note & 4))
+					{	//If user specified to mark new notes as cymbals, and this note was toggled on
+						eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum], i - 1, EOF_NOTE_FLAG_Y_CYMBAL, 1, 0);	//Set the yellow cymbal flag on all drum notes at this position
+					}
 				}
 			}
 		}
@@ -1500,27 +1526,36 @@ int eof_menu_note_toggle_blue(void)
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
+	{	//For each note in the active track, in reverse order
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
 		{	//If this note is in the currently active track, is selected and is in the active difficulty
-			note = eof_get_note_note(eof_song, eof_selected_track, i);
 			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If legacy view is in effect, alter the note's legacy bitmask
-				eof_song->pro_guitar_track[tracknum]->note[i]->legacymask ^= 8;
+				eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 8;
+				if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
+				{	//If all gems in the note have been toggled off
+					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
+				}
 			}
 			else
 			{	//Otherwise alter the note's normal bitmask
-				eof_set_note_note(eof_song, eof_selected_track, i, note ^ 8);
-			}
-			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-			{	//If blue drum is being toggled on/off
-				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-				flags &= (~EOF_NOTE_FLAG_B_CYMBAL);	//Clear the Pro blue cymbal status if it is set
-				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
-				if(eof_mark_drums_as_cymbal && (note & 8))
-				{	//If user specified to mark new notes as cymbals, and this note was toggled on
-					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_B_CYMBAL,1,0);	//Set the blue cymbal flag on all drum notes at this position
+				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
+				note ^= 8;	//Toggle off lane 4
+				eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+				if(!note)
+				{	//If all gems in the note have been toggled off
+					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
+				}
+				if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+				{	//If blue drum is being toggled on/off
+					flags = eof_get_note_flags(eof_song, eof_selected_track, i - 1);
+					flags &= (~EOF_NOTE_FLAG_B_CYMBAL);	//Clear the Pro blue cymbal status if it is set
+					eof_set_note_flags(eof_song, eof_selected_track, i - 1, flags);
+					if(eof_mark_drums_as_cymbal && (note & 8))
+					{	//If user specified to mark new notes as cymbals, and this note was toggled on
+						eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum], i - 1, EOF_NOTE_FLAG_B_CYMBAL, 1, 0);	//Set the blue cymbal flag on all drum notes at this position
+					}
 				}
 			}
 		}
@@ -1546,27 +1581,36 @@ int eof_menu_note_toggle_purple(void)
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
+	{	//For each note in the active track, in reverse order
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
 		{	//If this note is in the currently active track, is selected and is in the active difficulty
-			note = eof_get_note_note(eof_song, eof_selected_track, i);
 			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If legacy view is in effect, alter the note's legacy bitmask
-				eof_song->pro_guitar_track[tracknum]->note[i]->legacymask ^= 16;
+				eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 16;
+				if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
+				{	//If all gems in the note have been toggled off
+					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
+				}
 			}
 			else
 			{	//Otherwise alter the note's normal bitmask
-				eof_set_note_note(eof_song, eof_selected_track, i, note ^ 16);
-			}
-			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-			{	//If green drum is being toggled on/off
-				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-				flags &= (~EOF_NOTE_FLAG_G_CYMBAL);	//Clear the Pro green cymbal status if it is set
-				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
-				if(eof_mark_drums_as_cymbal && (note & 16))
-				{	//If user specified to mark new notes as cymbals, and this note was toggled on
-					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_G_CYMBAL,1,0);	//Set the green cymbal flag on all drum notes at this position
+				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
+				note ^= 16;	//Toggle off lane 5
+				eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+				if(!note)
+				{	//If all gems in the note have been toggled off
+					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
+				}
+				if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+				{	//If green drum is being toggled on/off
+					flags = eof_get_note_flags(eof_song, eof_selected_track, i - 1);
+					flags &= (~EOF_NOTE_FLAG_G_CYMBAL);	//Clear the Pro green cymbal status if it is set
+					eof_set_note_flags(eof_song, eof_selected_track, i - 1, flags);
+					if(eof_mark_drums_as_cymbal && (note & 16))
+					{	//If user specified to mark new notes as cymbals, and this note was toggled on
+						eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum], i - 1, EOF_NOTE_FLAG_G_CYMBAL, 1, 0);	//Set the green cymbal flag on all drum notes at this position
+					}
 				}
 			}
 		}
@@ -1595,29 +1639,38 @@ int eof_menu_note_toggle_orange(void)
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
+	{	//For each note in the active track, in reverse order
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
 		{
-			if(eof_selected_track == EOF_TRACK_BASS)
-			{	//When an open bass note is added, all other lanes must be forced clear, because they use conflicting MIDI notation
-				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-				eof_set_note_note(eof_song, eof_selected_track, i, 32);	//Clear all lanes except lane 6
-				flags &= ~(EOF_NOTE_FLAG_CRAZY);		//Clear the crazy flag, which is invalid for open strum notes
-				flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO flags, which are invalid for open strum notes
-				flags &= ~(EOF_NOTE_FLAG_NO_HOPO);
-				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+			{	//If legacy view is in effect, alter the note's legacy bitmask
+				eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 32;
+				if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
+				{	//If all gems in the note have been toggled off
+					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
+				}
 			}
 			else
 			{
-				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-				{	//If legacy view is in effect, alter the note's legacy bitmask
-					eof_song->pro_guitar_track[tracknum]->note[i]->legacymask ^= 32;
+				if(eof_selected_track == EOF_TRACK_BASS)
+				{	//When an open bass note is added, all other lanes must be forced clear, because they use conflicting MIDI notation
+					flags = eof_get_note_flags(eof_song, eof_selected_track, i - 1);
+					eof_set_note_note(eof_song, eof_selected_track, i - 1, 32);	//Clear all lanes except lane 6
+					flags &= ~(EOF_NOTE_FLAG_CRAZY);		//Clear the crazy flag, which is invalid for open strum notes
+					flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO flags, which are invalid for open strum notes
+					flags &= ~(EOF_NOTE_FLAG_NO_HOPO);
+					eof_set_note_flags(eof_song, eof_selected_track, i - 1, flags);
 				}
 				else
 				{	//Otherwise alter the note's normal bitmask
-					note = eof_get_note_note(eof_song, eof_selected_track, i);
-					eof_set_note_note(eof_song, eof_selected_track, i, note ^ 32);
+					note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
+					note ^= 32;	//Toggle off lane 6
+					eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+					if(!note)
+					{	//If all gems in the note have been toggled off
+						eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
+					}
 				}
 			}
 		}
@@ -1641,17 +1694,17 @@ int eof_menu_note_clear_green(void)
 	{
 		return 1;
 	}
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
+	{	//For each note in the active track, in reverse order
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
 		{	//If the note is in the active track, is selected and is in the active difficulty
 			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If legacy view is in effect, check the note's legacy bitmask
-				note = eof_song->pro_guitar_track[tracknum]->note[i]->legacymask;
+				note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
 			}
 			else
 			{	//Otherwise check the note's normal bitmask
-				note = eof_get_note_note(eof_song, eof_selected_track, i);
+				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
 			}
 			if(note & 1)
 			{	//If this note has a green gem
@@ -1663,11 +1716,15 @@ int eof_menu_note_clear_green(void)
 				note &= ~1;	//Clear the 1st lane gem
 				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 				{	//If legacy view is in effect, alter the note's legacy bitmask
-					eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = note;
+					eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
 				}
 				else
 				{	//Otherwise alter the note's normal bitmask
-					eof_set_note_note(eof_song, eof_selected_track, i, note);
+					eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+				}
+				if(!note)
+				{	//If all gems in the note have been toggled off
+					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
 				}
 			}
 		}
@@ -1694,17 +1751,17 @@ int eof_menu_note_clear_red(void)
 	{
 		return 1;
 	}
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
+	{	//For each note in the active track, in reverse order
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
 		{	//If the note is in the active track, is selected and is in the active difficulty
 			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If legacy view is in effect, check the note's legacy bitmask
-				note = eof_song->pro_guitar_track[tracknum]->note[i]->legacymask;
+				note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
 			}
 			else
 			{	//Otherwise check the note's normal bitmask
-				note = eof_get_note_note(eof_song, eof_selected_track, i);
+				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
 			}
 			if(note & 2)
 			{	//If this note has a red gem
@@ -1716,11 +1773,15 @@ int eof_menu_note_clear_red(void)
 				note &= ~2;	//Clear the 2nd lane gem
 				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 				{	//If legacy view is in effect, alter the note's legacy bitmask
-					eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = note;
+					eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
 				}
 				else
 				{	//Otherwise alter the note's normal bitmask
-					eof_set_note_note(eof_song, eof_selected_track, i, note);
+					eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+				}
+				if(!note)
+				{	//If all gems in the note have been toggled off
+					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
 				}
 			}
 		}
@@ -1747,17 +1808,17 @@ int eof_menu_note_clear_yellow(void)
 	{
 		return 1;
 	}
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
+	{	//For each note in the active track, in reverse order
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
 		{	//If the note is in the active track, is selected and is in the active difficulty
 			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If legacy view is in effect, check the note's legacy bitmask
-				note = eof_song->pro_guitar_track[tracknum]->note[i]->legacymask;
+				note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
 			}
 			else
 			{	//Otherwise check the note's normal bitmask
-				note = eof_get_note_note(eof_song, eof_selected_track, i);
+				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
 			}
 			if(note & 4)
 			{	//If this note has a yellow gem
@@ -1769,11 +1830,15 @@ int eof_menu_note_clear_yellow(void)
 				note &= ~4;	//Clear the 3rd lane gem
 				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 				{	//If legacy view is in effect, alter the note's legacy bitmask
-					eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = note;
+					eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
 				}
 				else
 				{	//Otherwise alter the note's normal bitmask
-					eof_set_note_note(eof_song, eof_selected_track, i, note);
+					eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+				}
+				if(!note)
+				{	//If all gems in the note have been toggled off
+					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
 				}
 			}
 		}
@@ -1800,17 +1865,17 @@ int eof_menu_note_clear_blue(void)
 	{
 		return 1;
 	}
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
+	{	//For each note in the active track, in reverse order
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
 		{	//If the note is in the active track, is selected and is in the active difficulty
 			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If legacy view is in effect, check the note's legacy bitmask
-				note = eof_song->pro_guitar_track[tracknum]->note[i]->legacymask;
+				note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
 			}
 			else
 			{	//Otherwise check the note's normal bitmask
-				note = eof_get_note_note(eof_song, eof_selected_track, i);
+				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
 			}
 			if(note & 8)
 			{	//If this note has a blue gem
@@ -1822,11 +1887,15 @@ int eof_menu_note_clear_blue(void)
 				note &= ~8;	//Clear the 4th lane gem
 				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 				{	//If legacy view is in effect, alter the note's legacy bitmask
-					eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = note;
+					eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
 				}
 				else
 				{	//Otherwise alter the note's normal bitmask
-					eof_set_note_note(eof_song, eof_selected_track, i, note);
+					eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+				}
+				if(!note)
+				{	//If all gems in the note have been toggled off
+					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
 				}
 			}
 		}
@@ -1853,17 +1922,17 @@ int eof_menu_note_clear_purple(void)
 	{
 		return 1;
 	}
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
+	{	//For each note in the active track, in reverse order
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
 		{	//If the note is in the active track, is selected and is in the active difficulty
 			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If legacy view is in effect, check the note's legacy bitmask
-				note = eof_song->pro_guitar_track[tracknum]->note[i]->legacymask;
+				note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
 			}
 			else
 			{	//Otherwise check the note's normal bitmask
-				note = eof_get_note_note(eof_song, eof_selected_track, i);
+				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
 			}
 			if(note & 16)
 			{	//If this note has a purple gem
@@ -1875,11 +1944,15 @@ int eof_menu_note_clear_purple(void)
 				note &= ~16;	//Clear the 5th lane gem
 				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 				{	//If legacy view is in effect, alter the note's legacy bitmask
-					eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = note;
+					eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
 				}
 				else
 				{	//Otherwise alter the note's normal bitmask
-					eof_set_note_note(eof_song, eof_selected_track, i, note);
+					eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+				}
+				if(!note)
+				{	//If all gems in the note have been toggled off
+					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
 				}
 			}
 		}
@@ -1911,17 +1984,17 @@ int eof_menu_note_clear_orange(void)
 		return 1;
 	}
 
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
+	{	//For each note in the active track, in reverse order
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
 		{	//If the note is in the active track, is selected and is in the active difficulty
 			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If legacy view is in effect, check the note's legacy bitmask
-				note = eof_song->pro_guitar_track[tracknum]->note[i]->legacymask;
+				note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
 			}
 			else
 			{	//Otherwise check the note's normal bitmask
-				note = eof_get_note_note(eof_song, eof_selected_track, i);
+				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
 			}
 			if(note & 32)
 			{	//If this note has an orange gem
@@ -1933,11 +2006,15 @@ int eof_menu_note_clear_orange(void)
 				note &= ~32;	//Clear the 6th lane gem
 				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 				{	//If legacy view is in effect, alter the note's legacy bitmask
-					eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = note;
+					eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
 				}
 				else
 				{	//Otherwise alter the note's normal bitmask
-					eof_set_note_note(eof_song, eof_selected_track, i, note);
+					eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+				}
+				if(!note)
+				{	//If all gems in the note have been toggled off
+					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
 				}
 			}
 		}
@@ -7733,4 +7810,16 @@ int eof_rocksmith_convert_mute_to_palm_mute_single_note(void)
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
 	return 1;
+}
+
+void eof_menu_note_cycle_selection_back(unsigned long notenum)
+{
+	unsigned long ctr;
+
+	for(ctr = notenum; ctr + 1 < EOF_MAX_NOTES; ctr++)
+	{	//For each entry in the selection array, up to the second to last one
+		eof_selection.multi[ctr] = eof_selection.multi[ctr + 1];	//This remaining note will cycled back one in number, so it needs to retain its selection status
+	}
+	eof_selection.multi[ctr] = 0;	//This last note, if it existed, will no longer exist so it can be deselected
+
 }

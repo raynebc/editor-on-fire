@@ -23,14 +23,18 @@
 #include "../rs_import.h"
 #include "../silence.h"	//For save_wav_with_silence_appended
 #include "beat.h"	//For eof_menu_beat_reset_offset()
-#include "file.h"
-#include "song.h"
 #include "edit.h"	//For eof_menu_edit_undo()
 #include "note.h"	//For eof_correct_chord_fingerings()
+#include "song.h"
+#include "file.h"
 
 #ifdef USEMEMWATCH
 #include "../memwatch.h"
 #endif
+
+struct Lyric_Format *lyricdetectionlist;	//Dialog windows cannot be passed local variables, requiring the use of this global variable for the lyric track prompt dialog
+char lyricdetectionstring[1024] = {0};		//The display name given to the detection when displayed in the list box
+static int redefine_index = -1;
 
 MENU eof_file_display_menu[] =
 {
@@ -70,20 +74,19 @@ MENU eof_file_menu[] =
 
 DIALOG eof_settings_dialog[] =
 {
-   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,    0,  48,  200, 140 + 64 + 16, 2,   23,  0,    0,      0,   0,   "Settings",               NULL, NULL },
-   { d_agup_text_proc,   16,  84,  64,  8,  2,   23,  0,    0,      0,   0,   "AV Delay (ms):",         NULL, NULL },
-   { eof_verified_edit_proc,   128, 80,  64,  20,  2,   23,  0,    0,      5,   0,   eof_etext,           "0123456789", NULL },
-   { d_agup_text_proc,   16,  108,  64,  8,  2,   23,  0,    0,      0,   0,   "Buffer Size:",         NULL, NULL },
-   { eof_verified_edit_proc,   128, 104,  64,  20,  2,   23,  0,    0,      5,   0,   eof_etext2,           "0123456789", NULL },
-   { d_agup_text_proc,   16,  132,  64,  8,  2,   23,  0,    0,      0,   0,   "CPU Saver",         NULL, NULL },
-   { d_agup_slider_proc, 96, 132,  96,  16,  2,   23,  0,    0,      10,   0,   NULL,           NULL, NULL },
-   { d_agup_check_proc, 16,  160, 160,  16, 2,   23,  0,    0, 1,   0,   "Smooth Playback",               NULL, NULL },
-   { d_agup_check_proc, 16,  180, 160,  16, 2,   23,  0,    0, 1,   0,   "Disable Windows UI",               NULL, NULL },
-   { d_agup_check_proc, 16,  200, 160,  16, 2,   23,  0,    0, 1,   0,   "Disable VSync",               NULL, NULL },
-
-   { d_agup_button_proc, 16,  156 + 64 + 8, 68,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
-   { d_agup_button_proc, 116, 156 + 64 + 8, 68,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+   /* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)              (dp2) (dp3) */
+   { d_agup_window_proc,    0,   48,  200, 220, 2,   23,  0,    0,      0,   0,   "Settings",       NULL, NULL },
+   { d_agup_text_proc,      16,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "AV Delay (ms):", NULL, NULL },
+   { eof_verified_edit_proc,128, 80,  64,  20,  2,   23,  0,    0,      5,   0,   eof_etext,        "0123456789", NULL },
+   { d_agup_text_proc,      16,  108, 64,  8,   2,   23,  0,    0,      0,   0,   "Buffer Size:",   NULL, NULL },
+   { eof_verified_edit_proc,128, 104, 64,  20,  2,   23,  0,    0,      5,   0,   eof_etext2,       "0123456789", NULL },
+   { d_agup_text_proc,      16,  132, 64,  8,   2,   23,  0,    0,      0,   0,   "CPU Saver",      NULL, NULL },
+   { d_agup_slider_proc,    96,  132, 96,  16,  2,   23,  0,    0,      10,  0,   NULL,             NULL, NULL },
+   { d_agup_check_proc,     16,  160, 160, 16,  2,   23,  0,    0,      1,   0,   "Smooth Playback",NULL, NULL },
+   { d_agup_check_proc,     16,  180, 160, 16,  2,   23,  0,    0,      1,   0,   "Disable Windows UI",NULL, NULL },
+   { d_agup_check_proc,     16,  200, 160, 16,  2,   23,  0,    0,      1,   0,   "Disable VSync",  NULL, NULL },
+   { d_agup_button_proc,    16,  228, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",             NULL, NULL },
+   { d_agup_button_proc,    116, 228, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",         NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -134,40 +137,37 @@ DIALOG eof_preferences_dialog[] =
 
 DIALOG eof_display_dialog[] =
 {
-   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,    0,  48,  200, 196, 2,   23,  0,    0,      0,   0,   "Display Settings",               NULL, NULL },
-
-   { d_agup_check_proc, 16,  80, 160,  16, 2,   23,  0,    0, 1,   0,   "Use Software Cursor",               NULL, NULL },
-   { d_agup_check_proc, 16,  100, 128,  16, 2,   23,  0,    0, 1,   0,   "Force 8-Bit Color",               NULL, NULL },
-   { d_agup_text_proc,   56, 124,  48,  8,   2,   23,  0,    0,      0,   0,   "Window Size",            NULL, NULL },
-   { d_agup_list_proc,   43, 140,  110,  94 - 45,  2,   23,  0,    0,      0,   0,   (void *)eof_display_list, NULL, NULL },
-   { d_agup_button_proc, 12,  202, 174,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
+   /* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                  (dp2) (dp3) */
+   { d_agup_window_proc, 0,   48,  200, 196, 2,   23,  0,    0,      0,   0,   "Display Settings",   NULL, NULL },
+   { d_agup_check_proc,  16,  80,  160, 16,  2,   23,  0,    0,      1,   0,   "Use Software Cursor",NULL, NULL },
+   { d_agup_check_proc,  16,  100, 128, 16,  2,   23,  0,    0,      1,   0,   "Force 8-Bit Color",  NULL, NULL },
+   { d_agup_text_proc,   56,  124, 48,  8,   2,   23,  0,    0,      0,   0,   "Window Size",        NULL, NULL },
+   { d_agup_list_proc,   43,  140, 110, 49,  2,   23,  0,    0,      0,   0,   (void *)eof_display_list, NULL, NULL },
+   { d_agup_button_proc, 12,  202, 174, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                 NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 DIALOG eof_guitar_settings_dialog[] =
 {
-   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,    4,  236 + 24 - 32 - 20 - 8,  192 + 32 + 96 + 16, 190 + 78, 2,   23,  0,    0,      0,   0,   "Guitar Settings",               NULL, NULL },
-
-   { d_agup_text_proc,    16, 240,  64,  8,  2,   23,  0,    0,      0,   0,   "Delay (ms):",         NULL, NULL },
-   { eof_verified_edit_proc,   104, 236,  64,  20,  2,   23,  0,    0,      5,   0,   eof_etext,           "0123456789", NULL },
-   { d_agup_list_proc,   13, 266,  170 + 32 + 85 + 28,  96 + 13,  2,   23,  0,    0,      0,   0,   (void *)eof_guitar_list, NULL, NULL },
-   { d_agup_push_proc, 13,  176 + 64 + 22 + 16 + 24 + 24 + 24 + 36, 170 + 32 + 85 + 28,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Redefine",               NULL, (void *)eof_guitar_controller_redefine },
-   { d_agup_button_proc, 13, 176 + 64 + 22 + 16 + 24 + 24 + 24 + 36 + 32 + 8, 170 + 32 + 85 + 28,  28, 2,   23,  0,    D_EXIT, 0,   0,   "OK",               NULL, NULL },
+   /* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)              (dp2) (dp3) */
+   { d_agup_window_proc,    4,   200, 336, 268, 2,   23,  0,    0,      0,   0,   "Guitar Settings",NULL, NULL },
+   { d_agup_text_proc,      16,  240, 64,  8,   2,   23,  0,    0,      0,   0,   "Delay (ms):",    NULL, NULL },
+   { eof_verified_edit_proc,104, 236, 64,  20,  2,   23,  0,    0,      5,   0,   eof_etext,        "0123456789", NULL },
+   { d_agup_list_proc,      13,  266, 315, 109, 2,   23,  0,    0,      0,   0,   (void *)eof_guitar_list, NULL, NULL },
+   { d_agup_push_proc,      13,  386, 315, 28,  2,   23,  0,    D_EXIT, 0,   0,   "Redefine",       NULL, (void *)eof_guitar_controller_redefine },
+   { d_agup_button_proc,    13,  426, 315, 28,  2,   23,  0,    D_EXIT, 0,   0,   "OK",             NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 DIALOG eof_drum_settings_dialog[] =
 {
-   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,    4,  236 + 24 - 32 - 20 - 8,  192 + 32 + 96 + 16, 190 + 78 - 30, 2,   23,  0,    0,      0,   0,   "Drum Settings",               NULL, NULL },
-
-   { d_agup_text_proc,    16, 240,  64,  8,  2,   23,  0,    0,      0,   0,   "Delay (ms):",         NULL, NULL },
-   { eof_verified_edit_proc,   104, 236,  64,  20,  2,   23,  0,    0,      5,   0,   eof_etext,           "0123456789", NULL },
-   { d_agup_list_proc,   13, 266,  170 + 32 + 85 + 28,  79,  2,   23,  0,    0,      0,   0,   (void *)eof_drum_list, NULL, NULL },
-   { d_agup_push_proc, 13,  176 + 64 + 22 + 16 + 24 + 24 + 24 + 36 - 30, 170 + 32 + 85 + 28,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Redefine",               NULL, (void *)eof_drum_controller_redefine },
-   { d_agup_button_proc, 13, 176 + 64 + 22 + 16 + 24 + 24 + 24 + 36 + 32 + 8 - 30, 170 + 32 + 85 + 28,  28, 2,   23,  0,    D_EXIT, 0,   0,   "OK",               NULL, NULL },
+   /* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
+   { d_agup_window_proc,    4,   200, 336, 238, 2,   23,  0,    0,      0,   0,   "Drum Settings",NULL, NULL },
+   { d_agup_text_proc,      16,  240, 64,  8,   2,   23,  0,    0,      0,   0,   "Delay (ms):",  NULL, NULL },
+   { eof_verified_edit_proc,104, 236, 64,  20,  2,   23,  0,    0,      5,   0,   eof_etext,      "0123456789", NULL },
+   { d_agup_list_proc,      13,  266, 315, 79,  2,   23,  0,    0,      0,   0,   (void *)eof_drum_list, NULL, NULL },
+   { d_agup_push_proc,      13,  356, 315, 28,  2,   23,  0,    D_EXIT, 0,   0,   "Redefine",     NULL, (void *)eof_drum_controller_redefine },
+   { d_agup_button_proc,    13,  396, 315, 28,  2,   23,  0,    D_EXIT, 0,   0,   "OK",           NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -183,56 +183,52 @@ DIALOG eof_controller_settings_dialog[] =
 
 DIALOG eof_file_new_dialog[] =
 {
-   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,    0,  48,  320, 112 + 8, 2,   23,  0,    0,      0,   0,   "New Song Information",               NULL, NULL },
-   { d_agup_text_proc,   112,  56,  128, 8,  2,   23,  0,    0,      0,   0,   "", NULL, NULL },
-   { d_agup_text_proc,   16,  84,  64,  8,  2,   23,  0,    0,      0,   0,   "Artist:",         NULL, NULL },
-   { d_agup_edit_proc,   80, 80,  224,  20,  2,   23,  0,    0,      255,   0,   eof_etext,           NULL, NULL },
-   { d_agup_text_proc,   16,  108,  64,  8,  2,   23,  0,    0,      0,   0,   "Title:",         NULL, NULL },
-   { d_agup_edit_proc,   80, 104,  224,  20,  2,   23,  0,    0,      255,   0,   eof_etext2,           NULL, NULL },
-   { d_agup_button_proc, 80,  132, 68,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
-   { d_agup_button_proc, 160, 132, 68,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+   /* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
+   { d_agup_window_proc, 0,   48,  320, 120, 2,   23,  0,    0,      0,   0,   "New Song Information",NULL, NULL },
+   { d_agup_text_proc,   112, 56,  128, 8,   2,   23,  0,    0,      0,   0,   "",                    NULL, NULL },
+   { d_agup_text_proc,   16,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "Artist:",             NULL, NULL },
+   { d_agup_edit_proc,   80,  80,  224, 20,  2,   23,  0,    0,      255, 0,   eof_etext,             NULL, NULL },
+   { d_agup_text_proc,   16,  108, 64,  8,   2,   23,  0,    0,      0,   0,   "Title:",              NULL, NULL },
+   { d_agup_edit_proc,   80,  104, 224, 20,  2,   23,  0,    0,      255, 0,   eof_etext2,            NULL, NULL },
+   { d_agup_button_proc, 80,  132, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+   { d_agup_button_proc, 160, 132, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 DIALOG eof_file_new_windows_dialog[] =
 {
-   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,    0,  48,  320, 112 + 32 + 24, 2,   23,  0,    0,      0,   0,   "Location for New Song",               NULL, NULL },
-   { d_agup_radio_proc,   16,  84,  256,  16,  2,   23,  0,    0,      0,   0,   "Use Existing Folder",         NULL, NULL },
-   { d_agup_radio_proc,   16,  108,  256,  16,  2,   23,  0,    0,      0,   0,   "Use Source Audio's Folder",         NULL, NULL },
-   { d_agup_radio_proc,   16,  132,  256,  16,  2,   23,  0,    0,      0,   0,   "Create New Folder",         NULL, NULL },
-   { d_agup_edit_proc,   34, 150,  252,  20,  2,   23,  0,    0,      255,   0,   eof_etext4,           NULL, NULL },
-   { d_agup_button_proc, 80,  180, 68,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
-   { d_agup_button_proc, 160, 180, 68,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+   /* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                        (dp2) (dp3) */
+   { d_agup_window_proc, 0,   48,  320, 168, 2,   23,  0,    0,      0,   0,   "Location for New Song",    NULL, NULL },
+   { d_agup_radio_proc,  16,  84,  256, 16,  2,   23,  0,    0,      0,   0,   "Use Existing Folder",      NULL, NULL },
+   { d_agup_radio_proc,  16,  108, 256, 16,  2,   23,  0,    0,      0,   0,   "Use Source Audio's Folder",NULL, NULL },
+   { d_agup_radio_proc,  16,  132, 256, 16,  2,   23,  0,    0,      0,   0,   "Create New Folder",        NULL, NULL },
+   { d_agup_edit_proc,   34,  150, 252, 20,  2,   23,  0,    0,      255, 0,   eof_etext4,                 NULL, NULL },
+   { d_agup_button_proc, 80,  180, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                       NULL, NULL },
+   { d_agup_button_proc, 160, 180, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                   NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 DIALOG eof_ogg_settings_dialog[] =
 {
-   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_shadow_box_proc,    4,  236 + 24 - 32 - 20 - 8,  192, 190, 2,   23,  0,    0,      0,   0,   NULL,               NULL, NULL },
-   { d_agup_text_proc,   58,  236 + 24 - 32 - 20,  128, 8,  2,   23,  0,    0,      0,   0,   "OGG Settings", NULL, NULL },
-   { d_agup_text_proc,   49, 236 + 24 - 32,  48,  8,   2,   23,  0,    0,      0,   0,   "Encoder Quality",            NULL, NULL },
-   { d_agup_list_proc,   43, 252 + 24 - 32,  110,  96,  2,   23,  0,    0,      0,   0,   (void *)eof_ogg_list, NULL, NULL },
-   { d_agup_button_proc, 16,  176 + 64 + 22 + 16 + 24 + 24 + 24, 68,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
-   { d_agup_button_proc, 116, 176 + 64 + 22 + 16 + 24 + 24 + 24, 68,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+   /* (proc)                 (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)              (dp2) (dp3) */
+   { d_agup_shadow_box_proc, 4,   200, 192, 190, 2,   23,  0,    0,      0,   0,   NULL,             NULL, NULL },
+   { d_agup_text_proc,       58,  208, 128, 8,   2,   23,  0,    0,      0,   0,   "OGG Settings",   NULL, NULL },
+   { d_agup_text_proc,       49,  228, 48,  8,   2,   23,  0,    0,      0,   0,   "Encoder Quality",NULL, NULL },
+   { d_agup_list_proc,       43,  244, 110, 96,  2,   23,  0,    0,      0,   0,   (void *)eof_ogg_list, NULL, NULL },
+   { d_agup_button_proc,     16,  350, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",             NULL, NULL },
+   { d_agup_button_proc,     116, 350, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",         NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 DIALOG eof_lyric_detections_dialog[]=
 {
-	/*(proc)				(x)			(y)			(w)			(h)			(fg)	(bg)	(key)	(flags)	(d1)(d2)	(dp)							(dp2)(dp3)*/
-	{d_agup_window_proc,	0,			48,			216+110+20,	160+72+2,	2,		23,		0,		0,		0,	0,		"Select track to import",		NULL,NULL},
-	{d_agup_list_proc,		12,			84,			110*2+20+80,69*2+2,		2,		23,		0,		0,		0,	0,		(void *)eof_lyric_detections_list_all,	NULL,NULL},
-	{d_agup_button_proc,	12,			166+69+2,	160-6,		28,			2,		23,		0,		D_EXIT,	0,	0,		"Import",						NULL,NULL},
-	{d_agup_button_proc,	12+160+6,	166+69+2,	160-6,		28,			2,		23,		0,		D_EXIT,	0,	0,		"Cancel",						NULL,NULL},
-	{NULL,					0,			0,			0,			0,			0,		0,		0,		0,		0,	0,		NULL,							NULL,NULL}
+	/*(proc)             (x)  (y)  (w)  (h)  (fg) (bg)  (key) (flags) (d1) (d2) (dp)                      (dp2) (dp3)*/
+	{d_agup_window_proc, 0,   48,  346, 234, 2,   23,   0,    0,      0,   0,   "Select track to import", NULL,NULL},
+	{d_agup_list_proc,   12,  84,  320, 140, 2,   23,   0,    0,      0,   0,   (void *)eof_lyric_detections_list_all,	NULL,NULL},
+	{d_agup_button_proc, 12,  237, 154, 28,  2,   23,   0,    D_EXIT, 0,   0,   "Import",                 NULL,NULL},
+	{d_agup_button_proc, 178, 237, 154, 28,  2,   23,   0,    D_EXIT, 0,   0,   "Cancel",                 NULL,NULL},
+	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL}
 };
-
-struct Lyric_Format *lyricdetectionlist;	//Dialog windows cannot be passed local variables, requiring the use of this global variable for the lyric track prompt dialog
-char lyricdetectionstring[1024] = {0};		//The display name given to the detection when displayed in the list box
-static int redefine_index = -1;
 
 void eof_prepare_file_menu(void)
 {

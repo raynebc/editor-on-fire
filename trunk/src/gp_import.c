@@ -21,7 +21,8 @@
 #endif
 
 #ifndef EOF_BUILD
-char *eof_note_names[12] =	{"A","Bb","B","C","Db","D","Eb","E","F","Gb","G","Ab"};		//The name of musical note 0 (0 semitones above A) to 11 (11 semitones above A)
+char *eof_note_names_flat[12];		//The name of musical note 0 (0 semitones above A) to 11 (11 semitones above A)
+char **eof_note_names = eof_note_names_flat;
 #endif
 
 void pack_ReadWORDLE(PACKFILE *inf,unsigned *data)
