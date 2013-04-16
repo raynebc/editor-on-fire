@@ -225,7 +225,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	}
 
 	/* stitch the original file to the silence file */
-	getcwd(old_wd, 1024);
+	(void) getcwd(old_wd, 1024);
 	(void) eof_chdir(eof_song_path);	//Change directory to the project's folder, since oggCat does not support paths that have any Unicode/extended ASCII, relative paths will be given
 	#ifdef ALLEGRO_WINDOWS
 		get_executable_name(oggcfn, 1024);

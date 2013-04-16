@@ -95,10 +95,11 @@ MENU eof_beat_menu[] =
 
 char stored_event_track_notice[] = "Warning:  A stored MIDI track will override chart-wide text events";
 char no_notice[] = "";
+char eof_events_dialog_string[15] = {0};	//The title string for the Events dialog
 DIALOG eof_events_dialog[] =
 {
    /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-   { d_agup_window_proc,0,   48,  500, 237, 2,   23,  0,    0,      0,   0,   "Events",       NULL, NULL },
+   { d_agup_window_proc,0,   48,  500, 237, 2,   23,  0,    0,      0,   0,   eof_events_dialog_string,NULL, NULL },
    { d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_events_list,NULL, NULL },
    { d_agup_push_proc,  416, 84,  76,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",         NULL, (void *)eof_events_dialog_add },
    { d_agup_push_proc,  416, 124, 76,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",        NULL, (void *)eof_events_dialog_edit },
@@ -111,10 +112,11 @@ DIALOG eof_events_dialog[] =
 };
 
 ///The dp2 values below must be edited appropriately whenever the radio buttons' object numbers in the dialog are changed
+char eof_all_events_dialog_string[20] = {0};	//The title string for the All Events dialog
 DIALOG eof_all_events_dialog[] =
 {
    /* (proc)                    (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-   { d_agup_window_proc,         0,   48,  500, 282, 2,   23,  0,    0,      0,   0,   "All Events",           NULL, NULL },
+   { d_agup_window_proc,         0,   48,  500, 282, 2,   23,  0,    0,      0,   0,   eof_all_events_dialog_string, NULL, NULL },
    { d_agup_list_proc,           12,  84,  475, 140, 2,   23,  0,    0,      0,   0,   (void *)eof_events_list_all,  NULL, NULL },
    { d_agup_button_proc,         12,  275, 70,  28,  2,   23,  'f',  D_EXIT, 0,   0,   "&Find",                NULL, NULL },
    { d_agup_button_proc,         95,  275, 70,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",                 NULL, NULL },
@@ -126,7 +128,7 @@ DIALOG eof_all_events_dialog[] =
    { eof_all_events_radio_proc,	 340, 307, 152, 15,  2,   23,  0,    0,      0,   0,   "RS events",            (void *)9,    NULL },
    { d_agup_text_proc,           12,  228, 64,  8,   2,   23,  0,    0,      0,   0,   ""      ,                NULL, NULL },
    { d_agup_button_proc,         12,  243, 70,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",                 NULL, NULL },
-   { d_agup_button_proc,         95,  243, 70,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete",                 NULL, NULL },
+   { d_agup_button_proc,         95,  243, 70,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete",                NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1189,7 +1191,7 @@ int eof_menu_beat_clear_non_rs_events(void)
 char * eof_events_list(int index, int * size)
 {
 	int i;
-	int ecount = 0;
+	unsigned long ecount = 0;
 	char trackname[26] = {0};
 	char eventflags[30] = {0};
 
@@ -1242,6 +1244,7 @@ char * eof_events_list(int index, int * size)
 		case -1:
 		{
 			*size = ecount;
+			(void) snprintf(eof_events_dialog_string, sizeof(eof_events_dialog_string) - 1, "Events (%lu)", ecount);
 			if(ecount > 0)
 			{	//If there is at least one event at this beat
 				eof_events_dialog[3].flags = 0;	//Enable the Edit button
@@ -1315,6 +1318,7 @@ char * eof_events_list_all(int index, int * size)
 			}
 		}
 		*size = count;
+		(void) snprintf(eof_all_events_dialog_string, sizeof(eof_all_events_dialog_string) - 1, "All Events (%lu)", count);
 	}
 	else
 	{	//Return the specified list item
@@ -1397,6 +1401,7 @@ int eof_events_dialog_add_function(unsigned long function)
 	if(!function)
 	{	//If this function was launched from within Beat>Events
 		(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);	//Redraw that menu
+		return D_REDRAW;
 	}
 	return D_O_K;
 }
@@ -1616,7 +1621,7 @@ int eof_events_dialog_delete(DIALOG * d)
 				}
 				(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
 				eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
-				return D_O_K;
+				return D_REDRAW;
 			}
 
 			/* go to next event */
@@ -1839,7 +1844,7 @@ int eof_edit_trainer_proc(int msg, DIALOG *d, int c)
 int eof_all_events_radio_proc(int msg, DIALOG *d, int c)
 {
 	static int previous_option = 5;	//By default, eof_all_events_dialog[5] (all events) is selected
-	int selected_option;
+	int selected_option, junk;
 
 	if(msg == MSG_CLICK)
 	{
@@ -1850,14 +1855,10 @@ int eof_all_events_radio_proc(int msg, DIALOG *d, int c)
 			eof_all_events_dialog[5].flags = eof_all_events_dialog[6].flags = eof_all_events_dialog[7].flags = eof_all_events_dialog[8].flags = eof_all_events_dialog[9].flags = 0;	//Clear all radio buttons
 			eof_all_events_dialog[selected_option].flags = D_SELECTED;			//Re-select the radio button that was just clicked on
 			eof_all_events_dialog[1].d2 = 0;									//Select first list item, since if it's too high, it will prevent the newly-selected filtered list from displaying
-			(void) object_message(&eof_all_events_dialog[1], MSG_DRAW, 0);		//Have Allegro redraw the list of events
-			(void) object_message(&eof_all_events_dialog[5], MSG_DRAW, 0);		//Have Allegro redraw the radio buttons
-			(void) object_message(&eof_all_events_dialog[6], MSG_DRAW, 0);
-			(void) object_message(&eof_all_events_dialog[7], MSG_DRAW, 0);
-			(void) object_message(&eof_all_events_dialog[8], MSG_DRAW, 0);
-			(void) object_message(&eof_all_events_dialog[9], MSG_DRAW, 0);
-			(void) object_message(&eof_all_events_dialog[10], MSG_DRAW, 0);		//Have Allegro redraw the event override string
 			previous_option = selected_option;
+			(void) d_agup_radio_proc(msg, d, c);	//Allow the input to be processed
+			(void) dialog_message(eof_all_events_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
+			return D_REDRAW;
 		}
 	}
 

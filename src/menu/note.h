@@ -152,6 +152,10 @@ int eof_rocksmith_convert_mute_to_palm_mute_single_note(void);
 	//Removes string mute status from all selected notes and marks affected notes with palm mute status
 	//If the note is a chord, it will be reduced to a single note by retaining the lowest lane in the chord (thickest string)
 
+void eof_menu_note_cycle_selection_back(unsigned long notenum);
+	//Manipulates eof_selection.multi[] to reflect the removal of notenum from the list of notes in the active track (such as when toggling off a note's only gem)
+	//This allows the remaining notes to keep their selection status intact
+
 int eof_menu_note_toggle_green(void);	//Toggles the gem on lane 1 (originally colored green)
 int eof_menu_note_toggle_red(void);		//Toggles the gem on lane 2 (originally colored red)
 int eof_menu_note_toggle_yellow(void);	//Toggles the gem on lane 3 (originally colored yellow)

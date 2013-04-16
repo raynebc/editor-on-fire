@@ -4240,11 +4240,6 @@ int eof_song_proguitar_delete_difficulty(void)
 	if(!eof_song || eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
-	if(eof_note_type < 5)
-	{	//Don't allow any of the first five default difficulties to be deleted
-		allegro_message("The first five difficulties cannot be deleted.");
-		return 1;
-	}
 	if(eof_track_diff_populated_status[eof_note_type])
 	{	//If the active track has any notes
 		if(alert(NULL, "Warning:  This difficulty contains at least one note.  Delete the difficulty anyway?", NULL, "&Yes", "&No", 'y', 'n') != 1)
@@ -4297,7 +4292,10 @@ int eof_song_proguitar_delete_difficulty(void)
 	}
 
 	eof_pro_guitar_track_sort_fret_hand_positions(tp);
-	eof_song->track[eof_selected_track]->numdiffs--;	//Decrement the track's difficulty counter
+	if(eof_song->track[eof_selected_track]->numdiffs > 5)
+	{	//If there are more than 5 difficulties in the active track
+		eof_song->track[eof_selected_track]->numdiffs--;	//Decrement the track's difficulty counter
+	}
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);
 	(void) eof_menu_track_selected_track_number(eof_note_type - 1);
 	return 1;
@@ -4436,10 +4434,11 @@ int eof_menu_song_fret_hand_positions_copy_from(void)
 
 char **eof_manage_rs_phrases_strings = NULL;	//Stores allocated strings for eof_manage_rs_phrases()
 unsigned long eof_manage_rs_phrases_strings_size = 0;	//The number of strings stored in the above array
+char eof_manage_rs_phrases_dialog_string[25] = {0};	//The title string for the manage RS phrases dialog
 
 char * eof_magage_rs_phrases_list(int index, int * size)
 {
-	int ctr, numphrases;
+	unsigned long ctr, numphrases;
 
 	switch(index)
 	{
@@ -4452,6 +4451,7 @@ char * eof_magage_rs_phrases_list(int index, int * size)
 					numphrases++;	//Update counter
 				}
 			}
+			(void) snprintf(eof_manage_rs_phrases_dialog_string, sizeof(eof_manage_rs_phrases_dialog_string) - 1, "Manage RS phrases (%lu)", numphrases);
 			*size = numphrases;
 			break;
 		}
@@ -4466,7 +4466,7 @@ char * eof_magage_rs_phrases_list(int index, int * size)
 DIALOG eof_manage_rs_phrases_dialog[] =
 {
    /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                 (dp2) (dp3) */
-   { d_agup_window_proc,0,   48,  400, 237, 2,   23,  0,    0,      0,   0,   "Manage RS phrases", NULL, NULL },
+   { d_agup_window_proc,0,   48,  400, 237, 2,   23,  0,    0,      0,   0,   eof_manage_rs_phrases_dialog_string, NULL, NULL },
    { d_agup_list_proc,  12,  84,  300, 144, 2,   23,  0,    0,      0,   0,   (void *)eof_magage_rs_phrases_list,NULL, NULL },
    { d_agup_push_proc,  325, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add level",        NULL, (void *)eof_manage_rs_phrases_add_level },
    { d_agup_push_proc,  325, 124, 68,  28,  2,   23,  'd',  D_EXIT, 0,   0,   "&Del level",        NULL, (void *)eof_manage_rs_phrases_remove_level },
@@ -4909,6 +4909,7 @@ int eof_menu_song_rs_popup_add(void)
 {
 	unsigned long start, duration, i;
 	unsigned long sel_start = 0, sel_end = 0;	//Will track the range of selected notes if any
+	char failed = 0;
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded or if an invalid catalog entry is selected
@@ -4959,12 +4960,24 @@ int eof_menu_song_rs_popup_add(void)
 
 		if(!duration)
 		{	//If the given duration is not valid
-			allegro_message("The popup message must have a duration");
+			allegro_message("The popup message must have a duration.");
 		}
 		else
 		{
-			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			(void) eof_track_add_section(eof_song, eof_selected_track, EOF_RS_POPUP_MESSAGE, 0, start, start + duration, 0, eof_etext);
+			for(i = 0; i < ustrlen(eof_etext); i ++)
+			{	//For each character in the user-specified string
+				if((ugetat(eof_etext, i) == '(') || (ugetat(eof_etext, i) == ')'))
+				{	//If the character is an open or close parenthesis
+					allegro_message("Rocksmith does not allow parentheses () in popup messages.");
+					failed = 1;
+					break;
+				}
+			}
+			if(!failed)
+			{	//If no parentheses were found in the string
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				(void) eof_track_add_section(eof_song, eof_selected_track, EOF_RS_POPUP_MESSAGE, 0, start, start + duration, 0, eof_etext);
+			}
 		}
 	}
 
@@ -4974,13 +4987,14 @@ int eof_menu_song_rs_popup_add(void)
 	return 1;
 }
 
-char **eof_rs_popup_messages_list_strings = NULL;		//Stores allocated strings for eof_menu_song_rs_popup_messages()
-char eof_rs_popup_messages_dialog_undo_made = 0;		//Used to track whether an undo state was made in this dialog
+char **eof_rs_popup_messages_list_strings = NULL;	//Stores allocated strings for eof_menu_song_rs_popup_messages()
+char eof_rs_popup_messages_dialog_undo_made = 0;	//Used to track whether an undo state was made in this dialog
+char eof_rs_popup_messages_dialog_string[25] = {0};	//The title string for the RS popup messages dialog
 
 DIALOG eof_rs_popup_messages_dialog[] =
 {
    /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-   { d_agup_window_proc,0,   48,  400, 237, 2,   23,  0,    0,      0,   0,   "RS popup messages",       NULL, NULL },
+   { d_agup_window_proc,0,   48,  400, 237, 2,   23,  0,    0,      0,   0,   eof_rs_popup_messages_dialog_string,NULL, NULL },
    { d_agup_list_proc,  12,  84,  300, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_rs_popup_messages_list,NULL, NULL },
    { d_agup_push_proc,  320, 84,  68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, (void *)eof_rs_popup_messages_delete },
    { d_agup_push_proc,  320, 124, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete all",   NULL, (void *)eof_rs_popup_messages_delete_all },
@@ -4989,6 +5003,24 @@ DIALOG eof_rs_popup_messages_dialog[] =
    { d_agup_button_proc,12,  245, 90,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
+
+char * eof_rs_popup_messages_list(int index, int * size)
+{
+	switch(index)
+	{
+		case -1:
+		{
+			*size = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum]->popupmessages;
+			(void) snprintf(eof_rs_popup_messages_dialog_string, sizeof(eof_rs_popup_messages_dialog_string) - 1, "RS popup messages (%lu)", eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum]->popupmessages);
+			break;
+		}
+		default:
+		{
+			return eof_rs_popup_messages_list_strings[index];
+		}
+	}
+	return NULL;
+}
 
 void eof_rebuild_rs_popup_messages_list_strings(void)
 {
@@ -5081,23 +5113,6 @@ int eof_menu_song_rs_popup_messages(void)
 	eof_rs_popup_messages_list_strings = NULL;
 
 	return 1;
-}
-
-char * eof_rs_popup_messages_list(int index, int * size)
-{
-	switch(index)
-	{
-		case -1:
-		{
-			*size = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum]->popupmessages;
-			break;
-		}
-		default:
-		{
-			return eof_rs_popup_messages_list_strings[index];
-		}
-	}
-	return NULL;
 }
 
 int eof_song_qsort_popup_messages(const void * e1, const void * e2)
@@ -5201,6 +5216,7 @@ int eof_rs_popup_messages_edit(DIALOG * d)
 	unsigned long start, duration, i, tracknum;
 	EOF_PHRASE_SECTION *ptr;
 	EOF_PRO_GUITAR_TRACK *tp;
+	char failed = 0;
 
 	if(!d)
 	{	//Satisfy Splint by checking value of d
@@ -5235,8 +5251,17 @@ int eof_rs_popup_messages_edit(DIALOG * d)
 		}
 		else
 		{
-			if(ustrcmp(eof_etext, ptr->name) || (start != ptr->start_pos) || (duration != ptr->end_pos - ptr->start_pos))
-			{	//If any of the popup's fields were edited
+			for(i = 0; i < ustrlen(eof_etext); i ++)
+			{	//For each character in the user-specified string
+				if((ugetat(eof_etext, i) == '(') || (ugetat(eof_etext, i) == ')'))
+				{	//If the character is an open or close parenthesis
+					allegro_message("Rocksmith does not allow parentheses () in popup messages.");
+					failed = 1;
+					break;
+				}
+			}
+			if(!failed && (ustrcmp(eof_etext, ptr->name) || (start != ptr->start_pos) || (duration != ptr->end_pos - ptr->start_pos)))
+			{	//If no parentheses were found and any of the popup's fields were edited
 				if(!eof_rs_popup_messages_dialog_undo_made)
 				{	//If an undo state hasn't been made yet since launching this dialog
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);

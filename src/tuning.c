@@ -10,7 +10,7 @@
 
 char *eof_note_names_flat[12] =		{"A","Bb","B","C","Db","D","Eb","E","F","Gb","G","Ab"};		//The name of each scale in order from 0 (0 semitones above A) to 11 (11 semitones above A)
 char *eof_note_names_sharp[12] =	{"A","A#","B","C","C#","D","D#","E","F","F#","G","G#"};		//The name of each scale in order from 0 (0 semitones above A) to 11 (11 semitones above A)
-char **eof_note_names =	eof_note_names_sharp;	//By default, display scales with sharp accidentals
+char **eof_note_names = eof_note_names_sharp;	//By default, display scales with sharp accidentals
 char *eof_slash_note_names_flat[12] =	{"/A","/Bb","/B","/C","/Db","/D","/Eb","/E","/F","/Gb","/G","/Ab"};	//The suffix of each type of slash chord
 char *eof_slash_note_names_sharp[12] =	{"/A","/A#","/B","/C","/C#","/D","/D#","/E","/F","/F#","/G","/G#"};
 char **eof_slash_note_names = eof_slash_note_names_sharp;	//By default, display slash chords with sharp accidentals
