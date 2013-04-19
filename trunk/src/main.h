@@ -469,6 +469,7 @@ unsigned long eof_count_selected_notes(unsigned long * total, char v);
 	//Returns the number of notes selected in the active instrument difficulty
 	//If total is not NULL, its value is incremented once for each note in the active difficulty
 void eof_fix_waveform_graph(void);	//Rebuild the waveform graph data if it exists
+void eof_fix_spectrogram_graph(void);	//Rebuild the waveform graph data if it exists
 void eof_clear_input(void);
 void eof_prepare_undo(int type);
 int eof_figure_difficulty(void);	//Returns -1 if the active track difficulty has no notes or pitched lyrics.  If the vocal track is active and has at least one pitched lyric, 0 is returned, otherwise the number of notes is returned

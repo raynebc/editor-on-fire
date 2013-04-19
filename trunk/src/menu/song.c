@@ -14,6 +14,7 @@
 #include "../undo.h"
 #include "../player.h"
 #include "../waveform.h"
+#include "../spectrogram.h"
 #include "../silence.h"
 #include "../song.h"
 #include "../tuning.h"
@@ -120,6 +121,13 @@ MENU eof_waveform_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_spectrogram_menu[] =
+{
+    {"&Show", eof_menu_song_spectrogram, NULL, 0, NULL},
+    {"&Configure", eof_menu_song_spectrogram_settings, NULL, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
+};
+
 DIALOG eof_note_set_num_frets_strings_dialog[] =
 {
    /* (proc)                  (x)  (y) (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)  (            dp2) (dp3) */
@@ -201,6 +209,7 @@ MENU eof_song_menu[] =
     {"Display semitones as flat", eof_display_flats_menu, NULL, 0, NULL},
     {"Create image sequence", eof_create_image_sequence, NULL, 0, NULL},
     {"&Waveform Graph", NULL, eof_waveform_menu, 0, NULL},
+    {"Spectrogra&m", NULL, eof_spectrogram_menu, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"&Catalog", NULL, eof_catalog_menu, 0, NULL},
     {"&INI Settings", eof_menu_song_ini_settings, NULL, 0, NULL},
@@ -1645,6 +1654,45 @@ int eof_menu_song_waveform(void)
 	return 0;	//Return success
 }
 
+int eof_menu_song_spectrogram(void)
+{
+    if(!eof_song_loaded)
+        return 1;	//Return error
+
+    if(eof_display_spectrogram == 0)
+    {
+        if(eof_music_paused)
+        {	//Don't try to generate the spectrogram data if the chart is playing
+            if(eof_spectrogram == NULL)
+            {
+                eof_spectrogram = eof_create_spectrogram(eof_loaded_ogg_name);	//Generate 1ms spectrogram data from the current audio file
+            }
+            else if(ustricmp(eof_spectrogram->oggfilename,eof_loaded_ogg_name) != 0)
+            {	//If the user opened a different OGG file since the spectrogram data was generated
+                eof_destroy_spectrogram(eof_spectrogram);
+                eof_spectrogram = eof_create_spectrogram(eof_loaded_ogg_name);	//Generate 1ms spectrogram data from the current audio file
+            }
+        }
+
+        if(eof_spectrogram != NULL)
+        {
+            eof_display_spectrogram = 1;
+            eof_spectrogram_menu[0].flags = D_SELECTED;	//Check the Show item in the Song>Waveform graph menu
+        }
+    }
+    else
+    {
+        eof_display_spectrogram = 0;
+        eof_spectrogram_menu[0].flags = 0;	//Clear the Show item in the Song>Waveform graph menu
+    }
+
+    if(eof_music_paused)
+        eof_render();
+    eof_fix_window_title();
+
+    return 0;	//Return success
+}
+
 DIALOG eof_leading_silence_dialog[] =
 {
    /* (proc) 		        (x)	(y)	(w)	(h)	(fg) (bg) (key) (flags)	(d1)(d2)(dp)						(dp2) (dp3) */
@@ -2042,6 +2090,146 @@ int eof_menu_song_waveform_settings(void)
 		{
 			eof_waveform_renderrightchannel = 0;
 		}
+	}
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	return 1;
+}
+
+int eof_spectrogram_settings_wsize[] = {32,128,512,1024,2048};
+DIALOG eof_spectrogram_settings_dialog[] =
+{
+   /* (proc) 		        (x)	(y)	(w)	(h)	(fg) (bg) (key) (flags)	(d1)(d2)(dp)						(dp2) (dp3) */
+   { d_agup_window_proc,  	0,	48,	200,400,2,   23,  0,    0,      0,	0,	"Configure Waveform Graph",	NULL, NULL },
+   { d_agup_text_proc,		16,	80,	64,	8,	2,   23,  0,    0,      0,	0,	"Fit into:",				NULL, NULL },
+   { d_agup_radio_proc,		16,	100,110,15,	2,   23,  0,    0,      0,	0,	"Fretboard area",			NULL, NULL },
+   { d_agup_radio_proc,		16,	120,110,15,	2,   23,  0,    0,      0,	0,	"Editor window",			NULL, NULL },
+   { d_agup_text_proc,		16,	140,80,16,	2,   23,  0,    0,		1,	0,	"Display channels:",		NULL, NULL },
+   { d_agup_check_proc,		16,	160,45,16,	2,   23,  0,    0,		1,	0,	"Left",						NULL, NULL },
+   { d_agup_check_proc,		16,	180,55,16,	2,   23,  0,    0,		1,	0,	"Right",					NULL, NULL },
+   { d_agup_text_proc,		16,	200,64,	8,	2,   23,  0,    0,      0,	0,	"Window size:",				NULL, NULL },
+   { d_agup_radio_proc,		16,	220,45,15,	2,   23,  0,    0,      1,	0,	"32",           			NULL, NULL },
+   { d_agup_radio_proc,		16,	240,45,15,	2,   23,  0,    0,      1,	0,	"128",           			NULL, NULL },
+   { d_agup_radio_proc,		16,	260,45,15,	2,   23,  0,    0,      1,	0,	"512",           			NULL, NULL },
+   { d_agup_radio_proc,		16,	280,45,15,	2,   23,  0,    0,      1,	0,	"1024",           			NULL, NULL },
+   { d_agup_radio_proc,		16,	300,45,15,	2,   23,  0,    0,      1,	0,	"2048",           			NULL, NULL },
+   { d_agup_radio_proc,		16,	320,59,15,	2,   23,  0,    0,      1,	0,	"Other",           			NULL, NULL },
+   { d_agup_edit_proc,      75, 317,50,20,  0,   0,   0,    0,      255, 0, eof_etext,                  NULL, NULL },
+   { d_agup_text_proc,		16,	340,64,	8,	2,   23,  0,    0,      0,	0,	"Color scheme:",			NULL, NULL },
+   { d_agup_radio_proc,		16,	360,100,15,	2,   23,  0,    0,      2,	0,	"Grayscale",           		NULL, NULL },
+   { d_agup_radio_proc,		16,	380,100,15,	2,   23,  0,    0,      2,	0,	"Color",           			NULL, NULL },
+   { d_agup_button_proc,	16,	408,68,	28,	2,   23,  '\r',	D_EXIT, 0,	0,	"OK",             			NULL, NULL },
+   { d_agup_button_proc,	116,408,68,	28,	2,   23,  0,	D_EXIT, 0,	0,	"Cancel",         			NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_menu_song_spectrogram_settings(void)
+{
+    int i;
+    int first_windowsize;
+    char custom_windowsize;
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_spectrogram_settings_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_spectrogram_settings_dialog);
+
+	eof_spectrogram_settings_dialog[2].flags = eof_spectrogram_settings_dialog[3].flags = 0;
+	if(eof_spectrogram_renderlocation == 0)
+	{	//If fit into fretboard is active
+		eof_spectrogram_settings_dialog[2].flags = D_SELECTED;
+	}
+	else
+	{	//If fit into editor window is active
+		eof_spectrogram_settings_dialog[3].flags = D_SELECTED;
+	}
+
+	eof_spectrogram_settings_dialog[5].flags = eof_spectrogram_settings_dialog[6].flags = 0;
+	if(eof_spectrogram_renderleftchannel)
+	{	//If the left channel is selected to be rendered
+		eof_spectrogram_settings_dialog[5].flags = D_SELECTED;
+	}
+	if(eof_spectrogram_renderrightchannel)
+	{	//If the left channel is selected to be rendered
+		eof_spectrogram_settings_dialog[6].flags = D_SELECTED;
+	}
+
+    eof_spectrogram_settings_dialog[8].flags 
+        = eof_spectrogram_settings_dialog[9].flags
+        = eof_spectrogram_settings_dialog[10].flags
+        = eof_spectrogram_settings_dialog[11].flags
+        = eof_spectrogram_settings_dialog[12].flags
+        = eof_spectrogram_settings_dialog[13].flags
+        = 0;
+    eof_etext[0] = '\0';
+
+    custom_windowsize = 1;
+    for(i=8;i<13;i++) {
+        if(eof_spectrogram_windowsize == eof_spectrogram_settings_wsize[i-8]) {
+            eof_spectrogram_settings_dialog[i].flags = D_SELECTED;
+            custom_windowsize = 0;
+        }
+    }
+    if(custom_windowsize) {
+        eof_spectrogram_settings_dialog[13].flags = D_SELECTED;
+        sprintf(eof_etext,"%d",eof_spectrogram_windowsize);
+    }
+
+    eof_spectrogram_settings_dialog[16].flags = eof_spectrogram_settings_dialog[17].flags = 0;
+    eof_spectrogram_settings_dialog[16 + eof_spectrogram_colorscheme].flags = D_SELECTED;
+
+	if(eof_popup_dialog(eof_spectrogram_settings_dialog, 0) == 18)		//User clicked OK
+	{
+		if(eof_spectrogram_settings_dialog[2].flags == D_SELECTED)
+		{	//User selected to render into fretboard area
+			eof_spectrogram_renderlocation = 0;
+		}
+		else
+		{	//User selected to render into editor window
+			eof_spectrogram_renderlocation = 1;
+		}
+		if(eof_spectrogram_settings_dialog[5].flags == D_SELECTED)
+		{	//User selected to render the left channel
+			eof_spectrogram_renderleftchannel = 1;
+		}
+		else
+		{
+			eof_spectrogram_renderleftchannel = 0;
+		}
+		if(eof_spectrogram_settings_dialog[6].flags == D_SELECTED)
+		{	//User selected to render the right channel
+			eof_spectrogram_renderrightchannel = 1;
+		}
+		else
+		{
+			eof_spectrogram_renderrightchannel = 0;
+		}
+
+        first_windowsize = eof_spectrogram_windowsize;
+        //Run through the window sizes
+        for(i=8;i<13;i++) {
+            if(eof_spectrogram_settings_dialog[i].flags == D_SELECTED) {
+                eof_spectrogram_windowsize = eof_spectrogram_settings_wsize[i-8];
+            }
+        }
+        //Check for the Other box
+        if(eof_spectrogram_settings_dialog[13].flags == D_SELECTED) {
+            eof_spectrogram_windowsize = atoi(eof_etext);
+            if(eof_spectrogram_windowsize == 0) { eof_spectrogram_windowsize = 1024; }
+        }
+
+        //Reload the spectrogram if we changed the window size
+        if(eof_spectrogram_windowsize != first_windowsize && eof_spectrogram != NULL) {
+            eof_create_spectrogram(eof_spectrogram->oggfilename);
+        }
+
+        //Run through the color options
+        for(i=16;i<18;i++) {
+            if(eof_spectrogram_settings_dialog[i].flags == D_SELECTED) {
+                eof_spectrogram_colorscheme = i-16;
+            }
+        }
 	}
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
