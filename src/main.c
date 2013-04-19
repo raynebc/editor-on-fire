@@ -40,6 +40,7 @@
 #include "mix.h"
 #include "control.h"
 #include "waveform.h"
+#include "spectrogram.h"
 #include "silence.h"
 #include "tuning.h"
 #include "ini_import.h"
@@ -1582,6 +1583,26 @@ void eof_fix_waveform_graph(void)
 			eof_waveform_menu[0].flags = 0;	//Clear the Show item in the Song>Waveform graph menu
 		}
 	}
+}
+
+void eof_fix_spectrogram_graph(void)
+{
+    eof_log("eof_fix_spectrogram_graph() entered", 1);
+
+    if(eof_music_paused && eof_spectrogram)
+    {
+        eof_destroy_spectrogram(eof_spectrogram);
+        eof_spectrogram = eof_create_spectrogram(eof_loaded_ogg_name);	//Generate 1ms spectrogram data from the current audio file
+        if(eof_spectrogram)
+        {
+            eof_spectrogram_menu[0].flags = D_SELECTED;	//Check the Show item in the Song>Waveform graph menu
+        }
+        else
+        {
+            eof_display_spectrogram = 0;
+            eof_spectrogram_menu[0].flags = 0;	//Clear the Show item in the Song>Waveform graph menu
+        }
+    }
 }
 
 /* read keys that are universally usable */
@@ -4005,6 +4026,8 @@ void eof_exit(void)
 	eof_destroy_song(eof_song);	//Frees memory used by any currently loaded chart
 	eof_destroy_waveform(eof_waveform);	//Frees memory used by any currently loaded waveform data
 	eof_waveform = NULL;
+    eof_destroy_spectrogram(eof_spectrogram);	//Frees memory used by any currently loaded spectrogram data
+    eof_spectrogram = NULL;
 	eof_window_destroy(eof_window_editor);
 	eof_window_destroy(eof_window_note_lower_left);
 	eof_window_destroy(eof_window_note_upper_left);
@@ -4190,6 +4213,7 @@ void eof_init_after_load(char initaftersavestate)
 		eof_change_count = 0;
 		eof_selected_catalog_entry = 0;
 		eof_display_waveform = 0;
+		eof_display_spectrogram = 0;
 		eof_catalog_menu[0].flags = 0;	//Hide the fret catalog by default
 		eof_select_beat(0);
 		eof_undo_reset();

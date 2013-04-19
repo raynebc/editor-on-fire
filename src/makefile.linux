@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -O2 -fomit-frame-pointer -ffast-math -funroll-loops -Ialogg/include -DEOF_BUILD
-LIBS = `allegro-config --libs` -logg -lvorbisfile
+LIBS = `allegro-config --libs` -logg -lvorbisfile -lm -lfftw3
 
 include makefile.common
 

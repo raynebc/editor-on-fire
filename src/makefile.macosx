@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -O2 -fomit-frame-pointer -ffast-math -arch i386 -arch ppc -mmacosx-version-min=10.5 -funroll-loops -Ialogg/include -DEOF_BUILD
-LIBS = `allegro-config --libs` -framework Cocoa -framework Carbon -framework IOKit -framework System -framework CoreAudio -framework AudioUnit -framework AudioToolBox -framework QuickTime -logg -lvorbis -lvorbisfile
+LIBS = `allegro-config --libs` -framework Cocoa -framework Carbon -framework IOKit -framework System -framework CoreAudio -framework AudioUnit -framework AudioToolBox -framework QuickTime -logg -lvorbis -lvorbisfile -lm -lfftw3
 
 include makefile.common
 

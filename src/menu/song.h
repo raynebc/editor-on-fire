@@ -11,6 +11,7 @@ extern MENU eof_lyric_line_menu[];
 extern MENU eof_song_seek_menu[];
 extern MENU eof_song_seek_bookmark_menu[];
 extern MENU eof_waveform_menu[];
+extern MENU eof_spectrogram_menu[];
 extern MENU eof_song_proguitar_menu[];
 extern MENU eof_song_menu[];
 
@@ -27,6 +28,8 @@ extern char eof_fret_hand_position_list_dialog_undo_made;	//Used to track an und
 extern char eof_fret_hand_position_list_dialog_title_string[30];	//This will be rebuilt by the list box count function to display the number of positions present
 
 extern char eof_menu_song_difficulty_list_strings[256][4];	//Used for the "paste from difficulty" and "fret hand positions>Copy From" menu functions
+
+extern int eof_spectrogram_settings_wsize[];	//A list of window sizes for the spectrogram
 
 void eof_prepare_song_menu(void);
 
@@ -100,6 +103,8 @@ int eof_menu_track_selected_track_number(int tracknum);	//Changes to the specifi
 
 int eof_menu_song_waveform_settings(void);
 int eof_menu_song_waveform(void);	//Toggle the display of the waveform on/off, generating the waveform data if necessary
+int eof_menu_song_spectrogram_settings(void);
+int eof_menu_song_spectrogram(void);	//Toggle the display of the spectrogram on/off, generating the spectrogram data if necessary
 int eof_menu_song_add_silence(void);
 
 int eof_menu_song_open_bass(void);		//Toggle the ability to use a sixth lane in PART BASS on/off
