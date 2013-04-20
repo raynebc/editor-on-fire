@@ -15,13 +15,13 @@
 
 MENU eof_main_menu[] =
 {
-    {"&File", NULL, eof_file_menu, 0, NULL},
-    {"&Edit", NULL, eof_edit_menu, D_DISABLED, NULL},
-    {"&Song", NULL, eof_song_menu, D_DISABLED, NULL},
-    {"&Note", NULL, eof_note_menu, D_DISABLED, NULL},
-    {"&Beat", NULL, eof_beat_menu, D_DISABLED, NULL},
-    {"&Help", NULL, eof_help_menu, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&File", NULL, eof_file_menu, 0, NULL},
+	{"&Edit", NULL, eof_edit_menu, D_DISABLED, NULL},
+	{"&Song", NULL, eof_song_menu, D_DISABLED, NULL},
+	{"&Note", NULL, eof_note_menu, D_DISABLED, NULL},
+	{"&Beat", NULL, eof_beat_menu, D_DISABLED, NULL},
+	{"&Help", NULL, eof_help_menu, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 void eof_prepare_main_menu(void)

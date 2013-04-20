@@ -31,379 +31,379 @@ char eof_tremolo_menu_text[32] = "Tremolo";
 char eof_menu_solo_copy_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
 MENU eof_menu_solo_copy_menu[EOF_TRACKS_MAX] =
 {
-    {eof_menu_solo_copy_menu_text[0], eof_menu_copy_solos_track_1, NULL, D_SELECTED, NULL},
-    {eof_menu_solo_copy_menu_text[1], eof_menu_copy_solos_track_2, NULL, 0, NULL},
-    {eof_menu_solo_copy_menu_text[2], eof_menu_copy_solos_track_3, NULL, 0, NULL},
-    {eof_menu_solo_copy_menu_text[3], eof_menu_copy_solos_track_4, NULL, 0, NULL},
-    {eof_menu_solo_copy_menu_text[4], eof_menu_copy_solos_track_5, NULL, 0, NULL},
-    {eof_menu_solo_copy_menu_text[5], eof_menu_copy_solos_track_6, NULL, 0, NULL},
-    {eof_menu_solo_copy_menu_text[6], eof_menu_copy_solos_track_7, NULL, 0, NULL},
-    {eof_menu_solo_copy_menu_text[7], eof_menu_copy_solos_track_8, NULL, 0, NULL},
-    {eof_menu_solo_copy_menu_text[8], eof_menu_copy_solos_track_9, NULL, 0, NULL},
-    {eof_menu_solo_copy_menu_text[9], eof_menu_copy_solos_track_10, NULL, 0, NULL},
-    {eof_menu_solo_copy_menu_text[10], eof_menu_copy_solos_track_11, NULL, 0, NULL},
-    {eof_menu_solo_copy_menu_text[11], eof_menu_copy_solos_track_12, NULL, 0, NULL},
-    {eof_menu_solo_copy_menu_text[12], eof_menu_copy_solos_track_13, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{eof_menu_solo_copy_menu_text[0], eof_menu_copy_solos_track_1, NULL, D_SELECTED, NULL},
+	{eof_menu_solo_copy_menu_text[1], eof_menu_copy_solos_track_2, NULL, 0, NULL},
+	{eof_menu_solo_copy_menu_text[2], eof_menu_copy_solos_track_3, NULL, 0, NULL},
+	{eof_menu_solo_copy_menu_text[3], eof_menu_copy_solos_track_4, NULL, 0, NULL},
+	{eof_menu_solo_copy_menu_text[4], eof_menu_copy_solos_track_5, NULL, 0, NULL},
+	{eof_menu_solo_copy_menu_text[5], eof_menu_copy_solos_track_6, NULL, 0, NULL},
+	{eof_menu_solo_copy_menu_text[6], eof_menu_copy_solos_track_7, NULL, 0, NULL},
+	{eof_menu_solo_copy_menu_text[7], eof_menu_copy_solos_track_8, NULL, 0, NULL},
+	{eof_menu_solo_copy_menu_text[8], eof_menu_copy_solos_track_9, NULL, 0, NULL},
+	{eof_menu_solo_copy_menu_text[9], eof_menu_copy_solos_track_10, NULL, 0, NULL},
+	{eof_menu_solo_copy_menu_text[10], eof_menu_copy_solos_track_11, NULL, 0, NULL},
+	{eof_menu_solo_copy_menu_text[11], eof_menu_copy_solos_track_12, NULL, 0, NULL},
+	{eof_menu_solo_copy_menu_text[12], eof_menu_copy_solos_track_13, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_solo_menu[] =
 {
-    {eof_solo_menu_mark_text, eof_menu_solo_mark, NULL, 0, NULL},
-    {"&Remove", eof_menu_solo_unmark, NULL, 0, NULL},
-    {"&Erase All", eof_menu_solo_erase_all, NULL, 0, NULL},
-    {"&Copy From", NULL, eof_menu_solo_copy_menu, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{eof_solo_menu_mark_text, eof_menu_solo_mark, NULL, 0, NULL},
+	{"&Remove", eof_menu_solo_unmark, NULL, 0, NULL},
+	{"&Erase All", eof_menu_solo_erase_all, NULL, 0, NULL},
+	{"&Copy From", NULL, eof_menu_solo_copy_menu, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 char eof_menu_sp_copy_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
 MENU eof_menu_sp_copy_menu[EOF_TRACKS_MAX] =
 {
-    {eof_menu_sp_copy_menu_text[0], eof_menu_copy_sp_track_1, NULL, D_SELECTED, NULL},
-    {eof_menu_sp_copy_menu_text[1], eof_menu_copy_sp_track_2, NULL, 0, NULL},
-    {eof_menu_sp_copy_menu_text[2], eof_menu_copy_sp_track_3, NULL, 0, NULL},
-    {eof_menu_sp_copy_menu_text[3], eof_menu_copy_sp_track_4, NULL, 0, NULL},
-    {eof_menu_sp_copy_menu_text[4], eof_menu_copy_sp_track_5, NULL, 0, NULL},
-    {eof_menu_sp_copy_menu_text[5], eof_menu_copy_sp_track_6, NULL, 0, NULL},
-    {eof_menu_sp_copy_menu_text[6], eof_menu_copy_sp_track_7, NULL, 0, NULL},
-    {eof_menu_sp_copy_menu_text[7], eof_menu_copy_sp_track_8, NULL, 0, NULL},
-    {eof_menu_sp_copy_menu_text[8], eof_menu_copy_sp_track_9, NULL, 0, NULL},
-    {eof_menu_sp_copy_menu_text[9], eof_menu_copy_sp_track_10, NULL, 0, NULL},
-    {eof_menu_sp_copy_menu_text[10], eof_menu_copy_sp_track_11, NULL, 0, NULL},
-    {eof_menu_sp_copy_menu_text[11], eof_menu_copy_sp_track_12, NULL, 0, NULL},
-    {eof_menu_sp_copy_menu_text[12], eof_menu_copy_sp_track_13, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{eof_menu_sp_copy_menu_text[0], eof_menu_copy_sp_track_1, NULL, D_SELECTED, NULL},
+	{eof_menu_sp_copy_menu_text[1], eof_menu_copy_sp_track_2, NULL, 0, NULL},
+	{eof_menu_sp_copy_menu_text[2], eof_menu_copy_sp_track_3, NULL, 0, NULL},
+	{eof_menu_sp_copy_menu_text[3], eof_menu_copy_sp_track_4, NULL, 0, NULL},
+	{eof_menu_sp_copy_menu_text[4], eof_menu_copy_sp_track_5, NULL, 0, NULL},
+	{eof_menu_sp_copy_menu_text[5], eof_menu_copy_sp_track_6, NULL, 0, NULL},
+	{eof_menu_sp_copy_menu_text[6], eof_menu_copy_sp_track_7, NULL, 0, NULL},
+	{eof_menu_sp_copy_menu_text[7], eof_menu_copy_sp_track_8, NULL, 0, NULL},
+	{eof_menu_sp_copy_menu_text[8], eof_menu_copy_sp_track_9, NULL, 0, NULL},
+	{eof_menu_sp_copy_menu_text[9], eof_menu_copy_sp_track_10, NULL, 0, NULL},
+	{eof_menu_sp_copy_menu_text[10], eof_menu_copy_sp_track_11, NULL, 0, NULL},
+	{eof_menu_sp_copy_menu_text[11], eof_menu_copy_sp_track_12, NULL, 0, NULL},
+	{eof_menu_sp_copy_menu_text[12], eof_menu_copy_sp_track_13, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_star_power_menu[] =
 {
-    {eof_star_power_menu_mark_text, eof_menu_star_power_mark, NULL, 0, NULL},
-    {"&Remove", eof_menu_star_power_unmark, NULL, 0, NULL},
-    {"&Erase All", eof_menu_star_power_erase_all, NULL, 0, NULL},
-    {"&Copy From", NULL, eof_menu_sp_copy_menu, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{eof_star_power_menu_mark_text, eof_menu_star_power_mark, NULL, 0, NULL},
+	{"&Remove", eof_menu_star_power_unmark, NULL, 0, NULL},
+	{"&Erase All", eof_menu_star_power_erase_all, NULL, 0, NULL},
+	{"&Copy From", NULL, eof_menu_sp_copy_menu, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_lyric_line_menu[] =
 {
-    {eof_lyric_line_menu_mark_text, eof_menu_lyric_line_mark, NULL, 0, NULL},
-    {"&Remove", eof_menu_lyric_line_unmark, NULL, 0, NULL},
-    {"&Erase All", eof_menu_lyric_line_erase_all, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"&Toggle Overdrive", eof_menu_lyric_line_toggle_overdrive, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{eof_lyric_line_menu_mark_text, eof_menu_lyric_line_mark, NULL, 0, NULL},
+	{"&Remove", eof_menu_lyric_line_unmark, NULL, 0, NULL},
+	{"&Erase All", eof_menu_lyric_line_erase_all, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"&Toggle Overdrive", eof_menu_lyric_line_toggle_overdrive, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 char eof_menu_arpeggio_copy_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
 MENU eof_menu_arpeggio_copy_menu[EOF_TRACKS_MAX] =
 {
-    {eof_menu_arpeggio_copy_menu_text[0], eof_menu_copy_arpeggio_track_1, NULL, D_SELECTED, NULL},
-    {eof_menu_arpeggio_copy_menu_text[1], eof_menu_copy_arpeggio_track_2, NULL, 0, NULL},
-    {eof_menu_arpeggio_copy_menu_text[2], eof_menu_copy_arpeggio_track_3, NULL, 0, NULL},
-    {eof_menu_arpeggio_copy_menu_text[3], eof_menu_copy_arpeggio_track_4, NULL, 0, NULL},
-    {eof_menu_arpeggio_copy_menu_text[4], eof_menu_copy_arpeggio_track_5, NULL, 0, NULL},
-    {eof_menu_arpeggio_copy_menu_text[5], eof_menu_copy_arpeggio_track_6, NULL, 0, NULL},
-    {eof_menu_arpeggio_copy_menu_text[6], eof_menu_copy_arpeggio_track_7, NULL, 0, NULL},
-    {eof_menu_arpeggio_copy_menu_text[7], eof_menu_copy_arpeggio_track_8, NULL, 0, NULL},
-    {eof_menu_arpeggio_copy_menu_text[8], eof_menu_copy_arpeggio_track_9, NULL, 0, NULL},
-    {eof_menu_arpeggio_copy_menu_text[9], eof_menu_copy_arpeggio_track_10, NULL, 0, NULL},
-    {eof_menu_arpeggio_copy_menu_text[10], eof_menu_copy_arpeggio_track_11, NULL, 0, NULL},
-    {eof_menu_arpeggio_copy_menu_text[11], eof_menu_copy_arpeggio_track_12, NULL, 0, NULL},
-    {eof_menu_arpeggio_copy_menu_text[12], eof_menu_copy_arpeggio_track_13, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{eof_menu_arpeggio_copy_menu_text[0], eof_menu_copy_arpeggio_track_1, NULL, D_SELECTED, NULL},
+	{eof_menu_arpeggio_copy_menu_text[1], eof_menu_copy_arpeggio_track_2, NULL, 0, NULL},
+	{eof_menu_arpeggio_copy_menu_text[2], eof_menu_copy_arpeggio_track_3, NULL, 0, NULL},
+	{eof_menu_arpeggio_copy_menu_text[3], eof_menu_copy_arpeggio_track_4, NULL, 0, NULL},
+	{eof_menu_arpeggio_copy_menu_text[4], eof_menu_copy_arpeggio_track_5, NULL, 0, NULL},
+	{eof_menu_arpeggio_copy_menu_text[5], eof_menu_copy_arpeggio_track_6, NULL, 0, NULL},
+	{eof_menu_arpeggio_copy_menu_text[6], eof_menu_copy_arpeggio_track_7, NULL, 0, NULL},
+	{eof_menu_arpeggio_copy_menu_text[7], eof_menu_copy_arpeggio_track_8, NULL, 0, NULL},
+	{eof_menu_arpeggio_copy_menu_text[8], eof_menu_copy_arpeggio_track_9, NULL, 0, NULL},
+	{eof_menu_arpeggio_copy_menu_text[9], eof_menu_copy_arpeggio_track_10, NULL, 0, NULL},
+	{eof_menu_arpeggio_copy_menu_text[10], eof_menu_copy_arpeggio_track_11, NULL, 0, NULL},
+	{eof_menu_arpeggio_copy_menu_text[11], eof_menu_copy_arpeggio_track_12, NULL, 0, NULL},
+	{eof_menu_arpeggio_copy_menu_text[12], eof_menu_copy_arpeggio_track_13, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_arpeggio_menu[] =
 {
-    {eof_arpeggio_menu_mark_text, eof_menu_arpeggio_mark, NULL, 0, NULL},
-    {"&Remove", eof_menu_arpeggio_unmark, NULL, 0, NULL},
-    {"&Erase All", eof_menu_arpeggio_erase_all, NULL, 0, NULL},
-    {"&Copy From", NULL, eof_menu_arpeggio_copy_menu, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{eof_arpeggio_menu_mark_text, eof_menu_arpeggio_mark, NULL, 0, NULL},
+	{"&Remove", eof_menu_arpeggio_unmark, NULL, 0, NULL},
+	{"&Erase All", eof_menu_arpeggio_erase_all, NULL, 0, NULL},
+	{"&Copy From", NULL, eof_menu_arpeggio_copy_menu, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_pro_guitar_slide_menu[] =
 {
-    {"Toggle slide &Up\t" CTRL_NAME "+Up", eof_menu_note_toggle_slide_up, NULL, 0, NULL},
-    {"Toggle slide &Down\t" CTRL_NAME "+Down", eof_menu_note_toggle_slide_down, NULL, 0, NULL},
-    {"Remove &Slide", eof_menu_note_remove_slide, NULL, 0, NULL},
-    {"&Reverse slide", eof_menu_note_reverse_slide, NULL, 0, NULL},
-    {"Set &End fret\t" CTRL_NAME "+Shift+L", eof_pro_guitar_note_slide_end_fret_save, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"Toggle slide &Up\t" CTRL_NAME "+Up", eof_menu_note_toggle_slide_up, NULL, 0, NULL},
+	{"Toggle slide &Down\t" CTRL_NAME "+Down", eof_menu_note_toggle_slide_down, NULL, 0, NULL},
+	{"Remove &Slide", eof_menu_note_remove_slide, NULL, 0, NULL},
+	{"&Reverse slide", eof_menu_note_reverse_slide, NULL, 0, NULL},
+	{"Set &End fret\t" CTRL_NAME "+Shift+L", eof_pro_guitar_note_slide_end_fret_save, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_pro_guitar_strum_menu[] =
 {
-    {"Toggle strum &Up\tShift+Up", eof_pro_guitar_toggle_strum_up, NULL, 0, NULL},
-    {"Toggle strum &Mid\tShift+M", eof_pro_guitar_toggle_strum_mid, NULL, 0, NULL},
-    {"Toggle strum &Down\tShift+Down", eof_pro_guitar_toggle_strum_down, NULL, 0, NULL},
-    {"&Remove strum direction", eof_menu_note_remove_strum_direction, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"Toggle strum &Up\tShift+Up", eof_pro_guitar_toggle_strum_up, NULL, 0, NULL},
+	{"Toggle strum &Mid\tShift+M", eof_pro_guitar_toggle_strum_mid, NULL, 0, NULL},
+	{"Toggle strum &Down\tShift+Down", eof_pro_guitar_toggle_strum_down, NULL, 0, NULL},
+	{"&Remove strum direction", eof_menu_note_remove_strum_direction, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 char eof_menu_trill_copy_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
 MENU eof_menu_trill_copy_menu[EOF_TRACKS_MAX] =
 {
-    {eof_menu_trill_copy_menu_text[0], eof_menu_copy_trill_track_1, NULL, D_SELECTED, NULL},
-    {eof_menu_trill_copy_menu_text[1], eof_menu_copy_trill_track_2, NULL, 0, NULL},
-    {eof_menu_trill_copy_menu_text[2], eof_menu_copy_trill_track_3, NULL, 0, NULL},
-    {eof_menu_trill_copy_menu_text[3], eof_menu_copy_trill_track_4, NULL, 0, NULL},
-    {eof_menu_trill_copy_menu_text[4], eof_menu_copy_trill_track_5, NULL, 0, NULL},
-    {eof_menu_trill_copy_menu_text[5], eof_menu_copy_trill_track_6, NULL, 0, NULL},
-    {eof_menu_trill_copy_menu_text[6], eof_menu_copy_trill_track_7, NULL, 0, NULL},
-    {eof_menu_trill_copy_menu_text[7], eof_menu_copy_trill_track_8, NULL, 0, NULL},
-    {eof_menu_trill_copy_menu_text[8], eof_menu_copy_trill_track_9, NULL, 0, NULL},
-    {eof_menu_trill_copy_menu_text[9], eof_menu_copy_trill_track_10, NULL, 0, NULL},
-    {eof_menu_trill_copy_menu_text[10], eof_menu_copy_trill_track_11, NULL, 0, NULL},
-    {eof_menu_trill_copy_menu_text[11], eof_menu_copy_trill_track_12, NULL, 0, NULL},
-    {eof_menu_trill_copy_menu_text[12], eof_menu_copy_trill_track_13, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{eof_menu_trill_copy_menu_text[0], eof_menu_copy_trill_track_1, NULL, D_SELECTED, NULL},
+	{eof_menu_trill_copy_menu_text[1], eof_menu_copy_trill_track_2, NULL, 0, NULL},
+	{eof_menu_trill_copy_menu_text[2], eof_menu_copy_trill_track_3, NULL, 0, NULL},
+	{eof_menu_trill_copy_menu_text[3], eof_menu_copy_trill_track_4, NULL, 0, NULL},
+	{eof_menu_trill_copy_menu_text[4], eof_menu_copy_trill_track_5, NULL, 0, NULL},
+	{eof_menu_trill_copy_menu_text[5], eof_menu_copy_trill_track_6, NULL, 0, NULL},
+	{eof_menu_trill_copy_menu_text[6], eof_menu_copy_trill_track_7, NULL, 0, NULL},
+	{eof_menu_trill_copy_menu_text[7], eof_menu_copy_trill_track_8, NULL, 0, NULL},
+	{eof_menu_trill_copy_menu_text[8], eof_menu_copy_trill_track_9, NULL, 0, NULL},
+	{eof_menu_trill_copy_menu_text[9], eof_menu_copy_trill_track_10, NULL, 0, NULL},
+	{eof_menu_trill_copy_menu_text[10], eof_menu_copy_trill_track_11, NULL, 0, NULL},
+	{eof_menu_trill_copy_menu_text[11], eof_menu_copy_trill_track_12, NULL, 0, NULL},
+	{eof_menu_trill_copy_menu_text[12], eof_menu_copy_trill_track_13, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_trill_menu[] =
 {
-    {eof_trill_menu_mark_text, eof_menu_trill_mark, NULL, 0, NULL},
-    {"&Remove", eof_menu_trill_unmark, NULL, 0, NULL},
-    {"&Erase All", eof_menu_trill_erase_all, NULL, 0, NULL},
-    {"&Copy From", NULL, eof_menu_trill_copy_menu, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{eof_trill_menu_mark_text, eof_menu_trill_mark, NULL, 0, NULL},
+	{"&Remove", eof_menu_trill_unmark, NULL, 0, NULL},
+	{"&Erase All", eof_menu_trill_erase_all, NULL, 0, NULL},
+	{"&Copy From", NULL, eof_menu_trill_copy_menu, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 char eof_menu_tremolo_copy_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
 MENU eof_menu_tremolo_copy_menu[EOF_TRACKS_MAX] =
 {
-    {eof_menu_tremolo_copy_menu_text[0], eof_menu_copy_tremolo_track_1, NULL, D_SELECTED, NULL},
-    {eof_menu_tremolo_copy_menu_text[1], eof_menu_copy_tremolo_track_2, NULL, 0, NULL},
-    {eof_menu_tremolo_copy_menu_text[2], eof_menu_copy_tremolo_track_3, NULL, 0, NULL},
-    {eof_menu_tremolo_copy_menu_text[3], eof_menu_copy_tremolo_track_4, NULL, 0, NULL},
-    {eof_menu_tremolo_copy_menu_text[4], eof_menu_copy_tremolo_track_5, NULL, 0, NULL},
-    {eof_menu_tremolo_copy_menu_text[5], eof_menu_copy_tremolo_track_6, NULL, 0, NULL},
-    {eof_menu_tremolo_copy_menu_text[6], eof_menu_copy_tremolo_track_7, NULL, 0, NULL},
-    {eof_menu_tremolo_copy_menu_text[7], eof_menu_copy_tremolo_track_8, NULL, 0, NULL},
-    {eof_menu_tremolo_copy_menu_text[8], eof_menu_copy_tremolo_track_9, NULL, 0, NULL},
-    {eof_menu_tremolo_copy_menu_text[9], eof_menu_copy_tremolo_track_10, NULL, 0, NULL},
-    {eof_menu_tremolo_copy_menu_text[10], eof_menu_copy_tremolo_track_11, NULL, 0, NULL},
-    {eof_menu_tremolo_copy_menu_text[11], eof_menu_copy_tremolo_track_12, NULL, 0, NULL},
-    {eof_menu_tremolo_copy_menu_text[12], eof_menu_copy_tremolo_track_13, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{eof_menu_tremolo_copy_menu_text[0], eof_menu_copy_tremolo_track_1, NULL, D_SELECTED, NULL},
+	{eof_menu_tremolo_copy_menu_text[1], eof_menu_copy_tremolo_track_2, NULL, 0, NULL},
+	{eof_menu_tremolo_copy_menu_text[2], eof_menu_copy_tremolo_track_3, NULL, 0, NULL},
+	{eof_menu_tremolo_copy_menu_text[3], eof_menu_copy_tremolo_track_4, NULL, 0, NULL},
+	{eof_menu_tremolo_copy_menu_text[4], eof_menu_copy_tremolo_track_5, NULL, 0, NULL},
+	{eof_menu_tremolo_copy_menu_text[5], eof_menu_copy_tremolo_track_6, NULL, 0, NULL},
+	{eof_menu_tremolo_copy_menu_text[6], eof_menu_copy_tremolo_track_7, NULL, 0, NULL},
+	{eof_menu_tremolo_copy_menu_text[7], eof_menu_copy_tremolo_track_8, NULL, 0, NULL},
+	{eof_menu_tremolo_copy_menu_text[8], eof_menu_copy_tremolo_track_9, NULL, 0, NULL},
+	{eof_menu_tremolo_copy_menu_text[9], eof_menu_copy_tremolo_track_10, NULL, 0, NULL},
+	{eof_menu_tremolo_copy_menu_text[10], eof_menu_copy_tremolo_track_11, NULL, 0, NULL},
+	{eof_menu_tremolo_copy_menu_text[11], eof_menu_copy_tremolo_track_12, NULL, 0, NULL},
+	{eof_menu_tremolo_copy_menu_text[12], eof_menu_copy_tremolo_track_13, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_tremolo_menu[] =
 {
-    {eof_tremolo_menu_mark_text, eof_menu_tremolo_mark, NULL, 0, NULL},
-    {"&Remove", eof_menu_tremolo_unmark, NULL, 0, NULL},
-    {"&Erase All", eof_menu_tremolo_erase_all, NULL, 0, NULL},
-    {"&Copy From", NULL, eof_menu_tremolo_copy_menu, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{eof_tremolo_menu_mark_text, eof_menu_tremolo_mark, NULL, 0, NULL},
+	{"&Remove", eof_menu_tremolo_unmark, NULL, 0, NULL},
+	{"&Erase All", eof_menu_tremolo_erase_all, NULL, 0, NULL},
+	{"&Copy From", NULL, eof_menu_tremolo_copy_menu, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_slider_menu[] =
 {
-    {eof_slider_menu_mark_text, eof_menu_slider_mark, NULL, 0, NULL},
-    {"&Remove", eof_menu_slider_unmark, NULL, 0, NULL},
-    {"&Erase All", eof_menu_slider_erase_all, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{eof_slider_menu_mark_text, eof_menu_slider_mark, NULL, 0, NULL},
+	{"&Remove", eof_menu_slider_unmark, NULL, 0, NULL},
+	{"&Erase All", eof_menu_slider_erase_all, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_legacy_hopo_menu[] =
 {
-    {"&Auto", eof_menu_hopo_auto, NULL, 0, NULL},
-    {"&Force On", eof_menu_hopo_force_on, NULL, 0, NULL},
-    {"Force &Off", eof_menu_hopo_force_off, NULL, 0, NULL},
-    {"&Cycle On/Off/Auto\tH", eof_menu_hopo_cycle, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&Auto", eof_menu_hopo_auto, NULL, 0, NULL},
+	{"&Force On", eof_menu_hopo_force_on, NULL, 0, NULL},
+	{"Force &Off", eof_menu_hopo_force_off, NULL, 0, NULL},
+	{"&Cycle On/Off/Auto\tH", eof_menu_hopo_cycle, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_pro_guitar_hopo_menu[] =
 {
-    {"Toggle hammer on\tH", eof_menu_pro_guitar_toggle_hammer_on, NULL, 0, NULL},
-    {"Remove &Hammer on", eof_menu_pro_guitar_remove_hammer_on, NULL, 0, NULL},
-    {"Toggle pull off\tP", eof_menu_pro_guitar_toggle_pull_off, NULL, 0, NULL},
-    {"Remove &Pull off", eof_menu_pro_guitar_remove_pull_off, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"Toggle hammer on\tH", eof_menu_pro_guitar_toggle_hammer_on, NULL, 0, NULL},
+	{"Remove &Hammer on", eof_menu_pro_guitar_remove_hammer_on, NULL, 0, NULL},
+	{"Toggle pull off\tP", eof_menu_pro_guitar_toggle_pull_off, NULL, 0, NULL},
+	{"Remove &Pull off", eof_menu_pro_guitar_remove_pull_off, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_note_toggle_menu[] =
 {
-    {eof_note_toggle_menu_string_1, eof_menu_note_toggle_green, NULL, 0, NULL},
-    {eof_note_toggle_menu_string_2, eof_menu_note_toggle_red, NULL, 0, NULL},
-    {eof_note_toggle_menu_string_3, eof_menu_note_toggle_yellow, NULL, 0, NULL},
-    {eof_note_toggle_menu_string_4, eof_menu_note_toggle_blue, NULL, 0, NULL},
-    {eof_note_toggle_menu_string_5, eof_menu_note_toggle_purple, NULL, 0, NULL},
-    {eof_note_toggle_menu_string_6, eof_menu_note_toggle_orange, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{eof_note_toggle_menu_string_1, eof_menu_note_toggle_green, NULL, 0, NULL},
+	{eof_note_toggle_menu_string_2, eof_menu_note_toggle_red, NULL, 0, NULL},
+	{eof_note_toggle_menu_string_3, eof_menu_note_toggle_yellow, NULL, 0, NULL},
+	{eof_note_toggle_menu_string_4, eof_menu_note_toggle_blue, NULL, 0, NULL},
+	{eof_note_toggle_menu_string_5, eof_menu_note_toggle_purple, NULL, 0, NULL},
+	{eof_note_toggle_menu_string_6, eof_menu_note_toggle_orange, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_note_clear_menu[] =
 {
-    {eof_note_clear_menu_string_1, eof_menu_note_clear_green, NULL, 0, NULL},
-    {eof_note_clear_menu_string_2, eof_menu_note_clear_red, NULL, 0, NULL},
-    {eof_note_clear_menu_string_3, eof_menu_note_clear_yellow, NULL, 0, NULL},
-    {eof_note_clear_menu_string_4, eof_menu_note_clear_blue, NULL, 0, NULL},
-    {eof_note_clear_menu_string_5, eof_menu_note_clear_purple, NULL, 0, NULL},
-    {eof_note_clear_menu_string_6, eof_menu_note_clear_orange, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{eof_note_clear_menu_string_1, eof_menu_note_clear_green, NULL, 0, NULL},
+	{eof_note_clear_menu_string_2, eof_menu_note_clear_red, NULL, 0, NULL},
+	{eof_note_clear_menu_string_3, eof_menu_note_clear_yellow, NULL, 0, NULL},
+	{eof_note_clear_menu_string_4, eof_menu_note_clear_blue, NULL, 0, NULL},
+	{eof_note_clear_menu_string_5, eof_menu_note_clear_purple, NULL, 0, NULL},
+	{eof_note_clear_menu_string_6, eof_menu_note_clear_orange, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_note_freestyle_menu[] =
 {
-    {"&On", eof_menu_set_freestyle_on, NULL, 0, NULL},
-    {"O&ff", eof_menu_set_freestyle_off, NULL, 0, NULL},
-    {"&Toggle\tF", eof_menu_toggle_freestyle, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&On", eof_menu_set_freestyle_on, NULL, 0, NULL},
+	{"O&ff", eof_menu_set_freestyle_off, NULL, 0, NULL},
+	{"&Toggle\tF", eof_menu_toggle_freestyle, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_note_drum_hi_hat_menu[] =
 {
-    {"&Open hi hat",eof_menu_note_default_open_hi_hat, NULL, 0, NULL},
-    {"&Pedal hi hat",eof_menu_note_default_pedal_hi_hat, NULL, 0, NULL},
-    {"&Sizzle hi hat",eof_menu_note_default_sizzle_hi_hat, NULL, 0, NULL},
-    {"&Non hi hat",eof_menu_note_default_no_hi_hat, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&Open hi hat",eof_menu_note_default_open_hi_hat, NULL, 0, NULL},
+	{"&Pedal hi hat",eof_menu_note_default_pedal_hi_hat, NULL, 0, NULL},
+	{"&Sizzle hi hat",eof_menu_note_default_sizzle_hi_hat, NULL, 0, NULL},
+	{"&Non hi hat",eof_menu_note_default_no_hi_hat, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_note_drum_menu[] =
 {
-    {"Toggle Yellow cymbal\t" CTRL_NAME "+Y", eof_menu_note_toggle_rb3_cymbal_yellow, NULL, 0, NULL},
-    {"Toggle Blue cymbal\t" CTRL_NAME "+B", eof_menu_note_toggle_rb3_cymbal_blue, NULL, 0, NULL},
-    {"Toggle Green cymbal\t" CTRL_NAME "+G", eof_menu_note_toggle_rb3_cymbal_green, NULL, 0, NULL},
-    {"Mark as &Non cymbal", eof_menu_note_remove_cymbal, NULL, 0, NULL},
-    {"Mark new notes as &Cymbals", eof_menu_note_default_cymbal, NULL, 0, NULL},
-    {"Toggle expert+ bass drum\t" CTRL_NAME "+E", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
-    {"Remove &Expert+ bass drum", eof_menu_note_remove_double_bass, NULL, 0, NULL},
-    {"&Mark new notes as Expert+", eof_menu_note_default_double_bass, NULL, 0, NULL},
-    {"Toggle Y note as &Open hi hat\tShift+O", eof_menu_note_toggle_hi_hat_open, NULL, 0, NULL},
-    {"Toggle Y note as &Pedal hi hat\tShift+P",eof_menu_note_toggle_hi_hat_pedal, NULL, 0, NULL},
-    {"Toggle Y note as &Sizzle hi hat\tShift+S", eof_menu_note_toggle_hi_hat_sizzle, NULL, 0, NULL},
-    {"Remove &Hi hat status", eof_menu_note_remove_hi_hat_status, NULL, 0, NULL},
-    {"Mark new &Y notes as", NULL, eof_note_drum_hi_hat_menu, 0, NULL},
-    {"Toggle R note as rim shot\tShift+R",eof_menu_note_toggle_rimshot, NULL, 0, NULL},
-    {"Remove &Rim shot status", eof_menu_note_remove_rimshot, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"Toggle Yellow cymbal\t" CTRL_NAME "+Y", eof_menu_note_toggle_rb3_cymbal_yellow, NULL, 0, NULL},
+	{"Toggle Blue cymbal\t" CTRL_NAME "+B", eof_menu_note_toggle_rb3_cymbal_blue, NULL, 0, NULL},
+	{"Toggle Green cymbal\t" CTRL_NAME "+G", eof_menu_note_toggle_rb3_cymbal_green, NULL, 0, NULL},
+	{"Mark as &Non cymbal", eof_menu_note_remove_cymbal, NULL, 0, NULL},
+	{"Mark new notes as &Cymbals", eof_menu_note_default_cymbal, NULL, 0, NULL},
+	{"Toggle expert+ bass drum\t" CTRL_NAME "+E", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
+	{"Remove &Expert+ bass drum", eof_menu_note_remove_double_bass, NULL, 0, NULL},
+	{"&Mark new notes as Expert+", eof_menu_note_default_double_bass, NULL, 0, NULL},
+	{"Toggle Y note as &Open hi hat\tShift+O", eof_menu_note_toggle_hi_hat_open, NULL, 0, NULL},
+	{"Toggle Y note as &Pedal hi hat\tShift+P",eof_menu_note_toggle_hi_hat_pedal, NULL, 0, NULL},
+	{"Toggle Y note as &Sizzle hi hat\tShift+S", eof_menu_note_toggle_hi_hat_sizzle, NULL, 0, NULL},
+	{"Remove &Hi hat status", eof_menu_note_remove_hi_hat_status, NULL, 0, NULL},
+	{"Mark new &Y notes as", NULL, eof_note_drum_hi_hat_menu, 0, NULL},
+	{"Toggle R note as rim shot\tShift+R",eof_menu_note_toggle_rimshot, NULL, 0, NULL},
+	{"Remove &Rim shot status", eof_menu_note_remove_rimshot, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 char eof_menu_thin_notes_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
 MENU eof_menu_thin_notes_menu[EOF_TRACKS_MAX] =
 {
-    {eof_menu_thin_notes_menu_text[0], eof_menu_thin_notes_track_1, NULL, D_SELECTED, NULL},
-    {eof_menu_thin_notes_menu_text[1], eof_menu_thin_notes_track_2, NULL, 0, NULL},
-    {eof_menu_thin_notes_menu_text[2], eof_menu_thin_notes_track_3, NULL, 0, NULL},
-    {eof_menu_thin_notes_menu_text[3], eof_menu_thin_notes_track_4, NULL, 0, NULL},
-    {eof_menu_thin_notes_menu_text[4], eof_menu_thin_notes_track_5, NULL, 0, NULL},
-    {eof_menu_thin_notes_menu_text[5], eof_menu_thin_notes_track_6, NULL, 0, NULL},
-    {eof_menu_thin_notes_menu_text[6], eof_menu_thin_notes_track_7, NULL, 0, NULL},
-    {eof_menu_thin_notes_menu_text[7], eof_menu_thin_notes_track_8, NULL, 0, NULL},
-    {eof_menu_thin_notes_menu_text[8], eof_menu_thin_notes_track_9, NULL, 0, NULL},
-    {eof_menu_thin_notes_menu_text[9], eof_menu_thin_notes_track_10, NULL, 0, NULL},
-    {eof_menu_thin_notes_menu_text[10], eof_menu_thin_notes_track_11, NULL, 0, NULL},
-    {eof_menu_thin_notes_menu_text[11], eof_menu_thin_notes_track_12, NULL, 0, NULL},
-    {eof_menu_thin_notes_menu_text[12], eof_menu_thin_notes_track_13, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{eof_menu_thin_notes_menu_text[0], eof_menu_thin_notes_track_1, NULL, D_SELECTED, NULL},
+	{eof_menu_thin_notes_menu_text[1], eof_menu_thin_notes_track_2, NULL, 0, NULL},
+	{eof_menu_thin_notes_menu_text[2], eof_menu_thin_notes_track_3, NULL, 0, NULL},
+	{eof_menu_thin_notes_menu_text[3], eof_menu_thin_notes_track_4, NULL, 0, NULL},
+	{eof_menu_thin_notes_menu_text[4], eof_menu_thin_notes_track_5, NULL, 0, NULL},
+	{eof_menu_thin_notes_menu_text[5], eof_menu_thin_notes_track_6, NULL, 0, NULL},
+	{eof_menu_thin_notes_menu_text[6], eof_menu_thin_notes_track_7, NULL, 0, NULL},
+	{eof_menu_thin_notes_menu_text[7], eof_menu_thin_notes_track_8, NULL, 0, NULL},
+	{eof_menu_thin_notes_menu_text[8], eof_menu_thin_notes_track_9, NULL, 0, NULL},
+	{eof_menu_thin_notes_menu_text[9], eof_menu_thin_notes_track_10, NULL, 0, NULL},
+	{eof_menu_thin_notes_menu_text[10], eof_menu_thin_notes_track_11, NULL, 0, NULL},
+	{eof_menu_thin_notes_menu_text[11], eof_menu_thin_notes_track_12, NULL, 0, NULL},
+	{eof_menu_thin_notes_menu_text[12], eof_menu_thin_notes_track_13, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_note_proguitar_menu[] =
 {
-    {"Edit pro guitar &Note\tN", eof_menu_note_edit_pro_guitar_note, NULL, 0, NULL},
-    {"&Arpeggio", NULL, eof_arpeggio_menu, 0, NULL},
-    {"s&Lide", NULL, eof_pro_guitar_slide_menu, 0, NULL},
-    {"&Strum", NULL, eof_pro_guitar_strum_menu, 0, NULL},
-    {"&Clear legacy bitmask", eof_menu_note_clear_legacy_values, NULL, 0, NULL},
-    {"Toggle tapping\t" CTRL_NAME "+T", eof_menu_note_toggle_tapping, NULL, 0, NULL},
-    {"Remove &Tapping", eof_menu_note_remove_tapping, NULL, 0, NULL},
-    {"Toggle bend\t" CTRL_NAME "+B", eof_menu_note_toggle_bend, NULL, 0, NULL},
-    {"Remove &Bend", eof_menu_note_remove_bend, NULL, 0, NULL},
-    {"Set bend strength\tShift+B", eof_pro_guitar_note_bend_strength_save, NULL, 0, NULL},
-    {"Toggle palm muting\t" CTRL_NAME "+M", eof_menu_note_toggle_palm_muting, NULL, 0, NULL},
-    {"Remove palm &Muting", eof_menu_note_remove_palm_muting, NULL, 0, NULL},
-    {"Toggle harmonic\t" CTRL_NAME "+H", eof_menu_note_toggle_harmonic, NULL, 0, NULL},
-    {"Remove &Harmonic", eof_menu_note_remove_harmonic, NULL, 0, NULL},
-    {"Toggle vibrato\tShift+V", eof_menu_note_toggle_vibrato, NULL, 0, NULL},
-    {"Remove &Vibrato", eof_menu_note_remove_vibrato, NULL, 0, NULL},
-    {"Toggle ghost\t"  CTRL_NAME "+G", eof_menu_note_toggle_ghost, NULL, 0, NULL},
-    {"Remove &Ghost", eof_menu_note_remove_ghost, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"Edit pro guitar &Note\tN", eof_menu_note_edit_pro_guitar_note, NULL, 0, NULL},
+	{"&Arpeggio", NULL, eof_arpeggio_menu, 0, NULL},
+	{"s&Lide", NULL, eof_pro_guitar_slide_menu, 0, NULL},
+	{"&Strum", NULL, eof_pro_guitar_strum_menu, 0, NULL},
+	{"&Clear legacy bitmask", eof_menu_note_clear_legacy_values, NULL, 0, NULL},
+	{"Toggle tapping\t" CTRL_NAME "+T", eof_menu_note_toggle_tapping, NULL, 0, NULL},
+	{"Remove &Tapping", eof_menu_note_remove_tapping, NULL, 0, NULL},
+	{"Toggle bend\t" CTRL_NAME "+B", eof_menu_note_toggle_bend, NULL, 0, NULL},
+	{"Remove &Bend", eof_menu_note_remove_bend, NULL, 0, NULL},
+	{"Set bend strength\tShift+B", eof_pro_guitar_note_bend_strength_save, NULL, 0, NULL},
+	{"Toggle palm muting\t" CTRL_NAME "+M", eof_menu_note_toggle_palm_muting, NULL, 0, NULL},
+	{"Remove palm &Muting", eof_menu_note_remove_palm_muting, NULL, 0, NULL},
+	{"Toggle harmonic\t" CTRL_NAME "+H", eof_menu_note_toggle_harmonic, NULL, 0, NULL},
+	{"Remove &Harmonic", eof_menu_note_remove_harmonic, NULL, 0, NULL},
+	{"Toggle vibrato\tShift+V", eof_menu_note_toggle_vibrato, NULL, 0, NULL},
+	{"Remove &Vibrato", eof_menu_note_remove_vibrato, NULL, 0, NULL},
+	{"Toggle ghost\t"  CTRL_NAME "+G", eof_menu_note_toggle_ghost, NULL, 0, NULL},
+	{"Remove &Ghost", eof_menu_note_remove_ghost, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_note_rocksmith_menu[] =
 {
-    {"Edit &Frets/Fingering\tF", eof_menu_note_edit_pro_guitar_note_frets_fingers_menu, NULL, 0, NULL},
-    {"Clear fingering", eof_menu_pro_guitar_remove_fingering, NULL, 0, NULL},
-    {"Toggle pop\t" CTRL_NAME "+Shift+P", eof_menu_note_toggle_pop, NULL, 0, NULL},
-    {"Remove &Pop", eof_menu_note_remove_pop, NULL, 0, NULL},
-    {"Toggle slap\t" CTRL_NAME "+Shift+S", eof_menu_note_toggle_slap, NULL, 0, NULL},
-    {"Remove slap", eof_menu_note_remove_slap, NULL, 0, NULL},
-    {"&Mute->Single note P.M.", eof_rocksmith_convert_mute_to_palm_mute_single_note, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"Edit &Frets/Fingering\tF", eof_menu_note_edit_pro_guitar_note_frets_fingers_menu, NULL, 0, NULL},
+	{"Clear fingering", eof_menu_pro_guitar_remove_fingering, NULL, 0, NULL},
+	{"Toggle pop\t" CTRL_NAME "+Shift+P", eof_menu_note_toggle_pop, NULL, 0, NULL},
+	{"Remove &Pop", eof_menu_note_remove_pop, NULL, 0, NULL},
+	{"Toggle slap\t" CTRL_NAME "+Shift+S", eof_menu_note_toggle_slap, NULL, 0, NULL},
+	{"Remove slap", eof_menu_note_remove_slap, NULL, 0, NULL},
+	{"&Mute->Single note P.M.", eof_rocksmith_convert_mute_to_palm_mute_single_note, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_note_lyrics_menu[] =
 {
-    {"&Edit Lyric\tL", eof_edit_lyric_dialog, NULL, 0, NULL},
-    {"&Split Lyric\tShift+L", eof_menu_split_lyric, NULL, 0, NULL},
-    {"&Lyric Lines", NULL, eof_lyric_line_menu, 0, NULL},
-    {"&Freestyle", NULL, eof_note_freestyle_menu, 0, NULL},
-    {"Import GP style lyric text", eof_note_menu_read_gp_lyric_texts, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&Edit Lyric\tL", eof_edit_lyric_dialog, NULL, 0, NULL},
+	{"&Split Lyric\tShift+L", eof_menu_split_lyric, NULL, 0, NULL},
+	{"&Lyric Lines", NULL, eof_lyric_line_menu, 0, NULL},
+	{"&Freestyle", NULL, eof_note_freestyle_menu, 0, NULL},
+	{"Import GP style lyric text", eof_note_menu_read_gp_lyric_texts, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_note_menu[] =
 {
-    {"&Toggle", NULL, eof_note_toggle_menu, 0, NULL},
-    {"&Clear", NULL, eof_note_clear_menu, 0, NULL},
-    {"Transpose Up\tUp", eof_menu_note_transpose_up, NULL, 0, NULL},
-    {"Transpose Down\tDown", eof_menu_note_transpose_down, NULL, 0, NULL},
-    {"Resnap\t" CTRL_NAME "+Shift+R", eof_menu_note_resnap, NULL, 0, NULL},
-    {"&Solos", NULL, eof_solo_menu, 0, NULL},
-    {"Star &Power", NULL, eof_star_power_menu, 0, NULL},
-    {"Delete\tDel", eof_menu_note_delete, NULL, 0, NULL},
-    {"Edit &Name", eof_menu_note_edit_name, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"Toggle &Crazy\tT", eof_menu_note_toggle_crazy, NULL, 0, NULL},
-    {"&HOPO", NULL, eof_legacy_hopo_menu, 0, NULL},
-    {eof_trill_menu_text, NULL, eof_trill_menu, 0, NULL},
-    {eof_tremolo_menu_text, NULL, eof_tremolo_menu, 0, NULL},
-    {"Slider", NULL, eof_slider_menu, 0, NULL},
-    {"Thin diff. to match", NULL, eof_menu_thin_notes_menu, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"&Drum", NULL, eof_note_drum_menu, 0, NULL},
-    {"Pro &Guitar", NULL, eof_note_proguitar_menu, 0, NULL},
-    {"&Rocksmith", NULL, eof_note_rocksmith_menu, 0, NULL},
-    {"&Lyrics", NULL, eof_note_lyrics_menu, 0, NULL},
-    {"Remove all statuses", eof_menu_remove_statuses, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&Toggle", NULL, eof_note_toggle_menu, 0, NULL},
+	{"&Clear", NULL, eof_note_clear_menu, 0, NULL},
+	{"Transpose Up\tUp", eof_menu_note_transpose_up, NULL, 0, NULL},
+	{"Transpose Down\tDown", eof_menu_note_transpose_down, NULL, 0, NULL},
+	{"Resnap\t" CTRL_NAME "+Shift+R", eof_menu_note_resnap, NULL, 0, NULL},
+	{"&Solos", NULL, eof_solo_menu, 0, NULL},
+	{"Star &Power", NULL, eof_star_power_menu, 0, NULL},
+	{"Delete\tDel", eof_menu_note_delete, NULL, 0, NULL},
+	{"Edit &Name", eof_menu_note_edit_name, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"Toggle &Crazy\tT", eof_menu_note_toggle_crazy, NULL, 0, NULL},
+	{"&HOPO", NULL, eof_legacy_hopo_menu, 0, NULL},
+	{eof_trill_menu_text, NULL, eof_trill_menu, 0, NULL},
+	{eof_tremolo_menu_text, NULL, eof_tremolo_menu, 0, NULL},
+	{"Slider", NULL, eof_slider_menu, 0, NULL},
+	{"Thin diff. to match", NULL, eof_menu_thin_notes_menu, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"&Drum", NULL, eof_note_drum_menu, 0, NULL},
+	{"Pro &Guitar", NULL, eof_note_proguitar_menu, 0, NULL},
+	{"&Rocksmith", NULL, eof_note_rocksmith_menu, 0, NULL},
+	{"&Lyrics", NULL, eof_note_lyrics_menu, 0, NULL},
+	{"Remove all statuses", eof_menu_remove_statuses, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 DIALOG eof_lyric_dialog[] =
 {
-   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,    0,  48,  204 + 110, 106, 2,   23,  0,    0,      0,   0,   "Edit Lyric",               NULL, NULL },
-   { d_agup_text_proc,   12,  84,  64,  8,  2,   23,  0,    0,      0,   0,   "Text:",         NULL, NULL },
-   { d_agup_edit_proc,   48, 80,  144 + 110,  20,  2,   23,  0,    0,      255,   0,   eof_etext,           NULL, NULL },
-   { d_agup_button_proc, 12 + 55,  112, 84,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
-   { d_agup_button_proc, 108 + 55, 112, 78,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)          (dp2) (dp3) */
+	{ d_agup_window_proc, 0,   48,  314, 106, 2,   23,  0,    0,      0,   0,   "Edit Lyric", NULL, NULL },
+	{ d_agup_text_proc,   12,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",      NULL, NULL },
+	{ d_agup_edit_proc,   48,  80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,    NULL, NULL },
+	{ d_agup_button_proc, 67,  112, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",         NULL, NULL },
+	{ d_agup_button_proc, 163, 112, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",     NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 DIALOG eof_split_lyric_dialog[] =
 {
-   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,    0,  48,  204 + 110, 106, 2,   23,  0,    0,      0,   0,   "Split Lyric",               NULL, NULL },
-   { d_agup_text_proc,   12,  84,  64,  8,  2,   23,  0,    0,      0,   0,   "Text:",         NULL, NULL },
-   { d_agup_edit_proc,   48, 80,  144 + 110,  20,  2,   23,  0,    0,      255,   0,   eof_etext,           NULL, NULL },
-   { d_agup_button_proc, 12 + 55,  112, 84,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
-   { d_agup_button_proc, 108 + 55, 112, 78,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
+	{ d_agup_window_proc, 0,   48,  314, 106, 2,   23,  0,    0,      0,   0,   "Split Lyric", NULL, NULL },
+	{ d_agup_text_proc,   12,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",       NULL, NULL },
+	{ d_agup_edit_proc,   48,  80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,     NULL, NULL },
+	{ d_agup_button_proc, 67,  112, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
+	{ d_agup_button_proc, 163, 112, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",          NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 DIALOG eof_note_name_dialog[] =
 {
-   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,    0,  48,  204 + 110, 106, 2,   23,  0,    0,      0,   0,   "Edit note name",               NULL, NULL },
-   { d_agup_text_proc,   12,  84,  64,  8,  2,   23,  0,    0,      0,   0,   "Text:",         NULL, NULL },
-   { d_agup_edit_proc,   48, 80,  144 + 110,  20,  2,   23,  0,    0,      EOF_NAME_LENGTH,   0,   eof_etext,           NULL, NULL },
-   { d_agup_button_proc, 12 + 55,  112, 84,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
-   { d_agup_button_proc, 108 + 55, 112, 78,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1)             (d2) (dp)              (dp2) (dp3) */
+	{ d_agup_window_proc, 0,   48,  314, 106, 2,   23,  0,    0,      0,               0,   "Edit note name", NULL, NULL },
+	{ d_agup_text_proc,   12,  84,  64,  8,   2,   23,  0,    0,      0,               0,   "Text:",          NULL, NULL },
+	{ d_agup_edit_proc,   48,  80,  254, 20,  2,   23,  0,    0,      EOF_NAME_LENGTH, 0,   eof_etext,        NULL, NULL },
+	{ d_agup_button_proc, 67,  112, 84,  28,  2,   23,  '\r', D_EXIT, 0,               0,   "OK",             NULL, NULL },
+	{ d_agup_button_proc, 163, 112, 78,  28,  2,   23,  0,    D_EXIT, 0,               0,   "Cancel",         NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 void eof_prepare_note_menu(void)
@@ -3389,7 +3389,7 @@ char eof_note_edit_name[EOF_NAME_LENGTH+1] = {0};
 
 DIALOG eof_pro_guitar_note_dialog[] =
 {
-/*	(proc)					(x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)       (d2) (dp)          (dp2)          (dp3) */
+	/*	(proc)             (x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)       (d2) (dp)          (dp2)          (dp3) */
 	{d_agup_window_proc,    0,   48,  230, 412,2,   23,  0,    0,      0,         0,   "Edit pro guitar note",NULL, NULL },
 	{d_agup_text_proc,      16,  80,  64,  8,  2,   23,  0,    0,      0,         0,   "Name:",      NULL,          NULL },
 	{d_agup_edit_proc,		74,  76,  134, 20, 2,   23,  0,    0, EOF_NAME_LENGTH,0,eof_note_edit_name,       NULL, NULL },
@@ -4180,7 +4180,7 @@ char *eof_finger_strings[6] = {eof_finger_string_lane_1, eof_finger_string_lane_
 
 DIALOG eof_pro_guitar_note_frets_dialog[] =
 {
-/*	(proc)					(x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)       (d2) (dp)          (dp2)          (dp3) */
+	/*	(proc)				(x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)       (d2) (dp)          (dp2)          (dp3) */
 	{d_agup_window_proc,    0,   48,  184, 248,2,   23,  0,    0,      0,         0,   "Edit note frets / fingering",NULL, NULL },
 
 	//Note:  In guitar theory, string 1 refers to high e
@@ -7280,13 +7280,13 @@ int eof_feedback_mode_update_note_selection(void)
 
 DIALOG eof_pro_guitar_note_slide_end_fret_dialog[] =
 {
-   /* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
-   { d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Edit slide end fret",      NULL, NULL },
-   { d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "End slide at fret #",                NULL, NULL },
-   { eof_verified_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      7,   0,   eof_etext,     "0123456789", NULL },
-   { d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",               NULL, NULL },
-   { d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
-   { NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,               NULL, NULL }
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
+	{ d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Edit slide end fret",      NULL, NULL },
+	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "End slide at fret #",                NULL, NULL },
+	{ eof_verified_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      7,   0,   eof_etext,     "0123456789", NULL },
+	{ d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",               NULL, NULL },
+	{ d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,               NULL, NULL }
 };
 
 int eof_pro_guitar_note_slide_end_fret(char undo)
@@ -7435,13 +7435,13 @@ int eof_pro_guitar_note_slide_end_fret_no_save(void)
 
 DIALOG eof_pro_guitar_note_bend_strength_dialog[] =
 {
-   /* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
-   { d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Edit bend strength",         NULL, NULL },
-   { d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "Bends this # of half steps:",NULL, NULL },
-   { eof_verified_edit_proc,12,  56,  20,  20,  0,   0,   0,    0,      1,   0,   eof_etext,     "0123456789",  NULL },
-   { d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                         NULL, NULL },
-   { d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                     NULL, NULL },
-   { NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                         NULL, NULL }
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
+	{ d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Edit bend strength",         NULL, NULL },
+	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "Bends this # of half steps:",NULL, NULL },
+	{ eof_verified_edit_proc,12,  56,  20,  20,  0,   0,   0,    0,      1,   0,   eof_etext,     "0123456789",  NULL },
+	{ d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                         NULL, NULL },
+	{ d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                     NULL, NULL },
+	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                         NULL, NULL }
 };
 
 int eof_pro_guitar_note_bend_strength(char undo)

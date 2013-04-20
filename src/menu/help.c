@@ -11,25 +11,25 @@
 
 MENU eof_help_menu[] =
 {
-    {"&Manual", eof_menu_help_manual, NULL, 0, NULL},
-    {"&Tutorial", eof_menu_help_tutorial, NULL, 0, NULL},
-    {"&Vocals Tutorial", eof_menu_help_vocals_tutorial, NULL, 0, NULL},
-    {"&Pro Guitar Tutorial", eof_menu_help_pro_guitar_tutorial, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"&Keys\tF1", eof_menu_help_keys, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"&About", eof_menu_help_about, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&Manual", eof_menu_help_manual, NULL, 0, NULL},
+	{"&Tutorial", eof_menu_help_tutorial, NULL, 0, NULL},
+	{"&Vocals Tutorial", eof_menu_help_vocals_tutorial, NULL, 0, NULL},
+	{"&Pro Guitar Tutorial", eof_menu_help_pro_guitar_tutorial, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"&Keys\tF1", eof_menu_help_keys, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"&About", eof_menu_help_about, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 DIALOG eof_help_dialog[] =
 {
-   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,    0,  0,  640, 480, 2,   23,  0,    0,      0,   0,   "EOF Help",               NULL, NULL },
-   { d_agup_text_proc,   288,  8,  128, 8,  2,   23,  0,    0,      0,   0,   "", NULL, NULL },
-   { d_agup_textbox_proc,   8,  32,  624, 412 - 8,  2,   23,  0,    0,      0,   0,   "", NULL, NULL },
-   { d_agup_button_proc, 8,  444, 624,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "Okay",               NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
+	{ d_agup_window_proc,    0,  0,  640, 480, 2,   23,  0,    0,      0,   0,   "EOF Help",               NULL, NULL },
+	{ d_agup_text_proc,   288,  8,  128, 8,  2,   23,  0,    0,      0,   0,   "", NULL, NULL },
+	{ d_agup_textbox_proc,   8,  32,  624, 412 - 8,  2,   23,  0,    0,      0,   0,   "", NULL, NULL },
+	{ d_agup_button_proc, 8,  444, 624,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "Okay",               NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 int eof_menu_help_keys(void)

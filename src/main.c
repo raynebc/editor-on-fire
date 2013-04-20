@@ -1587,22 +1587,22 @@ void eof_fix_waveform_graph(void)
 
 void eof_fix_spectrogram_graph(void)
 {
-    eof_log("eof_fix_spectrogram_graph() entered", 1);
+	eof_log("eof_fix_spectrogram_graph() entered", 1);
 
-    if(eof_music_paused && eof_spectrogram)
-    {
-        eof_destroy_spectrogram(eof_spectrogram);
-        eof_spectrogram = eof_create_spectrogram(eof_loaded_ogg_name);	//Generate 1ms spectrogram data from the current audio file
-        if(eof_spectrogram)
-        {
-            eof_spectrogram_menu[0].flags = D_SELECTED;	//Check the Show item in the Song>Waveform graph menu
-        }
-        else
-        {
-            eof_display_spectrogram = 0;
-            eof_spectrogram_menu[0].flags = 0;	//Clear the Show item in the Song>Waveform graph menu
-        }
-    }
+	if(eof_music_paused && eof_spectrogram)
+	{
+		eof_destroy_spectrogram(eof_spectrogram);
+		eof_spectrogram = eof_create_spectrogram(eof_loaded_ogg_name);	//Generate 1ms spectrogram data from the current audio file
+		if(eof_spectrogram)
+		{
+			eof_spectrogram_menu[0].flags = D_SELECTED;	//Check the Show item in the Song>Waveform graph menu
+		}
+		else
+		{
+			eof_display_spectrogram = 0;
+			eof_spectrogram_menu[0].flags = 0;	//Clear the Show item in the Song>Waveform graph menu
+		}
+	}
 }
 
 /* read keys that are universally usable */
@@ -3278,23 +3278,23 @@ static int work_around_fsel_bug = 0;
  */
 int d_hackish_edit_proc (int msg, DIALOG *d, int c)
 {
-    if ((msg == MSG_START) && !work_around_fsel_bug)
-    {
-        /* Adjust position/dimension so it is the same as AGUP's. */
-        d->y -= 3;
-        d->h += 6;
-        /* The Allegro GUI has a bug where it repeatedely sends MSG_START to a
-         * custom GUI procedure. We need to work around that.
-         */
-        work_around_fsel_bug = 1;
-    }
-    if ((msg == MSG_END) && work_around_fsel_bug)
-    {
-        d->y += 3;
-        d->h -= 6;
-        work_around_fsel_bug = 0;
-    }
-    return d_agup_edit_proc (msg, d, c);
+	if ((msg == MSG_START) && !work_around_fsel_bug)
+	{
+		/* Adjust position/dimension so it is the same as AGUP's. */
+		d->y -= 3;
+		d->h += 6;
+		/* The Allegro GUI has a bug where it repeatedely sends MSG_START to a
+		 * custom GUI procedure. We need to work around that.
+		 */
+		work_around_fsel_bug = 1;
+	}
+	if ((msg == MSG_END) && work_around_fsel_bug)
+	{
+		d->y += 3;
+		d->h -= 6;
+		work_around_fsel_bug = 0;
+	}
+	return d_agup_edit_proc (msg, d, c);
 }
 
 int eof_load_data(void)
@@ -3424,9 +3424,9 @@ int eof_load_data(void)
 	eof_color_silver = makecol(192, 192, 192);
 	eof_color_dark_silver = makecol(160, 160, 160);
 
-    gui_fg_color = agup_fg_color;
-    gui_bg_color = agup_bg_color;
-    gui_mg_color = agup_mg_color;
+	gui_fg_color = agup_fg_color;
+	gui_bg_color = agup_bg_color;
+	gui_mg_color = agup_mg_color;
 	agup_init(awin95_theme);
 
 	return 1;
@@ -3555,10 +3555,10 @@ int eof_initialize(int argc, char * argv[])
 		return 0;
 	}
 	eof_init_colors();
-    gui_shadow_box_proc = d_agup_shadow_box_proc;
-    gui_button_proc = d_agup_button_proc;
-    gui_ctext_proc = d_agup_ctext_proc;
-    gui_text_list_proc = d_agup_text_list_proc;
+	gui_shadow_box_proc = d_agup_shadow_box_proc;
+	gui_button_proc = d_agup_button_proc;
+	gui_ctext_proc = d_agup_ctext_proc;
+	gui_text_list_proc = d_agup_text_list_proc;
 	gui_edit_proc = d_hackish_edit_proc;
 
 	/* create file filters */
@@ -3680,8 +3680,8 @@ int eof_initialize(int argc, char * argv[])
 				#else
 				if((eof_system("oggenc -o silence.ogg -b 128 silence.wav") == 0) &&
 				#endif
-				   exists("silence.ogg"))
-					{	//If the OGG file was succesfully created
+					exists("silence.ogg"))
+				{	//If the OGG file was succesfully created
 					if(eof_copy_file("silence.ogg","silence2.ogg") && exists("silence2.ogg"))
 					{	//If the OGG file was successfully duplicated
 						if(!eof_system("oggCat silence3.ogg silence.ogg silence2.ogg") && exists("silence3.ogg"))
@@ -4026,8 +4026,8 @@ void eof_exit(void)
 	eof_destroy_song(eof_song);	//Frees memory used by any currently loaded chart
 	eof_destroy_waveform(eof_waveform);	//Frees memory used by any currently loaded waveform data
 	eof_waveform = NULL;
-    eof_destroy_spectrogram(eof_spectrogram);	//Frees memory used by any currently loaded spectrogram data
-    eof_spectrogram = NULL;
+	eof_destroy_spectrogram(eof_spectrogram);	//Frees memory used by any currently loaded spectrogram data
+	eof_spectrogram = NULL;
 	eof_window_destroy(eof_window_editor);
 	eof_window_destroy(eof_window_note_lower_left);
 	eof_window_destroy(eof_window_note_upper_left);

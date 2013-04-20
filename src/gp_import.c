@@ -406,7 +406,7 @@ EOF_SONG *parse_gp(const char * fn)
 		eof_gp_debug_log(inf, "Score size:  ");
 		pack_ReadDWORDLE(inf, &dword);	//Read the score size
 		printf("%lu%%\n", dword);
-		eof_gp_debug_log(inf, "Header/footer fields bitmask:   ");
+		eof_gp_debug_log(inf, "Header/footer fields bitmask:  ");
 		pack_ReadWORDLE(inf, &word);	//Read the enabled header/footer fields bitmask
 		printf("%u\n", word);
 		(void) puts("\tHeader/footer strings:");

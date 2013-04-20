@@ -4967,8 +4967,8 @@ void eof_render_editor_window_common(void)
 		}
 	}//If this track has any trill or tremolo sections
 
-    if(eof_display_spectrogram)
-        (void) eof_render_spectrogram(eof_spectrogram);
+	if(eof_display_spectrogram)
+		(void) eof_render_spectrogram(eof_spectrogram);
 
 	if(eof_display_waveform)
 		(void) eof_render_waveform(eof_waveform);
