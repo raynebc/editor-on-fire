@@ -778,34 +778,20 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	{
 		long fret0, fret1, fret2, fret3, fret4, fret5;	//Will store the fret number played on each string (-1 means the string is not played)
 		long *fret[6] = {&fret0, &fret1, &fret2, &fret3, &fret4, &fret5};	//Allow the fret numbers to be accessed via array
-		char *fingerunknown = "#";
 		char *fingerunused = "-1";
 		char *finger0, *finger1, *finger2, *finger3, *finger4, *finger5;	//Each will be set to either fingerunknown or fingerunused
 		char **finger[6] = {&finger0, &finger1, &finger2, &finger3, &finger4, &finger5};	//Allow the finger strings to be accessed via array
 		char finger0def[2] = "0", finger1def[2] = "1", finger2def[2] = "2", finger3def[2] = "3", finger4def[2] = "4", finger5def[2] = "5";	//Static strings for building manually-defined finger information
 		char *fingerdef[6] = {finger0def, finger1def, finger2def, finger3def, finger4def, finger5def};	//Allow the fingerdef strings to be accessed via array
 		unsigned long bitmask;
-		char fingeringpresent;	//Is set to nonzero if fingering is defined for ANY of this note's used strings
 
 		(void) snprintf(buffer, sizeof(buffer) - 1, "  <chordTemplates count=\"%lu\">\n", chordlistsize);
 		(void) pack_fputs(buffer, fp);
 		for(ctr = 0; ctr < chordlistsize; ctr++)
 		{	//For each of the entries in the unique chord list
-			fingeringpresent = 0;	//Reset this status
 			notename[0] = '\0';	//Empty the note name string
 			(void) eof_build_note_name(sp, track, chordlist[ctr], notename);	//Build the note name (if it exists) into notename[]
 
-			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
-			{	//For each of the 6 supported strings
-				if((eof_get_note_note(sp, track, chordlist[ctr]) & bitmask) && (ctr2 < tp->numstrings) && ((tp->note[chordlist[ctr]]->frets[ctr2] & 0x80) == 0))
-				{	//If the chord entry uses this string (verifying that the string number is supported by the track) and the string is not fret hand muted
-					if(tp->note[chordlist[ctr]]->finger[ctr2])
-					{	//If the fingering for this string is defined
-						fingeringpresent = 1;	//Track that there is fingering defined, at least partially
-						break;
-					}
-				}
-			}
 			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
 			{	//For each of the 6 supported strings
 				if((eof_get_note_note(sp, track, chordlist[ctr]) & bitmask) && (ctr2 < tp->numstrings) && ((tp->note[chordlist[ctr]]->frets[ctr2] & 0x80) == 0))
@@ -819,15 +805,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 						*(finger[ctr2]) = temp;
 					}
 					else
-					{
-						if(!fingeringpresent || (*(fret[ctr2]) == 0))
-						{	//If no fingering information is present for the chord, or this string is played open
-							*(finger[ctr2]) = fingerunused;		//Write a -1, this will allow the XML to compile even if the user defines no fingering for any chords
-						}
-						else
-						{	//If there is fingering defined for any of the other strings
-							*(finger[ctr2]) = fingerunknown;	//Write the placeholder #, the user will have to update it
-						}
+					{	//The fingering is not defined, regardless of whether the string is open or fretted
+						*(finger[ctr2]) = fingerunused;		//Write a -1, this will allow the XML to compile even if the chord's fingering is incomplete/undefined
 					}
 				}
 				else

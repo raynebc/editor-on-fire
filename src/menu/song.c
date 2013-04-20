@@ -2155,7 +2155,7 @@ int eof_menu_song_spectrogram_settings(void)
 		eof_spectrogram_settings_dialog[6].flags = D_SELECTED;
 	}
 
-    eof_spectrogram_settings_dialog[8].flags 
+    eof_spectrogram_settings_dialog[8].flags
         = eof_spectrogram_settings_dialog[9].flags
         = eof_spectrogram_settings_dialog[10].flags
         = eof_spectrogram_settings_dialog[11].flags
@@ -2218,6 +2218,7 @@ int eof_menu_song_spectrogram_settings(void)
             eof_spectrogram_windowsize = atoi(eof_etext);
             if(eof_spectrogram_windowsize == 0) { eof_spectrogram_windowsize = 1024; }
         }
+        eof_half_spectrogram_windowsize = (double)eof_spectrogram_windowsize / 2.0;	//Cache this value so it isn't calculated for every rendered column of the spectrogram
 
         //Reload the spectrogram if we changed the window size
         if(eof_spectrogram_windowsize != first_windowsize && eof_spectrogram != NULL) {
