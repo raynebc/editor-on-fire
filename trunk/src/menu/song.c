@@ -37,81 +37,81 @@ char eof_raw_midi_track_undo_made;
 
 MENU eof_song_seek_bookmark_menu[] =
 {
-    {"&0\tNum 0", eof_menu_song_seek_bookmark_0, NULL, 0, NULL},
-    {"&1\tNum 1", eof_menu_song_seek_bookmark_1, NULL, 0, NULL},
-    {"&2\tNum 2", eof_menu_song_seek_bookmark_2, NULL, 0, NULL},
-    {"&3\tNum 3", eof_menu_song_seek_bookmark_3, NULL, 0, NULL},
-    {"&4\tNum 4", eof_menu_song_seek_bookmark_4, NULL, 0, NULL},
-    {"&5\tNum 5", eof_menu_song_seek_bookmark_5, NULL, 0, NULL},
-    {"&6\tNum 6", eof_menu_song_seek_bookmark_6, NULL, 0, NULL},
-    {"&7\tNum 7", eof_menu_song_seek_bookmark_7, NULL, 0, NULL},
-    {"&8\tNum 8", eof_menu_song_seek_bookmark_8, NULL, 0, NULL},
-    {"&9\tNum 9", eof_menu_song_seek_bookmark_9, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&0\tNum 0", eof_menu_song_seek_bookmark_0, NULL, 0, NULL},
+	{"&1\tNum 1", eof_menu_song_seek_bookmark_1, NULL, 0, NULL},
+	{"&2\tNum 2", eof_menu_song_seek_bookmark_2, NULL, 0, NULL},
+	{"&3\tNum 3", eof_menu_song_seek_bookmark_3, NULL, 0, NULL},
+	{"&4\tNum 4", eof_menu_song_seek_bookmark_4, NULL, 0, NULL},
+	{"&5\tNum 5", eof_menu_song_seek_bookmark_5, NULL, 0, NULL},
+	{"&6\tNum 6", eof_menu_song_seek_bookmark_6, NULL, 0, NULL},
+	{"&7\tNum 7", eof_menu_song_seek_bookmark_7, NULL, 0, NULL},
+	{"&8\tNum 8", eof_menu_song_seek_bookmark_8, NULL, 0, NULL},
+	{"&9\tNum 9", eof_menu_song_seek_bookmark_9, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_song_seek_menu[] =
 {
-    {"Start\tHome", eof_menu_song_seek_start, NULL, 0, NULL},
-    {"End of audio\tEnd", eof_menu_song_seek_end, NULL, 0, NULL},
-    {"End of chart\t" CTRL_NAME "+Shift+End", eof_menu_song_seek_chart_end, NULL, 0, NULL},
-    {"Rewind\tR", eof_menu_song_seek_rewind, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"First Note\t" CTRL_NAME "+Home", eof_menu_song_seek_first_note, NULL, 0, NULL},
-    {"Last Note\t" CTRL_NAME "+End", eof_menu_song_seek_last_note, NULL, 0, NULL},
-    {"Previous Note\tShift+PGUP", eof_menu_song_seek_previous_note, NULL, 0, NULL},
-    {"Next Note\tShift+PGDN", eof_menu_song_seek_next_note, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"Previous Screen\t" CTRL_NAME "+PGUP", eof_menu_song_seek_previous_screen, NULL, 0, NULL},
-    {"Next Screen\t" CTRL_NAME "+PGDN", eof_menu_song_seek_next_screen, NULL, 0, NULL},
-    {"Previous Grid Snap\t" CTRL_NAME "+Shift+PGUP", eof_menu_song_seek_previous_grid_snap, NULL, 0, NULL},
-    {"Next Grid Snap\t" CTRL_NAME "+Shift+PGDN", eof_menu_song_seek_next_grid_snap, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"Previous Beat\tPGUP", eof_menu_song_seek_previous_beat, NULL, 0, NULL},
-    {"Next Beat\tPGDN", eof_menu_song_seek_next_beat, NULL, 0, NULL},
-    {"Previous Anchor\t" CTRL_NAME "+Shift+PGUP", eof_menu_song_seek_previous_anchor, NULL, 0, NULL},
-    {"Next Anchor\t" CTRL_NAME "+Shift+PGDN", eof_menu_song_seek_next_anchor, NULL, 0, NULL},
-    {"Beat/&Measure", eof_menu_song_seek_beat_measure, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"&Bookmark", NULL, eof_song_seek_bookmark_menu, 0, NULL},
-    {"&Catalog entry", eof_menu_song_seek_catalog_entry, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"Start\tHome", eof_menu_song_seek_start, NULL, 0, NULL},
+	{"End of audio\tEnd", eof_menu_song_seek_end, NULL, 0, NULL},
+	{"End of chart\t" CTRL_NAME "+Shift+End", eof_menu_song_seek_chart_end, NULL, 0, NULL},
+	{"Rewind\tR", eof_menu_song_seek_rewind, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"First Note\t" CTRL_NAME "+Home", eof_menu_song_seek_first_note, NULL, 0, NULL},
+	{"Last Note\t" CTRL_NAME "+End", eof_menu_song_seek_last_note, NULL, 0, NULL},
+	{"Previous Note\tShift+PGUP", eof_menu_song_seek_previous_note, NULL, 0, NULL},
+	{"Next Note\tShift+PGDN", eof_menu_song_seek_next_note, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"Previous Screen\t" CTRL_NAME "+PGUP", eof_menu_song_seek_previous_screen, NULL, 0, NULL},
+	{"Next Screen\t" CTRL_NAME "+PGDN", eof_menu_song_seek_next_screen, NULL, 0, NULL},
+	{"Previous Grid Snap\t" CTRL_NAME "+Shift+PGUP", eof_menu_song_seek_previous_grid_snap, NULL, 0, NULL},
+	{"Next Grid Snap\t" CTRL_NAME "+Shift+PGDN", eof_menu_song_seek_next_grid_snap, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"Previous Beat\tPGUP", eof_menu_song_seek_previous_beat, NULL, 0, NULL},
+	{"Next Beat\tPGDN", eof_menu_song_seek_next_beat, NULL, 0, NULL},
+	{"Previous Anchor\t" CTRL_NAME "+Shift+PGUP", eof_menu_song_seek_previous_anchor, NULL, 0, NULL},
+	{"Next Anchor\t" CTRL_NAME "+Shift+PGDN", eof_menu_song_seek_next_anchor, NULL, 0, NULL},
+	{"Beat/&Measure", eof_menu_song_seek_beat_measure, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"&Bookmark", NULL, eof_song_seek_bookmark_menu, 0, NULL},
+	{"&Catalog entry", eof_menu_song_seek_catalog_entry, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_track_selected_menu[EOF_TRACKS_MAX] =
 {
-    {eof_track_selected_menu_text[0], eof_menu_track_selected_1, NULL, D_SELECTED, NULL},
-    {eof_track_selected_menu_text[1], eof_menu_track_selected_2, NULL, 0, NULL},
-    {eof_track_selected_menu_text[2], eof_menu_track_selected_3, NULL, 0, NULL},
-    {eof_track_selected_menu_text[3], eof_menu_track_selected_4, NULL, 0, NULL},
-    {eof_track_selected_menu_text[4], eof_menu_track_selected_5, NULL, 0, NULL},
-    {eof_track_selected_menu_text[5], eof_menu_track_selected_6, NULL, 0, NULL},
-    {eof_track_selected_menu_text[6], eof_menu_track_selected_7, NULL, 0, NULL},
-    {eof_track_selected_menu_text[7], eof_menu_track_selected_8, NULL, 0, NULL},
-    {eof_track_selected_menu_text[8], eof_menu_track_selected_9, NULL, 0, NULL},
-    {eof_track_selected_menu_text[9], eof_menu_track_selected_10, NULL, 0, NULL},
-    {eof_track_selected_menu_text[10], eof_menu_track_selected_11, NULL, 0, NULL},
-    {eof_track_selected_menu_text[11], eof_menu_track_selected_12, NULL, 0, NULL},
-    {eof_track_selected_menu_text[12], eof_menu_track_selected_13, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{eof_track_selected_menu_text[0], eof_menu_track_selected_1, NULL, D_SELECTED, NULL},
+	{eof_track_selected_menu_text[1], eof_menu_track_selected_2, NULL, 0, NULL},
+	{eof_track_selected_menu_text[2], eof_menu_track_selected_3, NULL, 0, NULL},
+	{eof_track_selected_menu_text[3], eof_menu_track_selected_4, NULL, 0, NULL},
+	{eof_track_selected_menu_text[4], eof_menu_track_selected_5, NULL, 0, NULL},
+	{eof_track_selected_menu_text[5], eof_menu_track_selected_6, NULL, 0, NULL},
+	{eof_track_selected_menu_text[6], eof_menu_track_selected_7, NULL, 0, NULL},
+	{eof_track_selected_menu_text[7], eof_menu_track_selected_8, NULL, 0, NULL},
+	{eof_track_selected_menu_text[8], eof_menu_track_selected_9, NULL, 0, NULL},
+	{eof_track_selected_menu_text[9], eof_menu_track_selected_10, NULL, 0, NULL},
+	{eof_track_selected_menu_text[10], eof_menu_track_selected_11, NULL, 0, NULL},
+	{eof_track_selected_menu_text[11], eof_menu_track_selected_12, NULL, 0, NULL},
+	{eof_track_selected_menu_text[12], eof_menu_track_selected_13, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_catalog_menu[] =
 {
-    {"&Show\tQ", eof_menu_catalog_show, NULL, 0, NULL},
-    {"Double &Width\tSHIFT+Q", eof_menu_catalog_toggle_full_width, NULL, 0, NULL},
-    {"&Edit Name", eof_menu_catalog_edit_name, NULL, 0, NULL},
-    {"Edit &Timing", eof_menu_song_catalog_edit, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"&Add", eof_menu_catalog_add, NULL, 0, NULL},
-    {"&Delete", eof_menu_catalog_delete, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"&Previous\tW", eof_menu_catalog_previous, NULL, 0, NULL},
-    {"&Next\tE", eof_menu_catalog_next, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"Find Previous\t" CTRL_NAME "+SHIFT+G", eof_menu_catalog_find_prev, NULL, 0, NULL},
-    {"Find Next\tF3", eof_menu_catalog_find_next, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&Show\tQ", eof_menu_catalog_show, NULL, 0, NULL},
+	{"Double &Width\tSHIFT+Q", eof_menu_catalog_toggle_full_width, NULL, 0, NULL},
+	{"&Edit Name", eof_menu_catalog_edit_name, NULL, 0, NULL},
+	{"Edit &Timing", eof_menu_song_catalog_edit, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"&Add", eof_menu_catalog_add, NULL, 0, NULL},
+	{"&Delete", eof_menu_catalog_delete, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"&Previous\tW", eof_menu_catalog_previous, NULL, 0, NULL},
+	{"&Next\tE", eof_menu_catalog_next, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"Find Previous\t" CTRL_NAME "+SHIFT+G", eof_menu_catalog_find_prev, NULL, 0, NULL},
+	{"Find Next\tF3", eof_menu_catalog_find_next, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_waveform_menu[] =
@@ -123,163 +123,163 @@ MENU eof_waveform_menu[] =
 
 MENU eof_spectrogram_menu[] =
 {
-    {"&Show", eof_menu_song_spectrogram, NULL, 0, NULL},
-    {"&Configure", eof_menu_song_spectrogram_settings, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&Show", eof_menu_song_spectrogram, NULL, 0, NULL},
+	{"&Configure", eof_menu_song_spectrogram_settings, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 DIALOG eof_note_set_num_frets_strings_dialog[] =
 {
-   /* (proc)                  (x)  (y) (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)  (            dp2) (dp3) */
-   { d_agup_window_proc,      32,  68, 170, 136, 0,   0,    0,    0,     0,   0,   "Edit fret/string count", NULL, NULL },
-   { d_agup_text_proc,        44,  100,110, 8,   2,   23,   0,    0,     0,   0,   "Max fret value:", NULL, NULL },
-   { eof_verified_edit_proc,  158, 96, 26,  20,  2,   23,   0,    0,     2,   0,   eof_etext2,        "0123456789", NULL },
-   { d_agup_text_proc,		  44,  120,64,	8,   2,   23,   0,    0,     0,   0,   "Number of strings:",NULL, NULL },
-   { d_agup_radio_proc,	      44,  140,36,  15,  2,   23,   0,    0,     0,   0,   "4",               NULL, NULL },
-   { d_agup_radio_proc,	      80,  140,36,  15,  2,   23,   0,    0,     0,   0,   "5",               NULL, NULL },
-   { d_agup_radio_proc,	      116, 140,36,  15,  2,   23,   0,    0,     0,   0,   "6",               NULL, NULL },
-   { d_agup_button_proc,      42,  164,68,  28,  2,   23,   '\r', D_EXIT,0,   0,   "OK",              NULL, NULL },
-   { d_agup_button_proc,      120, 164,68,  28,  2,   23,   0,    D_EXIT,0,   0,   "Cancel",          NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)                 (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                      (dp2) (dp3) */
+	{ d_agup_window_proc,     32,  68,  170, 136, 0,   0,    0,    0,     0,   0,   "Edit fret/string count", NULL, NULL },
+	{ d_agup_text_proc,       44,  100, 110, 8,   2,   23,   0,    0,     0,   0,   "Max fret value:",        NULL, NULL },
+	{ eof_verified_edit_proc, 158, 96,  26,  20,  2,   23,   0,    0,     2,   0,   eof_etext2,       "0123456789", NULL },
+	{ d_agup_text_proc,		  44,  120, 64,	 8,   2,   23,   0,    0,     0,   0,   "Number of strings:",     NULL, NULL },
+	{ d_agup_radio_proc,	  44,  140, 36,  15,  2,   23,   0,    0,     0,   0,   "4",                      NULL, NULL },
+	{ d_agup_radio_proc,	  80,  140, 36,  15,  2,   23,   0,    0,     0,   0,   "5",                      NULL, NULL },
+	{ d_agup_radio_proc,	  116, 140, 36,  15,  2,   23,   0,    0,     0,   0,   "6",                      NULL, NULL },
+	{ d_agup_button_proc,     42,  164, 68,  28,  2,   23,   '\r', D_EXIT,0,   0,   "OK",                     NULL, NULL },
+	{ d_agup_button_proc,     120, 164, 68,  28,  2,   23,   0,    D_EXIT,0,   0,   "Cancel",                 NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 MENU eof_song_proguitar_fret_hand_menu[] =
 {
-    {"&Set\tShift+F", eof_pro_guitar_set_fret_hand_position, NULL, 0, NULL},
-    {"&List\t" CTRL_NAME "+Shift+F", eof_menu_song_fret_hand_positions, NULL, 0, NULL},
-    {"&Copy", eof_menu_song_fret_hand_positions_copy_from, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&Set\tShift+F", eof_pro_guitar_set_fret_hand_position, NULL, 0, NULL},
+	{"&List\t" CTRL_NAME "+Shift+F", eof_menu_song_fret_hand_positions, NULL, 0, NULL},
+	{"&Copy", eof_menu_song_fret_hand_positions_copy_from, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_song_proguitar_menu[] =
 {
-    {"Set track &Tuning", eof_menu_song_track_tuning, NULL, 0, NULL},
-    {"Set number of &Frets/strings", eof_menu_set_num_frets_strings, NULL, 0, NULL},
-    {"Enable &Legacy view\tShift+L", eof_menu_song_legacy_view, NULL, 0, NULL},
-    {"&Previous chord name\t" CTRL_NAME "+Shift+W", eof_menu_previous_chord_result, NULL, 0, NULL},
-    {"&Next chord name\t" CTRL_NAME "+Shift+E", eof_menu_next_chord_result, NULL, 0, NULL},
-    {"Ignore this track's tuning", eof_song_proguitar_toggle_ignore_tuning, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"Set track &Tuning", eof_menu_song_track_tuning, NULL, 0, NULL},
+	{"Set number of &Frets/strings", eof_menu_set_num_frets_strings, NULL, 0, NULL},
+	{"Enable &Legacy view\tShift+L", eof_menu_song_legacy_view, NULL, 0, NULL},
+	{"&Previous chord name\t" CTRL_NAME "+Shift+W", eof_menu_previous_chord_result, NULL, 0, NULL},
+	{"&Next chord name\t" CTRL_NAME "+Shift+E", eof_menu_next_chord_result, NULL, 0, NULL},
+	{"Ignore this track's tuning", eof_song_proguitar_toggle_ignore_tuning, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_song_proguitar_popup_menu[] =
 {
-    {"&Add", eof_menu_song_rs_popup_add, NULL, 0, NULL},
-    {"&List", eof_menu_song_rs_popup_messages, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&Add", eof_menu_song_rs_popup_add, NULL, 0, NULL},
+	{"&List", eof_menu_song_rs_popup_messages, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_song_rocksmith_arrangement_menu[] =
 {
-    {"&Undefined", eof_song_rocksmith_arrangement_undefined, NULL, 0, NULL},
-    {"&Combo", eof_song_rocksmith_arrangement_combo, NULL, 0, NULL},
-    {"&Rhythm", eof_song_rocksmith_arrangement_rhythm, NULL, 0, NULL},
-    {"&Lead", eof_song_rocksmith_arrangement_lead, NULL, 0, NULL},
-    {"&Bass", eof_song_rocksmith_arrangement_bass, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&Undefined", eof_song_rocksmith_arrangement_undefined, NULL, 0, NULL},
+	{"&Combo", eof_song_rocksmith_arrangement_combo, NULL, 0, NULL},
+	{"&Rhythm", eof_song_rocksmith_arrangement_rhythm, NULL, 0, NULL},
+	{"&Lead", eof_song_rocksmith_arrangement_lead, NULL, 0, NULL},
+	{"&Bass", eof_song_rocksmith_arrangement_bass, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_song_rocksmith_menu[] =
 {
-    {"Fret &Hand positions", NULL, eof_song_proguitar_fret_hand_menu, 0, NULL},
-    {"&Popup messages", NULL, eof_song_proguitar_popup_menu, 0, NULL},
-    {"&Arrangement type", NULL, eof_song_rocksmith_arrangement_menu, 0, NULL},
-    {"&Correct chord fingerings", eof_correct_chord_fingerings_menu, NULL, 0, NULL},
-    {"Remove difficulty limit", eof_song_proguitar_toggle_difficulty_limit, NULL, 0, NULL},
-    {"Insert new difficulty", eof_song_proguitar_insert_difficulty, NULL, 0, NULL},
-    {"Delete active difficulty", eof_song_proguitar_delete_difficulty, NULL, 0, NULL},
-    {"&Manage RS phrases\t" CTRL_NAME "+Shift+M", eof_manage_rs_phrases, NULL, 0, NULL},
-    {"Flatten this difficulty", eof_song_flatten_difficulties, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"Fret &Hand positions", NULL, eof_song_proguitar_fret_hand_menu, 0, NULL},
+	{"&Popup messages", NULL, eof_song_proguitar_popup_menu, 0, NULL},
+	{"&Arrangement type", NULL, eof_song_rocksmith_arrangement_menu, 0, NULL},
+	{"&Correct chord fingerings", eof_correct_chord_fingerings_menu, NULL, 0, NULL},
+	{"Remove difficulty limit", eof_song_proguitar_toggle_difficulty_limit, NULL, 0, NULL},
+	{"Insert new difficulty", eof_song_proguitar_insert_difficulty, NULL, 0, NULL},
+	{"Delete active difficulty", eof_song_proguitar_delete_difficulty, NULL, 0, NULL},
+	{"&Manage RS phrases\t" CTRL_NAME "+Shift+M", eof_manage_rs_phrases, NULL, 0, NULL},
+	{"Flatten this difficulty", eof_song_flatten_difficulties, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_song_phaseshift_menu[] =
 {
-    {"Enable &Open strum bass", eof_menu_song_open_bass, NULL, 0, NULL},
-    {"Enable &Five lane drums", eof_menu_song_five_lane_drums, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"Enable &Open strum bass", eof_menu_song_open_bass, NULL, 0, NULL},
+	{"Enable &Five lane drums", eof_menu_song_five_lane_drums, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_song_menu[] =
 {
-    {"&Seek", NULL, eof_song_seek_menu, 0, NULL},
-    {"&Track", NULL, eof_track_selected_menu, 0, NULL},
-    {"&File Info", eof_menu_song_file_info, NULL, 0, NULL},
-    {"&Audio cues", eof_menu_audio_cues, NULL, 0, NULL},
-    {"Display semitones as flat", eof_display_flats_menu, NULL, 0, NULL},
-    {"Create image sequence", eof_create_image_sequence, NULL, 0, NULL},
-    {"&Waveform Graph", NULL, eof_waveform_menu, 0, NULL},
-    {"Spectrogra&m", NULL, eof_spectrogram_menu, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"&Catalog", NULL, eof_catalog_menu, 0, NULL},
-    {"&INI Settings", eof_menu_song_ini_settings, NULL, 0, NULL},
-    {"Properties\tF9", eof_menu_song_properties, NULL, 0, NULL},
-    {"Set track &Difficulty", eof_song_track_difficulty_dialog, NULL, 0, NULL},
-    {"&Leading Silence", eof_menu_song_add_silence, NULL, 0, NULL},
-    {"Lock tempo map", eof_menu_song_lock_tempo_map, NULL, 0, NULL},
-    {"Disable click and drag", eof_menu_song_disable_click_drag, NULL, 0, NULL},
-    {"Disable expert+ bass drum", eof_menu_song_disable_double_bass_drums, NULL, 0, NULL},
-    {"Rename track", eof_song_rename_track, NULL, 0, NULL},
-    {"Pro &Guitar", NULL, eof_song_proguitar_menu, 0, NULL},
-    {"&Rocksmith", NULL, eof_song_rocksmith_menu, 0, NULL},
-    {"&Phase Shift", NULL, eof_song_phaseshift_menu, 0, NULL},
-    {"Manage raw MIDI tracks", eof_menu_song_raw_MIDI_tracks, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"T&est in FOF\tF12", eof_menu_song_test_fof, NULL, EOF_LINUX_DISABLE, NULL},
-    {"Test I&n Phase Shift", eof_menu_song_test_ps, NULL, EOF_LINUX_DISABLE, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&Seek", NULL, eof_song_seek_menu, 0, NULL},
+	{"&Track", NULL, eof_track_selected_menu, 0, NULL},
+	{"&File Info", eof_menu_song_file_info, NULL, 0, NULL},
+	{"&Audio cues", eof_menu_audio_cues, NULL, 0, NULL},
+	{"Display semitones as flat", eof_display_flats_menu, NULL, 0, NULL},
+	{"Create image sequence", eof_create_image_sequence, NULL, 0, NULL},
+	{"&Waveform Graph", NULL, eof_waveform_menu, 0, NULL},
+	{"Spectrogra&m", NULL, eof_spectrogram_menu, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"&Catalog", NULL, eof_catalog_menu, 0, NULL},
+	{"&INI Settings", eof_menu_song_ini_settings, NULL, 0, NULL},
+	{"Properties\tF9", eof_menu_song_properties, NULL, 0, NULL},
+	{"Set track &Difficulty", eof_song_track_difficulty_dialog, NULL, 0, NULL},
+	{"&Leading Silence", eof_menu_song_add_silence, NULL, 0, NULL},
+	{"Lock tempo map", eof_menu_song_lock_tempo_map, NULL, 0, NULL},
+	{"Disable click and drag", eof_menu_song_disable_click_drag, NULL, 0, NULL},
+	{"Disable expert+ bass drum", eof_menu_song_disable_double_bass_drums, NULL, 0, NULL},
+	{"Rename track", eof_song_rename_track, NULL, 0, NULL},
+	{"Pro &Guitar", NULL, eof_song_proguitar_menu, 0, NULL},
+	{"&Rocksmith", NULL, eof_song_rocksmith_menu, 0, NULL},
+	{"&Phase Shift", NULL, eof_song_phaseshift_menu, 0, NULL},
+	{"Manage raw MIDI tracks", eof_menu_song_raw_MIDI_tracks, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"T&est in FOF\tF12", eof_menu_song_test_fof, NULL, EOF_LINUX_DISABLE, NULL},
+	{"Test I&n Phase Shift", eof_menu_song_test_ps, NULL, EOF_LINUX_DISABLE, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 DIALOG eof_ini_dialog[] =
 {
-   /* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                 (dp2) (dp3) */
-   { d_agup_window_proc, 0,   48,  346, 232, 2,   23,  0,    0,      0,   0,   "INI Settings",      NULL, NULL },
-   { d_agup_list_proc,   12,  84,  240, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_ini_list,NULL, NULL },
-   { d_agup_push_proc,   264, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",              NULL, (void *)eof_ini_dialog_add },
-   { d_agup_push_proc,   264, 124, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",           NULL, (void *)eof_ini_dialog_delete },
-   { d_agup_button_proc, 12,  235, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",              NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                 (dp2) (dp3) */
+	{ d_agup_window_proc, 0,   48,  346, 232, 2,   23,  0,    0,      0,   0,   "INI Settings",      NULL, NULL },
+	{ d_agup_list_proc,   12,  84,  240, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_ini_list,NULL, NULL },
+	{ d_agup_push_proc,   264, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",              NULL, (void *)eof_ini_dialog_add },
+	{ d_agup_push_proc,   264, 124, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",           NULL, (void *)eof_ini_dialog_delete },
+	{ d_agup_button_proc, 12,  235, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",              NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 DIALOG eof_ini_add_dialog[] =
 {
-   /* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)              (dp2) (dp3) */
-   { d_agup_window_proc, 0,   48,  314, 106, 2,   23,  0,    0,      0,   0,   "Add INI Setting",NULL, NULL },
-   { d_agup_text_proc,   12,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",          NULL, NULL },
-   { d_agup_edit_proc,   48,  80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,        NULL, NULL },
-   { d_agup_button_proc, 67,  112, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",             NULL, NULL },
-   { d_agup_button_proc, 163, 112, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",         NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)              (dp2) (dp3) */
+	{ d_agup_window_proc, 0,   48,  314, 106, 2,   23,  0,    0,      0,   0,   "Add INI Setting",NULL, NULL },
+	{ d_agup_text_proc,   12,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",          NULL, NULL },
+	{ d_agup_edit_proc,   48,  80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,        NULL, NULL },
+	{ d_agup_button_proc, 67,  112, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",             NULL, NULL },
+	{ d_agup_button_proc, 163, 112, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",         NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 DIALOG eof_song_properties_dialog[] =
 {
-   /* (proc)              (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
-   { d_agup_window_proc,  0,   0,   480, 292, 0,   0,   0,    0,      0,   0,   "Song Properties",      NULL, NULL },
-   { d_agup_text_proc,    12,  40,  80,  12,  0,   0,   0,    0,      0,   0,   "Song Title",           NULL, NULL },
-   { d_agup_edit_proc,    12,  56,  184, 20,  0,   0,   0,    0,      255, 0,   eof_etext,              NULL, NULL },
-   { d_agup_text_proc,    12,  88,  96,  12,  0,   0,   0,    0,      0,   0,   "Artist",               NULL, NULL },
-   { d_agup_edit_proc,    12,  104, 184, 20,  0,   0,   0,    0,      255, 0,   eof_etext2,             NULL, NULL },
-   { d_agup_text_proc,    12,  136, 108, 12,  0,   0,   0,    0,      0,   0,   "Frettist",             NULL, NULL },
-   { d_agup_edit_proc,    12,  152, 184, 20,  0,   0,   0,    0,      255, 0,   eof_etext3,             NULL, NULL },
-   { d_agup_text_proc,    12,  184, 108, 12,  0,   0,   0,    0,      0,   0,   "Album",                NULL, NULL },
-   { d_agup_edit_proc,    12,  200, 184, 20,  0,   0,   0,    0,      255, 0,   eof_etext8,             NULL, NULL },
-   { d_agup_text_proc,    12,  232, 60,  12,  0,   0,   0,    0,      0,   0,   "Delay",                NULL, NULL },
-   { eof_verified_edit_proc,12,248, 50,  20,  0,   0,   0,    0,      6,   0,   eof_etext4,     "0123456789", NULL },
-   { d_agup_text_proc,    74,  232, 48,  12,  0,   0,   0,    0,      0,   0,   "Year",                 NULL, NULL },
-   { eof_verified_edit_proc,74,248, 38,  20,  0,   0,   0,    0,      4,   0,   eof_etext5,     "0123456789", NULL },
-   { d_agup_text_proc,    124, 232, 60,  12,  0,   0,   0,    0,      0,   0,   "Diff.",                NULL, NULL },
-   { eof_verified_edit_proc,124,248,26,  20,  0,   0,   0,    0,      1,   0,   eof_etext7,        "0123456", NULL },
-   { d_agup_text_proc,    208, 40,  96,  12,  0,   0,   0,    0,      0,   0,   "Loading Text",         NULL, NULL },
-   { d_agup_edit_proc,    208, 56,  256, 20,  0,   0,   0,    0,      255, 0,   eof_etext6,             NULL, NULL },
-   { d_agup_text_proc,    208, 88,  96,  12,  0,   0,   0,    0,      0,   0,   "Loading Text Preview", NULL, NULL },
-   { d_agup_textbox_proc, 208, 104, 256,116,  0,   0,   0,    0,      0,   0,   eof_etext6,             NULL, NULL },
-   { d_agup_check_proc,   160, 223, 136, 16,  0,   0,   0,    0,      1,   0,   "Lyrics",               NULL, NULL },
-   { d_agup_check_proc,   160, 238, 136, 16,  0,   0,   0,    0,      1,   0,   "8th Note HO/PO",       NULL, NULL },
-   { d_agup_check_proc,   160, 253, 215, 16,  0,   0,   0,    0,      1,   0,   "Use fret hand pos of 1 (pro g)", NULL, NULL },
-   { d_agup_check_proc,   160, 268, 215, 16,  0,   0,   0,    0,      1,   0,   "Use fret hand pos of 1 (pro b)", NULL, NULL },
-   { d_agup_button_proc,  380, 252, 84,  24,  0,   0,   '\r', D_EXIT, 0,   0,   "OK",                   NULL, NULL },
-   { NULL,                0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                   NULL, NULL }
+	/* (proc)              (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
+	{ d_agup_window_proc,  0,   0,   480, 292, 0,   0,   0,    0,      0,   0,   "Song Properties",      NULL, NULL },
+	{ d_agup_text_proc,    12,  40,  80,  12,  0,   0,   0,    0,      0,   0,   "Song Title",           NULL, NULL },
+	{ d_agup_edit_proc,    12,  56,  184, 20,  0,   0,   0,    0,      255, 0,   eof_etext,              NULL, NULL },
+	{ d_agup_text_proc,    12,  88,  96,  12,  0,   0,   0,    0,      0,   0,   "Artist",               NULL, NULL },
+	{ d_agup_edit_proc,    12,  104, 184, 20,  0,   0,   0,    0,      255, 0,   eof_etext2,             NULL, NULL },
+	{ d_agup_text_proc,    12,  136, 108, 12,  0,   0,   0,    0,      0,   0,   "Frettist",             NULL, NULL },
+	{ d_agup_edit_proc,    12,  152, 184, 20,  0,   0,   0,    0,      255, 0,   eof_etext3,             NULL, NULL },
+	{ d_agup_text_proc,    12,  184, 108, 12,  0,   0,   0,    0,      0,   0,   "Album",                NULL, NULL },
+	{ d_agup_edit_proc,    12,  200, 184, 20,  0,   0,   0,    0,      255, 0,   eof_etext8,             NULL, NULL },
+	{ d_agup_text_proc,    12,  232, 60,  12,  0,   0,   0,    0,      0,   0,   "Delay",                NULL, NULL },
+	{ eof_verified_edit_proc,12,248, 50,  20,  0,   0,   0,    0,      6,   0,   eof_etext4,     "0123456789", NULL },
+	{ d_agup_text_proc,    74,  232, 48,  12,  0,   0,   0,    0,      0,   0,   "Year",                 NULL, NULL },
+	{ eof_verified_edit_proc,74,248, 38,  20,  0,   0,   0,    0,      4,   0,   eof_etext5,     "0123456789", NULL },
+	{ d_agup_text_proc,    124, 232, 60,  12,  0,   0,   0,    0,      0,   0,   "Diff.",                NULL, NULL },
+	{ eof_verified_edit_proc,124,248,26,  20,  0,   0,   0,    0,      1,   0,   eof_etext7,        "0123456", NULL },
+	{ d_agup_text_proc,    208, 40,  96,  12,  0,   0,   0,    0,      0,   0,   "Loading Text",         NULL, NULL },
+	{ d_agup_edit_proc,    208, 56,  256, 20,  0,   0,   0,    0,      255, 0,   eof_etext6,             NULL, NULL },
+	{ d_agup_text_proc,    208, 88,  96,  12,  0,   0,   0,    0,      0,   0,   "Loading Text Preview", NULL, NULL },
+	{ d_agup_textbox_proc, 208, 104, 256,116,  0,   0,   0,    0,      0,   0,   eof_etext6,             NULL, NULL },
+	{ d_agup_check_proc,   160, 223, 136, 16,  0,   0,   0,    0,      1,   0,   "Lyrics",               NULL, NULL },
+	{ d_agup_check_proc,   160, 238, 136, 16,  0,   0,   0,    0,      1,   0,   "8th Note HO/PO",       NULL, NULL },
+	{ d_agup_check_proc,   160, 253, 215, 16,  0,   0,   0,    0,      1,   0,   "Use fret hand pos of 1 (pro g)", NULL, NULL },
+	{ d_agup_check_proc,   160, 268, 215, 16,  0,   0,   0,    0,      1,   0,   "Use fret hand pos of 1 (pro b)", NULL, NULL },
+	{ d_agup_button_proc,  380, 252, 84,  24,  0,   0,   '\r', D_EXIT, 0,   0,   "OK",                   NULL, NULL },
+	{ NULL,                0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                   NULL, NULL }
 };
 
 void eof_prepare_song_menu(void)
@@ -1656,60 +1656,60 @@ int eof_menu_song_waveform(void)
 
 int eof_menu_song_spectrogram(void)
 {
-    if(!eof_song_loaded)
-        return 1;	//Return error
+	if(!eof_song_loaded)
+		return 1;	//Return error
 
-    if(eof_display_spectrogram == 0)
-    {
-        if(eof_music_paused)
-        {	//Don't try to generate the spectrogram data if the chart is playing
-            if(eof_spectrogram == NULL)
-            {
-                eof_spectrogram = eof_create_spectrogram(eof_loaded_ogg_name);	//Generate 1ms spectrogram data from the current audio file
-            }
-            else if(ustricmp(eof_spectrogram->oggfilename,eof_loaded_ogg_name) != 0)
-            {	//If the user opened a different OGG file since the spectrogram data was generated
-                eof_destroy_spectrogram(eof_spectrogram);
-                eof_spectrogram = eof_create_spectrogram(eof_loaded_ogg_name);	//Generate 1ms spectrogram data from the current audio file
-            }
-        }
+	if(eof_display_spectrogram == 0)
+	{
+		if(eof_music_paused)
+		{	//Don't try to generate the spectrogram data if the chart is playing
+			if(eof_spectrogram == NULL)
+			{
+				eof_spectrogram = eof_create_spectrogram(eof_loaded_ogg_name);	//Generate 1ms spectrogram data from the current audio file
+			}
+			else if(ustricmp(eof_spectrogram->oggfilename,eof_loaded_ogg_name) != 0)
+			{	//If the user opened a different OGG file since the spectrogram data was generated
+				eof_destroy_spectrogram(eof_spectrogram);
+				eof_spectrogram = eof_create_spectrogram(eof_loaded_ogg_name);	//Generate 1ms spectrogram data from the current audio file
+			}
+		}
 
-        if(eof_spectrogram != NULL)
-        {
-            eof_display_spectrogram = 1;
-            eof_spectrogram_menu[0].flags = D_SELECTED;	//Check the Show item in the Song>Waveform graph menu
-        }
-    }
-    else
-    {
-        eof_display_spectrogram = 0;
-        eof_spectrogram_menu[0].flags = 0;	//Clear the Show item in the Song>Waveform graph menu
-    }
+		if(eof_spectrogram != NULL)
+		{
+			eof_display_spectrogram = 1;
+			eof_spectrogram_menu[0].flags = D_SELECTED;	//Check the Show item in the Song>Waveform graph menu
+		}
+	}
+	else
+	{
+		eof_display_spectrogram = 0;
+		eof_spectrogram_menu[0].flags = 0;	//Clear the Show item in the Song>Waveform graph menu
+	}
 
-    if(eof_music_paused)
-        eof_render();
-    eof_fix_window_title();
+	if(eof_music_paused)
+		eof_render();
+	eof_fix_window_title();
 
-    return 0;	//Return success
+	return 0;	//Return success
 }
 
 DIALOG eof_leading_silence_dialog[] =
 {
-   /* (proc) 		        (x)	(y)	(w)	(h)	(fg) (bg) (key) (flags)	(d1)(d2)(dp)						(dp2) (dp3) */
-   { d_agup_window_proc,  	  0,	 48,200,288,2,   23,  0,    0,      0,	0,	"Leading Silence",          NULL, NULL },
-   { d_agup_text_proc      , 16,     80,110,20, 2,   23,  0,    0,      0,  0,  "Add:",                      NULL, NULL },
-   { d_agup_radio_proc,		 16,	100,110,15,	2,   23,  0,    0,      0,	0,	"Milliseconds",             NULL, NULL },
-   { d_agup_radio_proc,		 16,	120,110,15,	2,   23,  0,    0,      0,	0,	"Beats",                    NULL, NULL },
-   { d_agup_text_proc      , 16,    140,110,20, 2,   23,  0,    0,      0,  0,  "Pad:",                      NULL, NULL },
-   { d_agup_radio_proc,		 16,	160,110,15,	2,   23,  0,    0,      0,	0,	"Milliseconds",	            NULL, NULL },
-   { d_agup_radio_proc,		 16,	180,110,15,	2,   23,  0,    0,      0,	0,	"Beats",                    NULL, NULL },
-   { eof_verified_edit_proc, 16,    200,110,20, 2,   23,  0,    0,    255,  0,   eof_etext,         "1234567890", NULL },
-   { d_agup_check_proc,		  16,	226,180,16,	2,   23,  0,    D_SELECTED,		1,	0,	"Adjust Notes/Beats",		NULL, NULL },
-   { d_agup_radio_proc,		 16,	246,160,15,	2,   23,  0,    0,      1,	0,	"Stream copy (oggCat)",     NULL, NULL },
-   { d_agup_radio_proc,		 16,	266, 90,15,	2,   23,  0,    0,      1,	0,	"Re-encode",                NULL, NULL },
-   { d_agup_button_proc,	  16,	292, 68,28,	2,   23,  '\r',	D_EXIT, 0,	0,	"OK",             			NULL, NULL },
-   { d_agup_button_proc,	 116,   292,68, 28,	2,   23,  0,	D_EXIT, 0,	0,	"Cancel",         			NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)                 (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags)    (d1)  (d2) (dp)                     (dp2) (dp3) */
+	{ d_agup_window_proc,  	  0,   48,  200, 288, 2,   23,  0,    0,          0,   0,   "Leading Silence",       NULL, NULL },
+	{ d_agup_text_proc,       16,  80,  110, 20,  2,   23,  0,    0,          0,   0,   "Add:",                  NULL, NULL },
+	{ d_agup_radio_proc,      16,  100, 110, 15,  2,   23,  0,    0,          0,   0,   "Milliseconds",          NULL, NULL },
+	{ d_agup_radio_proc,      16,  120, 110, 15,  2,   23,  0,    0,          0,   0,   "Beats",                 NULL, NULL },
+	{ d_agup_text_proc,       16,  140, 110, 20,  2,   23,  0,    0,          0,   0,   "Pad:",                  NULL, NULL },
+	{ d_agup_radio_proc,      16,  160, 110, 15,  2,   23,  0,    0,          0,   0,   "Milliseconds",          NULL, NULL },
+	{ d_agup_radio_proc,      16,  180, 110, 15,  2,   23,  0,    0,          0,   0,   "Beats",                 NULL, NULL },
+	{ eof_verified_edit_proc, 16,  200, 110, 20,  2,   23,  0,    0,          255, 0,   eof_etext,       "1234567890", NULL },
+	{ d_agup_check_proc,      16,  226, 180, 16,  2,   23,  0,    D_SELECTED, 1,   0,   "Adjust Notes/Beats",    NULL, NULL },
+	{ d_agup_radio_proc,      16,  246, 160, 15,  2,   23,  0,    0,          1,   0,   "Stream copy (oggCat)",  NULL, NULL },
+	{ d_agup_radio_proc,      16,  266, 90,  15,  2,   23,  0,    0,          1,   0,   "Re-encode",             NULL, NULL },
+	{ d_agup_button_proc,     16,  292, 68,  28,  2,   23,  '\r', D_EXIT,     0,   0,   "OK",                    NULL, NULL },
+	{ d_agup_button_proc,     116, 292, 68,  28,  2,   23,  0,    D_EXIT,     0,   0,   "Cancel",                NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 static long get_ogg_length(const char * fn)
@@ -2023,17 +2023,17 @@ int eof_menu_audio_cues(void)
 
 DIALOG eof_waveform_settings_dialog[] =
 {
-   /* (proc) 		        (x)	(y)	(w)	(h)	(fg) (bg) (key) (flags)	(d1)(d2)(dp)						(dp2) (dp3) */
-   { d_agup_window_proc,  	0,	48,	200,200,2,   23,  0,    0,      0,	0,	"Configure Waveform Graph",	NULL, NULL },
-   { d_agup_text_proc,		16,	80,	64,	8,	2,   23,  0,    0,      0,	0,	"Fit into:",				NULL, NULL },
-   { d_agup_radio_proc,		16,	100,110,15,	2,   23,  0,    0,      0,	0,	"Fretboard area",			NULL, NULL },
-   { d_agup_radio_proc,		16,	120,110,15,	2,   23,  0,    0,      0,	0,	"Editor window",			NULL, NULL },
-   { d_agup_text_proc,		16,	140,80,16,	2,   23,  0,    0,		1,	0,	"Display channels:",		NULL, NULL },
-   { d_agup_check_proc,		16,	160,45,16,	2,   23,  0,    0,		1,	0,	"Left",						NULL, NULL },
-   { d_agup_check_proc,		16,	180,55,16,	2,   23,  0,    0,		1,	0,	"Right",					NULL, NULL },
-   { d_agup_button_proc,	16,	208,68,	28,	2,   23,  '\r',	D_EXIT, 0,	0,	"OK",             			NULL, NULL },
-   { d_agup_button_proc,	116,208,68,	28,	2,   23,  0,	D_EXIT, 0,	0,	"Cancel",         			NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                        (dp2) (dp3) */
+	{ d_agup_window_proc, 0,   48,  200, 200, 2,   23,  0,    0,      0,   0,   "Configure Waveform Graph", NULL, NULL },
+	{ d_agup_text_proc,   16,  80,  64,  8,	  2,   23,  0,    0,      0,   0,   "Fit into:",                NULL, NULL },
+	{ d_agup_radio_proc,  16,  100, 110, 15,  2,   23,  0,    0,      0,   0,   "Fretboard area",           NULL, NULL },
+	{ d_agup_radio_proc,  16,  120, 110, 15,  2,   23,  0,    0,      0,   0,   "Editor window",            NULL, NULL },
+	{ d_agup_text_proc,   16,  140, 80,  16,  2,   23,  0,    0,	  1,   0,   "Display channels:",        NULL, NULL },
+	{ d_agup_check_proc,  16,  160, 45,  16,  2,   23,  0,    0,	  1,   0,   "Left",                     NULL, NULL },
+	{ d_agup_check_proc,  16,  180, 55,  16,  2,   23,  0,    0,	  1,   0,   "Right",                    NULL, NULL },
+	{ d_agup_button_proc, 16,  208, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                       NULL, NULL },
+	{ d_agup_button_proc, 116, 208, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                   NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 int eof_menu_song_waveform_settings(void)
@@ -2100,35 +2100,35 @@ int eof_menu_song_waveform_settings(void)
 int eof_spectrogram_settings_wsize[] = {32,128,512,1024,2048};
 DIALOG eof_spectrogram_settings_dialog[] =
 {
-   /* (proc) 		        (x)	(y)	(w)	(h)	(fg) (bg) (key) (flags)	(d1)(d2)(dp)						(dp2) (dp3) */
-   { d_agup_window_proc,  	0,	48,	200,400,2,   23,  0,    0,      0,	0,	"Configure Waveform Graph",	NULL, NULL },
-   { d_agup_text_proc,		16,	80,	64,	8,	2,   23,  0,    0,      0,	0,	"Fit into:",				NULL, NULL },
-   { d_agup_radio_proc,		16,	100,110,15,	2,   23,  0,    0,      0,	0,	"Fretboard area",			NULL, NULL },
-   { d_agup_radio_proc,		16,	120,110,15,	2,   23,  0,    0,      0,	0,	"Editor window",			NULL, NULL },
-   { d_agup_text_proc,		16,	140,80,16,	2,   23,  0,    0,		1,	0,	"Display channels:",		NULL, NULL },
-   { d_agup_check_proc,		16,	160,45,16,	2,   23,  0,    0,		1,	0,	"Left",						NULL, NULL },
-   { d_agup_check_proc,		16,	180,55,16,	2,   23,  0,    0,		1,	0,	"Right",					NULL, NULL },
-   { d_agup_text_proc,		16,	200,64,	8,	2,   23,  0,    0,      0,	0,	"Window size:",				NULL, NULL },
-   { d_agup_radio_proc,		16,	220,45,15,	2,   23,  0,    0,      1,	0,	"32",           			NULL, NULL },
-   { d_agup_radio_proc,		16,	240,45,15,	2,   23,  0,    0,      1,	0,	"128",           			NULL, NULL },
-   { d_agup_radio_proc,		16,	260,45,15,	2,   23,  0,    0,      1,	0,	"512",           			NULL, NULL },
-   { d_agup_radio_proc,		16,	280,45,15,	2,   23,  0,    0,      1,	0,	"1024",           			NULL, NULL },
-   { d_agup_radio_proc,		16,	300,45,15,	2,   23,  0,    0,      1,	0,	"2048",           			NULL, NULL },
-   { d_agup_radio_proc,		16,	320,59,15,	2,   23,  0,    0,      1,	0,	"Other",           			NULL, NULL },
-   { d_agup_edit_proc,      75, 317,50,20,  0,   0,   0,    0,      255, 0, eof_etext,                  NULL, NULL },
-   { d_agup_text_proc,		16,	340,64,	8,	2,   23,  0,    0,      0,	0,	"Color scheme:",			NULL, NULL },
-   { d_agup_radio_proc,		16,	360,100,15,	2,   23,  0,    0,      2,	0,	"Grayscale",           		NULL, NULL },
-   { d_agup_radio_proc,		16,	380,100,15,	2,   23,  0,    0,      2,	0,	"Color",           			NULL, NULL },
-   { d_agup_button_proc,	16,	408,68,	28,	2,   23,  '\r',	D_EXIT, 0,	0,	"OK",             			NULL, NULL },
-   { d_agup_button_proc,	116,408,68,	28,	2,   23,  0,	D_EXIT, 0,	0,	"Cancel",         			NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc) 		        (x)	(y)	(w)	(h)	(fg) (bg) (key) (flags)	(d1)(d2)(dp)						(dp2) (dp3) */
+	{ d_agup_window_proc,  	0,	48,	200,400,2,   23,  0,    0,      0,	0,	"Configure Waveform Graph",	NULL, NULL },
+	{ d_agup_text_proc,		16,	80,	64,	8,	2,   23,  0,    0,      0,	0,	"Fit into:",				NULL, NULL },
+	{ d_agup_radio_proc,		16,	100,110,15,	2,   23,  0,    0,      0,	0,	"Fretboard area",			NULL, NULL },
+	{ d_agup_radio_proc,		16,	120,110,15,	2,   23,  0,    0,      0,	0,	"Editor window",			NULL, NULL },
+	{ d_agup_text_proc,		16,	140,80,16,	2,   23,  0,    0,		1,	0,	"Display channels:",		NULL, NULL },
+	{ d_agup_check_proc,		16,	160,45,16,	2,   23,  0,    0,		1,	0,	"Left",						NULL, NULL },
+	{ d_agup_check_proc,		16,	180,55,16,	2,   23,  0,    0,		1,	0,	"Right",					NULL, NULL },
+	{ d_agup_text_proc,		16,	200,64,	8,	2,   23,  0,    0,      0,	0,	"Window size:",				NULL, NULL },
+	{ d_agup_radio_proc,		16,	220,45,15,	2,   23,  0,    0,      1,	0,	"32",           			NULL, NULL },
+	{ d_agup_radio_proc,		16,	240,45,15,	2,   23,  0,    0,      1,	0,	"128",           			NULL, NULL },
+	{ d_agup_radio_proc,		16,	260,45,15,	2,   23,  0,    0,      1,	0,	"512",           			NULL, NULL },
+	{ d_agup_radio_proc,		16,	280,45,15,	2,   23,  0,    0,      1,	0,	"1024",           			NULL, NULL },
+	{ d_agup_radio_proc,		16,	300,45,15,	2,   23,  0,    0,      1,	0,	"2048",           			NULL, NULL },
+	{ d_agup_radio_proc,		16,	320,59,15,	2,   23,  0,    0,      1,	0,	"Other",           			NULL, NULL },
+	{ d_agup_edit_proc,      75, 317,50,20,  0,   0,   0,    0,      255, 0, eof_etext,                  NULL, NULL },
+	{ d_agup_text_proc,		16,	340,64,	8,	2,   23,  0,    0,      0,	0,	"Color scheme:",			NULL, NULL },
+	{ d_agup_radio_proc,		16,	360,100,15,	2,   23,  0,    0,      2,	0,	"Grayscale",           		NULL, NULL },
+	{ d_agup_radio_proc,		16,	380,100,15,	2,   23,  0,    0,      2,	0,	"Color",           			NULL, NULL },
+	{ d_agup_button_proc,	16,	408,68,	28,	2,   23,  '\r',	D_EXIT, 0,	0,	"OK",             			NULL, NULL },
+	{ d_agup_button_proc,	116,408,68,	28,	2,   23,  0,	D_EXIT, 0,	0,	"Cancel",         			NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 int eof_menu_song_spectrogram_settings(void)
 {
-    int i;
-    int first_windowsize;
-    char custom_windowsize;
+	int i;
+	int first_windowsize;
+	char custom_windowsize;
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
@@ -2155,29 +2155,32 @@ int eof_menu_song_spectrogram_settings(void)
 		eof_spectrogram_settings_dialog[6].flags = D_SELECTED;
 	}
 
-    eof_spectrogram_settings_dialog[8].flags
-        = eof_spectrogram_settings_dialog[9].flags
-        = eof_spectrogram_settings_dialog[10].flags
-        = eof_spectrogram_settings_dialog[11].flags
-        = eof_spectrogram_settings_dialog[12].flags
-        = eof_spectrogram_settings_dialog[13].flags
-        = 0;
-    eof_etext[0] = '\0';
+	eof_spectrogram_settings_dialog[8].flags
+		= eof_spectrogram_settings_dialog[9].flags
+		= eof_spectrogram_settings_dialog[10].flags
+		= eof_spectrogram_settings_dialog[11].flags
+		= eof_spectrogram_settings_dialog[12].flags
+		= eof_spectrogram_settings_dialog[13].flags
+		= 0;
+	eof_etext[0] = '\0';
 
-    custom_windowsize = 1;
-    for(i=8;i<13;i++) {
-        if(eof_spectrogram_windowsize == eof_spectrogram_settings_wsize[i-8]) {
-            eof_spectrogram_settings_dialog[i].flags = D_SELECTED;
-            custom_windowsize = 0;
-        }
-    }
-    if(custom_windowsize) {
-        eof_spectrogram_settings_dialog[13].flags = D_SELECTED;
-        sprintf(eof_etext,"%d",eof_spectrogram_windowsize);
-    }
+	custom_windowsize = 1;
+	for(i=8;i<13;i++)
+	{
+		if(eof_spectrogram_windowsize == eof_spectrogram_settings_wsize[i-8])
+		{
+			eof_spectrogram_settings_dialog[i].flags = D_SELECTED;
+			custom_windowsize = 0;
+		}
+	}
+	if(custom_windowsize)
+	{
+		eof_spectrogram_settings_dialog[13].flags = D_SELECTED;
+		sprintf(eof_etext,"%d",eof_spectrogram_windowsize);
+	}
 
-    eof_spectrogram_settings_dialog[16].flags = eof_spectrogram_settings_dialog[17].flags = 0;
-    eof_spectrogram_settings_dialog[16 + eof_spectrogram_colorscheme].flags = D_SELECTED;
+	eof_spectrogram_settings_dialog[16].flags = eof_spectrogram_settings_dialog[17].flags = 0;
+	eof_spectrogram_settings_dialog[16 + eof_spectrogram_colorscheme].flags = D_SELECTED;
 
 	if(eof_popup_dialog(eof_spectrogram_settings_dialog, 0) == 18)		//User clicked OK
 	{
@@ -2203,35 +2206,45 @@ int eof_menu_song_spectrogram_settings(void)
 		}
 		else
 		{
-			eof_spectrogram_renderrightchannel = 0;
+		eof_spectrogram_renderrightchannel = 0;
+		}
+		first_windowsize = eof_spectrogram_windowsize;
+
+		//Run through the window sizes
+		for(i=8;i<13;i++)
+		{
+			if(eof_spectrogram_settings_dialog[i].flags == D_SELECTED)
+			{
+				eof_spectrogram_windowsize = eof_spectrogram_settings_wsize[i-8];
+			}
+		}
+        //Check for the Other box
+        if(eof_spectrogram_settings_dialog[13].flags == D_SELECTED)
+		{
+			eof_spectrogram_windowsize = atoi(eof_etext);
+			if(eof_spectrogram_windowsize == 0)
+			{
+				eof_spectrogram_windowsize = 1024;
+			}
+		}
+		eof_half_spectrogram_windowsize = (double)eof_spectrogram_windowsize / 2.0;	//Cache this value so it isn't calculated for every rendered column of the spectrogram
+
+		//Reload the spectrogram if we changed the window size
+		if(eof_spectrogram_windowsize != first_windowsize && eof_spectrogram != NULL)
+		{
+			eof_create_spectrogram(eof_spectrogram->oggfilename);
 		}
 
-        first_windowsize = eof_spectrogram_windowsize;
-        //Run through the window sizes
-        for(i=8;i<13;i++) {
-            if(eof_spectrogram_settings_dialog[i].flags == D_SELECTED) {
-                eof_spectrogram_windowsize = eof_spectrogram_settings_wsize[i-8];
-            }
-        }
-        //Check for the Other box
-        if(eof_spectrogram_settings_dialog[13].flags == D_SELECTED) {
-            eof_spectrogram_windowsize = atoi(eof_etext);
-            if(eof_spectrogram_windowsize == 0) { eof_spectrogram_windowsize = 1024; }
-        }
-        eof_half_spectrogram_windowsize = (double)eof_spectrogram_windowsize / 2.0;	//Cache this value so it isn't calculated for every rendered column of the spectrogram
-
-        //Reload the spectrogram if we changed the window size
-        if(eof_spectrogram_windowsize != first_windowsize && eof_spectrogram != NULL) {
-            eof_create_spectrogram(eof_spectrogram->oggfilename);
-        }
-
-        //Run through the color options
-        for(i=16;i<18;i++) {
-            if(eof_spectrogram_settings_dialog[i].flags == D_SELECTED) {
-                eof_spectrogram_colorscheme = i-16;
-            }
-        }
+		//Run through the color options
+		for(i=16;i<18;i++)
+		{
+			if(eof_spectrogram_settings_dialog[i].flags == D_SELECTED)
+			{
+				eof_spectrogram_colorscheme = i-16;
+			}
+		}
 	}
+	eof_fix_window_title();
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -2294,13 +2307,13 @@ int eof_menu_song_open_bass(void)
 
 DIALOG eof_catalog_entry_name_dialog[] =
 {
-   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,  0,   48,  314, 106, 2,   23,   0,      0,      0,   0,   "Edit catalog entry name",               NULL, NULL },
-   { d_agup_text_proc,    12,  84,  64,  8,   2,   23,   0,      0,      0,   0,   "Text:",         NULL, NULL },
-   { d_agup_edit_proc,    48,  80,  254, 20,  2,   23,   0,      0,      EOF_NAME_LENGTH,   0,   eof_etext,           NULL, NULL },
-   { d_agup_button_proc,  67,  112, 84,  28,  2,   23,   '\r',   D_EXIT, 0,   0,   "OK",               NULL, NULL },
-   { d_agup_button_proc,  163, 112, 78,  28,  2,   23,   0,      D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
+	{ d_agup_window_proc,  0,   48,  314, 106, 2,   23,   0,      0,      0,   0,   "Edit catalog entry name",               NULL, NULL },
+	{ d_agup_text_proc,    12,  84,  64,  8,   2,   23,   0,      0,      0,   0,   "Text:",         NULL, NULL },
+	{ d_agup_edit_proc,    48,  80,  254, 20,  2,   23,   0,      0,      EOF_NAME_LENGTH,   0,   eof_etext,           NULL, NULL },
+	{ d_agup_button_proc,  67,  112, 84,  28,  2,   23,   '\r',   D_EXIT, 0,   0,   "OK",               NULL, NULL },
+	{ d_agup_button_proc,  163, 112, 78,  28,  2,   23,   0,      D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 int eof_menu_catalog_edit_name(void)
@@ -2352,15 +2365,15 @@ int eof_menu_song_legacy_view(void)
 #define EOF_SONG_TRACK_DIFFICULTY_MENU_Y 48
 DIALOG eof_song_track_difficulty_menu[] =
 {
-   /* (proc)                (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2)    (dp3) */
-   { d_agup_window_proc,    EOF_SONG_TRACK_DIFFICULTY_MENU_X,  EOF_SONG_TRACK_DIFFICULTY_MENU_Y,  232, 146, 2,   23,  0,    0,      0,   0,   "Set track difficulty", NULL, NULL },
-   { d_agup_text_proc,      12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "Difficulty (0-6):",    NULL, NULL },
-   { eof_verified_edit_proc,111,80,  20,  20,  2,   23,  0,    0,      1,   0,   eof_etext,              "0123456", NULL },
-   { d_agup_button_proc,    8,  152, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                   NULL, NULL },
-   { d_agup_button_proc,    111,152, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",               NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)                (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2)    (dp3) */
+	{ d_agup_window_proc,    EOF_SONG_TRACK_DIFFICULTY_MENU_X,  EOF_SONG_TRACK_DIFFICULTY_MENU_Y,  232, 146, 2,   23,  0,    0,      0,   0,   "Set track difficulty", NULL, NULL },
+	{ d_agup_text_proc,      12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "Difficulty (0-6):",    NULL, NULL },
+	{ eof_verified_edit_proc,111,80,  20,  20,  2,   23,  0,    0,      1,   0,   eof_etext,              "0123456", NULL },
+	{ d_agup_button_proc,    8,  152, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                   NULL, NULL },
+	{ d_agup_button_proc,    111,152, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",               NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 DIALOG eof_song_track_difficulty_menu_pro_drum[] =
@@ -2601,7 +2614,7 @@ int eof_edit_tuning_proc(int msg, DIALOG *d, int c)
 
 DIALOG eof_pro_guitar_tuning_dialog[] =
 {
-/*	(proc)					(x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)       (d2) (dp)          		(dp2) (dp3) */
+	/*	(proc)				(x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)       (d2) (dp)          		(dp2) (dp3) */
 	{d_agup_window_proc,	0,   48,  230, 272,0,   0,   0,    0,      0,         0,	"Edit guitar tuning",NULL, NULL },
 	{d_agup_text_proc,  	16,  80,  44,  8,  0,   0,   0,    0,      0,         0,	"Tuning:",      	NULL, NULL },
 	{d_agup_text_proc,		74,  80,  154, 8,  0,   0,   0,    0, EOF_NAME_LENGTH,0,	eof_tuning_name,    NULL, NULL },
@@ -3213,14 +3226,14 @@ int eof_menu_song_raw_MIDI_tracks(void)
 
 DIALOG eof_raw_midi_tracks_dialog[] =
 {
-   /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-   { d_agup_window_proc,0,   48,  500, 232, 2,   23,  0,    0,      0,   0,   "Stored MIDI tracks",    NULL, NULL },
-   { d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_raw_midi_tracks_list,NULL, NULL },
-   { d_agup_push_proc,  425, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",         NULL, (void *)eof_raw_midi_dialog_add },
-//   { d_agup_push_proc,  425, 124, 68,  28,  2,   23,  'd',  D_EXIT, 0,   0,   "&Desc",        NULL, eof_raw_midi_dialog_desc },
-   { d_agup_push_proc,  425, 164, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, (void *)eof_raw_midi_dialog_delete },
-   { d_agup_button_proc,12,  235, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
+	{ d_agup_window_proc,0,   48,  500, 232, 2,   23,  0,    0,      0,   0,   "Stored MIDI tracks",    NULL, NULL },
+	{ d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_raw_midi_tracks_list,NULL, NULL },
+	{ d_agup_push_proc,  425, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",         NULL, (void *)eof_raw_midi_dialog_add },
+//	{ d_agup_push_proc,  425, 124, 68,  28,  2,   23,  'd',  D_EXIT, 0,   0,   "&Desc",        NULL, eof_raw_midi_dialog_desc },
+	{ d_agup_push_proc,  425, 164, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, (void *)eof_raw_midi_dialog_delete },
+	{ d_agup_button_proc,12,  235, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 struct eof_MIDI_data_track * eof_MIDI_track_list_to_enumerate;
@@ -3315,12 +3328,12 @@ int eof_raw_midi_dialog_delete(DIALOG * d)
 
 DIALOG eof_raw_midi_add_track_dialog[] =
 {
-   /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-   { d_agup_window_proc, 0,  48,  500, 232, 2,   23,  0,    0,      0,   0,   "Select MIDI track to import",    NULL, NULL },
-   { d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_raw_midi_tracks_list,NULL, NULL },
-   { d_agup_push_proc,  12,  235, 68,  28,  2,   23,  'i',  D_EXIT, 0,   0,   "&Import",      NULL, (void *)eof_raw_midi_track_import },
-   { d_agup_button_proc,120, 235, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
+	{ d_agup_window_proc, 0,  48,  500, 232, 2,   23,  0,    0,      0,   0,   "Select MIDI track to import",    NULL, NULL },
+	{ d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_raw_midi_tracks_list,NULL, NULL },
+	{ d_agup_push_proc,  12,  235, 68,  28,  2,   23,  'i',  D_EXIT, 0,   0,   "&Import",      NULL, (void *)eof_raw_midi_track_import },
+	{ d_agup_button_proc,120, 235, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 int eof_raw_midi_track_import(DIALOG * d)
@@ -3578,16 +3591,16 @@ int eof_raw_midi_dialog_add(DIALOG * d)
 
 DIALOG eof_seek_beat_measure_dialog[] =
 {
-   /* (proc) 		        (x)	(y)	(w)	(h)	(fg) (bg) (key) (flags)	(d1)(d2)(dp)						(dp2) (dp3) */
-   { d_agup_window_proc,  	0,	48,	180,157,2,   23,  0,    0,      0,	0,	"Seek to beat/measure",	NULL, NULL },
-   { d_agup_text_proc,		16,	80,	64,	8,	2,   23,  0,    0,      0,	0,	"Seek to:",				NULL, NULL },
-   { d_agup_radio_proc,		16,	100,110,15,	2,   23,  0,    0,      0,	0,	eof_etext,				NULL, NULL },
-   { d_agup_radio_proc,		16,	120,160,15,	2,   23,  0,    0,      0,	0,	eof_etext2,				NULL, NULL },
-   { d_agup_text_proc,		16,	140,80,16,	2,   23,  0,    0,		1,	0,	"Number:",				NULL, NULL },
-   { eof_verified_edit_proc,70, 140,66,20,  2,   23,  0, D_GOTFOCUS,4,  0,  eof_etext3,           	"1234567890", NULL },
-   { d_agup_button_proc,	16,	164,68,	28,	2,   23,  '\r',	D_EXIT, 0,	0,	"OK",             		NULL, NULL },
-   { d_agup_button_proc,	96, 164,68,	28,	2,   23,  0,	D_EXIT, 0,	0,	"Cancel",         		NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc) 		        (x)	(y)	(w)	(h)	(fg) (bg) (key) (flags)	(d1)(d2)(dp)						(dp2) (dp3) */
+	{ d_agup_window_proc,  	0,	48,	180,157,2,   23,  0,    0,      0,	0,	"Seek to beat/measure",	NULL, NULL },
+	{ d_agup_text_proc,		16,	80,	64,	8,	2,   23,  0,    0,      0,	0,	"Seek to:",				NULL, NULL },
+	{ d_agup_radio_proc,	16,	100,110,15,	2,   23,  0,    0,      0,	0,	eof_etext,				NULL, NULL },
+	{ d_agup_radio_proc,	16,	120,160,15,	2,   23,  0,    0,      0,	0,	eof_etext2,				NULL, NULL },
+	{ d_agup_text_proc,		16,	140,80,16,	2,   23,  0,    0,		1,	0,	"Number:",				NULL, NULL },
+	{ eof_verified_edit_proc,70, 140,66,20,  2,   23,  0, D_GOTFOCUS,4,  0,  eof_etext3,           	"1234567890", NULL },
+	{ d_agup_button_proc,	16,	164,68,	28,	2,   23,  '\r',	D_EXIT, 0,	0,	"OK",             		NULL, NULL },
+	{ d_agup_button_proc,	96, 164,68,	28,	2,   23,  0,	D_EXIT, 0,	0,	"Cancel",         		NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 int eof_menu_song_seek_beat_measure(void)
@@ -3857,15 +3870,15 @@ int eof_menu_catalog_toggle_full_width(void)
 
 DIALOG eof_song_catalog_edit_dialog[] =
 {
-   /* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
-   { d_agup_window_proc,    0,   0,   200, 180, 0,   0,   0,    0,      0,   0,   "Edit catalog entry",      NULL, NULL },
-   { d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "Start position (ms)",                NULL, NULL },
-   { eof_verified_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      7,   0,   eof_etext,     "0123456789", NULL },
-   { d_agup_text_proc,      12,  88,  60,  12,  0,   0,   0,    0,      0,   0,   "End position (ms)",                NULL, NULL },
-   { eof_verified_edit_proc,12,  104, 50,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789", NULL },
-   { d_agup_button_proc,    12,  140, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",               NULL, NULL },
-   { d_agup_button_proc,    110, 140, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
-   { NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,               NULL, NULL }
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
+	{ d_agup_window_proc,    0,   0,   200, 180, 0,   0,   0,    0,      0,   0,   "Edit catalog entry",      NULL, NULL },
+	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "Start position (ms)",                NULL, NULL },
+	{ eof_verified_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      7,   0,   eof_etext,     "0123456789", NULL },
+	{ d_agup_text_proc,      12,  88,  60,  12,  0,   0,   0,    0,      0,   0,   "End position (ms)",                NULL, NULL },
+	{ eof_verified_edit_proc,12,  104, 50,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789", NULL },
+	{ d_agup_button_proc,    12,  140, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",               NULL, NULL },
+	{ d_agup_button_proc,    110, 140, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,               NULL, NULL }
 };
 
 int eof_menu_song_catalog_edit(void)
@@ -3908,13 +3921,13 @@ char eof_pro_guitar_set_fret_hand_position_dialog_string1[] = "Set fret hand pos
 char eof_pro_guitar_set_fret_hand_position_dialog_string2[] = "Edit fret hand position";
 DIALOG eof_pro_guitar_set_fret_hand_position_dialog[] =
 {
-   /* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
-   { d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   eof_pro_guitar_set_fret_hand_position_dialog_string1,      NULL, NULL },
-   { d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "At fret #",                NULL, NULL },
-   { eof_verified_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      2,   0,   eof_etext,     "0123456789", NULL },
-   { d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",               NULL, NULL },
-   { d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
-   { NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,               NULL, NULL }
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
+	{ d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   eof_pro_guitar_set_fret_hand_position_dialog_string1,      NULL, NULL },
+	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "At fret #",                NULL, NULL },
+	{ eof_verified_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      2,   0,   eof_etext,     "0123456789", NULL },
+	{ d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",               NULL, NULL },
+	{ d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,               NULL, NULL }
 };
 
 int eof_pro_guitar_set_fret_hand_position(void)
@@ -4185,15 +4198,15 @@ char eof_fret_hand_position_list_dialog_undo_made = 0;	//Used to track whether a
 char eof_fret_hand_position_list_dialog_title_string[30] = "Fret hand positions";	//This will be rebuilt by the list box count function to display the number of positions present
 DIALOG eof_fret_hand_position_list_dialog[] =
 {
-   /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-   { d_agup_window_proc,0,   48,  250, 237, 2,   23,  0,    0,      0,   0,   "Fret hand positions",       NULL, NULL },
-   { d_agup_list_proc,  12,  84,  150, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_fret_hand_position_list,NULL, NULL },
-   { d_agup_push_proc,  170, 84,  68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, (void *)eof_fret_hand_position_delete },
-   { d_agup_push_proc,  170, 124, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete all",   NULL, (void *)eof_fret_hand_position_delete_all },
-   { d_agup_push_proc,  170, 164, 68,  28,  2,   23,  's',  D_EXIT, 0,   0,   "&Seek to",     NULL, (void *)eof_fret_hand_position_seek },
-   { d_agup_push_proc,  170, 204, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Generate",     NULL, (void *)eof_generate_hand_positions_current_track_difficulty },
-   { d_agup_button_proc,12,  245, 90,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
+	{ d_agup_window_proc,0,   48,  250, 237, 2,   23,  0,    0,      0,   0,   "Fret hand positions",       NULL, NULL },
+	{ d_agup_list_proc,  12,  84,  150, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_fret_hand_position_list,NULL, NULL },
+	{ d_agup_push_proc,  170, 84,  68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, (void *)eof_fret_hand_position_delete },
+	{ d_agup_push_proc,  170, 124, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete all",   NULL, (void *)eof_fret_hand_position_delete_all },
+	{ d_agup_push_proc,  170, 164, 68,  28,  2,   23,  's',  D_EXIT, 0,   0,   "&Seek to",     NULL, (void *)eof_fret_hand_position_seek },
+	{ d_agup_push_proc,  170, 204, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Generate",     NULL, (void *)eof_generate_hand_positions_current_track_difficulty },
+	{ d_agup_button_proc,12,  245, 90,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 int eof_menu_song_fret_hand_positions(void)
@@ -4225,13 +4238,13 @@ int eof_menu_song_fret_hand_positions(void)
 
 DIALOG eof_song_rename_track_dialog[] =
 {
-   /* (proc)            (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,0,  48,  314, 112, 2,   23,  0,    0,      0,   0,   "Rename track",NULL, NULL },
-   { d_agup_text_proc,  12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "New name:",   NULL, NULL },
-   { d_agup_edit_proc,  90, 80,  212, 20,  2,   23,  0, 0,EOF_NAME_LENGTH,0, eof_etext,     NULL, NULL },
-   { d_agup_button_proc,67, 120, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
-   { d_agup_button_proc,163,120, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",      NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)            (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
+	{ d_agup_window_proc,0,  48,  314, 112, 2,   23,  0,    0,      0,   0,   "Rename track",NULL, NULL },
+	{ d_agup_text_proc,  12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "New name:",   NULL, NULL },
+	{ d_agup_edit_proc,  90, 80,  212, 20,  2,   23,  0, 0,EOF_NAME_LENGTH,0, eof_etext,     NULL, NULL },
+	{ d_agup_button_proc,67, 120, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
+	{ d_agup_button_proc,163,120, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",      NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 int eof_song_rename_track(void)
@@ -4492,12 +4505,12 @@ int eof_song_proguitar_delete_difficulty(void)
 
 DIALOG eof_menu_song_fret_hand_positions_copy_from_dialog[] =
 {
-   /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-   { d_agup_window_proc,0,   48,  250, 237, 2,   23,  0,    0,      0,   0,   "Copy fret hand positions from diff #", NULL, NULL },
-   { d_agup_list_proc,  12,  84,  226, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_menu_song_fret_hand_positions_copy_from_list,NULL, NULL },
-   { d_agup_button_proc,12,  245, 90,  28,  2,   23,  'c', D_EXIT,  0,   0,   "&Copy",         NULL, NULL },
-   { d_agup_button_proc,148, 245, 90,  28,  2,   23,  0,   D_EXIT,  0,   0,   "Cancel",        NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
+	{ d_agup_window_proc,0,   48,  250, 237, 2,   23,  0,    0,      0,   0,   "Copy fret hand positions from diff #", NULL, NULL },
+	{ d_agup_list_proc,  12,  84,  226, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_menu_song_fret_hand_positions_copy_from_list,NULL, NULL },
+	{ d_agup_button_proc,12,  245, 90,  28,  2,   23,  'c', D_EXIT,  0,   0,   "&Copy",         NULL, NULL },
+	{ d_agup_button_proc,148, 245, 90,  28,  2,   23,  0,   D_EXIT,  0,   0,   "Cancel",        NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 char eof_menu_song_difficulty_list_strings[256][4];
@@ -4654,14 +4667,14 @@ char * eof_magage_rs_phrases_list(int index, int * size)
 
 DIALOG eof_manage_rs_phrases_dialog[] =
 {
-   /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                 (dp2) (dp3) */
-   { d_agup_window_proc,0,   48,  400, 237, 2,   23,  0,    0,      0,   0,   eof_manage_rs_phrases_dialog_string, NULL, NULL },
-   { d_agup_list_proc,  12,  84,  300, 144, 2,   23,  0,    0,      0,   0,   (void *)eof_magage_rs_phrases_list,NULL, NULL },
-   { d_agup_push_proc,  325, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add level",        NULL, (void *)eof_manage_rs_phrases_add_level },
-   { d_agup_push_proc,  325, 124, 68,  28,  2,   23,  'd',  D_EXIT, 0,   0,   "&Del level",        NULL, (void *)eof_manage_rs_phrases_remove_level },
-   { d_agup_push_proc,  325, 164, 68,  28,  2,   23,  's',  D_EXIT, 0,   0,   "&Seek to",          NULL, (void *)eof_manage_rs_phrases_seek },
-   { d_agup_button_proc,12,  245, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",              NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                 (dp2) (dp3) */
+	{ d_agup_window_proc,0,   48,  400, 237, 2,   23,  0,    0,      0,   0,   eof_manage_rs_phrases_dialog_string, NULL, NULL },
+	{ d_agup_list_proc,  12,  84,  300, 144, 2,   23,  0,    0,      0,   0,   (void *)eof_magage_rs_phrases_list,NULL, NULL },
+	{ d_agup_push_proc,  325, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add level",        NULL, (void *)eof_manage_rs_phrases_add_level },
+	{ d_agup_push_proc,  325, 124, 68,  28,  2,   23,  'd',  D_EXIT, 0,   0,   "&Del level",        NULL, (void *)eof_manage_rs_phrases_remove_level },
+	{ d_agup_push_proc,  325, 164, 68,  28,  2,   23,  's',  D_EXIT, 0,   0,   "&Seek to",          NULL, (void *)eof_manage_rs_phrases_seek },
+	{ d_agup_button_proc,12,  245, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",              NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 void eof_rebuild_manage_rs_phrases_strings(void)
@@ -5082,16 +5095,16 @@ int eof_manage_rs_phrases_add_or_remove_level(int function)
 
 DIALOG eof_song_rs_popup_add_dialog[] =
 {
-   /* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
-   { d_agup_window_proc,    0,   0,   200, 190, 0,   0,   0,    0,      0,   0,   "Rocksmith popup message",      NULL, NULL },
-   { d_agup_edit_proc,      12,  30,  176, 20,  2,   23,  0,    0,      EOF_SECTION_NAME_LENGTH,   0,   eof_etext,           NULL, NULL },
-   { d_agup_text_proc,      12,  56,  60,  12,  0,   0,   0,    0,      0,   0,   "Start position (ms)",                NULL, NULL },
-   { eof_verified_edit_proc,12,  72,  50,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789", NULL },
-   { d_agup_text_proc,      12,  100, 60,  12,  0,   0,   0,    0,      0,   0,   "Duration (ms)",                NULL, NULL },
-   { eof_verified_edit_proc,12,  120, 50,  20,  0,   0,   0,    0,      7,   0,   eof_etext3,     "0123456789", NULL },
-   { d_agup_button_proc,    12,  150, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",               NULL, NULL },
-   { d_agup_button_proc,    110, 150, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
-   { NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,               NULL, NULL }
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
+	{ d_agup_window_proc,    0,   0,   200, 190, 0,   0,   0,    0,      0,   0,   "Rocksmith popup message",      NULL, NULL },
+	{ d_agup_edit_proc,      12,  30,  176, 20,  2,   23,  0,    0,      EOF_SECTION_NAME_LENGTH,   0,   eof_etext,           NULL, NULL },
+	{ d_agup_text_proc,      12,  56,  60,  12,  0,   0,   0,    0,      0,   0,   "Start position (ms)",                NULL, NULL },
+	{ eof_verified_edit_proc,12,  72,  50,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789", NULL },
+	{ d_agup_text_proc,      12,  100, 60,  12,  0,   0,   0,    0,      0,   0,   "Duration (ms)",                NULL, NULL },
+	{ eof_verified_edit_proc,12,  120, 50,  20,  0,   0,   0,    0,      7,   0,   eof_etext3,     "0123456789", NULL },
+	{ d_agup_button_proc,    12,  150, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",               NULL, NULL },
+	{ d_agup_button_proc,    110, 150, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,               NULL, NULL }
 };
 
 int eof_menu_song_rs_popup_add(void)
@@ -5182,15 +5195,15 @@ char eof_rs_popup_messages_dialog_string[25] = {0};	//The title string for the R
 
 DIALOG eof_rs_popup_messages_dialog[] =
 {
-   /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-   { d_agup_window_proc,0,   48,  400, 237, 2,   23,  0,    0,      0,   0,   eof_rs_popup_messages_dialog_string,NULL, NULL },
-   { d_agup_list_proc,  12,  84,  300, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_rs_popup_messages_list,NULL, NULL },
-   { d_agup_push_proc,  320, 84,  68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, (void *)eof_rs_popup_messages_delete },
-   { d_agup_push_proc,  320, 124, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete all",   NULL, (void *)eof_rs_popup_messages_delete_all },
-   { d_agup_push_proc,  320, 164, 68,  28,  2,   23,  's',  D_EXIT, 0,   0,   "&Seek to",     NULL, (void *)eof_rs_popup_messages_seek },
-   { d_agup_push_proc,  320, 204, 68,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",        NULL, (void *)eof_rs_popup_messages_edit },
-   { d_agup_button_proc,12,  245, 90,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
+	{ d_agup_window_proc,0,   48,  400, 237, 2,   23,  0,    0,      0,   0,   eof_rs_popup_messages_dialog_string,NULL, NULL },
+	{ d_agup_list_proc,  12,  84,  300, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_rs_popup_messages_list,NULL, NULL },
+	{ d_agup_push_proc,  320, 84,  68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, (void *)eof_rs_popup_messages_delete },
+	{ d_agup_push_proc,  320, 124, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete all",   NULL, (void *)eof_rs_popup_messages_delete_all },
+	{ d_agup_push_proc,  320, 164, 68,  28,  2,   23,  's',  D_EXIT, 0,   0,   "&Seek to",     NULL, (void *)eof_rs_popup_messages_seek },
+	{ d_agup_push_proc,  320, 204, 68,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",        NULL, (void *)eof_rs_popup_messages_edit },
+	{ d_agup_button_proc,12,  245, 90,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 char * eof_rs_popup_messages_list(int index, int * size)
@@ -5608,13 +5621,13 @@ int eof_song_proguitar_toggle_ignore_tuning(void)
 char eof_song_flatten_difficulties_threshold[10] = "2";
 DIALOG eof_song_flatten_difficulties_dialog[] =
 {
-   /* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
-   { d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Merge notes that are within", NULL, NULL },
-   { d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "This # of ms:",NULL, NULL },
-   { eof_verified_edit_proc,12,  56,  90,  20,  0,   0,   0,    0,      7,   0,   eof_song_flatten_difficulties_threshold,     "0123456789",  NULL },
-   { d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                         NULL, NULL },
-   { d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                     NULL, NULL },
-   { NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                         NULL, NULL }
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
+	{ d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Merge notes that are within", NULL, NULL },
+	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "This # of ms:",NULL, NULL },
+	{ eof_verified_edit_proc,12,  56,  90,  20,  0,   0,   0,    0,      7,   0,   eof_song_flatten_difficulties_threshold,     "0123456789",  NULL },
+	{ d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                         NULL, NULL },
+	{ d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                     NULL, NULL },
+	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                         NULL, NULL }
 };
 
 int eof_song_flatten_difficulties(void)

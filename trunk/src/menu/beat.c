@@ -24,73 +24,73 @@ char eof_ks_menu_off_text[32] = {0};
 
 MENU eof_beat_time_signature_menu[] =
 {
-    {"&4/4", eof_menu_beat_ts_4_4, NULL, 0, NULL},
-    {"&3/4", eof_menu_beat_ts_3_4, NULL, 0, NULL},
-    {"&5/4", eof_menu_beat_ts_5_4, NULL, 0, NULL},
-    {"&6/4", eof_menu_beat_ts_6_4, NULL, 0, NULL},
-    {"&Custom", eof_menu_beat_ts_custom, NULL, 0, NULL},
-    {eof_ts_menu_off_text, eof_menu_beat_ts_off, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&4/4", eof_menu_beat_ts_4_4, NULL, 0, NULL},
+	{"&3/4", eof_menu_beat_ts_3_4, NULL, 0, NULL},
+	{"&5/4", eof_menu_beat_ts_5_4, NULL, 0, NULL},
+	{"&6/4", eof_menu_beat_ts_6_4, NULL, 0, NULL},
+	{"&Custom", eof_menu_beat_ts_custom, NULL, 0, NULL},
+	{eof_ts_menu_off_text, eof_menu_beat_ts_off, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_beat_key_signature_menu[] =
 {
-    {eof_ks_menu_off_text, eof_menu_beat_ks_off, NULL, 0, NULL},
-    {"B , g# (7 flats)", eof_menu_beat_ks_7_flats, NULL, 0, NULL},
-    {"Gb , eb (6 flats)", eof_menu_beat_ks_6_flats, NULL, 0, NULL},
-    {"Db , bb (5 flats)", eof_menu_beat_ks_5_flats, NULL, 0, NULL},
-    {"Ab , f (4 flats)", eof_menu_beat_ks_4_flats, NULL, 0, NULL},
-    {"Eb , c (3 flats)", eof_menu_beat_ks_3_flats, NULL, 0, NULL},
-    {"Bb , g (2 flats)", eof_menu_beat_ks_2_flats, NULL, 0, NULL},
-    {"F , d (1 flat)", eof_menu_beat_ks_1_flat, NULL, 0, NULL},
-    {"C , a (0 flats/sharps)", eof_menu_beat_ks_0_flats, NULL, 0, NULL},
-    {"G , e (1 sharp)", eof_menu_beat_ks_1_sharp, NULL, 0, NULL},
-    {"D , b (2 sharps)", eof_menu_beat_ks_2_sharps, NULL, 0, NULL},
-    {"A , f# (3 sharps)", eof_menu_beat_ks_3_sharps, NULL, 0, NULL},
-    {"E , c# (4 sharps)", eof_menu_beat_ks_4_sharps, NULL, 0, NULL},
-    {"B , g# (5 sharps)", eof_menu_beat_ks_5_sharps, NULL, 0, NULL},
-    {"Gb , eb (6 sharps)", eof_menu_beat_ks_6_sharps, NULL, 0, NULL},
-    {"Db , bb (7 sharps)", eof_menu_beat_ks_7_sharps, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{eof_ks_menu_off_text, eof_menu_beat_ks_off, NULL, 0, NULL},
+	{"B , g# (7 flats)", eof_menu_beat_ks_7_flats, NULL, 0, NULL},
+	{"Gb , eb (6 flats)", eof_menu_beat_ks_6_flats, NULL, 0, NULL},
+	{"Db , bb (5 flats)", eof_menu_beat_ks_5_flats, NULL, 0, NULL},
+	{"Ab , f (4 flats)", eof_menu_beat_ks_4_flats, NULL, 0, NULL},
+	{"Eb , c (3 flats)", eof_menu_beat_ks_3_flats, NULL, 0, NULL},
+	{"Bb , g (2 flats)", eof_menu_beat_ks_2_flats, NULL, 0, NULL},
+	{"F , d (1 flat)", eof_menu_beat_ks_1_flat, NULL, 0, NULL},
+	{"C , a (0 flats/sharps)", eof_menu_beat_ks_0_flats, NULL, 0, NULL},
+	{"G , e (1 sharp)", eof_menu_beat_ks_1_sharp, NULL, 0, NULL},
+	{"D , b (2 sharps)", eof_menu_beat_ks_2_sharps, NULL, 0, NULL},
+	{"A , f# (3 sharps)", eof_menu_beat_ks_3_sharps, NULL, 0, NULL},
+	{"E , c# (4 sharps)", eof_menu_beat_ks_4_sharps, NULL, 0, NULL},
+	{"B , g# (5 sharps)", eof_menu_beat_ks_5_sharps, NULL, 0, NULL},
+	{"Gb , eb (6 sharps)", eof_menu_beat_ks_6_sharps, NULL, 0, NULL},
+	{"Db , bb (7 sharps)", eof_menu_beat_ks_7_sharps, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_beat_rocksmith_menu[] =
 {
-    {"Place RS Phrase\tShift+P", eof_rocksmith_phrase_dialog_add, NULL, 0, NULL},
-    {"Place RS &Section\tShift+S", eof_rocksmith_section_dialog_add, NULL, 0, NULL},
-    {"Place RS &Event\tShift+E", eof_rocksmith_event_dialog_add, NULL, 0, NULL},
-    {"&Copy phrase/section\t" CTRL_NAME "+Shift+C", eof_menu_beat_copy_rs_events, NULL, 0, NULL},
-    {"&Paste phrase/section\t" CTRL_NAME "+Shift+V", eof_menu_beat_paste_rs_events, NULL, 0, NULL},
-    {"Clear non RS events", eof_menu_beat_clear_non_rs_events, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"Place RS Phrase\tShift+P", eof_rocksmith_phrase_dialog_add, NULL, 0, NULL},
+	{"Place RS &Section\tShift+S", eof_rocksmith_section_dialog_add, NULL, 0, NULL},
+	{"Place RS &Event\tShift+E", eof_rocksmith_event_dialog_add, NULL, 0, NULL},
+	{"&Copy phrase/section\t" CTRL_NAME "+Shift+C", eof_menu_beat_copy_rs_events, NULL, 0, NULL},
+	{"&Paste phrase/section\t" CTRL_NAME "+Shift+V", eof_menu_beat_paste_rs_events, NULL, 0, NULL},
+	{"Clear non RS events", eof_menu_beat_clear_non_rs_events, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_beat_menu[] =
 {
-    {"&BPM Change", eof_menu_beat_bpm_change, NULL, 0, NULL},
-    {"Time &Signature", NULL, eof_beat_time_signature_menu, 0, NULL},
-    {"&Key Signature", NULL, eof_beat_key_signature_menu, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"Add", eof_menu_beat_add, NULL, 0, NULL},
-    {"Delete\t" CTRL_NAME "+Del", eof_menu_beat_delete, NULL, 0, NULL},
-    {"Push Offset Back", eof_menu_beat_push_offset_back_menu, NULL, 0, NULL},
-    {"Push Offset Up", eof_menu_beat_push_offset_up, NULL, 0, NULL},
-    {"Reset Offset to Zero", eof_menu_beat_reset_offset, NULL, 0, NULL},
-    {"&Anchor Beat\tShift+A", eof_menu_beat_anchor, NULL, 0, NULL},
-    {"Toggle Anchor\tA", eof_menu_beat_toggle_anchor, NULL, 0, NULL},
-    {"&Delete Anchor", eof_menu_beat_delete_anchor, NULL, 0, NULL},
-    {"Reset BPM", eof_menu_beat_reset_bpm, NULL, 0, NULL},
-    {"&Calculate BPM", eof_menu_beat_calculate_bpm, NULL, 0, NULL},
-    {"Double BPM", eof_menu_beat_double_tempo, NULL, 0, NULL},
-    {"Halve BPM", eof_menu_beat_halve_tempo, NULL, 0, NULL},
-    {"Fix tempo for RBN", eof_menu_beat_set_RBN_tempos, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"&Rocksmith", NULL, eof_beat_rocksmith_menu, 0, NULL},
-    {"All E&vents", eof_menu_beat_all_events, NULL, 0, NULL},
-    {"&Events", eof_menu_beat_events, NULL, 0, NULL},
-    {"Clear Events", eof_menu_beat_clear_events, NULL, 0, NULL},
-    {"Place &Trainer Event", eof_menu_beat_trainer_event, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&BPM Change", eof_menu_beat_bpm_change, NULL, 0, NULL},
+	{"Time &Signature", NULL, eof_beat_time_signature_menu, 0, NULL},
+	{"&Key Signature", NULL, eof_beat_key_signature_menu, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"Add", eof_menu_beat_add, NULL, 0, NULL},
+	{"Delete\t" CTRL_NAME "+Del", eof_menu_beat_delete, NULL, 0, NULL},
+	{"Push Offset Back", eof_menu_beat_push_offset_back_menu, NULL, 0, NULL},
+	{"Push Offset Up", eof_menu_beat_push_offset_up, NULL, 0, NULL},
+	{"Reset Offset to Zero", eof_menu_beat_reset_offset, NULL, 0, NULL},
+	{"&Anchor Beat\tShift+A", eof_menu_beat_anchor, NULL, 0, NULL},
+	{"Toggle Anchor\tA", eof_menu_beat_toggle_anchor, NULL, 0, NULL},
+	{"&Delete Anchor", eof_menu_beat_delete_anchor, NULL, 0, NULL},
+	{"Reset BPM", eof_menu_beat_reset_bpm, NULL, 0, NULL},
+	{"&Calculate BPM", eof_menu_beat_calculate_bpm, NULL, 0, NULL},
+	{"Double BPM", eof_menu_beat_double_tempo, NULL, 0, NULL},
+	{"Halve BPM", eof_menu_beat_halve_tempo, NULL, 0, NULL},
+	{"Fix tempo for RBN", eof_menu_beat_set_RBN_tempos, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"&Rocksmith", NULL, eof_beat_rocksmith_menu, 0, NULL},
+	{"All E&vents", eof_menu_beat_all_events, NULL, 0, NULL},
+	{"&Events", eof_menu_beat_events, NULL, 0, NULL},
+	{"Clear Events", eof_menu_beat_clear_events, NULL, 0, NULL},
+	{"Place &Trainer Event", eof_menu_beat_trainer_event, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 char stored_event_track_notice[] = "Warning:  A stored MIDI track will override chart-wide text events";
@@ -98,38 +98,38 @@ char no_notice[] = "";
 char eof_events_dialog_string[15] = {0};	//The title string for the Events dialog
 DIALOG eof_events_dialog[] =
 {
-   /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-   { d_agup_window_proc,0,   48,  500, 237, 2,   23,  0,    0,      0,   0,   eof_events_dialog_string,NULL, NULL },
-   { d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_events_list,NULL, NULL },
-   { d_agup_push_proc,  416, 84,  76,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",         NULL, (void *)eof_events_dialog_add },
-   { d_agup_push_proc,  416, 124, 76,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",        NULL, (void *)eof_events_dialog_edit },
-   { d_agup_push_proc,  416, 164, 76,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, (void *)eof_events_dialog_delete },
-   { d_agup_text_proc,  12,  225, 64,  8,   2,   23,  0,    0,      0,   0,   ""      ,       NULL, NULL },
-   { d_agup_button_proc,12,  245, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
-   { d_agup_push_proc,  416, 204, 76,  28,  2,   23,  'u',  D_EXIT, 0,   0,   "Move &Up",     NULL, (void *)eof_events_dialog_move_up },
-   { d_agup_push_proc,  416, 244, 76,  28,  2,   23,  'd',  D_EXIT, 0,   0,   "Move &Down",   NULL, (void *)eof_events_dialog_move_down },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
+	{ d_agup_window_proc,0,   48,  500, 237, 2,   23,  0,    0,      0,   0,   eof_events_dialog_string,NULL, NULL },
+	{ d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_events_list,NULL, NULL },
+	{ d_agup_push_proc,  416, 84,  76,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",         NULL, (void *)eof_events_dialog_add },
+	{ d_agup_push_proc,  416, 124, 76,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",        NULL, (void *)eof_events_dialog_edit },
+	{ d_agup_push_proc,  416, 164, 76,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, (void *)eof_events_dialog_delete },
+	{ d_agup_text_proc,  12,  225, 64,  8,   2,   23,  0,    0,      0,   0,   ""      ,       NULL, NULL },
+	{ d_agup_button_proc,12,  245, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
+	{ d_agup_push_proc,  416, 204, 76,  28,  2,   23,  'u',  D_EXIT, 0,   0,   "Move &Up",     NULL, (void *)eof_events_dialog_move_up },
+	{ d_agup_push_proc,  416, 244, 76,  28,  2,   23,  'd',  D_EXIT, 0,   0,   "Move &Down",   NULL, (void *)eof_events_dialog_move_down },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 ///The dp2 values below must be edited appropriately whenever the radio buttons' object numbers in the dialog are changed
 char eof_all_events_dialog_string[20] = {0};	//The title string for the All Events dialog
 DIALOG eof_all_events_dialog[] =
 {
-   /* (proc)                    (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-   { d_agup_window_proc,         0,   48,  500, 282, 2,   23,  0,    0,      0,   0,   eof_all_events_dialog_string, NULL, NULL },
-   { d_agup_list_proc,           12,  84,  475, 140, 2,   23,  0,    0,      0,   0,   (void *)eof_events_list_all,  NULL, NULL },
-   { d_agup_button_proc,         12,  275, 70,  28,  2,   23,  'f',  D_EXIT, 0,   0,   "&Find",                NULL, NULL },
-   { d_agup_button_proc,         95,  275, 70,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",                 NULL, NULL },
-   { d_agup_button_proc,         182, 275, 150, 28,  2,   23,  0,    D_EXIT, 0,   0,   "Copy to selected beat",NULL, NULL },
-   { eof_all_events_radio_proc,	 340, 243, 85,  15,  2,   23,  0, D_SELECTED,0,   0,   "All Events",           (void *)5,    NULL },	//Use dp2 to store the object number, for use in eof_all_events_radio_proc()
-   { eof_all_events_radio_proc,	 340, 259, 142, 15,  2,   23,  0,    0,      0,   0,   "This Track's Events",  (void *)6,    NULL },
-   { eof_all_events_radio_proc,	 340, 275, 152, 15,  2,   23,  0,    0,      0,   0,   "Sections (RS phrases)",(void *)7,    NULL },
-   { eof_all_events_radio_proc,	 340, 291, 152, 15,  2,   23,  0,    0,      0,   0,   "RS sections",          (void *)8,    NULL },
-   { eof_all_events_radio_proc,	 340, 307, 152, 15,  2,   23,  0,    0,      0,   0,   "RS events",            (void *)9,    NULL },
-   { d_agup_text_proc,           12,  228, 64,  8,   2,   23,  0,    0,      0,   0,   ""      ,                NULL, NULL },
-   { d_agup_button_proc,         12,  243, 70,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",                 NULL, NULL },
-   { d_agup_button_proc,         95,  243, 70,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete",                NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)                    (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
+	{ d_agup_window_proc,         0,   48,  500, 282, 2,   23,  0,    0,      0,   0,   eof_all_events_dialog_string, NULL, NULL },
+	{ d_agup_list_proc,           12,  84,  475, 140, 2,   23,  0,    0,      0,   0,   (void *)eof_events_list_all,  NULL, NULL },
+	{ d_agup_button_proc,         12,  275, 70,  28,  2,   23,  'f',  D_EXIT, 0,   0,   "&Find",                NULL, NULL },
+	{ d_agup_button_proc,         95,  275, 70,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",                 NULL, NULL },
+	{ d_agup_button_proc,         182, 275, 150, 28,  2,   23,  0,    D_EXIT, 0,   0,   "Copy to selected beat",NULL, NULL },
+	{ eof_all_events_radio_proc,  340, 243, 85,  15,  2,   23,  0, D_SELECTED,0,   0,   "All Events",           (void *)5,    NULL },	//Use dp2 to store the object number, for use in eof_all_events_radio_proc()
+	{ eof_all_events_radio_proc,  340, 259, 142, 15,  2,   23,  0,    0,      0,   0,   "This Track's Events",  (void *)6,    NULL },
+	{ eof_all_events_radio_proc,  340, 275, 152, 15,  2,   23,  0,    0,      0,   0,   "Sections (RS phrases)",(void *)7,    NULL },
+	{ eof_all_events_radio_proc,  340, 291, 152, 15,  2,   23,  0,    0,      0,   0,   "RS sections",          (void *)8,    NULL },
+	{ eof_all_events_radio_proc,  340, 307, 152, 15,  2,   23,  0,    0,      0,   0,   "RS events",            (void *)9,    NULL },
+	{ d_agup_text_proc,           12,  228, 64,  8,   2,   23,  0,    0,      0,   0,   ""      ,                NULL, NULL },
+	{ d_agup_button_proc,         12,  243, 70,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",                 NULL, NULL },
+	{ d_agup_button_proc,         95,  243, 70,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete",                NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 char eof_events_add_dialog_string[100] = {0};
@@ -137,84 +137,84 @@ char eof_events_add_dialog_string1[] = "Add event";
 char eof_events_add_dialog_string2[] = "Edit event";
 DIALOG eof_events_add_dialog[] =
 {
-   /* (proc)            (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,0,  48,  314, 186, 2,   23,  0,    0,      0,   0,   eof_events_add_dialog_string1,  NULL, NULL },
-   { d_agup_text_proc,  12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",       NULL, NULL },
-   { d_agup_edit_proc,  48, 80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,     NULL, NULL },
-   { d_agup_check_proc, 12, 110, 250, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string, NULL, NULL },
-   { d_agup_check_proc, 12, 130, 174, 16,  0,   0,   0,    0,      1,   0,   "Rocksmith phrase marker", NULL, NULL },
-   { d_agup_check_proc, 12, 150, 182, 16,  0,   0,   0,    0,      1,   0,   "Rocksmith section marker", NULL, NULL },
-   { d_agup_check_proc, 12, 170, 182, 16,  0,   0,   0,    0,      1,   0,   "Rocksmith event marker", NULL, NULL },
-   { d_agup_button_proc,67, 194, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
-   { d_agup_button_proc,163,194, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",      NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)            (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
+	{ d_agup_window_proc,0,  48,  314, 186, 2,   23,  0,    0,      0,   0,   eof_events_add_dialog_string1,  NULL, NULL },
+	{ d_agup_text_proc,  12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",       NULL, NULL },
+	{ d_agup_edit_proc,  48, 80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,     NULL, NULL },
+	{ d_agup_check_proc, 12, 110, 250, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string, NULL, NULL },
+	{ d_agup_check_proc, 12, 130, 174, 16,  0,   0,   0,    0,      1,   0,   "Rocksmith phrase marker", NULL, NULL },
+	{ d_agup_check_proc, 12, 150, 182, 16,  0,   0,   0,    0,      1,   0,   "Rocksmith section marker", NULL, NULL },
+	{ d_agup_check_proc, 12, 170, 182, 16,  0,   0,   0,    0,      1,   0,   "Rocksmith event marker", NULL, NULL },
+	{ d_agup_button_proc,67, 194, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
+	{ d_agup_button_proc,163,194, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",      NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 DIALOG eof_bpm_change_dialog[] =
 {
-   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_shadow_box_proc,    32,  68,  170, 96 + 8 + 20, 2,   23,  0,    0,      0,   0,   NULL,               NULL, NULL },
-   { d_agup_text_proc,   56,  84,  64,  8,  2,   23,  0,    0,      0,   0,   "BPM:",         NULL, NULL },
-   { eof_verified_edit_proc,   112, 80,  66,  20,  2,   23,  0,    0,      255,   0,   eof_etext,           "1234567890.", NULL },
-   { d_agup_check_proc, 56,  108, 128,  16, 2,   23,  0,    0, 1,   0,   "This Beat Only",               NULL, NULL },
-   { d_agup_check_proc, 56,  128, 128,  16, 2,   23,  0,    0, 1,   0,   "Adjust Notes",               NULL, NULL },
-   { d_agup_button_proc, 42,  152, 68,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
-   { d_agup_button_proc, 120, 152, 68,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)             (dp2) (dp3) */
+	{ d_agup_shadow_box_proc,32,  68,  170, 124, 2,   23,  0,    0,      0,   0,   NULL,            NULL, NULL },
+	{ d_agup_text_proc,      56,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "BPM:",          NULL, NULL },
+	{ eof_verified_edit_proc,112, 80,  66,  20,  2,   23,  0,    0,      255, 0,   eof_etext,       "1234567890.", NULL },
+	{ d_agup_check_proc,     56,  108, 128, 16,  2,   23,  0,    0,      1,   0,   "This Beat Only",NULL, NULL },
+	{ d_agup_check_proc,     56,  128, 128, 16,  2,   23,  0,    0,      1,   0,   "Adjust Notes",  NULL, NULL },
+	{ d_agup_button_proc,    42,  152, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",            NULL, NULL },
+	{ d_agup_button_proc,    120, 152, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",        NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 DIALOG eof_anchor_dialog[] =
 {
-   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_shadow_box_proc,    32,  68,  170, 72 + 8, 2,   23,  0,    0,      0,   0,   NULL,               NULL, NULL },
-   { d_agup_text_proc,   56,  84,  64,  8,  2,   23,  0,    0,      0,   0,   "Position:",         NULL, NULL },
-   { eof_verified_edit_proc,   112, 80,  66,  20,  2,   23,  0,    0,      9,   0,   eof_etext2,           "0123456789:", NULL },
-   { d_agup_button_proc, 42,  108, 68,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
-   { d_agup_button_proc, 120, 108, 68,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)         (dp2) (dp3) */
+	{ d_agup_shadow_box_proc,32,  68,  170, 80,  2,   23,  0,    0,      0,   0,   NULL,        NULL, NULL },
+	{ d_agup_text_proc,      56,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "Position:", NULL, NULL },
+	{ eof_verified_edit_proc,112, 80,  66,  20,  2,   23,  0,    0,      9,   0,   eof_etext2,  "0123456789:", NULL },
+	{ d_agup_button_proc,    42,  108, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",        NULL, NULL },
+	{ d_agup_button_proc,    120, 108, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",    NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 char eof_trainer_string[5] = "";
 DIALOG eof_place_trainer_dialog[] =
 {
-   /* (proc)                (x) (y) (w)  (h)   (fg) (bg) (key) (flags)    (d1) (d2) (dp)                  (dp2) (dp3) */
-   { d_agup_window_proc,    0,  20, 260, 160,  2,   23,  0,    0,         0,   0,   "Place Trainer Event",NULL, NULL },
-   { d_agup_text_proc,      12, 56, 64,  8,    2,   23,  0,    0,         0,   0,   "Trainer #:",         NULL, NULL },
-   { eof_edit_trainer_proc, 80, 52, 40,  20,   2,   23,  0,    0,         3,   0,   eof_trainer_string,   "1234567890", NULL },
-   { d_agup_check_proc,     12, 78, 12,  16,   2,   23,  0,    D_DISABLED,0,   0,   "",                   NULL, NULL },
-   { d_agup_radio_proc,     34, 78, 220, 16,   2,   23,  0,    0,         1,   0,   eof_etext2,           NULL, NULL },
-   { d_agup_check_proc,     12, 98, 12,  16,   2,   23,  0,    D_DISABLED,0,   0,   "",                   NULL, NULL },
-   { d_agup_radio_proc,     34, 98, 220, 16,   2,   23,  0,    0,         1,   0,   eof_etext3,           NULL, NULL },
-   { d_agup_check_proc,     12, 118,12,  16,   2,   23,  0,    D_DISABLED,0,   0,   "",                   NULL, NULL },
-   { d_agup_radio_proc,     34, 118,220, 16,   2,   23,  0,    0,         1,   0,   eof_etext4,           NULL, NULL },
-   { d_agup_button_proc,    10, 144, 68, 28,   2,   23,  '\r', D_EXIT,    0,   0,   "OK",                 NULL, NULL },
-   { d_agup_button_proc,    88, 144, 68, 28,   2,   23,  0,    D_EXIT,    0,   0,   "Cancel",             NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)                (x) (y) (w)  (h)   (fg) (bg) (key) (flags)    (d1) (d2) (dp)                  (dp2) (dp3) */
+	{ d_agup_window_proc,    0,  20, 260, 160,  2,   23,  0,    0,         0,   0,   "Place Trainer Event",NULL, NULL },
+	{ d_agup_text_proc,      12, 56, 64,  8,    2,   23,  0,    0,         0,   0,   "Trainer #:",         NULL, NULL },
+	{ eof_edit_trainer_proc, 80, 52, 40,  20,   2,   23,  0,    0,         3,   0,   eof_trainer_string,   "1234567890", NULL },
+	{ d_agup_check_proc,     12, 78, 12,  16,   2,   23,  0,    D_DISABLED,0,   0,   "",                   NULL, NULL },
+	{ d_agup_radio_proc,     34, 78, 220, 16,   2,   23,  0,    0,         1,   0,   eof_etext2,           NULL, NULL },
+	{ d_agup_check_proc,     12, 98, 12,  16,   2,   23,  0,    D_DISABLED,0,   0,   "",                   NULL, NULL },
+	{ d_agup_radio_proc,     34, 98, 220, 16,   2,   23,  0,    0,         1,   0,   eof_etext3,           NULL, NULL },
+	{ d_agup_check_proc,     12, 118,12,  16,   2,   23,  0,    D_DISABLED,0,   0,   "",                   NULL, NULL },
+	{ d_agup_radio_proc,     34, 118,220, 16,   2,   23,  0,    0,         1,   0,   eof_etext4,           NULL, NULL },
+	{ d_agup_button_proc,    10, 144, 68, 28,   2,   23,  '\r', D_EXIT,    0,   0,   "OK",                 NULL, NULL },
+	{ d_agup_button_proc,    88, 144, 68, 28,   2,   23,  0,    D_EXIT,    0,   0,   "Cancel",             NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 char eof_rocksmith_section_dialog_string1[] = "Add Rocksmith section";
 char eof_rocksmith_section_dialog_string2[] = "Edit Rocksmith section";
 DIALOG eof_rocksmith_section_dialog[] =
 {
-   /* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                     (dp2) (dp3) */
-   { d_agup_window_proc, 0,   0,   290, 450, 2,   23,  0,    0,      0,   0,   eof_rocksmith_section_dialog_string1, NULL, NULL },
-   { d_agup_list_proc,   12,  35,  260, 320, 2,   23,  0,    0,      0,   0,   (void *)eof_rs_section_add_list, NULL, NULL },
-   { d_agup_check_proc,  12,  364, 164, 16,  0,   0,   0,    0,      1,   0,   "Also add as RS phrase",  NULL, NULL },
-   { d_agup_check_proc,  12,  384, 250, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string,  NULL, NULL },
-   { d_agup_button_proc, 12,  410, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                    NULL, NULL },
-   { d_agup_button_proc, 206, 410, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                     (dp2) (dp3) */
+	{ d_agup_window_proc, 0,   0,   290, 450, 2,   23,  0,    0,      0,   0,   eof_rocksmith_section_dialog_string1, NULL, NULL },
+	{ d_agup_list_proc,   12,  35,  260, 320, 2,   23,  0,    0,      0,   0,   (void *)eof_rs_section_add_list, NULL, NULL },
+	{ d_agup_check_proc,  12,  364, 164, 16,  0,   0,   0,    0,      1,   0,   "Also add as RS phrase",  NULL, NULL },
+	{ d_agup_check_proc,  12,  384, 250, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string,  NULL, NULL },
+	{ d_agup_button_proc, 12,  410, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                    NULL, NULL },
+	{ d_agup_button_proc, 206, 410, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 DIALOG eof_rocksmith_event_dialog[] =
 {
-   /* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                     (dp2) (dp3) */
-   { d_agup_window_proc, 0,   0,   286, 180, 2,   23,  0,    0,      0,   0,   "Add Rocksmith event", NULL, NULL },
-   { d_agup_list_proc,   12,  35,  260, 70,  2,   23,  0,    0,      0,   0,   (void *)eof_rs_event_add_list, NULL, NULL },
-   { d_agup_check_proc,  12,  112, 250, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string,  NULL, NULL },
-   { d_agup_button_proc, 12,  140, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                    NULL, NULL },
-   { d_agup_button_proc, 206, 140, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                     (dp2) (dp3) */
+	{ d_agup_window_proc, 0,   0,   286, 180, 2,   23,  0,    0,      0,   0,   "Add Rocksmith event", NULL, NULL },
+	{ d_agup_list_proc,   12,  35,  260, 70,  2,   23,  0,    0,      0,   0,   (void *)eof_rs_event_add_list, NULL, NULL },
+	{ d_agup_check_proc,  12,  112, 250, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string,  NULL, NULL },
+	{ d_agup_button_proc, 12,  140, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                    NULL, NULL },
+	{ d_agup_button_proc, 206, 140, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 void eof_prepare_beat_menu(void)
@@ -556,15 +556,15 @@ int eof_menu_beat_ts_6_4(void)
 
 DIALOG eof_custom_ts_dialog[] =
 {
-   /* (proc)				(x)		(y)		(w)		(h)  		(fg)	(bg) (key) (flags)	(d1) (d2) (dp)			(dp2) (dp3) */
-   { d_agup_shadow_box_proc,32,		68,		175, 	72 + 8 +15,	2,		23,  0,    0,		0,   0,   NULL,			NULL, NULL },
-   { d_agup_text_proc,		42,		84,		35,		8,			2,		23,  0,    0,		0,   0,   "Beats per measure:",	NULL, NULL },
-   { eof_verified_edit_proc,160,	80,		35,		20,			2,		23,  0,    0,		8,   0,   eof_etext,	"0123456789", NULL },
-   { d_agup_text_proc,		42,		105,	35,		8,			2,		23,  0,    0,		0,   0,   "Beat unit:",	NULL, NULL },
-   { eof_verified_edit_proc,160,	101,	35,		20,			2,		23,  0,    0,		8,   0,   eof_etext2,	"0123456789", NULL },
-   { d_agup_button_proc,	42,		125,	68,		28,			2,		23,  '\r', D_EXIT,	0,   0,   "OK",			NULL, NULL },
-   { d_agup_button_proc,	125,	125,	68,		28,			2,		23,  0,    D_EXIT,	0,   0,   "Cancel",		NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)				(x)		(y)		(w)		(h)  		(fg)	(bg) (key) (flags)	(d1) (d2) (dp)			(dp2) (dp3) */
+	{ d_agup_shadow_box_proc,32,		68,		175, 	72 + 8 +15,	2,		23,  0,    0,		0,   0,   NULL,			NULL, NULL },
+	{ d_agup_text_proc,		42,		84,		35,		8,			2,		23,  0,    0,		0,   0,   "Beats per measure:",	NULL, NULL },
+	{ eof_verified_edit_proc,160,	80,		35,		20,			2,		23,  0,    0,		8,   0,   eof_etext,	"0123456789", NULL },
+	{ d_agup_text_proc,		42,		105,	35,		8,			2,		23,  0,    0,		0,   0,   "Beat unit:",	NULL, NULL },
+	{ eof_verified_edit_proc,160,	101,	35,		20,			2,		23,  0,    0,		8,   0,   eof_etext2,	"0123456789", NULL },
+	{ d_agup_button_proc,	42,		125,	68,		28,			2,		23,  '\r', D_EXIT,	0,   0,   "OK",			NULL, NULL },
+	{ d_agup_button_proc,	125,	125,	68,		28,			2,		23,  0,    D_EXIT,	0,   0,   "Cancel",		NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 int eof_menu_beat_ts_custom(void)

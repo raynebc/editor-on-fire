@@ -243,7 +243,7 @@ void WriteVarLen(unsigned long value, PACKFILE * fp)
 		{
 			break;
 		}
-   }
+	}
 }
 
 /* sorter for MIDI events so I can ouput proper MTrk data */
@@ -251,18 +251,18 @@ int qsort_helper3(const void * e1, const void * e2)
 {
 //	eof_log("qsort_helper3() entered");
 
-    EOF_MIDI_EVENT ** thing1 = (EOF_MIDI_EVENT **)e1;
-    EOF_MIDI_EVENT ** thing2 = (EOF_MIDI_EVENT **)e2;
+	EOF_MIDI_EVENT ** thing1 = (EOF_MIDI_EVENT **)e1;
+	EOF_MIDI_EVENT ** thing2 = (EOF_MIDI_EVENT **)e2;
 
 	/* Chronological order takes precedence in sorting */
-    if((*thing1)->pos < (*thing2)->pos)
+	if((*thing1)->pos < (*thing2)->pos)
 	{
-        return -1;
-    }
-    if((*thing1)->pos > (*thing2)->pos)
-    {
-        return 1;
-    }
+		return -1;
+	}
+	if((*thing1)->pos > (*thing2)->pos)
+	{
+		return 1;
+	}
 
 	/* Logical order of custom Sysex markers:  Phrase on, note on, note off, Phrase off */
 	if(((*thing1)->type == 0xF0) && ((*thing2)->type == 0x90))
@@ -300,21 +300,21 @@ int qsort_helper3(const void * e1, const void * e2)
 			return 1;	//Left hand position note (pro guitar) written before gem notes
 	}
 
-    /* put lyric events first, except for a lyric phrase on marker */
-    if(((*thing1)->type == 0x05) && ((*thing2)->type == 0x90))
-    {
-    	if(((*thing2)->note == 105) || ((*thing2)->note == 106))
+	/* put lyric events first, except for a lyric phrase on marker */
+	if(((*thing1)->type == 0x05) && ((*thing2)->type == 0x90))
+	{
+		if(((*thing2)->note == 105) || ((*thing2)->note == 106))
 			return 1;	//lyric phrases should be written before the lyric event
 		else
 			return -1;
-    }
-    if(((*thing1)->type == 0x90) && ((*thing2)->type == 0x05))
-    {
-    	if(((*thing1)->note == 105) || ((*thing1)->note == 106))
+	}
+	if(((*thing1)->type == 0x90) && ((*thing2)->type == 0x05))
+	{
+		if(((*thing1)->note == 105) || ((*thing1)->note == 106))
 			return -1;	//lyric phrase should be written before the lyric event
 		else
 			return 1;
-    }
+	}
 
 	/* put pro drum phrase on markers before regular notes */
 	if(((*thing1)->type == 0x90) && (((*thing1)->note == RB3_DRUM_GREEN_FORCE) || ((*thing1)->note == RB3_DRUM_YELLOW_FORCE) || ((*thing1)->note == RB3_DRUM_BLUE_FORCE)))
@@ -322,18 +322,18 @@ int qsort_helper3(const void * e1, const void * e2)
 	if(((*thing2)->type == 0x90) && (((*thing2)->note == RB3_DRUM_GREEN_FORCE) || ((*thing2)->note == RB3_DRUM_YELLOW_FORCE) || ((*thing2)->note == RB3_DRUM_BLUE_FORCE)))
 		return 1;
 
-    /* put notes first and then markers, will numerically sort in this order:  lyric pitch, lyric off, overdrive off */
-    if((*thing1)->note < (*thing2)->note)
-    {
-	    return -1;
-    }
-    if((*thing1)->note > (*thing2)->note)
-    {
-	    return 1;
-    }
+	/* put notes first and then markers, will numerically sort in this order:  lyric pitch, lyric off, overdrive off */
+	if((*thing1)->note < (*thing2)->note)
+	{
+		return -1;
+	}
+	if((*thing1)->note > (*thing2)->note)
+	{
+		return 1;
+	}
 
 	/* to avoid strange overlap problems, ensure that if a note on and a note off occur at the same time, the note off is written first.
-	  This requires that all notes/phrases are at least 1 delta/ms long */
+	   This requires that all notes/phrases are at least 1 delta/ms long */
 	if(((*thing1)->type == 0x90) && ((*thing2)->type == 0x80))
 	{
 		return 1;
@@ -352,8 +352,8 @@ int qsort_helper3(const void * e1, const void * e2)
 			return 1;
 	}
 
-    // they are equal...
-    return 0;
+	// they are equal...
+	return 0;
 }
 
 long eof_figure_beat(double pos)

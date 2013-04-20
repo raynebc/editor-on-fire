@@ -15,190 +15,190 @@
 
 MENU eof_edit_paste_from_menu[] =
 {
-    {"&Supaeasy", eof_menu_edit_paste_from_supaeasy, NULL, 0, NULL},
-    {"&Easy", eof_menu_edit_paste_from_easy, NULL, 0, NULL},
-    {"&Medium", eof_menu_edit_paste_from_medium, NULL, 0, NULL},
-    {"&Amazing", eof_menu_edit_paste_from_amazing, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"&Catalog\t" CTRL_NAME "+SHIFT+C", eof_menu_edit_paste_from_catalog, NULL, 0, NULL},
-    {"&Difficulty", eof_menu_song_paste_from_difficulty, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&Supaeasy", eof_menu_edit_paste_from_supaeasy, NULL, 0, NULL},
+	{"&Easy", eof_menu_edit_paste_from_easy, NULL, 0, NULL},
+	{"&Medium", eof_menu_edit_paste_from_medium, NULL, 0, NULL},
+	{"&Amazing", eof_menu_edit_paste_from_amazing, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"&Catalog\t" CTRL_NAME "+SHIFT+C", eof_menu_edit_paste_from_catalog, NULL, 0, NULL},
+	{"&Difficulty", eof_menu_song_paste_from_difficulty, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_edit_paste_from_menu_dance[] =
 {
-    {"&Beginner", eof_menu_edit_paste_from_supaeasy, NULL, 0, NULL},
-    {"&Easy", eof_menu_edit_paste_from_easy, NULL, 0, NULL},
-    {"&Medium", eof_menu_edit_paste_from_medium, NULL, 0, NULL},
-    {"H&ard", eof_menu_edit_paste_from_amazing, NULL, 0, NULL},
-    {"C&hallenge", eof_menu_edit_paste_from_challenge, NULL, 0, NULL},
-    {"&Catalog\t" CTRL_NAME "+SHIFT+C", eof_menu_edit_paste_from_catalog, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&Beginner", eof_menu_edit_paste_from_supaeasy, NULL, 0, NULL},
+	{"&Easy", eof_menu_edit_paste_from_easy, NULL, 0, NULL},
+	{"&Medium", eof_menu_edit_paste_from_medium, NULL, 0, NULL},
+	{"H&ard", eof_menu_edit_paste_from_amazing, NULL, 0, NULL},
+	{"C&hallenge", eof_menu_edit_paste_from_challenge, NULL, 0, NULL},
+	{"&Catalog\t" CTRL_NAME "+SHIFT+C", eof_menu_edit_paste_from_catalog, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU * eof_active_edit_paste_from_menu;
 
 MENU eof_edit_snap_menu[] =
 {
-    {"1/4", eof_menu_edit_snap_quarter, NULL, 0, NULL},
-    {"1/8", eof_menu_edit_snap_eighth, NULL, 0, NULL},
-    {"1/16", eof_menu_edit_snap_sixteenth, NULL, 0, NULL},
-    {"1/32", eof_menu_edit_snap_thirty_second, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"1/12", eof_menu_edit_snap_twelfth, NULL, 0, NULL},
-    {"1/24", eof_menu_edit_snap_twenty_fourth, NULL, 0, NULL},
-    {"1/48", eof_menu_edit_snap_forty_eighth, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"&Custom", eof_menu_edit_snap_custom, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"Off\tG", eof_menu_edit_snap_off, NULL, D_SELECTED, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"1/4", eof_menu_edit_snap_quarter, NULL, 0, NULL},
+	{"1/8", eof_menu_edit_snap_eighth, NULL, 0, NULL},
+	{"1/16", eof_menu_edit_snap_sixteenth, NULL, 0, NULL},
+	{"1/32", eof_menu_edit_snap_thirty_second, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"1/12", eof_menu_edit_snap_twelfth, NULL, 0, NULL},
+	{"1/24", eof_menu_edit_snap_twenty_fourth, NULL, 0, NULL},
+	{"1/48", eof_menu_edit_snap_forty_eighth, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"&Custom", eof_menu_edit_snap_custom, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"Off\tG", eof_menu_edit_snap_off, NULL, D_SELECTED, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_edit_claps_menu[] =
 {
-    {"&All", eof_menu_edit_claps_all, NULL, D_SELECTED, NULL},
-    {"&Green", eof_menu_edit_claps_green, NULL, 0, NULL},
-    {"&Red", eof_menu_edit_claps_red, NULL, 0, NULL},
-    {"&Yellow", eof_menu_edit_claps_yellow, NULL, 0, NULL},
-    {"&Blue", eof_menu_edit_claps_blue, NULL, 0, NULL},
-    {"&Purple", eof_menu_edit_claps_purple, NULL, 0, NULL},
-    {"&Orange", eof_menu_edit_claps_orange, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&All", eof_menu_edit_claps_all, NULL, D_SELECTED, NULL},
+	{"&Green", eof_menu_edit_claps_green, NULL, 0, NULL},
+	{"&Red", eof_menu_edit_claps_red, NULL, 0, NULL},
+	{"&Yellow", eof_menu_edit_claps_yellow, NULL, 0, NULL},
+	{"&Blue", eof_menu_edit_claps_blue, NULL, 0, NULL},
+	{"&Purple", eof_menu_edit_claps_purple, NULL, 0, NULL},
+	{"&Orange", eof_menu_edit_claps_orange, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_edit_hopo_menu[] =
 {
-    {"&RF", eof_menu_edit_hopo_rf, NULL, D_SELECTED, NULL},
-    {"&FOF", eof_menu_edit_hopo_fof, NULL, 0, NULL},
-    {"&Off", eof_menu_edit_hopo_off, NULL, 0, NULL},
-    {"&Manual", eof_menu_edit_hopo_manual, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&RF", eof_menu_edit_hopo_rf, NULL, D_SELECTED, NULL},
+	{"&FOF", eof_menu_edit_hopo_fof, NULL, 0, NULL},
+	{"&Off", eof_menu_edit_hopo_off, NULL, 0, NULL},
+	{"&Manual", eof_menu_edit_hopo_manual, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 char eof_edit_zoom_menu_string[20] = "&Custom";
 MENU eof_edit_zoom_menu[] =
 {
-    {"1/1&0", eof_menu_edit_zoom_10, NULL, D_SELECTED, NULL},
-    {"1/&9", eof_menu_edit_zoom_9, NULL, 0, NULL},
-    {"1/&8", eof_menu_edit_zoom_8, NULL, 0, NULL},
-    {"1/&7", eof_menu_edit_zoom_7, NULL, 0, NULL},
-    {"1/&6", eof_menu_edit_zoom_6, NULL, 0, NULL},
-    {"1/&5", eof_menu_edit_zoom_5, NULL, 0, NULL},
-    {"1/&4", eof_menu_edit_zoom_4, NULL, 0, NULL},
-    {"1/&3", eof_menu_edit_zoom_3, NULL, 0, NULL},
-    {"1/&2", eof_menu_edit_zoom_2, NULL, 0, NULL},
-    {"1/&1", eof_menu_edit_zoom_1, NULL, 0, NULL},
-    {eof_edit_zoom_menu_string, eof_menu_edit_zoom_custom, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"1/1&0", eof_menu_edit_zoom_10, NULL, D_SELECTED, NULL},
+	{"1/&9", eof_menu_edit_zoom_9, NULL, 0, NULL},
+	{"1/&8", eof_menu_edit_zoom_8, NULL, 0, NULL},
+	{"1/&7", eof_menu_edit_zoom_7, NULL, 0, NULL},
+	{"1/&6", eof_menu_edit_zoom_6, NULL, 0, NULL},
+	{"1/&5", eof_menu_edit_zoom_5, NULL, 0, NULL},
+	{"1/&4", eof_menu_edit_zoom_4, NULL, 0, NULL},
+	{"1/&3", eof_menu_edit_zoom_3, NULL, 0, NULL},
+	{"1/&2", eof_menu_edit_zoom_2, NULL, 0, NULL},
+	{"1/&1", eof_menu_edit_zoom_1, NULL, 0, NULL},
+	{eof_edit_zoom_menu_string, eof_menu_edit_zoom_custom, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_edit_playback_menu[] =
 {
-    {"&100%", eof_menu_edit_playback_100, NULL, D_SELECTED, NULL},
-    {"&75%", eof_menu_edit_playback_75, NULL, 0, NULL},
-    {"&50%", eof_menu_edit_playback_50, NULL, 0, NULL},
-    {"&25%", eof_menu_edit_playback_25, NULL, 0, NULL},
-    {"&Custom", eof_menu_edit_playback_custom, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&100%", eof_menu_edit_playback_100, NULL, D_SELECTED, NULL},
+	{"&75%", eof_menu_edit_playback_75, NULL, 0, NULL},
+	{"&50%", eof_menu_edit_playback_50, NULL, 0, NULL},
+	{"&25%", eof_menu_edit_playback_25, NULL, 0, NULL},
+	{"&Custom", eof_menu_edit_playback_custom, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_edit_speed_menu[] =
 {
-    {"&Slow", eof_menu_edit_speed_slow, NULL, D_SELECTED, NULL},
-    {"&Medium", eof_menu_edit_speed_medium, NULL, 0, NULL},
-    {"&Fast", eof_menu_edit_speed_fast, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&Slow", eof_menu_edit_speed_slow, NULL, D_SELECTED, NULL},
+	{"&Medium", eof_menu_edit_speed_medium, NULL, 0, NULL},
+	{"&Fast", eof_menu_edit_speed_fast, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_edit_bookmark_menu[] =
 {
-    {"&0\t" CTRL_NAME "+Num 0", eof_menu_edit_bookmark_0, NULL, 0, NULL},
-    {"&1\t" CTRL_NAME "+Num 1", eof_menu_edit_bookmark_1, NULL, 0, NULL},
-    {"&2\t" CTRL_NAME "+Num 2", eof_menu_edit_bookmark_2, NULL, 0, NULL},
-    {"&3\t" CTRL_NAME "+Num 3", eof_menu_edit_bookmark_3, NULL, 0, NULL},
-    {"&4\t" CTRL_NAME "+Num 4", eof_menu_edit_bookmark_4, NULL, 0, NULL},
-    {"&5\t" CTRL_NAME "+Num 5", eof_menu_edit_bookmark_5, NULL, 0, NULL},
-    {"&6\t" CTRL_NAME "+Num 6", eof_menu_edit_bookmark_6, NULL, 0, NULL},
-    {"&7\t" CTRL_NAME "+Num 7", eof_menu_edit_bookmark_7, NULL, 0, NULL},
-    {"&8\t" CTRL_NAME "+Num 8", eof_menu_edit_bookmark_8, NULL, 0, NULL},
-    {"&9\t" CTRL_NAME "+Num 9", eof_menu_edit_bookmark_9, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&0\t" CTRL_NAME "+Num 0", eof_menu_edit_bookmark_0, NULL, 0, NULL},
+	{"&1\t" CTRL_NAME "+Num 1", eof_menu_edit_bookmark_1, NULL, 0, NULL},
+	{"&2\t" CTRL_NAME "+Num 2", eof_menu_edit_bookmark_2, NULL, 0, NULL},
+	{"&3\t" CTRL_NAME "+Num 3", eof_menu_edit_bookmark_3, NULL, 0, NULL},
+	{"&4\t" CTRL_NAME "+Num 4", eof_menu_edit_bookmark_4, NULL, 0, NULL},
+	{"&5\t" CTRL_NAME "+Num 5", eof_menu_edit_bookmark_5, NULL, 0, NULL},
+	{"&6\t" CTRL_NAME "+Num 6", eof_menu_edit_bookmark_6, NULL, 0, NULL},
+	{"&7\t" CTRL_NAME "+Num 7", eof_menu_edit_bookmark_7, NULL, 0, NULL},
+	{"&8\t" CTRL_NAME "+Num 8", eof_menu_edit_bookmark_8, NULL, 0, NULL},
+	{"&9\t" CTRL_NAME "+Num 9", eof_menu_edit_bookmark_9, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_edit_selection_menu[] =
 {
-    {"Select &All\t" CTRL_NAME "+A", eof_menu_edit_select_all, NULL, 0, NULL},
-    {"Select like\t" CTRL_NAME "+L", eof_menu_edit_select_like, NULL, 0, NULL},
-    {"Precise select &Like", eof_menu_edit_precise_select_like, NULL, 0, NULL},
-    {"Select &Rest\tShift+End", eof_menu_edit_select_rest, NULL, 0, NULL},
-    {"&Deselect All\t" CTRL_NAME "+D", eof_menu_edit_deselect_all, NULL, 0, NULL},
-    {"Select &Previous\tShift+Home", eof_menu_edit_select_previous, NULL, 0, NULL},
-    {"Select all &Shorter than", eof_menu_edit_select_all_shorter_than, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"Select &All\t" CTRL_NAME "+A", eof_menu_edit_select_all, NULL, 0, NULL},
+	{"Select like\t" CTRL_NAME "+L", eof_menu_edit_select_like, NULL, 0, NULL},
+	{"Precise select &Like", eof_menu_edit_precise_select_like, NULL, 0, NULL},
+	{"Select &Rest\tShift+End", eof_menu_edit_select_rest, NULL, 0, NULL},
+	{"&Deselect All\t" CTRL_NAME "+D", eof_menu_edit_deselect_all, NULL, 0, NULL},
+	{"Select &Previous\tShift+Home", eof_menu_edit_select_previous, NULL, 0, NULL},
+	{"Select all &Shorter than", eof_menu_edit_select_all_shorter_than, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_edit_menu[] =
 {
-    {"&Undo\t" CTRL_NAME "+Z", eof_menu_edit_undo, NULL, D_DISABLED, NULL},
-    {"&Redo\t" CTRL_NAME "+R", eof_menu_edit_redo, NULL, D_DISABLED, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"&Copy\t" CTRL_NAME "+C", eof_menu_edit_copy, NULL, 0, NULL},
-    {"&Paste\t" CTRL_NAME "+V", eof_menu_edit_paste, NULL, 0, NULL},
-    {"Old Paste\t" CTRL_NAME "+P", eof_menu_edit_old_paste, NULL, 0, NULL},
-    {"Paste &From", NULL, eof_edit_paste_from_menu, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"&Grid Snap", NULL, eof_edit_snap_menu, 0, NULL},
-    {"&Zoom", NULL, eof_edit_zoom_menu, 0, NULL},
-    {"Preview Sp&eed", NULL, eof_edit_speed_menu, 0, NULL},
-    {"Playback R&ate", NULL, eof_edit_playback_menu, 0, NULL},
-    {"Preview &HOPO", NULL, eof_edit_hopo_menu, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"&Metronome\tM", eof_menu_edit_metronome, NULL, 0, NULL},
-    {"Claps\tC", eof_menu_edit_claps, NULL, 0, NULL},
-    {"Clap &Notes", NULL, eof_edit_claps_menu, 0, NULL},
-    {"&Vocal Tones\tV", eof_menu_edit_vocal_tones, NULL, 0, NULL},
-    {"MIDI &Tones", eof_menu_edit_midi_tones, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"&Bookmark", NULL, eof_edit_bookmark_menu, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"&Selection", NULL, eof_edit_selection_menu, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
+	{"&Undo\t" CTRL_NAME "+Z", eof_menu_edit_undo, NULL, D_DISABLED, NULL},
+	{"&Redo\t" CTRL_NAME "+R", eof_menu_edit_redo, NULL, D_DISABLED, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"&Copy\t" CTRL_NAME "+C", eof_menu_edit_copy, NULL, 0, NULL},
+	{"&Paste\t" CTRL_NAME "+V", eof_menu_edit_paste, NULL, 0, NULL},
+	{"Old Paste\t" CTRL_NAME "+P", eof_menu_edit_old_paste, NULL, 0, NULL},
+	{"Paste &From", NULL, eof_edit_paste_from_menu, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"&Grid Snap", NULL, eof_edit_snap_menu, 0, NULL},
+	{"&Zoom", NULL, eof_edit_zoom_menu, 0, NULL},
+	{"Preview Sp&eed", NULL, eof_edit_speed_menu, 0, NULL},
+	{"Playback R&ate", NULL, eof_edit_playback_menu, 0, NULL},
+	{"Preview &HOPO", NULL, eof_edit_hopo_menu, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"&Metronome\tM", eof_menu_edit_metronome, NULL, 0, NULL},
+	{"Claps\tC", eof_menu_edit_claps, NULL, 0, NULL},
+	{"Clap &Notes", NULL, eof_edit_claps_menu, 0, NULL},
+	{"&Vocal Tones\tV", eof_menu_edit_vocal_tones, NULL, 0, NULL},
+	{"MIDI &Tones", eof_menu_edit_midi_tones, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"&Bookmark", NULL, eof_edit_bookmark_menu, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"&Selection", NULL, eof_edit_selection_menu, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
 };
 
 DIALOG eof_custom_snap_dialog[] =
 {
-   /* (proc)				(x)		(y)		(w)		(h)  		(fg)	(bg) (key) (flags)	(d1) (d2) (dp)			(dp2) (dp3) */
-   { d_agup_shadow_box_proc,32,		68,		170, 	72 + 8 +15,	2,		23,  0,    0,		0,   0,   NULL,			NULL, NULL },
-   { d_agup_text_proc,		56,		84,		64,		8,			2,		23,  0,    0,		0,   0,   "Intervals:",	NULL, NULL },
-   { eof_verified_edit_proc,112,	80,		66,		20,			2,		23,  0,    0,		8,   0,   eof_etext2,	"0123456789", NULL },
-   { d_agup_radio_proc,		42,		105,	68,		15,			2,		23,  0,    0,		0,   0,   "beat",		NULL, NULL },
-   { d_agup_radio_proc,		120,	105,	68,		15,			2,		23,  0,    0,		0,   0,   "measure",	NULL, NULL },
-   { d_agup_button_proc,	42,		125,	68,		28,			2,		23,  '\r', D_EXIT,	0,   0,   "OK",			NULL, NULL },
-   { d_agup_button_proc,	120,	125,	68,		28,			2,		23,  0,    D_EXIT,	0,   0,   "Cancel",		NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags)  (d1) (d2) (dp)         (dp2) (dp3) */
+	{ d_agup_shadow_box_proc,32,  68,  170, 95,  2,    23,  0,    0,      0,   0,   NULL,        NULL, NULL },
+	{ d_agup_text_proc,		 56,  84,  64,  8,   2,    23,  0,    0,      0,   0,   "Intervals:",NULL, NULL },
+	{ eof_verified_edit_proc,112, 80,  66,  20,  2,    23,  0,    0,      8,   0,   eof_etext2,  "0123456789", NULL },
+	{ d_agup_radio_proc,     42,  105, 68,  15,  2,    23,  0,    0,      0,   0,   "beat",      NULL, NULL },
+	{ d_agup_radio_proc,     120, 105, 68,  15,  2,    23,  0,    0,      0,   0,   "measure",   NULL, NULL },
+	{ d_agup_button_proc,    42,  125, 68,  28,  2,    23,  '\r', D_EXIT, 0,   0,   "OK",        NULL, NULL },
+	{ d_agup_button_proc,    120, 125, 68,  28,  2,    23,  0,    D_EXIT, 0,   0,   "Cancel",    NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 DIALOG eof_custom_speed_dialog[] =
 {
-   /* (proc)				(x)	(y)	(w)		(h) (fg)	(bg) (key) (flags)	(d1) (d2) (dp)			(dp2) 			(dp3) */
-   { d_agup_shadow_box_proc,32,	68,	170, 	95,	2,		23,  0,    0,		0,   0,   NULL,			NULL, 			NULL },
-   { d_agup_text_proc,		56,	84,	64,		8,	2,		23,  0,    0,		0,   0,   "Percent:",	NULL, 			NULL },
-   { eof_verified_edit_proc,112,80,	66,		20,	2,		23,  0,    0,		8,   0,   eof_etext2,	"0123456789",	NULL },
-   { d_agup_button_proc,	42,	125,68,		28,	2,		23,  '\r', D_EXIT,	0,   0,   "OK",			NULL, 			NULL },
-   { d_agup_button_proc,	120,125,68,		28,	2,		23,  0,    D_EXIT,	0,   0,   "Cancel",		NULL, 			NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)                (x)  (y)  (w)  (h)  (fg)  (bg) (key) (flags) (d1) (d2) (dp)         (dp2)         (dp3) */
+	{ d_agup_shadow_box_proc,32,  68,  170, 95,  2,    23,  0,    0,       0,   0,   NULL,       NULL,         NULL },
+	{ d_agup_text_proc,      56,  84,  64,  8,   2,    23,  0,    0,       0,   0,   "Percent:", NULL,         NULL },
+	{ eof_verified_edit_proc,112, 80,  66,  20,  2,    23,  0,    0,       8,   0,   eof_etext2, "0123456789", NULL },
+	{ d_agup_button_proc,    42,  125, 68,  28,  2,    23,  '\r', D_EXIT,  0,   0,   "OK",       NULL,         NULL },
+	{ d_agup_button_proc,    120, 125, 68,  28,  2,    23,  0,    D_EXIT,  0,   0,   "Cancel",   NULL,         NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 DIALOG eof_custom_zoom_dialog[] =
 {
-   /* (proc)			(x)	(y)	(w)		(h)  	(fg)	(bg) (key) (flags)	(d1) (d2) (dp)		(dp2) 		(dp3) */
-   { d_agup_shadow_box_proc,	32,	68,	170, 		95,	2,	23,  0,    0,		0,   0,   NULL,		NULL, 		NULL },
-   { d_agup_text_proc,		56,	84,	64,		8,	2,	23,  0,    0,		0,   0,   "1 / ",	NULL, 		NULL },
-   { eof_verified_edit_proc,	112,	80,	66,		20,	2,	23,  0,    0,		2,   0,   eof_etext2,	"0123456789",	NULL },
-   { d_agup_button_proc,	42,	125,	68,		28,	2,	23,  '\r', D_EXIT,	0,   0,   "OK",		NULL, 		NULL },
-   { d_agup_button_proc,	120,	125,	68,		28,	2,	23,  0,    D_EXIT,	0,   0,   "Cancel",	NULL, 		NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)                (x)  (y)  (w)  (h)  (fg)  (bg) (key) (flags) (d1) (d2) (dp)         (dp2)         (dp3) */
+	{ d_agup_shadow_box_proc,32,  68,  170, 95,  2,    23,  0,    0,       0,   0,   NULL,		 NULL,         NULL },
+	{ d_agup_text_proc,      56,  84,  64,  8,   2,    23,  0,    0,       0,   0,   "1 / ",	 NULL,         NULL },
+	{ eof_verified_edit_proc,112, 80,  66,  20,  2,    23,  0,    0,       2,   0,   eof_etext2, "0123456789", NULL },
+	{ d_agup_button_proc,    42,  125, 68,  28,  2,    23,  '\r', D_EXIT,  0,   0,   "OK",       NULL,         NULL },
+	{ d_agup_button_proc,    120, 125, 68,  28,  2,    23,  0,    D_EXIT,  0,   0,   "Cancel",   NULL,         NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 void eof_prepare_edit_menu(void)
@@ -2237,13 +2237,13 @@ int eof_menu_edit_select_rest(void)
 
 DIALOG eof_menu_edit_select_all_shorter_than_dialog[] =
 {
-   /* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
-   { d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Select all notes shorter than", NULL, NULL },
-   { d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "This # of ms:",NULL, NULL },
-   { eof_verified_edit_proc,12,  56,  90,  20,  0,   0,   0,    0,      7,   0,   eof_etext,     "0123456789",  NULL },
-   { d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                         NULL, NULL },
-   { d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                     NULL, NULL },
-   { NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                         NULL, NULL }
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
+	{ d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Select all notes shorter than", NULL, NULL },
+	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "This # of ms:",NULL, NULL },
+	{ eof_verified_edit_proc,12,  56,  90,  20,  0,   0,   0,    0,      7,   0,   eof_etext,     "0123456789",  NULL },
+	{ d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                         NULL, NULL },
+	{ d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                     NULL, NULL },
+	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                         NULL, NULL }
 };
 
 int eof_menu_edit_select_all_shorter_than(void)
@@ -3046,12 +3046,12 @@ unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long tra
 
 DIALOG eof_menu_song_paste_from_difficulty_dialog[] =
 {
-   /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-   { d_agup_window_proc,0,   48,  250, 237, 2,   23,  0,    0,      0,   0,   "Copy content from diff #", NULL, NULL },
-   { d_agup_list_proc,  12,  84,  226, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_menu_song_paste_from_difficulty_list,NULL, NULL },
-   { d_agup_button_proc,12,  245, 90,  28,  2,   23,  'c', D_EXIT,  0,   0,   "&Copy",         NULL, NULL },
-   { d_agup_button_proc,148, 245, 90,  28,  2,   23,  0,   D_EXIT,  0,   0,   "Cancel",        NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
+	{ d_agup_window_proc,0,   48,  250, 237, 2,   23,  0,    0,      0,   0,   "Copy content from diff #", NULL, NULL },
+	{ d_agup_list_proc,  12,  84,  226, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_menu_song_paste_from_difficulty_list,NULL, NULL },
+	{ d_agup_button_proc,12,  245, 90,  28,  2,   23,  'c', D_EXIT,  0,   0,   "&Copy",         NULL, NULL },
+	{ d_agup_button_proc,148, 245, 90,  28,  2,   23,  0,   D_EXIT,  0,   0,   "Cancel",        NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 char * eof_menu_song_paste_from_difficulty_list(int index, int * size)

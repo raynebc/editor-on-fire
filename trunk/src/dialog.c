@@ -210,30 +210,30 @@ int eof_popup_dialog(DIALOG * dp, int n)
 	}
 	ret = shutdown_dialog(player);
 
-//   	ret = popup_dialog(dp, n);
+//	ret = popup_dialog(dp, n);
 	eof_clear_input();
-   	gametime_reset();
-   	eof_show_mouse(NULL);
+	gametime_reset();
+	eof_show_mouse(NULL);
 	eof_keyboard_shortcut = 0;
 
-   	return ret;
+	return ret;
 }
 
 int eof_display_flats_menu(void)
 {
 	eof_log("eof_display_flats_menu() entered", 1);
 
-   if(eof_display_flats)
-   {
-      eof_display_flats = 0;
-      eof_note_names = eof_note_names_sharp;	//Switch to displaying guitar chords with sharps
-      eof_slash_note_names = eof_slash_note_names_sharp;
-   }
-   else
-   {
-      eof_display_flats = 1;
-      eof_note_names = eof_note_names_flat;	//Switch to displaying guitar chords with flats
-      eof_slash_note_names = eof_slash_note_names_flat;
-   }
-   return 1;
+	if(eof_display_flats)
+	{
+		eof_display_flats = 0;
+		eof_note_names = eof_note_names_sharp;	//Switch to displaying guitar chords with sharps
+		eof_slash_note_names = eof_slash_note_names_sharp;
+	}
+	else
+	{
+		eof_display_flats = 1;
+		eof_note_names = eof_note_names_flat;	//Switch to displaying guitar chords with flats
+		eof_slash_note_names = eof_slash_note_names_flat;
+	}
+	return 1;
 }

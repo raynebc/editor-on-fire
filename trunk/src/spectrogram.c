@@ -20,6 +20,8 @@ double eof_half_spectrogram_windowsize = 512.0;
 
 void eof_destroy_spectrogram(struct spectrogramstruct *ptr)
 {
+	unsigned long ctr;
+
  	eof_log("eof_destroy_spectrogram() entered", 1);
 
 	if(ptr)
@@ -27,9 +29,23 @@ void eof_destroy_spectrogram(struct spectrogramstruct *ptr)
 		if(ptr->oggfilename)
 			free(ptr->oggfilename);
 		if(ptr->left.slices)
+		{
+			for(ctr = 0; ctr < ptr->numslices; ctr++)
+			{	//For each slice of spectrogram data
+				if(ptr->left.slices[ctr].amplist)
+					free(ptr->left.slices[ctr].amplist);
+			}
 			free(ptr->left.slices);
+		}
 		if(ptr->right.slices)
+		{
+			for(ctr = 0; ctr < ptr->numslices; ctr++)
+			{	//For each slice of spectrogram data
+				if(ptr->right.slices[ctr].amplist)
+					free(ptr->right.slices[ctr].amplist);
+			}
 			free(ptr->right.slices);
+		}
 		free(ptr);
 	}
 }
@@ -44,7 +60,7 @@ int eof_render_spectrogram(struct spectrogramstruct *spectrogram)
 	unsigned long top,bottom;	//Stores the top and bottom coordinates for the area the graph will render to
 	char numgraphs;				//Stores the number of channels to render
 	unsigned long pos = eof_music_pos / eof_zoom;
-    unsigned long curms;
+	unsigned long curms;
 
 //validate input
 	if(!eof_song_loaded || !spectrogram)
@@ -67,7 +83,7 @@ int eof_render_spectrogram(struct spectrogramstruct *spectrogram)
 		return 0;
 
 //determine timestamp of the left visible edge of the piano roll, which will be in ms, the same as the length of each spectrogram slice
-    curms = eof_determine_piano_roll_left_edge();
+	curms = eof_determine_piano_roll_left_edge();
 
 //determine which pixel is the left visible edge of the piano roll
 	if(pos < 300)
@@ -140,15 +156,15 @@ int eof_render_spectrogram(struct spectrogramstruct *spectrogram)
 	//for(x=startpixel;x < eof_window_editor->w;x++)
 	for(x=startpixel;x < eof_window_editor->w;x++,curms+=eof_zoom)
 	{	//for each pixel in the piano roll's visible width
-        if(eof_spectrogram_renderleftchannel)
-        {	//If the left channel rendering is enabled
-            eof_render_spectrogram_col(spectrogram,&spectrogram->left,spectrogram->left.slices,x,curms);	//Render the peak amplitude in green
-        }
+		if(eof_spectrogram_renderleftchannel)
+		{	//If the left channel rendering is enabled
+			eof_render_spectrogram_col(spectrogram,&spectrogram->left,spectrogram->left.slices,x,curms);	//Render the peak amplitude in green
+		}
 
-        if(eof_spectrogram_renderrightchannel)
-        {	//If the right channel rendering is enabled
-            eof_render_spectrogram_col(spectrogram,&spectrogram->right,spectrogram->right.slices,x,curms);	//Render the peak amplitude in green
-        }
+		if(eof_spectrogram_renderrightchannel)
+		{	//If the right channel rendering is enabled
+			eof_render_spectrogram_col(spectrogram,&spectrogram->right,spectrogram->right.slices,x,curms);	//Render the peak amplitude in green
+		}
 	}
 
 	return 0;
@@ -167,11 +183,10 @@ void eof_render_spectrogram_col(struct spectrogramstruct *spectrogram,struct spe
 	unsigned long nextsamp;
 	double logheight;
 
-	actualzero = channel->yaxis + channel->halfheight;
-	curslice = curms / spectrogram->windowlength;
-
 	if(spectrogram != NULL)
 	{
+		actualzero = channel->yaxis + channel->halfheight;
+		curslice = curms / spectrogram->windowlength;
 		logheight = log(channel->height);
 		for(yoffset=0;yoffset < channel->height-1;yoffset++)
 		{
@@ -196,29 +211,45 @@ void eof_render_spectrogram_col(struct spectrogramstruct *spectrogram,struct spe
 	}
 }
 
-int eof_color_scale(double value, double max, short int scalenum) {
-    int cnt;
-    int rgb[3] = {0,0,0};
-    int scaledval;
-    value = value/max;
-    if(value < 0.0) { value = 0.0; }
-    if(value > 1.0) { value = 1.0; }
-    switch(scalenum) {
-        case 0:
-            for(cnt=0;cnt<3;cnt++) { rgb[cnt] = value * 255.0; }
-            break;
-        case 1:
-            scaledval = value * 1280.0;
-            rgb[0] = 384.0 - abs(scaledval-896.0);
-            rgb[1] = 384.0 - abs(scaledval-640.0);
-            rgb[2] = 384.0 - abs(scaledval-384.0);
-            for(cnt=0;cnt<3;cnt++) {
-                if(rgb[cnt] > 255) { rgb[cnt] = 255; }
-                if(rgb[cnt] < 0) { rgb[cnt] = 0; }
-            }
-            break;
-    }
-    return makecol(rgb[0],rgb[1],rgb[2]);
+int eof_color_scale(double value, double max, short int scalenum)
+{
+	int cnt;
+	int rgb[3] = {0,0,0};
+	int scaledval;
+
+	value = value/max;
+	if(value < 0.0)
+	{
+		value = 0.0;
+	}
+	if(value > 1.0)
+	{
+		value = 1.0;
+	}
+	switch(scalenum)
+	{
+		case 0:
+			for(cnt=0;cnt<3;cnt++) { rgb[cnt] = value * 255.0; }
+		break;
+		case 1:
+			scaledval = value * 1280.0;
+			rgb[0] = 384.0 - abs(scaledval-896.0);
+			rgb[1] = 384.0 - abs(scaledval-640.0);
+			rgb[2] = 384.0 - abs(scaledval-384.0);
+			for(cnt=0;cnt<3;cnt++)
+			{
+				if(rgb[cnt] > 255)
+				{
+					rgb[cnt] = 255;
+				}
+				if(rgb[cnt] < 0)
+				{
+					rgb[cnt] = 0;
+				}
+			}
+			break;
+	}
+	return makecol(rgb[0],rgb[1],rgb[2]);
 }
 
 void eof_render_spectrogram_line(struct spectrogramstruct *spectrogram,struct spectrogramchanneldata *channel,unsigned amp,unsigned long x,int color)
@@ -249,8 +280,8 @@ void eof_render_spectrogram_line(struct spectrogramstruct *spectrogram,struct sp
 #define EOF_DEBUG_SPECTROGRAM
 struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 {
- 	eof_log("\tGenerating spectrogram", 1);
- 	eof_log("eof_create_spectrogram() entered", 1);
+	eof_log("\tGenerating spectrogram", 1);
+	eof_log("eof_create_spectrogram() entered", 1);
 
 	ALOGG_OGG *oggstruct=NULL;
 	SAMPLE *audio=NULL;
@@ -260,7 +291,7 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 	char done=0;	//-1 on unsuccessful completion, 1 on successful completion
 	unsigned long slicenum=0;
 
-    fftw_plan fftplan;
+	fftw_plan fftplan;
 
 	set_window_title("Generating Spectrogram...");
 
@@ -321,7 +352,7 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 		else
 		{
 			*spectrogram=emptyspectrogram;					//Set all variables to value zero
-            spectrogram->numbuff = 1;
+			spectrogram->numbuff = 1;
 			if(alogg_get_wave_is_stereo_ogg(oggstruct))	//If this audio file has two audio channels
 				spectrogram->is_stereo=1;
 			else
@@ -343,7 +374,7 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 			}
 			else
 			{
-                spectrogram->windowlength = (float)eof_spectrogram_windowsize / (float)audio->freq * 1000.0;
+				spectrogram->windowlength = (float)eof_spectrogram_windowsize / (float)audio->freq * 1000.0;
 
 				spectrogram->numslices=(float)audio->len / ((float)audio->freq * spectrogram->windowlength / 1000.0);	//Find the number of slices to process
 				if(audio->len % spectrogram->numslices)		//If there's any remainder
@@ -373,17 +404,20 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 		}
 	}
 
-    //Allocate memory for the buffer pointers
-    spectrogram->buffin=(double *) fftw_malloc(sizeof(double) * eof_spectrogram_windowsize*spectrogram->numbuff);
-    spectrogram->buffout=(double *) fftw_malloc(sizeof(double) * eof_spectrogram_windowsize*spectrogram->numbuff);
-    fftplan=fftw_plan_r2r_1d(eof_spectrogram_windowsize,spectrogram->buffin,spectrogram->buffout,FFTW_R2HC,FFTW_DESTROY_INPUT);
+	//Allocate memory for the buffer pointers
+	if((done != -1) && spectrogram)
+	{	//If there wasn't an error yet
+		spectrogram->buffin=(double *) fftw_malloc(sizeof(double) * eof_spectrogram_windowsize*spectrogram->numbuff);
+		spectrogram->buffout=(double *) fftw_malloc(sizeof(double) * eof_spectrogram_windowsize*spectrogram->numbuff);
+		fftplan=fftw_plan_r2r_1d(eof_spectrogram_windowsize,spectrogram->buffin,spectrogram->buffout,FFTW_R2HC,FFTW_DESTROY_INPUT);
 
-    eof_log("\tPlan generated.", 1);
+		eof_log("\tPlan generated.", 1);
 
-    eof_log("\tGenerating slices...", 1);
-	while(!done)
-	{
-		done=eof_process_next_spectrogram_slice(spectrogram,audio,slicenum++,fftplan);
+		eof_log("\tGenerating slices...", 1);
+		while(!done)
+		{
+			done=eof_process_next_spectrogram_slice(spectrogram,audio,slicenum++,fftplan);
+		}
 	}
 
 //Cleanup
@@ -417,27 +451,30 @@ int eof_process_next_spectrogram_slice(struct spectrogramstruct *spectrogram,SAM
 	unsigned long startsample=0;	//The sample number of the first sample being processed
 	unsigned long samplesize=0;	//Number of bytes for each sample: 1 for 8 bit audio, 2 for 16 bit audio.  Doubled for stereo
 	unsigned long cursamp=0;
-    unsigned long halfsize;
-    long sample=0;
+	unsigned long halfsize;
+	long sample=0;
 	char channel=0;
 	struct spectrogramslice *dest;	//The structure to write this slice's data to
 	char outofsamples=0;		//Will be set to 1 if all samples in the audio structure have been processed
 
 //Validate parameters
-	if((spectrogram == NULL) || (spectrogram->left.slices == NULL) || (audio == NULL)) {
-        eof_log("\tNo sound found", 1);
+	if((spectrogram == NULL) || (spectrogram->left.slices == NULL) || (audio == NULL))
+	{
+		eof_log("\tNo sound found", 1);
 		return -1;	//Return error
-    }
+	}
 
-	if(spectrogram->is_stereo && (spectrogram->right.slices == NULL)) {
-        eof_log("\tStereo channel not found", 1);
+	if(spectrogram->is_stereo && (spectrogram->right.slices == NULL))
+	{
+		eof_log("\tStereo channel not found", 1);
 		return -1;	//Return error
-    }
+	}
 
-	if((slicenum > spectrogram->numslices)) {	//If this is more than the number of slices that were supposed to be read
-        eof_log("\tSlicenum is too far", 1);
+	if((slicenum > spectrogram->numslices))
+	{	//If this is more than the number of slices that were supposed to be read
+		eof_log("\tSlicenum is too far", 1);
 		return 1;	//Return out of samples
-    }
+	}
 
 	samplesize=audio->bits / 8;
 	if(spectrogram->is_stereo)		//Stereo data is interleaved as left channel, right channel, ...
@@ -458,41 +495,42 @@ int eof_process_next_spectrogram_slice(struct spectrogramstruct *spectrogram,SAM
 			if(startsample + cursamp >= audio->len)	//If there are no more samples to read
 			{
 				outofsamples=1;
-                //Zero-pad the remaining buffer...
-                memset(spectrogram->buffin+cursamp,0,sizeof(double) * (eof_spectrogram_windowsize - cursamp));
-                break;
+				//Zero-pad the remaining buffer...
+				memset(spectrogram->buffin+cursamp,0,sizeof(double) * (eof_spectrogram_windowsize - cursamp));
+				break;
 			}
 
-            sample=((unsigned char *)audio->data)[sampleindex];	//Store first sample byte (Allegro documentation states the sample data is stored in unsigned format)
-            if(audio->bits > 8)	//If this sample is more than one byte long (16 bit)
-                sample+=((unsigned char *)audio->data)[sampleindex+1]<<8;	//Assume little endian byte order, read the next (high byte) of data
+			sample=((unsigned char *)audio->data)[sampleindex];	//Store first sample byte (Allegro documentation states the sample data is stored in unsigned format)
+			if(audio->bits > 8)	//If this sample is more than one byte long (16 bit)
+				sample+=((unsigned char *)audio->data)[sampleindex+1]<<8;	//Assume little endian byte order, read the next (high byte) of data
 
-            sample -= spectrogram->zeroamp;
-            spectrogram->buffin[cursamp] = (double)sample;
+			sample -= spectrogram->zeroamp;
+			spectrogram->buffin[cursamp] = (double)sample;
 
-            sampleindex+=samplesize;		//Adjust index to point to next sample for this channel
+			sampleindex+=samplesize;		//Adjust index to point to next sample for this channel
 		}
-        fftw_execute(fftplan);
+		fftw_execute(fftplan);
 		if(channel == 0)
 		{
-            dest=&spectrogram->left.slices[slicenum];
-        }
+			dest=&spectrogram->left.slices[slicenum];
+		}
 		else
 		{
 			dest=&(spectrogram->right.slices[slicenum]);	//Store results to right channel array
-        }
-        halfsize = eof_spectrogram_windowsize/2;
-        dest->amplist=(double*)malloc(sizeof(double) * (halfsize+1));
-        dest->amplist[0] = spectrogram->buffout[0];    //The first one is all real
-        for(cursamp=halfsize-1;cursamp > 0;cursamp--) {
-            dest->amplist[cursamp] = sqrt(
-                spectrogram->buffout[cursamp] * spectrogram->buffout[cursamp] +
-                spectrogram->buffout[eof_spectrogram_windowsize - cursamp] *
-                spectrogram->buffout[eof_spectrogram_windowsize - cursamp]
-            );
-            if(dest->amplist[cursamp] > spectrogram->destmax) { spectrogram->destmax = dest->amplist[cursamp]; }
-        }
-        dest->amplist[halfsize] = spectrogram->buffout[halfsize];
+		}
+		halfsize = eof_spectrogram_windowsize/2;
+		dest->amplist=(double*)malloc(sizeof(double) * (halfsize+1));
+		dest->amplist[0] = spectrogram->buffout[0];    //The first one is all real
+		for(cursamp=halfsize-1;cursamp > 0;cursamp--)
+		{
+			dest->amplist[cursamp] = sqrt(
+				spectrogram->buffout[cursamp] * spectrogram->buffout[cursamp] +
+				spectrogram->buffout[eof_spectrogram_windowsize - cursamp] *
+				spectrogram->buffout[eof_spectrogram_windowsize - cursamp]
+			);
+			if(dest->amplist[cursamp] > spectrogram->destmax) { spectrogram->destmax = dest->amplist[cursamp]; }
+		}
+		dest->amplist[halfsize] = spectrogram->buffout[halfsize];
 	}
 
 	return outofsamples;	//Return success/completed status

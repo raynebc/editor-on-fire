@@ -142,34 +142,34 @@ static int save_wav_fp(SAMPLE * sp, PACKFILE * fp)
 
 int save_wav(const char * fn, SAMPLE * sp)
 {
-    PACKFILE * file;
+	PACKFILE * file;
 
- 	eof_log("save_wav() entered", 1);
+	eof_log("save_wav() entered", 1);
 
 	if(!fn || !sp)
 	{
 		return 0;
 	}
-    /* open file */
-    file = pack_fopen(fn, "w");
-    if(file == NULL)
+	/* open file */
+	file = pack_fopen(fn, "w");
+	if(file == NULL)
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving WAV:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
 		eof_log(eof_log_string, 1);
 		return 0;
 	}
 
-    /* save WAV to the file */
-    if(!save_wav_fp(sp, file))
-    {
+	/* save WAV to the file */
+	if(!save_wav_fp(sp, file))
+	{
 		(void) pack_fclose(file);
-        return 0;
-    }
+		return 0;
+	}
 
-    /* close the file */
+	/* close the file */
 	(void) pack_fclose(file);
 
-    return 1;
+	return 1;
 }
 
 int eof_add_silence(const char * oggfn, unsigned long ms)
@@ -179,7 +179,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	char wavfn[1024] = {0};		//The file path of the silent WAV file created
 	char soggfn[1024] = {0};	//The file path of the silent OGG file created
 	char oggcfn[1024] = {0};	//The file path to the oggCat utility
-	char old_wd[1024] = {0};    //Store working directory before changing it so we can get back
+	char old_wd[1024] = {0};	//Store working directory before changing it so we can get back
 	char *rel_oggfn;			//Relative file path to the target audio file
 	char *rel_backupfn;			//Relative file path to the backup of the target audio file
 	SAMPLE * silence_sample;
@@ -265,7 +265,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	if(eof_load_ogg((char *)oggfn, 0))
 	{
 		eof_fix_waveform_graph();
-        eof_fix_spectrogram_graph();
+		eof_fix_spectrogram_graph();
 		eof_fix_window_title();
 		eof_chart_length = eof_music_length;
 		return 1;
@@ -405,7 +405,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	if(eof_load_ogg((char *)oggfn, 0))
 	{
 		eof_fix_waveform_graph();
-        eof_fix_spectrogram_graph();
+		eof_fix_spectrogram_graph();
 		eof_fix_window_title();
 		eof_chart_length = eof_music_length;
 		return 1;
@@ -540,7 +540,7 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	if(eof_load_ogg((char *)oggfn, 0))
 	{
 		eof_fix_waveform_graph();
-        eof_fix_spectrogram_graph();
+		eof_fix_spectrogram_graph();
 		eof_fix_window_title();
 		eof_chart_length = eof_music_length;
 		return 1;

@@ -83,49 +83,49 @@ EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 12] =
 /* sort all notes according to position */
 int eof_song_qsort_legacy_notes(const void * e1, const void * e2)
 {
-    EOF_NOTE ** thing1 = (EOF_NOTE **)e1;
-    EOF_NOTE ** thing2 = (EOF_NOTE **)e2;
+	EOF_NOTE ** thing1 = (EOF_NOTE **)e1;
+	EOF_NOTE ** thing2 = (EOF_NOTE **)e2;
 
 //	allegro_message("%d\n%d", (*thing1)->pos, (*thing2)->pos);	//Debug
 	//Sort first by chronological order
-    if((*thing1)->pos < (*thing2)->pos)
-	{
-        return -1;
-    }
-    if((*thing1)->pos > (*thing2)->pos)
-    {
-        return 1;
-    }
-    //Sort second by difficulty
-    if((*thing1)->type < (*thing2)->type)
+	if((*thing1)->pos < (*thing2)->pos)
 	{
 		return -1;
 	}
-    if((*thing1)->type > (*thing2)->type)
+	if((*thing1)->pos > (*thing2)->pos)
+	{
+		return 1;
+	}
+	//Sort second by difficulty
+	if((*thing1)->type < (*thing2)->type)
+	{
+		return -1;
+	}
+	if((*thing1)->type > (*thing2)->type)
 	{
 		return 1;
 	}
 
-    // they are equal...
-    return 0;
+	// they are equal...
+	return 0;
 }
 
 int eof_song_qsort_lyrics(const void * e1, const void * e2)
 {
-    EOF_LYRIC ** thing1 = (EOF_LYRIC **)e1;
-    EOF_LYRIC ** thing2 = (EOF_LYRIC **)e2;
+	EOF_LYRIC ** thing1 = (EOF_LYRIC **)e1;
+	EOF_LYRIC ** thing2 = (EOF_LYRIC **)e2;
 
-    if((*thing1)->pos < (*thing2)->pos)
+	if((*thing1)->pos < (*thing2)->pos)
 	{
-        return -1;
-    }
-    if((*thing1)->pos > (*thing2)->pos)
-    {
-        return 1;
-    }
+		return -1;
+	}
+	if((*thing1)->pos > (*thing2)->pos)
+	{
+		return 1;
+	}
 
-    // they are equal...
-    return 0;
+	// they are equal...
+	return 0;
 }
 
 EOF_SONG * eof_create_song(void)
@@ -3772,30 +3772,30 @@ void eof_pro_guitar_track_delete_hand_position(EOF_PRO_GUITAR_TRACK *tp, unsigne
 /* sort all notes according to position */
 int eof_song_qsort_pro_guitar_notes(const void * e1, const void * e2)
 {
-    EOF_PRO_GUITAR_NOTE ** thing1 = (EOF_PRO_GUITAR_NOTE **)e1;
-    EOF_PRO_GUITAR_NOTE ** thing2 = (EOF_PRO_GUITAR_NOTE **)e2;
+	EOF_PRO_GUITAR_NOTE ** thing1 = (EOF_PRO_GUITAR_NOTE **)e1;
+	EOF_PRO_GUITAR_NOTE ** thing2 = (EOF_PRO_GUITAR_NOTE **)e2;
 
 	//Sort first by chronological order
-    if((*thing1)->pos < (*thing2)->pos)
-	{
-        return -1;
-    }
-    if((*thing1)->pos > (*thing2)->pos)
-    {
-        return 1;
-    }
-    //Sort second by difficulty
-    if((*thing1)->type < (*thing2)->type)
+	if((*thing1)->pos < (*thing2)->pos)
 	{
 		return -1;
 	}
-    if((*thing1)->type > (*thing2)->type)
+	if((*thing1)->pos > (*thing2)->pos)
+	{
+		return 1;
+	}
+	//Sort second by difficulty
+	if((*thing1)->type < (*thing2)->type)
+	{
+		return -1;
+	}
+	if((*thing1)->type > (*thing2)->type)
 	{
 		return 1;
 	}
 
-    // they are equal...
-    return 0;
+	// they are equal...
+	return 0;
 }
 
 void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note)
