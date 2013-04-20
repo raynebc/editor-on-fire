@@ -4,40 +4,43 @@
 
 struct spectrogramslice
 {
-    double *amplist;             //The list of absolute amplitudes for each frequency band 
+    double *amplist;             //The list of absolute amplitudes for each frequency band
 };
 
 struct spectrogramchanneldata
 {
 	struct spectrogramslice *slices;	//The spectrogram data for this channel
-	unsigned maxamp;			//The highest amplitude of samples in this channel
-	unsigned long yaxis;			//The y coordinate representing the y axis the channel's graph will render to
-	unsigned long height;			//The height of this channel's graph
+	unsigned maxamp;					//The highest amplitude of samples in this channel
+	unsigned long yaxis;				//The y coordinate representing the y axis the channel's graph will render to
+	unsigned long height;				//The height of this channel's graph
+	unsigned long halfheight;			//One half of the channel's graph height (cached in eof_render_spectrogram() to avoid recalculating for each line)
 };
 
 struct spectrogramstruct
 {
 	char *oggfilename;
-    double *buffin;                //Allow multiple input/output buffers, for overlap
-    double *buffout;
-    short int numbuff;              //Number of buffers to overlap
-	double windowlength;		        //The length of one slice of the graph in milliseconds
-	unsigned long numslices;		//The number of spectrogram structures in the arrays below
-	unsigned int zeroamp;			//The amplitude representing a 0 amplitude for this spectrogram (32768 for 16 bit audio samples, 128 for 8 bit audio samples)
-	char is_stereo;					//This OGG has two audio channels
-    double destmax;
+	double *buffin;						//Allow multiple input/output buffers, for overlap
+	double *buffout;
+	short int numbuff;					//Number of buffers to overlap
+	double windowlength;				//The length of one slice of the graph in milliseconds
+	unsigned long numslices;			//The number of spectrogram structures in the arrays below
+	unsigned int zeroamp;				//The amplitude representing a 0 amplitude for this spectrogram (32768 for 16 bit audio samples, 128 for 8 bit audio samples)
+	char is_stereo;						//This OGG has two audio channels
+	double destmax;
+	double log_max;						//Will store the logarithm of the product of the window size and the the spectrogram's zeroamp value
 
 	struct spectrogramchanneldata left;	//The amplitude and graph data for the audio's left channel
 	struct spectrogramchanneldata right;	//The amplitude and graph data for the audio's right channel (if applicable)
 };
 
-extern struct spectrogramstruct *eof_spectrogram;		//Stores the spectrogram data
-extern char eof_display_spectrogram;			//Specifies whether the spectrogram display is enabled
-extern char eof_spectrogram_renderlocation;	//Specifies where and how high the graph will render (0 = fretboard area, 1 = editor window)
-extern char eof_spectrogram_renderleftchannel;	//Specifies whether the left channel's graph should render
-extern char eof_spectrogram_renderrightchannel;//Specifies whether the right channel's graph should render
+extern struct spectrogramstruct *eof_spectrogram;	//Stores the spectrogram data
+extern char eof_display_spectrogram;				//Specifies whether the spectrogram display is enabled
+extern char eof_spectrogram_renderlocation;			//Specifies where and how high the graph will render (0 = fretboard area, 1 = editor window)
+extern char eof_spectrogram_renderleftchannel;		//Specifies whether the left channel's graph should render
+extern char eof_spectrogram_renderrightchannel;		//Specifies whether the right channel's graph should render
 extern char eof_spectrogram_colorscheme;
 extern int eof_spectrogram_windowsize;
+extern double eof_half_spectrogram_windowsize;		//Caches the value of eof_spectrogram_windowsize / 2
 
 void eof_destroy_spectrogram(struct spectrogramstruct *ptr);
 	//frees memory used by the specified spectrogram structure

@@ -10,12 +10,13 @@
 #endif
 
 struct spectrogramstruct *eof_spectrogram=NULL;	//Stores the spectrogram data
-char eof_display_spectrogram=0;			//Specifies whether the spectrogram display is enabled
+char eof_display_spectrogram=0;				//Specifies whether the spectrogram display is enabled
 char eof_spectrogram_renderlocation=0;		//Specifies where and how high the graph will render (0 = fretboard area, 1 = editor window)
 char eof_spectrogram_renderleftchannel=1;	//Specifies whether the left channel's graph should render
 char eof_spectrogram_renderrightchannel=0;	//Specifies whether the right channel's graph should render
 char eof_spectrogram_colorscheme = 1;		//Specifies the color scheme to use for the graph
-int eof_spectrogram_windowsize = 1024;	//Specifies the window size to use
+int eof_spectrogram_windowsize = 1024;		//Specifies the window size to use
+double eof_half_spectrogram_windowsize = 512.0;
 
 void eof_destroy_spectrogram(struct spectrogramstruct *ptr)
 {
@@ -41,7 +42,7 @@ int eof_render_spectrogram(struct spectrogramstruct *spectrogram)
 	unsigned long ycoord1,ycoord2;	//Stores the Y coordinates of graph 1's and 2's Y axis
 	unsigned long height;		//Stores the heigth of the fretboard area
 	unsigned long top,bottom;	//Stores the top and bottom coordinates for the area the graph will render to
-	char numgraphs;		//Stores the number of channels to render
+	char numgraphs;				//Stores the number of channels to render
 	unsigned long pos = eof_music_pos / eof_zoom;
     unsigned long curms;
 
@@ -110,11 +111,13 @@ int eof_render_spectrogram(struct spectrogramstruct *spectrogram)
 		if(eof_spectrogram_renderleftchannel)
 		{	//If only rendering the left channel
 			spectrogram->left.height = height;
+			spectrogram->left.halfheight = height / 2;
 			spectrogram->left.yaxis = ycoord1;
 		}
 		else
 		{	//If only rendering the right channel
 			spectrogram->right.height = height;
+			spectrogram->right.halfheight = height / 2;
 			spectrogram->right.yaxis = ycoord1;
 		}
 	}
@@ -126,6 +129,7 @@ int eof_render_spectrogram(struct spectrogramstruct *spectrogram)
 		spectrogram->left.yaxis = ycoord1;
 		spectrogram->right.height = height;
 		spectrogram->right.yaxis = ycoord2;
+		spectrogram->left.halfheight = spectrogram->right.halfheight = height / 2;
 	}
 	else
 	{	//Do not render anything unless it's the graph for 1 or 2 channels
@@ -153,51 +157,42 @@ int eof_render_spectrogram(struct spectrogramstruct *spectrogram)
 void eof_render_spectrogram_col(struct spectrogramstruct *spectrogram,struct spectrogramchanneldata *channel,struct spectrogramslice *ampdata, unsigned long x, unsigned long curms)
 {
 	unsigned long yoffset;	//The offset from the y axis coordinate to render the line to
-    double sampinterval;
-    unsigned long curslice;
-    unsigned long actualzero;
-    unsigned long sampoffset;
-    double avg;
-    double curpoint;
-    double nextpoint;
-    unsigned long cursamp;
-    unsigned long nextsamp;
-    double logheight;
-    double maxval;
+	unsigned long curslice;
+	unsigned long actualzero;
+	unsigned long sampoffset;
+	double avg;
+	double curpoint;
+	double nextpoint;
+	unsigned long cursamp;
+	unsigned long nextsamp;
+	double logheight;
 
-    actualzero = channel->yaxis + channel->height/2;
-    curslice = curms / spectrogram->windowlength;
-
-    sampinterval=(double)eof_spectrogram_windowsize/2.0;
-    maxval = eof_spectrogram_windowsize * spectrogram->zeroamp;
+	actualzero = channel->yaxis + channel->halfheight;
+	curslice = curms / spectrogram->windowlength;
 
 	if(spectrogram != NULL)
 	{
-        logheight = log(channel->height); 
-        for(yoffset=0;yoffset < channel->height-1;yoffset++) 
-        {
-            if(1) {
-                curpoint = 1.0 - log(channel->height-yoffset)/logheight;
-                nextpoint = 1.0 - log(channel->height-yoffset-1)/logheight;
-            } else {
-                curpoint = (double)yoffset / (double)channel->height;
-                nextpoint = (double)(yoffset+1) / (double)channel->height;
-            }
-            cursamp = (unsigned long)(sampinterval * curpoint); 
-            nextsamp = (unsigned long)(sampinterval * nextpoint); 
-            if(cursamp == nextsamp) { nextsamp = cursamp + 1; }
+		logheight = log(channel->height);
+		for(yoffset=0;yoffset < channel->height-1;yoffset++)
+		{
+			curpoint = 1.0 - log(channel->height-yoffset)/logheight;
+			nextpoint = 1.0 - log(channel->height-yoffset-1)/logheight;
+			cursamp = (unsigned long)(eof_half_spectrogram_windowsize * curpoint);
+			nextsamp = (unsigned long)(eof_half_spectrogram_windowsize * nextpoint);
+			if(cursamp == nextsamp) { nextsamp = cursamp + 1; }
 
-            //Average the samples to get a gray value
-            avg = 0.0;
-            for(sampoffset = cursamp; sampoffset < nextsamp; sampoffset++) {
-                avg += ampdata[curslice].amplist[sampoffset];
-            }
-            avg = avg/(double)(nextsamp - cursamp);
+			//Average the samples to get a gray value
+			avg = 0.0;
+			for(sampoffset = cursamp; sampoffset < nextsamp; sampoffset++)
+			{
+				avg += ampdata[curslice].amplist[sampoffset];
+			}
+			avg = avg/(double)(nextsamp - cursamp);
 
-            putpixel(eof_window_editor->screen, x, actualzero - yoffset, eof_color_scale(log(avg),log(maxval),eof_spectrogram_colorscheme));
-            //To test a color scale
-            //putpixel(eof_window_editor->screen, x, actualzero - yoffset, eof_color_scale(yoffset,channel->height,eof_spectrogram_colorscheme));
-        }
+			putpixel(eof_window_editor->screen, x, actualzero - yoffset, eof_color_scale(log(avg),spectrogram->log_max,eof_spectrogram_colorscheme));
+			//To test a color scale
+			//putpixel(eof_window_editor->screen, x, actualzero - yoffset, eof_color_scale(yoffset,channel->height,eof_spectrogram_colorscheme));
+		}
 	}
 }
 
@@ -216,9 +211,9 @@ int eof_color_scale(double value, double max, short int scalenum) {
             scaledval = value * 1280.0;
             rgb[0] = 384.0 - abs(scaledval-896.0);
             rgb[1] = 384.0 - abs(scaledval-640.0);
-            rgb[2] = 384.0 - abs(scaledval-384.0);  
-            for(cnt=0;cnt<3;cnt++) { 
-                if(rgb[cnt] > 255) { rgb[cnt] = 255; } 
+            rgb[2] = 384.0 - abs(scaledval-384.0);
+            for(cnt=0;cnt<3;cnt++) {
+                if(rgb[cnt] > 255) { rgb[cnt] = 255; }
                 if(rgb[cnt] < 0) { rgb[cnt] = 0; }
             }
             break;
@@ -266,7 +261,7 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 	unsigned long slicenum=0;
 
     fftw_plan fftplan;
-    
+
 	set_window_title("Generating Spectrogram...");
 
 	if((oggfilename == NULL))
@@ -336,6 +331,7 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 				spectrogram->zeroamp=128;	//128 represents amplitude 0 for unsigned 8 bit audio samples
 			else
 				spectrogram->zeroamp=32768;	//32768 represents amplitude 0 for unsigned 16 bit audio samples
+			spectrogram->log_max = log(eof_spectrogram_windowsize * spectrogram->zeroamp);	//Cache this value, since it is needed to render each pixel of the spectrogram
 
 			spectrogram->oggfilename=(char *)malloc(strlen(oggfilename)+1);
 			if(spectrogram->oggfilename == NULL)
@@ -470,7 +466,7 @@ int eof_process_next_spectrogram_slice(struct spectrogramstruct *spectrogram,SAM
             sample=((unsigned char *)audio->data)[sampleindex];	//Store first sample byte (Allegro documentation states the sample data is stored in unsigned format)
             if(audio->bits > 8)	//If this sample is more than one byte long (16 bit)
                 sample+=((unsigned char *)audio->data)[sampleindex+1]<<8;	//Assume little endian byte order, read the next (high byte) of data
-            
+
             sample -= spectrogram->zeroamp;
             spectrogram->buffin[cursamp] = (double)sample;
 
