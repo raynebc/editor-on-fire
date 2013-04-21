@@ -148,7 +148,7 @@ int eof_render_spectrogram(struct spectrogramstruct *spectrogram)
 		spectrogram->right.height = height;
 		spectrogram->right.yaxis = ycoord2;
 		spectrogram->left.halfheight = spectrogram->right.halfheight = height / 2;
-		spectrogram->left.logheight = spectrogram->right.logheight = log(height);
+		spectrogram->left.logheight = spectrogram->right.logheight = log(height / 2);
 	}
 	else
 	{	//Do not render anything unless it's the graph for 1 or 2 channels
@@ -358,17 +358,17 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 			*spectrogram=emptyspectrogram;					//Set all variables to value zero
 			spectrogram->numbuff = 1;
 			if(alogg_get_wave_is_stereo_ogg(oggstruct))	//If this audio file has two audio channels
-				spectrogram->is_stereo=1;
+				spectrogram->is_stereo = 1;
 			else
-				spectrogram->is_stereo=0;
+				spectrogram->is_stereo = 0;
 
 			if(audio->bits == 8)
-				spectrogram->zeroamp=128;	//128 represents amplitude 0 for unsigned 8 bit audio samples
+				spectrogram->zeroamp = 128;	//128 represents amplitude 0 for unsigned 8 bit audio samples
 			else
-				spectrogram->zeroamp=32768;	//32768 represents amplitude 0 for unsigned 16 bit audio samples
+				spectrogram->zeroamp = 32768;	//32768 represents amplitude 0 for unsigned 16 bit audio samples
 			spectrogram->log_max = log(eof_spectrogram_windowsize * spectrogram->zeroamp);	//Cache this value, since it is needed to render each pixel of the spectrogram
 
-			spectrogram->oggfilename=(char *)malloc(strlen(oggfilename)+1);
+			spectrogram->oggfilename = (char *)malloc(strlen(oggfilename)+1);
 			if(spectrogram->oggfilename == NULL)
 			{
 				#ifdef EOF_DEBUG_SPECTROGRAM

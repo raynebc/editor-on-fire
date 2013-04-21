@@ -331,16 +331,16 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 			*waveform=emptywaveform;					//Set all variables to value zero
 			waveform->slicelength = slicelength;
 			if(alogg_get_wave_is_stereo_ogg(oggstruct))	//If this audio file has two audio channels
-				waveform->is_stereo=1;
+				waveform->is_stereo = 1;
 			else
-				waveform->is_stereo=0;
+				waveform->is_stereo = 0;
 
 			if(audio->bits == 8)
-				waveform->zeroamp=128;	//128 represents amplitude 0 for unsigned 8 bit audio samples
+				waveform->zeroamp = 128;	//128 represents amplitude 0 for unsigned 8 bit audio samples
 			else
-				waveform->zeroamp=32768;	//32768 represents amplitude 0 for unsigned 16 bit audio samples
+				waveform->zeroamp = 32768;	//32768 represents amplitude 0 for unsigned 16 bit audio samples
 
-			waveform->oggfilename=(char *)malloc(strlen(oggfilename)+1);
+			waveform->oggfilename = (char *)malloc(strlen(oggfilename)+1);
 			if(waveform->oggfilename == NULL)
 			{
 				eof_log("Waveform: Unable to allocate memory for the audio filename string", 1);
