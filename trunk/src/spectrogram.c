@@ -127,14 +127,16 @@ int eof_render_spectrogram(struct spectrogramstruct *spectrogram)
 		if(eof_spectrogram_renderleftchannel)
 		{	//If only rendering the left channel
 			spectrogram->left.height = height;
-			spectrogram->left.halfheight = height / 2;
 			spectrogram->left.yaxis = ycoord1;
+			spectrogram->left.halfheight = height / 2;
+			spectrogram->left.logheight = log(height);
 		}
 		else
 		{	//If only rendering the right channel
 			spectrogram->right.height = height;
-			spectrogram->right.halfheight = height / 2;
 			spectrogram->right.yaxis = ycoord1;
+			spectrogram->right.halfheight = height / 2;
+			spectrogram->right.logheight = log(height);
 		}
 	}
 	else if(numgraphs == 2)
@@ -146,6 +148,7 @@ int eof_render_spectrogram(struct spectrogramstruct *spectrogram)
 		spectrogram->right.height = height;
 		spectrogram->right.yaxis = ycoord2;
 		spectrogram->left.halfheight = spectrogram->right.halfheight = height / 2;
+		spectrogram->left.logheight = spectrogram->right.logheight = log(height);
 	}
 	else
 	{	//Do not render anything unless it's the graph for 1 or 2 channels
@@ -181,20 +184,21 @@ void eof_render_spectrogram_col(struct spectrogramstruct *spectrogram,struct spe
 	double nextpoint;
 	unsigned long cursamp;
 	unsigned long nextsamp;
-	double logheight;
 
 	if(spectrogram != NULL)
 	{
 		actualzero = channel->yaxis + channel->halfheight;
 		curslice = curms / spectrogram->windowlength;
-		logheight = log(channel->height);
 		for(yoffset=0;yoffset < channel->height-1;yoffset++)
 		{
-			curpoint = 1.0 - log(channel->height-yoffset)/logheight;
-			nextpoint = 1.0 - log(channel->height-yoffset-1)/logheight;
+			curpoint = 1.0 - log(channel->height-yoffset)/channel->logheight;
+			nextpoint = 1.0 - log(channel->height-yoffset-1)/channel->logheight;
 			cursamp = (unsigned long)(eof_half_spectrogram_windowsize * curpoint);
 			nextsamp = (unsigned long)(eof_half_spectrogram_windowsize * nextpoint);
-			if(cursamp == nextsamp) { nextsamp = cursamp + 1; }
+			if(cursamp == nextsamp)
+			{
+				nextsamp = cursamp + 1;
+			}
 
 			//Average the samples to get a gray value
 			avg = 0.0;
@@ -518,17 +522,20 @@ int eof_process_next_spectrogram_slice(struct spectrogramstruct *spectrogram,SAM
 		{
 			dest=&(spectrogram->right.slices[slicenum]);	//Store results to right channel array
 		}
-		halfsize = eof_spectrogram_windowsize/2;
-		dest->amplist=(double*)malloc(sizeof(double) * (halfsize+1));
+		halfsize = eof_spectrogram_windowsize / 2;
+		dest->amplist=(double*)malloc(sizeof(double) * (halfsize + 1));
 		dest->amplist[0] = spectrogram->buffout[0];    //The first one is all real
-		for(cursamp=halfsize-1;cursamp > 0;cursamp--)
+		for(cursamp=halfsize - 1; cursamp > 0; cursamp--)
 		{
 			dest->amplist[cursamp] = sqrt(
 				spectrogram->buffout[cursamp] * spectrogram->buffout[cursamp] +
 				spectrogram->buffout[eof_spectrogram_windowsize - cursamp] *
 				spectrogram->buffout[eof_spectrogram_windowsize - cursamp]
 			);
-			if(dest->amplist[cursamp] > spectrogram->destmax) { spectrogram->destmax = dest->amplist[cursamp]; }
+			if(dest->amplist[cursamp] > spectrogram->destmax)
+			{
+				spectrogram->destmax = dest->amplist[cursamp];
+			}
 		}
 		dest->amplist[halfsize] = spectrogram->buffout[halfsize];
 	}

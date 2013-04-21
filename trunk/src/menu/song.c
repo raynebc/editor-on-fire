@@ -2230,9 +2230,10 @@ int eof_menu_song_spectrogram_settings(void)
 		eof_half_spectrogram_windowsize = (double)eof_spectrogram_windowsize / 2.0;	//Cache this value so it isn't calculated for every rendered column of the spectrogram
 
 		//Reload the spectrogram if we changed the window size
-		if(eof_spectrogram_windowsize != first_windowsize && eof_spectrogram != NULL)
+		if((eof_spectrogram_windowsize != first_windowsize) && (eof_spectrogram != NULL))
 		{
-			eof_create_spectrogram(eof_spectrogram->oggfilename);
+			eof_destroy_spectrogram(eof_spectrogram);
+			eof_create_spectrogram(eof_loaded_ogg_name);
 		}
 
 		//Run through the color options

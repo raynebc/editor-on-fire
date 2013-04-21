@@ -14,6 +14,7 @@ struct spectrogramchanneldata
 	unsigned long yaxis;				//The y coordinate representing the y axis the channel's graph will render to
 	unsigned long height;				//The height of this channel's graph
 	unsigned long halfheight;			//One half of the channel's graph height (cached in eof_render_spectrogram() to avoid recalculating for each line)
+	double logheight;					//The logarithm of the height (cached in eof_render_spectrogram() to avoid recalculating for each column)
 };
 
 struct spectrogramstruct
