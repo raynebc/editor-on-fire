@@ -161,12 +161,12 @@ int eof_render_spectrogram(struct spectrogramstruct *spectrogram)
 	{	//for each pixel in the piano roll's visible width
 		if(eof_spectrogram_renderleftchannel)
 		{	//If the left channel rendering is enabled
-			eof_render_spectrogram_col(spectrogram,&spectrogram->left,spectrogram->left.slices,x,curms);	//Render the peak amplitude in green
+			eof_render_spectrogram_col(spectrogram,&spectrogram->left,spectrogram->left.slices,x,curms);
 		}
 
 		if(eof_spectrogram_renderrightchannel)
 		{	//If the right channel rendering is enabled
-			eof_render_spectrogram_col(spectrogram,&spectrogram->right,spectrogram->right.slices,x,curms);	//Render the peak amplitude in green
+			eof_render_spectrogram_col(spectrogram,&spectrogram->right,spectrogram->right.slices,x,curms);
 		}
 	}
 

@@ -1819,6 +1819,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	char *rssectionname;
 	unsigned char start_of_repeat, num_of_repeats;
 	char import_ts = 0;		//Will be set to nonzero if user opts to import time signatures
+	char note_is_short = 0;	//Will be set to nonzero if the note being parsed is shorter than a quarter note
 
 	eof_log("\tImporting Guitar Pro file", 1);
 	eof_log("eof_load_gp() entered", 1);
@@ -2682,6 +2683,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					{	//Dotted note
 						note_duration *= 1.5;	//A dotted note is one and a half times as long as normal
 					}
+					if(note_duration / ((double)curden / (double)curnum) < 0.25)
+					{	//If the note (after undoing the scaling for the time signature) is shorter than a quarter note
+						note_is_short = 1;
+					}
+					else
+					{
+						note_is_short = 0;
+					}
+
 					if(bytemask & 2)
 					{	//Beat has a chord diagram
 						word = pack_getc(inf);	//Read chord diagram format
@@ -3386,6 +3396,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							beat_position += curbeat;	//Add the number of beats into the track the current measure is
 							beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
 							np[ctr2]->length = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position) - np[ctr2]->pos + 0.5;	//Define the length of this note
+
+							if(note_is_short && eof_gp_import_truncate_short_notes)
+							{	//If this note is shorter than a quarter note, and the preference to drop the note's sustain in this circumstance is enabled
+								np[ctr2]->length = 1;	//Remove the note's sustain
+							}
 
 #ifdef GP_IMPORT_DEBUG
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Start: %lums\tLength: %lums\tFrets+capo: ", gp->track[ctr2]->notes - 1, np[ctr2]->pos, np[ctr2]->length);
