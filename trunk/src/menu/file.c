@@ -132,6 +132,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_radio_proc, 161, 221, 150, 16,  2,   23,  0,    0,      1,   0,   "RS sections+phrases",         NULL, NULL },
 	{ d_agup_check_proc, 248, 284, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are made 1ms long",NULL, NULL },
 	{ d_agup_check_proc, 16,  236, 340, 16,  2,   23,  0,    0,      1,   0,   "GP import beat text as sections, markers as phrases",NULL, NULL },
+	{ d_agup_check_proc, 248, 300, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short notes",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -983,6 +984,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[eof_2d_render_top_option].flags = D_SELECTED;
 	eof_preferences_dialog[37].flags = eof_new_note_length_1ms ? D_SELECTED : 0;		//New notes are made 1ms long
 	eof_preferences_dialog[38].flags = eof_gp_import_preference_1 ? D_SELECTED : 0;		//GP import beat text as sections, markers as phrases
+	eof_preferences_dialog[39].flags = eof_gp_import_truncate_short_notes ? D_SELECTED : 0;		//GP import truncates short notes
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1067,6 +1069,7 @@ int eof_menu_file_preferences(void)
 			}
 			eof_new_note_length_1ms = (eof_preferences_dialog[37].flags == D_SELECTED ? 1 : 0);
 			eof_gp_import_preference_1 = (eof_preferences_dialog[38].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_truncate_short_notes = (eof_preferences_dialog[39].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 29)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1098,6 +1101,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[33].flags = eof_preferences_dialog[34].flags = eof_preferences_dialog[35].flags = eof_preferences_dialog[36].flags = 0;	//Display sections/fret hand positions at top of 2D panel
 			eof_preferences_dialog[37].flags = 0;					//New notes are made 1ms long
 			eof_preferences_dialog[38].flags = 0;					//GP import beat text as sections, markers as phrases
+			eof_preferences_dialog[39].flags = D_SELECTED;			//GP import truncates short notes
 		}//If the user clicked "Default
 	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
