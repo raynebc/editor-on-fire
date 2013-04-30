@@ -5855,7 +5855,7 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 	ctr = 0;
 	while(ctr < notecount)
 	{	//For each pre-existing note in the source track
-		if(eof_get_note_type(sp, srctrack, ctr) <=  srcdiff)
+		if(eof_get_note_type(sp, srctrack, ctr) <= srcdiff)
 		{	//If this note is at or below the source difficulty
 			targetnote = ctr;	//Track which note is to be copied to the source difficulty
 			targetpos = eof_get_note_pos(sp, srctrack, ctr);	//Track this note's position

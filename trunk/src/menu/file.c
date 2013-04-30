@@ -1329,12 +1329,16 @@ int eof_menu_file_exit(void)
 		if(eof_changes)
 		{
 			eof_clear_input();
+			key[KEY_Y] = 0;
+			key[KEY_N] = 0;
 			ret = alert3(NULL, "Save changes before quitting?", NULL, "&Yes", "&No", "Cancel", 'y', 'n', 0);
 			if(ret == 1)
 			{
 				if(eof_menu_file_save() == 2)
 				{
 					eof_clear_input();
+					key[KEY_Y] = 0;
+					key[KEY_N] = 0;
 					ret2 = alert3(NULL, "Save failed! Exit without saving?", NULL, "&Yes", "&No", NULL, 'y', 'n', 0);
 				}
 			}

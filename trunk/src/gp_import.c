@@ -2024,25 +2024,199 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	if(fileversion >= 500)
 	{	//Versions 5.0 and newer of the format store musical directional symbols and a master reverb setting here
 		pack_ReadWORDLE(inf, &word);	//Coda symbol position
+		gp->symbols[EOF_CODA_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+#ifdef GP_IMPORT_DEBUG
+		if(word != 0xFFFF)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Coda\" symbol is at measure #%u", word);
+			eof_log(eof_log_string, 1);
+		}
+#endif
 		pack_ReadWORDLE(inf, &word);	//Double coda symbol position
+		gp->symbols[EOF_DOUBLE_CODA_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+#ifdef GP_IMPORT_DEBUG
+		if(word != 0xFFFF)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Double Coda\" symbol is at measure #%u", word);
+			eof_log(eof_log_string, 1);
+		}
+#endif
 		pack_ReadWORDLE(inf, &word);	//Segno symbol position
+		gp->symbols[EOF_SEGNO_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+#ifdef GP_IMPORT_DEBUG
+		if(word != 0xFFFF)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Segno\" symbol is at measure #%u", word);
+			eof_log(eof_log_string, 1);
+		}
+#endif
 		pack_ReadWORDLE(inf, &word);	//Segno segno symbol position
+		gp->symbols[EOF_SEGNO_SEGNO_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+#ifdef GP_IMPORT_DEBUG
+		if(word != 0xFFFF)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Segno Segno\" symbol is at measure #%u", word);
+			eof_log(eof_log_string, 1);
+		}
+#endif
 		pack_ReadWORDLE(inf, &word);	//Fine symbol position
+		gp->symbols[EOF_FINE_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+#ifdef GP_IMPORT_DEBUG
+		if(word != 0xFFFF)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Fine\" symbol is at measure #%u", word);
+			eof_log(eof_log_string, 1);
+		}
+#endif
 		pack_ReadWORDLE(inf, &word);	//Da capo symbol position
+		gp->symbols[EOF_DA_CAPO_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+#ifdef GP_IMPORT_DEBUG
+		if(word != 0xFFFF)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Capo\" symbol is at measure #%u", word);
+			eof_log(eof_log_string, 1);
+		}
+#endif
 		pack_ReadWORDLE(inf, &word);	//Da capo al coda symbol position
+		gp->symbols[EOF_DA_CAPO_AL_CODA_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+#ifdef GP_IMPORT_DEBUG
+		if(word != 0xFFFF)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Capo al Coda\" symbol is at measure #%u", word);
+			eof_log(eof_log_string, 1);
+		}
+#endif
 		pack_ReadWORDLE(inf, &word);	//Da capo al double coda symbol position
+		gp->symbols[EOF_DA_CAPO_AL_DOUBLE_CODA_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+#ifdef GP_IMPORT_DEBUG
+		if(word != 0xFFFF)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Capo al double Coda\" symbol is at measure #%u", word);
+			eof_log(eof_log_string, 1);
+		}
+#endif
 		pack_ReadWORDLE(inf, &word);	//Da capo al fine symbol position
+		gp->symbols[EOF_DA_CAPO_AL_FINE_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+#ifdef GP_IMPORT_DEBUG
+		if(word != 0xFFFF)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Capo al Fine\" symbol is at measure #%u", word);
+			eof_log(eof_log_string, 1);
+		}
+#endif
 		pack_ReadWORDLE(inf, &word);	//Da segno symbol position
-		pack_ReadWORDLE(inf, &word);	//Da segno symbol position
+		gp->symbols[EOF_DA_SEGNO_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+#ifdef GP_IMPORT_DEBUG
+		if(word != 0xFFFF)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Segno\" symbol is at measure #%u", word);
+			eof_log(eof_log_string, 1);
+		}
+#endif
+		pack_ReadWORDLE(inf, &word);	//Da segno al coda symbol position
+		gp->symbols[EOF_DA_SEGNO_AL_CODA_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+#ifdef GP_IMPORT_DEBUG
+		if(word != 0xFFFF)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Segno al Coda\" symbol is at measure #%u", word);
+			eof_log(eof_log_string, 1);
+		}
+#endif
 		pack_ReadWORDLE(inf, &word);	//Da segno al double coda symbol position
+		gp->symbols[EOF_DA_SEGNO_AL_DOUBLE_CODA_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+#ifdef GP_IMPORT_DEBUG
+		if(word != 0xFFFF)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Segno al double Coda\" symbol is at measure #%u", word);
+			eof_log(eof_log_string, 1);
+		}
+#endif
 		pack_ReadWORDLE(inf, &word);	//Da segno al fine symbol position
+		gp->symbols[EOF_DA_SEGNO_AL_FINE_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+#ifdef GP_IMPORT_DEBUG
+		if(word != 0xFFFF)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Segno al Fine\" symbol is at measure #%u", word);
+			eof_log(eof_log_string, 1);
+		}
+#endif
 		pack_ReadWORDLE(inf, &word);	//Da segno segno symbol position
+		gp->symbols[EOF_DA_SEGNO_SEGNO_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+#ifdef GP_IMPORT_DEBUG
+		if(word != 0xFFFF)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Segno Segno\" symbol is at measure #%u", word);
+			eof_log(eof_log_string, 1);
+		}
+#endif
 		pack_ReadWORDLE(inf, &word);	//Da segno segno al coda symbol position
+		gp->symbols[EOF_DA_SEGNO_SEGNO_AL_CODA_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+#ifdef GP_IMPORT_DEBUG
+		if(word != 0xFFFF)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Segno Segno al Coda\" symbol is at measure #%u", word);
+			eof_log(eof_log_string, 1);
+		}
+#endif
 		pack_ReadWORDLE(inf, &word);	//Da segno segno al double coda symbol position
+		gp->symbols[EOF_DA_SEGNO_SEGNO_AL_DOUBLE_CODA_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+#ifdef GP_IMPORT_DEBUG
+		if(word != 0xFFFF)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Segno Segno al double Coda\" symbol is at measure #%u", word);
+			eof_log(eof_log_string, 1);
+		}
+#endif
 		pack_ReadWORDLE(inf, &word);	//Da segno segno al fine symbol position
+		gp->symbols[EOF_DA_SEGNO_SEGNO_AL_FINE_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+#ifdef GP_IMPORT_DEBUG
+		if(word != 0xFFFF)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Segno Segno al Fine\" symbol is at measure #%u", word);
+			eof_log(eof_log_string, 1);
+		}
+#endif
 		pack_ReadWORDLE(inf, &word);	//Da coda symbol position
+		gp->symbols[EOF_DA_CODA_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+#ifdef GP_IMPORT_DEBUG
+		if(word != 0xFFFF)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Coda\" symbol is at measure #%u", word);
+			eof_log(eof_log_string, 1);
+		}
+#endif
 		pack_ReadWORDLE(inf, &word);	//Da double coda symbol position
+		gp->symbols[EOF_DA_DOUBLE_CODA_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+#ifdef GP_IMPORT_DEBUG
+		if(word != 0xFFFF)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da double Coda\" symbol is at measure #%u", word);
+			eof_log(eof_log_string, 1);
+		}
+#endif
 		pack_ReadDWORDLE(inf, &dword);	//Read the master reverb value
+
+		//Validate symbols
+		if(gp->symbols[EOF_CODA_SYMBOL] == 0xFFFF)
+		{	//If no Coda symbol was placed
+			gp->symbols[EOF_DA_CAPO_AL_CODA_SYMBOL] = gp->symbols[EOF_DA_SEGNO_AL_CODA_SYMBOL] = gp->symbols[EOF_DA_SEGNO_SEGNO_AL_CODA_SYMBOL] = gp->symbols[EOF_DA_CODA_SYMBOL] = 0xFFFF;	//These symbols aren't valid
+		}
+		if(gp->symbols[EOF_DOUBLE_CODA_SYMBOL] == 0xFFFF)
+		{	//If no Double Coda symbol was placed
+			gp->symbols[EOF_DA_CAPO_AL_DOUBLE_CODA_SYMBOL] = gp->symbols[EOF_DA_SEGNO_AL_DOUBLE_CODA_SYMBOL] = gp->symbols[EOF_DA_SEGNO_SEGNO_AL_DOUBLE_CODA_SYMBOL] = gp->symbols[EOF_DA_DOUBLE_CODA_SYMBOL] = 0xFFFF;	//These symbols aren't valid
+		}
+		if(gp->symbols[EOF_SEGNO_SYMBOL] == 0xFFFF)
+		{	//If no Segno symbol was placed
+			gp->symbols[EOF_DA_SEGNO_SYMBOL] = gp->symbols[EOF_DA_SEGNO_AL_CODA_SYMBOL] = gp->symbols[EOF_DA_SEGNO_AL_DOUBLE_CODA_SYMBOL] = gp->symbols[EOF_DA_SEGNO_AL_FINE_SYMBOL] = 0xFFFF;	//These symbols aren't valid
+		}
+		if(gp->symbols[EOF_SEGNO_SEGNO_SYMBOL] == 0xFFFF)
+		{	//If no Segno Segno symbol was placed
+			gp->symbols[EOF_DA_SEGNO_SEGNO_SYMBOL] = gp->symbols[EOF_DA_SEGNO_SEGNO_AL_CODA_SYMBOL] = gp->symbols[EOF_DA_SEGNO_SEGNO_AL_DOUBLE_CODA_SYMBOL] = gp->symbols[EOF_DA_SEGNO_SEGNO_AL_FINE_SYMBOL] = 0xFFFF;	//These symbols aren't valid
+		}
+		if(gp->symbols[EOF_FINE_SYMBOL] == 0xFFFF)
+		{	//If no Fine symbol was placed
+			gp->symbols[EOF_DA_CAPO_AL_FINE_SYMBOL] = gp->symbols[EOF_DA_SEGNO_AL_FINE_SYMBOL] = gp->symbols[EOF_DA_SEGNO_SEGNO_AL_FINE_SYMBOL] = 0xFFFF;	//These symbols aren't valid
+		}
 	}
 
 
@@ -3389,7 +3563,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							partial_beat_position = (measure_position * curnum) - beat_position;	//How far into this beat the note begins
 							beat_position += curbeat;	//Add the number of beats into the track the current measure is
 							beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
-							np[ctr2]->pos = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position);	//Define the position of this note
+							np[ctr2]->pos = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position) + 0.5;	//Define the position of this note (rounded up)
 
 							beat_position = (measure_position + note_duration) * curnum;
 							partial_beat_position = (measure_position + note_duration) * curnum - beat_position;	//How far into this beat the note ends
@@ -3621,13 +3795,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, char import_ts)
 {
 	unsigned long ctr, currentmeasure, beatctr, last_start_of_repeat;
-	unsigned char has_repeats = 0;
+	unsigned char has_repeats = 0, has_symbols = 0;
 	unsigned char *working_num_of_repeats;	//Will store a copy of gp->measure[]'s repeat information so that the information in gp isn't destroyed
 	EOF_PRO_GUITAR_TRACK *tp;		//Stores the resulting track that is inserted into gp
 	unsigned long *measuremap;		//Will be used to refer to a dynamically built array storing the beat number at which each measure begins
 	EOF_TEXT_EVENT * newevent[EOF_MAX_TEXT_EVENTS];	//Will be used to rebuild the text events array to the appropriate unwrapped beat positions, if the first track is being unwrapped
 	unsigned long newevents = 0;		//The number of events stored in the above array
 	char unwrapevents = 0;		//Will track whether text events are to be unwrapped
+	unsigned int working_symbols[19];	//Will store a copy of gp->symbols[] so that the information ingp isn't destroyed
 
 	eof_log("eof_unwrap_gp_track() entered", 1);
 
@@ -3636,6 +3811,8 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 		eof_log("\tInvalid parameters", 1);
 		return 1;	//Invalid parameters
 	}
+
+	gp->coda_activated = gp->double_coda_activated = gp->fine_activated = 0;	//Reset these statuses
 
 	//First parse the measures[] array to determine if any end of repeats are present
 	for(ctr = 0; ctr < gp->measures; ctr++)
@@ -3646,13 +3823,22 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 			break;
 		}
 	}
-	if(!has_repeats)
-	{	//If this GP file has no repeats
-		eof_log("\tNo repeats detected", 1);
+	//Check to see if any navigational symbols were placed
+	for(ctr = 5; ctr < 19; ctr++)
+	{	//For each of the navigational symbols (except the first 5, which are labels and not branches)
+		if(gp->symbols[ctr] != 0xFFFF)
+		{	//If this symbol is placed in the composition
+			has_symbols = 1;
+			break;
+		}
+	}
+	if(!has_repeats && !has_symbols)
+	{	//If this GP file has no repeats and no branching
+		eof_log("\tNo repeats or navigational symbols detected", 1);
 		return 0;	//Return without altering the gp structure
 	}
 
-	//Create a working array tracking the number of repeats left for each measure
+	//Create a working copy of the array tracking the number of repeats left for each measure
 	working_num_of_repeats = malloc(sizeof(unsigned char) * gp->measures);
 	if(!working_num_of_repeats)
 	{	//Error allocating memory
@@ -3663,6 +3849,9 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 	{	//For each measure in the GP file
 		working_num_of_repeats[ctr] = gp->measure[ctr].num_of_repeats;	//Copy the number of repeats
 	}
+
+	//Create a working copy of the array tracking the navigational symbols
+	memcpy(working_symbols, gp->symbols, sizeof(working_symbols));
 
 	//Create a new pro guitar track structure to unwrap into
 	tp = malloc(sizeof(EOF_PRO_GUITAR_TRACK));
@@ -3815,7 +4004,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 
 		beatctr += gp->measure[currentmeasure].num;	//Add the number of beats contained in this measure to the ongoing counter
 
-		//Either increment to the next measure or seek to the beginning of a repeat
+		//Either increment to the next measure or seek to the beginning of a repeat/symbol
 		if(working_num_of_repeats[currentmeasure])
 		{	//If this measure has an end of repeat with any repeats left, seek to the appropriate measure
 #ifdef GP_IMPORT_DEBUG
@@ -3827,11 +4016,161 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 		}
 		else
 		{
+			working_num_of_repeats[currentmeasure] = gp->measure[currentmeasure].num_of_repeats;	//Restore the repeat count of this measure, in case a navigation symbol causes it to be unwrapped again later
+
+			if((working_symbols[EOF_FINE_SYMBOL] == currentmeasure) && gp->fine_activated)
+			{	//If the "Fine" symbol was reached after a "da ... al fine" symbol, this marks the end of the composition
 #ifdef GP_IMPORT_DEBUG
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tContinuing to next measure");
-			eof_log(eof_log_string, 1);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\"Fine\" reached, ending unwrap process");
+				eof_log(eof_log_string, 1);
 #endif
-			currentmeasure++;	//Otherwise continue to the next measure
+				break;
+			}
+			else if(working_symbols[EOF_DA_CAPO_SYMBOL] == currentmeasure)
+			{	//If the "Da Capo" symbol was reached, seek back to first measure
+#ifdef GP_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\"Da Capo\" reached, seeking to first measure");
+				eof_log(eof_log_string, 1);
+#endif
+				currentmeasure = 0;
+				working_symbols[EOF_DA_CAPO_SYMBOL] = 0xFFFF;	//This symbol is now destroyed
+			}
+			else if(working_symbols[EOF_DA_CAPO_AL_CODA_SYMBOL] == currentmeasure)
+			{	//If the "Da Capo al Coda" symbol was reached, seek to the first measure and expect a "Da Coda" symbol to follow
+#ifdef GP_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\"Da Capo al Coda\" reached, seeking to first measure");
+				eof_log(eof_log_string, 1);
+#endif
+				currentmeasure = 0;
+				gp->coda_activated = 1;	//Perform a seek when the "Da Coda" symbol is reached
+				working_symbols[EOF_DA_CAPO_AL_CODA_SYMBOL] = 0xFFFF;	//This symbol is now destroyed
+			}
+			else if(working_symbols[EOF_DA_CAPO_AL_DOUBLE_CODA_SYMBOL] == currentmeasure)
+			{	//If the "Da Capo al Double Coda" symbol was reached, seek to the first measure and expect a "Da Coda" symbol to follow
+#ifdef GP_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\"Da Capo al Double Coda\" reached, seeking to first measure");
+				eof_log(eof_log_string, 1);
+#endif
+				currentmeasure = 0;
+				gp->double_coda_activated = 1;	//Perform a seek when the "Da Double Coda" symbol is reached
+				working_symbols[EOF_DA_CAPO_AL_DOUBLE_CODA_SYMBOL] = 0xFFFF;	//This symbol is now destroyed
+			}
+			else if(working_symbols[EOF_DA_CAPO_AL_FINE_SYMBOL] == currentmeasure)
+			{	//If the "Da Capo al Fine" symbol was reached, seek to the first measure and expect a "Fine" symbol to follow
+#ifdef GP_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\"Da Capo al Fine\" reached, seeking to first measure");
+				eof_log(eof_log_string, 1);
+#endif
+				currentmeasure = 0;
+				gp->fine_activated = 1;	//End unwrapping when the "Fine" symbol is reached
+				working_symbols[EOF_DA_CAPO_AL_FINE_SYMBOL] = 0xFFFF;	//This symbol is now destroyed
+			}
+			else if(working_symbols[EOF_DA_SEGNO_SYMBOL] == currentmeasure)
+			{	//If the "Da Segno" symbol was reached, seek to the measure containing the Segno symbol
+#ifdef GP_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\"Da Segno\" reached, seeking to measure #%u", working_symbols[EOF_SEGNO_SYMBOL] + 1);
+				eof_log(eof_log_string, 1);
+#endif
+				currentmeasure = working_symbols[EOF_SEGNO_SYMBOL];
+				working_symbols[EOF_DA_SEGNO_SYMBOL] = 0xFFFF;	//This symbol is now destroyed
+			}
+			else if(working_symbols[EOF_DA_SEGNO_AL_CODA_SYMBOL] == currentmeasure)
+			{	//If the "Da Segno al Coda" symbol was reached, seek to the measure containing the Segno symbol and expect a "Da Coda" symbol to follow
+#ifdef GP_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\"Da Segno al Coda\" reached, seeking to measure #%u", working_symbols[EOF_SEGNO_SYMBOL] + 1);
+				eof_log(eof_log_string, 1);
+#endif
+				currentmeasure = working_symbols[EOF_SEGNO_SYMBOL];
+				gp->coda_activated = 1;	//Seek to "Coda" symbol when the "Da Coda" symbol is reached
+				working_symbols[EOF_DA_SEGNO_AL_CODA_SYMBOL] = 0xFFFF;	//This symbol is now destroyed
+			}
+			else if(working_symbols[EOF_DA_SEGNO_AL_DOUBLE_CODA_SYMBOL] == currentmeasure)
+			{	//If the "Da Segno al Double Coda" symbol was reached, seek to the measure containing the Segno symbol and expect a "Da Double Coda" symbol to follow
+#ifdef GP_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\"Da Segno al Double Coda\" reached, seeking to measure #%u", working_symbols[EOF_SEGNO_SYMBOL] + 1);
+				eof_log(eof_log_string, 1);
+#endif
+				currentmeasure = working_symbols[EOF_SEGNO_SYMBOL];
+				gp->double_coda_activated = 1;	//Seek to "Double Coda" symbol when the "Da Double Coda" symbol is reached
+				working_symbols[EOF_DA_SEGNO_AL_DOUBLE_CODA_SYMBOL] = 0xFFFF;	//This symbol is now destroyed
+			}
+			else if(working_symbols[EOF_DA_SEGNO_AL_FINE_SYMBOL] == currentmeasure)
+			{	//If the "Da Segno al Fine" symbol was reached, seek to the measure containing the Segno symbol and expect a "Fine" symbol to follow
+#ifdef GP_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\"Da Segno al Fine\" reached, seeking to measure #%u", working_symbols[EOF_SEGNO_SYMBOL] + 1);
+				eof_log(eof_log_string, 1);
+#endif
+				currentmeasure = working_symbols[EOF_SEGNO_SYMBOL];
+				gp->fine_activated = 1;	//End unwrapping when the "Fine" symbol is reached
+				working_symbols[EOF_DA_SEGNO_AL_FINE_SYMBOL] = 0xFFFF;	//This symbol is now destroyed
+			}
+			else if(working_symbols[EOF_DA_SEGNO_SEGNO_SYMBOL] == currentmeasure)
+			{	//If the "Da Segno Segno" symbol was reached, seek to the measure containing the Segno Segno symbol
+#ifdef GP_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\"Da Segno Segno\" reached, seeking to measure #%u", working_symbols[EOF_SEGNO_SEGNO_SYMBOL] + 1);
+				eof_log(eof_log_string, 1);
+#endif
+				currentmeasure = working_symbols[EOF_SEGNO_SEGNO_SYMBOL];
+				working_symbols[EOF_DA_SEGNO_SEGNO_SYMBOL] = 0xFFFF;	//This symbol is now destroyed
+			}
+			else if(working_symbols[EOF_DA_SEGNO_SEGNO_AL_CODA_SYMBOL] == currentmeasure)
+			{	//If the "Da Segno Segno al Coda" symbol was reached, seek to the measure containing the Segno Segno symbol and expect a "Da Coda" symbol to follow
+#ifdef GP_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\"Da Segno Segno al Coda\" reached, seeking to measure #%u", working_symbols[EOF_SEGNO_SEGNO_SYMBOL] + 1);
+				eof_log(eof_log_string, 1);
+#endif
+				currentmeasure = working_symbols[EOF_SEGNO_SEGNO_SYMBOL];
+				gp->coda_activated = 1;	//Seek to "Coda" symbol when the "Da Coda" symbol is reached
+				working_symbols[EOF_DA_SEGNO_SEGNO_AL_CODA_SYMBOL] = 0xFFFF;	//This symbol is now destroyed
+			}
+			else if(working_symbols[EOF_DA_SEGNO_SEGNO_AL_DOUBLE_CODA_SYMBOL] == currentmeasure)
+			{	//If the "Da Segno Segno al Double Coda" symbol was reached, seek to the measure containing the Segno Segno symbol and expect a "Da Double Coda" symbol to follow
+#ifdef GP_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\"Da Segno Segno al Double Coda\" reached, seeking to measure #%u", working_symbols[EOF_SEGNO_SEGNO_SYMBOL] + 1);
+				eof_log(eof_log_string, 1);
+#endif
+				currentmeasure = working_symbols[EOF_SEGNO_SEGNO_SYMBOL];
+				gp->double_coda_activated = 1;	//Seek to "Double Coda" symbol when the "Da Double Coda" symbol is reached
+				working_symbols[EOF_DA_SEGNO_SEGNO_AL_DOUBLE_CODA_SYMBOL] = 0xFFFF;	//This symbol is now destroyed
+			}
+			else if(working_symbols[EOF_DA_SEGNO_SEGNO_AL_FINE_SYMBOL] == currentmeasure)
+			{	//If the "Da Segno Segno al Fine" symbol was reached, seek to the measure containing the Segno Segno symbol and expect a "Fine" symbol to follow
+#ifdef GP_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\"Da Segno Segno al Fine\" reached, seeking to measure #%u", working_symbols[EOF_SEGNO_SEGNO_SYMBOL] + 1);
+				eof_log(eof_log_string, 1);
+#endif
+				currentmeasure = working_symbols[EOF_SEGNO_SEGNO_SYMBOL];
+				gp->fine_activated = 1;	//End unwrapping when the "Fine" symbol is reached
+				working_symbols[EOF_DA_SEGNO_SEGNO_AL_FINE_SYMBOL] = 0xFFFF;	//This symbol is now destroyed
+			}
+			else if((working_symbols[EOF_DA_CODA_SYMBOL] == currentmeasure) && gp->coda_activated)
+			{	//If the "Da Coda" symbol was reached after a "Da ... al Coda" symbol, seek to the measure containing the Coda symbol
+#ifdef GP_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\"Da Coda\" reached, seeking to measure #%u", working_symbols[EOF_CODA_SYMBOL] + 1);
+				eof_log(eof_log_string, 1);
+#endif
+				currentmeasure = working_symbols[EOF_CODA_SYMBOL];
+				gp->coda_activated = 0;	//Reset this status
+				working_symbols[EOF_DA_CODA_SYMBOL] = 0xFFFF;	//This symbol is now destroyed
+			}
+			else if((working_symbols[EOF_DA_DOUBLE_CODA_SYMBOL] == currentmeasure) && gp->double_coda_activated)
+			{	//If the "Da Double Coda" symbol was reached after a "Da ... al Double Coda" symbol, seek to the measure containing the Double Coda symbol
+#ifdef GP_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\"Da Double Coda\" reached, seeking to measure #%u", working_symbols[EOF_DOUBLE_CODA_SYMBOL] + 1);
+				eof_log(eof_log_string, 1);
+#endif
+				currentmeasure = working_symbols[EOF_DOUBLE_CODA_SYMBOL];
+				gp->double_coda_activated = 0;	//Reset this status
+				working_symbols[EOF_DA_DOUBLE_CODA_SYMBOL] = 0xFFFF;	//This symbol is now destroyed
+			}
+			else
+			{
+#ifdef GP_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tContinuing to next measure");
+				eof_log(eof_log_string, 1);
+#endif
+				currentmeasure++;	//Otherwise continue to the next measure
+			}
 		}
 	}//Continue until all repeats of all measures have been processed
 

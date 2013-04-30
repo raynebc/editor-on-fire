@@ -398,12 +398,16 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						finger[4] = output;	//Store the tuning
 						success_count += parse_xml_attribute_number("finger5", buffer, &output);	//Read the fingering for string 5
 						finger[5] = output;	//Store the tuning
-						if(success_count != 6)
-						{	//If 6 finger values were not read
+						if(success_count < 4)
+						{	//Rocksmith doesn't support arrangements using less than 4 strings
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading chord fingering on line #%lu.  Aborting", linectr);
 							eof_log(eof_log_string, 1);
 							error = 1;
 							break;
+						}
+						if((success_count == 4) && !parse_xml_attribute_number("finger4", buffer, &output) && !parse_xml_attribute_number("finger5", buffer, &output))
+						{	//If only four string fingerings were read, this must be a 4 string bass arrangement
+							tp->numstrings = 4;	//Update the string count
 						}
 						for(ctr = 0; ctr < 6; ctr++)
 						{	//For each of the 6 supported strings
@@ -427,8 +431,8 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						frets[4] = output;	//Store the tuning
 						success_count += parse_xml_attribute_number("fret5", buffer, &output);	//Read the fretting for string 5
 						frets[5] = output;	//Store the tuning
-						if(success_count != 6)
-						{	//If 6 finger values were not read
+						if(success_count < 4)
+						{	//Rocksmith doesn't support arrangements using less than 4 strings
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading chord fretting on line #%lu.  Aborting", linectr);
 							eof_log(eof_log_string, 1);
 							error = 1;
