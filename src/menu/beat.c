@@ -461,8 +461,6 @@ int eof_menu_beat_bpm_change(void)
 	centre_dialog(eof_bpm_change_dialog);
 	oldbpm = 60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn;
 	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%3.2f", oldbpm);
-	eof_bpm_change_dialog[3].flags = 0;
-	eof_bpm_change_dialog[4].flags = 0;
 	if(eof_popup_dialog(eof_bpm_change_dialog, 2) == 5)
 	{	//If the user activated the "OK" button
 		double bpm = atof(eof_etext);

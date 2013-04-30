@@ -2176,7 +2176,7 @@ int eof_menu_song_spectrogram_settings(void)
 	if(custom_windowsize)
 	{
 		eof_spectrogram_settings_dialog[13].flags = D_SELECTED;
-		sprintf(eof_etext,"%d",eof_spectrogram_windowsize);
+		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_spectrogram_windowsize);
 	}
 
 	eof_spectrogram_settings_dialog[16].flags = eof_spectrogram_settings_dialog[17].flags = 0;
@@ -2233,7 +2233,7 @@ int eof_menu_song_spectrogram_settings(void)
 		if((eof_spectrogram_windowsize != first_windowsize) && (eof_spectrogram != NULL))
 		{
 			eof_destroy_spectrogram(eof_spectrogram);
-			eof_create_spectrogram(eof_loaded_ogg_name);
+			eof_spectrogram = eof_create_spectrogram(eof_loaded_ogg_name);
 		}
 
 		//Run through the color options

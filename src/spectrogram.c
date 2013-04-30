@@ -9,13 +9,13 @@
 #include "memwatch.h"
 #endif
 
-struct spectrogramstruct *eof_spectrogram=NULL;	//Stores the spectrogram data
-char eof_display_spectrogram=0;				//Specifies whether the spectrogram display is enabled
-char eof_spectrogram_renderlocation=0;		//Specifies where and how high the graph will render (0 = fretboard area, 1 = editor window)
-char eof_spectrogram_renderleftchannel=1;	//Specifies whether the left channel's graph should render
-char eof_spectrogram_renderrightchannel=0;	//Specifies whether the right channel's graph should render
-char eof_spectrogram_colorscheme = 1;		//Specifies the color scheme to use for the graph
-int eof_spectrogram_windowsize = 1024;		//Specifies the window size to use
+struct spectrogramstruct *eof_spectrogram = NULL;	//Stores the spectrogram data
+char eof_display_spectrogram = 0;					//Specifies whether the spectrogram display is enabled
+char eof_spectrogram_renderlocation = 0;			//Specifies where and how high the graph will render (0 = fretboard area, 1 = editor window)
+char eof_spectrogram_renderleftchannel = 1;			//Specifies whether the left channel's graph should render
+char eof_spectrogram_renderrightchannel = 0;		//Specifies whether the right channel's graph should render
+char eof_spectrogram_colorscheme = 1;				//Specifies the color scheme to use for the graph
+int eof_spectrogram_windowsize = 1024;				//Specifies the window size to use
 double eof_half_spectrogram_windowsize = 512.0;
 
 void eof_destroy_spectrogram(struct spectrogramstruct *ptr)
@@ -284,9 +284,6 @@ void eof_render_spectrogram_line(struct spectrogramstruct *spectrogram,struct sp
 #define EOF_DEBUG_SPECTROGRAM
 struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 {
-	eof_log("\tGenerating spectrogram", 1);
-	eof_log("eof_create_spectrogram() entered", 1);
-
 	ALOGG_OGG *oggstruct=NULL;
 	SAMPLE *audio=NULL;
 	void * oggbuffer = NULL;
@@ -297,6 +294,8 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 
 	fftw_plan fftplan;
 
+	eof_log("\tGenerating spectrogram", 1);
+	eof_log("eof_create_spectrogram() entered", 1);
 	set_window_title("Generating Spectrogram...");
 
 	if((oggfilename == NULL))
@@ -316,7 +315,7 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 		#endif
 		return NULL;
 	}
-	oggstruct=alogg_create_ogg_from_buffer(oggbuffer, file_size_ex(oggfilename));
+	oggstruct=alogg_create_ogg_from_buffer(oggbuffer, (int) file_size_ex(oggfilename));
 	if(oggstruct == NULL)
 	{
 		#ifdef EOF_DEBUG_SPECTROGRAM

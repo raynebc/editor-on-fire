@@ -1,6 +1,26 @@
 #ifndef EOF_GP_IMPORT_H
 #define EOF_GP_IMPORT_H
 
+#define EOF_CODA_SYMBOL 0
+#define EOF_DOUBLE_CODA_SYMBOL 1
+#define EOF_SEGNO_SYMBOL 2
+#define EOF_SEGNO_SEGNO_SYMBOL 3
+#define EOF_FINE_SYMBOL 4
+#define EOF_DA_CAPO_SYMBOL 5
+#define EOF_DA_CAPO_AL_CODA_SYMBOL 6
+#define EOF_DA_CAPO_AL_DOUBLE_CODA_SYMBOL 7
+#define EOF_DA_CAPO_AL_FINE_SYMBOL 8
+#define EOF_DA_SEGNO_SYMBOL 9
+#define EOF_DA_SEGNO_AL_CODA_SYMBOL 10
+#define EOF_DA_SEGNO_AL_DOUBLE_CODA_SYMBOL 11
+#define EOF_DA_SEGNO_AL_FINE_SYMBOL 12
+#define EOF_DA_SEGNO_SEGNO_SYMBOL 13
+#define EOF_DA_SEGNO_SEGNO_AL_CODA_SYMBOL 14
+#define EOF_DA_SEGNO_SEGNO_AL_DOUBLE_CODA_SYMBOL 15
+#define EOF_DA_SEGNO_SEGNO_AL_FINE_SYMBOL 16
+#define EOF_DA_CODA_SYMBOL 17
+#define EOF_DA_DOUBLE_CODA_SYMBOL 18
+
 #ifndef EOF_BUILD
 	//Compile standalone parse utility, use macros to make the file compile without Allegro
 	#define PACKFILE FILE
@@ -31,6 +51,10 @@
 		unsigned long measures;				//The number of elements in the above array
 		unsigned long text_events;			//The size of the text_event[] array
 		unsigned long *capos;				//The capo position (0 if unused) for each imported track
+		unsigned int symbols[19];			//The position (measure number) of each musical symbol (ie. Segno)
+		char coda_activated;				//Indicates that an "...al coda" symbol was reached, meaning that when "da coda" is reached, the GP track unwrapping will redirect to that symbol
+		char double_coda_activated;			//Indicates that an "...al double coda" symbol was reached, meaning that when "da double coda" is reached, the GP track unwrapping will redirect to that symbol
+		char fine_activated;				//Indicates that an "...al fine" symbol was reached, meaning that when "fine" is reached, the GP track unwrapping will end
 	};
 
 	void eof_gp_debug_log(PACKFILE *inf, char *text);
