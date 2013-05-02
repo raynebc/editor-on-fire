@@ -3,6 +3,7 @@
 #include "menu/file.h"
 #include "menu/edit.h"
 #include "menu/song.h"
+#include "menu/track.h"
 #include "menu/note.h"
 #include "menu/beat.h"
 #include "menu/help.h"
@@ -1322,7 +1323,7 @@ if(key[KEY_PAUSE])
 			if(KEY_EITHER_SHIFT)
 			{	//If both CTRL and SHIFT are held
 				eof_shift_used = 1;	//Track that the SHIFT key was used
-				(void) eof_manage_rs_phrases();
+				(void) eof_track_manage_rs_phrases();
 			}
 			else
 			{	//If only CTRL is held
@@ -1870,7 +1871,7 @@ if(key[KEY_PAUSE])
 
 	/* toggle tapping status (CTRL+T in a pro guitar track) */
 	/* toggle crazy status (T) */
-		if(key[KEY_T])
+		if(key[KEY_T] && !KEY_EITHER_ALT)
 		{
 			if(KEY_EITHER_CTRL)
 			{
@@ -2066,7 +2067,7 @@ if(key[KEY_PAUSE])
 			if(key[KEY_F] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 			{
 				eof_shift_used = 1;	//Track that the SHIFT key was used
-				(void) eof_pro_guitar_set_fret_hand_position();
+				(void) eof_track_proguitar_set_fret_hand_position();
 				key[KEY_F] = 0;
 			}
 
@@ -2074,7 +2075,7 @@ if(key[KEY_PAUSE])
 			if(key[KEY_F] && KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 			{
 				eof_shift_used = 1;	//Track that the SHIFT key was used
-				(void) eof_menu_song_fret_hand_positions();
+				(void) eof_track_fret_hand_positions();
 				key[KEY_F] = 0;
 			}
 

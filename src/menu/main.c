@@ -8,6 +8,7 @@
 #include "note.h"
 #include "beat.h"
 #include "help.h"
+#include "track.h"
 
 #ifdef USEMEMWATCH
 #include "../memwatch.h"
@@ -18,6 +19,7 @@ MENU eof_main_menu[] =
 	{"&File", NULL, eof_file_menu, 0, NULL},
 	{"&Edit", NULL, eof_edit_menu, D_DISABLED, NULL},
 	{"&Song", NULL, eof_song_menu, D_DISABLED, NULL},
+	{"&Track",NULL, eof_track_menu, D_DISABLED, NULL},
 	{"&Note", NULL, eof_note_menu, D_DISABLED, NULL},
 	{"&Beat", NULL, eof_beat_menu, D_DISABLED, NULL},
 	{"&Help", NULL, eof_help_menu, 0, NULL},
@@ -26,24 +28,25 @@ MENU eof_main_menu[] =
 
 void eof_prepare_main_menu(void)
 {
-	eof_main_menu[3].flags = D_DISABLED; //The note menu is always disabled unless at least one note is selected
+	eof_main_menu[4].flags = D_DISABLED; //The note menu is always disabled unless at least one note is selected
 
 	if(eof_song && eof_song_loaded)
 	{
 		eof_main_menu[1].flags = 0; // Edit
 		eof_main_menu[2].flags = 0; // Song
-		eof_main_menu[4].flags = 0; // Beat
+		eof_main_menu[3].flags = 0; // Track
+		eof_main_menu[5].flags = 0; // Beat
 
 		/* disable Note menu when no notes are selected */
 		if(eof_count_selected_notes(NULL, 1) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
 		{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
-			eof_main_menu[3].flags = 0; // Note
+			eof_main_menu[4].flags = 0; // Note
 		}
 	}
 	else
 	{
 		eof_main_menu[1].flags = D_DISABLED; // Edit
 		eof_main_menu[2].flags = D_DISABLED; // Song
-		eof_main_menu[4].flags = D_DISABLED; // Beat
+		eof_main_menu[5].flags = D_DISABLED; // Beat
 	}
 }

@@ -12,7 +12,7 @@
 #include "utility.h"
 #include "tuning.h"
 #include "menu/note.h"	//For pitch macros
-#include "menu/song.h"	//For eof_fret_hand_position_list_dialog_undo_made
+#include "menu/track.h"	//For eof_fret_hand_position_list_dialog_undo_made
 #include "foflc/Lyric_storage.h"	//For RBA extraction
 #include "foflc/Midi_parse.h"
 

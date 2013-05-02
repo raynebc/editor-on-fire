@@ -14,7 +14,8 @@
 #include "utility.h"	//For eof_system()
 #include "foflc/RS_parse.h"	//For expand_xml_text()
 #include "menu/beat.h"	//For eof_rocksmith_phrase_dialog_add()
-#include "menu/song.h"	//For eof_fret_hand_position_list_dialog_undo_made and eof_fret_hand_position_list_dialog[]
+#include "menu/song.h"	//For eof_menu_track_selected_track_number()
+#include "menu/track.h"	//For eof_fret_hand_position_list_dialog_undo_made and eof_fret_hand_position_list_dialog[]
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -862,7 +863,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		expand_xml_text(buffer2, sizeof(buffer2) - 1, expanded_text, 512);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 
 		(void) eof_track_add_section(eof_song, track, EOF_RS_POPUP_MESSAGE, 0, 5100, 10100, 1, sp->tags->loading_text);	//Insert this as a popup message, setting the flag to nonzero to mark is as temporary
-		eof_pro_guitar_track_sort_popup_messages(tp);	//Sort the popup messages
+		eof_track_pro_guitar_sort_popup_messages(tp);	//Sort the popup messages
 	}
 	if(tp->popupmessages)
 	{	//If at least one popup message is to be written
@@ -883,7 +884,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		{	//For each popup message
 			if(tp->popupmessage[ctr].flags)
 			{	//If the flags field was made nonzero
-				eof_pro_guitar_track_delete_popup_message(tp, ctr);	//Delete this temporary popup message
+				eof_track_pro_guitar_delete_popup_message(tp, ctr);	//Delete this temporary popup message
 				break;
 			}
 		}

@@ -19,6 +19,7 @@
 #include "menu/file.h"
 #include "menu/edit.h"
 #include "menu/song.h"
+#include "menu/track.h"
 #include "menu/help.h"
 #include "menu/note.h"	//For pitch macros
 #include "foflc/Lyric_storage.h"
