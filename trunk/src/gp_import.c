@@ -3573,7 +3573,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 							if(note_is_short && eof_gp_import_truncate_short_notes)
 							{	//If this note is shorter than a quarter note, and the preference to drop the note's sustain in this circumstance is enabled
-								np[ctr2]->length = 1;	//Remove the note's sustain
+								if(!(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO))
+								{	//If this note doesn't have bend, slide or vibrato status
+									np[ctr2]->length = 1;	//Remove the note's sustain
+								}
 							}
 
 #ifdef GP_IMPORT_DEBUG

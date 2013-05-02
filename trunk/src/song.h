@@ -744,7 +744,8 @@ unsigned long eof_determine_chart_length(EOF_SONG *sp);
 	//Parses the project and returns the ending position of the last last note/lyric/text event/bookmark
 void eof_truncate_chart(EOF_SONG *sp);
 	//Uses eof_determine_chart() to set eof_chart_length to the larger of the last chart content and the loaded chart audio
-	//Any beats that are more than one beat after this position are deleted from the project, and eof_chart_length is updated to the position
+	//Any beats that are more than one beat after this position are deleted from the project
+	//The project is likewise padded with such number of beats if there aren't that many
 	//This should be called after Guitar Pro import (which adds beats even if no tracks are selected for import), after loading a project/file/undo/redo state (before calling cleanup logic) and after loading an audio file
 
 int eof_check_if_notes_exist_beyond_audio_end(EOF_SONG *sp);
