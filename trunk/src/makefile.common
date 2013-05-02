@@ -1,5 +1,5 @@
 OFILES = modules/ocd3d.o modules/wfsel.o modules/gametime.o modules/g-idle.o dialog/main.o dialog/proc.o main.o player.o config.o window.o dialog.o legacy.o midi.o ini.o song.o note.o beat.o event.o undo.o mix.o control.o editor.o utility.o chart_import.o midi_import.o ini_import.o waveform.o silence.o tuning.o gp_import.o midi_data_import.o gh_import.o rs.o rs_import.o spectrogram.o
-MENUOFILES = menu/file.o menu/edit.o menu/song.o menu/note.o menu/beat.o menu/help.o menu/main.o menu/context.o
+MENUOFILES = menu/file.o menu/edit.o menu/song.o menu/note.o menu/beat.o menu/help.o menu/main.o menu/context.o menu/track.o
 ALOGGOFILES = alogg/src/alogg.o
 AGUPOFILES = agup/aalg.o agup/aase.o agup/abeos.o  agup/abitmap.o  agup/agtk.o  agup/agup.o  agup/ans.o  agup/aphoton.o  agup/awin95.o
 LCOFILES = foflc/LRC_parse.o foflc/Lyric_storage.o foflc/Midi_parse.o foflc/Script_parse.o foflc/UStar_parse.o foflc/VL_parse.o foflc/ID3_parse.o foflc/SRT_parse.o foflc/XML_parse.o foflc/JB_parse.o foflc/RS_parse.o lc_import.o

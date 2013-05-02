@@ -1,6 +1,8 @@
 #ifndef EOF_MENU_EDIT_H
 #define EOF_MENU_EDIT_H
 
+#include "../song.h"
+
 extern MENU eof_edit_paste_from_menu[];
 extern MENU eof_edit_zoom_menu[];
 extern MENU eof_edit_snap_menu[];

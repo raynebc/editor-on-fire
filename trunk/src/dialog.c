@@ -9,6 +9,7 @@
 #include "menu/file.h"
 #include "menu/edit.h"
 #include "menu/song.h"
+#include "menu/track.h"
 #include "menu/note.h"
 #include "menu/beat.h"
 #include "menu/help.h"
@@ -67,6 +68,7 @@ void eof_prepare_menus(void)
 	eof_prepare_file_menu();
 	eof_prepare_edit_menu();
 	eof_prepare_song_menu();
+	eof_prepare_track_menu();
 	eof_prepare_note_menu();
 	eof_prepare_context_menu();
 }
@@ -150,7 +152,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 					player->mouse_obj = 0;
 				}
 			}
-			else if(key[KEY_F] || key[KEY_E] || key[KEY_S] || key[KEY_N] || key[KEY_B] || key[KEY_H])
+			else if(key[KEY_F] || key[KEY_E] || key[KEY_S] || key[KEY_T] || key[KEY_N] || key[KEY_B] || key[KEY_H])
 			{
 				eof_keyboard_shortcut = 1;
 				player->mouse_obj = 0;
