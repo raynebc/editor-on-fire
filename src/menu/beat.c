@@ -2025,8 +2025,8 @@ int eof_menu_beat_adjust_bpm(double amount)
 	oldppqn = eof_song->beat[targetbeat]->ppqn;
 	if(eof_input_mode != EOF_INPUT_FEEDBACK)
 	{	//If Feedback input method is not in effect, identify the anchor at or before the seek position
-		while((targetbeat > 0) && (eof_song->beat[targetbeat - 1]->ppqn == oldppqn))
-		{	//While the target is not a tempo change
+		while((targetbeat > 0) && (eof_song->beat[targetbeat - 1]->ppqn == oldppqn) && !(eof_song->beat[targetbeat]->flags & EOF_BEAT_FLAG_ANCHOR))
+		{	//While the target is not a tempo change and is not an anchor
 			targetbeat--;	//Move the target back one beat
 		}
 	}
@@ -2042,18 +2042,15 @@ int eof_menu_beat_adjust_bpm(double amount)
 	}
 	for(ctr = targetbeat; ctr < eof_song->beats; ctr++)
 	{	//For each beat from the target beat onward
-		if(eof_song->beat[ctr]->ppqn == oldppqn)
-		{	//If this beat isn't a tempo change
-			eof_song->beat[ctr]->ppqn = newppqn;	//Update its tempo
+		if((eof_song->beat[ctr]->ppqn != oldppqn) || ((eof_song->beat[ctr]->flags & EOF_BEAT_FLAG_ANCHOR) && (ctr != targetbeat)))
+		{	//If this beat is a tempo change, or is an anchor (except for the first beat modified by this function, which is allowed)
+			break;	//Exit the loop
 		}
 
-		/* break when we reach the end of the portion to change */
-		else
-		{
-			break;	//Otherwise exit the loop
-		}
+		eof_song->beat[ctr]->ppqn = newppqn;	//Update the beat's tempo
 	}
-	eof_calculate_beats(eof_song);
+	eof_calculate_beats(eof_song);	//Update beat timestamps
+	eof_truncate_chart(eof_song);	//Update number of beats and the chart length as appropriate
 	if(eof_note_auto_adjust)
 	{	//If the user has enabled the Note Auto-Adjust preference
 		(void) eof_menu_edit_cut_paste(targetbeat + 1, 1);
