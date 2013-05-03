@@ -1109,7 +1109,8 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 		{	//If this is a pro guitar track
 			for(j = 0; j < sp->pro_guitar_track[tracknum]->arpeggios; j++)
 			{	//For each arpeggio section in the active track
-				if((notepos >= sp->pro_guitar_track[tracknum]->arpeggio[j].start_pos) && (notepos <= sp->pro_guitar_track[tracknum]->arpeggio[j].end_pos))
+				sectionptr = &sp->pro_guitar_track[tracknum]->arpeggio[j];
+				if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
 				{	//If the note is in this arpeggio section
 					if((sectionptr->difficulty == 0xFF) || (sectionptr->difficulty == notetype))
 					{	//If the arpeggio section applies to all difficulties or if it applies to this note's track difficulty
