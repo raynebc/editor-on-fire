@@ -4,7 +4,7 @@
 #include "song.h"
 #include "foflc/Midi_parse.h"
 
-#define EOF_MAX_TS 100
+#define EOF_MAX_TS 500
 #define EOF_MAX_KS 100
 #define EOF_MAX_MIDI_EVENTS 65536
 
