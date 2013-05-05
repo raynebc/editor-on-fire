@@ -2506,13 +2506,14 @@ int eof_save_helper(char *destfilename)
 				(void) replace_filename(eof_temp_filename, newfolderpath, "guitar.wav", (int) sizeof(eof_temp_filename));
 				if(!exists(eof_temp_filename))
 				{	//If "guitar.wav" also does not exist
+					eof_get_rocksmith_wav_path(eof_temp_filename, newfolderpath, sizeof(eof_temp_filename));	//Rebuild the target path based on the song title
 					SAMPLE *decoded = alogg_create_sample_from_ogg(eof_music_track);	//Create PCM data from the loaded chart audio
 					set_window_title("Saving WAV file for use with Wwise.  Please wait.");
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Writing RS WAV file (%s)", eof_temp_filename);
 					eof_log(eof_log_string, 1);
 					if(!save_wav_with_silence_appended(eof_temp_filename, decoded, 8000))	//Write a WAV file with it, appending 8 seconds of silence to it
 					{	//If it didn't save, try saving again as "guitar.wav", just in case the user put invalid characters in the song title
-						(void) append_filename(eof_temp_filename, newfolderpath, "guitar.wav", (int) sizeof(eof_temp_filename));
+						(void) replace_filename(eof_temp_filename, newfolderpath, "guitar.wav", (int) sizeof(eof_temp_filename));
 						if(!save_wav_with_silence_appended(eof_temp_filename, decoded, 8000))
 						{	//If it didn't save again
 							allegro_message("Error saving WAV file, check the log for the OS' reason");
