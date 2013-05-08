@@ -235,6 +235,7 @@ extern NCDFS_FILTER_LIST * eof_filter_rs_files;
 extern int         eof_global_volume;
 
 extern EOF_WINDOW * eof_window_editor;
+extern EOF_WINDOW * eof_window_editor2;
 extern EOF_WINDOW * eof_window_note;	//Will be set to either the lower left or upper left variants below depending on whether full screen 3D view is in effect
 extern EOF_WINDOW * eof_window_note_lower_left;
 extern EOF_WINDOW * eof_window_note_upper_left;
@@ -251,6 +252,8 @@ extern int         eof_music_data_size;
 extern unsigned long eof_chart_length;
 extern unsigned long eof_music_length;
 extern int         eof_music_pos;
+extern int         eof_music_pos2;
+extern int         eof_sync_piano_rolls;
 extern int         eof_music_actual_pos;
 extern int         eof_music_rewind_pos;
 extern int         eof_music_catalog_pos;
@@ -315,6 +318,9 @@ extern char      * eof_ogg_quality[6];
 extern char        eof_cpu_saver;
 extern int         eof_note_type;
 extern int         eof_selected_track;
+extern int         eof_display_second_piano_roll;
+extern int         eof_note_type2;
+extern int         eof_selected_track2;
 extern int         eof_vocals_selected;
 extern int         eof_vocals_offset;
 extern int         eof_vocals_tab;
@@ -483,6 +489,7 @@ void eof_set_3d_projection(void);	//Sets the 3d projection by calling ocd3d_set_
 void eof_debug_message(char * text);
 void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track);
 	//Re-applies the HOPO, SP, trill and tremolo status of each note in the specified track, as well as deleting empty SP, Solo, trill, tremolo and arpeggio phrases
+void eof_cat_track_difficulty_string(char *str);	//Concatenates the current track difficulty to the specified string
 void eof_fix_window_title(void);
 int eof_load_ogg_quick(char * filename);
 int eof_load_ogg(char * filename, char silence_failover);
@@ -494,6 +501,8 @@ int eof_save_ogg(char * fn);
 void eof_render(void);
 void eof_render_lyric_window(void);
 void eof_render_3d_window(void);
+	//Renders the 3D preview
+	//Calls eof_render_lyric_window() instead if a vocal track is to be rendered
 void eof_render_note_window(void);
 int eof_load_data(void);	//Loads graphics and fonts from eof.dat
 void eof_destroy_data(void);	//Frees graphics and fonts from memory

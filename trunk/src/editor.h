@@ -55,17 +55,22 @@ void eof_read_editor_keys(void);
 void eof_editor_logic(void);
 void eof_editor_drum_logic(void);	//The drum record mode logic
 void eof_vocal_editor_logic(void);
-void eof_render_editor_window(void);
-void eof_render_vocal_editor_window(void);
 
 unsigned long eof_determine_piano_roll_left_edge(void);
 	//calculates the timestamp of the left visible edge of the piano roll
 unsigned long eof_determine_piano_roll_right_edge(void);
 	//calculates the timestamp of the right visible edge of the piano roll
 
-void eof_render_editor_window_common(void);
+void eof_render_editor_window(EOF_WINDOW *window);
+	//Renders to the specified editor window
+	//Calls eof_render_vocal_editor_window() instead if a vocal track is to be rendered
+void eof_render_vocal_editor_window(EOF_WINDOW *window);
+	//Renders to the specified editor window
+void eof_render_editor_window_2(void);
+	//If the user opted to display the secondary piano roll, temporarily swaps the active track difficulty with that of the secondary piano roll and renders it
+void eof_render_editor_window_common(EOF_WINDOW *window);
 	//Performs rendering common to both the normal and vocal editor windows, before the notes are rendered
-void eof_render_editor_window_common2(void);
+void eof_render_editor_window_common2(EOF_WINDOW *window);
 	//Performs rendering common to both the nromal and vocal editor windows, after the notes are rendered
 
 void eof_mark_new_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned long notenum);

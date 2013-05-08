@@ -93,4 +93,8 @@ int eof_track_flatten_difficulties(void);	//Launches a dialog to specify a thres
 
 void eof_prepare_track_menu(void);
 
+int eof_menu_track_open_bass(void);			//Toggle the ability to use a sixth lane in PART BASS on/off
+int eof_menu_track_five_lane_drums(void);	//Toggle the ability to use a fifth lane in PART DRUM on/off
+int eof_menu_track_disable_double_bass_drums(void);	//Toggle the setting to disable expert+ bass drum gem export on/off
+
 #endif

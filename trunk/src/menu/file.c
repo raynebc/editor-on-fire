@@ -2290,7 +2290,7 @@ int eof_save_helper(char *destfilename)
 				{	//If this note's length is shorter than the minimum length
 					if(alert("Warning:  At least one note was truncated shorter", "than your defined minimum length.", "Cancel save and seek to the first such note?", "&Yes", "&No", 'y', 'n') == 1)
 					{	//If the user opted to seek to the first offending note (only prompt once per call)
-						(void) eof_menu_track_selected_track_number(ctr);										//Set the active instrument track
+						(void) eof_menu_track_selected_track_number(ctr, 1);										//Set the active instrument track
 						eof_note_type = eof_get_note_type(eof_song, ctr, ctr2);							//Set the active difficulty to match that of the note
 						eof_set_seek_position(eof_get_note_pos(eof_song, ctr, ctr2) + eof_av_delay);	//Seek to the note's position
 						return 2;	//Return cancellation
@@ -2317,7 +2317,7 @@ int eof_save_helper(char *destfilename)
 					{	//If the notes are too close to enforce the minimum note distance
 						if(alert("Warning:  At least one note is too close to another", "to enforce the minimum note distance.", "Cancel save and seek to the first such note?", "&Yes", "&No", 'y', 'n') == 1)
 						{	//If the user opted to seek to the first offending note (only prompt once per call)
-							(void) eof_menu_track_selected_track_number(ctr);										//Set the active instrument track
+							(void) eof_menu_track_selected_track_number(ctr, 1);										//Set the active instrument track
 							eof_note_type = eof_get_note_type(eof_song, ctr, ctr2);							//Set the active difficulty to match that of the note
 							eof_set_seek_position(eof_get_note_pos(eof_song, ctr, ctr2) + eof_av_delay);	//Seek to the note's position
 							return 2;	//Return cancellation
@@ -2870,7 +2870,7 @@ int eof_menu_file_gp_import(void)
 		eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
 		eof_log("Cleaning up imported notes", 1);
 		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to clean up the track
-		(void) eof_menu_track_selected_track_number(eof_selected_track);	//Re-select the active track to allow for a change in string count
+		(void) eof_menu_track_selected_track_number(eof_selected_track, 1);	//Re-select the active track to allow for a change in string count
 	}
 	return 1;
 }
@@ -2988,7 +2988,7 @@ int eof_menu_file_rs_import(void)
 			eof_log("Cleaning up imported notes", 1);
 			eof_song->track[eof_selected_track]->numdiffs = eof_detect_difficulties(eof_song, eof_selected_track);	//Update the number of difficulties used in this track
 			eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to clean up the track
-			(void) eof_menu_track_selected_track_number(eof_selected_track);	//Re-select the active track to allow for a change in string count
+			(void) eof_menu_track_selected_track_number(eof_selected_track, 1);	//Re-select the active track to allow for a change in string count
 		}
 		else
 		{

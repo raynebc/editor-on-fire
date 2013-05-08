@@ -17,12 +17,21 @@
 #include "../memwatch.h"
 #endif
 
+MENU eof_track_phaseshift_menu[] =
+{
+	{"Enable &Open strum bass", eof_menu_track_open_bass, NULL, 0, NULL},
+	{"Enable &Five lane drums", eof_menu_track_five_lane_drums, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_track_menu[] =
 {
 	{"Pro &Guitar", NULL, eof_track_proguitar_menu, 0, NULL},
 	{"&Rocksmith", NULL, eof_track_rocksmith_menu, 0, NULL},
+	{"&Phase Shift", NULL, eof_track_phaseshift_menu, 0, NULL},
 	{"Set &Difficulty", eof_track_difficulty_dialog, NULL, 0, NULL},
-	{"Re&Name", eof_track_rename, NULL, 0, NULL},
+	{"Re&name", eof_track_rename, NULL, 0, NULL},
+	{"Disable expert+ bass drum", eof_menu_track_disable_double_bass_drums, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -48,6 +57,7 @@ void eof_prepare_track_menu(void)
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is active
 			eof_track_menu[0].flags = 0;			//Track>Pro Guitar> submenu
+			eof_track_menu[1].flags = 0;			//Track>Rocksmith> submenu
 
 			if(eof_song->pro_guitar_track[tracknum]->ignore_tuning)
 			{
@@ -83,7 +93,39 @@ void eof_prepare_track_menu(void)
 		else
 		{	//Otherwise disable these menu items
 			eof_track_menu[0].flags = D_DISABLED;
+			eof_track_menu[1].flags = D_DISABLED;
 		}
+
+		/* enable open strum bass */
+		if(eof_open_bass_enabled())
+		{
+			eof_track_phaseshift_menu[0].flags = D_SELECTED;	//Track>Phase Shift>Enable open strum bass
+		}
+		else
+		{
+			eof_track_phaseshift_menu[0].flags = 0;
+		}
+
+		/* enable five lane drums */
+		if(eof_five_lane_drums_enabled())
+		{
+			eof_track_phaseshift_menu[1].flags = D_SELECTED;	//Track>Phase Shift>Enable five lane drums
+		}
+		else
+		{
+			eof_track_phaseshift_menu[1].flags = 0;
+		}
+
+		/* Disable expert+ bass drum */
+		if(eof_song->tags->double_bass_drum_disabled)
+		{
+			eof_track_menu[5].flags = D_SELECTED;	//Track>Disable expert+ bass drum
+		}
+		else
+		{
+			eof_track_menu[5].flags = 0;
+		}
+
 	}//If a chart is loaded
 }
 
@@ -1706,7 +1748,7 @@ int eof_track_rocksmith_delete_difficulty(void)
 		eof_song->track[eof_selected_track]->numdiffs--;	//Decrement the track's difficulty counter
 	}
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);
-	(void) eof_menu_track_selected_track_number(eof_note_type - 1);
+	(void) eof_menu_track_selected_track_number(eof_note_type - 1, 1);
 	return 1;
 }
 
@@ -2333,5 +2375,92 @@ int eof_track_flatten_difficulties(void)
 		}
 	}
 
+	return 1;
+}
+
+int eof_menu_track_open_bass(void)
+{
+	unsigned long tracknum = eof_song->track[EOF_TRACK_BASS]->tracknum;
+	unsigned long ctr;
+	char undo_made = 0;	//Set to nonzero if an undo state was saved
+
+	if(eof_open_bass_enabled())
+	{	//Turn off open bass notes
+		eof_song->track[EOF_TRACK_BASS]->flags &= ~(EOF_TRACK_FLAG_SIX_LANES);	//Clear the flag
+		eof_song->legacy_track[tracknum]->numlanes = 5;
+	}
+	else
+	{	//Turn on open bass notes
+		//Examine existing notes to ensure that lanes don't have to be erased for notes that use open bass strumming
+		for(ctr = 0; ctr < eof_song->legacy_track[tracknum]->notes; ctr++)
+		{	//For each note in PART BASS
+			if((eof_song->legacy_track[tracknum]->note[ctr]->note & 32) && (eof_song->legacy_track[tracknum]->note[ctr]->note & ~32))
+			{	//If this note uses lane 6 (open bass) and at least one other lane
+				eof_cursor_visible = 0;
+				eof_pen_visible = 0;
+				eof_show_mouse(screen);
+				if(alert(NULL, "Warning: Open bass strum notes must have other lanes cleared to enable open bass.  Continue?", NULL, "&Yes", "&No", 'y', 'n') == 2)
+				{	//If user opts cancel the save
+					eof_show_mouse(NULL);
+					eof_cursor_visible = 1;
+					eof_pen_visible = 1;
+					return 1;	//Return cancellation
+				}
+				break;
+			}
+		}
+		eof_show_mouse(NULL);
+		eof_cursor_visible = 1;
+		eof_pen_visible = 1;
+
+		for(ctr = 0; ctr < eof_song->legacy_track[tracknum]->notes; ctr++)
+		{	//For each note in PART BASS
+			if((eof_song->legacy_track[tracknum]->note[ctr]->note & 32) && (eof_song->legacy_track[tracknum]->note[ctr]->note & ~32))
+			{	//If this note uses lane 6 (open bass) and at least one other lane
+				if(!undo_made)
+				{
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Create an undo state before making the first change
+					undo_made = 1;
+				}
+				eof_song->legacy_track[tracknum]->note[ctr]->note = 32;	//Clear all lanes for this note except for lane 6 (open bass)
+			}
+		}
+		eof_song->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the flag
+		eof_song->legacy_track[tracknum]->numlanes = 6;
+	}
+	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
+	return 1;
+}
+
+int eof_menu_track_five_lane_drums(void)
+{
+	unsigned long tracknum = eof_song->track[EOF_TRACK_DRUM]->tracknum;
+	unsigned long tracknum2 = eof_song->track[EOF_TRACK_DRUM_PS]->tracknum;
+
+	if(eof_five_lane_drums_enabled())
+	{	//Turn off five lane drums
+		eof_song->track[EOF_TRACK_DRUM]->flags &= ~(EOF_TRACK_FLAG_SIX_LANES);	//Clear the flag
+		eof_song->legacy_track[tracknum]->numlanes = 5;
+		eof_song->track[EOF_TRACK_DRUM_PS]->flags &= ~(EOF_TRACK_FLAG_SIX_LANES);	//Clear the flag
+		eof_song->legacy_track[tracknum2]->numlanes = 5;
+	}
+	else
+	{	//Turn on five lane drums
+		eof_song->track[EOF_TRACK_DRUM]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the flag
+		eof_song->legacy_track[tracknum]->numlanes = 6;
+		eof_song->track[EOF_TRACK_DRUM_PS]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the flag
+		eof_song->legacy_track[tracknum2]->numlanes = 6;
+	}
+
+	eof_set_3D_lane_positions(0);	//Update xchart[] by force
+	eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
+	return 1;
+}
+
+int eof_menu_track_disable_double_bass_drums(void)
+{
+	if(eof_song)
+		eof_song->tags->double_bass_drum_disabled ^= 1;	//Toggle this boolean variable
+	eof_fix_window_title();
 	return 1;
 }

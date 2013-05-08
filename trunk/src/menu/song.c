@@ -142,10 +142,11 @@ MENU eof_song_rocksmith_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
-MENU eof_song_phaseshift_menu[] =
+MENU eof_song_piano_roll_menu[] =
 {
-	{"Enable &Open strum bass", eof_menu_song_open_bass, NULL, 0, NULL},
-	{"Enable &Five lane drums", eof_menu_song_five_lane_drums, NULL, 0, NULL},
+	{"&Display\tShift+Enter", eof_menu_song_toggle_second_piano_roll, NULL, 0, NULL},
+	{"S&wap with main piano roll\t" CTRL_NAME "+Enter", eof_menu_song_swap_piano_rolls, NULL, 0, NULL},
+	{"&Sync with main piano roll", eof_menu_song_toggle_piano_roll_sync, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -166,11 +167,10 @@ MENU eof_song_menu[] =
 	{"&Leading Silence", eof_menu_song_add_silence, NULL, 0, NULL},
 	{"Lock tempo map", eof_menu_song_lock_tempo_map, NULL, 0, NULL},
 	{"Disable click and drag", eof_menu_song_disable_click_drag, NULL, 0, NULL},
-	{"Disable expert+ bass drum", eof_menu_song_disable_double_bass_drums, NULL, 0, NULL},
 	{"Pro &Guitar", NULL, eof_song_proguitar_menu, 0, NULL},
 	{"&Rocksmith", NULL, eof_song_rocksmith_menu, 0, NULL},
-	{"&Phase Shift", NULL, eof_song_phaseshift_menu, 0, NULL},
 	{"Manage raw MIDI tracks", eof_menu_song_raw_MIDI_tracks, NULL, 0, NULL},
+	{"Second &Piano roll", NULL, eof_song_piano_roll_menu, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"T&est in FOF\tF12", eof_menu_song_test_fof, NULL, EOF_LINUX_DISABLE, NULL},
 	{"Test I&n Phase Shift", eof_menu_song_test_ps, NULL, EOF_LINUX_DISABLE, NULL},
@@ -548,26 +548,6 @@ void eof_prepare_song_menu(void)
 			}
 		}
 
-		/* enable open strum bass */
-		if(eof_open_bass_enabled())
-		{
-			eof_song_phaseshift_menu[0].flags = D_SELECTED;	//Song>Phase Shift>Enable open strum bass
-		}
-		else
-		{
-			eof_song_phaseshift_menu[0].flags = 0;
-		}
-
-		/* enable five lane drums */
-		if(eof_five_lane_drums_enabled())
-		{
-			eof_song_phaseshift_menu[1].flags = D_SELECTED;	//Song>Enable five lane drums
-		}
-		else
-		{
-			eof_song_phaseshift_menu[1].flags = 0;
-		}
-
 		/* lock tempo map */
 		if(eof_song->tags->tempo_map_locked)
 		{
@@ -588,21 +568,11 @@ void eof_prepare_song_menu(void)
 			eof_song_menu[14].flags = 0;
 		}
 
-		/* Disable expert+ bass drum */
-		if(eof_song->tags->double_bass_drum_disabled)
-		{
-			eof_song_menu[15].flags = D_SELECTED;	//Song>Disable expert+ bass drum
-		}
-		else
-		{
-			eof_song_menu[15].flags = 0;
-		}
-
 		/* enable pro guitar and rocksmith submenus */
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is active
-			eof_song_menu[16].flags = 0;			//Song>Pro Guitar> submenu
-			eof_song_menu[17].flags = 0;			//Song>Rocksmith> submenu
+			eof_song_menu[15].flags = 0;			//Song>Pro Guitar> submenu
+			eof_song_menu[16].flags = 0;			//Song>Rocksmith> submenu
 
 			if(eof_enable_chord_cache && (eof_chord_lookup_count > 1))
 			{	//If an un-named note is selected and it has at least two chord matches
@@ -617,8 +587,18 @@ void eof_prepare_song_menu(void)
 		}
 		else
 		{	//Otherwise disable these menu items
+			eof_song_menu[15].flags = D_DISABLED;
 			eof_song_menu[16].flags = D_DISABLED;
-			eof_song_menu[17].flags = D_DISABLED;
+		}
+
+		/* Second piano roll>Sync with main piano roll */
+		if(eof_sync_piano_rolls)
+		{
+			eof_song_piano_roll_menu[2].flags = D_SELECTED;
+		}
+		else
+		{
+			eof_song_piano_roll_menu[2].flags = 0;
 		}
 	}//If a chart is loaded
 }
@@ -1186,70 +1166,70 @@ int eof_menu_song_test_ps(void)
 
 int eof_menu_track_selected_1(void)
 {
-	return eof_menu_track_selected_track_number(1);
+	return eof_menu_track_selected_track_number(1, 1);
 }
 
 int eof_menu_track_selected_2(void)
 {
-	return eof_menu_track_selected_track_number(2);
+	return eof_menu_track_selected_track_number(2, 1);
 }
 
 int eof_menu_track_selected_3(void)
 {
-	return eof_menu_track_selected_track_number(3);
+	return eof_menu_track_selected_track_number(3, 1);
 }
 
 int eof_menu_track_selected_4(void)
 {
-	return eof_menu_track_selected_track_number(4);
+	return eof_menu_track_selected_track_number(4, 1);
 }
 
 int eof_menu_track_selected_5(void)
 {
-	return eof_menu_track_selected_track_number(5);
+	return eof_menu_track_selected_track_number(5, 1);
 }
 
 int eof_menu_track_selected_6(void)
 {
-	return eof_menu_track_selected_track_number(6);
+	return eof_menu_track_selected_track_number(6, 1);
 }
 
 int eof_menu_track_selected_7(void)
 {
-	return eof_menu_track_selected_track_number(7);
+	return eof_menu_track_selected_track_number(7, 1);
 }
 
 int eof_menu_track_selected_8(void)
 {
-	return eof_menu_track_selected_track_number(8);
+	return eof_menu_track_selected_track_number(8, 1);
 }
 
 int eof_menu_track_selected_9(void)
 {
-	return eof_menu_track_selected_track_number(9);
+	return eof_menu_track_selected_track_number(9, 1);
 }
 
 int eof_menu_track_selected_10(void)
 {
-	return eof_menu_track_selected_track_number(10);
+	return eof_menu_track_selected_track_number(10, 1);
 }
 
 int eof_menu_track_selected_11(void)
 {
-	return eof_menu_track_selected_track_number(11);
+	return eof_menu_track_selected_track_number(11, 1);
 }
 
 int eof_menu_track_selected_12(void)
 {
-	return eof_menu_track_selected_track_number(12);
+	return eof_menu_track_selected_track_number(12, 1);
 }
 
 int eof_menu_track_selected_13(void)
 {
-	return eof_menu_track_selected_track_number(13);
+	return eof_menu_track_selected_track_number(13, 1);
 }
 
-int eof_menu_track_selected_track_number(int tracknum)
+int eof_menu_track_selected_track_number(int tracknum, int updatetitle)
 {
 	unsigned long i;
 	unsigned char maxdiff = 4;	//By default, each track supports 5 difficulties
@@ -1288,7 +1268,10 @@ int eof_menu_track_selected_track_number(int tracknum)
 		eof_track_selected_menu[tracknum-1].flags = D_SELECTED;
 		eof_selected_track = tracknum;
 		(void) eof_detect_difficulties(eof_song, eof_selected_track);
-		eof_fix_window_title();
+		if(updatetitle)
+		{	//If the program window title is to be updated
+			eof_fix_window_title();
+		}
 		eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 		eof_set_3D_lane_positions(0);
 		eof_set_2D_lane_positions(0);
@@ -2168,60 +2151,6 @@ int eof_menu_song_spectrogram_settings(void)
 	return 1;
 }
 
-int eof_menu_song_open_bass(void)
-{
-	unsigned long tracknum = eof_song->track[EOF_TRACK_BASS]->tracknum;
-	unsigned long ctr;
-	char undo_made = 0;	//Set to nonzero if an undo state was saved
-
-	if(eof_open_bass_enabled())
-	{	//Turn off open bass notes
-		eof_song->track[EOF_TRACK_BASS]->flags &= ~(EOF_TRACK_FLAG_SIX_LANES);	//Clear the flag
-		eof_song->legacy_track[tracknum]->numlanes = 5;
-	}
-	else
-	{	//Turn on open bass notes
-		//Examine existing notes to ensure that lanes don't have to be erased for notes that use open bass strumming
-		for(ctr = 0; ctr < eof_song->legacy_track[tracknum]->notes; ctr++)
-		{	//For each note in PART BASS
-			if((eof_song->legacy_track[tracknum]->note[ctr]->note & 32) && (eof_song->legacy_track[tracknum]->note[ctr]->note & ~32))
-			{	//If this note uses lane 6 (open bass) and at least one other lane
-				eof_cursor_visible = 0;
-				eof_pen_visible = 0;
-				eof_show_mouse(screen);
-				if(alert(NULL, "Warning: Open bass strum notes must have other lanes cleared to enable open bass.  Continue?", NULL, "&Yes", "&No", 'y', 'n') == 2)
-				{	//If user opts cancel the save
-					eof_show_mouse(NULL);
-					eof_cursor_visible = 1;
-					eof_pen_visible = 1;
-					return 1;	//Return cancellation
-				}
-				break;
-			}
-		}
-		eof_show_mouse(NULL);
-		eof_cursor_visible = 1;
-		eof_pen_visible = 1;
-
-		for(ctr = 0; ctr < eof_song->legacy_track[tracknum]->notes; ctr++)
-		{	//For each note in PART BASS
-			if((eof_song->legacy_track[tracknum]->note[ctr]->note & 32) && (eof_song->legacy_track[tracknum]->note[ctr]->note & ~32))
-			{	//If this note uses lane 6 (open bass) and at least one other lane
-				if(!undo_made)
-				{
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Create an undo state before making the first change
-					undo_made = 1;
-				}
-				eof_song->legacy_track[tracknum]->note[ctr]->note = 32;	//Clear all lanes for this note except for lane 6 (open bass)
-			}
-		}
-		eof_song->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the flag
-		eof_song->legacy_track[tracknum]->numlanes = 6;
-	}
-	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
-	return 1;
-}
-
 DIALOG eof_catalog_entry_name_dialog[] =
 {
 	/* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
@@ -2275,31 +2204,6 @@ int eof_menu_song_legacy_view(void)
 		eof_scale_fretboard(5);	//Recalculate the 2D screen positioning based on a 5 lane track
 	}
 	eof_fix_window_title();
-	return 1;
-}
-
-int eof_menu_song_five_lane_drums(void)
-{
-	unsigned long tracknum = eof_song->track[EOF_TRACK_DRUM]->tracknum;
-	unsigned long tracknum2 = eof_song->track[EOF_TRACK_DRUM_PS]->tracknum;
-
-	if(eof_five_lane_drums_enabled())
-	{	//Turn off five lane drums
-		eof_song->track[EOF_TRACK_DRUM]->flags &= ~(EOF_TRACK_FLAG_SIX_LANES);	//Clear the flag
-		eof_song->legacy_track[tracknum]->numlanes = 5;
-		eof_song->track[EOF_TRACK_DRUM_PS]->flags &= ~(EOF_TRACK_FLAG_SIX_LANES);	//Clear the flag
-		eof_song->legacy_track[tracknum2]->numlanes = 5;
-	}
-	else
-	{	//Turn on five lane drums
-		eof_song->track[EOF_TRACK_DRUM]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the flag
-		eof_song->legacy_track[tracknum]->numlanes = 6;
-		eof_song->track[EOF_TRACK_DRUM_PS]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the flag
-		eof_song->legacy_track[tracknum2]->numlanes = 6;
-	}
-
-	eof_set_3D_lane_positions(0);	//Update xchart[] by force
-	eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 	return 1;
 }
 
@@ -3151,14 +3055,6 @@ int eof_menu_song_disable_click_drag(void)
 	return 1;
 }
 
-int eof_menu_song_disable_double_bass_drums(void)
-{
-	if(eof_song)
-		eof_song->tags->double_bass_drum_disabled ^= 1;	//Toggle this boolean variable
-	eof_fix_window_title();
-	return 1;
-}
-
 int eof_menu_song_seek_catalog_entry(void)
 {
 	if(eof_song && eof_song->catalog->entries && (eof_selected_catalog_entry < eof_song->catalog->entries))
@@ -3370,5 +3266,53 @@ int eof_menu_song_catalog_edit(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);
+	return 1;
+}
+
+int eof_menu_song_toggle_second_piano_roll(void)
+{
+	eof_display_second_piano_roll ^= 1;	//Toggle this setting
+	return 1;
+}
+
+int eof_menu_song_swap_piano_rolls(void)
+{
+	int temp_track, temp_type, temp_pos;
+
+	if(eof_note_type2 < 0)
+	{	//If the difficulty hasn't been initialized
+		eof_note_type2 = eof_note_type;
+	}
+	if(eof_selected_track2 < 0)
+	{	//If the track hasn't been initialized
+		eof_selected_track2 = eof_selected_track;
+	}
+	if(eof_music_pos2 < 0)
+	{	//If the position hasn't been initialized
+		eof_music_pos2 = eof_music_pos;
+	}
+	eof_display_second_piano_roll = 1;	//Enable the display of the secondary piano roll
+	temp_track = eof_selected_track;	//Remember the active track difficulty
+	temp_type = eof_note_type;
+	temp_pos = eof_music_pos;			//And remember the position
+	(void) eof_menu_track_selected_track_number(eof_selected_track2, 1);	//Change to the track difficulty of the secondary piano roll
+	eof_note_type = eof_note_type2;
+	if(!eof_sync_piano_rolls)
+	{	//If the secondary piano roll is tracking its own position
+		eof_set_seek_position(eof_music_pos2);	//Seek to the secondary piano roll's position
+	}
+	eof_selected_track2 = temp_track;		//Set the secondary piano roll's track difficulty
+	eof_note_type2 = temp_type;
+	eof_music_pos2 = temp_pos;				//And set the secondary piano roll's position
+	return 1;
+}
+
+int eof_menu_song_toggle_piano_roll_sync(void)
+{
+	if(eof_sync_piano_rolls)
+	{	//If this setting is being turned off
+		eof_music_pos2 = eof_music_pos;	//Synchronize the piano rolls
+	}
+	eof_sync_piano_rolls ^= 1;	//Toggle this setting
 	return 1;
 }
