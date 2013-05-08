@@ -79,6 +79,7 @@ FONT *      eof_symbol_font;
 int         eof_global_volume = 255;
 
 EOF_WINDOW * eof_window_editor = NULL;
+EOF_WINDOW * eof_window_editor2 = NULL;
 EOF_WINDOW * eof_window_note = NULL;
 EOF_WINDOW * eof_window_note_lower_left = NULL;
 EOF_WINDOW * eof_window_note_upper_left = NULL;
@@ -158,6 +159,8 @@ int         eof_music_data_size = 0;
 unsigned long eof_chart_length = 0;
 unsigned long eof_music_length = 0;
 int         eof_music_pos;
+int         eof_music_pos2 = -1;		//The position to display in the secondary piano roll (-1 means it will initialize to the current track when it is enabled)
+int         eof_sync_piano_rolls = 1;	//If nonzero, the secondary piano roll will render with the current chart position instead of its own
 int         eof_music_actual_pos;
 int         eof_music_rewind_pos;
 int         eof_music_catalog_pos;
@@ -180,6 +183,9 @@ char        eof_window_title[4096] = {0};
 int         eof_quit = 0;
 int         eof_note_type = EOF_NOTE_AMAZING;	//The active difficulty
 int         eof_selected_track = EOF_TRACK_GUITAR;
+int         eof_display_second_piano_roll = 0;	//If nonzero, a second piano roll will render in place of the info panel and 3D preview
+int         eof_note_type2 = -1;	//The difficulty to display in the secondary piano roll (-1 means it will initialize to the current difficulty when it is enabled)
+int         eof_selected_track2 = -1;	//The track to display in the secondary piano roll (-1 means it will initialize to the current track when it is enabled)
 int         eof_vocals_selected = 0;	//Is set to nonzero if the active track is a vocal track
 int         eof_vocals_tab = 0;
 int         eof_vocals_offset = 60; // Start at "middle C"
@@ -633,6 +639,11 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 		eof_window_destroy(eof_window_editor);
 		eof_window_editor = NULL;
 	}
+	if(eof_window_editor2)
+	{
+		eof_window_destroy(eof_window_editor2);
+		eof_window_editor2 = NULL;
+	}
 	if(eof_window_note_lower_left)
 	{
 		eof_window_destroy(eof_window_note_lower_left);
@@ -761,6 +772,12 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 		allegro_message("Unable to create editor window!");
 		return 0;
 	}
+	eof_window_editor2 = eof_window_create(0, (eof_screen_height / 2) + 1, eof_screen_width, eof_screen_height, eof_screen);
+	if(!eof_window_editor2)
+	{
+		allegro_message("Unable to create second editor window!");
+		return 0;
+	}
 	eof_window_note_lower_left = eof_window_create(0, eof_screen_height / 2, eof_screen_width, eof_screen_height / 2, eof_screen);	//Make the window full width
 	eof_window_note_upper_left = eof_window_create(0, 20, eof_screen_width, eof_screen_height / 2, eof_screen);	//Make the window full width
 	if(!eof_window_note_lower_left || !eof_window_note_upper_left)
@@ -795,6 +812,50 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 	return 1;
 }
 
+void eof_cat_track_difficulty_string(char *str)
+{
+	if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_ALT_NAME)
+	{	//If this track has an alternate name, append the track's alternate name
+		(void) ustrcat(str, eof_song->track[eof_selected_track]->altname);
+	}
+	else
+	{	//Otherwise append the track's native name
+		(void) ustrcat(str, eof_song->track[eof_selected_track]->name);
+	}
+	if(!eof_vocals_selected)
+	{	//If the vocal track isn't active, append other information such as the current difficulty
+		(void) ustrcat(str, "  ");
+		char *ptr;
+		if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+		{	//If this track is not limited to 5 difficulties
+			char diff_string[15] = {0};			//Used to generate the string for a numbered difficulty
+			(void) snprintf(diff_string, sizeof(diff_string) - 1, " Diff: %d", eof_note_type);
+			if(eof_track_diff_populated_status[eof_note_type])
+			{	//If this difficulty is populated
+				diff_string[0] = '*';
+			}
+			(void) ustrcat(str, diff_string);
+		}
+		else if(eof_selected_track == EOF_TRACK_DANCE)
+		{	//If the dance track is active
+			ptr = eof_dance_tab_name[eof_note_type];
+			(void) ustrcat(str, ptr);					//Append the active dance difficulty name
+		}
+		else
+		{
+			ptr = eof_note_type_name[eof_note_type];
+			(void) ustrcat(str, ptr);					//Append the active instrument difficulty name
+		}
+	}
+
+	if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_ALT_NAME)
+	{	//If this track has an alternate name, append the track's native name
+		(void) ustrcat(str, " (");
+		(void) ustrcat(str, eof_song->track[eof_selected_track]->name);
+		(void) ustrcat(str, ")");
+	}
+}
+
 void eof_fix_window_title(void)
 {
 	eof_log("eof_fix_window_title() entered", 1);
@@ -809,49 +870,8 @@ void eof_fix_window_title(void)
 	}
 	if(eof_song && eof_song_loaded)
 	{
-		(void) ustrcat(eof_window_title, eof_song->tags->title);
-		(void) ustrcat(eof_window_title, " (");
-		if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_ALT_NAME)
-		{	//If this track has an alternate name, append the track's alternate name
-			(void) ustrcat(eof_window_title, eof_song->track[eof_selected_track]->altname);
-		}
-		else
-		{	//Otherwise append the track's native name
-			(void) ustrcat(eof_window_title, eof_song->track[eof_selected_track]->name);
-		}
-		if(!eof_vocals_selected)
-		{	//If the vocal track isn't active, append other information such as the current difficulty
-			(void) ustrcat(eof_window_title, "  ");
-			char *ptr;
-			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
-			{	//If this track is not limited to 5 difficulties
-				char diff_string[15] = {0};			//Used to generate the string for a numbered difficulty
-				(void) snprintf(diff_string, sizeof(diff_string) - 1, " Diff: %d", eof_note_type);
-				if(eof_track_diff_populated_status[eof_note_type])
-				{	//If this difficulty is populated
-					diff_string[0] = '*';
-				}
-				(void) ustrcat(eof_window_title, diff_string);
-			}
-			else if(eof_selected_track == EOF_TRACK_DANCE)
-			{	//If the dance track is active
-				ptr = eof_dance_tab_name[eof_note_type];
-				(void) ustrcat(eof_window_title, ptr);					//Append the active dance difficulty name
-			}
-			else
-			{
-				ptr = eof_note_type_name[eof_note_type];
-				(void) ustrcat(eof_window_title, ptr);					//Append the active instrument difficulty name
-			}
-		}
-		(void) ustrcat(eof_window_title, ")");
+		eof_cat_track_difficulty_string(eof_window_title);	//Append the track difficulty's title to the window title
 
-		if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_ALT_NAME)
-		{	//If this track has an alternate name, append the track's native name
-			(void) ustrcat(eof_window_title, " (");
-			(void) ustrcat(eof_window_title, eof_song->track[eof_selected_track]->name);
-			(void) ustrcat(eof_window_title, ")");
-		}
 		if((eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && eof_legacy_view)
 		{	//If this is a pro guitar track being displayed with the legacy view enabled
 			(void) ustrcat(eof_window_title, "(Legacy view)");
@@ -2219,6 +2239,9 @@ void eof_render_note_window(void)
 	if(eof_disable_info_panel)	//If the user disabled the info panel's rendering
 		return;					//Return immediately without rendering anything
 
+	if(eof_display_second_piano_roll)	//If a second piano roll is being rendered instead of the 3D preview
+		return;							//Return immediately
+
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	if(eof_full_screen_3d)
 	{	//If full screen 3D view is in effect
@@ -2335,7 +2358,7 @@ void eof_render_note_window(void)
 			if(eof_song->catalog->entry[eof_selected_catalog_entry].track == EOF_TRACK_VOCALS)
 			{	//If drawing a vocal catalog entry
 				/* clear lyric text area */
-				rectfill(eof_window_note->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_editor->w - 1, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, eof_color_black);
+				rectfill(eof_window_note->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_note->w - 1, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, eof_color_black);
 				hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, lpos + (eof_chart_length) / eof_zoom, eof_color_white);
 
 				for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
@@ -2808,6 +2831,9 @@ void eof_render_lyric_window(void)
 		return;	//Don't draw the lyric window
 	}
 
+	if(eof_display_second_piano_roll)	//If a second piano roll is being rendered instead of the 3D preview
+		return;							//Return immediately
+
 	clear_to_color(eof_window_3d->screen, eof_color_gray);
 
 	/* render the 29 white keys */
@@ -2908,12 +2934,24 @@ void eof_render_3d_window(void)
 	unsigned long j, ctr, usedlanes, bitmask, numsections;
 	EOF_PHRASE_SECTION *sectionptr = NULL;	//Used to abstract sections
 
-	if(eof_disable_3d_rendering)	//If the user wanted to disable the rendering of the 3D window to improve performance
-		return;						//Return immediately
+	if(!eof_full_screen_3d)
+	{	//If full screen 3D view isn't in effect, 3D rendering can be disabled
+		if(eof_disable_3d_rendering)	//If the user wanted to disable the rendering of the 3D window to improve performance
+			return;						//Return immediately
+
+		if(eof_display_second_piano_roll)	//If a second piano roll is being rendered instead of the 3D preview
+			return;							//Return immediately
+	}
 
 	if((eof_catalog_menu[0].flags & D_SELECTED) && (eof_catalog_menu[1].flags == D_SELECTED))
 	{	//If the fret catalog is visible and it's configured to display at full width
 		return;	//Don't draw the 3D window
+	}
+
+	if(eof_song->track[eof_selected_track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+	{	//If this is a vocal track
+		eof_render_lyric_window();
+		return;
 	}
 
 	clear_to_color(eof_window_3d->screen, eof_color_gray);
@@ -3227,16 +3265,9 @@ void eof_render(void)
 		{	//In full screen 3D view, don't render the note window yet, it will just be overwritten by the 3D window
 			eof_render_note_window();	//Otherwise render the note window first, so if the user didn't opt to display its full width, it won't draw over the 3D window
 		}
-		if(eof_vocals_selected)
-		{
- 			eof_render_vocal_editor_window();
-			eof_render_lyric_window();
-		}
-		else
-		{
- 			eof_render_editor_window();
-			eof_render_3d_window();
-		}
+		eof_render_editor_window(eof_window_editor);
+		eof_render_editor_window_2();	//Render the secondary piano roll if applicable
+		eof_render_3d_window();
 	}
 	else
 	{
@@ -4032,6 +4063,7 @@ void eof_exit(void)
 	eof_destroy_spectrogram(eof_spectrogram);	//Frees memory used by any currently loaded spectrogram data
 	eof_spectrogram = NULL;
 	eof_window_destroy(eof_window_editor);
+	eof_window_destroy(eof_window_editor2);
 	eof_window_destroy(eof_window_note_lower_left);
 	eof_window_destroy(eof_window_note_upper_left);
 	eof_window_destroy(eof_window_3d);
@@ -4196,7 +4228,7 @@ void eof_init_after_load(char initaftersavestate)
 	{	//Validate eof_selected_track, to ensure a valid track was loaded from the config file
 		eof_selected_track = EOF_TRACK_GUITAR;
 	}
-	(void) eof_menu_track_selected_track_number(eof_selected_track);
+	(void) eof_menu_track_selected_track_number(eof_selected_track, 1);
 	if(eof_zoom <= 0)
 	{	//Validate eof_zoom, to ensure a valid zoom level was loaded from the config file
 		eof_zoom = 10;

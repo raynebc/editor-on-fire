@@ -2193,7 +2193,7 @@ int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track)
 					return 2;	//Return user cancellation
 				}
 				user_prompted = 1;
-				(void) eof_menu_track_selected_track_number(track);		//Change the active track
+				(void) eof_menu_track_selected_track_number(track, 1);		//Change the active track
 				eof_selected_beat = ctr;					//Change the selected beat
 				eof_set_seek_position(sp->beat[ctr]->pos + eof_av_delay);	//Seek to the beat
 				if(eof_2d_render_top_option != 36)

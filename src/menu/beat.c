@@ -1045,7 +1045,7 @@ int eof_menu_beat_all_events(void)
 				track = eof_song->text_event[realindex]->track;
 				if((track != 0) && (track < eof_song->tracks))
 				{	//If this is a track-specific event
-					(void) eof_menu_track_selected_track_number(track);	//Change to that track
+					(void) eof_menu_track_selected_track_number(track, 1);	//Change to that track
 				}
 			}
 			break;	//Break from loop

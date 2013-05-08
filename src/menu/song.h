@@ -93,7 +93,9 @@ int eof_menu_track_selected_10(void);
 int eof_menu_track_selected_11(void);
 int eof_menu_track_selected_12(void);
 int eof_menu_track_selected_13(void);
-int eof_menu_track_selected_track_number(int tracknum);	//Changes to the specified track number
+int eof_menu_track_selected_track_number(int tracknum, int updatetitle);
+	//Changes to the specified track number
+	//If updatetitle is nonzero, EOF's program window title is set (it should not be updated when used to render the second piano roll)
 
 int eof_menu_song_waveform_settings(void);
 int eof_menu_song_waveform(void);	//Toggle the display of the waveform on/off, generating the waveform data if necessary
@@ -101,14 +103,11 @@ int eof_menu_song_spectrogram_settings(void);
 int eof_menu_song_spectrogram(void);	//Toggle the display of the spectrogram on/off, generating the spectrogram data if necessary
 int eof_menu_song_add_silence(void);
 
-int eof_menu_song_open_bass(void);		//Toggle the ability to use a sixth lane in PART BASS on/off
 int eof_menu_catalog_edit_name(void);	//Brings up a dialog window allowing the user to define a fret catalog entry's name
 int eof_menu_song_legacy_view(void);	//Toggles the view of pro guitar tracks as legacy notes
 
-int eof_menu_song_five_lane_drums(void);		//Toggle the ability to use a fifth lane in PART DRUM on/off
 int eof_menu_song_lock_tempo_map(void);			//Toggle the setting to lock the tempo map on/off
 int eof_menu_song_disable_click_drag(void);		//Toggle the setting to disable click and drag on/off
-int eof_menu_song_disable_double_bass_drums(void);	//Toggle the setting to disable expert+ bass drum gem export on/off
 
 void eof_set_percussion_cue(int cue_number);	//Sets eof_sound_chosen_percussion to the cue referred by eof_audio_cues_dialog[cue_number]
 
@@ -146,5 +145,12 @@ int eof_menu_song_seek_bookmark_help(int b);
 	//Seeks to the specified bookmark.  Returns nonzero on success
 int eof_is_number(char * buffer);
 	//Returns nonzero if all characters in the specified string are numerical.
+
+int eof_menu_song_toggle_second_piano_roll(void);
+	//Toggles on/off the display of the secondary piano roll
+int eof_menu_song_swap_piano_rolls(void);
+	//Swaps the primary and secondary piano rolls so that the track difficulty that was displayed in the secondary roll becomes available for editing
+int eof_menu_song_toggle_piano_roll_sync(void);
+	//Toggles on/off the synchronization of the two piano rolls
 
 #endif

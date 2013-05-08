@@ -5083,16 +5083,9 @@ int eof_create_image_sequence(void)
 
 		//Render the screen
 		eof_find_lyric_preview_lines();
-		if(eof_vocals_selected)
-		{
-			eof_render_vocal_editor_window();
-			eof_render_lyric_window();
-		}
-		else
-		{
-			eof_render_editor_window();
-			eof_render_3d_window();
-		}
+		eof_render_editor_window(eof_window_editor);
+		eof_render_editor_window_2();	//Render the secondary piano roll if applicable
+		eof_render_3d_window();
 		eof_render_note_window();
 
 		#ifndef EOF_CREATE_IMAGE_SEQUENCE_SHOW_FPS_ONLY
