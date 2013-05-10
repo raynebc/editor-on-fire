@@ -292,6 +292,9 @@ int eof_menu_file_new_supplement(char *directory, char check)
 		(void) replace_filename(eof_temp_filename, directory, "guitar.ogg", 1024);
 		if(exists(eof_temp_filename))
 		{
+			eof_clear_input();
+			key[KEY_Y] = 0;
+			key[KEY_N] = 0;
 			if(alert(NULL, "Existing guitar.ogg will be overwritten. Proceed?", NULL, "&Yes", "&No", 'y', 'n') == 2)
 			{
 				return 0;
@@ -303,6 +306,9 @@ int eof_menu_file_new_supplement(char *directory, char check)
 		(void) replace_filename(eof_temp_filename, directory, "original.mp3", 1024);
 		if(exists(eof_temp_filename))
 		{
+			eof_clear_input();
+			key[KEY_Y] = 0;
+			key[KEY_N] = 0;
 			if(alert(NULL, "Existing original.mp3 will be overwritten. Proceed?", NULL, "&Yes", "&No", 'y', 'n') == 2)
 			{
 				return 0;
@@ -339,6 +345,9 @@ int eof_menu_file_new_supplement(char *directory, char check)
 	}
 	if(err)
 	{
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
 		if(alert(NULL, "Some existing chart files will be overwritten. Proceed?", NULL, "&Yes", "&No", 'y', 'n') == 2)
 		{
 			return 0;
@@ -656,6 +665,9 @@ int eof_menu_file_save(void)
 	if(eof_changes <= 0)
 	{
 		eof_show_mouse(screen);
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
 		if(alert(NULL, "No Changes, save anyway?", NULL, "&Yes", "&No", 'y', 'n') == 2)
 		{
 			eof_show_mouse(NULL);
@@ -673,6 +685,9 @@ int eof_menu_file_save(void)
 	}
 	if(!file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
 	{
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
 		if(alert("Song folder no longer exists.", "Recreate folder?", NULL, "&Yes", "&No", 'y', 'n') == 2)
 		{
 			eof_show_mouse(NULL);
@@ -733,7 +748,6 @@ int eof_menu_file_lyrics_import(void)
 	int returncode = 1;	//Stores the return value of EOF_IMPORT_VIA_LC() to check for error
 	char tempfile = 0;	//Is set to nonzero if the selected lyric file's path contains any extended ASCII or Unicode characters, as a temporary file is created as a workaround
 	char templyricfile[] = "lyricfile.tmp";	//The name of the temporary file created as per the above condition
-	unsigned long ctr;
 
 	eof_log("\tImporting lyrics", 1);
 
@@ -747,16 +761,12 @@ int eof_menu_file_lyrics_import(void)
 	eof_clear_input();
 	if(returnedfn)
 	{	//If the user selected a file
-		for(ctr = 0; ctr < ustrlen(returnedfn); ctr++)
-		{	//For each character of the user-selected file
-			if(ugetat(returnedfn, ctr) > 127)
-			{	//If the character is not normal ASCII (if it is extended ASCII or Unicode)
-				eof_log("\t\tUnicode or extended ASCII file path detected.  Creating temporarily copy to use for import.", 1);
-				tempfile = 1;	//Track that EOF will create a temporary file to pass to FoFLC, since FoFLC uses standard C file I/O and cannot open file paths that aren't normal ASCII
-				(void) eof_copy_file(returnedfn, "lyricfile.tmp");	//Copy this to a temporary file containing normal ASCII characters
-				returnedfn = templyricfile;	//Change the target file path to the temporary file
-				break;
-			}
+		if(eof_string_has_non_ascii(returnedfn))
+		{	//If the string has any non ASCIi characters
+			eof_log("\t\tUnicode or extended ASCII file path detected.  Creating temporarily copy to use for import.", 1);
+			tempfile = 1;	//Track that EOF will create a temporary file to pass to FoFLC, since FoFLC uses standard C file I/O and cannot open file paths that aren't normal ASCII
+			(void) eof_copy_file(returnedfn, "lyricfile.tmp");	//Copy this to a temporary file containing normal ASCII characters
+			returnedfn = templyricfile;	//Change the target file path to the temporary file
 		}
 		(void) ustrcpy(eof_filename, returnedfn);	//Store another copy of the lyric file name, since if it's a vocal rhythm file, the user will have to select a MIDI file, whose path will be stored in returnedfn
 		jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
@@ -1324,6 +1334,8 @@ int eof_menu_file_exit(void)
 	eof_pen_visible = 0;
 	eof_render();
 	eof_clear_input();
+	key[KEY_Y] = 0;
+	key[KEY_N] = 0;
 	if(alert(NULL, "Want to Quit?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
 		if(eof_changes)
@@ -2243,6 +2255,9 @@ int eof_save_helper(char *destfilename)
 	if(notes_after_chart_audio && !eof_silence_loaded)
 	{	//Only display this warning if there is chart audio loaded
 		(void) snprintf(oggfn, sizeof(oggfn) - 1, "Warning:  Track \"%s\" contains notes/lyrics extending beyond the chart's audio.", eof_song->track[notes_after_chart_audio]->name);
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
 		if(alert(oggfn, NULL, "This chart may not work properly.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user doesn't opt to continue due to this error condition
 			return 2;	//Return cancellation
@@ -2266,6 +2281,9 @@ int eof_save_helper(char *destfilename)
 					eof_cursor_visible = 0;
 					eof_pen_visible = 0;
 					eof_show_mouse(screen);
+					eof_clear_input();
+					key[KEY_Y] = 0;
+					key[KEY_N] = 0;
 					if(alert("Warning: One or more lyrics aren't within lyric phrases.", "These lyrics won't export to FoF script format.", "Continue?", "&Yes", "&No", 'y', 'n') == 2)
 					{	//If user opts cancel the save
 						eof_show_mouse(NULL);
@@ -2288,6 +2306,9 @@ int eof_save_helper(char *destfilename)
 			{	//For each note in the track
 				if(eof_get_note_length(eof_song, ctr, ctr2) < eof_min_note_length)
 				{	//If this note's length is shorter than the minimum length
+					eof_clear_input();
+					key[KEY_Y] = 0;
+					key[KEY_N] = 0;
 					if(alert("Warning:  At least one note was truncated shorter", "than your defined minimum length.", "Cancel save and seek to the first such note?", "&Yes", "&No", 'y', 'n') == 1)
 					{	//If the user opted to seek to the first offending note (only prompt once per call)
 						(void) eof_menu_track_selected_track_number(ctr, 1);										//Set the active instrument track
@@ -2315,6 +2336,9 @@ int eof_save_helper(char *destfilename)
 				{	//And this note is longer than its maximum length
 					if(eof_get_note_pos(eof_song, ctr, next) - eof_get_note_pos(eof_song, ctr, ctr2) < eof_min_note_distance)
 					{	//If the notes are too close to enforce the minimum note distance
+						eof_clear_input();
+						key[KEY_Y] = 0;
+						key[KEY_N] = 0;
 						if(alert("Warning:  At least one note is too close to another", "to enforce the minimum note distance.", "Cancel save and seek to the first such note?", "&Yes", "&No", 'y', 'n') == 1)
 						{	//If the user opted to seek to the first offending note (only prompt once per call)
 							(void) eof_menu_track_selected_track_number(ctr, 1);										//Set the active instrument track
@@ -2341,6 +2365,9 @@ int eof_save_helper(char *destfilename)
 	{	//If the user wants to save Rocksmith capable files
 		if(eof_song->beat[0]->pos > 0)
 		{	//If there is a MIDI delay
+			eof_clear_input();
+			key[KEY_Y] = 0;
+			key[KEY_N] = 0;
 			if(alert("Warning:  The first beat marker (the MIDI delay) is not positioned at 0 seconds.", "This might prevent the song from playing from the beginning in Rocksmith.", "Correct this condition with \"Reset offset to zero\"?", "&Yes", "&No", 'y', 'n') == 1)
 			{	//If the user opts to correct the issue
 				(void) eof_menu_beat_reset_offset();	//Run the "Reset offset to zero" function.  If the tempo map is locked, the function will offer to unlock it before proceeding
@@ -2740,6 +2767,9 @@ int eof_gp_import_track(DIALOG * d)
 		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 		selected = eof_gp_import_dialog[1].d1;
 
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
 		if(eof_get_track_size(eof_song, eof_selected_track) && alert("This track already has notes", "Importing this GP track will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the active track is already populated and the user doesn't opt to overwrite it
 			return 0;
@@ -2819,6 +2849,9 @@ int eof_menu_file_gp_import(void)
 //If the GP file contained section markers, offer to import them now
 			if(eof_parsed_gp_file->text_events)
 			{	//If there were text events imported
+				eof_clear_input();
+				key[KEY_Y] = 0;
+				key[KEY_N] = 0;
 				if(alert(NULL, "Import Guitar Pro file's section markers/beat text as Rocksmith phrases/sections?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 				{	//If the user opts to import RS phrases and sections from GP files
 					if(!gp_import_undo_made)
@@ -2955,6 +2988,9 @@ int eof_menu_file_rs_import(void)
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Don't do anything unless the active track is a pro guitar/bass track
 
+	eof_clear_input();
+	key[KEY_Y] = 0;
+	key[KEY_N] = 0;
 	if(eof_get_track_size(eof_song, eof_selected_track) && alert("This track already has notes", "Importing this Rocksmith track will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 	{	//If the active track is already populated and the user doesn't opt to overwrite it
 		return 0;

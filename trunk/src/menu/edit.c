@@ -130,11 +130,12 @@ MENU eof_edit_selection_menu[] =
 {
 	{"Select &All\t" CTRL_NAME "+A", eof_menu_edit_select_all, NULL, 0, NULL},
 	{"Select like\t" CTRL_NAME "+L", eof_menu_edit_select_like, NULL, 0, NULL},
-	{"Precise select &Like", eof_menu_edit_precise_select_like, NULL, 0, NULL},
+	{"&Precise select like", eof_menu_edit_precise_select_like, NULL, 0, NULL},
 	{"Select &Rest\tShift+End", eof_menu_edit_select_rest, NULL, 0, NULL},
 	{"&Deselect All\t" CTRL_NAME "+D", eof_menu_edit_deselect_all, NULL, 0, NULL},
-	{"Select &Previous\tShift+Home", eof_menu_edit_select_previous, NULL, 0, NULL},
+	{"Select previous\tShift+Home", eof_menu_edit_select_previous, NULL, 0, NULL},
 	{"Select all &Shorter than", eof_menu_edit_select_all_shorter_than, NULL, 0, NULL},
+	{"Select all &Longer than", eof_menu_edit_select_all_longer_than, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -588,6 +589,9 @@ int eof_menu_edit_copy_vocal(void)
 			{
 				if(eof_song->beat[eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos) + 1]->pos - eof_song->vocal_track[tracknum]->lyric[i]->pos <= 10)
 				{
+					eof_clear_input();
+					key[KEY_Y] = 0;
+					key[KEY_N] = 0;
 					if(alert(NULL, "First note appears to be off.", "Adjust?", "&Yes", "&No", 'y', 'n') == 1)
 					{
 						eof_song->vocal_track[tracknum]->lyric[i]->pos = eof_song->beat[eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos) + 1]->pos;
@@ -1210,6 +1214,9 @@ int eof_menu_edit_copy(void)
 			{
 				if(eof_song->beat[eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i)) + 1]->pos - eof_get_note_pos(eof_song, eof_selected_track, i) <= 10)
 				{
+					eof_clear_input();
+					key[KEY_Y] = 0;
+					key[KEY_N] = 0;
 					if(alert(NULL, "First note appears to be off.", "Adjust?", "&Yes", "&No", 'y', 'n') == 1)
 					{
 						eof_set_note_pos(eof_song, eof_selected_track, i, eof_song->beat[eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i)) + 1]->pos);
@@ -1311,6 +1318,9 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		{	//If any notes on the clipboard would exceed the active track's fret limit
 			char message[120] = {0};
 			(void) snprintf(message, sizeof(message) - 1, "Warning:  This track's fret limit is exceeded by a pasted note's fret value of %lu.  Continue?", highestfret);
+			eof_clear_input();
+			key[KEY_Y] = 0;
+			key[KEY_N] = 0;
 			if(alert(NULL, message, NULL, "&Yes", "&No", 'y', 'n') != 1)
 			{	//If user does not opt to continue after being alerted of this fret limit issue
 				(void) pack_fclose(fp);
@@ -1323,6 +1333,9 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	{	//If any notes on the clipboard exceed the active track's lane limit
 		char message[120] = {0};
 		(void) snprintf(message, sizeof(message) - 1, "Warning:  This track's highest lane number is exceeded by a pasted note with a gem on lane %lu.", highestlane);
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
 		if(alert(NULL, message, "Gems will either be dropped, or added to form all-lane chords for such notes.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If user does not opt to continue after being alerted of this lane limit issue
 			(void) pack_fclose(fp);
@@ -2276,6 +2289,46 @@ int eof_menu_edit_select_all_shorter_than(void)
 	return 1;
 }
 
+DIALOG eof_menu_edit_select_all_longer_than_dialog[] =
+{
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
+	{ d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Select all notes longer than", NULL, NULL },
+	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "This # of ms:",NULL, NULL },
+	{ eof_verified_edit_proc,12,  56,  90,  20,  0,   0,   0,    0,      7,   0,   eof_etext,     "0123456789",  NULL },
+	{ d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                         NULL, NULL },
+	{ d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                     NULL, NULL },
+	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                         NULL, NULL }
+};
+
+int eof_menu_edit_select_all_longer_than(void)
+{
+	unsigned long i, threshold;
+
+	eof_etext[0] = '\0';	//Empty the string
+	eof_color_dialog(eof_menu_edit_select_all_longer_than_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_menu_edit_select_all_longer_than_dialog);
+
+	if(eof_popup_dialog(eof_menu_edit_select_all_longer_than_dialog, 2) == 3)
+	{	//User clicked OK
+		if(eof_etext[0] != '\0')
+		{	//If the user entered a threshold
+			threshold = atol(eof_etext);
+			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+			{	//For each note in the active track
+				if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_length(eof_song, eof_selected_track, i) > threshold))
+				{	//If the note is in the active difficulty and is longer than the user specified threshold length
+					eof_selection.track = eof_selected_track;
+					eof_selection.multi[i] = 1;
+				}
+				else
+				{	//Otherwise deselect the note from the selection array
+					eof_selection.multi[i] = 0;
+				}
+			}
+		}
+	}
+	return 1;
+}
 int eof_menu_edit_paste_from_supaeasy(void)
 {
 	char undo_made = 0;
@@ -2319,6 +2372,9 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 
 	if(eof_track_diff_populated_status[eof_note_type])
 	{	//If the current difficulty is populated
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
 		if(alert(NULL, "This operation will replace this difficulty's contents.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If user does not opt to overwrite this difficulty
 			return 1;
@@ -2374,6 +2430,9 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 				}
 			}
 		}
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
 		if(has_arpeggios && (alert(NULL, "Would you like to also copy the arpeggio sections?", NULL, "&Yes", "&No", 'y', 'n') == 1))
 		{	//If there are any arpeggio sections in the difficulty being copied, and the user opts to copy them to the active difficulty
 			for(i = 0; i < eof_get_num_arpeggios(eof_song, eof_selected_track); i++)
@@ -2400,6 +2459,9 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 				eof_pro_guitar_track_delete_hand_position(tp, i - 1);	//Delete it
 			}
 		}
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
 		if(has_handpositions && (alert(NULL, "Would you like to also copy the fret hand positions?", NULL, "&Yes", "&No", 'y', 'n') == 1))
 		{	//If there are any hand positions in the difficulty being copied, and the user opts to copy them to the active difficulty
 			for(i = 0; i < tp->handpositions; i++)
@@ -2431,6 +2493,9 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 			}
 		}
 	}
+	eof_clear_input();
+	key[KEY_Y] = 0;
+	key[KEY_N] = 0;
 	if(has_tremolos && (alert(NULL, "Would you like to also copy the difficulty-specific tremolo sections?", NULL, "&Yes", "&No", 'y', 'n') == 1))
 	{	//If there are any tremolo sections in the difficulty being copied, and the user opts to copy them to the active difficulty
 		for(i = 0; i < eof_get_num_tremolos(eof_song, eof_selected_track); i++)
@@ -2579,6 +2644,9 @@ int eof_menu_edit_paste_from_catalog(void)
 			{	//If any notes in the catalog entry would exceed the active track's fret limit
 				char message[120] = {0};
 				(void) snprintf(message, sizeof(message) - 1, "Warning:  This track's fret limit is exceeded by a pasted note's fret value of %lu.  Continue?", highestfret);
+				eof_clear_input();
+				key[KEY_Y] = 0;
+				key[KEY_N] = 0;
 				if(alert(NULL, message, NULL, "&Yes", "&No", 'y', 'n') != 1)
 				{	//If user does not opt to continue after being alerted of this fret limit issue
 					return 0;
@@ -2589,6 +2657,9 @@ int eof_menu_edit_paste_from_catalog(void)
 		{	//Warn if pasted notes go above the current track's lane limit
 			char message[120] = {0};
 			(void) snprintf(message, sizeof(message) - 1, "Warning:  This track's highest lane number is exceeded by a pasted note with a gem on lane %lu.", highestlane);
+			eof_clear_input();
+			key[KEY_Y] = 0;
+			key[KEY_N] = 0;
 			if(alert(NULL, message, "Such notes will be omitted.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
 			{	//If user does not opt to continue after being alerted of this lane limit issue
 				return 0;

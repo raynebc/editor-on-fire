@@ -1148,6 +1148,9 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 	}
 
 	//Apply strum directions
+	eof_clear_input();
+	key[KEY_Y] = 0;
+	key[KEY_N] = 0;
 	if(strum_dir && (alert("At least one chord was marked as strum up.", "Would you like to to mark all non strum-up chords as strum down?", NULL, "&Yes", "&No", 'y', 'n') == 1))
 	{	//If there were any up strum chords, and user opts to mark all others as down strum chords
 		unsigned long bitmask, count;

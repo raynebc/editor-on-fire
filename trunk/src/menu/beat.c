@@ -727,6 +727,9 @@ int eof_menu_beat_reset_offset(void)
 
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 	{
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
 		if(alert("Cannot perform this operation while the tempo map is locked.", NULL, "Would you like to unlock the tempo map?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If user does not opt to unlock the tempo map to carry out the operation
 			return 1;	//Return without making changes
@@ -739,6 +742,9 @@ int eof_menu_beat_reset_offset(void)
 
 	if(eof_song->beat[0]->pos >= eof_song->beat[1]->pos - eof_song->beat[0]->pos)
 	{	//If the MIDI delay is at least one beat length long, offer to insert as many evenly spaced beats as possible
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
 		if(alert(NULL, "Insert evenly spaced beats at the beginning of the chart?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 		{	//If user opts to insert evenly spaced beats
 			while(eof_song->beat[0]->pos >= eof_song->beat[1]->pos - eof_song->beat[0]->pos)
@@ -1142,6 +1148,9 @@ int eof_menu_beat_clear_events(void)
 		allegro_message("No events to clear!");
 		return 1;
 	}
+	eof_clear_input();
+	key[KEY_Y] = 0;
+	key[KEY_N] = 0;
 	if(alert(NULL, "Erase all events?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -1166,6 +1175,9 @@ int eof_menu_beat_clear_non_rs_events(void)
 		allegro_message("No events to clear!");
 		return 1;
 	}
+	eof_clear_input();
+	key[KEY_Y] = 0;
+	key[KEY_N] = 0;
 	if(alert(NULL, "Erase all non Rocksmith events?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
 		for(i = eof_song->text_events; i > 0; i--)
@@ -1756,6 +1768,9 @@ int eof_menu_beat_trainer_event(void)
 
 		if(eof_song_contains_event(eof_song, selected_string, relevant_track, 0xFFFF))
 		{	//If this training event is already defined in the active track
+			eof_clear_input();
+			key[KEY_Y] = 0;
+			key[KEY_N] = 0;
 			if(alert(NULL, "Warning:  This text event already exists in this track.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 			{	//If the user does not opt to place the duplicate text event
 				return 0;

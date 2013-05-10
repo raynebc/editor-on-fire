@@ -949,6 +949,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					allegro_message("MIDI export error:  Note %lu was not turned off", i);
 					if(endbeatnum)
 					{	//If the chart has a manually defined end event, that's probably the cause
+						eof_clear_input();
+						key[KEY_Y] = 0;
+						key[KEY_N] = 0;
 						if(alert("It appears this is due to an [end] event that cuts out a note early", "Would you like to seek to the beat containing this [end] event?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 						{	//If user opts to seek to the offending event
 							eof_set_seek_position(sp->beat[endbeatnum]->pos + eof_av_delay);
@@ -1715,6 +1718,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					allegro_message("MIDI export error:  Note %lu was not turned off", i);
 					if(endbeatnum)
 					{	//If the chart has a manually defined end event, that's probably the cause
+						eof_clear_input();
+						key[KEY_Y] = 0;
+						key[KEY_N] = 0;
 						if(alert("It appears this is due to an [end] event that cuts out a note early", "Would you like to seek to the beat containing this [end] event?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 						{	//If user opts to seek to the offending event
 							eof_set_seek_position(sp->beat[endbeatnum]->pos + eof_av_delay);
@@ -2768,6 +2774,9 @@ void eof_check_vocals(EOF_SONG* sp, char *fixvoxpitches, char *fixvoxphrases)
 					eof_cursor_visible = 0;
 					eof_pen_visible = 0;
 					eof_show_mouse(screen);
+					eof_clear_input();
+					key[KEY_Y] = 0;
+					key[KEY_N] = 0;
 					if(alert(NULL, "Write pitchless lyrics as playable freestyle?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 					{	//If user opts to have the lyrics corrected, update the fixvoxpitches variable
 						*fixvoxpitches = 1;
@@ -2788,6 +2797,9 @@ void eof_check_vocals(EOF_SONG* sp, char *fixvoxpitches, char *fixvoxphrases)
 					eof_cursor_visible = 0;
 					eof_pen_visible = 0;
 					eof_show_mouse(screen);
+					eof_clear_input();
+					key[KEY_Y] = 0;
+					key[KEY_N] = 0;
 					if(alert(NULL, "Add MIDI phrases for lyrics/percussions not in lyric phrases?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 					{	//If user opts to have missing lyric phrases inserted
 						*fixvoxphrases = 1;

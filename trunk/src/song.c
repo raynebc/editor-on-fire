@@ -5036,6 +5036,9 @@ int eof_create_image_sequence(void)
 	(void) replace_filename(eof_temp_filename, eof_temp_filename, "", (int)sizeof(eof_temp_filename));
 	put_backslash(eof_temp_filename);
 	(void) ustrcat(eof_temp_filename, "sequence");
+	eof_clear_input();
+	key[KEY_Y] = 0;
+	key[KEY_N] = 0;
 	if(!file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
 	{	//If this folder doesn't already exist
 		err = eof_mkdir(eof_temp_filename);

@@ -977,6 +977,9 @@ int eof_menu_song_properties(void)
 		}
 		if((eof_song->tags->ogg[eof_selected_ogg].midi_offset != old_offset) && (eof_get_chart_size(eof_song) > 0))
 		{	//If the MIDI offset was changed and there is at least one note/lyric in the chart, prompt to adjust the notes/lyrics
+			eof_clear_input();
+			key[KEY_Y] = 0;
+			key[KEY_N] = 0;
 			if(alert(NULL, "Adjust notes to new offset?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 			{
 				(void) eof_adjust_notes(eof_song->tags->ogg[eof_selected_ogg].midi_offset - old_offset);
@@ -2738,6 +2741,9 @@ int eof_raw_midi_track_import(DIALOG * d)
 	}
 	else if(!ustricmp(selected->trackname, "EVENTS"))
 	{
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
 		if(alert("Warning:  This track contains the chart's text events.", "Importing it will cause it to replace the project's events track", "in the MIDI created during save.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If user did not opt to override the project's events track with that of the external MIDI
 			selected = NULL;
@@ -2750,6 +2756,9 @@ int eof_raw_midi_track_import(DIALOG * d)
 		{	//For each of EOF's supported tracks
 			if(!ustricmp(selected->trackname, eof_midi_tracks[ctr].name))
 			{	//If the user selected a track with a name that EOF natively supports
+				eof_clear_input();
+				key[KEY_Y] = 0;
+				key[KEY_N] = 0;
 				if(alert("Warning:  This is a track supported natively by EOF.", "Importing it will cause it to replace the project's related track", "in the MIDI created during save.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
 				{	//If user did not opt to override the project's native track with that of the external MIDI
 					selected = NULL;
@@ -2767,6 +2776,9 @@ int eof_raw_midi_track_import(DIALOG * d)
 			next = ptr->next;
 			if(!ustricmp(selected->trackname, ptr->trackname))
 			{	//If the user selected a track with a name matching a track already being stored in the project
+				eof_clear_input();
+				key[KEY_Y] = 0;
+				key[KEY_N] = 0;
 				if(alert("A track with this name is already being stored:", selected->trackname, "Replace it?", "&Yes", "&No", 'y', 'n') != 1)
 				{	//If the user declined to replace the previously-stored track with the newly-selected track
 					selected = NULL;
@@ -2882,6 +2894,9 @@ int eof_raw_midi_dialog_add(DIALOG * d)
 		if(delay)
 		{	//If a nonzero delay was read from song.ini
 			(void) snprintf(tempfilename, sizeof(tempfilename) - 1, "%d", delay);
+			eof_clear_input();
+			key[KEY_Y] = 0;
+			key[KEY_N] = 0;
 			if(alert("Import this MIDI delay from song.ini?", tempfilename, NULL, "&Yes", "&No", 'y', 'n') != 1)
 			{	//If the user declined using the MIDI delay from the MIDI's song.ini file
 				delay = 0;	//Set the delay back to 0

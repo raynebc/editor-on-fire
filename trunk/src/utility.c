@@ -256,3 +256,20 @@ int eof_convert_extended_ascii(char * buffer, int size)
 	free(workbuffer);
 	return 1;
 }
+
+int eof_string_has_non_ascii(char *str)
+{
+	unsigned long ctr, length;
+
+	if(!str)
+		return 0;
+
+	for(ctr = 0, length = ustrlen(str); ctr < length; ctr++)
+	{	//For each character of the string
+		if(ugetat(str, ctr) > 127)
+		{	//If the character is not normal ASCII (value 0 through 127)
+			return 1;
+		}
+	}
+	return 0;
+}
