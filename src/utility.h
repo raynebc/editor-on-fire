@@ -17,5 +17,6 @@ void eof_allocate_ucode_table(void);
 void eof_free_ucode_table(void);
 int eof_convert_extended_ascii(char * buffer, int size);
 
+int eof_string_has_non_ascii(char *str);	//Returns nonzero if any characters in the string have non ASCII characters (any character valued over 127)
 
 #endif

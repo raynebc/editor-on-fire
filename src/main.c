@@ -3816,6 +3816,9 @@ int eof_initialize(int argc, char * argv[])
 					ptr = ustrtok(NULL, "\r\n[]");	//Get the second line (the project file path)
 					if(exists(buffer) && ptr && exists(ptr))
 					{	//If the recovery file contained the names of an undo file and a project file that each exist
+						eof_clear_input();
+						key[KEY_Y] = 0;
+						key[KEY_N] = 0;
 						if(alert(NULL, "Recover crashed project from last undo state?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 						{	//If user opts to recover from a crashed EOF instance
 							eof_log("\t\tLoading last undo state", 1);

@@ -1444,6 +1444,9 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 		}
 	}//If the user opted to import TS changes
 
+	eof_clear_input();
+	key[KEY_Y] = 0;
+	key[KEY_N] = 0;
 	if(alert(NULL, "Import the chart's original HOPO OFF notation?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{	//If user opts to have all non HOPO notes marked for forced strumming
 		forcestrum = 1;
@@ -2514,6 +2517,9 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 	}//If the user opted to import TS changes
 	eof_calculate_tempo_map(sp);	//Build the tempo map based on the beat time stamps
 
+	eof_clear_input();
+	key[KEY_Y] = 0;
+	key[KEY_N] = 0;
 	if(alert(NULL, "Import the chart's original HOPO OFF notation?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{	//If user opts to have all non HOPO notes marked for forced strumming
 		forcestrum = 1;
@@ -3073,6 +3079,9 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 					char * sectionfn;
 
 					eof_clear_input();
+					eof_clear_input();
+					key[KEY_Y] = 0;
+					key[KEY_N] = 0;
 					if(alert("No section names were found.", "Specify another file PAK or TXT file to try?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 					{	//If user opts not to try looking for section names in another file
 						eof_show_mouse(NULL);

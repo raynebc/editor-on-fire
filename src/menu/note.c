@@ -2636,6 +2636,9 @@ int eof_menu_solo_unmark(void)
 
 int eof_menu_solo_erase_all(void)
 {
+	eof_clear_input();
+	key[KEY_Y] = 0;
+	key[KEY_N] = 0;
 	if(eof_get_num_solos(eof_song, eof_selected_track) && (alert(NULL, "Erase all solos from this track?", NULL, "&Yes", "&No", 'y', 'n') == 1))
 	{	//If the active track has solos and the user opts to delete them
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -2731,6 +2734,9 @@ int eof_menu_star_power_unmark(void)
 
 int eof_menu_star_power_erase_all(void)
 {
+	eof_clear_input();
+	key[KEY_Y] = 0;
+	key[KEY_N] = 0;
 	if(eof_get_num_star_power_paths(eof_song, eof_selected_track) && (alert(NULL, "Erase all star power from this track?", NULL, "&Yes", "&No", 'y', 'n') == 1))
 	{	//If the active track has star power sections and the user opts to delete them
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -2849,6 +2855,9 @@ int eof_menu_lyric_line_erase_all(void)
 	if(!eof_vocals_selected)
 		return 1;
 
+	eof_clear_input();
+	key[KEY_Y] = 0;
+	key[KEY_N] = 0;
 	if(alert(NULL, "Erase all lyric lines?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -3702,6 +3711,9 @@ int eof_menu_note_edit_pro_guitar_note(void)
 
 			if(eof_count_selected_notes(NULL, 0) > 1)
 			{	//If multiple notes are selected, warn the user
+				eof_clear_input();
+				key[KEY_O] = 0;
+				key[KEY_C] = 0;
 				if(alert(NULL, "Warning:  This information will be applied to all selected notes.", NULL, "&OK", "&Cancel", 'y', 'n') == 2)
 				{	//If user opts to cancel the operation
 					if(note_selection_updated)
@@ -3958,6 +3970,9 @@ int eof_menu_note_edit_pro_guitar_note(void)
 				{	//For each note in the active track
 					if((eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr) == 0) && ustrcmp(eof_note_edit_name, eof_get_note_name(eof_song, eof_selected_track, ctr)))
 					{	//If this note matches the one that was edited but the name is different
+						eof_clear_input();
+						key[KEY_Y] = 0;
+						key[KEY_N] = 0;
 						if(alert(NULL, "Update other matching notes in this track to have the same name?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 						{	//If the user opts to use the updated note name on matching notes in this track
 							for(; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
@@ -4009,6 +4024,9 @@ int eof_menu_note_edit_pro_guitar_note(void)
 								{	//Otherwise use a generic prompt
 									(void) snprintf(autoprompt, sizeof(autoprompt) - 1, "Set selected notes' name to \"%s\"?",newname);
 								}
+								eof_clear_input();
+								key[KEY_Y] = 0;
+								key[KEY_N] = 0;
 								if(alert(NULL, autoprompt, NULL, "&Yes", "&No", 'y', 'n') == 1)
 								{	//If the user opts to assign this note's name to the selected notes
 									for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, eof_selected_track); ctr2++)
@@ -4048,6 +4066,9 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					{	//If this note isn't the one that was just edited, but it matches it and is in the active track difficulty
 						if(legacymask != eof_song->pro_guitar_track[tracknum]->note[ctr]->legacymask)
 						{	//If the two notes have different legacy bitmasks
+							eof_clear_input();
+							key[KEY_Y] = 0;
+							key[KEY_N] = 0;
 							if(alert(NULL, "Update other matching notes in this track difficulty to have the same legacy bitmask?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 							{	//If the user opts to use the updated note legacy bitmask on matching notes in this track difficulty
 								for(; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
@@ -4108,6 +4129,9 @@ int eof_menu_note_edit_pro_guitar_note(void)
 								{	//Otherwise use a generic prompt
 									(void) snprintf(autoprompt, sizeof(autoprompt) - 1, "Set selected notes' legacy bitmask to \"%s\"?",autobitmask);
 								}
+								eof_clear_input();
+								key[KEY_Y] = 0;
+								key[KEY_N] = 0;
 								if(alert(NULL, autoprompt, NULL, "&Yes", "&No", 'y', 'n') == 1)
 								{	//If the user opts to assign this note's legacy bitmask to the edited note
 									for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, eof_selected_track); ctr2++)
@@ -4378,6 +4402,9 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 			{	//If the finger entries weren't invalid
 				if(eof_count_selected_notes(NULL, 0) > 1)
 				{	//If multiple notes are selected, warn the user
+					eof_clear_input();
+					key[KEY_O] = 0;
+					key[KEY_C] = 0;
 					if(alert(NULL, "Warning:  This information will be applied to all selected notes.", NULL, "&OK", "&Cancel", 0, 0) == 2)
 					{	//If user opts to cancel the operation
 						if(note_selection_updated)
@@ -4518,6 +4545,9 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 							}
 						}
 					}
+					eof_clear_input();
+					key[KEY_Y] = 0;
+					key[KEY_N] = 0;
 					if(function || (offerupdatefingering && (alert(NULL, "Update all instances of this note to use this fingering?", NULL, "&Yes", "&No", 'y', 'n') == 1)))
 					{	//If the user opts to update the fingering array of all matching notes (or if the calling function wanted all instances to be updated automatically)
 						for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
@@ -4599,6 +4629,9 @@ int eof_correct_chord_fingerings_option(char report, char *undo_made)
 				{	//If this note is a chord that isn't completely string muted
 					if(eof_pro_guitar_note_fingering_valid(tp, ctr2) != 1)
 					{	//If the fingering for this chord isn't valid or is undefined
+						eof_clear_input();
+						key[KEY_Y] = 0;
+						key[KEY_N] = 0;
 						if(!user_prompted && (alert(NULL, "Some chords don't have correct finger information.", "Update them now?", "&Yes", "&No", 'y', 'n') != 1))
 						{	//If the user does not opt to update the fingering
 							return 0;
@@ -5257,6 +5290,9 @@ int eof_menu_arpeggio_erase_all(void)
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run unless a pro guitar track is active
 
+	eof_clear_input();
+	key[KEY_Y] = 0;
+	key[KEY_N] = 0;
 	if(alert(NULL, "Erase all arpeggios from this track?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -5610,6 +5646,9 @@ int eof_menu_trill_erase_all(void)
 	if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		prompt = drum_track_prompt;	//If this is a drum track, refer to the sections as "special drum rolls" instead of "trills"
 
+	eof_clear_input();
+	key[KEY_Y] = 0;
+	key[KEY_N] = 0;
 	if(alert(NULL, prompt, NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -5631,6 +5670,9 @@ int eof_menu_tremolo_erase_all(void)
 	if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		prompt = drum_track_prompt;	//If this is a drum track, refer to the sections as "drum rolls" instead of "tremolos"
 
+	eof_clear_input();
+	key[KEY_Y] = 0;
+	key[KEY_N] = 0;
 	if(alert(NULL, prompt, NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -5645,6 +5687,9 @@ int eof_menu_slider_erase_all(void)
 	if((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT))
 		return 1;	//Do not allow this function to run unless a legacy guitar track is active
 
+	eof_clear_input();
+	key[KEY_Y] = 0;
+	key[KEY_N] = 0;
 	if(alert(NULL, "Erase all slider sections from this track?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -5713,6 +5758,9 @@ int eof_menu_note_edit_name(void)
 		{
 			if((eof_etext[0] == '\0') && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If the user kept the name field empty and this is a pro guitar track, offer to apply auto-detected names
+				eof_clear_input();
+				key[KEY_Y] = 0;
+				key[KEY_N] = 0;
 				if(alert(NULL, "Apply automatically-detected chord names?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 				{	//If the user opts to apply auto-detected names
 					auto_apply = 1;
@@ -6003,6 +6051,9 @@ int eof_menu_copy_solos_track_number(EOF_SONG *sp, int sourcetrack, int desttrac
 		return 0;	//Source track has no solo phrases
 	if(eof_get_num_solos(sp, desttrack))
 	{	//If there are already solos in the destination track
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
 		if(alert(NULL, "Warning:  Existing solo phrases in this track will be lost.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user does not opt to continue
 			return 0;
@@ -6103,6 +6154,9 @@ int eof_menu_copy_sp_track_number(EOF_SONG *sp, int sourcetrack, int desttrack)
 		return 0;	//Source track has no star power phrases
 	if(eof_get_num_star_power_paths(sp, desttrack))
 	{	//If there are already star power phrases in the destination track
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
 		if(alert(NULL, "Warning:  Existing star power phrases in this track will be lost.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user does not opt to continue
 			return 0;
@@ -6203,6 +6257,9 @@ int eof_menu_copy_arpeggio_track_number(EOF_SONG *sp, int sourcetrack, int destt
 		return 0;	//Source track has no arpeggio phrases
 	if(eof_get_num_arpeggios(sp, desttrack))
 	{	//If there are already arpeggio phrases in the destination track
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
 		if(alert(NULL, "Warning:  Existing arpeggio phrases in this track will be lost.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user does not opt to continue
 			return 0;
@@ -6303,6 +6360,9 @@ int eof_menu_copy_trill_track_number(EOF_SONG *sp, int sourcetrack, int desttrac
 		return 0;	//Source track has no trill phrases
 	if(eof_get_num_trills(sp, desttrack))
 	{	//If there are already trill phrases in the destination track
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
 		if(alert(NULL, "Warning:  Existing trill phrases in this track will be lost.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user does not opt to continue
 			return 0;
@@ -6403,6 +6463,9 @@ int eof_menu_copy_tremolo_track_number(EOF_SONG *sp, int sourcetrack, int desttr
 		return 0;	//Source track has no tremolo phrases
 	if(eof_get_num_tremolos(sp, desttrack))
 	{	//If there are already tremolo phrases in the destination track
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
 		if(alert(NULL, "Warning:  Existing tremolo phrases in this track will be lost.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user does not opt to continue
 			return 0;

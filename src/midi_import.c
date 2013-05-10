@@ -699,6 +699,9 @@ EOF_SONG * eof_import_midi(const char * fn)
 								{
 									if(ustrstr(text,"PART") || (ustrstr(text,"HARM") == text))
 									{	//If this is a track that wasn't identified above, yet contains the word "PART" in the name (or begins with "HARM")
+										eof_clear_input();
+										key[KEY_Y] = 0;
+										key[KEY_N] = 0;
 										if(alert("Unsupported track:", text, "Import raw data?", "&Yes", "&No", 'y', 'n') == 1)
 										{	//If the user opts to import the raw track data
 											eof_MIDI_add_track(sp, eof_get_raw_MIDI_data(eof_work_midi, track[i], 0));	//Add this to the linked list of raw MIDI track data
@@ -1010,6 +1013,9 @@ set_window_title(debugtext);
 	/* If a mid beat tempo or TS change was found, offer to store the tempo map and the BEAT track into the project */
 	if(midbeatchangefound)
 	{
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
 		if(alert("Warning:  There were one or more mid beat tempo/TS changes.", "Store the tempo track into the project?", "(Recommended if creating RB3 upgrades)", "&Yes", "&No", 'y', 'n') == 1)
 		{	//If the user opts to import the tempo track
 			struct eof_MIDI_data_track *ptr;
@@ -1039,6 +1045,9 @@ set_window_title(debugtext);
 			if(beat_track)
 			{	//If there was a beat track found
 				char *beattrackname = "(BEAT)";
+				eof_clear_input();
+				key[KEY_Y] = 0;
+				key[KEY_N] = 0;
 				if(alert("Store the BEAT track as well?", "(Recommended)", NULL, "&Yes", "&No", 'y', 'n') == 1)
 				{	//If the user opts to store the beat track
 					ptr = eof_get_raw_MIDI_data(eof_work_midi, beat_track, 0);
@@ -1063,6 +1072,9 @@ set_window_title(debugtext);
 					eof_MIDI_add_track(sp, ptr);	//Add this to the linked list of raw MIDI track data
 				}
 			}
+			eof_clear_input();
+			key[KEY_Y] = 0;
+			key[KEY_N] = 0;
 			if(alert("Lock the tempo map to preserve sync?", "(Recommended)", NULL, "&Yes", "&No", 'y', 'n') == 1)
 			{	//If the user opts to lock the tempo map
 				sp->tags->tempo_map_locked |= 1;
@@ -2595,6 +2607,9 @@ eof_log("\tThird pass complete", 1);
 			eof_cursor_visible = 0;
 			eof_pen_visible = 0;
 			eof_show_mouse(screen);
+			eof_clear_input();
+			key[KEY_Y] = 0;
+			key[KEY_N] = 0;
 			if(alert(NULL, "Import lane 1 forced HOPO bass notes as open strums (ie. this is a Guitar Hero chart)?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 			{	//If the user opts to import lane 1 HOPO bass notes as open strums
 				sp->legacy_track[tracknum]->numlanes = 6;						//Set this track to have 6 lanes instead of 5

@@ -442,6 +442,9 @@ int eof_compare_set_ini_string_field(char *dest, char *src, unsigned long maxcha
 		{	//If the calling function wanted to check for differences and prompt the user to overwrite
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Song property \"%s\" altered in INI file", tag);
 			eof_log(eof_log_string, 1);
+			eof_clear_input();
+			key[KEY_Y] = 0;
+			key[KEY_N] = 0;
 			if(alert("Warning:  The INI file has been externally edited.", "Merge its changes with the active project?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 			{	//If the user did not opt to merge the changes into the project
 				return 1;	//Return user cancellation
@@ -473,6 +476,9 @@ int eof_compare_set_ini_boolean(char *status, char original, char *string, int *
 	{	//If the determined boolean status does not match the supplied original value, and the calling function wanted to prompt the user in such a case
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Song boolean \"%s\" altered in INI file", tag);
 		eof_log(eof_log_string, 1);
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
 		if(alert("Warning:  The INI file has been externally edited.", "Merge its changes with the active project?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user did not opt to merge the changes into the project
 			return 1;	//Return user cancellation
@@ -520,6 +526,9 @@ int eof_compare_set_ini_string_setting(EOF_SONG *sp, char *tag, char *value, int
 		eof_log(eof_log_string, 1);
 		if(*function)
 		{	//If the calling function wanted to prompt the user before changing/adding an INI setting
+			eof_clear_input();
+			key[KEY_Y] = 0;
+			key[KEY_N] = 0;
 			if(alert("Warning:  The INI file has been externally edited.", "Merge its changes with the active project?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 			{	//If the user did not opt to merge the changes into the project
 				return 1;	//Return user cancellation
@@ -583,6 +592,9 @@ int eof_compare_set_ini_pro_guitar_tuning(EOF_PRO_GUITAR_TRACK *tp, char *string
 		if(changes || (ctr != tp->numstrings))
 		{	//If the INI tag defined a different number of strings, or a different tuning for any of them
 			eof_log("Pro guitar/bass tuning tag altered in INI file", 1);
+			eof_clear_input();
+			key[KEY_Y] = 0;
+			key[KEY_N] = 0;
 			if(alert("Warning:  The INI file has been externally edited.", "Merge its changes with the active project?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 			{	//If the user did not opt to merge the changes into the project
 				return 1;	//Return user cancellation
@@ -608,6 +620,9 @@ int eof_compare_set_ini_integer(long *value, long original, char *string, int *f
 	{	//If the converted number does not match the supplied original value, and the calling function wanted to prompt the user in such a case
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Song property \"%s\" altered in INI file", tag);
 		eof_log(eof_log_string, 1);
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
 		if(alert("Warning:  The INI file has been externally edited.", "Merge its changes with the active project?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user did not opt to merge the changes into the project
 			return 1;	//Return user cancellation

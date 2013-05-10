@@ -2575,6 +2575,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	eof_clear_input();
 	if(eof_use_ts && !eof_song->tags->tempo_map_locked)
 	{	//If user has enabled the preference to import time signatures, and the project's tempo map isn't locked
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
 		if(alert(NULL, "Import Guitar Pro file's time signatures?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 		{	//If the user opts to import those from this Guitar Pro file into the active project
 			import_ts = 1;

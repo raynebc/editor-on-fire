@@ -314,6 +314,9 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	int standard_tuning = 0, non_standard_chords = 0, barre_chords = 0, power_chords = 0, notenum, dropd_tuning = 1, dropd_power_chords = 0, open_chords = 0, double_stops = 0, palm_mutes = 0, harmonics = 0, hopo = 0, tremolo = 0, slides = 0, bends = 0, tapping = 0, vibrato = 0, slappop = 0, octaves = 0, fifths_and_octaves = 0;	//Used for technique detection
 	char is_bass = 0;	//Is set to nonzero if the specified track is to be considered a bass guitar track
 	char end_phrase_found = 0;	//Will track if there was a manually defined END phrase
+	unsigned long chordid, handshapectr;
+	double handshapestart, handshapeend;
+	long nextnote;
 
 	eof_log("eof_export_rocksmith() entered", 1);
 
@@ -1219,80 +1222,77 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 			}
 
 			//Write hand shapes
-			if(numchords)
-			{	//If there's at least one chord in this difficulty
-				unsigned long chordid, handshapectr = 0;
-				double handshapestart, handshapeend;
-				long nextnote;
+			//Count the number of hand shapes to write
+			handshapectr = 0;
+			for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
+			{	//For each note in the track
+				if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_colors(sp, track, ctr3) > 1) && !eof_is_string_muted(sp, track, ctr3))
+				{	//If this note is in this difficulty and is a chord that isn't fully string muted
+					unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
 
-				//Count the number of hand shapes to write
-				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
-				{	//For each note in the track
-					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_colors(sp, track, ctr3) > 1) && !eof_is_string_muted(sp, track, ctr3))
-					{	//If this note is in this difficulty and is a chord that isn't fully string muted
-						unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
-
-						//Find this chord's ID
-						for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
-						{	//For each of the entries in the unique chord list
-							if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
-							{	//If this note matches a chord entry
-								chordid = ctr4;	//Store the chord entry number
-								break;
-							}
+					//Find this chord's ID
+					for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
+					{	//For each of the entries in the unique chord list
+						if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
+						{	//If this note matches a chord entry
+							chordid = ctr4;	//Store the chord entry number
+							break;
 						}
-						if(ctr4 >= chordlistsize)
-						{	//If the chord couldn't be found
-							allegro_message("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.");
-							eof_log("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.", 1);
-							if(chordlist)
-							{	//If the chord list was built
-								free(chordlist);
-							}
-							return 0;	//Return error
-						}
-						handshapestart = (double)eof_get_note_pos(sp, track, ctr3) / 1000.0;	//Store this chord's start position (in seconds)
-
-						//If this chord is at the beginning of an arpeggio phrase, skip the rest of the notes in that phrase
-						for(ctr5 = 0; ctr5 < tp->arpeggios; ctr5++)
-						{	//For each arpeggio phrase in the track
-							if((tp->note[ctr3]->pos == tp->arpeggio[ctr5].start_pos) && (tp->note[ctr3]->type == tp->arpeggio[ctr5].difficulty))
-							{	//If this chord's start position matches that of an arpeggio phrase in this track difficulty
-								while(1)
-								{
-									nextnote = eof_fixup_next_note(sp, track, ctr3);
-									if((nextnote >= 0) && (tp->note[nextnote]->pos <= tp->arpeggio[ctr5].end_pos))
-									{	//If there is another note and it is in the same arpeggio phrase
-										ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they are also in the phrase
-									}
-									else
-									{	//The next note (if any) is not in the arpeggio phrase
-										break;	//Break from while loop
-									}
-								}
-								break;	//Break from for loop
-							}
-						}
-
-						//Examine subsequent notes to see if they match this chord
-						while(1)
-						{
-							nextnote = eof_fixup_next_note(sp, track, ctr3);
-							if((nextnote >= 0) && !eof_note_compare_simple(sp, track, chord, nextnote))
-							{	//If there is another note and it matches this chord
-								ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
-							}
-							else
-							{	//The next note (if any) is not a repeat of this note
-								handshapeend = ((double)eof_get_note_pos(sp, track, ctr3) + (double)eof_get_note_length(sp, track, ctr3)) / 1000.0;	//End the hand shape at the end of this chord
-								break;	//Break from while loop
-							}
-						}
-
-						handshapectr++;	//One more hand shape has been counted
 					}
-				}
+					if(ctr4 >= chordlistsize)
+					{	//If the chord couldn't be found
+						allegro_message("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.");
+						eof_log("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.", 1);
+						if(chordlist)
+						{	//If the chord list was built
+							free(chordlist);
+						}
+						return 0;	//Return error
+					}
+					handshapestart = (double)eof_get_note_pos(sp, track, ctr3) / 1000.0;	//Store this chord's start position (in seconds)
 
+					//If this chord is at the beginning of an arpeggio phrase, skip the rest of the notes in that phrase
+					for(ctr5 = 0; ctr5 < tp->arpeggios; ctr5++)
+					{	//For each arpeggio phrase in the track
+						if((tp->note[ctr3]->pos == tp->arpeggio[ctr5].start_pos) && (tp->note[ctr3]->type == tp->arpeggio[ctr5].difficulty))
+						{	//If this chord's start position matches that of an arpeggio phrase in this track difficulty
+							while(1)
+							{
+								nextnote = eof_fixup_next_note(sp, track, ctr3);
+								if((nextnote >= 0) && (tp->note[nextnote]->pos <= tp->arpeggio[ctr5].end_pos))
+								{	//If there is another note and it is in the same arpeggio phrase
+									ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they are also in the phrase
+								}
+								else
+								{	//The next note (if any) is not in the arpeggio phrase
+									break;	//Break from while loop
+								}
+							}
+							break;	//Break from for loop
+						}
+					}
+
+					//Examine subsequent notes to see if they match this chord
+					while(1)
+					{
+						nextnote = eof_fixup_next_note(sp, track, ctr3);
+						if((nextnote >= 0) && !eof_note_compare_simple(sp, track, chord, nextnote))
+						{	//If there is another note and it matches this chord
+							ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
+						}
+						else
+						{	//The next note (if any) is not a repeat of this note
+							handshapeend = ((double)eof_get_note_pos(sp, track, ctr3) + (double)eof_get_note_length(sp, track, ctr3)) / 1000.0;	//End the hand shape at the end of this chord
+							break;	//Break from while loop
+						}
+					}
+
+					handshapectr++;	//One more hand shape has been counted
+				}
+			}
+
+			if(handshapectr)
+			{	//If there was at least one hand shape to write
 				//Write the hand shapes
 				(void) snprintf(buffer, sizeof(buffer) - 1, "      <handShapes count=\"%lu\">\n", handshapectr);
 				(void) pack_fputs(buffer, fp);
@@ -1532,6 +1532,9 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 		{	//If this hand position is defined for the specified difficulty
 			if(warnuser)
 			{
+				eof_clear_input();
+				key[KEY_Y] = 0;
+				key[KEY_N] = 0;
 				if(alert(NULL, "Existing fret hand positions for the active track difficulty will be removed.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 				{	//If the user does not opt to remove the existing hand positions
 					return;
@@ -2188,6 +2191,9 @@ int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track)
 		{	//If this beat contains a RS section
 			if(sp->beat[ctr]->contained_section_event < 0)
 			{	//But it doesn't contain a RS phrase
+				eof_clear_input();
+				key[KEY_Y] = 0;
+				key[KEY_N] = 0;
 				if(!user_prompted && alert("At least one Rocksmith section doesn't have a Rocksmith phrase at the same position.", "This can cause the chart's sections to work incorrectly", "Would you like to place Rocksmith phrases to correct this?", "&Yes", "&No", 'y', 'n') != 1)
 				{	//If the user hasn't already answered this prompt, and doesn't opt to correct the issue
 					return 2;	//Return user cancellation
@@ -2213,6 +2219,9 @@ int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track)
 					eof_process_beat_statistics(sp, track);	//Rebuild beat statistics to check if user added a Rocksmith phrase
 					if(sp->beat[ctr]->contained_section_event < 0)
 					{	//If user added a text event, but it wasn't a Rocksmith phrase
+						eof_clear_input();
+						key[KEY_Y] = 0;
+						key[KEY_N] = 0;
 						if(alert("You didn't add a Rocksmith phrase.", NULL, "Do you want to continue adding RS phrases for RS sections that are missing them?", "&Yes", "&No", 'y', 'n') != 1)
 						{	//If the user doesn't opt to finish correcting the issue
 							return 2;	//Return user cancellation
