@@ -88,6 +88,11 @@ Export functions are expected to:
 #define malloc_err malloc
 #endif
 
+#ifdef S_SPLINT_S
+//Ensure Splint checks the code for EOF's code base
+#define EOF_BUILD
+#endif
+
 #ifndef EOF_BUILD
 	#define assert_wrapper(expression) (assert(expression))
 		//Define this as a macro so that the line number and source file given in the assert message remain accurate

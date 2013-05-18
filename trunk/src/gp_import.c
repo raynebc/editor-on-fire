@@ -1,3 +1,8 @@
+#ifdef S_SPLINT_S
+//Ensure Splint checks the code for EOF's code base
+#define EOF_BUILD
+#endif
+
 #ifdef EOF_BUILD
 #include <allegro.h>
 #include <assert.h>
@@ -68,7 +73,7 @@ int eof_read_gp_string(PACKFILE *inf, unsigned *length, char *buffer, char readf
 	{	//If the calling function passed a non NULL pointer
 		*length = len;	//Return the string length through it
 	}
-	(void) pack_fread(buffer, (size_t)len, inf);	//Read the string
+	(void) pack_fread(buffer, (long)len, inf);	//Read the string
 	buffer[len] = '\0';	//Terminate the string
 
 	return 1;	//Return success
@@ -3591,16 +3596,16 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//If this string is used
 									if(np[ctr2]->frets[ctr4] & 0x80)
 									{	//If this string is muted
-										snprintf(temp, sizeof(temp) - 1, "X");
+										(void) snprintf(temp, sizeof(temp) - 1, "X");
 									}
 									else
 									{
-										snprintf(temp, sizeof(temp) - 1, "%u", np[ctr2]->frets[ctr4]);
+										(void) snprintf(temp, sizeof(temp) - 1, "%u", np[ctr2]->frets[ctr4]);
 									}
 								}
 								else
 								{
-									snprintf(temp, sizeof(temp) - 1, "_");
+									(void) snprintf(temp, sizeof(temp) - 1, "_");
 								}
 								if(ctr4 + 1 < strings[ctr2])
 								{	//If there is another string
