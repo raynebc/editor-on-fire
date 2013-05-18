@@ -3407,6 +3407,8 @@ int eof_load_data(void)
 	eof_image[EOF_IMAGE_NOTE_GREEN_CYMBAL_HIT] = load_pcx("eof.dat#note_green_hit_cymbal.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_ORANGE_CYMBAL] = load_pcx("eof.dat#note_orange_cymbal.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_ORANGE_CYMBAL_HIT] = load_pcx("eof.dat#note_orange_hit_cymbal.pcx", NULL);
+	eof_image[EOF_IMAGE_TAB_FG] = load_pcx("eof.dat#tabfg.pcx", NULL);
+	eof_image[EOF_IMAGE_TAB_BG] = load_pcx("eof.dat#tabbg.pcx", NULL);
 
 	eof_font = load_bitmap_font("eof.dat#font_times_new_roman.pcx", NULL, NULL);
 	if(!eof_font)

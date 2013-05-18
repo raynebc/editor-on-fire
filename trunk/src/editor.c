@@ -2105,7 +2105,6 @@ if(key[KEY_PAUSE])
 			}
 
 	/* set pro guitar fret values (CTRL+#, CTRL+Fn #, CTRL+X, CTRL+~, CTRL++, CTRL+-) */
-	/* change active difficulty number (CTRL+SHIFT+~, CTRL+SHIFT+#, CTRL+SHIFT+Fn #) */
 	/* toggle pro guitar ghost status (CTRL+G) */
 			if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 			{	//If CTRL is held but SHIFT is not
@@ -2248,148 +2247,6 @@ if(key[KEY_PAUSE])
 					key[KEY_G] = 0;
 				}
 			}//If CTRL is held but SHIFT is not
-			else if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
-			{	//If both CTRL and SHIFT are held
-				//CTRL+SHIFT+~, CTRL+SHIFT+# and CTRL+SHIFT+Fn # change the active difficulty
-				if(key[KEY_TILDE])
-				{
-					(void) eof_set_active_difficulty(0);
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_TILDE] = 0;
-				}
-				if(key[KEY_1])
-				{
-					(void) eof_set_active_difficulty(1);
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_1] = 0;
-				}
-				else if(key[KEY_2])
-				{
-					(void) eof_set_active_difficulty(2);
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_2] = 0;
-				}
-				else if(key[KEY_3])
-				{
-					(void) eof_set_active_difficulty(3);
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_3] = 0;
-				}
-				else if(key[KEY_4])
-				{
-					(void) eof_set_active_difficulty(4);
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_4] = 0;
-				}
-				else if(key[KEY_5])
-				{
-					(void) eof_set_active_difficulty(5);
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_5] = 0;
-				}
-				else if(key[KEY_6])
-				{
-					(void) eof_set_active_difficulty(6);
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_6] = 0;
-				}
-				else if(key[KEY_7])
-				{
-					(void) eof_set_active_difficulty(7);
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_7] = 0;
-				}
-				else if(key[KEY_8])
-				{
-					(void) eof_set_active_difficulty(8);
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_8] = 0;
-				}
-				else if(key[KEY_9])
-				{
-					(void) eof_set_active_difficulty(9);
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_9] = 0;
-				}
-				else if(key[KEY_0])
-				{
-					(void) eof_set_active_difficulty(10);
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_0] = 0;
-				}
-				else if(key[KEY_F1])
-				{
-					(void) eof_set_active_difficulty(11);
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_F1] = 0;
-				}
-				else if(key[KEY_F2])
-				{
-					(void) eof_set_active_difficulty(12);
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_F2] = 0;
-				}
-				else if(key[KEY_F3])
-				{
-					(void) eof_set_active_difficulty(13);
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_F3] = 0;
-				}
-				else if(key[KEY_F4])
-				{
-					(void) eof_set_active_difficulty(14);
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_F4] = 0;
-				}
-				else if(key[KEY_F5])
-				{
-					(void) eof_set_active_difficulty(15);
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_F5] = 0;
-				}
-				else if(key[KEY_F6])
-				{
-					(void) eof_set_active_difficulty(16);
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_F6] = 0;
-				}
-				else if(key[KEY_F7])
-				{
-					(void) eof_set_active_difficulty(17);
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_F7] = 0;
-				}
-				else if(key[KEY_F8])
-				{
-					(void) eof_set_active_difficulty(18);
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_F8] = 0;
-				}
-				else if(key[KEY_F9])
-				{
-					(void) eof_set_active_difficulty(19);
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_F9] = 0;
-				}
-				else if(key[KEY_F10])
-				{
-					(void) eof_set_active_difficulty(20);
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_F10] = 0;
-				}
-				else if(key[KEY_F11])
-				{
-					(void) eof_set_active_difficulty(21);
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_F11] = 0;
-				}
-				else if(key[KEY_F12])
-				{
-					(void) eof_set_active_difficulty(22);
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_F12] = 0;
-				}
-			}//If both CTRL and SHIFT are held
 			else if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 			{	//If SHIFT is held, but CTRL is not
 	/* set fret value shortcut bitmask (SHIFT+Esc, SHIFT+Fn #) */
@@ -2473,6 +2330,149 @@ if(key[KEY_PAUSE])
 				}
 			}//If SHIFT is held, but CTRL is not
 		}//If the active track is a pro guitar track
+
+	/* set active difficulty number (CTRL+SHIFT+~, CTRL+SHIFT+#, CTRL+SHIFT+Fn #) */
+		if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+		{	//If both CTRL and SHIFT are held
+			if(key[KEY_TILDE])
+			{
+				(void) eof_set_active_difficulty(0);
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_TILDE] = 0;
+			}
+			if(key[KEY_1])
+			{
+				(void) eof_set_active_difficulty(1);
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_1] = 0;
+			}
+			else if(key[KEY_2])
+			{
+				(void) eof_set_active_difficulty(2);
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_2] = 0;
+			}
+			else if(key[KEY_3])
+			{
+				(void) eof_set_active_difficulty(3);
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_3] = 0;
+			}
+			else if(key[KEY_4])
+			{
+				(void) eof_set_active_difficulty(4);
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_4] = 0;
+			}
+			else if(key[KEY_5])
+			{
+				(void) eof_set_active_difficulty(5);
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_5] = 0;
+			}
+			else if(key[KEY_6])
+			{
+				(void) eof_set_active_difficulty(6);
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_6] = 0;
+			}
+			else if(key[KEY_7])
+			{
+				(void) eof_set_active_difficulty(7);
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_7] = 0;
+			}
+			else if(key[KEY_8])
+			{
+				(void) eof_set_active_difficulty(8);
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_8] = 0;
+			}
+			else if(key[KEY_9])
+			{
+				(void) eof_set_active_difficulty(9);
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_9] = 0;
+			}
+			else if(key[KEY_0])
+			{
+				(void) eof_set_active_difficulty(10);
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_0] = 0;
+			}
+			else if(key[KEY_F1])
+			{
+				(void) eof_set_active_difficulty(11);
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_F1] = 0;
+			}
+			else if(key[KEY_F2])
+			{
+				(void) eof_set_active_difficulty(12);
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_F2] = 0;
+			}
+			else if(key[KEY_F3])
+			{
+				(void) eof_set_active_difficulty(13);
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_F3] = 0;
+			}
+			else if(key[KEY_F4])
+			{
+				(void) eof_set_active_difficulty(14);
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_F4] = 0;
+			}
+			else if(key[KEY_F5])
+			{
+				(void) eof_set_active_difficulty(15);
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_F5] = 0;
+			}
+			else if(key[KEY_F6])
+			{
+				(void) eof_set_active_difficulty(16);
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_F6] = 0;
+			}
+			else if(key[KEY_F7])
+			{
+				(void) eof_set_active_difficulty(17);
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_F7] = 0;
+			}
+			else if(key[KEY_F8])
+			{
+				(void) eof_set_active_difficulty(18);
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_F8] = 0;
+			}
+			else if(key[KEY_F9])
+			{
+				(void) eof_set_active_difficulty(19);
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_F9] = 0;
+			}
+			else if(key[KEY_F10])
+			{
+				(void) eof_set_active_difficulty(20);
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_F10] = 0;
+			}
+			else if(key[KEY_F11])
+			{
+				(void) eof_set_active_difficulty(21);
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_F11] = 0;
+			}
+			else if(key[KEY_F12])
+			{
+				(void) eof_set_active_difficulty(22);
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_F12] = 0;
+			}
+		}//If both CTRL and SHIFT are held
 
 	/* set mini piano octave focus (SHIFT+# in a vocal track) */
 	/* toggle lane (SHIFT+# in a non vocal track) */
@@ -2986,7 +2986,7 @@ void eof_editor_logic(void)
 {
 //	eof_log("eof_editor_logic() entered");
 
-	unsigned long i, note, notepos;
+	unsigned long i, note, notepos, numtabs;
 	unsigned long tracknum;
 	unsigned long bitmask = 0;	//Used to reduce duplicated logic
 	EOF_NOTE * new_note = NULL;
@@ -3617,36 +3617,37 @@ void eof_editor_logic(void)
 	}//If the chart is not paused
 
 	/* select difficulty */
-	if((mouse_y >= eof_window_editor->y + 7) && (mouse_y < eof_window_editor->y + 20 + 8) && (mouse_x > 12) && (mouse_x < 12 + 5 * 80 + 12 - 1) && (mouse_b & 1) && !eof_full_screen_3d)
+	numtabs = eof_get_number_displayed_tabs();
+	if((mouse_y >= eof_window_editor->y + 7) && (mouse_y < eof_window_editor->y + 20 + 8) && (mouse_x > 12) && (mouse_x < 12 + numtabs * 80 + 12 - 1) && (mouse_b & 1) && !eof_full_screen_3d)
 	{	//If the left mouse button is held down and the mouse is over one of the difficulty tabs, and full screen 3d mode isn't in effect
 		eof_hover_type = (mouse_x - 12) / 80;	//Determine which tab number was clicked
 		if(eof_hover_type < 0)
-		{
+		{	//Bounds check
 			eof_hover_type = 0;
 		}
-		else if(eof_hover_type > 4)
+		else if(eof_hover_type >= numtabs)
 		{
-			eof_hover_type = 4;
+			eof_hover_type = numtabs - 1;
 		}
 		if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 		{	//If this track is not limited to 5 difficulties
-			if(eof_hover_type == 4)
-			{	//If the fifth tab was clicked
+			if(eof_hover_type == numtabs - 1)
+			{	//If the last tab was clicked
 				eof_hover_type = eof_song->track[eof_selected_track]->numdiffs - 1;	//Change to the highest difficulty in the track
 			}
 			else if(eof_hover_type > 0)
 			{	//If the first tab (which will already change to the track's lowest difficulty) wasn't clicked
-				if(eof_note_type < 2)
-				{	//If the tabs represent the 3 lowest difficulties
+				if(eof_note_type < numtabs / 2)
+				{	//If the tabs represent the lowest difficulties
 					eof_hover_type = eof_hover_type - 1;
 				}
-				else if(eof_note_type >= eof_song->track[eof_selected_track]->numdiffs - 1)
-				{	//If the tabs represent the 3 highest difficulties
-					eof_hover_type = eof_hover_type +  eof_song->track[eof_selected_track]->numdiffs - 4;
+				else if(eof_note_type >= eof_song->track[eof_selected_track]->numdiffs - (numtabs / 2))
+				{	//If the tabs represent the highest difficulties
+					eof_hover_type = eof_song->track[eof_selected_track]->numdiffs - numtabs + 1 + eof_hover_type;
 				}
 				else
 				{	//If the center tab represents the active difficulty
-					eof_hover_type = eof_note_type - 2 + eof_hover_type;
+					eof_hover_type = eof_hover_type + eof_note_type - (numtabs / 2);
 				}
 			}
 			mouse_b &= ~1;	//Clear the left mouse button status or else the tab logic will run during next loop and cause the highest difficulty to be accepted
@@ -5286,10 +5287,10 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 	int pos = eof_music_pos / eof_zoom;	//Current seek position compensated for zoom level
 	int zoom = eof_av_delay / eof_zoom;	//AV delay compensated for zoom level
 	unsigned long i;
-	unsigned long selected_tab = eof_note_type;	//Unless the track's difficulty limit is released, the active tab is the same as the active difficulty number
+	unsigned long selected_tab;
 	int lpos;							//The position of the first beatmarker
 	char *tab_name;
-	char diff_number[5] = {0};			//Used to generate the string for a numbered difficulty
+	char tab_text[5] = {0};			//Used to generate the string for a numbered difficulty
 	int scroll_pos;
 
 	if(!eof_song_loaded || !window)
@@ -5319,68 +5320,77 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 	/* draw the difficulty tabs (after the section names, which otherwise render a couple pixels over the tabs) */
 	if(window != eof_window_editor2)
 	{	//Only draw difficulty tabs for the main piano roll
-		if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
-		{	//If this track is not limited to 5 difficulties
-			if(eof_note_type < 2)
-			{	//If the tabs represent the 3 lowest difficulties
-				selected_tab = 1 + eof_note_type;
+		unsigned long numtabs = eof_get_number_displayed_tabs();	//Determine how many tabs are to be displayed
+
+		//Determine which tab is active (in the foreground)
+		if(!(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS))
+		{	//If the track's difficulty limit has not been removed
+			selected_tab = eof_note_type;	//The active tab is the same as the active difficulty number
+		}
+		else
+		{
+			if(eof_note_type < numtabs / 2)
+			{	//If any of the left-of-center tabs represent the active difficulty
+				selected_tab = eof_note_type + 1;
 			}
-			else if(eof_note_type >= eof_song->track[eof_selected_track]->numdiffs - 1)
-			{	//If the tabs represent the 3 highest difficulties
-				selected_tab = 4 - (eof_song->track[eof_selected_track]->numdiffs - eof_note_type);
+			else if(eof_note_type >= eof_song->track[eof_selected_track]->numdiffs - (numtabs / 2))
+			{	//If any of the right-of-center tabs represent the active difficulty
+				selected_tab = numtabs - (eof_song->track[eof_selected_track]->numdiffs - eof_note_type) - 1;
 			}
 			else
-			{	//If the center tab represents the active difficulty
-				selected_tab = 2;
+			{	//Otherwise the center tab represents the active difficulty
+				selected_tab = numtabs / 2;
 			}
 		}
-		if(selected_tab > 5)
+		if(selected_tab >= numtabs)
 			selected_tab = 0;	//Bounds check
-		if(eof_selected_track == EOF_TRACK_VOCALS)
-			draw_sprite(window->screen, eof_image[EOF_IMAGE_VTAB0 + eof_vocals_tab], 0, 8);
-		else
-			draw_sprite(window->screen, eof_image[EOF_IMAGE_TAB0 + selected_tab], 0, 8);
 
-		for(i = 0; i < 5; i++)
-		{	//Draw difficulty tab text
+		//Render the tabs
+		for(i = 0; i < numtabs; i++)
+		{	//For each tab that needs to be rendered
+			if(i != selected_tab)
+			{	//Skip the active tab in this loop, it will render afterward
+				draw_sprite(window->screen, eof_image[EOF_IMAGE_TAB_BG], 8 + (i * 80), 8);
+			}
+		}
+		draw_sprite(window->screen, eof_image[EOF_IMAGE_TAB_FG], 8 + (selected_tab * 80) - 2, 8);	//The foreground tab is 4 pixels wider, so center it over the adjacent tabs
+
+		//Draw difficulty tab text
+		for(i = 0; i < numtabs; i++)
+		{	//For each difficulty tab rendered
 			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 			{	//If this track is not limited to 5 difficulties
 				if(i == 0)
 				{	//The first tab will be "<<"
-					(void) snprintf(diff_number, sizeof(diff_number) - 1, "<<");
+					(void) snprintf(tab_text, sizeof(tab_text) - 1, "<<");
 				}
-				else if(i == 4)
+				else if(i == numtabs - 1)
 				{	//The last tab will be ">>"
-					(void) snprintf(diff_number, sizeof(diff_number) - 1, ">>");
+					(void) snprintf(tab_text, sizeof(tab_text) - 1, ">>");
 				}
 				else
-				{	//The other tabs will be 3 of the difficulties, written as numbers
-					if(eof_note_type < 2)
-					{	//If the tabs represent the 3 lowest difficulties
-						(void) snprintf(diff_number, sizeof(diff_number) - 1, " %lu", i - 1);
-						if(eof_track_diff_populated_status[i - 1])
-						{	//If this difficulty is populated
-							diff_number[0] = '*';
-						}
+				{	//The other tabs will be rendered as difficulty numbers
+					unsigned char diffnum;
+
+					if(eof_note_type < numtabs / 2)
+					{	//If the tabs represent the lowest difficulties
+						diffnum = i - 1;
 					}
-					else if(eof_note_type >= eof_song->track[eof_selected_track]->numdiffs - 1)
-					{	//If the tabs represent the 3 highest difficulties
-						(void) snprintf(diff_number, sizeof(diff_number) - 1, " %lu", eof_song->track[eof_selected_track]->numdiffs - 4 + i);
-						if(eof_track_diff_populated_status[eof_song->track[eof_selected_track]->numdiffs - 4 + i])
-						{	//If this difficulty is populated
-							diff_number[0] = '*';
-						}
+					else if(eof_note_type >= eof_song->track[eof_selected_track]->numdiffs - (numtabs / 2))
+					{	//If the tabs represent the highest difficulties
+						diffnum = eof_song->track[eof_selected_track]->numdiffs - numtabs + 1 + i;
 					}
 					else
 					{	//If the center tab represents the active difficulty
-						(void) snprintf(diff_number, sizeof(diff_number) - 1, " %lu", i + eof_note_type - 2);
-						if(eof_track_diff_populated_status[i + eof_note_type - 2])
-						{	//If this difficulty is populated
-							diff_number[0] = '*';
-						}
+						diffnum = i + eof_note_type - (numtabs / 2);
+					}
+					(void) snprintf(tab_text, sizeof(tab_text) - 1, " %u", diffnum);
+					if(eof_track_diff_populated_status[diffnum])
+					{	//If this difficulty is populated
+						tab_text[0] = '*';
 					}
 				}
-				tab_name = diff_number;
+				tab_name = tab_text;
 			}
 			else if(eof_selected_track == EOF_TRACK_VOCALS)
 			{
@@ -6060,5 +6070,32 @@ unsigned char eof_set_active_difficulty(unsigned char diff)
 	{	//If the specified track difficulty is valid
 		eof_note_type = diff;	//Make it the active difficulty
 	}
+	eof_fix_window_title();
 	return eof_note_type_max;
+}
+
+unsigned long eof_get_number_displayed_tabs(void)
+{
+	unsigned long numtabs = 5;	//By default, 5 difficulty tabs display for a track
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 0;	//Error
+
+	//Determine how many tabs to draw
+	if(eof_selected_track == EOF_TRACK_VOCALS)
+	{	//If a vocal track is active
+		numtabs = 1;
+	}
+	else if(eof_song->track[eof_selected_track]->numdiffs > 5)
+	{	//If the track has more than 5 difficulties, determine how many tabs will be displayed based on EOF's program window width
+		//The tabs begin rendering 8 pixels from the left edge of the screen, end where the playback controls are rendered and need
+		// to allow two more pixels since the foreground tab is 2 pixels wider than background tabs
+		numtabs = (eof_screen_layout.controls_x - 10) / 80;	//Find the maximum number of displayable tabs
+		if(numtabs > eof_song->track[eof_selected_track]->numdiffs + 2)
+		{	//Only allow enough tabs to display the difficulties in use, plus an additional tab each for << and >>
+			numtabs = eof_song->track[eof_selected_track]->numdiffs + 2;
+		}
+	}
+
+	return numtabs;
 }
