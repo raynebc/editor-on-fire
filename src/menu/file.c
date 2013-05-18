@@ -24,9 +24,9 @@
 #include "../silence.h"	//For save_wav_with_silence_appended
 #include "beat.h"	//For eof_menu_beat_reset_offset()
 #include "edit.h"	//For eof_menu_edit_undo()
+#include "file.h"
 #include "note.h"	//For eof_correct_chord_fingerings()
 #include "song.h"
-#include "file.h"
 
 #ifdef USEMEMWATCH
 #include "../memwatch.h"
@@ -2130,7 +2130,7 @@ int eof_new_chart(char * filename)
 			{	//For each character in the user defined song folder, in reverse order
 				if(isspace(ugetat(eof_etext4, ctr2 - 1)))
 				{	//If the end of the string is a space character
-					usetat(eof_etext4, ctr2 - 1, '\0');	//Truncate it from the string
+					(void) usetat(eof_etext4, ctr2 - 1, '\0');	//Truncate it from the string
 				}
 				else
 				{
@@ -2547,8 +2547,9 @@ int eof_save_helper(char *destfilename)
 				(void) replace_filename(eof_temp_filename, newfolderpath, "guitar.wav", (int) sizeof(eof_temp_filename));
 				if(!exists(eof_temp_filename))
 				{	//If "guitar.wav" also does not exist
-					eof_get_rocksmith_wav_path(eof_temp_filename, newfolderpath, sizeof(eof_temp_filename));	//Rebuild the target path based on the song title
 					SAMPLE *decoded = alogg_create_sample_from_ogg(eof_music_track);	//Create PCM data from the loaded chart audio
+
+					eof_get_rocksmith_wav_path(eof_temp_filename, newfolderpath, sizeof(eof_temp_filename));	//Rebuild the target path based on the song title
 					set_window_title("Saving WAV file for use with Wwise.  Please wait.");
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Writing RS WAV file (%s)", eof_temp_filename);
 					eof_log(eof_log_string, 1);

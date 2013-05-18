@@ -6,6 +6,11 @@
 #include "Lyric_storage.h"
 #include "SRT_parse.h"
 
+#ifdef S_SPLINT_S
+//Ensure Splint checks the code for EOF's code base
+#define EOF_BUILD
+#endif
+
 #ifdef USEMEMWATCH
 #ifdef EOF_BUILD	//In the EOF code base, memwatch.h is at the root
 #include "../memwatch.h"

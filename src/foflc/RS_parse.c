@@ -6,6 +6,11 @@
 #include "Lyric_storage.h"
 #include "RS_parse.h"
 
+#ifdef S_SPLINT_S
+//Ensure Splint checks the code for EOF's code base
+#define EOF_BUILD
+#endif
+
 #ifdef EOF_BUILD
 #include "../main.h"
 #endif
