@@ -289,7 +289,7 @@ void eof_save_config(char * fn)
 	set_config_string("paths", "ps_path", eof_ps_executable_path);
 	set_config_string("paths", "ps_songs_path", eof_ps_songs_path);
 	set_config_string("paths", "songs_path", eof_songs_path);
-	set_config_string("paths", "songs_path", eof_songs_path);
+	set_config_string("paths", "eof_path", eof_last_eof_path);
 	set_config_string("paths", "ogg_path", eof_last_ogg_path);
 
 	/* write editor settings */

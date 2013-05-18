@@ -270,8 +270,8 @@ int eof_menu_file_new_supplement(char *directory, char check)
 
 	/* remove slash from folder name so we can check if it exists */
 	if((syscommand[uoffset(syscommand, ustrlen(syscommand) - 1)] == '\\') || (syscommand[uoffset(syscommand, ustrlen(syscommand) - 1)] == '/'))
-	{
-		syscommand[uoffset(syscommand, ustrlen(syscommand) - 1)] = '\0';
+	{	//If the path ends in a separator
+		syscommand[uoffset(syscommand, ustrlen(syscommand) - 1)] = '\0';	//Remove it
 	}
 	if(!file_exists(syscommand, FA_DIREC | FA_HIDDEN, NULL))
 	{	//If the folder doesn't exist,
@@ -1993,6 +1993,7 @@ int eof_new_chart(char * filename)
 	int temp_buffer_size = 0;
 	struct ID3Tag tag={NULL,0,0,0,0,0,0.0,NULL,0,NULL,NULL,NULL,NULL};
 	int ctr=0;
+	unsigned long ctr2;
 
 	if(filename == NULL)
 		return 1;	//Return failure
@@ -2124,6 +2125,19 @@ int eof_new_chart(char * filename)
 		}
 		else
 		{	//Create New Folder
+#ifdef ALLEGRO_WINDOWS
+			for(ctr2 = ustrlen(eof_etext4); ctr2 > 0; ctr2--)
+			{	//For each character in the user defined song folder, in reverse order
+				if(isspace(ugetat(eof_etext4, ctr2 - 1)))
+				{	//If the end of the string is a space character
+					usetat(eof_etext4, ctr2 - 1, '\0');	//Truncate it from the string
+				}
+				else
+				{
+					break;	//Otherwise break from the loop
+				}
+			}
+#endif
 			(void) ustrcpy(eof_etext3, eof_songs_path);
 			(void) ustrcat(eof_etext3, eof_etext4);
 		}
@@ -2892,7 +2906,7 @@ int eof_menu_file_gp_import(void)
 			free(eof_parsed_gp_file->track);
 			free(eof_parsed_gp_file->capos);
 			free(eof_parsed_gp_file);
-		}////The file was successfully parsed...
+		}//The file was successfully parsed...
 		else
 		{
 			allegro_message("Failure");

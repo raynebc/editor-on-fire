@@ -287,7 +287,12 @@ Custom track data block definitions
 *		1 byte:		Number of lanes played at this position
 *		EXTRA LANE NOTE CHUNK, for each lane played at this position
 *		{
-*			1 byte:		Lane number containing a playable note
+*			1 byte:		Lane number containing a gem
+			1 byte:		Number of flag bytes for this gem
+			EXTRA LANE FLAG CHUNK, for each flag byte specified above
+			{
+				[varies]:	The flags for this gem
+			}
 *		}
 *		4 bytes:	Note position (in milliseconds or delta ticks)
 *		4 bytes:	Note length (in milliseconds or delta ticks)

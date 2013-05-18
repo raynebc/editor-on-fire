@@ -25,6 +25,7 @@ int eof_undo_load_state(const char * fn)
 	EOF_SONG * sp = NULL;
 	PACKFILE * fp = NULL;
 	char rheader[16] = {0};
+	int old_eof_silence_loaded = eof_silence_loaded;	//Retain this value, since it is destroyed by eof_destroy_song()
 
  	eof_log("eof_undo_load_state() entered", 1);
 
@@ -56,6 +57,7 @@ int eof_undo_load_state(const char * fn)
 		eof_destroy_song(eof_song);	//Destroy the chart that is open
 	}
 	eof_song = sp;	//Replacing it with the loaded undo state
+	eof_silence_loaded = old_eof_silence_loaded;	//Restore the status of whether chart audio is loaded
 
 	(void) pack_fclose(fp);
 	return 1;

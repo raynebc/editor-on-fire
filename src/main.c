@@ -3553,11 +3553,17 @@ int eof_initialize(int argc, char * argv[])
 	eof_load_config("eof.cfg");
 
 	/* reset songs path */
-	if(eof_songs_path[0] == '\0')
-	{	//If the user-specified song folder couldn't be loaded from the config file above
+	/* remove slash from folder name so we can check if it exists */
+	if((eof_songs_path[uoffset(eof_songs_path, ustrlen(eof_songs_path) - 1)] == '\\') || (eof_songs_path[uoffset(eof_songs_path, ustrlen(eof_songs_path) - 1)] == '/'))
+	{	//If the path ends in a separator
+		eof_songs_path[uoffset(eof_songs_path, ustrlen(eof_songs_path) - 1)] = '\0';	//Remove it
+	}
+	if((eof_songs_path[0] == '\0') || !file_exists(eof_songs_path, FA_RDONLY | FA_HIDDEN | FA_DIREC, NULL))
+	{	//If the user-specified song folder couldn't be loaded from the config file above, or if the folder does not exist
 		get_executable_name(eof_songs_path, 1024);	//Set it to EOF's program file folder
 		(void) replace_filename(eof_songs_path, eof_songs_path, "", 1024);
 	}
+	put_backslash(eof_songs_path);	//Append a file separator if necessary
 
 	eof_zoom_backup = eof_zoom;	//Save this because it will be over-written in eof_set_display_mode()
 	if(eof_zoom_backup <= 0)
