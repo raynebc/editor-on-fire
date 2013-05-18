@@ -80,8 +80,8 @@ int eof_track_manage_rs_phrases_seek(DIALOG * d);
 	//Seeks to the beat containing the selected phrase
 int eof_track_manage_rs_phrases_add_or_remove_level(int function);
 	//Used by eof_track_manage_rs_phrases_add_level() and eof_track_manage_rs_phrases_delete_level() to manipulate the difficulties for the selected RS phrase
-	//If function is negative, the notes, arpeggios and hand positions in the active difficulty are deleted, and those of higher difficulties are decremented
-	//If function is >= 0, the notes, arpeggios and hand postions in the active difficulty are duplicated into the next difficulty, and those of higher difficulties are incremented
+	//If function is negative, the notes, arpeggios, hand positions and tremolos in the active difficulty are deleted, and those of higher difficulties are decremented
+	//If function is >= 0, the notes, arpeggios, hand positions and tremolos in the active difficulty are duplicated into the next difficulty, and those of higher difficulties are incremented
 int eof_track_manage_rs_phrases_add_level(DIALOG * d);
 	//Increments the difficulty level of the notes, arpeggios and hand positions in the selected phrase (either the selected instance or within all instances, depending on user selection)
 	//and copies the now higher-difficulty's content back into the active difficulty, making it convenient to author a new difficulty level for the notes in question.
@@ -90,6 +90,7 @@ int eof_track_manage_rs_phrases_remove_level(DIALOG * d);
 	//and deletes the affected notes in the current difficulty, making it convenient to remove a difficulty level for the notes in question.
 
 int eof_track_flatten_difficulties(void);	//Launches a dialog to specify a threshold distance and calls eof_flatten_difficulties on the active track difficulty
+int eof_track_unflatten_difficulties(void);	//Runs eof_unflatten_difficulties() on the active track difficulty
 
 void eof_prepare_track_menu(void);
 

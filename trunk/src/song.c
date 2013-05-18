@@ -5844,6 +5844,8 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 	if((sp == NULL) || (srctrack >= sp->tracks))
 		return;	//Invalid parameters
 
+ 	eof_log("eof_flatten_difficulties() entered", 1);
+
 	//Flatten notes
 	eof_track_sort_notes(sp, srctrack);				//This logic relies on notes being sorted by time and then by difficulty
 	notecount = eof_get_track_size(sp, srctrack);	//Cache this value, since any new notes will be appended to the track
@@ -5963,4 +5965,239 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 			}
 		}
 	}//If this is a pro guitar/bass track
+}
+
+void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long startpos, unsigned long endpos, int function, int prompt, char *undo_made)
+{
+	unsigned long ctr, ctr2, tracknum;
+	EOF_PRO_GUITAR_TRACK *tp;
+	EOF_PHRASE_SECTION *ptr;
+
+	if(!sp || !undo_made || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || (startpos >= endpos))
+		return;	//Invalid parameters
+
+	//Parse in reverse order so that notes can be appended to or deleted from the track in the same loop
+	for(ctr = eof_get_track_size(sp, track); ctr > 0; ctr--)
+	{	//For each note in the track (in reverse order)
+		unsigned long notepos = eof_get_note_pos(sp, track, ctr - 1);
+		unsigned char notetype = eof_get_note_type(sp, track, ctr - 1);
+
+		//Prompt to fix notes that are aligned slightly outside of a phrase
+		if((prompt != 3) && (notepos < startpos) && (notepos + 10 >= startpos))
+		{	//If this note is 1 to 10 milliseconds before the beginning of the affected time range
+			if(!prompt)
+			{	//If the user wasn't prompted about how to handle this condition yet, seek to the note in question and prompt the user whether to take action
+				eof_set_seek_position(notepos + eof_av_delay);	//Seek to the note's position
+				eof_render();
+				eof_clear_input();
+				key[KEY_Y] = 0;
+				key[KEY_N] = 0;
+				if(alert("At least one note is between 1 and 10 ms before the phrase.", NULL, "Move such notes to the start of the phrase?", "&Yes", "&No", 'y', 'n') == 1)
+				{	//If the user opts to correct the note positions
+					prompt = 1;	//Store a "yes" response
+				}
+				else
+				{
+					prompt = 2;	//Store a "no" response
+				}
+			}
+			if(prompt == 1)
+			{	//If the user opted to correct the note positions
+				if(!*undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					*undo_made = 1;
+				}
+				for(ctr2 = eof_get_track_size(sp, track); ctr2 > 0; ctr2--)
+				{	//For each note in the track (in reverse order)
+					unsigned long notepos2 = eof_get_note_pos(sp, track, ctr2 - 1);
+					if((notepos2 < startpos) && (notepos2 + 10 >= startpos))
+					{	//If this note is 1 to 10 milliseconds before the beginning of the phrase
+						eof_set_note_pos(sp, track, ctr2 - 1, startpos);	//Re-position the note to the start of the phrase
+					}
+				}
+				notepos = startpos;	//Update the stored position for the note
+			}
+		}
+
+		//Update notes
+		if((notetype >= diff) && (notepos >= startpos) && (notepos <= endpos))
+		{	//If the note meets the criteria to be altered
+			if(!*undo_made)
+			{	//If an undo state hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				*undo_made = 1;
+			}
+			if(notetype == diff)
+			{	//If this note is in the target difficulty
+				if(function < 0)
+				{	//If the delete level function is being performed, this note will be deleted
+					eof_track_delete_note(sp, track, ctr - 1);
+				}
+				else
+				{	//The add level function is being performed, this note will be duplicated into the next higher difficulty instead of just having its difficulty incremented
+					long length = eof_get_note_length(sp, track, ctr - 1);
+					(void) eof_copy_note(sp, track, ctr - 1, track, notepos, length, diff + 1);
+				}
+			}
+			else
+			{	//This note is in a higher difficulty (the outer if statement filters out notes in lower difficulties)
+				if(function < 0)
+				{	//If the delete level function is being performed, this note will have its difficulty decremented
+					eof_set_note_type(sp, track, ctr - 1, notetype - 1);	//Decrement the note's difficulty
+				}
+				else
+				{	//The add level function is being performed, this note will have its difficulty incremented
+					eof_set_note_type(sp, track, ctr - 1, notetype + 1);	//Increment the note's difficulty
+				}
+			}
+		}
+	}//For each note in the track (in reverse order)
+
+	//Update arpeggios
+	tracknum = sp->track[track]->tracknum;
+	tp = sp->pro_guitar_track[tracknum];
+	for(ctr = eof_get_num_arpeggios(sp, track); ctr > 0; ctr--)
+	{	//For each arpeggio section in the track (in reverse order)
+		ptr = &sp->pro_guitar_track[tracknum]->arpeggio[ctr - 1];	//Simplify
+		if((ptr->difficulty >= diff) && (ptr->start_pos <= endpos) && (ptr->end_pos >= startpos))
+		{	//If this arpeggio overlaps at all with the phrase being manipulated and is in a difficulty level that this function affects
+			if(ptr->difficulty == diff)
+			{	//If this arpeggio is in the active difficulty
+				if(function < 0)
+				{	//If the delete level function is being performed, this arpeggio will be deleted
+					eof_track_delete_arpeggio(sp, track, ctr - 1);
+				}
+				else
+				{	//The add level function is being performed, this arpeggio will be duplicated into the next higher difficulty instead of just having its difficulty incremented
+					(void) eof_track_add_section(sp, track, EOF_ARPEGGIO_SECTION, diff + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
+				}
+			}
+			else
+			{
+				if(function < 0)
+				{	//If the delete level function is being performed, this arpeggio will have its difficulty decremented
+					ptr->difficulty--;	//Decrement the arpeggio's difficulty
+				}
+				else
+				{	//The add level function is being performed, this arpeggio will have its difficulty incremented
+					ptr->difficulty++;	//Increment the arpeggio's difficulty
+				}
+			}
+		}
+	}
+
+	//Update fret hand positions
+	for(ctr = tp->handpositions; ctr > 0; ctr--)
+	{	//For each fret hand position in the track (in reverse order)
+		ptr = &tp->handposition[ctr - 1];	//Simplify
+		if((ptr->difficulty >= diff) && (ptr->start_pos >= startpos) && (ptr->start_pos <= endpos))
+		{	//If this fret hand position is within the phrase being manipulated and is in a difficulty level that this function affects
+			if(ptr->difficulty == diff)
+			{	//If this fret hand position is in the active difficulty, it will be duplicated into the next higher difficulty instead of just having its difficulty incremented
+				if(function < 0)
+				{	//If the delete level function is being performed, this fret hand position will be deleted
+					eof_pro_guitar_track_delete_hand_position(tp, ctr - 1);
+				}
+				else
+				{	//The add level function is being performed, this fret hand position will be duplicated into the next higher difficulty instead of just having its difficulty incremented
+					(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, diff + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
+				}
+			}
+			else
+			{
+				if(function < 0)
+				{	//If the delete level function is being performed, this fret hand position will have its difficulty decremented
+					ptr->difficulty--;	//Decrement the fret hand position's difficulty
+				}
+				else
+				{	//The add level function is being performed, this fret hand position will have its difficulty incremented
+					ptr->difficulty++;	//Increment the fret hand position's difficulty
+				}
+			}
+		}
+	}
+	eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Resort fret hand positions
+
+	//Update tremolos
+	for(ctr = eof_get_num_tremolos(sp, track); ctr > 0; ctr--)
+	{	//For each tremolo section in the track (in reverse order)
+		ptr = &sp->pro_guitar_track[tracknum]->tremolo[ctr - 1];	//Simplify
+		if((ptr->difficulty >= diff) && (ptr->start_pos <= endpos) && (ptr->end_pos >= startpos))
+		{	//If this tremolo overlaps at all with the phrase being manipulated and is in a difficulty level that this function affects
+			if(ptr->difficulty == 0xFF)
+			{	//If this tremolo is not difficulty specific
+				continue;	//Don't manipulate it in this function
+			}
+			if(ptr->difficulty == diff)
+			{	//If this tremolo is in the active difficulty
+				if(function < 0)
+				{	//If the delete level function is being performed, this tremolo will be deleted
+					eof_track_delete_tremolo(sp, track, ctr - 1);
+				}
+				else
+				{	//The add level function is being performed, this tremolo will be duplicated into the next higher difficulty instead of just having its difficulty incremented
+					(void) eof_track_add_section(sp, track, EOF_TREMOLO_SECTION, diff + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
+				}
+			}
+			else
+			{
+				if(function < 0)
+				{	//If the delete level function is being performed, this tremolo will have its difficulty decremented
+					ptr->difficulty--;	//Decrement the tremolo's difficulty
+				}
+				else
+				{	//The add level function is being performed, this tremolo will have its difficulty incremented
+					ptr->difficulty++;	//Increment the tremolo's difficulty
+				}
+			}
+		}
+	}
+}
+
+void eof_unflatten_difficulties(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long beatctr, startpos = 0, endpos = 0;
+	unsigned char diffctr;
+	int prompt = 0;	//Only the first call to eof_track_add_or_remove_track_difficulty_content_range() for each phrase will check/prompt to re-align notes
+	char undo_made = 0, started = 0;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return;	//Invalid parameters
+
+ 	eof_log("eof_unflatten_difficulties() entered", 1);
+
+	for(beatctr = 0; beatctr < sp->beats; beatctr++)
+	{	//For each beat in the project
+		if((sp->beat[beatctr]->contained_section_event >= 0) || ((beatctr + 1 >= sp->beats) && started))
+		{	//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
+			if(started)
+			{	//If the first phrase marker has been encountered, this beat marks the end of a phrase
+				endpos = sp->beat[beatctr]->pos - 1;	//Track this as the end position of the phrase
+
+				//Remove the higher of two difficulties' identical phrases
+				for(diffctr = 255; diffctr > 0; diffctr--)
+				{	//For each difficulty, in reverse order
+					if(eof_track_diff_populated_status[diffctr])
+					{	//If this difficulty is populated
+						if(!eof_compare_time_range_with_previous_or_next_difficulty(sp, track, startpos, endpos, diffctr, -1))
+						{	//If the notes of this phrase are the same between this difficulty and the previous
+							eof_track_add_or_remove_track_difficulty_content_range(sp, track, diffctr, startpos, endpos, -1, prompt, &undo_made);	//Level down the content of this time range of the track difficulty
+							prompt = 3;	//Ensure that subsequent calls to the above function don't check note alignment for this phrase
+						}
+					}
+				}
+			}//If the first phrase marker has been encountered, this beat marks the end of a phrase
+
+			started = 1;	//Track that a phrase has been encountered
+			prompt = 0;		//The next call to eof_track_add_or_remove_track_difficulty_content_range() will check note alignment for the beginning of this phrase
+			startpos = eof_song->beat[beatctr]->pos;	//Track the starting position of the phrase
+		}//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
+	}//For each beat in the project
+
+	sp->track[track]->numdiffs = eof_detect_difficulties(sp, track);	//Rebuild the eof_track_diff_populated_status[] array, and update the track's difficulty count
+	if(eof_note_type >= sp->track[track]->numdiffs)
+	{	//If the active track difficulty is now invalid
+		eof_note_type = sp->track[track]->numdiffs - 1;	//Change to the current highest difficulty
+	}
 }

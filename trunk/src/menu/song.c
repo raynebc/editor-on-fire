@@ -166,7 +166,7 @@ MENU eof_song_menu[] =
 	{"Properties\tF9", eof_menu_song_properties, NULL, 0, NULL},
 	{"&Leading Silence", eof_menu_song_add_silence, NULL, 0, NULL},
 	{"Lock tempo map", eof_menu_song_lock_tempo_map, NULL, 0, NULL},
-	{"Disable click and drag", eof_menu_song_disable_click_drag, NULL, 0, NULL},
+	{"&Disable click and drag", eof_menu_song_disable_click_drag, NULL, 0, NULL},
 	{"Pro &Guitar", NULL, eof_song_proguitar_menu, 0, NULL},
 	{"&Rocksmith", NULL, eof_song_rocksmith_menu, 0, NULL},
 	{"Manage raw MIDI tracks", eof_menu_song_raw_MIDI_tracks, NULL, 0, NULL},

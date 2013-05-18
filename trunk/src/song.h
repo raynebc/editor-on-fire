@@ -757,5 +757,20 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 	//The set is built by using the highest difficulty note at each position (notes within the threshold number of milliseconds are considered to be in the same position)
 	//The input track is expected to be authored in the style of Rocksmith, where notes in one difficulty replace or add to the notes in the lower difficulty
 	//The resulting notes are suitable for a flat difficulty system (like that used in Guitar Hero or Rock Band)
+void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long startpos, unsigned long endpos, int function, int prompt, char *undo_made);
+	//Modifies notes, arpeggios, hand positions and tremolos in the specified time range of the specified pro guitar track difficulty according to the specified function
+	//If function is negative, the items in the track difficulty are deleted, and the difficulty of those of higher difficulties are decremented, effectively leveling down that range of the track
+	//If function is >= 0, the items in the track difficulty are duplicated into the next difficulty, and those of higher difficulties are incremented, effectively leveling up that range of the track
+	//If prompt is zero, the function prompts the user whether to re-align notes that are up to 10ms before the start position (which is described to the user as a "phrase").
+	//If prompt is one, the function suppresses the prompt and assumes a yes response.  If prompt is two, the function suppresses the prompt and assumes a no response.
+	//If prompt is three, this check is skipped
+	//If *undo_made is zero, an undo state is made before the function modifies the chart
+void eof_unflatten_difficulties(EOF_SONG *sp, unsigned long track);
+	//Converts from a "flat" difficulty system (like Rock Band) to an additive one (like Rocksmith),
+	// where each difficulty only defines RS phrases that are different than the previous difficulty
+	//Parses from, highest to lowest difficulty, all Rocksmith phrases defined in the specified track
+	//If the notes in one RS phrase's difficulty matches those in the previous difficulty,
+	// the phrase's notes in the upper difficulty are deleted
+	//Expects the beat statistics and eof_track_diff_populated_status[] array to already reflect the track being processed
 
 #endif
