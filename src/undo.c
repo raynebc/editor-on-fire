@@ -184,7 +184,7 @@ int eof_undo_apply(void)
 			(void) eof_load_ogg(eof_loaded_ogg_name, 0);
 			eof_delete_rocksmith_wav();		//Delete the Rocksmith WAV file since changing silence will require a new WAV file to be written
 			eof_fix_waveform_graph();
-            eof_fix_spectrogram_graph();
+			eof_fix_spectrogram();
 			eof_redo_type = EOF_UNDO_TYPE_SILENCE;
 		}
 		if(strcmp(title, eof_song->tags->title))
@@ -241,7 +241,7 @@ void eof_redo_apply(void)
 			(void) eof_load_ogg(eof_loaded_ogg_name, 0);
 			eof_delete_rocksmith_wav();		//Delete the Rocksmith WAV file since changing silence will require a new WAV file to be written
 			eof_fix_waveform_graph();
-            eof_fix_spectrogram_graph();
+			eof_fix_spectrogram();
 		}
 		if(strcmp(title, eof_song->tags->title))
 		{	//If the song title changed as part of the redo, delete the Rocksmith WAV file, since changing the title will cause a new WAV file to be written

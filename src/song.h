@@ -708,8 +708,11 @@ EOF_SONG * eof_create_song_populated(void);
 
 inline int eof_open_bass_enabled(void);
 	//A simple function returning nonzero if PART BASS has open strumming enabled
-int eof_create_image_sequence(void);
+int eof_create_image_sequence(char benchmark_only);
 	//Creates a PCX format image sequence in a subfolder of the chart's folder called "\sequence"
+	//If benchmark_only is nonzero, image files are not written and the rendering performance (in frames per second) is displayed in the title bar
+int eof_write_image_sequence(void);
+	//Calls eof_create_image_sequence() with the option to save the images to disk
 
 int eof_get_pro_guitar_note_fret_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, char *pro_guitar_string);
 	//Writes a string representation of the specified pro guitar/bass note from lowest to highest gauge string into pro_guitar_string[] which must be at least
