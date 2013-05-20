@@ -5014,8 +5014,7 @@ EOF_PHRASE_SECTION *eof_get_arpeggio(EOF_SONG *sp, unsigned long track, unsigned
 	return NULL;	//Return error
 }
 
-//#define EOF_CREATE_IMAGE_SEQUENCE_SHOW_FPS_ONLY
-int eof_create_image_sequence(void)
+int eof_create_image_sequence(char benchmark_only)
 {
 	unsigned long framectr = 0, refreshctr = 0, lastpollctr = 0;
 	unsigned long remainder = 0;
@@ -5023,40 +5022,43 @@ int eof_create_image_sequence(void)
 	float fps = 0.0;
 	clock_t curtime, lastpolltime = 0;
 	char original_eof_desktop = eof_desktop;
-
-	#ifndef EOF_CREATE_IMAGE_SEQUENCE_SHOW_FPS_ONLY
 	int err;
 	char filename[20] = {0};
+	clock_t starttime, endtime;
 
- 	eof_log("\tCreating image sequence", 1);
- 	eof_log("eof_create_image_sequence() entered", 1);
+	eof_log("eof_create_image_sequence() entered", 1);
+	if(!benchmark_only)
+	{	//If saving the image sequence to disk
+		eof_log("\tCreating image sequence", 1);
 
-	/* check to make sure \sequence folder exists */
-	(void) ustrcpy(eof_temp_filename, eof_song_path);
-	(void) replace_filename(eof_temp_filename, eof_temp_filename, "", (int)sizeof(eof_temp_filename));
-	put_backslash(eof_temp_filename);
-	(void) ustrcat(eof_temp_filename, "sequence");
-	eof_clear_input();
-	key[KEY_Y] = 0;
-	key[KEY_N] = 0;
-	if(!file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
-	{	//If this folder doesn't already exist
-		err = eof_mkdir(eof_temp_filename);
-		if(err)
-		{	//If the folder could not be created
-			allegro_message("Could not create folder!\n%s", eof_temp_filename);
+		/* check to make sure \sequence folder exists */
+		(void) ustrcpy(eof_temp_filename, eof_song_path);
+		(void) replace_filename(eof_temp_filename, eof_temp_filename, "", (int)sizeof(eof_temp_filename));
+		put_backslash(eof_temp_filename);
+		(void) ustrcat(eof_temp_filename, "sequence");
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
+		if(!file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
+		{	//If this folder doesn't already exist
+			err = eof_mkdir(eof_temp_filename);
+			if(err)
+			{	//If the folder could not be created
+				allegro_message("Could not create folder!\n%s", eof_temp_filename);
+				return 1;
+			}
+		}
+		else if(alert(NULL, "Overwrite contents of existing \\sequence folder?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+		{	//If user declined to overwrite the contents of the folder
 			return 1;
 		}
+		put_backslash(eof_temp_filename);	//eof_temp_filename is now the path of the \sequence folder
 	}
-	else if(alert(NULL, "Overwrite contents of existing \\sequence folder?", NULL, "&Yes", "&No", 'y', 'n') != 1)
-	{	//If user declined to overwrite the contents of the folder
-		return 1;
-	}
-	put_backslash(eof_temp_filename);	//eof_temp_filename is now the path of the \sequence folder
-	#else
-		clock_t starttime, endtime;
+	else
+	{	//If performing a benchmark
 		starttime = clock();	//Get the start time of the image sequence export
-	#endif
+		eof_log("\tBenchmarking rendering performance", 1);
+	}
 
 //Change to 8 bit color mode
 	eof_desktop = 0;
@@ -5091,12 +5093,12 @@ int eof_create_image_sequence(void)
 		eof_render_3d_window();
 		eof_render_note_window();
 
-		#ifndef EOF_CREATE_IMAGE_SEQUENCE_SHOW_FPS_ONLY
-	//Export the image for this frame
-		(void) snprintf(filename, sizeof(filename) - 1, "%08lu.pcx",framectr);
-		(void) replace_filename(eof_temp_filename, eof_temp_filename, filename, (int)sizeof(eof_temp_filename));
-		(void) save_pcx(eof_temp_filename, eof_screen, NULL);	//Pass a NULL palette
-		#endif
+		if(!benchmark_only)
+		{	//If saving the image sequence to disk, export this frame to an image file
+			(void) snprintf(filename, sizeof(filename) - 1, "%08lu.pcx",framectr);
+			(void) replace_filename(eof_temp_filename, eof_temp_filename, filename, (int)sizeof(eof_temp_filename));
+			(void) save_pcx(eof_temp_filename, eof_screen, NULL);	//Pass a NULL palette
+		}
 
 	//Seek one frame (1/30 second) further into the audio, tracking for rounding errors
 		#define EOF_IMAGE_SEQUENCE_FPS 30
@@ -5111,12 +5113,14 @@ int eof_create_image_sequence(void)
 		}
 	}
 
-	#ifdef EOF_CREATE_IMAGE_SEQUENCE_SHOW_FPS_ONLY
-	endtime = clock();	//Get the start time of the image sequence export
-	fps = (float)framectr / ((float)(endtime - starttime) / (float)CLOCKS_PER_SEC);	//Find the average FPS
-	(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "Average render rate was %.2fFPS",fps);
-	allegro_message("%s", windowtitle);
-	#endif
+	if(benchmark_only)
+	{	//If performing a benchmark, calculate and display the rendering performance
+		endtime = clock();	//Get the start time of the image sequence export
+		fps = (float)framectr / ((float)(endtime - starttime) / (float)CLOCKS_PER_SEC);	//Find the average FPS
+		(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "Average render rate was %.2fFPS",fps);
+		allegro_message("%s", windowtitle);
+		eof_log(windowtitle, 1);
+	}
 
 //Restore original display settings
 	eof_desktop = original_eof_desktop;
@@ -5124,9 +5128,21 @@ int eof_create_image_sequence(void)
 
 	eof_fix_window_title();
 
-	eof_log("\tImage sequence created", 1);
+	if(!benchmark_only)
+	{
+		eof_log("\tImage sequence created", 1);
+	}
+	else
+	{
+		eof_log("\tBenchmark complete", 1);
+	}
 
 	return 1;
+}
+
+int eof_write_image_sequence(void)
+{
+	return eof_create_image_sequence(0);	//Generate the image sequence and write it to disk
 }
 
 unsigned long eof_get_num_lyric_sections(EOF_SONG *sp, unsigned long track)
