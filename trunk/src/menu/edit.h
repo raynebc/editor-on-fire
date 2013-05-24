@@ -54,9 +54,12 @@ int eof_menu_edit_select_like(void);			//For each unique selected note, selects 
 int eof_menu_edit_precise_select_like(void);	//Similar to eof_menu_edit_select_like(), but also requires notes have identical flags in order to match
 int eof_menu_edit_deselect_all(void);
 int eof_menu_edit_select_rest(void);
-int eof_menu_edit_select_previous(void);		//Selects all notes before the last selected note
+int eof_menu_edit_select_previous(void);			//Selects all notes before the last selected note
 int eof_menu_edit_select_all_shorter_than(void);	//Selects all notes in the active track difficulty that are shorter than a user specified length
 int eof_menu_edit_select_all_longer_than(void);		//Selects all notes in the active track difficulty that are longer than a user specified length
+int eof_menu_edit_deselect_conditional(void);		//Allows user to specify conditions for deselecting notes from the current selection
+int eof_menu_edit_deselect_chords(void);			//Deselects notes that have more than 1 gem
+int eof_menu_edit_deselect_single_notes(void);		//Deselects notes that have only 1 gem
 
 int eof_menu_edit_snap_quarter(void);
 int eof_menu_edit_snap_eighth(void);

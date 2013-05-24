@@ -3582,6 +3582,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 				eof_pro_guitar_note_dialog[13 - (2 * ctr)].flags = D_HIDDEN;	//Ensure this text boxes' label is hidden
 				eof_pro_guitar_note_dialog[14 - (2 * ctr)].flags = D_HIDDEN;	//Ensure this text box is hidden
 				eof_pro_guitar_note_dialog[28 - ctr].flags = D_HIDDEN;			//Ensure this ghost check box is hidden
+				eof_pro_guitar_note_dialog[35 - ctr].flags = D_HIDDEN;			//Ensure this mute check box is hidden
 				eof_fret_strings[ctr][0] = '\0';
 			}
 		}

@@ -132,10 +132,14 @@ MENU eof_edit_selection_menu[] =
 	{"Select like\t" CTRL_NAME "+L", eof_menu_edit_select_like, NULL, 0, NULL},
 	{"&Precise select like", eof_menu_edit_precise_select_like, NULL, 0, NULL},
 	{"Select &Rest\tShift+End", eof_menu_edit_select_rest, NULL, 0, NULL},
-	{"&Deselect All\t" CTRL_NAME "+D", eof_menu_edit_deselect_all, NULL, 0, NULL},
 	{"Select previous\tShift+Home", eof_menu_edit_select_previous, NULL, 0, NULL},
 	{"Select all &Shorter than", eof_menu_edit_select_all_shorter_than, NULL, 0, NULL},
 	{"Select all &Longer than", eof_menu_edit_select_all_longer_than, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"&Deselect All\t" CTRL_NAME "+D", eof_menu_edit_deselect_all, NULL, 0, NULL},
+	{"&Conditional deselect", eof_menu_edit_deselect_conditional, NULL, 0, NULL},
+	{"Deselect chords", eof_menu_edit_deselect_chords, NULL, 0, NULL},
+	{"Deselect single notes", eof_menu_edit_deselect_single_notes, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -235,7 +239,7 @@ void eof_prepare_edit_menu(void)
 		/* copy */
 		vselected = eof_count_selected_notes(NULL, 1);
 		if(vselected)
-		{
+		{	//If any notes in the active track difficulty are selected
 			eof_edit_menu[3].flags = 0;		//copy
 			eof_edit_selection_menu[1].flags = 0;	//select like
 			eof_edit_selection_menu[2].flags = 0;	//precise select like
@@ -250,26 +254,27 @@ void eof_prepare_edit_menu(void)
 				eof_edit_selection_menu[3].flags = D_DISABLED;
 			}
 
-			/* deselect all */
-			eof_edit_selection_menu[4].flags = 0;
-
 			if(eof_selection.current != 0)
 			{
-				eof_edit_selection_menu[5].flags = 0;	//select previous
+				eof_edit_selection_menu[4].flags = 0;	//select previous
 			}
 			else
 			{
-				eof_edit_selection_menu[5].flags = D_DISABLED;	//Select previous cannot be used when the first note/lyric was just selected
+				eof_edit_selection_menu[4].flags = D_DISABLED;	//Select previous cannot be used when the first note/lyric was just selected
 			}
+
+			eof_edit_selection_menu[8].flags = 0;	//deselect all
+			eof_edit_selection_menu[9].flags = 0;	//conditional deselect
 		}
 		else
-		{
+		{	//If no notes in the active track difficulty are selected
 			eof_edit_menu[3].flags = D_DISABLED;		//copy
 			eof_edit_selection_menu[1].flags = D_DISABLED;	//select like
 			eof_edit_selection_menu[2].flags = D_DISABLED;	//precise select like
 			eof_edit_selection_menu[3].flags = D_DISABLED;	//select rest
-			eof_edit_selection_menu[4].flags = D_DISABLED;	//deselect all
-			eof_edit_selection_menu[5].flags = D_DISABLED;	//select previous
+			eof_edit_selection_menu[4].flags = D_DISABLED;	//select previous
+			eof_edit_selection_menu[8].flags = D_DISABLED;	//deselect all
+			eof_edit_selection_menu[9].flags = D_DISABLED;	//conditional deselect
 		}
 
 		/* paste, paste old */
@@ -2329,6 +2334,175 @@ int eof_menu_edit_select_all_longer_than(void)
 	}
 	return 1;
 }
+
+DIALOG eof_menu_edit_deselect_conditional_dialog[] =
+{
+	/*	(proc)           (x)  (y)  (w)  (h) (fg) (bg) (key) (flags)     (d1) (d2) (dp)                  (dp2) (dp3) */
+	{d_agup_window_proc, 0,   0,   376, 182,2,   23,  0,    0,          0,   0,   "Deselect notes that",  NULL, NULL },
+	{d_agup_radio_proc,	 16,  32,  38,  16, 2,   23,  0,    D_SELECTED, 1,   0,   "Do",                   NULL, NULL },
+	{d_agup_radio_proc,	 72,  32,  62,  16, 2,   23,  0,    0,          1,   0,   "Do not",               NULL, NULL },
+	{d_agup_radio_proc,	 16,  52,  116, 16, 2,   23,  0,    D_SELECTED, 2,   0,   "Contain any of",       NULL, NULL },
+	{d_agup_radio_proc,	 134, 52,  108, 16, 2,   23,  0,    0,          2,   0,   "Contain all of",       NULL, NULL },
+	{d_agup_radio_proc,	 244, 52,  116, 16, 2,   23,  0,    0,          2,   0,   "Contain exactly",      NULL, NULL },
+	{d_agup_text_proc,   16,  72,  64,  8,  2,   23,  0,    0,          0,   0,   "These gems:",          NULL, NULL },
+	{d_agup_check_proc,	 16,  92,  64,  16, 2,   23,  0,    0,          0,   0,   "Lane 1",               NULL, NULL },
+	{d_agup_check_proc,	 80,  92,  64,  16, 2,   23,  0,    0,          0,   0,   "Lane 2",               NULL, NULL },
+	{d_agup_check_proc,	 144, 92,  64,  16, 2,   23,  0,    0,          0,   0,   "Lane 3",               NULL, NULL },
+	{d_agup_check_proc,	 16,  112, 64,  16, 2,   23,  0,    0,          0,   0,   "Lane 4",               NULL, NULL },
+	{d_agup_check_proc,	 80,  112, 64,  16, 2,   23,  0,    0,          0,   0,   "Lane 5",               NULL, NULL },
+	{d_agup_check_proc,	 144, 112, 64,  16, 2,   23,  0,    0,          0,   0,   "Lane 6",               NULL, NULL },
+	{d_agup_button_proc, 12,  142, 68,  28, 2,   23,  '\r', D_EXIT,     0,   0,   "OK",                   NULL, NULL },
+	{d_agup_button_proc, 296, 142, 68,  28, 2,   23,  0,    D_EXIT,     0,   0,   "Cancel",               NULL, NULL },
+	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_menu_edit_deselect_conditional(void)
+{
+	unsigned long ctr, bitmask, match_bitmask = 0, stringcount, note;
+	char match;
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 0;	//Return error
+
+	eof_color_dialog(eof_menu_edit_deselect_conditional_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_menu_edit_deselect_conditional_dialog);
+
+	//Prepare the dialog
+	stringcount = eof_count_track_lanes(eof_song, eof_selected_track);
+	for(ctr = 0; ctr < 6; ctr++)
+	{	//For each of the 6 supported strings
+		if(ctr < stringcount)
+		{	//If this track uses this string
+			eof_menu_edit_deselect_conditional_dialog[7 + ctr].flags = 0;			//Enable this lane's checkbox
+		}
+		else
+		{
+			eof_menu_edit_deselect_conditional_dialog[7 + ctr].flags = D_HIDDEN;	//Hide this lane's checkbox
+		}
+	}
+
+	//Process the dialog
+	if(eof_popup_dialog(eof_menu_edit_deselect_conditional_dialog, 0) == 13)
+	{	//User clicked OK
+		for(ctr = 0, bitmask = 1; ctr < stringcount; ctr++, bitmask <<= 1)
+		{	//For each lane in use for this track
+			if(eof_menu_edit_deselect_conditional_dialog[7 + ctr].flags == D_SELECTED)
+			{	//If the user checked this lane's checkbox
+				match_bitmask |= bitmask;	//Set the appropriate bit in the match bitmask
+			}
+		}
+
+		for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+		{	//For each note in the track
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type))
+			{	//If the note is in the active instrument difficulty and is selected
+				match = 0;	//This will be set to nonzero if the user's criteria apply to the note, and will be checked against the "Do" or "Do not" criterion
+				note = eof_get_note_note(eof_song, eof_selected_track, ctr);
+				if(eof_menu_edit_deselect_conditional_dialog[3].flags == D_SELECTED)
+				{	//Contain any of
+					if(note & match_bitmask)
+					{	//If the selected note contains a gem on any of the specified lanes
+						match = 1;
+					}
+				}
+				else if(eof_menu_edit_deselect_conditional_dialog[4].flags == D_SELECTED)
+				{	//Contain all of
+					if((note & match_bitmask) == match_bitmask)
+					{	//If the selected note contains gems on all of the specified lanes
+						match = 1;
+					}
+				}
+				else
+				{	//Contain exactly
+					if(note == match_bitmask)
+					{	//If the selected note contains gems on the specified lanes and no others
+						match = 1;
+					}
+				}
+				if(eof_menu_edit_deselect_conditional_dialog[1].flags == D_SELECTED)
+				{	//"Do" is selected, deselect the note if the other criteria were matched
+					if(match)
+					{
+						eof_selection.multi[ctr] = 0;
+					}
+				}
+				else
+				{	//"Do not" is selected, deselect the note if the other criteria were NOT matched
+					if(!match)
+					{
+						eof_selection.multi[ctr] = 0;
+					}
+				}
+			}
+		}//For each note in the track
+		if(eof_selection.current != EOF_MAX_NOTES - 1)
+		{	//If there was a last selected note
+			if(eof_selection.multi[eof_selection.current] == 0)
+			{	//And it's not selected anymore
+				eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note
+			}
+		}
+	}//User clicked OK
+
+	return 1;
+}
+
+int eof_menu_edit_deselect_chords(void)
+{
+	unsigned long ctr;
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 0;	//Return error
+
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+	{	//For each note in the track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			if(eof_note_count_colors(eof_song, eof_selected_track, ctr) > 1)
+			{	//If this note has at least two gems
+				eof_selection.multi[ctr] = 0;	//Deselect it
+			}
+		}
+	}
+	if(eof_selection.current != EOF_MAX_NOTES - 1)
+	{	//If there was a last selected note
+		if(eof_selection.multi[eof_selection.current] == 0)
+		{	//And it's not selected anymore
+			eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note
+		}
+	}
+
+	return 1;
+}
+
+int eof_menu_edit_deselect_single_notes(void)
+{
+	unsigned long ctr;
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 0;	//Return error
+
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+	{	//For each note in the track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			if(eof_note_count_colors(eof_song, eof_selected_track, ctr) < 2)
+			{	//If this note doesn't have at least two gems
+				eof_selection.multi[ctr] = 0;	//Deselect it
+			}
+		}
+	}
+	if(eof_selection.current != EOF_MAX_NOTES - 1)
+	{	//If there was a last selected note
+		if(eof_selection.multi[eof_selection.current] == 0)
+		{	//And it's not selected anymore
+			eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note
+		}
+	}
+
+	return 1;
+}
+
 int eof_menu_edit_paste_from_supaeasy(void)
 {
 	char undo_made = 0;
