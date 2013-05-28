@@ -4030,11 +4030,11 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 			}
 
 			/* cleanup Rocksmith related slide/bend statuses */
-			if(tp->note[i-1]->slideend > tp->numfrets)
+			if((tp->note[i-1]->slideend > tp->numfrets) || !(tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
 			{	//If the slide end position is invalid
 				tp->note[i-1]->slideend = 0;	//Clear it
 			}
-			if(tp->note[i-1]->bendstrength)
+			if(tp->note[i-1]->bendstrength && !(tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
 			{	//If the bend strength is invalid
 				tp->note[i-1]->bendstrength = 0;	//Clear it
 			}
@@ -6004,6 +6004,7 @@ void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsign
 			if(!prompt)
 			{	//If the user wasn't prompted about how to handle this condition yet, seek to the note in question and prompt the user whether to take action
 				eof_set_seek_position(notepos + eof_av_delay);	//Seek to the note's position
+				eof_find_lyric_preview_lines();
 				eof_render();
 				eof_clear_input();
 				key[KEY_Y] = 0;

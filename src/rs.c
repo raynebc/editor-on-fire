@@ -375,8 +375,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	{	//Otherwise use the track's native name
 		arrangement_name = sp->track[track]->name;
 	}
-	(void) replace_filename(fn, fn, arrangement_name, 1024);
-	(void) replace_extension(fn, fn, "xml", 1024);
+	(void) snprintf(buffer, 600, "%s.xml", arrangement_name);
+	(void) replace_filename(fn, fn, buffer, 1024);
 	fp = pack_fopen(fn, "w");
 	if(!fp)
 	{
@@ -630,6 +630,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 					eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
 					eof_set_seek_position(sp->beat[ctr]->pos + eof_av_delay);	//Seek to the beat containing the offending END phrase
 					eof_selected_beat = ctr;		//Select it
+					eof_find_lyric_preview_lines();
 					eof_render();					//Redraw the screen
 					allegro_message("Warning:  Beat #%lu contains an END phrase, but there's at least one more phrase or section after it.\nThis will cause dynamic difficulty and/or riff repeater to not work correctly.", ctr);
 					break;
@@ -2206,6 +2207,7 @@ int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track)
 				{	//If the piano roll isn't already displaying both RS sections and phrases
 					eof_2d_render_top_option = 35;					//Change the user preference to render RS sections at the top of the piano roll
 				}
+				eof_find_lyric_preview_lines();
 				eof_render();							//Render the track so the user can see where the correction needs to be made, along with the RS section in question
 
 				while(1)
