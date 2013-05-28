@@ -140,6 +140,7 @@ MENU eof_edit_selection_menu[] =
 	{"&Conditional deselect", eof_menu_edit_deselect_conditional, NULL, 0, NULL},
 	{"Deselect chords", eof_menu_edit_deselect_chords, NULL, 0, NULL},
 	{"Deselect single notes", eof_menu_edit_deselect_single_notes, NULL, 0, NULL},
+	{"Invert selection", eof_menu_edit_invert_selection, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -1363,6 +1364,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		unsigned long clear_start, clear_end;
 
 		eof_menu_paste_read_clipboard_note(fp, &first_note);	//Read the first note on the clipboard
+		memcpy(&last_note, &first_note, sizeof(first_note));	//Clone the first clipboard note into last_note in case there aren't any other notes on the clipboard
 		for(i = 1; i < copy_notes; i++)
 		{	//Parse the other notes on the clipboard
 			eof_menu_paste_read_clipboard_note(fp, &last_note);
@@ -2500,6 +2502,32 @@ int eof_menu_edit_deselect_single_notes(void)
 		}
 	}
 
+	return 1;
+}
+
+int eof_menu_edit_invert_selection(void)
+{
+	unsigned long i;
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the track
+		if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
+		{	//If the note is in the active track difficulty
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+			{	//If the note is selected
+				eof_selection.multi[i] = 0;	//Deselect the note
+			}
+			else
+			{
+				eof_selection.multi[i] = 1;	//Otherwise select the note
+				eof_selection.track = eof_selected_track;
+			}
+		}
+		else
+		{
+			eof_selection.multi[i] = 0;	//Otherwise deselect the note
+		}
+	}
 	return 1;
 }
 

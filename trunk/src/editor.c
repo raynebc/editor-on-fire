@@ -937,7 +937,7 @@ if(key[KEY_PAUSE])
 			}
 		}
 		key[KEY_SPACE] = 0;
-	}
+	}//Only allow playback controls when chart audio is loaded
 
 	/* Ensure the seek position is no further left than the first beat marker if Feedback input method is in effect */
 	if((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_music_pos < eof_song->beat[0]->pos + eof_av_delay))

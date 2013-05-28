@@ -61,7 +61,7 @@ void eof_music_play(void)
 
 		eof_log("\tStarting playback", 1);
 		if(key[KEY_S] && (eof_count_selected_notes(NULL, 0) > 0))
-		{
+		{	//If S is being held, and there are selected notes, play back the audio from the first selected note to the last
 			eof_music_end_pos = 0;
 			eof_music_rewind_pos = eof_chart_length;
 			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
@@ -79,12 +79,12 @@ void eof_music_play(void)
 			eof_play_selection = 1;
 		}
 		else
-		{
+		{	//Otherwise just play until the end is reached or user stops playback
 			eof_play_selection = 0;
 		}
 		eof_music_rewind_pos = eof_music_pos;
 		/* in Windows, subtracting the buffer size (buffer_size * 2 according to the Allegro manual)
-		 * seems to get rid if the stuttering. */
+		 * seems to get rid of the stuttering. */
 		#ifdef ALLEGRO_WINDOWS
 			alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_pos - ((eof_buffer_size * (eof_smooth_pos ? 2 : 1)) * 1000 / alogg_get_wave_freq_ogg(eof_music_track)));
 		#else

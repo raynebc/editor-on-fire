@@ -16,7 +16,9 @@ Playback and Seek controls:
         Hold Shift when pressing Space to play the current fret catalog entry (see manual for
         information about the fret catalog).
         
-        Hold S when pressing Space to play only the currently selected notes.
+        Hold S when pressing Space to play only the currently selected notes.  Keep S held
+        down to cause the selected notes to replay on a loop once the last selected note is
+        reached.
     
 
     Left/Right Arrow:

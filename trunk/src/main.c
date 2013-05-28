@@ -2080,7 +2080,7 @@ void eof_logic(void)
 		eof_read_editor_keys();
 	}
 	if(eof_music_catalog_playback)
-	{
+	{	//If the fret catalog is playing
 		eof_music_catalog_pos += 10;
 		if(eof_music_catalog_pos - eof_av_delay > eof_song->catalog->entry[eof_selected_catalog_entry].end_pos)
 		{
@@ -2092,7 +2092,7 @@ void eof_logic(void)
 		}
 	}
 	else if(!eof_music_paused)
-	{
+	{	//If the chart is playing
 		if(eof_smooth_pos)
 		{
 			if(eof_playback_speed != eof_mix_speed)
@@ -2179,8 +2179,12 @@ void eof_logic(void)
 			eof_stop_midi();
 			alogg_stop_ogg(eof_music_track);
 			alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_pos);
+			if(key[KEY_S])
+			{	//If S is still being held down, replay the note selection
+				eof_music_play();
+			}
 		}
-	}
+	}//If the chart is playing
 	if(eof_song_loaded)
 	{
 		if(eof_vocals_selected)
