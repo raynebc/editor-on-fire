@@ -2038,6 +2038,9 @@ int eof_menu_song_spectrogram_settings(void)
 	int i;
 	int prev_windowsize;
 	char custom_windowsize;
+	char is_dirty = 0;
+	double newfreq;
+	char prevchk;
 
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
@@ -2091,21 +2094,20 @@ int eof_menu_song_spectrogram_settings(void)
 	//Set up the color scheme
 	eof_spectrogram_settings_dialog[15].flags = eof_spectrogram_settings_dialog[16].flags = 0;
 	eof_spectrogram_settings_dialog[15 + eof_spectrogram_colorscheme].flags = D_SELECTED;
-	
+
 	//Set up the note range
 	strcpy(eof_etext2, notefunc_freq_to_note(eof_spectrogram_startfreq));
 	strcpy(eof_etext3, notefunc_freq_to_note(eof_spectrogram_endfreq));
 
-	if(eof_spectrogram_userange) 
+	if(eof_spectrogram_userange)
 		eof_spectrogram_settings_dialog[17].flags = D_SELECTED;
 
 	if(eof_spectrogram_avgbins)
 		eof_spectrogram_settings_dialog[21].flags = D_SELECTED;
 
-	if(eof_spectrogram_logplot) 
+	if(eof_spectrogram_logplot)
 		eof_spectrogram_settings_dialog[22].flags = D_SELECTED;
 
-	char is_dirty = 0;
 	if(eof_popup_dialog(eof_spectrogram_settings_dialog, 0) == 23)
 	{ //User clicked OK
 		if(eof_spectrogram_settings_dialog[2].flags == D_SELECTED)
@@ -2170,19 +2172,21 @@ int eof_menu_song_spectrogram_settings(void)
 		}
 
 		//Parse the note names
-		double newfreq;
-
 		newfreq = notefunc_note_to_freq(eof_etext2);
-		if(eof_spectrogram_startfreq != newfreq) { is_dirty = 1; }
+		if((eof_spectrogram_startfreq < newfreq) || (eof_spectrogram_startfreq > newfreq))
+		{	//If the returned value is different than the old value (floating point == and != comparisons are not considered reliable)
+			is_dirty = 1;
+		}
 		eof_spectrogram_startfreq = newfreq;
 
 		newfreq = notefunc_note_to_freq(eof_etext3);
-		if(eof_spectrogram_endfreq != newfreq) { is_dirty = 1; }
+		if((eof_spectrogram_endfreq < newfreq) || (eof_spectrogram_endfreq > newfreq))
+		{	//If the returned value is different than the old value (floating point == and != comparisons are not considered reliable)
+			is_dirty = 1;
+		}
 		eof_spectrogram_endfreq = newfreq;
 
 		//Set the various checkboxes
-		char prevchk;
-
 		prevchk	= eof_spectrogram_userange;
 		eof_spectrogram_userange = (eof_spectrogram_settings_dialog[17].flags == D_SELECTED);
 		if(eof_spectrogram_userange != prevchk) { is_dirty = 1; }

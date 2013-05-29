@@ -70,14 +70,14 @@ extern int eof_spectrogram_windowsize;				//Specifies the window size for the sp
 extern double eof_half_spectrogram_windowsize;		//Caches the value of eof_spectrogram_windowsize / 2
 extern double eof_spectrogram_startfreq;			//For displaying a subset of the frequency range, the lower frequency
 extern double eof_spectrogram_endfreq;				//For displaying a subset of the frequency range, the higher frequency
-extern double eof_spectrogram_userange;				//Specifies whether to display the selected subset
-extern double eof_spectrogram_logplot;				//Specifies whether to graph the y-axis on a log scale
-extern double eof_spectrogram_avgbins;				//Specifies whether to average the bins within a pixel
+extern int eof_spectrogram_userange;				//Specifies whether to display the selected subset
+extern int eof_spectrogram_logplot;					//Specifies whether to graph the y-axis on a log scale
+extern int eof_spectrogram_avgbins;					//Specifies whether to average the bins within a pixel
 
 //Axis helper functions
 double eof_spectrogram_y_from_freq(long rate, double freq);
 	//Converts a given frequency to a y value from 0 to 1
-double eof_spectrogram_freq_from_y(long rate, double y); 
+double eof_spectrogram_freq_from_y(long rate, double y);
 	//Converts a given y value to a frequency
 void eof_spectrogram_calculate_px_to_freq(struct spectrogramstruct *spectrogram);
 	//Regenerates the px_to_freq table

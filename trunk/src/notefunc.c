@@ -10,7 +10,7 @@ char returnval[10];
 
 /**
  * Calculate the frequency (in Hz) of a given 12-tone note name
- * 
+ *
  * Input is notename and octave number, with # and b as accidentals.
  * If it can't parse the note, it returns A4 (440Hz)
  *
@@ -21,9 +21,10 @@ double notefunc_note_to_freq(char* note)
 {
 	char notename;
 	char octavestr[10];
-	int notenum = 0;
 	int octavenum;
 	char accidental = 0;
+	int adj = 0;
+	size_t notenum = 0, numnotes = strlen(notelist);
 
 	notename = note[0];
 	if(strlen(note) == 2)
@@ -49,7 +50,6 @@ double notefunc_note_to_freq(char* note)
 
 	//fprintf(stderr,"%c,%d,%c\n",notename,octavenum,accidental);
 
-	int numnotes = strlen(notelist);
 	for(notenum=0;notenum < numnotes;notenum++)
 	{ //Find the base note number
 		if(notelist[notenum] == notename)
@@ -57,17 +57,16 @@ double notefunc_note_to_freq(char* note)
 	}
 	if(notenum == numnotes)
 	{
-		return 440; 
+		return 440;
 	}	//Again, not a note we know!
 
 	//Adjust for accidentals
-	int adj = 0;
 	if(accidental)
 	{
 		if(accidental == '#')
 		{
 			adj = 1;
-		} 
+		}
 		else if(accidental == 'b')
 		{
 			adj = -1;
@@ -76,7 +75,7 @@ double notefunc_note_to_freq(char* note)
 	}
 
 	//Round to two decimal places to avoid floating point weirdness
-	return round(BASE_FREQ * pow(2,octavenum+(notenum/12.0)) *100)/100;
+	return round(BASE_FREQ * pow(2,(double)octavenum+(notenum/12.0)) *100)/100;
 }
 
 /**
@@ -89,11 +88,12 @@ double notefunc_note_to_freq(char* note)
  */
 char* notefunc_freq_to_note(double freq)
 {
-	double midval = round(fabs(log(freq/BASE_FREQ)/log(2.0)) *100)/100;
+	double logof2 = log(2.0);
+	double midval = round(fabs(log(freq/BASE_FREQ)/logof2) *100)/100;
 	int octavenum = floor(midval);
 	int notenum = round(12.0*(midval - octavenum));
-	
+
 	//fprintf(stderr,"%f(%f):%d,%d\n",freq,midval,octavenum,notenum);
-	sprintf(returnval, "%s%d", notenames+notenum*3, octavenum);
+	(void) snprintf(returnval, sizeof(returnval) - 1, "%s%d", notenames+notenum*3, octavenum);
 	return returnval;
 }

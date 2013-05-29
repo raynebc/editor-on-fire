@@ -20,9 +20,9 @@ int eof_spectrogram_windowsize = 1024;				//Specifies the window size for the sp
 double eof_half_spectrogram_windowsize = 512.0;     //Caches the value of eof_spectrogram_windowsize / 2
 double eof_spectrogram_startfreq = DEFAULT_STARTFREQ;   //For displaying a subset of the frequency range, the lower frequency
 double eof_spectrogram_endfreq = DEFAULT_ENDFREQ;       //For displaying a subset of the frequency range, the higher frequency
-double eof_spectrogram_userange = 0;                //Specifies whether to display the selected subset
-double eof_spectrogram_logplot = 1;                 //Specifies whether to graph the y-axis on a log scale
-double eof_spectrogram_avgbins = 0;                 //Specifies whether to average the bins within a pixel
+int eof_spectrogram_userange = 0;					//Specifies whether to display the selected subset
+int eof_spectrogram_logplot = 1;					//Specifies whether to graph the y-axis on a log scale
+int eof_spectrogram_avgbins = 0;					//Specifies whether to average the bins within a pixel
 
 void eof_destroy_spectrogram(struct spectrogramstruct *ptr)
 {
@@ -60,8 +60,6 @@ void eof_destroy_spectrogram(struct spectrogramstruct *ptr)
 
 int eof_render_spectrogram(struct spectrogramstruct *spectrogram)
 {
-	eof_log("eof_render_spectrogram() entered",1);
-
 	unsigned long x,startpixel;
 	unsigned long ycoord1,ycoord2;	//Stores the Y coordinates of graph 1's and 2's Y axis
 	unsigned long height;		//Stores the heigth of the fretboard area
@@ -69,6 +67,8 @@ int eof_render_spectrogram(struct spectrogramstruct *spectrogram)
 	char numgraphs;				//Stores the number of channels to render
 	unsigned long pos = eof_music_pos / eof_zoom;
 	unsigned long curms;
+
+	eof_log("eof_render_spectrogram() entered", 1);
 
 //validate input
 	if(!eof_song_loaded || !spectrogram)
@@ -198,7 +198,10 @@ int eof_render_spectrogram(struct spectrogramstruct *spectrogram)
  */
 void eof_spectrogram_calculate_px_to_freq(struct spectrogramstruct *spectrogram)
 {
-	int height = 0;
+	int height = 0, y;
+	double binsize, a, b, yfrac, freq;
+	double startfreq = DEFAULT_STARTFREQ;
+	double endfreq = DEFAULT_ENDFREQ;
 
 	//Determine the height we should use from the channels
 	if(spectrogram->left.height)
@@ -236,9 +239,7 @@ void eof_spectrogram_calculate_px_to_freq(struct spectrogramstruct *spectrogram)
 		eof_log("Couldn't allocate memory for px_to_freq map!",1);
 	}
 
-	double startfreq = DEFAULT_STARTFREQ;
-	double endfreq = DEFAULT_ENDFREQ;
-	double binsize=((double)spectrogram->rate/2.0)/(double)eof_spectrogram_windowsize;
+	binsize=((double)spectrogram->rate/2.0)/(double)eof_spectrogram_windowsize;
 
 	if(eof_spectrogram_userange)
 	{ //Assign custom start/end if we're using it
@@ -246,13 +247,10 @@ void eof_spectrogram_calculate_px_to_freq(struct spectrogramstruct *spectrogram)
 		endfreq = eof_spectrogram_endfreq;
 	}
 
-	double a = eof_spectrogram_y_from_freq(spectrogram->rate, startfreq);
-	double b = eof_spectrogram_y_from_freq(spectrogram->rate, endfreq);
-	double yfrac = (b-a)/height;
+	a = eof_spectrogram_y_from_freq(spectrogram->rate, startfreq);
+	b = eof_spectrogram_y_from_freq(spectrogram->rate, endfreq);
+	yfrac = (b-a)/height;
 
-	//Internal loop vars
-	int y;
-	double freq;
 	for(y=0;y <= height;y++)
 	{
 		freq = eof_spectrogram_freq_from_y(spectrogram->rate, a + (double)y*yfrac);
@@ -321,9 +319,11 @@ double eof_spectrogram_freq_from_y(long rate, double y)
  */
 double eof_spectrogram_y_from_freq(long rate, double freq)
 {
+	double lograte;
 	if(eof_spectrogram_logplot)
 	{
-		return log(freq / MINFREQ) / log(((double)rate/2.0) / MINFREQ);
+		lograte = log(((double)rate/2.0) / MINFREQ);	//Cache this to avoid Splint's nag about multiple calls to log() in one line of code, obscuring which one may have returned an error through errno
+		return log(freq / MINFREQ) / lograte;
 	}
 	else
 	{
@@ -424,6 +424,9 @@ int eof_color_scale(double value, double max, short int scalenum)
  */
 void eof_generate_colorscale(char scalenum)
 {
+	int rgb[3] = {0,0,0};
+	int cnt, scaledval;
+
 	if((eof_spectrogram_colorscale != NULL) && (eof_spectrogram_colorscale->scalenum == scalenum))
 		return;
 
@@ -457,8 +460,6 @@ void eof_generate_colorscale(char scalenum)
 		eof_spectrogram_colorscale->colortable = (int *)malloc((eof_spectrogram_colorscale->maxval+1) * sizeof(int));
 
 		//Generate the color values
-		int rgb[3] = {0,0,0};
-		int cnt, scaledval;
 		for(scaledval = 0; scaledval <= eof_spectrogram_colorscale->maxval; scaledval++)
 		{ //Loop through, calculating a color for each point on the scale
 			switch(scalenum)
