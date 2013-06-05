@@ -1993,7 +1993,6 @@ int eof_new_chart(char * filename)
 	int temp_buffer_size = 0;
 	struct ID3Tag tag={NULL,0,0,0,0,0,0.0,NULL,0,NULL,NULL,NULL,NULL};
 	int ctr=0;
-	unsigned long ctr2;
 
 	if(filename == NULL)
 		return 1;	//Return failure
@@ -2126,6 +2125,8 @@ int eof_new_chart(char * filename)
 		else
 		{	//Create New Folder
 #ifdef ALLEGRO_WINDOWS
+			unsigned long ctr2;
+
 			for(ctr2 = ustrlen(eof_etext4); ctr2 > 0; ctr2--)
 			{	//For each character in the user defined song folder, in reverse order
 				if(isspace(ugetat(eof_etext4, ctr2 - 1)))

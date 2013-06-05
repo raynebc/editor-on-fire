@@ -1309,15 +1309,15 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		{
 			buffer[index++] = 'h';
 		}
-		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
 		{
 			buffer[index++] = 'p';
 		}
-		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
 		{
 			buffer[index++] = 'T';
 		}
-		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
 		{
 			buffer[index++] = 'a';	//In the symbols font, a is the bend character
 			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
@@ -1331,11 +1331,11 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 				}
 			}
 		}
-		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC)
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC)
 		{
 			buffer[index++] = 'b';	//In the symbols font, b is the harmonic character
 		}
-		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
 		{
 			buffer[index++] = 'V';
 		}
@@ -1345,7 +1345,7 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE)	//If the slide is reversed
 				buffer[index++] = '/';							//Double the slide indicator
 		}
-		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
 		{
 			buffer[index++] = '\\';
 			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE)	//If the slide is reversed
@@ -1373,7 +1373,7 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 				buffer[index++] = 'M';
 			}
 		}
-		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)
 		{
 			buffer[index++] = 'X';
 		}
@@ -1381,11 +1381,11 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		{
 			buffer[index++] = 'c';	//In the symbols font, c is the down strum character
 		}
-		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
 		{
 			buffer[index++] = 'd';	//In the symbols font, d is the up strum character
 		}
-		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM)
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM)
 		{
 			buffer[index++] = 'M';
 		}
@@ -1393,7 +1393,7 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		{
 			buffer[index++] = 'P';
 		}
-		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLAP)
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLAP)
 		{
 			buffer[index++] = 'S';
 		}
@@ -1404,11 +1404,11 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		{
 			buffer[index++] = 'O';
 		}
-		else if(flags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL)
+		if(flags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL)
 		{
 			buffer[index++] = 'P';
 		}
-		else if(flags & EOF_DRUM_NOTE_FLAG_Y_SIZZLE)
+		if(flags & EOF_DRUM_NOTE_FLAG_Y_SIZZLE)
 		{
 			buffer[index++] = 'S';
 		}
