@@ -6,7 +6,7 @@
 
 #define EOF_MAX_TS 500
 #define EOF_MAX_KS 100
-#define EOF_MAX_MIDI_EVENTS 65536
+#define EOF_MAX_MIDI_EVENTS (65536 * 2)
 
 //Rock Band 3 Pro drum markers (force as drum instead of cymbal)
 #define RB3_DRUM_YELLOW_FORCE 110	//Force the 2nd pad as a tom
