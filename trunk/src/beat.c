@@ -141,6 +141,10 @@ void eof_calculate_tempo_map(EOF_SONG * sp)
 			sp->beat[ctr]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Set the anchor flag
 			lastppqn = sp->beat[ctr]->ppqn;
 		}
+		else
+		{
+			sp->beat[ctr]->flags &= ~EOF_BEAT_FLAG_ANCHOR;	//Clear the anchor flag
+		}
 	}
 	sp->beat[sp->beats - 1]->ppqn = sp->beat[sp->beats - 2]->ppqn;	//The last beat's tempo is the same as the previous beat's
 }

@@ -57,6 +57,14 @@
 		char fine_activated;				//Indicates that an "...al fine" symbol was reached, meaning that when "fine" is reached, the GP track unwrapping will end
 	};
 
+	struct eof_gpa_sync_point
+	{
+		unsigned long realtime_pos;		//The realtime position of the sync point in milliseconds
+		unsigned long measure;			//The measure at which this sync point exists
+		double pos_in_measure;			//The position (from 0 to 1) in the measure at which the sync point exists
+		double beat_length;				//The length of each beat from this sync point until the next
+	};
+
 	void eof_gp_debug_log(PACKFILE *inf, char *text);
 		//Does nothing in the EOF build
 	EOF_SONG *eof_import_gp(const char * fn);
@@ -88,6 +96,10 @@ int eof_read_gp_string(PACKFILE *inf, unsigned *length, char *buffer, char readf
 int eof_gp_parse_bend(PACKFILE *inf);
 	//Parses the bend at the current file position, outputting debug logging appropriately
 	//Returns nonzero if there is an error parsing, such as end of file being reached unexpectedly
+
+int eof_get_next_gpa_sync_point(char **buffer, struct eof_gpa_sync_point *ptr);
+	//Reads the next GPA sync point into the referenced structure, advancing *buffer to point to the character after the timestamp read (is '#' between timestamps or '<' after the last timestamp)
+	//Returns nonzero on success
 
 #endif
 

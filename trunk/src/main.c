@@ -3643,10 +3643,10 @@ int eof_initialize(int argc, char * argv[])
 	eof_filter_gp_files = ncdfs_filter_list_create();
 	if(!eof_filter_gp_files)
 	{
-		allegro_message("Could not create file list filter (*.gp*)!");
+		allegro_message("Could not create file list filter (*.gp5;gp4;gp3;xml)!");
 		return 0;
 	}
-	ncdfs_filter_list_add(eof_filter_gp_files, "gpx;gp5;gp4;gp3", "Guitar Pro files (*.gp?)", 1);
+	ncdfs_filter_list_add(eof_filter_gp_files, "gp5;gp4;gp3;xml", "Guitar Pro (*.gp?), Go PlayAlong (*.xml)", 1);
 
 	eof_filter_text_files = ncdfs_filter_list_create();
 	if(!eof_filter_text_files)
