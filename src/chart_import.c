@@ -1593,7 +1593,7 @@ void DestroyFeedbackChart(struct FeedbackChart *ptr, char freestruct)
 		free(ptr);
 }
 
-unsigned long FindLongestLineLength_ALLEGRO(char *filename,char exit_on_empty)
+unsigned long FindLongestLineLength_ALLEGRO(const char *filename,char exit_on_empty)
 {
 	unsigned long maxlinelength=0;
 	unsigned long ctr=0;

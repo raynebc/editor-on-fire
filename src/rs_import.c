@@ -60,15 +60,15 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 	}
 
 	//Allocate memory buffers large enough to hold any line in this file
-	maxlinelength=(size_t)FindLongestLineLength_ALLEGRO(fn, 1);
+	maxlinelength = (size_t)FindLongestLineLength_ALLEGRO(fn, 0);
 	if(!maxlinelength)
 	{
 		eof_log("\tError finding the largest line in the file.  Aborting", 1);
 		(void) pack_fclose(inf);
 		return NULL;
 	}
-	buffer=(char *)malloc(maxlinelength);
-	buffer2=(char *)malloc(maxlinelength);
+	buffer = (char *)malloc(maxlinelength);
+	buffer2 = (char *)malloc(maxlinelength);
 	if(!buffer || !buffer2)
 	{
 		if(buffer)
@@ -119,7 +119,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		ptr = strcasestr_spec(buffer, ">");
 		if(ptr)
 		{	//If this line contained an XML tag
-			strcpy(buffer2, ptr);	//Copy the portion of the buffer beggining after the opening tag
+			strcpy(buffer2, ptr);	//Copy the portion of the buffer beginning after the opening tag
 			ptr2 = strchr(buffer2, '<');
 			if(ptr2)
 			{	//If this line contains a closing XML tag

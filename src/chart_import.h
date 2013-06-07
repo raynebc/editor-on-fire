@@ -87,7 +87,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error);
 	//invoked, so use jumpcode=setjmp(jumpbuffer); and the setjmp logic to catch that in the function that
 	//calls this function
 	//If import fails and error is NOT NULL, a return error is passed through it
-unsigned long FindLongestLineLength_ALLEGRO(char *filename, char exit_on_empty);
+unsigned long FindLongestLineLength_ALLEGRO(const char *filename, char exit_on_empty);
 	//An adaptation of FoFLC's FindLongestLineLength() function that uses Allegro's file I/O routines in order to
 	//avoid problems with the standard C functions being unable to handle filenames with special characters
 	//Returns 0 on error

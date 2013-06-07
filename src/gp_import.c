@@ -7,6 +7,7 @@
 #include <allegro.h>
 #include <assert.h>
 #include "beat.h"
+#include "chart_import.h"	//For FindLongestLineLength_ALLEGRO()
 #include "main.h"
 #include "midi.h"
 #include "rs.h"
@@ -15,10 +16,11 @@
 #include "undo.h"
 #endif
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include <math.h>
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "gp_import.h"
 
 #ifdef USEMEMWATCH
@@ -1796,10 +1798,10 @@ int main(int argc, char *argv[])
 
 struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 {
-	char buffer[256], byte, *buffer2, bytemask, usedstrings;
+	char buffer[256], *buffer2, buffer3[256], byte, bytemask, usedstrings, *ptr;
 	unsigned word, fileversion;
 	unsigned long dword, ctr, ctr2, ctr3, ctr4, tracks, measures, *strings, beats;
-	PACKFILE *inf;
+	PACKFILE *inf = NULL, *inf2;	//The GPA import logic will open the file handle for the Guitar Pro file in inf if applicable
 	struct eof_guitar_pro_struct *gp;
 	struct eof_gp_measure *tsarray;	//Stores all time signatures defined in the file
 	EOF_PRO_GUITAR_NOTE **np;	//Will store the last created note for each track (for handling tie notes)
@@ -1825,28 +1827,207 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	unsigned char start_of_repeat, num_of_repeats;
 	char import_ts = 0;		//Will be set to nonzero if user opts to import time signatures
 	char note_is_short = 0;	//Will be set to nonzero if the note being parsed is shorter than a quarter note
+	char parse_gpa = 0;		//Will be set to nonzero if the specified file is detected to be XML, in which case, the Go PlayAlong file will be parsed
+	size_t maxlinelength;
+	unsigned long linectr = 2, num_sync_points = 0;
+	struct eof_gpa_sync_point *sync_points = NULL;
+	char error = 0;
 
 	eof_log("\tImporting Guitar Pro file", 1);
 	eof_log("eof_load_gp() entered", 1);
 
-
-//Initialize pointers and handles
 	if(!fn)
 	{
 		return NULL;
 	}
-	inf = pack_fopen(fn, "rb");
-	if(!inf)
+
+
+//First, parse the input file to see if it is a Go PlayAlong XML file
+	//Allocate memory buffers large enough to hold any line in this file
+	inf2 = pack_fopen(fn, "rt");
+	if(!inf2)
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError loading:  Cannot open input GP file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
 		eof_log(eof_log_string, 1);
 		return NULL;
 	}
+	maxlinelength = (size_t)FindLongestLineLength_ALLEGRO(fn, 0);
+	if(!maxlinelength)
+	{
+		eof_log("\tError finding the largest line in the file.  Aborting", 1);
+		(void) pack_fclose(inf2);
+		return NULL;
+	}
+	buffer2 = (char *)malloc(maxlinelength);
+	if(!buffer2)
+	{
+		eof_log("\tError allocating memory (1).  Aborting", 1);
+		(void) pack_fclose(inf2);
+		return NULL;
+	}
+	if(pack_fgets(buffer2, (int)maxlinelength, inf2))
+	{	//If the line was read
+		if(strcasestr_spec(buffer2, "<?xml"))
+		{	//If the file is determined to be XML based
+			if(eof_song->tags->tempo_map_locked)
+			{	//If the user has locked the tempo map
+				eof_clear_input();
+				key[KEY_Y] = 0;
+				key[KEY_N] = 0;
+				if(alert(NULL, "The tempo map must be unlocked in order to import a Go PlayAlong file.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+				{	//If the user does not opt to unlock the tempo map
+					eof_log("\tUser cancellation.  Aborting", 1);
+					(void) pack_fclose(inf2);
+					return NULL;
+				}
+				eof_song->tags->tempo_map_locked = 0;	//Unlock the tempo map
+			}
+			parse_gpa = 1;
+		}
+	}
+
+
+//Parse the XML file if applicable
+	if(parse_gpa)
+	{	//If the input file was determined to be an XML file
+		eof_log("\tParsing Go PlayAlong file", 1);
+		if(!pack_fgets(buffer2, (int)maxlinelength, inf2))
+		{	//I/O error
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tGo PlayAlong import failed on line #%lu:  Unable to read from file:  \"%s\"", linectr, strerror(errno));
+			eof_log(eof_log_string, 1);
+			error = 1;
+		}
+		while(!error && !pack_feof(inf2))
+		{	//Until there was an error reading from the file or end of file is reached
+			ptr = strcasestr_spec(buffer2, "<scoreUrl>");	//Find the beginning of the GP file name, if present on this line
+			if(ptr)
+			{	//If the GP file name was present, parse it into a buffer
+				for(ctr = 0; ctr < 256; ctr++)
+				{	//For each character buffer3[] can hold
+					if((*ptr == '<') || (*ptr == '\0'))
+					{	//If end of string or end of XML tag are reached
+						break;
+					}
+					buffer3[ctr] = *ptr;
+					ptr++;
+				}
+				buffer3[ctr] = '\0';	//Terminate the string
+				(void) replace_filename(eof_temp_filename, fn, "", 1024);
+				strncat(eof_temp_filename, buffer3, 1024);	//Build the path to the GP file
+				inf = pack_fopen(eof_temp_filename, "rb");
+				if(!inf)
+				{
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tError loading:  Cannot open GP file (%s) specified in XML file:  \"%s\"", eof_temp_filename, strerror(errno));	//Get the Operating System's reason for the failure
+					eof_log(eof_log_string, 1);
+					error = 1;
+				}
+			}
+
+			ptr = strcasestr_spec(buffer2, "<sync>");
+			if(ptr)
+			{	//If the sync tag is present
+				//Read the number of sync entries
+				for(ctr = 0; ctr < 20; ctr++)
+				{	//Read up to 20 characters for this number
+					if(*ptr == '#')
+					{	//If the end of the number has been reached
+						if(ctr < 1)
+						{	//If no characters were read for this number
+							eof_log("\t\tMalformed sync point.  Aborting", 1);
+							error = 1;
+							break;
+						}
+						break;	//Otherwise stop parsing this number
+					}
+					else if(isdigit(*ptr))
+					{	//If this character is a valid number
+						buffer3[ctr] = *ptr;	//Append it to the buffer
+						ptr++;
+					}
+					else
+					{	//Malformed sync tag
+						eof_log("\t\tMalformed sync point.  Aborting", 1);
+						error = 1;
+						break;
+					}
+				}//Read up to 20 characters for this number
+				if(ctr >= 20)
+				{	//If the number was too long to parse
+					eof_log("\t\tMalformed sync point.  Aborting", 1);
+					error = 1;
+					break;
+				}
+				buffer3[ctr] = '\0';	//Terminate the string
+				num_sync_points = atol(buffer3);	//Convert to integer value
+
+				//Allocate array for sync points
+				if(num_sync_points)
+				{	//If there is a valid number of sync entries
+					sync_points = malloc(sizeof(struct eof_gpa_sync_point) * num_sync_points);
+					if(!sync_points)
+					{
+						eof_log("\t\tError allocating memory (2).  Aborting", 1);
+						error = 1;
+					}
+				}
+
+				//Store sync points into array
+				for(ctr = 0; ctr < num_sync_points; ctr++)
+				{	//For each expected sync point
+					if(!eof_get_next_gpa_sync_point(&ptr, &sync_points[ctr]))
+					{	//If the sync point was not read
+						eof_log("\t\tError parsing sync tag.  Aborting", 1);
+						error = 1;
+						break;
+					}
+					if(ctr && ((sync_points[ctr].measure + sync_points[ctr].pos_in_measure <= sync_points[ctr - 1].measure + sync_points[ctr - 1].pos_in_measure) || (sync_points[ctr].realtime_pos <= sync_points[ctr - 1].realtime_pos)))
+					{	//If there was a previous sync point, and this sync point isn't a later timestamp or measure position
+						eof_log("\t\tSync points out of order.  Aborting", 1);
+						error = 1;
+						break;
+					}
+				}
+			}//If the sync tag is present
+
+			(void) pack_fgets(buffer2, (int)maxlinelength, inf2);	//Read next line of text
+			linectr++;	//Increment line counter
+		}//Until there was an error reading from the file or end of file is reached
+		if(error)
+		{
+			if(inf)
+				pack_fclose(inf);
+			pack_fclose(inf2);
+			if(sync_points)
+				free(sync_points);
+			free(buffer2);
+			return NULL;
+		}
+	}
+	pack_fclose(inf2);
+	if(buffer2)
+		free(buffer2);
+
+
+//Initialize pointers and handles
+	if(!inf)
+	{	//If the input GP file wasn't opened for reading by the GPA parse logic earlier
+		inf = pack_fopen(fn, "rb");
+	}
+	if(!inf)
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError loading:  Cannot open input GP file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		eof_log(eof_log_string, 1);
+		if(sync_points)
+			free(sync_points);
+		return NULL;
+	}
 	gp = malloc(sizeof(struct eof_guitar_pro_struct));
 	if(!gp)
 	{
-		eof_log("Error allocating memory (1)", 1);
+		eof_log("Error allocating memory (3)", 1);
 		(void) pack_fclose(inf);
+		if(sync_points)
+			free(sync_points);
 		return NULL;
 	}
 
@@ -1908,6 +2089,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		eof_log("File format version not supported", 1);
 		(void) pack_fclose(inf);
 		free(gp);
+		if(sync_points)
+			free(sync_points);
 		return NULL;
 	}
 #ifdef GP_IMPORT_DEBUG
@@ -1949,9 +2132,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			buffer2 = malloc((size_t)dword + 1);	//Allocate a buffer large enough for the lyric string (plus a NULL terminator)
 			if(!buffer2)
 			{
-				eof_log("Error allocating memory (2)", 1);
+				eof_log("Error allocating memory (4)", 1);
 				(void) pack_fclose(inf);
 				free(gp);
+				if(sync_points)
+					free(sync_points);
 				return NULL;
 			}
 			(void) pack_fread(buffer2, dword, inf);	//Read the lyric string
@@ -2234,9 +2419,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	tsarray = malloc(sizeof(struct eof_gp_measure) * measures);	//Allocate memory to store the time signature effective for each measure
 	if(!tsarray)
 	{
-		eof_log("Error allocating memory (3)", 1);
+		eof_log("Error allocating memory (5)", 1);
 		(void) pack_fclose(inf);
 		free(gp);
+		if(sync_points)
+			free(sync_points);
 		return NULL;
 	}
 	gp->measure = tsarray;		//Store this array into the Guitar Pro structure
@@ -2254,10 +2441,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	gp->capos = malloc(sizeof(unsigned long) * tracks);		//Allocate memory to store the capo position of each track
 	if(!gp->names || !np || !hopo || !nonshiftslide || !gp->capos)
 	{
-		eof_log("Error allocating memory (4)", 1);
+		eof_log("Error allocating memory (6)", 1);
 		(void) pack_fclose(inf);
 		free(gp);
 		free(tsarray);
+		if(sync_points)
+			free(sync_points);
 		return NULL;
 	}
 	memset(np, 0, sizeof(EOF_PRO_GUITAR_NOTE *) * tracks);				//Set all last created note pointers to NULL
@@ -2268,7 +2457,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	gp->text_events = 0;
 	if(!gp->track )
 	{
-		eof_log("Error allocating memory (5)", 1);
+		eof_log("Error allocating memory (7)", 1);
 		(void) pack_fclose(inf);
 		free(gp->track);
 		free(gp->names);
@@ -2278,6 +2467,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		free(gp->capos);
 		free(gp);
 		free(tsarray);
+		if(sync_points)
+			free(sync_points);
 		return NULL;
 	}
 	for(ctr = 0; ctr < tracks; ctr++)
@@ -2285,7 +2476,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		gp->track[ctr] = malloc(sizeof(EOF_PRO_GUITAR_TRACK));
 		if(!gp->track[ctr])
 		{
-			eof_log("Error allocating memory (6)", 1);
+			eof_log("Error allocating memory (8)", 1);
 			(void) pack_fclose(inf);
 			free(gp->names);
 			free(gp->track[ctr]);
@@ -2301,6 +2492,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(gp->capos);
 			free(gp);
 			free(tsarray);
+			if(sync_points)
+				free(sync_points);
 			return NULL;
 		}
 		memset(gp->track[ctr], 0, sizeof(EOF_PRO_GUITAR_TRACK));	//Initialize memory block to 0 to avoid crashes when not explicitly setting counters that were newly added to the pro guitar structure
@@ -2314,7 +2507,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	strings = malloc(sizeof(unsigned long) * tracks);
 	if(!strings)
 	{
-		eof_log("Error allocating memory (7)", 1);
+		eof_log("Error allocating memory (9)", 1);
 		(void) pack_fclose(inf);
 		free(gp->names);
 		for(ctr = 0; ctr < tracks; ctr++)
@@ -2328,6 +2521,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		free(gp->capos);
 		free(gp);
 		free(tsarray);
+		if(sync_points)
+			free(sync_points);
 		return NULL;
 	}
 #ifdef GP_IMPORT_DEBUG
@@ -2399,7 +2594,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						gp->text_event[gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
 						if(!gp->text_event[gp->text_events])
 						{
-							eof_log("Error allocating memory (8)", 1);
+							eof_log("Error allocating memory (10)", 1);
 							(void) pack_fclose(inf);
 							free(gp->names);
 							for(ctr = 0; ctr < tracks; ctr++)
@@ -2417,6 +2612,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							free(gp->capos);
 							free(gp);
 							free(tsarray);
+							if(sync_points)
+								free(sync_points);
 							return NULL;
 						}
 						gp->text_event[gp->text_events]->beat = ctr;	//For now, store the measure number, it will need to be converted to the beat number later
@@ -2455,7 +2652,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						gp->text_event[gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
 						if(!gp->text_event[gp->text_events])
 						{
-							eof_log("Error allocating memory (8)", 1);
+							eof_log("Error allocating memory (11)", 1);
 							(void) pack_fclose(inf);
 							free(gp->names);
 							for(ctr = 0; ctr < tracks; ctr++)
@@ -2473,6 +2670,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							free(gp->capos);
 							free(gp);
 							free(tsarray);
+							if(sync_points)
+								free(sync_points);
 							return NULL;
 						}
 						gp->text_event[gp->text_events]->beat = ctr;	//For now, store the measure number, it will need to be converted to the beat number later
@@ -2548,7 +2747,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 			if(!eof_song_add_beat(eof_song))
 			{
-				eof_log("Error allocating memory (9)", 1);
+				eof_log("Error allocating memory (12)", 1);
 				(void) pack_fclose(inf);
 				free(gp->names);
 				for(ctr = 0; ctr < tracks; ctr++)
@@ -2567,6 +2766,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				free(gp);
 				free(tsarray);
 				free(strings);
+				if(sync_points)
+					free(sync_points);
 				return NULL;
 			}
 			eof_song->beat[eof_song->beats - 1]->ppqn = eof_song->beat[eof_song->beats - 2]->ppqn;	//Match the tempo of the previously last beat
@@ -2578,24 +2779,27 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	}
 
 	eof_clear_input();
-	if(eof_use_ts && !eof_song->tags->tempo_map_locked)
-	{	//If user has enabled the preference to import time signatures, and the project's tempo map isn't locked
-		eof_clear_input();
-		key[KEY_Y] = 0;
-		key[KEY_N] = 0;
-		if(alert(NULL, "Import Guitar Pro file's time signatures?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-		{	//If the user opts to import those from this Guitar Pro file into the active project
-			import_ts = 1;
-			if(undo_made && (*undo_made == 0))
-			{	//If calling function wants to track an undo state being made if time signatures are imported into the project
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				*undo_made = 1;
+	if(!sync_points)
+	{	//Skip prompting to import time signatures if importing a Go PlayAlong file
+		if(eof_use_ts && !eof_song->tags->tempo_map_locked)
+		{	//If user has enabled the preference to import time signatures, and the project's tempo map isn't locked (skip the prompt if importing a Go PlayAlong file)
+			eof_clear_input();
+			key[KEY_Y] = 0;
+			key[KEY_N] = 0;
+			if(alert(NULL, "Import Guitar Pro file's time signatures?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+			{	//If the user opts to import those from this Guitar Pro file into the active project
+				import_ts = 1;
+				if(undo_made && (*undo_made == 0))
+				{	//If calling function wants to track an undo state being made if time signatures are imported into the project
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					*undo_made = 1;
+				}
 			}
 		}
-	}
-	else
-	{	//TS change importing is being skipped
-		allegro_message("To allow time signatures to be imported, ensure the \"Import/Export TS\" preference is enabled and the tempo map isn't locked");
+		else
+		{	//TS change importing is being skipped
+			allegro_message("To allow time signatures to be imported, ensure the \"Import/Export TS\" preference is enabled and the tempo map isn't locked");
+		}
 	}
 	curnum = curden = 0;
 	for(ctr = 0; ctr < measures; ctr++)
@@ -2609,9 +2813,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			}
 		}
 		for(ctr2 = 0; ctr2 < tsarray[ctr].num; ctr2++, beatctr++)
-		{	//For each beat in this measure
-			if(import_ts)
-			{	//If the user opted to replace the active project's TS changes
+		{	//For each beat in this measure, count the beats
+			if(import_ts || sync_points)
+			{	//If the user opted to replace the active project's TS changes, or if a Go PlayAlong file is being imported
 				if(!ctr2 && ((tsarray[ctr].num != curnum) || (tsarray[ctr].den != curden)))
 				{	//If this is a time signature change on the first beat of the measure
 					(void) eof_apply_ts(tsarray[ctr].num, tsarray[ctr].den, beatctr, eof_song, 0);	//Apply the change to the active project
@@ -2626,6 +2830,38 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		curnum = tsarray[ctr].num;
 		curden = tsarray[ctr].den;
 	}
+
+
+//Apply Go PlayAlong timings now if applicable
+	if(sync_points)
+	{	//If synchronization data was imported from the input Go PlayAlong file
+		double curpos = 0.0, beat_length = 500;	//By default, assume 120BPM
+		eof_process_beat_statistics(eof_song, eof_selected_track);	//Find the measure numbering for all beats
+		for(ctr = 0; ctr < eof_song->beats; ctr++)
+		{	//For each beat in the project
+			measure_position = (double)eof_song->beat[ctr]->beat_within_measure / (double)eof_song->beat[ctr]->num_beats_in_measure;	//Find this beat's position in the measure, as a value between 0 and 1
+			for(ctr2 = 0; ctr2 < num_sync_points; ctr2++)
+			{	//For each sync point from the Go PlayAlong file
+				if(sync_points[ctr2].measure + 1 == eof_song->beat[ctr]->measurenum)
+				{	//If the sync point belongs in the same measure as this beat (GPA files number measures starting with 0)
+					if(fabs(measure_position - sync_points[ctr2].pos_in_measure) < (1.0 / (double)eof_song->beat[ctr]->num_beats_in_measure) * 0.05)
+					{	//If this sync point is close enough (within 5% of the measure's length) to this beat to be considered tied to the beat
+						eof_song->beat[ctr]->fpos = eof_song->beat[ctr]->pos = sync_points[ctr2].realtime_pos;	//Apply the timestamp
+						curpos = sync_points[ctr2].realtime_pos;			//Update the ongoing position variable
+						beat_length = sync_points[ctr2].beat_length;		//Update the beat length variable
+						break;	//Exit sync point loop
+					}
+				}
+			}
+			eof_song->beat[ctr]->fpos = curpos;							//Apply the current position to this beat
+			eof_song->beat[ctr]->pos = eof_song->beat[ctr]->fpos + 0.5;	//Round up
+			curpos += beat_length;
+		}
+		eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
+		eof_calculate_tempo_map(eof_song);	//Update the tempo and anchor status of all beats
+		free(sync_points);
+	}//If synchronization data was imported from the input Go PlayAlong file
+
 
 //Read track data
 #ifdef GP_IMPORT_DEBUG
@@ -2660,7 +2896,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		gp->names[ctr] = malloc(sizeof(buffer) + 1);	//Allocate memory to store track name string into guitar pro structure
 		if(!gp->names[ctr])
 		{
-			eof_log("Error allocating memory (10)", 1);
+			eof_log("Error allocating memory (13)", 1);
 			(void) pack_fclose(inf);
 			while(ctr > 0)
 			{	//Free the previous track name strings
@@ -2998,7 +3234,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							gp->text_event[gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
 							if(!gp->text_event[gp->text_events])
 							{
-								eof_log("Error allocating memory (8)", 1);
+								eof_log("Error allocating memory (14)", 1);
 								(void) pack_fclose(inf);
 								free(gp->names);
 								for(ctr = 0; ctr < tracks; ctr++)
@@ -3513,7 +3749,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							np[ctr2] = eof_pro_guitar_track_add_note(gp->track[ctr2]);	//Add a new note to the current track
 							if(!np[ctr2])
 							{
-								eof_log("Error allocating memory (11)", 1);
+								eof_log("Error allocating memory (15)", 1);
 								(void) pack_fclose(inf);
 								while(ctr > 0)
 								{	//Free the previous track name strings
@@ -4282,6 +4518,82 @@ char eof_copy_notes_in_beat_range(EOF_PRO_GUITAR_TRACK *source, unsigned long st
 			}
 		}
 	}
+
+	return 1;	//Return success
+}
+
+int eof_get_next_gpa_sync_point(char **buffer, struct eof_gpa_sync_point *ptr)
+{
+	unsigned long ctr, index;
+	char buffer2[21];
+	double value;
+
+	if(!buffer || !(*buffer) || !ptr)
+		return 0;	//Invalid parameters
+
+	//Examine the character at the specified position to see if it needs to be skipped
+	if(**buffer == '#')
+		(*buffer)++;	//Skip the timestamp delimiter
+	else if(!isdigit(**buffer))
+		return 0;	//Unexpected character was encountered
+
+	//Read a set of 4 delimited numbers
+	for(ctr = 0; ctr < 4; ctr++)
+	{	//For each of the 4 expected numbers in the timestamp
+		//Read the number and convert to floating point
+		for(index = 0; index < 20; index++)
+		{	//Read up to 20 characters for this number
+			if(**buffer == '\0')
+				return 0;	//The end of the string was unexpectedly reached
+			if((**buffer == '<') || (**buffer == '#'))
+			{	//If the end of the timestamp is reached
+				if(ctr < 3)
+				{	//If four input fields haven't been read yet
+					return 0;	//Malformed timestamp
+				}
+				break;	//Otherwise stop parsing this number
+			}
+			if(**buffer == ';')
+			{	//If the end of one of the first 3 numbers is reached
+				if(index < 1)
+				{	//If no characters were read for this number
+					return 0;	//Malformed timestamp
+				}
+				(*buffer)++;	//Increment to next character to read
+				break;	//Otherwise stop parsing this number
+			}
+			if(!isdigit(**buffer) && (**buffer != '.'))
+			{	//If the next character isn't a number or a period
+				return 0;	//Malformed timestamp
+			}
+			buffer2[index] = **buffer;	//Read the next character
+			(*buffer)++;	//Increment to next character to read
+		}
+		if(index >= 20)
+		{	//If the number field was too long to parse
+			return 0;	//Malformed timestamp
+		}
+		buffer2[index] = '\0';	//Terminate the string
+		value = atof(buffer2);	//Convert to floating point
+
+		//Store the value into the appropriate structure element
+		if(!ctr)
+		{
+			ptr->realtime_pos = value + 0.5;	//Round up to nearest ms
+		}
+		else if(ctr == 1)
+		{
+			ptr->measure = value + 0.5;	//Round up to nearest number to avoid precision loss
+		}
+		else if(ctr == 2)
+		{
+			ptr->pos_in_measure = value;
+		}
+		else
+		{	//ctr is 3
+			ptr->beat_length = value;
+		}
+	}//For each of the 4 expected numbers in the timestamp
 
 	return 1;	//Return success
 }
