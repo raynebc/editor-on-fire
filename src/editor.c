@@ -134,11 +134,10 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 {
 //	eof_log("eof_snap_logic() entered");
 
-	int i;
+	int i, least = -1;
 	int interval = 0;
-	char measure_snap = 0;
-	int note = 4;
-	float snaplength;
+	char measure_snap = 1;	//Unless a custom per-beat grid snap is defined, all grid snaps are per measure
+	float snaplength, least_amount;
 
 	if(!sp)
 	{
@@ -159,9 +158,6 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 
 	if(eof_snap_mode != EOF_SNAP_OFF)
 	{	//If grid snap is enabled
-		float least_amount;
-		int least = -1;
-
 		/* find the snap beat */
 		sp->beat = -1;
 		if(sp->pos < eof_song->beat[eof_song->beats - 1]->pos)
@@ -192,57 +188,44 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			{
 				case EOF_SNAP_QUARTER:
 				{
-					interval = 1;
-					measure_snap = 0;
-					note = 4;
+					interval = 4;
 					break;
 				}
 				case EOF_SNAP_EIGHTH:
 				{
-					interval = 2;
-					measure_snap = 0;
-					note = 8;
+					interval = 8;
 					break;
 				}
 				case EOF_SNAP_TWELFTH:
 				{
-					interval = 3;
-					measure_snap = 0;
-					note = 12;
+					interval = 12;
 					break;
 				}
 				case EOF_SNAP_SIXTEENTH:
 				{
-					interval = 4;
-					measure_snap = 0;
-					note = 16;
+					interval = 16;
 					break;
 				}
 				case EOF_SNAP_TWENTY_FOURTH:
 				{
-					interval = 6;
-					measure_snap = 0;
-					note = 24;
+					interval = 24;
 					break;
 				}
 				case EOF_SNAP_THIRTY_SECOND:
 				{
-					interval = 8;
-					measure_snap = 0;
-					note = 32;
+					interval = 32;
 					break;
 				}
 				case EOF_SNAP_FORTY_EIGHTH:
 				{
-					interval = 12;
-					measure_snap = 0;
-					note = 48;
+					interval = 48;
 					break;
 				}
 				case EOF_SNAP_CUSTOM:
 				{
 					interval = eof_snap_interval;
-					measure_snap = 1;
+					if(!eof_custom_snap_measure)
+						measure_snap = 0;
 					break;
 				}
 			}
@@ -250,37 +233,6 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 
 		/* do the actual snapping */
 		least_amount = sp->beat_length;
-		if(eof_snap_mode != EOF_SNAP_CUSTOM)
-		{
-			if(note < sp->denominator)
-			{
-				if(sp->beat + 1 < eof_song->beats)
-				{	//If nothing else, set the next snap position to the next beat so seek next grid snap will move the seek position
-					sp->next_snap = eof_song->beat[sp->beat + 1]->pos;
-				}
-				return;
-			}
-			if(sp->denominator == 2)
-			{
-				interval *= 2;
-			}
-			else if(sp->denominator == 8)
-			{
-				if(interval % 2)
-				{
-					return;
-				}
-				interval /= 2;
-			}
-			else if(sp->denominator == 16)
-			{
-				if(interval % 4)
-				{
-					return;
-				}
-				interval /= 4;
-			}
-		}
 		if(measure_snap)
 		{	//If performing snap by measure logic
 			int ts = 1;
@@ -323,7 +275,6 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			}
 			for(i = sp->beat; i >= sp->measure_beat; i--)
 			{
-
 				/* start of measure we are currently in */
 				if((i - sp->measure_beat) % ts == 0)
 				{
@@ -348,21 +299,21 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			}
 
 			/* find the snap positions */
-			snaplength = (float)sp->measure_length / (float)eof_snap_interval;
-			for(i = 0; i < eof_snap_interval; i++)
+			snaplength = (float)sp->measure_length / (float)interval;
+			for(i = 0; i < interval; i++)
 			{
 				sp->grid_pos[i] = eof_song->beat[sp->measure_beat]->fpos + (snaplength * (float)i);
 			}
-			sp->grid_pos[eof_snap_interval] = eof_song->beat[sp->measure_beat]->fpos + sp->measure_length;
+			sp->grid_pos[interval] = eof_song->beat[sp->measure_beat]->fpos + sp->measure_length;
 
 			/* see which one we snap to */
-			for(i = 0; i < eof_snap_interval + 1; i++)
+			for(i = 0; i < interval + 1; i++)
 			{
 				sp->grid_distance[i] = eof_pos_distance(sp->grid_pos[i], sp->pos);
 			}
 			sp->previous_snap = sp->grid_pos[0] + 0.5;		//Initialize these values
 			sp->next_snap = sp->grid_pos[1] + 0.5;
-			for(i = 0; i < eof_snap_interval + 1; i++)
+			for(i = 0; i < interval + 1; i++)
 			{	//For each calculated grid snap position
 				if((unsigned long)(sp->grid_pos[i] + 0.5) < p)
 				{	//If this grid snap position (rounded to nearest ms) is before the input timestamp
@@ -392,7 +343,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 		}//If performing snap by measure logic
 		else
 		{	//If performing snap by beat logic
-			/* find the snap positions */
+			//* find the snap positions /
 			snaplength = (float)sp->beat_length / (float)interval;
 			for(i = 0; i < interval; i++)
 			{
@@ -400,7 +351,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			}
 			sp->grid_pos[interval] = eof_song->beat[sp->beat + 1]->fpos;	//Record the position of the last grid snap, which is the next beat
 
-			/* see which one we snap to */
+			//* see which one we snap to /
 			for(i = 0; i < interval + 1; i++)
 			{
 				sp->grid_distance[i] = eof_pos_distance(sp->grid_pos[i], sp->pos);
@@ -441,6 +392,8 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 
 void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 {
+	char measure_snap = 1;	//Unless a custom per-beat grid snap is defined, all grid snaps are per measure
+	int interval;
 //	eof_log("eof_snap_length_logic() entered");
 
 	if(!sp)
@@ -448,7 +401,7 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 		return;
 	}
 	if(eof_snap_mode != EOF_SNAP_OFF)
-	{
+	{	//If grid snap is not disabled
 		/* if snapped to the next beat, make sure length is calculated from that beat */
 		if(sp->pos >= eof_song->beat[sp->beat + 1]->pos)
 		{
@@ -468,73 +421,62 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 		{
 			case EOF_SNAP_QUARTER:
 			{
-				sp->length = sp->beat_length;
+				interval = 4;
 				break;
 			}
 			case EOF_SNAP_EIGHTH:
 			{
-				sp->length = sp->beat_length / 2;
+				interval = 8;
 				break;
 			}
 			case EOF_SNAP_TWELFTH:
 			{
-				sp->length = sp->beat_length / 3;
+				interval = 12;
 				break;
 			}
 			case EOF_SNAP_SIXTEENTH:
 			{
-				sp->length = sp->beat_length / 4;
+				interval = 16;
 				break;
 			}
 			case EOF_SNAP_TWENTY_FOURTH:
 			{
-				sp->length = sp->beat_length / 6;
+				interval = 24;
 				break;
 			}
 			case EOF_SNAP_THIRTY_SECOND:
 			{
-				sp->length = sp->beat_length / 8;
+				interval = 32;
 				break;
 			}
 			case EOF_SNAP_FORTY_EIGHTH:
 			{
-				sp->length = sp->beat_length / 12;
+				interval = 48;
 				break;
 			}
 			case EOF_SNAP_CUSTOM:
 			{
-				if(eof_custom_snap_measure)
-				{
-					sp->length = ((double)sp->measure_length / (double)eof_snap_interval +0.5);	//Round up
-				}
-				else
-				{
-					sp->length = ((double)sp->beat_length / (double)eof_snap_interval +0.5);	//Round up
-				}
-				if(sp->length <= 0)
-					sp->length = 1;	//Enforce a minimum grid snap length of 1ms
+				interval = eof_snap_interval;
+				if(!eof_custom_snap_measure)
+					measure_snap = 0;
 				break;
 			}
 		}
-		if(eof_snap_mode != EOF_SNAP_CUSTOM)
+		if(measure_snap)
 		{
-			if(sp->denominator == 2)
-			{
-				sp->length /= 2;
-			}
-			else if(sp->denominator == 8)
-			{
-				sp->length *= 2;
-			}
-			else if(sp->denominator == 16)
-			{
-				sp->length *= 4;
-			}
+			sp->length = ((double)sp->measure_length / (double)interval +0.5);	//Round up
 		}
-	}
+		else
+		{
+			sp->length = ((double)sp->beat_length / (double)interval +0.5);	//Round up
+		}
+		if(sp->length <= 0)
+			sp->length = 1;	//Enforce a minimum grid snap length of 1ms
+
+	}//If grid snap is not disabled
 	else
-	{
-		sp->length = 100;
+	{	//If grid snap is disabled
+		sp->length = 100;	//Default snap length is 100ms
 	}
 }
 
