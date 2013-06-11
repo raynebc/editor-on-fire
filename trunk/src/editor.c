@@ -393,7 +393,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 {
 	char measure_snap = 1;	//Unless a custom per-beat grid snap is defined, all grid snaps are per measure
-	int interval;
+	int interval = 4;
 //	eof_log("eof_snap_length_logic() entered");
 
 	if(!sp)
@@ -460,6 +460,11 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 				if(!eof_custom_snap_measure)
 					measure_snap = 0;
 				break;
+			}
+			default:
+			{	//Invalid snap mode
+				sp->length = 100;
+				return;
 			}
 		}
 		if(measure_snap)

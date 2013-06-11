@@ -395,7 +395,7 @@ TRACK CHUNK, for each track:
 						[1 byte]:	Extended beat effects bitmask (byte 2 of the bitmask)
 					!STRING EFFECT (if the beat effects bitmask declares this effect):
 					{
-						[1 byte]:	Which string effect is used (0 = Tremolo, 1 = Tapping, 2 = Slapping, 3 = Popping (bass guitar))
+						[1 byte]:	Which string effect is used (0 = Tremolo bar, 1 = Tapping, 2 = Slapping, 3 = Popping (bass guitar))
 						!STRING EFFECT VALUE (only if the major file version is < 4):
 							[4 bytes]:	A value applied to the string effect, ie. how much the tremolo bar dives in cents
 					}						
@@ -636,7 +636,7 @@ Byte 1
  Bit 1:			Wide vibrato
  Bit 2:			Natural harmonic
  Bit 3:			Artificial harmonic
- Bit 4:			Unknown
+ Bit 4:			Fade in
  Bit 5:			String effect
  Bit 6:			Stroke effect
  Bit 7 (MSB):		Unused (set to 0)

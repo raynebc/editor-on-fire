@@ -1293,7 +1293,7 @@ EOF_SONG *parse_gp(const char * fn)
 							byte = pack_getc(inf);	//Read tapping/popping/slapping indicator
 							if(byte == 0)
 							{
-								(void) puts("Tremolo");
+								(void) puts("Tremolo bar");
 							}
 							else if(byte == 1)
 							{
@@ -3307,8 +3307,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						{	//Tapping/popping/slapping
 							byte = pack_getc(inf);	//Read tapping/popping/slapping indicator
 							if(byte == 0)
-							{	//Tremolo
-								flags |= EOF_NOTE_FLAG_IS_TREMOLO;
+							{	//Tremolo bar
 							}
 							else if(byte == 1)
 							{	//Tapping
