@@ -12,6 +12,7 @@
 #endif
 
 char *eof_difficulty_ini_tags[EOF_TRACKS_MAX + 1] = {"", "diff_guitar", "diff_bass", "diff_guitar_coop", "diff_rhythm", "diff_drums", "diff_vocals", "diff_keys", "diff_bass_real", "diff_guitar_real", "diff_dance", "diff_bass_real_22", "diff_guitar_real_22", "diff_drums_real_ps", "diff_keys_real"};
+int eof_rb_tier_values[7] = {1, 150, 208, 267, 325, 384, 442};	//Rock Band's tier values for difficulties 0 through 6, for use in creating DTA files
 
 int eof_save_ini(EOF_SONG * sp, char * fn)
 {
@@ -337,6 +338,7 @@ int eof_save_upgrades_dta(EOF_SONG * sp, char * fn)
 	char buffer2[256] = {0};
 	char buffer3[5] = {0};
 	unsigned long i, tracknum;
+	int tiervalue;
 	PACKFILE * fp;
 
 	eof_log("eof_save_upgrades_dta() entered", 1);
@@ -382,7 +384,23 @@ int eof_save_upgrades_dta(EOF_SONG * sp, char * fn)
 
 	if(eof_get_track_size(sp, EOF_TRACK_PRO_GUITAR))
 	{	//If the pro guitar track is populated
-		(void) pack_fputs("      (real_guitar ###)\n", fp);
+		if(sp->track[EOF_TRACK_PRO_GUITAR]->difficulty != 0xFF)
+		{	//If the track's difficulty is defined
+			if(sp->track[EOF_TRACK_PRO_GUITAR]->difficulty < 7)
+			{	//If the track's difficulty is valid
+				tiervalue = eof_rb_tier_values[sp->track[EOF_TRACK_PRO_GUITAR]->difficulty];
+			}
+			else
+			{	//Otherwise default to the lowest difficulty tier
+				tiervalue = 1;
+			}
+			(void) snprintf(buffer, sizeof(buffer) - 1, "      (real_guitar %d)\n", tiervalue);
+			(void) pack_fputs(buffer, fp);
+		}
+		else
+		{
+			(void) pack_fputs("      (real_guitar ###)\n", fp);
+		}
 	}
 	else
 	{	//Write data for a blank pro guitar track
@@ -391,7 +409,23 @@ int eof_save_upgrades_dta(EOF_SONG * sp, char * fn)
 
 	if(eof_get_track_size(sp, EOF_TRACK_PRO_BASS))
 	{	//If the pro bass track is populated
-		(void) pack_fputs("      (real_bass ###)\n", fp);
+		if(sp->track[EOF_TRACK_PRO_BASS]->difficulty != 0xFF)
+		{	//If the track's difficulty is defined
+			if(sp->track[EOF_TRACK_PRO_BASS]->difficulty < 7)
+			{	//If the track's difficulty is valid
+				tiervalue = eof_rb_tier_values[sp->track[EOF_TRACK_PRO_BASS]->difficulty];
+			}
+			else
+			{	//Otherwise default to the lowest difficulty tier
+				tiervalue = 1;
+			}
+			(void) snprintf(buffer, sizeof(buffer) - 1, "      (real_bass %d)\n", tiervalue);
+			(void) pack_fputs(buffer, fp);
+		}
+		else
+		{
+			(void) pack_fputs("      (real_bass ###)\n", fp);
+		}
 	}
 	else
 	{	//Write data for a blank pro bass track
