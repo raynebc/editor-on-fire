@@ -2801,6 +2801,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			allegro_message("To allow time signatures to be imported, ensure the \"Import/Export TS\" preference is enabled and the tempo map isn't locked");
 		}
 	}
+	else
+	{	//Make an undo state before processing Go PlayAlong file, which will overwrite the tempo map
+		if(undo_made && (*undo_made == 0))
+		{	//If calling function wants to track an undo state being made if time signatures are imported into the project
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			*undo_made = 1;
+		}
+	}
 	curnum = curden = 0;
 	for(ctr = 0; ctr < measures; ctr++)
 	{	//For each measure in the GP file
@@ -2842,14 +2850,39 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			measure_position = (double)eof_song->beat[ctr]->beat_within_measure / (double)eof_song->beat[ctr]->num_beats_in_measure;	//Find this beat's position in the measure, as a value between 0 and 1
 			for(ctr2 = 0; ctr2 < num_sync_points; ctr2++)
 			{	//For each sync point from the Go PlayAlong file
-				if(sync_points[ctr2].measure + 1 == eof_song->beat[ctr]->measurenum)
-				{	//If the sync point belongs in the same measure as this beat (GPA files number measures starting with 0)
-					if(fabs(measure_position - sync_points[ctr2].pos_in_measure) < (1.0 / (double)eof_song->beat[ctr]->num_beats_in_measure) * 0.05)
-					{	//If this sync point is close enough (within 5% of the measure's length) to this beat to be considered tied to the beat
-						eof_song->beat[ctr]->fpos = eof_song->beat[ctr]->pos = sync_points[ctr2].realtime_pos;	//Apply the timestamp
-						curpos = sync_points[ctr2].realtime_pos;			//Update the ongoing position variable
+				if(!sync_points[ctr2].processed)
+				{	//If the sync point hasn't been handled already
+					if(sync_points[ctr2].measure + 1 == eof_song->beat[ctr]->measurenum)
+					{	//If the sync point belongs in the same measure as this beat (GPA files number measures starting with 0)
+						if(fabs(measure_position - sync_points[ctr2].pos_in_measure) < (1.0 / (double)eof_song->beat[ctr]->num_beats_in_measure) * 0.05)
+						{	//If this sync point is close enough (within 5% of the beat's length) to this beat to be considered tied to the beat
+#ifdef GP_IMPORT_DEBUG
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tOn-beat sync point:  Pos:  %lums\tMeasure:  %f\tBeat length:  %f", sync_points[ctr2].realtime_pos, sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure, sync_points[ctr2].beat_length);
+							eof_log(eof_log_string, 1);
+#endif
+							eof_song->beat[ctr]->fpos = eof_song->beat[ctr]->pos = sync_points[ctr2].realtime_pos;	//Apply the timestamp
+							curpos = sync_points[ctr2].realtime_pos;			//Update the ongoing position variable
+							beat_length = sync_points[ctr2].beat_length;		//Update the beat length variable
+							sync_points[ctr2].processed = 1;
+							break;	//Exit sync point loop
+						}
+					}
+					if((double)sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure < (double)eof_song->beat[ctr]->measurenum + measure_position)
+					{	//If the beat is beyond the sync point, the sync point is not within 5% of a beat line and is located between beats
+						double temp;
+#ifdef GP_IMPORT_DEBUG
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMid-beat sync point:  Pos:  %lums\tMeasure:  %f\tBeat length:  %f", sync_points[ctr2].realtime_pos, sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure, sync_points[ctr2].beat_length);
+						eof_log(eof_log_string, 1);
+#endif
+						//This is the first beat that surpassed this sync point, find out how far into last beat the sync point is, and use the beat length to derive the position of the next beat
+						temp = (double)eof_song->beat[ctr]->measurenum + measure_position - ((double)sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure);	//The number of beats between this beat and the sync point before it
+						curpos = sync_points[ctr2].realtime_pos + (temp * sync_points[ctr2].beat_length);
 						beat_length = sync_points[ctr2].beat_length;		//Update the beat length variable
-						break;	//Exit sync point loop
+						sync_points[ctr2].processed = 1;	//Mark this sync point as processed, but don't break from loop, so that if there are multiple sync points within the span of one beat, only the last one is used to alter beat timings
+					}
+					else
+					{	//Otherwise if the beat is before the sync point
+						break;
 					}
 				}
 			}
@@ -4594,6 +4627,7 @@ int eof_get_next_gpa_sync_point(char **buffer, struct eof_gpa_sync_point *ptr)
 		}
 	}//For each of the 4 expected numbers in the timestamp
 
+	ptr->processed = 0;
 	return 1;	//Return success
 }
 

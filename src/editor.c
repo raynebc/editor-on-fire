@@ -1532,6 +1532,8 @@ if(key[KEY_PAUSE])
 		else if(KEY_EITHER_CTRL)
 		{
 			(void) eof_menu_song_swap_piano_rolls();
+			eof_mix_find_claps();		//Update sound cues
+			eof_mix_start_helper();
 			key[KEY_ENTER] = 0;
 		}
 	}

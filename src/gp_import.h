@@ -63,6 +63,7 @@
 		unsigned long measure;			//The measure at which this sync point exists
 		double pos_in_measure;			//The position (from 0 to 1) in the measure at which the sync point exists
 		double beat_length;				//The length of each beat from this sync point until the next
+		char processed;					//Is set to nonzero after the sync point is incorporated into the project's tempo map
 	};
 
 	void eof_gp_debug_log(PACKFILE *inf, char *text);
