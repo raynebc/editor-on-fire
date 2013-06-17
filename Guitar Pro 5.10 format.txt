@@ -183,7 +183,7 @@ BAR CHUNK, for each bar (measure):
 		!END OF REPEAT (if the bitmask declares this)
 		[1 byte]:	Number of repeats?
 		!NUMBER OF ALTERNATE ENDING (if the bitmask declares this)
-		[1 byte]:	The number of the alternate ending (ignored if the bitmask didn't declare this)
+		[1 byte]:	Bitmask defining the the alternate endings (1 through 8) this measure contains (ignored if the bitmask didn't declare this)
 	}
 	If the major file version is >= 3:
 	{
