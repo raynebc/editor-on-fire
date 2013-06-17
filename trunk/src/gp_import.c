@@ -2530,6 +2530,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 #endif
 	for(ctr = 0; ctr < measures; ctr++)
 	{	//For each measure
+		int alt_endings = 0;
 		bytemask = pack_getc(inf);	//Read the measure bitmask
 		start_of_repeat = num_of_repeats = 0;	//Reset these values
 		if(fileversion < 300)
@@ -2544,7 +2545,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			}
 			if(bytemask & 4)
 			{	//Number of alternate ending
-				(void) pack_getc(inf);	//Read alternate ending number
+				alt_endings = pack_getc(inf);	//Read alternate ending number
 			}
 		}
 		else
@@ -2580,7 +2581,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			{	//Versions 3 and 4 define the alternate ending next, followed by the section definition
 				if(bytemask & 16)
 				{	//Number of alternate ending
-					(void) pack_getc(inf);	//Read alternate ending number
+					alt_endings = pack_getc(inf);	//Read alternate ending number
 				}
 				if(bytemask & 32)
 				{	//New section
@@ -2697,7 +2698,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				}
 				if(bytemask & 16)
 				{	//Number of alternate ending
-					word = pack_getc(inf);	//Read alternate ending number
+					alt_endings = pack_getc(inf);	//Read alternate ending number
 				}
 			}
 			if(bytemask & 64)
@@ -2725,6 +2726,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			(void) pack_getc(inf);		//Read triplet feel value
 			(void) pack_getc(inf);		//Unknown data
 		}
+		tsarray[ctr].alt_endings = alt_endings;
 		tsarray[ctr].num = curnum;	//Store this measure's time signature for future reference
 		tsarray[ctr].den = curden;
 		tsarray[ctr].start_of_repeat = start_of_repeat;
@@ -4082,6 +4084,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 	unsigned long newevents = 0;		//The number of events stored in the above array
 	char unwrapevents = 0;		//Will track whether text events are to be unwrapped
 	unsigned int working_symbols[19];	//Will store a copy of gp->symbols[] so that the information ingp isn't destroyed
+	unsigned int curr_repeat = 0;
 
 	eof_log("eof_unwrap_gp_track() entered", 1);
 
@@ -4189,7 +4192,11 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tTracking start of repeat at measure #%lu", currentmeasure + 1);
 			eof_log(eof_log_string, 1);
 #endif
-			last_start_of_repeat = currentmeasure;	//Track it as the most recent start of repeat
+			if(last_start_of_repeat != currentmeasure)
+			{	//If this measure begins a new start of repeat
+				curr_repeat = 0;	//Reset the repeat counter
+				last_start_of_repeat = currentmeasure;	//Track this measure as the most recent start of repeat
+			}
 		}
 
 		//Ensure the active project has enough beats to hold the next unwrapped measure
@@ -4200,13 +4207,40 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 			eof_log(eof_log_string, 1);
 #endif
 		}
-		while(eof_song->beats < beatctr + gp->measure[currentmeasure].num + 2)
-		{	//Until the loaded project has enough beats to contain the unwrapped measure, and two extra to allow room for processing beat lengths later
-			double beat_length;
 
-			if(!eof_song_add_beat(eof_song))
-			{
-				eof_log("\tError allocating memory to unwrap GP track (4)", 1);
+		if(!gp->measure[currentmeasure].alt_endings || (gp->measure[currentmeasure].alt_endings & (1 << curr_repeat)))
+		{	//If this measure isn't part of an alternate ending, or if it is an alternate ending and the repeat count applies to it
+			while(eof_song->beats < beatctr + gp->measure[currentmeasure].num + 2)
+			{	//Until the loaded project has enough beats to contain the unwrapped measure, and two extra to allow room for processing beat lengths later
+				double beat_length;
+
+				if(!eof_song_add_beat(eof_song))
+				{
+					eof_log("\tError allocating memory to unwrap GP track (4)", 1);
+					free(measuremap);
+					free(tp);
+					free(working_num_of_repeats);
+					for(ctr = 0; ctr < newevents; ctr++)
+					{	//For each unwrapped text event
+						free(newevent[ctr]);	//Free it
+					}
+					return 4;
+				}
+				eof_song->beat[eof_song->beats - 1]->ppqn = eof_song->beat[eof_song->beats - 2]->ppqn;	//Match the tempo of the previously last beat
+				beat_length = (double)60000.0 / ((double)60000000.0 / (double)eof_song->beat[eof_song->beats - 2]->ppqn);	//Get the length of the previously last beat
+				eof_song->beat[eof_song->beats - 1]->fpos = eof_song->beat[eof_song->beats - 2]->fpos + beat_length;
+				eof_song->beat[eof_song->beats - 1]->pos = eof_song->beat[eof_song->beats - 1]->fpos + 0.5;	//Round up
+			}
+			eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
+
+			//Copy the contents in this measure to the new pro guitar track
+#ifdef GP_IMPORT_DEBUG
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUnwrapping %d beats from measure #%lu (starts at beat %lu) from original track to beat %lu in new track", gp->measure[currentmeasure].num, currentmeasure + 1, measuremap[currentmeasure], beatctr);
+			eof_log(eof_log_string, 1);
+#endif
+			if(!eof_copy_notes_in_beat_range(gp->track[track], measuremap[currentmeasure], gp->measure[currentmeasure].num, tp, beatctr))
+			{	//If there was an error unwrapping the repeat into the new pro guitar track
+				eof_log("\tError unwrapping beats", 1);
 				free(measuremap);
 				free(tp);
 				free(working_num_of_repeats);
@@ -4214,75 +4248,51 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 				{	//For each unwrapped text event
 					free(newevent[ctr]);	//Free it
 				}
-				return 4;
+				return 5;
 			}
-			eof_song->beat[eof_song->beats - 1]->ppqn = eof_song->beat[eof_song->beats - 2]->ppqn;	//Match the tempo of the previously last beat
-			beat_length = (double)60000.0 / ((double)60000000.0 / (double)eof_song->beat[eof_song->beats - 2]->ppqn);	//Get the length of the previously last beat
-			eof_song->beat[eof_song->beats - 1]->fpos = eof_song->beat[eof_song->beats - 2]->fpos + beat_length;
-			eof_song->beat[eof_song->beats - 1]->pos = eof_song->beat[eof_song->beats - 1]->fpos + 0.5;	//Round up
-		}
-		eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
 
-		//Copy the contents in this measure to the new pro guitar track
-#ifdef GP_IMPORT_DEBUG
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUnwrapping %d beats from measure #%lu (starts at beat %lu) from original track to beat %lu in new track", gp->measure[currentmeasure].num, currentmeasure + 1, measuremap[currentmeasure], beatctr);
-		eof_log(eof_log_string, 1);
-#endif
-		if(!eof_copy_notes_in_beat_range(gp->track[track], measuremap[currentmeasure], gp->measure[currentmeasure].num, tp, beatctr))
-		{	//If there was an error unwrapping the repeat into the new pro guitar track
-			eof_log("\tError unwrapping beats", 1);
-			free(measuremap);
-			free(tp);
-			free(working_num_of_repeats);
-			for(ctr = 0; ctr < newevents; ctr++)
-			{	//For each unwrapped text event
-				free(newevent[ctr]);	//Free it
-			}
-			return 5;
-		}
-
-		//Update the time signature if necessary
-		if(import_ts)
-		{
-			if(!currentmeasure || (gp->measure[currentmeasure].num != gp->measure[currentmeasure - 1].num) || (gp->measure[currentmeasure].den != gp->measure[currentmeasure - 1].den))
-			{	//If this is the first measure or this measure's time signature is different from that of the previous measure
-				(void) eof_apply_ts(gp->measure[currentmeasure].num, gp->measure[currentmeasure].den, beatctr, eof_song, 0);	//Apply the change to the active project
-			}
-		}
-
-		//If this measure has a text event, and text events are being unwrapped, copy it to the new text event array
-		if(unwrapevents)
-		{	//If text events are being unwrapped
-			for(ctr = 0; ctr < gp->text_events; ctr++)
-			{	//For each text event that was imported from the gp file
-				if(gp->text_event[ctr]->beat == measuremap[currentmeasure])
-				{	//If the text event is positioned at this measure
-					if(newevents < EOF_MAX_TEXT_EVENTS)
-					{	//If the maximum number of text events hasn't already been defined
-						newevent[newevents] = malloc(sizeof(EOF_TEXT_EVENT));	//Allocate space for the text event
-						if(!newevent[newevents])
-						{
-							eof_log("\tError allocating memory to unwrap GP track (5)", 1);
-							free(measuremap);
-							free(tp);
-							free(working_num_of_repeats);
-							for(ctr = 0; ctr < newevents; ctr++)
-							{	//For each unwrapped text event
-								free(newevent[ctr]);	//Free it
-							}
-							return 6;
-						}
-						memcpy(newevent[newevents], gp->text_event[ctr], sizeof(EOF_TEXT_EVENT));	//Copy the text event
-						newevent[newevents]->beat = beatctr;	//Correct the beat number
-						newevents++;
-					}
-					break;
+			//Update the time signature if necessary
+			if(import_ts)
+			{
+				if(!currentmeasure || (gp->measure[currentmeasure].num != gp->measure[currentmeasure - 1].num) || (gp->measure[currentmeasure].den != gp->measure[currentmeasure - 1].den))
+				{	//If this is the first measure or this measure's time signature is different from that of the previous measure
+					(void) eof_apply_ts(gp->measure[currentmeasure].num, gp->measure[currentmeasure].den, beatctr, eof_song, 0);	//Apply the change to the active project
 				}
 			}
-		}
 
-		beatctr += gp->measure[currentmeasure].num;	//Add the number of beats contained in this measure to the ongoing counter
+			//If this measure has a text event, and text events are being unwrapped, copy it to the new text event array
+			if(unwrapevents)
+			{	//If text events are being unwrapped
+				for(ctr = 0; ctr < gp->text_events; ctr++)
+				{	//For each text event that was imported from the gp file
+					if(gp->text_event[ctr]->beat == measuremap[currentmeasure])
+					{	//If the text event is positioned at this measure
+						if(newevents < EOF_MAX_TEXT_EVENTS)
+						{	//If the maximum number of text events hasn't already been defined
+							newevent[newevents] = malloc(sizeof(EOF_TEXT_EVENT));	//Allocate space for the text event
+							if(!newevent[newevents])
+							{
+								eof_log("\tError allocating memory to unwrap GP track (5)", 1);
+								free(measuremap);
+								free(tp);
+								free(working_num_of_repeats);
+								for(ctr = 0; ctr < newevents; ctr++)
+								{	//For each unwrapped text event
+									free(newevent[ctr]);	//Free it
+								}
+								return 6;
+							}
+							memcpy(newevent[newevents], gp->text_event[ctr], sizeof(EOF_TEXT_EVENT));	//Copy the text event
+							newevent[newevents]->beat = beatctr;	//Correct the beat number
+							newevents++;
+						}
+						break;
+					}
+				}
+			}
 
+			beatctr += gp->measure[currentmeasure].num;	//Add the number of beats contained in this measure to the ongoing counter
+		}//If this measure isn't part of an alternate ending, or if it is an alternate ending and the repeat count applies to it
 		//Either increment to the next measure or seek to the beginning of a repeat/symbol
 		if(working_num_of_repeats[currentmeasure])
 		{	//If this measure has an end of repeat with any repeats left, seek to the appropriate measure
@@ -4292,6 +4302,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 #endif
 			working_num_of_repeats[currentmeasure]--;	//Decrement the number of repeats left for this marker
 			currentmeasure = last_start_of_repeat;	//Jump to the last start of repeat that was encountered
+			curr_repeat++;
 		}
 		else
 		{
