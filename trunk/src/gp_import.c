@@ -3336,7 +3336,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						}
 						if(byte1 & 8)
 						{	//Artificial harmonic
-							flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
+							if(!eof_gp_import_nat_harmonics_only)
+							{	//If the user didn't opt to ignore harmonic status except for natural harmonics
+								flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
+							}
 						}
 						if(byte1 & 32)
 						{	//Tapping/popping/slapping
@@ -3738,17 +3741,27 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}
 								if(byte2 & 16)
 								{	//Harmonic
-									flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
 									byte = pack_getc(inf);	//Harmonic type
-									if(byte == 2)
-									{	//Artificial harmonic
-										(void) pack_getc(inf);	//Read harmonic note
-										(void) pack_getc(inf);	//Read sharp/flat status
-										(void) pack_getc(inf);	//Read octave status
+									if(eof_gp_import_nat_harmonics_only)
+									{	//If the user opted to ignore harmonic status except for natural harmonics
+										if(byte == 1)
+										{	//Natural harmonic
+											flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
+										}
 									}
-									else if(byte == 3)
-									{	//Tapped harmonic
-										(void) pack_getc(inf);	//Right hand fret
+									else
+									{	//Import all harmonic statuses
+										flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
+										if(byte == 2)
+										{	//Artificial harmonic
+											(void) pack_getc(inf);	//Read harmonic note
+											(void) pack_getc(inf);	//Read sharp/flat status
+											(void) pack_getc(inf);	//Read octave status
+										}
+										else if(byte == 3)
+										{	//Tapped harmonic
+											(void) pack_getc(inf);	//Right hand fret
+										}
 									}
 								}
 								if(byte2 & 32)
