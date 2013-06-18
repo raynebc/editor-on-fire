@@ -133,6 +133,8 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 284, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are made 1ms long",NULL, NULL },
 	{ d_agup_check_proc, 16,  236, 340, 16,  2,   23,  0,    0,      1,   0,   "GP import beat text as sections, markers as phrases",NULL, NULL },
 	{ d_agup_check_proc, 248, 300, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short notes",NULL, NULL },
+	{ d_agup_check_proc, 248, 316, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import replaces active track",NULL, NULL },
+	{ d_agup_check_proc, 248, 332, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import nat. harmonics only",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -995,6 +997,8 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[37].flags = eof_new_note_length_1ms ? D_SELECTED : 0;		//New notes are made 1ms long
 	eof_preferences_dialog[38].flags = eof_gp_import_preference_1 ? D_SELECTED : 0;		//GP import beat text as sections, markers as phrases
 	eof_preferences_dialog[39].flags = eof_gp_import_truncate_short_notes ? D_SELECTED : 0;		//GP import truncates short notes
+	eof_preferences_dialog[40].flags = eof_gp_import_replaces_track ? D_SELECTED : 0;		//GP import replaces active track
+	eof_preferences_dialog[41].flags = eof_gp_import_nat_harmonics_only ? D_SELECTED : 0;	//GP import nat. harmonics only
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1080,6 +1084,8 @@ int eof_menu_file_preferences(void)
 			eof_new_note_length_1ms = (eof_preferences_dialog[37].flags == D_SELECTED ? 1 : 0);
 			eof_gp_import_preference_1 = (eof_preferences_dialog[38].flags == D_SELECTED ? 1 : 0);
 			eof_gp_import_truncate_short_notes = (eof_preferences_dialog[39].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_replaces_track = (eof_preferences_dialog[40].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_nat_harmonics_only = (eof_preferences_dialog[41].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 29)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1112,6 +1118,8 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[37].flags = 0;					//New notes are made 1ms long
 			eof_preferences_dialog[38].flags = 0;					//GP import beat text as sections, markers as phrases
 			eof_preferences_dialog[39].flags = D_SELECTED;			//GP import truncates short notes
+			eof_preferences_dialog[40].flags = D_SELECTED;			//GP import replaces active track
+			eof_preferences_dialog[41].flags = 0;					//GP import nat. harmonics only
 		}//If the user clicked "Default
 	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -2773,9 +2781,13 @@ DIALOG eof_gp_import_dialog[] =
 
 int eof_gp_import_track(DIALOG * d)
 {
-	unsigned long ctr, selected;
+	unsigned long ctr, ctr2, selected;
 	int junk;
-	if(!d || d->d1 >= eof_parsed_gp_file->numtracks)
+	char exists, tuning_prompted = 0;
+	char still_populated = 0;	//Will be set to nonzero if the track still contains notes after the track/difficulty is cleared before importing the GP track
+	EOF_PHRASE_SECTION *ptr, *ptr2;
+
+	if(!d || (d->d1 >= eof_parsed_gp_file->numtracks))
 		return 0;
 
 	if(eof_song && eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -2783,34 +2795,155 @@ int eof_gp_import_track(DIALOG * d)
 		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 		selected = eof_gp_import_dialog[1].d1;
 
+		//Prompt about overwriting the active track or track difficulty as appropriate
 		eof_clear_input();
 		key[KEY_Y] = 0;
 		key[KEY_N] = 0;
-		if(eof_get_track_size(eof_song, eof_selected_track) && alert("This track already has notes", "Importing this GP track will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
-		{	//If the active track is already populated and the user doesn't opt to overwrite it
-			return 0;
+		if(eof_gp_import_replaces_track)
+		{	//If the user preference to replace the entire active track with the imported track is enabled
+			if(eof_get_track_size(eof_song, eof_selected_track) && alert("This track already has notes", "Importing this GP track will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+			{	//If the active track is already populated and the user doesn't opt to overwrite it
+				return 0;
+			}
 		}
-
+		else
+		{	//If the imported track will only replace the active track difficulty
+			if(eof_track_diff_populated_status[eof_note_type] && alert("This track difficulty already has notes", "Importing this GP track will overwrite this difficulty's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+			{	//If the active track difficulty is already populated and the user doesn't opt to overwrite it
+				return 0;
+			}
+		}
 		if(!gp_import_undo_made)
 		{	//If an undo state wasn't already made
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one now
 			gp_import_undo_made = 1;
 		}
-		eof_parsed_gp_file->track[selected]->parent = eof_song->pro_guitar_track[tracknum]->parent;
-		for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
-		{	//For each note in the active track
-			free(eof_song->pro_guitar_track[tracknum]->note[ctr]);	//Free its memory
+		if(eof_gp_import_replaces_track)
+		{	//If the user preference to replace the entire active track with the imported track is enabled
+			eof_erase_track(eof_song, eof_selected_track);	//Erase the active track
 		}
-		free(eof_song->pro_guitar_track[tracknum]);	//Free the active track
-		for(ctr = eof_song->text_events; ctr > 0; ctr--)
-		{	//For each of the project's text events (in reverse order)
-			if(eof_song->text_event[ctr - 1]->track == eof_selected_track)
-			{	//If the text event is assigned to the track being replaced
-				eof_song_delete_text_event(eof_song, ctr - 1);	//Delete it
+		else
+		{
+			eof_erase_track_difficulty(eof_song, eof_selected_track, eof_note_type);	//Otherwise erase the active track difficulty
+		}
+		if(eof_get_track_size(eof_song, eof_selected_track))
+		{	//If the track still has notes in it after the removal of the track or track difficulty's notes
+				still_populated = 1;
+		}
+
+		//Copy the content from the selected GP track into the active track
+		//Copy notes
+		for(ctr = 0; ctr < eof_parsed_gp_file->track[selected]->notes; ctr++)
+		{	//For each note in the GP track
+				EOF_PRO_GUITAR_NOTE *np = eof_pro_guitar_track_add_note(eof_song->pro_guitar_track[tracknum]);	//Allocate a new note
+				if(!np)
+				{	//If the memory couldn't be allocated
+					allegro_message("Error allocating memory.  Aborting");
+					return 0;
+				}
+				memcpy(np, eof_parsed_gp_file->track[selected]->note[ctr], sizeof(EOF_PRO_GUITAR_NOTE));	//Clone the note from the GP track
+				np->type = eof_note_type;	//Update the note difficulty
+		}
+		//Copy trill phrases
+		for(ctr = 0, exists = 0; ctr < eof_parsed_gp_file->track[selected]->trills; ctr++)
+		{	//For each trill phrase in the GP track
+			ptr = &eof_parsed_gp_file->track[selected]->trill[ctr];
+			for(ctr2 = 0; ctr2 < eof_get_num_trills(eof_song, eof_selected_track); ctr2++)
+			{	//For each trill section already in the active track
+				ptr2 = eof_get_trill(eof_song, eof_selected_track, ctr2);
+				if((ptr->end_pos >= ptr2->start_pos) && (ptr->start_pos <= ptr2->end_pos))
+				{	//If the trill phrase in the GP track overlaps with any trill phrase already in the active track
+					exists = 1;	//Make a note
+					break;
+				}
+			}
+			if(!exists)
+			{	//If this trill phrase doesn't overlap with any existing trill phrases in the active track
+				(void) eof_track_add_section(eof_song, eof_selected_track, EOF_TRILL_SECTION, 0, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the active track
 			}
 		}
-		eof_song->pro_guitar_track[tracknum] = eof_parsed_gp_file->track[selected];	//Replace it with the track imported from the Guitar Pro file
+		//Copy tremolo phrases
+		for(ctr = 0, exists = 0; ctr < eof_parsed_gp_file->track[selected]->tremolos; ctr++)
+		{	//For each tremolo phrase in the GP track
+			ptr = &eof_parsed_gp_file->track[selected]->tremolo[ctr];
+			for(ctr2 = 0; ctr2 < eof_get_num_tremolos(eof_song, eof_selected_track); ctr2++)
+			{	//For each tremolo section already in the active track
+				ptr2 = eof_get_tremolo(eof_song, eof_selected_track, ctr2);
+				if((ptr->end_pos >= ptr2->start_pos) && (ptr->start_pos <= ptr2->end_pos))
+				{	//If the tremolo phrase in the GP track overlaps with any tremolo phrase already in the active track
+					exists = 1;	//Make a note
+					break;
+				}
+			}
+			if(!exists)
+			{	//If this tremolo phrase doesn't overlap with any existing tremolo phrases in the active track
+				(void) eof_track_add_section(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, eof_note_type, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the active track difficulty
+			}
+		}
+
+		//Copy the imported track's tuning, string count and fret count into the active track
+		if(eof_detect_string_gem_conflicts(eof_song->pro_guitar_track[tracknum], eof_parsed_gp_file->track[selected]->numstrings))
+		{	//If the track being imported has a different string count that would cause notes to be removed from the track
+			if(alert("Warning:  The imported track's string count is lower than the active track.", "Applying the string count will alter/delete existing notes in the track.", "Apply the imported track's string count?", "&Yes", "&No", 'y', 'n') == 1)
+			{	//If user opts to change the string count even though notes will be altered/deleted
+				eof_song->pro_guitar_track[tracknum]->numstrings = eof_parsed_gp_file->track[selected]->numstrings;
+			}
+		}
+		else
+		{	//If the imported track's string count doesn't conflict with any notes that were already in the active track
+			eof_song->pro_guitar_track[tracknum]->numstrings = eof_parsed_gp_file->track[selected]->numstrings;
+		}
+		if(eof_get_highest_fret(eof_song, eof_selected_track, 0) > eof_parsed_gp_file->track[selected]->numfrets)
+		{	//If the track being imported has a fret count that is lower than what the active track is already using
+			allegro_message("Note:  The imported track's fret count is lower than notes already in the track.  The fret count will not be changed.");
+		}
+		else
+		{	//Otherwise apply the fret count specified in the imported track
+			eof_song->pro_guitar_track[tracknum]->numfrets = eof_parsed_gp_file->track[selected]->numfrets;
+		}
+		for(ctr = 0; ctr < 6; ctr++)
+		{	//For each of the 6 supported strings
+			int new_tuning;
+			int default_tuning = eof_lookup_default_string_tuning_absolute(eof_song->pro_guitar_track[tracknum], eof_selected_track, ctr);	//Get the default absolute tuning for this string
+			if(default_tuning >= 0)
+			{	//If the default tuning was found
+				new_tuning = eof_parsed_gp_file->track[selected]->tuning[ctr] - default_tuning;	//Convert the tuning to relative
+				new_tuning %= 12;	//Ensure the stored value is bounded to [-11,11]
+				if(!tuning_prompted && still_populated && (new_tuning != eof_song->pro_guitar_track[tracknum]->tuning[ctr]))
+				{	//If applying the imported track's tuning would alter the tuning for other notes that are already in the track, prompt the user
+					if(alert("Warning:  The imported track's tuning is different than the track's current tuning.", "Applying the tuning will affect the existing notes in the track.", "Apply the imported track's tuning?", "&Yes", "&No", 'y', 'n') == 1)
+					{	//If the user opts to set the imported track's tuning even though the active track still has notes in it
+						tuning_prompted = 1;	//Note that the user answered yes
+					}
+					else
+					{
+						tuning_prompted = 2;	//Note that the user answered no
+					}
+				}
+				if(tuning_prompted != 2)
+				{	//If the user didn't decline to apply the imported track's tuning
+					eof_song->pro_guitar_track[tracknum]->tuning[ctr] = new_tuning;	//Apply the tuning to this string
+				}
+			}
+		}
+
+		//Destroy the GP track that was imported and remove it from the list of GP tracks
+		for(ctr = 0; ctr < eof_parsed_gp_file->track[selected]->notes; ctr++)
+		{	//For each note in the imported track
+			free(eof_parsed_gp_file->track[selected]->note[ctr]);	//Free its memory
+		}
 		free(eof_parsed_gp_file->names[selected]);	//Free the imported track's name
+		free(eof_parsed_gp_file->track[selected]);	//Free the imported track
+		if(eof_gp_import_replaces_track)
+		{	//If the user preference to replace the entire active track with the imported track is enabled
+			for(ctr = eof_song->text_events; ctr > 0; ctr--)
+			{	//For each of the project's text events (in reverse order)
+				if(eof_song->text_event[ctr - 1]->track == eof_selected_track)
+				{	//If the text event is assigned to the track being replaced
+					eof_song_delete_text_event(eof_song, ctr - 1);	//Delete it
+				}
+			}
+		}
 		for(ctr = selected + 1; ctr < eof_parsed_gp_file->numtracks; ctr++)
 		{	//For all remaining tracks imported from the Guitar Pro file
 			eof_parsed_gp_file->track[ctr - 1] = eof_parsed_gp_file->track[ctr];	//Save this track into the previous track's index
@@ -2818,17 +2951,6 @@ int eof_gp_import_track(DIALOG * d)
 		}
 		eof_parsed_gp_file->numtracks--;
 		(void) dialog_message(eof_gp_import_dialog, MSG_DRAW, 0, &junk);	//Redraw the dialog since the list's contents have changed
-
-		//Correct the track's tuning array from absolute to relative
-		for(ctr = 0; ctr < 6; ctr++)
-		{	//For each of the 6 supported strings
-			int default_tuning = eof_lookup_default_string_tuning_absolute(eof_song->pro_guitar_track[tracknum], eof_selected_track, ctr);	//Get the default absolute tuning for this string
-			if(default_tuning >= 0)
-			{	//If the default tuning was found
-				eof_song->pro_guitar_track[tracknum]->tuning[ctr] -= default_tuning;	//Convert the tuning to relative
-				eof_song->pro_guitar_track[tracknum]->tuning[ctr] %= 12;	//Ensure the stored value is bounded to [-11,11]
-			}
-		}
 	}
 
 	return D_O_K;

@@ -32,6 +32,8 @@ MENU eof_track_menu[] =
 	{"Set &Difficulty", eof_track_difficulty_dialog, NULL, 0, NULL},
 	{"Re&name", eof_track_rename, NULL, 0, NULL},
 	{"Disable expert+ bass drum", eof_menu_track_disable_double_bass_drums, NULL, 0, NULL},
+	{"Erase track", eof_track_erase_track, NULL, 0, NULL},
+	{"Erase track difficulty", eof_track_erase_track_difficulty, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -2298,5 +2300,40 @@ int eof_menu_track_disable_double_bass_drums(void)
 	if(eof_song)
 		eof_song->tags->double_bass_drum_disabled ^= 1;	//Toggle this boolean variable
 	eof_fix_window_title();
+	return 1;
+}
+
+int eof_track_erase_track_difficulty(void)
+{
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 0;	//Error
+
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);
+	eof_clear_input();
+	key[KEY_Y] = 0;
+	key[KEY_N] = 0;
+	if(eof_track_diff_populated_status[eof_note_type] && alert(NULL, "This operation will erase this track difficulty's contents.", "Continue?", "&Yes", "&No", 'y', 'n') == 1)
+	{	//If this track difficulty has notes in it and the user opts to erase the track difficulty
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	}
+	eof_erase_track_difficulty(eof_song, eof_selected_track, eof_note_type);
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);
+	return 1;
+}
+
+int eof_track_erase_track(void)
+{
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 0;	//Error
+
+	eof_clear_input();
+	key[KEY_Y] = 0;
+	key[KEY_N] = 0;
+	if(eof_get_track_size(eof_song, eof_selected_track) && alert(NULL, "This operation will erase this track's contents.", "Continue?", "&Yes", "&No", 'y', 'n') == 1)
+	{	//If this track has notes in it and the user opts to erase the track
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	}
+	eof_erase_track(eof_song, eof_selected_track);
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);
 	return 1;
 }

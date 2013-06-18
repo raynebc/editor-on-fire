@@ -594,6 +594,13 @@ unsigned long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigne
 	//position of the next note in the same track difficulty that uses any gems on the same lane, otherwise it's based on that of the
 	//next note in the track difficulty.
 	//0 is returned on error, ULONG_MAX is returned if there is no note that follows (indicating the note's length is only limited by its variable capacity)
+void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char diff, char diffonly);
+	//If diffonly is zero, the entire specified track has its contents deleted
+	//If diffonly is nonzero, only the content from the specified track difficulty is deleted
+void eof_erase_track(EOF_SONG *sp, unsigned long track);
+	//Calls eof_erase_track_content() with the option to erase the entire track
+void eof_erase_track_difficulty(EOF_SONG *sp, unsigned long track, unsigned char diff);
+	//Calls eof_erase_track_content() with the option to erase the specified track difficulty only
 
 EOF_NOTE * eof_legacy_track_add_note(EOF_LEGACY_TRACK * tp);	//Allocates, initializes and stores a new EOF_NOTE structure into the notes array.  Returns the newly allocated structure or NULL upon error
 void eof_legacy_track_delete_note(EOF_LEGACY_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
@@ -648,6 +655,7 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track);
 	//Sets the populated status indicator for the specified track's difficulty names by prefixing each populated difficulty name in the current track (stored in eof_note_type_name[], eof_vocal_tab_name[] and eof_dance_tab_name[]) with an asterisk
 	//eof_track_diff_populated_status[] is also updated so that each populated difficulty results in the corresponding element number being nonzero
 	//Returns the number of difficulties present in the specified track (ie. if the highest used difficulty is 9, 10 is returned because the numbering begins with 0), or 0 is returned upon error or empty track
+	//If the specified track is also the active track, the program window title is redrawn to reflect the current populated status of the active track difficulty
 
 int eof_is_freestyle(char *ptr);
 	//Returns 1 if the specified lyric contains a freestyle character (# or ^)

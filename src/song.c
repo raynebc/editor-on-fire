@@ -1000,6 +1000,10 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 		}
 	}
 
+	if(track == eof_selected_track)
+	{	//If the active track was the one whose difficulties were being detected
+		eof_fix_window_title();	//Re-build the program window title to reflect the correct populated status
+	}
 	return numdiffs;
 }
 
@@ -6217,4 +6221,94 @@ void eof_unflatten_difficulties(EOF_SONG *sp, unsigned long track)
 	{	//If the active track difficulty is now invalid
 		eof_note_type = sp->track[track]->numdiffs - 1;	//Change to the current highest difficulty
 	}
+}
+
+void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char diff, char diffonly)
+{
+	unsigned long i, tracknum;
+	EOF_PHRASE_SECTION *ptr;
+
+	if(!sp || (track >= sp->tracks))
+		return;	//Invalid parameters
+
+	tracknum = sp->track[track]->tracknum;
+
+	//Delete notes
+	for(i = eof_get_track_size(sp, track); i > 0; i--)
+	{	//For each note/lyric in the track, in reverse order
+		if(!diffonly || (eof_get_note_type(sp, track, i - 1) == diff))
+		{	//If the entire track is to be erased, or if this note is in the difficulty specified to be erased
+			eof_track_delete_note(sp, track, i - 1);	//Delete it
+		}
+	}
+
+	//Delete arpeggios
+	for(i = eof_get_num_arpeggios(sp, track); i > 0; i--)
+	{	//For each arpeggio phrase in the track, in reverse order
+		ptr = eof_get_arpeggio(sp, track, i - 1);
+		if(ptr)
+		{	//If this phrase could be found
+			if(!diffonly || (ptr->difficulty == diff))
+			{	//If the entire track is to be erased, or if this arpeggio is in the difficulty specified to be erased
+				eof_track_delete_arpeggio(sp, track, i - 1);	//Delete it
+			}
+		}
+	}
+
+	//Delete popup messages and hand positions
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If a pro guitar track was specified
+		EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[tracknum];
+
+		if(!diffonly)
+		{	//If the entire track is to be erased
+			tp->popupmessages = 0;	//Remove all of the track's popup messages
+		}
+		for(i = tp->handpositions; i > 0; i--)
+		{	//For each of the track's fret hand positions, in reverse order
+			if(!diffonly || (tp->handposition[i - 1].difficulty == diff))
+			{	//If the entire track is to be erased, or if this hand position is in the difficulty specified to be erased
+				eof_pro_guitar_track_delete_hand_position(tp, i - 1);	//Delete it
+			}
+		}
+		eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions, since they must be in order for displaying to the user
+	}
+
+	//Delete tremolos
+	for(i = eof_get_num_tremolos(sp, track); i > 0; i--)
+	{	//For each tremolo phrase in the track, in reverse order
+		ptr = eof_get_tremolo(sp, track, i - 1);
+		if(ptr)
+		{	//If this phrase could be found
+			if(!diffonly || (ptr->difficulty == diff))
+			{	//If the entire track is to be erased, or if this tremolo is in the difficulty specified to be erased
+				eof_track_delete_tremolo(sp, track, i - 1);	//Delete it
+			}
+		}
+	}
+
+	//Delete phrases, etc.
+	if(!diffonly)
+	{	//If the entire track is to be erased
+		eof_set_num_solos(sp, track, 0);
+		eof_set_num_star_power_paths(sp, track, 0);
+		eof_set_num_trills(sp, track, 0);
+		eof_set_num_sliders(sp, track, 0);
+
+		if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+		{
+			EOF_VOCAL_TRACK *tp = sp->vocal_track[tracknum];
+			tp->lines = 0;
+		}
+	}
+}
+
+void eof_erase_track(EOF_SONG *sp, unsigned long track)
+{
+	eof_erase_track_content(sp, track, 0, 0);
+}
+
+void eof_erase_track_difficulty(EOF_SONG *sp, unsigned long track, unsigned char diff)
+{
+	eof_erase_track_content(sp, track, diff, 1);
 }

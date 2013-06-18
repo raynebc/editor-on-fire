@@ -143,6 +143,8 @@ void eof_load_config(char * fn)
 	eof_new_note_length_1ms = get_config_int("preferences", "eof_new_note_length_1ms", 0);
 	eof_gp_import_preference_1 = get_config_int("preferences", "eof_gp_import_preference_1", 0);
 	eof_gp_import_truncate_short_notes = get_config_int("preferences", "eof_gp_import_truncate_short_notes", 1);
+	eof_gp_import_replaces_track = get_config_int("preferences", "eof_gp_import_replaces_track", 1);
+	eof_gp_import_replaces_track = get_config_int("preferences", "eof_gp_import_nat_harmonics_only", 0);
 	eof_min_note_distance = get_config_int("preferences", "eof_min_note_distance", 3);
 	if(eof_min_note_distance < 1)
 	{	//If the minimum note distance is invalid
@@ -271,6 +273,8 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_new_note_length_1ms", eof_new_note_length_1ms);
 	set_config_int("preferences", "eof_gp_import_preference_1", eof_gp_import_preference_1);
 	set_config_int("preferences", "eof_gp_import_truncate_short_notes", eof_gp_import_truncate_short_notes);
+	set_config_int("preferences", "eof_gp_import_replaces_track", eof_gp_import_replaces_track);
+	set_config_int("preferences", "eof_gp_import_nat_harmonics_only", eof_gp_import_nat_harmonics_only);
 	set_config_int("preferences", "eof_min_note_length", eof_min_note_length);
 	set_config_int("preferences", "eof_min_note_distance", eof_min_note_distance);
 	set_config_int("preferences", "eof_render_bass_drum_in_lane", eof_render_bass_drum_in_lane);
