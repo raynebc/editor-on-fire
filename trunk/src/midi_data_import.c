@@ -252,7 +252,7 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 						else if( ((eventtype & 0xF) == 0) || ((eventtype & 0xF) == 0x7) )
 						{	//If it's a Sysex event
 							bytes_used = 0;
-							length = eof_parse_var_len(midiptr->track[curtrack].data, track_pos, &bytes_used);	//Read the meta event length
+							length = eof_parse_var_len(midiptr->track[curtrack].data, track_pos, &bytes_used);	//Read the Sysex event length
 							size = length + bytes_used;	//The size of this Sysex event is the size of the variable length value and the Sysex event data size
 						}
 						else

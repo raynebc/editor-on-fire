@@ -136,7 +136,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 
 	int i, least = -1;
 	int interval = 0;
-	char measure_snap = 1;	//Unless a custom per-beat grid snap is defined, all grid snaps are per measure
+	char measure_snap = 0;	//Unless a custom per-measure grid snap is defined, all grid snaps are per beat
 	float snaplength, least_amount;
 
 	if(!sp)
@@ -188,44 +188,44 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			{
 				case EOF_SNAP_QUARTER:
 				{
-					interval = 4;
+					interval = 1;
 					break;
 				}
 				case EOF_SNAP_EIGHTH:
 				{
-					interval = 8;
+					interval = 2;
 					break;
 				}
 				case EOF_SNAP_TWELFTH:
 				{
-					interval = 12;
+					interval = 3;
 					break;
 				}
 				case EOF_SNAP_SIXTEENTH:
 				{
-					interval = 16;
+					interval = 4;
 					break;
 				}
 				case EOF_SNAP_TWENTY_FOURTH:
 				{
-					interval = 24;
+					interval = 6;
 					break;
 				}
 				case EOF_SNAP_THIRTY_SECOND:
 				{
-					interval = 32;
+					interval = 8;
 					break;
 				}
 				case EOF_SNAP_FORTY_EIGHTH:
 				{
-					interval = 48;
+					interval = 12;
 					break;
 				}
 				case EOF_SNAP_CUSTOM:
 				{
 					interval = eof_snap_interval;
-					if(!eof_custom_snap_measure)
-						measure_snap = 0;
+					if(eof_custom_snap_measure)
+						measure_snap = 1;
 					break;
 				}
 			}
@@ -392,7 +392,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 
 void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 {
-	char measure_snap = 1;	//Unless a custom per-beat grid snap is defined, all grid snaps are per measure
+	char measure_snap = 0;	//Unless a custom per-measure grid snap is defined, all grid snaps are per beat
 	int interval = 4;
 //	eof_log("eof_snap_length_logic() entered");
 
@@ -421,44 +421,44 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 		{
 			case EOF_SNAP_QUARTER:
 			{
-				interval = 4;
+				interval = 1;
 				break;
 			}
 			case EOF_SNAP_EIGHTH:
 			{
-				interval = 8;
+				interval = 2;
 				break;
 			}
 			case EOF_SNAP_TWELFTH:
 			{
-				interval = 12;
+				interval = 3;
 				break;
 			}
 			case EOF_SNAP_SIXTEENTH:
 			{
-				interval = 16;
+				interval = 4;
 				break;
 			}
 			case EOF_SNAP_TWENTY_FOURTH:
 			{
-				interval = 24;
+				interval = 6;
 				break;
 			}
 			case EOF_SNAP_THIRTY_SECOND:
 			{
-				interval = 32;
+				interval = 8;
 				break;
 			}
 			case EOF_SNAP_FORTY_EIGHTH:
 			{
-				interval = 48;
+				interval = 12;
 				break;
 			}
 			case EOF_SNAP_CUSTOM:
 			{
 				interval = eof_snap_interval;
-				if(!eof_custom_snap_measure)
-					measure_snap = 0;
+				if(eof_custom_snap_measure)
+					measure_snap = 1;
 				break;
 			}
 			default:

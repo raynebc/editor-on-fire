@@ -343,16 +343,16 @@ char *RemoveLeadingZeroes(char *str);
 //
 void ReadWORDLE(FILE *inf,unsigned short *data);
 	//Takes a pointer to a 2 byte unsigned short, reads 2 bytes from input file and uses bit shifts to arrange them properly into memory
-	//Little endian encoding is assumed, where the first byte read is expected to be the least significant
+	//Little Endian encoding is assumed, where the first byte read is expected to be the least significant
 	//VL files are written in Little Endian format
 void WriteWORDLE(FILE *outf,unsigned short data);
 	//Writes a two byte value to file in Little Endian format (least significant byte written first)
 void ReadDWORDLE(FILE *inf,unsigned long *data);
 	//Takes a pointer to a 4 byte unsigned long, reads 4 bytes from input file and uses bit shifts to arrange them properly into memory
-	//Little endian encoding is assumed, where the first byte read is expected to be the least significant
+	//Little Endian encoding is assumed, where the first byte read is expected to be the least significant
 	//VL files are written in Little Endian format
 void WriteDWORDLE(FILE *outf,unsigned long data);
-	//Writes a four byte value to file in Little ndian format (least significant byte written first)
+	//Writes a four byte value to file in Little Endian format (least significant byte written first)
 void ReadWORDBE(FILE *inf, unsigned short *ptr);
 	//Read 2 bytes in Big Endian format from file into *ptr, performing bit shifting accordingly
 void WriteWORDBE(FILE *outf,unsigned short data);
@@ -360,7 +360,7 @@ void WriteWORDBE(FILE *outf,unsigned short data);
 void ReadDWORDBE(FILE *inf, unsigned long *ptr);
 	//Read 4 bytes in Big Endian format from file into *ptr, performing bit shifting accordingly
 void WriteDWORDBE(FILE *outf,unsigned long data);
-	//Writes a four byte value to file in Big ndian format (most significant byte written first)
+	//Writes a four byte value to file in Big Endian format (most significant byte written first)
 unsigned long ParseUnicodeString(FILE *inf);
 	//Reads from input file, returning the length of the Unicode string (not including NULL terminator) at the current file position,
 	//returning half the length (ANSI format)

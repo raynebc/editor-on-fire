@@ -604,7 +604,7 @@ void ReadDWORDLE(FILE *inf,unsigned long *data)
 
 	assert_wrapper((inf != NULL) && (data != NULL));	//These must not be NULL
 
-	if(fread(buffer,4,1,inf) != 1)	//Read 2 bytes into the buffer
+	if(fread(buffer,4,1,inf) != 1)	//Read 4 bytes into the buffer
 	{
 		printf("Error reading DWORD from file: %s\nAborting\n",strerror(errno));
 		exit_wrapper(1);
