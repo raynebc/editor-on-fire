@@ -150,6 +150,7 @@ unsigned char eof_2d_render_top_option = 32;	//Specifies what item displays at t
 
 int         eof_undo_toggle = 0;
 int         eof_redo_toggle = 0;
+int         eof_window_title_dirty = 0;	//This is set to true when an undo state is made and is cleared when the window title is recreated with eof_fix_window_title()
 int         eof_change_count = 0;
 int         eof_zoom = 10;			//The width of one pixel in the editor window in ms (smaller = higher zoom)
 int         eof_zoom_3d = 5;
@@ -931,7 +932,8 @@ void eof_prepare_undo(int type)
 	}
 	eof_redo_toggle = 0;
 	eof_undo_toggle = 1;
-	eof_fix_window_title();
+	eof_fix_window_title();	//Redraw the window title to reflect the chart is modified
+	eof_window_title_dirty = 1;	//Indicate that the window title will need to be redrawn during the next normal render, to reflect whatever change is to follow this undo state
 	if(eof_change_count % 10 == 0)
 	{
 		(void) replace_extension(eof_temp_filename, eof_filename, "backup.eof", 1024);
@@ -3251,6 +3253,10 @@ void eof_render(void)
 	}
 	if(eof_song_loaded)
 	{
+		if(eof_window_title_dirty)
+		{	//If the window title needs to be redrawn
+			eof_fix_window_title();
+		}
 		clear_to_color(eof_screen, eof_color_light_gray);
 		if(!eof_full_screen_3d)
 		{	//Only blit the menu bar now if full screen 3D view isn't in effect, as it will otherwise be blitted later

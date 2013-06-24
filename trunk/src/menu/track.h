@@ -98,7 +98,9 @@ int eof_menu_track_open_bass(void);			//Toggle the ability to use a sixth lane i
 int eof_menu_track_five_lane_drums(void);	//Toggle the ability to use a fifth lane in PART DRUM on/off
 int eof_menu_track_disable_double_bass_drums(void);	//Toggle the setting to disable expert+ bass drum gem export on/off
 
-int eof_track_erase_track(void);	//Allows the user to erase the active track's contents
+int eof_track_erase_track(void);			//Allows the user to erase the active track's contents
 int eof_track_erase_track_difficulty(void);	//Allows the user to erase the active track difficulty's contents
+
+int eof_menu_track_remove_highlighting(void);	//Removes highlighting from the notes in the active track
 
 #endif
