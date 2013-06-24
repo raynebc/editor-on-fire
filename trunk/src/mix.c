@@ -6,6 +6,7 @@
 #include "utility.h"
 #include "beat.h"
 #include "mix.h"
+#include "tuning.h"	//For eof_lookup_default_string_tuning_absolute()
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -57,6 +58,7 @@ int           eof_mix_speed = 1000;
 char          eof_mix_speed_ticker;
 unsigned long eof_mix_sample_count = 0;
 double        eof_mix_sample_increment = 1.0;
+unsigned long eof_mix_next_guitar_note;
 unsigned long eof_mix_next_clap;
 unsigned long eof_mix_next_metronome;
 unsigned long eof_mix_next_note;
@@ -65,6 +67,16 @@ unsigned long eof_mix_next_percussion;
 unsigned long eof_mix_clap_pos[EOF_MAX_NOTES] = {0};
 int eof_mix_claps = 0;
 int eof_mix_current_clap = 0;
+
+typedef struct {
+	unsigned long pos;
+	unsigned char channel;
+	int note;
+} guitar_midi_note;
+
+guitar_midi_note eof_guitar_notes[EOF_MAX_NOTES] = {{0}};
+int eof_mix_guitar_notes = 0;
+int eof_mix_current_guitar_note = 0;
 
 unsigned long eof_mix_note_pos[EOF_MAX_NOTES] = {0};
 unsigned long eof_mix_note_note[EOF_MAX_NOTES] = {0};
@@ -80,6 +92,72 @@ int eof_mix_current_metronome = 0;
 unsigned long eof_mix_percussion_pos[EOF_MAX_NOTES] = {0};
 int eof_mix_percussions = 0;
 int eof_mix_current_percussion = 0;
+
+void eof_mix_callback_common(void)
+{
+	/* increment the sample and check sound triggers */
+	eof_mix_sample_count++;
+	if((eof_mix_sample_count >= eof_mix_next_clap) && (eof_mix_current_clap < eof_mix_claps))
+	{
+		if(eof_mix_claps_enabled)
+		{
+			eof_voice[0].sp = eof_sound_clap;
+			eof_voice[0].pos = 0.0;
+			eof_voice[0].playing = 1;
+		}
+		eof_mix_current_clap++;
+		eof_mix_next_clap = eof_mix_clap_pos[eof_mix_current_clap];
+	}
+	if((eof_mix_sample_count >= eof_mix_next_metronome) && (eof_mix_current_metronome < eof_mix_metronomes))
+	{
+		if(eof_mix_metronome_enabled)
+		{
+			eof_voice[1].sp = eof_sound_metronome;
+			eof_voice[1].pos = 0.0;
+			eof_voice[1].playing = 1;
+		}
+		eof_mix_current_metronome++;
+		eof_mix_next_metronome = eof_mix_metronome_pos[eof_mix_current_metronome];
+	}
+	while ((eof_mix_sample_count >= eof_mix_next_guitar_note) && (eof_mix_current_guitar_note < eof_mix_guitar_notes))
+	{
+		// Using a while loop to allow all notes in a chord to fire at the same time
+		if (eof_mix_midi_tones_enabled)
+		{
+			eof_midi_play_note_ex(eof_guitar_notes[eof_mix_current_guitar_note].note, eof_guitar_notes[eof_mix_current_guitar_note].channel);	//Play the MIDI note
+		}
+		eof_mix_current_guitar_note++;
+		eof_mix_next_guitar_note = eof_guitar_notes[eof_mix_current_guitar_note].pos;
+	}
+
+	if((eof_mix_sample_count >= eof_mix_next_note) && (eof_mix_current_note < eof_mix_notes))
+	{
+		if(eof_mix_midi_tones_enabled)
+		{	//Queue the start and end time (in milliseconds) of this MIDI note
+//				eof_midi_play_note(eof_mix_note_note[eof_mix_current_note]);	//Play the MIDI note
+			eof_midi_queue_add(eof_mix_note_note[eof_mix_current_note],eof_mix_note_ms_pos[eof_mix_current_note],eof_mix_note_ms_end[eof_mix_current_note]);
+		}
+		else if(eof_mix_vocal_tones_enabled && eof_sound_note[eof_mix_note_note[eof_mix_current_note]])
+		{
+			eof_voice[2].sp = eof_sound_note[eof_mix_note_note[eof_mix_current_note]];
+			eof_voice[2].pos = 0.0;
+			eof_voice[2].playing = 1;
+		}
+		eof_mix_current_note++;
+		eof_mix_next_note = eof_mix_note_pos[eof_mix_current_note];
+	}
+	if((eof_mix_sample_count >= eof_mix_next_percussion) && (eof_mix_current_percussion < eof_mix_notes))
+	{
+		if(eof_mix_percussion_enabled)
+		{
+			eof_voice[3].sp = eof_sound_chosen_percussion;
+			eof_voice[3].pos = 0.0;
+			eof_voice[3].playing = 1;
+		}
+		eof_mix_current_percussion++;
+		eof_mix_next_percussion = eof_mix_percussion_pos[eof_mix_current_percussion];
+	}
+}
 
 void eof_mix_callback_stereo(void * buf, int length)
 {
@@ -139,57 +217,7 @@ void eof_mix_callback_stereo(void * buf, int length)
 			sum2 = 32767;
 		buffer[i+1] = sum2 + 32768;	//Convert the summed PCM samples to unsigned and store into buffer
 
-		/* increment the sample and check sound triggers */
-		eof_mix_sample_count++;
-		if((eof_mix_sample_count >= eof_mix_next_clap) && (eof_mix_current_clap < eof_mix_claps))
-		{
-			if(eof_mix_claps_enabled)
-			{
-				eof_voice[0].sp = eof_sound_clap;
-				eof_voice[0].pos = 0.0;
-				eof_voice[0].playing = 1;
-			}
-			eof_mix_current_clap++;
-			eof_mix_next_clap = eof_mix_clap_pos[eof_mix_current_clap];
-		}
-		if((eof_mix_sample_count >= eof_mix_next_metronome) && (eof_mix_current_metronome < eof_mix_metronomes))
-		{
-			if(eof_mix_metronome_enabled)
-			{
-				eof_voice[1].sp = eof_sound_metronome;
-				eof_voice[1].pos = 0.0;
-				eof_voice[1].playing = 1;
-			}
-			eof_mix_current_metronome++;
-			eof_mix_next_metronome = eof_mix_metronome_pos[eof_mix_current_metronome];
-		}
-		if((eof_mix_sample_count >= eof_mix_next_note) && (eof_mix_current_note < eof_mix_notes))
-		{
-			if(eof_mix_midi_tones_enabled)
-			{	//Queue the start and end time (in milliseconds) of this MIDI note
-//				eof_midi_play_note(eof_mix_note_note[eof_mix_current_note]);	//Play the MIDI note
-				eof_midi_queue_add(eof_mix_note_note[eof_mix_current_note],eof_mix_note_ms_pos[eof_mix_current_note],eof_mix_note_ms_end[eof_mix_current_note]);
-			}
-			else if(eof_mix_vocal_tones_enabled && eof_sound_note[eof_mix_note_note[eof_mix_current_note]])
-			{
-				eof_voice[2].sp = eof_sound_note[eof_mix_note_note[eof_mix_current_note]];
-				eof_voice[2].pos = 0.0;
-				eof_voice[2].playing = 1;
-			}
-			eof_mix_current_note++;
-			eof_mix_next_note = eof_mix_note_pos[eof_mix_current_note];
-		}
-		if((eof_mix_sample_count >= eof_mix_next_percussion) && (eof_mix_current_percussion < eof_mix_notes))
-		{
-			if(eof_mix_percussion_enabled)
-			{
-				eof_voice[3].sp = eof_sound_chosen_percussion;
-				eof_voice[3].pos = 0.0;
-				eof_voice[3].playing = 1;
-			}
-			eof_mix_current_percussion++;
-			eof_mix_next_percussion = eof_mix_percussion_pos[eof_mix_current_percussion];
-		}
+		eof_mix_callback_common();	//Increment the sample and check sound triggers
 	}
 	eof_just_played = 1;
 }
@@ -243,57 +271,7 @@ void eof_mix_callback_mono(void * buf, int length)
 			sum = 32767;
 		buffer[i] = sum + 32768;		//Convert the summed PCM samples to unsigned and store into buffer
 
-		/* increment the sample and check sound triggers */
-		eof_mix_sample_count++;
-		if((eof_mix_sample_count >= eof_mix_next_clap) && (eof_mix_current_clap < eof_mix_claps))
-		{
-			if(eof_mix_claps_enabled)
-			{
-				eof_voice[0].sp = eof_sound_clap;
-				eof_voice[0].pos = 0.0;
-				eof_voice[0].playing = 1;
-			}
-			eof_mix_current_clap++;
-			eof_mix_next_clap = eof_mix_clap_pos[eof_mix_current_clap];
-		}
-		if((eof_mix_sample_count >= eof_mix_next_metronome) && (eof_mix_current_metronome < eof_mix_metronomes))
-		{
-			if(eof_mix_metronome_enabled)
-			{
-				eof_voice[1].sp = eof_sound_metronome;
-				eof_voice[1].pos = 0.0;
-				eof_voice[1].playing = 1;
-			}
-			eof_mix_current_metronome++;
-			eof_mix_next_metronome = eof_mix_metronome_pos[eof_mix_current_metronome];
-		}
-		if((eof_mix_sample_count >= eof_mix_next_note) && (eof_mix_current_note < eof_mix_notes))
-		{
-			if(eof_mix_midi_tones_enabled)
-			{	//Queue the start and end time (in milliseconds) of this MIDI note
-//				eof_midi_play_note(eof_mix_note_note[eof_mix_current_note]);	//Play the MIDI note
-				eof_midi_queue_add(eof_mix_note_note[eof_mix_current_note],eof_mix_note_ms_pos[eof_mix_current_note],eof_mix_note_ms_end[eof_mix_current_note]);
-			}
-			else if(eof_mix_vocal_tones_enabled && eof_sound_note[eof_mix_note_note[eof_mix_current_note]])
-			{
-				eof_voice[2].sp = eof_sound_note[eof_mix_note_note[eof_mix_current_note]];
-				eof_voice[2].pos = 0.0;
-				eof_voice[2].playing = 1;
-			}
-			eof_mix_current_note++;
-			eof_mix_next_note = eof_mix_note_pos[eof_mix_current_note];
-		}
-		if((eof_mix_sample_count >= eof_mix_next_percussion) && (eof_mix_current_percussion < eof_mix_notes))
-		{
-			if(eof_mix_percussion_enabled)
-			{
-				eof_voice[3].sp = eof_sound_chosen_percussion;
-				eof_voice[3].pos = 0.0;
-				eof_voice[3].playing = 1;
-			}
-			eof_mix_current_percussion++;
-			eof_mix_next_percussion = eof_mix_percussion_pos[eof_mix_current_percussion];
-		}
+		eof_mix_callback_common();		//Increment the sample and check sound triggers
 	}
 	eof_just_played = 1;
 }
@@ -343,6 +321,32 @@ void eof_mix_find_claps(void)
 	{
 		eof_mix_metronome_pos[eof_mix_metronomes] = eof_mix_msec_to_sample(eof_song->beat[i]->pos, alogg_get_wave_freq_ogg(eof_music_track));
 		eof_mix_metronomes++;
+	}
+
+	eof_mix_guitar_notes = 0;
+	eof_mix_current_guitar_note = 0;
+
+	if (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+		{
+			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_note(eof_song, eof_selected_track, i) & eof_mix_claps_note))
+			{
+				int j = 0;
+				unsigned long pos = eof_mix_msec_to_sample(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay, alogg_get_wave_freq_ogg(eof_music_track));
+
+				EOF_PRO_GUITAR_TRACK *track = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
+				EOF_PRO_GUITAR_NOTE *note = track->note[i];
+				for (j = 0; j < 6; j++) {
+					if (note->note & (1<<j)) {
+						eof_guitar_notes[eof_mix_guitar_notes].pos = pos;
+						eof_guitar_notes[eof_mix_guitar_notes].channel = j;
+						eof_guitar_notes[eof_mix_guitar_notes].note = track->tuning[j] + eof_lookup_default_string_tuning_absolute(track, eof_selected_track, j) + note->frets[j];
+						eof_mix_guitar_notes++;
+					}
+				}
+			}
+		}
 	}
 
 	eof_mix_notes = 0;
@@ -558,6 +562,17 @@ void eof_mix_start_helper(void)
 			break;
 		}
 	}
+	eof_mix_current_guitar_note = -1;
+	eof_mix_next_guitar_note = -1;
+	for(i = 0; i < eof_mix_guitar_notes; i++)
+	{
+		if(eof_guitar_notes[i].pos >= eof_mix_sample_count)
+		{
+			eof_mix_current_guitar_note = i;
+			eof_mix_next_guitar_note = eof_guitar_notes[i].pos;
+			break;
+		}
+	}
 
 	if(eof_disable_sound_processing)
 	{	//If callback processing is disabled
@@ -661,6 +676,15 @@ void eof_mix_seek(int pos)
 			break;
 		}
 	}
+	for(i = 0; i < eof_mix_guitar_notes; i++)
+	{
+		if(eof_guitar_notes[i].pos >= eof_mix_sample_count)
+		{
+			eof_mix_current_guitar_note = i;
+			eof_mix_next_guitar_note = eof_guitar_notes[i].pos;
+			break;
+		}
+	}
 }
 
 void eof_mix_play_note(int note)
@@ -674,25 +698,33 @@ void eof_mix_play_note(int note)
 	}
 }
 
-void eof_midi_play_note(int note)
+void eof_midi_play_note_ex(int note, int channel)
 {
-	unsigned char NOTE_ON_DATA[3]={0x91,0x0,127};		//Data sequence for a Note On, channel 1, Note 0
-	unsigned char NOTE_OFF_DATA[3]={0x81,0x0,127};		//Data sequence for a Note Off, channel 1, Note 0
-	static unsigned char lastnote=0;					//Remembers the last note that was played, so it can be turned off
-	static unsigned char lastnotedefined=0;
+	unsigned char SET_PATCH_DATA[2] = {0xC0|channel, 28}; 		// 28 = Electric Guitar (clean)
+	unsigned char NOTE_ON_DATA[3] = {0x90|channel, 0x0, 127};	//Data sequence for a Note On, channel 1, Note 0
+	unsigned char NOTE_OFF_DATA[3] = {0x80|channel, 0x0, 127};	//Data sequence for a Note Off, channel 1, Note 0
+	static unsigned char lastnote[6] = {0,0,0,0,0,0};			//Remembers the last note that was played, so it can be turned off
+	static unsigned char lastnotedefined[6] = {0,0,0,0,0,0};
+
+	midi_out(SET_PATCH_DATA, 2);
 
 	if(note < EOF_MAX_VOCAL_TONES)
 	{
-		NOTE_ON_DATA[1]=note;	//Alter the data sequence to be the appropriate note number
-		if(lastnotedefined)
+		NOTE_ON_DATA[1] = note;	//Alter the data sequence to be the appropriate note number
+		if(lastnotedefined[channel])
 		{
-			NOTE_OFF_DATA[1]=lastnote;
+			NOTE_OFF_DATA[1] = lastnote[channel];
 			midi_out(NOTE_OFF_DATA,3);	//Turn off the last note that was played
 		}
 		midi_out(NOTE_ON_DATA,3);	//Turn on this note
-		lastnote=note;
-		lastnotedefined=1;
+		lastnote[channel] = note;
+		lastnotedefined[channel] = 1;
 	}
+}
+
+void eof_midi_play_note(int note)
+{
+	eof_midi_play_note_ex(note, 0);
 }
 
 struct ALOGG_OGG {
