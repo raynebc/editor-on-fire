@@ -784,4 +784,9 @@ void eof_unflatten_difficulties(EOF_SONG *sp, unsigned long track);
 	// the phrase's notes in the upper difficulty are deleted
 	//Expects the beat statistics and eof_track_diff_populated_status[] array to already reflect the track being processed
 
+void eof_hightlight_all_notes_above_fret_number(EOF_SONG *sp, unsigned long track, unsigned char fretnum);
+	//Sets the highlight status on all notes in the specified track that use any fret higher than the specified number
+void eof_track_remove_highlighting(EOF_SONG *sp, unsigned long track);
+	//Removes the highlight status on all notes in the specified track
+
 #endif

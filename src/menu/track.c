@@ -34,6 +34,7 @@ MENU eof_track_menu[] =
 	{"Disable expert+ bass drum", eof_menu_track_disable_double_bass_drums, NULL, 0, NULL},
 	{"Erase track", eof_track_erase_track, NULL, 0, NULL},
 	{"Erase track difficulty", eof_track_erase_track_difficulty, NULL, 0, NULL},
+	{"Erase highlighting", eof_menu_track_remove_highlighting, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -587,6 +588,7 @@ int eof_track_set_num_frets_strings(void)
 	unsigned char newnumfrets = 0, newnumstrings = 0;
 	unsigned long highestfret = 0;
 	char undo_made = 0, cancel = 0;
+	int retval;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run if a pro guitar track isn't active
@@ -625,8 +627,13 @@ int eof_track_set_num_frets_strings(void)
 				eof_clear_input();
 				key[KEY_Y] = 0;
 				key[KEY_N] = 0;
-				if(alert(NULL, message, NULL, "&Yes", "&No", 'y', 'n') != 1)
+				retval = alert3(NULL, message, NULL, "&Yes", "&No", "Highlight conflicts", 'y', 'n', 0);
+				if(retval != 1)
 				{	//If user does not opt to continue after being alerted of this fret limit issue
+					if(retval == 3)
+					{	//If the user opted to highlight the notes that conflict with the new fret count
+						eof_hightlight_all_notes_above_fret_number(eof_song, eof_selected_track, newnumfrets);
+					}
 					return 1;
 				}
 			}
@@ -2335,5 +2342,11 @@ int eof_track_erase_track(void)
 	}
 	eof_erase_track(eof_song, eof_selected_track);
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);
+	return 1;
+}
+
+int eof_menu_track_remove_highlighting(void)
+{
+	eof_track_remove_highlighting(eof_song, eof_selected_track);
 	return 1;
 }

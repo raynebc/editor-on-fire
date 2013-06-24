@@ -1000,10 +1000,6 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 		}
 	}
 
-	if(track == eof_selected_track)
-	{	//If the active track was the one whose difficulties were being detected
-		eof_fix_window_title();	//Re-build the program window title to reflect the correct populated status
-	}
 	return numdiffs;
 }
 
@@ -5535,11 +5531,11 @@ unsigned long eof_get_highest_fret(EOF_SONG *sp, unsigned long track, char scope
 	if(!sp || (track >= sp->tracks))
 		return 0;	//Invalid parameters
 	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
-		return 0;	//Only run this when a pro guitar/bass track is active
+		return 0;	//Only run this on a pro guitar/bass track
 
 	tracknum = sp->track[track]->tracknum;
 	for(ctr = 0; ctr < sp->pro_guitar_track[tracknum]->notes; ctr++)
-	{	//For each note in the active pro guitar track
+	{	//For each note in the specified pro guitar track
 		if(!scope || ((eof_selection.track == track) && eof_selection.multi[ctr]))
 		{	//If this note is within the scope of this search (in the track or selected)
 			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask<<=1)
@@ -6311,4 +6307,38 @@ void eof_erase_track(EOF_SONG *sp, unsigned long track)
 void eof_erase_track_difficulty(EOF_SONG *sp, unsigned long track, unsigned char diff)
 {
 	eof_erase_track_content(sp, track, diff, 1);
+}
+
+void eof_hightlight_all_notes_above_fret_number(EOF_SONG *sp, unsigned long track, unsigned char fretnum)
+{
+	unsigned long ctr, tracknum;
+
+	if(!sp || (track >= sp->tracks))
+		return;	//Invalid parameters
+	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return;	//Only run this on a pro guitar/bass track
+
+	tracknum = sp->track[track]->tracknum;
+	for(ctr = 0; ctr < sp->pro_guitar_track[tracknum]->notes; ctr++)
+	{	//For each note in the specified pro guitar track
+		if(eof_get_highest_fret_value(sp, track, ctr) > fretnum)
+		{	//If the note uses a fret number higher than the specified fret
+			sp->pro_guitar_track[tracknum]->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Set the note's highlight flag
+		}
+	}
+}
+
+void eof_track_remove_highlighting(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long ctr, flags;
+
+	if(!sp || (track >= sp->tracks))
+		return;	//Invalid parameters
+
+	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
+	{	//For each note in the specified track
+		flags = eof_get_note_flags(sp, track, ctr);
+		flags &= ~EOF_NOTE_FLAG_HIGHLIGHT;
+		eof_set_note_flags(sp, track, ctr, flags);	//Clear the note's hightlight flag
+	}
 }
