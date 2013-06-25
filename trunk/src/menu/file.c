@@ -2364,7 +2364,7 @@ int eof_save_helper(char *destfilename)
 						key[KEY_N] = 0;
 						if(alert("Warning:  At least one note is too close to another", "to enforce the minimum note distance.", "Cancel save and seek to the first such note?", "&Yes", "&No", 'y', 'n') == 1)
 						{	//If the user opted to seek to the first offending note (only prompt once per call)
-							(void) eof_menu_track_selected_track_number(ctr, 1);										//Set the active instrument track
+							(void) eof_menu_track_selected_track_number(ctr, 1);							//Set the active instrument track
 							eof_note_type = eof_get_note_type(eof_song, ctr, ctr2);							//Set the active difficulty to match that of the note
 							eof_set_seek_position(eof_get_note_pos(eof_song, ctr, ctr2) + eof_av_delay);	//Seek to the note's position
 							return 2;	//Return cancellation

@@ -22,9 +22,6 @@ You can use the zoom in/out shortcuts (+ and - on the numberpad) to
 zoom in and out of a custom zoom level.  If a custom zoom is in
 effect when EOF closes, it is restored when re-opening EOF.
 
-Fixed a bug where ghost pro guitar status was lost on notes that
-are auto-adjusted (ie. when moving beat markers).
-
 Increased the limit of each type of phrase to 300.
 
 Added cleanup logic that would ensure expert+ bass notes are only

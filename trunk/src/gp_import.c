@@ -2877,7 +2877,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						eof_log(eof_log_string, 1);
 #endif
 						//This is the first beat that surpassed this sync point, find out how far into last beat the sync point is, and use the beat length to derive the position of the next beat
-						temp = (double)eof_song->beat[ctr]->measurenum + measure_position - ((double)sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure);	//The number of beats between this beat and the sync point before it
+						temp = (double)eof_song->beat[ctr]->measurenum + measure_position - ((double)sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure);	//The number of measures between this beat and the sync point before it
+						temp *= (double)eof_song->beat[ctr]->num_beats_in_measure;	//The number of beats between this beat and the sync point before it
 						curpos = sync_points[ctr2].realtime_pos + (temp * sync_points[ctr2].beat_length);
 						beat_length = sync_points[ctr2].beat_length;		//Update the beat length variable
 						sync_points[ctr2].processed = 1;	//Mark this sync point as processed, but don't break from loop, so that if there are multiple sync points within the span of one beat, only the last one is used to alter beat timings
