@@ -144,7 +144,7 @@ char        eof_just_played = 0;
 char        eof_mark_drums_as_cymbal = 0;		//Allows the user to specify whether Y/B/G drum notes will be placed with cymbal notation by default
 char        eof_mark_drums_as_double_bass = 0;	//Allows the user to specify whether expert bass drum notes will be placed with expert+ notation by default
 unsigned long eof_mark_drums_as_hi_hat = 0;		//Allows the user to specify whether Y drum notes in the PS drum track will be placed with one of the hi hat statuses by default (this variable holds the note flag of the desired status)
-unsigned long eof_pro_guitar_fret_bitmask = 63;	//Defines which lanes are affected by CTRL+Fn fret setting shortcuts
+unsigned long eof_pro_guitar_fret_bitmask = 63;	//Defines which lanes are affected by these shortcuts:  CTRL+# to set fret numbers, CTRL+(plus/minus) increment/decrement fret values, CTRL+G to toggle ghost status
 char		eof_legacy_view = 0;				//Specifies whether pro guitar notes will render as legacy notes
 unsigned char eof_2d_render_top_option = 32;	//Specifies what item displays at the top of the 2D panel (defaults to note names)
 
@@ -902,6 +902,7 @@ void eof_fix_window_title(void)
 		(void) ustrcat(eof_window_title, "No Song");
 	}
 	set_window_title(eof_window_title);
+	eof_window_title_dirty = 0;
 }
 
 void eof_clear_input(void)
@@ -4263,6 +4264,10 @@ void eof_init_after_load(char initaftersavestate)
 	eof_menu_edit_zoom_level(eof_zoom);
 	eof_calculate_beats(eof_song);
 	eof_truncate_chart(eof_song);	//Add or remove beat markers as necessary and update the eof_chart_length variable
+	if(eof_selected_beat >= eof_song->beats)
+	{	//If the selected beat is no longer valid
+		eof_selected_beat = 0;	//Select the first beat
+	}
 	if(!initaftersavestate)
 	{	//If this wasn't cleanup after an undo/redo state, reset more variables
 		eof_music_pos = eof_av_delay;

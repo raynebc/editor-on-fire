@@ -5781,6 +5781,10 @@ void eof_truncate_chart(EOF_SONG *sp)
 				eof_song_delete_beat(sp, ctr - 1);	//Remove it from the end of the chart
 			}
 		}
+		if((sp == eof_song) && (eof_selected_beat >= sp->beats))
+		{	//If the selected beat in the active project is no longer valid
+			eof_selected_beat = 0;	//Select the first beat
+		}
 	}
 
  	eof_log("eof_truncate_chart() exiting", 1);

@@ -644,7 +644,13 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	{	//If the user did not define a END phrase
 		if(sp->beat[endbeat]->contained_section_event >= 0)
 		{	//If there is already a phrase defined on the beat following the last note
-			allegro_message("Warning:  There is no END phrase, but the beat marker after the last note already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.");
+			eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
+			eof_set_seek_position(sp->beat[endbeat]->pos + eof_av_delay);	//Seek to the beat where the END phrase should go
+			eof_selected_beat = endbeat;		//Select it
+			(void) eof_menu_track_selected_track_number(track, 1);		//Set the active instrument track
+			eof_find_lyric_preview_lines();
+			eof_render();					//Redraw the screen
+			allegro_message("Warning:  There is no END phrase, but the beat marker after the last note in \"%s\" already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.", sp->track[track]->name);
 		}
 		eof_log("\t! Adding missing END phrase", 1);
 		(void) eof_song_add_text_event(sp, endbeat, "END", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it as a temporary event at the last beat
