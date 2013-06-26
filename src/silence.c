@@ -118,12 +118,12 @@ static int save_wav_fp(SAMPLE * sp, PACKFILE * fp)
 	(void) pack_fputs("data", fp);
 	(void) pack_iputl((long)data_size, fp);
 
-	if (bits == 8)
+	if(bits == 8)
 	{
 		pval = sp->data;
 		(void) pack_fwrite(pval, (long)(samples * channels), fp);
 	}
-	else if (bits == 16)
+	else if(bits == 16)
 	{
 		data = (unsigned short *)sp->data;
 		for (i = 0; i < n; i++)

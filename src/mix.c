@@ -97,6 +97,8 @@ void eof_mix_callback_common(void)
 {
 	/* increment the sample and check sound triggers */
 	eof_mix_sample_count++;
+
+	//Mix claps
 	if((eof_mix_sample_count >= eof_mix_next_clap) && (eof_mix_current_clap < eof_mix_claps))
 	{
 		if(eof_mix_claps_enabled)
@@ -108,6 +110,8 @@ void eof_mix_callback_common(void)
 		eof_mix_current_clap++;
 		eof_mix_next_clap = eof_mix_clap_pos[eof_mix_current_clap];
 	}
+
+	//Mix metronome
 	if((eof_mix_sample_count >= eof_mix_next_metronome) && (eof_mix_current_metronome < eof_mix_metronomes))
 	{
 		if(eof_mix_metronome_enabled)
@@ -119,25 +123,27 @@ void eof_mix_callback_common(void)
 		eof_mix_current_metronome++;
 		eof_mix_next_metronome = eof_mix_metronome_pos[eof_mix_current_metronome];
 	}
-	while ((eof_mix_sample_count >= eof_mix_next_guitar_note) && (eof_mix_current_guitar_note < eof_mix_guitar_notes))
-	{
-		// Using a while loop to allow all notes in a chord to fire at the same time
-		if (eof_mix_midi_tones_enabled)
+
+	//Mix MIDI tones for pro guitar notes
+	while((eof_mix_sample_count >= eof_mix_next_guitar_note) && (eof_mix_current_guitar_note < eof_mix_guitar_notes))
+	{	// Using a while loop to allow all notes in a chord to fire at the same time
+		if(eof_mix_midi_tones_enabled)
 		{
-			eof_midi_play_note_ex(eof_guitar_notes[eof_mix_current_guitar_note].note, eof_guitar_notes[eof_mix_current_guitar_note].channel);	//Play the MIDI note
+			eof_midi_play_note_ex(eof_guitar_notes[eof_mix_current_guitar_note].note, eof_guitar_notes[eof_mix_current_guitar_note].channel, eof_midi_synth_instrument);	//Play the MIDI note
 		}
 		eof_mix_current_guitar_note++;
 		eof_mix_next_guitar_note = eof_guitar_notes[eof_mix_current_guitar_note].pos;
 	}
 
+	//Mix vocal tones
 	if((eof_mix_sample_count >= eof_mix_next_note) && (eof_mix_current_note < eof_mix_notes))
 	{
-		if(eof_mix_midi_tones_enabled)
-		{	//Queue the start and end time (in milliseconds) of this MIDI note
+///		if(eof_mix_midi_tones_enabled)
+//		{	//Queue the start and end time (in milliseconds) of this MIDI note
 //				eof_midi_play_note(eof_mix_note_note[eof_mix_current_note]);	//Play the MIDI note
-			eof_midi_queue_add(eof_mix_note_note[eof_mix_current_note],eof_mix_note_ms_pos[eof_mix_current_note],eof_mix_note_ms_end[eof_mix_current_note]);
-		}
-		else if(eof_mix_vocal_tones_enabled && eof_sound_note[eof_mix_note_note[eof_mix_current_note]])
+//			eof_midi_queue_add(eof_mix_note_note[eof_mix_current_note],eof_mix_note_ms_pos[eof_mix_current_note],eof_mix_note_ms_end[eof_mix_current_note]);
+//		}
+		if(eof_mix_vocal_tones_enabled && eof_sound_note[eof_mix_note_note[eof_mix_current_note]])
 		{
 			eof_voice[2].sp = eof_sound_note[eof_mix_note_note[eof_mix_current_note]];
 			eof_voice[2].pos = 0.0;
@@ -294,6 +300,7 @@ void eof_mix_find_claps(void)
 
 	eof_log("eof_mix_find_claps() entered", 1);
 
+	//Queue claps
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if(eof_vocals_selected)
 	{
@@ -304,17 +311,18 @@ void eof_mix_find_claps(void)
 		}
 	}
 	else
-	{
+	{	//If a vocal track is not selected
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-		{
+		{	//For each note in the track
 			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_note(eof_song, eof_selected_track, i) & eof_mix_claps_note))
-			{
+			{	//If the note is in the active track difficulty and the clap sound cue applies to at least one gem used in the note
 				eof_mix_clap_pos[eof_mix_claps] = eof_mix_msec_to_sample(eof_get_note_pos(eof_song, eof_selected_track, i), alogg_get_wave_freq_ogg(eof_music_track));
 				eof_mix_claps++;
 			}
 		}
 	}
 
+	//Queue metronome
 	eof_mix_metronomes = 0;
 	eof_mix_current_metronome = 0;
 	for(i = 0; i < eof_song->beats; i++)
@@ -323,22 +331,24 @@ void eof_mix_find_claps(void)
 		eof_mix_metronomes++;
 	}
 
+	//Queue MIDI tones for pro guitar notes
 	eof_mix_guitar_notes = 0;
 	eof_mix_current_guitar_note = 0;
-
-	if (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-	{
+	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If a pro guitar/bass track is active
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-		{
-			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_note(eof_song, eof_selected_track, i) & eof_mix_claps_note))
-			{
+		{	//For each note in the track
+			if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
+			{	//If the note is in the active track difficulty
 				int j = 0;
-				unsigned long pos = eof_mix_msec_to_sample(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay, alogg_get_wave_freq_ogg(eof_music_track));
+				unsigned long pos = eof_mix_msec_to_sample(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay - eof_midi_synth_delay, alogg_get_wave_freq_ogg(eof_music_track));
 
 				EOF_PRO_GUITAR_TRACK *track = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
 				EOF_PRO_GUITAR_NOTE *note = track->note[i];
-				for (j = 0; j < 6; j++) {
-					if (note->note & (1<<j)) {
+				for(j = 0; j < 6; j++)
+				{	//For each of the 6 supported strings
+					if((note->note & (1<<j)) && !(note->frets[j] & 0x80))
+					{	//If the string is used (and not muted)
 						eof_guitar_notes[eof_mix_guitar_notes].pos = pos;
 						eof_guitar_notes[eof_mix_guitar_notes].channel = j;
 						eof_guitar_notes[eof_mix_guitar_notes].note = track->tuning[j] + eof_lookup_default_string_tuning_absolute(track, eof_selected_track, j) + note->frets[j];
@@ -349,6 +359,7 @@ void eof_mix_find_claps(void)
 		}
 	}
 
+	//Queue vocal tones
 	eof_mix_notes = 0;
 	eof_mix_current_note = 0;
 	eof_mix_percussions = 0;
@@ -698,15 +709,25 @@ void eof_mix_play_note(int note)
 	}
 }
 
-void eof_midi_play_note_ex(int note, int channel)
+void eof_midi_play_note_ex(int note, unsigned char channel, unsigned char patch)
 {
 	unsigned char SET_PATCH_DATA[2] = {0xC0|channel, 28}; 		// 28 = Electric Guitar (clean)
 	unsigned char NOTE_ON_DATA[3] = {0x90|channel, 0x0, 127};	//Data sequence for a Note On, channel 1, Note 0
 	unsigned char NOTE_OFF_DATA[3] = {0x80|channel, 0x0, 127};	//Data sequence for a Note Off, channel 1, Note 0
 	static unsigned char lastnote[6] = {0,0,0,0,0,0};			//Remembers the last note that was played, so it can be turned off
 	static unsigned char lastnotedefined[6] = {0,0,0,0,0,0};
+	static unsigned char patches[16] = {0};	//The last instrument number played on each of the 16 usable channels, is set to nonzero after the instrument is set
 
-	midi_out(SET_PATCH_DATA, 2);
+	if(channel > 16)
+	{	//Bounds check
+		channel = 16;
+	}
+	if(patch |= patches[channel])
+	{	//If the instrument number needs to be changed for this channel
+		SET_PATCH_DATA[1] = patch;
+		midi_out(SET_PATCH_DATA, 2);
+		patches[channel] = patch;
+	}
 
 	if(note < EOF_MAX_VOCAL_TONES)
 	{
@@ -724,7 +745,31 @@ void eof_midi_play_note_ex(int note, int channel)
 
 void eof_midi_play_note(int note)
 {
-	eof_midi_play_note_ex(note, 0);
+	eof_midi_play_note_ex(note, 0, 0);
+}
+
+void eof_play_pro_guitar_note_midi(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long tracknum, ctr, bitmask;
+
+	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return;	//Invalid parameters
+
+	tracknum = sp->track[track]->tracknum;
+	tp = sp->pro_guitar_track[tracknum];
+
+	if(note >= tp->notes)
+		return;	//Invalid parameters
+
+	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+	{	//For each of the 6 supported strings
+		if((tp->note[note]->note & bitmask) && !(tp->note[note]->frets[ctr] & 0x80))
+		{	//If this string is used (and not muted)
+			//This note is found by adding default tuning for the string, the offset defining the current tuning and the fret number being played
+			eof_midi_play_note_ex(tp->tuning[ctr] + eof_lookup_default_string_tuning_absolute(tp, track, ctr) + tp->note[note]->frets[ctr], ctr, eof_midi_synth_instrument);	//Play the MIDI note
+		}
+	}
 }
 
 struct ALOGG_OGG {

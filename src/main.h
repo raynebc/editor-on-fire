@@ -284,6 +284,8 @@ extern int         eof_vanish_x, eof_vanish_y;
 extern char        eof_full_screen_3d;
 extern char        eof_3d_fretboard_coordinates_cached;
 extern int         eof_av_delay;
+extern int         eof_midi_synth_delay;
+extern int         eof_midi_synth_instrument;
 extern int         eof_buffer_size;
 extern int         eof_audio_fine_tune;
 extern int         eof_inverted_notes;

@@ -138,7 +138,13 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 			continue;
 		}
 
-		if(strcasestr_spec(buffer, "<song>"))
+		if(strcasestr_spec(buffer, "<scoreUrl>"))
+		{	//If this is a scoreUrl tag (Go PlayAlong XML file)
+			eof_log("This appears to be a Go PlayAlong XML file.  Aborting", 1);
+			allegro_message("This appears to be a Go PlayAlong XML file.  Use \"File>Guitar Pro Import\" instead.");
+			error = 1;
+		}
+		else if(strcasestr_spec(buffer, "<song>"))
 		{	//If this is the song tag
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state because the tempo map will be overwritten
 			for(ctr = eof_song->text_events; ctr > 0; ctr--)
@@ -1098,6 +1104,8 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 			free(tp->note[ctr]);	//Free its memory
 		}
 		free(tp);
+		free(buffer);
+		free(buffer2);
 		return NULL;
 	}
 
