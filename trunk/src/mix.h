@@ -66,8 +66,11 @@ SAMPLE *eof_mix_load_ogg_sample(char *fn);	//Loads the specified OGG sample from
 
 void eof_mix_find_claps(void);		//Populates clap, metronome, note_pos and note_note arrays based on the active track difficulty's contents
 void eof_mix_play_note(int note);	//Plays the vocal tone for the specified note, if available
-void eof_midi_play_note_ex(int note, int channel);	//Sends MIDI commands to stop a note on the specified channel, change to the "clean guitar" MIDI instrument and plays the note
+void eof_midi_play_note_ex(int note, unsigned char channel, unsigned char patch);
+	//Sends MIDI commands to stop a note on the specified channel, change to the "clean guitar" MIDI instrument and plays the note
+	//If patch is nonzero, MIDI commands to set it as the active instrument number are sent
 void eof_midi_play_note(int note);	//Sends a Note On MIDI command
+void eof_play_pro_guitar_note_midi(EOF_SONG *sp, unsigned long track, unsigned long note);	//Immediately plays all the MIDI tones in the specified pro guitar note
 
 int eof_read_pcm_samples(ALOGG_OGG *ogg,void *data,unsigned bytenum);
 	//Reads the next one or more audio samples from the ogg file (bytenum number of bytes) into the given data buffer

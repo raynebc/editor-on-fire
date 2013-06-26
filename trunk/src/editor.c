@@ -3055,6 +3055,10 @@ void eof_editor_logic(void)
 						eof_selection.last_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_selection.last);
 					}
 					eof_selection.current = eof_hover_note;
+					if(eof_mix_midi_tones_enabled)
+					{	//If MIDI tones are enabled
+						eof_play_pro_guitar_note_midi(eof_song, eof_selected_track, eof_selection.current);	//Play the tones for this note if it's a pro guitar/bass note
+					}
 					eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current);
 					if(KEY_EITHER_SHIFT)
 					{

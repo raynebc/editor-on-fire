@@ -1890,6 +1890,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 //Parse the XML file if applicable
 	if(parse_gpa)
 	{	//If the input file was determined to be an XML file
+		char identity = 0;	//Set to 1 if any Go PlayAlong tags are found, 2 if a Rocksmith phrase tag is found
+
 		eof_log("\tParsing Go PlayAlong file", 1);
 		if(!pack_fgets(buffer2, (int)maxlinelength, inf2))
 		{	//I/O error
@@ -1902,6 +1904,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			ptr = strcasestr_spec(buffer2, "<scoreUrl>");	//Find the beginning of the GP file name, if present on this line
 			if(ptr)
 			{	//If the GP file name was present, parse it into a buffer
+				identity = 1;
 				for(ctr = 0; ctr < 256; ctr++)
 				{	//For each character buffer3[] can hold
 					if((*ptr == '<') || (*ptr == '\0'))
@@ -1926,6 +1929,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			ptr = strcasestr_spec(buffer2, "<sync>");
 			if(ptr)
 			{	//If the sync tag is present
+				identity = 1;
 				//Read the number of sync entries
 				for(ctr = 0; ctr < 20; ctr++)
 				{	//Read up to 20 characters for this number
@@ -1989,11 +1993,31 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				}
 			}//If the sync tag is present
 
+			ptr = strcasestr_spec(buffer2, "<phrases");
+			if(ptr)
+			{	//If a phrases tag (Rocksmith XML file) is present
+				identity = 2;
+				eof_log("\t\tError:  This appears to be a Rocksmith XML file instead of a Go PlayAlong XML file.  Aborting", 1);
+				error = 1;
+			}
+
 			(void) pack_fgets(buffer2, (int)maxlinelength, inf2);	//Read next line of text
 			linectr++;	//Increment line counter
 		}//Until there was an error reading from the file or end of file is reached
 		if(error)
 		{
+			switch(identity)
+			{
+				case 0:	//Unknown XML file
+					allegro_message("Error:  The format of this XML file is unknown.  Aborting");
+				break;
+				case 1:	//Go PlayAlong XML file
+					allegro_message("Error:  Malformed Go PlayAlong XML file.  Aborting");
+				break;
+				case 2:	//Rocksmith XML file
+					allegro_message("This appears to be a Rocksmith XML file.  Use \"File>Rocksmith Import\" instead.");
+				break;
+			}
 			if(inf)
 				pack_fclose(inf);
 			pack_fclose(inf2);
@@ -2002,7 +2026,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(buffer2);
 			return NULL;
 		}
-	}
+	}//If the input file was determined to be an XML file
 	pack_fclose(inf2);
 	if(buffer2)
 		free(buffer2);
