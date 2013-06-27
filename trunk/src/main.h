@@ -515,10 +515,10 @@ int eof_load_data(void);	//Loads graphics and fonts from eof.dat
 void eof_destroy_data(void);	//Frees graphics and fonts from memory
 char * eof_get_tone_name(int tone);	//Returns the name of the given note number (ie. C# or Db) based on the value of eof_display_flats
 void eof_process_midi_queue(int pos);	//Process the MIDI queue based on the given timestamp
-int eof_midi_queue_add(unsigned char note,int startpos,int endpos);	//Appends the Note On/Off data to the MIDI queue
+int eof_midi_queue_add(unsigned char note, int startpos, int endpos);	//Appends the Note On/Off data to the MIDI queue
 void eof_midi_queue_destroy(void);	//Destroys the MIDI queue
 void eof_all_midi_notes_off(void);	//Sends a channel mode message to turn off all active notes, as per MIDI specification
-void eof_stop_midi(void);	//To be called whenever playback stops, turning of all playing MIDI notes and destroying the MIDI queue
+void eof_stop_midi(void);	//To be called whenever playback stops, turning off all playing MIDI notes and destroying the MIDI queue
 void eof_exit(void);		//Formally exits the program, releasing all data structures allocated
 
 void eof_init_after_load(char initaftersavestate);

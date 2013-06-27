@@ -124,25 +124,9 @@ void eof_mix_callback_common(void)
 		eof_mix_next_metronome = eof_mix_metronome_pos[eof_mix_current_metronome];
 	}
 
-	//Mix MIDI tones for pro guitar notes
-	while((eof_mix_sample_count >= eof_mix_next_guitar_note) && (eof_mix_current_guitar_note < eof_mix_guitar_notes))
-	{	// Using a while loop to allow all notes in a chord to fire at the same time
-		if(eof_mix_midi_tones_enabled)
-		{
-			eof_midi_play_note_ex(eof_guitar_notes[eof_mix_current_guitar_note].note, eof_guitar_notes[eof_mix_current_guitar_note].channel, eof_midi_synth_instrument);	//Play the MIDI note
-		}
-		eof_mix_current_guitar_note++;
-		eof_mix_next_guitar_note = eof_guitar_notes[eof_mix_current_guitar_note].pos;
-	}
-
 	//Mix vocal tones
 	if((eof_mix_sample_count >= eof_mix_next_note) && (eof_mix_current_note < eof_mix_notes))
 	{
-///		if(eof_mix_midi_tones_enabled)
-//		{	//Queue the start and end time (in milliseconds) of this MIDI note
-//				eof_midi_play_note(eof_mix_note_note[eof_mix_current_note]);	//Play the MIDI note
-//			eof_midi_queue_add(eof_mix_note_note[eof_mix_current_note],eof_mix_note_ms_pos[eof_mix_current_note],eof_mix_note_ms_end[eof_mix_current_note]);
-//		}
 		if(eof_mix_vocal_tones_enabled && eof_sound_note[eof_mix_note_note[eof_mix_current_note]])
 		{
 			eof_voice[2].sp = eof_sound_note[eof_mix_note_note[eof_mix_current_note]];
@@ -702,10 +686,7 @@ void eof_mix_play_note(int note)
 {
 	if((note < EOF_MAX_VOCAL_TONES) && eof_sound_note[note])
 	{
-		if(eof_mix_midi_tones_enabled)
-			eof_midi_play_note(note);
-		else
-			(void) play_sample(eof_sound_note[note], 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play the tone at the user specified cue volume
+		(void) play_sample(eof_sound_note[note], 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play the tone at the user specified cue volume
 	}
 }
 
@@ -718,6 +699,10 @@ void eof_midi_play_note_ex(int note, unsigned char channel, unsigned char patch)
 	static unsigned char lastnotedefined[6] = {0,0,0,0,0,0};
 	static unsigned char patches[16] = {0};	//The last instrument number played on each of the 16 usable channels, is set to nonzero after the instrument is set
 
+	if(midi_driver == NULL)
+	{	//Ensure Allegro's MIDI driver is loaded
+		return;
+	}
 	if(channel > 16)
 	{	//Bounds check
 		channel = 16;
@@ -735,9 +720,9 @@ void eof_midi_play_note_ex(int note, unsigned char channel, unsigned char patch)
 		if(lastnotedefined[channel])
 		{
 			NOTE_OFF_DATA[1] = lastnote[channel];
-			midi_out(NOTE_OFF_DATA,3);	//Turn off the last note that was played
+			midi_out(NOTE_OFF_DATA, 3);	//Turn off the last note that was played
 		}
-		midi_out(NOTE_ON_DATA,3);	//Turn on this note
+		midi_out(NOTE_ON_DATA, 3);	//Turn on this note
 		lastnote[channel] = note;
 		lastnotedefined[channel] = 1;
 	}
@@ -826,4 +811,17 @@ void eof_set_seek_position(int pos)
 	eof_music_actual_pos = eof_music_pos;
 	eof_mix_seek(eof_music_actual_pos);
 	eof_reset_lyric_preview_lines();
+}
+
+void eof_play_queued_midi_tones(void)
+{
+	while((eof_mix_sample_count >= eof_mix_next_guitar_note) && (eof_mix_current_guitar_note < eof_mix_guitar_notes))
+	{	// Using a while loop to allow all notes in a chord to fire at the same time
+		if(eof_mix_midi_tones_enabled)
+		{
+			eof_midi_play_note_ex(eof_guitar_notes[eof_mix_current_guitar_note].note, eof_guitar_notes[eof_mix_current_guitar_note].channel, eof_midi_synth_instrument);	//Play the MIDI note
+		}
+		eof_mix_current_guitar_note++;
+		eof_mix_next_guitar_note = eof_guitar_notes[eof_mix_current_guitar_note].pos;
+	}
 }
