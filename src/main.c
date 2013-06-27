@@ -4109,11 +4109,11 @@ void eof_exit(void)
 
 void eof_process_midi_queue(int pos)
 {	//Process the MIDI queue based on the current chart timestamp (eof_music_pos)
-	unsigned char NOTE_ON_DATA[3]={0x91,0x0,127};	//Data sequence for a Note On, channel 1, Note 0
-	unsigned char NOTE_OFF_DATA[3]={0x81,0x0,127};	//Data sequence for a Note Off, channel 1, Note 0
+	unsigned char NOTE_ON_DATA[3] = {0x91,0x0,127};		//Data sequence for a Note On, channel 1, Note 0
+	unsigned char NOTE_OFF_DATA[3] = {0x81,0x0,127};	//Data sequence for a Note Off, channel 1, Note 0
 
-	struct MIDIentry *ptr=MIDIqueue;	//Points to the head of the list
-	struct MIDIentry *temp=NULL;
+	struct MIDIentry *ptr = MIDIqueue;	//Points to the head of the list
+	struct MIDIentry *temp = NULL;
 
 	eof_log("eof_process_midi_queue() entered", 1);
 
@@ -4122,50 +4122,50 @@ void eof_process_midi_queue(int pos)
 
 	while(ptr != NULL)
 	{	//Process all queue entries
-		if(ptr->status == 0)	//If this queued note has not been played yet
-		{
+		if(ptr->status == 0)
+		{	//If this queued note has not been played yet
 			if(pos >= ptr->startpos)	//If the current chart position is at or past this note's start position
 			{
-				NOTE_ON_DATA[1]=ptr->note;	//Alter the data sequence to be the appropriate note number
+				NOTE_ON_DATA[1] = ptr->note;	//Alter the data sequence to be the appropriate note number
 				midi_driver->raw_midi(NOTE_ON_DATA[0]);
 				midi_driver->raw_midi(NOTE_ON_DATA[1]);
 				midi_driver->raw_midi(NOTE_ON_DATA[2]);
-				ptr->status=1;			//Track that it is playing
+				ptr->status = 1;			//Track that it is playing
 			}
 		}
-		else			//This queued note has already been played
-		{
+		else
+		{	//This queued note has already been played
 			if(pos >= ptr->endpos)	//If the current chart position is at or past this note's stop position
 			{
-				NOTE_OFF_DATA[1]=ptr->note;	//Alter the data sequence to be the appropriate note number
+				NOTE_OFF_DATA[1] = ptr->note;	//Alter the data sequence to be the appropriate note number
 				midi_driver->raw_midi(NOTE_OFF_DATA[0]);
 				midi_driver->raw_midi(NOTE_OFF_DATA[1]);
 				midi_driver->raw_midi(NOTE_OFF_DATA[2]);
 
 			//Remove this link from the list
 				if(ptr->prev)	//If there's a link that precedes this link
-					ptr->prev->next=ptr->next;	//It now points forward to the next link (if there is one)
+					ptr->prev->next = ptr->next;	//It now points forward to the next link (if there is one)
 				else
-					MIDIqueue=ptr->next;		//Update head of list
+					MIDIqueue = ptr->next;		//Update head of list
 
 				if(ptr->next)	//If there's a link that follows this link
-					ptr->next->prev=ptr->prev;	//It now points back to the previous link (if there is one)
+					ptr->next->prev = ptr->prev;	//It now points back to the previous link (if there is one)
 				else
-					MIDIqueuetail=ptr->prev;	//Update tail of list
+					MIDIqueuetail = ptr->prev;	//Update tail of list
 
-				temp=ptr->next;	//Save the address of the next link (if there is one)
+				temp = ptr->next;	//Save the address of the next link (if there is one)
 				free(ptr);
-				ptr=temp;	//Iterate to the link that followed the deleted link
+				ptr = temp;	//Iterate to the link that followed the deleted link
 				continue;	//Restart at top of loop without iterating to the next link
 			}
 		}
-		ptr=ptr->next;	//Point to the next link
+		ptr = ptr->next;	//Point to the next link
 	}
 }
 
-int eof_midi_queue_add(unsigned char note,int startpos,int endpos)
+int eof_midi_queue_add(unsigned char note, int startpos, int endpos)
 {
-	struct MIDIentry *ptr=NULL;	//Stores the newly allocated link
+	struct MIDIentry *ptr = NULL;	//Stores the newly allocated link
 
 	eof_log("eof_midi_queue_add() entered", 1);
 
@@ -4176,26 +4176,26 @@ int eof_midi_queue_add(unsigned char note,int startpos,int endpos)
 		return -1;	//return error:  Duration must be > 0
 
 //Allocate and initialize MIDI queue entry
-	ptr=malloc(sizeof(struct MIDIentry));
+	ptr = malloc(sizeof(struct MIDIentry));
 	if(ptr == NULL)
 		return -1;	//return error:  Unable to allocate memory
-	ptr->status=0;
-	ptr->note=note;
-	ptr->startpos=startpos;
-	ptr->endpos=endpos;
-	ptr->next=NULL;		//When appended to the end of the list, it will never point forward to anything
+	ptr->status = 0;
+	ptr->note = note;
+	ptr->startpos = startpos;
+	ptr->endpos = endpos;
+	ptr->next = NULL;		//When appended to the end of the list, it will never point forward to anything
 
 //Append to list
 	if(MIDIqueuetail)	//If the list isn't empty
 	{
-		MIDIqueuetail->next=ptr;	//Tail points forward to new link
-		ptr->prev=MIDIqueuetail;	//New link points backward to tail
-		MIDIqueuetail=ptr;		//Update tail
+		MIDIqueuetail->next = ptr;	//Tail points forward to new link
+		ptr->prev = MIDIqueuetail;	//New link points backward to tail
+		MIDIqueuetail = ptr;		//Update tail
 	}
 	else
 	{
-		MIDIqueue=MIDIqueuetail=ptr;	//This new link is both the head and the tail of the list
-		ptr->prev=NULL;			//New link points backward to nothing
+		MIDIqueue = MIDIqueuetail = ptr;	//This new link is both the head and the tail of the list
+		ptr->prev = NULL;				//New link points backward to nothing
 	}
 
 	return 0;	//return success
@@ -4203,18 +4203,18 @@ int eof_midi_queue_add(unsigned char note,int startpos,int endpos)
 
 void eof_midi_queue_destroy(void)
 {
-	struct MIDIentry *ptr=MIDIqueue,*temp=NULL;
+	struct MIDIentry *ptr = MIDIqueue,*temp = NULL;
 
 	eof_log("eof_midi_queue_destroy() entered", 2);
 
 	while(ptr != NULL)	//For all links in the list
 	{
-		temp=ptr->next;	//Save address of next link
+		temp = ptr->next;	//Save address of next link
 		free(ptr);	//Destroy this link
-		ptr=temp;	//Point to next link
+		ptr = temp;	//Point to next link
 	}
 
-	MIDIqueue=MIDIqueuetail=NULL;
+	MIDIqueue = MIDIqueuetail = NULL;
 }
 
 void eof_all_midi_notes_off(void)
@@ -4223,7 +4223,7 @@ void eof_all_midi_notes_off(void)
 
 	if(midi_driver)
 	{
-		unsigned char ALL_NOTES_OFF[3]={0xB1,123,0};	//Data sequence for a Control Change, controller 123, value 0 (All notes off)
+		unsigned char ALL_NOTES_OFF[3] = {0xB1,123,0};	//Data sequence for a Control Change, controller 123, value 0 (All notes off)
 
 		midi_driver->raw_midi(ALL_NOTES_OFF[0]);
 		midi_driver->raw_midi(ALL_NOTES_OFF[1]);
@@ -4539,8 +4539,7 @@ int main(int argc, char * argv[])
 		{
 			int ret = alogg_poll_ogg(eof_music_track);
 			eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
-			if(eof_mix_midi_tones_enabled)
-				eof_process_midi_queue(eof_music_actual_pos);	//Process the start/stop times of the MIDI tones
+			eof_play_queued_midi_tones();	//Played cued MIDI tones for pro guitar/bass notes
 			if((ret == ALOGG_POLL_PLAYJUSTFINISHED) || (ret == ALOGG_POLL_NOTPLAYING) || (ret == ALOGG_POLL_FRAMECORRUPT) || (ret == ALOGG_POLL_INTERNALERROR) || (eof_music_actual_pos > alogg_get_length_msecs_ogg(eof_music_track)))
 			{	//If ALOGG reported a completed/error condition or if the reported position is greater than the length of the audio
 				eof_music_pos = eof_music_actual_pos + eof_av_delay;
