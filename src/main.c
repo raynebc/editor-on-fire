@@ -97,7 +97,7 @@ char        eof_temp_filename[1024] = {0};
 char        eof_soft_cursor = 0;
 char        eof_desktop = 1;
 int         eof_av_delay = 200;
-int         eof_midi_synth_delay = 0;
+int         eof_midi_tone_delay = 0;
 int         eof_midi_synth_instrument = 28;	//Electric Guitar (clean) MIDI instrument
 int         eof_buffer_size = 4096;
 int         eof_audio_fine_tune = 0;
@@ -126,6 +126,7 @@ int         eof_min_note_length = 0;			//Specifies the user-configured minimum l
 int         eof_min_note_distance = 3;			//Specifies the user-configured minimum distance between notes (to avoid problems with timing conversion leading to precision loss that can cause notes to combine/drop)
 int         eof_render_bass_drum_in_lane = 0;	//If nonzero, the 3D rendering will draw bass drum gems in a lane instead of as a bar spanning all lanes
 int         eof_inverted_chords_slash = 0;
+int         eof_render_3d_rs_chords = 0;	//If nonzero, the 3D rendering will draw a rectangle to represent chords that will export to XML as repeats (Rocksmith), and 3D chord tails will not be rendered
 int         eof_smooth_pos = 1;
 int         eof_input_mode = EOF_INPUT_PIANO_ROLL;
 int         eof_windowed = 1;
@@ -267,6 +268,8 @@ int eof_color_dark_purple;
 int eof_color_orange;
 int eof_color_silver;
 int eof_color_dark_silver;
+int eof_color_cyan;
+int eof_color_dark_cyan;
 int eof_info_color;
 int eof_color_waveform_trough;
 int eof_color_waveform_peak;
@@ -3474,6 +3477,8 @@ int eof_load_data(void)
 	eof_color_orange = makecol(255, 127, 0);
 	eof_color_silver = makecol(192, 192, 192);
 	eof_color_dark_silver = makecol(160, 160, 160);
+	eof_color_cyan = makecol(0, 255, 255);
+	eof_color_dark_cyan = makecol(0, 160, 160);
 
 	gui_fg_color = agup_fg_color;
 	gui_bg_color = agup_bg_color;

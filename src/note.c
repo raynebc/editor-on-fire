@@ -2,6 +2,7 @@
 #include "modules/ocd3d.h"
 #include "main.h"
 #include "note.h"
+#include "rs.h"	//For eof_note_has_high_chord_density()
 #include "tuning.h"
 
 #ifdef USEMEMWATCH
@@ -916,75 +917,96 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	}//If this is a drum track
 	else
 	{	//This is a non drum track (or a drum track where bass is rendered in its own lane)
-		for(ctr=0,mask=1;ctr<eof_count_track_lanes(eof_song, track);ctr++,mask=mask<<1)
-		{	//Render for each of the available fret lanes (count the active track's lanes to work around numlanes not being equal to 6 for open bass)
-			if(notenote & mask)
-			{	//If this lane is used
-				if((mask == 32) && (track == EOF_TRACK_BASS) && eof_open_bass_enabled())
-				{	//Lane 6 for the bass track (if enabled) renders similarly to a bass drum note
-					rz = npos;
-					ez = npos + 14;
-					point[0] = ocd3d_project_x(bx - 10, rz);
-					point[1] = ocd3d_project_y(200, rz);
-					point[2] = ocd3d_project_x(bx - 10, ez);
-					point[3] = ocd3d_project_y(200, ez);
-					point[4] = ocd3d_project_x(bx + 232, ez);
-					point[5] = point[3];
-					point[6] = ocd3d_project_x(bx + 232, rz);
-					point[7] = point[1];
+		if(eof_render_3d_rs_chords && eof_note_has_high_chord_density(eof_song, track, notenum))
+		{	//If the user has opted to 3D render Rocksmith style chords, and this is a high density chord
+			rz = npos;
+			ez = npos + 14;
+			point[0] = ocd3d_project_x(bx - 10, rz);
+			point[1] = ocd3d_project_y(200, rz);
+			point[2] = ocd3d_project_x(bx - 10, ez);
+			point[3] = ocd3d_project_y(200, ez);
+			point[4] = ocd3d_project_x(bx + 232, ez);
+			point[5] = point[3];
+			point[6] = ocd3d_project_x(bx + 232, rz);
+			point[7] = point[1];
 
-					if((point[0] != -65536) && (point[1] != -65536) && (point[2] != -65536) && (point[3] != -65536) && (point[4] != -65536) && (point[6] != -65536))
-					{	//If none of the coordinate projections failed
-						if(noteflags & EOF_NOTE_FLAG_SP)			//If this open bass note is star power, render it in silver
-							polygon(eof_window_3d->screen, 4, point, p ? eof_color_white : eof_color_silver);
-						else										//Otherwise render it in the standard lane six color for the current color set
-							polygon(eof_window_3d->screen, 4, point, p ? eof_colors[5].hit : eof_colors[5].color);
+			if((point[0] != -65536) && (point[1] != -65536) && (point[2] != -65536) && (point[3] != -65536) && (point[4] != -65536) && (point[6] != -65536))
+			{	//If none of the coordinate projections failed
+				polygon(eof_window_3d->screen, 4, point, p ? eof_color_cyan : eof_color_dark_cyan);
+			}
+		}
+		else
+		{	//Render all gems in the note normally
+			for(ctr=0,mask=1;ctr<eof_count_track_lanes(eof_song, track);ctr++,mask=mask<<1)
+			{	//Render for each of the available fret lanes (count the active track's lanes to work around numlanes not being equal to 6 for open bass)
+				if(notenote & mask)
+				{	//If this lane is used
+					if((mask == 32) && (track == EOF_TRACK_BASS) && eof_open_bass_enabled())
+					{	//Lane 6 for the bass track (if enabled) renders similarly to a bass drum note
+						rz = npos;
+						ez = npos + 14;
+						point[0] = ocd3d_project_x(bx - 10, rz);
+						point[1] = ocd3d_project_y(200, rz);
+						point[2] = ocd3d_project_x(bx - 10, ez);
+						point[3] = ocd3d_project_y(200, ez);
+						point[4] = ocd3d_project_x(bx + 232, ez);
+						point[5] = point[3];
+						point[6] = ocd3d_project_x(bx + 232, rz);
+						point[7] = point[1];
+
+						if((point[0] != -65536) && (point[1] != -65536) && (point[2] != -65536) && (point[3] != -65536) && (point[4] != -65536) && (point[6] != -65536))
+						{	//If none of the coordinate projections failed
+							if(noteflags & EOF_NOTE_FLAG_SP)			//If this open bass note is star power, render it in silver
+								polygon(eof_window_3d->screen, 4, point, p ? eof_color_white : eof_color_silver);
+							else										//Otherwise render it in the standard lane six color for the current color set
+								polygon(eof_window_3d->screen, 4, point, p ? eof_colors[5].hit : eof_colors[5].color);
+						}
 					}
-				}
-				else
-				{
-					if(track != EOF_TRACK_DANCE)
-					{	//If this is not a dance track
-						if(noteflags & EOF_NOTE_FLAG_HOPO)
-						{	//If this is a HOPO note
-							if(noteflags & EOF_NOTE_FLAG_SP)
-							{	//If this is also a SP note
-								ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_HWHITE_HIT] : eof_image[EOF_IMAGE_NOTE_HWHITE], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
-							}
-							else
-							{
-								ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[eof_colors[ctr].hoponotehit3d] : eof_image[eof_colors[ctr].hoponote3d], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
-							}
-						}
-						else
-						{
-							if(noteflags & EOF_NOTE_FLAG_SP)
-							{	//If this is an SP note
-								ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
-							}
-							else
-							{
-								ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[eof_colors[ctr].notehit3d] : eof_image[eof_colors[ctr].note3d], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
-							}
-						}
-
-						if(!eof_legacy_view && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-						{	//If legacy view is disabled and this is a pro guitar note, render the fret number over the center of the note
-							BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], ctr, 8, eof_color_white, eof_color_black);	//Allow one extra character's width for padding
-							if(fretbmp != NULL)
-							{	//Render the bitmap on top of the 3D note and then destroy the bitmap
-								ocd3d_draw_bitmap(eof_window_3d->screen, fretbmp, xchart[ctr] - 8, 200 - (EOF_3D_IMAGE_HEIGHT / 2), npos);
-								destroy_bitmap(fretbmp);
-							}
-						}
-					}//If this is not a dance track
 					else
-					{	//This is a dance track
-						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[eof_colors[ctr].arrowhit3d] : eof_image[eof_colors[ctr].arrow3d], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
+					{
+						if(track != EOF_TRACK_DANCE)
+						{	//If this is not a dance track
+							if(noteflags & EOF_NOTE_FLAG_HOPO)
+							{	//If this is a HOPO note
+								if(noteflags & EOF_NOTE_FLAG_SP)
+								{	//If this is also a SP note
+									ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_HWHITE_HIT] : eof_image[EOF_IMAGE_NOTE_HWHITE], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
+								}
+								else
+								{
+									ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[eof_colors[ctr].hoponotehit3d] : eof_image[eof_colors[ctr].hoponote3d], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
+								}
+							}
+							else
+							{
+								if(noteflags & EOF_NOTE_FLAG_SP)
+								{	//If this is an SP note
+									ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
+								}
+								else
+								{
+									ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[eof_colors[ctr].notehit3d] : eof_image[eof_colors[ctr].note3d], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
+								}
+							}
+
+							if(!eof_legacy_view && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+							{	//If legacy view is disabled and this is a pro guitar note, render the fret number over the center of the note
+								BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], ctr, 8, eof_color_white, eof_color_black);	//Allow one extra character's width for padding
+								if(fretbmp != NULL)
+								{	//Render the bitmap on top of the 3D note and then destroy the bitmap
+									ocd3d_draw_bitmap(eof_window_3d->screen, fretbmp, xchart[ctr] - 8, 200 - (EOF_3D_IMAGE_HEIGHT / 2), npos);
+									destroy_bitmap(fretbmp);
+								}
+							}
+						}//If this is not a dance track
+						else
+						{	//This is a dance track
+							ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[eof_colors[ctr].arrowhit3d] : eof_image[eof_colors[ctr].arrow3d], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
+						}
 					}
-				}
-			}//If this lane is used
-		}//Render for each of the available fret lanes
+				}//If this lane is used
+			}//Render for each of the available fret lanes
+		}//Render all gems in the note normally
 	}//This is a non drum track (or a drum track where bass is rendered in its own lane)
 
 	//Render note names
@@ -1054,6 +1076,11 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 	if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		return 0;	//Don't render tails for drum notes
+
+	if(eof_render_3d_rs_chords && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_note_count_non_ghosted_lanes(eof_song, track, notenum) > 1))
+	{	//If the user has opted to 3D render Rocksmith style chords, and this is a pro guitar/bass chord
+		return 0;	//Don't render the tail
+	}
 
 	tracknum = eof_song->track[track]->tracknum;
 	if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || eof_legacy_view))

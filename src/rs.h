@@ -35,7 +35,11 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	//Writes the specified pro guitar track in Rocksmith's XML format, if the track is populated
 	//fn is expected to point to an array at least 1024 bytes in size, and is the target path for the exported XML file.
 	//	It is used to build an appropriate name for the XML file, based on the track's defined arrangement type or the presence of an alternate track name
-	//If *user_warned is zero, the user is alerted that a track difficulty has no defined fret hand positions and they will be automatically generated, then *user_warned is set to nonzero
+	//*user_warned maintains a set of flags about whether various problems were found and warned about to the user:
+	//	1:  At least one track difficulty has no fret hand positions, they will be automatically generated
+	//	2:  At least one track uses a fret value higher than 22
+	//	4:  At least one open note is marked with bend or slide status
+	//	8:  At least one note slides to or from fret 22
 
 void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_made);
 	//Checks all notes in the track and duplicates finger arrays of notes with complete finger definitions to matching notes without complete finger definitions
@@ -125,5 +129,10 @@ int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track);
 	// chart seeks to the offending beat in the specified track, automatically launching "Place RS Phrase" and then checking the remaining beats.
 	//If user refuses on any of the prompts or cancels any "Place RS Phrase" dialogs, or upon error, nonzero is returned.
 	//If the track is not populated, the function returns zero without checking the RS sections.
+
+int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned long note);
+	//Returns nonzero if the specified note will export to XML as a high density chord
+	//This is based on whether the chord is close enough to a matching, previous chord
+	// and whether the note's "crazy" flag is set (which overrides it to be low density)
 
 #endif
