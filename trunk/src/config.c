@@ -59,7 +59,7 @@ void eof_load_config(char * fn)
 
 	/* read configuration */
 	eof_av_delay = get_config_int("config", "av_delay", 300);
-	eof_midi_synth_delay = get_config_int("config", "eof_midi_synth_delay", 0);
+	eof_midi_tone_delay = get_config_int("config", "eof_midi_tone_delay", 0);
 	eof_midi_synth_instrument = get_config_int("config", "eof_midi_synth_instrument", 28);
 	eof_buffer_size = get_config_int("config", "buffer_size", 6144);
 	eof_smooth_pos = get_config_int("config", "smooth_playback", 1);
@@ -147,6 +147,7 @@ void eof_load_config(char * fn)
 	eof_gp_import_truncate_short_notes = get_config_int("preferences", "eof_gp_import_truncate_short_notes", 1);
 	eof_gp_import_replaces_track = get_config_int("preferences", "eof_gp_import_replaces_track", 1);
 	eof_gp_import_replaces_track = get_config_int("preferences", "eof_gp_import_nat_harmonics_only", 0);
+	eof_render_3d_rs_chords = get_config_int("preferences", "eof_render_3d_rs_chords", 0);
 	eof_min_note_distance = get_config_int("preferences", "eof_min_note_distance", 3);
 	if(eof_min_note_distance < 1)
 	{	//If the minimum note distance is invalid
@@ -231,7 +232,7 @@ void eof_save_config(char * fn)
 
 	/* write configuration */
 	set_config_int("config", "av_delay", eof_av_delay);
-	set_config_int("config", "eof_midi_synth_delay", eof_midi_synth_delay);
+	set_config_int("config", "eof_midi_tone_delay", eof_midi_tone_delay);
 	set_config_int("config", "eof_midi_synth_instrument", eof_midi_synth_instrument);
 	set_config_int("config", "buffer_size", eof_buffer_size);
 	set_config_int("config", "smooth_playback", eof_smooth_pos);
@@ -279,6 +280,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_gp_import_truncate_short_notes", eof_gp_import_truncate_short_notes);
 	set_config_int("preferences", "eof_gp_import_replaces_track", eof_gp_import_replaces_track);
 	set_config_int("preferences", "eof_gp_import_nat_harmonics_only", eof_gp_import_nat_harmonics_only);
+	set_config_int("preferences", "eof_render_3d_rs_chords", eof_render_3d_rs_chords);
 	set_config_int("preferences", "eof_min_note_length", eof_min_note_length);
 	set_config_int("preferences", "eof_min_note_distance", eof_min_note_distance);
 	set_config_int("preferences", "eof_render_bass_drum_in_lane", eof_render_bass_drum_in_lane);

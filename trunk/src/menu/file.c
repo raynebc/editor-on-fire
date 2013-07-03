@@ -75,18 +75,20 @@ MENU eof_file_menu[] =
 DIALOG eof_settings_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)              (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   48,  200, 220, 2,   23,  0,    0,      0,   0,   "Settings",       NULL, NULL },
+	{ d_agup_window_proc,    0,   48,  230, 244, 2,   23,  0,    0,      0,   0,   "Settings",       NULL, NULL },
 	{ d_agup_text_proc,      16,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "AV Delay (ms):", NULL, NULL },
-	{ eof_verified_edit_proc,128, 80,  64,  20,  2,   23,  0,    0,      5,   0,   eof_etext,        "0123456789", NULL },
-	{ d_agup_text_proc,      16,  108, 64,  8,   2,   23,  0,    0,      0,   0,   "Buffer Size:",   NULL, NULL },
-	{ eof_verified_edit_proc,128, 104, 64,  20,  2,   23,  0,    0,      5,   0,   eof_etext2,       "0123456789", NULL },
-	{ d_agup_text_proc,      16,  132, 64,  8,   2,   23,  0,    0,      0,   0,   "CPU Saver",      NULL, NULL },
-	{ d_agup_slider_proc,    96,  132, 96,  16,  2,   23,  0,    0,      10,  0,   NULL,             NULL, NULL },
-	{ d_agup_check_proc,     16,  160, 160, 16,  2,   23,  0,    0,      1,   0,   "Smooth Playback",NULL, NULL },
-	{ d_agup_check_proc,     16,  180, 160, 16,  2,   23,  0,    0,      1,   0,   "Disable Windows UI",NULL, NULL },
-	{ d_agup_check_proc,     16,  200, 160, 16,  2,   23,  0,    0,      1,   0,   "Disable VSync",  NULL, NULL },
-	{ d_agup_button_proc,    16,  228, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",             NULL, NULL },
-	{ d_agup_button_proc,    116, 228, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",         NULL, NULL },
+	{ eof_verified_edit_proc,158, 80,  64,  20,  2,   23,  0,    0,      5,   0,   eof_etext,        "0123456789", NULL },
+	{ d_agup_text_proc,      16,  108, 64,  8,   2,   23,  0,    0,      0,   0,   "MIDI Tone Delay (ms):",NULL, NULL },
+	{ eof_verified_edit_proc,158, 104, 64,  20,  2,   23,  0,    0,      5,   0,   eof_etext3,       "0123456789", NULL },
+	{ d_agup_text_proc,      16,  132, 64,  8,   2,   23,  0,    0,      0,   0,   "Buffer Size:",   NULL, NULL },
+	{ eof_verified_edit_proc,158, 128, 64,  20,  2,   23,  0,    0,      5,   0,   eof_etext2,       "0123456789", NULL },
+	{ d_agup_text_proc,      16,  156, 64,  8,   2,   23,  0,    0,      0,   0,   "CPU Saver",      NULL, NULL },
+	{ d_agup_slider_proc,    126,  156, 96,  16,  2,   23,  0,    0,      10,  0,   NULL,             NULL, NULL },
+	{ d_agup_check_proc,     16,  184, 160, 16,  2,   23,  0,    0,      1,   0,   "Smooth Playback",NULL, NULL },
+	{ d_agup_check_proc,     16,  204, 160, 16,  2,   23,  0,    0,      1,   0,   "Disable Windows UI",NULL, NULL },
+	{ d_agup_check_proc,     16,  224, 160, 16,  2,   23,  0,    0,      1,   0,   "Disable VSync",  NULL, NULL },
+	{ d_agup_button_proc,    16,  252, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",             NULL, NULL },
+	{ d_agup_button_proc,    146, 252, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",         NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -135,6 +137,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 300, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short notes",NULL, NULL },
 	{ d_agup_check_proc, 248, 316, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import replaces active track",NULL, NULL },
 	{ d_agup_check_proc, 248, 332, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import nat. harmonics only",NULL, NULL },
+	{ d_agup_check_proc, 248, 348, 218, 16,  2,   23,  0,    0,      1,   0,   "3D render RS style chords",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -927,12 +930,13 @@ int eof_menu_file_settings(void)
 	centre_dialog(eof_settings_dialog);
 	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_av_delay);
 	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%d", eof_buffer_size);
-	eof_settings_dialog[6].d2 = eof_cpu_saver;
-	eof_settings_dialog[7].flags = eof_smooth_pos ? D_SELECTED : 0;
-	eof_settings_dialog[8].flags = eof_disable_windows ? D_SELECTED : 0;
-	eof_settings_dialog[9].flags = eof_disable_vsync ? D_SELECTED : 0;
-	if(eof_popup_dialog(eof_settings_dialog, 0) == 10)
-	{
+	(void) snprintf(eof_etext3, sizeof(eof_etext2) - 1, "%d", eof_midi_tone_delay);
+	eof_settings_dialog[8].d2 = eof_cpu_saver;
+	eof_settings_dialog[9].flags = eof_smooth_pos ? D_SELECTED : 0;
+	eof_settings_dialog[10].flags = eof_disable_windows ? D_SELECTED : 0;
+	eof_settings_dialog[11].flags = eof_disable_vsync ? D_SELECTED : 0;
+	if(eof_popup_dialog(eof_settings_dialog, 0) == 12)
+	{	//User clicked OK
 		eof_av_delay = atol(eof_etext);
 		if(eof_av_delay < 0)
 		{
@@ -945,10 +949,16 @@ int eof_menu_file_settings(void)
 			allegro_message("Buffer size must be at least 1024. It has been set to 1024.");
 			eof_buffer_size = 1024;
 		}
-		eof_cpu_saver = eof_settings_dialog[6].d2;
-		eof_smooth_pos = (eof_settings_dialog[7].flags == D_SELECTED ? 1 : 0);
-		eof_disable_windows = (eof_settings_dialog[8].flags == D_SELECTED ? 1 : 0);
-		eof_disable_vsync = (eof_settings_dialog[9].flags == D_SELECTED ? 1 : 0);
+		eof_midi_tone_delay = atol(eof_etext3);
+		if(eof_midi_tone_delay < 0)
+		{
+			allegro_message("MIDI Delay must be at least 0.\nIt has been set to 0 for now.");
+			eof_midi_tone_delay = 0;
+		}
+		eof_cpu_saver = eof_settings_dialog[8].d2;
+		eof_smooth_pos = (eof_settings_dialog[9].flags == D_SELECTED ? 1 : 0);
+		eof_disable_windows = (eof_settings_dialog[10].flags == D_SELECTED ? 1 : 0);
+		eof_disable_vsync = (eof_settings_dialog[11].flags == D_SELECTED ? 1 : 0);
 		ncdfs_use_allegro = eof_disable_windows;
 	}
 	eof_show_mouse(NULL);
@@ -994,11 +1004,12 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[23].flags = eof_fb_seek_controls ? D_SELECTED : 0;			//Use dB style seek controls
 	eof_preferences_dialog[32].flags = eof_preferences_dialog[33].flags = eof_preferences_dialog[34].flags = eof_preferences_dialog[35].flags = eof_preferences_dialog[36].flags = 0;	//Options for what to display at top of 2D panel
 	eof_preferences_dialog[eof_2d_render_top_option].flags = D_SELECTED;
-	eof_preferences_dialog[37].flags = eof_new_note_length_1ms ? D_SELECTED : 0;		//New notes are made 1ms long
-	eof_preferences_dialog[38].flags = eof_gp_import_preference_1 ? D_SELECTED : 0;		//GP import beat text as sections, markers as phrases
-	eof_preferences_dialog[39].flags = eof_gp_import_truncate_short_notes ? D_SELECTED : 0;		//GP import truncates short notes
+	eof_preferences_dialog[37].flags = eof_new_note_length_1ms ? D_SELECTED : 0;			//New notes are made 1ms long
+	eof_preferences_dialog[38].flags = eof_gp_import_preference_1 ? D_SELECTED : 0;			//GP import beat text as sections, markers as phrases
+	eof_preferences_dialog[39].flags = eof_gp_import_truncate_short_notes ? D_SELECTED : 0;	//GP import truncates short notes
 	eof_preferences_dialog[40].flags = eof_gp_import_replaces_track ? D_SELECTED : 0;		//GP import replaces active track
 	eof_preferences_dialog[41].flags = eof_gp_import_nat_harmonics_only ? D_SELECTED : 0;	//GP import nat. harmonics only
+	eof_preferences_dialog[42].flags = eof_render_3d_rs_chords ? D_SELECTED : 0;		//3D render Rocksmith style chord repeats
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1086,6 +1097,7 @@ int eof_menu_file_preferences(void)
 			eof_gp_import_truncate_short_notes = (eof_preferences_dialog[39].flags == D_SELECTED ? 1 : 0);
 			eof_gp_import_replaces_track = (eof_preferences_dialog[40].flags == D_SELECTED ? 1 : 0);
 			eof_gp_import_nat_harmonics_only = (eof_preferences_dialog[41].flags == D_SELECTED ? 1 : 0);
+			eof_render_3d_rs_chords = (eof_preferences_dialog[42].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 29)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1120,6 +1132,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[39].flags = D_SELECTED;			//GP import truncates short notes
 			eof_preferences_dialog[40].flags = D_SELECTED;			//GP import replaces active track
 			eof_preferences_dialog[41].flags = 0;					//GP import nat. harmonics only
+			eof_preferences_dialog[42].flags = 0;					//3D render Rocksmith style chord repeats
 		}//If the user clicked "Default
 	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);

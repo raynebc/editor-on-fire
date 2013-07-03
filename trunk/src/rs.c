@@ -331,8 +331,37 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	{	//If the track being exported uses any frets higher than 22
 		if((*user_warned & 2) == 0)
 		{	//If the user wasn't alerted about this issue yet
-			allegro_message("Warning:  At least one track (\"%s\") uses a fret higher than 22.  This may cause Rocksmith to crash.", sp->track[track]->name);
+			allegro_message("Warning:  At least one track (\"%s\") uses a fret higher than 22.  This will cause Rocksmith to crash.", sp->track[track]->name);
 			*user_warned |= 2;
+		}
+	}
+	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
+	{	//For each note in the track
+		unsigned char slideend;
+
+		if(eof_note_count_non_ghosted_lanes(sp, track, ctr) == 1)
+		{	//If the note will export as a single note
+			if((eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+			{	//If the note slides up or down
+				slideend = tp->note[ctr]->slideend;
+				if(!(eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) && (eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP))
+				{	//if this note slides up and the slide's end position is not defined
+					slideend = eof_get_highest_fret_value(sp, track, ctr) + 1;	//Assume a 1 fret slide
+				}
+				if((eof_get_highest_fret_value(sp, track, ctr) == 22) || (slideend >= 22))
+				{	//If the slide goes to or from fret 22
+					if((*user_warned & 8) == 0)
+					{	//If the user wasn't alerted about this issue yet
+						eof_set_seek_position(tp->note[ctr]->pos + eof_av_delay);	//Seek to the note
+						(void) eof_menu_track_selected_track_number(track, 1);		//Set the active instrument track
+						eof_find_lyric_preview_lines();
+						eof_render();					//Redraw the screen
+						allegro_message("Warning:  At least one note slides to or from fret 22.  This will cause Rocksmith to crash.");
+						*user_warned |= 8;
+					}
+					break;
+				}
+			}
 		}
 	}
 
@@ -1104,13 +1133,12 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 			//Write chords
 			if(numchords)
 			{	//If there's at least one chord in this difficulty
-				unsigned long chordid, lastchordid = 0;
+				unsigned long chordid;
 				char *upstrum = "up";
 				char *downstrum = "down";
 				char *direction;	//Will point to either upstrum or downstrum as appropriate
 				double notepos;
 				char highdensity;		//Any chord within the threshold proximity of an identical chord has the highDensity boolean property set to true
-				unsigned long lastchordpos = 0;
 
 				(void) snprintf(buffer, sizeof(buffer) - 1, "      <chords count=\"%lu\">\n", numchords);
 				(void) pack_fputs(buffer, fp);
@@ -1144,19 +1172,10 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 						{	//Otherwise the direction defaults to down
 							direction = downstrum;
 						}
-						if(lastchordpos && (tp->note[ctr3]->pos <= lastchordpos + 10000) && (chordid == lastchordid) && !(tp->note[ctr3]->flags & EOF_NOTE_FLAG_CRAZY))
-						{	//If this isn't the first chord, it is within the threshold distance of the previous chord instance and it is the same as the previously written chord (not a chord change), and it is NOT marked as crazy
-							highdensity = 1;
-						}
-						else
-						{	//Otherwise the chord is "low" density
-							highdensity = 0;
-						}
+						highdensity = eof_note_has_high_chord_density(sp, track, ctr3);	//Determine whether the chord will export with high density
 						notepos = (double)tp->note[ctr3]->pos / 1000.0;
 						(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" chordId=\"%lu\" highDensity=\"%d\" ignore=\"0\" strum=\"%s\"/>\n", notepos, chordid, highdensity, direction);
 						(void) pack_fputs(buffer, fp);
-						lastchordpos = tp->note[ctr3]->pos;	//Cache the position of the last chord written
-						lastchordid = chordid;	//Cache the ID of the last chord written
 					}//If this note is in this difficulty and is a chord
 				}//For each note in the track
 				(void) pack_fputs("      </chords>\n", fp);
@@ -2299,4 +2318,33 @@ int eof_time_range_is_populated(EOF_SONG *sp, unsigned long track, unsigned long
 	}
 
 	return 0;	//Return not populated
+}
+
+int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	long prev;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return 0;	//Error
+
+	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 0;	//Note is not a pro guitar/bass note
+
+	if(eof_get_note_flags(sp, track, note) & EOF_NOTE_FLAG_CRAZY)
+		return 0;	//Note is marked with crazy status, which forces it to export as low density
+
+	if((eof_note_count_non_ghosted_lanes(sp, track, note) < 2) || eof_is_string_muted(sp, track, note))
+		return 0;	//Note is not a chord (not at least 2 non ghosted gems) or is entirely string muted
+
+	prev = eof_track_fixup_previous_note(sp, track, note);
+	if(prev < 0)
+		return 0;	//No earlier note
+
+	if(eof_get_note_pos(sp, track, note) > eof_get_note_pos(sp, track, prev) + 10000)
+		return 0;	//Note is not within 10000ms of the previous note
+
+	if(eof_note_compare(sp, track, note, track, prev, 0))
+		return 0;	//Note does not match the previous note (ignoring note flags and lengths)
+
+	return 1;	//All criteria passed, note is high density
 }

@@ -64,7 +64,7 @@ void eof_mix_start(unsigned long start, int speed);	//Prepares variables for cha
 void eof_mix_seek(int pos);	//Performs a seek and updates the position of the next of each audio cue
 SAMPLE *eof_mix_load_ogg_sample(char *fn);	//Loads the specified OGG sample from a dat file, returning it in SAMPLE format
 
-void eof_mix_find_claps(void);		//Populates clap, metronome, note_pos and note_note arrays based on the active track difficulty's contents
+void eof_mix_find_claps(void);		//Populates counters and arrays for the sound cues based on the active track difficulty's contents
 void eof_mix_play_note(int note);	//Plays the vocal tone for the specified note, if available
 void eof_midi_play_note_ex(int note, unsigned char channel, unsigned char patch);
 	//Sends MIDI commands to stop a note on the specified channel, change to the "clean guitar" MIDI instrument and plays the note

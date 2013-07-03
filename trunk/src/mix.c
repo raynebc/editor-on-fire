@@ -325,7 +325,7 @@ void eof_mix_find_claps(void)
 			if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
 			{	//If the note is in the active track difficulty
 				int j = 0;
-				unsigned long pos = eof_mix_msec_to_sample(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay - eof_midi_synth_delay, alogg_get_wave_freq_ogg(eof_music_track));
+				unsigned long pos = eof_mix_msec_to_sample(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay - eof_midi_tone_delay, alogg_get_wave_freq_ogg(eof_music_track));
 
 				EOF_PRO_GUITAR_TRACK *track = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
 				EOF_PRO_GUITAR_NOTE *note = track->note[i];
