@@ -2225,7 +2225,7 @@ int eof_menu_edit_precise_select_like(void)
 
 int eof_menu_edit_deselect_all(void)
 {
-	eof_update_seek_selection(0, 0);	//Clear the seek selection and the selected notes array
+	eof_update_seek_selection(0, 0, 1);	//Clear the seek selection and the selected notes array, do not reselect a note at position 0
 	eof_selection.current = EOF_MAX_NOTES - 1;
 	eof_selection.current_pos = 0;
 	eof_selection.range_pos_1 = 0;

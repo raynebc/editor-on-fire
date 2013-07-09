@@ -1140,7 +1140,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 							}
 						}
 					}
-					count = tp->tremolos++;
+					count = tp->tremolos;
 					if(tp->tremolos < EOF_MAX_PHRASES)
 					{	//If the track can store the tremolo section
 						tp->tremolo[count].start_pos = startpos;

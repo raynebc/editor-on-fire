@@ -1925,6 +1925,11 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 	{
 		isxml = 1;
 	}
+	temp=strstr(buffer,"<vocals");	//Search for the first non XML header line in a Rocksmith vocal XML file, in case the header is omitted
+	if(temp)
+	{
+		isxml = 1;
+	}
 
 //Continue reading lines until one begins with something other than #, then test for the text based formats (Script, UltraStar, LRC/ELRC)
 	while(!feof(inf))		//Until end of file is reached

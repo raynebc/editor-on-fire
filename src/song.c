@@ -3889,7 +3889,7 @@ long eof_get_prev_note_type_num(EOF_SONG *sp, unsigned long track, unsigned long
 
 void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 {
-	unsigned long i, ctr, bitmask, tracknum, maxlength;
+	unsigned long i, ctr, bitmask, tracknum, maxlength, flags;
 	unsigned char fretvalue;
 	long next;
 	char allmuted;	//Used to track whether all used strings are string muted
@@ -3966,6 +3966,25 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 				if(tp->note[i-1]->pos == tp->note[next]->pos)
 				{	//If this note and the next are at the same position, merge them
 					tp->note[i-1]->note |= tp->note[next]->note;	//Merge the two notes' bitmasks
+
+					//Perform additional merging logic for pro guitar tracks, because Rocksmith custom files define single notes and chords at the same position in order to define chord techniques
+					if(tp->note[next]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+					{	//If the next note is a slide
+						tp->note[i-1]->slideend = tp->note[next]->slideend;	//Copy the slide end position
+					}
+					if(tp->note[next]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+					{	//If the next note is a bend
+						tp->note[i-1]->bendstrength = tp->note[next]->bendstrength;	//Copy the bend strength
+					}
+					flags = eof_prepare_note_flag_merge(tp->note[i-1]->flags, EOF_PRO_GUITAR_TRACK_BEHAVIOR, tp->note[next]->note);
+					//Get the flags of the overlapped note as they would be if all applicable lane-specific flags are cleared to inherit the flags of the note to merge
+					flags |= tp->note[next]->flags;	//Merge the next note's flags
+					tp->note[i-1]->flags = flags;	//Update the flags for the merged note
+					if(tp->note[next]->length > tp->note[i-1]->length)
+					{	//If the next note is longer
+						tp->note[i-1]->length = tp->note[next]->length;	//Update the length for the merged note
+					}
+
 					for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
 					{	//For each of the next note's 6 usable strings
 						if(tp->note[next]->note & bitmask)
@@ -3976,7 +3995,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 					eof_pro_guitar_track_delete_note(tp, next);
 				}
 				else
-				{	//Otherwise ensure on doesn't overlap the other improperly
+				{	//Otherwise ensure one doesn't overlap the other improperly
 					maxlength = eof_get_note_max_length(sp, track, i - 1);	//Determine the maximum length for this note, taking its crazy status into account
 					if(maxlength && (eof_get_note_length(sp, track, i - 1) > maxlength))
 					{	//If the note is longer than its maximum length

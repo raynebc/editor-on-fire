@@ -122,8 +122,9 @@ int eof_find_hover_note(int targetpos, int x_tolerance, char snaplogic);
 	//Finds and returns an appropriate hover note based on the specified position and the given x_tolerance
 	//If snaplogic is nonzero, also checks snap position data (should only be needed for tracking by mouse position)
 	//Returns -1 if no note was close enough to the specified position in the current instrument difficulty
-void eof_update_seek_selection(unsigned long start, unsigned long stop);
+void eof_update_seek_selection(unsigned long start, unsigned long stop, char deselect);
 	//Updates the seek selection variables and the note selection array to reflect which range of notes are selected via keyboard seek controls
+	//If deselect is nonzero, the note selection is cleared and the function returns without selecting notes between the start and stop positions
 void eof_feedback_input_mode_update_selected_beat(void);
 	//If Feedback input mode is in use, update eof_selected_beat and measure to correspond with the beat at or immediately before the current seek position
 

@@ -2391,11 +2391,11 @@ void eof_seek_by_grid_snap(int dir)
 		eof_shift_used = 1;	//Track that the SHIFT key was used
 		if(eof_seek_selection_start == eof_seek_selection_end)
 		{	//If this begins a seek selection
-			eof_update_seek_selection(originalpos, eof_music_pos - eof_av_delay);
+			eof_update_seek_selection(originalpos, eof_music_pos - eof_av_delay, 0);
 		}
 		else
 		{
-			eof_update_seek_selection(eof_seek_selection_start, eof_music_pos - eof_av_delay);
+			eof_update_seek_selection(eof_seek_selection_start, eof_music_pos - eof_av_delay, 0);
 		}
 	}
 	eof_feedback_input_mode_update_selected_beat();	//Update the selected beat and measure if Feedback input mode is in use
@@ -2543,11 +2543,11 @@ int eof_menu_song_seek_previous_measure(void)
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			if(eof_seek_selection_start == eof_seek_selection_end)
 			{	//If this begins a seek selection
-				eof_update_seek_selection(originalpos, eof_music_pos - eof_av_delay);
+				eof_update_seek_selection(originalpos, eof_music_pos - eof_av_delay, 0);
 			}
 			else
 			{
-				eof_update_seek_selection(eof_seek_selection_start, eof_music_pos - eof_av_delay);
+				eof_update_seek_selection(eof_seek_selection_start, eof_music_pos - eof_av_delay, 0);
 			}
 		}
 	}
@@ -2587,11 +2587,11 @@ int eof_menu_song_seek_next_measure(void)
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			if(eof_seek_selection_start == eof_seek_selection_end)
 			{	//If this begins a seek selection
-				eof_update_seek_selection(originalpos, eof_music_pos - eof_av_delay);
+				eof_update_seek_selection(originalpos, eof_music_pos - eof_av_delay, 0);
 			}
 			else
 			{
-				eof_update_seek_selection(eof_seek_selection_start, eof_music_pos - eof_av_delay);
+				eof_update_seek_selection(eof_seek_selection_start, eof_music_pos - eof_av_delay, 0);
 			}
 		}
 	}
@@ -3376,6 +3376,7 @@ int eof_menu_song_swap_piano_rolls(void)
 	eof_selected_track2 = temp_track;		//Set the secondary piano roll's track difficulty
 	eof_note_type2 = temp_type;
 	eof_music_pos2 = temp_pos;				//And set the secondary piano roll's position
+	eof_beat_stats_cached = 0;				//Mark the cached beat stats as not current
 	return 1;
 }
 
