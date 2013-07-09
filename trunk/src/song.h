@@ -30,8 +30,9 @@
 #define EOF_NOTE_FLAG_B_CYMBAL  64	//This flag represents a blue note charted as a RB3 Pro style cymbal (lane 4)
 #define EOF_NOTE_FLAG_G_CYMBAL 128	//This flag represents a note charted as a RB3 Pro style green cymbal (lane 5)
 #define EOF_NOTE_FLAG_DBASS    256	//This flag will represent Expert+ bass drum for the drum track (lane 1)
+#define EOF_NOTE_FLAG_TEMP       536870912	//This flag will represent a note that was generated for temporary use and will be removed
 #define EOF_NOTE_FLAG_HIGHLIGHT 1073741824
-#define EOF_NOTE_FLAG_EXTENDED 2147483648	//The MSB will be reserved for use to indicate an additional flag variable is present
+#define EOF_NOTE_FLAG_EXTENDED  2147483648	//The MSB will be reserved for use to indicate an additional flag variable is present
 
 //The following flags pertain to pro guitar notes
 #define EOF_PRO_GUITAR_NOTE_FLAG_HO				512			//This flag will represent a hammer on

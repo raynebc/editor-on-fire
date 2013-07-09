@@ -39,7 +39,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	//	1:  At least one track difficulty has no fret hand positions, they will be automatically generated
 	//	2:  At least one track uses a fret value higher than 22
 	//	4:  At least one open note is marked with bend or slide status
-	//	8:  At least one note slides to or from fret 22
+	//	8:  At least one note slides to or above fret 22
 
 void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_made);
 	//Checks all notes in the track and duplicates finger arrays of notes with complete finger definitions to matching notes without complete finger definitions

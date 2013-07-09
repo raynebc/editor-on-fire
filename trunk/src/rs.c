@@ -341,22 +341,22 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 
 		if(eof_note_count_non_ghosted_lanes(sp, track, ctr) == 1)
 		{	//If the note will export as a single note
-			if((eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
-			{	//If the note slides up or down
+			if(eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+			{	//If the note slides up
 				slideend = tp->note[ctr]->slideend;
-				if(!(eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) && (eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP))
-				{	//if this note slides up and the slide's end position is not defined
+				if(!(eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
+				{	//If this slide's end position is not defined
 					slideend = eof_get_highest_fret_value(sp, track, ctr) + 1;	//Assume a 1 fret slide
 				}
-				if((eof_get_highest_fret_value(sp, track, ctr) == 22) || (slideend >= 22))
-				{	//If the slide goes to or from fret 22
+				if(slideend >= 22)
+				{	//If the slide goes to or above fret 22
 					if((*user_warned & 8) == 0)
 					{	//If the user wasn't alerted about this issue yet
 						eof_set_seek_position(tp->note[ctr]->pos + eof_av_delay);	//Seek to the note
 						(void) eof_menu_track_selected_track_number(track, 1);		//Set the active instrument track
 						eof_find_lyric_preview_lines();
 						eof_render();					//Redraw the screen
-						allegro_message("Warning:  At least one note slides to or from fret 22.  This will cause Rocksmith to crash.");
+						allegro_message("Warning:  At least one note slides to or above fret 22.  This will cause Rocksmith to crash.");
 						*user_warned |= 8;
 					}
 					break;
@@ -790,6 +790,40 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	(void) pack_fputs("  <linkedDiffs count=\"0\"/>\n", fp);
 	(void) pack_fputs("  <phraseProperties count=\"0\"/>\n", fp);
 
+	//Check for chords with techniques, and for each, add a temporary single note with those techniques at the same position
+	//Rocksmith will render the single note on top of the chord box so that the player can see which techniques are indicated
+	eof_determine_phrase_status(sp, track);	//Update the tremolo status of each note
+	for(ctr = tp->notes; ctr > 0; ctr--)
+	{	//For each note in the track, in reverse order
+		if((eof_note_count_non_ghosted_lanes(sp, track, ctr - 1) > 1) && !eof_is_string_muted(sp, track, ctr - 1))
+		{	//If this note is a chord (at least two non ghosted gems) that isn't fully string muted
+			unsigned long target = EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_HO | EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC | EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE | EOF_PRO_GUITAR_NOTE_FLAG_POP | EOF_PRO_GUITAR_NOTE_FLAG_SLAP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_NOTE_FLAG_IS_TREMOLO;	//A list of all statuses to try to notate for chords
+			unsigned long bitmask;
+			EOF_PRO_GUITAR_NOTE *new_note;
+
+			if(tp->note[ctr - 1]->flags & target)
+			{	//If this note has any of the statuses that can be displayed in Rocksmith for single notes
+				for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+				{	//For each of the six supported strings
+					if(tp->note[ctr - 1]->note & bitmask)
+					{	//If this string is used
+						new_note = eof_track_add_create_note(sp, track, bitmask, tp->note[ctr - 1]->pos, tp->note[ctr - 1]->length, tp->note[ctr - 1]->type, NULL);	//Initialize a new single note at this position
+						if(new_note)
+						{	//If the new note was created
+							new_note->flags = tp->note[ctr - 1]->flags;					//Clone the flags
+							new_note->flags |= EOF_NOTE_FLAG_TEMP;						//Mark the note as temporary
+							new_note->bendstrength = tp->note[ctr - 1]->bendstrength;	//Copy the bend strength
+							new_note->slideend = tp->note[ctr - 1]->slideend;			//And the slide end position
+							new_note->frets[ctr2] = tp->note[ctr - 1]->frets[ctr2];		//And this string's fret value
+						}
+						break;
+					}
+				}
+			}
+		}
+	}
+	eof_track_sort_notes(sp, track);	//Re-sort the notes
+
 	//Write chord templates
 	chordlistsize = eof_build_chord_list(sp, track, &chordlist);	//Build a list of all unique chords in the track
 	if(!chordlistsize)
@@ -994,7 +1028,6 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	//Write note difficulties
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <levels count=\"%u\">\n", numdifficulties);
 	(void) pack_fputs(buffer, fp);
-	eof_determine_phrase_status(sp, track);	//Update the tremolo status of each note
 	for(ctr = 0, ctr2 = 0; ctr < 256; ctr++)
 	{	//For each of the possible difficulties
 		if(eof_track_diff_populated_status[ctr])
@@ -1100,7 +1133,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 									slap = (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLAP) ? 1 : -1;
 									if((pop > 0) || (slap > 0))
 									{	//If the note has pop or slap notation
-										length = 0;	//Remove all sustain for the note, because Rocksmith will crash if a sustain note has either of these techniques
+										length = 0;	//Remove all sustain for the note, because Rocksmith display pop/slap sustain notes as non pop/slap sustained notes
 									}
 									if(!eof_pro_guitar_note_lowest_fret(tp, ctr3))
 									{	//If this note contains no fretted strings
@@ -1418,6 +1451,15 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		}
 	}
 	eof_sort_events(sp);	//Re-sort events
+	//Remove all temporary notes that were added
+	for(ctr = tp->notes; ctr > 0; ctr--)
+	{	//For each note in the track, in reverse order
+		if(tp->note[ctr - 1]->flags & EOF_NOTE_FLAG_TEMP)
+		{	//If this is a temporary note that was added for chord technique notation
+			eof_track_delete_note(sp, track, ctr - 1);	//Delete it
+		}
+	}
+	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
 	return 1;	//Return success
 }

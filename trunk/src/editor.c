@@ -4741,6 +4741,11 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	eof_set_2D_lane_positions(eof_selected_track);	//Update the ychart[] array
 
+	if(eof_display_second_piano_roll)
+	{	//If the secondary piano roll is being displayed
+		eof_process_beat_statistics(eof_song, eof_selected_track);	//Rebuild the beat stats so that the primary and secondary piano rolls can each display the correct RS phrases and sections
+	}
+
 	/* draw the starting position */
 	if(pos < 300)
 	{
@@ -5765,7 +5770,7 @@ void eof_editor_logic_common(void)
 		{
 			if(!eof_shift_used && (eof_input_mode == EOF_INPUT_FEEDBACK))
 			{	//If the SHIFT key wasn't used for anything while it was held down
-				eof_update_seek_selection(0, 0);	//Clear the seek selection
+				eof_update_seek_selection(0, 0, 0);	//Clear the seek selection
 			}
 			eof_shift_released = 1;
 		}
@@ -5938,7 +5943,7 @@ int eof_find_hover_note(int targetpos, int x_tolerance, char snaplogic)
 	return -1;	//No appropriate hover note found
 }
 
-void eof_update_seek_selection(unsigned long start, unsigned long stop)
+void eof_update_seek_selection(unsigned long start, unsigned long stop, char deselect)
 {
 	unsigned long t1 = start, t2 = start, i, notepos;
 	char first = 1;
@@ -5955,14 +5960,19 @@ void eof_update_seek_selection(unsigned long start, unsigned long stop)
 		t2 = stop;
 	}
 
-//Update the selection array
+//Clear the selection array
 	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 	if(start == stop)
 	{	//If the seek selection is removed
 		eof_selection.current = EOF_MAX_NOTES - 1;
 		eof_selection.current_pos = 0;
 	}
+	if(deselect)
+	{	//If the calling function did not want to go any further than deselecting notes
+		return;
+	}
 
+//Update the selection
 	eof_selection.track = eof_selected_track;
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{

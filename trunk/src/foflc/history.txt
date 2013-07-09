@@ -1,6 +1,7 @@
 Changelog: 2.39 to 2.40b (in progress)
 	Improved UltraStar export so that if a lyric is pitchless, it is stored as a positive number instead of a negative number.
 	Improved Ultrastar import to properly handle lyrics that have a negative timestamp but a large enough gap parameter to make them positive.
+	Minor improvement to Rocksmith lyric detection by adding another criterion to identify such a file if the <xml> header tag is missing.
 
 Changelog: 2.38 to 2.39
 	Some code cleanup.
