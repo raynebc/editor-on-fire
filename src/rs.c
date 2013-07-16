@@ -315,7 +315,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	char is_bass = 0;	//Is set to nonzero if the specified track is to be considered a bass guitar track
 	char end_phrase_found = 0;	//Will track if there was a manually defined END phrase
 	unsigned long chordid, handshapectr;
-	double handshapestart, handshapeend;
+	unsigned long handshapestart, handshapeend;
 	long nextnote;
 
 	eof_log("eof_export_rocksmith() entered", 1);
@@ -1307,13 +1307,13 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 						}
 						return 0;	//Return error
 					}
-					handshapestart = (double)eof_get_note_pos(sp, track, ctr3) / 1000.0;	//Store this chord's start position (in seconds)
+					handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position
 
 					//If this chord is at the beginning of an arpeggio phrase, skip the rest of the notes in that phrase
 					for(ctr5 = 0; ctr5 < tp->arpeggios; ctr5++)
 					{	//For each arpeggio phrase in the track
-						if((tp->note[ctr3]->pos == tp->arpeggio[ctr5].start_pos) && (tp->note[ctr3]->type == tp->arpeggio[ctr5].difficulty))
-						{	//If this chord's start position matches that of an arpeggio phrase in this track difficulty
+						if(((tp->note[ctr3]->pos + 10 >= tp->arpeggio[ctr5].start_pos) && (tp->note[ctr3]->pos <= tp->arpeggio[ctr5].start_pos + 10)) && (tp->note[ctr3]->type == tp->arpeggio[ctr5].difficulty))
+						{	//If this chord's start position is within 10ms of an arpeggio phrase in this track difficulty
 							while(1)
 							{
 								nextnote = eof_fixup_next_note(sp, track, ctr3);
@@ -1340,14 +1340,14 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 						}
 						else
 						{	//The next note (if any) is not a repeat of this note
-							handshapeend = ((double)eof_get_note_pos(sp, track, ctr3) + (double)eof_get_note_length(sp, track, ctr3)) / 1000.0;	//End the hand shape at the end of this chord
+							handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
 							break;	//Break from while loop
 						}
 					}
 
 					handshapectr++;	//One more hand shape has been counted
-				}
-			}
+				}//If this note is in this difficulty and is a chord that isn't fully string muted
+			}//For each note in the track
 
 			if(handshapectr)
 			{	//If there was at least one hand shape to write
@@ -1379,13 +1379,13 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 							}
 							return 0;	//Return error
 						}
-						handshapestart = (double)eof_get_note_pos(sp, track, ctr3) / 1000.0;	//Store this chord's start position (in seconds)
+						handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position (in seconds)
 
 						//If this chord is at the beginning of an arpeggio phrase, skip the rest of the notes in that phrase
 						for(ctr5 = 0; ctr5 < tp->arpeggios; ctr5++)
 						{	//For each arpeggio phrase in the track
-							if((tp->note[ctr3]->pos == tp->arpeggio[ctr5].start_pos) && (tp->note[ctr3]->type == tp->arpeggio[ctr5].difficulty))
-							{	//If this chord's start position matches that of an arpeggio phrase in this track difficulty
+							if(((tp->note[ctr3]->pos + 10 >= tp->arpeggio[ctr5].start_pos) && (tp->note[ctr3]->pos <= tp->arpeggio[ctr5].start_pos + 10)) && (tp->note[ctr3]->type == tp->arpeggio[ctr5].difficulty))
+							{	//If this chord's start position is within 10ms of an arpeggio phrase in this track difficulty
 								while(1)
 								{
 									nextnote = eof_fixup_next_note(sp, track, ctr3);
@@ -1412,16 +1412,21 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 							}
 							else
 							{	//The next note (if any) is not a repeat of this note
-								handshapeend = ((double)eof_get_note_pos(sp, track, ctr3) + (double)eof_get_note_length(sp, track, ctr3)) / 1000.0;	//End the hand shape at the end of this chord
+								handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
+
+								if((handshapeend - handshapestart < 56) && (handshapestart + 56 < eof_get_note_pos(sp, track, nextnote)))
+								{	//If the hand shape would be shorter than 56ms, and the next note is further than 56ms away
+									handshapeend = eof_get_note_pos(sp, track, ctr3) + 56;	//Pad the hand shape to 56ms
+								}
 								break;	//Break from while loop
 							}
 						}
 
 						//Write this hand shape
-						(void) snprintf(buffer, sizeof(buffer) - 1, "        <handShape chordId=\"%lu\" endTime=\"%.3f\" startTime=\"%.3f\"/>\n", chordid, handshapeend, handshapestart);
+						(void) snprintf(buffer, sizeof(buffer) - 1, "        <handShape chordId=\"%lu\" endTime=\"%.3f\" startTime=\"%.3f\"/>\n", chordid, (double)handshapeend / 1000.0, (double)handshapestart / 1000.0);
 						(void) pack_fputs(buffer, fp);
-					}
-				}
+					}//If this note is in this difficulty and is a chord that isn't fully string muted
+				}//For each note in the track
 				(void) pack_fputs("      </handShapes>\n", fp);
 			}
 			else

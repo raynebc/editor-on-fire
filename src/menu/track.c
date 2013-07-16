@@ -1481,6 +1481,7 @@ MENU eof_track_proguitar_menu[] =
 	{"Set &Tuning", eof_track_tuning, NULL, 0, NULL},
 	{"Set number of &Frets/strings", eof_track_set_num_frets_strings, NULL, 0, NULL},
 	{"Ignore tuning", eof_track_proguitar_toggle_ignore_tuning, NULL, 0, NULL},
+	{"Highlight notes in arpeggios", eof_menu_track_highlight_arpeggios, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -2348,5 +2349,29 @@ int eof_track_erase_track(void)
 int eof_menu_track_remove_highlighting(void)
 {
 	eof_track_remove_highlighting(eof_song, eof_selected_track);
+	return 1;
+}
+
+int eof_menu_track_highlight_arpeggios(void)
+{
+	unsigned long ctr, ctr2, tracknum;
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+	for(ctr = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the active pro guitar track
+		for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
+		{	//For each arpeggio section in the track
+			if((tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos))
+			{	//If the note is within the arpeggio phrase
+				tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight it
+			}
+		}
+	}
+
 	return 1;
 }

@@ -2151,6 +2151,14 @@ set_window_title(debugtext);
 #endif
 								eof_set_note_note(sp, picked_track, notenum, eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
 							}
+							if(eof_import_events[i]->event[j]->d2 < 100)
+							{	//Some other editors may have an invalid velocity defined
+#ifdef EOF_DEBUG
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%d, Pos=%lu) from velocity %d to 100", notenum, eof_get_note_type(sp, picked_track, notenum), event_realtime, eof_import_events[i]->event[j]->d2);
+								eof_log(eof_log_string, 1);
+#endif
+								eof_import_events[i]->event[j]->d2 = 100;	//In which case, revert the velocity to the lowest usable value
+							}
 							sp->pro_guitar_track[tracknum]->note[notenum]->frets[lane] = eof_import_events[i]->event[j]->d2 - 100;	//Velocity (100 + X) represents fret # X
 							if(sp->pro_guitar_track[tracknum]->note[notenum]->frets[lane] > sp->pro_guitar_track[tracknum]->numfrets)
 							{	//If this fret value is higher than this track's recorded maximum

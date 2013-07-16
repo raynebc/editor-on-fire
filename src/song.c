@@ -5608,7 +5608,7 @@ unsigned long eof_get_highest_clipboard_fret(char *clipboardfile)
 		for(i = 0; i < copy_notes; i++)
 		{	//For each note in the clipboard file
 			eof_menu_paste_read_clipboard_note(fp, &temp_note);	//Read the note
-			for(j= 0, bitmask = 1; j < 6; j++, bitmask<<=1)
+			for(j = 0, bitmask = 1; j < 6; j++, bitmask <<= 1)
 			{	//For each of the 6 usable strings
 				if(temp_note.note & bitmask)
 				{	//If this string is in use
