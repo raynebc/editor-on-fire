@@ -328,11 +328,16 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 					eof_ini_sysex_open_bass_present = 1;	//MIDI import will interpret forced HOPO lane 1 bass to be a HOPO bass gem and not an open strum
 				}
 			}
+
+			//Other tags ignored by INI import because they are only informational about EOF's exported MIDIs
 			else if(!ustricmp(eof_import_ini_setting[i].type, "sysex_pro_slide") || !ustricmp(eof_import_ini_setting[i].type, "sysex_high_hat_ctrl") || !ustricmp(eof_import_ini_setting[i].type, "sysex_rimshot") || !ustricmp(eof_import_ini_setting[i].type, "sysex_slider"))
 			{	//These Sysex indicators are only used by Phase Shift
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "star_power_note"))
-			{	//Other tags ignored by INI import because they are only informational about EOF's exported MIDIs
+			{	//Used by Phase Shift
+			}
+			else if(!ustricmp(eof_import_ini_setting[i].type, "song_length"))
+			{	//Used by one or more unnamed rhythm games
 			}
 
 			/* for custom settings or difficulty strings */
