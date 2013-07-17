@@ -2366,7 +2366,7 @@ int eof_menu_track_highlight_arpeggios(void)
 	{	//For each note in the active pro guitar track
 		for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
 		{	//For each arpeggio section in the track
-			if((tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos))
+			if((tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
 			{	//If the note is within the arpeggio phrase
 				tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight it
 			}
