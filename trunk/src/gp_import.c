@@ -1803,7 +1803,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	unsigned long dword, ctr, ctr2, ctr3, ctr4, tracks, measures, *strings, beats;
 	PACKFILE *inf = NULL, *inf2;	//The GPA import logic will open the file handle for the Guitar Pro file in inf if applicable
 	struct eof_guitar_pro_struct *gp;
-	struct eof_gp_measure *tsarray;	//Stores all time signatures defined in the file
+	struct eof_gp_measure *tsarray;	//Stores measure information relating to time signatures, alternate endings and navigational symbols
 	EOF_PRO_GUITAR_NOTE **np;	//Will store the last created note for each track (for handling tie notes)
 	char *hopo;	//Will store the fret value of the previous note marked as HO/PO (in GP, if note #N is marked for this, note #N+1 is the one that is a HO or PO), otherwise -1, for each track
 	char user_warned = 0;	//Used to track user warnings about the file being corrupt
@@ -2019,15 +2019,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				break;
 			}
 			if(inf)
-				pack_fclose(inf);
-			pack_fclose(inf2);
+				(void) pack_fclose(inf);
+			(void) pack_fclose(inf2);
 			if(sync_points)
 				free(sync_points);
 			free(buffer2);
 			return NULL;
 		}
 	}//If the input file was determined to be an XML file
-	pack_fclose(inf2);
+	(void) pack_fclose(inf2);
 	if(buffer2)
 		free(buffer2);
 
@@ -2902,7 +2902,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 #endif
 						//This is the first beat that surpassed this sync point, find out how far into last beat the sync point is, and use the beat length to derive the position of the next beat
 						temp = (double)eof_song->beat[ctr]->measurenum + measure_position - ((double)sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure);	//The number of measures between this beat and the sync point before it
-						temp *= (double)eof_song->beat[ctr]->num_beats_in_measure;	//The number of beats between this beat and the sync point before it
+						temp *= (double)tsarray[sync_points[ctr2].measure].num;	//The number of beats between this beat and the sync point before it
 						curpos = sync_points[ctr2].realtime_pos + (temp * sync_points[ctr2].beat_length);
 						beat_length = sync_points[ctr2].beat_length;		//Update the beat length variable
 						sync_points[ctr2].processed = 1;	//Mark this sync point as processed, but don't break from loop, so that if there are multiple sync points within the span of one beat, only the last one is used to alter beat timings

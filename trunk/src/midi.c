@@ -536,7 +536,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			continue;	//Skip the track
 
 		if(featurerestriction == 1)
-		{	//If writing a RBN2 compliant MIDI
+		{	//If writing a RBN2 or C3 compliant MIDI
 			if((j != EOF_TRACK_GUITAR) && (j != EOF_TRACK_BASS) && (j != EOF_TRACK_DRUM) && (j != EOF_TRACK_VOCALS) && (j != EOF_TRACK_KEYS) && (j != EOF_TRACK_PRO_KEYS))
 			{	//If this track is not valid for RBN2
 				continue;	//Skip the track
@@ -546,6 +546,13 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		{	//If writing a RB3 compliant pro guitar upgrade MIDI
 			if((j != EOF_TRACK_PRO_BASS) && (j != EOF_TRACK_PRO_GUITAR) && (j != EOF_TRACK_PRO_BASS_22) && (j != EOF_TRACK_PRO_GUITAR_22))
 			{	//If this track is not valid for a RB3 pro guitar upgrade
+				continue;	//Skip the track
+			}
+		}
+		else if(featurerestriction == 3)
+		{	//If writing a C3 compliant MIDI
+			if((j != EOF_TRACK_GUITAR) && (j != EOF_TRACK_BASS) && (j != EOF_TRACK_DRUM) && (j != EOF_TRACK_VOCALS) && (j != EOF_TRACK_KEYS) && (j != EOF_TRACK_PRO_KEYS) && (j != EOF_TRACK_PRO_BASS) && (j != EOF_TRACK_PRO_GUITAR) && (j != EOF_TRACK_PRO_BASS_22) && (j != EOF_TRACK_PRO_GUITAR_22))
+			{	//if this track is not valid for Rock Band 3
 				continue;	//Skip the track
 			}
 		}
@@ -1940,8 +1947,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 /* make events track */
 	if((featurerestriction != 2) && !eof_events_overridden_by_stored_MIDI_track(sp))
 	{	//Do not write an events track in a pro guitar upgrade MIDI, or if the project has an events track stored into it
-		if((sp->text_events) || (featurerestriction == 1))
-		{	//If there are manually defined text events, or if writing a RBN2 compliant MIDI (which requires certain events)
+		if((sp->text_events) || (featurerestriction == 1) || (featurerestriction == 3))
+		{	//If there are manually defined text events, or if writing a RBN2 or C3 compliant MIDI (which requires certain events)
 			/* open the file */
 			fp = pack_fopen(eventtempname, "w");
 			if(!fp)
@@ -1975,8 +1982,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				}
 			}
 
-			if(featurerestriction == 1)
-			{	//If writing a RBN2 compliant MIDI
+			if((featurerestriction == 1) || (featurerestriction == 3))
+			{	//If writing a RBN2 or C3 compliant MIDI
 				//Magma requires that the [end] event is the last MIDI event in the track, so it will be written 1ms after the end of the audio
 				//Check the existing events to see if such an event is already defined
 				if(!eof_song_contains_event(sp, "[end]", 0, 0xFFFF))
@@ -2023,8 +2030,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			break;
 		}
 	}
-	if((featurerestriction == 1) && !stored_beat_track)
-	{	//If writing a RBN2 compliant MIDI, make the beat track, which is required (unless a BEAT track was already stored into the project)
+	if(((featurerestriction == 1) || (featurerestriction == 3)) && !stored_beat_track)
+	{	//If writing a RBN2 or C3 compliant MIDI, make the beat track, which is required (unless a BEAT track was already stored into the project)
 		unsigned long beat_counter = 0;
 		unsigned beats_per_measure = 4;		//By default, a 4/4 time signature is assumed until a TS event is reached
 		unsigned note_to_write = 0;
@@ -2158,8 +2165,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 /* write text event track if there are any events */
 	//If RBN compatibility is in effect, the events track will be populated by force with at least the required events
-	if((sp->text_events) || (featurerestriction == 1))
-	{	//If there are manually defined text events, or if writing a RBN2 compliant MIDI (which requires certain events)
+	if((sp->text_events) || ((featurerestriction == 1) || (featurerestriction == 3)))
+	{	//If there are manually defined text events, or if writing a RBN2 or C3 compliant MIDI (which requires certain events)
 		(void) eof_dump_midi_track(eventtempname,fp);
 		if(expertpluswritten)
 		{
@@ -2167,8 +2174,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		}
 	}
 
-	if(featurerestriction == 1)
-	{	//If writing a RBN2 compliant MIDI, write the beat track, which is required
+	if((featurerestriction == 1) || (featurerestriction == 3))
+	{	//If writing a RBN2 or C3 compliant MIDI, write the beat track, which is required
 		(void) eof_dump_midi_track(beattempname,fp);
 		if(expertpluswritten)
 		{	//If writing an expert+ MIDI as well

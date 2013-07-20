@@ -64,6 +64,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	//If featurerestriction is 0, all chart features are written to MIDI, and expert+.mid is written if double bass drum is charted
 	//If featurerestriction is 1, only RBN2 features are written to MIDI
 	//If featurerestriction is 2, only pro guitar upgrade features are written to MIDI
+	//If featurerestriction is 3, both RB2 features and pro guitar features are written to MIDI.  The C3 release of Magma supports pro guitar/bass.
 	//If fixvoxpitches is nonzero, any lyric that has a pitch of 0 (undefined) will be written with a generic pitch and a freestyle # marker
 	//If fixvoxphrases is nonzero, any lyric that is not within a lyric phrase will have a phrase written to contain it
 

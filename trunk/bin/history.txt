@@ -3,6 +3,83 @@ EOF Version History
 
 1.8:
 
+Added the ability to display a spectrogram of the loaded audio
+(Song>Spectrogram>Show). The code to generate and display the
+spectrogram was graciously provided by 5of0, which utilizes the
+FFTW (Fastest Fourier Transform in the West) math library.
+
+Improved the lane toggle/clear functions so that when notes are
+removed, the remaining selected notes remain properly selected.
+
+Added a system of keyboard shortcuts to change the active track
+difficulty. CTRL+~ sets difficulty 0, CTRL+1 through 0 set
+difficulty 1 through 10, CTRL+F1 through F12 set difficulty 11
+through 22.
+
+Improved handling for adding leading silence to and importing
+lyrics from files that have Unicode or extended ASCII in the
+file name.
+
+Fixed various bugs that could occur when a track had no
+phrases except for just one at a position of 0.
+
+Changed lyric import to automatically set the lyrics to
+pitchless if they all have the same pitch.
+
+Fixed Ultrastar lyric import to properly handle lyrics that
+have a negative timestamp but a large enough gap parameter to
+make it positive.
+
+Added the ability to alter the order of a beat's events in the
+Beat>Events dialog. The MIDI that is created during save will
+have the events written in the displayed order.
+
+Fixed a bug where lyric import would fail to import extended
+LRC formatted lyrics.
+
+Added handling for improperly formatted MIDIs that don't properly
+end MIDI tracks, or which include data after the end of a track.
+
+Improved lyric import so that beats are appended to the chart if
+necessary for containing any of the imported lyrics.
+
+Improved the normal paste logic so that pasted notes begin at the
+current seek position instead of first copied note's original
+position within its beat. Using seek by grid snap
+(SHIFT+CTRL+Pg Up/Dn), this will make it much easier to control
+where notes are pasted.
+
+Fixed a bug where in some circumstances, the 3D preview of an
+open strum bass note could fill the entire 3D window with color.
+
+Moved the "Enable open strum bass" and "Enable five lane drums"
+functions into a new "Song>Phase Shift" submenu.
+
+Added more checks to the save/save as function to try to detect
+if the project fails to save. During save, the file created
+during the last save is copied to (filename).previous_save.eof
+and then deleted. If the file fails to be created after save has
+completed, EOF will alert you and recommend to save as to a clean
+location.
+
+Added edit and delete functions to the "Beat>All Events" dialog.
+
+Changed playback logic so that the full volume is used, since
+Allegro plays center-panned audio at half volume by default.
+
+Added the ability to disable clicking and dragging notes or beats
+(Song>Disable click and drag), which can be used to prevent
+accidental movement of notes and beats.
+
+Added a keyboard shortcut to start playback of the song at
+25% speed (CTRL+SHIFT+Spacebar).
+
+Added the ability to define a custom display width
+(File>Display>Set display width).  The "Display" File menu
+settings have been moved into the "File>Display" submenu.
+
+Added support for the album tag in song properties.
+
 Added a keyboard shortcut for Note>Resnap (CTRL+SHIFT+R).
 
 Added a "Precise select like" function to the Edit>Selection menu
@@ -161,7 +238,7 @@ Added an option (Song>Catalog>Double width) to display the fret
 catalog with the full width of EOF's window, to better display long
 fret catalog entries.
 
-Added functions to seek to the next (F3) or previous (CTRL+SHIFT+F3)
+Added functions to seek to the next (F3) or previous (CTRL+SHIFT+G)
 instance of the current fret catalog entry.  It will be considered a
 match as long as the gem/fret pattern matches, the notes don't have
 to have the same length or spacing.
@@ -192,10 +269,9 @@ at/before the seek position.  Note operations apply to the note at
 the current position if no notes are selected.  Allows notes to be
 selected with the keyboard by holding SHIFT when seeking by grid
 snap/measure.  Pressing and releasing SHIFT without performing any
-operations clears this keyboard selection.  CTRL+V and CTRL+P are
-reversed to perform old paste and paste, respectively.  The chart
-seeks to the nearest grid snap when playback stops, and the selected
-beat updates during playback and after seeking by grid snap/measure.
+operations clears this keyboard selection.  The chart seeks to the
+nearest grid snap when playback stops, and the selected beat
+updates during playback and after seeking by grid snap/measure.
 
 Implemented new keyboard shortcuts for altering tempos, based on the
 Feedback chart editor. +/- increases/decreases the tempo of the
@@ -390,17 +466,11 @@ Updated Feedback import to support filenames with special characters
 Made improvements to the split lyric function, which will now split
 pitchless lyrics with the correct lengths for each piece.
 
-Updated FoFLC to the latest version (2.38), adding support for
-importing Guitar Praise format XML lyrics and importing JamBand format
-lyrics.
+Updated FoFLC to the latest version (2.39), adding support for
+importing Guitar Praise, JamBand and Rocksmith format lyrics.
 
 Fixed a bug with the click and drag note logic that would allow
 notes/lyrics to be drug off the left end of the piano roll.
-
-Added paste logic so that if the "Erase overlapped pasted notes"
-preference isn't in effect, a pasted note is allowed to merge with a
-note that is overlapped (is within 2ms of the pasted note), properly
-merging note statuses.
 
 Fixed a bug that would cause open hi hat status to be lost.
 
@@ -467,7 +537,9 @@ by holding both CTRL and SHIFT when using the Pg Up or Pg Dn key
 
 Added the option (Preferences>Erase overlapped pasted notes) to delete
 notes that would be overlapped during a paste operation, similar to
-the behavior of the Feedback editor.
+the behavior of the Feedback editor.  If this preference isn't in
+effect, a pasted note is allowed to merge with a note that is
+overlapped (is within 2ms of the pasted note), merging note statuses.
 
 Improved the undo/redo system by adding a random 3 digit number
 (created during launch of EOF) to the filenames, making it extremely

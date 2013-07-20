@@ -2484,8 +2484,15 @@ int eof_save_helper(char *destfilename)
 			(void) eof_export_midi(eof_song, eof_temp_filename, 1, fixvoxpitches, fixvoxphrases);	//Write a RBN2 compliant MIDI
 			if(eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS) || eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS_22) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR_22))
 			{	//If any of the pro guitar tracks are populated
+				//Write the pro guitar upgrade MIDI
 				(void) append_filename(eof_temp_filename, newfolderpath, "notes_pro.mid", (int) sizeof(eof_temp_filename));
 				(void) eof_export_midi(eof_song, eof_temp_filename, 2, fixvoxpitches, fixvoxphrases);	//Write a RB3 pro guitar upgrade compliant MIDI
+
+				//Write the Rock Band MIDI that can be built by the C3 release of Magma
+				(void) append_filename(eof_temp_filename, newfolderpath, "notes_c3.mid", (int) sizeof(eof_temp_filename));
+				(void) eof_export_midi(eof_song, eof_temp_filename, 3, fixvoxpitches, fixvoxphrases);	//Write a MIDI containing the RBN and pro guitar content
+
+				//Write a DTA file for the pro guitar upgrade
 				(void) ustrcpy(eof_temp_filename, newfolderpath);
 				put_backslash(eof_temp_filename);
 				(void) ustrcat(eof_temp_filename, "songs_upgrades");
