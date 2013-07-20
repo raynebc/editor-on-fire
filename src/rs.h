@@ -35,7 +35,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	//Writes the specified pro guitar track in Rocksmith's XML format, if the track is populated
 	//fn is expected to point to an array at least 1024 bytes in size, and is the target path for the exported XML file.
 	//	It is used to build an appropriate name for the XML file, based on the track's defined arrangement type or the presence of an alternate track name
-	//*user_warned maintains a set of flags about whether various problems were found and warned about to the user:
+	// *user_warned maintains a set of flags about whether various problems were found and warned about to the user:
 	//	1:  At least one track difficulty has no fret hand positions, they will be automatically generated
 	//	2:  At least one track uses a fret value higher than 22
 	//	4:  At least one open note is marked with bend or slide status

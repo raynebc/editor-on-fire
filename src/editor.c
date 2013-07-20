@@ -343,7 +343,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 		}//If performing snap by measure logic
 		else
 		{	//If performing snap by beat logic
-			//* find the snap positions /
+			//Find the snap positions
 			snaplength = (float)sp->beat_length / (float)interval;
 			for(i = 0; i < interval; i++)
 			{
@@ -351,7 +351,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			}
 			sp->grid_pos[interval] = eof_song->beat[sp->beat + 1]->fpos;	//Record the position of the last grid snap, which is the next beat
 
-			//* see which one we snap to /
+			//see which one we snap to
 			for(i = 0; i < interval + 1; i++)
 			{
 				sp->grid_distance[i] = eof_pos_distance(sp->grid_pos[i], sp->pos);

@@ -141,6 +141,7 @@ MENU eof_edit_selection_menu[] =
 	{"Deselect chords", eof_menu_edit_deselect_chords, NULL, 0, NULL},
 	{"Deselect single notes", eof_menu_edit_deselect_single_notes, NULL, 0, NULL},
 	{"Invert selection", eof_menu_edit_invert_selection, NULL, 0, NULL},
+	{"Deselect one in every", eof_menu_edit_deselect_note_number_in_sequence, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -190,7 +191,7 @@ DIALOG eof_custom_speed_dialog[] =
 	/* (proc)                (x)  (y)  (w)  (h)  (fg)  (bg) (key) (flags) (d1) (d2) (dp)         (dp2)         (dp3) */
 	{ d_agup_shadow_box_proc,32,  68,  170, 95,  2,    23,  0,    0,       0,   0,   NULL,       NULL,         NULL },
 	{ d_agup_text_proc,      56,  84,  64,  8,   2,    23,  0,    0,       0,   0,   "Percent:", NULL,         NULL },
-	{ eof_verified_edit_proc,112, 80,  66,  20,  2,    23,  0,    0,       8,   0,   eof_etext2, "0123456789", NULL },
+	{ eof_verified_edit_proc,112, 80,  66,  20,  2,    23,  0,    0,       3,   0,   eof_etext2, "0123456789", NULL },
 	{ d_agup_button_proc,    42,  125, 68,  28,  2,    23,  '\r', D_EXIT,  0,   0,   "OK",       NULL,         NULL },
 	{ d_agup_button_proc,    120, 125, 68,  28,  2,    23,  0,    D_EXIT,  0,   0,   "Cancel",   NULL,         NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
@@ -266,6 +267,9 @@ void eof_prepare_edit_menu(void)
 
 			eof_edit_selection_menu[8].flags = 0;	//deselect all
 			eof_edit_selection_menu[9].flags = 0;	//conditional deselect
+			eof_edit_selection_menu[10].flags = 0;	//deselect chords
+			eof_edit_selection_menu[11].flags = 0;	//deselect single notes
+			eof_edit_selection_menu[13].flags = 0;	//deselect one in every
 		}
 		else
 		{	//If no notes in the active track difficulty are selected
@@ -276,6 +280,9 @@ void eof_prepare_edit_menu(void)
 			eof_edit_selection_menu[4].flags = D_DISABLED;	//select previous
 			eof_edit_selection_menu[8].flags = D_DISABLED;	//deselect all
 			eof_edit_selection_menu[9].flags = D_DISABLED;	//conditional deselect
+			eof_edit_selection_menu[10].flags = D_DISABLED;	//deselect chords
+			eof_edit_selection_menu[11].flags = D_DISABLED;	//deselect single notes
+			eof_edit_selection_menu[13].flags = D_DISABLED;	//deselect one in every
 		}
 
 		/* paste, paste old */
@@ -1862,7 +1869,7 @@ int eof_menu_edit_playback_custom(void)
 	}
 	eof_cursor_visible = 0;
 	eof_render();
-	eof_color_dialog(eof_custom_snap_dialog, gui_fg_color, gui_bg_color);
+	eof_color_dialog(eof_custom_speed_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_custom_speed_dialog);
 	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%d", eof_playback_speed/10);		//Load the current playback speed into a string
 	if(eof_popup_dialog(eof_custom_speed_dialog, 2) == 3)		//If user activated "OK" from the custom speed dialog
@@ -3324,5 +3331,64 @@ int eof_menu_song_paste_from_difficulty(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);
+	return 1;
+}
+
+DIALOG eof_deselect_note_number_in_sequence_dialog[] =
+{
+	/* (proc)                (x)  (y)  (w)  (h)  (fg)  (bg) (key) (flags) (d1) (d2) (dp)         (dp2)         (dp3) */
+	{ d_agup_shadow_box_proc,32,  68,  188, 130, 2,    23,  0,    0,       0,   0,   NULL,       NULL,         NULL },
+	{ d_agup_text_proc,      56,  84,  64,  8,   2,    23,  0,    0,       0,   0,   "Deselect note #:", NULL,         NULL },
+	{ eof_verified_edit_proc,160, 80,  28,  20,  2,    23,  0,    0,       3,   0,   eof_etext, "0123456789", NULL },
+	{ d_agup_text_proc,      56,  108, 64,  8,   2,    23,  0,    0,       0,   0,   "Out of every:", NULL,         NULL },
+	{ eof_verified_edit_proc,160, 104, 28,  20,  2,    23,  0,    0,       3,   0,   eof_etext2, "0123456789", NULL },
+	{ d_agup_text_proc,      56,  132, 64,  8,   2,    23,  0,    0,       0,   0,   "selected notes", NULL,         NULL },
+	{ d_agup_button_proc,    48,  156, 68,  28,  2,    23,  '\r', D_EXIT,  0,   0,   "OK",       NULL,         NULL },
+	{ d_agup_button_proc,    136, 156, 68,  28,  2,    23,  0,    D_EXIT,  0,   0,   "Cancel",   NULL,         NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_menu_edit_deselect_note_number_in_sequence(void)
+{
+	int val1, val2, ctr;
+	unsigned long i;
+
+	eof_color_dialog(eof_deselect_note_number_in_sequence_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_deselect_note_number_in_sequence_dialog);
+
+	eof_etext[0] = '\0';	//Empty this field
+	eof_etext2[0] = '\0';	//Empty this field
+
+	if(eof_popup_dialog(eof_deselect_note_number_in_sequence_dialog, 2) == 6)
+	{	//If user clicked OK
+		val1 = atoi(eof_etext);
+		val2 = atoi(eof_etext2);
+		if((val1 >= 1) && (val2 >= 1))
+		{	//If the user entered valid values
+			for(i = 0, ctr = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+			{	//For each note in the active track
+				if(eof_selection.multi[i])
+				{	//If the note is selected
+					ctr++;	//Keep track of which note number in the sequence this is
+					if(ctr == val1)
+					{	//If this is the note the user wanted to deselect
+						eof_selection.multi[i] = 0;	//Deselect it
+					}
+					if(ctr == val2)
+					{	//If the counter resets after this note
+						ctr = 0;
+					}
+				}
+			}
+
+			if(eof_selection.current != EOF_MAX_NOTES - 1)
+			{	//If there was a last selected note
+				if(eof_selection.multi[eof_selection.current] == 0)
+				{	//And it's not selected anymore
+					eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note
+				}
+			}
+		}
+	}
 	return 1;
 }

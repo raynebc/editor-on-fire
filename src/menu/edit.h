@@ -61,6 +61,7 @@ int eof_menu_edit_deselect_conditional(void);		//Allows user to specify conditio
 int eof_menu_edit_deselect_chords(void);			//Deselects notes that have more than 1 gem
 int eof_menu_edit_deselect_single_notes(void);		//Deselects notes that have only 1 gem
 int eof_menu_edit_invert_selection(void);			//Inverts the note selection (notes that aren't selected become selected and vice versa)
+int eof_menu_edit_deselect_note_number_in_sequence(void);	//Allows user to deselect one out of every set of a specified size of selected notes
 
 int eof_menu_edit_snap_quarter(void);
 int eof_menu_edit_snap_eighth(void);
