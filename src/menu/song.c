@@ -68,6 +68,7 @@ MENU eof_song_seek_menu[] =
 	{"Previous Grid Snap\t" CTRL_NAME "+Shift+PGUP", eof_menu_song_seek_previous_grid_snap, NULL, 0, NULL},
 	{"Next Grid Snap\t" CTRL_NAME "+Shift+PGDN", eof_menu_song_seek_next_grid_snap, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
+	{"First Beat\t"  CTRL_NAME "+Shift+Home", eof_menu_song_seek_first_beat, NULL, 0, NULL},
 	{"Previous Beat\tPGUP", eof_menu_song_seek_previous_beat, NULL, 0, NULL},
 	{"Next Beat\tPGDN", eof_menu_song_seek_next_beat, NULL, 0, NULL},
 	{"Previous Anchor\t" CTRL_NAME "+Shift+PGUP", eof_menu_song_seek_previous_anchor, NULL, 0, NULL},
@@ -290,24 +291,24 @@ void eof_prepare_song_menu(void)
 		if(eof_music_pos == eof_av_delay)
 		{	//If the seek position is already at the start of the chart
 			eof_song_seek_menu[0].flags = D_DISABLED;	//Seek start
-			eof_song_seek_menu[15].flags = D_DISABLED;	//Previous beat
+			eof_song_seek_menu[16].flags = D_DISABLED;	//Previous beat
 		}
 		else
 		{
 			eof_song_seek_menu[0].flags = 0;
-			eof_song_seek_menu[15].flags = 0;
+			eof_song_seek_menu[16].flags = 0;
 		}
 
 		/* seek end */
 		if(eof_music_pos >= eof_music_length - 1)
 		{	//If the seek position is already at the end of the chart
 			eof_song_seek_menu[1].flags = D_DISABLED;	//Seek end
-			eof_song_seek_menu[16].flags = D_DISABLED;	//Next beat
+			eof_song_seek_menu[17].flags = D_DISABLED;	//Next beat
 		}
 		else
 		{
 			eof_song_seek_menu[1].flags = 0;
-			eof_song_seek_menu[16].flags = 0;
+			eof_song_seek_menu[17].flags = 0;
 		}
 
 		/* rewind */
@@ -425,15 +426,15 @@ void eof_prepare_song_menu(void)
 		{	//If grid snap is disabled
 			eof_song_seek_menu[12].flags = D_DISABLED;	//Previous grid snap
 			eof_song_seek_menu[13].flags = D_DISABLED;	//Next grid snap
-			eof_song_seek_menu[17].flags = 0;			//Previous anchor
-			eof_song_seek_menu[18].flags = 0;			//Next anchor
+			eof_song_seek_menu[18].flags = 0;			//Previous anchor
+			eof_song_seek_menu[19].flags = 0;			//Next anchor
 		}
 		else
 		{
 			eof_song_seek_menu[12].flags = 0;			//Previous grid snap
 			eof_song_seek_menu[13].flags = 0;			//Next grid snap
-			eof_song_seek_menu[17].flags = D_DISABLED;	//Previous anchor
-			eof_song_seek_menu[18].flags = D_DISABLED;	//Next anchor
+			eof_song_seek_menu[18].flags = D_DISABLED;	//Previous anchor
+			eof_song_seek_menu[19].flags = D_DISABLED;	//Next anchor
 		}
 
 		/* seek bookmark # */
@@ -453,11 +454,11 @@ void eof_prepare_song_menu(void)
 		/* seek bookmark */
 		if(bmcount == 0)
 		{
-			eof_song_seek_menu[21].flags = D_DISABLED;	//Bookmark
+			eof_song_seek_menu[22].flags = D_DISABLED;	//Bookmark
 		}
 		else
 		{
-			eof_song_seek_menu[21].flags = 0;
+			eof_song_seek_menu[22].flags = 0;
 		}
 
 		/* display semitones as flat */
@@ -478,14 +479,14 @@ void eof_prepare_song_menu(void)
 			eof_catalog_menu[0].flags = eof_catalog_menu[0].flags & D_SELECTED;	//Enable "Show Catalog" and check it if it's already checked
 			eof_catalog_menu[2].flags = 0;		//Enable "Edit name"
 			eof_catalog_menu[3].flags = 0;		//Enable "Edit timing"
-			eof_song_seek_menu[22].flags = 0;	//Enable Seek>Catalog entry
+			eof_song_seek_menu[23].flags = 0;	//Enable Seek>Catalog entry
 		}
 		else
 		{
 			eof_catalog_menu[0].flags = D_DISABLED;	//Disable "Show catalog"
 			eof_catalog_menu[2].flags = D_DISABLED;	//Disable "Edit name"
 			eof_catalog_menu[3].flags = D_DISABLED;	//Disable "Edit timing"
-			eof_song_seek_menu[22].flags = D_DISABLED;	//Disable Seek>Catalog entry
+			eof_song_seek_menu[23].flags = D_DISABLED;	//Disable Seek>Catalog entry
 		}
 
 		/* add catalog entry */
@@ -2461,6 +2462,16 @@ int eof_menu_song_seek_next_anchor(void)
 		}
 		eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);	//Seek to the anchor
 	}
+
+	return 1;
+}
+
+int eof_menu_song_seek_first_beat(void)
+{
+	if(!eof_song)
+		return 1;
+
+	eof_set_seek_position(eof_song->beat[0]->pos + eof_av_delay);
 
 	return 1;
 }

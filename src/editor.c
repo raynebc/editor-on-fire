@@ -516,16 +516,22 @@ if(key[KEY_PAUSE])
 	/* seek to first note (CTRL+Home) */
 	/* select previous (SHIFT+Home) */
 	/* seek to beginning (Home) */
+	/* seek to first beat (CTRL+SHIFT+Home) */
 	if(key[KEY_HOME])
 	{
-		if(KEY_EITHER_CTRL)
-		{
+		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
+		{	//If CTRL is held but SHIFT is not
 			(void) eof_menu_song_seek_first_note();
 		}
-		else if(KEY_EITHER_SHIFT)
-		{
+		else if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
+		{	//If SHIFT is held but CTRL is not
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			(void) eof_menu_edit_select_previous();
+		}
+		else if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+		{	//If both CTRL and SHIFT are held
+			eof_shift_used = 1;	//Track that the SHIFT key was used
+			(void) eof_menu_song_seek_first_beat();
 		}
 		else
 		{
@@ -1836,18 +1842,24 @@ if(key[KEY_PAUSE])
 		}
 
 	/* toggle tapping status (CTRL+T in a pro guitar track) */
+	/* toggle MIDI tones (SHIFT+T) */
 	/* toggle crazy status (T) */
 		if(key[KEY_T] && !KEY_EITHER_ALT)
 		{
-			if(KEY_EITHER_CTRL)
+			if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 			{
 				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 				{	/* toggle tapping */
 					(void) eof_menu_note_toggle_tapping();
 				}
 			}
-			else
-			{	/* toggle crazy */
+			else if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
+			{	//If SHIFT is held but CTRL is not
+				(void) eof_menu_edit_midi_tones();
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+			}
+			else if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
+			{	//If neither SHIFT nor CTRL are held
 				(void) eof_menu_note_toggle_crazy();
 			}
 			key[KEY_T] = 0;
