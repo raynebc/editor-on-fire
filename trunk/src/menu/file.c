@@ -137,7 +137,8 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 300, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short notes",NULL, NULL },
 	{ d_agup_check_proc, 248, 316, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import replaces active track",NULL, NULL },
 	{ d_agup_check_proc, 248, 332, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import nat. harmonics only",NULL, NULL },
-	{ d_agup_check_proc, 248, 348, 218, 16,  2,   23,  0,    0,      1,   0,   "3D render RS style chords",NULL, NULL },
+	{ d_agup_check_proc, 248, 348, 190, 16,  2,   23,  0,    0,      1,   0,   "3D render RS style chords",NULL, NULL },
+	{ d_agup_check_proc, 248, 364, 210, 16,  2,   23,  0,    0,      1,   0,   "Import dialogs recall last path",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -746,7 +747,7 @@ int eof_menu_file_quick_save(void)
 
 int eof_menu_file_lyrics_import(void)
 {
-	char * returnedfn = NULL;
+	char * returnedfn = NULL, *initial;
 	int jumpcode = 0;
 	int selectedformat=0;
 	char *selectedtrack;
@@ -762,7 +763,19 @@ int eof_menu_file_lyrics_import(void)
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
-	returnedfn = ncd_file_select(0, eof_filename, "Import Lyrics", eof_filter_lyrics_files);
+	if((eof_last_lyric_path[uoffset(eof_last_lyric_path, ustrlen(eof_last_lyric_path) - 1)] == '\\') || (eof_last_lyric_path[uoffset(eof_last_lyric_path, ustrlen(eof_last_lyric_path) - 1)] == '/'))
+	{	//If the path ends in a separator
+		eof_last_lyric_path[uoffset(eof_last_lyric_path, ustrlen(eof_last_lyric_path) - 1)] = '\0';	//Remove it
+	}
+	if(eof_imports_recall_last_path && file_exists(eof_last_lyric_path, FA_RDONLY | FA_HIDDEN | FA_DIREC, NULL))
+	{	//If the user chose for the lyric import dialog to start at the path of the last imported lyric file and that path is valid
+		initial = eof_last_lyric_path;	//Use it
+	}
+	else
+	{	//Otherwise start at the project's path
+		initial = eof_last_eof_path;
+	}
+	returnedfn = ncd_file_select(0, initial, "Import Lyrics", eof_filter_lyrics_files);
 	eof_clear_input();
 	if(returnedfn)
 	{	//If the user selected a file
@@ -828,16 +841,20 @@ int eof_menu_file_lyrics_import(void)
 				(void) alert("Error", NULL, "Invalid lyric file", "OK", NULL, 0, KEY_ENTER);
 				(void) eof_menu_edit_undo();
 			}
+			else
+			{	//Import succeeded
+				eof_log("\tLyric import successful", 1);
+				eof_truncate_chart(eof_song);	//Add beats to the chart if necessary to encompass the imported lyrics
+				eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
+				eof_reset_lyric_preview_lines();
+				(void) replace_filename(eof_last_lyric_path, returnedfn, "", 1024);	//Set the last loaded lyric file path
+			}
 		}
 		if(tempfile)
 		{	//If a temporary file was created
 			(void) delete_file("lyricfile.tmp");	//Delete it
 		}
 	}//If the user selected a file
-	eof_log("\tLyric import successful", 1);
-	eof_truncate_chart(eof_song);	//Add beats to the chart if necessary to encompass the imported lyrics
-	eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
-	eof_reset_lyric_preview_lines();
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -848,7 +865,7 @@ int eof_menu_file_lyrics_import(void)
 
 int eof_menu_file_midi_import(void)
 {
-	char * returnedfn = NULL;
+	char * returnedfn = NULL, *initial;
 	char tempfilename[1024] = {0};
 
 	if(eof_menu_prompt_save_changes() == 3)
@@ -858,7 +875,19 @@ int eof_menu_file_midi_import(void)
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
-	returnedfn = ncd_file_select(0, eof_last_eof_path, "Import MIDI", eof_filter_midi_files);
+	if((eof_last_midi_path[uoffset(eof_last_midi_path, ustrlen(eof_last_midi_path) - 1)] == '\\') || (eof_last_midi_path[uoffset(eof_last_midi_path, ustrlen(eof_last_midi_path) - 1)] == '/'))
+	{	//If the path ends in a separator
+		eof_last_midi_path[uoffset(eof_last_midi_path, ustrlen(eof_last_midi_path) - 1)] = '\0';	//Remove it
+	}
+	if(eof_imports_recall_last_path && file_exists(eof_last_midi_path, FA_RDONLY | FA_HIDDEN | FA_DIREC, NULL))
+	{	//If the user chose for the MIDI import dialog to start at the path of the last imported MIDI file and that path is valid
+		initial = eof_last_midi_path;	//Use it
+	}
+	else
+	{	//Otherwise start at the project's path
+		initial = eof_last_eof_path;
+	}
+	returnedfn = ncd_file_select(0, initial, "Import MIDI", eof_filter_midi_files);
 	eof_clear_input();
 	if(returnedfn)
 	{
@@ -893,6 +922,7 @@ int eof_menu_file_midi_import(void)
 			eof_song_loaded = 1;
 			eof_init_after_load(0);
 			eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
+			(void) replace_filename(eof_last_midi_path, returnedfn, "", 1024);	//Set the last loaded MIDI file path
 		}
 		else
 		{
@@ -1009,7 +1039,8 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[39].flags = eof_gp_import_truncate_short_notes ? D_SELECTED : 0;	//GP import truncates short notes
 	eof_preferences_dialog[40].flags = eof_gp_import_replaces_track ? D_SELECTED : 0;		//GP import replaces active track
 	eof_preferences_dialog[41].flags = eof_gp_import_nat_harmonics_only ? D_SELECTED : 0;	//GP import nat. harmonics only
-	eof_preferences_dialog[42].flags = eof_render_3d_rs_chords ? D_SELECTED : 0;		//3D render Rocksmith style chord repeats
+	eof_preferences_dialog[42].flags = eof_render_3d_rs_chords ? D_SELECTED : 0;			//3D render Rocksmith style chords
+	eof_preferences_dialog[43].flags = eof_imports_recall_last_path ? D_SELECTED : 0;		//Import dialogs recall last path
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1098,6 +1129,7 @@ int eof_menu_file_preferences(void)
 			eof_gp_import_replaces_track = (eof_preferences_dialog[40].flags == D_SELECTED ? 1 : 0);
 			eof_gp_import_nat_harmonics_only = (eof_preferences_dialog[41].flags == D_SELECTED ? 1 : 0);
 			eof_render_3d_rs_chords = (eof_preferences_dialog[42].flags == D_SELECTED ? 1 : 0);
+			eof_imports_recall_last_path = (eof_preferences_dialog[43].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 29)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1132,7 +1164,8 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[39].flags = D_SELECTED;			//GP import truncates short notes
 			eof_preferences_dialog[40].flags = D_SELECTED;			//GP import replaces active track
 			eof_preferences_dialog[41].flags = 0;					//GP import nat. harmonics only
-			eof_preferences_dialog[42].flags = 0;					//3D render Rocksmith style chord repeats
+			eof_preferences_dialog[42].flags = 0;					//3D render Rocksmith style chords
+			eof_preferences_dialog[43].flags = 0;					//Import dialogs recall last path
 		}//If the user clicked "Default
 	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -1797,7 +1830,7 @@ int eof_test_controller_conflict(EOF_CONTROLLER *controller,int start,int stop)
 
 int eof_menu_file_feedback_import(void)
 {
-	char * returnedfn = NULL;
+	char * returnedfn = NULL, *initial;
 	int jumpcode = 0;
 
 	if(eof_menu_prompt_save_changes() == 3)
@@ -1807,7 +1840,19 @@ int eof_menu_file_feedback_import(void)
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
-	returnedfn = ncd_file_select(0, eof_last_eof_path, "Import Feedback Chart", eof_filter_dB_files);
+	if((eof_last_db_path[uoffset(eof_last_db_path, ustrlen(eof_last_db_path) - 1)] == '\\') || (eof_last_db_path[uoffset(eof_last_db_path, ustrlen(eof_last_db_path) - 1)] == '/'))
+	{	//If the path ends in a separator
+		eof_last_db_path[uoffset(eof_last_db_path, ustrlen(eof_last_db_path) - 1)] = '\0';	//Remove it
+	}
+	if(eof_imports_recall_last_path && file_exists(eof_last_db_path, FA_RDONLY | FA_HIDDEN | FA_DIREC, NULL))
+	{	//If the user chose for the Feedback import dialog to start at the path of the last imported Feedback file and that path is valid
+		initial = eof_last_db_path;	//Use it
+	}
+	else
+	{	//Otherwise start at the project's path
+		initial = eof_last_eof_path;
+	}
+	returnedfn = ncd_file_select(0, initial, "Import Feedback Chart", eof_filter_dB_files);
 	eof_clear_input();
 	if(returnedfn)
 	{
@@ -1843,6 +1888,7 @@ int eof_menu_file_feedback_import(void)
 			{
 				eof_song_loaded = 1;
 				eof_init_after_load(0);
+				(void) replace_filename(eof_last_db_path, returnedfn, "", 1024);	//Set the last loaded Feedback file path
 			}
 			else
 			{
@@ -2710,7 +2756,7 @@ int eof_menu_prompt_save_changes(void)
 
 int eof_menu_file_gh_import(void)
 {
-	char * returnedfn = NULL;
+	char * returnedfn = NULL, *initial;
 
 	if(eof_menu_prompt_save_changes() == 3)
 	{	//If user canceled closing the current, modified chart
@@ -2719,7 +2765,19 @@ int eof_menu_file_gh_import(void)
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
-	returnedfn = ncd_file_select(0, eof_last_eof_path, "Import GH Chart", eof_filter_gh_files);
+	if((eof_last_gh_path[uoffset(eof_last_gh_path, ustrlen(eof_last_gh_path) - 1)] == '\\') || (eof_last_gh_path[uoffset(eof_last_gh_path, ustrlen(eof_last_gh_path) - 1)] == '/'))
+	{	//If the path ends in a separator
+		eof_last_gh_path[uoffset(eof_last_gh_path, ustrlen(eof_last_gh_path) - 1)] = '\0';	//Remove it
+	}
+	if(eof_imports_recall_last_path && file_exists(eof_last_gh_path, FA_RDONLY | FA_HIDDEN | FA_DIREC, NULL))
+	{	//If the user chose for the GH import dialog to start at the path of the last imported GH file and that path is valid
+		initial = eof_last_gh_path;	//Use it
+	}
+	else
+	{	//Otherwise start at the project's path
+		initial = eof_last_eof_path;
+	}
+	returnedfn = ncd_file_select(0, initial, "Import GH Chart", eof_filter_gh_files);
 	eof_clear_input();
 	if(returnedfn)
 	{
@@ -2743,6 +2801,7 @@ int eof_menu_file_gh_import(void)
 		{
 			eof_song_loaded = 1;
 			eof_init_after_load(0);
+			(void) replace_filename(eof_last_gh_path, returnedfn, "", 1024);	//Set the last loaded GH file path
 		}
 		else
 		{
@@ -2979,7 +3038,7 @@ int eof_gp_import_track(DIALOG * d)
 char gp_import_undo_made;
 int eof_menu_file_gp_import(void)
 {
-	char * returnedfn = NULL;
+	char * returnedfn = NULL, *initial;
 	unsigned long ctr, ctr2;
 
 	if(!eof_song || !eof_song_loaded)
@@ -2992,7 +3051,19 @@ int eof_menu_file_gp_import(void)
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
-	returnedfn = ncd_file_select(0, eof_last_eof_path, "Import Guitar Pro", eof_filter_gp_files);
+	if((eof_last_gp_path[uoffset(eof_last_gp_path, ustrlen(eof_last_gp_path) - 1)] == '\\') || (eof_last_gp_path[uoffset(eof_last_gp_path, ustrlen(eof_last_gp_path) - 1)] == '/'))
+	{	//If the path ends in a separator
+		eof_last_gp_path[uoffset(eof_last_gp_path, ustrlen(eof_last_gp_path) - 1)] = '\0';	//Remove it
+	}
+	if(eof_imports_recall_last_path && file_exists(eof_last_gp_path, FA_RDONLY | FA_HIDDEN | FA_DIREC, NULL))
+	{	//If the user chose for the GP import dialog to start at the path of the last imported GP file and that path is valid
+		initial = eof_last_gp_path;	//Use it
+	}
+	else
+	{	//Otherwise start at the project's path
+		initial = eof_last_eof_path;
+	}
+	returnedfn = ncd_file_select(0, initial, "Import Guitar Pro", eof_filter_gp_files);
 	eof_clear_input();
 	if(returnedfn)
 	{
@@ -3050,6 +3121,8 @@ int eof_menu_file_gp_import(void)
 			free(eof_parsed_gp_file->track);
 			free(eof_parsed_gp_file->capos);
 			free(eof_parsed_gp_file);
+
+			(void) replace_filename(eof_last_gp_path, returnedfn, "", 1024);	//Set the last loaded GP file path
 		}//The file was successfully parsed...
 		else
 		{
@@ -3136,7 +3209,7 @@ int eof_set_display_width(void)
 
 int eof_menu_file_rs_import(void)
 {
-	char * returnedfn = NULL;
+	char * returnedfn = NULL, *initial;
 	EOF_PRO_GUITAR_TRACK *tp = NULL;
 	unsigned long ctr;
 
@@ -3157,7 +3230,19 @@ int eof_menu_file_rs_import(void)
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
-	returnedfn = ncd_file_select(0, eof_last_eof_path, "Import Rocksmith", eof_filter_rs_files);
+	if((eof_last_rs_path[uoffset(eof_last_rs_path, ustrlen(eof_last_rs_path) - 1)] == '\\') || (eof_last_rs_path[uoffset(eof_last_rs_path, ustrlen(eof_last_rs_path) - 1)] == '/'))
+	{	//If the path ends in a separator
+		eof_last_rs_path[uoffset(eof_last_rs_path, ustrlen(eof_last_rs_path) - 1)] = '\0';	//Remove it
+	}
+	if(eof_imports_recall_last_path && file_exists(eof_last_rs_path, FA_RDONLY | FA_HIDDEN | FA_DIREC, NULL))
+	{	//If the user chose for the Rocksmith import dialog to start at the path of the last imported Rocksmith file and that path is valid
+		initial = eof_last_rs_path;	//Use it
+	}
+	else
+	{	//Otherwise start at the project's path
+		initial = eof_last_eof_path;
+	}
+	returnedfn = ncd_file_select(0, initial, "Import Rocksmith", eof_filter_rs_files);
 	eof_clear_input();
 	if(returnedfn)
 	{
@@ -3183,6 +3268,7 @@ int eof_menu_file_rs_import(void)
 			eof_song->track[eof_selected_track]->numdiffs = eof_detect_difficulties(eof_song, eof_selected_track);	//Update the number of difficulties used in this track
 			eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to clean up the track
 			(void) eof_menu_track_selected_track_number(eof_selected_track, 1);	//Re-select the active track to allow for a change in string count
+			(void) replace_filename(eof_last_rs_path, returnedfn, "", 1024);	//Set the last loaded Rocksmith file path
 		}
 		else
 		{

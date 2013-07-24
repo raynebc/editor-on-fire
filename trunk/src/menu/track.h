@@ -32,6 +32,11 @@ int eof_track_set_num_frets_strings(void);
 	//Allows the track's number of frets (pro guitar/bass) and strings (pro bass only) to be defined
 int eof_track_proguitar_toggle_ignore_tuning(void);
 	//Toggles the option to have the chord name detection disregard the track's defined tuning and base it on standard tuning instead
+int eof_track_transpose_tuning(EOF_PRO_GUITAR_TRACK* tp, char *tuningdiff);
+	//Receives a pointer to an array of 6 signed chars indicating a subtractive tuning offset (in half steps) for each string
+	//If any existing notes in the specified track will be affected by the tuning change, the user is prompted whether or not to transpose the notes
+	//If so, the affected fret values will be raised or lowered accordingly
+	//If a note cannot be altered (ie. values of 0 or the track's max fret number would be surpassed), the user is warned and the note is highlighted
 
 int eof_track_proguitar_set_fret_hand_position(void);
 	//Allows the user to define a fret hand position for the active difficulty

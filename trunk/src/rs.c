@@ -1651,8 +1651,8 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 	current_low = current_high = 0;	//Reset these at the start of generating hand positions
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the track
-		if(tp->note[ctr]->type == difficulty)
-		{	//If it is in the specified difficulty
+		if((tp->note[ctr]->type == difficulty) && !(tp->note[ctr]->flags & EOF_NOTE_FLAG_TEMP))
+		{	//If it is in the specified difficulty and isn't marked as a temporary note (a single note inserted to allow chord techniques to appear in Rocksmith)
 			if(!current_note)
 			{	//If this is the first note since the last hand position
 				current_note = tp->note[ctr];	//Store its address
@@ -1710,8 +1710,8 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 				current_low = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Track this note's high and low frets
 				current_high = eof_pro_guitar_note_highest_fret(tp, ctr);
 			}
-		}
-	}
+		}//If it is in the specified difficulty and isn't marked as a temporary note (a single note inserted to allow chord techniques to appear in Rocksmith)
+	}//For each note in the track
 
 	//The last one or more notes examined need to have their hand position placed
 	if(!current_low)

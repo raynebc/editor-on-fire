@@ -165,7 +165,7 @@ MENU eof_edit_menu[] =
 	{"Claps\tC", eof_menu_edit_claps, NULL, 0, NULL},
 	{"Clap &Notes", NULL, eof_edit_claps_menu, 0, NULL},
 	{"&Vocal Tones\tV", eof_menu_edit_vocal_tones, NULL, 0, NULL},
-	{"MIDI &Tones", eof_menu_edit_midi_tones, NULL, 0, NULL},
+	{"MIDI Tones\tShift+T", eof_menu_edit_midi_tones, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Bookmark", NULL, eof_edit_bookmark_menu, 0, NULL},
 	{"", NULL, NULL, 0, NULL},

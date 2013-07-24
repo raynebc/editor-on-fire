@@ -465,11 +465,14 @@ DIALOG eof_pro_guitar_tuning_dialog[] =
 int eof_track_tuning(void)
 {
 	unsigned long ctr, tracknum, stringcount;
-	char undo_made = 0;
+	long newval;
+	char undo_made = 0, newtuning[6] = {0};
+	EOF_PRO_GUITAR_TRACK *tp;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run unless the pro guitar track is active
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
 
 	if(!eof_music_paused)
 	{
@@ -483,12 +486,12 @@ int eof_track_tuning(void)
 	centre_dialog(eof_pro_guitar_tuning_dialog);
 
 //Update the strings to reflect the currently set tuning
-	stringcount = eof_song->pro_guitar_track[tracknum]->numstrings;
+	stringcount = tp->numstrings;
 	for(ctr = 0; ctr < 6; ctr++)
 	{	//For each of the 6 supported strings
 		if(ctr < stringcount)
 		{	//If this track uses this string, convert the tuning to its string representation
-			(void) snprintf(eof_fret_strings[ctr], sizeof(eof_string_lane_1) - 1, "%d", eof_song->pro_guitar_track[tracknum]->tuning[ctr]);
+			(void) snprintf(eof_fret_strings[ctr], sizeof(eof_string_lane_1) - 1, "%d", tp->tuning[ctr]);
 			eof_pro_guitar_tuning_dialog[19 - (3 * ctr)].flags = 0;		//Enable the input field's label
 			eof_pro_guitar_tuning_dialog[20 - (3 * ctr)].flags = 0;		//Enable the input field for the string
 			eof_fret_string_numbers[ctr][7] = '0' + (stringcount - ctr);	//Correct the string number for this label
@@ -499,12 +502,12 @@ int eof_track_tuning(void)
 			eof_pro_guitar_tuning_dialog[20 - (3 * ctr)].flags = D_HIDDEN;	//Hide the input field for the string
 		}
 	}
-	eof_rebuild_tuning_strings(eof_song->pro_guitar_track[tracknum]->tuning);
+	eof_rebuild_tuning_strings(tp->tuning);
 
 	if(eof_popup_dialog(eof_pro_guitar_tuning_dialog, 0) == 22)
 	{	//If user clicked OK
 		//Validate and store the input
-		for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->numstrings; ctr++)
+		for(ctr = 0; ctr < tp->numstrings; ctr++)
 		{	//For each string in the track, ensure the user entered a tuning
 			if(eof_fret_strings[ctr][0] == '\0')
 			{	//Ensure the user entered a tuning
@@ -522,22 +525,123 @@ int eof_track_tuning(void)
 				return 1;
 			}
 		}
-		memset(eof_song->pro_guitar_track[tracknum]->tuning, 0, sizeof(eof_song->pro_guitar_track[tracknum]->tuning));	//Clear the tuning array to ensure that 4 string bass tracks have the 2 unused strings cleared
-		for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->numstrings; ctr++)
+		memset(tp->tuning, 0, sizeof(tp->tuning));	//Clear the tuning array to ensure that 4 string bass tracks have the 2 unused strings cleared
+		for(ctr = 0; ctr < tp->numstrings; ctr++)
 		{	//For each string in the track, store the numerical value into the track's tuning array
-			if(!undo_made && (eof_song->pro_guitar_track[tracknum]->tuning[ctr] != atol(eof_fret_strings[ctr]) % 12))
+			if(!undo_made && (tp->tuning[ctr] != atol(eof_fret_strings[ctr]) % 12))
 			{	//If a tuning was changed
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				undo_made = 1;
 				eof_chord_lookup_note = 0;	//Reset the cached chord lookup count
 			}
-			eof_song->pro_guitar_track[tracknum]->tuning[ctr] = atol(eof_fret_strings[ctr]) % 12;
+			newval = atol(eof_fret_strings[ctr]) % 12;
+			newtuning[ctr] = newval - tp->tuning[ctr];	//Find this string's tuning change (in half steps)
+			tp->tuning[ctr] = newval;
 		}
+		(void) eof_track_transpose_tuning(tp, newtuning);	//Offer to transpose any existing notes in the track to the new tuning
 	}//If user clicked OK
 
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
+	return 1;
+}
+
+int eof_track_transpose_tuning(EOF_PRO_GUITAR_TRACK* tp, char *tuningdiff)
+{
+	unsigned long ctr, ctr2, ctr3, bitmask;
+	unsigned char val, prompt = 0, transpose, warning = 0;
+
+	if(!tp || !tuningdiff)
+		return 0;	//Error
+
+	for(ctr = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the track
+		transpose = 1;	//This will be set to zero if the note won't be transposed automatically (in which case it will be highlighted for user action)
+		for(ctr2 = 0; ctr2 < 2; ctr2++)
+		{	//On the first pass, validate whether the note can be transposed automatically, on second pass, alter the note
+			for(ctr3 = 0, bitmask = 1; ctr3 < tp->numstrings; ctr3++, bitmask <<= 1)
+			{	//For each of the track's strings
+				if(tuningdiff[ctr3])
+				{	//If this string's tuning is being changed
+					if(tp->note[ctr]->note & bitmask)
+					{	//If this note uses this string
+						if(!prompt)
+						{	//If the user hasn't been prompted yet
+							if(alert("This track contains notes that would be affected by the tuning change.", "Would you like to transpose the notes to keep the same pitches where possible?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+							{	//If the user doesn't opt to transpose the track
+								return 1;
+							}
+							prompt = 1;
+						}
+						if(tuningdiff[ctr3] < 0)
+						{	//If the tuning for this string is being lowered, existing notes need to be moved up the fretboard
+							val = -tuningdiff[ctr3];	//Get the absolute value of the tuning change
+							if(!ctr2)
+							{	//First pass of the note, just validate the tranpsose
+								if(tp->note[ctr]->frets[ctr3] + val > tp->numfrets)
+								{	//If the note can't be raised an equivalent number of frets
+									transpose = 0;	//Track that the note will be highlighted instead
+								}
+							}
+							else
+							{	//Second pass of the note
+								if(transpose)
+								{	//If the note is to be transposed automatically
+									tp->note[ctr]->frets[ctr3] += val;
+								}
+								else
+								{	//Otherwise highlight it
+									tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;
+									if(!warning)
+									{	//If the user hasn't been warned about this problem yet
+										eof_set_seek_position(tp->note[ctr]->pos + eof_av_delay);	//Seek to the note
+										eof_find_lyric_preview_lines();
+										eof_render();					//Redraw the screen
+										allegro_message("Warning:  At least one note will have to be manually transposed to another string or octave.\nThese notes will be highlighted.");
+										warning = 1;
+									}
+									break;	//Skip checking the rest of the strings
+								}
+							}
+						}
+						else
+						{	//The tuning for this string is being raised, existing notes need to be moved down the fretboard
+							val = tuningdiff[ctr3];
+							if(!ctr2)
+							{	//First pass of the note, just validate the tranpsose
+								if(tp->note[ctr]->frets[ctr3] < val)
+								{	//If the note can't be lowered an equivalent number of frets
+									transpose = 0;	//Track that the note will be highlighted instead
+								}
+							}
+							else
+							{	//Second pass of the note
+								if(transpose)
+								{	//If the note is to be transposed automatically
+									tp->note[ctr]->frets[ctr3] -= val;
+								}
+								else
+								{	//Otherwise highlight it
+									tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;
+									if(!warning)
+									{	//If the user hasn't been warned about this problem yet
+										eof_set_seek_position(tp->note[ctr]->pos + eof_av_delay);	//Seek to the note
+										eof_find_lyric_preview_lines();
+										eof_render();					//Redraw the screen
+										allegro_message("Warning:  At least one note will have to be manually transposed to another string or octave.\nThese notes will be highlighted.");
+										warning = 1;
+									}
+									break;	//Skip checking the rest of the strings
+								}
+							}
+						}
+					}//If this note uses this string
+				}//If this string's tuning is being changed
+			}//For each of the track's strings
+		}//On the first pass, validate whether the note can be transposed automatically, on second pass, alter the note
+	}//For each note in the track
+
 	return 1;
 }
 
