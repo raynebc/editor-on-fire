@@ -608,6 +608,33 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 							}
 						}
 					}
+					else if((ptr = strcasestr_spec(buffer, "CDlcTone(")) && ptr)
+					{	//if this is a tone change
+						if(tp->tonechanges < EOF_MAX_PHRASES)
+						{	//If another tone change can be stored
+							ptr = strcasestr_spec(ptr, "[");	//The tone key name begins after the first opening bracket in the XML tag
+							if(!ptr)
+							{
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading start of control message on line #%lu.  Aborting", linectr);
+								eof_log(eof_log_string, 1);
+								error = 1;
+								break;	//Break from inner loop
+							}
+							ptr2 = strchr(ptr, ']');	//The tone key name ends at the first closing parenthesis after the start of the name
+							if(!ptr2)
+							{
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading end of control message on line #%lu.  Aborting", linectr);
+								eof_log(eof_log_string, 1);
+								error = 1;
+								break;	//Break from inner loop
+							}
+							*ptr2 = '\0';	//Truncate the buffer
+							tp->tonechange[tp->tonechanges].start_pos = output;		//Store the starting timestamp
+							tp->tonechange[tp->tonechanges].end_pos = 0;			//Tone changes don't use an end position
+							strncpy(tp->tonechange[tp->tonechanges].name, ptr, sizeof(tp->tonechange[tp->tonechanges].name) - 1);	//Store the message text
+							tp->tonechanges++;
+						}
+					}
 					else
 					{
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError:  Unrecognized control message on line #%lu.  Aborting", linectr);

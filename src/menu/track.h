@@ -70,6 +70,29 @@ int eof_find_effective_rs_popup_message(unsigned long pos, unsigned long *popupn
 	//The corresponding popup message number for the track is returned through popupnum
 	//Zero is returned if no popup message is in effect or upon error
 
+int eof_track_rs_tone_change_add(void);
+	//Allows the user to add a tone change for use in Rocksmith
+int eof_track_rs_tone_changes(void);
+	//Displays the tone changes defined for the current pro guitar/bass track
+char * eof_track_rs_tone_changes_list(int index, int * size);
+	//List dialog function for eof_track_rs_tone_changes()
+int eof_track_rs_tone_changes_edit(DIALOG * d);
+	//Allows the user to edit a tone change from the list
+void eof_track_pro_guitar_sort_tone_changes(EOF_PRO_GUITAR_TRACK* tp);
+	//Sorts the tone changes for the specified track
+int eof_track_rs_tone_changes_delete(DIALOG * d);
+	//Deletes the selected tone change from eof_track_rs_tone_changes()
+int eof_track_rs_tone_changes_delete_all(DIALOG * d);
+	//Deletes all tone changes from eof_track_rs_tone_changes()
+int eof_track_rs_tone_changes_seek(DIALOG * d);
+	//Seeks to the selected tone change from eof_track_rs_tone_changes()
+void eof_track_pro_guitar_delete_tone_change(EOF_PRO_GUITAR_TRACK *tp, unsigned long index);
+	//Deletes the specified tone change
+int eof_track_find_effective_rs_tone_change(unsigned long pos, unsigned long *changenum);
+	//Returns nonzero if there is a tone change for the current pro guitar/bass track at or before the specified position
+	//The corresponding tone change number for the track is returned through changenum
+	//Zero is returned if no tone change is in effect or upon error
+
 int eof_track_rocksmith_arrangement_set(unsigned char num);
 	//Validates that the active track is a pro guitar track and sets the track's arrangement type to the specified number
 	//If num is > 4, a value of 0 is set instead
