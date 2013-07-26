@@ -7,6 +7,12 @@ typedef struct
 	char *displayname;
 } EOF_RS_PREDEFINED_SECTION;
 
+typedef struct
+{
+	unsigned long pos;
+	char *str;
+} EOF_RS_CONTROL;	//A structure that will be used to build an array of popup message controls, clear message controls and tone change controls, so they can be chronologically sorted
+
 #define EOF_NUM_RS_PREDEFINED_SECTIONS 30
 extern EOF_RS_PREDEFINED_SECTION eof_rs_predefined_sections[EOF_NUM_RS_PREDEFINED_SECTIONS];
 

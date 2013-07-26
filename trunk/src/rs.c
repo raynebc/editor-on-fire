@@ -286,6 +286,25 @@ unsigned long eof_build_section_list(EOF_SONG *sp, unsigned long **results, unsi
 	return unique_count;
 }
 
+int eof_song_qsort_control_events(const void * e1, const void * e2)
+{
+	EOF_RS_CONTROL * thing1 = (EOF_RS_CONTROL *)e1;
+	EOF_RS_CONTROL * thing2 = (EOF_RS_CONTROL *)e2;
+
+	//Sort by timestamp
+	if(thing1->pos < thing2->pos)
+	{
+		return -1;
+	}
+	else if(thing1->pos > thing2->pos)
+	{
+		return 1;
+	}
+
+	//They are equal
+	return 0;
+}
+
 int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, char *user_warned)
 {
 	PACKFILE * fp;
@@ -938,18 +957,94 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		(void) eof_track_add_section(eof_song, track, EOF_RS_POPUP_MESSAGE, 0, 5100, 10100, 1, sp->tags->loading_text);	//Insert this as a popup message, setting the flag to nonzero to mark is as temporary
 		eof_track_pro_guitar_sort_popup_messages(tp);	//Sort the popup messages
 	}
-	if(tp->popupmessages)
-	{	//If at least one popup message is to be written
-		(void) snprintf(buffer, sizeof(buffer) - 1, "  <controls count=\"%lu\">\n", tp->popupmessages * 2);	//Each will need one control to display and one control to clear
+	if(tp->popupmessages || tp->tonechanges)
+	{	//If at least one popup message or tone change is to be written
+		unsigned long count, controlctr = 0;
+		size_t stringlen;
+		EOF_RS_CONTROL *controls = NULL;
+
+		//Allocate memory for a list of control events
+		count = tp->popupmessages * 2;	//Each popup message needs one control message to display and one to clear
+		count += tp->tonechanges;		//Each tone change needs one control message
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <controls count=\"%lu\">\n", count);
 		(void) pack_fputs(buffer, fp);
+		controls = malloc(sizeof(EOF_RS_CONTROL) * count);	//Allocate memory for a list of Rocksmith control events
+		if(!controls)
+		{
+			eof_log("\tError saving:  Cannot allocate memory for control list", 1);
+			return 0;	//Return failure
+		}
+
+		//Build the list of control events
 		for(ctr = 0; ctr < tp->popupmessages; ctr++)
 		{	//For each popup message
+			//Add the popup message display control to the list
 			expand_xml_text(buffer2, sizeof(buffer2) - 1, tp->popupmessage[ctr].name, EOF_SECTION_NAME_LENGTH);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
-			(void) snprintf(buffer, sizeof(buffer) - 1, "    <control time=\"%.3f\" code=\"ShowMessageBox(hint%lu, %s)\"/>\n", tp->popupmessage[ctr].start_pos / 1000.0, ctr + 1, buffer2);	//Insert expanded loading text into control string
-			(void) pack_fputs(buffer, fp);
-			(void) snprintf(buffer, sizeof(buffer) - 1, "    <control time=\"%.3f\" code=\"ClearAllMessageBoxes()\"/>\n", tp->popupmessage[ctr].end_pos / 1000.0);
-			(void) pack_fputs(buffer, fp);
+			stringlen = (size_t)snprintf(NULL, 0, "    <control time=\"%.3f\" code=\"ShowMessageBox(hint%lu, %s)\"/>\n", tp->popupmessage[ctr].start_pos / 1000.0, ctr + 1, buffer2) + 1;	//Find the number of characters needed to store this string
+			controls[controlctr].str = malloc(stringlen + 1);	//Allocate memory to build the string
+			if(!controls[controlctr].str)
+			{
+				eof_log("\tError saving:  Cannot allocate memory for control event", 1);
+				while(controlctr > 0)
+				{	//Free previously allocated strings
+					free(controls[controlctr - 1].str);
+					controlctr--;
+				}
+				free(controls);
+				return 0;	//Return failure
+			}
+			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"ShowMessageBox(hint%lu, %s)\"/>\n", tp->popupmessage[ctr].start_pos / 1000.0, ctr + 1, buffer2);
+			controls[controlctr].pos = tp->popupmessage[ctr].start_pos;
+			controlctr++;
+
+			//Add the clear message control to the list
+			stringlen = (size_t)snprintf(NULL, 0, "    <control time=\"%.3f\" code=\"ClearAllMessageBoxes()\"/>\n", tp->popupmessage[ctr].end_pos / 1000.0) + 1;	//Find the number of characters needed to store this string
+			controls[controlctr].str = malloc(stringlen + 1);	//Allocate memory to build the string
+			if(!controls[controlctr].str)
+			{
+				eof_log("\tError saving:  Cannot allocate memory for control event", 1);
+				while(controlctr > 0)
+				{	//Free previously allocated strings
+					free(controls[controlctr - 1].str);
+					controlctr--;
+				}
+				free(controls);
+				return 0;	//Return failure
+			}
+			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"ClearAllMessageBoxes()\"/>\n", tp->popupmessage[ctr].end_pos / 1000.0);
+			controls[controlctr].pos = tp->popupmessage[ctr].end_pos;
+			controlctr++;
 		}
+		for(ctr = 0; ctr < tp->tonechanges; ctr++)
+		{	//For each tone change
+			//Add the tone change control to the list
+			stringlen = (size_t)snprintf(NULL, 0, "    <control time=\"%.3f\" code=\"CDlcTone([%s])\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tp->tonechange[ctr].name) + 1;	//Find the number of characters needed to store this string
+			controls[controlctr].str = malloc(stringlen + 1);	//Allocate memory to build the string
+			if(!controls[controlctr].str)
+			{
+				eof_log("\tError saving:  Cannot allocate memory for control event", 1);
+				while(controlctr > 0)
+				{	//Free previously allocated strings
+					free(controls[controlctr - 1].str);
+					controlctr--;
+				}
+				free(controls);
+				return 0;	//Return failure
+			}
+			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"CDlcTone([%s])\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tp->tonechange[ctr].name);
+			controls[controlctr].pos = tp->tonechange[ctr].start_pos;
+			controlctr++;
+		}
+
+		//Sort, write and free the list of control events
+		qsort(controls, (size_t)count, sizeof(EOF_RS_CONTROL), eof_song_qsort_control_events);
+		for(ctr = 0; ctr < count; ctr++)
+		{	//For each control event
+			(void) pack_fputs(controls[ctr].str, fp);	//Write the control event string
+			free(controls[ctr].str);	//Free the string
+		}
+		free(controls);	//Free the array
+
 		(void) pack_fputs("  </controls>\n", fp);
 
 		//Remove any loading text popup that was inserted into the track

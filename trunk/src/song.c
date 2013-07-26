@@ -2228,6 +2228,22 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				return 1;
 			}
 		break;
+		case EOF_RS_TONE_CHANGE:	//Tone change
+			if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{
+				count = sp->pro_guitar_track[tracknum]->tonechanges;
+				if(count < EOF_MAX_PHRASES)
+				{	//If EOF can store the tone change
+					if(name)
+					{	//If the tone name isn't NULL, add the change to the project
+						sp->pro_guitar_track[tracknum]->tonechange[count].start_pos = start;
+						(void) ustrcpy(sp->pro_guitar_track[tracknum]->tonechange[count].name, name);
+						sp->pro_guitar_track[tracknum]->tonechanges++;
+					}
+				}
+			}
+			return 1;
+		break;
 	}
 	return 0;	//Return error
 }
@@ -2262,7 +2278,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};
 	unsigned long count,ctr,ctr2,tracknum;
 	unsigned long track_count,track_ctr,bookmark_count,bitmask,fingerdefinitions;
-	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,ignore_tuning;
+	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning;
 
 	#define EOFNUMINISTRINGTYPES 9
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
@@ -2777,7 +2793,11 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					{
 						has_popupmesages = 1;
 					}
-					(void) pack_iputw(has_solos + has_star_power + has_arpeggios + has_trills + has_tremolos + has_handpositions + has_popupmesages, fp);		//Write the number of section types
+					if(sp->pro_guitar_track[tracknum]->tonechanges)
+					{
+						has_tonechanges = 1;
+					}
+					(void) pack_iputw(has_solos + has_star_power + has_arpeggios + has_trills + has_tremolos + has_handpositions + has_popupmesages + has_tonechanges, fp);		//Write the number of section types
 					if(has_solos)
 					{	//Write solo sections
 						(void) pack_iputw(EOF_SOLO_SECTION, fp);			//Write solo section type
@@ -2867,6 +2887,19 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 							(void) pack_iputl(sp->pro_guitar_track[tracknum]->popupmessage[ctr].start_pos, fp);		//Write the message's start timestamp
 							(void) pack_iputl(sp->pro_guitar_track[tracknum]->popupmessage[ctr].end_pos, fp);		//Write the message's end timestamp
 							(void) pack_iputl(0, fp);						//Write section flags (not used)
+						}
+					}
+					if(has_tonechanges)
+					{	//Write tone changes
+						(void) pack_iputw(EOF_RS_TONE_CHANGE, fp);		//Write tone change message section type
+						(void) pack_iputl(sp->pro_guitar_track[tracknum]->tonechanges, fp);	//Write number of tone changes for this track
+						for(ctr=0; ctr < sp->pro_guitar_track[tracknum]->tonechanges; ctr++)
+						{	//For each tone change in the track
+							(void) eof_save_song_string_pf(sp->pro_guitar_track[tracknum]->tonechange[ctr].name, fp);		//Write tone name
+							(void) pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
+							(void) pack_iputl(sp->pro_guitar_track[tracknum]->tonechange[ctr].start_pos, fp);		//Write the change's start timestamp
+							(void) pack_iputl(0, fp);					//Write the change's end timestamp (not used)
+							(void) pack_iputl(0, fp);					//Write section flags (not used)
 						}
 					}
 				break;//Pro Guitar/Bass

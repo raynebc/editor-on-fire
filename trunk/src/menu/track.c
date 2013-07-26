@@ -73,11 +73,11 @@ void eof_prepare_track_menu(void)
 
 			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 			{	//If the active track has already had the difficulty limit removed
-				eof_track_rocksmith_menu[3].flags = D_SELECTED;	//Track>Rocksmith>Remove difficulty limit
+				eof_track_rocksmith_menu[4].flags = D_SELECTED;	//Track>Rocksmith>Remove difficulty limit
 			}
 			else
 			{
-				eof_track_rocksmith_menu[3].flags = 0;
+				eof_track_rocksmith_menu[4].flags = 0;
 			}
 
 			//Update checkmarks on the arrangement type submenu
@@ -1144,7 +1144,7 @@ int eof_track_rs_popup_add(void)
 	char failed = 0;
 
 	if(!eof_song_loaded || !eof_song)
-		return 1;	//Do not allow this function to run if a chart is not loaded or if an invalid catalog entry is selected
+		return 1;	//Do not allow this function to run if a chart is not loaded
 
 	eof_render();
 	eof_color_dialog(eof_song_rs_popup_add_dialog, gui_fg_color, gui_bg_color);
@@ -1428,8 +1428,8 @@ int eof_track_rs_popup_messages_delete(DIALOG * d)
 			eof_track_rs_popup_messages_list_strings = NULL;
 
 			/* remove the popup message, update the selection in the list box and exit */
-			eof_track_pro_guitar_delete_popup_message(eof_song->pro_guitar_track[tracknum], ctr);
-			eof_track_pro_guitar_sort_popup_messages(eof_song->pro_guitar_track[tracknum]);	//Re-sort the remaining popup messages
+			eof_track_pro_guitar_delete_popup_message(tp, ctr);
+			eof_track_pro_guitar_sort_popup_messages(tp);	//Re-sort the remaining popup messages
 			if((eof_fret_hand_position_list_dialog[1].d1 >= tp->popupmessages) && (tp->popupmessages > 0))
 			{	//If the last list item was deleted and others remain
 				eof_rs_popup_messages_dialog[1].d1--;	//Select the one before the one that was deleted, or the last message, whichever one remains
@@ -1596,11 +1596,19 @@ MENU eof_track_rocksmith_popup_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_track_rocksmith_tone_change_menu[] =
+{
+	{"&Add", eof_track_rs_tone_change_add, NULL, 0, NULL},
+	{"&List", eof_track_rs_tone_changes, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_track_rocksmith_menu[] =
 {
 	{"Fret &Hand positions", NULL, eof_song_proguitar_fret_hand_menu, 0, NULL},
 	{"&Popup messages", NULL, eof_track_rocksmith_popup_menu, 0, NULL},
 	{"&Arrangement type", NULL, eof_track_rocksmith_arrangement_menu, 0, NULL},
+	{"&Tone change", NULL, eof_track_rocksmith_tone_change_menu, 0, NULL},
 	{"Remove difficulty limit", eof_track_rocksmith_toggle_difficulty_limit, NULL, 0, NULL},
 	{"Insert new difficulty", eof_track_rocksmith_insert_difficulty, NULL, 0, NULL},
 	{"Delete active difficulty", eof_track_rocksmith_delete_difficulty, NULL, 0, NULL},
@@ -2478,4 +2486,377 @@ int eof_menu_track_highlight_arpeggios(void)
 	}
 
 	return 1;
+}
+
+DIALOG eof_track_rs_tone_change_add_dialog[] =
+{
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                     (dp2) (dp3) */
+	{ d_agup_window_proc,    0,   0,   200, 116, 0,   0,   0,    0,      0,   0,   "Rocksmith tone change", NULL, NULL },
+	{ d_agup_text_proc,      12,  30,  60,  12,  0,   0,   0,    0,      0,   0,   "Tone key name:",        NULL, NULL },
+	{ d_agup_edit_proc,      12,  46,  176, 20,  2,   23,  0,    0,      EOF_SECTION_NAME_LENGTH,   0, eof_etext, NULL, NULL },
+	{ d_agup_button_proc,    12,  76,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                    NULL, NULL },
+	{ d_agup_button_proc,    110, 76,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                NULL, NULL },
+	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                    NULL, NULL }
+};
+
+int eof_track_rs_tone_change_add(void)
+{
+	if(!eof_song_loaded || !eof_song)
+		return 1;	//Do not allow this function to run if a chart is not loaded
+
+	eof_render();
+	eof_color_dialog(eof_track_rs_tone_change_add_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_track_rs_tone_change_add_dialog);
+
+	(void) ustrcpy(eof_etext, "");
+	if(eof_popup_dialog(eof_track_rs_tone_change_add_dialog, 2) == 3)
+	{	//User clicked OK
+		if(eof_etext[0] != '\0')
+		{	//If a tone key name is specified
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			(void) eof_track_add_section(eof_song, eof_selected_track, EOF_RS_TONE_CHANGE, 0, eof_music_pos - eof_av_delay, 0, 0, eof_etext);
+		}
+	}
+
+	return 1;
+}
+
+char **eof_track_rs_tone_changes_list_strings = NULL;	//Stores allocated strings for eof_track_rs_tone_changes()
+char eof_track_rs_tone_changes_dialog_undo_made = 0;	//Used to track whether an undo state was made in this dialog
+char eof_track_rs_tone_changes_dialog_string[25] = {0};	//The title string for the RS tone changes dialog
+
+DIALOG eof_track_rs_tone_changes_dialog[] =
+{
+	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
+	{ d_agup_window_proc,0,   48,  400, 237, 2,   23,  0,    0,      0,   0,   eof_track_rs_tone_changes_dialog_string,NULL, NULL },
+	{ d_agup_list_proc,  12,  84,  300, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_track_rs_tone_changes_list,NULL, NULL },
+	{ d_agup_push_proc,  320, 84,  68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, (void *)eof_track_rs_tone_changes_delete },
+	{ d_agup_push_proc,  320, 124, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete all",   NULL, (void *)eof_track_rs_tone_changes_delete_all },
+	{ d_agup_push_proc,  320, 164, 68,  28,  2,   23,  's',  D_EXIT, 0,   0,   "&Seek to",     NULL, (void *)eof_track_rs_tone_changes_seek },
+	{ d_agup_push_proc,  320, 204, 68,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",        NULL, (void *)eof_track_rs_tone_changes_edit },
+	{ d_agup_button_proc,12,  245, 90,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+char * eof_track_rs_tone_changes_list(int index, int * size)
+{
+	switch(index)
+	{
+		case -1:
+		{
+			unsigned long tonechanges = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum]->tonechanges;
+			*size = tonechanges;
+			(void) snprintf(eof_track_rs_tone_changes_dialog_string, sizeof(eof_track_rs_tone_changes_dialog_string) - 1, "Rocksmith tone changes (%lu)", tonechanges);
+			break;
+		}
+		default:
+		{
+			return eof_track_rs_tone_changes_list_strings[index];
+		}
+	}
+	return NULL;
+}
+
+void eof_track_rebuild_rs_tone_changes_list_strings(void)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long tracknum, ctr;
+	size_t stringlen;
+
+	if(!eof_song_loaded || !eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return;	//Do not allow this function to run if a chart is not loaded or a pro guitar/bass track is not active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+	eof_track_rs_tone_changes_list_strings = malloc(sizeof(char *) * tp->tonechanges);	//Allocate enough pointers to have one for each tone change
+
+	for(ctr = 0; ctr < tp->tonechanges; ctr++)
+	{	//For each tone change
+		stringlen = (size_t)snprintf(NULL, 0, "%lums : %s", tp->tonechange[ctr].start_pos, tp->tonechange[ctr].name) + 1;	//Find the number of characters needed to snprintf this string
+		eof_track_rs_tone_changes_list_strings[ctr] = malloc(stringlen + 1);	//Allocate memory to build the string
+		if(!eof_track_rs_tone_changes_list_strings[ctr])
+		{
+			allegro_message("Error allocating memory");
+			while(ctr > 0)
+			{	//Free previously allocated strings
+				free(eof_track_rs_tone_changes_list_strings[ctr - 1]);
+				ctr--;
+			}
+			free(eof_track_rs_tone_changes_list_strings);
+			eof_track_rs_tone_changes_list_strings = NULL;
+			return;
+		}
+		(void) snprintf(eof_track_rs_tone_changes_list_strings[ctr], stringlen, "%lums : %s", tp->tonechange[ctr].start_pos, tp->tonechange[ctr].name);
+	}
+}
+
+int eof_track_find_effective_rs_tone_change(unsigned long pos, unsigned long *changenum)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long tracknum, ctr;
+	int found = 0;
+
+	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !changenum)
+		return 0;	//Return false if a pro guitar track isn't active or parameters are invalid
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+
+	for(ctr = 0; ctr < tp->tonechanges; ctr++)
+	{	//For each tone change
+		if(pos >= tp->tonechange[ctr].start_pos)
+		{	//If the specified position is at or after this tone change
+			*changenum = ctr;	//Store the result
+			found = 1;
+		}
+	}
+
+	return found;	//Return found status
+}
+
+
+int eof_track_rs_tone_changes(void)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long tracknum, ctr, tonechange;
+
+	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return 1;	//Do not allow this function to run if a pro guitar track isn't active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+	eof_track_pro_guitar_sort_tone_changes(tp);	//Re-sort the tone changes
+
+	//Allocate and build the strings for the phrases
+	eof_track_rebuild_rs_tone_changes_list_strings();
+	if(eof_track_find_effective_rs_tone_change(eof_music_pos - eof_av_delay, &tonechange))
+	{	//If a tone change had been placed at or before the current seek position
+		eof_track_rs_tone_changes_dialog[1].d1 = tonechange;	//Pre-select the tone change from the list
+	}
+
+	//Call the dialog
+	eof_clear_input();
+	eof_track_rs_tone_changes_dialog_undo_made = 0;	//Reset this condition
+	eof_color_dialog(eof_track_rs_tone_changes_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_track_rs_tone_changes_dialog);
+	(void) eof_popup_dialog(eof_track_rs_tone_changes_dialog, 0);
+
+	//Cleanup
+	for(ctr = 0; ctr < tp->tonechanges; ctr++)
+	{	//Free previously allocated strings
+		free(eof_track_rs_tone_changes_list_strings[ctr]);
+	}
+	free(eof_track_rs_tone_changes_list_strings);
+	eof_track_rs_tone_changes_list_strings = NULL;
+
+	return 1;
+}
+
+int eof_song_qsort_tone_changes(const void * e1, const void * e2)
+{
+	EOF_PHRASE_SECTION * thing1 = (EOF_PHRASE_SECTION *)e1;
+	EOF_PHRASE_SECTION * thing2 = (EOF_PHRASE_SECTION *)e2;
+
+	//Sort by timestamp
+	if(thing1->start_pos < thing2->start_pos)
+	{
+		return -1;
+	}
+	else if(thing1->start_pos > thing2->start_pos)
+	{
+		return 1;
+	}
+
+	//They are equal
+	return 0;
+}
+
+void eof_track_pro_guitar_sort_tone_changes(EOF_PRO_GUITAR_TRACK* tp)
+{
+ 	eof_log("eof_track_pro_guitar_sort_tone_changes() entered", 1);
+
+	if(tp)
+	{
+		qsort(tp->tonechange, (size_t)tp->tonechanges, sizeof(EOF_PHRASE_SECTION), eof_song_qsort_tone_changes);
+	}
+}
+
+void eof_track_pro_guitar_delete_tone_change(EOF_PRO_GUITAR_TRACK *tp, unsigned long index)
+{
+	unsigned long ctr;
+ 	eof_log("eof_track_pro_guitar_delete_tone_change() entered", 1);
+
+	if(tp && (index < tp->tonechanges))
+	{
+		tp->tonechange[index].name[0] = '\0';	//Empty the name string
+		for(ctr = index; ctr < tp->tonechanges; ctr++)
+		{
+			memcpy(&tp->tonechange[ctr], &tp->tonechange[ctr + 1], sizeof(EOF_PHRASE_SECTION));
+		}
+		tp->tonechanges--;
+	}
+}
+
+int eof_track_rs_tone_changes_delete(DIALOG * d)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long tracknum, ctr, ctr2;
+
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
+	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return D_O_K;	//Do not allow this function to run if a pro guitar track isn't active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+	if(tp->tonechanges == 0)
+		return D_O_K;
+
+	for(ctr = 0; ctr < tp->tonechanges; ctr++)
+	{	//For each tone change
+		if(ctr == eof_track_rs_tone_changes_dialog[1].d1)
+		{	//If this is the tone change selected from the list
+			if(!eof_track_rs_tone_changes_dialog_undo_made)
+			{	//If an undo state hasn't been made yet since launching this dialog
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				eof_track_rs_tone_changes_dialog_undo_made = 1;
+			}
+
+			//Release strings
+			for(ctr2 = 0; ctr2 < tp->tonechanges; ctr2++)
+			{	//Free previously allocated strings
+				free(eof_track_rs_tone_changes_list_strings[ctr2]);
+			}
+			free(eof_track_rs_tone_changes_list_strings);
+			eof_track_rs_tone_changes_list_strings = NULL;
+
+			/* remove the tone change, update the selection in the list box and exit */
+			eof_track_pro_guitar_delete_tone_change(tp, ctr);
+			eof_track_pro_guitar_sort_tone_changes(tp);	//Re-sort the remaining tone changes
+			if((eof_track_rs_tone_changes_dialog[1].d1 >= tp->tonechanges) && (tp->tonechanges > 0))
+			{	//If the last list item was deleted and others remain
+				eof_track_rs_tone_changes_dialog[1].d1--;	//Select the one before the one that was deleted, or the last message, whichever one remains
+			}
+		}
+	}
+
+	//Rebuild the strings for the dialog menu
+	eof_track_rebuild_rs_tone_changes_list_strings();
+
+	return D_REDRAW;	//Have Allegro redraw the dialog
+}
+
+int eof_track_rs_tone_changes_edit(DIALOG * d)
+{
+	unsigned long i, tracknum;
+	EOF_PHRASE_SECTION *ptr;
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
+
+	if(!eof_song_loaded || !eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return D_O_K;	//Do not allow this function to run if a chart is not loaded or a pro guitar/bass track is not active
+
+	eof_color_dialog(eof_track_rs_tone_change_add_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_track_rs_tone_change_add_dialog);
+
+	//Initialize the dialog fields
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+	if(eof_track_rs_tone_changes_dialog[1].d1 >= tp->tonechanges)
+		return D_O_K;	//Invalid tone change selected in list
+	ptr = &(tp->tonechange[eof_track_rs_tone_changes_dialog[1].d1]);
+	(void) ustrcpy(eof_etext, ptr->name);
+
+	eof_clear_input();
+	if(eof_popup_dialog(eof_track_rs_tone_change_add_dialog, 2) == 3)
+	{	//User clicked OK
+		if(eof_etext[0] != '\0')
+		{	//If a tone key name is specified
+			if(!eof_track_rs_tone_changes_dialog_undo_made)
+			{	//If an undo state hasn't been made yet since launching this dialog
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				eof_track_rs_tone_changes_dialog_undo_made = 1;
+			}
+			(void) ustrncpy(ptr->name, eof_etext, EOF_SECTION_NAME_LENGTH);	//Update the tone name string
+			ptr->name[EOF_SECTION_NAME_LENGTH] = '\0';	//Guarantee NULL termination
+		}
+	}
+
+	eof_track_pro_guitar_sort_tone_changes(tp);	//Re-sort the tone changes
+
+	//Release strings
+	for(i = 0; i < tp->tonechanges; i++)
+	{	//Free previously allocated strings
+		free(eof_track_rs_tone_changes_list_strings[i]);
+	}
+	free(eof_track_rs_tone_changes_list_strings);
+	eof_track_rs_tone_changes_list_strings = NULL;
+
+	//Rebuild the strings for the dialog menu
+	eof_track_rebuild_rs_tone_changes_list_strings();
+
+	return D_REDRAW;	//Have Allegro redraw the dialog
+}
+
+int eof_track_rs_tone_changes_delete_all(DIALOG * d)
+{
+	unsigned long i, tracknum;
+	int junk;
+
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return D_O_K;
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	if(eof_song->pro_guitar_track[tracknum]->tonechanges == 0)
+	{
+		return D_O_K;
+	}
+	for(i = eof_song->pro_guitar_track[tracknum]->tonechanges; i > 0; i--)
+	{	//For each tone change (in reverse order)
+		if(!eof_track_rs_tone_changes_dialog_undo_made)
+		{	//If an undo state hasn't been made yet since launching this dialog
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			eof_track_rs_tone_changes_dialog_undo_made = 1;
+		}
+		eof_track_pro_guitar_delete_tone_change(eof_song->pro_guitar_track[tracknum], i - 1);
+	}
+
+	(void) dialog_message(eof_track_rs_tone_changes_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
+	return D_REDRAW;
+}
+
+int eof_track_rs_tone_changes_seek(DIALOG * d)
+{
+	unsigned long tracknum;
+	EOF_PRO_GUITAR_TRACK *tp;
+	int junk;
+
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return D_O_K;
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+	if(eof_track_rs_tone_changes_dialog[1].d1 >= tp->tonechanges)
+	{	//Invalid tone change selected
+		return D_O_K;
+	}
+	eof_set_seek_position(tp->tonechange[eof_track_rs_tone_changes_dialog[1].d1].start_pos + eof_av_delay);	//Seek to the tone change's timestamp
+	eof_render();	//Redraw screen
+	(void) dialog_message(eof_track_rs_tone_changes_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
+
+	return D_O_K;
 }

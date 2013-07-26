@@ -240,6 +240,7 @@ typedef struct
 #define EOF_SLIDER_SECTION				15
 #define EOF_FRET_HAND_POS_SECTION       16
 #define EOF_RS_POPUP_MESSAGE            17
+#define EOF_RS_TONE_CHANGE              18
 
 #define EOF_TRACK_FLAG_SIX_LANES		1
 	//Specifies if the track has open strumming enabled (PART BASS) or a fifth drum lane enabled (PART DRUMS)
@@ -351,6 +352,10 @@ typedef struct
 	/* popup messages */
 	EOF_PHRASE_SECTION popupmessage[EOF_MAX_NOTES];
 	unsigned long popupmessages;
+
+	/* tone changes */
+	EOF_PHRASE_SECTION tonechange[EOF_MAX_PHRASES];
+	unsigned long tonechanges;
 
 } EOF_PRO_GUITAR_TRACK;
 
