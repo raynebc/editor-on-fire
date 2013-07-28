@@ -1623,24 +1623,27 @@ int eof_pro_guitar_note_fingering_valid(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 	{	//For each string supported by this track
 		if(tp->note[note]->note & bitmask)
 		{	//If this string is used
-			if((tp->note[note]->frets[ctr] & 0x7F) != 0)
-			{	//If the string isn't being played open
-				all_strings_open = 0;	//Track that the note used at least one fretted string
-				if(tp->note[note]->finger[ctr] != 0)
-				{	//If this string has a finger definition
-					string_finger_defined = 1;	//Track that a string was defined
+			if((tp->note[note]->frets[ctr] & 0x80) == 0)
+			{	//If the string isn't muted
+				if(tp->note[note]->frets[ctr] != 0)
+				{	//If the string isn't being played open, it requires a fingering
+					all_strings_open = 0;	//Track that the note used at least one fretted string
+					if(tp->note[note]->finger[ctr] != 0)
+					{	//If this string has a finger definition
+						string_finger_defined = 1;	//Track that a string was defined
+					}
+					else
+					{	//This string does not have a finger definition
+						string_finger_undefined = 1;	//Track that a string was undefined
+					}
 				}
 				else
-				{	//This string does not have a finger definition
-					string_finger_undefined = 1;	//Track that a string was undefined
-				}
-			}
-			else
-			{	//If the string is being played open, it must not have a finger defined
-				if(tp->note[note]->finger[ctr] != 0)
-				{	//If this string has a finger definition
-					string_finger_defined = string_finger_undefined = 1;	//Set an error condition
-					break;
+				{	//If the string is being played open, it must not have a finger defined
+					if(tp->note[note]->finger[ctr] != 0)
+					{	//If this string has a finger definition
+						string_finger_defined = string_finger_undefined = 1;	//Set an error condition
+						break;
+					}
 				}
 			}
 		}

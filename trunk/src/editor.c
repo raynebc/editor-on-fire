@@ -4680,15 +4680,16 @@ void eof_render_editor_window_2(void)
 			eof_music_pos = eof_music_pos2;	//Change to that position
 		}
 		(void) eof_menu_track_selected_track_number(eof_selected_track2, 0);	//Change to the track of the secondary piano roll, update coordinates, color set, etc.
-		eof_note_type = eof_note_type2;					//Set the secondary piano roll's difficulty
-		eof_render_editor_window(eof_window_editor2);	//Render this track difficulty to the secondary piano roll screen
+		eof_note_type = eof_note_type2;								//Set the secondary piano roll's difficulty
+		eof_render_editor_window(eof_window_editor2);				//Render this track difficulty to the secondary piano roll screen
 
 		(void) eof_menu_track_selected_track_number(temp_track, 0);	//Restore the active track number
 		eof_note_type = temp_type;									//Restore the active difficulty
 		eof_music_pos = temp_pos;									//Restore the active position
 		eof_selection.current = temp_selected;						//Restore the selected note
 		eof_hover_note = temp_hover;								//Restore the hover note
-	}
+		eof_process_beat_statistics(eof_song, eof_selected_track);	//Rebuild the beat stats to reflect the primary piano roll so edit operations work as expected
+	}//If the secondary piano roll is to be displayed
 }
 
 unsigned long eof_determine_piano_roll_left_edge(void)
@@ -6061,8 +6062,8 @@ unsigned long eof_get_number_displayed_tabs(void)
 	{	//If a vocal track is active
 		numtabs = 1;
 	}
-	else if(eof_song->track[eof_selected_track]->numdiffs > 5)
-	{	//If the track has more than 5 difficulties, determine how many tabs will be displayed based on EOF's program window width
+	else if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+	{	//If the track's difficulty limit has been removed
 		//The tabs begin rendering 8 pixels from the left edge of the screen, end where the playback controls are rendered and need
 		// to allow two more pixels since the foreground tab is 2 pixels wider than background tabs
 		numtabs = (eof_screen_layout.controls_x - 10) / 80;	//Find the maximum number of displayable tabs

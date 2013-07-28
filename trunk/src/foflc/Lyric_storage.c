@@ -933,6 +933,9 @@ void PostProcessLyrics(void)
 	{	//For each line of lyrics
 		ctr=0;
 
+if(totallinectr == 30)
+puts("blarg");
+
 		if(lineptr->next != NULL)					//If there's another line of lyrics
 			if((lineptr->next)->prev != lineptr)	//If next line doesn't properly point backward to this line
 			{
