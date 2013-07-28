@@ -3,6 +3,71 @@ EOF Version History
 
 1.8:
 
+Added a user preference (Import dialogs recall last path)
+where, if enabled, will alter the starting folder for each of
+the MIDI/Feedback/GH/Lyric/GP/RS imports to be the folder
+containing the last successfull import of such a file (if the
+folder still exists), instead of always starting in the
+project directory.
+
+Added a keyboard shortcut (CTRL+SHIFT+Home) to seek to the
+first beat marker.
+
+Added a song_length INI tag that will give the length of the
+chart's audio in milliseconds.
+
+Fixed a bug where the selected beat number could become
+invalid when performing an undo after certain chart
+operations, leading to a crash.
+
+Added an "Edit>MIDI tones" feature that outputs MIDI notes to
+your computer's default MIDI device to play a synthesized
+version of the active pro guitar/bass track during playback,
+thanks to some code provided by quarnster.  When this feature
+is enabled, clicking on a pro guitar/bass note will sound the
+tones for the note.  A MIDI tone delay value can be specified
+in File>Settings that will allow MIDI tones to play back
+earlier than notes, in order to compensate for MIDI lag from
+factors outside of EOF.
+
+Improved the function to play the chart from the first to the
+last selected note (holding S while playing back the chart) by
+allowing the playback to loop as long as the S key remains
+held down.  Release the S key to allow playback to stop when
+the last selected note is reached.
+
+Updated EOF to display as many difficulty tabs as will fit in
+the program window, taking any custom width into account.
+
+Added logic in the Windows build so that the new chart wizard
+drops trailing space characters from the end of a user-defined
+project folder name, since Windows prevents such folders from
+working normally.
+
+Added logic so that if the configured song path no longer
+exists when EOF is opened, it reverts to the default location
+of EOF's program folder.
+
+Added various functions to the Edit>Selection menu to select
+or deselect notes using a wide variety of criteria.
+
+Added the ability to display a second piano roll with another
+track difficulty (Song>Second piano roll>).  This second piano
+roll is view-only, only the main piano roll will be editable.
+Its seek position stays synchronized with the active piano roll
+by default, but you can disable this by unchecking the
+"Sync with main piano roll" option.
+
+Increased the limit of time signature changes that could be
+exported to MIDI from 100 to 500.  The number of events that
+can be written to each MIDI track during save has been doubled,
+as in extreme cases, such as full-album charts, the limit had
+been reached.
+
+Added a Track menu and organized several track-specific
+functions from the Song menu into it, including a new function
+to erase the track's content.
+
 Added the ability to display a spectrogram of the loaded audio
 (Song>Spectrogram>Show). The code to generate and display the
 spectrogram was graciously provided by 5of0, which utilizes the
@@ -82,10 +147,6 @@ Added support for the album tag in song properties.
 
 Added a keyboard shortcut for Note>Resnap (CTRL+SHIFT+R).
 
-Added a "Precise select like" function to the Edit>Selection menu
-that is similar to "Select like", but also requires notes to have
-the same statuses in order to match.
-
 Added a function to remove all statuses from selected notes
 (Note>Remove all statuses).
 
@@ -99,7 +160,8 @@ You can use the zoom in/out shortcuts (+ and - on the numberpad) to
 zoom in and out of a custom zoom level.  If a custom zoom is in
 effect when EOF closes, it is restored when re-opening EOF.
 
-Increased the limit of each type of phrase to 300.
+Increased the limit of each type of phrase to 600, as users had run
+into limits on various items in extreme cases.
 
 Added cleanup logic that would ensure expert+ bass notes are only
 defined and written for the Expert drum track.
@@ -147,10 +209,6 @@ Fixed memory leaks that could occur during a failed lyric export.
 Organized the preferences dialog menu, making space for many new
 preferences.
 
-Added a function (Edit>Selection>Select all shorter than) to select
-all notes in the active track difficulty that are shorter than a
-specified length.
-
 Updated the fret catalog to display the position of the active entry.
 
 Added the ability to edit the start and end positions of the active
@@ -169,7 +227,9 @@ fingering, bend strength, slide end position, pop and slap bass
 guitar technique and Rocksmith events.  New functions to define
 and auto-generate several of these has also been added.  The new
 "Song>Pro Guitar>Remove difficulty limit" function enables up to
-255 difficulties to be authored for a pro guitar/bass track.
+255 difficulties to be authored for a pro guitar/bass track.  A
+function to import Rocksmith XML files has been added to the File
+menu.
 
 Improved INI import so that for boolean tags (ie. "lyrics ="),
 having a value of the word "true" (case insensitive) or "1" are both
@@ -199,7 +259,9 @@ all.  If notes exist beyond the chart's audio during save, EOF will
 display a warning, indicating the first track discovered to have this
 issue.
 
-Added Guitar Pro file import capability.
+Added Guitar Pro file import capability.  Go PlayAlong XML files
+(which define synchronization for a Guitar Pro file) can also be
+imported.
 
 Updated 3D rendering to display tempo and time signature changes.
 
@@ -501,7 +563,9 @@ longer have to remove the legacy notes and existing text events, the
 for building the pro guitar upgrade package.  "notes_rbn.mid" will
 have the correct contents for building a package in Magma, even
 removing unsupported tracks such as the dance and pro guitar/bass
-tracks.
+tracks.  "notes_c3.mid" will also be written if the project contains
+pro guitar or bass tracks, since the C3 release of Magma can compile
+charts containing pro guitar and bass.
 
 Added support for slider sections, for use in Phase Shift.
 

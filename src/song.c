@@ -2587,7 +2587,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			}
 
 			tracknum = sp->track[track_ctr]->tracknum;
-			has_solos = has_star_power = has_lyric_phrases = has_arpeggios = has_trills = has_tremolos = has_sliders = has_handpositions = has_popupmesages = 0;
+			has_solos = has_star_power = has_lyric_phrases = has_arpeggios = has_trills = has_tremolos = has_sliders = has_handpositions = has_popupmesages = has_tonechanges = 0;
 			switch(sp->track[track_ctr]->track_format)
 			{	//Perform the appropriate logic to write this format of track
 				case EOF_LEGACY_TRACK_FORMAT:	//Legacy (non pro guitar, non pro bass, non pro keys, pro or non pro drums)
@@ -6307,7 +6307,7 @@ void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char di
 		}
 	}
 
-	//Delete popup messages and hand positions
+	//Delete popup messages, hand positions and tones
 	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If a pro guitar track was specified
 		EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[tracknum];
@@ -6315,6 +6315,7 @@ void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char di
 		if(!diffonly)
 		{	//If the entire track is to be erased
 			tp->popupmessages = 0;	//Remove all of the track's popup messages
+			tp->tonechanges = 0;	//Remove all of the track's tone changes
 		}
 		for(i = tp->handpositions; i > 0; i--)
 		{	//For each of the track's fret hand positions, in reverse order
