@@ -128,6 +128,7 @@ int         eof_render_bass_drum_in_lane = 0;	//If nonzero, the 3D rendering wil
 int         eof_inverted_chords_slash = 0;
 int         eof_render_3d_rs_chords = 0;	//If nonzero, the 3D rendering will draw a rectangle to represent chords that will export to XML as repeats (Rocksmith), and 3D chord tails will not be rendered
 int         eof_imports_recall_last_path = 0;	//If nonzero, various import dialogs will initialize the dialog to the path containing the last chosen import, instead of initializing to the project's folder
+int         eof_rewind_at_end = 1;				//If nonzero, chart rewinds when the end of chart is reached during playback
 int         eof_smooth_pos = 1;
 int         eof_input_mode = EOF_INPUT_PIANO_ROLL;
 int         eof_windowed = 1;
@@ -334,6 +335,7 @@ char eof_log_level = 0;		//Is set to 0 if logging is disabled
 char enable_logging = 1;	//Is set to 0 if logging is disabled
 
 int eof_custom_zoom_level = 0;	//Tracks any user-defined custom zoom level
+char eof_display_flats = 0;		//Used to allow eof_get_tone_name() to return note names containing flats.  By default, display as sharps instead
 
 void eof_debug_message(char * text)
 {
@@ -643,7 +645,6 @@ int eof_set_display_mode_preset_custom_width(int mode, unsigned long width)
 
 int eof_set_display_mode(unsigned long width, unsigned long height)
 {
-	unsigned long default_zoom_level;
 	int mode;
 
 	eof_log("eof_set_display_mode() entered", 1);
@@ -688,7 +689,6 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 			eof_screen_width_default = 640;
 			eof_screen_width = width;
 			eof_screen_height = 480;
-			default_zoom_level = 10;
 			eof_screen_layout.string_space_unscaled = 20;
 			eof_screen_layout.vocal_y = 96;
 			eof_screen_layout.vocal_tail_size = 4;
@@ -709,7 +709,6 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 			eof_screen_width_default = 800;
 			eof_screen_width = width;
 			eof_screen_height = 600;
-			default_zoom_level = 8;
 			eof_screen_layout.string_space_unscaled = 30;
 			eof_screen_layout.vocal_y = 128;
 			eof_screen_layout.vocal_tail_size = 6;
@@ -730,7 +729,6 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 			eof_screen_width_default = 1024;
 			eof_screen_width = width;
 			eof_screen_height = 768;
-			default_zoom_level = 5;
 			eof_screen_layout.string_space_unscaled = 48;
 			eof_screen_layout.vocal_y = 197;
 			eof_screen_layout.vocal_tail_size = 11;
@@ -817,7 +815,6 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 	eof_screen_layout.buffered_preview = 0;
 	eof_screen_layout.controls_x = eof_screen_width - 197;
 	eof_screen_layout.mode = mode;
-	eof_menu_edit_zoom_level(default_zoom_level);
 	eof_vanish_x = 160;
 	eof_set_3d_projection();
 	set_display_switch_mode(SWITCH_BACKGROUND);
@@ -4552,8 +4549,13 @@ int main(int argc, char * argv[])
 			int ret = alogg_poll_ogg(eof_music_track);
 			eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 			eof_play_queued_midi_tones();	//Played cued MIDI tones for pro guitar/bass notes
-			if((ret == ALOGG_POLL_PLAYJUSTFINISHED) || (ret == ALOGG_POLL_NOTPLAYING) || (ret == ALOGG_POLL_FRAMECORRUPT) || (ret == ALOGG_POLL_INTERNALERROR) || (eof_music_actual_pos > alogg_get_length_msecs_ogg(eof_music_track)))
-			{	//If ALOGG reported a completed/error condition or if the reported position is greater than the length of the audio
+			if((ret == ALOGG_POLL_PLAYJUSTFINISHED) && !eof_rewind_at_end)
+			{	//If the end of the chart has been reached during playback, and the user did not want the chart to automatically rewind
+				(void) eof_menu_song_seek_end();	//Re-seek to end of the audio
+				eof_music_paused = 1;
+			}
+			else if((ret == ALOGG_POLL_PLAYJUSTFINISHED) || (ret == ALOGG_POLL_NOTPLAYING) || (ret == ALOGG_POLL_FRAMECORRUPT) || (ret == ALOGG_POLL_INTERNALERROR) || (eof_music_actual_pos > alogg_get_length_msecs_ogg(eof_music_track)))
+			{	//Otherwise if ALOGG reported a completed/error condition or if the reported position is greater than the length of the audio
 				eof_music_pos = eof_music_actual_pos + eof_av_delay;
 				eof_music_paused = 1;
 			}

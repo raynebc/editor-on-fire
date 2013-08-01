@@ -53,9 +53,11 @@ MENU eof_song_seek_bookmark_menu[] =
 
 MENU eof_song_seek_menu[] =
 {
+	{"&Bookmark", NULL, eof_song_seek_bookmark_menu, 0, NULL},
 	{"Start\tHome", eof_menu_song_seek_start, NULL, 0, NULL},
 	{"End of audio\tEnd", eof_menu_song_seek_end, NULL, 0, NULL},
 	{"End of chart\t" CTRL_NAME "+Shift+End", eof_menu_song_seek_chart_end, NULL, 0, NULL},
+	{"&Catalog entry", eof_menu_song_seek_catalog_entry, NULL, 0, NULL},
 	{"Rewind\tR", eof_menu_song_seek_rewind, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"First Note\t" CTRL_NAME "+Home", eof_menu_song_seek_first_note, NULL, 0, NULL},
@@ -74,9 +76,6 @@ MENU eof_song_seek_menu[] =
 	{"Previous Anchor\t" CTRL_NAME "+Shift+PGUP", eof_menu_song_seek_previous_anchor, NULL, 0, NULL},
 	{"Next Anchor\t" CTRL_NAME "+Shift+PGDN", eof_menu_song_seek_next_anchor, NULL, 0, NULL},
 	{"Beat/&Measure", eof_menu_song_seek_beat_measure, NULL, 0, NULL},
-	{"", NULL, NULL, 0, NULL},
-	{"&Bookmark", NULL, eof_song_seek_bookmark_menu, 0, NULL},
-	{"&Catalog entry", eof_menu_song_seek_catalog_entry, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -287,38 +286,66 @@ void eof_prepare_song_menu(void)
 		}
 		eof_track_selected_menu[eof_selected_track-1].flags = D_SELECTED;	//Track numbering begins at 1 instead of 0
 
-		/* seek start */
-		if(eof_music_pos == eof_av_delay)
-		{	//If the seek position is already at the start of the chart
-			eof_song_seek_menu[0].flags = D_DISABLED;	//Seek start
-			eof_song_seek_menu[16].flags = D_DISABLED;	//Previous beat
+		/* seek bookmark */
+		if(bmcount == 0)
+		{
+			eof_song_seek_menu[0].flags = D_DISABLED;	//Bookmark
 		}
 		else
 		{
 			eof_song_seek_menu[0].flags = 0;
-			eof_song_seek_menu[16].flags = 0;
+		}
+
+		/* seek start */
+		if(eof_music_pos == eof_av_delay)
+		{	//If the seek position is already at the start of the chart
+			eof_song_seek_menu[1].flags = D_DISABLED;	//Seek start
+			eof_song_seek_menu[18].flags = D_DISABLED;	//Previous beat
+		}
+		else
+		{
+			eof_song_seek_menu[1].flags = 0;
+			eof_song_seek_menu[18].flags = 0;
 		}
 
 		/* seek end */
 		if(eof_music_pos >= eof_music_length - 1)
 		{	//If the seek position is already at the end of the chart
-			eof_song_seek_menu[1].flags = D_DISABLED;	//Seek end
-			eof_song_seek_menu[17].flags = D_DISABLED;	//Next beat
+			eof_song_seek_menu[2].flags = D_DISABLED;	//Seek end
+			eof_song_seek_menu[19].flags = D_DISABLED;	//Next beat
 		}
 		else
 		{
-			eof_song_seek_menu[1].flags = 0;
-			eof_song_seek_menu[17].flags = 0;
+			eof_song_seek_menu[2].flags = 0;
+			eof_song_seek_menu[19].flags = 0;
+		}
+
+		/* show catalog */
+		/* edit name */
+		/* seek catalog entry */
+		if(eof_song->catalog->entries > 0)
+		{	//If there are any fret catalog entries
+			eof_catalog_menu[0].flags = eof_catalog_menu[0].flags & D_SELECTED;	//Enable "Show Catalog" and check it if it's already checked
+			eof_catalog_menu[2].flags = 0;		//Enable "Edit name"
+			eof_catalog_menu[3].flags = 0;		//Enable "Edit timing"
+			eof_song_seek_menu[4].flags = 0;	//Enable Seek>Catalog entry
+		}
+		else
+		{
+			eof_catalog_menu[0].flags = D_DISABLED;	//Disable "Show catalog"
+			eof_catalog_menu[2].flags = D_DISABLED;	//Disable "Edit name"
+			eof_catalog_menu[3].flags = D_DISABLED;	//Disable "Edit timing"
+			eof_song_seek_menu[4].flags = D_DISABLED;	//Disable Seek>Catalog entry
 		}
 
 		/* rewind */
 		if(eof_music_pos == eof_music_rewind_pos)
 		{
-			eof_song_seek_menu[3].flags = D_DISABLED;	//Rewind
+			eof_song_seek_menu[5].flags = D_DISABLED;	//Rewind
 		}
 		else
 		{
-			eof_song_seek_menu[3].flags = 0;
+			eof_song_seek_menu[5].flags = 0;
 		}
 		if(eof_vocals_selected)
 		{
@@ -327,27 +354,27 @@ void eof_prepare_song_menu(void)
 				/* seek first note */
 				if(eof_song->vocal_track[tracknum]->lyric[0]->pos == eof_music_pos - eof_av_delay)
 				{
-					eof_song_seek_menu[5].flags = D_DISABLED;	//First note
+					eof_song_seek_menu[7].flags = D_DISABLED;	//First note
 				}
 				else
 				{
-					eof_song_seek_menu[5].flags = 0;
+					eof_song_seek_menu[7].flags = 0;
 				}
 
 				/* seek last note */
 				if(eof_song->vocal_track[tracknum]->lyric[eof_song->vocal_track[tracknum]->lyrics - 1]->pos == eof_music_pos - eof_av_delay)
 				{
-					eof_song_seek_menu[6].flags = D_DISABLED;	//Last note
+					eof_song_seek_menu[8].flags = D_DISABLED;	//Last note
 				}
 				else
 				{
-					eof_song_seek_menu[6].flags = 0;
+					eof_song_seek_menu[8].flags = 0;
 				}
 			}
 			else
 			{
-				eof_song_seek_menu[5].flags = D_DISABLED;
-				eof_song_seek_menu[6].flags = D_DISABLED;
+				eof_song_seek_menu[7].flags = D_DISABLED;
+				eof_song_seek_menu[8].flags = D_DISABLED;
 			}
 		}
 		else
@@ -357,84 +384,84 @@ void eof_prepare_song_menu(void)
 				/* seek first note */
 				if((firstnote >= 0) && (eof_get_note_pos(eof_song, eof_selected_track, firstnote) == eof_music_pos - eof_av_delay))
 				{
-					eof_song_seek_menu[5].flags = D_DISABLED;	//First note
+					eof_song_seek_menu[7].flags = D_DISABLED;	//First note
 				}
 				else
 				{
-					eof_song_seek_menu[5].flags = 0;
+					eof_song_seek_menu[7].flags = 0;
 				}
 
 				/* seek last note */
 				if((lastnote >= 0) && (eof_get_note_pos(eof_song, eof_selected_track, lastnote) == eof_music_pos - eof_av_delay))
 				{
-					eof_song_seek_menu[6].flags = D_DISABLED;	//Last note
+					eof_song_seek_menu[8].flags = D_DISABLED;	//Last note
 				}
 				else
 				{
-					eof_song_seek_menu[6].flags = 0;
+					eof_song_seek_menu[8].flags = 0;
 				}
 			}
 			else
 			{
-				eof_song_seek_menu[5].flags = D_DISABLED;
-				eof_song_seek_menu[6].flags = D_DISABLED;
+				eof_song_seek_menu[7].flags = D_DISABLED;
+				eof_song_seek_menu[8].flags = D_DISABLED;
 			}
 		}
 
 		/* seek previous note */
 		if(seekp)
 		{
-			eof_song_seek_menu[7].flags = 0;	//Previous note
+			eof_song_seek_menu[9].flags = 0;	//Previous note
 		}
 		else
 		{
-			eof_song_seek_menu[7].flags = D_DISABLED;
+			eof_song_seek_menu[9].flags = D_DISABLED;
 		}
 
 		/* seek next note */
 		if(seekn)
 		{
-			eof_song_seek_menu[8].flags = 0;	//Next note
+			eof_song_seek_menu[10].flags = 0;	//Next note
 		}
 		else
 		{
-			eof_song_seek_menu[8].flags = D_DISABLED;
+			eof_song_seek_menu[10].flags = D_DISABLED;
 		}
 
 		/* seek previous screen */
 		if(eof_music_pos <= eof_av_delay)
 		{
-			eof_song_seek_menu[10].flags = D_DISABLED;	//Previous screen
+			eof_song_seek_menu[12].flags = D_DISABLED;	//Previous screen
 		}
 		else
 		{
-			eof_song_seek_menu[10].flags = 0;
+			eof_song_seek_menu[12].flags = 0;
 		}
 
 		/* seek next screen */
 		if(eof_music_pos >= eof_music_length - 1)
 		{
-			eof_song_seek_menu[11].flags = D_DISABLED;	//Next screen
+			eof_song_seek_menu[13].flags = D_DISABLED;	//Next screen
 		}
 		else
 		{
-			eof_song_seek_menu[11].flags = 0;
+			eof_song_seek_menu[13].flags = 0;
 		}
 
 		/* previous/next grid snap/anchor */
 		if(eof_snap_mode == EOF_SNAP_OFF)
 		{	//If grid snap is disabled
-			eof_song_seek_menu[12].flags = D_DISABLED;	//Previous grid snap
-			eof_song_seek_menu[13].flags = D_DISABLED;	//Next grid snap
-			eof_song_seek_menu[18].flags = 0;			//Previous anchor
-			eof_song_seek_menu[19].flags = 0;			//Next anchor
+			eof_song_seek_menu[14].flags = D_DISABLED;	//Previous grid snap
+			eof_song_seek_menu[15].flags = D_DISABLED;	//Next grid snap
+			eof_song_seek_menu[20].flags = 0;			//Previous anchor
+			eof_song_seek_menu[21].flags = 0;			//Next anchor
 		}
 		else
 		{
-			eof_song_seek_menu[12].flags = 0;			//Previous grid snap
-			eof_song_seek_menu[13].flags = 0;			//Next grid snap
-			eof_song_seek_menu[18].flags = D_DISABLED;	//Previous anchor
-			eof_song_seek_menu[19].flags = D_DISABLED;	//Next anchor
+			eof_song_seek_menu[14].flags = 0;			//Previous grid snap
+			eof_song_seek_menu[15].flags = 0;			//Next grid snap
+			eof_song_seek_menu[20].flags = D_DISABLED;	//Previous anchor
+			eof_song_seek_menu[21].flags = D_DISABLED;	//Next anchor
 		}
 
 		/* seek bookmark # */
@@ -451,16 +478,6 @@ void eof_prepare_song_menu(void)
 			}
 		}
 
-		/* seek bookmark */
-		if(bmcount == 0)
-		{
-			eof_song_seek_menu[22].flags = D_DISABLED;	//Bookmark
-		}
-		else
-		{
-			eof_song_seek_menu[22].flags = 0;
-		}
-
 		/* display semitones as flat */
 		if(eof_display_flats)
 		{
@@ -469,24 +486,6 @@ void eof_prepare_song_menu(void)
 		else
 		{
 			eof_song_menu[4].flags = 0;
-		}
-
-		/* show catalog */
-		/* edit name */
-		/* seek catalog entry */
-		if(eof_song->catalog->entries > 0)
-		{	//If there are any fret catalog entries
-			eof_catalog_menu[0].flags = eof_catalog_menu[0].flags & D_SELECTED;	//Enable "Show Catalog" and check it if it's already checked
-			eof_catalog_menu[2].flags = 0;		//Enable "Edit name"
-			eof_catalog_menu[3].flags = 0;		//Enable "Edit timing"
-			eof_song_seek_menu[23].flags = 0;	//Enable Seek>Catalog entry
-		}
-		else
-		{
-			eof_catalog_menu[0].flags = D_DISABLED;	//Disable "Show catalog"
-			eof_catalog_menu[2].flags = D_DISABLED;	//Disable "Edit name"
-			eof_catalog_menu[3].flags = D_DISABLED;	//Disable "Edit timing"
-			eof_song_seek_menu[23].flags = D_DISABLED;	//Disable Seek>Catalog entry
 		}
 
 		/* add catalog entry */
@@ -1925,6 +1924,25 @@ int eof_menu_audio_cues(void)
 	return 1;
 }
 
+int eof_display_flats_menu(void)
+{
+	eof_log("eof_display_flats_menu() entered", 1);
+
+	if(eof_display_flats)
+	{
+		eof_display_flats = 0;
+		eof_note_names = eof_note_names_sharp;	//Switch to displaying guitar chords with sharps
+		eof_slash_note_names = eof_slash_note_names_sharp;
+	}
+	else
+	{
+		eof_display_flats = 1;
+		eof_note_names = eof_note_names_flat;	//Switch to displaying guitar chords with flats
+		eof_slash_note_names = eof_slash_note_names_flat;
+	}
+	return 1;
+}
+
 DIALOG eof_waveform_settings_dialog[] =
 {
 	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                        (dp2) (dp3) */
@@ -2952,6 +2970,8 @@ int eof_raw_midi_dialog_add(DIALOG * d)
 		}
 		if(!eof_work_midi)
 		{
+			allegro_message("Error:  Invalid MIDI file");
+			(void) dialog_message(eof_raw_midi_tracks_dialog, MSG_DRAW, 0, &junk);	//Redraw the Manage raw MIDI tracks dialog
 			return 0;
 		}
 
@@ -2980,6 +3000,7 @@ int eof_raw_midi_dialog_add(DIALOG * d)
 				ptr = eof_get_raw_MIDI_data(eof_work_midi, ctr, delay);
 				if(!ptr)
 				{	//If the track was not read
+					allegro_message("Error parsing MIDI track");
 					(void) dialog_message(eof_raw_midi_tracks_dialog, MSG_DRAW, 0, &junk);	//Redraw the Manage raw MIDI tracks dialog
 					return 0;
 				}

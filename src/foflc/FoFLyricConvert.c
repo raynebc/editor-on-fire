@@ -756,7 +756,7 @@ int main(int argc, char *argv[])
 		return 0;	//Return successful program completion
 	}
 
-//Perform lyric detection if user specifid an input file but not its format
+//Perform lyric detection if user specified an input file but not its format
 	if(!Lyrics.in_format && Lyrics.infilename)	//If user specified an input file but not its format
 	{
 		if(Lyrics.verbose)	printf("Auto detecting the lyric format(s) of file \"%s\"\n",Lyrics.infilename);

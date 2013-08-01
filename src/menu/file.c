@@ -139,6 +139,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 332, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import nat. harmonics only",NULL, NULL },
 	{ d_agup_check_proc, 248, 348, 190, 16,  2,   23,  0,    0,      1,   0,   "3D render RS style chords",NULL, NULL },
 	{ d_agup_check_proc, 248, 364, 210, 16,  2,   23,  0,    0,      1,   0,   "Import dialogs recall last path",NULL, NULL },
+	{ d_agup_check_proc, 248, 380, 210, 16,  2,   23,  0,    0,      1,   0,   "Rewind when playback is at end",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1041,6 +1042,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[41].flags = eof_gp_import_nat_harmonics_only ? D_SELECTED : 0;	//GP import nat. harmonics only
 	eof_preferences_dialog[42].flags = eof_render_3d_rs_chords ? D_SELECTED : 0;			//3D render Rocksmith style chords
 	eof_preferences_dialog[43].flags = eof_imports_recall_last_path ? D_SELECTED : 0;		//Import dialogs recall last path
+	eof_preferences_dialog[44].flags = eof_rewind_at_end ? D_SELECTED : 0;					//Rewind when playback is at end
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1130,6 +1132,7 @@ int eof_menu_file_preferences(void)
 			eof_gp_import_nat_harmonics_only = (eof_preferences_dialog[41].flags == D_SELECTED ? 1 : 0);
 			eof_render_3d_rs_chords = (eof_preferences_dialog[42].flags == D_SELECTED ? 1 : 0);
 			eof_imports_recall_last_path = (eof_preferences_dialog[43].flags == D_SELECTED ? 1 : 0);
+			eof_rewind_at_end = (eof_preferences_dialog[44].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 29)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1166,6 +1169,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[41].flags = 0;					//GP import nat. harmonics only
 			eof_preferences_dialog[42].flags = 0;					//3D render Rocksmith style chords
 			eof_preferences_dialog[43].flags = 0;					//Import dialogs recall last path
+			eof_preferences_dialog[44].flags = D_SELECTED;			//Rewind when playback is at end
 		}//If the user clicked "Default
 	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);

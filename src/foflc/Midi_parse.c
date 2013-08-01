@@ -456,11 +456,18 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 						return 0;	//Return with found status
 
 //Read the variable length "length" parameter
-					if(ReadVarLength(inf,&vars.length) == 0)
-					{
-						if(!suppress_errors)
-							printf("Error parsing Meta event: %s\nAborting\n",strerror(errno));
-						exit_wrapper(4);
+					if(vars.m_eventtype != 0x2F)
+					{	//If this isn't an end of track event, read the meta event length
+						if(ReadVarLength(inf,&vars.length) == 0)
+						{
+							if(!suppress_errors)
+								printf("Error parsing Meta event: %s\nAborting\n",strerror(errno));
+							exit_wrapper(4);
+						}
+					}
+					else
+					{	//Otherwise expect a meta event length of 0 (some MIDI files have been found to omit the length field of an end of track event, a possible MIDI standard violation)
+						vars.length = 0;
 					}
 
 					switch(vars.m_eventtype)

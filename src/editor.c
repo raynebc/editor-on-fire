@@ -5285,7 +5285,7 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 	/* draw the current position */
 	if(pos > zoom)
 	{
-		vline(window->screen, lpos + pos - zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
+		vline(window->screen, lpos + (eof_music_pos - eof_av_delay) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
 	}
 
 	/* draw the difficulty tabs (after the section names, which otherwise render a couple pixels over the tabs) */

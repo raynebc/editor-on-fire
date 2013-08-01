@@ -2103,6 +2103,20 @@ set_window_title(debugtext);
 							phraseptr->name[0] = '\0';
 						}
 
+						/* fret hand positions */
+						if(eof_import_events[i]->event[j]->d1 == 108)
+						{	//Pro guitar fret hand positions are marked with note 108
+							if(eof_import_events[i]->event[j]->d2 < 100)
+							{	//If this is an invalid velocity for a fret hand position
+#ifdef EOF_DEBUG
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying fret hand position at pos=%lu from velocity %d to 101", event_realtime, eof_import_events[i]->event[j]->d2);
+								eof_log(eof_log_string, 1);
+#endif
+								eof_import_events[i]->event[j]->d2 = 101;	//Reset it to a position of 1
+							}
+							(void) eof_track_add_section(sp, picked_track, EOF_FRET_HAND_POS_SECTION, EOF_NOTE_AMAZING, event_realtime, eof_import_events[i]->event[j]->d2 - 100, 0, NULL);
+						}
+
 						if(diff != -1)
 						{	//If a note difficulty was identified above
 							char match = 0;	//Is set to nonzero if this note on is matched with a previously added note

@@ -1018,7 +1018,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		for(ctr = 0; ctr < tp->tonechanges; ctr++)
 		{	//For each tone change
 			//Add the tone change control to the list
-			stringlen = (size_t)snprintf(NULL, 0, "    <control time=\"%.3f\" code=\"CDlcTone([%s])\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tp->tonechange[ctr].name) + 1;	//Find the number of characters needed to store this string
+			stringlen = (size_t)snprintf(NULL, 0, "    <control time=\"%.3f\" code=\"CDlcTone(%s)\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tp->tonechange[ctr].name) + 1;	//Find the number of characters needed to store this string
 			controls[controlctr].str = malloc(stringlen + 1);	//Allocate memory to build the string
 			if(!controls[controlctr].str)
 			{
@@ -1031,7 +1031,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 				free(controls);
 				return 0;	//Return failure
 			}
-			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"CDlcTone([%s])\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tp->tonechange[ctr].name);
+			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"CDlcTone(%s)\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tp->tonechange[ctr].name);
 			controls[controlctr].pos = tp->tonechange[ctr].start_pos;
 			controlctr++;
 		}
