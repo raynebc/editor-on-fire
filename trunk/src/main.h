@@ -321,6 +321,7 @@ extern int         eof_render_bass_drum_in_lane;
 extern int         eof_inverted_chords_slash;
 extern int         eof_render_3d_rs_chords;
 extern int         eof_imports_recall_last_path;
+extern int         eof_rewind_at_end;
 extern int         eof_smooth_pos;
 extern int         eof_windowed;
 extern int         eof_anchor_all_beats;
@@ -476,6 +477,7 @@ extern char eof_log_level;
 extern char enable_logging;
 
 extern int eof_custom_zoom_level;
+extern char eof_display_flats;
 
 extern long xchart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D rendering, updated by eof_set_3D_lane_positions()
 extern long ychart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D rendering, updated by eof_set_2D_lane_positions()

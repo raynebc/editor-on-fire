@@ -150,6 +150,7 @@ void eof_load_config(char * fn)
 	eof_render_3d_rs_chords = get_config_int("preferences", "eof_render_3d_rs_chords", 0);
 	eof_min_note_distance = get_config_int("preferences", "eof_min_note_distance", 3);
 	eof_imports_recall_last_path = get_config_int("preferences", "eof_imports_recall_last_path", 0);
+	eof_rewind_at_end = get_config_int("preferences", "eof_rewind_at_end", 1);
 	if(eof_min_note_distance < 1)
 	{	//If the minimum note distance is invalid
 		eof_min_note_distance = 3;	//Reset it to default
@@ -293,6 +294,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_render_bass_drum_in_lane", eof_render_bass_drum_in_lane);
 	set_config_int("preferences", "eof_vanish_y", eof_vanish_y);
 	set_config_int("preferences", "eof_imports_recall_last_path", eof_imports_recall_last_path);
+	set_config_int("preferences", "eof_rewind_at_end", eof_rewind_at_end);
 
 	/* write display settings */
 	set_config_int("display", "display_mode", eof_screen_layout.mode);

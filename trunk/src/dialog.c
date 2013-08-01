@@ -57,7 +57,6 @@ char *eof_help_text = NULL;
 char eof_ctext[13][1024] = {{0}};
 
 static int eof_keyboard_shortcut = 0;
-char eof_display_flats = 0;		//Used to allow eof_get_tone_name() to return note names containing flats.  By default, display as sharps instead
 
 void eof_prepare_menus(void)
 {
@@ -219,23 +218,4 @@ int eof_popup_dialog(DIALOG * dp, int n)
 	eof_keyboard_shortcut = 0;
 
 	return ret;
-}
-
-int eof_display_flats_menu(void)
-{
-	eof_log("eof_display_flats_menu() entered", 1);
-
-	if(eof_display_flats)
-	{
-		eof_display_flats = 0;
-		eof_note_names = eof_note_names_sharp;	//Switch to displaying guitar chords with sharps
-		eof_slash_note_names = eof_slash_note_names_sharp;
-	}
-	else
-	{
-		eof_display_flats = 1;
-		eof_note_names = eof_note_names_flat;	//Switch to displaying guitar chords with flats
-		eof_slash_note_names = eof_slash_note_names_flat;
-	}
-	return 1;
 }

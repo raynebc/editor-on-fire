@@ -2,6 +2,7 @@ Changelog: 2.39 to 2.40b (in progress)
 	Improved UltraStar export so that if a lyric is pitchless, it is stored as a positive number instead of a negative number.
 	Improved Ultrastar import to properly handle lyrics that have a negative timestamp but a large enough gap parameter to make them positive.
 	Minor improvement to Rocksmith lyric detection by adding another criterion to identify such a file if the <xml> header tag is missing.
+	Added handling for a rare problem that can affect the lyric import of MIDI based files.  This problem occurs when a MIDI file does not properly define a 0 byte length for the last end of track event, and subsequently the file would fail to parse.  Such MIDI files may even technically be violating the MIDI standard.
 
 Changelog: 2.38 to 2.39
 	Some code cleanup.

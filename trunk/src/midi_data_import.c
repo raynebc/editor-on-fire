@@ -193,11 +193,18 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 							meventtype = midiptr->track[curtrack].data[track_pos];	//Read the meta event type
 							track_pos++;
 							bytes_used = 0;
-							length = eof_parse_var_len(midiptr->track[curtrack].data, track_pos, &bytes_used);	//Read the meta event length
-							track_pos += bytes_used;
+							if(meventtype == 0x2F)
+							{	//End of track, expect a meta event length of 0 (some MIDI files have been found to omit the length field of an end of track event, a possible MIDI standard violation)
+								length = 0;
+							}
+							else
+							{
+								length = eof_parse_var_len(midiptr->track[curtrack].data, track_pos, &bytes_used);	//Read the meta event length
+								track_pos += bytes_used;
+							}
 							size = length + bytes_used + 1;	//The size of this meta event is the size of the variable length value, the meta event data size and the meta event ID
 							if(meventtype == 0x2F)
-							{	//End of track
+							{	//End of track, expect a meta event length of 0 (some MIDI files have been found to omit the length field of an end of track event, a possible MIDI standard violation)
 								endreached = 1;
 							}
 							else if((meventtype == 0x3) && (ctr > 0))
