@@ -809,39 +809,42 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	(void) pack_fputs("  <linkedDiffs count=\"0\"/>\n", fp);
 	(void) pack_fputs("  <phraseProperties count=\"0\"/>\n", fp);
 
-	//Check for chords with techniques, and for each, add a temporary single note with those techniques at the same position
-	//Rocksmith will render the single note on top of the chord box so that the player can see which techniques are indicated
-	eof_determine_phrase_status(sp, track);	//Update the tremolo status of each note
-	for(ctr = tp->notes; ctr > 0; ctr--)
-	{	//For each note in the track, in reverse order
-		if((eof_note_count_non_ghosted_lanes(sp, track, ctr - 1) > 1) && !eof_is_string_muted(sp, track, ctr - 1))
-		{	//If this note is a chord (at least two non ghosted gems) that isn't fully string muted
-			unsigned long target = EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_HO | EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC | EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE | EOF_PRO_GUITAR_NOTE_FLAG_POP | EOF_PRO_GUITAR_NOTE_FLAG_SLAP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_NOTE_FLAG_IS_TREMOLO;	//A list of all statuses to try to notate for chords
-			unsigned long bitmask;
-			EOF_PRO_GUITAR_NOTE *new_note;
+	if(sp->tags->rs_chord_technique_export)
+	{	//If the user opted to export chord techniques to the Rocksmith XML files
+		//Check for chords with techniques, and for each, add a temporary single note with those techniques at the same position
+		//Rocksmith will render the single note on top of the chord box so that the player can see which techniques are indicated
+		eof_determine_phrase_status(sp, track);	//Update the tremolo status of each note
+		for(ctr = tp->notes; ctr > 0; ctr--)
+		{	//For each note in the track, in reverse order
+			if((eof_note_count_non_ghosted_lanes(sp, track, ctr - 1) > 1) && !eof_is_string_muted(sp, track, ctr - 1))
+			{	//If this note is a chord (at least two non ghosted gems) that isn't fully string muted
+				unsigned long target = EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_HO | EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC | EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE | EOF_PRO_GUITAR_NOTE_FLAG_POP | EOF_PRO_GUITAR_NOTE_FLAG_SLAP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_NOTE_FLAG_IS_TREMOLO;	//A list of all statuses to try to notate for chords
+				unsigned long bitmask;
+				EOF_PRO_GUITAR_NOTE *new_note;
 
-			if(tp->note[ctr - 1]->flags & target)
-			{	//If this note has any of the statuses that can be displayed in Rocksmith for single notes
-				for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
-				{	//For each of the six supported strings
-					if(tp->note[ctr - 1]->note & bitmask)
-					{	//If this string is used
-						new_note = eof_track_add_create_note(sp, track, bitmask, tp->note[ctr - 1]->pos, tp->note[ctr - 1]->length, tp->note[ctr - 1]->type, NULL);	//Initialize a new single note at this position
-						if(new_note)
-						{	//If the new note was created
-							new_note->flags = tp->note[ctr - 1]->flags;					//Clone the flags
-							new_note->flags |= EOF_NOTE_FLAG_TEMP;						//Mark the note as temporary
-							new_note->bendstrength = tp->note[ctr - 1]->bendstrength;	//Copy the bend strength
-							new_note->slideend = tp->note[ctr - 1]->slideend;			//And the slide end position
-							new_note->frets[ctr2] = tp->note[ctr - 1]->frets[ctr2];		//And this string's fret value
+				if(tp->note[ctr - 1]->flags & target)
+				{	//If this note has any of the statuses that can be displayed in Rocksmith for single notes
+					for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+					{	//For each of the six supported strings
+						if(tp->note[ctr - 1]->note & bitmask)
+						{	//If this string is used
+							new_note = eof_track_add_create_note(sp, track, bitmask, tp->note[ctr - 1]->pos, tp->note[ctr - 1]->length, tp->note[ctr - 1]->type, NULL);	//Initialize a new single note at this position
+							if(new_note)
+							{	//If the new note was created
+								new_note->flags = tp->note[ctr - 1]->flags;					//Clone the flags
+								new_note->flags |= EOF_NOTE_FLAG_TEMP;						//Mark the note as temporary
+								new_note->bendstrength = tp->note[ctr - 1]->bendstrength;	//Copy the bend strength
+								new_note->slideend = tp->note[ctr - 1]->slideend;			//And the slide end position
+								new_note->frets[ctr2] = tp->note[ctr - 1]->frets[ctr2];		//And this string's fret value
+							}
+							break;
 						}
-						break;
 					}
 				}
 			}
 		}
-	}
-	eof_track_sort_notes(sp, track);	//Re-sort the notes
+		eof_track_sort_notes(sp, track);	//Re-sort the notes
+	}//If the user opted to export chord techniques to the Rocksmith XML files
 
 	//Write chord templates
 	chordlistsize = eof_build_chord_list(sp, track, &chordlist);	//Build a list of all unique chords in the track
@@ -1682,11 +1685,11 @@ void eof_song_fix_fingerings(EOF_SONG *sp, char *undo_made)
 
 void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, char difficulty, char warnuser, char dynamic)
 {
-	unsigned long ctr, ctr2, tracknum, count, bitmask;
+	unsigned long ctr, ctr2, tracknum, count, bitmask, beatctr, startpos = 0, endpos;
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned char current_low, current_high, last_anchor = 0;
 	EOF_PRO_GUITAR_NOTE *current_note = NULL;	//Tracks the first note in the set of notes having its hand position found
-	char force_change;
+	char force_change, started = 0;
 
 	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return;	//Invalid parameters
@@ -1825,10 +1828,27 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 		(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, current_note->pos, current_low, 0, NULL);	//Add the best determined fret hand position
 	}
 
+	//Ensure that a fret hand position is defined in each phrase, at or before its first note
+	for(beatctr = 0; beatctr < sp->beats; beatctr++)
+	{	//For each beat in the project
+		if((sp->beat[beatctr]->contained_section_event >= 0) || ((beatctr + 1 >= sp->beats) && started))
+		{	//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
+			if(started)
+			{	//If the first phrase marker has been encountered, this beat marks the end of a phrase
+				endpos = sp->beat[beatctr]->pos - 1;	//Track this as the end position of the phrase
+				eof_enforce_rs_phrase_begin_with_fret_hand_position(sp, track, difficulty, startpos, endpos, &eof_fret_hand_position_list_dialog_undo_made);	//Add a fret hand position
+			}//If the first phrase marker has been encountered, this beat marks the end of a phrase
+
+			started = 1;	//Track that a phrase has been encountered
+			startpos = eof_song->beat[beatctr]->pos;	//Track the starting position of the phrase
+		}//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
+	}//For each beat in the project
+
 	//Clean up
 	free(eof_fret_range_tolerances);
 	eof_fret_range_tolerances = NULL;	//Clear this array so that the next call to eof_build_fret_range_tolerances() rebuilds it accordingly
 	eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions
+	eof_render();
 }
 
 int eof_generate_hand_positions_current_track_difficulty(void)
@@ -2492,4 +2512,64 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 		return 0;	//Note does not match the previous note (ignoring note flags and lengths)
 
 	return 1;	//All criteria passed, note is high density
+}
+
+void eof_enforce_rs_phrase_begin_with_fret_hand_position(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long startpos, unsigned long endpos, char *undo_made)
+{
+	unsigned long ctr, firstnotepos, tracknum;
+	char found = 0;
+	unsigned char position;
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return;	//Invalid parameters
+	tracknum = sp->track[track]->tracknum;
+	tp = sp->pro_guitar_track[tracknum];
+
+	//Find the position of the first note in the phrase
+	found = 0;	//Reset this condition
+	for(ctr = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the track
+		if(tp->note[ctr]->type == diff)
+		{	//If the note is in the active difficulty
+			if((tp->note[ctr]->pos >= startpos) && (tp->note[ctr]->pos <= endpos))
+			{	//If this is the first note in the phrase
+				firstnotepos = tp->note[ctr]->pos;	//Note the position
+				found = 1;
+				break;
+			}
+		}
+	}
+
+	//Determine if the necessary fret hand position was set between the start of the phrase and the first note
+	if(found)
+	{	//If the phrase has a note in it
+		found = 0;	//Reset this condition
+		for(ctr = 0; ctr < tp->handpositions; ctr++)
+		{	//For each hand position in the track
+			if(tp->handposition[ctr].difficulty == diff)
+			{	//If the hand position is in the active difficulty
+				if((tp->handposition[ctr].start_pos >= startpos) && (tp->handposition[ctr].start_pos <= firstnotepos))
+				{	//If the hand position is defined anywhere between the start of the phrase and the start of the first note in that phrase
+					found = 1;
+					break;
+				}
+			}
+		}
+		if(!found)
+		{	//If a hand position needs to be added to the difficulty
+			position = eof_pro_guitar_track_find_effective_fret_hand_position(tp, diff, firstnotepos);
+			if(position)
+			{	//If a fret hand position was is in effect (placed anywhere earlier in the difficulty)
+				if(undo_made && !(*undo_made))
+				{	//If an undo state needs to be made
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					*undo_made = 1;
+				}
+				//Place that fret hand position for the active difficulty
+				(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, diff, firstnotepos, position, 0, NULL);
+				eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions
+			}
+		}
+	}
 }

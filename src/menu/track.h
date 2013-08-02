@@ -110,6 +110,7 @@ int eof_track_manage_rs_phrases_add_or_remove_level(int function);
 	//Used by eof_track_manage_rs_phrases_add_level() and eof_track_manage_rs_phrases_delete_level() to manipulate the difficulties for the selected RS phrase
 	//If function is negative, the notes, arpeggios, hand positions and tremolos in the active difficulty are deleted, and those of higher difficulties are decremented
 	//If function is >= 0, the notes, arpeggios, hand positions and tremolos in the active difficulty are duplicated into the next difficulty, and those of higher difficulties are incremented
+	//	Also, the presence of a hand position at the first note of the leveled up phrase is enforced, as this is done by official Rocksmith charts to ensure hand positions stay correct despite leveling up/down
 int eof_track_manage_rs_phrases_add_level(DIALOG * d);
 	//Increments the difficulty level of the notes, arpeggios and hand positions in the selected phrase (either the selected instance or within all instances, depending on user selection)
 	//and copies the now higher-difficulty's content back into the active difficulty, making it convenient to author a new difficulty level for the notes in question.
@@ -131,5 +132,23 @@ int eof_track_erase_track_difficulty(void);	//Allows the user to erase the activ
 
 int eof_menu_track_remove_highlighting(void);	//Removes highlighting from the notes in the active track
 int eof_menu_track_highlight_arpeggios(void);	//Enables highlighting for all notes in the active track that are within arpeggio phrases
+
+extern MENU eof_menu_track_rocksmith_popup_copy_menu[EOF_TRACKS_MAX];
+extern char eof_menu_track_rocksmith_popup_copy_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE];
+int eof_menu_track_copy_popups_track_1(void);
+int eof_menu_track_copy_popups_track_2(void);
+int eof_menu_track_copy_popups_track_3(void);
+int eof_menu_track_copy_popups_track_4(void);
+int eof_menu_track_copy_popups_track_5(void);
+int eof_menu_track_copy_popups_track_6(void);
+int eof_menu_track_copy_popups_track_7(void);
+int eof_menu_track_copy_popups_track_8(void);
+int eof_menu_track_copy_popups_track_9(void);
+int eof_menu_track_copy_popups_track_10(void);
+int eof_menu_track_copy_popups_track_11(void);
+int eof_menu_track_copy_popups_track_12(void);
+int eof_menu_track_copy_popups_track_13(void);
+int eof_menu_track_copy_popups_track_number(EOF_SONG *sp, int sourcetrack, int desttrack);
+	//Copies the popup messages from the specified source track to the destination track
 
 #endif

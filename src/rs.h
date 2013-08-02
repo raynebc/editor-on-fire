@@ -141,4 +141,11 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 	//This is based on whether the chord is close enough to a matching, previous chord
 	// and whether the note's "crazy" flag is set (which overrides it to be low density)
 
+void eof_enforce_rs_phrase_begin_with_fret_hand_position(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long startpos, unsigned long endpos, char *undo_made);
+	//Looks at the fret hand positions in the specified track difficulty within the specified time span, which should be the beginning and end of a RS phrase.
+	//  If no such fret hand position exists, but a fret hand position is defined earlier in the difficulty, that hand position is defined at endpos,
+	//  ensuring that there is an explicit hand position defined by the first note in the phrase, which ensures that they work properly in Rocksmith,
+	//  which can otherwise skip displaying position changes depending on the difficulties in effect going from one phrase to the next
+	//If *undo_made is zero, this function will create an undo state before adding any fret hand position
+
 #endif

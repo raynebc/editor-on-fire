@@ -140,6 +140,7 @@ MENU eof_song_proguitar_menu[] =
 MENU eof_song_rocksmith_menu[] =
 {
 	{"&Correct chord fingerings", eof_correct_chord_fingerings_menu, NULL, 0, NULL},
+	{"Export chord techniques", eof_menu_song_rocksmith_export_chord_techniques, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -170,8 +171,8 @@ MENU eof_song_menu[] =
 	{"&Disable click and drag", eof_menu_song_disable_click_drag, NULL, 0, NULL},
 	{"Pro &Guitar", NULL, eof_song_proguitar_menu, 0, NULL},
 	{"&Rocksmith", NULL, eof_song_rocksmith_menu, 0, NULL},
-	{"Manage raw MIDI tracks", eof_menu_song_raw_MIDI_tracks, NULL, 0, NULL},
 	{"Second &Piano roll", NULL, eof_song_piano_roll_menu, 0, NULL},
+	{"Manage raw MIDI tracks", eof_menu_song_raw_MIDI_tracks, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"T&est in FOF\tF12", eof_menu_song_test_fof, NULL, EOF_LINUX_DISABLE, NULL},
 	{"Test I&n Phase Shift", eof_menu_song_test_ps, NULL, EOF_LINUX_DISABLE, NULL},
@@ -600,6 +601,16 @@ void eof_prepare_song_menu(void)
 		else
 		{
 			eof_song_piano_roll_menu[2].flags = 0;
+		}
+
+		/* Export chord techniques */
+		if(eof_song->tags->rs_chord_technique_export)
+		{
+			eof_song_rocksmith_menu[1].flags = D_SELECTED;
+		}
+		else
+		{
+			eof_song_rocksmith_menu[1].flags = 0;
 		}
 	}//If a chart is loaded
 }
@@ -3419,5 +3430,12 @@ int eof_menu_song_toggle_piano_roll_sync(void)
 		eof_music_pos2 = eof_music_pos;	//Synchronize the piano rolls
 	}
 	eof_sync_piano_rolls ^= 1;	//Toggle this setting
+	return 1;
+}
+
+int eof_menu_song_rocksmith_export_chord_techniques(void)
+{
+	if(eof_song)
+		eof_song->tags->rs_chord_technique_export ^= 1;	//Toggle this boolean variable
 	return 1;
 }

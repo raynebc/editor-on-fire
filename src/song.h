@@ -397,8 +397,9 @@ typedef struct
 	char eof_fret_hand_pos_1_pg;
 	char eof_fret_hand_pos_1_pb;
 	char tempo_map_locked;
-	char click_drag_disabled;
 	char double_bass_drum_disabled;
+	char click_drag_disabled;
+	char rs_chord_technique_export;
 
 	EOF_OGG_INFO ogg[EOF_MAX_OGGS];
 	short oggs;
@@ -575,6 +576,7 @@ void eof_set_num_sliders(EOF_SONG *sp, unsigned long track, unsigned long number
 unsigned long eof_get_num_arpeggios(EOF_SONG *sp, unsigned long track);		//Returns the number of arpeggio phrases in the specified track, or 0 on error
 EOF_PHRASE_SECTION *eof_get_arpeggio(EOF_SONG *sp, unsigned long track, unsigned long index);	//Returns a pointer to the specified arpeggio phrase, or NULL on error
 void eof_set_num_arpeggios(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of arpeggio phrases in the specified track
+unsigned long eof_get_num_popup_messages(EOF_SONG *sp, unsigned long track);			//Returns the number of popup messages in the specified track, or 0 on error
 void eof_track_delete_trill(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified trill phrase and moves all phrases that follow back in the array one position
 void eof_track_delete_tremolo(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified tremolo phrase and moves all phrases that follow back in the array one position
 void eof_track_delete_arpeggio(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified arpeggio phrase and moves all phrases that follow back in the array one position
