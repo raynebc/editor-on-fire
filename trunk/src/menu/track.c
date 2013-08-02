@@ -129,6 +129,24 @@ void eof_prepare_track_menu(void)
 			eof_track_menu[5].flags = 0;
 		}
 
+		/* popup messages copy from */
+		for(i = 0; i < EOF_TRACKS_MAX; i++)
+		{	//For each track supported by EOF
+			eof_menu_track_rocksmith_popup_copy_menu[i].flags = 0;
+			if((i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
+			{	//If the track exists, copy its name into the string used by the track menu
+				(void) ustrncpy(eof_menu_track_rocksmith_popup_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE - 1);
+					//Copy the track name to the menu string
+			}
+			else
+			{	//Write a blank string for the track name
+				(void) ustrcpy(eof_menu_track_rocksmith_popup_copy_menu_text[i],"");
+			}
+			if(!eof_get_num_popup_messages(eof_song, i + 1) || (i + 1 == eof_selected_track))
+			{	//If the track has no popup messages or is the active track
+				eof_menu_track_rocksmith_popup_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
+			}
+		}
 	}//If a chart is loaded
 }
 
@@ -1589,17 +1607,37 @@ MENU eof_track_proguitar_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
-MENU eof_track_rocksmith_popup_menu[] =
-{
-	{"&Add", eof_track_rs_popup_add, NULL, 0, NULL},
-	{"&List", eof_track_rs_popup_messages, NULL, 0, NULL},
-	{NULL, NULL, NULL, 0, NULL}
-};
-
 MENU eof_track_rocksmith_tone_change_menu[] =
 {
 	{"&Add", eof_track_rs_tone_change_add, NULL, 0, NULL},
 	{"&List", eof_track_rs_tone_changes, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+char eof_menu_track_rocksmith_popup_copy_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
+MENU eof_menu_track_rocksmith_popup_copy_menu[EOF_TRACKS_MAX] =
+{
+	{eof_menu_track_rocksmith_popup_copy_menu_text[0], eof_menu_track_copy_popups_track_1, NULL, D_SELECTED, NULL},
+	{eof_menu_track_rocksmith_popup_copy_menu_text[1], eof_menu_track_copy_popups_track_2, NULL, 0, NULL},
+	{eof_menu_track_rocksmith_popup_copy_menu_text[2], eof_menu_track_copy_popups_track_3, NULL, 0, NULL},
+	{eof_menu_track_rocksmith_popup_copy_menu_text[3], eof_menu_track_copy_popups_track_4, NULL, 0, NULL},
+	{eof_menu_track_rocksmith_popup_copy_menu_text[4], eof_menu_track_copy_popups_track_5, NULL, 0, NULL},
+	{eof_menu_track_rocksmith_popup_copy_menu_text[5], eof_menu_track_copy_popups_track_6, NULL, 0, NULL},
+	{eof_menu_track_rocksmith_popup_copy_menu_text[6], eof_menu_track_copy_popups_track_7, NULL, 0, NULL},
+	{eof_menu_track_rocksmith_popup_copy_menu_text[7], eof_menu_track_copy_popups_track_8, NULL, 0, NULL},
+	{eof_menu_track_rocksmith_popup_copy_menu_text[8], eof_menu_track_copy_popups_track_9, NULL, 0, NULL},
+	{eof_menu_track_rocksmith_popup_copy_menu_text[9], eof_menu_track_copy_popups_track_10, NULL, 0, NULL},
+	{eof_menu_track_rocksmith_popup_copy_menu_text[10], eof_menu_track_copy_popups_track_11, NULL, 0, NULL},
+	{eof_menu_track_rocksmith_popup_copy_menu_text[11], eof_menu_track_copy_popups_track_12, NULL, 0, NULL},
+	{eof_menu_track_rocksmith_popup_copy_menu_text[12], eof_menu_track_copy_popups_track_13, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_track_rocksmith_popup_menu[] =
+{
+	{"&Add", eof_track_rs_popup_add, NULL, 0, NULL},
+	{"&List", eof_track_rs_popup_messages, NULL, 0, NULL},
+	{"&Copy From", NULL, eof_menu_track_rocksmith_popup_copy_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -2175,6 +2213,7 @@ int eof_track_manage_rs_phrases_add_or_remove_level(int function)
 	unsigned long startpos, endpos;		//Track the start and end position of the each instance of the phrase
 	char *phrasename = NULL, undo_made = 0;
 	char started = 0;
+	EOF_PRO_GUITAR_TRACK *tp;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return D_O_K;
@@ -2225,6 +2264,8 @@ int eof_track_manage_rs_phrases_add_or_remove_level(int function)
 	}
 
 	//Modify the selected phrase instance(s)
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
 	startpos = endpos = 0;	//Reset these to indicate that a phrase is being looked for
 	for(; ctr < eof_song->beats; ctr++)
 	{	//For each beat in the chart (starting from the one ctr is referring to)
@@ -2235,7 +2276,10 @@ int eof_track_manage_rs_phrases_add_or_remove_level(int function)
 				started = 0;
 				endpos = eof_song->beat[ctr]->pos - 1;	//Track this as the end position of the previous phrase marker
 
-				eof_track_add_or_remove_track_difficulty_content_range(eof_song, eof_selected_track, eof_note_type, startpos, endpos, function, 0, &undo_made);	//Level up/down the content of this time range of the track difficulty
+				eof_enforce_rs_phrase_begin_with_fret_hand_position(eof_song, eof_selected_track, eof_note_type, startpos, endpos, &undo_made);
+					//Ensure there is a fret hand position defined in this phrase at or before its first note
+				eof_track_add_or_remove_track_difficulty_content_range(eof_song, eof_selected_track, eof_note_type, startpos, endpos, function, 0, &undo_made);
+					//Level up/down the content of this time range of the track difficulty
 
 				if(!instancectr)
 				{	//If only the selected phrase instance was to be modified
@@ -2262,8 +2306,7 @@ int eof_track_manage_rs_phrases_add_or_remove_level(int function)
 	else
 	{	//Otherwise remove the difficulty limit since this operation has modified the chart
 		eof_track_sort_notes(eof_song, eof_selected_track);
-		tracknum = eof_song->track[eof_selected_track]->tracknum;
-		eof_pro_guitar_track_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Sort the positions, since they must be in order for displaying to the user
+		eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions, since they must be in order for displaying to the user
 		eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//Remove the difficulty limit for this track
 		eof_song->track[eof_selected_track]->numdiffs = eof_detect_difficulties(eof_song, eof_selected_track);	//Update the number of difficulties used in this track
 		if(eof_note_type >= eof_song->track[eof_selected_track]->numdiffs)
@@ -2859,4 +2902,104 @@ int eof_track_rs_tone_changes_seek(DIALOG * d)
 	(void) dialog_message(eof_track_rs_tone_changes_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
 
 	return D_O_K;
+}
+
+int eof_menu_track_copy_popups_track_1(void)
+{
+	return eof_menu_track_copy_popups_track_number(eof_song, 1, eof_selected_track);
+}
+
+int eof_menu_track_copy_popups_track_2(void)
+{
+	return eof_menu_track_copy_popups_track_number(eof_song, 2, eof_selected_track);
+}
+
+int eof_menu_track_copy_popups_track_3(void)
+{
+	return eof_menu_track_copy_popups_track_number(eof_song, 3, eof_selected_track);
+}
+
+int eof_menu_track_copy_popups_track_4(void)
+{
+	return eof_menu_track_copy_popups_track_number(eof_song, 4, eof_selected_track);
+}
+
+int eof_menu_track_copy_popups_track_5(void)
+{
+	return eof_menu_track_copy_popups_track_number(eof_song, 5, eof_selected_track);
+}
+
+int eof_menu_track_copy_popups_track_6(void)
+{
+	return eof_menu_track_copy_popups_track_number(eof_song, 6, eof_selected_track);
+}
+
+int eof_menu_track_copy_popups_track_7(void)
+{
+	return eof_menu_track_copy_popups_track_number(eof_song, 7, eof_selected_track);
+}
+
+int eof_menu_track_copy_popups_track_8(void)
+{
+	return eof_menu_track_copy_popups_track_number(eof_song, 8, eof_selected_track);
+}
+
+int eof_menu_track_copy_popups_track_9(void)
+{
+	return eof_menu_track_copy_popups_track_number(eof_song, 9, eof_selected_track);
+}
+
+int eof_menu_track_copy_popups_track_10(void)
+{
+	return eof_menu_track_copy_popups_track_number(eof_song, 10, eof_selected_track);
+}
+
+int eof_menu_track_copy_popups_track_11(void)
+{
+	return eof_menu_track_copy_popups_track_number(eof_song, 11, eof_selected_track);
+}
+
+int eof_menu_track_copy_popups_track_12(void)
+{
+	return eof_menu_track_copy_popups_track_number(eof_song, 12, eof_selected_track);
+}
+
+int eof_menu_track_copy_popups_track_13(void)
+{
+	return eof_menu_track_copy_popups_track_number(eof_song, 13, eof_selected_track);
+}
+
+int eof_menu_track_copy_popups_track_number(EOF_SONG *sp, int sourcetrack, int desttrack)
+{
+	unsigned long ctr;
+	EOF_PRO_GUITAR_TRACK *stp, *dtp;
+	EOF_PHRASE_SECTION *ptr;
+
+	if(!sp || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcetrack == desttrack))
+		return 0;	//Invalid parameters
+	if((sp->track[sourcetrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || (sp->track[desttrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return 0;	//Invalid parameters
+
+	stp = sp->pro_guitar_track[sp->track[sourcetrack]->tracknum];
+	dtp = sp->pro_guitar_track[sp->track[desttrack]->tracknum];
+	if(dtp->popupmessages)
+	{	//If there are already hand positions in the destination track
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
+		if(alert(NULL, "Warning:  Existing popup messages in this track will be lost.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+		{	//If the user does not opt to continue
+			return 0;
+		}
+	}
+
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	dtp->popupmessages = 0;
+	for(ctr = 0; ctr < stp->popupmessages; ctr++)
+	{	//For each popup message in the source track
+		ptr = &stp->popupmessage[ctr];	//Simplify
+		(void) eof_track_add_section(sp, desttrack, EOF_RS_POPUP_MESSAGE, 0, ptr->start_pos, ptr->end_pos, 0, ptr->name);	//Duplicate the message
+	}
+
+	return 1;	//Return completion
 }

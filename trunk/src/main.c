@@ -262,6 +262,8 @@ EOF_CONTROLLER eof_drums;
 int eof_color_black;
 int eof_color_white;
 int eof_color_gray;
+int eof_color_gray2;
+int eof_color_gray3;
 int eof_color_light_gray;
 int eof_color_red;
 int eof_color_green;
@@ -3467,6 +3469,8 @@ int eof_load_data(void)
 	eof_color_black = makecol(0, 0, 0);
 	eof_color_white = makecol(255, 255, 255);
 	eof_color_gray = makecol(64, 64, 64);
+	eof_color_gray2 = makecol(147, 147, 147);
+	eof_color_gray3 = makecol(163, 163, 163);
 	eof_color_light_gray = makecol(224, 224, 224);
 	eof_color_red = makecol(255, 0, 0);
 	eof_color_green = makecol(0, 255, 0);

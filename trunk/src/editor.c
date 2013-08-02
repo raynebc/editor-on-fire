@@ -5293,6 +5293,12 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 	{	//Only draw difficulty tabs for the main piano roll
 		unsigned long numtabs = eof_get_number_displayed_tabs();	//Determine how many tabs are to be displayed
 
+		//Draw a border between the piano roll and the difficulty tab Y boundaries of the editor
+		hline(window->screen, 0, 32, window->w - 1, eof_color_black);
+		hline(window->screen, 0, 31, window->w - 1, eof_color_gray3);
+		hline(window->screen, 0, 30, window->w - 1, eof_color_light_gray);
+		hline(window->screen, 0, 28, window->w - 1, eof_color_white);
+
 		//Determine which tab is active (in the foreground)
 		if(!(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS))
 		{	//If the track's difficulty limit has not been removed
@@ -5401,12 +5407,11 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 	if(window != eof_window_editor2)
 	{	//Only draw the scroll bar for the main piano roll
 		scroll_pos = ((float)(eof_screen->w - 8) / (float)eof_chart_length) * (float)eof_music_pos;
-		draw_sprite(window->screen, eof_image[EOF_IMAGE_SCROLL_BAR], 0, eof_screen_layout.scrollbar_y);
+		rectfill(window->screen, 0, eof_screen_layout.scrollbar_y, window->w - 1, window->h - 2, eof_color_light_gray);
 		draw_sprite(window->screen, eof_image[EOF_IMAGE_SCROLL_HANDLE], scroll_pos + 2, eof_screen_layout.scrollbar_y);
 
 		vline(window->screen, 0, 24 + 8, window->h + 4, eof_color_dark_silver);
 		vline(window->screen, 1, 25 + 8, window->h + 4, eof_color_black);
-		hline(window->screen, 1, window->h - 2, window->w - 1, eof_color_light_gray);
 		hline(window->screen, 0, window->h - 1, window->w - 1, eof_color_white);
 	}
 }
@@ -5760,14 +5765,11 @@ void eof_editor_logic_common(void)
 			if(!eof_full_screen_3d && (mouse_b & 1))
 			{
 				eof_music_actual_pos = ((float)eof_chart_length / (float)(eof_screen->w - 8)) * (float)(mouse_x - 4);
-				alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_actual_pos);
-				eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
-				eof_music_pos = eof_music_actual_pos;
-				if(eof_music_pos - eof_av_delay < 0)
+				if(eof_music_actual_pos > eof_chart_length)
 				{
-					(void) eof_menu_song_seek_start();
+					eof_music_actual_pos = eof_chart_length;
 				}
-				eof_mix_seek(eof_music_actual_pos);
+				eof_set_seek_position(eof_music_actual_pos + eof_av_delay);
 			}
 		}
 

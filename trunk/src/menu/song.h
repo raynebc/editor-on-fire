@@ -155,4 +155,6 @@ int eof_menu_song_swap_piano_rolls(void);
 int eof_menu_song_toggle_piano_roll_sync(void);
 	//Toggles on/off the synchronization of the two piano rolls
 
+int eof_menu_song_rocksmith_export_chord_techniques(void);	//Toggle the setting to export chords techniques by writing both a chord and a single note with appropriate techniques to XML at the same position
+
 #endif
