@@ -334,7 +334,7 @@ EOF_SONG *parse_gp(const char * fn)
 		{
 			eof_gp_debug_log(inf, "Lyric");
 			pack_ReadDWORDLE(inf, &dword);	//Read the start from bar #
-			printf(" (start from bar #%ld):  ", dword);
+			printf(" (start from bar #%lu):  ", dword);
 			pack_ReadDWORDLE(inf, &dword);	//Read the lyric string length
 			buffer2 = malloc((size_t)dword + 1);	//Allocate a buffer large enough for the lyric string (plus a NULL terminator)
 			if(!buffer2)
@@ -695,15 +695,15 @@ EOF_SONG *parse_gp(const char * fn)
 		}
 		eof_gp_debug_log(inf, "Master reverb:  ");
 		pack_ReadDWORDLE(inf, &dword);	//Read the master reverb value
-		printf("%ld\n", dword);
+		printf("%lu\n", dword);
 	}
 
 	eof_gp_debug_log(inf, "Number of measures:  ");
 	pack_ReadDWORDLE(inf, &measures);	//Read the number of measures
-	printf("%ld\n", measures);
+	printf("%lu\n", measures);
 	eof_gp_debug_log(inf, "Number of tracks:  ");
 	pack_ReadDWORDLE(inf, &tracks);	//Read the number of tracks
-	printf("%ld\n", tracks);
+	printf("%lu\n", tracks);
 
 	//Allocate memory for an array to track the number of strings for each track
 	strings = malloc(sizeof(unsigned long) * tracks);
@@ -1916,7 +1916,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				}
 				buffer3[ctr] = '\0';	//Terminate the string
 				(void) replace_filename(eof_temp_filename, fn, "", 1024);
-				strncat(eof_temp_filename, buffer3, 1024);	//Build the path to the GP file
+				strncat(eof_temp_filename, buffer3, 1024 - strlen(eof_temp_filename) - 1);	//Build the path to the GP file
 				inf = pack_fopen(eof_temp_filename, "rb");
 				if(!inf)
 				{

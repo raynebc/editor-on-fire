@@ -363,7 +363,7 @@ void Export_UStar(FILE *outf)
 			}
 		}//end if(next == NULL) else ...
 
-		if(Lyrics.verbose>=2)	printf("\trounded start=%lu\trounded duration=%lu\n",start,dur);
+		if(Lyrics.verbose>=2)	printf("\trounded start=%ld\trounded duration=%ld\n",start,dur);
 
 		//write lyric timing and pitch to file, prefixing with : or F as appropriate based on pitch presence
 		if(Lyrics.pitch_tracking)	//Write default pitch MINPITCH unless Lyrics.pitch_tracking is enabled
@@ -375,7 +375,7 @@ void Export_UStar(FILE *outf)
 		else
 			rawpitch=PITCHLESS;	//Store it as the positive value representing a pitchless lyric
 
-		if(fprintf(outf,"%c %lu %lu %d ",pitch_char,start-linetime,dur,rawpitch) < 0)
+		if(fprintf(outf,"%c %lu %ld %d ",pitch_char,start-linetime,dur,rawpitch) < 0)
 			errornumber=1;
 		if(!newline && !current->prev->groupswithnext)	//If this piece doesn't group with previous piece and isn't the first lyric in this line
 		{

@@ -2243,8 +2243,8 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 						sp->pro_guitar_track[tracknum]->tonechanges++;
 					}
 				}
+				return 1;
 			}
-			return 1;
 		break;
 	}
 	return 0;	//Return error

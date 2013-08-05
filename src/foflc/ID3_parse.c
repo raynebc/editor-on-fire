@@ -172,7 +172,7 @@ int FindID3Tag(struct ID3Tag *ptr)
 		ptr->tagend=ptr->framestart+tagsize;
 
 		if(Lyrics.verbose>=2)
-			printf("ID3v2 tag info:\n\tBegins at byte 0x%lX\n\tEnds after byte 0x%lX\n\tTag size is %ld bytes\n\tFirst frame begins at byte 0x%lX\n\n",ptr->tagstart,ptr->tagend-1,tagsize,ptr->framestart);
+			printf("ID3v2 tag info:\n\tBegins at byte 0x%lX\n\tEnds after byte 0x%lX\n\tTag size is %lu bytes\n\tFirst frame begins at byte 0x%lX\n\n",ptr->tagstart,ptr->tagend-1,tagsize,ptr->framestart);
 
 		return 1;
 	}

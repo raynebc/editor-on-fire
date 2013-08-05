@@ -187,7 +187,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 
 	if(!oggfn || (ms == 0) || eof_silence_loaded)
 	{
-		return 0;
+		return 1;	//Return error:  Invalid parameters
 	}
 
  	eof_log("eof_add_silence() entered", 1);
@@ -206,7 +206,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	if(!silence_sample)
 	{
 		eof_fix_window_title();
-		return 0;
+		return 2;	//Return error:  Couldn't create silent audio
 	}
 	(void) replace_filename(wavfn, eof_song_path, "silence.wav", 1024);
 	(void) save_wav(wavfn, silence_sample);
@@ -220,7 +220,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	if(eof_system(sys_command))
 	{
 		eof_fix_window_title();
-		return 0;
+		return 3;	//Return error:  Could not encode silent audio
 	}
 
 	/* stitch the original file to the silence file */
@@ -247,7 +247,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	if(eof_chdir(old_wd))
 	{
 		allegro_message("Could not change directory to EOF's program folder!\n%s", backupfn);
-		return 1;
+		return 4;	//Return error:  Could not set working directory
 	}
 
 	if(retval)
@@ -256,7 +256,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 		eof_log(eof_log_string, 1);
 		(void) eof_copy_file(backupfn, (char *)oggfn);	//Restore the original OGG file
 		eof_fix_window_title();
-		return 0;
+		return 5;	//Return error:  oggCat failed
 	}
 
 	/* clean up */
@@ -268,10 +268,11 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 		eof_fix_spectrogram();
 		eof_fix_window_title();
 		eof_chart_length = eof_music_length;
-		return 1;
+		return 6;	//Return error:  Could not load new audio
 	}
 	eof_fix_window_title();
-	return 0;
+
+	return 0;	//Return success
 }
 
 int eof_add_silence_recode(const char * oggfn, unsigned long ms)
@@ -294,7 +295,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 
 	if(!oggfn || (ms == 0) || eof_silence_loaded)
 	{
-		return 0;
+		return 1;	//Return failure:  Invalid parameters
 	}
 	set_window_title("Adjusting Silence...");
 
@@ -312,14 +313,14 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading OGG:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
 		eof_log(eof_log_string, 1);
-		return 0;	//Return failure
+		return 2;	//Return failure:  Could not buffer chart audio into memory
 	}
 	oggfile=alogg_create_ogg_from_buffer(oggbuffer, (int)file_size_ex(oggfn));
 	if(oggfile == NULL)
 	{
 		eof_log("ALOGG failed to open input audio file", 1);
 		free(oggbuffer);
-		return 0;	//Return failure
+		return 3;	//Return failure:  Could not process buffered chart audio
 	}
 
 	//Decode OGG into memory
@@ -328,7 +329,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	{
 		alogg_destroy_ogg(oggfile);
 		free(oggbuffer);
-		return 0;	//Return failure
+		return 4;	//Return failure:  Could not decode chart audio to memory
 	}
 
 	/* Create a SAMPLE array large enough for the leading silence and the decoded OGG */
@@ -343,7 +344,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	if(combined == NULL)
 	{
 		destroy_sample(decoded);
-		return 0;	//Return failure
+		return 5;	//Return failure:  Could not create a sample array for the combined audio
 	}
 
 	/* Add the PCM data for the silence */
@@ -393,7 +394,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	if(eof_system(sys_command))
 	{
 		eof_fix_window_title();
-		return 0;
+		return 6;	//Return failure:  Could not encode combined audio
 	}
 
 	/* replace the current OGG file with the new file */
@@ -408,10 +409,11 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 		eof_fix_spectrogram();
 		eof_fix_window_title();
 		eof_chart_length = eof_music_length;
-		return 1;
+		return 7;	//Return error:  Could not load new audio
 	}
 	eof_fix_window_title();
-	return 0;
+
+	return 0;	//Return success
 }
 
 int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
@@ -434,7 +436,7 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 
 	if(!oggfn || (ms == 0) || eof_silence_loaded)
 	{
-		return 0;
+		return 1;	//Return error:  Invalid parameters
 	}
 	set_window_title("Adjusting Silence...");
 
@@ -456,7 +458,7 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	if(!decoded)
 	{
 		allegro_message("Error opening file.\nMake sure there are no Unicode or extended ASCII characters in this chart's file path.");
-		return 0;	//Return failure
+		return 2;	//Return failure:  Could not load decoded MP3 file
 	}
 	bits = decoded->bits;
 	stereo = decoded->stereo;
@@ -467,7 +469,7 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	if(combined == NULL)
 	{
 		destroy_sample(decoded);
-		return 0;	//Return failure
+		return 3;	//Return failure:  Could not create a sample array for the combined audio
 	}
 	/* Add the PCM data for the silence */
 	if(bits == 8)
@@ -506,7 +508,7 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	{
 		destroy_sample(decoded);	//This is no longer needed
 		destroy_sample(combined);	//This is no longer needed
-		return 0;
+		return 4;	//Return failure:  Could not create the combined audio WAV file
 	}
 
 	/* destroy samples */
@@ -525,7 +527,7 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	if(eof_system(sys_command))
 	{
 		eof_fix_window_title();
-		return 0;
+		return 5;	//Return failure:  Could not encode combined audio WAV file
 	}
 
 	/* replace the current OGG file with the new file */
@@ -543,10 +545,11 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 		eof_fix_spectrogram();
 		eof_fix_window_title();
 		eof_chart_length = eof_music_length;
-		return 1;
+		return 6;	//Return error:  Could not load new audio
 	}
 	eof_fix_window_title();
-	return 1;
+
+	return 0;	//Return success
 }
 
 int save_wav_with_silence_appended(const char * fn, SAMPLE * sp, unsigned long ms)
