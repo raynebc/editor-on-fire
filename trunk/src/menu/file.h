@@ -97,6 +97,7 @@ int eof_save_helper(char *destfilename);
 	//Performs logic that is common among "Save" and "Save as"
 	//"Save as" operations should pass the destination file path through destfilename
 	//"Save" operations should pass NULL for destfilename
+	//Returns zero on success
 
 void eof_apply_display_settings(int mode);
 	//Used by eof_menu_file_display() and eof_create_image_sequence() to set EOF's display settings

@@ -1664,6 +1664,7 @@ int eof_menu_song_add_silence(void)
 	char fn[1024] = {0};
 	char mp3fn[1024] = {0};
 	static int creationmethod = 9;	//Stores the user's last selected leading silence creation method (default to oggCat, which is menu item 9 in eof_leading_silence_dialog[])
+	int retval;
 
 	if(eof_silence_loaded)
 	{
@@ -1697,8 +1698,8 @@ int eof_menu_song_add_silence(void)
 	eof_leading_silence_dialog[6].flags = 0;
 	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "0");
 
-	if(eof_popup_dialog(eof_leading_silence_dialog, 7) == 11)			//User clicked OK
-	{
+	if(eof_popup_dialog(eof_leading_silence_dialog, 7) == 11)
+	{	//User clicked OK
 		eof_delete_rocksmith_wav();		//Delete the Rocksmith WAV file since changing silence will require a new WAV file to be written
 
 		(void) snprintf(fn, sizeof(fn) - 1, "%s.backup", eof_loaded_ogg_name);
@@ -1726,19 +1727,19 @@ int eof_menu_song_add_silence(void)
 			}
 		}
 		else
-		{
+		{	//Add silence
 			eof_prepare_undo(EOF_UNDO_TYPE_SILENCE);
 			if(eof_leading_silence_dialog[2].flags & D_SELECTED)
-			{
+			{	//Add milliseconds
 				silence_length = atoi(eof_etext);
 			}
 			else if(eof_leading_silence_dialog[3].flags & D_SELECTED)
-			{
+			{	//Add beats
 				beat_length = (double)60000 / ((double)60000000.0 / (double)eof_song->beat[0]->ppqn);
 				silence_length = beat_length * (double)atoi(eof_etext);
 			}
 			else if(eof_leading_silence_dialog[5].flags & D_SELECTED)
-			{
+			{	//Pad milliseconds
 				silence_length = atoi(eof_etext);
 				if(silence_length > eof_song->beat[0]->pos)
 				{
@@ -1746,7 +1747,7 @@ int eof_menu_song_add_silence(void)
 				}
 			}
 			else if(eof_leading_silence_dialog[6].flags & D_SELECTED)
-			{
+			{	//Pad beats
 				beat_length = (double)60000 / ((double)60000000.0 / (double)eof_song->beat[0]->ppqn);
 				silence_length = beat_length * (double)atoi(eof_etext);
 				printf("%lu\n", silence_length);
@@ -1759,7 +1760,7 @@ int eof_menu_song_add_silence(void)
 			if((eof_leading_silence_dialog[9].flags == D_SELECTED) && eof_supports_oggcat)
 			{	//User opted to use oggCat
 				creationmethod = 9;		//Remember this as the default next time
-				(void) eof_add_silence(eof_loaded_ogg_name, silence_length);
+				retval = eof_add_silence(eof_loaded_ogg_name, silence_length);
 			}
 			else
 			{	//User opted to re-encode
@@ -1767,17 +1768,23 @@ int eof_menu_song_add_silence(void)
 				if(exists(mp3fn))
 				{
 					creationmethod = 10;	//Remember this as the default next time
-					(void) eof_add_silence_recode_mp3(eof_loaded_ogg_name, silence_length);
+					retval = eof_add_silence_recode_mp3(eof_loaded_ogg_name, silence_length);
 				}
 				else
 				{
 					creationmethod = 10;	//Remember this as the default next time
-					(void) eof_add_silence_recode(eof_loaded_ogg_name, silence_length);
+					retval = eof_add_silence_recode(eof_loaded_ogg_name, silence_length);
 				}
+			}
+			if(retval)
+			{	//If silence could not be inserted
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError code %d when adding leading silence", retval);
+				eof_log(eof_log_string, 1);
+				allegro_message("Could not add leading silence (error %d)", retval);
 			}
 			after_silence_length = get_ogg_length(eof_loaded_ogg_name);
 			eof_song->tags->ogg[eof_selected_ogg].modified = 1;
-		}
+		}//Add silence
 
 		/* adjust notes/beats */
 		if(eof_leading_silence_dialog[8].flags & D_SELECTED)
@@ -1808,7 +1815,7 @@ int eof_menu_song_add_silence(void)
 		eof_fixup_notes(eof_song);
 		eof_calculate_beats(eof_song);
 		eof_fix_window_title();
-	}
+	}//User clicked OK
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
