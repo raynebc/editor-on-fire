@@ -25,7 +25,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 	unsigned long linectr = 1, tagctr;
 	PACKFILE *inf = NULL;
 	char *ptr, *ptr2, tag[256];
-	char error = 0;
+	char error = 0, warning = 0;
 	char *phraselist[EOF_RS_PHRASE_IMPORT_LIMIT] = {0};	//Will store the list of phrase names
 	unsigned long phraselist_count = 0;	//Keeps count of how many phrases have been imported
 	EOF_TEXT_EVENT *eventlist[EOF_RS_EVENT_IMPORT_LIMIT] = {0};	//Will store the list of imported RS phrases, RS sections and RS events
@@ -1090,10 +1090,23 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 													error = 1;
 													break;	//Break from inner loop
 												}
-												tp->handposition[tp->handpositions].start_pos = time;
-												tp->handposition[tp->handpositions].end_pos = fret;
-												tp->handposition[tp->handpositions].difficulty = curdiff;
-												tp->handpositions++;
+												if(fret > 19)
+												{	//If the anchor is not valid, log it and warn the user
+													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tIgnoring invalid anchor (fret %ld) at position %ld on line #%lu", fret, time, linectr);
+													eof_log(eof_log_string, 1);
+													if(!(warning & 1))
+													{	//If the user wasn't warned about this error yet
+														allegro_message("Warning:  This arrangement contains at least one invalid fret hand position (higher than fret 19).\n  Offending positions were dropped");
+														warning |= 1;
+													}
+												}
+												else
+												{	//Otherwise add it to the track
+													tp->handposition[tp->handpositions].start_pos = time;
+													tp->handposition[tp->handpositions].end_pos = fret;
+													tp->handposition[tp->handpositions].difficulty = curdiff;
+													tp->handpositions++;
+												}
 											}
 										}//If this is an anchor tag
 

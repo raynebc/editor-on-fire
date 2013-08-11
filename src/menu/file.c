@@ -2661,6 +2661,7 @@ int eof_save_helper(char *destfilename)
 							allegro_message("Error saving WAV file, check the log for the OS' reason");
 						}
 					}
+					destroy_sample(decoded);	//Release buffered chart audio
 					eof_fix_window_title();
 				}
 			}

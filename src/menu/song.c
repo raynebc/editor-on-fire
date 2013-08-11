@@ -1716,7 +1716,7 @@ int eof_menu_song_add_silence(void)
 				eof_prepare_undo(EOF_UNDO_TYPE_SILENCE);
 				(void) eof_copy_file(fn, eof_loaded_ogg_name);
 				if(eof_load_ogg(eof_loaded_ogg_name, 0))
-				{
+				{	//If the audio was loaded
 					eof_fix_waveform_graph();
 					eof_fix_window_title();
 				}

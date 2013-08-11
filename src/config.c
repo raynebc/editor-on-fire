@@ -60,7 +60,8 @@ void eof_load_config(char * fn)
 	/* read configuration */
 	eof_av_delay = get_config_int("config", "av_delay", 300);
 	eof_midi_tone_delay = get_config_int("config", "eof_midi_tone_delay", 0);
-	eof_midi_synth_instrument = get_config_int("config", "eof_midi_synth_instrument", 28);
+	eof_midi_synth_instrument_guitar = get_config_int("config", "eof_midi_synth_instrument_guitar", 28);
+	eof_midi_synth_instrument_bass = get_config_int("config", "eof_midi_synth_instrument_bass", 35);
 	eof_buffer_size = get_config_int("config", "buffer_size", 6144);
 	eof_smooth_pos = get_config_int("config", "smooth_playback", 1);
 	eof_disable_windows = get_config_int("config", "disable_windows_fs", 0);
@@ -241,7 +242,8 @@ void eof_save_config(char * fn)
 	/* write configuration */
 	set_config_int("config", "av_delay", eof_av_delay);
 	set_config_int("config", "eof_midi_tone_delay", eof_midi_tone_delay);
-	set_config_int("config", "eof_midi_synth_instrument", eof_midi_synth_instrument);
+	set_config_int("config", "eof_midi_synth_instrument_guitar", eof_midi_synth_instrument_guitar);
+	set_config_int("config", "eof_midi_synth_instrument_bass", eof_midi_synth_instrument_bass);
 	set_config_int("config", "buffer_size", eof_buffer_size);
 	set_config_int("config", "smooth_playback", eof_smooth_pos);
 	set_config_int("config", "disable_windows_fs", eof_disable_windows);
