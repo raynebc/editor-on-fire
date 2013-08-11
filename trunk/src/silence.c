@@ -263,16 +263,16 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	(void) delete_file(wavfn);	//Delete silence.wav
 	(void) delete_file(soggfn);	//Delete silence.ogg
 	if(eof_load_ogg((char *)oggfn, 0))
-	{
+	{	//If the combined audio was loaded
 		eof_fix_waveform_graph();
 		eof_fix_spectrogram();
 		eof_fix_window_title();
 		eof_chart_length = eof_music_length;
-		return 6;	//Return error:  Could not load new audio
+		return 0;	//Return success
 	}
 	eof_fix_window_title();
 
-	return 0;	//Return success
+	return 6;	//Return error:  Could not load new audio
 }
 
 int eof_add_silence_recode(const char * oggfn, unsigned long ms)
@@ -404,16 +404,16 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	(void) delete_file(soggfn);	//Delete encode.ogg
 	(void) delete_file(wavfn);		//Delete encode.wav
 	if(eof_load_ogg((char *)oggfn, 0))
-	{
+	{	//If the combined audio was loaded
 		eof_fix_waveform_graph();
 		eof_fix_spectrogram();
 		eof_fix_window_title();
 		eof_chart_length = eof_music_length;
-		return 7;	//Return error:  Could not load new audio
+		return 0;	//Return success
 	}
 	eof_fix_window_title();
 
-	return 0;	//Return success
+	return 7;	//Return error:  Could not load new audio
 }
 
 int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
@@ -540,16 +540,16 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	(void) delete_file(wavfn);		//Delete encode.wav
 	(void) delete_file(soggfn);	//Delete encode.ogg
 	if(eof_load_ogg((char *)oggfn, 0))
-	{
+	{	//If the combined audio was loaded
 		eof_fix_waveform_graph();
 		eof_fix_spectrogram();
 		eof_fix_window_title();
 		eof_chart_length = eof_music_length;
-		return 6;	//Return error:  Could not load new audio
+		return 0;	//Return success
 	}
 	eof_fix_window_title();
 
-	return 0;	//Return success
+	return 6;	//Return error:  Could not load new audio
 }
 
 int save_wav_with_silence_appended(const char * fn, SAMPLE * sp, unsigned long ms)

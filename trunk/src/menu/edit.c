@@ -142,6 +142,8 @@ MENU eof_edit_selection_menu[] =
 	{"Deselect single notes", eof_menu_edit_deselect_single_notes, NULL, 0, NULL},
 	{"Invert selection", eof_menu_edit_invert_selection, NULL, 0, NULL},
 	{"Deselect one in every", eof_menu_edit_deselect_note_number_in_sequence, NULL, 0, NULL},
+	{"Deselect on beat notes", eof_menu_edit_deselect_on_beat_notes, NULL, 0, NULL},
+	{"Deselect off beat notes", eof_menu_edit_deselect_off_beat_notes, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -270,6 +272,8 @@ void eof_prepare_edit_menu(void)
 			eof_edit_selection_menu[10].flags = 0;	//deselect chords
 			eof_edit_selection_menu[11].flags = 0;	//deselect single notes
 			eof_edit_selection_menu[13].flags = 0;	//deselect one in every
+			eof_edit_selection_menu[14].flags = 0;	//deselect on beat notes
+			eof_edit_selection_menu[15].flags = 0;	//deselect off beat notes
 		}
 		else
 		{	//If no notes in the active track difficulty are selected
@@ -283,6 +287,8 @@ void eof_prepare_edit_menu(void)
 			eof_edit_selection_menu[10].flags = D_DISABLED;	//deselect chords
 			eof_edit_selection_menu[11].flags = D_DISABLED;	//deselect single notes
 			eof_edit_selection_menu[13].flags = D_DISABLED;	//deselect one in every
+			eof_edit_selection_menu[14].flags = D_DISABLED;	//deselect on beat notes
+			eof_edit_selection_menu[15].flags = D_DISABLED;	//deselect off beat notes
 		}
 
 		/* paste, paste old */
@@ -3353,6 +3359,9 @@ int eof_menu_edit_deselect_note_number_in_sequence(void)
 	int val1, val2, ctr;
 	unsigned long i;
 
+	if(!eof_song_loaded || !eof_song)
+		return 1;	//Do not allow this function to run if a chart is not loaded
+
 	eof_color_dialog(eof_deselect_note_number_in_sequence_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_deselect_note_number_in_sequence_dialog);
 
@@ -3391,4 +3400,67 @@ int eof_menu_edit_deselect_note_number_in_sequence(void)
 		}
 	}
 	return 1;
+}
+
+int eof_menu_edit_deselect_on_or_off_beat_notes(int function)
+{
+	unsigned long ctr, ctr2, notepos;
+	char match;
+
+	if(!eof_song_loaded || !eof_song)
+		return 1;	//Do not allow this function to run if a chart is not loaded
+
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+	{	//For each note in the track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			match = 0;	//Reset this condition
+			for(ctr2 = 0; ctr2 < eof_song->beats; ctr2++)
+			{	//For each beat in the project
+				notepos = eof_get_note_pos(eof_song, eof_selected_track, ctr);
+				if(notepos < eof_song->beat[ctr2]->pos)
+				{	//If this beat (and all remaining beats) are past the note
+					break;
+				}
+				if(notepos == eof_song->beat[ctr2]->pos)
+				{	//If this note is on a beat marker
+					match = 1;
+					break;
+				}
+			}
+			if(match)
+			{	//If the note was on a beat marker
+				if(function)
+				{	//If the calling function wanted to deselect on-beat notes
+					eof_selection.multi[ctr] = 0;	//Deselect it
+				}
+			}
+			else
+			{	//The note was not on a beat marker
+				if(!function)
+				{	//If the calling function wanted to deselect off-beat notes
+					eof_selection.multi[ctr] = 0;	//Deselect it
+				}
+			}
+		}
+	}
+	if(eof_selection.current != EOF_MAX_NOTES - 1)
+	{	//If there was a last selected note
+		if(eof_selection.multi[eof_selection.current] == 0)
+		{	//And it's not selected anymore
+			eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note
+		}
+	}
+
+	return 1;
+}
+
+int eof_menu_edit_deselect_on_beat_notes(void)
+{
+	return eof_menu_edit_deselect_on_or_off_beat_notes(1);
+}
+
+int eof_menu_edit_deselect_off_beat_notes(void)
+{
+	return eof_menu_edit_deselect_on_or_off_beat_notes(0);
 }

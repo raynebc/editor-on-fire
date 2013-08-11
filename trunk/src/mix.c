@@ -72,6 +72,7 @@ typedef struct {
 	unsigned long pos;
 	unsigned char channel;
 	int note;
+	int tone;
 } guitar_midi_note;
 
 guitar_midi_note eof_guitar_notes[EOF_MAX_NOTES] = {{0}};
@@ -320,6 +321,13 @@ void eof_mix_find_claps(void)
 	eof_mix_current_guitar_note = 0;
 	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If a pro guitar/bass track is active
+		int tone = eof_midi_synth_instrument_guitar;
+		EOF_PRO_GUITAR_TRACK *track = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
+
+		if(track->arrangement == 4)
+		{	//If this track's arrangement type is bass
+			tone = eof_midi_synth_instrument_bass;	//Use the configured bass MIDI tone instead
+		}
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the track
 			if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
@@ -327,7 +335,6 @@ void eof_mix_find_claps(void)
 				int j = 0;
 				unsigned long pos = eof_mix_msec_to_sample(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay - eof_midi_tone_delay, alogg_get_wave_freq_ogg(eof_music_track));
 
-				EOF_PRO_GUITAR_TRACK *track = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
 				EOF_PRO_GUITAR_NOTE *note = track->note[i];
 				for(j = 0; j < 6; j++)
 				{	//For each of the 6 supported strings
@@ -336,6 +343,7 @@ void eof_mix_find_claps(void)
 						eof_guitar_notes[eof_mix_guitar_notes].pos = pos;
 						eof_guitar_notes[eof_mix_guitar_notes].channel = j;
 						eof_guitar_notes[eof_mix_guitar_notes].note = track->tuning[j] + eof_lookup_default_string_tuning_absolute(track, eof_selected_track, j) + note->frets[j];
+						eof_guitar_notes[eof_mix_guitar_notes].tone = tone;
 						eof_mix_guitar_notes++;
 					}
 				}
@@ -737,6 +745,7 @@ void eof_play_pro_guitar_note_midi(EOF_SONG *sp, unsigned long track, unsigned l
 {
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned long tracknum, ctr, bitmask;
+	int tone = eof_midi_synth_instrument_guitar;
 
 	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return;	//Invalid parameters
@@ -746,13 +755,17 @@ void eof_play_pro_guitar_note_midi(EOF_SONG *sp, unsigned long track, unsigned l
 
 	if(note >= tp->notes)
 		return;	//Invalid parameters
+	if(tp->arrangement == 4)
+	{	//If this track's arrangement type is bass
+		tone = eof_midi_synth_instrument_bass;	//Use the configured bass MIDI tone instead
+	}
 
 	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
 	{	//For each of the 6 supported strings
 		if((tp->note[note]->note & bitmask) && !(tp->note[note]->frets[ctr] & 0x80))
 		{	//If this string is used (and not muted)
 			//This note is found by adding default tuning for the string, the offset defining the current tuning and the fret number being played
-			eof_midi_play_note_ex(tp->tuning[ctr] + eof_lookup_default_string_tuning_absolute(tp, track, ctr) + tp->note[note]->frets[ctr], ctr, eof_midi_synth_instrument);	//Play the MIDI note
+			eof_midi_play_note_ex(tp->tuning[ctr] + eof_lookup_default_string_tuning_absolute(tp, track, ctr) + tp->note[note]->frets[ctr], ctr, tone);	//Play the MIDI note
 		}
 	}
 }
@@ -819,7 +832,7 @@ void eof_play_queued_midi_tones(void)
 	{	// Using a while loop to allow all notes in a chord to fire at the same time
 		if(eof_mix_midi_tones_enabled)
 		{
-			eof_midi_play_note_ex(eof_guitar_notes[eof_mix_current_guitar_note].note, eof_guitar_notes[eof_mix_current_guitar_note].channel, eof_midi_synth_instrument);	//Play the MIDI note
+			eof_midi_play_note_ex(eof_guitar_notes[eof_mix_current_guitar_note].note, eof_guitar_notes[eof_mix_current_guitar_note].channel, eof_guitar_notes[eof_mix_current_guitar_note].tone);	//Play the MIDI note
 		}
 		eof_mix_current_guitar_note++;
 		eof_mix_next_guitar_note = eof_guitar_notes[eof_mix_current_guitar_note].pos;
