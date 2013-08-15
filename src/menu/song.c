@@ -110,7 +110,7 @@ MENU eof_catalog_menu[] =
 	{"&Previous\tW", eof_menu_catalog_previous, NULL, 0, NULL},
 	{"&Next\tE", eof_menu_catalog_next, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"Find Previous\t" CTRL_NAME "+SHIFT+G", eof_menu_catalog_find_prev, NULL, 0, NULL},
+	{"Find Previous\t" CTRL_NAME "+Shift+G", eof_menu_catalog_find_prev, NULL, 0, NULL},
 	{"Find Next\tF3", eof_menu_catalog_find_next, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -1036,6 +1036,8 @@ int eof_menu_song_test(char application)
 	int difficulty = 0;
 	int part = 0;
 
+	eof_log("eof_menu_song_test() entered", 1);
+
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
 
@@ -1665,6 +1667,8 @@ int eof_menu_song_add_silence(void)
 	char mp3fn[1024] = {0};
 	static int creationmethod = 9;	//Stores the user's last selected leading silence creation method (default to oggCat, which is menu item 9 in eof_leading_silence_dialog[])
 	int retval;
+
+	eof_log("eof_menu_song_add_silence() entered", 1);
 
 	if(eof_silence_loaded)
 	{

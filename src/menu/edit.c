@@ -20,7 +20,7 @@ MENU eof_edit_paste_from_menu[] =
 	{"&Medium", eof_menu_edit_paste_from_medium, NULL, 0, NULL},
 	{"&Amazing", eof_menu_edit_paste_from_amazing, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"&Catalog\t" CTRL_NAME "+SHIFT+C", eof_menu_edit_paste_from_catalog, NULL, 0, NULL},
+	{"&Catalog\t" CTRL_NAME "+Shift+C", eof_menu_edit_paste_from_catalog, NULL, 0, NULL},
 	{"&Difficulty", eof_menu_song_paste_from_difficulty, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -32,7 +32,7 @@ MENU eof_edit_paste_from_menu_dance[] =
 	{"&Medium", eof_menu_edit_paste_from_medium, NULL, 0, NULL},
 	{"H&ard", eof_menu_edit_paste_from_amazing, NULL, 0, NULL},
 	{"C&hallenge", eof_menu_edit_paste_from_challenge, NULL, 0, NULL},
-	{"&Catalog\t" CTRL_NAME "+SHIFT+C", eof_menu_edit_paste_from_catalog, NULL, 0, NULL},
+	{"&Catalog\t" CTRL_NAME "+Shift+C", eof_menu_edit_paste_from_catalog, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
