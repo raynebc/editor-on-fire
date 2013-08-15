@@ -2190,19 +2190,22 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				count = sp->pro_guitar_track[tracknum]->handpositions;
 				if(count < EOF_MAX_NOTES)
 				{	//If EOF can store the fret hand position
-					sp->pro_guitar_track[tracknum]->handposition[count].start_pos = start;
-					sp->pro_guitar_track[tracknum]->handposition[count].end_pos = end;	//This will store the fret number the fretting hand is at
-					sp->pro_guitar_track[tracknum]->handposition[count].flags = 0;
-					sp->pro_guitar_track[tracknum]->handposition[count].difficulty = difficulty;
-					if(name == NULL)
-					{
-						sp->pro_guitar_track[tracknum]->handposition[count].name[0] = '\0';
+					if(end <= 19)
+					{	//If the fret hand position is valid
+						sp->pro_guitar_track[tracknum]->handposition[count].start_pos = start;
+						sp->pro_guitar_track[tracknum]->handposition[count].end_pos = end;	//This will store the fret number the fretting hand is at
+						sp->pro_guitar_track[tracknum]->handposition[count].flags = 0;
+						sp->pro_guitar_track[tracknum]->handposition[count].difficulty = difficulty;
+						if(name == NULL)
+						{
+							sp->pro_guitar_track[tracknum]->handposition[count].name[0] = '\0';
+						}
+						else
+						{
+							(void) ustrcpy(sp->pro_guitar_track[tracknum]->handposition[count].name, name);
+						}
+						sp->pro_guitar_track[tracknum]->handpositions++;
 					}
-					else
-					{
-						(void) ustrcpy(sp->pro_guitar_track[tracknum]->handposition[count].name, name);
-					}
-					sp->pro_guitar_track[tracknum]->handpositions++;
 				}
 				return 1;
 			}
@@ -3781,7 +3784,7 @@ int eof_song_qsort_fret_hand_positions(const void * e1, const void * e2)
 
 void eof_pro_guitar_track_sort_fret_hand_positions(EOF_PRO_GUITAR_TRACK* tp)
 {
- 	eof_log("eof_pro_guitar_track_sort_fret_hand_positions() entered", 1);
+ 	eof_log("eof_pro_guitar_track_sort_fret_hand_positions() entered", 2);
 
 	if(tp)
 	{
@@ -4551,7 +4554,7 @@ int eof_pro_guitar_track_add_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long start
 
 void eof_note_set_tail_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos)
 {
- 	eof_log("eof_note_set_tail_pos() entered", 1);
+ 	eof_log("eof_note_set_tail_pos() entered", 2);
 
 	if((sp == NULL) || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)))
 		return;

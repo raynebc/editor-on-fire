@@ -760,6 +760,7 @@ void eof_play_pro_guitar_note_midi(EOF_SONG *sp, unsigned long track, unsigned l
 		tone = eof_midi_synth_instrument_bass;	//Use the configured bass MIDI tone instead
 	}
 
+	eof_all_midi_notes_off();	//Try to stop any MIDI notes currently being played
 	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
 	{	//For each of the 6 supported strings
 		if((tp->note[note]->note & bitmask) && !(tp->note[note]->frets[ctr] & 0x80))

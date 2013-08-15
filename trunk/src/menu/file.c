@@ -1,5 +1,6 @@
 #include <allegro.h>
 #include <ctype.h>
+#include <time.h>
 #include "../agup/agup.h"
 #include "../main.h"
 #include "../foflc/Lyric_storage.h"
@@ -391,6 +392,8 @@ int eof_menu_file_load(void)
 {
 	char temp_filename[1024] = {0};
 	char * returnedfn = NULL;
+
+	eof_log("eof_menu_file_load() entered", 1);
 
 	if(eof_menu_prompt_save_changes() == 3)
 	{	//If user canceled closing the current, modified chart
@@ -881,6 +884,8 @@ int eof_menu_file_midi_import(void)
 {
 	char * returnedfn = NULL, *initial;
 	char tempfilename[1024] = {0};
+
+	eof_log("eof_menu_file_midi_import() entered", 1);
 
 	if(eof_menu_prompt_save_changes() == 3)
 	{	//If user canceled closing the current, modified chart
@@ -1850,6 +1855,8 @@ int eof_menu_file_feedback_import(void)
 	char * returnedfn = NULL, *initial;
 	int jumpcode = 0;
 
+	eof_log("eof_menu_file_feedback_import() entered", 1);
+
 	if(eof_menu_prompt_save_changes() == 3)
 	{	//If user canceled closing the current, modified chart
 		return 1;
@@ -1984,6 +1991,8 @@ int eof_mp3_to_ogg(char *file, char *directory)
 	char syscommand[1024] = {0};
 	char cfn[1024] = {0};
 
+	eof_log("eof_mp3_to_ogg() entered", 1);
+
 	if((file == NULL) || (directory == NULL))
 		return 3;	//Return invalid filename
 
@@ -2077,6 +2086,8 @@ int eof_new_chart(char * filename)
 	int temp_buffer_size = 0;
 	struct ID3Tag tag={NULL,0,0,0,0,0,0.0,NULL,0,NULL,NULL,NULL,NULL};
 	int ctr=0;
+
+	eof_log("eof_new_chart() entered", 1);
 
 	if(filename == NULL)
 		return 1;	//Return failure
@@ -2321,6 +2332,10 @@ int eof_save_helper(char *destfilename)
 	int jumpcode = 0;
 	char fixvoxpitches, fixvoxphrases;
 	char note_length_warned = 0, note_distance_warned = 0;
+	time_t seconds;		//Will store the current time in seconds
+	struct tm *caltime;	//Will store the current time in calendar format
+
+	eof_log("eof_save_helper() entered", 1);
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Return failure:  Invalid parameters
@@ -2534,7 +2549,10 @@ int eof_save_helper(char *destfilename)
 		eof_pen_visible = 1;
 		return 11;	//Return failure:  Could not save song
 	}
-	eof_log("\tProject saved", 1);
+	seconds = time(NULL);
+	caltime = localtime(&seconds);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tProject saved at %s", asctime(caltime));
+	eof_log(eof_log_string, 1);
 	if(!exists(eof_temp_filename))
 	{	//Make sure the target file was created
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Save operation did not create project file.  Please use \"Save as\" to save to a new location.");
@@ -2600,7 +2618,7 @@ int eof_save_helper(char *destfilename)
 				(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,SCRIPT_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
 			}
 		}
-	}
+	}//If saving the normal MIDI succeeded, proceed with saving song.ini and additional MIDI files if applicable
 
 	if(eof_write_rs_files)
 	{	//If the user wants to save Rocksmith capable files
@@ -2666,7 +2684,7 @@ int eof_save_helper(char *destfilename)
 				}
 			}
 		}
-	}
+	}//If the user wants to save Rocksmith capable files
 
 	/* save OGG file if necessary*/
 	if(!eof_silence_loaded)
@@ -2713,6 +2731,8 @@ void eof_restore_oggs_helper(void)
 	char oggfn[1024] = {0};
 	char coggfn[1024] = {0};
 	int i;
+
+	eof_log("eof_restore_oggs_helper() entered", 1);
 
 	/* see if we need to restore any OGGs before quitting */
 	if(eof_song == NULL)
@@ -2783,6 +2803,8 @@ int eof_menu_prompt_save_changes(void)
 int eof_menu_file_gh_import(void)
 {
 	char * returnedfn = NULL, *initial;
+
+	eof_log("eof_menu_file_gh_import() entered", 1);
 
 	if(eof_menu_prompt_save_changes() == 3)
 	{	//If user canceled closing the current, modified chart

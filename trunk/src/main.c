@@ -99,7 +99,7 @@ char        eof_desktop = 1;
 int         eof_av_delay = 200;
 int         eof_midi_tone_delay = 0;
 int         eof_midi_synth_instrument_guitar = 28;	//Electric Guitar (clean) MIDI instrument
-int         eof_midi_synth_instrument_bass = 35;	//Electric bass (picked) MIDI instrument
+int         eof_midi_synth_instrument_bass = 34;	//Electric bass (fingered) MIDI instrument
 int         eof_buffer_size = 4096;
 int         eof_audio_fine_tune = 0;
 int         eof_inverted_notes = 0;
@@ -873,7 +873,7 @@ void eof_cat_track_difficulty_string(char *str)
 
 void eof_fix_window_title(void)
 {
-	eof_log("eof_fix_window_title() entered", 1);
+	eof_log("eof_fix_window_title() entered", 2);
 
 	if(eof_changes)
 	{
@@ -3307,7 +3307,7 @@ void eof_render(void)
 
 	if(eof_full_screen_3d && eof_song_loaded)
 	{	//If the user enabled full screen 3D view, scale it to fill the program window
-		stretch_blit(eof_window_3d->screen, eof_screen, 0, 0, eof_screen_width_default / 2, eof_screen_height / 2, 0, 0, SCREEN_W, SCREEN_H);
+		stretch_blit(eof_window_3d->screen, eof_screen, 0, 0, eof_screen_width_default / 2, eof_screen_height / 2, 0, 0, eof_screen_width_default, eof_screen_height);
 		eof_window_note->y = 0;	//Re-position the note window to the top left corner of EOF's program window
 		eof_render_note_window();
 		if((eof_count_selected_notes(NULL, 0) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
@@ -3524,6 +3524,8 @@ int eof_initialize(int argc, char * argv[])
 {
 	int i, eof_zoom_backup;
 	char temp_filename[1024] = {0}, recovered = 0;
+	time_t seconds;		//Will store the current time in seconds
+	struct tm *caltime;	//Will store the current time in calendar format
 
 	eof_log("eof_initialize() entered", 1);
 
@@ -3576,7 +3578,10 @@ int eof_initialize(int argc, char * argv[])
 
 	//Start the logging system (unless the user disabled it via preferences)
 	eof_start_logging();
-	eof_log("Logging started during program initialization", 1);
+	seconds = time(NULL);
+	caltime = localtime(&seconds);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Logging started during program initialization at %s", asctime(caltime));
+	eof_log(eof_log_string, 1);
 	eof_log(EOF_VERSION_STRING, 1);
 
 	InitIdleSystem();
@@ -4033,6 +4038,8 @@ void eof_exit(void)
 {
 	unsigned long i;
 	char fn[1024] = {0};
+	time_t seconds;		//Will store the current time in seconds
+	struct tm *caltime;	//Will store the current time in calendar format
 
 	eof_log("eof_exit() entered", 1);
 
@@ -4109,7 +4116,10 @@ void eof_exit(void)
 	eof_window_destroy(eof_window_3d);
 
 	//Stop the logging system
-	eof_log("Logging stopped during program completion", 1);
+	seconds = time(NULL);
+	caltime = localtime(&seconds);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Logging stopped during program completion at %s", asctime(caltime));
+	eof_log(eof_log_string, 1);
 	eof_stop_logging();
 
 	//Close the autorecover file if it is open, and delete the auto-recovery status file

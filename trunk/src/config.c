@@ -61,7 +61,7 @@ void eof_load_config(char * fn)
 	eof_av_delay = get_config_int("config", "av_delay", 300);
 	eof_midi_tone_delay = get_config_int("config", "eof_midi_tone_delay", 0);
 	eof_midi_synth_instrument_guitar = get_config_int("config", "eof_midi_synth_instrument_guitar", 28);
-	eof_midi_synth_instrument_bass = get_config_int("config", "eof_midi_synth_instrument_bass", 35);
+	eof_midi_synth_instrument_bass = get_config_int("config", "eof_midi_synth_instrument_bass", 34);
 	eof_buffer_size = get_config_int("config", "buffer_size", 6144);
 	eof_smooth_pos = get_config_int("config", "smooth_playback", 1);
 	eof_disable_windows = get_config_int("config", "disable_windows_fs", 0);
