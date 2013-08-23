@@ -1854,12 +1854,17 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 int eof_generate_hand_positions_current_track_difficulty(void)
 {
 	int junk;
+	unsigned long diffindex = 0;
 
 	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return 0;	//Invalid parameters
 
 	eof_generate_efficient_hand_positions(eof_song, eof_selected_track, eof_note_type, 1, 0);	//Warn the user if existing hand positions will be deleted (use a static fret range tolerance of 4 for all frets, since it's assumed the author is charting for Rocksmith if they use this function)
 
+	(void) eof_pro_guitar_track_find_effective_fret_hand_position_definition(eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum], eof_note_type, eof_music_pos - eof_av_delay, NULL, &diffindex, 0);
+		//Obtain the fret hand position change now in effect at the current seek position
+	eof_fret_hand_position_list_dialog[1].d1 = diffindex;	//Pre-select it in the list
+	(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_START, 0, &junk);	//Re-initialize the dialog
 	(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
 	return D_REDRAW;
 }

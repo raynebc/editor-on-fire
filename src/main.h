@@ -246,6 +246,7 @@ extern EOF_WINDOW * eof_window_3d;
 extern char        eof_last_frettist[256];
 extern int         eof_zoom;
 extern int         eof_zoom_3d;
+extern char        eof_screen_zoom;
 extern char        eof_changes;
 extern ALOGG_OGG * eof_music_track;
 extern void      * eof_music_data;

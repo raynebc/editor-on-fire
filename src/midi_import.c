@@ -1148,6 +1148,7 @@ set_window_title(debugtext);
 			char rb_pro_green = 0;					//Tracks the status of forced yellow pro drum notation
 			unsigned long rb_pro_green_pos = 0;		//Tracks the last start time of a forced green pro drum phrase
 			unsigned long notenum = 0;
+			char fretwarning = 0;					//Tracks whether the user was warned about the track violating its standard fret limit, if applicable
 
 			first_note = note_count[picked_track];
 			tracknum = sp->track[picked_track]->tracknum;
@@ -2176,6 +2177,13 @@ set_window_title(debugtext);
 							sp->pro_guitar_track[tracknum]->note[notenum]->frets[lane] = eof_import_events[i]->event[j]->d2 - 100;	//Velocity (100 + X) represents fret # X
 							if(sp->pro_guitar_track[tracknum]->note[notenum]->frets[lane] > sp->pro_guitar_track[tracknum]->numfrets)
 							{	//If this fret value is higher than this track's recorded maximum
+								if(!fretwarning)
+								{	//If the user hasn't been warned about this problem for this track
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  At least one note (at %lu ms) in %s breaks the track's fret limit of %u.  This can cause Rock Band to crash.", event_realtime, eof_midi_tracks[picked_track].name, sp->pro_guitar_track[tracknum]->numfrets);
+									eof_log(eof_log_string, 1);
+									allegro_message("Warning:  At least one note (at %lu ms) in %s breaks the track's fret limit of %u.\nThis can cause Rock Band to crash.", event_realtime, eof_midi_tracks[picked_track].name, sp->pro_guitar_track[tracknum]->numfrets);
+									fretwarning = 1;
+								}
 								sp->pro_guitar_track[tracknum]->numfrets = sp->pro_guitar_track[tracknum]->note[notenum]->frets[lane];	//Increase the maximum to reflect this fret value
 							}
 							if(eof_import_events[i]->event[j]->channel == 1)

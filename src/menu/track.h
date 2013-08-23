@@ -151,4 +151,20 @@ int eof_menu_track_copy_popups_track_13(void);
 int eof_menu_track_copy_popups_track_number(EOF_SONG *sp, int sourcetrack, int desttrack);
 	//Copies the popup messages from the specified source track to the destination track
 
+int eof_menu_thin_notes_track_1(void);
+int eof_menu_thin_notes_track_2(void);
+int eof_menu_thin_notes_track_3(void);
+int eof_menu_thin_notes_track_4(void);
+int eof_menu_thin_notes_track_5(void);
+int eof_menu_thin_notes_track_6(void);
+int eof_menu_thin_notes_track_7(void);
+int eof_menu_thin_notes_track_8(void);
+int eof_menu_thin_notes_track_9(void);
+int eof_menu_thin_notes_track_10(void);
+int eof_menu_thin_notes_track_11(void);
+int eof_menu_thin_notes_track_12(void);
+int eof_menu_thin_notes_track_13(void);
+	//Thins out the notes in the active track difficulty to match those in the active difficulty in the specified track
+	//If a note in the active track isn't within a threshold distance of any note in the specified track, it is deleted
+
 #endif

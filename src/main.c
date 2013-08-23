@@ -298,6 +298,7 @@ unsigned long eof_screen_width_default;				//Stores the default width based on t
 int eof_vanish_x = 0, eof_vanish_y = 0;				//Used to allow the user to control the vanishing point for the 3D preview
 char eof_full_screen_3d = 0;						//If nonzero, directs the render logic to scale the 3D window to fit the entire program window
 char eof_3d_fretboard_coordinates_cached = 0;		//Tracks the validity of the 3D window rendering's cache of the fretboard's 2D coordinates
+char eof_screen_zoom = 0;							//Tracks whether EOF will perform a x2 zoom rendering
 
 EOF_SELECTION_DATA eof_selection;
 
@@ -649,6 +650,7 @@ int eof_set_display_mode_preset_custom_width(int mode, unsigned long width)
 int eof_set_display_mode(unsigned long width, unsigned long height)
 {
 	int mode;
+	unsigned long effectiveheight = height, effectivewidth = width;
 
 	eof_log("eof_set_display_mode() entered", 1);
 
@@ -682,6 +684,12 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 	{
 		destroy_bitmap(eof_screen);
 		eof_screen = NULL;
+	}
+
+	if(eof_screen_zoom)
+	{	//If x2 zoom is in effect
+		effectiveheight = height * 2;
+		effectivewidth = width * 2;
 	}
 
 	eof_3d_fretboard_coordinates_cached = 0;	//The 3D rendering logic will need to rebuild the fretboard's 2D coordinate projections
@@ -750,24 +758,30 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 		default:
 		return 0;	//Invalid display mode
 	}
-
 	if(eof_screen_width < eof_screen_width_default)
 	{	//If the specified width is invalid
 		eof_screen_width = eof_screen_width_default;
 	}
 
-	if(set_gfx_mode(GFX_AUTODETECT_WINDOWED, eof_screen_width, eof_screen_height, 0, 0))
-	{
-		if(set_gfx_mode(GFX_AUTODETECT, eof_screen_width, eof_screen_height, 0, 0))
-		{
-			if(eof_screen_width != eof_screen_width_default)
-			{	//If the custom width failed to be applied
+	if(set_gfx_mode(GFX_AUTODETECT_WINDOWED, effectivewidth, effectiveheight, 0, 0))
+	{	//If the specified window size could not be set, try again
+		if(set_gfx_mode(GFX_AUTODETECT, effectivewidth, effectiveheight, 0, 0))
+		{	//If it failed again
+			if(eof_screen_zoom)
+			{	//If x2 zoom display is enabled
+				eof_screen_zoom = 0;	//Disable x2 zoom
+				eof_set_display_mode(width, height);
+				allegro_message("Warning:  Failed to enable x2 zoom");
+				return 1;
+			}
+			if(width != eof_screen_width_default)
+			{	//If the custom width failed to be applied, revert to the default width for this window height
 				eof_set_display_mode(eof_screen_width_default, height);
 				allegro_message("Warning:  Failed to set custom display width, reverted to default");
 				return 1;
 			}
-			if(set_gfx_mode(GFX_SAFE, eof_screen_width, eof_screen_height, 0, 0))
-			{
+			if(set_gfx_mode(GFX_SAFE, width, eof_screen_height, 0, 0))
+			{	//If the window size could not be set at all
 				allegro_message("Can't set up screen!  Error: %s",allegro_error);
 				return 0;
 			}
@@ -1913,6 +1927,7 @@ void eof_lyric_logic(void)
 	unsigned long i, k;
 	unsigned long tracknum;
 	eof_hover_key = -1;
+	int eof_mouse_x = mouse_x, eof_mouse_y = mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
 
 	if(eof_song == NULL)	//Do not allow lyric processing to occur if no song is loaded
 		return;
@@ -1920,20 +1935,26 @@ void eof_lyric_logic(void)
 	if(!eof_vocals_selected)
 		return;
 
+	if(eof_screen_zoom)
+	{	//If x2 zoom is in effect, take that into account for the mouse position
+		eof_mouse_x = mouse_x / 2;
+		eof_mouse_y = mouse_y / 2;
+	}
+
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if(eof_music_paused)
 	{
-		if((mouse_x >= eof_window_3d->x) && (mouse_x < eof_window_3d->x + eof_window_3d->w) && (mouse_y >= eof_window_3d->y + eof_window_3d->h - eof_screen_layout.lyric_view_key_height))
+		if((eof_mouse_x >= eof_window_3d->x) && (eof_mouse_x < eof_window_3d->x + eof_window_3d->w) && (eof_mouse_y >= eof_window_3d->y + eof_window_3d->h - eof_screen_layout.lyric_view_key_height))
 		{
 			/* check for black key */
-			if(mouse_y < eof_window_3d->y + eof_window_3d->h - eof_screen_layout.lyric_view_key_height + eof_screen_layout.lyric_view_bkey_height)
+			if(eof_mouse_y < eof_window_3d->y + eof_window_3d->h - eof_screen_layout.lyric_view_key_height + eof_screen_layout.lyric_view_bkey_height)
 			{
 				for(i = 0; i < 28; i++)
 				{
 					k = i % 7;
 					if((k == 0) || (k == 1) || (k == 3) || (k == 4) || (k == 5))
 					{
-						if((mouse_x - eof_window_3d->x >= i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 + eof_screen_layout.lyric_view_bkey_width) && (mouse_x - eof_window_3d->x <= (i + 1) * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 - eof_screen_layout.lyric_view_bkey_width + 1))
+						if((eof_mouse_x - eof_window_3d->x >= i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 + eof_screen_layout.lyric_view_bkey_width) && (eof_mouse_x - eof_window_3d->x <= (i + 1) * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 - eof_screen_layout.lyric_view_bkey_width + 1))
 						{
 							eof_hover_key = MINPITCH + (i / 7) * 12 + bnote[k];
 							break;
@@ -1948,7 +1969,7 @@ void eof_lyric_logic(void)
 				for(i = 0; i < 29; i++)
 				{
 					k = i % 7;
-					if((mouse_x - eof_window_3d->x >= i * eof_screen_layout.lyric_view_key_width) && (mouse_x - eof_window_3d->x < i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width - 1))
+					if((eof_mouse_x - eof_window_3d->x >= i * eof_screen_layout.lyric_view_key_width) && (eof_mouse_x - eof_window_3d->x < i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width - 1))
 					{
 						eof_hover_key = MINPITCH + (i / 7) * 12 + note[k];
 						break;
@@ -2015,11 +2036,18 @@ void eof_lyric_logic(void)
 
 void eof_note_logic(void)
 {
+	int eof_mouse_x = mouse_x, eof_mouse_y = mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
 //	eof_log("eof_note_logic() entered");
 
-	if((eof_catalog_menu[0].flags & D_SELECTED) && (mouse_x >= 0) && (mouse_x < 90) && (mouse_y > 40 + eof_window_note->y) && (mouse_y < 40 + 18 + eof_window_note->y))
+	if(eof_screen_zoom)
+	{	//If x2 zoom is in effect, take that into account for the mouse position
+		eof_mouse_x = mouse_x / 2;
+		eof_mouse_y = mouse_y / 2;
+	}
+
+	if((eof_catalog_menu[0].flags & D_SELECTED) && (eof_mouse_x >= 0) && (eof_mouse_x < 90) && (eof_mouse_y > 40 + eof_window_note->y) && (eof_mouse_y < 40 + 18 + eof_window_note->y))
 	{
-		eof_cselected_control = mouse_x / 30;
+		eof_cselected_control = eof_mouse_x / 30;
 		if(!eof_full_screen_3d && (mouse_b & 1))
 		{
 			eof_blclick_released = 0;
@@ -2048,7 +2076,7 @@ void eof_note_logic(void)
 	{
 		eof_cselected_control = -1;
 	}
-	if((mouse_y >= eof_window_note->y) && (mouse_y < eof_window_note->y + 12) && (mouse_x >= 0) && (mouse_x < ((eof_catalog_menu[0].flags & D_SELECTED) ? text_length(font, "Fret Catalog") : text_length(font, "Information Panel"))))
+	if((eof_mouse_y >= eof_window_note->y) && (eof_mouse_y < eof_window_note->y + 12) && (eof_mouse_x >= 0) && (eof_mouse_x < ((eof_catalog_menu[0].flags & D_SELECTED) ? text_length(font, "Fret Catalog") : text_length(font, "Information Panel"))))
 	{
 		if(!eof_full_screen_3d && (mouse_b & 1))
 		{
@@ -3271,8 +3299,8 @@ void eof_render(void)
 			eof_fix_window_title();
 		}
 		clear_to_color(eof_screen, eof_color_light_gray);
-		if(!eof_full_screen_3d)
-		{	//Only blit the menu bar now if full screen 3D view isn't in effect, as it will otherwise be blitted later
+		if(!eof_full_screen_3d && !eof_screen_zoom)
+		{	//Only blit the menu bar now if neither full screen 3D view nor x2 zoom is in effect, otherwise it will be blitted later
 			if((eof_count_selected_notes(NULL, 0) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
 			{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
 				blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
@@ -3301,7 +3329,7 @@ void eof_render(void)
 	}
 
 	if(eof_cursor_visible && eof_soft_cursor)
-	{
+	{	//If rendering the software mouse cursor, do so at the actual screen coordinates
 		draw_sprite(eof_screen, mouse_sprite, mouse_x - 1, mouse_y - 1);
 	}
 
@@ -3310,13 +3338,16 @@ void eof_render(void)
 		stretch_blit(eof_window_3d->screen, eof_screen, 0, 0, eof_screen_width_default / 2, eof_screen_height / 2, 0, 0, eof_screen_width_default, eof_screen_height);
 		eof_window_note->y = 0;	//Re-position the note window to the top left corner of EOF's program window
 		eof_render_note_window();
-		if((eof_count_selected_notes(NULL, 0) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
-		{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
-			blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
-		}
-		else
-		{
-			blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+		if(!eof_screen_zoom)
+		{	//If x2 zoom is not enabled, render the menu now
+			if((eof_count_selected_notes(NULL, 0) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
+			{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
+				blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+			}
+			else
+			{
+				blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+			}
 		}
 		eof_window_note->y = eof_screen_height / 2;	//Re-position the note window to the bottom left corner of EOF's program window
 	}
@@ -3327,7 +3358,25 @@ void eof_render(void)
 		vsync();
 		DoneVSync();
 	}
-	blit(eof_screen, screen, 0, 0, 0, 0, SCREEN_W, SCREEN_H);	//Render the screen
+	if(eof_screen_zoom)
+	{	//If x2 zoom is enabled, stretch blit the menu to eof_screen, and then stretch blit that to screen
+		//Blitting straight to screen causes flickery menus
+		//Drawing the menu half size and then stretching it to full size makes it unreadable, but that may be better than not rendering them at all
+		//The highest quality (and most memory wasteful) solution would require another large bitmap to render the x2 program window and then the x1 menus on top, which would then be blit to screen
+		if((eof_count_selected_notes(NULL, 0) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
+		{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
+			stretch_blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, eof_image[EOF_IMAGE_MENU_FULL]->w, eof_image[EOF_IMAGE_MENU_FULL]->h, 0, 0, eof_image[EOF_IMAGE_MENU_FULL]->w / 2, eof_image[EOF_IMAGE_MENU_FULL]->h / 2);
+		}
+		else
+		{
+			stretch_blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen, 0, 0, eof_image[EOF_IMAGE_MENU_NO_NOTE]->w, eof_image[EOF_IMAGE_MENU_NO_NOTE]->h, 0, 0, eof_image[EOF_IMAGE_MENU_NO_NOTE]->w / 2, eof_image[EOF_IMAGE_MENU_NO_NOTE]->h / 2);
+		}
+		stretch_blit(eof_screen, screen, 0, 0, eof_screen_width, eof_screen_height, 0, 0, SCREEN_W, SCREEN_H);
+	}
+	else
+	{
+		blit(eof_screen, screen, 0, 0, 0, 0, SCREEN_W, SCREEN_H);	//Render the screen normally
+	}
 }
 
 static int work_around_fsel_bug = 0;

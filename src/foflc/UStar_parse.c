@@ -714,6 +714,11 @@ void UStar_Load(FILE *inf)
 //Parse duration
 		duration=ParseLongInt(buffer,&index,processedctr,NULL);
 		duration=(long int)(((double)duration * stepping)+0.5);		//Convert from quarterbeats to milliseconds (round up)
+		if(!duration)
+		{	//If the duration had the invalid value of 0, set it to the minimum length of 1
+			printf("Warning:  Invalid lyric duration on line #%lu\nCorrecting\n",processedctr);
+			duration = 1;
+		}
 
 //Parse pitch
 		rawpitch=ParseLongInt(buffer,&index,processedctr,NULL);

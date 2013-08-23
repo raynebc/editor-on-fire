@@ -253,22 +253,6 @@ int eof_menu_copy_tremolo_track_13(void);
 int eof_menu_copy_tremolo_track_number(EOF_SONG *sp, int sourcetrack, int desttrack);
 	//Copies the tremolo phrases from the specified source track to the destination track
 
-int eof_menu_thin_notes_track_1(void);
-int eof_menu_thin_notes_track_2(void);
-int eof_menu_thin_notes_track_3(void);
-int eof_menu_thin_notes_track_4(void);
-int eof_menu_thin_notes_track_5(void);
-int eof_menu_thin_notes_track_6(void);
-int eof_menu_thin_notes_track_7(void);
-int eof_menu_thin_notes_track_8(void);
-int eof_menu_thin_notes_track_9(void);
-int eof_menu_thin_notes_track_10(void);
-int eof_menu_thin_notes_track_11(void);
-int eof_menu_thin_notes_track_12(void);
-int eof_menu_thin_notes_track_13(void);
-	//Thins out the notes in the active track difficulty to match those in the active difficulty in the specified track
-	//If a note in the active track isn't within a threshold distance of any note in the specified track, it is deleted
-
 float eof_menu_note_push_get_offset(void);
 	//Returns a value representing the currently-set grid snap interval as a percentage of the duration of one beat
 int eof_feedback_mode_update_note_selection(void);
@@ -279,5 +263,8 @@ int eof_feedback_mode_update_note_selection(void);
 int eof_note_menu_read_gp_lyric_texts(void);
 	//Prompts user to browse for a text file containing lyric texts formatted in the style of Guitar Pro
 	//The text for lyrics in the active chart are replaced by text found in the file, starting with the first lyric
+
+int eof_menu_note_simplify_chords(void);
+	//Removes the top-most (highest lane) gem on each selected chord
 
 #endif
