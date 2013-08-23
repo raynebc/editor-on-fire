@@ -24,6 +24,26 @@ MENU eof_track_phaseshift_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+
+char eof_menu_thin_diff_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
+MENU eof_menu_thin_diff_menu[EOF_TRACKS_MAX] =
+{
+	{eof_menu_thin_diff_menu_text[0], eof_menu_thin_notes_track_1, NULL, D_SELECTED, NULL},
+	{eof_menu_thin_diff_menu_text[1], eof_menu_thin_notes_track_2, NULL, 0, NULL},
+	{eof_menu_thin_diff_menu_text[2], eof_menu_thin_notes_track_3, NULL, 0, NULL},
+	{eof_menu_thin_diff_menu_text[3], eof_menu_thin_notes_track_4, NULL, 0, NULL},
+	{eof_menu_thin_diff_menu_text[4], eof_menu_thin_notes_track_5, NULL, 0, NULL},
+	{eof_menu_thin_diff_menu_text[5], eof_menu_thin_notes_track_6, NULL, 0, NULL},
+	{eof_menu_thin_diff_menu_text[6], eof_menu_thin_notes_track_7, NULL, 0, NULL},
+	{eof_menu_thin_diff_menu_text[7], eof_menu_thin_notes_track_8, NULL, 0, NULL},
+	{eof_menu_thin_diff_menu_text[8], eof_menu_thin_notes_track_9, NULL, 0, NULL},
+	{eof_menu_thin_diff_menu_text[9], eof_menu_thin_notes_track_10, NULL, 0, NULL},
+	{eof_menu_thin_diff_menu_text[10], eof_menu_thin_notes_track_11, NULL, 0, NULL},
+	{eof_menu_thin_diff_menu_text[11], eof_menu_thin_notes_track_12, NULL, 0, NULL},
+	{eof_menu_thin_diff_menu_text[12], eof_menu_thin_notes_track_13, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_track_menu[] =
 {
 	{"Pro &Guitar", NULL, eof_track_proguitar_menu, 0, NULL},
@@ -35,6 +55,7 @@ MENU eof_track_menu[] =
 	{"Erase track", eof_track_erase_track, NULL, 0, NULL},
 	{"Erase track difficulty", eof_track_erase_track_difficulty, NULL, 0, NULL},
 	{"Erase highlighting", eof_menu_track_remove_highlighting, NULL, 0, NULL},
+	{"Thin diff. to match", NULL, eof_menu_thin_diff_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -50,7 +71,7 @@ MENU eof_track_rocksmith_arrangement_menu[] =
 
 void eof_prepare_track_menu(void)
 {
-	unsigned long i, tracknum;
+	unsigned long i, j, tracknum;
 
 	if(eof_song && eof_song_loaded)
 	{//If a chart is loaded
@@ -145,6 +166,29 @@ void eof_prepare_track_menu(void)
 			if(!eof_get_num_popup_messages(eof_song, i + 1) || (i + 1 == eof_selected_track))
 			{	//If the track has no popup messages or is the active track
 				eof_menu_track_rocksmith_popup_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
+			}
+		}
+
+		/* Thin difficulty to match */
+		for(i = 0; i < EOF_TRACKS_MAX; i++)
+		{	//For each track supported by EOF
+			eof_menu_thin_diff_menu[i].flags = D_DISABLED;
+			if((i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
+			{	//If the track exists, copy its name into the string used by the track menu
+				(void) ustrncpy(eof_menu_thin_diff_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE - 1);
+					//Copy the track name to the menu string
+			}
+			else
+			{	//Write a blank string for the track name
+				(void) ustrcpy(eof_menu_thin_diff_menu_text[i],"");
+			}
+			for(j = 0; j < eof_get_track_size(eof_song, i + 1); j++)
+			{	//For each note in the track
+				if(eof_get_note_type(eof_song,i + 1, j) == eof_note_type)
+				{	//If the note is in the active track's difficulty
+					eof_menu_thin_diff_menu[i].flags = 0;	//Enable the track from the submenu
+					break;
+				}
 			}
 		}
 	}//If a chart is loaded
@@ -745,11 +789,11 @@ int eof_track_set_num_frets_strings(void)
 			if(highestfret > newnumfrets)
 			{	//If any notes in this track use fret values that would exceed the new fret limit
 				char message[120] = {0};
-				(void) snprintf(message, sizeof(message) - 1, "Warning:  This track uses frets as high as %lu, exceeding the proposed limit.  Continue?", highestfret);
+				(void) snprintf(message, sizeof(message) - 1, "Warning:  This track uses frets as high as %lu, exceeding the proposed limit.", highestfret);
 				eof_clear_input();
 				key[KEY_Y] = 0;
 				key[KEY_N] = 0;
-				retval = alert3(NULL, message, NULL, "&Yes", "&No", "Highlight conflicts", 'y', 'n', 0);
+				retval = alert3(NULL, message, "Continue?", "&Yes", "&No", "Highlight conflicts", 'y', 'n', 0);
 				if(retval != 1)
 				{	//If user does not opt to continue after being alerted of this fret limit issue
 					if(retval == 3)
@@ -955,6 +999,7 @@ int eof_fret_hand_position_delete(DIALOG * d)
 				{	//If the last list item was deleted and others remain
 					eof_fret_hand_position_list_dialog[1].d1--;	//Select the one before the one that was deleted, or the last event, whichever one remains
 				}
+				(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_START, 0, &junk);	//Re-initialize the dialog
 				(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
 				return D_REDRAW;
 			}
@@ -1001,6 +1046,7 @@ int eof_fret_hand_position_delete_all(DIALOG * d)
 
 	eof_beat_stats_cached = 0;	//Have the beat statistics rebuilt
 	eof_pro_guitar_track_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Re-sort the remaining hand positions
+	(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_START, 0, &junk);	//Re-initialize the dialog
 	(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
 	return D_REDRAW;
 }
@@ -1568,6 +1614,7 @@ int eof_track_rs_popup_messages_delete_all(DIALOG * d)
 		eof_track_pro_guitar_delete_popup_message(eof_song->pro_guitar_track[tracknum], i - 1);
 	}
 
+	(void) dialog_message(eof_rs_popup_messages_dialog, MSG_START, 0, &junk);	//Re-initialize the dialog
 	(void) dialog_message(eof_rs_popup_messages_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
 	return D_REDRAW;
 }
@@ -2874,6 +2921,7 @@ int eof_track_rs_tone_changes_delete_all(DIALOG * d)
 		eof_track_pro_guitar_delete_tone_change(eof_song->pro_guitar_track[tracknum], i - 1);
 	}
 
+	(void) dialog_message(eof_track_rs_tone_changes_dialog, MSG_START, 0, &junk);	//Re-initialize the dialog
 	(void) dialog_message(eof_track_rs_tone_changes_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
 	return D_REDRAW;
 }
@@ -3002,4 +3050,69 @@ int eof_menu_track_copy_popups_track_number(EOF_SONG *sp, int sourcetrack, int d
 	}
 
 	return 1;	//Return completion
+}
+
+int eof_menu_thin_notes_track_1(void)
+{
+	return eof_thin_notes_to_match_target_difficulty(eof_song, 1, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_2(void)
+{
+	return eof_thin_notes_to_match_target_difficulty(eof_song, 2, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_3(void)
+{
+	return eof_thin_notes_to_match_target_difficulty(eof_song, 3, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_4(void)
+{
+	return eof_thin_notes_to_match_target_difficulty(eof_song, 4, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_5(void)
+{
+	return eof_thin_notes_to_match_target_difficulty(eof_song, 5, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_6(void)
+{
+	return eof_thin_notes_to_match_target_difficulty(eof_song, 6, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_7(void)
+{
+	return eof_thin_notes_to_match_target_difficulty(eof_song, 7, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_8(void)
+{
+	return eof_thin_notes_to_match_target_difficulty(eof_song, 8, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_9(void)
+{
+	return eof_thin_notes_to_match_target_difficulty(eof_song, 9, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_10(void)
+{
+	return eof_thin_notes_to_match_target_difficulty(eof_song, 10, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_11(void)
+{
+	return eof_thin_notes_to_match_target_difficulty(eof_song, 11, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_12(void)
+{
+	return eof_thin_notes_to_match_target_difficulty(eof_song, 12, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_13(void)
+{
+	return eof_thin_notes_to_match_target_difficulty(eof_song, 13, eof_selected_track, 2, eof_note_type);
 }

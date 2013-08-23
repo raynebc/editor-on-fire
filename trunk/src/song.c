@@ -5576,7 +5576,7 @@ char eof_search_for_note_near(EOF_SONG *sp, unsigned long track, unsigned long t
 	return matchfound;	//Return the match status
 }
 
-int eof_thin_notes_to_match__target_difficulty(EOF_SONG *sp, unsigned long sourcetrack, unsigned long targettrack, unsigned long delta, char type)
+int eof_thin_notes_to_match_target_difficulty(EOF_SONG *sp, unsigned long sourcetrack, unsigned long targettrack, unsigned long delta, char type)
 {
 	unsigned long i, match;
 

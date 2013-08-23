@@ -41,6 +41,7 @@ MENU eof_file_display_menu[] =
 {
 	{"&Display", eof_menu_file_display, NULL, 0, NULL},
 	{"Set display &Width", eof_set_display_width, NULL, EOF_LINUX_DISABLE, NULL},
+	{"x2 &Zoom", eof_toggle_display_zoom, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -3252,6 +3253,19 @@ int eof_set_display_width(void)
 	eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case the display window size was changed
 	eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case the display window size was changed
 
+	return D_O_K;
+}
+
+int eof_toggle_display_zoom(void)
+{
+	eof_screen_zoom ^= 1;	//Toggle this value
+	(void) eof_set_display_mode(eof_screen_width, eof_screen_height);	//Redefine graphic primitive sizes to fit 480 height display mode
+
+	//Update coordinate related items
+	eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
+	eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case the display window size was changed
+	eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case the display window size was changed
+	eof_render();
 	return D_O_K;
 }
 

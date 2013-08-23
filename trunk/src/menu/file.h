@@ -120,4 +120,7 @@ int eof_menu_file_rs_import(void);
 	//Replaces the active pro guitar/bass track with the content of the arrangement in the user's selected Rocksmith XML file
 	//Beat timings in the active project are replaced with the timings in the XML file
 
+int eof_toggle_display_zoom(void);
+	//Alters EOF so that it renders a 480 height window and then stretches it to fit the program window, acting as a zoom feature
+
 #endif

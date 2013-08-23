@@ -744,7 +744,7 @@ char eof_search_for_note_near(EOF_SONG *sp, unsigned long track, unsigned long t
 	//Looks for one or more notes within [delta] number of milliseconds of the specified position of the specified track difficulty
 	//If such a note is found, nonzero is returned and match refers to the note number of the closest note
 	//If two notes are an equal distance from the target time (one before, one after), the earlier note is returned
-int eof_thin_notes_to_match__target_difficulty(EOF_SONG *sp, unsigned long sourcetrack, unsigned long targettrack, unsigned long delta, char type);
+int eof_thin_notes_to_match_target_difficulty(EOF_SONG *sp, unsigned long sourcetrack, unsigned long targettrack, unsigned long delta, char type);
 	//Checks all notes in the target track difficulty
 	//For each note, if it isn't within [delta] number of milliseconds of a note in the source track difficulty, it is deleted
 	//Returns zero on error

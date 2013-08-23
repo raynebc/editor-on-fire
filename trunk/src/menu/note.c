@@ -282,25 +282,6 @@ MENU eof_note_drum_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
-char eof_menu_thin_notes_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
-MENU eof_menu_thin_notes_menu[EOF_TRACKS_MAX] =
-{
-	{eof_menu_thin_notes_menu_text[0], eof_menu_thin_notes_track_1, NULL, D_SELECTED, NULL},
-	{eof_menu_thin_notes_menu_text[1], eof_menu_thin_notes_track_2, NULL, 0, NULL},
-	{eof_menu_thin_notes_menu_text[2], eof_menu_thin_notes_track_3, NULL, 0, NULL},
-	{eof_menu_thin_notes_menu_text[3], eof_menu_thin_notes_track_4, NULL, 0, NULL},
-	{eof_menu_thin_notes_menu_text[4], eof_menu_thin_notes_track_5, NULL, 0, NULL},
-	{eof_menu_thin_notes_menu_text[5], eof_menu_thin_notes_track_6, NULL, 0, NULL},
-	{eof_menu_thin_notes_menu_text[6], eof_menu_thin_notes_track_7, NULL, 0, NULL},
-	{eof_menu_thin_notes_menu_text[7], eof_menu_thin_notes_track_8, NULL, 0, NULL},
-	{eof_menu_thin_notes_menu_text[8], eof_menu_thin_notes_track_9, NULL, 0, NULL},
-	{eof_menu_thin_notes_menu_text[9], eof_menu_thin_notes_track_10, NULL, 0, NULL},
-	{eof_menu_thin_notes_menu_text[10], eof_menu_thin_notes_track_11, NULL, 0, NULL},
-	{eof_menu_thin_notes_menu_text[11], eof_menu_thin_notes_track_12, NULL, 0, NULL},
-	{eof_menu_thin_notes_menu_text[12], eof_menu_thin_notes_track_13, NULL, 0, NULL},
-	{NULL, NULL, NULL, 0, NULL}
-};
-
 MENU eof_note_proguitar_menu[] =
 {
 	{"Edit pro guitar &Note\tN", eof_menu_note_edit_pro_guitar_note, NULL, 0, NULL},
@@ -363,13 +344,13 @@ MENU eof_note_menu[] =
 	{eof_trill_menu_text, NULL, eof_trill_menu, 0, NULL},
 	{eof_tremolo_menu_text, NULL, eof_tremolo_menu, 0, NULL},
 	{"Slider", NULL, eof_slider_menu, 0, NULL},
-	{"Thin diff. to match", NULL, eof_menu_thin_notes_menu, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Drum", NULL, eof_note_drum_menu, 0, NULL},
 	{"Pro &Guitar", NULL, eof_note_proguitar_menu, 0, NULL},
 	{"&Rocksmith", NULL, eof_note_rocksmith_menu, 0, NULL},
 	{"&Lyrics", NULL, eof_note_lyrics_menu, 0, NULL},
-	{"Remove all statuses", eof_menu_remove_statuses, NULL, 0, NULL},
+	{"Remove statuses", eof_menu_remove_statuses, NULL, 0, NULL},
+	{"Simpli&Fy chords", eof_menu_note_simplify_chords, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -772,11 +753,11 @@ void eof_prepare_note_menu(void)
 			eof_note_menu[11].flags = D_DISABLED;	//Note>HOPO
 			eof_note_menu[12].flags = D_DISABLED;	//Note>Trill> submenu
 			eof_note_menu[13].flags = D_DISABLED;	//Note>Tremolo> submenu
-			eof_note_menu[17].flags = D_DISABLED;	//Note>Drum> submenu
-			eof_note_menu[18].flags = D_DISABLED;	//Note>Pro Guitar> submenu
-			eof_note_menu[19].flags = D_DISABLED;	//Note>Rocksmith> submenu
+			eof_note_menu[16].flags = D_DISABLED;	//Note>Drum> submenu
+			eof_note_menu[17].flags = D_DISABLED;	//Note>Pro Guitar> submenu
+			eof_note_menu[18].flags = D_DISABLED;	//Note>Rocksmith> submenu
 
-			eof_note_menu[20].flags = 0;	//Note>Lyrics> submenu
+			eof_note_menu[19].flags = 0;	//Note>Lyrics> submenu
 			if((eof_selection.current < eof_song->vocal_track[tracknum]->lyrics) && (vselected == 1))
 			{	//Only enable edit and split lyric if only one lyric is selected
 				eof_note_lyrics_menu[0].flags = 0;	//Note>Lyrics>Edit Lyric
@@ -824,7 +805,7 @@ void eof_prepare_note_menu(void)
 			eof_note_menu[8].flags = 0;				//Note>Edit Name
 			eof_note_menu[12].flags = 0;			//Note>Trill> submenu
 			eof_note_menu[13].flags = 0;			//Note>Tremolo> submenu
-			eof_note_menu[20].flags = D_DISABLED;	//Note>Lyrics> submenu
+			eof_note_menu[19].flags = D_DISABLED;	//Note>Lyrics> submenu
 
 			/* toggle crazy */
 			if((track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR))
@@ -838,11 +819,11 @@ void eof_prepare_note_menu(void)
 
 			if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
 			{	//When a drum track is not active
-				eof_note_menu[17].flags = D_DISABLED;	//Note>Drum> submenu
+				eof_note_menu[16].flags = D_DISABLED;	//Note>Drum> submenu
 			}
 			else
 			{
-				eof_note_menu[17].flags = 0;
+				eof_note_menu[16].flags = 0;
 
 				if(eof_selected_track == EOF_TRACK_DRUM_PS)
 				{	//If the PS drum track is active
@@ -891,8 +872,8 @@ void eof_prepare_note_menu(void)
 			/* Pro Guitar mode notation> */
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If the active track is a pro guitar track
-				eof_note_menu[18].flags = 0;			//Note>Pro Guitar> submenu
-				eof_note_menu[19].flags = 0;			//Note>Rocksmith> submenu
+				eof_note_menu[17].flags = 0;			//Note>Pro Guitar> submenu
+				eof_note_menu[18].flags = 0;			//Note>Rocksmith> submenu
 
 				/* Arpeggio>Erase all */
 				if(eof_song->pro_guitar_track[tracknum]->arpeggios)
@@ -903,34 +884,11 @@ void eof_prepare_note_menu(void)
 				{
 					eof_arpeggio_menu[2].flags = D_DISABLED;
 				}
-
-				/* Thin difficulty to match */
-				for(i = 0; i < EOF_TRACKS_MAX; i++)
-				{	//For each track supported by EOF
-					eof_menu_thin_notes_menu[i].flags = D_DISABLED;
-					if((i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
-					{	//If the track exists, copy its name into the string used by the track menu
-						(void) ustrncpy(eof_menu_thin_notes_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE - 1);
-							//Copy the track name to the menu string
-					}
-					else
-					{	//Write a blank string for the track name
-						(void) ustrcpy(eof_menu_thin_notes_menu_text[i],"");
-					}
-					for(j = 0; j < eof_get_track_size(eof_song, i + 1); j++)
-					{	//For each note in the track
-						if(eof_get_note_type(eof_song,i + 1, j) == eof_note_type)
-						{	//If the note is in the active track's difficulty
-							eof_menu_thin_notes_menu[i].flags = 0;	//Enable the track from the submenu
-							break;
-						}
-					}
-				}
 			}
 			else
 			{
+				eof_note_menu[17].flags = D_DISABLED;
 				eof_note_menu[18].flags = D_DISABLED;
-				eof_note_menu[19].flags = D_DISABLED;
 			}
 
 			/* Trill mark/remark*/
@@ -3405,17 +3363,17 @@ DIALOG eof_pro_guitar_note_dialog[] =
 
 	//Note:  In guitar theory, string 1 refers to high e
 	{d_agup_text_proc,      16,  128, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_6_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  124, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_6,  "0123456789Xx",NULL },
+	{eof_verified_edit_proc,74,  124, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_6,  "0123456789Xx",NULL },
 	{d_agup_text_proc,      16,  152, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_5_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  148, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_5,  "0123456789Xx",NULL },
+	{eof_verified_edit_proc,74,  148, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_5,  "0123456789Xx",NULL },
 	{d_agup_text_proc,      16,  176, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_4_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  172, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_4,  "0123456789Xx",NULL },
+	{eof_verified_edit_proc,74,  172, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_4,  "0123456789Xx",NULL },
 	{d_agup_text_proc,      16,  200, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_3_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  196, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_3,  "0123456789Xx",NULL },
+	{eof_verified_edit_proc,74,  196, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_3,  "0123456789Xx",NULL },
 	{d_agup_text_proc,      16,  224, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_2_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  220, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_2,  "0123456789Xx",NULL },
+	{eof_verified_edit_proc,74,  220, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_2,  "0123456789Xx",NULL },
 	{d_agup_text_proc,      16,  248, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_1_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  244, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_1,  "0123456789Xx",NULL },
+	{eof_verified_edit_proc,74,  244, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_1,  "0123456789Xx",NULL },
 
 	{d_agup_text_proc,      16,  108, 64,  8,  2,   23,  0,    0,      0,         0,   "Fret #",     NULL,          NULL },
 	{d_agup_text_proc,      176, 127, 64,  8,  2,   23,  0,    0,      0,         0,   "Legacy",     NULL,          NULL },
@@ -3425,13 +3383,13 @@ DIALOG eof_pro_guitar_note_dialog[] =
 	{d_agup_check_proc,		158, 223, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 2",     NULL,          NULL },
 	{d_agup_check_proc,		158, 247, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 1",     NULL,          NULL },
 
-	{d_agup_text_proc,      98,  108, 64,  8,  2,   23,  0,    0,      0,         0,   "Ghost",      NULL,          NULL },
-	{d_agup_check_proc,		100, 127, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		100, 151, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		100, 175, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		100, 199, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		100, 223, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		100, 247, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_text_proc,      102, 108, 64,  8,  2,   23,  0,    0,      0,         0,   "Ghost",      NULL,          NULL },
+	{d_agup_check_proc,		104, 127, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,		104, 151, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,		104, 175, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,		104, 199, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,		104, 223, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,		104, 247, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
 
 	{d_agup_text_proc,      140, 108, 64,  8,  2,   23,  0,    0,      0,         0,   "Mute",       NULL,          NULL },
 	{d_agup_check_proc,		140, 127, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
@@ -4211,17 +4169,17 @@ DIALOG eof_pro_guitar_note_frets_dialog[] =
 	//Note:  In guitar theory, string 1 refers to high e
 	{d_agup_text_proc,      60,  80,  64,  8,  2,   23,  0,    0,      0,         0,   "Fret #",     NULL,          NULL },
 	{d_agup_text_proc,      16,  108, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_6_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  104, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_6,  "0123456789Xx",NULL },
+	{eof_verified_edit_proc,74,  104, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_6,  "0123456789Xx",NULL },
 	{d_agup_text_proc,      16,  132, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_5_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  128, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_5,  "0123456789Xx",NULL },
+	{eof_verified_edit_proc,74,  128, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_5,  "0123456789Xx",NULL },
 	{d_agup_text_proc,      16,  156, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_4_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  152, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_4,  "0123456789Xx",NULL },
+	{eof_verified_edit_proc,74,  152, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_4,  "0123456789Xx",NULL },
 	{d_agup_text_proc,      16,  180, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_3_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  176, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_3,  "0123456789Xx",NULL },
+	{eof_verified_edit_proc,74,  176, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_3,  "0123456789Xx",NULL },
 	{d_agup_text_proc,      16,  204, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_2_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  200, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_2,  "0123456789Xx",NULL },
+	{eof_verified_edit_proc,74,  200, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_2,  "0123456789Xx",NULL },
 	{d_agup_text_proc,      16,  228, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_1_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  224, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_1,  "0123456789Xx",NULL },
+	{eof_verified_edit_proc,74,  224, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_1,  "0123456789Xx",NULL },
 
 	{d_agup_text_proc,      120, 80,  64,  8,  2,   23,  0,    0,      0,         0,   "Finger #",     NULL,          NULL },
 	{eof_verified_edit_proc,140, 104, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_6, "12345Xx",NULL },
@@ -6954,71 +6912,6 @@ int eof_menu_pro_guitar_remove_pull_off(void)
 	return 1;
 }
 
-int eof_menu_thin_notes_track_1(void)
-{
-	return eof_thin_notes_to_match__target_difficulty(eof_song, 1, eof_selected_track, 2, eof_note_type);
-}
-
-int eof_menu_thin_notes_track_2(void)
-{
-	return eof_thin_notes_to_match__target_difficulty(eof_song, 2, eof_selected_track, 2, eof_note_type);
-}
-
-int eof_menu_thin_notes_track_3(void)
-{
-	return eof_thin_notes_to_match__target_difficulty(eof_song, 3, eof_selected_track, 2, eof_note_type);
-}
-
-int eof_menu_thin_notes_track_4(void)
-{
-	return eof_thin_notes_to_match__target_difficulty(eof_song, 4, eof_selected_track, 2, eof_note_type);
-}
-
-int eof_menu_thin_notes_track_5(void)
-{
-	return eof_thin_notes_to_match__target_difficulty(eof_song, 5, eof_selected_track, 2, eof_note_type);
-}
-
-int eof_menu_thin_notes_track_6(void)
-{
-	return eof_thin_notes_to_match__target_difficulty(eof_song, 6, eof_selected_track, 2, eof_note_type);
-}
-
-int eof_menu_thin_notes_track_7(void)
-{
-	return eof_thin_notes_to_match__target_difficulty(eof_song, 7, eof_selected_track, 2, eof_note_type);
-}
-
-int eof_menu_thin_notes_track_8(void)
-{
-	return eof_thin_notes_to_match__target_difficulty(eof_song, 8, eof_selected_track, 2, eof_note_type);
-}
-
-int eof_menu_thin_notes_track_9(void)
-{
-	return eof_thin_notes_to_match__target_difficulty(eof_song, 9, eof_selected_track, 2, eof_note_type);
-}
-
-int eof_menu_thin_notes_track_10(void)
-{
-	return eof_thin_notes_to_match__target_difficulty(eof_song, 10, eof_selected_track, 2, eof_note_type);
-}
-
-int eof_menu_thin_notes_track_11(void)
-{
-	return eof_thin_notes_to_match__target_difficulty(eof_song, 11, eof_selected_track, 2, eof_note_type);
-}
-
-int eof_menu_thin_notes_track_12(void)
-{
-	return eof_thin_notes_to_match__target_difficulty(eof_song, 12, eof_selected_track, 2, eof_note_type);
-}
-
-int eof_menu_thin_notes_track_13(void)
-{
-	return eof_thin_notes_to_match__target_difficulty(eof_song, 13, eof_selected_track, 2, eof_note_type);
-}
-
 int eof_menu_note_toggle_ghost(void)
 {
 	unsigned long ctr, ctr2, bitmask, tracknum;
@@ -7887,4 +7780,45 @@ void eof_menu_note_cycle_selection_back(unsigned long notenum)
 	}
 	eof_selection.multi[ctr] = 0;	//This last note, if it existed, will no longer exist so it can be deselected
 
+}
+
+int eof_menu_note_simplify_chords(void)
+{
+	unsigned long ctr, ctr2, bitmask, note;
+	unsigned char undo_made = 0;
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 0;	//Return error
+
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+	{	//For each note in the track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			if(eof_note_count_colors(eof_song, eof_selected_track, ctr) > 1)
+			{	//If this note has at least two gems
+				note = eof_get_note_note(eof_song, eof_selected_track, ctr);	//Get the note's bitmask
+				for(ctr2 = 6, bitmask = 32; ctr2 > 0; ctr2--, bitmask >>= 1)
+				{	//For each of the 6 supported strings (in reverse order)
+					if(note & bitmask)
+					{	//When the first (highest numbered) populated lane is reached
+						if(!undo_made)
+						{	//If an undo state hasn't been made yet
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+							undo_made = 1;
+						}
+						note &= ~ bitmask;	//Clear that lane
+						eof_set_note_note(eof_song, eof_selected_track, ctr, note);	//Update the note
+						break;
+					}
+				}
+			}
+		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
 }

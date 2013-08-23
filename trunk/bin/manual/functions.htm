@@ -233,7 +233,7 @@ Launch Phase Shift with the current song in practice mode, allowing you to adjus
 
 
 <h1><a name="track">Track</a></h1>
-[ <a href="functions.htm#trackproguitar">Pro Guitar</a> ] [ <a href="functions.htm#trackrocksmith">Rocksmith</a> ] [ <a href="functions.htm#trackphaseshift">Phase Shift</a> ] [ <a href="functions.htm#difficulty">Set difficulty</a> ] [ <a href="functions.htm#renametrack">Rename</a> ] [ <a href="functions.htm#disable_double_bass">Disable expert+ bass drum</a> ] [ <a href="functions.htm#erasetrack">Erase track</a> ] [ <a href="functions.htm#erasetrackdiff">Erase track difficulty</a> ] [ <a href="functions.htm#erasehighlighting">Erase highlighting</a> ]
+[ <a href="functions.htm#trackproguitar">Pro Guitar</a> ] [ <a href="functions.htm#trackrocksmith">Rocksmith</a> ] [ <a href="functions.htm#trackphaseshift">Phase Shift</a> ] [ <a href="functions.htm#difficulty">Set difficulty</a> ] [ <a href="functions.htm#renametrack">Rename</a> ] [ <a href="functions.htm#disable_double_bass">Disable expert+ bass drum</a> ] [ <a href="functions.htm#erasetrack">Erase track</a> ] [ <a href="functions.htm#erasetrackdiff">Erase track difficulty</a> ] [ <a href="functions.htm#erasehighlighting">Erase highlighting</a> ] [ <a href="functions.htm#thindiff">Thin difficulty to match</a> ] 
 <blockquote>
 <h1><a name="trackproguitar">Pro Guitar</a></h1>
 <blockquote>
@@ -294,11 +294,13 @@ Erases all content in the active track.</br>
 Erases all content in the active track difficulty.</br>
 <h1><a name="erasehighlighting">Erase highlighting</a></h1>
 Removes any highlighting from notes that had been applied by functions such as <a href="functions.htm#highlightarpeggios">Track>Pro Guitar>Highlight notes in arpeggios</a>.<br>
+<h1><a name="thindiff">Thin difficulty to match</a></h1>
+Thins notes in the current track difficulty by comparing them with another track.  When the function is used, EOF checks each note in the active track difficulty against the notes in the active difficulty of the specified track.  If a note in the active track is not close enough to a note in the specified track (within 2 ms), it is removed.  This function makes it easier to thin the number of notes in the lower difficulties of a pro guitar track to be similar to the note thinning that was done for lower difficulties of a five lane instrument track or vice versa.<br>
 </blockquote>
 
 
 <h1><a name="note">Note</a></h1>
-[ <a href="functions.htm#toggle">Toggle</a> ] [ <a href="functions.htm#clear">Clear</a> ] [ <a href="functions.htm#transposeup">Transpose Up</a> ] [ <a href="functions.htm#transposedown">Transpose Down</a> ] [ <a href="functions.htm#resnap">Resnap</a> ] [ <a href="functions.htm#solos">Solos</a> ] [ <a href="functions.htm#starpower">Star Power</a> ] [ <a href="functions.htm#delete">Delete</a> ] [ <a href="functions.htm#editname">Edit Name</a> ] [ <a href="functions.htm#crazy">Toggle Crazy</a> ] [ <a href="functions.htm#hopo">HOPO</a> ] [ <a href="functions.htm#trill">Trill</a> ] [ <a href="functions.htm#tremolo">Tremolo</a> ] [ <a href="functions.htm#slider">Slider</a> ] [ <a href="functions.htm#thindiff">Thin difficulty to match</a> ] [ <a href="functions.htm#drum">Drum</a> ] [ <a href="functions.htm#noteproguitar">Pro Guitar</a> ] [ <a href="functions.htm#noterocksmith">Rocksmith</a> ] [ <a href="functions.htm#lyrics">Lyrics</a> ]<br>[ <a href="functions.htm#removestatuses">Remove all statuses</a> ]
+[ <a href="functions.htm#toggle">Toggle</a> ] [ <a href="functions.htm#clear">Clear</a> ] [ <a href="functions.htm#transposeup">Transpose Up</a> ] [ <a href="functions.htm#transposedown">Transpose Down</a> ] [ <a href="functions.htm#resnap">Resnap</a> ] [ <a href="functions.htm#solos">Solos</a> ] [ <a href="functions.htm#starpower">Star Power</a> ] [ <a href="functions.htm#delete">Delete</a> ] [ <a href="functions.htm#editname">Edit Name</a> ] [ <a href="functions.htm#crazy">Toggle Crazy</a> ] [ <a href="functions.htm#hopo">HOPO</a> ] [ <a href="functions.htm#trill">Trill</a> ] [ <a href="functions.htm#tremolo">Tremolo</a> ] [ <a href="functions.htm#slider">Slider</a> ] [ <a href="functions.htm#drum">Drum</a> ] [ <a href="functions.htm#noteproguitar">Pro Guitar</a> ] [ <a href="functions.htm#noterocksmith">Rocksmith</a> ] [ <a href="functions.htm#lyrics">Lyrics</a> ]<br>[ <a href="functions.htm#removestatuses">Remove statuses</a> ]
 <blockquote>
 <h1><a name="toggle">Toggle</a></h1>
 Toggle the desired gem color on/off in all selected notes.<br>
@@ -341,8 +343,6 @@ If the active track's difficulty limit has been removed (see <a href="functions.
 <h1><a name="slider">Slider</a></h1>
 Perform various operations related to slider sections.  "Mark" marks the currently selected notes as a slider section.  "Remove" removes all slider sections in which selected notes lie.  To delete one slider section simply select at least one note within that section and select "Note>Slider>Remove".  "Erase All" erases all slider sections from the current track.  "Re-Mark" will modify an existing slider section.  If you mark a slider and later need to modify it, simply select the notes that belong in the section and select Note>Slider>Re-Mark.  "Re-Mark" is only available when at least one of the selected notes lies within a slider section.  EOF renders a purple rectangle above the piano roll where these sections exist to make it easy to identify them.  In addition, the 3D preview will draw a purple line between slider notes, similarly to how they would appear in Guitar Hero World Tour.<br><br>Slider notes are special type of note introduced in Guitar Hero World Tour that allow notes to be played without strumming, using a touch sensitive strip on the guitar released for the game, also allowing various effects such as whammying and sliding.  EOF currently only allows slider sections to be authored in 5 lane guitar tracks.  If any slider sections exist during save, a "sysex_slider = True" song.ini tag is written.  Frets on Fire and FoFiX do not currently support slider sections, but Phase Shift does.<br><br>
 <a href="functions.htm#sysexwarning">Be aware that this feature is marked in the MIDI using Sysex, which FoF and FoFiX will have compatibility issues with.</a><br>
-<h1><a name="thindiff">Thin difficulty to match</a></h1>
-Thins notes in the current track difficulty by comparing them with another track.  When the function is used, EOF checks each note in the active track difficulty against the notes in the active difficulty of the specified track.  If a note in the active track is not close enough to a note in the specified track (within 2 ms), it is removed.  This function makes it easier to thin the number of notes in the lower difficulties of a pro guitar track to be similar to the note thinning that was done for lower difficulties of a five lane instrument track or vice versa.<br>
 <h1><a name="drum">Drum</a></h1>
 <blockquote>
 Performs various drum note operations. If the active track is not the drum track, this sub-menu is grayed out and inaccessible.<br><br>
@@ -434,7 +434,7 @@ Replace the items in brackets with the appropriate names.  Remember that if any 
 <b>8.</b>  To make the lyrics more accurate, consider marking proper lyric lines by selecting a range of lyrics that should be in one line and use Note>Lyrics>Lyric Lines>Mark (CTRL+M), repeat for each appropriate line of lyrics.  Also consider shortening lyric lengths so that one lyric doesn't run all the way up to the next.  These steps aren't needed for Rocksmith customs, but they are for proper pitched lyrics for better use in some other rhythm games like Rock Band and Phase Shift.  If the guitar pro formatted lyric text file used line breaks, those are automatically used by EOF to place lyric lines, so if you prefer, you can just format the lyrics before importing that file into EOF.<br>
 </blockquote>
 </blockquote>
-<h1><a name="removestatuses">Remove all statuses</a></h1>
+<h1><a name="removestatuses">Remove statuses</a></h1>
 Removes all statuses from selected notes.  An exception to this is string mute status for pro guitar notes, as it is handled on a per gem basis instead of simply a per note basis.
 </blockquote>
 

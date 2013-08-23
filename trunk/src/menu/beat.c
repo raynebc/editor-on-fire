@@ -1469,6 +1469,14 @@ void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *
 	else
 	{	//An existing event is being edited
 		eof_events_add_dialog[0].dp = eof_events_add_dialog_string2;	//Update the dialog window title to reflect that an event is being edited
+		if(ptr->track == eof_selected_track)
+		{	//If this event is specific to this track
+			eof_events_add_dialog[3].flags = D_SELECTED;	//Set the checkbox specifying the event is track specific
+		}
+		else
+		{	//Otherwise clear the checkbox
+			eof_events_add_dialog[3].flags = 0;
+		}
 	}
 
 	if(!undo_made)
@@ -1482,14 +1490,6 @@ void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *
 
 	//Initialize the dialog
 	(void) snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string) - 1, "Specific to %s", eof_song->track[eof_selected_track]->name);
-	if(ptr->track == eof_selected_track)
-	{	//If this event is specific to this track
-		eof_events_add_dialog[3].flags = D_SELECTED;	//Set the checkbox specifying the event is track specific
-	}
-	else
-	{	//Otherwise clear the checkbox
-		eof_events_add_dialog[3].flags = 0;
-	}
 
 	if(ptr->flags & EOF_EVENT_FLAG_RS_PHRASE)
 	{	//If the calling function wanted to automatically enable the "Rocksmith phrase marker" checkbox, or the event being edited already has this flag
@@ -1870,6 +1870,7 @@ int eof_all_events_radio_proc(int msg, DIALOG *d, int c)
 			eof_all_events_dialog[1].d2 = 0;									//Select first list item, since if it's too high, it will prevent the newly-selected filtered list from displaying
 			previous_option = selected_option;
 			(void) d_agup_radio_proc(msg, d, c);	//Allow the input to be processed
+			(void) dialog_message(eof_all_events_dialog, MSG_START, 0, &junk);	//Re-initialize the dialog
 			(void) dialog_message(eof_all_events_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
 			return D_REDRAW;
 		}
