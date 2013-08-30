@@ -370,7 +370,7 @@ typedef struct
 
 	//These variables track various properties of the beat to relieve rendering functions of some processing
 	unsigned long measurenum;
-	int beat_within_measure, num_beats_in_measure, contained_section_event, contained_rs_section_event, contained_rs_section_event_instance_number;
+	int beat_within_measure, num_beats_in_measure, beat_unit, contained_section_event, contained_rs_section_event, contained_rs_section_event_instance_number;
 	char contains_tempo_change, contains_ts_change, contains_end_event;
 
 } EOF_BEAT_MARKER;

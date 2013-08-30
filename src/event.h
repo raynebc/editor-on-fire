@@ -22,10 +22,10 @@ void eof_sort_events(EOF_SONG * sp);
 	//Performs a quicksort of the specified song's events array
 int eof_song_qsort_events(const void * e1, const void * e2);
 	//The comparitor function used to quicksort the events array
-char eof_song_contains_event(EOF_SONG *sp, const char *text, unsigned long track, unsigned long flags);
+char eof_song_contains_event(EOF_SONG *sp, const char *text, unsigned long track, unsigned long flags, unsigned char track_specific);
 	//Returns nonzero if there is one or more text events that matches the specified string exactly (case sensitive)
 	// and whose flags ANDED with the specified flags is nonzero (ie. for checking for existing of a RS phrase, use a flags value of all bits set to search for any event type)
-	//If track is nonzero, only events in that track are checked for comparison, otherwise all events are checked
+	//If track_specific is nonzero, only events with a matching track number value are checked for comparison, otherwise all events are checked
 char eof_song_contains_event_beginning_with(EOF_SONG *sp, const char *text, unsigned long track);
 	//Returns nonzero if there is one or more text events that begins with the specified string exactly (case sensitive substring)
 	//If track is nonzero, only events in that track are checked for comparison, otherwise all events are checked

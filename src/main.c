@@ -332,7 +332,7 @@ char *eof_fret_string_numbers[6] = {eof_string_lane_1_number, eof_string_lane_2_
 
 struct MIDIentry *MIDIqueue=NULL;		//Linked list of queued MIDI notes
 struct MIDIentry *MIDIqueuetail=NULL;	//Points to the tail of the list
-char eof_midi_initialized=0;			//Specifies whether Allegro was able to set up a MIDI device
+char eof_midi_initialized = 0;			//Specifies whether Allegro was able to set up a MIDI device
 
 FILE *eof_log_fp = NULL;	//Is set to NULL if logging is disabled
 char eof_log_level = 0;		//Is set to 0 if logging is disabled
@@ -771,13 +771,13 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 			{	//If x2 zoom display is enabled
 				eof_screen_zoom = 0;	//Disable x2 zoom
 				eof_set_display_mode(width, height);
-				allegro_message("Warning:  Failed to enable x2 zoom");
+				allegro_message("Warning:  Failed to enable x2 zoom.\nTry setting a smaller program window size first.");
 				return 1;
 			}
 			if(width != eof_screen_width_default)
 			{	//If the custom width failed to be applied, revert to the default width for this window height
 				eof_set_display_mode(eof_screen_width_default, height);
-				allegro_message("Warning:  Failed to set custom display width, reverted to default");
+				allegro_message("Warning:  Failed to set custom display width, reverted to default.\nTry setting a different width.");
 				return 1;
 			}
 			if(set_gfx_mode(GFX_SAFE, width, eof_screen_height, 0, 0))
@@ -1315,6 +1315,9 @@ unsigned long eof_count_selected_notes(unsigned long * total, char v)
 	unsigned long tracknum;
 	unsigned long count=0, i;
 	long last = -1;
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 0;	//Return error
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	switch(eof_song->track[eof_selected_track]->track_format)
@@ -3293,7 +3296,7 @@ void eof_render(void)
 		return;
 	}
 	if(eof_song_loaded)
-	{
+	{	//If a project is loaded
 		if(eof_window_title_dirty)
 		{	//If the window title needs to be redrawn
 			eof_fix_window_title();
@@ -3323,9 +3326,16 @@ void eof_render(void)
 		eof_render_3d_window();
 	}
 	else
-	{
+	{	//If no project is loaded, just draw a blank screen and the menu
 		clear_to_color(eof_screen, eof_color_gray);
-		blit(eof_image[EOF_IMAGE_MENU], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+		if(eof_screen_zoom)
+		{	//If x2 zoom is enabled, stretch blit the menu
+			stretch_blit(eof_image[EOF_IMAGE_MENU], eof_screen, 0, 0, eof_image[EOF_IMAGE_MENU]->w, eof_image[EOF_IMAGE_MENU]->h, 0, 0, eof_image[EOF_IMAGE_MENU]->w / 2, eof_image[EOF_IMAGE_MENU]->h / 2);
+		}
+		else
+		{	//Otherwise render it normally
+			blit(eof_image[EOF_IMAGE_MENU], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+		}
 	}
 
 	if(eof_cursor_visible && eof_soft_cursor)
@@ -3593,12 +3603,12 @@ int eof_initialize(int argc, char * argv[])
 			allegro_message("Can't set up sound!  Error: %s",allegro_error);
 			return 0;
 		}
-		eof_midi_initialized=0;	//Couldn't set up MIDI
+		eof_midi_initialized = 0;	//Couldn't set up MIDI
 	}
 	else
 	{
 		install_timer();	//Needed to use midi_out()
-		eof_midi_initialized=1;
+		eof_midi_initialized = 1;
 	}
 
 	if(install_keyboard())

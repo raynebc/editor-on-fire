@@ -156,7 +156,7 @@ int eof_song_qsort_events(const void * e1, const void * e2)
 	}
 }
 
-char eof_song_contains_event(EOF_SONG *sp, const char *text, unsigned long track, unsigned long flags)
+char eof_song_contains_event(EOF_SONG *sp, const char *text, unsigned long track, unsigned long flags, unsigned char track_specific)
 {
 	unsigned long i;
 
@@ -168,9 +168,12 @@ char eof_song_contains_event(EOF_SONG *sp, const char *text, unsigned long track
 			{	//If the specified flags filters out this event
 				continue;	//Skip this event
 			}
-			if(track && (sp->text_event[i]->track != track))
-			{	//If searching for events in a specific track, and this event isn't in that track
-				continue;	//Skip this event
+			if(track_specific)
+			{	//If the track specific flag is to be matched
+				if(sp->text_event[i]->track != track)
+				{	//If this event isn't in the specified track
+					continue;	//Skip this event
+				}
 			}
 			if(!ustrcmp(sp->text_event[i]->text, text))
 			{

@@ -52,9 +52,10 @@ unsigned long eof_note_count_colors_bitmask(unsigned long notemask)
 	return count;
 }
 
-unsigned long eof_note_count_non_ghosted_lanes(EOF_SONG *sp, unsigned long track, unsigned long note)
+unsigned long eof_note_count_rs_lanes(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	unsigned long ctr, bitmask, tracknum, count = 0, notenote;
+	EOF_PRO_GUITAR_TRACK *tp;
 
 	if(!sp || (track >= sp->tracks))
 		return 0;	//Invalid parameters
@@ -62,18 +63,19 @@ unsigned long eof_note_count_non_ghosted_lanes(EOF_SONG *sp, unsigned long track
 	notenote = eof_get_note_note(sp, track, note);
 	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If the specified track is not a pro guitar track
-		return notenote;
+		return eof_note_count_colors_bitmask(notenote);
 	}
 
 	tracknum = sp->track[track]->tracknum;
-	if(note >= sp->pro_guitar_track[tracknum]->notes)
+	tp = sp->pro_guitar_track[tracknum];	//Simplify
+	if(note >= tp->notes)
 	{	//If the specified note is higher than the number of notes in the track
 		return 0;	//Invalid parameters
 	}
 	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
 	{	//For each of the 6 supported strings
-		if((sp->pro_guitar_track[tracknum]->note[note]->note & bitmask) && !(sp->pro_guitar_track[tracknum]->note[note]->ghost & bitmask))
-		{	//If this string is used and it is not ghosted
+		if((tp->note[note]->note & bitmask) && ((tp->note[note]->frets[ctr] & 0x80) == 0) && !(tp->note[note]->ghost & bitmask))
+		{	//If this string is used, it is not fret hand muted and it is not ghosted
 			count++;	//Increment counter
 		}
 	}
@@ -1077,7 +1079,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		return 0;	//Don't render tails for drum notes
 
-	if(eof_render_3d_rs_chords && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_note_count_non_ghosted_lanes(eof_song, track, notenum) > 1))
+	if(eof_render_3d_rs_chords && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_note_count_colors(eof_song, track, notenum) > 1))
 	{	//If the user has opted to 3D render Rocksmith style chords, and this is a pro guitar/bass chord
 		return 0;	//Don't render the tail
 	}

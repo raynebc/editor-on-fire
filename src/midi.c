@@ -492,12 +492,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		}
 		if(sp->beats > 3)
 		{	//Only add these if there are at least 4 beats
-			if(!eof_song_contains_event(sp, "[music_start]", 0, 0xFFFF))
+			if(!eof_song_contains_event(sp, "[music_start]", 0, 0xFFFF, 0))
 			{	//If the user did not define the music_start event
 				eof_log("\t! Adding missing [music_start] event", 1);
 				(void) eof_song_add_text_event(sp, 2, "[music_start]", 0, 0, 1);	//Add it as a temporary event two beats into the song (at the third beat)
 			}
-			if(!eof_song_contains_event(sp, "[music_end]", 0, 0xFFFF))
+			if(!eof_song_contains_event(sp, "[music_end]", 0, 0xFFFF, 0))
 			{	//If the user did not define the music_end event
 				eof_log("\t! Adding missing [music_end] event", 1);
 				(void) eof_song_add_text_event(sp, sp->beats-1, "[music_end]", 0, 0, 1);	//Add it as a temporary event on the last beat
@@ -1986,7 +1986,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			{	//If writing a RBN2 or C3 compliant MIDI
 				//Magma requires that the [end] event is the last MIDI event in the track, so it will be written 1ms after the end of the audio
 				//Check the existing events to see if such an event is already defined
-				if(!eof_song_contains_event(sp, "[end]", 0, 0xFFFF))
+				if(!eof_song_contains_event(sp, "[end]", 0, 0xFFFF, 0))
 				{	//If the user did not define the end event, manually write it
 					eof_log("\t! Adding missing [end] event", 1);
 					delta = eof_chart_length + 1;	//Prepare to write the end event after the audio ends

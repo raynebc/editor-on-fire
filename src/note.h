@@ -11,8 +11,8 @@ unsigned long eof_note_count_colors(EOF_SONG *sp, unsigned long track, unsigned 
 	//Performs bit masking to determine the number of gems the specified note defines being present
 unsigned long eof_note_count_colors_bitmask(unsigned long notemask);
 	//Performs bit masking to determine the number of gems the specified note bitmask defines being present
-unsigned long eof_note_count_non_ghosted_lanes(EOF_SONG *sp, unsigned long track, unsigned long note);
-	//Returns the number of gems in the specified note that are NOT marked with ghost status
+unsigned long eof_note_count_rs_lanes(EOF_SONG *sp, unsigned long track, unsigned long note);
+	//Returns the number of gems in the specified note that are NOT marked with ghost or string mute status (which cannot export to Rocksmith format)
 	//Returns 0 on error
 void eof_legacy_track_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, char o, unsigned long pos, long length);
 	//Initializes a note by by storing the specified on/off status of the green, yellow, red, blue and purple gem colors
