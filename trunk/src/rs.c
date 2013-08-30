@@ -358,7 +358,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	{	//For each note in the track
 		unsigned char slideend;
 
-		if(eof_note_count_non_ghosted_lanes(sp, track, ctr) == 1)
+		if(eof_note_count_rs_lanes(sp, track, ctr) == 1)
 		{	//If the note will export as a single note
 			if(eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
 			{	//If the note slides up
@@ -537,8 +537,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	eof_determine_phrase_status(sp, track);	//Update the tremolo status of each note
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the track
-		if(eof_note_count_non_ghosted_lanes(sp, track, ctr) > 1)
-		{	//If the note is a chord (more than one non ghosted gem)
+		if(eof_note_count_rs_lanes(sp, track, ctr) > 1)
+		{	//If the note will export as a chord (more than one non ghosted/muted gem)
 			if(!non_standard_chords && !eof_build_note_name(sp, track, ctr, notename))
 			{	//If the chord has no defined or detected name (only if this condition hasn't been found already)
 				non_standard_chords = 1;
@@ -658,8 +658,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		endbeat++;	//Otherwise set it to the first beat that follows the end of the last note
 	}
 	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
-	if(!eof_song_contains_event(sp, "COUNT", 0, EOF_EVENT_FLAG_RS_PHRASE))
-	{	//If the user did not define a COUNT phrase
+	if(!eof_song_contains_event(sp, "COUNT", track, EOF_EVENT_FLAG_RS_PHRASE, 1) && !eof_song_contains_event(sp, "COUNT", 0, EOF_EVENT_FLAG_RS_PHRASE, 1))
+	{	//If the user did not define a COUNT phrase that applies to either the track being exported or all tracks
 		if(sp->beat[0]->contained_section_event >= 0)
 		{	//If there is already a phrase defined on the first beat
 			allegro_message("Warning:  There is no COUNT phrase, but the first beat marker already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.");
@@ -705,8 +705,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	}
 	eof_sort_events(sp);	//Re-sort events
 	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
-	if(!eof_song_contains_event(sp, "intro", 0, EOF_EVENT_FLAG_RS_SECTION))
-	{	//If the user did not define an intro RS section
+	if(!eof_song_contains_event(sp, "intro", track, EOF_EVENT_FLAG_RS_SECTION, 1) && !eof_song_contains_event(sp, "intro", 0, EOF_EVENT_FLAG_RS_SECTION, 1))
+	{	//If the user did not define an intro RS section that applies to either the track being exported or all tracks
 		if(sp->beat[startbeat]->contained_rs_section_event >= 0)
 		{	//If there is already a RS section defined on the first beat containing a note
 			allegro_message("Warning:  There is no intro RS section, but the beat marker before the first note already has a section.\nYou should move that section because only one section per beat is exported.");
@@ -714,8 +714,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		eof_log("\t! Adding missing intro RS section", 1);
 		(void) eof_song_add_text_event(sp, startbeat, "intro", 0, EOF_EVENT_FLAG_RS_SECTION, 1);	//Add a temporary one
 	}
-	if(!eof_song_contains_event(sp, "noguitar", 0, EOF_EVENT_FLAG_RS_SECTION))
-	{	//If the user did not define a noguitar RS section
+	if(!eof_song_contains_event(sp, "noguitar", track, EOF_EVENT_FLAG_RS_SECTION, 1) && !eof_song_contains_event(sp, "noguitar", 0, EOF_EVENT_FLAG_RS_SECTION, 1))
+	{	//If the user did not define a noguitar RS section that applies to either the track being exported or all tracks
 		if(sp->beat[endbeat]->contained_rs_section_event >= 0)
 		{	//If there is already a RS section defined on the first beat after the last note
 			allegro_message("Warning:  There is no noguitar RS section, but the beat marker after the last note already has a section.\nYou should move that section because only one section per beat is exported.");
@@ -816,8 +816,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		eof_determine_phrase_status(sp, track);	//Update the tremolo status of each note
 		for(ctr = tp->notes; ctr > 0; ctr--)
 		{	//For each note in the track, in reverse order
-			if((eof_note_count_non_ghosted_lanes(sp, track, ctr - 1) > 1) && !eof_is_string_muted(sp, track, ctr - 1))
-			{	//If this note is a chord (at least two non ghosted gems) that isn't fully string muted
+			if(eof_note_count_rs_lanes(sp, track, ctr - 1) > 1)
+			{	//If this note will export as a chord (at least two non ghosted/muted gems)
 				unsigned long target = EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_HO | EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC | EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE | EOF_PRO_GUITAR_NOTE_FLAG_POP | EOF_PRO_GUITAR_NOTE_FLAG_SLAP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_NOTE_FLAG_IS_TREMOLO;	//A list of all statuses to try to notate for chords
 				unsigned long bitmask;
 				EOF_PRO_GUITAR_NOTE *new_note;
@@ -871,7 +871,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		(void) pack_fputs("  </chordTemplates>\n", fp);
 	}
 	else
-	{
+	{	//There were chords
 		long fret0, fret1, fret2, fret3, fret4, fret5;	//Will store the fret number played on each string (-1 means the string is not played)
 		long *fret[6] = {&fret0, &fret1, &fret2, &fret3, &fret4, &fret5};	//Allow the fret numbers to be accessed via array
 		char *fingerunused = "-1";
@@ -890,8 +890,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 
 			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
 			{	//For each of the 6 supported strings
-				if((eof_get_note_note(sp, track, chordlist[ctr]) & bitmask) && (ctr2 < tp->numstrings) && ((tp->note[chordlist[ctr]]->frets[ctr2] & 0x80) == 0))
-				{	//If the chord entry uses this string (verifying that the string number is supported by the track) and the string is not fret hand muted
+				if((eof_get_note_note(sp, track, chordlist[ctr]) & bitmask) && (ctr2 < tp->numstrings) && ((tp->note[chordlist[ctr]]->frets[ctr2] & 0x80) == 0) && !(tp->note[chordlist[ctr]]->ghost & bitmask))
+				{	//If the chord entry uses this string (verifying that the string number is supported by the track) and the string is not fret hand muted or ghosted
 					*(fret[ctr2]) = tp->note[chordlist[ctr]]->frets[ctr2] & 0x7F;	//Retrieve the fret played on this string (masking out the muting bit)
 					if(tp->note[chordlist[ctr]]->finger[ctr2])
 					{	//If the fingering for this string is defined
@@ -917,7 +917,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 			(void) pack_fputs(buffer, fp);
 		}//For each of the entries in the unique chord list
 		(void) pack_fputs("  </chordTemplates>\n", fp);
-	}
+	}//There were chords
 
 	//Write some unknown information
 	(void) pack_fputs("  <fretHandMuteTemplates count=\"0\"/>\n", fp);
@@ -1021,6 +1021,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		for(ctr = 0; ctr < tp->tonechanges; ctr++)
 		{	//For each tone change
 			//Add the tone change control to the list
+			char tempname[EOF_SECTION_NAME_LENGTH+1];
 			stringlen = (size_t)snprintf(NULL, 0, "    <control time=\"%.3f\" code=\"CDlcTone(%s)\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tp->tonechange[ctr].name) + 1;	//Find the number of characters needed to store this string
 			controls[controlctr].str = malloc(stringlen + 1);	//Allocate memory to build the string
 			if(!controls[controlctr].str)
@@ -1034,7 +1035,21 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 				free(controls);
 				return 0;	//Return failure
 			}
-			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"CDlcTone(%s)\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tp->tonechange[ctr].name);
+			///Until the Rocksmith toolkit exposes proper tone key names, convert spaces to underscores, which is one known change that the toolkit makes to the
+			/// display name in order to derive a key name.  Build another copy of the string to do this
+			for(ctr2 = 0; ctr2 < strlen(tp->tonechange[ctr].name); ctr2++)
+			{	//For each character in the tone name
+				if(tp->tonechange[ctr].name[ctr2] == ' ')
+				{	//If it's a space character
+					tempname[ctr2] = '_';	//Copy it to the new string as an underscore instead
+				}
+				else
+				{	//Otherwise copy it as-is
+					tempname[ctr2] = tp->tonechange[ctr].name[ctr2];
+				}
+			}
+			tempname[ctr2] = '\0';	//Terminate the string
+			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"CDlcTone(%s)\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tempname);
 			controls[controlctr].pos = tp->tonechange[ctr].start_pos;
 			controlctr++;
 		}
@@ -1059,7 +1074,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 				break;
 			}
 		}
-	}
+	}//If at least one popup message or tone change is to be written
 
 	//Write sections
 	for(ctr = 0, numsections = 0; ctr < sp->beats; ctr++)
@@ -1138,17 +1153,14 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 			{	//For each note in the track
 				if(eof_get_note_type(sp, track, ctr3) == ctr)
 				{	//If the note is in this difficulty
-					if(!eof_is_string_muted(sp, track, ctr3))
-					{	//If the note is not fully string muted
-						unsigned long lanecount = eof_note_count_non_ghosted_lanes(sp, track, ctr3);	//Count the number of non ghosted gems for this note
-						if(lanecount == 1)
-						{	//If the note has only one gem
-							numsinglenotes++;	//Increment counter
-						}
-						else if(lanecount > 1)
-						{	//If the note has multiple gems
-							numchords++;	//Increment counter
-						}
+					unsigned long lanecount = eof_note_count_rs_lanes(sp, track, ctr3);	//Count the number of non ghosted/muted gems for this note
+					if(lanecount == 1)
+					{	//If the note has only one gem
+						numsinglenotes++;	//Increment counter
+					}
+					else if(lanecount > 1)
+					{	//If the note has multiple gems
+						numchords++;	//Increment counter
 					}
 				}
 			}
@@ -1163,8 +1175,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 				(void) pack_fputs(buffer, fp);
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
-					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_non_ghosted_lanes(sp, track, ctr3) == 1))
-					{	//If this note is in this difficulty and is a single note (only one gem has non ghosted status)
+					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3) == 1))
+					{	//If this note is in this difficulty and will export as a single note (only one gem has non ghosted/muted status)
 						for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
 						{	//For each string used in this track
 							if((eof_get_note_note(sp, track, ctr3) & bitmask) && ((tp->note[ctr3]->frets[stringnum] & 0x80) == 0) && !(tp->note[ctr3]->ghost & bitmask))
@@ -1275,8 +1287,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 				(void) pack_fputs(buffer, fp);
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
-					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_non_ghosted_lanes(sp, track, ctr3) > 1) && !eof_is_string_muted(sp, track, ctr3))
-					{	//If this note is in this difficulty and is a chord (at least two non ghosted gems) that isn't fully string muted
+					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3) > 1))
+					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems) that isn't fully string muted
 						for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
 						{	//For each of the entries in the unique chord list
 							if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
@@ -2503,8 +2515,8 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 	if(eof_get_note_flags(sp, track, note) & EOF_NOTE_FLAG_CRAZY)
 		return 0;	//Note is marked with crazy status, which forces it to export as low density
 
-	if((eof_note_count_non_ghosted_lanes(sp, track, note) < 2) || eof_is_string_muted(sp, track, note))
-		return 0;	//Note is not a chord (not at least 2 non ghosted gems) or is entirely string muted
+	if(eof_note_count_rs_lanes(sp, track, note) < 2)
+		return 0;	//Note is not a chord (not at least 2 non ghosted/muted gems) or is entirely string muted
 
 	prev = eof_track_fixup_previous_note(sp, track, note);
 	if(prev < 0)

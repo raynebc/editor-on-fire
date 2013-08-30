@@ -64,19 +64,19 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 		return 0;
 	}
 	eof_log("\tTokenizing INI file buffer", 1);
-	(void) ustrtok(textbuffer, "\r\n[]");
+	(void) ustrtok(textbuffer, "\r\n");
 	eof_log("\tParsing INI file buffer", 1);
 	while(1)
-	{
-		line_token = ustrtok(NULL, "\r\n[]");
+	{	//While the INI file hasn't been exhausted
+		line_token = ustrtok(NULL, "\r\n");	//Return the next line
 		if(!line_token)
-		{
+		{	//If there isn't another line
 			break;
 		}
 		else
-		{
+		{	//If there is another line
 			if(ustrlen(line_token) > 6)
-			{
+			{	//If the line is at least 7 characters long
 				/* find the first '=' */
 				for(i = 0; i < ustrlen(line_token); i++)
 				{
@@ -114,9 +114,9 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 						eof_import_ini_settings++;
 					}
 				}
-			}
-		}
-	}
+			}//If the line is at least 7 characters long
+		}//If there is another line
+	}//While the INI file hasn't been exhausted
 	eof_log("\tProcessing INI file contents", 1);
 	for(i = 0; i < eof_import_ini_settings; i++)
 	{	//For each imported INI setting

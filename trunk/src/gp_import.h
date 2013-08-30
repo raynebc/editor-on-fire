@@ -63,12 +63,12 @@
 		unsigned long realtime_pos;		//The realtime position of the sync point in milliseconds
 		unsigned long measure;			//The measure at which this sync point exists
 		double pos_in_measure;			//The position (from 0 to 1) in the measure at which the sync point exists
-		double beat_length;				//The length of each beat from this sync point until the next
+		double qnote_length;			//The length of each quarter note from this sync point until the next
 		char processed;					//Is set to nonzero after the sync point is incorporated into the project's tempo map
 	};
 
 	void eof_gp_debug_log(PACKFILE *inf, char *text);
-		//Does nothing in the EOF build
+		//Logs the text
 	EOF_SONG *eof_import_gp(const char * fn);
 		//Currently parses through the specified GP file and outputs its details to stdout
 	struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made);

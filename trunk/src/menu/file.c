@@ -1212,7 +1212,7 @@ int eof_menu_file_display(void)
 	eof_display_dialog[4].d1 = eof_screen_layout.mode;
 	eof_display_dialog[1].flags = eof_soft_cursor ? D_SELECTED : 0;
 	eof_display_dialog[2].flags = (eof_desktop == 0) ? D_SELECTED : 0;
-	if(eof_popup_dialog(eof_display_dialog, 0) == 5)
+	if(eof_popup_dialog(eof_display_dialog, 4) == 5)
 	{	//User clicked OK
 		eof_soft_cursor = (eof_display_dialog[1].flags & D_SELECTED) ? 1 : 0;
 		eof_desktop = (eof_display_dialog[2].flags & D_SELECTED) ? 0 : 1;
@@ -1270,7 +1270,7 @@ int eof_ogg_settings(void)
 	centre_dialog(eof_ogg_settings_dialog);
 	eof_ogg_settings_dialog[3].d1 = eof_ogg_setting;
 	if(eof_popup_dialog(eof_ogg_settings_dialog, 0) == 4)
-	{
+	{	//User clicked OK
 		eof_ogg_setting = eof_ogg_settings_dialog[3].d1;
 	}
 	else

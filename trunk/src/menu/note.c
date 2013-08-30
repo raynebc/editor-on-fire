@@ -2739,6 +2739,10 @@ int eof_menu_lyric_line_mark(void)
 			}
 		}
 	}
+	if(sel_start < 0)
+	{	//If no lyrics are selected
+		return 1;	//Return without doing anything
+	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Create the undo state before removing/adding phrase(s)
 	for(j = eof_song->vocal_track[tracknum]->lines; j > 0; j--)
 	{
@@ -2750,7 +2754,7 @@ int eof_menu_lyric_line_mark(void)
 	}
 	(void) eof_vocal_track_add_line(eof_song->vocal_track[tracknum], sel_start, sel_end);
 
-	if(eof_song->vocal_track[tracknum]->lines >0)
+	if(eof_song->vocal_track[tracknum]->lines > 0)
 		eof_song->vocal_track[tracknum]->line[eof_song->vocal_track[tracknum]->lines-1].flags = originalflags;	//Restore the line's flags
 
 	/* check for overlapping lines */
@@ -5461,6 +5465,10 @@ int eof_menu_slider_mark(void)
 			existingphrase = 1;	//Note it
 			existingphrasenum = j;
 		}
+	}
+	if(!firstnote)
+	{	//If no notes are selected
+		return 1;	//Return without doing anything
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(!existingphrase)

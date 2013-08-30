@@ -93,9 +93,9 @@ void eof_gp_debug_log(FILE *inf, char *text)
 #else
 void eof_gp_debug_log(PACKFILE *inf, char *text)
 {
-	if(inf)
-	{	//Read inf to get rid of a warning about it being unused
-		eof_log(text, 1);
+	if(!inf || !text)
+	{	//Read these variables so Splint doesn't complain about them being unused
+		eof_log("Logging error", 1);
 	}
 }
 #endif
@@ -2803,7 +2803,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 		eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
 	}
-
 	eof_clear_input();
 	if(!sync_points)
 	{	//Skip prompting to import time signatures if importing a Go PlayAlong file
@@ -2869,8 +2868,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 //Apply Go PlayAlong timings now if applicable
 	if(sync_points)
 	{	//If synchronization data was imported from the input Go PlayAlong file
-		double curpos = 0.0, beat_length = 500;	//By default, assume 120BPM
-		eof_process_beat_statistics(eof_song, eof_selected_track);	//Find the measure numbering for all beats
+		double curpos = 0.0, beat_length = 500.0, temp_length = 0.0;	//By default, assume 120BPM at 4/4 meter
+		eof_process_beat_statistics(eof_song, eof_selected_track);		//Find the measure numbering for all beats
 		for(ctr = 0; ctr < eof_song->beats; ctr++)
 		{	//For each beat in the project
 			measure_position = (double)eof_song->beat[ctr]->beat_within_measure / (double)eof_song->beat[ctr]->num_beats_in_measure;	//Find this beat's position in the measure, as a value between 0 and 1
@@ -2883,13 +2882,26 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						if(fabs(measure_position - sync_points[ctr2].pos_in_measure) < (1.0 / (double)eof_song->beat[ctr]->num_beats_in_measure) * 0.05)
 						{	//If this sync point is close enough (within 5% of the beat's length) to this beat to be considered tied to the beat
 #ifdef GP_IMPORT_DEBUG
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tOn-beat sync point:  Pos:  %lums\tMeasure:  %f\tBeat length:  %f", sync_points[ctr2].realtime_pos, sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure, sync_points[ctr2].beat_length);
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tOn-beat sync point:  Pos:  %lums\tMeasure:  %f\tQuarter note length:  %fms", sync_points[ctr2].realtime_pos, sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure, sync_points[ctr2].qnote_length);
 							eof_log(eof_log_string, 1);
 #endif
 							eof_song->beat[ctr]->fpos = eof_song->beat[ctr]->pos = sync_points[ctr2].realtime_pos;	//Apply the timestamp
 							curpos = sync_points[ctr2].realtime_pos;			//Update the ongoing position variable
-							beat_length = sync_points[ctr2].beat_length;		//Update the beat length variable
+							beat_length = sync_points[ctr2].qnote_length / ((double)eof_song->beat[ctr]->beat_unit / 4.0);		//Update the beat length variable (scale the GPA sync point's quarter note length to beat length based on the current time signature)
 							sync_points[ctr2].processed = 1;
+							if(!ctr2 && ctr)
+							{	//If this is the first sync point and it wasn't placed at the first beat
+#ifdef GP_IMPORT_DEBUG
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFirst sync point is not at measure 1.0.  Positioning the %lu preceding beats", ctr);
+								eof_log(eof_log_string, 1);
+#endif
+								temp_length = (double)sync_points[ctr2].realtime_pos / ctr;	//Divide the distance between the start of the song (0ms) and this sync point between the number of beats before the sync point
+								for(ctr3 = 0; ctr3 < ctr; ctr3++)
+								{	//For each of the beats before the sync point, define their position
+									eof_song->beat[ctr3]->fpos = (double)ctr3 * temp_length;
+									eof_song->beat[ctr3]->pos = eof_song->beat[ctr3]->fpos + 0.5;
+								}
+							}
 							break;	//Exit sync point loop
 						}
 					}
@@ -2897,15 +2909,29 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					{	//If the beat is beyond the sync point, the sync point is not within 5% of a beat line and is located between beats
 						double temp;
 #ifdef GP_IMPORT_DEBUG
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMid-beat sync point:  Pos:  %lums\tMeasure:  %f\tBeat length:  %f", sync_points[ctr2].realtime_pos, sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure, sync_points[ctr2].beat_length);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMid-beat sync point:  Pos:  %lums\tMeasure:  %f\tQuarter note length:  %fms", sync_points[ctr2].realtime_pos, sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure, sync_points[ctr2].qnote_length);
 						eof_log(eof_log_string, 1);
 #endif
 						//This is the first beat that surpassed this sync point, find out how far into last beat the sync point is, and use the beat length to derive the position of the next beat
 						temp = (double)eof_song->beat[ctr]->measurenum + measure_position - ((double)sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure);	//The number of measures between this beat and the sync point before it
 						temp *= (double)tsarray[sync_points[ctr2].measure].num;	//The number of beats between this beat and the sync point before it
-						curpos = sync_points[ctr2].realtime_pos + (temp * sync_points[ctr2].beat_length);
-						beat_length = sync_points[ctr2].beat_length;		//Update the beat length variable
+						curpos = sync_points[ctr2].realtime_pos + (temp * sync_points[ctr2].qnote_length);
+						beat_length = sync_points[ctr2].qnote_length / ((double)eof_song->beat[ctr]->beat_unit / 4.0);		//Update the beat length variable (scale the GPA sync point's quarter note length to beat length based on the current time signature)
 						sync_points[ctr2].processed = 1;	//Mark this sync point as processed, but don't break from loop, so that if there are multiple sync points within the span of one beat, only the last one is used to alter beat timings
+						if(!ctr2 && ctr)
+						{	//If this is the first sync point and it wasn't placed at the first beat
+#ifdef GP_IMPORT_DEBUG
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFirst sync point is not at measure 1.0.  Positioning the %lu preceding beats", ctr);
+							eof_log(eof_log_string, 1);
+#endif
+							temp_length = (double)sync_points[ctr2].realtime_pos / ctr;	//Divide the distance between the start of the song (0ms) and this sync point between the number of beats before the sync point
+							for(ctr3 = 0; ctr3 < ctr; ctr3++)
+							{	//For each of the beats before the sync point, define their position
+								eof_song->beat[ctr3]->fpos = (double)ctr3 * temp_length;
+								eof_song->beat[ctr3]->pos = eof_song->beat[ctr3]->fpos + 0.5;
+							}
+						}
+						break;	//Exit sync point loop
 					}
 					else
 					{	//Otherwise if the beat is before the sync point
@@ -3874,7 +3900,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							}
 							np[ctr2]->type = eof_note_type;
 
-	//Determine the correct timestamp position and duration
+							//Determine the correct timestamp position and duration
 							beat_position = measure_position * curnum;								//How many whole beats into the current measure the position is
 							partial_beat_position = (measure_position * curnum) - beat_position;	//How far into this beat the note begins
 							beat_position += curbeat;	//Add the number of beats into the track the current measure is
@@ -4672,7 +4698,7 @@ int eof_get_next_gpa_sync_point(char **buffer, struct eof_gpa_sync_point *ptr)
 		}
 		else
 		{	//ctr is 3
-			ptr->beat_length = value;
+			ptr->qnote_length = value;
 		}
 	}//For each of the 4 expected numbers in the timestamp
 
