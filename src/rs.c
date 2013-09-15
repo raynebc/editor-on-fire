@@ -57,10 +57,10 @@ EOF_RS_PREDEFINED_SECTION eof_rs_predefined_sections[EOF_NUM_RS_PREDEFINED_SECTI
 
 EOF_RS_PREDEFINED_SECTION eof_rs_predefined_events[EOF_NUM_RS_PREDEFINED_EVENTS] =
 {
-	{"B0", "High pitch tick"},
-	{"B1", "Low pitch tick"},
-	{"E1", "Crowd happy"},
-	{"E3", "Crowd wild"}
+	{"B0", "High pitch tick (B0)"},
+	{"B1", "Low pitch tick (B1)"},
+	{"E1", "Crowd happy (E1)"},
+	{"E3", "Crowd wild (E3)"}
 };
 
 unsigned char *eof_fret_range_tolerances = NULL;	//A dynamically allocated array that defines the fretting hand's range for each fret on the guitar neck, numbered where fret 1's range is defined at eof_fret_range_tolerances[1]
@@ -1037,7 +1037,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 			}
 			///Until the Rocksmith toolkit exposes proper tone key names, convert spaces to underscores, which is one known change that the toolkit makes to the
 			/// display name in order to derive a key name.  Build another copy of the string to do this
-			for(ctr2 = 0; ctr2 < strlen(tp->tonechange[ctr].name); ctr2++)
+			for(ctr2 = 0; ctr2 < (unsigned long)strlen(tp->tonechange[ctr].name); ctr2++)
 			{	//For each character in the tone name
 				if(tp->tonechange[ctr].name[ctr2] == ' ')
 				{	//If it's a space character

@@ -986,8 +986,9 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 	float tfloat;
 	EOF_PHRASE_SECTION *sectionptr = NULL;
 	char text[EOF_MAX_LYRIC_LENGTH+1] = {0};
-	unsigned long notepos=0;
-	long notelength=0;
+	unsigned long notepos = 0;
+	long notelength = 0;
+	char affect_all = 0;	//Is set to nonzero if all notes in the project are affected by this operation
 
 	for(i = 0; i < EOF_TRACKS_MAX; i++)
 	{
@@ -999,8 +1000,8 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 	next_anchor = eof_find_next_anchor(eof_song, anchor);
 	start_pos = eof_song->beat[last_anchor]->pos;
 	if((next_anchor < 0) || (option == 1))
-	{
-		end_pos = eof_song->beat[eof_song->beats - 1]->pos - 1;
+	{	//If there was no following anchor, or the notes are being auto-adjusted
+		affect_all = 1;	//All notes in the project are to be deleted and replaced from the auto-adjust file
 	}
 	else
 	{
@@ -1016,11 +1017,11 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 	for(j = 1; j < eof_song->tracks; j++)
 	{	//For each track
 		for(i = eof_get_track_size(eof_song, j); i > 0; i--)
-		{	//For each note in the track, starting from the last note
-			notepos = eof_get_note_pos(eof_song, j, i-1);
-			if((notepos + eof_get_note_length(eof_song, j, i-1) >= start_pos) && (notepos < end_pos))
-			{	//If the note's end position is after the target beat or if the note's start position is before the target beat
-				eof_track_delete_note(eof_song, j, i-1);	//Delete the note
+		{	//For each note in the track, in reverse order
+			notepos = eof_get_note_pos(eof_song, j, i - 1);
+			if(affect_all || ((notepos + eof_get_note_length(eof_song, j, i - 1) >= start_pos) && (notepos < end_pos)))
+			{	//If the note is in the affected range of the chart
+				eof_track_delete_note(eof_song, j, i - 1);	//Delete the note
 			}
 		}
 	}

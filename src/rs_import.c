@@ -1149,7 +1149,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 	}
 
 	#ifdef RS_IMPORT_DEBUG
-		eof_log("\tProcessing complete.  Cleaning up", 1);
+		eof_log("\tParsing complete.  Finishing up", 1);
 	#endif
 
 	//Create tremolo phrases
@@ -1218,6 +1218,29 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		}
 	}
 
+	//Derive chord lengths from single note lengths
+	eof_pro_guitar_track_sort_notes(tp);
+	for(ctr = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the track
+		if(eof_note_count_colors_bitmask(tp->note[ctr]->note) > 1)
+		{	//If the note is a chord, look for single notes at the same position in other difficulties
+			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+			{	//For each note in the track
+				if(tp->note[ctr2]->pos > tp->note[ctr]->pos)
+				{	//If the note is beyond the note from the outer loop
+					break;	//None of the remaining notes will be at the appropriate position
+				}
+				else if(tp->note[ctr2]->pos == tp->note[ctr]->pos)
+				{	//If the notes are at the same position
+					if(tp->note[ctr2]->length > tp->note[ctr]->length)
+					{	//If the note in the inner loop is longer (ie. a single note)
+						tp->note[ctr]->length = tp->note[ctr2]->length;	//Assign its length to the chord from the outer loop
+					}
+				}
+			}
+		}
+	}
+
 	//Cleanup
 	for(ctr = 0; ctr < phraselist_count; ctr++)
 	{	//For each phrase name that was stored
@@ -1249,7 +1272,6 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 
 	eof_sort_events(eof_song);
 	eof_pro_guitar_track_sort_fret_hand_positions(tp);
-	eof_pro_guitar_track_sort_notes(tp);
 
 	return tp;
 }

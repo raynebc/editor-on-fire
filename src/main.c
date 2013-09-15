@@ -2523,6 +2523,11 @@ void eof_render_note_window(void)
 		{
 			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Beat = %lu : BPM = %f", eof_selected_beat, (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn);
 		}
+///Keep for debugging
+//#ifdef EOF_DEBUG
+//		ypos += 12;
+//		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "#Beat pos = %lu : fpos = %f", eof_song->beat[eof_selected_beat]->pos, eof_song->beat[eof_selected_beat]->fpos);
+//#endif
 		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Key : %s maj (%s min)", eof_get_key_signature(eof_song, eof_selected_beat, 1, 0), eof_get_key_signature(eof_song, eof_selected_beat, 1, 1));
 		ypos += 12;

@@ -3334,7 +3334,7 @@ int eof_menu_file_rs_import(void)
 		}
 		else
 		{
-			allegro_message("Failure");
+			allegro_message("Failure.  Check log for details.");
 		}
 	}
 
