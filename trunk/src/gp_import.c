@@ -2237,8 +2237,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	}
 	if(fileversion >= 500)
 	{	//Versions 5.0 and newer of the format store musical directional symbols and a master reverb setting here
-		pack_ReadWORDLE(inf, &word);	//Coda symbol position
-		gp->symbols[EOF_CODA_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+		pack_ReadWORDLE(inf, &word);				//Coda symbol position
+		gp->symbols[EOF_CODA_SYMBOL] = word;		//Store the measure number this symbol appears on
+		if(word != 0xFFFF)
+		{	//If the symbol is actually present
+			gp->symbols[EOF_CODA_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
+		}
 #ifdef GP_IMPORT_DEBUG
 		if(word != 0xFFFF)
 		{
@@ -2247,7 +2251,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 #endif
 		pack_ReadWORDLE(inf, &word);	//Double coda symbol position
-		gp->symbols[EOF_DOUBLE_CODA_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+		gp->symbols[EOF_DOUBLE_CODA_SYMBOL] = word;	//Store the measure number this symbol appears on
+		if(word != 0xFFFF)
+		{	//If the symbol is actually present
+			gp->symbols[EOF_DOUBLE_CODA_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
+		}
 #ifdef GP_IMPORT_DEBUG
 		if(word != 0xFFFF)
 		{
@@ -2256,7 +2264,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 #endif
 		pack_ReadWORDLE(inf, &word);	//Segno symbol position
-		gp->symbols[EOF_SEGNO_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+		gp->symbols[EOF_SEGNO_SYMBOL] = word;	//Store the measure number this symbol appears on
+		if(word != 0xFFFF)
+		{	//If the symbol is actually present
+			gp->symbols[EOF_SEGNO_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
+		}
 #ifdef GP_IMPORT_DEBUG
 		if(word != 0xFFFF)
 		{
@@ -2265,7 +2277,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 #endif
 		pack_ReadWORDLE(inf, &word);	//Segno segno symbol position
-		gp->symbols[EOF_SEGNO_SEGNO_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+		gp->symbols[EOF_SEGNO_SEGNO_SYMBOL] = word;	//Store the measure number this symbol appears on
+		if(word != 0xFFFF)
+		{	//If the symbol is actually present
+			gp->symbols[EOF_SEGNO_SEGNO_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
+		}
 #ifdef GP_IMPORT_DEBUG
 		if(word != 0xFFFF)
 		{
@@ -2274,7 +2290,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 #endif
 		pack_ReadWORDLE(inf, &word);	//Fine symbol position
-		gp->symbols[EOF_FINE_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+		gp->symbols[EOF_FINE_SYMBOL] = word;	//Store the measure number this symbol appears on
+		if(word != 0xFFFF)
+		{	//If the symbol is actually present
+			gp->symbols[EOF_FINE_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
+		}
 #ifdef GP_IMPORT_DEBUG
 		if(word != 0xFFFF)
 		{
@@ -2283,7 +2303,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 #endif
 		pack_ReadWORDLE(inf, &word);	//Da capo symbol position
-		gp->symbols[EOF_DA_CAPO_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+		gp->symbols[EOF_DA_CAPO_SYMBOL] = word;	//Store the measure number this symbol appears on
+		if(word != 0xFFFF)
+		{	//If the symbol is actually present
+			gp->symbols[EOF_DA_CAPO_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
+		}
 #ifdef GP_IMPORT_DEBUG
 		if(word != 0xFFFF)
 		{
@@ -2292,7 +2316,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 #endif
 		pack_ReadWORDLE(inf, &word);	//Da capo al coda symbol position
-		gp->symbols[EOF_DA_CAPO_AL_CODA_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+		gp->symbols[EOF_DA_CAPO_AL_CODA_SYMBOL] = word;	//Store the measure number this symbol appears on
+		if(word != 0xFFFF)
+		{	//If the symbol is actually present
+			gp->symbols[EOF_DA_CAPO_AL_CODA_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
+		}
 #ifdef GP_IMPORT_DEBUG
 		if(word != 0xFFFF)
 		{
@@ -2301,7 +2329,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 #endif
 		pack_ReadWORDLE(inf, &word);	//Da capo al double coda symbol position
-		gp->symbols[EOF_DA_CAPO_AL_DOUBLE_CODA_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+		gp->symbols[EOF_DA_CAPO_AL_DOUBLE_CODA_SYMBOL] = word;	//Store the measure number this symbol appears on
+		if(word != 0xFFFF)
+		{	//If the symbol is actually present
+			gp->symbols[EOF_DA_CAPO_AL_DOUBLE_CODA_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
+		}
 #ifdef GP_IMPORT_DEBUG
 		if(word != 0xFFFF)
 		{
@@ -2310,7 +2342,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 #endif
 		pack_ReadWORDLE(inf, &word);	//Da capo al fine symbol position
-		gp->symbols[EOF_DA_CAPO_AL_FINE_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+		gp->symbols[EOF_DA_CAPO_AL_FINE_SYMBOL] = word;	//Store the measure number this symbol appears on
+		if(word != 0xFFFF)
+		{	//If the symbol is actually present
+			gp->symbols[EOF_DA_CAPO_AL_FINE_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
+		}
 #ifdef GP_IMPORT_DEBUG
 		if(word != 0xFFFF)
 		{
@@ -2319,7 +2355,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 #endif
 		pack_ReadWORDLE(inf, &word);	//Da segno symbol position
-		gp->symbols[EOF_DA_SEGNO_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+		gp->symbols[EOF_DA_SEGNO_SYMBOL] = word;	//Store the measure number this symbol appears on
+		if(word != 0xFFFF)
+		{	//If the symbol is actually present
+			gp->symbols[EOF_DA_SEGNO_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
+		}
 #ifdef GP_IMPORT_DEBUG
 		if(word != 0xFFFF)
 		{
@@ -2328,7 +2368,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 #endif
 		pack_ReadWORDLE(inf, &word);	//Da segno al coda symbol position
-		gp->symbols[EOF_DA_SEGNO_AL_CODA_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+		gp->symbols[EOF_DA_SEGNO_AL_CODA_SYMBOL] = word;	//Store the measure number this symbol appears on
+		if(word != 0xFFFF)
+		{	//If the symbol is actually present
+			gp->symbols[EOF_DA_SEGNO_AL_CODA_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
+		}
 #ifdef GP_IMPORT_DEBUG
 		if(word != 0xFFFF)
 		{
@@ -2337,7 +2381,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 #endif
 		pack_ReadWORDLE(inf, &word);	//Da segno al double coda symbol position
-		gp->symbols[EOF_DA_SEGNO_AL_DOUBLE_CODA_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+		gp->symbols[EOF_DA_SEGNO_AL_DOUBLE_CODA_SYMBOL] = word;	//Store the measure number this symbol appears on
+		if(word != 0xFFFF)
+		{	//If the symbol is actually present
+			gp->symbols[EOF_DA_SEGNO_AL_DOUBLE_CODA_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
+		}
 #ifdef GP_IMPORT_DEBUG
 		if(word != 0xFFFF)
 		{
@@ -2346,7 +2394,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 #endif
 		pack_ReadWORDLE(inf, &word);	//Da segno al fine symbol position
-		gp->symbols[EOF_DA_SEGNO_AL_FINE_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+		gp->symbols[EOF_DA_SEGNO_AL_FINE_SYMBOL] = word;	//Store the measure number this symbol appears on
+		if(word != 0xFFFF)
+		{	//If the symbol is actually present
+			gp->symbols[EOF_DA_SEGNO_AL_FINE_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
+		}
 #ifdef GP_IMPORT_DEBUG
 		if(word != 0xFFFF)
 		{
@@ -2355,7 +2407,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 #endif
 		pack_ReadWORDLE(inf, &word);	//Da segno segno symbol position
-		gp->symbols[EOF_DA_SEGNO_SEGNO_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+		gp->symbols[EOF_DA_SEGNO_SEGNO_SYMBOL] = word;	//Store the measure number this symbol appears on
+		if(word != 0xFFFF)
+		{	//If the symbol is actually present
+			gp->symbols[EOF_DA_SEGNO_SEGNO_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
+		}
 #ifdef GP_IMPORT_DEBUG
 		if(word != 0xFFFF)
 		{
@@ -2364,7 +2420,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 #endif
 		pack_ReadWORDLE(inf, &word);	//Da segno segno al coda symbol position
-		gp->symbols[EOF_DA_SEGNO_SEGNO_AL_CODA_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+		gp->symbols[EOF_DA_SEGNO_SEGNO_AL_CODA_SYMBOL] = word;	//Store the measure number this symbol appears on
+		if(word != 0xFFFF)
+		{	//If the symbol is actually present
+			gp->symbols[EOF_DA_SEGNO_SEGNO_AL_CODA_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
+		}
 #ifdef GP_IMPORT_DEBUG
 		if(word != 0xFFFF)
 		{
@@ -2373,7 +2433,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 #endif
 		pack_ReadWORDLE(inf, &word);	//Da segno segno al double coda symbol position
-		gp->symbols[EOF_DA_SEGNO_SEGNO_AL_DOUBLE_CODA_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+		gp->symbols[EOF_DA_SEGNO_SEGNO_AL_DOUBLE_CODA_SYMBOL] = word;	//Store the measure number this symbol appears on
+		if(word != 0xFFFF)
+		{	//If the symbol is actually present
+			gp->symbols[EOF_DA_SEGNO_SEGNO_AL_DOUBLE_CODA_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
+		}
 #ifdef GP_IMPORT_DEBUG
 		if(word != 0xFFFF)
 		{
@@ -2382,7 +2446,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 #endif
 		pack_ReadWORDLE(inf, &word);	//Da segno segno al fine symbol position
-		gp->symbols[EOF_DA_SEGNO_SEGNO_AL_FINE_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+		gp->symbols[EOF_DA_SEGNO_SEGNO_AL_FINE_SYMBOL] = word;	//Store the measure number this symbol appears on
+		if(word != 0xFFFF)
+		{	//If the symbol is actually present
+			gp->symbols[EOF_DA_SEGNO_SEGNO_AL_FINE_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
+		}
 #ifdef GP_IMPORT_DEBUG
 		if(word != 0xFFFF)
 		{
@@ -2391,7 +2459,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 #endif
 		pack_ReadWORDLE(inf, &word);	//Da coda symbol position
-		gp->symbols[EOF_DA_CODA_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+		gp->symbols[EOF_DA_CODA_SYMBOL] = word;	//Store the measure number this symbol appears on
+		if(word != 0xFFFF)
+		{	//If the symbol is actually present
+			gp->symbols[EOF_DA_CODA_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
+		}
 #ifdef GP_IMPORT_DEBUG
 		if(word != 0xFFFF)
 		{
@@ -2400,7 +2472,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 #endif
 		pack_ReadWORDLE(inf, &word);	//Da double coda symbol position
-		gp->symbols[EOF_DA_DOUBLE_CODA_SYMBOL] = word - 1;	//Store the measure number this symbol appears on
+		gp->symbols[EOF_DA_DOUBLE_CODA_SYMBOL] = word;	//Store the measure number this symbol appears on
+		if(word != 0xFFFF)
+		{	//If the symbol is actually present
+			gp->symbols[EOF_DA_DOUBLE_CODA_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
+		}
 #ifdef GP_IMPORT_DEBUG
 		if(word != 0xFFFF)
 		{
@@ -2868,10 +2944,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 //Apply Go PlayAlong timings now if applicable
 	if(sync_points)
 	{	//If synchronization data was imported from the input Go PlayAlong file
-		double curpos = 0.0, beat_length = 500.0, temp_length = 0.0;	//By default, assume 120BPM at 4/4 meter
+		double curpos = 0.0, beat_length = 500.0, last_qnote_length = 500.0, temp_length = 0.0;	//By default, assume 120BPM at 4/4 meter
+		char mid_beat;	//Tracks whether the sync point applied to the beat was mid-beat
 		eof_process_beat_statistics(eof_song, eof_selected_track);		//Find the measure numbering for all beats
 		for(ctr = 0; ctr < eof_song->beats; ctr++)
 		{	//For each beat in the project
+			mid_beat = 0;	//Reset this condition
 			measure_position = (double)eof_song->beat[ctr]->beat_within_measure / (double)eof_song->beat[ctr]->num_beats_in_measure;	//Find this beat's position in the measure, as a value between 0 and 1
 			for(ctr2 = 0; ctr2 < num_sync_points; ctr2++)
 			{	//For each sync point from the Go PlayAlong file
@@ -2887,7 +2965,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 #endif
 							eof_song->beat[ctr]->fpos = eof_song->beat[ctr]->pos = sync_points[ctr2].realtime_pos;	//Apply the timestamp
 							curpos = sync_points[ctr2].realtime_pos;			//Update the ongoing position variable
-							beat_length = sync_points[ctr2].qnote_length / ((double)eof_song->beat[ctr]->beat_unit / 4.0);		//Update the beat length variable (scale the GPA sync point's quarter note length to beat length based on the current time signature)
+							last_qnote_length = sync_points[ctr2].qnote_length;
 							sync_points[ctr2].processed = 1;
 							if(!ctr2 && ctr)
 							{	//If this is the first sync point and it wasn't placed at the first beat
@@ -2913,10 +2991,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						eof_log(eof_log_string, 1);
 #endif
 						//This is the first beat that surpassed this sync point, find out how far into last beat the sync point is, and use the beat length to derive the position of the next beat
+						mid_beat = 1;
 						temp = (double)eof_song->beat[ctr]->measurenum + measure_position - ((double)sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure);	//The number of measures between this beat and the sync point before it
 						temp *= (double)tsarray[sync_points[ctr2].measure].num;	//The number of beats between this beat and the sync point before it
 						curpos = sync_points[ctr2].realtime_pos + (temp * sync_points[ctr2].qnote_length);
-						beat_length = sync_points[ctr2].qnote_length / ((double)eof_song->beat[ctr]->beat_unit / 4.0);		//Update the beat length variable (scale the GPA sync point's quarter note length to beat length based on the current time signature)
+						last_qnote_length = sync_points[ctr2].qnote_length;
 						sync_points[ctr2].processed = 1;	//Mark this sync point as processed, but don't break from loop, so that if there are multiple sync points within the span of one beat, only the last one is used to alter beat timings
 						if(!ctr2 && ctr)
 						{	//If this is the first sync point and it wasn't placed at the first beat
@@ -2937,12 +3016,20 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					{	//Otherwise if the beat is before the sync point
 						break;
 					}
-				}
-			}
+				}//If the sync point hasn't been handled already
+			}//For each sync point from the Go PlayAlong file
 			eof_song->beat[ctr]->fpos = curpos;							//Apply the current position to this beat
 			eof_song->beat[ctr]->pos = eof_song->beat[ctr]->fpos + 0.5;	//Round up
-			curpos += beat_length;
-		}
+			if(mid_beat)
+			{	//If a mid beat sync point was processed
+				ctr--;	//Rewind one beat in case the next sync point is also at or before this beat (happens if the user defines multiple sync points within the span of one beat)
+			}
+			else
+			{	//Otherwise advance the position variable
+				beat_length = last_qnote_length / ((double)eof_song->beat[ctr]->beat_unit / 4.0);
+				curpos += beat_length;
+			}
+		}//For each beat in the project
 		eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
 		eof_calculate_tempo_map(eof_song);	//Update the tempo and anchor status of all beats
 		free(sync_points);
