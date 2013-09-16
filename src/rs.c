@@ -890,8 +890,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 
 			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
 			{	//For each of the 6 supported strings
-				if((eof_get_note_note(sp, track, chordlist[ctr]) & bitmask) && (ctr2 < tp->numstrings) && ((tp->note[chordlist[ctr]]->frets[ctr2] & 0x80) == 0) && !(tp->note[chordlist[ctr]]->ghost & bitmask))
-				{	//If the chord entry uses this string (verifying that the string number is supported by the track) and the string is not fret hand muted or ghosted
+				if((eof_get_note_note(sp, track, chordlist[ctr]) & bitmask) && (ctr2 < tp->numstrings) && ((tp->note[chordlist[ctr]]->frets[ctr2] & 0x80) == 0))
+				{	//If the chord entry uses this string (verifying that the string number is supported by the track) and the string is not fret hand muted (ghost notes must be allowed so that arpeggio shapes can export)
 					*(fret[ctr2]) = tp->note[chordlist[ctr]]->frets[ctr2] & 0x7F;	//Retrieve the fret played on this string (masking out the muting bit)
 					if(tp->note[chordlist[ctr]]->finger[ctr2])
 					{	//If the fingering for this string is defined
