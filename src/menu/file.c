@@ -2505,6 +2505,12 @@ int eof_save_helper(char *destfilename)
 		}
 	}
 
+	/* check if any track that has manually defined fret hand positions need corrections */
+	if(eof_write_rs_files)
+	{
+///Add fret hand position check function call here
+	}
+
 	/* rotate out the last save file (filename).previous_save.eof */
 	(void) replace_extension(eof_temp_filename, eof_temp_filename, "eof", (int) sizeof(eof_temp_filename));	//Ensure the chart's file path has a .eof extension
 	(void) replace_extension(tempfilename2, eof_temp_filename, "previous_save.eof", 1024);	//(filename).previous_save.eof will be store the last save operation

@@ -100,7 +100,7 @@ void eof_gp_debug_log(PACKFILE *inf, char *text)
 }
 #endif
 
-int eof_gp_parse_bend(PACKFILE *inf)
+int eof_gp_parse_bend(PACKFILE *inf, unsigned long *bendheight)
 {
 	unsigned word;
 	unsigned long height, points, ctr, dword;
@@ -157,6 +157,10 @@ int eof_gp_parse_bend(PACKFILE *inf)
 	eof_gp_debug_log(inf, "\t\tHeight:  ");
 	pack_ReadDWORDLE(inf, &height);	//Read bend height
 	printf("%lu cents\n", height);
+	if(bendheight)
+	{	//If the calling function wanted to retrieve the bend height
+		*bendheight = height;
+	}
 	eof_gp_debug_log(inf, "\t\tNumber of points:  ");
 	pack_ReadDWORDLE(inf, &points);	//Read number of bend points
 	printf("%lu points\n", points);
@@ -205,6 +209,7 @@ EOF_SONG *parse_gp(const char * fn)
 	unsigned long dword, ctr, ctr2, ctr3, ctr4, tracks, measures, *strings, beats, barres;
 	char *note_dynamics[8] = {"ppp", "pp", "p", "mp", "mf", "f", "ff", "fff"};
 	PACKFILE *inf;
+	char *musical_symbols[19] = {"Coda", "Double Coda", "Segno", "Segno Segno", "Fine", "Da Capo", "Da Capo al Coda", "Da Capo al double Coda", "Da Capo al Fine", "Da Segno", "Da Segno al Coda", "Da Segno al double Coda", "Da Segno al Fine", "Da Segno Segno", "Da Segno Segno al Coda", "Da Segno Segno al double Coda", "Da Segno Segno al Fine", "Da Coda", "Da double Coda"};
 
 	if(!fn)
 	{
@@ -501,197 +506,21 @@ EOF_SONG *parse_gp(const char * fn)
 	}
 
 	if(fileversion >= 500)
-	{	//Versions 5.0 and newer of the format store musical directional symbols and a master reverb setting here
+	{	//Versions 5.0 and newer of the format store 19 musical directional symbols and a master reverb setting here
 		(void) puts("\tMusical symbols:");
-		eof_gp_debug_log(inf, "\"Coda\" symbol is ");
-		pack_ReadWORDLE(inf, &word);
-		if(word == 0xFFFF)
-		{
-			(void) puts("unused");
-		}
-		else
-		{
-			printf("at beat #%u\n", word);
-		}
-		eof_gp_debug_log(inf, "\"Double coda\" symbol is ");
-		pack_ReadWORDLE(inf, &word);
-		if(word == 0xFFFF)
-		{
-			(void) puts("unused");
-		}
-		else
-		{
-			printf("at beat #%u\n", word);
-		}
-		eof_gp_debug_log(inf, "\"Segno\" symbol is ");
-		pack_ReadWORDLE(inf, &word);
-		if(word == 0xFFFF)
-		{
-			(void) puts("unused");
-		}
-		else
-		{
-			printf("at beat #%u\n", word);
-		}
-		eof_gp_debug_log(inf, "\"Segno segno\" symbol is ");
-		pack_ReadWORDLE(inf, &word);
-		if(word == 0xFFFF)
-		{
-			(void) puts("unused");
-		}
-		else
-		{
-			printf("at beat #%u\n", word);
-		}
-		eof_gp_debug_log(inf, "\"Fine\" symbol is ");
-		pack_ReadWORDLE(inf, &word);
-		if(word == 0xFFFF)
-		{
-			(void) puts("unused");
-		}
-		else
-		{
-			printf("at beat #%u\n", word);
-		}
-		eof_gp_debug_log(inf, "\"Da capo\" symbol is ");
-		pack_ReadWORDLE(inf, &word);
-		if(word == 0xFFFF)
-		{
-			(void) puts("unused");
-		}
-		else
-		{
-			printf("at beat #%u\n", word);
-		}
-		eof_gp_debug_log(inf, "\"Da capo al coda\" symbol is ");
-		pack_ReadWORDLE(inf, &word);
-		if(word == 0xFFFF)
-		{
-			(void) puts("unused");
-		}
-		else
-		{
-			printf("at beat #%u\n", word);
-		}
-		eof_gp_debug_log(inf, "\"Da capo al double coda\" symbol is ");
-		pack_ReadWORDLE(inf, &word);
-		if(word == 0xFFFF)
-		{
-			(void) puts("unused");
-		}
-		else
-		{
-			printf("at beat #%u\n", word);
-		}
-		eof_gp_debug_log(inf, "\"Da capo al fine\" symbol is ");
-		pack_ReadWORDLE(inf, &word);
-		if(word == 0xFFFF)
-		{
-			(void) puts("unused");
-		}
-		else
-		{
-			printf("at beat #%u\n", word);
-		}
-		eof_gp_debug_log(inf, "\"Da segno\" symbol is ");
-		pack_ReadWORDLE(inf, &word);
-		if(word == 0xFFFF)
-		{
-			(void) puts("unused");
-		}
-		else
-		{
-			printf("at beat #%u\n", word);
-		}
-		eof_gp_debug_log(inf, "\"Da segno al coda\" symbol is ");
-		pack_ReadWORDLE(inf, &word);
-		if(word == 0xFFFF)
-		{
-			(void) puts("unused");
-		}
-		else
-		{
-			printf("at beat #%u\n", word);
-		}
-		eof_gp_debug_log(inf, "\"Da segno al double coda\" symbol is ");
-		pack_ReadWORDLE(inf, &word);
-		if(word == 0xFFFF)
-		{
-			(void) puts("unused");
-		}
-		else
-		{
-			printf("at beat #%u\n", word);
-		}
-		eof_gp_debug_log(inf, "\"Da segno al fine\" symbol is ");
-		pack_ReadWORDLE(inf, &word);
-		if(word == 0xFFFF)
-		{
-			(void) puts("unused");
-		}
-		else
-		{
-			printf("at beat #%u\n", word);
-		}
-		eof_gp_debug_log(inf, "\"Da segno segno\" symbol is ");
-		pack_ReadWORDLE(inf, &word);
-		if(word == 0xFFFF)
-		{
-			(void) puts("unused");
-		}
-		else
-		{
-			printf("at beat #%u\n", word);
-		}
-		eof_gp_debug_log(inf, "\"Da segno segno al coda\" symbol is ");
-		pack_ReadWORDLE(inf, &word);
-		if(word == 0xFFFF)
-		{
-			(void) puts("unused");
-		}
-		else
-		{
-			printf("at beat #%u\n", word);
-		}
-		eof_gp_debug_log(inf, "\"Da segno segno al double coda\" symbol is ");
-		pack_ReadWORDLE(inf, &word);
-		if(word == 0xFFFF)
-		{
-			(void) puts("unused");
-		}
-		else
-		{
-			printf("at beat #%u\n", word);
-		}
-		eof_gp_debug_log(inf, "\"Da segno segno al fine\" symbol is ");
-		pack_ReadWORDLE(inf, &word);
-		if(word == 0xFFFF)
-		{
-			(void) puts("unused");
-		}
-		else
-		{
-			printf("at beat #%u\n", word);
-		}
-		eof_gp_debug_log(inf, "\"Da coda\" symbol is ");
-		pack_ReadWORDLE(inf, &word);
-		if(word == 0xFFFF)
-		{
-			(void) puts("unused");
-		}
-		else
-		{
-			printf("at beat #%u\n", word);
-		}
-		eof_gp_debug_log(inf, "\"Da double coda\" symbol is ");
-		pack_ReadWORDLE(inf, &word);
-		if(word == 0xFFFF)
-		{
-			(void) puts("unused");
-		}
-		else
-		{
-			printf("at beat #%u\n", word);
+		for(ctr = 0; ctr < 19; ctr++)
+		{	//For each of the musical directional symbols
+			eof_gp_debug_log(inf, "\"");	//Print file position
+			printf("%s\" symbol is ", musical_symbols[ctr]);
+			pack_ReadWORDLE(inf, &word);
+			if(word == 0xFFFF)
+			{
+				(void) puts("unused");
+			}
+			else
+			{
+				printf("at beat #%u\n", word);
+			}
 		}
 		eof_gp_debug_log(inf, "Master reverb:  ");
 		pack_ReadDWORDLE(inf, &dword);	//Read the master reverb value
@@ -1320,7 +1149,7 @@ EOF_SONG *parse_gp(const char * fn)
 						}
 						if(byte2 & 4)
 						{	//Tremolo bar
-							if(eof_gp_parse_bend(inf))
+							if(eof_gp_parse_bend(inf, NULL))
 							{	//If there was an error parsing the bend
 								(void) puts("Error parsing bend");
 								(void) pack_fclose(inf);
@@ -1595,7 +1424,7 @@ EOF_SONG *parse_gp(const char * fn)
 								}
 								if(byte1 & 1)
 								{	//Bend
-									if(eof_gp_parse_bend(inf))
+									if(eof_gp_parse_bend(inf, NULL))
 									{	//If there was an error parsing the bend
 										(void) puts("Error parsing bend");
 										(void) pack_fclose(inf);
@@ -1814,6 +1643,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	double note_duration;			//Tracks the note's duration as a percentage of the current measure
 	double measure_position;		//Tracks the current position as a percentage within the current measure
 	unsigned long flags;			//Tracks the flags for the current note
+	unsigned char bendstrength;		//Tracks the note's bend strength if applicable
 	char new_note;					//Tracks whether a new note is to be created
 	char tie_note;					//Tracks whether a note is a tie note
 	unsigned char finger[7];		//Store left (fretting hand) finger values for each string
@@ -1832,6 +1662,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	unsigned long linectr = 2, num_sync_points = 0;
 	struct eof_gpa_sync_point *sync_points = NULL;
 	char error = 0;
+	char *musical_symbols[19] = {"Coda", "Double Coda", "Segno", "Segno Segno", "Fine", "Da Capo", "Da Capo al Coda", "Da Capo al double Coda", "Da Capo al Fine", "Da Segno", "Da Segno al Coda", "Da Segno al double Coda", "Da Segno al Fine", "Da Segno Segno", "Da Segno Segno al Coda", "Da Segno Segno al double Coda", "Da Segno Segno al Fine", "Da Coda", "Da double Coda"};
 
 	eof_log("\tImporting Guitar Pro file", 1);
 	eof_log("eof_load_gp() entered", 1);
@@ -2236,254 +2067,24 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		pack_ReadWORDLE(inf, NULL);		//Read two bytes of unknown data/padding
 	}
 	if(fileversion >= 500)
-	{	//Versions 5.0 and newer of the format store musical directional symbols and a master reverb setting here
-		pack_ReadWORDLE(inf, &word);				//Coda symbol position
-		gp->symbols[EOF_CODA_SYMBOL] = word;		//Store the measure number this symbol appears on
-		if(word != 0xFFFF)
-		{	//If the symbol is actually present
-			gp->symbols[EOF_CODA_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
-		}
+	{	//Versions 5.0 and newer of the format store 19 musical directional symbols and a master reverb setting here
+		for(ctr = 0; ctr < 19; ctr++)
+		{	//For each of the musical directional symbols
+			pack_ReadWORDLE(inf, &word);	//Read symbol position
+			gp->symbols[ctr] = word;		//Store the measure number this symbol appears on
+			if(word != 0xFFFF)
+			{	//If the symbol's use is defined
+				gp->symbols[ctr]--;			//Change the numbering to reflect the first measure being #0
+			}
 #ifdef GP_IMPORT_DEBUG
-		if(word != 0xFFFF)
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Coda\" symbol is at measure #%u", word);
-			eof_log(eof_log_string, 1);
-		}
+			if(word != 0xFFFF)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"%s\" symbol is at measure #%u", musical_symbols[ctr], word);
+				eof_log(eof_log_string, 1);
+			}
 #endif
-		pack_ReadWORDLE(inf, &word);	//Double coda symbol position
-		gp->symbols[EOF_DOUBLE_CODA_SYMBOL] = word;	//Store the measure number this symbol appears on
-		if(word != 0xFFFF)
-		{	//If the symbol is actually present
-			gp->symbols[EOF_DOUBLE_CODA_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
 		}
-#ifdef GP_IMPORT_DEBUG
-		if(word != 0xFFFF)
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Double Coda\" symbol is at measure #%u", word);
-			eof_log(eof_log_string, 1);
-		}
-#endif
-		pack_ReadWORDLE(inf, &word);	//Segno symbol position
-		gp->symbols[EOF_SEGNO_SYMBOL] = word;	//Store the measure number this symbol appears on
-		if(word != 0xFFFF)
-		{	//If the symbol is actually present
-			gp->symbols[EOF_SEGNO_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
-		}
-#ifdef GP_IMPORT_DEBUG
-		if(word != 0xFFFF)
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Segno\" symbol is at measure #%u", word);
-			eof_log(eof_log_string, 1);
-		}
-#endif
-		pack_ReadWORDLE(inf, &word);	//Segno segno symbol position
-		gp->symbols[EOF_SEGNO_SEGNO_SYMBOL] = word;	//Store the measure number this symbol appears on
-		if(word != 0xFFFF)
-		{	//If the symbol is actually present
-			gp->symbols[EOF_SEGNO_SEGNO_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
-		}
-#ifdef GP_IMPORT_DEBUG
-		if(word != 0xFFFF)
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Segno Segno\" symbol is at measure #%u", word);
-			eof_log(eof_log_string, 1);
-		}
-#endif
-		pack_ReadWORDLE(inf, &word);	//Fine symbol position
-		gp->symbols[EOF_FINE_SYMBOL] = word;	//Store the measure number this symbol appears on
-		if(word != 0xFFFF)
-		{	//If the symbol is actually present
-			gp->symbols[EOF_FINE_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
-		}
-#ifdef GP_IMPORT_DEBUG
-		if(word != 0xFFFF)
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Fine\" symbol is at measure #%u", word);
-			eof_log(eof_log_string, 1);
-		}
-#endif
-		pack_ReadWORDLE(inf, &word);	//Da capo symbol position
-		gp->symbols[EOF_DA_CAPO_SYMBOL] = word;	//Store the measure number this symbol appears on
-		if(word != 0xFFFF)
-		{	//If the symbol is actually present
-			gp->symbols[EOF_DA_CAPO_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
-		}
-#ifdef GP_IMPORT_DEBUG
-		if(word != 0xFFFF)
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Capo\" symbol is at measure #%u", word);
-			eof_log(eof_log_string, 1);
-		}
-#endif
-		pack_ReadWORDLE(inf, &word);	//Da capo al coda symbol position
-		gp->symbols[EOF_DA_CAPO_AL_CODA_SYMBOL] = word;	//Store the measure number this symbol appears on
-		if(word != 0xFFFF)
-		{	//If the symbol is actually present
-			gp->symbols[EOF_DA_CAPO_AL_CODA_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
-		}
-#ifdef GP_IMPORT_DEBUG
-		if(word != 0xFFFF)
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Capo al Coda\" symbol is at measure #%u", word);
-			eof_log(eof_log_string, 1);
-		}
-#endif
-		pack_ReadWORDLE(inf, &word);	//Da capo al double coda symbol position
-		gp->symbols[EOF_DA_CAPO_AL_DOUBLE_CODA_SYMBOL] = word;	//Store the measure number this symbol appears on
-		if(word != 0xFFFF)
-		{	//If the symbol is actually present
-			gp->symbols[EOF_DA_CAPO_AL_DOUBLE_CODA_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
-		}
-#ifdef GP_IMPORT_DEBUG
-		if(word != 0xFFFF)
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Capo al double Coda\" symbol is at measure #%u", word);
-			eof_log(eof_log_string, 1);
-		}
-#endif
-		pack_ReadWORDLE(inf, &word);	//Da capo al fine symbol position
-		gp->symbols[EOF_DA_CAPO_AL_FINE_SYMBOL] = word;	//Store the measure number this symbol appears on
-		if(word != 0xFFFF)
-		{	//If the symbol is actually present
-			gp->symbols[EOF_DA_CAPO_AL_FINE_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
-		}
-#ifdef GP_IMPORT_DEBUG
-		if(word != 0xFFFF)
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Capo al Fine\" symbol is at measure #%u", word);
-			eof_log(eof_log_string, 1);
-		}
-#endif
-		pack_ReadWORDLE(inf, &word);	//Da segno symbol position
-		gp->symbols[EOF_DA_SEGNO_SYMBOL] = word;	//Store the measure number this symbol appears on
-		if(word != 0xFFFF)
-		{	//If the symbol is actually present
-			gp->symbols[EOF_DA_SEGNO_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
-		}
-#ifdef GP_IMPORT_DEBUG
-		if(word != 0xFFFF)
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Segno\" symbol is at measure #%u", word);
-			eof_log(eof_log_string, 1);
-		}
-#endif
-		pack_ReadWORDLE(inf, &word);	//Da segno al coda symbol position
-		gp->symbols[EOF_DA_SEGNO_AL_CODA_SYMBOL] = word;	//Store the measure number this symbol appears on
-		if(word != 0xFFFF)
-		{	//If the symbol is actually present
-			gp->symbols[EOF_DA_SEGNO_AL_CODA_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
-		}
-#ifdef GP_IMPORT_DEBUG
-		if(word != 0xFFFF)
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Segno al Coda\" symbol is at measure #%u", word);
-			eof_log(eof_log_string, 1);
-		}
-#endif
-		pack_ReadWORDLE(inf, &word);	//Da segno al double coda symbol position
-		gp->symbols[EOF_DA_SEGNO_AL_DOUBLE_CODA_SYMBOL] = word;	//Store the measure number this symbol appears on
-		if(word != 0xFFFF)
-		{	//If the symbol is actually present
-			gp->symbols[EOF_DA_SEGNO_AL_DOUBLE_CODA_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
-		}
-#ifdef GP_IMPORT_DEBUG
-		if(word != 0xFFFF)
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Segno al double Coda\" symbol is at measure #%u", word);
-			eof_log(eof_log_string, 1);
-		}
-#endif
-		pack_ReadWORDLE(inf, &word);	//Da segno al fine symbol position
-		gp->symbols[EOF_DA_SEGNO_AL_FINE_SYMBOL] = word;	//Store the measure number this symbol appears on
-		if(word != 0xFFFF)
-		{	//If the symbol is actually present
-			gp->symbols[EOF_DA_SEGNO_AL_FINE_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
-		}
-#ifdef GP_IMPORT_DEBUG
-		if(word != 0xFFFF)
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Segno al Fine\" symbol is at measure #%u", word);
-			eof_log(eof_log_string, 1);
-		}
-#endif
-		pack_ReadWORDLE(inf, &word);	//Da segno segno symbol position
-		gp->symbols[EOF_DA_SEGNO_SEGNO_SYMBOL] = word;	//Store the measure number this symbol appears on
-		if(word != 0xFFFF)
-		{	//If the symbol is actually present
-			gp->symbols[EOF_DA_SEGNO_SEGNO_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
-		}
-#ifdef GP_IMPORT_DEBUG
-		if(word != 0xFFFF)
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Segno Segno\" symbol is at measure #%u", word);
-			eof_log(eof_log_string, 1);
-		}
-#endif
-		pack_ReadWORDLE(inf, &word);	//Da segno segno al coda symbol position
-		gp->symbols[EOF_DA_SEGNO_SEGNO_AL_CODA_SYMBOL] = word;	//Store the measure number this symbol appears on
-		if(word != 0xFFFF)
-		{	//If the symbol is actually present
-			gp->symbols[EOF_DA_SEGNO_SEGNO_AL_CODA_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
-		}
-#ifdef GP_IMPORT_DEBUG
-		if(word != 0xFFFF)
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Segno Segno al Coda\" symbol is at measure #%u", word);
-			eof_log(eof_log_string, 1);
-		}
-#endif
-		pack_ReadWORDLE(inf, &word);	//Da segno segno al double coda symbol position
-		gp->symbols[EOF_DA_SEGNO_SEGNO_AL_DOUBLE_CODA_SYMBOL] = word;	//Store the measure number this symbol appears on
-		if(word != 0xFFFF)
-		{	//If the symbol is actually present
-			gp->symbols[EOF_DA_SEGNO_SEGNO_AL_DOUBLE_CODA_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
-		}
-#ifdef GP_IMPORT_DEBUG
-		if(word != 0xFFFF)
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Segno Segno al double Coda\" symbol is at measure #%u", word);
-			eof_log(eof_log_string, 1);
-		}
-#endif
-		pack_ReadWORDLE(inf, &word);	//Da segno segno al fine symbol position
-		gp->symbols[EOF_DA_SEGNO_SEGNO_AL_FINE_SYMBOL] = word;	//Store the measure number this symbol appears on
-		if(word != 0xFFFF)
-		{	//If the symbol is actually present
-			gp->symbols[EOF_DA_SEGNO_SEGNO_AL_FINE_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
-		}
-#ifdef GP_IMPORT_DEBUG
-		if(word != 0xFFFF)
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Segno Segno al Fine\" symbol is at measure #%u", word);
-			eof_log(eof_log_string, 1);
-		}
-#endif
-		pack_ReadWORDLE(inf, &word);	//Da coda symbol position
-		gp->symbols[EOF_DA_CODA_SYMBOL] = word;	//Store the measure number this symbol appears on
-		if(word != 0xFFFF)
-		{	//If the symbol is actually present
-			gp->symbols[EOF_DA_CODA_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
-		}
-#ifdef GP_IMPORT_DEBUG
-		if(word != 0xFFFF)
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da Coda\" symbol is at measure #%u", word);
-			eof_log(eof_log_string, 1);
-		}
-#endif
-		pack_ReadWORDLE(inf, &word);	//Da double coda symbol position
-		gp->symbols[EOF_DA_DOUBLE_CODA_SYMBOL] = word;	//Store the measure number this symbol appears on
-		if(word != 0xFFFF)
-		{	//If the symbol is actually present
-			gp->symbols[EOF_DA_DOUBLE_CODA_SYMBOL]--;			//Change the numbering to reflect the first measure being #0
-		}
-#ifdef GP_IMPORT_DEBUG
-		if(word != 0xFFFF)
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"Da double Coda\" symbol is at measure #%u", word);
-			eof_log(eof_log_string, 1);
-		}
-#endif
+
 		pack_ReadDWORDLE(inf, &dword);	//Read the master reverb value
 
 		//Validate symbols
@@ -3221,6 +2822,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					new_note = 0;	//Assume no new note is to be added unless a normal/muted note is parsed
 					tie_note = 0;	//Assume a note isn't a tie note unless found otherwise
 					flags = 0;
+					bendstrength = 0;
 					memset(finger, 0, sizeof(finger));	//Clear the finger array
 					bytemask = pack_getc(inf);	//Read beat bitmask
 					if(bytemask & 64)
@@ -3504,7 +3106,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						}
 						if(byte2 & 4)
 						{	//Tremolo bar
-							if(eof_gp_parse_bend(inf))
+							if(eof_gp_parse_bend(inf, NULL))
 							{	//If there was an error parsing the bend
 								allegro_message("Error parsing bend, file is corrupt");
 								(void) pack_fclose(inf);
@@ -3778,6 +3380,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							if(bytemask & 8)
 							{	//Note effects
 								char byte1, byte2 = 0;
+								unsigned long bendheight = 0;
 								byte1 = pack_getc(inf);	//Note effect bitmask
 								if(fileversion >= 400)
 								{	//Version 4.0 and higher of the file format has a second note effect bitmask
@@ -3785,7 +3388,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}
 								if(byte1 & 1)
 								{	//Bend
-									if(eof_gp_parse_bend(inf))
+									if(eof_gp_parse_bend(inf, &bendheight))
 									{	//If there was an error parsing the bend
 										allegro_message("Error parsing bend, file is corrupt");
 										(void) pack_fclose(inf);
@@ -3814,6 +3417,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										return NULL;
 									}
 									flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+									if(bendheight >= 100)
+									{	//If the GP file defines the bend of being at least one half step
+										bendstrength = bendheight / 100;	//Convert cents to half steps
+										flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that the note has the bend height defined
+									}
 								}
 								if(byte1 & 2)
 								{	//Hammer on/pull off from current note (next note gets the HO/PO status)
@@ -3986,6 +3594,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								np[ctr2]->ghost = ghost >> (7 - strings[ctr2]);			//Likewise translate the ghost bit mask
 							}
 							np[ctr2]->type = eof_note_type;
+							np[ctr2]->bendstrength = bendstrength;	//Apply the note's bend strength if applicable
 
 							//Determine the correct timestamp position and duration
 							beat_position = measure_position * curnum;								//How many whole beats into the current measure the position is
@@ -4037,6 +3646,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							eof_log(eof_log_string, 1);
 #endif
 
+							//Track note slides
 							for(ctr4 = 0; ctr4 < strings[ctr2]; ctr4++)
 							{	//For each of this track's natively supported strings
 								if(nonshiftslide[ctr2][ctr4] == 1)

@@ -1871,7 +1871,7 @@ if(key[KEY_PAUSE])
 		}
 
 	/* select like (CTRL+L) */
-	/* split lyric (SHIFT+L in PART VOCALS) */
+	/* precise select like (SHIFT+L) */
 	/* edit lyric (L in PART VOCALS) */
 	/* enable legacy view (SHIFT+L in pro guitar track) */
 	/* set slide end fret (CTRL+SHIFT+L in a pro guitar track) */
@@ -1882,15 +1882,15 @@ if(key[KEY_PAUSE])
 				(void) eof_menu_edit_select_like();
 				key[KEY_L] = 0;
 			}
+			else if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
+			{	//SHIFT is held but CTRL is not
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				(void) eof_menu_edit_precise_select_like();
+				key[KEY_L] = 0;
+			}
 			else if(eof_vocals_selected && (eof_selection.track == EOF_TRACK_VOCALS) && (eof_selection.current < eof_song->vocal_track[tracknum]->lyrics))
 			{	//If PART VOCALS is active, and one of its lyrics is the current selected lyric
-				if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
-				{	//SHIFT is held but CTRL is not
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					(void) eof_menu_split_lyric();
-					key[KEY_L] = 0;
-				}
-				else if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
+				if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 				{	//Neither SHIFT nor CTRL are held
 					(void) eof_edit_lyric_dialog();
 					key[KEY_L] = 0;
@@ -1996,14 +1996,6 @@ if(key[KEY_PAUSE])
 			key[KEY_P] = 0;
 		}
 
-	/* toggle sizzle hi hat (SHIFT+S, in the PS drum track) */
-		if(key[KEY_S] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT && (eof_selected_track == EOF_TRACK_DRUM_PS))
-		{
-			eof_shift_used = 1;	//Track that the SHIFT key was used
-			(void) eof_menu_note_toggle_hi_hat_sizzle();
-			key[KEY_S] = 0;
-		}
-
 	/* toggle rim shot (SHIFT+R) */
 		if(key[KEY_R] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{
@@ -2014,8 +2006,10 @@ if(key[KEY_PAUSE])
 
 	/* mark/remark slider (SHIFT+S, in a five lane guitar/bass track) */
 	/* place Rocksmith section (SHIFT+S, in a pro guitar track) */
+	/* toggle sizzle hi hat (SHIFT+S, in the PS drum track) */
+	/* split lyric (SHIFT+S in PART VOCALS) */
 		if(key[KEY_S] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
-		{
+		{	//S and SHIFT are held, but CTRL is not
 			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
 			{	//If this is a 5 lane guitar/bass track
 				eof_shift_used = 1;	//Track that the SHIFT key was used
@@ -2026,6 +2020,18 @@ if(key[KEY_PAUSE])
 			{	//If this is a pro guitar track
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				(void) eof_rocksmith_section_dialog_add();
+				key[KEY_S] = 0;
+			}
+			else if(eof_selected_track == EOF_TRACK_DRUM_PS)
+			{	//If this is the Phase Shift drum track
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				(void) eof_menu_note_toggle_hi_hat_sizzle();
+				key[KEY_S] = 0;
+			}
+			else if(eof_vocals_selected && (eof_selection.track == EOF_TRACK_VOCALS) && (eof_selection.current < eof_song->vocal_track[tracknum]->lyrics))
+			{	//If PART VOCALS is active, and one of its lyrics is the current selected lyric
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				(void) eof_menu_split_lyric();
 				key[KEY_S] = 0;
 			}
 		}

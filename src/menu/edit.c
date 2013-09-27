@@ -130,7 +130,7 @@ MENU eof_edit_selection_menu[] =
 {
 	{"Select &All\t" CTRL_NAME "+A", eof_menu_edit_select_all, NULL, 0, NULL},
 	{"Select like\t" CTRL_NAME "+L", eof_menu_edit_select_like, NULL, 0, NULL},
-	{"&Precise select like", eof_menu_edit_precise_select_like, NULL, 0, NULL},
+	{"&Precise select like\tShift+L", eof_menu_edit_precise_select_like, NULL, 0, NULL},
 	{"Select &Rest\tShift+End", eof_menu_edit_select_rest, NULL, 0, NULL},
 	{"Select previous\tShift+Home", eof_menu_edit_select_previous, NULL, 0, NULL},
 	{"Select all &Shorter than", eof_menu_edit_select_all_shorter_than, NULL, 0, NULL},

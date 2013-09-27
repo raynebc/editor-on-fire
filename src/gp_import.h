@@ -84,6 +84,10 @@
 	char eof_copy_notes_in_beat_range(EOF_PRO_GUITAR_TRACK *source, unsigned long startbeat, unsigned long numbeats, EOF_PRO_GUITAR_TRACK *dest, unsigned long destbeat);
 		//Copies the notes within the specified range of beats in the source track to the same number of beats starting at the specified beat in the destination track
 		//Returns zero on error
+	int eof_get_next_gpa_sync_point(char **buffer, struct eof_gpa_sync_point *ptr);
+		//Reads the next GPA sync point into the referenced structure, advancing *buffer to point to the character after the timestamp read (is '#' between timestamps or '<' after the last timestamp)
+		//Returns nonzero on success
+
 #endif
 
 void pack_ReadWORDLE(PACKFILE *inf, unsigned *data);
@@ -95,13 +99,10 @@ int eof_read_gp_string(PACKFILE *inf, unsigned *length, char *buffer, char readf
 	//If readfieldlength is nonzero, a 4 byte field length that prefixes the string length is also read
 	//If length is not NULL, the string length is returned through it.
 	//Buffer must be able to store at least 256 bytes to avoid overflowing.
-int eof_gp_parse_bend(PACKFILE *inf);
+int eof_gp_parse_bend(PACKFILE *inf, unsigned long *bendheight);
 	//Parses the bend at the current file position, outputting debug logging appropriately
+	//If bendheight is not NULL, the bend's height in cents (100 cents is the distance between two half steps) is returned by reference
 	//Returns nonzero if there is an error parsing, such as end of file being reached unexpectedly
-
-int eof_get_next_gpa_sync_point(char **buffer, struct eof_gpa_sync_point *ptr);
-	//Reads the next GPA sync point into the referenced structure, advancing *buffer to point to the character after the timestamp read (is '#' between timestamps or '<' after the last timestamp)
-	//Returns nonzero on success
 
 #endif
 
