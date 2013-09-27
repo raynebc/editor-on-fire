@@ -3629,6 +3629,7 @@ int eof_initialize(int argc, char * argv[])
 	install_joystick(JOY_TYPE_AUTODETECT);
 	alogg_detect_endianess(); // make sure OGG player works for PPC
 
+	//Ensure the current working directory is EOF's program folder
 	if(!file_exists("eof.dat", 0, NULL))
 	{	//If eof.dat doesn't exist in the current working directory (ie. opening a file with EOF over command line)
 		get_executable_name(temp_filename, 1024);
@@ -3651,6 +3652,7 @@ int eof_initialize(int argc, char * argv[])
 	InitIdleSystem();
 	show_mouse(NULL);
 	eof_load_config("eof.cfg");
+	eof_load_chord_shape_definitions("chordshapes.xml");
 
 	/* reset songs path */
 	/* remove slash from folder name so we can check if it exists */
@@ -4178,6 +4180,8 @@ void eof_exit(void)
 	eof_window_destroy(eof_window_note_lower_left);
 	eof_window_destroy(eof_window_note_upper_left);
 	eof_window_destroy(eof_window_3d);
+
+	eof_destroy_shape_definitions();
 
 	//Stop the logging system
 	seconds = time(NULL);

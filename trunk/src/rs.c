@@ -2,12 +2,14 @@
 #include <time.h>
 #include "agup/agup.h"
 #include "beat.h"
+#include "chart_import.h"	//For FindLongestLineLength_ALLEGRO()
 #include "dialog.h"
 #include "event.h"
 #include "main.h"
 #include "midi.h"
 #include "mix.h"	//For eof_set_seek_position()
 #include "rs.h"
+#include "rs_import.h"	//For eof_parse_chord_template()
 #include "song.h"	//For eof_pro_guitar_track_delete_hand_position()
 #include "tuning.h"	//For eof_lookup_tuned_note()
 #include "undo.h"
@@ -20,6 +22,9 @@
 #ifdef USEMEMWATCH
 #include "memwatch.h"
 #endif
+
+EOF_CHORD_SHAPE eof_chord_shape[EOF_MAX_CHORD_SHAPES];	//An array storing chord shape definitions
+unsigned long num_eof_chord_shapes = 0;	//Defines how many chord shapes are defined in eof_chord_shape[]
 
 EOF_RS_PREDEFINED_SECTION eof_rs_predefined_sections[EOF_NUM_RS_PREDEFINED_SECTIONS] =
 {
@@ -879,7 +884,9 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		char **finger[6] = {&finger0, &finger1, &finger2, &finger3, &finger4, &finger5};	//Allow the finger strings to be accessed via array
 		char finger0def[2] = "0", finger1def[2] = "1", finger2def[2] = "2", finger3def[2] = "3", finger4def[2] = "4", finger5def[2] = "5";	//Static strings for building manually-defined finger information
 		char *fingerdef[6] = {finger0def, finger1def, finger2def, finger3def, finger4def, finger5def};	//Allow the fingerdef strings to be accessed via array
-		unsigned long bitmask;
+		unsigned long bitmask, shapenum;
+		EOF_PRO_GUITAR_NOTE temp;	//Will have a matching chord shape definition's fingering applied to
+		unsigned char *effective_fingering;	//Will point to either a note's own finger array or one of that of the temp pro guitar note structure above
 
 		(void) snprintf(buffer, sizeof(buffer) - 1, "  <chordTemplates count=\"%lu\">\n", chordlistsize);
 		(void) pack_fputs(buffer, fp);
@@ -888,15 +895,27 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 			notename[0] = '\0';	//Empty the note name string
 			(void) eof_build_note_name(sp, track, chordlist[ctr], notename);	//Build the note name (if it exists) into notename[]
 
+			effective_fingering = tp->note[chordlist[ctr]]->finger;	//By default, use the chord entry's finger array
+			memcpy(temp.frets, tp->note[chordlist[ctr]]->frets, 6);	//Clone the fretting of the chord into the temporary note
+			temp.note = tp->note[chordlist[ctr]]->note;				//Clone the note mask
+			if(eof_pro_guitar_note_fingering_valid(tp, ctr) != 1)
+			{	//If the fingering for the note is not fully defined
+				if(eof_lookup_chord_shape(tp->note[ctr], &shapenum, 0))
+				{	//If a fingering for the chord can be found in the chord shape definitions
+					eof_apply_chord_shape_definition(&temp, shapenum);	//Apply the matching chord shape definition's fingering
+					effective_fingering = temp.finger;	//Use the matching chord shape definition's finger definitions
+				}
+			}
+
 			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
 			{	//For each of the 6 supported strings
 				if((eof_get_note_note(sp, track, chordlist[ctr]) & bitmask) && (ctr2 < tp->numstrings) && ((tp->note[chordlist[ctr]]->frets[ctr2] & 0x80) == 0))
 				{	//If the chord entry uses this string (verifying that the string number is supported by the track) and the string is not fret hand muted (ghost notes must be allowed so that arpeggio shapes can export)
 					*(fret[ctr2]) = tp->note[chordlist[ctr]]->frets[ctr2] & 0x7F;	//Retrieve the fret played on this string (masking out the muting bit)
-					if(tp->note[chordlist[ctr]]->finger[ctr2])
+					if(effective_fingering[ctr2])
 					{	//If the fingering for this string is defined
 						char *temp = fingerdef[ctr2];	//Simplify logic below
-						temp[0] = '0' + tp->note[chordlist[ctr]]->finger[ctr2];	//Convert decimal to ASCII
+						temp[0] = '0' + effective_fingering[ctr2];	//Convert decimal to ASCII
 						temp[1] = '\0';	//Truncate string
 						*(finger[ctr2]) = temp;
 					}
@@ -1767,7 +1786,7 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 		if((tp->note[ctr]->type == difficulty) && !(tp->note[ctr]->flags & EOF_NOTE_FLAG_TEMP))
 		{	//If it is in the specified difficulty and isn't marked as a temporary note (a single note inserted to allow chord techniques to appear in Rocksmith)
 			if(!current_note)
-			{	//If this is the first note since the last hand position
+			{	//If this is the first unchecked note since the last hand position
 				current_note = tp->note[ctr];	//Store its address
 			}
 			force_change = 0;	//Reset this condition
@@ -1784,6 +1803,10 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 						force_change = 1;
 						break;
 					}
+					else
+					{	//The forced hand position change is unnecessary since it's the position in effect
+						current_note = NULL;	//The next hand position change will take effect no sooner than the next note
+					}
 				}
 			}
 			if(force_change || !eof_note_can_be_played_within_fret_tolerance(tp, ctr, &current_low, &current_high))
@@ -1799,10 +1822,14 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 				}
 				if(current_low != last_anchor)
 				{	//As long as the hand position being written is different from the previous one
+					if(!current_note)
+					{	//If this pointer isn't valid
+						current_note = tp->note[ctr];	//The hand position will be placed at the current note
+					}
 					(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, current_note->pos, current_low, 0, NULL);	//Add the best determined fret hand position
 					last_anchor = current_low;
 				}
-				if(force_change)
+				else if(force_change)
 				{	//If a fret hand position change was forced due to note fingering
 					if(current_note != tp->note[ctr])
 					{	//If the position for this note was not written yet
@@ -1810,6 +1837,10 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 						current_note = tp->note[ctr];	//Store this note's address
 						if(current_low != last_anchor)
 						{	//As long as the hand position being written is different from the previous one
+							if(!current_note)
+							{	//If this pointer isn't valid
+								current_note = tp->note[ctr];	//The hand position will be placed at the current note
+							}
 							(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, current_note->pos, current_low, 0, NULL);	//Add the fret hand position for this forced position change
 							last_anchor = current_low;
 						}
@@ -2589,4 +2620,296 @@ void eof_enforce_rs_phrase_begin_with_fret_hand_position(EOF_SONG *sp, unsigned 
 			}
 		}
 	}
+}
+
+int eof_lookup_chord_shape(EOF_PRO_GUITAR_NOTE *np, unsigned long *shapenum, unsigned long skipctr)
+{
+	unsigned long ctr, ctr2, bitmask;
+	EOF_PRO_GUITAR_NOTE template;
+	unsigned char lowest = 0;	//Tracks the lowest fret value in the note
+	char nonmatch;
+
+	if(!np)
+		return 0;	//Invalid parameter
+
+	//Prepare a copy of the target note that ignores open and muted strings and moves the note's shape to the lowest fret position and so that its lowest fretted string is lane 1
+	//This will be used to easily compare against the chord shape definitions, which have been transformed the same way
+	template = *np;
+	for(ctr = 0, ctr2 = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+	{	//For each of the 6 supported strings
+		if(template.note & bitmask)
+		{	//If this string is used
+			if((template.frets[ctr] == 0) || (template.frets[ctr] & 0x80))
+			{	//If this string is played open or muted
+				template.note &= ~bitmask;	//Clear this string on the template note
+			}
+			else
+			{	//Otherwise the string is fretted
+				ctr2++;	//Count how many strings are fretted
+				if(!lowest || (template.frets[ctr] < lowest))
+				{
+					lowest = template.frets[ctr];	//Track the lowest fret value in the note
+				}
+			}
+		}
+	}
+	if(ctr < 1)
+	{	//If no strings are fretted, there cannot be a chord shape
+		return 0;
+	}
+	for(ctr = 0; ctr < 6; ctr++)
+	{	//For each of the 6 supported strings, lower the fretted notes by the same amount so shape is moved to fret 1
+		if(template.frets[ctr] != 0)
+		{	//If this note is fretted
+			template.frets[ctr] -= (lowest - 1);	//Transpose the shape to the first fret
+		}
+	}
+	while((template.note & 1) == 0)
+	{	//Until the shape has been moved to occupy the lowest string
+		for(ctr = 0; ctr < 5; ctr++)
+		{	//For each of the first 5 supported strings
+			template.frets[ctr] = template.frets[ctr + 1];		//Transpose the fretted note down one string
+			template.finger[ctr] = template.finger[ctr + 1];	//Transpose the finger definition for the string
+		}
+		template.frets[5] = 0;
+		template.finger[5] = 0;
+		template.note >>= 1;	//Transpose the note mask
+	}
+
+	//Look for a chord shape definition that matches the template on any string position
+	for(ctr = 0; ctr < num_eof_chord_shapes; ctr++)
+	{	//For each chord shape definition
+		//Compare the working copy note against the chord shape definition
+		if(template.note == eof_chord_shape[ctr].note)
+		{	//If the note bitmask matches that of the chord shape definition
+			nonmatch = 0;	//Reset this status
+			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+			{	//For each of the 6 supported strings
+				if(template.note & bitmask)
+				{	//If this string is fretted
+					if(template.frets[ctr2] != eof_chord_shape[ctr].frets[ctr2])
+					{	//If the fret value doesn't match the chord shape definition
+						nonmatch = 1;
+						break;
+					}
+				}
+			}
+			if(!nonmatch)
+			{	//If the note matches the chord shape definition
+				if(!skipctr)
+				{	//If no more matches were to be skipped before returning the match
+					if(shapenum)
+					{	//If calling function wanted to receive the matching definition number
+						*shapenum = ctr;
+					}
+					return 1;	//Return match found
+				}
+				skipctr--;
+			}
+		}//If the note bitmask matches that of the chord shape definition
+	}//For each chord shape definition
+
+	return 0;	//No chord shape match found
+}
+
+void eof_apply_chord_shape_definition(EOF_PRO_GUITAR_NOTE *np, unsigned long shapenum)
+{
+	unsigned long ctr, transpose, bitmask;
+
+	if(!np || (shapenum >= num_eof_chord_shapes))
+		return;	//Invalid parameters
+
+	//Find the lowest fretted string in the target note, this is where the chord shape begins
+	//The specified chord shape definition will be transposed the appropriate number of strings
+	for(transpose = 0, bitmask = 1; transpose < 6; transpose++, bitmask <<= 1)
+	{	//For each of the 6 supported strings
+		np->finger[transpose] = 0;	//Erase any existing fingering for this string
+		if(np->note & bitmask)
+		{	//If this string is used
+			if((np->frets[transpose] != 0) && !(np->frets[transpose] & 0x80))
+			{	//If this string is not played open or muted
+				break;	//This string has the lowest fretted note
+			}
+		}
+	}
+	if(transpose >= 6)
+		return;	//Error
+
+	//Apply the chord shape's fingering, transosing the definition by the number of strings found necessary in the prior loop
+	for(ctr = 0; ctr + transpose < 6; ctr++)
+	{	//For the remainder of the 6 strings after any needed transposing is accounted for
+		np->finger[ctr + transpose] = eof_chord_shape[shapenum].finger[ctr];	//Apply the defined fingering
+	}
+}
+
+unsigned long eof_count_chord_shape_matches(EOF_PRO_GUITAR_NOTE *np)
+{
+	unsigned long ctr = 0;
+
+	if(!np)
+		return 0;	//Invalid parameter
+
+	while(eof_lookup_chord_shape(np, NULL, ctr))
+	{	//While another chord shape definition match is found
+		ctr++;	//Try to find another
+	}
+	return ctr;
+}
+
+void eof_load_chord_shape_definitions(char *fn)
+{
+	char *buffer = NULL;	//Will be an array large enough to hold the largest line of text from input file
+	PACKFILE *inf = NULL;
+	size_t maxlinelength, length;
+	unsigned long linectr = 1, ctr, bitmask;
+	char finger[8] = {0};
+	char frets[8] = {0};
+	char name[51] = {0};
+	unsigned char note, lowestfret;
+	char error = 0;
+
+	eof_log("\tImporting chord shape definitions", 1);
+	eof_log("eof_load_chord_shape_definitions() entered", 1);
+
+	if(!fn)
+		return;	//Invalid parameter
+
+	inf = pack_fopen(fn, "rt");	//Open file in text mode
+	if(!inf)
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError loading:  Cannot open input chord shape definitions file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		eof_log(eof_log_string, 1);
+		return;
+	}
+
+	//Allocate memory buffers large enough to hold any line in this file
+	maxlinelength = (size_t)FindLongestLineLength_ALLEGRO(fn, 0);
+	if(!maxlinelength)
+	{
+		eof_log("\tError finding the largest line in the file.  Aborting", 1);
+		(void) pack_fclose(inf);
+		return;
+	}
+	buffer = (char *)malloc(maxlinelength);
+	if(!buffer)
+	{
+		eof_log("\tError allocating memory.  Aborting", 1);
+		(void) pack_fclose(inf);
+		return;
+	}
+
+	//Read first line of text, capping it to prevent buffer overflow
+	if(!pack_fgets(buffer, (int)maxlinelength, inf))
+	{	//I/O error
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Chord shape definitions import failed on line #%lu:  Unable to read from file:  \"%s\"", linectr, strerror(errno));
+		eof_log(eof_log_string, 1);
+		error = 1;
+	}
+
+	//Parse the contents of the file
+	while(!error)
+	{	//Until there was an error reading from the file
+		if(num_eof_chord_shapes < EOF_MAX_CHORD_SHAPES)
+		{	//If another chord shape definition can be stored
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tProcessing line #%lu", linectr);
+			eof_log(eof_log_string, 1);
+
+			//Load chord shape definition
+			if(strcasestr_spec(buffer, "<chordTemplate"))
+			{	//If this line contains a chord template tag (which defines a chord shape)
+				if(eof_parse_chord_template(name, sizeof(name), finger, frets, &note, NULL, linectr, buffer))
+				{	//If there was an error reading the chord template
+					error = 1;
+				}
+			}
+
+			if(eof_note_count_colors_bitmask(note) < 2)
+			{	//If not at least two strings are used in the definition
+				eof_log("\t\tSkipping non chord definition", 1);
+			}
+			else
+			{	//The chord shape is valid
+				//Move the shape so that it begins on fret 1 and its lowest fretted string is lane 1
+				for(ctr = 0, bitmask = 1, lowestfret = 0; ctr < 6; ctr++, bitmask <<= 1)
+				{	//For each of the 6 supported strings
+					if(note & bitmask)
+					{	//If this string is used
+						if(!lowestfret || (frets[ctr] < lowestfret))
+						{
+							lowestfret = frets[ctr];	//Track the lowest fret value in the note
+						}
+					}
+				}
+				for(ctr = 0; ctr < 6; ctr++)
+				{	//For each of the 6 supported strings
+					if(frets[ctr] >= lowestfret)
+					{
+						frets[ctr] -= (lowestfret - 1);	//Transpose any fretted strings to the first fret
+					}
+				}
+				while((note & 1) == 0)
+				{	//Until the shape has been moved to occupy the lowest string
+					for(ctr = 0; ctr < 5; ctr++)
+					{	//For each of the first 5 supported strings
+						frets[ctr] = frets[ctr + 1];	//Transpose the fretted note down one string
+						finger[ctr] = finger[ctr + 1];	//Transpose the finger definition for the string
+					}
+					frets[5] = 0;
+					finger[5] = 0;
+					note >>= 1;	//Transpose the note mask
+				}
+
+				//Add to list
+				length = strlen(name);
+				eof_chord_shape[num_eof_chord_shapes].name = malloc(length + 1);	//Allocate memory to store the shape name
+				if(!eof_chord_shape[num_eof_chord_shapes].name)
+				{
+					eof_log("\tError allocating memory.  Aborting", 1);
+					error = 1;
+				}
+				else
+				{	//Memory was allocated
+					memset(eof_chord_shape[num_eof_chord_shapes].name, 0, length + 1);	//Initialize memory block to 0
+					strncpy(eof_chord_shape[num_eof_chord_shapes].name, name, strlen(name) + 1);
+					memcpy(eof_chord_shape[num_eof_chord_shapes].finger, finger, 8);	//Store the finger array
+					memcpy(eof_chord_shape[num_eof_chord_shapes].frets, frets, 8);		//Store the fret array
+					eof_chord_shape[num_eof_chord_shapes].note = note;			//Store the note mask
+					num_eof_chord_shapes++;
+					eof_log("\t\tChord shape definition loaded", 1);
+				}
+			}//The chord shape is valid
+		}//If another chord shape definition can be stored
+		else
+		{	//The chord shape definition list is full
+			error = 1;
+		}
+
+		//Use this method of checking for EOF instead of pack_feof(), otherwise the last line cannot be read and the definitions file doesn't use a closing tag that can be ignored
+		if(!pack_fgets(buffer, (int)maxlinelength, inf))
+		{	//If another line cannot be read from the file
+			break;	//Exit loop
+		}
+		linectr++;	//Increment line counter
+	}//Until there was an error reading from the file
+
+	if(error)
+	{	//If import did not complete successfully
+		eof_destroy_shape_definitions();	//Destroy any imported shapes
+	}
+
+	//Cleanup
+	(void) pack_fclose(inf);
+	free(buffer);
+}
+
+void eof_destroy_shape_definitions(void)
+{
+	unsigned long ctr;
+
+	for(ctr = 0; ctr < num_eof_chord_shapes; ctr++)
+	{	//For each chord shape that was imported
+		free(eof_chord_shape[ctr].name);	//Release the memory allocated to store the name
+		eof_chord_shape[ctr].name = NULL;
+	}
+	num_eof_chord_shapes = 0;
 }

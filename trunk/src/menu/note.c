@@ -320,7 +320,7 @@ MENU eof_note_rocksmith_menu[] =
 MENU eof_note_lyrics_menu[] =
 {
 	{"&Edit Lyric\tL", eof_edit_lyric_dialog, NULL, 0, NULL},
-	{"&Split Lyric\tShift+L", eof_menu_split_lyric, NULL, 0, NULL},
+	{"&Split Lyric\tShift+S", eof_menu_split_lyric, NULL, 0, NULL},
 	{"&Lyric Lines", NULL, eof_lyric_line_menu, 0, NULL},
 	{"&Freestyle", NULL, eof_note_freestyle_menu, 0, NULL},
 	{"Import GP style lyric text", eof_note_menu_read_gp_lyric_texts, NULL, 0, NULL},
@@ -4592,30 +4592,33 @@ int eof_correct_chord_fingerings_option(char report, char *undo_made)
 				{	//If this note is a chord that isn't completely string muted
 					if(eof_pro_guitar_note_fingering_valid(tp, ctr2) != 1)
 					{	//If the fingering for this chord isn't valid or is undefined
-						eof_clear_input();
-						key[KEY_Y] = 0;
-						key[KEY_N] = 0;
-						if(!user_prompted && (alert(NULL, "Some chords don't have correct finger information.", "Update them now?", "&Yes", "&No", 'y', 'n') != 1))
-						{	//If the user does not opt to update the fingering
-							return 0;
-						}
-						user_prompted = 1;
-						eof_selection.current = ctr2;	//Select this note
-						eof_selection.track = ctr;		//Select this track
-						eof_selection.multi[ctr2] = 1;	//Select this note in the selection array
-						(void) eof_menu_track_selected_track_number(ctr, 1);	//Change the active track
-						eof_note_type = tp->note[ctr2]->type;	//Set the note's difficulty as the active difficulty
-						eof_set_seek_position(tp->note[ctr2]->pos + eof_av_delay);
-						eof_find_lyric_preview_lines();
-						eof_render();					//Render the track being checked so the user knows which track a note is being edited from
-						cancelled = !eof_menu_note_edit_pro_guitar_note_frets_fingers(1, undo_made);	//Open the edit fret/finger dialog where only the necessary finger fields can be altered
-						eof_selection.multi[ctr2] = 0;	//Unselect this note
-						eof_selection.current = EOF_MAX_NOTES - 1;
-						if(cancelled)
-						{	//If the user cancelled updating the chord fingering
-							return 0;
-						}
-					}
+						if(!eof_lookup_chord_shape(tp->note[ctr2], NULL, 0))
+						{	//If a fingering for the chord can NOT be found in the chord shape definitions
+							eof_clear_input();
+							key[KEY_Y] = 0;
+							key[KEY_N] = 0;
+							if(!user_prompted && (alert("One or more chords don't have correct finger information", "and have no chord shape definition.", "Update them now?", "&Yes", "&No", 'y', 'n') != 1))
+							{	//If the user does not opt to update the fingering
+								return 0;
+							}
+							user_prompted = 1;
+							eof_selection.current = ctr2;	//Select this note
+							eof_selection.track = ctr;		//Select this track
+							eof_selection.multi[ctr2] = 1;	//Select this note in the selection array
+							(void) eof_menu_track_selected_track_number(ctr, 1);	//Change the active track
+							eof_note_type = tp->note[ctr2]->type;	//Set the note's difficulty as the active difficulty
+							eof_set_seek_position(tp->note[ctr2]->pos + eof_av_delay);
+							eof_find_lyric_preview_lines();
+							eof_render();					//Render the track being checked so the user knows which track a note is being edited from
+							cancelled = !eof_menu_note_edit_pro_guitar_note_frets_fingers(1, undo_made);	//Open the edit fret/finger dialog where only the necessary finger fields can be altered
+							eof_selection.multi[ctr2] = 0;	//Unselect this note
+							eof_selection.current = EOF_MAX_NOTES - 1;
+							if(cancelled)
+							{	//If the user canceled updating the chord fingering
+								return 0;
+							}
+						}//If a fingering for the chord can NOT be found in the chord shape definitions
+					}//If the fingering for this chord isn't valid or is undefined
 				}//If this note is a chord that isn't completely string muted
 			}//For each note in this track
 		}//If this is a pro guitar track

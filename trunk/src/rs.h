@@ -21,6 +21,18 @@ extern EOF_RS_PREDEFINED_SECTION eof_rs_predefined_events[EOF_NUM_RS_PREDEFINED_
 
 extern char *eof_rs_arrangement_names[5];
 
+typedef struct
+{
+	unsigned char note;			//Stores the note's string statuses
+	unsigned char frets[8];		//Stores the fret number for each string
+	unsigned char finger[8];	//Stores the finger number used to fret each string
+	char *name;					//Stores the name of the shape (ie. "D")
+} EOF_CHORD_SHAPE;
+
+#define EOF_MAX_CHORD_SHAPES 300
+extern EOF_CHORD_SHAPE eof_chord_shape[EOF_MAX_CHORD_SHAPES];
+extern unsigned long num_eof_chord_shapes;
+
 int eof_is_string_muted(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//Returns nonzero if all used strings in the note are fret hand muted
 
@@ -51,15 +63,24 @@ void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_ma
 	//Checks all notes in the track and duplicates finger arrays of notes with complete finger definitions to matching notes without complete finger definitions
 	//If any note has invalid fingering, it is cleared and will be allowed to be set by a valid fingering from a matching note.
 	//If *undo_made is zero, this function will create an undo state before modifying the chart and will set the referenced variable to nonzero
-
 int eof_pro_guitar_note_fingering_valid(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);
 	//Returns 0 if the fingering is invalid for the specified note (partially defined, or a finger specified for a string that is played open)
 	//Returns 1 if the fingering is fully defined for the specified note
 	//Returns 2 if the fingering is undefined for the specified note
-
 void eof_song_fix_fingerings(EOF_SONG *sp, char *undo_made);
 	//Runs eof_pro_guitar_track_fix_fingerings() on all pro guitar tracks in the specified chart
 	//If *undo_made is zero, this function will create an undo state before modifying the chart and will set the referenced variable to nonzero
+int eof_lookup_chord_shape(EOF_PRO_GUITAR_NOTE *np, unsigned long *shapenum, unsigned long skipctr);
+	//Examines the specified note and returns nonzero if a matching chord shape definition is found, in which case the shape number is returned through shapenum if it is not NULL
+	//If skipctr is nonzero, then the first [skipctr] number of matches are ignored during the lookup process, allowing additional definition matches to be found
+void eof_apply_chord_shape_definition(EOF_PRO_GUITAR_NOTE *np, unsigned long shapenum);
+	//Applies the specified chord shape to the specified note, transposing the shape definition to suit the lowest fretted string of the specified note
+unsigned long eof_count_chord_shape_matches(EOF_PRO_GUITAR_NOTE *np);
+	//Returns the number of chord shape definitions that match the specified note
+void eof_load_chord_shape_definitions(char *fn);
+	//Reads chord templates from the specified file and stores them into the eof_chord_shape[] array
+void eof_destroy_shape_definitions(void);
+	//Empties the eof_chord_shape[] array, releasing the entries' allocated memory
 
 int eof_generate_hand_positions_current_track_difficulty(void);
 	//Calls eof_generate_efficient_hand_positions() specifying the current track difficulty
