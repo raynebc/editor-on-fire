@@ -2834,7 +2834,11 @@ void eof_load_chord_shape_definitions(char *fn)
 				{	//For each of the 6 supported strings
 					if(note & bitmask)
 					{	//If this string is used
-						if(!lowestfret || (frets[ctr] < lowestfret))
+						if(frets[ctr] == 0)
+						{	//If this string is played open
+							note &= ~bitmask;	//Clear this string from the note mask
+						}
+						else if(!lowestfret || (frets[ctr] < lowestfret))
 						{
 							lowestfret = frets[ctr];	//Track the lowest fret value in the note
 						}
