@@ -1719,7 +1719,7 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 	unsigned long ctr, ctr2, tracknum, count, bitmask, beatctr, startpos = 0, endpos;
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned char current_low, current_high, last_anchor = 0;
-	EOF_PRO_GUITAR_NOTE *current_note = NULL;	//Tracks the first note in the set of notes having its hand position found
+	EOF_PRO_GUITAR_NOTE *next_position = NULL;	//Tracks the note at which the next fret hand position will be placed
 	char force_change, started = 0;
 
 	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
@@ -1785,75 +1785,58 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 	{	//For each note in the track
 		if((tp->note[ctr]->type == difficulty) && !(tp->note[ctr]->flags & EOF_NOTE_FLAG_TEMP))
 		{	//If it is in the specified difficulty and isn't marked as a temporary note (a single note inserted to allow chord techniques to appear in Rocksmith)
-			if(!current_note)
-			{	//If this is the first unchecked note since the last hand position
-				current_note = tp->note[ctr];	//Store its address
+			if(!next_position)
+			{	//If this is the first note since the last hand position, or there was no hand position placed yet
+				next_position = tp->note[ctr];	//Store its address
 			}
 			force_change = 0;	//Reset this condition
 			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
 			{	//For each of the 6 supported strings
 				if((tp->note[ctr]->note & bitmask) && (tp->note[ctr]->finger[ctr2] == 1))
 				{	//If this note uses this string, and the string is defined as being fretted by the index finger
-					if(eof_pro_guitar_note_lowest_fret(tp, ctr) != last_anchor)
-					{	//If this note's lowest fret would indicate a change in hand position
-						if(current_note == tp->note[ctr])
-						{	//If this is a forced position changed following another forced change
-							current_low = 0;	//The logic below will set the position to reflect this change
-						}
-						force_change = 1;
-						break;
-					}
-					else
-					{	//The forced hand position change is unnecessary since it's the position in effect
-						current_note = NULL;	//The next hand position change will take effect no sooner than the next note
-					}
+					force_change = 1;
+					break;
 				}
 			}
 			if(force_change || !eof_note_can_be_played_within_fret_tolerance(tp, ctr, &current_low, &current_high))
-			{	//If a position change was determined to be necessary based on fingering, or this note can't be included in the set of notes played with a single fret hand position
-				if(!current_low)
-				{	//If a fret hand position hasn't been placed yet
-					current_low = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Track this note's high and low frets
-					current_high = eof_pro_guitar_note_highest_fret(tp, ctr);
-				}
+			{	//If a position change was determined to be necessary based on fingering, or this note can't be included with previous notes within a single fret hand position
 				if(current_low > 19)
 				{	//Ensure the fret hand position is capped at 19, since 22 is the highest fret supported in either Rock Band or Rocksmith
 					current_low = 19;
 				}
-				if(current_low != last_anchor)
-				{	//As long as the hand position being written is different from the previous one
-					if(!current_note)
-					{	//If this pointer isn't valid
-						current_note = tp->note[ctr];	//The hand position will be placed at the current note
-					}
-					(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, current_note->pos, current_low, 0, NULL);	//Add the best determined fret hand position
-					last_anchor = current_low;
-				}
-				else if(force_change)
+				if(force_change)
 				{	//If a fret hand position change was forced due to note fingering
-					if(current_note != tp->note[ctr])
-					{	//If the position for this note was not written yet
-						current_low = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Initialize the low fret used for this note
-						current_note = tp->note[ctr];	//Store this note's address
+					if(next_position != tp->note[ctr])
+					{	//If the fret hand position for previous notes has not been placed yet, write it first
 						if(current_low != last_anchor)
 						{	//As long as the hand position being written is different from the previous one
-							if(!current_note)
-							{	//If this pointer isn't valid
-								current_note = tp->note[ctr];	//The hand position will be placed at the current note
-							}
-							(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, current_note->pos, current_low, 0, NULL);	//Add the fret hand position for this forced position change
+							(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL);	//Add the fret hand position for this forced position change
 							last_anchor = current_low;
 						}
+						next_position = tp->note[ctr];	//The fret hand position for the current note will be written next
 					}
-					current_note = NULL;	//This note's position will not receive another hand position, the next loop iteration will look for any necessary position changes starting with the next note's location
+					//Now that the previous notes' position is in place, update the high and low fret tracking for the current note
+					current_low = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Track this note's high and low frets
+					current_high = eof_pro_guitar_note_highest_fret(tp, ctr);
+					if(current_low != last_anchor)
+					{	//As long as the hand position being written is different from the previous one
+						(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL);	//Add the fret hand position for this forced position change
+						last_anchor = current_low;
+					}
+					next_position = NULL;	//This note's position will not receive another hand position, the next loop iteration will look for any necessary position changes starting with the next note's location
 				}
 				else
-				{
-					current_note = tp->note[ctr];	//Store this note's address
+				{	//If the position change is being placed on a previous note due to this note going out of fret tolerance
+					if(current_low != last_anchor)
+					{	//As long as the hand position being written is different from the previous one
+						(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL);	//Add the fret hand position for this forced position change
+						last_anchor = current_low;
+					}
+					next_position = tp->note[ctr];	//The fret hand position for the current note will be written next
 				}
 				current_low = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Track this note's high and low frets
 				current_high = eof_pro_guitar_note_highest_fret(tp, ctr);
-			}
+			}//If a position change was determined to be necessary based on fingering, or this note can't be included with previous notes within a single fret hand position
 		}//If it is in the specified difficulty and isn't marked as a temporary note (a single note inserted to allow chord techniques to appear in Rocksmith)
 	}//For each note in the track
 
@@ -1866,9 +1849,9 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 	{	//Ensure the fret hand position is capped at 19, since 22 is the highest fret supported in either Rock Band or Rocksmith
 		current_low = 19;
 	}
-	if((current_low != last_anchor) && current_note)
+	if((current_low != last_anchor) && next_position)
 	{	//If the last parsed note requires a position change
-		(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, current_note->pos, current_low, 0, NULL);	//Add the best determined fret hand position
+		(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL);	//Add the best determined fret hand position
 	}
 
 	//Ensure that a fret hand position is defined in each phrase, at or before its first note
