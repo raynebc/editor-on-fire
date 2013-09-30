@@ -101,7 +101,7 @@ int eof_read_gp_string(PACKFILE *inf, unsigned *length, char *buffer, char readf
 	//Buffer must be able to store at least 256 bytes to avoid overflowing.
 int eof_gp_parse_bend(PACKFILE *inf, unsigned long *bendheight);
 	//Parses the bend at the current file position, outputting debug logging appropriately
-	//If bendheight is not NULL, the bend's height in cents (100 cents is the distance between two half steps) is returned by reference
+	//If bendheight is not NULL, the bend's height in percent of a full step (not cents) is returned by reference
 	//Returns nonzero if there is an error parsing, such as end of file being reached unexpectedly
 
 #endif

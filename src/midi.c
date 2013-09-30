@@ -2716,6 +2716,7 @@ void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_chang
 	struct eof_MIDI_data_track *trackptr;
 	struct eof_MIDI_data_event *eventptr;
 	char trackheader[4] = {'M', 'T', 'r', 'k'};
+	char endoftrack[3] = {0xFF, 0x2F, 0};
 	PACKFILE *tempf;
 	unsigned long lastdelta, deltapos, track_length, ctr;
 
@@ -2737,7 +2738,14 @@ void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_chang
 			{	//For each event in the track
 				deltapos = eof_ConvertToDeltaTime(eventptr->realtime + anchorlist->realtime,anchorlist,tslist,timedivision,0);	//Store the tick position of the event (accounting for the MIDI delay of the active beat map)
 				WriteVarLen(deltapos - lastdelta, tempf);		//Write this event's relative delta time
-				(void) pack_fwrite(eventptr->data, eventptr->size, tempf);	//Write this event's data
+				if((eventptr->size == 2) && (((unsigned char *)eventptr->data)[0] == 0xFF) && (((unsigned char *)eventptr->data)[1] == 0x2F))
+				{	//If this is an end of track event that is missing the length field
+					(void) pack_fwrite(endoftrack, 3, tempf);	//Write a complete end of track event
+				}
+				else
+				{	//Otherwise write the event data as-is
+					(void) pack_fwrite(eventptr->data, eventptr->size, tempf);	//Write this event's data
+				}
 				lastdelta = deltapos;
 			}
 			(void) pack_fclose(tempf);					//Close the temporary file
