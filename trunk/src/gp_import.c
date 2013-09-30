@@ -3417,9 +3417,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										return NULL;
 									}
 									flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
-									if(bendheight >= 100)
+									if(bendheight >= 50)
 									{	//If the GP file defines the bend of being at least one half step
-										bendstrength = bendheight / 100;	//Convert cents to half steps
+										bendstrength = bendheight / 50;	//Convert cents to half steps
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that the note has the bend height defined
 									}
 								}
