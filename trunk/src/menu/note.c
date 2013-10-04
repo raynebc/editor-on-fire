@@ -1310,7 +1310,7 @@ int eof_menu_note_delete(void)
 				eof_selection.multi[i-1] = 0;
 			}
 		}
-		eof_selection.current = EOF_MAX_NOTES - 1;
+		(void) eof_menu_edit_deselect_all();	//Clear selection data
 		eof_track_fixup_notes(eof_song, eof_selected_track, 0);
 		eof_reset_lyric_preview_lines();
 		(void) eof_detect_difficulties(eof_song, eof_selected_track);
@@ -4567,9 +4567,10 @@ int eof_correct_chord_fingerings_menu(void)
 
 int eof_correct_chord_fingerings_option(char report, char *undo_made)
 {
-	unsigned long ctr, ctr2, tracknum;
+	unsigned long ctr, ctr2, tracknum, shapenum;
 	EOF_PRO_GUITAR_TRACK *tp;
-	char cancelled, user_prompted = 0;
+	char cancelled, user_prompted = 0, auto_complete = 0;
+	int result;
 
 	if(!eof_song)
 		return 0;	//Error
@@ -4592,16 +4593,45 @@ int eof_correct_chord_fingerings_option(char report, char *undo_made)
 				{	//If this note is a chord that isn't completely string muted
 					if(eof_pro_guitar_note_fingering_valid(tp, ctr2) != 1)
 					{	//If the fingering for this chord isn't valid or is undefined
-						if(!eof_lookup_chord_shape(tp->note[ctr2], NULL, 0))
-						{	//If a fingering for the chord can NOT be found in the chord shape definitions
+						if(!user_prompted)
+						{	//If the user hasn't been prompted whether to update the fingering (or if the prompt hasn't been suppressed)
 							eof_clear_input();
 							key[KEY_Y] = 0;
 							key[KEY_N] = 0;
-							if(!user_prompted && (alert("One or more chords don't have correct finger information", "and have no chord shape definition.", "Update them now?", "&Yes", "&No", 'y', 'n') != 1))
+							if(alert("One or more chords don't have correct finger information", "Update them now?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 							{	//If the user does not opt to update the fingering
 								return 0;
 							}
 							user_prompted = 1;
+						}
+						result = 0;
+						if(auto_complete != 2)
+						{	//As long as the user didn't decline to use the chord shape definitions
+							result = eof_lookup_chord_shape(tp->note[ctr2], &shapenum, 0);	//Look for a match in the chord shape definitions
+						}
+						if(!auto_complete && result)
+						{	//If the user hasn't been prompted whether to use the chord definitions yet, and the chord's fingering CAN be automatically applied
+							if(alert(NULL, "Automatically apply fingerings for known chord shapes?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+							{	//If the user declines using the chord shape definitions
+								auto_complete = 2;	//Remember a no answer
+							}
+							else
+							{
+								auto_complete = 1;	//Otherwise remember a yes answer
+							}
+						}
+
+						if((auto_complete == 1) && result)
+						{	//If this chord's fingering is to be applied automatically
+							if(!*undo_made)
+							{	//If an undo state hasn't been made yet
+								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+								*undo_made = 1;
+							}
+							eof_apply_chord_shape_definition(tp->note[ctr2], shapenum);	//Apply the matching chord shape definition's fingering
+						}
+						else
+						{	//If this chord's fingering is to be applied manually
 							eof_selection.current = ctr2;	//Select this note
 							eof_selection.track = ctr;		//Select this track
 							eof_selection.multi[ctr2] = 1;	//Select this note in the selection array
@@ -4617,7 +4647,7 @@ int eof_correct_chord_fingerings_option(char report, char *undo_made)
 							{	//If the user canceled updating the chord fingering
 								return 0;
 							}
-						}//If a fingering for the chord can NOT be found in the chord shape definitions
+						}//If this chord's fingering is to be applied manually
 					}//If the fingering for this chord isn't valid or is undefined
 				}//If this note is a chord that isn't completely string muted
 			}//For each note in this track

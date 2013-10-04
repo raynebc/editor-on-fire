@@ -72,8 +72,9 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 int eof_menu_note_edit_pro_guitar_note_frets_fingers_menu(void);
 	//Calls eof_menu_note_edit_pro_guitar_note_frets_fingers() specifying function 0
 int eof_correct_chord_fingerings_option(char report, char *undo_made);
-	//Checks each pro guitar track in the active chart for chords that have incorrect fingering (defined when it shouldn't be or vice versa)
-	//For each that is found, the "Edit pro guitar fret/finger values" dialog is launched with the fret fields locked so that the fingerings can be defined
+	//Checks each pro guitar track in the active chart for chords that have incorrect fingering (defined when it shouldn't be or vice-versa)
+	//If at least one such chord matches a chord shape definition, the function will prompt the user whether to automatically fill in fingering where possible
+	//Otherwise for each such chord, the "Edit pro guitar fret/finger values" dialog is launched with the fret fields locked so that the fingerings can be defined
 	//The given fingering is then applied to all matching notes in the track
 	//If report is nonzero, a dialog message is displayed if no corrections were made, alerting the user that it was already correct
 	//If report is zero, a dialog message is displayed BEFORE prompting the user to make corrections, since the user didn't manually invoke the function

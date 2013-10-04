@@ -539,6 +539,10 @@ int eof_menu_file_save_as(void)
 			(void) ustrcpy(eof_song_path,new_foldername);
 			(void) ustrcpy(eof_last_eof_path,new_foldername);
 		}
+		else if(retval == 1)
+		{
+			eof_log("\tSave canceled", 1);
+		}
 		else
 		{	//If save was not successful
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError code %d during \"Save as\"", retval);
@@ -727,7 +731,11 @@ int eof_menu_file_save(void)
 	eof_log("\tSaving chart", 1);
 
 	retval = eof_save_helper(NULL);	//Perform "Save" operation to the chart's current path
-	if(retval)
+	if(retval == 1)
+	{
+		eof_log("\tSave canceled", 1);
+	}
+	else if(retval > 1)
 	{	//If save was not successful
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError code %d during \"Save\"", retval);
 		eof_log(eof_log_string, 1);
@@ -2339,7 +2347,7 @@ int eof_save_helper(char *destfilename)
 	eof_log("eof_save_helper() entered", 1);
 
 	if(!eof_song_loaded || !eof_song)
-		return 1;	//Return failure:  Invalid parameters
+		return 2;	//Return failure:  Invalid parameters
 
 //	eof_log_level &= ~2;	//Disable verbose logging
 
@@ -2347,7 +2355,7 @@ int eof_save_helper(char *destfilename)
 	{	//Perform save
 		function = 1;
 		if((eof_song_path == NULL) || (eof_loaded_song_name == NULL))
-			return 2;	//Return failure:  Invalid paths
+			return 3;	//Return failure:  Invalid paths
 		(void) append_filename(eof_temp_filename, eof_song_path, eof_loaded_song_name, (int) sizeof(eof_temp_filename));
 		(void) replace_filename(newfolderpath, eof_song_path, "", 1024);	//Obtain the destination path
 	}
@@ -2357,7 +2365,7 @@ int eof_save_helper(char *destfilename)
 		(void) replace_extension(destfilename, destfilename, "eof", 1024);	//Ensure the chart is saved with a .eof extension
 		(void) ustrncpy(eof_temp_filename, destfilename, (int) sizeof(eof_temp_filename) - 1);
 		if(eof_temp_filename[1022] != '\0')	//If the source filename was too long to store in the array
-			return 3;			//Return failure:  Destination path too long
+			return 4;			//Return failure:  Destination path too long
 		(void) replace_filename(newfolderpath, destfilename, "", 1024);	//Obtain the destination path
 	}
 
@@ -2375,7 +2383,7 @@ int eof_save_helper(char *destfilename)
 		key[KEY_N] = 0;
 		if(alert(oggfn, NULL, "This chart may not work properly.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user doesn't opt to continue due to this error condition
-			return 4;	//Return cancellation
+			return 1;	//Return cancellation
 		}
 	}
 
@@ -2404,7 +2412,7 @@ int eof_save_helper(char *destfilename)
 						eof_show_mouse(NULL);
 						eof_cursor_visible = 1;
 						eof_pen_visible = 1;
-						return 5;	//Return cancellation
+						return 1;	//Return cancellation
 					}
 					break;
 				}
@@ -2429,7 +2437,7 @@ int eof_save_helper(char *destfilename)
 						(void) eof_menu_track_selected_track_number(ctr, 1);										//Set the active instrument track
 						eof_note_type = eof_get_note_type(eof_song, ctr, ctr2);							//Set the active difficulty to match that of the note
 						eof_set_seek_position(eof_get_note_pos(eof_song, ctr, ctr2) + eof_av_delay);	//Seek to the note's position
-						return 6;	//Return cancellation
+						return 1;	//Return cancellation
 					}
 					note_length_warned = 1;
 					break;	//Stop checking after the first offending note is found
@@ -2459,7 +2467,7 @@ int eof_save_helper(char *destfilename)
 							(void) eof_menu_track_selected_track_number(ctr, 1);							//Set the active instrument track
 							eof_note_type = eof_get_note_type(eof_song, ctr, ctr2);							//Set the active difficulty to match that of the note
 							eof_set_seek_position(eof_get_note_pos(eof_song, ctr, ctr2) + eof_av_delay);	//Seek to the note's position
-							return 7;	//Return cancellation
+							return 1;	//Return cancellation
 						}
 						note_distance_warned = 1;
 						break;	//Stop checking after the first offending note is found
@@ -2469,10 +2477,17 @@ int eof_save_helper(char *destfilename)
 		}
 	}
 
-	/* check if any chords have undefined fingering */
 	if(eof_write_rs_files)
 	{	//If the user wants to save Rocksmith capable files
 		(void) eof_correct_chord_fingerings();			//Ensure all chords in each pro guitar track have valid finger arrays, prompt user to provide any that are missing
+		if(eof_check_fret_hand_positions())
+		{	//If any fret hand position errors were found
+			if(alert("One or more problems with defined fret hand positions were found.", NULL, "Cancel save and review them now?", "&Yes", "&No", 'y', 'n') == 1)
+			{	//If the user opts to see the problems
+				eof_check_fret_hand_positions_menu();
+				return 1;	//Return cancellation
+			}
+		}
 	}
 
 	/* check if there is a MIDI delay, offer to use Reset offset to zero */
@@ -2522,7 +2537,7 @@ int eof_save_helper(char *destfilename)
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Could not delete the previous_save backup file.  Aborting save.  Please use \"Save as\" to save to a new location.");
 			eof_log(eof_log_string, 1);
 			allegro_message(eof_log_string);
-			return 8;	//Return failure:  Error deleting lastsave file
+			return 5;	//Return failure:  Error deleting lastsave file
 		}
 	}
 	if(exists(eof_temp_filename))
@@ -2533,7 +2548,7 @@ int eof_save_helper(char *destfilename)
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Could not create the previous_save backup file.  Aborting save.  Please use \"Save as\" to save to a new location.");
 			eof_log(eof_log_string, 1);
 			allegro_message(eof_log_string);
-			return 9;	//Return failure:  Could not create previous_save backup file
+			return 6;	//Return failure:  Could not create previous_save backup file
 		}
 		(void) delete_file(eof_temp_filename);	//Delete the target file name
 		if(exists(eof_temp_filename))
@@ -2541,7 +2556,7 @@ int eof_save_helper(char *destfilename)
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Could not delete the last save file.  Aborting save.  Please use \"Save as\" to save to a new location.");
 			eof_log(eof_log_string, 1);
 			allegro_message(eof_log_string);
-			return 10;	//Return failure:  Could not delete the last save file
+			return 7;	//Return failure:  Could not delete the last save file
 		}
 	}
 
@@ -2554,7 +2569,7 @@ int eof_save_helper(char *destfilename)
 		eof_show_mouse(NULL);
 		eof_cursor_visible = 1;
 		eof_pen_visible = 1;
-		return 11;	//Return failure:  Could not save song
+		return 8;	//Return failure:  Could not save song
 	}
 	seconds = time(NULL);
 	caltime = localtime(&seconds);
@@ -2565,7 +2580,7 @@ int eof_save_helper(char *destfilename)
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Save operation did not create project file.  Please use \"Save as\" to save to a new location.");
 		eof_log(eof_log_string, 1);
 		allegro_message(eof_log_string);
-		return 12;	//Return failure:  Could not create project file
+		return 9;	//Return failure:  Could not create project file
 	}
 	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_temp_filename));
 
@@ -2597,7 +2612,7 @@ int eof_save_helper(char *destfilename)
 					if(eof_mkdir(eof_temp_filename))
 					{	//And it couldn't be created
 						allegro_message("Could not create folder!\n%s", eof_temp_filename);
-						return 13;	//Return failure:  Could not recreate project folder
+						return 10;	//Return failure:  Could not recreate project folder
 					}
 				}
 				put_backslash(eof_temp_filename);

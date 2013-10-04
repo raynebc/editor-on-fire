@@ -2759,19 +2759,19 @@ void eof_render_note_window(void)
 	}
 }
 
-#define MAX_LYRIC_PREVIEW_LENGTH 255
+#define MAX_LYRIC_PREVIEW_LENGTH 512
 void eof_render_lyric_preview(BITMAP * bp)
 {
 //	eof_log("eof_render_lyric_preview() entered");
 
-	unsigned long currentlength=0;		//Used to track the length of the preview line being built
-	unsigned long lyriclength=0;		//The length of the lyric being added
-	char *tempstring=NULL;				//The code to render in green needs special handling to suppress the / character
-	EOF_PHRASE_SECTION *linenum=NULL;	//Used to find the background color to render the lyric lines in (green for overdrive, otherwise transparent)
-	int bgcol1=-1,bgcol2=-1;
+	unsigned long currentlength = 0;	//Used to track the length of the preview line being built
+	unsigned long lyriclength = 0;		//The length of the lyric being added
+	char *tempstring = NULL;			//The code to render in green needs special handling to suppress the / character
+	EOF_PHRASE_SECTION *linenum = NULL;	//Used to find the background color to render the lyric lines in (green for overdrive, otherwise transparent)
+	int bgcol1 = -1, bgcol2 = -1;
 
 	char lline[2][MAX_LYRIC_PREVIEW_LENGTH+1] = {{0}};
-	unsigned long i,x;
+	unsigned long i, x;
 	int offset = -1;
 	int space;	//Track the spacing for lyric preview, taking pitch shift and grouping logic into account
 
@@ -2794,18 +2794,18 @@ void eof_render_lyric_preview(BITMAP * bp)
 		space = 0;			//The first lyric will have no space inserted in front of it
 		currentlength = 0;	//Reset preview line length counter
 
-		linenum=eof_find_lyric_line(eof_preview_line_lyric[x]);	//Find the line structure representing this lyric preview
+		linenum = eof_find_lyric_line(eof_preview_line_lyric[x]);	//Find the line structure representing this lyric preview
 		if(linenum && (linenum->flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE))	//If this line is overdrive
 		{
 			if(x == 0)	//This is the first preview line
-				bgcol1=makecol(64, 128, 64);	//Render the line's text with an overdrive green background
+				bgcol1 = makecol(64, 128, 64);	//Render the line's text with an overdrive green background
 			else		//This is the second preview line
-				bgcol2=makecol(64, 128, 64);	//Render the line's text with an overdrive green background
+				bgcol2 = makecol(64, 128, 64);	//Render the line's text with an overdrive green background
 		}
 
 		for(i = eof_preview_line_lyric[x]; i < eof_preview_line_end_lyric[x]; i++)
 		{	//For each lyric in the preview line
-			lyriclength=ustrlen(eof_song->vocal_track[0]->lyric[i]->text);	//This value will be used multiple times
+			lyriclength = ustrlen(eof_song->vocal_track[0]->lyric[i]->text);	//This value will be used multiple times
 
 		//Perform grouping logic
 			if((eof_song->vocal_track[0]->lyric[i]->text[0] != '+'))
@@ -2822,7 +2822,7 @@ void eof_render_lyric_preview(BITMAP * bp)
 				}
 			}
 
-			if(ustrchr(eof_song->vocal_track[0]->lyric[i]->text,'-') || ustrchr(eof_song->vocal_track[0]->lyric[i]->text,'='))
+			if(ustrchr(eof_song->vocal_track[0]->lyric[i]->text, '-') || ustrchr(eof_song->vocal_track[0]->lyric[i]->text, '='))
 			{	//If the lyric contains a hyphen or an equal sign
 				space = 0;	//The next syllable will group with this one
 			}
@@ -2845,13 +2845,13 @@ void eof_render_lyric_preview(BITMAP * bp)
 
 		//Append string
 			(void) ustrcat(lline[x], eof_song->vocal_track[0]->lyric[i]->text);
-			currentlength+=lyriclength;									//Track the length of this preview line
+			currentlength += lyriclength;									//Track the length of this preview line
 
 		//Truncate a '/' character off the end of the lyric line if it exists (TB:RB notation for a forced line break)
-			if(lline[x][ustrlen(lline[x])-1] == '/')
-				lline[x][ustrlen(lline[x])-1]='\0';
-		}
-	}
+			if(ugetat(lline[x], ustrlen(lline[x]) - 1) == '/')	//If the string ends in a forward slash
+				usetat(lline[x], ustrlen(lline[x]) - 1, '\0');
+		}//For each lyric in the preview line
+	}//For each of the two lyric preview lines to build
 
 	textout_centre_ex(bp, font, lline[0], bp->w / 2, 20, eof_color_white, bgcol1);
 	textout_centre_ex(bp, font, lline[1], bp->w / 2, 36, eof_color_white, bgcol2);
@@ -2859,11 +2859,11 @@ void eof_render_lyric_preview(BITMAP * bp)
 	{
 		if(eof_song->vocal_track[0]->lyric[eof_hover_lyric]->text[strlen(eof_song->vocal_track[0]->lyric[eof_hover_lyric]->text)-1] == '/')
 		{	//If the at-playback position lyric ends in a forward slash, make a copy with the slash removed and display it instead
-			tempstring=malloc(ustrlen(eof_song->vocal_track[0]->lyric[eof_hover_lyric]->text)+1);
-			if(tempstring==NULL)	//If there wasn't enough memory to copy this string...
+			tempstring = malloc(ustrlen(eof_song->vocal_track[0]->lyric[eof_hover_lyric]->text) + 1);
+			if(tempstring == NULL)	//If there wasn't enough memory to copy this string...
 				return;
 			(void) ustrcpy(tempstring,eof_song->vocal_track[0]->lyric[eof_hover_lyric]->text);
-			tempstring[ustrlen(tempstring)-1]='\0';
+			tempstring[ustrlen(tempstring)-1] = '\0';
 			textout_ex(bp, font, tempstring, bp->w / 2 - text_length(font, lline[0]) / 2 + offset, 20, eof_color_green, -1);
 			free(tempstring);
 		}
