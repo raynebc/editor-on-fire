@@ -157,4 +157,15 @@ int eof_menu_song_toggle_piano_roll_sync(void);
 
 int eof_menu_song_rocksmith_export_chord_techniques(void);	//Toggle the setting to export chords techniques by writing both a chord and a single note with appropriate techniques to XML at the same position
 
+int eof_check_fret_hand_positions_option(char report, char *undo_made);
+	//Checks all pro guitar tracks that have any fret hand positions defined to see if changes are needed for the track to work properly in Rocksmith
+	//When a problem is identified, EOF seeks to the offending part of the chart and prompts the user whether to cancel or continue looking for errors
+	//If report is nonzero, this function is more verbose and will report if there are no problems found.  It will also warn about chords too wide to fix into chord boxes
+	//	nonzero will be returned if the user cancels the testing
+	//If report is zero, this function doesn't display any dialogs, it only returns nonzero if problems were found
+int eof_check_fret_hand_positions(void);
+	//Calls eof_check_fret_hand_positions_option specifying not to report if there were no corrections needed (to be called during save logic)
+int eof_check_fret_hand_positions_menu(void);
+	//Calls eof_check_fret_hand_positions_option specifying to report if there were no corrections needed (to be called from menu)
+
 #endif

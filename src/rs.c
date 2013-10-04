@@ -1862,7 +1862,7 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 			if(started)
 			{	//If the first phrase marker has been encountered, this beat marks the end of a phrase
 				endpos = sp->beat[beatctr]->pos - 1;	//Track this as the end position of the phrase
-				eof_enforce_rs_phrase_begin_with_fret_hand_position(sp, track, difficulty, startpos, endpos, &eof_fret_hand_position_list_dialog_undo_made);	//Add a fret hand position
+				eof_enforce_rs_phrase_begin_with_fret_hand_position(sp, track, difficulty, startpos, endpos, &eof_fret_hand_position_list_dialog_undo_made, 0);	//Add a fret hand position
 			}//If the first phrase marker has been encountered, this beat marks the end of a phrase
 
 			started = 1;	//Track that a phrase has been encountered
@@ -2545,15 +2545,15 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 	return 1;	//All criteria passed, note is high density
 }
 
-void eof_enforce_rs_phrase_begin_with_fret_hand_position(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long startpos, unsigned long endpos, char *undo_made)
+int eof_enforce_rs_phrase_begin_with_fret_hand_position(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long startpos, unsigned long endpos, char *undo_made, char check_only)
 {
 	unsigned long ctr, firstnotepos, tracknum;
-	char found = 0;
+	int found = 0;
 	unsigned char position;
 	EOF_PRO_GUITAR_TRACK *tp;
 
 	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
-		return;	//Invalid parameters
+		return 0;	//Invalid parameters
 	tracknum = sp->track[track]->tracknum;
 	tp = sp->pro_guitar_track[tracknum];
 
@@ -2587,8 +2587,8 @@ void eof_enforce_rs_phrase_begin_with_fret_hand_position(EOF_SONG *sp, unsigned 
 				}
 			}
 		}
-		if(!found)
-		{	//If a hand position needs to be added to the difficulty
+		if(!found && !check_only)
+		{	//If a hand position needs to be added to the difficulty, and the calling function intends for the position to be added
 			position = eof_pro_guitar_track_find_effective_fret_hand_position(tp, diff, firstnotepos);
 			if(position)
 			{	//If a fret hand position was is in effect (placed anywhere earlier in the difficulty)
@@ -2603,6 +2603,8 @@ void eof_enforce_rs_phrase_begin_with_fret_hand_position(EOF_SONG *sp, unsigned 
 			}
 		}
 	}
+
+	return found;
 }
 
 int eof_lookup_chord_shape(EOF_PRO_GUITAR_NOTE *np, unsigned long *shapenum, unsigned long skipctr)
