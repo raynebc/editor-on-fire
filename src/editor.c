@@ -161,7 +161,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 		/* find the snap beat */
 		sp->beat = -1;
 		if(sp->pos < eof_song->beat[eof_song->beats - 1]->pos)
-		{
+		{	//If the target position is earlier than the last beat marker
 			for(i = 0; i < eof_song->beats - 1; i++)
 			{
 				if((sp->pos >= eof_song->beat[i]->pos) && (sp->pos < eof_song->beat[i + 1]->pos))
@@ -2222,6 +2222,7 @@ if(key[KEY_PAUSE])
 			else if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 			{	//If SHIFT is held, but CTRL is not
 	/* set fret value shortcut bitmask (SHIFT+Esc, SHIFT+Fn #) */
+	/* toggle string mute status (SHIFT+X) */
 				if(key[KEY_ESC])
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
@@ -2299,6 +2300,12 @@ if(key[KEY_PAUSE])
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask = 63;	//Enable all strings
 					key[KEY_F12] = 0;
+				}
+				else if(key[KEY_X])
+				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					(void)eof_menu_pro_guitar_toggle_string_mute();
+					key[KEY_X] = 0;
 				}
 			}//If SHIFT is held, but CTRL is not
 		}//If the active track is a pro guitar track

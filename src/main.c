@@ -4972,4 +4972,13 @@ void eof_set_3d_projection(void)
 	ocd3d_set_projection((float)eof_screen_width_default / 640.0, (float)eof_screen_height / 480.0, (float)eof_vanish_x, (float)eof_vanish_y, 320.0, 320.0);
 }
 
+void eof_seek_and_render_position(unsigned long track, unsigned char diff, unsigned long pos)
+{
+	(void) eof_menu_track_selected_track_number(track, 1);	//Change the active track
+	eof_note_type = diff;					//Change the active difficulty
+	eof_set_seek_position(pos + eof_av_delay);		//Change the seek position
+	eof_find_lyric_preview_lines();
+	eof_render();						//Render the screen
+}
+
 END_OF_MAIN()

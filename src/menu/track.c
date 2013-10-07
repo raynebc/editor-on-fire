@@ -657,9 +657,7 @@ int eof_track_transpose_tuning(EOF_PRO_GUITAR_TRACK* tp, char *tuningdiff)
 									tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;
 									if(!warning)
 									{	//If the user hasn't been warned about this problem yet
-										eof_set_seek_position(tp->note[ctr]->pos + eof_av_delay);	//Seek to the note
-										eof_find_lyric_preview_lines();
-										eof_render();					//Redraw the screen
+										eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
 										allegro_message("Warning:  At least one note will have to be manually transposed to another string or octave.\nThese notes will be highlighted.");
 										warning = 1;
 									}
@@ -688,9 +686,7 @@ int eof_track_transpose_tuning(EOF_PRO_GUITAR_TRACK* tp, char *tuningdiff)
 									tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;
 									if(!warning)
 									{	//If the user hasn't been warned about this problem yet
-										eof_set_seek_position(tp->note[ctr]->pos + eof_av_delay);	//Seek to the note
-										eof_find_lyric_preview_lines();
-										eof_render();					//Redraw the screen
+										eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
 										allegro_message("Warning:  At least one note will have to be manually transposed to another string or octave.\nThese notes will be highlighted.");
 										warning = 1;
 									}
@@ -858,11 +854,12 @@ int eof_track_set_num_frets_strings(void)
 	return 1;
 }
 
-MENU eof_song_proguitar_fret_hand_menu[] =
+MENU eof_track_proguitar_fret_hand_menu[] =
 {
 	{"&Set\tShift+F", eof_track_proguitar_set_fret_hand_position, NULL, 0, NULL},
 	{"&List\t" CTRL_NAME "+Shift+F", eof_track_fret_hand_positions, NULL, 0, NULL},
 	{"&Copy", eof_track_fret_hand_positions_copy_from, NULL, 0, NULL},
+	{"Generate all diffs", eof_track_fret_hand_positions_generate_all, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -1690,7 +1687,7 @@ MENU eof_track_rocksmith_popup_menu[] =
 
 MENU eof_track_rocksmith_menu[] =
 {
-	{"Fret &Hand positions", NULL, eof_song_proguitar_fret_hand_menu, 0, NULL},
+	{"Fret &Hand positions", NULL, eof_track_proguitar_fret_hand_menu, 0, NULL},
 	{"&Popup messages", NULL, eof_track_rocksmith_popup_menu, 0, NULL},
 	{"&Arrangement type", NULL, eof_track_rocksmith_arrangement_menu, 0, NULL},
 	{"&Tone change", NULL, eof_track_rocksmith_tone_change_menu, 0, NULL},
@@ -3115,4 +3112,49 @@ int eof_menu_thin_notes_track_12(void)
 int eof_menu_thin_notes_track_13(void)
 {
 	return eof_thin_notes_to_match_target_difficulty(eof_song, 13, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_track_fret_hand_positions_generate_all(void)
+{
+	unsigned long tracknum, ctr;
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return 1;	//Error
+
+	//Remove any existing fret hand positions defined for this track
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+	if(tp->handpositions)
+	{	//If the active track has at least one fret hand position already
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
+		if(alert(NULL, "Existing fret hand positions for the active track will be removed.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+		{	//If the user does not opt to remove the existing hand positions
+			return 1;
+		}
+		if(!eof_fret_hand_position_list_dialog_undo_made)
+		{
+			eof_fret_hand_position_list_dialog_undo_made = 1;
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		}
+		tp->handpositions = 0;
+	}
+
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
+	for(ctr = 0; ctr < 256; ctr++)
+	{	//For each of the 256 possible difficulties
+		if(eof_track_diff_populated_status[ctr])
+		{	//If this difficulty is populated
+			if(!eof_fret_hand_position_list_dialog_undo_made)
+			{
+				eof_fret_hand_position_list_dialog_undo_made = 1;
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			}
+			eof_generate_efficient_hand_positions(eof_song, eof_selected_track, ctr, 1, 0);	//Generate fret hand positions for it
+		}
+	}
+
+	return 1;
 }

@@ -376,10 +376,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 				{	//If the slide goes to or above fret 22
 					if((*user_warned & 8) == 0)
 					{	//If the user wasn't alerted about this issue yet
-						eof_set_seek_position(tp->note[ctr]->pos + eof_av_delay);	//Seek to the note
-						(void) eof_menu_track_selected_track_number(track, 1);		//Set the active instrument track
-						eof_find_lyric_preview_lines();
-						eof_render();					//Redraw the screen
+						eof_seek_and_render_position(track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
 						allegro_message("Warning:  At least one note slides to or above fret 22.  This will cause Rocksmith to crash.");
 						*user_warned |= 8;
 					}
@@ -681,10 +678,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 				if((sp->beat[ctr2]->contained_section_event >= 0) || (sp->beat[ctr2]->contained_rs_section_event >= 0))
 				{	//If the beat contains an RS phrase or RS section
 					eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
-					eof_set_seek_position(sp->beat[ctr]->pos + eof_av_delay);	//Seek to the beat containing the offending END phrase
 					eof_selected_beat = ctr;		//Select it
-					eof_find_lyric_preview_lines();
-					eof_render();					//Redraw the screen
+					eof_seek_and_render_position(track, eof_note_type, sp->beat[ctr]->pos);	//Show the offending END phrase
 					allegro_message("Warning:  Beat #%lu contains an END phrase, but there's at least one more phrase or section after it.\nThis will cause dynamic difficulty and/or riff repeater to not work correctly.", ctr);
 					break;
 				}
@@ -698,11 +693,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		if(sp->beat[endbeat]->contained_section_event >= 0)
 		{	//If there is already a phrase defined on the beat following the last note
 			eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
-			eof_set_seek_position(sp->beat[endbeat]->pos + eof_av_delay);	//Seek to the beat where the END phrase should go
 			eof_selected_beat = endbeat;		//Select it
-			(void) eof_menu_track_selected_track_number(track, 1);		//Set the active instrument track
-			eof_find_lyric_preview_lines();
-			eof_render();					//Redraw the screen
+			eof_seek_and_render_position(track, eof_note_type, sp->beat[endbeat]->pos);	//Show where the END phrase should go
 			allegro_message("Warning:  There is no END phrase, but the beat marker after the last note in \"%s\" already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.", sp->track[track]->name);
 		}
 		eof_log("\t! Adding missing END phrase", 1);
@@ -976,7 +968,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		(void) strftime(expanded_text, sizeof(expanded_text), sp->tags->loading_text, caltime);	//Expand any user defined calendar date/time tokens
 		expand_xml_text(buffer2, sizeof(buffer2) - 1, expanded_text, 512);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 
-		(void) eof_track_add_section(eof_song, track, EOF_RS_POPUP_MESSAGE, 0, 5100, 10100, 1, sp->tags->loading_text);	//Insert this as a popup message, setting the flag to nonzero to mark is as temporary
+		(void) eof_track_add_section(eof_song, track, EOF_RS_POPUP_MESSAGE, 0, 5100, 10100, 1, buffer2);	//Insert the expanded text as a popup message, setting the flag to nonzero to mark is as temporary
 		eof_track_pro_guitar_sort_popup_messages(tp);	//Sort the popup messages
 	}
 	if(tp->popupmessages || tp->tonechanges)
@@ -1716,10 +1708,11 @@ void eof_song_fix_fingerings(EOF_SONG *sp, char *undo_made)
 
 void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, char difficulty, char warnuser, char dynamic)
 {
-	unsigned long ctr, ctr2, tracknum, count, bitmask, beatctr, startpos = 0, endpos;
+	unsigned long ctr, ctr2, tracknum, count, bitmask, beatctr, startpos = 0, endpos, shapenum;
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned char current_low, current_high, last_anchor = 0;
 	EOF_PRO_GUITAR_NOTE *next_position = NULL;	//Tracks the note at which the next fret hand position will be placed
+	EOF_PRO_GUITAR_NOTE *np, temp;
 	char force_change, started = 0;
 
 	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
@@ -1789,15 +1782,29 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 			{	//If this is the first note since the last hand position, or there was no hand position placed yet
 				next_position = tp->note[ctr];	//Store its address
 			}
+
+			//Determine if this chord uses the index finger, which will trigger a fret hand position change (if this chord's fingering is incomplete, perform a chord shape lookup)
 			force_change = 0;	//Reset this condition
+			np = tp->note[ctr];	//Unless the chord's fingering is incomplete, the note's current fingering will be used to determine whether the index finger triggers a position change
+			if(eof_pro_guitar_note_fingering_valid(tp, ctr) != 1)
+			{	//If the fingering for the note is not fully defined
+				if(eof_lookup_chord_shape(np, &shapenum, 0))
+				{	//If a fingering for the chord can be found in the chord shape definitions
+					memcpy(temp.frets, np->frets, 6);	//Clone the fretting of the original note into the temporary note
+					temp.note = np->note;				//Clone the note mask
+					eof_apply_chord_shape_definition(&temp, shapenum);	//Apply the matching chord shape definition's fingering to the temporary note
+					np = &temp;	//Check the temporary note for use of the index finger, instead of the original note
+				}
+			}
 			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
 			{	//For each of the 6 supported strings
-				if((tp->note[ctr]->note & bitmask) && (tp->note[ctr]->finger[ctr2] == 1))
+				if((np->note & bitmask) && (np->finger[ctr2] == 1))
 				{	//If this note uses this string, and the string is defined as being fretted by the index finger
 					force_change = 1;
 					break;
 				}
 			}
+
 			if(force_change || !eof_note_can_be_played_within_fret_tolerance(tp, ctr, &current_low, &current_high))
 			{	//If a position change was determined to be necessary based on fingering, or this note can't be included with previous notes within a single fret hand position
 				if(current_low > 19)
@@ -1808,8 +1815,8 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 				{	//If a fret hand position change was forced due to note fingering
 					if(next_position != tp->note[ctr])
 					{	//If the fret hand position for previous notes has not been placed yet, write it first
-						if(current_low != last_anchor)
-						{	//As long as the hand position being written is different from the previous one
+						if(current_low && (current_low != last_anchor))
+						{	//As long as the hand position being written is valid and is is different from the previous one
 							(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL);	//Add the fret hand position for this forced position change
 							last_anchor = current_low;
 						}
@@ -1818,8 +1825,8 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 					//Now that the previous notes' position is in place, update the high and low fret tracking for the current note
 					current_low = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Track this note's high and low frets
 					current_high = eof_pro_guitar_note_highest_fret(tp, ctr);
-					if(current_low != last_anchor)
-					{	//As long as the hand position being written is different from the previous one
+					if(current_low && (current_low != last_anchor))
+					{	//As long as the hand position being written is valid and is is different from the previous one
 						(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL);	//Add the fret hand position for this forced position change
 						last_anchor = current_low;
 					}
@@ -1827,8 +1834,8 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 				}
 				else
 				{	//If the position change is being placed on a previous note due to this note going out of fret tolerance
-					if(current_low != last_anchor)
-					{	//As long as the hand position being written is different from the previous one
+					if(current_low && (current_low != last_anchor))
+					{	//As long as the hand position being written is valid and is is different from the previous one
 						(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL);	//Add the fret hand position for this forced position change
 						last_anchor = current_low;
 					}
@@ -1851,6 +1858,8 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 	}
 	if((current_low != last_anchor) && next_position)
 	{	//If the last parsed note requires a position change
+if(!current_low)
+puts("Blarg");
 		(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL);	//Add the best determined fret hand position
 	}
 
@@ -2412,6 +2421,12 @@ int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track)
 		{	//If this beat contains a RS section
 			if(sp->beat[ctr]->contained_section_event < 0)
 			{	//But it doesn't contain a RS phrase
+				eof_selected_beat = ctr;					//Change the selected beat
+				if(eof_2d_render_top_option != 36)
+				{	//If the piano roll isn't already displaying both RS sections and phrases
+					eof_2d_render_top_option = 35;					//Change the user preference to render RS sections at the top of the piano roll
+				}
+				eof_seek_and_render_position(track, eof_note_type, sp->beat[ctr]->pos);	//Render the track so the user can see where the correction needs to be made, along with the RS section in question
 				eof_clear_input();
 				key[KEY_Y] = 0;
 				key[KEY_N] = 0;
@@ -2420,15 +2435,6 @@ int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track)
 					return 2;	//Return user cancellation
 				}
 				user_prompted = 1;
-				(void) eof_menu_track_selected_track_number(track, 1);		//Change the active track
-				eof_selected_beat = ctr;					//Change the selected beat
-				eof_set_seek_position(sp->beat[ctr]->pos + eof_av_delay);	//Seek to the beat
-				if(eof_2d_render_top_option != 36)
-				{	//If the piano roll isn't already displaying both RS sections and phrases
-					eof_2d_render_top_option = 35;					//Change the user preference to render RS sections at the top of the piano roll
-				}
-				eof_find_lyric_preview_lines();
-				eof_render();							//Render the track so the user can see where the correction needs to be made, along with the RS section in question
 
 				while(1)
 				{
