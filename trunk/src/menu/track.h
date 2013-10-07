@@ -167,4 +167,7 @@ int eof_menu_thin_notes_track_13(void);
 	//Thins out the notes in the active track difficulty to match those in the active difficulty in the specified track
 	//If a note in the active track isn't within a threshold distance of any note in the specified track, it is deleted
 
+int eof_track_fret_hand_positions_generate_all(void);
+	//Generates fret hand positions for all populated difficulties in the track, replacing any that already exist
+
 #endif

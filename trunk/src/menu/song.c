@@ -3471,7 +3471,7 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned long tracknum, ctr, ctr2, ctr3, bitmask, startpos = 0, endpos;
 	unsigned char position, lowest, highest;
-	char width_warning = 0, problem_found = 0, started = 0, phrase_warning;
+	char width_warning = 0, problem_found = 0, started = 0, phrase_warning, unset_warning = 0;
 
 	if(!eof_song || !undo_made)
 		return 0;	//Invalid parameter
@@ -3484,6 +3484,7 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 		{	//If this is a pro guitar/bass track
 			tracknum = eof_song->track[ctr]->tracknum;
 			tp = eof_song->pro_guitar_track[tracknum];
+			unset_warning = 0;
 
 			//Check to ensure that defined fret hand positions don't conflict with defined notes
 			if(tp->handpositions)
@@ -3493,34 +3494,34 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 					position = eof_pro_guitar_track_find_effective_fret_hand_position(tp, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Get the fret hand position in effect
 					lowest = eof_pro_guitar_note_lowest_fret(tp, ctr2);		//Determine the lowest fret value in the note
 					highest = eof_pro_guitar_note_highest_fret(tp, ctr2);	//And the highest fret value
-					if((lowest != 0) && ((highest > position + 3) || (lowest < position)))
-					{	//If the note is not open, and its fret value goes outside of the highlighted fret range based on the current fret hand position in place
-						if(report)
-						{	//If the calling function wanted to prompt the user about each issue found
-							(void) eof_menu_track_selected_track_number(ctr, 1);	//Change the active track
-							eof_note_type = tp->note[ctr2]->type;	//Set the note's difficulty as the active difficulty
-							eof_set_seek_position(tp->note[ctr2]->pos + eof_av_delay);	//Seek to the offending note
-							eof_2d_render_top_option = 34;			//Display fret hand positions at the top of the piano roll
-							eof_find_lyric_preview_lines();
-							eof_render();					//Render the track being checked so the user knows which track a note is being edited from
-						}
-						if(highest - lowest + 1 > 4)
-						{	//If this note is a chord, and its fret range is too large to fit into Rocksmith's chord box
-							if(!width_warning && report)
-							{	//If the user wasn't warned about this yet, and this validation function was manually invoked through the menu
-								if(alert("Warning:  At least one chord is too wide to fit into a chord box.", "It may be a good idea to change its fretting.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+					if(!position)
+					{	//If no fret hand position is in effect yet
+						if(!unset_warning)
+						{	//If the user hasn't been warned about this issue yet
+							if(report)
+							{	//If the calling function wanted to prompt the user about each issue found
+								eof_2d_render_top_option = 34;			//Display fret hand positions at the top of the piano roll
+								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
+
+								if(alert("Warning:  A fret hand position was not defined at/before the first note in this track difficulty.", "Correct this by setting the fret hand position at or before this note,", "or by deleting/regenerating the fret hand positions.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
 								{	//If the user does not opt to continue looking for errors
 									eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
 									(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
 									return 1;	//Return user cancellation
 								}
-								problem_found = 1;
 							}
-							width_warning = 1;
+							unset_warning = 1;
+							problem_found = 1;
 						}
+					}
+					else if(position > 19)
+					{	//If an invalid fret hand position is in effect
 						if(report)
 						{	//If the calling function wanted to prompt the user about each issue found
-							if(alert("Warning:  At least one note is outside of the highlighted range of the fretboard.", "Correct this by setting the fret hand position at or before this note,", "or by deleting/regenerating the fret hand positions.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
+							eof_2d_render_top_option = 34;			//Display fret hand positions at the top of the piano roll
+							eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
+
+							if(alert("Warning:  Fret hand positions higher than 19 are invalid.", "Change this to a lower number or delete/regenerate the fret hand positions.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 							{	//If the user does not opt to continue looking for errors
 								eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
 								(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
@@ -3528,33 +3529,64 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 							}
 						}
 						problem_found = 1;
-					}//If the note is not open, and its fret value goes outside of the highlighted fret range based on the current fret hand position in place
+					}
 					else
-					{	//The note stays within the highlighted fret range
-						for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
-						{	//For each of the 6 usable strings
-							if((tp->note[ctr2]->note & bitmask) && (tp->note[ctr2]->finger[ctr3] == 1) && (tp->note[ctr2]->frets[ctr3] != position))
-							{	//If this string is defined as being fretted by the index finger, but at a different fret than the fret hand position in effect
-								if(report)
-								{	//If the calling function wanted to prompt the user about each issue found
-									(void) eof_menu_track_selected_track_number(ctr, 1);	//Change the active track
-									eof_note_type = tp->note[ctr2]->type;	//Set the note's difficulty as the active difficulty
-									eof_set_seek_position(tp->note[ctr2]->pos + eof_av_delay);	//Seek to the offending note
-									eof_2d_render_top_option = 34;			//Display fret hand positions at the top of the piano roll
-									eof_find_lyric_preview_lines();
-									eof_render();					//Render the track being checked so the user knows which track a note is being edited from
-									if(alert("Warning:  This note is specified as using the index finger,", "but the fret hand position is on a different fret.", "It's recommended to change the fret hand position to match.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
+					{	//A valid fret hand position is in effect, run other checks
+						if((lowest != 0) && ((highest > position + 3) || (lowest < position)))
+						{	//If the note is not open, and its fret value goes outside of the highlighted fret range based on the current fret hand position in place
+							if(report)
+							{	//If the calling function wanted to prompt the user about each issue found
+								eof_2d_render_top_option = 34;			//Display fret hand positions at the top of the piano roll
+								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
+							}
+							if(highest - lowest + 1 > 4)
+							{	//If this note is a chord, and its fret range is too large to fit into Rocksmith's chord box
+								if(!width_warning && report)
+								{	//If the user wasn't warned about this yet, and this validation function was manually invoked through the menu
+									if(alert("Warning:  At least one chord is too wide to fit into a chord box.", "It may be a good idea to change its fretting.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 									{	//If the user does not opt to continue looking for errors
 										eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
 										(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
 										return 1;	//Return user cancellation
 									}
+									problem_found = 1;
 								}
-								problem_found = 1;
-								break;
+								width_warning = 1;
+							}
+							if(report)
+							{	//If the calling function wanted to prompt the user about each issue found
+								if(alert("Warning:  At least one note is outside of the highlighted range of the fretboard.", "Correct this by setting the fret hand position at or before this note,", "or by deleting/regenerating the fret hand positions.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
+								{	//If the user does not opt to continue looking for errors
+									eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
+									(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
+									return 1;	//Return user cancellation
+								}
+							}
+							problem_found = 1;
+						}//If the note is not open, and its fret value goes outside of the highlighted fret range based on the current fret hand position in place
+						else
+						{	//The note stays within the highlighted fret range
+							for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+							{	//For each of the 6 usable strings
+								if((tp->note[ctr2]->note & bitmask) && (tp->note[ctr2]->finger[ctr3] == 1) && (tp->note[ctr2]->frets[ctr3] != position))
+								{	//If this string is defined as being fretted by the index finger, but at a different fret than the fret hand position in effect
+									if(report)
+									{	//If the calling function wanted to prompt the user about each issue found
+										eof_2d_render_top_option = 34;			//Display fret hand positions at the top of the piano roll
+										eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
+										if(alert("Warning:  This note is specified as using the index finger,", "but the fret hand position is on a different fret.", "It's recommended to change the fret hand position to match.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
+										{	//If the user does not opt to continue looking for errors
+											eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
+											(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
+											return 1;	//Return user cancellation
+										}
+									}
+									problem_found = 1;
+									break;
+								}
 							}
 						}
-					}
+					}//A fret hand position is in effect
 				}//For each note in the track
 
 				//Check to ensure that each difficulty of an RS phrase defines a fret hand position
@@ -3578,12 +3610,12 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 										{	//If the user hasn't been warned about this issue yet for this track, check to see if a fret hand position was NOT defined at the first note in the phrase
 											if(report)
 											{	//If the calling function wanted to prompt the user about each issue found
-												(void) eof_menu_track_selected_track_number(ctr, 1);	//Change the active track
-												eof_note_type = ctr3;	//Change the active difficulty
-												eof_set_seek_position(eof_song->beat[ctr2]->pos + eof_av_delay);	//Seek to the offending beat
 												eof_2d_render_top_option = 34;			//Display fret hand positions at the top of the piano roll
-												eof_find_lyric_preview_lines();
-												eof_render();					//Render the track being checked so the user knows which track a note is being edited from
+												eof_selected_beat = ctr2;				//Change the selected beat
+												eof_seek_and_render_position(ctr, ctr3, eof_song->beat[ctr2]->pos);
+												eof_clear_input();
+												key[KEY_Y] = 0;
+												key[KEY_N] = 0;
 												phrase_warning = alert3("The fret hand position is not redefined at each difficulty of each phrase.", "This can prevent the positions from working in dynamic difficulty charts.", "Correct this issue?", "&Yes", "&No", "Cancel", 'y', 'n', 0);
 												if(phrase_warning == 3)
 												{	//If the user does not opt to continue looking for errors

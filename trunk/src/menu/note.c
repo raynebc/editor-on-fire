@@ -302,6 +302,7 @@ MENU eof_note_proguitar_menu[] =
 	{"Remove &Vibrato", eof_menu_note_remove_vibrato, NULL, 0, NULL},
 	{"Toggle ghost\t"  CTRL_NAME "+G", eof_menu_note_toggle_ghost, NULL, 0, NULL},
 	{"Remove &Ghost", eof_menu_note_remove_ghost, NULL, 0, NULL},
+	{"Toggle string mute\tShift+X", eof_menu_pro_guitar_toggle_string_mute, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -1045,73 +1046,71 @@ int eof_menu_note_transpose_up(void)
 	unsigned long flags, note, tracknum;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(!eof_transpose_possible(-1))
-	{
-		return 1;
-	}
-
-	if(eof_vocals_selected)
-	{
-		eof_prepare_undo(EOF_UNDO_TYPE_LYRIC_NOTE);	//Perform a cumulative undo for lyric pitch transpose operations
-		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-		{	//For each lyric in the active track
-			note = eof_get_note_note(eof_song, eof_selected_track, i);
-			if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && (note != EOF_LYRIC_PERCUSSION))
-			{
-				note++;
-				eof_set_note_note(eof_song, eof_selected_track, i, note);
-			}
-		}
-	}
-	else
-	{
-		if(eof_open_bass_enabled() || (eof_count_track_lanes(eof_song, eof_selected_track) > 5))
-		{	//If open bass is enabled, or the track has more than 5 lanes, lane 6 is valid for use
-			max = 63;
-		}
-		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-		{	//Special case:  Legacy view is in effect, display pro guitar notes as 5 lane notes
-			max = 31;
-		}
-		tracknum = eof_song->track[eof_selected_track]->tracknum;
-		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-		{	//For each note in the active track
-			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-			{	//If the note is in the same track as the selected notes, is selected and is the same difficulty as the selected notes
-				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-				{	//If legacy view is in effect, get the note's legacy bitmask
-					note = eof_song->pro_guitar_track[tracknum]->note[i]->legacymask;
-				}
-				else
-				{	//Otherwise get the note's normal bitmask
-					note = eof_get_note_note(eof_song, eof_selected_track, i);
-				}
-				note = (note << 1) & max;
-				if((eof_selected_track == EOF_TRACK_BASS) && eof_open_bass_enabled() && (note & 32))
-				{	//If open bass is enabled, and this transpose operation resulted in a bass guitar gem in lane 6
-					flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-					eof_set_note_note(eof_song, eof_selected_track, i, 32);		//Clear all lanes except lane 6
-					flags &= ~(EOF_NOTE_FLAG_CRAZY);	//Clear the crazy flag, which is invalid for open strum notes
-					flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO flags, which are invalid for open strum notes
-					flags &= ~(EOF_NOTE_FLAG_NO_HOPO);
-					eof_set_note_flags(eof_song, eof_selected_track, i, flags);
-				}
-				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-				{	//If legacy view is in effect, set the note's legacy bitmask
-					eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = note;
-				}
-				else
-				{	//Otherwise set the note's normal bitmask
+	if(eof_transpose_possible(-1))
+	{	//If selected notes can transpose up one
+		if(eof_vocals_selected)
+		{
+			eof_prepare_undo(EOF_UNDO_TYPE_LYRIC_NOTE);	//Perform a cumulative undo for lyric pitch transpose operations
+			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+			{	//For each lyric in the active track
+				note = eof_get_note_note(eof_song, eof_selected_track, i);
+				if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && (note != EOF_LYRIC_PERCUSSION))
+				{
+					note++;
 					eof_set_note_note(eof_song, eof_selected_track, i, note);
 				}
-				if(!eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-				{	//If a pro guitar note was tranposed, move the fret values accordingly (only if legacy view isn't in effect)
-					for(j = 7; j > 0; j--)
-					{	//For the upper 7 frets
-						eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j-1];	//Cycle fret values up from lower lane
+			}
+		}
+		else
+		{
+			if(eof_open_bass_enabled() || (eof_count_track_lanes(eof_song, eof_selected_track) > 5))
+			{	//If open bass is enabled, or the track has more than 5 lanes, lane 6 is valid for use
+				max = 63;
+			}
+			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+			{	//Special case:  Legacy view is in effect, display pro guitar notes as 5 lane notes
+				max = 31;
+			}
+			tracknum = eof_song->track[eof_selected_track]->tracknum;
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+			{	//For each note in the active track
+				if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+				{	//If the note is in the same track as the selected notes, is selected and is the same difficulty as the selected notes
+					if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+					{	//If legacy view is in effect, get the note's legacy bitmask
+						note = eof_song->pro_guitar_track[tracknum]->note[i]->legacymask;
 					}
-					eof_song->pro_guitar_track[tracknum]->note[i]->frets[0] = 0xFF;	//Re-initialize lane 1 to the default of (muted)
+					else
+					{	//Otherwise get the note's normal bitmask
+						note = eof_get_note_note(eof_song, eof_selected_track, i);
+					}
+					note = (note << 1) & max;
+					if((eof_selected_track == EOF_TRACK_BASS) && eof_open_bass_enabled() && (note & 32))
+					{	//If open bass is enabled, and this transpose operation resulted in a bass guitar gem in lane 6
+						flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+						eof_set_note_note(eof_song, eof_selected_track, i, 32);		//Clear all lanes except lane 6
+						flags &= ~(EOF_NOTE_FLAG_CRAZY);	//Clear the crazy flag, which is invalid for open strum notes
+						flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO flags, which are invalid for open strum notes
+						flags &= ~(EOF_NOTE_FLAG_NO_HOPO);
+						eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+					}
+					if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+					{	//If legacy view is in effect, set the note's legacy bitmask
+						eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = note;
+					}
+					else
+					{	//Otherwise set the note's normal bitmask
+						eof_set_note_note(eof_song, eof_selected_track, i, note);
+					}
+					if(!eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+					{	//If a pro guitar note was tranposed, move the fret values accordingly (only if legacy view isn't in effect)
+						for(j = 7; j > 0; j--)
+						{	//For the upper 7 frets
+							eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j-1];	//Cycle fret values up from lower lane
+						}
+						eof_song->pro_guitar_track[tracknum]->note[i]->frets[0] = 0xFF;	//Re-initialize lane 1 to the default of (muted)
+					}
 				}
 			}
 		}
@@ -1130,56 +1129,54 @@ int eof_menu_note_transpose_down(void)
 	unsigned long note, tracknum;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(!eof_transpose_possible(1))
-	{
-		return 1;
-	}
-
-	if(eof_vocals_selected)
-	{
-		eof_prepare_undo(EOF_UNDO_TYPE_LYRIC_NOTE);	//Perform a cumulative undo for lyric pitch transpose operations
-		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-		{	//For each lyric in the active track
-			note = eof_get_note_note(eof_song, eof_selected_track, i);
-			if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && (note != EOF_LYRIC_PERCUSSION))
-			{
-				note--;
-				eof_set_note_note(eof_song, eof_selected_track, i, note);
-			}
-		}
-	}
-	else
-	{
-		tracknum = eof_song->track[eof_selected_track]->tracknum;
-		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-		{	//For each note in the active track
-			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-			{	//If the note is in the same track as the selected notes, is selected and is the same difficulty as the selected notes
-				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-				{	//If legacy view is in effect, get the note's legacy bitmask
-					note = eof_song->pro_guitar_track[tracknum]->note[i]->legacymask;
-				}
-				else
-				{	//Otherwise get the note's normal bitmask
-					note = eof_get_note_note(eof_song, eof_selected_track, i);
-				}
-				note = (note >> 1) & 63;
-				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-				{	//If legacy view is in effect, set the note's legacy bitmask
-					eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = note;
-				}
-				else
-				{	//Otherwise set the note's normal bitmask
+	if(eof_transpose_possible(1))
+	{	//If selected notes can transpose down one
+		if(eof_vocals_selected)
+		{
+			eof_prepare_undo(EOF_UNDO_TYPE_LYRIC_NOTE);	//Perform a cumulative undo for lyric pitch transpose operations
+			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+			{	//For each lyric in the active track
+				note = eof_get_note_note(eof_song, eof_selected_track, i);
+				if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && (note != EOF_LYRIC_PERCUSSION))
+				{
+					note--;
 					eof_set_note_note(eof_song, eof_selected_track, i, note);
 				}
-				if(!eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-				{	//If a pro guitar note was tranposed, move the fret values accordingly (only if legacy view isn't in effect)
-					for(j = 0; j < 7; j++)
-					{	//For the 7 supported lower frets
-						eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j+1];	//Cycle fret values down from upper lane
+			}
+		}
+		else
+		{
+			tracknum = eof_song->track[eof_selected_track]->tracknum;
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+			{	//For each note in the active track
+				if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+				{	//If the note is in the same track as the selected notes, is selected and is the same difficulty as the selected notes
+					if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+					{	//If legacy view is in effect, get the note's legacy bitmask
+						note = eof_song->pro_guitar_track[tracknum]->note[i]->legacymask;
 					}
-					eof_song->pro_guitar_track[tracknum]->note[i]->frets[7] = 0xFF;	//Re-initialize lane 15 to the default of (muted)
+					else
+					{	//Otherwise get the note's normal bitmask
+						note = eof_get_note_note(eof_song, eof_selected_track, i);
+					}
+					note = (note >> 1) & 63;
+					if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+					{	//If legacy view is in effect, set the note's legacy bitmask
+						eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = note;
+					}
+					else
+					{	//Otherwise set the note's normal bitmask
+						eof_set_note_note(eof_song, eof_selected_track, i, note);
+					}
+					if(!eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+					{	//If a pro guitar note was tranposed, move the fret values accordingly (only if legacy view isn't in effect)
+						for(j = 0; j < 7; j++)
+						{	//For the 7 supported lower frets
+							eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j+1];	//Cycle fret values down from upper lane
+						}
+						eof_song->pro_guitar_track[tracknum]->note[i]->frets[7] = 0xFF;	//Re-initialize lane 15 to the default of (muted)
+					}
 				}
 			}
 		}
@@ -1196,18 +1193,24 @@ int eof_menu_note_transpose_up_octave(void)
 {
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
-	if(!eof_transpose_possible(-12))	//If selected lyrics cannot move up one octave
-		return 1;
 	if(!eof_vocals_selected)			//If PART VOCALS is not active
 		return 1;
 
-	eof_prepare_undo(EOF_UNDO_TYPE_LYRIC_NOTE);	//Perform a cumulative undo for lyric pitch transpose operations
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	if(eof_transpose_possible(-12))
+	{	//If selected lyrics can move up one octave
+		eof_prepare_undo(EOF_UNDO_TYPE_LYRIC_NOTE);	//Perform a cumulative undo for lyric pitch transpose operations
 
-	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && (eof_song->vocal_track[tracknum]->lyric[i]->note != EOF_LYRIC_PERCUSSION))
-			eof_song->vocal_track[tracknum]->lyric[i]->note+=12;
+		for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
+		{	//For each lyric in the track
+			if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && (eof_song->vocal_track[tracknum]->lyric[i]->note != EOF_LYRIC_PERCUSSION))
+			{	//If the lyric is selected and is not a percussion note
+				eof_song->vocal_track[tracknum]->lyric[i]->note += 12;
+			}
+		}
+	}
 
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note
@@ -1221,18 +1224,24 @@ int eof_menu_note_transpose_down_octave(void)
 {
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
-	if(!eof_transpose_possible(12))		//If selected lyrics cannot move down one octave
-		return 1;
 	if(!eof_vocals_selected)		//If PART VOCALS is not active
 		return 1;
 
-	eof_prepare_undo(EOF_UNDO_TYPE_LYRIC_NOTE);	//Perform a cumulative undo for lyric pitch transpose operations
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	if(eof_transpose_possible(12))
+	{	//If selected lyrics can move down one octave
+		eof_prepare_undo(EOF_UNDO_TYPE_LYRIC_NOTE);	//Perform a cumulative undo for lyric pitch transpose operations
 
-	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && (eof_song->vocal_track[tracknum]->lyric[i]->note != EOF_LYRIC_PERCUSSION))
-			eof_song->vocal_track[tracknum]->lyric[i]->note-=12;
+		for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
+		{	//For each lyric in the track
+			if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && (eof_song->vocal_track[tracknum]->lyric[i]->note != EOF_LYRIC_PERCUSSION))
+			{	//If the lyric is selected and is not a percussion note
+				eof_song->vocal_track[tracknum]->lyric[i]->note -= 12;
+			}
+		}
+	}
 
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note
@@ -1246,13 +1255,14 @@ int eof_menu_note_resnap(void)
 {
 	unsigned long i;
 	unsigned long oldnotes = eof_get_track_size(eof_song, eof_selected_track);
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_snap_mode == EOF_SNAP_OFF)
 	{
 		return 1;
 	}
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -1590,8 +1600,9 @@ int eof_menu_note_toggle_orange(void)
 
 	if(eof_count_track_lanes(eof_song, eof_selected_track) < 6)
 	{
-		return 1;	//Don't do anything if there is less than 6 tracks available
+		return 1;	//Don't do anything if there is less than 6 lanes available
 	}
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	if(eof_count_selected_notes(NULL, 0) == 0)
 	{
 		return 1;
@@ -1931,12 +1942,13 @@ int eof_menu_note_clear_orange(void)
 {
 	unsigned long i, u = 0;
 	unsigned long note, tracknum = eof_song->track[eof_selected_track]->tracknum;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_count_track_lanes(eof_song, eof_selected_track) < 6)
 	{
-		return 1;	//Don't do anything if there is less than 6 tracks available
+		return 1;	//Don't do anything if there is less than 6 lanes available
 	}
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	if(eof_count_selected_notes(NULL, 0) == 0)
 	{
 		return 1;
@@ -1995,11 +2007,12 @@ int eof_menu_note_toggle_crazy(void)
 	int u = 0;	//Is set to nonzero when an undo state has been made
 	unsigned long track_behavior = eof_song->track[eof_selected_track]->track_behavior;
 	unsigned long flags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if((track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && (track_behavior != EOF_DANCE_TRACK_BEHAVIOR))
 		return 1;	//Do not allow this function to run unless a guitar or dance track is active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
@@ -2030,11 +2043,12 @@ int eof_menu_note_toggle_double_bass(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
 		return 1;	//Do not allow this function to run when a drum track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == EOF_NOTE_AMAZING) && (eof_get_note_note(eof_song, eof_selected_track, i) & 1))
@@ -2062,11 +2076,12 @@ int eof_menu_note_remove_double_bass(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
 		return 1;	//Do not allow this function to run when a drum track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == EOF_NOTE_AMAZING) && (eof_get_note_note(eof_song, eof_selected_track, i) & 1))
@@ -2097,11 +2112,12 @@ int eof_menu_note_toggle_rb3_cymbal_green(void)
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	long u = 0;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
 		return 1;	//Do not allow this function to run when a drum track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -2130,11 +2146,12 @@ int eof_menu_note_toggle_rb3_cymbal_yellow(void)
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	long u = 0;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
 		return 1;	//Do not allow this function to run when a drum track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -2163,11 +2180,12 @@ int eof_menu_note_toggle_rb3_cymbal_blue(void)
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	long u = 0;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
 		return 1;	//Do not allow this function to run when a drum track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -2197,11 +2215,12 @@ int eof_menu_note_remove_cymbal(void)
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	long u = 0;
 	unsigned long flags, oldflags, note;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
 		return 1;	//Do not allow this function to run when a drum track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -2478,10 +2497,11 @@ static void eof_split_lyric(int lyric)
 int eof_menu_split_lyric(void)
 {
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(!eof_vocals_selected)
 		return 1;
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	if(eof_count_selected_notes(NULL, 0) != 1)
 	{
 		return 1;
@@ -2711,11 +2731,12 @@ int eof_menu_lyric_line_mark(void)
 	long sel_start = -1;
 	long sel_end = 0;
 	int originalflags = 0; //Used to apply the line's original flags after the line is recreated
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(!eof_song || !eof_vocals_selected)
 		return 1;
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{
@@ -2781,11 +2802,12 @@ int eof_menu_lyric_line_unmark(void)
 {
 	unsigned long i, j;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(!eof_vocals_selected)
 		return 1;
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{
 		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
@@ -2834,11 +2856,12 @@ int eof_menu_lyric_line_toggle_overdrive(void)
 	char used[1024] = {0};
 	unsigned long i, j;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(!eof_vocals_selected)
 		return 1;
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{
@@ -2867,11 +2890,12 @@ int eof_menu_hopo_auto(void)
 	unsigned long i;
 	char undo_made = 0;	//Set to nonzero if an undo state was saved
 	unsigned long flags, oldflags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if((eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) || eof_vocals_selected)
 		return 1;	//Do not allow this function to run when a drum track or the vocal track is active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if(eof_selection.multi[i])
@@ -2915,11 +2939,12 @@ int eof_menu_hopo_cycle(void)
 	char undo_made = 0;	//Set to nonzero if an undo state was saved
 	unsigned long flags;
 	unsigned long track_behavior = eof_song->track[eof_selected_track]->track_behavior;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if((track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR))
 		return 1;	//Do not allow this function to run unless a guitar track is active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	if((eof_count_selected_notes(NULL, 0) > 0))
 	{
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
@@ -2994,11 +3019,12 @@ int eof_menu_hopo_force_on(void)
 	unsigned long i;
 	char undo_made = 0;	//Set to nonzero if an undo state was saved
 	unsigned long flags, oldflags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if((eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) || eof_vocals_selected)
 		return 1;	//Do not allow this function to run when a drum track or the vocal track is active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if(eof_selection.multi[i])
@@ -3041,11 +3067,12 @@ int eof_menu_hopo_force_off(void)
 	unsigned long i;
 	char undo_made = 0;	//Set to nonzero if an undo state was saved
 	unsigned long flags, oldflags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if((eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) || eof_vocals_selected)
 		return 1;	//Do not allow this function to run when a drum track or the vocal track is active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if(eof_selection.multi[i])
@@ -3229,15 +3256,15 @@ int eof_new_lyric_dialog(void)
 int eof_edit_lyric_dialog(void)
 {
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(!eof_vocals_selected)
 		return 1;
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	if(eof_count_selected_notes(NULL, 0) != 1)
-	{
 		return 1;
-	}
+
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_lyric_dialog, gui_fg_color, gui_bg_color);
@@ -3277,11 +3304,12 @@ int eof_menu_set_freestyle(char status)
 {
 	unsigned long i=0,ctr=0;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(!eof_vocals_selected)
 		return 1;
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 //Determine if any lyrics will actually be affected by this action
 	if(eof_vocals_selected && (eof_selection.track == EOF_TRACK_VOCALS))
 	{	//If lyrics are selected
@@ -3333,18 +3361,19 @@ int eof_menu_toggle_freestyle(void)
 {
 	unsigned long i=0;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
-	if(eof_vocals_selected && (eof_selection.track == EOF_TRACK_VOCALS) && eof_count_selected_notes(NULL, 0))
-	{	//If lyrics are selected
-		eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
+	if(!eof_vocals_selected)
+		return 1;
 
-		for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-		{	//For each lyric...
-			if(eof_selection.multi[i])
-			{	//...that is selected, toggle its freestyle status
-				eof_toggle_freestyle(eof_song->vocal_track[tracknum],i);
-			}
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
+
+	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
+	{	//For each lyric...
+		if(eof_selection.multi[i])
+		{	//...that is selected, toggle its freestyle status
+			eof_toggle_freestyle(eof_song->vocal_track[tracknum],i);
 		}
 	}
 
@@ -3459,13 +3488,14 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	char pro_guitar_string[30] = {0};
 	long previous_note = 0, next_note = 0;
 	int retval;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run unless the pro guitar track is active
 	if(eof_selection.current >= eof_get_track_size(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run if a valid note isn't selected
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	if(!eof_music_paused)
 	{
 		eof_music_play();
@@ -4213,7 +4243,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 	char allmuted;					//Used to track whether all used strings are string muted
 	unsigned long flags;			//Used to build the updated flag bitmask
 	int retval;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 0;	//Do not allow this function to run unless the pro guitar track is active
@@ -4222,6 +4252,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 	if(!undo_made)
 		return 0;
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	if(!eof_music_paused)
 	{
 		eof_music_play();
@@ -4635,11 +4666,7 @@ int eof_correct_chord_fingerings_option(char report, char *undo_made)
 							eof_selection.current = ctr2;	//Select this note
 							eof_selection.track = ctr;		//Select this track
 							eof_selection.multi[ctr2] = 1;	//Select this note in the selection array
-							(void) eof_menu_track_selected_track_number(ctr, 1);	//Change the active track
-							eof_note_type = tp->note[ctr2]->type;	//Set the note's difficulty as the active difficulty
-							eof_set_seek_position(tp->note[ctr2]->pos + eof_av_delay);
-							eof_find_lyric_preview_lines();
-							eof_render();					//Render the track being checked so the user knows which track a note is being edited from
+							eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Show the offending note
 							cancelled = !eof_menu_note_edit_pro_guitar_note_frets_fingers(1, undo_made);	//Open the edit fret/finger dialog where only the necessary finger fields can be altered
 							eof_selection.multi[ctr2] = 0;	//Unselect this note
 							eof_selection.current = EOF_MAX_NOTES - 1;
@@ -4665,11 +4692,12 @@ int eof_menu_note_toggle_tapping(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -4709,11 +4737,12 @@ int eof_menu_note_remove_tapping(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -4746,11 +4775,12 @@ int eof_menu_note_toggle_bend(void)
 	long u = 0;
 	unsigned long flags;
 	char bends_present = 0;		//Will be set to nonzero if any selected notes become bend notes
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -4801,11 +4831,12 @@ int eof_menu_note_remove_bend(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -4836,11 +4867,12 @@ int eof_menu_note_toggle_harmonic(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -4878,11 +4910,12 @@ int eof_menu_note_remove_harmonic(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -4914,11 +4947,12 @@ int eof_menu_note_toggle_slide_up(void)
 	long u = 0;
 	unsigned long flags;
 	char slides_present = 0;	//Will be set to nonzero if any selected notes become slide notes
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -4965,11 +4999,12 @@ int eof_menu_note_toggle_slide_down(void)
 	long u = 0;
 	unsigned long flags;
 	char slides_present = 0;	//Will be set to nonzero if any selected notes become slide notes
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -5015,11 +5050,12 @@ int eof_menu_note_remove_slide(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags, oldflags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -5051,11 +5087,12 @@ int eof_menu_note_reverse_slide(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags, oldflags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -5096,11 +5133,12 @@ int eof_menu_note_toggle_palm_muting(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -5129,11 +5167,12 @@ int eof_menu_note_remove_palm_muting(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags, oldflags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -5167,11 +5206,12 @@ int eof_menu_arpeggio_mark(void)
 	unsigned long existingphrasenum = 0;	//Is set to the last arpeggio phrase number that encompasses existing notes
 	unsigned long tracknum;
 	unsigned long flags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run unless a pro guitar track is active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	//Find the start and end position of the collection of selected notes in the active difficulty
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -5236,11 +5276,12 @@ int eof_menu_arpeggio_unmark(void)
 {
 	unsigned long i, j;
 	unsigned long tracknum;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Don't allow this function to run unless a pro guitar track is active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -5312,11 +5353,12 @@ int eof_menu_trill_mark(void)
 	char existingphrase = 0;				//Is set to nonzero if any selected notes are within an existing phrase
 	unsigned long existingphrasenum = 0;	//Is set to the last trill phrase number that encompasses existing notes
 	EOF_PHRASE_SECTION *sectionptr;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if((eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_KEYS_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_KEYS_TRACK_BEHAVIOR))
 		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass/drum/keys track is active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	//Find the start and end position of the collection of selected notes in the active difficulty
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -5379,11 +5421,12 @@ int eof_menu_tremolo_mark(void)
 	char existingphrase = 0;				//Is set to nonzero if any selected notes are within an existing phrase
 	unsigned long existingphrasenum = 0;	//Is set to the last tremolo phrase number that encompasses existing notes
 	EOF_PHRASE_SECTION *sectionptr;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if((eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR))
 		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass/drum track is active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	//Find the start and end position of the collection of selected notes in the active difficulty
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -5461,11 +5504,12 @@ int eof_menu_slider_mark(void)
 	char existingphrase = 0;				//Is set to nonzero if any selected notes are within an existing phrase
 	unsigned long existingphrasenum = 0;	//Is set to the last slider phrase number that encompasses existing notes
 	EOF_PHRASE_SECTION *sectionptr;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT))
 		return 1;	//Do not allow this function to run unless a legacy guitar track is active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	//Find the start and end position of the collection of selected notes in the active difficulty
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -5527,11 +5571,12 @@ int eof_menu_trill_unmark(void)
 {
 	unsigned long i, j;
 	EOF_PHRASE_SECTION *sectionptr;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if((eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR))
 		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass/drum track is active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
@@ -5561,11 +5606,12 @@ int eof_menu_tremolo_unmark(void)
 {
 	unsigned long i, j;
 	EOF_PHRASE_SECTION *sectionptr;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if((eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR))
 		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass/drum track is active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
@@ -5605,11 +5651,12 @@ int eof_menu_slider_unmark(void)
 {
 	unsigned long i, j;
 	EOF_PHRASE_SECTION *sectionptr;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT))
 		return 1;	//Do not allow this function to run unless a legacy guitar track is active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
@@ -5705,11 +5752,12 @@ int eof_menu_note_clear_legacy_values(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long tracknum;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -5823,11 +5871,12 @@ int eof_pro_guitar_toggle_strum_up(void)
 	unsigned long i;
 	char undo_made = 0;	//Set to nonzero if an undo state was saved
 	unsigned long flags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -5864,11 +5913,12 @@ int eof_pro_guitar_toggle_strum_down(void)
 	unsigned long i;
 	char undo_made = 0;	//Set to nonzero if an undo state was saved
 	unsigned long flags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -5905,11 +5955,12 @@ int eof_pro_guitar_toggle_strum_mid(void)
 	unsigned long i;
 	char undo_made = 0;	//Set to nonzero if an undo state was saved
 	unsigned long flags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -5946,11 +5997,12 @@ int eof_menu_note_remove_strum_direction(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags, oldflags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -6495,13 +6547,13 @@ int eof_menu_note_toggle_hi_hat_open(void)
 {
 	unsigned long i, flags, tracknum;
 	long u = 0;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_selected_track != EOF_TRACK_DRUM_PS)
 		return 1;	//Do not allow this function to run when the PS drum track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -6546,13 +6598,13 @@ int eof_menu_note_toggle_hi_hat_pedal(void)
 {
 	unsigned long i, flags, tracknum;
 	long u = 0;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_selected_track != EOF_TRACK_DRUM_PS)
 		return 1;	//Do not allow this function to run when the PS drum track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -6597,13 +6649,13 @@ int eof_menu_note_toggle_hi_hat_sizzle(void)
 {
 	unsigned long i, flags, tracknum;
 	long u = 0;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_selected_track != EOF_TRACK_DRUM_PS)
 		return 1;	//Do not allow this function to run when the PS drum track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -6648,13 +6700,13 @@ int eof_menu_note_remove_hi_hat_status(void)
 {
 	unsigned long i, flags, tracknum;
 	long u = 0;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
 		return 1;	//Do not allow this function to run when a drum track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -6695,11 +6747,12 @@ int eof_menu_note_toggle_rimshot(void)
 {
 	unsigned long i, flags, tracknum;
 	long u = 0;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_selected_track != EOF_TRACK_DRUM_PS)
 		return 1;	//Do not allow this function to run when the PS drum track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -6737,13 +6790,13 @@ int eof_menu_note_remove_rimshot(void)
 {
 	unsigned long i, flags, tracknum;
 	long u = 0;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
 		return 1;	//Do not allow this function to run when a drum track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -6781,11 +6834,12 @@ int eof_menu_pro_guitar_toggle_hammer_on(void)
 	unsigned long i;
 	char undo_made = 0;	//Set to nonzero if an undo state was saved
 	unsigned long flags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run unless a pro guitar track is active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	if((eof_count_selected_notes(NULL, 0) > 0))
 	{
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
@@ -6831,11 +6885,12 @@ int eof_menu_pro_guitar_remove_hammer_on(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -6871,11 +6926,12 @@ int eof_menu_pro_guitar_toggle_pull_off(void)
 	unsigned long i;
 	char undo_made = 0;	//Set to nonzero if an undo state was saved
 	unsigned long flags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run unless a pro guitar track is active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	if((eof_count_selected_notes(NULL, 0) > 0))
 	{
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
@@ -6921,11 +6977,12 @@ int eof_menu_pro_guitar_remove_pull_off(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -6957,13 +7014,14 @@ int eof_menu_note_toggle_ghost(void)
 {
 	unsigned long ctr, ctr2, bitmask, tracknum;
 	char undo_made = 0;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
  	eof_log("eof_menu_note_toggle_ghost() entered", 1);
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run unless a pro guitar/bass track is active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
 	{	//For each note in the active pro guitar track
@@ -6995,13 +7053,14 @@ int eof_menu_note_remove_ghost(void)
 {
 	unsigned long ctr, ctr2, bitmask, tracknum;
 	char undo_made = 0;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
  	eof_log("eof_menu_note_remove_ghost() entered", 1);
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run unless a pro guitar/bass track is active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
 	{	//For each note in the active pro guitar track
@@ -7034,11 +7093,12 @@ int eof_menu_note_remove_vibrato(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags, tracknum;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -7070,11 +7130,12 @@ int eof_menu_note_toggle_vibrato(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags, tracknum;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -7113,11 +7174,12 @@ int eof_menu_note_remove_pop(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags, tracknum;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -7149,11 +7211,12 @@ int eof_menu_note_toggle_pop(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags, tracknum;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -7186,11 +7249,12 @@ int eof_menu_note_remove_slap(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags, tracknum;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -7222,11 +7286,12 @@ int eof_menu_note_toggle_slap(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags, tracknum;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -7291,7 +7356,7 @@ DIALOG eof_pro_guitar_note_slide_end_fret_dialog[] =
 int eof_pro_guitar_note_slide_end_fret(char undo)
 {
 	unsigned long newend, i, flags, bitmask, ctr;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 	unsigned long tracknum;
 	EOF_PRO_GUITAR_NOTE *np;
 	char undo_made = 0;
@@ -7301,6 +7366,7 @@ int eof_pro_guitar_note_slide_end_fret(char undo)
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if(eof_selection.current >= eof_song->pro_guitar_track[tracknum]->notes)
 		return 1;	//Invalid selected note number
@@ -7446,7 +7512,7 @@ DIALOG eof_pro_guitar_note_bend_strength_dialog[] =
 int eof_pro_guitar_note_bend_strength(char undo)
 {
 	unsigned long newstrength, i, flags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 	unsigned long tracknum;
 	EOF_PRO_GUITAR_NOTE *np;
 	char undo_made = 0;
@@ -7456,6 +7522,7 @@ int eof_pro_guitar_note_bend_strength(char undo)
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if(eof_selection.current >= eof_song->pro_guitar_track[tracknum]->notes)
 		return 1;	//Invalid selected note number
@@ -7541,11 +7608,12 @@ int eof_menu_pro_guitar_remove_fingering(void)
 	unsigned long tracknum;
 	char empty_array[8] = {0};
 	EOF_PRO_GUITAR_TRACK *tp;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	tp = eof_song->pro_guitar_track[tracknum];
 	for(i = 0; i < tp->notes; i++)
@@ -7750,11 +7818,12 @@ int eof_rocksmith_convert_mute_to_palm_mute_single_note(void)
 	EOF_PRO_GUITAR_TRACK *tp;
 	char undo_made = 0;	//Set to nonzero if an undo state was saved
 	char first_string;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -7827,11 +7896,12 @@ int eof_menu_note_simplify_chords(void)
 {
 	unsigned long ctr, ctr2, bitmask, note;
 	unsigned char undo_made = 0;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(!eof_song || (eof_selected_track >= eof_song->tracks))
 		return 0;	//Return error
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 	{	//For each note in the track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type))
@@ -7852,6 +7922,63 @@ int eof_menu_note_simplify_chords(void)
 						eof_set_note_note(eof_song, eof_selected_track, ctr, note);	//Update the note
 						break;
 					}
+				}
+			}
+		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_pro_guitar_toggle_string_mute(void)
+{
+	unsigned long ctr, ctr2, bitmask, tracknum;
+	char undo_made = 0;	//Set to nonzero if an undo state was saved
+	int note_selection_updated;
+	EOF_PRO_GUITAR_NOTE *np;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run unless a pro guitar track is active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	if((eof_count_selected_notes(NULL, 0) > 0))
+	{
+		for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+		{	//For each note in the active track
+			if(eof_selection.multi[ctr])
+			{	//If the note is selected
+				np = eof_song->pro_guitar_track[tracknum]->note[ctr];
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+					undo_made = 1;
+				}
+				if(eof_is_string_muted(eof_song, eof_selected_track, ctr))
+				{	//If the note is already completely string muted, clear the mute status (MSB) from each gem
+					for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+					{	//For each of the 6 supported strings
+						if(np->note & bitmask)
+						{	//If the string is in use
+							np->frets[ctr2] &= 0x7F;	//Clear the MSB
+						}
+					}
+					np->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;	//Clear this status flag
+				}
+				else
+				{	//At least one gem in the note isn't string muted, set the mute status (MSB) on each gem
+					for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+					{	//For each of the 6 supported strings
+						if(np->note & bitmask)
+						{	//If the string is in use
+							np->frets[ctr2] |= 0x80;	//Set the MSB
+						}
+					}
+					np->flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;	//Set this status flag
 				}
 			}
 		}

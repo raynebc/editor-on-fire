@@ -33,7 +33,7 @@ int eof_menu_hopo_cycle(void);					//Cycles the selected note(s) between auto, o
 int eof_menu_hopo_force_on(void);
 int eof_menu_hopo_force_off(void);
 
-int eof_transpose_possible(int dir);			//Tests ability of instrument/vocal pitches to transpose by the given amount
+int eof_transpose_possible(int dir);			//Tests ability of instrument/vocal pitches to transpose (lower) by the given amount
 int eof_menu_note_transpose_up(void);
 int eof_menu_note_transpose_down(void);
 int eof_menu_note_transpose_down_octave(void);	//Moves selected lyrics down one octave if possible
@@ -267,5 +267,9 @@ int eof_note_menu_read_gp_lyric_texts(void);
 
 int eof_menu_note_simplify_chords(void);
 	//Removes the top-most (highest lane) gem on each selected chord
+
+int eof_menu_pro_guitar_toggle_string_mute(void);
+	//For each selected note, applies string mute status to all used strings if any of the note's used strings aren't already string muted,
+	//otherwise clears string mute status from all used strings in the note
 
 #endif

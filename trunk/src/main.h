@@ -585,4 +585,7 @@ int eof_initialize(int argc, char * argv[]);	//Initializes various values, check
 	int eof_initialize_windows(void);	//Performs additional initialization for the Windows platform
 #endif
 
+void eof_seek_and_render_position(unsigned long track, unsigned char diff, unsigned long pos);
+	//Seeks to the specified position and renders the screen, taking the AV delay into account
+
 #endif

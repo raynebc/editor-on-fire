@@ -4882,13 +4882,14 @@ void eof_set_pro_guitar_fret_number(char function, unsigned long fretvalue)
 	unsigned long ctr, ctr2, bitmask, tracknum;
 	char undo_made = 0;
 	unsigned char oldfretvalue = 0, newfretvalue = 0;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
  	eof_log("eof_set_pro_guitar_fret_number() entered", 1);
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return;	//Do not allow this function to run unless a pro guitar/bass track is active
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
 	{	//For each note in the active pro guitar track
@@ -5262,13 +5263,14 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 {
 	unsigned long i, undo_made = 0, adjustment, notepos, notelength, newnotelength, newnotelength2;
 	long next_note;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
  	eof_log("eof_adjust_note_length() entered", 1);
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	adjustment = amount;	//This would be the amount to adjust the note by
 	for(i = 0; i < eof_get_track_size(sp, eof_selected_track); i++)
 	{	//For each note in the track
@@ -5601,13 +5603,14 @@ int eof_thin_notes_to_match_target_difficulty(EOF_SONG *sp, unsigned long source
 unsigned long eof_get_highest_fret(EOF_SONG *sp, unsigned long track, char scope)
 {
 	unsigned long highestfret = 0, currentfret, ctr, ctr2, tracknum, bitmask;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(!sp || (track >= sp->tracks))
 		return 0;	//Invalid parameters
 	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 0;	//Only run this on a pro guitar/bass track
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = sp->track[track]->tracknum;
 	for(ctr = 0; ctr < sp->pro_guitar_track[tracknum]->notes; ctr++)
 	{	//For each note in the specified pro guitar track
@@ -6082,9 +6085,7 @@ void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsign
 		{	//If this note is 1 to 10 milliseconds before the beginning of the affected time range
 			if(!prompt)
 			{	//If the user wasn't prompted about how to handle this condition yet, seek to the note in question and prompt the user whether to take action
-				eof_set_seek_position(notepos + eof_av_delay);	//Seek to the note's position
-				eof_find_lyric_preview_lines();
-				eof_render();
+				eof_seek_and_render_position(eof_selected_track, eof_note_type, notepos);
 				eof_clear_input();
 				key[KEY_Y] = 0;
 				key[KEY_N] = 0;

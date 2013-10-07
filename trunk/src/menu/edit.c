@@ -562,11 +562,12 @@ int eof_menu_edit_copy_vocal(void)
 	int copy_notes = 0;
 	float tfloat;
 	PACKFILE * fp;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(!eof_vocals_selected)
 		return 1;	//Return error
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	/* first, scan for selected notes */
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{
@@ -1183,13 +1184,14 @@ int eof_menu_edit_copy(void)
 	unsigned char frets[8] = {0};	//Used to store NULL fret data to support copying legacy notes to a pro guitar track
 	unsigned char finger[8] = {0};	//Used to store NULL finger data to support copying legacy notes to a pro guitar track
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated;
 
 	if(eof_vocals_selected)
 	{
 		return eof_menu_edit_copy_vocal();
 	}
 
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	/* first, scan for selected notes */
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
