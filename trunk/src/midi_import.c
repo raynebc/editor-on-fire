@@ -18,7 +18,6 @@
 
 typedef struct
 {
-
 	unsigned long pos;
 	unsigned char type;
 	unsigned char channel;
@@ -26,16 +25,16 @@ typedef struct
 	unsigned long track;	//The track number this event is from
 	char text[EOF_MAX_MIDI_TEXT_SIZE+1];
 	char *dp;	//Stores pointer to data (ie. Sysex messages)
-
 } EOF_IMPORT_MIDI_EVENT;
 
 typedef struct
 {
-
 	EOF_IMPORT_MIDI_EVENT * event[EOF_IMPORT_MAX_EVENTS];
 	unsigned long events;
 	int type;
-
+	int game;	//Is set to 0 to indicate a Frets on Fire, Rock Band or Guitar Hero style MIDI is being imported, set to 1 to indicate a Power Gig MIDI is being imported
+	unsigned char diff;	//Some tracks (such as the pro keys and Power Gig tracks) have all of their contents applicable to a single difficulty level
+	unsigned long tracknum;
 } EOF_IMPORT_MIDI_EVENT_LIST;
 
 static MIDI * eof_work_midi = NULL;
@@ -689,30 +688,57 @@ EOF_SONG * eof_import_midi(const char * fn)
 									if(!ustricmp(text, eof_midi_tracks[j].name))
 									{	//If this track name matches an expected name
 										eof_import_events[i]->type = eof_midi_tracks[j].track_type;
+										eof_import_events[i]->game = 0;	//Note that this is a FoF/RB/GH style MIDI
+										eof_import_events[i]->diff = eof_midi_tracks[j].difficulty;
+										eof_import_events[i]->tracknum = j;
 										if(eof_midi_tracks[j].track_type == EOF_TRACK_GUITAR)
-										{
-											rbg = 1;
+										{	//If this is the guitar track
+											rbg = 1;	//Note that the track has been found
 										}
 									}
 								}
 								if(eof_import_events[i]->type == 0)
-								{
-									if(ustrstr(text,"PART") || (ustrstr(text,"HARM") == text))
-									{	//If this is a track that wasn't identified above, yet contains the word "PART" in the name (or begins with "HARM")
-										eof_clear_input();
-										key[KEY_Y] = 0;
-										key[KEY_N] = 0;
-										if(alert("Unsupported track:", text, "Import raw data?", "&Yes", "&No", 'y', 'n') == 1)
-										{	//If the user opts to import the raw track data
-											eof_MIDI_add_track(sp, eof_get_raw_MIDI_data(eof_work_midi, track[i], 0));	//Add this to the linked list of raw MIDI track data
+								{	//If the track name didn't match any of the standard Rock Band track names
+									for(j = 1; j < EOF_POWER_GIG_TRACKS_MAX; j++)
+									{	//Compare the track name against the tracks in eof_power_gig_tracks[]
+										if(!ustricmp(text, eof_power_gig_tracks[j].name))
+										{	//If this track name matches an expected name
+											if(eof_midi_tracks[j].track_format == 0)
+											{	//If this is a track that is to be skipped
+												eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
+											}
+											else
+											{
+												eof_import_events[i]->type = eof_power_gig_tracks[j].track_type;
+												eof_import_events[i]->game = 1;	//Note that this is a Power Gig style MIDI
+												eof_import_events[i]->diff = eof_power_gig_tracks[j].difficulty;
+												eof_import_events[i]->tracknum = j;
+												if(eof_midi_tracks[j].track_type == EOF_TRACK_GUITAR)
+												{	//If this is the guitar track
+													rbg = 1;	//Note that the track has been found
+												}
+											}
 										}
-										eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
 									}
-									else if(!ustricmp(text, "EVENTS"))
-									{	//This track is the EVENTS track
-										is_event_track = 1;	//Store any encountered text events into the global events array
+									if(eof_import_events[i]->type == 0)
+									{	//If the track name didn't match any of the standard Power Gig track names either
+										if(ustrstr(text,"PART") || (ustrstr(text,"HARM") == text))
+										{	//If this is a track that contains the word "PART" in the name (or begins with "HARM")
+											eof_clear_input();
+											key[KEY_Y] = 0;
+											key[KEY_N] = 0;
+											if(alert("Unsupported track:", text, "Import raw data?", "&Yes", "&No", 'y', 'n') == 1)
+											{	//If the user opts to import the raw track data
+												eof_MIDI_add_track(sp, eof_get_raw_MIDI_data(eof_work_midi, track[i], 0));	//Add this to the linked list of raw MIDI track data
+											}
+											eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
+										}
+										else if(!ustricmp(text, "EVENTS"))
+										{	//This track is the EVENTS track
+											is_event_track = 1;	//Store any encountered text events into the global events array
+										}
 									}
-								}
+								}//If the track name didn't match any of the standard Rock Band track names
 								break;
 							}
 
@@ -1149,6 +1175,8 @@ set_window_title(debugtext);
 			unsigned long rb_pro_green_pos = 0;		//Tracks the last start time of a forced green pro drum phrase
 			unsigned long notenum = 0;
 			char fretwarning = 0;					//Tracks whether the user was warned about the track violating its standard fret limit, if applicable
+			unsigned long linestart = 0;			//Tracks the start of a line of lyrics for Power Gig MIDIs, which don't formally mark line placements with a note
+			char linetrack = 0;						//Is set to nonzero when linestart is tracking the position of the current line of lyrics
 
 			first_note = note_count[picked_track];
 			tracknum = sp->track[picked_track]->tracknum;
@@ -1178,7 +1206,14 @@ set_window_title(debugtext);
 			}
 
 #ifdef EOF_DEBUG
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tParsing track %s", eof_midi_tracks[picked_track].name);
+			if(eof_import_events[i]->game == 0)
+			{	//Rock Band format MIDI track
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tParsing track \"%s\"", eof_midi_tracks[picked_track].name);
+			}
+			else
+			{	//Power Gig format MIDI track
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tParsing track \"%s\"", eof_power_gig_tracks[eof_import_events[i]->tracknum].name);
+			}
 			eof_log(eof_log_string, 1);
 #endif
 
@@ -1310,6 +1345,34 @@ set_window_title(debugtext);
 					/* lyric */
 					else if(((eof_import_events[i]->event[j]->type == 0x05) || (eof_import_events[i]->event[j]->type == 0x01)) && (eof_import_events[i]->event[j]->text[0] != '['))
 					{	//!Note: The text event import puts all text events in a global list instead of the track event list, so it's not currently possible for EOF to import text events as lyrics
+						if(eof_import_events[i]->game == 1)
+						{	//If a Power Gig MIDI is being imported
+							unsigned long len = ustrlen(eof_import_events[i]->event[j]->text);
+							if(len)
+							{	//If the lyric has text
+								for(k = 0; k < len; k++)
+								{	//For each character in the text event
+									if(ugetat(eof_import_events[i]->event[j]->text, k) == '*')
+									{	//If it is an asterisk (what Power Gig uses to denote a pitch shift)
+										usetat(eof_import_events[i]->event[j]->text, k, '+');	//Replace it with a plus sign, the Rock Band equivalent
+									}
+								}
+								if(ugetat(eof_import_events[i]->event[j]->text, len - 1) == ' ')
+								{	//If the last character in the string is a space
+									usetat(eof_import_events[i]->event[j]->text, len - 1, '\0');	//Truncate the character from the string
+								}
+								else
+								{	//Otherwise the next lyric groups with this one, append a hyphen
+									if(len < EOF_MAX_MIDI_TEXT_SIZE)
+									{	//If the array storing the string can accommodate one more character
+										usetat(eof_import_events[i]->event[j]->text, len, '-');
+										usetat(eof_import_events[i]->event[j]->text, len + 1, '\0');
+									}
+								}
+							}
+						}
+
+						//Determine which note this lyric event lines up with
 						for(k = 0; k < note_count[picked_track]; k++)
 						{
 							if(sp->vocal_track[0]->lyric[k]->pos == event_realtime)
@@ -1321,15 +1384,36 @@ set_window_title(debugtext);
 						/* no note associated with this lyric so create a new note */
 						if(k == note_count[picked_track])
 						{
-							strcpy(sp->vocal_track[0]->lyric[note_count[picked_track]]->text, eof_import_events[i]->event[j]->text);
-							sp->vocal_track[0]->lyric[note_count[picked_track]]->note = 0;
-							sp->vocal_track[0]->lyric[note_count[picked_track]]->pos = event_realtime;
-							sp->vocal_track[0]->lyric[note_count[picked_track]]->length = 100;
-							note_count[picked_track]++;
+							if(ustrstr(eof_import_events[i]->event[j]->text, "\\r"))
+							{	//If this lyric contains the string Power Gig uses for a line break, add the line definition
+								sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = linestart;
+								sp->vocal_track[0]->line[sp->vocal_track[0]->lines].end_pos = event_realtime;
+								sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags = 0;	//Init flags for this line as 0
+								sp->vocal_track[0]->lines++;
+								linetrack = 0;
+							}
+							else
+							{	//Otherwise add the lyric
+								strcpy(sp->vocal_track[0]->lyric[note_count[picked_track]]->text, eof_import_events[i]->event[j]->text);
+								sp->vocal_track[0]->lyric[note_count[picked_track]]->note = 0;
+								sp->vocal_track[0]->lyric[note_count[picked_track]]->pos = event_realtime;
+								sp->vocal_track[0]->lyric[note_count[picked_track]]->length = 100;
+								if(!linetrack)
+								{	//If this is the first lyric in this line of lyrics
+									linestart = event_realtime;	//This is the starting position
+									linetrack = 1;
+								}
+								note_count[picked_track]++;
+							}
 						}
 						else
 						{
 							strcpy(sp->vocal_track[0]->lyric[k]->text, eof_import_events[i]->event[j]->text);
+							if(!linetrack)
+							{	//If this is the first lyric in this line of lyrics
+								linestart = event_realtime;	//This is the starting position
+								linetrack = 1;
+							}
 						}
 					}
 				}//If parsing a vocal track
@@ -1340,40 +1424,69 @@ set_window_title(debugtext);
 						diff = -1;	//No difficulty is assumed until the note number is examined
 						if(picked_track != EOF_TRACK_DANCE)
 						{	//All legacy style tracks besides the dance track use the same offsets
-							if((eof_import_events[i]->event[j]->d1 >= 60) && (eof_import_events[i]->event[j]->d1 < 60 + 6))
-							{	//Lane 5 + 1 is used for a lane 5 drum gem, so include it in the difficulty checks here
-								lane = eof_import_events[i]->event[j]->d1 - 60;
-								diff = EOF_NOTE_SUPAEASY;
-							}
-							else if((eof_import_events[i]->event[j]->d1 >= 72) && (eof_import_events[i]->event[j]->d1 < 72 + 6))
-							{
-								lane = eof_import_events[i]->event[j]->d1 - 72;
-								diff = EOF_NOTE_EASY;
-							}
-							else if((eof_import_events[i]->event[j]->d1 >= 84) && (eof_import_events[i]->event[j]->d1 < 84 + 6))
-							{
-								lane = eof_import_events[i]->event[j]->d1 - 84;
-								diff = EOF_NOTE_MEDIUM;
-							}
-							else if((eof_import_events[i]->event[j]->d1 >= 96) && (eof_import_events[i]->event[j]->d1 < 102))
-							{
-								lane = eof_import_events[i]->event[j]->d1 - 96;
-								diff = EOF_NOTE_AMAZING;
-							}
-							else if((eof_import_events[i]->event[j]->d1 >= 120) && (eof_import_events[i]->event[j]->d1 <= 124))
-							{
-								lane = eof_import_events[i]->event[j]->d1 - 120;
-								diff = EOF_NOTE_SPECIAL;
-							}
-							else if(((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS)) && (eof_import_events[i]->event[j]->d1 == 95))
-							{	//If the track being read is a drum track, and this note is marked for Expert+ double bass
-								lane = eof_import_events[i]->event[j]->d1 - 96 + 1;	//Treat as gem 1 (bass drum)
-								diff = EOF_NOTE_AMAZING;
+							if(eof_import_events[i]->game == 1)
+							{	//If the MIDI being parsed is a Power Gig MIDI, remap it to Rock Band numbering
+								diff = eof_import_events[i]->diff;
+								switch(eof_import_events[i]->event[j]->d1)
+								{
+									case 62:
+										lane = 0;
+									break;
+									case 64:
+										lane = 1;
+									break;
+									case 65:
+										lane = 2;
+									break;
+									case 67:
+										lane = 3;
+									break;
+									case 69:
+										lane = 4;
+									break;
+									default:
+										lane = 0;
+										diff = -1;	//Unknown item
+									break;
+								}
 							}
 							else
-							{
-								lane = 0;	//No defined lane
-								diff = -1;	//No defined difficulty
+							{	//Otherwise use the MIDI values used in Rock Band
+								if((eof_import_events[i]->event[j]->d1 >= 60) && (eof_import_events[i]->event[j]->d1 < 60 + 6))
+								{	//Lane 5 + 1 is used for a lane 5 drum gem, so include it in the difficulty checks here
+									lane = eof_import_events[i]->event[j]->d1 - 60;
+									diff = EOF_NOTE_SUPAEASY;
+								}
+								else if((eof_import_events[i]->event[j]->d1 >= 72) && (eof_import_events[i]->event[j]->d1 < 72 + 6))
+								{
+									lane = eof_import_events[i]->event[j]->d1 - 72;
+									diff = EOF_NOTE_EASY;
+								}
+								else if((eof_import_events[i]->event[j]->d1 >= 84) && (eof_import_events[i]->event[j]->d1 < 84 + 6))
+								{
+									lane = eof_import_events[i]->event[j]->d1 - 84;
+									diff = EOF_NOTE_MEDIUM;
+								}
+								else if((eof_import_events[i]->event[j]->d1 >= 96) && (eof_import_events[i]->event[j]->d1 < 102))
+								{
+									lane = eof_import_events[i]->event[j]->d1 - 96;
+									diff = EOF_NOTE_AMAZING;
+								}
+								else if((eof_import_events[i]->event[j]->d1 >= 120) && (eof_import_events[i]->event[j]->d1 <= 124))
+								{
+									lane = eof_import_events[i]->event[j]->d1 - 120;
+									diff = EOF_NOTE_SPECIAL;
+								}
+								else if(((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS)) && (eof_import_events[i]->event[j]->d1 == 95))
+								{	//If the track being read is a drum track, and this note is marked for Expert+ double bass
+									lane = eof_import_events[i]->event[j]->d1 - 96 + 1;	//Treat as gem 1 (bass drum)
+									diff = EOF_NOTE_AMAZING;
+								}
+								else
+								{
+									lane = 0;	//No defined lane
+									diff = -1;	//No defined difficulty
+								}
 							}
 						}
 						else
@@ -1419,120 +1532,124 @@ set_window_title(debugtext);
 						eof_log(eof_log_string, 1);
 #endif
 						char doublebass = 0;
-						if(((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS)) && (eof_import_events[i]->event[j]->d1 == 95))
-						{	//If the track being read is a drum track, and this note is marked for Expert+ double bass
-							doublebass = 1;	//Track that double bass was found for this note, and apply it after the note flag for a newly created note is initialized to zero
-						}
-						if(eof_midi_tracks[picked_track].track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-						{	//If this is a drum track, lane 6 is used for the fifth drum lane and not a HOPO marker
-							if(lane == 5)
-							{	//A lane 6 gem encountered for a drum track will cause the track to be marked as being a "five lane" drum track
-								sp->track[picked_track]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the six lane flag
-								sp->legacy_track[tracknum]->numlanes = 6;
-							}
-						}
-						else
-						{	/* store forced HOPO marker, when the note off for this marker occurs, search for note with same position and apply it to that note */
-							//Forced HOPO on are marked as lane 1 + 5
-							if(eof_import_events[i]->event[j]->d1 == 60 + 5)
-							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopopos[0] = event_realtime;
-								hopotype[0] = 0;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 72 + 5)
-							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopopos[1] = event_realtime;
-								hopotype[1] = 0;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 84 + 5)
-							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopopos[2] = event_realtime;
-								hopotype[2] = 0;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 96 + 5)
-							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopopos[3] = event_realtime;
-								hopotype[3] = 0;
-							}
-							//Forced HOPO off are marked as lane 1 + 6
-							else if(eof_import_events[i]->event[j]->d1 == 60 + 6)
-							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopopos[0] = event_realtime;
-								hopotype[0] = 1;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 72 + 6)
-							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopopos[1] = event_realtime;
-								hopotype[1] = 1;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 84 + 6)
-							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopopos[2] = event_realtime;
-								hopotype[2] = 1;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 96 + 6)
-							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopopos[3] = event_realtime;
-								hopotype[3] = 1;
-							}
-						}
 
-						/* solos, star power, tremolos and trills */
-						phraseptr = NULL;
-						if((eof_import_events[i]->event[j]->d1 == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
-						{	//Legacy solos are marked with note 103
-							phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
-							phraseptr->start_pos = event_realtime;
-						}
-						else if((eof_import_events[i]->event[j]->d1 == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
-						{	//Star power is marked with note 116
-							phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
-							phraseptr->start_pos = event_realtime;
-						}
-						else if((eof_import_events[i]->event[j]->d1 == 126) && (eof_get_num_tremolos(sp, picked_track) < EOF_MAX_PHRASES))
-						{	//Tremolos are marked with note 126
-							phraseptr = eof_get_tremolo(sp, picked_track, eof_get_num_tremolos(sp, picked_track));
-							phraseptr->start_pos = event_realtime;
-							phraseptr->difficulty = 0xFF;	//Tremolo phrases imported from MIDI apply to all difficulties
-						}
-						else if((eof_import_events[i]->event[j]->d1 == 127) && (eof_get_num_trills(sp, picked_track) < EOF_MAX_PHRASES))
-						{	//Trills are marked with note 127
-							phraseptr = eof_get_trill(sp, picked_track, eof_get_num_trills(sp, picked_track));
-							phraseptr->start_pos = event_realtime;
-						}
-						if(phraseptr)
-						{	//If a phrase was created, initialize some other values
-							phraseptr->flags = 0;
-							phraseptr->name[0] = '\0';
-						}
+						if(eof_import_events[i]->game == 0)
+						{	//If the MIDI is in Rock Band/FoF/Phase Shift notation
+							if(((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS)) && (eof_import_events[i]->event[j]->d1 == 95))
+							{	//If the track being read is a drum track, and this note is marked for Expert+ double bass
+								doublebass = 1;	//Track that double bass was found for this note, and apply it after the note flag for a newly created note is initialized to zero
+							}
+							if(eof_midi_tracks[picked_track].track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+							{	//If this is a drum track, lane 6 is used for the fifth drum lane and not a HOPO marker
+								if(lane == 5)
+								{	//A lane 6 gem encountered for a drum track will cause the track to be marked as being a "five lane" drum track
+									sp->track[picked_track]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the six lane flag
+									sp->legacy_track[tracknum]->numlanes = 6;
+								}
+							}
+							else
+							{	/* store forced HOPO marker, when the note off for this marker occurs, search for note with same position and apply it to that note */
+								//Forced HOPO on are marked as lane 1 + 5
+								if(eof_import_events[i]->event[j]->d1 == 60 + 5)
+								{
+									diff = -1;	//HOPO Markers will not be processed as regular gems
+									hopopos[0] = event_realtime;
+									hopotype[0] = 0;
+								}
+								else if(eof_import_events[i]->event[j]->d1 == 72 + 5)
+								{
+									diff = -1;	//HOPO Markers will not be processed as regular gems
+									hopopos[1] = event_realtime;
+									hopotype[1] = 0;
+								}
+								else if(eof_import_events[i]->event[j]->d1 == 84 + 5)
+								{
+									diff = -1;	//HOPO Markers will not be processed as regular gems
+									hopopos[2] = event_realtime;
+									hopotype[2] = 0;
+								}
+								else if(eof_import_events[i]->event[j]->d1 == 96 + 5)
+								{
+									diff = -1;	//HOPO Markers will not be processed as regular gems
+									hopopos[3] = event_realtime;
+									hopotype[3] = 0;
+								}
+								//Forced HOPO off are marked as lane 1 + 6
+								else if(eof_import_events[i]->event[j]->d1 == 60 + 6)
+								{
+									diff = -1;	//HOPO Markers will not be processed as regular gems
+									hopopos[0] = event_realtime;
+									hopotype[0] = 1;
+								}
+								else if(eof_import_events[i]->event[j]->d1 == 72 + 6)
+								{
+									diff = -1;	//HOPO Markers will not be processed as regular gems
+									hopopos[1] = event_realtime;
+									hopotype[1] = 1;
+								}
+								else if(eof_import_events[i]->event[j]->d1 == 84 + 6)
+								{
+									diff = -1;	//HOPO Markers will not be processed as regular gems
+									hopopos[2] = event_realtime;
+									hopotype[2] = 1;
+								}
+								else if(eof_import_events[i]->event[j]->d1 == 96 + 6)
+								{
+									diff = -1;	//HOPO Markers will not be processed as regular gems
+									hopopos[3] = event_realtime;
+									hopotype[3] = 1;
+								}
+							}//store forced HOPO marker
 
-						/* rb pro markers */
-						if(prodrums)
-						{	//If the track was already found to have these markers
-							if(eof_import_events[i]->event[j]->d1 == RB3_DRUM_YELLOW_FORCE)
-							{
-								rb_pro_yellow = 1;
-								rb_pro_yellow_pos = event_realtime;
+							/* solos, star power, tremolos and trills */
+							phraseptr = NULL;
+							if((eof_import_events[i]->event[j]->d1 == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
+							{	//Legacy solos are marked with note 103
+								phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
+								phraseptr->start_pos = event_realtime;
 							}
-							else if(eof_import_events[i]->event[j]->d1 == RB3_DRUM_BLUE_FORCE)
-							{
-								rb_pro_blue = 1;
-								rb_pro_blue_pos = event_realtime;
+							else if((eof_import_events[i]->event[j]->d1 == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
+							{	//Star power is marked with note 116
+								phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
+								phraseptr->start_pos = event_realtime;
 							}
-							else if(eof_import_events[i]->event[j]->d1 == RB3_DRUM_GREEN_FORCE)
-							{
-								rb_pro_green = 1;
-								rb_pro_green_pos = event_realtime;
+							else if((eof_import_events[i]->event[j]->d1 == 126) && (eof_get_num_tremolos(sp, picked_track) < EOF_MAX_PHRASES))
+							{	//Tremolos are marked with note 126
+								phraseptr = eof_get_tremolo(sp, picked_track, eof_get_num_tremolos(sp, picked_track));
+								phraseptr->start_pos = event_realtime;
+								phraseptr->difficulty = 0xFF;	//Tremolo phrases imported from MIDI apply to all difficulties
 							}
-						}
+							else if((eof_import_events[i]->event[j]->d1 == 127) && (eof_get_num_trills(sp, picked_track) < EOF_MAX_PHRASES))
+							{	//Trills are marked with note 127
+								phraseptr = eof_get_trill(sp, picked_track, eof_get_num_trills(sp, picked_track));
+								phraseptr->start_pos = event_realtime;
+							}
+							if(phraseptr)
+							{	//If a phrase was created, initialize some other values
+								phraseptr->flags = 0;
+								phraseptr->name[0] = '\0';
+							}
+
+							/* rb pro markers */
+							if(prodrums)
+							{	//If the track was already found to have these markers
+								if(eof_import_events[i]->event[j]->d1 == RB3_DRUM_YELLOW_FORCE)
+								{
+									rb_pro_yellow = 1;
+									rb_pro_yellow_pos = event_realtime;
+								}
+								else if(eof_import_events[i]->event[j]->d1 == RB3_DRUM_BLUE_FORCE)
+								{
+									rb_pro_blue = 1;
+									rb_pro_blue_pos = event_realtime;
+								}
+								else if(eof_import_events[i]->event[j]->d1 == RB3_DRUM_GREEN_FORCE)
+								{
+									rb_pro_green = 1;
+									rb_pro_green_pos = event_realtime;
+								}
+							}
+						}//If the MIDI is in Rock Band/FoF/Phase Shift notation
 
 						if(diff != -1)
 						{	//If a note difficulty was identified above
@@ -1605,133 +1722,137 @@ set_window_title(debugtext);
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote off:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
 						eof_log(eof_log_string, 1);
 #endif
-						if(eof_midi_tracks[picked_track].track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-						{	//If this is a drum track, lane 6 is used for the fifth drum lane and not a HOPO marker
-						}
-						else
-						{	/* detect forced HOPO */
-							hopodiff = -1;
-							if(eof_import_events[i]->event[j]->d1 == 60 + 5)
-							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopodiff = 0;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 72 + 5)
-							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopodiff = 1;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 84 + 5)
-							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopodiff = 2;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 96 + 5)
-							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopodiff = 3;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 60 + 6)
-							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopodiff = 0;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 72 + 6)
-							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopodiff = 1;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 84 + 6)
-							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopodiff = 2;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 96 + 6)
-							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopodiff = 3;
-							}
-							if(hopodiff >= 0)
-							{
-								for(k = note_count[picked_track] - 1; k >= first_note; k--)
-								{	//Check (in reverse) for each note that has been imported
-									if((eof_get_note_type(sp, picked_track, k) == hopodiff) && (eof_get_note_pos(sp, picked_track, k) >= hopopos[hopodiff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
-									{	//If the note is in the same difficulty as the HOPO phrase, and its timestamp falls between the HOPO On and HOPO Off marker
-										if(hopotype[hopodiff] == 0)
-										{	//Forced HOPO on
-											eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_NOTE_FLAG_F_HOPO);
-										}
-										else
-										{	//Forced HOPO off
-											eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_NOTE_FLAG_NO_HOPO);
-										}
-									}
-								}
-							}
-						}/* detect forced HOPO */
 
-						/* rb pro markers */
-						if(prodrums)
-						{	//If the track was already found to have these markers
-							if((eof_import_events[i]->event[j]->d1 == RB3_DRUM_YELLOW_FORCE) && rb_pro_yellow)
-							{	//If this event ends a pro yellow drum phrase
-								for(k = note_count[picked_track] - 1; k >= first_note; k--)
-								{	//Check for each note that has been imported for this track
-									if((sp->legacy_track[tracknum]->note[k]->pos >= rb_pro_yellow_pos) && (sp->legacy_track[tracknum]->note[k]->pos <= event_realtime))
-									{	//If the note is positioned within this pro yellow drum phrase
-										sp->legacy_track[tracknum]->note[k]->flags &= (~EOF_NOTE_FLAG_Y_CYMBAL);	//Clear the yellow cymbal marker on the note
+						if(eof_import_events[i]->game == 0)
+						{	//If the MIDI is in Rock Band/FoF/Phase Shift notation
+							if(eof_midi_tracks[picked_track].track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+							{	//If this is a drum track, lane 6 is used for the fifth drum lane and not a HOPO marker
+							}
+							else
+							{	/* detect forced HOPO */
+								hopodiff = -1;
+								if(eof_import_events[i]->event[j]->d1 == 60 + 5)
+								{
+									diff = -1;	//HOPO Markers will not be processed as regular gems
+									hopodiff = 0;
+								}
+								else if(eof_import_events[i]->event[j]->d1 == 72 + 5)
+								{
+									diff = -1;	//HOPO Markers will not be processed as regular gems
+									hopodiff = 1;
+								}
+								else if(eof_import_events[i]->event[j]->d1 == 84 + 5)
+								{
+									diff = -1;	//HOPO Markers will not be processed as regular gems
+									hopodiff = 2;
+								}
+								else if(eof_import_events[i]->event[j]->d1 == 96 + 5)
+								{
+									diff = -1;	//HOPO Markers will not be processed as regular gems
+									hopodiff = 3;
+								}
+								else if(eof_import_events[i]->event[j]->d1 == 60 + 6)
+								{
+									diff = -1;	//HOPO Markers will not be processed as regular gems
+									hopodiff = 0;
+								}
+								else if(eof_import_events[i]->event[j]->d1 == 72 + 6)
+								{
+									diff = -1;	//HOPO Markers will not be processed as regular gems
+									hopodiff = 1;
+								}
+								else if(eof_import_events[i]->event[j]->d1 == 84 + 6)
+								{
+									diff = -1;	//HOPO Markers will not be processed as regular gems
+									hopodiff = 2;
+								}
+								else if(eof_import_events[i]->event[j]->d1 == 96 + 6)
+								{
+									diff = -1;	//HOPO Markers will not be processed as regular gems
+									hopodiff = 3;
+								}
+								if(hopodiff >= 0)
+								{
+									for(k = note_count[picked_track] - 1; k >= first_note; k--)
+									{	//Check (in reverse) for each note that has been imported
+										if((eof_get_note_type(sp, picked_track, k) == hopodiff) && (eof_get_note_pos(sp, picked_track, k) >= hopopos[hopodiff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+										{	//If the note is in the same difficulty as the HOPO phrase, and its timestamp falls between the HOPO On and HOPO Off marker
+											if(hopotype[hopodiff] == 0)
+											{	//Forced HOPO on
+												eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_NOTE_FLAG_F_HOPO);
+											}
+											else
+											{	//Forced HOPO off
+												eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_NOTE_FLAG_NO_HOPO);
+											}
+										}
 									}
 								}
-								rb_pro_yellow = 0;
-							}
-							else if((eof_import_events[i]->event[j]->d1 == RB3_DRUM_BLUE_FORCE) && rb_pro_blue)
-							{	//If this event ends a pro blue drum phrase
-								for(k = note_count[picked_track] - 1; k >= first_note; k--)
-								{	//Check for each note that has been imported for this track
-									if((sp->legacy_track[tracknum]->note[k]->pos >= rb_pro_blue_pos) && (sp->legacy_track[tracknum]->note[k]->pos <= event_realtime))
-									{	//If the note is positioned within this pro blue drum phrase
-										sp->legacy_track[tracknum]->note[k]->flags &= (~EOF_NOTE_FLAG_B_CYMBAL);	//Clear the blue cymbal marker on the note
-									}
-								}
-								rb_pro_blue = 0;
-							}
-							else if((eof_import_events[i]->event[j]->d1 == RB3_DRUM_GREEN_FORCE) && rb_pro_green)
-							{	//If this event ends a pro green drum phrase
-								for(k = note_count[picked_track] - 1; k >= first_note; k--)
-								{	//Check for each note that has been imported for this track, in reverse order
-									if((sp->legacy_track[tracknum]->note[k]->pos >= rb_pro_green_pos) && (sp->legacy_track[tracknum]->note[k]->pos <= event_realtime))
-									{	//If the note is positioned within this pro green drum phrase
-										sp->legacy_track[tracknum]->note[k]->flags &= (~EOF_NOTE_FLAG_G_CYMBAL);	//Clear the green cymbal marker on the note
-									}
-								}
-								rb_pro_green = 0;
-							}
-						}
+							}/* detect forced HOPO */
 
-						if((eof_import_events[i]->event[j]->d1 == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
-						{	//End of a solo phrase
-							phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
-							phraseptr->end_pos = event_realtime;
-							eof_set_num_solos(sp, picked_track, eof_get_num_solos(sp, picked_track) + 1);
-						}
-						else if((eof_import_events[i]->event[j]->d1 == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
-						{	//End of a star power phrase
-							phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
-							phraseptr->end_pos = event_realtime;
-							eof_set_num_star_power_paths(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track) + 1);
-						}
-						else if((eof_import_events[i]->event[j]->d1 == 126) && (eof_get_num_tremolos(sp, picked_track) < EOF_MAX_PHRASES))
-						{	//End of a tremolo phrase
-							phraseptr = eof_get_tremolo(sp, picked_track, eof_get_num_tremolos(sp, picked_track));
-							phraseptr->end_pos = event_realtime;
-							eof_set_num_tremolos(sp, picked_track, eof_get_num_tremolos(sp, picked_track) + 1);
-						}
-						else if((eof_import_events[i]->event[j]->d1 == 127) && (eof_get_num_trills(sp, picked_track) < EOF_MAX_PHRASES))
-						{	//End of a trill phrase
-							phraseptr = eof_get_trill(sp, picked_track, eof_get_num_trills(sp, picked_track));
-							phraseptr->end_pos = event_realtime;
-							eof_set_num_trills(sp, picked_track, eof_get_num_trills(sp, picked_track) + 1);
-						}
+							/* rb pro markers */
+							if(prodrums)
+							{	//If the track was already found to have these markers
+								if((eof_import_events[i]->event[j]->d1 == RB3_DRUM_YELLOW_FORCE) && rb_pro_yellow)
+								{	//If this event ends a pro yellow drum phrase
+									for(k = note_count[picked_track] - 1; k >= first_note; k--)
+									{	//Check for each note that has been imported for this track
+										if((sp->legacy_track[tracknum]->note[k]->pos >= rb_pro_yellow_pos) && (sp->legacy_track[tracknum]->note[k]->pos <= event_realtime))
+										{	//If the note is positioned within this pro yellow drum phrase
+											sp->legacy_track[tracknum]->note[k]->flags &= (~EOF_NOTE_FLAG_Y_CYMBAL);	//Clear the yellow cymbal marker on the note
+										}
+									}
+									rb_pro_yellow = 0;
+								}
+								else if((eof_import_events[i]->event[j]->d1 == RB3_DRUM_BLUE_FORCE) && rb_pro_blue)
+								{	//If this event ends a pro blue drum phrase
+									for(k = note_count[picked_track] - 1; k >= first_note; k--)
+									{	//Check for each note that has been imported for this track
+										if((sp->legacy_track[tracknum]->note[k]->pos >= rb_pro_blue_pos) && (sp->legacy_track[tracknum]->note[k]->pos <= event_realtime))
+										{	//If the note is positioned within this pro blue drum phrase
+											sp->legacy_track[tracknum]->note[k]->flags &= (~EOF_NOTE_FLAG_B_CYMBAL);	//Clear the blue cymbal marker on the note
+										}
+									}
+									rb_pro_blue = 0;
+								}
+								else if((eof_import_events[i]->event[j]->d1 == RB3_DRUM_GREEN_FORCE) && rb_pro_green)
+								{	//If this event ends a pro green drum phrase
+									for(k = note_count[picked_track] - 1; k >= first_note; k--)
+									{	//Check for each note that has been imported for this track, in reverse order
+										if((sp->legacy_track[tracknum]->note[k]->pos >= rb_pro_green_pos) && (sp->legacy_track[tracknum]->note[k]->pos <= event_realtime))
+										{	//If the note is positioned within this pro green drum phrase
+											sp->legacy_track[tracknum]->note[k]->flags &= (~EOF_NOTE_FLAG_G_CYMBAL);	//Clear the green cymbal marker on the note
+										}
+									}
+									rb_pro_green = 0;
+								}
+							}
+
+							if((eof_import_events[i]->event[j]->d1 == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
+							{	//End of a solo phrase
+								phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
+								phraseptr->end_pos = event_realtime;
+								eof_set_num_solos(sp, picked_track, eof_get_num_solos(sp, picked_track) + 1);
+							}
+							else if((eof_import_events[i]->event[j]->d1 == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
+							{	//End of a star power phrase
+								phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
+								phraseptr->end_pos = event_realtime;
+								eof_set_num_star_power_paths(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track) + 1);
+							}
+							else if((eof_import_events[i]->event[j]->d1 == 126) && (eof_get_num_tremolos(sp, picked_track) < EOF_MAX_PHRASES))
+							{	//End of a tremolo phrase
+								phraseptr = eof_get_tremolo(sp, picked_track, eof_get_num_tremolos(sp, picked_track));
+								phraseptr->end_pos = event_realtime;
+								eof_set_num_tremolos(sp, picked_track, eof_get_num_tremolos(sp, picked_track) + 1);
+							}
+							else if((eof_import_events[i]->event[j]->d1 == 127) && (eof_get_num_trills(sp, picked_track) < EOF_MAX_PHRASES))
+							{	//End of a trill phrase
+								phraseptr = eof_get_trill(sp, picked_track, eof_get_num_trills(sp, picked_track));
+								phraseptr->end_pos = event_realtime;
+								eof_set_num_trills(sp, picked_track, eof_get_num_trills(sp, picked_track) + 1);
+							}
+						}//If the MIDI is in Rock Band/FoF/Phase Shift notation
 
 						if((note_count[picked_track] > 0) && (diff != -1))
 						{	//If there's at least one note on found for this track, and this note off event has a defined difficulty
@@ -2567,10 +2688,13 @@ set_window_title(debugtext);
 			}//For each event in this track
 
 			eof_track_resize(sp, picked_track, note_count[picked_track]);
-			if(eof_get_track_size(sp, picked_track) > 0)
-			{
-				eof_track_find_crazy_notes(sp, picked_track);
-				used_track[picked_track] = 1;
+			if(eof_import_events[i]->game == 0)
+			{	//If this is not a Power Gig formatted MIDI, only allow one MIDI track to import into each track in the project
+				if(eof_get_track_size(sp, picked_track) > 0)
+				{	//If at least one note was imported
+					eof_track_find_crazy_notes(sp, picked_track);
+					used_track[picked_track] = 1;	//Note that this track has been imported, duplicate instances of the track will be ignored
+				}
 			}
 		}//If this is a valid track to process
 	}//For each imported track
