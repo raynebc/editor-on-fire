@@ -258,7 +258,7 @@ typedef struct
 	unsigned long tracknum;			//Specifies which number of that type this track is, used as an index into the type-specific track arrays
 	char name[EOF_NAME_LENGTH+1];	//Specifies the name of the track
 	char altname[EOF_NAME_LENGTH+1];//Specifies the alternate name of the track (for RS export)
-	unsigned char difficulty;		//Specifies the difficulty level from 0-5 (standard 0-5 scale), or 6 for devil heads (extreme difficulty)
+	unsigned char difficulty;		//Specifies the difficulty level from 0-5 (standard 0-5 scale), or 6 for devil heads (extreme difficulty).  0xFF means the difficulty is undefined
 	unsigned char numdiffs;			//Specifies the number of difficulties usable in this track, including BRE (is set to 5 unless the track's EOF_TRACK_FLAG_UNLIMITED_DIFFS flag is set)
 	unsigned long flags;
 } EOF_TRACK_ENTRY;
@@ -446,11 +446,13 @@ typedef struct
 
 #define EOF_TRACKS_MAX	(EOF_LEGACY_TRACKS_MAX + EOF_VOCAL_TRACKS_MAX + EOF_PRO_GUITAR_TRACKS_MAX + 1)
 //Add 1 to reflect that track[0] is added but not used
+#define EOF_POWER_GIG_TRACKS_MAX (15 + 1)
 
 extern EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1];
 	//The list of default tracks that should be presented in EOF
 extern EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 12];
 	//The list of MIDI track names pertaining to each instrument and harmony track
+extern EOF_TRACK_ENTRY eof_power_gig_tracks[EOF_POWER_GIG_TRACKS_MAX];
 
 struct eof_MIDI_data_track
 {
