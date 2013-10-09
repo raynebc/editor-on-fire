@@ -1372,50 +1372,52 @@ set_window_title(debugtext);
 							}
 						}
 
-						//Determine which note this lyric event lines up with
-						for(k = 0; k < note_count[picked_track]; k++)
-						{
-							if(sp->vocal_track[0]->lyric[k]->pos == event_realtime)
+						if(!ustrstr(eof_import_events[i]->event[j]->text, "\\n"))
+						{	//Only import the lyric if it isn't a newline character, which some Power Gig MIDIs use in addition to carriage return
+							//Determine which note this lyric event lines up with
+							for(k = 0; k < note_count[picked_track]; k++)
 							{
-								break;
+								if(sp->vocal_track[0]->lyric[k]->pos == event_realtime)
+								{
+									break;
+								}
 							}
-						}
-
-						/* no note associated with this lyric so create a new note */
-						if(k == note_count[picked_track])
-						{
-							if(ustrstr(eof_import_events[i]->event[j]->text, "\\r"))
-							{	//If this lyric contains the string Power Gig uses for a line break, add the line definition
-								sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = linestart;
-								sp->vocal_track[0]->line[sp->vocal_track[0]->lines].end_pos = event_realtime;
-								sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags = 0;	//Init flags for this line as 0
-								sp->vocal_track[0]->lines++;
-								linetrack = 0;
+							/* no note associated with this lyric so create a new note */
+							if(k == note_count[picked_track])
+							{
+								if(ustrstr(eof_import_events[i]->event[j]->text, "\\r"))
+								{	//If this lyric contains the string Power Gig uses for a line break, add the line definition
+									sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = linestart;
+									sp->vocal_track[0]->line[sp->vocal_track[0]->lines].end_pos = event_realtime;
+									sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags = 0;	//Init flags for this line as 0
+									sp->vocal_track[0]->lines++;
+									linetrack = 0;
+								}
+								else
+								{	//Otherwise add the lyric
+									strcpy(sp->vocal_track[0]->lyric[note_count[picked_track]]->text, eof_import_events[i]->event[j]->text);
+									sp->vocal_track[0]->lyric[note_count[picked_track]]->note = 0;
+									sp->vocal_track[0]->lyric[note_count[picked_track]]->pos = event_realtime;
+									sp->vocal_track[0]->lyric[note_count[picked_track]]->length = 100;
+									if(!linetrack)
+									{	//If this is the first lyric in this line of lyrics
+										linestart = event_realtime;	//This is the starting position
+										linetrack = 1;
+									}
+									note_count[picked_track]++;
+								}
 							}
 							else
-							{	//Otherwise add the lyric
-								strcpy(sp->vocal_track[0]->lyric[note_count[picked_track]]->text, eof_import_events[i]->event[j]->text);
-								sp->vocal_track[0]->lyric[note_count[picked_track]]->note = 0;
-								sp->vocal_track[0]->lyric[note_count[picked_track]]->pos = event_realtime;
-								sp->vocal_track[0]->lyric[note_count[picked_track]]->length = 100;
+							{
+								strcpy(sp->vocal_track[0]->lyric[k]->text, eof_import_events[i]->event[j]->text);
 								if(!linetrack)
 								{	//If this is the first lyric in this line of lyrics
 									linestart = event_realtime;	//This is the starting position
 									linetrack = 1;
 								}
-								note_count[picked_track]++;
 							}
-						}
-						else
-						{
-							strcpy(sp->vocal_track[0]->lyric[k]->text, eof_import_events[i]->event[j]->text);
-							if(!linetrack)
-							{	//If this is the first lyric in this line of lyrics
-								linestart = event_realtime;	//This is the starting position
-								linetrack = 1;
-							}
-						}
-					}
+						}//Only import the lyric if it isn't a newline character, which some Power Gig MIDIs use in addition to carriage return
+					}//Lyric event
 				}//If parsing a vocal track
 				else if(eof_midi_tracks[picked_track].track_format == EOF_LEGACY_TRACK_FORMAT)
 				{	//If parsing a legacy track
@@ -1430,7 +1432,14 @@ set_window_title(debugtext);
 								switch(eof_import_events[i]->event[j]->d1)
 								{
 									case 62:
-										lane = 0;
+										if(eof_midi_tracks[picked_track].track_type == EOF_TRACK_DRUM)
+										{	//In the drum track, this value is high tom
+											lane = 4;
+										}
+										else
+										{	//Otherwise it's the lowest fret
+											lane = 0;
+										}
 									break;
 									case 64:
 										lane = 1;
@@ -1442,7 +1451,14 @@ set_window_title(debugtext);
 										lane = 3;
 									break;
 									case 69:
-										lane = 4;
+										if(eof_midi_tracks[picked_track].track_type == EOF_TRACK_DRUM)
+										{	//In the drum track, this value is bass drum
+											lane = 0;
+										}
+										else
+										{	//Otherwise it's the highest fret
+											lane = 4;
+										}
 									break;
 									default:
 										lane = 0;
