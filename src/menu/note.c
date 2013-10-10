@@ -1063,8 +1063,8 @@ int eof_menu_note_transpose_up(void)
 		}
 		else
 		{
-			if(eof_open_bass_enabled() || (eof_count_track_lanes(eof_song, eof_selected_track) > 5))
-			{	//If open bass is enabled, or the track has more than 5 lanes, lane 6 is valid for use
+			if(eof_open_strum_enabled(eof_selected_track) || (eof_count_track_lanes(eof_song, eof_selected_track) > 5))
+			{	//If open strum is enabled, or the track has more than 5 lanes, lane 6 is valid for use
 				max = 63;
 			}
 			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
@@ -1086,8 +1086,8 @@ int eof_menu_note_transpose_up(void)
 						note = eof_get_note_note(eof_song, eof_selected_track, i);
 					}
 					note = (note << 1) & max;
-					if((eof_selected_track == EOF_TRACK_BASS) && eof_open_bass_enabled() && (note & 32))
-					{	//If open bass is enabled, and this transpose operation resulted in a bass guitar gem in lane 6
+					if(eof_open_strum_enabled(eof_selected_track) && (note & 32))
+					{	//If open strum is enabled, and this transpose operation resulted in a bass guitar gem in lane 6
 						flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 						eof_set_note_note(eof_song, eof_selected_track, i, 32);		//Clear all lanes except lane 6
 						flags &= ~(EOF_NOTE_FLAG_CRAZY);	//Clear the crazy flag, which is invalid for open strum notes
@@ -3152,8 +3152,8 @@ int eof_transpose_possible(int dir)
 	}
 	else
 	{
-		if(eof_open_bass_enabled() || (eof_count_track_lanes(eof_song, eof_selected_track) > 5))
-		{	//If open bass is enabled, or the track has more than 5 lanes, lane 5 can transpose up to lane 6
+		if(eof_open_strum_enabled(eof_selected_track) || (eof_count_track_lanes(eof_song, eof_selected_track) > 5))
+		{	//If open strum is enabled, or the track has more than 5 lanes, lane 5 can transpose up to lane 6
 			max = 32;
 		}
 		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
@@ -5395,7 +5395,7 @@ int eof_menu_trill_mark(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(!existingphrase)
 	{	//If the selected notes are not within an existing trill phrase, create one
-		(void) eof_track_add_section(eof_song, eof_selected_track, EOF_TRILL_SECTION, 0, sel_start, sel_end, 0, NULL);
+		(void) eof_track_add_trill(eof_song, eof_selected_track, sel_start, sel_end);
 	}
 	else
 	{	//Otherwise edit the existing phrase
@@ -5478,7 +5478,7 @@ int eof_menu_tremolo_mark(void)
 		{	//If this track has had its difficulty limit removed (Rocksmith authoring)
 			targetdiff = eof_note_type;	//A new tremolo phrase will apply to the active track difficulty instead
 		}
-		(void) eof_track_add_section(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, targetdiff, sel_start, sel_end, 0, NULL);
+		(void) eof_track_add_tremolo(eof_song, eof_selected_track, sel_start, sel_end, targetdiff);
 	}
 	else
 	{	//Otherwise edit the existing phrase
@@ -6433,7 +6433,7 @@ int eof_menu_copy_trill_track_number(EOF_SONG *sp, int sourcetrack, int desttrac
 		ptr = eof_get_trill(sp, sourcetrack, ctr);
 		if(ptr)
 		{	//If this phrase could be found
-			(void) eof_track_add_section(sp, desttrack, EOF_TRILL_SECTION, ptr->difficulty, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the destination track
+			(void) eof_track_add_trill(sp, desttrack, ptr->start_pos, ptr->end_pos);	//Copy it to the destination track
 		}
 	}
 	eof_determine_phrase_status(eof_song, eof_selected_track);
@@ -6536,7 +6536,7 @@ int eof_menu_copy_tremolo_track_number(EOF_SONG *sp, int sourcetrack, int desttr
 		ptr = eof_get_tremolo(sp, sourcetrack, ctr);
 		if(ptr)
 		{	//If this phrase could be found
-			(void) eof_track_add_section(sp, desttrack, EOF_TREMOLO_SECTION, ptr->difficulty, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the destination track
+			(void) eof_track_add_tremolo(sp, desttrack, ptr->start_pos, ptr->end_pos, ptr->difficulty);	//Copy it to the destination track
 		}
 	}
 	eof_determine_phrase_status(eof_song, eof_selected_track);

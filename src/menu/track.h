@@ -20,7 +20,7 @@ int eof_track_rocksmith_toggle_difficulty_limit(void);
 int eof_track_rocksmith_insert_difficulty(void);
 	//If the active pro guitar/bass track has fewer than 255 difficulties, prompts user to insert a new difficulty above or below the active difficulty
 	//If the new difficulty has a populated difficulty above or below it, the user is prompted whether to import either (calling paste from logic)
-int eof_track_rocksmith_delete_difficulty(void);
+int eof_track_delete_difficulty(void);
 	//Deletes the active difficulty's content, decrementing all higher difficulty's content accordingly
 
 int eof_track_rename(void);				//Allows the user to define an alternate name for the active track
@@ -123,9 +123,12 @@ int eof_track_unflatten_difficulties(void);	//Runs eof_unflatten_difficulties() 
 
 void eof_prepare_track_menu(void);
 
-int eof_menu_track_open_bass(void);			//Toggle the ability to use a sixth lane in PART BASS on/off
+int eof_menu_track_open_strum(void);		//Toggle the ability to use a sixth lane in the active legacy guitar/bass track
 int eof_menu_track_five_lane_drums(void);	//Toggle the ability to use a fifth lane in PART DRUM on/off
 int eof_menu_track_disable_double_bass_drums(void);	//Toggle the setting to disable expert+ bass drum gem export on/off
+int eof_menu_track_unshare_drum_phrasing(void);
+	//By default, the drum and PS drum tracks use the same star power, solo, drum roll and special drum roll phrases
+	//This function toggles that setting on/off
 
 int eof_track_erase_track(void);			//Allows the user to erase the active track's contents
 int eof_track_erase_track_difficulty(void);	//Allows the user to erase the active track difficulty's contents

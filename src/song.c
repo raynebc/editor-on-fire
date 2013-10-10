@@ -183,6 +183,7 @@ EOF_SONG * eof_create_song(void)
 	sp->tags->click_drag_disabled = 0;
 	sp->tags->rs_chord_technique_export = 0;
 	sp->tags->double_bass_drum_disabled = 0;
+	sp->tags->unshare_drum_phrasing = 0;
 	sp->tags->ini_settings = 0;
 	sp->tags->ogg[0].midi_offset = 0;
 	sp->tags->ogg[0].modified = 0;
@@ -563,8 +564,8 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		}
 	}
 
-	if(eof_open_bass_enabled() && (tp == sp->legacy_track[sp->track[EOF_TRACK_BASS]->tracknum]))
-	{	//If open bass strumming is enabled, and this is the bass guitar track, check to ensure that open bass doesn't conflict with other notes/HOPOs/statuses
+	if(eof_open_strum_enabled(track))
+	{	//If open strumming is enabled, check to ensure that open bass doesn't conflict with other notes/HOPOs/statuses
 		for(i = 0; i < tp->notes; i++)
 		{	//For each note in the track
 			if(tp->note[i]->note & 32)
@@ -1479,7 +1480,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	unsigned long const inistringbuffersize[EOFNUMINISTRINGTYPES]={0,0,256,256,256,0,32,512,256};
 		//Store the buffer information of each of the INI strings to simplify the loading code
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
-	#define EOFNUMINIBOOLEANTYPES 9
+	#define EOFNUMINIBOOLEANTYPES 10
 	char *inibooleanbuffer[EOFNUMINIBOOLEANTYPES] = {NULL};
 		//Store the pointers to each of the boolean type INI settings (number 0 is reserved) to simplify the loading code
 	#define EOFNUMININUMBERTYPES 5
@@ -1491,11 +1492,15 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	struct eof_MIDI_data_track *trackptr;
 	struct eof_MIDI_data_event *eventptr, *eventhead, *eventtail;
 	unsigned char numdiffs;
+	char unshare_drum_phrasing;
 
  	eof_log("eof_load_song_pf() entered", 1);
 
 	if((sp == NULL) || (fp == NULL))
 		return 0;	//Return failure
+
+	unshare_drum_phrasing = sp->tags->unshare_drum_phrasing;	//Store this outside the project structure until load completes, so that both drum tracks' phrases can be loaded
+	sp->tags->unshare_drum_phrasing = 1;
 
 	//Populate the arrays with addresses for variables here instead of during declaration to avoid compiler warnings
 	inistringbuffer[2] = sp->tags->artist;
@@ -1512,6 +1517,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	inibooleanbuffer[6] = &sp->tags->double_bass_drum_disabled;
 	inibooleanbuffer[7] = &sp->tags->click_drag_disabled;
 	inibooleanbuffer[8] = &sp->tags->rs_chord_technique_export;
+	inibooleanbuffer[9] = &unshare_drum_phrasing;
 	ininumberbuffer[2] = &sp->tags->difficulty;
 
 	/* read chart properties */
@@ -1984,6 +1990,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 			}
 		}//For each custom data block in the track
 	}//For each track in the project
+	sp->tags->unshare_drum_phrasing = unshare_drum_phrasing;	//After all tracks have been formally loaded, store this value into the project to optionally override drum phrase handling
 	return 1;	//Return success
 }
 
@@ -2060,51 +2067,10 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 			{	//Cymbal sections are only valid for drum tracks
 			}
 		break;
-		case EOF_TRILL_SECTION:
-			if((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (sp->track[track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) || (sp->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR) || (sp->track[eof_selected_track]->track_behavior == EOF_PRO_KEYS_TRACK_BEHAVIOR))
-			{	//Only legacy/pro guitar/bass/drum/keys type tracks are able to use this type of section
-				switch(sp->track[track]->track_format)
-				{
-					case EOF_LEGACY_TRACK_FORMAT:
-						count = sp->legacy_track[tracknum]->trills;
-						if(count < EOF_MAX_PHRASES)
-						{	//If EOF can store the trill section
-							sp->legacy_track[tracknum]->trill[count].start_pos = start;
-							sp->legacy_track[tracknum]->trill[count].end_pos = end;
-							sp->legacy_track[tracknum]->trill[count].flags = 0;
-							if(name == NULL)
-							{
-								sp->legacy_track[tracknum]->trill[count].name[0] = '\0';
-							}
-							else
-							{
-								(void) ustrcpy(sp->legacy_track[tracknum]->trill[count].name, name);
-							}
-							sp->legacy_track[tracknum]->trills++;
-						}
-					return 1;
 
-					case EOF_PRO_GUITAR_TRACK_FORMAT:
-						count = sp->pro_guitar_track[tracknum]->trills;
-						if(count < EOF_MAX_PHRASES)
-						{	//If EOF can store the trill section
-							sp->pro_guitar_track[tracknum]->trill[count].start_pos = start;
-							sp->pro_guitar_track[tracknum]->trill[count].end_pos = end;
-							sp->pro_guitar_track[tracknum]->trill[count].flags = 0;
-							if(name == NULL)
-							{
-								sp->pro_guitar_track[tracknum]->trill[count].name[0] = '\0';
-							}
-							else
-							{
-								(void) ustrcpy(sp->pro_guitar_track[tracknum]->trill[count].name, name);
-							}
-							sp->pro_guitar_track[tracknum]->trills++;
-						}
-					return 1;
-				}
-			}
-		break;
+		case EOF_TRILL_SECTION:
+		return eof_track_add_trill(sp, track, start, end);
+
 		case EOF_ARPEGGIO_SECTION:	//Arpeggio section
 			if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{
@@ -2132,59 +2098,17 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				return 1;
 			}
 		break;
+
 		case EOF_TRAINER_SECTION:	//Pro trainer section (not supported yet)
 		break;
 		case EOF_CUSTOM_MIDI_NOTE_SECTION:	//Custom MIDI note section (not supported yet)
 		break;
 		case EOF_PREVIEW_SECTION:	//Preview audio section (not supported yet)
 		break;
-		case EOF_TREMOLO_SECTION:
-			if((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (sp->track[track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
-			{	//Only legacy/pro guitar/bass/drum type tracks are able to use this type of section
-				switch(sp->track[track]->track_format)
-				{
-					case EOF_LEGACY_TRACK_FORMAT:
-						count = sp->legacy_track[tracknum]->tremolos;
-						if(count < EOF_MAX_PHRASES)
-						{	//If EOF can store the tremolo section
-							sp->legacy_track[tracknum]->tremolo[count].start_pos = start;
-							sp->legacy_track[tracknum]->tremolo[count].end_pos = end;
-							sp->legacy_track[tracknum]->tremolo[count].flags = 0;
-							sp->legacy_track[tracknum]->tremolo[count].difficulty = difficulty;
-							if(name == NULL)
-							{
-								sp->legacy_track[tracknum]->tremolo[count].name[0] = '\0';
-							}
-							else
-							{
-								(void) ustrcpy(sp->legacy_track[tracknum]->tremolo[count].name, name);
-							}
-							sp->legacy_track[tracknum]->tremolos++;
-						}
-					return 1;
 
-					case EOF_PRO_GUITAR_TRACK_FORMAT:
-						count = sp->pro_guitar_track[tracknum]->tremolos;
-						if(count < EOF_MAX_PHRASES)
-						{	//If EOF can store the tremolo section
-							sp->pro_guitar_track[tracknum]->tremolo[count].start_pos = start;
-							sp->pro_guitar_track[tracknum]->tremolo[count].end_pos = end;
-							sp->pro_guitar_track[tracknum]->tremolo[count].flags = 0;
-							sp->pro_guitar_track[tracknum]->tremolo[count].difficulty = difficulty;
-							if(name == NULL)
-							{
-								sp->pro_guitar_track[tracknum]->tremolo[count].name[0] = '\0';
-							}
-							else
-							{
-								(void) ustrcpy(sp->pro_guitar_track[tracknum]->tremolo[count].name, name);
-							}
-							sp->pro_guitar_track[tracknum]->tremolos++;
-						}
-					return 1;
-				}
-			}
-		break;
+		case EOF_TREMOLO_SECTION:
+		return eof_track_add_tremolo(sp, track, start, end, difficulty);
+
 		case EOF_SLIDER_SECTION:
 			if((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT))
 			{	//Only legacy guitar tracks are able to use this type of section
@@ -2312,12 +2236,13 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
 		//Store the buffer information of each of the 12 INI strings to simplify the loading code
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
-	#define EOFNUMINIBOOLEANTYPES 9
+	#define EOFNUMINIBOOLEANTYPES 10
 	char *inibooleanbuffer[EOFNUMINIBOOLEANTYPES] = {NULL};
 		//Store the pointers to each of the boolean type INI settings (number 0 is reserved) to simplify the loading code
 	#define EOFNUMININUMBERTYPES 5
 	unsigned long *ininumberbuffer[EOFNUMININUMBERTYPES] = {NULL};
 		//Store the pointers to each of the 5 number type INI settings (number 0 is reserved) to simplify the loading code
+	char unshare_drum_phrasing;
 
  	eof_log("eof_save_song() entered", 1);
 
@@ -2326,6 +2251,9 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		eof_log("\tError saving:  Invalid parameters", 1);
 		return 0;	//Return error
 	}
+
+	unshare_drum_phrasing = sp->tags->unshare_drum_phrasing;	//Store this outside the project structure until save completes, so that both drum tracks' phrases can be written
+	sp->tags->unshare_drum_phrasing = 1;
 
 	//Populate the arrays with addresses for variables here instead of during declaration to avoid compiler warnings
 	inistringbuffer[2] = sp->tags->artist;
@@ -2342,6 +2270,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	inibooleanbuffer[6] = &sp->tags->double_bass_drum_disabled;
 	inibooleanbuffer[7] = &sp->tags->click_drag_disabled;
 	inibooleanbuffer[8] = &sp->tags->rs_chord_technique_export;
+	inibooleanbuffer[9] = &unshare_drum_phrasing;
 	ininumberbuffer[2] = &sp->tags->difficulty;
 
 	/* write file header */
@@ -3008,6 +2937,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	}//For each track in the project
 
 	(void) pack_fclose(fp);
+	sp->tags->unshare_drum_phrasing = unshare_drum_phrasing;	//After all tracks have been formally written, store this value back into the project to optionally override drum phrase handling
 	return 1;	//Return success
 }
 
@@ -3060,9 +2990,9 @@ unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track)
 	}
 }
 
-inline int eof_open_bass_enabled(void)
+inline int eof_open_strum_enabled(unsigned long track)
 {
-	return (eof_song->track[EOF_TRACK_BASS]->flags & EOF_TRACK_FLAG_SIX_LANES);
+	return (eof_song->track[track]->flags & EOF_TRACK_FLAG_SIX_LANES);
 }
 
 EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_note(EOF_PRO_GUITAR_TRACK *tp)
@@ -3554,6 +3484,10 @@ unsigned long eof_get_num_solos(EOF_SONG *sp, unsigned long track)
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
+			if((sp->track[track]->track_type == EOF_TRACK_DRUM_PS) && !sp->tags->unshare_drum_phrasing)
+			{	//If the specified track is the Phase Shift drum track, it refers to the normal drum track phrasing by default
+				tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+			}
 		return sp->legacy_track[tracknum]->solos;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
@@ -3576,6 +3510,10 @@ EOF_PHRASE_SECTION *eof_get_solo(EOF_SONG *sp, unsigned long track, unsigned lon
 		case EOF_LEGACY_TRACK_FORMAT:
 			if(solonum < EOF_MAX_PHRASES)
 			{
+				if((sp->track[track]->track_type == EOF_TRACK_DRUM_PS) && !sp->tags->unshare_drum_phrasing)
+				{	//If the specified track is the Phase Shift drum track, it refers to the normal drum track phrasing by default
+					tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+				}
 				return &sp->legacy_track[tracknum]->solo[solonum];
 			}
 		break;
@@ -4196,6 +4134,10 @@ unsigned long eof_get_num_star_power_paths(EOF_SONG *sp, unsigned long track)
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
+			if((sp->track[track]->track_type == EOF_TRACK_DRUM_PS) && !sp->tags->unshare_drum_phrasing)
+			{	//If the specified track is the Phase Shift drum track, it refers to the normal drum track phrasing by default
+				tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+			}
 		return sp->legacy_track[tracknum]->star_power_paths;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
@@ -4218,6 +4160,10 @@ EOF_PHRASE_SECTION *eof_get_star_power_path(EOF_SONG *sp, unsigned long track, u
 		case EOF_LEGACY_TRACK_FORMAT:
 			if(pathnum < EOF_MAX_PHRASES)
 			{
+				if((sp->track[track]->track_type == EOF_TRACK_DRUM_PS) && !sp->tags->unshare_drum_phrasing)
+				{	//If the specified track is the Phase Shift drum track, it refers to the normal drum track phrasing by default
+					tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+				}
 				return &sp->legacy_track[tracknum]->star_power_path[pathnum];
 			}
 		break;
@@ -4249,6 +4195,10 @@ void eof_set_num_solos(EOF_SONG *sp, unsigned long track, unsigned long number)
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
+			if((sp->track[track]->track_type == EOF_TRACK_DRUM_PS) && !sp->tags->unshare_drum_phrasing)
+			{	//If the specified track is the Phase Shift drum track, it refers to the normal drum track phrasing by default
+				tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+			}
 			sp->legacy_track[tracknum]->solos = number;
 		break;
 
@@ -4271,6 +4221,10 @@ void eof_set_num_star_power_paths(EOF_SONG *sp, unsigned long track, unsigned lo
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
+			if((sp->track[track]->track_type == EOF_TRACK_DRUM_PS) && !sp->tags->unshare_drum_phrasing)
+			{	//If the specified track is the Phase Shift drum track, it refers to the normal drum track phrasing by default
+				tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+			}
 			sp->legacy_track[tracknum]->star_power_paths = number;
 		break;
 
@@ -4435,17 +4389,15 @@ void eof_track_delete_star_power_path(EOF_SONG *sp, unsigned long track, unsigne
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-			if(pathnum < sp->legacy_track[tracknum]->star_power_paths)
-			{
-				eof_legacy_track_delete_star_power(sp->legacy_track[tracknum], pathnum);
+			if((sp->track[track]->track_type == EOF_TRACK_DRUM_PS) && !sp->tags->unshare_drum_phrasing)
+			{	//If the specified track is the Phase Shift drum track, it refers to the normal drum track phrasing by default
+				tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
 			}
+			eof_legacy_track_delete_star_power(sp->legacy_track[tracknum], pathnum);
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			if(pathnum < sp->pro_guitar_track[tracknum]->star_power_paths)
-			{
-				eof_pro_guitar_track_delete_star_power(sp->pro_guitar_track[tracknum], pathnum);
-			}
+			eof_pro_guitar_track_delete_star_power(sp->pro_guitar_track[tracknum], pathnum);
 		break;
 	}
 }
@@ -4478,6 +4430,10 @@ int eof_track_add_star_power_path(EOF_SONG *sp, unsigned long track, unsigned lo
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
+			if((sp->track[track]->track_type == EOF_TRACK_DRUM_PS) && !sp->tags->unshare_drum_phrasing)
+			{	//If the specified track is the Phase Shift drum track, it refers to the normal drum track phrasing by default
+				tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+			}
 		return eof_legacy_track_add_star_power(sp->legacy_track[tracknum], start_pos, end_pos);
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
@@ -4516,6 +4472,10 @@ void eof_track_delete_solo(EOF_SONG *sp, unsigned long track, unsigned long path
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
+			if((sp->track[track]->track_type == EOF_TRACK_DRUM_PS) && !sp->tags->unshare_drum_phrasing)
+			{	//If the specified track is the Phase Shift drum track, it refers to the normal drum track phrasing by default
+				tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+			}
 			eof_legacy_track_delete_solo(sp->legacy_track[tracknum], pathnum);
 		break;
 
@@ -4553,6 +4513,10 @@ int eof_track_add_solo(EOF_SONG *sp, unsigned long track, unsigned long start_po
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
+			if((sp->track[track]->track_type == EOF_TRACK_DRUM_PS) && !sp->tags->unshare_drum_phrasing)
+			{	//If the specified track is the Phase Shift drum track, it refers to the normal drum track phrasing by default
+				tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+			}
 		return eof_legacy_track_add_solo(sp->legacy_track[tracknum], start_pos, end_pos);
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
@@ -4611,6 +4575,10 @@ unsigned long eof_get_num_trills(EOF_SONG *sp, unsigned long track)
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
+			if((sp->track[track]->track_type == EOF_TRACK_DRUM_PS) && !sp->tags->unshare_drum_phrasing)
+			{	//If the specified track is the Phase Shift drum track, it refers to the normal drum track phrasing by default
+				tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+			}
 		return sp->legacy_track[tracknum]->trills;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
@@ -4631,6 +4599,10 @@ unsigned long eof_get_num_tremolos(EOF_SONG *sp, unsigned long track)
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
+			if((sp->track[track]->track_type == EOF_TRACK_DRUM_PS) && !sp->tags->unshare_drum_phrasing)
+			{	//If the specified track is the Phase Shift drum track, it refers to the normal drum track phrasing by default
+				tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+			}
 		return sp->legacy_track[tracknum]->tremolos;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
@@ -4670,6 +4642,10 @@ EOF_PHRASE_SECTION *eof_get_trill(EOF_SONG *sp, unsigned long track, unsigned lo
 		case EOF_LEGACY_TRACK_FORMAT:
 			if(index < EOF_MAX_PHRASES)
 			{
+				if((sp->track[track]->track_type == EOF_TRACK_DRUM_PS) && !sp->tags->unshare_drum_phrasing)
+				{	//If the specified track is the Phase Shift drum track, it refers to the normal drum track phrasing by default
+					tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+				}
 				return &sp->legacy_track[tracknum]->trill[index];
 			}
 		break;
@@ -4698,6 +4674,10 @@ EOF_PHRASE_SECTION *eof_get_tremolo(EOF_SONG *sp, unsigned long track, unsigned 
 		case EOF_LEGACY_TRACK_FORMAT:
 			if(index < EOF_MAX_PHRASES)
 			{
+				if((sp->track[track]->track_type == EOF_TRACK_DRUM_PS) && !sp->tags->unshare_drum_phrasing)
+				{	//If the specified track is the Phase Shift drum track, it refers to the normal drum track phrasing by default
+					tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+				}
 				return &sp->legacy_track[tracknum]->tremolo[index];
 			}
 		break;
@@ -4733,9 +4713,8 @@ EOF_PHRASE_SECTION *eof_get_slider(EOF_SONG *sp, unsigned long track, unsigned l
 	return NULL;	//Return error
 }
 
-void eof_track_delete_trill(EOF_SONG *sp, unsigned long track, unsigned long index)
+void eof_track_delete_trill(EOF_SONG *sp, unsigned long track, unsigned long pathnum)
 {
-	unsigned long ctr;
 	unsigned long tracknum;
 
  	eof_log("eof_track_delete_trill() entered", 1);
@@ -4747,34 +4726,104 @@ void eof_track_delete_trill(EOF_SONG *sp, unsigned long track, unsigned long ind
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-			if(index < sp->legacy_track[tracknum]->trills)
-			{
-				sp->legacy_track[tracknum]->trill[index].name[0] = '\0';	//Empty the name string
-				for(ctr = index; ctr < sp->legacy_track[tracknum]->trills; ctr++)
-				{
-					memcpy(&sp->legacy_track[tracknum]->trill[ctr], &sp->legacy_track[tracknum]->trill[ctr + 1], sizeof(EOF_PHRASE_SECTION));
-				}
-				sp->legacy_track[tracknum]->trills--;
+			if((sp->track[track]->track_type == EOF_TRACK_DRUM_PS) && !sp->tags->unshare_drum_phrasing)
+			{	//If the specified track is the Phase Shift drum track, it refers to the normal drum track phrasing by default
+				tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
 			}
+			eof_legacy_track_delete_trill(sp->legacy_track[tracknum], pathnum);
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			if(index < sp->pro_guitar_track[tracknum]->trills)
-			{
-				sp->pro_guitar_track[tracknum]->trill[index].name[0] = '\0';	//Empty the name string
-				for(ctr = index; ctr < sp->pro_guitar_track[tracknum]->trills; ctr++)
-				{
-					memcpy(&sp->pro_guitar_track[tracknum]->trill[ctr], &sp->pro_guitar_track[tracknum]->trill[ctr + 1], sizeof(EOF_PHRASE_SECTION));
-				}
-				sp->pro_guitar_track[tracknum]->trills--;
-			}
+			eof_pro_guitar_track_delete_trill(sp->pro_guitar_track[tracknum], pathnum);
 		break;
 	}
 }
 
+void eof_legacy_track_delete_trill(EOF_LEGACY_TRACK * tp, unsigned long index)
+{
+	unsigned long i;
+
+	if(!tp || (index >= tp->trills))
+		return;
+
+	tp->trill[index].name[0] = '\0';	//Empty the name string
+	for(i = index; i < tp->trills - 1; i++)
+	{
+		memcpy(&tp->trill[i], &tp->trill[i + 1], sizeof(EOF_PHRASE_SECTION));
+	}
+	tp->trills--;
+}
+
+void eof_pro_guitar_track_delete_trill(EOF_PRO_GUITAR_TRACK * tp, unsigned long index)
+{
+	unsigned long i;
+
+	if(!tp || (index >= tp->trills))
+		return;
+
+	tp->trill[index].name[0] = '\0';	//Empty the name string
+	for(i = index; i < tp->trills - 1; i++)
+	{
+		memcpy(&tp->trill[i], &tp->trill[i + 1], sizeof(EOF_PHRASE_SECTION));
+	}
+	tp->trills--;
+}
+
+int eof_track_add_trill(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos)
+{
+	unsigned long tracknum;
+
+ 	eof_log("eof_track_add_trill() entered", 1);
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if((sp->track[track]->track_type == EOF_TRACK_DRUM_PS) && !sp->tags->unshare_drum_phrasing)
+			{	//If the specified track is the Phase Shift drum track, it refers to the normal drum track phrasing by default
+				tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+			}
+		return eof_legacy_track_add_trill(sp->legacy_track[tracknum], start_pos, end_pos);
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+		return eof_pro_guitar_track_add_trill(sp->pro_guitar_track[tracknum], start_pos, end_pos);
+	}
+	return 0;	//Return error
+}
+
+int eof_legacy_track_add_trill(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
+{
+	if(tp && (tp->trills < EOF_MAX_PHRASES))
+	{	//If the maximum number of solo phrases for this track hasn't already been defined
+		tp->trill[tp->trills].start_pos = start_pos;
+		tp->trill[tp->trills].end_pos = end_pos;
+		tp->trill[tp->trills].flags = 0;
+		tp->trill[tp->trills].name[0] = '\0';
+		tp->trills++;
+		return 1;	//Return success
+	}
+	return 0;	//Return error
+}
+
+int eof_pro_guitar_track_add_trill(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
+{
+	if(tp && (tp->trills < EOF_MAX_PHRASES))
+	{	//If the maximum number of solo phrases for this track hasn't already been defined
+		tp->trill[tp->trills].start_pos = start_pos;
+		tp->trill[tp->trills].end_pos = end_pos;
+		tp->trill[tp->trills].flags = 0;
+		tp->trill[tp->trills].name[0] = '\0';
+		tp->trills++;
+		return 1;	//Return success
+	}
+	return 0;	//Return error
+}
+
 void eof_track_delete_tremolo(EOF_SONG *sp, unsigned long track, unsigned long index)
 {
-	unsigned long ctr;
 	unsigned long tracknum;
 
  	eof_log("eof_track_delete_tremolo() entered", 1);
@@ -4786,29 +4835,102 @@ void eof_track_delete_tremolo(EOF_SONG *sp, unsigned long track, unsigned long i
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-			if(index < sp->legacy_track[tracknum]->tremolos)
-			{
-				sp->legacy_track[tracknum]->tremolo[index].name[0] = '\0';	//Empty the name string
-				for(ctr = index; ctr < sp->legacy_track[tracknum]->tremolos; ctr++)
-				{
-					memcpy(&sp->legacy_track[tracknum]->tremolo[ctr], &sp->legacy_track[tracknum]->tremolo[ctr + 1], sizeof(EOF_PHRASE_SECTION));
-				}
-				sp->legacy_track[tracknum]->tremolos--;
+			if((sp->track[track]->track_type == EOF_TRACK_DRUM_PS) && !sp->tags->unshare_drum_phrasing)
+			{	//If the specified track is the Phase Shift drum track, it refers to the normal drum track phrasing by default
+				tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
 			}
+			eof_legacy_track_delete_tremolo(sp->legacy_track[tracknum], index);
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			if(index < sp->pro_guitar_track[tracknum]->tremolos)
-			{
-				sp->pro_guitar_track[tracknum]->tremolo[index].name[0] = '\0';	//Empty the name string
-				for(ctr = index; ctr < sp->pro_guitar_track[tracknum]->tremolos; ctr++)
-				{
-					memcpy(&sp->pro_guitar_track[tracknum]->tremolo[ctr], &sp->pro_guitar_track[tracknum]->tremolo[ctr + 1], sizeof(EOF_PHRASE_SECTION));
-				}
-				sp->pro_guitar_track[tracknum]->tremolos--;
-			}
+			eof_pro_guitar_track_delete_tremolo(sp->pro_guitar_track[tracknum], index);
 		break;
 	}
+}
+
+void eof_legacy_track_delete_tremolo(EOF_LEGACY_TRACK * tp, unsigned long index)
+{
+	unsigned long i;
+
+	if(!tp || (index >= tp->tremolos))
+		return;
+
+	tp->tremolo[index].name[0] = '\0';	//Empty the name string
+	for(i = index; i < tp->tremolos - 1; i++)
+	{
+		memcpy(&tp->tremolo[i], &tp->tremolo[i + 1], sizeof(EOF_PHRASE_SECTION));
+	}
+	tp->tremolos--;
+}
+
+void eof_pro_guitar_track_delete_tremolo(EOF_PRO_GUITAR_TRACK * tp, unsigned long index)
+{
+	unsigned long i;
+
+	if(!tp || (index >= tp->tremolos))
+		return;
+
+	tp->tremolo[index].name[0] = '\0';	//Empty the name string
+	for(i = index; i < tp->tremolos - 1; i++)
+	{
+		memcpy(&tp->tremolo[i], &tp->tremolo[i + 1], sizeof(EOF_PHRASE_SECTION));
+	}
+	tp->tremolos--;
+}
+
+int eof_track_add_tremolo(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos, unsigned char diff)
+{
+	unsigned long tracknum;
+
+ 	eof_log("eof_track_add_tremolo() entered", 1);
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if((sp->track[track]->track_type == EOF_TRACK_DRUM_PS) && !sp->tags->unshare_drum_phrasing)
+			{	//If the specified track is the Phase Shift drum track, it refers to the normal drum track phrasing by default
+				tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+			}
+		return eof_legacy_track_add_tremolo(sp->legacy_track[tracknum], start_pos, end_pos);
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+		return eof_pro_guitar_track_add_tremolo(sp->pro_guitar_track[tracknum], start_pos, end_pos, diff);
+	}
+	return 0;	//Return error
+}
+
+int eof_legacy_track_add_tremolo(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
+{
+	if(tp && (tp->tremolos < EOF_MAX_PHRASES))
+	{	//If the maximum number of solo phrases for this track hasn't already been defined
+		tp->tremolo[tp->tremolos].start_pos = start_pos;
+		tp->tremolo[tp->tremolos].end_pos = end_pos;
+		tp->tremolo[tp->tremolos].flags = 0;
+		tp->tremolo[tp->tremolos].name[0] = '\0';
+		tp->tremolo[tp->tremolos].difficulty = 0xFF;	//In legacy tracks, tremolo sections always apply to all difficulties
+		tp->tremolos++;
+		return 1;	//Return success
+	}
+	return 0;	//Return error
+}
+
+int eof_pro_guitar_track_add_tremolo(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos, unsigned char diff)
+{
+	if(tp && (tp->tremolos < EOF_MAX_PHRASES))
+	{	//If the maximum number of solo phrases for this track hasn't already been defined
+		tp->tremolo[tp->tremolos].start_pos = start_pos;
+		tp->tremolo[tp->tremolos].end_pos = end_pos;
+		tp->tremolo[tp->tremolos].flags = 0;
+		tp->tremolo[tp->tremolos].name[0] = '\0';
+		tp->tremolo[tp->tremolos].difficulty = diff;
+		tp->tremolos++;
+		return 1;	//Return success
+	}
+	return 0;	//Return error
 }
 
 void eof_track_delete_slider(EOF_SONG *sp, unsigned long track, unsigned long index)
@@ -4851,6 +4973,10 @@ void eof_set_num_trills(EOF_SONG *sp, unsigned long track, unsigned long number)
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
+			if((sp->track[track]->track_type == EOF_TRACK_DRUM_PS) && !sp->tags->unshare_drum_phrasing)
+			{	//If the specified track is the Phase Shift drum track, it refers to the normal drum track phrasing by default
+				tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+			}
 			sp->legacy_track[tracknum]->trills = number;
 		break;
 
@@ -4873,6 +4999,10 @@ void eof_set_num_tremolos(EOF_SONG *sp, unsigned long track, unsigned long numbe
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
+			if((sp->track[track]->track_type == EOF_TRACK_DRUM_PS) && !sp->tags->unshare_drum_phrasing)
+			{	//If the specified track is the Phase Shift drum track, it refers to the normal drum track phrasing by default
+				tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+			}
 			sp->legacy_track[tracknum]->tremolos = number;
 		break;
 
@@ -6094,7 +6224,7 @@ void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsign
 	EOF_PRO_GUITAR_TRACK *tp;
 	EOF_PHRASE_SECTION *ptr;
 
-	if(!sp || !undo_made || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || (startpos >= endpos))
+	if(!sp || !undo_made || (track >= sp->tracks) || (startpos >= endpos))
 		return;	//Invalid parameters
 
 	//Parse in reverse order so that notes can be appended to or deleted from the track in the same loop
@@ -6174,105 +6304,108 @@ void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsign
 		}
 	}//For each note in the track (in reverse order)
 
-	//Update arpeggios
-	tracknum = sp->track[track]->tracknum;
-	tp = sp->pro_guitar_track[tracknum];
-	for(ctr = eof_get_num_arpeggios(sp, track); ctr > 0; ctr--)
-	{	//For each arpeggio section in the track (in reverse order)
-		ptr = &sp->pro_guitar_track[tracknum]->arpeggio[ctr - 1];	//Simplify
-		if((ptr->difficulty >= diff) && (ptr->start_pos <= endpos) && (ptr->end_pos >= startpos))
-		{	//If this arpeggio overlaps at all with the phrase being manipulated and is in a difficulty level that this function affects
-			if(ptr->difficulty == diff)
-			{	//If this arpeggio is in the active difficulty
-				if(function < 0)
-				{	//If the delete level function is being performed, this arpeggio will be deleted
-					eof_track_delete_arpeggio(sp, track, ctr - 1);
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If the track being altered is a pro guitar track
+		//Update arpeggios
+		tracknum = sp->track[track]->tracknum;
+		tp = sp->pro_guitar_track[tracknum];
+		for(ctr = eof_get_num_arpeggios(sp, track); ctr > 0; ctr--)
+		{	//For each arpeggio section in the track (in reverse order)
+			ptr = &sp->pro_guitar_track[tracknum]->arpeggio[ctr - 1];	//Simplify
+			if((ptr->difficulty >= diff) && (ptr->start_pos <= endpos) && (ptr->end_pos >= startpos))
+			{	//If this arpeggio overlaps at all with the phrase being manipulated and is in a difficulty level that this function affects
+				if(ptr->difficulty == diff)
+				{	//If this arpeggio is in the active difficulty
+					if(function < 0)
+					{	//If the delete level function is being performed, this arpeggio will be deleted
+						eof_track_delete_arpeggio(sp, track, ctr - 1);
+					}
+					else
+					{	//The add level function is being performed, this arpeggio will be duplicated into the next higher difficulty instead of just having its difficulty incremented
+						(void) eof_track_add_section(sp, track, EOF_ARPEGGIO_SECTION, diff + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
+					}
 				}
 				else
-				{	//The add level function is being performed, this arpeggio will be duplicated into the next higher difficulty instead of just having its difficulty incremented
-					(void) eof_track_add_section(sp, track, EOF_ARPEGGIO_SECTION, diff + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
-				}
-			}
-			else
-			{
-				if(function < 0)
-				{	//If the delete level function is being performed, this arpeggio will have its difficulty decremented
-					ptr->difficulty--;	//Decrement the arpeggio's difficulty
-				}
-				else
-				{	//The add level function is being performed, this arpeggio will have its difficulty incremented
-					ptr->difficulty++;	//Increment the arpeggio's difficulty
+				{
+					if(function < 0)
+					{	//If the delete level function is being performed, this arpeggio will have its difficulty decremented
+						ptr->difficulty--;	//Decrement the arpeggio's difficulty
+					}
+					else
+					{	//The add level function is being performed, this arpeggio will have its difficulty incremented
+						ptr->difficulty++;	//Increment the arpeggio's difficulty
+					}
 				}
 			}
 		}
-	}
 
-	//Update fret hand positions
-	for(ctr = tp->handpositions; ctr > 0; ctr--)
-	{	//For each fret hand position in the track (in reverse order)
-		ptr = &tp->handposition[ctr - 1];	//Simplify
-		if((ptr->difficulty >= diff) && (ptr->start_pos >= startpos) && (ptr->start_pos <= endpos))
-		{	//If this fret hand position is within the phrase being manipulated and is in a difficulty level that this function affects
-			if(ptr->difficulty == diff)
-			{	//If this fret hand position is in the active difficulty, it will be duplicated into the next higher difficulty instead of just having its difficulty incremented
-				if(function < 0)
-				{	//If the delete level function is being performed, this fret hand position will be deleted
-					eof_pro_guitar_track_delete_hand_position(tp, ctr - 1);
+		//Update fret hand positions
+		for(ctr = tp->handpositions; ctr > 0; ctr--)
+		{	//For each fret hand position in the track (in reverse order)
+			ptr = &tp->handposition[ctr - 1];	//Simplify
+			if((ptr->difficulty >= diff) && (ptr->start_pos >= startpos) && (ptr->start_pos <= endpos))
+			{	//If this fret hand position is within the phrase being manipulated and is in a difficulty level that this function affects
+				if(ptr->difficulty == diff)
+				{	//If this fret hand position is in the active difficulty, it will be duplicated into the next higher difficulty instead of just having its difficulty incremented
+					if(function < 0)
+					{	//If the delete level function is being performed, this fret hand position will be deleted
+						eof_pro_guitar_track_delete_hand_position(tp, ctr - 1);
+					}
+					else
+					{	//The add level function is being performed, this fret hand position will be duplicated into the next higher difficulty instead of just having its difficulty incremented
+						(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, diff + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
+					}
 				}
 				else
-				{	//The add level function is being performed, this fret hand position will be duplicated into the next higher difficulty instead of just having its difficulty incremented
-					(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, diff + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
-				}
-			}
-			else
-			{
-				if(function < 0)
-				{	//If the delete level function is being performed, this fret hand position will have its difficulty decremented
-					ptr->difficulty--;	//Decrement the fret hand position's difficulty
-				}
-				else
-				{	//The add level function is being performed, this fret hand position will have its difficulty incremented
-					ptr->difficulty++;	//Increment the fret hand position's difficulty
+				{
+					if(function < 0)
+					{	//If the delete level function is being performed, this fret hand position will have its difficulty decremented
+						ptr->difficulty--;	//Decrement the fret hand position's difficulty
+					}
+					else
+					{	//The add level function is being performed, this fret hand position will have its difficulty incremented
+						ptr->difficulty++;	//Increment the fret hand position's difficulty
+					}
 				}
 			}
 		}
-	}
-	eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Resort fret hand positions
+		eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Resort fret hand positions
 
-	//Update tremolos
-	for(ctr = eof_get_num_tremolos(sp, track); ctr > 0; ctr--)
-	{	//For each tremolo section in the track (in reverse order)
-		ptr = &sp->pro_guitar_track[tracknum]->tremolo[ctr - 1];	//Simplify
-		if((ptr->difficulty >= diff) && (ptr->start_pos <= endpos) && (ptr->end_pos >= startpos))
-		{	//If this tremolo overlaps at all with the phrase being manipulated and is in a difficulty level that this function affects
-			if(ptr->difficulty == 0xFF)
-			{	//If this tremolo is not difficulty specific
-				continue;	//Don't manipulate it in this function
-			}
-			if(ptr->difficulty == diff)
-			{	//If this tremolo is in the active difficulty
-				if(function < 0)
-				{	//If the delete level function is being performed, this tremolo will be deleted
-					eof_track_delete_tremolo(sp, track, ctr - 1);
+		//Update tremolos
+		for(ctr = eof_get_num_tremolos(sp, track); ctr > 0; ctr--)
+		{	//For each tremolo section in the track (in reverse order)
+			ptr = &sp->pro_guitar_track[tracknum]->tremolo[ctr - 1];	//Simplify
+			if((ptr->difficulty >= diff) && (ptr->start_pos <= endpos) && (ptr->end_pos >= startpos))
+			{	//If this tremolo overlaps at all with the phrase being manipulated and is in a difficulty level that this function affects
+				if(ptr->difficulty == 0xFF)
+				{	//If this tremolo is not difficulty specific
+					continue;	//Don't manipulate it in this function
+				}
+				if(ptr->difficulty == diff)
+				{	//If this tremolo is in the active difficulty
+					if(function < 0)
+					{	//If the delete level function is being performed, this tremolo will be deleted
+						eof_track_delete_tremolo(sp, track, ctr - 1);
+					}
+					else
+					{	//The add level function is being performed, this tremolo will be duplicated into the next higher difficulty instead of just having its difficulty incremented
+						(void) eof_track_add_section(sp, track, EOF_TREMOLO_SECTION, diff + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
+					}
 				}
 				else
-				{	//The add level function is being performed, this tremolo will be duplicated into the next higher difficulty instead of just having its difficulty incremented
-					(void) eof_track_add_section(sp, track, EOF_TREMOLO_SECTION, diff + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
-				}
-			}
-			else
-			{
-				if(function < 0)
-				{	//If the delete level function is being performed, this tremolo will have its difficulty decremented
-					ptr->difficulty--;	//Decrement the tremolo's difficulty
-				}
-				else
-				{	//The add level function is being performed, this tremolo will have its difficulty incremented
-					ptr->difficulty++;	//Increment the tremolo's difficulty
+				{
+					if(function < 0)
+					{	//If the delete level function is being performed, this tremolo will have its difficulty decremented
+						ptr->difficulty--;	//Decrement the tremolo's difficulty
+					}
+					else
+					{	//The add level function is being performed, this tremolo will have its difficulty incremented
+						ptr->difficulty++;	//Increment the tremolo's difficulty
+					}
 				}
 			}
 		}
-	}
+	}//If the track being altered is a pro guitar track
 }
 
 void eof_unflatten_difficulties(EOF_SONG *sp, unsigned long track)
