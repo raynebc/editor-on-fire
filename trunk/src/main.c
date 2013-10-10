@@ -130,6 +130,7 @@ int         eof_inverted_chords_slash = 0;
 int         eof_render_3d_rs_chords = 0;	//If nonzero, the 3D rendering will draw a rectangle to represent chords that will export to XML as repeats (Rocksmith), and 3D chord tails will not be rendered
 int         eof_imports_recall_last_path = 0;	//If nonzero, various import dialogs will initialize the dialog to the path containing the last chosen import, instead of initializing to the project's folder
 int         eof_rewind_at_end = 1;				//If nonzero, chart rewinds when the end of chart is reached during playback
+int         eof_disable_rs_wav = 0;				//If nonzero, a WAV file for use in Rocksmith will not be maintained during save even if Rocksmith file export is enabled
 int         eof_smooth_pos = 1;
 int         eof_input_mode = EOF_INPUT_PIANO_ROLL;
 int         eof_windowed = 1;

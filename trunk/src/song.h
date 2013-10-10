@@ -207,6 +207,7 @@ typedef struct
 #define EOF_PRO_KEYS_TRACK_BEHAVIOR		6
 #define EOF_DANCE_TRACK_BEHAVIOR        7
 
+//Track types
 #define EOF_TRACKS_MIN			1
 #define EOF_TRACK_GUITAR		1
 #define EOF_TRACK_BASS			2
@@ -243,7 +244,7 @@ typedef struct
 #define EOF_RS_TONE_CHANGE              18
 
 #define EOF_TRACK_FLAG_SIX_LANES		1
-	//Specifies if the track has open strumming enabled (PART BASS) or a fifth drum lane enabled (PART DRUMS)
+	//Specifies if the track has open strumming enabled (legacy bass or guitar tracks) or a fifth drum lane enabled (PART DRUMS)
 #define EOF_TRACK_FLAG_ALT_NAME			2
 	//Specifies if the track has an alternate display name (for RS export.  MIDI export will still use the native name)
 #define EOF_TRACK_FLAG_UNLIMITED_DIFFS	4
@@ -400,6 +401,7 @@ typedef struct
 	char double_bass_drum_disabled;
 	char click_drag_disabled;
 	char rs_chord_technique_export;
+	char unshare_drum_phrasing;
 
 	EOF_OGG_INFO ogg[EOF_MAX_OGGS];
 	short oggs;
@@ -566,9 +568,13 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 	//The difficulty field is used for catalog, arpeggio and tremolo (if Rocksmith numbered difficulties are in effect) sections and fret hand positions
 	//Returns zero on error
 unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track);		//Returns the number of lanes in the specified track, or the default of 5
+int eof_track_add_trill(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a trill phrase at the specified start and stop timestamp
 unsigned long eof_get_num_trills(EOF_SONG *sp, unsigned long track);		//Returns the number of trill phrases in the specified track, or 0 on error
 EOF_PHRASE_SECTION *eof_get_trill(EOF_SONG *sp, unsigned long track, unsigned long index);		//Returns a pointer to the specified trill phrase, or NULL on error
 void eof_set_num_trills(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of trill phrases in the specified track
+int eof_track_add_tremolo(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos, unsigned char diff);
+	//Adds a tremolo phrase at the specified start and stop timestamp
+	//If diff is not 0xFF, and the specified track is a pro guitar track, the tremolo phrase will apply to the specified track difficulty only
 unsigned long eof_get_num_tremolos(EOF_SONG *sp, unsigned long track);		//Returns the number of tremolo phrases in the specified track, or 0 on error
 EOF_PHRASE_SECTION *eof_get_tremolo(EOF_SONG *sp, unsigned long track, unsigned long index);	//Returns a pointer to the specified tremolo phrase, or NULL on error
 void eof_set_num_tremolos(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of tremolo phrases in the specified track
@@ -623,6 +629,10 @@ int eof_legacy_track_add_star_power(EOF_LEGACY_TRACK * tp, unsigned long start_p
 void eof_legacy_track_delete_star_power(EOF_LEGACY_TRACK * tp, unsigned long index);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
 int eof_legacy_track_add_solo(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 void eof_legacy_track_delete_solo(EOF_LEGACY_TRACK * tp, unsigned long index);	//Deletes the specified solo phrase and moves all phrases that follow back in the array one position
+int eof_legacy_track_add_trill(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a trill phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
+void eof_legacy_track_delete_trill(EOF_LEGACY_TRACK * tp, unsigned long index);		//Deletes the specified trill phrase and moves all phrases that follow back in the array one position
+int eof_legacy_track_add_tremolo(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a tremolo phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
+void eof_legacy_track_delete_tremolo(EOF_LEGACY_TRACK * tp, unsigned long index);	//Deletes the specified tremolo phrase and moves all phrases that follow back in the array one position
 
 EOF_LYRIC * eof_vocal_track_add_lyric(EOF_VOCAL_TRACK * tp);	//Allocates, initializes and stores a new EOF_LYRIC structure into the lyrics array.  Returns the newly allocated structure or NULL upon error
 void eof_vocal_track_delete_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//Removes and frees the specified lyric from the lyrics array.  All lyrics after the deleted lyric are moved back in the array one position
@@ -646,6 +656,12 @@ int eof_pro_guitar_track_add_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned long
 void eof_pro_guitar_track_delete_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
 int eof_pro_guitar_track_add_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 void eof_pro_guitar_track_delete_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified solo phrase and moves all phrases that follow back in the array one position
+int eof_pro_guitar_track_add_trill(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a trill phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
+void eof_pro_guitar_track_delete_trill(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified trill phrase and moves all phrases that follow back in the array one position
+int eof_pro_guitar_track_add_tremolo(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos, unsigned char diff);
+	//Adds a tremolo phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
+	//If diff is not 0xFF, the tremolo phrase will apply to the specified track difficulty only
+void eof_pro_guitar_track_delete_tremolo(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified tremolo phrase and moves all phrases that follow back in the array one position
 void eof_set_pro_guitar_fret_number(char function, unsigned long fretvalue);
 	//Alters each selected pro guitar note's fret values on used strings (that match the eof_pro_guitar_fret_bitmask bitmask) based on the parameters:
 	//If function is 0, the applicable strings' fret values are set to the specified value
@@ -724,8 +740,8 @@ int eof_song_delete_track(EOF_SONG * sp, unsigned long track);
 EOF_SONG * eof_create_song_populated(void);
 	//Allocates, initializes and returns an EOF_SONG structure pre-populated with the default legacy and vocal tracks
 
-inline int eof_open_bass_enabled(void);
-	//A simple function returning nonzero if PART BASS has open strumming enabled
+inline int eof_open_strum_enabled(unsigned long track);
+	//A simple function returning nonzero if the specified track has open strumming enabled
 int eof_create_image_sequence(char benchmark_only);
 	//Creates a PCX format image sequence in a subfolder of the chart's folder called "\sequence"
 	//If benchmark_only is nonzero, image files are not written and the rendering performance (in frames per second) is displayed in the title bar
@@ -780,7 +796,8 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 	//The input track is expected to be authored in the style of Rocksmith, where notes in one difficulty replace or add to the notes in the lower difficulty
 	//The resulting notes are suitable for a flat difficulty system (like that used in Guitar Hero or Rock Band)
 void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long startpos, unsigned long endpos, int function, int prompt, char *undo_made);
-	//Modifies notes, arpeggios, hand positions and tremolos in the specified time range of the specified pro guitar track difficulty according to the specified function
+	//Modifies notes in the specified time range of the specified track difficulty according to the specified function
+	//If the specified track is a pro guitar track, arpeggios, hand positions and tremolos in the specified time range are also modified accordingly
 	//If function is negative, the items in the track difficulty are deleted, and the difficulty of those of higher difficulties are decremented, effectively leveling down that range of the track
 	//If function is >= 0, the items in the track difficulty are duplicated into the next difficulty, and those of higher difficulties are incremented, effectively leveling up that range of the track
 	//If prompt is zero, the function prompts the user whether to re-align notes that are up to 10ms before the start position (which is described to the user as a "phrase").

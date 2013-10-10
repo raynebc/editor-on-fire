@@ -423,7 +423,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	unsigned long bitmask;
 	EOF_PHRASE_SECTION *sectionptr;
 	char *currentname = NULL, chordname[100]="";
-	char phase_shift_sysex_phrase[8] = {'P','S','\0',0,0,0,0,0xF7};	//This is used to write Sysex messages for features supported in Phase Shift (ie. open strum bass)
+	char phase_shift_sysex_phrase[8] = {'P','S','\0',0,0,0,0,0xF7};	//This is used to write Sysex messages for features supported in Phase Shift (ie. open strum)
 	char fret_hand_pos_written;					//This is used to track whether the track's fret hand positions were completely written yet
 	char fret_hand_positions_generated;			//This is used to track whether fret hand positions were automatically generated for an exported pro guitar/bass track's expert difficulty
 	char fret_hand_positions_present;			//This is used to track whether fret hand positions are defined for an exported pro guitar/bass track's expert difficulty
@@ -682,8 +682,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					deltalength = 1;
 				}
 
-				if(eof_open_bass_enabled() && (j == EOF_TRACK_BASS))
-				{	//Ensure that for PART BASS, open bass notes don't have any gems except for lane 6
+				if(eof_open_strum_enabled(j))
+				{	//Ensure that open strum notes don't have any gems except for lane 6
 					if((note & ~32) && (note & 32))
 					{	//If this bass guitar note has a gem on lane 6 (open strum bass) and any other lane
 						note = 32;	//Clear all lanes except lane 6
@@ -813,8 +813,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				}
 
 				/* write open bass note marker, if the feature was enabled during save */
-				if(eof_open_bass_enabled() && (j == EOF_TRACK_BASS) && (note & 32))
-				{	//If this is an open bass note
+				if(eof_open_strum_enabled(j) && (note & 32))
+				{	//If this is an open strum note
 					if(featurerestriction == 0)
 					{	//Only write this notation if not writing a Rock Band compliant MIDI
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 0, vel, 0);	//Write a gem for lane 1

@@ -166,15 +166,19 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	}
 
 	/* check for use of open bass strumming and write a tag if necessary */
-	if(eof_open_bass_enabled())
-	{	//If open bass was enabled during the time of the save
-		tracknum = sp->track[EOF_TRACK_BASS]->tracknum;
-		for(i = 0; i < sp->legacy_track[tracknum]->notes; i++)
-		{	//For each note in the bass guitar track
-			if(sp->legacy_track[tracknum]->note[i]->note & 32)
-			{	//If lane 6 (open bass) is populated
-				(void) ustrcat(ini_string, "\r\nsysex_open_bass = True");	//Write the open strum Sysex presence tag (used in Phase Shift) to identify that this Sysex phrase will be written to MIDI
-				break;	//Exit loop
+	for(i = 1; i < sp->tracks; i++)
+	{	//For each track in the chart (skipping track 0)
+		if(eof_open_strum_enabled(i))
+		{	//If open strumming was enabled for this track during the time of the save
+			tracknum = sp->track[i]->tracknum;
+			for(j = 0; j < sp->legacy_track[tracknum]->notes; j++)
+			{	//For each note in the bass guitar track
+				if(sp->legacy_track[tracknum]->note[j]->note & 32)
+				{	//If lane 6 (open bass) is populated
+					(void) ustrcat(ini_string, "\r\nsysex_open_bass = True");	//Write the open strum Sysex presence tag (used in Phase Shift) to identify that this Sysex phrase will be written to MIDI
+					i = sp->tracks;	//Trigger the exit of the outer loop
+					break;	//Exit loops
+				}
 			}
 		}
 	}

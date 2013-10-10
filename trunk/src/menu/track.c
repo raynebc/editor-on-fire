@@ -19,8 +19,9 @@
 
 MENU eof_track_phaseshift_menu[] =
 {
-	{"Enable &Open strum bass", eof_menu_track_open_bass, NULL, 0, NULL},
+	{"Enable &Open strum", eof_menu_track_open_strum, NULL, 0, NULL},
 	{"Enable &Five lane drums", eof_menu_track_five_lane_drums, NULL, 0, NULL},
+	{"Unshare drum phrasing", eof_menu_track_unshare_drum_phrasing, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -56,6 +57,7 @@ MENU eof_track_menu[] =
 	{"Erase track difficulty", eof_track_erase_track_difficulty, NULL, 0, NULL},
 	{"Erase highlighting", eof_menu_track_remove_highlighting, NULL, 0, NULL},
 	{"Thin diff. to match", NULL, eof_menu_thin_diff_menu, 0, NULL},
+	{"Delete active difficulty", eof_track_delete_difficulty, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -121,9 +123,9 @@ void eof_prepare_track_menu(void)
 		}
 
 		/* enable open strum bass */
-		if(eof_open_bass_enabled())
+		if(eof_open_strum_enabled(eof_selected_track))
 		{
-			eof_track_phaseshift_menu[0].flags = D_SELECTED;	//Track>Phase Shift>Enable open strum bass
+			eof_track_phaseshift_menu[0].flags = D_SELECTED;	//Track>Phase Shift>Enable open strum
 		}
 		else
 		{
@@ -148,6 +150,16 @@ void eof_prepare_track_menu(void)
 		else
 		{
 			eof_track_menu[5].flags = 0;
+		}
+
+		/* Unshare drum phrasing */
+		if(eof_song->tags->unshare_drum_phrasing)
+		{
+			eof_track_phaseshift_menu[2].flags = D_SELECTED;	//Track>Phase Shift>Unshare drum phrasing
+		}
+		else
+		{
+			eof_track_phaseshift_menu[2].flags = 0;
 		}
 
 		/* popup messages copy from */
@@ -1693,7 +1705,6 @@ MENU eof_track_rocksmith_menu[] =
 	{"&Tone change", NULL, eof_track_rocksmith_tone_change_menu, 0, NULL},
 	{"Remove difficulty limit", eof_track_rocksmith_toggle_difficulty_limit, NULL, 0, NULL},
 	{"Insert new difficulty", eof_track_rocksmith_insert_difficulty, NULL, 0, NULL},
-	{"Delete active difficulty", eof_track_rocksmith_delete_difficulty, NULL, 0, NULL},
 	{"&Manage RS phrases\t" CTRL_NAME "+Shift+M", eof_track_manage_rs_phrases, NULL, 0, NULL},
 	{"Flatten this difficulty", eof_track_flatten_difficulties, NULL, 0, NULL},
 	{"Un-flatten track", eof_track_unflatten_difficulties, NULL, 0, NULL},
@@ -1908,12 +1919,12 @@ int eof_track_rocksmith_insert_difficulty(void)
 	return 1;
 }
 
-int eof_track_rocksmith_delete_difficulty(void)
+int eof_track_delete_difficulty(void)
 {
 	char undo_made = 0;
 
-	if(!eof_song || eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
-		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+	if(!eof_song)
+		return 1;
 
 	if(eof_track_diff_populated_status[eof_note_type])
 	{	//If the active track has any notes
@@ -2420,15 +2431,19 @@ int eof_track_unflatten_difficulties(void)
 	return 1;
 }
 
-int eof_menu_track_open_bass(void)
+int eof_menu_track_open_strum(void)
 {
-	unsigned long tracknum = eof_song->track[EOF_TRACK_BASS]->tracknum;
+	unsigned long tracknum;
 	unsigned long ctr;
 	char undo_made = 0;	//Set to nonzero if an undo state was saved
 
-	if(eof_open_bass_enabled())
-	{	//Turn off open bass notes
-		eof_song->track[EOF_TRACK_BASS]->flags &= ~(EOF_TRACK_FLAG_SIX_LANES);	//Clear the flag
+	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT) || (eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR))
+		return 1;	//Don't allow this function to run unless a legacy guitar/bass track is active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	if(eof_open_strum_enabled(eof_selected_track))
+	{	//Turn off open strum notes
+		eof_song->track[eof_selected_track]->flags &= ~(EOF_TRACK_FLAG_SIX_LANES);	//Clear the flag
 		eof_song->legacy_track[tracknum]->numlanes = 5;
 	}
 	else
@@ -2470,7 +2485,7 @@ int eof_menu_track_open_bass(void)
 				eof_song->legacy_track[tracknum]->note[ctr]->note = 32;	//Clear all lanes for this note except for lane 6 (open bass)
 			}
 		}
-		eof_song->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the flag
+		eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the flag
 		eof_song->legacy_track[tracknum]->numlanes = 6;
 	}
 	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
@@ -2499,6 +2514,13 @@ int eof_menu_track_five_lane_drums(void)
 
 	eof_set_3D_lane_positions(0);	//Update xchart[] by force
 	eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
+	return 1;
+}
+
+int eof_menu_track_unshare_drum_phrasing(void)
+{
+	if(eof_song)
+		eof_song->tags->unshare_drum_phrasing ^= 1;	//Toggle this boolean variable
 	return 1;
 }
 

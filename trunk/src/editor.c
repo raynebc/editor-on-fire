@@ -1718,8 +1718,8 @@ if(key[KEY_PAUSE])
 				{
 					eof_snote |= 16;
 				}
-				if(eof_open_bass_enabled() && (eof_selected_track == EOF_TRACK_BASS) && !eof_snote && (eof_guitar.button[0].held || eof_guitar.button[1].held))
-				{	//If the strum is being held up/down with no frets, PART BASS is active, and open bass strumming is enabled
+				if(eof_open_strum_enabled(eof_selected_track) && !eof_snote && (eof_guitar.button[0].held || eof_guitar.button[1].held))
+				{	//If the strum is being held up/down with no frets, and open strumming is enabled
 					eof_snote = 32;	//The strum note is lane 6
 				}
 				if(eof_guitar.button[0].pressed || eof_guitar.button[1].pressed)

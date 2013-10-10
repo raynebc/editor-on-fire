@@ -1431,6 +1431,11 @@ set_window_title(debugtext);
 								diff = eof_import_events[i]->diff;
 								switch(eof_import_events[i]->event[j]->d1)
 								{
+									case 60:	//This is used as an open strum in Power Gig
+										lane = 5;	//EOF maps this to lane 6
+										sp->track[picked_track]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
+										sp->legacy_track[tracknum]->numlanes = 6;	//Set this track to have 6 lanes instead of 5
+									break;
 									case 62:
 										if(eof_midi_tracks[picked_track].track_type == EOF_TRACK_DRUM)
 										{	//In the drum track, this value is high tom
@@ -1903,32 +1908,29 @@ set_window_title(debugtext);
 									phrasediff = eof_import_events[i]->event[j]->dp[4];	//Store the difficulty ID
 									switch(eof_import_events[i]->event[j]->dp[5])
 									{	//Check the value of the phrase ID
-										case 1:	//Open strum bass
-											if(picked_track == EOF_TRACK_BASS)
-											{	//Only parse open strum bass phrases for the bass track
+										case 1:	//Open strum
 #ifdef EOF_DEBUG
-												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Open strum bass (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
-												eof_log(eof_log_string, 1);
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Open strum bass (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
+											eof_log(eof_log_string, 1);
 #endif
-												if(eof_import_events[i]->event[j]->dp[6] == 1)
-												{	//Start of open strum bass phrase
-													openstrumpos[phrasediff] = event_realtime;
-												}
-												else if(eof_import_events[i]->event[j]->dp[6] == 0)
-												{	//End of open strum bass phrase
-													for(k = note_count[picked_track] - 1; k >= first_note; k--)
-													{	//Check for each note that has been imported
-														if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= openstrumpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
-														{	//If the note is in the same difficulty as the open strum bass phrase, and its timestamp falls between the phrase on and phrase off marker
+											if(eof_import_events[i]->event[j]->dp[6] == 1)
+											{	//Start of open strum bass phrase
+												openstrumpos[phrasediff] = event_realtime;
+											}
+											else if(eof_import_events[i]->event[j]->dp[6] == 0)
+											{	//End of open strum phrase
+												for(k = note_count[picked_track] - 1; k >= first_note; k--)
+												{	//Check for each note that has been imported
+													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= openstrumpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+													{	//If the note is in the same difficulty as the open strum bass phrase, and its timestamp falls between the phrase on and phrase off marker
 #ifdef EOF_DEBUG
-															(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%ld (Diff=%d, Pos=%lu, Mask=%lu, Length=%ld) to have a note mask of 33", k, eof_get_note_type(sp, picked_track, k), eof_get_note_pos(sp, picked_track, k), eof_get_note_note(sp, picked_track, k), eof_get_note_length(sp, picked_track, k));
-															eof_log(eof_log_string, 1);
+														(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%ld (Diff=%d, Pos=%lu, Mask=%lu, Length=%ld) to have a note mask of 33", k, eof_get_note_type(sp, picked_track, k), eof_get_note_pos(sp, picked_track, k), eof_get_note_note(sp, picked_track, k), eof_get_note_length(sp, picked_track, k));
+														eof_log(eof_log_string, 1);
 #endif
-															eof_set_note_note(sp, picked_track, k, 33);	//Change this note to a lane 1+6 chord (the cleanup logic should later correct this to just a lane 6 gem, EOF's in-editor notation for open strum bass).  This modification is necessary so that the note off event representing the end of the lane 1 gem for an open bass note can be processed properly.
-															sp->track[picked_track]->flags = EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
-															tracknum = sp->track[EOF_TRACK_BASS]->tracknum;
-															sp->legacy_track[tracknum]->numlanes = 6;	//Set this track to have 6 lanes instead of 5
-														}
+														eof_set_note_note(sp, picked_track, k, 33);	//Change this note to a lane 1+6 chord (the cleanup logic should later correct this to just a lane 6 gem, EOF's in-editor notation for open strum bass).  This modification is necessary so that the note off event representing the end of the lane 1 gem for an open bass note can be processed properly.
+														sp->track[picked_track]->flags = EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
+														tracknum = sp->track[picked_track]->tracknum;
+														sp->legacy_track[tracknum]->numlanes = 6;	//Set this track to have 6 lanes instead of 5
 													}
 												}
 											}

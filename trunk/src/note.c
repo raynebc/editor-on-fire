@@ -943,7 +943,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			{	//Render for each of the available fret lanes (count the active track's lanes to work around numlanes not being equal to 6 for open bass)
 				if(notenote & mask)
 				{	//If this lane is used
-					if((mask == 32) && (track == EOF_TRACK_BASS) && eof_open_bass_enabled())
+					if((mask == 32) && eof_open_strum_enabled(track))
 					{	//Lane 6 for the bass track (if enabled) renders similarly to a bass drum note
 						rz = npos;
 						ez = npos + 14;
@@ -1119,8 +1119,8 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	{	//For each of the lanes in this track
 		if(notenote & mask)
 		{	//If this lane has a gem to render
-			if((ctr == 5) && (track == EOF_TRACK_BASS) && eof_open_bass_enabled())
-			{	//Logic to render open bass strum notes (a rectangle covering the width of rendering of frets 2, 3 and 4
+			if((ctr == 5) && eof_open_strum_enabled(track))
+			{	//Logic to render open strum notes (a rectangle covering the width of rendering of frets 2, 3 and 4
 				point[0] = ocd3d_project_x(xchart[1] - 10, rz);
 				point[1] = ocd3d_project_y(200, rz);
 				point[2] = ocd3d_project_x(xchart[1] - 10, ez);
