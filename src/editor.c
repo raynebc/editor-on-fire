@@ -811,14 +811,14 @@ if(key[KEY_PAUSE])
 			{
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				if(eof_selected_track > EOF_TRACKS_MIN)
-					(void) eof_menu_track_selected_track_number(eof_selected_track-1, 1);
+					(void) eof_menu_track_selected_track_number(eof_selected_track - 1, 1);
 				else
 					(void) eof_menu_track_selected_track_number(EOF_TRACKS_MAX - 1, 1);	//Wrap around
 			}
 			else					//Shift instrument forward 1 number
 			{
 				if(eof_selected_track < EOF_TRACKS_MAX - 1)
-					(void) eof_menu_track_selected_track_number(eof_selected_track+1, 1);
+					(void) eof_menu_track_selected_track_number(eof_selected_track + 1, 1);
 				else
 					(void) eof_menu_track_selected_track_number(EOF_TRACKS_MIN, 1);	//Wrap around
 			}
@@ -1085,6 +1085,7 @@ if(key[KEY_PAUSE])
 
 	/* transpose mini piano visible area up one octave (CTRL+SHIFT+Up in a vocal track) */
 	/* transpose mini piano visible area up one (SHIFT+Up in a vocal track, non Feedback input modes) */
+	/* change to the next track of the same type (CTRL+SHIFT+Up in a non vocal track) */
 	/* transpose lyric up one octave (CTRL+Up in a vocal track) */
 	/* toggle pro guitar slide up (CTRL+Up in a pro guitar track) */
 	/* transpose note up (Up, non Feedback input methods, normal seek controls) */
@@ -1094,27 +1095,54 @@ if(key[KEY_PAUSE])
 	if(key[KEY_UP])
 	{
 		char do_seek = 0;	//Is set to nonzero if a seek is performed
-		if((KEY_EITHER_SHIFT) && (eof_input_mode != EOF_INPUT_FEEDBACK))
-		{
-			eof_shift_used = 1;	//Track that the SHIFT key was used
+		if(KEY_EITHER_SHIFT)
+		{	//SHIFT is held
 			if(eof_vocals_selected)
-			{
+			{	//The vocal track is active
 				if(KEY_EITHER_CTRL)
-				{	//CTRL and SHIFT held
+				{	//Both CTRL and SHIFT are held
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_vocals_offset += 12;
 				}
-				else
-				{	//Only SHIFT held
+				else if(eof_input_mode != EOF_INPUT_FEEDBACK)
+				{	//Only SHIFT is held, a non feedback input mode is in use
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_vocals_offset++;
 				}
-				if(eof_vocals_offset > MAXPITCH)
-				{
-					eof_vocals_offset = MAXPITCH;
+				else if(eof_music_paused && !eof_music_catalog_playback)
+				{	//Only SHIFT is held and feedback input mode is in use
+					(void) eof_menu_song_seek_next_grid_snap();
+				}
+				if(eof_vocals_offset > MAXPITCH - 12)
+				{	//Don't allow the offset to go higher than the last usable octave
+					eof_vocals_offset = MAXPITCH - 12;
 				}
 			}
-			else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{
-				(void) eof_pro_guitar_toggle_strum_up();
+			else
+			{	//A non vocal track is active
+				if(KEY_EITHER_CTRL)
+				{	//Both CTRL and SHIFT are held
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					char format = eof_song->track[eof_selected_track]->track_format;	//Remember what format this track is
+					do{	//Cycle track forward until one of the same format is reached
+						if(eof_selected_track < EOF_TRACKS_MAX - 1)
+							(void) eof_menu_track_selected_track_number(eof_selected_track + 1, 1);
+						else
+							(void) eof_menu_track_selected_track_number(EOF_TRACKS_MIN, 1);	//Wrap around
+					}while(eof_song->track[eof_selected_track]->track_format != format);
+				}
+				else if(eof_input_mode != EOF_INPUT_FEEDBACK)
+				{	//Only SHIFT is held, a non feedback input mode is in use
+					if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+					{
+						eof_shift_used = 1;	//Track that the SHIFT key was used
+						(void) eof_pro_guitar_toggle_strum_up();
+					}
+				}
+				else if(eof_music_paused && !eof_music_catalog_playback)
+				{	//Only SHIFT is held and feedback input mode is in use
+					(void) eof_menu_song_seek_next_grid_snap();
+				}
 			}
 		}
 		else if(eof_music_paused && !eof_music_catalog_playback)
@@ -1131,7 +1159,7 @@ if(key[KEY_PAUSE])
 				}
 			}
 			else
-			{	//Neither SHIFT nor CTRL is held
+			{	//Neither SHIFT nor CTRL are held
 				if(eof_input_mode == EOF_INPUT_FEEDBACK)
 				{
 					(void) eof_menu_song_seek_next_grid_snap();
@@ -1162,6 +1190,7 @@ if(key[KEY_PAUSE])
 
 	/* transpose mini piano visible area down one octave (CTRL+SHIFT+Down) */
 	/* transpose mini piano visible area down one (SHIFT+Down, non Feedback input modes) */
+	/* change to the previous track of the same type (CTRL+SHIFT+Down in a non vocal track) */
 	/* transpose lyric down one octave (CTRL+Down in a vocal track) */
 	/* toggle pro guitar slide down (CTRL+Down in a pro guitar track) */
 	/* transpose note down (Down, non Feedback input methods) */
@@ -1171,27 +1200,55 @@ if(key[KEY_PAUSE])
 	if(key[KEY_DOWN])
 	{
 		char do_seek = 0;	//Is set to nonzero if a seek is performed
-		if((KEY_EITHER_SHIFT) && (eof_input_mode != EOF_INPUT_FEEDBACK))
-		{
-			eof_shift_used = 1;	//Track that the SHIFT key was used
+		if(KEY_EITHER_SHIFT)
+		{	//SHIFT is held
 			if(eof_vocals_selected)
-			{
+			{	//The vocal track is active
 				if(KEY_EITHER_CTRL)
-				{	//CTRL and SHIFT held
+				{	//Both CTRL and SHIFT are held
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_vocals_offset -= 12;
 				}
-				else
-				{	//Only SHIFT held
+				else if(eof_input_mode != EOF_INPUT_FEEDBACK)
+				{	//Only SHIFT is held, a non feedback input mode is in use
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_vocals_offset--;
+				}
+				else if(eof_music_paused && !eof_music_catalog_playback)
+				{	//Only SHIFT is held, the chart is paused and feedback input mode is in use
+					(void) eof_menu_song_seek_previous_grid_snap();
 				}
 				if(eof_vocals_offset < MINPITCH)
 				{
 					eof_vocals_offset = MINPITCH;
 				}
 			}
-			else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{
-				(void) eof_pro_guitar_toggle_strum_down();
+			else
+			{	//A non vocal track is active
+				if(KEY_EITHER_CTRL)
+				{	//Both CTRL and SHIFT are held
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					char format = eof_song->track[eof_selected_track]->track_format;	//Remember what format this track is
+					do{	//Cycle track backward until one of the same format is reached
+						if(eof_selected_track > EOF_TRACKS_MIN)
+							(void) eof_menu_track_selected_track_number(eof_selected_track - 1, 1);
+						else
+							(void) eof_menu_track_selected_track_number(EOF_TRACKS_MAX - 1, 1);	//Wrap around
+					}while(eof_song->track[eof_selected_track]->track_format != format);
+				}
+				else if(eof_input_mode != EOF_INPUT_FEEDBACK)
+				{	//Only SHIFT is held, a non feedback input mode is in use
+					if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+					{
+						eof_shift_used = 1;	//Track that the SHIFT key was used
+						(void) eof_pro_guitar_toggle_strum_down();
+					}
+				}
+				else if(eof_music_paused && !eof_music_catalog_playback)
+				{	//Only SHIFT is held, the chart is paused and feedback input mode is in use
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					(void) eof_menu_song_seek_previous_grid_snap();
+				}
 			}
 		}
 		else if(eof_music_paused && !eof_music_catalog_playback)
@@ -1208,7 +1265,7 @@ if(key[KEY_PAUSE])
 				}
 			}
 			else
-			{	//Neither SHIFT nor CTRL is held
+			{	//Neither SHIFT nor CTRL are held
 				if(eof_input_mode == EOF_INPUT_FEEDBACK)
 				{
 					(void) eof_menu_song_seek_previous_grid_snap();
