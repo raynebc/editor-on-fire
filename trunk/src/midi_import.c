@@ -375,6 +375,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	int lc;
 	long b = -1;
 	unsigned long tp;
+	char powergig_hopo, powergig_sp;	//Track the HOPO and Star Power phrasing for Power Gig import
 
 	eof_log("eof_import_midi() entered", 1);
 
@@ -563,6 +564,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 				/* controller change */
 				case 0xB0:
 				{
+					eof_midi_import_add_event(eof_import_events[i], absolute_pos, current_event, d1, d2, i);
 					break;
 				}
 
@@ -1181,6 +1183,8 @@ set_window_title(debugtext);
 			first_note = note_count[picked_track];
 			tracknum = sp->track[picked_track]->tracknum;
 
+			powergig_hopo = powergig_sp = 0;	//Reset these statuses
+
 //Detect whether Pro drum notation is being used
 //Pro drum notation is that if a green, yellow or blue drum note is NOT to be marked as a cymbal,
 //it must be marked with the appropriate MIDI note, otherwise the note defaults as a cymbal
@@ -1404,6 +1408,13 @@ set_window_title(debugtext);
 										linestart = event_realtime;	//This is the starting position
 										linetrack = 1;
 									}
+									if(eof_import_events[i]->game == 1)
+									{	//If the MIDI is in Power Gig notation
+										if(powergig_sp)
+										{	//If a star power phrase is in progress
+											sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;	//The line this lyric is in gets marked with star power status
+										}
+									}
 									note_count[picked_track]++;
 								}
 							}
@@ -1418,6 +1429,30 @@ set_window_title(debugtext);
 							}
 						}//Only import the lyric if it isn't a newline character, which some Power Gig MIDIs use in addition to carriage return
 					}//Lyric event
+
+					/* Control change event (Used in Power Gig to mark the equivalent of star power sections */
+					else if(eof_import_events[i]->event[j]->type == 0xB0)
+					{	//Control change event
+						if(eof_import_events[i]->game == 1)
+						{	//If the MIDI is in Power Gig notation
+#ifdef EOF_DEBUG
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tControl change:  Controller type %d, value %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->d2, eof_import_events[i]->event[j]->pos, event_realtime);
+							eof_log(eof_log_string, 1);
+#endif
+							if((eof_import_events[i]->event[j]->d1 >= 80) && (eof_import_events[i]->event[j]->d1 <= 82))
+							{	//These control change events mark "mojo" sections (the equivalent of star power phrases)
+								if(eof_import_events[i]->event[j]->d2 == 127)
+								{	//This starts the phrase
+									powergig_sp = 1;
+									sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;	//Any lyric line in progress gets marked with star power status
+								}
+								else
+								{	//This ends the phrase
+									powergig_sp = 0;
+								}
+							}
+						}//If the MIDI is in Power Gig notation
+					}//Control change event
 				}//If parsing a vocal track
 				else if(eof_midi_tracks[picked_track].track_format == EOF_LEGACY_TRACK_FORMAT)
 				{	//If parsing a legacy track
@@ -1731,6 +1766,13 @@ set_window_title(debugtext);
 									{	//This is a purle drum note (green in Rock Band), assume it is a cymbal unless a pro drum phrase indicates otherwise
 										eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_NOTE_FLAG_G_CYMBAL);	//Ensure the cymbal flag is set
 									}
+								}
+							}
+							if(eof_import_events[i]->game == 1)
+							{	//If the MIDI is in Power Gig notation
+								if(powergig_hopo)
+								{	//If a HOPO phrase is in effect
+									eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_NOTE_FLAG_F_HOPO);	//Ensure the HOPO flag is set
 								}
 							}
 						}//If a note difficulty was identified above
@@ -2054,6 +2096,51 @@ set_window_title(debugtext);
 						free(eof_import_events[i]->event[j]->dp);	//The the memory allocated to store this Sysex message's data
 						eof_import_events[i]->event[j]->dp = NULL;
 					}//Sysex event
+
+					/* Control change event (Used in Power Gig to mark HO/PO and the equivalent of star power sections */
+					else if(eof_import_events[i]->event[j]->type == 0xB0)
+					{	//Control change event
+						if(eof_import_events[i]->game == 1)
+						{	//If the MIDI is in Power Gig notation
+#ifdef EOF_DEBUG
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tControl change:  Controller type %d, value %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->d2, eof_import_events[i]->event[j]->pos, event_realtime);
+							eof_log(eof_log_string, 1);
+#endif
+							if(eof_import_events[i]->event[j]->d1 == 68)
+							{	//This control change event marks forced HOPO phrases
+								if(eof_import_events[i]->event[j]->d2 == 127)
+								{	//This starts the phrase
+									powergig_hopo = 1;
+								}
+								else
+								{	//This ends the phrase
+									powergig_hopo = 0;
+								}
+							}
+							else if((eof_import_events[i]->event[j]->d1 >= 80) && (eof_import_events[i]->event[j]->d1 <= 82))
+							{	//These control change events mark "mojo" sections (the equivalent of star power phrases)
+								if(eof_import_events[i]->event[j]->d2 == 127)
+								{	//This starts the phrase
+									if(!powergig_sp && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
+									{	//If a star power phrase had not been started, and another phrase can be stored
+										phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
+										phraseptr->start_pos = event_realtime;
+										powergig_sp = 1;
+									}
+								}
+								else
+								{	//This ends the phrase
+									if(powergig_sp && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
+									{	//If a star power phrase had been started, and another phrase can be stored
+										phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
+										phraseptr->end_pos = event_realtime;
+										eof_set_num_star_power_paths(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track) + 1);
+									}
+									powergig_sp = 0;
+								}
+							}
+						}//If the MIDI is in Power Gig notation
+					}//Control change event
 				}//If parsing a legacy track
 				else if(eof_midi_tracks[picked_track].track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 				{	//If parsing a pro guitar track
