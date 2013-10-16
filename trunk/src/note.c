@@ -175,6 +175,28 @@ int eof_adjust_notes(int offset)
 			phraseptr->start_pos += offset;
 			phraseptr->end_pos += offset;
 		}
+		if(eof_song->track[i]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If this is a pro guitar track
+			EOF_PRO_GUITAR_TRACK *tp;
+			unsigned long tracknum;
+
+			tracknum = eof_song->track[i]->tracknum;
+			tp = eof_song->pro_guitar_track[tracknum];
+
+			for(j = 0; j < tp->handpositions; j++)
+			{	//For each fret hand position in the track (only change the start_pos variable, end_pos stores the fret position and not a timestamp)
+				tp->handposition[j].start_pos += offset;
+			}
+			for(j = 0; j < tp->popupmessages; j++)
+			{	//For each popup message in the track
+				tp->popupmessage[j].start_pos += offset;
+				tp->popupmessage[j].end_pos += offset;
+			}
+			for(j = 0; j < tp->tonechanges; j++)
+			{	//For each tone change in the track (only change the start_pos variable, end_pos is unused)
+				tp->tonechange[j].start_pos += offset;
+			}
+		}//If this is a pro guitar track
 	}
 	for(i = 0; i < eof_song->catalog->entries; i++)
 	{

@@ -2347,7 +2347,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 		}
 	}
 //Parse the song name
-	for(index = 0; (filename[index] != '\0') && (filename[index] != '.') && ((size_t)index < sizeof(filename) - 1); index++)
+	for(index = 0; ((size_t)index < sizeof(filename) - 1) && (filename[index] != '\0') && (filename[index] != '.'); index++)
 	{	//For each character in the file name until the end of the string or a period is reached (and while a buffer overflow won't occur)
 		songname[index] = filename[index];	//Copy the character
 	}

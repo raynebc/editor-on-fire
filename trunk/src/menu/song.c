@@ -1255,6 +1255,16 @@ int eof_menu_track_selected_track_number(int tracknum, int updatetitle)
 	eof_log("\tChanging active track", 1);
 	eof_log("eof_menu_track_selected_track_number() entered", 1);
 
+	//Store the active difficulty number into the appropriate variable
+	if(eof_song->track[eof_selected_track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+	{	//If a vocal track is active
+		eof_note_type_v = eof_note_type;	//Store the active difficulty number into the vocal difficulty variable
+	}
+	else
+	{
+		eof_note_type_i = eof_note_type;	//Store the active difficulty number into the instrument difficulty variable
+	}
+
 	if((tracknum > 0) && (tracknum < eof_song->tracks))
 	{
 		for(i = 0; i < EOF_TRACKS_MAX; i++)
@@ -1265,11 +1275,13 @@ int eof_menu_track_selected_track_number(int tracknum, int updatetitle)
 		if(eof_song->track[tracknum]->track_format == EOF_VOCAL_TRACK_FORMAT)
 		{
 			eof_vocals_selected = 1;
+			eof_note_type = eof_note_type_v;	//Retrieve the difficulty number last in effect when the vocal track was last active
 			maxdiff = 0;			//For now, the default lyric set (PART VOCALS) will be selected when changing to PART VOCALS
 		}
 		else
 		{
 			eof_vocals_selected = 0;
+			eof_note_type = eof_note_type_i;	//Retrieve the difficulty number last in effect when an instrument track was last active
 			if(eof_song->track[tracknum]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 			{	//If the track being changed to has its difficulty limit removed
 				maxdiff = eof_song->track[tracknum]->numdiffs - 1;
@@ -3370,8 +3382,8 @@ int eof_menu_song_catalog_edit(void)
 	eof_render();
 	eof_color_dialog(eof_song_catalog_edit_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_song_catalog_edit_dialog);
-	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%ld", eof_song->catalog->entry[eof_selected_catalog_entry].start_pos);
-	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%ld", eof_song->catalog->entry[eof_selected_catalog_entry].end_pos);
+	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%lu", eof_song->catalog->entry[eof_selected_catalog_entry].start_pos);
+	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", eof_song->catalog->entry[eof_selected_catalog_entry].end_pos);
 
 	if(eof_popup_dialog(eof_song_catalog_edit_dialog, 2) == 5)
 	{	//User clicked OK
@@ -3632,7 +3644,7 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 										}
 										if(report && (phrase_warning == 1))
 										{	//If the user opted to correct this issue, ensure each difficulty of each phrase defines a fret hand position
-											eof_enforce_rs_phrase_begin_with_fret_hand_position(eof_song, ctr, ctr3, startpos, endpos, undo_made, 0);	//Add a fret hand position to this phrase if one is not defined already
+											(void) eof_enforce_rs_phrase_begin_with_fret_hand_position(eof_song, ctr, ctr3, startpos, endpos, undo_made, 0);	//Add a fret hand position to this phrase if one is not defined already
 										}
 									}
 								}

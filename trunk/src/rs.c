@@ -465,7 +465,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	caltime = localtime(&seconds);
 	if(caltime)
 	{	//If the calendar time could be determined
-		(void) snprintf(buffer, sizeof(buffer) - 1, "  <lastConversionDateTime>%u-%u-%u %u:%02u</lastConversionDateTime>\n", caltime->tm_mon + 1, caltime->tm_mday, caltime->tm_year % 100, caltime->tm_hour % 12, caltime->tm_min);
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <lastConversionDateTime>%d-%d-%d %d:%02d</lastConversionDateTime>\n", caltime->tm_mon + 1, caltime->tm_mday, caltime->tm_year % 100, caltime->tm_hour % 12, caltime->tm_min);
 	}
 	else
 	{
@@ -847,25 +847,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	chordlistsize = eof_build_chord_list(sp, track, &chordlist);	//Build a list of all unique chords in the track
 	if(!chordlistsize)
 	{	//If there were no chords, write an empty chord template tag
-		char *filler_template_6_string = "   <chordTemplate chordName=\"\" finger0=\"1\" finger1=\"-1\" finger2=\"-1\" finger3=\"1\" finger4=\"-1\" finger5=\"-1\" fret0=\"14\" fret1=\"-1\" fret2=\"-1\" fret3=\"14\" fret4=\"-1\" fret5=\"-1\"/>\n";
-		char *filler_template_5_string = "   <chordTemplate chordName=\"\" finger0=\"1\" finger1=\"-1\" finger2=\"-1\" finger3=\"1\" finger4=\"-1\" fret0=\"14\" fret1=\"-1\" fret2=\"-1\" fret3=\"14\" fret4=\"-1\"/>\n";
-		char *filler_template_4_string = "   <chordTemplate chordName=\"\" finger0=\"1\" finger1=\"-1\" finger2=\"-1\" finger3=\"1\" fret0=\"14\" fret1=\"-1\" fret2=\"-1\" fret3=\"14\"/>\n";
-///The Rocksmith toolkit (v1.01) has a bug where a song package cannot be created if any arrangements have no chord templates, so write at least one
-//		(void) pack_fputs("  <chordTemplates count=\"0\"/>\n", fp);
-		(void) pack_fputs("  <chordTemplates count=\"1\">\n", fp);
-		switch(tp->numstrings)
-		{	//The chord template written should match the number of strings used in the track
-			case 4:
-				(void) pack_fputs(filler_template_4_string, fp);
-			break;
-			case 5:
-				(void) pack_fputs(filler_template_5_string, fp);
-			break;
-			default:
-				(void) pack_fputs(filler_template_6_string, fp);
-			break;
-		}
-		(void) pack_fputs("  </chordTemplates>\n", fp);
+		(void) pack_fputs("  <chordTemplate count=\"0\"/>\n", fp);
 	}
 	else
 	{	//There were chords
@@ -1858,8 +1840,6 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 	}
 	if((current_low != last_anchor) && next_position)
 	{	//If the last parsed note requires a position change
-if(!current_low)
-puts("Blarg");
 		(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL);	//Add the best determined fret hand position
 	}
 
@@ -1871,7 +1851,7 @@ puts("Blarg");
 			if(started)
 			{	//If the first phrase marker has been encountered, this beat marks the end of a phrase
 				endpos = sp->beat[beatctr]->pos - 1;	//Track this as the end position of the phrase
-				eof_enforce_rs_phrase_begin_with_fret_hand_position(sp, track, difficulty, startpos, endpos, &eof_fret_hand_position_list_dialog_undo_made, 0);	//Add a fret hand position
+				(void) eof_enforce_rs_phrase_begin_with_fret_hand_position(sp, track, difficulty, startpos, endpos, &eof_fret_hand_position_list_dialog_undo_made, 0);	//Add a fret hand position
 			}//If the first phrase marker has been encountered, this beat marks the end of a phrase
 
 			started = 1;	//Track that a phrase has been encountered

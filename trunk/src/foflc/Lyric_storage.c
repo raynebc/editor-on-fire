@@ -91,7 +91,6 @@ void InitLyrics(void)
 	Lyrics.piececount=0;
 	Lyrics.filter=NULL;
 	Lyrics.defaultfilter=0;
-	Lyrics.defaultfilter=0;
 	Lyrics.verbose=0;
 	Lyrics.quick=0;
 	Lyrics.in_format=0;

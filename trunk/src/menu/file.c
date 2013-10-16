@@ -2481,6 +2481,7 @@ int eof_save_helper(char *destfilename)
 		}
 	}
 
+	/* perform checks for chord fingerings and fret hand positions */
 	if(eof_write_rs_files)
 	{	//If the user wants to save Rocksmith capable files
 		(void) eof_correct_chord_fingerings();			//Ensure all chords in each pro guitar track have valid finger arrays, prompt user to provide any that are missing
@@ -2488,7 +2489,7 @@ int eof_save_helper(char *destfilename)
 		{	//If any fret hand position errors were found
 			if(alert("One or more problems with defined fret hand positions were found.", NULL, "Cancel save and review them now?", "&Yes", "&No", 'y', 'n') == 1)
 			{	//If the user opts to see the problems
-				eof_check_fret_hand_positions_menu();
+				(void) eof_check_fret_hand_positions_menu();
 				return 1;	//Return cancellation
 			}
 		}
@@ -2522,12 +2523,6 @@ int eof_save_helper(char *destfilename)
 				}
 			}
 		}
-	}
-
-	/* check if any track that has manually defined fret hand positions need corrections */
-	if(eof_write_rs_files)
-	{
-///Add fret hand position check function call here
 	}
 
 	/* rotate out the last save file (filename).previous_save.eof */

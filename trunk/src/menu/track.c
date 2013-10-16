@@ -2331,7 +2331,7 @@ int eof_track_manage_rs_phrases_add_or_remove_level(int function)
 				started = 0;
 				endpos = eof_song->beat[ctr]->pos - 1;	//Track this as the end position of the previous phrase marker
 
-				eof_enforce_rs_phrase_begin_with_fret_hand_position(eof_song, eof_selected_track, eof_note_type, startpos, endpos, &undo_made, 0);
+				(void) eof_enforce_rs_phrase_begin_with_fret_hand_position(eof_song, eof_selected_track, eof_note_type, startpos, endpos, &undo_made, 0);
 					//Ensure there is a fret hand position defined in this phrase at or before its first note
 				eof_track_add_or_remove_track_difficulty_content_range(eof_song, eof_selected_track, eof_note_type, startpos, endpos, function, 0, &undo_made);
 					//Level up/down the content of this time range of the track difficulty
