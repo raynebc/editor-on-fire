@@ -335,6 +335,8 @@ extern char        eof_ogg_setting;
 extern char      * eof_ogg_quality[6];
 extern char        eof_cpu_saver;
 extern int         eof_note_type;
+extern int         eof_note_type_i;
+extern int         eof_note_type_v;
 extern int         eof_selected_track;
 extern int         eof_display_second_piano_roll;
 extern int         eof_note_type2;

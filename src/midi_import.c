@@ -1164,7 +1164,7 @@ set_window_title(debugtext);
 			continue;
 		}
 		picked_track = eof_import_events[i]->type >= 1 ? eof_import_events[i]->type : rbg == 0 ? EOF_TRACK_GUITAR : -1;
-		if((picked_track >= 0) && !used_track[picked_track] && (picked_track < sp->tracks))
+		if((picked_track >= 0) && (picked_track < sp->tracks) && !used_track[picked_track])
 		{	//If this is a valid track to process
 			int last_105 = 0;
 			int last_106 = 0;
@@ -1358,19 +1358,19 @@ set_window_title(debugtext);
 								{	//For each character in the text event
 									if(ugetat(eof_import_events[i]->event[j]->text, k) == '*')
 									{	//If it is an asterisk (what Power Gig uses to denote a pitch shift)
-										usetat(eof_import_events[i]->event[j]->text, k, '+');	//Replace it with a plus sign, the Rock Band equivalent
+										(void) usetat(eof_import_events[i]->event[j]->text, k, '+');	//Replace it with a plus sign, the Rock Band equivalent
 									}
 								}
 								if(ugetat(eof_import_events[i]->event[j]->text, len - 1) == ' ')
 								{	//If the last character in the string is a space
-									usetat(eof_import_events[i]->event[j]->text, len - 1, '\0');	//Truncate the character from the string
+									(void) usetat(eof_import_events[i]->event[j]->text, len - 1, '\0');	//Truncate the character from the string
 								}
 								else
 								{	//Otherwise the next lyric groups with this one, append a hyphen
 									if(len < EOF_MAX_MIDI_TEXT_SIZE)
 									{	//If the array storing the string can accommodate one more character
-										usetat(eof_import_events[i]->event[j]->text, len, '-');
-										usetat(eof_import_events[i]->event[j]->text, len + 1, '\0');
+										(void) usetat(eof_import_events[i]->event[j]->text, len, '-');
+										(void) usetat(eof_import_events[i]->event[j]->text, len + 1, '\0');
 									}
 								}
 							}

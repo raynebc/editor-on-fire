@@ -1122,14 +1122,19 @@ if(key[KEY_PAUSE])
 			{	//A non vocal track is active
 				if(KEY_EITHER_CTRL)
 				{	//Both CTRL and SHIFT are held
-					eof_shift_used = 1;	//Track that the SHIFT key was used
 					char format = eof_song->track[eof_selected_track]->track_format;	//Remember what format this track is
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					do{	//Cycle track forward until one of the same format is reached
 						if(eof_selected_track < EOF_TRACKS_MAX - 1)
-							(void) eof_menu_track_selected_track_number(eof_selected_track + 1, 1);
+						{	//If this isn't the last usable track in the project
+							eof_selected_track++;
+						}
 						else
-							(void) eof_menu_track_selected_track_number(EOF_TRACKS_MIN, 1);	//Wrap around
+						{
+							eof_selected_track = EOF_TRACKS_MIN;	//Otherwise wrap around to the first usable track
+						}
 					}while(eof_song->track[eof_selected_track]->track_format != format);
+					(void) eof_menu_track_selected_track_number(eof_selected_track, 1);	//Set the track
 				}
 				else if(eof_input_mode != EOF_INPUT_FEEDBACK)
 				{	//Only SHIFT is held, a non feedback input mode is in use
@@ -1227,14 +1232,19 @@ if(key[KEY_PAUSE])
 			{	//A non vocal track is active
 				if(KEY_EITHER_CTRL)
 				{	//Both CTRL and SHIFT are held
-					eof_shift_used = 1;	//Track that the SHIFT key was used
 					char format = eof_song->track[eof_selected_track]->track_format;	//Remember what format this track is
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					do{	//Cycle track backward until one of the same format is reached
 						if(eof_selected_track > EOF_TRACKS_MIN)
-							(void) eof_menu_track_selected_track_number(eof_selected_track - 1, 1);
+						{	//If this isn't the first usable track in the project
+							eof_selected_track--;
+						}
 						else
-							(void) eof_menu_track_selected_track_number(EOF_TRACKS_MAX - 1, 1);	//Wrap around
+						{
+							eof_selected_track = EOF_TRACKS_MAX - 1;	//Otherwise wrap around to the last usable track
+						}
 					}while(eof_song->track[eof_selected_track]->track_format != format);
+					(void) eof_menu_track_selected_track_number(eof_selected_track, 1);	//Set the track
 				}
 				else if(eof_input_mode != EOF_INPUT_FEEDBACK)
 				{	//Only SHIFT is held, a non feedback input mode is in use
@@ -1865,15 +1875,23 @@ if(key[KEY_PAUSE])
 			key[KEY_A] = 0;
 		}
 
-	/* decrease note length ( [ or CTRL+[ ) */
+	/* decrease note length ( [ , SHIFT+[ or CTRL+SHIFT+[) */
 		if(key[KEY_OPENBRACE])
 		{
 			unsigned long reductionvalue = 100;	//Default decrease length when grid snap is disabled
 			if(eof_snap_mode == EOF_SNAP_OFF)
 			{
-				if(KEY_EITHER_CTRL)
+				if(KEY_EITHER_SHIFT)
 				{
-					reductionvalue = 10;
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					if(KEY_EITHER_CTRL)
+					{	//If both CTRL and SHIFT are held
+						reductionvalue = 1;		//1 ms length change
+					}
+					else
+					{	//SHIFT+scroll wheel
+						reductionvalue = 10;	//10ms length change
+					}
 				}
 			}
 			else
@@ -1884,15 +1902,23 @@ if(key[KEY_PAUSE])
 			key[KEY_OPENBRACE] = 0;
 		}
 
-	/* increase note length ( ] or CTRL+] ) */
+	/* increase note length ( ] , SHIFT+ ] or CTRL+SHIFT+] ) */
 		if(key[KEY_CLOSEBRACE])
 		{
 			unsigned long increasevalue = 100;	//Default increase length when grid snap is disabled
 			if(eof_snap_mode == EOF_SNAP_OFF)
 			{
-				if(KEY_EITHER_CTRL)
+				if(KEY_EITHER_SHIFT)
 				{
-					increasevalue = 10;
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					if(KEY_EITHER_CTRL)
+					{	//If both CTRL and SHIFT are held
+						increasevalue = 1;		//1 ms length change
+					}
+					else
+					{	//SHIFT+scroll wheel
+						increasevalue = 10;	//10ms length change
+					}
 				}
 			}
 			else
@@ -3590,7 +3616,7 @@ void eof_editor_logic(void)
 			}
 
 			/* increment/decrement fret value (CTRL+scroll wheel) */
-			/* increase/decrease note length (scroll wheel or SHIFT+scroll wheel) */
+			/* increase/decrease note length (scroll wheel , SHIFT+scroll wheel or CTRL+SHIFT+scroll wheel) */
 			if(eof_mickey_z != 0)
 			{	//If there was scroll wheel activity
 				if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
@@ -5809,7 +5835,7 @@ void eof_editor_logic_common(void)
 					if(!eof_song->tags->click_drag_disabled && (!eof_song->tags->tempo_map_locked || (eof_selected_beat == 0)))
 					{	//If click and drag is not disabled and either the tempo map is not locked or the first beat marker was manipulated, allow the marker to be moved
 						if(eof_mouse_drug && (eof_song->tags->ogg[eof_selected_ogg].midi_offset != eof_last_midi_offset))
-						{
+						{	//If the first beat marker's position has changed
 							if((eof_note_auto_adjust && !KEY_EITHER_SHIFT) || (!eof_note_auto_adjust && KEY_EITHER_SHIFT))
 							{
 								if(KEY_EITHER_SHIFT)
