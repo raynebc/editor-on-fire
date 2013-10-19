@@ -328,6 +328,14 @@ MENU eof_note_lyrics_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_note_reflect_menu[] =
+{
+	{"&Vertical", eof_menu_note_reflect_vertical, NULL, 0, NULL},
+	{"&Horizontal", eof_menu_note_reflect_horizontal, NULL, 0, NULL},
+	{"&Both", eof_menu_note_reflect_both, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_note_menu[] =
 {
 	{"&Toggle", NULL, eof_note_toggle_menu, 0, NULL},
@@ -350,8 +358,9 @@ MENU eof_note_menu[] =
 	{"Pro &Guitar", NULL, eof_note_proguitar_menu, 0, NULL},
 	{"&Rocksmith", NULL, eof_note_rocksmith_menu, 0, NULL},
 	{"&Lyrics", NULL, eof_note_lyrics_menu, 0, NULL},
+	{"Re&Flect", NULL, eof_note_reflect_menu, 0, NULL},
 	{"Remove statuses", eof_menu_remove_statuses, NULL, 0, NULL},
-	{"Simpli&Fy chords", eof_menu_note_simplify_chords, NULL, 0, NULL},
+	{"Simplify chords", eof_menu_note_simplify_chords, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -7989,4 +7998,172 @@ int eof_menu_pro_guitar_toggle_string_mute(void)
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
 	return 1;
+}
+
+int eof_menu_note_reflect(char function)
+{
+	int note_selection_updated;
+	unsigned long i, ctr, bitmask1, bitmask2, index1 = 0, index2 = 0, numlanes, tracknum, pos1, pos2, next, previous;
+	unsigned char note, newnote, newlegacy, newghost, newfrets[6], newfinger[6], first_found = 0;
+	char undo_made = 0;
+	EOF_PRO_GUITAR_NOTE *np = NULL;
+
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	if((function & 1) && (eof_song->track[eof_selected_track]->track_format != EOF_VOCAL_TRACK_FORMAT))
+	{	//Perform vertical reflect (unless a vocal track is active)
+		numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+		{	//For each note in the active track
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+			{	//If the note is in the active instrument difficulty and is selected
+				newnote = newlegacy = newghost = 0;	//Reset these
+				(void) memset(newfrets, 0, sizeof(newfrets));	//Clear these arrays
+				(void) memset(newfinger, 0, sizeof(newfinger));
+				index2 = numlanes - 1;	//This is the highest lane's array index (for pro guitar note fret and finger arrays)
+				bitmask2 = 1 << (numlanes - 1);	//This is the bit corresponding to the note mask's highest lane
+				note = eof_get_note_note(eof_song, eof_selected_track, i);
+				for(ctr = 0, bitmask1 = 1; ctr <= numlanes / 2; ctr++, bitmask1 <<= 1, bitmask2 >>= 1, index2--)
+				{	//For the lower half of the lanes in this track and the center lane
+					if((numlanes % 2) && (ctr == (numlanes / 2)))
+					{	//If this is the center lane, leave it as-is
+						newnote |= (note & bitmask1);
+					}
+					else
+					{	//Otherwise reflect it
+						if(note & bitmask1)
+						{	//If this lane is in use
+							if(!undo_made)
+							{	//If an undo hasn't been made
+								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+								undo_made = 1;
+							}
+							newnote |= bitmask2;	//The bit on the other side of the reflection is set
+						}
+						if(note & bitmask2)
+						{	//If the lane opposite the reflection is set
+							if(!undo_made)
+							{	//If an undo hasn't been made
+								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+								undo_made = 1;
+							}
+							newnote |= bitmask1;	//The bit on this side of the reflection is set
+						}
+					}
+
+					if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+					{	//If the track is a pro guitar track
+						np = eof_song->pro_guitar_track[tracknum]->note[i];
+
+						if((numlanes % 2) && (ctr == (numlanes / 2)))
+						{	//If this is the center lane, leave it as-is
+							newlegacy |= (np->legacymask & bitmask1);
+							newfrets[ctr] = np->frets[ctr];
+							newfinger[ctr] = np->finger[ctr];
+						}
+						else
+						{	//Otherwise reflect it
+							if(note & bitmask1)
+							{	//If this lane is in use
+								if(np->legacymask & bitmask1)
+								{	//If this lane is set in the legacy bitmask
+									newlegacy |= bitmask2;	//The bit on the other side of the reflection is set for the legacy bitmask
+								}
+								if(np->ghost & bitmask1)
+								{	//If this lane is set in the ghost bitmask
+									newghost |= bitmask2;	//The bit on the other side of the reflection is set for the ghost bitmask
+								}
+								newfrets[index2] = np->frets[ctr];			//The fret value on the other side of the reflection is updated
+								newfinger[index2] = np->finger[ctr];		//The finger value on the other side of the reflection is updated
+							}
+							if(note & bitmask2)
+							{	//If the lane opposite the reflection is set
+								if(np->legacymask & bitmask2)
+								{	//If the lane opposite the reflection is set in the legacy bitmask
+									newlegacy |= bitmask1;	//The bit on the other side of the reflection is set for the legacy bitmask
+								}
+								if(np->ghost & bitmask2)
+								{	//If this lane opposite the reflection is set in the ghost bitmask
+									newghost |= bitmask1;	//The bit on the other side of the reflection is set for the ghost bitmask
+								}
+								newfrets[ctr] = np->frets[index2];			//The fret value on this side of the reflection is updated
+								newfinger[ctr] = np->finger[index2];		//The finger value on this side of the reflection is updated
+							}
+						}//Otherwise reflect it
+					}//If the track is a pro guitar track
+				}//For the lower half of the lanes in this track and the center lane
+
+				eof_set_note_note(eof_song, eof_selected_track, i, newnote);	//Update the note bitmask
+				if(np && eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//If the track is a pro guitar track
+					np->legacymask = newlegacy;	//Update the legacy bitmask
+					np->ghost = newghost;		//Update the ghost bitmask
+					(void) memcpy(np->frets, newfrets, sizeof(newfrets));		//Update the fret array
+					(void) memcpy(np->finger, newfinger, sizeof(newfinger));	//Update the finger array
+				}
+			}//If the note is in the active instrument difficulty and is selected
+		}//For each note in the active track
+	}//Perform vertical reflect (unless a vocal track is active)
+
+	if(function & 2)
+	{	//Perform horizontal reflect
+		//Determine the first and last selected note
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+		{	//For each note in the active track
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+			{	//If the note is in the active instrument difficulty and is selected
+				if(!first_found)
+				{	//If this is the first selected note found so far
+					index1 = i;	//Track this as the first selected note
+					first_found = 1;
+				}
+				index2 = i;	//Track this as the last selected note found so far
+			}
+		}
+		if(first_found)
+		{	//If at least one note is selected
+			while(index1 < index2)
+			{	//Until the notes on each side of the reflection (the middle selected note) have been swapped
+				if(!undo_made)
+				{	//If an undo hasn't been made
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+
+				pos1 = eof_get_note_pos(eof_song, eof_selected_track, index1);	//Store the position of the note on the left side of the reflection
+				pos2 = eof_get_note_pos(eof_song, eof_selected_track, index2);	//Store the position of the note on the right side of the reflection
+				next = eof_track_fixup_next_note(eof_song, eof_selected_track, index1);	//Store the positions of the next and previous selected notes on each side of the reflection
+				previous = eof_track_fixup_previous_note(eof_song, eof_selected_track, index2);
+				eof_set_note_pos(eof_song, eof_selected_track, index1, pos2);	//Swap the two notes' positions
+				eof_set_note_pos(eof_song, eof_selected_track, index2, pos1);
+				index1 = next;	//Move one note closer to the center of the reflection
+				index2 = previous;
+			}
+			eof_track_sort_notes(eof_song, eof_selected_track);
+		}
+	}//Perform horizontal reflect
+
+	eof_determine_phrase_status(eof_song, eof_selected_track);
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_note_reflect_vertical(void)
+{
+	return eof_menu_note_reflect(1);
+}
+
+int eof_menu_note_reflect_horizontal(void)
+{
+	return eof_menu_note_reflect(2);
+}
+
+int eof_menu_note_reflect_both(void)
+{
+	return eof_menu_note_reflect(3);
 }

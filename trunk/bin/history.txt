@@ -3,6 +3,40 @@ EOF Version History
 
 1.8:
 
+Added a Note>Reflect menu that has functions to reflect
+the selected notes vertically (ie. a gem on the lowest
+lane becomes a gem on the highest lane), horizontally
+(ie. the first selected note is swapped with the last
+selected note), or both.
+
+Fixed a bug where a file path variable wasn't set when a
+new project was created, which could cause the project to
+save into EOF's project folder instead of the expected
+location until the project was manually re-opened in EOF.
+
+Added an alternate EOF icon image courtesy of Frack.
+
+Added keyboard shortcuts (CTRL+SHIFT+Up/Down in a non vocal
+track) that change to the next/previous track of the same
+format.  This allows you, for example, to quickly cycle
+through the pro guitar tracks even though they are not all
+contiguous..
+
+Improved MIDI import to support Power Gig format charts.
+
+Doubled the maximum length of the lyric preview lines.
+
+Added a "precise select like" function that is similar to
+"select like", but also requires notes to have the same
+statuses (ie. both forced HOPO) in order to match.
+
+Added a check to UltraStar lyric import to handle an invalid
+lyric duration of 0.
+
+Added a "Rewind when playback is at end" preference to
+control whether the chart automatically rewinds when the end
+of the song is reached during playback.
+
 Added a user preference (Import dialogs recall last path)
 where, if enabled, will alter the starting folder for each of
 the MIDI/Feedback/GH/Lyric/GP/RS imports to be the folder
@@ -35,9 +69,6 @@ last selected note (holding S while playing back the chart) by
 allowing the playback to loop as long as the S key remains
 held down.  Release the S key to allow playback to stop when
 the last selected note is reached.
-
-Updated EOF to display as many difficulty tabs as will fit in
-the program window, taking any custom width into account.
 
 Added logic in the Windows build so that the new chart wizard
 drops trailing space characters from the end of a user-defined
@@ -117,8 +148,8 @@ where notes are pasted.
 Fixed a bug where in some circumstances, the 3D preview of an
 open strum bass note could fill the entire 3D window with color.
 
-Moved the "Enable open strum bass" and "Enable five lane drums"
-functions into a new "Song>Phase Shift" submenu.
+Added the ability to enable authoring for a fifth drum lane, for
+use in Phase Shift.
 
 Added more checks to the save/save as function to try to detect
 if the project fails to save. During save, the file created
@@ -141,7 +172,10 @@ Added a keyboard shortcut to start playback of the song at
 
 Added the ability to define a custom display width
 (File>Display>Set display width).  The "Display" File menu
-settings have been moved into the "File>Display" submenu.
+settings have been moved into the "File>Display" submenu.  For
+the pro guitar tracks, which can have more than 5 difficulties,
+EOF will display as many difficulty tabs as will fit in the
+program window, taking any custom width into account.
 
 Added support for the album tag in song properties.
 
@@ -172,7 +206,10 @@ Shift.  This drum track will behave similarly to the original
 addition of hi hat or rim shot notations, as requested by the Phase
 Shift developers.  This is necessary in various cases where a single
 drum track cannot behave appropriately in the multiple different
-drum modes Phase Shift allows.
+drum modes Phase Shift allows.  The drum and Phase Shift drum tracks
+both share the same solo, star power, drum roll and special drum
+roll phrases by default.  This sharing can be turned off for a chart
+by enabling the "Track>Phase Shift>Unshare drum phrasing" option.
 
 Improved Beat>Anchor by allowing the position for the selected beat
 to be given to the millisecond.
@@ -687,8 +724,8 @@ Phase Shift" function in the Song menu.
 
 Corrected some bugs involving expert and pro drum statuses.
 
-Added the ability to chart open strum bass guitar notes, compatible with
-Phase Shift.
+Added the ability to chart open strum notes.  Open strum notes in the bass
+track are compatible with Phase Shift.
 
 Updated the EOF project file format to support new features including pro
 guitar/bass, keys, dance, open bass strumming, etc.
