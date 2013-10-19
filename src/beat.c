@@ -151,7 +151,7 @@ void eof_calculate_tempo_map(EOF_SONG * sp)
 
 int eof_beat_is_anchor(EOF_SONG * sp, int cbeat)
 {
-	eof_log("eof_beat_is_anchor() entered", 1);
+	eof_log("eof_beat_is_anchor() entered", 2);
 
 	if(cbeat >= EOF_MAX_BEATS)	//Bounds check
 		return 0;
@@ -581,7 +581,7 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 	char first_measure = 0;	//Set to nonzero when the first measure marker is reached
 	unsigned long i;
 
-	eof_log("eof_process_beat_statistics() entered", 1);
+	eof_log("eof_process_beat_statistics() entered", 2);
 
 	if(!sp)
 		return;

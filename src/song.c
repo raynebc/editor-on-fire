@@ -2252,6 +2252,9 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		return 0;	//Return error
 	}
 
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Saving to file \"%s\"", fn);
+	eof_log(eof_log_string, 1);
+
 	unshare_drum_phrasing = sp->tags->unshare_drum_phrasing;	//Store this outside the project structure until save completes, so that both drum tracks' phrases can be written
 	sp->tags->unshare_drum_phrasing = 1;
 

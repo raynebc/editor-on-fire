@@ -2321,6 +2321,7 @@ int eof_new_chart(char * filename)
 	}
 	eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
 	(void) ustrcpy(eof_loaded_song_name, "notes.eof");
+	(void) append_filename(eof_filename, eof_song_path, eof_loaded_song_name, (int) sizeof(eof_filename));	//Build the full path to the project file
 
 	eof_song_loaded = 1;
 

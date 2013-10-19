@@ -272,4 +272,15 @@ int eof_menu_pro_guitar_toggle_string_mute(void);
 	//For each selected note, applies string mute status to all used strings if any of the note's used strings aren't already string muted,
 	//otherwise clears string mute status from all used strings in the note
 
+int eof_menu_note_reflect(char function);
+	//If function is 1, selected notes are reflected vertically so that a gem on lane 1 is moved to the highest lane, etc.
+	//If function is 2, selected notes are reflected horizontally so that the first selected note is swapped with the last selected note, etc.
+	//If function is 3, both the vertical and horizontal reflect operations are performed
+int eof_menu_note_reflect_vertical(void);
+	//Calls eof_menu_note_reflect() with the option to perform vertical reflection
+int eof_menu_note_reflect_horizontal(void);
+	//Calls eof_menu_note_reflect() with the option to perform horizontal reflection
+int eof_menu_note_reflect_both(void);
+	//Calls eof_menu_note_reflect() with the option to perform both vertical and horizontal reflection
+
 #endif
