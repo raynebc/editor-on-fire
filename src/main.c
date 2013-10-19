@@ -764,6 +764,7 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 	if(eof_screen_width < eof_screen_width_default)
 	{	//If the specified width is invalid
 		eof_screen_width = eof_screen_width_default;
+		effectivewidth = eof_screen_width_default;
 	}
 
 	if(set_gfx_mode(GFX_AUTODETECT_WINDOWED, effectivewidth, effectiveheight, 0, 0))
