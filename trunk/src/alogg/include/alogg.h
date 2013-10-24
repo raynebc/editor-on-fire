@@ -57,6 +57,7 @@ ALOGG_DLL_DECLSPEC ALOGG_OGG *alogg_create_ogg_from_file(FILE *f);
 ALOGG_DLL_DECLSPEC void alogg_destroy_ogg(ALOGG_OGG *ogg);
 
 ALOGG_DLL_DECLSPEC int alogg_play_ogg(ALOGG_OGG *ogg, int buffer_len, int vol, int pan);
+ALOGG_DLL_DECLSPEC int alogg_play_ogg_ts(ALOGG_OGG *ogg, int buffer_len, int vol, int pan, int speed);
 ALOGG_DLL_DECLSPEC int alogg_play_ex_ogg(ALOGG_OGG *ogg, int buffer_len, int vol, int pan, int speed, int loop);
 ALOGG_DLL_DECLSPEC void alogg_stop_ogg(ALOGG_OGG *ogg);
 ALOGG_DLL_DECLSPEC void alogg_adjust_ogg(ALOGG_OGG *ogg, int vol, int pan, int speed, int loop);
