@@ -17,6 +17,8 @@
 #include "../../memwatch.h"
 #endif
 
+#include <rubberband/rubberband-c.h>
+
 
 /* standard ALOGG_OGG structure */
 
@@ -39,6 +41,7 @@ struct ALOGG_OGG {
   int wait_for_audio_stop;         /* set if we are just waiting for the
                                       audiobuffer to stop plaing the last
                                       frame */
+  int time_stretch;                /* set if we are using time stretch */
 };
 
 
@@ -287,6 +290,10 @@ int alogg_play_ogg(ALOGG_OGG *ogg, int buffer_len, int vol, int pan) {
   return alogg_play_ex_ogg(ogg, buffer_len, vol, pan, 1000, FALSE);
 }
 
+int alogg_play_ogg_ts(ALOGG_OGG *ogg, int buffer_len, int vol, int pan, int speed) {
+  return 0;
+}
+
 
 int alogg_play_ex_ogg(ALOGG_OGG *ogg, int buffer_len, int vol, int pan, int speed, int loop) {
   int samples;
@@ -393,11 +400,19 @@ void alogg_seek_rel_bytes_ogg(ALOGG_OGG *ogg, int bytes) {
 }
 
 
+int alogg_poll_ogg_ts(ALOGG_OGG *ogg) {
+   return 0;
+}
+
 int alogg_poll_ogg(ALOGG_OGG *ogg) {
   void *audiobuf;
   char *audiobuf_p;
   int i, size_done;
 
+  /* use alternate poller for time stretching mode */
+  if (ogg->time_stretch)
+    return alogg_poll_ogg_ts(ogg);
+    
   /* continue only if we are playing it */
   if (!alogg_is_playing_ogg(ogg))
     return ALOGG_POLL_NOTPLAYING;
