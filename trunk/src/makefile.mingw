@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -O2 -fomit-frame-pointer -ffast-math -funroll-loops -mwindows -static-libgcc -Ialogg/include -DEOF_BUILD
-LIBS = -lalleg44.dll -logg -lvorbisfile -lm -lfftw3
+LIBS = -lalleg44.dll -logg -lvorbisfile -lm -lfftw3 -lrubberband -lstdc++
 
 include makefile.common
 

@@ -42,6 +42,7 @@ struct ALOGG_OGG {
                                       audiobuffer to stop plaing the last
                                       frame */
   int time_stretch;                /* set if we are using time stretch */
+  RubberBandState time_stretch_state;
 };
 
 
@@ -291,7 +292,17 @@ int alogg_play_ogg(ALOGG_OGG *ogg, int buffer_len, int vol, int pan) {
 }
 
 int alogg_play_ogg_ts(ALOGG_OGG *ogg, int buffer_len, int vol, int pan, int speed) {
-  return 0;
+  int ret;
+  
+  /* start playing Ogg at normal speed */
+  ret = alogg_play_ex_ogg(ogg, buffer_len, vol, pan, 1000, 0);
+  if (ret != ALOGG_OK)
+    return ret;
+  
+  ogg->time_stretch = 1;
+  ogg->time_stretch_state = rubberband_new(ogg->freq, ogg->stereo ? 2 : 1, RubberBandOptionProcessRealTime, (float)speed / 1000.0, 1.0);
+
+  return ALOGG_OK;
 }
 
 
