@@ -272,7 +272,7 @@ unsigned long eof_mix_msec_to_sample(unsigned long msec, int freq)
 	unsigned long sample;
 	double second = (double)msec / (double)1000.0;
 
-	sample = (unsigned long)(second * (double)freq);
+	sample = (unsigned long)(second * (double)freq * (1000.0 / (float)eof_playback_speed));
 	return sample;
 }
 
@@ -622,7 +622,7 @@ void eof_mix_start(unsigned long start, int speed)
 	eof_mix_speed = speed;
 	eof_mix_speed_ticker = 0;
 	eof_mix_sample_count = start;
-	eof_mix_sample_increment = (1000.0 / (double)eof_mix_speed) * (44100.0 / (double)alogg_get_wave_freq_ogg(eof_music_track));
+	eof_mix_sample_increment = (1.0) * (44100.0 / (double)alogg_get_wave_freq_ogg(eof_music_track));
 	eof_mix_start_helper();
 
 	for(i = 1; i < eof_song->tracks; i++)
