@@ -425,7 +425,7 @@ int alogg_poll_ogg_ts(ALOGG_OGG *ogg) {
   void *audiobuf;
   char *audiobuf_p;
   unsigned short *audiobuf_sp;
-  int i, size_done;
+  int i, size_done, finished = 0;
 
   /* continue only if we are playing it */
   if (!alogg_is_playing_ogg(ogg))
@@ -461,7 +461,7 @@ int alogg_poll_ogg_ts(ALOGG_OGG *ogg) {
   audiobuf_p = (char *)audiobuf;
   audiobuf_sp = (short *)audiobuf;
   size_done = 0;
-  while (rubberband_available(ogg->time_stretch_state) < ogg->time_stretch_buffer_samples) {
+  while (!finished && rubberband_available(ogg->time_stretch_state) < ogg->time_stretch_buffer_samples) {
     /* read samples from Ogg Vorbis file */
     for (i = ogg->audiostream_buffer_len; i > 0; i -= size_done) {
       /* decode */
@@ -479,13 +479,10 @@ int alogg_poll_ogg_ts(ALOGG_OGG *ogg) {
         }
       }
       else if (size_done == 0) {
-        /* we have reached the end */
         alogg_rewind_ogg(ogg);
-        if (!ogg->loop) {
-          free_audio_stream_buffer(ogg->audiostream);
-          ogg->wait_for_audio_stop = 2;
-          return ALOGG_OK;
-        }
+        ogg->wait_for_audio_stop = 2;
+        finished = 1;
+        break; // playback finished so get out of loop
       }
       audiobuf_p += size_done;
     }
