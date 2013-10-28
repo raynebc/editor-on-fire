@@ -43,6 +43,7 @@ struct ALOGG_OGG {
                                       frame */
   int time_stretch;                /* set if we are using time stretch */
   RubberBandState time_stretch_state;
+  float *time_stretch_buffer[2];   /* store samples here for processing */
 };
 
 
@@ -300,7 +301,11 @@ int alogg_play_ogg_ts(ALOGG_OGG *ogg, int buffer_len, int vol, int pan, int spee
     return ret;
   
   ogg->time_stretch = 1;
-  ogg->time_stretch_state = rubberband_new(ogg->freq, ogg->stereo ? 2 : 1, RubberBandOptionProcessRealTime, (float)speed / 1000.0, 1.0);
+  ogg->time_stretch_state = rubberband_new(ogg->freq, ogg->stereo ? 2 : 1, RubberBandOptionProcessRealTime |  RubberBandOptionThreadingNever, 1000.0 / (float)speed, 1.0);
+  rubberband_set_max_process_size(ogg->time_stretch_state, buffer_len);
+  ogg->time_stretch_buffer[0] = malloc(sizeof(float) * buffer_len);
+  if (ogg->stereo)
+    ogg->time_stretch_buffer[1] = malloc(sizeof(float) * buffer_len);
 
   return ALOGG_OK;
 }
@@ -333,6 +338,7 @@ int alogg_play_ex_ogg(ALOGG_OGG *ogg, int buffer_len, int vol, int pan, int spee
     LOCK_FUNCTION(alogg_autopoll_ogg);
     install_param_int(&alogg_autopoll_ogg, (void *)ogg, ogg->auto_poll_speed);
   }
+  ogg->time_stretch = 0;
 
   return ALOGG_OK;
 }
@@ -412,6 +418,120 @@ void alogg_seek_rel_bytes_ogg(ALOGG_OGG *ogg, int bytes) {
 
 
 int alogg_poll_ogg_ts(ALOGG_OGG *ogg) {
+  void *audiobuf;
+  char *audiobuf_p;
+  short *audiobuf_sp;
+  int i, size_done;
+
+  printf("time stretch poll\n");
+  /* continue only if we are playing it */
+  if (!alogg_is_playing_ogg(ogg))
+    return ALOGG_POLL_NOTPLAYING;
+
+  printf("1\n");
+  /* get the audio stream buffer and only continue if we need to fill it */
+  audiobuf = get_audio_stream_buffer(ogg->audiostream);
+  if (audiobuf == NULL)
+    return ALOGG_OK;
+
+  printf("2\n");
+  /* clear the buffer with 16bit unsigned data */
+  {
+    int i;
+    unsigned short *j = (unsigned short *)audiobuf;
+    for (i = 0; i < (ogg->audiostream_buffer_len / 2); i++, j++)
+      *j = 0x8000;
+  }
+
+  printf("3\n");
+  /* if we need to fill it, but we were just waiting for it to finish */
+  if (!ogg->loop) {
+    if (ogg->wait_for_audio_stop > 0) {
+		printf("3a\n");
+      free_audio_stream_buffer(ogg->audiostream);
+		printf("3b\n");
+      if (--ogg->wait_for_audio_stop == 0) {
+        /* stop it */
+        alogg_stop_ogg(ogg);
+        return ALOGG_POLL_PLAYJUSTFINISHED;
+      }
+      else
+        return ALOGG_OK;
+    }
+  }
+
+  printf("4\n");
+  audiobuf_p = (char *)audiobuf;
+  size_done = 0;
+  while (rubberband_available(ogg->time_stretch_state) < ogg->audiostream_buffer_len) {
+    /* read samples from Ogg Vorbis file */
+    printf("a\n");
+    for (i = ogg->audiostream_buffer_len; i > 0; i -= size_done) {
+      /* decode */
+      size_done = ov_read(&(ogg->vf), audiobuf_p, i, alogg_endianess, 2, 0, &(ogg->current_section));
+
+    printf("b\n");
+      /* check if the decoding was not successful */
+      if (size_done < 0) {
+        if (size_done == OV_HOLE)
+          size_done = 0;
+        else {
+		printf("4a\n");
+          free_audio_stream_buffer(ogg->audiostream);
+		printf("4b\n");
+          alogg_stop_ogg(ogg);
+          alogg_rewind_ogg(ogg);
+          return ALOGG_POLL_FRAMECORRUPT;
+        }
+      }
+      else if (size_done == 0) {
+        /* we have reached the end */
+        alogg_rewind_ogg(ogg);
+        if (!ogg->loop) {
+		printf("4c\n");
+          free_audio_stream_buffer(ogg->audiostream);
+		printf("4d\n");
+          ogg->wait_for_audio_stop = 2;
+          return ALOGG_OK;
+        }
+      }
+
+    printf("c\n");
+      audiobuf_p += size_done;
+    }
+    
+    printf("d\n");
+    /* process samples with Rubber Band */
+    audiobuf_sp = (short *)audiobuf;
+    for (i = 0; i < ogg->audiostream_buffer_len; i++) {
+        ogg->time_stretch_buffer[i % 2][i / 2] = (float)(audiobuf_sp[i] - 0x8000) / (float)0x8000;
+    }
+    printf("e\n");
+    rubberband_process(ogg->time_stretch_state, (const float **)ogg->time_stretch_buffer, ogg->audiostream_buffer_len, 0);
+    printf("f\n");
+  }
+  
+  printf("5\n");
+  /* put audio into stream buffer */
+  rubberband_retrieve(ogg->time_stretch_state, ogg->time_stretch_buffer, ogg->audiostream_buffer_len);
+  for (i = 0; i < ogg->audiostream_buffer_len / 2; i++) {
+    audiobuf_sp[i] = ogg->time_stretch_buffer[i % 2][i / 2] * (float)0x8000 + 0x8000;
+  }
+
+  printf("6\n");
+  /* lock the buffer */
+  if(alogg_buffer_callback)
+  {
+  printf("7\n");
+//     alogg_buffer_callback(audiobuf, ogg->audiostream_buffer_len);
+  printf("8\n");
+  }
+  printf("9\n");
+  free_audio_stream_buffer(ogg->audiostream);
+  printf("10\n");
+
+  printf("time stretch poll done\n");
+  return ALOGG_OK;
    return 0;
 }
 
