@@ -503,15 +503,15 @@ int alogg_poll_ogg_ts(ALOGG_OGG *ogg) {
   }
   
   /* retrieve audio from rubberband and put it into stream buffer */
-  rubberband_retrieve(ogg->time_stretch_state, ogg->time_stretch_buffer, ogg->time_stretch_buffer_samples);
+  size_done = rubberband_retrieve(ogg->time_stretch_state, ogg->time_stretch_buffer, ogg->time_stretch_buffer_samples);
   if (ogg->stereo) {
-    for (i = 0; i < ogg->time_stretch_buffer_samples; i++) {
+    for (i = 0; i < size_done; i++) {
       audiobuf_sp[i * 2] = ogg->time_stretch_buffer[0][i] * (float)0x8000 + 0x8000;
       audiobuf_sp[i * 2 + 1] = ogg->time_stretch_buffer[1][i] * (float)0x8000 + 0x8000;
     }
   }
   else {
-    for (i = 0; i < ogg->time_stretch_buffer_samples; i++) {
+    for (i = 0; i < size_done; i++) {
       audiobuf_sp[i] = ogg->time_stretch_buffer[0][i] * (float)0x8000 + 0x8000;
     }
   }
