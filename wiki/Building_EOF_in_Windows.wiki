@@ -84,9 +84,9 @@ The FFTW library needs to be added.  Download the 32 bit precompiled DLL files f
 
 
 ==Building rubberband:==
-The rubberband library adds several dependencies, but it allows audio to be played back at less than full speed, without lowering the pitch.  It requires a fourier transform library, but luckily is compatible with the FFTW library that was added above.  First, get Vamp (http://www.vamp-plugins.org/develop.html).  It's easiest to download the pre-compiled library (labeled "Windows (MinGW)"), and copy libvamp-sdk.a from the zip file into the "lib" directory of your MinGW installation.  The pre-compiled library package does not include the header files, so you will still have to download the source code (labeled "The main SDK") and copy the header file from the source code zip file's vamp directory into the "include" directory of your MinGW installation.
+The rubberband library adds several dependencies, but it allows audio to be played back at less than full speed, without lowering the pitch.  It requires a fourier transform library, but luckily is compatible with the FFTW library that was added above.  First, get Vamp (http://www.vamp-plugins.org/develop.html).  It's easiest to download the pre-compiled library (labeled "Windows (MinGW)"), copy libvamp-sdk.a from the zip file into the "lib" directory of your MinGW installation.  The pre-compiled library package does not include the header files, so you will still have to download the source code (labeled "The main SDK"), copy the "vamp" and "vamp-sdk" folders of header files into MinGW's "include" directory.
 
-Next, get libsndfile (http://www.mega-nerd.com/libsndfile).  As with Vamp, it's easiest to download the pre-compiled library (the "Win32 installer").  Install it directly into your MinGW installation if you like, or if you don't want it cluttered with miscellaneous files, install it elsewhere.  If you installed it outside of your MinGW installation, copy the libsndfile\bin\libsndfile-1.dll file to the "lib" directory of your MinGW installation and rename it to libsndfile-1.a, and copy the two header files from libsndfile\include into the "include" directory of your MinGW installation.
+Next, get libsndfile (http://www.mega-nerd.com/libsndfile).  As with Vamp, it's easiest to download the pre-compiled library (the "Win32 installer").  Install it directly into your MinGW installation if you like, or if you don't want it cluttered with miscellaneous files, install it elsewhere.  If you installed it outside of your MinGW installation, copy the libsndfile\bin\libsndfile-1.dll file to the "lib" directory of your MinGW installation and rename it to libsndfile.a, copy the two header files from libsndfile\include into the "include" directory of your MinGW installation and copy the libsndfile\lib\pkgconfig\sndfile.pc file to the "lib\pkgconfig" directory of your MinGW installation.
 
 Next, get libsamplerate (http://www.mega-nerd.com/SRC/download.html).  This doesn't have a pre-compiled library, so it will be built from source code.  Just as with the Vorbis libraries, it's easiest to extract the compressed folder of source files someplace simple like the root of your c drive.  Bring up the MSYS program again and change to the directory with libsamplerate's source files, for example:
 {{{
@@ -98,7 +98,7 @@ Run the configure script, specifying the path to your MinGW installation.  If Mi
 make
 make install
 }}}
-If you used the prefix correctly in the call to the configure script above, libsamplerate will be properly built and the files will be correctly copied to within your MinGW folder.  I saw some errors building some of the example programs that came with the source, but that shouldn't be a problem as long as libsamplerate.a was added to your MinGW "lib" directory and samplerate.h was added to the "include" directory.  Confirm these files were added before continuing.
+If you used the prefix correctly in the call to the configure script above, libsamplerate will be properly built and the files will be correctly copied to within your MinGW folder.  I saw some errors building some of the example programs that came with the source, but that shouldn't be a problem as long as libsamplerate.a was added to your MinGW "lib" directory and samplerate.h was added to the "include" directory.  I also found that samplerate.pc file that was created during the make wasn't automatically copied to the MinGW's "lib\pkgconfig" directory, and had to manually copy it to the MinGW installation.  Confirm these files were added before continuing.
 
 Next, get pkgconfig (http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/pkg-config_0.26-1_win32.zip).  Extract the pkg-config.exe file from that package's bin folder and copy it to the "bin" folder in your MinGW installation.  While you're here, copy libintl-8.dll and name the copy intl.dll to satisfy a requirement for pkgconfig.
 
@@ -108,9 +108,12 @@ At last, rubberband's dependencies are met and rubberband can be built from sour
 {{{
 cd /c/rubberband
 }}}
-Run the configure script, specifying the path to your MinGW installation.  If MinGW was installed to C:\mingw, that makes it:
+Run the configure script, specifying the path to your MinGW installation.  Since we didn't build FFTW or Vamp from source, you have to also specify the compiler and linker arguments on the command line.  If MinGW was installed to C:\mingw, that makes it:
 {{{
-./configure --prefix=/c/mingw
+./configure --prefix=/c/mingw FFTW_CFLAGS="-I/c/mingw/include" FFTW_LIBS="-L/c/mingw/lib -lfftw3 -lm" Vamp_CFLAGS="-I/c/mingw/include" Vamp_LIBS="-L/c/mingw/lib -lvamp-sdk"
+}}}
+If everything worked, it will indicate that it got to the point where it was creating the makefile.  If it did, finish up with the make commands:
+{{{
 make
 make install
 }}}
