@@ -347,6 +347,8 @@ int alogg_play_ex_ogg(ALOGG_OGG *ogg, int buffer_len, int vol, int pan, int spee
     install_param_int(&alogg_autopoll_ogg, (void *)ogg, ogg->auto_poll_speed);
   }
   ogg->time_stretch = 0;
+  ogg->time_stretch_buffer[0] = NULL;
+  ogg->time_stretch_buffer[1] = NULL;
 
   return ALOGG_OK;
 }
@@ -364,6 +366,10 @@ void alogg_stop_ogg(ALOGG_OGG *ogg) {
   /* stop the audio stream */
   stop_audio_stream(ogg->audiostream);
   ogg->audiostream = NULL;
+  if (ogg->time_stretch_buffer[0])
+    free(ogg->time_stretch_buffer[0]);
+  if (ogg->time_stretch_buffer[1])
+    free(ogg->time_stretch_buffer[1]);
 }
 
 
