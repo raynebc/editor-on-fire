@@ -301,6 +301,10 @@ int alogg_play_ogg_ts(ALOGG_OGG *ogg, int buffer_len, int vol, int pan, int spee
   if (ret != ALOGG_OK)
     return ret;
   
+  /* don't set up time stretching if we are playing at normal speed */
+  if (speed == 1000)
+    return ALOGG_OK;
+    
   ogg->time_stretch = 1;
   ogg->time_stretch_buffer_samples = (buffer_len / (ogg->stereo ? 2 : 1)) / 2;
   ogg->time_stretch_state = rubberband_new(ogg->freq, ogg->stereo ? 2 : 1, RubberBandOptionProcessRealTime |  RubberBandOptionThreadingNever, 1000.0 / (float)speed, 1.0);
