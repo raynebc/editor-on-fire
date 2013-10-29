@@ -9,7 +9,7 @@ Note:  Certain new Linux distributions use Pulse Audio, which messes up the abil
 
 = Details =
 
-==Building Allegro:==
+==Building Allegro and other dependencies:==
 First, you need to build Allegro itself, along with some other dependencies that EOF needs.  This procedure should work with version 4.4.1.1 of Allegro.  At this time EOF will NOT WORK with Allegro 5.  To build EOF from source, you will need:
   # MinGW (http://sourceforge.net/projects/mingw/)
   # Allegro source and a DirectX SDK (download from http://alleg.sourceforge.net/wip.html)
@@ -18,6 +18,12 @@ First, you need to build Allegro itself, along with some other dependencies that
   # MSYS (download from http://www.mingw.org/wiki/msys)
   # CMake (download from http://www.cmake.org/)
   # FFTW (download from http://www.fftw.org/install/windows.html)
+  # libsamplerate (download from http://www.mega-nerd.com/SRC/download.html)
+  # libsndfile (download from http://www.mega-nerd.com/libsndfile/)
+  # vamp-sdk (download from http://www.vamp-plugins.org/develop.html)
+  # pkgconfig (download from http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/pkg-config_0.26-1_win32.zip)
+  # GLib (download from http://ftp.gnome.org/pub/gnome/binaries/win32/glib/2.28/glib_2.28.8-1_win32.zip)
+  # rubberband (download from http://breakfastquay.com/rubberband/)
 
 Get MinGW (http://sourceforge.net/projects/mingw/) and install it.  You can use this with many modern IDE's such as Dev-Cpp or CodeBlocks.  Since Dev-Cpp is end of development and has some unresolved bugs, I personally recommend CodeBlocks.  Installing MinGW to the root of a file system (ie. c:\mingw) will make things easier.  Ensure that MinGW's "bin" folder is in your PATH environment variable, so you can use gcc and mingw32-make from any current working directory.  Allegro in Windows requires a DirectX SDK.  Get one of them from http://alleg.sourceforge.net/wip.html.  Ie. download dx70_mgw.zip and extract its contents to your MinGW install path (ie. c:\mingw), allowing files to be overwritten.  This must be done in order for Allegro to build later.
 
@@ -74,7 +80,41 @@ mingw32-make install
 *Note:*
 Some earlier versions of Allegro (ie. version 4.22) had some strange problems that would make Allegro fail to CMake and/or make.  Try the latest stable release, which fixes this problem.  Otherwise you may have to update part of the Allegro package (apparently binutils was the culprit).
 
-Next, the FFTW library needs to be added.  Download the 32 bit precompiled DLL files from FFTW's website.  Inside it is several source and binary files.  The one needed for EOF is libfftw3-3.dll.  Copy this file into the "lib" directory in your MinGW installation and rename the file to "libfftw3.dll.a".  This naming convention is probably only one of many ways to do it, but it's how I got it to work as it allows MinGW to be told to link to the "fftw3" library when EOF is built.  Lastly, copy the fftw3.h file from the FFTW precompiled package and paste it into the "include" directory in your MinGW installation.
+The FFTW library needs to be added.  Download the 32 bit precompiled DLL files from FFTW's website.  Inside it is several source and binary files.  The one needed for EOF is libfftw3-3.dll.  Copy this file into the "lib" directory in your MinGW installation and rename the file to "libfftw3.dll.a".  This naming convention is probably only one of many ways to do it, but it's how I got it to work as it allows MinGW to be told to link to the "fftw3" library when EOF is built.  Lastly, copy the fftw3.h file from the FFTW precompiled package and paste it into the "include" directory in your MinGW installation.
+
+
+==Building rubberband:==
+The rubberband library adds several dependencies, but it allows audio to be played back at less than full speed, without lowering the pitch.  It requires a fourier transform library, but luckily is compatible with the FFTW library that was added above.  First, get Vamp (http://www.vamp-plugins.org/develop.html).  It's easiest to download the pre-compiled library (labeled "Windows (MinGW)"), and copy libvamp-sdk.a from the zip file into the "lib" directory of your MinGW installation.  The pre-compiled library package does not include the header files, so you will still have to download the source code (labeled "The main SDK") and copy the header file from the source code zip file's vamp directory into the "include" directory of your MinGW installation.
+
+Next, get libsndfile (http://www.mega-nerd.com/libsndfile).  As with Vamp, it's easiest to download the pre-compiled library (the "Win32 installer").  Install it directly into your MinGW installation if you like, or if you don't want it cluttered with miscellaneous files, install it elsewhere.  If you installed it outside of your MinGW installation, copy the libsndfile\bin\libsndfile-1.dll file to the "lib" directory of your MinGW installation and rename it to libsndfile-1.a, and copy the two header files from libsndfile\include into the "include" directory of your MinGW installation.
+
+Next, get libsamplerate (http://www.mega-nerd.com/SRC/download.html).  This doesn't have a pre-compiled library, so it will be built from source code.  Just as with the Vorbis libraries, it's easiest to extract the compressed folder of source files someplace simple like the root of your c drive.  Bring up the MSYS program again and change to the directory with libsamplerate's source files, for example:
+{{{
+cd /c/libsamplerate
+}}}
+Run the configure script, specifying the path to your MinGW installation.  If MinGW was installed to C:\mingw, that makes it:
+{{{
+./configure --prefix=/c/mingw
+make
+make install
+}}}
+If you used the prefix correctly in the call to the configure script above, libogg will be properly built and the files will be correctly copied to within your MinGW folder.  I saw some errors building some of the example programs that came with the source, but that shouldn't be a problem as long as libsamplerate.a was added to your MinGW "lib" directory and samplerate.h was added to the "include" directory.  Confirm these files were added before continuing.
+
+Next, get pkgconfig (http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/pkg-config_0.26-1_win32.zip).  Extract the pkg-config.exe file from that package's bin folder and copy it to the "bin" folder in your MinGW installation.  While you're here, copy libintl-8.dll and name the copy intl.dll to satisfy a requirement for pkgconfig.
+
+Next, get GLib (http://ftp.gnome.org/pub/gnome/binaries/win32/glib/2.28/glib_2.28.8-1_win32.zip).  Extract the libglib-2.0-0.dll file from that package's bin folder and copy it to the "bin" folder in your MinGW installation.
+
+At last, rubberband's dependencies are met and rubberband can be built from source (http://breakfastquay.com/rubberband/).  Extract the source folder someplace convenient like the root of your c drive.  Back in MSYS, change to the directory with rubberband's source files, for example:
+{{{
+cd /c/rubberband
+}}}
+Before building the library, the path to pkgconfig needs to be set.  Look for Run the configure script, specifying the path to your MinGW installation.  If MinGW was installed to C:\mingw, that makes it:
+{{{
+./configure --prefix=/c/mingw
+make
+make install
+}}}
+
 
 ==Building EOF:==
 To build EOF, ensure that you have built Allegro and the other dependencies into your MinGW installation with the instructions given above.  If you are using Allegro 4.4 in Windows, I've found that it may have a different name for the main dll file (alleg.dll).  If so, you need to modify makefile.mingw so that the line that says "LIBS = -lalleg" is changed to "LIBS = -lalleg44.dll".  Before continuing, ensure that the folder containing the \src folder also contains a folder called "bin", or the make will fail.  To build EOF, change directory to EOF's \src folder and run "mingw32-make -f makefile.mingw"
