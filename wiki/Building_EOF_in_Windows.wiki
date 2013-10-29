@@ -108,7 +108,7 @@ At last, rubberband's dependencies are met and rubberband can be built from sour
 {{{
 cd /c/rubberband
 }}}
-Before building the library, the path to pkgconfig needs to be set.  Look for Run the configure script, specifying the path to your MinGW installation.  If MinGW was installed to C:\mingw, that makes it:
+Run the configure script, specifying the path to your MinGW installation.  If MinGW was installed to C:\mingw, that makes it:
 {{{
 ./configure --prefix=/c/mingw
 make
