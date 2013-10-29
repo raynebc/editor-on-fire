@@ -98,7 +98,7 @@ Run the configure script, specifying the path to your MinGW installation.  If Mi
 make
 make install
 }}}
-If you used the prefix correctly in the call to the configure script above, libogg will be properly built and the files will be correctly copied to within your MinGW folder.  I saw some errors building some of the example programs that came with the source, but that shouldn't be a problem as long as libsamplerate.a was added to your MinGW "lib" directory and samplerate.h was added to the "include" directory.  Confirm these files were added before continuing.
+If you used the prefix correctly in the call to the configure script above, libsamplerate will be properly built and the files will be correctly copied to within your MinGW folder.  I saw some errors building some of the example programs that came with the source, but that shouldn't be a problem as long as libsamplerate.a was added to your MinGW "lib" directory and samplerate.h was added to the "include" directory.  Confirm these files were added before continuing.
 
 Next, get pkgconfig (http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/pkg-config_0.26-1_win32.zip).  Extract the pkg-config.exe file from that package's bin folder and copy it to the "bin" folder in your MinGW installation.  While you're here, copy libintl-8.dll and name the copy intl.dll to satisfy a requirement for pkgconfig.
 
