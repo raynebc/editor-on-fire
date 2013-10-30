@@ -31,7 +31,7 @@ sudo apt-get install build-essential liballegro4.2-dev libvorbis-dev libfftw3-de
 }}}
 If this works with your system, you can skip to the Building EOF section. Otherwise, continue reading.
 
-All of EOF's dependencies, with the exception of Allegro 4.4, can be built using the same set of commands. You simply extract the source code to a location of your choosing, change to that directory from the command line (e.g. 'cd ~/libogg', and type the following commands:
+All of EOF's dependencies, with the exception of Allegro 4.4, can be built using the same set of commands. You simply extract the source code to a location of your choosing, change to that directory from the command line (e.g. 'cd ~/libogg'), and type the following commands:
 {{{
 ./configure
 make
