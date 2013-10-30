@@ -295,16 +295,16 @@ int alogg_play_ogg(ALOGG_OGG *ogg, int buffer_len, int vol, int pan) {
 
 int alogg_play_ogg_ts(ALOGG_OGG *ogg, int buffer_len, int vol, int pan, int speed) {
   int ret;
-  
+
   /* start playing Ogg at normal speed */
   ret = alogg_play_ex_ogg(ogg, buffer_len, vol, pan, 1000, 0);
   if (ret != ALOGG_OK)
     return ret;
-  
+
   /* don't set up time stretching if we are playing at normal speed */
   if (speed == 1000)
     return ALOGG_OK;
-    
+
   ogg->time_stretch = 1;
   ogg->time_stretch_buffer_samples = (buffer_len / (ogg->stereo ? 2 : 1)) / 2;
   ogg->time_stretch_state = rubberband_new(ogg->freq, ogg->stereo ? 2 : 1, RubberBandOptionProcessRealTime |  RubberBandOptionThreadingNever, 1000.0 / (float)speed, 1.0);
@@ -469,7 +469,7 @@ int alogg_poll_ogg_ts(ALOGG_OGG *ogg) {
   }
 
   audiobuf_p = (char *)audiobuf;
-  audiobuf_sp = (short *)audiobuf;
+  audiobuf_sp = (unsigned short *)audiobuf;
   size_done = 0;
   while (!finished && rubberband_available(ogg->time_stretch_state) < ogg->time_stretch_buffer_samples) {
     /* read samples from Ogg Vorbis file */
@@ -496,7 +496,7 @@ int alogg_poll_ogg_ts(ALOGG_OGG *ogg) {
       }
       audiobuf_p += size_done;
     }
-    
+
     /* process samples with Rubber Band */
     if (ogg->stereo) {
       for (i = 0; i < ogg->time_stretch_buffer_samples; i++) {
@@ -511,7 +511,7 @@ int alogg_poll_ogg_ts(ALOGG_OGG *ogg) {
 	}
     rubberband_process(ogg->time_stretch_state, (const float **)ogg->time_stretch_buffer, ogg->time_stretch_buffer_samples, 0);
   }
-  
+
   /* retrieve audio from rubberband and put it into stream buffer */
   size_done = rubberband_retrieve(ogg->time_stretch_state, ogg->time_stretch_buffer, ogg->time_stretch_buffer_samples);
   if (ogg->stereo) {
@@ -543,7 +543,7 @@ int alogg_poll_ogg(ALOGG_OGG *ogg) {
   /* use alternate poller for time stretching mode */
   if (ogg->time_stretch)
     return alogg_poll_ogg_ts(ogg);
-    
+
   /* continue only if we are playing it */
   if (!alogg_is_playing_ogg(ogg))
     return ALOGG_POLL_NOTPLAYING;

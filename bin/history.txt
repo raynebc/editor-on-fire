@@ -3,6 +3,10 @@ EOF Version History
 
 1.8:
 
+Added an "x2 zoom" option to the File>Display menu that
+doubles the size of everything displayed in EOF except
+for the menus and dialog functions.
+
 Added a Note>Reflect menu that has functions to reflect
 the selected notes vertically (ie. a gem on the lowest
 lane becomes a gem on the highest lane), horizontally
@@ -194,7 +198,7 @@ You can use the zoom in/out shortcuts (+ and - on the numberpad) to
 zoom in and out of a custom zoom level.  If a custom zoom is in
 effect when EOF closes, it is restored when re-opening EOF.
 
-Increased the limit of each type of phrase to 600, as users had run
+Increased the limit of each type of phrase to 1000, as users had run
 into limits on various items in extreme cases.
 
 Added cleanup logic that would ensure expert+ bass notes are only
