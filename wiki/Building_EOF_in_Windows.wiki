@@ -119,6 +119,7 @@ If everything worked, it will indicate that it got to the point where it was cre
 make
 make install
 }}}
+Don't be surprised if you see errors that indicate it failed, but even then, check the "lib" directory if the rubberband source folder for librubberband.a.  If it is there, then it worked enough to get the library built, go ahead and copy that file to the "lib" directory of your MinGW installation.  Then copy the "rubberband" headers folder from the rubberband source code folder to the "include" directory of your MinGW installation.
 
 
 ==Building EOF:==
