@@ -21,7 +21,7 @@ EOF has several dependencies which need to be met before it can be built.  These
     * vamp-sdk (download from http://sourceforge.net/projects/vamp)
   # CMake (download from http://www.cmake.org, unless your OS has it already)
 
-*Note:* Allegro 5 does not use the same API as Allegro 4, so you will need to have some version Allegro 4 installed on your system even if you already have Allegro 5.
+*Note:* Allegro 5 does not use the same API as Allegro 4, so you will need to have some version Allegro 4 installed on your system, even if you already have Allegro 5.
 
 ==Building Dependencies==
 
