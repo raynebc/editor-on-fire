@@ -212,7 +212,7 @@ int eof_text_is_section_marker(const char *text)
 		if((ustrstr(text, "[section") == text) ||
 			(ustrstr(text, "section") == text) ||
 			(ustrstr(text, "[prc_") == text))
-			return 1;
+			return 1;	//If the input string begins with any of these substrings, consider this a section event
 	}
 	return 0;
 }

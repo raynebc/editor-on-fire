@@ -1952,11 +1952,11 @@ set_window_title(debugtext);
 									{	//Check the value of the phrase ID
 										case 1:	//Open strum
 #ifdef EOF_DEBUG
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Open strum bass (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Open strum (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
 											eof_log(eof_log_string, 1);
 #endif
 											if(eof_import_events[i]->event[j]->dp[6] == 1)
-											{	//Start of open strum bass phrase
+											{	//Start of open strum phrase
 												openstrumpos[phrasediff] = event_realtime;
 											}
 											else if(eof_import_events[i]->event[j]->dp[6] == 0)
@@ -1964,7 +1964,7 @@ set_window_title(debugtext);
 												for(k = note_count[picked_track] - 1; k >= first_note; k--)
 												{	//Check for each note that has been imported
 													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= openstrumpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
-													{	//If the note is in the same difficulty as the open strum bass phrase, and its timestamp falls between the phrase on and phrase off marker
+													{	//If the note is in the same difficulty as the open strum phrase, and its timestamp falls between the phrase on and phrase off marker
 #ifdef EOF_DEBUG
 														(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%ld (Diff=%d, Pos=%lu, Mask=%lu, Length=%ld) to have a note mask of 33", k, eof_get_note_type(sp, picked_track, k), eof_get_note_pos(sp, picked_track, k), eof_get_note_note(sp, picked_track, k), eof_get_note_length(sp, picked_track, k));
 														eof_log(eof_log_string, 1);
