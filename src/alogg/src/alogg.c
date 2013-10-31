@@ -367,9 +367,15 @@ void alogg_stop_ogg(ALOGG_OGG *ogg) {
   stop_audio_stream(ogg->audiostream);
   ogg->audiostream = NULL;
   if (ogg->time_stretch_buffer[0])
+  {
     free(ogg->time_stretch_buffer[0]);
+	ogg->time_stretch_buffer[0] = NULL;
+  }
   if (ogg->time_stretch_buffer[1])
+  {
     free(ogg->time_stretch_buffer[1]);
+    ogg->time_stretch_buffer[1] = NULL;
+  }
 }
 
 
