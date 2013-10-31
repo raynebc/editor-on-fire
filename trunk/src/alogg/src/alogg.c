@@ -474,10 +474,12 @@ int alogg_poll_ogg_ts(ALOGG_OGG *ogg) {
     }
   }
 
-  audiobuf_p = (char *)audiobuf;
   audiobuf_sp = (unsigned short *)audiobuf;
-  size_done = 0;
   while (!finished && rubberband_available(ogg->time_stretch_state) < ogg->time_stretch_buffer_samples) {
+    /* reset these each iteration so we don't overrun the buffer */
+    audiobuf_p = (char *)audiobuf;
+    size_done = 0;
+
     /* read samples from Ogg Vorbis file */
     for (i = ogg->audiostream_buffer_len; i > 0; i -= size_done) {
       /* decode */
@@ -522,13 +524,13 @@ int alogg_poll_ogg_ts(ALOGG_OGG *ogg) {
   size_done = rubberband_retrieve(ogg->time_stretch_state, ogg->time_stretch_buffer, ogg->time_stretch_buffer_samples);
   if (ogg->stereo) {
     for (i = 0; i < size_done; i++) {
-      audiobuf_sp[i * 2] = (float)ogg->time_stretch_buffer[0][i] * (float)0x8000 + (float)0x8000;
-      audiobuf_sp[i * 2 + 1] = (float)ogg->time_stretch_buffer[1][i] * (float)0x8000 + (float)0x8000;
+      audiobuf_sp[i * 2] = ogg->time_stretch_buffer[0][i] * (float)0x8000 + (float)0x8000;
+      audiobuf_sp[i * 2 + 1] = ogg->time_stretch_buffer[1][i] * (float)0x8000 + (float)0x8000;
     }
   }
   else {
     for (i = 0; i < size_done; i++) {
-      audiobuf_sp[i] = (float)ogg->time_stretch_buffer[0][i] * (float)0x8000 + (float)0x8000;
+      audiobuf_sp[i] = ogg->time_stretch_buffer[0][i] * (float)0x8000 + (float)0x8000;
     }
   }
 
