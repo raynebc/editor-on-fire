@@ -95,6 +95,7 @@ MENU eof_edit_zoom_menu[] =
 
 MENU eof_edit_playback_menu[] =
 {
+	{"&Time Stretch", eof_menu_edit_playback_time_stretch, NULL, D_SELECTED, NULL},
 	{"&100%", eof_menu_edit_playback_100, NULL, D_SELECTED, NULL},
 	{"&75%", eof_menu_edit_playback_75, NULL, 0, NULL},
 	{"&50%", eof_menu_edit_playback_50, NULL, 0, NULL},
@@ -1741,7 +1742,7 @@ int eof_menu_edit_playback_speed_helper_faster(void)
 
 	for(i = 0; i < 5; i++)
 	{
-		eof_edit_playback_menu[i].flags = 0;
+		eof_edit_playback_menu[i + 1].flags = 0;
 	}
 	if(eof_input_mode == EOF_INPUT_FEEDBACK)
 	{	//In Feedback input mode, cycle playback speed in intervals of 10%
@@ -1766,11 +1767,11 @@ int eof_menu_edit_playback_speed_helper_faster(void)
 	}
 	if(eof_playback_speed % 250 == 0)
 	{	//If one of the 25% preset intervals is set
-		eof_edit_playback_menu[(1000 - eof_playback_speed) / 250].flags = D_SELECTED;	//Check the appropriate speed menu item
+		eof_edit_playback_menu[(1000 - eof_playback_speed) / 250 + 1].flags = D_SELECTED;	//Check the appropriate speed menu item
 	}
 	else
 	{
-		eof_edit_playback_menu[4].flags = D_SELECTED;	//Check the "custom" playback speed menu item
+		eof_edit_playback_menu[5].flags = D_SELECTED;	//Check the "custom" playback speed menu item
 	}
 	return 1;
 }
@@ -1781,7 +1782,7 @@ int eof_menu_edit_playback_speed_helper_slower(void)
 
 	for(i = 0; i < 5; i++)
 	{
-		eof_edit_playback_menu[i].flags = 0;
+		eof_edit_playback_menu[i + 1].flags = 0;
 	}
 	if(eof_input_mode == EOF_INPUT_FEEDBACK)
 	{	//In Feedback input mode, cycle playback speed in intervals of 10%
@@ -1806,11 +1807,22 @@ int eof_menu_edit_playback_speed_helper_slower(void)
 	}
 	if(eof_playback_speed % 250 == 0)
 	{	//If one of the 25% preset intervals is set
-		eof_edit_playback_menu[(1000 - eof_playback_speed) / 250].flags = D_SELECTED;	//Check the appropriate speed menu item
+		eof_edit_playback_menu[(1000 - eof_playback_speed) / 250 + 1].flags = D_SELECTED;	//Check the appropriate speed menu item
 	}
 	else
 	{
-		eof_edit_playback_menu[4].flags = D_SELECTED;	//Check the "custom" playback speed menu item
+		eof_edit_playback_menu[5].flags = D_SELECTED;	//Check the "custom" playback speed menu item
+	}
+	return 1;
+}
+
+int eof_menu_edit_playback_time_stretch(void)
+{
+	eof_playback_time_stretch = 1 - eof_playback_time_stretch;
+	eof_edit_playback_menu[0].flags = 0;
+	if(eof_playback_time_stretch)
+	{
+		eof_edit_playback_menu[0].flags = D_SELECTED;
 	}
 	return 1;
 }
@@ -1821,9 +1833,9 @@ int eof_menu_edit_playback_100(void)
 
 	for(i = 0; i < 5; i++)
 	{
-		eof_edit_playback_menu[i].flags = 0;
+		eof_edit_playback_menu[i + 1].flags = 0;
 	}
-	eof_edit_playback_menu[0].flags = D_SELECTED;
+	eof_edit_playback_menu[1].flags = D_SELECTED;
 	eof_playback_speed = 1000;
 	return 1;
 }
@@ -1834,9 +1846,9 @@ int eof_menu_edit_playback_75(void)
 
 	for(i = 0; i < 5; i++)
 	{
-		eof_edit_playback_menu[i].flags = 0;
+		eof_edit_playback_menu[i + 1].flags = 0;
 	}
-	eof_edit_playback_menu[1].flags = D_SELECTED;
+	eof_edit_playback_menu[2].flags = D_SELECTED;
 	eof_playback_speed = 750;
 	return 1;
 }
@@ -1847,9 +1859,9 @@ int eof_menu_edit_playback_50(void)
 
 	for(i = 0; i < 5; i++)
 	{
-		eof_edit_playback_menu[i].flags = 0;
+		eof_edit_playback_menu[i + 1].flags = 0;
 	}
-	eof_edit_playback_menu[2].flags = D_SELECTED;
+	eof_edit_playback_menu[3].flags = D_SELECTED;
 	eof_playback_speed = 500;
 	return 1;
 }
@@ -1860,9 +1872,9 @@ int eof_menu_edit_playback_25(void)
 
 	for(i = 0; i < 5; i++)
 	{
-		eof_edit_playback_menu[i].flags = 0;
+		eof_edit_playback_menu[i + 1].flags = 0;
 	}
-	eof_edit_playback_menu[3].flags = D_SELECTED;
+	eof_edit_playback_menu[4].flags = D_SELECTED;
 	eof_playback_speed = 250;
 	return 1;
 }
@@ -1874,7 +1886,7 @@ int eof_menu_edit_playback_custom(void)
 
 	for(i = 0; i < 5; i++)
 	{
-		eof_edit_playback_menu[i].flags = 0;
+		eof_edit_playback_menu[i + 1].flags = 0;
 	}
 	eof_cursor_visible = 0;
 	eof_render();
@@ -1890,7 +1902,7 @@ int eof_menu_edit_playback_custom(void)
 		eof_playback_speed = userinput * 10;
 	}
 	printf("%d\n", eof_playback_speed);
-	eof_edit_playback_menu[4].flags = D_SELECTED;
+	eof_edit_playback_menu[5].flags = D_SELECTED;
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);

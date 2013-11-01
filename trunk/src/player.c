@@ -13,6 +13,7 @@ void eof_music_play(void)
 {
 	int speed = eof_playback_speed;
 	unsigned long i;
+	int ret;
 
 	eof_log("eof_music_play() entered", 1);
 
@@ -104,8 +105,15 @@ void eof_music_play(void)
 			}
 		}while(held);
 
-//		if(alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, 128, speed + eof_audio_fine_tune, 0) == ALOGG_OK)
-		if(alogg_play_ogg_ts(eof_music_track, eof_buffer_size, 255, 128, speed) == ALOGG_OK)
+		if(eof_playback_time_stretch)
+		{
+			ret = alogg_play_ogg_ts(eof_music_track, eof_buffer_size, 255, 128, speed);
+		}
+		else
+		{
+			ret = alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, 128, speed + eof_audio_fine_tune, 0);
+		}
+		if(ret == ALOGG_OK)
 		{
 			eof_mix_start(speed);
 			eof_entering_note_note = NULL;

@@ -138,6 +138,7 @@ int         eof_anchor_all_beats = 1;
 int         eof_disable_windows = 0;
 int         eof_disable_vsync = 0;
 int         eof_playback_speed = 1000;
+char        eof_playback_time_stretch = 1;
 char        eof_ogg_setting = 1;
 char      * eof_ogg_quality[6] = {"1.0", "2.0", "4.0", "5.0", "6.0", "8.0"};
 unsigned long eof_frame = 0;
