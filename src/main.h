@@ -331,6 +331,7 @@ extern int         eof_anchor_all_beats;
 extern int         eof_disable_windows;
 extern int         eof_disable_vsync;
 extern int         eof_playback_speed;
+extern char        eof_playback_time_stretch;
 extern char        eof_ogg_setting;
 extern char      * eof_ogg_quality[6];
 extern char        eof_cpu_saver;

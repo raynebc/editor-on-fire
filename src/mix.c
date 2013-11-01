@@ -272,7 +272,14 @@ unsigned long eof_mix_msec_to_sample(unsigned long msec, int freq)
 	unsigned long sample;
 	double second = (double)msec / (double)1000.0;
 
-	sample = (unsigned long)(second * (double)freq * (1000.0 / (float)eof_mix_speed));
+	if(eof_playback_time_stretch)
+	{
+		sample = (unsigned long)(second * (double)freq * (1000.0 / (float)eof_mix_speed));
+	}
+	else
+	{
+		sample = (unsigned long)(second * (double)freq);
+	}
 	return sample;
 }
 
