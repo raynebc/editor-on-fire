@@ -60,7 +60,7 @@ unsigned long eof_mix_msec_to_sample(unsigned long msec, int freq);
 void eof_mix_init(void);	//Inits variables and loads cues (clap, metronome tick, vocal tones)
 void eof_mix_exit(void);	//Releases memory used by audio cues
 void eof_mix_start_helper(void);	//Finds the next clap, tick and vocal tone timestamps?
-void eof_mix_start(unsigned long start, int speed);	//Prepares variables for chart playback
+void eof_mix_start(int speed);	//Prepares variables for chart playback
 void eof_mix_seek(int pos);	//Performs a seek and updates the position of the next of each audio cue
 SAMPLE *eof_mix_load_ogg_sample(char *fn);	//Loads the specified OGG sample from a dat file, returning it in SAMPLE format
 
