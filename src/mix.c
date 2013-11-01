@@ -272,7 +272,7 @@ unsigned long eof_mix_msec_to_sample(unsigned long msec, int freq)
 	unsigned long sample;
 	double second = (double)msec / (double)1000.0;
 
-	sample = (unsigned long)(second * (double)freq * (1000.0 / (float)eof_playback_speed));
+	sample = (unsigned long)(second * (double)freq * (1000.0 / (float)eof_mix_speed));
 	return sample;
 }
 
@@ -521,6 +521,7 @@ void eof_mix_start_helper(void)
 
 	eof_log("eof_mix_start_helper() entered", 1);
 
+	eof_mix_find_claps();
 	eof_mix_current_clap = -1;
 	eof_mix_next_clap = -1;
 	for(i = 0; i < eof_mix_claps; i++)
@@ -591,7 +592,7 @@ void eof_mix_start_helper(void)
 	}
 }
 
-void eof_mix_start(unsigned long start, int speed)
+void eof_mix_start(int speed)
 {
 	unsigned long i;
 
@@ -621,7 +622,7 @@ void eof_mix_start(unsigned long start, int speed)
 
 	eof_mix_speed = speed;
 	eof_mix_speed_ticker = 0;
-	eof_mix_sample_count = start;
+	eof_mix_sample_count = eof_mix_msec_to_sample(alogg_get_pos_msecs_ogg(eof_music_track), alogg_get_wave_freq_ogg(eof_music_track));
 	eof_mix_sample_increment = (1.0) * (44100.0 / (double)alogg_get_wave_freq_ogg(eof_music_track));
 	eof_mix_start_helper();
 
