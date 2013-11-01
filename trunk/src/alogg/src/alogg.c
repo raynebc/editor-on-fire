@@ -210,6 +210,7 @@ ALOGG_OGG *alogg_create_ogg_from_buffer(void *data, int data_len) {
   ogg->loop = FALSE;
   ogg->auto_polling = FALSE;
   ogg->current_section = -1;
+  ogg->time_stretch = 0;
 
   /* use vorbisfile to open it */
   ret = ov_open_callbacks((void *)ogg, &(ogg->vf), NULL, 0, _alogg_ogg_callbacks);
@@ -390,11 +391,15 @@ void alogg_seek_abs_msecs_ogg(ALOGG_OGG *ogg, int msec) {
   s /= 1000;
 
   ov_time_seek(&(ogg->vf), s);
+  if (ogg->time_stretch)
+    rubberband_reset(ogg->time_stretch_state);
 }
 
 
 void alogg_seek_abs_secs_ogg(ALOGG_OGG *ogg, int sec) {
   ov_time_seek(&(ogg->vf), sec);
+  if (ogg->time_stretch)
+    rubberband_reset(ogg->time_stretch_state);
 }
 
 
