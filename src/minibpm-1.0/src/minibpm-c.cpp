@@ -29,7 +29,7 @@ struct MiniBPMState_
     breakfastquay::MiniBPM *m_s;
 };
 
-MiniBPMState minibpm_new(double sampleRate)
+MiniBPMState minibpm_new(float sampleRate)
 {
     MiniBPMState_ *state = new MiniBPMState_();
     state->m_s = new breakfastquay::MiniBPM(sampleRate);
