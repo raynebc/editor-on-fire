@@ -140,7 +140,7 @@ MENU eof_song_proguitar_menu[] =
 MENU eof_song_rocksmith_menu[] =
 {
 	{"&Correct chord fingerings", eof_correct_chord_fingerings_menu, NULL, 0, NULL},
-	{"Export chord techniques", eof_menu_song_rocksmith_export_chord_techniques, NULL, 0, NULL},
+	{"Export chord techniques (RS1)", eof_menu_song_rocksmith_export_chord_techniques, NULL, 0, NULL},
 	{"Check &Fret hand positions", eof_check_fret_hand_positions_menu, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };

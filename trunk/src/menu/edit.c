@@ -20,7 +20,7 @@ MENU eof_edit_paste_from_menu[] =
 	{"&Medium", eof_menu_edit_paste_from_medium, NULL, 0, NULL},
 	{"&Amazing", eof_menu_edit_paste_from_amazing, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"&Catalog\t" CTRL_NAME "+Shift+C", eof_menu_edit_paste_from_catalog, NULL, 0, NULL},
+	{"&Catalog\tShift+C", eof_menu_edit_paste_from_catalog, NULL, 0, NULL},
 	{"&Difficulty", eof_menu_song_paste_from_difficulty, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -2993,20 +2993,21 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 		{	//If it is pasting into a non pro guitar track, erase all pro guitar flags as they are invalid
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;				//Erase the pro hammer on flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;				//Erase the pro hammer off flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Erase the pro tap flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;		//Erase the pro slide up flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;		//Erase the pro slide down flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;	//Erase the pro string mute flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;		//Erase the pro palm mute flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;		//Erase the pro strum up flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;		//Erase the pro strum down flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM;		//Erase the pro strum mid flag
-			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;		//Erase the pro strum up flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;			//Erase the pro bend flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;		//Erase the pro harmonic flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;	//Erase the pro guitar slide reverse flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;		//Erase the pro guitar vibrato flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Erase the pro guitar Rocksmith status flag
-			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLAP;			//Erase the pro guitar slap flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_POP;			//Erase the pro guitar pop flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLAP;			//Erase the pro guitar slap flag
 		}
 		else
 		{	//If it is pasting into a pro guitar track
@@ -3137,24 +3138,24 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 
 	if(eof_song->track[desttrack]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR)
 	{	//If the note is pasting into a non 5 lane guitar track, erase legacy HOPO flags
-		*flags &= (~EOF_NOTE_FLAG_HOPO);	//Erase the temporary HOPO flag
-		*flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Erase the forced HOPO ON flag
-		*flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Erase the forced HOPO OFF flag
+		*flags &= ~EOF_NOTE_FLAG_HOPO;		//Erase the temporary HOPO flag
+		*flags &= ~EOF_NOTE_FLAG_F_HOPO;	//Erase the forced HOPO ON flag
+		*flags &= ~EOF_NOTE_FLAG_NO_HOPO;	//Erase the forced HOPO OFF flag
 	}
 
 	if(eof_song->track[desttrack]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
 	{	//If the note is pasting into a non drum track, erase drum flags
 		if(eof_song->track[sourcetrack]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-		{	//If the note is copying from a drum track, erase conflicting flags
+		{	//If the note is copying from a drum track, erase all drum flags as they are invalid
 			*flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;	//Erase the open hi hat flag
 			*flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;	//Erase the pedal controlled hi hat flag
 			*flags &= ~EOF_DRUM_NOTE_FLAG_R_RIMSHOT;		//Erase the rim shot flag
 			*flags &= ~EOF_DRUM_NOTE_FLAG_Y_SIZZLE;			//Erase the sizzle hi hat flag
+			*flags &= ~EOF_DRUM_NOTE_FLAG_Y_CYMBAL;			//Erase the yellow cymbal flag
+			*flags &= ~EOF_DRUM_NOTE_FLAG_B_CYMBAL;			//Erase the blue cymbal flag
+			*flags &= ~EOF_DRUM_NOTE_FLAG_G_CYMBAL;			//Erase the green cymbal flag
+			*flags &= ~EOF_DRUM_NOTE_FLAG_DBASS;			//Erase the double bass flag
 		}
-		*flags &= (~EOF_NOTE_FLAG_Y_CYMBAL);				//Erase the yellow cymbal flag
-		*flags &= (~EOF_NOTE_FLAG_B_CYMBAL);				//Erase the blue cymbal flag
-		*flags &= (~EOF_NOTE_FLAG_G_CYMBAL);				//Erase the green cymbal flag
-		*flags &= (~EOF_NOTE_FLAG_DBASS);					//Erase the double bass flag
 	}
 	else
 	{	//If it is pasting into a drum track, erase flags that are invalid for drum notes
@@ -3222,7 +3223,7 @@ unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long tra
 	{	//If the note being pasted uses lane 1, erase lane 1 flags from the overlapped note
 		if(track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//Erase drum specific flags
-			flags &= ~EOF_NOTE_FLAG_DBASS;
+			flags &= ~EOF_DRUM_NOTE_FLAG_DBASS;
 		}
 		else if(track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
 		{
@@ -3244,7 +3245,7 @@ unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long tra
 	{	//If the note being pasted uses lane 3, erase lane 3 flags from the overlapped note (remove yellow hi hat statuses if a red gem is present)
 		if(track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//Erase drum specific flags
-			flags &= ~EOF_NOTE_FLAG_Y_CYMBAL;
+			flags &= ~EOF_DRUM_NOTE_FLAG_Y_CYMBAL;
 			flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;
 			flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;
 			flags &= ~EOF_DRUM_NOTE_FLAG_Y_SIZZLE;
@@ -3258,7 +3259,7 @@ unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long tra
 	{	//If the note being pasted uses lane 4, erase lane 4 flags from the overlapped note
 		if(track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//Erase drum specific flags
-			flags &= ~EOF_NOTE_FLAG_B_CYMBAL;
+			flags &= ~EOF_DRUM_NOTE_FLAG_B_CYMBAL;
 		}
 		else if(track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
 		{
@@ -3269,7 +3270,7 @@ unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long tra
 	{	//If the note being pasted uses lane 5, erase lane 5 flags from the overlapped note
 		if(track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//Erase drum specific flags
-			flags &= ~EOF_NOTE_FLAG_G_CYMBAL;
+			flags &= ~EOF_DRUM_NOTE_FLAG_G_CYMBAL;
 		}
 	}
 	return flags;

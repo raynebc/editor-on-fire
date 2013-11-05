@@ -469,13 +469,13 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		{	//If this is a drum track
 			if(((tp->note[i-1]->note & 1) == 0) || (tp->note[i-1]->type != 3))
 			{	//If this note does not have a bass drum note or isn't in expert difficulty
-				tp->note[i-1]->flags &= ~EOF_NOTE_FLAG_DBASS;	//Clear the double bass flag
+				tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_DBASS;	//Clear the double bass flag
 			}
 			if((tp->note[i-1]->note & 2) == 0)
 			{	//If this note does not have a red tom, clear flags that are specific to that lane
 				tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_R_RIMSHOT;
 			}
-			if(((tp->note[i-1]->note & 4) == 0) || ((tp->note[i-1]->flags & EOF_NOTE_FLAG_Y_CYMBAL) == 0))
+			if(((tp->note[i-1]->note & 4) == 0) || ((tp->note[i-1]->flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL) == 0))
 			{	//If this note does not have a yellow cymbal, clear flags that are specific to yellow cymbals
 				if((tp->note[i-1]->note & 2) == 0)
 				{	//If this note also doesn't have a red note (allowing for hi hat notation during disco flip)
@@ -595,37 +595,37 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		{	//For each note in the drum track
 			if((tp->note[i]->note & 16) && (!lastcheckedgreenpos || (tp->note[i]->pos != lastcheckedgreenpos)))
 			{	//If this note contains a lane 5 gem, perform green cymbal cleanup
-				if(eof_check_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL))
+				if(eof_check_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_G_CYMBAL))
 				{	//If any notes at this position are marked as a green cymbal
-					eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL,1,1);	//Mark all notes at this position as green cymbal
+					eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_G_CYMBAL,1,1);	//Mark all notes at this position as green cymbal
 				}
 				else
 				{
-					eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL,0,1);	//Mark all notes at this position as green drum
+					eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_G_CYMBAL,0,1);	//Mark all notes at this position as green drum
 				}
 				lastcheckedgreenpos = tp->note[i]->pos;	//Remember that green notes at this position were already checked and fixed if applicable
 			}
 			if((tp->note[i]->note & 8) && (!lastcheckedbluepos || (tp->note[i]->pos != lastcheckedbluepos)))
 			{	//If this note contains a lane 4 gem, perform blue cymbal cleanup
-				if(eof_check_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_B_CYMBAL))
+				if(eof_check_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_B_CYMBAL))
 				{	//If any notes at this position are marked as a blue cymbal
-					eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_B_CYMBAL,1,1);	//Mark all notes at this position as blue cymbal
+					eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_B_CYMBAL,1,1);	//Mark all notes at this position as blue cymbal
 				}
 				else
 				{
-					eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_B_CYMBAL,0,1);	//Mark all notes at this position as blue drum
+					eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_B_CYMBAL,0,1);	//Mark all notes at this position as blue drum
 				}
 				lastcheckedbluepos = tp->note[i]->pos;	//Remember that blue notes at this position were already checked and fixed if applicable
 			}
 			if((tp->note[i]->note & 4) && (!lastcheckedyellowpos || (tp->note[i]->pos != lastcheckedyellowpos)))
 			{	//If this note contains a lane 3 gem, perform yellow cymbal cleanup
-				if(eof_check_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_Y_CYMBAL))
+				if(eof_check_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_Y_CYMBAL))
 				{	//If any notes at this position are marked as a yellow cymbal
-					eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_Y_CYMBAL,1,1);	//Mark all notes at this position as yellow cymbal
+					eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_Y_CYMBAL,1,1);	//Mark all notes at this position as yellow cymbal
 				}
 				else
 				{
-					eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_Y_CYMBAL,0,1);	//Mark all notes at this position as yellow drum
+					eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_Y_CYMBAL,0,1);	//Mark all notes at this position as yellow drum
 				}
 				lastcheckedyellowpos = tp->note[i]->pos;	//Remember that yellow notes at this position were already checked and fixed if applicable
 			}
@@ -5685,9 +5685,9 @@ char eof_track_has_cymbals(EOF_SONG *sp, unsigned long track)
 		{	//For each note in the track
 			note = eof_get_note_note(sp, track, i);
 			noteflags = eof_get_note_flags(sp, track, i);
-			if(	((note & 4) && ((noteflags & EOF_NOTE_FLAG_Y_CYMBAL))) ||
-				((note & 8) && ((noteflags & EOF_NOTE_FLAG_B_CYMBAL))) ||
-				((note & 16) && ((noteflags & EOF_NOTE_FLAG_G_CYMBAL))))
+			if(	((note & 4) && ((noteflags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL))) ||
+				((note & 8) && ((noteflags & EOF_DRUM_NOTE_FLAG_B_CYMBAL))) ||
+				((note & 16) && ((noteflags & EOF_DRUM_NOTE_FLAG_G_CYMBAL))))
 			{	//If this note contains a yellow, blue or green drum marked with pro drum notation
 				return 1;	//Track has cymbals
 			}

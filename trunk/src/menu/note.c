@@ -1368,7 +1368,7 @@ int eof_menu_note_toggle_green(void)
 				if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 				{	//If green drum is being toggled on/off
 					flags = eof_get_note_flags(eof_song, eof_selected_track, i - 1);
-					flags &= (~EOF_NOTE_FLAG_DBASS);		//Clear the Expert+ status if it is set
+					flags &= (~EOF_DRUM_NOTE_FLAG_DBASS);		//Clear the Expert+ status if it is set
 					eof_set_note_flags(eof_song, eof_selected_track, i - 1, flags);
 				}
 				else if(eof_selected_track == EOF_TRACK_BASS)
@@ -1472,11 +1472,11 @@ int eof_menu_note_toggle_yellow(void)
 				if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 				{	//If yellow drum is being toggled on/off
 					flags = eof_get_note_flags(eof_song, eof_selected_track, i - 1);
-					flags &= (~EOF_NOTE_FLAG_Y_CYMBAL);	//Clear the Pro yellow cymbal status if it is set
+					flags &= (~EOF_DRUM_NOTE_FLAG_Y_CYMBAL);	//Clear the Pro yellow cymbal status if it is set
 					eof_set_note_flags(eof_song, eof_selected_track, i - 1, flags);
 					if(eof_mark_drums_as_cymbal && (note & 4))
 					{	//If user specified to mark new notes as cymbals, and this note was toggled on
-						eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum], i - 1, EOF_NOTE_FLAG_Y_CYMBAL, 1, 0);	//Set the yellow cymbal flag on all drum notes at this position
+						eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum], i - 1, EOF_DRUM_NOTE_FLAG_Y_CYMBAL, 1, 0);	//Set the yellow cymbal flag on all drum notes at this position
 					}
 				}
 			}
@@ -1527,11 +1527,11 @@ int eof_menu_note_toggle_blue(void)
 				if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 				{	//If blue drum is being toggled on/off
 					flags = eof_get_note_flags(eof_song, eof_selected_track, i - 1);
-					flags &= (~EOF_NOTE_FLAG_B_CYMBAL);	//Clear the Pro blue cymbal status if it is set
+					flags &= (~EOF_DRUM_NOTE_FLAG_B_CYMBAL);	//Clear the Pro blue cymbal status if it is set
 					eof_set_note_flags(eof_song, eof_selected_track, i - 1, flags);
 					if(eof_mark_drums_as_cymbal && (note & 8))
 					{	//If user specified to mark new notes as cymbals, and this note was toggled on
-						eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum], i - 1, EOF_NOTE_FLAG_B_CYMBAL, 1, 0);	//Set the blue cymbal flag on all drum notes at this position
+						eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum], i - 1, EOF_DRUM_NOTE_FLAG_B_CYMBAL, 1, 0);	//Set the blue cymbal flag on all drum notes at this position
 					}
 				}
 			}
@@ -1582,11 +1582,11 @@ int eof_menu_note_toggle_purple(void)
 				if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 				{	//If green drum is being toggled on/off
 					flags = eof_get_note_flags(eof_song, eof_selected_track, i - 1);
-					flags &= (~EOF_NOTE_FLAG_G_CYMBAL);	//Clear the Pro green cymbal status if it is set
+					flags &= (~EOF_DRUM_NOTE_FLAG_G_CYMBAL);	//Clear the Pro green cymbal status if it is set
 					eof_set_note_flags(eof_song, eof_selected_track, i - 1, flags);
 					if(eof_mark_drums_as_cymbal && (note & 16))
 					{	//If user specified to mark new notes as cymbals, and this note was toggled on
-						eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum], i - 1, EOF_NOTE_FLAG_G_CYMBAL, 1, 0);	//Set the green cymbal flag on all drum notes at this position
+						eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum], i - 1, EOF_DRUM_NOTE_FLAG_G_CYMBAL, 1, 0);	//Set the green cymbal flag on all drum notes at this position
 					}
 				}
 			}
@@ -2068,7 +2068,7 @@ int eof_menu_note_toggle_double_bass(void)
 				u = 1;
 			}
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			flags ^= EOF_NOTE_FLAG_DBASS;
+			flags ^= EOF_DRUM_NOTE_FLAG_DBASS;
 			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 		}
 	}
@@ -2096,14 +2096,14 @@ int eof_menu_note_remove_double_bass(void)
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == EOF_NOTE_AMAZING) && (eof_get_note_note(eof_song, eof_selected_track, i) & 1))
 		{	//If this note is in the currently active track, is selected, is in the Expert difficulty and has a green gem
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			if(flags & EOF_NOTE_FLAG_DBASS)
+			if(flags & EOF_DRUM_NOTE_FLAG_DBASS)
 			{	//If this note has double bass status
 				if(!u)
 				{
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					u = 1;
 				}
-				flags &= ~EOF_NOTE_FLAG_DBASS;	//Remove double bass status
+				flags &= ~EOF_DRUM_NOTE_FLAG_DBASS;	//Remove double bass status
 				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 			}
 		}
@@ -2138,7 +2138,7 @@ int eof_menu_note_toggle_rb3_cymbal_green(void)
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					u = 1;
 				}
-				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_G_CYMBAL,2,0);	//Toggle the green cymbal flag on all drum notes at this position
+				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_G_CYMBAL,2,0);	//Toggle the green cymbal flag on all drum notes at this position
 			}
 		}
 	}
@@ -2172,7 +2172,7 @@ int eof_menu_note_toggle_rb3_cymbal_yellow(void)
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					u = 1;
 				}
-				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,2,0);	//Toggle the yellow cymbal flag on all drum notes at this position
+				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_CYMBAL,2,0);	//Toggle the yellow cymbal flag on all drum notes at this position
 			}
 		}
 	}
@@ -2206,7 +2206,7 @@ int eof_menu_note_toggle_rb3_cymbal_blue(void)
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					u = 1;
 				}
-				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_B_CYMBAL,2,0);	//Toggle the blue cymbal flag on all drum notes at this position
+				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_B_CYMBAL,2,0);	//Toggle the blue cymbal flag on all drum notes at this position
 			}
 		}
 	}
@@ -2237,18 +2237,18 @@ int eof_menu_note_remove_cymbal(void)
 			note = eof_get_note_note(eof_song, eof_selected_track, i);
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 			oldflags = flags;	//Save an extra copy of the original flags
-			if(	((note & 4) && (flags & EOF_NOTE_FLAG_Y_CYMBAL)) ||
-				((note & 8) && (flags & EOF_NOTE_FLAG_B_CYMBAL)) ||
-				((note & 16) && (flags & EOF_NOTE_FLAG_G_CYMBAL)))
+			if(	((note & 4) && (flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL)) ||
+				((note & 8) && (flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL)) ||
+				((note & 16) && (flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL)))
 			{	//If this note has a cymbal notation
 				if(!u && (oldflags != flags))
 				{	//Make a back up before changing the first note
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					u = 1;
 				}
-				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,0,0);	//Clear the yellow cymbal flag on all drum notes at this position
-				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_B_CYMBAL,0,0);	//Clear the blue cymbal flag on all drum notes at this position
-				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_G_CYMBAL,0,0);	//Clear the green cymbal flag on all drum notes at this position
+				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_CYMBAL,0,0);	//Clear the yellow cymbal flag on all drum notes at this position
+				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_B_CYMBAL,0,0);	//Clear the blue cymbal flag on all drum notes at this position
+				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_G_CYMBAL,0,0);	//Clear the green cymbal flag on all drum notes at this position
 				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN,0,0);	//Clear the open hi hat cymbal flag on all drum notes at this position
 				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL,0,0);	//Clear the pedal hi hat cymbal flag on all drum notes at this position
 				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_SIZZLE,0,0);			//Clear the sizzle hi hat cymbal flag on all drum notes at this position
@@ -6576,7 +6576,7 @@ int eof_menu_note_toggle_hi_hat_open(void)
 				}
 				if(eof_get_note_note(eof_song, eof_selected_track, i) & 4)
 				{	//If this is a yellow gem
-					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,1,0);	//Automatically mark as a cymbal
+					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_CYMBAL,1,0);	//Automatically mark as a cymbal
 				}
 				if(eof_drum_modifiers_affect_all_difficulties)
 				{	//If the user wants to apply this change to notes at this position among all difficulties
@@ -6627,7 +6627,7 @@ int eof_menu_note_toggle_hi_hat_pedal(void)
 				}
 				if(eof_get_note_note(eof_song, eof_selected_track, i) & 4)
 				{	//If this is a yellow gem
-					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,1,0);	//Automatically mark as a cymbal
+					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_CYMBAL,1,0);	//Automatically mark as a cymbal
 				}
 				if(eof_drum_modifiers_affect_all_difficulties)
 				{	//If the user wants to apply this change to notes at this position among all difficulties
@@ -6678,7 +6678,7 @@ int eof_menu_note_toggle_hi_hat_sizzle(void)
 				}
 				if(eof_get_note_note(eof_song, eof_selected_track, i) & 4)
 				{	//If this is a yellow gem
-					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,1,0);	//Automatically mark as a cymbal
+					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_CYMBAL,1,0);	//Automatically mark as a cymbal
 				}
 				if(eof_drum_modifiers_affect_all_difficulties)
 				{	//If the user wants to apply this change to notes at this position among all difficulties

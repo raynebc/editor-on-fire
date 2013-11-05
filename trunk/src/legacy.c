@@ -1253,7 +1253,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 					if((sp->legacy_track[i]->parent->track_type == EOF_TRACK_DRUM) && (sp->legacy_track[i]->note[j]->flags & EOF_NOTE_FLAG_CRAZY))
 					{	//In this version of the EOF project format, double bass used the same flag as crazy notes
 						sp->legacy_track[i]->note[j]->flags &= ~(EOF_NOTE_FLAG_CRAZY);	//Clear the crazy flag
-						sp->legacy_track[i]->note[j]->flags |= EOF_NOTE_FLAG_DBASS;		//Set the double bass flag
+						sp->legacy_track[i]->note[j]->flags |= EOF_DRUM_NOTE_FLAG_DBASS;		//Set the double bass flag
 					}
 				}
 			}
