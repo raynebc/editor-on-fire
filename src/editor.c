@@ -1379,7 +1379,7 @@ if(key[KEY_PAUSE])
 
 	/* toggle claps (C) */
 	/* paste from catalog (SHIFT+C) */
-	/* copy Rocksmith phrase/section */
+	/* copy Rocksmith phrase/section (CTRL+SHIFT+C)*/
 	if(key[KEY_C])
 	{
 		if(!KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
@@ -5552,15 +5552,15 @@ void eof_mark_edited_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned 
 
 		if((sp->legacy_track[tracknum]->note[notenum]->note & 4) && (bitmask & 4))
 		{	//If the note was changed to include a yellow note
-			eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_NOTE_FLAG_Y_CYMBAL,1,0);	//Set the yellow cymbal flag on all drum notes at this position
+			eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_DRUM_NOTE_FLAG_Y_CYMBAL,1,0);	//Set the yellow cymbal flag on all drum notes at this position
 		}
 		if((sp->legacy_track[tracknum]->note[notenum]->note & 8) && (bitmask & 8))
 		{	//If the note was changed to include a blue note
-			eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_NOTE_FLAG_B_CYMBAL,1,0);	//Set the blue cymbal flag on all drum notes at this position
+			eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_DRUM_NOTE_FLAG_B_CYMBAL,1,0);	//Set the blue cymbal flag on all drum notes at this position
 		}
 		if((sp->legacy_track[tracknum]->note[notenum]->note & 16) && (bitmask & 16))
 		{	//If the note was changed to include a green note
-			eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_NOTE_FLAG_G_CYMBAL,1,0);	//Set the green cymbal flag on all drum notes at this position
+			eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_DRUM_NOTE_FLAG_G_CYMBAL,1,0);	//Set the green cymbal flag on all drum notes at this position
 		}
 	}
 }
@@ -5589,7 +5589,7 @@ void eof_mark_edited_note_as_double_bass(EOF_SONG *sp, unsigned long track, unsi
 		//For now, it's assumed that any drum behavior track will be a legacy format track
 		if((sp->legacy_track[tracknum]->note[notenum]->note & 1) && (bitmask & 1))
 		{	//If the note was changed to include a bass drum note
-			sp->legacy_track[tracknum]->note[notenum]->flags |= EOF_NOTE_FLAG_DBASS;	//Set the double bass flag
+			sp->legacy_track[tracknum]->note[notenum]->flags |= EOF_DRUM_NOTE_FLAG_DBASS;	//Set the double bass flag
 		}
 	}
 }
@@ -5617,7 +5617,7 @@ void eof_mark_edited_note_as_special_hi_hat(EOF_SONG *sp, unsigned long track, u
 
 		if((sp->legacy_track[tracknum]->note[notenum]->note & 4) && (bitmask & 4))
 		{	//If the note has lane 3 populated
-			eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_NOTE_FLAG_Y_CYMBAL,1,0);	//Set the yellow cymbal flag on all drum notes at this position
+			eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_DRUM_NOTE_FLAG_Y_CYMBAL,1,0);	//Set the yellow cymbal flag on all drum notes at this position
 
 			if(eof_drum_modifiers_affect_all_difficulties)
 			{	//If the user wants to apply this change to notes at this position among all difficulties

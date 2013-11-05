@@ -499,7 +499,7 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 		}
 		if(isexpertplus)
 		{	//If this note was determined to be an expert+ drum note
-			newnote->flags |= EOF_NOTE_FLAG_DBASS;	//Set the double bass flag bit
+			newnote->flags |= EOF_DRUM_NOTE_FLAG_DBASS;	//Set the double bass flag bit
 		}
 ///If the size field is omitted, it's not yet known whether the expected size is 8 or 9 bytes
 		if(notesize == 9)
@@ -1764,7 +1764,7 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 			}
 			if(isexpertplus)
 			{	//If this note was determined to be an expert+ drum note
-				newnote->flags |= EOF_NOTE_FLAG_DBASS;	//Set the double bass flag bit
+				newnote->flags |= EOF_DRUM_NOTE_FLAG_DBASS;	//Set the double bass flag bit
 			}
 		}
 	}

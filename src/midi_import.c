@@ -1750,21 +1750,21 @@ set_window_title(debugtext);
 							{
 								if(doublebass)
 								{	//If the note was found to be double bass
-									eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_NOTE_FLAG_DBASS);	//Set the double bass flag
+									eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_DRUM_NOTE_FLAG_DBASS);	//Set the double bass flag
 								}
 								if(prodrums && (eof_get_note_type(sp, picked_track, notenum) != EOF_NOTE_SPECIAL))
 								{	//If pro drum notation is in effect and this was a non BRE drum note, assume cymbal notation until a tom marker ending is found
 									if(eof_get_note_note(sp, picked_track, notenum) & 4)
 									{	//This is a yellow drum note, assume it is a cymbal unless a pro drum phrase indicates otherwise
-										eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_NOTE_FLAG_Y_CYMBAL);	//Ensure the cymbal flag is set
+										eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_DRUM_NOTE_FLAG_Y_CYMBAL);	//Ensure the cymbal flag is set
 									}
 									if(eof_get_note_note(sp, picked_track, notenum) & 8)
 									{	//This is a blue drum note, assume it is a cymbal unless a pro drum phrase indicates otherwise
-										eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_NOTE_FLAG_B_CYMBAL);	//Ensure the cymbal flag is set
+										eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_DRUM_NOTE_FLAG_B_CYMBAL);	//Ensure the cymbal flag is set
 									}
 									if(eof_get_note_note(sp, picked_track, notenum) & 16)
 									{	//This is a purle drum note (green in Rock Band), assume it is a cymbal unless a pro drum phrase indicates otherwise
-										eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_NOTE_FLAG_G_CYMBAL);	//Ensure the cymbal flag is set
+										eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_DRUM_NOTE_FLAG_G_CYMBAL);	//Ensure the cymbal flag is set
 									}
 								}
 							}
@@ -1862,7 +1862,7 @@ set_window_title(debugtext);
 									{	//Check for each note that has been imported for this track
 										if((sp->legacy_track[tracknum]->note[k]->pos >= rb_pro_yellow_pos) && (sp->legacy_track[tracknum]->note[k]->pos <= event_realtime))
 										{	//If the note is positioned within this pro yellow drum phrase
-											sp->legacy_track[tracknum]->note[k]->flags &= (~EOF_NOTE_FLAG_Y_CYMBAL);	//Clear the yellow cymbal marker on the note
+											sp->legacy_track[tracknum]->note[k]->flags &= (~EOF_DRUM_NOTE_FLAG_Y_CYMBAL);	//Clear the yellow cymbal marker on the note
 										}
 									}
 									rb_pro_yellow = 0;
@@ -1873,7 +1873,7 @@ set_window_title(debugtext);
 									{	//Check for each note that has been imported for this track
 										if((sp->legacy_track[tracknum]->note[k]->pos >= rb_pro_blue_pos) && (sp->legacy_track[tracknum]->note[k]->pos <= event_realtime))
 										{	//If the note is positioned within this pro blue drum phrase
-											sp->legacy_track[tracknum]->note[k]->flags &= (~EOF_NOTE_FLAG_B_CYMBAL);	//Clear the blue cymbal marker on the note
+											sp->legacy_track[tracknum]->note[k]->flags &= (~EOF_DRUM_NOTE_FLAG_B_CYMBAL);	//Clear the blue cymbal marker on the note
 										}
 									}
 									rb_pro_blue = 0;
@@ -1884,7 +1884,7 @@ set_window_title(debugtext);
 									{	//Check for each note that has been imported for this track, in reverse order
 										if((sp->legacy_track[tracknum]->note[k]->pos >= rb_pro_green_pos) && (sp->legacy_track[tracknum]->note[k]->pos <= event_realtime))
 										{	//If the note is positioned within this pro green drum phrase
-											sp->legacy_track[tracknum]->note[k]->flags &= (~EOF_NOTE_FLAG_G_CYMBAL);	//Clear the green cymbal marker on the note
+											sp->legacy_track[tracknum]->note[k]->flags &= (~EOF_DRUM_NOTE_FLAG_G_CYMBAL);	//Clear the green cymbal marker on the note
 										}
 									}
 									rb_pro_green = 0;
@@ -2834,17 +2834,17 @@ eof_log("\tThird pass complete", 1);
 		{	//For each note in the drum track
 			if(sp->legacy_track[tracknum]->note[k]->type != EOF_NOTE_SPECIAL)
 			{	//Only process non BRE notes
-				if((sp->legacy_track[tracknum]->note[k]->note & 4) && ((sp->legacy_track[tracknum]->note[k]->flags & EOF_NOTE_FLAG_Y_CYMBAL) == 0))
+				if((sp->legacy_track[tracknum]->note[k]->note & 4) && ((sp->legacy_track[tracknum]->note[k]->flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL) == 0))
 				{	//If this note has a yellow gem with the cymbal marker cleared
-					eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],k,EOF_NOTE_FLAG_Y_CYMBAL,0,1);	//Ensure all drum notes at this position have the flag cleared
+					eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],k,EOF_DRUM_NOTE_FLAG_Y_CYMBAL,0,1);	//Ensure all drum notes at this position have the flag cleared
 				}
-				if((sp->legacy_track[tracknum]->note[k]->note & 8) && ((sp->legacy_track[tracknum]->note[k]->flags & EOF_NOTE_FLAG_B_CYMBAL) == 0))
+				if((sp->legacy_track[tracknum]->note[k]->note & 8) && ((sp->legacy_track[tracknum]->note[k]->flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL) == 0))
 				{	//If this note has a blue gem with the cymbal marker cleared
-					eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],k,EOF_NOTE_FLAG_B_CYMBAL,0,1);	//Ensure all drum notes at this position have the flag cleared
+					eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],k,EOF_DRUM_NOTE_FLAG_B_CYMBAL,0,1);	//Ensure all drum notes at this position have the flag cleared
 				}
-				if((sp->legacy_track[tracknum]->note[k]->note & 16) && ((sp->legacy_track[tracknum]->note[k]->flags & EOF_NOTE_FLAG_G_CYMBAL) == 0))
+				if((sp->legacy_track[tracknum]->note[k]->note & 16) && ((sp->legacy_track[tracknum]->note[k]->flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL) == 0))
 				{	//If this note has a green gem with the cymbal marker cleared
-					eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],k,EOF_NOTE_FLAG_G_CYMBAL,0,1);	//Ensure all drum notes at this position have the flag cleared
+					eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],k,EOF_DRUM_NOTE_FLAG_G_CYMBAL,0,1);	//Ensure all drum notes at this position have the flag cleared
 				}
 			}
 		}

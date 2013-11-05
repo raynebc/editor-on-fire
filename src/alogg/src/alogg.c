@@ -513,13 +513,13 @@ int alogg_poll_ogg_ts(ALOGG_OGG *ogg) {
     /* process samples with Rubber Band */
     if (ogg->stereo) {
       for (i = 0; i < ogg->time_stretch_buffer_samples; i++) {
-        ogg->time_stretch_buffer[0][i] = (float)((long)audiobuf_sp[i * 2] - 0x8000) / (float)0x8000;
-        ogg->time_stretch_buffer[1][i] = (float)((long)audiobuf_sp[i * 2 + 1] - 0x8000) / (float)0x8000;
+        ogg->time_stretch_buffer[0][i] = (float)((long)audiobuf_sp[i * 2] - 0x8000) / (float)0x8000;		//Convert sample to signed floating point format
+        ogg->time_stretch_buffer[1][i] = (float)((long)audiobuf_sp[i * 2 + 1] - 0x8000) / (float)0x8000;	//Repeat for the other channel's sample
       }
     }
     else {
       for (i = 0; i < ogg->time_stretch_buffer_samples; i++) {
-        ogg->time_stretch_buffer[0][i] = (float)((long)audiobuf_sp[i] - 0x8000) / (float)0x8000;
+        ogg->time_stretch_buffer[0][i] = (float)((long)audiobuf_sp[i] - 0x8000) / (float)0x8000;	//Convert sample to signed floating point format
       }
 	}
     rubberband_process(ogg->time_stretch_state, (const float **)ogg->time_stretch_buffer, ogg->time_stretch_buffer_samples, 0);
@@ -529,13 +529,13 @@ int alogg_poll_ogg_ts(ALOGG_OGG *ogg) {
   size_done = rubberband_retrieve(ogg->time_stretch_state, ogg->time_stretch_buffer, ogg->time_stretch_buffer_samples);
   if (ogg->stereo) {
     for (i = 0; i < size_done; i++) {
-      audiobuf_sp[i * 2] = ogg->time_stretch_buffer[0][i] * (float)0x8000 + (float)0x8000;
-      audiobuf_sp[i * 2 + 1] = ogg->time_stretch_buffer[1][i] * (float)0x8000 + (float)0x8000;
+      audiobuf_sp[i * 2] = (ogg->time_stretch_buffer[0][i] * (float)0x8000) + (float)0x8000;		//Convert sample back to unsigned integer format
+      audiobuf_sp[i * 2 + 1] = (ogg->time_stretch_buffer[1][i] * (float)0x8000) + (float)0x8000;	//Repeat for the other channel's sample
     }
   }
   else {
     for (i = 0; i < size_done; i++) {
-      audiobuf_sp[i] = ogg->time_stretch_buffer[0][i] * (float)0x8000 + (float)0x8000;
+      audiobuf_sp[i] = (ogg->time_stretch_buffer[0][i] * (float)0x8000) + (float)0x8000;	//Convert sample back to unsigned integer format
     }
   }
 
