@@ -11,6 +11,7 @@
 #include "../dialog/proc.h"
 #include "../midi_data_import.h"	//For eof_events_overridden_by_stored_MIDI_track()
 #include "../rs.h"
+#include "../bpm.h"	//For eof_estimate_bpm()
 #include "beat.h"
 #include "edit.h"
 #include "song.h"
@@ -81,6 +82,7 @@ MENU eof_beat_menu[] =
 	{"&Delete Anchor", eof_menu_beat_delete_anchor, NULL, 0, NULL},
 	{"Reset BPM", eof_menu_beat_reset_bpm, NULL, 0, NULL},
 	{"&Calculate BPM", eof_menu_beat_calculate_bpm, NULL, 0, NULL},
+	{"Estimate BPM", eof_menu_beat_estimate_bpm, NULL, 0, NULL},
 	{"Double BPM", eof_menu_beat_double_tempo, NULL, 0, NULL},
 	{"Halve BPM", eof_menu_beat_halve_tempo, NULL, 0, NULL},
 	{"Fix tempo for RBN", eof_menu_beat_set_RBN_tempos, NULL, 0, NULL},
@@ -235,9 +237,10 @@ void eof_prepare_beat_menu(void)
 		eof_beat_menu[11].flags = 0;	//Delete anchor
 		eof_beat_menu[12].flags = 0;	//Reset BPM
 		eof_beat_menu[13].flags = 0;	//Calculate BPM
-		eof_beat_menu[14].flags = 0;	//Double BPM
-		eof_beat_menu[15].flags = 0;	//Halve BPM
-		eof_beat_menu[16].flags = 0;	//Adjust tempo for RBN
+		eof_beat_menu[14].flags = 0;	//Estimate BPM
+		eof_beat_menu[15].flags = 0;	//Double BPM
+		eof_beat_menu[16].flags = 0;	//Halve BPM
+		eof_beat_menu[17].flags = 0;	//Adjust tempo for RBN
 
 //Beat>Add and Delete validation
 		if(eof_find_next_anchor(eof_song, eof_selected_beat) < 0)
@@ -319,24 +322,24 @@ void eof_prepare_beat_menu(void)
 //Beat>All Events and Clear Events validation
 		if(eof_song->text_events > 0)
 		{	//If there is at least one defined text event, enable Beat>All Events and Clear Events
-			eof_beat_menu[19].flags = 0;
-			eof_beat_menu[21].flags = 0;
+			eof_beat_menu[20].flags = 0;
+			eof_beat_menu[22].flags = 0;
 		}
 		else
 		{
-			eof_beat_menu[19].flags = D_DISABLED;
-			eof_beat_menu[21].flags = D_DISABLED;
+			eof_beat_menu[20].flags = D_DISABLED;
+			eof_beat_menu[22].flags = D_DISABLED;
 		}
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar/bass track is active
-			eof_beat_menu[18].flags = 0;	//Beat>Rocksmith>
-			eof_beat_menu[22].flags = 0;	//Place Trainer Event
+			eof_beat_menu[19].flags = 0;	//Beat>Rocksmith>
+			eof_beat_menu[23].flags = 0;	//Place Trainer Event
 		}
 		else
 		{
-			eof_beat_menu[18].flags = D_DISABLED;
-			eof_beat_menu[22].flags = D_DISABLED;
+			eof_beat_menu[19].flags = D_DISABLED;
+			eof_beat_menu[23].flags = D_DISABLED;
 		}
 //Re-flag the active Time Signature for the selected beat
 		for(i = 0; i < 6; i++)
@@ -416,11 +419,11 @@ void eof_prepare_beat_menu(void)
 
 		if((eof_selected_beat + 1 < eof_song->beats) && (eof_song->beat[eof_selected_beat + 1]->ppqn != eof_song->beat[eof_selected_beat]->ppqn))
 		{	//If there is a beat after the current beat, and it has a different tempo
-			eof_beat_menu[15].flags = D_DISABLED;	//Disable Beat>Halve BPM
+			eof_beat_menu[16].flags = D_DISABLED;	//Disable Beat>Halve BPM
 		}
 		else
 		{
-			eof_beat_menu[15].flags = 0;
+			eof_beat_menu[16].flags = 0;
 		}
 
 		if(eof_song->tags->tempo_map_locked)
@@ -436,9 +439,10 @@ void eof_prepare_beat_menu(void)
 			eof_beat_menu[11].flags = D_DISABLED;	//Delete anchor
 			eof_beat_menu[12].flags = D_DISABLED;	//Reset BPM
 			eof_beat_menu[13].flags = D_DISABLED;	//Calculate BPM
-			eof_beat_menu[14].flags = D_DISABLED;	//Double BPM
-			eof_beat_menu[15].flags = D_DISABLED;	//Halve BPM
-			eof_beat_menu[16].flags = D_DISABLED;	//Adjust tempo for RBN
+			eof_beat_menu[14].flags = D_DISABLED;	//Estimate BPM
+			eof_beat_menu[15].flags = D_DISABLED;	//Double BPM
+			eof_beat_menu[16].flags = D_DISABLED;	//Halve BPM
+			eof_beat_menu[17].flags = D_DISABLED;	//Adjust tempo for RBN
 		}
 	}//If a song is loaded
 }
@@ -2509,4 +2513,36 @@ int eof_events_dialog_move_down(DIALOG * d)
 	}
 
 	return eof_events_dialog_move(1);
+}
+
+int eof_menu_beat_estimate_bpm(void)
+{
+	unsigned long ctr, ppqn;
+	double result;
+
+	if(!eof_song || !eof_music_track)
+		return D_O_K;
+
+	set_window_title("Estimating tempo...");
+	result = eof_estimate_bpm(eof_music_track);
+	eof_fix_window_title();
+	allegro_message("Estimated tempo is %fBPM", result);
+	if(alert(NULL, "Would you like to apply this tempo to the first beat?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+	{	//If user opts to apply the estimated tempo
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		ppqn = 60000000.0 / result;
+		eof_song->beat[0]->ppqn = ppqn;	//Apply the tempo to the first beat
+		for(ctr = 1; ctr < eof_song->beats; ctr++)
+		{	//For the remaining beats in the project
+			if(eof_song->beat[ctr]->flags & EOF_BEAT_FLAG_ANCHOR)
+			{	//If this beat is an anchor
+				break;	//Stop updating beat tempos
+			}
+			eof_song->beat[ctr]->ppqn = ppqn;	//Apply the new tempo
+		}
+		eof_calculate_beats(eof_song);
+		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+	}
+
+	return D_O_K;
 }
