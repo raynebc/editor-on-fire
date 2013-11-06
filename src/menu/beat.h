@@ -122,4 +122,6 @@ int eof_menu_beat_paste_rs_events(void);
 int eof_events_dialog_move_up(DIALOG * d);	//If the selected event in Beat>Events is not the first event listed, swaps its position to be one higher (earlier) in the list
 int eof_events_dialog_move_down(DIALOG * d);	//If the selected event in Beat>Events is not the last event listed, swaps its position tob e one lower (later) in the list
 
+int eof_menu_beat_estimate_bpm(void);	//Uses the MiniBPM source package to estimate the tempo of the current chart audio
+
 #endif
