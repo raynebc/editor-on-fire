@@ -62,6 +62,7 @@ ALOGG_DLL_DECLSPEC int alogg_play_ex_ogg(ALOGG_OGG *ogg, int buffer_len, int vol
 ALOGG_DLL_DECLSPEC void alogg_stop_ogg(ALOGG_OGG *ogg);
 ALOGG_DLL_DECLSPEC void alogg_adjust_ogg(ALOGG_OGG *ogg, int vol, int pan, int speed, int loop);
 ALOGG_DLL_DECLSPEC char * alogg_get_ogg_comment(ALOGG_OGG *ogg, const char *comment, char * out);
+ALOGG_DLL_DECLSPEC int alogg_process_ogg(ALOGG_OGG * ogg, void(*callback)(void * buf, int nsamples, int stereo), int buffer_samples, double start_time, double end_time);
 
 ALOGG_DLL_DECLSPEC void alogg_rewind_ogg(ALOGG_OGG *ogg);
 ALOGG_DLL_DECLSPEC void alogg_seek_abs_msecs_ogg(ALOGG_OGG *ogg, int msecs);

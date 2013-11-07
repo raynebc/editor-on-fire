@@ -1,53 +1,42 @@
 #include <alogg.h>
 #include "minibpm-1.0/src/minibpm-c.h"
 
+static MiniBPMState eof_bpm_estimator_state;
+static float * eof_bpm_estimator_buffer = NULL;
+
+static void eof_bpm_estimator_callback(void * buffer, int nsamples, int stereo)
+{
+	int i;
+	unsigned short * buffer_sp = (unsigned short *)buffer;
+	int iter = stereo ? 2 : 1;
+	for(i = 0; i < nsamples / iter; i++)
+	{
+		eof_bpm_estimator_buffer[i] = (float)((long)buffer_sp[i * iter] - 0x8000) / (float)0x8000;
+		if(stereo)
+		{
+			eof_bpm_estimator_buffer[i] += (float)((long)buffer_sp[i * iter + 1] - 0x8000) / (float)0x8000;
+			eof_bpm_estimator_buffer[i] /= 2.0;
+		}
+	}
+	minibpm_process(eof_bpm_estimator_state, eof_bpm_estimator_buffer, nsamples / iter);
+}
+
+
 double eof_estimate_bpm(ALOGG_OGG * ogg)
 {
-	SAMPLE * sp;
-	MiniBPMState state;
-	float buf[1024] = {0.0};
-	int iter = 1;
-	int i, spos = 0;
-	int samples_left;
 	double bpm = 0.0;
-	unsigned short * sp_pointer;
 	
-	sp = alogg_create_sample_from_ogg(ogg);
-	if(sp)
+	eof_bpm_estimator_state = minibpm_new((float)alogg_get_wave_freq_ogg(ogg));
+	if(eof_bpm_estimator_state)
 	{
-		sp_pointer = (unsigned short *)sp->data;
-		if(sp->stereo)
+		eof_bpm_estimator_buffer = malloc(sizeof(float) * 1024); // 1024 mono floating point samples
+		if(eof_bpm_estimator_buffer)
 		{
-			iter = 2;
+			alogg_process_ogg(ogg, eof_bpm_estimator_callback, 1024, 0.0, 0.0);
+			bpm = minibpm_estimate_tempo(eof_bpm_estimator_state);
+			free(eof_bpm_estimator_buffer);
 		}
-		samples_left = sp->len / iter;
-		state = minibpm_new((float)sp->freq);
-		if(state)
-		{
-			while(samples_left > 0)
-			{
-				for(i = 0; i < (samples_left > 1024 ? 1024 : samples_left); i++)
-				{
-					buf[i] = (float)((long)sp_pointer[spos] - 0x8000) / (float)0x8000;
-					spos += iter;
-				}
-				samples_left -= 1024;
-				
-				/* if we ran out of samples, fill rest of buffer with silence */
-				if(samples_left < 0)
-				{
-					for(i = samples_left + 1024; i < 1024; i++)
-					{
-						buf[i] = 0.0;
-					}
-				}
-				minibpm_process(state, buf, 1024);
-			}
-			bpm = minibpm_estimate_tempo(state);
-			minibpm_delete(state);
-		}
-		destroy_sample(sp);
+		minibpm_delete(eof_bpm_estimator_state);
 	}
 	return bpm;
 }
-

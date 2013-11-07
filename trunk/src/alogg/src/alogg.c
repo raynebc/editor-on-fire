@@ -380,6 +380,69 @@ void alogg_stop_ogg(ALOGG_OGG *ogg) {
 }
 
 
+/* process the Ogg from start_time to end_time, passing the decoded data to the supplied callback */
+int alogg_process_ogg(ALOGG_OGG * ogg, void(*callback)(void * buf, int nsamples, int stereo), int buffer_samples, double start_time, double end_time)
+{
+	int size_done, i, all_done = 0;
+	int ret = 0;
+	char * buffer;
+	char * buffer_p;
+	double current_pos;
+	int buffer_bytes = buffer_samples * 2;
+	PACKFILE * fp;
+	
+	buffer = malloc(buffer_bytes);
+	if(!buffer)
+	{
+		return 0;
+	}
+	
+	current_pos = ov_time_tell(&(ogg->vf));
+	ov_time_seek(&(ogg->vf), start_time);
+	
+	while(!all_done)
+	{
+		buffer_p = buffer;
+		for(i = 0; i < buffer_samples; i++)
+		{
+			((unsigned short *)(buffer_p))[i] = 0x8000;
+		}
+		size_done = 0;
+		
+		/* read samples from Ogg Vorbis file */
+		for(i = buffer_bytes; i > 0; i -= size_done)
+		{
+			/* decode */
+			size_done = ov_read(&(ogg->vf), buffer_p, i, alogg_endianess, 2, 0, &(ogg->current_section));
+
+			/* check if the decoding was not successful */
+			if(size_done < 0)
+			{
+				if(size_done == OV_HOLE)
+				{
+					size_done = 0;
+				}
+				else
+				{
+					all_done = 2;
+				}
+			}
+			else if(size_done == 0)
+			{
+				all_done = 1;
+				ret = 1;
+				break; // playback finished so get out of loop
+			}
+			buffer_p += size_done;
+		}
+		callback(buffer, buffer_samples, ogg->stereo);
+    }
+    free(buffer);
+    ov_time_seek(&(ogg->vf), current_pos);
+    return ret;
+}
+
+
 void alogg_rewind_ogg(ALOGG_OGG *ogg) {
   ov_raw_seek(&(ogg->vf), 0);
 }
