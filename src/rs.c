@@ -310,7 +310,7 @@ int eof_song_qsort_control_events(const void * e1, const void * e2)
 	return 0;
 }
 
-int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, char *user_warned)
+int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, char *user_warned)
 {
 	PACKFILE * fp;
 	char buffer[600] = {0}, buffer2[512] = {0};
@@ -342,7 +342,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	unsigned long handshapestart, handshapeend;
 	long nextnote;
 
-	eof_log("eof_export_rocksmith() entered", 1);
+	eof_log("eof_export_rocksmith_1_track() entered", 1);
 
 	if(!sp || !fn || !sp->beats || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !sp->track[track]->name || !user_warned)
 	{
@@ -516,6 +516,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->year, 32);	//Replace any special characters in the year song property with escape sequences if necessary
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <albumYear>%s</albumYear>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
+
+	//Determine arrangement properties
 	if(!memcmp(tuning, standard, 6))
 	{	//All unused strings had their tuning set to 0, so if all bytes of this array are 0, the track is in standard tuning
 		standard_tuning = 1;
@@ -847,7 +849,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	chordlistsize = eof_build_chord_list(sp, track, &chordlist);	//Build a list of all unique chords in the track
 	if(!chordlistsize)
 	{	//If there were no chords, write an empty chord template tag
-		(void) pack_fputs("  <chordTemplate count=\"0\"/>\n", fp);
+		(void) pack_fputs("  <chordTemplates count=\"0\"/>\n", fp);
 	}
 	else
 	{	//There were chords
@@ -1308,9 +1310,1290 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 						{	//Otherwise the direction defaults to down
 							direction = downstrum;
 						}
-						highdensity = eof_note_has_high_chord_density(sp, track, ctr3);	//Determine whether the chord will export with high density
+						highdensity = eof_note_has_high_chord_density(sp, track, ctr3, 0);	//Determine whether the chord will export with high density
 						notepos = (double)tp->note[ctr3]->pos / 1000.0;
 						(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" chordId=\"%lu\" highDensity=\"%d\" ignore=\"0\" strum=\"%s\"/>\n", notepos, chordid, highdensity, direction);
+						(void) pack_fputs(buffer, fp);
+					}//If this note is in this difficulty and is a chord
+				}//For each note in the track
+				(void) pack_fputs("      </chords>\n", fp);
+			}
+			else
+			{	//There are no chords in this difficulty, write an empty chords tag
+				(void) pack_fputs("      <chords count=\"0\"/>\n", fp);
+			}
+
+			//Write other stuff
+			(void) pack_fputs("      <fretHandMutes count=\"0\"/>\n", fp);
+
+			//Write anchors (fret hand positions)
+			for(ctr3 = 0, anchorcount = 0; ctr3 < tp->handpositions; ctr3++)
+			{	//For each hand position defined in the track
+				if(tp->handposition[ctr3].difficulty == ctr)
+				{	//If the hand position is in this difficulty
+					anchorcount++;
+				}
+			}
+			if(!anchorcount)
+			{	//If there are no anchors in this track difficulty, automatically generate them
+				if((*user_warned & 1) == 0)
+				{	//If the user wasn't alerted that one or more track difficulties have no fret hand positions defined
+					allegro_message("Warning:  At least one track difficulty has no fret hand positions defined.  They will be created automatically.");
+					*user_warned |= 1;
+				}
+				eof_fret_hand_position_list_dialog_undo_made = 1;	//Ensure no undo state is written during export
+				eof_generate_efficient_hand_positions(sp, track, ctr, 0, 0);	//Generate the fret hand positions for the track difficulty being currently written (use a static fret range tolerance of 4 for all frets)
+				anchorsgenerated = 1;
+			}
+			for(ctr3 = 0, anchorcount = 0; ctr3 < tp->handpositions; ctr3++)	//Re-count the hand positions
+			{	//For each hand position defined in the track
+				if(tp->handposition[ctr3].difficulty == ctr)
+				{	//If the hand position is in this difficulty
+					anchorcount++;
+				}
+			}
+			if(anchorcount)
+			{	//If there's at least one anchor in this difficulty
+				(void) snprintf(buffer, sizeof(buffer) - 1, "      <anchors count=\"%lu\">\n", anchorcount);
+				(void) pack_fputs(buffer, fp);
+				for(ctr3 = 0, anchorcount = 0; ctr3 < tp->handpositions; ctr3++)
+				{	//For each hand position defined in the track
+					if(tp->handposition[ctr3].difficulty == ctr)
+					{	//If the hand position is in this difficulty
+						(void) snprintf(buffer, sizeof(buffer) - 1, "        <anchor time=\"%.3f\" fret=\"%lu\"/>\n", (double)tp->handposition[ctr3].start_pos / 1000.0, tp->handposition[ctr3].end_pos);
+						(void) pack_fputs(buffer, fp);
+					}
+				}
+				(void) pack_fputs("      </anchors>\n", fp);
+			}
+			else
+			{	//There are no anchors in this difficulty, write an empty anchors tag
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Failed to automatically generate fret hand positions for level %lu of\n\"%s\" during MIDI export.", ctr2, fn);
+				eof_log(eof_log_string, 1);
+				allegro_message(eof_log_string);
+				(void) pack_fputs("      <anchors count=\"0\"/>\n", fp);
+			}
+			if(anchorsgenerated)
+			{	//If anchors were automatically generated for this track difficulty, remove them now
+				for(ctr3 = tp->handpositions; ctr3 > 0; ctr3--)
+				{	//For each hand position defined in the track, in reverse order
+					if(tp->handposition[ctr3 - 1].difficulty == ctr)
+					{	//If the hand position is in this difficulty
+						eof_pro_guitar_track_delete_hand_position(tp, ctr3 - 1);	//Delete the hand position
+					}
+				}
+			}
+
+			//Write hand shapes
+			//Count the number of hand shapes to write
+			handshapectr = 0;
+			for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
+			{	//For each note in the track
+				if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_colors(sp, track, ctr3) > 1) && !eof_is_string_muted(sp, track, ctr3))
+				{	//If this note is in this difficulty and is a chord that isn't fully string muted
+					unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
+
+					//Find this chord's ID
+					for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
+					{	//For each of the entries in the unique chord list
+						if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
+						{	//If this note matches a chord entry
+							chordid = ctr4;	//Store the chord entry number
+							break;
+						}
+					}
+					if(ctr4 >= chordlistsize)
+					{	//If the chord couldn't be found
+						allegro_message("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.");
+						eof_log("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.", 1);
+						if(chordlist)
+						{	//If the chord list was built
+							free(chordlist);
+						}
+						return 0;	//Return error
+					}
+					handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position
+
+					//If this chord is at the beginning of an arpeggio phrase, skip the rest of the notes in that phrase
+					for(ctr5 = 0; ctr5 < tp->arpeggios; ctr5++)
+					{	//For each arpeggio phrase in the track
+						if(((tp->note[ctr3]->pos + 10 >= tp->arpeggio[ctr5].start_pos) && (tp->note[ctr3]->pos <= tp->arpeggio[ctr5].start_pos + 10)) && (tp->note[ctr3]->type == tp->arpeggio[ctr5].difficulty))
+						{	//If this chord's start position is within 10ms of an arpeggio phrase in this track difficulty
+							while(1)
+							{
+								nextnote = eof_fixup_next_note(sp, track, ctr3);
+								if((nextnote >= 0) && (tp->note[nextnote]->pos <= tp->arpeggio[ctr5].end_pos))
+								{	//If there is another note and it is in the same arpeggio phrase
+									ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they are also in the phrase
+								}
+								else
+								{	//The next note (if any) is not in the arpeggio phrase
+									break;	//Break from while loop
+								}
+							}
+							break;	//Break from for loop
+						}
+					}
+
+					//Examine subsequent notes to see if they match this chord
+					while(1)
+					{
+						nextnote = eof_fixup_next_note(sp, track, ctr3);
+						if((nextnote >= 0) && !eof_note_compare_simple(sp, track, chord, nextnote))
+						{	//If there is another note and it matches this chord
+							ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
+						}
+						else
+						{	//The next note (if any) is not a repeat of this note
+							handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
+							break;	//Break from while loop
+						}
+					}
+
+					handshapectr++;	//One more hand shape has been counted
+				}//If this note is in this difficulty and is a chord that isn't fully string muted
+			}//For each note in the track
+
+			if(handshapectr)
+			{	//If there was at least one hand shape to write
+				//Write the hand shapes
+				(void) snprintf(buffer, sizeof(buffer) - 1, "      <handShapes count=\"%lu\">\n", handshapectr);
+				(void) pack_fputs(buffer, fp);
+				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
+				{	//For each note in the track
+					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_colors(sp, track, ctr3) > 1) && !eof_is_string_muted(sp, track, ctr3))
+					{	//If this note is in this difficulty and is a chord that isn't fully string muted
+						unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
+
+						//Find this chord's ID
+						for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
+						{	//For each of the entries in the unique chord list
+							if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
+							{	//If this note matches a chord entry
+								chordid = ctr4;	//Store the chord entry number
+								break;
+							}
+						}
+						if(ctr4 >= chordlistsize)
+						{	//If the chord couldn't be found
+							allegro_message("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.");
+							eof_log("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.", 1);
+							if(chordlist)
+							{	//If the chord list was built
+								free(chordlist);
+							}
+							return 0;	//Return error
+						}
+						handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position (in seconds)
+
+						//If this chord is at the beginning of an arpeggio phrase, skip the rest of the notes in that phrase
+						for(ctr5 = 0; ctr5 < tp->arpeggios; ctr5++)
+						{	//For each arpeggio phrase in the track
+							if(((tp->note[ctr3]->pos + 10 >= tp->arpeggio[ctr5].start_pos) && (tp->note[ctr3]->pos <= tp->arpeggio[ctr5].start_pos + 10)) && (tp->note[ctr3]->type == tp->arpeggio[ctr5].difficulty))
+							{	//If this chord's start position is within 10ms of an arpeggio phrase in this track difficulty
+								while(1)
+								{
+									nextnote = eof_fixup_next_note(sp, track, ctr3);
+									if((nextnote >= 0) && (tp->note[nextnote]->pos <= tp->arpeggio[ctr5].end_pos))
+									{	//If there is another note and it is in the same arpeggio phrase
+										ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they are also in the phrase
+									}
+									else
+									{	//The next note (if any) is not in the arpeggio phrase
+										break;	//Break from while loop
+									}
+								}
+								break;	//Break from for loop
+							}
+						}
+
+						//Examine subsequent notes to see if they match this chord
+						while(1)
+						{
+							nextnote = eof_fixup_next_note(sp, track, ctr3);
+							if((nextnote >= 0) && !eof_note_compare_simple(sp, track, chord, nextnote))
+							{	//If there is another note and it matches this chord
+								ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
+							}
+							else
+							{	//The next note (if any) is not a repeat of this note
+								handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
+
+								if((handshapeend - handshapestart < 56) && (handshapestart + 56 < eof_get_note_pos(sp, track, nextnote)))
+								{	//If the hand shape would be shorter than 56ms, and the next note is further than 56ms away
+									handshapeend = eof_get_note_pos(sp, track, ctr3) + 56;	//Pad the hand shape to 56ms
+								}
+								break;	//Break from while loop
+							}
+						}
+
+						//Write this hand shape
+						(void) snprintf(buffer, sizeof(buffer) - 1, "        <handShape chordId=\"%lu\" endTime=\"%.3f\" startTime=\"%.3f\"/>\n", chordid, (double)handshapeend / 1000.0, (double)handshapestart / 1000.0);
+						(void) pack_fputs(buffer, fp);
+					}//If this note is in this difficulty and is a chord that isn't fully string muted
+				}//For each note in the track
+				(void) pack_fputs("      </handShapes>\n", fp);
+			}
+			else
+			{	//There are no chords in this difficulty, write an empty hand shape tag
+				(void) pack_fputs("      <handShapes count=\"0\"/>\n", fp);
+			}
+
+			//Write closing level tag
+			(void) pack_fputs("    </level>\n", fp);
+		}//If this difficulty is populated
+	}//For each of the available difficulties
+	(void) pack_fputs("  </levels>\n", fp);
+	(void) pack_fputs("</song>\n", fp);
+	(void) pack_fclose(fp);
+
+	//Cleanup
+	if(chordlist)
+	{	//If the chord list was built
+		free(chordlist);
+	}
+	//Remove all temporary text events that were added
+	for(ctr = sp->text_events; ctr > 0; ctr--)
+	{	//For each text event (in reverse order)
+		if(sp->text_event[ctr - 1]->is_temporary)
+		{	//If this text event has been marked as temporary
+			eof_song_delete_text_event(sp, ctr - 1);	//Delete it
+		}
+	}
+	eof_sort_events(sp);	//Re-sort events
+	//Remove all temporary notes that were added
+	for(ctr = tp->notes; ctr > 0; ctr--)
+	{	//For each note in the track, in reverse order
+		if(tp->note[ctr - 1]->flags & EOF_NOTE_FLAG_TEMP)
+		{	//If this is a temporary note that was added for chord technique notation
+			eof_track_delete_note(sp, track, ctr - 1);	//Delete it
+		}
+	}
+	eof_track_sort_notes(sp, track);	//Re-sort the notes
+
+	return 1;	//Return success
+}
+
+int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, char *user_warned)
+{
+	PACKFILE * fp;
+	char buffer[600] = {0}, buffer2[512] = {0};
+	time_t seconds;		//Will store the current time in seconds
+	struct tm *caltime;	//Will store the current time in calendar format
+	unsigned long ctr, ctr2, ctr3, ctr4, ctr5, numsections, stringnum, bitmask, numsinglenotes, numchords, *chordlist, chordlistsize, *sectionlist, sectionlistsize, xml_end, numevents = 0;
+	EOF_PRO_GUITAR_TRACK *tp;
+	char *arrangement_name;	//This will point to the track's native name unless it has an alternate name defined
+	unsigned numdifficulties;
+	unsigned char bre_populated = 0;
+	unsigned long phraseid;
+	unsigned beatspermeasure = 4, beatcounter = 0;
+	long displayedmeasure, measurenum = 0;
+	long startbeat;	//This will indicate the first beat containing a note in the track
+	long endbeat;	//This will indicate the first beat after the exported track's last note
+	char standard[] = {0,0,0,0,0,0};
+	char standardbass[] = {0,0,0,0};
+	char eb[] = {-1,-1,-1,-1,-1,-1};
+	char dropd[] = {-2,0,0,0,0,0};
+	char openg[] = {-2,-2,0,0,0,-2};
+	char *tuning;
+	char isebtuning = 1;	//Will track whether all strings are tuned to -1
+	char notename[EOF_NAME_LENGTH+1];	//String large enough to hold any chord name supported by EOF
+	int scale, chord, isslash, bassnote;	//Used for power chord detection
+	int standard_tuning = 0, non_standard_chords = 0, barre_chords = 0, power_chords = 0, notenum, dropd_tuning = 1, dropd_power_chords = 0, open_chords = 0, double_stops = 0, palm_mutes = 0, harmonics = 0, hopo = 0, tremolo = 0, slides = 0, bends = 0, tapping = 0, vibrato = 0, slappop = 0, octaves = 0, fifths_and_octaves = 0, sustains = 0;	//Used for technique detection
+	int is_lead = 0, is_rhythm = 0, is_bass = 0;	//Is set to nonzero if the specified track is to be considered any of these arrangement types
+	char end_phrase_found = 0;	//Will track if there was a manually defined END phrase
+	unsigned long chordid, handshapectr;
+	unsigned long handshapestart, handshapeend;
+	long nextnote;
+
+	eof_log("eof_export_rocksmith_2_track() entered", 1);
+
+	if(!sp || !fn || !sp->beats || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !sp->track[track]->name || !user_warned)
+	{
+		eof_log("\tError saving:  Invalid parameters", 1);
+		return 0;	//Return failure
+	}
+
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+	if(eof_get_highest_fret(sp, track, 0) > 22)
+	{	//If the track being exported uses any frets higher than 22
+		if((*user_warned & 2) == 0)
+		{	//If the user wasn't alerted about this issue yet
+			allegro_message("Warning:  At least one track (\"%s\") uses a fret higher than 22.  This will cause Rocksmith to crash.", sp->track[track]->name);
+			*user_warned |= 2;
+		}
+	}
+	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
+	{	//For each note in the track
+		unsigned char slideend;
+
+		if(eof_note_count_rs2_lanes(sp, track, ctr) == 1)
+		{	//If the note will export as a single note
+			if(eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+			{	//If the note slides up
+				slideend = tp->note[ctr]->slideend;
+				if(!(eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
+				{	//If this slide's end position is not defined
+					slideend = eof_get_highest_fret_value(sp, track, ctr) + 1;	//Assume a 1 fret slide
+				}
+				if(slideend >= 22)
+				{	//If the slide goes to or above fret 22
+					if((*user_warned & 8) == 0)
+					{	//If the user wasn't alerted about this issue yet
+						eof_seek_and_render_position(track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
+						allegro_message("Warning:  At least one note slides to or above fret 22.  This will cause Rocksmith to crash.");
+						*user_warned |= 8;
+					}
+					break;
+				}
+			}
+		}
+	}
+
+	//Count the number of populated difficulties in the track
+	(void) eof_detect_difficulties(sp, track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for this track
+	if((sp->track[track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) == 0)
+	{	//If the track is using the traditional 5 difficulty system
+		if(eof_track_diff_populated_status[4])
+		{	//If the BRE difficulty is populated
+			bre_populated = 1;	//Track that it was
+		}
+		eof_track_diff_populated_status[4] = 0;	//Ensure that the BRE difficulty is not exported
+	}
+	for(ctr = 0, numdifficulties = 0; ctr < 256; ctr++)
+	{	//For each possible difficulty
+		if(eof_track_diff_populated_status[ctr])
+		{	//If this difficulty is populated
+			numdifficulties++;	//Increment this counter
+		}
+	}
+	if(!numdifficulties)
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Cannot export track \"%s\"in Rocksmith format, it has no populated difficulties", sp->track[track]->name);
+		eof_log(eof_log_string, 1);
+		if(bre_populated)
+		{	//If the BRE difficulty was the only one populated, warn that it is being omitted
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Track \"%s\" only has notes in the BRE difficulty.\nThese are not exported in Rocksmith format unless you remove the difficulty limit (Song>Rocksmith>Remove difficulty limit).", sp->track[track]->name);
+			allegro_message(eof_log_string);
+			eof_log(eof_log_string, 1);
+		}
+		return 0;	//Return failure
+	}
+
+	//Update target file name and open it for writing
+	if((sp->track[track]->flags & EOF_TRACK_FLAG_ALT_NAME) && (sp->track[track]->altname[0] != '\0'))
+	{	//If the track has an alternate name
+		arrangement_name = sp->track[track]->altname;
+	}
+	else
+	{	//Otherwise use the track's native name
+		arrangement_name = sp->track[track]->name;
+	}
+	(void) snprintf(buffer, 600, "%s_RS2.xml", arrangement_name);
+	(void) replace_filename(fn, fn, buffer, 1024);
+	fp = pack_fopen(fn, "w");
+	if(!fp)
+	{
+		eof_log("\tError saving:  Cannot open file for writing", 1);
+		return 0;	//Return failure
+	}
+
+	//Update the track's arrangement name
+	if(tp->arrangement)
+	{	//If the track's arrangement type has been defined
+		arrangement_name = eof_rs_arrangement_names[tp->arrangement];	//Use the corresponding string in the XML file
+	}
+
+	//Get the smaller of the chart length and the music length, this will be used to write the songlength tag
+	xml_end = eof_music_length;
+	if(eof_silence_loaded || (eof_chart_length < eof_music_length))
+	{	//If the chart length is shorter than the music length, or there is no chart audio loaded
+		xml_end = eof_chart_length;	//Use the chart's length instead
+	}
+
+	//Write the beginning of the XML file
+	(void) pack_fputs("<?xml version='1.0' encoding='UTF-8'?>\n", fp);
+	(void) pack_fputs("<song version=\"7\">\n", fp);
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->title, 64);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <title>%s</title>\n", buffer2);
+	(void) pack_fputs(buffer, fp);
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, arrangement_name, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <arrangement>%s</arrangement>\n", buffer2);
+	(void) pack_fputs(buffer, fp);
+	(void) pack_fputs("  <part>1</part>\n", fp);
+	(void) pack_fputs("  <offset>0.000</offset>\n", fp);
+	(void) pack_fputs("  <centOffset>0</centOffset>\n", fp);
+	eof_truncate_chart(sp);	//Update the chart length
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <songLength>%.3f</songLength>\n", (double)(xml_end - 1) / 1000.0);	//Make sure the song length is not longer than the actual audio, or the chart won't reach an end in-game
+	(void) pack_fputs(buffer, fp);
+	seconds = time(NULL);
+	caltime = localtime(&seconds);
+	if(caltime)
+	{	//If the calendar time could be determined
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <lastConversionDateTime>%d-%d-%d %d:%02d</lastConversionDateTime>\n", caltime->tm_mon + 1, caltime->tm_mday, caltime->tm_year % 100, caltime->tm_hour % 12, caltime->tm_min);
+	}
+	else
+	{
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <lastConversionDateTime>UNKNOWN</lastConversionDateTime>\n");
+	}
+	(void) pack_fputs(buffer, fp);
+
+	//Write additional tags to pass song information to the Rocksmith toolkit
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <startBeat>%.3f</startBeat>\n", sp->beat[0]->fpos / 1000.0);	//The position of the first beat
+	(void) pack_fputs(buffer, fp);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <averageTempo>%.3f</averageTempo>\n", 60000.0 / ((sp->beat[sp->beats - 1]->fpos - sp->beat[0]->fpos) / sp->beats));	//The average tempo (60000ms / the average beat length in ms)
+	(void) pack_fputs(buffer, fp);
+	tuning = tp->tuning;	//By default, use the track's original tuning array
+	for(ctr = 0; ctr < 6; ctr++)
+	{	//For each string EOF supports
+		if(ctr >= tp->numstrings)
+		{	//If the track doesn't use this string
+			tp->tuning[ctr] = 0;	//Ensure the tuning is cleared accordingly
+		}
+	}
+	for(ctr = 0; ctr < tp->numstrings; ctr++)
+	{	//For each string in this track
+		if(tp->tuning[ctr] != -1)
+		{	//If this string isn't tuned a half step down
+			isebtuning = 0;
+			break;
+		}
+	}
+	is_bass = eof_track_is_bass_arrangement(tp, track);
+	if(tp->arrangement == 2)
+	{	//Rhythm arrangement
+		is_rhythm = 1;
+	}
+	else if(tp->arrangement == 3)
+	{	//Lead arrangement
+		is_lead = 1;
+	}
+	if(isebtuning && !(is_bass && (tp->numstrings > 4)))
+	{	//If all strings were tuned down a half step (except for bass tracks with more than 4 strings, since in those cases, the lowest string is not tuned to E)
+		tuning = eb;	//Remap 4 or 5 string Eb tuning as {-1,-1,-1,-1,-1,-1}
+	}
+	if(memcmp(tuning, standard, 6) && memcmp(tuning, standardbass, 4) && memcmp(tuning, eb, 6) && memcmp(tuning, dropd, 6) && memcmp(tuning, openg, 6))
+	{	//If the track's tuning doesn't match any supported by Rocksmith
+		allegro_message("Warning:  This track (%s) uses a tuning that isn't one known to be supported in Rocksmith.\nTuning and note recognition may not work as expected in-game", sp->track[track]->name);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  This track (%s) uses a tuning that isn't known to be supported in Rocksmith.  Tuning and note recognition may not work as expected in-game", sp->track[track]->name);
+		eof_log(eof_log_string, 1);
+	}
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <tuning string0=\"%d\" string1=\"%d\" string2=\"%d\" string3=\"%d\" string4=\"%d\" string5=\"%d\" />\n", tuning[0], tuning[1], tuning[2], tuning[3], tuning[4], tuning[5]);
+	(void) pack_fputs(buffer, fp);
+	(void) pack_fputs("  <capo>0</capo>\n", fp);
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->artist, 256);	//Replace any special characters in the artist song property with escape sequences if necessary
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <artistName>%s</artistName>\n", buffer2);
+	(void) pack_fputs(buffer, fp);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <artistNameSort>%s</artistNameSort>\n", buffer2);
+	(void) pack_fputs(buffer, fp);
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->album, 256);	//Replace any special characters in the album song property with escape sequences if necessary
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <albumName>%s</albumName>\n", buffer2);
+	(void) pack_fputs(buffer, fp);
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->year, 32);	//Replace any special characters in the year song property with escape sequences if necessary
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <albumYear>%s</albumYear>\n", buffer2);
+	(void) pack_fputs(buffer, fp);
+	(void) pack_fputs("  <crowdSpeed>1</crowdSpeed>\n", fp);
+
+	//Determine arrangement properties
+	if(!memcmp(tuning, standard, 6))
+	{	//All unused strings had their tuning set to 0, so if all bytes of this array are 0, the track is in standard tuning
+		standard_tuning = 1;
+	}
+	notenum = eof_lookup_tuned_note(tp, track, 0, tp->tuning[0]);	//Look up the open note the lowest string plays
+	notenum %= 12;	//Ensure the value is in the range of [0,11]
+	if(notenum == 5)
+	{	//If the lowest string is tuned to D
+		for(ctr = 1; ctr < 6; ctr++)
+		{	//For the other 5 strings
+			if(tp->tuning[ctr] != 0)
+			{	//If the string is not in standard tuning
+				dropd_tuning = 0;
+			}
+		}
+	}
+	else
+	{	//The lowest string is not tuned to D
+		dropd_tuning = 0;
+	}
+	eof_determine_phrase_status(sp, track);	//Update the tremolo status of each note
+	for(ctr = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the track
+		if(eof_note_count_rs2_lanes(sp, track, ctr) > 1)
+		{	//If the note will export as a chord (more than one non ghosted/muted gem)
+			if(!non_standard_chords && !eof_build_note_name(sp, track, ctr, notename))
+			{	//If the chord has no defined or detected name (only if this condition hasn't been found already)
+				non_standard_chords = 1;
+			}
+			if(!barre_chords && eof_pro_guitar_note_is_barre_chord(tp, ctr))
+			{	//If the chord is a barre chord (only if this condition hasn't been found already)
+				barre_chords = 1;
+			}
+			if(!power_chords && eof_lookup_chord(tp, track, ctr, &scale, &chord, &isslash, &bassnote, 0, 0))
+			{	//If the chord lookup found a match (only if this condition hasn't been found already)
+				if(chord == 27)
+				{	//27 is the index of the power chord formula in eof_chord_names[]
+					power_chords = 1;
+					if(dropd_tuning)
+					{	//If this track is in drop d tuning
+						dropd_power_chords = 1;
+					}
+				}
+			}
+			if(!open_chords)
+			{	//Only if no open chords have been found already
+				for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+				{	//For each of the 6 supported strings
+					if((tp->note[ctr]->note & bitmask) && (tp->note[ctr]->frets[ctr2] == 0))
+					{	//If this string is used and played open
+						open_chords = 1;
+					}
+				}
+			}
+			if(!double_stops && eof_pro_guitar_note_is_double_stop(tp, ctr))
+			{	//If the chord is a double stop (only if this condition hasn't been found already)
+				double_stops = 1;
+			}
+			if(is_bass)
+			{	//If the arrangement being exported is bass
+				int thisnote, lastnote = -1, failed = 0;
+				for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+				{	//For each of the 6 supported strings
+					if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->frets[ctr2] & 0x80))
+					{	//If this string is played and not string muted
+						thisnote = eof_lookup_played_note(tp, track, ctr2, tp->note[ctr]->frets[ctr2]);	//Determine what note is being played
+						if((lastnote >= 0) && (lastnote != thisnote))
+						{	//If this string's played note doesn't match the note played by previous strings
+							failed = 1;
+							break;
+						}
+						lastnote = thisnote;
+					}
+				}
+				if(!failed)
+				{	//If non muted strings in the chord played the same note
+					octaves = 1;
+				}
+			}
+		}//If the note is a chord (more than one non ghosted gem)
+		else
+		{	//If it will export as a single note
+			if(tp->note[ctr]->length > 1)
+			{	//If the note is a sustain
+				sustains = 1;
+			}
+		}
+		if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
+		{	//If the note is palm muted
+			palm_mutes = 1;
+		}
+		if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC)
+		{	//If the note is a harmonic
+			harmonics = 1;
+		}
+		if((tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_HO) || (tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_PO))
+		{	//If the note is a hammer on or pull off
+			hopo = 1;
+		}
+		if(tp->note[ctr]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
+		{	//If the note is played with tremolo
+			tremolo = 1;
+		}
+		if((tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+		{	//If the note slides up or down
+			slides = 1;
+		}
+		if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+		{	//If the note is bent
+			bends = 1;
+		}
+		if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+		{	//If the note is tapped
+			tapping = 1;
+		}
+		if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
+		{	//If the note is played with vibrato
+			vibrato = 1;
+		}
+		if((tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLAP) || (tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_POP))
+		{	//If the note is played by slapping or popping
+			slappop = 1;
+		}
+	}//For each note in the track
+	if(is_bass)
+	{	//If the arrangement being exported is bass
+		if(double_stops || octaves)
+		{	//If either of these techniques were detected
+			fifths_and_octaves = 1;
+		}
+		double_stops = 0;
+	}
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <arrangementProperties represent=\"1\" bonusArr=\"0\" standardTuning=\"%d\" nonStandardChords=\"%d\" barreChords=\"%d\" powerChords=\"%d\" dropDPower=\"%d\" openChords=\"%d\" fingerPicking=\"0\" pickDirection=\"0\" doubleStops=\"%d\" palmMutes=\"%d\" harmonics=\"%d\" pinchHarmonics=\"0\" hopo=\"%d\" tremolo=\"%d\" slides=\"%d\" unpitchedSlides=\"0\" bends=\"%d\" tapping=\"%d\" vibrato=\"%d\" fretHandMutes=\"0\" slapPop=\"%d\" twoFingerPicking=\"0\" fifthsAndOctaves=\"%d\" syncopation=\"0\" bassPick=\"0\" sustain=\"%d\" pathLead=\"%d\" pathRhythm=\"%d\" pathBass=\"%d\" />\n", standard_tuning, non_standard_chords, barre_chords, power_chords, dropd_power_chords, open_chords, double_stops, palm_mutes, harmonics, hopo, tremolo, slides, bends, tapping, vibrato, slappop, fifths_and_octaves, sustains, is_lead, is_rhythm, is_bass);
+	(void) pack_fputs(buffer, fp);
+
+	//Check if any RS phrases or sections need to be added
+	startbeat = eof_get_beat(sp, tp->note[0]->pos);	//Find the beat containing the track's first note
+	if(startbeat < 0)
+	{	//If the beat couldn't be found
+		startbeat = 0;	//Set this to the first beat
+	}
+	endbeat = eof_get_beat(sp, tp->note[tp->notes - 1]->pos + tp->note[tp->notes - 1]->length);	//Find the beat containing the end of the track's last note
+	if((endbeat < 0) || (endbeat + 1 >= sp->beats))
+	{	//If the beat couldn't be found, or the extreme last beat in the track has the last note
+		endbeat = sp->beats - 1;	//Set this to the last beat
+	}
+	else
+	{
+		endbeat++;	//Otherwise set it to the first beat that follows the end of the last note
+	}
+	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
+	if(!eof_song_contains_event(sp, "COUNT", track, EOF_EVENT_FLAG_RS_PHRASE, 1) && !eof_song_contains_event(sp, "COUNT", 0, EOF_EVENT_FLAG_RS_PHRASE, 1))
+	{	//If the user did not define a COUNT phrase that applies to either the track being exported or all tracks
+		if(sp->beat[0]->contained_section_event >= 0)
+		{	//If there is already a phrase defined on the first beat
+			allegro_message("Warning:  There is no COUNT phrase, but the first beat marker already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.");
+		}
+		eof_log("\t! Adding missing COUNT phrase", 1);
+		(void) eof_song_add_text_event(sp, 0, "COUNT", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it as a temporary event at the first beat
+	}
+	for(ctr = 0; ctr < sp->beats; ctr++)
+	{	//For each beat
+		if((sp->beat[ctr]->contained_section_event >= 0) && !ustricmp(sp->text_event[sp->beat[ctr]->contained_section_event]->text, "END"))
+		{	//If this beat contains an "END" RS phrase
+			for(ctr2 = ctr + 1; ctr2 < sp->beats; ctr2++)
+			{	//For each remaining beat
+				if((sp->beat[ctr2]->contained_section_event >= 0) || (sp->beat[ctr2]->contained_rs_section_event >= 0))
+				{	//If the beat contains an RS phrase or RS section
+					eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
+					eof_selected_beat = ctr;		//Select it
+					eof_seek_and_render_position(track, eof_note_type, sp->beat[ctr]->pos);	//Show the offending END phrase
+					allegro_message("Warning:  Beat #%lu contains an END phrase, but there's at least one more phrase or section after it.\nThis will cause dynamic difficulty and/or riff repeater to not work correctly.", ctr);
+					break;
+				}
+			}
+			end_phrase_found = 1;
+			break;
+		}
+	}
+	if(!end_phrase_found)
+	{	//If the user did not define a END phrase
+		if(sp->beat[endbeat]->contained_section_event >= 0)
+		{	//If there is already a phrase defined on the beat following the last note
+			eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
+			eof_selected_beat = endbeat;		//Select it
+			eof_seek_and_render_position(track, eof_note_type, sp->beat[endbeat]->pos);	//Show where the END phrase should go
+			allegro_message("Warning:  There is no END phrase, but the beat marker after the last note in \"%s\" already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.", sp->track[track]->name);
+		}
+		eof_log("\t! Adding missing END phrase", 1);
+		(void) eof_song_add_text_event(sp, endbeat, "END", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it as a temporary event at the last beat
+	}
+	eof_sort_events(sp);	//Re-sort events
+	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
+	if(!eof_song_contains_event(sp, "intro", track, EOF_EVENT_FLAG_RS_SECTION, 1) && !eof_song_contains_event(sp, "intro", 0, EOF_EVENT_FLAG_RS_SECTION, 1))
+	{	//If the user did not define an intro RS section that applies to either the track being exported or all tracks
+		if(sp->beat[startbeat]->contained_rs_section_event >= 0)
+		{	//If there is already a RS section defined on the first beat containing a note
+			allegro_message("Warning:  There is no intro RS section, but the beat marker before the first note already has a section.\nYou should move that section because only one section per beat is exported.");
+		}
+		eof_log("\t! Adding missing intro RS section", 1);
+		(void) eof_song_add_text_event(sp, startbeat, "intro", 0, EOF_EVENT_FLAG_RS_SECTION, 1);	//Add a temporary one
+	}
+	if(!eof_song_contains_event(sp, "noguitar", track, EOF_EVENT_FLAG_RS_SECTION, 1) && !eof_song_contains_event(sp, "noguitar", 0, EOF_EVENT_FLAG_RS_SECTION, 1))
+	{	//If the user did not define a noguitar RS section that applies to either the track being exported or all tracks
+		if(sp->beat[endbeat]->contained_rs_section_event >= 0)
+		{	//If there is already a RS section defined on the first beat after the last note
+			allegro_message("Warning:  There is no noguitar RS section, but the beat marker after the last note already has a section.\nYou should move that section because only one section per beat is exported.");
+		}
+		eof_log("\t! Adding missing noguitar RS section", 1);
+		(void) eof_song_add_text_event(sp, endbeat, "noguitar", 0, EOF_EVENT_FLAG_RS_SECTION, 1);	//Add a temporary one
+	}
+
+	//Write the phrases
+	eof_sort_events(sp);	//Re-sort events
+	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
+	for(ctr = 0, numsections = 0; ctr < sp->beats; ctr++)
+	{	//For each beat in the chart
+		if(sp->beat[ctr]->contained_section_event >= 0)
+		{	//If this beat has a section event (RS phrase)
+			numsections++;	//Update section marker instance counter
+		}
+	}
+	sectionlistsize = eof_build_section_list(sp, &sectionlist, track);	//Build a list of all unique section markers (Rocksmith phrases) in the chart (from the perspective of the track being exported)
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <phrases count=\"%lu\">\n", sectionlistsize);	//Write the number of unique phrases
+	(void) pack_fputs(buffer, fp);
+	for(ctr = 0; ctr < sectionlistsize; ctr++)
+	{	//For each of the entries in the unique section (RS phrase) list
+		char * currentphrase = NULL;
+		unsigned long startpos = 0, endpos = 0;		//Track the start and end position of the each instance of the phrase
+		unsigned char maxdiff, ongoingmaxdiff = 0;	//Track the highest fully leveled difficulty used among all phraseinstances
+		char started = 0;
+
+		//Determine the highest maxdifficulty present among all instances of this phrase
+		for(ctr2 = 0; ctr2 < sp->beats; ctr2++)
+		{	//For each beat
+			if((sp->beat[ctr2]->contained_section_event >= 0) || ((ctr2 + 1 >= eof_song->beats) && started))
+			{	//If this beat contains a section event (Rocksmith phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
+				started = 0;
+				endpos = sp->beat[ctr2]->pos - 1;	//Track this as the end position of the previous phrase marker
+				if(currentphrase)
+				{	//If the first instance of the phrase was already encountered
+					if(!ustricmp(currentphrase, sp->text_event[sectionlist[ctr]]->text))
+					{	//If the phrase that just ended is an instance of the phrase being written
+						maxdiff = eof_find_fully_leveled_rs_difficulty_in_time_range(sp, track, startpos, endpos, 1);	//Find the maxdifficulty value for this phrase instance, converted to relative numbering
+						if(maxdiff > ongoingmaxdiff)
+						{	//If that phrase instance had a higher maxdifficulty than the other instances checked so far
+							ongoingmaxdiff = maxdiff;	//Track it
+						}
+					}
+				}
+				started = 1;
+				startpos = sp->beat[ctr2]->pos;	//Track the starting position
+				currentphrase = sp->text_event[eof_song->beat[ctr2]->contained_section_event]->text;	//Track which phrase is being examined
+			}
+		}
+
+		//Write the phrase definition using the highest difficulty found among all instances of the phrase
+		expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[sectionlist[ctr]]->text, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+		(void) snprintf(buffer, sizeof(buffer) - 1, "    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"%u\" name=\"%s\" solo=\"0\"/>\n", ongoingmaxdiff, buffer2);
+		(void) pack_fputs(buffer, fp);
+	}//For each of the entries in the unique section (RS phrase) list
+	(void) pack_fputs("  </phrases>\n", fp);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <phraseIterations count=\"%lu\">\n", numsections);	//Write the number of phrase instances
+	(void) pack_fputs(buffer, fp);
+	for(ctr = 0; ctr < sp->beats; ctr++)
+	{	//For each beat in the chart
+		if(sp->beat[ctr]->contained_section_event >= 0)
+		{	//If this beat has a section event
+			for(ctr2 = 0; ctr2 < sectionlistsize; ctr2++)
+			{	//For each of the entries in the unique section list
+				if(!ustricmp(sp->text_event[sp->beat[ctr]->contained_section_event]->text, sp->text_event[sectionlist[ctr2]]->text))
+				{	//If this event matches a section marker entry
+					phraseid = ctr2;
+					break;
+				}
+			}
+			if(ctr2 >= sectionlistsize)
+			{	//If the section couldn't be found
+				allegro_message("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.");
+				eof_log("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.", 1);
+				free(sectionlist);
+				return 0;	//Return error
+			}
+			(void) snprintf(buffer, sizeof(buffer) - 1, "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\" variation=\"\"/>\n", sp->beat[ctr]->fpos / 1000.0, phraseid);
+			(void) pack_fputs(buffer, fp);
+		}
+	}
+	(void) pack_fputs("  </phraseIterations>\n", fp);
+	if(sectionlistsize)
+	{	//If there were any entries in the unique section list
+		free(sectionlist);	//Free the list now
+	}
+
+	//Write some unknown information
+	(void) pack_fputs("  <linkedDiffs count=\"0\"/>\n", fp);
+	(void) pack_fputs("  <phraseProperties count=\"0\"/>\n", fp);
+
+	//Write chord templates
+	chordlistsize = eof_build_chord_list(sp, track, &chordlist);	//Build a list of all unique chords in the track
+	if(!chordlistsize)
+	{	//If there were no chords, write an empty chord template tag
+		(void) pack_fputs("  <chordTemplates count=\"0\"/>\n", fp);
+	}
+	else
+	{	//There were chords
+		long fret0, fret1, fret2, fret3, fret4, fret5;	//Will store the fret number played on each string (-1 means the string is not played)
+		long *fret[6] = {&fret0, &fret1, &fret2, &fret3, &fret4, &fret5};	//Allow the fret numbers to be accessed via array
+		char *fingerunused = "-1";
+		char *finger0, *finger1, *finger2, *finger3, *finger4, *finger5;	//Each will be set to either fingerunknown or fingerunused
+		char **finger[6] = {&finger0, &finger1, &finger2, &finger3, &finger4, &finger5};	//Allow the finger strings to be accessed via array
+		char finger0def[2] = "0", finger1def[2] = "1", finger2def[2] = "2", finger3def[2] = "3", finger4def[2] = "4", finger5def[2] = "5";	//Static strings for building manually-defined finger information
+		char *fingerdef[6] = {finger0def, finger1def, finger2def, finger3def, finger4def, finger5def};	//Allow the fingerdef strings to be accessed via array
+		unsigned long bitmask, shapenum;
+		EOF_PRO_GUITAR_NOTE temp;	//Will have a matching chord shape definition's fingering applied to
+		unsigned char *effective_fingering;	//Will point to either a note's own finger array or one of that of the temp pro guitar note structure above
+
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <chordTemplates count=\"%lu\">\n", chordlistsize);
+		(void) pack_fputs(buffer, fp);
+		for(ctr = 0; ctr < chordlistsize; ctr++)
+		{	//For each of the entries in the unique chord list
+			notename[0] = '\0';	//Empty the note name string
+			(void) eof_build_note_name(sp, track, chordlist[ctr], notename);	//Build the note name (if it exists) into notename[]
+
+			effective_fingering = tp->note[chordlist[ctr]]->finger;	//By default, use the chord entry's finger array
+			memcpy(temp.frets, tp->note[chordlist[ctr]]->frets, 6);	//Clone the fretting of the chord into the temporary note
+			temp.note = tp->note[chordlist[ctr]]->note;				//Clone the note mask
+			if(eof_pro_guitar_note_fingering_valid(tp, chordlist[ctr]) != 1)
+			{	//If the fingering for the note is not fully defined
+				if(eof_lookup_chord_shape(tp->note[chordlist[ctr]], &shapenum, 0))
+				{	//If a fingering for the chord can be found in the chord shape definitions
+					eof_apply_chord_shape_definition(&temp, shapenum);	//Apply the matching chord shape definition's fingering
+					effective_fingering = temp.finger;	//Use the matching chord shape definition's finger definitions
+				}
+			}
+
+			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+			{	//For each of the 6 supported strings
+				if((eof_get_note_note(sp, track, chordlist[ctr]) & bitmask) && (ctr2 < tp->numstrings) && ((tp->note[chordlist[ctr]]->frets[ctr2] & 0x80) == 0))
+				{	//If the chord entry uses this string (verifying that the string number is supported by the track) and the string is not fret hand muted (ghost notes must be allowed so that arpeggio shapes can export)
+					*(fret[ctr2]) = tp->note[chordlist[ctr]]->frets[ctr2] & 0x7F;	//Retrieve the fret played on this string (masking out the muting bit)
+					if(effective_fingering[ctr2])
+					{	//If the fingering for this string is defined
+						char *temp = fingerdef[ctr2];	//Simplify logic below
+						temp[0] = '0' + effective_fingering[ctr2];	//Convert decimal to ASCII
+						temp[1] = '\0';	//Truncate string
+						*(finger[ctr2]) = temp;
+					}
+					else
+					{	//The fingering is not defined, regardless of whether the string is open or fretted
+						*(finger[ctr2]) = fingerunused;		//Write a -1, this will allow the XML to compile even if the chord's fingering is incomplete/undefined
+					}
+				}
+				else
+				{	//The chord entry does not use this string
+					*(fret[ctr2]) = -1;
+					*(finger[ctr2]) = fingerunused;
+				}
+			}
+
+			expand_xml_text(buffer2, sizeof(buffer2) - 1, notename, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+			(void) snprintf(buffer, sizeof(buffer) - 1, "    <chordTemplate chordName=\"%s\" displayName=\"%s\" finger0=\"%s\" finger1=\"%s\" finger2=\"%s\" finger3=\"%s\" finger4=\"%s\" finger5=\"%s\" fret0=\"%ld\" fret1=\"%ld\" fret2=\"%ld\" fret3=\"%ld\" fret4=\"%ld\" fret5=\"%ld\"/>\n", buffer2, buffer2, finger0, finger1, finger2, finger3, finger4, finger5, fret0, fret1, fret2, fret3, fret4, fret5);
+			(void) pack_fputs(buffer, fp);
+		}//For each of the entries in the unique chord list
+		(void) pack_fputs("  </chordTemplates>\n", fp);
+	}//There were chords
+
+	//Write some unknown information
+	(void) pack_fputs("  <fretHandMuteTemplates count=\"0\"/>\n", fp);
+
+	//Write the beat timings
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <ebeats count=\"%lu\">\n", sp->beats);
+	(void) pack_fputs(buffer, fp);
+	for(ctr = 0; ctr < sp->beats; ctr++)
+	{	//For each beat in the chart
+		if(eof_get_ts(sp,&beatspermeasure,NULL,ctr) == 1)
+		{	//If this beat has a time signature change
+			beatcounter = 0;
+		}
+		if(!beatcounter)
+		{	//If this is the first beat in a measure
+			measurenum++;
+			displayedmeasure = measurenum;
+		}
+		else
+		{	//Otherwise the measure is displayed as -1 to indicate no change from the previous beat's measure number
+			displayedmeasure = -1;
+		}
+		(void) snprintf(buffer, sizeof(buffer) - 1, "    <ebeat time=\"%.3f\" measure=\"%ld\"/>\n", sp->beat[ctr]->fpos / 1000.0, displayedmeasure);
+		(void) pack_fputs(buffer, fp);
+		beatcounter++;
+		if(beatcounter >= beatspermeasure)
+		{
+			beatcounter = 0;
+		}
+	}
+	(void) pack_fputs("  </ebeats>\n", fp);
+
+	//Write message boxes for the loading text song property (if defined) and each user defined popup message
+	if(sp->tags->loading_text[0] != '\0')
+	{	//If the loading text is defined
+		char expanded_text[512];	//A string to expand the user defined text into
+		(void) strftime(expanded_text, sizeof(expanded_text), sp->tags->loading_text, caltime);	//Expand any user defined calendar date/time tokens
+		expand_xml_text(buffer2, sizeof(buffer2) - 1, expanded_text, 512);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+
+		(void) eof_track_add_section(eof_song, track, EOF_RS_POPUP_MESSAGE, 0, 5100, 10100, 1, buffer2);	//Insert the expanded text as a popup message, setting the flag to nonzero to mark is as temporary
+		eof_track_pro_guitar_sort_popup_messages(tp);	//Sort the popup messages
+	}
+	if(tp->popupmessages || tp->tonechanges)
+	{	//If at least one popup message or tone change is to be written
+		unsigned long count, controlctr = 0;
+		size_t stringlen;
+		EOF_RS_CONTROL *controls = NULL;
+
+		//Allocate memory for a list of control events
+		count = tp->popupmessages * 2;	//Each popup message needs one control message to display and one to clear
+		count += tp->tonechanges;		//Each tone change needs one control message
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <controls count=\"%lu\">\n", count);
+		(void) pack_fputs(buffer, fp);
+		controls = malloc(sizeof(EOF_RS_CONTROL) * count);	//Allocate memory for a list of Rocksmith control events
+		if(!controls)
+		{
+			eof_log("\tError saving:  Cannot allocate memory for control list", 1);
+			return 0;	//Return failure
+		}
+
+		//Build the list of control events
+		for(ctr = 0; ctr < tp->popupmessages; ctr++)
+		{	//For each popup message
+			//Add the popup message display control to the list
+			expand_xml_text(buffer2, sizeof(buffer2) - 1, tp->popupmessage[ctr].name, EOF_SECTION_NAME_LENGTH);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+			stringlen = (size_t)snprintf(NULL, 0, "    <control time=\"%.3f\" code=\"ShowMessageBox(hint%lu, %s)\"/>\n", tp->popupmessage[ctr].start_pos / 1000.0, ctr + 1, buffer2) + 1;	//Find the number of characters needed to store this string
+			controls[controlctr].str = malloc(stringlen + 1);	//Allocate memory to build the string
+			if(!controls[controlctr].str)
+			{
+				eof_log("\tError saving:  Cannot allocate memory for control event", 1);
+				while(controlctr > 0)
+				{	//Free previously allocated strings
+					free(controls[controlctr - 1].str);
+					controlctr--;
+				}
+				free(controls);
+				return 0;	//Return failure
+			}
+			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"ShowMessageBox(hint%lu, %s)\"/>\n", tp->popupmessage[ctr].start_pos / 1000.0, ctr + 1, buffer2);
+			controls[controlctr].pos = tp->popupmessage[ctr].start_pos;
+			controlctr++;
+
+			//Add the clear message control to the list
+			stringlen = (size_t)snprintf(NULL, 0, "    <control time=\"%.3f\" code=\"ClearAllMessageBoxes()\"/>\n", tp->popupmessage[ctr].end_pos / 1000.0) + 1;	//Find the number of characters needed to store this string
+			controls[controlctr].str = malloc(stringlen + 1);	//Allocate memory to build the string
+			if(!controls[controlctr].str)
+			{
+				eof_log("\tError saving:  Cannot allocate memory for control event", 1);
+				while(controlctr > 0)
+				{	//Free previously allocated strings
+					free(controls[controlctr - 1].str);
+					controlctr--;
+				}
+				free(controls);
+				return 0;	//Return failure
+			}
+			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"ClearAllMessageBoxes()\"/>\n", tp->popupmessage[ctr].end_pos / 1000.0);
+			controls[controlctr].pos = tp->popupmessage[ctr].end_pos;
+			controlctr++;
+		}
+		for(ctr = 0; ctr < tp->tonechanges; ctr++)
+		{	//For each tone change
+			//Add the tone change control to the list
+			char tempname[EOF_SECTION_NAME_LENGTH+1];
+			stringlen = (size_t)snprintf(NULL, 0, "    <control time=\"%.3f\" code=\"CDlcTone(%s)\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tp->tonechange[ctr].name) + 1;	//Find the number of characters needed to store this string
+			controls[controlctr].str = malloc(stringlen + 1);	//Allocate memory to build the string
+			if(!controls[controlctr].str)
+			{
+				eof_log("\tError saving:  Cannot allocate memory for control event", 1);
+				while(controlctr > 0)
+				{	//Free previously allocated strings
+					free(controls[controlctr - 1].str);
+					controlctr--;
+				}
+				free(controls);
+				return 0;	//Return failure
+			}
+			///Until the Rocksmith toolkit exposes proper tone key names, convert spaces to underscores, which is one known change that the toolkit makes to the
+			/// display name in order to derive a key name.  Build another copy of the string to do this
+			for(ctr2 = 0; ctr2 < (unsigned long)strlen(tp->tonechange[ctr].name); ctr2++)
+			{	//For each character in the tone name
+				if(tp->tonechange[ctr].name[ctr2] == ' ')
+				{	//If it's a space character
+					tempname[ctr2] = '_';	//Copy it to the new string as an underscore instead
+				}
+				else
+				{	//Otherwise copy it as-is
+					tempname[ctr2] = tp->tonechange[ctr].name[ctr2];
+				}
+			}
+			tempname[ctr2] = '\0';	//Terminate the string
+			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"CDlcTone(%s)\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tempname);
+			controls[controlctr].pos = tp->tonechange[ctr].start_pos;
+			controlctr++;
+		}
+
+		//Sort, write and free the list of control events
+		qsort(controls, (size_t)count, sizeof(EOF_RS_CONTROL), eof_song_qsort_control_events);
+		for(ctr = 0; ctr < count; ctr++)
+		{	//For each control event
+			(void) pack_fputs(controls[ctr].str, fp);	//Write the control event string
+			free(controls[ctr].str);	//Free the string
+		}
+		free(controls);	//Free the array
+
+		(void) pack_fputs("  </controls>\n", fp);
+
+		//Remove any loading text popup that was inserted into the track
+		for(ctr = 0; ctr < tp->popupmessages; ctr++)
+		{	//For each popup message
+			if(tp->popupmessage[ctr].flags)
+			{	//If the flags field was made nonzero
+				eof_track_pro_guitar_delete_popup_message(tp, ctr);	//Delete this temporary popup message
+				break;
+			}
+		}
+	}//If at least one popup message or tone change is to be written
+
+	//Write sections
+	for(ctr = 0, numsections = 0; ctr < sp->beats; ctr++)
+	{	//For each beat in the chart
+		if(sp->beat[ctr]->contained_rs_section_event >= 0)
+		{	//If this beat has a Rocksmith section
+			numsections++;	//Update Rocksmith section instance counter
+		}
+	}
+	if(numsections)
+	{	//If there is at least one Rocksmith section defined in the chart (which should be the case since default ones were inserted earlier if there weren't any)
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <sections count=\"%lu\">\n", numsections);
+		(void) pack_fputs(buffer, fp);
+		for(ctr = 0; ctr < sp->beats; ctr++)
+		{	//For each beat in the chart
+			if(sp->beat[ctr]->contained_rs_section_event >= 0)
+			{	//If this beat has a Rocksmith section
+				expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[sp->beat[ctr]->contained_rs_section_event]->text, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+				(void) snprintf(buffer, sizeof(buffer) - 1, "    <section name=\"%s\" number=\"%d\" startTime=\"%.3f\"/>\n", buffer2, sp->beat[ctr]->contained_rs_section_event_instance_number, sp->beat[ctr]->fpos / 1000.0);
+				(void) pack_fputs(buffer, fp);
+			}
+		}
+		(void) pack_fputs("  </sections>\n", fp);
+	}
+	else
+	{
+		allegro_message("Error:  Default RS sections that were added are missing.  Skipping writing the <sections> tag.");
+	}
+
+	//Write events
+	for(ctr = 0, numevents = 0; ctr < sp->text_events; ctr++)
+	{	//For each event in the chart
+		if(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_EVENT)
+		{	//If the event is marked as a Rocksmith event
+			if(!sp->text_event[ctr]->track || (sp->text_event[ctr]->track  == track))
+			{	//If the event applies to the specified track
+				numevents++;
+			}
+		}
+	}
+	if(numevents)
+	{	//If there is at least one Rocksmith event defined in the chart
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <events count=\"%lu\">\n", numevents);
+		(void) pack_fputs(buffer, fp);
+		for(ctr = 0, numevents = 0; ctr < sp->text_events; ctr++)
+		{	//For each event in the chart
+			if(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_EVENT)
+			{	//If the event is marked as a Rocksmith event
+				if(!sp->text_event[ctr]->track || (sp->text_event[ctr]->track  == track))
+				{	//If the event applies to the specified track
+					expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[ctr]->text, 256);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+					(void) snprintf(buffer, sizeof(buffer) - 1, "    <event time=\"%.3f\" code=\"%s\"/>\n", sp->beat[sp->text_event[ctr]->beat]->fpos / 1000.0, buffer2);
+					(void) pack_fputs(buffer, fp);
+				}
+			}
+		}
+		(void) pack_fputs("  </events>\n", fp);
+	}
+	else
+	{	//Otherwise write an empty events tag
+		(void) pack_fputs("  <events count=\"0\"/>\n", fp);
+	}
+
+	//Write note difficulties
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <levels count=\"%u\">\n", numdifficulties);
+	(void) pack_fputs(buffer, fp);
+	for(ctr = 0, ctr2 = 0; ctr < 256; ctr++)
+	{	//For each of the possible difficulties
+		if(eof_track_diff_populated_status[ctr])
+		{	//If this difficulty is populated
+			unsigned long anchorcount;
+			char anchorsgenerated = 0;	//Tracks whether anchors were automatically generated and will need to be deleted after export
+
+			//Count the number of single notes and chords in this difficulty
+			for(ctr3 = 0, numsinglenotes = 0, numchords = 0; ctr3 < tp->notes; ctr3++)
+			{	//For each note in the track
+				if(eof_get_note_type(sp, track, ctr3) == ctr)
+				{	//If the note is in this difficulty
+					unsigned long lanecount = eof_note_count_rs2_lanes(sp, track, ctr3);	//Count the number of non ghosted/muted gems for this note
+					if(lanecount == 1)
+					{	//If the note has only one gem
+						numsinglenotes++;	//Increment counter
+					}
+					else if(lanecount > 1)
+					{	//If the note has multiple gems
+						numchords++;	//Increment counter
+					}
+				}
+			}
+
+			//Write single notes
+			(void) snprintf(buffer, sizeof(buffer) - 1, "    <level difficulty=\"%lu\">\n", ctr2);
+			(void) pack_fputs(buffer, fp);
+			ctr2++;	//Increment the populated difficulty level number
+			if(numsinglenotes)
+			{	//If there's at least one single note in this difficulty
+				(void) snprintf(buffer, sizeof(buffer) - 1, "      <notes count=\"%lu\">\n", numsinglenotes);
+				(void) pack_fputs(buffer, fp);
+				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
+				{	//For each note in the track
+					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs2_lanes(sp, track, ctr3) == 1))
+					{	//If this note is in this difficulty and will export as a single note (only one gem has non ghosted/muted status)
+						for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
+						{	//For each string used in this track
+							if((eof_get_note_note(sp, track, ctr3) & bitmask) && !(tp->note[ctr3]->ghost & bitmask))
+							{	//If this string is used in this note and it is not ghosted
+								unsigned long flags;
+								unsigned long notepos;
+								char bend = 0;					//Nonzero if this note is a bend
+								unsigned long bendstrength = 0;	//The number of half steps this note bends
+								long slideto = -1;				//If not negative, is the fret position the slide ends at
+								unsigned long fret;				//The fret number used for this string
+								char hammeron;					//Nonzero if this note is a hammer on
+								char pulloff;					//Nonzero if this note is a pull off
+								char harmonic;					//Nonzero if this note is a harmonic
+								char hopo;						//Nonzero if this note is either a hammer on or a pull off
+								char palmmute;					//Nonzero if this note is a palm mute
+								unsigned long length;
+								char tremolo;					//Nonzero if this note is a tremolo
+								char pop;						//1 if this note is played with pop technique, else -1
+								char slap;						//1 if this note is played with slap technique, else -1
+								char accent;					//Nonzero if this note is played as an accent
+								char pinchharmonic;				//Nonzero if this note is a pinch harmonic
+								char stringmute;				//Nonzero if this note is a string mute
+								long unpitchedslideto = -1;		//If not negative, is the fret position to which the note performs an unpitched slide
+								char tap;						//Nonzero if this note is tapped
+								char vibrato;					//Is set to 80 if the note is played with vibrato, otherwise zero
+								char tagend[2] = "/";			//If a note tag is to have a bendValues subtag, this string is emptied so that the note tag doesn't end in the same line
+
+								flags = eof_get_note_flags(sp, track, ctr3);
+								notepos = eof_get_note_pos(sp, track, ctr3);
+								length = eof_get_note_length(sp, track, ctr3);
+								if((length == 1) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+								{	//If the note is has the absolute minimum length and isn't a bend or a slide note (bend and slide notes are required to have a length > 0 or Rocksmith will crash)
+									length = 0;	//Convert to a length of 0 so that it doesn't display as a sustain note in-game
+								}
+								fret = tp->note[ctr3]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
+								if((flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) == 0)
+								{	//If this note doesn't have definitions for bend strength or the ending fret for slides
+									if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+									{	//If this note bends
+										bend = 1;
+										bendstrength = 1;	//Assume a 1 half step bend
+									}
+									if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+									{	//If this note slides up and the user hasn't defined the ending fret of the slide
+										slideto = fret + 1;	//Assume a 1 fret slide until logic is added for the author to add this information
+									}
+									else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+									{	//If this note slides down and the user hasn't defined the ending fret of the slide
+										slideto = fret - 1;	//Assume a 1 fret slide until logic is added for the author to add this information
+									}
+								}
+								else
+								{	//This note defines the bend strength and ending fret for slides
+									if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+									{	//If this note bends
+										bend = 1;
+										bendstrength = tp->note[ctr3]->bendstrength;	//Obtain the defined bend strength
+									}
+									if((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+									{	//If this note slides
+										slideto = tp->note[ctr3]->slideend;
+									}
+								}
+								//Determine note statuses
+								hammeron = (flags & EOF_PRO_GUITAR_NOTE_FLAG_HO) ? 1 : 0;
+								pulloff = (flags & EOF_PRO_GUITAR_NOTE_FLAG_PO) ? 1 : 0;
+								harmonic = (flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC) ? 1 : 0;
+								hopo = (hammeron | pulloff) ? 1 : 0;
+								palmmute = (flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE) ? 1 : 0;
+								tremolo = (flags & EOF_NOTE_FLAG_IS_TREMOLO) ? 1 : 0;
+								pop = (flags & EOF_PRO_GUITAR_NOTE_FLAG_POP) ? 1 : -1;
+								slap = (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLAP) ? 1 : -1;
+								accent = 0;
+								pinchharmonic = 0;
+								stringmute = (flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) ? 1 : 0;
+								tap = (flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP) ? 1 : 0;
+								vibrato = (flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO) ? 80 : 0;
+								if((pop > 0) || (slap > 0))
+								{	//If the note has pop or slap notation
+									length = 0;	//Remove all sustain for the note, because Rocksmith display pop/slap sustain notes as non pop/slap sustained notes
+								}
+								if(!eof_pro_guitar_note_lowest_fret(tp, ctr3))
+								{	//If this note contains no fretted strings
+									if(bend || (slideto >= 0) || (unpitchedslideto >= 0))
+									{	//If it is also marked as a bend or slide note, omit these statuses because they're invalid for open notes
+										bend = 0;
+										slideto = -1;
+										unpitchedslideto = -1;
+										if((*user_warned & 4) == 0)
+										{	//If the user wasn't alerted that one or more open notes have these statuses improperly applied
+											allegro_message("Warning:  At least one open note is marked with bend or slide status.\nThis is not supported, so these statuses are being omitted for such notes.");
+											*user_warned |= 4;
+										}
+									}
+								}
+								if(bend)
+								{	//If the note is a bend, the note tag must not end on the same line as it will have a bendValues subtag
+									tagend[0] = '\0';	//Drop the / from the string
+								}
+								(void) snprintf(buffer, sizeof(buffer) - 1, "        <note time=\"%.3f\" linkNext=\"0\" accent=\"%d\" bend=\"%d\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"0\" leftHand=\"-1\" mute=\"%d\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\" harmonicPinch=\"%d\" pickDirection=\"0\" rightHand=\"-1\" slideUnpitchTo=\"%ld\" tap=\"%d\" vibrato=\"%d\"%s>\n", (double)notepos / 1000.0, accent, bend, fret, hammeron, harmonic, hopo, stringmute, palmmute, pop, pulloff, slap, slideto, stringnum, (double)length / 1000.0, tremolo, pinchharmonic, unpitchedslideto, tap, vibrato, tagend);
+								(void) pack_fputs(buffer, fp);
+								if(bend)
+								{	//If the note is a bend, write the bendValues subtag and close the note tag
+									(void) pack_fputs("          <bendValues count=\"1\">\n", fp);
+									(void) snprintf(buffer, sizeof(buffer) - 1, "            <bendValue time=\"%.3f\" step=\"%.3f\"/>\n", (((double)notepos + ((double)length / 3.0)) / 1000.0), (double)bendstrength / 2.0);	//Write a bend point 1/3 into the note
+									(void) pack_fputs(buffer, fp);
+									(void) pack_fputs("          </bendValues>\n", fp);
+									(void) pack_fputs("        </note>\n", fp);
+								}
+								break;	//Only one note entry is valid for each single note, so break from loop
+							}//If this string is used in this note and it is not ghosted
+						}//For each string used in this track
+					}//If this note is in this difficulty and is a single note (and not a chord)
+				}//For each note in the track
+				(void) pack_fputs("      </notes>\n", fp);
+			}//If there's at least one single note in this difficulty
+			else
+			{	//There are no single notes in this difficulty, write an empty notes tag
+				(void) pack_fputs("      <notes count=\"0\"/>\n", fp);
+			}
+
+			//Write chords
+			if(numchords)
+			{	//If there's at least one chord in this difficulty
+				unsigned long chordid, flags;
+				char *upstrum = "up";
+				char *downstrum = "down";
+				char *direction;	//Will point to either upstrum or downstrum as appropriate
+				double notepos;
+				char highdensity;	//Any chord within the threshold proximity of an identical chord has the highDensity boolean property set to true
+				char accent;		//Nonzero if this chord is played as an accent
+				char stringmute;	//Nonzero if this chord is a string mute
+				char palmmute;		//Nonzero if this chord is a palm mute
+				char hopo;			//Nonzero if this chord is either a hammer on or a pull off
+
+				(void) snprintf(buffer, sizeof(buffer) - 1, "      <chords count=\"%lu\">\n", numchords);
+				(void) pack_fputs(buffer, fp);
+				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
+				{	//For each note in the track
+					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs2_lanes(sp, track, ctr3) > 1))
+					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems) that isn't fully string muted
+						for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
+						{	//For each of the entries in the unique chord list
+							if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
+							{	//If this note matches a chord entry
+								chordid = ctr4;	//Store the chord entry number
+								break;
+							}
+						}
+						if(ctr4 >= chordlistsize)
+						{	//If the chord couldn't be found
+							allegro_message("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.");
+							eof_log("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.", 1);
+							if(chordlist)
+							{	//If the chord list was built
+								free(chordlist);
+							}
+							return 0;	//Return error
+						}
+						flags = tp->note[ctr3]->flags;	//Simplify
+						if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
+						{	//If this note explicitly strums up
+							direction = upstrum;	//Set the direction string to match
+						}
+						else
+						{	//Otherwise the direction defaults to down
+							direction = downstrum;
+						}
+						accent = 0;
+						stringmute = (flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) ? 1 : 0;
+						palmmute = (flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE) ? 1 : 0;
+						hopo = 0;
+						highdensity = eof_note_has_high_chord_density(sp, track, ctr3, 1);	//Determine whether the chord will export with high density
+						notepos = (double)tp->note[ctr3]->pos / 1000.0;
+						(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" linkNext=\"0\" accent=\"%d\" chordId=\"%lu\" fretHandMute=\"%d\" highDensity=\"%d\" ignore=\"0\" palmMute=\"%d\" hopo=\"%d\" strum=\"%s\">/>\n", notepos, accent, chordid, stringmute, highdensity, palmmute, hopo, direction);
 						(void) pack_fputs(buffer, fp);
 					}//If this note is in this difficulty and is a chord
 				}//For each note in the track
@@ -2502,7 +3785,7 @@ int eof_time_range_is_populated(EOF_SONG *sp, unsigned long track, unsigned long
 	return 0;	//Return not populated
 }
 
-int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned long note)
+int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char mode)
 {
 	long prev;
 
@@ -2515,8 +3798,16 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 	if(eof_get_note_flags(sp, track, note) & EOF_NOTE_FLAG_CRAZY)
 		return 0;	//Note is marked with crazy status, which forces it to export as low density
 
-	if(eof_note_count_rs_lanes(sp, track, note) < 2)
-		return 0;	//Note is not a chord (not at least 2 non ghosted/muted gems) or is entirely string muted
+	if(!mode)
+	{	//Rocksmith 1 rules observed (no string mutes)
+		if(eof_note_count_rs_lanes(sp, track, note) < 2)
+			return 0;	//Note is not a chord (not at least 2 non ghosted/muted gems) or is entirely string muted
+	}
+	else
+	{	//Rocksmith 2 rules observed (string mutes allowed)
+		if(eof_note_count_rs2_lanes(sp, track, note) < 2)
+			return 0;	//Note is not a chord (not at least 2 non ghosted gems)
+	}
 
 	prev = eof_track_fixup_previous_note(sp, track, note);
 	if(prev < 0)
