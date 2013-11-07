@@ -83,6 +83,47 @@ unsigned long eof_note_count_rs_lanes(EOF_SONG *sp, unsigned long track, unsigne
 	return count;
 }
 
+unsigned long eof_note_count_rs2_lanes(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long ctr, bitmask, tracknum, count = 0, notenote, stringmutecount = 0;
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if(!sp || (track >= sp->tracks))
+		return 0;	//Invalid parameters
+
+	notenote = eof_get_note_note(sp, track, note);
+	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If the specified track is not a pro guitar track
+		return eof_note_count_colors_bitmask(notenote);
+	}
+
+	tracknum = sp->track[track]->tracknum;
+	tp = sp->pro_guitar_track[tracknum];	//Simplify
+	if(note >= tp->notes)
+	{	//If the specified note is higher than the number of notes in the track
+		return 0;	//Invalid parameters
+	}
+	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+	{	//For each of the 6 supported strings
+		if((tp->note[note]->note & bitmask) && !(tp->note[note]->ghost & bitmask))
+		{	//If this string is used and it is not ghosted
+			count++;	//Increment counter
+			if((tp->note[note]->frets[ctr] & 0x80) != 0)
+			{	//If this gem is not string muted
+				stringmutecount++;
+			}
+		}
+	}
+
+///For now, EOF cannot export string muted chords in RS2 format
+	if(stringmutecount > 1)
+	{	//If this is a string muted chord
+		return 0;	//This note will need to be dropped from export
+	}
+
+	return count;
+}
+
 void eof_legacy_track_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, char o, unsigned long pos, long length)
 {
 	eof_log("eof_legacy_track_note_create() entered", 1);
@@ -941,7 +982,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	}//If this is a drum track
 	else
 	{	//This is a non drum track (or a drum track where bass is rendered in its own lane)
-		if(eof_render_3d_rs_chords && eof_note_has_high_chord_density(eof_song, track, notenum))
+		if(eof_render_3d_rs_chords && eof_note_has_high_chord_density(eof_song, track, notenum, 1))
 		{	//If the user has opted to 3D render Rocksmith style chords, and this is a high density chord
 			rz = npos;
 			ez = npos + 14;

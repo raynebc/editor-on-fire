@@ -237,7 +237,6 @@ void eof_prepare_beat_menu(void)
 		eof_beat_menu[11].flags = 0;	//Delete anchor
 		eof_beat_menu[12].flags = 0;	//Reset BPM
 		eof_beat_menu[13].flags = 0;	//Calculate BPM
-		eof_beat_menu[14].flags = 0;	//Estimate BPM
 		eof_beat_menu[15].flags = 0;	//Double BPM
 		eof_beat_menu[16].flags = 0;	//Halve BPM
 		eof_beat_menu[17].flags = 0;	//Adjust tempo for RBN
@@ -439,7 +438,6 @@ void eof_prepare_beat_menu(void)
 			eof_beat_menu[11].flags = D_DISABLED;	//Delete anchor
 			eof_beat_menu[12].flags = D_DISABLED;	//Reset BPM
 			eof_beat_menu[13].flags = D_DISABLED;	//Calculate BPM
-			eof_beat_menu[14].flags = D_DISABLED;	//Estimate BPM
 			eof_beat_menu[15].flags = D_DISABLED;	//Double BPM
 			eof_beat_menu[16].flags = D_DISABLED;	//Halve BPM
 			eof_beat_menu[17].flags = D_DISABLED;	//Adjust tempo for RBN
@@ -2527,8 +2525,8 @@ int eof_menu_beat_estimate_bpm(void)
 	result = eof_estimate_bpm(eof_music_track);
 	eof_fix_window_title();
 	allegro_message("Estimated tempo is %fBPM", result);
-	if(alert(NULL, "Would you like to apply this tempo to the first beat?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-	{	//If user opts to apply the estimated tempo
+	if(!eof_song->tags->tempo_map_locked && alert(NULL, "Would you like to apply this tempo to the first beat?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+	{	//If the tempo map is not locked and the user opts to apply the estimated tempo
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		ppqn = 60000000.0 / result;
 		eof_song->beat[0]->ppqn = ppqn;	//Apply the tempo to the first beat
