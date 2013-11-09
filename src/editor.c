@@ -1851,26 +1851,35 @@ if(key[KEY_PAUSE])
 			key[KEY_QUOTE] = 0;
 		}
 
-	/* anchor beat (SHIFT+A) */
 	/* toggle anchor (A) */
 	/* select all (CTRL+A) */
+	/* anchor beat (SHIFT+A) */
+	/* toggle accent (CTRL+SHIFT+A in a pro guitar track) */
 		if(key[KEY_A])
 		{
 			if(!KEY_EITHER_CTRL)
-			{
+			{	//If CTRL is not held
 				if(KEY_EITHER_SHIFT)
-				{
+				{	//If SHIFT is held
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 					(void) eof_menu_beat_anchor();
 				}
 				else
-				{
+				{	//If neither CTRL nor SHIFT are held
 					(void) eof_menu_beat_toggle_anchor();
 				}
 			}
 			else
-			{
-				(void) eof_menu_edit_select_all();
+			{	//If CTRL is held
+				if(KEY_EITHER_SHIFT)
+				{	//If both CTRL and SHIFT are held
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					(void) eof_menu_note_toggle_accent();
+				}
+				else
+				{	//If only CTRL is held
+					(void) eof_menu_edit_select_all();
+				}
 			}
 			key[KEY_A] = 0;
 		}
@@ -2013,17 +2022,26 @@ if(key[KEY_PAUSE])
 	/* cycle HOPO status (H in a legacy track) */
 	/* toggle hammer on status (H in a pro guitar track) */
 	/* toggle harmonic (CTRL+H in a pro guitar track) */
+	/* toggle pinch harmonic (CTRL+SHIFT+H in a pro guitar track) */
 		if(key[KEY_H] && !KEY_EITHER_ALT)
 		{
 			if(KEY_EITHER_CTRL)
-			{
-				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-				{	//Toggle harmonic
-					(void) eof_menu_note_toggle_harmonic();
+			{	//If CTRL is held
+				if(KEY_EITHER_SHIFT)
+				{	//If SHIFT is also held
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					(void) eof_menu_note_toggle_pinch_harmonic();
+				}
+				else
+				{	//Only CTRL is held
+					if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+					{	//Toggle harmonic
+						(void) eof_menu_note_toggle_harmonic();
+					}
 				}
 			}
 			else
-			{
+			{	//If CTRL is not held
 				if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
 				{	//Cycle HO/PO
 					(void) eof_menu_hopo_cycle();

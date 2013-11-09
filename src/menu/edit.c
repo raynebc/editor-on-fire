@@ -2991,6 +2991,8 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 	{	//If the note is copying from a pro guitar track
 		if(eof_song->track[desttrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If it is pasting into a non pro guitar track, erase all pro guitar flags as they are invalid
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;			//Erase the pro guitar accent flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC;		//Erase the pro guitar pinch harmonic flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;				//Erase the pro hammer on flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;				//Erase the pro hammer off flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Erase the pro tap flag
