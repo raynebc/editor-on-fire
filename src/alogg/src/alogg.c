@@ -294,7 +294,6 @@ int alogg_play_ogg(ALOGG_OGG *ogg, int buffer_len, int vol, int pan) {
   return alogg_play_ex_ogg(ogg, buffer_len, vol, pan, 1000, FALSE);
 }
 
-static PACKFILE * alogg_ts_file = NULL;
 int alogg_play_ogg_ts(ALOGG_OGG *ogg, int buffer_len, int vol, int pan, int speed) {
   int ret;
 
@@ -316,7 +315,6 @@ int alogg_play_ogg_ts(ALOGG_OGG *ogg, int buffer_len, int vol, int pan, int spee
     ogg->time_stretch_buffer[1] = malloc(sizeof(float) * ogg->time_stretch_buffer_samples);
   else
     ogg->time_stretch_buffer[1] = NULL;
-  alogg_ts_file = pack_fopen("alogg_debug.raw", "w");
 
   return ALOGG_OK;
 }
@@ -378,11 +376,6 @@ void alogg_stop_ogg(ALOGG_OGG *ogg) {
   {
     free(ogg->time_stretch_buffer[1]);
     ogg->time_stretch_buffer[1] = NULL;
-  }
-  if(alogg_ts_file)
-  {
-	  pack_fclose(alogg_ts_file);
-	  alogg_ts_file = NULL;
   }
 }
 
