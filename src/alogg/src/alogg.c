@@ -294,6 +294,7 @@ int alogg_play_ogg(ALOGG_OGG *ogg, int buffer_len, int vol, int pan) {
   return alogg_play_ex_ogg(ogg, buffer_len, vol, pan, 1000, FALSE);
 }
 
+static PACKFILE * alogg_ts_file = NULL;
 int alogg_play_ogg_ts(ALOGG_OGG *ogg, int buffer_len, int vol, int pan, int speed) {
   int ret;
 
@@ -315,6 +316,7 @@ int alogg_play_ogg_ts(ALOGG_OGG *ogg, int buffer_len, int vol, int pan, int spee
     ogg->time_stretch_buffer[1] = malloc(sizeof(float) * ogg->time_stretch_buffer_samples);
   else
     ogg->time_stretch_buffer[1] = NULL;
+  alogg_ts_file = pack_fopen("alogg_debug.raw", "w");
 
   return ALOGG_OK;
 }
@@ -376,6 +378,11 @@ void alogg_stop_ogg(ALOGG_OGG *ogg) {
   {
     free(ogg->time_stretch_buffer[1]);
     ogg->time_stretch_buffer[1] = NULL;
+  }
+  if(alogg_ts_file)
+  {
+	  pack_fclose(alogg_ts_file);
+	  alogg_ts_file = NULL;
   }
 }
 
@@ -592,13 +599,46 @@ int alogg_poll_ogg_ts(ALOGG_OGG *ogg) {
   size_done = rubberband_retrieve(ogg->time_stretch_state, ogg->time_stretch_buffer, ogg->time_stretch_buffer_samples);
   if (ogg->stereo) {
     for (i = 0; i < size_done; i++) {
-      audiobuf_sp[i * 2] = (ogg->time_stretch_buffer[0][i] * (float)0x8000) + (float)0x8000;		//Convert sample back to unsigned integer format
-      audiobuf_sp[i * 2 + 1] = (ogg->time_stretch_buffer[1][i] * (float)0x8000) + (float)0x8000;	//Repeat for the other channel's sample
+      if(ogg->time_stretch_buffer[0][i] > 1.0)
+      {
+        audiobuf_sp[i * 2] = 0xFFFF;
+      }
+      else if(ogg->time_stretch_buffer[0][i] < -1.0)
+      {
+        audiobuf_sp[i * 2] = 0;
+      }
+      else
+      {
+        audiobuf_sp[i * 2] = (ogg->time_stretch_buffer[0][i] * (float)0x8000) + (float)0x8000;		//Convert sample back to unsigned integer format
+      }
+      if(ogg->time_stretch_buffer[1][i] > 1.0)
+      {
+        audiobuf_sp[i * 2 + 1] = 0xFFFF;
+      }
+      else if(ogg->time_stretch_buffer[1][i] < -1.0)
+      {
+        audiobuf_sp[i * 2 + 1] = 0;
+      }
+      else
+      {
+        audiobuf_sp[i * 2 + 1] = (ogg->time_stretch_buffer[1][i] * (float)0x8000) + (float)0x8000;	//Repeat for the other channel's sample
+      }
     }
   }
   else {
     for (i = 0; i < size_done; i++) {
-      audiobuf_sp[i] = (ogg->time_stretch_buffer[0][i] * (float)0x8000) + (float)0x8000;	//Convert sample back to unsigned integer format
+      if(ogg->time_stretch_buffer[0][i] > 1.0)
+      {
+        audiobuf_sp[i] = 0xFFFF;
+      }
+      else if(ogg->time_stretch_buffer[0][i] < -1.0)
+      {
+        audiobuf_sp[i] = 0;
+      }
+      else
+      {
+        audiobuf_sp[i] = (ogg->time_stretch_buffer[0][i] * (float)0x8000) + (float)0x8000;		//Convert sample back to unsigned integer format
+      }
     }
   }
 
