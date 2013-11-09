@@ -1599,7 +1599,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	char isebtuning = 1;	//Will track whether all strings are tuned to -1
 	char notename[EOF_NAME_LENGTH+1];	//String large enough to hold any chord name supported by EOF
 	int scale, chord, isslash, bassnote;	//Used for power chord detection
-	int standard_tuning = 0, non_standard_chords = 0, barre_chords = 0, power_chords = 0, notenum, dropd_tuning = 1, dropd_power_chords = 0, open_chords = 0, double_stops = 0, palm_mutes = 0, harmonics = 0, hopo = 0, tremolo = 0, slides = 0, bends = 0, tapping = 0, vibrato = 0, slappop = 0, octaves = 0, fifths_and_octaves = 0, sustains = 0;	//Used for technique detection
+	int standard_tuning = 0, non_standard_chords = 0, barre_chords = 0, power_chords = 0, notenum, dropd_tuning = 1, dropd_power_chords = 0, open_chords = 0, double_stops = 0, palm_mutes = 0, harmonics = 0, hopo = 0, tremolo = 0, slides = 0, bends = 0, tapping = 0, vibrato = 0, slappop = 0, octaves = 0, fifths_and_octaves = 0, sustains = 0, pinch= 0;	//Used for technique detection
 	int is_lead = 0, is_rhythm = 0, is_bass = 0;	//Is set to nonzero if the specified track is to be considered any of these arrangement types
 	char end_phrase_found = 0;	//Will track if there was a manually defined END phrase
 	unsigned long chordid, handshapectr;
@@ -1918,6 +1918,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		{	//If the note is played by slapping or popping
 			slappop = 1;
 		}
+		if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC)
+		{	//If the note is played with vibrato
+			pinch = 1;
+		}
 	}//For each note in the track
 	if(is_bass)
 	{	//If the arrangement being exported is bass
@@ -1927,7 +1931,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}
 		double_stops = 0;
 	}
-	(void) snprintf(buffer, sizeof(buffer) - 1, "  <arrangementProperties represent=\"1\" bonusArr=\"0\" standardTuning=\"%d\" nonStandardChords=\"%d\" barreChords=\"%d\" powerChords=\"%d\" dropDPower=\"%d\" openChords=\"%d\" fingerPicking=\"0\" pickDirection=\"0\" doubleStops=\"%d\" palmMutes=\"%d\" harmonics=\"%d\" pinchHarmonics=\"0\" hopo=\"%d\" tremolo=\"%d\" slides=\"%d\" unpitchedSlides=\"0\" bends=\"%d\" tapping=\"%d\" vibrato=\"%d\" fretHandMutes=\"0\" slapPop=\"%d\" twoFingerPicking=\"0\" fifthsAndOctaves=\"%d\" syncopation=\"0\" bassPick=\"0\" sustain=\"%d\" pathLead=\"%d\" pathRhythm=\"%d\" pathBass=\"%d\" />\n", standard_tuning, non_standard_chords, barre_chords, power_chords, dropd_power_chords, open_chords, double_stops, palm_mutes, harmonics, hopo, tremolo, slides, bends, tapping, vibrato, slappop, fifths_and_octaves, sustains, is_lead, is_rhythm, is_bass);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <arrangementProperties represent=\"1\" bonusArr=\"0\" standardTuning=\"%d\" nonStandardChords=\"%d\" barreChords=\"%d\" powerChords=\"%d\" dropDPower=\"%d\" openChords=\"%d\" fingerPicking=\"0\" pickDirection=\"0\" doubleStops=\"%d\" palmMutes=\"%d\" harmonics=\"%d\" pinchHarmonics=\"%d\" hopo=\"%d\" tremolo=\"%d\" slides=\"%d\" unpitchedSlides=\"0\" bends=\"%d\" tapping=\"%d\" vibrato=\"%d\" fretHandMutes=\"0\" slapPop=\"%d\" twoFingerPicking=\"0\" fifthsAndOctaves=\"%d\" syncopation=\"0\" bassPick=\"0\" sustain=\"%d\" pathLead=\"%d\" pathRhythm=\"%d\" pathBass=\"%d\" />\n", standard_tuning, non_standard_chords, barre_chords, power_chords, dropd_power_chords, open_chords, double_stops, palm_mutes, harmonics, pinch, hopo, tremolo, slides, bends, tapping, vibrato, slappop, fifths_and_octaves, sustains, is_lead, is_rhythm, is_bass);
 	(void) pack_fputs(buffer, fp);
 
 	//Check if any RS phrases or sections need to be added
@@ -2491,8 +2495,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								tremolo = (flags & EOF_NOTE_FLAG_IS_TREMOLO) ? 1 : 0;
 								pop = (flags & EOF_PRO_GUITAR_NOTE_FLAG_POP) ? 1 : -1;
 								slap = (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLAP) ? 1 : -1;
-								accent = 0;
-								pinchharmonic = 0;
+								accent = (flags & EOF_PRO_GUITAR_NOTE_FLAG_ACCENT) ? 1 : 0;
+								pinchharmonic = (flags & EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC) ? 1 : 0;
 								stringmute = (flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) ? 1 : 0;
 								tap = (flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP) ? 1 : 0;
 								vibrato = (flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO) ? 80 : 0;
@@ -2587,13 +2591,13 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						{	//Otherwise the direction defaults to down
 							direction = downstrum;
 						}
-						accent = 0;
+						accent = (flags & EOF_PRO_GUITAR_NOTE_FLAG_ACCENT) ? 1 : 0;
 						stringmute = (flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) ? 1 : 0;
 						palmmute = (flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE) ? 1 : 0;
 						hopo = 0;
 						highdensity = eof_note_has_high_chord_density(sp, track, ctr3, 1);	//Determine whether the chord will export with high density
 						notepos = (double)tp->note[ctr3]->pos / 1000.0;
-						(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" linkNext=\"0\" accent=\"%d\" chordId=\"%lu\" fretHandMute=\"%d\" highDensity=\"%d\" ignore=\"0\" palmMute=\"%d\" hopo=\"%d\" strum=\"%s\">/>\n", notepos, accent, chordid, stringmute, highdensity, palmmute, hopo, direction);
+						(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" linkNext=\"0\" accent=\"%d\" chordId=\"%lu\" fretHandMute=\"%d\" highDensity=\"%d\" ignore=\"0\" palmMute=\"%d\" hopo=\"%d\" strum=\"%s\"/>\n", notepos, accent, chordid, stringmute, highdensity, palmmute, hopo, direction);
 						(void) pack_fputs(buffer, fp);
 					}//If this note is in this difficulty and is a chord
 				}//For each note in the track

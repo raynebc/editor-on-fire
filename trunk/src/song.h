@@ -31,6 +31,8 @@
 #define EOF_NOTE_FLAG_EXTENDED  2147483648	//The MSB will be reserved to indicate an additional flag variable is present in a project file
 
 //The following flags pertain to pro guitar notes
+#define EOF_PRO_GUITAR_NOTE_FLAG_ACCENT         32			//This flag will represent a note that is played as an accent
+#define EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC     64			//This flag will represent a note that is played as a pinch harmonic
 #define EOF_PRO_GUITAR_NOTE_FLAG_HO				512			//This flag will represent a hammer on
 #define EOF_PRO_GUITAR_NOTE_FLAG_PO				1024		//This flag will represent a pull off
 #define EOF_PRO_GUITAR_NOTE_FLAG_TAP			2048		//This flag will represent a tapped note

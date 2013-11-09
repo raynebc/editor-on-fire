@@ -3488,16 +3488,16 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								if(byte2 & 16)
 								{	//Harmonic
 									byte = pack_getc(inf);	//Harmonic type
-									if(eof_gp_import_nat_harmonics_only)
-									{	//If the user opted to ignore harmonic status except for natural harmonics
-										if(byte == 1)
-										{	//Natural harmonic
-											flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
-										}
+									if(byte == 1)
+									{	//Natural harmonic
+										flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
+									}
+									else if(byte == 4)
+									{	//Pinch harmonic
+										flags |= EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC;
 									}
 									else
-									{	//Import all harmonic statuses
-										flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
+									{	//Other harmonic types will only be applied to imported notes if the user didn't enable the preference to ignore them
 										if(byte == 2)
 										{	//Artificial harmonic
 											(void) pack_getc(inf);	//Read harmonic note
@@ -3507,6 +3507,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										else if(byte == 3)
 										{	//Tapped harmonic
 											(void) pack_getc(inf);	//Right hand fret
+										}
+										if(eof_gp_import_nat_harmonics_only)
+										{	//If the user opted to ignore harmonic status except for natural harmonics
+											flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
 										}
 									}
 								}
@@ -3522,6 +3526,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									flags |= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
 								}
 							}//Note effects
+							if((bytemask & 2) || (bytemask & 64))
+							{	//Heavy accented or accented note
+								flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;
+							}
 						}//If this string is used
 					}//For each of the 7 possible usable strings
 					if(fileversion >= 500)

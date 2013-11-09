@@ -1489,6 +1489,14 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		{
 			buffer[index++] = 'S';
 		}
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_ACCENT)
+		{
+			buffer[index++] = '>';
+		}
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC)
+		{
+			buffer[index++] = 'f';	//In the symbols font, f is the pinch harmonic character
+		}
 	}//Check pro guitar statuses
 	else if((track == EOF_TRACK_DRUM) || (track == EOF_TRACK_DRUM_PS))
 	{	//Check drum statuses
