@@ -410,12 +410,6 @@ int alogg_process_ogg(ALOGG_OGG * ogg, void(*callback)(void * buf, int nsamples,
 	else
 	{
 		num_samples_left = ((end_time - start_time) * alogg_get_wave_freq_ogg(ogg)) * (ogg->stereo ? 2 : 1);	//The number of samples to pass to the callback function
-		
-		/* ensure that the right channel of the last sample is included */
-		if(ogg->stereo && num_samples_left % 2)
-		{
-			num_samples_left++;
-		}
 	}
 	bits = alogg_get_wave_bits_ogg(ogg);	//The number of bits per sample (expected to be 16)
 
