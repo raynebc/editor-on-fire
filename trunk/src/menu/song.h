@@ -168,4 +168,7 @@ int eof_check_fret_hand_positions(void);
 int eof_check_fret_hand_positions_menu(void);
 	//Calls eof_check_fret_hand_positions_option specifying to report if there were no corrections needed (to be called from menu)
 
+int eof_menu_song_export_song_preview(void);
+	//Allows the user to define a portion of the chart audio to export to preview.wav and preview.ogg in the project folder
+
 #endif

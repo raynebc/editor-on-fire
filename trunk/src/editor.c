@@ -512,7 +512,6 @@ void eof_read_editor_keys(void)
 ///DEBUG
 if(key[KEY_PAUSE])
 {
-	eof_export_time_range(eof_music_track, 0.0, 30.0, "test.wav");
 	//Debug action here
 	key[KEY_PAUSE] = 0;
 }
