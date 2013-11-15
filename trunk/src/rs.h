@@ -181,4 +181,8 @@ int eof_enforce_rs_phrase_begin_with_fret_hand_position(EOF_SONG *sp, unsigned l
 	//If *undo_made is zero, this function will create an undo state before adding any fret hand position
 	//Returns nonzero if it was found that a phrase was needed to be added
 
+void eof_export_rocksmith_showlights(EOF_SONG * sp, char * fn, unsigned long track);
+	//Exports a showlights file for the specified track to the specified file (to be used for Rocksmith 2014 customs)
+	//This XML file defines the MIDI note played for each highest-level note (or bass notes in the case of chords)
+
 #endif

@@ -4,6 +4,7 @@ Changelog: 2.39 to 2.40b (in progress)
 	Minor improvement to Rocksmith lyric detection by adding another criterion to identify such a file if the <xml> header tag is missing.
 	Added handling for a rare problem that can affect the lyric import of MIDI based files.  This problem occurs when a MIDI file does not properly define a 0 byte length for the last end of track event, and subsequently the file would fail to parse.  Such MIDI files may even technically be violating the MIDI standard.
 	Added a check to UltraStar lyric import to handle an invalid lyric duration of 0.
+	Fixed a bug where timing conversion could malfunction on a MIDI that defines time signature changes in tracks other than the tempo track.
 
 Changelog: 2.38 to 2.39
 	Some code cleanup.
