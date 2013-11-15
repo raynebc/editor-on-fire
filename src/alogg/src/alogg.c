@@ -380,35 +380,48 @@ void alogg_stop_ogg(ALOGG_OGG *ogg) {
 }
 
 
-/* process the Ogg from start_time to end_time, passing the decoded data to the supplied callback */
+/* process the Ogg from start_time to end_time, passing the decoded data to the supplied callback
+   if the start and end time are the same value, the entire OGG is processed from the specified start time until the end of the file */
 int alogg_process_ogg(ALOGG_OGG * ogg, void(*callback)(void * buf, int nsamples, int stereo), int buffer_samples, double start_time, double end_time)
 {
 	int size_done, i, all_done = 0;
 	int ret = 0;
+	int bits;
 	char * buffer;
 	char * buffer_p;
 	double current_pos;
 	int buffer_bytes = buffer_samples * 2;
-	PACKFILE * fp;
-	
+	unsigned long num_samples_left = 0, num_samples_decoded;
+	char all = 0;	//Is set to nonzero if the OGG is to be processed until the end of the file
+
 	buffer = malloc(buffer_bytes);
 	if(!buffer)
 	{
 		return 0;
 	}
-	
+
 	current_pos = ov_time_tell(&(ogg->vf));
 	ov_time_seek(&(ogg->vf), start_time);
-	
+
+	if(start_time == end_time)
+	{	//If the calling function intends to process the OGG until the end of the file
+		all = 1;
+	}
+	else
+	{
+		num_samples_left = (end_time - start_time) * alogg_get_wave_freq_ogg(ogg);	//The number of samples to pass to the callback function
+	}
+	bits = alogg_get_wave_bits_ogg(ogg);	//The number of bits per sample (expected to be 16)
+
 	while(!all_done)
 	{
 		buffer_p = buffer;
 		for(i = 0; i < buffer_samples; i++)
-		{
+		{	//Fill buffer with silent audio
 			((unsigned short *)(buffer_p))[i] = 0x8000;
 		}
-		size_done = 0;
-		
+		size_done = num_samples_decoded = 0;
+
 		/* read samples from Ogg Vorbis file */
 		for(i = buffer_bytes; i > 0; i -= size_done)
 		{
@@ -428,15 +441,25 @@ int alogg_process_ogg(ALOGG_OGG * ogg, void(*callback)(void * buf, int nsamples,
 				}
 			}
 			else if(size_done == 0)
-			{
+			{	//No more samples
 				all_done = 1;
 				ret = 1;
 				break; // playback finished so get out of loop
 			}
+			num_samples_decoded += size_done / bits;	//Keep track of how many samples have been decoded since the last callback
 			buffer_p += size_done;
 		}
-		callback(buffer, buffer_samples, ogg->stereo);
-    }
+		if(all || (num_samples_decoded < num_samples_left))
+		{	//If all of the newly decoded samples are to be passed to the callback
+		   callback(buffer, buffer_samples, ogg->stereo);
+		   num_samples_left -= num_samples_decoded;
+		}
+		else
+		{	//If the samples passed to the callback will be limited to the given time range
+		   callback(buffer, num_samples_left, ogg->stereo);
+		   all_done = 3;
+		}
+	}
     free(buffer);
     ov_time_seek(&(ogg->vf), current_pos);
     return ret;

@@ -777,8 +777,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 
 		vars.processed++;	//If we reached the end of the loop, we processed an event
 
-//! I have noticed a trend in some Rock Band MIDIs that will nest Meta events inside a running status, expecting
-//	the running status to be valid after the Meta event is parsed.  Technically, this violates the MIDI standard.
+//! Running status is expected to remain in effect even when meta events are encountered.
 //	This conditional statement will attempt to continue a running status in this scenario
 		if((vars.eventtype >> 4) != 0xF)		//If this event wasn't a Meta/Sysex event
 			vars.lasteventtype=vars.eventtype;	//Remember this in case Running Status is encountered
@@ -845,7 +844,7 @@ int Lyricless_handler(struct TEPstruct *data)
 	//Configure variables to track this event
 		if(Lyrics.lyric_on == 0)
 		{	//Only if no notes are currently on
-			lastlyrictime=(unsigned long)ConvertToRealTime(MIDIstruct.deltacounter,MIDIstruct.realtime);
+			lastlyrictime=(unsigned long)ConvertToRealTime(MIDIstruct.absdelta,0.0);	//Get the realtime by parsing the entire tempo list, in case this track's TS changes are causing problems
 				//Store timestamp of this Note On event
 			Lyrics.lyric_on=1;
 			lyric_note_num=data->parameters[0];		//Will only process a Note Off for this note number
@@ -871,7 +870,7 @@ int Lyricless_handler(struct TEPstruct *data)
 		if(data->parameters[0] != lyric_note_num )	//If this Note Off doesn't correspond to the note number we're expecting
 			return 0;								//ignore it
 	//Add the lyric piece
-		time=ConvertToRealTime(MIDIstruct.deltacounter,MIDIstruct.realtime);	//End offset of lyric piece in realtime
+		time=ConvertToRealTime(MIDIstruct.absdelta,0.0);	//Get the realtime by parsing the entire tempo list, in case this track's TS changes are causing problems
 		AddLyricPiece(placeholder,lastlyrictime,(unsigned long)time,lyric_note_num,0);	//Add the lyric placeholder to the lyric storage by providing the lyric string, the start time
 			//in milliseconds and the end time in millieseconds.  Store the pitch specified by the Note number
 		if(Lyrics.verbose>=2)	printf("Added lyric placeholder %lu: Start=%lu\tEnd=%lu\n",Lyrics.piececount,lastlyrictime,(unsigned long)time);
@@ -2233,7 +2232,7 @@ int SKAR_handler(struct TEPstruct *data)
 		}
 
 		assert_wrapper(Lyrics.curline != NULL);
-		lastlyrictime=(unsigned long)ConvertToRealTime(MIDIstruct.deltacounter,MIDIstruct.realtime);	//Get realtime for start of this lyric
+		lastlyrictime=(unsigned long)ConvertToRealTime(MIDIstruct.absdelta,0.0);	//Get the realtime by parsing the entire tempo list, in case this track's TS changes are causing problems
 
 //Handle whitespace at the beginning of any parsed lyric piece as a signal that the piece will not group with previous piece
 		if(isspace(buffer[0]))
@@ -2379,7 +2378,7 @@ int Lyric_handler(struct TEPstruct *data)
 			while(GetLyricPiece());	//Remove and store all completed MIDI lyrics from the front of the list
 			lastlyric=DuplicateString(data->buffer);	//Forget lastlyric string, allocate a new one
 			MIDIstruct.unfinalizedlyric=lastlyric;		//Store this to handle the special case of the last lyric being pitchless
-			lastlyrictime=(unsigned long)ConvertToRealTime(MIDIstruct.deltacounter,MIDIstruct.realtime);
+			lastlyrictime=(unsigned long)ConvertToRealTime(MIDIstruct.absdelta,0.0);	//Get the realtime by parsing the entire tempo list, in case this track's TS changes are causing problems
 			MIDIstruct.unfinalizedlyrictime=lastlyrictime;	//Store this to handle the special case of the last lyric being pitchless
 			return 1;
 		}
@@ -2400,7 +2399,7 @@ int Lyric_handler(struct TEPstruct *data)
 		lastlyric=DuplicateString(data->buffer);	//Forget lastlyric string, allocate a new one
 
 	//Configure variables to track this event
-		lastlyrictime=(unsigned long)ConvertToRealTime(MIDIstruct.deltacounter,MIDIstruct.realtime);
+		lastlyrictime=(unsigned long)ConvertToRealTime(MIDIstruct.absdelta,0.0);	//Get the realtime by parsing the entire tempo list, in case this track's TS changes are causing problems
 
 		MIDIstruct.unfinalizedlyric=lastlyric;					//Store this to handle the special case of the last lyric being pitchless
 		MIDIstruct.unfinalizedlyrictime=lastlyrictime;			//Store this to handle the special case of the last lyric being pitchless
@@ -2456,7 +2455,7 @@ int Lyric_handler(struct TEPstruct *data)
 				return 0;	//Ignore this note, it isn't valid
 			}
 
-		lastnotetime=(unsigned long)ConvertToRealTime(MIDIstruct.deltacounter,MIDIstruct.realtime);
+		lastnotetime=(unsigned long)ConvertToRealTime(MIDIstruct.absdelta,0.0);	//Get the realtime by parsing the entire tempo list, in case this track's TS changes are causing problems
 
 		lyric_note_num=data->parameters[0];	//Store Note number
 		if(lastlyric != NULL)
@@ -2477,7 +2476,7 @@ int Lyric_handler(struct TEPstruct *data)
 //Handle Note Off event
 	if((eventtype>>4) == 0x8)
 	{	//If note off in the vocal track
-		time=ConvertToRealTime(MIDIstruct.deltacounter,MIDIstruct.realtime);	//End offset of lyric piece in realtime
+		time=ConvertToRealTime(MIDIstruct.absdelta,0.0);	//Get the realtime by parsing the entire tempo list, in case this track's TS changes are causing problems
 
 	//Perform RB Midi specific Note off logic
 		if(Lyrics.in_format == MIDI_FORMAT)

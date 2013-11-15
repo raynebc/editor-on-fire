@@ -2832,6 +2832,11 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	(void) pack_fputs("</song>\n", fp);
 	(void) pack_fclose(fp);
 
+	//Generate showlights XML file for this track
+	(void) snprintf(buffer, 600, "%s_showlights.xml", arrangement_name);
+	(void) replace_filename(fn, fn, buffer, 1024);
+	eof_export_rocksmith_showlights(sp, fn, track);
+
 	//Cleanup
 	if(chordlist)
 	{	//If the chord list was built
@@ -4182,4 +4187,76 @@ void eof_destroy_shape_definitions(void)
 		eof_chord_shape[ctr].name = NULL;
 	}
 	num_eof_chord_shapes = 0;
+}
+
+void eof_export_rocksmith_showlights(EOF_SONG * sp, char * fn, unsigned long track)
+{
+	unsigned long ctr, ctr2, count, bitmask;
+	int note;
+	EOF_PRO_GUITAR_TRACK *tp;
+	PACKFILE * fp;
+	char buffer[50] = {0};
+
+	eof_log("eof_export_rocksmith_showlights() entered", 1);
+
+	if(!sp || !fn || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	{
+		eof_log("\tError saving:  Invalid parameters", 1);
+		return;	//Return failure
+	}
+
+	fp = pack_fopen(fn, "w");
+	if(!fp)
+	{
+		eof_log("\tError saving:  Cannot open file for writing", 1);
+		return;	//Return failure
+	}
+	(void) pack_fputs("<?xml version='1.0' encoding='UTF-8'?>\n", fp);
+
+	//Count how many entries will be exported
+	eof_track_sort_notes(sp, track);	//Ensure the track is sorted
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+	for(ctr = 0, count = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the track
+		//Find the next note to export
+		if((ctr + 1 < tp->notes) && (tp->note[ctr]->pos == tp->note[ctr + 1]->pos))
+		{	//If there is another note in the track, and it's in the same position
+			continue;	//Skip this one and use the higher difficulty note
+		}
+		count++;	//This is the highest difficulty note at this position
+	}
+	(void) snprintf(buffer, sizeof(buffer) - 1, "<showlights count=\"%lu\">\n", count);
+	(void) pack_fputs(buffer, fp);
+
+	for(ctr = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the track
+		//Find the next note to export
+		if((ctr + 1 < tp->notes) && (tp->note[ctr]->pos == tp->note[ctr + 1]->pos))
+		{	//If there is another note in the track, and it's in the same position
+			continue;	//Skip this one and use the higher difficulty note
+		}
+
+		//Determine what MIDI note to export
+		//Determine what string plays the lowest note in this single note/chord
+		for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+		{	//For each of the 6 usable strings
+			if(tp->note[ctr]->note & bitmask)
+			{	//If this is the first populated string
+				break;
+			}
+		}
+		note = eof_lookup_default_string_tuning_absolute(tp, track, ctr2);	//Look up the default tuning for this string
+		note += tp->tuning[ctr2];						//Account for the string's defined tuning
+		if(tp->note[ctr]->frets[ctr2] != 0xFF)
+		{	//If the fret value of this string is defined
+			note += (tp->note[ctr]->frets[ctr2] & 0x7F);	//Account for what fret is being held on this string (mask out the string mute flag)
+		}
+
+		//Export the entry
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <showlight time=\"%.3f\" note=\"%d\"/>\n", (double)tp->note[ctr]->pos / 1000.0, note);
+		(void) pack_fputs(buffer, fp);
+	}//For each note in the track
+
+	(void) pack_fputs("</showlights>\n", fp);
+	(void) pack_fclose(fp);
 }

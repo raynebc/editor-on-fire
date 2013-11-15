@@ -9,6 +9,7 @@
 #include "midi_data_import.h"
 #include "mix.h"
 #include "rs.h"			//For eof_pro_guitar_track_find_effective_fret_hand_position_definition()
+#include "silence.h"	//For save_wav()
 #include "tuning.h"
 #include "undo.h"
 #include "utility.h"
@@ -97,7 +98,7 @@ EOF_TRACK_ENTRY eof_power_gig_tracks[EOF_POWER_GIG_TRACKS_MAX] =
 	{0, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "vocals_1_hard", "", 0, 5, 0},
 	{0, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "vocals_1_medium", "", 0, 5, 0},
 	{0, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "vocals_1_easy", "", 0, 5, 0},
-	{0, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "vocals_1_beginner", "", 0, 5, 0},
+	{0, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "vocals_1_beginner", "", 0, 5, 0}
 };	//These entries describe tracks in the Power Gig MIDI file format
 	//The definition of a difficulty number for these legacy and vocal track definitions will allow the MIDI import
 	// logic to identify that it is a Power Gig MIDI instead of a FoF/RB MIDI
@@ -6580,5 +6581,50 @@ void eof_track_remove_highlighting(EOF_SONG *sp, unsigned long track)
 		flags = eof_get_note_flags(sp, track, ctr);
 		flags &= ~EOF_NOTE_FLAG_HIGHLIGHT;
 		eof_set_note_flags(sp, track, ctr, flags);	//Clear the note's hightlight flag
+	}
+}
+
+SAMPLE *eof_export_time_range_sample = NULL;
+unsigned long eof_export_time_range_ctr;
+
+static void eof_export_time_range_callback(void * buffer, int nsamples, int stereo)
+{
+	int i;
+	int iter = stereo ? 2 : 1;
+	unsigned long index;
+	unsigned short *in_buffer = (unsigned short *)buffer;
+	unsigned short *out_buffer = (unsigned short *)eof_export_time_range_sample->data;
+
+	for(i = 0; i < nsamples / iter; i++)
+	{	//For each decoded sample
+		index = i * iter;
+		out_buffer[index] = in_buffer[index];	//Copy amplitude to output buffer
+		eof_export_time_range_ctr++;
+		if(stereo)
+		{
+			out_buffer[index + 1] = in_buffer[index + 1];	//Copy the other channel's amplitude to output buffer
+			eof_export_time_range_ctr++;
+		}
+	}
+}
+
+void eof_export_time_range(ALOGG_OGG * ogg, double start_time, double end_time, const char * fn)
+{
+	unsigned long num_samples;
+
+	if(!ogg || !fn)
+		return;	//Invalid parameters
+
+	num_samples = (end_time - start_time) * alogg_get_wave_freq_ogg(ogg);
+	eof_export_time_range_sample = create_sample(alogg_get_wave_bits_ogg(ogg), alogg_get_wave_is_stereo_ogg(ogg), alogg_get_wave_freq_ogg(ogg), num_samples);
+
+	if(eof_export_time_range_sample)
+	{	//If memory for the decoded audio was allocated
+		if(!alogg_process_ogg(ogg, eof_export_time_range_callback, num_samples, start_time, end_time))
+		{	//Successfully decoded audio file
+			save_wav(fn, eof_export_time_range_sample);	//Export it to WAV
+		}
+		destroy_sample(eof_export_time_range_sample);
+		eof_export_time_range_sample = NULL;
 	}
 }

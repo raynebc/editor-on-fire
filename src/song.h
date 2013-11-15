@@ -2,6 +2,7 @@
 #define EOF_SONG_H
 
 #include <allegro.h>
+#include "alogg/include/alogg.h"
 
 #define EOF_OLD_MAX_NOTES     65536
 #define EOF_MAX_NOTES         32768
@@ -507,7 +508,6 @@ typedef struct
 
 } EOF_SONG;
 
-
 EOF_SONG * eof_create_song(void);	//Allocates, initializes and returns an EOF_SONG structure
 void eof_destroy_song(EOF_SONG * sp);	//De-allocates the memory used by the EOF_SONG structure
 int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp);	//Loads data from the specified PACKFILE pointer into the given EOF_SONG structure (called by eof_load_song()).  Returns 0 on error
@@ -818,5 +818,9 @@ void eof_hightlight_all_notes_above_fret_number(EOF_SONG *sp, unsigned long trac
 	//Sets the highlight status on all notes in the specified track that use any fret higher than the specified number
 void eof_track_remove_highlighting(EOF_SONG *sp, unsigned long track);
 	//Removes the highlight status on all notes in the specified track
+
+extern SAMPLE *eof_export_time_range_sample;
+void eof_export_time_range(ALOGG_OGG * ogg, double start_time, double end_time, const char * fn);
+	//Exports a time range of the specified OGG file to a file of the specified name
 
 #endif
