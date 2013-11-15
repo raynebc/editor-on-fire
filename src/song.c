@@ -6604,7 +6604,7 @@ static void eof_export_time_range_callback(void * buffer, int nsamples, int ster
 			out_buffer[eof_export_time_range_ctr + index + 1] = in_buffer[index + 1];	//Copy the other channel's amplitude to output buffer
 		}
 	}
-	eof_export_time_range_ctr += nsamples * iter;
+	eof_export_time_range_ctr += nsamples;
 }
 
 void eof_export_time_range(ALOGG_OGG * ogg, double start_time, double end_time, const char * fn)
