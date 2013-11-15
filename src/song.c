@@ -6598,14 +6598,13 @@ static void eof_export_time_range_callback(void * buffer, int nsamples, int ster
 	for(i = 0; i < nsamples / iter; i++)
 	{	//For each decoded sample
 		index = i * iter;
-		out_buffer[index] = in_buffer[index];	//Copy amplitude to output buffer
-		eof_export_time_range_ctr++;
+		out_buffer[eof_export_time_range_ctr + index] = in_buffer[index];	//Copy amplitude to output buffer
 		if(stereo)
 		{
-			out_buffer[index + 1] = in_buffer[index + 1];	//Copy the other channel's amplitude to output buffer
-			eof_export_time_range_ctr++;
+			out_buffer[eof_export_time_range_ctr + index + 1] = in_buffer[index + 1];	//Copy the other channel's amplitude to output buffer
 		}
 	}
+	eof_export_time_range_ctr += nsamples * iter;
 }
 
 void eof_export_time_range(ALOGG_OGG * ogg, double start_time, double end_time, const char * fn)
@@ -6615,12 +6614,13 @@ void eof_export_time_range(ALOGG_OGG * ogg, double start_time, double end_time, 
 	if(!ogg || !fn)
 		return;	//Invalid parameters
 
-	num_samples = (end_time - start_time) * alogg_get_wave_freq_ogg(ogg);
-	eof_export_time_range_sample = create_sample(alogg_get_wave_bits_ogg(ogg), alogg_get_wave_is_stereo_ogg(ogg), alogg_get_wave_freq_ogg(ogg), num_samples);
+	num_samples = (end_time - start_time) * alogg_get_wave_freq_ogg(ogg) * (alogg_get_wave_is_stereo_ogg(ogg) ? 2 : 1);
+	eof_export_time_range_sample = create_sample(alogg_get_wave_bits_ogg(ogg), alogg_get_wave_is_stereo_ogg(ogg), alogg_get_wave_freq_ogg(ogg), num_samples / (alogg_get_wave_is_stereo_ogg(ogg) ? 2 : 1));
+	eof_export_time_range_ctr = 0;
 
 	if(eof_export_time_range_sample)
 	{	//If memory for the decoded audio was allocated
-		if(!alogg_process_ogg(ogg, eof_export_time_range_callback, num_samples, start_time, end_time))
+		if(alogg_process_ogg(ogg, eof_export_time_range_callback, num_samples, start_time, end_time))
 		{	//Successfully decoded audio file
 			save_wav(fn, eof_export_time_range_sample);	//Export it to WAV
 		}

@@ -409,7 +409,13 @@ int alogg_process_ogg(ALOGG_OGG * ogg, void(*callback)(void * buf, int nsamples,
 	}
 	else
 	{
-		num_samples_left = (end_time - start_time) * alogg_get_wave_freq_ogg(ogg);	//The number of samples to pass to the callback function
+		num_samples_left = ((end_time - start_time) * alogg_get_wave_freq_ogg(ogg)) * (ogg->stereo ? 2 : 1);	//The number of samples to pass to the callback function
+		
+		/* ensure that the right channel of the last sample is included */
+		if(ogg->stereo && num_samples_left % 2)
+		{
+			num_samples_left++;
+		}
 	}
 	bits = alogg_get_wave_bits_ogg(ogg);	//The number of bits per sample (expected to be 16)
 
@@ -446,7 +452,7 @@ int alogg_process_ogg(ALOGG_OGG * ogg, void(*callback)(void * buf, int nsamples,
 				ret = 1;
 				break; // playback finished so get out of loop
 			}
-			num_samples_decoded += size_done / bits;	//Keep track of how many samples have been decoded since the last callback
+			num_samples_decoded += size_done / 2;	//Keep track of how many samples have been decoded since the last callback
 			buffer_p += size_done;
 		}
 		if(all || (num_samples_decoded < num_samples_left))
@@ -458,6 +464,7 @@ int alogg_process_ogg(ALOGG_OGG * ogg, void(*callback)(void * buf, int nsamples,
 		{	//If the samples passed to the callback will be limited to the given time range
 		   callback(buffer, num_samples_left, ogg->stereo);
 		   all_done = 3;
+		   ret = 1;
 		}
 	}
     free(buffer);
