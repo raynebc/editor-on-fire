@@ -524,7 +524,7 @@ int eof_load_ogg(char * filename, char silence_failover);
 	//If silence_failover is nonzero, if the user cancels loading audio, "second_of_silence.ogg" is loaded instead, and nonzero is returned.
 int eof_load_complete_song(char * filename);
 int eof_destroy_ogg(void);	//Frees chart audio
-int eof_save_ogg(char * fn);
+int eof_save_ogg(char * fn);	//Writes the memory buffered chart audio OGG (eof_music_data) to the specified file
 void eof_render(void);
 void eof_render_lyric_window(void);
 void eof_render_3d_window(void);

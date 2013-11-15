@@ -174,6 +174,7 @@ MENU eof_song_menu[] =
 	{"&Rocksmith", NULL, eof_song_rocksmith_menu, 0, NULL},
 	{"Second &Piano roll", NULL, eof_song_piano_roll_menu, 0, NULL},
 	{"Manage raw MIDI tracks", eof_menu_song_raw_MIDI_tracks, NULL, 0, NULL},
+	{"Create pre&View audio", eof_menu_song_export_song_preview, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"T&est in FOF\tF12", eof_menu_song_test_fof, NULL, EOF_LINUX_DISABLE, NULL},
 	{"Test i&N Phase Shift", eof_menu_song_test_ps, NULL, EOF_LINUX_DISABLE, NULL},
@@ -3676,4 +3677,67 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 	}
 
 	return 0;	//Return completion
+}
+
+DIALOG eof_menu_song_export_song_preview_dialog[] =
+{
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
+	{ d_agup_window_proc,    0,   0,   200, 190, 0,   0,   0,    0,      0,   0,   "Set preview timings", NULL, NULL },
+	{ d_agup_text_proc,      12,  56,  60,  12,  0,   0,   0,    0,      0,   0,   "Start position (ms)", NULL, NULL },
+	{ eof_verified_edit_proc,12,  72,  50,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789", NULL },
+	{ d_agup_text_proc,      12,  100, 60,  12,  0,   0,   0,    0,      0,   0,   "Stop position (ms)",  NULL, NULL },
+	{ eof_verified_edit_proc,12,  120, 50,  20,  0,   0,   0,    0,      7,   0,   eof_etext3,     "0123456789", NULL },
+	{ d_agup_button_proc,    12,  150, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_button_proc,    110, 150, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                  NULL, NULL }
+};
+
+int eof_menu_song_export_song_preview(void)
+{
+	unsigned long start, stop;
+	char targetpath[1024] = {0};
+	char syscommand[1024] = {0};
+
+	//Initialize the start and end positions as appropriate
+	if(eof_seek_selection_start != eof_seek_selection_end)
+	{	//If there is a seek selection
+		start = eof_seek_selection_start;
+		stop = eof_seek_selection_end;
+	}
+	else
+	{	//Default the start time to the current seek position and the stop time 30 seconds later
+		start = eof_music_pos - eof_av_delay;
+		stop = start + 30000; //30,000 ms later
+	}
+	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", start);	//Initialize the start time string
+	(void) snprintf(eof_etext3, sizeof(eof_etext3) - 1, "%lu", stop);	//Initialize the end time string
+
+	eof_color_dialog(eof_menu_song_export_song_preview_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_menu_song_export_song_preview_dialog);
+	if(eof_popup_dialog(eof_menu_song_export_song_preview_dialog, 1) == 5)
+	{	//User clicked OK
+		start = atol(eof_etext2);
+		stop = atol(eof_etext3);
+
+		if(eof_ogg_settings())
+		{	//If the user selected an OGG encoding quality
+			(void) replace_filename(targetpath, eof_song_path, "preview.wav", 1024);	//Build the target path for the preview WAV file
+			(void) delete_file(targetpath);	//Delete the preview WAV file if it already exists
+			eof_export_time_range(eof_music_track, start / 1000.0, stop / 1000.0, targetpath);	//Build the preview WAV file
+			if(exists(targetpath))
+			{	//If the preview WAV file was created, convert it to OGG
+				(void) replace_filename(targetpath, eof_song_path, "preview.ogg", 1024);	//Build the target for the preview OGG file
+				(void) delete_file(targetpath);	//Delete the preview OGG file if it already exists
+				(void) replace_filename(targetpath, eof_song_path, "", 1024);	//Build the path for the preview files' parent folder
+				#ifdef ALLEGRO_WINDOWS
+					(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc2 --quiet -q %s --resample 44100 -s 0 \"%spreview.wav\" -o \"%spreview.ogg\"", eof_ogg_quality[(int)eof_ogg_setting], targetpath, targetpath);
+				#else
+					(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc --quiet -q %s --resample 44100 -s 0 \"%spreview.wav\" -o \"%spreview.ogg\"", eof_ogg_quality[(int)eof_ogg_setting], targetpath, targetpath);
+				#endif
+				(void) eof_system(syscommand);
+			}
+		}
+	}
+
+	return 1;
 }

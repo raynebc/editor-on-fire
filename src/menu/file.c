@@ -2057,9 +2057,6 @@ int eof_mp3_to_ogg(char *file, char *directory)
 		}
 		else
 		{
-			eof_cursor_visible = 1;
-			eof_pen_visible = 1;
-			eof_show_mouse(NULL);
 			return 2;	//Return user canceled conversion
 		}
 	}

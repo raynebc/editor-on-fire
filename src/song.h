@@ -822,5 +822,6 @@ void eof_track_remove_highlighting(EOF_SONG *sp, unsigned long track);
 extern SAMPLE *eof_export_time_range_sample;
 void eof_export_time_range(ALOGG_OGG * ogg, double start_time, double end_time, const char * fn);
 	//Exports a time range of the specified OGG file to a file of the specified name
+	//start_time and end_time are both in seconds and not milliseconds
 
 #endif
