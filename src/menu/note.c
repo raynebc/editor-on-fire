@@ -3505,6 +3505,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	long previous_note = 0, next_note = 0;
 	int retval;
 	int note_selection_updated;
+	static char dont_ask = 0;	//Is set to nonzero if the user opts to suppress the prompt regarding modifying multiple selected notes
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run unless the pro guitar track is active
@@ -3736,20 +3737,30 @@ int eof_menu_note_edit_pro_guitar_note(void)
 
 			if(eof_count_selected_notes(NULL, 0) > 1)
 			{	//If multiple notes are selected, warn the user
+				int retval;
+
 				eof_clear_input();
 				key[KEY_O] = 0;
 				key[KEY_C] = 0;
-				if(alert(NULL, "Warning:  This information will be applied to all selected notes.", NULL, "&OK", "&Cancel", 'y', 'n') == 2)
-				{	//If user opts to cancel the operation
-					if(note_selection_updated)
-					{	//If the only note modified was the seek hover note
-						eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
-						eof_selection.current = EOF_MAX_NOTES - 1;
+				if(!dont_ask)
+				{	//If the user didn't suppress this prompt
+					retval = alert3(NULL, "Warning:  This information will be applied to all selected notes.", NULL, "&OK", "&Cancel", "OK, don't ask again", 'y', 'n', 0);
+					if(retval == 2)
+					{	//If user opts to cancel the operation
+						if(note_selection_updated)
+						{	//If the only note modified was the seek hover note
+							eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+							eof_selection.current = EOF_MAX_NOTES - 1;
+						}
+						eof_show_mouse(NULL);
+						eof_cursor_visible = 1;
+						eof_pen_visible = 1;
+						return 1;
 					}
-					eof_show_mouse(NULL);
-					eof_cursor_visible = 1;
-					eof_pen_visible = 1;
-					return 1;
+					if(retval == 3)
+					{	//If this user is suppressing this prompt
+						dont_ask = 1;
+					}
 				}
 			}
 
@@ -4285,6 +4296,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 	unsigned long flags;			//Used to build the updated flag bitmask
 	int retval;
 	int note_selection_updated;
+	static char dont_ask = 0;	//Is set to nonzero if the user opts to suppress the prompt regarding modifying multiple selected notes
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 0;	//Do not allow this function to run unless the pro guitar track is active
@@ -4440,17 +4452,25 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 					eof_clear_input();
 					key[KEY_O] = 0;
 					key[KEY_C] = 0;
-					if(alert(NULL, "Warning:  This information will be applied to all selected notes.", NULL, "&OK", "&Cancel", 0, 0) == 2)
-					{	//If user opts to cancel the operation
-						if(note_selection_updated)
-						{	//If the only note modified was the seek hover note
-							eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
-							eof_selection.current = EOF_MAX_NOTES - 1;
+					if(!dont_ask)
+					{	//If the user didn't suppress this prompt
+						retval = alert3(NULL, "Warning:  This information will be applied to all selected notes.", NULL, "&OK", "&Cancel", "OK, don't ask again", 'y', 'n', 0);
+						if(retval == 2)
+						{	//If user opts to cancel the operation
+							if(note_selection_updated)
+							{	//If the only note modified was the seek hover note
+								eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+								eof_selection.current = EOF_MAX_NOTES - 1;
+							}
+							eof_show_mouse(NULL);
+							eof_cursor_visible = 1;
+							eof_pen_visible = 1;
+							return 0;	//Return Cancel selected
 						}
-						eof_show_mouse(NULL);
-						eof_cursor_visible = 1;
-						eof_pen_visible = 1;
-						return 0;	//Return Cancel selected
+						if(retval == 3)
+						{	//If this user is suppressing this prompt
+							dont_ask = 1;
+						}
 					}
 				}
 				for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
