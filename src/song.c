@@ -6620,7 +6620,7 @@ void eof_export_time_range(ALOGG_OGG * ogg, double start_time, double end_time, 
 
 	if(eof_export_time_range_sample)
 	{	//If memory for the decoded audio was allocated
-		if(alogg_process_ogg(ogg, eof_export_time_range_callback, num_samples, start_time, end_time))
+		if(alogg_process_ogg(ogg, eof_export_time_range_callback, 1024, start_time, end_time))
 		{	//Successfully decoded audio file
 			save_wav(fn, eof_export_time_range_sample);	//Export it to WAV
 		}
