@@ -1740,17 +1740,27 @@ int eof_menu_edit_playback_speed_helper_faster(void)
 {
 	int i, amount;
 
+	if(eof_music_catalog_playback)
+		return 1;	//Don't allow speed changes during catalog playback
+
 	for(i = 0; i < 5; i++)
 	{
 		eof_edit_playback_menu[i + 1].flags = 0;
 	}
-	if(eof_input_mode == EOF_INPUT_FEEDBACK)
-	{	//In Feedback input mode, cycle playback speed in intervals of 10%
-		amount = 100;
+	if(KEY_EITHER_CTRL)
+	{	//If CTRL is held, change the playback speed by 1%
+		amount = 10;
 	}
 	else
 	{
-		amount = 250;	//Otherwise do so in intervals of 25%
+		if((eof_input_mode == EOF_INPUT_FEEDBACK) || (!eof_music_paused))
+		{	//In Feedback input mode, or the chart is playing back, cycle playback speed in intervals of 10%
+			amount = 100;
+		}
+		else
+		{
+			amount = 250;	//Otherwise do so in intervals of 25%
+		}
 	}
 	eof_playback_speed = (eof_playback_speed /amount)*amount;	//Account for custom playback rate (force to round down to a multiple of the change interval)
 	eof_playback_speed += amount;
@@ -1780,17 +1790,27 @@ int eof_menu_edit_playback_speed_helper_slower(void)
 {
 	int i, amount;
 
+	if(eof_music_catalog_playback)
+		return 1;	//Don't allow speed changes during catalog playback
+
 	for(i = 0; i < 5; i++)
 	{
 		eof_edit_playback_menu[i + 1].flags = 0;
 	}
-	if(eof_input_mode == EOF_INPUT_FEEDBACK)
-	{	//In Feedback input mode, cycle playback speed in intervals of 10%
-		amount = 100;
+	if(KEY_EITHER_CTRL)
+	{	//If CTRL is held, change the playback speed by 1%
+		amount = 10;
 	}
 	else
 	{
-		amount = 250;	//Otherwise do so in intervals of 25%
+		if((eof_input_mode == EOF_INPUT_FEEDBACK) || (!eof_music_paused))
+		{	//In Feedback input mode, or the chart is playing back, cycle playback speed in intervals of 10%
+			amount = 100;
+		}
+		else
+		{
+			amount = 250;	//Otherwise do so in intervals of 25%
+		}
 	}
 	eof_playback_speed = (eof_playback_speed /amount)*amount;	//Account for custom playback rate (force to round down to a multiple of the change interval)
 	eof_playback_speed -= amount;

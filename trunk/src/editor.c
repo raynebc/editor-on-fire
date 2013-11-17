@@ -2952,6 +2952,46 @@ if(key[KEY_PAUSE])
 			key[KEY_P] = 0;
 		}
 	}//If the chart is paused and no catalog entries are playing
+	else if(!eof_music_catalog_playback)
+	{	//If the chart is playing
+	/* lower playback speed (;) */
+		if(key[KEY_SEMICOLON])
+		{
+			if(eof_playback_speed != 100)
+			{	//If playback isn't already at 10%
+				char lctrl, rctrl;
+
+				(void) eof_menu_edit_playback_speed_helper_slower();
+				lctrl = key[KEY_LCONTROL];	//Store the CTRL key states
+				rctrl = key[KEY_RCONTROL];
+				key[KEY_LCONTROL] = key[KEY_RCONTROL] = 0;	//Clear both CTRL keys so they are not picked up by eof_music_play() to force half-speed playback
+				eof_music_play();	//Stop playback
+				eof_music_play();	//Resume playback at new speed
+				key[KEY_LCONTROL] = lctrl;	//Restore the CTRL key states
+				key[KEY_RCONTROL] = rctrl;
+			}
+			key[KEY_SEMICOLON] = 0;
+		}
+
+	/* increase playback speed (') */
+		if(key[KEY_QUOTE])
+		{
+			if(eof_playback_speed != 1000)
+			{	//If playback isn't already at 100%
+				char lctrl, rctrl;	//Used to store the CTRL key states
+
+				(void) eof_menu_edit_playback_speed_helper_faster();
+				lctrl = key[KEY_LCONTROL];		//Store the CTRL key states
+				rctrl = key[KEY_RCONTROL];
+				key[KEY_LCONTROL] = key[KEY_RCONTROL] = 0;	//Clear both CTRL keys so they are not picked up by eof_music_play() to force half-speed playback
+				eof_music_play();	//Stop playback
+				eof_music_play();	//Resume playback at new speed
+				key[KEY_LCONTROL] = lctrl;	//Restore the CTRL key states
+				key[KEY_RCONTROL] = rctrl;
+			}
+			key[KEY_QUOTE] = 0;
+		}
+	}
 }
 
 void eof_editor_drum_logic(void)

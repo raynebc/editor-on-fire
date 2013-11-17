@@ -381,7 +381,8 @@ void alogg_stop_ogg(ALOGG_OGG *ogg) {
 
 
 /* process the Ogg from start_time to end_time, passing the decoded data to the supplied callback
-   if the start and end time are the same value, the entire OGG is processed from the specified start time until the end of the file */
+   if the start and end time are the same value, the entire OGG is processed from the specified start time until the end of the file
+   buffer_samples is the internally allocated buffer size to use */
 int alogg_process_ogg(ALOGG_OGG * ogg, void(*callback)(void * buf, int nsamples, int stereo), int buffer_samples, double start_time, double end_time)
 {
 	int size_done, i, all_done = 0;

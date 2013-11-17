@@ -2093,6 +2093,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}
 
 	//Write some unknown information
+	(void) pack_fputs("  <newLinkedDiffs count=\"0\"/>\n", fp);
 	(void) pack_fputs("  <linkedDiffs count=\"0\"/>\n", fp);
 	(void) pack_fputs("  <phraseProperties count=\"0\"/>\n", fp);
 
@@ -2383,6 +2384,14 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	{	//Otherwise write an empty events tag
 		(void) pack_fputs("  <events count=\"0\"/>\n", fp);
 	}
+
+	//Write some unknown information
+	(void) pack_fputs("  <transcriptionTrack difficulty=\"-1\">\n", fp);
+	(void) pack_fputs("      <notes count=\"0\"/>\n", fp);
+	(void) pack_fputs("      <chords count=\"0\"/>\n", fp);
+	(void) pack_fputs("      <anchors count=\"0\"/>\n", fp);
+	(void) pack_fputs("      <handShapes count=\"0\"/>\n", fp);
+	(void) pack_fputs("  </transcriptionTrack>\n", fp);
 
 	//Write note difficulties
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <levels count=\"%u\">\n", numdifficulties);
@@ -2833,7 +2842,15 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	(void) pack_fclose(fp);
 
 	//Generate showlights XML file for this track
-	(void) snprintf(buffer, 600, "%s_showlights.xml", arrangement_name);
+	if((sp->track[track]->flags & EOF_TRACK_FLAG_ALT_NAME) && (sp->track[track]->altname[0] != '\0'))
+	{	//If the track has an alternate name
+		arrangement_name = sp->track[track]->altname;
+	}
+	else
+	{	//Otherwise use the track's native name
+		arrangement_name = sp->track[track]->name;
+	}
+	(void) snprintf(buffer, 600, "%s_RS2_showlights.xml", arrangement_name);
 	(void) replace_filename(fn, fn, buffer, 1024);
 	eof_export_rocksmith_showlights(sp, fn, track);
 

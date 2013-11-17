@@ -77,7 +77,11 @@ Playback and Seek controls:
 
     ;/' (Semicolon/Apostrophe):
 
-        Adjust audio playback rate.
+        Adjust audio playback rate in increments of 25%
+        (or 10% if Feedback input method is active) if
+        the chart is NOT playing, or 10% if the chart is
+        playing.  Hold Ctrl while using these keys to
+        change the playback rate in increments of 1%.
 
 
 Note and Beat Editing:
