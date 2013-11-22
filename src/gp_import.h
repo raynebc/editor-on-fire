@@ -45,6 +45,7 @@
 	struct eof_guitar_pro_struct
 	{
 		unsigned long numtracks;			//The number of tracks loaded from the guitar pro file
+		unsigned fileversion;				//The version of the GP format being imported
 		char **names;						//An array of strings, representing the native name of each loaded track
 		EOF_PRO_GUITAR_TRACK **track;		//An array of pro guitar track pointers, representing the imported note data of each loaded track
 		EOF_TEXT_EVENT * text_event[EOF_MAX_TEXT_EVENTS];	//An array of pro guitar text event structures, representing the section markers imported for each loaded track
