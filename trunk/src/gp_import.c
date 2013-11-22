@@ -1948,6 +1948,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(sync_points);
 		return NULL;
 	}
+	gp->fileversion = fileversion;	//Store this so that the unwrapping function can handle differing formatting for alternate endings
 #ifdef GP_IMPORT_DEBUG
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tParsing version %u guitar pro file", fileversion);
 	eof_log(eof_log_string, 1);
@@ -3671,6 +3672,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						else if(np[ctr2] && tie_note)
 						{	//Otherwise if this was a tie note
 							np[ctr2]->flags |= flags;	//Apply this tie note's flags to the previous note
+							if(bendstrength > np[ctr2]->bendstrength)
+							{	//If this tie note defined a stronger bend than the original note
+								np[ctr2]->bendstrength = bendstrength;	//Apply this tie note's bend strength
+							}
 						}
 					}//If this is the voice that is being imported
 					measure_position += note_duration;	//Update the measure position
@@ -3854,6 +3859,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 	char unwrapevents = 0;		//Will track whether text events are to be unwrapped
 	unsigned int working_symbols[19];	//Will store a copy of gp->symbols[] so that the information ingp isn't destroyed
 	unsigned int curr_repeat = 0;
+	char in_alt_ending;
 
 	eof_log("eof_unwrap_gp_track() entered", 1);
 
@@ -3968,17 +3974,31 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 			}
 		}
 
-		//Ensure the active project has enough beats to hold the next unwrapped measure
-		if(eof_song->beats < beatctr + gp->measure[currentmeasure].num + 2)
-		{
-#ifdef GP_IMPORT_DEBUG
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUnwrapping measure #%lu requires %lu beats, but project only has %lu beats.  Appending %lu beats to the project to allow for this measure and two beats of padding.", currentmeasure + 1, beatctr + gp->measure[currentmeasure].num, eof_song->beats, beatctr + gp->measure[currentmeasure].num + 2 - eof_song->beats);
-			eof_log(eof_log_string, 1);
-#endif
+		in_alt_ending = 0;	//Reset this status
+		if((gp->fileversion < 400) || (gp->fileversion >= 500))
+		{	//Versions 3.x and older and 5.x of the GP format defined alternate endings as a bitmask
+			if(gp->measure[currentmeasure].alt_endings & (1 << curr_repeat))
+			{	//If the alternate ending value matches the current repeat count
+				in_alt_ending = 1;
+			}
 		}
-
-		if(!gp->measure[currentmeasure].alt_endings || (gp->measure[currentmeasure].alt_endings & (1 << curr_repeat)))
+		else
+		{	//Version 4.x stored the actual number
+			if(gp->measure[currentmeasure].alt_endings == curr_repeat + 1)
+			{
+				in_alt_ending = 1;
+			}
+		}
+		if(!gp->measure[currentmeasure].alt_endings || in_alt_ending)
 		{	//If this measure isn't part of an alternate ending, or if it is an alternate ending and the repeat count applies to it
+			//Ensure the active project has enough beats to hold the next unwrapped measure
+			if(eof_song->beats < beatctr + gp->measure[currentmeasure].num + 2)
+			{
+#ifdef GP_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUnwrapping measure #%lu requires %lu beats, but project only has %lu beats.  Appending %lu beats to the project to allow for this measure and two beats of padding.", currentmeasure + 1, beatctr + gp->measure[currentmeasure].num, eof_song->beats, beatctr + gp->measure[currentmeasure].num + 2 - eof_song->beats);
+				eof_log(eof_log_string, 1);
+#endif
+			}
 			while(eof_song->beats < beatctr + gp->measure[currentmeasure].num + 2)
 			{	//Until the loaded project has enough beats to contain the unwrapped measure, and two extra to allow room for processing beat lengths later
 				double beat_length;
@@ -4233,34 +4253,16 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 			}//This measure is not an end of repeat with any repeats left
 		}//If this measure isn't part of an alternate ending, or if it is an alternate ending and the repeat count applies to it
 		else
-		{	//This measure is not the current alternate ending, seek until the correct alternate ending is found
+		{	//This measure is the beginning of a different alternate ending, seek until the next relevant measure is reached
 #ifdef GP_IMPORT_DEBUG
-			eof_log("\t\tSearching for the next alternate ending", 1);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tMeasure #%lu is the start of another alternate ending (mask = %d), skipping to the end of the alternate ending", currentmeasure + 1, gp->measure[currentmeasure].alt_endings);
+			eof_log(eof_log_string, 1);
 #endif
-			currentmeasure = last_start_of_repeat;	//Rewind to the last start of repeat, in case the alternate endings are defined out of numerical order
-
-			while(currentmeasure < gp->measures)
-			{	//For the rest of the measures
-				if(gp->measure[currentmeasure].alt_endings && (gp->measure[currentmeasure].alt_endings & (1 << curr_repeat)))
-				{	//If this is the correct alternate ending
-					break;
-				}
+			while((currentmeasure < gp->measures) && !gp->measure[currentmeasure].num_of_repeats)
+			{	//Until an end of repeat is reached
 				currentmeasure++;	//Iterate to the next measure
 			}
-			if(currentmeasure >= gp->measures)
-			{	//If the alternate ending wasn't defined
-#ifdef GP_IMPORT_DEBUG
-				eof_log("\t\tError:  Alternate ending not defined", 1);
-#endif
-				free(measuremap);
-				free(tp);
-				free(working_num_of_repeats);
-				for(ctr = 0; ctr < newevents; ctr++)
-				{	//For each unwrapped text event
-					free(newevent[ctr]);	//Free it
-				}
-				return 7;
-			}
+			currentmeasure++;	//Go beyond the end of repeat to the next measure
 		}//This measure is not the current alternate ending, seek until the correct alternate ending is found
 	}//Continue until all repeats of all measures have been processed
 

@@ -653,8 +653,8 @@ int eof_track_transpose_tuning(EOF_PRO_GUITAR_TRACK* tp, char *tuningdiff)
 							val = -tuningdiff[ctr3];	//Get the absolute value of the tuning change
 							if(!ctr2)
 							{	//First pass of the note, just validate the tranpsose
-								if(tp->note[ctr]->frets[ctr3] + val > tp->numfrets)
-								{	//If the note can't be raised an equivalent number of frets
+								if((tp->note[ctr]->frets[ctr3] & 0x7F) + val > tp->numfrets)
+								{	//If the note's fret value (masking out the muting flag) can't be raised an equivalent number of frets
 									transpose = 0;	//Track that the note will be highlighted instead
 								}
 							}
@@ -682,8 +682,8 @@ int eof_track_transpose_tuning(EOF_PRO_GUITAR_TRACK* tp, char *tuningdiff)
 							val = tuningdiff[ctr3];
 							if(!ctr2)
 							{	//First pass of the note, just validate the tranpsose
-								if(tp->note[ctr]->frets[ctr3] < val)
-								{	//If the note can't be lowered an equivalent number of frets
+								if((tp->note[ctr]->frets[ctr3] & 0x7f) < val)
+								{	//If the note's fret value (masking out the muting flag) can't be lowered an equivalent number of frets
 									transpose = 0;	//Track that the note will be highlighted instead
 								}
 							}

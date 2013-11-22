@@ -216,7 +216,7 @@ BAR CHUNK, for each bar (measure):
 				[4 bytes]:	Color to render the section name with (RGB intensities, with the most significant byte set padded with a value of 0)
 			}
 			!NUMBER OF ALTERNATE ENDING (if the bitmask declares this)
-			[1 byte]:	The number of the alternate ending (ignored if the bitmask didn't declare this)
+			[1 byte]:	Bitmask defining the the alternate endings (1 through 8) this measure contains (ignored if the bitmask didn't declare this)
 		}
 
 		!KEY SIGNATURE CHANGE (if the bitmask declares this)
