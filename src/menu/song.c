@@ -3556,7 +3556,7 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 							{	//If this note is a chord, and its fret range is too large to fit into Rocksmith's chord box
 								if(!width_warning && report)
 								{	//If the user wasn't warned about this yet, and this validation function was manually invoked through the menu
-									if(alert("Warning:  At least one chord is too wide to fit into a chord box.", "It may be a good idea to change its fretting.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+									if(alert("Warning (RS1):  At least one chord is too wide to fit into a chord box.", "It may be a good idea to change its fretting.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 									{	//If the user does not opt to continue looking for errors
 										eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
 										(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
@@ -3568,7 +3568,19 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 							}
 							if(report)
 							{	//If the calling function wanted to prompt the user about each issue found
-								if(alert("Warning:  At least one note is outside of the highlighted range of the fretboard.", "Correct this by setting the fret hand position at or before this note,", "or by deleting/regenerating the fret hand positions.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
+								char *error;
+								char error1[] = "Warning:  At least one note is lower than the highlighted range of the fretboard.";
+								char error2[] = "Warning (RS1):  At least one note is higher than the highlighted range of the fretboard.";
+
+								if(lowest < position)
+								{	//If there is a fretted note lower than the fret hand position
+									error = error1;	//Select the appropriate error message
+								}
+								else
+								{	//There is a fretted note more than 3 frets higher than the fret hand position
+									error = error2;	//Select the appropriate error message
+								}
+								if(alert(error, "Correct this by setting the fret hand position at or before this note,", "or by deleting/regenerating the fret hand positions.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
 								{	//If the user does not opt to continue looking for errors
 									eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
 									(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track

@@ -13,6 +13,28 @@ typedef struct
 	char *str;
 } EOF_RS_CONTROL;	//A structure that will be used to build an array of popup message controls, clear message controls and tone change controls, so they can be chronologically sorted
 
+typedef struct
+{
+	unsigned long length;
+	char bend;					//Nonzero if this note is a bend
+	unsigned long bendstrength;	//The number of half steps this note bends
+	long slideto;				//If not negative, is the fret position the slide ends at
+	char hammeron;					//Nonzero if this note is a hammer on
+	char pulloff;					//Nonzero if this note is a pull off
+	char harmonic;					//Nonzero if this note is a harmonic
+	char hopo;						//Nonzero if this note is either a hammer on or a pull off
+	char palmmute;					//Nonzero if this note is a palm mute
+	char tremolo;					//Nonzero if this note is a tremolo
+	char pop;						//1 if this note is played with pop technique, else -1
+	char slap;						//1 if this note is played with slap technique, else -1
+	char accent;					//Nonzero if this note is played as an accent
+	char pinchharmonic;				//Nonzero if this note is a pinch harmonic
+	char stringmute;				//Nonzero if this note is a string mute
+	long unpitchedslideto;		//If not negative, is the fret position to which the note performs an unpitched slide
+	char tap;						//Nonzero if this note is tapped
+	char vibrato;					//Is set to 80 if the note is played with vibrato, otherwise zero
+} EOF_RS_TECHNIQUES;
+
 #define EOF_NUM_RS_PREDEFINED_SECTIONS 30
 extern EOF_RS_PREDEFINED_SECTION eof_rs_predefined_sections[EOF_NUM_RS_PREDEFINED_SECTIONS];
 
@@ -184,5 +206,17 @@ int eof_enforce_rs_phrase_begin_with_fret_hand_position(EOF_SONG *sp, unsigned l
 void eof_export_rocksmith_showlights(EOF_SONG * sp, char * fn, unsigned long track);
 	//Exports a showlights file for the specified track to the specified file (to be used for Rocksmith 2014 customs)
 	//This XML file defines the MIDI note played for each highest-level note (or bass notes in the case of chords)
+
+unsigned long eof_get_highest_fret_in_time_range(EOF_SONG *sp, unsigned long track, unsigned char difficulty, unsigned long start, unsigned long stop);
+	//Examines all notes within the specified time range in the specified track difficulty and returns the highest fret value encountered
+	//Returns 0 if there are no fretted notes in the range, or upon error
+	//Expects the notes to be sorted in order to maximize performance
+
+unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long stringnum, EOF_RS_TECHNIQUES *ptr);
+	//Reads the flags of the specified note and sets variables in the specified techniques structure
+	//If the note has pop or slap status, the length in the techniques structure is set to 0 to reflect
+	//	that Rocksmith requires such techniques to be on non sustained notes
+	//Unless the note has bend or slide status, the length in the techniques structure is set to 0 if the note has EOF's minimum length of 1ms
+	//A flags bitmask is returned that is nonzero if the note contains any statuses that would necessitate chordNote subtag(s) if the examined note is a chord
 
 #endif
