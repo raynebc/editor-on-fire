@@ -2604,7 +2604,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						{	//If any notes within the scope of this fret hand position require the anchor width to be increased beyond 4 frets
 							width = highest - tp->handposition[ctr3].end_pos + 1;	//Determine the minimum needed width
 						}
-						(void) snprintf(buffer, sizeof(buffer) - 1, "        <anchor time=\"%.3f\" fret=\"%lu\" width=\%lu.000\"/>\n", (double)tp->handposition[ctr3].start_pos / 1000.0, tp->handposition[ctr3].end_pos, width);
+						(void) snprintf(buffer, sizeof(buffer) - 1, "        <anchor time=\"%.3f\" fret=\"%lu\" width=\"%lu.000\"/>\n", (double)tp->handposition[ctr3].start_pos / 1000.0, tp->handposition[ctr3].end_pos, width);
 						(void) pack_fputs(buffer, fp);
 					}
 				}
