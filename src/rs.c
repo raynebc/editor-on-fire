@@ -2495,46 +2495,52 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						{	//If chordNote tags are to be written
 							unsigned long stringnum, bitmask;
 							unsigned char *finger = tp->note[chordlist[chordid]]->finger;	//Point to this chord's template's finger array
+							long fingernum;
 
 							for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
 							{	//For each string used in this track
-								if(finger[stringnum])
-								{	//If the chord uses this string
-									if((eof_get_note_note(sp, track, ctr3) & bitmask) && !(tp->note[ctr3]->ghost & bitmask))
-									{	//If this string is used in this note and it is not ghosted
-										char tagend[2] = "/";			//If a chordNote tag is to have a bendValues subtag, this string is emptied so that the note tag doesn't end in the same line
-										unsigned long fret;				//The fret number used for this string
+								if((eof_get_note_note(sp, track, ctr3) & bitmask) && !(tp->note[ctr3]->ghost & bitmask))
+								{	//If this string is used in this note and it is not ghosted
+									char tagend[2] = "/";			//If a chordNote tag is to have a bendValues subtag, this string is emptied so that the note tag doesn't end in the same line
+									unsigned long fret;				//The fret number used for this string
 
-										(void) eof_get_rs_techniques(sp, track, ctr3, stringnum, &tech);	//Determine techniques used by this note
-										fret = tp->note[ctr3]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
-										if(!eof_pro_guitar_note_lowest_fret(tp, ctr3))
-										{	//If this note contains no fretted strings
-											if(tech.bend || (tech.slideto >= 0) || (tech.unpitchedslideto >= 0))
-											{	//If it is also marked as a bend or slide note, omit these statuses because they're invalid for open notes
-												tech.bend = 0;
-												tech.slideto = -1;
-												tech.unpitchedslideto = -1;
-												if((*user_warned & 4) == 0)
-												{	//If the user wasn't alerted that one or more open notes have these statuses improperly applied
-													allegro_message("Warning:  At least one open note is marked with bend or slide status.\nThis is not supported, so these statuses are being omitted for such notes.");
-													*user_warned |= 4;
-												}
+									(void) eof_get_rs_techniques(sp, track, ctr3, stringnum, &tech);	//Determine techniques used by this note
+									fret = tp->note[ctr3]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
+									if(!eof_pro_guitar_note_lowest_fret(tp, ctr3))
+									{	//If this note contains no fretted strings
+										if(tech.bend || (tech.slideto >= 0) || (tech.unpitchedslideto >= 0))
+										{	//If it is also marked as a bend or slide note, omit these statuses because they're invalid for open notes
+											tech.bend = 0;
+											tech.slideto = -1;
+											tech.unpitchedslideto = -1;
+											if((*user_warned & 4) == 0)
+											{	//If the user wasn't alerted that one or more open notes have these statuses improperly applied
+												allegro_message("Warning:  At least one open note is marked with bend or slide status.\nThis is not supported, so these statuses are being omitted for such notes.");
+												*user_warned |= 4;
 											}
 										}
-										if(tech.bend)
-										{	//If the note is a bend, the note tag must not end on the same line as it will have a bendValues subtag
-											tagend[0] = '\0';	//Drop the / from the string
-										}
-										(void) snprintf(buffer, sizeof(buffer) - 1, "          <chordNote time=\"%.3f\" linkNext=\"0\" accent=\"%d\" bend=\"%d\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"0\" leftHand=\"%d\" mute=\"%d\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\" harmonicPinch=\"%d\" pickDirection=\"0\" rightHand=\"-1\" slideUnpitchTo=\"%ld\" tap=\"%d\" vibrato=\"%d\"%s>\n", notepos, tech.accent, tech.bend, fret, tech.hammeron, tech.harmonic, tech.hopo, finger[stringnum], tech.stringmute, tech.palmmute, tech.pop, tech.pulloff, tech.slap, tech.slideto, stringnum, (double)tech.length / 1000.0, tech.tremolo, tech.pinchharmonic, tech.unpitchedslideto, tech.tap, tech.vibrato, tagend);
+									}
+									if(tech.bend)
+									{	//If the note is a bend, the note tag must not end on the same line as it will have a bendValues subtag
+										tagend[0] = '\0';	//Drop the / from the string
+									}
+									if(finger[stringnum])
+									{	//If this string is fretted
+										fingernum = finger[stringnum];
+									}
+									else
+									{	//This string is played open
+										fingernum = -1;
+									}
+									(void) snprintf(buffer, sizeof(buffer) - 1, "          <chordNote time=\"%.3f\" linkNext=\"0\" accent=\"%d\" bend=\"%d\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"0\" leftHand=\"%ld\" mute=\"%d\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\" harmonicPinch=\"%d\" pickDirection=\"0\" rightHand=\"-1\" slideUnpitchTo=\"%ld\" tap=\"%d\" vibrato=\"%d\"%s>\n", notepos, tech.accent, tech.bend, fret, tech.hammeron, tech.harmonic, tech.hopo, fingernum, tech.stringmute, tech.palmmute, tech.pop, tech.pulloff, tech.slap, tech.slideto, stringnum, (double)tech.length / 1000.0, tech.tremolo, tech.pinchharmonic, tech.unpitchedslideto, tech.tap, tech.vibrato, tagend);
+									(void) pack_fputs(buffer, fp);
+									if(tech.bend)
+									{	//If the note is a bend, write the bendValues subtag and close the note tag
+										(void) pack_fputs("            <bendValues count=\"1\">\n", fp);
+										(void) snprintf(buffer, sizeof(buffer) - 1, "              <bendValue time=\"%.3f\" step=\"%.3f\"/>\n", (((double)notepos + ((double)tech.length / 3.0)) / 1000.0), (double)tech.bendstrength / 2.0);	//Write a bend point 1/3 into the note
 										(void) pack_fputs(buffer, fp);
-										if(tech.bend)
-										{	//If the note is a bend, write the bendValues subtag and close the note tag
-											(void) pack_fputs("            <bendValues count=\"1\">\n", fp);
-											(void) snprintf(buffer, sizeof(buffer) - 1, "              <bendValue time=\"%.3f\" step=\"%.3f\"/>\n", (((double)notepos + ((double)tech.length / 3.0)) / 1000.0), (double)tech.bendstrength / 2.0);	//Write a bend point 1/3 into the note
-											(void) pack_fputs(buffer, fp);
-											(void) pack_fputs("            </bendValues>\n", fp);
-											(void) pack_fputs("          </chordNote>\n", fp);
-										}
+										(void) pack_fputs("            </bendValues>\n", fp);
+										(void) pack_fputs("          </chordNote>\n", fp);
 									}
 								}
 							}
