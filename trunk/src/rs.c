@@ -100,7 +100,7 @@ int eof_is_string_muted(EOF_SONG *sp, unsigned long track, unsigned long note)
 	return allmuted;	//Return nonzero if all of the used strings were fret hand muted
 }
 
-unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned long **results)
+unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned long **results, char target)
 {
 	unsigned long ctr, ctr2, unique_count = 0;
 	EOF_PRO_GUITAR_NOTE **notelist;	//An array large enough to hold a pointer to every note in the track
@@ -131,8 +131,8 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 	//Overwrite each pointer in the duplicate note array that isn't a unique chord with NULL
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the track
-		if((eof_note_count_colors(sp, track, ctr) > 1) && !eof_is_string_muted(sp, track, ctr))
-		{	//If this note is a chord (has a gem on at least two lanes) and is not a fully string muted chord
+		if(eof_note_count_rs_lanes(sp, track, ctr, target) > 1)
+		{	//If this note is a valid chord for the target Rocksmith game (RS2 supports string muted chords)
 			match = 0;
 			for(ctr2 = ctr + 1; ctr2 < tp->notes; ctr2++)
 			{	//For each note in the track that follows this note
@@ -363,7 +363,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	{	//For each note in the track
 		unsigned char slideend;
 
-		if(eof_note_count_rs_lanes(sp, track, ctr) == 1)
+		if(eof_note_count_rs_lanes(sp, track, ctr, 1) == 1)
 		{	//If the note will export as a single note
 			if(eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
 			{	//If the note slides up
@@ -449,6 +449,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 	//Write the beginning of the XML file
 	(void) pack_fputs("<?xml version='1.0' encoding='UTF-8'?>\n", fp);
+	(void) pack_fputs("<!-- " EOF_VERSION_STRING " -->\n", fp);	//Write EOF's version in an XML comment
 	(void) pack_fputs("<song>\n", fp);
 	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->title, 64);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <title>%s</title>\n", buffer2);
@@ -541,7 +542,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	eof_determine_phrase_status(sp, track);	//Update the tremolo status of each note
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the track
-		if(eof_note_count_rs_lanes(sp, track, ctr) > 1)
+		if(eof_note_count_rs_lanes(sp, track, ctr, 1) > 1)
 		{	//If the note will export as a chord (more than one non ghosted/muted gem)
 			if(!non_standard_chords && !eof_build_note_name(sp, track, ctr, notename))
 			{	//If the chord has no defined or detected name (only if this condition hasn't been found already)
@@ -815,7 +816,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		eof_determine_phrase_status(sp, track);	//Update the tremolo status of each note
 		for(ctr = tp->notes; ctr > 0; ctr--)
 		{	//For each note in the track, in reverse order
-			if(eof_note_count_rs_lanes(sp, track, ctr - 1) > 1)
+			if(eof_note_count_rs_lanes(sp, track, ctr - 1, 1) > 1)
 			{	//If this note will export as a chord (at least two non ghosted/muted gems)
 				unsigned long target = EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_HO | EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC | EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE | EOF_PRO_GUITAR_NOTE_FLAG_POP | EOF_PRO_GUITAR_NOTE_FLAG_SLAP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_NOTE_FLAG_IS_TREMOLO;	//A list of all statuses to try to notate for chords
 				unsigned long bitmask;
@@ -846,7 +847,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}//If the user opted to export chord techniques to the Rocksmith XML files
 
 	//Write chord templates
-	chordlistsize = eof_build_chord_list(sp, track, &chordlist);	//Build a list of all unique chords in the track
+	chordlistsize = eof_build_chord_list(sp, track, &chordlist, 1);	//Build a list of all unique chords in the track
 	if(!chordlistsize)
 	{	//If there were no chords, write an empty chord template tag
 		(void) pack_fputs("  <chordTemplates count=\"0\"/>\n", fp);
@@ -1148,7 +1149,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			{	//For each note in the track
 				if(eof_get_note_type(sp, track, ctr3) == ctr)
 				{	//If the note is in this difficulty
-					unsigned long lanecount = eof_note_count_rs_lanes(sp, track, ctr3);	//Count the number of non ghosted/muted gems for this note
+					unsigned long lanecount = eof_note_count_rs_lanes(sp, track, ctr3, 1);	//Count the number of non ghosted/muted gems for this note
 					if(lanecount == 1)
 					{	//If the note has only one gem
 						numsinglenotes++;	//Increment counter
@@ -1170,7 +1171,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				(void) pack_fputs(buffer, fp);
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
-					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3) == 1))
+					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 1) == 1))
 					{	//If this note is in this difficulty and will export as a single note (only one gem has non ghosted/muted status)
 						for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
 						{	//For each string used in this track
@@ -1229,7 +1230,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				(void) pack_fputs(buffer, fp);
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
-					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3) > 1))
+					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 1) > 1))
 					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems) that isn't fully string muted
 						for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
 						{	//For each of the entries in the unique chord list
@@ -1574,7 +1575,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	{	//For each note in the track
 		unsigned char slideend;
 
-		if(eof_note_count_rs2_lanes(sp, track, ctr) == 1)
+		if(eof_note_count_rs_lanes(sp, track, ctr, 2) == 1)
 		{	//If the note will export as a single note
 			if(eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
 			{	//If the note slides up
@@ -1660,6 +1661,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 	//Write the beginning of the XML file
 	(void) pack_fputs("<?xml version='1.0' encoding='UTF-8'?>\n", fp);
+	(void) pack_fputs("<!-- " EOF_VERSION_STRING " -->\n", fp);	//Write EOF's version in an XML comment
 	(void) pack_fputs("<song version=\"7\">\n", fp);
 	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->title, 64);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <title>%s</title>\n", buffer2);
@@ -1765,7 +1767,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	eof_determine_phrase_status(sp, track);	//Update the tremolo status of each note
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the track
-		if(eof_note_count_rs2_lanes(sp, track, ctr) > 1)
+		if(eof_note_count_rs_lanes(sp, track, ctr, 2) > 1)
 		{	//If the note will export as a chord (more than one non ghosted/muted gem)
 			if(!non_standard_chords && !eof_build_note_name(sp, track, ctr, notename))
 			{	//If the chord has no defined or detected name (only if this condition hasn't been found already)
@@ -2045,7 +2047,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	(void) pack_fputs("  <phraseProperties count=\"0\"/>\n", fp);
 
 	//Write chord templates
-	chordlistsize = eof_build_chord_list(sp, track, &chordlist);	//Build a list of all unique chords in the track
+	chordlistsize = eof_build_chord_list(sp, track, &chordlist, 2);	//Build a list of all unique chords in the track
 	if(!chordlistsize)
 	{	//If there were no chords, write an empty chord template tag
 		(void) pack_fputs("  <chordTemplates count=\"0\"/>\n", fp);
@@ -2355,7 +2357,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			{	//For each note in the track
 				if(eof_get_note_type(sp, track, ctr3) == ctr)
 				{	//If the note is in this difficulty
-					unsigned long lanecount = eof_note_count_rs2_lanes(sp, track, ctr3);	//Count the number of non ghosted/muted gems for this note
+					unsigned long lanecount = eof_note_count_rs_lanes(sp, track, ctr3, 2);	//Count the number of non ghosted gems for this note
 					if(lanecount == 1)
 					{	//If the note has only one gem
 						numsinglenotes++;	//Increment counter
@@ -2377,7 +2379,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				(void) pack_fputs(buffer, fp);
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
-					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs2_lanes(sp, track, ctr3) == 1))
+					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 2) == 1))
 					{	//If this note is in this difficulty and will export as a single note (only one gem has non ghosted/muted status)
 						for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
 						{	//For each string used in this track
@@ -2390,7 +2392,14 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 								(void) eof_get_rs_techniques(sp, track, ctr3, stringnum, &tech);	//Determine techniques used by this note
 								notepos = eof_get_note_pos(sp, track, ctr3);
-								fret = tp->note[ctr3]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
+								if(tp->note[ctr3]->frets[stringnum] == 0xFF)
+								{	//If this is a string mute with no defined fret number
+									fret = 0;	//Assume muted open note
+								}
+								else
+								{	//Otherwise use the defined fret number
+									fret = tp->note[ctr3]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
+								}
 								if(!eof_pro_guitar_note_lowest_fret(tp, ctr3))
 								{	//If this note contains no fretted strings
 									if(tech.bend || (tech.slideto >= 0) || (tech.unpitchedslideto >= 0))
@@ -2448,8 +2457,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				(void) pack_fputs(buffer, fp);
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
-					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs2_lanes(sp, track, ctr3) > 1))
-					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems) that isn't fully string muted
+					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1))
+					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems) that isn't fully string muted
 						EOF_RS_TECHNIQUES tech;
 						char tagend[2] = "/";	//If a chord tag is to have a chordNote subtag, this string is emptied so that the chord tag doesn't end in the same line
 						chordnote = 0;	//Reset this status
@@ -2506,19 +2515,24 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 									(void) eof_get_rs_techniques(sp, track, ctr3, stringnum, &tech);	//Determine techniques used by this note
 									fret = tp->note[ctr3]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
-									if(!eof_pro_guitar_note_lowest_fret(tp, ctr3))
-									{	//If this note contains no fretted strings
-										if(tech.bend || (tech.slideto >= 0) || (tech.unpitchedslideto >= 0))
-										{	//If it is also marked as a bend or slide note, omit these statuses because they're invalid for open notes
+									if(tech.bend || (tech.slideto >= 0) || (tech.unpitchedslideto >= 0))
+									{	//If this note it is marked as a bend or slide note
+										if(!eof_pro_guitar_note_lowest_fret(tp, ctr3))
+										{	//If this note also contains no fretted strings, omit these statuses because they're invalid for open notes
 											tech.bend = 0;
 											tech.slideto = -1;
 											tech.unpitchedslideto = -1;
+											tech.length = 0;	//chordNotes should have no sustain unless they use bend or slide technique
 											if((*user_warned & 4) == 0)
 											{	//If the user wasn't alerted that one or more open notes have these statuses improperly applied
 												allegro_message("Warning:  At least one open note is marked with bend or slide status.\nThis is not supported, so these statuses are being omitted for such notes.");
 												*user_warned |= 4;
 											}
 										}
+									}
+									else
+									{
+										tech.length = 0;	//chordNotes should have no sustain unless they use bend or slide technique
 									}
 									if(tech.bend)
 									{	//If the note is a bend, the note tag must not end on the same line as it will have a bendValues subtag
@@ -3782,12 +3796,12 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 
 	if(!mode)
 	{	//Rocksmith 1 rules observed (no string mutes)
-		if(eof_note_count_rs_lanes(sp, track, note) < 2)
+		if(eof_note_count_rs_lanes(sp, track, note, 1) < 2)
 			return 0;	//Note is not a chord (not at least 2 non ghosted/muted gems) or is entirely string muted
 	}
 	else
 	{	//Rocksmith 2 rules observed (string mutes allowed)
-		if(eof_note_count_rs2_lanes(sp, track, note) < 2)
+		if(eof_note_count_rs_lanes(sp, track, note, 2) < 2)
 			return 0;	//Note is not a chord (not at least 2 non ghosted gems)
 	}
 

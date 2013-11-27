@@ -73,11 +73,6 @@ void eof_midi_play_note(int note);	//Sends a Note On MIDI command
 void eof_play_pro_guitar_note_midi(EOF_SONG *sp, unsigned long track, unsigned long note);	//Immediately plays all the MIDI tones in the specified pro guitar note
 void eof_play_queued_midi_tones(void);	//Advances through and plays MIDI tones queued by eof_mix_find_claps(), similarly to how the OGG callback function plays other cues
 
-int eof_read_pcm_samples(ALOGG_OGG *ogg,void *data,unsigned bytenum);
-	//Reads the next one or more audio samples from the ogg file (bytenum number of bytes) into the given data buffer
-	//Returns -1 on error, 0 on success and 1 upon EOF (no more samples)
-	///This function is currently broken
-
 void eof_set_seek_position(int pos);
 	//Updates variables to set the audio and seek position to the specified timestamp in ms
 

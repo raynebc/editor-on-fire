@@ -776,23 +776,33 @@ if(key[KEY_PAUSE])
 	/* toggle blue cymbal (CTRL+B in the drum track) */
 	/* toggle bend (CTRL+B in a pro guitar track) */
 	/* set bend strength (SHIFT+B in a pro guitar track) */
+	/* seek to beat/measure (CTRL+SHIFT+B) */
 	if(key[KEY_B])
 	{	//CTRL+B will toggle Pro blue cymbal notation
 		if(KEY_EITHER_CTRL)
-		{
-			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-			{	//If a drum track is active
-				(void) eof_menu_note_toggle_rb3_cymbal_blue();
+		{	//If CTRL is held
+			if(KEY_EITHER_SHIFT)
+			{	//If both CTRL and SHIFT are held
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				(void) eof_menu_song_seek_beat_measure();
 				key[KEY_B] = 0;
 			}
-			else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{
-				(void) eof_menu_note_toggle_bend();
-				key[KEY_B] = 0;
+			else
+			{	//Only CTRL is held
+				if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+				{	//If a drum track is active
+					(void) eof_menu_note_toggle_rb3_cymbal_blue();
+					key[KEY_B] = 0;
+				}
+				else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{
+					(void) eof_menu_note_toggle_bend();
+					key[KEY_B] = 0;
+				}
 			}
 		}
 		else if(KEY_EITHER_SHIFT)
-		{
+		{	//If only SHIFT is held
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			(void) eof_pro_guitar_note_bend_strength_save();
 			key[KEY_B] = 0;

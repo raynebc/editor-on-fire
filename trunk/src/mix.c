@@ -799,33 +799,6 @@ struct ALOGG_OGG {
                                       frame */
 };
 
-int eof_read_pcm_samples(ALOGG_OGG *ogg,void *data,unsigned bytenum)
-{
-	int section;//Value returned by reference by ov_read()
-	long ret=0;	//Return value of ov_read()
-	OggVorbis_File *temp;
-
-	if((ogg == NULL) || (data == NULL) || (bytenum == 0))
-		return -1;
-
-	while(1)
-	{
-		temp = &(ogg->vf);
-		ret = ov_read(temp, data, bytenum, 0, 2, 0, &section);	//Read one sample
-
-		if(ret == 0)
-			return 1;	//EOF
-
-		if((ret == OV_EINVAL) || (ret == OV_EBADLINK))
-			return -1;	//Error
-
-		if(ret != OV_HOLE)	//If the data was read
-			break;			//Break from loop
-	}
-
-	return 0;	//Success
-}
-
 void eof_set_seek_position(int pos)
 {
 	alogg_seek_abs_msecs_ogg(eof_music_track, pos);
