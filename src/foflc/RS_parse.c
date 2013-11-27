@@ -37,6 +37,7 @@ void Export_RS(FILE *outf)
 
 //Write the beginning lines of the XML file
 	fputs_err("<?xml version='1.0' encoding='UTF-8'?>\n",outf);
+	fputs_err("<!-- " EOF_VERSION_STRING " -->\n", outf);	//Write EOF's version in an XML comment
 	if(fprintf(outf,"<vocals count=\"%lu\">\n", Lyrics.piececount) < 0)
 	{
 		printf("Error writing to XML file: %s\nAborting\n",strerror(errno));

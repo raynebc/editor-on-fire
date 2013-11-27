@@ -75,7 +75,7 @@ MENU eof_song_seek_menu[] =
 	{"Next Beat\tPGDN", eof_menu_song_seek_next_beat, NULL, 0, NULL},
 	{"Previous Anchor\t" CTRL_NAME "+Shift+PGUP", eof_menu_song_seek_previous_anchor, NULL, 0, NULL},
 	{"Next Anchor\t" CTRL_NAME "+Shift+PGDN", eof_menu_song_seek_next_anchor, NULL, 0, NULL},
-	{"Beat/&Measure", eof_menu_song_seek_beat_measure, NULL, 0, NULL},
+	{"Beat/&Measure\t" CTRL_NAME "+Shift+B", eof_menu_song_seek_beat_measure, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
