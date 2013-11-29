@@ -944,7 +944,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	}//If this is a drum track
 	else
 	{	//This is a non drum track (or a drum track where bass is rendered in its own lane)
-		if(eof_render_3d_rs_chords && eof_note_has_high_chord_density(eof_song, track, notenum, 1))
+		if(eof_render_3d_rs_chords && eof_note_has_high_chord_density(eof_song, track, notenum, 2))
 		{	//If the user has opted to 3D render Rocksmith style chords, and this is a high density chord
 			rz = npos;
 			ez = npos + 14;

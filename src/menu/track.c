@@ -2723,7 +2723,6 @@ int eof_track_find_effective_rs_tone_change(unsigned long pos, unsigned long *ch
 	return found;	//Return found status
 }
 
-
 int eof_track_rs_tone_changes(void)
 {
 	EOF_PRO_GUITAR_TRACK *tp;

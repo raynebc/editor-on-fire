@@ -450,6 +450,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//Write the beginning of the XML file
 	(void) pack_fputs("<?xml version='1.0' encoding='UTF-8'?>\n", fp);
 	(void) pack_fputs("<!-- " EOF_VERSION_STRING " -->\n", fp);	//Write EOF's version in an XML comment
+	(void) pack_fputs("<song version=\"4\">\n", fp);
 	(void) pack_fputs("<song>\n", fp);
 	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->title, 64);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <title>%s</title>\n", buffer2);
@@ -1258,7 +1259,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						{	//Otherwise the direction defaults to down
 							direction = downstrum;
 						}
-						highdensity = eof_note_has_high_chord_density(sp, track, ctr3, 0);	//Determine whether the chord will export with high density
+						highdensity = eof_note_has_high_chord_density(sp, track, ctr3, 1);	//Determine whether the chord will export with high density
 						notepos = (double)tp->note[ctr3]->pos / 1000.0;
 						(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" chordId=\"%lu\" highDensity=\"%d\" ignore=\"0\" strum=\"%s\"/>\n", notepos, chordid, highdensity, direction);
 						(void) pack_fputs(buffer, fp);
@@ -2491,7 +2492,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							direction = downstrum;
 						}
 						flags = eof_get_rs_techniques(sp, track, ctr3, 0, &tech);	//Determine techniques used by this chord
-						highdensity = eof_note_has_high_chord_density(sp, track, ctr3, 1);	//Determine whether the chord will export with high density
+						highdensity = eof_note_has_high_chord_density(sp, track, ctr3, 2);	//Determine whether the chord will export with high density
 						notepos = (double)tp->note[ctr3]->pos / 1000.0;
 						if(first || (chordid != lastchordid) || flags)
 						{	//If this is the first chord to be written, it's ID is different from that of the previous chord, or it has statuses that require chordNote subtags to define
@@ -3781,7 +3782,7 @@ int eof_time_range_is_populated(EOF_SONG *sp, unsigned long track, unsigned long
 	return 0;	//Return not populated
 }
 
-int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char mode)
+int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned long note, char target)
 {
 	long prev;
 
@@ -3794,16 +3795,8 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 	if(eof_get_note_flags(sp, track, note) & EOF_NOTE_FLAG_CRAZY)
 		return 0;	//Note is marked with crazy status, which forces it to export as low density
 
-	if(!mode)
-	{	//Rocksmith 1 rules observed (no string mutes)
-		if(eof_note_count_rs_lanes(sp, track, note, 1) < 2)
-			return 0;	//Note is not a chord (not at least 2 non ghosted/muted gems) or is entirely string muted
-	}
-	else
-	{	//Rocksmith 2 rules observed (string mutes allowed)
-		if(eof_note_count_rs_lanes(sp, track, note, 2) < 2)
-			return 0;	//Note is not a chord (not at least 2 non ghosted gems)
-	}
+	if(eof_note_count_rs_lanes(sp, track, note, target) < 2)
+		return 0;	//Note is not a chord
 
 	prev = eof_track_fixup_previous_note(sp, track, note);
 	if(prev < 0)

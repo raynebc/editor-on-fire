@@ -15,7 +15,7 @@
 
 #define EOF_RS_PHRASE_IMPORT_LIMIT 200
 #define EOF_RS_EVENT_IMPORT_LIMIT 200
-#define EOF_RS_CHORD_TEMPLATE_IMPORT_LIMIT 200
+#define EOF_RS_CHORD_TEMPLATE_IMPORT_LIMIT 400
 
 int eof_parse_chord_template(char *name, size_t size, char *finger, char *frets, unsigned char *note, unsigned char *numstrings, unsigned long linectr, char *input)
 {
@@ -354,6 +354,8 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 				{	//Until there was an error reading from the file or end of file is reached
 					if(strcasestr_spec(buffer, "</phrases"))
 					{	//If this is the end of the phrases tag
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu phrases loaded", phraselist_count);
+						eof_log(eof_log_string, 1);
 						break;	//Break from loop
 					}
 					if(phraselist_count < EOF_RS_PHRASE_IMPORT_LIMIT)
@@ -375,6 +377,12 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						strcpy(phraselist[phraselist_count], tag);
 						phraselist_count++;
 					}
+					else
+					{	//Otherwise the phrase limit has been exceeded
+						eof_log("\t\tError:  Phrase limit exceeded.  Aborting", 1);
+						error = 1;
+						break;	//Break from inner loop
+					}
 
 					(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 					linectr++;	//Increment line counter
@@ -394,12 +402,16 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 
 			if(parse_xml_attribute_number("count", buffer, &output) && output)
 			{	//If the count attribute of this tag is readable and greater than 0
+				unsigned long phraseitctr = 0;
+
 				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 				linectr++;
 				while(!error || !pack_feof(inf))
 				{	//Until there was an error reading from the file or end of file is reached
 					if(strcasestr_spec(buffer, "</phraseIterations"))
 					{	//If this is the end of the phraseIterations tag
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu phrase iterations loaded", phraseitctr);
+						eof_log(eof_log_string, 1);
 						break;	//Break from loop
 					}
 					if(eventlist_count < EOF_RS_EVENT_IMPORT_LIMIT)
@@ -436,7 +448,14 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						eventlist[eventlist_count]->track = eof_selected_track;
 						eventlist[eventlist_count]->flags = EOF_EVENT_FLAG_RS_PHRASE;
 						eventlist[eventlist_count]->beat = timestamp;	//Store the real timestamp, it will need to be converted to the beat number later
+						phraseitctr++;
 						eventlist_count++;
+					}
+					else
+					{	//Otherwise the text event limit has been exceeded
+						eof_log("\t\tError:  Text event limit exceeded.  Aborting", 1);
+						error = 1;
+						break;	//Break from inner loop
 					}
 
 					(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
@@ -466,6 +485,8 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 				{	//Until there was an error reading from the file or end of file is reached
 					if(strcasestr_spec(buffer, "</chordTemplates"))
 					{	//If this is the end of the chordTemplates tag
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu chord templates loaded", chordlist_count);
+						eof_log(eof_log_string, 1);
 						break;	//Break from loop
 					}
 					if(chordlist_count < EOF_RS_CHORD_TEMPLATE_IMPORT_LIMIT)
@@ -497,6 +518,12 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						chordlist[chordlist_count]->note = note;	//Store the note mask
 						chordlist_count++;
 					}//If another chord can be stored
+					else
+					{	//Otherwise the chord limit has been exceeded
+						eof_log("\t\tError:  Chord template limit exceeded.  Aborting", 1);
+						error = 1;
+						break;	//Break from inner loop
+					}
 
 					(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 					linectr++;	//Increment line counter
@@ -694,12 +721,16 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 
 			if(parse_xml_attribute_number("count", buffer, &output) && output)
 			{	//If the count attribute of this tag is readable and greater than 0
+				unsigned long sectionctr = 0;
+
 				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 				linectr++;
 				while(!error || !pack_feof(inf))
 				{	//Until there was an error reading from the file or end of file is reached
 					if(strcasestr_spec(buffer, "</sections"))
 					{	//If this is the end of the sections tag
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu sections loaded", sectionctr);
+						eof_log(eof_log_string, 1);
 						break;	//Break from loop
 					}
 					if(eventlist_count < EOF_RS_EVENT_IMPORT_LIMIT)
@@ -734,7 +765,14 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						eventlist[eventlist_count]->track = eof_selected_track;
 						eventlist[eventlist_count]->flags = EOF_EVENT_FLAG_RS_SECTION;
 						eventlist[eventlist_count]->beat = output;	//Store the real timestamp, it will need to be converted to the beat number later
+						sectionctr++;
 						eventlist_count++;
+					}
+					else
+					{	//Otherwise the text event limit has been exceeded
+						eof_log("\t\tError:  Text event limit exceeded.  Aborting", 1);
+						error = 1;
+						break;	//Break from inner loop
 					}
 
 					(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
@@ -755,12 +793,16 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 
 			if(parse_xml_attribute_number("count", buffer, &output) && output)
 			{	//If the count attribute of this tag is readable and greater than 0
+				unsigned long eventctr = 0;
+
 				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 				linectr++;
 				while(!error || !pack_feof(inf))
 				{	//Until there was an error reading from the file or end of file is reached
 					if(strcasestr_spec(buffer, "</events"))
 					{	//If this is the end of the events tag
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu events loaded", eventctr);
+						eof_log(eof_log_string, 1);
 						break;	//Break from loop
 					}
 					if(eventlist_count < EOF_RS_EVENT_IMPORT_LIMIT)
@@ -790,7 +832,14 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						eventlist[eventlist_count]->track = eof_selected_track;
 						eventlist[eventlist_count]->flags = EOF_EVENT_FLAG_RS_EVENT;
 						eventlist[eventlist_count]->beat = output;	//Store the real timestamp, it will need to be converted to the beat number later
+						eventctr++;
 						eventlist_count++;
+					}
+					else
+					{	//Otherwise the text event limit has been exceeded
+						eof_log("\t\tError:  Text event limit exceeded.  Aborting", 1);
+						error = 1;
+						break;	//Break from inner loop
 					}
 
 					(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
@@ -1159,110 +1208,101 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		linectr++;	//Increment line counter
 	}//Until there was an error reading from the file or end of file is reached
 
-	if(error)
-	{	//If import did not complete successfully
-		for(ctr = 0; ctr < tp->notes; ctr++)
-		{	//For each note in the track
-			free(tp->note[ctr]);	//Free its memory
-		}
-		free(tp);
-		free(buffer);
-		free(buffer2);
-		return NULL;
-	}
-
-	#ifdef RS_IMPORT_DEBUG
+	if(!error)
+	{	//If import succeeded
+#ifdef RS_IMPORT_DEBUG
 		eof_log("\tParsing complete.  Finishing up", 1);
-	#endif
+#endif
 
-	//Create tremolo phrases
-	for(ctr3 = 0; ctr3 < 256; ctr3++)
-	{	//For each of the 256 possible difficulties
-		for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
-		{	//For each note in the track
-			if(tp->note[ctr2]->type == ctr3)
-			{	//If the note is in the difficulty being parsed
-				if(tp->note[ctr2]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
-				{	//If this note is marked as being in a tremolo
-					unsigned long startpos, endpos, count;
-
-					startpos = tp->note[ctr2]->pos;	//Mark the start of this phrase
-					endpos = startpos + tp->note[ctr2]->length;	//Initialize the end position of the phrase
-					while(++ctr2 < tp->notes)
-					{	//For the consecutive remaining notes in the track
-						if(tp->note[ctr2]->type == ctr3)
-						{	//If the note is in the difficulty being parsed
-							if(tp->note[ctr2]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
-							{	//And the next note is also marked as a tremolo
-								endpos = tp->note[ctr2]->pos + tp->note[ctr2]->length;	//Update the end position of the phrase
-							}
-							else
-							{
-								break;	//Break from while loop.  This note isn't a tremolo so the next pass doesn't need to check it either
-							}
-						}
-					}
-					count = tp->tremolos;
-					if(tp->tremolos < EOF_MAX_PHRASES)
-					{	//If the track can store the tremolo section
-						tp->tremolo[count].start_pos = startpos;
-						tp->tremolo[count].end_pos = endpos;
-						tp->tremolo[count].flags = 0;
-						tp->tremolo[count].difficulty = ctr3;	//Tremolo phrases are difficulty-specific in Rocksmith
-						tp->tremolo[count].name[0] = '\0';
-						tp->tremolos++;
-					}
-				}
-			}
-		}
-	}
-
-	//Apply strum directions
-	eof_clear_input();
-	key[KEY_Y] = 0;
-	key[KEY_N] = 0;
-	if(strum_dir && (alert("At least one chord was marked as strum up.", "Would you like to to mark all non strum-up chords as strum down?", NULL, "&Yes", "&No", 'y', 'n') == 1))
-	{	//If there were any up strum chords, and user opts to mark all others as down strum chords
-		unsigned long bitmask, count;
-
-		for(ctr = 0; ctr < tp->notes; ctr++)
-		{	//For each note in the track
-			for(ctr2 = 0, count = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
-			{	//For each of the 6 supported strings
-				if(tp->note[ctr]->note & bitmask)
-				{	//If this string is used
-					count++;	//Increment counter
-				}
-			}
-			if((count > 1) && !(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM))
-			{	//If this note is a chord that isn't already marked to strum upward
-				tp->note[ctr]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;	//Mark it to strum downward
-			}
-		}
-	}
-
-	//Derive chord lengths from single note lengths
-	eof_pro_guitar_track_sort_notes(tp);
-	for(ctr = 0; ctr < tp->notes; ctr++)
-	{	//For each note in the track
-		if(eof_note_count_colors_bitmask(tp->note[ctr]->note) > 1)
-		{	//If the note is a chord, look for single notes at the same position in other difficulties
+		//Create tremolo phrases
+		for(ctr3 = 0; ctr3 < 256; ctr3++)
+		{	//For each of the 256 possible difficulties
 			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
 			{	//For each note in the track
-				if(tp->note[ctr2]->pos > tp->note[ctr]->pos)
-				{	//If the note is beyond the note from the outer loop
-					break;	//None of the remaining notes will be at the appropriate position
-				}
-				else if(tp->note[ctr2]->pos == tp->note[ctr]->pos)
-				{	//If the notes are at the same position
-					if(tp->note[ctr2]->length > tp->note[ctr]->length)
-					{	//If the note in the inner loop is longer (ie. a single note)
-						tp->note[ctr]->length = tp->note[ctr2]->length;	//Assign its length to the chord from the outer loop
+				if(tp->note[ctr2]->type == ctr3)
+				{	//If the note is in the difficulty being parsed
+					if(tp->note[ctr2]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
+					{	//If this note is marked as being in a tremolo
+						unsigned long startpos, endpos, count;
+
+						startpos = tp->note[ctr2]->pos;	//Mark the start of this phrase
+						endpos = startpos + tp->note[ctr2]->length;	//Initialize the end position of the phrase
+						while(++ctr2 < tp->notes)
+						{	//For the consecutive remaining notes in the track
+							if(tp->note[ctr2]->type == ctr3)
+							{	//If the note is in the difficulty being parsed
+								if(tp->note[ctr2]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
+								{	//And the next note is also marked as a tremolo
+									endpos = tp->note[ctr2]->pos + tp->note[ctr2]->length;	//Update the end position of the phrase
+								}
+								else
+								{
+									break;	//Break from while loop.  This note isn't a tremolo so the next pass doesn't need to check it either
+								}
+							}
+						}
+						count = tp->tremolos;
+						if(tp->tremolos < EOF_MAX_PHRASES)
+						{	//If the track can store the tremolo section
+							tp->tremolo[count].start_pos = startpos;
+							tp->tremolo[count].end_pos = endpos;
+							tp->tremolo[count].flags = 0;
+							tp->tremolo[count].difficulty = ctr3;	//Tremolo phrases are difficulty-specific in Rocksmith
+							tp->tremolo[count].name[0] = '\0';
+							tp->tremolos++;
+						}
 					}
 				}
 			}
 		}
-	}
+
+		//Apply strum directions
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
+		if(strum_dir && (alert("At least one chord was marked as strum up.", "Would you like to to mark all non strum-up chords as strum down?", NULL, "&Yes", "&No", 'y', 'n') == 1))
+		{	//If there were any up strum chords, and user opts to mark all others as down strum chords
+			unsigned long bitmask, count;
+
+			for(ctr = 0; ctr < tp->notes; ctr++)
+			{	//For each note in the track
+				for(ctr2 = 0, count = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+				{	//For each of the 6 supported strings
+					if(tp->note[ctr]->note & bitmask)
+					{	//If this string is used
+						count++;	//Increment counter
+					}
+				}
+				if((count > 1) && !(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM))
+				{	//If this note is a chord that isn't already marked to strum upward
+					tp->note[ctr]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;	//Mark it to strum downward
+				}
+			}
+		}
+
+		//Derive chord lengths from single note lengths
+		eof_pro_guitar_track_sort_notes(tp);
+		for(ctr = 0; ctr < tp->notes; ctr++)
+		{	//For each note in the track
+			if(eof_note_count_colors_bitmask(tp->note[ctr]->note) > 1)
+			{	//If the note is a chord, look for single notes at the same position in other difficulties
+				for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+				{	//For each note in the track
+					if(tp->note[ctr2]->pos > tp->note[ctr]->pos)
+					{	//If the note is beyond the note from the outer loop
+						break;	//None of the remaining notes will be at the appropriate position
+					}
+					else if(tp->note[ctr2]->pos == tp->note[ctr]->pos)
+					{	//If the notes are at the same position
+						if(tp->note[ctr2]->length > tp->note[ctr]->length)
+						{	//If the note in the inner loop is longer (ie. a single note)
+							tp->note[ctr]->length = tp->note[ctr2]->length;	//Assign its length to the chord from the outer loop
+						}
+					}
+				}
+			}
+		}
+	}//If import succeeded
 
 	//Cleanup
 	for(ctr = 0; ctr < phraselist_count; ctr++)
@@ -1272,12 +1312,15 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 	phraselist_count = 0;
 	for(ctr = 0; ctr < eventlist_count; ctr++)
 	{	//For each text event that was stored
-		for(ctr2 = 0; ctr2 < eof_song->beats; ctr2++)
-		{	//For each beat in the project
-			if((ctr2 + 1 >= eof_song->beats) || (eventlist[ctr]->beat < eof_song->beat[ctr2 + 1]->pos))
-			{	//If this text event falls before the next beat, or if there isn't another beat
-				(void) eof_song_add_text_event(eof_song, ctr2, eventlist[ctr]->text, eof_selected_track, eventlist[ctr]->flags, 0);	//Add the event to this beat
-				break;
+		if(!error)
+		{	//If import succeeded
+			for(ctr2 = 0; ctr2 < eof_song->beats; ctr2++)
+			{	//For each beat in the project
+				if((ctr2 + 1 >= eof_song->beats) || (eventlist[ctr]->beat < eof_song->beat[ctr2 + 1]->pos))
+				{	//If this text event falls before the next beat, or if there isn't another beat
+					(void) eof_song_add_text_event(eof_song, ctr2, eventlist[ctr]->text, eof_selected_track, eventlist[ctr]->flags, 0);	//Add the event to this beat
+					break;
+				}
 			}
 		}
 		free(eventlist[ctr]);	//Free the text event, since it's been added to the project
@@ -1293,8 +1336,16 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 	free(buffer);
 	free(buffer2);
 
-	eof_sort_events(eof_song);
-	eof_pro_guitar_track_sort_fret_hand_positions(tp);
+	if(!error)
+	{	//If import succeeded
+		eof_sort_events(eof_song);
+		eof_pro_guitar_track_sort_fret_hand_positions(tp);
 
-	return tp;
+		return tp;
+	}
+	else
+	{
+		free(tp);
+		return NULL;
+	}
 }
