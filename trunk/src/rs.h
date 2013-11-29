@@ -190,11 +190,11 @@ int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track);
 	//If user refuses on any of the prompts or cancels any "Place RS Phrase" dialogs, or upon error, nonzero is returned.
 	//If the track is not populated, the function returns zero without checking the RS sections.
 
-int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char mode);
+int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned long note, char target);
 	//Returns nonzero if the specified note will export to XML as a high density chord
 	//This is based on whether the chord is close enough to a matching, previous chord
 	// and whether the note's "crazy" flag is set (which overrides it to be low density)
-	//If mode is nonzero, Rocksmith 2 capability is considered and string muted chords are not ignored
+	//If target is 1, then Rocksmith 1 authoring rules are followed and string muted chords are ignored
 
 int eof_enforce_rs_phrase_begin_with_fret_hand_position(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long startpos, unsigned long endpos, char *undo_made, char check_only);
 	//Looks at the fret hand positions in the specified track difficulty within the specified time span, which should be the beginning and end of a RS phrase.
