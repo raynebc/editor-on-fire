@@ -28,6 +28,7 @@
 #include "file.h"
 #include "note.h"	//For eof_correct_chord_fingerings()
 #include "song.h"
+#include "track.h"	//For tone name functions
 
 #ifdef USEMEMWATCH
 #include "../memwatch.h"
@@ -2519,6 +2520,53 @@ int eof_save_helper(char *destfilename)
 				{	//If the user canceled adding missing phrases
 					break;	//Stop fixing them and break from loop
 				}
+			}
+		}
+	}
+
+	/* check if any tracks use 2 or more tone names but doesn't define the default or uses more than 4 tone names */
+	if(eof_write_rs_files)
+	{
+		for(ctr = 1; ctr < eof_song->tracks; ctr++)
+		{	//For each track
+			if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If this is a pro guitar/bass track
+				EOF_PRO_GUITAR_TRACK *tp;
+				unsigned long tracknum;
+				char warning1 = 0, warning2 = 0;
+
+				tracknum = eof_song->track[ctr]->tracknum;
+				tp = eof_song->pro_guitar_track[tracknum];
+				//Build and count the size of the list of unique tone names used, and empty the default tone string if it is not valid
+				eof_track_rebuild_rs_tone_names_list_strings(ctr, 1);
+				if(eof_track_rs_tone_names_list_strings_num > 1)
+				{	//If at least 2 unique tone names are used
+					if((tp->defaulttone[0] == '\0') && !warning1)
+					{	//If the default tone is not set, and the user wasn't warned about this yet
+						if(alert("Warning:  At least one track with tone changes has no default tone set.", NULL, "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
+						{
+							eof_track_destroy_rs_tone_names_list_strings();
+							(void) eof_menu_track_selected_track_number(ctr, 1);	//Set the active instrument track
+							eof_render();
+							(void) eof_track_rs_tone_names();	//Call up the tone names dialog
+							return 1;	//Return cancellation
+						}
+						warning1 = 1;
+					}
+					if((eof_track_rs_tone_names_list_strings_num > 4) && !warning2)
+					{	//If there are more than 4 unique tone names used, and the user wasn't warned about this yet
+						if(alert("Warning:  At least one arrangement uses more than 4 different tones.", "Rocksmith doesn't support more than 4 so EOF will only export changes for 4 tone names.", "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
+						{
+							eof_track_destroy_rs_tone_names_list_strings();
+							(void) eof_menu_track_selected_track_number(ctr, 1);	//Set the active instrument track
+							eof_render();
+							(void) eof_track_rs_tone_names();	//Call up the tone names dialog
+							return 1;	//Return cancellation
+						}
+						warning2 = 1;
+					}
+				}
+				eof_track_destroy_rs_tone_names_list_strings();
 			}
 		}
 	}

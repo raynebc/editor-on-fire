@@ -1373,6 +1373,7 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 					free(ptr4);
 					return 0;	//Return error
 				}
+				ptr4->defaulttone[0] = '\0';	//Ensure this string is emptied
 				ptr4->parent = ptr3;
 				sp->pro_guitar_track[sp->pro_guitar_tracks] = ptr4;
 				sp->pro_guitar_tracks++;
@@ -1474,7 +1475,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	unsigned long section_type_count,section_type_ctr,section_type,section_count,section_ctr,section_start,section_end;
 	unsigned long custom_data_count,custom_data_ctr,custom_data_size,custom_data_id;
 	EOF_TRACK_ENTRY temp={0, 0, 0, 0, "", "", 0, 5, 0};
-	char name[EOF_SECTION_NAME_LENGTH+1];	//Used to load note/section names (section names are currently longer)
+	char name[EOF_SECTION_NAME_LENGTH + 1];	//Used to load note/section names (section names are currently longer)
 
 	#define EOFNUMINISTRINGTYPES 9
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
@@ -1887,7 +1888,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 			section_count = pack_igetl(fp);		//Read the number of instances of this type of section there is
 			for(section_ctr=0; section_ctr<section_count; section_ctr++)
 			{	//For each instance of the specified section
-				(void) eof_load_song_string_pf(name,fp,EOF_SECTION_NAME_LENGTH+1);	//Parse past the section name
+				(void) eof_load_song_string_pf(name,fp,EOF_SECTION_NAME_LENGTH + 1);	//Parse past the section name
 				inputc = pack_getc(fp);								//Read the section's associated difficulty
 				section_start = pack_igetl(fp);						//Read the start timestamp of the section
 				section_end = pack_igetl(fp);						//Read the end timestamp of the section
@@ -2187,10 +2188,14 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				count = sp->pro_guitar_track[tracknum]->tonechanges;
 				if(count < EOF_MAX_PHRASES)
 				{	//If EOF can store the tone change
-					if(name)
-					{	//If the tone name isn't NULL, add the change to the project
+					if(name && (name[0] != '\0'))
+					{	//If the tone name isn't NULL or empty, add the change to the project
 						sp->pro_guitar_track[tracknum]->tonechange[count].start_pos = start;
 						(void) ustrcpy(sp->pro_guitar_track[tracknum]->tonechange[count].name, name);
+						if(end)
+						{	//The project format uses this field as a boolean to identify if this is the default tone for the track
+							strncpy(sp->pro_guitar_track[tracknum]->defaulttone, sp->pro_guitar_track[tracknum]->tonechange[count].name, EOF_SECTION_NAME_LENGTH);
+						}
 						sp->pro_guitar_track[tracknum]->tonechanges++;
 					}
 				}
@@ -2689,73 +2694,76 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					(void) pack_fclose(fp);
 				return 0;
 				case EOF_PRO_GUITAR_TRACK_FORMAT:	//Pro Guitar/Bass
-					(void) pack_putc(sp->pro_guitar_track[tracknum]->numfrets, fp);	//Write the number of frets used in this track
-					(void) pack_putc(sp->pro_guitar_track[tracknum]->numstrings, fp);	//Write the number of strings used in this track
-					for(ctr=0; ctr < sp->pro_guitar_track[tracknum]->numstrings; ctr++)
+				{
+					EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[tracknum];	//Simplify
+
+					(void) pack_putc(tp->numfrets, fp);		//Write the number of frets used in this track
+					(void) pack_putc(tp->numstrings, fp);	//Write the number of strings used in this track
+					for(ctr=0; ctr < tp->numstrings; ctr++)
 					{	//For each string
-						(void) pack_putc(sp->pro_guitar_track[tracknum]->tuning[ctr], fp);	//Write this string's tuning value
+						(void) pack_putc(tp->tuning[ctr], fp);	//Write this string's tuning value
 					}
-					(void) pack_iputl(sp->pro_guitar_track[tracknum]->notes, fp);					//Write the number of notes in this track
-					for(ctr=0; ctr < sp->pro_guitar_track[tracknum]->notes; ctr++)
+					(void) pack_iputl(tp->notes, fp);			//Write the number of notes in this track
+					for(ctr=0; ctr < tp->notes; ctr++)
 					{	//For each note in this track
-						(void) eof_save_song_string_pf(sp->pro_guitar_track[tracknum]->note[ctr]->name, fp);	//Write the note's name
-						(void) pack_putc(0, fp);													//Write the chord's number (not supported yet)
-						(void) pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->type, fp);		//Write the note's difficulty
-						(void) pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->note, fp);		//Write the note's bitflags
-						(void) pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->ghost, fp);		//Write the note's ghost bitflags
+						(void) eof_save_song_string_pf(tp->note[ctr]->name, fp);	//Write the note's name
+						(void) pack_putc(0, fp);									//Write the chord's number (not supported yet)
+						(void) pack_putc(tp->note[ctr]->type, fp);		//Write the note's difficulty
+						(void) pack_putc(tp->note[ctr]->note, fp);		//Write the note's bitflags
+						(void) pack_putc(tp->note[ctr]->ghost, fp);		//Write the note's ghost bitflags
 						for(ctr2=0, bitmask=1; ctr2 < 8; ctr2++, bitmask <<= 1)
 						{	//For each of the 8 bits in the note bitflag
-							if(sp->pro_guitar_track[tracknum]->note[ctr]->note & bitmask)
+							if(tp->note[ctr]->note & bitmask)
 							{	//If this bit is set
-								(void) pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2], fp);	//Write this string's fret value
+								(void) pack_putc(tp->note[ctr]->frets[ctr2], fp);	//Write this string's fret value
 							}
 						}
-						(void) pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->legacymask, fp);	//Write the legacy note bitmask
-						(void) pack_iputl(sp->pro_guitar_track[tracknum]->note[ctr]->pos, fp);			//Write the note's position
-						(void) pack_iputl(sp->pro_guitar_track[tracknum]->note[ctr]->length, fp);		//Write the note's length
-						(void) pack_iputl(sp->pro_guitar_track[tracknum]->note[ctr]->flags, fp);		//Write the note's flags
-						if(sp->pro_guitar_track[tracknum]->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
+						(void) pack_putc(tp->note[ctr]->legacymask, fp);	//Write the legacy note bitmask
+						(void) pack_iputl(tp->note[ctr]->pos, fp);			//Write the note's position
+						(void) pack_iputl(tp->note[ctr]->length, fp);		//Write the note's length
+						(void) pack_iputl(tp->note[ctr]->flags, fp);		//Write the note's flags
+						if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
 						{	//If this note has bend string or slide ending fret definitions
-							if((sp->pro_guitar_track[tracknum]->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (sp->pro_guitar_track[tracknum]->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+							if((tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 							{	//If this is a slide note
-								(void) pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->slideend, fp);	//Write the slide's ending fret
+								(void) pack_putc(tp->note[ctr]->slideend, fp);	//Write the slide's ending fret
 							}
-							if(sp->pro_guitar_track[tracknum]->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+							if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
 							{	//If this is a bend note
-								(void) pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->bendstrength, fp);	//Write the bend's strength
+								(void) pack_putc(tp->note[ctr]->bendstrength, fp);	//Write the bend's strength
 							}
 						}
 					}
 					//Write the section type chunk, first count the number of section types to write
-					if(sp->pro_guitar_track[tracknum]->solos)
+					if(tp->solos)
 					{
 						has_solos = 1;
 					}
-					if(sp->pro_guitar_track[tracknum]->star_power_paths)
+					if(tp->star_power_paths)
 					{
 						has_star_power = 1;
 					}
-					if(sp->pro_guitar_track[tracknum]->arpeggios)
+					if(tp->arpeggios)
 					{
 						has_arpeggios = 1;
 					}
-					if(sp->pro_guitar_track[tracknum]->trills)
+					if(tp->trills)
 					{
 						has_trills = 1;
 					}
-					if(sp->pro_guitar_track[tracknum]->tremolos)
+					if(tp->tremolos)
 					{
 						has_tremolos = 1;
 					}
-					if(sp->pro_guitar_track[tracknum]->handpositions)
+					if(tp->handpositions)
 					{
 						has_handpositions = 1;
 					}
-					if(sp->pro_guitar_track[tracknum]->popupmessages)
+					if(tp->popupmessages)
 					{
 						has_popupmesages = 1;
 					}
-					if(sp->pro_guitar_track[tracknum]->tonechanges)
+					if(tp->tonechanges)
 					{
 						has_tonechanges = 1;
 					}
@@ -2763,107 +2771,115 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					if(has_solos)
 					{	//Write solo sections
 						(void) pack_iputw(EOF_SOLO_SECTION, fp);			//Write solo section type
-						(void) pack_iputl(sp->pro_guitar_track[tracknum]->solos, fp);	//Write number of solo sections for this track
-						for(ctr=0; ctr < sp->pro_guitar_track[tracknum]->solos; ctr++)
+						(void) pack_iputl(tp->solos, fp);					//Write number of solo sections for this track
+						for(ctr=0; ctr < tp->solos; ctr++)
 						{	//For each solo section in the track
 							(void) eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
-							(void) pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
-							(void) pack_iputl(sp->pro_guitar_track[tracknum]->solo[ctr].start_pos, fp);	//Write the solo's position
-							(void) pack_iputl(sp->pro_guitar_track[tracknum]->solo[ctr].end_pos, fp);		//Write the solo's end position
+							(void) pack_putc(0xFF, fp);						//Write an associated difficulty of "all difficulties"
+							(void) pack_iputl(tp->solo[ctr].start_pos, fp);	//Write the solo's position
+							(void) pack_iputl(tp->solo[ctr].end_pos, fp);	//Write the solo's end position
 							(void) pack_iputl(0, fp);						//Write section flags (not used)
 						}
 					}
 					if(has_star_power)
 					{	//Write star power sections
 						(void) pack_iputw(EOF_SP_SECTION, fp);				//Write star power section type
-						(void) pack_iputl(sp->pro_guitar_track[tracknum]->star_power_paths, fp);	//Write number of star power sections for this track
-						for(ctr=0; ctr < sp->pro_guitar_track[tracknum]->star_power_paths; ctr++)
+						(void) pack_iputl(tp->star_power_paths, fp);		//Write number of star power sections for this track
+						for(ctr=0; ctr < tp->star_power_paths; ctr++)
 						{	//For each star power section in the track
 							(void) eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
-							(void) pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
-							(void) pack_iputl(sp->pro_guitar_track[tracknum]->star_power_path[ctr].start_pos, fp);	//Write the SP phrase's position
-							(void) pack_iputl(sp->pro_guitar_track[tracknum]->star_power_path[ctr].end_pos, fp);	//Write the SP phrase's end position
+							(void) pack_putc(0xFF, fp);						//Write an associated difficulty of "all difficulties"
+							(void) pack_iputl(tp->star_power_path[ctr].start_pos, fp);	//Write the SP phrase's position
+							(void) pack_iputl(tp->star_power_path[ctr].end_pos, fp);	//Write the SP phrase's end position
 							(void) pack_iputl(0, fp);						//Write section flags (not used)
 						}
 					}
 					if(has_arpeggios)
 					{	//Write arpeggio section
 						(void) pack_iputw(EOF_ARPEGGIO_SECTION, fp);		//Write arpeggio section type
-						(void) pack_iputl(sp->pro_guitar_track[tracknum]->arpeggios, fp);	//Write number of arpeggio sections for this track
-						for(ctr=0; ctr < sp->pro_guitar_track[tracknum]->arpeggios; ctr++)
+						(void) pack_iputl(tp->arpeggios, fp);				//Write number of arpeggio sections for this track
+						for(ctr=0; ctr < tp->arpeggios; ctr++)
 						{	//For each arpegio section in the track
 							(void) eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
-							(void) pack_putc(sp->pro_guitar_track[tracknum]->arpeggio[ctr].difficulty, fp);	//Write the arpeggio phrase's associated difficulty
-							(void) pack_iputl(sp->pro_guitar_track[tracknum]->arpeggio[ctr].start_pos, fp);	//Write the arpeggio phrase's position
-							(void) pack_iputl(sp->pro_guitar_track[tracknum]->arpeggio[ctr].end_pos, fp);		//Write the arpeggio phrase's end position
+							(void) pack_putc(tp->arpeggio[ctr].difficulty, fp);	//Write the arpeggio phrase's associated difficulty
+							(void) pack_iputl(tp->arpeggio[ctr].start_pos, fp);	//Write the arpeggio phrase's position
+							(void) pack_iputl(tp->arpeggio[ctr].end_pos, fp);		//Write the arpeggio phrase's end position
 							(void) pack_iputl(0, fp);						//Write section flags (not used)
 						}
 					}
 					if(has_trills)
 					{	//Write trill sections
 						(void) pack_iputw(EOF_TRILL_SECTION, fp);		//Write trill section type
-						(void) pack_iputl(sp->pro_guitar_track[tracknum]->trills, fp);	//Write number of trill sections for this track
-						for(ctr=0; ctr < sp->pro_guitar_track[tracknum]->trills; ctr++)
+						(void) pack_iputl(tp->trills, fp);				//Write number of trill sections for this track
+						for(ctr=0; ctr < tp->trills; ctr++)
 						{	//For each trill section in the track
-							(void) eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
-							(void) pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
-							(void) pack_iputl(sp->pro_guitar_track[tracknum]->trill[ctr].start_pos, fp);	//Write the trill phrase's position
-							(void) pack_iputl(sp->pro_guitar_track[tracknum]->trill[ctr].end_pos, fp);		//Write the trill phrase's end position
-							(void) pack_iputl(0, fp);						//Write section flags (not used)
+							(void) eof_save_song_string_pf(NULL, fp);			//Write an empty section name string (not supported yet)
+							(void) pack_putc(0xFF, fp);							//Write an associated difficulty of "all difficulties"
+							(void) pack_iputl(tp->trill[ctr].start_pos, fp);	//Write the trill phrase's position
+							(void) pack_iputl(tp->trill[ctr].end_pos, fp);		//Write the trill phrase's end position
+							(void) pack_iputl(0, fp);							//Write section flags (not used)
 						}
 					}
 					if(has_tremolos)
 					{	//Write tremolo sections
 						(void) pack_iputw(EOF_TREMOLO_SECTION, fp);		//Write tremolo section type
-						(void) pack_iputl(sp->pro_guitar_track[tracknum]->tremolos, fp);	//Write number of tremolo sections for this track
-						for(ctr=0; ctr < sp->pro_guitar_track[tracknum]->tremolos; ctr++)
+						(void) pack_iputl(tp->tremolos, fp);			//Write number of tremolo sections for this track
+						for(ctr=0; ctr < tp->tremolos; ctr++)
 						{	//For each tremolo section in the track
-							(void) eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
-							(void) pack_putc(sp->pro_guitar_track[tracknum]->tremolo[ctr].difficulty, fp);	//Write the tremolo phrase's difficulty
-							(void) pack_iputl(sp->pro_guitar_track[tracknum]->tremolo[ctr].start_pos, fp);	//Write the tremolo phrase's position
-							(void) pack_iputl(sp->pro_guitar_track[tracknum]->tremolo[ctr].end_pos, fp);	//Write the tremolo phrase's end position
-							(void) pack_iputl(0, fp);						//Write section flags (not used)
+							(void) eof_save_song_string_pf(NULL, fp);			//Write an empty section name string (not supported yet)
+							(void) pack_putc(tp->tremolo[ctr].difficulty, fp);	//Write the tremolo phrase's difficulty
+							(void) pack_iputl(tp->tremolo[ctr].start_pos, fp);	//Write the tremolo phrase's position
+							(void) pack_iputl(tp->tremolo[ctr].end_pos, fp);	//Write the tremolo phrase's end position
+							(void) pack_iputl(0, fp);							//Write section flags (not used)
 						}
 					}
 					if(has_handpositions)
 					{	//Write fret hand positions
 						(void) pack_iputw(EOF_FRET_HAND_POS_SECTION, fp);		//Write fret hand position section type
-						(void) pack_iputl(sp->pro_guitar_track[tracknum]->handpositions, fp);	//Write number of fret hand positions for this track
-						for(ctr=0; ctr < sp->pro_guitar_track[tracknum]->handpositions; ctr++)
+						(void) pack_iputl(tp->handpositions, fp);				//Write number of fret hand positions for this track
+						for(ctr=0; ctr < tp->handpositions; ctr++)
 						{	//For each fret hand position in the track
-							(void) eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
-							(void) pack_putc(sp->pro_guitar_track[tracknum]->handposition[ctr].difficulty, fp);	//Write the fret hand position's associated difficulty
-							(void) pack_iputl(sp->pro_guitar_track[tracknum]->handposition[ctr].start_pos, fp);	//Write the fret hand position's timestamp
-							(void) pack_iputl(sp->pro_guitar_track[tracknum]->handposition[ctr].end_pos, fp);		//Write the fret hand position's fret number
-							(void) pack_iputl(0, fp);						//Write section flags (not used)
+							(void) eof_save_song_string_pf(NULL, fp);				//Write an empty section name string (not supported yet)
+							(void) pack_putc(tp->handposition[ctr].difficulty, fp);	//Write the fret hand position's associated difficulty
+							(void) pack_iputl(tp->handposition[ctr].start_pos, fp);	//Write the fret hand position's timestamp
+							(void) pack_iputl(tp->handposition[ctr].end_pos, fp);	//Write the fret hand position's fret number
+							(void) pack_iputl(0, fp);								//Write section flags (not used)
 						}
 					}
 					if(has_popupmesages)
 					{	//Write popup messages
 						(void) pack_iputw(EOF_RS_POPUP_MESSAGE, fp);		//Write popup message section type
-						(void) pack_iputl(sp->pro_guitar_track[tracknum]->popupmessages, fp);	//Write number of popup messages for this track
-						for(ctr=0; ctr < sp->pro_guitar_track[tracknum]->popupmessages; ctr++)
+						(void) pack_iputl(tp->popupmessages, fp);			//Write number of popup messages for this track
+						for(ctr=0; ctr < tp->popupmessages; ctr++)
 						{	//For each popup message in the track
-							(void) eof_save_song_string_pf(sp->pro_guitar_track[tracknum]->popupmessage[ctr].name, fp);		//Write message text
-							(void) pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
-							(void) pack_iputl(sp->pro_guitar_track[tracknum]->popupmessage[ctr].start_pos, fp);		//Write the message's start timestamp
-							(void) pack_iputl(sp->pro_guitar_track[tracknum]->popupmessage[ctr].end_pos, fp);		//Write the message's end timestamp
+							(void) eof_save_song_string_pf(tp->popupmessage[ctr].name, fp);		//Write message text
+							(void) pack_putc(0xFF, fp);		//Write an associated difficulty of "all difficulties"
+							(void) pack_iputl(tp->popupmessage[ctr].start_pos, fp);		//Write the message's start timestamp
+							(void) pack_iputl(tp->popupmessage[ctr].end_pos, fp);		//Write the message's end timestamp
 							(void) pack_iputl(0, fp);						//Write section flags (not used)
 						}
 					}
 					if(has_tonechanges)
 					{	//Write tone changes
 						(void) pack_iputw(EOF_RS_TONE_CHANGE, fp);		//Write tone change message section type
-						(void) pack_iputl(sp->pro_guitar_track[tracknum]->tonechanges, fp);	//Write number of tone changes for this track
-						for(ctr=0; ctr < sp->pro_guitar_track[tracknum]->tonechanges; ctr++)
+						(void) pack_iputl(tp->tonechanges, fp);			//Write number of tone changes for this track
+						for(ctr=0; ctr < tp->tonechanges; ctr++)
 						{	//For each tone change in the track
-							(void) eof_save_song_string_pf(sp->pro_guitar_track[tracknum]->tonechange[ctr].name, fp);		//Write tone name
-							(void) pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
-							(void) pack_iputl(sp->pro_guitar_track[tracknum]->tonechange[ctr].start_pos, fp);		//Write the change's start timestamp
-							(void) pack_iputl(0, fp);					//Write the change's end timestamp (not used)
-							(void) pack_iputl(0, fp);					//Write section flags (not used)
+							(void) eof_save_song_string_pf(tp->tonechange[ctr].name, fp);		//Write tone name
+							(void) pack_putc(0xFF, fp);		//Write an associated difficulty of "all difficulties"
+							(void) pack_iputl(tp->tonechange[ctr].start_pos, fp);		//Write the change's start timestamp
+							if(!strcmp(tp->tonechange[ctr].name, tp->defaulttone))
+							{	//If this tone is the default tone for the track
+								(void) pack_iputl(1, fp);	//Write the change's end timestamp to reflect that this change's tone is the default tone
+							}
+							else
+							{
+								(void) pack_iputl(0, fp);	//Write the change's end timestamp to reflect that this change's tone is NOT the default tone
+							}
+							(void) pack_iputl(0, fp);		//Write section flags (not used)
 						}
 					}
+				}
 				break;//Pro Guitar/Bass
 				case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:	//Variable Lane Legacy (not implemented yet)
 					allegro_message("Error: Variable lane not supported yet.  Aborting");
@@ -2880,56 +2896,63 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		fingerdefinitions = has_fingerdefinitions = has_arrangement = ignore_tuning = 0;
 		if(track_ctr && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 		{	//If this is a pro guitar track
+			EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[tracknum];	//Simplify
+
 			//Count the number of notes with finger definitions
-			for(ctr = 0; ctr < sp->pro_guitar_track[tracknum]->notes; ctr++)
+			for(ctr = 0; ctr < tp->notes; ctr++)
 			{	//For each note in the track
 				for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
 				{	//For each supported string in the track
-					if(sp->pro_guitar_track[tracknum]->note[ctr]->note & bitmask)
+					if(tp->note[ctr]->note & bitmask)
 					{	//If this string is used
 						fingerdefinitions++;	//Increment the counter representing the number of finger usage bytes to write in this block
 						has_fingerdefinitions = 1;
 					}
 				}
 			}
-			if(sp->pro_guitar_track[tracknum]->arrangement)
+			if(tp->arrangement)
 			{	//If this track has a Rocksmith arrangement type defined
 				has_arrangement = 1;
 			}
-			if(sp->pro_guitar_track[tracknum]->ignore_tuning)
+			if(tp->ignore_tuning)
 			{	//If this track's tuning is ignored for chord detection
 				ignore_tuning = 1;
 			}
 		}
 		if(has_fingerdefinitions || has_arrangement || ignore_tuning)
 		{	//If writing data in a custom data block
-			(void) pack_iputl(has_fingerdefinitions + has_arrangement + ignore_tuning, fp);		//Write the number of custom data blocks
-			if(has_fingerdefinitions)
-			{	//Write finger definitions
-				(void) pack_iputl(fingerdefinitions + 4, fp);	//Write the number of bytes this block will contain (finger data and a 4 byte block ID)
-				(void) pack_iputl(2, fp);		//Write the pro guitar finger array custom data block ID
-				for(ctr = 0; ctr < sp->pro_guitar_track[tracknum]->notes; ctr++)
-				{	//For each note in the track
-					for(ctr2 = 0, bitmask = 1; ctr2 < sp->pro_guitar_track[tracknum]->numstrings; ctr2++, bitmask <<= 1)
-					{	//For each supported string in the track
-						if(sp->pro_guitar_track[tracknum]->note[ctr]->note & bitmask)
-						{	//If this string is used
-							(void) pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->finger[ctr2], fp);	//Write this string's finger value
+			if(track_ctr && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+			{	//If this is a pro guitar track
+				EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[tracknum];	//Simplify
+
+				(void) pack_iputl(has_fingerdefinitions + has_arrangement + ignore_tuning, fp);		//Write the number of custom data blocks
+				if(has_fingerdefinitions)
+				{	//Write finger definitions
+					(void) pack_iputl(fingerdefinitions + 4, fp);	//Write the number of bytes this block will contain (finger data and a 4 byte block ID)
+					(void) pack_iputl(2, fp);		//Write the pro guitar finger array custom data block ID
+					for(ctr = 0; ctr < tp->notes; ctr++)
+					{	//For each note in the track
+						for(ctr2 = 0, bitmask = 1; ctr2 < tp->numstrings; ctr2++, bitmask <<= 1)
+						{	//For each supported string in the track
+							if(tp->note[ctr]->note & bitmask)
+							{	//If this string is used
+								(void) pack_putc(tp->note[ctr]->finger[ctr2], fp);	//Write this string's finger value
+							}
 						}
 					}
 				}
-			}
-			if(has_arrangement)
-			{	//Write track arrangement type
-				(void) pack_iputl(5, fp);		//Write the number of bytes this block will contain (1 byte arrangement type and a 4 byte block ID)
-				(void) pack_iputl(3, fp);		//Write the pro guitar track arrangement type custom data block ID
-				(void) pack_putc(sp->pro_guitar_track[tracknum]->arrangement, fp);	//Write the pro guitar track arrangement type
-			}
-			if(ignore_tuning)
-			{	//Write track tuning not honored
-				(void) pack_iputl(5, fp);		//Write the number of bytes this block will contain (1 byte arrangement type and a 4 byte block ID)
-				(void) pack_iputl(4, fp);		//Write the track tuning not honored custom data block ID
-				(void) pack_putc(1, fp);		//Write the track tuning not honored option
+				if(has_arrangement)
+				{	//Write track arrangement type
+					(void) pack_iputl(5, fp);		//Write the number of bytes this block will contain (1 byte arrangement type and a 4 byte block ID)
+					(void) pack_iputl(3, fp);		//Write the pro guitar track arrangement type custom data block ID
+					(void) pack_putc(tp->arrangement, fp);	//Write the pro guitar track arrangement type
+				}
+				if(ignore_tuning)
+				{	//Write track tuning not honored
+					(void) pack_iputl(5, fp);		//Write the number of bytes this block will contain (1 byte arrangement type and a 4 byte block ID)
+					(void) pack_iputl(4, fp);		//Write the track tuning not honored custom data block ID
+					(void) pack_putc(1, fp);		//Write the track tuning not honored option
+				}
 			}
 		}
 		else

@@ -1951,25 +1951,37 @@ if(key[KEY_PAUSE])
 	/* toggle tapping status (CTRL+T in a pro guitar track) */
 	/* toggle MIDI tones (SHIFT+T) */
 	/* toggle crazy status (T) */
+	/* add tone change (CTRL+SHIFT+T in a pro guitar track) */
 		if(key[KEY_T] && !KEY_EITHER_ALT)
 		{
 			if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
-			{
+			{	//If CTRL is held but SHIFT is not
 				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-				{	/* toggle tapping */
+				{	//If a pro guitar track is active
 					(void) eof_menu_note_toggle_tapping();
+					key[KEY_T] = 0;
 				}
 			}
 			else if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 			{	//If SHIFT is held but CTRL is not
 				(void) eof_menu_edit_midi_tones();
 				eof_shift_used = 1;	//Track that the SHIFT key was used
+				key[KEY_T] = 0;
 			}
 			else if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 			{	//If neither SHIFT nor CTRL are held
 				(void) eof_menu_note_toggle_crazy();
+				key[KEY_T] = 0;
 			}
-			key[KEY_T] = 0;
+			else if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
+			{	//If both SHIFT and CTRL are held
+				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//If a pro guitar track is active
+					(void) eof_track_rs_tone_change_add();
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_T] = 0;
+				}
+			}
 		}
 
 	/* select like (CTRL+L) */

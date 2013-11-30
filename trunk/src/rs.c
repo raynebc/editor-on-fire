@@ -1018,7 +1018,6 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		for(ctr = 0; ctr < tp->tonechanges; ctr++)
 		{	//For each tone change
 			//Add the tone change control to the list
-			char tempname[EOF_SECTION_NAME_LENGTH+1];
 			stringlen = (size_t)snprintf(NULL, 0, "    <control time=\"%.3f\" code=\"CDlcTone(%s)\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tp->tonechange[ctr].name) + 1;	//Find the number of characters needed to store this string
 			controls[controlctr].str = malloc(stringlen + 1);	//Allocate memory to build the string
 			if(!controls[controlctr].str)
@@ -1032,21 +1031,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				free(controls);
 				return 0;	//Return failure
 			}
-			///Until the Rocksmith toolkit exposes proper tone key names, convert spaces to underscores, which is one known change that the toolkit makes to the
-			/// display name in order to derive a key name.  Build another copy of the string to do this
-			for(ctr2 = 0; ctr2 < (unsigned long)strlen(tp->tonechange[ctr].name); ctr2++)
-			{	//For each character in the tone name
-				if(tp->tonechange[ctr].name[ctr2] == ' ')
-				{	//If it's a space character
-					tempname[ctr2] = '_';	//Copy it to the new string as an underscore instead
-				}
-				else
-				{	//Otherwise copy it as-is
-					tempname[ctr2] = tp->tonechange[ctr].name[ctr2];
-				}
-			}
-			tempname[ctr2] = '\0';	//Terminate the string
-			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"CDlcTone(%s)\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tempname);
+			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"CDlcTone(%s)\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tp->tonechange[ctr].name);
 			controls[controlctr].pos = tp->tonechange[ctr].start_pos;
 			controlctr++;
 		}
@@ -2157,15 +2142,14 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		(void) eof_track_add_section(eof_song, track, EOF_RS_POPUP_MESSAGE, 0, 5100, 10100, 1, buffer2);	//Insert the expanded text as a popup message, setting the flag to nonzero to mark is as temporary
 		eof_track_pro_guitar_sort_popup_messages(tp);	//Sort the popup messages
 	}
-	if(tp->popupmessages || tp->tonechanges)
-	{	//If at least one popup message or tone change is to be written
+	if(tp->popupmessages)
+	{	//If at least one popup message is to be written
 		unsigned long count, controlctr = 0;
 		size_t stringlen;
 		EOF_RS_CONTROL *controls = NULL;
 
 		//Allocate memory for a list of control events
 		count = tp->popupmessages * 2;	//Each popup message needs one control message to display and one to clear
-		count += tp->tonechanges;		//Each tone change needs one control message
 		(void) snprintf(buffer, sizeof(buffer) - 1, "  <controls count=\"%lu\">\n", count);
 		(void) pack_fputs(buffer, fp);
 		controls = malloc(sizeof(EOF_RS_CONTROL) * count);	//Allocate memory for a list of Rocksmith control events
@@ -2215,41 +2199,6 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			controls[controlctr].pos = tp->popupmessage[ctr].end_pos;
 			controlctr++;
 		}
-		for(ctr = 0; ctr < tp->tonechanges; ctr++)
-		{	//For each tone change
-			//Add the tone change control to the list
-			char tempname[EOF_SECTION_NAME_LENGTH+1];
-			stringlen = (size_t)snprintf(NULL, 0, "    <control time=\"%.3f\" code=\"CDlcTone(%s)\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tp->tonechange[ctr].name) + 1;	//Find the number of characters needed to store this string
-			controls[controlctr].str = malloc(stringlen + 1);	//Allocate memory to build the string
-			if(!controls[controlctr].str)
-			{
-				eof_log("\tError saving:  Cannot allocate memory for control event", 1);
-				while(controlctr > 0)
-				{	//Free previously allocated strings
-					free(controls[controlctr - 1].str);
-					controlctr--;
-				}
-				free(controls);
-				return 0;	//Return failure
-			}
-			///Until the Rocksmith toolkit exposes proper tone key names, convert spaces to underscores, which is one known change that the toolkit makes to the
-			/// display name in order to derive a key name.  Build another copy of the string to do this
-			for(ctr2 = 0; ctr2 < (unsigned long)strlen(tp->tonechange[ctr].name); ctr2++)
-			{	//For each character in the tone name
-				if(tp->tonechange[ctr].name[ctr2] == ' ')
-				{	//If it's a space character
-					tempname[ctr2] = '_';	//Copy it to the new string as an underscore instead
-				}
-				else
-				{	//Otherwise copy it as-is
-					tempname[ctr2] = tp->tonechange[ctr].name[ctr2];
-				}
-			}
-			tempname[ctr2] = '\0';	//Terminate the string
-			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"CDlcTone(%s)\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tempname);
-			controls[controlctr].pos = tp->tonechange[ctr].start_pos;
-			controlctr++;
-		}
 
 		//Sort, write and free the list of control events
 		qsort(controls, (size_t)count, sizeof(EOF_RS_CONTROL), eof_song_qsort_control_events);
@@ -2271,7 +2220,81 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				break;
 			}
 		}
-	}//If at least one popup message or tone change is to be written
+	}//If at least one popup message is to be written
+
+	//Write tone changes
+	//Build and count the size of the list of unique tone names used, and empty the default tone string if it is not valid
+	eof_track_rebuild_rs_tone_names_list_strings(track, 0);	//Build the tone names list without the (D) default tone name suffix
+	if((tp->defaulttone[0] != '\0') && (eof_track_rs_tone_names_list_strings_num > 1))
+	{	//If the default tone is valid and at least two different tone names are referenced among the tone changes
+		unsigned long tonecount = 0;
+		char *temp;
+
+		//Make sure the default tone is placed at the beginning of the eof_track_rs_tone_names_list_strings[] list
+		for(ctr = 1; ctr < eof_track_rs_tone_names_list_strings_num; ctr++)
+		{	//For each unique tone name after the first
+			if(!strcmp(eof_track_rs_tone_names_list_strings[ctr], tp->defaulttone))
+			{	//If this is the track's default tone
+				temp = eof_track_rs_tone_names_list_strings[0];	//Store the pointer to the first tone name in the list
+				eof_track_rs_tone_names_list_strings[0] = eof_track_rs_tone_names_list_strings[ctr];	//Replace it with this one, which is the default tone
+				eof_track_rs_tone_names_list_strings[ctr] = temp;	//And swap the previously first tone name in its place
+				break;
+			}
+		}
+
+		//Write the declarations for the default tone and the first two tones
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <tonebase>%s</tonebase>\n", eof_track_rs_tone_names_list_strings[0]);
+		(void) pack_fputs(buffer, fp);
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <tonea>%s</tonea>\n", eof_track_rs_tone_names_list_strings[0]);
+		(void) pack_fputs(buffer, fp);
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <toneb>%s</toneb>\n", eof_track_rs_tone_names_list_strings[1]);
+		(void) pack_fputs(buffer, fp);
+
+		//Write the third tone declaration if applicable
+		if(eof_track_rs_tone_names_list_strings_num > 2)
+		{	//If there is a third tone name
+			(void) snprintf(buffer, sizeof(buffer) - 1, "  <tonec>%s</tonec>\n", eof_track_rs_tone_names_list_strings[2]);
+			(void) pack_fputs(buffer, fp);
+		}
+
+		//Write the fourth tone declaration if applicable
+		if(eof_track_rs_tone_names_list_strings_num > 3)
+		{	//If there is a fourth tone name
+			(void) snprintf(buffer, sizeof(buffer) - 1, "  <toned>%s</toned>\n", eof_track_rs_tone_names_list_strings[3]);
+			(void) pack_fputs(buffer, fp);
+		}
+
+		//Count how many tone changes are valid to export
+		for(ctr = 0; ctr < tp->tonechanges; ctr++)
+		{	//For each tone change in the track
+			for(ctr2 = 0; (ctr2 < eof_track_rs_tone_names_list_strings_num) && (ctr2 < 4); ctr2++)
+			{	//For the first four unique tone names
+				if(!strcmp(tp->tonechange[ctr].name, eof_track_rs_tone_names_list_strings[ctr2]))
+				{	//If the tone change applies one of the four valid tone names
+					tonecount++;
+					break;	//Break from inner loop
+				}
+			}
+		}
+
+		//Write the tone changes that are valid to export
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <tones count=\"%lu\">\n", tonecount);
+		(void) pack_fputs(buffer, fp);
+		for(ctr = 0; ctr < tp->tonechanges; ctr++)
+		{	//For each tone change in the track
+			for(ctr2 = 0; (ctr2 < eof_track_rs_tone_names_list_strings_num) && (ctr2 < 4); ctr2++)
+			{	//For the first four unique tone names
+				if(!strcmp(tp->tonechange[ctr].name, eof_track_rs_tone_names_list_strings[ctr2]))
+				{	//If the tone change applies one of the four valid tone names
+					(void) snprintf(buffer, sizeof(buffer) - 1, "    <tone time=\"%.3f\" name=\"%s\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tp->tonechange[ctr].name);
+					(void) pack_fputs(buffer, fp);
+					break;	//Break from inner loop
+				}
+			}
+		}
+		(void) pack_fputs("  </tones>\n", fp);
+	}//If the default tone is valid and at least two different tone names are referenced among the tone changes
+	eof_track_destroy_rs_tone_names_list_strings();
 
 	//Write sections
 	for(ctr = 0, numsections = 0; ctr < sp->beats; ctr++)
