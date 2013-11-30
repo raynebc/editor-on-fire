@@ -1665,8 +1665,9 @@ MENU eof_track_proguitar_menu[] =
 
 MENU eof_track_rocksmith_tone_change_menu[] =
 {
-	{"&Add", eof_track_rs_tone_change_add, NULL, 0, NULL},
+	{"&Add\t" CTRL_NAME "+Shift+T", eof_track_rs_tone_change_add, NULL, 0, NULL},
 	{"&List", eof_track_rs_tone_changes, NULL, 0, NULL},
+	{"&Names", eof_track_rs_tone_names, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -2610,8 +2611,15 @@ DIALOG eof_track_rs_tone_change_add_dialog[] =
 
 int eof_track_rs_tone_change_add(void)
 {
-	if(!eof_song_loaded || !eof_song)
-		return 1;	//Do not allow this function to run if a chart is not loaded
+	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long tracknum, ctr;
+	char defaulttone = 0;
+
+	if(!eof_song_loaded || !eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return 1;	//Do not allow this function to run if a pro guitar track isn't active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
 
 	eof_render();
 	eof_color_dialog(eof_track_rs_tone_change_add_dialog, gui_fg_color, gui_bg_color);
@@ -2622,8 +2630,19 @@ int eof_track_rs_tone_change_add(void)
 	{	//User clicked OK
 		if(eof_etext[0] != '\0')
 		{	//If a tone key name is specified
+			for(ctr = 0; ctr < (unsigned long)strlen(eof_etext); ctr++)
+			{	//For each character in the name
+				if(eof_etext[ctr] == ' ')
+				{	//If it's a space character
+					eof_etext[ctr] = '_';	//Replace it with an underscore
+				}
+			}
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			(void) eof_track_add_section(eof_song, eof_selected_track, EOF_RS_TONE_CHANGE, 0, eof_music_pos - eof_av_delay, 0, 0, eof_etext);
+			if((tp->defaulttone[0] != '\0') && (!strcmp(tp->defaulttone, eof_etext)))
+			{	//If the tone being changed to is the currently defined default tone
+					defaulttone = 1;
+			}
+			(void) eof_track_add_section(eof_song, eof_selected_track, EOF_RS_TONE_CHANGE, 0, eof_music_pos - eof_av_delay, defaulttone, 0, eof_etext);
 		}
 	}
 
@@ -2632,7 +2651,7 @@ int eof_track_rs_tone_change_add(void)
 
 char **eof_track_rs_tone_changes_list_strings = NULL;	//Stores allocated strings for eof_track_rs_tone_changes()
 char eof_track_rs_tone_changes_dialog_undo_made = 0;	//Used to track whether an undo state was made in this dialog
-char eof_track_rs_tone_changes_dialog_string[25] = {0};	//The title string for the RS tone changes dialog
+char eof_track_rs_tone_changes_dialog_string[35] = {0};	//The title string for the RS tone changes dialog
 
 DIALOG eof_track_rs_tone_changes_dialog[] =
 {
@@ -2671,6 +2690,7 @@ void eof_track_rebuild_rs_tone_changes_list_strings(void)
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned long tracknum, ctr;
 	size_t stringlen;
+	char *suffix, blank[] = "", def[] = " (D)", defaultfound = 0;
 
 	if(!eof_song_loaded || !eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return;	//Do not allow this function to run if a chart is not loaded or a pro guitar/bass track is not active
@@ -2682,7 +2702,14 @@ void eof_track_rebuild_rs_tone_changes_list_strings(void)
 	for(ctr = 0; ctr < tp->tonechanges; ctr++)
 	{	//For each tone change
 		stringlen = (size_t)snprintf(NULL, 0, "%lums : %s", tp->tonechange[ctr].start_pos, tp->tonechange[ctr].name) + 1;	//Find the number of characters needed to snprintf this string
-		eof_track_rs_tone_changes_list_strings[ctr] = malloc(stringlen + 1);	//Allocate memory to build the string
+		suffix = blank;
+		if(!strcmp(tp->tonechange[ctr].name, tp->defaulttone))
+		{	//If this tone is the track's default tone
+			suffix = def;	//Append the suffix denoting the default tone
+			stringlen += strlen(def);
+			defaultfound = 1;	//Track that at least one tone change still uses the default tone
+		}
+		eof_track_rs_tone_changes_list_strings[ctr] = malloc(stringlen);	//Allocate memory to build the string
 		if(!eof_track_rs_tone_changes_list_strings[ctr])
 		{
 			allegro_message("Error allocating memory");
@@ -2695,7 +2722,11 @@ void eof_track_rebuild_rs_tone_changes_list_strings(void)
 			eof_track_rs_tone_changes_list_strings = NULL;
 			return;
 		}
-		(void) snprintf(eof_track_rs_tone_changes_list_strings[ctr], stringlen, "%lums : %s", tp->tonechange[ctr].start_pos, tp->tonechange[ctr].name);
+		(void) snprintf(eof_track_rs_tone_changes_list_strings[ctr], stringlen, "%lums : %s%s", tp->tonechange[ctr].start_pos, tp->tonechange[ctr].name, suffix);
+	}
+	if(!defaultfound)
+	{	//If no tone changes in the arrangement use the default tone anymore (ie. all the ones that did were deleted)
+		tp->defaulttone[0] = '\0';	//Truncate the default tone string
 	}
 }
 
@@ -2735,7 +2766,7 @@ int eof_track_rs_tone_changes(void)
 	tp = eof_song->pro_guitar_track[tracknum];
 	eof_track_pro_guitar_sort_tone_changes(tp);	//Re-sort the tone changes
 
-	//Allocate and build the strings for the phrases
+	//Allocate and build the strings for the tone changes
 	eof_track_rebuild_rs_tone_changes_list_strings();
 	if(eof_track_find_effective_rs_tone_change(eof_music_pos - eof_av_delay, &tonechange))
 	{	//If a tone change had been placed at or before the current seek position
@@ -2747,7 +2778,7 @@ int eof_track_rs_tone_changes(void)
 	eof_track_rs_tone_changes_dialog_undo_made = 0;	//Reset this condition
 	eof_color_dialog(eof_track_rs_tone_changes_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_track_rs_tone_changes_dialog);
-	(void) eof_popup_dialog(eof_track_rs_tone_changes_dialog, 0);
+	(void) eof_popup_dialog(eof_track_rs_tone_changes_dialog, 1);
 
 	//Cleanup
 	for(ctr = 0; ctr < tp->tonechanges; ctr++)
@@ -2914,6 +2945,7 @@ int eof_track_rs_tone_changes_edit(DIALOG * d)
 
 int eof_track_rs_tone_changes_delete_all(DIALOG * d)
 {
+	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned long i, tracknum;
 	int junk;
 
@@ -2925,19 +2957,21 @@ int eof_track_rs_tone_changes_delete_all(DIALOG * d)
 		return D_O_K;
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	if(eof_song->pro_guitar_track[tracknum]->tonechanges == 0)
+	tp = eof_song->pro_guitar_track[tracknum];
+	if(tp->tonechanges == 0)
 	{
 		return D_O_K;
 	}
-	for(i = eof_song->pro_guitar_track[tracknum]->tonechanges; i > 0; i--)
+	for(i = tp->tonechanges; i > 0; i--)
 	{	//For each tone change (in reverse order)
 		if(!eof_track_rs_tone_changes_dialog_undo_made)
 		{	//If an undo state hasn't been made yet since launching this dialog
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			eof_track_rs_tone_changes_dialog_undo_made = 1;
 		}
-		eof_track_pro_guitar_delete_tone_change(eof_song->pro_guitar_track[tracknum], i - 1);
+		eof_track_pro_guitar_delete_tone_change(tp, i - 1);
 	}
+	tp->defaulttone[0] = '\0';	//Truncate the default tone string since no tone changes exist anymore
 
 	(void) dialog_message(eof_track_rs_tone_changes_dialog, MSG_START, 0, &junk);	//Re-initialize the dialog
 	(void) dialog_message(eof_track_rs_tone_changes_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
@@ -2969,6 +3003,286 @@ int eof_track_rs_tone_changes_seek(DIALOG * d)
 
 	return D_O_K;
 }
+
+char **eof_track_rs_tone_names_list_strings = NULL;			//Stores allocated strings for eof_track_rs_tone_names()
+unsigned long eof_track_rs_tone_names_list_strings_num = 0;	//Tracks the number of strings stored in the above array
+char eof_track_rs_tone_names_dialog_undo_made = 0;			//Used to track whether an undo state was made in this dialog
+char eof_track_rs_tone_names_dialog_string[35] = {0};		//The title string for the RS tone names dialog
+
+DIALOG eof_track_rs_tone_names_dialog[] =
+{
+	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
+	{ d_agup_window_proc,0,   48,  400, 237, 2,   23,  0,    0,      0,   0,   eof_track_rs_tone_names_dialog_string,NULL, NULL },
+	{ d_agup_list_proc,  12,  84,  300, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_track_rs_tone_names_list,NULL, NULL },
+	{ d_agup_push_proc,  320, 84,  68,  28,  2,   23,  'd',  D_EXIT, 0,   0,   "&Default",     NULL, (void *)eof_track_rs_tone_names_default },
+	{ d_agup_push_proc,  320, 124, 68,  28,  2,   23,  'r',  D_EXIT, 0,   0,   "&Rename",      NULL, (void *)eof_track_rs_tone_names_rename },
+	{ d_agup_button_proc,12,  245, 90,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+char * eof_track_rs_tone_names_list(int index, int * size)
+{
+	switch(index)
+	{
+		case -1:
+		{
+			EOF_PRO_GUITAR_TRACK *tp;
+			unsigned long tracknum, ctr, ctr2, namecount = 0;
+			char unique;
+
+			tracknum = eof_song->track[eof_selected_track]->tracknum;
+			tp = eof_song->pro_guitar_track[tracknum];
+			for(ctr = 0; ctr < tp->tonechanges; ctr++)
+			{	//For each tone change in the active track
+				unique = 1;		//Consider this tone change's name to be unique unless any of the previous tone changes use the same name
+				if(ctr > 0)
+				{	//If this isn't the first tone change, compare this tone change's name to the previous changes
+					for(ctr2 = ctr; ctr2 > 0; ctr2--)
+					{	//For each previous tone change
+						if(!strcmp(tp->tonechange[ctr].name, tp->tonechange[ctr2 - 1].name))
+						{	//If the tone change's name matches the name of any of the previous tone changes
+							unique = 0;
+							break;
+						}
+					}
+				}
+				if(unique)
+				{	//If this is the first tone change of this name encountered for the track
+					namecount++;
+				}
+			}
+			*size = namecount;
+			eof_track_rs_tone_names_list_strings_num = namecount;
+			(void) snprintf(eof_track_rs_tone_names_dialog_string, sizeof(eof_track_rs_tone_names_dialog_string) - 1, "Rocksmith tone names (%lu)", namecount);
+			break;
+		}
+		default:
+		{
+			return eof_track_rs_tone_names_list_strings[index];
+		}
+	}
+	return NULL;
+}
+
+void eof_track_rebuild_rs_tone_names_list_strings(unsigned long track, char allowsuffix)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long tracknum, ctr, ctr2, index = 0, temp;
+	size_t stringlen;
+	char unique, *suffix, blank[] = "", def[] = " (D)", defaultfound = 0;
+	int junk;
+
+	if(!eof_song_loaded || !eof_song || (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return;	//Do not allow this function to run if a chart is not loaded or a pro guitar/bass track is not active
+
+	tracknum = eof_song->track[track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+	temp = eof_selected_track;	//Store the current track since eof_selected_track has to be changed in order for eof_track_rs_tone_names_list() to count tones in the correct track
+	eof_selected_track = track;
+	(void) eof_track_rs_tone_names_list(-1, &junk);	//Update eof_track_rs_tone_names_list_strings_num
+	eof_selected_track = temp;	//Restore the original active track
+	eof_track_rs_tone_names_list_strings = malloc(sizeof(char *) * eof_track_rs_tone_names_list_strings_num);	//Allocate enough pointers to have one for each tone name
+
+	for(ctr = 0; ctr < tp->tonechanges; ctr++)
+	{	//For each tone change in the active track
+		unique = 1;		//Consider this tone change's name to be unique unless any of the previous tone changes use the same name
+		if(ctr > 0)
+		{	//If this isn't the first tone change, compare this tone change's name to the previous changes
+			for(ctr2 = ctr; ctr2 > 0; ctr2--)
+			{	//For each previous tone change
+				if(!strcmp(tp->tonechange[ctr].name, tp->tonechange[ctr2 - 1].name))
+				{	//If the tone change's name matches the name of any of the previous tone changes
+					unique = 0;
+					break;
+				}
+			}
+		}
+		if(unique)
+		{	//If this is the first tone change of this name encountered for the track, copy it into a list
+			stringlen = strlen(tp->tonechange[ctr].name) + 1;	//Unless this tone name is found to be the default, the string will just be the tone's name
+			suffix = blank;
+			if(!strcmp(tp->tonechange[ctr].name, tp->defaulttone))
+			{	//If this tone is the track's default tone
+				defaultfound = 1;	//Track that at least one tone change still uses the default tone
+				if(allowsuffix)
+				{	//If the calling function is allowing the default tone suffix to be appended to the string
+					suffix = def;	//Append the suffix denoting the default tone
+					stringlen += strlen(def);
+				}
+			}
+			eof_track_rs_tone_names_list_strings[index] = malloc(stringlen);
+			if(!eof_track_rs_tone_names_list_strings[index])
+			{
+				allegro_message("Error allocating memory");
+				while(index > 0)
+				{	//Free previously allocated strings
+					free(eof_track_rs_tone_names_list_strings[index - 1]);
+					index--;
+				}
+				free(eof_track_rs_tone_names_list_strings);
+				eof_track_rs_tone_names_list_strings = NULL;
+				eof_track_rs_tone_names_list_strings_num = 0;
+				return;
+			}
+			(void) snprintf(eof_track_rs_tone_names_list_strings[index], stringlen, "%s%s", tp->tonechange[ctr].name, suffix);
+			index++;
+		}
+	}
+	if(!defaultfound)
+	{	//If no tone changes in the arrangement use the default tone anymore (ie. all the ones that did were deleted)
+		tp->defaulttone[0] = '\0';	//Truncate the default tone string
+	}
+}
+
+void eof_track_destroy_rs_tone_names_list_strings(void)
+{
+	unsigned long ctr;
+
+	for(ctr = 0; ctr < eof_track_rs_tone_names_list_strings_num; ctr++)
+	{	//Free previously allocated strings
+		free(eof_track_rs_tone_names_list_strings[ctr]);
+	}
+	free(eof_track_rs_tone_names_list_strings);
+	eof_track_rs_tone_names_list_strings = NULL;
+	eof_track_rs_tone_names_list_strings_num = 0;
+}
+
+int eof_track_rs_tone_names(void)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long tracknum;
+
+	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return 1;	//Do not allow this function to run if a pro guitar track isn't active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+	eof_track_pro_guitar_sort_tone_changes(tp);	//Re-sort the tone changes
+
+	//Allocate and build the strings for the tone names
+	eof_track_rebuild_rs_tone_names_list_strings(eof_selected_track, 1);
+
+	//Call the dialog
+	eof_clear_input();
+	eof_track_rs_tone_names_dialog_undo_made = 0;	//Reset this condition
+	eof_color_dialog(eof_track_rs_tone_names_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_track_rs_tone_names_dialog);
+	(void) eof_popup_dialog(eof_track_rs_tone_names_dialog, 1);
+
+	//Cleanup
+	eof_track_destroy_rs_tone_names_list_strings();
+
+	return 1;
+}
+
+int eof_track_rs_tone_names_default(DIALOG * d)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long tracknum, ctr, namenum;
+
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
+	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return D_O_K;	//Do not allow this function to run if a pro guitar track isn't active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+	namenum = eof_track_rs_tone_names_dialog[1].d1;
+	if((tp->tonechanges == 0) || (namenum >= eof_track_rs_tone_names_list_strings_num) || (eof_track_rs_tone_names_list_strings[namenum][0] == '\0'))
+		return D_O_K;
+
+	//Rebuild the tone name strings omitting the (D) suffix, so the default tone name can be compared with other tone names
+	eof_track_destroy_rs_tone_names_list_strings();
+	eof_track_rebuild_rs_tone_names_list_strings(eof_selected_track, 0);
+	if(strcmp(tp->defaulttone, eof_track_rs_tone_names_list_strings[namenum]))
+	{	//If the default tone is being changed
+		if(!eof_track_rs_tone_names_dialog_undo_made)
+		{	//If an undo state hasn't been made yet since launching this dialog
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			eof_track_rs_tone_names_dialog_undo_made = 1;
+		}
+		strncpy(tp->defaulttone, eof_track_rs_tone_names_list_strings[namenum], EOF_SECTION_NAME_LENGTH);	//Update the defaulttone string
+		for(ctr = 0; ctr < tp->tonechanges; ctr++)
+		{	//For each tone change in the track
+			if(!strcmp(tp->defaulttone, tp->tonechange[ctr].name))
+			{	//If this tone change applies the default tone
+				tp->tonechange[ctr].end_pos = 1;	//Track this condition
+			}
+			else
+			{
+				tp->tonechange[ctr].end_pos = 0;	//Reset this condition
+			}
+		}
+	}
+
+	//Release the tone name strings showing the (D) suffix for the default tone
+	eof_track_destroy_rs_tone_names_list_strings();
+	eof_track_rebuild_rs_tone_names_list_strings(eof_selected_track, 1);
+
+	return D_REDRAW;	//Have Allegro redraw the dialog
+}
+
+int eof_track_rs_tone_names_rename(DIALOG * d)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long tracknum, ctr, namenum;
+
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
+	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return D_O_K;	//Do not allow this function to run if a pro guitar track isn't active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+	namenum = eof_track_rs_tone_names_dialog[1].d1;
+	if((tp->tonechanges == 0) || (namenum >= eof_track_rs_tone_names_list_strings_num) || (eof_track_rs_tone_names_list_strings[namenum][0] == '\0'))
+		return D_O_K;
+
+	//Rebuild the tone name strings omitting the (D) suffix, so the correct tone name can be matched against tone changes for renaming
+	eof_track_destroy_rs_tone_names_list_strings();
+	eof_track_rebuild_rs_tone_names_list_strings(eof_selected_track, 0);
+
+	//Prepare the tone change dialog so the user can edit the name
+	eof_color_dialog(eof_track_rs_tone_change_add_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_track_rs_tone_change_add_dialog);
+	strncpy(eof_etext, eof_track_rs_tone_names_list_strings[namenum], EOF_SECTION_NAME_LENGTH);
+	if(eof_popup_dialog(eof_track_rs_tone_change_add_dialog, 2) == 3)
+	{	//User clicked OK
+		if((eof_etext[0] != '\0') && strcmp(eof_track_rs_tone_names_list_strings[namenum], eof_etext))
+		{	//If a tone key name was specified and it is different from the key name it already had
+			if(!eof_track_rs_tone_names_dialog_undo_made)
+			{	//If an undo state hasn't been made yet since launching this dialog
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				eof_track_rs_tone_names_dialog_undo_made = 1;
+			}
+			if(!strcmp(tp->defaulttone, eof_track_rs_tone_names_list_strings[namenum]))
+			{	//If the default tone is being renamed
+				strncpy(tp->defaulttone, eof_etext, EOF_SECTION_NAME_LENGTH);	//Update the default tone string
+			}
+			for(ctr = 0; ctr < tp->tonechanges; ctr++)
+			{	//For each tone change in the track
+				if(!strcmp(tp->tonechange[ctr].name, eof_track_rs_tone_names_list_strings[namenum]))
+				{	//If this is a tone change whose name is being changed
+					strncpy(tp->tonechange[ctr].name, eof_etext, EOF_SECTION_NAME_LENGTH);	//Update the tone name
+				}
+			}
+		}
+	}
+
+	//Release the tone name strings showing the (D) suffix for the default tone
+	eof_track_destroy_rs_tone_names_list_strings();
+	eof_track_rebuild_rs_tone_names_list_strings(eof_selected_track, 1);
+
+	return D_REDRAW;	//Have Allegro redraw the dialog
+}
+
+
+
+
 
 int eof_menu_track_copy_popups_track_1(void)
 {

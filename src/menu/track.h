@@ -11,8 +11,11 @@ extern DIALOG eof_pro_guitar_tuning_dialog[];
 extern DIALOG eof_note_set_num_frets_strings_dialog[];
 extern DIALOG eof_fret_hand_position_list_dialog[];
 
-extern char eof_fret_hand_position_list_dialog_undo_made;	//Used to track an undo state having been made in the fret hand positions dialog
+extern char eof_fret_hand_position_list_dialog_undo_made;			//Used to track an undo state having been made in the fret hand positions dialog
 extern char eof_fret_hand_position_list_dialog_title_string[30];	//This will be rebuilt by the list box count function to display the number of positions present
+
+extern char **eof_track_rs_tone_names_list_strings;				//A list of unique tone names that is build with eof_track_rebuild_rs_tone_names_list_strings()
+extern unsigned long eof_track_rs_tone_names_list_strings_num;	//Indicates the number of entries in the above array
 
 int eof_track_difficulty_dialog(void);	//Allow the active track's difficulty to be set to a value from 0 through 6
 int eof_track_rocksmith_toggle_difficulty_limit(void);
@@ -93,14 +96,31 @@ int eof_track_find_effective_rs_tone_change(unsigned long pos, unsigned long *ch
 	//The corresponding tone change number for the track is returned through changenum
 	//Zero is returned if no tone change is in effect or upon error
 
+int eof_track_rs_tone_names(void);
+	//Displays the tone names referenced by all tone changes in the current pro guitar/bass track
+char * eof_track_rs_tone_names_list(int index, int * size);
+	//List dialog function for eof_track_rs_tone_names()
+void eof_track_rebuild_rs_tone_names_list_strings(unsigned long track, char allowsuffix);
+	//Allocates memory for and builds eof_track_rs_tone_names_list_strings[] to include a list of strings containing all unique tone names used in the specified track
+	//If allowsuffix is nonzero, " (D)" is appended to the tone name string of whichever of the tone names is the current default (if any)
+	//	This parameter should be passed as zero when using the names for anything besides display purposes
+	//eof_track_rs_tone_names_list_strings_num indicates how many strings are in the array
+	//If the specified track's default tone is no longer valid (not used by any tone changes), its default tone string is emptied
+void eof_track_destroy_rs_tone_names_list_strings(void);
+	//Destroys the eof_track_rs_tone_names_list_strings[] array and frees its memory
+int eof_track_rs_tone_names_default(DIALOG * d);
+	//Sets the selected tone name to be the default tone for the active track
+int eof_track_rs_tone_names_rename(DIALOG * d);
+	//Renames all instances of the selected tone name
+
 int eof_track_rocksmith_arrangement_set(unsigned char num);
 	//Validates that the active track is a pro guitar track and sets the track's arrangement type to the specified number
 	//If num is > 4, a value of 0 is set instead
 int eof_track_rocksmith_arrangement_undefined(void);	//Sets an undefined arrangement type
 int eof_track_rocksmith_arrangement_combo(void);		//Sets a combo arrangement type
-int eof_track_rocksmith_arrangement_rhythm(void);	//Sets a rhythm arrangement type
-int eof_track_rocksmith_arrangement_lead(void);		//Sets a lead arrangement type
-int eof_track_rocksmith_arrangement_bass(void);		//Sets a bass arrangement type
+int eof_track_rocksmith_arrangement_rhythm(void);		//Sets a rhythm arrangement type
+int eof_track_rocksmith_arrangement_lead(void);			//Sets a lead arrangement type
+int eof_track_rocksmith_arrangement_bass(void);			//Sets a bass arrangement type
 
 int eof_track_manage_rs_phrases(void);
 	//Displays the phrases defined for the current pro guitar/bass track, along with the maxdifficulty of each

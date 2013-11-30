@@ -102,7 +102,7 @@
 
 typedef struct
 {
-    char name[EOF_NAME_LENGTH+1];
+    char name[EOF_NAME_LENGTH + 1];
 	unsigned char type;			//Stores the note's difficulty
 	unsigned char note;			//Stores the note's fret values
 	unsigned long midi_pos;
@@ -115,7 +115,7 @@ typedef struct
 
 typedef struct
 {
-	char name[EOF_NAME_LENGTH+1];
+	char name[EOF_NAME_LENGTH + 1];
 	unsigned char type;			//Stores the note's difficulty
 	unsigned char note;			//Stores the note's string statuses (set=played, reset=not played).  Bit 0 refers to string 6 (low E), bit 5 refers to string 1 (high e), etc.
 	unsigned char ghost;		//Stores the note's ghost statuses.  Bit 0 indicates whether string 1 is ghosted, etc.
@@ -134,7 +134,7 @@ typedef struct
 
 typedef struct
 {
-	char name[EOF_NAME_LENGTH+1];
+	char name[EOF_NAME_LENGTH + 1];
 	unsigned char type;
 	unsigned char note;
 	unsigned long endbeat;
@@ -159,7 +159,7 @@ typedef struct
 {
 	unsigned char type;		//The lyric set this lyric belongs to (0=PART VOCALS, 1=HARM1, 2=HARM2...)
 	unsigned char note;		// if zero, the lyric has no defined pitch
-	char          text[EOF_MAX_LYRIC_LENGTH+1];
+	char          text[EOF_MAX_LYRIC_LENGTH + 1];
 	unsigned long midi_pos;
 	long midi_length;		//Keep as signed, since the npos logic uses signed math
 	unsigned long pos;
@@ -171,7 +171,7 @@ typedef struct
 typedef struct
 {
 	unsigned char note;
-	char          text[EOF_MAX_LYRIC_LENGTH+1];
+	char          text[EOF_MAX_LYRIC_LENGTH + 1];
 	unsigned long midi_pos;
 	long          midi_length;	//Keep as signed, since the npos logic uses signed math
 	unsigned long pos;
@@ -191,7 +191,7 @@ typedef struct
 	unsigned long start_pos;
 	unsigned long end_pos;	//Will store other data in items that don't use an end position (such as the fret number for fret hand positions)
 	unsigned long flags;
-	char name[EOF_SECTION_NAME_LENGTH+1];
+	char name[EOF_SECTION_NAME_LENGTH + 1];
 	unsigned char difficulty;	//The difficulty this phrase applies to (ie. arpeggios, hand positions, RS tremolos), or 0xFF if it otherwise applies to all difficulties
 
 } EOF_PHRASE_SECTION;
@@ -256,14 +256,14 @@ typedef struct
 #define EOF_TRACK_NAME_SIZE		31
 typedef struct
 {
-	char track_format;				//Specifies which track format this is, using one of the macros above
-	char track_behavior;			//Specifies which behavior this track follows, using one of the macros above
-	char track_type;				//Specifies which type of track this is (ie default PART GUITAR, custom track, etc)
-	unsigned long tracknum;			//Specifies which number of that type this track is, used as an index into the type-specific track arrays
-	char name[EOF_NAME_LENGTH+1];	//Specifies the name of the track
-	char altname[EOF_NAME_LENGTH+1];//Specifies the alternate name of the track (for RS export)
-	unsigned char difficulty;		//Specifies the difficulty level from 0-5 (standard 0-5 scale), or 6 for devil heads (extreme difficulty).  0xFF means the difficulty is undefined
-	unsigned char numdiffs;			//Specifies the number of difficulties usable in this track, including BRE (is set to 5 unless the track's EOF_TRACK_FLAG_UNLIMITED_DIFFS flag is set)
+	char track_format;					//Specifies which track format this is, using one of the macros above
+	char track_behavior;				//Specifies which behavior this track follows, using one of the macros above
+	char track_type;					//Specifies which type of track this is (ie default PART GUITAR, custom track, etc)
+	unsigned long tracknum;				//Specifies which number of that type this track is, used as an index into the type-specific track arrays
+	char name[EOF_NAME_LENGTH + 1];		//Specifies the name of the track
+	char altname[EOF_NAME_LENGTH + 1];	//Specifies the alternate name of the track (for RS export)
+	unsigned char difficulty;			//Specifies the difficulty level from 0-5 (standard 0-5 scale), or 6 for devil heads (extreme difficulty).  0xFF means the difficulty is undefined
+	unsigned char numdiffs;				//Specifies the number of difficulties usable in this track, including BRE (is set to 5 unless the track's EOF_TRACK_FLAG_UNLIMITED_DIFFS flag is set)
 	unsigned long flags;
 } EOF_TRACK_ENTRY;
 
@@ -360,6 +360,7 @@ typedef struct
 	/* tone changes */
 	EOF_PHRASE_SECTION tonechange[EOF_MAX_PHRASES];
 	unsigned long tonechanges;
+	char defaulttone[EOF_SECTION_NAME_LENGTH + 1];
 
 } EOF_PRO_GUITAR_TRACK;
 
@@ -384,7 +385,7 @@ typedef struct
 	char filename[256];
 	long  midi_offset;	//Leave signed just in case this is eventually used to allow for insertion of leading silence via specifying a negative midi offset
 	char modified;
-	char description[EOF_NAME_LENGTH+1];
+	char description[EOF_NAME_LENGTH + 1];
 
 } EOF_OGG_INFO;
 
@@ -423,7 +424,7 @@ typedef struct
 	unsigned char type;
 	unsigned long start_pos;
 	unsigned long end_pos;
-	char name[EOF_NAME_LENGTH+1];
+	char name[EOF_NAME_LENGTH + 1];
 
 } EOF_CATALOG_ENTRY;
 
