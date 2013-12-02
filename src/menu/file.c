@@ -2721,7 +2721,7 @@ int eof_save_helper(char *destfilename)
 			}
 			else
 			{
-				(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,RS_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
+				(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,RS_FORMAT);	//Import lyrics into FLC lyrics structure and export to Rocksmith format
 			}
 		}
 		(void) eof_detect_difficulties(eof_song, eof_selected_track);		//Update eof_track_diff_populated_status[] to reflect the currently selected difficulty

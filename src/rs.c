@@ -451,7 +451,6 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	(void) pack_fputs("<?xml version='1.0' encoding='UTF-8'?>\n", fp);
 	(void) pack_fputs("<!-- " EOF_VERSION_STRING " -->\n", fp);	//Write EOF's version in an XML comment
 	(void) pack_fputs("<song version=\"4\">\n", fp);
-	(void) pack_fputs("<song>\n", fp);
 	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->title, 64);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <title>%s</title>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
@@ -2517,8 +2516,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						flags = eof_get_rs_techniques(sp, track, ctr3, 0, &tech);	//Determine techniques used by this chord
 						highdensity = eof_note_has_high_chord_density(sp, track, ctr3, 2);	//Determine whether the chord will export with high density
 						notepos = (double)tp->note[ctr3]->pos / 1000.0;
-						if(first || (chordid != lastchordid) || flags)
-						{	//If this is the first chord to be written, it's ID is different from that of the previous chord, or it has statuses that require chordNote subtags to define
+						if(first || (chordid != lastchordid) || flags || !highdensity)
+						{	//If this is the first chord to be written, it's ID is different from that of the previous chord, it has statuses that require chordNote subtags to define or it is a low density chord
 							chordnote = 1;	//Ensure chordNote subtags are written
 							tagend[0] = '\0';	//Drop the / from the string
 						}
@@ -2540,7 +2539,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 									(void) eof_get_rs_techniques(sp, track, ctr3, stringnum, &tech);	//Determine techniques used by this note
 									fret = tp->note[ctr3]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
 									if(tech.bend || (tech.slideto >= 0) || (tech.unpitchedslideto >= 0))
-									{	//If this note it is marked as a bend or slide note
+									{	//If this note is marked as a bend or slide note
 										if(!eof_pro_guitar_note_lowest_fret(tp, ctr3))
 										{	//If this note also contains no fretted strings, omit these statuses because they're invalid for open notes
 											tech.bend = 0;
@@ -2554,9 +2553,9 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 											}
 										}
 									}
-									else
-									{
-										tech.length = 0;	//chordNotes should have no sustain unless they use bend or slide technique
+									else if(!tech.tremolo)
+									{	//Otherwise if the chord also does not have tremolo status (which is required for the technique to display in game)
+										tech.length = 0;	//Force the chordNotes to have no sustain
 									}
 									if(tech.bend)
 									{	//If the note is a bend, the note tag must not end on the same line as it will have a bendValues subtag
@@ -2580,8 +2579,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 										(void) pack_fputs("            </bendValues>\n", fp);
 										(void) pack_fputs("          </chordNote>\n", fp);
 									}
-								}
-							}
+								}//If this string is used in this note and it is not ghosted
+							}//For each string used in this track
 							(void) pack_fputs("        </chord>\n", fp);
 						}//If chordNote tags are to be written
 						lastchordid = chordid;
