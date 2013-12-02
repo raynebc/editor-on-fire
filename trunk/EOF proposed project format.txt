@@ -165,7 +165,7 @@ Custom track data block definitions
 		1 byte:		Number of additional data bytes per note
 		[varies]:	Number of data bytes * number of notes (defined above in the track data) bytes
 	Custom data block ID 2:  Pro guitar finger arrays, for each note in the pro guitar track:
-		FINGER CHUNK, for each set bit in the note's bitflag (defined in the prior track data)
+		FINGER CHUNK, for each set bit in the note's bitflag (defined in the prior track's note data)
 		{
 			1 byte:	Finger number used for this string (0 = unused/undefined, 1 = index, 2 = middle, 3= ring, 4 = pinky, 5 = thumb)
 		}
@@ -173,6 +173,11 @@ Custom track data block definitions
 		1 byte:		Arrangement type (1 = Combo, 2 = Rhythm, 3 = Lead, 4 = Bass)
 	Custom data block ID 4:  Track tuning not honored
 		1 byte:		If nonzero, indicates that the chord name detection reflects the DEFAULT tuning for the arrangement, and not the track's actual specified tuning.
+	Custom data block ID 5:  Vibrato speeds
+		VIBRATO CHUNK, for each note in the track that is marked with vibrato (note flag value 16777216)
+		{
+			1 byte: Vibrato speed used for this note (40 = slow, 80 = medium, 120 = fast, the default value is 80)
+		}
 =========================================		
 }
 (End of file)
