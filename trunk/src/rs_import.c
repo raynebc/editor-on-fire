@@ -234,7 +234,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 			allegro_message("This appears to be a Go PlayAlong XML file.  Use \"File>Guitar Pro Import\" instead.");
 			error = 1;
 		}
-		else if(strcasestr_spec(buffer, "<song>"))
+		else if(strcasestr_spec(buffer, "<song>") || strcasestr_spec(buffer, "<song version"))
 		{	//If this is the song tag
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state because the tempo map will be overwritten
 			for(ctr = eof_song->text_events; ctr > 0; ctr--)

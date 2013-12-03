@@ -1398,21 +1398,13 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				/* write note gems */
 				for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
 				{	//For each of the 6 usable strings
-					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC)
-					{	//Harmonic notes are written on channel 5
-						channel = 5;
-					}
-					else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
 					{	//Tapped notes are written on channel 4
 						channel = 4;
 					}
 					else if((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) || (sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] & 0x80))
 					{	//Mute gems are written on channel 3
 						channel = 3;
-					}
-					else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
-					{	//Bent notes are written on channel 2
-						channel = 2;
 					}
 					else if(sp->pro_guitar_track[tracknum]->note[i]->ghost & bitmask)
 					{	//Ghost note gems are written on channel 1
@@ -1508,6 +1500,51 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
 						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
 						phase_shift_sysex_phrase[5] = 10;	//Store the phrase ID (10 = Pro guitar vibrato)
+						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker
+						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
+					}
+				}
+
+				/* write harmonic marker */
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC)
+				{	//If this note has harmonic status
+					if(featurerestriction == 0)
+					{	//Only write the harmonic Sysex notation if not writing a Rock Band compliant MIDI
+						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+						phase_shift_sysex_phrase[5] = 11;	//Store the phrase ID (11 = Pro guitar harmonic)
+						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker
+						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
+					}
+				}
+
+				/* write pinch harmonic marker */
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC)
+				{	//If this note has pinch harmonic status
+					if(featurerestriction == 0)
+					{	//Only write the harmonic Sysex notation if not writing a Rock Band compliant MIDI
+						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+						phase_shift_sysex_phrase[5] = 12;	//Store the phrase ID (12 = Pro guitar pinch harmonic)
+						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker
+						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
+					}
+				}
+
+				/* write bend marker */
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+				{	//If this note has bend status
+					if(featurerestriction == 0)
+					{	//Only write the bend Sysex notation if not writing a Rock Band compliant MIDI
+						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+						phase_shift_sysex_phrase[5] = 13;	//Store the phrase ID (13 = Pro guitar bend)
 						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
 						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker
 						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
