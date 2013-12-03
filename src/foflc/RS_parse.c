@@ -29,6 +29,7 @@ void Export_RS(FILE *outf)
 	struct Lyric_Line *curline=NULL;	//Conductor of the lyric line linked list
 	struct Lyric_Piece *temp=NULL;		//A conductor for the lyric pieces list
 	char buffer2[260];
+	char *suffix, newline[]="+", nonewline[] = "";
 
 	assert_wrapper(outf != NULL);	//This must not be NULL
 	assert_wrapper(Lyrics.piececount != 0);	//This function is not to be called with an empty Lyrics structure
@@ -37,7 +38,9 @@ void Export_RS(FILE *outf)
 
 //Write the beginning lines of the XML file
 	fputs_err("<?xml version='1.0' encoding='UTF-8'?>\n",outf);
+#ifdef EOF_BUILD	//In the EOF code base, put a comment line indicating the program version
 	fputs_err("<!-- " EOF_VERSION_STRING " -->\n", outf);	//Write EOF's version in an XML comment
+#endif
 	if(fprintf(outf,"<vocals count=\"%lu\">\n", Lyrics.piececount) < 0)
 	{
 		printf("Error writing to XML file: %s\nAborting\n",strerror(errno));
@@ -56,13 +59,21 @@ void Export_RS(FILE *outf)
 		while(temp != NULL)				//For each piece of lyric in this line
 		{
 			expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
-			if(fprintf(outf,"  <vocal time=\"%.3f\" note=\"%u\" length=\"%.3f\" lyric=\"%s\"/>\n", (double)temp->start / 1000.0, temp->pitch, (double)temp->duration / 1000.0, buffer2) < 0)
+			if((temp->next == NULL) && (Lyrics.rocksmithver == 2))
+			{	//This is the last lyric in the line, and Rocksmith 2014 format is being exported
+				suffix = newline;	//Write a + after the lyric to indicate a line break
+			}
+			else
+				suffix = nonewline;
+
+			if(fprintf(outf,"  <vocal time=\"%.3f\" note=\"%u\" length=\"%.3f\" lyric=\"%s%s\"/>\n", (double)temp->start / 1000.0, temp->pitch, (double)temp->duration / 1000.0, buffer2, suffix) < 0)
 			{
-				printf("Error exporting lyric %lu\t%lu\ttext\t%s: %s\nAborting\n",temp->start,temp->duration,temp->lyric,strerror(errno));
+				printf("Error exporting lyric %lu\t%lu\ttext\t%s%s: %s\nAborting\n",temp->start,temp->duration,temp->lyric,suffix,strerror(errno));
 				exit_wrapper(2);
 			}
 
-			if(Lyrics.verbose)	printf("'%s'",temp->lyric);
+			if(Lyrics.verbose)
+				printf("'%s'",temp->lyric);
 
 			temp=temp->next;	//Advance to next lyric piece as normal
 		}//end while(temp != NULL)
@@ -389,6 +400,8 @@ void RS_Load(FILE *inf)
 						Lyrics.pitch_tracking=1;
 					Lyrics.last_pitch=note;	//Consider this the last defined pitch
 					AddLyricPiece(lyric2, time , time + length, note, 0);	//Add lyric
+					if(strchr(lyric2, '+'))	//If this lyric contained a + character
+						EndLyricLine();		//End lyric line, as this is a line break mechanism in RS2014 formatted lyrics
 
 					(void) fgets_err(buffer, (int)maxlinelength, inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 					processedctr++;

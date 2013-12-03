@@ -371,7 +371,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	int phrasediff;						//Used for parsing Sysex phrase markers
 	int slidediff;						//Used for parsing slide markers
 	unsigned char slidevelocity[4];		//Used for parsing slide markers
-	unsigned long openstrumpos[4] = {0}, slideuppos[4] = {0}, slidedownpos[4] = {0}, openhihatpos[4] = {0}, pedalhihatpos[4] = {0}, rimshotpos[4] = {0}, sliderpos[4] = {0}, palmmutepos[4] = {0}, vibratopos[4] = {0};	//Used for parsing Sysex phrase markers
+	unsigned long openstrumpos[4] = {0}, slideuppos[4] = {0}, slidedownpos[4] = {0}, openhihatpos[4] = {0}, pedalhihatpos[4] = {0}, rimshotpos[4] = {0}, sliderpos[4] = {0}, palmmutepos[4] = {0}, vibratopos[4] = {0}, harmpos[4] = {0}, pharmpos[4] = {0}, bendpos[4] = {0};	//Used for parsing Sysex phrase markers
 	int lc;
 	long b = -1;
 	unsigned long tp;
@@ -2777,6 +2777,66 @@ set_window_title(debugtext);
 													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= vibratopos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
 													{	//If the note is in the same difficulty as the pro guitar vibrato phrase, and its timestamp falls between the phrase on and phrase off marker
 														eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO);	//Set the vibrato flag
+													}
+												}
+											}
+										break;
+										case 11:	//Pro guitar harmonic
+#ifdef EOF_DEBUG
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar harmonic (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
+											eof_log(eof_log_string, 1);
+#endif
+											if(eof_import_events[i]->event[j]->dp[6] == 1)
+											{	//Start of pro guitar harmonic phrase
+												harmpos[phrasediff] = event_realtime;
+											}
+											else if(eof_import_events[i]->event[j]->dp[6] == 0)
+											{	//End of pro guitar harmonic phrase
+												for(k = note_count[picked_track] - 1; k >= first_note; k--)
+												{	//Check for each note that has been imported
+													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= harmpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+													{	//If the note is in the same difficulty as the pro guitar harmonic phrase, and its timestamp falls between the phrase on and phrase off marker
+														eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC);	//Set the harmonic flag
+													}
+												}
+											}
+										break;
+										case 12:	//Pro guitar pinch harmonic
+#ifdef EOF_DEBUG
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar pinch harmonic (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
+											eof_log(eof_log_string, 1);
+#endif
+											if(eof_import_events[i]->event[j]->dp[6] == 1)
+											{	//Start of pro guitar pinch harmonic phrase
+												pharmpos[phrasediff] = event_realtime;
+											}
+											else if(eof_import_events[i]->event[j]->dp[6] == 0)
+											{	//End of pro guitar pinch harmonic phrase
+												for(k = note_count[picked_track] - 1; k >= first_note; k--)
+												{	//Check for each note that has been imported
+													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= pharmpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+													{	//If the note is in the same difficulty as the pro guitar pinch harmonic phrase, and its timestamp falls between the phrase on and phrase off marker
+														eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC);	//Set the pinch harmonic flag
+													}
+												}
+											}
+										break;
+										case 13:	//Pro guitar bend
+#ifdef EOF_DEBUG
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar bend (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
+											eof_log(eof_log_string, 1);
+#endif
+											if(eof_import_events[i]->event[j]->dp[6] == 1)
+											{	//Start of pro guitar bend phrase
+												bendpos[phrasediff] = event_realtime;
+											}
+											else if(eof_import_events[i]->event[j]->dp[6] == 0)
+											{	//End of pro guitar bend phrase
+												for(k = note_count[picked_track] - 1; k >= first_note; k--)
+												{	//Check for each note that has been imported
+													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= bendpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+													{	//If the note is in the same difficulty as the pro guitar bend phrase, and its timestamp falls between the phrase on and phrase off marker
+														eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_BEND);	//Set the bend flag
 													}
 												}
 											}

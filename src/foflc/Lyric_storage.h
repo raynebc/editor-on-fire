@@ -76,8 +76,9 @@ Export functions are expected to:
 #define XML_FORMAT 13
 #define C9C_FORMAT 14
 #define RS_FORMAT 15
+#define RS2_FORMAT 16
 
-#define NUMBEROFLYRICFORMATS 15
+#define NUMBEROFLYRICFORMATS 16
 	//This defined number should be equal to the number of defined lyric macros above, for use with the LYRICFORMATNAMES[] array
 
 //#define NDEBUG		//This will disable the assert macros in the source file if defined
@@ -216,6 +217,7 @@ struct _LYRICSSTRUCT_{
 	double explicittempo;		//Set to nonzero if a tempo was passed as an argument
 	unsigned char last_pitch;	//Used by various import functions to track pitch changes.  Reset to 0 by InitMIDI() and InitLyrics()
 	struct OmitID3frame *nosrctag;	//The linked list of ID3 frames to omit during ID3 export
+	char rocksmithver;			//If this has a value of 2, + characters are appended to the last lyric in each line, as this is Rocksmith 2014's line break mechanism
 
 //Filenames
 	char *outfilename;		//Stores the name of the output file

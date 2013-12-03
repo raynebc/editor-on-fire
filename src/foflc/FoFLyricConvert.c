@@ -163,6 +163,8 @@ int main(int argc, char *argv[])
 					Lyrics.in_format=C9C_FORMAT;
 				else if(strcasecmp(argv[ctr+1],"rs") == 0)
 					Lyrics.in_format=RS_FORMAT;
+				else if(strcasecmp(argv[ctr+1],"rs2") == 0)	//For the purposes of importing, RS1 and RS2 are identical formats
+					Lyrics.in_format=RS_FORMAT;
 				else
 					Input_failed(ctr+1,NULL);
 
@@ -350,6 +352,13 @@ int main(int argc, char *argv[])
 			{
 				Lyrics.out_format=RS_FORMAT;
 				Lyrics.outfilename=argv[ctr+2];
+				correct_extension=DuplicateString(".xml");	//.xml is the correct extension for this file format
+			}
+			else if(strcasecmp(argv[ctr+1],"rs2") == 0)	//-out rs2 output
+			{
+				Lyrics.out_format=RS2_FORMAT;
+				Lyrics.outfilename=argv[ctr+2];
+				Lyrics.noplus=1;	//Disable plus output, which is used for line breaks in RS2014
 				correct_extension=DuplicateString(".xml");	//.xml is the correct extension for this file format
 			}
 			else	//Any other specified output format is invalid
@@ -943,6 +952,7 @@ int main(int argc, char *argv[])
 		break;
 
 		case RS_FORMAT:		//Load Rocksmith XML file
+		case RS2_FORMAT:
 			inf=fopen_err(Lyrics.infilename,"rt");	//Rocksmith XML is a text format
 			RS_Load(inf);
 		break;
@@ -1125,6 +1135,13 @@ int main(int argc, char *argv[])
 		break;
 
 		case RS_FORMAT:	//Export as Rocksmith XML
+			Lyrics.rocksmithver=1;
+			outf=fopen_err(Lyrics.outfilename,"wt");	//XML is a text format
+			Export_RS(outf);
+		break;
+
+		case RS2_FORMAT:	//Export as Rocksmith 2014 XML
+			Lyrics.rocksmithver=2;
 			outf=fopen_err(Lyrics.outfilename,"wt");	//XML is a text format
 			Export_RS(outf);
 		break;
@@ -1248,7 +1265,7 @@ void DisplayHelp(void)
 //Describe general syntax and required parameters
 	DisplaySyntax();
 	(void) puts("-The use of detect will halt a conversion specified by the other parameters");
-	(void) puts("-FORMATs: script,vl,midi,ustar,lrc,elrc,vrhythm,kar,skar,id3,srt,xml,jb,rs");
+	(void) puts("-FORMATs: script,vl,midi,ustar,lrc,elrc,vrhythm,kar,skar,id3,srt,xml,jb,rs,rs2");
 	(void) puts("-infile is the name of the input file, whose FORMAT is optional");
 	(void) puts("-outfile is the name of the file to create in the FORMAT preceding it");
 	(void) puts("-If the input format is vrhythm, a source rhythm MIDI file (infile)");

@@ -174,6 +174,7 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 		break;
 
 		case RS_FORMAT:		//Load Rocksmith XML file
+		case RS2_FORMAT:
 			inf=fopen_err(Lyrics.infilename,"rt");	//Rocksmith XML is a text format
 			RS_Load(inf);
 		break;
@@ -296,7 +297,7 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 	FILE *outf=NULL;			//Used to open output file
 	FILE *pitchedlyrics=NULL;	//Used to open output pitched lyric fle
 	char *vrhythmid=NULL;
-	EOF_PHRASE_SECTION temp;	//Used to store the first lyric line in the project, which gets overridden with one covering all lyrics during RS export
+	EOF_PHRASE_SECTION temp;	//Used to store the first lyric line in the project, which gets overridden with one covering all lyrics during RS1 export
 	unsigned long original_lines;
 
 	eof_log("EOF_EXPORT_TO_LC() entered", 1);
@@ -311,7 +312,7 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 	temp = tp->line[0];			//Preserve the original lyric line information
 	original_lines = tp->lines;
 
-//Set export-specific settigns
+//Set export-specific settings
 	if(format == SCRIPT_FORMAT)
 	{
 		Lyrics.grouping=2;	//Enable line grouping for script.txt export
@@ -320,13 +321,21 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 		Lyrics.filter=DuplicateString("^=%#/");	//Use default filter list
 		Lyrics.defaultfilter = 1;	//Track that the above string will need to be freed
 	}
-	else if(format == RS_FORMAT)
+	else if((format == RS_FORMAT) || (format == RS2_FORMAT))
 	{
 		Lyrics.noplus=1;	//Disable plus output
 		Lyrics.filter=DuplicateString("^=%#/");	//Use default filter list
 		Lyrics.defaultfilter = 1;	//Track that the above string will need to be freed
 		tp->lines = 0;		//Temporarily disregard any existing lyric lines
-		(void) eof_vocal_track_add_line(tp, 0, tp->lyric[tp->lyrics - 1]->pos + 1);	//Create a single line encompassing all lyrics
+		if(format == RS_FORMAT)
+		{	//Rocksmith 1 format
+			Lyrics.rocksmithver = 1;
+			(void) eof_vocal_track_add_line(tp, 0, tp->lyric[tp->lyrics - 1]->pos + 1);	//Create a single line encompassing all lyrics
+		}
+		else
+		{	//Rocksmith 2 format
+			Lyrics.rocksmithver = 2;
+		}
 	}
 
 //Import lyrics from EOF structure
@@ -475,6 +484,13 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 
 		case RS_FORMAT:	//Export as Rocksmith XML
 			outf=fopen_err(Lyrics.outfilename,"wt");	//XML is a text format
+			Lyrics.rocksmithver = 1;
+			Export_RS(outf);
+		break;
+
+		case RS2_FORMAT:	//Export as Rocksmith 2 XML
+			outf=fopen_err(Lyrics.outfilename,"wt");	//XML is a text format
+			Lyrics.rocksmithver = 2;
 			Export_RS(outf);
 		break;
 
@@ -494,7 +510,7 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 //Cleanup
 	fclose_err(outf);
 	if(format == RS_FORMAT)
-	{	//Restore the original lyric lines
+	{	//Restore the original lyric lines that were destroyed by Rocksmith 1 export
 		tp->line[0] = temp;
 		tp->lines = original_lines;
 	}
