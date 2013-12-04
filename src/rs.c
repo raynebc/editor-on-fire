@@ -136,8 +136,8 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 			match = 0;
 			for(ctr2 = ctr + 1; ctr2 < tp->notes; ctr2++)
 			{	//For each note in the track that follows this note
-				if(!eof_note_compare_simple(sp, track, ctr, ctr2))
-				{	//If this note matches one that follows it
+				if((eof_note_count_rs_lanes(sp, track, ctr2, target) > 1) && !eof_note_compare_simple(sp, track, ctr, ctr2))
+				{	//If this note matches one that follows it, and that later note is a valid chord for the target Rocksmith game
 					notelist[ctr] = NULL;	//Eliminate this note from the list
 					match = 1;	//Note that this chord matched one of the others
 					break;
@@ -1227,8 +1227,8 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						}
 						if(ctr4 >= chordlistsize)
 						{	//If the chord couldn't be found
-							allegro_message("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.");
-							eof_log("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.", 1);
+							allegro_message("Error:  Couldn't match chord with chord template while exporting chords.  Aborting Rocksmith 1 export.");
+							eof_log("Error:  Couldn't match chord with chord template while exporting chords.  Aborting Rocksmith 1 export.", 1);
 							if(chordlist)
 							{	//If the chord list was built
 								free(chordlist);
@@ -1337,8 +1337,8 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					}
 					if(ctr4 >= chordlistsize)
 					{	//If the chord couldn't be found
-						allegro_message("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.");
-						eof_log("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.", 1);
+						allegro_message("Error:  Couldn't match chord with chord template while counting handshapes.  Aborting Rocksmith 1 export.");
+						eof_log("Error:  Couldn't match chord with chord template while counting handshapes.  Aborting Rocksmith 1 export.", 1);
 						if(chordlist)
 						{	//If the chord list was built
 							free(chordlist);
@@ -1409,8 +1409,8 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						}
 						if(ctr4 >= chordlistsize)
 						{	//If the chord couldn't be found
-							allegro_message("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.");
-							eof_log("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.", 1);
+							allegro_message("Error:  Couldn't match chord with chord template while writing handshapes.  Aborting Rocksmith 1 export.");
+							eof_log("Error:  Couldn't match chord with chord template while writing handshapes.  Aborting Rocksmith 1 export.", 1);
 							if(chordlist)
 							{	//If the chord list was built
 								free(chordlist);
@@ -2487,7 +2487,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				char *downstrum = "down";
 				char *direction;	//Will point to either upstrum or downstrum as appropriate
 				double notepos;
-				char highdensity;	//Any chord within the threshold proximity of an identical chord has the highDensity boolean property set to true
+				char highdensity;	//Various criteria determine whether the highDensity boolean property is set to true
 				char first = 1;		//Tracks whether no chords have been exported yet
 				char chordnote;		//Tracks whether a chordNote subtag is to be written
 
@@ -2511,8 +2511,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						}
 						if(ctr4 >= chordlistsize)
 						{	//If the chord couldn't be found
-							allegro_message("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.");
-							eof_log("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.", 1);
+							allegro_message("Error:  Couldn't match chord with chord template while exporting chords.  Aborting Rocksmith 2 export.");
+							eof_log("Error:  Couldn't match chord with chord template while exporting chords.  Aborting Rocksmith 2 export.", 1);
 							if(chordlist)
 							{	//If the chord list was built
 								free(chordlist);
@@ -2533,7 +2533,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						notepos = (double)tp->note[ctr3]->pos / 1000.0;
 						if(first || (chordid != lastchordid) || flags || !highdensity)
 						{	//If this is the first chord to be written, it's ID is different from that of the previous chord, it has statuses that require chordNote subtags to define or it is a low density chord
-							chordnote = 1;	//Ensure chordNote subtags are written
+							chordnote = 1;		//Ensure chordNote subtags are written
+							highdensity = 0;	//Ensure the chord tag is written to reflect low density
 							tagend[0] = '\0';	//Drop the / from the string
 						}
 						(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" linkNext=\"0\" accent=\"%d\" chordId=\"%lu\" fretHandMute=\"%d\" highDensity=\"%d\" ignore=\"0\" palmMute=\"%d\" hopo=\"%d\" strum=\"%s\"%s>\n", notepos, tech.accent, chordid, tech.stringmute, highdensity, tech.palmmute, tech.hopo, direction, tagend);
@@ -2713,8 +2714,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					}
 					if(ctr4 >= chordlistsize)
 					{	//If the chord couldn't be found
-						allegro_message("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.");
-						eof_log("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.", 1);
+						allegro_message("Error:  Couldn't match chord with chord template while counting handshapes.  Aborting Rocksmith 2 export.");
+						eof_log("Error:  Couldn't match chord with chord template while counting handshapes.  Aborting Rocksmith 2 export.", 1);
 						if(chordlist)
 						{	//If the chord list was built
 							free(chordlist);
@@ -2785,8 +2786,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						}
 						if(ctr4 >= chordlistsize)
 						{	//If the chord couldn't be found
-							allegro_message("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.");
-							eof_log("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.", 1);
+							allegro_message("Error:  Couldn't match chord with chord template while writing handshapes.  Aborting Rocksmith 2 export.");
+							eof_log("Error:  Couldn't match chord with chord template while writing handshapes.  Aborting Rocksmith 2 export.", 1);
 							if(chordlist)
 							{	//If the chord list was built
 								free(chordlist);
