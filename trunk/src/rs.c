@@ -1216,7 +1216,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
 					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 1) > 1))
-					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems) that isn't fully string muted
+					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems)
 						for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
 						{	//For each of the entries in the unique chord list
 							if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
@@ -1322,8 +1322,8 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			handshapectr = 0;
 			for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 			{	//For each note in the track
-				if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_colors(sp, track, ctr3) > 1) && !eof_is_string_muted(sp, track, ctr3))
-				{	//If this note is in this difficulty and is a chord that isn't fully string muted
+				if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 1) > 1))
+				{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems)
 					unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
 
 					//Find this chord's ID
@@ -1384,7 +1384,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					}
 
 					handshapectr++;	//One more hand shape has been counted
-				}//If this note is in this difficulty and is a chord that isn't fully string muted
+				}//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems)
 			}//For each note in the track
 
 			if(handshapectr)
@@ -1394,8 +1394,8 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				(void) pack_fputs(buffer, fp);
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
-					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_colors(sp, track, ctr3) > 1) && !eof_is_string_muted(sp, track, ctr3))
-					{	//If this note is in this difficulty and is a chord that isn't fully string muted
+					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 1) > 1))
+					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems)
 						unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
 
 						//Find this chord's ID
@@ -1463,7 +1463,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						//Write this hand shape
 						(void) snprintf(buffer, sizeof(buffer) - 1, "        <handShape chordId=\"%lu\" endTime=\"%.3f\" startTime=\"%.3f\"/>\n", chordid, (double)handshapeend / 1000.0, (double)handshapestart / 1000.0);
 						(void) pack_fputs(buffer, fp);
-					}//If this note is in this difficulty and is a chord that isn't fully string muted
+					}//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems)
 				}//For each note in the track
 				(void) pack_fputs("      </handShapes>\n", fp);
 			}
@@ -2071,19 +2071,34 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
 			{	//For each of the 6 supported strings
-				if((eof_get_note_note(sp, track, chordlist[ctr]) & bitmask) && (ctr2 < tp->numstrings) && ((tp->note[chordlist[ctr]]->frets[ctr2] & 0x80) == 0))
-				{	//If the chord entry uses this string (verifying that the string number is supported by the track) and the string is not fret hand muted (ghost notes must be allowed so that arpeggio shapes can export)
-					*(fret[ctr2]) = tp->note[chordlist[ctr]]->frets[ctr2] & 0x7F;	//Retrieve the fret played on this string (masking out the muting bit)
-					if(effective_fingering[ctr2])
-					{	//If the fingering for this string is defined
-						char *temp = fingerdef[ctr2];	//Simplify logic below
-						temp[0] = '0' + effective_fingering[ctr2];	//Convert decimal to ASCII
-						temp[1] = '\0';	//Truncate string
-						*(finger[ctr2]) = temp;
+				if((eof_get_note_note(sp, track, chordlist[ctr]) & bitmask) && (ctr2 < tp->numstrings))
+				{	//If the chord entry uses this string (verifying that the string number is supported by the track)
+					if((tp->note[chordlist[ctr]]->frets[ctr2] & 0x80) == 0)
+					{	//If the string is not fret hand muted (ghost notes must be allowed so that arpeggio shapes can export)
+						*(fret[ctr2]) = tp->note[chordlist[ctr]]->frets[ctr2] & 0x7F;	//Retrieve the fret played on this string (masking out the muting bit)
+						if(effective_fingering[ctr2])
+						{	//If the fingering for this string is defined
+							char *temp = fingerdef[ctr2];	//Simplify logic below
+							temp[0] = '0' + effective_fingering[ctr2];	//Convert decimal to ASCII
+							temp[1] = '\0';	//Truncate string
+							*(finger[ctr2]) = temp;
+						}
+						else
+						{	//The fingering is not defined, regardless of whether the string is open or fretted
+							*(finger[ctr2]) = fingerunused;		//Write a -1, this will allow the XML to compile even if the chord's fingering is incomplete/undefined
+						}
 					}
 					else
-					{	//The fingering is not defined, regardless of whether the string is open or fretted
-						*(finger[ctr2]) = fingerunused;		//Write a -1, this will allow the XML to compile even if the chord's fingering is incomplete/undefined
+					{	//The string is muted
+						if(tp->note[chordlist[ctr]]->frets[ctr2] == 0xFF)
+						{	//If no fret value is defined, assume 0
+							*(fret[ctr2]) = 0;
+						}
+						else
+						{	//The fret value is defined
+							*(fret[ctr2]) = tp->note[chordlist[ctr]]->frets[ctr2] & 0x7F;	//Retrieve the fret played on this string (masking out the muting bit)
+						}
+						*(finger[ctr2]) = fingerunused;
 					}
 				}
 				else
@@ -2403,7 +2418,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
 					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 2) == 1))
-					{	//If this note is in this difficulty and will export as a single note (only one gem has non ghosted/muted status)
+					{	//If this note is in this difficulty and will export as a single note (only one gem has non ghosted status)
 						for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
 						{	//For each string used in this track
 							if((eof_get_note_note(sp, track, ctr3) & bitmask) && !(tp->note[ctr3]->ghost & bitmask))
@@ -2481,7 +2496,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
 					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1))
-					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems) that isn't fully string muted
+					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems)
 						EOF_RS_TECHNIQUES tech;
 						char tagend[2] = "/";	//If a chord tag is to have a chordNote subtag, this string is emptied so that the chord tag doesn't end in the same line
 						chordnote = 0;	//Reset this status
@@ -2537,7 +2552,14 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 									unsigned long fret;				//The fret number used for this string
 
 									(void) eof_get_rs_techniques(sp, track, ctr3, stringnum, &tech);	//Determine techniques used by this note
-									fret = tp->note[ctr3]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
+									if(tp->note[ctr3]->frets[stringnum] == 0xFF)
+									{	//If this is a string mute with no defined fret number
+										fret = 0;	//Assume muted open note
+									}
+									else
+									{	//Otherwise use the defined fret number
+										fret = tp->note[ctr3]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
+									}
 									if(tech.bend || (tech.slideto >= 0) || (tech.unpitchedslideto >= 0))
 									{	//If this note is marked as a bend or slide note
 										if(!eof_pro_guitar_note_lowest_fret(tp, ctr3))
@@ -2676,8 +2698,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			handshapectr = 0;
 			for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 			{	//For each note in the track
-				if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_colors(sp, track, ctr3) > 1) && !eof_is_string_muted(sp, track, ctr3))
-				{	//If this note is in this difficulty and is a chord that isn't fully string muted
+				if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1))
+				{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems)
 					unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
 
 					//Find this chord's ID
@@ -2726,19 +2748,19 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					while(1)
 					{
 						nextnote = eof_fixup_next_note(sp, track, ctr3);
-						if((nextnote >= 0) && !eof_note_compare_simple(sp, track, chord, nextnote))
-						{	//If there is another note and it matches this chord
+						if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chord, nextnote) || eof_is_string_muted(sp, track, nextnote)))
+						{	//If there is another note and it matches this chord or is completely string muted
 							ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
 						}
 						else
-						{	//The next note (if any) is not a repeat of this note
+						{	//The next note (if any) is not a repeat of this note and is not completely string muted
 							handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
 							break;	//Break from while loop
 						}
 					}
 
 					handshapectr++;	//One more hand shape has been counted
-				}//If this note is in this difficulty and is a chord that isn't fully string muted
+				}//If this note is in this difficulty and will export as a chord (at least two non ghosted gems)
 			}//For each note in the track
 
 			if(handshapectr)
@@ -2748,8 +2770,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				(void) pack_fputs(buffer, fp);
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
-					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_colors(sp, track, ctr3) > 1) && !eof_is_string_muted(sp, track, ctr3))
-					{	//If this note is in this difficulty and is a chord that isn't fully string muted
+					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1))
+					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems)
 						unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
 
 						//Find this chord's ID
@@ -2798,12 +2820,12 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						while(1)
 						{
 							nextnote = eof_fixup_next_note(sp, track, ctr3);
-							if((nextnote >= 0) && !eof_note_compare_simple(sp, track, chord, nextnote))
-							{	//If there is another note and it matches this chord
+							if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chord, nextnote) || eof_is_string_muted(sp, track, nextnote)))
+							{	//If there is another note and it matches this chord or is completely string muted
 								ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
 							}
 							else
-							{	//The next note (if any) is not a repeat of this note
+							{	//The next note (if any) is not a repeat of this note and is not completely string muted
 								handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
 
 								if((handshapeend - handshapestart < 56) && (handshapestart + 56 < eof_get_note_pos(sp, track, nextnote)))
@@ -2817,7 +2839,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						//Write this hand shape
 						(void) snprintf(buffer, sizeof(buffer) - 1, "        <handShape chordId=\"%lu\" endTime=\"%.3f\" startTime=\"%.3f\"/>\n", chordid, (double)handshapeend / 1000.0, (double)handshapestart / 1000.0);
 						(void) pack_fputs(buffer, fp);
-					}//If this note is in this difficulty and is a chord that isn't fully string muted
+					}//If this note is in this difficulty and will export as a chord (at least two non ghosted gems)
 				}//For each note in the track
 				(void) pack_fputs("      </handShapes>\n", fp);
 			}
