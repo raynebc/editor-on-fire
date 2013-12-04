@@ -3497,6 +3497,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									{	//Pinch harmonic
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC;
 									}
+									else if(byte == 5)
+									{	//"Semi" harmonic (similar to a pinch harmonic)
+										flags |= EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC;
+									}
 									else
 									{	//Other harmonic types will only be applied to imported notes if the user didn't enable the preference to ignore them
 										if(byte == 2)

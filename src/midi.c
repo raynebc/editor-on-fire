@@ -1486,9 +1486,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
 						phase_shift_sysex_phrase[5] = 9;	//Store the phrase ID (9 = Pro guitar palm mute)
 						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar palm mute start marker
 						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar palm mute stop marker
 					}
 				}
 
@@ -1501,9 +1501,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
 						phase_shift_sysex_phrase[5] = 10;	//Store the phrase ID (10 = Pro guitar vibrato)
 						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar vibrato start marker
 						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar vibrato stop marker
 					}
 				}
 
@@ -1516,9 +1516,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
 						phase_shift_sysex_phrase[5] = 11;	//Store the phrase ID (11 = Pro guitar harmonic)
 						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar harmonic start marker
 						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar harmonic stop marker
 					}
 				}
 
@@ -1531,9 +1531,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
 						phase_shift_sysex_phrase[5] = 12;	//Store the phrase ID (12 = Pro guitar pinch harmonic)
 						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar pinch harmonic start marker
 						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar pinch harmonic stop marker
 					}
 				}
 
@@ -1546,9 +1546,54 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
 						phase_shift_sysex_phrase[5] = 13;	//Store the phrase ID (13 = Pro guitar bend)
 						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar bend start marker
 						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar bend stop marker
+					}
+				}
+
+				/* write accent marker */
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_ACCENT)
+				{	//If this note has accent status
+					if(featurerestriction == 0)
+					{	//Only write the accent Sysex notation if not writing a Rock Band compliant MIDI
+						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+						phase_shift_sysex_phrase[5] = 14;	//Store the phrase ID (14 = Pro guitar accent)
+						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar accent start marker
+						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar accent stop marker
+					}
+				}
+
+				/* write pop marker */
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_POP)
+				{	//If this note has pop status
+					if(featurerestriction == 0)
+					{	//Only write the pop Sysex notation if not writing a Rock Band compliant MIDI
+						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+						phase_shift_sysex_phrase[5] = 15;	//Store the phrase ID (15 = Pro guitar pop)
+						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar pop start marker
+						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar pop stop marker
+					}
+				}
+
+				/* write slap marker */
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLAP)
+				{	//If this note has slap status
+					if(featurerestriction == 0)
+					{	//Only write the slap Sysex notation if not writing a Rock Band compliant MIDI
+						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+						phase_shift_sysex_phrase[5] = 16;	//Store the phrase ID (16 = Pro guitar slap)
+						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slap start marker
+						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slap stop marker
 					}
 				}
 

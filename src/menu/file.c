@@ -2711,8 +2711,9 @@ int eof_save_helper(char *destfilename)
 			{	//Otherwise use the track's native name
 				arrangement_name = eof_song->track[EOF_TRACK_VOCALS]->name;
 			}
-			(void) append_filename(eof_temp_filename, newfolderpath, arrangement_name, (int) sizeof(eof_temp_filename));
-			(void) replace_extension(eof_temp_filename, eof_temp_filename, "xml", (int) sizeof(eof_temp_filename));
+			//Export in RS1 format
+			(void) snprintf(tempfilename2, sizeof(tempfilename2), "%s.xml", arrangement_name);	//Build the filename
+			(void) append_filename(eof_temp_filename, newfolderpath, tempfilename2, (int) sizeof(eof_temp_filename));	//Build the full file name
 			jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 			if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 			{	//Lyric export failed
@@ -2722,6 +2723,19 @@ int eof_save_helper(char *destfilename)
 			else
 			{
 				(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,RS_FORMAT);	//Import lyrics into FLC lyrics structure and export to Rocksmith format
+			}
+			//Export in RS2 format
+			(void) snprintf(tempfilename2, sizeof(tempfilename2), "%s_RS2.xml", arrangement_name);	//Build the filename
+			(void) append_filename(eof_temp_filename, newfolderpath, tempfilename2, (int) sizeof(eof_temp_filename));	//Build the full file name
+			jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
+			if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
+			{	//Lyric export failed
+				(void) puts("Assert() handled sucessfully!");
+				allegro_message("Rocksmith lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in this chart's file path,\nbecause EOF's lyric export doesn't support them.");
+			}
+			else
+			{
+				(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,RS2_FORMAT);	//Import lyrics into FLC lyrics structure and export to Rocksmith 2014 format
 			}
 		}
 		(void) eof_detect_difficulties(eof_song, eof_selected_track);		//Update eof_track_diff_populated_status[] to reflect the currently selected difficulty

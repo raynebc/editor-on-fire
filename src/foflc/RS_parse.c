@@ -344,6 +344,7 @@ void RS_Load(FILE *inf)
 	unsigned long processedctr=0;	//The current line number being processed in the text file
 	long time, note, length, count;
 	char lyric[256], lyric2[256];
+	char *index;
 
 	assert_wrapper(inf != NULL);	//This must not be NULL
 
@@ -399,8 +400,19 @@ void RS_Load(FILE *inf)
 					if((Lyrics.last_pitch != 0) && (Lyrics.last_pitch != note))	//There's a pitch change
 						Lyrics.pitch_tracking=1;
 					Lyrics.last_pitch=note;	//Consider this the last defined pitch
+					if(Lyrics.line_on == 0)	//If a line isn't in progress (ie. there was a line break after the previous lyric)
+						CreateLyricLine();	//Initialize new line of lyrics
+					index = strchr(lyric2, '+');	//Get a pointer to the first plus character in this lyric, if any
+					if(index)
+					{	//If this lyric contained a + character
+						while(index[0] != '\0')
+						{	//Until the end of the string is reached
+							index[0] = index[1];	//Shift all remaining characters in the lyric back one, overwriting the +
+							index++;
+						}
+					}
 					AddLyricPiece(lyric2, time , time + length, note, 0);	//Add lyric
-					if(strchr(lyric2, '+'))	//If this lyric contained a + character
+					if(index)				//If a + character was filtered out of the lyric
 						EndLyricLine();		//End lyric line, as this is a line break mechanism in RS2014 formatted lyrics
 
 					(void) fgets_err(buffer, (int)maxlinelength, inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF

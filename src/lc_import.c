@@ -326,15 +326,10 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 		Lyrics.noplus=1;	//Disable plus output
 		Lyrics.filter=DuplicateString("^=%#/");	//Use default filter list
 		Lyrics.defaultfilter = 1;	//Track that the above string will need to be freed
-		tp->lines = 0;		//Temporarily disregard any existing lyric lines
-		if(format == RS_FORMAT)
-		{	//Rocksmith 1 format
-			Lyrics.rocksmithver = 1;
+		if((format == RS_FORMAT) || (!tp->lines))
+		{	//If exporting to Rocksmith 1 format or if the lyrics don't have any lines defined
+			tp->lines = 0;		//Temporarily disregard any existing lyric lines
 			(void) eof_vocal_track_add_line(tp, 0, tp->lyric[tp->lyrics - 1]->pos + 1);	//Create a single line encompassing all lyrics
-		}
-		else
-		{	//Rocksmith 2 format
-			Lyrics.rocksmithver = 2;
 		}
 	}
 
@@ -509,11 +504,8 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 
 //Cleanup
 	fclose_err(outf);
-	if(format == RS_FORMAT)
-	{	//Restore the original lyric lines that were destroyed by Rocksmith 1 export
-		tp->line[0] = temp;
-		tp->lines = original_lines;
-	}
+	tp->line[0] = temp;	//Restore the original lyric lines, which could have been destroyed by Rocksmith export
+	tp->lines = original_lines;
 
 	ReleaseMemory(1);
 	return 1;	//Return success

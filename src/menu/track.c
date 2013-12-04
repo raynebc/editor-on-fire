@@ -2542,10 +2542,11 @@ int eof_track_erase_track_difficulty(void)
 	eof_clear_input();
 	key[KEY_Y] = 0;
 	key[KEY_N] = 0;
-	if(eof_track_diff_populated_status[eof_note_type] && alert(NULL, "This operation will erase this track difficulty's contents.", "Continue?", "&Yes", "&No", 'y', 'n') == 1)
-	{	//If this track difficulty has notes in it and the user opts to erase the track difficulty
-		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	if(!eof_track_diff_populated_status[eof_note_type] || (alert(NULL, "This operation will erase this track difficulty's contents.", "Continue?", "&Yes", "&No", 'y', 'n') != 1))
+	{	//If this track difficulty isn't populated or the user does not opt to erase it
+		return 1;	//Cancel
 	}
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	eof_erase_track_difficulty(eof_song, eof_selected_track, eof_note_type);
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);
 	return 1;
@@ -2559,10 +2560,11 @@ int eof_track_erase_track(void)
 	eof_clear_input();
 	key[KEY_Y] = 0;
 	key[KEY_N] = 0;
-	if(eof_get_track_size(eof_song, eof_selected_track) && alert(NULL, "This operation will erase this track's contents.", "Continue?", "&Yes", "&No", 'y', 'n') == 1)
-	{	//If this track has notes in it and the user opts to erase the track
-		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	if(!eof_get_track_size(eof_song, eof_selected_track) || (alert(NULL, "This operation will erase this track's contents.", "Continue?", "&Yes", "&No", 'y', 'n') != 1))
+	{	//If this track isn't populated or the user does not opt to erase it
+		return 1;	//Cancel
 	}
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	eof_erase_track(eof_song, eof_selected_track);
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);
 	return 1;
