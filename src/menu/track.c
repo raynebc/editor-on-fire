@@ -2614,7 +2614,7 @@ DIALOG eof_track_rs_tone_change_add_dialog[] =
 int eof_track_rs_tone_change_add(void)
 {
 	EOF_PRO_GUITAR_TRACK *tp;
-	unsigned long tracknum, ctr;
+	unsigned long tracknum;
 	char defaulttone = 0;
 
 	if(!eof_song_loaded || !eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
@@ -2632,13 +2632,6 @@ int eof_track_rs_tone_change_add(void)
 	{	//User clicked OK
 		if(eof_etext[0] != '\0')
 		{	//If a tone key name is specified
-			for(ctr = 0; ctr < (unsigned long)strlen(eof_etext); ctr++)
-			{	//For each character in the name
-				if(eof_etext[ctr] == ' ')
-				{	//If it's a space character
-					eof_etext[ctr] = '_';	//Replace it with an underscore
-				}
-			}
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			if((tp->defaulttone[0] != '\0') && (!strcmp(tp->defaulttone, eof_etext)))
 			{	//If the tone being changed to is the currently defined default tone
