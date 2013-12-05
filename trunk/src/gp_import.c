@@ -4093,7 +4093,10 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tEnd of repeat (%d repeats left) -> Seeking to measure #%lu", working_num_of_repeats[currentmeasure] - 1, last_start_of_repeat + 1);
 				eof_log(eof_log_string, 1);
 #endif
-				working_num_of_repeats[currentmeasure]--;	//Decrement the number of repeats left for this marker
+				if(!in_alt_ending)
+				{	//As long as this measure isn't used in an alternate ending (depending on how the GP file is authored, multiple alternate endings may rely on the same end of repeat)
+					working_num_of_repeats[currentmeasure]--;	//Decrement the number of repeats left for this marker
+				}
 				currentmeasure = last_start_of_repeat;	//Jump to the last start of repeat that was encountered
 				curr_repeat++;
 			}

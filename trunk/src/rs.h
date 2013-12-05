@@ -19,20 +19,20 @@ typedef struct
 	char bend;					//Nonzero if this note is a bend
 	unsigned long bendstrength;	//The number of half steps this note bends
 	long slideto;				//If not negative, is the fret position the slide ends at
-	char hammeron;					//Nonzero if this note is a hammer on
-	char pulloff;					//Nonzero if this note is a pull off
-	char harmonic;					//Nonzero if this note is a harmonic
-	char hopo;						//Nonzero if this note is either a hammer on or a pull off
-	char palmmute;					//Nonzero if this note is a palm mute
-	char tremolo;					//Nonzero if this note is a tremolo
-	char pop;						//1 if this note is played with pop technique, else -1
-	char slap;						//1 if this note is played with slap technique, else -1
-	char accent;					//Nonzero if this note is played as an accent
-	char pinchharmonic;				//Nonzero if this note is a pinch harmonic
-	char stringmute;				//Nonzero if this note is a string mute
+	char hammeron;				//Nonzero if this note is a hammer on
+	char pulloff;				//Nonzero if this note is a pull off
+	char harmonic;				//Nonzero if this note is a harmonic
+	char hopo;					//Nonzero if this note is either a hammer on or a pull off
+	char palmmute;				//Nonzero if this note is a palm mute
+	char tremolo;				//Nonzero if this note is a tremolo
+	char pop;					//1 if this note is played with pop technique, else -1
+	char slap;					//1 if this note is played with slap technique, else -1
+	char accent;				//Nonzero if this note is played as an accent
+	char pinchharmonic;			//Nonzero if this note is a pinch harmonic
+	char stringmute;			//Nonzero if this note is a string mute
 	long unpitchedslideto;		//If not negative, is the fret position to which the note performs an unpitched slide
-	char tap;						//Nonzero if this note is tapped
-	char vibrato;					//Is set to 80 if the note is played with vibrato, otherwise zero
+	char tap;					//Nonzero if this note is tapped
+	char vibrato;				//Is set to 80 if the note is played with vibrato, otherwise zero
 } EOF_RS_TECHNIQUES;
 
 #define EOF_NUM_RS_PREDEFINED_SECTIONS 30

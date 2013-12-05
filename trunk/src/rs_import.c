@@ -414,48 +414,67 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						eof_log(eof_log_string, 1);
 						break;	//Break from loop
 					}
-					if(eventlist_count < EOF_RS_EVENT_IMPORT_LIMIT)
-					{	//If another text event can be stored
-						if(!parse_xml_rs_timestamp("time", buffer, &timestamp))
-						{	//If the timestamp was not readable
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
-							eof_log(eof_log_string, 1);
-							error = 1;
-							break;	//Break from inner loop
-						}
-						if(!parse_xml_attribute_number("phraseId", buffer, &id))
-						{	//If the phrase ID was not readable
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading phrase ID on line #%lu.  Aborting", linectr);
-							eof_log(eof_log_string, 1);
-							error = 1;
-							break;	//Break from inner loop
-						}
-						if(id >= phraselist_count)
-						{	//If this phrase ID was not defined in the phrase tag
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError:  Invalid phrase ID on line #%lu.  Aborting", linectr);
-							eof_log(eof_log_string, 1);
-							error = 1;
-							break;	//Break from inner loop
-						}
-						eventlist[eventlist_count] = malloc(sizeof(EOF_TEXT_EVENT));	//Allocate memory to store the text event
-						if(!eventlist[eventlist_count])
-						{
-							eof_log("\tError allocating memory.  Aborting", 1);
-							error = 1;
-							break;	//Break from inner loop
-						}
-						strncpy(eventlist[eventlist_count]->text, phraselist[id], sizeof(eventlist[eventlist_count]->text) - 1);	//Copy the phrase name
-						eventlist[eventlist_count]->track = eof_selected_track;
-						eventlist[eventlist_count]->flags = EOF_EVENT_FLAG_RS_PHRASE;
-						eventlist[eventlist_count]->beat = timestamp;	//Store the real timestamp, it will need to be converted to the beat number later
-						phraseitctr++;
-						eventlist_count++;
+					if(strcasestr_spec(buffer, "<heroLevels "))
+					{	//If this is the start of a heroLevels tag, ignore all lines of XML until the end of the tag is reached
+#ifdef RS_IMPORT_DEBUG
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tIgnoring <heroLevels> tag on line #%lu", linectr);
+						eof_log(eof_log_string, 1);
+#endif
+					}
+					else if(strcasestr_spec(buffer, "<heroLevel "))
+					{	//Ignore a heroLevel tag
+					}
+					else if(strcasestr_spec(buffer, "</heroLevels"))
+					{	//Ignore the end of a heroLevels tag
+					}
+					else if(strcasestr_spec(buffer, "</phraseIteration>"))
+					{	//Ignore the end of a phraseIteration tag, which would occur after a heroLevels tag
 					}
 					else
-					{	//Otherwise the text event limit has been exceeded
-						eof_log("\t\tError:  Text event limit exceeded.  Aborting", 1);
-						error = 1;
-						break;	//Break from inner loop
+					{
+						if(eventlist_count < EOF_RS_EVENT_IMPORT_LIMIT)
+						{	//If another text event can be stored
+							if(!parse_xml_rs_timestamp("time", buffer, &timestamp))
+							{	//If the timestamp was not readable
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
+								eof_log(eof_log_string, 1);
+								error = 1;
+								break;	//Break from inner loop
+							}
+							if(!parse_xml_attribute_number("phraseId", buffer, &id))
+							{	//If the phrase ID was not readable
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading phrase ID on line #%lu.  Aborting", linectr);
+								eof_log(eof_log_string, 1);
+								error = 1;
+								break;	//Break from inner loop
+							}
+							if(id >= phraselist_count)
+							{	//If this phrase ID was not defined in the phrase tag
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError:  Invalid phrase ID on line #%lu.  Aborting", linectr);
+								eof_log(eof_log_string, 1);
+								error = 1;
+								break;	//Break from inner loop
+							}
+							eventlist[eventlist_count] = malloc(sizeof(EOF_TEXT_EVENT));	//Allocate memory to store the text event
+							if(!eventlist[eventlist_count])
+							{
+								eof_log("\tError allocating memory.  Aborting", 1);
+								error = 1;
+								break;	//Break from inner loop
+							}
+							strncpy(eventlist[eventlist_count]->text, phraselist[id], sizeof(eventlist[eventlist_count]->text) - 1);	//Copy the phrase name
+							eventlist[eventlist_count]->track = eof_selected_track;
+							eventlist[eventlist_count]->flags = EOF_EVENT_FLAG_RS_PHRASE;
+							eventlist[eventlist_count]->beat = timestamp;	//Store the real timestamp, it will need to be converted to the beat number later
+							phraseitctr++;
+							eventlist_count++;
+						}
+						else
+						{	//Otherwise the text event limit has been exceeded
+							eof_log("\t\tError:  Text event limit exceeded.  Aborting", 1);
+							error = 1;
+							break;	//Break from inner loop
+						}
 					}
 
 					(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text

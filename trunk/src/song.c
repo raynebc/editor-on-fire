@@ -1999,6 +1999,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, unsigned char difficulty, unsigned long start, unsigned long end, unsigned long flags, char *name)
 {
 	unsigned long count,tracknum;	//Used to de-obfuscate the track handling
+	unsigned long ctr;
 
  	eof_log("eof_track_add_section() entered", 2);
 
@@ -2189,9 +2190,16 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				if(count < EOF_MAX_PHRASES)
 				{	//If EOF can store the tone change
 					if(name && (name[0] != '\0'))
-					{	//If the tone name isn't NULL or empty, add the change to the project
+					{	//If the tone name isn't NULL or empty, add the tone change to the project
 						sp->pro_guitar_track[tracknum]->tonechange[count].start_pos = start;
 						(void) ustrcpy(sp->pro_guitar_track[tracknum]->tonechange[count].name, name);
+						for(ctr = 0; ctr < (unsigned long)strlen(sp->pro_guitar_track[tracknum]->tonechange[count].name); ctr++)
+						{	//For each character in the name
+							if(sp->pro_guitar_track[tracknum]->tonechange[count].name[ctr] == ' ')
+							{	//If it's a space character
+								sp->pro_guitar_track[tracknum]->tonechange[count].name[ctr] = '_';	//Replace it with an underscore
+							}
+						}
 						if(end)
 						{	//The project format uses this field as a boolean to identify if this is the default tone for the track
 							strncpy(sp->pro_guitar_track[tracknum]->defaulttone, sp->pro_guitar_track[tracknum]->tonechange[count].name, EOF_SECTION_NAME_LENGTH);

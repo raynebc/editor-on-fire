@@ -2544,13 +2544,14 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							unsigned long stringnum, bitmask;
 							unsigned char *finger = tp->note[chordlist[chordid]]->finger;	//Point to this chord's template's finger array
 							long fingernum;
+							long slidediff = 0;	//Used to find how many frets a slide is, so it can be evenly applied to all fretted strings in a chord
 
 							for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
 							{	//For each string used in this track
 								if((eof_get_note_note(sp, track, ctr3) & bitmask) && !(tp->note[ctr3]->ghost & bitmask))
 								{	//If this string is used in this note and it is not ghosted
-									char tagend[2] = "/";			//If a chordNote tag is to have a bendValues subtag, this string is emptied so that the note tag doesn't end in the same line
-									unsigned long fret;				//The fret number used for this string
+									char tagend[2] = "/";	//If a chordNote tag is to have a bendValues subtag, this string is emptied so that the note tag doesn't end in the same line
+									long fret;				//The fret number used for this string (uses signed math, keep it a signed int type)
 
 									(void) eof_get_rs_techniques(sp, track, ctr3, stringnum, &tech);	//Determine techniques used by this note
 									if(tp->note[ctr3]->frets[stringnum] == 0xFF)
@@ -2558,8 +2559,31 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 										fret = 0;	//Assume muted open note
 									}
 									else
-									{	//Otherwise use the defined fret number
+									{	//Otherwise use the defined fret number for the muted string
 										fret = tp->note[ctr3]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
+									}
+									if(tp->note[ctr3]->frets[stringnum] & 0x80)
+									{	//If the note is string muted
+										tech.stringmute = 1;	//Ensure the chordNote indicates this string is muted
+									}
+									else
+									{	//The note is not string muted
+										tech.stringmute = 0;
+									}
+									if(tech.slideto >= 0)
+									{	//If the chord has slide technique
+										if(!slidediff && fret)
+										{	//If this is the first fretted string in the chord
+											slidediff = tech.slideto - fret;	//Determine how many frets the slide is (negative is a downward slide)
+										}
+										if(fret)
+										{	//If this string is fretted
+											tech.slideto = fret + slidediff;	//Get the correct ending fret for this string's slide
+										}
+										else
+										{	//Otherwise this string does not slide
+											tech.slideto = -1;
+										}
 									}
 									if(tech.bend || (tech.slideto >= 0) || (tech.unpitchedslideto >= 0))
 									{	//If this note is marked as a bend or slide note
