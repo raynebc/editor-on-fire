@@ -27,13 +27,14 @@
 #define EOF_NOTE_FLAG_CRAZY      4	//This flag will represent overlap allowed for guitar/dance/keys tracks, and will force pro guitar/bass chords to display with a chord box
 #define EOF_NOTE_FLAG_F_HOPO     8
 #define EOF_NOTE_FLAG_NO_HOPO   16
-#define EOF_NOTE_FLAG_TEMP       536870912	//This flag will represent a note that was generated for temporary use and will be removed
+#define EOF_NOTE_FLAG_TEMP       536870912	//This flag will represent a temporary status, such as a note that was generated for temporary use that will be removed
 #define EOF_NOTE_FLAG_HIGHLIGHT 1073741824
 #define EOF_NOTE_FLAG_EXTENDED  2147483648	//The MSB will be reserved to indicate an additional flag variable is present in a project file
 
 //The following flags pertain to pro guitar notes
 #define EOF_PRO_GUITAR_NOTE_FLAG_ACCENT         32			//This flag will represent a note that is played as an accent
 #define EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC     64			//This flag will represent a note that is played as a pinch harmonic
+#define EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT       128			//This flag will represent a note that is linked to the next note in the track difficulty
 #define EOF_PRO_GUITAR_NOTE_FLAG_HO				512			//This flag will represent a hammer on
 #define EOF_PRO_GUITAR_NOTE_FLAG_PO				1024		//This flag will represent a pull off
 #define EOF_PRO_GUITAR_NOTE_FLAG_TAP			2048		//This flag will represent a tapped note
@@ -552,7 +553,7 @@ void *eof_track_add_create_note2(EOF_SONG *sp, unsigned long track, EOF_NOTE *no
 	//Adds and initializes the appropriate note for the specified track, returning the newly created note structure, or NULL on error
 	//If track refers to a legacy track, it is created and initialized using the passed structure
 	//If track refers to a pro guitar track, a pro guitar note is partially initialized and the rest of the data is set to default values, ie. fret values set to 0xFF (muted)
-void eof_track_sort_notes(EOF_SONG *sp, unsigned long track);		//Calls the appropriate sort function for the specified track
+void eof_track_sort_notes(EOF_SONG *sp, unsigned long track);		//Calls the appropriate sort function for the specified track.  eof_selection.multi[] is preserved before the sort and recreated afterward, since sorting invalidates the selection array due to note numbering being changed
 long eof_track_fixup_previous_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note/lyric one before the specified note/lyric number that is in the same difficulty, or -1 if there is none
 long eof_track_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note/lyric one after the specified note/lyric number that is in the same difficulty, or -1 if there is none
 void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel);	//Calls the appropriate fixup function for the specified track.  If sel is zero, the currently selected note is deselected automatically.

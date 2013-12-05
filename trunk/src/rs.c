@@ -2456,7 +2456,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								{	//If the note is a bend, the note tag must not end on the same line as it will have a bendValues subtag
 									tagend[0] = '\0';	//Drop the / from the string
 								}
-								(void) snprintf(buffer, sizeof(buffer) - 1, "        <note time=\"%.3f\" linkNext=\"0\" accent=\"%d\" bend=\"%d\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"0\" leftHand=\"-1\" mute=\"%d\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\" harmonicPinch=\"%d\" pickDirection=\"0\" rightHand=\"-1\" slideUnpitchTo=\"%ld\" tap=\"%d\" vibrato=\"%d\"%s>\n", (double)notepos / 1000.0, tech.accent, tech.bend, fret, tech.hammeron, tech.harmonic, tech.hopo, tech.stringmute, tech.palmmute, tech.pop, tech.pulloff, tech.slap, tech.slideto, stringnum, (double)tech.length / 1000.0, tech.tremolo, tech.pinchharmonic, tech.unpitchedslideto, tech.tap, tech.vibrato, tagend);
+								(void) snprintf(buffer, sizeof(buffer) - 1, "        <note time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" bend=\"%d\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"0\" leftHand=\"-1\" mute=\"%d\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\" harmonicPinch=\"%d\" pickDirection=\"0\" rightHand=\"-1\" slideUnpitchTo=\"%ld\" tap=\"%d\" vibrato=\"%d\"%s>\n", (double)notepos / 1000.0, tech.linknext, tech.accent, tech.bend, fret, tech.hammeron, tech.harmonic, tech.hopo, tech.stringmute, tech.palmmute, tech.pop, tech.pulloff, tech.slap, tech.slideto, stringnum, (double)tech.length / 1000.0, tech.tremolo, tech.pinchharmonic, tech.unpitchedslideto, tech.tap, tech.vibrato, tagend);
 								(void) pack_fputs(buffer, fp);
 								if(tech.bend)
 								{	//If the note is a bend, write the bendValues subtag and close the note tag
@@ -2537,7 +2537,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							highdensity = 0;	//Ensure the chord tag is written to reflect low density
 							tagend[0] = '\0';	//Drop the / from the string
 						}
-						(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" linkNext=\"0\" accent=\"%d\" chordId=\"%lu\" fretHandMute=\"%d\" highDensity=\"%d\" ignore=\"0\" palmMute=\"%d\" hopo=\"%d\" strum=\"%s\"%s>\n", notepos, tech.accent, chordid, tech.stringmute, highdensity, tech.palmmute, tech.hopo, direction, tagend);
+						(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" chordId=\"%lu\" fretHandMute=\"%d\" highDensity=\"%d\" ignore=\"0\" palmMute=\"%d\" hopo=\"%d\" strum=\"%s\"%s>\n", notepos, tech.linknext, tech.accent, chordid, tech.stringmute, highdensity, tech.palmmute, tech.hopo, direction, tagend);
 						(void) pack_fputs(buffer, fp);
 						if(chordnote)
 						{	//If chordNote tags are to be written
@@ -2616,7 +2616,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 									{	//This string is played open
 										fingernum = -1;
 									}
-									(void) snprintf(buffer, sizeof(buffer) - 1, "          <chordNote time=\"%.3f\" linkNext=\"0\" accent=\"%d\" bend=\"%d\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"0\" leftHand=\"%ld\" mute=\"%d\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\" harmonicPinch=\"%d\" pickDirection=\"0\" rightHand=\"-1\" slideUnpitchTo=\"%ld\" tap=\"%d\" vibrato=\"%d\"%s>\n", notepos, tech.accent, tech.bend, fret, tech.hammeron, tech.harmonic, tech.hopo, fingernum, tech.stringmute, tech.palmmute, tech.pop, tech.pulloff, tech.slap, tech.slideto, stringnum, (double)tech.length / 1000.0, tech.tremolo, tech.pinchharmonic, tech.unpitchedslideto, tech.tap, tech.vibrato, tagend);
+									(void) snprintf(buffer, sizeof(buffer) - 1, "          <chordNote time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" bend=\"%d\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"0\" leftHand=\"%ld\" mute=\"%d\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\" harmonicPinch=\"%d\" pickDirection=\"0\" rightHand=\"-1\" slideUnpitchTo=\"%ld\" tap=\"%d\" vibrato=\"%d\"%s>\n", notepos, tech.linknext, tech.accent, tech.bend, fret, tech.hammeron, tech.harmonic, tech.hopo, fingernum, tech.stringmute, tech.palmmute, tech.pop, tech.pulloff, tech.slap, tech.slideto, stringnum, (double)tech.length / 1000.0, tech.tremolo, tech.pinchharmonic, tech.unpitchedslideto, tech.tap, tech.vibrato, tagend);
 									(void) pack_fputs(buffer, fp);
 									if(tech.bend)
 									{	//If the note is a bend, write the bendValues subtag and close the note tag
@@ -2908,15 +2908,6 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}
 	}
 	eof_sort_events(sp);	//Re-sort events
-	//Remove all temporary notes that were added
-	for(ctr = tp->notes; ctr > 0; ctr--)
-	{	//For each note in the track, in reverse order
-		if(tp->note[ctr - 1]->flags & EOF_NOTE_FLAG_TEMP)
-		{	//If this is a temporary note that was added for chord technique notation
-			eof_track_delete_note(sp, track, ctr - 1);	//Delete it
-		}
-	}
-	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
 	return 1;	//Return success
 }
@@ -3108,7 +3099,7 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the track
 		if((tp->note[ctr]->type == difficulty) && !(tp->note[ctr]->flags & EOF_NOTE_FLAG_TEMP))
-		{	//If it is in the specified difficulty and isn't marked as a temporary note (a single note inserted to allow chord techniques to appear in Rocksmith)
+		{	//If it is in the specified difficulty and isn't marked as a temporary note (a single note temporarily inserted to allow chord techniques to appear in Rocksmith 1)
 			if(!next_position)
 			{	//If this is the first note since the last hand position, or there was no hand position placed yet
 				next_position = tp->note[ctr];	//Store its address
@@ -4347,7 +4338,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 	unsigned long tracknum, flags, fret;
 	EOF_PRO_GUITAR_TRACK *tp;
 
-	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || (ptr == NULL))
+	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return 0;	//Invalid parameters
 	tracknum = sp->track[track]->tracknum;
 	tp = sp->pro_guitar_track[tracknum];
@@ -4355,67 +4346,70 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 		return 0;	//Invalid parameter
 
 	flags = eof_get_note_flags(sp, track, notenum);
-	ptr->length = eof_get_note_length(sp, track, notenum);
-	fret = tp->note[notenum]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
+	if(ptr)
+	{	//If the calling function passed a techniques structure
+		ptr->length = eof_get_note_length(sp, track, notenum);
+		fret = tp->note[notenum]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
+		ptr->bendstrength = ptr->bend = 0;	//Initialize these to default values
+		ptr->slideto = ptr->unpitchedslideto = -1;
 
-	ptr->bendstrength = ptr->bend = 0;	//Initialize these to default values
-	ptr->slideto = ptr->unpitchedslideto = -1;
-
-	if((ptr->length == 1) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
-	{	//If the note is has the absolute minimum length and isn't a bend or a slide note (bend and slide notes are required to have a length > 0 or Rocksmith will crash)
-		ptr->length = 0;	//Convert to a length of 0 so that it doesn't display as a sustain note in-game
-	}
-	if((flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) == 0)
-	{	//If this note doesn't have definitions for bend strength or the ending fret for slides
-		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
-		{	//If this note bends
-			ptr->bend = 1;
-			ptr->bendstrength = 1;	//Assume a 1 half step bend
+		if((ptr->length == 1) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+		{	//If the note is has the absolute minimum length and isn't a bend or a slide note (bend and slide notes are required to have a length > 0 or Rocksmith will crash)
+			ptr->length = 0;	//Convert to a length of 0 so that it doesn't display as a sustain note in-game
 		}
-		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-		{	//If this note slides up and the user hasn't defined the ending fret of the slide
-			ptr->slideto = fret + 1;	//Assume a 1 fret slide until logic is added for the author to add this information
+		if((flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) == 0)
+		{	//If this note doesn't have definitions for bend strength or the ending fret for slides
+			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+			{	//If this note bends
+				ptr->bend = 1;
+				ptr->bendstrength = 1;	//Assume a 1 half step bend
+			}
+			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+			{	//If this note slides up and the user hasn't defined the ending fret of the slide
+				ptr->slideto = fret + 1;	//Assume a 1 fret slide until logic is added for the author to add this information
+			}
+			else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+			{	//If this note slides down and the user hasn't defined the ending fret of the slide
+				ptr->slideto = fret - 1;	//Assume a 1 fret slide until logic is added for the author to add this information
+			}
 		}
-		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
-		{	//If this note slides down and the user hasn't defined the ending fret of the slide
-			ptr->slideto = fret - 1;	//Assume a 1 fret slide until logic is added for the author to add this information
+		else
+		{	//This note defines the bend strength and ending fret for slides
+			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+			{	//If this note bends
+				ptr->bendstrength = tp->note[notenum]->bendstrength;	//Obtain the defined bend strength
+				ptr->bend = (ptr->bendstrength + 1) / 2;	//The bend attribute value is supposedly the bend's maximum height rounded up to the nearest number of full steps
+			}
+			if((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+			{	//If this note slides
+				ptr->slideto = tp->note[notenum]->slideend;
+			}
 		}
-	}
-	else
-	{	//This note defines the bend strength and ending fret for slides
-		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
-		{	//If this note bends
-			ptr->bend = 1;
-			ptr->bendstrength = tp->note[notenum]->bendstrength;	//Obtain the defined bend strength
+		//Determine note statuses
+		ptr->hammeron = (flags & EOF_PRO_GUITAR_NOTE_FLAG_HO) ? 1 : 0;
+		ptr->pulloff = (flags & EOF_PRO_GUITAR_NOTE_FLAG_PO) ? 1 : 0;
+		ptr->harmonic = (flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC) ? 1 : 0;
+		ptr->hopo = (ptr->hammeron | ptr->pulloff) ? 1 : 0;
+		ptr->palmmute = (flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE) ? 1 : 0;
+		ptr->tremolo = (flags & EOF_NOTE_FLAG_IS_TREMOLO) ? 1 : 0;
+		ptr->pop = (flags & EOF_PRO_GUITAR_NOTE_FLAG_POP) ? 1 : -1;
+		ptr->slap = (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLAP) ? 1 : -1;
+		ptr->accent = (flags & EOF_PRO_GUITAR_NOTE_FLAG_ACCENT) ? 1 : 0;
+		ptr->pinchharmonic = (flags & EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC) ? 1 : 0;
+		ptr->stringmute = (flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) ? 1 : 0;
+		ptr->tap = (flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP) ? 1 : 0;
+		ptr->vibrato = (flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO) ? 80 : 0;
+		ptr->linknext = (flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT) ? 1 : 0;
+		if((ptr->pop > 0) || (ptr->slap > 0))
+		{	//If the note has pop or slap notation
+			ptr->length = 0;	//Remove all sustain for the note, because Rocksmith displays pop/slap sustain notes as non pop/slap sustained notes
 		}
-		if((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
-		{	//If this note slides
-			ptr->slideto = tp->note[notenum]->slideend;
-		}
-	}
-	//Determine note statuses
-	ptr->hammeron = (flags & EOF_PRO_GUITAR_NOTE_FLAG_HO) ? 1 : 0;
-	ptr->pulloff = (flags & EOF_PRO_GUITAR_NOTE_FLAG_PO) ? 1 : 0;
-	ptr->harmonic = (flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC) ? 1 : 0;
-	ptr->hopo = (ptr->hammeron | ptr->pulloff) ? 1 : 0;
-	ptr->palmmute = (flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE) ? 1 : 0;
-	ptr->tremolo = (flags & EOF_NOTE_FLAG_IS_TREMOLO) ? 1 : 0;
-	ptr->pop = (flags & EOF_PRO_GUITAR_NOTE_FLAG_POP) ? 1 : -1;
-	ptr->slap = (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLAP) ? 1 : -1;
-	ptr->accent = (flags & EOF_PRO_GUITAR_NOTE_FLAG_ACCENT) ? 1 : 0;
-	ptr->pinchharmonic = (flags & EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC) ? 1 : 0;
-	ptr->stringmute = (flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) ? 1 : 0;
-	ptr->tap = (flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP) ? 1 : 0;
-	ptr->vibrato = (flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO) ? 80 : 0;
-	if((ptr->pop > 0) || (ptr->slap > 0))
-	{	//If the note has pop or slap notation
-		ptr->length = 0;	//Remove all sustain for the note, because Rocksmith displays pop/slap sustain notes as non pop/slap sustained notes
-	}
+	}//If the calling function passed a techniques structure
 
 	//Make a bitmask reflecting only the techniques this note has that require a chordNote subtag to be written
 	flags &= (	EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_HO | EOF_PRO_GUITAR_NOTE_FLAG_PO |
 				EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC | EOF_NOTE_FLAG_IS_TREMOLO | EOF_PRO_GUITAR_NOTE_FLAG_POP | EOF_PRO_GUITAR_NOTE_FLAG_SLAP | EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC |
-				EOF_PRO_GUITAR_NOTE_FLAG_TAP | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO );
+				EOF_PRO_GUITAR_NOTE_FLAG_TAP | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO | EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT);
 
 	return flags;
 }

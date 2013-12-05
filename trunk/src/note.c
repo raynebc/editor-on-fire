@@ -1106,7 +1106,10 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 	if(eof_render_3d_rs_chords && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_note_count_colors(eof_song, track, notenum) > 1))
 	{	//If the user has opted to 3D render Rocksmith style chords, and this is a pro guitar/bass chord
-		return 0;	//Don't render the tail
+		if(!eof_get_rs_techniques(eof_song, eof_selected_track, notenum, 0, NULL))
+		{	//If the chord does not contain any techniques that would require chordNotes to be written (to display with a sustain in RS2)
+			return 0;	//Don't render the tail
+		}
 	}
 
 	tracknum = eof_song->track[track]->tracknum;
@@ -1458,6 +1461,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC)
 		{
 			buffer[index++] = 'f';	//In the symbols font, f is the pinch harmonic character
+		}
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT)
+		{
+			buffer[index++] = 'g';	//In the symbols font, f is the linknext indicator
 		}
 	}//Check pro guitar statuses
 	else if((track == EOF_TRACK_DRUM) || (track == EOF_TRACK_DRUM_PS))

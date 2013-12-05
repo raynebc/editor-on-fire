@@ -984,8 +984,8 @@ int eof_menu_beat_calculate_bpm(void)
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if(eof_selection.multi[i])
-		{
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If the note is selected
 			if(first)
 			{
 				curpos = eof_get_note_pos(eof_song, eof_selected_track, i);

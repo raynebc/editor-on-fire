@@ -3030,6 +3030,7 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Erase the pro guitar Rocksmith status flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_POP;			//Erase the pro guitar pop flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLAP;			//Erase the pro guitar slap flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;		//Erase the pro guitar linknext flag
 		}
 		else
 		{	//If it is pasting into a pro guitar track
@@ -3343,7 +3344,7 @@ int eof_menu_edit_deselect_note_number_in_sequence(void)
 		{	//If the user entered valid values
 			for(i = 0, ctr = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 			{	//For each note in the active track
-				if(eof_selection.multi[i])
+				if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 				{	//If the note is selected
 					ctr++;	//Keep track of which note number in the sequence this is
 					if(ctr == val1)

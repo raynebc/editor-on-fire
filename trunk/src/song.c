@@ -3694,13 +3694,27 @@ void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, un
 
 void eof_track_sort_notes(EOF_SONG *sp, unsigned long track)
 {
-	unsigned long tracknum;
+	unsigned long tracknum, flags, ctr;
 
  	eof_log("eof_track_sort_notes() entered", 2);
 
 	if((sp == NULL) || (track >= sp->tracks) || (track == 0))
 		return;
 	tracknum = sp->track[track]->tracknum;
+
+	//Preserve the note selection, which would be destroyed by note sorting, if applicable
+	if(eof_selection.track == track)
+	{	//If the track being sorted has selected notes
+		for(ctr = eof_get_track_size(sp, track); ctr > 0; ctr--)
+		{	//For each note in the track, in reverse order
+			if(eof_selection.multi[ctr - 1])
+			{	//If this note is selected
+				flags = eof_get_note_flags(sp, track, ctr - 1);
+				flags |= EOF_NOTE_FLAG_TEMP;	//Set the temporary flag to track this note is selected
+				eof_set_note_flags(sp, track, ctr - 1, flags);	//Update the note flags
+			}
+		}
+	}
 
 	switch(sp->track[track]->track_format)
 	{
@@ -3715,6 +3729,25 @@ void eof_track_sort_notes(EOF_SONG *sp, unsigned long track)
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			eof_pro_guitar_track_sort_notes(sp->pro_guitar_track[tracknum]);
 		break;
+	}
+
+	//Recreate the note selection if applicable
+	if(eof_selection.track == track)
+	{	//If the track being sorted has selected notes
+		for(ctr = eof_get_track_size(sp, track); ctr > 0; ctr--)
+		{	//For each note in the track, in reverse order
+			flags = eof_get_note_flags(sp, track, ctr - 1);
+			if(flags & EOF_NOTE_FLAG_TEMP)
+			{	//If this note was previously marked as selected
+				flags &= ~EOF_NOTE_FLAG_TEMP;	//Clear the temporary flag
+				eof_set_note_flags(sp, track, ctr - 1, flags);	//Restore the note's original flags
+				eof_selection.multi[ctr - 1] = 1;	//Mark this note as selected in the selection array
+			}
+			else
+			{	//This note was not selected before the sort was performed
+				eof_selection.multi[ctr - 1] = 0;
+			}
+		}
 	}
 }
 

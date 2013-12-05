@@ -33,6 +33,7 @@ typedef struct
 	long unpitchedslideto;		//If not negative, is the fret position to which the note performs an unpitched slide
 	char tap;					//Nonzero if this note is tapped
 	char vibrato;				//Is set to 80 if the note is played with vibrato, otherwise zero
+	char linknext;				//Nonzero if this note has the linknext option enabled
 } EOF_RS_TECHNIQUES;
 
 #define EOF_NUM_RS_PREDEFINED_SECTIONS 30
@@ -215,9 +216,11 @@ unsigned long eof_get_highest_fret_in_time_range(EOF_SONG *sp, unsigned long tra
 
 unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long stringnum, EOF_RS_TECHNIQUES *ptr);
 	//Reads the flags of the specified note and sets variables in the specified techniques structure
+	//stringnum is only used to set the fret and slide end fret values for a specified gem, and must be a value from 0 to 5
 	//If the note has pop or slap status, the length in the techniques structure is set to 0 to reflect
 	//	that Rocksmith requires such techniques to be on non sustained notes
 	//Unless the note has bend or slide status, the length in the techniques structure is set to 0 if the note has EOF's minimum length of 1ms
 	//A flags bitmask is returned that is nonzero if the note contains any statuses that would necessitate chordNote subtag(s) if the examined note is a chord
+	//If ptr is NULL, no logic is performed besides returning the flags that the note contains that would necessitate chordNote subtag(s) if the examined note is a chord
 
 #endif
