@@ -3496,7 +3496,7 @@ void eof_editor_logic(void)
 					}
 					for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 					{	//For each note in the active track
-						if(eof_selection.multi[i])
+						if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 						{	//If the note is selected
 							notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
 							if(notepos == eof_selection.current_pos)
@@ -3550,7 +3550,7 @@ void eof_editor_logic(void)
 						}
 						for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 						{
-							if(eof_selection.multi[i])
+							if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 							{
 								eof_set_note_pos(eof_song, eof_selected_track, i, eof_get_note_pos(eof_song, eof_selected_track, i) - revert_amount);
 							}
@@ -4271,8 +4271,8 @@ void eof_vocal_editor_logic(void)
 					for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 					{	//For each lyric in the track
 						notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
-						if(eof_selection.multi[i])
-						{
+						if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+						{	//If the lyric is selected
 							if(notepos == eof_selection.current_pos)
 							{
 								if(move_direction < 0)
@@ -4314,7 +4314,7 @@ void eof_vocal_editor_logic(void)
 					{
 						for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 						{
-							if(eof_selection.multi[i])
+							if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 							{
 								eof_song->vocal_track[tracknum]->lyric[i]->pos -= revert_amount;
 							}

@@ -2388,8 +2388,8 @@ int eof_menu_note_push_back(void)
 	{	//If notes are selected
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the active track
-			if(eof_selection.multi[i])
-			{
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+			{	//If the note is selected
 				beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i));
 				porpos = eof_get_porpos(eof_get_note_pos(eof_song, eof_selected_track, i));
 				eof_set_note_pos(eof_song, eof_selected_track, i, eof_put_porpos(beat, porpos, eof_menu_note_push_get_offset()));
@@ -2427,8 +2427,8 @@ int eof_menu_note_push_up(void)
 	{	//If notes are selected
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the active track
-			if(eof_selection.multi[i])
-			{
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+			{	//If the note is selected
 				beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i));
 				porpos = eof_get_porpos(eof_get_note_pos(eof_song, eof_selected_track, i));
 				eof_set_note_pos(eof_song, eof_selected_track, i, eof_put_porpos(beat, porpos, -eof_menu_note_push_get_offset()));
@@ -2911,7 +2911,7 @@ int eof_menu_hopo_auto(void)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if(eof_selection.multi[i])
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If the note is selected
 			if(!((eof_selected_track == EOF_TRACK_BASS) && (eof_get_note_note(eof_song, eof_selected_track, i) & 32)))
 			{	//If the note is not an open bass strum note
@@ -2959,7 +2959,7 @@ int eof_menu_hopo_cycle(void)
 	{
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the active track
-			if(eof_selection.multi[i])
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 			{	//If the note is selected
 				if(!((eof_selected_track == EOF_TRACK_BASS) && (eof_get_note_note(eof_song, eof_selected_track, i) & 32)))
 				{	//If the note is not an open bass strum note
@@ -3028,7 +3028,7 @@ int eof_menu_hopo_force_on(void)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if(eof_selection.multi[i])
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{
 			if(!((eof_selected_track == EOF_TRACK_BASS) && (eof_get_note_note(eof_song, eof_selected_track, i) & 32)))
 			{	//If the note is not an open bass strum note
@@ -3073,7 +3073,7 @@ int eof_menu_hopo_force_off(void)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if(eof_selection.multi[i])
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{
 			if(!((eof_selected_track == EOF_TRACK_BASS) && (eof_get_note_note(eof_song, eof_selected_track, i) & 32)))
 			{	//If the note is not an open bass strum note
@@ -3366,7 +3366,7 @@ int eof_menu_toggle_freestyle(void)
 
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{	//For each lyric...
-		if(eof_selection.multi[i])
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//...that is selected, toggle its freestyle status
 			eof_toggle_freestyle(eof_song->vocal_track[tracknum],i);
 		}
@@ -3462,6 +3462,7 @@ DIALOG eof_pro_guitar_note_dialog[] =
 	{d_agup_check_proc,		154, 392, 64,  16, 2,   23,  0,    0,      0,         0,   "Vibrato",    NULL,          NULL },
 	{d_agup_check_proc,		10,  412, 76,  16, 2,   23,  0,    0,      0,         0,   "Harmonic",   NULL,          NULL },
 	{d_agup_check_proc,		89,  412, 50,  16, 2,   23,  0,    0,      0,         0,   "Bend",       NULL,          NULL },
+	{d_agup_check_proc,		154, 412, 72,  16, 2,   23,  0,    0,      0,         0,   "Linknext",   NULL,          NULL },
 	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -3707,6 +3708,14 @@ int eof_menu_note_edit_pro_guitar_note(void)
 		else
 		{	//Clear "Bend"
 			eof_pro_guitar_note_dialog[67].flags = 0;
+		}
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT)
+		{	//Select "Linknext"
+			eof_pro_guitar_note_dialog[68].flags = D_SELECTED;
+		}
+		else
+		{	//Clear "Linknext"
+			eof_pro_guitar_note_dialog[68].flags = 0;
 		}
 
 		bitmask = 0;
@@ -3979,6 +3988,15 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					if(eof_pro_guitar_note_dialog[67].flags == D_SELECTED)
 					{	//Bend is selected
 						flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+					}
+					if(eof_pro_guitar_note_dialog[68].flags == D_SELECTED)
+					{	//Linknext is selected
+						flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;
+					}
+
+					if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+					{	//If this is a slide or bend note, retain the note's original RS notation flag so any existing bend strengths or slide positions are kept
+						flags |= (eof_song->pro_guitar_track[tracknum]->note[i]->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION);
 					}
 
 					if(!allmuted)
@@ -6881,7 +6899,7 @@ int eof_menu_pro_guitar_toggle_hammer_on(void)
 	{
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the active track
-			if(eof_selection.multi[i])
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 			{	//If the note is selected
 				if(!undo_made)
 				{	//If an undo state hasn't been made yet
@@ -6967,7 +6985,7 @@ int eof_menu_pro_guitar_toggle_pull_off(void)
 	{
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the active track
-			if(eof_selection.multi[i])
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 			{	//If the note is selected
 				if(!undo_made)
 				{	//If an undo state hasn't been made yet
@@ -7490,7 +7508,7 @@ int eof_feedback_mode_update_note_selection(void)
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if(eof_selection.multi[i])
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If a note is selected
 			return 0;
 		}
@@ -7945,8 +7963,8 @@ int eof_menu_remove_statuses(void)
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if(eof_selection.multi[i])
-		{
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If the note is selected
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 			if(flags)
 			{	//If this note has any statuses
