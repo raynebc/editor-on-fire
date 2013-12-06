@@ -374,7 +374,7 @@ typedef struct
 	char key;	//If negative, the value defines the number of flats present, ie. -2 is Bb.  If positive, the value defines the number of sharps present, ie. 4 is E
 	double fpos;
 
-	//These variables track various properties of the beat to relieve rendering functions of some processing
+	//These variables, set with eof_process_beat_statistics(), track various properties of the beat to relieve rendering functions of some processing
 	unsigned long measurenum;
 	int beat_within_measure, num_beats_in_measure, beat_unit, contained_section_event, contained_rs_section_event, contained_rs_section_event_instance_number;
 	char contains_tempo_change, contains_ts_change, contains_end_event;
@@ -554,6 +554,7 @@ void *eof_track_add_create_note2(EOF_SONG *sp, unsigned long track, EOF_NOTE *no
 	//If track refers to a legacy track, it is created and initialized using the passed structure
 	//If track refers to a pro guitar track, a pro guitar note is partially initialized and the rest of the data is set to default values, ie. fret values set to 0xFF (muted)
 void eof_track_sort_notes(EOF_SONG *sp, unsigned long track);		//Calls the appropriate sort function for the specified track.  eof_selection.multi[] is preserved before the sort and recreated afterward, since sorting invalidates the selection array due to note numbering being changed
+int eof_song_qsort_phrase_sections(const void * e1, const void * e2);	//A generic qsort comparitor that will sort phrase sections into chronological order
 long eof_track_fixup_previous_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note/lyric one before the specified note/lyric number that is in the same difficulty, or -1 if there is none
 long eof_track_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note/lyric one after the specified note/lyric number that is in the same difficulty, or -1 if there is none
 void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel);	//Calls the appropriate fixup function for the specified track.  If sel is zero, the currently selected note is deselected automatically.
@@ -782,7 +783,7 @@ unsigned long eof_get_highest_fret_value(EOF_SONG *sp, unsigned long track, unsi
 	//If the parameters are invalid or the specific pro guitar note's gems are all muted with no fret specified, 0 is returned
 
 unsigned long eof_determine_chart_length(EOF_SONG *sp);
-	//Parses the project and returns the ending position of the last last note/lyric/text event/bookmark
+	//Parses the project and returns the ending position of the last note/lyric/text event/bookmark
 void eof_truncate_chart(EOF_SONG *sp);
 	//Uses eof_determine_chart() to set eof_chart_length to the larger of the last chart content and the loaded chart audio
 	//Any beats that are more than one beat after this position are deleted from the project

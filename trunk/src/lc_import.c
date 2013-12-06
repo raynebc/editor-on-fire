@@ -309,6 +309,7 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 	InitLyrics();	//Initialize all variables in the Lyrics structure
 	InitMIDI();		//Initialize all variables in the MIDI structure
 
+	qsort(tp->line, (size_t)tp->lines, sizeof(EOF_PHRASE_SECTION), eof_song_qsort_phrase_sections);	//Sort the lyric lines
 	temp = tp->line[0];			//Preserve the original lyric line information
 	original_lines = tp->lines;
 
@@ -364,6 +365,8 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 			}
 			if((tp->lyric[lyrctr])->pos < linestart)		//If this lyric precedes the beginning of the line
 			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLogic error while preparing lyrics for export to file \"%s\"", outputfilename);
+				eof_log(eof_log_string, 1);
 				ReleaseMemory(1);
 				return -1;				//Return failure
 			}

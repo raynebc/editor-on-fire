@@ -5,7 +5,8 @@ Changelog: 2.39 to 2.40b (in progress)
 	Added handling for a rare problem that can affect the lyric import of MIDI based files.  This problem occurs when a MIDI file does not properly define a 0 byte length for the last end of track event, and subsequently the file would fail to parse.  Such MIDI files may even technically be violating the MIDI standard.
 	Added a check to UltraStar lyric import to handle an invalid lyric duration of 0.
 	Fixed a bug where timing conversion could malfunction on a MIDI that defines time signature changes in tracks other than the tempo track.
-	Added support for importing and exporting line breaks in Rocksmith 2014 formatted lyrics.
+	Added support for importing line breaks in Rocksmith formatted lyrics and exporting line breaks in Rocksmith 2014 format.
+	Improved the noplus logic so that a lyric's duration extends to the end of a pitch shift instead of simply having the shift's duration added.  Previously, the distance between the start of the pitch shift and the end of the previous lyric was not taken into account.
 
 Changelog: 2.38 to 2.39
 	Some code cleanup.

@@ -217,7 +217,7 @@ void EndLyricLine(void)
 			{	//If next is in the same line as temp, is a plus sign and the user specified noplus,
 				//Remove the plus lyric, adjust the duration and grouping of the previous lyric
 				if(Lyrics.verbose >= 2)	printf("\tNoplus- Merging plus lyric with \"%s\"\n",temp->lyric);
-				temp->duration+=next->duration;			//Add the +'s duration to this lyric piece
+				temp->duration += (next->start - (temp->start + temp->duration)) + next->duration;	//Add the +'s duration and distance from this lyric to this lyric
 				temp->groupswithnext=next->groupswithnext;	//Replace this lyric's grouping status with that of the plus lyric
 
 				temp->next=next->next;					//Remove the + lyric from the list

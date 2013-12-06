@@ -28,8 +28,9 @@ void Export_RS(FILE *outf)
 {
 	struct Lyric_Line *curline=NULL;	//Conductor of the lyric line linked list
 	struct Lyric_Piece *temp=NULL;		//A conductor for the lyric pieces list
-	char buffer2[260];
+	char buffer2[260], buffer3[260];
 	char *suffix, newline[]="+", nonewline[] = "";
+	unsigned index1, index2;
 
 	assert_wrapper(outf != NULL);	//This must not be NULL
 	assert_wrapper(Lyrics.piececount != 0);	//This function is not to be called with an empty Lyrics structure
@@ -59,6 +60,15 @@ void Export_RS(FILE *outf)
 		while(temp != NULL)				//For each piece of lyric in this line
 		{
 			expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+			for(index1 = index2 = 0; index1 < strlen(buffer2); index1++)
+			{	//For each character in the expanded XML string
+				if(buffer2[index1] != '+')
+				{	//If it's not a plus character
+					buffer3[index2] = buffer2[index1];	//Copy it to another buffer
+					index2++;
+				}
+			}
+			buffer3[index2] = '\0';	//Terminate the new buffer
 			if((temp->next == NULL) && (Lyrics.rocksmithver == 2))
 			{	//This is the last lyric in the line, and Rocksmith 2014 format is being exported
 				suffix = newline;	//Write a + after the lyric to indicate a line break
@@ -66,7 +76,7 @@ void Export_RS(FILE *outf)
 			else
 				suffix = nonewline;
 
-			if(fprintf(outf,"  <vocal time=\"%.3f\" note=\"%u\" length=\"%.3f\" lyric=\"%s%s\"/>\n", (double)temp->start / 1000.0, temp->pitch, (double)temp->duration / 1000.0, buffer2, suffix) < 0)
+			if(fprintf(outf,"  <vocal time=\"%.3f\" note=\"%u\" length=\"%.3f\" lyric=\"%s%s\"/>\n", (double)temp->start / 1000.0, temp->pitch, (double)temp->duration / 1000.0, buffer3, suffix) < 0)
 			{
 				printf("Error exporting lyric %lu\t%lu\ttext\t%s%s: %s\nAborting\n",temp->start,temp->duration,temp->lyric,suffix,strerror(errno));
 				exit_wrapper(2);

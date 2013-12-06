@@ -2527,23 +2527,35 @@ int eof_save_helper(char *destfilename)
 	/* check if any tracks use 2 or more tone names but doesn't define the default or uses more than 4 tone names */
 	if(eof_write_rs_files)
 	{
+		char warning1 = 0, warning2 = 0, warning3 = 0;
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track
 			if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If this is a pro guitar/bass track
 				EOF_PRO_GUITAR_TRACK *tp;
 				unsigned long tracknum;
-				char warning1 = 0, warning2 = 0;
 
 				tracknum = eof_song->track[ctr]->tracknum;
 				tp = eof_song->pro_guitar_track[tracknum];
 				//Build and count the size of the list of unique tone names used, and empty the default tone string if it is not valid
 				eof_track_rebuild_rs_tone_names_list_strings(ctr, 1);
-				if(eof_track_rs_tone_names_list_strings_num > 1)
+				if(eof_track_rs_tone_names_list_strings_num == 1)
+				{	//If only one tone name is used
+					if(!warning3 && alert("Warning:  At least one track uses only one tone name.  You must use at least", "two different tone names and set one as default for them to work in Rocksmith.", "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
+					{
+						eof_track_destroy_rs_tone_names_list_strings();
+						(void) eof_menu_track_selected_track_number(ctr, 1);	//Set the active instrument track
+						eof_render();
+						(void) eof_track_rs_tone_names();	//Call up the tone names dialog
+						return 1;	//Return cancellation
+					}
+					warning3 = 1;
+				}
+				else if(eof_track_rs_tone_names_list_strings_num > 1)
 				{	//If at least 2 unique tone names are used
 					if((tp->defaulttone[0] == '\0') && !warning1)
 					{	//If the default tone is not set, and the user wasn't warned about this yet
-						if(alert("Warning:  At least one track with tone changes has no default tone set.", NULL, "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
+						if(!warning1 && alert("Warning:  At least one track with tone changes has no default tone set.", NULL, "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
 						{
 							eof_track_destroy_rs_tone_names_list_strings();
 							(void) eof_menu_track_selected_track_number(ctr, 1);	//Set the active instrument track
@@ -2555,7 +2567,7 @@ int eof_save_helper(char *destfilename)
 					}
 					if((eof_track_rs_tone_names_list_strings_num > 4) && !warning2)
 					{	//If there are more than 4 unique tone names used, and the user wasn't warned about this yet
-						if(alert("Warning:  At least one arrangement uses more than 4 different tones.", "Rocksmith doesn't support more than 4 so EOF will only export changes for 4 tone names.", "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
+						if(!warning2 && alert("Warning:  At least one arrangement uses more than 4 different tones.", "Rocksmith doesn't support more than 4 so EOF will only export changes for 4 tone names.", "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
 						{
 							eof_track_destroy_rs_tone_names_list_strings();
 							(void) eof_menu_track_selected_track_number(ctr, 1);	//Set the active instrument track
@@ -2690,6 +2702,7 @@ int eof_save_helper(char *destfilename)
 	if(eof_write_rs_files)
 	{	//If the user wants to save Rocksmith capable files
 		char user_warned = 0;	//Tracks whether the user was warned about hand positions being undefined and auto-generated during export
+		eof_log("Exporting Rocksmith XML files", 1);
 		(void) append_filename(eof_temp_filename, newfolderpath, "xmlpath.xml", (int) sizeof(eof_temp_filename));	//Re-acquire the save's target folder
 
 		(void) eof_export_rocksmith_1_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS, &user_warned);

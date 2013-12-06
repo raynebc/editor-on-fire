@@ -426,6 +426,30 @@ int eof_song_resize_beats(EOF_SONG * sp, unsigned long beats)
 	return 1;	//Return success
 }
 
+int eof_song_append_beats(EOF_SONG * sp, unsigned long beats)
+{
+	unsigned long i;
+	double beat_length;
+
+	if(!sp)
+	{
+		return 0;
+	}
+	beat_length = (double)60000.0 / ((double)60000000.0 / (double)sp->beat[sp->beats - 1]->ppqn);	//Get the length of the current last beat
+	for(i = 0; i < beats; i++)
+	{
+		if(!eof_song_add_beat(sp))
+		{
+			return 0;	//Return failure
+		}
+		sp->beat[sp->beats - 1]->ppqn = sp->beat[sp->beats - 2]->ppqn;		//Set this beat's tempo to match the previous beat
+		sp->beat[sp->beats - 1]->fpos = sp->beat[sp->beats - 2]->fpos + beat_length;	//Set this beat's position to one beat length after the previous beat
+		sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos + 0.5;	//Round up
+	}
+
+	return 1;	//Return success
+}
+
 void eof_double_tempo(EOF_SONG * sp, unsigned long beat, char *undo_made)
 {
 	unsigned long i, ppqn;

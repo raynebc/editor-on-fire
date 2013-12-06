@@ -2447,10 +2447,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 #endif
 		while(eof_song->beats < totalbeats + 2)
 		{	//Until the loaded project has enough beats to contain the Guitar Pro transcriptions, and two extra to allow room for processing beat lengths later
-			double beat_length;
-
-			if(!eof_song_add_beat(eof_song))
-			{
+			if(!eof_song_append_beats(eof_song, 1))
+			{	//Append them to the end of the project
 				eof_log("Error allocating memory (12)", 1);
 				(void) pack_fclose(inf);
 				free(gp->names);
@@ -2474,10 +2472,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					free(sync_points);
 				return NULL;
 			}
-			eof_song->beat[eof_song->beats - 1]->ppqn = eof_song->beat[eof_song->beats - 2]->ppqn;	//Match the tempo of the previously last beat
-			beat_length = (double)60000.0 / ((double)60000000.0 / (double)eof_song->beat[eof_song->beats - 2]->ppqn);	//Get the length of the previously last beat
-			eof_song->beat[eof_song->beats - 1]->fpos = eof_song->beat[eof_song->beats - 2]->fpos + beat_length;
-			eof_song->beat[eof_song->beats - 1]->pos = eof_song->beat[eof_song->beats - 1]->fpos + 0.5;	//Round up
 		}
 		eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
 	}
@@ -4005,9 +3999,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 			}
 			while(eof_song->beats < beatctr + gp->measure[currentmeasure].num + 2)
 			{	//Until the loaded project has enough beats to contain the unwrapped measure, and two extra to allow room for processing beat lengths later
-				double beat_length;
-
-				if(!eof_song_add_beat(eof_song))
+				if(!eof_song_append_beats(eof_song, 1))
 				{
 					eof_log("\tError allocating memory to unwrap GP track (4)", 1);
 					free(measuremap);
@@ -4019,10 +4011,6 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 					}
 					return 4;
 				}
-				eof_song->beat[eof_song->beats - 1]->ppqn = eof_song->beat[eof_song->beats - 2]->ppqn;	//Match the tempo of the previously last beat
-				beat_length = (double)60000.0 / ((double)60000000.0 / (double)eof_song->beat[eof_song->beats - 2]->ppqn);	//Get the length of the previously last beat
-				eof_song->beat[eof_song->beats - 1]->fpos = eof_song->beat[eof_song->beats - 2]->fpos + beat_length;
-				eof_song->beat[eof_song->beats - 1]->pos = eof_song->beat[eof_song->beats - 1]->fpos + 0.5;	//Round up
 			}
 			eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
 
@@ -4328,17 +4316,11 @@ char eof_copy_notes_in_beat_range(EOF_PRO_GUITAR_TRACK *source, unsigned long st
 #endif
 					while(eof_song->beats < destbeat + endbeatnum - startbeat + 2)
 					{	//Until the loaded project has enough beats to contain the unwrapped note, and two extra to allow room for processing beat lengths later
-						double beat_length;
-
-						if(!eof_song_add_beat(eof_song))
+						if(!eof_song_append_beats(eof_song, 1))
 						{
 							eof_log("\tError allocating memory to unwrap GP track (6)", 1);
 							return 0;	//Return error
 						}
-						eof_song->beat[eof_song->beats - 1]->ppqn = eof_song->beat[eof_song->beats - 2]->ppqn;	//Match the tempo of the previously last beat
-						beat_length = (double)60000.0 / ((double)60000000.0 / (double)eof_song->beat[eof_song->beats - 2]->ppqn);	//Get the length of the previously last beat
-						eof_song->beat[eof_song->beats - 1]->fpos = eof_song->beat[eof_song->beats - 2]->fpos + beat_length;
-						eof_song->beat[eof_song->beats - 1]->pos = eof_song->beat[eof_song->beats - 1]->fpos + 0.5;	//Round up
 					}
 					eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
 				}
