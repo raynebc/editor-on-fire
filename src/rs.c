@@ -341,6 +341,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	unsigned long chordid, handshapectr;
 	unsigned long handshapestart, handshapeend;
 	long nextnote;
+	unsigned long originalbeatcount;	//If beats are padded to reach the beginning of the next measure (for DDC), this will track the project's original number of beats
 
 	eof_log("eof_export_rocksmith_1_track() entered", 1);
 
@@ -918,6 +919,18 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//Write some unknown information
 	(void) pack_fputs("  <fretHandMuteTemplates count=\"0\"/>\n", fp);
 
+	//DDC prefers when the XML pads partially complete measures by adding beats to finish the measure and then going one beat into the next measure
+	originalbeatcount = sp->beats;	//Store the original beat count
+	if(sp->beat[endbeat]->beat_within_measure)
+	{	//If the first beat after the last note in this track isn't the first beat in a measure
+		ctr = sp->beat[endbeat]->num_beats_in_measure - sp->beat[endbeat]->beat_within_measure;	//This is how many beats need to be after endbeat
+		if(endbeat + ctr > sp->beats)
+		{	//If the project doesn't have enough beats to accommodate this padding
+			(void) eof_song_append_beats(sp, ctr);	//Append them to the end of the project
+		}
+	}
+	eof_process_beat_statistics(sp, track);	//Rebuild beat stats
+
 	//Write the beat timings
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <ebeats count=\"%lu\">\n", sp->beats);
 	(void) pack_fputs(buffer, fp);
@@ -945,6 +958,9 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}
 	}
 	(void) pack_fputs("  </ebeats>\n", fp);
+
+	//Restore the original number of beats in the project in case any were added for DDC
+	(void) eof_song_resize_beats(sp, originalbeatcount);
 
 	//Write message boxes for the loading text song property (if defined) and each user defined popup message
 	if(sp->tags->loading_text[0] != '\0')
@@ -1538,6 +1554,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	unsigned long chordid, handshapectr;
 	unsigned long handshapestart, handshapeend;
 	long nextnote;
+	unsigned long originalbeatcount;	//If beats are padded to reach the beginning of the next measure (for DDC), this will track the project's original number of beats
 
 	eof_log("eof_export_rocksmith_2_track() entered", 1);
 
@@ -2118,6 +2135,18 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//Write some unknown information
 	(void) pack_fputs("  <fretHandMuteTemplates count=\"0\"/>\n", fp);
 
+	//DDC prefers when the XML pads partially complete measures by adding beats to finish the measure and then going one beat into the next measure
+	originalbeatcount = sp->beats;	//Store the original beat count
+	if(sp->beat[endbeat]->beat_within_measure)
+	{	//If the first beat after the last note in this track isn't the first beat in a measure
+		ctr = sp->beat[endbeat]->num_beats_in_measure - sp->beat[endbeat]->beat_within_measure;	//This is how many beats need to be after endbeat
+		if(endbeat + ctr > sp->beats)
+		{	//If the project doesn't have enough beats to accommodate this padding
+			(void) eof_song_append_beats(sp, ctr);	//Append them to the end of the project
+		}
+	}
+	eof_process_beat_statistics(sp, track);	//Rebuild beat stats
+
 	//Write the beat timings
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <ebeats count=\"%lu\">\n", sp->beats);
 	(void) pack_fputs(buffer, fp);
@@ -2145,6 +2174,9 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}
 	}
 	(void) pack_fputs("  </ebeats>\n", fp);
+
+	//Restore the original number of beats in the project in case any were added for DDC
+	(void) eof_song_resize_beats(sp, originalbeatcount);
 
 	//Write message boxes for the loading text song property (if defined) and each user defined popup message
 	if(sp->tags->loading_text[0] != '\0')
@@ -2243,6 +2275,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	{	//If the default tone is valid and at least two different tone names are referenced among the tone changes
 		unsigned long tonecount = 0;
 		char *temp;
+		char *effective_tone;	//The last tone exported
 
 		//Make sure the default tone is placed at the beginning of the eof_track_rs_tone_names_list_strings[] list
 		for(ctr = 1; ctr < eof_track_rs_tone_names_list_strings_num; ctr++)
@@ -2279,13 +2312,18 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}
 
 		//Count how many tone changes are valid to export
+		effective_tone = tp->defaulttone;	//The default tone is automatically in effect at the start of the track
 		for(ctr = 0; ctr < tp->tonechanges; ctr++)
 		{	//For each tone change in the track
 			for(ctr2 = 0; (ctr2 < eof_track_rs_tone_names_list_strings_num) && (ctr2 < 4); ctr2++)
 			{	//For the first four unique tone names
 				if(!strcmp(tp->tonechange[ctr].name, eof_track_rs_tone_names_list_strings[ctr2]))
 				{	//If the tone change applies one of the four valid tone names
-					tonecount++;
+					if(strcmp(tp->tonechange[ctr].name, effective_tone))
+					{	//If the tone being changed to isn't already in effect
+						tonecount++;
+						effective_tone = tp->tonechange[ctr].name;	//Track the tone that is in effect
+					}
 					break;	//Break from inner loop
 				}
 			}
@@ -2294,14 +2332,19 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		//Write the tone changes that are valid to export
 		(void) snprintf(buffer, sizeof(buffer) - 1, "  <tones count=\"%lu\">\n", tonecount);
 		(void) pack_fputs(buffer, fp);
+		effective_tone = tp->defaulttone;	//The default tone is automatically in effect at the start of the track
 		for(ctr = 0; ctr < tp->tonechanges; ctr++)
 		{	//For each tone change in the track
 			for(ctr2 = 0; (ctr2 < eof_track_rs_tone_names_list_strings_num) && (ctr2 < 4); ctr2++)
 			{	//For the first four unique tone names
 				if(!strcmp(tp->tonechange[ctr].name, eof_track_rs_tone_names_list_strings[ctr2]))
 				{	//If the tone change applies one of the four valid tone names
-					(void) snprintf(buffer, sizeof(buffer) - 1, "    <tone time=\"%.3f\" name=\"%s\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tp->tonechange[ctr].name);
-					(void) pack_fputs(buffer, fp);
+					if(strcmp(tp->tonechange[ctr].name, effective_tone))
+					{	//If the tone being changed to isn't already in effect
+						(void) snprintf(buffer, sizeof(buffer) - 1, "    <tone time=\"%.3f\" name=\"%s\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tp->tonechange[ctr].name);
+						(void) pack_fputs(buffer, fp);
+						effective_tone = tp->tonechange[ctr].name;	//Track the tone that is in effect
+					}
 					break;	//Break from inner loop
 				}
 			}

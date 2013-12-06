@@ -167,7 +167,7 @@ ALOGG_OGG * eof_music_track = NULL;
 void      * eof_music_data = NULL;	//A memory buffer of the current chart audio's OGG file
 int         eof_silence_loaded = 0;
 int         eof_music_data_size = 0;
-unsigned long eof_chart_length = 0;
+unsigned long eof_chart_length = 0;		//Stores the position of the last note/lyric/text event/bookmark or the end of the chart audio, whichever is longer
 unsigned long eof_music_length = 0;
 int         eof_music_pos;
 int         eof_music_pos2 = -1;		//The position to display in the secondary piano roll (-1 means it will initialize to the current track when it is enabled)

@@ -1420,32 +1420,13 @@ int eof_track_rs_popup_messages(void)
 	return 1;
 }
 
-int eof_song_qsort_popup_messages(const void * e1, const void * e2)
-{
-	EOF_PHRASE_SECTION * thing1 = (EOF_PHRASE_SECTION *)e1;
-	EOF_PHRASE_SECTION * thing2 = (EOF_PHRASE_SECTION *)e2;
-
-	//Sort by timestamp
-	if(thing1->start_pos < thing2->start_pos)
-	{
-		return -1;
-	}
-	else if(thing1->start_pos > thing2->start_pos)
-	{
-		return 1;
-	}
-
-	//They are equal
-	return 0;
-}
-
 void eof_track_pro_guitar_sort_popup_messages(EOF_PRO_GUITAR_TRACK* tp)
 {
  	eof_log("eof_track_pro_guitar_sort_popup_messages() entered", 1);
 
 	if(tp)
 	{
-		qsort(tp->popupmessage, (size_t)tp->popupmessages, sizeof(EOF_PHRASE_SECTION), eof_song_qsort_popup_messages);
+		qsort(tp->popupmessage, (size_t)tp->popupmessages, sizeof(EOF_PHRASE_SECTION), eof_song_qsort_phrase_sections);
 	}
 }
 
@@ -2786,32 +2767,13 @@ int eof_track_rs_tone_changes(void)
 	return 1;
 }
 
-int eof_song_qsort_tone_changes(const void * e1, const void * e2)
-{
-	EOF_PHRASE_SECTION * thing1 = (EOF_PHRASE_SECTION *)e1;
-	EOF_PHRASE_SECTION * thing2 = (EOF_PHRASE_SECTION *)e2;
-
-	//Sort by timestamp
-	if(thing1->start_pos < thing2->start_pos)
-	{
-		return -1;
-	}
-	else if(thing1->start_pos > thing2->start_pos)
-	{
-		return 1;
-	}
-
-	//They are equal
-	return 0;
-}
-
 void eof_track_pro_guitar_sort_tone_changes(EOF_PRO_GUITAR_TRACK* tp)
 {
  	eof_log("eof_track_pro_guitar_sort_tone_changes() entered", 1);
 
 	if(tp)
 	{
-		qsort(tp->tonechange, (size_t)tp->tonechanges, sizeof(EOF_PHRASE_SECTION), eof_song_qsort_tone_changes);
+		qsort(tp->tonechange, (size_t)tp->tonechanges, sizeof(EOF_PHRASE_SECTION), eof_song_qsort_phrase_sections);
 	}
 }
 

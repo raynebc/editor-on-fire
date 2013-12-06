@@ -3866,6 +3866,25 @@ int eof_song_qsort_pro_guitar_notes(const void * e1, const void * e2)
 	return 0;
 }
 
+int eof_song_qsort_phrase_sections(const void * e1, const void * e2)
+{
+	EOF_PHRASE_SECTION * thing1 = (EOF_PHRASE_SECTION *)e1;
+	EOF_PHRASE_SECTION * thing2 = (EOF_PHRASE_SECTION *)e2;
+
+	//Sort by timestamp
+	if(thing1->start_pos < thing2->start_pos)
+	{
+		return -1;
+	}
+	else if(thing1->start_pos > thing2->start_pos)
+	{
+		return 1;
+	}
+
+	//They are equal
+	return 0;
+}
+
 void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note)
 {
 	unsigned long i;
@@ -6040,19 +6059,14 @@ void eof_truncate_chart(EOF_SONG *sp)
 
 	if(sp->beat[sp->beats - 1]->pos < targetpos)
 	{	//If there aren't enough beats so that at least one starts at or after the target position
-		double beat_length = (double)60000.0 / ((double)60000000.0 / (double)sp->beat[sp->beats - 1]->ppqn);	//Get the length of the current last beat
-
 		eof_log("\tAdding beats", 1);
 		while(sp->beat[sp->beats - 1]->pos < targetpos)
 		{	//While there aren't enough beats so that at least one starts at or after the target position
-			if(!eof_song_add_beat(sp))
+			if(!eof_song_append_beats(sp, 1))
 			{	//If there was an error adding a beat
 				eof_log("\tError adding beat.  Aborting", 1);
 				return;
 			}
-			sp->beat[sp->beats - 1]->ppqn = sp->beat[sp->beats - 2]->ppqn;		//Set this beat's tempo to match the previous beat
-			sp->beat[sp->beats - 1]->fpos = sp->beat[sp->beats - 2]->fpos + beat_length;	//Set this beat's position to one beat length after the previous beat
-			sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos + 0.5;	//Round up
 		}
 		eof_chart_length = targetpos;	//Resize the chart length accordingly
 	}
