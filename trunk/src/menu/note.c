@@ -318,6 +318,8 @@ MENU eof_note_rocksmith_menu[] =
 	{"Remove &Accent", eof_menu_note_remove_accent, NULL, 0, NULL},
 	{"Toggle pinch harmonic\t" CTRL_NAME "+Shift+H", eof_menu_note_toggle_pinch_harmonic, NULL, 0, NULL},
 	{"Remove pinch &Harmonic", eof_menu_note_remove_pinch_harmonic, NULL, 0, NULL},
+	{"Define unpitched slide\t" CTRL_NAME "+U", eof_pro_guitar_note_define_unpitched_slide, NULL, 0, NULL},
+	{"Remove &Unpitched slide", eof_menu_note_remove_unpitched_slide, NULL, 0, NULL},
 	{"&Mute->Single note P.M.", eof_rocksmith_convert_mute_to_palm_mute_single_note, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -7533,11 +7535,11 @@ DIALOG eof_pro_guitar_note_slide_end_fret_dialog[] =
 
 int eof_pro_guitar_note_slide_end_fret(char undo)
 {
-	unsigned long newend, i, flags, bitmask, ctr;
+	unsigned long newend, i, flags;
 	int note_selection_updated;
 	unsigned long tracknum;
 	EOF_PRO_GUITAR_NOTE *np;
-	char undo_made = 0;
+	char undo_made = 0, error = 0;
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
@@ -7581,33 +7583,15 @@ int eof_pro_guitar_note_slide_end_fret(char undo)
 			}
 		}
 
-		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-		{	//For each note in the active track
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track) && !error; i++)
+		{	//For each note in the active track, unless an error was encountered above
 			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 			{	//If this note is in the currently active track and is selected
 				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 				if((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 				{	//If this note is a slide
-					//Determine the lowest fret used in the note
-					unsigned char lowestfret = 0, thisfret;
-					for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
-					{	//For each of the 6 usable strings, from lowest to highest gauge
-						if(eof_get_note_note(eof_song, eof_selected_track, i) & bitmask)
-						{	//If this string is used
-							thisfret = eof_song->pro_guitar_track[tracknum]->note[i]->frets[ctr] & 0x7F;	//Store the fret (mask out the MSB, used for mute status)
-							if(thisfret)
-							{	//If a fret is used on this string (note played open)
-								if(!lowestfret)
-								{	//If no fret number has been recorded so far
-									lowestfret = thisfret;
-								}
-								else if(thisfret < lowestfret)
-								{	//Otherwise store this gem's fret number if it is lower than the others checked for this note
-									lowestfret = thisfret;
-								}
-							}
-						}
-					}
+					unsigned char lowestfret = eof_get_lowest_fretted_string_fret(eof_song, eof_selected_track, i);	//Determine the fret value of the lowest fretted string
+
 					if(lowestfret && newend)
 					{	//If a fret value was used, and an ending fret was defined, validate the slide ending fret
 						if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
@@ -7618,7 +7602,7 @@ int eof_pro_guitar_note_slide_end_fret(char undo)
 								eof_pen_visible = 1;
 								eof_show_mouse(NULL);
 								allegro_message("Error:  The fret number specified must be higher than the lowest fret on upward slide notes");
-								return 1;	//Return error
+								break;	//Stop processing selected notes
 							}
 						}
 						else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
@@ -7629,7 +7613,7 @@ int eof_pro_guitar_note_slide_end_fret(char undo)
 								eof_pen_visible = 1;
 								eof_show_mouse(NULL);
 								allegro_message("Error:  The fret number specified must be lower than the lowest fret on downward slide notes");
-								return 1;	//Return error
+								break;	//Stop processing selected notes
 							}
 						}
 					}
@@ -7676,15 +7660,171 @@ int eof_pro_guitar_note_slide_end_fret_no_save(void)
 	return eof_pro_guitar_note_slide_end_fret(0);	//Call the function and do NOT allow it to save before making changes
 }
 
+DIALOG eof_pro_guitar_note_define_unpitched_slide_dialog[] =
+{
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
+	{ d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Unpitched slide end fret",      NULL, NULL },
+	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "End slide at fret #",                NULL, NULL },
+	{ eof_verified_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      7,   0,   eof_etext,     "0123456789", NULL },
+	{ d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",               NULL, NULL },
+	{ d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,               NULL, NULL }
+};
+
+int eof_pro_guitar_note_define_unpitched_slide(void)
+{
+	unsigned long newend, i, flags;
+	int note_selection_updated;
+	unsigned long tracknum;
+	EOF_PRO_GUITAR_NOTE *np;
+	char undo_made = 0, error = 0;
+
+	if(!eof_song_loaded || !eof_song)
+		return 1;	//Do not allow this function to run if a chart is not loaded
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	if(eof_selection.current >= eof_song->pro_guitar_track[tracknum]->notes)
+		return 1;	//Invalid selected note number
+	np = eof_song->pro_guitar_track[tracknum]->note[eof_selection.current];
+
+	eof_render();
+	eof_color_dialog(eof_pro_guitar_note_define_unpitched_slide_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_pro_guitar_note_define_unpitched_slide_dialog);
+	if(np->unpitchend == 0)
+	{	//If the selected note has no unpitched slide ending fret defined
+		eof_etext[0] = '\0';	//Empty this string
+	}
+	else
+	{	//Otherwise write the ending fret into the string
+		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", np->unpitchend);
+	}
+
+	if(eof_popup_dialog(eof_pro_guitar_note_define_unpitched_slide_dialog, 2) == 3)
+	{	//User clicked OK
+		if(eof_etext[0] == '\0')
+		{	//If the user did not define the ending fret number
+			newend = 0;
+		}
+		else
+		{
+			newend = atol(eof_etext);
+			if(newend > eof_song->pro_guitar_track[tracknum]->numfrets)
+			{	//If this fret value is higher than the track supports
+				eof_cursor_visible = 1;
+				eof_pen_visible = 1;
+				eof_show_mouse(NULL);
+				allegro_message("Error:  The fret number specified is higher than the max fret for this track");
+				error = 1;
+			}
+		}
+
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track) && !error; i++)
+		{	//For each note in the active track, unless an error was encountered above
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+			{	//If this note is in the currently active track and is selected
+				flags = eof_song->pro_guitar_track[tracknum]->note[i]->flags;
+				if(newend)
+				{	//If a slide end value was given
+					unsigned char lowestfret = eof_get_lowest_fretted_string_fret(eof_song, eof_selected_track, i);	//Determine the fret value of the lowest fretted string
+
+					if(lowestfret && newend)
+					{	//If the note has a fretted string, and an ending fret was defined, validate the unpitched slide ending fret
+						if(newend == lowestfret)
+						{
+							eof_cursor_visible = 1;
+							eof_pen_visible = 1;
+							eof_show_mouse(NULL);
+							allegro_message("Error:  The fret number specified must be higher or lower than the bass note's fret");
+							break;	//Stop processing selected notes
+						}
+					}
+					if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) || (newend != eof_song->pro_guitar_track[tracknum]->note[i]->unpitchend))
+					{	//If the note wasn't already an unpitched slide, or the specified slide ending is different than what the note already has
+						if(!undo_made)
+						{	//Make an undo state before changing the first note
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+							undo_made = 1;
+						}
+						eof_song->pro_guitar_track[tracknum]->note[i]->unpitchend = newend;
+						eof_song->pro_guitar_track[tracknum]->note[i]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;	//Enable the status flag
+					}
+				}//If this note isn't already marked as an unpitched slide
+				else
+				{	//No slide end value was given, remove the status
+					if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+					{	//If this note has unpitched slide status
+						if(!undo_made)
+						{	//Make an undo state before changing the first note
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+							undo_made = 1;
+						}
+						eof_song->pro_guitar_track[tracknum]->note[i]->unpitchend = 0;
+						eof_song->pro_guitar_track[tracknum]->note[i]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;	//Clear the status flag
+					}
+				}
+			}//If this note is in the currently active track and is selected
+		}//For each note in the active track
+	}//User clicked OK
+
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(NULL);
+	return 1;
+}
+
+int eof_menu_note_remove_unpitched_slide(void)
+{
+	unsigned long i;
+	long u = 0;
+	unsigned long flags, oldflags;
+	int note_selection_updated;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			oldflags = flags;							//Save an extra copy of the original flags
+			flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE);	//Clear the unpitched slide flag
+			if(!u && (oldflags != flags))
+			{	//Make a back up before changing the first note
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				u = 1;
+			}
+			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+			eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->unpitchend = 0;	//Reset the ending fret number of the slide
+		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
 DIALOG eof_pro_guitar_note_bend_strength_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Edit bend strength",         NULL, NULL },
-	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "Bends this # of half steps:",NULL, NULL },
-	{ eof_verified_edit_proc,12,  56,  20,  20,  0,   0,   0,    0,      1,   0,   eof_etext,     "0123456789",  NULL },
-	{ d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                         NULL, NULL },
-	{ d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                     NULL, NULL },
-	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                         NULL, NULL }
+	{ d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Edit bend strength", NULL, NULL },
+	{ eof_verified_edit_proc,12,  56,  20,  20,  0,   0,   0,    0,      1,   0,   eof_etext,     "0123456789",NULL },
+	{d_agup_radio_proc,		 40,  40,  82,  16,  2,   23,  0,    0,      1,   0,   "half steps",         NULL, NULL },
+	{d_agup_radio_proc,		 40,  60,  100, 16,  2,   23,  0,    0,      1,   0,   "quarter steps",      NULL, NULL },
+	{ d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                 NULL, NULL },
+	{ d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",             NULL, NULL },
+	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                 NULL, NULL }
 };
 
 int eof_pro_guitar_note_bend_strength(char undo)
@@ -7709,16 +7849,26 @@ int eof_pro_guitar_note_bend_strength(char undo)
 	eof_render();
 	eof_color_dialog(eof_pro_guitar_note_bend_strength_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_pro_guitar_note_bend_strength_dialog);
-	if(np->bendstrength == 0)
+	if((np->bendstrength & 0x7F) == 0)
 	{	//If the selected note has no ending fret defined
 		eof_etext[0] = '\0';	//Empty this string
 	}
 	else
 	{	//Otherwise write the ending fret into the string
-		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", np->bendstrength);
+		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", (np->bendstrength & 0x7F));	//Mask out the MSB, which specifies the bend strength's unit of measurement
+	}
+	if(np->bendstrength & 0x80)
+	{	//If the note's current bend strength specifies the value is in quarter steps
+		eof_pro_guitar_note_bend_strength_dialog[2].flags = 0;			//Clear the half steps radio button
+		eof_pro_guitar_note_bend_strength_dialog[3].flags = D_SELECTED;	//Select the quarter steps radio button
+	}
+	else
+	{	//The bend strength specifies the value in half steps (the default)
+		eof_pro_guitar_note_bend_strength_dialog[3].flags = 0;			//Clear the quarter steps radio button
+		eof_pro_guitar_note_bend_strength_dialog[2].flags = D_SELECTED;	//Select the half steps radio button
 	}
 
-	if(eof_popup_dialog(eof_pro_guitar_note_bend_strength_dialog, 2) == 3)
+	if(eof_popup_dialog(eof_pro_guitar_note_bend_strength_dialog, 2) == 4)
 	{	//User clicked OK
 		if(eof_etext[0] == '\0')
 		{	//If the user did not define the bend strength
@@ -7727,6 +7877,10 @@ int eof_pro_guitar_note_bend_strength(char undo)
 		else
 		{
 			newstrength = atol(eof_etext);
+		}
+		if(eof_pro_guitar_note_bend_strength_dialog[3].flags == D_SELECTED)
+		{	//If the user selected the quarter steps radio button
+			newstrength |= 0x80;	//Set the MSB to track this option
 		}
 
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)

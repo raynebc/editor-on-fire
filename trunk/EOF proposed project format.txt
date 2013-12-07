@@ -178,6 +178,8 @@ Custom track data block definitions
 		{
 			1 byte: Vibrato speed used for this note (40 = slow, 80 = medium, 120 = fast, the default value is 80)
 		}
+	Custom data block ID 6:  Capo position
+		1 byte:		The fret number at which a capo is placed for this track
 =========================================		
 }
 (End of file)
@@ -249,7 +251,9 @@ Custom track data block definitions
 *		4 bytes:	Note flags (allow 32 flags for an unforsee-able number of techniques such as tapping, bending, etc)
 		[varies:]	Extended note flags (if the MSB of the note flags field is set, another 4 byte flag field follows, and if its MSB is set, another 4 byte flag field, etc)
 		[1 byte]	Slide ending fret (if the Rocksmith notation flag, value 33554432, is set and this note is flagged as having an up/down slide, value 4096 or 8192)
-		[1 byte]	Bend strength in half steps (if the Rocksmith notation flag, value 33554432, is set and this note is flagged as a bend, value 2097152)
+		[1 byte]	Bend strength in half/quarter steps (if the Rocksmith notation flag, value 33554432, is set and this note is flagged as a bend, value 2097152)
+				(If the MSB of this value is set, the other 7 bits define the number of quarter steps the bend is, otherwise the value is in half steps)
+		[1 byte]	Unpitched slide ending fret (if this note is flagged as having an unpitched slide, value 256)
 *	}
 
 [PRO KEYS TRACK FORMAT]
