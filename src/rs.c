@@ -378,7 +378,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					if((*user_warned & 8) == 0)
 					{	//If the user wasn't alerted about this issue yet
 						eof_seek_and_render_position(track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
-						allegro_message("Warning:  At least one note slides to or above fret 22.  This will cause Rocksmith to crash.");
+						allegro_message("Warning:  At least one note slides to or above fret 22.  This will cause Rocksmith 1 to crash.");
 						*user_warned |= 8;
 					}
 					break;
@@ -450,8 +450,8 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 	//Write the beginning of the XML file
 	(void) pack_fputs("<?xml version='1.0' encoding='UTF-8'?>\n", fp);
-	(void) pack_fputs("<!-- " EOF_VERSION_STRING " -->\n", fp);	//Write EOF's version in an XML comment
 	(void) pack_fputs("<song version=\"4\">\n", fp);
+	(void) pack_fputs("<!-- " EOF_VERSION_STRING " -->\n", fp);	//Write EOF's version in an XML comment
 	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->title, 64);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <title>%s</title>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
@@ -1193,7 +1193,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 									{	//If this note contains no fretted strings
 										if(tech.bend || (tech.slideto >= 0))
 										{	//If it is also marked as a bend or slide note, omit these statuses because they're invalid for open notes
-											tech.bend = 0;
+											tech.bend = tech.bendstrength_h = tech.bendstrength_q = 0;
 											tech.slideto = -1;
 											if((*user_warned & 4) == 0)
 											{	//If the user wasn't alerted that one or more open notes have these statuses improperly applied
@@ -1202,7 +1202,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 											}
 										}
 									}
-									(void) snprintf(buffer, sizeof(buffer) - 1, "        <note time=\"%.3f\" bend=\"%lu\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"0\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\"/>\n", (double)notepos / 1000.0, tech.bendstrength, fret, tech.hammeron, tech.harmonic, tech.hopo, tech.palmmute, tech.pop, tech.pulloff, tech.slap, tech.slideto, stringnum, (double)tech.length / 1000.0, tech.tremolo);
+									(void) snprintf(buffer, sizeof(buffer) - 1, "        <note time=\"%.3f\" bend=\"%lu\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"0\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\"/>\n", (double)notepos / 1000.0, tech.bendstrength_h, fret, tech.hammeron, tech.harmonic, tech.hopo, tech.palmmute, tech.pop, tech.pulloff, tech.slap, tech.slideto, stringnum, (double)tech.length / 1000.0, tech.tremolo);
 									(void) pack_fputs(buffer, fp);
 									break;	//Only one note entry is valid for each single note, so break from loop
 								}//If the note isn't string muted
@@ -1555,6 +1555,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	unsigned long handshapestart, handshapeend;
 	long nextnote;
 	unsigned long originalbeatcount;	//If beats are padded to reach the beginning of the next measure (for DDC), this will track the project's original number of beats
+	EOF_RS_TECHNIQUES tech;
 
 	eof_log("eof_export_rocksmith_2_track() entered", 1);
 
@@ -1576,26 +1577,24 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
 	{	//For each note in the track
 		unsigned char slideend;
+		unsigned long flags = eof_get_note_flags(sp, track, ctr);
 
-		if(eof_note_count_rs_lanes(sp, track, ctr, 2) == 1)
-		{	//If the note will export as a single note
-			if(eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-			{	//If the note slides up
-				slideend = tp->note[ctr]->slideend;
-				if(!(eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
-				{	//If this slide's end position is not defined
-					slideend = eof_get_highest_fret_value(sp, track, ctr) + 1;	//Assume a 1 fret slide
+		if((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))
+		{	//If the note slides up or unpitched slides up
+			slideend = tp->note[ctr]->slideend;
+			if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
+			{	//If this slide's end position is not defined
+				slideend = eof_get_highest_fret_value(sp, track, ctr) + 1;	//Assume a 1 fret slide
+			}
+			if((slideend >= 22) || (tp->note[ctr]->unpitchend >= 22))
+			{	//If either type of slide goes to or above fret 22
+				if((*user_warned & 8) == 0)
+				{	//If the user wasn't alerted about this issue yet
+					eof_seek_and_render_position(track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
+					allegro_message("Warning:  At least one note slides to or above fret 22.  This could cause Rocksmith 2 to crash.");
+					*user_warned |= 8;
 				}
-				if(slideend >= 22)
-				{	//If the slide goes to or above fret 22
-					if((*user_warned & 8) == 0)
-					{	//If the user wasn't alerted about this issue yet
-						eof_seek_and_render_position(track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
-						allegro_message("Warning:  At least one note slides to or above fret 22.  This will cause Rocksmith to crash.");
-						*user_warned |= 8;
-					}
-					break;
-				}
+				break;
 			}
 		}
 	}
@@ -1663,8 +1662,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 	//Write the beginning of the XML file
 	(void) pack_fputs("<?xml version='1.0' encoding='UTF-8'?>\n", fp);
-	(void) pack_fputs("<!-- " EOF_VERSION_STRING " -->\n", fp);	//Write EOF's version in an XML comment
 	(void) pack_fputs("<song version=\"7\">\n", fp);
+	(void) pack_fputs("<!-- " EOF_VERSION_STRING " -->\n", fp);	//Write EOF's version in an XML comment
 	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->title, 64);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <title>%s</title>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
@@ -1731,7 +1730,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <tuning string0=\"%d\" string1=\"%d\" string2=\"%d\" string3=\"%d\" string4=\"%d\" string5=\"%d\" />\n", tuning[0], tuning[1], tuning[2], tuning[3], tuning[4], tuning[5]);
 	(void) pack_fputs(buffer, fp);
-	(void) pack_fputs("  <capo>0</capo>\n", fp);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <capo>%d</capo>\n", tp->capo);
+	(void) pack_fputs(buffer, fp);
 	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->artist, 256);	//Replace any special characters in the artist song property with escape sequences if necessary
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <artistName>%s</artistName>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
@@ -2466,7 +2466,6 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						{	//For each string used in this track
 							if((eof_get_note_note(sp, track, ctr3) & bitmask) && !(tp->note[ctr3]->ghost & bitmask))
 							{	//If this string is used in this note and it is not ghosted
-								EOF_RS_TECHNIQUES tech;
 								unsigned long notepos;
 								unsigned long fret;				//The fret number used for this string
 								char tagend[2] = "/";			//If a note tag is to have a bendValues subtag, this string is emptied so that the note tag doesn't end in the same line
@@ -2485,7 +2484,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								{	//If this note contains no fretted strings
 									if(tech.bend || (tech.slideto >= 0) || (tech.unpitchedslideto >= 0))
 									{	//If it is also marked as a bend or slide note, omit these statuses because they're invalid for open notes
-										tech.bend = 0;
+										tech.bend = tech.bendstrength_h = tech.bendstrength_q = 0;
 										tech.slideto = -1;
 										tech.unpitchedslideto = -1;
 										if((*user_warned & 4) == 0)
@@ -2504,7 +2503,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								if(tech.bend)
 								{	//If the note is a bend, write the bendValues subtag and close the note tag
 									(void) pack_fputs("          <bendValues count=\"1\">\n", fp);
-									(void) snprintf(buffer, sizeof(buffer) - 1, "            <bendValue time=\"%.3f\" step=\"%.3f\"/>\n", (((double)notepos + ((double)tech.length / 3.0)) / 1000.0), (double)tech.bendstrength / 2.0);	//Write a bend point 1/3 into the note
+									(void) snprintf(buffer, sizeof(buffer) - 1, "            <bendValue time=\"%.3f\" step=\"%.3f\"/>\n", (((double)notepos + ((double)tech.length / 3.0)) / 1000.0), (double)tech.bendstrength_q / 2.0);	//Write a bend point 1/3 into the note
 									(void) pack_fputs(buffer, fp);
 									(void) pack_fputs("          </bendValues>\n", fp);
 									(void) pack_fputs("        </note>\n", fp);
@@ -2540,7 +2539,6 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				{	//For each note in the track
 					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1))
 					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems)
-						EOF_RS_TECHNIQUES tech;
 						char tagend[2] = "/";	//If a chord tag is to have a chordNote subtag, this string is emptied so that the chord tag doesn't end in the same line
 						chordnote = 0;	//Reset this status
 
@@ -2588,6 +2586,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							unsigned char *finger = tp->note[chordlist[chordid]]->finger;	//Point to this chord's template's finger array
 							long fingernum;
 							long slidediff = 0;	//Used to find how many frets a slide is, so it can be evenly applied to all fretted strings in a chord
+							long unpitchedslidediff = 0;	//Same as the above, but for unpitched slide tracking
 
 							for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
 							{	//For each string used in this track
@@ -2602,7 +2601,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 										fret = 0;	//Assume muted open note
 									}
 									else
-									{	//Otherwise use the defined fret number for the muted string
+									{	//Otherwise use the defined fret number
 										fret = tp->note[ctr3]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
 									}
 									if(tp->note[ctr3]->frets[stringnum] & 0x80)
@@ -2628,11 +2627,26 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 											tech.slideto = -1;
 										}
 									}
+									if(tech.unpitchedslideto >= 0)
+									{	//If the chord has unpitched slide technique
+										if(!unpitchedslidediff && fret)
+										{	//If this is the first fretted string in the chord
+											unpitchedslidediff = tech.unpitchedslideto - fret;	//Determine how many frets the unpitched slide is
+										}
+										if(fret)
+										{	//If this string is fretted
+											tech.unpitchedslideto = fret + unpitchedslidediff;	//Get the correct ending fret for this string's unpitched slide
+										}
+										else
+										{	//Otherwise this string does not slide
+											tech.unpitchedslideto = -1;
+										}
+									}
 									if(tech.bend || (tech.slideto >= 0) || (tech.unpitchedslideto >= 0))
 									{	//If this note is marked as a bend or slide note
 										if(!eof_pro_guitar_note_lowest_fret(tp, ctr3))
 										{	//If this note also contains no fretted strings, omit these statuses because they're invalid for open notes
-											tech.bend = 0;
+											tech.bend = tech.bendstrength_h = tech.bendstrength_q = 0;
 											tech.slideto = -1;
 											tech.unpitchedslideto = -1;
 											tech.length = 0;	//chordNotes should have no sustain unless they use bend or slide technique
@@ -2664,7 +2678,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 									if(tech.bend)
 									{	//If the note is a bend, write the bendValues subtag and close the note tag
 										(void) pack_fputs("            <bendValues count=\"1\">\n", fp);
-										(void) snprintf(buffer, sizeof(buffer) - 1, "              <bendValue time=\"%.3f\" step=\"%.3f\"/>\n", (((double)notepos + ((double)tech.length / 3.0)) / 1000.0), (double)tech.bendstrength / 2.0);	//Write a bend point 1/3 into the note
+										(void) snprintf(buffer, sizeof(buffer) - 1, "              <bendValue time=\"%.3f\" step=\"%.3f\"/>\n", (((double)notepos + ((double)tech.length / 3.0)) / 1000.0), (double)tech.bendstrength_q);	//Write a bend point 1/3 into the note
 										(void) pack_fputs(buffer, fp);
 										(void) pack_fputs("            </bendValues>\n", fp);
 										(void) pack_fputs("          </chordNote>\n", fp);
@@ -2816,6 +2830,15 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					while(1)
 					{
 						nextnote = eof_fixup_next_note(sp, track, ctr3);
+						if((nextnote >= 0) && (eof_note_count_rs_lanes(sp, track, nextnote, 2) > 1))
+						{	//If there is another note and it is a chord
+							(void) eof_get_rs_techniques(sp, track, nextnote, stringnum, &tech);	//Determine techniques used by the next note
+							if(tech.slideto >= 0)
+							{	//If the next note is a chord bend, it will require its own handshape to work in-game
+								handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
+								break;	//Break from while loop
+							}
+						}
 						if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chord, nextnote) || eof_is_string_muted(sp, track, nextnote)))
 						{	//If there is another note and it matches this chord or is completely string muted
 							ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
@@ -2888,6 +2911,15 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						while(1)
 						{
 							nextnote = eof_fixup_next_note(sp, track, ctr3);
+							if((nextnote >= 0) && (eof_note_count_rs_lanes(sp, track, nextnote, 2) > 1))
+							{	//If there is another note and it is a chord
+								(void) eof_get_rs_techniques(sp, track, nextnote, stringnum, &tech);	//Determine techniques used by the next note
+								if(tech.slideto >= 0)
+								{	//If the next note is a chord bend, it will require its own handshape to work in-game
+									handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
+									break;	//Break from while loop
+								}
+							}
 							if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chord, nextnote) || eof_is_string_muted(sp, track, nextnote)))
 							{	//If there is another note and it matches this chord or is completely string muted
 								ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
@@ -4393,7 +4425,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 	{	//If the calling function passed a techniques structure
 		ptr->length = eof_get_note_length(sp, track, notenum);
 		fret = tp->note[notenum]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
-		ptr->bendstrength = ptr->bend = 0;	//Initialize these to default values
+		ptr->bendstrength_h = ptr->bendstrength_q = ptr->bend = 0;	//Initialize these to default values
 		ptr->slideto = ptr->unpitchedslideto = -1;
 
 		if((ptr->length == 1) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
@@ -4405,7 +4437,8 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
 			{	//If this note bends
 				ptr->bend = 1;
-				ptr->bendstrength = 1;	//Assume a 1 half step bend
+				ptr->bendstrength_h = 1;	//Assume a 1 half step bend
+				ptr->bendstrength_q = 2;
 			}
 			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
 			{	//If this note slides up and the user hasn't defined the ending fret of the slide
@@ -4420,14 +4453,35 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 		{	//This note defines the bend strength and ending fret for slides
 			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
 			{	//If this note bends
-				ptr->bendstrength = tp->note[notenum]->bendstrength;	//Obtain the defined bend strength
-				ptr->bend = (ptr->bendstrength + 1) / 2;	//The bend attribute value is supposedly the bend's maximum height rounded up to the nearest number of full steps
+				if(tp->note[notenum]->bendstrength & 0x80)
+				{	//If this bend strength is defined in quarter steps
+					ptr->bendstrength_q = (tp->note[notenum]->bendstrength & 0x7F);	//Obtain the defined bend strength in quarter steps (mask out the MSB)
+					ptr->bendstrength_h = (ptr->bendstrength_q + 1) / 2;			//Obtain the defined bend strength rounded up to the nearest half step
+				}
+				else
+				{	//The bend strength is defined in half steps
+					ptr->bendstrength_h = tp->note[notenum]->bendstrength;	//Obtain the defined bend strength in half steps
+					ptr->bendstrength_q = ptr->bendstrength_h * 2;			//Obtain the defined bend strength in quarter steps
+				}
+				ptr->bend = ptr->bendstrength_h;	//Obtain the strength of this bend rounded up to the nearest half step
 			}
 			if((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 			{	//If this note slides
 				ptr->slideto = tp->note[notenum]->slideend;
 			}
 		}
+		if(ptr->slideto == fret)
+		{	//If this slide value is invalid (ends on the same fret as it starts on)
+			ptr->slideto = -1;	//Disable the slide
+		}
+		if((flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) && tp->note[notenum]->unpitchend)
+		{	//If this note has an unpitched slide and the user has defined the ending fret of the slide
+			if(eof_get_lowest_fretted_string_fret(sp, track, notenum) != tp->note[notenum]->unpitchend)
+			{	//Don't allow the unpitched slide if it slides to the same fret this note/chord is already at
+				ptr->unpitchedslideto = tp->note[notenum]->unpitchend;
+			}
+		}
+
 		//Determine note statuses
 		ptr->hammeron = (flags & EOF_PRO_GUITAR_NOTE_FLAG_HO) ? 1 : 0;
 		ptr->pulloff = (flags & EOF_PRO_GUITAR_NOTE_FLAG_PO) ? 1 : 0;

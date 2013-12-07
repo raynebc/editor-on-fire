@@ -2076,6 +2076,16 @@ if(key[KEY_PAUSE])
 			key[KEY_H] = 0;
 		}
 
+	/* toggle unpitched slide (CTRL+U in a pro guitar track) */
+		if(key[KEY_U] && KEY_EITHER_CTRL)
+		{
+			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{
+				(void) eof_pro_guitar_note_define_unpitched_slide();
+			}
+			key[KEY_U] = 0;
+		}
+
 	/* toggle pull off status (P in a pro guitar track) */
 	/* place Rocksmith phrase (SHIFT+P in a pro guitar track) */
 	/* toggle pop status (CTRL+SHIFT+P in a pro guitar track) */
@@ -2179,7 +2189,7 @@ if(key[KEY_PAUSE])
 			if(key[KEY_F] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 			{
 				eof_shift_used = 1;	//Track that the SHIFT key was used
-				(void) eof_track_proguitar_set_fret_hand_position();
+				(void) eof_track_pro_guitar_set_fret_hand_position();
 				key[KEY_F] = 0;
 			}
 
@@ -4940,6 +4950,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	int bcol, bscol, bhcol;
 	char buffer[16] = {0};
 	char *ksname;
+	char capo = 0;		//Is set to nonzero if a capo position was rendered, causing the first second marker to not be rendered
 
 	if(!eof_song_loaded || !window)
 		return;
@@ -5013,12 +5024,13 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar/bass track is active
-	/* draw track tuning */
 			unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+
+	/* draw track tuning */
 			if(pos <= 320)
 			{	//If the area left of the first beat marker is visible
 				int notenum;
-				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 
 				for(i = 0; i < EOF_TUNING_LENGTH; i++)
 				{	//For each usable string in the track
@@ -5073,6 +5085,16 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 							}
 						}
 					}
+				}
+			}
+
+	/* draw capo position */
+			if(tp->capo)
+			{	//If the track uses a capo
+				if(pos <= 320)
+				{	//If the area left of the first beat marker is visible
+					textprintf_ex(window->screen, eof_mono_font, lpos - 19, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 3, eof_color_yellow, -1, "C=%d", tp->capo);
+					capo = 1;
 				}
 			}
 		}//If a pro guitar/bass track is active
@@ -5231,7 +5253,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 
 	/* draw second markers */
 	roundedstart = start / 1000;
-	roundedstart *= 1000;		//Roundedstart is start is rounded down to nearest second
+	roundedstart *= 1000;		//Roundedstart is start rounded down to nearest second
 	for(msec = roundedstart; msec < stop + 1000; msec += 1000)
 	{	//Draw up to 1 second beyond the right edge of the screen's worth of second markers
 		pmin = msec / 60000;		//Find minute count of this second marker
@@ -5248,7 +5270,11 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 					vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 9, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_gray);
 					if(j == 0)
 					{	//Each second marker is drawn taller
-						vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 5, eof_color_white);
+						if(!capo)
+						{	//If this second marker isn't being skipped to avoid rendering on top of the capo indicator
+							vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 5, eof_color_white);
+						}
+						capo = 0;	//All second markers after the first will render regardless of whether the capo indicator is shown
 					}
 					else
 					{	//Each 1/10 second marker is drawn shorter

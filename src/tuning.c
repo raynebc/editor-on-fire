@@ -254,6 +254,7 @@ int eof_lookup_played_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsign
 	else
 	{	//Normal chord lookup, using the track's defined tuning
 		notenum = eof_lookup_tuned_note(tp, track, stringnum, tp->tuning[stringnum]);	//Look up the open note this string plays
+		notenum += tp->capo;	//Take the capo into account
 	}
 	if(notenum < 0)	//If lookup failed,
 		return -1;	//Return error

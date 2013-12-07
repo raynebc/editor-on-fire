@@ -139,6 +139,11 @@ int eof_menu_note_remove_ghost(void);			//Clears the ghost flag for each populat
 int eof_pro_guitar_note_slide_end_fret(char undo);
 	//Prompts the user for an ending fret number to apply to all selected slide notes.  The number is validated against each selected note's slide direction before it is applied
 	//If save is nonzero, a save state is created before any notes are altered
+int eof_pro_guitar_note_define_unpitched_slide(void);
+	//Toggles unpitched slide status for all selected notes
+	//This status is only applied if the user provides a suitable end fret position for the slide
+int eof_menu_note_remove_unpitched_slide(void);
+	//Removes unpitched slide status from all selected notes
 int eof_pro_guitar_note_slide_end_fret_save(void);
 	//Calls eof_pro_guitar_note_slide_end_fret() specifying to make an undo before making changes (for when setting slide endings directly from the note menu)
 int eof_pro_guitar_note_slide_end_fret_no_save(void);

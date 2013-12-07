@@ -1342,6 +1342,7 @@ BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, unsigned char s
 void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note)
 {
 	unsigned long index = 0, flags = 0, prevnoteflags = 0;
+	char buffer2[5] = {0};
 	long prevnotenum;
 
 	if((track >= eof_song->tracks) || (buffer == NULL) || ((eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT)))
@@ -1362,6 +1363,9 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 
 	if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//Check pro guitar statuses
+		unsigned long tracknum = eof_song->track[track]->tracknum, index2;
+		EOF_PRO_GUITAR_NOTE *np = eof_song->pro_guitar_track[tracknum]->note[note];
+
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
 		{
 			buffer[index++] = 'h';
@@ -1379,12 +1383,27 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 			buffer[index++] = 'a';	//In the symbols font, a is the bend character
 			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
 			{	//If the note defines the strength of its bend
-				char buffer2[5] = {0};
-				unsigned long tracknum = eof_song->track[track]->tracknum, index2;
-				(void) snprintf(buffer2, sizeof(buffer2) - 1, "%d", eof_song->pro_guitar_track[tracknum]->note[note]->bendstrength);	//Build a string out of the bend strength
-				for(index2 = 0; buffer2[index2] != '\0'; index2++)
-				{	//For each character in the string
-					buffer[index++] = buffer2[index2];	//Append it to the notation string
+				unsigned char bendstrength = np->bendstrength & 0x7F;	//Mask out the MSB
+				if(np->bendstrength & 0x80)
+				{	//If the bend strength is defined in quarter steps
+					(void) snprintf(buffer2, sizeof(buffer2) - 1, "%d", bendstrength / 2);	//Build a string out of the bend strength converted to half steps
+					for(index2 = 0; buffer2[index2] != '\0'; index2++)
+					{	//For each character in the string
+						buffer[index++] = buffer2[index2];	//Append it to the notation string
+					}
+					if(bendstrength % 2)
+					{	//Write any remaining quarter bend value as a decimal
+						buffer[index++] = '.';
+						buffer[index++] = '5';
+					}
+				}
+				else
+				{	//The bend strength is defined in half steps
+					(void) snprintf(buffer2, sizeof(buffer2) - 1, "%d", bendstrength);	//Build a string out of the bend strength
+					for(index2 = 0; buffer2[index2] != '\0'; index2++)
+					{	//For each character in the string
+						buffer[index++] = buffer2[index2];	//Append it to the notation string
+					}
 				}
 			}
 		}
@@ -1410,12 +1429,20 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		}
 		if(((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
 		{	//If the note slides up or down and defines the ending fret for the slide
-			char buffer2[5] = {0};
-			unsigned long tracknum = eof_song->track[track]->tracknum, index2;
-			(void) snprintf(buffer2, sizeof(buffer2) - 1, "%d", eof_song->pro_guitar_track[tracknum]->note[note]->slideend);	//Build a string out of the ending fret value
-			for(index2 = 0; buffer2[index2] != '\0'; index2++)
-			{	//For each character in the string
-				buffer[index++] = buffer2[index2];	//Append it to the notation string
+			unsigned long index2;
+			unsigned char lowestfret = eof_get_lowest_fretted_string_fret(eof_song, track, note);	//Determine the fret value of the lowest fretted string
+
+			if((np->slideend == lowestfret) || !lowestfret)
+			{	//If the slide is not valid (it ends on the same fret it starts on or the note/chord is played open)
+				buffer[index++] = '?';	//Place this character to alert the user
+			}
+			else
+			{	//The slide is valid
+				(void) snprintf(buffer2, sizeof(buffer2) - 1, "%d", np->slideend);	//Build a string out of the ending fret value
+				for(index2 = 0; buffer2[index2] != '\0'; index2++)
+				{	//For each character in the string
+					buffer[index++] = buffer2[index2];	//Append it to the notation string
+				}
 			}
 		}
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
@@ -1465,6 +1492,38 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT)
 		{
 			buffer[index++] = 'g';	//In the symbols font, f is the linknext indicator
+		}
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+		{
+			unsigned char lowestfret = eof_get_lowest_fretted_string_fret(eof_song, track, note);	//Determine the fret value of the lowest fretted string
+
+			if(lowestfret)
+			{	//If at least one of the strings is fretted, display an unpitched slide indicator
+				if(lowestfret == np->unpitchend)
+				{	//Invalid unpitched slide (ends on the same fret it starts at)
+					buffer[index++] = '?';	//Place this character to alert the user
+				}
+				else
+				{
+					if(lowestfret > np->unpitchend)
+					{	//If the unpitched slide goes lower than this position
+						buffer[index++] = 'j';	//In the symbols font, j is the unpitched slide down indicator
+					}
+					else if(lowestfret < np->unpitchend)
+					{	//If the unpitched slide goes higher than this position
+						buffer[index++] = 'i';	//In the symbols font, i is the unpitched slide up indicator
+					}
+					(void) snprintf(buffer2, sizeof(buffer2) - 1, "%d", np->unpitchend);	//Build a string out of the ending fret value
+					for(index2 = 0; buffer2[index2] != '\0'; index2++)
+					{	//For each character in the string
+						buffer[index++] = buffer2[index2];	//Append it to the notation string
+					}
+				}
+			}
+			else
+			{	//Slides are not valid for open strings/chords
+				buffer[index++] = '?';	//Place this character to alert the user
+			}
 		}
 	}//Check pro guitar statuses
 	else if((track == EOF_TRACK_DRUM) || (track == EOF_TRACK_DRUM_PS))

@@ -1870,6 +1870,10 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 							sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->bendstrength = pack_getc(fp);	//Read the bend's strength
 						}
 					}
+					if(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+					{	//If this is an unpitched slide note
+						sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->unpitchend = pack_getc(fp);	//Read the unpitched slide's ending fret
+					}
 				}
 				sp->pro_guitar_track[sp->pro_guitar_tracks-1]->parent->numdiffs = numdiffs;	//Update the track's difficulty count
 			break;
@@ -1974,6 +1978,19 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					{	//Ensure this logic only runs for a pro guitar track
 						EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track_ctr]->tracknum];	//Get pointer to this pro guitar track
 						tp->ignore_tuning = pack_getc(fp);	//Read the option of whether the chord detection does not honor the track's defined tuning
+					}
+				break;
+
+				case 6:		//Capo position
+					if(custom_data_size != 5)
+					{	//This data block is expected to be 5 bytes long
+						allegro_message("Error:  Invalid custom data block size.  Aborting");
+						return 0;
+					}
+					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+					{	//Ensure this logic only runs for a pro guitar track
+						EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track_ctr]->tracknum];	//Get pointer to this pro guitar track
+						tp->capo = pack_getc(fp);	//Read the capo position
 					}
 				break;
 
@@ -2244,7 +2261,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};
 	unsigned long count,ctr,ctr2,tracknum;
 	unsigned long track_count,track_ctr,bookmark_count,bitmask,fingerdefinitions;
-	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning;
+	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo;
 
 	#define EOFNUMINISTRINGTYPES 9
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
@@ -2741,6 +2758,10 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 								(void) pack_putc(tp->note[ctr]->bendstrength, fp);	//Write the bend's strength
 							}
 						}
+						if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+						{	//If this is an unpitched slide note
+							(void) pack_putc(tp->note[ctr]->unpitchend, fp);	//Write the unpitched slide's ending fret
+						}
 					}
 					//Write the section type chunk, first count the number of section types to write
 					if(tp->solos)
@@ -2901,7 +2922,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		}//Write other tracks
 
 		//Write custom track data blocks
-		fingerdefinitions = has_fingerdefinitions = has_arrangement = ignore_tuning = 0;
+		fingerdefinitions = has_fingerdefinitions = has_arrangement = ignore_tuning = has_capo = 0;
 		if(track_ctr && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 		{	//If this is a pro guitar track
 			EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[tracknum];	//Simplify
@@ -2926,14 +2947,18 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			{	//If this track's tuning is ignored for chord detection
 				ignore_tuning = 1;
 			}
+			if(tp->capo)
+			{	//If this track uses a capo
+				has_capo = 1;
+			}
 		}
-		if(has_fingerdefinitions || has_arrangement || ignore_tuning)
+		if(has_fingerdefinitions || has_arrangement || ignore_tuning || has_capo)
 		{	//If writing data in a custom data block
 			if(track_ctr && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If this is a pro guitar track
 				EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[tracknum];	//Simplify
 
-				(void) pack_iputl(has_fingerdefinitions + has_arrangement + ignore_tuning, fp);		//Write the number of custom data blocks
+				(void) pack_iputl(has_fingerdefinitions + has_arrangement + ignore_tuning + has_capo, fp);		//Write the number of custom data blocks
 				if(has_fingerdefinitions)
 				{	//Write finger definitions
 					(void) pack_iputl(fingerdefinitions + 4, fp);	//Write the number of bytes this block will contain (finger data and a 4 byte block ID)
@@ -2960,6 +2985,12 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					(void) pack_iputl(5, fp);		//Write the number of bytes this block will contain (1 byte arrangement type and a 4 byte block ID)
 					(void) pack_iputl(4, fp);		//Write the track tuning not honored custom data block ID
 					(void) pack_putc(1, fp);		//Write the track tuning not honored option
+				}
+				if(has_capo)
+				{	//Write capo value
+					(void) pack_iputl(5, fp);		//Write the number of bytes this block will contain (1 byte arrangement type and a 4 byte block ID)
+					(void) pack_iputl(6, fp);		//Write the capo custom data block ID
+					(void) pack_putc(tp->capo, fp);	//Write the track's capo position
 				}
 			}
 		}
@@ -3483,6 +3514,7 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long
 				ptr3->flags = 0;
 				ptr3->bendstrength = 0;
 				ptr3->slideend = 0;
+				ptr3->unpitchend = 0;
 				if(eof_legacy_view)
 				{	//If legacy view is in effect, initialize the legacy bitmask to whichever lanes (1-5) created the note
 					ptr3->legacymask = note & 31;
@@ -4063,6 +4095,10 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 					{	//If the next note is a bend
 						tp->note[i-1]->bendstrength = tp->note[next]->bendstrength;	//Copy the bend strength
 					}
+					if(tp->note[next]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+					{	//If the next note is an unpitched slide
+						tp->note[i-1]->unpitchend = tp->note[next]->unpitchend;	//Copy the unpitched slide end position
+					}
 					flags = eof_prepare_note_flag_merge(tp->note[i-1]->flags, EOF_PRO_GUITAR_TRACK_BEHAVIOR, tp->note[next]->note);
 					//Get the flags of the overlapped note as they would be if all applicable lane-specific flags are cleared to inherit the flags of the note to merge
 					flags |= tp->note[next]->flags;	//Merge the next note's flags
@@ -4143,6 +4179,11 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 			if(tp->note[i-1]->bendstrength && !(tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
 			{	//If the bend strength is invalid
 				tp->note[i-1]->bendstrength = 0;	//Clear it
+			}
+			if((tp->note[i-1]->unpitchend > tp->numfrets) || !tp->note[i-1]->unpitchend)
+			{	//If the unpitched slide end position is invalid
+				tp->note[i-1]->unpitchend = 0;	//Clear it
+				tp->note[i-1]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;	//Clear the related flag
 			}
 			if(!tp->note[i-1]->slideend && !tp->note[i-1]->bendstrength)
 			{	//If this note has no slide end fret number or bend strength defined
@@ -5268,6 +5309,7 @@ void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourc
 				sp->pro_guitar_track[desttracknum]->note[newnotenum]->legacymask = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask;		//Copy the legacy bitmask
 				sp->pro_guitar_track[desttracknum]->note[newnotenum]->bendstrength = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->bendstrength;	//Copy the bend strength
 				sp->pro_guitar_track[desttracknum]->note[newnotenum]->slideend = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->slideend;			//Copy the slide end position
+				sp->pro_guitar_track[desttracknum]->note[newnotenum]->unpitchend = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->unpitchend;		//Copy the unpitched slide end position
 			}
 		}
 	}//If copying from a non vocal track
@@ -5991,6 +6033,35 @@ unsigned long eof_get_highest_fret_value(EOF_SONG *sp, unsigned long track, unsi
 	}
 
 	return highestfret;
+}
+
+unsigned char eof_get_lowest_fretted_string_fret(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long ctr, bitmask, tracknum;
+	EOF_PRO_GUITAR_NOTE *np;
+
+	if(!sp || (track >= sp->tracks))
+		return 0;	//Invalid parameters
+	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)	//If the specified track is not a pro guitar track
+		return 0;	//Invalid parameters
+	tracknum = sp->track[track]->tracknum;
+	if(note >= sp->pro_guitar_track[tracknum]->notes)
+		return 0;	//Invalid parameters
+	np = sp->pro_guitar_track[tracknum]->note[note];
+
+	//Find the lowest fretted string's fret value
+	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+	{	//For each of the 6 supported strings
+		if((np->note & bitmask) && !(np->ghost & bitmask))
+		{	//If this string is used in this note and it is not ghosted
+			if(np->frets[ctr] != 0xFF)
+			{	//If this string has a defined fret number
+				return (np->frets[ctr] & 0x7F);	//Return it
+			}
+		}
+	}
+
+	return 0;	//None of the strings were fretted
 }
 
 unsigned long eof_determine_chart_length(EOF_SONG *sp)

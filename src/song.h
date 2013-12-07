@@ -35,6 +35,7 @@
 #define EOF_PRO_GUITAR_NOTE_FLAG_ACCENT         32			//This flag will represent a note that is played as an accent
 #define EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC     64			//This flag will represent a note that is played as a pinch harmonic
 #define EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT       128			//This flag will represent a note that is linked to the next note in the track difficulty
+#define EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE  256			//This flag will represent a note that has an unpitched slide
 #define EOF_PRO_GUITAR_NOTE_FLAG_HO				512			//This flag will represent a hammer on
 #define EOF_PRO_GUITAR_NOTE_FLAG_PO				1024		//This flag will represent a pull off
 #define EOF_PRO_GUITAR_NOTE_FLAG_TAP			2048		//This flag will represent a tapped note
@@ -128,8 +129,9 @@ typedef struct
 	unsigned long pos;
 	long length;				//Keep as signed, since the npos logic uses signed math
 	unsigned long flags;		//Stores various note statuses
-	unsigned char bendstrength;	//The number of half steps this note bends (0 if undefined or not applicable)
+	unsigned char bendstrength;	//The amount this note bends (0 if undefined or not applicable).  If the MSB is set, the value specifies quarter steps, otherwise it specifies half steps
 	unsigned char slideend;		//The fret at which this slide ends (0 if undefined or not applicable)
+	unsigned char unpitchend;	//The fret at which this unpitched slide ends (0 if undefined or not applicable)
 
 } EOF_PRO_GUITAR_NOTE;
 
@@ -153,6 +155,7 @@ typedef struct
 	unsigned long ghostmask;
 	unsigned char bendstrength;
 	unsigned char slideend;
+	unsigned char unpitchend;
 
 } EOF_EXTENDED_NOTE;
 
@@ -324,6 +327,7 @@ typedef struct
 	unsigned char numstrings;		//The number of strings/lanes in this track
 	unsigned char arrangement;		//The arrangement type of this track  (0 = Undefined, 1 = Combo, 2 = Rhythm, 3 = Lead, 4 = Bass)
 	unsigned char ignore_tuning;	//If nonzero, indicates that the chord name detection reflects the DEFAULT tuning for the arrangement, and not the track's actual specified tuning
+	unsigned char capo;				//If nonzero, specifies the presence of a capo on the specified fret number, affecting the chord lookup logic
 	char tuning[EOF_TUNING_LENGTH];	//An array with at least (numstrings) elements, each of which defines the string's relative tuning as the +/- number of half steps from standard tuning (tuning[0] refers to lane 1's string, which is low E)
 	EOF_TRACK_ENTRY * parent;		//Allows an easy means to look up the global track using a pro guitar track pointer
 
@@ -781,6 +785,9 @@ unsigned long eof_get_highest_clipboard_lane(char *clipboardfile);
 unsigned long eof_get_highest_fret_value(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//Returns the highest used fret in the specified pro guitar note
 	//If the parameters are invalid or the specific pro guitar note's gems are all muted with no fret specified, 0 is returned
+unsigned char eof_get_lowest_fretted_string_fret(EOF_SONG *sp, unsigned long track, unsigned long note);
+	//Returns the fret value of the lowest string that is fretted
+	//Returns zero on error or if none of the note's strings are fretted
 
 unsigned long eof_determine_chart_length(EOF_SONG *sp);
 	//Parses the project and returns the ending position of the last note/lyric/text event/bookmark

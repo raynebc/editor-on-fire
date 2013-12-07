@@ -87,11 +87,11 @@ void eof_prepare_track_menu(void)
 
 			if(eof_song->pro_guitar_track[tracknum]->ignore_tuning)
 			{
-				eof_track_proguitar_menu[2].flags = D_SELECTED;	//Track>Pro Guitar>Ignore this track's tuning
+				eof_track_proguitar_menu[3].flags = D_SELECTED;	//Track>Pro Guitar>Ignore tuning/capo
 			}
 			else
 			{
-				eof_track_proguitar_menu[2].flags = 0;
+				eof_track_proguitar_menu[3].flags = 0;
 			}
 
 			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
@@ -715,7 +715,7 @@ int eof_track_transpose_tuning(EOF_PRO_GUITAR_TRACK* tp, char *tuningdiff)
 	return 1;
 }
 
-int eof_track_proguitar_toggle_ignore_tuning(void)
+int eof_track_pro_guitar_toggle_ignore_tuning(void)
 {
 	unsigned long tracknum;
 	EOF_PRO_GUITAR_TRACK *tp;
@@ -866,21 +866,73 @@ int eof_track_set_num_frets_strings(void)
 	return 1;
 }
 
+DIALOG eof_track_pro_guitar_set_capo_position_dialog[] =
+{
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
+	{ d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Set capo position",    NULL, NULL },
+	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "At fret #",            NULL, NULL },
+	{ eof_verified_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      2,   0,   eof_etext, "0123456789", NULL },
+	{ d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                   NULL, NULL },
+	{ d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",               NULL, NULL },
+	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                   NULL, NULL }
+};
+
+int eof_track_pro_guitar_set_capo_position(void)
+{
+	unsigned long position, tracknum;
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if(!eof_song_loaded || !eof_song)
+		return 1;	//Do not allow this function to run if a chart is not loaded
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	eof_render();
+	eof_color_dialog(eof_track_pro_guitar_set_capo_position_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_track_pro_guitar_set_capo_position_dialog);
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+	(void) snprintf(eof_etext, 3, "%d", tp->capo);
+	if(eof_popup_dialog(eof_track_pro_guitar_set_capo_position_dialog, 2) == 3)
+	{	//User clicked OK
+		if(eof_etext[0] != '\0')
+		{	//If the user provided a number
+			position = atol(eof_etext);
+		}
+		else
+		{	//User left the field empty
+			position = 0;
+		}
+		if(position > eof_song->pro_guitar_track[tracknum]->numfrets)
+		{	//If the given capo position is higher than this track's supported number of frets
+			allegro_message("You cannot specify a capo position that is higher than this track's number of frets (%u).", eof_song->pro_guitar_track[tracknum]->numfrets);
+		}
+		else if(position != tp->capo)
+		{	//If the user gave a valid position and it is different from the capo position that was already in use
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			tp->capo = position;
+		}
+		eof_chord_lookup_note = 0;	//Reset the cached chord lookup count
+	}
+	return 0;
+}
+
 MENU eof_track_proguitar_fret_hand_menu[] =
 {
-	{"&Set\tShift+F", eof_track_proguitar_set_fret_hand_position, NULL, 0, NULL},
+	{"&Set\tShift+F", eof_track_pro_guitar_set_fret_hand_position, NULL, 0, NULL},
 	{"&List\t" CTRL_NAME "+Shift+F", eof_track_fret_hand_positions, NULL, 0, NULL},
 	{"&Copy", eof_track_fret_hand_positions_copy_from, NULL, 0, NULL},
 	{"Generate all diffs", eof_track_fret_hand_positions_generate_all, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
-char eof_track_proguitar_set_fret_hand_position_dialog_string1[] = "Set fret hand position";
-char eof_track_proguitar_set_fret_hand_position_dialog_string2[] = "Edit fret hand position";
-DIALOG eof_track_proguitar_set_fret_hand_position_dialog[] =
+char eof_track_pro_guitar_set_fret_hand_position_dialog_string1[] = "Set fret hand position";
+char eof_track_pro_guitar_set_fret_hand_position_dialog_string2[] = "Edit fret hand position";
+DIALOG eof_track_pro_guitar_set_fret_hand_position_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   eof_track_proguitar_set_fret_hand_position_dialog_string1,      NULL, NULL },
+	{ d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   eof_track_pro_guitar_set_fret_hand_position_dialog_string1,      NULL, NULL },
 	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "At fret #",                NULL, NULL },
 	{ eof_verified_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      2,   0,   eof_etext,     "0123456789", NULL },
 	{ d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",               NULL, NULL },
@@ -888,7 +940,7 @@ DIALOG eof_track_proguitar_set_fret_hand_position_dialog[] =
 	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,               NULL, NULL }
 };
 
-int eof_track_proguitar_set_fret_hand_position(void)
+int eof_track_pro_guitar_set_fret_hand_position(void)
 {
 	unsigned long position, tracknum;
 	EOF_PHRASE_SECTION *ptr = NULL;	//If the seek position has a fret hand position defined, this will reference it
@@ -900,8 +952,8 @@ int eof_track_proguitar_set_fret_hand_position(void)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	eof_render();
-	eof_color_dialog(eof_track_proguitar_set_fret_hand_position_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_track_proguitar_set_fret_hand_position_dialog);
+	eof_color_dialog(eof_track_pro_guitar_set_fret_hand_position_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_track_pro_guitar_set_fret_hand_position_dialog);
 
 	//Find the pointer to the fret hand position at the current seek position in this difficulty, if there is one
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -909,14 +961,14 @@ int eof_track_proguitar_set_fret_hand_position(void)
 	if(ptr)
 	{	//If an existing fret hand position is to be edited
 		(void) snprintf(eof_etext, 5, "%lu", ptr->end_pos);	//Populate the input box with it
-		eof_track_proguitar_set_fret_hand_position_dialog[0].dp = eof_track_proguitar_set_fret_hand_position_dialog_string2;	//Update the dialog window title to reflect that a hand position is being edited
+		eof_track_pro_guitar_set_fret_hand_position_dialog[0].dp = eof_track_pro_guitar_set_fret_hand_position_dialog_string2;	//Update the dialog window title to reflect that a hand position is being edited
 	}
 	else
 	{
-		eof_track_proguitar_set_fret_hand_position_dialog[0].dp = eof_track_proguitar_set_fret_hand_position_dialog_string1;	//Update the dialog window title to reflect that a new hand position is being added
+		eof_track_pro_guitar_set_fret_hand_position_dialog[0].dp = eof_track_pro_guitar_set_fret_hand_position_dialog_string1;	//Update the dialog window title to reflect that a new hand position is being added
 		eof_etext[0] = '\0';	//Empty this string
 	}
-	if(eof_popup_dialog(eof_track_proguitar_set_fret_hand_position_dialog, 2) == 3)
+	if(eof_popup_dialog(eof_track_pro_guitar_set_fret_hand_position_dialog, 2) == 3)
 	{	//User clicked OK
 		if(eof_etext[0] != '\0')
 		{	//If the user provided a number
@@ -1639,7 +1691,8 @@ MENU eof_track_proguitar_menu[] =
 {
 	{"Set &Tuning", eof_track_tuning, NULL, 0, NULL},
 	{"Set number of &Frets/strings", eof_track_set_num_frets_strings, NULL, 0, NULL},
-	{"Ignore tuning", eof_track_proguitar_toggle_ignore_tuning, NULL, 0, NULL},
+	{"Set capo", eof_track_pro_guitar_set_capo_position, NULL, 0, NULL},
+	{"Ignore tuning/capo", eof_track_pro_guitar_toggle_ignore_tuning, NULL, 0, NULL},
 	{"Highlight notes in arpeggios", eof_menu_track_highlight_arpeggios, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
