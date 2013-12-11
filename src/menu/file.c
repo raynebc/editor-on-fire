@@ -2716,6 +2716,9 @@ int eof_save_helper(char *destfilename)
 		if(eof_song->vocal_track[0]->lyrics)
 		{	//If there are lyrics, export them in Rocksmith format as well
 			char *arrangement_name;	//This will point to the track's native name unless it has an alternate name defined
+			unsigned long numlines = eof_song->vocal_track[0]->lines;		//Retain the original line count, which would be lost during a failed RS lyric export
+			EOF_PHRASE_SECTION temp = eof_song->vocal_track[0]->line[0];	//Retain the original lyric line information, which would be lost during a failed RS lyric export
+
 			if((eof_song->track[EOF_TRACK_VOCALS]->flags & EOF_TRACK_FLAG_ALT_NAME) && (eof_song->track[EOF_TRACK_VOCALS]->altname[0] != '\0'))
 			{	//If the vocal track has an alternate name
 				arrangement_name = eof_song->track[EOF_TRACK_VOCALS]->altname;
@@ -2750,6 +2753,8 @@ int eof_save_helper(char *destfilename)
 			{
 				(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,RS2_FORMAT);	//Import lyrics into FLC lyrics structure and export to Rocksmith 2014 format
 			}
+			eof_song->vocal_track[0]->lines = numlines;	//Restore the number of lyric lines present before lyric export was attempted
+			eof_song->vocal_track[0]->line[0] = temp;	//Restore the first lyric line present before lyric export was attempted
 		}
 		(void) eof_detect_difficulties(eof_song, eof_selected_track);		//Update eof_track_diff_populated_status[] to reflect the currently selected difficulty
 		eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)

@@ -3056,7 +3056,7 @@ unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track)
 	}
 }
 
-inline int eof_open_strum_enabled(unsigned long track)
+int eof_open_strum_enabled(unsigned long track)
 {
 	return (eof_song->track[track]->flags & EOF_TRACK_FLAG_SIX_LANES);
 }
@@ -5793,7 +5793,7 @@ int eof_get_pro_guitar_note_fret_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 	return 1;	//Return success
 }
 
-inline int eof_five_lane_drums_enabled(void)
+int eof_five_lane_drums_enabled(void)
 {
 	return (eof_song->track[EOF_TRACK_DRUM]->flags & EOF_TRACK_FLAG_SIX_LANES);
 }

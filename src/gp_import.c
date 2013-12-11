@@ -4250,15 +4250,26 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 		}//If this measure isn't part of an alternate ending, or if it is an alternate ending and the repeat count applies to it
 		else
 		{	//This measure is the beginning of a different alternate ending, seek until the next relevant measure is reached
+			unsigned char curr_alt_ending;
+
 #ifdef GP_IMPORT_DEBUG
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tMeasure #%lu is the start of another alternate ending (mask = %d), skipping to the end of the alternate ending", currentmeasure + 1, gp->measure[currentmeasure].alt_endings);
 			eof_log(eof_log_string, 1);
 #endif
-			while((currentmeasure < gp->measures) && !gp->measure[currentmeasure].num_of_repeats)
-			{	//Until an end of repeat is reached
+			curr_alt_ending = gp->measure[currentmeasure].alt_endings;	//Remember the alternate ending number being skipped
+			while(currentmeasure < gp->measures)
+			{	//While there are more measures
+				if(gp->measure[currentmeasure].num_of_repeats)
+				{	//If this is the first end of repeat that was reached
+					currentmeasure++;	//Go beyond the end of repeat to the next measure
+					break;
+				}
+				if(curr_alt_ending != gp->measure[currentmeasure].alt_endings)
+				{	//If this is the beginning of another alternate ending
+					break;
+				}
 				currentmeasure++;	//Iterate to the next measure
 			}
-			currentmeasure++;	//Go beyond the end of repeat to the next measure
 		}//This measure is not the current alternate ending, seek until the correct alternate ending is found
 	}//Continue until all repeats of all measures have been processed
 
