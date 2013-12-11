@@ -876,6 +876,7 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 					(void) pack_iputl(eof_song->pro_guitar_track[tracknum]->note[i]->ghost, fp);		//Write the note's ghost bitmask
 					(void) pack_putc(eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength, fp);	//Write the note's bend strength
 					(void) pack_putc(eof_song->pro_guitar_track[tracknum]->note[i]->slideend, fp);		//Write the note's slide end position
+					(void) pack_putc(eof_song->pro_guitar_track[tracknum]->note[i]->unpitchend, fp);	//Write the note's unpitched slide end position
 				}
 			}
 		}
@@ -1067,6 +1068,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 						eof_song->pro_guitar_track[tracknum]->note[notenum]->ghost = pack_igetl(fp);			//Set the note's ghost bitmask
 						eof_song->pro_guitar_track[tracknum]->note[notenum]->bendstrength = pack_getc(fp);		//Set the note's bend strength
 						eof_song->pro_guitar_track[tracknum]->note[notenum]->slideend = pack_getc(fp);			//Set the note's slide end position
+						eof_song->pro_guitar_track[tracknum]->note[notenum]->unpitchend = pack_getc(fp);		//Set the note's unpitched slide end position
 					}
 				}
 			}
@@ -1272,6 +1274,7 @@ int eof_menu_edit_copy(void)
 				(void) pack_iputl(eof_song->pro_guitar_track[tracknum]->note[i]->ghost, fp);						//Write the note's ghost bitmask
 				(void) pack_putc(eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength, fp);					//Write the note's bend strength
 				(void) pack_putc(eof_song->pro_guitar_track[tracknum]->note[i]->slideend, fp);						//Write the note's slide end position
+				(void) pack_putc(eof_song->pro_guitar_track[tracknum]->note[i]->unpitchend, fp);					//Write the note's unpitched slide end position
 			}
 			else
 			{
@@ -1490,6 +1493,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->ghost = temp_note.ghostmask;								//Copy the ghost bitmask to the last created pro guitar note
 			eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->bendstrength = temp_note.bendstrength;						//Copy the bend height to the last created pro guitar note
 			eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->slideend = temp_note.slideend;								//Copy the slide end position to the last created pro guitar note
+			eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->unpitchend = temp_note.unpitchend;							//Copy the slide end position to the last created pro guitar note
 			if(eof_song->track[sourcetrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If a non pro guitar note is being pasted into a pro guitar track
 				unsigned char legacymask = temp_note.note & 31;	//Determine the appropriate legacy mask to apply (drop lane 6)
@@ -3167,6 +3171,7 @@ void eof_menu_paste_read_clipboard_note(PACKFILE * fp, EOF_EXTENDED_NOTE *temp_n
 	temp_note->ghostmask = pack_igetl(fp);		//Read the note's ghost bitmask
 	temp_note->bendstrength = pack_getc(fp);	//Read the note's bend strength
 	temp_note->slideend = pack_getc(fp);		//Read the note's slide end position
+	temp_note->unpitchend = pack_getc(fp);		//Read the note's unpitched slide end position
 }
 
 unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long track_behavior, unsigned long notemask)

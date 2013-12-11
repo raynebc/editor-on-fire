@@ -2530,7 +2530,6 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				char *direction;	//Will point to either upstrum or downstrum as appropriate
 				double notepos;
 				char highdensity;	//Various criteria determine whether the highDensity boolean property is set to true
-				char first = 1;		//Tracks whether no chords have been exported yet
 				char chordnote;		//Tracks whether a chordNote subtag is to be written
 
 				(void) snprintf(buffer, sizeof(buffer) - 1, "      <chords count=\"%lu\">\n", numchords);
@@ -2569,11 +2568,11 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						{	//Otherwise the direction defaults to down
 							direction = downstrum;
 						}
-						flags = eof_get_rs_techniques(sp, track, ctr3, 0, &tech);	//Determine techniques used by this chord
+						(void) eof_get_rs_techniques(sp, track, ctr3, 0, &tech);			//Determine techniques used by this chord
 						highdensity = eof_note_has_high_chord_density(sp, track, ctr3, 2);	//Determine whether the chord will export with high density
 						notepos = (double)tp->note[ctr3]->pos / 1000.0;
-						if(first || (chordid != lastchordid) || flags || !highdensity)
-						{	//If this is the first chord to be written, it's ID is different from that of the previous chord, it has statuses that require chordNote subtags to define or it is a low density chord
+						if((chordid != lastchordid) || !highdensity)
+						{	//If this chord's ID is different from that of the previous chord or it meets the normal criteria for a low density chord
 							chordnote = 1;		//Ensure chordNote subtags are written
 							highdensity = 0;	//Ensure the chord tag is written to reflect low density
 							tagend[0] = '\0';	//Drop the / from the string
@@ -2673,12 +2672,12 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 									{	//This string is played open
 										fingernum = -1;
 									}
-									(void) snprintf(buffer, sizeof(buffer) - 1, "          <chordNote time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" bend=\"%d\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"0\" leftHand=\"%ld\" mute=\"%d\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\" harmonicPinch=\"%d\" pickDirection=\"0\" rightHand=\"-1\" slideUnpitchTo=\"%ld\" tap=\"%d\" vibrato=\"%d\"%s>\n", notepos, tech.linknext, tech.accent, tech.bend, fret, tech.hammeron, tech.harmonic, tech.hopo, fingernum, tech.stringmute, tech.palmmute, tech.pop, tech.pulloff, tech.slap, tech.slideto, stringnum, (double)tech.length / 1000.0, tech.tremolo, tech.pinchharmonic, tech.unpitchedslideto, tech.tap, tech.vibrato, tagend);
+									(void) snprintf(buffer, sizeof(buffer) - 1, "          <chordNote time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" bend=\"%d\" fret=\"%ld\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"0\" leftHand=\"%ld\" mute=\"%d\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\" harmonicPinch=\"%d\" pickDirection=\"0\" rightHand=\"-1\" slideUnpitchTo=\"%ld\" tap=\"%d\" vibrato=\"%d\"%s>\n", notepos, tech.linknext, tech.accent, tech.bend, fret, tech.hammeron, tech.harmonic, tech.hopo, fingernum, tech.stringmute, tech.palmmute, tech.pop, tech.pulloff, tech.slap, tech.slideto, stringnum, (double)tech.length / 1000.0, tech.tremolo, tech.pinchharmonic, tech.unpitchedslideto, tech.tap, tech.vibrato, tagend);
 									(void) pack_fputs(buffer, fp);
 									if(tech.bend)
 									{	//If the note is a bend, write the bendValues subtag and close the note tag
 										(void) pack_fputs("            <bendValues count=\"1\">\n", fp);
-										(void) snprintf(buffer, sizeof(buffer) - 1, "              <bendValue time=\"%.3f\" step=\"%.3f\"/>\n", (((double)notepos + ((double)tech.length / 3.0)) / 1000.0), (double)tech.bendstrength_q);	//Write a bend point 1/3 into the note
+										(void) snprintf(buffer, sizeof(buffer) - 1, "              <bendValue time=\"%.3f\" step=\"%.3f\"/>\n", (((double)notepos + ((double)tech.length / 3.0)) / 1000.0), (double)tech.bendstrength_q / 2.0);	//Write a bend point 1/3 into the note
 										(void) pack_fputs(buffer, fp);
 										(void) pack_fputs("            </bendValues>\n", fp);
 										(void) pack_fputs("          </chordNote>\n", fp);
@@ -2688,7 +2687,6 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							(void) pack_fputs("        </chord>\n", fp);
 						}//If chordNote tags are to be written
 						lastchordid = chordid;
-						first = 0;	//Track that a chord tag has been written
 					}//If this note is in this difficulty and is a chord
 				}//For each note in the track
 				(void) pack_fputs("      </chords>\n", fp);
@@ -2832,7 +2830,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						nextnote = eof_fixup_next_note(sp, track, ctr3);
 						if((nextnote >= 0) && (eof_note_count_rs_lanes(sp, track, nextnote, 2) > 1))
 						{	//If there is another note and it is a chord
-							(void) eof_get_rs_techniques(sp, track, nextnote, stringnum, &tech);	//Determine techniques used by the next note
+							(void) eof_get_rs_techniques(sp, track, nextnote, 0, &tech);	//Determine techniques used by the next note
 							if(tech.slideto >= 0)
 							{	//If the next note is a chord bend, it will require its own handshape to work in-game
 								handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
@@ -2913,7 +2911,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							nextnote = eof_fixup_next_note(sp, track, ctr3);
 							if((nextnote >= 0) && (eof_note_count_rs_lanes(sp, track, nextnote, 2) > 1))
 							{	//If there is another note and it is a chord
-								(void) eof_get_rs_techniques(sp, track, nextnote, stringnum, &tech);	//Determine techniques used by the next note
+								(void) eof_get_rs_techniques(sp, track, nextnote, 0, &tech);	//Determine techniques used by the next note
 								if(tech.slideto >= 0)
 								{	//If the next note is a chord bend, it will require its own handshape to work in-game
 									handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
@@ -3920,6 +3918,7 @@ int eof_time_range_is_populated(EOF_SONG *sp, unsigned long track, unsigned long
 int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned long note, char target)
 {
 	long prev;
+	EOF_RS_TECHNIQUES tech;
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return 0;	//Error
@@ -3942,6 +3941,18 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 
 	if(eof_note_compare(sp, track, note, track, prev, 0))
 		return 0;	//Note does not match the previous note (ignoring note flags and lengths)
+
+	if(target == 2)
+	{	//Additional checks for Rocksmith 2
+		if(eof_get_rs_techniques(sp, track, note, 0, NULL))
+			return 0;	//Chord has one or more techniques that require it to be written as low density
+
+		eof_get_rs_techniques(sp, track, prev, 0, &tech);	//Get techniques used by the previous note
+		if((eof_note_count_rs_lanes(sp, track, note, target) > 1) && (tech.slideto >= 0))
+		{	//If the previous note was a chord slide
+			return 0;
+		}
+	}
 
 	return 1;	//All criteria passed, note is high density
 }
@@ -4468,11 +4479,11 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 			if((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 			{	//If this note slides
 				ptr->slideto = tp->note[notenum]->slideend;
+				if(eof_get_lowest_fretted_string_fret(sp, track, notenum) == ptr->slideto)
+				{	//If the lowest fretted string in the note/chord slides to the position it's already at
+					ptr->slideto = -1;	//Disable the slide
+				}
 			}
-		}
-		if(ptr->slideto == fret)
-		{	//If this slide value is invalid (ends on the same fret as it starts on)
-			ptr->slideto = -1;	//Disable the slide
 		}
 		if((flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) && tp->note[notenum]->unpitchend)
 		{	//If this note has an unpitched slide and the user has defined the ending fret of the slide

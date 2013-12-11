@@ -749,7 +749,7 @@ int eof_song_delete_track(EOF_SONG * sp, unsigned long track);
 EOF_SONG * eof_create_song_populated(void);
 	//Allocates, initializes and returns an EOF_SONG structure pre-populated with the default legacy and vocal tracks
 
-inline int eof_open_strum_enabled(unsigned long track);
+int eof_open_strum_enabled(unsigned long track);
 	//A simple function returning nonzero if the specified track has open strumming enabled
 int eof_create_image_sequence(char benchmark_only);
 	//Creates a PCX format image sequence in a subfolder of the chart's folder called "\sequence"
@@ -761,7 +761,7 @@ int eof_get_pro_guitar_note_fret_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 	//Writes a string representation of the specified pro guitar/bass note from lowest to highest gauge string into pro_guitar_string[] which must be at least
 	//3 * # of strings number of bytes long in order to store the maximum length string
 	//Returns 0 on error or 1 on success
-inline int eof_five_lane_drums_enabled(void);
+int eof_five_lane_drums_enabled(void);
 	//A simple function returning nonzero if PART DRUM has the fifth lane enabled
 
 char eof_track_has_cymbals(EOF_SONG *sp, unsigned long track);
@@ -792,7 +792,7 @@ unsigned char eof_get_lowest_fretted_string_fret(EOF_SONG *sp, unsigned long tra
 unsigned long eof_determine_chart_length(EOF_SONG *sp);
 	//Parses the project and returns the ending position of the last note/lyric/text event/bookmark
 void eof_truncate_chart(EOF_SONG *sp);
-	//Uses eof_determine_chart() to set eof_chart_length to the larger of the last chart content and the loaded chart audio
+	//Uses eof_determine_chart_length() to set eof_chart_length to the larger of the last chart content and the loaded chart audio
 	//Any beats that are more than one beat after this position are deleted from the project
 	//For this reason, eof_selected_beat is validated and will be reset to 0 if it refers to a beat that doesn't exist anymore
 	//The project is likewise padded with such number of beats if there aren't that many
