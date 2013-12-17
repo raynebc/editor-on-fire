@@ -185,13 +185,14 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 	}//For each character of the input string
 	buffer[index++] = '\0';	//Terminate the string
 
-	if(index > warnsize + 1)
-	{	//If the expanded string is above the given threshold (accounting for the extra byte used by the string terminator)
+	if(warnsize && (index > warnsize + 1))
+	{	//If there is a threshold length specified for the output string, and the expanded string exceeds it (accounting for the extra byte used by the string terminator)
 #ifdef EOF_BUILD
 		allegro_message("Warning:  The string\n\"%s\"\nis longer than %lu characters.  It will need to be shortened or it will be truncated.", buffer, (unsigned long)warnsize);
 #else
 		printf("\nWarning:  The string\n\"%s\"\nis longer than %lu characters.  It will need to be shortened or it will be truncated.", buffer, (unsigned long)warnsize);
 #endif
+		buffer[warnsize] = '\0';	//Truncate the string
 	}
 }
 

@@ -9,6 +9,7 @@ typedef struct
 
 	SAMPLE * sp;
 	long pos;
+	double fpos;	//Since the sample increment is not 1.0 when the chart audio's sample rate is not 44.1KHz, a floating point position needs to be tracked
 	char playing;
 	int volume;	//A percent value from 0 to 100
 	double multiplier;	//This is the value sqrt(volume/100.0), which must be multiplied to the voice's amplitude to adjust for the specified volume

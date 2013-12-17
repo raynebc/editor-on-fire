@@ -358,34 +358,38 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 
 		while(lyrctr < tp->lyrics)
 		{	//For each lyric
-			if((tp->lyric[lyrctr])->pos < lastlyrtime)	//If this lyric precedes the previous lyric
-			{
-				ReleaseMemory(1);
-				return -1;				//Return failure
-			}
-			if((tp->lyric[lyrctr])->pos < linestart)		//If this lyric precedes the beginning of the line
-			{
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLogic error while preparing lyrics for export to file \"%s\"", outputfilename);
-				eof_log(eof_log_string, 1);
-				ReleaseMemory(1);
-				return -1;				//Return failure
-			}
-			if((tp->lyric[lyrctr])->pos > lineend)		//If this lyric is placed beyond the end of this line
-			{
-				break;					//Break from this while loop to have another line created
-			}
+			if((tp->lyric[lyrctr])->text[0] != '\0')
+			{	//If this lyric's text isn't an empty string
+				if((tp->lyric[lyrctr])->pos < lastlyrtime)	//If this lyric precedes the previous lyric
+				{
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLogic error while preparing lyrics for export to file \"%s\"", outputfilename);
+					eof_log(eof_log_string, 1);
+					ReleaseMemory(1);
+					return -1;				//Return failure
+				}
+				if((tp->lyric[lyrctr])->pos < linestart)		//If this lyric precedes the beginning of the line
+				{
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWarning:  Lyric \"%s\" at %lums is outside of defined lyric lines", tp->lyric[lyrctr]->text, tp->lyric[lyrctr]->pos);
+					eof_log(eof_log_string, 1);
+					CreateLyricLine();	//Initialize new line of lyrics
+				}
+				if((tp->lyric[lyrctr])->pos > lineend)		//If this lyric is placed beyond the end of this line
+				{
+					break;					//Break from this while loop to have another line created
+				}
 
-			pitch=(tp->lyric[lyrctr])->note;			//Store the lyric's pitch
-			if((tp->lyric[lyrctr])->note == 0)			//Remap EOF's pitchless value to FLC's pitchless value
-				pitch=PITCHLESS;
+				pitch=(tp->lyric[lyrctr])->note;			//Store the lyric's pitch
+				if((tp->lyric[lyrctr])->note == 0)			//Remap EOF's pitchless value to FLC's pitchless value
+					pitch=PITCHLESS;
 
-			if(!Lyrics.line_on)		//If a lyric line is not in progress
-				CreateLyricLine();	//Force one to be before adding the next lyric
-			AddLyricPiece((tp->lyric[lyrctr])->text,(tp->lyric[lyrctr])->pos,(tp->lyric[lyrctr])->pos+(tp->lyric[lyrctr])->length,pitch,0);
-				//Add the lyric to the Lyrics structure
+				if(!Lyrics.line_on)		//If a lyric line is not in progress
+					CreateLyricLine();	//Force one to be before adding the next lyric
+				AddLyricPiece((tp->lyric[lyrctr])->text,(tp->lyric[lyrctr])->pos,(tp->lyric[lyrctr])->pos+(tp->lyric[lyrctr])->length,pitch,0);
+					//Add the lyric to the Lyrics structure
 
-			if((Lyrics.lastpiece != NULL) && (Lyrics.lastpiece->lyric[strlen(Lyrics.lastpiece->lyric)-1] == '-'))	//If the piece that was just added ended in a hyphen
-				Lyrics.lastpiece->groupswithnext=1;	//Set its grouping status
+				if((Lyrics.lastpiece != NULL) && (Lyrics.lastpiece->lyric[strlen(Lyrics.lastpiece->lyric)-1] == '-'))	//If the piece that was just added ended in a hyphen
+					Lyrics.lastpiece->groupswithnext=1;	//Set its grouping status
+			}//If this lyric's text isn't an empty string
 
 			lyrctr++;	//Advance to next lyric
 		}

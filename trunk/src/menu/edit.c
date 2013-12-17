@@ -1284,6 +1284,7 @@ int eof_menu_edit_copy(void)
 				(void) pack_iputl(0, fp);	//Write a blank ghost bitmask (no strings are ghosted by default)
 				(void) pack_putc(0, fp);	//Write a blank bend strength
 				(void) pack_putc(0, fp);	//Write a blank slide end position
+				(void) pack_putc(0, fp);	//Write a blank unpitched slide end position
 			}
 		}
 	}

@@ -4,6 +4,7 @@
 #ifdef ALLEGRO_WINDOWS
 	#include <winalleg.h>
 #endif
+#include <locale.h>	//For setlocale()
 #include <math.h>
 #include <sys/stat.h>
 #include <time.h>
@@ -3645,6 +3646,9 @@ int eof_initialize(int argc, char * argv[])
 			return 1;
 		}
 	}
+
+	//Set the locale back to the default "C" locale because on Linux builds of Allegro, the locale is set to the local system locale when the keyboard system is initialized above
+	(void) setlocale(LC_ALL, "C");
 
 	//Start the logging system (unless the user disabled it via preferences)
 	eof_start_logging();

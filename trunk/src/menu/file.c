@@ -3115,7 +3115,7 @@ int eof_gp_import_track(DIALOG * d)
 			}
 		}
 
-		//Copy the imported track's tuning, string count and fret count into the active track
+		//Copy the imported track's tuning, string count, fret count and capo position into the active track
 		if(eof_detect_string_gem_conflicts(eof_song->pro_guitar_track[tracknum], eof_parsed_gp_file->track[selected]->numstrings))
 		{	//If the track being imported has a different string count that would cause notes to be removed from the track
 			if(alert("Warning:  The imported track's string count is lower than the active track.", "Applying the string count will alter/delete existing notes in the track.", "Apply the imported track's string count?", "&Yes", "&No", 'y', 'n') == 1)
@@ -3160,6 +3160,7 @@ int eof_gp_import_track(DIALOG * d)
 				}
 			}
 		}
+		eof_song->pro_guitar_track[tracknum]->capo = eof_parsed_gp_file->track[selected]->capo;	//Apply the capo position
 
 		//Destroy the GP track that was imported and remove it from the list of GP tracks
 		for(ctr = 0; ctr < eof_parsed_gp_file->track[selected]->notes; ctr++)
@@ -3274,7 +3275,6 @@ int eof_menu_file_gp_import(void)
 			}
 			free(eof_parsed_gp_file->names);
 			free(eof_parsed_gp_file->track);
-			free(eof_parsed_gp_file->capos);
 			free(eof_parsed_gp_file);
 
 			(void) replace_filename(eof_last_gp_path, returnedfn, "", 1024);	//Set the last loaded GP file path

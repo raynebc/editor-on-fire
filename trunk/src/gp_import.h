@@ -52,7 +52,6 @@
 		struct eof_gp_measure *measure;		//An array of measure data from the Guitar Pro file
 		unsigned long measures;				//The number of elements in the above array
 		unsigned long text_events;			//The size of the text_event[] array
-		unsigned long *capos;				//The capo position (0 if unused) for each imported track
 		unsigned int symbols[19];			//The position (measure number) of each musical symbol (ie. Segno)
 		char coda_activated;				//Indicates that an "...al coda" symbol was reached, meaning that when "da coda" is reached, the GP track unwrapping will redirect to that symbol
 		char double_coda_activated;			//Indicates that an "...al double coda" symbol was reached, meaning that when "da double coda" is reached, the GP track unwrapping will redirect to that symbol

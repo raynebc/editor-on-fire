@@ -308,6 +308,7 @@ Custom track data block definitions
 *		2 bytes:	Note flags (among other specialized flags, DTXMania supposedly tracks whether hi-hat is open/closed)
 *	}
 !For the next variation of the format, have a 4 byte common flags variable that all track formats use, and then a 4 byte flags variable with statuses that are specific to each format
+!Also don't store dynamically updated flags (ie. EOF_NOTE_FLAG_HOPO and EOF_NOTE_FLAG_SP) in the note's limited flags, they can be kept in a separate flags variable that doesn't save to file
 
 
 !NOTES:
