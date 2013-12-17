@@ -95,8 +95,9 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//	8:  At least one note slides to or above fret 22
 
 void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_made);
-	//Checks all notes in the track and duplicates finger arrays of notes with complete finger definitions to matching notes without complete finger definitions
-	//If any note has invalid fingering, it is cleared and will be allowed to be set by a valid fingering from a matching note.
+	//Checks all notes in the track and duplicates finger arrays of chords with complete finger definitions to matching chords without complete finger definitions
+	//If any note has invalid fingering, it is cleared and will be allowed to be set by a valid fingering from a matching note
+	//Single notes do not have their fingerings populated by this function, but if the fingering is invalid it is still cleared
 	//If *undo_made is zero, this function will create an undo state before modifying the chart and will set the referenced variable to nonzero
 int eof_pro_guitar_note_fingering_valid(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);
 	//Returns 0 if the fingering is invalid for the specified note (partially defined, or a finger specified for a string that is played open)

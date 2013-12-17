@@ -105,7 +105,8 @@ void eof_mix_callback_common(void)
 		if(eof_mix_claps_enabled)
 		{
 			eof_voice[0].sp = eof_sound_clap;
-			eof_voice[0].pos = 0.0;
+			eof_voice[0].pos = 0;
+			eof_voice[0].fpos = 0.0;
 			eof_voice[0].playing = 1;
 		}
 		eof_mix_current_clap++;
@@ -118,7 +119,8 @@ void eof_mix_callback_common(void)
 		if(eof_mix_metronome_enabled)
 		{
 			eof_voice[1].sp = eof_sound_metronome;
-			eof_voice[1].pos = 0.0;
+			eof_voice[1].pos = 0;
+			eof_voice[1].fpos = 0.0;
 			eof_voice[1].playing = 1;
 		}
 		eof_mix_current_metronome++;
@@ -131,7 +133,8 @@ void eof_mix_callback_common(void)
 		if(eof_mix_vocal_tones_enabled && eof_sound_note[eof_mix_note_note[eof_mix_current_note]])
 		{
 			eof_voice[2].sp = eof_sound_note[eof_mix_note_note[eof_mix_current_note]];
-			eof_voice[2].pos = 0.0;
+			eof_voice[2].pos = 0;
+			eof_voice[2].fpos = 0.0;
 			eof_voice[2].playing = 1;
 		}
 		eof_mix_current_note++;
@@ -142,7 +145,8 @@ void eof_mix_callback_common(void)
 		if(eof_mix_percussion_enabled)
 		{
 			eof_voice[3].sp = eof_sound_chosen_percussion;
-			eof_voice[3].pos = 0.0;
+			eof_voice[3].pos = 0;
+			eof_voice[3].fpos = 0.0;
 			eof_voice[3].playing = 1;
 		}
 		eof_mix_current_percussion++;
@@ -187,7 +191,8 @@ void eof_mix_callback_stereo(void * buf, int length)
 				sum += cuesample;
 				sum2 += cuesample;	//If this is a stereo audio file, mix the voice into the other channel as well
 
-				eof_voice[j].pos += eof_mix_sample_increment;
+				eof_voice[j].fpos += eof_mix_sample_increment;
+				eof_voice[j].pos = eof_voice[j].fpos + 0.5;	//Round to nearest full sample number
 				if(eof_voice[j].pos >= eof_voice[j].sp->len)
 				{
 					eof_voice[j].playing = 0;
@@ -247,7 +252,8 @@ void eof_mix_callback_mono(void * buf, int length)
 
 				sum += cuesample;
 
-				eof_voice[j].pos += eof_mix_sample_increment;
+				eof_voice[j].fpos += eof_mix_sample_increment;
+				eof_voice[j].pos = eof_voice[j].fpos + 0.5;	//Round to nearest full sample number
 				if(eof_voice[j].pos >= eof_voice[j].sp->len)
 				{
 					eof_voice[j].playing = 0;
@@ -610,7 +616,8 @@ void eof_mix_start(int speed)
 	for(i = 0; i < EOF_MIX_MAX_CHANNELS; i++)
 	{
 		eof_voice[i].sp = NULL;
-		eof_voice[i].pos = 0.0;
+		eof_voice[i].pos = 0;
+		eof_voice[i].fpos = 0.0;
 		eof_voice[i].playing = 0;
 		eof_voice[i].volume = 100;		//Default to 100% volume
 		eof_voice[i].multiplier = 1.0;	//Default to 100% volume

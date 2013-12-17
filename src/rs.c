@@ -2999,26 +2999,29 @@ void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_ma
 		retval = eof_pro_guitar_note_fingering_valid(tp, ctr2);
 		if(retval == 1)
 		{	//If the note's fingering was complete
-			array = tp->note[ctr2]->finger;
-			for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
-			{	//For each note in the track (inner loop)
-				if((ctr2 != ctr3) && (eof_pro_guitar_note_compare(tp, ctr2, tp, ctr3) == 0))
-				{	//If this note matches the note being examined in the outer loop, and we're not comparing the note to itself
-					if(eof_pro_guitar_note_fingering_valid(tp, ctr3) != 1)
-					{	//If the fingering of the inner loop's note is invalid/undefined
-						if(undo_made && !(*undo_made))
-						{	//If an undo hasn't been made yet
-							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-							*undo_made = 1;
+			if(eof_note_count_colors_bitmask(tp->note[ctr2]->note) > 1)
+			{	//If this note is a chord
+				array = tp->note[ctr2]->finger;
+				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
+				{	//For each note in the track (inner loop)
+					if((ctr2 != ctr3) && (eof_pro_guitar_note_compare(tp, ctr2, tp, ctr3) == 0))
+					{	//If this note matches the note being examined in the outer loop, and we're not comparing the note to itself
+						if(eof_pro_guitar_note_fingering_valid(tp, ctr3) != 1)
+						{	//If the fingering of the inner loop's note is invalid/undefined
+							if(undo_made && !(*undo_made))
+							{	//If an undo hasn't been made yet
+								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+								*undo_made = 1;
+							}
+							memcpy(tp->note[ctr3]->finger, array, 8);	//Overwrite it with the current finger array
 						}
-						memcpy(tp->note[ctr3]->finger, array, 8);	//Overwrite it with the current finger array
+						else
+						{	//The inner loop's note has a valid fingering array defined
+							array = tp->note[ctr3]->finger;	//Use this finger array for remaining matching notes in the track
+						}
 					}
-					else
-					{	//The inner loop's note has a valid fingering array defined
-						array = tp->note[ctr3]->finger;	//Use this finger array for remaining matching notes in the track
-					}
-				}
-			}//For each note in the track (inner loop)
+				}//For each note in the track (inner loop)
+			}
 		}
 		else if(retval == 0)
 		{	//If the note's fingering was defined, but invalid
@@ -4510,6 +4513,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 		ptr->linknext = (flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT) ? 1 : 0;
 		if((ptr->pop > 0) || (ptr->slap > 0))
 		{	//If the note has pop or slap notation
+			ptr->slideto = -1;	//Avoid allowing a note with both pop/slap AND slide techniques to crash the game
 			ptr->length = 0;	//Remove all sustain for the note, because Rocksmith displays pop/slap sustain notes as non pop/slap sustained notes
 		}
 	}//If the calling function passed a techniques structure
@@ -4517,7 +4521,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 	//Make a bitmask reflecting only the techniques this note has that require a chordNote subtag to be written
 	flags &= (	EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_HO | EOF_PRO_GUITAR_NOTE_FLAG_PO |
 				EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC | EOF_NOTE_FLAG_IS_TREMOLO | EOF_PRO_GUITAR_NOTE_FLAG_POP | EOF_PRO_GUITAR_NOTE_FLAG_SLAP | EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC |
-				EOF_PRO_GUITAR_NOTE_FLAG_TAP | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO | EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT);
+				EOF_PRO_GUITAR_NOTE_FLAG_TAP | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO | EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE);
 
 	return flags;
 }
