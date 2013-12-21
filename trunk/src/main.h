@@ -505,7 +505,7 @@ unsigned long eof_count_selected_notes(unsigned long * total, char v);
 void eof_fix_waveform_graph(void);	//Rebuild the waveform graph data if it exists
 void eof_fix_spectrogram(void);	//Rebuild the spectrogram data if it exists
 void eof_clear_input(void);
-void eof_prepare_undo(int type);
+void eof_prepare_undo(int type);	//Adds an undo state, creating a backup of the project every 10 undo states.
 int eof_figure_difficulty(void);	//Returns -1 if the active track difficulty has no notes or pitched lyrics.  If the vocal track is active and has at least one pitched lyric, 0 is returned, otherwise the number of notes is returned
 int eof_figure_part(void);	//Returns the active track number in terms of FoF's command line play functionality, or -1 on error
 int d_hackish_edit_proc (int msg, DIALOG *d, int c);

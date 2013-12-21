@@ -59,6 +59,8 @@ extern unsigned long num_eof_chord_shapes;
 
 int eof_is_string_muted(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//Returns nonzero if all used strings in the note are fret hand muted
+int eof_is_partially_ghosted(EOF_SONG *sp, unsigned long track, unsigned long note);
+	//Returns nonzero if the specified note contains at least one ghosted gem and one non ghosted gem
 
 unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned long **results, char target);
 	//Parses the given pro guitar track, building a list of all unique chords
@@ -66,6 +68,7 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 	//The function returns the number of unique chords contained in the list
 	//If there are no chords in the pro guitar track, or upon error, *results is set to NULL and 0 is returned
 	//If target is 1, then Rocksmith 1 authoring rules are also followed and chords that don't have at least two non string muted gems are not included
+	//If target is 2, then Rocksmith 2 authoring rules are also followed and chords that are partially ghosted (for arpeggios) get their own entries in the list
 
 unsigned long eof_build_section_list(EOF_SONG *sp, unsigned long **results, unsigned long track);
 	//Parses the given chart, building a list of all unique section markers (case insensitive),
@@ -218,7 +221,7 @@ unsigned long eof_get_highest_fret_in_time_range(EOF_SONG *sp, unsigned long tra
 	//Returns 0 if there are no fretted notes in the range, or upon error
 	//Expects the notes to be sorted in order to maximize performance
 
-unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long stringnum, EOF_RS_TECHNIQUES *ptr);
+unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long stringnum, EOF_RS_TECHNIQUES *ptr, char target);
 	//Reads the flags of the specified note and sets variables in the specified techniques structure
 	//stringnum is only used to set the fret and slide end fret values for a specified gem, and must be a value from 0 to 5
 	//If the note has pop or slap status, the length in the techniques structure is set to 0 to reflect
@@ -226,5 +229,6 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 	//Unless the note has bend or slide status, the length in the techniques structure is set to 0 if the note has EOF's minimum length of 1ms
 	//A flags bitmask is returned that is nonzero if the note contains any statuses that would necessitate chordNote subtag(s) if the examined note is a chord
 	//If ptr is NULL, no logic is performed besides returning the flags that the note contains that would necessitate chordNote subtag(s) if the examined note is a chord
+	//If target is 1, then Rocksmith 1 authoring rules are followed and a note cannot be both a slide/bend AND a pop/slap note, as they have conflicting sustain requirements
 
 #endif

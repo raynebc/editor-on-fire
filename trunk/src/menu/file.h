@@ -96,6 +96,7 @@ void eof_restore_oggs_helper(void);
 int eof_save_helper(char *destfilename);
 	//Performs logic that is common among "Save" and "Save as"
 	//"Save as" operations should pass the destination file path through destfilename
+	//  (but the calling function must not use eof_temp_filename[] to pass the target filename, as this function destroys that array's contents)
 	//"Save" operations should pass NULL for destfilename
 	//Returns zero on success, one on user cancellation, other values on error
 

@@ -14,6 +14,8 @@ unsigned long eof_note_count_colors_bitmask(unsigned long notemask);
 unsigned long eof_note_count_rs_lanes(EOF_SONG *sp, unsigned long track, unsigned long note, char target);
 	//Returns the number of gems in the specified note that are NOT marked with ghost status (which cannot export to Rocksmith 1 or 2 format)
 	//If target is 1, then Rocksmith 1 authoring rules are also followed and lanes that are string muted are not counted
+	//If target is 2, then Rocksmith 2 authoring rules are followed and string muted gems are counted
+	//If target is 3, then ghosted gems are also counted, as this is required for adding arpeggios to the unique chord list
 	//Returns 0 on error
 void eof_legacy_track_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, char o, unsigned long pos, long length);
 	//Initializes a note by by storing the specified on/off status of the green, yellow, red, blue and purple gem colors

@@ -153,7 +153,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	{
 		/* backup "song.ini" if it exists in the folder with the imported MIDI
 		as it will be overwritten upon save */
-		(void) replace_filename(oggfn, fn, "song.ini", 1024);
+		(void) replace_filename(eof_temp_filename, fn, "song.ini", 1024);
 		if(exists(eof_temp_filename))
 		{
 			/* do not overwrite an existing backup, this prevents the original backed up song.ini from
@@ -161,7 +161,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			(void) replace_filename(backup_filename, fn, "song.ini.backup", 1024);
 			if(!exists(backup_filename))
 			{
-				(void) eof_copy_file(oggfn, backup_filename);
+				(void) eof_copy_file(eof_temp_filename, backup_filename);
 			}
 		}
 

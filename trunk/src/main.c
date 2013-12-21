@@ -94,7 +94,7 @@ char        eof_ps_executable_path[1024] = {0};
 char        eof_ps_executable_name[1024] = {0};
 char        eof_ps_songs_path[1024] = {0};
 char        eof_last_frettist[256] = {0};
-char        eof_temp_filename[1024] = {0};
+char        eof_temp_filename[1024] = {0};	//A string for temporarily storing file paths
 char        eof_soft_cursor = 0;
 char        eof_desktop = 1;
 int         eof_av_delay = 200;
@@ -956,6 +956,8 @@ void eof_clear_input(void)
 
 void eof_prepare_undo(int type)
 {
+	char fn[1024] = {0};	//Use an internal array for building the periodic backup path, since the calling function may need eof_temp_filename[] to remain intact
+
 	eof_log("eof_prepare_undo() entered", 1);
 
 	if(eof_undo_add(type))
@@ -969,9 +971,9 @@ void eof_prepare_undo(int type)
 	eof_window_title_dirty = 1;	//Indicate that the window title will need to be redrawn during the next normal render, to reflect whatever change is to follow this undo state
 	if(eof_change_count % 10 == 0)
 	{
-		(void) replace_extension(eof_temp_filename, eof_filename, "backup.eof", 1024);
+		(void) replace_extension(fn, eof_filename, "backup.eof", 1024);
 		eof_log("\tSaving periodic backup", 1);
-		if(!eof_save_song(eof_song, eof_temp_filename))
+		if(!eof_save_song(eof_song, fn))
 		{
 			allegro_message("Undo state error!");
 		}
