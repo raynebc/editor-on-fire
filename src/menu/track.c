@@ -599,18 +599,24 @@ int eof_track_tuning(void)
 				return 1;
 			}
 		}
-		memset(tp->tuning, 0, sizeof(tp->tuning));	//Clear the tuning array to ensure that 4 string bass tracks have the 2 unused strings cleared
-		for(ctr = 0; ctr < tp->numstrings; ctr++)
-		{	//For each string in the track, store the numerical value into the track's tuning array
-			if(!undo_made && (tp->tuning[ctr] != atol(eof_fret_strings[ctr]) % 12))
-			{	//If a tuning was changed
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				undo_made = 1;
-				eof_chord_lookup_note = 0;	//Reset the cached chord lookup count
+		for(ctr = 0; ctr < 6; ctr++)
+		{	//For each of the six supported strings
+			if(ctr < tp->numstrings)
+			{	//If this string is used in the track, store the numerical value into the track's tuning array
+				if(!undo_made && (tp->tuning[ctr] != atol(eof_fret_strings[ctr]) % 12))
+				{	//If a tuning was changed
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+					eof_chord_lookup_note = 0;	//Reset the cached chord lookup count
+				}
+				newval = atol(eof_fret_strings[ctr]) % 12;
+				newtuning[ctr] = newval - tp->tuning[ctr];	//Find this string's tuning change (in half steps)
+				tp->tuning[ctr] = newval;
 			}
-			newval = atol(eof_fret_strings[ctr]) % 12;
-			newtuning[ctr] = newval - tp->tuning[ctr];	//Find this string's tuning change (in half steps)
-			tp->tuning[ctr] = newval;
+			else
+			{	//This string is not used in the track
+				tp->tuning[ctr] = 0;
+			}
 		}
 		(void) eof_track_transpose_tuning(tp, newtuning);	//Offer to transpose any existing notes in the track to the new tuning
 	}//If user clicked OK
@@ -1980,7 +1986,6 @@ int eof_track_delete_difficulty(void)
 		eof_song->track[eof_selected_track]->numdiffs--;	//Decrement the track's difficulty counter
 	}
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);
-	(void) eof_menu_track_selected_track_number(eof_note_type - 1, 1);
 	return 1;
 }
 

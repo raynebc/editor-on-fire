@@ -64,6 +64,12 @@ There are generally only a few reasons why this would happen:<br>
 <b>Problem:</b><br>
 Accented characters are replaced with ^ during lyric import.<br>
 <b>Solution:</b><br>
-The lyric import code doesn't have special handling for some text file encodings when extended ASCII is in use, for example when the encoding is Windows 1252.  In order to get EOF to import the accented characters from lyrics that are in a text file (ie. UltraStar), open the lyric file in a text editor capable of allowing you to choose the encoding, such as EditPad Lite.  Change the encoding to UTF-8 and no Byte Order Marker (BOM) and save the file, preserving a copy of the original file if desired and try having EOF import the altered lyric file.
+The lyric import code doesn't have special handling for some text file encodings when extended ASCII is in use, for example when the encoding is Windows 1252.  In order to get EOF to import the accented characters from lyrics that are in a text file (ie. UltraStar), open the lyric file in a text editor capable of allowing you to choose the encoding, such as EditPad Lite.  Change the encoding to UTF-8 and no Byte Order Marker (BOM) and save the file, preserving a copy of the original file if desired and try having EOF import the altered lyric file.<br><br>
+
+<b>Problem:</b><br>
+The mouse pointer is not working reliably in EOF even though it works normally in other programs.
+<b>Solution:</b><br>
+Some higher end mice have really high movement resolution, and this doesn't seem to work well with the game library EOF uses (Allegro).  Try going into the mouse's configuration program (ie. for Logitech mice this would be the SetPoint utility, for Microsoft it may be the IntelliMouse utility) lowering the X and Y resolution to something like 400 DPI.
+
 </BODY>
 </HTML>

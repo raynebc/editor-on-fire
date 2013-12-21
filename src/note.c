@@ -74,11 +74,14 @@ unsigned long eof_note_count_rs_lanes(EOF_SONG *sp, unsigned long track, unsigne
 	}
 	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
 	{	//For each of the 6 supported strings
-		if((tp->note[note]->note & bitmask) && !(tp->note[note]->ghost & bitmask))
-		{	//If this string is used, it is not fret hand muted and it is not ghosted
-			if(((tp->note[note]->frets[ctr] & 0x80) == 0) || (target != 1))
-			{	//If the note is not string muted, or the target game is Rocksmith 2 (which supports string mutes)
-				count++;	//Increment counter
+		if(tp->note[note]->note & bitmask)
+		{	//If this string is used
+			if(!(tp->note[note]->ghost & bitmask) || (target == 3))
+			{	//If the string is not ghosted, or if the target parameter allows ghost gems to be counted
+				if(((tp->note[note]->frets[ctr] & 0x80) == 0) || (target != 1))
+				{	//If the note is not string muted, or the target game is Rocksmith 2 (which supports string mutes)
+					count++;	//Increment counter
+				}
 			}
 		}
 	}
@@ -1106,7 +1109,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 	if(eof_render_3d_rs_chords && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_note_count_colors(eof_song, track, notenum) > 1))
 	{	//If the user has opted to 3D render Rocksmith style chords, and this is a pro guitar/bass chord
-		if(!eof_get_rs_techniques(eof_song, eof_selected_track, notenum, 0, NULL))
+		if(!eof_get_rs_techniques(eof_song, eof_selected_track, notenum, 0, NULL, 2))
 		{	//If the chord does not contain any techniques that would require chordNotes to be written (to display with a sustain in RS2)
 			return 0;	//Don't render the tail
 		}

@@ -100,12 +100,44 @@ int eof_is_string_muted(EOF_SONG *sp, unsigned long track, unsigned long note)
 	return allmuted;	//Return nonzero if all of the used strings were fret hand muted
 }
 
+int eof_is_partially_ghosted(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long ctr, bitmask;
+	EOF_PRO_GUITAR_TRACK *tp;
+	char ghosted = 0, nonghosted = 0;	//Tracks the number of gems in this note that are ghosted and non ghosted
+
+	if(!sp || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return 0;	//Return error
+
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+	{	//For each of the 6 supported strings
+		if(ctr < tp->numstrings)
+		{	//If this is a string used in the track
+			if(tp->note[note]->note & bitmask)
+			{	//If this is a string used in the note
+				if(tp->note[note]->ghost & bitmask)
+				{	//If this string is ghosted
+					ghosted++;
+				}
+				else
+				{	//This string is not ghosted
+					nonghosted++;
+				}
+			}
+		}
+	}
+
+	return (ghosted && nonghosted);	//Return nonzero if the note contained at least one ghosted gem AND one non ghosted gem
+}
+
 unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned long **results, char target)
 {
 	unsigned long ctr, ctr2, unique_count = 0;
 	EOF_PRO_GUITAR_NOTE **notelist;	//An array large enough to hold a pointer to every note in the track
 	EOF_PRO_GUITAR_TRACK *tp;
 	char match;
+	int ghost1 = 0, ghost2 = 0;	//Rocksmith 2 export tracks arpeggios as separate chord templates
 
 	eof_log("eof_rs_build_chord_list() entered", 1);
 
@@ -116,6 +148,11 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 	{
 		*results = NULL;
 		return 0;	//Return error
+	}
+
+	if(target == 2)
+	{	//If a chord list for Rocksmith 2 export is to be built
+		target = 3;	//Change this value to reflect that eof_note_count_rs_lanes() should also count ghosted gems
 	}
 
 	//Duplicate the track's note array
@@ -132,12 +169,20 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the track
 		if(eof_note_count_rs_lanes(sp, track, ctr, target) > 1)
-		{	//If this note is a valid chord for the target Rocksmith game (RS2 supports string muted chords)
+		{	//If this note is a valid chord for the target Rocksmith game (RS2 supports string muted chords, and partially ghosted chords are used for arpeggios)
 			match = 0;
+			if(target > 1)
+			{	//If the target is Rocksmith 2
+				ghost1 = eof_is_partially_ghosted(sp, track, ctr);	//Track whether the note is partially ghosted
+			}
 			for(ctr2 = ctr + 1; ctr2 < tp->notes; ctr2++)
 			{	//For each note in the track that follows this note
-				if((eof_note_count_rs_lanes(sp, track, ctr2, target) > 1) && !eof_note_compare_simple(sp, track, ctr, ctr2))
-				{	//If this note matches one that follows it, and that later note is a valid chord for the target Rocksmith game
+				if(target > 1)
+				{	//If the target is Rocksmith 2
+					ghost2 = eof_is_partially_ghosted(sp, track, ctr2);	//Track whether the note is partially ghosted
+				}
+				if((eof_note_count_rs_lanes(sp, track, ctr2, target) > 1) && !eof_note_compare_simple(sp, track, ctr, ctr2) && (ghost1 == ghost2))
+				{	//If this note matches one that follows it, and that later note is a valid chord for the target Rocksmith game (and for RS2 export, if the chords both have the same status of either being an arpeggio or non arpeggio)
 					notelist[ctr] = NULL;	//Eliminate this note from the list
 					match = 1;	//Note that this chord matched one of the others
 					break;
@@ -873,7 +918,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			notename[0] = '\0';	//Empty the note name string
 			(void) eof_build_note_name(sp, track, chordlist[ctr], notename);	//Build the note name (if it exists) into notename[]
 
-			effective_fingering = tp->note[chordlist[ctr]]->finger;	//By default, use the chord entry's finger array
+			effective_fingering = tp->note[chordlist[ctr]]->finger;	//By default, use the chord list entry's finger array
 			memcpy(temp.frets, tp->note[chordlist[ctr]]->frets, 6);	//Clone the fretting of the chord into the temporary note
 			temp.note = tp->note[chordlist[ctr]]->note;				//Clone the note mask
 			if(eof_pro_guitar_note_fingering_valid(tp, chordlist[ctr]) != 1)
@@ -888,7 +933,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
 			{	//For each of the 6 supported strings
 				if((eof_get_note_note(sp, track, chordlist[ctr]) & bitmask) && (ctr2 < tp->numstrings) && ((tp->note[chordlist[ctr]]->frets[ctr2] & 0x80) == 0))
-				{	//If the chord entry uses this string (verifying that the string number is supported by the track) and the string is not fret hand muted (ghost notes must be allowed so that arpeggio shapes can export)
+				{	//If the chord list entry uses this string (verifying that the string number is supported by the track) and the string is not fret hand muted (ghost notes must be allowed so that arpeggio shapes can export)
 					*(fret[ctr2]) = tp->note[chordlist[ctr]]->frets[ctr2] & 0x7F;	//Retrieve the fret played on this string (masking out the muting bit)
 					if(effective_fingering[ctr2])
 					{	//If the fingering for this string is defined
@@ -903,7 +948,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					}
 				}
 				else
-				{	//The chord entry does not use this string
+				{	//The chord list entry does not use this string
 					*(fret[ctr2]) = -1;
 					*(finger[ctr2]) = fingerunused;
 				}
@@ -1186,7 +1231,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 									unsigned long notepos;
 									unsigned long fret;				//The fret number used for this string
 
-									(void) eof_get_rs_techniques(sp, track, ctr3, stringnum, &tech);	//Determine techniques used by this note
+									(void) eof_get_rs_techniques(sp, track, ctr3, stringnum, &tech, 1);	//Determine techniques used by this note (run the RS1 check to ensure a pop/slap note isn't allowed to also have bend/slide technique)
 									notepos = eof_get_note_pos(sp, track, ctr3);
 									fret = tp->note[ctr3]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
 									if(!eof_pro_guitar_note_lowest_fret(tp, ctr3))
@@ -1236,8 +1281,8 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
 						{	//For each of the entries in the unique chord list
 							if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
-							{	//If this note matches a chord entry
-								chordid = ctr4;	//Store the chord entry number
+							{	//If this note matches a chord list entry
+								chordid = ctr4;	//Store the chord list entry number
 								break;
 							}
 						}
@@ -1338,16 +1383,16 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			handshapectr = 0;
 			for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 			{	//For each note in the track
-				if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 1) > 1))
-				{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems)
+				if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 1) > 1) || eof_is_partially_ghosted(sp, track, ctr3)))
+				{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems) or an arpeggio handshape
 					unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
 
 					//Find this chord's ID
 					for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
 					{	//For each of the entries in the unique chord list
 						if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
-						{	//If this note matches a chord entry
-							chordid = ctr4;	//Store the chord entry number
+						{	//If this note matches a chord list entry
+							chordid = ctr4;	//Store the chord list entry number
 							break;
 						}
 					}
@@ -1388,8 +1433,8 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					while(1)
 					{
 						nextnote = eof_fixup_next_note(sp, track, ctr3);
-						if((nextnote >= 0) && !eof_note_compare_simple(sp, track, chord, nextnote))
-						{	//If there is another note and it matches this chord
+						if((nextnote >= 0) && !eof_note_compare_simple(sp, track, chord, nextnote) && !eof_is_partially_ghosted(sp, track, nextnote))
+						{	//If there is another note, it matches this chord and it is not partially ghosted (an arpeggio)
 							ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
 						}
 						else
@@ -1410,16 +1455,16 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				(void) pack_fputs(buffer, fp);
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
-					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 1) > 1))
-					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems)
+					if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 1) > 1) || eof_is_partially_ghosted(sp, track, ctr3)))
+					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems) or an arpeggio handshape
 						unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
 
 						//Find this chord's ID
 						for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
 						{	//For each of the entries in the unique chord list
 							if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
-							{	//If this note matches a chord entry
-								chordid = ctr4;	//Store the chord entry number
+							{	//If this note matches a chord list entry
+								chordid = ctr4;	//Store the chord list entry number
 								break;
 							}
 						}
@@ -1460,8 +1505,8 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						while(1)
 						{
 							nextnote = eof_fixup_next_note(sp, track, ctr3);
-							if((nextnote >= 0) && !eof_note_compare_simple(sp, track, chord, nextnote))
-							{	//If there is another note and it matches this chord
+							if((nextnote >= 0) && !eof_note_compare_simple(sp, track, chord, nextnote) && !eof_is_partially_ghosted(sp, track, nextnote))
+							{	//If there is another note, it matches this chord and it is not partially ghosted (an arpeggio)
 								ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
 							}
 							else
@@ -2066,6 +2111,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		unsigned long bitmask, shapenum;
 		EOF_PRO_GUITAR_NOTE temp;	//Will have a matching chord shape definition's fingering applied to
 		unsigned char *effective_fingering;	//Will point to either a note's own finger array or one of that of the temp pro guitar note structure above
+		char arp[] = "-arp", no_arp[] = "";	//The suffix applied to the chord template's display name, depending on whether the template is for an arpeggio
+		char *suffix;	//Will point to either arp[] or no_arp[]
 
 		(void) snprintf(buffer, sizeof(buffer) - 1, "  <chordTemplates count=\"%lu\">\n", chordlistsize);
 		(void) pack_fputs(buffer, fp);
@@ -2074,7 +2121,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			notename[0] = '\0';	//Empty the note name string
 			(void) eof_build_note_name(sp, track, chordlist[ctr], notename);	//Build the note name (if it exists) into notename[]
 
-			effective_fingering = tp->note[chordlist[ctr]]->finger;	//By default, use the chord entry's finger array
+			effective_fingering = tp->note[chordlist[ctr]]->finger;	//By default, use the chord list entry's finger array
 			memcpy(temp.frets, tp->note[chordlist[ctr]]->frets, 6);	//Clone the fretting of the chord into the temporary note
 			temp.note = tp->note[chordlist[ctr]]->note;				//Clone the note mask
 			if(eof_pro_guitar_note_fingering_valid(tp, chordlist[ctr]) != 1)
@@ -2089,7 +2136,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
 			{	//For each of the 6 supported strings
 				if((eof_get_note_note(sp, track, chordlist[ctr]) & bitmask) && (ctr2 < tp->numstrings))
-				{	//If the chord entry uses this string (verifying that the string number is supported by the track)
+				{	//If the chord list entry uses this string (verifying that the string number is supported by the track)
 					if((tp->note[chordlist[ctr]]->frets[ctr2] & 0x80) == 0)
 					{	//If the string is not fret hand muted (ghost notes must be allowed so that arpeggio shapes can export)
 						*(fret[ctr2]) = tp->note[chordlist[ctr]]->frets[ctr2] & 0x7F;	//Retrieve the fret played on this string (masking out the muting bit)
@@ -2119,14 +2166,22 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					}
 				}
 				else
-				{	//The chord entry does not use this string
+				{	//The chord list entry does not use this string
 					*(fret[ctr2]) = -1;
 					*(finger[ctr2]) = fingerunused;
 				}
 			}
 
-			expand_xml_text(buffer2, sizeof(buffer2) - 1, notename, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
-			(void) snprintf(buffer, sizeof(buffer) - 1, "    <chordTemplate chordName=\"%s\" displayName=\"%s\" finger0=\"%s\" finger1=\"%s\" finger2=\"%s\" finger3=\"%s\" finger4=\"%s\" finger5=\"%s\" fret0=\"%ld\" fret1=\"%ld\" fret2=\"%ld\" fret3=\"%ld\" fret4=\"%ld\" fret5=\"%ld\"/>\n", buffer2, buffer2, finger0, finger1, finger2, finger3, finger4, finger5, fret0, fret1, fret2, fret3, fret4, fret5);
+			if(eof_is_partially_ghosted(sp, track, chordlist[ctr]))
+			{	//If the chord list entry is partially ghosted (for arpeggio notation)
+				suffix = arp;	//Apply the "-arp" suffix to the chord template's display name
+			}
+			else
+			{
+				suffix = no_arp;	//This chord template is not for an arpeggio chord, apply no suffix
+			}
+			expand_xml_text(buffer2, sizeof(buffer2) - 1, notename, 32 - 4);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field (reserve 4 characters for the "-arp" suffix)
+			(void) snprintf(buffer, sizeof(buffer) - 1, "    <chordTemplate chordName=\"%s\" displayName=\"%s%s\" finger0=\"%s\" finger1=\"%s\" finger2=\"%s\" finger3=\"%s\" finger4=\"%s\" finger5=\"%s\" fret0=\"%ld\" fret1=\"%ld\" fret2=\"%ld\" fret3=\"%ld\" fret4=\"%ld\" fret5=\"%ld\"/>\n", buffer2, buffer2, suffix, finger0, finger1, finger2, finger3, finger4, finger5, fret0, fret1, fret2, fret3, fret4, fret5);
 			(void) pack_fputs(buffer, fp);
 		}//For each of the entries in the unique chord list
 		(void) pack_fputs("  </chordTemplates>\n", fp);
@@ -2470,7 +2525,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								unsigned long fret;				//The fret number used for this string
 								char tagend[2] = "/";			//If a note tag is to have a bendValues subtag, this string is emptied so that the note tag doesn't end in the same line
 
-								(void) eof_get_rs_techniques(sp, track, ctr3, stringnum, &tech);	//Determine techniques used by this note
+								(void) eof_get_rs_techniques(sp, track, ctr3, stringnum, &tech, 2);	//Determine techniques used by this note
 								notepos = eof_get_note_pos(sp, track, ctr3);
 								if(tp->note[ctr3]->frets[stringnum] == 0xFF)
 								{	//If this is a string mute with no defined fret number
@@ -2544,8 +2599,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
 						{	//For each of the entries in the unique chord list
 							if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
-							{	//If this note matches a chord entry
-								chordid = ctr4;	//Store the chord entry number
+							{	//If this note matches a chord list entry
+								chordid = ctr4;	//Store the chord list entry number
 								break;
 							}
 						}
@@ -2568,7 +2623,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						{	//Otherwise the direction defaults to down
 							direction = downstrum;
 						}
-						(void) eof_get_rs_techniques(sp, track, ctr3, 0, &tech);			//Determine techniques used by this chord
+						(void) eof_get_rs_techniques(sp, track, ctr3, 0, &tech, 2);			//Determine techniques used by this chord
 						highdensity = eof_note_has_high_chord_density(sp, track, ctr3, 2);	//Determine whether the chord will export with high density
 						notepos = (double)tp->note[ctr3]->pos / 1000.0;
 						if((chordid != lastchordid) || !highdensity)
@@ -2594,7 +2649,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 									char tagend[2] = "/";	//If a chordNote tag is to have a bendValues subtag, this string is emptied so that the note tag doesn't end in the same line
 									long fret;				//The fret number used for this string (uses signed math, keep it a signed int type)
 
-									(void) eof_get_rs_techniques(sp, track, ctr3, stringnum, &tech);	//Determine techniques used by this note
+									(void) eof_get_rs_techniques(sp, track, ctr3, stringnum, &tech, 2);	//Determine techniques used by this note
 									if(tp->note[ctr3]->frets[stringnum] == 0xFF)
 									{	//If this is a string mute with no defined fret number
 										fret = 0;	//Assume muted open note
@@ -2778,17 +2833,24 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			handshapectr = 0;
 			for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 			{	//For each note in the track
-				if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1))
-				{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems)
+				if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 1) > 1) || eof_is_partially_ghosted(sp, track, ctr3)))
+				{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems) or an arpeggio handshape
 					unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
+					int ghost1, ghost2;
+
+					ghost1 = eof_is_partially_ghosted(sp, track, ctr3);	//Determine whether this chord is partially ghosted
 
 					//Find this chord's ID
 					for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
 					{	//For each of the entries in the unique chord list
 						if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
-						{	//If this note matches a chord entry
-							chordid = ctr4;	//Store the chord entry number
-							break;
+						{	//If this note matches a chord list entry
+							ghost2 = eof_is_partially_ghosted(sp, track, chordlist[ctr4]);	//Determine whether the chord list entry is partially ghosted
+							if(ghost1 == ghost2)
+							{	//If the chord and the chord list entry are both either partially ghosted or not ghosted at all, consider it a match
+								chordid = ctr4;	//Store the chord list entry number
+								break;
+							}
 						}
 					}
 					if(ctr4 >= chordlistsize)
@@ -2830,15 +2892,15 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						nextnote = eof_fixup_next_note(sp, track, ctr3);
 						if((nextnote >= 0) && (eof_note_count_rs_lanes(sp, track, nextnote, 2) > 1))
 						{	//If there is another note and it is a chord
-							(void) eof_get_rs_techniques(sp, track, nextnote, 0, &tech);	//Determine techniques used by the next note
+							(void) eof_get_rs_techniques(sp, track, nextnote, 0, &tech, 2);	//Determine techniques used by the next note
 							if(tech.slideto >= 0)
 							{	//If the next note is a chord bend, it will require its own handshape to work in-game
 								handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
 								break;	//Break from while loop
 							}
 						}
-						if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chord, nextnote) || eof_is_string_muted(sp, track, nextnote)))
-						{	//If there is another note and it matches this chord or is completely string muted
+						if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chord, nextnote) || eof_is_string_muted(sp, track, nextnote)) && !eof_is_partially_ghosted(sp, track, nextnote))
+						{	//If there is another note, it either matches this chord or is completely string muted and it is not partially ghosted (an arpeggio)
 							ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
 						}
 						else
@@ -2859,17 +2921,24 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				(void) pack_fputs(buffer, fp);
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
-					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1))
-					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems)
+					if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 1) > 1) || eof_is_partially_ghosted(sp, track, ctr3)))
+					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems) or an arpeggio handshape
 						unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
+						int ghost1, ghost2;
+
+						ghost1 = eof_is_partially_ghosted(sp, track, ctr3);	//Determine whether this chord is partially ghosted
 
 						//Find this chord's ID
 						for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
 						{	//For each of the entries in the unique chord list
 							if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
-							{	//If this note matches a chord entry
-								chordid = ctr4;	//Store the chord entry number
-								break;
+							{	//If this note matches a chord list entry
+								ghost2 = eof_is_partially_ghosted(sp, track, chordlist[ctr4]);	//Determine whether the chord list entry is partially ghosted
+								if(ghost1 == ghost2)
+								{	//If the chord and the chord list entry are both either partially ghosted or not ghosted at all, consider it a match
+									chordid = ctr4;	//Store the chord list entry number
+									break;
+								}
 							}
 						}
 						if(ctr4 >= chordlistsize)
@@ -2911,15 +2980,15 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							nextnote = eof_fixup_next_note(sp, track, ctr3);
 							if((nextnote >= 0) && (eof_note_count_rs_lanes(sp, track, nextnote, 2) > 1))
 							{	//If there is another note and it is a chord
-								(void) eof_get_rs_techniques(sp, track, nextnote, 0, &tech);	//Determine techniques used by the next note
+								(void) eof_get_rs_techniques(sp, track, nextnote, 0, &tech, 2);	//Determine techniques used by the next note
 								if(tech.slideto >= 0)
 								{	//If the next note is a chord bend, it will require its own handshape to work in-game
 									handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
 									break;	//Break from while loop
 								}
 							}
-							if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chord, nextnote) || eof_is_string_muted(sp, track, nextnote)))
-							{	//If there is another note and it matches this chord or is completely string muted
+							if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chord, nextnote) || eof_is_string_muted(sp, track, nextnote)) && !eof_is_partially_ghosted(sp, track, nextnote))
+							{	//If there is another note, it either matches this chord or is completely string muted and it is not partially ghosted (an arpeggio)
 								ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
 							}
 							else
@@ -3947,10 +4016,10 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 
 	if(target == 2)
 	{	//Additional checks for Rocksmith 2
-		if(eof_get_rs_techniques(sp, track, note, 0, NULL))
+		if(eof_get_rs_techniques(sp, track, note, 0, NULL, 2))
 			return 0;	//Chord has one or more techniques that require it to be written as low density
 
-		eof_get_rs_techniques(sp, track, prev, 0, &tech);	//Get techniques used by the previous note
+		eof_get_rs_techniques(sp, track, prev, 0, &tech, 2);	//Get techniques used by the previous note
 		if((eof_note_count_rs_lanes(sp, track, note, target) > 1) && (tech.slideto >= 0))
 		{	//If the previous note was a chord slide
 			return 0;
@@ -4422,7 +4491,7 @@ unsigned long eof_get_highest_fret_in_time_range(EOF_SONG *sp, unsigned long tra
 	return highest;
 }
 
-unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long stringnum, EOF_RS_TECHNIQUES *ptr)
+unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long stringnum, EOF_RS_TECHNIQUES *ptr, char target)
 {
 	unsigned long tracknum, flags, fret;
 	EOF_PRO_GUITAR_TRACK *tp;
@@ -4513,8 +4582,12 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 		ptr->linknext = (flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT) ? 1 : 0;
 		if((ptr->pop > 0) || (ptr->slap > 0))
 		{	//If the note has pop or slap notation
-			ptr->slideto = -1;	//Avoid allowing a note with both pop/slap AND slide techniques to crash the game
-			ptr->length = 0;	//Remove all sustain for the note, because Rocksmith displays pop/slap sustain notes as non pop/slap sustained notes
+			if(target == 1)
+			{	//In Rocksmith 1, a slap/pop note cannot also be a slide/bend, because slap/pop notes require a sustain of 0 and slide/bend requires a nonzero sustain
+				ptr->slideto = -1;	//Avoid allowing a 0 length slide note from crashing the game
+				ptr->bend = ptr->bendstrength_h = ptr->bendstrength_q = 0;	//Avoid allowing a 0 length bend note from crashing the game
+				ptr->length = 0;	//Remove all sustain for the note, otherwise Rocksmith 1 won't display the pop/slap sustain technique
+			}
 		}
 	}//If the calling function passed a techniques structure
 

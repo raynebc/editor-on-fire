@@ -1120,7 +1120,7 @@ int eof_menu_file_preferences(void)
 			if(eof_etext2[0] != '\0')
 			{	//If the minimum note distance field is populated
 				eof_min_note_distance = atol(eof_etext2);
-				if(eof_min_note_distance < 1)
+				if(eof_min_note_distance < 0)
 				{	//Validate this value
 					eof_min_note_distance = 3;
 				}
@@ -2354,24 +2354,6 @@ int eof_save_helper(char *destfilename)
 
 //	eof_log_level &= ~2;	//Disable verbose logging
 
-	if(destfilename == NULL)
-	{	//Perform save
-		function = 1;
-		if((eof_song_path == NULL) || (eof_loaded_song_name == NULL))
-			return 3;	//Return failure:  Invalid paths
-		(void) append_filename(eof_temp_filename, eof_song_path, eof_loaded_song_name, (int) sizeof(eof_temp_filename));
-		(void) replace_filename(newfolderpath, eof_song_path, "", 1024);	//Obtain the destination path
-	}
-	else
-	{	//Perform save as
-		function = 2;
-		(void) replace_extension(destfilename, destfilename, "eof", 1024);	//Ensure the chart is saved with a .eof extension
-		(void) ustrncpy(eof_temp_filename, destfilename, (int) sizeof(eof_temp_filename) - 1);
-		if(eof_temp_filename[1022] != '\0')	//If the source filename was too long to store in the array
-			return 4;			//Return failure:  Destination path too long
-		(void) replace_filename(newfolderpath, destfilename, "", 1024);	//Obtain the destination path
-	}
-
 	/* sort notes so they are in order of position */
 	eof_sort_notes(eof_song);
 	eof_fixup_notes(eof_song);
@@ -2583,6 +2565,25 @@ int eof_save_helper(char *destfilename)
 		}
 	}
 
+	/* build the target file name */
+	if(destfilename == NULL)
+	{	//Perform save
+		function = 1;
+		if((eof_song_path == NULL) || (eof_loaded_song_name == NULL))
+			return 3;	//Return failure:  Invalid paths
+		(void) append_filename(eof_temp_filename, eof_song_path, eof_loaded_song_name, (int) sizeof(eof_temp_filename));
+		(void) replace_filename(newfolderpath, eof_song_path, "", 1024);	//Obtain the destination path
+	}
+	else
+	{	//Perform save as
+		function = 2;
+		(void) replace_extension(destfilename, destfilename, "eof", 1024);	//Ensure the chart is saved with a .eof extension
+		(void) ustrncpy(eof_temp_filename, destfilename, (int) sizeof(eof_temp_filename) - 1);
+		if(eof_temp_filename[1022] != '\0')	//If the source filename was too long to store in the array
+			return 4;			//Return failure:  Destination path too long
+		(void) replace_filename(newfolderpath, destfilename, "", 1024);	//Obtain the destination path
+	}
+
 	/* rotate out the last save file (filename).previous_save.eof */
 	(void) replace_extension(eof_temp_filename, eof_temp_filename, "eof", (int) sizeof(eof_temp_filename));	//Ensure the chart's file path has a .eof extension
 	(void) replace_extension(tempfilename2, eof_temp_filename, "previous_save.eof", 1024);	//(filename).previous_save.eof will be store the last save operation
@@ -2716,8 +2717,8 @@ int eof_save_helper(char *destfilename)
 		if(eof_song->vocal_track[0]->lyrics)
 		{	//If there are lyrics, export them in Rocksmith format as well
 			char *arrangement_name;	//This will point to the track's native name unless it has an alternate name defined
-			unsigned long numlines = eof_song->vocal_track[0]->lines;		//Retain the original line count, which would be lost during a failed RS lyric export
-			EOF_PHRASE_SECTION temp = eof_song->vocal_track[0]->line[0];	//Retain the original lyric line information, which would be lost during a failed RS lyric export
+			unsigned long numlines;
+			EOF_PHRASE_SECTION temp;
 
 			if((eof_song->track[EOF_TRACK_VOCALS]->flags & EOF_TRACK_FLAG_ALT_NAME) && (eof_song->track[EOF_TRACK_VOCALS]->altname[0] != '\0'))
 			{	//If the vocal track has an alternate name
@@ -2727,6 +2728,12 @@ int eof_save_helper(char *destfilename)
 			{	//Otherwise use the track's native name
 				arrangement_name = eof_song->track[EOF_TRACK_VOCALS]->name;
 			}
+
+			//Sort lyrics and back up the lyric line data that may be altered by lyric export
+			qsort(eof_song->vocal_track[0]->line, (size_t)eof_song->vocal_track[0]->lines, sizeof(EOF_PHRASE_SECTION), eof_song_qsort_phrase_sections);	//Sort the lyric lines
+			temp = eof_song->vocal_track[0]->line[0];	//Retain the original lyric line information, which would be lost during a failed RS lyric export
+			numlines = eof_song->vocal_track[0]->lines;		//Retain the original line count, which would be lost during a failed RS lyric export
+
 			//Export in RS1 format
 			(void) snprintf(tempfilename2, sizeof(tempfilename2), "%s.xml", arrangement_name);	//Build the filename
 			(void) append_filename(eof_temp_filename, newfolderpath, tempfilename2, (int) sizeof(eof_temp_filename));	//Build the full file name
