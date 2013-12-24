@@ -951,6 +951,7 @@ int eof_track_pro_guitar_set_fret_hand_position(void)
 	unsigned long position, tracknum;
 	EOF_PHRASE_SECTION *ptr = NULL;	//If the seek position has a fret hand position defined, this will reference it
 	unsigned long index;			//Will store the index number of the existing fret hand position being edited
+	EOF_PRO_GUITAR_TRACK *tp;
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
@@ -963,7 +964,8 @@ int eof_track_pro_guitar_set_fret_hand_position(void)
 
 	//Find the pointer to the fret hand position at the current seek position in this difficulty, if there is one
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	ptr = eof_pro_guitar_track_find_effective_fret_hand_position_definition(eof_song->pro_guitar_track[tracknum], eof_note_type, eof_music_pos - eof_av_delay, &index, NULL, 1);
+	tp = eof_song->pro_guitar_track[tracknum];
+	ptr = eof_pro_guitar_track_find_effective_fret_hand_position_definition(tp, eof_note_type, eof_music_pos - eof_av_delay, &index, NULL, 1);
 	if(ptr)
 	{	//If an existing fret hand position is to be edited
 		(void) snprintf(eof_etext, 5, "%lu", ptr->end_pos);	//Populate the input box with it
@@ -979,14 +981,22 @@ int eof_track_pro_guitar_set_fret_hand_position(void)
 		if(eof_etext[0] != '\0')
 		{	//If the user provided a number
 			position = atol(eof_etext);
-			if(position > eof_song->pro_guitar_track[tracknum]->numfrets)
+			if(position > tp->numfrets)
 			{	//If the given fret position is higher than this track's supported number of frets
-				allegro_message("You cannot specify a fret hand position that is higher than this track's number of frets (%u).", eof_song->pro_guitar_track[tracknum]->numfrets);
+				allegro_message("You cannot specify a fret hand position that is higher than this track's number of frets (%u).", tp->numfrets);
 				return 1;
 			}
-			else if(position > 19)
+			else if(position + tp->capo > 19)
 			{	//19 is the highest valid anchor because fret 22 is the highest supported fret in both Rock Band and Rocksmith
-				allegro_message("You cannot specify a fret hand position higher than 19 (it will cause Rocksmith to crash).");
+				if(tp->capo)
+				{	//If there is a capo in use
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "You cannot specify a fret hand position higher than %u when a capo is at fret %d (it will cause Rocksmith to crash).", 19 - tp->capo, tp->capo);
+					allegro_message(eof_log_string);
+				}
+				else
+				{
+					allegro_message("You cannot specify a fret hand position higher than 19 (it will cause Rocksmith to crash).");
+				}
 				return 1;
 			}
 			else if(!position)
@@ -1008,14 +1018,14 @@ int eof_track_pro_guitar_set_fret_hand_position(void)
 
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				(void) eof_track_add_section(eof_song, eof_selected_track, EOF_FRET_HAND_POS_SECTION, eof_note_type, eof_music_pos - eof_av_delay, position, 0, NULL);
-				eof_pro_guitar_track_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Sort the positions, since they must be in order for displaying to the user
+				eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions, since they must be in order for displaying to the user
 			}
 		}
 		else if(ptr)
 		{	//If the user left the input box empty and was editing an existing hand position
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			eof_pro_guitar_track_delete_hand_position(eof_song->pro_guitar_track[tracknum], index);	//Delete the existing fret hand position
-			eof_pro_guitar_track_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Sort the positions, since they must be in order for displaying to the user
+			eof_pro_guitar_track_delete_hand_position(tp, index);	//Delete the existing fret hand position
+			eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions, since they must be in order for displaying to the user
 		}
 	}
 	return 0;
@@ -1697,9 +1707,9 @@ MENU eof_track_proguitar_menu[] =
 {
 	{"Set &Tuning", eof_track_tuning, NULL, 0, NULL},
 	{"Set number of &Frets/strings", eof_track_set_num_frets_strings, NULL, 0, NULL},
-	{"Set capo", eof_track_pro_guitar_set_capo_position, NULL, 0, NULL},
-	{"Ignore tuning/capo", eof_track_pro_guitar_toggle_ignore_tuning, NULL, 0, NULL},
-	{"Highlight notes in arpeggios", eof_menu_track_highlight_arpeggios, NULL, 0, NULL},
+	{"Set &Capo", eof_track_pro_guitar_set_capo_position, NULL, 0, NULL},
+	{"&Ignore tuning/capo", eof_track_pro_guitar_toggle_ignore_tuning, NULL, 0, NULL},
+	{"&Highlight notes in arpeggios", eof_menu_track_highlight_arpeggios, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 

@@ -27,7 +27,6 @@
 #define EOF_NOTE_FLAG_CRAZY      4	//This flag will represent overlap allowed for guitar/dance/keys tracks, and will force pro guitar/bass chords to display with a chord box
 #define EOF_NOTE_FLAG_F_HOPO     8
 #define EOF_NOTE_FLAG_NO_HOPO   16
-#define EOF_NOTE_FLAG_TEMP       536870912	//This flag will represent a temporary status, such as a note that was generated for temporary use that will be removed
 #define EOF_NOTE_FLAG_HIGHLIGHT 1073741824
 #define EOF_NOTE_FLAG_EXTENDED  2147483648	//The MSB will be reserved to indicate an additional flag variable is present in a project file
 
@@ -77,6 +76,10 @@
 #define EOF_NOTE_FLAG_IS_TRILL		            65536	//This flag will be set by eof_determine_phrase_status() if the note is in a trill section
 #define EOF_NOTE_FLAG_IS_TREMOLO		        131072	//This flag will be set by eof_determine_phrase_status() if the note is in a tremolo section
 
+//The following temporary flags are maintained internally and do not save to file
+#define EOF_NOTE_TFLAG_TEMP       1	//This flag will represent a temporary status, such as a note that was generated for temporary use that will be removed
+#define EOF_NOTE_TFLAG_IGNORE     2	//This flag will represent a note that is not exported to XML (such as a chord within an arpeggio that is converted into single notes)
+
 #define EOF_MAX_BEATS   32768
 #define EOF_MAX_PHRASES  1000
 #define EOF_MAX_OGGS        8
@@ -112,6 +115,7 @@ typedef struct
 	unsigned long pos;
 	long length;				//Keep as signed, since the npos logic uses signed math
 	unsigned long flags;		//Stores various note statuses
+	unsigned char tflags;		//Stores various temporary statuses
 
 } EOF_NOTE;
 
@@ -132,6 +136,7 @@ typedef struct
 	unsigned char bendstrength;	//The amount this note bends (0 if undefined or not applicable).  If the MSB is set, the value specifies quarter steps, otherwise it specifies half steps
 	unsigned char slideend;		//The fret at which this slide ends (0 if undefined or not applicable)
 	unsigned char unpitchend;	//The fret at which this unpitched slide ends (0 if undefined or not applicable)
+	unsigned char tflags;		//Stores various temporary statuses
 
 } EOF_PRO_GUITAR_NOTE;
 
@@ -169,6 +174,7 @@ typedef struct
 	unsigned long pos;
 	long length;			//Keep as signed, since the npos logic uses signed math
 	unsigned long flags;
+	unsigned char tflags;	//Stores various temporary statuses
 
 } EOF_LYRIC;
 
@@ -545,6 +551,8 @@ long eof_get_note_length(EOF_SONG *sp, unsigned long track, unsigned long note);
 void eof_set_note_length(EOF_SONG *sp, unsigned long track, unsigned long note, long length);	//Sets the length of the specified track's note/lyric
 unsigned long eof_get_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the flags of the specified track's note/lyric, or 0 on error
 void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long flags);	//Sets the flags of the specified track's note/lyric
+unsigned char eof_get_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the temporary flags of the specified track's note/lyric, or 0 on error
+void eof_set_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char tflags);	//Sets the temporary flags of the specified track's note/lyric
 unsigned long eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the note bitflag of the specified track's note/lyric, or 0 on error
 void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long value);	//Sets the note value of the specified track's note/lyric
 char *eof_get_note_name(EOF_SONG *sp, unsigned long track, unsigned long note);				//Returns a pointer to the note's statically allocated name array, or a lyric's text array, or NULL on error

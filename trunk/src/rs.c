@@ -137,7 +137,6 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 	EOF_PRO_GUITAR_NOTE **notelist;	//An array large enough to hold a pointer to every note in the track
 	EOF_PRO_GUITAR_TRACK *tp;
 	char match;
-	int ghost1 = 0, ghost2 = 0;	//Rocksmith 2 export tracks arpeggios as separate chord templates
 
 	eof_log("eof_rs_build_chord_list() entered", 1);
 
@@ -148,11 +147,6 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 	{
 		*results = NULL;
 		return 0;	//Return error
-	}
-
-	if(target == 2)
-	{	//If a chord list for Rocksmith 2 export is to be built
-		target = 3;	//Change this value to reflect that eof_note_count_rs_lanes() should also count ghosted gems
 	}
 
 	//Duplicate the track's note array
@@ -169,20 +163,12 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the track
 		if(eof_note_count_rs_lanes(sp, track, ctr, target) > 1)
-		{	//If this note is a valid chord for the target Rocksmith game (RS2 supports string muted chords, and partially ghosted chords are used for arpeggios)
+		{	//If this note is a valid chord based on the target
 			match = 0;
-			if(target > 1)
-			{	//If the target is Rocksmith 2
-				ghost1 = eof_is_partially_ghosted(sp, track, ctr);	//Track whether the note is partially ghosted
-			}
 			for(ctr2 = ctr + 1; ctr2 < tp->notes; ctr2++)
 			{	//For each note in the track that follows this note
-				if(target > 1)
-				{	//If the target is Rocksmith 2
-					ghost2 = eof_is_partially_ghosted(sp, track, ctr2);	//Track whether the note is partially ghosted
-				}
-				if((eof_note_count_rs_lanes(sp, track, ctr2, target) > 1) && !eof_note_compare_simple(sp, track, ctr, ctr2) && (ghost1 == ghost2))
-				{	//If this note matches one that follows it, and that later note is a valid chord for the target Rocksmith game (and for RS2 export, if the chords both have the same status of either being an arpeggio or non arpeggio)
+				if((eof_note_count_rs_lanes(sp, track, ctr2, target) > 1) && !eof_note_compare_simple(sp, track, ctr, ctr2))
+				{	//If this note matches one that follows it, and that later note is a valid chord for the target Rocksmith game
 					notelist[ctr] = NULL;	//Eliminate this note from the list
 					match = 1;	//Note that this chord matched one of the others
 					break;
@@ -192,12 +178,12 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 			{	//If this chord didn't match any of the other notes
 				unique_count++;	//Increment unique chord counter
 			}
-		}
+		}//If this note is a valid chord based on the target
 		else
 		{	//This not is not a chord
 			notelist[ctr] = NULL;	//Eliminate this note from the list since it's not a chord
 		}
-	}
+	}//For each note in the track
 
 	if(!unique_count)
 	{	//If there were no chords
@@ -413,7 +399,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		{	//If the note will export as a single note
 			if(eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
 			{	//If the note slides up
-				slideend = tp->note[ctr]->slideend;
+				slideend = tp->note[ctr]->slideend + tp->capo;	//Obtain the end position of the slide, take the capo position into account
 				if(!(eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
 				{	//If this slide's end position is not defined
 					slideend = eof_get_highest_fret_value(sp, track, ctr) + 1;	//Assume a 1 fret slide
@@ -878,7 +864,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							if(new_note)
 							{	//If the new note was created
 								new_note->flags = tp->note[ctr - 1]->flags;					//Clone the flags
-								new_note->flags |= EOF_NOTE_FLAG_TEMP;						//Mark the note as temporary
+								new_note->tflags |= EOF_NOTE_TFLAG_TEMP;					//Mark the note as temporary
 								new_note->bendstrength = tp->note[ctr - 1]->bendstrength;	//Copy the bend strength
 								new_note->slideend = tp->note[ctr - 1]->slideend;			//And the slide end position
 								new_note->frets[ctr2] = tp->note[ctr - 1]->frets[ctr2];		//And this string's fret value
@@ -935,6 +921,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				if((eof_get_note_note(sp, track, chordlist[ctr]) & bitmask) && (ctr2 < tp->numstrings) && ((tp->note[chordlist[ctr]]->frets[ctr2] & 0x80) == 0))
 				{	//If the chord list entry uses this string (verifying that the string number is supported by the track) and the string is not fret hand muted (ghost notes must be allowed so that arpeggio shapes can export)
 					*(fret[ctr2]) = tp->note[chordlist[ctr]]->frets[ctr2] & 0x7F;	//Retrieve the fret played on this string (masking out the muting bit)
+					*(fret[ctr2]) += tp->capo;	//Apply the capo position
 					if(effective_fingering[ctr2])
 					{	//If the fingering for this string is defined
 						char *temp = fingerdef[ctr2];	//Simplify logic below
@@ -1234,6 +1221,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 									(void) eof_get_rs_techniques(sp, track, ctr3, stringnum, &tech, 1);	//Determine techniques used by this note (run the RS1 check to ensure a pop/slap note isn't allowed to also have bend/slide technique)
 									notepos = eof_get_note_pos(sp, track, ctr3);
 									fret = tp->note[ctr3]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
+									fret += tp->capo;	//Apply the capo position
 									if(!eof_pro_guitar_note_lowest_fret(tp, ctr3))
 									{	//If this note contains no fretted strings
 										if(tech.bend || (tech.slideto >= 0))
@@ -1354,7 +1342,8 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				{	//For each hand position defined in the track
 					if(tp->handposition[ctr3].difficulty == ctr)
 					{	//If the hand position is in this difficulty
-						(void) snprintf(buffer, sizeof(buffer) - 1, "        <anchor time=\"%.3f\" fret=\"%lu\"/>\n", (double)tp->handposition[ctr3].start_pos / 1000.0, tp->handposition[ctr3].end_pos);
+						unsigned long fret = tp->handposition[ctr3].end_pos + tp->capo;	////Apply the capo position
+						(void) snprintf(buffer, sizeof(buffer) - 1, "        <anchor time=\"%.3f\" fret=\"%lu\"/>\n", (double)tp->handposition[ctr3].start_pos / 1000.0, fret);
 						(void) pack_fputs(buffer, fp);
 					}
 				}
@@ -1558,7 +1547,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//Remove all temporary notes that were added
 	for(ctr = tp->notes; ctr > 0; ctr--)
 	{	//For each note in the track, in reverse order
-		if(tp->note[ctr - 1]->flags & EOF_NOTE_FLAG_TEMP)
+		if(tp->note[ctr - 1]->tflags & EOF_NOTE_TFLAG_TEMP)
 		{	//If this is a temporary note that was added for chord technique notation
 			eof_track_delete_note(sp, track, ctr - 1);	//Delete it
 		}
@@ -1626,13 +1615,13 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 		if((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))
 		{	//If the note slides up or unpitched slides up
-			slideend = tp->note[ctr]->slideend;
-			if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
-			{	//If this slide's end position is not defined
+			slideend = tp->note[ctr]->slideend + tp->capo;	//Obtain the end position of the slide, take the capo position into account
+			if((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
+			{	//If this pitched slide's end position is not defined
 				slideend = eof_get_highest_fret_value(sp, track, ctr) + 1;	//Assume a 1 fret slide
 			}
-			if((slideend >= 22) || (tp->note[ctr]->unpitchend >= 22))
-			{	//If either type of slide goes to or above fret 22
+			if((slideend >= 22) || ((tp->note[ctr]->unpitchend + tp->capo) >= 22))
+			{	//If either type of slide goes to or above fret 22 (after taking the capo position into account)
 				if((*user_warned & 8) == 0)
 				{	//If the user wasn't alerted about this issue yet
 					eof_seek_and_render_position(track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
@@ -2140,6 +2129,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					if((tp->note[chordlist[ctr]]->frets[ctr2] & 0x80) == 0)
 					{	//If the string is not fret hand muted (ghost notes must be allowed so that arpeggio shapes can export)
 						*(fret[ctr2]) = tp->note[chordlist[ctr]]->frets[ctr2] & 0x7F;	//Retrieve the fret played on this string (masking out the muting bit)
+						if(*(fret[ctr2]))
+						{	//If this string isn't played open
+							*(fret[ctr2]) += tp->capo;	//Apply the capo position
+						}
 						if(effective_fingering[ctr2])
 						{	//If the fingering for this string is defined
 							char *temp = fingerdef[ctr2];	//Simplify logic below
@@ -2535,6 +2528,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								{	//Otherwise use the defined fret number
 									fret = tp->note[ctr3]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
 								}
+								if(fret)
+								{	//If this string isn't played open
+									fret += tp->capo;	//Apply the capo position
+								}
 								if(!eof_pro_guitar_note_lowest_fret(tp, ctr3))
 								{	//If this note contains no fretted strings
 									if(tech.bend || (tech.slideto >= 0) || (tech.unpitchedslideto >= 0))
@@ -2657,6 +2654,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 									else
 									{	//Otherwise use the defined fret number
 										fret = tp->note[ctr3]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
+									}
+									if(fret)
+									{	//If this string isn't played open
+										fret += tp->capo;	//Apply the capo position
 									}
 									if(tp->note[ctr3]->frets[stringnum] & 0x80)
 									{	//If the note is string muted
@@ -2788,7 +2789,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				{	//For each hand position defined in the track
 					if(tp->handposition[ctr3].difficulty == ctr)
 					{	//If the hand position is in this difficulty
-						unsigned long highest, nextanchorpos, width = 4;
+						unsigned long highest, nextanchorpos, width = 4, fret;
 
 						nextanchorpos = tp->note[tp->notes - 1]->pos + 1;	//In case there are no other anchors, initialize this to reflect covering all remaining notes
 						for(ctr4 = ctr3 + 1; ctr4 < tp->handpositions; ctr4++)
@@ -2804,7 +2805,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						{	//If any notes within the scope of this fret hand position require the anchor width to be increased beyond 4 frets
 							width = highest - tp->handposition[ctr3].end_pos + 1;	//Determine the minimum needed width
 						}
-						(void) snprintf(buffer, sizeof(buffer) - 1, "        <anchor time=\"%.3f\" fret=\"%lu\" width=\"%lu.000\"/>\n", (double)tp->handposition[ctr3].start_pos / 1000.0, tp->handposition[ctr3].end_pos, width);
+						fret = tp->handposition[ctr3].end_pos + tp->capo;	////Apply the capo position
+						(void) snprintf(buffer, sizeof(buffer) - 1, "        <anchor time=\"%.3f\" fret=\"%lu\" width=\"%lu.000\"/>\n", (double)tp->handposition[ctr3].start_pos / 1000.0, fret, width);
 						(void) pack_fputs(buffer, fp);
 					}
 				}
@@ -3243,7 +3245,7 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 	current_low = current_high = 0;	//Reset these at the start of generating hand positions
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the track
-		if((tp->note[ctr]->type == difficulty) && !(tp->note[ctr]->flags & EOF_NOTE_FLAG_TEMP))
+		if((tp->note[ctr]->type == difficulty) && !(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_TEMP))
 		{	//If it is in the specified difficulty and isn't marked as a temporary note (a single note temporarily inserted to allow chord techniques to appear in Rocksmith 1)
 			if(!next_position)
 			{	//If this is the first note since the last hand position, or there was no hand position placed yet
@@ -3274,9 +3276,9 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 
 			if(force_change || !eof_note_can_be_played_within_fret_tolerance(tp, ctr, &current_low, &current_high))
 			{	//If a position change was determined to be necessary based on fingering, or this note can't be included with previous notes within a single fret hand position
-				if(current_low > 19)
-				{	//Ensure the fret hand position is capped at 19, since 22 is the highest fret supported in either Rock Band or Rocksmith
-					current_low = 19;
+				if(current_low + tp->capo > 19)
+				{	//Ensure the fret hand position (taking the capo position into account) is capped at 19, since 22 is the highest fret supported in either Rock Band or Rocksmith
+					current_low = 19 - tp->capo;
 				}
 				if(force_change)
 				{	//If a fret hand position change was forced due to note fingering
@@ -3319,9 +3321,9 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 	{	//If only open notes were played in this track difficulty
 		current_low = 1;	//Place the fret hand position at fret 1
 	}
-	else if(current_low > 19)
-	{	//Ensure the fret hand position is capped at 19, since 22 is the highest fret supported in either Rock Band or Rocksmith
-		current_low = 19;
+	else if(current_low + tp->capo > 19)
+	{	//Ensure the fret hand position (taking the capo position into account) is capped at 19, since 22 is the highest fret supported in either Rock Band or Rocksmith
+		current_low = 19 - tp->capo;
 	}
 	if((current_low != last_anchor) && next_position)
 	{	//If the last parsed note requires a position change
@@ -4531,6 +4533,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 			{	//If this note slides down and the user hasn't defined the ending fret of the slide
 				ptr->slideto = fret - 1;	//Assume a 1 fret slide until logic is added for the author to add this information
 			}
+			ptr->slideto += tp->capo;	//Apply the capo position, so the slide ending is on the correct fret in-game
 		}
 		else
 		{	//This note defines the bend strength and ending fret for slides
@@ -4555,6 +4558,10 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 				{	//If the lowest fretted string in the note/chord slides to the position it's already at
 					ptr->slideto = -1;	//Disable the slide
 				}
+				else
+				{
+					ptr->slideto += tp->capo;	//Apply the capo position, so the slide ending is on the correct fret in-game
+				}
 			}
 		}
 		if((flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) && tp->note[notenum]->unpitchend)
@@ -4562,6 +4569,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 			if(eof_get_lowest_fretted_string_fret(sp, track, notenum) != tp->note[notenum]->unpitchend)
 			{	//Don't allow the unpitched slide if it slides to the same fret this note/chord is already at
 				ptr->unpitchedslideto = tp->note[notenum]->unpitchend;
+				ptr->unpitchedslideto += tp->capo;	//Apply the capo position, so the slide ending is on the correct fret in-game
 			}
 		}
 

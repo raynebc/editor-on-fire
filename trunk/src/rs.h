@@ -68,7 +68,6 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 	//The function returns the number of unique chords contained in the list
 	//If there are no chords in the pro guitar track, or upon error, *results is set to NULL and 0 is returned
 	//If target is 1, then Rocksmith 1 authoring rules are also followed and chords that don't have at least two non string muted gems are not included
-	//If target is 2, then Rocksmith 2 authoring rules are also followed and chords that are partially ghosted (for arpeggios) get their own entries in the list
 
 unsigned long eof_build_section_list(EOF_SONG *sp, unsigned long **results, unsigned long track);
 	//Parses the given chart, building a list of all unique section markers (case insensitive),
@@ -86,6 +85,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//	2:  At least one track uses a fret value higher than 22
 	//	4:  At least one open note is marked with bend or slide status
 	//	8:  At least one note slides to or above fret 22
+	//Rocksmith 1 doesn't support arrangements using a capo, so the capo position is added to the frets values of all fretted notes
 
 int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, char *user_warned);
 	//Writes the specified pro guitar track in Rocksmith 2's XML format, if the track is populated
@@ -96,6 +96,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//	2:  At least one track uses a fret value higher than 22
 	//	4:  At least one open note is marked with bend or slide status
 	//	8:  At least one note slides to or above fret 22
+	//Rocksmith 2 supports arrangements using a capo, but it does not consider the capo to be the nut position, so the capo position still needs to be added
+	// to the fret values of all fretted notes
 
 void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_made);
 	//Checks all notes in the track and duplicates finger arrays of chords with complete finger definitions to matching chords without complete finger definitions
@@ -230,5 +232,6 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 	//A flags bitmask is returned that is nonzero if the note contains any statuses that would necessitate chordNote subtag(s) if the examined note is a chord
 	//If ptr is NULL, no logic is performed besides returning the flags that the note contains that would necessitate chordNote subtag(s) if the examined note is a chord
 	//If target is 1, then Rocksmith 1 authoring rules are followed and a note cannot be both a slide/bend AND a pop/slap note, as they have conflicting sustain requirements
+	//The capo position is added to the end position of pitched and unpitched slides, as required by Rocksmith in order for them to display correctly for capo'd arrangements
 
 #endif

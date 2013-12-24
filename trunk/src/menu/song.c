@@ -3527,14 +3527,14 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 							problem_found = 1;
 						}
 					}
-					else if(position > 19)
+					else if(position + tp->capo > 19)
 					{	//If an invalid fret hand position is in effect
 						if(report)
 						{	//If the calling function wanted to prompt the user about each issue found
 							eof_2d_render_top_option = 34;			//Display fret hand positions at the top of the piano roll
 							eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
 
-							if(alert("Warning:  Fret hand positions higher than 19 are invalid.", "Change this to a lower number or delete/regenerate the fret hand positions.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+							if(alert("Warning:  Fret hand positions higher than 19 (considering any capo in use) are invalid.", "Change this to a lower number or delete/regenerate the fret hand positions.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 							{	//If the user does not opt to continue looking for errors
 								eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
 								(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
