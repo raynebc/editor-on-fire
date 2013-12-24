@@ -1183,6 +1183,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 												}
 												if(fret > 19)
 												{	//If the anchor is not valid, log it and warn the user
+													///When RS2 import is implemented, this check will need to take the capo position into account
 													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tIgnoring invalid anchor (fret %ld) at position %ld on line #%lu", fret, time, linectr);
 													eof_log(eof_log_string, 1);
 													if(!(warning & 1))

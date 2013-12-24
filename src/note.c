@@ -76,9 +76,9 @@ unsigned long eof_note_count_rs_lanes(EOF_SONG *sp, unsigned long track, unsigne
 	{	//For each of the 6 supported strings
 		if(tp->note[note]->note & bitmask)
 		{	//If this string is used
-			if(!(tp->note[note]->ghost & bitmask) || (target == 3))
+			if(!(tp->note[note]->ghost & bitmask) || (target & 4))
 			{	//If the string is not ghosted, or if the target parameter allows ghost gems to be counted
-				if(((tp->note[note]->frets[ctr] & 0x80) == 0) || (target != 1))
+				if(((tp->note[note]->frets[ctr] & 0x80) == 0) || (target & 2))
 				{	//If the note is not string muted, or the target game is Rocksmith 2 (which supports string mutes)
 					count++;	//Increment counter
 				}

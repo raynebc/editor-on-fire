@@ -3904,6 +3904,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 						ghostmask |= 2;
 					if(eof_pro_guitar_note_dialog[28].flags == D_SELECTED)
 							ghostmask |= 1;
+					ghostmask &= bitmask;	//Clear all lanes that are specified by the note bitmask as being used
 					if(ghostmask != eof_song->pro_guitar_track[tracknum]->note[i]->ghost)
 					{	//If the ghost mask changed
 						if(!undo_made)
@@ -4010,6 +4011,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 						flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;		//Set the string mute flag
 					}
 					flags |= (eof_song->pro_guitar_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_CRAZY);	//Retain the note's original crazy status
+					flags |= (eof_song->pro_guitar_track[tracknum]->note[i]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE);	//Retain the note's original unpitched slide status
 					if(flags != eof_song->pro_guitar_track[tracknum]->note[i]->flags)
 					{	//If the flags changed
 						if(!undo_made)

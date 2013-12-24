@@ -3380,6 +3380,41 @@ unsigned long eof_get_note_flags(EOF_SONG *sp, unsigned long track, unsigned lon
 	return 0;	//Return error
 }
 
+unsigned char eof_get_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				return sp->legacy_track[tracknum]->note[note]->tflags;
+			}
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			if(note < sp->vocal_track[tracknum]->lyrics)
+			{
+				return sp->vocal_track[tracknum]->lyric[note]->tflags;
+			}
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(note < sp->pro_guitar_track[tracknum]->notes)
+			{
+				return sp->pro_guitar_track[tracknum]->note[note]->tflags;
+			}
+		break;
+	}
+
+	return 0;	//Return error
+}
+
 unsigned long eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	unsigned long tracknum;
@@ -3455,6 +3490,7 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long
 				ptr->pos = pos;
 				ptr->length = length;
 				ptr->flags = 0;
+				ptr->tflags = 0;
 				if(text != NULL)
 				{
 					(void) ustrncpy(ptr->name, text, EOF_NAME_LENGTH);
@@ -3490,6 +3526,7 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long
 				ptr2->pos = pos;
 				ptr2->length = length;
 				ptr2->flags = 0;
+				ptr2->tflags = 0;
 			return ptr2;
 
 			case EOF_PRO_GUITAR_TRACK_FORMAT:
@@ -3512,6 +3549,7 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long
 				ptr3->pos = pos;
 				ptr3->length = length;
 				ptr3->flags = 0;
+				ptr3->tflags = 0;
 				ptr3->bendstrength = 0;
 				ptr3->slideend = 0;
 				ptr3->unpitchend = 0;
@@ -3726,7 +3764,7 @@ void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, un
 
 void eof_track_sort_notes(EOF_SONG *sp, unsigned long track)
 {
-	unsigned long tracknum, flags, ctr;
+	unsigned long tracknum, tflags, ctr;
 
  	eof_log("eof_track_sort_notes() entered", 2);
 
@@ -3741,9 +3779,9 @@ void eof_track_sort_notes(EOF_SONG *sp, unsigned long track)
 		{	//For each note in the track, in reverse order
 			if(eof_selection.multi[ctr - 1])
 			{	//If this note is selected
-				flags = eof_get_note_flags(sp, track, ctr - 1);
-				flags |= EOF_NOTE_FLAG_TEMP;	//Set the temporary flag to track this note is selected
-				eof_set_note_flags(sp, track, ctr - 1, flags);	//Update the note flags
+				tflags = eof_get_note_flags(sp, track, ctr - 1);
+				tflags |= EOF_NOTE_TFLAG_TEMP;	//Set the temporary flag to track this note is selected
+				eof_set_note_tflags(sp, track, ctr - 1, tflags);	//Update the note flags
 			}
 		}
 	}
@@ -3768,11 +3806,11 @@ void eof_track_sort_notes(EOF_SONG *sp, unsigned long track)
 	{	//If the track being sorted has selected notes
 		for(ctr = eof_get_track_size(sp, track); ctr > 0; ctr--)
 		{	//For each note in the track, in reverse order
-			flags = eof_get_note_flags(sp, track, ctr - 1);
-			if(flags & EOF_NOTE_FLAG_TEMP)
+			tflags = eof_get_note_tflags(sp, track, ctr - 1);
+			if(tflags & EOF_NOTE_TFLAG_TEMP)
 			{	//If this note was previously marked as selected
-				flags &= ~EOF_NOTE_FLAG_TEMP;	//Clear the temporary flag
-				eof_set_note_flags(sp, track, ctr - 1, flags);	//Restore the note's original flags
+				tflags &= ~EOF_NOTE_TFLAG_TEMP;	//Clear the temporary flag
+				eof_set_note_tflags(sp, track, ctr - 1, tflags);	//Restore the note's original flags
 				eof_selection.multi[ctr - 1] = 1;	//Mark this note as selected in the selection array
 			}
 			else
@@ -4058,7 +4096,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 			}
 		}
 
-		/* delete certain notes */
+		/* delete invalid notes or force corrections on valid notes */
 		if((tp->note[i-1]->note == 0) || (tp->note[i-1]->type >= sp->track[track]->numdiffs) || (tp->note[i-1]->pos < sp->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i-1]->pos >= eof_chart_length))
 		{	//If the note is not valid
 			eof_pro_guitar_track_delete_note(tp, i-1);
@@ -4148,8 +4186,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 						}
 					}
 					if((fretvalue & 0x7F) > tp->numfrets)
-
-					{	//If this fret value is invalid (all bits set except the MSB) is invalid
+					{	//If this fret value is invalid
 						tp->note[i-1]->frets[ctr] = 0;	//Revert to default fret value of 0
 					}
 				}
@@ -4193,6 +4230,9 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 			{	//If the note is not a slide or bend
 				tp->note[i-1]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag
 			}
+
+			/* ensure that a note doesn't specify that an unused string is ghosted */
+			tp->note[i-1]->ghost &= tp->note[i-1]->note;	//Clear all lanes that are specified by the note bitmask as being used
 		}//If the note is valid, perform other cleanup
 	}//For each note in the track
 	//Run another pass to check crazy notes overlapping with gems on their same lanes more than 1 note ahead
@@ -4464,6 +4504,41 @@ void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, u
 			if(note < sp->pro_guitar_track[tracknum]->notes)
 			{
 				sp->pro_guitar_track[tracknum]->note[note]->flags = flags;
+			}
+		break;
+	}
+}
+
+void eof_set_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char tflags)
+{
+// 	eof_log("eof_set_note_flags() entered");
+
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				sp->legacy_track[tracknum]->note[note]->tflags = tflags;
+			}
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			if(note < sp->vocal_track[tracknum]->lyrics)
+			{
+				sp->vocal_track[tracknum]->lyric[note]->tflags = tflags;
+			}
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(note < sp->pro_guitar_track[tracknum]->notes)
+			{
+				sp->pro_guitar_track[tracknum]->note[note]->tflags = tflags;
 			}
 		break;
 	}
