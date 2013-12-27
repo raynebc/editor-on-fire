@@ -22,13 +22,18 @@
 #define EOF_MAX_DIFFICULTIES 5
 	//Note: EOF_NOTE_SPECIAL references the same difficulty that the dance track uses for "Challenge" difficulty
 
+//The original 32 status flags are used up by some common and some track-specific statuses
 #define EOF_NOTE_FLAG_HOPO       1	//This flag will be set by eof_determine_phrase_status() if the note displays as a HOPO
 #define EOF_NOTE_FLAG_SP         2	//This flag will be set by eof_determine_phrase_status() if the note is in a star power section
 #define EOF_NOTE_FLAG_CRAZY      4	//This flag will represent overlap allowed for guitar/dance/keys tracks, and will force pro guitar/bass chords to display with a chord box
 #define EOF_NOTE_FLAG_F_HOPO     8
-#define EOF_NOTE_FLAG_NO_HOPO   16
-#define EOF_NOTE_FLAG_HIGHLIGHT 1073741824
-#define EOF_NOTE_FLAG_EXTENDED  2147483648	//The MSB will be reserved to indicate an additional flag variable is present in a project file
+#define EOF_NOTE_FLAG_NO_HOPO    16
+#define EOF_NOTE_FLAG_RESERVED   268435456	//Reserved for future use
+#define EOF_NOTE_FLAG_EXTENDED   536870912	//This flag will be set if an additional common use (applicable to all tracks) flag variable is present for the note in the project file
+											//This flag will only be used during project save/load to determine whether another bytes variable is written/read
+#define EOF_NOTE_FLAG_HIGHLIGHT  1073741824	//This flag will represent a note that is highlighted in the editor window
+#define EOF_NOTE_FLAG_T_EXTENDED 2147483648UL	//The MSB will be set if an additional track-specific flag variable is present for the note in the project file
+												//This flag will only be used during project save/load to determine whether another bytes variable is written/read
 
 //The following flags pertain to pro guitar notes
 #define EOF_PRO_GUITAR_NOTE_FLAG_ACCENT         32			//This flag will represent a note that is played as an accent
@@ -100,7 +105,7 @@
 
 #define EOF_DEFAULT_TIME_DIVISION 480 // default time division used to convert midi_pos to msec_pos
 
-#define EOF_MAX_GRID_SNAP_INTERVALS 64
+#define EOF_MAX_GRID_SNAP_INTERVALS 65
 
 #define EOF_NAME_LENGTH 30
 #define EOF_SECTION_NAME_LENGTH 50
@@ -133,6 +138,7 @@ typedef struct
 	unsigned long pos;
 	long length;				//Keep as signed, since the npos logic uses signed math
 	unsigned long flags;		//Stores various note statuses
+	unsigned long eflags;		//Stores extended, track specific note statuses
 	unsigned char bendstrength;	//The amount this note bends (0 if undefined or not applicable).  If the MSB is set, the value specifies quarter steps, otherwise it specifies half steps
 	unsigned char slideend;		//The fret at which this slide ends (0 if undefined or not applicable)
 	unsigned char unpitchend;	//The fret at which this unpitched slide ends (0 if undefined or not applicable)
@@ -154,6 +160,7 @@ typedef struct
 	float         porpos;     // position of note within the beat (100.0 = full beat)
 	float         porendpos;
 	unsigned long flags;
+	unsigned long eflags;
 	unsigned long legacymask;
 	unsigned char frets[8];
 	unsigned char finger[8];

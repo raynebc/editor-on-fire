@@ -204,7 +204,9 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 	// and whether the note's "crazy" flag is set (which overrides it to be low density)
 	//If target is 1, then Rocksmith 1 authoring rules are followed and string muted chords are ignored
 	//If target is 2, then Rocksmith 2 authoring rules are followed and a chord with techniques that
-	// require chordNote tags to be written and chords that follow chord slides are reflected as low density
+	// require chordNote tags to be written and chords that follow chord slides are reflected as low density,
+	// and string muted chords that follow other chords are automatically counted as high density because RS2
+	// uses a separate XML attribute to cause it to display as string muted
 
 int eof_enforce_rs_phrase_begin_with_fret_hand_position(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long startpos, unsigned long endpos, char *undo_made, char check_only);
 	//Looks at the fret hand positions in the specified track difficulty within the specified time span, which should be the beginning and end of a RS phrase.
