@@ -2923,6 +2923,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 	int prompt;
 	struct QBlyric *head = NULL, *linkptr = NULL;	//Used to maintain the linked list matching section names with checksums
 	filebuffer *sections_file = fb;	//By default, check for sections in the main chart file
+	int done = 0, retval = 0;
 
 	if(!fb || !sp)
 		return -1;
@@ -2930,7 +2931,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 	eof_log("eof_gh_read_sections_qb() entered", 1);
 	sections_file->index = 0;	//Rewind to beginning of file buffer
 
-	while(1)
+	while(!done)
 	{	//Until the user accepts a language of section names
 		sections_file->index = lastsectionpos;				//Seek back to the position that was reached by the last search for section names
 		head = eof_gh_read_section_names(sections_file);	//Read the section names and their checksums into a linked list
@@ -3045,7 +3046,8 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 				{	//If an external section names file was buffered
 					eof_filebuffer_close(sections_file);	//Close that file buffer
 				}
-				return 1;	//Return success
+				retval = 1;	//Return success
+				done = 1;	//Exit loop
 			}
 			for(ctr = sp->text_events; ctr > 0; ctr--)
 			{	//For each text event (in reverse order)
@@ -3057,7 +3059,8 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 				{	//If an external section names file was buffered
 					eof_filebuffer_close(sections_file);	//Close that file buffer
 				}
-				return -2;	//Return cancellation
+				retval = -2;	//Return cancellation
+				done = 1;		//Exit loop
 			}
 		}
 		else
@@ -3087,7 +3090,9 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 						eof_show_mouse(NULL);
 						eof_cursor_visible = 1;
 						eof_pen_visible = 1;
-						return 0;	//Return no sections
+						retval = 0;	//Return no sections
+						done = 1;	//Exit outer loop
+						break;		//Break from inner loop
 					}
 					eof_clear_input();
 
@@ -3119,6 +3124,5 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 		}//There were no sections loaded during this loop iteration
 	}//Until the user accepts a language of section names
 
-//This code should never run because no statement breaks from the outer while loop
-	return -1;	//Return unexpected error
+	return retval;
 }

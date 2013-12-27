@@ -3080,6 +3080,10 @@ unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track)
 
 int eof_open_strum_enabled(unsigned long track)
 {
+	if((track == EOF_TRACK_DRUM) || (track == EOF_TRACK_DRUM_PS))
+	{	//Drum tracks do not use open strumming
+		return 0;
+	}
 	return (eof_song->track[track]->flags & EOF_TRACK_FLAG_SIX_LANES);
 }
 
@@ -4069,7 +4073,8 @@ long eof_get_prev_note_type_num(EOF_SONG *sp, unsigned long track, unsigned long
 
 void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 {
-	unsigned long i, ctr, ctr2, ctr3, bitmask, tracknum, maxlength, flags, nextnote;
+	unsigned long i, ctr, ctr2, ctr3, bitmask, tracknum, maxlength, flags;
+	long nextnote;
 	unsigned char fretvalue;
 	long next;
 	char allmuted;	//Used to track whether all used strings are string muted
@@ -6924,7 +6929,7 @@ void eof_export_time_range(ALOGG_OGG * ogg, double start_time, double end_time, 
 	{	//If memory for the decoded audio was allocated
 		if(alogg_process_ogg(ogg, eof_export_time_range_callback, 1024, start_time, end_time))
 		{	//Successfully decoded audio file
-			save_wav(fn, eof_export_time_range_sample);	//Export it to WAV
+			(void) save_wav(fn, eof_export_time_range_sample);	//Export it to WAV
 		}
 		destroy_sample(eof_export_time_range_sample);
 		eof_export_time_range_sample = NULL;

@@ -4075,7 +4075,7 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 		if(eof_get_rs_techniques(sp, track, note, 0, NULL, 2))
 			return 0;	//Chord has one or more techniques that require it to be written as low density
 
-		eof_get_rs_techniques(sp, track, prev, 0, &tech, 2);	//Get techniques used by the previous note
+		(void) eof_get_rs_techniques(sp, track, prev, 0, &tech, 2);	//Get techniques used by the previous note
 		if((eof_note_count_rs_lanes(sp, track, note, target) > 1) && (tech.slideto >= 0))
 		{	//If the previous note was a chord slide
 			return 0;

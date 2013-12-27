@@ -786,25 +786,27 @@ void eof_play_pro_guitar_note_midi(EOF_SONG *sp, unsigned long track, unsigned l
 	}
 }
 
+/*
 struct ALOGG_OGG {
-  /* data info */
-  void *data;                      /* ogg data */
-  char *data_cursor;               /* pointer to data being read */
-  int data_len;                    /* size of the data */
-  /* decoder info */
+  // data info
+  void *data;                      // ogg data
+  char *data_cursor;               // pointer to data being read
+  int data_len;                    // size of the data
+  // decoder info
   OggVorbis_File vf;
   int current_section;
-  /* playing info */
-  AUDIOSTREAM *audiostream;        /* the audiostream we are using to play */
-                                   /* also used to know when it's playing */
-  int audiostream_buffer_len;      /* len of the audiostream buffer */
-  int stereo, freq, loop;          /* audio general info */
-  int auto_polling;                /* set if the ogg is auto polling */
-  int auto_poll_speed;             /* auto poll speed in msecs */
-  int wait_for_audio_stop;         /* set if we are just waiting for the
-                                      audiobuffer to stop plaing the last
-                                      frame */
+  // playing info
+  AUDIOSTREAM *audiostream;        // the audiostream we are using to play
+                                   // also used to know when it's playing
+  int audiostream_buffer_len;      // len of the audiostream buffer
+  int stereo, freq, loop;          // audio general info
+  int auto_polling;                // set if the ogg is auto polling
+  int auto_poll_speed;             // auto poll speed in msecs
+  int wait_for_audio_stop;         // set if we are just waiting for the
+                                   // audiobuffer to stop plaing the last
+                                   // frame
 };
+*/
 
 void eof_set_seek_position(int pos)
 {
