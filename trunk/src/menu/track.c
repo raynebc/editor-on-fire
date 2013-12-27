@@ -600,7 +600,7 @@ int eof_track_tuning(void)
 			}
 		}
 		for(ctr = 0; ctr < 6; ctr++)
-		{	//For each of the six supported strings
+		{	//For each of the 6 supported strings
 			if(ctr < tp->numstrings)
 			{	//If this string is used in the track, store the numerical value into the track's tuning array
 				if(!undo_made && (tp->tuning[ctr] != atol(eof_fret_strings[ctr]) % 12))

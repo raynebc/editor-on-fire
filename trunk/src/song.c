@@ -1495,6 +1495,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	struct eof_MIDI_data_event *eventptr, *eventhead, *eventtail;
 	unsigned char numdiffs;
 	char unshare_drum_phrasing;
+	EOF_PRO_GUITAR_TRACK *tp;
 
  	eof_log("eof_load_song_pf() entered", 1);
 
@@ -1808,23 +1809,24 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				allegro_message("Error: Pro Keys not supported yet.  Aborting");
 			return 0;
 			case EOF_PRO_GUITAR_TRACK_FORMAT:	//Pro Guitar/Bass
+				tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Simplify
 				numdiffs = 5;		//By default, assume there are 5 difficulties used in the track
-				sp->pro_guitar_track[sp->pro_guitar_tracks-1]->numfrets = pack_getc(fp);	//Read the number of frets used in this track
+				tp->numfrets = pack_getc(fp);	//Read the number of frets used in this track
 				count = pack_getc(fp);	//Read the number of strings used in this track
 				if(count > 8)
 				{
 					allegro_message("Error: Unsupported number of strings in track %lu.  Aborting",track_ctr);
 					return 0;
 				}
-				sp->pro_guitar_track[sp->pro_guitar_tracks-1]->numstrings = count;
-				if(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->numstrings > EOF_TUNING_LENGTH)
+				tp->numstrings = count;
+				if(tp->numstrings > EOF_TUNING_LENGTH)
 				{	//Prevent overflow
 					allegro_message("Unsupported number of strings in track %lu.  Aborting",track_ctr);
 					return 0;
 				}
-				for(ctr=0; ctr < sp->pro_guitar_track[sp->pro_guitar_tracks-1]->numstrings; ctr++)
+				for(ctr=0; ctr < tp->numstrings; ctr++)
 				{	//For each string
-					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->tuning[ctr] = pack_getc(fp);	//Read the string's tuning
+					tp->tuning[ctr] = pack_getc(fp);	//Read the string's tuning
 				}
 				count = pack_igetl(fp);	//Read the number of notes in this track
 				if(count > EOF_MAX_NOTES)
@@ -1835,47 +1837,55 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				eof_track_resize(sp, sp->tracks-1,count);	//Resize the note array
 				for(ctr=0; ctr<count; ctr++)
 				{	//For each note in this track
-					(void) eof_load_song_string_pf(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->name,fp,EOF_NAME_LENGTH);	//Read the note's name
+					(void) eof_load_song_string_pf(tp->note[ctr]->name,fp,EOF_NAME_LENGTH);	//Read the note's name
 					(void) pack_getc(fp);																//Read the chord's number (not supported yet)
-					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->type = pack_getc(fp);		//Read the note's difficulty
-					if(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->type >= numdiffs)
+					tp->note[ctr]->type = pack_getc(fp);		//Read the note's difficulty
+					if(tp->note[ctr]->type >= numdiffs)
 					{	//If this note's difficulty is the highest encountered in the track so far
-						numdiffs = sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->type + 1;	//Track it
+						numdiffs = tp->note[ctr]->type + 1;	//Track it
 					}
-					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->note = pack_getc(fp);		//Read note bitflags
-					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->ghost = pack_getc(fp);	//Read ghost bitflags
+					tp->note[ctr]->note = pack_getc(fp);		//Read note bitflags
+					tp->note[ctr]->ghost = pack_getc(fp);	//Read ghost bitflags
 					for(ctr2=0, bitmask=1; ctr2 < 8; ctr2++, bitmask <<= 1)
 					{	//For each of the 8 bits in the note bitflag
-						if(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->note & bitmask)
+						if(tp->note[ctr]->note & bitmask)
 						{	//If this bit is set
-							sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->frets[ctr2] = pack_getc(fp);	//Read this string's fret value
+							tp->note[ctr]->frets[ctr2] = pack_getc(fp);	//Read this string's fret value
 						}
 						else
 						{	//Write a default value of 0
-							sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->frets[ctr2] = 0;
+							tp->note[ctr]->frets[ctr2] = 0;
 						}
 					}
-					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->legacymask = pack_getc(fp);	//Read the legacy note bitmask
-					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->pos = pack_igetl(fp);			//Read note position
-					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->length = pack_igetl(fp);		//Read note length
-					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->flags = pack_igetl(fp);		//Read note flags
-					if(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
+					tp->note[ctr]->legacymask = pack_getc(fp);	//Read the legacy note bitmask
+					tp->note[ctr]->pos = pack_igetl(fp);			//Read note position
+					tp->note[ctr]->length = pack_igetl(fp);		//Read note length
+					tp->note[ctr]->flags = pack_igetl(fp);		//Read note flags
+					if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
 					{	//If this note has bend string or slide ending fret definitions
-						if((sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+						if((tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 						{	//If this is a slide note
-							sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->slideend = pack_getc(fp);	//Read the slide's ending fret
+							tp->note[ctr]->slideend = pack_getc(fp);	//Read the slide's ending fret
 						}
-						if(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+						if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
 						{	//If this is a bend note
-							sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->bendstrength = pack_getc(fp);	//Read the bend's strength
+							tp->note[ctr]->bendstrength = pack_getc(fp);	//Read the bend's strength
 						}
 					}
-					if(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+					if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
 					{	//If this is an unpitched slide note
-						sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->unpitchend = pack_getc(fp);	//Read the unpitched slide's ending fret
+						tp->note[ctr]->unpitchend = pack_getc(fp);	//Read the unpitched slide's ending fret
 					}
-				}
-				sp->pro_guitar_track[sp->pro_guitar_tracks-1]->parent->numdiffs = numdiffs;	//Update the track's difficulty count
+					if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+					{	//If this is an unpitched slide note
+						tp->note[ctr]->unpitchend = pack_getc(fp);	//Read the unpitched slide's ending fret
+					}
+					if(tp->note[ctr]->flags & EOF_NOTE_FLAG_T_EXTENDED)
+					{	//If this note uses any extended track flags
+						tp->note[ctr]->eflags = pack_igetl(fp);		//Read extended track flags
+					}
+				}//For each note in this track
+				tp->parent->numdiffs = numdiffs;	//Update the track's difficulty count
 			break;
 			case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:	//Variable Lane Legacy (not implemented yet)
 				allegro_message("Error: Variable lane not supported yet.  Aborting");
@@ -2746,6 +2756,14 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 						(void) pack_putc(tp->note[ctr]->legacymask, fp);	//Write the legacy note bitmask
 						(void) pack_iputl(tp->note[ctr]->pos, fp);			//Write the note's position
 						(void) pack_iputl(tp->note[ctr]->length, fp);		//Write the note's length
+						if(tp->note[ctr]->eflags)
+						{	//If this note uses any extended track flags
+							tp->note[ctr]->flags |= EOF_NOTE_FLAG_T_EXTENDED;	//Set this flag
+						}
+						else
+						{
+							tp->note[ctr]->flags &= ~EOF_NOTE_FLAG_T_EXTENDED;	//Clear this flag
+						}
 						(void) pack_iputl(tp->note[ctr]->flags, fp);		//Write the note's flags
 						if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
 						{	//If this note has bend string or slide ending fret definitions
@@ -2762,7 +2780,11 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 						{	//If this is an unpitched slide note
 							(void) pack_putc(tp->note[ctr]->unpitchend, fp);	//Write the unpitched slide's ending fret
 						}
-					}
+						if(tp->note[ctr]->flags & EOF_NOTE_FLAG_T_EXTENDED)
+						{	//if this note uses any extended track flags
+							(void) pack_iputl(tp->note[ctr]->flags, fp);		//Write the note's extended track flags
+						}
+					}//For each note in this track
 					//Write the section type chunk, first count the number of section types to write
 					if(tp->solos)
 					{
@@ -3549,6 +3571,7 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long
 				ptr3->pos = pos;
 				ptr3->length = length;
 				ptr3->flags = 0;
+				ptr3->eflags = 0;
 				ptr3->tflags = 0;
 				ptr3->bendstrength = 0;
 				ptr3->slideend = 0;
@@ -4046,7 +4069,7 @@ long eof_get_prev_note_type_num(EOF_SONG *sp, unsigned long track, unsigned long
 
 void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 {
-	unsigned long i, ctr, bitmask, tracknum, maxlength, flags;
+	unsigned long i, ctr, ctr2, ctr3, bitmask, tracknum, maxlength, flags, nextnote;
 	unsigned char fretvalue;
 	long next;
 	char allmuted;	//Used to track whether all used strings are string muted
@@ -4276,6 +4299,60 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 	}
 
 	eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Ensure fret hand positions are sorted
+
+	//Ensure that the note at the beginning of each arpeggio phrase is authored correctly
+	if(eof_write_rs_files)
+	{	//If the user wants to save Rocksmith capable files
+		for(ctr = 0; ctr < tp->notes; ctr++)
+		{	//For each note in the track
+			for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
+			{	//For each arpeggio phrase in the track
+				if(((tp->note[ctr]->pos + 10 >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].start_pos + 10)) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
+				{	//If this note's start position is within 10ms of an arpeggio phrase in this track difficulty
+					unsigned char frets[6];	//Will be used to build a new fret array
+					unsigned char note;		//Will be used to build a new note bitmask
+					unsigned char ghost;	//Will be used to build a new ghost bitmask
+
+					memcpy(frets, tp->note[ctr]->frets, 6);	//Duplicate the original note's fret array
+					note = tp->note[ctr]->note;
+					ghost = tp->note[ctr]->ghost;
+					nextnote = ctr;
+					while(1)
+					{
+						nextnote = eof_fixup_next_note(sp, track, nextnote);	//Iterate to the next note in this track difficulty
+						if((nextnote >= 0) && (tp->note[nextnote]->pos <= tp->arpeggio[ctr2].end_pos))
+						{	//If there is another note and it is in the same arpeggio phrase
+							for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+							{	//For each of the 6 supported strings
+								if((tp->note[nextnote]->note & bitmask) && !(note & bitmask))
+								{	//If the note uses a string that isn't yet defined as used in the arpeggio's base note
+									note |= bitmask;	//Mark the string as used
+									ghost |= bitmask;	//Mark it as ghosted
+									frets[ctr3] = tp->note[nextnote]->frets[ctr3];	//Copy the gem's fret value
+								}
+							}
+						}
+						else
+						{	//The next note (if any) is not in the arpeggio phrase
+							break;	//Break from while loop
+						}
+					}
+					memcpy(tp->note[ctr]->frets, frets, 6);	//Apply changes (if any) to the note at the base of the arpeggio phrase
+					tp->note[ctr]->note = note;
+					tp->note[ctr]->ghost = ghost;
+					if(nextnote >= 0)
+					{	//If the last note in the track difficulty had not been reached
+						ctr = nextnote;	//Iterate to the next note that followed the arpeggio phrase
+					}
+					else
+					{	//Otherwise stop processing the arpeggio phrases
+						ctr = tp->notes;	//Set a condition to exit the outer for loop
+						break;	//exit the inner for loop
+					}
+				}//If this note's start position is within 10ms of an arpeggio phrase in this track difficulty
+			}//For each arpeggio phrase in the track
+		}//For each note in the track
+	}//If the user wants to save Rocksmith capable files
 
 	if(tp->arrangement > 4)
 	{	//If the track's arrangement type is invalid
@@ -5375,7 +5452,7 @@ void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourc
 		if(result)
 		{	//If the note was successfully created
 			newnotenum = eof_get_track_size(sp, desttrack) - 1;		//The index of the new note
-			eof_set_note_flags(sp, desttrack, newnotenum, flags);	//Copy the souce note's flags to the newly created note
+			eof_set_note_flags(sp, desttrack, newnotenum, flags);	//Copy the source note's flags to the newly created note
 			if((sp->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (sp->track[desttrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If the note was copied from a pro guitar track and pasted to a pro guitar track
 				memcpy(sp->pro_guitar_track[desttracknum]->note[newnotenum]->frets, sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->frets, 6);		//Copy the six usable string fret values from the source note to the newly created note
@@ -5385,6 +5462,7 @@ void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourc
 				sp->pro_guitar_track[desttracknum]->note[newnotenum]->bendstrength = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->bendstrength;	//Copy the bend strength
 				sp->pro_guitar_track[desttracknum]->note[newnotenum]->slideend = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->slideend;			//Copy the slide end position
 				sp->pro_guitar_track[desttracknum]->note[newnotenum]->unpitchend = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->unpitchend;		//Copy the unpitched slide end position
+				sp->pro_guitar_track[desttracknum]->note[newnotenum]->eflags = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->eflags;				//Copy the extended flags
 			}
 		}
 	}//If copying from a non vocal track

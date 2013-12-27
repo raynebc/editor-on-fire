@@ -862,7 +862,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				if(tp->note[ctr - 1]->flags & target)
 				{	//If this note has any of the statuses that can be displayed in Rocksmith for single notes
 					for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
-					{	//For each of the six supported strings
+					{	//For each of the 6 supported strings
 						if(tp->note[ctr - 1]->note & bitmask)
 						{	//If this string is used
 							new_note = eof_track_add_create_note(sp, track, bitmask, tp->note[ctr - 1]->pos, tp->note[ctr - 1]->length, tp->note[ctr - 1]->type, NULL);	//Initialize a new single note at this position
@@ -1347,7 +1347,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				{	//For each hand position defined in the track
 					if(tp->handposition[ctr3].difficulty == ctr)
 					{	//If the hand position is in this difficulty
-						unsigned long fret = tp->handposition[ctr3].end_pos + tp->capo;	////Apply the capo position
+						unsigned long fret = tp->handposition[ctr3].end_pos + tp->capo;	//Apply the capo position
 						(void) snprintf(buffer, sizeof(buffer) - 1, "        <anchor time=\"%.3f\" fret=\"%lu\"/>\n", (double)tp->handposition[ctr3].start_pos / 1000.0, fret);
 						(void) pack_fputs(buffer, fp);
 					}
@@ -2099,7 +2099,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				if(eof_note_count_rs_lanes(sp, track, ctr, 2) > 1)
 				{	//If this note would export as a chord, set it as ignored and split it up into temporary single notes
 					for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
-					{	//For each of the six supported strings
+					{	//For each of the 6 supported strings
 						if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
 						{	//If this string is used and is not ghosted
 							new_note = eof_track_add_create_note(sp, track, bitmask, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type, NULL);	//Initialize a new single note at this position
@@ -2110,7 +2110,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								new_note->bendstrength = tp->note[ctr]->bendstrength;	//Copy the bend strength
 								new_note->slideend = tp->note[ctr]->slideend;			//And the slide end position
 								new_note->unpitchend = tp->note[ctr]->unpitchend;		//And the unpitched slide end position
-								new_note->frets[ctr2] = tp->note[ctr]->frets[ctr2];		//And this string's fret value
+								new_note->frets[ctr3] = tp->note[ctr]->frets[ctr3];		//And this string's fret value
 							}
 							else
 							{
@@ -2120,7 +2120,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								return 0;	//Return error
 							}
 						}//If this string is used and is not ghosted
-					}//For each of the six supported strings
+					}//For each of the 6 supported strings
 					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic
 				}//If this note would export as a chord
 			}//If the note is within the arpeggio phrase
@@ -2857,7 +2857,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						{	//If any notes within the scope of this fret hand position require the anchor width to be increased beyond 4 frets
 							width = highest - tp->handposition[ctr3].end_pos + 1;	//Determine the minimum needed width
 						}
-						fret = tp->handposition[ctr3].end_pos + tp->capo;	////Apply the capo position
+						fret = tp->handposition[ctr3].end_pos + tp->capo;	//Apply the capo position
 						(void) snprintf(buffer, sizeof(buffer) - 1, "        <anchor time=\"%.3f\" fret=\"%lu\" width=\"%lu.000\"/>\n", (double)tp->handposition[ctr3].start_pos / 1000.0, fret, width);
 						(void) pack_fputs(buffer, fp);
 					}
@@ -2939,9 +2939,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						nextnote = eof_fixup_next_note(sp, track, ctr3);
 						if((nextnote >= 0) && (eof_note_count_rs_lanes(sp, track, nextnote, 2) > 1))
 						{	//If there is another note and it is a chord
-							(void) eof_get_rs_techniques(sp, track, nextnote, 0, &tech, 2);	//Determine techniques used by the next note
-							if(tech.slideto >= 0)
-							{	//If the next note is a chord bend, it will require its own handshape to work in-game
+							if(!eof_note_has_high_chord_density(sp, track, nextnote, 2))
+							{	//If the next note is low density (including if it has any techniques requiring a new handshape tag such as sliding)
 								handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
 								break;	//Break from while loop
 							}
@@ -3025,9 +3024,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							nextnote = eof_fixup_next_note(sp, track, ctr3);
 							if((nextnote >= 0) && (eof_note_count_rs_lanes(sp, track, nextnote, 2) > 1))
 							{	//If there is another note and it is a chord
-								(void) eof_get_rs_techniques(sp, track, nextnote, 0, &tech, 2);	//Determine techniques used by the next note
-								if(tech.slideto >= 0)
-								{	//If the next note is a chord bend, it will require its own handshape to work in-game
+								if(!eof_note_has_high_chord_density(sp, track, nextnote, 2))
+								{	//If the next note is low density (including if it has any techniques requiring a new handshape tag such as sliding)
 									handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
 									break;	//Break from while loop
 								}
@@ -4063,7 +4061,7 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 		return 0;	//Note is marked with crazy status, which forces it to export as low density
 
 	if(eof_note_count_rs_lanes(sp, track, note, target) < 2)
-		return 0;	//Note is not a chord
+		return 0;	//Note is not a chord from the perspective of the target game (RS1 ignored string muted notes)
 
 	prev = eof_track_fixup_previous_note(sp, track, note);
 	if(prev < 0)
@@ -4071,9 +4069,6 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 
 	if(eof_get_note_pos(sp, track, note) > eof_get_note_pos(sp, track, prev) + 10000)
 		return 0;	//Note is not within 10000ms of the previous note
-
-	if(eof_note_compare(sp, track, note, track, prev, 0))
-		return 0;	//Note does not match the previous note (ignoring note flags and lengths)
 
 	if(target == 2)
 	{	//Additional checks for Rocksmith 2
@@ -4085,7 +4080,20 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 		{	//If the previous note was a chord slide
 			return 0;
 		}
+
+		if(eof_get_rs_techniques(sp, track, note, 0, NULL, 2))
+		{	//If this note uses any techniques that require writing a low density chord
+			return 0;
+		}
+
+		if(eof_is_string_muted(sp, track, note) && (eof_note_count_rs_lanes(sp, track, prev, target) > 1))
+		{	//If this chord is entirely string muted and the previous note was a chord
+			return 1;	//Export this chord as high density so that it is added to the same hand shape tag
+		}
 	}
+
+	if(eof_note_compare(sp, track, note, track, prev, 0))
+		return 0;	//Note does not match the previous note (ignoring note flags and lengths)
 
 	return 1;	//All criteria passed, note is high density
 }

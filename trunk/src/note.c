@@ -1680,7 +1680,7 @@ int eof_pro_guitar_note_compare(EOF_PRO_GUITAR_TRACK *tp1, unsigned long note1, 
 	if(note == tp2->note[note2]->note)
 	{	//If both note's bitmasks match
 		for(ctr = 0, bitmask = 1; ctr < 6; ctr ++, bitmask <<= 1)
-		{	//For each of the six strings supported by EOF
+		{	//For each of the 6 supported strings
 			if(note & bitmask)
 			{	//If this string is used
 				if(tp1->note[note1]->frets[ctr] != tp2->note[note2]->frets[ctr])

@@ -1726,6 +1726,11 @@ set_window_title(debugtext);
 							if(!match)
 							{	//If the note doesn't match the same time and difficulty as an existing note, this MIDI event represents a new note, initialize it now and increment the note count
 								notenum = note_count[picked_track];
+								if(notenum >= EOF_MAX_NOTES)
+								{
+									allegro_message("Error:  The maximum number of notes is exceeded by track \"%s\".  Truncating track.", eof_midi_tracks[picked_track].name);
+									break;	//Exit outer for loop
+								}
 								eof_set_note_note(sp, picked_track, notenum, lane_chart[lane]);
 								eof_set_note_pos(sp, picked_track, notenum, event_realtime);
 								eof_set_note_length(sp, picked_track, notenum, 0);				//The length will be kept at 0 until the end of the note is found
