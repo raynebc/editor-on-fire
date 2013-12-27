@@ -2996,7 +2996,8 @@ if(key[KEY_PAUSE])
 				(void) eof_menu_edit_playback_speed_helper_slower();
 				lctrl = key[KEY_LCONTROL];	//Store the CTRL key states
 				rctrl = key[KEY_RCONTROL];
-				key[KEY_LCONTROL] = key[KEY_RCONTROL] = 0;	//Clear both CTRL keys so they are not picked up by eof_music_play() to force half-speed playback
+				key[KEY_LCONTROL] = 0;	//Clear both CTRL keys so they are not picked up by eof_music_play() to force half-speed playback
+				key[KEY_RCONTROL] = 0;
 				eof_music_play();	//Stop playback
 				eof_music_play();	//Resume playback at new speed
 				key[KEY_LCONTROL] = lctrl;	//Restore the CTRL key states
@@ -3015,7 +3016,8 @@ if(key[KEY_PAUSE])
 				(void) eof_menu_edit_playback_speed_helper_faster();
 				lctrl = key[KEY_LCONTROL];		//Store the CTRL key states
 				rctrl = key[KEY_RCONTROL];
-				key[KEY_LCONTROL] = key[KEY_RCONTROL] = 0;	//Clear both CTRL keys so they are not picked up by eof_music_play() to force half-speed playback
+				key[KEY_LCONTROL] = 0;	//Clear both CTRL keys so they are not picked up by eof_music_play() to force half-speed playback
+				key[KEY_RCONTROL] = 0;
 				eof_music_play();	//Stop playback
 				eof_music_play();	//Resume playback at new speed
 				key[KEY_LCONTROL] = lctrl;	//Restore the CTRL key states

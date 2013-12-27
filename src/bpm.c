@@ -25,14 +25,14 @@ static void eof_bpm_estimator_callback(void * buffer, int nsamples, int stereo)
 double eof_estimate_bpm(ALOGG_OGG * ogg)
 {
 	double bpm = 0.0;
-	
+
 	eof_bpm_estimator_state = minibpm_new((float)alogg_get_wave_freq_ogg(ogg));
 	if(eof_bpm_estimator_state)
 	{
 		eof_bpm_estimator_buffer = malloc(sizeof(float) * 1024); // 1024 mono floating point samples
 		if(eof_bpm_estimator_buffer)
 		{
-			alogg_process_ogg(ogg, eof_bpm_estimator_callback, 1024, 0.0, 0.0);
+			(void) alogg_process_ogg(ogg, eof_bpm_estimator_callback, 1024, 0.0, 0.0);
 			bpm = minibpm_estimate_tempo(eof_bpm_estimator_state);
 			free(eof_bpm_estimator_buffer);
 		}

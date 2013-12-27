@@ -60,7 +60,7 @@ void Export_RS(FILE *outf)
 		while(temp != NULL)				//For each piece of lyric in this line
 		{
 			expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
-			for(index1 = index2 = 0; index1 < strlen(buffer2); index1++)
+			for(index1 = index2 = 0; (size_t)index1 < strlen(buffer2); index1++)
 			{	//For each character in the expanded XML string
 				if(buffer2[index1] != '+')
 				{	//If it's not a plus character
