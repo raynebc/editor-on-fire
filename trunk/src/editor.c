@@ -2211,6 +2211,7 @@ if(key[KEY_PAUSE])
 
 	/* set pro guitar fret values (CTRL+#, CTRL+Fn #, CTRL+X, CTRL+~, CTRL++, CTRL+-) */
 	/* toggle pro guitar ghost status (CTRL+G) */
+	/* Mark/Remark arpeggio (CTRL+SHIFT+G in a pro guitar track) */
 			if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 			{	//If CTRL is held but SHIFT is not
 				//CTRL+# or CTRL+Fn # in a pro guitar track sets the fret values of selected notes
@@ -2354,85 +2355,67 @@ if(key[KEY_PAUSE])
 			}//If CTRL is held but SHIFT is not
 			else if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 			{	//If SHIFT is held, but CTRL is not
-	/* set fret value shortcut bitmask (SHIFT+Esc, SHIFT+Fn #) */
+	/* set fret value shortcut bitmask (SHIFT+Numpad #) */
 	/* toggle string mute status (SHIFT+X) */
-				if(key[KEY_ESC])
+				if(key[KEY_0_PAD])
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask = 0;	//Disable all strings
-					key[KEY_ESC] = 0;
+					key[KEY_0_PAD] = 0;
 				}
-				else if(key[KEY_F1])
+				else if(key[KEY_1_PAD])
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask ^= 32;	//Toggle string 1 (high E)
-					key[KEY_F1] = 0;
+					key[KEY_1_PAD] = 0;
 				}
-				else if(key[KEY_F2])
+				else if(key[KEY_2_PAD])
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask ^= 16;	//Toggle string 2
-					key[KEY_F2] = 0;
+					key[KEY_2_PAD] = 0;
 				}
-				else if(key[KEY_F3])
+				else if(key[KEY_3_PAD])
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask ^= 8;	//Toggle string 3
-					key[KEY_F3] = 0;
+					key[KEY_3_PAD] = 0;
 				}
-				else if(key[KEY_F4])
+				else if(key[KEY_4_PAD])
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask ^= 4;	//Toggle string 4
-					key[KEY_F4] = 0;
+					key[KEY_4_PAD] = 0;
 				}
-				else if(key[KEY_F5])
+				else if(key[KEY_5_PAD])
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask ^= 2;	//Toggle string 5
-					key[KEY_F5] = 0;
+					key[KEY_5_PAD] = 0;
 				}
-				else if(key[KEY_F6])
+				else if(key[KEY_6_PAD])
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask ^= 1;	//Toggle string 6 (low e)
-					key[KEY_F6] = 0;
+					key[KEY_6_PAD] = 0;
 				}
-				else if(key[KEY_F7])
+				else if(key[KEY_7_PAD])
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask = 63;	//Enable all strings
-					key[KEY_F7] = 0;
+					key[KEY_7_PAD] = 0;
 				}
-				else if(key[KEY_F8])
+				else if(key[KEY_8_PAD])
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask = 63;	//Enable all strings
-					key[KEY_F8] = 0;
+					key[KEY_8_PAD] = 0;
 				}
-				else if(key[KEY_F9])
+				else if(key[KEY_9_PAD])
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask = 63;	//Enable all strings
-					key[KEY_F9] = 0;
-				}
-				else if(key[KEY_F10])
-				{
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					eof_pro_guitar_fret_bitmask = 63;	//Enable all strings
-					key[KEY_F10] = 0;
-				}
-				else if(key[KEY_F11])
-				{
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					eof_pro_guitar_fret_bitmask = 63;	//Enable all strings
-					key[KEY_F11] = 0;
-				}
-				else if(key[KEY_F12])
-				{
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					eof_pro_guitar_fret_bitmask = 63;	//Enable all strings
-					key[KEY_F12] = 0;
+					key[KEY_9_PAD] = 0;
 				}
 				else if(key[KEY_X])
 				{
@@ -2441,6 +2424,16 @@ if(key[KEY_PAUSE])
 					key[KEY_X] = 0;
 				}
 			}//If SHIFT is held, but CTRL is not
+			else if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+			{	//If both CTRL and SHIFT are held
+				if(key[KEY_G])
+				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					(void)eof_menu_arpeggio_mark();
+					key[KEY_G] = 0;
+					eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run the fixup logic immediately in order to correct the arpeggio's base chord
+				}
+			}
 		}//If the active track is a pro guitar track
 
 	/* set active difficulty number (CTRL+SHIFT+~, CTRL+SHIFT+#, CTRL+SHIFT+Fn #) */

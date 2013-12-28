@@ -99,6 +99,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//Rocksmith 2 supports arrangements using a capo, but it does not consider the capo to be the nut position, so the capo position still needs to be added
 	// to the fret values of all fretted notes
 
+void eof_rs_export_cleanup(EOF_SONG * sp, unsigned long track);
+	//Cleanup that should be performed before either RS export function returns
+	//This function removes the ignore status from the specified track's notes and deletes temporary notes that had been added
+
 void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_made);
 	//Checks all notes in the track and duplicates finger arrays of chords with complete finger definitions to matching chords without complete finger definitions
 	//If any note has invalid fingering, it is cleared and will be allowed to be set by a valid fingering from a matching note

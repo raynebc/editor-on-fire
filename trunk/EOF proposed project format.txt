@@ -198,8 +198,8 @@ Custom track data block definitions
 		4 bytes:	Note position (in milliseconds or delta ticks)
 		4 bytes:	Note length (in milliseconds or delta ticks)
 *		4 bytes:	Note flags
-		[varies:]	Extended common flags (if the extended flags flag, decimal value 536870912, is set, another 4 byte flag field follows, and if its MSB is set, another 4 byte flag field, etc)
-		[varies:]	Extended track specific flags (if the MSB of the note flags field is set, another 4 byte flag field follows, and if its MSB is set, another 4 byte flag field, etc)
+		[4 bytes:]	Extended common flags (if the extended flags flag, decimal value 536870912, is set, another 4 byte flag field follows, and if its MSB is set, another 4 byte flag field, etc)
+		[4 bytes:]	Extended track specific flags (if the MSB of the note flags field is set, another 4 byte flag field follows, and if its MSB is set, another 4 byte flag field, etc)
 	}
 !This track format could be referred to as "legacy" format, because it is Harmonix's old format used prior to RB3
 !The MSB of the PART DRUMS' flags variable stores the additional "pro drums" difficulty (the high nibble stored the "PS Real Drums" difficulty in late beta versions of EOF 1.8, the low nibble stores the Pro Drums difficulty)
@@ -219,8 +219,8 @@ Custom track data block definitions
 		4 bytes:	Lyric position (in milliseconds or delta ticks)
 		4 bytes:	Lyric position (in milliseconds or delta ticks)
 *		2 bytes:	Lyric flags
-		[varies:]	Extended common flags (if the extended flags flag, decimal value 536870912, is set, another 4 byte flag field follows, and if its MSB is set, another 4 byte flag field, etc)
-		[varies:]	Extended track specific flags (if the MSB of the note flags field is set, another 4 byte flag field follows, and if its MSB is set, another 4 byte flag field, etc)
+		[4 bytes:]	Extended common flags (if the extended flags flag, decimal value 536870912, is set, another 4 byte flag field follows, and if its MSB is set, another 4 byte flag field, etc)
+		[4 bytes:]	Extended track specific flags (if the MSB of the note flags field is set, another 4 byte flag field follows, and if its MSB is set, another 4 byte flag field, etc)
 	}
 
 [PRO GUITAR/PRO BASS TRACK FORMAT]
@@ -252,12 +252,12 @@ Custom track data block definitions
 *		4 bytes:	Note position (in milliseconds or delta ticks)
 *		4 bytes:	Note length (in milliseconds or delta ticks)
 *		4 bytes:	Note flags (allow 32 flags for an unforsee-able number of techniques such as tapping, bending, etc)
-		[varies:]	Slide ending fret (if the Rocksmith notation flag, decimal value 33554432, is set and this note is flagged as having an up/down slide, value 4096 or 8192, 1 byte is written)
-		[varies:]	Bend strength in half/quarter steps (if the Rocksmith notation flag, decimal value 33554432, is set and this note is flagged as a bend, value 2097152, 1 byte is written)
+		[1 byte:]	Slide ending fret (if the Rocksmith notation flag, decimal value 33554432, is set and this note is flagged as having an up/down slide, value 4096 or 8192)
+		[1 byte:]	Bend strength in half/quarter steps (if the Rocksmith notation flag, decimal value 33554432, is set and this note is flagged as a bend, value 2097152)
 				(If the MSB of this value is set, the other 7 bits define the number of quarter steps the bend is, otherwise the value is in half steps)
-		[varies:]	Unpitched slide ending fret (if this note is flagged as having an unpitched slide, value 256, 1 byte is written)
-		[varies:]	Extended common flags (if the extended flags flag, decimal value 536870912, is set, another 4 byte flag field follows, and if its MSB is set, another 4 byte flag field, etc)
-		[varies:]	Extended track specific flags (if the MSB of the note flags field is set, another 4 byte flag field follows, and if its MSB is set, another 4 byte flag field, etc)
+		[1 byte:]	Unpitched slide ending fret (if this note is flagged as having an unpitched slide, value 256)
+		[4 bytes:]	Extended common flags (if the extended flags flag, decimal value 536870912, is set, another 4 byte flag field follows, and if its MSB is set, another 4 byte flag field, etc)
+		[4 bytes:]	Extended track specific flags (if the MSB of the note flags field is set, another 4 byte flag field follows, and if its MSB is set, another 4 byte flag field, etc)
 *	}
 
 [PRO KEYS TRACK FORMAT]

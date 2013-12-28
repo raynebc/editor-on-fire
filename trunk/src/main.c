@@ -1828,12 +1828,12 @@ void eof_read_global_keys(void)
 		}
 	}
 
-	/* find previous catalog match (CTRL+SHIFT+G) */
-	if(key[KEY_G] && KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
+	/* find previous catalog match (SHIFT+F3) */
+	if(key[KEY_F3] && !KEY_EITHER_CTRL & KEY_EITHER_SHIFT)
 	{
 		eof_shift_used = 1;	//Track that the SHIFT key was used
 		eof_menu_catalog_find_prev();
-		key[KEY_G] = 0;
+		key[KEY_F3] = 0;
 	}
 
 	/* load chart (CTRL+O) */

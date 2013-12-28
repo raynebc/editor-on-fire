@@ -1024,6 +1024,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		if(!controls)
 		{
 			eof_log("\tError saving:  Cannot allocate memory for control list", 1);
+			eof_rs_export_cleanup(sp, track);
 			return 0;	//Return failure
 		}
 
@@ -1043,6 +1044,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					controlctr--;
 				}
 				free(controls);
+				eof_rs_export_cleanup(sp, track);
 				return 0;	//Return failure
 			}
 			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"ShowMessageBox(hint%lu, %s)\"/>\n", tp->popupmessage[ctr].start_pos / 1000.0, ctr + 1, buffer2);
@@ -1061,6 +1063,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					controlctr--;
 				}
 				free(controls);
+				eof_rs_export_cleanup(sp, track);
 				return 0;	//Return failure
 			}
 			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"ClearAllMessageBoxes()\"/>\n", tp->popupmessage[ctr].end_pos / 1000.0);
@@ -1081,6 +1084,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					controlctr--;
 				}
 				free(controls);
+				eof_rs_export_cleanup(sp, track);
 				return 0;	//Return failure
 			}
 			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"CDlcTone(%s)\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tp->tonechange[ctr].name);
@@ -1235,6 +1239,10 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 											tech.slideto = -1;
 											if((*user_warned & 4) == 0)
 											{	//If the user wasn't alerted that one or more open notes have these statuses improperly applied
+												(void) eof_menu_track_selected_track_number(track, 1);						//Set the active instrument track
+												eof_note_type = eof_get_note_type(sp, track, ctr3);							//Set the active difficulty to match that of the note
+												eof_set_seek_position(eof_get_note_pos(sp, track, ctr3) + eof_av_delay);	//Seek to the note's position
+												eof_render();
 												allegro_message("Warning:  At least one open note is marked with bend or slide status.\nThis is not supported, so these statuses are being omitted for such notes.");
 												*user_warned |= 4;
 											}
@@ -1287,6 +1295,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							{	//If the chord list was built
 								free(chordlist);
 							}
+							eof_rs_export_cleanup(sp, track);
 							return 0;	//Return error
 						}
 						if(tp->note[ctr3]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
@@ -1398,6 +1407,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						{	//If the chord list was built
 							free(chordlist);
 						}
+						eof_rs_export_cleanup(sp, track);
 						return 0;	//Return error
 					}
 					handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position
@@ -1470,6 +1480,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							{	//If the chord list was built
 								free(chordlist);
 							}
+							eof_rs_export_cleanup(sp, track);
 							return 0;	//Return error
 						}
 						handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position (in seconds)
@@ -1549,15 +1560,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}
 	}
 	eof_sort_events(sp);	//Re-sort events
-	//Remove all temporary notes that were added
-	for(ctr = tp->notes; ctr > 0; ctr--)
-	{	//For each note in the track, in reverse order
-		if(tp->note[ctr - 1]->tflags & EOF_NOTE_TFLAG_TEMP)
-		{	//If this is a temporary note that was added for chord technique notation
-			eof_track_delete_note(sp, track, ctr - 1);	//Delete it
-		}
-	}
-	eof_track_sort_notes(sp, track);	//Re-sort the notes
+	eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added
 
 	return 1;	//Return success
 }
@@ -2117,6 +2120,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								allegro_message("Error:  Couldn't expand an arpeggio chord into single notes.  Aborting Rocksmith export.");
 								eof_log("Error:  Couldn't expand an arpeggio chord into single notes.  Aborting Rocksmith export.", 1);
 								free(sectionlist);
+								eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 								return 0;	//Return error
 							}
 						}//If this string is used and is not ghosted
@@ -2296,6 +2300,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		if(!controls)
 		{
 			eof_log("\tError saving:  Cannot allocate memory for control list", 1);
+			eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 			return 0;	//Return failure
 		}
 
@@ -2315,6 +2320,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					controlctr--;
 				}
 				free(controls);
+				eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 				return 0;	//Return failure
 			}
 			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"ShowMessageBox(hint%lu, %s)\"/>\n", tp->popupmessage[ctr].start_pos / 1000.0, ctr + 1, buffer2);
@@ -2333,6 +2339,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					controlctr--;
 				}
 				free(controls);
+				eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 				return 0;	//Return failure
 			}
 			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"ClearAllMessageBoxes()\"/>\n", tp->popupmessage[ctr].end_pos / 1000.0);
@@ -2590,6 +2597,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 										tech.unpitchedslideto = -1;
 										if((*user_warned & 4) == 0)
 										{	//If the user wasn't alerted that one or more open notes have these statuses improperly applied
+											(void) eof_menu_track_selected_track_number(track, 1);						//Set the active instrument track
+											eof_note_type = eof_get_note_type(sp, track, ctr3);							//Set the active difficulty to match that of the note
+											eof_set_seek_position(eof_get_note_pos(sp, track, ctr3) + eof_av_delay);	//Seek to the note's position
+											eof_render();
 											allegro_message("Warning:  At least one open note is marked with bend or slide status.\nThis is not supported, so these statuses are being omitted for such notes.");
 											*user_warned |= 4;
 										}
@@ -2660,6 +2671,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								{	//If the chord list was built
 									free(chordlist);
 								}
+								eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 								return 0;	//Return error
 							}
 							flags = tp->note[ctr3]->flags;	//Simplify
@@ -2758,6 +2770,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 												tech.length = 0;	//chordNotes should have no sustain unless they use bend or slide technique
 												if((*user_warned & 4) == 0)
 												{	//If the user wasn't alerted that one or more open notes have these statuses improperly applied
+													(void) eof_menu_track_selected_track_number(track, 1);						//Set the active instrument track
+													eof_note_type = eof_get_note_type(sp, track, ctr3);							//Set the active difficulty to match that of the note
+													eof_set_seek_position(eof_get_note_pos(sp, track, ctr3) + eof_av_delay);	//Seek to the note's position
+													eof_render();
 													allegro_message("Warning:  At least one open note is marked with bend or slide status.\nThis is not supported, so these statuses are being omitted for such notes.");
 													*user_warned |= 4;
 												}
@@ -2908,6 +2924,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						{	//If the chord list was built
 							free(chordlist);
 						}
+						eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 						return 0;	//Return error
 					}
 					handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position
@@ -2993,6 +3010,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							{	//If the chord list was built
 								free(chordlist);
 							}
+							eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 							return 0;	//Return error
 						}
 						handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position (in seconds)
@@ -3071,16 +3089,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	(void) pack_fputs("</song>\n", fp);
 	(void) pack_fclose(fp);
 
-	//Remove all temporary notes that were added and remove the ignore status from all notes
-	for(ctr = tp->notes; ctr > 0; ctr--)
-	{	//For each note in the track, in reverse order
-		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_IGNORE;	//Clear the ignore flag
-		if(tp->note[ctr - 1]->tflags & EOF_NOTE_TFLAG_TEMP)
-		{	//If this is a temporary note that was added to split up an arpeggio's chord into single notes
-			eof_track_delete_note(sp, track, ctr - 1);	//Delete it
-		}
-	}
-	eof_track_sort_notes(sp, track);	//Re-sort the notes
+	eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 
 	//Generate showlights XML file for this track
 	if((sp->track[track]->flags & EOF_TRACK_FLAG_ALT_NAME) && (sp->track[track]->altname[0] != '\0'))
@@ -4672,4 +4681,25 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 				EOF_PRO_GUITAR_NOTE_FLAG_TAP | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO | EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE);
 
 	return flags;
+}
+
+void eof_rs_export_cleanup(EOF_SONG * sp, unsigned long track)
+{
+	unsigned long ctr;
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return;	//Invalid parameters
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+
+	//Remove all temporary notes that were added and remove the ignore status from all notes
+	for(ctr = tp->notes; ctr > 0; ctr--)
+	{	//For each note in the track, in reverse order
+		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_IGNORE;	//Clear the ignore flag
+		if(tp->note[ctr - 1]->tflags & EOF_NOTE_TFLAG_TEMP)
+		{	//If this is a temporary note that was added to split up an arpeggio's chord into single notes
+			eof_track_delete_note(sp, track, ctr - 1);	//Delete it
+		}
+	}
+	eof_track_sort_notes(sp, track);	//Re-sort the notes
 }

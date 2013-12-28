@@ -671,12 +671,12 @@ void eof_prepare_note_menu(void)
 		if(inarpeggio)
 		{
 			eof_arpeggio_menu[1].flags = 0;				//Note>Pro Guitar>Arpeggio>Remove
-			(void) ustrcpy(eof_arpeggio_menu_mark_text, "Re-&Mark");
+			(void) ustrcpy(eof_arpeggio_menu_mark_text, "Re-&Mark\t" CTRL_NAME "+Shift+G");
 		}
 		else
 		{
 			eof_arpeggio_menu[1].flags = D_DISABLED;
-			(void) ustrcpy(eof_arpeggio_menu_mark_text, "&Mark");
+			(void) ustrcpy(eof_arpeggio_menu_mark_text, "&Mark\t" CTRL_NAME "+Shift+G");
 		}
 
 		/* arpeggio copy from */

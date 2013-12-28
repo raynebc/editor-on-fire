@@ -110,7 +110,7 @@ MENU eof_catalog_menu[] =
 	{"&Previous\tW", eof_menu_catalog_previous, NULL, 0, NULL},
 	{"&Next\tE", eof_menu_catalog_next, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"Find Previous\t" CTRL_NAME "+Shift+G", eof_menu_catalog_find_prev, NULL, 0, NULL},
+	{"Find Previous\tShift+F3", eof_menu_catalog_find_prev, NULL, 0, NULL},
 	{"Find Next\tF3", eof_menu_catalog_find_next, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };

@@ -1381,6 +1381,7 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 			case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:	//Variable Lane Legacy (not implemented yet)
 			break;
 			default:
+				eof_log("\tError:  Invalid track format", 1);
 			return 0;	//Return error
 		}
 
@@ -1528,7 +1529,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	inputc = pack_getc(fp);					//Read timing format
 	if(inputc == 1)
 	{
-		allegro_message("Error: Delta timing is not yet supported");
+		eof_log("Error: Delta timing is not yet supported", 1);
 		return 0;	//Return failure
 	}
 	(void) pack_igetl(fp);		//Read time division (not supported yet)
@@ -1592,6 +1593,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	count = pack_igetl(fp);					//Read the number of beats
 	if(!eof_song_resize_beats(sp, count))	//Resize the beat array accordingly
 	{
+		eof_log("Error:  Couldn't resize beat array", 1);
 		return 0;	//Return error upon failure to do so
 	}
 	for(ctr=0; ctr<count; ctr++)
@@ -1606,6 +1608,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	count = pack_igetl(fp);				//Read the number of text events
 	if(!eof_song_resize_text_events(sp, count))	//Resize the text event array accordingly
 	{
+		eof_log("Error:  Couldn't resize text event array", 1);
 		return 0;	//Return error upon failure to do so
 	}
 	for(ctr=0; ctr<count; ctr++)
@@ -1634,7 +1637,10 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				eventhead = eventtail = NULL;	//The event linked list begins empty
 				trackptr = malloc(sizeof(struct eof_MIDI_data_track));
 				if(!trackptr)
+				{
+					eof_log("Error:  Couldn't allocate memory for raw MIDI data", 1);
 					return 0;	//Memory allocation error
+				}
 				(void) eof_load_song_string_pf(buffer, fp, sizeof(buffer));	//Read the MIDI track name
 				if(buffer[0] == '\0')
 				{	//If there is no track name
@@ -1645,6 +1651,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					trackptr->trackname = malloc(strlen(buffer) + 1);	//Allocate enough memory to duplicate this string
 					if(!trackptr->trackname)
 					{
+						eof_log("Error:  Couldn't allocate memory for raw MIDI track name", 1);
 						free(trackptr);
 						return 0;	//Memory allocation error
 					}
@@ -1662,6 +1669,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					{
 						free(trackptr->trackname);
 						free(trackptr);
+						eof_log("Error:  Couldn't allocate memory for raw MIDI track description", 1);
 						return 0;	//Memory allocation error
 					}
 					strcpy(trackptr->description, buffer);
@@ -1685,17 +1693,19 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 						free(trackptr->trackname);
 						free(trackptr->description);
 						free(trackptr);
+						eof_log("Error:  Couldn't allocate memory for raw MIDI text event", 1);
 						return 0;	//Memory allocation error
 					}
 					(void) eof_load_song_string_pf(buffer, fp, sizeof(buffer));	//Read the timestamp string
-					(void) sscanf(buffer, "%99lf", &eventptr->realtime);			//Convert to double floating point (sscanf is width limited to prevent buffer overflow)
-					eventptr->stringtime = malloc(strlen(buffer) + 1);		//Allocate enough memory to store the timestamp string
+					(void) sscanf(buffer, "%99lf", &eventptr->realtime);		//Convert to double floating point (sscanf is width limited to prevent buffer overflow)
+					eventptr->stringtime = malloc(strlen(buffer) + 1);			//Allocate enough memory to store the timestamp string
 					if(!eventptr->stringtime)
 					{
 						free(trackptr->trackname);
 						free(trackptr->description);
 						free(trackptr);
 						free(eventptr);
+						eof_log("Error:  Couldn't allocate memory for raw MIDI timestamp", 1);
 						return 0;	//Memory allocation error
 					}
 					strcpy(eventptr->stringtime, buffer);	//Store the timestamp string
@@ -1713,6 +1723,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 						free(trackptr);
 						free(eventptr->stringtime);
 						free(eventptr);
+						eof_log("Error:  Couldn't allocate memory for raw MIDI event data", 1);
 						return 0;	//Memory allocation error
 					}
 					(void) pack_fread(eventptr->data, (long)eventptr->size, fp);	//Read the event's data
@@ -1761,7 +1772,10 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		if(track_ctr != 0)
 		{	//Add track to project
 			if(eof_song_add_track(sp, &temp) == 0)	//Add the track
+			{
+				eof_log("Error:  Couldn't add track", 1);
 				return 0;	//Return error upon failure
+			}
 		}
 		switch(temp.track_format)
 		{	//Perform the appropriate logic to load this format of track
@@ -1772,7 +1786,9 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				count = pack_igetl(fp);	//Read the number of notes in this track
 				if(count > EOF_MAX_NOTES)
 				{
-					allegro_message("Error: Unsupported number of notes in track %lu.  Aborting",track_ctr);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error: Unsupported number of notes in track %lu.  Aborting", track_ctr);
+					allegro_message(eof_log_string);
+					eof_log(eof_log_string, 1);
 					return 0;
 				}
 				eof_track_resize(sp, sp->tracks-1,count);	//Resize the note array
@@ -1791,7 +1807,9 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				count = pack_igetl(fp);	//Read the number of notes in this track
 				if(count > EOF_MAX_LYRICS)
 				{
-					allegro_message("Error: Unsupported number of lyrics in track %lu.  Aborting",track_ctr);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error: Unsupported number of lyrics in track %lu.  Aborting", track_ctr);
+					allegro_message(eof_log_string);
+					eof_log(eof_log_string, 1);
 					return 0;
 				}
 				eof_track_resize(sp, sp->tracks-1,count);	//Resize the lyrics array
@@ -1807,6 +1825,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 			break;
 			case EOF_PRO_KEYS_TRACK_FORMAT:	//Pro Keys
 				allegro_message("Error: Pro Keys not supported yet.  Aborting");
+				eof_log("Error: Pro Keys not supported yet.  Aborting", 1);
 			return 0;
 			case EOF_PRO_GUITAR_TRACK_FORMAT:	//Pro Guitar/Bass
 				tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Simplify
@@ -1815,13 +1834,17 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				count = pack_getc(fp);	//Read the number of strings used in this track
 				if(count > 8)
 				{
-					allegro_message("Error: Unsupported number of strings in track %lu.  Aborting",track_ctr);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error: Unsupported number of strings in track %lu.  Aborting", track_ctr);
+					allegro_message(eof_log_string);
+					eof_log(eof_log_string, 1);
 					return 0;
 				}
 				tp->numstrings = count;
 				if(tp->numstrings > EOF_TUNING_LENGTH)
 				{	//Prevent overflow
-					allegro_message("Unsupported number of strings in track %lu.  Aborting",track_ctr);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Unsupported number of strings in track %lu.  Aborting", track_ctr);
+					allegro_message(eof_log_string);
+					eof_log(eof_log_string, 1);
 					return 0;
 				}
 				for(ctr=0; ctr < tp->numstrings; ctr++)
@@ -1831,7 +1854,9 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				count = pack_igetl(fp);	//Read the number of notes in this track
 				if(count > EOF_MAX_NOTES)
 				{
-					allegro_message("Error: Unsupported number of notes in track %lu.  Aborting",track_ctr);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error: Unsupported number of notes in track %lu.  Aborting", track_ctr);
+					allegro_message(eof_log_string);
+					eof_log(eof_log_string, 1);
 					return 0;
 				}
 				eof_track_resize(sp, sp->tracks-1,count);	//Resize the note array
@@ -1876,10 +1901,6 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					{	//If this is an unpitched slide note
 						tp->note[ctr]->unpitchend = pack_getc(fp);	//Read the unpitched slide's ending fret
 					}
-					if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
-					{	//If this is an unpitched slide note
-						tp->note[ctr]->unpitchend = pack_getc(fp);	//Read the unpitched slide's ending fret
-					}
 					if(tp->note[ctr]->flags & EOF_NOTE_FLAG_T_EXTENDED)
 					{	//If this note uses any extended track flags
 						tp->note[ctr]->eflags = pack_igetl(fp);		//Read extended track flags
@@ -1892,6 +1913,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 			return 0;
 			default://Unknown track type
 				allegro_message("Error: Unsupported track type.  Aborting");
+				eof_log("Error: Unsupported track type.  Aborting", 1);
 			return 0;
 		}
 
@@ -1940,7 +1962,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				case 2:		//Pro guitar finger array custom data block ID
 					if(custom_data_size < 4)
 					{	//This is invalid, the size needed to have included the 4 byte ID
-						allegro_message("Error:  Invalid custom data block size.  Aborting");
+						allegro_message("Error:  Invalid custom data block size (finger definitions).  Aborting");
+						eof_log("Error:  Invalid custom data block size (finger definitions).  Aborting", 1);
 						return 0;
 					}
 					custom_data_size -= 4;	//Subtract the size of the block ID, which was already read
@@ -1961,6 +1984,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					else
 					{	//Corrupt file
 						allegro_message("Error: Invalid pro guitar finger array data block.  Aborting");
+						eof_log("Error: Invalid pro guitar finger array data block.  Aborting", 1);
 						return 0;
 					}
 				break;
@@ -1968,7 +1992,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				case 3:		//Pro guitar track arrangement type
 					if(custom_data_size != 5)
 					{	//This data block is expected to be 5 bytes long
-						allegro_message("Error:  Invalid custom data block size.  Aborting");
+						allegro_message("Error:  Invalid custom data block size (arrangement type).  Aborting");
+						eof_log("Error:  Invalid custom data block size (arrangement type).  Aborting", 1);
 						return 0;
 					}
 					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -1981,7 +2006,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				case 4:		//Track tuning not honored
 					if(custom_data_size != 5)
 					{	//This data block is expected to be 5 bytes long
-						allegro_message("Error:  Invalid custom data block size.  Aborting");
+						allegro_message("Error:  Invalid custom data block size (track tuning not honored).  Aborting");
+						eof_log("Error:  Invalid custom data block size (track tuning not honored).  Aborting", 1);
 						return 0;
 					}
 					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -1994,7 +2020,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				case 6:		//Capo position
 					if(custom_data_size != 5)
 					{	//This data block is expected to be 5 bytes long
-						allegro_message("Error:  Invalid custom data block size.  Aborting");
+						allegro_message("Error:  Invalid custom data block size (capo position).  Aborting");
+						eof_log("Error:  Invalid custom data block size (capo position).  Aborting", 1);
 						return 0;
 					}
 					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -2007,7 +2034,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				default:	//Unknown custom data block ID
 					if(custom_data_size < 4)
 					{	//This is invalid, the size needed to have included the 4 byte ID
-						allegro_message("Error:  Invalid custom data block size.  Aborting");
+						allegro_message("Error:  Invalid custom data block size (unknown custom data block).  Aborting");
+						eof_log("Error:  Invalid custom data block size (unknown custom data block).  Aborting", 1);
 						return 0;
 					}
 					custom_data_size -= 4;	//Subtract the size of the block ID, which was already read
@@ -3004,13 +3032,13 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				}
 				if(ignore_tuning)
 				{	//Write track tuning not honored
-					(void) pack_iputl(5, fp);		//Write the number of bytes this block will contain (1 byte arrangement type and a 4 byte block ID)
+					(void) pack_iputl(5, fp);		//Write the number of bytes this block will contain (1 byte tuning not honored status and a 4 byte block ID)
 					(void) pack_iputl(4, fp);		//Write the track tuning not honored custom data block ID
 					(void) pack_putc(1, fp);		//Write the track tuning not honored option
 				}
 				if(has_capo)
 				{	//Write capo value
-					(void) pack_iputl(5, fp);		//Write the number of bytes this block will contain (1 byte arrangement type and a 4 byte block ID)
+					(void) pack_iputl(5, fp);		//Write the number of bytes this block will contain (1 byte capo position and a 4 byte block ID)
 					(void) pack_iputl(6, fp);		//Write the capo custom data block ID
 					(void) pack_putc(tp->capo, fp);	//Write the track's capo position
 				}
@@ -4308,24 +4336,24 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 	//Ensure that the note at the beginning of each arpeggio phrase is authored correctly
 	if(eof_write_rs_files)
 	{	//If the user wants to save Rocksmith capable files
-		for(ctr = 0; ctr < tp->notes; ctr++)
-		{	//For each note in the track
-			for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
-			{	//For each arpeggio phrase in the track
-				if(((tp->note[ctr]->pos + 10 >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].start_pos + 10)) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
+		for(ctr = 0; ctr < tp->arpeggios; ctr++)
+		{	//For each arpeggio phrase in the track
+			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+			{	//For each note in the track
+				if(((tp->note[ctr2]->pos + 10 >= tp->arpeggio[ctr].start_pos) && (tp->note[ctr2]->pos <= tp->arpeggio[ctr].start_pos + 10)) && (tp->note[ctr2]->type == tp->arpeggio[ctr].difficulty))
 				{	//If this note's start position is within 10ms of an arpeggio phrase in this track difficulty
 					unsigned char frets[6];	//Will be used to build a new fret array
 					unsigned char note;		//Will be used to build a new note bitmask
 					unsigned char ghost;	//Will be used to build a new ghost bitmask
 
-					memcpy(frets, tp->note[ctr]->frets, 6);	//Duplicate the original note's fret array
-					note = tp->note[ctr]->note;
-					ghost = tp->note[ctr]->ghost;
-					nextnote = ctr;
+					memcpy(frets, tp->note[ctr2]->frets, 6);	//Duplicate the original note's fret array
+					note = tp->note[ctr2]->note;
+					ghost = tp->note[ctr2]->ghost;
+					nextnote = ctr2;
 					while(1)
 					{
 						nextnote = eof_fixup_next_note(sp, track, nextnote);	//Iterate to the next note in this track difficulty
-						if((nextnote >= 0) && (tp->note[nextnote]->pos <= tp->arpeggio[ctr2].end_pos))
+						if((nextnote >= 0) && (tp->note[nextnote]->pos <= tp->arpeggio[ctr].end_pos))
 						{	//If there is another note and it is in the same arpeggio phrase
 							for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
 							{	//For each of the 6 supported strings
@@ -4342,21 +4370,21 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 							break;	//Break from while loop
 						}
 					}
-					memcpy(tp->note[ctr]->frets, frets, 6);	//Apply changes (if any) to the note at the base of the arpeggio phrase
-					tp->note[ctr]->note = note;
-					tp->note[ctr]->ghost = ghost;
+					memcpy(tp->note[ctr2]->frets, frets, 6);	//Apply changes (if any) to the note at the base of the arpeggio phrase
+					tp->note[ctr2]->note = note;
+					tp->note[ctr2]->ghost = ghost;
 					if(nextnote >= 0)
 					{	//If the last note in the track difficulty had not been reached
-						ctr = nextnote;	//Iterate to the next note that followed the arpeggio phrase
+						ctr2 = nextnote;	//Iterate to the next note that followed the arpeggio phrase
 					}
 					else
 					{	//Otherwise stop processing the arpeggio phrases
-						ctr = tp->notes;	//Set a condition to exit the outer for loop
+						ctr2 = tp->notes;	//Set a condition to exit the outer for loop
 						break;	//exit the inner for loop
 					}
 				}//If this note's start position is within 10ms of an arpeggio phrase in this track difficulty
-			}//For each arpeggio phrase in the track
-		}//For each note in the track
+			}//For each note in the track
+		}//For each arpeggio phrase in the track
 	}//If the user wants to save Rocksmith capable files
 
 	if(tp->arrangement > 4)
