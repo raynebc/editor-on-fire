@@ -702,9 +702,10 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
 	if(!eof_song_contains_event(sp, "COUNT", track, EOF_EVENT_FLAG_RS_PHRASE, 1) && !eof_song_contains_event(sp, "COUNT", 0, EOF_EVENT_FLAG_RS_PHRASE, 1))
 	{	//If the user did not define a COUNT phrase that applies to either the track being exported or all tracks
-		if(sp->beat[0]->contained_section_event >= 0)
-		{	//If there is already a phrase defined on the first beat
+		if((sp->beat[0]->contained_section_event >= 0) && ((*user_warned & 16) == 0))
+		{	//If there is already a phrase defined on the first beat, and the user wasn't warned of this problem yet
 			allegro_message("Warning:  There is no COUNT phrase, but the first beat marker already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.");
+			*user_warned |= 16;
 		}
 		eof_log("\t! Adding missing COUNT phrase", 1);
 		(void) eof_song_add_text_event(sp, 0, "COUNT", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it as a temporary event at the first beat
@@ -715,12 +716,13 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		{	//If this beat contains an "END" RS phrase
 			for(ctr2 = ctr + 1; ctr2 < sp->beats; ctr2++)
 			{	//For each remaining beat
-				if((sp->beat[ctr2]->contained_section_event >= 0) || (sp->beat[ctr2]->contained_rs_section_event >= 0))
-				{	//If the beat contains an RS phrase or RS section
+				if(((sp->beat[ctr2]->contained_section_event >= 0) || (sp->beat[ctr2]->contained_rs_section_event >= 0)) && ((*user_warned & 32) == 0))
+				{	//If the beat contains an RS phrase or RS section, and the user wasn't warned of this problem yet
 					eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
 					eof_selected_beat = ctr;		//Select it
 					eof_seek_and_render_position(track, eof_note_type, sp->beat[ctr]->pos);	//Show the offending END phrase
 					allegro_message("Warning:  Beat #%lu contains an END phrase, but there's at least one more phrase or section after it.\nThis will cause dynamic difficulty and/or riff repeater to not work correctly.", ctr);
+					*user_warned |= 32;
 					break;
 				}
 			}
@@ -1945,9 +1947,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
 	if(!eof_song_contains_event(sp, "COUNT", track, EOF_EVENT_FLAG_RS_PHRASE, 1) && !eof_song_contains_event(sp, "COUNT", 0, EOF_EVENT_FLAG_RS_PHRASE, 1))
 	{	//If the user did not define a COUNT phrase that applies to either the track being exported or all tracks
-		if(sp->beat[0]->contained_section_event >= 0)
-		{	//If there is already a phrase defined on the first beat
+		if((sp->beat[0]->contained_section_event >= 0) && ((*user_warned & 16) == 0))
+		{	//If there is already a phrase defined on the first beat, and the user wasn't warned of this problem yet
 			allegro_message("Warning:  There is no COUNT phrase, but the first beat marker already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.");
+			*user_warned |= 16;
 		}
 		eof_log("\t! Adding missing COUNT phrase", 1);
 		(void) eof_song_add_text_event(sp, 0, "COUNT", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it as a temporary event at the first beat
@@ -1958,12 +1961,13 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		{	//If this beat contains an "END" RS phrase
 			for(ctr2 = ctr + 1; ctr2 < sp->beats; ctr2++)
 			{	//For each remaining beat
-				if((sp->beat[ctr2]->contained_section_event >= 0) || (sp->beat[ctr2]->contained_rs_section_event >= 0))
-				{	//If the beat contains an RS phrase or RS section
+				if(((sp->beat[ctr2]->contained_section_event >= 0) || (sp->beat[ctr2]->contained_rs_section_event >= 0)) && ((*user_warned & 32) == 0))
+				{	//If the beat contains an RS phrase or RS section, and the user wasn't warned of this problem yet
 					eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
 					eof_selected_beat = ctr;		//Select it
 					eof_seek_and_render_position(track, eof_note_type, sp->beat[ctr]->pos);	//Show the offending END phrase
 					allegro_message("Warning:  Beat #%lu contains an END phrase, but there's at least one more phrase or section after it.\nThis will cause dynamic difficulty and/or riff repeater to not work correctly.", ctr);
+					*user_warned |= 32;
 					break;
 				}
 			}
@@ -4604,12 +4608,13 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
 			{	//If this note slides up and the user hasn't defined the ending fret of the slide
 				ptr->slideto = fret + 1;	//Assume a 1 fret slide until logic is added for the author to add this information
+				ptr->slideto += tp->capo;	//Apply the capo position, so the slide ending is on the correct fret in-game
 			}
 			else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
 			{	//If this note slides down and the user hasn't defined the ending fret of the slide
 				ptr->slideto = fret - 1;	//Assume a 1 fret slide until logic is added for the author to add this information
+				ptr->slideto += tp->capo;	//Apply the capo position, so the slide ending is on the correct fret in-game
 			}
-			ptr->slideto += tp->capo;	//Apply the capo position, so the slide ending is on the correct fret in-game
 		}
 		else
 		{	//This note defines the bend strength and ending fret for slides
