@@ -85,6 +85,8 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//	2:  At least one track uses a fret value higher than 22
 	//	4:  At least one open note is marked with bend or slide status
 	//	8:  At least one note slides to or above fret 22
+	//  16:  There is no COUNT phrase defined and the first beat already contains a phrase
+	//  32:  There is at least one phrase or section defined after the END phrase
 	//Rocksmith 1 doesn't support arrangements using a capo, so the capo position is added to the frets values of all fretted notes
 
 int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, char *user_warned);
@@ -96,6 +98,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//	2:  At least one track uses a fret value higher than 22
 	//	4:  At least one open note is marked with bend or slide status
 	//	8:  At least one note slides to or above fret 22
+	//  16:  There is no COUNT phrase defined and the first beat already contains a phrase
+	//  32:  There is at least one phrase or section defined after the END phrase
 	//Rocksmith 2 supports arrangements using a capo, but it does not consider the capo to be the nut position, so the capo position still needs to be added
 	// to the fret values of all fretted notes
 

@@ -2336,14 +2336,14 @@ int eof_new_chart(char * filename)
 
 int eof_save_helper(char *destfilename)
 {
-	unsigned long ctr, ctr2, notes_after_chart_audio;
+	unsigned long ctr, ctr2, ctr3, notes_after_chart_audio;
 	char newfolderpath[1024] = {0};
 	char tempfilename2[1024] = {0};
 	char oggfn[1024] = {0};
 	char function;		//Will be set to 1 for "Save" or 2 for "Save as"
 	int jumpcode = 0;
 	char fixvoxpitches, fixvoxphrases;
-	char note_length_warned = 0, note_distance_warned = 0;
+	char note_length_warned = 0, note_distance_warned = 0, arpeggio_warned = 0;
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
 
@@ -2523,6 +2523,9 @@ int eof_save_helper(char *destfilename)
 				eof_track_rebuild_rs_tone_names_list_strings(ctr, 1);
 				if(eof_track_rs_tone_names_list_strings_num == 1)
 				{	//If only one tone name is used
+					eof_clear_input();
+					key[KEY_Y] = 0;
+					key[KEY_N] = 0;
 					if(!warning3 && alert("Warning:  At least one track uses only one tone name.  You must use at least", "two different tone names and set one as default for them to work in Rocksmith.", "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
 					{
 						eof_track_destroy_rs_tone_names_list_strings();
@@ -2537,6 +2540,9 @@ int eof_save_helper(char *destfilename)
 				{	//If at least 2 unique tone names are used
 					if((tp->defaulttone[0] == '\0') && !warning1)
 					{	//If the default tone is not set, and the user wasn't warned about this yet
+						eof_clear_input();
+						key[KEY_Y] = 0;
+						key[KEY_N] = 0;
 						if(!warning1 && alert("Warning:  At least one track with tone changes has no default tone set.", NULL, "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
 						{
 							eof_track_destroy_rs_tone_names_list_strings();
@@ -2564,6 +2570,47 @@ int eof_save_helper(char *destfilename)
 			}
 		}
 	}
+
+	/* check if any arpeggio phrases only have one note in them */
+	for(ctr = 1; (ctr < eof_song->tracks) && !arpeggio_warned; ctr++)
+	{	//For each track, or until the user is warned about an offending arpeggio
+		if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If this is a pro guitar/bass track
+			EOF_PRO_GUITAR_TRACK *tp;
+			unsigned long tracknum, notectr;
+
+			tracknum = eof_song->track[ctr]->tracknum;
+			tp = eof_song->pro_guitar_track[tracknum];
+
+			for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
+			{	//For each arpeggio phrase in the track
+				notectr = 0;
+				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
+				{	//For each note in the track
+					if((tp->note[ctr3]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr3]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr3]->type == tp->arpeggio[ctr2].difficulty))
+					{	//If the note is within the arpeggio phrase
+						notectr++;	//Increment counter
+					}
+				}
+				if(notectr < 2)
+				{
+					eof_clear_input();
+					key[KEY_Y] = 0;
+					key[KEY_N] = 0;
+					(void) eof_menu_track_selected_track_number(ctr, 1);				//Set the active instrument track
+					eof_note_type = tp->arpeggio[ctr2].difficulty;						//Set the active difficulty to match that of the arpeggio
+					eof_set_seek_position(tp->arpeggio[ctr2].start_pos + eof_av_delay);	//Seek to the arpeggio's position
+					eof_render();
+					if(alert("Warning:  At least one arpeggio phrase doesn't contain at least two notes.", "You should remove the arpeggio phrase or add additional notes into it.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+					{	//If the user opts to cancel
+						return 1;	//Return cancellation
+					}
+					arpeggio_warned = 1;	//Set a condition to exit outer for loop
+					break;	//Break from inner for loop
+				}
+			}//For each arpeggio phrase in the track
+		}//If this is a pro guitar/bass track
+	}//For each track
 
 	/* build the target file name */
 	if(destfilename == NULL)
