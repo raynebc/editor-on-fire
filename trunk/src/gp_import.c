@@ -1663,6 +1663,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	struct eof_gpa_sync_point *sync_points = NULL;
 	char error = 0;
 	char *musical_symbols[19] = {"Coda", "Double Coda", "Segno", "Segno Segno", "Fine", "Da Capo", "Da Capo al Coda", "Da Capo al double Coda", "Da Capo al Fine", "Da Segno", "Da Segno al Coda", "Da Segno al double Coda", "Da Segno al Fine", "Da Segno Segno", "Da Segno Segno al Coda", "Da Segno Segno al double Coda", "Da Segno Segno al Fine", "Da Coda", "Da double Coda"};
+	unsigned char unpitchend;	//Tracks the end position for imported notes that slide in/out with no formal slide definition
 
 	eof_log("\tImporting Guitar Pro file", 1);
 	eof_log("eof_load_gp() entered", 1);
@@ -1867,6 +1868,29 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	if(!inf)
 	{	//If the input GP file wasn't opened for reading by the GPA parse logic earlier
 		inf = pack_fopen(fn, "rb");
+	}
+	//The webtabplayer website corrupts GP files by inserting a BOM at the beginning of the file, check for this and pass it if necessary
+	if(inf)
+	{	//If the file was opened
+		char reopen = 1;	//If the BOM sequence is not read, the file will have to be reopened, since Allegro can't simply rewind it
+
+		if(pack_getc(inf) == 0xEF)
+		{	//The first byte in a BOM sequence
+			if(pack_getc(inf) == 0xBB)
+			{	//The second byte in a BOM sequence
+				if(pack_getc(inf) == 0xBF)
+				{	//The third byte in a BOM sequence
+					eof_log("Warning:  This GP file is corrupted (begins with a Byte Order Mark sequence), attempting to recover", 1);
+					reopen = 0;	//Don't re-open the file
+					//If this sequence of bytes was not read, re-open the file for reading since Allegro can't simply rewind it
+				}
+			}
+		}
+		if(reopen)
+		{
+			(void) pack_fclose(inf);
+			inf = pack_fopen(fn, "rb");
+		}
 	}
 	if(!inf)
 	{
@@ -3462,11 +3486,31 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									byte = pack_getc(inf);	//Slide type
 									if(byte & 4)
 									{	//This note slides out and downwards
-										flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+										if(frets[ctr4] > 1 )
+										{	//Don't apply a downward slide unless the note is at fret 2 or higher
+											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+											unpitchend = frets[ctr4] - 1;
+										}
 									}
 									else if(byte & 8)
 									{	//This note slides out and upwards
-										flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+										flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+										unpitchend = frets[ctr4] + 1;
+									}
+									else if(byte & 16)
+									{	//This note slides in from below
+										if(frets[ctr4] > 1 )
+										{	//Don't allow this unless sliding into a fret higher than 1
+											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+											unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
+											frets[ctr4]--;				//Set the beginning of this slide one fret lower
+										}
+									}
+									else if(byte & 32)
+									{	//This note slides in from above
+										flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+										unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
+										frets[ctr4]++;				//Set the beginning of this slide one fret higher
 									}
 									else
 									{
@@ -3476,6 +3520,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										}
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
 									}
+								}
+								else
+								{
+									unpitchend = 0;	//No unpitched slide
 								}
 								if(byte2 & 16)
 								{	//Harmonic
@@ -3581,6 +3629,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}
 								np[ctr2]->frets[ctr4] = frets[convertednum];	//Copy the fret number for this string
 								np[ctr2]->finger[ctr4] = finger[convertednum];	//Copy the finger number used to fret the string (is nonzero if defined)
+							}
+							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+							{	//If the note had an unpitched slide
+								np[ctr2]->unpitchend = unpitchend;	//Apply the end position that was previously determined
+								if(unpitchend > gp->track[ctr2]->numfrets)
+								{	//If this unpitched slide requires the fret limit to be increased
+									gp->track[ctr2]->numfrets++;		//Make it so
+								}
 							}
 							np[ctr2]->legacymask = 0;
 							np[ctr2]->midi_length = 0;
@@ -4063,7 +4119,6 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 							newevent[newevents]->beat = beatctr;	//Correct the beat number
 							newevents++;
 						}
-						break;
 					}
 				}
 			}

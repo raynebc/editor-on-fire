@@ -2035,10 +2035,20 @@ if(key[KEY_PAUSE])
 		}
 
 	/* deselect all (CTRL+D) */
+	/* double BPM (CTRL+SHIFT+D) */
 		if(KEY_EITHER_CTRL && key[KEY_D])
 		{
-			(void) eof_menu_edit_deselect_all();
-			key[KEY_D] = 0;
+			if(!KEY_EITHER_SHIFT)
+			{	//If CTRL is held but SHIFT is not
+				(void) eof_menu_edit_deselect_all();
+				key[KEY_D] = 0;
+			}
+			else
+			{	//Both CTRL and SHIFT are held
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				(void) eof_menu_beat_double_tempo();
+				key[KEY_D] = 0;
+			}
 		}
 
 	/* cycle HOPO status (H in a legacy track) */
@@ -2435,6 +2445,14 @@ if(key[KEY_PAUSE])
 				}
 			}
 		}//If the active track is a pro guitar track
+
+	/* halve BPM (CTRL+SHIFT+X) */
+		if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT && key[KEY_X])
+		{
+			eof_shift_used = 1;	//Track that the SHIFT key was used
+			(void) eof_menu_beat_halve_tempo();
+			key[KEY_X] = 0;
+		}
 
 	/* set active difficulty number (CTRL+SHIFT+~, CTRL+SHIFT+#, CTRL+SHIFT+Fn #) */
 		if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)

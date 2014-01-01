@@ -83,8 +83,8 @@ MENU eof_beat_menu[] =
 	{"Reset BPM", eof_menu_beat_reset_bpm, NULL, 0, NULL},
 	{"&Calculate BPM", eof_menu_beat_calculate_bpm, NULL, 0, NULL},
 	{"Estimate BPM", eof_menu_beat_estimate_bpm, NULL, 0, NULL},
-	{"Double BPM", eof_menu_beat_double_tempo, NULL, 0, NULL},
-	{"Halve BPM", eof_menu_beat_halve_tempo, NULL, 0, NULL},
+	{"Double BPM\t" CTRL_NAME "+Shift+D", eof_menu_beat_double_tempo, NULL, 0, NULL},
+	{"Halve BPM\t" CTRL_NAME "+Shift+X", eof_menu_beat_halve_tempo, NULL, 0, NULL},
 	{"Fix tempo for RBN", eof_menu_beat_set_RBN_tempos, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Rocksmith", NULL, eof_beat_rocksmith_menu, 0, NULL},
@@ -474,10 +474,10 @@ int eof_menu_beat_bpm_change(void)
 			eof_show_mouse(NULL);
 			return 1;
 		}
-		if(bpm < 0.1)
+		if((bpm < 0.1) || (bpm > 2000.0))
 		{
 			eof_render();
-			allegro_message("BPM must be at least 0.1.");
+			allegro_message("BPM must be between 0.1 and 2000.");
 			eof_cursor_visible = 1;
 			eof_pen_visible = 1;
 			eof_show_mouse(NULL);

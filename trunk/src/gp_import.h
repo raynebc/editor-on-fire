@@ -48,7 +48,7 @@
 		unsigned fileversion;				//The version of the GP format being imported
 		char **names;						//An array of strings, representing the native name of each loaded track
 		EOF_PRO_GUITAR_TRACK **track;		//An array of pro guitar track pointers, representing the imported note data of each loaded track
-		EOF_TEXT_EVENT * text_event[EOF_MAX_TEXT_EVENTS];	//An array of pro guitar text event structures, representing the section markers imported for each loaded track
+		EOF_TEXT_EVENT * text_event[EOF_MAX_TEXT_EVENTS];	//An array of pro guitar text event structures, representing the section markers and beat text imported for each loaded track
 		struct eof_gp_measure *measure;		//An array of measure data from the Guitar Pro file
 		unsigned long measures;				//The number of elements in the above array
 		unsigned long text_events;			//The size of the text_event[] array
@@ -79,6 +79,7 @@
 	int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, char import_ts);
 		//Unwrap the specified track in the guitar pro structure into a new pro guitar track
 		//If the track being unwrapped is 0, text events will be unwrapped and gp's text events array will be replaced if there are any text events
+		// (so that the text events are only unwrapped once instead of duplicating for each track that is unwrapped)
 		//If import_ts is nonzero, the active project's time signatures are updated to reflect those of the unwrapped transcription
 		//Returns nonzero on error
 	char eof_copy_notes_in_beat_range(EOF_PRO_GUITAR_TRACK *source, unsigned long startbeat, unsigned long numbeats, EOF_PRO_GUITAR_TRACK *dest, unsigned long destbeat);
