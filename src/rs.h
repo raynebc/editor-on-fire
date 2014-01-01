@@ -35,6 +35,7 @@ typedef struct
 	char tap;						//Nonzero if this note is tapped
 	char vibrato;					//Is set to 80 if the note is played with vibrato, otherwise zero
 	char linknext;					//Nonzero if this note has the linknext option enabled
+	char ignore;					//Nonzero if this note has the ignore status applied and RS2 export is being performed
 } EOF_RS_TECHNIQUES;
 
 #define EOF_NUM_RS_PREDEFINED_SECTIONS 30
@@ -235,7 +236,8 @@ unsigned long eof_get_highest_fret_in_time_range(EOF_SONG *sp, unsigned long tra
 
 unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long stringnum, EOF_RS_TECHNIQUES *ptr, char target);
 	//Reads the flags of the specified note and sets variables in the specified techniques structure
-	//stringnum is only used to set the fret and slide end fret values for a specified gem, and must be a value from 0 to 5
+	//stringnum is only used to set the fret and pitched/unpitched slide end fret values (which take the track's capo into account) for a specified gem,
+	//  and must be a value from 0 to 5.  The correct end position for each slide is tracked for the specified string by determining how many frets the slide is
 	//If the note has pop or slap status, the length in the techniques structure is set to 0 to reflect
 	//	that Rocksmith requires such techniques to be on non sustained notes
 	//Unless the note has bend or slide status, the length in the techniques structure is set to 0 if the note has EOF's minimum length of 1ms

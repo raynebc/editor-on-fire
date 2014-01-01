@@ -426,15 +426,29 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			}
 
 			//Render pro guitar note slide if applicable
-			if((track != 0) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)))
-			{	//If rendering an existing pro guitar note that slides up or down
+			if((track != 0) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)))
+			{	//If rendering an existing pro guitar note that slides up or down or is an unpitched slide
 				long x2;			//Used for slide note rendering
 				unsigned long notepos2;		//Used for slide note rendering
 				int sliderect[8];		//An array of 4 vertices, used to draw a diagonal rectangle
 				int slidecolor = eof_color_dark_purple;	//By default, pro guitar slides are drawn in purple
+				char up = 0;		//Will be assumed to be a down slide by default
 
 				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE)
 					slidecolor = eof_color_white;	//If it's a reverse slide though, draw in white
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+					slidecolor = eof_color_black;	//If it's an unpitched slide, draw in black
+
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+					up = 1;
+				else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+				{
+					unsigned char lowestfret = eof_get_lowest_fretted_string_fret(eof_song, track, notenum);	//Determine the fret value of the lowest fretted string
+					if(lowestfret < eof_song->pro_guitar_track[eof_song->track[track]->tracknum]->note[notenum]->unpitchend)
+					{	//If the unpitched slide goes higher than this position
+						up = 1;
+					}
+				}
 
 				notepos2 = notepos + notelength;	//Find the position of the end of the note
 				if(pos < leftcoord)
@@ -449,7 +463,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 				//Define the slide rectangle coordinates in clockwise order
 				#define EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS 1
 				sliderect[0] = x;	//X1 (X coordinate of the left end of the slide)
-				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+				if(up)
 				{	//If this note slides up, start the slide line at the bottom of this note
 					sliderect[1] = y + radius - EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS;	//Y1 (Y coordinate of the left end of the slide)
 				}
@@ -458,7 +472,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 					sliderect[1] = y - radius - EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS;	//Y1 (Y coordinate of the left end of the slide)
 				}
 				sliderect[2] = x2;	//X2 (X coordinate of the right end of the slide)
-				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+				if(up)
 				{	//If this note slides up, end the slide line at the top of the next note
 					sliderect[3] = y - radius - EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS;	//Y2 (Y coordinate of the right end of the slide)
 				}
@@ -475,7 +489,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 				{	//If the left end of the polygon doesn't render off the right edge of the editor window and the right end of the polygon doesn't render off the left edge
 					polygon(window->screen, 4, sliderect, slidecolor);		//Render the 4 point polygon in the appropriate color
 				}
-			}//If rendering an existing pro guitar track that slides up or down
+			}//If rendering an existing pro guitar note that slides up or down or is an unpitched slide
 
 			if(!iscymbal)
 			{	//If this note is not a cymbal, render note as a circle
@@ -1179,15 +1193,29 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 			}
 
 			//Render pro guitar note slide if applicable
-			if((track != 0) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)))
-			{	//If rendering an existing pro guitar track that slides up or down
+			if((track != 0) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)))
+			{	//If rendering an existing pro guitar track that slides up or down or is an unpitched slide
 				long npos2, rz2;
 				unsigned long notepos2;		//Used for slide note rendering
 				unsigned long halflanewidth = (56.0 * (4.0 / (numlanes-1))) / 2;
 				int slidecolor = eof_color_dark_purple;	//By default, pro guitar slides are drawn in purple
+				char up = 0;		//Will be assumed to be a down slide by default
 
 				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE)
 					slidecolor = eof_color_white;	//If it's a reverse slide though, draw in white
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+					slidecolor = eof_color_black;	//If it's an unpitched slide, draw in black
+
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+					up = 1;
+				else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+				{
+					unsigned char lowestfret = eof_get_lowest_fretted_string_fret(eof_song, track, notenum);	//Determine the fret value of the lowest fretted string
+					if(lowestfret < eof_song->pro_guitar_track[eof_song->track[track]->tracknum]->note[notenum]->unpitchend)
+					{	//If the unpitched slide goes higher than this position
+						up = 1;
+					}
+				}
 
 				notepos2 = notepos + notelength;	//Find the position of the end of the note
 				npos2 = (long)(notepos2 + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
@@ -1195,7 +1223,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 				//Define the slide rectangle coordinates in clockwise order
 				#define EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D 4
-				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+				if(up)
 				{	//If this note slides up (3D view from left to right), start the slide line at the left of this note
 					point[0] = ocd3d_project_x(xchart[ctr] - halflanewidth, rz);	//X1 (X coordinate of the front end of the slide)
 				}
@@ -1204,7 +1232,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 					point[0] = ocd3d_project_x(xchart[ctr] + halflanewidth, rz);	//X1 (X coordinate of the front end of the slide)
 				}
 				point[1] = ocd3d_project_y(200, rz);	//Y1 (Y coordinate of the front end of the slide)
-				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+				if(up)
 				{	//If this note slides up (3D view from left to right), end the slide line at the right of the next note
 					point[2] = ocd3d_project_x(xchart[ctr] + halflanewidth, rz2);	//X2 (X coordinate of the back end of the slide)
 				}
@@ -1218,7 +1246,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 				point[6] = point[0] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X4 (the specified number of pixels right of X1)
 				point[7] = point[1];	//Y4 (Y coordinate of the front end of the slide)
 				polygon(eof_window_3d->screen, 4, point, slidecolor);	//Render the 4 point polygon in the appropriate color
-			}//If rendering an existing pro guitar track that slides up or down
+			}//If rendering an existing pro guitar track that slides up or down or is an unpitched slide
 
 			//Render slider note slide if applicable
 			if((eof_song->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER))
@@ -1527,6 +1555,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 			{	//Slides are not valid for open strings/chords
 				buffer[index++] = '?';	//Place this character to alert the user
 			}
+		}
+		if(np->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE)
+		{
+			buffer[index++] = 'I';
 		}
 	}//Check pro guitar statuses
 	else if((track == EOF_TRACK_DRUM) || (track == EOF_TRACK_DRUM_PS))

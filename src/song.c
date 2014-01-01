@@ -129,6 +129,15 @@ int eof_song_qsort_legacy_notes(const void * e1, const void * e2)
 	{
 		return 1;
 	}
+	//Sort third by note mask
+	if((*thing1)->note < (*thing2)->note)
+	{
+		return -1;
+	}
+	if((*thing1)->note > (*thing2)->note)
+	{
+		return 1;
+	}
 
 	// they are equal...
 	return 0;
@@ -1904,6 +1913,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					if(tp->note[ctr]->flags & EOF_NOTE_FLAG_T_EXTENDED)
 					{	//If this note uses any extended track flags
 						tp->note[ctr]->eflags = pack_igetl(fp);		//Read extended track flags
+						tp->note[ctr]->flags &= ~EOF_NOTE_FLAG_T_EXTENDED;	//Clear this flag, it won't be updated again until the project is saved/loaded
 					}
 				}//For each note in this track
 				tp->parent->numdiffs = numdiffs;	//Update the track's difficulty count
@@ -2810,7 +2820,8 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 						}
 						if(tp->note[ctr]->flags & EOF_NOTE_FLAG_T_EXTENDED)
 						{	//if this note uses any extended track flags
-							(void) pack_iputl(tp->note[ctr]->flags, fp);		//Write the note's extended track flags
+							(void) pack_iputl(tp->note[ctr]->eflags, fp);		//Write the note's extended track flags
+							tp->note[ctr]->flags &= ~EOF_NOTE_FLAG_T_EXTENDED;	//Clear this flag, it won't be updated again until the project is saved/loaded
 						}
 					}//For each note in this track
 					//Write the section type chunk, first count the number of section types to write
@@ -3986,6 +3997,15 @@ int eof_song_qsort_pro_guitar_notes(const void * e1, const void * e2)
 	{
 		return 1;
 	}
+	//Sort third by note mask
+	if((*thing1)->note < (*thing2)->note)
+	{
+		return -1;
+	}
+	if((*thing1)->note > (*thing2)->note)
+	{
+		return 1;
+	}
 
 	// they are equal...
 	return 0;
@@ -4057,29 +4077,6 @@ long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long not
 		}
 	}
 	return -1;
-}
-
-long eof_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long note)
-{
-	unsigned long tracknum;
-
-	if((sp == NULL) || (track >= sp->tracks))
-		return -1;	//Return error
-	tracknum = sp->track[track]->tracknum;
-
-	switch(sp->track[track]->track_format)
-	{
-		case EOF_LEGACY_TRACK_FORMAT:
-		return eof_fixup_next_legacy_note(sp->legacy_track[tracknum], note);
-
-		case EOF_VOCAL_TRACK_FORMAT:
-		return eof_fixup_next_lyric(sp->vocal_track[tracknum], note);
-
-		case EOF_PRO_GUITAR_TRACK_FORMAT:
-		return eof_fixup_next_pro_guitar_note(sp->pro_guitar_track[tracknum], note);
-	}
-
-	return -1;	//Return not found
 }
 
 long eof_get_prev_note_type_num(EOF_SONG *sp, unsigned long track, unsigned long note)
@@ -4352,7 +4349,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 					nextnote = ctr2;
 					while(1)
 					{
-						nextnote = eof_fixup_next_note(sp, track, nextnote);	//Iterate to the next note in this track difficulty
+						nextnote = eof_track_fixup_next_note(sp, track, nextnote);	//Iterate to the next note in this track difficulty
 						if((nextnote >= 0) && (tp->note[nextnote]->pos <= tp->arpeggio[ctr].end_pos))
 						{	//If there is another note and it is in the same arpeggio phrase
 							for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
@@ -6373,7 +6370,7 @@ unsigned long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigne
 	thisnote = eof_get_note_note(sp, track, note);		//Also get its note bitflag
 	while(1)
 	{
-		next = eof_fixup_next_note(sp, track, next);	//Find the next note that follows the specified note
+		next = eof_track_fixup_next_note(sp, track, next);	//Find the next note that follows the specified note
 		if(next < 0)
 		{	//If there was no next note
 			return ULONG_MAX;	//This note has no length limit

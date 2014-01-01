@@ -2343,7 +2343,7 @@ int eof_save_helper(char *destfilename)
 	char function;		//Will be set to 1 for "Save" or 2 for "Save as"
 	int jumpcode = 0;
 	char fixvoxpitches, fixvoxphrases;
-	char note_length_warned = 0, note_distance_warned = 0, arpeggio_warned = 0;
+	char note_length_warned = 0, note_distance_warned = 0, arpeggio_warned = 0, slide_warned = 0, bend_warned = 0;
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
 
@@ -2436,7 +2436,7 @@ int eof_save_helper(char *destfilename)
 	{	//For each track (and only if the user didn't already decline to cancel when an offending note was found)
 		for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, ctr); ctr2++)
 		{	//For each note in the track
-			long next = eof_fixup_next_note(eof_song, ctr, ctr2);	//Get the next note, if it exists
+			long next = eof_track_fixup_next_note(eof_song, ctr, ctr2);	//Get the next note, if it exists
 			unsigned long maxlength = eof_get_note_max_length(eof_song, ctr, ctr2);	//Get the maximum length of this note
 			if(next > 0)
 			{	//If there was a next note
@@ -2611,6 +2611,61 @@ int eof_save_helper(char *destfilename)
 			}//For each arpeggio phrase in the track
 		}//If this is a pro guitar/bass track
 	}//For each track
+
+	/* check if any slide notes don't define their end position or bend notes don't define their bend strength */
+	if(eof_write_rs_files)
+	{
+		for(ctr = 1; ctr < eof_song->tracks; ctr++)
+		{	//For each track
+			if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If this is a pro guitar/bass track
+				EOF_PRO_GUITAR_TRACK *tp;
+				unsigned long tracknum, flags;
+
+				tracknum = eof_song->track[ctr]->tracknum;
+				tp = eof_song->pro_guitar_track[tracknum];
+				for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+				{	//For each note in the track
+					flags = tp->note[ctr2]->flags;
+					if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
+					{	//If the note contains no bend strength or slide end position
+						if(((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)) && !slide_warned)
+						{	//If the note has slide technique and is missing the end position, and the user hasn't been warned about this yet
+							eof_clear_input();
+							key[KEY_Y] = 0;
+							key[KEY_N] = 0;
+							(void) eof_menu_track_selected_track_number(ctr, 1);		//Set the active instrument track
+							eof_note_type = tp->note[ctr2]->type;						//Set the active difficulty to match that of the note
+							eof_set_seek_position(tp->note[ctr2]->pos + eof_av_delay);	//Seek to the note's position
+							eof_render();
+							if(alert("Warning:  At least one slide note doesn't define its ending position.", "Unless you define this information they will export as 1 fret slides.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+							{	//If the user opts to cancel
+								return 1;	//Return cancellation
+							}
+							slide_warned = 1;
+						}
+						if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND && !bend_warned)
+						{	//If the note has bend technique and is missing the bend strength, and the user hasn't been warned about this yet
+							eof_clear_input();
+							key[KEY_Y] = 0;
+							key[KEY_N] = 0;
+							(void) eof_menu_track_selected_track_number(ctr, 1);		//Set the active instrument track
+							eof_note_type = tp->note[ctr2]->type;						//Set the active difficulty to match that of the note
+							eof_set_seek_position(tp->note[ctr2]->pos + eof_av_delay);	//Seek to the note's position
+							eof_render();
+							if(alert("Warning:  At least one bend note doesn't define its bend strength.", "Unless you define this information they will export as bending 1 half step.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+							{	//If the user opts to cancel
+								return 1;	//Return cancellation
+							}
+							bend_warned = 1;
+						}
+					}
+					if(slide_warned && bend_warned)
+						break;	//Exit for loop if both warnings were issued and the user declined both
+				}
+			}
+		}
+	}
 
 	/* build the target file name */
 	if(destfilename == NULL)

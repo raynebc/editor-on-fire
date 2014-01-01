@@ -85,6 +85,9 @@
 #define EOF_NOTE_TFLAG_TEMP       1	//This flag will represent a temporary status, such as a note that was generated for temporary use that will be removed
 #define EOF_NOTE_TFLAG_IGNORE     2	//This flag will represent a note that is not exported to XML (such as a chord within an arpeggio that is converted into single notes)
 
+//The following extended flags pertain to pro guitar notes
+#define EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE  1		//This flag specifies a note that will export to RS2 format with the "ignore" status set to nonzero, for special uses
+
 #define EOF_MAX_BEATS   32768
 #define EOF_MAX_PHRASES  1000
 #define EOF_MAX_OGGS        8
@@ -627,7 +630,6 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 	//If dir is < 0, decreases all selected notes in the active instrument difficulty by the specified amount
 	//If amount is 0, then the notes are adjusted by the current grid snap value
 	//An undo state is only created if at least one note's length is altered
-long eof_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note one after the specified note number that is in the same difficulty, or -1 if there is none
 unsigned long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//Determines the maximum valid length for the specified note by comparing its position to the next note that marks the threshold,
 	//minus the configured minimum distance between notes.  If the specified note is a crazy note, the threshold is based on the
