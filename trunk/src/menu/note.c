@@ -4294,25 +4294,25 @@ DIALOG eof_pro_guitar_note_frets_dialog[] =
 	//Note:  In guitar theory, string 1 refers to high e
 	{d_agup_text_proc,      60,  80,  64,  8,  2,   23,  0,    0,      0,         0,   "Fret #",     NULL,          NULL },
 	{d_agup_text_proc,      16,  108, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_6_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  104, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_6,  "0123456789Xx",NULL },
+	{eof_verified_edit_proc,74,  104, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_6, "0123456789Xx",NULL },
 	{d_agup_text_proc,      16,  132, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_5_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  128, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_5,  "0123456789Xx",NULL },
+	{eof_verified_edit_proc,74,  128, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_5, "0123456789Xx",NULL },
 	{d_agup_text_proc,      16,  156, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_4_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  152, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_4,  "0123456789Xx",NULL },
+	{eof_verified_edit_proc,74,  152, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_4, "0123456789Xx",NULL },
 	{d_agup_text_proc,      16,  180, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_3_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  176, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_3,  "0123456789Xx",NULL },
+	{eof_verified_edit_proc,74,  176, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_3, "0123456789Xx",NULL },
 	{d_agup_text_proc,      16,  204, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_2_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  200, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_2,  "0123456789Xx",NULL },
+	{eof_verified_edit_proc,74,  200, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_2, "0123456789Xx",NULL },
 	{d_agup_text_proc,      16,  228, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_1_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  224, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_1,  "0123456789Xx",NULL },
+	{eof_verified_edit_proc,74,  224, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_1, "0123456789Xx",NULL },
 
 	{d_agup_text_proc,      120, 80,  64,  8,  2,   23,  0,    0,      0,         0,   "Finger #",     NULL,          NULL },
-	{eof_verified_edit_proc,140, 104, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_6, "12345Xx",NULL },
-	{eof_verified_edit_proc,140, 128, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_5, "12345Xx",NULL },
-	{eof_verified_edit_proc,140, 152, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_4, "12345Xx",NULL },
-	{eof_verified_edit_proc,140, 176, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_3, "12345Xx",NULL },
-	{eof_verified_edit_proc,140, 200, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_2, "12345Xx",NULL },
-	{eof_verified_edit_proc,140, 224, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_1, "12345Xx",NULL },
+	{eof_verified_edit_proc,140, 104, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_6, "01234XxTt",NULL },
+	{eof_verified_edit_proc,140, 128, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_5, "01234XxTt",NULL },
+	{eof_verified_edit_proc,140, 152, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_4, "01234XxTt",NULL },
+	{eof_verified_edit_proc,140, 176, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_3, "01234XxTt",NULL },
+	{eof_verified_edit_proc,140, 200, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_2, "01234XxTt",NULL },
+	{eof_verified_edit_proc,140, 224, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_1, "01234XxTt",NULL },
 
 	{d_agup_button_proc,    12,  256, 68,  28, 2,   23,  '\r', D_EXIT, 0,         0,   "OK",         NULL,          NULL },
 	{d_agup_button_proc,    104, 256, 68,  28, 2,   23,  0,    D_EXIT, 0,         0,   "Cancel",     NULL,          NULL },
@@ -4395,6 +4395,10 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 						if(np->finger[ctr] != 0)
 						{	//If the finger used to fret this string is defined
 							(void) snprintf(eof_finger_strings[ctr], sizeof(eof_finger_strings[ctr]) - 1, "%d", np->finger[ctr]);	//Create the finger string
+							if(eof_finger_strings[ctr][0] == '5')
+							{	//If this is the value for the thumb
+								eof_finger_strings[ctr][0] = '0';	//Convert to 0, which specifies the thumb in Rocksmith numbering
+							}
 						}
 						else
 						{
@@ -4413,7 +4417,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 				}
 				else
 				{
-					eof_pro_guitar_note_frets_dialog[20 - ctr].flags = 0;		//Ensure this finger # input box is enabled
+					eof_pro_guitar_note_frets_dialog[20 - ctr].flags = 0;				//Ensure this finger # input box is enabled
 				}
 			}
 			if(function)
@@ -4533,7 +4537,15 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 									}
 									else
 									{	//Otherwise it defines the fingering for the string
+										if((eof_finger_strings[ctr][0] == 't') || (eof_finger_strings[ctr][0] == 'T'))
+										{	//If the user used the letter T
+											eof_finger_strings[ctr][0] = '0';	//Convert to the numeric Rocksmith notation for the thumb
+										}
 										fingervalue = eof_finger_strings[ctr][0] - '0';	//Convert the ASCII numerical character to decimal
+										if(fingervalue == 0)
+										{	//User defined use of the thumb
+											fingervalue = 5;	//Translate into EOF's notation for the thumb
+										}
 									}
 								}
 								bitmask |= (1 << ctr);	//Set the appropriate bit for this lane

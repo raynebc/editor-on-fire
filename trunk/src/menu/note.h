@@ -63,6 +63,7 @@ int eof_menu_toggle_freestyle(void);		//Toggles the freestyle status of all sele
 int eof_menu_note_edit_pro_guitar_note(void);		//Allows a pro guitar note's properties to be defined
 int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_made);
 	//Allows a pro guitar note's fret and fingering values to be defined.
+	//Rocksmith uses finger 0 to define use of the thumb, but EOF uses a value of 0 for undefined, so a user-specified value of 0, 't' or 'T' will be translated and stored as 5.
 	//If function is zero, either the fret values or the fingerings can be edited, and if the latter is changed,
 	//	this function will offer to update the finger arrays for matching non-selected matching notes in the active track
 	//If function is nonzero, the fret value input boxes are disabled, the finger input boxes for unused strings are disabled,

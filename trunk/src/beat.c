@@ -435,6 +435,7 @@ int eof_song_append_beats(EOF_SONG * sp, unsigned long beats)
 	{
 		return 0;
 	}
+
 	beat_length = (double)60000.0 / ((double)60000000.0 / (double)sp->beat[sp->beats - 1]->ppqn);	//Get the length of the current last beat
 	for(i = 0; i < beats; i++)
 	{

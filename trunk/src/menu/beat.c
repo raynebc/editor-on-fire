@@ -90,7 +90,7 @@ MENU eof_beat_menu[] =
 	{"&Rocksmith", NULL, eof_beat_rocksmith_menu, 0, NULL},
 	{"All E&vents", eof_menu_beat_all_events, NULL, 0, NULL},
 	{"&Events", eof_menu_beat_events, NULL, 0, NULL},
-	{"Clear Events", eof_menu_beat_clear_events, NULL, 0, NULL},
+	{"Clear all events", eof_menu_beat_clear_events, NULL, 0, NULL},
 	{"Place &Trainer Event", eof_menu_beat_trainer_event, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
