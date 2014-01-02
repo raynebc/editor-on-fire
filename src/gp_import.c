@@ -1664,6 +1664,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	char error = 0;
 	char *musical_symbols[19] = {"Coda", "Double Coda", "Segno", "Segno Segno", "Fine", "Da Capo", "Da Capo al Coda", "Da Capo al double Coda", "Da Capo al Fine", "Da Segno", "Da Segno al Coda", "Da Segno al double Coda", "Da Segno al Fine", "Da Segno Segno", "Da Segno Segno al Coda", "Da Segno Segno al double Coda", "Da Segno Segno al Fine", "Da Coda", "Da double Coda"};
 	unsigned char unpitchend;	//Tracks the end position for imported notes that slide in/out with no formal slide definition
+	const char *gpfile;	//Will be set to point to the name of the GP file to import, since when importing a GPA file, fn points to the XML file and not the GP file
 
 	eof_log("\tImporting Guitar Pro file", 1);
 	eof_log("eof_load_gp() entered", 1);
@@ -1672,6 +1673,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	{
 		return NULL;
 	}
+	gpfile = fn;	//Unless fn is found to point to a Go PlayAlong XML file, fn is assumed to be the path to a Guitar Pro file
 
 
 //First, parse the input file to see if it is a Go PlayAlong XML file
@@ -1756,6 +1758,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					eof_log(eof_log_string, 1);
 					error = 1;
 				}
+				gpfile = eof_temp_filename;	//Point gpfile to the name of the GP file to parse
 			}
 
 			ptr = strcasestr_spec(buffer2, "<sync>");
@@ -1867,7 +1870,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 //Initialize pointers and handles
 	if(!inf)
 	{	//If the input GP file wasn't opened for reading by the GPA parse logic earlier
-		inf = pack_fopen(fn, "rb");
+		inf = pack_fopen(gpfile, "rb");
 	}
 	//The webtabplayer website corrupts GP files by inserting a BOM at the beginning of the file, check for this and pass it if necessary
 	if(inf)
@@ -1889,7 +1892,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		if(reopen)
 		{
 			(void) pack_fclose(inf);
-			inf = pack_fopen(fn, "rb");
+			inf = pack_fopen(gpfile, "rb");
 		}
 	}
 	if(!inf)
@@ -2648,6 +2651,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				beat_length = last_qnote_length / ((double)eof_song->beat[ctr]->beat_unit / 4.0);
 				curpos += beat_length;
 			}
+#ifdef GP_IMPORT_DEBUG
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tBeat #%lu set at pos = %lu, fpos = %f", ctr, eof_song->beat[ctr]->pos, eof_song->beat[ctr]->fpos);
+			eof_log(eof_log_string, 1);
+			if((ctr > 0) && (eof_song->beat[ctr - 1]->fpos >= eof_song->beat[ctr]->fpos))
+			{	//If this beat isn't after the previous beat
+				eof_log("\t\t\tError:  Invalid beat position.", 1);
+			}
+#endif
 		}//For each beat in the project
 		eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
 		eof_calculate_tempo_map(eof_song);	//Update the tempo and anchor status of all beats
@@ -4075,6 +4086,10 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 			{	//If there was an error unwrapping the repeat into the new pro guitar track
 				eof_log("\tError unwrapping beats", 1);
 				free(measuremap);
+				for(ctr = 0; ctr < tp->notes; ctr++)
+				{	//For each note that had been allocated for the unwrapped track
+					free(tp->note[ctr]);	//Free its memory
+				}
 				free(tp);
 				free(working_num_of_repeats);
 				for(ctr = 0; ctr < newevents; ctr++)
@@ -4107,6 +4122,10 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 							{
 								eof_log("\tError allocating memory to unwrap GP track (5)", 1);
 								free(measuremap);
+								for(ctr = 0; ctr < tp->notes; ctr++)
+								{	//For each note that had been allocated for the unwrapped track
+									free(tp->note[ctr]);	//Free its memory
+								}
 								free(tp);
 								free(working_num_of_repeats);
 								for(ctr = 0; ctr < newevents; ctr++)
@@ -4411,9 +4430,9 @@ char eof_copy_notes_in_beat_range(EOF_PRO_GUITAR_TRACK *source, unsigned long st
 				dest->note[dest->notes]->pos = newpos;				//Set the unwrapped note's position
 				dest->note[dest->notes]->length = newend - newpos;	//Set its length
 				dest->notes++;	//Increment the destination track's note counter
-			}
-		}
-	}
+			}//The beat positions were found
+		}//If this note is positioned within the target range of beats
+	}//For each note in the source track
 
 	return 1;	//Return success
 }

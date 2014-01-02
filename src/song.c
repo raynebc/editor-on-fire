@@ -3480,6 +3480,35 @@ unsigned char eof_get_note_tflags(EOF_SONG *sp, unsigned long track, unsigned lo
 	return 0;	//Return error
 }
 
+unsigned char eof_get_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			return 0;	//Legacy tracks do not use extended flags yet
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			return 0;	//Vocal tracks do not use extended flags yet
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(note < sp->pro_guitar_track[tracknum]->notes)
+			{
+				return sp->pro_guitar_track[tracknum]->note[note]->eflags;
+			}
+		break;
+	}
+
+	return 0;	//Return error
+}
+
 unsigned long eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	unsigned long tracknum;
@@ -4646,6 +4675,25 @@ void eof_set_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note, 
 			if(note < sp->pro_guitar_track[tracknum]->notes)
 			{
 				sp->pro_guitar_track[tracknum]->note[note]->tflags = tflags;
+			}
+		break;
+	}
+}
+
+void eof_set_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char eflags)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(note < sp->pro_guitar_track[tracknum]->notes)
+			{
+				sp->pro_guitar_track[tracknum]->note[note]->eflags = eflags;
 			}
 		break;
 	}

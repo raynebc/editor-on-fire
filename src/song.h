@@ -563,6 +563,8 @@ unsigned long eof_get_note_flags(EOF_SONG *sp, unsigned long track, unsigned lon
 void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long flags);	//Sets the flags of the specified track's note/lyric
 unsigned char eof_get_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the temporary flags of the specified track's note/lyric, or 0 on error
 void eof_set_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char tflags);	//Sets the temporary flags of the specified track's note/lyric
+unsigned char eof_get_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the extended flags of the specified track's note/lyric, or 0 on error
+void eof_set_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char eflags);	//Sets the extended flags of the specified track's note/lyric
 unsigned long eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the note bitflag of the specified track's note/lyric, or 0 on error
 void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long value);	//Sets the note value of the specified track's note/lyric
 char *eof_get_note_name(EOF_SONG *sp, unsigned long track, unsigned long note);				//Returns a pointer to the note's statically allocated name array, or a lyric's text array, or NULL on error

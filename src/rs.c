@@ -934,6 +934,10 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						char *temp = fingerdef[ctr2];	//Simplify logic below
 						temp[0] = '0' + effective_fingering[ctr2];	//Convert decimal to ASCII
 						temp[1] = '\0';	//Truncate string
+						if(temp[0] == '5')
+						{	//If this fingering specifies the thumb
+							temp[0] = '0';	//Convert from EOF's numbering (5 = thumb) to Rocksmith's numbering (0 = thumb)
+						}
 						*(finger[ctr2]) = temp;
 					}
 					else
@@ -2236,6 +2240,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							char *temp = fingerdef[ctr2];	//Simplify logic below
 							temp[0] = '0' + effective_fingering[ctr2];	//Convert decimal to ASCII
 							temp[1] = '\0';	//Truncate string
+							if(temp[0] == '5')
+							{	//If this fingering specifies the thumb
+								temp[0] = '0';	//Convert from EOF's numbering (5 = thumb) to Rocksmith's numbering (0 = thumb)
+							}
 							*(finger[ctr2]) = temp;
 						}
 						else
@@ -2806,6 +2814,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 										if(finger[stringnum])
 										{	//If this string is fretted
 											fingernum = finger[stringnum];
+											if(fingernum == 5)
+											{	//If this fingering specifies the thumb
+												fingernum = 0;	//Convert from EOF's numbering (5 = thumb) to Rocksmith's numbering (0 = thumb)
+											}
 										}
 										else
 										{	//This string is played open
