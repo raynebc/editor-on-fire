@@ -59,7 +59,8 @@ int eof_menu_beat_push_offset_up(void);
 int eof_menu_beat_toggle_anchor(void);
 int eof_menu_beat_delete_anchor(void);
 int eof_menu_beat_calculate_bpm(void);
-int eof_menu_beat_reset_bpm(void);
+int eof_menu_beat_reset_bpm(void);		//Applies the first beat's tempo to all beats in the project
+int eof_menu_beat_remove_ts(void);		//Removes all time signature changes from the project
 int eof_menu_beat_all_events(void);
 int eof_menu_beat_events(void);
 int eof_menu_beat_clear_events(void);

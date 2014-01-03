@@ -31,6 +31,7 @@ MENU eof_beat_time_signature_menu[] =
 	{"&6/4", eof_menu_beat_ts_6_4, NULL, 0, NULL},
 	{"&Custom", eof_menu_beat_ts_custom, NULL, 0, NULL},
 	{eof_ts_menu_off_text, eof_menu_beat_ts_off, NULL, 0, NULL},
+	{"Clear all", eof_menu_beat_remove_ts, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -612,8 +613,15 @@ int eof_menu_beat_ts_custom(void)
 int eof_menu_beat_ts_off(void)
 {
 //Clear the beat's status except for its anchor and event flags
-	int flags = eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR;
-	flags |= eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_EVENTS;
+	unsigned long flags = eof_song->beat[eof_selected_beat]->flags;
+
+	flags &= ~EOF_BEAT_FLAG_START_4_4;	//Clear this TS flag
+	flags &= ~EOF_BEAT_FLAG_START_3_4;	//Clear this TS flag
+	flags &= ~EOF_BEAT_FLAG_START_5_4;	//Clear this TS flag
+	flags &= ~EOF_BEAT_FLAG_START_6_4;	//Clear this TS flag
+	flags &= ~EOF_BEAT_FLAG_CUSTOM_TS;	//Clear this TS flag
+	flags &= ~0xFF000000;	//Clear any custom TS numerator
+	flags &= ~0x00FF0000;	//Clear any custom TS denominator
 	if(flags != eof_song->beat[eof_selected_beat]->flags)
 	{	//If the user has changed the time signature status of this beat
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -955,7 +963,7 @@ int eof_menu_beat_reset_bpm(void)
 			for(i = 1; i < eof_song->beats; i++)
 			{
 				eof_song->beat[i]->ppqn = eof_song->beat[0]->ppqn;
-				eof_song->beat[i]->flags = eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS;
+				eof_song->beat[i]->flags &= ~EOF_BEAT_FLAG_ANCHOR;	//Clear the anchor flag
 			}
 			eof_calculate_beats(eof_song);
 			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
@@ -964,6 +972,48 @@ int eof_menu_beat_reset_bpm(void)
 	else
 	{
 		allegro_message("No BPM changes to erase!");
+	}
+	eof_clear_input();
+	return 1;
+}
+
+int eof_menu_beat_remove_ts(void)
+{
+	unsigned junk1, junk2;
+	unsigned long i, flags;
+	char reset = 0;
+
+	for(i = 0; i < eof_song->beats; i++)
+	{	//For each beat
+		if(eof_get_ts(eof_song, &junk1, &junk2, i) == 1)
+		{	//If this beat has a time signature defined
+			reset = 1;
+			break;
+		}
+	}
+	if(reset)
+	{	//If there was at least one time signature change
+		if(alert(NULL, "Erase all time signature changes?", NULL, "OK", "Cancel", 0, 0) == 1)
+		{	//If the user opted to erase the changes
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			for(i = 0; i < eof_song->beats; i++)
+			{
+				flags = eof_song->beat[i]->flags;
+				flags &= ~EOF_BEAT_FLAG_START_4_4;	//Clear this TS flag
+				flags &= ~EOF_BEAT_FLAG_START_3_4;	//Clear this TS flag
+				flags &= ~EOF_BEAT_FLAG_START_5_4;	//Clear this TS flag
+				flags &= ~EOF_BEAT_FLAG_START_6_4;	//Clear this TS flag
+				flags &= ~EOF_BEAT_FLAG_CUSTOM_TS;	//Clear this TS flag
+				flags &= ~0xFF000000;				//Clear any custom TS numerator
+				flags &= ~0x00FF0000;				//Clear any custom TS denominator
+				eof_song->beat[i]->flags = flags;
+			}
+			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+		}
+	}
+	else
+	{
+		allegro_message("No time signature changes to erase!");
 	}
 	eof_clear_input();
 	return 1;
