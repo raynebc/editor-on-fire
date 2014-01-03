@@ -2931,8 +2931,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			handshapectr = 0;
 			for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 			{	//For each note in the track
-				if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 1) > 1) || eof_is_partially_ghosted(sp, track, ctr3)))
-				{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems) or an arpeggio handshape
+				if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1) || eof_is_partially_ghosted(sp, track, ctr3)))
+				{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems) or an arpeggio handshape
 					unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
 
 					//Find this chord's ID
@@ -3017,8 +3017,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				(void) pack_fputs(buffer, fp);
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
-					if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 1) > 1) || eof_is_partially_ghosted(sp, track, ctr3)))
-					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems) or an arpeggio handshape
+					if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1) || eof_is_partially_ghosted(sp, track, ctr3)))
+					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems) or an arpeggio handshape
 						unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
 
 						//Find this chord's ID

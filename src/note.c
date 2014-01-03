@@ -962,7 +962,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	else
 	{	//This is a non drum track (or a drum track where bass is rendered in its own lane)
 		if(eof_render_3d_rs_chords && eof_note_has_high_chord_density(eof_song, track, notenum, 2))
-		{	//If the user has opted to 3D render Rocksmith style chords, and this is a high density chord
+		{	//If the user has opted to 3D render Rocksmith style chords, and this is a high density pro guitar chord
 			rz = npos;
 			ez = npos + 14;
 			point[0] = ocd3d_project_x(bx - 10, rz);
@@ -977,6 +977,25 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			if((point[0] != -65536) && (point[1] != -65536) && (point[2] != -65536) && (point[3] != -65536) && (point[4] != -65536) && (point[6] != -65536))
 			{	//If none of the coordinate projections failed
 				polygon(eof_window_3d->screen, 4, point, p ? eof_color_cyan : eof_color_dark_cyan);
+			}
+			if(eof_is_string_muted(eof_song, track, notenum))
+			{	//If the chord is entirely string muted, render an X fret window centered over the repeat line
+				unsigned long bitmask;
+				BITMAP *fretbmp;
+				for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+				{	//Find the first used string to pass to eof_create_fret_number_bitmap() to generate the fret window
+					if(eof_song->pro_guitar_track[tracknum]->note[notenum]->note & bitmask)
+					{	//If this string is used
+						break;
+					}
+				}
+				fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], ctr, 8, eof_color_white, eof_color_black);	//Allow one extra character's width for padding
+				if(fretbmp != NULL)
+				{	//Render the bitmap on top of the 3D note and then destroy the bitmap
+					unsigned long xpos = (xchart[0] + xchart[eof_song->pro_guitar_track[tracknum]->numstrings - 1]) / 2;		//Get the 3D x coordinate of the center of the lanes
+					ocd3d_draw_bitmap(eof_window_3d->screen, fretbmp, xpos - 8, 200 - 14, npos);	//Center the fret window over the repeat line
+					destroy_bitmap(fretbmp);
+				}
 			}
 		}
 		else
@@ -1396,6 +1415,7 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 	{	//Check pro guitar statuses
 		unsigned long tracknum = eof_song->track[track]->tracknum, index2;
 		EOF_PRO_GUITAR_NOTE *np = eof_song->pro_guitar_track[tracknum]->note[note];
+		unsigned char lowestfret = eof_get_lowest_fretted_string_fret(eof_song, track, note);	//Determine the fret value of the lowest fretted string
 
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
 		{
@@ -1461,7 +1481,6 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		if(((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
 		{	//If the note slides up or down and defines the ending fret for the slide
 			unsigned long index2;
-			unsigned char lowestfret = eof_get_lowest_fretted_string_fret(eof_song, track, note);	//Determine the fret value of the lowest fretted string
 
 			if((np->slideend == lowestfret) || !lowestfret)
 			{	//If the slide is not valid (it ends on the same fret it starts on or the note/chord is played open)
@@ -1526,8 +1545,6 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		}
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
 		{
-			unsigned char lowestfret = eof_get_lowest_fretted_string_fret(eof_song, track, note);	//Determine the fret value of the lowest fretted string
-
 			if(lowestfret)
 			{	//If at least one of the strings is fretted, display an unpitched slide indicator
 				if(lowestfret == np->unpitchend)

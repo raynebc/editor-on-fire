@@ -435,6 +435,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	unsigned long nexteventpos = 0;
 	char whattowrite;	//Bitflag: bit 0=write tempo change, bit 1=write TS change
 	char stored_beat_track = 0;	//Will be set to nonzero if there is found to be a stored BEAT track in the project
+	char slideup, slidedown;	//Will track whether a note has an upward/downward slide or unpitched slide
 
 	memset(notetempname, 0, sizeof(notetempname));	//Init this memory to 0
 	eof_log("eof_export_midi() entered", 1);
@@ -1438,16 +1439,39 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				}
 
 				/* write slide sections */
-				if((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+				//First, determine if the note slides, and if so, in what direction
+				slideup = 0;	//Reset these statuses
+				slidedown = 0;
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+				{	//If the note explicitly slides up
+					slideup = 1;
+				}
+				else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+				{	//If the note explicitly slides down
+					slidedown = 1;
+				}
+				else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+				{	//If the note has an unpitched slide
+					unsigned char lowestfret = eof_get_lowest_fretted_string_fret(sp, j, i);	//Determine the fret value of the note's lowest fretted string
+					if(lowestfret < tp->note[i]->unpitchend)
+					{	//If the unpitched slide goes higher than this position
+						slideup = 1;
+					}
+					else if(lowestfret > tp->note[i]->unpitchend)
+					{	//If the unpitched slide goes lower than this position
+						slidedown = 1;
+					}
+				}
+				if(slideup || slidedown)
 				{	//If this note slides up or down
-//	The correct method to mark slides in RB3 has been found, the sysex method is deprecated and will remain exported for the time being
+//	The correct method to mark slides in RB3 has been found, and works (mostly), the sysex method is deprecated and will remain exported for the time being
 					int slidechannel = 0;	//By default, slides are written over channel 0
 
 					if(featurerestriction == 0)
 					{	//Only write the slide Sysex notation if not writing a Rock Band compliant MIDI
 						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
 						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
-						if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+						if(slideup)
 						{	//If this note slides up
 							phase_shift_sysex_phrase[5] = 2;	//Store the phrase ID (2 = Pro guitar slide up)
 						}
@@ -1465,12 +1489,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					{	//If this slide is to be written to indicate it is reversed
 						slidechannel = 11;	//It must be written over channel 11
 					}
-					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+					if(slidedown)
 					{	//If this note slides down
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 7, 108, slidechannel);	//Slide markers are note # (lane 1 + 7).  Fret 8 or higher triggers a down slide in RB3
 						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 7, 108, slidechannel);
 					}
-					else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+					else if(slideup)
 					{	//If this note slides up
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 7, 107, slidechannel);	//Fret 7 or lower triggers an up slide in RB3
 						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 7, 107, slidechannel);
