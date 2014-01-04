@@ -2696,7 +2696,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				char *upstrum = "up";
 				char *downstrum = "down";
 				char *direction;	//Will point to either upstrum or downstrum as appropriate
-				double notepos;
+				unsigned long notepos;
 				char highdensity;	//Various criteria determine whether the highDensity boolean property is set to true
 				char chordnote;		//Tracks whether a chordNote subtag is to be written
 
@@ -2741,19 +2741,20 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							}
 							(void) eof_get_rs_techniques(sp, track, ctr3, 0, &tech, 2);			//Determine techniques used by this chord
 							highdensity = eof_note_has_high_chord_density(sp, track, ctr3, 2);	//Determine whether the chord will export with high density
-							notepos = (double)tp->note[ctr3]->pos / 1000.0;
+							notepos = tp->note[ctr3]->pos;
 							if((chordid != lastchordid) || !highdensity)
 							{	//If this chord's ID is different from that of the previous chord or it meets the normal criteria for a low density chord
 								chordnote = 1;		//Ensure chordNote subtags are written
 								highdensity = 0;	//Ensure the chord tag is written to reflect low density
 								tagend[0] = '\0';	//Drop the / from the string
 							}
-							(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" chordId=\"%lu\" fretHandMute=\"%d\" highDensity=\"%d\" ignore=\"%d\" palmMute=\"%d\" hopo=\"%d\" strum=\"%s\"%s>\n", notepos, tech.linknext, tech.accent, chordid, tech.stringmute, highdensity, tech.ignore, tech.palmmute, tech.hopo, direction, tagend);
+							(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" chordId=\"%lu\" fretHandMute=\"%d\" highDensity=\"%d\" ignore=\"%d\" palmMute=\"%d\" hopo=\"%d\" strum=\"%s\"%s>\n", (double)notepos / 1000.0, tech.linknext, tech.accent, chordid, tech.stringmute, highdensity, tech.ignore, tech.palmmute, tech.hopo, direction, tagend);
 							(void) pack_fputs(buffer, fp);
 							if(chordnote)
 							{	//If chordNote tags are to be written
 								unsigned long stringnum, bitmask;
 								unsigned char *finger = tp->note[chordlist[chordid]]->finger;	//Point to this chord's template's finger array
+								unsigned char lowestfretted = eof_pro_guitar_note_lowest_fret(tp, ctr3);	//Get the lowest fret number (if any) used for the chord
 								long fingernum;
 
 								for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
@@ -2762,6 +2763,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 									{	//If this string is used in this note and it is not ghosted
 										char tagend[2] = "/";	//If a chordNote tag is to have a bendValues subtag, this string is emptied so that the note tag doesn't end in the same line
 										long fret;				//The fret number used for this string (uses signed math, keep it a signed int type)
+										unsigned long flags = tp->note[ctr3]->flags;
 
 										(void) eof_get_rs_techniques(sp, track, ctr3, stringnum, &tech, 2);	//Determine techniques used by this note
 										if(tp->note[ctr3]->frets[stringnum] == 0xFF)
@@ -2786,7 +2788,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 										}
 										if(tech.bend || (tech.slideto >= 0) || (tech.unpitchedslideto >= 0))
 										{	//If this note is marked as a bend or slide note
-											if(!eof_pro_guitar_note_lowest_fret(tp, ctr3))
+											if(!lowestfretted)
 											{	//If this note also contains no fretted strings, omit these statuses because they're invalid for open notes
 												tech.bend = tech.bendstrength_h = tech.bendstrength_q = 0;
 												tech.slideto = -1;
@@ -2805,7 +2807,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 										}
 										else if(!tech.tremolo)
 										{	//Otherwise if the chord also does not have tremolo status (which is required for the technique to display in game)
-											tech.length = 0;	//Force the chordNotes to have no sustain
+											if(!((fret == 0) && ((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))))
+											{	//If the note is not fretted, it needs to keep its sustain if the fretted notes in the chord have bend or slide status
+												tech.length = 0;	//Force the chordNotes to have no sustain
+											}
 										}
 										if(tech.bend)
 										{	//If the note is a bend, the note tag must not end on the same line as it will have a bendValues subtag
@@ -2823,7 +2828,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 										{	//This string is played open
 											fingernum = -1;
 										}
-										(void) snprintf(buffer, sizeof(buffer) - 1, "          <chordNote time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" bend=\"%d\" fret=\"%ld\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"%d\" leftHand=\"%ld\" mute=\"%d\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\" harmonicPinch=\"%d\" pickDirection=\"0\" rightHand=\"-1\" slideUnpitchTo=\"%ld\" tap=\"%d\" vibrato=\"%d\"%s>\n", notepos, tech.linknext, tech.accent, tech.bend, fret, tech.hammeron, tech.harmonic, tech.hopo, tech.ignore, fingernum, tech.stringmute, tech.palmmute, tech.pop, tech.pulloff, tech.slap, tech.slideto, stringnum, (double)tech.length / 1000.0, tech.tremolo, tech.pinchharmonic, tech.unpitchedslideto, tech.tap, tech.vibrato, tagend);
+										(void) snprintf(buffer, sizeof(buffer) - 1, "          <chordNote time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" bend=\"%d\" fret=\"%ld\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"%d\" leftHand=\"%ld\" mute=\"%d\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\" harmonicPinch=\"%d\" pickDirection=\"0\" rightHand=\"-1\" slideUnpitchTo=\"%ld\" tap=\"%d\" vibrato=\"%d\"%s>\n", (double)notepos / 1000.0, tech.linknext, tech.accent, tech.bend, fret, tech.hammeron, tech.harmonic, tech.hopo, tech.ignore, fingernum, tech.stringmute, tech.palmmute, tech.pop, tech.pulloff, tech.slap, tech.slideto, stringnum, (double)tech.length / 1000.0, tech.tremolo, tech.pinchharmonic, tech.unpitchedslideto, tech.tap, tech.vibrato, tagend);
 										(void) pack_fputs(buffer, fp);
 										if(tech.bend)
 										{	//If the note is a bend, write the bendValues subtag and close the note tag
@@ -4615,7 +4620,14 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 	if(ptr)
 	{	//If the calling function passed a techniques structure
 		ptr->length = eof_get_note_length(sp, track, notenum);
-		fret = tp->note[notenum]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
+		if(tp->note[notenum]->frets[stringnum] != 0xFF)
+		{	//If this gem has a defined fret value
+			fret = tp->note[notenum]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
+		}
+		else
+		{
+			fret = 0;
+		}
 		lowestfretted = eof_get_lowest_fretted_string_fret(sp, track, notenum);	//Determine the fret value of the lowest fretted string
 
 		ptr->bendstrength_h = ptr->bendstrength_q = ptr->bend = 0;	//Initialize these to default values
@@ -4625,61 +4637,71 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 		{	//If the note is has the absolute minimum length and isn't a bend or a slide note (bend and slide notes are required to have a length > 0 or Rocksmith will crash)
 			ptr->length = 0;	//Convert to a length of 0 so that it doesn't display as a sustain note in-game
 		}
-		if((flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) == 0)
-		{	//If this note doesn't have definitions for bend strength or the ending fret for slides
-			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
-			{	//If this note bends
-				ptr->bend = 1;
-				ptr->bendstrength_h = 1;	//Assume a 1 half step bend
-				ptr->bendstrength_q = 2;
-			}
-			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-			{	//If this note slides up and the user hasn't defined the ending fret of the slide
-				ptr->slideto = fret + 1;	//Assume a 1 fret slide until logic is added for the author to add this information
-				ptr->slideto += tp->capo;	//Apply the capo position, so the slide ending is on the correct fret in-game
-			}
-			else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
-			{	//If this note slides down and the user hasn't defined the ending fret of the slide
-				ptr->slideto = fret - 1;	//Assume a 1 fret slide until logic is added for the author to add this information
-				ptr->slideto += tp->capo;	//Apply the capo position, so the slide ending is on the correct fret in-game
-			}
-		}
-		else
-		{	//This note defines the bend strength and ending fret for slides
-			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
-			{	//If this note bends
-				if(tp->note[notenum]->bendstrength & 0x80)
-				{	//If this bend strength is defined in quarter steps
-					ptr->bendstrength_q = (tp->note[notenum]->bendstrength & 0x7F);	//Obtain the defined bend strength in quarter steps (mask out the MSB)
-					ptr->bendstrength_h = (ptr->bendstrength_q + 1) / 2;			//Obtain the defined bend strength rounded up to the nearest half step
+		if(fret)
+		{	//If this string is fretted (open notes don't have slide or bend attributes written)
+			if((flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) == 0)
+			{	//If this note doesn't have definitions for bend strength or the ending fret for slides
+				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+				{	//If this note bends
+					ptr->bend = 1;
+					ptr->bendstrength_h = 1;	//Assume a 1 half step bend
+					ptr->bendstrength_q = 2;
 				}
-				else
-				{	//The bend strength is defined in half steps
-					ptr->bendstrength_h = tp->note[notenum]->bendstrength;	//Obtain the defined bend strength in half steps
-					ptr->bendstrength_q = ptr->bendstrength_h * 2;			//Obtain the defined bend strength in quarter steps
+				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+				{	//If this note slides up and the user hasn't defined the ending fret of the slide
+					ptr->slideto = fret + 1;	//Assume a 1 fret slide until logic is added for the author to add this information
+					ptr->slideto += tp->capo;	//Apply the capo position, so the slide ending is on the correct fret in-game
 				}
-				ptr->bend = ptr->bendstrength_h;	//Obtain the strength of this bend rounded up to the nearest half step
-			}
-			if((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
-			{	//If this note slides
-				if(lowestfretted != tp->note[notenum]->slideend)
-				{	//If the note's slide doesn't end at the position the lowest fretted string in the note is already at
-					slidediff = tp->note[notenum]->slideend - lowestfretted;	//Determine how many frets this slide travels
-					ptr->slideto = fret + slidediff + tp->capo;	//Get the correct ending fret for this string's slide, applying the capo position
+				else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+				{	//If this note slides down and the user hasn't defined the ending fret of the slide
+					ptr->slideto = fret - 1;	//Assume a 1 fret slide until logic is added for the author to add this information
+					ptr->slideto += tp->capo;	//Apply the capo position, so the slide ending is on the correct fret in-game
 				}
 			}
-		}
-		if((flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) && tp->note[notenum]->unpitchend)
-		{	//If this note has an unpitched slide and the user has defined the ending fret of the slide
-			if(lowestfretted != tp->note[notenum]->unpitchend)
-			{	//Don't allow the unpitched slide if it slides to the same fret this note/chord is already at
-				unpitchedslidediff = tp->note[notenum]->unpitchend - lowestfretted;	//Determine how many frets this slide travels
-				ptr->unpitchedslideto = fret + unpitchedslidediff + tp->capo;	//Get the correct ending fret for this string's slide, applying the capo position
+			else
+			{	//This note defines the bend strength and ending fret for slides
+				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+				{	//If this note bends
+					if(tp->note[notenum]->bendstrength & 0x80)
+					{	//If this bend strength is defined in quarter steps
+						ptr->bendstrength_q = (tp->note[notenum]->bendstrength & 0x7F);	//Obtain the defined bend strength in quarter steps (mask out the MSB)
+						ptr->bendstrength_h = (ptr->bendstrength_q + 1) / 2;			//Obtain the defined bend strength rounded up to the nearest half step
+					}
+					else
+					{	//The bend strength is defined in half steps
+						ptr->bendstrength_h = tp->note[notenum]->bendstrength;	//Obtain the defined bend strength in half steps
+						ptr->bendstrength_q = ptr->bendstrength_h * 2;			//Obtain the defined bend strength in quarter steps
+					}
+					ptr->bend = ptr->bendstrength_h;	//Obtain the strength of this bend rounded up to the nearest half step
+				}
+				if((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+				{	//If this note slides
+					if(lowestfretted != tp->note[notenum]->slideend)
+					{	//If the note's slide doesn't end at the position the lowest fretted string in the note is already at
+						slidediff = tp->note[notenum]->slideend - lowestfretted;	//Determine how many frets this slide travels
+						ptr->slideto = fret + slidediff + tp->capo;	//Get the correct ending fret for this string's slide, applying the capo position
+					}
+				}
 			}
-		}
+			if((flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) && tp->note[notenum]->unpitchend)
+			{	//If this note has an unpitched slide and the user has defined the ending fret of the slide
+				if(lowestfretted != tp->note[notenum]->unpitchend)
+				{	//Don't allow the unpitched slide if it slides to the same fret this note/chord is already at
+					unpitchedslidediff = tp->note[notenum]->unpitchend - lowestfretted;	//Determine how many frets this slide travels
+					ptr->unpitchedslideto = fret + unpitchedslidediff + tp->capo;	//Get the correct ending fret for this string's slide, applying the capo position
+				}
+			}
+		}//If this string is fretted (open notes don't have slide or bend attributes written)
 
 		//Determine note statuses
-		ptr->hammeron = (flags & EOF_PRO_GUITAR_NOTE_FLAG_HO) ? 1 : 0;
+		if(!fret)
+		{	//If the string is played open
+			ptr->hammeron = 0;	//An open string can't be played by hammering onto a fret
+		}
+		else
+		{
+			ptr->hammeron = (flags & EOF_PRO_GUITAR_NOTE_FLAG_HO) ? 1 : 0;
+		}
 		ptr->pulloff = (flags & EOF_PRO_GUITAR_NOTE_FLAG_PO) ? 1 : 0;
 		ptr->harmonic = (flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC) ? 1 : 0;
 		ptr->hopo = (ptr->hammeron | ptr->pulloff) ? 1 : 0;
