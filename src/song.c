@@ -6285,7 +6285,7 @@ unsigned char eof_get_lowest_fretted_string_fret(EOF_SONG *sp, unsigned long tra
 	{	//For each of the 6 supported strings
 		if((np->note & bitmask) && !(np->ghost & bitmask))
 		{	//If this string is used in this note and it is not ghosted
-			if(np->frets[ctr] != 0xFF)
+			if((np->frets[ctr] != 0xFF) && np->frets[ctr])
 			{	//If this string has a defined fret number
 				return (np->frets[ctr] & 0x7F);	//Return it
 			}
