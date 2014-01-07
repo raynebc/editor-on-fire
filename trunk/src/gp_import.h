@@ -64,6 +64,7 @@
 		unsigned long measure;			//The measure at which this sync point exists
 		double pos_in_measure;			//The position (from 0 to 1) in the measure at which the sync point exists
 		double qnote_length;			//The length of each quarter note from this sync point until the next
+		double real_qnote_length;		//Multiple users have encountered instances where Go PlayAlong exported invalid quarter note timings to XML, EOF will recreate them by dividing the time between sync points by the number of beats between them
 		char processed;					//Is set to nonzero after the sync point is incorporated into the project's tempo map
 	};
 
@@ -76,11 +77,12 @@
 		//Returns NULL on error
 		//NOTE:  Beats are added to the current project if there aren't as many as defined in the GP file.
 		//If the user opts to import the GP file's time signatures, an undo state will be made if undo_made is not NULL and *undo_made is zero.  The referenced memory will then be set to nonzero
-	int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, char import_ts);
+	int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, char import_ts, char beats_only);
 		//Unwrap the specified track in the guitar pro structure into a new pro guitar track
 		//If the track being unwrapped is 0, text events will be unwrapped and gp's text events array will be replaced if there are any text events
 		// (so that the text events are only unwrapped once instead of duplicating for each track that is unwrapped)
 		//If import_ts is nonzero, the active project's time signatures are updated to reflect those of the unwrapped transcription
+		//If beats_only is nonzero, no notes or text events are unwrapped, but beats and time signatures are (ie. to unwrap the measures before applying beat timings in GPA import)
 		//Returns nonzero on error
 	char eof_copy_notes_in_beat_range(EOF_PRO_GUITAR_TRACK *source, unsigned long startbeat, unsigned long numbeats, EOF_PRO_GUITAR_TRACK *dest, unsigned long destbeat);
 		//Copies the notes within the specified range of beats in the source track to the same number of beats starting at the specified beat in the destination track

@@ -2562,13 +2562,98 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		curden = tsarray[ctr].den;
 	}
 
+//Correct Go PlayAlong timings by rebuilding the quarter note lengths
+ 	if(sync_points)
+	{	//If synchronization data was imported from the input Go PlayAlong file
+		double beatctr;
+		unsigned char *num;	//Will point to an array with the TS numerator of every measure
+		unsigned char *den;	//Will point to an array with the TS denominator of every measure
+		unsigned long nummeasures;	//The number of entries in the above arrays
+
+		eof_log("Unwrapping beats", 1);
+		eof_unwrap_gp_track(gp, 0, 1, 1);	//Unwrap all measures in the GP file, applying time signatures where appropriate
+		eof_process_beat_statistics(eof_song, eof_selected_track);		//Find the measure numbering for all beats
+
+		//Build a temporary tsarray[], since GPA import needs one reflecting unwrapped measures, and the GP import that follows needs one reflecting the original wrapped measures
+		nummeasures = eof_song->beat[eof_song->beats - 1]->measurenum;	//Derive the number of measures based off the last unwrapped beat's measure number
+		num = (unsigned char *)malloc(sizeof(char) * nummeasures);	//Allocate memory for the arrays
+		den = (unsigned char *)malloc(sizeof(char) * nummeasures);
+		if(!num || !den)
+		{
+			if(num)
+				free(num);
+			if(den)
+				free(den);
+			eof_log("Error allocating memory (13)", 1);
+			(void) pack_fclose(inf);
+			free(gp->names);
+			for(ctr = 0; ctr < tracks; ctr++)
+			{	//Free all previously allocated track structures
+				free(gp->track[ctr]);
+			}
+			for(ctr = 0; ctr < gp->text_events; ctr++)
+			{	//Free all allocated text events
+				free(gp->text_event[ctr]);
+			}
+			free(gp->track);
+			free(np);
+			free(hopo);
+			free(nonshiftslide);
+			free(gp);
+			free(tsarray);
+			free(strings);
+			free(sync_points);
+			return NULL;
+		}
+		for(ctr = 0; ctr < nummeasures; ctr++)
+		{	//For each unwrapped measure
+			for(ctr2 = 0; ctr2 < eof_song->beats; ctr2++)
+			{	//For each beat in the project
+				if(eof_song->beat[ctr2]->measurenum == ctr + 1)
+				{	//If this beat is in the targeted measure
+					num[ctr] = eof_song->beat[ctr2]->num_beats_in_measure;	//Populate the TS arrays with the measure information
+					den[ctr] = eof_song->beat[ctr2]->beat_unit;
+					break;
+				}
+			}
+		}
+
+		eof_log("Correcting sync point timings", 1);
+		for(ctr = 0; ctr < num_sync_points; ctr++)
+		{	//For each sync point from the Go PlayAlong file
+			if(ctr + 1 >= num_sync_points)
+			{	//If this is the last sync point, retain the original quarter note length specified in the XML file
+				sync_points[ctr].real_qnote_length = sync_points[ctr].qnote_length;
+			}
+			else
+			{	//Otherwise base the quarter note length on the amount of time and number of beats between this next sync point and the next
+				if(sync_points[ctr + 1].measure > sync_points[ctr].measure)
+				{	//If the next sync point ends in a different measure
+					beatctr = (1.0 - sync_points[ctr].pos_in_measure) * num[sync_points[ctr].measure];	//Initialize the counter to the number of beats between this sync point and the end of the measure it's in
+					for(ctr2 = sync_points[ctr].measure + 1; ctr2 < sync_points[ctr + 1].measure; ctr2++)
+					{	//For each remaining measure until the one the sync point is in
+						beatctr += num[ctr2];	//Add this measure's number of beats to the counter
+					}
+					beatctr += sync_points[ctr + 1].pos_in_measure * num[sync_points[ctr + 1].measure];	//Add the number of beats into the measure the later sync point is
+				}
+				else
+				{	//This sync point and the next end in the same measure
+					beatctr = sync_points[ctr + 1].pos_in_measure - sync_points[ctr].pos_in_measure;	//Get the distance between them in measures
+					beatctr *= num[sync_points[ctr].measure];	//Convert this value to the number of beats between the sync points
+				}
+				sync_points[ctr].real_qnote_length = ((double)sync_points[ctr + 1].realtime_pos - sync_points[ctr].realtime_pos) / beatctr;	//Get the beat length
+				sync_points[ctr].real_qnote_length *= den[sync_points[ctr].measure] / 4.0;	//Translate into the number of quarter notes (based on the beat unit of the time signature in effect at the earlier sync point)
+			}
+#ifdef GP_IMPORT_DEBUG
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSync point #%lu:  Pos:  %lums\tMeasure:  %f\tQuarter note length:  %fms\tCorrected length:  %fms", ctr, sync_points[ctr].realtime_pos, sync_points[ctr].measure + 1.0 + sync_points[ctr].pos_in_measure, sync_points[ctr].qnote_length, sync_points[ctr].real_qnote_length);
+			eof_log(eof_log_string, 1);
+#endif
+		}//For each sync point from the Go PlayAlong file
 
 //Apply Go PlayAlong timings now if applicable
-	if(sync_points)
-	{	//If synchronization data was imported from the input Go PlayAlong file
 		double curpos = 0.0, beat_length = 500.0, last_qnote_length = 500.0, temp_length = 0.0;	//By default, assume 120BPM at 4/4 meter
 		char mid_beat;	//Tracks whether the sync point applied to the beat was mid-beat
-		eof_process_beat_statistics(eof_song, eof_selected_track);		//Find the measure numbering for all beats
+		eof_log("Applying sync point timings", 1);
 		for(ctr = 0; ctr < eof_song->beats; ctr++)
 		{	//For each beat in the project
 			mid_beat = 0;	//Reset this condition
@@ -2582,12 +2667,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						if(fabs(measure_position - sync_points[ctr2].pos_in_measure) < (1.0 / (double)eof_song->beat[ctr]->num_beats_in_measure) * 0.05)
 						{	//If this sync point is close enough (within 5% of the beat's length) to this beat to be considered tied to the beat
 #ifdef GP_IMPORT_DEBUG
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tOn-beat sync point:  Pos:  %lums\tMeasure:  %f\tQuarter note length:  %fms", sync_points[ctr2].realtime_pos, sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure, sync_points[ctr2].qnote_length);
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSync point #%lu (On-beat):  Pos:  %lums\tMeasure:  %f\tQuarter note length:  %fms\tCorrected length:  %fms", ctr2, sync_points[ctr2].realtime_pos, sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure, sync_points[ctr2].qnote_length, sync_points[ctr2].real_qnote_length);
 							eof_log(eof_log_string, 1);
 #endif
 							eof_song->beat[ctr]->fpos = eof_song->beat[ctr]->pos = sync_points[ctr2].realtime_pos;	//Apply the timestamp
 							curpos = sync_points[ctr2].realtime_pos;			//Update the ongoing position variable
-							last_qnote_length = sync_points[ctr2].qnote_length;
+							last_qnote_length = sync_points[ctr2].real_qnote_length;
 							sync_points[ctr2].processed = 1;
 							if(!ctr2 && ctr)
 							{	//If this is the first sync point and it wasn't placed at the first beat
@@ -2609,15 +2694,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					{	//If the beat is beyond the sync point, the sync point is not within 5% of a beat line and is located between beats
 						double temp;
 #ifdef GP_IMPORT_DEBUG
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMid-beat sync point:  Pos:  %lums\tMeasure:  %f\tQuarter note length:  %fms", sync_points[ctr2].realtime_pos, sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure, sync_points[ctr2].qnote_length);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSync point #%lu (Mid-beat):  Pos:  %lums\tMeasure:  %f\tQuarter note length:  %fms\tCorrected length:  %fms", ctr2, sync_points[ctr2].realtime_pos, sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure, sync_points[ctr2].qnote_length, sync_points[ctr2].real_qnote_length);
 						eof_log(eof_log_string, 1);
 #endif
 						//This is the first beat that surpassed this sync point, find out how far into last beat the sync point is, and use the beat length to derive the position of the next beat
 						mid_beat = 1;
 						temp = (double)eof_song->beat[ctr]->measurenum + measure_position - ((double)sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure);	//The number of measures between this beat and the sync point before it
-						temp *= (double)tsarray[sync_points[ctr2].measure].num;	//The number of beats between this beat and the sync point before it
-						curpos = sync_points[ctr2].realtime_pos + (temp * sync_points[ctr2].qnote_length);
-						last_qnote_length = sync_points[ctr2].qnote_length;
+						temp *= (double)num[sync_points[ctr2].measure];	//The number of beats between this beat and the sync point before it
+						curpos = sync_points[ctr2].realtime_pos + (temp * sync_points[ctr2].real_qnote_length);
+						last_qnote_length = sync_points[ctr2].real_qnote_length;
 						sync_points[ctr2].processed = 1;	//Mark this sync point as processed, but don't break from loop, so that if there are multiple sync points within the span of one beat, only the last one is used to alter beat timings
 						if(!ctr2 && ctr)
 						{	//If this is the first sync point and it wasn't placed at the first beat
@@ -2663,6 +2748,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
 		eof_calculate_tempo_map(eof_song);	//Update the tempo and anchor status of all beats
 		free(sync_points);
+		free(num);
+		free(den);
 	}//If synchronization data was imported from the input Go PlayAlong file
 
 
@@ -3810,7 +3897,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 //Unwrap repeat sections if necessary
 	for(ctr = 0; ctr < gp->numtracks; ctr++)
 	{	//For each imported track
-		if(eof_unwrap_gp_track(gp, ctr, import_ts))
+		if(eof_unwrap_gp_track(gp, ctr, import_ts, 0))
 		{	//If the track failed to unwrap
 			allegro_message("Warning:  Failed to unwrap repeats for track #%lu (%s).", ctr + 1, gp->names[ctr]);
 		}
@@ -3908,12 +3995,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	return gp;
 }
 
-int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, char import_ts)
+int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, char import_ts, char beats_only)
 {
 	unsigned long ctr, currentmeasure, beatctr, last_start_of_repeat;
 	unsigned char has_repeats = 0, has_symbols = 0;
 	unsigned char *working_num_of_repeats;	//Will store a copy of gp->measure[]'s repeat information so that the information in gp isn't destroyed
-	EOF_PRO_GUITAR_TRACK *tp;		//Stores the resulting track that is inserted into gp
+	EOF_PRO_GUITAR_TRACK *tp;		//Stores the resulting unwrapped track that is inserted into gp
 	unsigned long *measuremap;		//Will be used to refer to a dynamically built array storing the beat number at which each measure begins
 	EOF_TEXT_EVENT * newevent[EOF_MAX_TEXT_EVENTS];	//Will be used to rebuild the text events array to the appropriate unwrapped beat positions, if the first track is being unwrapped
 	unsigned long newevents = 0;		//The number of events stored in the above array
@@ -4078,25 +4165,28 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 			eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
 
 			//Copy the contents in this measure to the new pro guitar track
+			if(!beats_only)
+			{	//If the track content besides just the beats and time signatures is being unwrapped
 #ifdef GP_IMPORT_DEBUG
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUnwrapping %d beats from measure #%lu (starts at beat %lu) from original track to beat %lu in new track", gp->measure[currentmeasure].num, currentmeasure + 1, measuremap[currentmeasure], beatctr);
-			eof_log(eof_log_string, 1);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUnwrapping %d beats from measure #%lu (starts at beat %lu) from original track to beat %lu in new track", gp->measure[currentmeasure].num, currentmeasure + 1, measuremap[currentmeasure], beatctr);
+				eof_log(eof_log_string, 1);
 #endif
-			if(!eof_copy_notes_in_beat_range(gp->track[track], measuremap[currentmeasure], gp->measure[currentmeasure].num, tp, beatctr))
-			{	//If there was an error unwrapping the repeat into the new pro guitar track
-				eof_log("\tError unwrapping beats", 1);
-				free(measuremap);
-				for(ctr = 0; ctr < tp->notes; ctr++)
-				{	//For each note that had been allocated for the unwrapped track
-					free(tp->note[ctr]);	//Free its memory
+				if(!eof_copy_notes_in_beat_range(gp->track[track], measuremap[currentmeasure], gp->measure[currentmeasure].num, tp, beatctr))
+				{	//If there was an error unwrapping the repeat into the new pro guitar track
+					eof_log("\tError unwrapping beats", 1);
+					free(measuremap);
+					for(ctr = 0; ctr < tp->notes; ctr++)
+					{	//For each note that had been allocated for the unwrapped track
+						free(tp->note[ctr]);	//Free its memory
+					}
+					free(tp);
+					free(working_num_of_repeats);
+					for(ctr = 0; ctr < newevents; ctr++)
+					{	//For each unwrapped text event
+						free(newevent[ctr]);	//Free it
+					}
+					return 5;
 				}
-				free(tp);
-				free(working_num_of_repeats);
-				for(ctr = 0; ctr < newevents; ctr++)
-				{	//For each unwrapped text event
-					free(newevent[ctr]);	//Free it
-				}
-				return 5;
 			}
 
 			//Update the time signature if necessary
@@ -4109,7 +4199,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 			}
 
 			//If this measure has a text event, and text events are being unwrapped, copy it to the new text event array
-			if(unwrapevents)
+			if(unwrapevents && !beats_only)
 			{	//If text events are being unwrapped
 				for(ctr = 0; ctr < gp->text_events; ctr++)
 				{	//For each text event that was imported from the gp file
@@ -4328,6 +4418,14 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 			curr_alt_ending = gp->measure[currentmeasure].alt_endings;	//Remember the alternate ending number being skipped
 			while(currentmeasure < gp->measures)
 			{	//While there are more measures
+				//Based on Guitar Pro's behavior, even when a time signature change is in an inactive alternate ending, the composition's meter takes it into effect
+				if(import_ts)
+				{
+					if(!currentmeasure || (gp->measure[currentmeasure].num != gp->measure[currentmeasure - 1].num) || (gp->measure[currentmeasure].den != gp->measure[currentmeasure - 1].den))
+					{	//If this is the first measure or this measure's time signature is different from that of the previous measure
+						(void) eof_apply_ts(gp->measure[currentmeasure].num, gp->measure[currentmeasure].den, beatctr, eof_song, 0);	//Apply the change to the active project
+					}
+				}
 				if(gp->measure[currentmeasure].num_of_repeats)
 				{	//If this is the first end of repeat that was reached
 					currentmeasure++;	//Go beyond the end of repeat to the next measure
