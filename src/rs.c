@@ -718,10 +718,13 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			{	//For each remaining beat
 				if(((sp->beat[ctr2]->contained_section_event >= 0) || (sp->beat[ctr2]->contained_rs_section_event >= 0)) && ((*user_warned & 32) == 0))
 				{	//If the beat contains an RS phrase or RS section, and the user wasn't warned of this problem yet
+					unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+
 					eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
 					eof_selected_beat = ctr;		//Select it
 					eof_seek_and_render_position(track, eof_note_type, sp->beat[ctr]->pos);	//Show the offending END phrase
 					allegro_message("Warning:  Beat #%lu contains an END phrase, but there's at least one more phrase or section after it.\nThis will cause dynamic difficulty and/or riff repeater to not work correctly.", ctr);
+					eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
 					*user_warned |= 32;
 					break;
 				}
@@ -734,10 +737,13 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	{	//If the user did not define a END phrase
 		if(sp->beat[endbeat]->contained_section_event >= 0)
 		{	//If there is already a phrase defined on the beat following the last note
+			unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+
 			eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
 			eof_selected_beat = endbeat;		//Select it
 			eof_seek_and_render_position(track, eof_note_type, sp->beat[endbeat]->pos);	//Show where the END phrase should go
 			allegro_message("Warning:  There is no END phrase, but the beat marker after the last note in \"%s\" already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.", sp->track[track]->name);
+			eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
 		}
 		eof_log("\t! Adding missing END phrase", 1);
 		(void) eof_song_add_text_event(sp, endbeat, "END", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it as a temporary event at the last beat
@@ -1245,10 +1251,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 											tech.slideto = -1;
 											if((*user_warned & 4) == 0)
 											{	//If the user wasn't alerted that one or more open notes have these statuses improperly applied
-												(void) eof_menu_track_selected_track_number(track, 1);						//Set the active instrument track
-												eof_note_type = eof_get_note_type(sp, track, ctr3);							//Set the active difficulty to match that of the note
-												eof_set_seek_position(eof_get_note_pos(sp, track, ctr3) + eof_av_delay);	//Seek to the note's position
-												eof_render();
+												eof_seek_and_render_position(track, eof_get_note_type(sp, track, ctr3), eof_get_note_pos(sp, track, ctr3));
 												allegro_message("Warning:  At least one open note is marked with bend or slide status.\nThis is not supported, so these statuses are being omitted for such notes.");
 												*user_warned |= 4;
 											}
@@ -1968,10 +1971,13 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			{	//For each remaining beat
 				if(((sp->beat[ctr2]->contained_section_event >= 0) || (sp->beat[ctr2]->contained_rs_section_event >= 0)) && ((*user_warned & 32) == 0))
 				{	//If the beat contains an RS phrase or RS section, and the user wasn't warned of this problem yet
+					unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+
 					eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
 					eof_selected_beat = ctr;		//Select it
 					eof_seek_and_render_position(track, eof_note_type, sp->beat[ctr]->pos);	//Show the offending END phrase
 					allegro_message("Warning:  Beat #%lu contains an END phrase, but there's at least one more phrase or section after it.\nThis will cause dynamic difficulty and/or riff repeater to not work correctly.", ctr);
+					eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
 					*user_warned |= 32;
 					break;
 				}
@@ -1984,10 +1990,13 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	{	//If the user did not define a END phrase
 		if(sp->beat[endbeat]->contained_section_event >= 0)
 		{	//If there is already a phrase defined on the beat following the last note
+			unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+
 			eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
 			eof_selected_beat = endbeat;		//Select it
 			eof_seek_and_render_position(track, eof_note_type, sp->beat[endbeat]->pos);	//Show where the END phrase should go
 			allegro_message("Warning:  There is no END phrase, but the beat marker after the last note in \"%s\" already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.", sp->track[track]->name);
+			eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
 		}
 		eof_log("\t! Adding missing END phrase", 1);
 		(void) eof_song_add_text_event(sp, endbeat, "END", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it as a temporary event at the last beat
@@ -2653,10 +2662,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 										tech.unpitchedslideto = -1;
 										if((*user_warned & 4) == 0)
 										{	//If the user wasn't alerted that one or more open notes have these statuses improperly applied
-											(void) eof_menu_track_selected_track_number(track, 1);						//Set the active instrument track
-											eof_note_type = eof_get_note_type(sp, track, ctr3);							//Set the active difficulty to match that of the note
-											eof_set_seek_position(eof_get_note_pos(sp, track, ctr3) + eof_av_delay);	//Seek to the note's position
-											eof_render();
+											eof_seek_and_render_position(track, eof_get_note_type(sp, track, ctr3), eof_get_note_pos(sp, track, ctr3));
 											allegro_message("Warning:  At least one open note is marked with bend or slide status.\nThis is not supported, so these statuses are being omitted for such notes.");
 											*user_warned |= 4;
 										}
@@ -2796,10 +2802,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 												tech.length = 0;	//chordNotes should have no sustain unless they use bend or slide technique
 												if((*user_warned & 4) == 0)
 												{	//If the user wasn't alerted that one or more open notes have these statuses improperly applied
-													(void) eof_menu_track_selected_track_number(track, 1);						//Set the active instrument track
-													eof_note_type = eof_get_note_type(sp, track, ctr3);							//Set the active difficulty to match that of the note
-													eof_set_seek_position(eof_get_note_pos(sp, track, ctr3) + eof_av_delay);	//Seek to the note's position
-													eof_render();
+													eof_seek_and_render_position(track, eof_get_note_type(sp, track, ctr3), eof_get_note_pos(sp, track, ctr3));
 													allegro_message("Warning:  At least one open note is marked with bend or slide status.\nThis is not supported, so these statuses are being omitted for such notes.");
 													*user_warned |= 4;
 												}
@@ -3987,6 +3990,8 @@ int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track)
 		{	//If this beat contains a RS section
 			if(sp->beat[ctr]->contained_section_event < 0)
 			{	//But it doesn't contain a RS phrase
+				unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+
 				eof_selected_beat = ctr;					//Change the selected beat
 				if(eof_2d_render_top_option != 36)
 				{	//If the piano roll isn't already displaying both RS sections and phrases
@@ -3998,8 +4003,10 @@ int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track)
 				key[KEY_N] = 0;
 				if(!user_prompted && alert("At least one Rocksmith section doesn't have a Rocksmith phrase at the same position.", "This can cause the chart's sections to work incorrectly", "Would you like to place Rocksmith phrases to correct this?", "&Yes", "&No", 'y', 'n') != 1)
 				{	//If the user hasn't already answered this prompt, and doesn't opt to correct the issue
+					eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
 					return 2;	//Return user cancellation
 				}
+				eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
 				user_prompted = 1;
 
 				while(1)

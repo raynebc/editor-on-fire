@@ -233,6 +233,7 @@ extern NCDFS_FILTER_LIST * eof_filter_gh_files;
 extern NCDFS_FILTER_LIST * eof_filter_gp_files;
 extern NCDFS_FILTER_LIST * eof_filter_text_files;
 extern NCDFS_FILTER_LIST * eof_filter_rs_files;
+extern NCDFS_FILTER_LIST * eof_filter_sonic_visualiser_files;
 
 extern int         eof_global_volume;
 
@@ -280,6 +281,7 @@ extern char        eof_last_gh_path[1024];
 extern char        eof_last_lyric_path[1024];
 extern char        eof_last_gp_path[1024];
 extern char        eof_last_rs_path[1024];
+extern char        eof_last_sonic_visualiser_path[1024];
 extern char        eof_loaded_song_name[1024];
 extern char        eof_loaded_ogg_name[1024];
 extern int         eof_quit;
@@ -309,6 +311,7 @@ extern int         eof_disable_info_panel;
 extern int         eof_paste_erase_overlap;
 extern int         eof_write_rb_files;
 extern int         eof_write_rs_files;
+extern int         eof_write_rs2_files;
 extern int         eof_add_new_notes_to_selection;
 extern int         eof_drum_modifiers_affect_all_difficulties;
 extern int         eof_fb_seek_controls;

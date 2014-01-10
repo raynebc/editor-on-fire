@@ -4922,7 +4922,7 @@ int eof_menu_note_toggle_bend(void)
 			}
 		}
 	}
-	if(eof_write_rs_files && bends_present)
+	if((eof_write_rs_files || eof_write_rs2_files) && bends_present)
 	{	//If the user wants to save Rocksmith capable files, prompt to set the strength of bend notes
 		(void) eof_pro_guitar_note_bend_strength_no_save();	//Don't make another undo state
 	}
@@ -5078,7 +5078,7 @@ int eof_menu_note_toggle_slide_up(void)
 			}
 		}
 	}
-	if(eof_write_rs_files && slides_present)
+	if((eof_write_rs_files || eof_write_rs2_files) && slides_present)
 	{	//If the user wants to save Rocksmith capable files, prompt to set the ending fret for the slide notes
 		(void) eof_pro_guitar_note_slide_end_fret_no_save();	//Don't make another undo state
 	}
@@ -5130,7 +5130,7 @@ int eof_menu_note_toggle_slide_down(void)
 			}
 		}
 	}
-	if(eof_write_rs_files && slides_present)
+	if((eof_write_rs_files || eof_write_rs2_files) && slides_present)
 	{	//If the user wants to save Rocksmith capable files, prompt to set the ending fret for the slide notes
 		(void) eof_pro_guitar_note_slide_end_fret_no_save();	//Don't make another undo state
 	}

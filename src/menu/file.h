@@ -124,4 +124,7 @@ int eof_menu_file_rs_import(void);
 int eof_toggle_display_zoom(void);
 	//Alters EOF so that it renders a 480 height window and then stretches it to fit the program window, acting as a zoom feature
 
+int eof_menu_file_sonic_visualiser_import(void);
+	//Imports beat timings from a user specified Sonic Visualiser file
+
 #endif
