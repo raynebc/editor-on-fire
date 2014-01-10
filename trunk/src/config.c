@@ -131,6 +131,7 @@ void eof_load_config(char * fn)
 	eof_paste_erase_overlap = get_config_int("preferences", "eof_paste_erase_overlap", 0);
 	eof_write_rb_files = get_config_int("preferences", "eof_write_rb_files", 0);
 	eof_write_rs_files = get_config_int("preferences", "eof_write_rs_files", 0);
+	eof_write_rs2_files = get_config_int("preferences", "eof_write_rs2_files", 0);
 	eof_inverted_chords_slash = get_config_int("preferences", "eof_inverted_chords_slash", 0);
 	enable_logging = get_config_int("preferences", "enable_logging", 1);
 	eof_2d_render_top_option = get_config_int("preferences", "eof_2d_render_top_option", 32);
@@ -191,6 +192,7 @@ void eof_load_config(char * fn)
 	(void) ustrcpy(eof_last_lyric_path, get_config_string("paths", "lyric_path", ""));
 	(void) ustrcpy(eof_last_gp_path, get_config_string("paths", "gp_path", ""));
 	(void) ustrcpy(eof_last_rs_path, get_config_string("paths", "rs_path", ""));
+	(void) ustrcpy(eof_last_sonic_visualiser_path, get_config_string("paths", "sonic_visualiser_path", ""));
 
 	/* read editor settings */
 	(void) ustrcpy(eof_last_frettist, get_config_string("editor", "frettist", ""));
@@ -279,6 +281,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_paste_erase_overlap", eof_paste_erase_overlap);
 	set_config_int("preferences", "eof_write_rb_files", eof_write_rb_files);
 	set_config_int("preferences", "eof_write_rs_files", eof_write_rs_files);
+	set_config_int("preferences", "eof_write_rs2_files", eof_write_rs2_files);
 	set_config_int("preferences", "eof_inverted_chords_slash", eof_inverted_chords_slash);
 	set_config_int("preferences", "enable_logging", enable_logging);
 	set_config_int("preferences", "eof_color_set", eof_color_set);
@@ -321,6 +324,7 @@ void eof_save_config(char * fn)
 	set_config_string("paths", "lyric_path", eof_last_lyric_path);
 	set_config_string("paths", "gp_path", eof_last_gp_path);
 	set_config_string("paths", "rs_path", eof_last_rs_path);
+	set_config_string("paths", "sonic_visualiser_path", eof_last_rs_path);
 
 	/* write editor settings */
 	set_config_string("editor", "frettist", eof_last_frettist);

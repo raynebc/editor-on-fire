@@ -71,6 +71,7 @@ NCDFS_FILTER_LIST * eof_filter_gh_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_gp_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_text_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_rs_files = NULL;
+NCDFS_FILTER_LIST * eof_filter_sonic_visualiser_files = NULL;
 
 PALETTE     eof_palette;
 BITMAP *    eof_image[EOF_MAX_IMAGES] = {NULL};
@@ -116,6 +117,7 @@ int         eof_disable_info_panel = 0;
 int         eof_paste_erase_overlap = 0;
 int         eof_write_rb_files = 0;				//If nonzero, extra files are written during save that are used for authoring Rock Band customs
 int         eof_write_rs_files = 0;				//If nonzero, extra files are written during save that are used for authoring Rocksmith customs
+int         eof_write_rs2_files = 0;			//If nonzero, extra files are written during save that are used for authoring Rocksmith 2014 customs
 int         eof_add_new_notes_to_selection = 0;	//If nonzero, newly added gems cause notes to be added to the selection instead of the selection being cleared first
 int         eof_drum_modifiers_affect_all_difficulties = 1;	//If nonzero, a drum modifier (ie. open/pedal hi hat or rim shot apply to any notes at the same position in non active difficulties)
 int         eof_fb_seek_controls = 0;			//If nonzero, the page up/dn keys have their seek directions reversed, and up/down seek forward/backward
@@ -184,19 +186,20 @@ int         eof_selected_ogg = 0;
 EOF_SONG    * eof_song = NULL;
 EOF_NOTE    eof_pen_note;
 EOF_LYRIC   eof_pen_lyric;
-char        eof_filename[1024] = {0};			//The full path of the EOF file that is loaded
-char        eof_song_path[1024] = {0};			//The path to active project's parent folder
-char        eof_songs_path[1024] = {0};			//The path to the user's song folder
-char        eof_last_ogg_path[1024] = {0};		//The path to the folder containing the last loaded OGG file
-char        eof_last_eof_path[1024] = {0};		//The path to the folder containing the last loaded project
-char        eof_last_midi_path[1024] = {0};		//The path to the folder containing the last imported MIDI
-char        eof_last_db_path[1024] = {0};		//The path to the folder containing the last imported Feedback chart file
-char        eof_last_gh_path[1024] = {0};		//The path to the folder containing the last imported Guitar Hero chart file
-char        eof_last_lyric_path[1024] = {0};	//The path to the folder containing the last imported lyric file
-char        eof_last_gp_path[1024] = {0};		//The path to the folder containing the last imported Guitar Pro file
-char        eof_last_rs_path[1024] = {0};		//The path to the folder containing the last imported Rocksmith XML file
-char        eof_loaded_song_name[1024] = {0};	//The file name (minus the folder path) of the active project
-char        eof_loaded_ogg_name[1024] = {0};	//The full path of the loaded OGG file
+char        eof_filename[1024] = {0};					//The full path of the EOF file that is loaded
+char        eof_song_path[1024] = {0};					//The path to active project's parent folder
+char        eof_songs_path[1024] = {0};					//The path to the user's song folder
+char        eof_last_ogg_path[1024] = {0};				//The path to the folder containing the last loaded OGG file
+char        eof_last_eof_path[1024] = {0};				//The path to the folder containing the last loaded project
+char        eof_last_midi_path[1024] = {0};				//The path to the folder containing the last imported MIDI
+char        eof_last_db_path[1024] = {0};				//The path to the folder containing the last imported Feedback chart file
+char        eof_last_gh_path[1024] = {0};				//The path to the folder containing the last imported Guitar Hero chart file
+char        eof_last_lyric_path[1024] = {0};			//The path to the folder containing the last imported lyric file
+char        eof_last_gp_path[1024] = {0};				//The path to the folder containing the last imported Guitar Pro file
+char        eof_last_rs_path[1024] = {0};				//The path to the folder containing the last imported Rocksmith XML file
+char        eof_last_sonic_visualiser_path[1024] = {0};	//The path to the folder containing the last imported Sonic Visualiser file
+char        eof_loaded_song_name[1024] = {0};			//The file name (minus the folder path) of the active project
+char        eof_loaded_ogg_name[1024] = {0};			//The full path of the loaded OGG file
 char        eof_window_title[4096] = {0};
 int         eof_quit = 0;
 int         eof_note_type = EOF_NOTE_AMAZING;		//The active difficulty
@@ -1452,7 +1455,7 @@ int eof_load_ogg_quick(char * filename)
 			loaded = 1;
 			if(!eof_silence_loaded)
 			{	//Only display song channel and sample rate warnings if chart audio is loaded
-				if(!eof_write_rs_files)
+				if(!eof_write_rs_files && !eof_write_rs2_files)
 				{	//If not authoring for Rocksmith
 					if(alogg_get_wave_freq_ogg(eof_music_track) != 44100)
 					{
@@ -1543,7 +1546,7 @@ int eof_load_ogg(char * filename, char silence_failover)
 			loaded = 1;
 			if(!eof_silence_loaded)
 			{	//Only display song channel and sample rate warnings if chart audio is loaded
-				if(!eof_write_rs_files)
+				if(!eof_write_rs_files && !eof_write_rs2_files)
 				{	//If not authoring for Rocksmith
 					if(alogg_get_wave_freq_ogg(eof_music_track) != 44100)
 					{
@@ -3771,6 +3774,14 @@ int eof_initialize(int argc, char * argv[])
 	}
 	ncdfs_filter_list_add(eof_filter_rs_files, "xml", "Rocksmith chart files (*.xml)", 1);
 
+	eof_filter_sonic_visualiser_files = ncdfs_filter_list_create();
+	if(!eof_filter_sonic_visualiser_files)
+	{
+		allegro_message("Could not create file list filter (*.svl)!");
+		return 0;
+	}
+	ncdfs_filter_list_add(eof_filter_sonic_visualiser_files, "svl", "Sonic Visualiser files (*.svl)", 1);
+
 	/* check availability of MP3 conversion tools */
 	if(!eof_supports_mp3)
 	{
@@ -4166,6 +4177,8 @@ void eof_exit(void)
 	eof_filter_text_files = NULL;
 	free(eof_filter_rs_files);
 	eof_filter_rs_files = NULL;
+	free(eof_filter_sonic_visualiser_files);
+	eof_filter_sonic_visualiser_files = NULL;
 	//Free command line storage variables (for Windows build)
 	#ifdef ALLEGRO_WINDOWS
 	for(i = 0; i < eof_windows_argc; i++)

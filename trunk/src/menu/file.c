@@ -5,6 +5,7 @@
 #include "../main.h"
 #include "../foflc/Lyric_storage.h"
 #include "../foflc/ID3_parse.h"
+#include "../foflc/RS_parse.h"	//For XML parsing functions
 #include "../lc_import.h"
 #include "../midi_import.h"
 #include "../chart_import.h"
@@ -54,7 +55,7 @@ MENU eof_file_menu[] =
 	{"Save &As", eof_menu_file_save_as, NULL, D_DISABLED, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Load &OGG", eof_menu_file_load_ogg, NULL, D_DISABLED, NULL},
-	{"", NULL, NULL, 0, NULL},
+	{"Sonic Visualiser Import", eof_menu_file_sonic_visualiser_import, NULL, 0, NULL},
 	{"&MIDI Import\tF6", eof_menu_file_midi_import, NULL, 0, NULL},
 	{"&Feedback Import\tF7", eof_menu_file_feedback_import, NULL, 0, NULL},
 	{"&GH Import", eof_menu_file_gh_import, NULL, 0, NULL},
@@ -98,7 +99,7 @@ DIALOG eof_settings_dialog[] =
 DIALOG eof_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  480, 380, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
+	{ d_agup_window_proc,0,   48,  480, 396, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
 	{ d_agup_check_proc, 16,  75,  110, 16,  2,   23,  0,    0,      1,   0,   "Inverted Notes",      NULL, NULL },
 	{ d_agup_check_proc, 150, 75,  92 , 16,  2,   23,  0,    0,      1,   0,   "Lefty Mode",          NULL, NULL },
 	{ d_agup_check_proc, 306, 75,  128, 16,  2,   23,  0,    0,      1,   0,   "Note Auto-Adjust",    NULL, NULL },
@@ -111,9 +112,9 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 16,  120, 116, 16,  2,   23,  0,    0,      1,   0,   "Hide info panel",NULL, NULL },
 	{ d_agup_check_proc, 150, 120, 206, 16,  2,   23,  0,    0,      1,   0,   "Erase overlapped pasted notes",NULL, NULL },
 	{ d_agup_check_proc, 16,  136, 208, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rock Band files",NULL, NULL },
-	{ d_agup_check_proc, 248, 136, 206, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith files",NULL, NULL },
-	{ d_agup_check_proc, 16,  152, 210, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
-	{ d_agup_check_proc, 248, 152, 182, 16,  2,   23,  0,    0,      1,   0,   "Enable logging on launch",NULL, NULL },
+	{ d_agup_check_proc, 248, 136, 210, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
+	{ d_agup_check_proc, 16,  152, 216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 1 files",NULL, NULL },
+	{ d_agup_check_proc, 248, 152, 216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 2 files",NULL, NULL },
 	{ d_agup_check_proc, 16,  168, 190, 16,  2,   23,  0,    0,      1,   0,   "Add new notes to selection",NULL, NULL },
 	{ d_agup_check_proc, 248, 168, 216, 16,  2,   23,  0,    0,      1,   0,   "Drum modifiers affect all diff's",NULL, NULL },
 	{ d_agup_text_proc,  16,  185, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note distance (ms):",NULL,NULL },
@@ -122,13 +123,13 @@ DIALOG eof_preferences_dialog[] =
 	{ eof_verified_edit_proc,392,185,30,20,  0,   0,   0,    0,      3,   0,   eof_etext,     "0123456789", NULL },
 	{ d_agup_check_proc, 248, 252, 214, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
 	{ d_agup_check_proc, 248, 268, 184, 16,  2,   23,  0,    0,      1,   0,   "Use dB style seek controls",NULL, NULL },
-	{ d_agup_text_proc,  24,  252, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
+	{ d_agup_text_proc,  24,  268, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
 	{ d_agup_list_proc,  16,  270, 100, 110, 2,   23,  0,    0,      0,   0,   (void *)eof_input_list,        NULL, NULL },
-	{ d_agup_text_proc,  150, 270, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
+	{ d_agup_text_proc,  150, 286, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
 	{ d_agup_list_proc,  129, 285, 100, 95,  2,   23,  0,    0,      0,   0,   (void *)eof_colors_list,       NULL, NULL },
-	{ d_agup_button_proc,12,  385, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-	{ d_agup_button_proc,86,  385, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-	{ d_agup_button_proc,160, 385, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+	{ d_agup_button_proc,12,  401, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_button_proc,86,  401, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+	{ d_agup_button_proc,160, 401, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
 	{ d_agup_text_proc,  16,  206, 120, 12,  0,   0,   0,    0,      0,   0,   "Top of 2D pane shows:",NULL,NULL },
 	{ d_agup_radio_proc, 161, 206, 60,  16,  2,   23,  0,    0,      1,   0,   "Names",               NULL, NULL },
 	{ d_agup_radio_proc, 224, 206, 72,  16,  2,   23,  0,    0,      1,   0,   "Sections",            NULL, NULL },
@@ -144,6 +145,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 364, 210, 16,  2,   23,  0,    0,      1,   0,   "Import dialogs recall last path",NULL, NULL },
 	{ d_agup_check_proc, 248, 380, 224, 16,  2,   23,  0,    0,      1,   0,   "Rewind when playback is at end",NULL, NULL },
 	{ d_agup_check_proc, 248, 396, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
+	{ d_agup_check_proc, 248, 412, 182, 16,  2,   23,  0,    0,      1,   0,   "Enable logging on launch",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -249,6 +251,7 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[2].flags = 0; // Save
 		eof_file_menu[3].flags = 0; // Save As
 		eof_file_menu[5].flags = 0; // Load OGG
+		eof_file_menu[6].flags = 0; // Sonic Visualiser Import
 		eof_file_menu[10].flags = 0; // Lyric Import
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{
@@ -266,6 +269,7 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[2].flags = D_DISABLED; // Save
 		eof_file_menu[3].flags = D_DISABLED; // Save As
 		eof_file_menu[5].flags = D_DISABLED; // Load OGG
+		eof_file_menu[6].flags = D_DISABLED; // Sonic Visualiser Import
 		eof_file_menu[10].flags = D_DISABLED; // Lyric Import
 		eof_file_menu[11].flags = D_DISABLED; // Guitar Pro Import
 		eof_file_menu[12].flags = D_DISABLED; // Rocksmith Import
@@ -1029,7 +1033,7 @@ int eof_menu_file_settings(void)
 
 int eof_menu_file_preferences(void)
 {
-	int retval, original_input_mode;
+	int retval, original_input_mode, original_rs1_export_setting;
 
 	if(eof_song_loaded)
 	{
@@ -1056,9 +1060,10 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[10].flags = eof_disable_info_panel ? D_SELECTED : 0;			//Disable info panel
 	eof_preferences_dialog[11].flags = eof_paste_erase_overlap ? D_SELECTED : 0;		//Erase overlapped pasted notes
 	eof_preferences_dialog[12].flags = eof_write_rb_files ? D_SELECTED : 0;				//Save separate Rock Band files
-	eof_preferences_dialog[13].flags = eof_write_rs_files ? D_SELECTED : 0;				//Save separate Rocksmith files
-	eof_preferences_dialog[14].flags = eof_inverted_chords_slash ? D_SELECTED : 0;		//Treat inverted chords as slash
-	eof_preferences_dialog[15].flags = enable_logging ? D_SELECTED : 0;					//Enable logging on launch
+	eof_preferences_dialog[13].flags = eof_inverted_chords_slash ? D_SELECTED : 0;		//Treat inverted chords as slash
+	eof_preferences_dialog[14].flags = eof_write_rs_files ? D_SELECTED : 0;				//Save separate Rocksmith 1 files
+	original_rs1_export_setting = eof_write_rs_files;	//Back up this setting to track whether it is changed in the dialog
+	eof_preferences_dialog[15].flags = eof_write_rs2_files ? D_SELECTED : 0;			//Save separate Rocksmith 2 files
 	eof_preferences_dialog[16].flags = eof_add_new_notes_to_selection ? D_SELECTED : 0;	//Add new notes to selection
 	eof_preferences_dialog[17].flags = eof_drum_modifiers_affect_all_difficulties ? D_SELECTED : 0;	//Drum modifiers affect all diff's
 	eof_preferences_dialog[23].flags = eof_fb_seek_controls ? D_SELECTED : 0;			//Use dB style seek controls
@@ -1073,6 +1078,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[43].flags = eof_imports_recall_last_path ? D_SELECTED : 0;		//Import dialogs recall last path
 	eof_preferences_dialog[44].flags = eof_rewind_at_end ? D_SELECTED : 0;					//Rewind when playback is at end
 	eof_preferences_dialog[45].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
+	eof_preferences_dialog[46].flags = enable_logging ? D_SELECTED : 0;						//Enable logging on launch
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1104,9 +1110,9 @@ int eof_menu_file_preferences(void)
 			eof_disable_info_panel = (eof_preferences_dialog[10].flags == D_SELECTED ? 1 : 0);
 			eof_paste_erase_overlap = (eof_preferences_dialog[11].flags == D_SELECTED ? 1 : 0);
 			eof_write_rb_files = (eof_preferences_dialog[12].flags == D_SELECTED ? 1 : 0);
-			eof_write_rs_files = (eof_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
-			eof_inverted_chords_slash = (eof_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
-			enable_logging = (eof_preferences_dialog[15].flags == D_SELECTED ? 1 : 0);
+			eof_inverted_chords_slash = (eof_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
+			eof_write_rs_files = (eof_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
+			eof_write_rs2_files = (eof_preferences_dialog[15].flags == D_SELECTED ? 1 : 0);
 			eof_add_new_notes_to_selection = (eof_preferences_dialog[16].flags == D_SELECTED ? 1 : 0);
 			eof_drum_modifiers_affect_all_difficulties = (eof_preferences_dialog[17].flags == D_SELECTED ? 1 : 0);
 			if(eof_etext[0] != '\0')
@@ -1164,6 +1170,7 @@ int eof_menu_file_preferences(void)
 			eof_imports_recall_last_path = (eof_preferences_dialog[43].flags == D_SELECTED ? 1 : 0);
 			eof_rewind_at_end = (eof_preferences_dialog[44].flags == D_SELECTED ? 1 : 0);
 			eof_disable_rs_wav = (eof_preferences_dialog[45].flags == D_SELECTED ? 1 : 0);
+			enable_logging = (eof_preferences_dialog[46].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 29)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1179,9 +1186,9 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[10].flags = 0;					//Disable info panel
 			eof_preferences_dialog[11].flags = 0;					//Erase overlapped pasted notes
 			eof_preferences_dialog[12].flags = 0;					//Save separate RBN MIDI files
-
-			eof_preferences_dialog[14].flags = 0;					//Treat inverted chords as slash
-			eof_preferences_dialog[15].flags = D_SELECTED;			//Enable logging on launch
+			eof_preferences_dialog[13].flags = 0;					//Treat inverted chords as slash
+			eof_preferences_dialog[14].flags = 0;					//Save separate Rocksmith 1 files
+			eof_preferences_dialog[15].flags = 0;					//Save separate Rocksmith 2 files
 			eof_preferences_dialog[16].flags = 0;					//Add new notes to selection
 			eof_preferences_dialog[17].flags = D_SELECTED;			//Drum modifiers affect all diff's
 			eof_etext2[0] = '3';									//Min. note distance
@@ -1202,6 +1209,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[43].flags = 0;					//Import dialogs recall last path
 			eof_preferences_dialog[44].flags = D_SELECTED;			//Rewind when playback is at end
 			eof_preferences_dialog[45].flags = 0;					//Don't write Rocksmith WAV file
+			eof_preferences_dialog[46].flags = D_SELECTED;			//Enable logging on launch
 		}//If the user clicked "Default
 	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -1211,6 +1219,10 @@ int eof_menu_file_preferences(void)
 	if(original_input_mode != eof_input_mode)
 	{	//If the input mode was changed
 		eof_seek_selection_start = eof_seek_selection_end = 0;	//Clear the seek selection
+	}
+	if(original_rs1_export_setting != eof_write_rs_files)
+	{	//If the preference for exporting RS1 file was changed
+		eof_delete_rocksmith_wav();	//Delete the Rocksmith WAV file since the amount of silence appended to it will differ
 	}
 	return 1;
 }
@@ -2419,9 +2431,7 @@ int eof_save_helper(char *destfilename)
 					key[KEY_N] = 0;
 					if(alert("Warning:  At least one note was truncated shorter", "than your defined minimum length.", "Cancel save and seek to the first such note?", "&Yes", "&No", 'y', 'n') == 1)
 					{	//If the user opted to seek to the first offending note (only prompt once per call)
-						(void) eof_menu_track_selected_track_number(ctr, 1);										//Set the active instrument track
-						eof_note_type = eof_get_note_type(eof_song, ctr, ctr2);							//Set the active difficulty to match that of the note
-						eof_set_seek_position(eof_get_note_pos(eof_song, ctr, ctr2) + eof_av_delay);	//Seek to the note's position
+						eof_seek_and_render_position(ctr, eof_get_note_type(eof_song, ctr, ctr2), eof_get_note_pos(eof_song, ctr, ctr2));
 						return 1;	//Return cancellation
 					}
 					note_length_warned = 1;
@@ -2449,9 +2459,7 @@ int eof_save_helper(char *destfilename)
 						key[KEY_N] = 0;
 						if(alert("Warning:  At least one note is too close to another", "to enforce the minimum note distance.", "Cancel save and seek to the first such note?", "&Yes", "&No", 'y', 'n') == 1)
 						{	//If the user opted to seek to the first offending note (only prompt once per call)
-							(void) eof_menu_track_selected_track_number(ctr, 1);							//Set the active instrument track
-							eof_note_type = eof_get_note_type(eof_song, ctr, ctr2);							//Set the active difficulty to match that of the note
-							eof_set_seek_position(eof_get_note_pos(eof_song, ctr, ctr2) + eof_av_delay);	//Seek to the note's position
+							eof_seek_and_render_position(ctr, eof_get_note_type(eof_song, ctr, ctr2), eof_get_note_pos(eof_song, ctr, ctr2));
 							return 1;	//Return cancellation
 						}
 						note_distance_warned = 1;
@@ -2463,7 +2471,7 @@ int eof_save_helper(char *destfilename)
 	}
 
 	/* perform checks for chord fingerings and fret hand positions */
-	if(eof_write_rs_files)
+	if(eof_write_rs_files || eof_write_rs2_files)
 	{	//If the user wants to save Rocksmith capable files
 		(void) eof_correct_chord_fingerings();			//Ensure all chords in each pro guitar track have valid finger arrays, prompt user to provide any that are missing
 		if(eof_check_fret_hand_positions())
@@ -2477,7 +2485,7 @@ int eof_save_helper(char *destfilename)
 	}
 
 	/* check if there is a MIDI delay, offer to use Reset offset to zero */
-	if(eof_write_rs_files)
+	if(eof_write_rs_files || eof_write_rs2_files)
 	{	//If the user wants to save Rocksmith capable files
 		if(eof_song->beat[0]->pos > 0)
 		{	//If there is a MIDI delay
@@ -2492,8 +2500,8 @@ int eof_save_helper(char *destfilename)
 	}
 
 	/* check if any Rocksmith sections don't have a Rocksmith phrase at the same position */
-	if(eof_write_rs_files)
-	{
+	if(eof_write_rs_files || eof_write_rs2_files)
+	{	//If the user wants to save Rocksmith capable files
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track
 			if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -2507,8 +2515,8 @@ int eof_save_helper(char *destfilename)
 	}
 
 	/* check if any tracks use 2 or more tone names but doesn't define the default or uses more than 4 tone names */
-	if(eof_write_rs_files)
-	{
+	if(eof_write_rs2_files)
+	{	//If the user wants to save Rocksmith 2 files
 		char warning1 = 0, warning2 = 0, warning3 = 0;
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track
@@ -2526,7 +2534,7 @@ int eof_save_helper(char *destfilename)
 					eof_clear_input();
 					key[KEY_Y] = 0;
 					key[KEY_N] = 0;
-					if(!warning3 && alert("Warning:  At least one track uses only one tone name.  You must use at least", "two different tone names and set one as default for them to work in Rocksmith.", "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
+					if(!warning3 && alert("Warning:  At least one track uses only one tone name.  You must use at least", "two different tone names and set one as default for them to work in Rocksmith 2014.", "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
 					{
 						eof_track_destroy_rs_tone_names_list_strings();
 						(void) eof_menu_track_selected_track_number(ctr, 1);	//Set the active instrument track
@@ -2597,10 +2605,7 @@ int eof_save_helper(char *destfilename)
 					eof_clear_input();
 					key[KEY_Y] = 0;
 					key[KEY_N] = 0;
-					(void) eof_menu_track_selected_track_number(ctr, 1);				//Set the active instrument track
-					eof_note_type = tp->arpeggio[ctr2].difficulty;						//Set the active difficulty to match that of the arpeggio
-					eof_set_seek_position(tp->arpeggio[ctr2].start_pos + eof_av_delay);	//Seek to the arpeggio's position
-					eof_render();
+					eof_seek_and_render_position(ctr, tp->arpeggio[ctr2].difficulty, tp->arpeggio[ctr2].start_pos);
 					if(alert("Warning:  At least one arpeggio phrase doesn't contain at least two notes.", "You should remove the arpeggio phrase or add additional notes into it.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
 					{	//If the user opts to cancel
 						return 1;	//Return cancellation
@@ -2613,8 +2618,8 @@ int eof_save_helper(char *destfilename)
 	}//For each track
 
 	/* check if any slide notes don't define their end position or bend notes don't define their bend strength */
-	if(eof_write_rs_files)
-	{
+	if(eof_write_rs_files || eof_write_rs2_files)
+	{	//If the user wants to save Rocksmith capable files
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track
 			if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -2634,10 +2639,7 @@ int eof_save_helper(char *destfilename)
 							eof_clear_input();
 							key[KEY_Y] = 0;
 							key[KEY_N] = 0;
-							(void) eof_menu_track_selected_track_number(ctr, 1);		//Set the active instrument track
-							eof_note_type = tp->note[ctr2]->type;						//Set the active difficulty to match that of the note
-							eof_set_seek_position(tp->note[ctr2]->pos + eof_av_delay);	//Seek to the note's position
-							eof_render();
+							eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
 							if(alert("Warning:  At least one slide note doesn't define its ending position.", "Unless you define this information they will export as 1 fret slides.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
 							{	//If the user opts to cancel
 								return 1;	//Return cancellation
@@ -2649,10 +2651,7 @@ int eof_save_helper(char *destfilename)
 							eof_clear_input();
 							key[KEY_Y] = 0;
 							key[KEY_N] = 0;
-							(void) eof_menu_track_selected_track_number(ctr, 1);		//Set the active instrument track
-							eof_note_type = tp->note[ctr2]->type;						//Set the active difficulty to match that of the note
-							eof_set_seek_position(tp->note[ctr2]->pos + eof_av_delay);	//Seek to the note's position
-							eof_render();
+							eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
 							if(alert("Warning:  At least one bend note doesn't define its bend strength.", "Unless you define this information they will export as bending 1 half step.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
 							{	//If the user opts to cancel
 								return 1;	//Return cancellation
@@ -2802,20 +2801,26 @@ int eof_save_helper(char *destfilename)
 		}
 	}//If saving the normal MIDI succeeded, proceed with saving song.ini and additional MIDI files if applicable
 
-	if(eof_write_rs_files)
+	if(eof_write_rs_files || eof_write_rs2_files)
 	{	//If the user wants to save Rocksmith capable files
 		char user_warned = 0;	//Tracks whether the user was warned about hand positions being undefined and auto-generated during export
 		eof_log("Exporting Rocksmith XML files", 1);
 		(void) append_filename(eof_temp_filename, newfolderpath, "xmlpath.xml", (int) sizeof(eof_temp_filename));	//Re-acquire the save's target folder
 
-		(void) eof_export_rocksmith_1_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS, &user_warned);
-		(void) eof_export_rocksmith_1_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS_22, &user_warned);
-		(void) eof_export_rocksmith_1_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR, &user_warned);
-		(void) eof_export_rocksmith_1_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_22, &user_warned);
-		(void) eof_export_rocksmith_2_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS, &user_warned);
-		(void) eof_export_rocksmith_2_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS_22, &user_warned);
-		(void) eof_export_rocksmith_2_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR, &user_warned);
-		(void) eof_export_rocksmith_2_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_22, &user_warned);
+		if(eof_write_rs_files)
+		{	//If the user wants to save Rocksmith 1 files
+			(void) eof_export_rocksmith_1_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS, &user_warned);
+			(void) eof_export_rocksmith_1_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS_22, &user_warned);
+			(void) eof_export_rocksmith_1_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR, &user_warned);
+			(void) eof_export_rocksmith_1_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_22, &user_warned);
+		}
+		if(eof_write_rs2_files)
+		{	//If the user wants to save Rocksmith 2 files
+			(void) eof_export_rocksmith_2_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS, &user_warned);
+			(void) eof_export_rocksmith_2_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS_22, &user_warned);
+			(void) eof_export_rocksmith_2_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR, &user_warned);
+			(void) eof_export_rocksmith_2_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_22, &user_warned);
+		}
 		if(eof_song->vocal_track[0]->lyrics)
 		{	//If there are lyrics, export them in Rocksmith format as well
 			char *arrangement_name;	//This will point to the track's native name unless it has an alternate name defined
@@ -2837,30 +2842,36 @@ int eof_save_helper(char *destfilename)
 			numlines = eof_song->vocal_track[0]->lines;		//Retain the original line count, which would be lost during a failed RS lyric export
 
 			//Export in RS1 format
-			(void) snprintf(tempfilename2, sizeof(tempfilename2), "%s.xml", arrangement_name);	//Build the filename
-			(void) append_filename(eof_temp_filename, newfolderpath, tempfilename2, (int) sizeof(eof_temp_filename));	//Build the full file name
-			jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
-			if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
-			{	//Lyric export failed
-				(void) puts("Assert() handled sucessfully!");
-				allegro_message("Rocksmith lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in this chart's file path,\nbecause EOF's lyric export doesn't support them.");
-			}
-			else
-			{
-				(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,RS_FORMAT);	//Import lyrics into FLC lyrics structure and export to Rocksmith format
+			if(eof_write_rs_files)
+			{	//If the user wants to save Rocksmith 1 files
+				(void) snprintf(tempfilename2, sizeof(tempfilename2), "%s.xml", arrangement_name);	//Build the filename
+				(void) append_filename(eof_temp_filename, newfolderpath, tempfilename2, (int) sizeof(eof_temp_filename));	//Build the full file name
+				jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
+				if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
+				{	//Lyric export failed
+					(void) puts("Assert() handled sucessfully!");
+					allegro_message("Rocksmith lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in this chart's file path,\nbecause EOF's lyric export doesn't support them.");
+				}
+				else
+				{
+					(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,RS_FORMAT);	//Import lyrics into FLC lyrics structure and export to Rocksmith format
+				}
 			}
 			//Export in RS2 format
-			(void) snprintf(tempfilename2, sizeof(tempfilename2), "%s_RS2.xml", arrangement_name);	//Build the filename
-			(void) append_filename(eof_temp_filename, newfolderpath, tempfilename2, (int) sizeof(eof_temp_filename));	//Build the full file name
-			jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
-			if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
-			{	//Lyric export failed
-				(void) puts("Assert() handled sucessfully!");
-				allegro_message("Rocksmith lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in this chart's file path,\nbecause EOF's lyric export doesn't support them.");
-			}
-			else
-			{
-				(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,RS2_FORMAT);	//Import lyrics into FLC lyrics structure and export to Rocksmith 2014 format
+			if(eof_write_rs2_files)
+			{	//If the user wants to save Rocksmith 2 files
+				(void) snprintf(tempfilename2, sizeof(tempfilename2), "%s_RS2.xml", arrangement_name);	//Build the filename
+				(void) append_filename(eof_temp_filename, newfolderpath, tempfilename2, (int) sizeof(eof_temp_filename));	//Build the full file name
+				jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
+				if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
+				{	//Lyric export failed
+					(void) puts("Assert() handled sucessfully!");
+					allegro_message("Rocksmith lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in this chart's file path,\nbecause EOF's lyric export doesn't support them.");
+				}
+				else
+				{
+					(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,RS2_FORMAT);	//Import lyrics into FLC lyrics structure and export to Rocksmith 2014 format
+				}
 			}
 			eof_song->vocal_track[0]->lines = numlines;	//Restore the number of lyric lines present before lyric export was attempted
 			eof_song->vocal_track[0]->line[0] = temp;	//Restore the first lyric line present before lyric export was attempted
@@ -2879,14 +2890,19 @@ int eof_save_helper(char *destfilename)
 				{	//If the user hasn't disabled the creation of the Rocksmith WAV file
 					if(!exists(eof_temp_filename))
 					{	//If "guitar.wav" also does not exist
+						unsigned long silence = 0;	//The amount of silence to append to the RS WAV file (8000ms if RS1 export is enabled)
 						SAMPLE *decoded = alogg_create_sample_from_ogg(eof_music_track);	//Create PCM data from the loaded chart audio
 
 						eof_get_rocksmith_wav_path(eof_temp_filename, newfolderpath, sizeof(eof_temp_filename));	//Rebuild the target path based on the song title
 						eof_log("Saving Rocksmith WAV file", 1);
 						set_window_title("Saving WAV file for use with Wwise.  Please wait.");
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Writing RS WAV file (%s)", eof_temp_filename);
+						if(eof_write_rs_files)
+						{	//If the user wants to save Rocksmith 1 files
+							silence = 8000;	//Create a WAV with 8 seconds of silence appended, so that the song will end properly in-game
+						}
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Writing RS WAV file (%s) with %lums of silence", eof_temp_filename, silence);
 						eof_log(eof_log_string, 1);
-						if(!save_wav_with_silence_appended(eof_temp_filename, decoded, 8000))	//Write a WAV file with it, appending 8 seconds of silence to it
+						if(!save_wav_with_silence_appended(eof_temp_filename, decoded, silence))	//Write a WAV file with it, appending either 0 or 8 seconds of silence to it
 						{	//If it didn't save, try saving again as "guitar.wav", just in case the user put invalid characters in the song title
 							(void) replace_filename(eof_temp_filename, newfolderpath, "guitar.wav", (int) sizeof(eof_temp_filename));
 							if(!save_wav_with_silence_appended(eof_temp_filename, decoded, 8000))
@@ -3554,4 +3570,237 @@ int eof_menu_file_rs_import(void)
 	}
 
 	return D_O_K;
+}
+
+int eof_menu_file_sonic_visualiser_import(void)
+{
+	char * returnedfn = NULL, *initial, *ptr;
+	PACKFILE *inf = NULL;
+	size_t maxlinelength;
+	char *buffer = NULL, error = 0, tempo_s[15], undo_made = 0, done = 0;
+	unsigned long linectr = 1, ctr, beatctr = 0, pointctr = 0;
+	long samplerate = 0, frame;
+	double frametime, tempo_f, beatlen, timectr, lastbeatlen;
+
+	eof_log("eof_menu_file_sonic_visualiser_import() entered", 1);
+
+	if(!eof_song || !eof_song_loaded)
+		return 1;	//For now, don't do anything unless a project is active
+
+	if(eof_song->tags->tempo_map_locked)
+	{	//If the user has locked the tempo map
+		eof_clear_input();
+		key[KEY_Y] = 0;
+		key[KEY_N] = 0;
+		if(alert(NULL, "The tempo map must be unlocked in order to import a Sonic Visualiser file.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+		{	//If the user does not opt to unlock the tempo map
+			eof_log("\tUser cancellation.  Aborting", 1);
+			return 1;
+		}
+		eof_song->tags->tempo_map_locked = 0;	//Unlock the tempo map
+	}
+
+	if((eof_last_sonic_visualiser_path[uoffset(eof_last_sonic_visualiser_path, ustrlen(eof_last_sonic_visualiser_path) - 1)] == '\\') || (eof_last_sonic_visualiser_path[uoffset(eof_last_sonic_visualiser_path, ustrlen(eof_last_sonic_visualiser_path) - 1)] == '/'))
+	{	//If the path ends in a separator
+		eof_last_sonic_visualiser_path[uoffset(eof_last_sonic_visualiser_path, ustrlen(eof_last_sonic_visualiser_path) - 1)] = '\0';	//Remove it
+	}
+	if(eof_imports_recall_last_path && file_exists(eof_last_sonic_visualiser_path, FA_RDONLY | FA_HIDDEN | FA_DIREC, NULL))
+	{	//If the user chose for the Sonic Visualiser import dialog to start at the path of the last imported file and that path is valid
+		initial = eof_last_sonic_visualiser_path;	//Use it
+	}
+	else
+	{	//Otherwise start at the project's path
+		initial = eof_last_eof_path;
+	}
+	returnedfn = ncd_file_select(0, initial, "Import Sonic Visualiser", eof_filter_sonic_visualiser_files);
+	eof_clear_input();
+	if(returnedfn)
+	{	//If the user selected a file
+		inf = pack_fopen(returnedfn, "rt");	//Open file in text mode
+		if(!inf)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError loading:  Cannot open input SVL file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+			eof_log(eof_log_string, 1);
+			return 1;
+		}
+
+		//Allocate memory buffers large enough to hold any line in this file
+		maxlinelength = (size_t)FindLongestLineLength_ALLEGRO(returnedfn, 0);
+		if(!maxlinelength)
+		{
+			eof_log("\tError finding the largest line in the file.  Aborting", 1);
+			(void) pack_fclose(inf);
+			return 1;
+		}
+		buffer = (char *)malloc(maxlinelength);
+		if(!buffer)
+		{
+			eof_log("\tError allocating memory.  Aborting", 1);
+			(void) pack_fclose(inf);
+			return 1;
+		}
+
+		//Read first line of text, capping it to prevent buffer overflow
+		if(!pack_fgets(buffer, (int)maxlinelength, inf))
+		{	//I/O error
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSonic Visualiser import failed on line #%lu:  Unable to read from file:  \"%s\"", linectr, strerror(errno));
+			eof_log(eof_log_string, 1);
+			error = 1;
+		}
+
+		//Parse the contents of the file
+		while(!error && !done && !pack_feof(inf))
+		{	//Until there was an error reading from the file or end of file is reached
+			#ifdef RS_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tProcessing line #%lu", linectr);
+				eof_log(eof_log_string, 1);
+			#endif
+
+			//Separate the line into the opening XML tag (buffer) and the content between the opening and closing tag (buffer2)
+			ptr = strcasestr_spec(buffer, ">");
+			if(!ptr)
+			{	//This line had no XML, skip it
+				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text, so the EOF condition can be checked
+				linectr++;
+				continue;
+			}
+
+			if(strcasestr_spec(buffer, "<model"))
+			{	//If this is a model tag
+				if(parse_xml_attribute_number("sampleRate", buffer, &samplerate) != 1)
+				{	//If the sample rate couldn't be read
+					eof_log("\tError reading sample rate.  Aborting", 1);
+					error = 1;
+					break;
+				}
+			}
+			else if(strcasestr_spec(buffer, "<point"))
+			{	//If this is a point tag
+				pointctr++;
+				if(!samplerate)
+				{	//If the sample rate hadn't been read yet
+					eof_log("\tError:  Sample rate not defined.  Aborting", 1);
+					error = 1;
+					break;
+				}
+				if(parse_xml_attribute_number("frame", buffer, &frame) != 1)
+				{	//If the frame number couldn't be read
+					eof_log("\tError reading frame number.  Aborting", 1);
+					error = 1;
+					break;
+				}
+				frametime = (double)frame / ((double)samplerate / 1000.0);	//Convert point timing to realtime in milliseconds
+
+				//Read either the value or label attribute (prefer the value attribute as it is higher precision), convert to floating point and determine the beat length
+				if(parse_xml_attribute_text(tempo_s, sizeof(tempo_s), "value", buffer) != 1)
+				{	//If the tempo value isn't defined (only available when the tempo estimation function is used in Sonic Visualiser instead of the beat estimation function)
+					if(parse_xml_attribute_text(tempo_s, sizeof(tempo_s), "label", buffer) != 1)
+					{	//If the tempo label isn't defined either
+						eof_log("\tError:  Tempo not defined.  Aborting", 1);
+						error = 1;
+						break;
+					}
+					for(ctr = 0; ctr < strlen(tempo_s) && (tempo_s[ctr] != '\0'); ctr++)
+					{	//For each character in the label string
+						if(!isdigit(tempo_s[ctr]) && (tempo_s[ctr] != '.'))
+						{	//If this character isn't a number or decimal point
+							tempo_s[ctr] = '\0';	//Truncate string
+							break;
+						}
+					}
+				}
+				tempo_f = atof(tempo_s);
+				if(tempo_f == 0.0)
+				{	//If the conversion couldn't be performed (the last point tag in a beat estimation defines an empty tag attribute), keep the last beat length in effect
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tFrame = %ld\ttime = %fms", frame, frametime);
+					eof_log(eof_log_string, 1);
+					done = 1;
+				}
+				else
+				{
+					beatlen = 60000.0 / tempo_f;	//Get the length (in milliseconds) of one beat using this tempo
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tFrame = %ld\ttime = %fms\ttempo = %.3fBPM\tbeat length = %f", frame, frametime, tempo_f, beatlen);
+					eof_log(eof_log_string, 1);
+				}
+
+				//Apply the beat timing
+				if(!undo_made)
+				{	//If an undo hasn't been made
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				if(pointctr > 1)
+				{	//If this isn't the first point tag, apply timings for all beats between this point tag and the previous (if any)
+					while(timectr + lastbeatlen + 1 < frametime)
+					{	//While another beat fits before this frame's timestamp with at least an extra millisecond of room
+						if(beatctr >= eof_song->beats)
+						{	//If another beat needs to be added to the project
+							if(!eof_song_append_beats(eof_song, 1))
+							{	//If a beat couldn't be added
+								eof_log("\tError allocating memory to add a beat.  Aborting", 1);
+								error = 1;
+								break;
+							}
+						}
+						timectr += lastbeatlen;	//Advance the time counter by one beat length
+						eof_song->beat[beatctr]->fpos = timectr;
+						eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;
+						beatctr++;
+					}
+					if(error)
+					{	//If an error was reached
+						break;	//Exit outer loop
+					}
+				}
+				else
+				{	//This is the first point tag, update the chart's MIDI delay
+					eof_song->tags->ogg[eof_selected_ogg].midi_offset = frametime + 0.5;
+				}
+				if(beatctr >= eof_song->beats)
+				{	//If another beat needs to be added to the project
+					if(!eof_song_append_beats(eof_song, 1))
+					{	//If a beat couldn't be added
+						eof_log("\tError allocating memory to add a beat.  Aborting", 1);
+						error = 1;
+						break;
+					}
+				}
+				eof_song->beat[beatctr]->fpos = frametime;
+				eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;
+				beatctr++;
+				timectr = frametime;	//Track the position of the last processed beat
+				lastbeatlen = beatlen;	//Track the beat length of the last processed point tag
+			}//If this is a point tag
+
+			(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+			linectr++;	//Increment line counter
+		}//Until there was an error reading from the file or end of file is reached
+
+		if(error)
+		{
+			if(undo_made)
+			{	//If an undo state was made
+				(void) eof_undo_apply();	//Load it
+			}
+			allegro_message("Sonic Visualiser import failed, see log for details.");
+		}
+		else
+		{
+			while((beatctr > 0) && beatctr < eof_song->beats)
+			{	//While there are beats whose timings weren't covered by the imported file
+				eof_song->beat[beatctr]->fpos = eof_song->beat[beatctr - 1]->fpos + beatlen;	//Apply the beat length defined by the last point frame
+				eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;
+				beatctr++;
+			}
+		}
+
+		//Cleanup
+		eof_calculate_tempo_map(eof_song);	//Determine all tempo changes based on the beats' timestamps
+		eof_truncate_chart(eof_song);		//Remove excess beat markers and update the eof_chart_length variable
+		(void) replace_filename(eof_last_sonic_visualiser_path, returnedfn, "", 1024);	//Set the last loaded Sonic Visualiser file path
+		free(buffer);
+		(void) pack_fclose(inf);
+	}//If the user selected a file
+
+	return 1;
 }

@@ -5371,7 +5371,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 				{	//If this beat has a section (RS phrase) event
 					int bg_color = eof_color_gray;	//By default, section names will render with a gray background
 
-					if(eof_write_rs_files && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+					if((eof_write_rs_files || eof_write_rs2_files) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 					{	//If the user wants to save Rocksmith capable files, and a pro guitar/bass track is active, determine if the section (Rocksmith phrase) is identical in both this and the previous difficulty or if the phrase is fully leveled in the active difficulty
 						unsigned long i2, startpos, endpos;
 						char retval;

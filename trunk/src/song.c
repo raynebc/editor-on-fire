@@ -4360,7 +4360,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 	eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Ensure fret hand positions are sorted
 
 	//Ensure that the note at the beginning of each arpeggio phrase is authored correctly
-	if(eof_write_rs_files)
+	if(eof_write_rs_files || eof_write_rs2_files)
 	{	//If the user wants to save Rocksmith capable files
 		for(ctr = 0; ctr < tp->arpeggios; ctr++)
 		{	//For each arpeggio phrase in the track
