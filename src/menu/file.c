@@ -3580,7 +3580,7 @@ int eof_menu_file_sonic_visualiser_import(void)
 	char *buffer = NULL, error = 0, tempo_s[15], undo_made = 0, done = 0;
 	unsigned long linectr = 1, ctr, beatctr = 0, pointctr = 0;
 	long samplerate = 0, frame;
-	double frametime, tempo_f, beatlen, timectr, lastbeatlen;
+	double frametime, tempo_f, beatlen = 500.0, timectr = 0.0, lastbeatlen = 500.0;
 
 	eof_log("eof_menu_file_sonic_visualiser_import() entered", 1);
 
@@ -3786,7 +3786,7 @@ int eof_menu_file_sonic_visualiser_import(void)
 		}
 		else
 		{
-			while((beatctr > 0) && beatctr < eof_song->beats)
+			while((beatctr > 0) && (beatctr < eof_song->beats))
 			{	//While there are beats whose timings weren't covered by the imported file
 				eof_song->beat[beatctr]->fpos = eof_song->beat[beatctr - 1]->fpos + beatlen;	//Apply the beat length defined by the last point frame
 				eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;
