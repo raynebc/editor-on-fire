@@ -87,6 +87,7 @@
 
 //The following extended flags pertain to pro guitar notes
 #define EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE  1		//This flag specifies a note that will export to RS2 format with the "ignore" status set to nonzero, for special uses
+#define EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN 2		//This flag specifies a note that will export to RS2 format with its sustain even when it's a chord without techniques that normally require chordNote tags
 
 #define EOF_MAX_BEATS   32768
 #define EOF_MAX_PHRASES  1000

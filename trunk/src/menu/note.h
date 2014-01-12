@@ -131,6 +131,8 @@ int eof_menu_note_toggle_accent(void);			//Toggles the accent status of all sele
 int eof_menu_note_remove_accent(void);			//Removes the accent status of all selected notes
 int eof_menu_note_toggle_pinch_harmonic(void);	//Toggles the pinch harmonic status of all selected notes
 int eof_menu_note_remove_pinch_harmonic(void);	//Removes the pinch harmonic status of all selected notes
+int eof_menu_note_toggle_rs_sustain(void);		//Toggles the sustain pro guitar status of all selected notes
+int eof_menu_note_remove_rs_sustain(void);		//Removes the sustain pro guitar status of all selected notes
 int eof_menu_pro_guitar_toggle_hammer_on(void);	//Toggles the hammer on status of all selected notes
 int eof_menu_pro_guitar_remove_hammer_on(void);	//Removes the hammer on status of all selected notes
 int eof_menu_pro_guitar_toggle_pull_off(void);	//Toggles the pull off status of all selected notes

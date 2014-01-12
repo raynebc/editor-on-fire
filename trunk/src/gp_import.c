@@ -2565,7 +2565,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 //Correct Go PlayAlong timings by rebuilding the quarter note lengths
  	if(sync_points)
 	{	//If synchronization data was imported from the input Go PlayAlong file
-		double beatctr;
+		double beatctr, qnotectr;
 		unsigned char *num;	//Will point to an array with the TS numerator of every measure
 		unsigned char *den;	//Will point to an array with the TS denominator of every measure
 		unsigned long nummeasures;	//The number of entries in the above arrays
@@ -2630,22 +2630,26 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				if(sync_points[ctr + 1].measure > sync_points[ctr].measure)
 				{	//If the next sync point ends in a different measure
 					beatctr = (1.0 - sync_points[ctr].pos_in_measure) * num[sync_points[ctr].measure];	//Initialize the counter to the number of beats between this sync point and the end of the measure it's in
+					qnotectr = beatctr / ((double)den[sync_points[ctr].measure] / 4.0);	//Convert the beat counter to the number of quarter notes
 					for(ctr2 = sync_points[ctr].measure + 1; ctr2 < sync_points[ctr + 1].measure; ctr2++)
 					{	//For each remaining measure until the one the sync point is in
 						beatctr += num[ctr2];	//Add this measure's number of beats to the counter
+						qnotectr += num[ctr2] / ((double)den[ctr2] / 4.0);	//Add this measure's number of quarter notes to the counter
 					}
 					beatctr += sync_points[ctr + 1].pos_in_measure * num[sync_points[ctr + 1].measure];	//Add the number of beats into the measure the later sync point is
+					qnotectr += (sync_points[ctr + 1].pos_in_measure * num[sync_points[ctr + 1].measure]) / ((double)den[sync_points[ctr + 1].measure] / 4.0);	//Add the number of quarter notes into the measure the later sync point is
 				}
 				else
 				{	//This sync point and the next end in the same measure
 					beatctr = sync_points[ctr + 1].pos_in_measure - sync_points[ctr].pos_in_measure;	//Get the distance between them in measures
 					beatctr *= num[sync_points[ctr].measure];	//Convert this value to the number of beats between the sync points
+					qnotectr = beatctr / ((double)den[sync_points[ctr].measure] / 4.0);	//Convert the beat counter to the number of quarter notes
 				}
-				sync_points[ctr].real_qnote_length = ((double)sync_points[ctr + 1].realtime_pos - sync_points[ctr].realtime_pos) / beatctr;	//Get the beat length
-				sync_points[ctr].real_qnote_length *= den[sync_points[ctr].measure] / 4.0;	//Translate into the number of quarter notes (based on the beat unit of the time signature in effect at the earlier sync point)
+				sync_points[ctr].beat_length = ((double)sync_points[ctr + 1].realtime_pos - sync_points[ctr].realtime_pos) / beatctr;	//Get the beat length
+				sync_points[ctr].real_qnote_length = (sync_points[ctr + 1].realtime_pos - sync_points[ctr].realtime_pos) / qnotectr;	//Get the quarter note length (the distance between this sync point and the next divided by the number of quarter notes between them)
 			}
 #ifdef GP_IMPORT_DEBUG
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSync point #%lu:  Pos:  %lums\tMeasure:  %f\tQuarter note length:  %fms\tCorrected length:  %fms", ctr, sync_points[ctr].realtime_pos, sync_points[ctr].measure + 1.0 + sync_points[ctr].pos_in_measure, sync_points[ctr].qnote_length, sync_points[ctr].real_qnote_length);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSync point #%lu:  Pos:  %lums\tMeasure:  %f\tQuarter note length:  %fms\t# of qnotes to next sync point:  %f\tCorrected length:  %fms", ctr, sync_points[ctr].realtime_pos, sync_points[ctr].measure + 1.0 + sync_points[ctr].pos_in_measure, sync_points[ctr].qnote_length, qnotectr, sync_points[ctr].real_qnote_length);
 			eof_log(eof_log_string, 1);
 #endif
 		}//For each sync point from the Go PlayAlong file

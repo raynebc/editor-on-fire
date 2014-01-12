@@ -65,6 +65,7 @@
 		double pos_in_measure;			//The position (from 0 to 1) in the measure at which the sync point exists
 		double qnote_length;			//The length of each quarter note from this sync point until the next
 		double real_qnote_length;		//Multiple users have encountered instances where Go PlayAlong exported invalid quarter note timings to XML, EOF will recreate them by dividing the time between sync points by the number of beats between them
+		double beat_length;				//The measured length of each beat based on the realtime distance between sync points and the number of beats between them
 		char processed;					//Is set to nonzero after the sync point is incorporated into the project's tempo map
 	};
 

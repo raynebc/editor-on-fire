@@ -1591,10 +1591,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	long startbeat;	//This will indicate the first beat containing a note in the track
 	long endbeat;	//This will indicate the first beat after the exported track's last note
 	char standard[] = {0,0,0,0,0,0};
-	char standardbass[] = {0,0,0,0};
 	char eb[] = {-1,-1,-1,-1,-1,-1};
-	char dropd[] = {-2,0,0,0,0,0};
-	char openg[] = {-2,-2,0,0,0,-2};
 	char *tuning;
 	char isebtuning = 1;	//Will track whether all strings are tuned to -1
 	char notename[EOF_NAME_LENGTH+1];	//String large enough to hold any chord name supported by EOF
@@ -1773,12 +1770,6 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	if(isebtuning && !(is_bass && (tp->numstrings > 4)))
 	{	//If all strings were tuned down a half step (except for bass tracks with more than 4 strings, since in those cases, the lowest string is not tuned to E)
 		tuning = eb;	//Remap 4 or 5 string Eb tuning as {-1,-1,-1,-1,-1,-1}
-	}
-	if(memcmp(tuning, standard, 6) && memcmp(tuning, standardbass, 4) && memcmp(tuning, eb, 6) && memcmp(tuning, dropd, 6) && memcmp(tuning, openg, 6))
-	{	//If the track's tuning doesn't match any supported by Rocksmith
-		allegro_message("Warning:  This track (%s) uses a tuning that isn't one known to be supported in Rocksmith.\nTuning and note recognition may not work as expected in-game", sp->track[track]->name);
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  This track (%s) uses a tuning that isn't known to be supported in Rocksmith.  Tuning and note recognition may not work as expected in-game", sp->track[track]->name);
-		eof_log(eof_log_string, 1);
 	}
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <tuning string0=\"%d\" string1=\"%d\" string2=\"%d\" string3=\"%d\" string4=\"%d\" string5=\"%d\" />\n", tuning[0], tuning[1], tuning[2], tuning[3], tuning[4], tuning[5]);
 	(void) pack_fputs(buffer, fp);
@@ -2770,6 +2761,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 										char tagend[2] = "/";	//If a chordNote tag is to have a bendValues subtag, this string is emptied so that the note tag doesn't end in the same line
 										long fret;				//The fret number used for this string (uses signed math, keep it a signed int type)
 										unsigned long flags = tp->note[ctr3]->flags;
+										unsigned long eflags = tp->note[ctr3]->eflags;
 
 										(void) eof_get_rs_techniques(sp, track, ctr3, stringnum, &tech, 2);	//Determine techniques used by this note
 										if(tp->note[ctr3]->frets[stringnum] == 0xFF)
@@ -2812,7 +2804,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 										{	//Otherwise if the chord also does not have tremolo status (which is required for the technique to display in game)
 											if(!((fret == 0) && ((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))))
 											{	//If the note is not fretted, it needs to keep its sustain if the fretted notes in the chord have bend or slide status
-												tech.length = 0;	//Force the chordNotes to have no sustain
+												if(!(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN))
+												{	//If the chord has the sustain status applied, it needs to keep its sustain
+													tech.length = 0;	//Force the chordNotes to have no sustain
+												}
 											}
 										}
 										if(tech.bend)
@@ -3720,6 +3715,9 @@ void eof_get_rocksmith_wav_path(char *buffer, const char *parent_folder, size_t 
 {
 	(void) replace_filename(buffer, parent_folder, "", (int)num - 1);	//Obtain the destination path
 
+	if(!eof_song_loaded)
+		return;	//Don't perform this action unless a chart is loaded
+
 	//Build target WAV file name
 	put_backslash(buffer);
 	if(eof_song->tags->title[0] != '\0')
@@ -3737,6 +3735,9 @@ void eof_get_rocksmith_wav_path(char *buffer, const char *parent_folder, size_t 
 void eof_delete_rocksmith_wav(void)
 {
 	char checkfn[1024] = {0};
+
+	if(!eof_song_loaded)
+		return;	//Don't perform this action unless a chart is loaded
 
 	eof_get_rocksmith_wav_path(checkfn, eof_song_path, sizeof(checkfn));	//Build the path to the WAV file written for Rocksmith during save
 	if(exists(checkfn))
@@ -4611,7 +4612,7 @@ unsigned long eof_get_highest_fret_in_time_range(EOF_SONG *sp, unsigned long tra
 
 unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long stringnum, EOF_RS_TECHNIQUES *ptr, char target)
 {
-	unsigned long tracknum, flags;
+	unsigned long tracknum, flags, eflags;
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned char lowestfretted;
 	long fret, slidediff = 0, unpitchedslidediff = 0;
@@ -4624,6 +4625,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 		return 0;	//Invalid parameter
 
 	flags = eof_get_note_flags(sp, track, notenum);
+	eflags = eof_get_note_eflags(sp, track, notenum);
 	if(ptr)
 	{	//If the calling function passed a techniques structure
 		ptr->length = eof_get_note_length(sp, track, notenum);
@@ -4642,7 +4644,10 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 
 		if((ptr->length == 1) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 		{	//If the note is has the absolute minimum length and isn't a bend or a slide note (bend and slide notes are required to have a length > 0 or Rocksmith will crash)
-			ptr->length = 0;	//Convert to a length of 0 so that it doesn't display as a sustain note in-game
+			if(!((target == 2) && (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN)))
+			{	//Only if this note does not have the sustain status applied and the target is Rocksmith 2
+				ptr->length = 0;	//Convert to a length of 0 so that it doesn't display as a sustain note in-game
+			}
 		}
 		if(fret)
 		{	//If this string is fretted (open notes don't have slide or bend attributes written)
@@ -4731,7 +4736,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 				ptr->length = 0;	//Remove all sustain for the note, otherwise Rocksmith 1 won't display the pop/slap sustain technique
 			}
 		}
-		if((tp->note[notenum]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE) && (target == 2))
+		if((eflags & EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE) && (target == 2))
 		{	//If the note's extended flags indicate the ignore status is applied and Rocksmith 2 export is in effect
 			ptr->ignore = 1;
 		}
@@ -4745,6 +4750,11 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 	flags &= (	EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_HO | EOF_PRO_GUITAR_NOTE_FLAG_PO |
 				EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC | EOF_NOTE_FLAG_IS_TREMOLO | EOF_PRO_GUITAR_NOTE_FLAG_POP | EOF_PRO_GUITAR_NOTE_FLAG_SLAP | EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC |
 				EOF_PRO_GUITAR_NOTE_FLAG_TAP | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO | EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE);
+
+	if((target == 2) && (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN))
+	{	//If the target is Rocksmith 2 and this note has the sustain status applied
+		flags |= EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN;	//Ensure flags is nonzero so the calling function knows the a chord with such status exports with chordNote tags
+	}
 
 	return flags;
 }
