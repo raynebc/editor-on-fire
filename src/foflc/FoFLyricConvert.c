@@ -820,7 +820,7 @@ int main(int argc, char *argv[])
 		Input_failed(0xEA,NULL);	//The brute parameter is only valid for UltraStar export
 	if(Lyrics.marklines && (Lyrics.out_format != SCRIPT_FORMAT))
 		Input_failed(0xE0,NULL);	//The marklines parameter is only valid for Script export
-	if((Lyrics.nolyrics == 2) && ((Lyrics.in_format != KAR_FORMAT) || (Lyrics.in_format != MIDI_FORMAT)))
+	if((Lyrics.nolyrics == 2) && ((Lyrics.in_format != KAR_FORMAT) && (Lyrics.in_format != MIDI_FORMAT)))
 		Input_failed(0xE8,NULL);	//The nolyrics parameter can only be specified explicitly for MIDI/KAR import
 	if(Lyrics.quick && (!midi_based_import && !midi_based_export))
 		Input_failed(0xE6,NULL);	//The quick parameter is only valid for MIDI, KAR or Vrhythm import/export

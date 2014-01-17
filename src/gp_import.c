@@ -2569,9 +2569,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		unsigned char *num;	//Will point to an array with the TS numerator of every measure
 		unsigned char *den;	//Will point to an array with the TS denominator of every measure
 		unsigned long nummeasures;	//The number of entries in the above arrays
+		double curpos = 0.0, beat_length = 500.0, last_qnote_length = 500.0, temp_length = 0.0;	//By default, assume 120BPM at 4/4 meter
+		char mid_beat;	//Tracks whether the sync point applied to the beat was mid-beat
 
 		eof_log("Unwrapping beats", 1);
-		eof_unwrap_gp_track(gp, 0, 1, 1);	//Unwrap all measures in the GP file, applying time signatures where appropriate
+		(void) eof_unwrap_gp_track(gp, 0, 1, 1);	//Unwrap all measures in the GP file, applying time signatures where appropriate
 		eof_process_beat_statistics(eof_song, eof_selected_track);		//Find the measure numbering for all beats
 
 		//Build a temporary tsarray[], since GPA import needs one reflecting unwrapped measures, and the GP import that follows needs one reflecting the original wrapped measures
@@ -2624,6 +2626,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			if(ctr + 1 >= num_sync_points)
 			{	//If this is the last sync point, retain the original quarter note length specified in the XML file
 				sync_points[ctr].real_qnote_length = sync_points[ctr].qnote_length;
+				qnotectr = 0;
 			}
 			else
 			{	//Otherwise base the quarter note length on the amount of time and number of beats between this next sync point and the next
@@ -2655,8 +2658,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}//For each sync point from the Go PlayAlong file
 
 //Apply Go PlayAlong timings now if applicable
-		double curpos = 0.0, beat_length = 500.0, last_qnote_length = 500.0, temp_length = 0.0;	//By default, assume 120BPM at 4/4 meter
-		char mid_beat;	//Tracks whether the sync point applied to the beat was mid-beat
 		eof_log("Applying sync point timings", 1);
 		for(ctr = 0; ctr < eof_song->beats; ctr++)
 		{	//For each beat in the project
@@ -4012,6 +4013,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 	unsigned int working_symbols[19];	//Will store a copy of gp->symbols[] so that the information ingp isn't destroyed
 	unsigned int curr_repeat = 0;
 	char in_alt_ending;
+	unsigned char curnum = 4, curden = 4;	//Tracks the time signature of the most recently unwrapped measure
 
 	eof_log("eof_unwrap_gp_track() entered", 1);
 
@@ -4196,9 +4198,11 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 			//Update the time signature if necessary
 			if(import_ts)
 			{
-				if(!currentmeasure || (gp->measure[currentmeasure].num != gp->measure[currentmeasure - 1].num) || (gp->measure[currentmeasure].den != gp->measure[currentmeasure - 1].den))
-				{	//If this is the first measure or this measure's time signature is different from that of the previous measure
-					(void) eof_apply_ts(gp->measure[currentmeasure].num, gp->measure[currentmeasure].den, beatctr, eof_song, 0);	//Apply the change to the active project
+				if(!currentmeasure || (gp->measure[currentmeasure].num != curnum) || (gp->measure[currentmeasure].den != curden))
+				{	//If this is the first measure or this measure's time signature is different from that of the previously unwrapped measure
+					curnum = gp->measure[currentmeasure].num;
+					curden = gp->measure[currentmeasure].den;
+					(void) eof_apply_ts(curnum, curden, beatctr, eof_song, 0);	//Apply the change to the active project
 				}
 			}
 
@@ -4427,7 +4431,9 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 				{
 					if(!currentmeasure || (gp->measure[currentmeasure].num != gp->measure[currentmeasure - 1].num) || (gp->measure[currentmeasure].den != gp->measure[currentmeasure - 1].den))
 					{	//If this is the first measure or this measure's time signature is different from that of the previous measure
-						(void) eof_apply_ts(gp->measure[currentmeasure].num, gp->measure[currentmeasure].den, beatctr, eof_song, 0);	//Apply the change to the active project
+						curnum = gp->measure[currentmeasure].num;
+						curden = gp->measure[currentmeasure].den;
+						(void) eof_apply_ts(curnum, curden, beatctr, eof_song, 0);	//Apply the change to the active project
 					}
 				}
 				if(gp->measure[currentmeasure].num_of_repeats)

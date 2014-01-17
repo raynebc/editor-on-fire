@@ -145,7 +145,8 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 364, 210, 16,  2,   23,  0,    0,      1,   0,   "Import dialogs recall last path",NULL, NULL },
 	{ d_agup_check_proc, 248, 380, 224, 16,  2,   23,  0,    0,      1,   0,   "Rewind when playback is at end",NULL, NULL },
 	{ d_agup_check_proc, 248, 396, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
-	{ d_agup_check_proc, 248, 412, 182, 16,  2,   23,  0,    0,      1,   0,   "Enable logging on launch",NULL, NULL },
+	{ d_agup_check_proc, 16,  252, 182, 16,  2,   23,  0,    0,      1,   0,   "Enable logging on launch",NULL, NULL },
+	{ d_agup_check_proc, 248, 412, 196, 16,  2,   23,  0,    0,      1,   0,   "Display seek pos. in seconds",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1079,6 +1080,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[44].flags = eof_rewind_at_end ? D_SELECTED : 0;					//Rewind when playback is at end
 	eof_preferences_dialog[45].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
 	eof_preferences_dialog[46].flags = enable_logging ? D_SELECTED : 0;						//Enable logging on launch
+	eof_preferences_dialog[47].flags = eof_display_seek_pos_in_seconds ? D_SELECTED : 0;	//Display seek pos. in seconds
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1171,6 +1173,7 @@ int eof_menu_file_preferences(void)
 			eof_rewind_at_end = (eof_preferences_dialog[44].flags == D_SELECTED ? 1 : 0);
 			eof_disable_rs_wav = (eof_preferences_dialog[45].flags == D_SELECTED ? 1 : 0);
 			enable_logging = (eof_preferences_dialog[46].flags == D_SELECTED ? 1 : 0);
+			eof_display_seek_pos_in_seconds = (eof_preferences_dialog[47].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 29)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1210,6 +1213,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[44].flags = D_SELECTED;			//Rewind when playback is at end
 			eof_preferences_dialog[45].flags = 0;					//Don't write Rocksmith WAV file
 			eof_preferences_dialog[46].flags = D_SELECTED;			//Enable logging on launch
+			eof_preferences_dialog[47].flags = 0;					//Display seek pos. in seconds
 		}//If the user clicked "Default
 	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -3700,7 +3704,7 @@ int eof_menu_file_sonic_visualiser_import(void)
 						error = 1;
 						break;
 					}
-					for(ctr = 0; ctr < strlen(tempo_s) && (tempo_s[ctr] != '\0'); ctr++)
+					for(ctr = 0; ctr < (unsigned long)strlen(tempo_s) && (tempo_s[ctr] != '\0'); ctr++)
 					{	//For each character in the label string
 						if(!isdigit(tempo_s[ctr]) && (tempo_s[ctr] != '.'))
 						{	//If this character isn't a number or decimal point
@@ -3709,15 +3713,15 @@ int eof_menu_file_sonic_visualiser_import(void)
 						}
 					}
 				}
-				tempo_f = atof(tempo_s);
-				if(tempo_f == 0.0)
-				{	//If the conversion couldn't be performed (the last point tag in a beat estimation defines an empty tag attribute), keep the last beat length in effect
+				if(tempo_s[0] == '\0')
+				{	//If the tempo string is empty (the last point tag in a beat estimation defines an empty tag attribute), keep the last beat length in effect
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tFrame = %ld\ttime = %fms", frame, frametime);
 					eof_log(eof_log_string, 1);
 					done = 1;
 				}
 				else
-				{
+				{	//Otherwise convert the string to floating point
+					tempo_f = atof(tempo_s);
 					beatlen = 60000.0 / tempo_f;	//Get the length (in milliseconds) of one beat using this tempo
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tFrame = %ld\ttime = %fms\ttempo = %.3fBPM\tbeat length = %f", frame, frametime, tempo_f, beatlen);
 					eof_log(eof_log_string, 1);

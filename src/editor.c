@@ -5269,8 +5269,6 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	roundedstart *= 1000;		//Roundedstart is start rounded down to nearest second
 	for(msec = roundedstart; msec < stop + 1000; msec += 1000)
 	{	//Draw up to 1 second beyond the right edge of the screen's worth of second markers
-		pmin = msec / 60000;		//Find minute count of this second marker
-		psec = (msec % 60000)/1000;	//Find second count of this second marker
 		if(msec < eof_chart_length)
 		{
 			for(j = 0; j < 1000; j+=100)
@@ -5295,7 +5293,17 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 					}
 				}
 			}
-			textprintf_ex(window->screen, eof_mono_font, lpos + (msec / eof_zoom) - 16, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 6, eof_color_white, -1, "%02d:%02d", pmin, psec);
+			if(!eof_display_seek_pos_in_seconds)
+			{	//If the seek position is to be displayed as minutes:seconds
+				pmin = msec / 60000;		//Find minute count of this second marker
+				psec = (msec % 60000)/1000;	//Find second count of this second marker
+				textprintf_ex(window->screen, eof_mono_font, lpos + (msec / eof_zoom) - 16, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 6, eof_color_white, -1, "%02d:%02d", pmin, psec);
+			}
+			else
+			{	//If the seek position is to be displayed as seconds
+				psec = msec/1000;	//Find second count of this second marker
+				textprintf_centre_ex(window->screen, eof_mono_font, lpos + (msec / eof_zoom), EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 6, eof_color_white, -1, "%ds", psec);
+			}
 		}
 	}
 	vline(window->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
