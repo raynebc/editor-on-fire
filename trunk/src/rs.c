@@ -539,8 +539,8 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}
 	if(memcmp(tuning, standard, 6) && memcmp(tuning, standardbass, 4) && memcmp(tuning, eb, 6) && memcmp(tuning, dropd, 6) && memcmp(tuning, openg, 6))
 	{	//If the track's tuning doesn't match any supported by Rocksmith
-		allegro_message("Warning:  This track (%s) uses a tuning that isn't one known to be supported in Rocksmith.\nTuning and note recognition may not work as expected in-game", sp->track[track]->name);
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  This track (%s) uses a tuning that isn't known to be supported in Rocksmith.  Tuning and note recognition may not work as expected in-game", sp->track[track]->name);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  This track (%s) uses a tuning that isn't known to be supported in Rocksmith 1.  Tuning and note recognition may not work as expected in-game", sp->track[track]->name);
+		allegro_message("Warning:  This track (%s) uses a tuning that isn't one known to be supported in Rocksmith 1.\nTuning and note recognition may not work as expected in-game", sp->track[track]->name);
 		eof_log(eof_log_string, 1);
 	}
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <tuning string0=\"%d\" string1=\"%d\" string2=\"%d\" string3=\"%d\" string4=\"%d\" string5=\"%d\" />\n", tuning[0], tuning[1], tuning[2], tuning[3], tuning[4], tuning[5]);
@@ -1395,8 +1395,8 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			handshapectr = 0;
 			for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 			{	//For each note in the track
-				if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 1) > 1) || eof_is_partially_ghosted(sp, track, ctr3)))
-				{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems) or an arpeggio handshape
+				if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 1 | 4) > 1))
+				{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems) or an arpeggio handshape (at least two non muted notes)
 					unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
 
 					//Find this chord's ID
@@ -1468,8 +1468,8 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				(void) pack_fputs(buffer, fp);
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
-					if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 1) > 1) || eof_is_partially_ghosted(sp, track, ctr3)))
-					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems) or an arpeggio handshape
+					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 1 | 4) > 1))
+					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems) or an arpeggio handshape (at least two non muted notes)
 						unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
 
 						//Find this chord's ID
@@ -2112,7 +2112,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				{	//For each of the 6 supported strings
 					if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
 					{	//If this string is used and is not ghosted
-						eof_get_rs_techniques(sp, track, ctr, ctr3, &tech, 2);		//Get the end position of any pitched/unpitched slide this chord's gem has
+						(void) eof_get_rs_techniques(sp, track, ctr, ctr3, &tech, 2);		//Get the end position of any pitched/unpitched slide this chord's gem has
 						new_note = eof_track_add_create_note(sp, track, bitmask, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type, NULL);	//Initialize a new single note at this position
 						if(new_note)
 						{	//If the new note was created

@@ -7,6 +7,7 @@ Changelog: 2.39 to 2.40b (in progress)
 	Fixed a bug where timing conversion could malfunction on a MIDI that defines time signature changes in tracks other than the tempo track.
 	Added support for importing line breaks in Rocksmith formatted lyrics and exporting line breaks in Rocksmith 2014 format.
 	Improved the noplus logic so that a lyric's duration extends to the end of a pitch shift instead of simply having the shift's duration added.  Previously, the distance between the start of the pitch shift and the end of the previous lyric was not taken into account.
+	Fixed a bug where the nolyrics parameter couldn't be specified without FoFLC reporting a usage error.
 
 Changelog: 2.38 to 2.39
 	Some code cleanup.

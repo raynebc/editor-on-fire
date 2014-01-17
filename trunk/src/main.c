@@ -134,6 +134,7 @@ int         eof_render_3d_rs_chords = 0;	//If nonzero, the 3D rendering will dra
 int         eof_imports_recall_last_path = 0;	//If nonzero, various import dialogs will initialize the dialog to the path containing the last chosen import, instead of initializing to the project's folder
 int         eof_rewind_at_end = 1;				//If nonzero, chart rewinds when the end of chart is reached during playback
 int         eof_disable_rs_wav = 0;				//If nonzero, a WAV file for use in Rocksmith will not be maintained during save even if Rocksmith file export is enabled
+int         eof_display_seek_pos_in_seconds = 0;	//If nonzero, the seek position in the piano roll and information panel is given in seconds instead of minutes:seconds
 int         eof_smooth_pos = 1;
 int         eof_input_mode = EOF_INPUT_PIANO_ROLL;
 int         eof_windowed = 1;
@@ -2631,13 +2632,23 @@ void eof_render_note_window(void)
 				}
 			}
 		}//If a non vocal track is active
-		int ism = ((eof_music_pos - eof_av_delay) / 1000) / 60;
-		int iss = ((eof_music_pos - eof_av_delay) / 1000) % 60;
-		int isms = ((eof_music_pos - eof_av_delay) % 1000);
+		int ism;
+		int iss;
+		int isms = ((eof_music_pos - eof_av_delay) % 1000);	//Get the number of milliseconds in the seek position, which is used the same regardless of which timing format is selected by the user
 		unsigned long itn = 0;
 		int isn = eof_count_selected_notes(&itn, 0);
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %02d:%02d.%03d", ism, iss, isms >= 0 ? isms : 0);
+		if(!eof_display_seek_pos_in_seconds)
+		{	//If the seek position is to be displayed as minutes:seconds
+			ism = ((eof_music_pos - eof_av_delay) / 1000) / 60;
+			iss = ((eof_music_pos - eof_av_delay) / 1000) % 60;
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %02d:%02d.%03d", ism, iss, isms >= 0 ? isms : 0);
+		}
+		else
+		{	//If the seek position is to be displayed as seconds
+			iss = (eof_music_pos - eof_av_delay) / 1000;
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %d.%03ds", iss, isms >= 0 ? isms : 0);
+		}
 		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s Selected = %d/%lu", eof_vocals_selected ? "Lyrics" : "Notes", isn, itn);
 		ypos += 12;

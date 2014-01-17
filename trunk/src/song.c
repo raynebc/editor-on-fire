@@ -3491,12 +3491,10 @@ unsigned char eof_get_note_eflags(EOF_SONG *sp, unsigned long track, unsigned lo
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-			return 0;	//Legacy tracks do not use extended flags yet
-		break;
+		return 0;	//Legacy tracks do not use extended flags yet
 
 		case EOF_VOCAL_TRACK_FORMAT:
-			return 0;	//Vocal tracks do not use extended flags yet
-		break;
+		return 0;	//Vocal tracks do not use extended flags yet
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			if(note < sp->pro_guitar_track[tracknum]->notes)

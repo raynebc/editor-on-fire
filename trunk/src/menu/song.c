@@ -3729,6 +3729,10 @@ int eof_menu_song_export_song_preview(void)
 	unsigned long start, stop;
 	char targetpath[1024] = {0};
 	char syscommand[1024] = {0};
+	char wavname[270] = {0};
+
+	if(!eof_song)
+		return 0;
 
 	//Initialize the start and end positions as appropriate
 	if(eof_seek_selection_start != eof_seek_selection_end)
@@ -3753,7 +3757,16 @@ int eof_menu_song_export_song_preview(void)
 
 		if(eof_ogg_settings())
 		{	//If the user selected an OGG encoding quality
-			(void) replace_filename(targetpath, eof_song_path, "preview.wav", 1024);	//Build the target path for the preview WAV file
+			//Determine the name to save the WAV file to
+			if(eof_song->tags->title[0] != '\0')
+			{	//If the chart has a defined song title
+				(void) snprintf(wavname, sizeof(wavname), "%s_preview.wav", eof_song->tags->title);
+			}
+			else
+			{	//Otherwise default to "guitar"
+				(void) snprintf(wavname, sizeof(wavname), "guitar_preview.wav");
+			}
+			(void) replace_filename(targetpath, eof_song_path, wavname, 1024);	//Build the target path for the preview WAV file
 			(void) delete_file(targetpath);	//Delete the preview WAV file if it already exists
 			eof_export_time_range(eof_music_track, start / 1000.0, stop / 1000.0, targetpath);	//Build the preview WAV file
 			if(exists(targetpath))
@@ -3762,9 +3775,9 @@ int eof_menu_song_export_song_preview(void)
 				(void) delete_file(targetpath);	//Delete the preview OGG file if it already exists
 				(void) replace_filename(targetpath, eof_song_path, "", 1024);	//Build the path for the preview files' parent folder
 				#ifdef ALLEGRO_WINDOWS
-					(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc2 --quiet -q %s --resample 44100 -s 0 \"%spreview.wav\" -o \"%spreview.ogg\"", eof_ogg_quality[(int)eof_ogg_setting], targetpath, targetpath);
+					(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc2 --quiet -q %s --resample 44100 -s 0 \"%s%s\" -o \"%spreview.ogg\"", eof_ogg_quality[(int)eof_ogg_setting], targetpath, wavname, targetpath);
 				#else
-					(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc --quiet -q %s --resample 44100 -s 0 \"%spreview.wav\" -o \"%spreview.ogg\"", eof_ogg_quality[(int)eof_ogg_setting], targetpath, targetpath);
+					(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc --quiet -q %s --resample 44100 -s 0 \"%s%s\" -o \"%spreview.ogg\"", eof_ogg_quality[(int)eof_ogg_setting], targetpath, wavname, targetpath);
 				#endif
 				(void) eof_system(syscommand);
 			}

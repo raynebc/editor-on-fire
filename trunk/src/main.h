@@ -328,6 +328,7 @@ extern int         eof_render_3d_rs_chords;
 extern int         eof_imports_recall_last_path;
 extern int         eof_rewind_at_end;
 extern int         eof_disable_rs_wav;
+extern int         eof_display_seek_pos_in_seconds;
 extern int         eof_smooth_pos;
 extern int         eof_windowed;
 extern int         eof_anchor_all_beats;

@@ -57,6 +57,9 @@ static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_create_events_list(void)
 	}
 	lp->events = 0;
 	lp->type = -1;
+	lp->game = 0;
+	lp->diff = 0;
+	lp->tracknum = 0;
 	return lp;
 }
 
