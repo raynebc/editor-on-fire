@@ -2441,7 +2441,6 @@ if(key[KEY_PAUSE])
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 					(void)eof_menu_arpeggio_mark();
 					key[KEY_G] = 0;
-					eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run the fixup logic immediately in order to correct the arpeggio's base chord
 				}
 			}
 		}//If the active track is a pro guitar track

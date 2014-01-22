@@ -2736,7 +2736,7 @@ int eof_save_helper(char *destfilename)
 	}
 	seconds = time(NULL);
 	caltime = localtime(&seconds);
-	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tProject saved at %s", asctime(caltime));
+	(void) strftime(eof_log_string, sizeof(eof_log_string) - 1, "\tProject saved at %c", caltime);
 	eof_log(eof_log_string, 1);
 	if(!exists(eof_temp_filename))
 	{	//Make sure the target file was created

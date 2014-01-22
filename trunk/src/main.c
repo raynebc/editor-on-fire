@@ -3670,7 +3670,7 @@ int eof_initialize(int argc, char * argv[])
 	eof_start_logging();
 	seconds = time(NULL);
 	caltime = localtime(&seconds);
-	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Logging started during program initialization at %s", asctime(caltime));
+	(void) strftime(eof_log_string, sizeof(eof_log_string) - 1, "Logging started during program initialization at %c", caltime);
 	eof_log(eof_log_string, 1);
 	eof_log(EOF_VERSION_STRING, 1);
 
@@ -4221,7 +4221,7 @@ void eof_exit(void)
 	//Stop the logging system
 	seconds = time(NULL);
 	caltime = localtime(&seconds);
-	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Logging stopped during program completion at %s", asctime(caltime));
+	(void) strftime(eof_log_string, sizeof(eof_log_string) - 1, "Logging stopped during program completion at %c", caltime);
 	eof_log(eof_log_string, 1);
 	eof_stop_logging();
 

@@ -5382,6 +5382,7 @@ int eof_menu_arpeggio_mark(void)
 		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
+	eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run the fixup logic immediately in order to correct the arpeggio's base chord
 	return 1;
 }
 

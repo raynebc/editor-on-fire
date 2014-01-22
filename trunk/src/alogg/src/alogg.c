@@ -415,6 +415,7 @@ int alogg_process_ogg(ALOGG_OGG * ogg, void(*callback)(void * buf, int nsamples,
 	bits = alogg_get_wave_bits_ogg(ogg);	//The number of bits per sample (expected to be 16)
 	if(bits != 16)
 	{	//Unexpected sample size
+		free(buffer);
 		return 0;
 	}
 
