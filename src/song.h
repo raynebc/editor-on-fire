@@ -348,8 +348,17 @@ typedef struct
 	char tuning[EOF_TUNING_LENGTH];	//An array with at least (numstrings) elements, each of which defines the string's relative tuning as the +/- number of half steps from standard tuning (tuning[0] refers to lane 1's string, which is low E)
 	EOF_TRACK_ENTRY * parent;		//Allows an easy means to look up the global track using a pro guitar track pointer
 
-	EOF_PRO_GUITAR_NOTE * note[EOF_MAX_NOTES];
+	/* the active note array */
+	EOF_PRO_GUITAR_NOTE ** note;	//This array pointer and count variable are assigned to point to either the pro guitar notes or the tech notes, depending on which the user is currently authoring
 	unsigned long notes;
+
+	/* regular pro guitar notes */
+	EOF_PRO_GUITAR_NOTE * pgnote[EOF_MAX_NOTES];
+	unsigned long pgnotes;
+
+	/* tech notes */
+	EOF_PRO_GUITAR_NOTE * technote[EOF_MAX_NOTES];
+	unsigned long technotes;
 
 	/* solos */
 	EOF_PHRASE_SECTION solo[EOF_MAX_PHRASES];
@@ -376,7 +385,7 @@ typedef struct
 	unsigned long handpositions;
 
 	/* popup messages */
-	EOF_PHRASE_SECTION popupmessage[EOF_MAX_NOTES];
+	EOF_PHRASE_SECTION popupmessage[EOF_MAX_PHRASES];
 	unsigned long popupmessages;
 
 	/* tone changes */

@@ -513,6 +513,7 @@ void eof_read_editor_keys(void)
 if(key[KEY_PAUSE])
 {
 	//Debug action here
+	eof_menu_track_toggle_tech_view();
 	key[KEY_PAUSE] = 0;
 }
 
@@ -1987,7 +1988,6 @@ if(key[KEY_PAUSE])
 	/* select like (CTRL+L) */
 	/* precise select like (SHIFT+L) */
 	/* edit lyric (L in PART VOCALS) */
-	/* enable legacy view (SHIFT+L in pro guitar track) */
 	/* set slide end fret (CTRL+SHIFT+L in a pro guitar track) */
 		if(key[KEY_L])
 		{
@@ -2012,13 +2012,7 @@ if(key[KEY_PAUSE])
 			}
 			else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If a pro guitar track is active
-				if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
-				{	//SHIFT is held but CTRL is not
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					(void) eof_menu_song_legacy_view();
-					key[KEY_L] = 0;
-				}
-				else if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
+				if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
 				{	//Both SHIFT and CTRL are held
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 					(void) eof_pro_guitar_note_slide_end_fret_save();
@@ -4699,7 +4693,7 @@ void eof_render_editor_window(EOF_WINDOW *window)
 	if(!eof_song_loaded || !window)
 		return;
 
-	if(eof_disable_2d_rendering || eof_full_screen_3d)	//If the disabled the 2D window's rendering (or enabled full screen 3D view)
+	if(eof_disable_2d_rendering || eof_full_screen_3d)	//If the user disabled the 2D window's rendering (or enabled full screen 3D view)
 		return;											//Return immediately
 
 	if(eof_song->track[eof_selected_track]->track_format == EOF_VOCAL_TRACK_FORMAT)
@@ -4869,6 +4863,18 @@ void eof_render_editor_window_2(void)
 
 	if(eof_display_second_piano_roll)
 	{	//If the secondary piano roll is to be displayed
+		EOF_PRO_GUITAR_TRACK *tp = NULL;
+		char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
+
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If the track being rendered is a pro guitar track
+			tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
+			if(tp->note == tp->technote)
+			{	//If tech view is in effect for the active track
+				restore_tech_view = 1;
+				eof_menu_track_disable_tech_view(tp);
+			}
+		}
 		if(eof_note_type2 < 0)
 		{	//If the difficulty hasn't been initialized
 			eof_note_type2 = eof_note_type;
@@ -4882,11 +4888,11 @@ void eof_render_editor_window_2(void)
 			eof_music_pos2 = eof_music_pos;
 		}
 
-		temp_type = eof_note_type;			//Remember the active difficulty
-		temp_track = eof_selected_track;	//Remember the active track number
-		temp_pos = eof_music_pos;			//Remember the active position
-		temp_selected = eof_selection.current;	//Remember the selected note
-		temp_hover = eof_hover_note;			//Remember the hover note
+		temp_type = eof_note_type;					//Remember the active difficulty
+		temp_track = eof_selected_track;			//Remember the active track number
+		temp_pos = eof_music_pos;					//Remember the active position
+		temp_selected = eof_selection.current;		//Remember the selected note
+		temp_hover = eof_hover_note;				//Remember the hover note
 		eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note
 		eof_hover_note = -1;						//Clear the hover note
 
@@ -4898,6 +4904,10 @@ void eof_render_editor_window_2(void)
 		eof_note_type = eof_note_type2;								//Set the secondary piano roll's difficulty
 		eof_render_editor_window(eof_window_editor2);				//Render this track difficulty to the secondary piano roll screen
 
+		if(tp && restore_tech_view)
+		{	//If tech view needs to be re-enabled
+			eof_menu_track_enable_tech_view(tp);
+		}
 		(void) eof_menu_track_selected_track_number(temp_track, 0);	//Restore the active track number
 		eof_note_type = temp_type;									//Restore the active difficulty
 		eof_music_pos = temp_pos;									//Restore the active position

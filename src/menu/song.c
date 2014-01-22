@@ -131,7 +131,7 @@ MENU eof_spectrogram_menu[] =
 
 MENU eof_song_proguitar_menu[] =
 {
-	{"Enable &Legacy view\tShift+L", eof_menu_song_legacy_view, NULL, 0, NULL},
+	{"Enable &Legacy view", eof_menu_song_legacy_view, NULL, 0, NULL},
 	{"&Previous chord name\t" CTRL_NAME "+Shift+W", eof_menu_previous_chord_result, NULL, 0, NULL},
 	{"&Next chord name\t" CTRL_NAME "+Shift+E", eof_menu_next_chord_result, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}

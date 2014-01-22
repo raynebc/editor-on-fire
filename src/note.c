@@ -376,8 +376,33 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 
 	if(track != 0)
 	{	//If rendering an existing note instead of the pen note
+		EOF_PRO_GUITAR_TRACK *tp;
+
+		if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If a pro guitar track is being rendered
+			tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];
+			eof_get_note_notation(notation, track, notenum, 0);	//Get the tab playing notation for this note, disabling sanity checks for slides
+			if((tp->note == tp->technote) && (notation[0] != '\0'))
+			{	//If tech view is in effect and has at least one effect, render the tab notation for the note and nothing else
+				BITMAP *fretbmp = eof_create_fret_number_bitmap(NULL, notation, 0, 2, eof_color_red, eof_color_black, eof_symbol_font);	//Build a bordered bitmap for the technique, allow 2 pixels for padding
+				if(fretbmp != NULL)
+				{	//Render the bitmap in place of the note and then destroy the bitmap
+					for(ctr=0,mask=1;ctr<numlanes;ctr++,mask=mask<<1)
+					{	//Render for each of the available fret lanes
+						if(notenote & mask)
+						{	//If this lane is populated
+							y = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr];	//Store this to make the code more readable
+							draw_sprite(window->screen, fretbmp, x - (fretbmp->w/2), y - (text_height(font)/2));	//Fudge (x,y) to make it print centered over the gem
+						}
+					}
+					destroy_bitmap(fretbmp);
+					return 0;	//Return status:  Note was not clipped in its entirety
+				}
+			}
+		}
+
 		//Render tab notations before the note, so that the former doesn't render a solid background over the latter
-		eof_get_note_notation(notation, track, notenum);	//Get the tab playing notation for this note
+		eof_get_note_notation(notation, track, notenum, 1);	//Get the tab playing notation for this note
 		textout_centre_ex(window->screen, eof_symbol_font, notation, x, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 6, eof_color_red, eof_color_black);
 	}
 
@@ -444,7 +469,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 				else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
 				{
 					unsigned char lowestfret = eof_get_lowest_fretted_string_fret(eof_song, track, notenum);	//Determine the fret value of the lowest fretted string
-					if(lowestfret < eof_song->pro_guitar_track[eof_song->track[track]->tracknum]->note[notenum]->unpitchend)
+					if(lowestfret < eof_song->pro_guitar_track[tracknum]->note[notenum]->unpitchend)
 					{	//If the unpitched slide goes higher than this position
 						up = 1;
 					}
@@ -503,9 +528,9 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 				if(!eof_legacy_view && (track > 0) && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 				{	//If legacy view is disabled, this is a pro guitar note and a pro guitar track is active, perform pro guitar specific rendering
 					//Render the fret number over the center of the note (but only if the active track is a pro guitar track)
-					BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], ctr, 2, tcol, dcol);	//Allow 2 pixels for padding
+					BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], NULL, ctr, 2, tcol, dcol, font);	//Allow 2 pixels for padding
 					if(fretbmp != NULL)
-					{	//Render the bitmap on top of the 3D note and then destroy the bitmap
+					{	//Render the bitmap on top of the 2D note and then destroy the bitmap
 						draw_sprite(window->screen, fretbmp, x - (fretbmp->w/2), y - (text_height(font)/2));	//Fudge (x,y) to make it print centered over the gem
 						destroy_bitmap(fretbmp);
 					}
@@ -989,7 +1014,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 						break;
 					}
 				}
-				fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], ctr, 8, eof_color_white, eof_color_black);	//Allow one extra character's width for padding
+				fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], NULL, ctr, 8, eof_color_white, eof_color_black, font);	//Allow one extra character's width for padding
 				if(fretbmp != NULL)
 				{	//Render the bitmap on top of the 3D note and then destroy the bitmap
 					unsigned long xpos = (xchart[0] + xchart[eof_song->pro_guitar_track[tracknum]->numstrings - 1]) / 2;		//Get the 3D x coordinate of the center of the lanes
@@ -1054,7 +1079,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 							if(!eof_legacy_view && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 							{	//If legacy view is disabled and this is a pro guitar note, render the fret number over the center of the note
-								BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], ctr, 8, eof_color_white, eof_color_black);	//Allow one extra character's width for padding
+								BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], NULL, ctr, 8, eof_color_white, eof_color_black, font);	//Allow one extra character's width for padding
 								if(fretbmp != NULL)
 								{	//Render the bitmap on top of the 3D note and then destroy the bitmap
 									ocd3d_draw_bitmap(eof_window_3d->screen, fretbmp, xchart[ctr] - 8, 200 - (EOF_3D_IMAGE_HEIGHT / 2), npos);
@@ -1351,14 +1376,17 @@ unsigned long eof_find_lyric_number(EOF_LYRIC * np)
 	return 0;
 }
 
-BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, unsigned char stringnum, unsigned long padding, int textcol, int fillcol)
+BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, char *text, unsigned char stringnum, unsigned long padding, int textcol, int fillcol, FONT *font)
 {
 	BITMAP *fretbmp = NULL;
 	int height, width;
 	char fretstring[10] = {0};
 
+	if(!note && !text)
+		return NULL;	//Invalid parameters
+
 	if(note != NULL)
-	{
+	{	//If the specified note's fretting will be rendered to the bitmap
 		if(note->frets[stringnum] & 0x80)
 		{	//This is a muted fret
 			(void) snprintf(fretstring, sizeof(fretstring) - 1, "X");
@@ -1374,22 +1402,23 @@ BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, unsigned char s
 				(void) snprintf(fretstring, sizeof(fretstring) - 1,"%d", note->frets[stringnum]);
 			}
 		}
+		text = fretstring;	//This string will be rendered to the bitmap
+	}
 
-		width = text_length(font,fretstring) + padding + 1;	//The font in use doesn't look centered, so pad the left by one pixel
-		height = text_height(font);
-		fretbmp = create_bitmap(width,height);
-		if(fretbmp != NULL)
-		{	//Render the fret number on top of the 3D note
-			clear_to_color(fretbmp, fillcol);
-			rect(fretbmp, 0, 0, width-1, height-1, textcol);	//Draw a border along the edge of this bitmap
-			textprintf_ex(fretbmp, font, (padding/2.0) + 1, 0, textcol, -1, "%s", fretstring);	//Center the text between the padding (including one extra pixel for left padding), rounding to the right if the padding is an odd value
-		}
+	width = text_length(font, text) + padding + 1;	//The font in use doesn't look centered, so pad the left by one pixel
+	height = text_height(font);
+	fretbmp = create_bitmap(width, height);
+	if(fretbmp != NULL)
+	{	//Render the fret number on top of the 3D note
+		clear_to_color(fretbmp, fillcol);
+		rect(fretbmp, 0, 0, width - 1, height - 1, textcol);	//Draw a border along the edge of this bitmap
+		textprintf_ex(fretbmp, font, (padding / 2.0) + 1, 0, textcol, -1, "%s", text);	//Center the text between the padding (including one extra pixel for left padding), rounding to the right if the padding is an odd value
 	}
 
 	return fretbmp;
 }
 
-void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note)
+void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note, unsigned char sanitycheck)
 {
 	unsigned long index = 0, flags = 0, prevnoteflags = 0;
 	char buffer2[5] = {0};
@@ -1482,8 +1511,8 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		{	//If the note slides up or down and defines the ending fret for the slide
 			unsigned long index2;
 
-			if((np->slideend == lowestfret) || !lowestfret)
-			{	//If the slide is not valid (it ends on the same fret it starts on or the note/chord is played open)
+			if(((np->slideend == lowestfret) || !lowestfret) && sanitycheck)
+			{	//If the slide is not valid (it ends on the same fret it starts on or the note/chord is played open) and sanity checking is enabled
 				buffer[index++] = '?';	//Place this character to alert the user
 			}
 			else
@@ -1547,8 +1576,8 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		{
 			if(lowestfret)
 			{	//If at least one of the strings is fretted, display an unpitched slide indicator
-				if(lowestfret == np->unpitchend)
-				{	//Invalid unpitched slide (ends on the same fret it starts at)
+				if((lowestfret == np->unpitchend) && sanitycheck)
+				{	//Invalid unpitched slide (ends on the same fret it starts at) and sanity checking is enabled
 					buffer[index++] = '?';	//Place this character to alert the user
 				}
 				else
@@ -1570,7 +1599,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 			}
 			else
 			{	//Slides are not valid for open strings/chords
-				buffer[index++] = '?';	//Place this character to alert the user
+				if(sanitycheck)
+				{	//If sanity checking is enabled
+					buffer[index++] = '?';	//Place this character to alert the user
+				}
 			}
 		}
 		if(np->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE)

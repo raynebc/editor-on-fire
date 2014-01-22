@@ -280,5 +280,8 @@ Miscellaneous Controls:
 
         Toggle full screen 3D view on/off.
 
+    Ctrl + Shift + Up /Down:
+
+        Cycle to the next/previous track of the same type (ie. "pro guitar/bass").
 
 EOF provides many useful functions which can be accessed through various menus and dialogs. Shortcuts keys are provided to access some of the more frequently used functions. This screen is not an exhaustive list of keyboard shortcuts. All menu functions with shortcuts will display that shortcut next to the name of the function in the menu.
