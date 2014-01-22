@@ -3419,8 +3419,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									{	//If this is the voice that is being imported
 										if(np[ctr2] && (np[ctr2]->note && bitmask))
 										{	//If there is a previously created note, and it used this string, alter its length
-											unsigned long beat_position, oldlength;
+											unsigned long beat_position;
 											double partial_beat_position, beat_length;
+											long oldlength;
 
 											tie_note = 1;
 											beat_position = (measure_position + note_duration) * curnum;
@@ -3431,7 +3432,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											np[ctr2]->length = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position) - np[ctr2]->pos + 0.5;	//Define the length of this note
 
 #ifdef GP_IMPORT_DEBUG
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tTie note:  Note starting at %lums lengthened from %lums to %lums", np[ctr2]->pos, oldlength, np[ctr2]->length);
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tTie note:  Note starting at %lums lengthened from %lums to %ldms", np[ctr2]->pos, oldlength, np[ctr2]->length);
 											eof_log(eof_log_string, 1);
 #endif
 
@@ -3780,7 +3781,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							}
 
 #ifdef GP_IMPORT_DEBUG
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Start: %lums\tLength: %lums\tFrets: ", gp->track[ctr2]->notes - 1, np[ctr2]->pos, np[ctr2]->length);
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Start: %lums\tLength: %ldms\tFrets: ", gp->track[ctr2]->notes - 1, np[ctr2]->pos, np[ctr2]->length);
 							for(ctr4 = 0, bitmask = 1; ctr4 < strings[ctr2]; ctr4++, bitmask <<= 1)
 							{	//For each of this track's natively supported strings
 								char temp[10];
