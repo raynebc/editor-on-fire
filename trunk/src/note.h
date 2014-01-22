@@ -51,10 +51,14 @@ unsigned long eof_find_lyric_number(EOF_LYRIC * np);
 	//Finds the lyric in the lyric[] array and returns its index, or 0 on error or lyric not found
 	//error checking can be achieved by testing if(!returnval && (lyric[returnval] != np))
 
-BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, unsigned char stringnum, unsigned long padding, int textcol, int fillcol);
+BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, char *text, unsigned char stringnum, unsigned long padding, int textcol, int fillcol, FONT *font);
 	//Used to create a bordered rectangle bitmap with the specified string number, for use in the editor or 3D window, returns NULL on error
-void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note);
+	//The specified font is used, allowing the mono-spaced symbol and regular fonts to be used interchangeably
+	//If note is NULL, a bitmap containing the string in the text pointer is used instead
+void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note, unsigned char sanitycheck);
 	//Used to store notations (ie. "PM" for palm mute) for the specified note into the buffer, which should be able to hold at least 30 characters
+	//If sanitycheck is nonzero and the specified note is a pro guitar note, the validity of any pitched/unpitched slide technique it has is checked
+	// and if the end position is not valid, a question mark is appended after the slide notation character
 int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, unsigned long track2, unsigned long note2, char thorough);
 	//Compares the two notes and returns 0 under the following conditions:
 	//1. The track is a legacy format track and both notes have the same bitmask

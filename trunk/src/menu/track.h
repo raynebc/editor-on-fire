@@ -195,4 +195,8 @@ int eof_menu_thin_notes_track_13(void);
 int eof_track_fret_hand_positions_generate_all(void);
 	//Generates fret hand positions for all populated difficulties in the track, replacing any that already exist
 
+int eof_menu_track_toggle_tech_view(void);	//Toggles tech view for the active pro guitar track
+void eof_menu_track_disable_tech_view(EOF_PRO_GUITAR_TRACK *tp);	//Disables tech view for the specified pro guitar track, preserving the tech note array size
+void eof_menu_track_enable_tech_view(EOF_PRO_GUITAR_TRACK *tp);		//Enables tech view for the specified pro guitar track, preserving the normal note array size
+
 #endif

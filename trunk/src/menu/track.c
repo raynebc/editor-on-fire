@@ -94,13 +94,22 @@ void eof_prepare_track_menu(void)
 				eof_track_proguitar_menu[3].flags = 0;
 			}
 
-			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
-			{	//If the active track has already had the difficulty limit removed
-				eof_track_rocksmith_menu[4].flags = D_SELECTED;	//Track>Rocksmith>Remove difficulty limit
+			if(eof_song->pro_guitar_track[tracknum]->note == eof_song->pro_guitar_track[tracknum]->technote)
+			{	//If tech view is in effect for the active track
+				eof_track_rocksmith_menu[0].flags = D_SELECTED;	//Track>Rocksmith>Enable tech view
 			}
 			else
 			{
-				eof_track_rocksmith_menu[4].flags = 0;
+				eof_track_rocksmith_menu[0].flags = 0;
+			}
+
+			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+			{	//If the active track has already had the difficulty limit removed
+				eof_track_rocksmith_menu[5].flags = D_SELECTED;	//Track>Rocksmith>Remove difficulty limit
+			}
+			else
+			{
+				eof_track_rocksmith_menu[5].flags = 0;
 			}
 
 			//Update checkmarks on the arrangement type submenu
@@ -1750,6 +1759,7 @@ MENU eof_track_rocksmith_popup_menu[] =
 
 MENU eof_track_rocksmith_menu[] =
 {
+	{"Enable tech &View", eof_menu_track_toggle_tech_view, NULL, 0, NULL},
 	{"Fret &Hand positions", NULL, eof_track_proguitar_fret_hand_menu, 0, NULL},
 	{"&Popup messages", NULL, eof_track_rocksmith_popup_menu, 0, NULL},
 	{"&Arrangement type", NULL, eof_track_rocksmith_arrangement_menu, 0, NULL},
@@ -3517,4 +3527,51 @@ int eof_track_fret_hand_positions_generate_all(void)
 	}
 
 	return 1;
+}
+
+int eof_menu_track_toggle_tech_view(void)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run unless a pro guitar track is active
+
+	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
+	if(tp->note == tp->technote)
+	{	//If tech view is already in effect for the active track
+		eof_menu_track_disable_tech_view(tp);
+	}
+	else
+	{	//Otherwise put the tech note array into effect
+		eof_menu_track_enable_tech_view(tp);
+	}
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Re-count the number of notes in the currently active array
+	eof_fix_window_title();
+	return 1;
+}
+
+void eof_menu_track_disable_tech_view(EOF_PRO_GUITAR_TRACK *tp)
+{
+	if(!tp)
+		return;	//Invalid parameter
+
+	if(tp->note == tp->technote)
+	{	//If tech view is in effect for the specified track
+		tp->technotes = tp->notes;	//Ensure that the size of the tech note array is backed up
+		tp->note = tp->pgnote;		//Put the regular pro guitar note array into effect
+		tp->notes = tp->pgnotes;
+	}
+}
+
+void eof_menu_track_enable_tech_view(EOF_PRO_GUITAR_TRACK *tp)
+{
+	if(!tp)
+		return;	//Invalid parameter
+
+	if(tp->note != tp->technote)
+	{	//If tech view is not in effect for the specified track
+		tp->pgnotes = tp->notes;	//Ensure that the size of the regular note array is backed up
+		tp->note = tp->technote;	//Put the tech note array into effect
+		tp->notes = tp->technotes;
+	}
 }

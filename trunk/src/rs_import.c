@@ -642,7 +642,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 					ptr = strcasestr_spec(buffer, "ShowMessageBox(");
 					if(ptr)
 					{	//If this is a start of a popup message
-						if(tp->popupmessages < EOF_MAX_NOTES)
+						if(tp->popupmessages < EOF_MAX_PHRASES)
 						{	//If another popup message can be stored
 							ptr = strcasestr_spec(ptr, ",");	//The message text begins after the first comma in the XML tag
 							if(!ptr)

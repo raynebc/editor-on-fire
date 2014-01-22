@@ -911,9 +911,17 @@ void eof_fix_window_title(void)
 	{
 		eof_cat_track_difficulty_string(eof_window_title);	//Append the track difficulty's title to the window title
 
-		if((eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && eof_legacy_view)
-		{	//If this is a pro guitar track being displayed with the legacy view enabled
-			(void) ustrcat(eof_window_title, "(Legacy view)");
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If this is a pro guitar track being displayed
+			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
+			if(tp->note == tp->technote)
+			{	//If tech view is enabled
+				(void) ustrcat(eof_window_title, "(Tech view)");
+			}
+			if(eof_legacy_view)
+			{	//If legacy view is enabled
+				(void) ustrcat(eof_window_title, "(Legacy view)");
+			}
 		}
 
 		if(eof_song->tags->tempo_map_locked)

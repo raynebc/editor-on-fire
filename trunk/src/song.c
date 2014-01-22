@@ -17,6 +17,7 @@
 #include "menu/file.h"
 #include "menu/note.h"	//For eof_feedback_mode_update_note_selection()
 #include "menu/song.h"
+#include "menu/track.h"	//For the tech view enable/disable functions
 #include "agup/agup.h"
 
 #ifdef USEMEMWATCH
@@ -295,10 +296,12 @@ EOF_SONG * eof_load_song(const char * fn)
 		sp = eof_create_song();
 		if(!sp)
 		{
+			(void) pack_fclose(fp);
 			return NULL;
 		}
 		if(!eof_load_song_pf(sp, fp))
 		{
+			(void) pack_fclose(fp);
 			return NULL;
 		}
 		if(EOF_TRACK_DANCE >= sp->tracks)
@@ -306,6 +309,7 @@ EOF_SONG * eof_load_song(const char * fn)
 			if(eof_song_add_track(sp,&eof_default_tracks[EOF_TRACK_DANCE]) == 0)	//Add a blank dance track
 			{	//If the track failed to be added
 				eof_destroy_song(sp);	//Destroy the song and return on error
+				(void) pack_fclose(fp);
 				return NULL;
 			}
 		}
@@ -314,6 +318,7 @@ EOF_SONG * eof_load_song(const char * fn)
 			if(eof_song_add_track(sp,&eof_default_tracks[EOF_TRACK_PRO_BASS_22]) == 0)	//Add a blank 22 fret pro bass track
 			{	//If the track failed to be added
 				eof_destroy_song(sp);	//Destroy the song and return on error
+				(void) pack_fclose(fp);
 				return NULL;
 			}
 		}
@@ -322,6 +327,7 @@ EOF_SONG * eof_load_song(const char * fn)
 			if(eof_song_add_track(sp,&eof_default_tracks[EOF_TRACK_PRO_GUITAR_22]) == 0)	//Add a blank 22 fret pro guitar track
 			{	//If the track failed to be added
 				eof_destroy_song(sp);	//Destroy the song and return on error
+				(void) pack_fclose(fp);
 				return NULL;
 			}
 		}
@@ -330,6 +336,7 @@ EOF_SONG * eof_load_song(const char * fn)
 			if(eof_song_add_track(sp,&eof_default_tracks[EOF_TRACK_DRUM_PS]) == 0)	//Add a blank Phase Shift drum track
 			{	//If the track failed to be added
 				eof_destroy_song(sp);	//Destroy the song and return on error
+				(void) pack_fclose(fp);
 				return NULL;
 			}
 		}
@@ -1384,6 +1391,7 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 				}
 				ptr4->defaulttone[0] = '\0';	//Ensure this string is emptied
 				ptr4->parent = ptr3;
+				ptr4->note = ptr4->pgnote;		//Put the regular pro guitar note array into effect
 				sp->pro_guitar_track[sp->pro_guitar_tracks] = ptr4;
 				sp->pro_guitar_tracks++;
 			break;
@@ -1916,6 +1924,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 						tp->note[ctr]->flags &= ~EOF_NOTE_FLAG_T_EXTENDED;	//Clear this flag, it won't be updated again until the project is saved/loaded
 					}
 				}//For each note in this track
+				tp->pgnotes = tp->notes;			//Store the size of the regular pro guitar note array
 				tp->parent->numdiffs = numdiffs;	//Update the track's difficulty count
 			break;
 			case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:	//Variable Lane Legacy (not implemented yet)
@@ -2303,6 +2312,59 @@ int eof_save_song_string_pf(char *buffer, PACKFILE *fp)
 	return 0;	//Return success
 }
 
+void eof_write_pro_guitar_note(EOF_PRO_GUITAR_NOTE *ptr, PACKFILE *fp)
+{
+	unsigned long ctr, bitmask;
+
+	if(!ptr || !fp)
+		return;	//Invalid parameters
+
+	(void) eof_save_song_string_pf(ptr->name, fp);	//Write the note's name
+	(void) pack_putc(0, fp);			//Write the chord's number (not supported yet)
+	(void) pack_putc(ptr->type, fp);		//Write the note's difficulty
+	(void) pack_putc(ptr->note, fp);		//Write the note's bitflags
+	(void) pack_putc(ptr->ghost, fp);		//Write the note's ghost bitflags
+	for(ctr=0, bitmask=1; ctr < 8; ctr++, bitmask <<= 1)
+	{	//For each of the 8 bits in the note bitflag
+		if(ptr->note & bitmask)
+		{	//If this bit is set
+			(void) pack_putc(ptr->frets[ctr], fp);	//Write this string's fret value
+		}
+	}
+	(void) pack_putc(ptr->legacymask, fp);	//Write the legacy note bitmask
+	(void) pack_iputl(ptr->pos, fp);			//Write the note's position
+	(void) pack_iputl(ptr->length, fp);		//Write the note's length
+	if(ptr->eflags)
+	{	//If this note uses any extended track flags
+		ptr->flags |= EOF_NOTE_FLAG_T_EXTENDED;	//Set this flag
+	}
+	else
+	{
+		ptr->flags &= ~EOF_NOTE_FLAG_T_EXTENDED;	//Clear this flag
+	}
+	(void) pack_iputl(ptr->flags, fp);		//Write the note's flags
+	if(ptr->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
+	{	//If this note has bend string or slide ending fret definitions
+		if((ptr->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (ptr->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+		{	//If this is a slide note
+			(void) pack_putc(ptr->slideend, fp);	//Write the slide's ending fret
+		}
+		if(ptr->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+		{	//If this is a bend note
+			(void) pack_putc(ptr->bendstrength, fp);	//Write the bend's strength
+		}
+	}
+	if(ptr->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+	{	//If this is an unpitched slide note
+		(void) pack_putc(ptr->unpitchend, fp);	//Write the unpitched slide's ending fret
+	}
+	if(ptr->flags & EOF_NOTE_FLAG_T_EXTENDED)
+	{	//if this note uses any extended track flags
+		(void) pack_iputl(ptr->eflags, fp);		//Write the note's extended track flags
+		ptr->flags &= ~EOF_NOTE_FLAG_T_EXTENDED;	//Clear this flag, it won't be updated again until the project is saved/loaded
+	}
+}
+
 int eof_save_song(EOF_SONG * sp, const char * fn)
 {
 	PACKFILE * fp = NULL;
@@ -2322,6 +2384,9 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	unsigned long *ininumberbuffer[EOFNUMININUMBERTYPES] = {NULL};
 		//Store the pointers to each of the 5 number type INI settings (number 0 is reserved) to simplify the loading code
 	char unshare_drum_phrasing;
+
+	EOF_PRO_GUITAR_TRACK *tp = NULL;
+	char restore_tech_view;		//If tech view is in effect for a pro guitar track, it is temporarily disabled until after the track's notes have been written
 
  	eof_log("eof_save_song() entered", 1);
 
@@ -2564,6 +2629,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	(void) pack_iputl(track_count, fp);	//Write the number of tracks
 	for(track_ctr=0; track_ctr < track_count; track_ctr++)
 	{	//For each track in the project
+		restore_tech_view = 0;	//Reset this condition
 		if(sp->track[track_ctr] != NULL)
 		{	//Skip NULL tracks, such as track 0
 			(void) eof_save_song_string_pf(sp->track[track_ctr]->name, fp);	//Write track name string
@@ -2768,62 +2834,23 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				return 0;
 				case EOF_PRO_GUITAR_TRACK_FORMAT:	//Pro Guitar/Bass
 				{
-					EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[tracknum];	//Simplify
-
+					tp = sp->pro_guitar_track[tracknum];	//Simplify
 					(void) pack_putc(tp->numfrets, fp);		//Write the number of frets used in this track
 					(void) pack_putc(tp->numstrings, fp);	//Write the number of strings used in this track
 					for(ctr=0; ctr < tp->numstrings; ctr++)
 					{	//For each string
 						(void) pack_putc(tp->tuning[ctr], fp);	//Write this string's tuning value
 					}
+					if(tp->note == tp->technote)
+					{	//If tech view is in effect for the active track
+						restore_tech_view = 1;
+						eof_menu_track_disable_tech_view(tp);		///For now, just write the regular note array to the project file
+					}
 					(void) pack_iputl(tp->notes, fp);			//Write the number of notes in this track
 					for(ctr=0; ctr < tp->notes; ctr++)
 					{	//For each note in this track
-						(void) eof_save_song_string_pf(tp->note[ctr]->name, fp);	//Write the note's name
-						(void) pack_putc(0, fp);									//Write the chord's number (not supported yet)
-						(void) pack_putc(tp->note[ctr]->type, fp);		//Write the note's difficulty
-						(void) pack_putc(tp->note[ctr]->note, fp);		//Write the note's bitflags
-						(void) pack_putc(tp->note[ctr]->ghost, fp);		//Write the note's ghost bitflags
-						for(ctr2=0, bitmask=1; ctr2 < 8; ctr2++, bitmask <<= 1)
-						{	//For each of the 8 bits in the note bitflag
-							if(tp->note[ctr]->note & bitmask)
-							{	//If this bit is set
-								(void) pack_putc(tp->note[ctr]->frets[ctr2], fp);	//Write this string's fret value
-							}
-						}
-						(void) pack_putc(tp->note[ctr]->legacymask, fp);	//Write the legacy note bitmask
-						(void) pack_iputl(tp->note[ctr]->pos, fp);			//Write the note's position
-						(void) pack_iputl(tp->note[ctr]->length, fp);		//Write the note's length
-						if(tp->note[ctr]->eflags)
-						{	//If this note uses any extended track flags
-							tp->note[ctr]->flags |= EOF_NOTE_FLAG_T_EXTENDED;	//Set this flag
-						}
-						else
-						{
-							tp->note[ctr]->flags &= ~EOF_NOTE_FLAG_T_EXTENDED;	//Clear this flag
-						}
-						(void) pack_iputl(tp->note[ctr]->flags, fp);		//Write the note's flags
-						if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
-						{	//If this note has bend string or slide ending fret definitions
-							if((tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
-							{	//If this is a slide note
-								(void) pack_putc(tp->note[ctr]->slideend, fp);	//Write the slide's ending fret
-							}
-							if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
-							{	//If this is a bend note
-								(void) pack_putc(tp->note[ctr]->bendstrength, fp);	//Write the bend's strength
-							}
-						}
-						if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
-						{	//If this is an unpitched slide note
-							(void) pack_putc(tp->note[ctr]->unpitchend, fp);	//Write the unpitched slide's ending fret
-						}
-						if(tp->note[ctr]->flags & EOF_NOTE_FLAG_T_EXTENDED)
-						{	//if this note uses any extended track flags
-							(void) pack_iputl(tp->note[ctr]->eflags, fp);		//Write the note's extended track flags
-							tp->note[ctr]->flags &= ~EOF_NOTE_FLAG_T_EXTENDED;	//Clear this flag, it won't be updated again until the project is saved/loaded
-						}
-					}//For each note in this track
+						eof_write_pro_guitar_note(tp->note[ctr], fp);	//Write the note to the PACKFILE
+					}
 					//Write the section type chunk, first count the number of section types to write
 					if(tp->solos)
 					{
@@ -2986,8 +3013,6 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		fingerdefinitions = has_fingerdefinitions = has_arrangement = ignore_tuning = has_capo = 0;
 		if(track_ctr && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 		{	//If this is a pro guitar track
-			EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[tracknum];	//Simplify
-
 			//Count the number of notes with finger definitions
 			for(ctr = 0; ctr < tp->notes; ctr++)
 			{	//For each note in the track
@@ -3017,8 +3042,6 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		{	//If writing data in a custom data block
 			if(track_ctr && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If this is a pro guitar track
-				EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[tracknum];	//Simplify
-
 				(void) pack_iputl(has_fingerdefinitions + has_arrangement + ignore_tuning + has_capo, fp);		//Write the number of custom data blocks
 				if(has_fingerdefinitions)
 				{	//Write finger definitions
@@ -3060,6 +3083,10 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			(void) pack_iputl(1, fp);			//Write one custom data block
 			(void) pack_iputl(4, fp);
 			(void) pack_iputl(0xFFFFFFFF, fp);	//Write the debug custom data block ID
+		}
+		if(restore_tech_view)
+		{	//If tech view needs to be re-enabled for the track that was just written
+			eof_menu_track_enable_tech_view(tp);
 		}
 	}//For each track in the project
 
@@ -3239,6 +3266,18 @@ void eof_song_empty_track(EOF_SONG * sp, unsigned long track)
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
+
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If the track being destroyed is a pro guitar track, erase the technote array first
+		EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+
+		eof_menu_track_enable_tech_view(tp);	//Empty the tech note array first
+		for(i = eof_get_track_size(sp, track); i > 0; i--)
+		{	//Delete all notes in reverse order, which will avoid having to re-arrange the note array after each
+			eof_track_delete_note(sp, track, i-1);	//Note numbering starts with #0
+		}
+		eof_menu_track_disable_tech_view(tp);	//Then empty the regular note array
+	}
 
 	for(i = eof_get_track_size(sp, track); i > 0; i--)
 	{	//Delete all notes in reverse order, which will avoid having to re-arrange the note array after each
