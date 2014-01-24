@@ -998,7 +998,7 @@ void PostProcessLyrics(void)
 
 		if(ctr != lineptr->piececount)
 		{
-			(void) puts("Error: The lyric piece count in the current line is incorrect\nAborting");
+			printf("Error: The lyric piece count in the line #%lu is incorrect.  Was %lu but was expected to be %lu\nAborting", totallinectr + 1, ctr, lineptr->piececount);
 			exit_wrapper(3);
 		}
 
@@ -1006,7 +1006,7 @@ void PostProcessLyrics(void)
 		assert_wrapper(stop >= start);	//The line of lyrics cannot end before it begins
 		if(lineptr->duration != stop-start)
 		{
-			(void) puts("Error: The lyric piece duration sum in the current line is incorrect\nAborting");
+			printf("Error: The lyric piece duration sum in line #%lu is incorrect.  Was %lu but was expected to be %lu\nAborting", totallinectr + 1, lineptr->duration, stop-start);
 			exit_wrapper(4);
 		}
 		totalpiecectr+=ctr;

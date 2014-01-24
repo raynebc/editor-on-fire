@@ -290,6 +290,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	int channels;
 	unsigned long ctr,index;
 	void * oggbuffer = NULL;
+	int bitrate;
 
  	eof_log("eof_add_silence_recode() entered", 1);
 
@@ -386,15 +387,38 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	(void) save_wav(wavfn, combined);
 	destroy_sample(combined);	//This is no longer needed
 	(void) replace_filename(soggfn, eof_song_path, "encode.ogg", 1024);
+	bitrate = alogg_get_bitrate_ogg(eof_music_track) / 1000;
+	if(!bitrate)
+	{	//A user found that in an audio file with a really high sample rate (ie. 96KHz), alogg_get_bitrate_ogg() may return zero instead of an expected value
+		bitrate = 256;	//In case this happens, use a bitrate of 256Kbps, which should be good enough for a very high quality file
+	}
 	#ifdef ALLEGRO_WINDOWS
-		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, bitrate, wavfn);
 	#else
-		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, bitrate, wavfn);
 	#endif
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCalling oggenc as follows:  %s", sys_command);
+	eof_log(eof_log_string, 1);
 	if(eof_system(sys_command))
-	{
-		eof_fix_window_title();
-		return 6;	//Return failure:  Could not encode combined audio
+	{	//If oggenc failed, retry again by specifying a quality level (specifying bitrate can fail in some circumstances)
+		eof_log("\t\toggenc failed.  Retrying by specifying a quality level instead of a target bitrate", 1);
+		#ifdef ALLEGRO_WINDOWS
+			(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -q 9 \"%s\"", soggfn, wavfn);
+		#else
+			(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc -o \"%s\" -q 9 \"%s\"", soggfn, wavfn);
+		#endif
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCalling oggenc as follows:  %s", sys_command);
+		eof_log(eof_log_string, 1);
+		if(eof_system(sys_command))
+		{	//If oggenc failed again
+			(void) ustrzcat(sys_command, (int) sizeof(sys_command) - 1, " 2> oggenc.log");	//Append a redirection to capture the output of oggenc
+			if(eof_system(sys_command))
+			{	//Run one last time to catch the error output
+				eof_log("\tOggenc failed.  Please see oggenc.log for any errors it gave.", 1);
+				eof_fix_window_title();
+				return 6;	//Return failure:  Could not encode combined audio
+			}
+		}
 	}
 
 	/* replace the current OGG file with the new file */

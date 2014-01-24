@@ -597,7 +597,7 @@ EOF_SONG *parse_gp(const char * fn)
 				printf("%u repeats\n", word);
 			}
 			if(fileversion < 500)
-			{	//Versions 3 and 4 define the alternate ending next, followed by the section definition
+			{	//Versions 3 and 4 define the alternate ending next, followed by the section definition, then the key signature
 				if(bytemask & 16)
 				{	//Number of alternate ending
 					eof_gp_debug_log(inf, "\tNumber of alternate ending:  ");
@@ -616,10 +616,18 @@ EOF_SONG *parse_gp(const char * fn)
 					word = pack_getc(inf);
 					printf("B = %u)\n", word);
 					(void) pack_getc(inf);	//Read unused value
+				}
+				if(bytemask & 64)
+				{	//Key signature change
+					eof_gp_debug_log(inf, "\tNew key signature:  ");
+					byte = pack_getc(inf);	//Read the key
+					printf("%d (%d %s, ", byte, abs(byte), (byte < 0) ? "flats" : "sharps");
+					byte = pack_getc(inf);	//Read the major/minor byte
+					printf("%s)\n", !byte ? "major" : "minor");
 				}
 			}
 			else
-			{	//Version 5 defines these two items in the opposite order
+			{	//Version 5 and newer define these items in a different order and some other items afterward
 				if(bytemask & 32)
 				{	//New section
 					eof_gp_debug_log(inf, "\tNew section:  ");
@@ -633,23 +641,14 @@ EOF_SONG *parse_gp(const char * fn)
 					printf("B = %u)\n", word);
 					(void) pack_getc(inf);	//Read unused value
 				}
-				if(bytemask & 16)
-				{	//Number of alternate ending
-					eof_gp_debug_log(inf, "\tNumber of alternate ending:  ");
-					word = pack_getc(inf);	//Read alternate ending number
-					printf("%u\n", word);
+				if(bytemask & 64)
+				{	//Key signature change
+					eof_gp_debug_log(inf, "\tNew key signature:  ");
+					byte = pack_getc(inf);	//Read the key
+					printf("%d (%d %s, ", byte, abs(byte), (byte < 0) ? "flats" : "sharps");
+					byte = pack_getc(inf);	//Read the major/minor byte
+					printf("%s)\n", !byte ? "major" : "minor");
 				}
-			}
-			if(bytemask & 64)
-			{	//Key signature change
-				eof_gp_debug_log(inf, "\tNew key signature:  ");
-				byte = pack_getc(inf);	//Read the key
-				printf("%d (%d %s, ", byte, abs(byte), (byte < 0) ? "flats" : "sharps");
-				byte = pack_getc(inf);	//Read the major/minor byte
-				printf("%s)\n", !byte ? "major" : "minor");
-			}
-			if(fileversion >= 500)
-			{	//Version 5 of the format defines additional things here
 				if((bytemask & 1) || (bytemask & 2))
 				{	//If either a new TS numerator or denominator was set, read the beam by eight notes values
 					char byte1, byte2, byte3, byte4;
@@ -660,7 +659,13 @@ EOF_SONG *parse_gp(const char * fn)
 					byte4 = pack_getc(inf);
 					printf("%d + %d + %d + %d = %d\n", byte1, byte2, byte3, byte4, byte1 + byte2 + byte3 + byte4);
 				}
-				if(!(bytemask & 16))
+				if(bytemask & 16)
+				{	//Number of alternate ending
+					eof_gp_debug_log(inf, "\tNumber of alternate ending:  ");
+					word = pack_getc(inf);	//Read alternate ending number
+					printf("%u\n", word);
+				}
+				else
 				{	//If a GP5 file doesn't define an alternate ending here, ignore a byte of padding
 					eof_gp_debug_log(inf, "\t(skipping 1 byte of unused alternate ending data)\n");
 					(void) pack_getc(inf);			//Unknown data
@@ -2230,6 +2235,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 		memset(gp->track[ctr], 0, sizeof(EOF_PRO_GUITAR_TRACK));	//Initialize memory block to 0 to avoid crashes when not explicitly setting counters that were newly added to the pro guitar structure
 		gp->track[ctr]->numfrets = 22;
+		gp->track[ctr]->note = gp->track[ctr]->pgnote;	//Put the regular pro guitar note array into effect
 		gp->track[ctr]->parent = NULL;
 	}
 
@@ -2309,7 +2315,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				}
 			}
 			if(fileversion < 500)
-			{	//Versions 3 and 4 define the alternate ending next, followed by the section definition
+			{	//Versions 3 and 4 define the alternate ending next, followed by the section definition, then the key signature
 				if(bytemask & 16)
 				{	//Number of alternate ending
 					alt_endings = pack_getc(inf);	//Read alternate ending number
@@ -2368,9 +2374,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					(void) pack_getc(inf);								//Read section string color (Blue intensity)
 					(void) pack_getc(inf);								//Read unused value
 				}//New section
+				if(bytemask & 64)
+				{	//Key signature change
+					(void) pack_getc(inf);	//Read the key
+					(void) pack_getc(inf);	//Read the major/minor byte
+				}
 			}
 			else
-			{	//Version 5 defines the section definition next, followed by the alternate ending
+			{	//Version 5 and newer define these items in a different order and some other items afterward
 				if(bytemask & 32)
 				{	//New section
 					(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read section string
@@ -2425,35 +2436,32 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					(void) pack_getc(inf);								//Read section string color (Blue intensity)
 					(void) pack_getc(inf);								//Read unused value
 				}
+				if(bytemask & 64)
+				{	//Key signature change
+					(void) pack_getc(inf);	//Read the key
+					(void) pack_getc(inf);	//Read the major/minor byte
+				}
+				if((bytemask & 1) || (bytemask & 2))
+				{	//If either a new TS numerator or denominator was set, read the beam by eight notes values
+					(void) pack_getc(inf);
+					(void) pack_getc(inf);
+					(void) pack_getc(inf);
+					(void) pack_getc(inf);
+				}
 				if(bytemask & 16)
 				{	//Number of alternate ending
 					alt_endings = pack_getc(inf);	//Read alternate ending number
 				}
-			}
-			if(bytemask & 64)
-			{	//Key signature change
-				(void) pack_getc(inf);	//Read the key
-				(void) pack_getc(inf);	//Read the major/minor byte
+				else
+				{	//If a GP5 file doesn't define an alternate ending here, ignore a byte of padding
+					(void) pack_getc(inf);
+				}
+				(void) pack_getc(inf);		//Read triplet feel value
+				(void) pack_getc(inf);		//Unknown data
 			}
 		}//Versions of the format 3.0 and newer
 		if(bytemask & 128)
 		{	//Double bar
-		}
-		if(fileversion >= 500)
-		{	//Version 5 of the format defines additional things here
-			if((bytemask & 1) || (bytemask & 2))
-			{	//If either a new TS numerator or denominator was set, read the beam by eight notes values
-				(void) pack_getc(inf);
-				(void) pack_getc(inf);
-				(void) pack_getc(inf);
-				(void) pack_getc(inf);
-			}
-			if(!(bytemask & 16))
-			{	//If a GP5 file doesn't define an alternate ending here, ignore a byte of padding
-				(void) pack_getc(inf);		//Unknown data
-			}
-			(void) pack_getc(inf);		//Read triplet feel value
-			(void) pack_getc(inf);		//Unknown data
 		}
 		tsarray[ctr].alt_endings = alt_endings;
 		tsarray[ctr].num = curnum;	//Store this measure's time signature for future reference
@@ -3674,8 +3682,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									flags |= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
 								}
 							}//Note effects
-							if((bytemask & 2) || (bytemask & 64))
+							if(bytemask & 64)
 							{	//Heavy accented or accented note
+								flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;
+							}
+							if((fileversion >= 500) && (bytemask & 2))
+							{	//Heavy accented note (GP5 or higher only)
 								flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;
 							}
 						}//If this string is used
@@ -3774,8 +3786,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 							if(note_is_short && eof_gp_import_truncate_short_notes)
 							{	//If this note is shorter than a quarter note, and the preference to drop the note's sustain in this circumstance is enabled
-								if(!(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO))
-								{	//If this note doesn't have bend, slide or vibrato status
+								if(!(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))
+								{	//If this note doesn't have bend, slide, vibrato or unpitched slide status
 									np[ctr2]->length = 1;	//Remove the note's sustain
 								}
 							}
@@ -4076,6 +4088,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 	memset(tp, 0, sizeof(EOF_PRO_GUITAR_TRACK));	//Initialize memory block to 0 to avoid crashes when not explicitly setting counters that were newly added to the pro guitar structure
 	tp->numfrets = gp->track[track]->numfrets;
 	tp->numstrings = gp->track[track]->numstrings;
+	tp->note = tp->pgnote;	//Put the regular pro guitar note array into effect
 	tp->parent = NULL;
 	memcpy(tp->tuning, gp->track[track]->tuning, sizeof(char) * EOF_TUNING_LENGTH);
 
