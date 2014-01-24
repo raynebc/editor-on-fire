@@ -197,13 +197,18 @@ BAR CHUNK, for each bar (measure):
 		If the major file version is < 5:
 		{
 			!NUMBER OF ALTERNATE ENDING (if the bitmask declares this)
-			[1 byte]:	The number of the alternate ending (ignored if the bitmask didn't declare this)
+			[1 byte]:	The number (not a bitmask) of the alternate ending (ignored if the measure bitmask didn't declare this)
 			!NEW SECTION (if the bitmask declares this)
 			{
 				[4 bytes]:	Section name field length (including string length byte that follows this value)
 				[1 byte]:	Length of section name string
 				[varies]:	Section name string
 				[4 bytes]:	Color to render the section name with (RGB intensities, with the most significant byte set padded with a value of 0)
+			}
+			!KEY SIGNATURE CHANGE (if the bitmask declares this)
+			{
+				[1 byte]:	Key (see notes section)
+				[1 byte]:	Major/Minor (value is 0 if it is major, or 1 if it is minor)
 			}
 		}
 		If the major file version is >= 5:
@@ -215,20 +220,15 @@ BAR CHUNK, for each bar (measure):
 				[varies]:	Section name string
 				[4 bytes]:	Color to render the section name with (RGB intensities, with the most significant byte set padded with a value of 0)
 			}
-			!NUMBER OF ALTERNATE ENDING (if the bitmask declares this)
-			[1 byte]:	Bitmask defining the the alternate endings (1 through 8) this measure contains (ignored if the bitmask didn't declare this)
-		}
-
-		!KEY SIGNATURE CHANGE (if the bitmask declares this)
-		{
-			[1 byte]:	Key (see notes section)
-			[1 byte]:	Major/Minor (value is 0 if it is major, or 1 if it is minor)
-		}
-
-		If the major file version is >= 5:
-		{
+			!KEY SIGNATURE CHANGE (if the bitmask declares this)
+			{
+				[1 byte]:	Key (see notes section)
+				[1 byte]:	Major/Minor (value is 0 if it is major, or 1 if it is minor)
+			}
 			!BEAM EIGHT NOTES BY VALUES (if the bitmask declares either a new TS num/den and the major file version is >= 5)
 				[4 bytes]:	Beam eight notes by values
+			!NUMBER OF ALTERNATE ENDING (if the bitmask declares this)
+			[1 byte]:	Bitmask defining the the alternate endings (1 through 8) this measure contains (ignored if the bitmask didn't declare this)
 			!TRIPLET FEEL (if the major file version is >= 5):
 				[1 byte]:	(0 = no triplet feel, 1 = Triplet 8th, 2 = Triplet 16th)
 			!PADDING (if the major file version is >= 5):
@@ -657,7 +657,7 @@ Bits 6-7:	Unused
 
 The note bitmask declares which parameters are defined for the note:
 Bit 0 (LSB):	Time-independent duration
-Bit 1:		Heavy Accentuated note
+Bit 1:		Heavy Accentuated note (GP5 or higher only, usage in older formats is unknown)
 Bit 2:		Ghost note
 Bit 3:		Note effects present
 Bit 4:		Note dynamic

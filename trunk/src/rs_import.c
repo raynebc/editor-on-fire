@@ -187,6 +187,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 	memset(tp, 0, sizeof(EOF_PRO_GUITAR_TRACK));	//Initialize memory block to 0 to avoid crashes when not explicitly setting counters that were newly added to the pro guitar structure
 	tp->numstrings = 6;	//The number of strings that will be used in the arrangement is unknown, default to 6
 	tp->numfrets = 22;	//The number of frets that will be used in the arrangement is unknown, default to 22
+	tp->note = tp->pgnote;	//Put the regular pro guitar note array into effect
 	tp->parent = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum]->parent;	//Initialize the parent so that the alternate track name can be set if appropriate
 
 	//Read first line of text, capping it to prevent buffer overflow
