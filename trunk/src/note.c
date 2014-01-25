@@ -382,8 +382,13 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		{	//If a pro guitar track is being rendered
 			tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];
 			eof_get_note_notation(notation, track, notenum, 0);	//Get the tab playing notation for this note, disabling sanity checks for slides
-			if((tp->note == tp->technote) && (notation[0] != '\0'))
-			{	//If tech view is in effect and has at least one effect, render the tab notation for the note and nothing else
+			if(notation[0] == '\0')
+			{	//If the note has no notations
+				notation[0] = ' ';	//Insert a space to make the box that is drawn a little wider
+				notation[1] = '\0';
+			}
+			if((tp->note == tp->technote))
+			{	//If tech view is in effect, render the tab notation for the note and nothing else
 				BITMAP *fretbmp = eof_create_fret_number_bitmap(NULL, notation, 0, 2, eof_color_red, eof_color_black, eof_symbol_font);	//Build a bordered bitmap for the technique, allow 2 pixels for padding
 				if(fretbmp != NULL)
 				{	//Render the bitmap in place of the note and then destroy the bitmap

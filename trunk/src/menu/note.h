@@ -153,7 +153,7 @@ int eof_pro_guitar_note_slide_end_fret_no_save(void);
 	//Calls eof_pro_guitar_note_slide_end_fret() specifying not to make an undo before making changes
 	//(for when using the keyboard shortcut to toggle slides, since an undo would already have been created)
 int eof_pro_guitar_note_bend_strength(char undo);
-	//Prompts the user for a bend strength in half steps to apply to all bend notes.  If  save is nonzero, a save state is created before any notes are altered
+	//Prompts the user for a bend strength in half steps to apply to all bend notes.  If save is nonzero, a save state is created before any notes are altered
 int eof_pro_guitar_note_bend_strength_save(void);
 	//Calls eof_pro_guitar_note_bend_strength() specifying to make an undo before making changes (for when setting bend strengths directly from the note menu)
 int eof_pro_guitar_note_bend_strength_no_save(void);

@@ -1,6 +1,7 @@
 #include <allegro.h>
 #include "main.h"
 #include "menu/edit.h"
+#include "menu/track.h"	//For the tech view enable/disable functions
 #include "dialog.h"
 #include "editor.h"
 #include "rs.h"
@@ -155,11 +156,24 @@ int eof_undo_apply(void)
 {
 	char fn[1024] = {0};
 	char title[256] = {0};
+	unsigned long ctr;
+	EOF_PRO_GUITAR_TRACK *tp = NULL;
+	char tech_view_status[EOF_PRO_GUITAR_TRACKS_MAX] = {0};	//Tracks whether or not tech view was in effect for each of the pro guitar tracks, so this view's status can be restored after the undo
 
  	eof_log("eof_undo_apply() entered", 1);
 
 	if(eof_undo_count > 0)
 	{
+		//Determine whether each pro guitar track was in tech view
+		for(ctr = 0; ctr < EOF_PRO_GUITAR_TRACKS_MAX; ctr++)
+		{	//For each pro guitar track in the project
+			tp = eof_song->pro_guitar_track[ctr];
+			if(tp->note == tp->technote)
+			{	//If tech view was in effect for this track
+				tech_view_status[ctr] = 1;
+			}
+		}
+
 		strncpy(title, eof_song->tags->title, sizeof(title) - 1);	//Backup the song title field, since if it changes as part of the undo, the Rocksmith WAV file should be deleted
 
 		(void) snprintf(fn, sizeof(fn) - 1, "eof%03u.redo", eof_log_id);	//Include EOF's log ID in the redo name to almost guarantee it is uniquely named
@@ -210,6 +224,17 @@ int eof_undo_apply(void)
 		eof_fix_catalog_selection();
 		eof_fix_window_title();
 		eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
+
+		//Restore tech view for each pro guitar track that had it in use before the undo operation
+		for(ctr = 0; ctr < EOF_PRO_GUITAR_TRACKS_MAX; ctr++)
+		{	//For each pro guitar track in the project
+			tp = eof_song->pro_guitar_track[ctr];
+			if(tech_view_status[ctr])
+			{	//If tech view was in effect for this track
+				eof_menu_track_enable_tech_view(tp);
+			}
+		}
+
 		return 1;
 	}
 	return 0;
@@ -219,11 +244,24 @@ void eof_redo_apply(void)
 {
 	char fn[1024] = {0};
 	char title[256] = {0};
+	unsigned long ctr;
+	EOF_PRO_GUITAR_TRACK *tp = NULL;
+	char tech_view_status[EOF_PRO_GUITAR_TRACKS_MAX] = {0};	//Tracks whether or not tech view was in effect for each of the pro guitar tracks, so this view's status can be restored after the redo
 
  	eof_log("eof_redo_apply() entered", 1);
 
 	if(eof_redo_count > 0)
 	{
+		//Determine whether each pro guitar track was in tech view
+		for(ctr = 0; ctr < EOF_PRO_GUITAR_TRACKS_MAX; ctr++)
+		{	//For each pro guitar track in the project
+			tp = eof_song->pro_guitar_track[ctr];
+			if(tp->note == tp->technote)
+			{	//If tech view was in effect for this track
+				tech_view_status[ctr] = 1;
+			}
+		}
+
 		strncpy(title, eof_song->tags->title, sizeof(title) - 1);	//Backup the song title field, since if it changes as part of the redo, the Rocksmith WAV file should be deleted
 
 		(void) eof_save_song(eof_song, eof_undo_filename[eof_undo_current_index]);
@@ -269,6 +307,16 @@ void eof_redo_apply(void)
 		eof_fix_catalog_selection();
 		eof_fix_window_title();
 		eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
+
+		//Restore tech view for each pro guitar track that had it in use before the redo operation
+		for(ctr = 0; ctr < EOF_PRO_GUITAR_TRACKS_MAX; ctr++)
+		{	//For each pro guitar track in the project
+			tp = eof_song->pro_guitar_track[ctr];
+			if(tech_view_status[ctr])
+			{	//If tech view was in effect for this track
+				eof_menu_track_enable_tech_view(tp);
+			}
+		}
 	}
 }
 

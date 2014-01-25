@@ -4682,27 +4682,14 @@ int eof_get_tempo_text(int beat, char * buffer)
 	return 1;
 }
 
-void eof_render_editor_window(EOF_WINDOW *window)
+void eof_render_editor_notes(EOF_WINDOW *window)
 {
-//	eof_log("eof_render_editor_window() entered");
-
 	unsigned long start;	//Will store the timestamp of the left visible edge of the piano roll
-	unsigned long i,numnotes;
+	unsigned long i, numnotes;
 	char drawhighlight = 0;
 
 	if(!eof_song_loaded || !window)
-		return;
-
-	if(eof_disable_2d_rendering || eof_full_screen_3d)	//If the user disabled the 2D window's rendering (or enabled full screen 3D view)
-		return;											//Return immediately
-
-	if(eof_song->track[eof_selected_track]->track_format == EOF_VOCAL_TRACK_FORMAT)
-	{	//If this is a vocal track
-		eof_render_vocal_editor_window(window);
-		return;
-	}
-
-	eof_render_editor_window_common(window);	//Perform rendering that is common to the note and the vocal editor displays
+		return;	//Invalid parameter
 
 	numnotes = eof_get_track_size(eof_song, eof_selected_track);	//Get the number of notes in this legacy/pro guitar track
 	start = eof_determine_piano_roll_left_edge();
@@ -4742,8 +4729,43 @@ void eof_render_editor_window(EOF_WINDOW *window)
 			}
 		}
 	}
+}
 
-	eof_render_editor_window_common2(window);
+void eof_render_editor_window(EOF_WINDOW *window, unsigned char windownum)
+{
+//	eof_log("eof_render_editor_window() entered");
+	EOF_PRO_GUITAR_TRACK *tp = NULL;
+	char render_tech_notes = 0;
+
+	if(!eof_song_loaded || !window)
+		return;
+
+	if(eof_disable_2d_rendering || eof_full_screen_3d)	//If the user disabled the 2D window's rendering (or enabled full screen 3D view)
+		return;											//Return immediately
+
+	if(eof_song->track[eof_selected_track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+	{	//If this is a vocal track
+		eof_render_vocal_editor_window(window);
+		return;
+	}
+	else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If the track being rendered is a pro guitar track
+		tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
+		if((tp->note == tp->technote) && (windownum == 1))
+		{	//If tech view is in effect for the active track and the primary piano roll is being drawn
+			render_tech_notes = 1;	//Track that the regular notes will be rendered and then the tech notes will render on top of them
+		}
+	}
+
+	eof_render_editor_window_common(window);	//Perform rendering that is common to the note and vocal editor displays
+	if(render_tech_notes && tp)
+	{	//If tech notes are to render on top of the regular notes
+		eof_menu_track_disable_tech_view(tp);	//Switch back to the regular note array
+		eof_render_editor_notes(window);		//Render its notes
+		eof_menu_track_enable_tech_view(tp);	//Switch back to the tech note array
+	}
+	eof_render_editor_notes(window);			//Render the notes in the active track
+	eof_render_editor_window_common2(window);	//Perform post-rendering that is common to the note and vocal editor displays
 }
 
 void eof_render_vocal_editor_window(EOF_WINDOW *window)
@@ -4901,8 +4923,8 @@ void eof_render_editor_window_2(void)
 			eof_music_pos = eof_music_pos2;	//Change to that position
 		}
 		(void) eof_menu_track_selected_track_number(eof_selected_track2, 0);	//Change to the track of the secondary piano roll, update coordinates, color set, etc.
-		eof_note_type = eof_note_type2;								//Set the secondary piano roll's difficulty
-		eof_render_editor_window(eof_window_editor2);				//Render this track difficulty to the secondary piano roll screen
+		eof_note_type = eof_note_type2;									//Set the secondary piano roll's difficulty
+		eof_render_editor_window(eof_window_editor2, 2);				//Render this track difficulty to the secondary piano roll screen
 
 		if(tp && restore_tech_view)
 		{	//If tech view needs to be re-enabled

@@ -3016,6 +3016,8 @@ void eof_render_3d_window(void)
 	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
 	unsigned long tracknum;
 	unsigned long firstlane = 0, lastlane;	//Used to track the first and last lanes that get track specific rendering (ie. drums don't render markers for lane 1, bass doesn't render markers for lane 6)
+	EOF_PRO_GUITAR_TRACK *tp = NULL;
+	char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the regular notes are rendered instead
 
 	//Used to draw trill and tremolo sections:
 	unsigned long j, ctr, usedlanes, bitmask, numsections;
@@ -3039,6 +3041,15 @@ void eof_render_3d_window(void)
 	{	//If this is a vocal track
 		eof_render_lyric_window();
 		return;
+	}
+	else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If the track being rendered is a pro guitar track
+		tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
+		if(tp->note == tp->technote)
+		{	//If tech view is in effect for the active track
+			restore_tech_view = 1;
+			eof_menu_track_disable_tech_view(tp);
+		}
 	}
 
 	clear_to_color(eof_window_3d->screen, eof_color_gray);
@@ -3319,6 +3330,11 @@ void eof_render_3d_window(void)
 	rect(eof_window_3d->screen, 1, 1, eof_window_3d->w - 2, eof_window_3d->h - 2, eof_color_black);
 	hline(eof_window_3d->screen, 1, eof_window_3d->h - 2, eof_window_3d->w - 2, eof_color_white);
 	vline(eof_window_3d->screen, eof_window_3d->w - 2, 1, eof_window_3d->h - 2, eof_color_white);
+
+	if(tp && restore_tech_view)
+	{	//If tech view needs to be re-enabled
+		eof_menu_track_enable_tech_view(tp);
+	}
 }
 
 void eof_render(void)
@@ -3356,7 +3372,7 @@ void eof_render(void)
 		{	//In full screen 3D view, don't render the note window yet, it will just be overwritten by the 3D window
 			eof_render_note_window();	//Otherwise render the note window first, so if the user didn't opt to display its full width, it won't draw over the 3D window
 		}
-		eof_render_editor_window(eof_window_editor);
+		eof_render_editor_window(eof_window_editor, 1);	//Render the primary piano roll
 		eof_render_editor_window_2();	//Render the secondary piano roll if applicable
 		eof_render_3d_window();
 	}

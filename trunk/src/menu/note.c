@@ -7960,6 +7960,7 @@ int eof_pro_guitar_note_bend_strength(char undo)
 	unsigned long newstrength, i, flags;
 	int note_selection_updated;
 	unsigned long tracknum;
+	EOF_PRO_GUITAR_TRACK *tp;
 	EOF_PRO_GUITAR_NOTE *np;
 	char undo_made = 0;
 
@@ -7972,14 +7973,18 @@ int eof_pro_guitar_note_bend_strength(char undo)
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if(eof_selection.current >= eof_song->pro_guitar_track[tracknum]->notes)
 		return 1;	//Invalid selected note number
-	np = eof_song->pro_guitar_track[tracknum]->note[eof_selection.current];
+	tp = eof_song->pro_guitar_track[tracknum];
+	np = tp->note[eof_selection.current];
 
 	eof_render();
 	eof_color_dialog(eof_pro_guitar_note_bend_strength_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_pro_guitar_note_bend_strength_dialog);
 	if((np->bendstrength & 0x7F) == 0)
-	{	//If the selected note has no ending fret defined
-		eof_etext[0] = '\0';	//Empty this string
+	{	//If the selected note has no bend strength defined
+		if(tp->note != tp->technote)
+		{	//Tech notes are allows to have a bend strength of 0 (defines the release of a bend)
+			eof_etext[0] = '\0';	//Otherwise it's not valid, empty this string
+		}
 	}
 	else
 	{	//Otherwise write the ending fret into the string
@@ -8005,10 +8010,10 @@ int eof_pro_guitar_note_bend_strength(char undo)
 		else
 		{
 			newstrength = atol(eof_etext);
-		}
-		if(eof_pro_guitar_note_bend_strength_dialog[3].flags == D_SELECTED)
-		{	//If the user selected the quarter steps radio button
-			newstrength |= 0x80;	//Set the MSB to track this option
+			if(newstrength && (eof_pro_guitar_note_bend_strength_dialog[3].flags == D_SELECTED))
+			{	//If the user gave a nonzero bend strength and selected the quarter steps radio button
+				newstrength |= 0x80;	//Set the MSB to track this option
+			}
 		}
 
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
@@ -8018,16 +8023,17 @@ int eof_pro_guitar_note_bend_strength(char undo)
 				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
 				{	//If this note is a bend
-					if(newstrength != eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength)
-					{	//If the bend strength is different than what the note already has
+					if((newstrength != eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength) ||
+					   ((tp->note == tp->technote) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)))
+					{	//If the bend strength is different than what the note already has, or if this is a tech note that didn't already have a bend strength defined (necessary check to allow a value of 0 to set the RS notation flag)
 						if(undo && !undo_made)
 						{	//Make a back up before changing the first note (but only if the calling function specified to create an undo state)
 							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 							undo_made = 1;
 						}
 						eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength = newstrength;
-						if(newstrength)
-						{	//If the bend strength is nonzero, it is now defined
+						if(newstrength || (tp->note == tp->technote))
+						{	//If the bend strength is nonzero, or it is zero and tech view is in effect, the bend strength is now defined
 							eof_song->pro_guitar_track[tracknum]->note[i]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Set this flag to indicate that the bend's strength is defined
 						}
 						else
