@@ -1485,6 +1485,55 @@ int eof_song_delete_track(EOF_SONG * sp, unsigned long track)
 	return 1;	//Return success
 }
 
+void eof_read_pro_guitar_note(EOF_PRO_GUITAR_NOTE *ptr, PACKFILE *fp)
+{
+	unsigned long ctr, bitmask;
+
+	if(!ptr || !fp)
+		return;	//Invalid parameters
+
+	(void) eof_load_song_string_pf(ptr->name,fp,EOF_NAME_LENGTH);	//Read the note's name
+	(void) pack_getc(fp);																//Read the chord's number (not supported yet)
+	ptr->type = pack_getc(fp);		//Read the note's difficulty
+	ptr->note = pack_getc(fp);		//Read note bitflags
+	ptr->ghost = pack_getc(fp);	//Read ghost bitflags
+	for(ctr = 0, bitmask = 1; ctr < 8; ctr++, bitmask <<= 1)
+	{	//For each of the 8 bits in the note bitflag
+		if(ptr->note & bitmask)
+		{	//If this bit is set
+			ptr->frets[ctr] = pack_getc(fp);	//Read this string's fret value
+		}
+		else
+		{	//Write a default value of 0
+			ptr->frets[ctr] = 0;
+		}
+	}
+	ptr->legacymask = pack_getc(fp);	//Read the legacy note bitmask
+	ptr->pos = pack_igetl(fp);			//Read note position
+	ptr->length = pack_igetl(fp);		//Read note length
+	ptr->flags = pack_igetl(fp);		//Read note flags
+	if(ptr->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
+	{	//If this note has bend string or slide ending fret definitions
+		if((ptr->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (ptr->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+		{	//If this is a slide note
+			ptr->slideend = pack_getc(fp);	//Read the slide's ending fret
+		}
+		if(ptr->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+		{	//If this is a bend note
+			ptr->bendstrength = pack_getc(fp);	//Read the bend's strength
+		}
+	}
+	if(ptr->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+	{	//If this is an unpitched slide note
+		ptr->unpitchend = pack_getc(fp);	//Read the unpitched slide's ending fret
+	}
+	if(ptr->flags & EOF_NOTE_FLAG_T_EXTENDED)
+	{	//If this note uses any extended track flags
+		ptr->eflags = pack_igetl(fp);		//Read extended track flags
+		ptr->flags &= ~EOF_NOTE_FLAG_T_EXTENDED;	//Clear this flag, it won't be updated again until the project is saved/loaded
+	}
+}
+
 int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 {
 	unsigned char inputc;
@@ -1879,49 +1928,10 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				eof_track_resize(sp, sp->tracks-1,count);	//Resize the note array
 				for(ctr=0; ctr<count; ctr++)
 				{	//For each note in this track
-					(void) eof_load_song_string_pf(tp->note[ctr]->name,fp,EOF_NAME_LENGTH);	//Read the note's name
-					(void) pack_getc(fp);																//Read the chord's number (not supported yet)
-					tp->note[ctr]->type = pack_getc(fp);		//Read the note's difficulty
+					eof_read_pro_guitar_note(tp->note[ctr], fp);	//Read the data for this note from the project file
 					if(tp->note[ctr]->type >= numdiffs)
 					{	//If this note's difficulty is the highest encountered in the track so far
 						numdiffs = tp->note[ctr]->type + 1;	//Track it
-					}
-					tp->note[ctr]->note = pack_getc(fp);		//Read note bitflags
-					tp->note[ctr]->ghost = pack_getc(fp);	//Read ghost bitflags
-					for(ctr2=0, bitmask=1; ctr2 < 8; ctr2++, bitmask <<= 1)
-					{	//For each of the 8 bits in the note bitflag
-						if(tp->note[ctr]->note & bitmask)
-						{	//If this bit is set
-							tp->note[ctr]->frets[ctr2] = pack_getc(fp);	//Read this string's fret value
-						}
-						else
-						{	//Write a default value of 0
-							tp->note[ctr]->frets[ctr2] = 0;
-						}
-					}
-					tp->note[ctr]->legacymask = pack_getc(fp);	//Read the legacy note bitmask
-					tp->note[ctr]->pos = pack_igetl(fp);			//Read note position
-					tp->note[ctr]->length = pack_igetl(fp);		//Read note length
-					tp->note[ctr]->flags = pack_igetl(fp);		//Read note flags
-					if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
-					{	//If this note has bend string or slide ending fret definitions
-						if((tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
-						{	//If this is a slide note
-							tp->note[ctr]->slideend = pack_getc(fp);	//Read the slide's ending fret
-						}
-						if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
-						{	//If this is a bend note
-							tp->note[ctr]->bendstrength = pack_getc(fp);	//Read the bend's strength
-						}
-					}
-					if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
-					{	//If this is an unpitched slide note
-						tp->note[ctr]->unpitchend = pack_getc(fp);	//Read the unpitched slide's ending fret
-					}
-					if(tp->note[ctr]->flags & EOF_NOTE_FLAG_T_EXTENDED)
-					{	//If this note uses any extended track flags
-						tp->note[ctr]->eflags = pack_igetl(fp);		//Read extended track flags
-						tp->note[ctr]->flags &= ~EOF_NOTE_FLAG_T_EXTENDED;	//Clear this flag, it won't be updated again until the project is saved/loaded
 					}
 				}//For each note in this track
 				tp->pgnotes = tp->notes;			//Store the size of the regular pro guitar note array
@@ -2022,7 +2032,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					}
 				break;
 
-				case 4:		//Track tuning not honored
+				case 4:		//Pro guitar track tuning not honored
 					if(custom_data_size != 5)
 					{	//This data block is expected to be 5 bytes long
 						allegro_message("Error:  Invalid custom data block size (track tuning not honored).  Aborting");
@@ -2036,7 +2046,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					}
 				break;
 
-				case 6:		//Capo position
+				case 6:		//Pro guitar capo position
 					if(custom_data_size != 5)
 					{	//This data block is expected to be 5 bytes long
 						allegro_message("Error:  Invalid custom data block size (capo position).  Aborting");
@@ -2047,6 +2057,34 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					{	//Ensure this logic only runs for a pro guitar track
 						EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track_ctr]->tracknum];	//Get pointer to this pro guitar track
 						tp->capo = pack_getc(fp);	//Read the capo position
+					}
+				break;
+
+				case 7:		//Pro guitar tech notes
+					if(custom_data_size < 8)
+					{	//This data block is expected to be at least 8 bytes long
+						allegro_message("Error:  Invalid custom data block size (tech notes).  Aborting");
+						eof_log("Error:  Invalid custom data block size (tech notes).  Aborting", 1);
+						return 0;
+					}
+					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+					{	//Ensure this logic only runs for a pro guitar track
+						EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track_ctr]->tracknum];	//Get pointer to this pro guitar track
+						unsigned long ctr;
+
+						tp->technotes = pack_igetl(fp);	//Read the number of tech notes
+						for(ctr = 0; ctr < tp->technotes; ctr++)
+						{	//For each tech note in the custom data block
+							tp->technote[ctr] = malloc(sizeof(EOF_PRO_GUITAR_NOTE));	//Allocate memory for the tech note
+							if(!tp->technote[ctr])
+							{
+								allegro_message("Error:  Unable to allocate memory for (tech notes).  Aborting");
+								eof_log("Error:  Unable to allocate memory for (tech notes).  Aborting", 1);
+								return 0;
+							}
+							memset(tp->technote[ctr], 0, sizeof(EOF_PRO_GUITAR_NOTE));
+							eof_read_pro_guitar_note(tp->technote[ctr], fp);	//Read the tech note
+						}
 					}
 				break;
 
@@ -2371,7 +2409,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};
 	unsigned long count,ctr,ctr2,tracknum;
 	unsigned long track_count,track_ctr,bookmark_count,bitmask,fingerdefinitions;
-	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo;
+	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes;
 
 	#define EOFNUMINISTRINGTYPES 9
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
@@ -3010,7 +3048,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		}//Write other tracks
 
 		//Write custom track data blocks
-		fingerdefinitions = has_fingerdefinitions = has_arrangement = ignore_tuning = has_capo = 0;
+		fingerdefinitions = has_fingerdefinitions = has_arrangement = ignore_tuning = has_capo = has_tech_notes = 0;
 		if(track_ctr && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 		{	//If this is a pro guitar track
 			//Count the number of notes with finger definitions
@@ -3037,12 +3075,16 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			{	//If this track uses a capo
 				has_capo = 1;
 			}
+			if(tp->technotes)
+			{	//If this track has any tech notes defined
+				has_tech_notes = 1;
+			}
 		}
-		if(has_fingerdefinitions || has_arrangement || ignore_tuning || has_capo)
+		if(has_fingerdefinitions || has_arrangement || ignore_tuning || has_capo || has_tech_notes)
 		{	//If writing data in a custom data block
 			if(track_ctr && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If this is a pro guitar track
-				(void) pack_iputl(has_fingerdefinitions + has_arrangement + ignore_tuning + has_capo, fp);		//Write the number of custom data blocks
+				(void) pack_iputl(has_fingerdefinitions + has_arrangement + ignore_tuning + has_capo + has_tech_notes, fp);		//Write the number of custom data blocks
 				if(has_fingerdefinitions)
 				{	//Write finger definitions
 					(void) pack_iputl(fingerdefinitions + 4, fp);	//Write the number of bytes this block will contain (finger data and a 4 byte block ID)
@@ -3067,15 +3109,55 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				if(ignore_tuning)
 				{	//Write track tuning not honored
 					(void) pack_iputl(5, fp);		//Write the number of bytes this block will contain (1 byte tuning not honored status and a 4 byte block ID)
-					(void) pack_iputl(4, fp);		//Write the track tuning not honored custom data block ID
+					(void) pack_iputl(4, fp);		//Write the pro guitar track tuning not honored custom data block ID
 					(void) pack_putc(1, fp);		//Write the track tuning not honored option
 				}
 				if(has_capo)
 				{	//Write capo value
 					(void) pack_iputl(5, fp);		//Write the number of bytes this block will contain (1 byte capo position and a 4 byte block ID)
-					(void) pack_iputl(6, fp);		//Write the capo custom data block ID
+					(void) pack_iputl(6, fp);		//Write the pro guitar capo custom data block ID
 					(void) pack_putc(tp->capo, fp);	//Write the track's capo position
 				}
+				if(has_tech_notes)
+				{	//Write tech notes
+					PACKFILE *tempf;	//Since the size of the custom data block must be known in advance, write it to a temp file so its size can be read
+					unsigned long file_size;
+					char tempfilename[] = "eof_tech_notes.tmp";
+
+					tempf = pack_fopen(tempfilename, "w");
+					if(!tempf)
+					{	//If there was an error opening the temp file for writing
+						eof_log("Error writing tech notes to temp file, skipping export of the track's tech notes", 1);
+						(void) pack_iputl(8, fp);	//Write the number of bytes this block will contain (4 byte number of tech notes and a 4 byte block ID)
+						(void) pack_iputl(7, fp);	//Write the pro guitar tech note custom data block ID
+						(void) pack_iputl(0, fp);	//Write 0 tech notes
+					}
+					else
+					{	//The temp file was opened for writing
+						(void) pack_iputl(tp->technotes, tempf);	//Write the number of tech notes
+						for(ctr = 0; ctr < tp->technotes; ctr++)
+						{	//For each tech note in this track
+							eof_write_pro_guitar_note(tp->technote[ctr], tempf);	//Write the tech note to the temp file
+						}
+						(void) pack_fclose(tempf);	//Close temp file
+						file_size = (unsigned long)file_size_ex(tempfilename);
+						(void) pack_iputl(file_size + 4, fp);	//Write the number of bytes this block will contain (the temp file and a 4 byte block ID)
+						(void) pack_iputl(7, fp);				//Write the pro guitar tech note custom data block ID
+						tempf = pack_fopen(tempfilename, "r");	//Open temp file for reading
+						if(!tempf)
+						{	//If the temp file couldn't be accessed
+							eof_log("Error reading tech notes temp file.  Aborting", 1);
+							(void) pack_fclose(fp);
+							return 0;
+						}
+						for(ctr = 0; ctr < file_size; ctr++)
+						{	//For each byte in the temp file
+							(void) pack_putc(pack_getc(tempf), fp);	//Copy the byte to the project file
+						}
+						(void) pack_fclose(tempf);			//Close temp file
+						(void) delete_file(tempfilename);	//And delete it
+					}
+				}//Write tech notes
 			}
 		}
 		else
@@ -4343,7 +4425,10 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 			}
 			if(!tp->note[i-1]->slideend && !tp->note[i-1]->bendstrength)
 			{	//If this note has no slide end fret number or bend strength defined
-				tp->note[i-1]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag
+				if(!((tp->note == tp->technote) && (tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)))
+				{	//If tech view is in effect, a bend note is allowed to have a bend strength of 0
+					tp->note[i-1]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Otherwise both the slide end position and the bend strength are undefined, clear this flag
+				}
 			}
 			if(!(tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) && !(tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
 			{	//If the note is not a slide or bend
@@ -5714,7 +5799,7 @@ int eof_create_image_sequence(char benchmark_only)
 
 		//Render the screen
 		eof_find_lyric_preview_lines();
-		eof_render_editor_window(eof_window_editor);
+		eof_render_editor_window(eof_window_editor, 1);	//Render the primary piano roll
 		eof_render_editor_window_2();	//Render the secondary piano roll if applicable
 		eof_render_3d_window();
 		eof_render_note_window();

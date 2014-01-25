@@ -171,15 +171,22 @@ Custom track data block definitions
 		}
 	Custom data block ID 3:  Pro guitar track arrangement type
 		1 byte:		Arrangement type (1 = Combo, 2 = Rhythm, 3 = Lead, 4 = Bass)
-	Custom data block ID 4:  Track tuning not honored
+	Custom data block ID 4:  Pro guitar track tuning not honored
 		1 byte:		If nonzero, indicates that the chord name detection reflects the DEFAULT tuning for the arrangement, and not the track's actual specified tuning.
-	Custom data block ID 5:  Vibrato speeds
+	Custom data block ID 5:  Pro guitar vibrato speeds
 		VIBRATO CHUNK, for each note in the track that is marked with vibrato (note flag value 16777216)
 		{
 			1 byte: Vibrato speed used for this note (40 = slow, 80 = medium, 120 = fast, the default value is 80)
 		}
-	Custom data block ID 6:  Capo position
+	Custom data block ID 6:  Pro guitar capo position
 		1 byte:		The fret number at which a capo is placed for this track
+	Custom data block ID 7:  Pro guitar tech notes
+		4 bytes:	Number of tech notes
+		PRO GUITAR NOTE CHUNK, for each tech note
+		{
+			(As defined in the "PRO GUITAR/PRO BASS TRACK FORMAT" section)
+		}
+
 =========================================		
 }
 (End of file)

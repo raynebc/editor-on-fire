@@ -3091,12 +3091,15 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							else
 							{	//The next note (if any) is not a repeat of this note and is not completely string muted
 								handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
-
-								if((handshapeend - handshapestart < 56) && (handshapestart + 56 < eof_get_note_pos(sp, track, nextnote)))
-								{	//If the hand shape would be shorter than 56ms, and the next note is further than 56ms away
-									handshapeend = eof_get_note_pos(sp, track, ctr3) + 56;	//Pad the hand shape to 56ms
-								}
 								break;	//Break from while loop
+							}
+						}
+						if(handshapeend - handshapestart < 56)
+						{	//If the handshape is shorter than 56ms, see if it can be padded to 56ms
+							nextnote = eof_track_fixup_next_note(sp, track, ctr3);
+							if((nextnote < 0) || (handshapestart + 56 < eof_get_note_pos(sp, track, nextnote)))
+							{	//If no notes follow this chord, or if there's at least 56ms of gap between this chord and the next note, the handshape can be lengthened without any threat of overlapping another handshape tag
+								handshapeend = handshapestart + 56;
 							}
 						}
 

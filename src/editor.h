@@ -61,9 +61,10 @@ unsigned long eof_determine_piano_roll_left_edge(void);
 unsigned long eof_determine_piano_roll_right_edge(void);
 	//calculates the timestamp of the right visible edge of the piano roll
 
-void eof_render_editor_window(EOF_WINDOW *window);
+void eof_render_editor_window(EOF_WINDOW *window, unsigned char windownum);
 	//Renders to the specified editor window
 	//Calls eof_render_vocal_editor_window() instead if a vocal track is to be rendered
+	//windownum specifies whether the first or the second piano roll is being drawn.  If it's the first one, and tech view is in effect, the tech notes are drawn on top of the regular notes
 void eof_render_vocal_editor_window(EOF_WINDOW *window);
 	//Renders to the specified editor window
 void eof_render_editor_window_2(void);
