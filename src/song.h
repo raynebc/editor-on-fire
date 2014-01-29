@@ -143,7 +143,7 @@ typedef struct
 	long length;				//Keep as signed, since the npos logic uses signed math
 	unsigned long flags;		//Stores various note statuses
 	unsigned long eflags;		//Stores extended, track specific note statuses
-	unsigned char bendstrength;	//The amount this note bends (0 if undefined or not applicable).  If the MSB is set, the value specifies quarter steps, otherwise it specifies half steps
+	unsigned char bendstrength;	//The amount this note bends (0 if undefined or not applicable for regular notes, can be 0 for tech notes as that defines the release of a bend).  If the MSB is set, the value specifies quarter steps, otherwise it specifies half steps
 	unsigned char slideend;		//The fret at which this slide ends (0 if undefined or not applicable)
 	unsigned char unpitchend;	//The fret at which this unpitched slide ends (0 if undefined or not applicable)
 	unsigned char tflags;		//Stores various temporary statuses
@@ -685,6 +685,7 @@ void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, unsigned long index);	//D
 
 EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_note(EOF_PRO_GUITAR_TRACK *tp);	//Allocates, initializes and stores a new EOF_PRO_GUITAR_NOTE structure into the notes array.  Returns the newly allocated structure or NULL upon error
 void eof_pro_guitar_track_sort_notes(EOF_PRO_GUITAR_TRACK * tp);	//Performs a quicksort of the notes array
+void eof_pro_guitar_track_sort_tech_notes(EOF_PRO_GUITAR_TRACK * tp);	//Performs a quicksort of the tech notes array
 int eof_song_qsort_pro_guitar_notes(const void * e1, const void * e2);	//The comparitor function used to quicksort the pro guitar notes array
 void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
 long eof_fixup_previous_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Returns the note one before the specified note number that is in the same difficulty, or -1 if there is none
@@ -862,5 +863,22 @@ extern SAMPLE *eof_export_time_range_sample;
 void eof_export_time_range(ALOGG_OGG * ogg, double start_time, double end_time, const char * fn);
 	//Exports a time range of the specified OGG file to a file of the specified name
 	//start_time and end_time are both in seconds and not milliseconds
+
+char eof_pro_guitar_note_bitmask_has_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long mask, unsigned long *technote_num);
+	//Returns nonzero if the specified pro guitar note has at least one tech note that overlaps it on any of the specified strings in the specified bitmask
+	//If technote_num is not NULL, the index number of the first relevant tech note is returned through it
+char eof_pro_guitar_note_has_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long *technote_num);
+	//Uses eof_pro_guitar_note_bitmask_has_tech_note() to search for a technote overlapping any of the specified note's used strings
+	//If technote_num is not NULL, the index number of the first relevant tech note is returned through it
+char eof_pro_guitar_note_bitmask_has_bend_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long mask, unsigned long *technote_num);
+	//Similar to eof_pro_guitar_note_has_tech_note(), but returns nonzero only if at least one of the tech notes that apply to the specified note have bend technique
+char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long technote, unsigned long mask, unsigned long *note_num);
+	//Looks for regular pro guitar notes that are overlapped by the specified tech note, checking all notes ending at or before the tech note
+	//Checking for more than just the first overlap is necessary because if crazy notes are being used, the tech note may simply overlap one note
+	// and actually start at the same timestamp as one of the other regular notes
+	//If the tech note is found to be at the start position of any overlapping notes, 1 is returned
+	// If note_num is not NULL, the matching regular note number is returned through it
+	//If the tech note is found to overlap at least one note, 2 is returned
+	// If note_num is not NULL, the LAST matching regular note number is returned through it
 
 #endif

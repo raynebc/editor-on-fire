@@ -135,7 +135,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_radio_proc, 224, 206, 72,  16,  2,   23,  0,    0,      1,   0,   "Sections",            NULL, NULL },
 	{ d_agup_radio_proc, 301, 206, 78,  16,  2,   23,  0,    0,      1,   0,   "Hand pos",            NULL, NULL },
 	{ d_agup_radio_proc, 384, 206, 92,  16,  2,   23,  0,    0,      1,   0,   "RS sections",         NULL, NULL },
-	{ d_agup_radio_proc, 161, 221, 150, 16,  2,   23,  0,    0,      1,   0,   "RS sections+phrases",         NULL, NULL },
+	{ d_agup_radio_proc, 161, 221, 150, 16,  2,   23,  0,    0,      1,   0,   "RS sections+Phrases",         NULL, NULL },
 	{ d_agup_check_proc, 248, 284, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are made 1ms long",NULL, NULL },
 	{ d_agup_check_proc, 16,  236, 340, 16,  2,   23,  0,    0,      1,   0,   "GP import beat text as sections, markers as phrases",NULL, NULL },
 	{ d_agup_check_proc, 248, 300, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short notes",NULL, NULL },

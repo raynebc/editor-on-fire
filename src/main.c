@@ -3018,6 +3018,8 @@ void eof_render_3d_window(void)
 	unsigned long firstlane = 0, lastlane;	//Used to track the first and last lanes that get track specific rendering (ie. drums don't render markers for lane 1, bass doesn't render markers for lane 6)
 	EOF_PRO_GUITAR_TRACK *tp = NULL;
 	char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the regular notes are rendered instead
+	unsigned long temptrack;
+	int temphover;
 
 	//Used to draw trill and tremolo sections:
 	unsigned long j, ctr, usedlanes, bitmask, numsections;
@@ -3049,6 +3051,10 @@ void eof_render_3d_window(void)
 		{	//If tech view is in effect for the active track
 			restore_tech_view = 1;
 			eof_menu_track_disable_tech_view(tp);
+			temphover = eof_hover_note;				//Temporarily clear the hover note, since any hover note in effect at this time applies to the tech notes and not the normal notes
+			eof_hover_note = -1;
+			temptrack = eof_selection.track;		//Likewise temporarily clear the selection track number
+			eof_selection.track = 0;
 		}
 	}
 
@@ -3289,8 +3295,9 @@ void eof_render_3d_window(void)
 	{	//Render 3D notes from last to first so that the earlier notes are in front
 		if(eof_note_type == eof_get_note_type(eof_song, eof_selected_track, i-1))
 		{
-			tr = eof_note_tail_draw_3d(eof_selected_track, i-1, (eof_selection.multi[i-1] && eof_music_paused) ? 1 : (i-1) == eof_hover_note ? 2 : 0);
-			(void) eof_note_draw_3d(eof_selected_track, i-1, (eof_selection.track == eof_selected_track && eof_selection.multi[i-1] && eof_music_paused) ? 1 : (i-1) == eof_hover_note ? 2 : 0);
+			int p = ((eof_selection.track == eof_selected_track) && eof_selection.multi[i-1] && eof_music_paused) ? 1 : (i-1) == eof_hover_note ? 2 : 0;	//Cache this result to use it twice
+			tr = eof_note_tail_draw_3d(eof_selected_track, i-1, p);
+			(void) eof_note_draw_3d(eof_selected_track, i-1, p);
 
 			if(tr < 0)	//if eof_note_tail_draw_3d skipped rendering the tail because it renders before the visible area
 				break;	//Stop rendering 3d notes
@@ -3334,6 +3341,8 @@ void eof_render_3d_window(void)
 	if(tp && restore_tech_view)
 	{	//If tech view needs to be re-enabled
 		eof_menu_track_enable_tech_view(tp);
+		eof_hover_note = temphover;				//Restore the hover note
+		eof_selection.track = temptrack;		//Restore the selection track
 	}
 }
 
