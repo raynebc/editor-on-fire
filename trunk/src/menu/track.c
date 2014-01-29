@@ -3545,6 +3545,7 @@ int eof_menu_track_toggle_tech_view(void)
 	{	//Otherwise put the tech note array into effect
 		eof_menu_track_enable_tech_view(tp);
 	}
+	(void) eof_menu_edit_deselect_all();	//Clear the note selection
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Re-count the number of notes in the currently active array
 	eof_fix_window_title();
 	return 1;

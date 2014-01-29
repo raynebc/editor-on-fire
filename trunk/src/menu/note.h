@@ -295,4 +295,7 @@ int eof_menu_note_reflect_horizontal(void);
 int eof_menu_note_reflect_both(void);
 	//Calls eof_menu_note_reflect() with the option to perform both vertical and horizontal reflection
 
+int eof_menu_note_move_tech_note_to_overlapping_note_pos(void);
+	//Moves the selected tech notes to the start position of the regular notes they overlap, if any
+
 #endif

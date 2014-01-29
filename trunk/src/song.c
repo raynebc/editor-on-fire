@@ -4066,6 +4066,14 @@ void eof_pro_guitar_track_sort_notes(EOF_PRO_GUITAR_TRACK * tp)
 	}
 }
 
+void eof_pro_guitar_track_sort_tech_notes(EOF_PRO_GUITAR_TRACK * tp)
+{
+	if(tp)
+	{
+		qsort(tp->technote, (size_t)tp->technotes, sizeof(EOF_PRO_GUITAR_NOTE *), eof_song_qsort_pro_guitar_notes);
+	}
+}
+
 int eof_song_qsort_fret_hand_positions(const void * e1, const void * e2)
 {
 	EOF_PHRASE_SECTION * thing1 = (EOF_PHRASE_SECTION *)e1;
@@ -5905,6 +5913,15 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
 
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If a pro guitar track is being altered
+		EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+		if(tp->note == tp->technote)
+		{	//If tech view is in effect for the track
+			return;	//Do not allow this function to alter a tech note's length
+		}
+	}
+
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	adjustment = amount;	//This would be the amount to adjust the note by
 	for(i = 0; i < eof_get_track_size(sp, eof_selected_track); i++)
@@ -7129,4 +7146,109 @@ void eof_export_time_range(ALOGG_OGG * ogg, double start_time, double end_time, 
 		destroy_sample(eof_export_time_range_sample);
 		eof_export_time_range_sample = NULL;
 	}
+}
+
+char eof_pro_guitar_note_has_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long *technote_num)
+{
+	if((tp == NULL) || (note >= tp->notes))
+		return 0;	//Return error
+
+	return eof_pro_guitar_note_bitmask_has_tech_note(tp, note, tp->note[note]->note, technote_num);	//Search for a technote on any of this note's used strings
+}
+
+char eof_pro_guitar_note_bitmask_has_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long mask, unsigned long *technote_num)
+{
+	unsigned long ctr;
+
+	if((tp == NULL) || (note >= tp->notes))
+		return 0;	//Return error
+
+	for(ctr = 0; ctr < tp->technotes; ctr++)
+	{	//For each tech note in the track
+		if((tp->technote[ctr]->pos >= tp->pgnote[note]->pos) && (tp->technote[ctr]->pos <= tp->pgnote[note]->pos + tp->pgnote[note]->length))
+		{	//If this tech note overlaps with the specified pro guitar regular note
+			if(mask & tp->technote[ctr]->note)
+			{	//If the tech note uses any of the specified strings
+				if(technote_num)
+				{	//If the calling function passed a non NULL address
+					*technote_num = ctr;	//Return the index number of the first tech note that overlaps with the specified note
+				}
+				return 1;	//Return overlapping tech note found
+			}
+		}
+	}
+	return 0;	//Return overlapping tech note not found
+}
+
+char eof_pro_guitar_note_bitmask_has_bend_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long mask, unsigned long *technote_num)
+{
+	unsigned long ctr, flags;
+
+	if((tp == NULL) || (note >= tp->notes))
+		return 0;	//Return error
+
+	for(ctr = 0; ctr < tp->technotes; ctr++)
+	{	//For each tech note in the track
+		if((tp->technote[ctr]->pos >= tp->pgnote[note]->pos) && (tp->technote[ctr]->pos <= tp->pgnote[note]->pos + tp->pgnote[note]->length))
+		{	//If this tech note overlaps with the specified pro guitar regular note
+			if(mask & tp->technote[ctr]->note)
+			{	//If the tech note uses any of the specified strings
+				flags = tp->technote[ctr]->flags;
+				if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
+				{	//If the tech note is a bend and has a bend strength defined
+					if(technote_num)
+					{	//If the calling function passed a non NULL address
+						*technote_num = ctr;	//Return the index number of the first tech note that overlaps with the specified note
+					}
+					return 1;	//Return overlapping tech note found
+				}
+			}
+		}
+	}
+	return 0;	//Return overlapping tech note not found
+}
+
+char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long technote, unsigned long mask, unsigned long *note_num)
+{
+	unsigned long ctr;
+	unsigned long techpos;
+	EOF_PRO_GUITAR_NOTE *np;
+	char retval = 0;
+
+	if((tp == NULL) || (technote >= tp->technotes))
+		return 0;	//Return error
+
+	techpos = tp->technote[technote]->pos;
+	for(ctr = 0; ctr < tp->pgnotes; ctr++)
+	{	//For each regular note in the track
+		np = tp->pgnote[ctr];	//Simplify
+		if(np->pos > techpos)
+		{	//If this regular note (and all those that follow) are after this tech note's position
+			break;		//Break and return with whatever return status has been found so far
+		}
+		if(np->pos == techpos)
+		{	//If this regular note is at the same timestamp as the tech note
+			if(np->note & mask)
+			{	//If the regular note has a gem on the specified lane
+				if(note_num)
+				{	//If the calling function passed a non NULL pointer
+					*note_num = ctr;	//Pass the overlapping note number by reference
+				}
+				return 1;	//Return overlap found at start of note
+			}
+		}
+		if((techpos >= np->pos) && (techpos <= np->pos + np->length))
+		{	//If the tech note overlaps this regular note
+			if(np->note & mask)
+			{	//If the regular note has a gem on the specified lane
+				if(note_num)
+				{	//If the calling function passed a non NULL pointer
+					*note_num = ctr;	//Pass the overlapping note number by reference
+				}
+				retval = 2;	//Store a return value indicating an overlap was found within a note
+			}
+		}
+	}
+
+	return retval;
 }

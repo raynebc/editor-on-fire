@@ -381,35 +381,60 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is being rendered
 			tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];
-			eof_get_note_notation(notation, track, notenum, 0);	//Get the tab playing notation for this note, disabling sanity checks for slides
-			if(notation[0] == '\0')
-			{	//If the note has no notations
-				notation[0] = ' ';	//Insert a space to make the box that is drawn a little wider
-				notation[1] = '\0';
-			}
-			if((tp->note == tp->technote))
+			if(tp->note == tp->technote)
 			{	//If tech view is in effect, render the tab notation for the note and nothing else
-				BITMAP *fretbmp = eof_create_fret_number_bitmap(NULL, notation, 0, 2, eof_color_red, eof_color_black, eof_symbol_font);	//Build a bordered bitmap for the technique, allow 2 pixels for padding
-				if(fretbmp != NULL)
-				{	//Render the bitmap in place of the note and then destroy the bitmap
-					for(ctr=0,mask=1;ctr<numlanes;ctr++,mask=mask<<1)
-					{	//Render for each of the available fret lanes
-						if(notenote & mask)
-						{	//If this lane is populated
+				BITMAP *fretbmp;
+				int textcol;
+				int bgcol;
+
+				eof_get_note_notation(notation, track, notenum, 0);	//Get the tab playing notation for this note, disabling sanity checks for slides
+				if(notation[0] == '\0')
+				{	//If the note has no notations
+					notation[0] = ' ';	//Insert a space to make the box that is drawn a little wider
+					notation[1] = '\0';
+				}
+				for(ctr = 0, mask = 1; ctr < numlanes; ctr++, mask = mask << 1)
+				{	//Render for each of the available fret lanes
+					if(notenote & mask)
+					{	//If this lane is populated
+						textcol = eof_color_red;	//Unless the technote overlaps at least one normal note or is highlighted, it will render in red
+						bgcol = eof_color_black;	//Unless the technote begins at the same timestamp as a normal note, the background will be black
+						if(p)
+						{	//If the tech note is highlighted
+							textcol = eof_color_white;
+						}
+						else
+						{	//Otherwise determine what color to render it in
+							char retval = eof_pro_guitar_tech_note_overlaps_a_note(tp, notenum, mask, NULL);	//Determine if the tech note overlaps any regular notes
+
+							if(retval == 1)
+							{	//If the technote overlaps with and starts at the same timestamp as a regular note on this lane
+								textcol = eof_color_blue;
+								bgcol = eof_color_white;	//Blue on white background should be more readable
+							}
+							else if(retval == 2)
+							{	//If the technote overlaps with a regular note on this lane
+								textcol = eof_color_green;
+							}
+						}
+
+						fretbmp = eof_create_fret_number_bitmap(NULL, notation, 0, 2, textcol, bgcol, eof_symbol_font);	//Build a bordered bitmap for the technique, allow 2 pixels for padding
+						if(fretbmp != NULL)
+						{	//Render the bitmap in place of the note and then destroy the bitmap
 							y = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr];	//Store this to make the code more readable
 							draw_sprite(window->screen, fretbmp, x - (fretbmp->w/2), y - (text_height(font)/2));	//Fudge (x,y) to make it print centered over the gem
 						}
-					}
-					destroy_bitmap(fretbmp);
-					return 0;	//Return status:  Note was not clipped in its entirety
-				}
-			}
-		}
+						destroy_bitmap(fretbmp);
+					}//If this lane is populated
+				}//Render for each of the available fret lanes
+				return 0;	//Return status:  Note was not clipped in its entirety
+			}//If tech view is in effect, render the tab notation for the note and nothing else
+		}//If a pro guitar track is being rendered
 
 		//Render tab notations before the note, so that the former doesn't render a solid background over the latter
 		eof_get_note_notation(notation, track, notenum, 1);	//Get the tab playing notation for this note
 		textout_centre_ex(window->screen, eof_symbol_font, notation, x, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 6, eof_color_red, eof_color_black);
-	}
+	}//If rendering an existing note instead of the pen note
 
 	for(ctr=0,mask=1;ctr<numlanes;ctr++,mask=mask<<1)
 	{	//Render for each of the available fret lanes
@@ -1448,7 +1473,8 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 	if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//Check pro guitar statuses
 		unsigned long tracknum = eof_song->track[track]->tracknum, index2;
-		EOF_PRO_GUITAR_NOTE *np = eof_song->pro_guitar_track[tracknum]->note[note];
+		EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+		EOF_PRO_GUITAR_NOTE *np = tp->note[note];
 		unsigned char lowestfret = eof_get_lowest_fretted_string_fret(eof_song, track, note);	//Determine the fret value of the lowest fretted string
 
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
@@ -1617,6 +1643,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		if(np->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN)
 		{
 			buffer[index++] = 's';
+		}
+		if((tp->note != tp->technote) && eof_pro_guitar_note_has_tech_note(tp, note, NULL))
+		{	//If tech view is not in effect (this function isn't being used to generate the string being displayed in the tech not box), display an asterisk on notes that have an overlapping tech note
+			buffer[index++] = '*';
 		}
 	}//Check pro guitar statuses
 	else if((track == EOF_TRACK_DRUM) || (track == EOF_TRACK_DRUM_PS))

@@ -25,6 +25,7 @@ int eof_adjust_notes(int offset);
 	//Applies the given additive offset to all notes, lyrics, bookmarks, catalog entries and phrases
 int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW *window);
 	//Renders the note to the specified window, unless it would be outside the viewable area
+	//If p is nonzero, the note is rendered as highlighted (selected/hovered)
 	//If track is nonzero, the pre-existing note is rendered, otherwise the eof_pen_note is rendered
 	//The position specified should be eof_music_catalog_pos when rendering the fret catalog, or eof_music_pos when rendering the editor window
 	//If the note is 100% clipped, nonzero is returned

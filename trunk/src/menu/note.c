@@ -320,9 +320,10 @@ MENU eof_note_rocksmith_menu[] =
 	{"Remove pinch &Harmonic", eof_menu_note_remove_pinch_harmonic, NULL, 0, NULL},
 	{"Define unpitched slide\t" CTRL_NAME "+U", eof_pro_guitar_note_define_unpitched_slide, NULL, 0, NULL},
 	{"Remove &Unpitched slide", eof_menu_note_remove_unpitched_slide, NULL, 0, NULL},
-	{"&Mute->Single note P.M.", eof_rocksmith_convert_mute_to_palm_mute_single_note, NULL, 0, NULL},
+	{"Mute->Single note P.M.", eof_rocksmith_convert_mute_to_palm_mute_single_note, NULL, 0, NULL},
 	{"Toggle force sustain", eof_menu_note_toggle_rs_sustain, NULL, 0, NULL},
 	{"Remove force sustain", eof_menu_note_remove_rs_sustain, NULL, 0, NULL},
+	{"&Move to note start", eof_menu_note_move_tech_note_to_overlapping_note_pos, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -890,11 +891,21 @@ void eof_prepare_note_menu(void)
 			/* Pro Guitar mode notation> */
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If the active track is a pro guitar track
+				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+
 				eof_note_menu[17].flags = 0;			//Note>Pro Guitar> submenu
 				eof_note_menu[18].flags = 0;			//Note>Rocksmith> submenu
+				if(tp->note == tp->technote)
+				{	//If tech view is in effect
+					eof_note_rocksmith_menu[15].flags = 0;	//Note>Rocksmith>Move to note start
+				}
+				else
+				{
+					eof_note_rocksmith_menu[15].flags = D_DISABLED;
+				}
 
 				/* Arpeggio>Erase all */
-				if(eof_song->pro_guitar_track[tracknum]->arpeggios)
+				if(tp->arpeggios)
 				{	//If there's at least one arpeggio phrase
 					eof_arpeggio_menu[2].flags = 0;		//Note>Pro Guitar>Arpeggio>Erase All
 				}
@@ -4450,6 +4461,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 			eof_pro_guitar_note_frets_dialog[13 - (2 * ctr)].flags = D_HIDDEN;	//Ensure this text box is hidden
 			eof_pro_guitar_note_frets_dialog[20 - ctr].flags = D_HIDDEN;		//Ensure this finger # input box is hidden
 			eof_fret_strings[ctr][0] = '\0';
+			eof_finger_strings[ctr][0] = '\0';
 		}
 	}
 
@@ -8623,4 +8635,50 @@ int eof_menu_note_reflect_horizontal(void)
 int eof_menu_note_reflect_both(void)
 {
 	return eof_menu_note_reflect(3);
+}
+
+int eof_menu_note_move_tech_note_to_overlapping_note_pos(void)
+{
+	unsigned long i;
+	long u = 0;
+	unsigned long tracknum, match;
+	int note_selection_updated;
+	EOF_PRO_GUITAR_TRACK *tp;
+	char status;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+	if(tp->note != tp->technote)
+		return 1;	//Do not allow this function to run when tech view is not in effect
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each tech note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (tp->note[i]->type == eof_note_type))
+		{	//If this note is selected and is in the active difficulty
+			status = eof_pro_guitar_tech_note_overlaps_a_note(tp, i, tp->note[i]->note, &match);	//Determine whether the tech note overlaps a regular note and if so, which one
+			if(status > 1)
+			{	//If the tech note overlaps a regular note and isn't already at the start position of a regular note
+				if(!u)
+				{	//Make a back up before changing the first note
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					u = 1;
+				}
+				tp->note[i]->pos = tp->pgnote[match]->pos;	//Move this tech note to begin at the position of the note it overlaps
+			}
+		}
+	}
+	if(u)
+	{	//If any changes were made
+		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Perform track fixup in case tech notes at the same position need to be merged
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
 }

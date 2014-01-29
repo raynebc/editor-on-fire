@@ -1414,7 +1414,7 @@ if(key[KEY_PAUSE])
 
 	/* toggle vocal tones (V) */
 	/* toggle vibrato (SHIFT+V in a pro guitar track) */
-	/* paste Rocksmith phrase/section */
+	/* paste Rocksmith phrase/section (CTRL+SHIFT+V) */
 	if(key[KEY_V])
 	{
 		if(!KEY_EITHER_CTRL)
@@ -4736,6 +4736,8 @@ void eof_render_editor_window(EOF_WINDOW *window, unsigned char windownum)
 //	eof_log("eof_render_editor_window() entered");
 	EOF_PRO_GUITAR_TRACK *tp = NULL;
 	char render_tech_notes = 0;
+	unsigned long temptrack;
+	int temphover;
 
 	if(!eof_song_loaded || !window)
 		return;
@@ -4761,7 +4763,13 @@ void eof_render_editor_window(EOF_WINDOW *window, unsigned char windownum)
 	if(render_tech_notes && tp)
 	{	//If tech notes are to render on top of the regular notes
 		eof_menu_track_disable_tech_view(tp);	//Switch back to the regular note array
+		temphover = eof_hover_note;				//Temporarily clear the hover note, since any hover note in effect at this time applies to the tech notes and not the normal notes
+		eof_hover_note = -1;
+		temptrack = eof_selection.track;		//Likewise temporarily clear the selection track number
+		eof_selection.track = 0;
 		eof_render_editor_notes(window);		//Render its notes
+		eof_hover_note = temphover;				//Restore the hover note
+		eof_selection.track = temptrack;		//Restore the selection track
 		eof_menu_track_enable_tech_view(tp);	//Switch back to the tech note array
 	}
 	eof_render_editor_notes(window);			//Render the notes in the active track

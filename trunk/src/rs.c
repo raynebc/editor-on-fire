@@ -392,7 +392,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	{	//If the track being exported uses any frets higher than 22
 		if((*user_warned & 2) == 0)
 		{	//If the user wasn't alerted about this issue yet
-			allegro_message("Warning:  At least one track (\"%s\") uses a fret higher than 22.  This will cause Rocksmith to crash.", sp->track[track]->name);
+			allegro_message("Warning:  At least one track (\"%s\") uses a fret higher than 22.  This will cause Rocksmith 1 to crash.", sp->track[track]->name);
 			*user_warned |= 2;
 		}
 	}
@@ -446,7 +446,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		eof_log(eof_log_string, 1);
 		if(bre_populated)
 		{	//If the BRE difficulty was the only one populated, warn that it is being omitted
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Track \"%s\" only has notes in the BRE difficulty.\nThese are not exported in Rocksmith format unless you remove the difficulty limit (Song>Rocksmith>Remove difficulty limit).", sp->track[track]->name);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Track \"%s\" only has notes in the BRE difficulty.\nThese are not exported in Rocksmith format unless you remove the difficulty limit (Track>Rocksmith>Remove difficulty limit).", sp->track[track]->name);
 			allegro_message(eof_log_string);
 			eof_log(eof_log_string, 1);
 		}
@@ -1489,7 +1489,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							{	//If the chord list was built
 								free(chordlist);
 							}
-							eof_rs_export_cleanup(sp, track);
+							eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added
 							return 0;	//Return error
 						}
 						handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position (in seconds)
@@ -1615,14 +1615,6 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
-	if(eof_get_highest_fret(sp, track, 0) > 22)
-	{	//If the track being exported uses any frets higher than 22
-		if((*user_warned & 2) == 0)
-		{	//If the user wasn't alerted about this issue yet
-			allegro_message("Warning:  At least one track (\"%s\") uses a fret higher than 22.  This will cause Rocksmith to crash.", sp->track[track]->name);
-			*user_warned |= 2;
-		}
-	}
 	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
 	{	//For each note in the track
 		unsigned char slideend;
@@ -1671,7 +1663,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		eof_log(eof_log_string, 1);
 		if(bre_populated)
 		{	//If the BRE difficulty was the only one populated, warn that it is being omitted
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Track \"%s\" only has notes in the BRE difficulty.\nThese are not exported in Rocksmith format unless you remove the difficulty limit (Song>Rocksmith>Remove difficulty limit).", sp->track[track]->name);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Track \"%s\" only has notes in the BRE difficulty.\nThese are not exported in Rocksmith format unless you remove the difficulty limit (Track>Rocksmith>Remove difficulty limit).", sp->track[track]->name);
 			allegro_message(eof_log_string);
 			eof_log(eof_log_string, 1);
 		}
