@@ -76,10 +76,15 @@ EOF_CHORD_DEFINITION eof_chord_names[EOF_NUM_DEFINED_CHORDS] =
 	{"dim7", "1,b3,b5,6"},
 	{"m7b5", "1,b3,b5,b7"},
 	{"min", "1,b3,5"},
+	{"min7b6", "1,b3,b6,b7"},
 	{"min7b6", "1,b3,5,b6,b7"},
+	{"min6", "1,b3,6"},
 	{"min6", "1,b3,5,6"},
+	{"min6/Maj7", "1,b3,6,7"},
 	{"min6/Maj7", "1,b3,5,6,7"},
+	{"min7", "1,b3,b7"},
 	{"min7", "1,b3,5,b7"},
+	{"m/Maj7", "1,b3,7"},
 	{"m/Maj7", "1,b3,5,7"},
 	{"m#7aug5", "1,b3,#5,7"},
 	{"3", "1,3"},
@@ -88,17 +93,22 @@ EOF_CHORD_DEFINITION eof_chord_names[EOF_NUM_DEFINED_CHORDS] =
 	{"7b5", "1,3,b5,b7"},
 	{"Maj7b5", "1,3,b5,7"},
 	{"", "1,3,5"},		//For Rocksmith compatibility reasons, the "maj" notation will be left off of major chords, which is common enough anyway
+	{"6", "1,3,6"},
 	{"6", "1,3,5,6"},
+	{"7", "1,3,b7"},
 	{"7", "1,3,5,b7"},
+	{"Maj7", "1,3,7"},
 	{"Maj7", "1,3,5,7"},
 	{"aug", "1,3,#5"},
 	{"aug7", "1,3,#5,b7"},
 	{"MajAug7", "1,3,#5,7"},
 	{"sus4", "1,4,5"},
+	{"7sus4", "1,4,b7"},
 	{"7sus4", "1,4,5,b7"},
 	{"b5", "1,b5"},
 	{"5", "1,5"}
 };
+//Jazz style variants of some chords omit the perfect fifth interval, so a second instance of some chord definitions is given
 
 char *eof_lookup_tuning_name(EOF_SONG *sp, unsigned long track, char *tuning)
 {

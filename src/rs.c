@@ -378,6 +378,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	unsigned long handshapestart, handshapeend;
 	long nextnote;
 	unsigned long originalbeatcount;	//If beats are padded to reach the beginning of the next measure (for DDC), this will track the project's original number of beats
+	char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct notes are exported
 
 	eof_log("eof_export_rocksmith_1_track() entered", 1);
 
@@ -388,6 +389,11 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+	if(tp->note == tp->technote)
+	{	//If tech view is in effect for the track being exported
+		restore_tech_view = 1;
+		eof_menu_track_disable_tech_view(tp);
+	}
 	if(eof_get_highest_fret(sp, track, 0) > 22)
 	{	//If the track being exported uses any frets higher than 22
 		if((*user_warned & 2) == 0)
@@ -450,6 +456,10 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			allegro_message(eof_log_string);
 			eof_log(eof_log_string, 1);
 		}
+		if(restore_tech_view)
+		{	//If tech view needs to be re-enabled
+			eof_menu_track_enable_tech_view(tp);
+		}
 		return 0;	//Return failure
 	}
 
@@ -468,6 +478,10 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	if(!fp)
 	{
 		eof_log("\tError saving:  Cannot open file for writing", 1);
+		if(restore_tech_view)
+		{	//If tech view needs to be re-enabled
+			eof_menu_track_enable_tech_view(tp);
+		}
 		return 0;	//Return failure
 	}
 
@@ -838,6 +852,10 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				allegro_message("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.");
 				eof_log("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.", 1);
 				free(sectionlist);
+				if(restore_tech_view)
+				{	//If tech view needs to be re-enabled
+					eof_menu_track_enable_tech_view(tp);
+				}
 				return 0;	//Return error
 			}
 			(void) snprintf(buffer, sizeof(buffer) - 1, "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\"/>\n", sp->beat[ctr]->fpos / 1000.0, phraseid);
@@ -1037,6 +1055,10 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		{
 			eof_log("\tError saving:  Cannot allocate memory for control list", 1);
 			eof_rs_export_cleanup(sp, track);
+			if(restore_tech_view)
+			{	//If tech view needs to be re-enabled
+				eof_menu_track_enable_tech_view(tp);
+			}
 			return 0;	//Return failure
 		}
 
@@ -1057,6 +1079,10 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				}
 				free(controls);
 				eof_rs_export_cleanup(sp, track);
+				if(restore_tech_view)
+				{	//If tech view needs to be re-enabled
+					eof_menu_track_enable_tech_view(tp);
+				}
 				return 0;	//Return failure
 			}
 			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"ShowMessageBox(hint%lu, %s)\"/>\n", tp->popupmessage[ctr].start_pos / 1000.0, ctr + 1, buffer2);
@@ -1076,6 +1102,10 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				}
 				free(controls);
 				eof_rs_export_cleanup(sp, track);
+				if(restore_tech_view)
+				{	//If tech view needs to be re-enabled
+					eof_menu_track_enable_tech_view(tp);
+				}
 				return 0;	//Return failure
 			}
 			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"ClearAllMessageBoxes()\"/>\n", tp->popupmessage[ctr].end_pos / 1000.0);
@@ -1097,6 +1127,10 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				}
 				free(controls);
 				eof_rs_export_cleanup(sp, track);
+				if(restore_tech_view)
+				{	//If tech view needs to be re-enabled
+					eof_menu_track_enable_tech_view(tp);
+				}
 				return 0;	//Return failure
 			}
 			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"CDlcTone(%s)\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tp->tonechange[ctr].name);
@@ -1305,6 +1339,10 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								free(chordlist);
 							}
 							eof_rs_export_cleanup(sp, track);
+							if(restore_tech_view)
+							{	//If tech view needs to be re-enabled
+								eof_menu_track_enable_tech_view(tp);
+							}
 							return 0;	//Return error
 						}
 						if(tp->note[ctr3]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
@@ -1417,6 +1455,10 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							free(chordlist);
 						}
 						eof_rs_export_cleanup(sp, track);
+						if(restore_tech_view)
+						{	//If tech view needs to be re-enabled
+							eof_menu_track_enable_tech_view(tp);
+						}
 						return 0;	//Return error
 					}
 					handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position
@@ -1490,6 +1532,10 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								free(chordlist);
 							}
 							eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added
+							if(restore_tech_view)
+							{	//If tech view needs to be re-enabled
+								eof_menu_track_enable_tech_view(tp);
+							}
 							return 0;	//Return error
 						}
 						handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position (in seconds)
@@ -1570,6 +1616,10 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}
 	eof_sort_events(sp);	//Re-sort events
 	eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added
+	if(restore_tech_view)
+	{	//If tech view needs to be re-enabled
+		eof_menu_track_enable_tech_view(tp);
+	}
 
 	return 1;	//Return success
 }
@@ -1605,6 +1655,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	unsigned long originalbeatcount;	//If beats are padded to reach the beginning of the next measure (for DDC), this will track the project's original number of beats
 	EOF_RS_TECHNIQUES tech;
 	EOF_PRO_GUITAR_NOTE *new_note;
+	char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct notes are exported
 
 	eof_log("eof_export_rocksmith_2_track() entered", 1);
 
@@ -1615,6 +1666,11 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+	if(tp->note == tp->technote)
+	{	//If tech view is in effect for the track being exported
+		restore_tech_view = 1;
+		eof_menu_track_disable_tech_view(tp);
+	}
 	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
 	{	//For each note in the track
 		unsigned char slideend;
@@ -1667,6 +1723,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			allegro_message(eof_log_string);
 			eof_log(eof_log_string, 1);
 		}
+		if(restore_tech_view)
+		{	//If tech view needs to be re-enabled
+			eof_menu_track_enable_tech_view(tp);
+		}
 		return 0;	//Return failure
 	}
 
@@ -1685,6 +1745,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	if(!fp)
 	{
 		eof_log("\tError saving:  Cannot open file for writing", 1);
+		if(restore_tech_view)
+		{	//If tech view needs to be re-enabled
+			eof_menu_track_enable_tech_view(tp);
+		}
 		return 0;	//Return failure
 	}
 
@@ -2074,6 +2138,14 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				allegro_message("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.");
 				eof_log("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.", 1);
 				free(sectionlist);
+				if(restore_tech_view)
+				{	//If tech view needs to be re-enabled
+					eof_menu_track_enable_tech_view(tp);
+				}
+				if(restore_tech_view)
+				{	//If tech view needs to be re-enabled
+					eof_menu_track_enable_tech_view(tp);
+				}
 				return 0;	//Return error
 			}
 			(void) snprintf(buffer, sizeof(buffer) - 1, "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\" variation=\"\"/>\n", sp->beat[ctr]->fpos / 1000.0, phraseid);
@@ -2127,6 +2199,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							eof_log("Error:  Couldn't expand linked chords into single notes.  Aborting Rocksmith export.", 1);
 							free(sectionlist);
 							eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+							if(restore_tech_view)
+							{	//If tech view needs to be re-enabled
+								eof_menu_track_enable_tech_view(tp);
+							}
 							return 0;	//Return error
 						}
 					}//If this string is used and is not ghosted
@@ -2166,6 +2242,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								eof_log("Error:  Couldn't expand an arpeggio chord into single notes.  Aborting Rocksmith export.", 1);
 								free(sectionlist);
 								eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+								if(restore_tech_view)
+								{	//If tech view needs to be re-enabled
+									eof_menu_track_enable_tech_view(tp);
+								}
 								return 0;	//Return error
 							}
 						}//If this string is used and is not ghosted
@@ -2349,6 +2429,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		{
 			eof_log("\tError saving:  Cannot allocate memory for control list", 1);
 			eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+			if(restore_tech_view)
+			{	//If tech view needs to be re-enabled
+				eof_menu_track_enable_tech_view(tp);
+			}
 			return 0;	//Return failure
 		}
 
@@ -2369,6 +2453,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				}
 				free(controls);
 				eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+				if(restore_tech_view)
+				{	//If tech view needs to be re-enabled
+					eof_menu_track_enable_tech_view(tp);
+				}
 				return 0;	//Return failure
 			}
 			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"ShowMessageBox(hint%lu, %s)\"/>\n", tp->popupmessage[ctr].start_pos / 1000.0, ctr + 1, buffer2);
@@ -2388,6 +2476,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				}
 				free(controls);
 				eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+				if(restore_tech_view)
+				{	//If tech view needs to be re-enabled
+					eof_menu_track_enable_tech_view(tp);
+				}
 				return 0;	//Return failure
 			}
 			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"ClearAllMessageBoxes()\"/>\n", tp->popupmessage[ctr].end_pos / 1000.0);
@@ -2659,9 +2751,47 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								(void) pack_fputs(buffer, fp);
 								if(tech.bend)
 								{	//If the note is a bend, write the bendValues subtag and close the note tag
-									(void) pack_fputs("          <bendValues count=\"1\">\n", fp);
-									(void) snprintf(buffer, sizeof(buffer) - 1, "            <bendValue time=\"%.3f\" step=\"%.3f\"/>\n", (((double)notepos + ((double)tech.length / 3.0)) / 1000.0), (double)tech.bendstrength_q / 2.0);	//Write a bend point 1/3 into the note
-									(void) pack_fputs(buffer, fp);
+									unsigned long bendpoints, firstbend, flags, bendstrength_q;	//Used to parse any bend tech notes that may affect the exported note
+
+									bendpoints = eof_pro_guitar_note_bitmask_has_bend_tech_note(tp, ctr3, tp->note[ctr3]->note, &firstbend);	//Count how many bend tech notes overlap this note
+									if(!bendpoints)
+									{	//If there are none
+										(void) pack_fputs("          <bendValues count=\"1\">\n", fp);
+										(void) snprintf(buffer, sizeof(buffer) - 1, "            <bendValue time=\"%.3f\" step=\"%.3f\"/>\n", (((double)notepos + ((double)tech.length / 3.0)) / 1000.0), (double)tech.bendstrength_q / 2.0);	//Write a bend point 1/3 into the note
+										(void) pack_fputs(buffer, fp);
+									}
+									else
+									{	//If there's at least one bend tech note that overlaps the note being exported
+										(void) snprintf(buffer, sizeof(buffer) - 1, "          <bendValues count=\"%lu\">\n", bendpoints);
+										(void) pack_fputs(buffer, fp);
+										for(ctr4 = firstbend; ctr4 < tp->technotes; ctr4++)
+										{	//For all tech notes, starting with the first applicable bend tech note
+											if(tp->technote[ctr4]->pos > notepos + tech.length)
+											{	//If this tech note (and all those that follow) are after the end position of this note
+												break;	//Break from loop, no more overlapping notes will be found
+											}
+											if((tp->technote[ctr4]->type == tp->pgnote[ctr3]->type) && (bitmask & tp->technote[ctr4]->note))
+											{	//If the tech note is in the same difficulty as the pro guitar single note being exported and uses the same string
+												if((tp->technote[ctr4]->pos >= notepos) && (tp->technote[ctr4]->pos <= notepos + tech.length))
+												{	//If this tech note overlaps with the specified pro guitar regular note
+													flags = tp->technote[ctr4]->flags;
+													if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
+													{	//If the tech note is a bend and has a bend strength defined
+														if(tp->technote[ctr4]->bendstrength & 0x80)
+														{	//If this bend strength is defined in quarter steps
+															bendstrength_q = tp->technote[ctr4]->bendstrength & 0x7F;	//Obtain the defined bend strength in quarter steps (mask out the MSB)
+														}
+														else
+														{	//The bend strength is defined in half steps
+															bendstrength_q = tp->technote[ctr4]->bendstrength * 2;		//Obtain the defined bend strength in quarter steps
+														}
+														(void) snprintf(buffer, sizeof(buffer) - 1, "            <bendValue time=\"%.3f\" step=\"%.3f\"/>\n", ((double)tp->technote[ctr4]->pos / 1000.0), (double)bendstrength_q / 2.0);	//Write the bend point at the specified position within the note
+														(void) pack_fputs(buffer, fp);
+													}
+												}
+											}
+										}
+									}
 									(void) pack_fputs("          </bendValues>\n", fp);
 									(void) pack_fputs("        </note>\n", fp);
 								}
@@ -2717,6 +2847,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 									free(chordlist);
 								}
 								eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+								if(restore_tech_view)
+								{	//If tech view needs to be re-enabled
+									eof_menu_track_enable_tech_view(tp);
+								}
 								return 0;	//Return error
 							}
 							flags = tp->note[ctr3]->flags;	//Simplify
@@ -2822,9 +2956,47 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 										(void) pack_fputs(buffer, fp);
 										if(tech.bend)
 										{	//If the note is a bend, write the bendValues subtag and close the note tag
-											(void) pack_fputs("            <bendValues count=\"1\">\n", fp);
-											(void) snprintf(buffer, sizeof(buffer) - 1, "              <bendValue time=\"%.3f\" step=\"%.3f\"/>\n", (((double)notepos + ((double)tech.length / 3.0)) / 1000.0), (double)tech.bendstrength_q / 2.0);	//Write a bend point 1/3 into the note
-											(void) pack_fputs(buffer, fp);
+											unsigned long bendpoints, firstbend, flags, bendstrength_q;	//Used to parse any bend tech notes that may affect the exported chordNote
+
+											bendpoints = eof_pro_guitar_note_bitmask_has_bend_tech_note(tp, ctr3, bitmask, &firstbend);	//Count how many bend tech notes overlap this string in the chord being exported
+											if(!bendpoints)
+											{	//If there are none
+												(void) pack_fputs("            <bendValues count=\"1\">\n", fp);
+												(void) snprintf(buffer, sizeof(buffer) - 1, "              <bendValue time=\"%.3f\" step=\"%.3f\"/>\n", (((double)notepos + ((double)tech.length / 3.0)) / 1000.0), (double)tech.bendstrength_q / 2.0);	//Write a bend point 1/3 into the note
+												(void) pack_fputs(buffer, fp);
+											}
+											else
+											{	//If there's at least one bend tech note that overlaps this string in the chord being exported
+												(void) snprintf(buffer, sizeof(buffer) - 1, "            <bendValues count=\"%lu\">\n", bendpoints);
+												(void) pack_fputs(buffer, fp);
+												for(ctr4 = firstbend; ctr4 < tp->technotes; ctr4++)
+												{	//For all tech notes, starting with the first applicable bend tech note
+													if(tp->technote[ctr4]->pos > notepos + tech.length)
+													{	//If this tech note (and all those that follow) are after the end position of this note
+														break;	//Break from loop, no more overlapping notes will be found
+													}
+													if((tp->technote[ctr4]->type == tp->pgnote[ctr3]->type) && (bitmask & tp->technote[ctr4]->note))
+													{	//If the tech note is in the same difficulty as the pro guitar single note being exported and uses the same string
+														if((tp->technote[ctr4]->pos >= notepos) && (tp->technote[ctr4]->pos <= notepos + tech.length))
+														{	//If this tech note overlaps with the specified pro guitar regular note
+															flags = tp->technote[ctr4]->flags;
+															if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
+															{	//If the tech note is a bend and has a bend strength defined
+																if(tp->technote[ctr4]->bendstrength & 0x80)
+																{	//If this bend strength is defined in quarter steps
+																	bendstrength_q = tp->technote[ctr4]->bendstrength & 0x7F;	//Obtain the defined bend strength in quarter steps (mask out the MSB)
+																}
+																else
+																{	//The bend strength is defined in half steps
+																	bendstrength_q = tp->technote[ctr4]->bendstrength * 2;		//Obtain the defined bend strength in quarter steps
+																}
+																(void) snprintf(buffer, sizeof(buffer) - 1, "              <bendValue time=\"%.3f\" step=\"%.3f\"/>\n", ((double)tp->technote[ctr4]->pos / 1000.0), (double)bendstrength_q / 2.0);	//Write the bend point at the specified position within the chordNote
+																(void) pack_fputs(buffer, fp);
+															}
+														}
+													}
+												}
+											}
 											(void) pack_fputs("            </bendValues>\n", fp);
 											(void) pack_fputs("          </chordNote>\n", fp);
 										}
@@ -2948,6 +3120,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							free(chordlist);
 						}
 						eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+						if(restore_tech_view)
+						{	//If tech view needs to be re-enabled
+							eof_menu_track_enable_tech_view(tp);
+						}
 						return 0;	//Return error
 					}
 					handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position
@@ -3034,6 +3210,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								free(chordlist);
 							}
 							eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+							if(restore_tech_view)
+							{	//If tech view needs to be re-enabled
+								eof_menu_track_enable_tech_view(tp);
+							}
 							return 0;	//Return error
 						}
 						handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position (in seconds)
@@ -3144,6 +3324,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}
 	}
 	eof_sort_events(sp);	//Re-sort events
+	if(restore_tech_view)
+	{	//If tech view needs to be re-enabled
+		eof_menu_track_enable_tech_view(tp);
+	}
 
 	return 1;	//Return success
 }
@@ -4616,7 +4800,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 		return 0;	//Invalid parameters
 	tracknum = sp->track[track]->tracknum;
 	tp = sp->pro_guitar_track[tracknum];
-	if(notenum >= tp->notes)
+	if((notenum >= tp->notes) || (stringnum > 5))
 		return 0;	//Invalid parameter
 
 	flags = eof_get_note_flags(sp, track, notenum);
@@ -4696,6 +4880,13 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 				{	//Don't allow the unpitched slide if it slides to the same fret this note/chord is already at
 					unpitchedslidediff = tp->note[notenum]->unpitchend - lowestfretted;	//Determine how many frets this slide travels
 					ptr->unpitchedslideto = fret + unpitchedslidediff + tp->capo;	//Get the correct ending fret for this string's slide, applying the capo position
+				}
+			}
+			if(target == 2)
+			{	//If the target game is Rocksmith 2
+				if(eof_pro_guitar_note_bitmask_has_bend_tech_note(tp, notenum, 1 << stringnum, NULL))
+				{	//If there is at least one bend tech note affecting the specified string
+					ptr->bend = 1;
 				}
 			}
 		}//If this string is fretted (open notes don't have slide or bend attributes written)

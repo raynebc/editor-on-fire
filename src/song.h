@@ -336,7 +336,7 @@ typedef struct
 
 #define EOF_PRO_GUITAR_TRACKS_MAX	4
 #define EOF_TUNING_LENGTH 6	//For now, the tuning array will only track 6 strings
-#define EOF_NUM_DEFINED_CHORDS 28
+#define EOF_NUM_DEFINED_CHORDS 37
 
 typedef struct
 {
@@ -870,15 +870,12 @@ char eof_pro_guitar_note_bitmask_has_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigne
 char eof_pro_guitar_note_has_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long *technote_num);
 	//Uses eof_pro_guitar_note_bitmask_has_tech_note() to search for a technote overlapping any of the specified note's used strings
 	//If technote_num is not NULL, the index number of the first relevant tech note is returned through it
-char eof_pro_guitar_note_bitmask_has_bend_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long mask, unsigned long *technote_num);
-	//Similar to eof_pro_guitar_note_has_tech_note(), but returns nonzero only if at least one of the tech notes that apply to the specified note have bend technique
+unsigned long eof_pro_guitar_note_bitmask_has_bend_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long mask, unsigned long *technote_num);
+	//Similar to eof_pro_guitar_note_has_tech_note(), but returns the number of overlapping tech notes that have bend technique
 char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long technote, unsigned long mask, unsigned long *note_num);
-	//Looks for regular pro guitar notes that are overlapped by the specified tech note, checking all notes ending at or before the tech note
-	//Checking for more than just the first overlap is necessary because if crazy notes are being used, the tech note may simply overlap one note
-	// and actually start at the same timestamp as one of the other regular notes
+	//Looks for the first regular pro guitar note that is overlapped by the specified tech note
 	//If the tech note is found to be at the start position of any overlapping notes, 1 is returned
-	// If note_num is not NULL, the matching regular note number is returned through it
 	//If the tech note is found to overlap at least one note, 2 is returned
-	// If note_num is not NULL, the LAST matching regular note number is returned through it
+	// If note_num is not NULL, the matching regular note number is returned through it
 
 #endif
