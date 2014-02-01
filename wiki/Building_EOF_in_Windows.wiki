@@ -135,3 +135,16 @@ Code::Blocks instructions, in Windows (other OSs will require some different ste
   # Open the project's build options, and for the top item listed in the Project build options (should apply to any build targets you created for the project),
   # Open Linker Settings.  Under "Other Linker Options", add "-lalleg44.dll -logg -lvorbisfile -mwindows" without quotation marks.  This adds the required libraries and the necessary "mwindows" parameter required for building EOF in Windows.  Under "Search Directories", add the "...\alogg\include" (within \src directory in the EOF sources package)
   # Go to Project Properties>Build Targets tab>Output Filename and ensure that you specify where the executable file is placed, otherwise it could end up in some unknown location.
+
+
+==Adding decoding/encoding capability:==
+During initialization, EOF will check for the existence of the LAME, oggenc2 and oggCat utilities, which are used to convert MP3 to OGG when creating a new chart or when adding leading silence.
+
+You can download LAME here (put lame.exe in EOF's program folder):
+http://www.rarewares.org/mp3-lame-bundle.php
+
+You can download oggenc2 here (put oggenc2.exe in EOF's program folder):
+http://www.rarewares.org/ogg-oggenc.php
+
+You can download oggCat, which is part of the Ogg video tools, here (put oggCat.exe and bgd.dll in EOF's program folder):
+http://sourceforge.net/projects/oggvideotools/files/
