@@ -235,8 +235,9 @@ unsigned long eof_get_highest_fret_in_time_range(EOF_SONG *sp, unsigned long tra
 
 unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long stringnum, EOF_RS_TECHNIQUES *ptr, char target);
 	//Reads the flags of the specified note and sets variables in the specified techniques structure
-	//stringnum is only used to set the fret and pitched/unpitched slide end fret values (which take the track's capo into account) for a specified gem,
-	//  and must be a value from 0 to 5.  The correct end position for each slide is tracked for the specified string by determining how many frets the slide is
+	//stringnum is used to set the fret and pitched/unpitched slide end fret values (which take the track's capo into account) for a specified string,
+	//  as well as determining which tech notes affect the note on the specified string, and must be a value from 0 to 5.
+	//  The correct end position for each slide is tracked for the specified string by determining how many frets the slide is
 	//If the note has pop or slap status, the length in the techniques structure is set to 0 to reflect
 	//	that Rocksmith requires such techniques to be on non sustained notes
 	//Unless the note has bend or slide status, the length in the techniques structure is set to 0 if the note has EOF's minimum length of 1ms

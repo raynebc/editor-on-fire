@@ -3018,8 +3018,8 @@ void eof_render_3d_window(void)
 	unsigned long firstlane = 0, lastlane;	//Used to track the first and last lanes that get track specific rendering (ie. drums don't render markers for lane 1, bass doesn't render markers for lane 6)
 	EOF_PRO_GUITAR_TRACK *tp = NULL;
 	char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the regular notes are rendered instead
-	unsigned long temptrack;
-	int temphover;
+	unsigned long temptrack = 0;
+	int temphover = 0;
 
 	//Used to draw trill and tremolo sections:
 	unsigned long j, ctr, usedlanes, bitmask, numsections;

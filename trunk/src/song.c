@@ -7158,17 +7158,23 @@ char eof_pro_guitar_note_has_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long n
 
 char eof_pro_guitar_note_bitmask_has_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long mask, unsigned long *technote_num)
 {
-	unsigned long ctr;
+	unsigned long ctr, notepos, notelen;
 
 	if((tp == NULL) || (note >= tp->notes))
 		return 0;	//Return error
 
 	for(ctr = 0; ctr < tp->technotes; ctr++)
 	{	//For each tech note in the track
-		if((tp->technote[ctr]->pos >= tp->pgnote[note]->pos) && (tp->technote[ctr]->pos <= tp->pgnote[note]->pos + tp->pgnote[note]->length))
-		{	//If this tech note overlaps with the specified pro guitar regular note
-			if(mask & tp->technote[ctr]->note)
-			{	//If the tech note uses any of the specified strings
+		notepos = tp->pgnote[note]->pos;
+		notelen = tp->pgnote[note]->length;
+		if(tp->technote[ctr]->pos > notepos + notelen)
+		{	//If this tech note (and all those that follow) are after the end position of this note
+			break;	//Break from loop, no overlapping note will be found
+		}
+		if((tp->technote[ctr]->type == tp->pgnote[note]->type) && (mask & tp->technote[ctr]->note))
+		{	//If the tech note is in the same difficulty as the pro guitar regular note and uses any of the specified strings
+			if((tp->technote[ctr]->pos >= notepos) && (tp->technote[ctr]->pos <= notepos + notelen))
+			{	//If this tech note overlaps with the specified pro guitar regular note
 				if(technote_num)
 				{	//If the calling function passed a non NULL address
 					*technote_num = ctr;	//Return the index number of the first tech note that overlaps with the specified note
@@ -7180,32 +7186,38 @@ char eof_pro_guitar_note_bitmask_has_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigne
 	return 0;	//Return overlapping tech note not found
 }
 
-char eof_pro_guitar_note_bitmask_has_bend_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long mask, unsigned long *technote_num)
+unsigned long eof_pro_guitar_note_bitmask_has_bend_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long mask, unsigned long *technote_num)
 {
-	unsigned long ctr, flags;
+	unsigned long ctr, flags, notepos, notelen, matchctr = 0;
 
 	if((tp == NULL) || (note >= tp->notes))
 		return 0;	//Return error
 
 	for(ctr = 0; ctr < tp->technotes; ctr++)
 	{	//For each tech note in the track
-		if((tp->technote[ctr]->pos >= tp->pgnote[note]->pos) && (tp->technote[ctr]->pos <= tp->pgnote[note]->pos + tp->pgnote[note]->length))
-		{	//If this tech note overlaps with the specified pro guitar regular note
-			if(mask & tp->technote[ctr]->note)
-			{	//If the tech note uses any of the specified strings
+		notepos = tp->pgnote[note]->pos;
+		notelen = tp->pgnote[note]->length;
+		if(tp->technote[ctr]->pos > notepos + notelen)
+		{	//If this tech note (and all those that follow) are after the end position of this note
+			break;	//Break from loop, no overlapping note will be found
+		}
+		if((tp->technote[ctr]->type == tp->pgnote[note]->type) && (mask & tp->technote[ctr]->note))
+		{	//If the tech note is in the same difficulty as the pro guitar regular note and uses any of the specified strings
+			if((tp->technote[ctr]->pos >= notepos) && (tp->technote[ctr]->pos <= notepos + notelen))
+			{	//If this tech note overlaps with the specified pro guitar regular note
 				flags = tp->technote[ctr]->flags;
 				if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
 				{	//If the tech note is a bend and has a bend strength defined
-					if(technote_num)
-					{	//If the calling function passed a non NULL address
-						*technote_num = ctr;	//Return the index number of the first tech note that overlaps with the specified note
+					if(technote_num && !matchctr)
+					{	//If the calling function passed a non NULL address, and this is the first overlapping bend tech note found
+						*technote_num = ctr;	//Store the index number of the first tech note that overlaps with the specified note
 					}
-					return 1;	//Return overlapping tech note found
+					matchctr++;	//Increment counter
 				}
 			}
 		}
 	}
-	return 0;	//Return overlapping tech note not found
+	return matchctr;	//Return the number of overlapping bend notes found
 }
 
 char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long technote, unsigned long mask, unsigned long *note_num)
@@ -7213,7 +7225,6 @@ char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned
 	unsigned long ctr;
 	unsigned long techpos;
 	EOF_PRO_GUITAR_NOTE *np;
-	char retval = 0;
 
 	if((tp == NULL) || (technote >= tp->technotes))
 		return 0;	//Return error
@@ -7224,31 +7235,28 @@ char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned
 		np = tp->pgnote[ctr];	//Simplify
 		if(np->pos > techpos)
 		{	//If this regular note (and all those that follow) are after this tech note's position
-			break;		//Break and return with whatever return status has been found so far
+			break;		//Break from loop
 		}
-		if(np->pos == techpos)
-		{	//If this regular note is at the same timestamp as the tech note
-			if(np->note & mask)
-			{	//If the regular note has a gem on the specified lane
+		if((tp->technote[technote]->type == np->type) && (mask & np->note))
+		{	//If the pro guitar note is in the same difficulty as the tech note and uses any of the specified strings
+			if(np->pos == techpos)
+			{	//If this regular note is at the same timestamp as the tech note
 				if(note_num)
 				{	//If the calling function passed a non NULL pointer
 					*note_num = ctr;	//Pass the overlapping note number by reference
 				}
 				return 1;	//Return overlap found at start of note
 			}
-		}
-		if((techpos >= np->pos) && (techpos <= np->pos + np->length))
-		{	//If the tech note overlaps this regular note
-			if(np->note & mask)
-			{	//If the regular note has a gem on the specified lane
+			if((techpos >= np->pos) && (techpos <= np->pos + np->length))
+			{	//If the tech note overlaps this regular note
 				if(note_num)
 				{	//If the calling function passed a non NULL pointer
 					*note_num = ctr;	//Pass the overlapping note number by reference
 				}
-				retval = 2;	//Store a return value indicating an overlap was found within a note
+				return 2;	//Return overlap found within a note
 			}
 		}
 	}
 
-	return retval;
+	return 0;	//No overlap note found
 }
