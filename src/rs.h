@@ -103,6 +103,13 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//Rocksmith 2 supports arrangements using a capo, but it does not consider the capo to be the nut position, so the capo position still needs to be added
 	// to the fret values of all fretted notes
 
+void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsigned long notenum, unsigned long stringnum, char ischordnote, unsigned long fingering, PACKFILE *fp);
+	//Writes the note or chordNote XML tag for the specified gem of the specified note to the specified PACKFILE stream
+	//If ischordnote is nonzero, the tag is written as a chordNote tag with an additional two spaces of indentation, otherwise a note tag is written
+	//  otherwise the two tag's formatting is generally identical, except that the chordNote tag defines the fingering for that string of the chord,
+	//  in which case fingering is the note number whose finger array is accessed, so fingering should be the same note number as that of the chord template the chordNote is referencing
+	//If ischordnote is zero, the value of fingering is not used
+
 void eof_rs_export_cleanup(EOF_SONG * sp, unsigned long track);
 	//Cleanup that should be performed before either RS export function returns
 	//This function removes the ignore status from the specified track's notes and deletes temporary notes that had been added
@@ -202,19 +209,21 @@ unsigned char eof_find_fully_leveled_rs_difficulty_in_time_range(EOF_SONG *sp, u
 int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track);
 	//Checks the specified track to ensure that each beat that has a Rocksmith section also has a Rocksmith phrase (from the perspective of the specified track).
 	//If not, the user is prompted whether to cancel save and seek to the offending beat.  If user accepts, the top of the piano roll is changed to display RS sections and the
-	// chart seeks to the offending beat in the specified track, automatically launching "Place RS Phrase" and then checking the remaining beats.
+	//  chart seeks to the offending beat in the specified track, automatically launching "Place RS Phrase" and then checking the remaining beats.
 	//If user refuses on any of the prompts or cancels any "Place RS Phrase" dialogs, or upon error, nonzero is returned.
 	//If the track is not populated, the function returns zero without checking the RS sections.
 
 int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned long note, char target);
 	//Returns nonzero if the specified note will export to XML as a high density chord
 	//This is based on whether the chord is close enough to a matching, previous chord
-	// and whether the note's "crazy" flag is set (which overrides it to be low density)
+	//  and whether the note's "crazy" flag is set (which overrides it to be low density)
 	//If target is 1, then Rocksmith 1 authoring rules are followed and string muted chords are ignored
 	//If target is 2, then Rocksmith 2 authoring rules are followed and a chord with techniques that
-	// require chordNote tags to be written and chords that follow chord slides are reflected as low density,
-	// and string muted chords that follow other chords are automatically counted as high density because RS2
-	// uses a separate XML attribute to cause it to display as string muted
+	//  require chordNote tags to be written and chords that follow chord slides are reflected as low density,
+	//  and string muted chords that follow other chords are automatically counted as high density because RS2
+	//  uses a separate XML attribute to cause it to display as string muted.  Likewise if any technotes
+	//  overlap the chord on any of its strings, the chord is determined to be low density because the relevant
+	//  technique can only be exported to the chordNote
 
 int eof_enforce_rs_phrase_begin_with_fret_hand_position(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long startpos, unsigned long endpos, char *undo_made, char check_only);
 	//Looks at the fret hand positions in the specified track difficulty within the specified time span, which should be the beginning and end of a RS phrase.
@@ -224,24 +233,22 @@ int eof_enforce_rs_phrase_begin_with_fret_hand_position(EOF_SONG *sp, unsigned l
 	//If *undo_made is zero, this function will create an undo state before adding any fret hand position
 	//Returns nonzero if it was found that a phrase was needed to be added
 
-void eof_export_rocksmith_showlights(EOF_SONG * sp, char * fn, unsigned long track);
-	//Exports a showlights file for the specified track to the specified file (to be used for Rocksmith 2014 customs)
-	//This XML file defines the MIDI note played for each highest-level note (or bass notes in the case of chords)
-
 unsigned long eof_get_highest_fret_in_time_range(EOF_SONG *sp, unsigned long track, unsigned char difficulty, unsigned long start, unsigned long stop);
 	//Examines all notes within the specified time range in the specified track difficulty and returns the highest fret value encountered
 	//Returns 0 if there are no fretted notes in the range, or upon error
 	//Expects the notes to be sorted in order to maximize performance
 
-unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long stringnum, EOF_RS_TECHNIQUES *ptr, char target);
+unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long stringnum, EOF_RS_TECHNIQUES *ptr, char target, char checktechnotes);
 	//Reads the flags of the specified note and sets variables in the specified techniques structure
+	//  If checktechnotes is nonzero, the techniques of any tech notes applicable to the specified string of the note are taken into account
 	//stringnum is used to set the fret and pitched/unpitched slide end fret values (which take the track's capo into account) for a specified string,
-	//  as well as determining which tech notes affect the note on the specified string, and must be a value from 0 to 5.
+	//  as well as determining which tech notes affect the note on the specified string (if checktechnotes is nonzero), and must be a value from 0 to 5.
 	//  The correct end position for each slide is tracked for the specified string by determining how many frets the slide is
 	//If the note has pop or slap status, the length in the techniques structure is set to 0 to reflect
 	//	that Rocksmith requires such techniques to be on non sustained notes
 	//Unless the note has bend or slide status, the length in the techniques structure is set to 0 if the note has EOF's minimum length of 1ms
 	//A flags bitmask is returned that is nonzero if the note contains any statuses that would necessitate chordNote subtag(s) if the examined note is a chord
+	//  If the target is RS2 and checktechnotes is nonzero, the LSB of these flags will be set if any technotes overlap the note on any strings, regardless of the techniques they have
 	//If ptr is NULL, no logic is performed besides returning the flags that the note contains that would necessitate chordNote subtag(s) if the examined note is a chord
 	//If target is 1, then Rocksmith 1 authoring rules are followed and a note cannot be both a slide/bend AND a pop/slap note, as they have conflicting sustain requirements
 	//The capo position is added to the end position of pitched and unpitched slides, as required by Rocksmith in order for them to display correctly for capo'd arrangements
