@@ -12,13 +12,13 @@
 #define EOF_VERSION_STRING "EOF v1.8RC8"
 #define EOF_COPYRIGHT_STRING "(c)2008-2010 T^3 Software."
 
-#define KEY_EITHER_ALT (key[KEY_ALT] || key[KEY_ALTGR])
+#define KEY_EITHER_ALT (key_shifts & KB_ALT_FLAG)
 #ifdef ALLEGRO_MACOSX
-	#define KEY_EITHER_CTRL (key[106])
+     #define KEY_EITHER_CTRL (key_shifts & KB_COMMAND_FLAG)
 #else
-	#define KEY_EITHER_CTRL (key[KEY_LCONTROL] || key[KEY_RCONTROL])
+     #define KEY_EITHER_CTRL (key_shifts & KB_CTRL_FLAG)
 #endif
-#define KEY_EITHER_SHIFT (key[KEY_LSHIFT] || key[KEY_RSHIFT])
+#define KEY_EITHER_SHIFT (key_shifts & KB_SHIFT_FLAG)
 
 #ifdef ALLEGRO_MACOSX
 	#define CTRL_NAME "Cmd"
@@ -494,6 +494,10 @@ extern char eof_display_flats;
 extern long xchart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D rendering, updated by eof_set_3D_lane_positions()
 extern long ychart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D rendering, updated by eof_set_2D_lane_positions()
 
+extern int eof_key_pressed;
+extern int eof_key_char;
+extern int eof_key_code;
+
 void eof_show_mouse(BITMAP * bp);	//Shows the software mouse if it is being used
 float eof_get_porpos(unsigned long pos);	//Returns the timestamp's position within a beat (percentage)
 long eof_put_porpos(unsigned long beat, float porpos, float offset);
@@ -595,5 +599,7 @@ int eof_initialize(int argc, char * argv[]);	//Initializes various values, check
 
 void eof_seek_and_render_position(unsigned long track, unsigned char diff, unsigned long pos);
 	//Seeks to the specified position and renders the screen, taking the AV delay into account
+
+void eof_use_key(void);
 
 #endif

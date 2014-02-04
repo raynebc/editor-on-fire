@@ -350,6 +350,11 @@ char enable_logging = 1;	//Is set to 0 if logging is disabled
 int eof_custom_zoom_level = 0;	//Tracks any user-defined custom zoom level
 char eof_display_flats = 0;		//Used to allow eof_get_tone_name() to return note names containing flats.  By default, display as sharps instead
 
+/* storage for keyboard input, needed since we use key data in more than one function */
+int eof_key_pressed = 0;
+int eof_key_char = 0;
+int eof_key_code = 0;
+
 void eof_debug_message(char * text)
 {
 	eof_log("eof_debug_message() entered", 1);
@@ -577,7 +582,7 @@ void eof_switch_out_callback(void)
 	eof_log("eof_switch_out_callback() entered", 2);
 
 	eof_emergency_stop_music();
-	key[KEY_TAB] = 0;
+	eof_use_key();
 
 	#ifndef ALLEGRO_MACOSX
 		eof_has_focus = 0;
@@ -588,7 +593,7 @@ void eof_switch_in_callback(void)
 {
 	eof_log("eof_switch_in_callback() entered", 2);
 
-	key[KEY_TAB] = 0;
+	eof_use_key();
 	eof_has_focus = 1;
 	gametime_reset();
 }
@@ -1682,17 +1687,46 @@ void eof_fix_spectrogram(void)
 	}
 }
 
+void eof_read_keyboard_input(void)
+{
+	int key_read = 0;
+	
+	if(keypressed())
+	{
+		eof_key_pressed = 1;
+		key_read = readkey();
+		eof_key_char = tolower(key_read & 0xFF);
+		eof_key_code = key_read >> 8;
+	}
+	else
+	{
+		eof_key_pressed = 0;
+		eof_key_char = 0;
+		eof_key_code = 0;
+		return;
+	}
+}
+
+/* Any time we use a key press, we should call this if we don't want that key
+ * press to be used again in another part of the code. This should replace the
+ * old method of doing key[KEY_*] = 0. */
+void eof_use_key(void)
+{
+	eof_key_pressed = 0;
+	eof_key_char = 0;
+	eof_key_code = 0;
+}
+
 /* read keys that are universally usable */
 void eof_read_global_keys(void)
 {
 //	eof_log("eof_read_global_keys() entered");
 
 	/* exit program (Esc) */
-	if(key[KEY_ESC] && !KEY_EITHER_SHIFT)
+	if(eof_key_char == 27 && !KEY_EITHER_SHIFT)
 	{
 		eof_menu_file_exit();
-		key[KEY_ESC] = 0;	//If user cancelled quitting, make sure these keys are cleared
-		key[KEY_N] = 0;
+		eof_use_key(); //If user cancelled quitting, make sure these keys are cleared
 	}
 
 	if(!eof_music_paused)
@@ -1745,18 +1779,16 @@ void eof_read_global_keys(void)
 	if(eof_song_loaded && eof_song)
 	{
 		/* undo (CTRL+Z) */
-		if(KEY_EITHER_CTRL && key[KEY_Z] && (eof_undo_count > 0))
+		if(KEY_EITHER_CTRL && eof_key_char == 'z' && (eof_undo_count > 0))
 		{
 			eof_menu_edit_undo();
-			key[KEY_Z] = 0;
 			eof_reset_lyric_preview_lines();	//Rebuild the preview lines
 		}
 
 		/* redo (CTRL+R) */
-		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && key[KEY_R] && eof_redo_toggle)
+		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && eof_key_char == 'r' && eof_redo_toggle)
 		{
 			eof_menu_edit_redo();
-			key[KEY_R] = 0;
 			eof_reset_lyric_preview_lines();	//Rebuild the preview lines
 		}
 
@@ -1764,7 +1796,7 @@ void eof_read_global_keys(void)
 		/* decrease tempo by .1BPM (SHIFT+-) */
 		/* decrease tempo by .01BPM (SHIFT+CTRL+-) */
 		double tempochange;
-		if(key[KEY_MINUS])
+		if(eof_key_char == '-')
 		{
 			if(KEY_EITHER_SHIFT)
 			{	//If SHIFT is held
@@ -1778,7 +1810,6 @@ void eof_read_global_keys(void)
 					tempochange = -0.1;
 				}
 				eof_menu_beat_adjust_bpm(tempochange);
-				key[KEY_MINUS] = 0;
 			}
 			else
 			{	//If SHIFT is not held
@@ -1786,7 +1817,6 @@ void eof_read_global_keys(void)
 				{	//If the CTRL key is not held (CTRL+- is reserved for decrement pro guitar fret value
 					tempochange = -1.0;
 					eof_menu_beat_adjust_bpm(tempochange);
-					key[KEY_MINUS] = 0;
 				}
 			}
 		}
@@ -1794,7 +1824,7 @@ void eof_read_global_keys(void)
 		/* increase tempo by 1BPM (+) */
 		/* increase tempo by .1BPM (SHIFT+(plus)) */
 		/* increase tempo by .01BPM (SHIFT+CTRL+(plus)) */
-		if(key[KEY_EQUALS])
+		if(eof_key_char == '=')
 		{
 			if(KEY_EITHER_SHIFT)
 			{	//If SHIFT is held
@@ -1808,7 +1838,6 @@ void eof_read_global_keys(void)
 					tempochange = 0.1;
 				}
 				eof_menu_beat_adjust_bpm(tempochange);
-				key[KEY_EQUALS] = 0;
 			}
 			else
 			{	//The SHIFT key is not held
@@ -1816,127 +1845,124 @@ void eof_read_global_keys(void)
 				{	//If the CTRL key is not held (CTRL++ is reserved for increment pro guitar fret value)
 					tempochange = 1.0;
 					eof_menu_beat_adjust_bpm(tempochange);
-					key[KEY_EQUALS] = 0;
 				}
 			}
 		}
 	}//If a song is loaded
 
 	/* save (F2 or CTRL+S) */
-	if((key[KEY_F2] && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT) || (key[KEY_S] && KEY_EITHER_CTRL && !KEY_EITHER_SHIFT))
+	if((eof_key_code == KEY_F2 && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT) || (eof_key_char == 's' && KEY_EITHER_CTRL && !KEY_EITHER_SHIFT))
 	{
 		eof_menu_file_save();
-		key[KEY_F2] = 0;
-		key[KEY_S] = 0;
+		eof_use_key();
 	}
 
 	/* find next catalog match (F3) */
-	if(key[KEY_F3])
+	if(eof_key_code == KEY_F3)
 	{
 		if(!KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 		{	//Neither CTRL nor SHIFT are held
 			eof_menu_catalog_find_next();
-			key[KEY_F3] = 0;
+			eof_use_key();
 		}
 	}
 
 	/* find previous catalog match (SHIFT+F3) */
-	if(key[KEY_F3] && !KEY_EITHER_CTRL & KEY_EITHER_SHIFT)
+	if(eof_key_code == KEY_F3 && !KEY_EITHER_CTRL & KEY_EITHER_SHIFT)
 	{
 		eof_shift_used = 1;	//Track that the SHIFT key was used
 		eof_menu_catalog_find_prev();
-		key[KEY_F3] = 0;
+		eof_use_key();
 	}
 
 	/* load chart (CTRL+O) */
-	if(KEY_EITHER_CTRL && key[KEY_O])
+	if(KEY_EITHER_CTRL && eof_key_char == 'o')
 	{	//File>Load
 		clear_keybuf();
 		eof_menu_file_load();
-		key[KEY_O] = 0;
+		eof_use_key();
 	}
 
 	/* new chart (F4 or CTRL+N) */
-	if((key[KEY_F4] && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT) || (KEY_EITHER_CTRL && key[KEY_N]))
+	if((eof_key_code == KEY_F4 && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT) || (KEY_EITHER_CTRL && eof_key_char == 'n'))
 	{
 		clear_keybuf();
 		eof_menu_file_new_wizard();
-		key[KEY_F4] = 0;
+		eof_use_key();
 	}
 
 	if(!KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 	{	//If neither CTRL nor SHIFT are held
 	/* show help */
-		if(key[KEY_F1])
+		if(eof_key_code == KEY_F1)
 		{
 			clear_keybuf();
 			eof_menu_help_keys();
-			key[KEY_ESC] = 0;
-			key[KEY_F1] = 0;
+			eof_use_key();
 		}
 
 	/* show waveform graph (F5) */
-		else if(key[KEY_F5])
+		else if(eof_key_code == KEY_F5)
 		{
 			clear_keybuf();
 			eof_menu_song_waveform();
-			key[KEY_F5] = 0;
+			eof_use_key();
 		}
 
 	/* midi import (F6) */
-		else if(key[KEY_F6])
+		else if(eof_key_code == KEY_F6)
 		{	//Launch MIDI import
 			clear_keybuf();
 			eof_menu_file_midi_import();
-			key[KEY_F6] = 0;
+			eof_use_key();
 		}
 
 	/* feedback import (F7) */
-		else if(key[KEY_F7])
+		else if(eof_key_code == KEY_F7)
 		{	//Launch Feedback chart import
 			clear_keybuf();
 			eof_menu_file_feedback_import();
-			key[KEY_F7] = 0;
+			eof_use_key();
 		}
 
 	/* lyric import (F8) */
-		else if(key[KEY_F8])
+		else if(eof_key_code == KEY_F8)
 		{
 			clear_keybuf();
 			eof_menu_file_lyrics_import();
-			key[KEY_F8] = 0;
+			eof_use_key();
 		}
 
 	/* song properties (F9) */
-		else if(key[KEY_F9])
+		else if(eof_key_code == KEY_F9)
 		{
 			clear_keybuf();
 			eof_menu_song_properties();
-			key[KEY_F9] = 0;
+			eof_use_key();
 		}
 
 	/* settings (F10) */
-		else if(key[KEY_F10])
+		else if(eof_key_code == KEY_F10)
 		{
 			clear_keybuf();
 			eof_menu_file_settings();
-			key[KEY_F10] = 0;
+			eof_use_key();
 		}
 
 	/* preferences (F11) */
-		else if(key[KEY_F11])
+		else if(eof_key_code == KEY_F11)
 		{
 			clear_keybuf();
 			eof_menu_file_preferences();
-			key[KEY_F11] = 0;
+			eof_use_key();
 		}
 
 	/* test in FoF (F12) */
-		else if(key[KEY_F12])
+		else if(eof_key_code == KEY_F12)
 		{
 			clear_keybuf();
 			eof_menu_song_test_fof();
-			key[KEY_F12] = 0;
+			eof_use_key();
 		}
 	}//If neither CTRL nor SHIFT are held
 }
@@ -2021,7 +2047,7 @@ void eof_lyric_logic(void)
 				{
 					eof_last_tone = -1;
 				}
-				if(!eof_full_screen_3d && ((mouse_b & 2) || key[KEY_INSERT]))
+				if(!eof_full_screen_3d && ((mouse_b & 2) || eof_key_code == KEY_INSERT))
 				{
 					eof_vocals_offset = eof_hover_key - eof_screen_layout.vocal_view_size / 2;
 					if(KEY_EITHER_CTRL)
@@ -2125,6 +2151,7 @@ void eof_logic(void)
 {
 //	eof_log("eof_logic() entered");
 
+	eof_read_keyboard_input();
 	eof_read_global_keys();
 
 	/* see if we need to activate the menu */
@@ -3991,8 +4018,7 @@ int eof_initialize(int argc, char * argv[])
 					if(exists(buffer) && ptr && exists(ptr))
 					{	//If the recovery file contained the names of an undo file and a project file that each exist
 						eof_clear_input();
-						key[KEY_Y] = 0;
-						key[KEY_N] = 0;
+						eof_use_key();
 						if(alert(NULL, "Recover crashed project from last undo state?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 						{	//If user opts to recover from a crashed EOF instance
 							eof_log("\t\tLoading last undo state", 1);
