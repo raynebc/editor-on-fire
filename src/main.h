@@ -12,13 +12,13 @@
 #define EOF_VERSION_STRING "EOF v1.8RC8"
 #define EOF_COPYRIGHT_STRING "(c)2008-2010 T^3 Software."
 
-#define KEY_EITHER_ALT (key_shifts & KB_ALT_FLAG)
+#define KEY_EITHER_ALT (eof_key_shifts & KB_ALT_FLAG)
 #ifdef ALLEGRO_MACOSX
-     #define KEY_EITHER_CTRL (key_shifts & KB_COMMAND_FLAG)
+     #define KEY_EITHER_CTRL (eof_key_shifts & KB_COMMAND_FLAG)
 #else
-     #define KEY_EITHER_CTRL (key_shifts & KB_CTRL_FLAG)
+     #define KEY_EITHER_CTRL (eof_key_shifts & KB_CTRL_FLAG)
 #endif
-#define KEY_EITHER_SHIFT (key_shifts & KB_SHIFT_FLAG)
+#define KEY_EITHER_SHIFT (eof_key_shifts & KB_SHIFT_FLAG)
 
 #ifdef ALLEGRO_MACOSX
 	#define CTRL_NAME "Cmd"
@@ -497,6 +497,7 @@ extern long ychart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D render
 extern int eof_key_pressed;
 extern int eof_key_char;
 extern int eof_key_code;
+extern int eof_key_shifts;
 
 void eof_show_mouse(BITMAP * bp);	//Shows the software mouse if it is being used
 float eof_get_porpos(unsigned long pos);	//Returns the timestamp's position within a beat (percentage)
