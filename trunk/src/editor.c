@@ -500,7 +500,7 @@ void eof_read_editor_keys(void)
 
 	if(!eof_song_loaded)
 		return;	//Don't handle these keyboard shortcuts unless a chart is loaded
-	
+
 	if(eof_screen_zoom)
 	{	//If x2 zoom is in effect, take that into account for the mouse position
 		eof_mouse_y = mouse_y / 2;
@@ -513,7 +513,6 @@ void eof_read_editor_keys(void)
 if(eof_key_code == KEY_PAUSE)
 {
 	//Debug action here
-	eof_menu_track_toggle_tech_view();
 	eof_use_key();
 }
 
@@ -765,7 +764,7 @@ if(eof_key_code == KEY_PAUSE)
 	}
 
 	/* toggle yellow cymbal (CTRL+Y) */
-	if(eof_key_char == 'y' && KEY_EITHER_CTRL)
+	if((eof_key_char == 'y') && KEY_EITHER_CTRL)
 	{	//CTRL+Y will toggle Pro yellow cymbal notation
 		(void) eof_menu_note_toggle_rb3_cymbal_yellow();
 		eof_use_key();
@@ -868,7 +867,7 @@ if(eof_key_code == KEY_PAUSE)
 
 	/* play/pause music (Space) */
 	/* play catalog entry (SHIFT+Space) */
-	if(eof_key_char == ' ' && !eof_silence_loaded)
+	if((eof_key_char == ' ') && !eof_silence_loaded)
 	{	//Only allow playback controls when chart audio is loaded
 		if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 		{
@@ -1436,14 +1435,14 @@ if(eof_key_code == KEY_PAUSE)
 	}
 
 	/* toggle full screen 3D view (CTRL+F)*/
-	if(eof_key_char == 'f' && KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
+	if((eof_key_char == 'f') && KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 	{
 		eof_full_screen_3d ^= 1;		//Toggle this setting on/off
 		eof_use_key();
 	}
 
 	/* toggle info panel rendering (CTRL+I) */
-	if(KEY_EITHER_CTRL && eof_key_char == 'i')
+	if(KEY_EITHER_CTRL && (eof_key_char == 'i'))
 	{
 		eof_disable_info_panel = 1 - eof_disable_info_panel;
 		eof_use_key();
@@ -1525,12 +1524,12 @@ if(eof_key_code == KEY_PAUSE)
 				eof_pen_note.note ^= 8;
 				eof_use_key();
 			}
-			if(eof_key_char == '5' && (numlanes >= 5))
+			if((eof_key_char == '5') && (numlanes >= 5))
 			{
 				eof_pen_note.note ^= 16;
 				eof_use_key();
 			}
-			if(eof_key_char == '6' && (numlanes >= 6))
+			if((eof_key_char == '6') && (numlanes >= 6))
 			{	//Only allow use of the 6 key if lane 6 is available
 				eof_pen_note.note ^= 32;
 				eof_use_key();
@@ -1950,7 +1949,7 @@ if(eof_key_code == KEY_PAUSE)
 	/* toggle MIDI tones (SHIFT+T) */
 	/* toggle crazy status (T) */
 	/* add tone change (CTRL+SHIFT+T in a pro guitar track) */
-		if(eof_key_char == 't' && !KEY_EITHER_ALT)
+		if((eof_key_char == 't') && !KEY_EITHER_ALT)
 		{
 			if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 			{	//If CTRL is held but SHIFT is not
@@ -2019,7 +2018,7 @@ if(eof_key_code == KEY_PAUSE)
 		}
 
 	/* toggle freestyle (F in a vocal track) */
-		if(eof_key_char == 'f' && !KEY_EITHER_CTRL && eof_vocals_selected)
+		if((eof_key_char == 'f') && !KEY_EITHER_CTRL && eof_vocals_selected)
 		{
 			(void) eof_menu_toggle_freestyle();
 			eof_use_key();
@@ -2027,7 +2026,7 @@ if(eof_key_code == KEY_PAUSE)
 
 	/* deselect all (CTRL+D) */
 	/* double BPM (CTRL+SHIFT+D) */
-		if(KEY_EITHER_CTRL && eof_key_char == 'd')
+		if(KEY_EITHER_CTRL && (eof_key_char == 'd'))
 		{
 			if(!KEY_EITHER_SHIFT)
 			{	//If CTRL is held but SHIFT is not
@@ -2046,7 +2045,7 @@ if(eof_key_code == KEY_PAUSE)
 	/* toggle hammer on status (H in a pro guitar track) */
 	/* toggle harmonic (CTRL+H in a pro guitar track) */
 	/* toggle pinch harmonic (CTRL+SHIFT+H in a pro guitar track) */
-		if(eof_key_char == 'h' && !KEY_EITHER_ALT)
+		if((eof_key_char == 'h') && !KEY_EITHER_ALT)
 		{
 			if(KEY_EITHER_CTRL)
 			{	//If CTRL is held
@@ -2078,7 +2077,7 @@ if(eof_key_code == KEY_PAUSE)
 		}
 
 	/* toggle unpitched slide (CTRL+U in a pro guitar track) */
-		if(eof_key_char == 'u' && KEY_EITHER_CTRL)
+		if((eof_key_char == 'u') && KEY_EITHER_CTRL)
 		{
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{
@@ -2115,7 +2114,7 @@ if(eof_key_code == KEY_PAUSE)
 		}
 
 	/* toggle open hi hat (SHIFT+O) */
-		if(eof_key_char == 'o' && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+		if((eof_key_char == 'o') && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			(void) eof_menu_note_toggle_hi_hat_open();
@@ -2123,7 +2122,7 @@ if(eof_key_code == KEY_PAUSE)
 		}
 
 	/* toggle pedal controlled hi hat (SHIFT+P in the PS drum track) */
-		if(eof_key_char == 'p' && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT && (eof_selected_track == EOF_TRACK_DRUM_PS))
+		if((eof_key_char == 'p') && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT && (eof_selected_track == EOF_TRACK_DRUM_PS))
 		{
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			(void) eof_menu_note_toggle_hi_hat_pedal();
@@ -2131,7 +2130,7 @@ if(eof_key_code == KEY_PAUSE)
 		}
 
 	/* toggle rim shot (SHIFT+R) */
-		if(eof_key_char == 'r' && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+		if((eof_key_char == 'r') && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			(void) eof_menu_note_toggle_rimshot();
@@ -2142,7 +2141,7 @@ if(eof_key_code == KEY_PAUSE)
 	/* place Rocksmith section (SHIFT+S, in a pro guitar track) */
 	/* toggle sizzle hi hat (SHIFT+S, in the PS drum track) */
 	/* split lyric (SHIFT+S in PART VOCALS) */
-		if(eof_key_char == 's' && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+		if((eof_key_char == 's') && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{	//S and SHIFT are held, but CTRL is not
 			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
 			{	//If this is a 5 lane guitar/bass track
@@ -2173,21 +2172,21 @@ if(eof_key_code == KEY_PAUSE)
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If the active track is a pro guitar track
 	/* edit pro guitar note (N in a pro guitar track) */
-			if((eof_key_char == 'n' && !KEY_EITHER_CTRL))
+			if((eof_key_char == 'n') && !KEY_EITHER_CTRL)
 			{
 				(void) eof_menu_note_edit_pro_guitar_note();
 				eof_use_key();
 			}
 
 	/* edit pro guitar fret values (F in a pro guitar track) */
-			if(eof_key_char == 'f' && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
+			if((eof_key_char == 'f') && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 			{
 				(void) eof_menu_note_edit_pro_guitar_note_frets_fingers_menu();
 				eof_use_key();
 			}
 
 	/* set fret hand position (SHIFT+F in a pro guitar track) */
-			if(eof_key_char == 'f' && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+			if((eof_key_char == 'f') && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 			{
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				(void) eof_track_pro_guitar_set_fret_hand_position();
@@ -2195,7 +2194,7 @@ if(eof_key_code == KEY_PAUSE)
 			}
 
 	/* list fret hand positions (CTRL+SHIFT+F in a pro guitar track) */
-			if(eof_key_char == 'f' && KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+			if((eof_key_char == 'f') && KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 			{
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				(void) eof_track_fret_hand_positions();
@@ -2203,7 +2202,7 @@ if(eof_key_code == KEY_PAUSE)
 			}
 
 	/* toggle slap status (CTRL+SHIFT+S in a pro guitar track) */
-			if(eof_key_char == 's' && KEY_EITHER_CTRL && !KEY_EITHER_ALT && KEY_EITHER_SHIFT)
+			if((eof_key_char == 's') && KEY_EITHER_CTRL && !KEY_EITHER_ALT && KEY_EITHER_SHIFT)
 			{	//If both CTRL and SHIFT are held, but ALT is not
 				(void) eof_menu_note_toggle_slap();
 				eof_use_key();
@@ -2437,7 +2436,7 @@ if(eof_key_code == KEY_PAUSE)
 		}//If the active track is a pro guitar track
 
 	/* halve BPM (CTRL+SHIFT+X) */
-		if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT && eof_key_char == 'x')
+		if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT && (eof_key_char == 'x'))
 		{
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			(void) eof_menu_beat_halve_tempo();
@@ -2644,13 +2643,13 @@ if(eof_key_code == KEY_PAUSE)
 					(void) eof_menu_note_toggle_blue();
 					eof_use_key();
 				}
-				else if(eof_key_char == '5' && (numlanes >= 5))
+				else if((eof_key_char == '5') && (numlanes >= 5))
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 					(void) eof_menu_note_toggle_purple();
 					eof_use_key();
 				}
-				else if(eof_key_char == '6' && (numlanes >= 6))
+				else if((eof_key_char == '6') && (numlanes >= 6))
 				{	//Only allow use of the 6 key if lane 6 is available
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 					(void) eof_menu_note_toggle_orange();
@@ -2671,32 +2670,32 @@ if(eof_key_code == KEY_PAUSE)
 				if(!eof_vocals_selected)
 				{	//If a vocal track is not active
 					bitmask = 0;
-					if(eof_key_char == '1' && !KEY_EITHER_SHIFT)
+					if((eof_key_char == '1') && !KEY_EITHER_SHIFT)
 					{
 						bitmask = 1;
 						eof_use_key();
 					}
-					else if(eof_key_char == '2' && !KEY_EITHER_SHIFT)
+					else if((eof_key_char == '2') && !KEY_EITHER_SHIFT)
 					{
 						bitmask = 2;
 						eof_use_key();
 					}
-					else if(eof_key_char == '3' && !KEY_EITHER_SHIFT)
+					else if((eof_key_char == '3') && !KEY_EITHER_SHIFT)
 					{
 						bitmask = 4;
 						eof_use_key();
 					}
-					else if(eof_key_char == '4' && !KEY_EITHER_SHIFT)
+					else if((eof_key_char == '4') && !KEY_EITHER_SHIFT)
 					{
 						bitmask = 8;
 						eof_use_key();
 					}
-					else if(eof_key_char == '5' && (numlanes >= 5) && !KEY_EITHER_SHIFT)
+					else if((eof_key_char == '5') && (numlanes >= 5) && !KEY_EITHER_SHIFT)
 					{
 						bitmask = 16;
 						eof_use_key();
 					}
-					else if(eof_key_char == '6' && (numlanes >= 6) && !KEY_EITHER_SHIFT)
+					else if((eof_key_char == '6') && (numlanes >= 6) && !KEY_EITHER_SHIFT)
 					{	//Only allow use of the 6 key if lane 6 is available
 						bitmask = 32;
 						eof_use_key();
@@ -2965,21 +2964,21 @@ if(eof_key_code == KEY_PAUSE)
 		}//If SHIFT is not held
 
 	/* copy (CTRL+C) */
-		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && eof_key_char == 'c')
+		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && (eof_key_char == 'c'))
 		{
 			(void) eof_menu_edit_copy();
 			eof_use_key();
 		}
 
 	/* paste (CTRL+V) */
-		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && eof_key_char == 'v')
+		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && (eof_key_char == 'v'))
 		{	//If CTRL is held and SHIFT is not
 			(void) eof_menu_edit_paste();
 			eof_use_key();
 		}
 
 	/* old paste (CTRL+P) */
-		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && eof_key_char == 'p')
+		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && (eof_key_char == 'p'))
 		{	//If CTRL is held and SHIFT is not
 			(void) eof_menu_edit_old_paste();
 			eof_use_key();
@@ -4335,7 +4334,7 @@ void eof_vocal_editor_logic(void)
 					}
 				}
 			}//If neither full screen 3D view is is use nor is click and drag disabled, the left mouse button is being held and the mouse is right of the left edge of the piano roll
-			if(!eof_full_screen_3d && ((((eof_input_mode != EOF_INPUT_REX) && ((mouse_b & 2) || eof_key_code == KEY_INSERT)) || (((eof_input_mode == EOF_INPUT_REX) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL && (eof_key_char == '1' || eof_key_char == '2' || eof_key_char == '3' || eof_key_char == '4' || eof_key_char == '5' || eof_key_char == '6')) && eof_rclick_released && (eof_pen_lyric.pos < eof_chart_length))) || eof_key_code == KEY_BACKSPACE))
+			if(!eof_full_screen_3d && ((((eof_input_mode != EOF_INPUT_REX) && ((mouse_b & 2) || eof_key_code == KEY_INSERT)) || (((eof_input_mode == EOF_INPUT_REX) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL && ((eof_key_char == '1') || (eof_key_char == '2') || (eof_key_char == '3') || (eof_key_char == '4') || (eof_key_char == '5') || (eof_key_char == '6'))) && eof_rclick_released && (eof_pen_lyric.pos < eof_chart_length))) || eof_key_code == KEY_BACKSPACE))
 			{	//If full screen 3D view is not in effect and input to add a note is provided
 				eof_selection.range_pos_1 = 0;
 				eof_selection.range_pos_2 = 0;
@@ -4420,7 +4419,7 @@ void eof_vocal_editor_logic(void)
 			}
 			if(eof_input_mode == EOF_INPUT_REX)
 			{
-				if(!(eof_key_char == '1' || eof_key_char == '2' || eof_key_char == '3' || eof_key_char == '4' || eof_key_char == '5' || eof_key_char == '6'))
+				if(!((eof_key_char == '1') || (eof_key_char == '2') || (eof_key_char == '3') || (eof_key_char == '4') || (eof_key_char == '5') || (eof_key_char == '6')))
 				{
 					eof_rclick_released = 1;
 				}
@@ -4514,7 +4513,7 @@ void eof_vocal_editor_logic(void)
 			{
 				eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 			}
-			if(eof_key_char == 'p' && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
+			if((eof_key_char == 'p') && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 			{	//P is held, but neither CTRL nor SHIFT are
 				if(eof_pen_lyric.note != eof_last_tone)
 				{

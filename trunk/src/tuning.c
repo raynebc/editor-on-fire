@@ -281,7 +281,7 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 	static char scales_created = 0;	//This will be set to one after the major_scales[] array has been created
 	char chord_intervals[30];		//This stores the referred note's interval makeup for the current scale being checked against
 	char *chord_intervals_index;	//This is an index into chord_intervals[] for added string processing efficiency
-	unsigned long ctr, ctr2, ctr3, ctr4, halfstep, halfstep2, skipaccidental, pass;
+	unsigned long ctr, ctr2, ctr3, ctr4, halfstep, halfstep2, skipaccidental, pass, scalenum;
 	int retval, bass = -1;			//bass will track the bass note (for now, the note played on the lowest used string) of the chord
 	char *name, **notename = eof_note_names_sharp;
 	unsigned long originalskipctr = skipctr;	//Save this for caching purposes
@@ -398,12 +398,16 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 		for(pass = 0; pass < 2; pass++)
 		{	//On the first pass, perform normal lookup.  On the second pass, perform (hybrid) slash chord lookup (disregarding the bass note)
 		//Look up the note against each major scale
-			for(ctr = 0; ctr < 12; ctr++)
-			{	//For each major scale
+			for(ctr = 0, scalenum = bass; ctr < 12; ctr++, scalenum++)
+			{	//For each of the 12 major scales, starting with whichever one the bass note was in
 				//Create the list of intervals this note uses for this scale
+				if(scalenum > 11)
+				{	//Wrap around back to scale of A
+					scalenum = 0;
+				}
 				chord_intervals[0] = '\0';	//Truncate the intervals string
 				chord_intervals_index = chord_intervals;
-				halfstep = major_scales[ctr][0];	//Chord formulas always start with the lowest scale interval
+				halfstep = major_scales[scalenum][0];	//Chord formulas always start with the lowest scale interval
 				for(ctr2 = 0; ctr2 < 12; ctr2++, halfstep++)
 				{	//For each of the 12 notes, starting which the note that is represented by interval 1 of this scale
 					if(halfstep >= 12)
@@ -414,7 +418,7 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 					{	//If this note is played, check to see if it matches an interval
 						for(ctr3 = 0; ctr3 < 7; ctr3++)
 						{	//For each interval in the scale
-							if(halfstep == major_scales[ctr][ctr3])
+							if(halfstep == major_scales[scalenum][ctr3])
 							{	//If the note matches this interval
 								if(chord_intervals[0] != '\0')
 								{	//If this isn't the first interval stored in the array
@@ -425,13 +429,13 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 							}
 							else
 							{	//The normal interval is not played in this note
-								halfstep2 = (major_scales[ctr][ctr3] + 11) % 12;	//Get the note value for the flat of this interval
+								halfstep2 = (major_scales[scalenum][ctr3] + 11) % 12;	//Get the note value for the flat of this interval
 								if(halfstep == halfstep2)
 								{	//If the note matches the flat of this interval
 									skipaccidental = 0;	//Reset this status
 									for(ctr4 = 0; ctr4 < 7; ctr4++)
 									{	//Check to make sure the flat of this interval isn't already a non accidental interval (ie. In the A major scale, interval 3 and flat interval 4 are the same note)
-										if(halfstep2 == major_scales[ctr][ctr4])
+										if(halfstep2 == major_scales[scalenum][ctr4])
 										{	//The flat of this interval is already a non accidental interval for this scale, don't add this to the ongoing interal list
 											skipaccidental = 1;
 											break;
@@ -456,7 +460,7 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 										skipaccidental = 0;	//Reset this status
 										for(ctr4 = 0; ctr4 < 7; ctr4++)
 										{	//Check to make sure the flat of this interval isn't already a non accidental interval (ie. In the A major scale, interval 3 and flat interval 4 are the same note)
-											if(halfstep2 == major_scales[ctr][ctr4])
+											if(halfstep2 == major_scales[scalenum][ctr4])
 											{	//The flat of this interval is already a non accidental interval for this scale, don't add this to the ongoing interal list
 												skipaccidental = 1;
 												break;
@@ -489,18 +493,18 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 						{	//If this match is not supposed to be skipped
 							if(cache)
 							{	//If a successful lookup is to be cached to global variables
-								eof_cached_chord_lookup_scale = ctr;
+								eof_cached_chord_lookup_scale = scalenum;
 								eof_cached_chord_lookup_chord = ctr2;
 								eof_cached_chord_lookup_variation = originalskipctr;
 								eof_chord_lookup_note = eof_get_pro_guitar_note_note(tp, note);		//Cache the looked up note's details
 								memcpy(eof_chord_lookup_frets, tp->note[note]->frets, 6);
 								eof_enable_chord_cache = 1;
 							}
-							*scale = ctr;	//Pass the scale back through the pointer
+							*scale = scalenum;	//Pass the scale back through the pointer
 							*chord = ctr2;	//Pass the chord name back through the pointer
 							if(!pass)
 							{	//This is the first pass (normal chord)
-								if((bass != ctr) && eof_inverted_chords_slash)
+								if((bass != scalenum) && eof_inverted_chords_slash)
 								{	//If this is an inverted chord and the user opted to have such chords detect as slash chords
 									if(cache)
 									{	//If a successful lookup is to be cached to global variables
@@ -539,7 +543,7 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 						}
 					}
 				}
-			}//For each major scale
+			}//For each of the 12 major scales, starting with whichever one the bass note was in
 			notes_played[bass] = 0;	//Remove the bass note from the lookup so the second pass can search for hybrid slash chords
 		}//On the first pass, perform normal lookup.  On the second pass, perform (hybrid) slash chord lookup (disregarding the bass note)
 	}//Otherwise perform chord lookup based on notes played

@@ -1671,6 +1671,14 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		restore_tech_view = 1;
 		eof_menu_track_disable_tech_view(tp);
 	}
+	if(eof_get_highest_fret(sp, track, 0) > 24)
+	{	//If the track being exported uses any frets higher than 24
+		if((*user_warned & 64) == 0)
+		{	//If the user wasn't alerted about this issue yet
+			allegro_message("Warning:  At least one track (\"%s\") uses a fret higher than 24.  These won't display correctly in Rocksmith 2.", sp->track[track]->name);
+			*user_warned |= 64;
+		}
+	}
 	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
 	{	//For each note in the track
 		unsigned char slideend;
@@ -4506,7 +4514,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned char lowestfretted;
 	long fret, slidediff = 0, unpitchedslidediff = 0;
-	char techbends = 0;
+	char techbends = 0, thistechbends;
 
 	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return 0;	//Invalid parameters
@@ -4547,14 +4555,15 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 					thistechflags = tp->technote[ctr]->flags;
 					techflags |= thistechflags;
 					techeflags |= tp->technote[ctr]->eflags;
+					thistechbends = 0;	//Reset this value
 
 					//Track the slide to position of the last tech note affecting the specified note
-					if(thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
-					{	//If this tech note bends
-						techbends = 1;	//Track this boolean status
-					}
 					if((thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) == 0)
 					{	//If this tech note doesn't have definitions for bend strength or the ending fret for slides
+						if(thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+						{	//If this note bends
+							thistechbends = 1;	//Assume a 1 half step bend
+						}
 						if(thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
 						{	//If this tech note has slide up technique
 							techslideto = fret + 1;		//Assume a 1 fret slide until logic is added for the author to add this information
@@ -4568,8 +4577,20 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 					}
 					else
 					{	//This tech note defines the bend strength and ending fret for slides
+						if(thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+						{	//If this note bends
+							if(tp->technote[ctr]->bendstrength & 0x80)
+							{	//If this bend strength is defined in quarter steps
+								thistechbends = ((tp->technote[ctr]->bendstrength & 0x7F) + 1) / 2;	//Obtain the defined bend strength in quarter steps (mask out the MSB), add 1 and divide by 2 to round up to the nearest number of half steps
+							}
+							else
+							{	//The bend strength is defined in half steps
+								thistechbends = tp->technote[ctr]->bendstrength;	//Obtain the defined bend strength in half steps
+							}
+						}
 						if((thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 						{	//If this tech note slides
+							lowestfretted = fret;	//This individual string's note will slide regardless of what the chord's lowest fretted string is
 							if(lowestfretted != tp->technote[ctr]->slideend)
 							{	//If the tech note's slide doesn't end at the position the lowest fretted string in the tech note is already at
 								slidediff = tp->technote[ctr]->slideend - lowestfretted;	//Determine how many frets this slide travels
@@ -4584,6 +4605,10 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 							unpitchedslidediff = tp->technote[ctr]->unpitchend - lowestfretted;	//Determine how many frets this slide travels
 							techunpitchedslideto = fret + unpitchedslidediff + tp->capo;	//Get the correct ending fret for this string's slide, applying the capo position
 						}
+					}
+					if(thistechbends && !techbends)
+					{	//If this tech note's bend was the first bend found to affect this note
+						techbends = thistechbends;	//Track the first tech note bend (in halfsteps)
 					}
 				}//If this tech note overlaps with the specified note
 			}//If the tech note is in the same difficulty as the specified note and uses the same string
@@ -4662,7 +4687,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 			{	//If the target game is Rocksmith 2 and tech notes are being taken into account
 				if(techbends)
 				{	//If there was at least one bend tech note found affecting the specified string
-					ptr->bend = 1;
+					ptr->bend = techbends;
 				}
 				if(techslideto >= 0)
 				{	//If a tech note had a defined slide
@@ -4846,7 +4871,7 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 	}
 
 	//Write the note/chordNote tag
-	(void) snprintf(buffer, sizeof(buffer) - 1, "        %s<%s time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" bend=\"%d\" fret=\"%ld\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"%d\" leftHand=\"%ld\" mute=\"%d\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\" harmonicPinch=\"%d\" pickDirection=\"0\" rightHand=\"-1\" slideUnpitchTo=\"%ld\" tap=\"%d\" vibrato=\"%d\"%s>\n", indentlevel, tagstring, (double)notepos / 1000.0, tech.linknext, tech.accent, tech.bend, fret, tech.hammeron, tech.harmonic, tech.hopo, tech.ignore, fingernum, tech.stringmute, tech.palmmute, tech.pop, tech.pulloff, tech.slap, tech.slideto, stringnum, (double)tech.length / 1000.0, tech.tremolo, tech.pinchharmonic, tech.unpitchedslideto, tech.tap, tech.vibrato, tagend);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "        %s<%s time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" bend=\"%d\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"%d\" leftHand=\"%ld\" mute=\"%d\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\" harmonicPinch=\"%d\" pickDirection=\"0\" rightHand=\"-1\" slideUnpitchTo=\"%ld\" tap=\"%d\" vibrato=\"%d\"%s>\n", indentlevel, tagstring, (double)notepos / 1000.0, tech.linknext, tech.accent, tech.bend, fret, tech.hammeron, tech.harmonic, tech.hopo, tech.ignore, fingernum, tech.stringmute, tech.palmmute, tech.pop, tech.pulloff, tech.slap, tech.slideto, stringnum, (double)tech.length / 1000.0, tech.tremolo, tech.pinchharmonic, tech.unpitchedslideto, tech.tap, tech.vibrato, tagend);
 	(void) pack_fputs(buffer, fp);
 	if(tech.bend)
 	{	//If the note is a bend, write the bendValues subtag and close the note tag
