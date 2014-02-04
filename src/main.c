@@ -1712,9 +1712,9 @@ void eof_read_keyboard_input(void)
 			{	//readkey() converts the ASCII return value CTRL+letter presses to # where A is 1, Z is 26, etc.
 				eof_key_char = 'a' + eof_key_char - 1;	//Convert back to ASCII numbering
 			}
-			if((eof_key_code >= 27) && (eof_key_code <= 36))
+			if((eof_key_code >= KEY_0) && (eof_key_code <= KEY_9))
 			{	//readkey() cannot read an ASCII value for CTRL+#, the scan code has to be interpreted
-				eof_key_char = '0' + (eof_key_code - 27);	//Convert to ASCII numbering
+				eof_key_char = '0' + (eof_key_code - KEY_0);	//Convert to ASCII numbering
 			}
 		}
 		if(KEY_EITHER_SHIFT)
