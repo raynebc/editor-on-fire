@@ -2217,7 +2217,7 @@ if(eof_key_code == KEY_PAUSE)
 				//CTRL+# or CTRL+Fn # in a pro guitar track sets the fret values of selected notes
 				//CTRL+~ sets fret values to 0 and CTRL+X sets fret values to (muted)
 				//CTRL+G sets the used frets of selected notes to be ghosted
-				if(eof_key_char == '`')
+				if(eof_key_code == KEY_TILDE)
 				{
 					eof_set_pro_guitar_fret_number(0,0);
 					eof_use_key();
@@ -2446,7 +2446,7 @@ if(eof_key_code == KEY_PAUSE)
 	/* set active difficulty number (CTRL+SHIFT+~, CTRL+SHIFT+#, CTRL+SHIFT+Fn #) */
 		if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{	//If both CTRL and SHIFT are held
-			if(eof_key_char == '`')
+			if(eof_key_code == KEY_TILDE)
 			{
 				(void) eof_set_active_difficulty(0);
 				eof_shift_used = 1;	//Track that the SHIFT key was used

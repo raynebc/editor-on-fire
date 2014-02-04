@@ -355,6 +355,11 @@ char eof_display_flats = 0;		//Used to allow eof_get_tone_name() to return note 
 int eof_key_pressed = 0;
 int eof_key_char = 0;
 int eof_key_code = 0;
+int eof_key_shifts = 0;
+
+///DEBUG
+int eof_last_key_char = 0;
+int eof_last_key_code = 0;
 
 void eof_debug_message(char * text)
 {
@@ -1690,7 +1695,9 @@ void eof_fix_spectrogram(void)
 
 void eof_read_keyboard_input(void)
 {
-	int key_read = 0;
+	int key_read = 0, ctr;
+	#define SHIFT_NUMBER_ARRAY_SIZE 10
+	char shift_number_array[SHIFT_NUMBER_ARRAY_SIZE] = {')', '!', '@', '#', '$', '%', '^', '&', '*', '('};
 
 	if(keypressed())
 	{
@@ -1698,12 +1705,38 @@ void eof_read_keyboard_input(void)
 		key_read = readkey();
 		eof_key_char = tolower(key_read & 0xFF);
 		eof_key_code = key_read >> 8;
+		eof_key_shifts = key_shifts;
+		if(KEY_EITHER_CTRL)
+		{
+			if((eof_key_char >= 1) && (eof_key_char <= 26))
+			{	//readkey() converts the ASCII return value CTRL+letter presses to # where A is 1, Z is 26, etc.
+				eof_key_char = 'a' + eof_key_char - 1;	//Convert back to ASCII numbering
+			}
+			if((eof_key_code >= 27) && (eof_key_code <= 36))
+			{	//readkey() cannot read an ASCII value for CTRL+#, the scan code has to be interpreted
+				eof_key_char = '0' + (eof_key_code - 27);	//Convert to ASCII numbering
+			}
+		}
+		if(KEY_EITHER_SHIFT)
+		{	//readkey() returns the ASCII character for SHIFT+# keypresses, while the actual number is still desired
+			for(ctr = 0; ctr < SHIFT_NUMBER_ARRAY_SIZE; ctr++)
+			{	//For each of the ten number keys
+				if(eof_key_char == shift_number_array[ctr])
+				{	//If this is the number key that was pressed
+					eof_key_char = '0' + ctr;	//Convert back to the ASCII character for the number
+					break;
+				}
+			}
+		}
+		eof_last_key_char = eof_key_char;
+		eof_last_key_code = eof_key_code;
 	}
 	else
 	{
 		eof_key_pressed = 0;
 		eof_key_char = 0;
 		eof_key_code = 0;
+		eof_key_shifts = key_shifts;
 		return;
 	}
 }
@@ -2817,6 +2850,12 @@ void eof_render_note_window(void)
 				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Effective fret hand position:  None");
 			}
 		}//Display information specific to pro guitar tracks
+
+///Keep for debugging
+#ifdef EOF_DEBUG
+		ypos += 12;
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "CTRL:%c ALT:%c SHIFT:%c CODE:%d ASCII:%d ('%c')", KEY_EITHER_CTRL ? '*' : ' ', KEY_EITHER_ALT ? '*' : ' ', KEY_EITHER_SHIFT ? '*' : ' ', eof_last_key_code, eof_last_key_char, eof_last_key_char);
+#endif
 	}//If show catalog is disabled
 
 	if(!eof_full_screen_3d)
