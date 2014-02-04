@@ -5,6 +5,7 @@
 	#include <winalleg.h>
 #endif
 #include <locale.h>	//For setlocale()
+#include <ctype.h>
 #include <math.h>
 #include <sys/stat.h>
 #include <time.h>
@@ -1690,7 +1691,7 @@ void eof_fix_spectrogram(void)
 void eof_read_keyboard_input(void)
 {
 	int key_read = 0;
-	
+
 	if(keypressed())
 	{
 		eof_key_pressed = 1;
@@ -1723,7 +1724,7 @@ void eof_read_global_keys(void)
 //	eof_log("eof_read_global_keys() entered");
 
 	/* exit program (Esc) */
-	if(eof_key_char == 27 && !KEY_EITHER_SHIFT)
+	if((eof_key_char == 27) && !KEY_EITHER_SHIFT)
 	{
 		eof_menu_file_exit();
 		eof_use_key(); //If user cancelled quitting, make sure these keys are cleared
@@ -1779,14 +1780,14 @@ void eof_read_global_keys(void)
 	if(eof_song_loaded && eof_song)
 	{
 		/* undo (CTRL+Z) */
-		if(KEY_EITHER_CTRL && eof_key_char == 'z' && (eof_undo_count > 0))
+		if(KEY_EITHER_CTRL && (eof_key_char == 'z') && (eof_undo_count > 0))
 		{
 			eof_menu_edit_undo();
 			eof_reset_lyric_preview_lines();	//Rebuild the preview lines
 		}
 
 		/* redo (CTRL+R) */
-		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && eof_key_char == 'r' && eof_redo_toggle)
+		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && (eof_key_char == 'r') && eof_redo_toggle)
 		{
 			eof_menu_edit_redo();
 			eof_reset_lyric_preview_lines();	//Rebuild the preview lines
@@ -1810,6 +1811,7 @@ void eof_read_global_keys(void)
 					tempochange = -0.1;
 				}
 				eof_menu_beat_adjust_bpm(tempochange);
+				eof_use_key();
 			}
 			else
 			{	//If SHIFT is not held
@@ -1817,6 +1819,7 @@ void eof_read_global_keys(void)
 				{	//If the CTRL key is not held (CTRL+- is reserved for decrement pro guitar fret value
 					tempochange = -1.0;
 					eof_menu_beat_adjust_bpm(tempochange);
+					eof_use_key();
 				}
 			}
 		}
@@ -1838,6 +1841,7 @@ void eof_read_global_keys(void)
 					tempochange = 0.1;
 				}
 				eof_menu_beat_adjust_bpm(tempochange);
+				eof_use_key();
 			}
 			else
 			{	//The SHIFT key is not held
@@ -1845,13 +1849,14 @@ void eof_read_global_keys(void)
 				{	//If the CTRL key is not held (CTRL++ is reserved for increment pro guitar fret value)
 					tempochange = 1.0;
 					eof_menu_beat_adjust_bpm(tempochange);
+					eof_use_key();
 				}
 			}
 		}
 	}//If a song is loaded
 
 	/* save (F2 or CTRL+S) */
-	if((eof_key_code == KEY_F2 && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT) || (eof_key_char == 's' && KEY_EITHER_CTRL && !KEY_EITHER_SHIFT))
+	if(((eof_key_code == KEY_F2) && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT) || ((eof_key_char == 's') && KEY_EITHER_CTRL && !KEY_EITHER_SHIFT))
 	{
 		eof_menu_file_save();
 		eof_use_key();
@@ -1868,7 +1873,7 @@ void eof_read_global_keys(void)
 	}
 
 	/* find previous catalog match (SHIFT+F3) */
-	if(eof_key_code == KEY_F3 && !KEY_EITHER_CTRL & KEY_EITHER_SHIFT)
+	if((eof_key_code == KEY_F3) && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 	{
 		eof_shift_used = 1;	//Track that the SHIFT key was used
 		eof_menu_catalog_find_prev();
@@ -1876,15 +1881,15 @@ void eof_read_global_keys(void)
 	}
 
 	/* load chart (CTRL+O) */
-	if(KEY_EITHER_CTRL && eof_key_char == 'o')
+	if(KEY_EITHER_CTRL && (eof_key_char == 'o'))
 	{	//File>Load
 		clear_keybuf();
 		eof_menu_file_load();
 		eof_use_key();
 	}
 
-	/* new chart (F4 or CTRL+N) */
-	if((eof_key_code == KEY_F4 && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT) || (KEY_EITHER_CTRL && eof_key_char == 'n'))
+	/* new chart (CTRL+N) */
+	if(KEY_EITHER_CTRL && (eof_key_char == 'n'))
 	{
 		clear_keybuf();
 		eof_menu_file_new_wizard();
@@ -1897,15 +1902,22 @@ void eof_read_global_keys(void)
 		if(eof_key_code == KEY_F1)
 		{
 			clear_keybuf();
-			eof_menu_help_keys();
+			(void) eof_menu_help_keys();
 			eof_use_key();
+		}
+
+	/* toggle tech view (F4) */
+		else if(eof_key_code == KEY_F4)
+		{
+			(void) eof_menu_track_toggle_tech_view();
+			key[KEY_F4] = 0;
 		}
 
 	/* show waveform graph (F5) */
 		else if(eof_key_code == KEY_F5)
 		{
 			clear_keybuf();
-			eof_menu_song_waveform();
+			(void) eof_menu_song_waveform();
 			eof_use_key();
 		}
 
@@ -1913,7 +1925,7 @@ void eof_read_global_keys(void)
 		else if(eof_key_code == KEY_F6)
 		{	//Launch MIDI import
 			clear_keybuf();
-			eof_menu_file_midi_import();
+			(void) eof_menu_file_midi_import();
 			eof_use_key();
 		}
 
@@ -1921,7 +1933,7 @@ void eof_read_global_keys(void)
 		else if(eof_key_code == KEY_F7)
 		{	//Launch Feedback chart import
 			clear_keybuf();
-			eof_menu_file_feedback_import();
+			(void) eof_menu_file_feedback_import();
 			eof_use_key();
 		}
 
@@ -1929,7 +1941,7 @@ void eof_read_global_keys(void)
 		else if(eof_key_code == KEY_F8)
 		{
 			clear_keybuf();
-			eof_menu_file_lyrics_import();
+			(void) eof_menu_file_lyrics_import();
 			eof_use_key();
 		}
 
@@ -1937,7 +1949,7 @@ void eof_read_global_keys(void)
 		else if(eof_key_code == KEY_F9)
 		{
 			clear_keybuf();
-			eof_menu_song_properties();
+			(void) eof_menu_song_properties();
 			eof_use_key();
 		}
 
@@ -1945,7 +1957,7 @@ void eof_read_global_keys(void)
 		else if(eof_key_code == KEY_F10)
 		{
 			clear_keybuf();
-			eof_menu_file_settings();
+			(void) eof_menu_file_settings();
 			eof_use_key();
 		}
 
@@ -1953,7 +1965,7 @@ void eof_read_global_keys(void)
 		else if(eof_key_code == KEY_F11)
 		{
 			clear_keybuf();
-			eof_menu_file_preferences();
+			(void) eof_menu_file_preferences();
 			eof_use_key();
 		}
 
@@ -1961,7 +1973,7 @@ void eof_read_global_keys(void)
 		else if(eof_key_code == KEY_F12)
 		{
 			clear_keybuf();
-			eof_menu_song_test_fof();
+			(void) eof_menu_song_test_fof();
 			eof_use_key();
 		}
 	}//If neither CTRL nor SHIFT are held

@@ -49,7 +49,7 @@ MENU eof_file_display_menu[] =
 
 MENU eof_file_menu[] =
 {
-	{"&New\t" CTRL_NAME "+N / F4", eof_menu_file_new_wizard, NULL, 0, NULL},
+	{"&New\t" CTRL_NAME "+N", eof_menu_file_new_wizard, NULL, 0, NULL},
 	{"&Load\t" CTRL_NAME "+O", eof_menu_file_load, NULL, 0, NULL},
 	{"&Save\tF2 / "CTRL_NAME "+S", eof_menu_file_save, NULL, D_DISABLED, NULL},
 	{"Save &As", eof_menu_file_save_as, NULL, D_DISABLED, NULL},
@@ -2669,6 +2669,54 @@ int eof_save_helper(char *destfilename)
 			}
 		}
 	}
+
+	/* check if any chords have manually defined names with parentheses, which will cause Rocksmith to malfunction */
+	if(eof_write_rs_files || eof_write_rs2_files)
+	{	//If the user wants to save Rocksmith capable files
+		char target = 1;	//Unless eof_write_rs2_files is enabled, only notes that are valid for RS1 export are checked
+		char *name, user_prompted = 0;
+		unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+
+		if(eof_write_rs2_files)
+			target = 2;
+		for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
+		{	//For each track (until the user is warned about any offending chord names)
+			if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If this is a pro guitar/bass track
+				EOF_PRO_GUITAR_TRACK *tp;
+				unsigned long tracknum;
+
+				tracknum = eof_song->track[ctr]->tracknum;
+				tp = eof_song->pro_guitar_track[tracknum];
+				for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+				{	//For each note in the track
+					if(eof_note_count_rs_lanes(eof_song, ctr, ctr2, target) > 1)
+					{	//If the note will export as a chord to one or both user-configured target versions of Rocksmith
+						name = eof_get_note_name(eof_song, ctr, ctr2);	//Get pointer to the chord's name
+						if(name)
+						{	//If the name was retrievable
+							if(strchr(name, '(') || strchr(name, ')'))
+							{	//If the name is manually defined and contains either the opening or closing parenthesis character
+								eof_2d_render_top_option = 32;					//Change the user preference to render note names at the top of the piano roll
+								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Render the track so the user can see where the correction needs to be made, along with the RS section in question
+								eof_clear_input();
+								key[KEY_Y] = 0;
+								key[KEY_N] = 0;
+								if(!user_prompted && alert("At least one chord has a defined name that has parentheses.", "This can cause Rocksmith to crash or hang.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+								{	//If the user hasn't already answered this prompt, and doesn't opt to correct the issue
+									eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+									return 1;	//Return cancellation
+								}
+								eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+								user_prompted = 1;	//Set the condition to exit outer for loop
+								break;	//Break from inner for loop
+							}
+						}
+					}
+				}//For each note in the track
+			}//If this is a pro guitar/bass track
+		}//For each track (until the user is warned about any offending chord names)
+	}//If the user wants to save Rocksmith capable files
 
 	/* build the target file name */
 	if(destfilename == NULL)

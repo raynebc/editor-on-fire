@@ -1759,7 +1759,7 @@ MENU eof_track_rocksmith_popup_menu[] =
 
 MENU eof_track_rocksmith_menu[] =
 {
-	{"Enable tech &View", eof_menu_track_toggle_tech_view, NULL, 0, NULL},
+	{"Enable tech &View\tF4", eof_menu_track_toggle_tech_view, NULL, 0, NULL},
 	{"Fret &Hand positions", NULL, eof_track_proguitar_fret_hand_menu, 0, NULL},
 	{"&Popup messages", NULL, eof_track_rocksmith_popup_menu, 0, NULL},
 	{"&Arrangement type", NULL, eof_track_rocksmith_arrangement_menu, 0, NULL},
@@ -3532,6 +3532,9 @@ int eof_track_fret_hand_positions_generate_all(void)
 int eof_menu_track_toggle_tech_view(void)
 {
 	EOF_PRO_GUITAR_TRACK *tp;
+
+	if(!eof_song_loaded)
+		return 1;	//Return error
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run unless a pro guitar track is active

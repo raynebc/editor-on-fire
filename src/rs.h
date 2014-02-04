@@ -100,6 +100,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//	8:  At least one note slides to or above fret 22
 	//  16:  There is no COUNT phrase defined and the first beat already contains a phrase
 	//  32:  There is at least one phrase or section defined after the END phrase
+	//  64:  At least one track uses a fret value higher than 24
 	//Rocksmith 2 supports arrangements using a capo, but it does not consider the capo to be the nut position, so the capo position still needs to be added
 	// to the fret values of all fretted notes
 
