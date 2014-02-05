@@ -1698,6 +1698,9 @@ void eof_read_keyboard_input(void)
 	int key_read = 0, ctr;
 	#define SHIFT_NUMBER_ARRAY_SIZE 10
 	char shift_number_array[SHIFT_NUMBER_ARRAY_SIZE] = {')', '!', '@', '#', '$', '%', '^', '&', '*', '('};
+	#define NUMPAD_KEY_ARRAY_SIZE 13
+	unsigned char numpad_key_array[NUMPAD_KEY_ARRAY_SIZE] = {KEY_PLUS_PAD, KEY_MINUS_PAD, KEY_ENTER_PAD, KEY_0_PAD, KEY_1_PAD, KEY_2_PAD, KEY_3_PAD, KEY_4_PAD, KEY_5_PAD, KEY_6_PAD, KEY_7_PAD, KEY_8_PAD, KEY_9_PAD};
+		//When these keys are pressed, the ASCII value must be ignored because they conflict with other keys on the keyboard
 
 	if(keypressed())
 	{
@@ -1706,6 +1709,14 @@ void eof_read_keyboard_input(void)
 		eof_key_char = tolower(key_read & 0xFF);
 		eof_key_code = key_read >> 8;
 		eof_key_shifts = key_shifts;
+		for(ctr = 0; ctr < NUMPAD_KEY_ARRAY_SIZE; ctr++)
+		{	//For each of the number pad keys used in keyboard controls
+			if(eof_key_code == numpad_key_array[ctr])
+			{	//If the key pressed is one of those number pad keys
+				eof_key_char = 0;	//Destroy the ASCII code
+				break;
+			}
+		}
 		if(KEY_EITHER_CTRL)
 		{
 			if((eof_key_char >= 1) && (eof_key_char <= 26))
@@ -2092,7 +2103,7 @@ void eof_lyric_logic(void)
 				{
 					eof_last_tone = -1;
 				}
-				if(!eof_full_screen_3d && ((mouse_b & 2) || eof_key_code == KEY_INSERT))
+				if(!eof_full_screen_3d && ((mouse_b & 2) || (eof_key_code == KEY_INSERT)))
 				{
 					eof_vocals_offset = eof_hover_key - eof_screen_layout.vocal_view_size / 2;
 					if(KEY_EITHER_CTRL)

@@ -1228,6 +1228,10 @@ int eof_menu_file_preferences(void)
 	{	//If the preference for exporting RS1 file was changed
 		eof_delete_rocksmith_wav();	//Delete the Rocksmith WAV file since the amount of silence appended to it will differ
 	}
+	if(eof_write_rs2_files)
+	{	//If Rocksmith 2 export is enabled
+		eof_min_note_distance = 0;	//Override the minimum distance between notes to be 0ms because some types of RS2 authoring will require this
+	}
 	return 1;
 }
 
