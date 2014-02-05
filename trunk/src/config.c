@@ -159,6 +159,10 @@ void eof_load_config(char * fn)
 	{	//If the minimum note distance is invalid
 		eof_min_note_distance = 3;	//Reset it to default
 	}
+	if(eof_write_rs2_files)
+	{	//If Rocksmith 2 export is enabled
+		eof_min_note_distance = 0;	//Override the minimum distance between notes to be 0ms because some types of RS2 authoring will require this
+	}
 	eof_render_bass_drum_in_lane = get_config_int("preferences", "eof_render_bass_drum_in_lane", 0);
 	eof_vanish_y = get_config_int("preferences", "eof_vanish_y", 0);
 	if((eof_vanish_y < -500) || (eof_vanish_y > 260))

@@ -595,7 +595,7 @@ if(eof_key_code == KEY_PAUSE)
 	/* zoom in (+ on numpad) */
 	/* increment AV delay (CTRL+SHIFT+(plus) on numpad) */
 	/* lower 3D camera angle (SHIFT+(plus) on numpad) or BACKSLASH */
-	if(eof_key_code == KEY_PLUS_PAD || (eof_key_code == KEY_BACKSLASH && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL))
+	if((eof_key_code == KEY_PLUS_PAD) || ((eof_key_code == KEY_BACKSLASH) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL))
 	{
 		if(!KEY_EITHER_CTRL)
 		{	//If CTRL is not being held
@@ -626,7 +626,7 @@ if(eof_key_code == KEY_PAUSE)
 	/* zoom out (- on numpad) */
 	/* decrement AV delay (CTRL+SHIFT+(minus) on numpad) */
 	/* raise 3D camera angle (SHIFT+(minus) on numpad) or SHIFT+BACKSLASH */
-	if(eof_key_code == KEY_MINUS_PAD || (eof_key_code == KEY_BACKSLASH && KEY_EITHER_SHIFT && !KEY_EITHER_CTRL))
+	if((eof_key_code == KEY_MINUS_PAD) || ((eof_key_code == KEY_BACKSLASH) && KEY_EITHER_SHIFT && !KEY_EITHER_CTRL))
 	{
 		if(!KEY_EITHER_CTRL)
 		{	//If CTRL is not being held
@@ -658,7 +658,7 @@ if(eof_key_code == KEY_PAUSE)
 	}
 
 	/* reset 3D camera angle (SHIFT+Enter on numpad or CTRL+BACKSLASH) */
-	if((eof_key_code == KEY_ENTER_PAD && KEY_EITHER_SHIFT) || (eof_key_code == KEY_BACKSLASH && KEY_EITHER_CTRL && !KEY_EITHER_SHIFT))
+	if(((eof_key_code == KEY_ENTER_PAD) && KEY_EITHER_SHIFT) || ((eof_key_code == KEY_BACKSLASH) && KEY_EITHER_CTRL && !KEY_EITHER_SHIFT))
 	{
 		if(KEY_EITHER_SHIFT)
 		{
@@ -810,8 +810,8 @@ if(eof_key_code == KEY_PAUSE)
 	/* cycle track forward (CTRL+Tab) */
 	/* cycle difficulty backward (SHIFT+Tab) */
 	/* cycle difficulty forward (Tab) */
-	if(eof_key_char == '\t')
-	{
+	if(eof_key_code == KEY_TAB)
+	{	//Read the scan code because the ASCII code cannot represent CTRL or SHIFT with the tab key
 		if(KEY_EITHER_CTRL)
 		{	//Track numbering begins at 1 instead of 0
 			if(KEY_EITHER_SHIFT)	//Shift instrument back 1 number
@@ -1539,7 +1539,7 @@ if(eof_key_code == KEY_PAUSE)
 
 	if((eof_input_mode == EOF_INPUT_CLASSIC) || (eof_input_mode == EOF_INPUT_HOLD))
 	{	//If the input method is classic or hold
-		if(eof_key_code == KEY_ENTER && (eof_music_pos - eof_av_delay >= eof_song->beat[0]->pos) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
+		if((eof_key_code == KEY_ENTER) && (eof_music_pos - eof_av_delay >= eof_song->beat[0]->pos) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 		{	//If the user pressed enter and the current seek position is not left of the first beat marker, and neither SHIFT nor CTRL are held
 			/* place note with default length if song is paused */
 			if(eof_music_paused)
@@ -2987,8 +2987,8 @@ if(eof_key_code == KEY_PAUSE)
 	else if(!eof_music_catalog_playback)
 	{	//If the chart is playing
 	/* lower playback speed (;) */
-		if(eof_key_char == ';')
-		{
+		if(eof_key_code == KEY_SEMICOLON)
+		{	//Read the scan code because the ASCII code cannot represent CTRL or SHIFT with the semicolon key
 			if(eof_playback_speed != 100)
 			{	//If playback isn't already at 10%
 				char lctrl, rctrl;
@@ -3007,8 +3007,8 @@ if(eof_key_code == KEY_PAUSE)
 		}
 
 	/* increase playback speed (') */
-		if(eof_key_char == '\'')
-		{
+		if(eof_key_code == KEY_QUOTE)
+		{	//Read the scan code because the ASCII code cannot represent CTRL or SHIFT with the apostrophe key
 			if(eof_playback_speed != 1000)
 			{	//If playback isn't already at 100%
 				char lctrl, rctrl;	//Used to store the CTRL key states
@@ -3830,7 +3830,7 @@ void eof_editor_logic(void)
 		eof_hover_type = -1;
 	}
 
-	if(((mouse_b & 2) || eof_key_code == KEY_INSERT) && ((eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK)))
+	if(((mouse_b & 2) || (eof_key_code == KEY_INSERT)) && ((eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK)))
 	{	//If the right mouse button or Insert key is pressed, a song is loaded and Rex Mundi or Feedback input mode is in use
 		eof_emergency_stop_music();
 		eof_render();
@@ -4334,7 +4334,7 @@ void eof_vocal_editor_logic(void)
 					}
 				}
 			}//If neither full screen 3D view is is use nor is click and drag disabled, the left mouse button is being held and the mouse is right of the left edge of the piano roll
-			if(!eof_full_screen_3d && ((((eof_input_mode != EOF_INPUT_REX) && ((mouse_b & 2) || eof_key_code == KEY_INSERT)) || (((eof_input_mode == EOF_INPUT_REX) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL && ((eof_key_char == '1') || (eof_key_char == '2') || (eof_key_char == '3') || (eof_key_char == '4') || (eof_key_char == '5') || (eof_key_char == '6'))) && eof_rclick_released && (eof_pen_lyric.pos < eof_chart_length))) || eof_key_code == KEY_BACKSPACE))
+			if(!eof_full_screen_3d && ((((eof_input_mode != EOF_INPUT_REX) && ((mouse_b & 2) || (eof_key_code == KEY_INSERT))) || (((eof_input_mode == EOF_INPUT_REX) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL && ((eof_key_char == '1') || (eof_key_char == '2') || (eof_key_char == '3') || (eof_key_char == '4') || (eof_key_char == '5') || (eof_key_char == '6'))) && eof_rclick_released && (eof_pen_lyric.pos < eof_chart_length))) || (eof_key_code == KEY_BACKSPACE)))
 			{	//If full screen 3D view is not in effect and input to add a note is provided
 				eof_selection.range_pos_1 = 0;
 				eof_selection.range_pos_2 = 0;
@@ -4550,7 +4550,7 @@ void eof_vocal_editor_logic(void)
 		}
 	}//If the chart is not paused
 
-	if(((mouse_b & 2) || eof_key_code == KEY_INSERT) && ((eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK)))
+	if(((mouse_b & 2) || (eof_key_code == KEY_INSERT)) && ((eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK)))
 	{	//If the right mouse button or Insert key is pressed, a song is loaded and Rex Mundi or Feedback input mode is in use
 		eof_emergency_stop_music();
 		eof_render();
@@ -6027,7 +6027,7 @@ void eof_editor_logic_common(void)
 				eof_mouse_drug = 0;
 				eof_adjusted_anchor = 0;
 			}//If the left mouse button is not held
-			if(!eof_full_screen_3d && ((mouse_b & 2) || eof_key_code == KEY_INSERT) && eof_rclick_released && (eof_hover_beat >= 0))
+			if(!eof_full_screen_3d && ((mouse_b & 2) || (eof_key_code == KEY_INSERT)) && eof_rclick_released && (eof_hover_beat >= 0))
 			{	//If full screen 3d is not in use and the right mouse key or insert are held over a beat marker
 				eof_select_beat(eof_hover_beat);
 				alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->beat[eof_hover_beat]->pos + eof_av_delay);

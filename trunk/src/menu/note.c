@@ -323,7 +323,7 @@ MENU eof_note_rocksmith_menu[] =
 	{"Mute->Single note P.M.", eof_rocksmith_convert_mute_to_palm_mute_single_note, NULL, 0, NULL},
 	{"Toggle force sustain", eof_menu_note_toggle_rs_sustain, NULL, 0, NULL},
 	{"Remove force sustain", eof_menu_note_remove_rs_sustain, NULL, 0, NULL},
-	{"&Move to note start", eof_menu_note_move_tech_note_to_overlapping_note_pos, NULL, 0, NULL},
+	{"&Move to prev note", eof_menu_note_move_tech_note_to_previous_note_pos, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -8637,14 +8637,12 @@ int eof_menu_note_reflect_both(void)
 	return eof_menu_note_reflect(3);
 }
 
-int eof_menu_note_move_tech_note_to_overlapping_note_pos(void)
+int eof_menu_note_move_tech_note_to_previous_note_pos(void)
 {
-	unsigned long i;
-	long u = 0;
-	unsigned long tracknum, match;
-	int note_selection_updated;
+	unsigned long ctr, ctr2, tracknum;
+	int note_selection_updated, u = 0;
 	EOF_PRO_GUITAR_TRACK *tp;
-	char status;
+	EOF_PRO_GUITAR_NOTE *np, *tnp;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
@@ -8655,19 +8653,24 @@ int eof_menu_note_move_tech_note_to_overlapping_note_pos(void)
 	if(tp->note != tp->technote)
 		return 1;	//Do not allow this function to run when tech view is not in effect
 
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 	{	//For each tech note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (tp->note[i]->type == eof_note_type))
+		tnp = tp->note[ctr];	//Simplify
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (tnp->type == eof_note_type))
 		{	//If this note is selected and is in the active difficulty
-			status = eof_pro_guitar_tech_note_overlaps_a_note(tp, i, tp->note[i]->note, &match);	//Determine whether the tech note overlaps a regular note and if so, which one
-			if(status > 1)
-			{	//If the tech note overlaps a regular note and isn't already at the start position of a regular note
-				if(!u)
-				{	//Make a back up before changing the first note
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					u = 1;
+			for(ctr2 = tp->pgnotes; ctr2 > 0; ctr2--)
+			{	//For each normal note in the active track, in reverse order
+				np = tp->pgnote[ctr2 - 1];	//Simplify
+				if((np->type == tnp->type) && (np->pos < tnp->pos))
+				{	//If this is the first normal note in the same track difficulty that is before the tech note
+					if(!u)
+					{	//Make a back up before changing the first note
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						u = 1;
+					}
+					tnp->pos = np->pos;	//Set the tech note's position to match
+					break;
 				}
-				tp->note[i]->pos = tp->pgnote[match]->pos;	//Move this tech note to begin at the position of the note it overlaps
 			}
 		}
 	}
