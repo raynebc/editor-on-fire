@@ -601,6 +601,7 @@ int eof_initialize(int argc, char * argv[]);	//Initializes various values, check
 void eof_seek_and_render_position(unsigned long track, unsigned char diff, unsigned long pos);
 	//Seeks to the specified position and renders the screen, taking the AV delay into account
 
+void eof_read_keyboard_input(void);
 void eof_use_key(void);
 
 #endif
