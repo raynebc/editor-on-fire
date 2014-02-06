@@ -103,6 +103,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 	clear_keybuf();
 	while(1)
 	{
+		eof_read_keyboard_input();
 		if(!update_dialog(player))
 		{
 			break;
