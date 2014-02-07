@@ -109,6 +109,10 @@ int eof_popup_dialog(DIALOG * dp, int n)
 		eof_read_keyboard_input();
 		if(eof_key_pressed)
 		{
+			if(eof_key_code == KEY_ESC)
+			{	//Escape causes the menu to close immediately
+				break;
+			}
 			if(eof_key_char)
 			{
 				simulate_ukeypress(eof_key_uchar, eof_key_code);
@@ -137,7 +141,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 			{
 				eof_keyboard_shortcut = 2;
 			}
-			
+
 			/* allow menu to be closed if mouse button released after it was
 			 * opened with a click */
 			if((eof_keyboard_shortcut == 2) && !(mouse_b & 1))
@@ -191,7 +195,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 		{
 			eof_use_key();
 		}
-		
+
 		Idle(10);
 	}
 	ret = shutdown_dialog(player);
