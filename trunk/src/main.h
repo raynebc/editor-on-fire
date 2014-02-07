@@ -511,7 +511,7 @@ void eof_emergency_stop_music(void);	//Stops audio playback
 void eof_fix_catalog_selection(void);	//Ensures that a valid catalog entry is active, if any
 unsigned long eof_count_selected_notes(unsigned long * total, char v);
 	//Returns the number of notes selected in the active instrument difficulty
-	//If total is not NULL, its value is incremented once for each note in the active difficulty
+	//If total is not NULL, its value is incremented once for each selected note in the active difficulty
 void eof_fix_waveform_graph(void);	//Rebuild the waveform graph data if it exists
 void eof_fix_spectrogram(void);	//Rebuild the spectrogram data if it exists
 void eof_clear_input(void);
@@ -602,7 +602,7 @@ int eof_initialize(int argc, char * argv[]);	//Initializes various values, check
 void eof_seek_and_render_position(unsigned long track, unsigned char diff, unsigned long pos);
 	//Seeks to the specified position and renders the screen, taking the AV delay into account
 
-void eof_read_keyboard_input(void);
-void eof_use_key(void);
+void eof_read_keyboard_input(void);	//Updates the keypress state variables
+void eof_use_key(void);	//Erases the keypress state variables
 
 #endif
