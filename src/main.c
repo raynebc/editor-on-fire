@@ -354,6 +354,7 @@ char eof_display_flats = 0;		//Used to allow eof_get_tone_name() to return note 
 /* storage for keyboard input, needed since we use key data in more than one function */
 int eof_key_pressed = 0;
 int eof_key_char = 0;
+int eof_key_uchar = 0;
 int eof_key_code = 0;
 int eof_key_shifts = 0;
 
@@ -1695,7 +1696,7 @@ void eof_fix_spectrogram(void)
 
 void eof_read_keyboard_input(void)
 {
-	int key_read = 0, ctr;
+	int ctr;
 	#define SHIFT_NUMBER_ARRAY_SIZE 10
 	char shift_number_array[SHIFT_NUMBER_ARRAY_SIZE] = {')', '!', '@', '#', '$', '%', '^', '&', '*', '('};
 	#define NUMPAD_KEY_ARRAY_SIZE 13
@@ -1705,9 +1706,9 @@ void eof_read_keyboard_input(void)
 	if(keypressed())
 	{
 		eof_key_pressed = 1;
-		key_read = readkey();
-		eof_key_char = tolower(key_read & 0xFF);
-		eof_key_code = key_read >> 8;
+		eof_key_uchar = ureadkey(&eof_key_code);
+		eof_key_char = tolower(eof_key_uchar);
+//		eof_key_code = key_read >> 8;
 		eof_key_shifts = key_shifts;
 		for(ctr = 0; ctr < NUMPAD_KEY_ARRAY_SIZE; ctr++)
 		{	//For each of the number pad keys used in keyboard controls
@@ -1745,6 +1746,7 @@ void eof_read_keyboard_input(void)
 	else
 	{
 		eof_key_pressed = 0;
+		eof_key_uchar = 0;
 		eof_key_char = 0;
 		eof_key_code = 0;
 		eof_key_shifts = key_shifts;

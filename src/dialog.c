@@ -103,7 +103,21 @@ int eof_popup_dialog(DIALOG * dp, int n)
 	clear_keybuf();
 	while(1)
 	{
+		/* Read the keyboard input and simulate the keypresses so the dialog
+		 * player can pick up keyboard input after we intercepted it. This lets
+		 * us be aware of any keyboard input so we can react accordingly. */
 		eof_read_keyboard_input();
+		if(eof_key_pressed)
+		{
+			if(eof_key_char)
+			{
+				simulate_ukeypress(eof_key_uchar, eof_key_code);
+			}
+			else if(eof_key_code)
+			{
+				simulate_ukeypress(0, eof_key_code);
+			}
+		}
 		if(!update_dialog(player))
 		{
 			break;
@@ -111,57 +125,21 @@ int eof_popup_dialog(DIALOG * dp, int n)
 		/* special handling of the main menu */
 		if(dp[0].proc == d_agup_menu_proc)
 		{
-			//A keypress (X) shifted left by 8 bits counts it as ALT+(X)
-			/* if user wants the menu, force dialog to stay open */
-			if(key[KEY_ALTGR] && !eof_keyboard_shortcut)
-			{
-				if(key[KEY_F])
-				{
-					simulate_keypress(KEY_F << 8);
-					eof_keyboard_shortcut = 1;
-					player->mouse_obj = 0;
-				}
-				else if(key[KEY_E])
-				{
-					simulate_keypress(KEY_E << 8);
-					eof_keyboard_shortcut = 1;
-					player->mouse_obj = 0;
-				}
-				else if(key[KEY_S])
-				{
-					simulate_keypress(KEY_S << 8);
-					eof_keyboard_shortcut = 1;
-					player->mouse_obj = 0;
-				}
-				else if(key[KEY_N])
-				{
-					simulate_keypress(KEY_N << 8);
-					eof_keyboard_shortcut = 1;
-					player->mouse_obj = 0;
-				}
-				else if(key[KEY_B])
-				{
-					simulate_keypress(KEY_B << 8);
-					eof_keyboard_shortcut = 1;
-					player->mouse_obj = 0;
-				}
-				else if(key[KEY_H])
-				{
-					simulate_keypress(KEY_H << 8);
-					eof_keyboard_shortcut = 1;
-					player->mouse_obj = 0;
-				}
-			}
-			else if(key[KEY_F] || key[KEY_E] || key[KEY_S] || key[KEY_T] || key[KEY_N] || key[KEY_B] || key[KEY_H])
+			/* use has opened the menu with a shortcut key */
+			if(eof_key_char == 'f' || eof_key_char == 'e' || eof_key_char == 's' || eof_key_char == 't' || eof_key_char == 'n' || eof_key_char == 'b' || eof_key_char == 'h')
 			{
 				eof_keyboard_shortcut = 1;
 				player->mouse_obj = 0;
 			}
 
+			/* detect if menu was activated with a click */
 			if(mouse_b & 1)
 			{
 				eof_keyboard_shortcut = 2;
 			}
+			
+			/* allow menu to be closed if mouse button released after it was
+			 * opened with a click */
 			if((eof_keyboard_shortcut == 2) && !(mouse_b & 1))
 			{
 				eof_keyboard_shortcut = 0;
@@ -207,7 +185,13 @@ int eof_popup_dialog(DIALOG * dp, int n)
 				}
 			}
 		}
-
+		/* clear keyboard data so it doesn't show up in the next run of the
+		 * loop */
+		if(eof_key_pressed)
+		{
+			eof_use_key();
+		}
+		
 		Idle(10);
 	}
 	ret = shutdown_dialog(player);

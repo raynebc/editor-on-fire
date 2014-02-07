@@ -496,6 +496,7 @@ extern long ychart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D render
 
 extern int eof_key_pressed;
 extern int eof_key_char;
+extern int eof_key_uchar;
 extern int eof_key_code;
 extern int eof_key_shifts;
 
