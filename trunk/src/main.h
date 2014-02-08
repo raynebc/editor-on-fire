@@ -9,7 +9,7 @@
 #include "control.h"
 #include "editor.h"
 
-#define EOF_VERSION_STRING "EOF v1.8RC8"
+#define EOF_VERSION_STRING "EOF v1.8RC8 (r1289)"
 #define EOF_COPYRIGHT_STRING "(c)2008-2010 T^3 Software."
 
 #define KEY_EITHER_ALT (eof_key_shifts & KB_ALT_FLAG)
@@ -602,7 +602,11 @@ int eof_initialize(int argc, char * argv[]);	//Initializes various values, check
 void eof_seek_and_render_position(unsigned long track, unsigned char diff, unsigned long pos);
 	//Seeks to the specified position and renders the screen, taking the AV delay into account
 
-void eof_read_keyboard_input(void);	//Updates the keypress state variables
-void eof_use_key(void);	//Erases the keypress state variables
+void eof_read_keyboard_input(char function);
+	//Updates the keypress state variables
+	//If function is nonzero, the numberpad number key strokes have the ASCII value discarded so that the main editor logic can detect the keys without conflicting with the other number keys.
+	//  This functionality needs to be disabled in the dialogs or else the number pad keys cannot be used to type into input fields
+void eof_use_key(void);
+	//Erases the keypress state variables
 
 #endif

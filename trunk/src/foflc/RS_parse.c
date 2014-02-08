@@ -59,7 +59,14 @@ void Export_RS(FILE *outf)
 
 		while(temp != NULL)				//For each piece of lyric in this line
 		{
-			expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+			if(Lyrics.rocksmithver == 2)
+			{	//If Rocksmith 2014 format is being exported, the maximum length per lyric is 48 characters
+				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 48);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+			}
+			else
+			{	//Otherwise the lyric limit is 32 characters
+				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+			}
 			for(index1 = index2 = 0; (size_t)index1 < strlen(buffer2); index1++)
 			{	//For each character in the expanded XML string
 				if(buffer2[index1] != '+')

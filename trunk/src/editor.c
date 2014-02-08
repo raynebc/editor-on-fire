@@ -1892,7 +1892,7 @@ if(eof_key_code == KEY_PAUSE)
 		}
 
 	/* decrease note length ( [ , SHIFT+[ or CTRL+SHIFT+[) */
-		if(eof_key_char == '[')
+		if(eof_key_code == KEY_OPENBRACE)
 		{
 			unsigned long reductionvalue = 100;	//Default decrease length when grid snap is disabled
 			if(eof_snap_mode == EOF_SNAP_OFF)
@@ -1919,7 +1919,7 @@ if(eof_key_code == KEY_PAUSE)
 		}
 
 	/* increase note length ( ] , SHIFT+ ] or CTRL+SHIFT+] ) */
-		if(eof_key_char == ']')
+		if(eof_key_code == KEY_CLOSEBRACE)
 		{
 			unsigned long increasevalue = 100;	//Default increase length when grid snap is disabled
 			if(eof_snap_mode == EOF_SNAP_OFF)

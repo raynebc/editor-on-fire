@@ -106,7 +106,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 		/* Read the keyboard input and simulate the keypresses so the dialog
 		 * player can pick up keyboard input after we intercepted it. This lets
 		 * us be aware of any keyboard input so we can react accordingly. */
-		eof_read_keyboard_input();
+		eof_read_keyboard_input(0);	//Don't drop ASCII values for number pad key presses
 		if(eof_key_pressed)
 		{
 			if(eof_key_code == KEY_ESC)

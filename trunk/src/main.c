@@ -1694,7 +1694,7 @@ void eof_fix_spectrogram(void)
 	}
 }
 
-void eof_read_keyboard_input(void)
+void eof_read_keyboard_input(char function)
 {
 	int ctr;
 	#define SHIFT_NUMBER_ARRAY_SIZE 10
@@ -1710,12 +1710,15 @@ void eof_read_keyboard_input(void)
 		eof_key_char = tolower(eof_key_uchar);
 //		eof_key_code = key_read >> 8;
 		eof_key_shifts = key_shifts;
-		for(ctr = 0; ctr < NUMPAD_KEY_ARRAY_SIZE; ctr++)
-		{	//For each of the number pad keys used in keyboard controls
-			if(eof_key_code == numpad_key_array[ctr])
-			{	//If the key pressed is one of those number pad keys
-				eof_key_char = 0;	//Destroy the ASCII code
-				break;
+		if(function)
+		{	//If the calling function wants to discard the ASCII value for number pad number keys
+			for(ctr = 0; ctr < NUMPAD_KEY_ARRAY_SIZE; ctr++)
+			{	//For each of the number pad keys used in keyboard controls
+				if(eof_key_code == numpad_key_array[ctr])
+				{	//If the key pressed is one of those number pad keys
+					eof_key_char = 0;	//Destroy the ASCII code
+					break;
+				}
 			}
 		}
 		if(KEY_EITHER_CTRL)
@@ -2209,7 +2212,7 @@ void eof_logic(void)
 {
 //	eof_log("eof_logic() entered");
 
-	eof_read_keyboard_input();
+	eof_read_keyboard_input(1);	//Drop ASCII values for number pad key presses
 	eof_read_global_keys();
 
 	/* see if we need to activate the menu */
