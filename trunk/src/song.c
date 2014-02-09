@@ -4366,10 +4366,17 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 				}
 				else
 				{	//Otherwise ensure one doesn't overlap the other improperly
-					maxlength = eof_get_note_max_length(sp, track, i - 1);	//Determine the maximum length for this note, taking its crazy status into account
-					if(maxlength && (eof_get_note_length(sp, track, i - 1) > maxlength))
-					{	//If the note is longer than its maximum length
-						eof_set_note_length(sp, track, i - 1, maxlength);	//Truncate it to its valid maximum length
+					if(tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT)
+					{	//If the note has linkNext status, force it to extend to the next note
+						eof_set_note_length(sp, track, i - 1, tp->note[next]->pos - tp->note[i-1]->pos);	//Assign the distance between the next note and this one as the length
+					}
+					else
+					{	//Otherwise enforce the minimum distance between the two notes
+						maxlength = eof_get_note_max_length(sp, track, i - 1);	//Determine the maximum length for this note, taking its crazy status into account
+						if(maxlength && (eof_get_note_length(sp, track, i - 1) > maxlength))
+						{	//If the note is longer than its maximum length
+							eof_set_note_length(sp, track, i - 1, maxlength);	//Truncate it to its valid maximum length
+						}
 					}
 				}
 			}
@@ -6549,12 +6556,17 @@ unsigned long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigne
 	long next = note;
 	unsigned long thisflags, thispos, nextpos;
 	unsigned char thisnote, nextnote;
+	int effective_min_note_distance = eof_min_note_distance;	//By default, the user configured minimum note distance is used
 
 	if(!sp || (track >= sp->tracks))
 		return 0;	//Return error
 
 	thisflags = eof_get_note_flags(sp, track, note);	//Get the note's flags so it can be checked for "crazy" status
 	thisnote = eof_get_note_note(sp, track, note);		//Also get its note bitflag
+	if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (thisflags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT))
+	{	//If this is a pro guitar note and it has linknext status
+		effective_min_note_distance = 0;	//The note is allowed to extend all the way up to the next note
+	}
 	while(1)
 	{
 		next = eof_track_fixup_next_note(sp, track, next);	//Find the next note that follows the specified note
@@ -6574,7 +6586,7 @@ unsigned long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigne
 
 		thispos = eof_get_note_pos(sp, track, note);	//Get the note's position
 		nextpos = eof_get_note_pos(sp, track, next);	//And the next note's
-		if(nextpos - thispos <= eof_min_note_distance)
+		if(nextpos - thispos <= effective_min_note_distance)
 		{	//If the notes aren't far enough apart to enforce the minimum note distance
 			return 1;
 		}
@@ -6583,7 +6595,7 @@ unsigned long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigne
 			break;
 		}
 	}
-	return (nextpos - thispos - eof_min_note_distance);
+	return (nextpos - thispos - effective_min_note_distance);
 }
 
 int eof_check_if_notes_exist_beyond_audio_end(EOF_SONG *sp)
