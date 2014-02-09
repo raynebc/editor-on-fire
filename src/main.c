@@ -136,6 +136,7 @@ int         eof_imports_recall_last_path = 0;	//If nonzero, various import dialo
 int         eof_rewind_at_end = 1;				//If nonzero, chart rewinds when the end of chart is reached during playback
 int         eof_disable_rs_wav = 0;				//If nonzero, a WAV file for use in Rocksmith will not be maintained during save even if Rocksmith file export is enabled
 int         eof_display_seek_pos_in_seconds = 0;	//If nonzero, the seek position in the piano roll and information panel is given in seconds instead of minutes:seconds
+int         eof_note_tails_clickable = 0;	//If nonzero, when the mouse hovers over a note/lyric tail instead of just the note/lyric head, that note/lyric becomes the hover note
 int         eof_smooth_pos = 1;
 int         eof_input_mode = EOF_INPUT_PIANO_ROLL;
 int         eof_windowed = 1;
@@ -1930,7 +1931,7 @@ void eof_read_global_keys(void)
 	}
 
 	/* load chart (CTRL+O) */
-	if(KEY_EITHER_CTRL && (eof_key_char == 'o'))
+	if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && (eof_key_char == 'o'))
 	{	//File>Load
 		clear_keybuf();
 		eof_menu_file_load();

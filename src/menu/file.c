@@ -99,7 +99,7 @@ DIALOG eof_settings_dialog[] =
 DIALOG eof_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  480, 396, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
+	{ d_agup_window_proc,0,   48,  480, 412, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
 	{ d_agup_check_proc, 16,  75,  110, 16,  2,   23,  0,    0,      1,   0,   "Inverted Notes",      NULL, NULL },
 	{ d_agup_check_proc, 150, 75,  92 , 16,  2,   23,  0,    0,      1,   0,   "Lefty Mode",          NULL, NULL },
 	{ d_agup_check_proc, 306, 75,  128, 16,  2,   23,  0,    0,      1,   0,   "Note Auto-Adjust",    NULL, NULL },
@@ -123,13 +123,13 @@ DIALOG eof_preferences_dialog[] =
 	{ eof_verified_edit_proc,392,185,30,20,  0,   0,   0,    0,      3,   0,   eof_etext,     "0123456789", NULL },
 	{ d_agup_check_proc, 248, 252, 214, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
 	{ d_agup_check_proc, 248, 268, 184, 16,  2,   23,  0,    0,      1,   0,   "Use dB style seek controls",NULL, NULL },
-	{ d_agup_text_proc,  24,  268, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
-	{ d_agup_list_proc,  16,  286, 100, 110, 2,   23,  0,    0,      0,   0,   (void *)eof_input_list,        NULL, NULL },
-	{ d_agup_text_proc,  150, 286, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
-	{ d_agup_list_proc,  129, 301, 100, 95,  2,   23,  0,    0,      0,   0,   (void *)eof_colors_list,       NULL, NULL },
-	{ d_agup_button_proc,12,  401, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-	{ d_agup_button_proc,86,  401, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-	{ d_agup_button_proc,160, 401, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+	{ d_agup_text_proc,  24,  284, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
+	{ d_agup_list_proc,  16,  302, 100, 110, 2,   23,  0,    0,      0,   0,   (void *)eof_input_list,        NULL, NULL },
+	{ d_agup_text_proc,  150, 302, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
+	{ d_agup_list_proc,  129, 317, 100, 95,  2,   23,  0,    0,      0,   0,   (void *)eof_colors_list,       NULL, NULL },
+	{ d_agup_button_proc,12,  417, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_button_proc,86,  417, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+	{ d_agup_button_proc,160, 417, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
 	{ d_agup_text_proc,  16,  206, 120, 12,  0,   0,   0,    0,      0,   0,   "Top of 2D pane shows:",NULL,NULL },
 	{ d_agup_radio_proc, 161, 206, 60,  16,  2,   23,  0,    0,      1,   0,   "Names",               NULL, NULL },
 	{ d_agup_radio_proc, 224, 206, 72,  16,  2,   23,  0,    0,      1,   0,   "Sections",            NULL, NULL },
@@ -147,6 +147,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 396, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
 	{ d_agup_check_proc, 16,  252, 182, 16,  2,   23,  0,    0,      1,   0,   "Enable logging on launch",NULL, NULL },
 	{ d_agup_check_proc, 248, 412, 196, 16,  2,   23,  0,    0,      1,   0,   "Display seek pos. in seconds",NULL, NULL },
+	{ d_agup_check_proc, 248, 428, 174, 16,  2,   23,  0,    0,      1,   0,   "Make note tails clickable",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1081,6 +1082,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[45].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
 	eof_preferences_dialog[46].flags = enable_logging ? D_SELECTED : 0;						//Enable logging on launch
 	eof_preferences_dialog[47].flags = eof_display_seek_pos_in_seconds ? D_SELECTED : 0;	//Display seek pos. in seconds
+	eof_preferences_dialog[48].flags = eof_note_tails_clickable ? D_SELECTED : 0;			//Make note tails clickable
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1128,7 +1130,7 @@ int eof_menu_file_preferences(void)
 			if(eof_etext2[0] != '\0')
 			{	//If the minimum note distance field is populated
 				eof_min_note_distance = atol(eof_etext2);
-				if(eof_min_note_distance < 0)
+				if(eof_min_note_distance < 1)
 				{	//Validate this value
 					eof_min_note_distance = 3;
 				}
@@ -1174,6 +1176,7 @@ int eof_menu_file_preferences(void)
 			eof_disable_rs_wav = (eof_preferences_dialog[45].flags == D_SELECTED ? 1 : 0);
 			enable_logging = (eof_preferences_dialog[46].flags == D_SELECTED ? 1 : 0);
 			eof_display_seek_pos_in_seconds = (eof_preferences_dialog[47].flags == D_SELECTED ? 1 : 0);
+			eof_note_tails_clickable = (eof_preferences_dialog[48].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 29)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1214,6 +1217,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[45].flags = 0;					//Don't write Rocksmith WAV file
 			eof_preferences_dialog[46].flags = D_SELECTED;			//Enable logging on launch
 			eof_preferences_dialog[47].flags = 0;					//Display seek pos. in seconds
+			eof_preferences_dialog[48].flags = 0;					//Make note tails clickable
 		}//If the user clicked "Default
 	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -1227,10 +1231,6 @@ int eof_menu_file_preferences(void)
 	if(original_rs1_export_setting != eof_write_rs_files)
 	{	//If the preference for exporting RS1 file was changed
 		eof_delete_rocksmith_wav();	//Delete the Rocksmith WAV file since the amount of silence appended to it will differ
-	}
-	if(eof_write_rs2_files)
-	{	//If Rocksmith 2 export is enabled
-		eof_min_note_distance = 0;	//Override the minimum distance between notes to be 0ms because some types of RS2 authoring will require this
 	}
 	return 1;
 }

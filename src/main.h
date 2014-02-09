@@ -9,7 +9,7 @@
 #include "control.h"
 #include "editor.h"
 
-#define EOF_VERSION_STRING "EOF v1.8RC8 (r1289)"
+#define EOF_VERSION_STRING "EOF v1.8RC8"
 #define EOF_COPYRIGHT_STRING "(c)2008-2010 T^3 Software."
 
 #define KEY_EITHER_ALT (eof_key_shifts & KB_ALT_FLAG)
@@ -329,6 +329,7 @@ extern int         eof_imports_recall_last_path;
 extern int         eof_rewind_at_end;
 extern int         eof_disable_rs_wav;
 extern int         eof_display_seek_pos_in_seconds;
+extern int         eof_note_tails_clickable;
 extern int         eof_smooth_pos;
 extern int         eof_windowed;
 extern int         eof_anchor_all_beats;
@@ -391,7 +392,7 @@ extern int         eof_seek_hover_note;	//The hover note that is tracked using t
 extern int         eof_hover_note_2;	//The hover note that is tracked for fret catalog playback
 extern long        eof_hover_beat;
 extern long        eof_hover_beat_2;
-extern int         eof_hover_piece;
+extern int         eof_hover_piece;		//The lane number that the mouse is over
 extern int         eof_hover_key;
 extern int         eof_hover_lyric;
 extern int         eof_last_tone;

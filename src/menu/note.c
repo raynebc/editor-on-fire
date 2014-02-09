@@ -955,12 +955,12 @@ void eof_prepare_note_menu(void)
 			if(intremolo)
 			{
 				eof_tremolo_menu[1].flags = 0;	//Note>Tremolo>Remove
-				(void) ustrcpy(eof_tremolo_menu_mark_text, "Re-&Mark");
+				(void) ustrcpy(eof_tremolo_menu_mark_text, "Re-&Mark\t" CTRL_NAME "+Shift+O");
 			}
 			else
 			{
 				eof_tremolo_menu[1].flags = D_DISABLED;
-				(void) ustrcpy(eof_tremolo_menu_mark_text, "&Mark");
+				(void) ustrcpy(eof_tremolo_menu_mark_text, "&Mark\t" CTRL_NAME "+Shift+O");
 			}
 
 			/* Tremolo copy from */
@@ -4292,6 +4292,11 @@ int eof_menu_note_edit_pro_guitar_note(void)
 			eof_render();	//Redraw the screen
 		}
 	}while((retval == 54) || (retval == 56) || (retval == 58));	//Re-run this dialog if the user clicked previous, apply or next
+
+	if(undo_made)
+	{	//If any notes were altered
+		eof_pro_guitar_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run the fixup logic for this track, since the alteration of the linkNext status can change the length of applicable notes
+	}
 
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;

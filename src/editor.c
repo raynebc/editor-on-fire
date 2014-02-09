@@ -1981,6 +1981,14 @@ if(eof_key_code == KEY_PAUSE)
 			}
 		}
 
+	/* Mark tremolo (CTRL+SHIFT+O) */
+	if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT && (eof_key_char == 'o'))
+	{
+		(void) eof_menu_tremolo_mark();
+		eof_shift_used = 1;	//Track that the SHIFT key was used
+		eof_use_key();
+	}
+
 	/* select like (CTRL+L) */
 	/* precise select like (SHIFT+L) */
 	/* edit lyric (L in PART VOCALS) */
@@ -6208,7 +6216,8 @@ void eof_seek_to_nearest_grid_snap(void)
 
 int eof_find_hover_note(int targetpos, int x_tolerance, char snaplogic)
 {
-	unsigned long i, npos, leftboundary;
+	unsigned long i, npos, leftboundary, hoverlane;
+	long nlen;
 	if(targetpos < 0)
 	{
 		targetpos = 0;
@@ -6219,6 +6228,10 @@ int eof_find_hover_note(int targetpos, int x_tolerance, char snaplogic)
 		eof_snap_length_logic(&eof_snap);
 		eof_pen_note.pos = eof_snap.pos;
 		eof_pen_visible = 1;
+	}
+	if(eof_note_tails_clickable)
+	{	//If the user enabled the preference to include note tails in the clickable area for notes
+		hoverlane = eof_find_pen_note_mask();	//Find which lane the mouse is currently hovering over
 	}
 	for(i = 0; (i < eof_get_track_size(eof_song, eof_selected_track)); i++)
 	{	//For each note in the active track, until a hover note is found
@@ -6233,11 +6246,41 @@ int eof_find_hover_note(int targetpos, int x_tolerance, char snaplogic)
 			{
 				leftboundary = npos - x_tolerance;
 			}
-			if((targetpos >= leftboundary) && (targetpos <= npos + x_tolerance))
+			if(eof_note_tails_clickable && (eof_vocals_selected || (hoverlane & eof_get_note_note(eof_song, eof_selected_track, i))))
+			{	//If the user enabled the preference to include note tails in the clickable area for notes, and the vocal track is active or the mouse is hovering over a lane this note uses
+				long next = eof_track_fixup_next_note(eof_song, eof_selected_track, i);	//Find the next note in the track difficulty
+
+				nlen = eof_get_note_length(eof_song, eof_selected_track, i);
+				if(nlen < 0)
+				{	//If the note length was not retrievable
+					nlen = 0;
+				}
+				else if(next > 0)
+				{	//If there was a next note, ensure that the clickable area of the note is shortened to allow clickable space for that next note
+					unsigned long nextpos = eof_get_note_pos(eof_song, eof_selected_track, next);
+
+					if(npos + nlen + x_tolerance >= nextpos - x_tolerance)
+					{	//If the note's tail extends into the clickable area of the next note
+						if(nlen >= x_tolerance)
+						{	//If the note length's clickable area can be reduced by the tolerance
+							nlen -= x_tolerance;
+						}
+						else
+						{	//Otherwise don't allow the note's tail to be clickable because it's too close to the next note
+							nlen = 0;
+						}
+					}
+				}
+			}
+			else
+			{	//Otherwise only include the note head as the clickable area, including the specified tolerance
+				nlen = 0;
+			}
+			if((targetpos >= leftboundary) && (targetpos <= npos + nlen + x_tolerance))
 			{
 				return i;
 			}
-			else if(snaplogic && ((eof_pen_note.pos >= npos - x_tolerance) && (eof_pen_note.pos <= npos + x_tolerance)))
+			else if(snaplogic && ((eof_pen_note.pos >= npos - x_tolerance) && (eof_pen_note.pos <= npos + nlen + x_tolerance)))
 			{	//If the position wasn't close enough to a note, but snaplogic is enabled, check the position's closest grid snap
 				return i;
 			}
