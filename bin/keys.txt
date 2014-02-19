@@ -29,7 +29,7 @@ Playback and Seek controls:
     
         Hold Shift while pressing to move quickly.
 
-        Hold both Ctrl and Shift while pressing to move very slowly.
+        Hold both Ctrl and Shift while pressing to move very slowly (1ms at a time).
 
         (If Feedback input method is active, each left/right press seeks one grid
         snap backward/forward.)

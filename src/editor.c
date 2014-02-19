@@ -1434,6 +1434,17 @@ if(eof_key_code == KEY_PAUSE)
 		}
 	}
 
+	/* toggle MIDI tones (SHIFT+T) */
+	if((eof_key_char == 't') && !KEY_EITHER_ALT)
+	{
+		if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
+		{	//If SHIFT is held but CTRL is not
+			(void) eof_menu_edit_midi_tones();
+			eof_shift_used = 1;	//Track that the SHIFT key was used
+			eof_use_key();
+		}
+	}
+
 	/* toggle full screen 3D view (CTRL+F)*/
 	if((eof_key_char == 'f') && KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 	{
@@ -1946,7 +1957,6 @@ if(eof_key_code == KEY_PAUSE)
 		}
 
 	/* toggle tapping status (CTRL+T in a pro guitar track) */
-	/* toggle MIDI tones (SHIFT+T) */
 	/* toggle crazy status (T) */
 	/* add tone change (CTRL+SHIFT+T in a pro guitar track) */
 		if((eof_key_char == 't') && !KEY_EITHER_ALT)
@@ -1958,12 +1968,6 @@ if(eof_key_code == KEY_PAUSE)
 					(void) eof_menu_note_toggle_tapping();
 					eof_use_key();
 				}
-			}
-			else if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
-			{	//If SHIFT is held but CTRL is not
-				(void) eof_menu_edit_midi_tones();
-				eof_shift_used = 1;	//Track that the SHIFT key was used
-				eof_use_key();
 			}
 			else if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 			{	//If neither SHIFT nor CTRL are held
@@ -6216,7 +6220,7 @@ void eof_seek_to_nearest_grid_snap(void)
 
 int eof_find_hover_note(int targetpos, int x_tolerance, char snaplogic)
 {
-	unsigned long i, npos, leftboundary, hoverlane;
+	unsigned long i, npos, leftboundary, hoverlane = 0;
 	long nlen;
 	if(targetpos < 0)
 	{

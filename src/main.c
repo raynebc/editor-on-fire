@@ -1722,6 +1722,14 @@ void eof_read_keyboard_input(char function)
 				}
 			}
 		}
+		else
+		{	//Otherwise ensure that the numberpad enter key can be picked up as if it was the regular enter key (ie. in dialog menus)
+			if(eof_key_code == KEY_ENTER_PAD)
+			{
+				eof_key_code = KEY_ENTER;
+				eof_key_char = '\r';
+			}
+		}
 		if(KEY_EITHER_CTRL)
 		{
 			if((eof_key_char >= 1) && (eof_key_char <= 26))
