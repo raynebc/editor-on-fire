@@ -152,17 +152,17 @@ typedef struct
 
 typedef struct
 {
-	char name[EOF_NAME_LENGTH + 1];
+	char name[EOF_MAX_LYRIC_LENGTH + 1];	//Should be the longer of the note structure's name length or the lyric structure's name length
 	unsigned char type;
 	unsigned char note;
 	unsigned long endbeat;
-	unsigned long beat;       // which beat this note was copied from
+	unsigned long beat; 		//Which beat this note was copied from
 	unsigned long pos;
 	long length;				//Keep as signed, since the npos logic uses signed math
 	unsigned long midi_pos;
-	unsigned long midi_length;
-	float         porpos;     // position of note within the beat (100.0 = full beat)
-	float         porendpos;
+	long midi_length;			//Keep as signed, since the npos logic uses signed math
+	float         porpos;		//Position of note within the beat (100.0 = full beat)
+	float         porendpos;	//Position of the end of the note within the beat
 	unsigned long flags;
 	unsigned long eflags;
 	unsigned long legacymask;
@@ -178,7 +178,7 @@ typedef struct
 typedef struct
 {
 	unsigned char type;		//The lyric set this lyric belongs to (0=PART VOCALS, 1=HARM1, 2=HARM2...)
-	unsigned char note;		// if zero, the lyric has no defined pitch
+	unsigned char note;		//If zero, the lyric has no defined pitch
 	char          text[EOF_MAX_LYRIC_LENGTH + 1];
 	unsigned long midi_pos;
 	long midi_length;		//Keep as signed, since the npos logic uses signed math

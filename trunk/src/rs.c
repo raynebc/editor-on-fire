@@ -4606,9 +4606,9 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 							techunpitchedslideto = fret + unpitchedslidediff + tp->capo;	//Get the correct ending fret for this string's slide, applying the capo position
 						}
 					}
-					if(thistechbends && !techbends)
-					{	//If this tech note's bend was the first bend found to affect this note
-						techbends = thistechbends;	//Track the first tech note bend (in halfsteps)
+					if(thistechbends > techbends)
+					{	//If this tech note's bend was the strongest found for this note so far
+						techbends = thistechbends;	//Track the strongest tech note bend (in halfsteps)
 					}
 				}//If this tech note overlaps with the specified note
 			}//If the tech note is in the same difficulty as the specified note and uses the same string
