@@ -1605,34 +1605,24 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		}
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
 		{
-			if(lowestfret)
-			{	//If at least one of the strings is fretted, display an unpitched slide indicator
-				if((lowestfret == np->unpitchend) && sanitycheck)
-				{	//Invalid unpitched slide (ends on the same fret it starts at) and sanity checking is enabled
-					buffer[index++] = '?';	//Place this character to alert the user
-				}
-				else
-				{
-					if(lowestfret > np->unpitchend)
-					{	//If the unpitched slide goes lower than this position
-						buffer[index++] = 'j';	//In the symbols font, j is the unpitched slide down indicator
-					}
-					else if(lowestfret < np->unpitchend)
-					{	//If the unpitched slide goes higher than this position
-						buffer[index++] = 'i';	//In the symbols font, i is the unpitched slide up indicator
-					}
-					(void) snprintf(buffer2, sizeof(buffer2) - 1, "%d", np->unpitchend);	//Build a string out of the ending fret value
-					for(index2 = 0; buffer2[index2] != '\0'; index2++)
-					{	//For each character in the string
-						buffer[index++] = buffer2[index2];	//Append it to the notation string
-					}
-				}
+			if(((lowestfret == np->unpitchend) || !lowestfret) && sanitycheck)
+			{	//If the unpitched slide is not valid (it ends on the same fret it starts on or the note/chord is played open) and sanity checking is enabled
+				buffer[index++] = '?';	//Place this character to alert the user
 			}
 			else
-			{	//Slides are not valid for open strings/chords
-				if(sanitycheck)
-				{	//If sanity checking is enabled
-					buffer[index++] = '?';	//Place this character to alert the user
+			{	//The slide is valid
+				if(lowestfret > np->unpitchend)
+				{	//If the unpitched slide goes lower than this position
+					buffer[index++] = 'j';	//In the symbols font, j is the unpitched slide down indicator
+				}
+				else if(lowestfret < np->unpitchend)
+				{	//If the unpitched slide goes higher than this position
+					buffer[index++] = 'i';	//In the symbols font, i is the unpitched slide up indicator
+				}
+				(void) snprintf(buffer2, sizeof(buffer2) - 1, "%d", np->unpitchend);	//Build a string out of the ending fret value
+				for(index2 = 0; buffer2[index2] != '\0'; index2++)
+				{	//For each character in the string
+					buffer[index++] = buffer2[index2];	//Append it to the notation string
 				}
 			}
 		}

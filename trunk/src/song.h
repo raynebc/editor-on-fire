@@ -84,6 +84,7 @@
 //The following temporary flags are maintained internally and do not save to file
 #define EOF_NOTE_TFLAG_TEMP       1	//This flag will represent a temporary status, such as a note that was generated for temporary use that will be removed
 #define EOF_NOTE_TFLAG_IGNORE     2	//This flag will represent a note that is not exported to XML (such as a chord within an arpeggio that is converted into single notes)
+#define EOF_NOTE_TFLAG_ARP        4	//This flag will represent a note that is a chord within an arpeggio, for RS export of arpeggio handshapes
 
 //The following extended flags pertain to pro guitar notes
 #define EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE  1		//This flag specifies a note that will export to RS2 format with the "ignore" status set to nonzero, for special uses
@@ -634,7 +635,7 @@ void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourc
 	//Copies the specified note to the specified track as a new note, returning a pointer to the newly created note structure, or NULL on error
 	//The specified position, length and type are applied to the new note.  Other note variables such as the bitmask/pitch and name/lyric text are copied as-is
 	//If the source is a pro guitar track and the destination is not, the source note's legacy bitmask is used if defined
-	//If the source and destination are both pro guitar tracks, the source note's fret array, finger array, ghost bitmask, legacy bitmask, bend strength and slide end position are copied
+	//If the source and destination are both pro guitar tracks, the source note's fret array, finger array, ghost bitmask, legacy bitmask, bend strength, slide end position and extended flags are copied
 long eof_get_prev_note_type_num(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//Returns the note immediately before the specified that is in the same difficulty, provided that the notes are sorted chronologically, or -1 if no such note exists
 void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long amount, int dir);
