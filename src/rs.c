@@ -143,10 +143,10 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 	if(!results)
 		return 0;	//Return error
 
-	if(!sp || (track >= sp->tracks))
+	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 	{
 		*results = NULL;
-		return 0;	//Return error
+		return 0;	//Invalid parameters
 	}
 
 	target |= 4;	//Allow ghosted notes to be counted for chords, since this is required for arpeggios
@@ -166,22 +166,29 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 	{	//For each note in the track
 		if(eof_note_count_rs_lanes(sp, track, ctr, target) > 1)
 		{	//If this note is a valid chord based on the target
-			match = 0;
-			for(ctr2 = ctr + 1; ctr2 < tp->notes; ctr2++)
-			{	//For each note in the track that follows this note
-				if((eof_note_count_rs_lanes(sp, track, ctr2, target) > 1) && !eof_note_compare_simple(sp, track, ctr, ctr2))
-				{	//If this note matches one that follows it, and that later note is a valid chord for the target Rocksmith game
-					if(!(target & 2) || (eof_is_partially_ghosted(sp, track, ctr) == eof_is_partially_ghosted(sp, track, ctr2)))
-					{	//If the target is Rocksmith 1, or if both notes have the same ghost status (either no gems ghosted or at least one gem ghosted)
-						notelist[ctr] = NULL;	//Eliminate this note from the list
-						match = 1;	//Note that this chord matched one of the others
-						break;
+			if(!(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE) || (tp->note[ctr]->tflags & EOF_NOTE_TFLAG_ARP))
+			{	//If this note is not ignored or is a chord within an arpeggio
+				match = 0;
+				for(ctr2 = ctr + 1; ctr2 < tp->notes; ctr2++)
+				{	//For each note in the track that follows this note
+					if((eof_note_count_rs_lanes(sp, track, ctr2, target) > 1) && !eof_note_compare_simple(sp, track, ctr, ctr2))
+					{	//If this note matches one that follows it, and that later note is a valid chord for the target Rocksmith game
+						if(!(target & 2) || (eof_is_partially_ghosted(sp, track, ctr) == eof_is_partially_ghosted(sp, track, ctr2)))
+						{	//If the target is Rocksmith 1, or if both notes have the same ghost status (either no gems ghosted or at least one gem ghosted)
+							notelist[ctr] = NULL;	//Eliminate this note from the list
+							match = 1;	//Note that this chord matched one of the others
+							break;
+						}
 					}
 				}
-			}
-			if(!match)
-			{	//If this chord didn't match any of the other notes
-				unique_count++;	//Increment unique chord counter
+				if(!match)
+				{	//If this chord didn't match any of the other notes
+					unique_count++;	//Increment unique chord counter
+				}
+			}//If this note is not ignored or is a chord within an arpeggio
+			else
+			{	//This chord is ignored and isn't for an arpeggio shape
+				notelist[ctr] = NULL;	//Eliminate this note from the list since it's not a chord
 			}
 		}//If this note is a valid chord based on the target
 		else
@@ -895,6 +902,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							if(new_note)
 							{	//If the new note was created
 								new_note->flags = tp->note[ctr - 1]->flags;					//Clone the flags
+								new_note->eflags = tp->note[ctr]->eflags;					//Clone the extended flags
 								new_note->tflags |= EOF_NOTE_TFLAG_TEMP;					//Mark the note as temporary
 								new_note->bendstrength = tp->note[ctr - 1]->bendstrength;	//Copy the bend strength
 								new_note->slideend = tp->note[ctr - 1]->slideend;			//And the slide end position
@@ -1656,6 +1664,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	EOF_RS_TECHNIQUES tech;
 	EOF_PRO_GUITAR_NOTE *new_note;
 	char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct notes are exported
+	char match;		//Used for testing whether partially ghosted chords are inside of arpeggio phrases
 
 	eof_log("eof_export_rocksmith_2_track() entered", 1);
 
@@ -2189,6 +2198,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						if(new_note)
 						{	//If the new note was created
 							new_note->flags = tp->note[ctr]->flags;					//Clone the flags
+							new_note->eflags = tp->note[ctr]->eflags;				//Clone the extended flags
 							new_note->tflags |= EOF_NOTE_TFLAG_TEMP;				//Mark the note as temporary
 							new_note->bendstrength = tp->note[ctr]->bendstrength;	//Copy the bend strength
 							new_note->frets[ctr3] = tp->note[ctr]->frets[ctr3];		//And this string's fret value
@@ -2223,26 +2233,23 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//Identify chords that are inside arpeggio phrases, which will need to be broken into single notes so that they display correctly in-game
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the active pro guitar track
-		if(eof_note_count_rs_lanes(sp, track, ctr, 2) > 1)
-		{	//If this note would export as a chord
+		if((eof_note_count_rs_lanes(sp, track, ctr, 2) > 1) && !(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE))
+		{	//If this note would export as a chord and isn't already ignored
 			for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
 			{	//For each arpeggio section in the track
 				if((tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
 				{	//If the note is within the arpeggio phrase
 					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as single notes
+					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_ARP;	//Mark this chord as being in an arpeggio phrase
 					for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
 					{	//For each of the 6 supported strings
 						if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
 						{	//If this string is used and is not ghosted
-							new_note = eof_track_add_create_note(sp, track, bitmask, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type, NULL);	//Initialize a new single note at this position
+							new_note = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);
 							if(new_note)
 							{	//If the new note was created
-								new_note->flags = tp->note[ctr]->flags;					//Clone the flags
 								new_note->tflags |= EOF_NOTE_TFLAG_TEMP;				//Mark the note as temporary
-								new_note->bendstrength = tp->note[ctr]->bendstrength;	//Copy the bend strength
-								new_note->slideend = tp->note[ctr]->slideend;			//And the slide end position
-								new_note->unpitchend = tp->note[ctr]->unpitchend;		//And the unpitched slide end position
-								new_note->frets[ctr3] = tp->note[ctr]->frets[ctr3];		//And this string's fret value
+								new_note->note = bitmask;								//Turn the cloned chord into a single note on the appropriate string
 							}
 							else
 							{
@@ -2261,6 +2268,57 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				}
 			}
 		}
+	}
+	eof_track_sort_notes(sp, track);	//Re-sort the notes
+
+	//Identify partially ghosted chords that are NOT inside arpeggio phrases, which will need to be temporarily replaced with versions without the ghost notes
+	//This will ensure these chords don't use an arpeggio chord template for the chord instance or handshape
+	for(ctr = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the active pro guitar track
+		if((eof_note_count_rs_lanes(sp, track, ctr, 4) > 1) && !(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE))
+		{	//If this note contains multiple gems and isn't already ignored
+			if(eof_is_partially_ghosted(sp, track, ctr))
+			{	//If it is partially ghosted
+				for(ctr2 = 0, match = 0; ctr2 < tp->arpeggios; ctr2++)
+				{	//For each arpeggio section in the track
+					if((tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
+					{	//If the note is within the arpeggio phrase
+						match = 1;	//Track that it was inside an arpeggio phrase
+						break;	//Exit inner for loop
+					}
+				}
+				if(!match)
+				{	//If the partially ghosted chord wasn't in an arpeggio phrase, mark it as ignored and insert a temporary that is the same except without the ghost gems
+					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as the newly build chord below
+					new_note = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);
+					if(new_note)
+					{	//If the new note was created
+						new_note->tflags |= EOF_NOTE_TFLAG_TEMP;				//Mark the note as temporary
+						new_note->note = 0;										//Clear the new note's note mask, it will be rebuilt below
+						for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+						{	//For each of the 6 supported strings
+							if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
+							{	//If this string is used and not ghosted
+								new_note->note |= bitmask;	//Set this bit in the mask
+								new_note->frets[ctr3] = tp->note[ctr]->frets[ctr3];		//Copy this string's fret value
+							}
+						}
+					}
+					else
+					{
+						allegro_message("Error:  Couldn't expand a non arpeggio partially ghosted chord into a non ghosted chord.  Aborting Rocksmith export.");
+						eof_log("Error:  Couldn't expand a non arpeggio partially ghosted chord into a non ghosted chord.  Aborting Rocksmith export.", 1);
+						free(sectionlist);
+						eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+						if(restore_tech_view)
+						{	//If tech view needs to be re-enabled
+							eof_menu_track_enable_tech_view(tp);
+						}
+						return 0;	//Return error
+					}
+				}
+			}//If it is partially ghosted
+		}//If this note would export as a chord and isn't already ignored
 	}
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
@@ -2685,8 +2743,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			//Count the number of single notes and chords in this difficulty
 			for(ctr3 = 0, numsinglenotes = 0, numchords = 0; ctr3 < tp->notes; ctr3++)
 			{	//For each note in the track
-				if(eof_get_note_type(sp, track, ctr3) == ctr)
-				{	//If the note is in this difficulty
+				if((eof_get_note_type(sp, track, ctr3) == ctr) && !(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE))
+				{	//If the note is in this difficulty and isn't being ignored
 					unsigned long lanecount = eof_note_count_rs_lanes(sp, track, ctr3, 2);	//Count the number of non ghosted gems for this note
 					if(lanecount == 1)
 					{	//If the note has only one gem
@@ -2694,10 +2752,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					}
 					else if(lanecount > 1)
 					{	//If the note has multiple gems
-						if(!(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE))
-						{	//If this chord wasn't split into single notes and is being ignored
-							numchords++;	//Increment counter
-						}
+						numchords++;	//Increment counter
 					}
 				}
 			}
@@ -2712,8 +2767,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				(void) pack_fputs(buffer, fp);
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
-					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 2) == 1))
-					{	//If this note is in this difficulty and will export as a single note (only one gem has non ghosted status)
+					if(!(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE) && (eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 2) == 1))
+					{	//If this note is not ignored, is in this difficulty and will export as a single note (only one gem has non ghosted status)
 						for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
 						{	//For each string used in this track
 							if((eof_get_note_note(sp, track, ctr3) & bitmask) && !(tp->note[ctr3]->ghost & bitmask))
@@ -2722,7 +2777,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								break;	//Only one note entry is valid for each single note, so break from loop
 							}//If this string is used in this note and it is not ghosted
 						}//For each string used in this track
-					}//If this note is in this difficulty and is a single note (and not a chord)
+					}//If this note is not ignored, is in this difficulty and will export as a single note (only one gem has non ghosted status)
 				}//For each note in the track
 				(void) pack_fputs("      </notes>\n", fp);
 			}//If there's at least one single note in this difficulty
@@ -2750,7 +2805,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1))
 					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems)
 						if(!(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE))
-						{	//If this chord wasn't split into single notes and is being ignored
+						{	//If this chord wasn't split into single notes or converted into a non ghosted chord and is being ignored
 							char tagend[2] = "/";	//If a chord tag is to have a chordNote subtag, this string is emptied so that the chord tag doesn't end in the same line
 							chordnote = 0;	//Reset this status
 
@@ -2811,7 +2866,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								(void) pack_fputs("        </chord>\n", fp);
 							}//If chordNote tags are to be written
 							lastchordid = chordid;
-						}//If this chord wasn't split into single notes and is being ignored
+						}//If this chord wasn't split into single notes or converted into a non ghosted chord and is being ignored
 					}//If this note is in this difficulty and will export as a chord (at least two non ghosted gems)
 				}//For each note in the track
 				(void) pack_fputs("      </chords>\n", fp);
@@ -2904,96 +2959,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			handshapectr = 0;
 			for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 			{	//For each note in the track
-				if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1) || eof_is_partially_ghosted(sp, track, ctr3)))
-				{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems) or an arpeggio handshape
-					unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
-
-					//Find this chord's ID
-					for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
-					{	//For each of the entries in the unique chord list
-						if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]) && (eof_is_partially_ghosted(sp, track, ctr3) == eof_is_partially_ghosted(sp, track, chordlist[ctr4])))
-						{	//If this note matches a chord list entry and has the same ghost status (either no gems ghosted or at least one gem ghosted)
-							chordid = ctr4;	//Store the chord list entry number
-							break;
-						}
-					}
-					if(ctr4 >= chordlistsize)
-					{	//If the chord couldn't be found
-						allegro_message("Error:  Couldn't match chord with chord template while counting handshapes.  Aborting Rocksmith 2 export.");
-						eof_log("Error:  Couldn't match chord with chord template while counting handshapes.  Aborting Rocksmith 2 export.", 1);
-						if(chordlist)
-						{	//If the chord list was built
-							free(chordlist);
-						}
-						eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-						if(restore_tech_view)
-						{	//If tech view needs to be re-enabled
-							eof_menu_track_enable_tech_view(tp);
-						}
-						return 0;	//Return error
-					}
-					handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position
-
-					//If this chord is at the beginning of an arpeggio phrase, skip the rest of the notes in that phrase
-					for(ctr5 = 0; ctr5 < tp->arpeggios; ctr5++)
-					{	//For each arpeggio phrase in the track
-						if(((tp->note[ctr3]->pos + 10 >= tp->arpeggio[ctr5].start_pos) && (tp->note[ctr3]->pos <= tp->arpeggio[ctr5].start_pos + 10)) && (tp->note[ctr3]->type == tp->arpeggio[ctr5].difficulty))
-						{	//If this chord's start position is within 10ms of an arpeggio phrase in this track difficulty
-							while(1)
-							{
-								nextnote = eof_track_fixup_next_note(sp, track, ctr3);
-								if((nextnote >= 0) && (tp->note[nextnote]->pos <= tp->arpeggio[ctr5].end_pos))
-								{	//If there is another note and it is in the same arpeggio phrase
-									ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they are also in the phrase
-								}
-								else
-								{	//The next note (if any) is not in the arpeggio phrase
-									break;	//Break from while loop
-								}
-							}
-							break;	//Break from for loop
-						}
-					}
-
-					//Examine subsequent notes to see if they match this chord
-					while(1)
-					{
-						nextnote = eof_track_fixup_next_note(sp, track, ctr3);
-						if((nextnote >= 0) && (eof_note_count_rs_lanes(sp, track, nextnote, 2) > 1))
-						{	//If there is another note and it is a chord
-							if(!eof_note_has_high_chord_density(sp, track, nextnote, 2))
-							{	//If the next note is low density (including if it has any techniques requiring a new handshape tag such as sliding)
-								handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
-								break;	//Break from while loop
-							}
-						}
-						if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chord, nextnote) || eof_is_string_muted(sp, track, nextnote)) && !eof_is_partially_ghosted(sp, track, nextnote))
-						{	//If there is another note, it either matches this chord or is completely string muted and it is not partially ghosted (an arpeggio)
-							if(eof_is_partially_ghosted(sp, track, chord))
-							{	//If the handshape being written was for an arpeggio, and the next note isn't
-								handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of the arpeggio's last note
-								break;	//Break from while loop
-							}
-							ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
-						}
-						else
-						{	//The next note (if any) is not a repeat of this note and is not completely string muted
-							handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
-							break;	//Break from while loop
-						}
-					}
-
-					handshapectr++;	//One more hand shape has been counted
-				}//If this note is in this difficulty and will export as a chord (at least two non ghosted gems)
-			}//For each note in the track
-
-			if(handshapectr)
-			{	//If there was at least one hand shape to write
-				//Write the hand shapes
-				(void) snprintf(buffer, sizeof(buffer) - 1, "      <handShapes count=\"%lu\">\n", handshapectr);
-				(void) pack_fputs(buffer, fp);
-				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
-				{	//For each note in the track
+				if(!(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE) || (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_ARP))
+				{	//If this note is not ignored or is a chord within an arpeggio
 					if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1) || eof_is_partially_ghosted(sp, track, ctr3)))
 					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems) or an arpeggio handshape
 						unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
@@ -3009,8 +2976,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						}
 						if(ctr4 >= chordlistsize)
 						{	//If the chord couldn't be found
-							allegro_message("Error:  Couldn't match chord with chord template while writing handshapes.  Aborting Rocksmith 2 export.");
-							eof_log("Error:  Couldn't match chord with chord template while writing handshapes.  Aborting Rocksmith 2 export.", 1);
+							allegro_message("Error:  Couldn't match chord with chord template while counting handshapes.  Aborting Rocksmith 2 export.");
+							eof_log("Error:  Couldn't match chord with chord template while counting handshapes.  Aborting Rocksmith 2 export.", 1);
 							if(chordlist)
 							{	//If the chord list was built
 								free(chordlist);
@@ -3022,7 +2989,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							}
 							return 0;	//Return error
 						}
-						handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position (in seconds)
+						handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position
 
 						//If this chord is at the beginning of an arpeggio phrase, skip the rest of the notes in that phrase
 						for(ctr5 = 0; ctr5 < tp->arpeggios; ctr5++)
@@ -3072,19 +3039,116 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								break;	//Break from while loop
 							}
 						}
-						if(handshapeend - handshapestart < 56)
-						{	//If the handshape is shorter than 56ms, see if it can be padded to 56ms
-							nextnote = eof_track_fixup_next_note(sp, track, ctr3);
-							if((nextnote < 0) || (handshapestart + 56 < eof_get_note_pos(sp, track, nextnote)))
-							{	//If no notes follow this chord, or if there's at least 56ms of gap between this chord and the next note, the handshape can be lengthened without any threat of overlapping another handshape tag
-								handshapeend = handshapestart + 56;
-							}
-						}
 
-						//Write this hand shape
-						(void) snprintf(buffer, sizeof(buffer) - 1, "        <handShape chordId=\"%lu\" endTime=\"%.3f\" startTime=\"%.3f\"/>\n", chordid, (double)handshapeend / 1000.0, (double)handshapestart / 1000.0);
-						(void) pack_fputs(buffer, fp);
-					}//If this note is in this difficulty and will export as a chord (at least two non ghosted gems)
+						handshapectr++;	//One more hand shape has been counted
+					}//If this note is in this difficulty and will export as a chord (at least two non ghosted gems) or an arpeggio handshape
+				}//If this note is not ignored or is a chord within an arpeggio
+			}//For each note in the track
+
+			if(handshapectr)
+			{	//If there was at least one hand shape to write
+				//Write the hand shapes
+				(void) snprintf(buffer, sizeof(buffer) - 1, "      <handShapes count=\"%lu\">\n", handshapectr);
+				(void) pack_fputs(buffer, fp);
+				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
+				{	//For each note in the track
+					if(!(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE) || (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_ARP))
+					{	//If this note is not ignored or is a chord within an arpeggio
+						if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1) || eof_is_partially_ghosted(sp, track, ctr3)))
+						{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems) or an arpeggio handshape
+							unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
+
+							//Find this chord's ID
+							for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
+							{	//For each of the entries in the unique chord list
+								if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]) && (eof_is_partially_ghosted(sp, track, ctr3) == eof_is_partially_ghosted(sp, track, chordlist[ctr4])))
+								{	//If this note matches a chord list entry and has the same ghost status (either no gems ghosted or at least one gem ghosted)
+									chordid = ctr4;	//Store the chord list entry number
+									break;
+								}
+							}
+							if(ctr4 >= chordlistsize)
+							{	//If the chord couldn't be found
+								allegro_message("Error:  Couldn't match chord with chord template while writing handshapes.  Aborting Rocksmith 2 export.");
+								eof_log("Error:  Couldn't match chord with chord template while writing handshapes.  Aborting Rocksmith 2 export.", 1);
+								if(chordlist)
+								{	//If the chord list was built
+									free(chordlist);
+								}
+								eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+								if(restore_tech_view)
+								{	//If tech view needs to be re-enabled
+									eof_menu_track_enable_tech_view(tp);
+								}
+								return 0;	//Return error
+							}
+							handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position (in seconds)
+
+							//If this chord is at the beginning of an arpeggio phrase, skip the rest of the notes in that phrase
+							for(ctr5 = 0; ctr5 < tp->arpeggios; ctr5++)
+							{	//For each arpeggio phrase in the track
+								if(((tp->note[ctr3]->pos + 10 >= tp->arpeggio[ctr5].start_pos) && (tp->note[ctr3]->pos <= tp->arpeggio[ctr5].start_pos + 10)) && (tp->note[ctr3]->type == tp->arpeggio[ctr5].difficulty))
+								{	//If this chord's start position is within 10ms of an arpeggio phrase in this track difficulty
+									while(1)
+									{
+										nextnote = eof_track_fixup_next_note(sp, track, ctr3);
+										if((nextnote >= 0) && (tp->note[nextnote]->pos <= tp->arpeggio[ctr5].end_pos))
+										{	//If there is another note and it is in the same arpeggio phrase
+											ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they are also in the phrase
+										}
+										else
+										{	//The next note (if any) is not in the arpeggio phrase
+											break;	//Break from while loop
+										}
+									}
+									break;	//Break from for loop
+								}
+							}
+
+							//Examine subsequent notes to see if they match this chord
+							while(1)
+							{
+								nextnote = eof_track_fixup_next_note(sp, track, ctr3);
+								if((nextnote >= 0) && (eof_note_count_rs_lanes(sp, track, nextnote, 2) > 1))
+								{	//If there is another note and it is a chord
+									if(!eof_note_has_high_chord_density(sp, track, nextnote, 2))
+									{	//If the next note is low density (including if it has any techniques requiring a new handshape tag such as sliding)
+										handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
+										break;	//Break from while loop
+									}
+								}
+								if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chord, nextnote) || eof_is_string_muted(sp, track, nextnote)) && !eof_is_partially_ghosted(sp, track, nextnote))
+								{	//If there is another note, it either matches this chord or is completely string muted and it is not partially ghosted (an arpeggio)
+									if(eof_is_partially_ghosted(sp, track, chord))
+									{	//If the handshape being written was for an arpeggio, and the next note isn't
+										handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of the arpeggio's last note
+										break;	//Break from while loop
+									}
+									ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
+								}
+								else
+								{	//The next note (if any) is not a repeat of this note and is not completely string muted
+									handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
+									break;	//Break from while loop
+								}
+							}
+							if(handshapeend - handshapestart < 56)
+							{	//If the handshape is shorter than 56ms, see if it can be padded to 56ms
+								nextnote = ctr3;
+								do{	//Find the next note that isn't ignored, if any
+									nextnote = eof_track_fixup_next_note(sp, track, nextnote);
+								}while((nextnote >= 0) && (tp->note[nextnote]->tflags & EOF_NOTE_TFLAG_IGNORE));
+								if((nextnote < 0) || (handshapestart + 56 < eof_get_note_pos(sp, track, nextnote)))
+								{	//If no notes follow this chord, or if there's at least 56ms of gap between this chord and the next note, the handshape can be lengthened without any threat of overlapping another handshape tag
+									handshapeend = handshapestart + 56;
+								}
+							}
+
+							//Write this hand shape
+							(void) snprintf(buffer, sizeof(buffer) - 1, "        <handShape chordId=\"%lu\" endTime=\"%.3f\" startTime=\"%.3f\"/>\n", chordid, (double)handshapeend / 1000.0, (double)handshapestart / 1000.0);
+							(void) pack_fputs(buffer, fp);
+						}//If this note is not ignored, is in this difficulty and will export as a chord (at least two non ghosted gems) or an arpeggio handshape
+					}//If this note is not ignored or is a chord within an arpeggio
 				}//For each note in the track
 				(void) pack_fputs("      </handShapes>\n", fp);
 			}
@@ -3101,7 +3165,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	(void) pack_fputs("</song>\n", fp);
 	(void) pack_fclose(fp);
 
-	eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+	eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore and arpeggio status from notes
 
 	//Cleanup
 	if(chordlist)
@@ -4598,7 +4662,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 							}
 						}
 					}
-					if((thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) && tp->note[notenum]->unpitchend)
+					if((thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) && tp->technote[ctr]->unpitchend)
 					{	//If this note has an unpitched slide and the user has defined the ending fret of the slide
 						if(lowestfretted != tp->technote[ctr]->unpitchend)
 						{	//Don't allow the unpitched slide if it slides to the same fret this note/chord is already at
@@ -4773,6 +4837,7 @@ void eof_rs_export_cleanup(EOF_SONG * sp, unsigned long track)
 	for(ctr = tp->notes; ctr > 0; ctr--)
 	{	//For each note in the track, in reverse order
 		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_IGNORE;	//Clear the ignore flag
+		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_ARP;		//Clear the arpeggio flag
 		if(tp->note[ctr - 1]->tflags & EOF_NOTE_TFLAG_TEMP)
 		{	//If this is a temporary note that was added to split up an arpeggio's chord into single notes
 			eof_track_delete_note(sp, track, ctr - 1);	//Delete it

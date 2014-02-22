@@ -7896,7 +7896,7 @@ int eof_pro_guitar_note_define_unpitched_slide(void)
 						eof_song->pro_guitar_track[tracknum]->note[i]->unpitchend = newend;
 						eof_song->pro_guitar_track[tracknum]->note[i]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;	//Enable the status flag
 					}
-				}//If this note isn't already marked as an unpitched slide
+				}
 				else
 				{	//No slide end value was given, remove the status
 					if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
