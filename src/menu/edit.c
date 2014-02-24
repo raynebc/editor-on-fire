@@ -561,7 +561,6 @@ int eof_menu_edit_copy_vocal(void)
 	long first_beat = -1;
 	char note_check = 0;
 	int copy_notes = 0;
-	float tfloat;
 	PACKFILE * fp;
 	int note_selection_updated;
 
@@ -604,7 +603,6 @@ int eof_menu_edit_copy_vocal(void)
 	{
 		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
 		{
-
 			/* check for accidentally moved note */
 			if(!note_check)
 			{
@@ -623,17 +621,7 @@ int eof_menu_edit_copy_vocal(void)
 			}
 
 			/* write note data to disk */
-			(void) pack_putc(eof_song->vocal_track[tracknum]->lyric[i]->note, fp);
-			(void) pack_iputl(eof_song->vocal_track[tracknum]->lyric[i]->pos - first_pos, fp);
-			(void) pack_iputl(eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos), fp);
-			(void) pack_iputl(eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length), fp);
-			(void) pack_iputl(eof_song->vocal_track[tracknum]->lyric[i]->length, fp);
-			tfloat = eof_get_porpos(eof_song->vocal_track[tracknum]->lyric[i]->pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
-			tfloat = eof_get_porpos(eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length);
-			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
-			(void) pack_iputw(ustrlen(eof_song->vocal_track[tracknum]->lyric[i]->text), fp);
-			(void) pack_fwrite(eof_song->vocal_track[tracknum]->lyric[i]->text, ustrlen(eof_song->vocal_track[tracknum]->lyric[i]->text), fp);
+			eof_write_clipboard_note(fp, eof_song, EOF_TRACK_VOCALS, i, first_pos);
 		}
 	}
 	(void) pack_fclose(fp);
@@ -647,7 +635,7 @@ int eof_menu_edit_copy_vocal(void)
 
 int eof_menu_edit_paste_vocal_logic(int oldpaste)
 {
-	unsigned long i, j, t;
+	unsigned long i, j;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
 	long paste_count = 0;
@@ -657,7 +645,7 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 	long new_pos = -1;
 	long new_end_pos = -1;
 	long last_pos = -1;
-	EOF_EXTENDED_LYRIC temp_lyric;
+	EOF_EXTENDED_NOTE temp_lyric;
 	EOF_LYRIC * new_lyric = NULL;
 	PACKFILE * fp;
 
@@ -685,20 +673,7 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 	for(i = 0; i < copy_notes; i++)
 	{
 		/* read the note */
-		temp_lyric.note = pack_getc(fp);
-		temp_lyric.pos = pack_igetl(fp);
-		temp_lyric.beat = pack_igetl(fp);
-		if(!oldpaste && (temp_lyric.beat - first_beat + this_beat >= eof_song->beats - 1))
-		{	//If new paste logic is being used, return from function if this lyric (and the subsequent lyrics) would paste after the last beat
-			break;
-		}
-		temp_lyric.endbeat = pack_igetl(fp);
-		temp_lyric.length = pack_igetl(fp);
-		(void) pack_fread(&temp_lyric.porpos, (long)sizeof(float), fp);
-		(void) pack_fread(&temp_lyric.porendpos, (long)sizeof(float), fp);
-		t = pack_igetw(fp);
-		(void) pack_fread(temp_lyric.text, (long)t, fp);
-		temp_lyric.text[t] = '\0';
+		eof_read_clipboard_note(fp, &temp_lyric, EOF_MAX_LYRIC_LENGTH + 1);
 
 		if(eof_music_pos + temp_lyric.pos - eof_av_delay < eof_chart_length)
 		{
@@ -724,11 +699,11 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 
 			if(!oldpaste)
 			{	//If new paste logic is being used, this lyric pastes into a position relative to the start and end of a beat marker
-				new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, temp_lyric.note, new_pos, new_end_pos - new_pos, 0, temp_lyric.text);
+				new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, temp_lyric.note, new_pos, new_end_pos - new_pos, 0, temp_lyric.name);
 			}
 			else
 			{	//If old paste logic is being used, this lyric pastes into a position relative to the previous pasted note
-				new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, temp_lyric.note, new_pos, temp_lyric.length, 0, temp_lyric.text);
+				new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, temp_lyric.note, new_pos, temp_lyric.length, 0, temp_lyric.name);
 			}
 			if(new_lyric)
 			{
@@ -972,6 +947,16 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 			tfloat = eof_get_porpos(sectionptr->end_pos);
 			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
 		}
+
+		/* fret hand positions (only the start position is stored, the end position stores the fret value) */
+		for(i = 0; i < eof_get_num_fret_hand_positions(eof_song, j); i++)
+		{	//For each fret hand position in the track
+			/* which beat */
+			sectionptr = eof_get_fret_hand_position(eof_song, j, i);
+			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
+			tfloat = eof_get_porpos(sectionptr->start_pos);
+			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+		}
 	}//For each track
 	(void) pack_fclose(fp);
 	return 1;
@@ -1169,6 +1154,16 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
 			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
 		}
+
+		/* fret hand positions (only the start position changes, the end position stores the fret value) */
+		for(i = 0; i < eof_get_num_fret_hand_positions(eof_song, j); i++)
+		{	//For each fret hand position in the active track
+			/* which beat */
+			b = pack_igetl(fp);
+			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
+			sectionptr = eof_get_fret_hand_position(eof_song, j, i);
+			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
+		}
 	}//For each track
 	(void) pack_fclose(fp);
 	eof_fixup_notes(eof_song);
@@ -1180,17 +1175,12 @@ int eof_menu_edit_copy(void)
 {
 	unsigned long i;
 	unsigned long first_pos = 0, note_pos;
-	long note_len;
 	char first_pos_read = 0;
 	long first_beat = 0;
 	char first_beat_read = 0;
 	char note_check = 0;
 	unsigned long copy_notes = 0;
-	float tfloat;
 	PACKFILE * fp;
-	unsigned char frets[8] = {0};	//Used to store NULL fret data to support copying legacy notes to a pro guitar track
-	unsigned char finger[8] = {0};	//Used to store NULL finger data to support copying legacy notes to a pro guitar track
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int note_selection_updated;
 
 	if(eof_vocals_selected)
@@ -1256,44 +1246,7 @@ int eof_menu_edit_copy(void)
 			}
 
 			/* write note data to disk */
-			(void) eof_save_song_string_pf(eof_get_note_name(eof_song, eof_selected_track, i), fp);		//Write the note's name
-			(void) pack_iputl(eof_get_note_note(eof_song, eof_selected_track, i), fp);					//Write the note bitmask value
-			(void) pack_iputl(eof_get_note_pos(eof_song, eof_selected_track, i) - first_pos, fp);		//Write the note's position relative to within the selection
-			tfloat = eof_get_porpos(eof_get_note_pos(eof_song, eof_selected_track, i));
-			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);	//Write the percent representing the note's start position within a beat
-			note_len = eof_get_note_length(eof_song, eof_selected_track, i);
-			tfloat = eof_get_porpos(eof_get_note_pos(eof_song, eof_selected_track, i) + note_len);
-			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);	//Write the percent representing the note's end position within a beat
-			(void) pack_iputl(eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i)), fp);	//Write the beat the note starts in
-			(void) pack_iputl(eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i) + note_len), fp);	//Write the beat the note ends in
-			(void) pack_iputl(note_len, fp);	//Write the note's length
-			(void) pack_iputl(eof_get_note_flags(eof_song, eof_selected_track, i), fp);	//Write the note's flags
-
-			/* Write pro guitar specific data to disk, or zeroed data */
-			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{	//If this is a pro guitar note
-				EOF_PRO_GUITAR_NOTE *np = eof_song->pro_guitar_track[tracknum]->note[i];	//Simplify
-
-				(void) pack_iputl(np->eflags, fp);						//Write the note's extended track flags
-				(void) pack_iputl(np->legacymask, fp);					//Write the pro guitar note's legacy bitmask
-				(void) pack_fwrite(np->frets, (long)sizeof(frets), fp);	//Write the note's fret array
-				(void) pack_fwrite(np->finger, (long)sizeof(finger), fp);//Write the note's finger array
-				(void) pack_iputl(np->ghost, fp);						//Write the note's ghost bitmask
-				(void) pack_putc(np->bendstrength, fp);					//Write the note's bend strength
-				(void) pack_putc(np->slideend, fp);						//Write the note's slide end position
-				(void) pack_putc(np->unpitchend, fp);					//Write the note's unpitched slide end position
-			}
-			else
-			{
-				(void) pack_iputl(0, fp);	//Write a blank extended track flag (for now, only pro guitar tracks will use these)
-				(void) pack_iputl(0, fp);	//Write a legacy bitmask indicating that the original note bitmask is to be used
-				(void) pack_fwrite(frets, (long)sizeof(frets), fp);	//Write 0 data for the note's fret array (legacy notes pasted into a pro guitar track will be played open by default)
-				(void) pack_fwrite(finger, (long)sizeof(finger), fp);	//Write 0 data for the note's finger array (legacy notes pasted into a pro guitar track will have no fingering by default)
-				(void) pack_iputl(0, fp);	//Write a blank ghost bitmask (no strings are ghosted by default)
-				(void) pack_putc(0, fp);	//Write a blank bend strength
-				(void) pack_putc(0, fp);	//Write a blank slide end position
-				(void) pack_putc(0, fp);	//Write a blank unpitched slide end position
-			}
+			eof_write_clipboard_note(fp, eof_song, eof_selected_track, i, first_pos);
 		}
 	}
 	(void) pack_fclose(fp);
@@ -1392,11 +1345,11 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	{	//If the user decided to delete existing notes that are between the start and end of the pasted notes
 		unsigned long clear_start, clear_end;
 
-		eof_menu_paste_read_clipboard_note(fp, &first_note);	//Read the first note on the clipboard
+		eof_read_clipboard_note(fp, &first_note, EOF_NAME_LENGTH + 1);	//Read the first note on the clipboard
 		memcpy(&last_note, &first_note, sizeof(first_note));	//Clone the first clipboard note into last_note in case there aren't any other notes on the clipboard
 		for(i = 1; i < copy_notes; i++)
-		{	//Parse the other notes on the clipboard
-			eof_menu_paste_read_clipboard_note(fp, &last_note);
+		{	//For each remaining note on the clipboard
+			eof_read_clipboard_note(fp, &last_note, EOF_NAME_LENGTH + 1);	//Read the note
 		}
 		//At this point, last_note contains the data for the last note on the clipboard.  Determine the time span of notes that would need to be cleared
 		if(!oldpaste)
@@ -1429,7 +1382,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 
 	for(i = 0; i < copy_notes; i++)
 	{	//For each note in the clipboard file
-		eof_menu_paste_read_clipboard_note(fp, &temp_note);	//Read the note
+		eof_read_clipboard_note(fp, &temp_note, EOF_NAME_LENGTH + 1);	//Read the note
 		if(!oldpaste && ((temp_note.beat - first_beat + this_beat >= eof_song->beats - 1) || (temp_note.endbeat - first_beat + this_beat >= eof_song->beats - 1)))
 		{	//If new paste logic is being used, return from function if this note (and the subsequent notes) would paste after the last beat
 			break;
@@ -1501,7 +1454,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			np->legacymask = temp_note.legacymask;							//Copy the legacy bitmask to the last created pro guitar note
 			memcpy(np->frets, temp_note.frets, sizeof(temp_note.frets));	//Copy the fret array to the last created pro guitar note
 			memcpy(np->finger, temp_note.finger, sizeof(temp_note.finger));	//Copy the finger array to the last created pro guitar note
-			np->ghost = temp_note.ghostmask;								//Copy the ghost bitmask to the last created pro guitar note
+			np->ghost = temp_note.ghost;									//Copy the ghost bitmask to the last created pro guitar note
 			np->bendstrength = temp_note.bendstrength;						//Copy the bend height to the last created pro guitar note
 			np->slideend = temp_note.slideend;								//Copy the slide end position to the last created pro guitar note
 			np->unpitchend = temp_note.unpitchend;							//Copy the slide end position to the last created pro guitar note
@@ -3162,29 +3115,83 @@ void eof_menu_edit_paste_clear_range(unsigned long track, int note_type, unsigne
 	}
 }
 
-void eof_menu_paste_read_clipboard_note(PACKFILE * fp, EOF_EXTENDED_NOTE *temp_note)
+void eof_read_clipboard_note(PACKFILE *fp, EOF_EXTENDED_NOTE *temp_note, unsigned long namelength)
 {
 	if(!fp || !temp_note)
 		return;
 
 	/* read the note */
-	(void) eof_load_song_string_pf(temp_note->name, fp, sizeof(temp_note->name));	//Read the note's name
-	temp_note->note = pack_igetl(fp);	//Read the note bitmask value
-	temp_note->pos = pack_igetl(fp);		//Read the note's position relative to within the selection
-	(void) pack_fread(&temp_note->porpos, (long)sizeof(float), fp);	//Read the percent representing the note's start position within a beat
-	(void) pack_fread(&temp_note->porendpos, (long)sizeof(float), fp);	//Read the percent representing the note's end position within a beat
+	(void) eof_load_song_string_pf(temp_note->name, fp, namelength);	//Read the note's name, up to the specified number of characters
+	temp_note->type = pack_getc(fp);	//Read the note's difficulty
+	temp_note->note = pack_getc(fp);	//Read the note bitmask value
 	temp_note->beat = pack_igetl(fp);	//Read the beat the note starts in
 	temp_note->endbeat = pack_igetl(fp);	//Read the beat the note ends in
+	temp_note->pos = pack_igetl(fp);		//Read the note's position relative to within the selection
 	temp_note->length = pack_igetl(fp);	//Read the note's length
+	(void) pack_fread(&temp_note->porpos, (long)sizeof(float), fp);	//Read the percent representing the note's start position within a beat
+	(void) pack_fread(&temp_note->porendpos, (long)sizeof(float), fp);	//Read the percent representing the note's end position within a beat
 	temp_note->flags = pack_igetl(fp);	//Read the note's flags
 	temp_note->eflags = pack_igetl(fp);	//Read the note's extended track flags
-	temp_note->legacymask = pack_igetl(fp);		//Read the note's legacy bitmask
+	temp_note->legacymask = pack_getc(fp);		//Read the note's legacy bitmask
 	(void) pack_fread(temp_note->frets, (long)sizeof(temp_note->frets), fp);	//Read the note's fret array
 	(void) pack_fread(temp_note->finger, (long)sizeof(temp_note->finger), fp);	//Read the note's finger array
-	temp_note->ghostmask = pack_igetl(fp);		//Read the note's ghost bitmask
+	temp_note->ghost = pack_getc(fp);		//Read the note's ghost bitmask
 	temp_note->bendstrength = pack_getc(fp);	//Read the note's bend strength
 	temp_note->slideend = pack_getc(fp);		//Read the note's slide end position
 	temp_note->unpitchend = pack_getc(fp);		//Read the note's unpitched slide end position
+}
+
+void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long first_pos)
+{
+	long note_len;
+	float tfloat;
+	unsigned char frets[8] = {0};	//Used to store NULL fret data to support copying legacy notes to a pro guitar track
+	unsigned char finger[8] = {0};	//Used to store NULL finger data to support copying legacy notes to a pro guitar track
+
+	if(!fp || !sp || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)))
+		return;	//Invalid parameters
+
+	/* write the note */
+	(void) eof_save_song_string_pf(eof_get_note_name(sp, track, note), fp);		//Write the note's name
+	(void) pack_putc(eof_get_note_type(sp, track, note), fp);					//Write the note's difficulty
+	(void) pack_putc(eof_get_note_note(sp, track, note), fp);					//Write the note bitmask value
+	note_len = eof_get_note_length(sp, track, note);
+	(void) pack_iputl(eof_get_beat(sp, eof_get_note_pos(sp, track, note)), fp);	//Write the beat the note starts in
+	(void) pack_iputl(eof_get_beat(sp, eof_get_note_pos(sp, track, note) + note_len), fp);	//Write the beat the note ends in
+	(void) pack_iputl(eof_get_note_pos(sp, track, note) - first_pos, fp);		//Write the note's position relative to within the selection
+	(void) pack_iputl(note_len, fp);	//Write the note's length
+	tfloat = eof_get_porpos(eof_get_note_pos(sp, track, note));
+	(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);	//Write the percent representing the note's start position within a beat
+	tfloat = eof_get_porpos(eof_get_note_pos(sp, track, note) + note_len);
+	(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);	//Write the percent representing the note's end position within a beat
+	(void) pack_iputl(eof_get_note_flags(sp, track, note), fp);	//Write the note's flags
+
+	/* Write pro guitar specific data to disk, or zeroed data */
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If this is a pro guitar note
+		unsigned long tracknum = sp->track[track]->tracknum;
+		EOF_PRO_GUITAR_NOTE *np = sp->pro_guitar_track[tracknum]->note[note];	//Simplify
+
+		(void) pack_iputl(np->eflags, fp);						//Write the note's extended track flags
+		(void) pack_putc(np->legacymask, fp);					//Write the pro guitar note's legacy bitmask
+		(void) pack_fwrite(np->frets, (long)sizeof(frets), fp);	//Write the note's fret array
+		(void) pack_fwrite(np->finger, (long)sizeof(finger), fp);//Write the note's finger array
+		(void) pack_putc(np->ghost, fp);						//Write the note's ghost bitmask
+		(void) pack_putc(np->bendstrength, fp);					//Write the note's bend strength
+		(void) pack_putc(np->slideend, fp);						//Write the note's slide end position
+		(void) pack_putc(np->unpitchend, fp);					//Write the note's unpitched slide end position
+	}
+	else
+	{
+		(void) pack_iputl(0, fp);	//Write a blank extended track flag (for now, only pro guitar tracks will use these)
+		(void) pack_putc(0, fp);	//Write a legacy bitmask indicating that the original note bitmask is to be used
+		(void) pack_fwrite(frets, (long)sizeof(frets), fp);	//Write 0 data for the note's fret array (legacy notes pasted into a pro guitar track will be played open by default)
+		(void) pack_fwrite(finger, (long)sizeof(finger), fp);	//Write 0 data for the note's finger array (legacy notes pasted into a pro guitar track will have no fingering by default)
+		(void) pack_putc(0, fp);	//Write a blank ghost bitmask (no strings are ghosted by default)
+		(void) pack_putc(0, fp);	//Write a blank bend strength
+		(void) pack_putc(0, fp);	//Write a blank slide end position
+		(void) pack_putc(0, fp);	//Write a blank unpitched slide end position
+	}
 }
 
 unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long track_behavior, unsigned long notemask)

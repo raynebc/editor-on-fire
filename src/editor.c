@@ -867,8 +867,8 @@ if(eof_key_code == KEY_PAUSE)
 
 	/* play/pause music (Space) */
 	/* play catalog entry (SHIFT+Space) */
-	if((eof_key_char == ' ') && !eof_silence_loaded)
-	{	//Only allow playback controls when chart audio is loaded
+	if((eof_key_code == KEY_SPACE) && !eof_silence_loaded)
+	{	//Only allow playback controls when chart audio is loaded (use the scan code because CTRL+SHIFT+Space cannot be reliably detected via ASCII value)
 		if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 		{
 			eof_shift_used = 1;	//Track that the SHIFT key was used
@@ -2349,12 +2349,12 @@ if(eof_key_code == KEY_PAUSE)
 					eof_set_pro_guitar_fret_number(0,255);	//CTRL+X sets frets to (muted)
 					eof_use_key();
 				}
-				else if(eof_key_char == '-')
+				else if(eof_key_code == KEY_MINUS)			//Use the scan code because CTRL+- can't be reliably detected via ASCII value
 				{
 					eof_set_pro_guitar_fret_number(2,0);	//Decrement fret value
 					eof_use_key();
 				}
-				else if(eof_key_char == '=')
+				else if(eof_key_code == KEY_EQUALS)			//Use the scan code because CTRL+= can't be reliably detected via ASCII value
 				{
 					eof_set_pro_guitar_fret_number(1,0);	//Increment fret value
 					eof_use_key();

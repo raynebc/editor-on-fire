@@ -524,7 +524,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	caltime = localtime(&seconds);
 	if(caltime)
 	{	//If the calendar time could be determined
-		(void) snprintf(buffer, sizeof(buffer) - 1, "  <lastConversionDateTime>%d-%d-%d %d:%02d</lastConversionDateTime>\n", caltime->tm_mon + 1, caltime->tm_mday, caltime->tm_year % 100, caltime->tm_hour % 12, caltime->tm_min);
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <lastConversionDateTime>%d-%d-%d %d:%02d</lastConversionDateTime>\n", caltime->tm_mon + 1, caltime->tm_mday, caltime->tm_year % 100, caltime->tm_hour, caltime->tm_min);
 	}
 	else
 	{
@@ -1802,7 +1802,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	caltime = localtime(&seconds);
 	if(caltime)
 	{	//If the calendar time could be determined
-		(void) snprintf(buffer, sizeof(buffer) - 1, "  <lastConversionDateTime>%d-%d-%d %d:%02d</lastConversionDateTime>\n", caltime->tm_mon + 1, caltime->tm_mday, caltime->tm_year % 100, caltime->tm_hour % 12, caltime->tm_min);
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <lastConversionDateTime>%d-%d-%d %d:%02d</lastConversionDateTime>\n", caltime->tm_mon + 1, caltime->tm_mday, caltime->tm_year % 100, caltime->tm_hour, caltime->tm_min);
 	}
 	else
 	{
@@ -2271,7 +2271,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
-	//Identify partially ghosted chords that are NOT inside arpeggio phrases, which will need to be temporarily replaced with versions without the ghost notes
+	//Identify partially ghosted chords that are NOT inside arpeggio phrases, which will need to be temporarily replaced with variations of the chords without the ghost notes
 	//This will ensure these chords don't use an arpeggio chord template for the chord instance or handshape
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the active pro guitar track
@@ -2288,8 +2288,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					}
 				}
 				if(!match)
-				{	//If the partially ghosted chord wasn't in an arpeggio phrase, mark it as ignored and insert a temporary that is the same except without the ghost gems
-					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as the newly build chord below
+				{	//If the partially ghosted chord wasn't in an arpeggio phrase, mark it as ignored and insert a temporary chord that is the same except without the ghost gems
+					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as the newly built chord below
 					new_note = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);
 					if(new_note)
 					{	//If the new note was created
@@ -2300,7 +2300,6 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
 							{	//If this string is used and not ghosted
 								new_note->note |= bitmask;	//Set this bit in the mask
-								new_note->frets[ctr3] = tp->note[ctr]->frets[ctr3];		//Copy this string's fret value
 							}
 						}
 					}
@@ -2793,10 +2792,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				unsigned long lastchordid = 0;	//Stores the previous written chord's ID, so that when the ID changes, chordNote subtags can be forced to be written
 				char *upstrum = "up";
 				char *downstrum = "down";
-				char *direction;	//Will point to either upstrum or downstrum as appropriate
+				char *direction;		//Will point to either upstrum or downstrum as appropriate
 				unsigned long notepos;
-				char highdensity;	//Various criteria determine whether the highDensity boolean property is set to true
-				char chordnote;		//Tracks whether a chordNote subtag is to be written
+				char highdensity;		//Various criteria determine whether the highDensity boolean property is set to true
+				char chordnote = 1;		//Tracks whether a chordNote subtag is to be written, at this point, it's been determined that all chords should be written this way
 
 				(void) snprintf(buffer, sizeof(buffer) - 1, "      <chords count=\"%lu\">\n", numchords);
 				(void) pack_fputs(buffer, fp);
@@ -2807,7 +2806,6 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						if(!(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE))
 						{	//If this chord wasn't split into single notes or converted into a non ghosted chord and is being ignored
 							char tagend[2] = "/";	//If a chord tag is to have a chordNote subtag, this string is emptied so that the chord tag doesn't end in the same line
-							chordnote = 0;	//Reset this status
 
 							for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
 							{	//For each of the entries in the unique chord list
@@ -2844,8 +2842,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							(void) eof_get_rs_techniques(sp, track, ctr3, 0, &tech, 2, 0);			//Determine techniques used by this chord (do not include applicable technote's techniques to the chord tag itself, they will apply to chordNotes instead)
 							highdensity = eof_note_has_high_chord_density(sp, track, ctr3, 2);	//Determine whether the chord will export with high density
 							notepos = tp->note[ctr3]->pos;
-							if((chordid != lastchordid) || !highdensity)
-							{	//If this chord's ID is different from that of the previous chord or it meets the normal criteria for a low density chord
+							if((chordid != lastchordid) || !highdensity || chordnote)
+							{	//If this chord's ID is different from that of the previous chord, meets the normal criteria for a low density chord or otherwise requires chordNote tags to be written
 								chordnote = 1;		//Ensure chordNote subtags are written
 								highdensity = 0;	//Ensure the chord tag is written to reflect low density
 								tagend[0] = '\0';	//Drop the / from the string
@@ -2857,7 +2855,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								unsigned long stringnum, bitmask;
 
 								for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
-								{	//For each string used in this track
+								{	//For each string used in this track, write chordNote tags
 									if((eof_get_note_note(sp, track, ctr3) & bitmask) && !(tp->note[ctr3]->ghost & bitmask))
 									{	//If this string is used in this note and it is not ghosted
 										eof_rs2_export_note_string_to_xml(sp, track, ctr3, stringnum, 1, chordlist[chordid], fp);	//Write this chordNote's XML tag
