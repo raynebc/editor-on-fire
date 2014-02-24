@@ -166,10 +166,10 @@ typedef struct
 	float         porendpos;	//Position of the end of the note within the beat
 	unsigned long flags;
 	unsigned long eflags;
-	unsigned long legacymask;
+	unsigned char legacymask;
 	unsigned char frets[8];
 	unsigned char finger[8];
-	unsigned long ghostmask;
+	unsigned char ghost;
 	unsigned char bendstrength;
 	unsigned char slideend;
 	unsigned char unpitchend;
@@ -625,6 +625,9 @@ unsigned long eof_get_num_arpeggios(EOF_SONG *sp, unsigned long track);		//Retur
 EOF_PHRASE_SECTION *eof_get_arpeggio(EOF_SONG *sp, unsigned long track, unsigned long index);	//Returns a pointer to the specified arpeggio phrase, or NULL on error
 void eof_set_num_arpeggios(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of arpeggio phrases in the specified track
 unsigned long eof_get_num_popup_messages(EOF_SONG *sp, unsigned long track);			//Returns the number of popup messages in the specified track, or 0 on error
+unsigned long eof_get_num_fret_hand_positions(EOF_SONG *sp, unsigned long track);		//Returns the number of fret hand positions in the specified track, or 0 on error
+EOF_PHRASE_SECTION *eof_get_fret_hand_position(EOF_SONG *sp, unsigned long track, unsigned long index);	//Returns a pointer to the specified fret hand position, or NULL on error
+void eof_set_num_fret_hand_positions(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of fret hand positions in the specified track
 void eof_track_delete_trill(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified trill phrase and moves all phrases that follow back in the array one position
 void eof_track_delete_tremolo(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified tremolo phrase and moves all phrases that follow back in the array one position
 void eof_track_delete_arpeggio(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified arpeggio phrase and moves all phrases that follow back in the array one position

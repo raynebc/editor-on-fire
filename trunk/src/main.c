@@ -1855,7 +1855,7 @@ void eof_read_global_keys(void)
 		/* decrease tempo by .1BPM (SHIFT+-) */
 		/* decrease tempo by .01BPM (SHIFT+CTRL+-) */
 		double tempochange;
-		if(eof_key_char == '-')
+		if(eof_key_code == KEY_MINUS)	//Use the scan code because CTRL+- cannot be reliably detected via ASCII value
 		{
 			if(KEY_EITHER_SHIFT)
 			{	//If SHIFT is held
@@ -1885,7 +1885,7 @@ void eof_read_global_keys(void)
 		/* increase tempo by 1BPM (+) */
 		/* increase tempo by .1BPM (SHIFT+(plus)) */
 		/* increase tempo by .01BPM (SHIFT+CTRL+(plus)) */
-		if(eof_key_char == '=')
+		if(eof_key_code == KEY_EQUALS)	//Use the scan code because CTRL+= cannot be reliably detected via ASCII value
 		{
 			if(KEY_EITHER_SHIFT)
 			{	//If SHIFT is held

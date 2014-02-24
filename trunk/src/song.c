@@ -2882,7 +2882,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					if(tp->note == tp->technote)
 					{	//If tech view is in effect for the active track
 						restore_tech_view = 1;
-						eof_menu_track_disable_tech_view(tp);		///For now, just write the regular note array to the project file
+						eof_menu_track_disable_tech_view(tp);	//Temporarily change to the regular note array
 					}
 					(void) pack_iputl(tp->notes, fp);			//Write the number of notes in this track
 					for(ctr=0; ctr < tp->notes; ctr++)
@@ -5740,6 +5740,62 @@ unsigned long eof_get_num_popup_messages(EOF_SONG *sp, unsigned long track)
 	return 0;	//Return error
 }
 
+unsigned long eof_get_num_fret_hand_positions(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+		return sp->pro_guitar_track[tracknum]->handpositions;
+	}
+
+	return 0;	//Return error
+}
+
+EOF_PHRASE_SECTION *eof_get_fret_hand_position(EOF_SONG *sp, unsigned long track, unsigned long index)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return NULL;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(index < EOF_MAX_PHRASES)
+			{
+				return &sp->pro_guitar_track[tracknum]->handposition[index];
+			}
+		break;
+	}
+
+	return NULL;	//Return error
+}
+
+void eof_set_num_fret_hand_positions(EOF_SONG *sp, unsigned long track, unsigned long number)
+{
+	unsigned long tracknum;
+
+ 	eof_log("eof_set_num_arpeggios() entered", 1);
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			sp->pro_guitar_track[tracknum]->handpositions = number;
+		break;
+	}
+}
+
 int eof_create_image_sequence(char benchmark_only)
 {
 	unsigned long framectr = 0, refreshctr = 0, lastpollctr = 0;
@@ -6325,7 +6381,7 @@ unsigned long eof_get_highest_clipboard_fret(char *clipboardfile)
 	{	//If the clipboard notes are from a pro guitar/bass track
 		for(i = 0; i < copy_notes; i++)
 		{	//For each note in the clipboard file
-			eof_menu_paste_read_clipboard_note(fp, &temp_note);	//Read the note
+			eof_read_clipboard_note(fp, &temp_note, EOF_NAME_LENGTH + 1);	//Read the note
 			for(j = 0, bitmask = 1; j < 6; j++, bitmask <<= 1)
 			{	//For each of the 6 usable strings
 				if(temp_note.note & bitmask)
@@ -6370,7 +6426,7 @@ unsigned long eof_get_highest_clipboard_lane(char *clipboardfile)
 	}
 	for(i = 0; i < copy_notes; i++)
 	{	//For each note in the clipboard file
-		eof_menu_paste_read_clipboard_note(fp, &temp_note);	//Read the note
+		eof_read_clipboard_note(fp, &temp_note, EOF_NAME_LENGTH + 1);	//Read the note
 		for(j = 1, bitmask = 1; j < 9; j++, bitmask<<=1)
 		{	//For each of the 8 bits in the bitmask
 			if(temp_note.note & bitmask)
