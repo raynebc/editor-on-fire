@@ -44,6 +44,8 @@ typedef struct
 
 extern EOF_SNAP_DATA eof_snap;
 extern EOF_SNAP_DATA eof_tail_snap;
+extern long        eof_anchor_diff[EOF_TRACKS_MAX];			//Used for note auto-adjust logic
+extern long        eof_tech_anchor_diff[EOF_TRACKS_MAX];	//Used for tech note auto-adjust logic
 
 void eof_select_beat(unsigned long beat);	//Updates eof_selected_measure, eof_beat_in_measure, eof_beats_in_measure and eof_selected_beat to reflect the specified beat number
 void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p);
