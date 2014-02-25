@@ -41,6 +41,7 @@ int         eof_last_snote = 0;
 int         eof_moving_anchor = 0;
 int         eof_adjusted_anchor = 0;
 long        eof_anchor_diff[EOF_TRACKS_MAX] = {0};
+long        eof_tech_anchor_diff[EOF_TRACKS_MAX] = {0};
 
 EOF_SNAP_DATA eof_snap;
 EOF_SNAP_DATA eof_tail_snap;

@@ -8,6 +8,7 @@
 #include "edit.h"
 #include "note.h"	//For eof_feedback_mode_update_note_selection()
 #include "song.h"
+#include "track.h"	//For tech view functions
 
 #ifdef USEMEMWATCH
 #include "../memwatch.h"
@@ -759,12 +760,12 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 	EOF_PHRASE_SECTION *sectionptr = NULL;
 	unsigned long notepos=0;
 	long notelength;
-	float noterelativestart=0.0,noterelativeend=0.0;
 
 	/* set boundary */
 	for(i = 0; i < EOF_TRACKS_MAX; i++)
 	{
 		eof_anchor_diff[i] = 0;
+		eof_tech_anchor_diff[i] = 0;
 	}
 	last_anchor = eof_find_previous_anchor(eof_song, anchor);
 	next_anchor = eof_find_next_anchor(eof_song, anchor);
@@ -778,8 +779,31 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 		end_pos = eof_song->beat[next_anchor]->pos;
 	}
 
+	/* get ready to write clipboard to disk */
+	fp = pack_fopen("eof.autoadjust", "w");
+	if(!fp)
+	{
+		allegro_message("Clipboard error!");
+		return 1;
+	}
+
+	/* copy all tracks */
 	for(j = 1; j < eof_song->tracks; j++)
 	{	//For each track
+		EOF_PRO_GUITAR_TRACK *tp = NULL;
+		char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the notes have been stored
+
+		if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If the track being stored is a pro guitar track
+			tp = eof_song->pro_guitar_track[eof_song->track[j]->tracknum];
+			if(tp->note == tp->technote)
+			{	//If tech view is in effect for the track
+				restore_tech_view = 1;
+				eof_menu_track_disable_tech_view(tp);
+			}
+		}
+
+		/* Process notes */
 		for(i = 0; i < eof_get_track_size(eof_song, j); i++)
 		{	//For each note in the track
 			notepos = eof_get_note_pos(eof_song, j, i);
@@ -805,58 +829,69 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 				}
 			}
 		}
-	}
 
-	/* get ready to write clipboard to disk */
-	fp = pack_fopen("eof.autoadjust", "w");
-	if(!fp)
-	{
-		allegro_message("Clipboard error!");
-		return 1;
-	}
-
-	/* copy all tracks */
-	for(j = 1; j < eof_song->tracks; j++)
-	{	//For each track
 		/* notes */
 		(void) pack_iputl(copy_notes[j], fp);
 		(void) pack_iputl(first_beat[j], fp);
-
 		for(i = 0; i < eof_get_track_size(eof_song, j); i++)
 		{	//For each note in this track
 			notepos = eof_get_note_pos(eof_song, j, i);
 			notelength = eof_get_note_length(eof_song, j, i);
 			if((notepos + notelength >= start_pos) && (notepos < end_pos))
 			{	//If this note falls within the start->end time range
-				(void) pack_iputl(eof_get_note_type(eof_song, j, i), fp);
-				(void) pack_iputl(eof_get_note_note(eof_song, j, i), fp);
-				(void) pack_iputl(notepos - first_pos[j], fp);
-				noterelativestart = eof_get_porpos(notepos);
-				(void) pack_fwrite(&noterelativestart, (long)sizeof(float), fp);
-				noterelativeend = eof_get_porpos(notepos + notelength);
-				(void) pack_fwrite(&noterelativeend, (long)sizeof(float), fp);
-				(void) pack_iputl(eof_get_beat(eof_song, notepos), fp);
-				(void) pack_iputl(eof_get_beat(eof_song, notepos + notelength), fp);
-				(void) pack_iputl(notelength, fp);
-				(void) pack_iputl(eof_get_note_flags(eof_song, j, i), fp);
-
-				(void) eof_save_song_string_pf(eof_get_note_name(eof_song, j, i), fp);	//Write the note/lyric name/text
-
-				if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-				{	//If this is a pro guitar track
-					EOF_PRO_GUITAR_NOTE *np = eof_song->pro_guitar_track[eof_song->track[j]->tracknum]->note[i];	//Simplify
-
-					(void) pack_iputl(np->eflags, fp);		//Write the note's extended track flags
-					(void) pack_putc(np->legacymask, fp);	//Write the legacy bitmask
-					(void) pack_fwrite(np->frets, 6, fp);	//Write the fret values for the six usable strings
-					(void) pack_fwrite(np->finger, 6, fp);	//Write the note's finger array
-					(void) pack_putc(np->ghost, fp);		//Write the note's ghost bitmask
-					(void) pack_putc(np->bendstrength, fp);	//Write the note's bend strength
-					(void) pack_putc(np->slideend, fp);		//Write the note's slide end position
-					(void) pack_putc(np->unpitchend, fp);	//Write the note's unpitched slide end position
-				}
+				eof_write_clipboard_note(fp, eof_song, j, i, first_pos[j]);	//Write note data to disk
 			}//If this note falls within the start->end time range
 		}//For each note in this track
+
+		/* tech notes */
+		if(tp)
+		{	//If the track being exported is a pro guitar track
+			/* Process tech notes */
+			eof_menu_track_enable_tech_view(tp);	//Enable tech view just until the tech notes are stored
+			copy_notes[j] = 0;
+			first_pos_found[j] = 0;
+			first_pos[j] = 0;
+			first_beat[j] = 0;
+			first_beat_found[j] = 0;
+			for(i = 0; i < eof_get_track_size(eof_song, j); i++)
+			{	//For each note in the track
+				notepos = eof_get_note_pos(eof_song, j, i);
+				notelength = eof_get_note_length(eof_song, j, i);
+				if((notepos + notelength >= start_pos) && (notepos < end_pos))
+				{
+					copy_notes[j]++;
+					if(!first_pos_found[j])
+					{
+						first_pos[j] = notepos;
+						first_pos_found[j] = 1;
+						eof_tech_anchor_diff[j] = eof_get_beat(eof_song, notepos) - last_anchor;
+					}
+					if(notepos < first_pos[j])
+					{
+						first_pos[j] = notepos;
+						eof_tech_anchor_diff[j] = eof_get_beat(eof_song, notepos) - last_anchor;
+					}
+					if(!first_beat_found[j])
+					{
+						first_beat[j] = eof_get_beat(eof_song, notepos);
+						first_beat_found[j] = 1;
+					}
+				}
+			}
+			(void) pack_iputl(copy_notes[j], fp);
+			(void) pack_iputl(first_beat[j], fp);
+			for(i = 0; i < eof_get_track_size(eof_song, j); i++)
+			{	//For each note in this track
+				notepos = eof_get_note_pos(eof_song, j, i);
+				notelength = eof_get_note_length(eof_song, j, i);
+				if((notepos + notelength >= start_pos) && (notepos < end_pos))
+				{	//If this note falls within the start->end time range
+					eof_write_clipboard_note(fp, eof_song, j, i, first_pos[j]);	//Write note data to disk
+				}//If this note falls within the start->end time range
+			}//For each note in this track
+			eof_menu_track_disable_tech_view(tp);
+		}
+
 		/* star power */
 		for(i = 0; i < eof_get_num_star_power_paths(eof_song, j); i++)
 		{	//For each star power path in the track
@@ -957,6 +992,11 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 			tfloat = eof_get_porpos(sectionptr->start_pos);
 			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
 		}
+
+		if(tp && restore_tech_view)
+		{	//If tech view needs to be re-enabled for the track
+			eof_menu_track_enable_tech_view(tp);
+		}
 	}//For each track
 	(void) pack_fclose(fp);
 	return 1;
@@ -967,6 +1007,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 	unsigned long i, j, b, notenum;
 	unsigned long first_beat[EOF_TRACKS_MAX] = {0};
 	unsigned long this_beat[EOF_TRACKS_MAX] = {0};
+	unsigned long this_tech_beat[EOF_TRACKS_MAX] = {0};
 	unsigned long start_pos, end_pos;
 	long last_anchor, next_anchor;
 	PACKFILE * fp;
@@ -983,6 +1024,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 	for(i = 0; i < EOF_TRACKS_MAX; i++)
 	{
 		this_beat[i] = eof_find_previous_anchor(eof_song, anchor) + eof_anchor_diff[i];
+		this_tech_beat[i] = eof_find_previous_anchor(eof_song, anchor) + eof_tech_anchor_diff[i];
 	}
 
 	/* set boundary */
@@ -1004,8 +1046,24 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		allegro_message("Clipboard error!");
 		return 1;
 	}
+
+	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 	for(j = 1; j < eof_song->tracks; j++)
 	{	//For each track
+		EOF_PRO_GUITAR_TRACK *tp = NULL;
+		char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the notes have been stored
+
+		if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If the track being stored is a pro guitar track
+			tp = eof_song->pro_guitar_track[eof_song->track[j]->tracknum];
+			if(tp->note == tp->technote)
+			{	//If tech view is in effect for the track
+				restore_tech_view = 1;
+				eof_menu_track_disable_tech_view(tp);
+			}
+		}
+
+		//Empty the notes from the track
 		for(i = eof_get_track_size(eof_song, j); i > 0; i--)
 		{	//For each note in the track, in reverse order
 			notepos = eof_get_note_pos(eof_song, j, i - 1);
@@ -1014,26 +1072,14 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 				eof_track_delete_note(eof_song, j, i - 1);	//Delete the note
 			}
 		}
-	}
 
-	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
-	for(j = 1; j < eof_song->tracks; j++)
-	{	//For each track
+		//Re-populate the notes
 		copy_notes[j] = pack_igetl(fp);
 		first_beat[j] = pack_igetl(fp);
 		for(i = 0; i < copy_notes[j]; i++)
 		{
 		/* read the note */
-			temp_note.type = pack_igetl(fp);
-			temp_note.note = pack_igetl(fp);
-			temp_note.pos = pack_igetl(fp);
-			(void) pack_fread(&temp_note.porpos, (long)sizeof(float), fp);
-			(void) pack_fread(&temp_note.porendpos, (long)sizeof(float), fp);
-			temp_note.beat = pack_igetl(fp);
-			temp_note.endbeat = pack_igetl(fp);
-			temp_note.length = pack_igetl(fp);
-			temp_note.flags = pack_igetl(fp);	//Store the note flags
-			(void) eof_load_song_string_pf(text, fp, sizeof(text));	//Store the note/lyric name/text
+			eof_read_clipboard_note(fp, &temp_note, EOF_MAX_LYRIC_LENGTH + 1);
 
 			if(temp_note.pos + temp_note.length < eof_chart_length)
 			{
@@ -1050,19 +1096,73 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 					{	//If this is a pro guitar track
 						EOF_PRO_GUITAR_NOTE *np = eof_song->pro_guitar_track[eof_song->track[j]->tracknum]->note[notenum];	//Simplify
 
-						np->eflags = pack_igetl(fp);			//Set the note's extended track flags
-						np->legacymask = pack_getc(fp);			//Set the legacy bitmask
-						(void) pack_fread(np->frets, 6, fp);	//Set the fret values for the six usable strings
-						(void) pack_fread(np->finger, 6, fp);	//Set the note's finger array
-						np->ghost = pack_getc(fp);				//Set the note's ghost bitmask
-						np->bendstrength = pack_getc(fp);		//Set the note's bend strength
-						np->slideend = pack_getc(fp);			//Set the note's slide end position
-						np->unpitchend = pack_getc(fp);			//Set the note's unpitched slide end position
+						np->legacymask = temp_note.legacymask;							//Copy the legacy bitmask to the last created pro guitar note
+						memcpy(np->frets, temp_note.frets, sizeof(temp_note.frets));	//Copy the fret array to the last created pro guitar note
+						memcpy(np->finger, temp_note.finger, sizeof(temp_note.finger));	//Copy the finger array to the last created pro guitar note
+						np->ghost = temp_note.ghost;									//Copy the ghost bitmask to the last created pro guitar note
+						np->bendstrength = temp_note.bendstrength;						//Copy the bend height to the last created pro guitar note
+						np->slideend = temp_note.slideend;								//Copy the slide end position to the last created pro guitar note
+						np->unpitchend = temp_note.unpitchend;							//Copy the slide end position to the last created pro guitar note
+						np->eflags = temp_note.eflags;									//Copy the extended track flags
 					}
 				}
 			}
 		}
 		eof_track_sort_notes(eof_song, j);
+
+		//Adjust the tech notes, if any
+		if(tp)
+		{	//If the track being exported is a pro guitar track
+			eof_menu_track_enable_tech_view(tp);	//Enable tech view just until the tech notes are restored
+
+			//Empty the notes from the track
+			for(i = eof_get_track_size(eof_song, j); i > 0; i--)
+			{	//For each note in the track, in reverse order
+				notepos = eof_get_note_pos(eof_song, j, i - 1);
+				if((notepos + eof_get_note_length(eof_song, j, i - 1) >= start_pos) && (affect_until_end || (notepos < end_pos)))
+				{	//If the note is in the affected range of the chart (between affected anchors or between an anchor and the end of the project)
+					eof_track_delete_note(eof_song, j, i - 1);	//Delete the note
+				}
+			}
+
+			//Re-populate the tech notes
+			copy_notes[j] = pack_igetl(fp);
+			first_beat[j] = pack_igetl(fp);
+			for(i = 0; i < copy_notes[j]; i++)
+			{
+				/* read the note */
+				eof_read_clipboard_note(fp, &temp_note, EOF_MAX_LYRIC_LENGTH + 1);
+
+				if(temp_note.pos + temp_note.length < eof_chart_length)
+				{
+					notepos = eof_put_porpos(temp_note.beat - first_beat[j] + this_tech_beat[j], temp_note.porpos, 0.0);
+					notelength = eof_put_porpos(temp_note.endbeat - first_beat[j] + this_tech_beat[j], temp_note.porendpos, 0.0) - notepos;
+					new_note = eof_track_add_create_note(eof_song, j, temp_note.note, notepos, notelength, temp_note.type, text);
+
+					if(new_note)
+					{	//If the note was successfully created
+						notenum = eof_get_track_size(eof_song, j) - 1;	//Get the index of the note that was just created
+						eof_set_note_flags(eof_song, j, notenum, temp_note.flags);	//Set the last created note's flags
+
+						if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+						{	//If this is a pro guitar track
+							EOF_PRO_GUITAR_NOTE *np = eof_song->pro_guitar_track[eof_song->track[j]->tracknum]->note[notenum];	//Simplify
+
+							np->legacymask = temp_note.legacymask;							//Copy the legacy bitmask to the last created pro guitar note
+							memcpy(np->frets, temp_note.frets, sizeof(temp_note.frets));	//Copy the fret array to the last created pro guitar note
+							memcpy(np->finger, temp_note.finger, sizeof(temp_note.finger));	//Copy the finger array to the last created pro guitar note
+							np->ghost = temp_note.ghost;									//Copy the ghost bitmask to the last created pro guitar note
+							np->bendstrength = temp_note.bendstrength;						//Copy the bend height to the last created pro guitar note
+							np->slideend = temp_note.slideend;								//Copy the slide end position to the last created pro guitar note
+							np->unpitchend = temp_note.unpitchend;							//Copy the slide end position to the last created pro guitar note
+							np->eflags = temp_note.eflags;									//Copy the extended track flags
+						}
+					}
+				}
+			}
+			eof_track_sort_notes(eof_song, j);
+			eof_menu_track_disable_tech_view(tp);
+		}
 
 		/* star power */
 		for(i = 0; i < eof_get_num_star_power_paths(eof_song, j); i++)
@@ -1163,6 +1263,11 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
 			sectionptr = eof_get_fret_hand_position(eof_song, j, i);
 			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
+		}
+
+		if(tp && restore_tech_view)
+		{	//If tech view needs to be re-enabled for the track
+			eof_menu_track_enable_tech_view(tp);
 		}
 	}//For each track
 	(void) pack_fclose(fp);
