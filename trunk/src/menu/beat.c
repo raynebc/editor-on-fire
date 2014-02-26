@@ -941,15 +941,23 @@ int eof_menu_beat_delete_anchor(void)
 
 int eof_menu_beat_reset_bpm(void)
 {
-	int i;
 	int reset = 0;
+	unsigned long startbeat = 0, i;
 
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
 
-	for(i = 1; i < eof_song->beats; i++)
+	if(eof_selected_beat != 0)
+	{	//If a beat besides the first is selected
+		if(alert(NULL, "Erase all BPM changes after the first beat or the selected beat?", NULL, "First", "Selected", 0, 0) == 2)
+		{	//If the user opted to only erase BPM changes after the selected beat
+			startbeat = eof_selected_beat;
+		}
+	}
+
+	for(i = startbeat + 1; i < eof_song->beats; i++)
 	{
-		if(eof_song->beat[i]->ppqn != eof_song->beat[0]->ppqn)
+		if(eof_song->beat[i]->ppqn != eof_song->beat[startbeat]->ppqn)
 		{
 			reset = 1;
 			break;
@@ -957,12 +965,12 @@ int eof_menu_beat_reset_bpm(void)
 	}
 	if(reset)
 	{
-		if(alert(NULL, "Erase all BPM changes?", NULL, "OK", "Cancel", 0, 0) == 1)
+		if(alert(NULL, "Erase specified BPM changes?", NULL, "OK", "Cancel", 0, 0) == 1)
 		{
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			for(i = 1; i < eof_song->beats; i++)
+			for(i = startbeat + 1; i < eof_song->beats; i++)
 			{
-				eof_song->beat[i]->ppqn = eof_song->beat[0]->ppqn;
+				eof_song->beat[i]->ppqn = eof_song->beat[startbeat]->ppqn;
 				eof_song->beat[i]->flags &= ~EOF_BEAT_FLAG_ANCHOR;	//Clear the anchor flag
 			}
 			eof_calculate_beats(eof_song);

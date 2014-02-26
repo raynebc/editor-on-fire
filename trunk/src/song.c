@@ -2880,7 +2880,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 						(void) pack_putc(tp->tuning[ctr], fp);	//Write this string's tuning value
 					}
 					if(tp->note == tp->technote)
-					{	//If tech view is in effect for the active track
+					{	//If tech view is in effect for the track being written
 						restore_tech_view = 1;
 						eof_menu_track_disable_tech_view(tp);	//Temporarily change to the regular note array
 					}
@@ -6811,98 +6811,125 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 
 void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long startpos, unsigned long endpos, int function, int prompt, char *undo_made)
 {
-	unsigned long ctr, ctr2, tracknum;
-	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long ctr, ctr2, ctr3;
+	EOF_PRO_GUITAR_TRACK *tp = NULL;
 	EOF_PHRASE_SECTION *ptr;
+	int notearrayctr = 1;	//If the target track is a pro guitar track, the note alteration logic will be run for both the normal AND tech note arrays
+	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
 
 	if(!sp || !undo_made || (track >= sp->tracks) || (startpos >= endpos))
 		return;	//Invalid parameters
 
-	//Parse in reverse order so that notes can be appended to or deleted from the track in the same loop
-	for(ctr = eof_get_track_size(sp, track); ctr > 0; ctr--)
-	{	//For each note in the track (in reverse order)
-		unsigned long notepos = eof_get_note_pos(sp, track, ctr - 1);
-		unsigned char notetype = eof_get_note_type(sp, track, ctr - 1);
+	if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If the track being altered is a pro guitar track
+		tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];
+		notearrayctr = 2;	//A second note array (the tech notes) will need to be processed
+		if(tp->note == tp->technote)
+		{	//If tech view is in effect for the active track
+			restore_tech_view = 1;
+			eof_menu_track_disable_tech_view(tp);
+		}
+	}
 
-		//Prompt to fix notes that are aligned slightly outside of a phrase
-		if((prompt != 3) && (notepos < startpos) && (notepos + 10 >= startpos))
-		{	//If this note is 1 to 10 milliseconds before the beginning of the affected time range
-			if(!prompt)
-			{	//If the user wasn't prompted about how to handle this condition yet, seek to the note in question and prompt the user whether to take action
-				eof_seek_and_render_position(eof_selected_track, eof_note_type, notepos);
-				eof_clear_input();
-				key[KEY_Y] = 0;
-				key[KEY_N] = 0;
-				if(alert("At least one note is between 1 and 10 ms before the phrase.", NULL, "Move such notes to the start of the phrase?", "&Yes", "&No", 'y', 'n') == 1)
-				{	//If the user opts to correct the note positions
-					prompt = 1;	//Store a "yes" response
+	for(ctr3 = 0; ctr3 < notearrayctr; ctr3++)
+	{	//For each note array being modified
+		if(tp && (ctr3 > 0))
+		{	//If this is the second pass, the tech notes are being modified
+			eof_menu_track_enable_tech_view(tp);
+		}
+
+		//Parse in reverse order so that notes can be appended to or deleted from the track in the same loop
+		for(ctr = eof_get_track_size(sp, track); ctr > 0; ctr--)
+		{	//For each note in the track (in reverse order)
+			unsigned long notepos = eof_get_note_pos(sp, track, ctr - 1);
+			unsigned char notetype = eof_get_note_type(sp, track, ctr - 1);
+
+			//Prompt to fix notes that are aligned slightly outside of a phrase
+			if((prompt != 3) && (notepos < startpos) && (notepos + 10 >= startpos))
+			{	//If this note is 1 to 10 milliseconds before the beginning of the affected time range
+				if(!prompt)
+				{	//If the user wasn't prompted about how to handle this condition yet, seek to the note in question and prompt the user whether to take action
+					eof_seek_and_render_position(eof_selected_track, eof_note_type, notepos);
+					eof_clear_input();
+					key[KEY_Y] = 0;
+					key[KEY_N] = 0;
+					if(alert("At least one note is between 1 and 10 ms before the phrase.", NULL, "Move such notes to the start of the phrase?", "&Yes", "&No", 'y', 'n') == 1)
+					{	//If the user opts to correct the note positions
+						prompt = 1;	//Store a "yes" response
+					}
+					else
+					{
+						prompt = 2;	//Store a "no" response
+					}
 				}
-				else
-				{
-					prompt = 2;	//Store a "no" response
+				if(prompt == 1)
+				{	//If the user opted to correct the note positions
+					if(!*undo_made)
+					{	//If an undo state hasn't been made yet
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						*undo_made = 1;
+					}
+					for(ctr2 = eof_get_track_size(sp, track); ctr2 > 0; ctr2--)
+					{	//For each note in the track (in reverse order)
+						unsigned long notepos2 = eof_get_note_pos(sp, track, ctr2 - 1);
+						if((notepos2 < startpos) && (notepos2 + 10 >= startpos))
+						{	//If this note is 1 to 10 milliseconds before the beginning of the phrase
+							eof_set_note_pos(sp, track, ctr2 - 1, startpos);	//Re-position the note to the start of the phrase
+						}
+					}
+					notepos = startpos;	//Update the stored position for the note
 				}
 			}
-			if(prompt == 1)
-			{	//If the user opted to correct the note positions
+
+			//Update notes
+			if((notetype >= diff) && (notepos >= startpos) && (notepos <= endpos))
+			{	//If the note meets the criteria to be altered
 				if(!*undo_made)
 				{	//If an undo state hasn't been made yet
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					*undo_made = 1;
 				}
-				for(ctr2 = eof_get_track_size(sp, track); ctr2 > 0; ctr2--)
-				{	//For each note in the track (in reverse order)
-					unsigned long notepos2 = eof_get_note_pos(sp, track, ctr2 - 1);
-					if((notepos2 < startpos) && (notepos2 + 10 >= startpos))
-					{	//If this note is 1 to 10 milliseconds before the beginning of the phrase
-						eof_set_note_pos(sp, track, ctr2 - 1, startpos);	//Re-position the note to the start of the phrase
+				if(notetype == diff)
+				{	//If this note is in the target difficulty
+					if(function < 0)
+					{	//If the delete level function is being performed, this note will be deleted
+						eof_track_delete_note(sp, track, ctr - 1);
+					}
+					else
+					{	//The add level function is being performed, this note will be duplicated into the next higher difficulty instead of just having its difficulty incremented
+						long length = eof_get_note_length(sp, track, ctr - 1);
+						(void) eof_copy_note(sp, track, ctr - 1, track, notepos, length, diff + 1);
 					}
 				}
-				notepos = startpos;	//Update the stored position for the note
-			}
-		}
-
-		//Update notes
-		if((notetype >= diff) && (notepos >= startpos) && (notepos <= endpos))
-		{	//If the note meets the criteria to be altered
-			if(!*undo_made)
-			{	//If an undo state hasn't been made yet
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				*undo_made = 1;
-			}
-			if(notetype == diff)
-			{	//If this note is in the target difficulty
-				if(function < 0)
-				{	//If the delete level function is being performed, this note will be deleted
-					eof_track_delete_note(sp, track, ctr - 1);
-				}
 				else
-				{	//The add level function is being performed, this note will be duplicated into the next higher difficulty instead of just having its difficulty incremented
-					long length = eof_get_note_length(sp, track, ctr - 1);
-					(void) eof_copy_note(sp, track, ctr - 1, track, notepos, length, diff + 1);
+				{	//This note is in a higher difficulty (the outer if statement filters out notes in lower difficulties)
+					if(function < 0)
+					{	//If the delete level function is being performed, this note will have its difficulty decremented
+						eof_set_note_type(sp, track, ctr - 1, notetype - 1);	//Decrement the note's difficulty
+					}
+					else
+					{	//The add level function is being performed, this note will have its difficulty incremented
+						eof_set_note_type(sp, track, ctr - 1, notetype + 1);	//Increment the note's difficulty
+					}
 				}
 			}
-			else
-			{	//This note is in a higher difficulty (the outer if statement filters out notes in lower difficulties)
-				if(function < 0)
-				{	//If the delete level function is being performed, this note will have its difficulty decremented
-					eof_set_note_type(sp, track, ctr - 1, notetype - 1);	//Decrement the note's difficulty
-				}
-				else
-				{	//The add level function is being performed, this note will have its difficulty incremented
-					eof_set_note_type(sp, track, ctr - 1, notetype + 1);	//Increment the note's difficulty
-				}
-			}
+		}//For each note in the track (in reverse order)
+		eof_track_sort_notes(sp, track);	//Sort the note array
+	}//For each note array being modified
+	if(tp)
+	{
+		if(!restore_tech_view)
+		{	//If tech view doesn't need to remain enabled
+			eof_menu_track_disable_tech_view(tp);
 		}
-	}//For each note in the track (in reverse order)
+	}
 
 	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If the track being altered is a pro guitar track
 		//Update arpeggios
-		tracknum = sp->track[track]->tracknum;
-		tp = sp->pro_guitar_track[tracknum];
 		for(ctr = eof_get_num_arpeggios(sp, track); ctr > 0; ctr--)
 		{	//For each arpeggio section in the track (in reverse order)
-			ptr = &sp->pro_guitar_track[tracknum]->arpeggio[ctr - 1];	//Simplify
+			ptr = &tp->arpeggio[ctr - 1];	//Simplify
 			if((ptr->difficulty >= diff) && (ptr->start_pos <= endpos) && (ptr->end_pos >= startpos))
 			{	//If this arpeggio overlaps at all with the phrase being manipulated and is in a difficulty level that this function affects
 				if(ptr->difficulty == diff)
@@ -6965,7 +6992,7 @@ void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsign
 		//Update tremolos
 		for(ctr = eof_get_num_tremolos(sp, track); ctr > 0; ctr--)
 		{	//For each tremolo section in the track (in reverse order)
-			ptr = &sp->pro_guitar_track[tracknum]->tremolo[ctr - 1];	//Simplify
+			ptr = &tp->tremolo[ctr - 1];	//Simplify
 			if((ptr->difficulty >= diff) && (ptr->start_pos <= endpos) && (ptr->end_pos >= startpos))
 			{	//If this tremolo overlaps at all with the phrase being manipulated and is in a difficulty level that this function affects
 				if(ptr->difficulty == 0xFF)
@@ -7050,11 +7077,23 @@ void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char di
 {
 	unsigned long i, tracknum;
 	EOF_PHRASE_SECTION *ptr;
+	EOF_PRO_GUITAR_TRACK *tp = NULL;
+	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
 
 	if(!sp || (track >= sp->tracks))
 		return;	//Invalid parameters
 
 	tracknum = sp->track[track]->tracknum;
+
+	if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If the track being erased is a pro guitar track
+		tp = eof_song->pro_guitar_track[tracknum];
+		if(tp->note == tp->technote)
+		{	//If tech view is in effect for the active track
+			restore_tech_view = 1;
+			eof_menu_track_disable_tech_view(tp);
+		}
+	}
 
 	//Delete notes
 	for(i = eof_get_track_size(sp, track); i > 0; i--)
@@ -7078,11 +7117,22 @@ void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char di
 		}
 	}
 
-	//Delete popup messages, hand positions and tones
+	//Delete tech notes, popup messages, hand positions and tones
 	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If a pro guitar track was specified
-		EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[tracknum];
-
+		//Delete tech notes
+		eof_menu_track_enable_tech_view(tp);
+		for(i = eof_get_track_size(sp, track); i > 0; i--)
+		{	//For each tech note in the track, in reverse order
+			if(!diffonly || (eof_get_note_type(sp, track, i - 1) == diff))
+			{	//If the entire track is to be erased, or if this note is in the difficulty specified to be erased
+				eof_track_delete_note(sp, track, i - 1);	//Delete it
+			}
+		}
+		if(!restore_tech_view)
+		{	//If tech view doesn't need to remain enabled
+			eof_menu_track_disable_tech_view(tp);
+		}
 		if(!diffonly)
 		{	//If the entire track is to be erased
 			tp->popupmessages = 0;	//Remove all of the track's popup messages

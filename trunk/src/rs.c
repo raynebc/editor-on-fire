@@ -3790,6 +3790,8 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 	unsigned long ctr2, ctr3, thispos, thispos2;
 	unsigned char note_found;
 	unsigned char comparediff, thisdiff, populated = 0;
+	EOF_PRO_GUITAR_TRACK *tp = NULL;
+	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
 
 	if(!sp || (track >= sp->tracks) || (start > stop))
 		return 0;	//Invalid parameters
@@ -3816,6 +3818,16 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 		if(((sp->track[track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) == 0) && (comparediff == 4))
 		{	//If the track is using the traditional 5 difficulty system and the difficulty next to the being examined is the BRE difficulty
 			comparediff++;	//Compare to the next difficulty
+		}
+	}
+
+	if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If the track being checked is a pro guitar track
+		tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];
+		if(tp->note == tp->technote)
+		{	//If tech view is in effect for the active track
+			restore_tech_view = 1;
+			eof_menu_track_disable_tech_view(tp);
 		}
 	}
 
@@ -3851,6 +3863,10 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 							note_found = 1;	//Track that a note at the same position was found in the previous difficulty
 							if(eof_note_compare(sp, track, ctr2, track, ctr3 - 1, 1))
 							{	//If the two notes don't match (including lengths and flags)
+								if(tp && restore_tech_view)
+								{	//If tech view needs to be re-enabled
+									eof_menu_track_enable_tech_view(tp);
+								}
 								return 1;	//Return difference found
 							}
 							break;
@@ -3872,6 +3888,10 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 							note_found = 1;	//Track that a note at the same position was found in the previous difficulty
 							if(eof_note_compare(sp, track, ctr2, track, ctr3 - 1, 1))
 							{	//If the two notes don't match (including lengths and flags)
+								if(tp && restore_tech_view)
+								{	//If tech view needs to be re-enabled
+									eof_menu_track_enable_tech_view(tp);
+								}
 								return 1;	//Return difference found
 							}
 							break;
@@ -3880,6 +3900,10 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 				}
 				if(!note_found)
 				{	//If this note has no note at the same position in the previous difficulty
+					if(tp && restore_tech_view)
+					{	//If tech view needs to be re-enabled
+						eof_menu_track_enable_tech_view(tp);
+					}
 					return 1;	//Return difference found
 				}
 			}//If this note is in the difficulty being examined
@@ -3888,6 +3912,10 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 
 	if(!populated)
 	{	//If no notes were contained within the time range in the specified difficulty
+		if(tp && restore_tech_view)
+		{	//If tech view needs to be re-enabled
+			eof_menu_track_enable_tech_view(tp);
+		}
 		return -1;	//Return empty time range
 	}
 
@@ -3922,6 +3950,10 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 							note_found = 1;	//Track that a note at the same position was found in the previous difficulty
 							if(eof_note_compare(sp, track, ctr2, track, ctr3 - 1, 1))
 							{	//If the two notes don't match (including lengths and flags)
+								if(tp && restore_tech_view)
+								{	//If tech view needs to be re-enabled
+									eof_menu_track_enable_tech_view(tp);
+								}
 								return 1;	//Return difference found
 							}
 							break;
@@ -3943,6 +3975,10 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 							note_found = 1;	//Track that a note at the same position was found in the previous difficulty
 							if(eof_note_compare(sp, track, ctr2, track, ctr3 - 1, 1))
 							{	//If the two notes don't match (including lengths and flags)
+								if(tp && restore_tech_view)
+								{	//If tech view needs to be re-enabled
+									eof_menu_track_enable_tech_view(tp);
+								}
 								return 1;	//Return difference found
 							}
 							break;
@@ -3951,11 +3987,19 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 				}
 				if(!note_found)
 				{	//If this note has no note at the same position in the previous difficulty
+					if(tp && restore_tech_view)
+					{	//If tech view needs to be re-enabled
+						eof_menu_track_enable_tech_view(tp);
+					}
 					return 1;	//Return difference found
 				}
 			}//If this note is in the difficulty being compared
 		}//If this note is at or after the start of the specified range, check its difficulty
 	}//For each note in the track
+	if(tp && restore_tech_view)
+	{	//If tech view needs to be re-enabled
+		eof_menu_track_enable_tech_view(tp);
+	}
 
 	return 0;	//Return no difference found
 }
@@ -3964,10 +4008,21 @@ unsigned char eof_find_fully_leveled_rs_difficulty_in_time_range(EOF_SONG *sp, u
 {
 	unsigned char reldiff, fullyleveleddiff = 0;
 	unsigned long ctr;
+	EOF_PRO_GUITAR_TRACK *tp = NULL;
+	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
 
 	if(!sp || (track >= sp->tracks) || (start > stop))
 		return 0;	//Invalid parameters
 
+	if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If the specified track is a pro guitar track
+		tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
+		if(tp->note == tp->technote)
+		{	//If tech view is in effect for the active track
+			restore_tech_view = 1;
+			eof_menu_track_disable_tech_view(tp);
+		}
+	}
 	(void) eof_detect_difficulties(sp, track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for this track
 	if((sp->track[track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) == 0)
 	{	//If the track is using the traditional 5 difficulty system
@@ -3983,6 +4038,10 @@ unsigned char eof_find_fully_leveled_rs_difficulty_in_time_range(EOF_SONG *sp, u
 			}
 		}
 	}//For each of the possible difficulties
+	if(tp && restore_tech_view)
+	{	//If tech view needs to be re-enabled
+		eof_menu_track_enable_tech_view(tp);
+	}
 
 	if(!relative)
 	{	//If the resulting difficulty number is not to be converted to Rocksmith's relative difficulty number system
@@ -4106,9 +4165,22 @@ int eof_time_range_is_populated(EOF_SONG *sp, unsigned long track, unsigned long
 {
 	unsigned long ctr2, thispos;
 	unsigned char thisdiff;
+	EOF_PRO_GUITAR_TRACK *tp = NULL;
+	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
+	int retval = 0;
 
 	if(!sp || (track >= sp->tracks) || (start > stop))
 		return 0;	//Invalid parameters
+
+	if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If the specified track is a pro guitar track
+		tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];
+		if(tp->note == tp->technote)
+		{	//If tech view is in effect for the active track
+			restore_tech_view = 1;
+			eof_menu_track_disable_tech_view(tp);
+		}
+	}
 
 	for(ctr2 = 0; ctr2 < eof_get_track_size(sp, track); ctr2++)
 	{	//For each note in the track
@@ -4122,12 +4194,17 @@ int eof_time_range_is_populated(EOF_SONG *sp, unsigned long track, unsigned long
 			thisdiff = eof_get_note_type(sp, track, ctr2);	//Get this note's difficulty
 			if(thisdiff == diff)
 			{	//If this note is in the difficulty being examined
-				return 1;	//Return specified range at the specified difficulty is populated
+				retval = 1;	//Set the return value to indicate the specified time range of the specified difficulty is populated
+				break;
 			}
 		}
 	}
+	if(tp && restore_tech_view)
+	{	//If tech view needs to be re-enabled
+		eof_menu_track_enable_tech_view(tp);
+	}
 
-	return 0;	//Return not populated
+	return retval;	//Return not populated
 }
 
 int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned long note, char target)
