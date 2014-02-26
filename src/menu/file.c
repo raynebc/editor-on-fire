@@ -3856,6 +3856,7 @@ int eof_menu_file_sonic_visualiser_import(void)
 		(void) replace_filename(eof_last_sonic_visualiser_path, returnedfn, "", 1024);	//Set the last loaded Sonic Visualiser file path
 		free(buffer);
 		(void) pack_fclose(inf);
+		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	}//If the user selected a file
 
 	return 1;

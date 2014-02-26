@@ -1866,6 +1866,7 @@ int eof_track_rocksmith_insert_difficulty(void)
 	unsigned char thistype, newdiff, upper = 0, lower = 0;
 	EOF_PRO_GUITAR_TRACK *tp;
 	char undo_made = 0;
+	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the note difficulties are updated
 
 	if(!eof_song || eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
@@ -1892,6 +1893,12 @@ int eof_track_rocksmith_insert_difficulty(void)
 		newdiff = eof_note_type;
 	}
 
+	if(tp->note == tp->technote)
+	{	//If tech view is in effect for the active track
+		restore_tech_view = 1;
+		eof_menu_track_disable_tech_view(tp);
+	}
+
 	//Update note difficulties
 	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 	{	//For each note in the track
@@ -1899,6 +1906,15 @@ int eof_track_rocksmith_insert_difficulty(void)
 		if(thistype >= newdiff)
 		{	//If this note's difficulty needs to be updated
 			eof_set_note_type(eof_song, eof_selected_track, ctr, thistype + 1);
+		}
+	}
+
+	//Update tech note difficulties
+	for(ctr = 0; ctr < tp->technotes; ctr++)
+	{	//For each tech note in the track
+		if(tp->technote[ctr]->type >= newdiff)
+		{	//If this tech note's difficulty needs to be updated
+			tp->technote[ctr]->type++;
 		}
 	}
 
@@ -1972,6 +1988,10 @@ int eof_track_rocksmith_insert_difficulty(void)
 		}
 	}
 
+	if(tp && restore_tech_view)
+	{	//If tech view needs to be re-enabled
+		eof_menu_track_enable_tech_view(tp);
+	}
 	eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//Remove the difficulty limit for this track
 	eof_pro_guitar_track_sort_fret_hand_positions(tp);
 	eof_song->track[eof_selected_track]->numdiffs++;	//Increment the track's difficulty counter

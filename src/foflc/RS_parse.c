@@ -240,11 +240,11 @@ void shrink_xml_text(char *buffer, size_t size, char *input)
 			else if(strstr(&(input[ctr]), "&gt;") == ptr)
 			{	//If this is the greater than escape sequence
 				buffer[index++] = '>';
-				ctr += 5;	//Seek past the sequence in the input buffer
+				ctr += 3;	//Seek past the sequence in the input buffer
 			}
 			else if(strstr(&(input[ctr]), "&amp;") == ptr)
 			{	//If this is the ampersand escape sequence
-				buffer[index++] = '\"';
+				buffer[index++] = '&';
 				ctr += 4;	//Seek past the sequence in the input buffer
 			}
 			else

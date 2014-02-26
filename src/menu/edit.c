@@ -1054,7 +1054,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the notes have been stored
 
 		if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-		{	//If the track being stored is a pro guitar track
+		{	//If the track being written is a pro guitar track
 			tp = eof_song->pro_guitar_track[eof_song->track[j]->tracknum];
 			if(tp->note == tp->technote)
 			{	//If tech view is in effect for the track
@@ -2689,9 +2689,24 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 	unsigned long pos;
 	long length;
 	EOF_PHRASE_SECTION *ptr;
+	unsigned long tracknum;
+	EOF_PRO_GUITAR_TRACK *tp = NULL;
+	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
 
 	if(!undo_made || (eof_note_type == source_difficulty))
 		return 1;	//Invalid parameters
+
+	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If a pro guitar track is active
+		tracknum = eof_song->track[eof_selected_track]->tracknum;
+		tp = eof_song->pro_guitar_track[tracknum];
+		if(tp->note == tp->technote)
+		{	//If tech view is in effect for the active track
+			restore_tech_view = 1;
+			eof_menu_track_disable_tech_view(tp);
+			(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
+		}
+	}
 
 	if(eof_track_diff_populated_status[eof_note_type])
 	{	//If the current difficulty is populated
@@ -2725,8 +2740,23 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 
 	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If this is a pro guitar track
-		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-		EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+		//Copy tech notes from the source difficulty
+		eof_menu_track_enable_tech_view(tp);
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+		{	//For each note in this instrument track
+			if(eof_get_note_type(eof_song, eof_selected_track, i) == source_difficulty)
+			{	//If this note is in the source difficulty
+				pos = eof_get_note_pos(eof_song, eof_selected_track, i);
+				length = eof_get_note_length(eof_song, eof_selected_track, i);
+				(void) eof_copy_note(eof_song, eof_selected_track, i, eof_selected_track, pos, length, eof_note_type);
+			}
+		}
+		eof_track_sort_notes(eof_song, eof_selected_track);	//Sort tech notes before switching back to the normal note array
+		if(!restore_tech_view)
+		{	//If tech view doesn't need to remain enabled
+			eof_menu_track_disable_tech_view(tp);
+		}
+		(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
 
 		//Copy arpeggios from the source difficulty
 		for(i = 0; i < eof_get_num_arpeggios(eof_song, eof_selected_track); i++)

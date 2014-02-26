@@ -14,6 +14,7 @@
 #include "song.h"
 #include "tuning.h"
 #include "undo.h"
+#include "foflc/RS_parse.h"	//For shrink_xml_text()
 #endif
 
 #include <math.h>
@@ -1632,7 +1633,7 @@ int main(int argc, char *argv[])
 
 struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 {
-	char buffer[256], *buffer2, buffer3[256], byte, bytemask, usedstrings, *ptr;
+	char buffer[256], *buffer2, buffer3[256], buffer4[256], byte, bytemask, usedstrings, *ptr;
 	unsigned word, fileversion;
 	unsigned long dword, ctr, ctr2, ctr3, ctr4, tracks, measures, *strings, beats;
 	PACKFILE *inf = NULL, *inf2;	//The GPA import logic will open the file handle for the Guitar Pro file in inf if applicable
@@ -1754,8 +1755,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					ptr++;
 				}
 				buffer3[ctr] = '\0';	//Terminate the string
+				shrink_xml_text(buffer4, sizeof(buffer4), buffer3);	//Convert any escape sequences in the file name to regular characters
 				(void) replace_filename(eof_temp_filename, fn, "", 1024);
-				strncat(eof_temp_filename, buffer3, 1024 - strlen(eof_temp_filename) - 1);	//Build the path to the GP file
+				strncat(eof_temp_filename, buffer4, 1024 - strlen(eof_temp_filename) - 1);	//Build the path to the GP file
 				inf = pack_fopen(eof_temp_filename, "rb");
 				if(!inf)
 				{

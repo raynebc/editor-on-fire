@@ -159,11 +159,9 @@ int eof_adjust_notes(int offset)
 		{	//For each note in the track
 			eof_set_note_pos(eof_song, i, j, eof_get_note_pos(eof_song, i, j) + offset);	//Add the offset to the note's position
 		}
-		eof_menu_track_disable_tech_view(tp);
-
-		if(tp && restore_tech_view)
-		{	//If tech view needs to be re-enabled for the track
-			eof_menu_track_enable_tech_view(tp);
+		if(tp && !restore_tech_view)
+		{	//If tech view needs doesn't need remain enabled for the track
+			eof_menu_track_disable_tech_view(tp);
 		}
 
 		for(j = 0; j < eof_get_num_solos(eof_song, i); j++)
