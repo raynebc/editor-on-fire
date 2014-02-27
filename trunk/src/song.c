@@ -3166,7 +3166,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			(void) pack_iputl(4, fp);
 			(void) pack_iputl(0xFFFFFFFF, fp);	//Write the debug custom data block ID
 		}
-		if(restore_tech_view)
+		if(tp && restore_tech_view)
 		{	//If tech view needs to be re-enabled for the track that was just written
 			eof_menu_track_enable_tech_view(tp);
 		}
@@ -6824,11 +6824,8 @@ void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsign
 	{	//If the track being altered is a pro guitar track
 		tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];
 		notearrayctr = 2;	//A second note array (the tech notes) will need to be processed
-		if(tp->note == tp->technote)
-		{	//If tech view is in effect for the active track
-			restore_tech_view = 1;
-			eof_menu_track_disable_tech_view(tp);
-		}
+		restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
+		eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view if applicable
 	}
 
 	for(ctr3 = 0; ctr3 < notearrayctr; ctr3++)
@@ -6916,13 +6913,7 @@ void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsign
 		}//For each note in the track (in reverse order)
 		eof_track_sort_notes(sp, track);	//Sort the note array
 	}//For each note array being modified
-	if(tp)
-	{
-		if(!restore_tech_view)
-		{	//If tech view doesn't need to remain enabled
-			eof_menu_track_disable_tech_view(tp);
-		}
-	}
+	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 
 	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If the track being altered is a pro guitar track
@@ -7078,22 +7069,14 @@ void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char di
 	unsigned long i, tracknum;
 	EOF_PHRASE_SECTION *ptr;
 	EOF_PRO_GUITAR_TRACK *tp = NULL;
-	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
+	char restore_tech_view;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
 
 	if(!sp || (track >= sp->tracks))
 		return;	//Invalid parameters
 
 	tracknum = sp->track[track]->tracknum;
-
-	if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-	{	//If the track being erased is a pro guitar track
-		tp = eof_song->pro_guitar_track[tracknum];
-		if(tp->note == tp->technote)
-		{	//If tech view is in effect for the active track
-			restore_tech_view = 1;
-			eof_menu_track_disable_tech_view(tp);
-		}
-	}
+	restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
+	eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view if applicable
 
 	//Delete notes
 	for(i = eof_get_track_size(sp, track); i > 0; i--)
@@ -7121,6 +7104,7 @@ void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char di
 	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If a pro guitar track was specified
 		//Delete tech notes
+		tp = eof_song->pro_guitar_track[tracknum];
 		eof_menu_track_enable_tech_view(tp);
 		for(i = eof_get_track_size(sp, track); i > 0; i--)
 		{	//For each tech note in the track, in reverse order
@@ -7129,10 +7113,7 @@ void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char di
 				eof_track_delete_note(sp, track, i - 1);	//Delete it
 			}
 		}
-		if(!restore_tech_view)
-		{	//If tech view doesn't need to remain enabled
-			eof_menu_track_disable_tech_view(tp);
-		}
+		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 		if(!diffonly)
 		{	//If the entire track is to be erased
 			tp->popupmessages = 0;	//Remove all of the track's popup messages

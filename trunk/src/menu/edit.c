@@ -796,11 +796,8 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 		if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If the track being stored is a pro guitar track
 			tp = eof_song->pro_guitar_track[eof_song->track[j]->tracknum];
-			if(tp->note == tp->technote)
-			{	//If tech view is in effect for the track
-				restore_tech_view = 1;
-				eof_menu_track_disable_tech_view(tp);
-			}
+			restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, j);
+			eof_menu_track_set_tech_view_state(eof_song, j, 0);	//Disable tech view if applicable
 		}
 
 		/* Process notes */
@@ -993,10 +990,7 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
 		}
 
-		if(tp && restore_tech_view)
-		{	//If tech view needs to be re-enabled for the track
-			eof_menu_track_enable_tech_view(tp);
-		}
+		eof_menu_track_set_tech_view_state(eof_song, j, restore_tech_view);	//Re-enable tech view if applicable
 	}//For each track
 	(void) pack_fclose(fp);
 	return 1;
@@ -1056,11 +1050,8 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If the track being written is a pro guitar track
 			tp = eof_song->pro_guitar_track[eof_song->track[j]->tracknum];
-			if(tp->note == tp->technote)
-			{	//If tech view is in effect for the track
-				restore_tech_view = 1;
-				eof_menu_track_disable_tech_view(tp);
-			}
+			restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, j);
+			eof_menu_track_set_tech_view_state(eof_song, j, 0);	//Disable tech view if applicable
 		}
 
 		//Empty the notes from the track
@@ -1265,10 +1256,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
 		}
 
-		if(tp && restore_tech_view)
-		{	//If tech view needs to be re-enabled for the track
-			eof_menu_track_enable_tech_view(tp);
-		}
+		eof_menu_track_set_tech_view_state(eof_song, j, restore_tech_view);	//Re-enable tech view if applicable
 	}//For each track
 	(void) pack_fclose(fp);
 	eof_fixup_notes(eof_song);
@@ -2700,12 +2688,9 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 	{	//If a pro guitar track is active
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		tp = eof_song->pro_guitar_track[tracknum];
-		if(tp->note == tp->technote)
-		{	//If tech view is in effect for the active track
-			restore_tech_view = 1;
-			eof_menu_track_disable_tech_view(tp);
-			(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
-		}
+		restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track);
+		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0);	//Disable tech view if applicable
+		(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
 	}
 
 	if(eof_track_diff_populated_status[eof_note_type])
@@ -2741,7 +2726,7 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If this is a pro guitar track
 		//Copy tech notes from the source difficulty
-		eof_menu_track_enable_tech_view(tp);
+		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 1);	//Enable tech view
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in this instrument track
 			if(eof_get_note_type(eof_song, eof_selected_track, i) == source_difficulty)
@@ -2752,10 +2737,7 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 			}
 		}
 		eof_track_sort_notes(eof_song, eof_selected_track);	//Sort tech notes before switching back to the normal note array
-		if(!restore_tech_view)
-		{	//If tech view doesn't need to remain enabled
-			eof_menu_track_disable_tech_view(tp);
-		}
+		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, restore_tech_view);	//Restore original tech view state
 		(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
 
 		//Copy arpeggios from the source difficulty

@@ -396,11 +396,8 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
-	if(tp->note == tp->technote)
-	{	//If tech view is in effect for the track being exported
-		restore_tech_view = 1;
-		eof_menu_track_disable_tech_view(tp);
-	}
+	restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
+	eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view if applicable
 	if(eof_get_highest_fret(sp, track, 0) > 22)
 	{	//If the track being exported uses any frets higher than 22
 		if((*user_warned & 2) == 0)
@@ -463,10 +460,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			allegro_message(eof_log_string);
 			eof_log(eof_log_string, 1);
 		}
-		if(restore_tech_view)
-		{	//If tech view needs to be re-enabled
-			eof_menu_track_enable_tech_view(tp);
-		}
+		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 		return 0;	//Return failure
 	}
 
@@ -485,10 +479,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	if(!fp)
 	{
 		eof_log("\tError saving:  Cannot open file for writing", 1);
-		if(restore_tech_view)
-		{	//If tech view needs to be re-enabled
-			eof_menu_track_enable_tech_view(tp);
-		}
+		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 		return 0;	//Return failure
 	}
 
@@ -859,10 +850,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				allegro_message("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.");
 				eof_log("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.", 1);
 				free(sectionlist);
-				if(restore_tech_view)
-				{	//If tech view needs to be re-enabled
-					eof_menu_track_enable_tech_view(tp);
-				}
+				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 				return 0;	//Return error
 			}
 			(void) snprintf(buffer, sizeof(buffer) - 1, "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\"/>\n", sp->beat[ctr]->fpos / 1000.0, phraseid);
@@ -1063,10 +1051,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		{
 			eof_log("\tError saving:  Cannot allocate memory for control list", 1);
 			eof_rs_export_cleanup(sp, track);
-			if(restore_tech_view)
-			{	//If tech view needs to be re-enabled
-				eof_menu_track_enable_tech_view(tp);
-			}
+			eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 			return 0;	//Return failure
 		}
 
@@ -1087,10 +1072,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				}
 				free(controls);
 				eof_rs_export_cleanup(sp, track);
-				if(restore_tech_view)
-				{	//If tech view needs to be re-enabled
-					eof_menu_track_enable_tech_view(tp);
-				}
+				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 				return 0;	//Return failure
 			}
 			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"ShowMessageBox(hint%lu, %s)\"/>\n", tp->popupmessage[ctr].start_pos / 1000.0, ctr + 1, buffer2);
@@ -1110,10 +1092,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				}
 				free(controls);
 				eof_rs_export_cleanup(sp, track);
-				if(restore_tech_view)
-				{	//If tech view needs to be re-enabled
-					eof_menu_track_enable_tech_view(tp);
-				}
+				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 				return 0;	//Return failure
 			}
 			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"ClearAllMessageBoxes()\"/>\n", tp->popupmessage[ctr].end_pos / 1000.0);
@@ -1135,10 +1114,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				}
 				free(controls);
 				eof_rs_export_cleanup(sp, track);
-				if(restore_tech_view)
-				{	//If tech view needs to be re-enabled
-					eof_menu_track_enable_tech_view(tp);
-				}
+				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 				return 0;	//Return failure
 			}
 			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"CDlcTone(%s)\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tp->tonechange[ctr].name);
@@ -1347,10 +1323,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								free(chordlist);
 							}
 							eof_rs_export_cleanup(sp, track);
-							if(restore_tech_view)
-							{	//If tech view needs to be re-enabled
-								eof_menu_track_enable_tech_view(tp);
-							}
+							eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 							return 0;	//Return error
 						}
 						if(tp->note[ctr3]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
@@ -1463,10 +1436,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							free(chordlist);
 						}
 						eof_rs_export_cleanup(sp, track);
-						if(restore_tech_view)
-						{	//If tech view needs to be re-enabled
-							eof_menu_track_enable_tech_view(tp);
-						}
+						eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 						return 0;	//Return error
 					}
 					handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position
@@ -1540,10 +1510,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								free(chordlist);
 							}
 							eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added
-							if(restore_tech_view)
-							{	//If tech view needs to be re-enabled
-								eof_menu_track_enable_tech_view(tp);
-							}
+							eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 							return 0;	//Return error
 						}
 						handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position (in seconds)
@@ -1624,10 +1591,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}
 	eof_sort_events(sp);	//Re-sort events
 	eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added
-	if(restore_tech_view)
-	{	//If tech view needs to be re-enabled
-		eof_menu_track_enable_tech_view(tp);
-	}
+	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 
 	return 1;	//Return success
 }
@@ -1675,11 +1639,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
-	if(tp->note == tp->technote)
-	{	//If tech view is in effect for the track being exported
-		restore_tech_view = 1;
-		eof_menu_track_disable_tech_view(tp);
-	}
+	restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
+	eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view if applicable
 	if(eof_get_highest_fret(sp, track, 0) > 24)
 	{	//If the track being exported uses any frets higher than 24
 		if((*user_warned & 64) == 0)
@@ -1740,10 +1701,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			allegro_message(eof_log_string);
 			eof_log(eof_log_string, 1);
 		}
-		if(restore_tech_view)
-		{	//If tech view needs to be re-enabled
-			eof_menu_track_enable_tech_view(tp);
-		}
+		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 		return 0;	//Return failure
 	}
 
@@ -1762,10 +1720,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	if(!fp)
 	{
 		eof_log("\tError saving:  Cannot open file for writing", 1);
-		if(restore_tech_view)
-		{	//If tech view needs to be re-enabled
-			eof_menu_track_enable_tech_view(tp);
-		}
+		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 		return 0;	//Return failure
 	}
 
@@ -2155,14 +2110,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				allegro_message("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.");
 				eof_log("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.", 1);
 				free(sectionlist);
-				if(restore_tech_view)
-				{	//If tech view needs to be re-enabled
-					eof_menu_track_enable_tech_view(tp);
-				}
-				if(restore_tech_view)
-				{	//If tech view needs to be re-enabled
-					eof_menu_track_enable_tech_view(tp);
-				}
+				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 				return 0;	//Return error
 			}
 			(void) snprintf(buffer, sizeof(buffer) - 1, "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\" variation=\"\"/>\n", sp->beat[ctr]->fpos / 1000.0, phraseid);
@@ -2217,10 +2165,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							eof_log("Error:  Couldn't expand linked chords into single notes.  Aborting Rocksmith export.", 1);
 							free(sectionlist);
 							eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-							if(restore_tech_view)
-							{	//If tech view needs to be re-enabled
-								eof_menu_track_enable_tech_view(tp);
-							}
+							eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 							return 0;	//Return error
 						}
 					}//If this string is used and is not ghosted
@@ -2257,10 +2202,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								eof_log("Error:  Couldn't expand an arpeggio chord into single notes.  Aborting Rocksmith export.", 1);
 								free(sectionlist);
 								eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-								if(restore_tech_view)
-								{	//If tech view needs to be re-enabled
-									eof_menu_track_enable_tech_view(tp);
-								}
+								eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 								return 0;	//Return error
 							}
 						}//If this string is used and is not ghosted
@@ -2309,10 +2251,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						eof_log("Error:  Couldn't expand a non arpeggio partially ghosted chord into a non ghosted chord.  Aborting Rocksmith export.", 1);
 						free(sectionlist);
 						eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-						if(restore_tech_view)
-						{	//If tech view needs to be re-enabled
-							eof_menu_track_enable_tech_view(tp);
-						}
+						eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 						return 0;	//Return error
 					}
 				}
@@ -2494,10 +2433,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		{
 			eof_log("\tError saving:  Cannot allocate memory for control list", 1);
 			eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-			if(restore_tech_view)
-			{	//If tech view needs to be re-enabled
-				eof_menu_track_enable_tech_view(tp);
-			}
+			eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 			return 0;	//Return failure
 		}
 
@@ -2518,10 +2454,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				}
 				free(controls);
 				eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-				if(restore_tech_view)
-				{	//If tech view needs to be re-enabled
-					eof_menu_track_enable_tech_view(tp);
-				}
+				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 				return 0;	//Return failure
 			}
 			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"ShowMessageBox(hint%lu, %s)\"/>\n", tp->popupmessage[ctr].start_pos / 1000.0, ctr + 1, buffer2);
@@ -2541,10 +2474,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				}
 				free(controls);
 				eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-				if(restore_tech_view)
-				{	//If tech view needs to be re-enabled
-					eof_menu_track_enable_tech_view(tp);
-				}
+				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 				return 0;	//Return failure
 			}
 			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"ClearAllMessageBoxes()\"/>\n", tp->popupmessage[ctr].end_pos / 1000.0);
@@ -2824,10 +2754,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 									free(chordlist);
 								}
 								eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-								if(restore_tech_view)
-								{	//If tech view needs to be re-enabled
-									eof_menu_track_enable_tech_view(tp);
-								}
+								eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 								return 0;	//Return error
 							}
 							flags = tp->note[ctr3]->flags;	//Simplify
@@ -2981,10 +2908,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								free(chordlist);
 							}
 							eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-							if(restore_tech_view)
-							{	//If tech view needs to be re-enabled
-								eof_menu_track_enable_tech_view(tp);
-							}
+							eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 							return 0;	//Return error
 						}
 						handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position
@@ -3074,10 +2998,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 									free(chordlist);
 								}
 								eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-								if(restore_tech_view)
-								{	//If tech view needs to be re-enabled
-									eof_menu_track_enable_tech_view(tp);
-								}
+								eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 								return 0;	//Return error
 							}
 							handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position (in seconds)
@@ -3179,10 +3100,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}
 	}
 	eof_sort_events(sp);	//Re-sort events
-	if(restore_tech_view)
-	{	//If tech view needs to be re-enabled
-		eof_menu_track_enable_tech_view(tp);
-	}
+	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 
 	return 1;	//Return success
 }
@@ -3790,7 +3708,6 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 	unsigned long ctr2, ctr3, thispos, thispos2;
 	unsigned char note_found;
 	unsigned char comparediff, thisdiff, populated = 0;
-	EOF_PRO_GUITAR_TRACK *tp = NULL;
 	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
 
 	if(!sp || (track >= sp->tracks) || (start > stop))
@@ -3821,15 +3738,8 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 		}
 	}
 
-	if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-	{	//If the track being checked is a pro guitar track
-		tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];
-		if(tp->note == tp->technote)
-		{	//If tech view is in effect for the active track
-			restore_tech_view = 1;
-			eof_menu_track_disable_tech_view(tp);
-		}
-	}
+	restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
+	eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view if applicable
 
 	//First pass:  Compare notes in the specified difficulty with those in the comparing difficulty
 	for(ctr2 = 0; ctr2 < eof_get_track_size(sp, track); ctr2++)
@@ -3863,10 +3773,7 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 							note_found = 1;	//Track that a note at the same position was found in the previous difficulty
 							if(eof_note_compare(sp, track, ctr2, track, ctr3 - 1, 1))
 							{	//If the two notes don't match (including lengths and flags)
-								if(tp && restore_tech_view)
-								{	//If tech view needs to be re-enabled
-									eof_menu_track_enable_tech_view(tp);
-								}
+								eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 								return 1;	//Return difference found
 							}
 							break;
@@ -3888,10 +3795,7 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 							note_found = 1;	//Track that a note at the same position was found in the previous difficulty
 							if(eof_note_compare(sp, track, ctr2, track, ctr3 - 1, 1))
 							{	//If the two notes don't match (including lengths and flags)
-								if(tp && restore_tech_view)
-								{	//If tech view needs to be re-enabled
-									eof_menu_track_enable_tech_view(tp);
-								}
+								eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 								return 1;	//Return difference found
 							}
 							break;
@@ -3900,10 +3804,7 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 				}
 				if(!note_found)
 				{	//If this note has no note at the same position in the previous difficulty
-					if(tp && restore_tech_view)
-					{	//If tech view needs to be re-enabled
-						eof_menu_track_enable_tech_view(tp);
-					}
+					eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 					return 1;	//Return difference found
 				}
 			}//If this note is in the difficulty being examined
@@ -3912,10 +3813,7 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 
 	if(!populated)
 	{	//If no notes were contained within the time range in the specified difficulty
-		if(tp && restore_tech_view)
-		{	//If tech view needs to be re-enabled
-			eof_menu_track_enable_tech_view(tp);
-		}
+		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 		return -1;	//Return empty time range
 	}
 
@@ -3950,10 +3848,7 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 							note_found = 1;	//Track that a note at the same position was found in the previous difficulty
 							if(eof_note_compare(sp, track, ctr2, track, ctr3 - 1, 1))
 							{	//If the two notes don't match (including lengths and flags)
-								if(tp && restore_tech_view)
-								{	//If tech view needs to be re-enabled
-									eof_menu_track_enable_tech_view(tp);
-								}
+								eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 								return 1;	//Return difference found
 							}
 							break;
@@ -3975,10 +3870,7 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 							note_found = 1;	//Track that a note at the same position was found in the previous difficulty
 							if(eof_note_compare(sp, track, ctr2, track, ctr3 - 1, 1))
 							{	//If the two notes don't match (including lengths and flags)
-								if(tp && restore_tech_view)
-								{	//If tech view needs to be re-enabled
-									eof_menu_track_enable_tech_view(tp);
-								}
+								eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 								return 1;	//Return difference found
 							}
 							break;
@@ -3987,19 +3879,13 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 				}
 				if(!note_found)
 				{	//If this note has no note at the same position in the previous difficulty
-					if(tp && restore_tech_view)
-					{	//If tech view needs to be re-enabled
-						eof_menu_track_enable_tech_view(tp);
-					}
+					eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 					return 1;	//Return difference found
 				}
 			}//If this note is in the difficulty being compared
 		}//If this note is at or after the start of the specified range, check its difficulty
 	}//For each note in the track
-	if(tp && restore_tech_view)
-	{	//If tech view needs to be re-enabled
-		eof_menu_track_enable_tech_view(tp);
-	}
+	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 
 	return 0;	//Return no difference found
 }
@@ -4008,21 +3894,13 @@ unsigned char eof_find_fully_leveled_rs_difficulty_in_time_range(EOF_SONG *sp, u
 {
 	unsigned char reldiff, fullyleveleddiff = 0;
 	unsigned long ctr;
-	EOF_PRO_GUITAR_TRACK *tp = NULL;
 	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
 
 	if(!sp || (track >= sp->tracks) || (start > stop))
 		return 0;	//Invalid parameters
 
-	if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-	{	//If the specified track is a pro guitar track
-		tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
-		if(tp->note == tp->technote)
-		{	//If tech view is in effect for the active track
-			restore_tech_view = 1;
-			eof_menu_track_disable_tech_view(tp);
-		}
-	}
+	restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
+	eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view if applicable
 	(void) eof_detect_difficulties(sp, track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for this track
 	if((sp->track[track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) == 0)
 	{	//If the track is using the traditional 5 difficulty system
@@ -4038,10 +3916,7 @@ unsigned char eof_find_fully_leveled_rs_difficulty_in_time_range(EOF_SONG *sp, u
 			}
 		}
 	}//For each of the possible difficulties
-	if(tp && restore_tech_view)
-	{	//If tech view needs to be re-enabled
-		eof_menu_track_enable_tech_view(tp);
-	}
+	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 
 	if(!relative)
 	{	//If the resulting difficulty number is not to be converted to Rocksmith's relative difficulty number system
@@ -4165,22 +4040,14 @@ int eof_time_range_is_populated(EOF_SONG *sp, unsigned long track, unsigned long
 {
 	unsigned long ctr2, thispos;
 	unsigned char thisdiff;
-	EOF_PRO_GUITAR_TRACK *tp = NULL;
 	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
 	int retval = 0;
 
 	if(!sp || (track >= sp->tracks) || (start > stop))
 		return 0;	//Invalid parameters
 
-	if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-	{	//If the specified track is a pro guitar track
-		tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];
-		if(tp->note == tp->technote)
-		{	//If tech view is in effect for the active track
-			restore_tech_view = 1;
-			eof_menu_track_disable_tech_view(tp);
-		}
-	}
+	restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
+	eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view if applicable
 
 	for(ctr2 = 0; ctr2 < eof_get_track_size(sp, track); ctr2++)
 	{	//For each note in the track
@@ -4199,10 +4066,7 @@ int eof_time_range_is_populated(EOF_SONG *sp, unsigned long track, unsigned long
 			}
 		}
 	}
-	if(tp && restore_tech_view)
-	{	//If tech view needs to be re-enabled
-		eof_menu_track_enable_tech_view(tp);
-	}
+	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 
 	return retval;	//Return not populated
 }

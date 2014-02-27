@@ -1893,11 +1893,8 @@ int eof_track_rocksmith_insert_difficulty(void)
 		newdiff = eof_note_type;
 	}
 
-	if(tp->note == tp->technote)
-	{	//If tech view is in effect for the active track
-		restore_tech_view = 1;
-		eof_menu_track_disable_tech_view(tp);
-	}
+	restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track);
+	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0);	//Disable tech view if applicable
 
 	//Update note difficulties
 	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
@@ -1988,10 +1985,7 @@ int eof_track_rocksmith_insert_difficulty(void)
 		}
 	}
 
-	if(tp && restore_tech_view)
-	{	//If tech view needs to be re-enabled
-		eof_menu_track_enable_tech_view(tp);
-	}
+	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, restore_tech_view);	//Re-enable tech view if applicable
 	eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//Remove the difficulty limit for this track
 	eof_pro_guitar_track_sort_fret_hand_positions(tp);
 	eof_song->track[eof_selected_track]->numdiffs++;	//Increment the track's difficulty counter
@@ -3597,5 +3591,39 @@ void eof_menu_track_enable_tech_view(EOF_PRO_GUITAR_TRACK *tp)
 		tp->pgnotes = tp->notes;	//Ensure that the size of the regular note array is backed up
 		tp->note = tp->technote;	//Put the tech note array into effect
 		tp->notes = tp->technotes;
+	}
+}
+
+char eof_menu_track_get_tech_view_state(EOF_SONG *sp, unsigned long track)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return 0;	//Invalid parameters
+
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+	if(tp->note == tp->technote)
+	{	//If tech view is in effect for the specified track
+		return 1;
+	}
+
+	return 0;	//Return tech view not in effect
+}
+
+void eof_menu_track_set_tech_view_state(EOF_SONG *sp, unsigned long track, char state)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return;	//Invalid parameters
+
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+	if(state)
+	{	//If the calling function specified to enable tech view
+		eof_menu_track_enable_tech_view(tp);
+	}
+	else
+	{	//The calling function specified to disable tech view
+		eof_menu_track_disable_tech_view(tp);
 	}
 }

@@ -4902,18 +4902,10 @@ void eof_render_editor_window_2(void)
 
 	if(eof_display_second_piano_roll)
 	{	//If the secondary piano roll is to be displayed
-		EOF_PRO_GUITAR_TRACK *tp = NULL;
 		char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
 
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-		{	//If the track being rendered is a pro guitar track
-			tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
-			if(tp->note == tp->technote)
-			{	//If tech view is in effect for the active track
-				restore_tech_view = 1;
-				eof_menu_track_disable_tech_view(tp);
-			}
-		}
+		restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track);
+		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0);	//Disable tech view if applicable
 		if(eof_note_type2 < 0)
 		{	//If the difficulty hasn't been initialized
 			eof_note_type2 = eof_note_type;
@@ -4943,10 +4935,7 @@ void eof_render_editor_window_2(void)
 		eof_note_type = eof_note_type2;									//Set the secondary piano roll's difficulty
 		eof_render_editor_window(eof_window_editor2, 2);				//Render this track difficulty to the secondary piano roll screen
 
-		if(tp && restore_tech_view)
-		{	//If tech view needs to be re-enabled
-			eof_menu_track_enable_tech_view(tp);
-		}
+		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, restore_tech_view);	//Re-enable tech view if applicable
 		(void) eof_menu_track_selected_track_number(temp_track, 0);	//Restore the active track number
 		eof_note_type = temp_type;									//Restore the active difficulty
 		eof_music_pos = temp_pos;									//Restore the active position
