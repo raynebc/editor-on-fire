@@ -173,11 +173,14 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 				{	//For each note in the track that follows this note
 					if((eof_note_count_rs_lanes(sp, track, ctr2, target) > 1) && !eof_note_compare_simple(sp, track, ctr, ctr2))
 					{	//If this note matches one that follows it, and that later note is a valid chord for the target Rocksmith game
-						if(!(target & 2) || (eof_is_partially_ghosted(sp, track, ctr) == eof_is_partially_ghosted(sp, track, ctr2)))
-						{	//If the target is Rocksmith 1, or if both notes have the same ghost status (either no gems ghosted or at least one gem ghosted)
-							notelist[ctr] = NULL;	//Eliminate this note from the list
-							match = 1;	//Note that this chord matched one of the others
-							break;
+						if(!(tp->note[ctr2]->tflags & EOF_NOTE_TFLAG_IGNORE))
+						{	//If the note is not ignored
+							if(!(target & 2) || (eof_is_partially_ghosted(sp, track, ctr) == eof_is_partially_ghosted(sp, track, ctr2)))
+							{	//If the target is Rocksmith 1, or if both notes have the same ghost status (either no gems ghosted or at least one gem ghosted)
+								notelist[ctr] = NULL;	//Eliminate this note from the list
+								match = 1;	//Note that this chord matched one of the others
+								break;
+							}
 						}
 					}
 				}
