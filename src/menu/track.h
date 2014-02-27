@@ -198,5 +198,7 @@ int eof_track_fret_hand_positions_generate_all(void);
 int eof_menu_track_toggle_tech_view(void);	//Toggles tech view for the active pro guitar track
 void eof_menu_track_disable_tech_view(EOF_PRO_GUITAR_TRACK *tp);	//Disables tech view for the specified pro guitar track, preserving the tech note array size
 void eof_menu_track_enable_tech_view(EOF_PRO_GUITAR_TRACK *tp);		//Enables tech view for the specified pro guitar track, preserving the normal note array size
+char eof_menu_track_get_tech_view_state(EOF_SONG *sp, unsigned long track);	//Returns nonzero if the specified track is a pro guitar track and has tech view enabled, otherwise returns zero
+void eof_menu_track_set_tech_view_state(EOF_SONG *sp, unsigned long track, char state);	//Changes the tech view status for the specified pro guitar track to enabled if state is nonzero, otherwise tech view is disabled
 
 #endif

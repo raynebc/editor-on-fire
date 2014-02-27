@@ -1100,6 +1100,7 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 	unsigned long notepos, flags, numphrases, numnotes;
 	unsigned char notetype;
 	EOF_PHRASE_SECTION *sectionptr = NULL;
+	char restore_tech_view = 0;
 
 	eof_log("eof_determine_phrase_status() entered", 2);
 
@@ -1107,6 +1108,9 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 		return;	//Invalid parameters
 	if(!eof_music_paused)
 		return;	//Do not allow this to run during playback because it causes too much lag when switching to a track with a large number of notes
+
+	restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
+	eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view if applicable
 
 	tracknum = sp->track[track]->tracknum;
 	numnotes = eof_get_track_size(sp, track);
@@ -1283,6 +1287,8 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 			eof_track_delete_slider(sp, track, j - 1);
 		}
 	}
+
+	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 }
 
 int eof_figure_difficulty(void)

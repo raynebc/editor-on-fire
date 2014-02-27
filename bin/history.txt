@@ -3,60 +3,126 @@ EOF Version History
 
 1.8:
 
-Added an "x2 zoom" option to the File>Display menu that
-doubles the size of everything displayed in EOF except
-for the menus and dialog functions.
+Updated the EOF project file format to support new features including
+pro guitar/bass, keys, dance, open bass strumming, etc.
 
-Added a Note>Reflect menu that has functions to reflect
-the selected notes vertically (ie. a gem on the lowest
-lane becomes a gem on the highest lane), horizontally
-(ie. the first selected note is swapped with the last
-selected note), or both.
+Added support for authoring custom Rock Band 3 pro guitar tracks,
+including a variety of new charting mechanics.  A tutorial for
+authoring pro guitar tracks has been added.
 
-Fixed a bug where a file path variable wasn't set when a
-new project was created, which could cause the project to
-save into EOF's project folder instead of the expected
-location until the project was manually re-opened in EOF.
+Added support for authoring custom Rocksmith and Rocksmith 2014
+charts, which include one or more pro guitar and bass tracks and
+lyrics.  This adds many more chart features on top of those used for
+authoring Rock Band 3 charts, such as Rocksmith phrases, Rocksmith
+sections, fret hand positions (the Expert difficulty of which is also
+used during MIDI export for allowing unusual situations such as
+authoring dislike guitar parts for each difficulty in a Rock Band 3
+pro guitar custom), chord fingering, bend strength, slide end
+position, various guitar and bass techniques and Rocksmith events.
+New functions to define and auto-generate several of these have also
+been added.  The new "Song>Pro Guitar>Remove difficulty limit" function
+enables up to 255 difficulties to be authored for a pro guitar/bass
+track.  A function to import Rocksmith XML files has been added to the
+File menu.
+
+Added a new preference (Save separate RBN MIDI files) that
+automatically will save a RBN specific and a pro guitar specific MIDI
+file during save, each of which omitting any necessary unsupported
+notation.  For example, when creating a pro guitar upgrade, you no
+longer have to remove the legacy notes and existing text events, the
+"notes_pro.mid" file will provide the MIDI with the correct contents
+for building the pro guitar upgrade package.  "notes_rbn.mid" will
+have the correct contents for building a package in Magma, even
+removing unsupported tracks such as the dance and pro guitar/bass
+tracks.  "notes_c3.mid" will also be written if the project contains
+pro guitar or bass tracks, since the C3 release of Magma can compile
+charts containing pro guitar and bass.
+
+Added more logging and error checking in the leading silence
+function.
+
+Added the ability to import beat timings exported from Sonic
+Visualiser (File>Sonic Visualiser Import).  Sonic Visualiser is a
+program that can, with the first-party "Queen Mary Tempo and Beat
+Tracker" plugin installed, estimate the position of each beat in
+the song and save this information as an XML file.
+
+Made improvements to lyric export:  Fixed memory leaks that would
+occur during a failed export and added correction so that if a
+lyric is defined outsid of lyric lines, a line is temporarily
+created to hold it.
+
+Added a "Create preview audio" function to the song menu that
+exports the specified portion of the chart audio to
+(songname)_preview.wav and preview.ogg in the project folder.  It
+will default to a 30 second clip beginning from the current seek
+position, but if a seek selection has been made (Feedback input
+mode), the default start and stop position in the dialog reflect
+the selected area of the chart.
+
+Added a new "Beat>Estimate BPM" function using the MiniBPM source
+package.  This function estimates the tempo of the current chart
+audio and offers to apply that tempo to the first beat.
+
+Added a new time stretch feature using the rubberband library that
+uses phase vocoding techniques to allow chart audio to be played
+back slower than full speed without changing the pitch.  This is
+more processor intensive so you may need to increase your audio
+buffer (and AV delay) to compensate, but you can disable this
+feature by unchecking "Edit>Playback rate>Time stretch".
+
+Added an "x2 zoom" option to the File>Display menu that doubles
+the size of everything displayed in EOF except for the menus and
+dialog functions.
+
+Added a Note>Reflect menu that has functions to reflect the
+selected notes vertically (ie. a gem on the lowest lane becomes a
+gem on the highest lane), horizontally (ie. the first selected
+note is swapped with the last selected note), or both.
+
+Fixed a bug where a file path variable wasn't set when a new
+project was created, which could cause the project to save into
+EOF's project folder instead of the expected location until the
+project was manually re-opened in EOF.
 
 Added an alternate EOF icon image courtesy of Frack.
 
-Added keyboard shortcuts (CTRL+SHIFT+Up/Down in a non vocal
-track) that change to the next/previous track of the same
-format.  This allows you, for example, to quickly cycle
-through the pro guitar tracks even though they are not all
-contiguous..
+Added keyboard shortcuts (CTRL+SHIFT+Up/Down in a non vocal track)
+that change to the next/previous track of the same format.  This
+allows you, for example, to quickly cycle through the pro guitar
+tracks even though they are not all contiguous.
 
 Improved MIDI import to support Power Gig format charts.
 
-Doubled the maximum length of the lyric preview lines.
+Added a "precise select like" function that is similar to "select
+like", but also requires notes to have the same statuses (ie. both
+forced HOPO) in order to match.
 
-Added a "precise select like" function that is similar to
-"select like", but also requires notes to have the same
-statuses (ie. both forced HOPO) in order to match.
+Made improvements to lyric import:  UltraStar import now handles
+invalid lyrics with durations of 0 and/or negative timestamps,
+imported lyrics are set to pitchless if they all have the same
+pitch, fixed the ability to import extended LRC lyrics, added
+logic so that beats are appended to the project if the imported
+lyrics extend beyond the end of the chart, updated FoFLC to the
+latest version (2.39), adding support for importing Guitar Praise,
+JamBand and Rocksmith format lyrics and made various other fixes.
 
-Added a check to UltraStar lyric import to handle an invalid
-lyric duration of 0.
+Added a "Rewind when playback is at end" preference to control
+whether the chart automatically rewinds when the end of the song
+is reached during playback.
 
-Added a "Rewind when playback is at end" preference to
-control whether the chart automatically rewinds when the end
-of the song is reached during playback.
-
-Added a user preference (Import dialogs recall last path)
-where, if enabled, will alter the starting folder for each of
-the MIDI/Feedback/GH/Lyric/GP/RS imports to be the folder
-containing the last successfull import of such a file (if the
-folder still exists), instead of always starting in the
-project directory.
-
-Added a keyboard shortcut (CTRL+SHIFT+Home) to seek to the
-first beat marker.
+Added a user preference (Import dialogs recall last path) where,
+if enabled, will alter the starting folder for each of the
+MIDI/Feedback/GH/Lyric/GP/RS imports to be the folder containing
+the last successfull import of such a file (if the folder still
+exists), instead of always starting in the project directory.
 
 Added a song_length INI tag that will give the length of the
 chart's audio in milliseconds.
 
-Fixed a bug where the selected beat number could become
-invalid when performing an undo after certain chart
-operations, leading to a crash.
+Fixed a bug where the selected beat number could become invalid
+when performing an undo after certain chart operations, leading
+to a crash.
 
 Added an "Edit>MIDI tones" feature that outputs MIDI notes to
 your computer's default MIDI device to play a synthesized
@@ -116,32 +182,18 @@ difficulty. CTRL+~ sets difficulty 0, CTRL+1 through 0 set
 difficulty 1 through 10, CTRL+F1 through F12 set difficulty 11
 through 22.
 
-Improved handling for adding leading silence to and importing
-lyrics from files that have Unicode or extended ASCII in the
-file name.
+Improved handling for adding leading silence to and importing lyrics
+from files that have Unicode or extended ASCII in the file name.
 
 Fixed various bugs that could occur when a track had no
 phrases except for just one at a position of 0.
-
-Changed lyric import to automatically set the lyrics to
-pitchless if they all have the same pitch.
-
-Fixed Ultrastar lyric import to properly handle lyrics that
-have a negative timestamp but a large enough gap parameter to
-make it positive.
 
 Added the ability to alter the order of a beat's events in the
 Beat>Events dialog. The MIDI that is created during save will
 have the events written in the displayed order.
 
-Fixed a bug where lyric import would fail to import extended
-LRC formatted lyrics.
-
 Added handling for improperly formatted MIDIs that don't properly
 end MIDI tracks, or which include data after the end of a track.
-
-Improved lyric import so that beats are appended to the chart if
-necessary for containing any of the imported lyrics.
 
 Improved the normal paste logic so that pasted notes begin at the
 current seek position instead of first copied note's original
@@ -175,15 +227,13 @@ Added a keyboard shortcut to start playback of the song at
 25% speed (CTRL+SHIFT+Spacebar).
 
 Added the ability to define a custom display width
-(File>Display>Set display width).  The "Display" File menu
-settings have been moved into the "File>Display" submenu.  For
-the pro guitar tracks, which can have more than 5 difficulties,
-EOF will display as many difficulty tabs as will fit in the
-program window, taking any custom width into account.
+(File>Display>Set display width).  The "Display" File menu settings
+have been moved into the "File>Display" submenu.  For the pro guitar
+tracks, which can have more than 5 difficulties, EOF will display as
+many difficulty tabs as will fit in the program window, taking any
+custom width into account.
 
 Added support for the album tag in song properties.
-
-Added a keyboard shortcut for Note>Resnap (CTRL+SHIFT+R).
 
 Added a function to remove all statuses from selected notes
 (Note>Remove all statuses).
@@ -201,8 +251,12 @@ effect when EOF closes, it is restored when re-opening EOF.
 Increased the limit of each type of phrase to 1000, as users had run
 into limits on various items in extreme cases.
 
-Added cleanup logic that would ensure expert+ bass notes are only
-defined and written for the Expert drum track.
+Made improvements to expert+ bass drum authoring:  Added cleanup
+logic that would ensure expert+ bass notes are only defined and
+written for the Expert drum track, added a "Mark as non Expert+ bass
+drum" function to the Note>Drum menu and added a "Mark new notes as
+expert+" toggle-able option to make it more convenient to create
+double bass drum charts.
 
 Added an additional drum track (PART REAL_DRUMS_PS) for use in Phase
 Shift.  This drum track will behave similarly to the original
@@ -245,11 +299,6 @@ Changed the "Import/Export TS" preference to be enabled by default.
 Added the ability to copy the selected event in the "Beat>All Events"
 dialog function to the currently selected beat.
 
-Fixed memory leaks that could occur during a failed lyric export.
-
-Organized the preferences dialog menu, making space for many new
-preferences.
-
 Updated the fret catalog to display the position of the active entry.
 
 Added the ability to edit the start and end positions of the active
@@ -257,20 +306,6 @@ fret catalog entry (Song>Catalog>Edit Timing).
 
 Implemented running status encoding logic for exported MIDIs, making
 them smaller (about 20% smaller is typical).
-
-Added the ability to export pro guitar/bass and vocal tracks in
-Rocksmith XML format, including many new chart features such as
-Rocksmith phrases, Rocksmith sections, fret hand positions (the
-Expert difficulty of which is also used during MIDI export for
-allowing unusual situations such as authoring dislike guitar parts
-for each difficulty in a Rock Band 3 pro guitar custom), chord
-fingering, bend strength, slide end position, pop and slap bass
-guitar technique and Rocksmith events.  New functions to define
-and auto-generate several of these has also been added.  The new
-"Song>Pro Guitar>Remove difficulty limit" function enables up to
-255 difficulties to be authored for a pro guitar/bass track.  A
-function to import Rocksmith XML files has been added to the File
-menu.
 
 Improved INI import so that for boolean tags (ie. "lyrics ="),
 having a value of the word "true" (case insensitive) or "1" are both
@@ -335,8 +370,6 @@ which can be defined on the selected beat marker via the Beat>Key
 Signature menu.  The current key of the song will be used by Phase
 Shift to select appropriately pitched notes for freestyle.
 
-Added a keyboard shortcut for paste from catalog (CTRL+SHIFT+C).
-
 Added an option (Song>Catalog>Double width) to display the fret
 catalog with the full width of EOF's window, to better display long
 fret catalog entries.
@@ -382,9 +415,6 @@ anchor at/before current seek position by 1BPM (or .1BPM if SHIFT is
 held, or .01BPM if CTRL+SHIFT is held).  The shorcuts for
 increment/decrement AV delay have been changed to use CTRL++ and
 CTRL+- on the numpad.
-
-Fixed a bug where the 6th lane was dropped from pro guitar BRE notes
-during MIDI import.
 
 Fixed a minor bug where an undo state wasn't made if Enter was used
 to place gems at the current seek position (Classic and Hold input
@@ -446,9 +476,6 @@ Updated setting defaults based on my findings on multiple
 computers:  Buffer size is 6KB, "disable vsync" is in effect and
 AV delay is 300ms.
 
-Updated Feedback import to ignore unrecognized entries in the events
-section.
-
 Moved note/phrase processing to the start of playback to reduce lag
 that can occur when switching between tracks during playback.
 
@@ -458,8 +485,8 @@ The Mac release now uses the Cmd+key shortcuts instead of CTRL+key
 shortcuts, to avoid a crash that is either a bug in Allegro or a
 behavior of Mac OS.
 
-Minor corrections to the lyric preview regarding how lyrics are
-grouped together by equal signs and hyphens.
+Corrected the grouping behavior of the lyric preview and doubled the
+maximum length of lyric preview lines.
 
 Added Guitar Hero import functionality.
 
@@ -487,9 +514,11 @@ Made improvements to Feedback import:  Section names are altered to
 conform to the "[section SECTION_NAME]" format, [solo_on] and
 [solo_off] events into guitar and lead guitar solos, fixed memory
 leaks that could occur if the import fails, improved error
-reporting/logging that occurs when import fails and updated the
-import to allow the keyboard tracks to be loaded if present, song.ini
-is now imported with the Feedback chart.
+reporting/logging that occurs when import fails, updated the import
+to allow the keyboard tracks to be loaded if present, song.ini is now
+imported with the Feedback chart, added support for more instrument
+tracks used in Feedback, added handling to ignore unrecognized events
+and added support for filenames with special characters (ie. umlauts).
 
 Added the display of section markers to the editor window.
 
@@ -509,10 +538,6 @@ Fixed a minor bug where using Note>Toggle to remove the last gem for a
 note wouldn't cause it to be deleted immediately.
 
 Added a Note>Clear menu allowing gems for specific lanes to be removed.
-
-Improved Feedback import by having it back up song.ini before it is
-overwritten, recognizing more instrument track names and tolerating
-more player section types.
 
 Fixed a bug where user settings weren't read if EOF was launched from
 outside its program directory (when loading a file via command line).
@@ -563,50 +588,28 @@ status was changed.
 
 Made some optimizations to the audio playback code.
 
-Updated Feedback import to support filenames with special characters
-(ie. umlauts).
-
 Made improvements to the split lyric function, which will now split
 pitchless lyrics with the correct lengths for each piece.
-
-Updated FoFLC to the latest version (2.39), adding support for
-importing Guitar Praise, JamBand and Rocksmith format lyrics.
 
 Fixed a bug with the click and drag note logic that would allow
 notes/lyrics to be drug off the left end of the piano roll.
 
 Fixed a bug that would cause open hi hat status to be lost.
 
-Added a menu function to automate the thinning of notes in a
-difficulty based on the notes in another track
-(Note>Thin difficulty to match).  When the function is used, EOF
-checks each note in the active track difficulty against the notes in
-the active difficulty of the specified track. If a note in the active
-track is not close enough to a note in the specified track (within 2
-ms), it is removed.  This will make it extremely easy to thin the
-number of notes in the lower difficulties of a pro guitar track to be
-similar to the note thinning that was done for lower difficulties of a
-five lane instrument track or vice versa.
-
-Added a "Mark as non Expert+ bass drum" function to the Note>Drum menu.
+Added a menu function to automate the thinning of notes in a difficulty
+based on the notes in another track (Note>Thin difficulty to match).
+When the function is used, EOF checks each note in the active track
+difficulty against the notes in the active difficulty of the specified
+track. If a note in the active track is not close enough to a note in
+the specified track (within 2ms), it is removed.  This will make it
+extremely easy to thin the number of notes in the lower difficulties of
+a pro guitar track to be similar to the note thinning that was done for
+lower difficulties of a five lane instrument track or vice versa.
 
 Updated MIDI import to check for the "pro_drums = True" tag to make it
 possible for chart MIDIs where all yellow, blue and green drum gems
 are cymbals to be imported correctly.  For this to work, the chart
 must have been created in 1.8b14 or newer.
-
-Added a new preference (Save separate RBN MIDI files) that
-automatically will save a RBN specific and a pro guitar specific MIDI
-file during save, each of which omitting any necessary unsupported
-notation.  For example, when creating a pro guitar upgrade, you no
-longer have to remove the legacy notes and existing text events, the
-"notes_pro.mid" file will provide the MIDI with the correct contents
-for building the pro guitar upgrade package.  "notes_rbn.mid" will
-have the correct contents for building a package in Magma, even
-removing unsupported tracks such as the dance and pro guitar/bass
-tracks.  "notes_c3.mid" will also be written if the project contains
-pro guitar or bass tracks, since the C3 release of Magma can compile
-charts containing pro guitar and bass.
 
 Added support for slider sections, for use in Phase Shift.
 
@@ -627,8 +630,6 @@ the end of audio position and the last beat marker notes.
 Fixed a bug where using the right mouse button to change a lyric's
 pitch would cause the lyric to rapidly toggle between pitched and
 pitchless states.
-
-Added a keyboard shortcut (CTRL+M) for mark/remark lyric line.
 
 Added the ability to copy the solo, star power, arpeggio, trill or
 tremolo phrases into the active track from another track.
@@ -681,12 +682,7 @@ memory leaks and other bugs that were fixed.
 
 Added the ability to author 5 lane (5 pads and one pedal) drums.
 
-Fixed various bugs in the lyric import.
-
 Added the ability to define band and track-specific difficulties.
-
-Added support for pro guitar/bass and 4 lane dance authoring.  A
-tutorial for authoring pro guitar tracks has been added.
 
 Added some logging functionality to help identify points of malfunction.
 Logging can be disabled in Preferences.
@@ -715,9 +711,6 @@ current seek position was before the first beat marker.
 
 Fixed some grid snap related bugs.
 
-Added a "Mark new notes as expert+" toggle-able option to make it
-more convenient to create double bass drum charts.
-
 Fixed the handling of time signatures in the MIDI import and export
 logic that would cause incorrect timings when #/8 time signatures
 were encountered.
@@ -730,9 +723,6 @@ Corrected some bugs involving expert and pro drum statuses.
 
 Added the ability to chart open strum notes.  Open strum notes in the bass
 track are compatible with Phase Shift.
-
-Updated the EOF project file format to support new features including pro
-guitar/bass, keys, dance, open bass strumming, etc.
 
 Removed duplicated rendering code, allowing HOPO on/off notes, percussion
 notes, vocal slides and cymbals to be shown correctly in the fret catalog.
