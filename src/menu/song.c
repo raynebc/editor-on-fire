@@ -24,6 +24,7 @@
 #include "note.h"	//For eof_feedback_mode_update_note_selection()
 #include "song.h"
 #include "file.h"	//For eof_menu_prompt_save_changes()
+#include "track.h"	//For tech view functions
 
 #ifdef USEMEMWATCH
 #include "../memwatch.h"

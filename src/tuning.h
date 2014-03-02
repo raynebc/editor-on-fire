@@ -82,7 +82,7 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 	//Examines the specified note and returns nonzero if a chord match is found, in which case the chord name is returned through scale and chord
 	//scale is set to the index into eof_note_names[] that names the matching chord's major scale
 	//chord is set to the index into eof_chord_names[] that names the matching chord
-	//isslash is set to nonzero if the chord is detected as a slash chord, in which cass the bass note is returned through bassnote
+	//isslash is set to nonzero if the chord is detected as a slash chord, in which case the bass note is returned through bassnote
 	//If isslash is zero, combining the index into the eof_note_names[] and eof_chord_names[] arrays will provide a full chord name, such as "Amin6"
 	//If isslash is nonzero, combining the index into the eof_note_names[], eof_chord_names[] and eof_slash_note_names[] arrays will provide a full chord name, such as "Dmaj/F#"
 	//For manually-named notes, 2 is returned (and isslash is set to nonzero) if the scale is identified and the name contains a forward or backward slash but the bass note cannot be identified

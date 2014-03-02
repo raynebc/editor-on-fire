@@ -3214,6 +3214,7 @@ int eof_pro_guitar_note_fingering_valid(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 void eof_song_fix_fingerings(EOF_SONG *sp, char *undo_made)
 {
 	unsigned long ctr;
+	char restore_tech_view;
 
 	if(!sp)
 		return;	//Invalid parameter
@@ -3222,7 +3223,10 @@ void eof_song_fix_fingerings(EOF_SONG *sp, char *undo_made)
 	{	//For each track (skipping the NULL global track 0)
 		if(sp->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If this is a pro guitar track
+			restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, ctr);
+			eof_menu_track_set_tech_view_state(eof_song, ctr, 0); //Disable tech view if applicable
 			eof_pro_guitar_track_fix_fingerings(sp->pro_guitar_track[sp->track[ctr]->tracknum], undo_made);	//Correct and complete note fingering where possible, performing an undo state before making changes
+			eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view); //Re-enable tech view if applicable
 		}
 	}
 }
@@ -4747,6 +4751,14 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 		{
 			ptr->ignore = 0;
 		}
+		if((eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN) && (target == 2))
+		{	//If the note's extended flags indicate the sustain status is applied and Rocksmith 2 export is in effect
+			ptr->sustain = 1;
+		}
+		else
+		{
+			ptr->sustain = 0;
+		}
 	}//If the calling function passed a techniques structure
 
 	//Make a bitmask reflecting only the techniques this note (or any applicable tech notes) has that require a chordNote subtag to be written
@@ -4793,7 +4805,7 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned long fret;			//The fret number used for the specified string of the note
 	char tagend[2] = "/";		//If a bendValues subtag is to be written, this string is emptied so that the note/chordNote tag doesn't end in the same line
-	unsigned long flags, eflags, notepos, ctr, bitmask;
+	unsigned long flags, notepos, ctr, bitmask;
 	EOF_RS_TECHNIQUES tech;
 	unsigned char *finger = NULL;
 	long fingernum;
@@ -4806,7 +4818,6 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 	if(notenum >= tp->notes)
 		return;	//Invalid parameter
 	flags = tp->note[notenum]->flags;
-	eflags = tp->note[notenum]->eflags;
 	notepos = tp->note[notenum]->pos;
 	bitmask = 1 << stringnum;
 	if(ischordnote)
@@ -4850,7 +4861,7 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 		{	//If the chordNote does not have tremolo, bend, slide or unpitched slide (all of which need to keep their sustain)
 			if(!((fret == 0) && ((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))))
 			{	//If the chordNote is not fretted, it needs to keep its sustain if the fretted notes in the chord have bend, slide or unpitched slide status
-				if(!(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN))
+				if(!(tech.sustain))
 				{	//If the chordNote has the sustain status applied, it needs to keep its sustain
 					tech.length = 0;	//Otherwise force the chordNote to have no sustain
 				}

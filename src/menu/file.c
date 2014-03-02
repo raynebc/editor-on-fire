@@ -3208,7 +3208,9 @@ int eof_gp_import_track(DIALOG * d)
 	if(eof_song && eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//Only perform this action if a pro guitar/bass track is active
 		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+
 		selected = eof_gp_import_dialog[1].d1;
+		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0);	//Disable tech view if applicable
 
 		//Prompt about overwriting the active track or track difficulty as appropriate
 		eof_clear_input();
@@ -3257,6 +3259,18 @@ int eof_gp_import_track(DIALOG * d)
 					return 0;
 				}
 				memcpy(np, eof_parsed_gp_file->track[selected]->note[ctr], sizeof(EOF_PRO_GUITAR_NOTE));	//Clone the note from the GP track
+				np->type = eof_note_type;	//Update the note difficulty
+		}
+		//Copy tech notes
+		for(ctr = 0; ctr < eof_parsed_gp_file->track[selected]->technotes; ctr++)
+		{	//For each tech note in the GP track
+				EOF_PRO_GUITAR_NOTE *np = eof_pro_guitar_track_add_tech_note(eof_song->pro_guitar_track[tracknum]);	//Allocate a new note
+				if(!np)
+				{	//If the memory couldn't be allocated
+					allegro_message("Error allocating memory.  Aborting");
+					return 0;
+				}
+				memcpy(np, eof_parsed_gp_file->track[selected]->technote[ctr], sizeof(EOF_PRO_GUITAR_NOTE));	//Clone the tech note from the GP track
 				np->type = eof_note_type;	//Update the note difficulty
 		}
 		//Copy trill phrases
@@ -3347,6 +3361,10 @@ int eof_gp_import_track(DIALOG * d)
 		for(ctr = 0; ctr < eof_parsed_gp_file->track[selected]->notes; ctr++)
 		{	//For each note in the imported track
 			free(eof_parsed_gp_file->track[selected]->note[ctr]);	//Free its memory
+		}
+		for(ctr = 0; ctr < eof_parsed_gp_file->track[selected]->technotes; ctr++)
+		{	//For each tech note in the imported track
+			free(eof_parsed_gp_file->track[selected]->technote[ctr]);	//Free its memory
 		}
 		free(eof_parsed_gp_file->names[selected]);	//Free the imported track's name
 		free(eof_parsed_gp_file->track[selected]);	//Free the imported track

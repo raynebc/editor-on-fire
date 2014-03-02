@@ -3942,7 +3942,7 @@ int eof_initialize(int argc, char * argv[])
 		if((eof_system("lame -S check.wav >foo") == 0) && (eof_system("oggenc2 -h >foo") == 0))
 		{
 			eof_supports_mp3 = 1;
-			(void) delete_file("check.wav.mp3");
+			(void) delete_file("check.mp3");
 			(void) delete_file("foo");
 		}
 		else

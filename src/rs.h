@@ -36,6 +36,7 @@ typedef struct
 	char vibrato;					//Is set to 80 if the note is played with vibrato, otherwise zero
 	char linknext;					//Nonzero if this note has the linknext option enabled
 	char ignore;					//Nonzero if this note has the ignore status applied and RS2 export is being performed
+	char sustain;					//Nonzero if this note has the sustain status applied and RS2 export is being performed
 } EOF_RS_TECHNIQUES;
 
 #define EOF_NUM_RS_PREDEFINED_SECTIONS 30

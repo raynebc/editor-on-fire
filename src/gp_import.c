@@ -101,10 +101,10 @@ void eof_gp_debug_log(PACKFILE *inf, char *text)
 }
 #endif
 
-int eof_gp_parse_bend(PACKFILE *inf, unsigned long *bendheight)
+int eof_gp_parse_bend(PACKFILE *inf, struct guitar_pro_bend *bp)
 {
 	unsigned word;
-	unsigned long height, points, ctr, dword;
+	unsigned long height, points, ctr, dword, dword2;
 
 	if(!inf)
 		return 1;	//Return error
@@ -157,14 +157,22 @@ int eof_gp_parse_bend(PACKFILE *inf, unsigned long *bendheight)
 	}
 	eof_gp_debug_log(inf, "\t\tHeight:  ");
 	pack_ReadDWORDLE(inf, &height);	//Read bend height
-	printf("%lu cents\n", height);
-	if(bendheight)
+	printf("%lu * 2 cents\n", height);
+	if(bp)
 	{	//If the calling function wanted to retrieve the bend height
-		*bendheight = height;
+		bp->summaryheight = height / 25;	//Store the value in quarter steps (100 cents in a half step, and height is the bend measured in increments of 2 cents)
 	}
 	eof_gp_debug_log(inf, "\t\tNumber of points:  ");
 	pack_ReadDWORDLE(inf, &points);	//Read number of bend points
 	printf("%lu points\n", points);
+	if(bp)
+	{	//If the calling function wanted to retrieve the bend height
+		bp->bendpoints = points;
+		if(bp->bendpoints > 30)
+		{	//Only store the first 30 points
+			bp->bendpoints = 30;
+		}
+	}
 	for(ctr = 0; ctr < points; ctr++)
 	{	//For each point in the bend
 		if(pack_feof(inf))
@@ -176,8 +184,8 @@ int eof_gp_parse_bend(PACKFILE *inf, unsigned long *bendheight)
 		pack_ReadDWORDLE(inf, &dword);
 		printf("%lu sixtieths\n", dword);
 		eof_gp_debug_log(inf, "\t\t\tVertical position:  ");
-		pack_ReadDWORDLE(inf, &dword);
-		printf("%ld * 25 cents\n", (long)dword);
+		pack_ReadDWORDLE(inf, &dword2);
+		printf("%ld * 2 cents\n", (long)dword2);
 		eof_gp_debug_log(inf, "\t\t\tVibrato type:  ");
 		word = pack_getc(inf);
 		if(!word)
@@ -195,6 +203,11 @@ int eof_gp_parse_bend(PACKFILE *inf, unsigned long *bendheight)
 		else if(word == 3)
 		{
 			(void) puts("slow");
+		}
+		if(bp && (ctr < 30))
+		{	//If the calling function wanted to retrieve the bend height, store the first 30 definitions
+			bp->bendpos[ctr] = dword;
+			bp->bendheight[ctr] = dword2 / 25;	//Store the value in quarter steps
 		}
 	}
 	return 0;	//Return success
@@ -1650,6 +1663,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	double measure_position;		//Tracks the current position as a percentage within the current measure
 	unsigned long flags;			//Tracks the flags for the current note
 	unsigned char bendstrength;		//Tracks the note's bend strength if applicable
+	struct guitar_pro_bend bendstruct;	//Stores data about the bend being parsed
+	double laststartpos, lastendpos;	//Stores the start and end position of the last normal or tie note to be parsed, so bend point data can be used to create tech notes
 	char new_note;					//Tracks whether a new note is to be created
 	char tie_note;					//Tracks whether a note is a tie note
 	unsigned char finger[7];		//Store left (fretting hand) finger values for each string
@@ -2949,9 +2964,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					char ghost = 0;	//Track the ghost status for notes
 					unsigned bitmask;
 					unsigned char frets[7];		//Store fret values for each string
+					unsigned long beat_position;
+					double partial_beat_position, beat_length;
 
 					new_note = 0;	//Assume no new note is to be added unless a normal/muted note is parsed
 					tie_note = 0;	//Assume a note isn't a tie note unless found otherwise
+					bendstruct.bendpoints = 0;	//Assume the note has no bend points unless any are parsed
 					flags = 0;
 					bendstrength = 0;
 					memset(finger, 0, sizeof(finger));	//Clear the finger array
@@ -3033,44 +3051,44 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						}//Chord diagram format 0, ie. GP3
 						else if(word == 1)
 						{	//Chord diagram format 1, ie. GP4
-							(void) pack_getc(inf);		//Read sharp/flat indicator
-							(void) pack_fseek(inf, 3);			//Unknown data
-							(void) pack_getc(inf);		//Read chord root
+							(void) pack_getc(inf);			//Read sharp/flat indicator
+							(void) pack_fseek(inf, 3);		//Unknown data
+							(void) pack_getc(inf);			//Read chord root
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								(void) pack_fseek(inf, 3);		//Unknown data
+								(void) pack_fseek(inf, 3);	//Unknown data
 							}
-							(void) pack_getc(inf);		//Read chord type
+							(void) pack_getc(inf);			//Read chord type
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								(void) pack_fseek(inf, 3);		//Unknown data
+								(void) pack_fseek(inf, 3);	//Unknown data
 							}
-							(void) pack_getc(inf);		//9th/11th/13th option
+							(void) pack_getc(inf);			//9th/11th/13th option
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								(void) pack_fseek(inf, 3);		//Unknown data
+								(void) pack_fseek(inf, 3);	//Unknown data
 							}
 							pack_ReadDWORDLE(inf, &dword);	//Read bass note (lowest note played in string)
-							(void) pack_getc(inf);					//+/- option
-							(void) pack_fseek(inf, 4);				//Unknown data
+							(void) pack_getc(inf);			//+/- option
+							(void) pack_fseek(inf, 4);		//Unknown data
 							word = pack_getc(inf);			//Read chord name string length
 							(void) pack_fread(buffer, 20, inf);	//Read chord name (which is padded to 20 bytes)
 							buffer[word] = '\0';			//Ensure string is terminated to be the right length
-							(void) pack_fseek(inf, 2);				//Unknown data
-							(void) pack_getc(inf);					//Tonality of the fifth
+							(void) pack_fseek(inf, 2);		//Unknown data
+							(void) pack_getc(inf);			//Tonality of the fifth
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								(void) pack_fseek(inf, 3);			//Unknown data
+								(void) pack_fseek(inf, 3);	//Unknown data
 							}
-							(void) pack_getc(inf);					//Tonality of the ninth
+							(void) pack_getc(inf);			//Tonality of the ninth
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								(void) pack_fseek(inf, 3);			//Unknown data
+								(void) pack_fseek(inf, 3);	//Unknown data
 							}
-							(void) pack_getc(inf);					//Tonality of the eleventh
+							(void) pack_getc(inf);			//Tonality of the eleventh
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								(void) pack_fseek(inf, 3);			//Unknown data
+								(void) pack_fseek(inf, 3);	//Unknown data
 							}
 							pack_ReadDWORDLE(inf, &dword);	//Base fret for diagram
 							for(ctr4 = 0; ctr4 < 7; ctr4++)
@@ -3409,6 +3427,21 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Effect 1 string
 						}
 					}//Beat has mix table change
+
+					//Determine the realtime start position of the note that was just parsed
+					beat_position = measure_position * curnum;								//How many whole beats into the current measure the position is
+					partial_beat_position = (measure_position * curnum) - beat_position;	//How far into this beat the note begins
+					beat_position += curbeat;	//Add the number of beats into the track the current measure is
+					beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
+					laststartpos = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position);
+
+					//Determine the realtime end position of the note that was just parsed
+					beat_position = (measure_position + note_duration) * curnum;
+					partial_beat_position = (measure_position + note_duration) * curnum - beat_position;	//How far into this beat the note ends
+					beat_position += curbeat;	//Add the number of beats into the track the current measure is
+					beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
+					lastendpos = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position);
+
 					usedstrings = pack_getc(inf);	//Used strings bitmask
 					for(ctr4 = 0, bitmask = 64; ctr4 < 7; ctr4++, bitmask>>=1)
 					{	//For each of the 7 possible usable strings
@@ -3429,17 +3462,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									{	//If this is the voice that is being imported
 										if(np[ctr2] && (np[ctr2]->note && bitmask))
 										{	//If there is a previously created note, and it used this string, alter its length
-											unsigned long beat_position;
-											double partial_beat_position, beat_length;
 											long oldlength;
 
 											tie_note = 1;
-											beat_position = (measure_position + note_duration) * curnum;
-											partial_beat_position = (measure_position + note_duration) * curnum - beat_position;	//How far into this beat the note ends
-											beat_position += curbeat;	//Add the number of beats into the track the current measure is
-											beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
 											oldlength = np[ctr2]->length;
-											np[ctr2]->length = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position) - np[ctr2]->pos + 0.5;	//Define the length of this note
+											np[ctr2]->length = lastendpos - np[ctr2]->pos + 0.5;	//Round up to nearest millisecond
 
 #ifdef GP_IMPORT_DEBUG
 											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tTie note:  Note starting at %lums lengthened from %lums to %ldms", np[ctr2]->pos, oldlength, np[ctr2]->length);
@@ -3510,7 +3537,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							if(bytemask & 8)
 							{	//Note effects
 								char byte1, byte2 = 0;
-								unsigned long bendheight = 0;
 								byte1 = pack_getc(inf);	//Note effect bitmask
 								if(fileversion >= 400)
 								{	//Version 4.0 and higher of the file format has a second note effect bitmask
@@ -3518,7 +3544,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}
 								if(byte1 & 1)
 								{	//Bend
-									if(eof_gp_parse_bend(inf, &bendheight))
+									if(eof_gp_parse_bend(inf, &bendstruct))
 									{	//If there was an error parsing the bend
 										allegro_message("Error parsing bend, file is corrupt");
 										(void) pack_fclose(inf);
@@ -3546,9 +3572,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										return NULL;
 									}
 									flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
-									if(bendheight >= 25)
+									if(bendstruct.summaryheight > 0)
 									{	//If the GP file defines the bend of being at least one quarter step
-										bendstrength = bendheight / 25;	//Convert cents to quarter steps
+										bendstrength = bendstruct.summaryheight;
 										bendstrength |= 0x80;	//Mark the MSB to indicate this value is measured in quarter steps
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that the note has the bend height defined
 									}
@@ -3706,9 +3732,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					{	//If this is the voice that is being imported
 						if(new_note)
 						{	//If a new note is to be created
-							unsigned long beat_position;
-							double partial_beat_position, beat_length;
-
 							np[ctr2] = eof_pro_guitar_track_add_note(gp->track[ctr2]);	//Add a new note to the current track
 							if(!np[ctr2])
 							{
@@ -3773,18 +3796,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							np[ctr2]->type = eof_note_type;
 							np[ctr2]->bendstrength = bendstrength;	//Apply the note's bend strength if applicable
 
-							//Determine the correct timestamp position and duration
-							beat_position = measure_position * curnum;								//How many whole beats into the current measure the position is
-							partial_beat_position = (measure_position * curnum) - beat_position;	//How far into this beat the note begins
-							beat_position += curbeat;	//Add the number of beats into the track the current measure is
-							beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
-							np[ctr2]->pos = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position) + 0.5;	//Define the position of this note (rounded up)
-
-							beat_position = (measure_position + note_duration) * curnum;
-							partial_beat_position = (measure_position + note_duration) * curnum - beat_position;	//How far into this beat the note ends
-							beat_position += curbeat;	//Add the number of beats into the track the current measure is
-							beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
-							np[ctr2]->length = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position) - np[ctr2]->pos + 0.5;	//Define the length of this note
+							//Set the start position and length of the note
+							np[ctr2]->pos = laststartpos + 0.5;	//Round up to nearest millisecond
+							np[ctr2]->length = lastendpos - laststartpos + 0.5;	//Round up to nearest millisecond
 
 							if(note_is_short && eof_gp_import_truncate_short_notes)
 							{	//If this note is shorter than a quarter note, and the preference to drop the note's sustain in this circumstance is enabled
@@ -3843,6 +3857,55 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							if(bendstrength > np[ctr2]->bendstrength)
 							{	//If this tie note defined a stronger bend than the original note
 								np[ctr2]->bendstrength = bendstrength;	//Apply this tie note's bend strength
+							}
+						}
+						for(ctr4 = 0; ctr4 < bendstruct.bendpoints; ctr4++)
+						{	//For each bend point that was parsed
+							if(!ctr4 || (bendstruct.bendheight[ctr4] != bendstruct.bendheight[ctr4 - 1]))
+							{	//If this is the first bend point, or this bend point is a different height than the last
+								EOF_PRO_GUITAR_NOTE *ptr = eof_pro_guitar_track_add_tech_note(gp->track[ctr2]);	//Add a new tech note to the current track
+								unsigned long length;
+								if(!ptr)
+								{
+									eof_log("Error allocating memory (16)", 1);
+									(void) pack_fclose(inf);
+									while(ctr > 0)
+									{	//Free the previous track name strings
+										free(gp->names[ctr - 1]);
+										ctr--;
+									}
+									free(gp->names);
+									for(ctr = 0; ctr < tracks; ctr++)
+									{	//Free all previously allocated track structures
+										free(gp->track[ctr]);
+									}
+									for(ctr = 0; ctr < gp->text_events; ctr++)
+									{	//Free all allocated text events
+										free(gp->text_event[ctr]);
+									}
+									free(gp->track);
+									free(np);
+									free(hopo);
+									free(nonshiftslide);
+									free(gp);
+									free(tsarray);
+									free(strings);
+									return NULL;
+								}
+								ptr->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;	//Set the bend flag
+								ptr->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that a bend strength is defined
+								ptr->bendstrength = 0x80 + bendstruct.bendheight[ctr4];	//Store the bend strength and set the MSB to indicate the value is in quarter steps
+								ptr->note = np[ctr2]->note;	//Match the note bitmask of the last parsed GP note
+								if(bendstruct.bendpos[ctr4] == 60)
+								{	//If this bend point is at the end of the note
+									length = lastendpos - laststartpos - eof_min_note_distance;	//Take the minimum padding between notes into account to ensure it doesn't overlap the next note
+								}
+								else
+								{	//Otherwise use the normal note length
+									length = lastendpos - laststartpos;
+								}
+								ptr->pos = laststartpos + ((length * (double)bendstruct.bendpos[ctr4]) / 60.0);	//Determine the position of the bend point
+								ptr->length = 1;
 							}
 						}
 					}//If this is the voice that is being imported

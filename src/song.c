@@ -3250,6 +3250,21 @@ EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_note(EOF_PRO_GUITAR_TRACK *tp)
 	return NULL;
 }
 
+EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_tech_note(EOF_PRO_GUITAR_TRACK *tp)
+{
+	if(tp && (tp->technotes < EOF_MAX_NOTES))
+	{
+		tp->technote[tp->technotes] = malloc(sizeof(EOF_PRO_GUITAR_NOTE));
+		if(tp->technote[tp->technotes])
+		{
+			memset(tp->technote[tp->technotes], 0, sizeof(EOF_PRO_GUITAR_NOTE));
+			tp->technotes++;
+			return tp->technote[tp->technotes - 1];
+		}
+	}
+	return NULL;
+}
+
 unsigned long eof_get_track_size(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum;
@@ -5536,6 +5551,9 @@ void eof_set_pro_guitar_fret_number(char function, unsigned long fretvalue)
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return;	//Do not allow this function to run unless a pro guitar/bass track is active
+
+	if(eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
+		return;	//Don't allow this function to run if tech view is in effect, since tech notes completely disregard their fret values
 
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;

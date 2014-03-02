@@ -13,6 +13,7 @@
 #include "edit.h"
 #include "note.h"
 #include "song.h"	//For eof_menu_track_selected_track_number()
+#include "track.h"	//For tech view functions
 
 #ifdef USEMEMWATCH
 #include "../memwatch.h"
@@ -3854,6 +3855,10 @@ int eof_menu_note_edit_pro_guitar_note(void)
 									fretvalue |= 0x80;
 								}
 							}
+							if(eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
+							{	//If tech view is in effect, ignore the user specified fret value and keep it at 0
+								fretvalue = 0;
+							}
 							if(fretvalue != tp->note[i]->frets[ctr])
 							{	//If this fret value (or the string's muting) changed
 								if(!undo_made)
@@ -4353,6 +4358,9 @@ DIALOG eof_pro_guitar_note_frets_dialog[] =
 int eof_menu_note_edit_pro_guitar_note_frets_fingers_menu(void)
 {
 	char undo_made = 0;
+	if(eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
+		return 1;	//If tech view is in effect, don't run the dialog
+
 	return eof_menu_note_edit_pro_guitar_note_frets_fingers(0, &undo_made);
 }
 
@@ -4748,7 +4756,7 @@ int eof_correct_chord_fingerings_option(char report, char *undo_made)
 {
 	unsigned long ctr, ctr2, tracknum, shapenum;
 	EOF_PRO_GUITAR_TRACK *tp;
-	char cancelled, user_prompted = 0, auto_complete = 0;
+	char cancelled, user_prompted = 0, auto_complete = 0, restore_tech_view;
 	int result;
 
 	if(!eof_song)
@@ -4764,6 +4772,8 @@ int eof_correct_chord_fingerings_option(char report, char *undo_made)
 	{	//For each track (skipping the global track, 0)
 		if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If this is a pro guitar track
+			restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, ctr);
+			eof_menu_track_set_tech_view_state(eof_song, ctr, 0); //Disable tech view if applicable
 			tracknum = eof_song->track[ctr]->tracknum;
 			tp = eof_song->pro_guitar_track[tracknum];
 			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
@@ -4779,6 +4789,7 @@ int eof_correct_chord_fingerings_option(char report, char *undo_made)
 							key[KEY_N] = 0;
 							if(alert("One or more chords don't have correct finger information", "Update them now?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 							{	//If the user does not opt to update the fingering
+								eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, restore_tech_view); //Re-enable tech view if applicable
 								return 0;
 							}
 							user_prompted = 1;
@@ -4820,12 +4831,14 @@ int eof_correct_chord_fingerings_option(char report, char *undo_made)
 							eof_selection.current = EOF_MAX_NOTES - 1;
 							if(cancelled)
 							{	//If the user canceled updating the chord fingering
+								eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, restore_tech_view); //Re-enable tech view if applicable
 								return 0;
 							}
 						}//If this chord's fingering is to be applied manually
 					}//If the fingering for this chord isn't valid or is undefined
 				}//If this note is a chord that isn't completely string muted
 			}//For each note in this track
+			eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view); //Re-enable tech view if applicable
 		}//If this is a pro guitar track
 	}//For each track (skipping the global track, 0)
 	if(report && !(*undo_made))
