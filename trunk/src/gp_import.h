@@ -94,6 +94,14 @@
 
 #endif
 
+struct guitar_pro_bend
+{
+	unsigned char summaryheight;	//The bend height specified in the selection list, defining a summarized height of the bend in quarter steps
+	unsigned char bendpoints;		//The number of bend points defined in the structure (maximum value is 30)
+	unsigned char bendpos[30];		//An array defining the position of each bend point (Valued 0 through 60, in sixtieths of the note's duration)
+	unsigned char bendheight[30];	//An array defining the height of each bend point in quarter steps
+};
+
 void pack_ReadWORDLE(PACKFILE *inf, unsigned *data);
 	//Read a little endian format 2 byte integer from the specified file.  If data isn't NULL, the value is stored into it.
 void pack_ReadDWORDLE(PACKFILE *inf, unsigned long *data);
@@ -103,9 +111,9 @@ int eof_read_gp_string(PACKFILE *inf, unsigned *length, char *buffer, char readf
 	//If readfieldlength is nonzero, a 4 byte field length that prefixes the string length is also read
 	//If length is not NULL, the string length is returned through it.
 	//Buffer must be able to store at least 256 bytes to avoid overflowing.
-int eof_gp_parse_bend(PACKFILE *inf, unsigned long *bendheight);
+int eof_gp_parse_bend(PACKFILE *inf, struct guitar_pro_bend *bp);
 	//Parses the bend at the current file position, outputting debug logging appropriately
-	//If bendheight is not NULL, the bend's height in percent of a full step (not cents) is returned by reference
+	//If bp is not NULL, the bend data is stored into the structure
 	//Returns nonzero if there is an error parsing, such as end of file being reached unexpectedly
 
 #endif

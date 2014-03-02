@@ -700,11 +700,12 @@ Bends are defined in this format:
 		[1 byte]:	The type of bend (0 = none, 1 = bend, 2 = bend and release, 3 = bend->release->bend, 4 = prebend, 5 = prebend and release,
 				6 = tremolo dip, 7 = tremolo dive, 8 = tremolo release [up], 9 = tremolo inverted dip, 10 = tremolo return, 11 = tremolo release [down])
 		[4 bytes]:	Bend height, measured in how much the pitch changes in percent of a full step (it does not store it in cents, which is percent of a half step)
-		[4 bytes]:	Number of points to display the bend with
+					Note:  The bend points override this bend height, which is just a pre-set selection list
+		[4 bytes]:	Number of points to display the bend with, the most GP5 allows to be defined on a single note seems to be 30
 		BEND POINT CHUNK, for each bend point
 		{
 			[4 bytes]:	Absolute time position relative to previous bend point (Valued 0 through 60, in sixtieths of the note's duration)
-			[4 bytes]:	Vertical position (Pitch alteration from normal note, signed value in intervals of 25 cents)
+			[4 bytes]:	Vertical position (Pitch alteration from normal note, signed value as a percent of a full step, which is in intervals of 2 cents)
 			[1 byte]:	Vibrato type (0 = none, 1 = fast, 2 = average, 3 = slow)
 		}
 		...(variably repeated data)...

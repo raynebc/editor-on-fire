@@ -390,8 +390,8 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 			}
 		}
 
-		if(stringctr < 2)	//If there aren't at least two strings used
-		{
+		if((stringctr < 2) || (bass < 0))
+		{	//If there aren't at least two strings used, or if no actual notes (only muted strings) are played
 			return 0;		//Return no matches
 		}
 
@@ -544,7 +544,10 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 					}
 				}
 			}//For each of the 12 major scales, starting with whichever one the bass note was in
-			notes_played[bass] = 0;	//Remove the bass note from the lookup so the second pass can search for hybrid slash chords
+			if(bass >= 0)
+			{	//If a bass note was identified in this note
+				notes_played[bass] = 0;	//Remove the bass note from the lookup so the second pass can search for hybrid slash chords
+			}
 		}//On the first pass, perform normal lookup.  On the second pass, perform (hybrid) slash chord lookup (disregarding the bass note)
 	}//Otherwise perform chord lookup based on notes played
 
