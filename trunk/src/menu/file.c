@@ -3306,7 +3306,7 @@ int eof_gp_import_track(DIALOG * d)
 			}
 			if(!exists)
 			{	//If this tremolo phrase doesn't overlap with any existing tremolo phrases in the active track
-				(void) eof_track_add_section(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, eof_note_type, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the active track difficulty
+				(void) eof_track_add_section(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, ptr->difficulty, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the active track
 			}
 		}
 

@@ -2340,12 +2340,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				if(bytemask & 32)
 				{	//New section
 					(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read section string
-					if(gp->text_events < EOF_MAX_TEXT_EVENTS)
-					{	//If the maximum number of text events hasn't already been defined
 #ifdef GP_IMPORT_DEBUG
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSection marker found at measure #%lu:  \"%s\"", ctr + 1, buffer);
-						eof_log(eof_log_string, 1);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSection marker found at measure #%lu:  \"%s\"", ctr + 1, buffer);
+					eof_log(eof_log_string, 1);
 #endif
+					if((buffer[0] != '\0') && (gp->text_events < EOF_MAX_TEXT_EVENTS))
+					{	//If the section marker has any text in its name and the maximum number of text events hasn't already been defined
 						gp->text_event[gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
 						if(!gp->text_event[gp->text_events])
 						{
@@ -2402,12 +2402,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				if(bytemask & 32)
 				{	//New section
 					(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read section string
-					if(gp->text_events < EOF_MAX_TEXT_EVENTS)
-					{	//If the maximum number of text events hasn't already been defined
 #ifdef GP_IMPORT_DEBUG
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSection marker found at measure #%lu:  \"%s\"", ctr + 1, buffer);
-						eof_log(eof_log_string, 1);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSection marker found at measure #%lu:  \"%s\"", ctr + 1, buffer);
+					eof_log(eof_log_string, 1);
 #endif
+					if((buffer[0] != '\0') && (gp->text_events < EOF_MAX_TEXT_EVENTS))
+					{	//If the section marker has any text in its name and the maximum number of text events hasn't already been defined
 						gp->text_event[gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
 						if(!gp->text_event[gp->text_events])
 						{
@@ -4047,8 +4047,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					gp->track[ctr]->tremolo[count].end_pos = endpos;
 					gp->track[ctr]->tremolo[count].flags = 0;
 					gp->track[ctr]->tremolo[count].name[0] = '\0';
-					if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
-					{	//If the active project's active track already had the difficulty limit removed
+					if((eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) || !eof_gp_import_replaces_track)
+					{	//If the active project's active track already had the difficulty limit removed, or if the user preference is to import the GP file into the active track difficulty instead of replacing the whole track
 						gp->track[ctr]->tremolo[count].difficulty = eof_note_type;	//The tremolo will be made specific to the active track difficulty
 					}
 					else

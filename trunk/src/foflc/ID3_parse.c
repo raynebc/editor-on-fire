@@ -1143,7 +1143,8 @@ void WriteTextInfoFrame(FILE *outf,const char *frameid,const char *string)
 
 char IsTextInfoID3FrameID(char *frameid)
 {
-	const char *tags[]={"TALB","TBPM","TCOM","TCON","TCOP","TDAT","TDLY","TENC","TEXT","TFLT","TIME","TIT1","TIT2","TIT3","TKEY","TLAN","TLEN","TMED","TOAL","TOFN","TOLY","TOPE","TORY","TOWN","TPE1","TPE2","TPE3","TPE4","TPOS","TPUB","TRCK","TRDA","TRSN","TRSO","TSIZ","TSRC","TSSE","TYER"};
+	#define NUMID3TAGS 38
+	const char *tags[NUMID3TAGS]={"TALB","TBPM","TCOM","TCON","TCOP","TDAT","TDLY","TENC","TEXT","TFLT","TIME","TIT1","TIT2","TIT3","TKEY","TLAN","TLEN","TMED","TOAL","TOFN","TOLY","TOPE","TORY","TOWN","TPE1","TPE2","TPE3","TPE4","TPOS","TPUB","TRCK","TRDA","TRSN","TRSO","TSIZ","TSRC","TSSE","TYER"};
 	unsigned long ctr=0;
 	char found=0;	//Used to track whether each frame was a text info frame defined in the tags[] array above
 
@@ -1151,7 +1152,7 @@ char IsTextInfoID3FrameID(char *frameid)
 	if(frameid == NULL)
 		return 0;
 
-	for(ctr=0;(size_t)ctr<sizeof(tags);ctr++)
+	for(ctr=0;ctr<NUMID3TAGS;ctr++)
 	{	//For each defined text info frame id
 		if(strcasecmp(tags[ctr],frameid) == 0)
 		{	//If the specified text info frame id matches this ID3 frame

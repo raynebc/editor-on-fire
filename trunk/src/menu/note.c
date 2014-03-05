@@ -3481,6 +3481,7 @@ DIALOG eof_pro_guitar_note_dialog[] =
 	{d_agup_check_proc,		154, 412, 72,  16, 2,   23,  0,    0,      0,         0,   "Linknext",   NULL,          NULL },
 	{d_agup_check_proc,		10,  432, 60,  16, 2,   23,  0,    0,      0,         0,   "Ignore",     NULL,          NULL },
 	{d_agup_check_proc,		87,  432, 65,  16, 2,   23,  0,    0,      0,         0,   "Sustain",    NULL,          NULL },
+	{d_agup_check_proc,		154, 432, 50,  16, 2,   23,  0,    0,      0,         0,   "Stop",       NULL,          NULL },
 	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -3756,6 +3757,21 @@ int eof_menu_note_edit_pro_guitar_note(void)
 		else
 		{	//Clear "Sustain"
 			eof_pro_guitar_note_dialog[70].flags = 0;
+		}
+		if(!eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
+		{	//If tech view isn't in effect for the current track
+			eof_pro_guitar_note_dialog[71].flags = D_DISABLED;
+		}
+		else
+		{
+			if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP)
+			{	//Select "Stop"
+				eof_pro_guitar_note_dialog[71].flags = D_SELECTED;
+			}
+			else
+			{	//Clear "Stop"
+				eof_pro_guitar_note_dialog[71].flags = 0;
+			}
 		}
 
 		bitmask = 0;
@@ -4046,6 +4062,10 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					if(eof_pro_guitar_note_dialog[70].flags == D_SELECTED)
 					{	//Sustain is selected
 						eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN;
+					}
+					if(eof_pro_guitar_note_dialog[71].flags == D_SELECTED)
+					{	//Stop is selected
+						eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_STOP;
 					}
 
 					if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))

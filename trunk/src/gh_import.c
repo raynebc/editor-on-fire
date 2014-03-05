@@ -2922,13 +2922,14 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 	char sectionsfound = 0, validated, found;
 	int prompt;
 	struct QBlyric *head = NULL, *linkptr = NULL;	//Used to maintain the linked list matching section names with checksums
-	filebuffer *sections_file = fb;	//By default, check for sections in the main chart file
+	filebuffer *sections_file;
 	int done = 0, retval = 0;
 
 	if(!fb || !sp)
 		return -1;
 
 	eof_log("eof_gh_read_sections_qb() entered", 1);
+	sections_file = fb;	//By default, check for sections in the main chart file
 	sections_file->index = 0;	//Rewind to beginning of file buffer
 
 	while(!done)
