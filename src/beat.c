@@ -295,6 +295,8 @@ void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 
 	/* figure out what the new BPM should be */
 	beats_length = sp->beat[cbeat]->pos - sp->beat[last_anchor]->pos;
+	if(!beats_length || !beats)
+		return;	//Error condition
 	newbpm = (double)60000.0 / (beats_length / (double)beats);
 	newppqn = (double)60000000.0 / newbpm;
 
@@ -317,6 +319,8 @@ void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 			beats=next_anchor - cbeat;	//The number of beats between the specified beat and the next anchor
 
 		beats_length = sp->beat[next_anchor]->pos - sp->beat[cbeat]->pos;
+		if(!beats_length || !beats)
+			return;	//Error condition
 		newbpm = (double)60000 / (beats_length / (double)beats);
 		newppqn = (double)60000000 / newbpm;
 
