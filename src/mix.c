@@ -355,7 +355,7 @@ void eof_mix_find_claps(void)
 					{	//If the string is used (and not muted)
 						eof_guitar_notes[eof_mix_guitar_notes].pos = pos;
 						eof_guitar_notes[eof_mix_guitar_notes].channel = j;
-						eof_guitar_notes[eof_mix_guitar_notes].note = track->tuning[j] + eof_lookup_default_string_tuning_absolute(track, eof_selected_track, j) + note->frets[j];
+						eof_guitar_notes[eof_mix_guitar_notes].note = track->tuning[j] + eof_lookup_default_string_tuning_absolute(track, eof_selected_track, j) + note->frets[j] + track->capo;
 						eof_guitar_notes[eof_mix_guitar_notes].tone = tone;
 						eof_mix_guitar_notes++;
 					}
@@ -781,7 +781,7 @@ void eof_play_pro_guitar_note_midi(EOF_SONG *sp, unsigned long track, unsigned l
 		if((tp->note[note]->note & bitmask) && !(tp->note[note]->frets[ctr] & 0x80))
 		{	//If this string is used (and not muted)
 			//This note is found by adding default tuning for the string, the offset defining the current tuning and the fret number being played
-			eof_midi_play_note_ex(tp->tuning[ctr] + eof_lookup_default_string_tuning_absolute(tp, track, ctr) + tp->note[note]->frets[ctr], ctr, tone);	//Play the MIDI note
+			eof_midi_play_note_ex(tp->tuning[ctr] + eof_lookup_default_string_tuning_absolute(tp, track, ctr) + tp->note[note]->frets[ctr] + tp->capo, ctr, tone);	//Play the MIDI note
 		}
 	}
 }

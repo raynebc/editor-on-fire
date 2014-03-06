@@ -873,13 +873,15 @@ void eof_export_time_range(ALOGG_OGG * ogg, double start_time, double end_time, 
 char eof_pro_guitar_note_bitmask_has_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long mask, unsigned long *technote_num);
 	//Returns nonzero if the specified pro guitar note has at least one tech note that overlaps it on any of the specified strings in the specified bitmask
 	//If technote_num is not NULL, the index number of the first relevant tech note is returned through it
+	//If the specified note extends all the way to the next note (has linkNext status), only the tech notes before the next note's position are checked
 char eof_pro_guitar_note_has_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long *technote_num);
 	//Uses eof_pro_guitar_note_bitmask_has_tech_note() to search for a technote overlapping any of the specified note's used strings
 	//If technote_num is not NULL, the index number of the first relevant tech note is returned through it
 unsigned long eof_pro_guitar_note_bitmask_has_bend_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long mask, unsigned long *technote_num);
 	//Similar to eof_pro_guitar_note_has_tech_note(), but returns the number of overlapping tech notes that have bend technique
 char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long technote, unsigned long mask, unsigned long *note_num);
-	//Looks for the first regular pro guitar note that is overlapped by the specified tech note
+	//Looks for the last regular pro guitar note that is overlapped by the specified tech note and mask
+	//Notes are iterated in reverse order because a note can end at the start position of the next note due to linknext status
 	//If the tech note is found to be at the start position of any overlapping notes, 1 is returned
 	//If the tech note is found to overlap at least one note, 2 is returned
 	// If note_num is not NULL, the matching regular note number is returned through it

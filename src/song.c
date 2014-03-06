@@ -4370,7 +4370,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 						tp->note[i-1]->length = tp->note[next]->length;	//Update the length for the merged note
 					}
 
-					for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
+					for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
 					{	//For each of the next note's 6 usable strings
 						if(tp->note[next]->note & bitmask)
 						{	//If this string is used
@@ -4381,20 +4381,37 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 				}
 				else
 				{	//Otherwise ensure one doesn't overlap the other improperly
-					if(tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT)
-					{	//If the note has linkNext status, force it to extend to the next note
-						eof_set_note_length(sp, track, i - 1, tp->note[next]->pos - tp->note[i-1]->pos);	//Assign the distance between the next note and this one as the length
-					}
-					else
-					{	//Otherwise enforce the minimum distance between the two notes
-						maxlength = eof_get_note_max_length(sp, track, i - 1);	//Determine the maximum length for this note, taking its crazy status into account
-						if(maxlength && (eof_get_note_length(sp, track, i - 1) > maxlength))
-						{	//If the note is longer than its maximum length
-							eof_set_note_length(sp, track, i - 1, maxlength);	//Truncate it to its valid maximum length
+					if(!eof_menu_track_get_tech_view_state(sp, track))
+					{	//Only perform length validation when tech view isn't in effect, since tech notes cannot retain a specific length
+						EOF_RS_TECHNIQUES ptr;
+						char has_link_next = 0;	//Is set to nonzero if any strings used in the note have sustain status applied
+						for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+						{	//For each of the 6 supported strings
+							if(tp->note[i-1]->note & bitmask)
+							{	//If this string is used
+								eof_get_rs_techniques(sp, track, i - 1, ctr, &ptr, 2, 1);	//Get the statuses in effect for this string, checking all applicable tech notes
+								if(ptr.linknext)
+								{	//If this string used linkNext status
+									has_link_next = 1;
+									break;	//The other strings don't need to be checked
+								}
+							}
+						}
+						if(has_link_next)
+						{	//If the note has linkNext status, force it to extend to the next note
+							eof_set_note_length(sp, track, i - 1, tp->note[next]->pos - tp->note[i-1]->pos);	//Assign the distance between the next note and this one as the length
+						}
+						else
+						{	//Otherwise enforce the minimum distance between the two notes
+							maxlength = eof_get_note_max_length(sp, track, i - 1);	//Determine the maximum length for this note, taking its crazy status into account
+							if(maxlength && (eof_get_note_length(sp, track, i - 1) > maxlength))
+							{	//If the note is longer than its maximum length
+								eof_set_note_length(sp, track, i - 1, maxlength);	//Truncate it to its valid maximum length
+							}
 						}
 					}
 				}
-			}
+			}//If there is another note in this track
 
 			/* make sure that there aren't any invalid fret/finger values, and inspect the mute flag status */
 			for(ctr = 0, allmuted = 1, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
@@ -7276,14 +7293,23 @@ char eof_pro_guitar_note_has_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long n
 char eof_pro_guitar_note_bitmask_has_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long mask, unsigned long *technote_num)
 {
 	unsigned long ctr, notepos, notelen;
+	long nextnote;
 
 	if((tp == NULL) || (note >= tp->notes))
 		return 0;	//Return error
 
+	notepos = tp->pgnote[note]->pos;
+	notelen = tp->pgnote[note]->length;
+	nextnote = eof_fixup_next_pro_guitar_note(tp, note);
+	if(nextnote > 0)
+	{	//If there was a next note
+		if(notepos + notelen == tp->pgnote[nextnote]->pos)
+		{	//And this note extends all the way to it with no gap in between (this note has linkNext status)
+			notelen--;	//Shorten the effective note length to ensure that a tech note at the next note's position is detected as affecting that note instead of this one
+		}
+	}
 	for(ctr = 0; ctr < tp->technotes; ctr++)
 	{	//For each tech note in the track
-		notepos = tp->pgnote[note]->pos;
-		notelen = tp->pgnote[note]->length;
 		if(tp->technote[ctr]->pos > notepos + notelen)
 		{	//If this tech note (and all those that follow) are after the end position of this note
 			break;	//Break from loop, no overlapping note will be found
@@ -7306,14 +7332,23 @@ char eof_pro_guitar_note_bitmask_has_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigne
 unsigned long eof_pro_guitar_note_bitmask_has_bend_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long mask, unsigned long *technote_num)
 {
 	unsigned long ctr, flags, notepos, notelen, matchctr = 0;
+	long nextnote;
 
 	if((tp == NULL) || (note >= tp->notes))
 		return 0;	//Return error
 
+	notepos = tp->pgnote[note]->pos;
+	notelen = tp->pgnote[note]->length;
+	nextnote = eof_fixup_next_pro_guitar_note(tp, note);
+	if(nextnote > 0)
+	{	//If there was a next note
+		if(notepos + notelen == tp->pgnote[nextnote]->pos)
+		{	//And this note extends all the way to it with no gap in between (this note has linkNext status)
+			notelen--;	//Shorten the effective note length to ensure that a tech note at the next note's position is detected as affecting that note instead of this one
+		}
+	}
 	for(ctr = 0; ctr < tp->technotes; ctr++)
 	{	//For each tech note in the track
-		notepos = tp->pgnote[note]->pos;
-		notelen = tp->pgnote[note]->length;
 		if(tp->technote[ctr]->pos > notepos + notelen)
 		{	//If this tech note (and all those that follow) are after the end position of this note
 			break;	//Break from loop, no overlapping note will be found
@@ -7347,11 +7382,11 @@ char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned
 		return 0;	//Return error
 
 	techpos = tp->technote[technote]->pos;
-	for(ctr = 0; ctr < tp->pgnotes; ctr++)
-	{	//For each regular note in the track
-		np = tp->pgnote[ctr];	//Simplify
-		if(np->pos > techpos)
-		{	//If this regular note (and all those that follow) are after this tech note's position
+	for(ctr = tp->pgnotes; ctr > 0; ctr--)
+	{	//For each regular note in the track, in reverse order
+		np = tp->pgnote[ctr - 1];	//Simplify
+		if(np->pos + np->length < techpos)
+		{	//If this regular note (and all those that precede) ends before this tech note's position
 			break;		//Break from loop
 		}
 		if((tp->technote[technote]->type == np->type) && (mask & np->note))
@@ -7360,7 +7395,7 @@ char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned
 			{	//If this regular note is at the same timestamp as the tech note
 				if(note_num)
 				{	//If the calling function passed a non NULL pointer
-					*note_num = ctr;	//Pass the overlapping note number by reference
+					*note_num = ctr - 1;	//Pass the overlapping note number by reference
 				}
 				return 1;	//Return overlap found at start of note
 			}
@@ -7368,7 +7403,7 @@ char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned
 			{	//If the tech note overlaps this regular note
 				if(note_num)
 				{	//If the calling function passed a non NULL pointer
-					*note_num = ctr;	//Pass the overlapping note number by reference
+					*note_num = ctr - 1;	//Pass the overlapping note number by reference
 				}
 				return 2;	//Return overlap found within a note
 			}

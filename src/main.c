@@ -248,6 +248,7 @@ int         eof_mickeys_y;
 int         eof_lclick_released = 1;	//Tracks the handling of the left mouse button in general
 int         eof_blclick_released = 1;	//Tracks the handling of the left mouse button when used on beat markers
 int         eof_rclick_released = 1;	//Tracks the handling of the right mouse button in general
+int         eof_mclick_released = 1;	//Tracks the handling of the middle mouse button in general
 int         eof_click_x;
 int         eof_click_y;
 int         eof_peg_x;
