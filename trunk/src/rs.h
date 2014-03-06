@@ -244,6 +244,7 @@ unsigned long eof_get_highest_fret_in_time_range(EOF_SONG *sp, unsigned long tra
 unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long stringnum, EOF_RS_TECHNIQUES *ptr, char target, char checktechnotes);
 	//Reads the flags of the specified note and sets variables in the specified techniques structure
 	//  If checktechnotes is nonzero, the techniques of any tech notes applicable to the specified string of the note are taken into account
+	//  If the specified note extends all the way to the next note (has linkNext status), only the tech notes before the next note's position are checked
 	//stringnum is used to set the fret and pitched/unpitched slide end fret values (which take the track's capo into account) for a specified string,
 	//  as well as determining which tech notes affect the note on the specified string (if checktechnotes is nonzero), and must be a value from 0 to 5.
 	//  The correct end position for each slide is tracked for the specified string by determining how many frets the slide is

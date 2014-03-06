@@ -4564,8 +4564,18 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 	//If applicable, track the techniques for any tech notes that affect the specified string of the note
 	if(checktechnotes && eof_pro_guitar_note_bitmask_has_tech_note(tp, notenum, bitmask, &technote_num))
 	{	//If tech notes are to be taken into account and the specified string of the note has at least one tech note applied to it
-		unsigned long thistechflags;
+		unsigned long thistechflags, notelen;
+		long nextnote;
 
+		notelen = eof_get_note_length(sp, track, notenum);
+		nextnote = eof_fixup_next_pro_guitar_note(tp, notenum);
+		if(nextnote > 0)
+		{	//If there was a next note
+			if(notepos + notelen == tp->pgnote[nextnote]->pos)
+			{	//And this note extends all the way to it with no gap in between (this note has linkNext status)
+				notelen--;	//Shorten the effective note length to ensure that a tech note at the next note's position is detected as affecting that note instead of this one
+			}
+		}
 		for(ctr = technote_num; ctr < tp->technotes; ctr++)
 		{	//For all tech notes, starting with the first one that applies to this note
 			if(tp->technote[ctr]->pos > notepos + tp->note[notenum]->length)
@@ -4646,7 +4656,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 
 	if(ptr)
 	{	//If the calling function passed a techniques structure
-		ptr->length = eof_get_note_length(sp, track, notenum);
+		ptr->length = eof_get_note_length(sp, track, notenum);;
 
 		ptr->bendstrength_h = ptr->bendstrength_q = ptr->bend = 0;	//Initialize these to default values
 		ptr->slideto = ptr->unpitchedslideto = -1;

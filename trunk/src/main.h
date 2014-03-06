@@ -402,6 +402,7 @@ extern int         eof_mickeys_y;
 extern int         eof_lclick_released;
 extern int         eof_blclick_released;
 extern int         eof_rclick_released;
+extern int         eof_mclick_released;
 extern int         eof_click_x;
 extern int         eof_click_y;
 extern int         eof_peg_x;
@@ -511,7 +512,8 @@ void eof_emergency_stop_music(void);	//Stops audio playback
 void eof_fix_catalog_selection(void);	//Ensures that a valid catalog entry is active, if any
 unsigned long eof_count_selected_notes(unsigned long * total, char v);
 	//Returns the number of notes selected in the active instrument difficulty
-	//If total is not NULL, its value is incremented once for each selected note in the active difficulty
+	//If total is not NULL, its value is incremented once for each selected note in the active difficulty, regardless of whether it's selected
+	//The v parameter presently doesn't have any purpose and can be given as 0
 void eof_fix_waveform_graph(void);	//Rebuild the waveform graph data if it exists
 void eof_fix_spectrogram(void);	//Rebuild the spectrogram data if it exists
 void eof_clear_input(void);

@@ -3258,6 +3258,31 @@ void eof_editor_logic(void)
 				}//If a note is not being moused over
 			}//If piano roll, rex mundi or feedback input modes are in use
 
+			/* handle initial middle click (only if full screen 3D view is not in effect) */
+			if(!eof_full_screen_3d && (mouse_b & 4) && eof_mclick_released)
+			{	//If the middle click hasn't been processed yet
+				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//If a pro guitar track is active
+					if(eof_count_selected_notes(NULL, 0))
+					{	//If any notes in the active track difficulty are selected
+						(void) eof_menu_note_edit_pro_guitar_note();
+					}
+					else if(eof_hover_note >= 0)
+					{	//if a note is being hovered over
+						eof_selection.current = eof_hover_note;		//Temporarily mark the hover note as the selected note
+						eof_selection.multi[eof_hover_note] = 1;
+						(void) eof_menu_note_edit_pro_guitar_note();
+						eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note statuses
+						eof_selection.multi[eof_hover_note] = 0;
+					}
+					eof_mclick_released = 0;
+				}
+			}
+			else
+			{	//If the middle mouse button is not held
+				eof_mclick_released = 1;	//Track that the middle click button has been release and is ready to be processed again the next time it is clicked
+			}
+
 			/* handle initial left click (only if full screen 3D view is not in effect) */
 			if(!eof_full_screen_3d && (mouse_b & 1) && eof_lclick_released)
 			{
