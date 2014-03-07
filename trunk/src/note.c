@@ -147,12 +147,15 @@ int eof_adjust_notes(int offset)
 			eof_set_note_pos(eof_song, i, j, eof_get_note_pos(eof_song, i, j) + offset);	//Add the offset to the note's position
 		}
 		//Offset the tech notes
-		eof_menu_track_set_tech_view_state(eof_song, i, 1);	//Enable tech view if applicable
-		for(j = 0; j < eof_get_track_size(eof_song, i); j++)
-		{	//For each note in the track
-			eof_set_note_pos(eof_song, i, j, eof_get_note_pos(eof_song, i, j) + offset);	//Add the offset to the note's position
+		if(eof_song->track[i]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If this is a pro guitar track
+			eof_menu_track_set_tech_view_state(eof_song, i, 1);	//Enable tech view if applicable
+			for(j = 0; j < eof_get_track_size(eof_song, i); j++)
+			{	//For each note in the track
+				eof_set_note_pos(eof_song, i, j, eof_get_note_pos(eof_song, i, j) + offset);	//Add the offset to the note's position
+			}
+			eof_menu_track_set_tech_view_state(eof_song, i, restore_tech_view);	//Restore the track's original tech view state
 		}
-		eof_menu_track_set_tech_view_state(eof_song, i, restore_tech_view);	//Restore original tech view state
 
 		for(j = 0; j < eof_get_num_solos(eof_song, i); j++)
 		{	//For each solo section in the track

@@ -2455,7 +2455,7 @@ int eof_save_helper(char *destfilename)
 		for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, ctr); ctr2++)
 		{	//For each note in the track
 			long next = eof_track_fixup_next_note(eof_song, ctr, ctr2);	//Get the next note, if it exists
-			unsigned long maxlength = eof_get_note_max_length(eof_song, ctr, ctr2);	//Get the maximum length of this note
+			unsigned long maxlength = eof_get_note_max_length(eof_song, ctr, ctr2, 1);	//Get the maximum length of this note
 			if(next > 0)
 			{	//If there was a next note
 				if(eof_get_note_length(eof_song, ctr, ctr2) > maxlength)
