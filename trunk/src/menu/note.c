@@ -8013,6 +8013,7 @@ int eof_pro_guitar_note_bend_strength(char undo)
 	EOF_PRO_GUITAR_TRACK *tp;
 	EOF_PRO_GUITAR_NOTE *np;
 	char undo_made = 0;
+	static unsigned long lastselected = 2;	//Track the last selected option (half steps or quarter steps)
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
@@ -8029,29 +8030,30 @@ int eof_pro_guitar_note_bend_strength(char undo)
 	eof_render();
 	eof_color_dialog(eof_pro_guitar_note_bend_strength_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_pro_guitar_note_bend_strength_dialog);
+	eof_pro_guitar_note_bend_strength_dialog[2].flags = 0;	//Clear the half steps radio button
+	eof_pro_guitar_note_bend_strength_dialog[3].flags = 0;	//Clear the quarter steps radio button
 	if((np->bendstrength & 0x7F) == 0)
 	{	//If the selected note has no bend strength defined
 		if(tp->note != tp->technote)
 		{	//Tech notes are allows to have a bend strength of 0 (defines the release of a bend)
 			eof_etext[0] = '\0';	//Otherwise it's not valid, empty this string
 		}
+		eof_pro_guitar_note_bend_strength_dialog[lastselected].flags = D_SELECTED;
 	}
 	else
 	{	//Otherwise write the ending fret into the string
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", (np->bendstrength & 0x7F));	//Mask out the MSB, which specifies the bend strength's unit of measurement
-	}
-	if(np->bendstrength & 0x80)
-	{	//If the note's current bend strength specifies the value is in quarter steps
-		eof_pro_guitar_note_bend_strength_dialog[2].flags = 0;			//Clear the half steps radio button
-		eof_pro_guitar_note_bend_strength_dialog[3].flags = D_SELECTED;	//Select the quarter steps radio button
-	}
-	else
-	{	//The bend strength specifies the value in half steps (the default)
-		eof_pro_guitar_note_bend_strength_dialog[3].flags = 0;			//Clear the quarter steps radio button
-		eof_pro_guitar_note_bend_strength_dialog[2].flags = D_SELECTED;	//Select the half steps radio button
+		if(np->bendstrength & 0x80)
+		{	//If the note's current bend strength specifies the value is in quarter steps
+			eof_pro_guitar_note_bend_strength_dialog[3].flags = D_SELECTED;	//Select the quarter steps radio button
+		}
+		else
+		{	//The bend strength specifies the value in half steps (the default)
+			eof_pro_guitar_note_bend_strength_dialog[2].flags = D_SELECTED;	//Select the half steps radio button
+		}
 	}
 
-	if(eof_popup_dialog(eof_pro_guitar_note_bend_strength_dialog, 2) == 4)
+	if(eof_popup_dialog(eof_pro_guitar_note_bend_strength_dialog, 1) == 4)
 	{	//User clicked OK
 		if(eof_etext[0] == '\0')
 		{	//If the user did not define the bend strength
@@ -8095,6 +8097,15 @@ int eof_pro_guitar_note_bend_strength(char undo)
 			}//If this note is in the currently active track and is selected
 		}//For each note in the active track
 	}//User clicked OK
+
+	if(eof_pro_guitar_note_bend_strength_dialog[2].flags == D_SELECTED)
+	{	//If the half steps radio button is selected
+		lastselected = 2;
+	}
+	else
+	{	//The quarter steps radio button is selected
+		lastselected = 3;
+	}
 
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note

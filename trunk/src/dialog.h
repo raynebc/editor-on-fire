@@ -33,7 +33,9 @@ int eof_edit_lyric_dialog(void);	//Performs the Edit Lyric action presented in t
 
 
 void eof_prepare_menus(void);	//Configures menus based on conditions within EOF, such as to enable/disable menu items
-int eof_popup_dialog(DIALOG * dp, int n);	//Opens the dialog menu, giving focus to object #n and returns the activated item number
+int eof_popup_dialog(DIALOG * dp, int n);
+	//Opens the dialog menu, giving focus to object #n and returns the activated item number
+	//If the user cancels with the escape key, the return value may indicate whatever dialog item had focus as of when escape was pressed
 void eof_color_dialog(DIALOG * dp, int fg, int bg);	//Applies the global foreground and background colors to the dialog
 
 #endif

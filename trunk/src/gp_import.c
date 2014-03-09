@@ -3469,7 +3469,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											np[ctr2]->length = lastendpos - np[ctr2]->pos + 0.5;	//Round up to nearest millisecond
 
 #ifdef GP_IMPORT_DEBUG
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tTie note:  Note starting at %lums lengthened from %lums to %ldms", np[ctr2]->pos, oldlength, np[ctr2]->length);
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tTie note:  Note starting at %lums lengthened from %ldms to %ldms", np[ctr2]->pos, oldlength, np[ctr2]->length);
 											eof_log(eof_log_string, 1);
 #endif
 
@@ -4503,6 +4503,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 			eof_log(eof_log_string, 1);
 #endif
 			curr_alt_ending = gp->measure[currentmeasure].alt_endings;	//Remember the alternate ending number being skipped
+			currentmeasure++;	//Seek one measure into the beginning of the alternate ending
 			while(currentmeasure < gp->measures)
 			{	//While there are more measures
 				//Based on Guitar Pro's behavior, even when a time signature change is in an inactive alternate ending, the composition's meter takes it into effect
@@ -4520,7 +4521,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 					currentmeasure++;	//Go beyond the end of repeat to the next measure
 					break;
 				}
-				if(curr_alt_ending != gp->measure[currentmeasure].alt_endings)
+				if(gp->measure[currentmeasure].alt_endings && (curr_alt_ending != gp->measure[currentmeasure].alt_endings))
 				{	//If this is the beginning of another alternate ending
 					break;
 				}

@@ -3238,7 +3238,7 @@ void eof_read_clipboard_note(PACKFILE *fp, EOF_EXTENDED_NOTE *temp_note, unsigne
 		return;
 
 	/* read the note */
-	(void) eof_load_song_string_pf(temp_note->name, fp, namelength);	//Read the note's name, up to the specified number of characters
+	(void) eof_load_song_string_pf(temp_note->name, fp, (size_t)namelength);	//Read the note's name, up to the specified number of characters
 	temp_note->type = pack_getc(fp);	//Read the note's difficulty
 	temp_note->note = pack_getc(fp);	//Read the note bitmask value
 	temp_note->beat = pack_igetl(fp);	//Read the beat the note starts in

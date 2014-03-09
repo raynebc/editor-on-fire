@@ -4390,7 +4390,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 						{	//For each of the 6 supported strings
 							if(tp->note[i-1]->note & bitmask)
 							{	//If this string is used
-								eof_get_rs_techniques(sp, track, i - 1, ctr, &ptr, 2, 1);	//Get the statuses in effect for this string, checking all applicable tech notes
+								(void) eof_get_rs_techniques(sp, track, i - 1, ctr, &ptr, 2, 1);	//Get the statuses in effect for this string, checking all applicable tech notes
 								if(ptr.linknext)
 								{	//If this string used linkNext status
 									has_link_next = 1;
@@ -4503,7 +4503,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 			{	//For each of the 6 supported strings
 				if(tp->note[i]->note & bitmask)
 				{	//If this string is used
-					eof_get_rs_techniques(sp, track, i, ctr, &ptr, 2, 1);	//Get the statuses in effect for this string, checking all applicable tech notes
+					(void) eof_get_rs_techniques(sp, track, i, ctr, &ptr, 2, 1);	//Get the statuses in effect for this string, checking all applicable tech notes
 					if(ptr.linknext)
 					{	//If this string used linkNext status
 						has_link_next = 1;
