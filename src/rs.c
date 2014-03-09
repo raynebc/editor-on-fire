@@ -2143,7 +2143,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 				for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
 				{	//For each of the 6 supported strings
-					eof_get_rs_techniques(sp, track, prevnote, ctr2, &tech, 2, 1);	//Obtain all techniques that apply to this string
+					(void) eof_get_rs_techniques(sp, track, prevnote, ctr2, &tech, 2, 1);	//Obtain all techniques that apply to this string
 					if(tech.linknext)
 					{	//If the linknext status is applied
 						linked = 1;
@@ -4670,8 +4670,8 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 		}
 		if((ptr->length == 1) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 		{	//If the note is has the absolute minimum length and isn't a bend or a slide note (bend and slide notes are required to have a length > 0 or Rocksmith will crash)
-			if(!((target == 2) && (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN)))
-			{	//Only if this note does not have the sustain status applied and the target is Rocksmith 2
+			if(!((target == 2) && (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT)))
+			{	//Only if this note does not have the sustain or linknext status applied and the target is Rocksmith 2
 				ptr->length = 0;	//Convert to a length of 0 so that it doesn't display as a sustain note in-game
 			}
 		}
@@ -4897,8 +4897,8 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 		{	//If the chordNote does not have tremolo, bend, slide or unpitched slide (all of which need to keep their sustain)
 			if(!((fret == 0) && ((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))))
 			{	//If the chordNote is not fretted, it needs to keep its sustain if the fretted notes in the chord have bend, slide or unpitched slide status
-				if(!(tech.sustain))
-				{	//If the chordNote has the sustain status applied, it needs to keep its sustain
+				if(!tech.sustain && !tech.linknext)
+				{	//If the chordNote has the sustain or linknext status applied, it needs to keep its sustain
 					tech.length = 0;	//Otherwise force the chordNote to have no sustain
 				}
 			}

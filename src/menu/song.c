@@ -3122,6 +3122,7 @@ int eof_menu_song_seek_beat_measure(void)
 	eof_seek_beat_measure_dialog[2].flags = 0;	//Clear these so they can be selected/disabled below as applicable
 	eof_seek_beat_measure_dialog[3].flags = 0;
 	measurecount = eof_get_measure(0, 1);	//Count the number of measures
+	eof_etext3[0] = '\0';	//Empty the input field
 	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "Beat [0 - %lu]", eof_song->beats - 1);
 	if(measurecount)
 	{	//If there is at least one measure
@@ -3169,7 +3170,7 @@ int eof_menu_song_seek_beat_measure(void)
 				}
 			}
 		}
-		else if((retval == 7) || (retval == -1))
+		else if((retval == 7) || (retval == -1) || (retval == 5))
 		{	//User clicked cancel (or pressed escape)
 			done = 1;
 		}

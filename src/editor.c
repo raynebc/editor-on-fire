@@ -6047,6 +6047,7 @@ void eof_editor_logic_common(void)
 						}
 						(void) eof_menu_edit_cut_paste(eof_selected_beat, 0);
 						eof_calculate_beats(eof_song);
+						eof_truncate_chart(eof_song);	//Add or remove beat markers as necessary and update the eof_chart_length variable
 						eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 					}
 				}
