@@ -978,6 +978,7 @@ void eof_clear_input(void)
 		}
 	}
 	eof_mouse_z = mouse_z;
+	eof_use_key();	//Clear key input state of the new key press system
 }
 
 void eof_prepare_undo(int type)
@@ -3160,7 +3161,7 @@ void eof_render_3d_window(void)
 		if(tp->note == tp->technote)
 		{	//If tech view is in effect for the active track
 			restore_tech_view = 1;
-			eof_menu_track_disable_tech_view(tp);
+			eof_menu_pro_guitar_track_disable_tech_view(tp);
 			temphover = eof_hover_note;				//Temporarily clear the hover note, since any hover note in effect at this time applies to the tech notes and not the normal notes
 			eof_hover_note = -1;
 			temptrack = eof_selection.track;		//Likewise temporarily clear the selection track number
@@ -3450,7 +3451,7 @@ void eof_render_3d_window(void)
 
 	if(tp && restore_tech_view)
 	{	//If tech view needs to be re-enabled
-		eof_menu_track_enable_tech_view(tp);
+		eof_menu_pro_guitar_track_enable_tech_view(tp);
 		eof_hover_note = temphover;				//Restore the hover note
 		eof_selection.track = temptrack;		//Restore the selection track
 	}

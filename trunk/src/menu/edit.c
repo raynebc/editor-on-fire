@@ -844,7 +844,7 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 		if(tp)
 		{	//If the track being exported is a pro guitar track
 			/* Process tech notes */
-			eof_menu_track_enable_tech_view(tp);	//Enable tech view just until the tech notes are stored
+			eof_menu_pro_guitar_track_enable_tech_view(tp);	//Enable tech view just until the tech notes are stored
 			copy_notes[j] = 0;
 			first_pos_found[j] = 0;
 			first_pos[j] = 0;
@@ -886,7 +886,7 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 					eof_write_clipboard_note(fp, eof_song, j, i, first_pos[j]);	//Write note data to disk
 				}//If this note falls within the start->end time range
 			}//For each note in this track
-			eof_menu_track_disable_tech_view(tp);
+			eof_menu_pro_guitar_track_disable_tech_view(tp);
 		}
 
 		/* star power */
@@ -1010,7 +1010,6 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 	EOF_NOTE * new_note = NULL;
 	float tfloat;
 	EOF_PHRASE_SECTION *sectionptr = NULL;
-	char text[EOF_MAX_LYRIC_LENGTH+1] = {0};
 	unsigned long notepos = 0;
 	long notelength = 0;
 	char affect_until_end = 0;	//Is set to nonzero if all notes until the end of the project are affected by this operation
@@ -1076,7 +1075,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 			{
 				notepos = eof_put_porpos(temp_note.beat - first_beat[j] + this_beat[j], temp_note.porpos, 0.0);
 				notelength = eof_put_porpos(temp_note.endbeat - first_beat[j] + this_beat[j], temp_note.porendpos, 0.0) - notepos;
-				new_note = eof_track_add_create_note(eof_song, j, temp_note.note, notepos, notelength, temp_note.type, text);
+				new_note = eof_track_add_create_note(eof_song, j, temp_note.note, notepos, notelength, temp_note.type, temp_note.name);
 
 				if(new_note)
 				{	//If the note was successfully created
@@ -1104,7 +1103,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		//Adjust the tech notes, if any
 		if(tp)
 		{	//If the track being exported is a pro guitar track
-			eof_menu_track_enable_tech_view(tp);	//Enable tech view just until the tech notes are restored
+			eof_menu_pro_guitar_track_enable_tech_view(tp);	//Enable tech view just until the tech notes are restored
 
 			//Empty the notes from the track
 			for(i = eof_get_track_size(eof_song, j); i > 0; i--)
@@ -1128,7 +1127,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 				{
 					notepos = eof_put_porpos(temp_note.beat - first_beat[j] + this_tech_beat[j], temp_note.porpos, 0.0);
 					notelength = eof_put_porpos(temp_note.endbeat - first_beat[j] + this_tech_beat[j], temp_note.porendpos, 0.0) - notepos;
-					new_note = eof_track_add_create_note(eof_song, j, temp_note.note, notepos, notelength, temp_note.type, text);
+					new_note = eof_track_add_create_note(eof_song, j, temp_note.note, notepos, notelength, temp_note.type, temp_note.name);
 
 					if(new_note)
 					{	//If the note was successfully created
@@ -1152,7 +1151,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 				}
 			}
 			eof_track_sort_notes(eof_song, j);
-			eof_menu_track_disable_tech_view(tp);
+			eof_menu_pro_guitar_track_disable_tech_view(tp);
 		}
 
 		/* star power */

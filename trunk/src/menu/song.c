@@ -3733,6 +3733,9 @@ int eof_menu_song_export_song_preview(void)
 	char syscommand[1024] = {0};
 	char wavname[270] = {0};
 
+	eof_log("eof_check_fret_hand_positions_option() entered", 1);
+	eof_log("\tCreating preview audio", 1);
+
 	if(!eof_song)
 		return 0;
 

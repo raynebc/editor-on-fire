@@ -606,10 +606,10 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 					break;	//Break from outer loop
 
 				eof_calculate_tempo_map(eof_song);	//Determine all tempo changes based on the beats' timestamps
-			}
+			}//If the count attribute of this tag is readable and greater than 0
 			else
 			{	//The XML must have beats defined
-				eof_log("Error reading tuning values from XML.  Aborting", 1);
+				eof_log("Error reading beat tags from XML, the \"count\" attribute is 0 or undefined.  Aborting", 1);
 				error = 1;
 				break;
 			}

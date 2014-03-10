@@ -2882,7 +2882,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					if(tp->note == tp->technote)
 					{	//If tech view is in effect for the track being written
 						restore_tech_view = 1;
-						eof_menu_track_disable_tech_view(tp);	//Temporarily change to the regular note array
+						eof_menu_pro_guitar_track_disable_tech_view(tp);	//Temporarily change to the regular note array
 					}
 					(void) pack_iputl(tp->notes, fp);			//Write the number of notes in this track
 					for(ctr=0; ctr < tp->notes; ctr++)
@@ -3168,7 +3168,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		}
 		if(tp && restore_tech_view)
 		{	//If tech view needs to be re-enabled for the track that was just written
-			eof_menu_track_enable_tech_view(tp);
+			eof_menu_pro_guitar_track_enable_tech_view(tp);
 		}
 	}//For each track in the project
 
@@ -3368,12 +3368,12 @@ void eof_song_empty_track(EOF_SONG * sp, unsigned long track)
 	{	//If the track being destroyed is a pro guitar track, erase the technote array first
 		EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 
-		eof_menu_track_enable_tech_view(tp);	//Empty the tech note array first
+		eof_menu_pro_guitar_track_enable_tech_view(tp);	//Empty the tech note array first
 		for(i = eof_get_track_size(sp, track); i > 0; i--)
 		{	//Delete all notes in reverse order, which will avoid having to re-arrange the note array after each
 			eof_track_delete_note(sp, track, i-1);	//Note numbering starts with #0
 		}
-		eof_menu_track_disable_tech_view(tp);	//Then empty the regular note array
+		eof_menu_pro_guitar_track_disable_tech_view(tp);	//Then empty the regular note array
 	}
 
 	for(i = eof_get_track_size(sp, track); i > 0; i--)
@@ -6897,7 +6897,7 @@ void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsign
 	{	//For each note array being modified
 		if(tp && (ctr3 > 0))
 		{	//If this is the second pass, the tech notes are being modified
-			eof_menu_track_enable_tech_view(tp);
+			eof_menu_pro_guitar_track_enable_tech_view(tp);
 		}
 
 		//Parse in reverse order so that notes can be appended to or deleted from the track in the same loop
@@ -7170,7 +7170,7 @@ void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char di
 	{	//If a pro guitar track was specified
 		//Delete tech notes
 		tp = eof_song->pro_guitar_track[tracknum];
-		eof_menu_track_enable_tech_view(tp);
+		eof_menu_pro_guitar_track_enable_tech_view(tp);
 		for(i = eof_get_track_size(sp, track); i > 0; i--)
 		{	//For each tech note in the track, in reverse order
 			if(!diffonly || (eof_get_note_type(sp, track, i - 1) == diff))
@@ -7407,10 +7407,13 @@ char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned
 	unsigned long ctr, techpos;
 	long nextnote, notelen;
 	EOF_PRO_GUITAR_NOTE *np;
+	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled
 
 	if((tp == NULL) || (technote >= tp->technotes))
 		return 0;	//Return error
 
+	restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);
+	eof_menu_pro_guitar_track_disable_tech_view(tp);	//Disable tech view if applicable
 	techpos = tp->technote[technote]->pos;
 	for(ctr = 0; ctr < tp->pgnotes; ctr++)
 	{	//For each regular note in the track
@@ -7437,6 +7440,7 @@ char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned
 				{	//If the calling function passed a non NULL pointer
 					*note_num = ctr;	//Pass the overlapping note number by reference
 				}
+				eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Re-enable tech view if applicable
 				return 1;	//Return overlap found at start of note
 			}
 			if((techpos >= np->pos) && (techpos <= np->pos + notelen))
@@ -7445,10 +7449,12 @@ char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned
 				{	//If the calling function passed a non NULL pointer
 					*note_num = ctr;	//Pass the overlapping note number by reference
 				}
+				eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Re-enable tech view if applicable
 				return 2;	//Return overlap found within a note
 			}
 		}
 	}
 
+	eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Re-enable tech view if applicable
 	return 0;	//No overlap note found
 }

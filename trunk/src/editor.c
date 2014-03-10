@@ -2191,7 +2191,7 @@ if(eof_key_code == KEY_PAUSE)
 				eof_use_key();
 			}
 
-	/* edit pro guitar fret values (F in a pro guitar track) */
+	/* edit pro guitar fret/finger values (F in a pro guitar track) */
 			if((eof_key_char == 'f') && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 			{
 				(void) eof_menu_note_edit_pro_guitar_note_frets_fingers_menu();
@@ -4796,7 +4796,7 @@ void eof_render_editor_window(EOF_WINDOW *window, unsigned char windownum)
 	eof_render_editor_window_common(window);	//Perform rendering that is common to the note and vocal editor displays
 	if(render_tech_notes && tp)
 	{	//If tech notes are to render on top of the regular notes
-		eof_menu_track_disable_tech_view(tp);	//Switch back to the regular note array
+		eof_menu_pro_guitar_track_disable_tech_view(tp);	//Switch back to the regular note array
 		temphover = eof_hover_note;				//Temporarily clear the hover note, since any hover note in effect at this time applies to the tech notes and not the normal notes
 		eof_hover_note = -1;
 		temptrack = eof_selection.track;		//Likewise temporarily clear the selection track number
@@ -4804,7 +4804,7 @@ void eof_render_editor_window(EOF_WINDOW *window, unsigned char windownum)
 		eof_render_editor_notes(window);		//Render its notes
 		eof_hover_note = temphover;				//Restore the hover note
 		eof_selection.track = temptrack;		//Restore the selection track
-		eof_menu_track_enable_tech_view(tp);	//Switch back to the tech note array
+		eof_menu_pro_guitar_track_enable_tech_view(tp);	//Switch back to the tech note array
 	}
 	eof_render_editor_notes(window);			//Render the notes in the active track
 	eof_render_editor_window_common2(window);	//Perform post-rendering that is common to the note and vocal editor displays
