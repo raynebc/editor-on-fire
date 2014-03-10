@@ -231,7 +231,7 @@ int eof_undo_apply(void)
 			tp = eof_song->pro_guitar_track[ctr];
 			if(tech_view_status[ctr])
 			{	//If tech view was in effect for this track
-				eof_menu_track_enable_tech_view(tp);
+				eof_menu_pro_guitar_track_enable_tech_view(tp);
 			}
 		}
 
@@ -314,7 +314,7 @@ void eof_redo_apply(void)
 			tp = eof_song->pro_guitar_track[ctr];
 			if(tech_view_status[ctr])
 			{	//If tech view was in effect for this track
-				eof_menu_track_enable_tech_view(tp);
+				eof_menu_pro_guitar_track_enable_tech_view(tp);
 			}
 		}
 	}

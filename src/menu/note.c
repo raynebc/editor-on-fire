@@ -3514,10 +3514,11 @@ int eof_menu_note_edit_pro_guitar_note(void)
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run unless the pro guitar track is active
+
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	if(eof_selection.current >= eof_get_track_size(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run if a valid note isn't selected
 
-	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tp = eof_song->pro_guitar_track[tracknum];	//Simplify
 	np = tp->note[eof_selection.current];	//Simplify
 	if(!eof_music_paused)
@@ -4400,12 +4401,13 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 0;	//Do not allow this function to run unless the pro guitar track is active
-	if(eof_selection.current >= eof_get_track_size(eof_song, eof_selected_track))
-		return 0;	//Do not allow this function to run if a valid note isn't selected
 	if(!undo_made)
 		return 0;
 
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	if(eof_selection.current >= eof_get_track_size(eof_song, eof_selected_track))
+		return 0;	//Do not allow this function to run if a valid note isn't selected
+
 	tp = eof_song->pro_guitar_track[tracknum];
 	np = tp->note[eof_selection.current];	//Simplify
 	if(!eof_music_paused)
@@ -4745,6 +4747,11 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 			eof_cursor_visible = 0;
 			eof_pen_visible = 0;
 			eof_render();
+			if(note_selection_updated)
+			{	//If the only note modified was the seek hover note
+				eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+				eof_selection.current = EOF_MAX_NOTES - 1;
+			}
 			return 0;	//Return Cancel selected
 		}
 	}//Until user explicitly cancels, or provides proper input and clicks OK

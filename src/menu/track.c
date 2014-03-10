@@ -3556,11 +3556,11 @@ int eof_menu_track_toggle_tech_view(void)
 	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
 	if(tp->note == tp->technote)
 	{	//If tech view is already in effect for the active track
-		eof_menu_track_disable_tech_view(tp);
+		eof_menu_pro_guitar_track_disable_tech_view(tp);
 	}
 	else
 	{	//Otherwise put the tech note array into effect
-		eof_menu_track_enable_tech_view(tp);
+		eof_menu_pro_guitar_track_enable_tech_view(tp);
 	}
 	(void) eof_menu_edit_deselect_all();	//Clear the note selection
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Re-count the number of notes in the currently active array
@@ -3568,7 +3568,20 @@ int eof_menu_track_toggle_tech_view(void)
 	return 1;
 }
 
-void eof_menu_track_disable_tech_view(EOF_PRO_GUITAR_TRACK *tp)
+char eof_menu_pro_guitar_track_get_tech_view_state(EOF_PRO_GUITAR_TRACK *tp)
+{
+	if(!tp)
+		return 0;	//Invalid parameter
+
+	if(tp->note == tp->technote)
+	{	//If tech view is in effect for the specified track
+		return 1;
+	}
+
+	return 0;
+}
+
+void eof_menu_pro_guitar_track_disable_tech_view(EOF_PRO_GUITAR_TRACK *tp)
 {
 	if(!tp)
 		return;	//Invalid parameter
@@ -3581,7 +3594,7 @@ void eof_menu_track_disable_tech_view(EOF_PRO_GUITAR_TRACK *tp)
 	}
 }
 
-void eof_menu_track_enable_tech_view(EOF_PRO_GUITAR_TRACK *tp)
+void eof_menu_pro_guitar_track_enable_tech_view(EOF_PRO_GUITAR_TRACK *tp)
 {
 	if(!tp)
 		return;	//Invalid parameter
@@ -3591,6 +3604,21 @@ void eof_menu_track_enable_tech_view(EOF_PRO_GUITAR_TRACK *tp)
 		tp->pgnotes = tp->notes;	//Ensure that the size of the regular note array is backed up
 		tp->note = tp->technote;	//Put the tech note array into effect
 		tp->notes = tp->technotes;
+	}
+}
+
+void eof_menu_pro_guitar_track_set_tech_view_state(EOF_PRO_GUITAR_TRACK *tp, char state)
+{
+	if(!tp)
+		return;	//Invalid parameter
+
+	if(state)
+	{	//If the calling function specified to enable tech view
+		eof_menu_pro_guitar_track_enable_tech_view(tp);
+	}
+	else
+	{	//The calling function specified to disable tech view
+		eof_menu_pro_guitar_track_disable_tech_view(tp);
 	}
 }
 
@@ -3620,10 +3648,10 @@ void eof_menu_track_set_tech_view_state(EOF_SONG *sp, unsigned long track, char 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 	if(state)
 	{	//If the calling function specified to enable tech view
-		eof_menu_track_enable_tech_view(tp);
+		eof_menu_pro_guitar_track_enable_tech_view(tp);
 	}
 	else
 	{	//The calling function specified to disable tech view
-		eof_menu_track_disable_tech_view(tp);
+		eof_menu_pro_guitar_track_disable_tech_view(tp);
 	}
 }

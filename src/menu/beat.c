@@ -1199,6 +1199,7 @@ int eof_menu_beat_events(void)
 	if(eof_popup_dialog(eof_events_dialog, 0) == 4)
 	{
 	}
+	eof_clear_input();
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);
