@@ -338,156 +338,146 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 			shrink_xml_text(tag, sizeof(tag), buffer2);	//Convert any escape sequences in the tag content to normal text
 			strncpy(eof_song->tags->year, tag, sizeof(eof_song->tags->year) - 1);
 		}
-		else if(strcasestr_spec(buffer, "<phrases"))
-		{	//If this is the phrases tag
-			long output;
-
+		else if(strcasestr_spec(buffer, "<phrases") && !strstr(buffer, "/>"))
+		{	//If this is the phrases tag and it isn't empty
 			#ifdef RS_IMPORT_DEBUG
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tProcessing <phrases> tag on line #%lu", linectr);
 				eof_log(eof_log_string, 1);
 			#endif
 
-			if(parse_xml_attribute_number("count", buffer, &output) && output)
-			{	//If the count attribute of this tag is readable and greater than 0
-				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-				linectr++;
-				while(!error || !pack_feof(inf))
-				{	//Until there was an error reading from the file or end of file is reached
-					if(strcasestr_spec(buffer, "</phrases"))
-					{	//If this is the end of the phrases tag
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu phrases loaded", phraselist_count);
+			(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+			linectr++;
+			while(!error || !pack_feof(inf))
+			{	//Until there was an error reading from the file or end of file is reached
+				if(strcasestr_spec(buffer, "</phrases"))
+				{	//If this is the end of the phrases tag
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu phrases loaded", phraselist_count);
+					eof_log(eof_log_string, 1);
+					break;	//Break from loop
+				}
+				if(phraselist_count < EOF_RS_PHRASE_IMPORT_LIMIT)
+				{	//If another phrase name can be stored
+					if(!parse_xml_attribute_text(tag, sizeof(tag), "name", buffer))
+					{	//If the phrase name could not be read
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading phrase name on line #%lu.  Aborting", linectr);
 						eof_log(eof_log_string, 1);
-						break;	//Break from loop
-					}
-					if(phraselist_count < EOF_RS_PHRASE_IMPORT_LIMIT)
-					{	//If another phrase name can be stored
-						if(!parse_xml_attribute_text(tag, sizeof(tag), "name", buffer))
-						{	//If the phrase name could not be read
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading phrase name on line #%lu.  Aborting", linectr);
-							eof_log(eof_log_string, 1);
-							error = 1;
-							break;	//Break from inner loop
-						}
-						phraselist[phraselist_count] = malloc(strlen(tag) + 1);	//Allocate memory to store the phrase name
-						if(!phraselist[phraselist_count])
-						{
-							eof_log("\tError allocating memory.  Aborting", 1);
-							error = 1;
-							break;	//Break from inner loop
-						}
-						strcpy(phraselist[phraselist_count], tag);
-						phraselist_count++;
-					}
-					else
-					{	//Otherwise the phrase limit has been exceeded
-						eof_log("\t\tError:  Phrase limit exceeded.  Aborting", 1);
 						error = 1;
 						break;	//Break from inner loop
 					}
-
-					(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-					linectr++;	//Increment line counter
+					phraselist[phraselist_count] = malloc(strlen(tag) + 1);	//Allocate memory to store the phrase name
+					if(!phraselist[phraselist_count])
+					{
+						eof_log("\tError allocating memory.  Aborting", 1);
+						error = 1;
+						break;	//Break from inner loop
+					}
+					strcpy(phraselist[phraselist_count], tag);
+					phraselist_count++;
 				}
-				if(error)
-					break;	//Break from outer loop
+				else
+				{	//Otherwise the phrase limit has been exceeded
+					eof_log("\t\tError:  Phrase limit exceeded.  Aborting", 1);
+					error = 1;
+					break;	//Break from inner loop
+				}
+
+				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+				linectr++;	//Increment line counter
 			}
-		}
-		else if(strcasestr_spec(buffer, "<phraseIterations"))
-		{	//If this is the phraseIterations tag
-			long output, timestamp, id;
+			if(error)
+				break;	//Break from outer loop
+		}//If this is the phrases tag and it isn't empty
+		else if(strcasestr_spec(buffer, "<phraseIterations") && !strstr(buffer, "/>"))
+		{	//If this is the phraseIterations tag and it isn't empty
+			long timestamp, id;
+			unsigned long phraseitctr = 0;
 
 			#ifdef RS_IMPORT_DEBUG
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tProcessing <phraseIterations> tag on line #%lu", linectr);
 				eof_log(eof_log_string, 1);
 			#endif
 
-			if(parse_xml_attribute_number("count", buffer, &output) && output)
-			{	//If the count attribute of this tag is readable and greater than 0
-				unsigned long phraseitctr = 0;
-
-				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-				linectr++;
-				while(!error || !pack_feof(inf))
-				{	//Until there was an error reading from the file or end of file is reached
-					if(strcasestr_spec(buffer, "</phraseIterations"))
-					{	//If this is the end of the phraseIterations tag
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu phrase iterations loaded", phraseitctr);
-						eof_log(eof_log_string, 1);
-						break;	//Break from loop
-					}
-					if(strcasestr_spec(buffer, "<heroLevels "))
-					{	//If this is the start of a heroLevels tag, ignore all lines of XML until the end of the tag is reached
-#ifdef RS_IMPORT_DEBUG
+			(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+			linectr++;
+			while(!error || !pack_feof(inf))
+			{	//Until there was an error reading from the file or end of file is reached
+				if(strcasestr_spec(buffer, "</phraseIterations"))
+				{	//If this is the end of the phraseIterations tag
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu phrase iterations loaded", phraseitctr);
+					eof_log(eof_log_string, 1);
+					break;	//Break from loop
+				}
+				if(strcasestr_spec(buffer, "<heroLevels"))
+				{	//If this is the start of a heroLevels tag, ignore all lines of XML until the end of the tag is reached
+					#ifdef RS_IMPORT_DEBUG
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tIgnoring <heroLevels> tag on line #%lu", linectr);
 						eof_log(eof_log_string, 1);
-#endif
-					}
-					else if(strcasestr_spec(buffer, "<heroLevel "))
-					{	//Ignore a heroLevel tag
-					}
-					else if(strcasestr_spec(buffer, "</heroLevels"))
-					{	//Ignore the end of a heroLevels tag
-					}
-					else if(strcasestr_spec(buffer, "</phraseIteration>"))
-					{	//Ignore the end of a phraseIteration tag, which would occur after a heroLevels tag
-					}
-					else
-					{
-						if(eventlist_count < EOF_RS_EVENT_IMPORT_LIMIT)
-						{	//If another text event can be stored
-							if(!parse_xml_rs_timestamp("time", buffer, &timestamp))
-							{	//If the timestamp was not readable
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
-								eof_log(eof_log_string, 1);
-								error = 1;
-								break;	//Break from inner loop
-							}
-							if(!parse_xml_attribute_number("phraseId", buffer, &id))
-							{	//If the phrase ID was not readable
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading phrase ID on line #%lu.  Aborting", linectr);
-								eof_log(eof_log_string, 1);
-								error = 1;
-								break;	//Break from inner loop
-							}
-							if(id >= phraselist_count)
-							{	//If this phrase ID was not defined in the phrase tag
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError:  Invalid phrase ID on line #%lu.  Aborting", linectr);
-								eof_log(eof_log_string, 1);
-								error = 1;
-								break;	//Break from inner loop
-							}
-							eventlist[eventlist_count] = malloc(sizeof(EOF_TEXT_EVENT));	//Allocate memory to store the text event
-							if(!eventlist[eventlist_count])
-							{
-								eof_log("\tError allocating memory.  Aborting", 1);
-								error = 1;
-								break;	//Break from inner loop
-							}
-							strncpy(eventlist[eventlist_count]->text, phraselist[id], sizeof(eventlist[eventlist_count]->text) - 1);	//Copy the phrase name
-							eventlist[eventlist_count]->track = eof_selected_track;
-							eventlist[eventlist_count]->flags = EOF_EVENT_FLAG_RS_PHRASE;
-							eventlist[eventlist_count]->beat = timestamp;	//Store the real timestamp, it will need to be converted to the beat number later
-							phraseitctr++;
-							eventlist_count++;
-						}
-						else
-						{	//Otherwise the text event limit has been exceeded
-							eof_log("\t\tError:  Text event limit exceeded.  Aborting", 1);
+					#endif
+				}
+				else if(strcasestr_spec(buffer, "<heroLevel "))
+				{	//Ignore a heroLevel tag
+				}
+				else if(strcasestr_spec(buffer, "</heroLevels"))
+				{	//Ignore the end of a heroLevels tag
+				}
+				else if(strcasestr_spec(buffer, "</phraseIteration>"))
+				{	//Ignore the end of a phraseIteration tag, which would occur after a heroLevels tag
+				}
+				else
+				{
+					if(eventlist_count < EOF_RS_EVENT_IMPORT_LIMIT)
+					{	//If another text event can be stored
+						if(!parse_xml_rs_timestamp("time", buffer, &timestamp))
+						{	//If the timestamp was not readable
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
+							eof_log(eof_log_string, 1);
 							error = 1;
 							break;	//Break from inner loop
 						}
+						if(!parse_xml_attribute_number("phraseId", buffer, &id))
+						{	//If the phrase ID was not readable
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading phrase ID on line #%lu.  Aborting", linectr);
+							eof_log(eof_log_string, 1);
+							error = 1;
+							break;	//Break from inner loop
+						}
+						if(id >= phraselist_count)
+						{	//If this phrase ID was not defined in the phrase tag
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError:  Invalid phrase ID on line #%lu.  Aborting", linectr);
+							eof_log(eof_log_string, 1);
+							error = 1;
+							break;	//Break from inner loop
+						}
+						eventlist[eventlist_count] = malloc(sizeof(EOF_TEXT_EVENT));	//Allocate memory to store the text event
+						if(!eventlist[eventlist_count])
+						{
+							eof_log("\tError allocating memory.  Aborting", 1);
+							error = 1;
+							break;	//Break from inner loop
+						}
+						strncpy(eventlist[eventlist_count]->text, phraselist[id], sizeof(eventlist[eventlist_count]->text) - 1);	//Copy the phrase name
+						eventlist[eventlist_count]->track = eof_selected_track;
+						eventlist[eventlist_count]->flags = EOF_EVENT_FLAG_RS_PHRASE;
+						eventlist[eventlist_count]->beat = timestamp;	//Store the real timestamp, it will need to be converted to the beat number later
+						phraseitctr++;
+						eventlist_count++;
 					}
-
-					(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-					linectr++;	//Increment line counter
+					else
+					{	//Otherwise the text event limit has been exceeded
+						eof_log("\t\tError:  Text event limit exceeded.  Aborting", 1);
+						error = 1;
+						break;	//Break from inner loop
+					}
 				}
-				if(error)
-					break;	//Break from outer loop
+
+				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+				linectr++;	//Increment line counter
 			}
-		}
-		else if(strcasestr_spec(buffer, "<chordTemplates"))
-		{	//If this is the chordTemplates tag
-			long output;
+			if(error)
+				break;	//Break from outer loop
+		}//If this is the phraseIterations tag and it isn't empty
+		else if(strcasestr_spec(buffer, "<chordTemplates") && !strstr(buffer, "/>"))
+		{	//If this is the chordTemplates tag and it isn't empty
 			char finger[8] = {0};
 			char frets[8] = {0};
 			unsigned char note;
@@ -497,63 +487,60 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 				eof_log(eof_log_string, 1);
 			#endif
 
-			if(parse_xml_attribute_number("count", buffer, &output) && output)
-			{	//If the count attribute of this tag is readable and greater than 0
-				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-				linectr++;
-				while(!error || !pack_feof(inf))
-				{	//Until there was an error reading from the file or end of file is reached
-					if(strcasestr_spec(buffer, "</chordTemplates"))
-					{	//If this is the end of the chordTemplates tag
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu chord templates loaded", chordlist_count);
-						eof_log(eof_log_string, 1);
-						break;	//Break from loop
+			(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+			linectr++;
+			while(!error || !pack_feof(inf))
+			{	//Until there was an error reading from the file or end of file is reached
+				if(strcasestr_spec(buffer, "</chordTemplates"))
+				{	//If this is the end of the chordTemplates tag
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu chord templates loaded", chordlist_count);
+					eof_log(eof_log_string, 1);
+					break;	//Break from loop
+				}
+				if(chordlist_count < EOF_RS_CHORD_TEMPLATE_IMPORT_LIMIT)
+				{	//If another chord can be stored
+					if(eof_parse_chord_template(tag, sizeof(tag), finger, frets, &note, &(tp->numstrings), linectr, buffer))
+					{	//If there was an error reading the chord template
+						error = 1;
+						break;
 					}
-					if(chordlist_count < EOF_RS_CHORD_TEMPLATE_IMPORT_LIMIT)
-					{	//If another chord can be stored
-						if(eof_parse_chord_template(tag, sizeof(tag), finger, frets, &note, &(tp->numstrings), linectr, buffer))
-						{	//If there was an error reading the chord template
-							error = 1;
-							break;
-						}
-						//Track the highest used fret number
-						for(ctr = 0; ctr < 6; ctr++)
-						{	//For each of the 6 supported strings
-							if(frets[ctr] > tp->numfrets)
-								tp->numfrets = frets[ctr];	//Track the highest used fret number
-						}
+					//Track the highest used fret number
+					for(ctr = 0; ctr < 6; ctr++)
+					{	//For each of the 6 supported strings
+						if(frets[ctr] > tp->numfrets)
+							tp->numfrets = frets[ctr];	//Track the highest used fret number
+					}
 
-						//Add chord template to list
-						chordlist[chordlist_count] = malloc(sizeof(EOF_PRO_GUITAR_NOTE));
-						if(!chordlist[chordlist_count])
-						{
-							eof_log("\tError allocating memory.  Aborting", 1);
-							error = 1;
-							break;	//Break from inner loop
-						}
-						memset(chordlist[chordlist_count], 0, sizeof(EOF_PRO_GUITAR_NOTE));	//Initialize memory block to 0
-						strncpy(chordlist[chordlist_count]->name, tag, sizeof(chordlist[chordlist_count]->name) - 1);	//Store the chord name
-						memcpy(chordlist[chordlist_count]->finger, finger, 8);	//Store the finger array
-						memcpy(chordlist[chordlist_count]->frets, frets, 8);	//Store the fret array
-						chordlist[chordlist_count]->note = note;	//Store the note mask
-						chordlist_count++;
-					}//If another chord can be stored
-					else
-					{	//Otherwise the chord limit has been exceeded
-						eof_log("\t\tError:  Chord template limit exceeded.  Aborting", 1);
+					//Add chord template to list
+					chordlist[chordlist_count] = malloc(sizeof(EOF_PRO_GUITAR_NOTE));
+					if(!chordlist[chordlist_count])
+					{
+						eof_log("\tError allocating memory.  Aborting", 1);
 						error = 1;
 						break;	//Break from inner loop
 					}
+					memset(chordlist[chordlist_count], 0, sizeof(EOF_PRO_GUITAR_NOTE));	//Initialize memory block to 0
+					strncpy(chordlist[chordlist_count]->name, tag, sizeof(chordlist[chordlist_count]->name) - 1);	//Store the chord name
+					memcpy(chordlist[chordlist_count]->finger, finger, 8);	//Store the finger array
+					memcpy(chordlist[chordlist_count]->frets, frets, 8);	//Store the fret array
+					chordlist[chordlist_count]->note = note;	//Store the note mask
+					chordlist_count++;
+				}//If another chord can be stored
+				else
+				{	//Otherwise the chord limit has been exceeded
+					eof_log("\t\tError:  Chord template limit exceeded.  Aborting", 1);
+					error = 1;
+					break;	//Break from inner loop
+				}
 
-					(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-					linectr++;	//Increment line counter
-				}//Until there was an error reading from the file or end of file is reached
-				if(error)
-					break;	//Break from outer loop
-			}
-		}
-		else if(strcasestr_spec(buffer, "<ebeats"))
-		{	//If this is the ebeats tag
+				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+				linectr++;	//Increment line counter
+			}//Until there was an error reading from the file or end of file is reached
+			if(error)
+				break;	//Break from outer loop
+		}//If this is the chordTemplates tag and it isn't empty
+		else if(strcasestr_spec(buffer, "<ebeats") && !strstr(buffer, "/>"))
+		{	//If this is the ebeats tag and it isn't empty
 			long output;
 
 			#ifdef RS_IMPORT_DEBUG
@@ -561,61 +548,58 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 				eof_log(eof_log_string, 1);
 			#endif
 
-			if(parse_xml_attribute_number("count", buffer, &output) && output)
-			{	//If the count attribute of this tag is readable and greater than 0
-				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-				linectr++;
-				while(!error || !pack_feof(inf))
-				{	//Until there was an error reading from the file or end of file is reached
-					if(strcasestr_spec(buffer, "</ebeats"))
-					{	//If this is the end of the ebeats tag
-						for(ctr = eof_song->beats; ctr > beat_count; ctr--)
-						{	//For each of the remaining beats in the project (which weren't initialized), in reverse order
-							eof_song_delete_beat(eof_song, ctr - 1);	//Delete it.  eof_truncate_chart() will be run by the calling function to add beats as necessary
-						}
-						break;	//Break from loop
+			(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+			linectr++;
+			while(!error || !pack_feof(inf))
+			{	//Until there was an error reading from the file or end of file is reached
+				if(strcasestr_spec(buffer, "</ebeats"))
+				{	//If this is the end of the ebeats tag
+					for(ctr = eof_song->beats; ctr > beat_count; ctr--)
+					{	//For each of the remaining beats in the project (which weren't initialized), in reverse order
+						eof_song_delete_beat(eof_song, ctr - 1);	//Delete it.  eof_truncate_chart() will be run by the calling function to add beats as necessary
 					}
-					if(!parse_xml_rs_timestamp("time", buffer, &output))
-					{	//If the timestamp was not readable
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
-						eof_log(eof_log_string, 1);
+					break;	//Break from loop
+				}
+				if(!parse_xml_rs_timestamp("time", buffer, &output))
+				{	//If the timestamp was not readable
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
+					eof_log(eof_log_string, 1);
+					error = 1;
+					break;	//Break from inner loop
+				}
+				if(beat_count >= eof_song->beats)
+				{	//If a beat has to be added to the project
+					if(!eof_song_add_beat(eof_song))
+					{	//If there was an error adding a beat
+						eof_log("\tError adding beat.  Aborting", 1);
 						error = 1;
 						break;	//Break from inner loop
 					}
-					if(beat_count >= eof_song->beats)
-					{	//If a beat has to be added to the project
-						if(!eof_song_add_beat(eof_song))
-						{	//If there was an error adding a beat
-							eof_log("\tError adding beat.  Aborting", 1);
-							error = 1;
-							break;	//Break from inner loop
-						}
-					}
-					eof_song->beat[beat_count]->pos = output;			//Store the integer timestamp
-					eof_song->beat[beat_count]->fpos = (double)output;	//Store the floating point timestamp
-					if(!beat_count)
-					{	//If this is the first beat, update the chart's MIDI delay
-						eof_song->tags->ogg[eof_selected_ogg].midi_offset = output;
-					}
-					beat_count++;
+				}
+				eof_song->beat[beat_count]->pos = output;			//Store the integer timestamp
+				eof_song->beat[beat_count]->fpos = (double)output;	//Store the floating point timestamp
+				if(!beat_count)
+				{	//If this is the first beat, update the chart's MIDI delay
+					eof_song->tags->ogg[eof_selected_ogg].midi_offset = output;
+				}
+				beat_count++;
 
-					(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-					linectr++;	//Increment line counter
-				}//Until there was an error reading from the file or end of file is reached
-				if(error)
-					break;	//Break from outer loop
+				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+				linectr++;	//Increment line counter
+			}//Until there was an error reading from the file or end of file is reached
+			if(error)
+				break;	//Break from outer loop
 
-				eof_calculate_tempo_map(eof_song);	//Determine all tempo changes based on the beats' timestamps
-			}//If the count attribute of this tag is readable and greater than 0
-			else
-			{	//The XML must have beats defined
-				eof_log("Error reading beat tags from XML, the \"count\" attribute is 0 or undefined.  Aborting", 1);
+			eof_calculate_tempo_map(eof_song);	//Determine all tempo changes based on the beats' timestamps
+			if(!beat_count)
+			{	//If no beats were parsed
+				eof_log("No valid beat tags found.  Aborting", 1);
 				error = 1;
 				break;
 			}
 		}
-		else if(strcasestr_spec(buffer, "<controls"))
-		{	//If this is the controls tag
+		else if(strcasestr_spec(buffer, "<controls") && !strstr(buffer, "/>"))
+		{	//If this is the controls tag and it isn't empty
 			long output;
 
 			#ifdef RS_IMPORT_DEBUG
@@ -623,16 +607,199 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 				eof_log(eof_log_string, 1);
 			#endif
 
-			if(parse_xml_attribute_number("count", buffer, &output) && output)
-			{	//If the count attribute of this tag is readable and greater than 0
-				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-				linectr++;
-				while(!error || !pack_feof(inf))
-				{	//Until there was an error reading from the file or end of file is reached
-					if(strcasestr_spec(buffer, "</controls"))
-					{	//If this is the end of the controls tag
-						break;	//Break from loop
+			(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+			linectr++;
+			while(!error || !pack_feof(inf))
+			{	//Until there was an error reading from the file or end of file is reached
+				if(strcasestr_spec(buffer, "</controls"))
+				{	//If this is the end of the controls tag
+					break;	//Break from loop
+				}
+				if(!parse_xml_rs_timestamp("time", buffer, &output))
+				{	//If the timestamp was not readable
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
+					eof_log(eof_log_string, 1);
+					error = 1;
+					break;	//Break from inner loop
+				}
+				ptr = strcasestr_spec(buffer, "ShowMessageBox(");
+				if(ptr)
+				{	//If this is a start of a popup message
+					if(tp->popupmessages < EOF_MAX_PHRASES)
+					{	//If another popup message can be stored
+						ptr = strcasestr_spec(ptr, ",");	//The message text begins after the first comma in the XML tag
+						if(!ptr)
+						{
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading start of control message on line #%lu.  Aborting", linectr);
+							eof_log(eof_log_string, 1);
+							error = 1;
+							break;	//Break from inner loop
+						}
+						ptr2 = strchr(ptr, ')');	//The message text ends at the first closing parenthesis after the start of the message
+						if(!ptr2)
+						{
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading end of control message on line #%lu.  Aborting", linectr);
+							eof_log(eof_log_string, 1);
+							error = 1;
+							break;	//Break from inner loop
+						}
+						*ptr2 = '\0';	//Truncate the buffer
+						tp->popupmessage[tp->popupmessages].start_pos = output;	//Store the starting timestamp
+						tp->popupmessage[tp->popupmessages].end_pos = 0;		//Use 0 to indicate an un-ended popup message
+						strncpy(tp->popupmessage[tp->popupmessages].name, ptr, sizeof(tp->popupmessage[tp->popupmessages].name) - 1);	//Store the message text
+						tp->popupmessages++;
 					}
+				}
+				else if((ptr = strcasestr_spec(buffer, "ClearAllMessageBoxes()")) && ptr)
+				{	//If this is the end of any popup messages that are not ended yet
+					for(ctr = 0; ctr < tp->popupmessages; ctr++)
+					{	//For each popup message that has been imported so far
+						if(!tp->popupmessage[ctr].end_pos)
+						{	//If the message hasn't been ended
+							tp->popupmessage[ctr].end_pos = output;		//Store the ending timestamp
+						}
+					}
+				}
+				else if((ptr = strcasestr_spec(buffer, "CDlcTone(")) && ptr)
+				{	//if this is a tone change
+					if(tp->tonechanges < EOF_MAX_PHRASES)
+					{	//If another tone change can be stored
+						if(!ptr)
+						{
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading start of control message on line #%lu.  Aborting", linectr);
+							eof_log(eof_log_string, 1);
+							error = 1;
+							break;	//Break from inner loop
+						}
+						ptr2 = strchr(ptr, ')');	//The tone key name ends at the first closing parenthesis after the start of the name
+						if(!ptr2)
+						{
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading end of control message on line #%lu.  Aborting", linectr);
+							eof_log(eof_log_string, 1);
+							error = 1;
+							break;	//Break from inner loop
+						}
+						*ptr2 = '\0';	//Truncate the buffer
+						tp->tonechange[tp->tonechanges].start_pos = output;		//Store the starting timestamp
+						tp->tonechange[tp->tonechanges].end_pos = 0;			//Tone changes don't use an end position
+						strncpy(tp->tonechange[tp->tonechanges].name, ptr, sizeof(tp->tonechange[tp->tonechanges].name) - 1);	//Store the message text
+						tp->tonechanges++;
+					}
+				}
+				else
+				{
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError:  Unrecognized control message on line #%lu.  Aborting", linectr);
+					eof_log(eof_log_string, 1);
+					error = 1;
+					break;	//Break from inner loop
+				}
+
+				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+				linectr++;	//Increment line counter
+			}//Until there was an error reading from the file or end of file is reached
+			if(error)
+				break;	//Break from outer loop
+
+			for(ctr = 0; ctr < tp->popupmessages; ctr++)
+			{	//For each popup message that was imported
+				if(!tp->popupmessage[ctr].end_pos)
+				{	//If the message hasn't been ended
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWarning:  Control message #%lu was not ended.  Correcting", ctr);
+					eof_log(eof_log_string, 1);
+					tp->popupmessage[ctr].end_pos = tp->popupmessage[ctr].start_pos + 1;
+				}
+			}
+		}//If this is the controls tag and it isn't empty
+		else if(strcasestr_spec(buffer, "<sections") && !strstr(buffer, "/>"))
+		{	//If this is the sections tag and it isn't empty
+			long output;
+			unsigned long sectionctr = 0;
+
+			#ifdef RS_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tProcessing <sections> tag on line #%lu", linectr);
+				eof_log(eof_log_string, 1);
+			#endif
+
+			(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+			linectr++;
+			while(!error || !pack_feof(inf))
+			{	//Until there was an error reading from the file or end of file is reached
+				if(strcasestr_spec(buffer, "</sections"))
+				{	//If this is the end of the sections tag
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu sections loaded", sectionctr);
+					eof_log(eof_log_string, 1);
+					break;	//Break from loop
+				}
+				if(eventlist_count < EOF_RS_EVENT_IMPORT_LIMIT)
+				{	//If another text event can be stored
+					if(!parse_xml_attribute_text(tag, sizeof(tag), "name", buffer))
+					{	//If the section name could not be read
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading section name on line #%lu.  Aborting", linectr);
+						eof_log(eof_log_string, 1);
+						error = 1;
+						break;	//Break from inner loop
+					}
+					if(!eof_rs_section_text_valid(tag))
+					{	//If this isn't a valid name for a RS section
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWarning:  Invalid section name on line #%lu.", linectr);
+						eof_log(eof_log_string, 1);
+					}
+					if(!parse_xml_rs_timestamp("startTime", buffer, &output))
+					{	//If the timestamp was not readable
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
+						eof_log(eof_log_string, 1);
+						error = 1;
+						break;	//Break from inner loop
+					}
+					eventlist[eventlist_count] = malloc(sizeof(EOF_TEXT_EVENT));	//Allocate memory to store the text event
+					if(!eventlist[eventlist_count])
+					{
+						eof_log("\tError allocating memory.  Aborting", 1);
+						error = 1;
+						break;	//Break from inner loop
+					}
+					strncpy(eventlist[eventlist_count]->text, tag, sizeof(eventlist[eventlist_count]->text) - 1);	//Copy the section name
+					eventlist[eventlist_count]->track = eof_selected_track;
+					eventlist[eventlist_count]->flags = EOF_EVENT_FLAG_RS_SECTION;
+					eventlist[eventlist_count]->beat = output;	//Store the real timestamp, it will need to be converted to the beat number later
+					sectionctr++;
+					eventlist_count++;
+				}
+				else
+				{	//Otherwise the text event limit has been exceeded
+					eof_log("\t\tError:  Text event limit exceeded.  Aborting", 1);
+					error = 1;
+					break;	//Break from inner loop
+				}
+
+				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+				linectr++;	//Increment line counter
+			}
+			if(error)
+				break;	//Break from outer loop
+		}//If this is the sections tag and it isn't empty
+		else if(strcasestr_spec(buffer, "<events") && !strstr(buffer, "/>"))
+		{	//If this is the events tag and it isn't empty
+			long output;
+			unsigned long eventctr = 0;
+
+			#ifdef RS_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tProcessing <events> tag on line #%lu", linectr);
+				eof_log(eof_log_string, 1);
+			#endif
+
+			(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+			linectr++;
+			while(!error || !pack_feof(inf))
+			{	//Until there was an error reading from the file or end of file is reached
+				if(strcasestr_spec(buffer, "</events"))
+				{	//If this is the end of the events tag
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu events loaded", eventctr);
+					eof_log(eof_log_string, 1);
+					break;	//Break from loop
+				}
+				if(eventlist_count < EOF_RS_EVENT_IMPORT_LIMIT)
+				{	//If another text event can be stored
 					if(!parse_xml_rs_timestamp("time", buffer, &output))
 					{	//If the timestamp was not readable
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
@@ -640,238 +807,43 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						error = 1;
 						break;	//Break from inner loop
 					}
-					ptr = strcasestr_spec(buffer, "ShowMessageBox(");
-					if(ptr)
-					{	//If this is a start of a popup message
-						if(tp->popupmessages < EOF_MAX_PHRASES)
-						{	//If another popup message can be stored
-							ptr = strcasestr_spec(ptr, ",");	//The message text begins after the first comma in the XML tag
-							if(!ptr)
-							{
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading start of control message on line #%lu.  Aborting", linectr);
-								eof_log(eof_log_string, 1);
-								error = 1;
-								break;	//Break from inner loop
-							}
-							ptr2 = strchr(ptr, ')');	//The message text ends at the first closing parenthesis after the start of the message
-							if(!ptr2)
-							{
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading end of control message on line #%lu.  Aborting", linectr);
-								eof_log(eof_log_string, 1);
-								error = 1;
-								break;	//Break from inner loop
-							}
-							*ptr2 = '\0';	//Truncate the buffer
-							tp->popupmessage[tp->popupmessages].start_pos = output;	//Store the starting timestamp
-							tp->popupmessage[tp->popupmessages].end_pos = 0;		//Use 0 to indicate an un-ended popup message
-							strncpy(tp->popupmessage[tp->popupmessages].name, ptr, sizeof(tp->popupmessage[tp->popupmessages].name) - 1);	//Store the message text
-							tp->popupmessages++;
-						}
+					if(!parse_xml_attribute_text(tag, sizeof(tag), "code", buffer))
+					{	//If the event code could not be read
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading event code on line #%lu.  Aborting", linectr);
+						eof_log(eof_log_string, 1);
+						error = 1;
+						break;	//Break from inner loop
 					}
-					else if((ptr = strcasestr_spec(buffer, "ClearAllMessageBoxes()")) && ptr)
-					{	//If this is the end of any popup messages that are not ended yet
-						for(ctr = 0; ctr < tp->popupmessages; ctr++)
-						{	//For each popup message that has been imported so far
-							if(!tp->popupmessage[ctr].end_pos)
-							{	//If the message hasn't been ended
-								tp->popupmessage[ctr].end_pos = output;		//Store the ending timestamp
-							}
-						}
-					}
-					else if((ptr = strcasestr_spec(buffer, "CDlcTone(")) && ptr)
-					{	//if this is a tone change
-						if(tp->tonechanges < EOF_MAX_PHRASES)
-						{	//If another tone change can be stored
-							if(!ptr)
-							{
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading start of control message on line #%lu.  Aborting", linectr);
-								eof_log(eof_log_string, 1);
-								error = 1;
-								break;	//Break from inner loop
-							}
-							ptr2 = strchr(ptr, ')');	//The tone key name ends at the first closing parenthesis after the start of the name
-							if(!ptr2)
-							{
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading end of control message on line #%lu.  Aborting", linectr);
-								eof_log(eof_log_string, 1);
-								error = 1;
-								break;	//Break from inner loop
-							}
-							*ptr2 = '\0';	//Truncate the buffer
-							tp->tonechange[tp->tonechanges].start_pos = output;		//Store the starting timestamp
-							tp->tonechange[tp->tonechanges].end_pos = 0;			//Tone changes don't use an end position
-							strncpy(tp->tonechange[tp->tonechanges].name, ptr, sizeof(tp->tonechange[tp->tonechanges].name) - 1);	//Store the message text
-							tp->tonechanges++;
-						}
-					}
-					else
+					eventlist[eventlist_count] = malloc(sizeof(EOF_TEXT_EVENT));	//Allocate memory to store the text event
+					if(!eventlist[eventlist_count])
 					{
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError:  Unrecognized control message on line #%lu.  Aborting", linectr);
-						eof_log(eof_log_string, 1);
+						eof_log("\tError allocating memory.  Aborting", 1);
 						error = 1;
 						break;	//Break from inner loop
 					}
-
-					(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-					linectr++;	//Increment line counter
-				}//Until there was an error reading from the file or end of file is reached
-				if(error)
-					break;	//Break from outer loop
-
-				for(ctr = 0; ctr < tp->popupmessages; ctr++)
-				{	//For each popup message that was imported
-					if(!tp->popupmessage[ctr].end_pos)
-					{	//If the message hasn't been ended
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWarning:  Control message #%lu was not ended.  Correcting", ctr);
-						eof_log(eof_log_string, 1);
-						tp->popupmessage[ctr].end_pos = tp->popupmessage[ctr].start_pos + 1;
-					}
+					strncpy(eventlist[eventlist_count]->text, tag, sizeof(eventlist[eventlist_count]->text) - 1);	//Copy the event code
+					eventlist[eventlist_count]->track = eof_selected_track;
+					eventlist[eventlist_count]->flags = EOF_EVENT_FLAG_RS_EVENT;
+					eventlist[eventlist_count]->beat = output;	//Store the real timestamp, it will need to be converted to the beat number later
+					eventctr++;
+					eventlist_count++;
 				}
-
-			}
-		}
-		else if(strcasestr_spec(buffer, "<sections"))
-		{	//If this is the sections tag
-			long output;
-
-			#ifdef RS_IMPORT_DEBUG
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tProcessing <sections> tag on line #%lu", linectr);
-				eof_log(eof_log_string, 1);
-			#endif
-
-			if(parse_xml_attribute_number("count", buffer, &output) && output)
-			{	//If the count attribute of this tag is readable and greater than 0
-				unsigned long sectionctr = 0;
+				else
+				{	//Otherwise the text event limit has been exceeded
+					eof_log("\t\tError:  Text event limit exceeded.  Aborting", 1);
+					error = 1;
+					break;	//Break from inner loop
+				}
 
 				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-				linectr++;
-				while(!error || !pack_feof(inf))
-				{	//Until there was an error reading from the file or end of file is reached
-					if(strcasestr_spec(buffer, "</sections"))
-					{	//If this is the end of the sections tag
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu sections loaded", sectionctr);
-						eof_log(eof_log_string, 1);
-						break;	//Break from loop
-					}
-					if(eventlist_count < EOF_RS_EVENT_IMPORT_LIMIT)
-					{	//If another text event can be stored
-						if(!parse_xml_attribute_text(tag, sizeof(tag), "name", buffer))
-						{	//If the section name could not be read
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading section name on line #%lu.  Aborting", linectr);
-							eof_log(eof_log_string, 1);
-							error = 1;
-							break;	//Break from inner loop
-						}
-						if(!eof_rs_section_text_valid(tag))
-						{	//If this isn't a valid name for a RS section
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWarning:  Invalid section name on line #%lu.", linectr);
-							eof_log(eof_log_string, 1);
-						}
-						if(!parse_xml_rs_timestamp("startTime", buffer, &output))
-						{	//If the timestamp was not readable
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
-							eof_log(eof_log_string, 1);
-							error = 1;
-							break;	//Break from inner loop
-						}
-						eventlist[eventlist_count] = malloc(sizeof(EOF_TEXT_EVENT));	//Allocate memory to store the text event
-						if(!eventlist[eventlist_count])
-						{
-							eof_log("\tError allocating memory.  Aborting", 1);
-							error = 1;
-							break;	//Break from inner loop
-						}
-						strncpy(eventlist[eventlist_count]->text, tag, sizeof(eventlist[eventlist_count]->text) - 1);	//Copy the section name
-						eventlist[eventlist_count]->track = eof_selected_track;
-						eventlist[eventlist_count]->flags = EOF_EVENT_FLAG_RS_SECTION;
-						eventlist[eventlist_count]->beat = output;	//Store the real timestamp, it will need to be converted to the beat number later
-						sectionctr++;
-						eventlist_count++;
-					}
-					else
-					{	//Otherwise the text event limit has been exceeded
-						eof_log("\t\tError:  Text event limit exceeded.  Aborting", 1);
-						error = 1;
-						break;	//Break from inner loop
-					}
-
-					(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-					linectr++;	//Increment line counter
-				}
-				if(error)
-					break;	//Break from outer loop
+				linectr++;	//Increment line counter
 			}
-		}
-		else if(strcasestr_spec(buffer, "<events"))
-		{	//If this is the events tag
-			long output;
-
-			#ifdef RS_IMPORT_DEBUG
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tProcessing <events> tag on line #%lu", linectr);
-				eof_log(eof_log_string, 1);
-			#endif
-
-			if(parse_xml_attribute_number("count", buffer, &output) && output)
-			{	//If the count attribute of this tag is readable and greater than 0
-				unsigned long eventctr = 0;
-
-				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-				linectr++;
-				while(!error || !pack_feof(inf))
-				{	//Until there was an error reading from the file or end of file is reached
-					if(strcasestr_spec(buffer, "</events"))
-					{	//If this is the end of the events tag
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu events loaded", eventctr);
-						eof_log(eof_log_string, 1);
-						break;	//Break from loop
-					}
-					if(eventlist_count < EOF_RS_EVENT_IMPORT_LIMIT)
-					{	//If another text event can be stored
-						if(!parse_xml_rs_timestamp("time", buffer, &output))
-						{	//If the timestamp was not readable
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
-							eof_log(eof_log_string, 1);
-							error = 1;
-							break;	//Break from inner loop
-						}
-						if(!parse_xml_attribute_text(tag, sizeof(tag), "code", buffer))
-						{	//If the event code could not be read
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading event code on line #%lu.  Aborting", linectr);
-							eof_log(eof_log_string, 1);
-							error = 1;
-							break;	//Break from inner loop
-						}
-						eventlist[eventlist_count] = malloc(sizeof(EOF_TEXT_EVENT));	//Allocate memory to store the text event
-						if(!eventlist[eventlist_count])
-						{
-							eof_log("\tError allocating memory.  Aborting", 1);
-							error = 1;
-							break;	//Break from inner loop
-						}
-						strncpy(eventlist[eventlist_count]->text, tag, sizeof(eventlist[eventlist_count]->text) - 1);	//Copy the event code
-						eventlist[eventlist_count]->track = eof_selected_track;
-						eventlist[eventlist_count]->flags = EOF_EVENT_FLAG_RS_EVENT;
-						eventlist[eventlist_count]->beat = output;	//Store the real timestamp, it will need to be converted to the beat number later
-						eventctr++;
-						eventlist_count++;
-					}
-					else
-					{	//Otherwise the text event limit has been exceeded
-						eof_log("\t\tError:  Text event limit exceeded.  Aborting", 1);
-						error = 1;
-						break;	//Break from inner loop
-					}
-
-					(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-					linectr++;	//Increment line counter
-				}
-				if(error)
-					break;	//Break from outer loop
-			}
-		}
-		else if(strcasestr_spec(buffer, "<levels"))
-		{	//If this is the levels tag
-			long output, curdiff, time, bend, fret, hammeron, harmonic, palmmute, pluck, pulloff, slap, slideto, string, sustain, tremolo;
+			if(error)
+				break;	//Break from outer loop
+		}//If this is the events tag and it isn't empty
+		else if(strcasestr_spec(buffer, "<levels") && !strstr(buffer, "/>"))
+		{	//If this is the levels tag and it isn't empty
+			long curdiff, time, bend, fret, hammeron, harmonic, palmmute, pluck, pulloff, slap, slideto, string, sustain, tremolo;
 			unsigned long flags;
 			EOF_PRO_GUITAR_NOTE *np;
 
@@ -880,350 +852,336 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 				eof_log(eof_log_string, 1);
 			#endif
 
-			if(parse_xml_attribute_number("count", buffer, &output) && output)
-			{	//If the count attribute of this tag is readable and greater than 0
-				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-				linectr++;
-				while(!error || !pack_feof(inf))
-				{	//Until there was an error reading from the file or end of file is reached
-					if(strcasestr_spec(buffer, "</levels"))
-					{	//If this is the end of the levels tag
-						break;	//Break from loop
+			(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+			linectr++;
+			while(!error || !pack_feof(inf))
+			{	//Until there was an error reading from the file or end of file is reached
+				if(strcasestr_spec(buffer, "</levels"))
+				{	//If this is the end of the levels tag
+					break;	//Break from loop
+				}
+
+				//Read level tag
+				ptr = strcasestr_spec(buffer, "<level difficulty");
+				if(ptr)
+				{	//If this is a level tag
+
+					#ifdef RS_IMPORT_DEBUG
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tProcessing <level> tag on line #%lu", linectr);
+						eof_log(eof_log_string, 1);
+					#endif
+
+					if(!parse_xml_attribute_number("difficulty", buffer, &curdiff))
+					{	//If the difficulty number was not readable
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading difficulty number on line #%lu.  Aborting", linectr);
+						eof_log(eof_log_string, 1);
+						error = 1;
+						break;	//Break from inner loop
 					}
-
-					//Read level tag
-					ptr = strcasestr_spec(buffer, "<level difficulty");
-					if(ptr)
-					{	//If this is a level tag
-
-						#ifdef RS_IMPORT_DEBUG
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tProcessing <level> tag on line #%lu", linectr);
-							eof_log(eof_log_string, 1);
-						#endif
-
-						if(!parse_xml_attribute_number("difficulty", buffer, &curdiff))
-						{	//If the difficulty number was not readable
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading difficulty number on line #%lu.  Aborting", linectr);
-							eof_log(eof_log_string, 1);
-							error = 1;
-							break;	//Break from inner loop
-						}
-						(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-						linectr++;
-						while(!error || !pack_feof(inf))
-						{	//Until there was an error reading from the file or end of file is reached
-							if(strcasestr_spec(buffer, "</level>"))
-							{	//If this is the end of the level tag
-								break;	//Break from loop
-							}
-
-							//Read notes tag
-							ptr = strcasestr_spec(buffer, "<notes");
-							if(ptr)
-							{	//If this is a notes tag
-
-								#ifdef RS_IMPORT_DEBUG
-									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tProcessing <notes> tag on line #%lu", linectr);
-									eof_log(eof_log_string, 1);
-								#endif
-
-								if(parse_xml_attribute_number("count", buffer, &output) && output)
-								{	//If the count attribute of this tag is readable and greater than 0
-									tagctr = 0;
-									(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-									linectr++;
-									while(!error || !pack_feof(inf))
-									{	//Until there was an error reading from the file or end of file is reached
-										if(strcasestr_spec(buffer, "</notes"))
-										{	//If this is the end of the notes tag
-											#ifdef RS_IMPORT_DEBUG
-												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tAdded %lu notes", tagctr);
-												eof_log(eof_log_string, 1);
-											#endif
-											break;	//Break from loop
-										}
-
-										//Read note tag
-										ptr = strcasestr_spec(buffer, "<note ");
-										if(ptr)
-										{	//If this is a note tag
-											if(note_count < EOF_MAX_NOTES)
-											{	//If another note can be stored
-												bend = fret = hammeron = harmonic = palmmute = pulloff = string = tremolo = flags = 0;	//Init all of these to undefined
-												pluck = slap = slideto = -1;	//Init these to Rocksmith's undefined value
-
-												//Read note attributes
-												if(!parse_xml_rs_timestamp("time", buffer, &time))
-												{	//If the timestamp was not readable
-													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading start timestamp on line #%lu.  Aborting", linectr);
-													eof_log(eof_log_string, 1);
-													error = 1;
-													break;	//Break from inner loop
-												}
-												(void) parse_xml_attribute_number("bend", buffer, &bend);
-												(void) parse_xml_attribute_number("fret", buffer, &fret);
-												(void) parse_xml_attribute_number("hammerOn", buffer, &hammeron);
-												(void) parse_xml_attribute_number("harmonic", buffer, &harmonic);
-												(void) parse_xml_attribute_number("palmMute", buffer, &palmmute);
-												(void) parse_xml_attribute_number("pluck", buffer, &pluck);
-												(void) parse_xml_attribute_number("pullOff", buffer, &pulloff);
-												(void) parse_xml_attribute_number("slap", buffer, &slap);
-												(void) parse_xml_attribute_number("slideTo", buffer, &slideto);
-												(void) parse_xml_attribute_number("string", buffer, &string);
-												if(!parse_xml_rs_timestamp("sustain", buffer, &sustain))
-												{	//If the timestamp was not readable
-													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading sustain time on line #%lu.  Aborting", linectr);
-													eof_log(eof_log_string, 1);
-													error = 1;
-													break;	//Break from inner loop
-												}
-												(void) parse_xml_attribute_number("tremolo", buffer, &tremolo);
-
-												//Add note and set attributes
-												if((string >= 0) && (string < 6))
-												{	//As long as the string number is valid
-													np = eof_pro_guitar_track_add_note(tp);	//Allocate, initialize and add the new note to the note array
-													if(!np)
-													{
-														eof_log("\tError allocating memory.  Aborting", 1);
-														error = 1;
-														break;	//Break from inner loop
-													}
-													np->type = curdiff;
-													np->note = 1 << (unsigned long) string;
-													np->frets[(unsigned long) string] = fret;
-													np->pos = time;
-													np->length = sustain;
-													if(bend)
-													{
-														flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
-														flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
-														np->bendstrength = bend;
-													}
-													if(hammeron)
-														flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;
-													if(harmonic)
-														flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
-													if(palmmute)
-														flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
-													if(pulloff)
-														flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;
-													if(tremolo)
-														flags |= EOF_NOTE_FLAG_IS_TREMOLO;
-													if(pluck > 0)
-														flags |= EOF_PRO_GUITAR_NOTE_FLAG_POP;
-													if(slap > 0)
-														flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLAP;
-													if(slideto > 0)
-													{
-														flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
-														np->slideend = slideto;
-														if(slideto > fret)
-														{	//The slide ends above the starting fret
-															flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
-														}
-														else
-														{	//The slide ends below the starting fret
-															flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
-														}
-													}
-													np->flags = flags;
-													note_count++;
-													tagctr++;
-
-													if(fret > tp->numfrets)
-														tp->numfrets = fret;	//Track the highest used fret number
-												}//As long as the string number is valid
-											}//If another note can be stored
-										}//If this is a note tag
-
-										(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-										linectr++;
-									}//Until there was an error reading from the file or end of file is reached
-									if(error)
-										break;	//Break from inner loop
-								}//If the count attribute of this tag is readable and greater than 0
-							}//If this is a notes tag
-							else if(strcasestr_spec(buffer, "<chords"))
-							{	//If this is a chords tag
-								long output, time, id;
-								unsigned long flags;
-
-								#ifdef RS_IMPORT_DEBUG
-									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tProcessing <chords> tag on line #%lu", linectr);
-									eof_log(eof_log_string, 1);
-								#endif
-
-								if(parse_xml_attribute_number("count", buffer, &output) && output)
-								{	//If the count attribute of this tag is readable and greater than 0
-									tagctr = 0;
-									(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-									linectr++;
-									while(!error || !pack_feof(inf))
-									{	//Until there was an error reading from the file or end of file is reached
-										if(strcasestr_spec(buffer, "</chords"))
-										{	//If this is the end of the events tag
-											#ifdef RS_IMPORT_DEBUG
-												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tAdded %lu chords", tagctr);
-												eof_log(eof_log_string, 1);
-											#endif
-											break;	//Break from loop
-										}
-
-										//Read chord tag
-										ptr = strcasestr_spec(buffer, "<chord ");
-										if(ptr)
-										{	//If this is a chord tag
-											if(note_count < EOF_MAX_NOTES)
-											{	//If another chord can be stored
-												flags = 0;
-
-												//Read chord attributes
-												if(!parse_xml_rs_timestamp("time", buffer, &time))
-												{	//If the timestamp was not readable
-													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
-													eof_log(eof_log_string, 1);
-													error = 1;
-													break;	//Break from inner loop
-												}
-												if(!parse_xml_attribute_number("chordId", buffer, &id))
-												{	//If the chord ID was not readable
-													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading chord ID on line #%lu.  Aborting", linectr);
-													eof_log(eof_log_string, 1);
-													error = 1;
-													break;	//Break from inner loop
-												}
-												if(id >= chordlist_count)
-												{	//If this chord ID was not defined in the chordTemplates tag
-													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError:  Invalid chord ID on line #%lu.  Aborting", linectr);
-													eof_log(eof_log_string, 1);
-													error = 1;
-													break;	//Break from inner loop
-												}
-												if(!parse_xml_attribute_text(tag, sizeof(tag), "strum", buffer))
-												{	//If the strum direction could not be read
-													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading strum direction on line #%lu.  Aborting", linectr);
-													eof_log(eof_log_string, 1);
-													error = 1;
-													break;	//Break from inner loop
-												}
-
-												//Add chord and set attributes
-												np = eof_pro_guitar_track_add_note(tp);	//Allocate, initialize and add the new note to the note array
-												if(!np)
-												{
-													eof_log("\tError allocating memory.  Aborting", 1);
-													error = 1;
-													break;	//Break from inner loop
-												}
-												memcpy(np, chordlist[id], sizeof(EOF_PRO_GUITAR_NOTE));	//Copy the chord template into the new note
-												np->pos = time;
-												if(strcasestr_spec(tag, "up"))
-												{	//If the strum direction is marked as up
-													flags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;
-													strum_dir = 1;	//Track that this arrangement defines chord strum directions
-												}
-												np->flags = flags;
-												np->type = curdiff;
-												note_count++;
-												tagctr++;
-											}
-										}//If this is a chord tag
-
-										(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-										linectr++;	//Increment line counter
-									}
-									if(error)
-										break;	//Break from inner loop
-								}//If the count attribute of this tag is readable and greater than 0
-							}//If this is a chords tag
-							else if(strcasestr_spec(buffer, "<anchors"))
-							{	//If this is an anchors tag
-								long output, time, fret;
-
-								#ifdef RS_IMPORT_DEBUG
-									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tProcessing <anchors> tag on line #%lu", linectr);
-									eof_log(eof_log_string, 1);
-								#endif
-
-								if(parse_xml_attribute_number("count", buffer, &output) && output)
-								{	//If the count attribute of this tag is readable and greater than 0
-									tagctr = 0;
-									(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-									linectr++;
-									while(!error || !pack_feof(inf))
-									{	//Until there was an error reading from the file or end of file is reached
-										if(strcasestr_spec(buffer, "</anchors"))
-										{	//If this is the end of the anchors tag
-											#ifdef RS_IMPORT_DEBUG
-												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tAdded %lu anchors", tagctr);
-												eof_log(eof_log_string, 1);
-											#endif
-											break;	//Break from loop
-										}
-
-										//Read anchor tag
-										ptr = strcasestr_spec(buffer, "<anchor ");
-										if(ptr)
-										{	//If this is an anchor tag
-											if(tp->handpositions < EOF_MAX_NOTES)
-											{	//If another chord can be stored
-												if(!parse_xml_rs_timestamp("time", buffer, &time))
-												{	//If the timestamp was not readable
-													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
-													eof_log(eof_log_string, 1);
-													error = 1;
-													break;	//Break from inner loop
-												}
-												if(!parse_xml_attribute_number("fret", buffer, &fret))
-												{	//If the fret number was not readable
-													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading fret number on line #%lu.  Aborting", linectr);
-													eof_log(eof_log_string, 1);
-													error = 1;
-													break;	//Break from inner loop
-												}
-												if(fret > 19)
-												{	//If the anchor is not valid, log it and warn the user
-													///When RS2 import is implemented, this check will need to take the capo position into account
-													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tIgnoring invalid anchor (fret %ld) at position %ld on line #%lu", fret, time, linectr);
-													eof_log(eof_log_string, 1);
-													if(!(warning & 1))
-													{	//If the user wasn't warned about this error yet
-														allegro_message("Warning:  This arrangement contains at least one invalid fret hand position (higher than fret 19).\n  Offending positions were dropped");
-														warning |= 1;
-													}
-												}
-												else
-												{	//Otherwise add it to the track
-													tp->handposition[tp->handpositions].start_pos = time;
-													tp->handposition[tp->handpositions].end_pos = fret;
-													tp->handposition[tp->handpositions].difficulty = curdiff;
-													tp->handpositions++;
-												}
-											}
-										}//If this is an anchor tag
-
-										(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-										linectr++;	//Increment line counter
-										tagctr++;
-									}
-									if(error)
-										break;	//Break from inner loop
-								}//If the count attribute of this tag is readable and greater than 0
-							}//If this is an anchors tag
-
-							(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-							linectr++;
-						}//Until there was an error reading from the file or end of file is reached
-						if(error)
-							break;	//Break from outer loop
-					}//If this is a level tag
-
 					(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 					linectr++;
-				}//Until there was an error reading from the file or end of file is reached
-			}//If the count attribute of this tag is readable and greater than 0
-		}//If this is the levels tag
+					while(!error || !pack_feof(inf))
+					{	//Until there was an error reading from the file or end of file is reached
+						if(strcasestr_spec(buffer, "</level>"))
+						{	//If this is the end of the level tag
+							break;	//Break from loop
+						}
+
+						//Read notes tag
+						if(strcasestr_spec(buffer, "<notes") && !strstr(buffer, "/>"))
+						{	//If this is the notes tag and it isn't empty
+							#ifdef RS_IMPORT_DEBUG
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tProcessing <notes> tag on line #%lu", linectr);
+								eof_log(eof_log_string, 1);
+							#endif
+
+							tagctr = 0;
+							(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+							linectr++;
+							while(!error || !pack_feof(inf))
+							{	//Until there was an error reading from the file or end of file is reached
+								if(strcasestr_spec(buffer, "</notes"))
+								{	//If this is the end of the notes tag
+									#ifdef RS_IMPORT_DEBUG
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tAdded %lu notes", tagctr);
+										eof_log(eof_log_string, 1);
+									#endif
+									break;	//Break from loop
+								}
+
+								//Read note tag
+								ptr = strcasestr_spec(buffer, "<note ");
+								if(ptr)
+								{	//If this is a note tag
+									if(note_count < EOF_MAX_NOTES)
+									{	//If another note can be stored
+										bend = fret = hammeron = harmonic = palmmute = pulloff = string = tremolo = flags = 0;	//Init all of these to undefined
+										pluck = slap = slideto = -1;	//Init these to Rocksmith's undefined value
+
+										//Read note attributes
+										if(!parse_xml_rs_timestamp("time", buffer, &time))
+										{	//If the timestamp was not readable
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading start timestamp on line #%lu.  Aborting", linectr);
+											eof_log(eof_log_string, 1);
+											error = 1;
+											break;	//Break from inner loop
+										}
+										(void) parse_xml_attribute_number("bend", buffer, &bend);
+										(void) parse_xml_attribute_number("fret", buffer, &fret);
+										(void) parse_xml_attribute_number("hammerOn", buffer, &hammeron);
+										(void) parse_xml_attribute_number("harmonic", buffer, &harmonic);
+										(void) parse_xml_attribute_number("palmMute", buffer, &palmmute);
+										(void) parse_xml_attribute_number("pluck", buffer, &pluck);
+										(void) parse_xml_attribute_number("pullOff", buffer, &pulloff);
+										(void) parse_xml_attribute_number("slap", buffer, &slap);
+										(void) parse_xml_attribute_number("slideTo", buffer, &slideto);
+										(void) parse_xml_attribute_number("string", buffer, &string);
+										if(!parse_xml_rs_timestamp("sustain", buffer, &sustain))
+										{	//If the timestamp was not readable
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading sustain time on line #%lu.  Aborting", linectr);
+											eof_log(eof_log_string, 1);
+											error = 1;
+											break;	//Break from inner loop
+										}
+										(void) parse_xml_attribute_number("tremolo", buffer, &tremolo);
+
+										//Add note and set attributes
+										if((string >= 0) && (string < 6))
+										{	//As long as the string number is valid
+											np = eof_pro_guitar_track_add_note(tp);	//Allocate, initialize and add the new note to the note array
+											if(!np)
+											{
+												eof_log("\tError allocating memory.  Aborting", 1);
+												error = 1;
+												break;	//Break from inner loop
+											}
+											np->type = curdiff;
+											np->note = 1 << (unsigned long) string;
+											np->frets[(unsigned long) string] = fret;
+											np->pos = time;
+											np->length = sustain;
+											if(bend)
+											{
+												flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+												flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
+												np->bendstrength = bend;
+											}
+											if(hammeron)
+												flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;
+											if(harmonic)
+												flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
+											if(palmmute)
+												flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
+											if(pulloff)
+												flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;
+											if(tremolo)
+												flags |= EOF_NOTE_FLAG_IS_TREMOLO;
+											if(pluck > 0)
+												flags |= EOF_PRO_GUITAR_NOTE_FLAG_POP;
+											if(slap > 0)
+												flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLAP;
+											if(slideto > 0)
+											{
+												flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
+												np->slideend = slideto;
+												if(slideto > fret)
+												{	//The slide ends above the starting fret
+													flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+												}
+												else
+												{	//The slide ends below the starting fret
+													flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+												}
+											}
+											np->flags = flags;
+											note_count++;
+											tagctr++;
+
+											if(fret > tp->numfrets)
+												tp->numfrets = fret;	//Track the highest used fret number
+										}//As long as the string number is valid
+									}//If another note can be stored
+								}//If this is a note tag
+
+								(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+								linectr++;
+							}//Until there was an error reading from the file or end of file is reached
+							if(error)
+								break;	//Break from inner loop
+						}//If this is a notes tag
+						else if(strcasestr_spec(buffer, "<chords") && !strstr(buffer, "/>"))
+						{	//If this is a chords tag and it isn't empty
+							long time, id;
+							unsigned long flags;
+
+							#ifdef RS_IMPORT_DEBUG
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tProcessing <chords> tag on line #%lu", linectr);
+								eof_log(eof_log_string, 1);
+							#endif
+
+							tagctr = 0;
+							(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+							linectr++;
+							while(!error || !pack_feof(inf))
+							{	//Until there was an error reading from the file or end of file is reached
+								if(strcasestr_spec(buffer, "</chords"))
+								{	//If this is the end of the events tag
+									#ifdef RS_IMPORT_DEBUG
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tAdded %lu chords", tagctr);
+										eof_log(eof_log_string, 1);
+									#endif
+									break;	//Break from loop
+								}
+
+								//Read chord tag
+								ptr = strcasestr_spec(buffer, "<chord ");
+								if(ptr)
+								{	//If this is a chord tag
+									if(note_count < EOF_MAX_NOTES)
+									{	//If another chord can be stored
+										flags = 0;
+
+										//Read chord attributes
+										if(!parse_xml_rs_timestamp("time", buffer, &time))
+										{	//If the timestamp was not readable
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
+											eof_log(eof_log_string, 1);
+											error = 1;
+											break;	//Break from inner loop
+										}
+										if(!parse_xml_attribute_number("chordId", buffer, &id))
+										{	//If the chord ID was not readable
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading chord ID on line #%lu.  Aborting", linectr);
+											eof_log(eof_log_string, 1);
+											error = 1;
+											break;	//Break from inner loop
+										}
+										if(id >= chordlist_count)
+										{	//If this chord ID was not defined in the chordTemplates tag
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError:  Invalid chord ID on line #%lu.  Aborting", linectr);
+											eof_log(eof_log_string, 1);
+											error = 1;
+											break;	//Break from inner loop
+										}
+										if(!parse_xml_attribute_text(tag, sizeof(tag), "strum", buffer))
+										{	//If the strum direction could not be read
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading strum direction on line #%lu.  Aborting", linectr);
+											eof_log(eof_log_string, 1);
+											error = 1;
+											break;	//Break from inner loop
+										}
+
+										//Add chord and set attributes
+										np = eof_pro_guitar_track_add_note(tp);	//Allocate, initialize and add the new note to the note array
+										if(!np)
+										{
+											eof_log("\tError allocating memory.  Aborting", 1);
+											error = 1;
+											break;	//Break from inner loop
+										}
+										memcpy(np, chordlist[id], sizeof(EOF_PRO_GUITAR_NOTE));	//Copy the chord template into the new note
+										np->pos = time;
+										if(strcasestr_spec(tag, "up"))
+										{	//If the strum direction is marked as up
+											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;
+											strum_dir = 1;	//Track that this arrangement defines chord strum directions
+										}
+										np->flags = flags;
+										np->type = curdiff;
+										note_count++;
+										tagctr++;
+									}
+								}//If this is a chord tag
+
+								(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+								linectr++;	//Increment line counter
+							}
+							if(error)
+								break;	//Break from inner loop
+						}//If this is a chords tag and it isn't empty
+						else if(strcasestr_spec(buffer, "<anchors") && !strstr(buffer, "/>"))
+						{	//If this is an anchors tag and it isn't empty
+							long time, fret;
+
+							#ifdef RS_IMPORT_DEBUG
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tProcessing <anchors> tag on line #%lu", linectr);
+								eof_log(eof_log_string, 1);
+							#endif
+
+							tagctr = 0;
+							(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+							linectr++;
+							while(!error || !pack_feof(inf))
+							{	//Until there was an error reading from the file or end of file is reached
+								if(strcasestr_spec(buffer, "</anchors"))
+								{	//If this is the end of the anchors tag
+									#ifdef RS_IMPORT_DEBUG
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tAdded %lu anchors", tagctr);
+										eof_log(eof_log_string, 1);
+									#endif
+									break;	//Break from loop
+								}
+
+								//Read anchor tag
+								ptr = strcasestr_spec(buffer, "<anchor ");
+								if(ptr)
+								{	//If this is an anchor tag
+									if(tp->handpositions < EOF_MAX_NOTES)
+									{	//If another chord can be stored
+										if(!parse_xml_rs_timestamp("time", buffer, &time))
+										{	//If the timestamp was not readable
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
+											eof_log(eof_log_string, 1);
+											error = 1;
+											break;	//Break from inner loop
+										}
+										if(!parse_xml_attribute_number("fret", buffer, &fret))
+										{	//If the fret number was not readable
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading fret number on line #%lu.  Aborting", linectr);
+											eof_log(eof_log_string, 1);
+											error = 1;
+											break;	//Break from inner loop
+										}
+										if(fret > 19)
+										{	//If the anchor is not valid, log it and warn the user
+											///When RS2 import is implemented, this check will need to take the capo position into account
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tIgnoring invalid anchor (fret %ld) at position %ld on line #%lu", fret, time, linectr);
+											eof_log(eof_log_string, 1);
+											if(!(warning & 1))
+											{	//If the user wasn't warned about this error yet
+												allegro_message("Warning:  This arrangement contains at least one invalid fret hand position (higher than fret 19).\n  Offending positions were dropped");
+												warning |= 1;
+											}
+										}
+										else
+										{	//Otherwise add it to the track
+											tp->handposition[tp->handpositions].start_pos = time;
+											tp->handposition[tp->handpositions].end_pos = fret;
+											tp->handposition[tp->handpositions].difficulty = curdiff;
+											tp->handpositions++;
+										}
+									}
+								}//If this is an anchor tag
+
+								(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+								linectr++;	//Increment line counter
+								tagctr++;
+							}
+							if(error)
+								break;	//Break from inner loop
+						}//If this is an anchors tag and it isn't empty
+
+						(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+						linectr++;
+					}//Until there was an error reading from the file or end of file is reached
+					if(error)
+						break;	//Break from outer loop
+				}//If this is a level tag
+
+				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+				linectr++;
+			}//Until there was an error reading from the file or end of file is reached
+		}//If this is the levels tag and it isn't empty
 
 		(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 		linectr++;	//Increment line counter
