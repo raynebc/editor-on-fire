@@ -329,8 +329,9 @@ int parse_xml_attribute_number(char *target, char *input, long *output)
 
 int parse_xml_rs_timestamp(char *target, char *input, long *output)
 {
-	char buffer[11], buffer2[11];
+	char buffer[11], buffer2[11], decimalfound = 0;
 	unsigned long index = 0, index2 = 0;
+	long wholeseconds, milliseconds = 0;
 
 	if(!target || !input || !output)
 		return 0;	//Invalid parameters
@@ -346,11 +347,31 @@ int parse_xml_rs_timestamp(char *target, char *input, long *output)
 		{	//If it's not a period
 			buffer2[index2++] = buffer[index];	//Copy it to the second buffer
 		}
+		else
+		{
+			buffer2[index2] = '\0';	//Terminate the second buffer
+			wholeseconds = atol(buffer2);	//Convert the string before the decimal point (whole seconds) to an integer value
+			index2 = 0;	//Empty buffer2 so that it can store the fractional part of the string
+			decimalfound = 1;
+		}
 		index++;
 	}
 	buffer2[index2] = '\0';	//Terminate the second buffer
+	if(decimalfound)
+	{	//If the decimal point was read, the second buffer is expected to have the fractional part of the timestamp
+		while(index2 < 3)
+		{	//Pad the second buffer with zeros until it defines to the third decimal place
+			buffer2[index2++] = '0';
+		}
+		buffer2[index2] = '\0';	//Terminate the second buffer
+		milliseconds = atol(buffer2);	//Convert the number of milliseconds to an integer value
+	}
+	else
+	{	//Otherwise the second buffer just has the number of seconds
+		wholeseconds = atol(buffer2);
+	}
 
-	*output = atol(buffer2);
+	*output = (wholeseconds * 1000) + milliseconds;
 	return 1;	//Return success
 }
 
