@@ -928,11 +928,19 @@ if(eof_key_code == KEY_PAUSE)
 		}
 		else
 		{
-			eof_music_rewind();
-			if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
-			{	//If user is trying to seek at the slowest speed,
-				eof_shift_used = 1;	//Track that the SHIFT key was used
-				key[KEY_LEFT] = 0;	//Clear this key state to allow seeking in accurate 1ms intervals
+			if(eof_fb_seek_controls)
+			{	//If the "Use dB style seek controls" preference is enabled
+				(void) eof_menu_song_seek_previous_grid_snap();
+				key[KEY_LEFT] = 0;
+			}
+			else
+			{
+				eof_music_rewind();
+				if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
+				{	//If user is trying to seek at the slowest speed,
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_LEFT] = 0;	//Clear this key state to allow seeking in accurate 1ms intervals
+				}
 			}
 		}
 	}
@@ -954,11 +962,19 @@ if(eof_key_code == KEY_PAUSE)
 		}
 		else
 		{
-			eof_music_forward();
-			if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
-			{	//If user is trying to seek at the slowest speed,
-				eof_shift_used = 1;	//Track that the SHIFT key was used
-				key[KEY_RIGHT] = 0;	//Clear this key state to allow seeking in accurate 1ms intervals
+			if(eof_fb_seek_controls)
+			{	//If the "Use dB style seek controls" preference is enabled
+				(void) eof_menu_song_seek_next_grid_snap();
+				key[KEY_RIGHT] = 0;
+			}
+			else
+			{
+				eof_music_forward();
+				if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
+				{	//If user is trying to seek at the slowest speed,
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					key[KEY_RIGHT] = 0;	//Clear this key state to allow seeking in accurate 1ms intervals
+				}
 			}
 		}
 	}
@@ -1102,7 +1118,6 @@ if(eof_key_code == KEY_PAUSE)
 	/* toggle pro guitar strum up (SHIFT+Up in a pro guitar track, non Feedback input modes) */
 	if(key[KEY_UP])
 	{
-		char do_seek = 0;	//Is set to nonzero if a seek is performed
 		if(KEY_EITHER_SHIFT)
 		{	//SHIFT is held
 			if(eof_vocals_selected)
@@ -1179,15 +1194,7 @@ if(eof_key_code == KEY_PAUSE)
 				}
 				else
 				{
-					if(eof_fb_seek_controls)
-					{
-						do_seek = 1;
-						eof_music_forward();
-					}
-					else
-					{
-						(void) eof_menu_note_transpose_up();
-					}
+					(void) eof_menu_note_transpose_up();
 				}
 			}
 			if(eof_vocals_selected && eof_mix_vocal_tones_enabled && (eof_selection.current < eof_song->vocal_track[tracknum]->lyrics) && (eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note != EOF_LYRIC_PERCUSSION))
@@ -1195,10 +1202,7 @@ if(eof_key_code == KEY_PAUSE)
 				eof_mix_play_note(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note);
 			}
 		}
-		if(!do_seek)
-		{	//Don't break a held seek operation
-			key[KEY_UP] = 0;
-		}
+		key[KEY_UP] = 0;
 	}
 
 	/* transpose mini piano visible area down one octave (CTRL+SHIFT+Down) */
@@ -1212,7 +1216,6 @@ if(eof_key_code == KEY_PAUSE)
 	/* toggle pro guitar strum down (SHIFT+Down in a pro guitar track, non Feedback input modes) */
 	if(key[KEY_DOWN])
 	{
-		char do_seek = 0;	//Is set to nonzero if a seek is performed
 		if(KEY_EITHER_SHIFT)
 		{	//SHIFT is held
 			if(eof_vocals_selected)
@@ -1290,15 +1293,7 @@ if(eof_key_code == KEY_PAUSE)
 				}
 				else
 				{
-					if(eof_fb_seek_controls)
-					{
-						do_seek = 1;
-						eof_music_rewind();
-					}
-					else
-					{
-						(void) eof_menu_note_transpose_down();
-					}
+					(void) eof_menu_note_transpose_down();
 				}
 			}
 			if(eof_vocals_selected && eof_mix_vocal_tones_enabled && (eof_selection.current < eof_song->vocal_track[tracknum]->lyrics) && (eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note != EOF_LYRIC_PERCUSSION))
@@ -1306,10 +1301,7 @@ if(eof_key_code == KEY_PAUSE)
 				eof_mix_play_note(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note);
 			}
 		}
-		if(!do_seek)
-		{	//Don't break a held seek operation
-			key[KEY_DOWN] = 0;
-		}
+		key[KEY_DOWN] = 0;
 	}
 
 	/* decrease grid snap (,) */
@@ -4929,8 +4921,8 @@ void eof_render_editor_window_2(void)
 	{	//If the secondary piano roll is to be displayed
 		char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
 
-		restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track);
-		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0);	//Disable tech view if applicable
+		restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track2);
+		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track2, 0);	//Disable tech view for the second piano roll's track if applicable
 		if(eof_note_type2 < 0)
 		{	//If the difficulty hasn't been initialized
 			eof_note_type2 = eof_note_type;
@@ -4960,13 +4952,13 @@ void eof_render_editor_window_2(void)
 		eof_note_type = eof_note_type2;									//Set the secondary piano roll's difficulty
 		eof_render_editor_window(eof_window_editor2, 2);				//Render this track difficulty to the secondary piano roll screen
 
-		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, restore_tech_view);	//Re-enable tech view if applicable
 		(void) eof_menu_track_selected_track_number(temp_track, 0);	//Restore the active track number
 		eof_note_type = temp_type;									//Restore the active difficulty
 		eof_music_pos = temp_pos;									//Restore the active position
 		eof_selection.current = temp_selected;						//Restore the selected note
 		eof_hover_note = temp_hover;								//Restore the hover note
 		eof_process_beat_statistics(eof_song, eof_selected_track);	//Rebuild the beat stats to reflect the primary piano roll so edit operations work as expected
+		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track2, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
 	}//If the secondary piano roll is to be displayed
 }
 

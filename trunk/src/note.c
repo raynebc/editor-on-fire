@@ -467,7 +467,14 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			}
 			if(p)
 			{	//For mouse over/highlight lyrics, render with note with its defined contrasting border color
-				pcol = eof_colors[ctr].border;
+				if(!(noteflags & EOF_NOTE_FLAG_SP))
+				{	//If the note is not star power
+					pcol = eof_colors[ctr].border;	//Use the note's normal border color
+				}
+				else
+				{
+					pcol = eof_color_red;	//Draw the border in red, which contrasts with silver much better
+				}
 			}
 
 			if((eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
