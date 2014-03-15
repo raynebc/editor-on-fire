@@ -1474,10 +1474,33 @@ int eof_menu_edit_paste_logic(int oldpaste)
 
 	for(i = 0; i < copy_notes; i++)
 	{	//For each note in the clipboard file
+		unsigned long newnotepos, match, flags;
+		long newnotelength;
+
 		eof_read_clipboard_note(fp, &temp_note, EOF_NAME_LENGTH + 1);	//Read the note
-		if(!oldpaste && ((temp_note.beat - first_beat + this_beat >= eof_song->beats - 1) || (temp_note.endbeat - first_beat + this_beat >= eof_song->beats - 1)))
-		{	//If new paste logic is being used, return from function if this note (and the subsequent notes) would paste after the last beat
-			break;
+
+		//Add enough beats to encompass the pasted note if necessary
+		while(1)
+		{
+			if(oldpaste)
+			{	//If old paste is being performed, the chart simply has to be long enough to accommodate the pasted note's original length
+				if(eof_music_pos + temp_note.pos + temp_note.length - eof_av_delay < eof_song->beat[eof_song->beats - 1]->pos)
+				{	//If there are enough beats already
+					break;
+				}
+			}
+			else
+			{	//If new paste is being performed, the paste re-aligns the pasted note to the beat map
+				if(temp_note.endbeat - first_beat + this_beat < eof_song->beats - 1)
+				{	//If there are enough beats already
+					break;
+				}
+			}
+			if(!eof_song_append_beats(eof_song, 1))
+			{	//If there was an error adding a beat
+				eof_log("\tError adding beat.  Aborting", 1);
+				return 1;
+			}
 		}
 		if((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (temp_note.legacymask != 0))
 		{	//If the copied note indicated that this overrides the original bitmask (pasting pro guitar into a legacy track)
@@ -1487,56 +1510,50 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		{	//If this note only uses lanes higher than the active track allows
 			temp_note.note = maxbitmask;	//Alter this note to be an all-lane chord
 		}
-		eof_sanitize_note_flags(&temp_note.flags,sourcetrack, eof_selected_track);	//Ensure the note flags are validated for the track being pasted into
+		eof_sanitize_note_flags(&temp_note.flags, sourcetrack, eof_selected_track);	//Ensure the note flags are validated for the track being pasted into
 
 		/* create/merge the note */
-		if(eof_music_pos + temp_note.pos + temp_note.length - eof_av_delay < eof_chart_length)
-		{	//If the note fits within the chart
-			unsigned long newnotepos, match, flags;
-			long newnotelength;
+		if(!oldpaste)
+		{	//If new paste logic is being used, this note pastes into a position relative to the start and end of a beat marker
+			if(i == 0)
+			{	//If this is the first note being pasted
+				newpasteoffset = newpasteoffset - temp_note.porpos;	//Find the percentage offset that needs to be applied to all start/stop timestamps
+			}
+			newnotepos = eof_put_porpos(temp_note.beat - first_beat + this_beat, temp_note.porpos, newpasteoffset);
+			newnotelength = eof_put_porpos(temp_note.endbeat - first_beat + this_beat, temp_note.porendpos, newpasteoffset) - newnotepos;
+		}
+		else
+		{	//If old paste logic is being used, this note pastes into a position relative to the previous pasted note
+			newnotepos = eof_music_pos + temp_note.pos - eof_av_delay;
+			newnotelength = temp_note.length;
+		}
+		if(!eof_paste_erase_overlap && eof_search_for_note_near(eof_song, eof_selected_track, newnotepos, 2, eof_note_type, &match))
+		{	//If using the default paste behavior (a note merges with a note that it overlaps), and this pasted note would overlap another
+			//Erase any lane specific flags in the matching note that correspond with used lanes in the note being pasted
+			flags = eof_prepare_note_flag_merge(eof_get_note_flags(eof_song, eof_selected_track, match), eof_song->track[eof_selected_track]->track_behavior, temp_note.note);
+				//Get the flags of the overlapped note as they would be if all applicable lane-specific flags are cleared to inherit the flags of the note to merge
 
-			if(!oldpaste)
-			{	//If new paste logic is being used, this note pastes into a position relative to the start and end of a beat marker
-				if(i == 0)
-				{	//If this is the first note being pasted
-					newpasteoffset = newpasteoffset - temp_note.porpos;	//Find the percentage offset that needs to be applied to all start/stop timestamps
-				}
-				newnotepos = eof_put_porpos(temp_note.beat - first_beat + this_beat, temp_note.porpos, newpasteoffset);
-				newnotelength = eof_put_porpos(temp_note.endbeat - first_beat + this_beat, temp_note.porendpos, newpasteoffset) - newnotepos;
+			flags |= temp_note.flags;	//Merge the pasted note's flags
+			eof_set_note_flags(eof_song, eof_selected_track, match, flags);	//Apply the updated flags to the overlapped note
+			eof_set_note_note(eof_song, eof_selected_track, match, eof_get_note_note(eof_song, eof_selected_track, match) | temp_note.note);	//Merge the note bitmask
+			//Erase ghost and legacy flags
+			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{
+				unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+				eof_song->pro_guitar_track[tracknum]->note[match]->legacymask = 0;	//Clear the legacy bit mask
+				eof_song->pro_guitar_track[tracknum]->note[match]->ghost = 0;	//Clear the ghost bit mask
 			}
-			else
-			{	//If old paste logic is being used, this note pastes into a position relative to the previous pasted note
-				newnotepos = eof_music_pos + temp_note.pos - eof_av_delay;
-				newnotelength = temp_note.length;
+		}
+		else
+		{	//This will paste as a new note
+			new_note = eof_track_add_create_note(eof_song, eof_selected_track, temp_note.note, newnotepos, newnotelength, eof_note_type, temp_note.name);
+			if(new_note)
+			{
+				eof_set_note_flags(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.flags);
+				paste_pos[paste_count] = eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1);
+				paste_count++;
 			}
-			if(!eof_paste_erase_overlap && eof_search_for_note_near(eof_song, eof_selected_track, newnotepos, 2, eof_note_type, &match))
-			{	//If using the default paste behavior (a note merges with a note that it overlaps), and this pasted note would overlap another
-				//Erase any lane specific flags in the matching note that correspond with used lanes in the note being pasted
-				flags = eof_prepare_note_flag_merge(eof_get_note_flags(eof_song, eof_selected_track, match), eof_song->track[eof_selected_track]->track_behavior, temp_note.note);
-					//Get the flags of the overlapped note as they would be if all applicable lane-specific flags are cleared to inherit the flags of the note to merge
-
-				flags |= temp_note.flags;	//Merge the pasted note's flags
-				eof_set_note_flags(eof_song, eof_selected_track, match, flags);	//Apply the updated flags to the overlapped note
-				eof_set_note_note(eof_song, eof_selected_track, match, eof_get_note_note(eof_song, eof_selected_track, match) | temp_note.note);	//Merge the note bitmask
-				//Erase ghost and legacy flags
-				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-				{
-					unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-					eof_song->pro_guitar_track[tracknum]->note[match]->legacymask = 0;	//Clear the legacy bit mask
-					eof_song->pro_guitar_track[tracknum]->note[match]->ghost = 0;	//Clear the ghost bit mask
-				}
-			}
-			else
-			{	//This will paste as a new note
-				new_note = eof_track_add_create_note(eof_song, eof_selected_track, temp_note.note, newnotepos, newnotelength, eof_note_type, temp_note.name);
-				if(new_note)
-				{
-					eof_set_note_flags(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.flags);
-					paste_pos[paste_count] = eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1);
-					paste_count++;
-				}
-			}
-		}//If the note fits within the chart
+		}
 
 		/* process pro guitar data */
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -1563,6 +1580,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		}
 	}//For each note in the clipboard file
 	(void) pack_fclose(fp);
+	eof_truncate_chart(eof_song);	//Update chart variables for any beats that were added to accommodate the paste
 	eof_track_sort_notes(eof_song, eof_selected_track);
 	eof_fixup_notes(eof_song);
 	eof_determine_phrase_status(eof_song, eof_selected_track);
