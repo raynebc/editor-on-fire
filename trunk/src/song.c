@@ -6630,7 +6630,7 @@ void eof_truncate_chart(EOF_SONG *sp)
 				return;
 			}
 		}
-		eof_chart_length = targetpos;	//Resize the chart length accordingly
+		eof_chart_length = sp->beat[sp->beats - 1]->pos;	//The position of the last beat is the new chart length
 	}
 	else
 	{	//Find the beat that precedes the target position

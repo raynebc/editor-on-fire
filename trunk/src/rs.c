@@ -3157,15 +3157,21 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 	EOF_PRO_GUITAR_NOTE *next_position = NULL;	//Tracks the note at which the next fret hand position will be placed
 	EOF_PRO_GUITAR_NOTE *np, temp;
 	char force_change, started = 0;
+	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the fret hand positions are generated
 
 	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return;	//Invalid parameters
 
 	//Remove any existing fret hand positions defined for this track difficulty
+	restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track);
+	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0);	//Disable tech view for the active pro guitar track if applicable
 	tracknum = sp->track[track]->tracknum;
 	tp = sp->pro_guitar_track[tracknum];
 	if(tp->notes == 0)
+	{
+		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track2, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
 		return;	//Invalid parameters (track must have at least 1 note)
+	}
 	for(ctr = tp->handpositions; ctr > 0; ctr--)
 	{	//For each existing hand positions in this track (in reverse order)
 		if(tp->handposition[ctr - 1].difficulty == difficulty)
@@ -3177,6 +3183,7 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 				key[KEY_N] = 0;
 				if(alert(NULL, "Existing fret hand positions for the active track difficulty will be removed.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 				{	//If the user does not opt to remove the existing hand positions
+					eof_menu_track_set_tech_view_state(eof_song, eof_selected_track2, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
 					return;
 				}
 			}
@@ -3202,12 +3209,14 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 
 	if(!count)
 	{	//If this track difficulty has no notes
+		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track2, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
 		return;	//Exit function
 	}
 
 	eof_build_fret_range_tolerances(tp, difficulty, dynamic);	//Allocate and build eof_fret_range_tolerances[], using the calling function's chosen option regarding tolerances
 	if(!eof_fret_range_tolerances)
 	{	//eof_fret_range_tolerances[] wasn't built
+		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track2, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
 		return;
 	}
 	if(!eof_fret_hand_position_list_dialog_undo_made)
@@ -3324,6 +3333,7 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 	free(eof_fret_range_tolerances);
 	eof_fret_range_tolerances = NULL;	//Clear this array so that the next call to eof_build_fret_range_tolerances() rebuilds it accordingly
 	eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions
+	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
 	eof_render();
 }
 

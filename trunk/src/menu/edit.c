@@ -1258,6 +1258,8 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		eof_menu_track_set_tech_view_state(eof_song, j, restore_tech_view);	//Re-enable tech view if applicable
 	}//For each track
 	(void) pack_fclose(fp);
+	eof_calculate_beats(eof_song);
+	eof_truncate_chart(eof_song);	//Add or remove beat markers as necessary and update the eof_chart_length variable
 	eof_fixup_notes(eof_song);
 	eof_determine_phrase_status(eof_song, eof_selected_track);
 	return 1;

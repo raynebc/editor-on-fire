@@ -3502,9 +3502,12 @@ int eof_track_fret_hand_positions_generate_all(void)
 {
 	unsigned long tracknum, ctr;
 	EOF_PRO_GUITAR_TRACK *tp;
+	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the populated difficulties are determined
 
 	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return 1;	//Error
+
+	eof_fret_hand_position_list_dialog_undo_made = 0;	//Reset this condition
 
 	//Remove any existing fret hand positions defined for this track
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -3526,6 +3529,8 @@ int eof_track_fret_hand_positions_generate_all(void)
 		tp->handpositions = 0;
 	}
 
+	restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track);
+	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0);	//Disable tech view for the active pro guitar track if applicable
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
 	for(ctr = 0; ctr < 256; ctr++)
 	{	//For each of the 256 possible difficulties
@@ -3539,6 +3544,7 @@ int eof_track_fret_hand_positions_generate_all(void)
 			eof_generate_efficient_hand_positions(eof_song, eof_selected_track, ctr, 1, 0);	//Generate fret hand positions for it
 		}
 	}
+	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
 
 	return 1;
 }
