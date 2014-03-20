@@ -331,7 +331,7 @@ int parse_xml_rs_timestamp(char *target, char *input, long *output)
 {
 	char buffer[11], buffer2[11], decimalfound = 0;
 	unsigned long index = 0, index2 = 0;
-	long wholeseconds, milliseconds = 0;
+	long wholeseconds = 0, milliseconds = 0;
 
 	if(!target || !input || !output)
 		return 0;	//Invalid parameters
@@ -406,58 +406,57 @@ void RS_Load(FILE *inf)
 		if(strcasestr_spec(buffer, "<vocals"))
 		{	//If this is the vocals tag
 			CreateLyricLine();	//Start a line of lyrics
-			if(parse_xml_attribute_number("count", buffer, &count) && count)
-			{	//If the count attribute of this tag is readable and greater than 0
-				(void) fgets_err(buffer, (int)maxlinelength, inf);	//Read next line of text
-				processedctr++;
-				while(!feof(inf))
-				{	//Until there was an error reading from the file or end of file is reached
-					if(strcasestr_spec(buffer, "</vocals>"))	//If the end of the vocals XML tag is reached
-						break;									//Stop processing lines
 
-					if(!parse_xml_rs_timestamp("time", buffer, &time))
-					{	//If the timestamp was not readable
-						printf("Error reading timestamp on line #%lu.  Aborting", processedctr);
-						exit_wrapper(1);
-					}
-					if(!parse_xml_attribute_number("note", buffer, &note))
-					{	//If the pitch was not readable
-						printf("Error reading pitch on line #%lu.  Aborting", processedctr);
-						exit_wrapper(2);
-					}
-					if(!parse_xml_rs_timestamp("length", buffer, &length))
-					{	//If the length was not readable
-						printf("Error reading length on line #%lu.  Aborting", processedctr);
-						exit_wrapper(3);
-					}
-					if(!parse_xml_attribute_text(lyric, sizeof(lyric), "lyric", buffer))
-					{	//If the lyric text could not be read
-						printf("Error reading lyric text on line #%lu.  Aborting", processedctr);
-						exit_wrapper(4);
-					}
-					shrink_xml_text(lyric2, sizeof(lyric2), lyric);		//Condense XML escape sequences to normal text
-					if((Lyrics.last_pitch != 0) && (Lyrics.last_pitch != note))	//There's a pitch change
-						Lyrics.pitch_tracking=1;
-					Lyrics.last_pitch=note;	//Consider this the last defined pitch
-					if(Lyrics.line_on == 0)	//If a line isn't in progress (ie. there was a line break after the previous lyric)
-						CreateLyricLine();	//Initialize new line of lyrics
-					index = strchr(lyric2, '+');	//Get a pointer to the first plus character in this lyric, if any
-					if(index)
-					{	//If this lyric contained a + character
-						while(index[0] != '\0')
-						{	//Until the end of the string is reached
-							index[0] = index[1];	//Shift all remaining characters in the lyric back one, overwriting the +
-							index++;
-						}
-					}
-					AddLyricPiece(lyric2, time , time + length, note, 0);	//Add lyric
-					if(index)				//If a + character was filtered out of the lyric
-						EndLyricLine();		//End lyric line, as this is a line break mechanism in RS2014 formatted lyrics
+			(void) fgets_err(buffer, (int)maxlinelength, inf);	//Read next line of text
+			processedctr++;
+			while(!feof(inf))
+			{	//Until there was an error reading from the file or end of file is reached
+				if(strcasestr_spec(buffer, "</vocals>"))	//If the end of the vocals XML tag is reached
+					break;									//Stop processing lines
 
-					(void) fgets_err(buffer, (int)maxlinelength, inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
-					processedctr++;
+				if(!parse_xml_rs_timestamp("time", buffer, &time))
+				{	//If the timestamp was not readable
+					printf("Error reading timestamp on line #%lu.  Aborting", processedctr);
+					exit_wrapper(1);
 				}
+				if(!parse_xml_attribute_number("note", buffer, &note))
+				{	//If the pitch was not readable
+					printf("Error reading pitch on line #%lu.  Aborting", processedctr);
+					exit_wrapper(2);
+				}
+				if(!parse_xml_rs_timestamp("length", buffer, &length))
+				{	//If the length was not readable
+					printf("Error reading length on line #%lu.  Aborting", processedctr);
+					exit_wrapper(3);
+				}
+				if(!parse_xml_attribute_text(lyric, sizeof(lyric), "lyric", buffer))
+				{	//If the lyric text could not be read
+					printf("Error reading lyric text on line #%lu.  Aborting", processedctr);
+					exit_wrapper(4);
+				}
+				shrink_xml_text(lyric2, sizeof(lyric2), lyric);		//Condense XML escape sequences to normal text
+				if((Lyrics.last_pitch != 0) && (Lyrics.last_pitch != note))	//There's a pitch change
+					Lyrics.pitch_tracking=1;
+				Lyrics.last_pitch=note;	//Consider this the last defined pitch
+				if(Lyrics.line_on == 0)	//If a line isn't in progress (ie. there was a line break after the previous lyric)
+					CreateLyricLine();	//Initialize new line of lyrics
+				index = strchr(lyric2, '+');	//Get a pointer to the first plus character in this lyric, if any
+				if(index)
+				{	//If this lyric contained a + character
+					while(index[0] != '\0')
+					{	//Until the end of the string is reached
+						index[0] = index[1];	//Shift all remaining characters in the lyric back one, overwriting the +
+						index++;
+					}
+				}
+				AddLyricPiece(lyric2, time , time + length, note, 0);	//Add lyric
+				if(index)				//If a + character was filtered out of the lyric
+					EndLyricLine();		//End lyric line, as this is a line break mechanism in RS2014 formatted lyrics
+
+				(void) fgets_err(buffer, (int)maxlinelength, inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+				processedctr++;
 			}
+
 			EndLyricLine();	//End the line of lyrics
 			break;	//Only process one vocals tag
 		}

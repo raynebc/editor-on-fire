@@ -2392,6 +2392,8 @@ void ForceEndLyricLine(void)
 
 			templine=Lyrics.curline->prev;		//Save pointer to previous line
 			free(Lyrics.curline);				//Release empty line
+			if(Lyrics.lines == Lyrics.curline)	//If the first line of lyrics is empty and is being removed
+				Lyrics.lines=templine;			//Update that conductor
 			Lyrics.curline=templine;			//Point conductor to previous line
 			Lyrics.line_on=0;					//Mark lyric line status as closed
 		}
