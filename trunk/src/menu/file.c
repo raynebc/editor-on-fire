@@ -53,7 +53,7 @@ MENU eof_file_menu[] =
 	{"&Load\t" CTRL_NAME "+O", eof_menu_file_load, NULL, 0, NULL},
 	{"&Save\tF2 / "CTRL_NAME "+S", eof_menu_file_save, NULL, D_DISABLED, NULL},
 	{"Save &As", eof_menu_file_save_as, NULL, D_DISABLED, NULL},
-	{"", NULL, NULL, 0, NULL},
+	{"&Quick save", eof_menu_file_quick_save, NULL, D_DISABLED, NULL},
 	{"Load &OGG", eof_menu_file_load_ogg, NULL, D_DISABLED, NULL},
 	{"Sonic Visualiser Import", eof_menu_file_sonic_visualiser_import, NULL, 0, NULL},
 	{"&MIDI Import\tF6", eof_menu_file_midi_import, NULL, 0, NULL},
@@ -252,6 +252,7 @@ void eof_prepare_file_menu(void)
 	{	//If a chart is loaded
 		eof_file_menu[2].flags = 0; // Save
 		eof_file_menu[3].flags = 0; // Save As
+		eof_file_menu[4].flags = 0; // Quick save
 		eof_file_menu[5].flags = 0; // Load OGG
 		eof_file_menu[6].flags = 0; // Sonic Visualiser Import
 		eof_file_menu[10].flags = 0; // Lyric Import
@@ -270,6 +271,7 @@ void eof_prepare_file_menu(void)
 	{
 		eof_file_menu[2].flags = D_DISABLED; // Save
 		eof_file_menu[3].flags = D_DISABLED; // Save As
+		eof_file_menu[4].flags = D_DISABLED; // Quick save
 		eof_file_menu[5].flags = D_DISABLED; // Load OGG
 		eof_file_menu[6].flags = D_DISABLED; // Sonic Visualiser Import
 		eof_file_menu[10].flags = D_DISABLED; // Lyric Import

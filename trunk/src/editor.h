@@ -76,7 +76,7 @@ unsigned long eof_get_number_displayed_tabs(void);
 void eof_render_editor_window_common(EOF_WINDOW *window);
 	//Performs rendering common to both the normal and vocal editor windows, before the notes are rendered
 void eof_render_editor_window_common2(EOF_WINDOW *window);
-	//Performs rendering common to both the nromal and vocal editor windows, after the notes are rendered
+	//Performs rendering common to both the normal and vocal editor windows, after the notes are rendered
 
 void eof_mark_new_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned long notenum);
 	//Checks if the newly-created note is in PART DRUMS, if so, and the new note contains

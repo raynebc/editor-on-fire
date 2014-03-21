@@ -325,6 +325,7 @@ MENU eof_note_rocksmith_menu[] =
 	{"Toggle force sustain", eof_menu_note_toggle_rs_sustain, NULL, 0, NULL},
 	{"Remove force sustain", eof_menu_note_remove_rs_sustain, NULL, 0, NULL},
 	{"&Move to prev note", eof_menu_note_move_tech_note_to_previous_note_pos, NULL, 0, NULL},
+	{"&Generate FHPs", eof_generate_efficient_hand_positions_for_selected_notes, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -899,10 +900,12 @@ void eof_prepare_note_menu(void)
 				if(tp->note == tp->technote)
 				{	//If tech view is in effect
 					eof_note_rocksmith_menu[15].flags = 0;	//Note>Rocksmith>Move to note start
+					eof_note_rocksmith_menu[16].flags = D_DISABLED;	//Note>Rocksmith>Generate FHPs
 				}
 				else
 				{
 					eof_note_rocksmith_menu[15].flags = D_DISABLED;
+					eof_note_rocksmith_menu[16].flags = 0;
 				}
 
 				/* Arpeggio>Erase all */

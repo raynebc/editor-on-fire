@@ -3149,7 +3149,7 @@ void eof_song_fix_fingerings(EOF_SONG *sp, char *undo_made)
 	}
 }
 
-void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, char difficulty, char warnuser, char dynamic)
+void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long track, char difficulty, char warnuser, char dynamic, unsigned long startnote, unsigned long stopnote)
 {
 	unsigned long ctr, ctr2, tracknum, count, bitmask, beatctr, startpos = 0, endpos, shapenum;
 	EOF_PRO_GUITAR_TRACK *tp;
@@ -3158,42 +3158,64 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 	EOF_PRO_GUITAR_NOTE *np, temp;
 	char force_change, started = 0;
 	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the fret hand positions are generated
+	char all = 0;	//Is set to nonzero if the values passed for startnote and stopnote are equal, indicating all existing fret hand positions are to be replaced
+	char *warning, warning1[] = "Existing fret hand positions for the active track difficulty will be removed.", warning2[] = "Existing fret hand positions for the selected range of notes will be removed.";
 
 	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return;	//Invalid parameters
 
-	//Remove any existing fret hand positions defined for this track difficulty
-	restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track);
-	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0);	//Disable tech view for the active pro guitar track if applicable
+	//Set up
 	tracknum = sp->track[track]->tracknum;
 	tp = sp->pro_guitar_track[tracknum];
 	if(tp->notes == 0)
 	{
-		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track2, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
 		return;	//Invalid parameters (track must have at least 1 note)
 	}
+	restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track);
+	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0);	//Disable tech view for the active pro guitar track if applicable
+	if(startnote == stopnote)
+	{	//If fret hand positions for the entire track difficulty are to be generated
+		all = 1;
+		startnote = 0;
+		stopnote = tp->notes - 1;	//The last note processed in the fret hand position loop is the last note in this track
+		warning = warning1;
+	}
+	else
+	{
+		warning = warning2;
+	}
+	if((startnote >= tp->notes) || (stopnote >= tp->notes))
+	{	//If the specified start or stop note numbers are not valid
+		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track2, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
+		return;	//Invalid parameters
+	}
+
+	//Remove any existing fret hand positions in the specified scope
 	for(ctr = tp->handpositions; ctr > 0; ctr--)
 	{	//For each existing hand positions in this track (in reverse order)
 		if(tp->handposition[ctr - 1].difficulty == difficulty)
 		{	//If this hand position is defined for the specified difficulty
-			if(warnuser)
-			{
-				eof_clear_input();
-				key[KEY_Y] = 0;
-				key[KEY_N] = 0;
-				if(alert(NULL, "Existing fret hand positions for the active track difficulty will be removed.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
-				{	//If the user does not opt to remove the existing hand positions
-					eof_menu_track_set_tech_view_state(eof_song, eof_selected_track2, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
-					return;
+			if(all || ((tp->handposition[ctr - 1].start_pos >= tp->note[startnote]->pos) && (tp->handposition[ctr - 1].start_pos <= tp->note[stopnote]->pos)))
+			{	//If this fret hand position is in the affected range of this function
+				if(warnuser)
+				{
+					eof_clear_input();
+					key[KEY_Y] = 0;
+					key[KEY_N] = 0;
+					if(alert(NULL, warning, "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+					{	//If the user does not opt to remove the existing hand positions
+						eof_menu_track_set_tech_view_state(eof_song, eof_selected_track2, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
+						return;
+					}
 				}
+				warnuser = 0;
+				if(!eof_fret_hand_position_list_dialog_undo_made)
+				{	//If an undo state hasn't been made yet since launching this dialog
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					eof_fret_hand_position_list_dialog_undo_made = 1;
+				}
+				eof_pro_guitar_track_delete_hand_position(tp, ctr - 1);	//Delete the hand position
 			}
-			warnuser = 0;
-			if(!eof_fret_hand_position_list_dialog_undo_made)
-			{	//If an undo state hasn't been made yet since launching this dialog
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				eof_fret_hand_position_list_dialog_undo_made = 1;
-			}
-			eof_pro_guitar_track_delete_hand_position(tp, ctr - 1);	//Delete the hand position
 		}
 	}
 	eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions
@@ -3224,8 +3246,17 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	}
 
+	//Initialize low and high fret variables for the generation of hand positions
+	if(all)
+	{	//If the entire track difficulty's fret hand positions are being generated
+		current_low = current_high = 0;	//Reset these
+	}
+	else
+	{	//If fret hand positions for a selection of notes is being generated
+		current_low = current_high = eof_pro_guitar_track_find_effective_fret_hand_position(tp, eof_note_type, tp->note[startnote]->pos);	//Set these variables to the value of the fret hand position in effect at the position of the first selected note, if any
+	}
+
 	//Iterate through this track difficulty's notes and determine efficient hand positions
-	current_low = current_high = 0;	//Reset these at the start of generating hand positions
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the track
 		if((tp->note[ctr]->type == difficulty) && !(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_TEMP))
@@ -3337,6 +3368,11 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 	eof_render();
 }
 
+void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, char difficulty, char warnuser, char dynamic)
+{
+	eof_generate_efficient_hand_positions_logic(sp, track, difficulty, warnuser, dynamic, 0, 0);	//Generate fret hand positions for the entire track
+}
+
 int eof_generate_hand_positions_current_track_difficulty(void)
 {
 	int junk;
@@ -3345,6 +3381,7 @@ int eof_generate_hand_positions_current_track_difficulty(void)
 	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return 0;	//Invalid parameters
 
+	eof_fret_hand_position_list_dialog_undo_made = 0;	//Reset this condition
 	eof_generate_efficient_hand_positions(eof_song, eof_selected_track, eof_note_type, 1, 0);	//Warn the user if existing hand positions will be deleted (use a static fret range tolerance of 4 for all frets, since it's assumed the author is charting for Rocksmith if they use this function)
 
 	(void) eof_pro_guitar_track_find_effective_fret_hand_position_definition(eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum], eof_note_type, eof_music_pos - eof_av_delay, NULL, &diffindex, 0);
@@ -3353,6 +3390,36 @@ int eof_generate_hand_positions_current_track_difficulty(void)
 	(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_START, 0, &junk);	//Re-initialize the dialog
 	(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
 	return D_REDRAW;
+}
+
+int eof_generate_efficient_hand_positions_for_selected_notes(void)
+{
+	unsigned long i;
+	long sel_start = -1;	//The index number of the first selected note
+	long sel_end = 0;
+
+	eof_fret_hand_position_list_dialog_undo_made = 0;	//Reset this condition
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{
+			if(eof_get_note_pos(eof_song, eof_selected_track, i) < sel_start)
+			{
+				sel_start = i;
+			}
+			if(eof_get_note_pos(eof_song, eof_selected_track, i) > sel_end)
+			{
+				sel_end = i;
+			}
+		}
+	}
+
+	if((sel_start >= 0) && (sel_end > sel_start))
+	{	//If multiple notes are selected
+		eof_generate_efficient_hand_positions_logic(eof_song, eof_selected_track, eof_note_type, 1, 0, sel_start, sel_end);	//Generate fret hand positions for the range of the chart from the first to last selected note
+	}
+
+	return 1;
 }
 
 int eof_note_can_be_played_within_fret_tolerance(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned char *current_low, unsigned char *current_high)

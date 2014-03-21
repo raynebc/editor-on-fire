@@ -94,7 +94,7 @@ void eof_restore_oggs_helper(void);
 	//Function to discard changes made to OGGs during editing
 
 int eof_save_helper(char *destfilename);
-	//Performs logic that is common among "Save" and "Save as"
+	//Performs logic that is common among "Save" and "Save as", including various validation checks
 	//"Save as" operations should pass the destination file path through destfilename
 	//  (but the calling function must not use eof_temp_filename[] to pass the target filename, as this function destroys that array's contents)
 	//"Save" operations should pass NULL for destfilename

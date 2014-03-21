@@ -2827,17 +2827,26 @@ if(eof_key_code == KEY_PAUSE)
 			}//If the mouse is in the fretboard area
 		}//If CTRL is not held down and the input method is rex mundi
 
-	/* delete beat (CTRL+Del) */
 	/* delete note (Del) */
+	/* delete beat (CTRL+Del) */
+	/* delete effective fret hand position (SHIFT+Del in a pro guitar track) */
 		if(eof_key_code == KEY_DEL)
 		{
-			if(KEY_EITHER_CTRL)
-			{
-				(void) eof_menu_beat_delete();
+			if(KEY_EITHER_SHIFT)
+			{	//If SHIFT is held
+				(void) eof_track_delete_effective_fret_hand_position();
+				eof_shift_used = 1;	//Track that the SHIFT key was used
 			}
 			else
 			{
-				(void) eof_menu_note_delete();
+				if(KEY_EITHER_CTRL)
+				{	//If CTRL is held but SHIFT is not
+					(void) eof_menu_beat_delete();
+				}
+				else
+				{	//If neither CTRL nor SHIFT are held
+					(void) eof_menu_note_delete();
+				}
 			}
 			eof_use_key();
 		}
@@ -5536,8 +5545,9 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 				{	//If this hand position would render further right than the right edge of the screen
 					break;	//Skip rendering this and all other hand positions, which would continue to render off screen
 				}
-				else if(xcoord >= -25)
+				if(xcoord >= -25)
 				{	//If the hand position renders close enough to or after the left edge of the screen, consider it visible
+					vline(window->screen, xcoord, 25 + 5 + 14, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_red);
 					textprintf_centre_ex(window->screen, eof_font, xcoord , 25 + 5, eof_color_red, eof_color_black, "%lu", tp->handposition[i].end_pos);	//Display it
 				}
 			}
@@ -5555,8 +5565,10 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 	unsigned long selected_tab;
 	int lpos;							//The position of the first beatmarker
 	char *tab_name;
-	char tab_text[5] = {0};			//Used to generate the string for a numbered difficulty
+	char tab_text[32] = {0};			//Used to generate the string for the difficulty name/number, including the note/tech note population statuses
 	int scroll_pos;
+	EOF_PRO_GUITAR_TRACK *tp = NULL;
+	unsigned char diffnum = 0, isdiff;
 
 	if(!eof_song_loaded || !window)
 		return;
@@ -5629,20 +5641,21 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 		//Draw difficulty tab text
 		for(i = 0; i < numtabs; i++)
 		{	//For each difficulty tab rendered
+			isdiff = 1;	//Unless determined that the tab represents a change to lowest/highest difficulty (<< and >>), this condition is set
 			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 			{	//If this track is not limited to 5 difficulties
 				if(i == 0)
 				{	//The first tab will be "<<"
 					(void) snprintf(tab_text, sizeof(tab_text) - 1, "<<");
+					isdiff = 0;
 				}
 				else if(i == numtabs - 1)
 				{	//The last tab will be ">>"
 					(void) snprintf(tab_text, sizeof(tab_text) - 1, ">>");
+					isdiff = 0;
 				}
 				else
 				{	//The other tabs will be rendered as difficulty numbers
-					unsigned char diffnum;
-
 					if(eof_note_type < numtabs / 2)
 					{	//If the tabs represent the lowest difficulties
 						diffnum = i - 1;
@@ -5662,32 +5675,45 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 					}
 				}
 				tab_name = tab_text;
-			}
-			else if(eof_selected_track == EOF_TRACK_VOCALS)
-			{
-				tab_name = eof_vocal_tab_name[i];
-			}
-			else if(eof_selected_track == EOF_TRACK_DANCE)
-			{
-				tab_name = eof_dance_tab_name[i];
-			}
+			}//If this track is not limited to 5 difficulties
 			else
-			{
-				tab_name = eof_note_type_name[i];
+			{	//The track difficulty is named
+				if(eof_selected_track == EOF_TRACK_VOCALS)
+				{
+					tab_name = eof_vocal_tab_name[i];
+				}
+				else if(eof_selected_track == EOF_TRACK_DANCE)
+				{
+					tab_name = eof_dance_tab_name[i];
+				}
+				else
+				{
+					tab_name = eof_note_type_name[i];
+				}
+				(void) snprintf(tab_text, sizeof(tab_text) - 1, "%s", tab_name);	//Copy the difficulty name to the string
+				diffnum = i;	//The difficulty number is the same as the tab number
+			}
+			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If a pro guitar track is being rendered
+				tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
+				if((tp->note != tp->technote) && isdiff && eof_track_diff_populated_tech_note_status[diffnum])
+				{	//If tech view is NOT in effect, this tab represents a specific difficulty and there is at least one tech note in this difficulty
+					(void) strncat(tab_text, "(*)", sizeof(tab_text) - 1);	//Append the tech notes populated indicator
+				}
 			}
 			if(i == selected_tab)
 			{
-				textprintf_centre_ex(window->screen, font, 50 + i * 80, 2 + 8, eof_color_black, -1, "%s", tab_name);
+				textprintf_centre_ex(window->screen, font, 47 + i * 80, 2 + 8, eof_color_black, -1, "%s", tab_text);
 			}
 			else
 			{
-				textprintf_centre_ex(window->screen, font, 50 + i * 80, 2 + 2 + 8, makecol(128, 128, 128), -1, "%s", tab_name);
+				textprintf_centre_ex(window->screen, font, 47 + i * 80, 2 + 2 + 8, makecol(128, 128, 128), -1, "%s", tab_text);
 			}
 			if((eof_selected_track == EOF_TRACK_VOCALS) && (i == eof_vocals_tab))
 			{	//Break after  rendering the one difficulty tab name for the vocal track
 				break;
 			}
-		}
+		}//For each difficulty tab rendered
 	}//Only draw difficulty tabs for the main piano roll
 	else
 	{	//Otherwise display the secondary piano roll's track difficulty

@@ -1040,6 +1040,17 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 				}
 			}
 		}
+
+		if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If a pro guitar track is being processed
+			EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+
+			memset(eof_track_diff_populated_tech_note_status, 0, sizeof(eof_track_diff_populated_tech_note_status));
+			for(i = 0; i < tp->technotes; i++)
+			{
+				eof_track_diff_populated_tech_note_status[tp->technote[i]->type] = 1;
+			}
+		}
 	}
 
 	return numdiffs;
@@ -1392,6 +1403,7 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 				ptr4->defaulttone[0] = '\0';	//Ensure this string is emptied
 				ptr4->parent = ptr3;
 				ptr4->note = ptr4->pgnote;		//Put the regular pro guitar note array into effect
+				ptr4->ignore_tuning = 1;		//By default, chord lookups will ignore the tuning and capo and assume standard tuning
 				sp->pro_guitar_track[sp->pro_guitar_tracks] = ptr4;
 				sp->pro_guitar_tracks++;
 			break;
@@ -3283,6 +3295,29 @@ unsigned long eof_get_track_size(EOF_SONG *sp, unsigned long track)
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 		return sp->pro_guitar_track[tracknum]->notes;
+	}
+
+	return 0;
+}
+
+unsigned long eof_get_track_tech_note_size(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track] == NULL))
+		return 0;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+		return 0;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+		return 0;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+		return sp->pro_guitar_track[tracknum]->technotes;
 	}
 
 	return 0;
