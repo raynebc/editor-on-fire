@@ -549,6 +549,7 @@ EOF_SONG * eof_load_song(const char * fn);	//Loads the specified EOF file, valid
 int eof_save_song(EOF_SONG * sp, const char * fn);	//Saves the song to file
 
 unsigned long eof_get_track_size(EOF_SONG *sp, unsigned long track);						//Returns the number of notes/lyrics in the specified track, or 0 on error
+unsigned long eof_get_track_tech_note_size(EOF_SONG *sp, unsigned long track);				//Returns the number of tech notes in the specified pro guitar track, or 0 on error
 unsigned long eof_get_chart_size(EOF_SONG *sp);												//Returns the number of notes/lyrics in the chart, or 0 on error
 unsigned long eof_get_used_lanes(unsigned long track, unsigned long startpos, unsigned long endpos, char type);
 	//Returns a bitmask representing all lanes used within the specified track difficulty during the specified time span
@@ -725,7 +726,8 @@ void eof_sort_notes(EOF_SONG *sp);	//Sorts the notes in all tracks
 void eof_fixup_notes(EOF_SONG *sp);	//Performs cleanup of the note selection, beats and all tracks
 unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track);
 	//Sets the populated status indicator for the specified track's difficulty names by prefixing each populated difficulty name in the current track (stored in eof_note_type_name[], eof_vocal_tab_name[] and eof_dance_tab_name[]) with an asterisk
-	//eof_track_diff_populated_status[] is also updated so that each populated difficulty results in the corresponding element number being nonzero
+	//eof_track_diff_populated_status[] is updated so that each populated difficulty results in the corresponding element number being nonzero
+	//eof_track_diff_populated_tech_note_status[] is also updated if the specified track is a pro guitar track, so that each difficulty with at least one tech note results in the corresponding element number being nonzero
 	//Returns the number of difficulties present in the specified track (ie. if the highest used difficulty is 9, 10 is returned because the numbering begins with 0), or 0 is returned upon error or empty track
 	//If the specified track is also the active track, the program window title is redrawn to reflect the current populated status of the active track difficulty
 

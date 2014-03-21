@@ -51,6 +51,10 @@ int eof_track_fret_hand_positions_copy_from(void);
 	//Allows the user to copy fret hand positions defined in another difficulty into the current track difficulty
 char * eof_track_fret_hand_positions_copy_from_list(int index, int * size);
 	//The list dialog function for eof_track_fret_hand_positions_copy_from()
+int eof_track_delete_effective_fret_hand_position(void);
+	//Deletes the fret hand position in effect at the current seek position in the active track difficulty, if any
+int eof_track_fret_hand_positions_generate_all(void);
+	//Generates fret hand positions for all populated difficulties in the track, replacing any that already exist
 
 int eof_track_rs_popup_add(void);
 	//Allows the user to add a popup message displayed in-game in Rocksmith
@@ -191,9 +195,6 @@ int eof_menu_thin_notes_track_12(void);
 int eof_menu_thin_notes_track_13(void);
 	//Thins out the notes in the active track difficulty to match those in the active difficulty in the specified track
 	//If a note in the active track isn't within a threshold distance of any note in the specified track, it is deleted
-
-int eof_track_fret_hand_positions_generate_all(void);
-	//Generates fret hand positions for all populated difficulties in the track, replacing any that already exist
 
 int eof_menu_track_toggle_tech_view(void);	//Toggles tech view for the active pro guitar track
 char eof_menu_pro_guitar_track_get_tech_view_state(EOF_PRO_GUITAR_TRACK *tp);	//Returns nonzero if the specified pro guitar track has tech view enabled, otherwise returns zero

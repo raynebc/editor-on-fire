@@ -381,7 +381,7 @@ void RS_Load(FILE *inf)
 							//input file so I can create a buffer large enough to read any line into
 	char *buffer;			//Will be an array large enough to hold the largest line of text from input file
 	unsigned long processedctr=0;	//The current line number being processed in the text file
-	long time, note, length, count;
+	long time, note, length;
 	char lyric[256], lyric2[256];
 	char *index;
 
