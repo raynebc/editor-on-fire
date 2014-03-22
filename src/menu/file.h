@@ -35,8 +35,9 @@ int eof_new_chart(char * filename);
 	//Returns nonzero on failure/cancellation
 
 int eof_menu_file_load(void);
-int eof_menu_file_save(void);
-int eof_menu_file_quick_save(void);
+int eof_menu_file_save_logic(char silent);	//Performs "Save" logic, with the option to silence dialog prompts where possible
+int eof_menu_file_save(void);				//Calls eof_menu_file_save_logic() with a silent value of 0
+int eof_menu_file_quick_save(void);			//Calls eof_menu_file_save_logic() with a silent value of 1
 int eof_menu_file_lyrics_import(void);
 int eof_menu_file_feedback_import(void);	//Prompt for a .chart file and import it
 int eof_menu_file_save_as(void);
@@ -93,12 +94,13 @@ int eof_mp3_to_ogg(char *file, char *directory);
 void eof_restore_oggs_helper(void);
 	//Function to discard changes made to OGGs during editing
 
-int eof_save_helper(char *destfilename);
+int eof_save_helper(char *destfilename, char silent);
 	//Performs logic that is common among "Save" and "Save as", including various validation checks
 	//"Save as" operations should pass the destination file path through destfilename
 	//  (but the calling function must not use eof_temp_filename[] to pass the target filename, as this function destroys that array's contents)
 	//"Save" operations should pass NULL for destfilename
 	//Returns zero on success, one on user cancellation, other values on error
+	//If silent is nonzero, warnings and prompts are suppressed in order to perform a quick save operation
 
 void eof_apply_display_settings(int mode);
 	//Used by eof_menu_file_display() and eof_create_image_sequence() to set EOF's display settings
