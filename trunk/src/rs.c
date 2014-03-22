@@ -356,7 +356,7 @@ int eof_song_qsort_control_events(const void * e1, const void * e2)
 	return 0;
 }
 
-int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, char *user_warned)
+int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, unsigned short *user_warned)
 {
 	PACKFILE * fp;
 	char buffer[600] = {0}, buffer2[512] = {0};
@@ -767,18 +767,20 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
 	if(!eof_song_contains_event(sp, "intro", track, EOF_EVENT_FLAG_RS_SECTION, 1) && !eof_song_contains_event(sp, "intro", 0, EOF_EVENT_FLAG_RS_SECTION, 1))
 	{	//If the user did not define an intro RS section that applies to either the track being exported or all tracks
-		if(sp->beat[startbeat]->contained_rs_section_event >= 0)
-		{	//If there is already a RS section defined on the first beat containing a note
+		if((sp->beat[startbeat]->contained_rs_section_event >= 0) && ((*user_warned & 64) == 0))
+		{	//If there is already a RS section defined on the first beat containing a note, and the user wasn't warned of this problem yet
 			allegro_message("Warning:  There is no intro RS section, but the beat marker before the first note already has a section.\nYou should move that section because only one section per beat is exported.");
+			*user_warned |= 64;
 		}
 		eof_log("\t! Adding missing intro RS section", 1);
 		(void) eof_song_add_text_event(sp, startbeat, "intro", 0, EOF_EVENT_FLAG_RS_SECTION, 1);	//Add a temporary one
 	}
 	if(!eof_song_contains_event(sp, "noguitar", track, EOF_EVENT_FLAG_RS_SECTION, 1) && !eof_song_contains_event(sp, "noguitar", 0, EOF_EVENT_FLAG_RS_SECTION, 1))
 	{	//If the user did not define a noguitar RS section that applies to either the track being exported or all tracks
-		if(sp->beat[endbeat]->contained_rs_section_event >= 0)
-		{	//If there is already a RS section defined on the first beat after the last note
+		if((sp->beat[endbeat]->contained_rs_section_event >= 0) && ((*user_warned & 128) == 0))
+		{	//If there is already a RS section defined on the first beat after the last note, and the user wasn't warned of this problem yet
 			allegro_message("Warning:  There is no noguitar RS section, but the beat marker after the last note already has a section.\nYou should move that section because only one section per beat is exported.");
+			*user_warned |= 128;
 		}
 		eof_log("\t! Adding missing noguitar RS section", 1);
 		(void) eof_song_add_text_event(sp, endbeat, "noguitar", 0, EOF_EVENT_FLAG_RS_SECTION, 1);	//Add a temporary one
@@ -1599,7 +1601,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	return 1;	//Return success
 }
 
-int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, char *user_warned)
+int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, unsigned short *user_warned)
 {
 	PACKFILE * fp;
 	char buffer[600] = {0}, buffer2[512] = {0};
@@ -1646,10 +1648,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view if applicable
 	if(eof_get_highest_fret(sp, track, 0) > 24)
 	{	//If the track being exported uses any frets higher than 24
-		if((*user_warned & 64) == 0)
+		if((*user_warned & 256) == 0)
 		{	//If the user wasn't alerted about this issue yet
 			allegro_message("Warning:  At least one track (\"%s\") uses a fret higher than 24.  These won't display correctly in Rocksmith 2.", sp->track[track]->name);
-			*user_warned |= 64;
+			*user_warned |= 256;
 		}
 	}
 	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
@@ -2027,18 +2029,20 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
 	if(!eof_song_contains_event(sp, "intro", track, EOF_EVENT_FLAG_RS_SECTION, 1) && !eof_song_contains_event(sp, "intro", 0, EOF_EVENT_FLAG_RS_SECTION, 1))
 	{	//If the user did not define an intro RS section that applies to either the track being exported or all tracks
-		if(sp->beat[startbeat]->contained_rs_section_event >= 0)
-		{	//If there is already a RS section defined on the first beat containing a note
+		if((sp->beat[startbeat]->contained_rs_section_event >= 0) && ((*user_warned & 64) == 0))
+		{	//If there is already a RS section defined on the first beat containing a note, and the user wasn't warned of this problem yet
 			allegro_message("Warning:  There is no intro RS section, but the beat marker before the first note already has a section.\nYou should move that section because only one section per beat is exported.");
+			*user_warned |= 64;
 		}
 		eof_log("\t! Adding missing intro RS section", 1);
 		(void) eof_song_add_text_event(sp, startbeat, "intro", 0, EOF_EVENT_FLAG_RS_SECTION, 1);	//Add a temporary one
 	}
 	if(!eof_song_contains_event(sp, "noguitar", track, EOF_EVENT_FLAG_RS_SECTION, 1) && !eof_song_contains_event(sp, "noguitar", 0, EOF_EVENT_FLAG_RS_SECTION, 1))
 	{	//If the user did not define a noguitar RS section that applies to either the track being exported or all tracks
-		if(sp->beat[endbeat]->contained_rs_section_event >= 0)
-		{	//If there is already a RS section defined on the first beat after the last note
+		if((sp->beat[endbeat]->contained_rs_section_event >= 0) && ((*user_warned & 128) == 0))
+		{	//If there is already a RS section defined on the first beat after the last note, and the user wasn't warned of this problem yet
 			allegro_message("Warning:  There is no noguitar RS section, but the beat marker after the last note already has a section.\nYou should move that section because only one section per beat is exported.");
+			*user_warned |= 128;
 		}
 		eof_log("\t! Adding missing noguitar RS section", 1);
 		(void) eof_song_add_text_event(sp, endbeat, "noguitar", 0, EOF_EVENT_FLAG_RS_SECTION, 1);	//Add a temporary one

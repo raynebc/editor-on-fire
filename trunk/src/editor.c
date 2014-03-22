@@ -672,12 +672,20 @@ if(eof_key_code == KEY_PAUSE)
 	}
 
 	/* show/hide catalog (Q) */
+	/* quick save (CTRL+Q) */
 	/* double catalog width (SHIFT+Q) */
 	if(eof_key_char == 'q')
 	{
 		if(!KEY_EITHER_SHIFT)
-		{
-			(void) eof_menu_catalog_show();
+		{	//SHIFT is not held
+			if(!KEY_EITHER_CTRL)
+			{	//Neither SHIFT nor CTRL are held
+				(void) eof_menu_catalog_show();
+			}
+			else
+			{	//CTRL is held
+				(void) eof_menu_file_quick_save();
+			}
 		}
 		else
 		{	//SHIFT is held

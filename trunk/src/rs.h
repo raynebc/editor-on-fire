@@ -79,7 +79,7 @@ unsigned long eof_build_section_list(EOF_SONG *sp, unsigned long **results, unsi
 	//The function returns the number of unique sections contained in the list
 	//If there are no sections in the pro guitar track, or upon error, *results is set to NULL and 0 is returned
 
-int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, char *user_warned);
+int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, unsigned short *user_warned);
 	//Writes the specified pro guitar track in Rocksmith 1's XML format, if the track is populated
 	//fn is expected to point to an array at least 1024 bytes in size, and is the target path for the exported XML file.
 	//	It is used to build an appropriate name for the XML file, based on the track's defined arrangement type or the presence of an alternate track name
@@ -90,9 +90,11 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//	8:  At least one note slides to or above fret 22
 	//  16:  There is no COUNT phrase defined and the first beat already contains a phrase
 	//  32:  There is at least one phrase or section defined after the END phrase
+	//  64:  There is no intro RS section, but the beat marker before the first note already has a section.
+	//  128:  There is no noguitar RS section, but the beat marker after the last note already has a section
 	//Rocksmith 1 doesn't support arrangements using a capo, so the capo position is added to the frets values of all fretted notes
 
-int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, char *user_warned);
+int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, unsigned short *user_warned);
 	//Writes the specified pro guitar track in Rocksmith 2's XML format, if the track is populated
 	//fn is expected to point to an array at least 1024 bytes in size, and is the target path for the exported XML file.
 	//	It is used to build an appropriate name for the XML file, based on the track's defined arrangement type or the presence of an alternate track name
@@ -102,7 +104,9 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//	8:  At least one note slides to or above fret 22
 	//  16:  There is no COUNT phrase defined and the first beat already contains a phrase
 	//  32:  There is at least one phrase or section defined after the END phrase
-	//  64:  At least one track uses a fret value higher than 24
+	//  64:  There is no intro RS section, but the beat marker before the first note already has a section.
+	//  128:  There is no noguitar RS section, but the beat marker after the last note already has a section
+	//  256:  At least one track uses a fret value higher than 24
 	//Rocksmith 2 supports arrangements using a capo, but it does not consider the capo to be the nut position, so the capo position still needs to be added
 	// to the fret values of all fretted notes
 
