@@ -3494,6 +3494,7 @@ int eof_menu_file_gp_import(void)
 					free(eof_parsed_gp_file->text_event[ctr]);	//Free the event
 				}
 				eof_parsed_gp_file->text_events = 0;
+				eof_sort_events(eof_song);
 			}
 
 			eof_color_dialog(eof_gp_import_dialog, gui_fg_color, gui_bg_color);

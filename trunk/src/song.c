@@ -4584,7 +4584,22 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 		}
 	}
 
+	//Cleanup fret hand positions
 	eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Ensure fret hand positions are sorted
+	for(ctr = tp->handpositions; ctr > 0; ctr--)
+	{	//For each fret hand position in the track, in reverse order
+		for(ctr2 = ctr; ctr2 < tp->handpositions; ctr2++)
+		{	//For each of the following fret hand positions in the track
+			if(tp->handposition[ctr - 1].start_pos != tp->handposition[ctr2].start_pos)
+			{	//If this fret hand position (all of subsequent ones) are at a different timestamp
+				break;	//Exit inner loop
+			}
+			if(tp->handposition[ctr - 1].difficulty == tp->handposition[ctr2].difficulty)
+			{	//If the two hand positions at the same timestamp and track difficulty
+				eof_pro_guitar_track_delete_hand_position(tp, ctr2);	//Delete the latter
+			}
+		}
+	}
 
 	//Ensure that the note at the beginning of each arpeggio phrase is authored correctly
 	if(eof_write_rs_files || eof_write_rs2_files)
