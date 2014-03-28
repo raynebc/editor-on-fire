@@ -376,6 +376,7 @@ extern PACKFILE *  eof_recovery;
 extern unsigned long eof_seek_selection_start, eof_seek_selection_end;
 extern int         eof_shift_released;
 extern int         eof_shift_used;
+extern int         eof_emergency_stop;
 
 /* mouse control data */
 extern int         eof_selected_control;

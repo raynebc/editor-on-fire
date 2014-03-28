@@ -3594,7 +3594,7 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 								{	//There is a fretted note more than 3 frets higher than the fret hand position
 									error = error2;	//Select the appropriate error message
 								}
-								if(alert(error, "Correct this by setting the fret hand position at or before this note,", "or by deleting/regenerating the fret hand positions.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
+								if(alert(error, "You should correct this by setting the fret hand position at or before this note,", "or by deleting/regenerating the fret hand positions.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
 								{	//If the user does not opt to continue looking for errors
 									eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
 									(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track

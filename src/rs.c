@@ -3156,6 +3156,7 @@ void eof_song_fix_fingerings(EOF_SONG *sp, char *undo_made)
 void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long track, char difficulty, char warnuser, char dynamic, unsigned long startnote, unsigned long stopnote)
 {
 	unsigned long ctr, ctr2, tracknum, count, bitmask, beatctr, startpos = 0, endpos, shapenum;
+	unsigned long effectivestart, effectivestop;	//The start and stop timestamps of the affected range of notes
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned char current_low, current_high, last_anchor = 0;
 	EOF_PRO_GUITAR_NOTE *next_position = NULL;	//Tracks the note at which the next fret hand position will be placed
@@ -3171,9 +3172,9 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 	//Set up
 	tracknum = sp->track[track]->tracknum;
 	tp = sp->pro_guitar_track[tracknum];
-	if(tp->notes == 0)
-	{
-		return;	//Invalid parameters (track must have at least 1 note)
+	if((tp->notes == 0) || (startnote >= tp->notes) || (stopnote >= tp->notes) || (startnote > stopnote))
+	{	//If there are no notes or the specified start or stop note numbers are not valid
+		return;	//Invalid parameters
 	}
 	restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track);
 	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0);	//Disable tech view for the active pro guitar track if applicable
@@ -3188,11 +3189,8 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 	{
 		warning = warning2;
 	}
-	if((startnote >= tp->notes) || (stopnote >= tp->notes))
-	{	//If the specified start or stop note numbers are not valid
-		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track2, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
-		return;	//Invalid parameters
-	}
+	effectivestart = tp->note[startnote]->pos;
+	effectivestop = tp->note[stopnote]->pos;
 
 	//Remove any existing fret hand positions in the specified scope
 	for(ctr = tp->handpositions; ctr > 0; ctr--)
@@ -3245,10 +3243,6 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track2, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
 		return;
 	}
-	if(!eof_fret_hand_position_list_dialog_undo_made)
-	{	//If an undo hasn't been made yet, do it now as there will be at least one fret hand position added
-		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	}
 
 	//Initialize low and high fret variables for the generation of hand positions
 	if(all)
@@ -3261,8 +3255,8 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 	}
 
 	//Iterate through this track difficulty's notes and determine efficient hand positions
-	for(ctr = 0; ctr < tp->notes; ctr++)
-	{	//For each note in the track
+	for(ctr = startnote; ctr <= stopnote; ctr++)
+	{	//For each note in the track that is in the target range
 		if((tp->note[ctr]->type == difficulty) && !(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_TEMP))
 		{	//If it is in the specified difficulty and isn't marked as a temporary note (a single note temporarily inserted to allow chord techniques to appear in Rocksmith 1)
 			if(!next_position)
@@ -3304,6 +3298,11 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 					{	//If the fret hand position for previous notes has not been placed yet, write it first
 						if(current_low && (current_low != last_anchor))
 						{	//As long as the hand position being written is valid and is is different from the previous one
+							if(!eof_fret_hand_position_list_dialog_undo_made)
+							{	//If an undo state hasn't been made yet since launching this dialog
+								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+								eof_fret_hand_position_list_dialog_undo_made = 1;
+							}
 							(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL);	//Add the fret hand position for this forced position change
 							last_anchor = current_low;
 						}
@@ -3314,6 +3313,11 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 					current_high = eof_pro_guitar_note_highest_fret(tp, ctr);
 					if(current_low && (current_low != last_anchor))
 					{	//As long as the hand position being written is valid and is is different from the previous one
+						if(!eof_fret_hand_position_list_dialog_undo_made)
+						{	//If an undo state hasn't been made yet since launching this dialog
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+							eof_fret_hand_position_list_dialog_undo_made = 1;
+						}
 						(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL);	//Add the fret hand position for this forced position change
 						last_anchor = current_low;
 					}
@@ -3323,6 +3327,11 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 				{	//If the position change is being placed on a previous note due to this note going out of fret tolerance
 					if(current_low && (current_low != last_anchor))
 					{	//As long as the hand position being written is valid and is is different from the previous one
+						if(!eof_fret_hand_position_list_dialog_undo_made)
+						{	//If an undo state hasn't been made yet since launching this dialog
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+							eof_fret_hand_position_list_dialog_undo_made = 1;
+						}
 						(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL);	//Add the fret hand position for this forced position change
 						last_anchor = current_low;
 					}
@@ -3332,12 +3341,19 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 				current_high = eof_pro_guitar_note_highest_fret(tp, ctr);
 			}//If a position change was determined to be necessary based on fingering, or this note can't be included with previous notes within a single fret hand position
 		}//If it is in the specified difficulty and isn't marked as a temporary note (a single note inserted to allow chord techniques to appear in Rocksmith)
-	}//For each note in the track
+	}//For each note in the track that is in the target range
 
 	//The last one or more notes examined need to have their hand position placed
 	if(!current_low)
-	{	//If only open notes were played in this track difficulty
-		current_low = 1;	//Place the fret hand position at fret 1
+	{	//If the range of affected notes ending on open notes
+		if(!last_anchor)
+		{	//If no fret hand positions were placed
+			current_low = 1;	//Place the fret hand position at fret 1
+		}
+		else
+		{	//Otherwise the last placed fret hand position remains in effect
+			current_low = last_anchor;
+		}
 	}
 	else if(current_low + tp->capo > 19)
 	{	//Ensure the fret hand position (taking the capo position into account) is capped at 19, since 22 is the highest fret supported in either Rock Band or Rocksmith
@@ -3345,6 +3361,11 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 	}
 	if((current_low != last_anchor) && next_position)
 	{	//If the last parsed note requires a position change
+		if(!eof_fret_hand_position_list_dialog_undo_made)
+		{	//If an undo state hasn't been made yet since launching this dialog
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			eof_fret_hand_position_list_dialog_undo_made = 1;
+		}
 		(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL);	//Add the best determined fret hand position
 	}
 
@@ -3356,7 +3377,10 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 			if(started)
 			{	//If the first phrase marker has been encountered, this beat marks the end of a phrase
 				endpos = sp->beat[beatctr]->pos - 1;	//Track this as the end position of the phrase
-				(void) eof_enforce_rs_phrase_begin_with_fret_hand_position(sp, track, difficulty, startpos, endpos, &eof_fret_hand_position_list_dialog_undo_made, 0);	//Add a fret hand position
+				if((startpos >= effectivestart) && (startpos <= effectivestop))
+				{	//If this phrase begins in the portion of the chart affected by this function
+					(void) eof_enforce_rs_phrase_begin_with_fret_hand_position(sp, track, difficulty, startpos, endpos, &eof_fret_hand_position_list_dialog_undo_made, 0);	//Add a fret hand position
+				}
 			}//If the first phrase marker has been encountered, this beat marks the end of a phrase
 
 			started = 1;	//Track that a phrase has been encountered

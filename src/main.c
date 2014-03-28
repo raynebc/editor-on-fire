@@ -223,6 +223,7 @@ PACKFILE *  eof_recovery = NULL;
 unsigned long eof_seek_selection_start = 0, eof_seek_selection_end = 0;	//Used to track the keyboard driven note selection system in Feedback input mode
 int         eof_shift_released = 1;	//Tracks the press/release of the SHIFT keys for the Feedback input mode seek selection system
 int         eof_shift_used = 0;	//Tracks whether the SHIFT key was used for a keyboard shortcut while SHIFT was held
+int         eof_emergency_stop = 0;	//Set to nonzero by eof_switch_out_callback() so that playback can be stopped OUTSIDE of the callback, in EOF's main loop so that a crash with time stretched playback can be avoided
 
 /* mouse control data */
 int         eof_selected_control = -1;
@@ -591,7 +592,7 @@ void eof_switch_out_callback(void)
 {
 	eof_log("eof_switch_out_callback() entered", 2);
 
-	eof_emergency_stop_music();
+	eof_emergency_stop = 1;	//Trigger EOF to call eof_emergency_stop_music()
 	eof_use_key();
 
 	#ifndef ALLEGRO_MACOSX
@@ -2232,6 +2233,12 @@ void eof_logic(void)
 
 	eof_read_keyboard_input(1);	//Drop ASCII values for number pad key presses
 	eof_read_global_keys();
+
+	if(eof_emergency_stop)
+	{	//If the switch out callback function was triggered, stop playback immediately
+		eof_emergency_stop_music();
+		eof_emergency_stop = 0;
+	}
 
 	/* see if we need to activate the menu */
 	if((mouse_y < eof_image[EOF_IMAGE_MENU]->h) && (mouse_b & 1))
