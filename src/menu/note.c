@@ -3526,7 +3526,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	np = tp->note[eof_selection.current];	//Simplify
 	if(!eof_music_paused)
 	{
-		eof_music_play();
+		eof_music_play(0);
 	}
 
 	eof_cursor_visible = 0;
@@ -4415,7 +4415,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 	np = tp->note[eof_selection.current];	//Simplify
 	if(!eof_music_paused)
 	{
-		eof_music_play();
+		eof_music_play(0);
 	}
 
 	eof_cursor_visible = 0;

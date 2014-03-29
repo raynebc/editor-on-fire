@@ -76,6 +76,7 @@ int eof_menu_edit_snap_twelfth(void);
 int eof_menu_edit_snap_twenty_fourth(void);
 int eof_menu_edit_snap_forty_eighth(void);
 int eof_menu_edit_snap_custom(void);
+int eof_menu_edit_toggle_grid_lines(void);
 
 int eof_menu_edit_hopo_rf(void);
 int eof_menu_edit_hopo_fof(void);

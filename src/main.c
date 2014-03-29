@@ -162,6 +162,7 @@ unsigned long eof_mark_drums_as_hi_hat = 0;		//Allows the user to specify whethe
 unsigned long eof_pro_guitar_fret_bitmask = 63;	//Defines which lanes are affected by these shortcuts:  CTRL+# to set fret numbers, CTRL+(plus/minus) increment/decrement fret values, CTRL+G to toggle ghost status
 char		eof_legacy_view = 0;				//Specifies whether pro guitar notes will render as legacy notes
 unsigned char eof_2d_render_top_option = 32;	//Specifies what item displays at the top of the 2D panel (defaults to note names)
+char        eof_render_grid_lines = 0;		//Specifies whether grid snap positions will render in the editor window
 
 int         eof_undo_toggle = 0;
 int         eof_redo_toggle = 0;
@@ -2362,7 +2363,7 @@ void eof_logic(void)
 			alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_pos);
 			if(key[KEY_S])
 			{	//If S is still being held down, replay the note selection
-				eof_music_play();
+				eof_music_play(0);
 			}
 		}
 	}//If the chart is playing

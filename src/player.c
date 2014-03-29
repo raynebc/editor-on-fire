@@ -9,11 +9,11 @@
 #include "memwatch.h"
 #endif
 
-void eof_music_play(void)
+void eof_music_play(char resumelastspeed)
 {
-	int speed = eof_playback_speed;
+	static int speed = 1000;
 	unsigned long i;
-	int ret;
+	int ret, newspeed;
 
 	eof_log("eof_music_play() entered", 1);
 
@@ -22,22 +22,26 @@ void eof_music_play(void)
 		return;
 	}
 	eof_music_paused = 1 - eof_music_paused;
-	if(KEY_EITHER_CTRL)
-	{	//If CTRL is being held
-		if(KEY_EITHER_SHIFT)
-		{	//If SHIFT is also being held
-			eof_shift_used = 1;	//Track that the SHIFT key was used
-			speed = 250;
+	if(!resumelastspeed)
+	{	//If the previous playback speed isn't being re-used, determine what speed to play at
+		newspeed = eof_playback_speed;	//By default, use the currently configured playback rate
+		if(KEY_EITHER_CTRL)
+		{	//If CTRL is being held
+			if(KEY_EITHER_SHIFT)
+			{	//If SHIFT is also being held
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				newspeed = 250;
+			}
+			else
+			{
+				newspeed = 500;
+			}
 		}
-		else
+		else if(key[KEY_D])	//Force full playback speed
 		{
-			speed = 500;
+			newspeed = 1000;
+			key[KEY_D]=0;
 		}
-	}
-	else if(key[KEY_D])	//Force full playback speed
-	{
-		speed = 1000;
-		key[KEY_D]=0;
 	}
 	if(eof_music_paused)
 	{
@@ -61,6 +65,10 @@ void eof_music_play(void)
 		int held;	//Tracks whether the user is holding down one of the defined controller buttons
 
 		eof_log("\tStarting playback", 1);
+		if(!resumelastspeed)
+		{	//If the previous playback speed isn't being re-used, set the speed based on the current playback rate or any keyboard modifiers used
+			speed = newspeed;
+		}
 		if(key[KEY_S] && (eof_count_selected_notes(NULL, 0) > 0))
 		{	//If S is being held, and there are selected notes, play back the audio from the first selected note to the last
 			eof_music_end_pos = 0;
@@ -143,7 +151,7 @@ void eof_catalog_play(void)
 	{	//Only play a catalog entry if there's at least one, and there is chart audio loaded
 		if(!eof_music_paused)
 		{
-			eof_music_play();
+			eof_music_play(0);
 		}
 		else if(eof_music_catalog_playback)
 		{

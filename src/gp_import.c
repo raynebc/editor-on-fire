@@ -1664,7 +1664,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	unsigned long flags;			//Tracks the flags for the current note
 	unsigned char bendstrength;		//Tracks the note's bend strength if applicable
 	struct guitar_pro_bend bendstruct;	//Stores data about the bend being parsed
-	double laststartpos, lastendpos;	//Stores the start and end position of the last normal or tie note to be parsed, so bend point data can be used to create tech notes
+	double laststartpos = 0, lastendpos = 0;	//Stores the start and end position of the last normal or tie note to be parsed, so bend point data can be used to create tech notes
 	char new_note;					//Tracks whether a new note is to be created
 	char tie_note;					//Tracks whether a note is a tie note
 	unsigned char finger[7];		//Store left (fretting hand) finger values for each string
