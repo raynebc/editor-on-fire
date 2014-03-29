@@ -502,7 +502,7 @@ int eof_menu_file_save_as(void)
 	{
 		if(!eof_music_paused)
 		{
-			eof_music_play();
+			eof_music_play(0);
 		}
 	}
 	eof_cursor_visible = 0;
@@ -692,7 +692,7 @@ int eof_menu_file_save_logic(char silent)
 
 	if(!eof_music_paused)
 	{
-		eof_music_play();
+		eof_music_play(0);
 	}
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
@@ -982,7 +982,7 @@ int eof_menu_file_settings(void)
 	{
 		if(!eof_music_paused)
 		{
-			eof_music_play();
+			eof_music_play(0);
 		}
 	}
 	eof_cursor_visible = 0;
@@ -1037,7 +1037,7 @@ int eof_menu_file_preferences(void)
 	{
 		if(!eof_music_paused)
 		{
-			eof_music_play();
+			eof_music_play(0);
 		}
 	}
 	eof_cursor_visible = 0;
@@ -1363,7 +1363,7 @@ int eof_menu_file_link(char application)
 	{
 		if(!eof_music_paused)
 		{
-			eof_music_play();
+			eof_music_play(0);
 		}
 	}
 	eof_cursor_visible = 0;
@@ -1425,7 +1425,7 @@ int eof_menu_file_exit(void)
 	{
 		if(!eof_music_paused)
 		{
-			eof_music_play();
+			eof_music_play(0);
 		}
 		if(eof_music_catalog_playback)
 		{
@@ -3113,7 +3113,7 @@ int eof_menu_prompt_save_changes(void)
 
 	if(!eof_music_paused)
 	{
-		eof_music_play();
+		eof_music_play(0);
 	}
 	ret = alert3(NULL, "You have unsaved changes.", NULL, "Save", "Discard", "Cancel", 0, 0, 0);
 	if(ret == 1)

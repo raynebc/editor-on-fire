@@ -559,7 +559,7 @@ int eof_track_tuning(void)
 
 	if(!eof_music_paused)
 	{
-		eof_music_play();
+		eof_music_play(0);
 	}
 
 	eof_cursor_visible = 0;

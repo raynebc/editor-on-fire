@@ -47,12 +47,16 @@ extern EOF_SNAP_DATA eof_tail_snap;
 extern long        eof_anchor_diff[EOF_TRACKS_MAX];			//Used for note auto-adjust logic
 extern long        eof_tech_anchor_diff[EOF_TRACKS_MAX];	//Used for tech note auto-adjust logic
 
-void eof_select_beat(unsigned long beat);	//Updates eof_selected_measure, eof_beat_in_measure, eof_beats_in_measure and eof_selected_beat to reflect the specified beat number
+void eof_select_beat(unsigned long beat);
+	//Updates eof_selected_measure, eof_beat_in_measure, eof_beats_in_measure and eof_selected_beat to reflect the specified beat number
 void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p);
 	//Accepts a timestamp, and updates sp->grid_pos[] with the positions of each grid snap immediately at/before the timestamp and all remaining grid snaps for the beat/measure (depending on which of the two the grid snap setting is set to use)
 	//The position of the grid snap nearest to the given timestamp is stored in sp->pos
 	//sp->previous_snap and sp->next_snap are populated with the grid snap positions before/after sp->pos, with the limitation that previous_snap is no earlier than the beat's position itself (it won't go into the previous beat)
-void eof_snap_length_logic(EOF_SNAP_DATA * sp);	//Calculates the grid snap interval length for sp->beat
+void eof_snap_length_logic(EOF_SNAP_DATA * sp);
+	//Calculates the grid snap interval length for sp->beat
+unsigned long eof_next_grid_snap(unsigned long pos);
+	//Returns the timestamp of the next grid snap position, or 0 on error
 void eof_read_editor_keys(void);
 void eof_editor_logic(void);
 void eof_editor_drum_logic(void);	//The drum record mode logic

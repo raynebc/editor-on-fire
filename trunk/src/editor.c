@@ -486,6 +486,25 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 	}
 }
 
+unsigned long eof_next_grid_snap(unsigned long pos)
+{
+	long beat;
+
+	if(!eof_song || (eof_snap_mode == EOF_SNAP_OFF))
+		return 0;
+
+	beat = eof_get_beat(eof_song, pos);	//Find which beat the specified position is in
+	if(beat < 0)	//If the seek position is outside the chart
+		return 0;
+
+	if(pos >= eof_song->beat[eof_song->beats - 1]->pos)	//If th especified position is after the last beat marker
+		return 0;
+
+	eof_snap_logic(&eof_tail_snap, pos);				//Find the next grid snap position that occurs after the specified position
+
+	return eof_tail_snap.next_snap;
+}
+
 void eof_read_editor_keys(void)
 {
 //	eof_log("eof_read_editor_keys() entered");
@@ -747,6 +766,7 @@ if(eof_key_code == KEY_PAUSE)
 
 	/* toggle green cymbal (CTRL+G in the drum track) */
 	/* toggle grid snap (G) */
+	/* display grid lines (SHIFT+G) */
 	if(eof_key_char == 'g')
 	{
 		if(KEY_EITHER_CTRL)
@@ -758,17 +778,26 @@ if(eof_key_code == KEY_PAUSE)
 			}
 		}
 		else
-		{	//Otherwise G will toggle grid snap
-			if(eof_snap_mode == EOF_SNAP_OFF)
-			{
-				eof_snap_mode = eof_last_snap_mode;
+		{	//CTRL is not held
+			if(KEY_EITHER_SHIFT)
+			{	//SHIFT is held
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				(void) eof_menu_edit_toggle_grid_lines();
+				eof_use_key();
 			}
 			else
-			{
-				eof_last_snap_mode = eof_snap_mode;
-				eof_snap_mode = EOF_SNAP_OFF;
+			{	//Neither SHIFT nor CTRL are held
+				if(eof_snap_mode == EOF_SNAP_OFF)
+				{
+					eof_snap_mode = eof_last_snap_mode;
+				}
+				else
+				{
+					eof_last_snap_mode = eof_snap_mode;
+					eof_snap_mode = EOF_SNAP_OFF;
+				}
+				eof_use_key();
 			}
-			eof_use_key();
 		}
 	}
 
@@ -895,7 +924,7 @@ if(eof_key_code == KEY_PAUSE)
 			}
 			else
 			{
-				eof_music_play();
+				eof_music_play(0);
 				if(eof_music_paused)
 				{
 					eof_track_fixup_notes(eof_song, eof_selected_track, 1);
@@ -3020,8 +3049,8 @@ if(eof_key_code == KEY_PAUSE)
 				rctrl = key[KEY_RCONTROL];
 				key[KEY_LCONTROL] = 0;	//Clear both CTRL keys so they are not picked up by eof_music_play() to force half-speed playback
 				key[KEY_RCONTROL] = 0;
-				eof_music_play();	//Stop playback
-				eof_music_play();	//Resume playback at new speed
+				eof_music_play(0);	//Stop playback
+				eof_music_play(0);	//Resume playback at new speed
 				key[KEY_LCONTROL] = lctrl;	//Restore the CTRL key states
 				key[KEY_RCONTROL] = rctrl;
 			}
@@ -3040,8 +3069,8 @@ if(eof_key_code == KEY_PAUSE)
 				rctrl = key[KEY_RCONTROL];
 				key[KEY_LCONTROL] = 0;	//Clear both CTRL keys so they are not picked up by eof_music_play() to force half-speed playback
 				key[KEY_RCONTROL] = 0;
-				eof_music_play();	//Stop playback
-				eof_music_play();	//Resume playback at new speed
+				eof_music_play(0);	//Stop playback
+				eof_music_play(0);	//Resume playback at new speed
 				key[KEY_LCONTROL] = lctrl;	//Restore the CTRL key states
 				key[KEY_RCONTROL] = rctrl;
 			}
@@ -5417,7 +5446,11 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			}
 
 			//Only render vertical lines if the x position is visible on-screen, otherwise the entire line will not be visible anyway
-			if((eof_song->beat[i]->contained_rs_section_event >= 0) || (eof_song->beat[i]->contained_section_event >= 0))
+			if(i == eof_hover_beat)
+			{	//If this beat is hovered over
+				beatlinecol = bhcol;	//Render the beat line in green
+			}
+			else if((eof_song->beat[i]->contained_rs_section_event >= 0) || (eof_song->beat[i]->contained_section_event >= 0))
 			{	//If this beat contains a RS section or RS phrase
 				beatlinecol = eof_color_red;	//Render the beat line in red
 			}
@@ -5529,6 +5562,20 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			textprintf_ex(window->screen, eof_mono_font, xcoord + 2, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 2, eof_color_yellow, -1, "%s", ksname);
 		}
 	}//For each beat
+
+	/* draw grid lines */
+	if(eof_render_grid_lines)
+	{	//If the rendering of grid lines is enabled
+		unsigned long gridpos = start;	//Begin with the timestamp of the visible left edge of the piano roll
+
+		gridpos = eof_next_grid_snap(gridpos);	//Find the first grid snap from that timestamp
+		while((gridpos > 0) && (gridpos < stop))
+		{	//If a grid snap position was identified and it renders before the right edge of the screen
+			xcoord = lpos + gridpos / eof_zoom;
+			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10 - 1, eof_color_yellow);
+			gridpos = eof_next_grid_snap(gridpos);	//Find the next grid snap
+		}
+	}
 
 	/* draw the bookmark position */
 	for(i = 0; i < EOF_MAX_BOOKMARK_ENTRIES; i++)
@@ -6223,7 +6270,7 @@ void eof_editor_logic_common(void)
 				}
 				else if(eof_selected_control == 2)
 				{
-					eof_music_play();
+					eof_music_play(0);
 				}
 				else if(eof_selected_control == 4)
 				{

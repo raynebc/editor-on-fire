@@ -53,6 +53,8 @@ MENU eof_edit_snap_menu[] =
 	{"&Custom", eof_menu_edit_snap_custom, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Off\tG", eof_menu_edit_snap_off, NULL, D_SELECTED, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"&Display grid lines\tShift+G", eof_menu_edit_toggle_grid_lines, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -219,7 +221,7 @@ void eof_prepare_edit_menu(void)
 	int vselected = 0;
 
 	if(eof_song && eof_song_loaded)
-	{
+	{	//If a chart is loaded
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 		/* undo */
@@ -473,7 +475,7 @@ void eof_prepare_edit_menu(void)
 		}
 
 		/* selection */
-		for(i = 0; i < 12; i++)
+		for(i = 0; i < 14; i++)
 		{
 			eof_edit_snap_menu[i].flags = 0;
 		}
@@ -525,11 +527,15 @@ void eof_prepare_edit_menu(void)
 				break;
 			}
 		}
+		if(eof_render_grid_lines)
+		{
+			eof_edit_snap_menu[13].flags = D_SELECTED;
+		}
 
 		/* MIDI tones */
 		if(!eof_midi_initialized)
 			eof_edit_menu[18].flags = D_DISABLED;
-	}
+	}//If a chart is loaded
 }
 
 int eof_menu_edit_undo(void)
@@ -1704,6 +1710,12 @@ int eof_menu_edit_snap_custom(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);
+	return 1;
+}
+
+int eof_menu_edit_toggle_grid_lines(void)
+{
+	eof_render_grid_lines ^= 1;	//Toggle this boolean variable
 	return 1;
 }
 
