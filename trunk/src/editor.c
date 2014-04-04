@@ -1483,9 +1483,18 @@ if(eof_key_code == KEY_PAUSE)
 	}
 
 	/* toggle info panel rendering (CTRL+I) */
+	/* toggle ignore status (CTRL+SHIFT+I in a pro guitar track) */
 	if(KEY_EITHER_CTRL && (eof_key_char == 'i'))
 	{
-		eof_disable_info_panel = 1 - eof_disable_info_panel;
+		if(!KEY_EITHER_SHIFT)
+		{	//CTRL is held but SHIFT is not
+			eof_disable_info_panel = 1 - eof_disable_info_panel;
+		}
+		else
+		{	//Both CTRL and SHIFT are held
+			eof_shift_used = 1;	//Track that the SHIFT key was used
+			(void) eof_menu_note_toggle_rs_ignore();
+		}
 		eof_use_key();
 	}
 
@@ -2698,6 +2707,19 @@ if(eof_key_code == KEY_PAUSE)
 					eof_use_key();
 				}
 			}
+
+	/* Redraw display (SHIFT+F5) */
+			if(eof_key_code == KEY_F5)
+			{
+				if(!KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+				{	//If SHIFT is held but CTRL is not
+#ifdef ALLEGRO_WINDOWS
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					(void) eof_redraw_display();
+					eof_use_key();
+#endif
+				}
+			}
 		}//If SHIFT is held down and CTRL is not
 
 		if(!KEY_EITHER_CTRL && ((eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK)))
@@ -3299,6 +3321,7 @@ void eof_editor_logic(void)
 			/* handle initial middle click (only if full screen 3D view is not in effect) */
 			if(!eof_full_screen_3d && (mouse_b & 4) && eof_mclick_released)
 			{	//If the middle click hasn't been processed yet
+				while(mouse_b & 4);	//Wait until the middle mouse button is released before proceeding
 				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 				{	//If a pro guitar track is active
 					if(eof_count_selected_notes(NULL, 0))
@@ -5568,6 +5591,10 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	{	//If the rendering of grid lines is enabled
 		unsigned long gridpos = start;	//Begin with the timestamp of the visible left edge of the piano roll
 
+		if(gridpos < eof_song->beat[0]->pos)
+		{	//If the left edge of the piano roll is before the first beat marker's position
+			gridpos = eof_song->beat[0]->pos;	//Start from there
+		}
 		gridpos = eof_next_grid_snap(gridpos);	//Find the first grid snap from that timestamp
 		while((gridpos > 0) && (gridpos < stop))
 		{	//If a grid snap position was identified and it renders before the right edge of the screen

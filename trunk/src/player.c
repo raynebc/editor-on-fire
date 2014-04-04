@@ -13,7 +13,7 @@ void eof_music_play(char resumelastspeed)
 {
 	static int speed = 1000;
 	unsigned long i;
-	int ret, newspeed;
+	int ret, newspeed = 1000;
 
 	eof_log("eof_music_play() entered", 1);
 

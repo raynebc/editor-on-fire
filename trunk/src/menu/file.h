@@ -47,6 +47,7 @@ int eof_menu_file_settings(void);
 int eof_menu_file_preferences(void);
 int eof_menu_file_display(void);
 int eof_set_display_width(void);			//Overrides the current program window width with a user defined value
+int eof_redraw_display(void);				//Rebuilds the program window with the current window size
 int eof_menu_file_controllers(void);
 int eof_menu_file_song_folder(void);
 int eof_menu_file_link(char application);	//Prompts the user for an executable and song path, if application is 1, they are stored as a link to FoF, otherwise as a link to Phase Shift

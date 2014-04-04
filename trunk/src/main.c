@@ -1985,9 +1985,12 @@ void eof_read_global_keys(void)
 	/* show waveform graph (F5) */
 		else if(eof_key_code == KEY_F5)
 		{
-			clear_keybuf();
-			(void) eof_menu_song_waveform();
-			eof_use_key();
+			if(!KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
+			{	//If neither CTRL nor SHIFT are held
+				clear_keybuf();
+				(void) eof_menu_song_waveform();
+				eof_use_key();
+			}
 		}
 
 	/* midi import (F6) */
@@ -4611,7 +4614,7 @@ void eof_scale_fretboard(unsigned long numlanes)
 
 	for(ctr = 0; ctr < EOF_MAX_FRETS; ctr++)
 	{	//For each fretboard lane after the first is eof_screen_layout.string_space higher than the previous lane
-		eof_screen_layout.note_y[ctr] = 20.0 + ((float)ctr * lanewidth);
+		eof_screen_layout.note_y[ctr] = 20.0 + ((float)ctr * lanewidth) + 0.5;	//Round up to nearest pixel
 	}
 }
 
