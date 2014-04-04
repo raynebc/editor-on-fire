@@ -33,6 +33,19 @@ int eof_menu_hopo_cycle(void);					//Cycles the selected note(s) between auto, o
 int eof_menu_hopo_force_on(void);
 int eof_menu_hopo_force_off(void);
 
+int eof_menu_note_toggle_flag(unsigned char function, unsigned char track_format, unsigned long bitmask);
+	//Toggles the specified bits of either the normal flags or the extended flags of selected notes in the active track difficulty
+	//If function is nonzero, the extended flags are altered, otherwise the normal flags are
+	//If track_format is not equal to EOF_ANY_TRACK_FORMAT, the alteration is only performed if the active track difficulty is of the specified track format
+	//If no notes are manually selected, but Feedback input mode is in effect, any note at the current seek position is instead modified by this function
+	//Functions that do nothing more than toggle one or more bits can call this, otherwise they will need to perform their own logic
+int eof_menu_note_clear_flag(unsigned char function, unsigned char track_format, unsigned long bitmask);
+	//Clears the specified bits of either the normal flags or the extended flags of selected notes in the active track difficulty
+	//If function is nonzero, the extended flags are altered, otherwise the normal flags are
+	//If track_format is not equal to EOF_ANY_TRACK_FORMAT, the alteration is only performed if the active track difficulty is of the specified track format
+	//If no notes are manually selected, but Feedback input mode is in effect, any note at the current seek position is instead modified by this function
+	//Functions that do nothing more than clear one or more bits can call this, otherwise they will need to perform their own logic
+
 int eof_transpose_possible(int dir);			//Tests ability of instrument/vocal pitches to transpose (lower) by the given amount
 int eof_menu_note_transpose_up(void);
 int eof_menu_note_transpose_down(void);
@@ -115,30 +128,32 @@ int eof_menu_note_toggle_hi_hat_sizzle(void);	//Toggles the sizzle hi hat status
 int eof_menu_note_remove_hi_hat_status(void);	//Removes the open, pedal controlled and sizzle hi hat statuses for selected yellow (or red during a disco flip) drum notes
 int eof_menu_note_toggle_rimshot(void);			//Toggles the rimshot status for selected red notes
 int eof_menu_note_remove_rimshot(void);			//Removes the rimshot status for selected red notes
-int eof_menu_note_toggle_tapping(void);			//Toggles the tapping status of all selected notes
-int eof_menu_note_remove_tapping(void);			//Removes the tapping status of all selected notes
-int eof_menu_note_toggle_bend(void);			//Toggles the bend status of all selected notes
-int eof_menu_note_remove_bend(void);			//Removes the bend status of all selected notes
-int eof_menu_note_toggle_harmonic(void);		//Toggles the harmonic status of all selected notes
-int eof_menu_note_remove_harmonic(void);		//Removes the harmonic status of all selected notes
-int eof_menu_note_toggle_vibrato(void);			//Toggles the vibrato status of all selected notes
-int eof_menu_note_remove_vibrato(void);			//Removes the vibrato status of all selected notes
-int eof_menu_note_toggle_pop(void);				//Toggles the pop status of all selected notes
-int eof_menu_note_remove_pop(void);				//Removes the pop status of all selected notes
-int eof_menu_note_toggle_slap(void);			//Toggles the slap status of all selected notes
-int eof_menu_note_remove_slap(void);			//Removes the slap status of all selected notes
-int eof_menu_note_toggle_accent(void);			//Toggles the accent status of all selected notes
-int eof_menu_note_remove_accent(void);			//Removes the accent status of all selected notes
-int eof_menu_note_toggle_pinch_harmonic(void);	//Toggles the pinch harmonic status of all selected notes
-int eof_menu_note_remove_pinch_harmonic(void);	//Removes the pinch harmonic status of all selected notes
-int eof_menu_note_toggle_rs_sustain(void);		//Toggles the sustain pro guitar status of all selected notes
-int eof_menu_note_remove_rs_sustain(void);		//Removes the sustain pro guitar status of all selected notes
-int eof_menu_pro_guitar_toggle_hammer_on(void);	//Toggles the hammer on status of all selected notes
-int eof_menu_pro_guitar_remove_hammer_on(void);	//Removes the hammer on status of all selected notes
-int eof_menu_pro_guitar_toggle_pull_off(void);	//Toggles the pull off status of all selected notes
-int eof_menu_pro_guitar_remove_pull_off(void);	//Removes the pull off status of all selected notes
+int eof_menu_note_toggle_tapping(void);			//Toggles the tapping status of all selected pro guitar notes
+int eof_menu_note_remove_tapping(void);			//Removes the tapping status of all selected pro guitar notes
+int eof_menu_note_toggle_bend(void);			//Toggles the bend status of all selected pro guitar notes
+int eof_menu_note_remove_bend(void);			//Removes the bend status of all selected pro guitar notes
+int eof_menu_note_toggle_harmonic(void);		//Toggles the harmonic status of all selected pro guitar notes
+int eof_menu_note_remove_harmonic(void);		//Removes the harmonic status of all selected pro guitar notes
+int eof_menu_note_toggle_vibrato(void);			//Toggles the vibrato status of all selected pro guitar notes
+int eof_menu_note_remove_vibrato(void);			//Removes the vibrato status of all selected pro guitar notes
+int eof_menu_note_toggle_pop(void);				//Toggles the pop status of all selected pro guitar notes
+int eof_menu_note_remove_pop(void);				//Removes the pop status of all selected pro guitar notes
+int eof_menu_note_toggle_slap(void);			//Toggles the slap status of all selected pro guitar notes
+int eof_menu_note_remove_slap(void);			//Removes the slap status of all selected pro guitar notes
+int eof_menu_note_toggle_accent(void);			//Toggles the accent status of all selected pro guitar notes
+int eof_menu_note_remove_accent(void);			//Removes the accent status of all selected pro guitar notes
+int eof_menu_note_toggle_pinch_harmonic(void);	//Toggles the pinch harmonic status of all selected pro guitar notes
+int eof_menu_note_remove_pinch_harmonic(void);	//Removes the pinch harmonic status of all selected pro guitar notes
+int eof_menu_note_toggle_rs_sustain(void);		//Toggles the sustain status of all selected pro guitar notes
+int eof_menu_note_remove_rs_sustain(void);		//Removes the sustain status of all selected pro guitar notes
+int eof_menu_pro_guitar_toggle_hammer_on(void);	//Toggles the hammer on status of all selected pro guitar notes
+int eof_menu_pro_guitar_remove_hammer_on(void);	//Removes the hammer on status of all selected pro guitar notes
+int eof_menu_pro_guitar_toggle_pull_off(void);	//Toggles the pull off status of all selected pro guitar notes
+int eof_menu_pro_guitar_remove_pull_off(void);	//Removes the pull off status of all selected pro guitar notes
 int eof_menu_note_toggle_ghost(void);			//Toggles the ghost flag for each populated string (that has keyboard shortcuts enabled) on each selected note
 int eof_menu_note_remove_ghost(void);			//Clears the ghost flag for each populated string (that has keyboard shortcuts enabled) on each selected note
+int eof_menu_note_remove_rs_ignore(void);		//Removes the ignore status of all selected pro guitar notes
+int eof_menu_note_toggle_rs_ignore(void);		//Toggles the ignore status of all selected pro guitar notes
 int eof_pro_guitar_note_slide_end_fret(char undo);
 	//Prompts the user for an ending fret number to apply to all selected slide notes.  The number is validated against each selected note's slide direction before it is applied
 	//If save is nonzero, a save state is created before any notes are altered

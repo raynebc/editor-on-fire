@@ -44,6 +44,7 @@ MENU eof_file_display_menu[] =
 	{"&Display", eof_menu_file_display, NULL, 0, NULL},
 	{"Set display &Width", eof_set_display_width, NULL, EOF_LINUX_DISABLE, NULL},
 	{"x2 &Zoom", eof_toggle_display_zoom, NULL, 0, NULL},
+	{"&Redraw\tShift+F5", eof_redraw_display, NULL, EOF_LINUX_DISABLE, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -2414,7 +2415,7 @@ int eof_save_helper(char *destfilename, char silent)
 						key[KEY_Y] = 0;
 						key[KEY_N] = 0;
 						if(alert("Warning: One or more lyrics aren't within lyric phrases.", "These lyrics won't export to FoF script format.", "Continue?", "&Yes", "&No", 'y', 'n') == 2)
-						{	//If user opts cancel the save
+						{	//If user opts to cancel the save
 							eof_show_mouse(NULL);
 							eof_cursor_visible = 1;
 							eof_pen_visible = 1;
@@ -3599,6 +3600,23 @@ int eof_set_display_width(void)
 	eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 	eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case the display window size was changed
 	eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case the display window size was changed
+
+	return D_O_K;
+}
+
+int eof_redraw_display(void)
+{
+	(void) eof_set_display_mode(eof_screen_width, eof_screen_height);
+
+	//Update coordinate related items
+	eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
+	eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case the display window size was changed
+	eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case the display window size was changed
+
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(screen);
+	eof_render();
 
 	return D_O_K;
 }
