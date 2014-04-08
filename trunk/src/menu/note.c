@@ -4457,7 +4457,7 @@ char *eof_finger_strings[6] = {eof_finger_string_lane_1, eof_finger_string_lane_
 DIALOG eof_pro_guitar_note_frets_dialog[] =
 {
 	/*	(proc)				(x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)       (d2) (dp)          (dp2)          (dp3) */
-	{d_agup_window_proc,    0,   48,  184, 248,2,   23,  0,    0,      0,         0,   "Edit note frets / fingering",NULL, NULL },
+	{d_agup_window_proc,    0,   48,  214, 248,2,   23,  0,    0,      0,         0,   "Edit note frets / fingering",NULL, NULL },
 
 	//Note:  In guitar theory, string 1 refers to high e
 	{d_agup_text_proc,      60,  80,  64,  8,  2,   23,  0,    0,      0,         0,   "Fret #",     NULL,          NULL },
@@ -4474,16 +4474,24 @@ DIALOG eof_pro_guitar_note_frets_dialog[] =
 	{d_agup_text_proc,      16,  228, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_1_number, NULL, NULL },
 	{eof_verified_edit_proc,74,  224, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_1, "0123456789Xx",NULL },
 
-	{d_agup_text_proc,      120, 80,  64,  8,  2,   23,  0,    0,      0,         0,   "Finger #",     NULL,          NULL },
-	{eof_verified_edit_proc,140, 104, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_6, "01234XxTt",NULL },
-	{eof_verified_edit_proc,140, 128, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_5, "01234XxTt",NULL },
-	{eof_verified_edit_proc,140, 152, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_4, "01234XxTt",NULL },
-	{eof_verified_edit_proc,140, 176, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_3, "01234XxTt",NULL },
-	{eof_verified_edit_proc,140, 200, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_2, "01234XxTt",NULL },
-	{eof_verified_edit_proc,140, 224, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_1, "01234XxTt",NULL },
+	{d_agup_text_proc,      110, 80,  64,  8,  2,   23,  0,    0,      0,         0,   "Finger #",     NULL,          NULL },
+	{eof_verified_edit_proc,130, 104, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_6, "01234XxTt",NULL },
+	{eof_verified_edit_proc,130, 128, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_5, "01234XxTt",NULL },
+	{eof_verified_edit_proc,130, 152, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_4, "01234XxTt",NULL },
+	{eof_verified_edit_proc,130, 176, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_3, "01234XxTt",NULL },
+	{eof_verified_edit_proc,130, 200, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_2, "01234XxTt",NULL },
+	{eof_verified_edit_proc,130, 224, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_1, "01234XxTt",NULL },
+
+	{d_agup_text_proc,      170, 80,  64,  8,  2,   23,  0,    0,      0,         0,   "Mute",       NULL,          NULL },
+	{d_agup_check_proc,		170, 109, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,		170, 133, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,		170, 157, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,		170, 181, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,		170, 205, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,		170, 229, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
 
 	{d_agup_button_proc,    12,  256, 68,  28, 2,   23,  '\r', D_EXIT, 0,         0,   "OK",         NULL,          NULL },
-	{d_agup_button_proc,    104, 256, 68,  28, 2,   23,  0,    D_EXIT, 0,         0,   "Cancel",     NULL,          NULL },
+	{d_agup_button_proc,    134, 256, 68,  28, 2,   23,  0,    D_EXIT, 0,         0,   "Cancel",     NULL,          NULL },
 	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -4546,12 +4554,14 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 			eof_fret_string_numbers[ctr][7] = '0' + (stringcount - ctr);	//Correct the string number for this label
 			eof_pro_guitar_note_frets_dialog[13 - (2 * ctr)].flags = 0;		//Ensure this fret # input box is enabled
 			eof_pro_guitar_note_frets_dialog[20 - ctr].flags = 0;			//Ensure this finger # input box is enabled
+			eof_pro_guitar_note_frets_dialog[27 - ctr].flags = 0;			//Ensure this mute check box is enabled
 			if(np->note & bitmask)
 			{	//If this string is already defined as being in use, copy its fret value to the string
 				if(np->frets[ctr] == 0xFF)
 				{	//If this string is muted with no fret value specified
 					(void) snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "X");
 					eof_finger_strings[ctr][0] = '\0';	//Empty the fingering string
+					eof_pro_guitar_note_frets_dialog[27 - ctr].flags = D_SELECTED;	//Check the mute box for this string
 				}
 				else
 				{	//If this string has a fret value specified
@@ -4559,11 +4569,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 
 					if(np->frets[ctr] & 0x80)
 					{	//If the fret number's MSB is set, the string is muted
-						eof_finger_strings[ctr][0] = 'X';	//Set the fingering to X to reflect string muting
-						eof_finger_strings[ctr][1] = '\0';
-					}
-					else
-					{	//Otherwise use the string's defined fingering, if any
+						eof_pro_guitar_note_frets_dialog[27 - ctr].flags = D_SELECTED;	//Check the mute box for this string
 						if(np->finger[ctr] != 0)
 						{	//If the finger used to fret this string is defined
 							(void) snprintf(eof_finger_strings[ctr], sizeof(eof_finger_strings[ctr]) - 1, "%d", np->finger[ctr]);	//Create the finger string
@@ -4602,21 +4608,22 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 			}
 		}
 		else
-		{	//Otherwise disable the text box for this fret and empty the string
+		{	//Otherwise disable the inputs for this string
 			eof_pro_guitar_note_frets_dialog[12 - (2 * ctr)].flags = D_HIDDEN;	//Ensure this text boxes' label is hidden
 			eof_pro_guitar_note_frets_dialog[13 - (2 * ctr)].flags = D_HIDDEN;	//Ensure this text box is hidden
 			eof_pro_guitar_note_frets_dialog[20 - ctr].flags = D_HIDDEN;		//Ensure this finger # input box is hidden
+			eof_pro_guitar_note_frets_dialog[27 - ctr].flags = D_HIDDEN;		//Ensure this mute check box is hidden
 			eof_fret_strings[ctr][0] = '\0';
 			eof_finger_strings[ctr][0] = '\0';
 		}
-	}
+	}//For each of the 6 supported strings
 
 	bitmask = 0;
 	while(1)
 	{	//Until user explicitly cancels, or provides proper input and clicks OK
 		char retry = 0, fingeringdefined = 0, offerupdatefingering = 0;
 		retval = eof_popup_dialog(eof_pro_guitar_note_frets_dialog, 0);
-		if(retval == 21)
+		if(retval == 28)
 		{	//If user clicked OK
 			//Validate the finger strings
 			for(i = 0; i < 6; i++)
@@ -4631,34 +4638,37 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 			{	//If any fingering fields are defined, they have to be valid
 				for(i = 0; i < 6; i++)
 				{	//For each of the supported strings
-					if(eof_fret_strings[i][0] != '\0')
-					{	//If this string has a fret value
-						if(atol(eof_fret_strings[i]) != 0)
-						{	//If the value doesn't indicate that it is played open or muted
-							if(eof_finger_strings[i][0] == '\0')
-							{	//If no finger value is given
-								allegro_message("If any fingering is specified, it must be done for all fretted strings.\nCorrect or erase the finger numbers before clicking OK.");
-								retry = 1;	//Flag that the user must enter valid finger information
-								break;
+					if(eof_pro_guitar_note_frets_dialog[27 - i].flags != D_SELECTED)
+					{	//If the mute box isn't checked
+						if(eof_fret_strings[i][0] != '\0')
+						{	//If this string has a fret value
+							if(atol(eof_fret_strings[i]) != 0)
+							{	//If the value doesn't indicate that it is played open or muted
+								if(eof_finger_strings[i][0] == '\0')
+								{	//If no finger value is given
+									allegro_message("If any fingering is specified, it must be done for all fretted strings.\nCorrect or erase the finger numbers before clicking OK.");
+									retry = 1;	//Flag that the user must enter valid finger information
+									break;
+								}
+							}
+							else
+							{	//The string is played open or muted
+								if(((eof_finger_strings[i][0] != '\0') && (toupper(eof_finger_strings[i][0]) != 'X')) && (eof_pro_guitar_note_frets_dialog[27 - i].flags != D_SELECTED))
+								{	//If the inputs don't indicate muting
+									allegro_message("If any fingering is specified, it must be done for all fretted strings.\nCorrect or erase the finger numbers before clicking OK.");
+									retry = 1;
+									break;
+								}
 							}
 						}
 						else
-						{	//The string is played open or muted
-							if((eof_finger_strings[i][0] != '\0') && (toupper(eof_finger_strings[i][0]) != 'X'))
-							{	//If a fingering was given that doesn't indicate muting
-								allegro_message("If any fingering is specified, it must be done for all fretted strings.\nCorrect or erase the finger numbers before clicking OK.");
+						{	//There is no fret value defined
+							if(eof_finger_strings[i][0] != '\0')
+							{	//If there is a fingering defined
+								allegro_message("If any fingering is specified, it must be done only for the fretted strings.\nCorrect or erase the finger numbers before clicking OK.");
 								retry = 1;
 								break;
 							}
-						}
-					}
-					else
-					{	//There is no fret value defined
-						if(eof_finger_strings[i][0] != '\0')
-						{	//If there is a fingering defined
-							allegro_message("If any fingering is specified, it must be done only for the fretted strings.\nCorrect or erase the finger numbers before clicking OK.");
-							retry = 1;
-							break;
 						}
 					}
 				}//For each of the supported strings
@@ -4699,8 +4709,8 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 					{	//If the note is in the active instrument difficulty and is selected
 						for(ctr = 0, allmuted = 1; ctr < 6; ctr++)
 						{	//For each of the 6 supported strings
-							if(eof_fret_strings[ctr][0] != '\0')
-							{	//If this string isn't empty
+							if((eof_fret_strings[ctr][0] != '\0') || (eof_pro_guitar_note_frets_dialog[27 - ctr].flags == D_SELECTED))
+							{	//If this string isn't empty or is marked as muted
 								fretvalue = fingervalue = 0;
 								if(eof_finger_strings[ctr][0] != '\0')
 								{	//If there is a finger value specified for this string
@@ -4719,6 +4729,14 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 										{	//User defined use of the thumb
 											fingervalue = 5;	//Translate into EOF's notation for the thumb
 										}
+									}
+								}
+								if(eof_pro_guitar_note_frets_dialog[27 - ctr].flags == D_SELECTED)
+								{	//If the mute box is checked
+									fretvalue |= 0x80;	//Set the fret value's MSB
+									if(eof_fret_strings[ctr][0] == '\0')
+									{	//Unless the fret value is undefined
+										fretvalue = 0xFF;	//In which case this is a muted note with no specified fret value
 									}
 								}
 								bitmask |= (1 << ctr);	//Set the appropriate bit for this lane
@@ -8379,7 +8397,14 @@ int eof_menu_pro_guitar_toggle_string_mute(void)
 					{	//For each of the 6 supported strings
 						if(np->note & bitmask)
 						{	//If the string is in use
-							np->frets[ctr2] &= 0x7F;	//Clear the MSB
+							if(np->frets[ctr2] == 0xFF)
+							{	//If the fret value is undefined for this note
+								np->frets[ctr2] = 0;	//Replace with a value of 0
+							}
+							else
+							{	//Otherwise just clear the MSB to leave the existing fret value in place
+								np->frets[ctr2] &= 0x7F;
+							}
 						}
 					}
 					np->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;	//Clear this status flag

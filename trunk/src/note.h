@@ -74,6 +74,9 @@ int eof_pro_guitar_note_compare(EOF_PRO_GUITAR_TRACK *tp1, unsigned long note1, 
 	//Compares two pro guitar notes and returns 0 if both notes have the same bitmask (legacy bitmasks are not compared) and active frets have matching values
 	//If the notes do not match, or are from differently formatted tracks, 1 is returned
 	//-1 is returned on error
+int eof_pro_guitar_note_compare_fingerings(EOF_PRO_GUITAR_NOTE *np1, EOF_PRO_GUITAR_NOTE *np2);
+	//Compares the fingering between the specified notes and returns 0 if both use the same strings and define the same fingering for all used strings
+	//-1 is returned on error
 char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, char *buffer);
 	//Copies the note name into the buffer, which is assumed to be large enough to store the name
 	//If the note is named manually, that name is used, otherwise chord detection is used to build the name

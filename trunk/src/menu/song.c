@@ -3638,7 +3638,7 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 						{	//The note stays within the highlighted fret range
 							for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
 							{	//For each of the 6 usable strings
-								if((tp->note[ctr2]->note & bitmask) && (tp->note[ctr2]->finger[ctr3] == 1) && (tp->note[ctr2]->frets[ctr3] != position))
+								if((tp->note[ctr2]->note & bitmask) && (tp->note[ctr2]->finger[ctr3] == 1) && ((tp->note[ctr2]->frets[ctr3] & 0x7F) != position))
 								{	//If this string is defined as being fretted by the index finger, but at a different fret than the fret hand position in effect
 									if(report && !(ignorewarning & 8))
 									{	//If the calling function wanted to prompt the user about each issue found, and this warning message hasn't been suppressed

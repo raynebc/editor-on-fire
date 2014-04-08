@@ -173,13 +173,16 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 				{	//For each note in the track that follows this note
 					if((eof_note_count_rs_lanes(sp, track, ctr2, target) > 1) && !eof_note_compare_simple(sp, track, ctr, ctr2))
 					{	//If this note matches one that follows it, and that later note is a valid chord for the target Rocksmith game
-						if(!(tp->note[ctr2]->tflags & EOF_NOTE_TFLAG_IGNORE))
-						{	//If the note is not ignored
-							if(!(target & 2) || (eof_is_partially_ghosted(sp, track, ctr) == eof_is_partially_ghosted(sp, track, ctr2)))
-							{	//If the target is Rocksmith 1, or if both notes have the same ghost status (either no gems ghosted or at least one gem ghosted)
-								notelist[ctr] = NULL;	//Eliminate this note from the list
-								match = 1;	//Note that this chord matched one of the others
-								break;
+						if(!eof_pro_guitar_note_compare_fingerings(tp->note[ctr], tp->note[ctr2]))
+						{	//If this note has identical fingering to the one that follows it
+							if(!(tp->note[ctr2]->tflags & EOF_NOTE_TFLAG_IGNORE))
+							{	//If the note is not ignored
+								if(!(target & 2) || (eof_is_partially_ghosted(sp, track, ctr) == eof_is_partially_ghosted(sp, track, ctr2)))
+								{	//If the target is Rocksmith 1, or if both notes have the same ghost status (either no gems ghosted or at least one gem ghosted)
+									notelist[ctr] = NULL;	//Eliminate this note from the list
+									match = 1;	//Note that this chord matched one of the others
+									break;
+								}
 							}
 						}
 					}
@@ -2325,40 +2328,25 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			{	//For each of the 6 supported strings
 				if((eof_get_note_note(sp, track, chordlist[ctr]) & bitmask) && (ctr2 < tp->numstrings))
 				{	//If the chord list entry uses this string (verifying that the string number is supported by the track)
-					if((tp->note[chordlist[ctr]]->frets[ctr2] & 0x80) == 0)
-					{	//If the string is not fret hand muted (ghost notes must be allowed so that arpeggio shapes can export)
-						*(fret[ctr2]) = tp->note[chordlist[ctr]]->frets[ctr2] & 0x7F;	//Retrieve the fret played on this string (masking out the muting bit)
-						if(*(fret[ctr2]))
-						{	//If this string isn't played open
-							*(fret[ctr2]) += tp->capo;	//Apply the capo position
+					*(fret[ctr2]) = tp->note[chordlist[ctr]]->frets[ctr2] & 0x7F;	//Retrieve the fret played on this string (masking out the muting bit)
+					if(*(fret[ctr2]))
+					{	//If this string isn't played open
+						*(fret[ctr2]) += tp->capo;	//Apply the capo position
+					}
+					if(effective_fingering[ctr2])
+					{	//If the fingering for this string is defined
+						char *temp = fingerdef[ctr2];	//Simplify logic below
+						temp[0] = '0' + effective_fingering[ctr2];	//Convert decimal to ASCII
+						temp[1] = '\0';	//Truncate string
+						if(temp[0] == '5')
+						{	//If this fingering specifies the thumb
+							temp[0] = '0';	//Convert from EOF's numbering (5 = thumb) to Rocksmith's numbering (0 = thumb)
 						}
-						if(effective_fingering[ctr2])
-						{	//If the fingering for this string is defined
-							char *temp = fingerdef[ctr2];	//Simplify logic below
-							temp[0] = '0' + effective_fingering[ctr2];	//Convert decimal to ASCII
-							temp[1] = '\0';	//Truncate string
-							if(temp[0] == '5')
-							{	//If this fingering specifies the thumb
-								temp[0] = '0';	//Convert from EOF's numbering (5 = thumb) to Rocksmith's numbering (0 = thumb)
-							}
-							*(finger[ctr2]) = temp;
-						}
-						else
-						{	//The fingering is not defined, regardless of whether the string is open or fretted
-							*(finger[ctr2]) = fingerunused;		//Write a -1, this will allow the XML to compile even if the chord's fingering is incomplete/undefined
-						}
+						*(finger[ctr2]) = temp;
 					}
 					else
-					{	//The string is muted
-						if(tp->note[chordlist[ctr]]->frets[ctr2] == 0xFF)
-						{	//If no fret value is defined, assume 0
-							*(fret[ctr2]) = 0;
-						}
-						else
-						{	//The fret value is defined
-							*(fret[ctr2]) = tp->note[chordlist[ctr]]->frets[ctr2] & 0x7F;	//Retrieve the fret played on this string (masking out the muting bit)
-						}
-						*(finger[ctr2]) = fingerunused;
+					{	//The fingering is not defined, regardless of whether the string is open or fretted
+						*(finger[ctr2]) = fingerunused;		//Write a -1, this will allow the XML to compile even if the chord's fingering is incomplete/undefined
 					}
 				}
 				else
@@ -2666,8 +2654,11 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							{	//For each of the entries in the unique chord list
 								if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]) && (eof_is_partially_ghosted(sp, track, ctr3) == eof_is_partially_ghosted(sp, track, chordlist[ctr4])))
 								{	//If this note matches a chord list entry and has the same ghost status (either no gems ghosted or at least one gem ghosted)
-									chordid = ctr4;	//Store the chord list entry number
-									break;
+									if(!eof_pro_guitar_note_compare_fingerings(tp->note[ctr3], tp->note[chordlist[ctr4]]))
+									{	//If this note has identical fingering to chord list entry
+										chordid = ctr4;	//Store the chord list entry number
+										break;
+									}
 								}
 							}
 							if(ctr4 >= chordlistsize)
