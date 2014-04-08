@@ -1834,6 +1834,33 @@ int eof_pro_guitar_note_compare(EOF_PRO_GUITAR_TRACK *tp1, unsigned long note1, 
 	return 1;	//Return not equal
 }
 
+int eof_pro_guitar_note_compare_fingerings(EOF_PRO_GUITAR_NOTE *np1, EOF_PRO_GUITAR_NOTE *np2)
+{
+	unsigned long ctr, bitmask;
+
+	if(!np1 || !np2)
+		return -1;	//Invalid parameters
+
+	if(np1->note != np2->note)	//If the notes don't use the same strings
+		return 1;				//Return not equal
+
+	for(ctr = 0, bitmask = 1; ctr < 6; ctr ++, bitmask <<= 1)
+	{	//For each of the 6 supported strings
+		if(np1->note & bitmask)
+		{	//If this string is used
+			if((np1->frets[ctr] & 0x80) != (np2->frets[ctr] & 0x80))
+			{	//If this string's muted status isn't identical between both notes
+				return 1;	//Return not equal
+			}
+			if(np1->finger[ctr] != np2->finger[ctr])
+			{	//If the fingering isn't identical between both notes
+				return 1;	//Return not equal
+			}
+		}
+	}
+	return 0;	//Return equal
+}
+
 unsigned char eof_pro_guitar_note_lowest_fret(EOF_PRO_GUITAR_TRACK *tp, unsigned long note)
 {
 	unsigned long ctr, bitmask;
