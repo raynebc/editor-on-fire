@@ -1448,6 +1448,56 @@ unsigned long eof_count_selected_notes(unsigned long * total, char v)
 	return count;
 }
 
+unsigned long eof_get_selected_note_range(unsigned long *sel_start, unsigned long *sel_end, char function)
+{
+	unsigned long ctr, start, end, pos, startpos, endpos, count = 0;
+	long length;
+	char first = 1;
+
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type))
+		{
+			pos = eof_get_note_pos(eof_song, eof_selected_track, ctr);
+			length = eof_get_note_length(eof_song, eof_selected_track, ctr);
+			count++;	//Track the number of notes within the selection that are explicitly selected
+			if(first)
+			{	//The first selected note is always the earliest in the selection, since notes are sorted
+				start = end = ctr;
+				startpos = pos;
+				endpos = pos + length;
+				first = 0;
+			}
+			else
+			{
+				if(ctr > end)
+				{	//Track the index of the last note that is selected
+					end = ctr;
+				}
+				if(pos + length > endpos)
+				{	//Track the latest end position among all selected notes, due to crazy notes overlapping, end and endpos may reflect different notes
+					endpos = pos + length;
+				}
+			}
+		}
+	}
+	if(!function)
+	{	//Return the selection information as index numbers
+		if(sel_start)
+			*sel_start = start;
+		if(sel_end)
+			*sel_end = end;
+	}
+	else
+	{	//Return the selection information as timestamps
+		if(sel_start)
+			*sel_start = startpos;
+		if(sel_end)
+			*sel_end = endpos;
+	}
+	return count;
+}
+
 int eof_figure_part(void)
 {
 	int part[EOF_TRACKS_MAX] = {-1};	//Ensure that any tracks FoF don't support reflect -1 being returned

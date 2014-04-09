@@ -3413,27 +3413,10 @@ int eof_generate_hand_positions_current_track_difficulty(void)
 
 int eof_generate_efficient_hand_positions_for_selected_notes(void)
 {
-	unsigned long i;
-	long sel_start = -1;	//The index number of the first selected note
-	long sel_end = 0;
+	unsigned long sel_start, sel_end;
 
 	eof_fret_hand_position_list_dialog_undo_made = 0;	//Reset this condition
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-		{
-			if(eof_get_note_pos(eof_song, eof_selected_track, i) < sel_start)
-			{
-				sel_start = i;
-			}
-			if(eof_get_note_pos(eof_song, eof_selected_track, i) > sel_end)
-			{
-				sel_end = i;
-			}
-		}
-	}
-
-	if((sel_start >= 0) && (sel_end > sel_start))
+	if(eof_get_selected_note_range(&sel_start, &sel_end, 0) > 1)
 	{	//If multiple notes are selected
 		eof_generate_efficient_hand_positions_logic(eof_song, eof_selected_track, eof_note_type, 1, 0, sel_start, sel_end);	//Generate fret hand positions for the range of the chart from the first to last selected note
 	}

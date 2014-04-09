@@ -419,7 +419,7 @@ void eof_prepare_note_menu(void)
 	int spp = 0, ssp = 0, llp = 0;
 	unsigned long i, j;
 	unsigned long tracknum;
-	int sel_start = eof_chart_length, sel_end = 0;
+	unsigned long sel_start = eof_chart_length, sel_end = 0;
 	EOF_PHRASE_SECTION *sectionptr = NULL;
 	unsigned long track_behavior = 0;
 
@@ -429,119 +429,94 @@ void eof_prepare_note_menu(void)
 
 		track_behavior = eof_song->track[eof_selected_track]->track_behavior;
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
-		if(eof_vocals_selected)
-		{	//PART VOCALS SELECTED
-			for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-			{
-				if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
+		if(eof_get_selected_note_range(&sel_start, &sel_end, 1))	//Find the start and end position of the collection of selected notes in the active difficulty
+		{	//If one or more notes/lyrics are selected
+			if(eof_vocals_selected)
+			{	//PART VOCALS SELECTED
+				for(j = 0; j < eof_song->vocal_track[tracknum]->lines; j++)
 				{
-					if(eof_song->vocal_track[tracknum]->lyric[i]->pos < sel_start)
+					if((sel_end >= eof_song->vocal_track[tracknum]->line[j].start_pos) && (sel_start <= eof_song->vocal_track[tracknum]->line[j].end_pos))
 					{
-						sel_start = eof_song->vocal_track[tracknum]->lyric[i]->pos;
-					}
-					if(eof_song->vocal_track[tracknum]->lyric[i]->pos > sel_end)
-					{
-						sel_end = eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length;
+						inll = 1;
+						llstart = sel_start;
+						llend = sel_end;
+						llp = j;
 					}
 				}
 			}
-			for(j = 0; j < eof_song->vocal_track[tracknum]->lines; j++)
-			{
-				if((sel_end >= eof_song->vocal_track[tracknum]->line[j].start_pos) && (sel_start <= eof_song->vocal_track[tracknum]->line[j].end_pos))
-				{
-					inll = 1;
-					llstart = sel_start;
-					llend = sel_end;
-					llp = j;
+			else
+			{	//PART VOCALS NOT SELECTED
+				for(j = 0; j < eof_get_num_star_power_paths(eof_song, eof_selected_track); j++)
+				{	//For each star power path in the active track
+					sectionptr = eof_get_star_power_path(eof_song, eof_selected_track, j);
+					if((sel_end >= sectionptr->start_pos) && (sel_start <= sectionptr->end_pos))
+					{
+						insp = 1;
+						spstart = sel_start;
+						spend = sel_end;
+						spp = j;
+					}
 				}
-			}
+				for(j = 0; j < eof_get_num_solos(eof_song, eof_selected_track); j++)
+				{	//For each solo section in the active track
+					sectionptr = eof_get_solo(eof_song, eof_selected_track, j);
+					if((sel_end >= sectionptr->start_pos) && (sel_start <= sectionptr->end_pos))
+					{
+						insolo = 1;
+						ssstart = sel_start;
+						ssend = sel_end;
+						ssp = j;
+					}
+				}
+				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//If a pro guitar track is active
+					for(j = 0; j < eof_song->pro_guitar_track[tracknum]->arpeggios; j++)
+					{	//For each arpeggio phrase in the active track
+						if((sel_end >= eof_song->pro_guitar_track[tracknum]->arpeggio[j].start_pos) && (sel_start <= eof_song->pro_guitar_track[tracknum]->arpeggio[j].end_pos) && (eof_song->pro_guitar_track[tracknum]->arpeggio[j].difficulty == eof_note_type))
+						{
+							inarpeggio = 1;
+						}
+					}
+				}
+				if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_KEYS_TRACK_BEHAVIOR))
+				{	//If a legacy/pro guitar/bass/keys or drum track is active
+					for(j = 0; j < eof_get_num_trills(eof_song, eof_selected_track); j++)
+					{	//For each trill phrase in the active track
+						sectionptr = eof_get_trill(eof_song, eof_selected_track, j);
+						if((sel_end >= sectionptr->start_pos) && (sel_start <= sectionptr->end_pos))
+						{
+							intrill = 1;
+						}
+					}
+					for(j = 0; j < eof_get_num_tremolos(eof_song, eof_selected_track); j++)
+					{	//For each tremolo phrase in the active track
+						sectionptr = eof_get_tremolo(eof_song, eof_selected_track, j);
+						if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+						{	//If the track's difficulty limit has been removed
+							if(sectionptr->difficulty != eof_note_type)	//And the tremolo section does not apply to the active track difficulty
+								continue;
+						}
+						else
+						{
+							if(sectionptr->difficulty != 0xFF)	//Otherwise if the tremolo section does not apply to all track difficulties
+								continue;
+						}
+						if((sel_end >= sectionptr->start_pos) && (sel_start <= sectionptr->end_pos))
+						{
+							intremolo = 1;
+						}
+					}
+					for(j = 0; j < eof_get_num_sliders(eof_song, eof_selected_track); j++)
+					{	//For each slider phrase in the active track
+						sectionptr = eof_get_slider(eof_song, eof_selected_track, j);
+						if((sel_end >= sectionptr->start_pos) && (sel_start <= sectionptr->end_pos))
+						{
+							inslider = 1;
+						}
+					}
+				}
+			}//PART VOCALS NOT SELECTED
 		}
-		else
-		{	//PART VOCALS NOT SELECTED
-			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-			{	//For each note in the active track
-				if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-				{
-					if(eof_get_note_pos(eof_song, eof_selected_track, i) < sel_start)
-					{
-						sel_start = eof_get_note_pos(eof_song, eof_selected_track, i);
-					}
-					if(eof_get_note_pos(eof_song, eof_selected_track, i) > sel_end)
-					{
-						sel_end = eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i);
-					}
-				}
-			}
-			for(j = 0; j < eof_get_num_star_power_paths(eof_song, eof_selected_track); j++)
-			{	//For each star power path in the active track
-				sectionptr = eof_get_star_power_path(eof_song, eof_selected_track, j);
-				if((sel_end >= sectionptr->start_pos) && (sel_start <= sectionptr->end_pos))
-				{
-					insp = 1;
-					spstart = sel_start;
-					spend = sel_end;
-					spp = j;
-				}
-			}
-			for(j = 0; j < eof_get_num_solos(eof_song, eof_selected_track); j++)
-			{	//For each solo section in the active track
-				sectionptr = eof_get_solo(eof_song, eof_selected_track, j);
-				if((sel_end >= sectionptr->start_pos) && (sel_start <= sectionptr->end_pos))
-				{
-					insolo = 1;
-					ssstart = sel_start;
-					ssend = sel_end;
-					ssp = j;
-				}
-			}
-			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{	//If a pro guitar track is active
-				for(j = 0; j < eof_song->pro_guitar_track[tracknum]->arpeggios; j++)
-				{	//For each arpeggio phrase in the active track
-					if((sel_end >= eof_song->pro_guitar_track[tracknum]->arpeggio[j].start_pos) && (sel_start <= eof_song->pro_guitar_track[tracknum]->arpeggio[j].end_pos) && (eof_song->pro_guitar_track[tracknum]->arpeggio[j].difficulty == eof_note_type))
-					{
-						inarpeggio = 1;
-					}
-				}
-			}
-			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_KEYS_TRACK_BEHAVIOR))
-			{	//If a legacy/pro guitar/bass/keys or drum track is active
-				for(j = 0; j < eof_get_num_trills(eof_song, eof_selected_track); j++)
-				{	//For each trill phrase in the active track
-					sectionptr = eof_get_trill(eof_song, eof_selected_track, j);
-					if((sel_end >= sectionptr->start_pos) && (sel_start <= sectionptr->end_pos))
-					{
-						intrill = 1;
-					}
-				}
-				for(j = 0; j < eof_get_num_tremolos(eof_song, eof_selected_track); j++)
-				{	//For each tremolo phrase in the active track
-					sectionptr = eof_get_tremolo(eof_song, eof_selected_track, j);
-					if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
-					{	//If the track's difficulty limit has been removed
-						if(sectionptr->difficulty != eof_note_type)	//And the tremolo section does not apply to the active track difficulty
-							continue;
-					}
-					else
-					{
-						if(sectionptr->difficulty != 0xFF)	//Otherwise if the tremolo section does not apply to all track difficulties
-							continue;
-					}
-					if((sel_end >= sectionptr->start_pos) && (sel_start <= sectionptr->end_pos))
-					{
-						intremolo = 1;
-					}
-				}
-				for(j = 0; j < eof_get_num_sliders(eof_song, eof_selected_track); j++)
-				{	//For each slider phrase in the active track
-					sectionptr = eof_get_slider(eof_song, eof_selected_track, j);
-					if((sel_end >= sectionptr->start_pos) && (sel_start <= sectionptr->end_pos))
-					{
-						inslider = 1;
-					}
-				}
-			}
-		}//PART VOCALS NOT SELECTED
 		vselected = eof_count_selected_notes(NULL, 1);
 		if(vselected)
 		{	//ONE OR MORE NOTES/LYRICS SELECTED
@@ -2585,26 +2560,14 @@ int eof_menu_split_lyric(void)
 
 int eof_menu_solo_mark(void)
 {
-	unsigned long i, j;
+	unsigned long j, sel_start, sel_end;
 	long insp = -1;
-	long sel_start = -1;
-	long sel_end = 0;
 	EOF_PHRASE_SECTION *soloptr = NULL;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-		{
-			if(eof_get_note_pos(eof_song, eof_selected_track, i) < sel_start)
-			{
-				sel_start = eof_get_note_pos(eof_song, eof_selected_track, i);
-			}
-			if(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) > sel_end)
-			{
-				sel_end = eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i);
-			}
-		}
+	if(!eof_get_selected_note_range(&sel_start, &sel_end, 1))	//Find the start and end position of the collection of selected notes in the active difficulty
+	{	//If no notes are selected
+		return 1;	//Return without doing anything
 	}
 	for(j = 0; j < eof_get_num_solos(eof_song, eof_selected_track); j++)
 	{	//For each solo in the track
@@ -2678,26 +2641,14 @@ int eof_menu_solo_erase_all(void)
 
 int eof_menu_star_power_mark(void)
 {
-	unsigned long i, j;
+	unsigned long j, sel_start, sel_end;
 	long insp = -1;
-	long sel_start = -1;
-	long sel_end = 0;
 	EOF_PHRASE_SECTION *starpowerptr = NULL;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-		{
-			if(eof_get_note_pos(eof_song, eof_selected_track, i) < sel_start)
-			{
-				sel_start = eof_get_note_pos(eof_song, eof_selected_track, i);
-			}
-			if(eof_get_note_pos(eof_song, eof_selected_track, i) > sel_end)
-			{
-				sel_end = eof_get_note_pos(eof_song, eof_selected_track, i) + (eof_get_note_length(eof_song, eof_selected_track, i) > 20 ? eof_get_note_length(eof_song, eof_selected_track, i) : 20);
-			}
-		}
+	if(!eof_get_selected_note_range(&sel_start, &sel_end, 1))	//Find the start and end position of the collection of selected notes in the active difficulty
+	{	//If no notes are selected
+		return 1;	//Return without doing anything
 	}
 	for(j = 0; j < eof_get_num_star_power_paths(eof_song, eof_selected_track); j++)
 	{	//For each star power path in the active track
@@ -2777,10 +2728,7 @@ int eof_menu_star_power_erase_all(void)
 
 int eof_menu_lyric_line_mark(void)
 {
-	unsigned long i, j;
-	unsigned long tracknum;
-	long sel_start = -1;
-	long sel_end = 0;
+	unsigned long i, j, tracknum, sel_start, sel_end;
 	int originalflags = 0; //Used to apply the line's original flags after the line is recreated
 	int note_selection_updated;
 
@@ -2789,29 +2737,7 @@ int eof_menu_lyric_line_mark(void)
 
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-	{
-		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
-		{
-			if(eof_song->vocal_track[tracknum]->lyric[i]->pos < sel_start)
-			{
-				sel_start = eof_song->vocal_track[tracknum]->lyric[i]->pos;
-				if(sel_start < eof_song->tags->ogg[eof_selected_ogg].midi_offset)
-				{
-					sel_start = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
-				}
-			}
-			if(eof_song->vocal_track[tracknum]->lyric[i]->pos > sel_end)
-			{
-				sel_end = eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length;
-				if(sel_end >= eof_chart_length)
-				{
-					sel_end = eof_chart_length - 1;
-				}
-			}
-		}
-	}
-	if(sel_start < 0)
+	if(!eof_get_selected_note_range(&sel_start, &sel_end, 1))	//Find the start and end position of the collection of selected lyrics in the active difficulty
 	{	//If no lyrics are selected
 		return 1;	//Return without doing anything
 	}
@@ -5438,10 +5364,7 @@ int eof_menu_note_remove_palm_muting(void)
 
 int eof_menu_arpeggio_mark(void)
 {
-	unsigned long i, j;
-	unsigned long sel_start = 0;
-	unsigned long sel_end = 0;
-	char firstnote = 0;						//Is set to nonzero when the first selected note in the active track difficulty is found
+	unsigned long i, j, sel_start, sel_end;
 	char existingphrase = 0;				//Is set to nonzero if any selected notes are within an existing phrase
 	unsigned long existingphrasenum = 0;	//Is set to the last arpeggio phrase number that encompasses existing notes
 	unsigned long tracknum;
@@ -5453,28 +5376,9 @@ int eof_menu_arpeggio_mark(void)
 
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	//Find the start and end position of the collection of selected notes in the active difficulty
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-		{	//If the note is selected and is in the active track and difficulty
-			if(firstnote == 0)
-			{	//This is the first encountered selected note
-				sel_start = eof_get_note_pos(eof_song, eof_selected_track, i);
-				sel_end = sel_start + eof_get_note_length(eof_song, eof_selected_track, i);
-				firstnote = 1;
-			}
-			else
-			{
-				if(eof_get_note_pos(eof_song, eof_selected_track, i) < sel_start)
-				{
-					sel_start = eof_get_note_pos(eof_song, eof_selected_track, i);
-				}
-				if(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) > sel_end)
-				{
-					sel_end = eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i);
-				}
-			}
-		}
+	if(!eof_get_selected_note_range(&sel_start, &sel_end, 1))	//Find the start and end position of the collection of selected notes in the active difficulty
+	{	//If no notes are selected
+		return 1;	//Return without doing anything
 	}
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(j = 0; j < eof_song->pro_guitar_track[tracknum]->arpeggios; j++)
@@ -5587,10 +5491,7 @@ int eof_menu_arpeggio_erase_all(void)
 
 int eof_menu_trill_mark(void)
 {
-	unsigned long i, j;
-	unsigned long sel_start = 0;
-	unsigned long sel_end = 0;
-	char firstnote = 0;						//Is set to nonzero when the first selected note in the active track difficulty is found
+	unsigned long j, sel_start, sel_end;
 	char existingphrase = 0;				//Is set to nonzero if any selected notes are within an existing phrase
 	unsigned long existingphrasenum = 0;	//Is set to the last trill phrase number that encompasses existing notes
 	EOF_PHRASE_SECTION *sectionptr;
@@ -5600,29 +5501,9 @@ int eof_menu_trill_mark(void)
 		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass/drum/keys track is active
 
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
-	//Find the start and end position of the collection of selected notes in the active difficulty
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-		{	//If the note is selected and is in the active track and difficulty
-			if(firstnote == 0)
-			{	//This is the first encountered selected note
-				sel_start = eof_get_note_pos(eof_song, eof_selected_track, i);
-				sel_end = sel_start + eof_get_note_length(eof_song, eof_selected_track, i);
-				firstnote = 1;
-			}
-			else
-			{
-				if(eof_get_note_pos(eof_song, eof_selected_track, i) < sel_start)
-				{
-					sel_start = eof_get_note_pos(eof_song, eof_selected_track, i);
-				}
-				if(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) > sel_end)
-				{
-					sel_end = eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i);
-				}
-			}
-		}
+	if(!eof_get_selected_note_range(&sel_start, &sel_end, 1))	//Find the start and end position of the collection of selected notes in the active difficulty
+	{	//If no notes are selected
+		return 1;	//Return without doing anything
 	}
 	for(j = 0; j < eof_get_num_trills(eof_song, eof_selected_track); j++)
 	{	//For each trill section in the track
@@ -5655,10 +5536,7 @@ int eof_menu_trill_mark(void)
 
 int eof_menu_tremolo_mark(void)
 {
-	unsigned long i, j;
-	unsigned long sel_start = 0;
-	unsigned long sel_end = 0;
-	char firstnote = 0;						//Is set to nonzero when the first selected note in the active track difficulty is found
+	unsigned long j, sel_start, sel_end;
 	char existingphrase = 0;				//Is set to nonzero if any selected notes are within an existing phrase
 	unsigned long existingphrasenum = 0;	//Is set to the last tremolo phrase number that encompasses existing notes
 	EOF_PHRASE_SECTION *sectionptr;
@@ -5668,29 +5546,9 @@ int eof_menu_tremolo_mark(void)
 		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass/drum track is active
 
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
-	//Find the start and end position of the collection of selected notes in the active difficulty
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-		{	//If the note is selected and is in the active track and difficulty
-			if(firstnote == 0)
-			{	//This is the first encountered selected note
-				sel_start = eof_get_note_pos(eof_song, eof_selected_track, i);
-				sel_end = sel_start + eof_get_note_length(eof_song, eof_selected_track, i);
-				firstnote = 1;
-			}
-			else
-			{
-				if(eof_get_note_pos(eof_song, eof_selected_track, i) < sel_start)
-				{
-					sel_start = eof_get_note_pos(eof_song, eof_selected_track, i);
-				}
-				if(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) > sel_end)
-				{
-					sel_end = eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i);
-				}
-			}
-		}
+	if(!eof_get_selected_note_range(&sel_start, &sel_end, 1))	//Find the start and end position of the collection of selected notes in the active difficulty
+	{	//If no notes are selected
+		return 1;	//Return without doing anything
 	}
 	for(j = 0; j < eof_get_num_tremolos(eof_song, eof_selected_track); j++)
 	{	//For each tremolo section in the track
@@ -5738,10 +5596,7 @@ int eof_menu_tremolo_mark(void)
 
 int eof_menu_slider_mark(void)
 {
-	unsigned long i, j;
-	unsigned long sel_start = 0;
-	unsigned long sel_end = 0;
-	char firstnote = 0;						//Is set to nonzero when the first selected note in the active track difficulty is found
+	unsigned long j, sel_start, sel_end;
 	char existingphrase = 0;				//Is set to nonzero if any selected notes are within an existing phrase
 	unsigned long existingphrasenum = 0;	//Is set to the last slider phrase number that encompasses existing notes
 	EOF_PHRASE_SECTION *sectionptr;
@@ -5751,30 +5606,11 @@ int eof_menu_slider_mark(void)
 		return 1;	//Do not allow this function to run unless a legacy guitar track is active
 
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
-	//Find the start and end position of the collection of selected notes in the active difficulty
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-		{	//If the note is selected and is in the active track and difficulty
-			if(firstnote == 0)
-			{	//This is the first encountered selected note
-				sel_start = eof_get_note_pos(eof_song, eof_selected_track, i);
-				sel_end = sel_start + eof_get_note_length(eof_song, eof_selected_track, i);
-				firstnote = 1;
-			}
-			else
-			{
-				if(eof_get_note_pos(eof_song, eof_selected_track, i) < sel_start)
-				{
-					sel_start = eof_get_note_pos(eof_song, eof_selected_track, i);
-				}
-				if(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) > sel_end)
-				{
-					sel_end = eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i);
-				}
-			}
-		}
+	if(!eof_get_selected_note_range(&sel_start, &sel_end, 1))	//Find the start and end position of the collection of selected notes in the active difficulty
+	{	//If no notes are selected
+		return 1;	//Return without doing anything
 	}
+
 	for(j = 0; j < eof_get_num_sliders(eof_song, eof_selected_track); j++)
 	{	//For each slider section in the track
 		sectionptr = eof_get_slider(eof_song, eof_selected_track, j);
@@ -5783,10 +5619,6 @@ int eof_menu_slider_mark(void)
 			existingphrase = 1;	//Note it
 			existingphrasenum = j;
 		}
-	}
-	if(!firstnote)
-	{	//If no notes are selected
-		return 1;	//Return without doing anything
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(!existingphrase)
