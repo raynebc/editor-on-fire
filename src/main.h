@@ -517,6 +517,11 @@ unsigned long eof_count_selected_notes(unsigned long * total, char v);
 	//Returns the number of notes selected in the active instrument difficulty
 	//If total is not NULL, its value is incremented once for each selected note in the active difficulty, regardless of whether it's selected
 	//The v parameter presently doesn't have any purpose and can be given as 0
+unsigned long eof_get_selected_note_range(unsigned long *sel_start, unsigned long *sel_end, char function);
+	//Returns the number of notes in the selected note range that are explicitly selected, allowing an easy way to check if more than one note is selected
+	//If sel_start and sel_end are not NULL, information about the first and last selected note are returned through them
+	//If function is zero, the information returned is the index number of the notes, otherwise it is their timestamps
+	//The notes are expected to be sorted.  Zero is returned on error.
 void eof_fix_waveform_graph(void);	//Rebuild the waveform graph data if it exists
 void eof_fix_spectrogram(void);	//Rebuild the spectrogram data if it exists
 void eof_clear_input(void);	//Clears the keypress states in allegro's key[] array and uses eof_use_key() to clear EOF's key press handling system

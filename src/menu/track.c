@@ -1310,8 +1310,7 @@ DIALOG eof_song_rs_popup_add_dialog[] =
 
 int eof_track_rs_popup_add(void)
 {
-	unsigned long start, duration, i;
-	unsigned long sel_start = 0, sel_end = 0;	//Will track the range of selected notes if any
+	unsigned long start, duration, i, sel_start, sel_end;
 	char failed = 0;
 
 	if(!eof_song_loaded || !eof_song)
@@ -1329,20 +1328,7 @@ int eof_track_rs_popup_add(void)
 	}
 	else
 	{	//Find the start and stop positions of any notes selected in the active track difficulty
-		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-		{	//For each note in the active track
-			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-			{
-				if(!sel_end || (eof_get_note_pos(eof_song, eof_selected_track, i) < sel_start))
-				{	//If this is the first selected note or it otherwise starts before the other selected notes
-					sel_start = eof_get_note_pos(eof_song, eof_selected_track, i);
-				}
-				if(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) > sel_end)
-				{
-					sel_end = eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i);
-				}
-			}
-		}
+		(void) eof_get_selected_note_range(&sel_start, &sel_end, 1);
 	}
 
 	(void) ustrcpy(eof_etext, "");
