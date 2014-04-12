@@ -1454,17 +1454,14 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		//At this point, last_note contains the data for the last note on the clipboard.  Determine the time span of notes that would need to be cleared
 		if(!oldpaste)
 		{	//If new paste logic is being used, this note pastes into a position relative to the start and end of a beat marker
-			if(i == 0)
-			{	//If this is the first note being pasted
-				newpasteoffset = newpasteoffset - first_note.porpos;	//Find the percentage offset that needs to be applied to all start/stop timestamps
-			}
-			clear_start = eof_put_porpos(first_note.beat - first_beat + this_beat, first_note.porpos, newpasteoffset) + 2;	//The position that "new paste" would paste the first note at (plus 2ms to avoid deleting a note ending on the position being pasted to)
-			clear_end = eof_put_porpos(last_note.beat - first_beat + this_beat, last_note.porpos, newpasteoffset) - 2;		//The position where "new paste" would paste the last note at (minus 2ms to avoid deleting a note starting right after where the pasted notes end)
+			newpasteoffset = newpasteoffset - first_note.porpos;	//Find the percentage offset that needs to be applied to all start/stop timestamps
+			clear_start = eof_put_porpos(first_note.beat - first_beat + this_beat, first_note.porpos, newpasteoffset);	//The position that "new paste" would paste the first note at
+			clear_end = eof_put_porpos(last_note.beat - first_beat + this_beat, last_note.porpos, newpasteoffset);		//The position where "new paste" would paste the last note at
 		}
 		else
 		{	//If old paste logic is being used, this note pastes into a position relative to the previous pasted note
-			clear_start = eof_music_pos + first_note.pos - eof_av_delay + 2;	//The position that "old paste" would paste the first note at (plus 2ms to avoid deleting a note ending on the position being pasted to)
-			clear_end = eof_music_pos + last_note.pos - eof_av_delay - 2;	//The position where "old paste" would paste the last note at (minus 2ms to avoid deleting a note starting right after where the pasted notes end)
+			clear_start = eof_music_pos + first_note.pos - eof_av_delay;	//The position that "old paste" would paste the first note at
+			clear_end = eof_music_pos + last_note.pos - eof_av_delay;	//The position where "old paste" would paste the last note at
 		}
 		eof_menu_edit_paste_clear_range(eof_selected_track, eof_note_type, clear_start, clear_end);
 		//The packfile functions have no seek routine, so the file has to be closed, re-opened and repositioned to the first clipboard note for the actual paste logic
@@ -1480,6 +1477,10 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		first_beat = pack_igetl(fp);		//Read the original beat number of the first note that was copied
 	}
 
+	if(!oldpaste)
+	{	//If using new paste, find the seek position's percentage within the current beat
+		newpasteoffset = eof_get_porpos(eof_music_pos - eof_av_delay);
+	}
 	for(i = 0; i < copy_notes; i++)
 	{	//For each note in the clipboard file
 		unsigned long newnotepos, match, flags;
@@ -3247,16 +3248,15 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 
 void eof_menu_edit_paste_clear_range(unsigned long track, int note_type, unsigned long start, unsigned long end)
 {
-	unsigned long i, notepos, notelen;
+	unsigned long i, notepos;
 	int type;
 
 	for(i = eof_get_track_size(eof_song, track); i > 0; i--)
 	{	//For each note in the specified track
 		notepos = eof_get_note_pos(eof_song, track, i - 1);
-		notelen = eof_get_note_length(eof_song, track, i - 1);
 		type = eof_get_note_type(eof_song, track, i - 1);
 
-		if((type == note_type) && ((notepos <= end) && (notepos + notelen >= start)))
+		if((type == note_type) && ((notepos <= end) && (notepos >= start)))
 		{	//If the note is in the target difficulty, begins at or before the specified end position and the note ends at or after the specified start position
 			eof_track_delete_note(eof_song, track, i - 1);	//Delete the note
 		}

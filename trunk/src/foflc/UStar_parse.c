@@ -193,7 +193,7 @@ void Export_UStar(FILE *outf)
 		temp=Lyrics.Title;
 
 	if(fprintf(outf,"#TITLE:%s\n",temp) < 0)
-		errornumber=1;
+		errornumber=errno;
 
 	if(Lyrics.Artist == NULL)
 	{
@@ -204,7 +204,7 @@ void Export_UStar(FILE *outf)
 		temp=Lyrics.Artist;
 
 	if(fprintf(outf,"#ARTIST:%s\n",temp) < 0)
-		errornumber=1;
+		errornumber=errno;
 
 	fputs_err("#MP3:\n",outf);
 	incomplete=1;	//There is no checking for MP3 yet
@@ -221,12 +221,12 @@ void Export_UStar(FILE *outf)
 	else
 	{
 		if(fprintf(outf,"#BPM:%s\n",tempostring) < 0)
-			errornumber=1;
+			errornumber=errno;
 		free(tempostring);	//We don't need this string anymore
 	}
 
 	if(fprintf(outf,"#GAP:%lu\n",gap) < 0)
-		errornumber=1;
+		errornumber=errno;
 
 	if(errornumber != 0)
 	{
@@ -261,8 +261,8 @@ void Export_UStar(FILE *outf)
 		}
 
 	//If the current lyric piece is nothing but a + and whitespace, replace the + with ~
-		length = (unsigned long)strlen(current->lyric);	//Save this value, which will be used several times
 		assert_wrapper(current->lyric != NULL);
+		length = (unsigned long)strlen(current->lyric);	//Save this value, which will be used several times
 		for(ctr2=0,replace=1;ctr2<length;ctr2++)
 			if((current->lyric[ctr2] != '+') && !isspace((unsigned char)current->lyric[ctr2]))
 				replace=0;
@@ -376,7 +376,7 @@ void Export_UStar(FILE *outf)
 			rawpitch=PITCHLESS;	//Store it as the positive value representing a pitchless lyric
 
 		if(fprintf(outf,"%c %lu %ld %d ",pitch_char,start-linetime,dur,rawpitch) < 0)
-			errornumber=1;
+			errornumber=errno;
 		if(!newline && !current->prev->groupswithnext)	//If this piece doesn't group with previous piece and isn't the first lyric in this line
 		{
 			assert_wrapper(current->prev->groupswithnext == 0);
@@ -387,7 +387,7 @@ void Export_UStar(FILE *outf)
 		newline=0;	//Reset this condition
 
 		if(fprintf(outf,"%s\n",current->lyric) < 0)
-			errornumber=1;
+			errornumber=errno;
 
 		if(errornumber != 0)
 		{

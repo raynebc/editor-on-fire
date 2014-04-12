@@ -218,15 +218,15 @@ EOF_SONG * eof_import_chart(const char * fn)
 		/* copy tags */
 		if(chart->name)
 		{
-			strcpy(sp->tags->title, chart->name);
+			strncpy(sp->tags->title, chart->name, sizeof(sp->tags->title) - 1);
 		}
 		if(chart->artist)
 		{
-			strcpy(sp->tags->artist, chart->artist);
+			strncpy(sp->tags->artist, chart->artist, sizeof(sp->tags->artist) - 1);
 		}
 		if(chart->charter)
 		{
-			strcpy(sp->tags->frettist, chart->charter);
+			strncpy(sp->tags->frettist, chart->charter, sizeof(sp->tags->frettist) - 1);
 		}
 
 		/* read INI file */

@@ -436,7 +436,7 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 			return -1;
 		}
 #ifdef GH_IMPORT_DEBUG
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\tNote %lu position = %lu  length = %u  bitmask = %u (%08lu %08lu) accent = %08lu", ctr, dword, length, notemask, eof_char_to_binary(notemask >> 8), eof_char_to_binary(notemask & 0xFF), eof_char_to_binary(accentmask));
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\tNote %lu position = %lu  length = %u  bitmask = %u (%08lu) accent = %08lu", ctr, dword, length, notemask, eof_char_to_binary(notemask), eof_char_to_binary(accentmask));
 		eof_log(eof_log_string, 1);
 #endif
 		isexpertplus = 0;	//Reset this condition

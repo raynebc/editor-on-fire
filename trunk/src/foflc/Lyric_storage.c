@@ -845,8 +845,6 @@ long int ParseLongInt(char *buffer,unsigned long *startindex,unsigned long linen
 		value=0;
 	else
 	{
-		assert_wrapper(buffer2 != NULL);	//atol() may crash the program if it is passed NULL
-
 		value=atol(buffer2);	//Convert string to int
 		if(value == 0)
 		{
@@ -1378,7 +1376,7 @@ int fgetc_err(FILE *stream)
 	result=fgetc(stream);
 	if(result == EOF)
 	{
-		printf("Error reading from stream/file: %s\nAborting\n",strerror(result));
+		printf("Error reading from stream/file: %s\nAborting\n",strerror(errno));
 		exit_wrapper(1);
 	}
 
@@ -2505,12 +2503,11 @@ void BlockCopy(FILE *inf, FILE *outf, size_t num)
 
 int SearchPhrase(FILE *inf,unsigned long breakpos,unsigned long *pos,const char *phrase,unsigned long phraselen,unsigned char autoseek)
 {
-	unsigned long originalpos=0;
-	unsigned long matchpos=0;
+	long originalpos=0, currentpos=0, matchpos=0;
 	unsigned char c=0;
+	int ret;
 	unsigned long ctr=0;		//Used to index into the phrase[] array, beginning with the first character
 	unsigned char success=0;
-	unsigned long currentpos=0;	//Store the current file position
 
 //Validate input
 	if(!inf || !phrase)	//These input parameters are not allowed to be NULL
@@ -2526,7 +2523,10 @@ int SearchPhrase(FILE *inf,unsigned long breakpos,unsigned long *pos,const char 
 	if(errno)		//If there was an I/O error
 		return -1;
 
-	c=fgetc(inf);		//Read the first character of the file
+	ret = fgetc(inf);		//Read the first character of the file
+	if(ret == EOF)
+		return -1;
+	c = ret;
 	currentpos++;		//Track that one more byte has been read
 	if(ferror(inf))		//If there was an I/O error
 	{
@@ -2563,7 +2563,10 @@ int SearchPhrase(FILE *inf,unsigned long breakpos,unsigned long *pos,const char 
 		else	//Character did not match
 			ctr=0;			//Ensure that the first character in the search array is looked for
 
-		c=fgetc(inf);	//Read the next character of the file
+		ret = fgetc(inf);	//Read the next character of the file
+		if(ret == EOF)
+			return -1;
+		c = ret;
 		currentpos++;	//Track that one more byte has been read
 	}
 

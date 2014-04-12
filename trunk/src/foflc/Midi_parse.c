@@ -1841,8 +1841,6 @@ void PitchedLyric_Load(FILE *inf)
 		}
 
 //Process line of input
-		assert_wrapper(buffer != NULL);
-
 		if(isdigit(buffer[index]) || (buffer[index] == '#') || isalpha(buffer[index]))
 		{	//If this line of input begins with a number, # character or letter
 			if(isdigit(buffer[index]))

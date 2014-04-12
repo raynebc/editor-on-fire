@@ -291,16 +291,6 @@ void eof_prepare_song_menu(void)
 		}
 		eof_track_selected_menu[eof_selected_track-1].flags = D_SELECTED;	//Track numbering begins at 1 instead of 0
 
-		/* seek bookmark */
-		if(bmcount == 0)
-		{
-			eof_song_seek_menu[0].flags = D_DISABLED;	//Bookmark
-		}
-		else
-		{
-			eof_song_seek_menu[0].flags = 0;
-		}
-
 		/* seek start */
 		if(eof_music_pos == eof_av_delay)
 		{	//If the seek position is already at the start of the chart
@@ -481,6 +471,16 @@ void eof_prepare_song_menu(void)
 			{
 				eof_song_seek_bookmark_menu[i].flags = D_DISABLED;
 			}
+		}
+
+		/* seek bookmark */
+		if(bmcount == 0)
+		{
+			eof_song_seek_menu[0].flags = D_DISABLED;	//Bookmark
+		}
+		else
+		{
+			eof_song_seek_menu[0].flags = 0;
 		}
 
 		/* display semitones as flat */
@@ -2153,8 +2153,8 @@ int eof_menu_song_spectrogram_settings(void)
 	eof_spectrogram_settings_dialog[15 + eof_spectrogram_colorscheme].flags = D_SELECTED;
 
 	//Set up the note range
-	strcpy(eof_etext2, notefunc_freq_to_note(eof_spectrogram_startfreq));
-	strcpy(eof_etext3, notefunc_freq_to_note(eof_spectrogram_endfreq));
+	strncpy(eof_etext2, notefunc_freq_to_note(eof_spectrogram_startfreq), 10);
+	strncpy(eof_etext3, notefunc_freq_to_note(eof_spectrogram_endfreq), 10);
 
 	if(eof_spectrogram_userange)
 		eof_spectrogram_settings_dialog[17].flags = D_SELECTED;

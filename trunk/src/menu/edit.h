@@ -129,7 +129,7 @@ void eof_sanitize_note_flags(unsigned long *flags, unsigned long sourcetrack, un
 	//For some flags that are used for different statuses for different instruments, flags will be cleared as necessary (ie. during paste)
 	//Extended flags are always track-specific and should be appropriately removed when pasting from one track format to another
 void eof_menu_edit_paste_clear_range(unsigned long track, int note_type, unsigned long start, unsigned long end);
-	//Deletes all notes in the specified track difficulty that fall within the given start and end positions
+	//Deletes all notes in the specified track difficulty that START within the given start and end positions
 void eof_read_clipboard_note(PACKFILE *fp, EOF_EXTENDED_NOTE *temp_note, unsigned long namelength);
 	//Reads one note definition from the specified clipboard file into the given extended note structure
 	//namelength specifies the maximum number of characters to store into temp_note

@@ -23,7 +23,7 @@
 
 char *ReadTextInfoFrame(FILE *inf)
 {
-	unsigned long originalpos=0;
+	long originalpos=0;
 	char buffer[5]={0};		//Used to store the ID3 frame header as a NULL terminated string
 	char buffer2[7]={0};	//Used to store frame size, flags and string encoding
 	char *string=NULL;
