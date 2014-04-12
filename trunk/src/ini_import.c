@@ -344,7 +344,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			else
 			{
 				setting_stored = 0;
-				for(j = 0; (j < EOF_TRACKS_MAX + 1) && (j < sp->tracks); j++)
+				for(j = 0; (j < EOF_TRACKS_MAX) && (j < sp->tracks); j++)
 				{	//For each string in the eof_difficulty_ini_tags[] array (for each currently supported track number)
 					if(eof_difficulty_ini_tags[j] && !ustricmp(eof_import_ini_setting[i].type, eof_difficulty_ini_tags[j]))
 					{	//If this INI setting matches the difficulty tag, store the difficulty value into the appropriate track structure
@@ -559,7 +559,7 @@ int eof_compare_set_ini_string_setting(EOF_SONG *sp, char *tag, char *value, int
 int eof_compare_set_ini_pro_guitar_tuning(EOF_PRO_GUITAR_TRACK *tp, char *string, int *function)
 {
 	unsigned long ctr = 0, ctr2;
-	char tuning[EOF_TUNING_LENGTH];
+	char tuning[EOF_TUNING_LENGTH] = {0};
 	char * line_token = NULL;
 
 	if(!tp || !string || !function)

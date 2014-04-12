@@ -351,7 +351,7 @@ unsigned long ConvertLRCTimestamp(char **ptr,int *errorstatus)
 			}
 		}
 	}
-	assert_wrapper(index <= LRCTIMESTAMPMAXFIELDLENGTH+1);	//Ensure that writing the NULL character won't overflow
+	assert_wrapper(index < LRCTIMESTAMPMAXFIELDLENGTH+1);	//Ensure that writing the NULL character won't overflow
 	minutes[index]='\0';	//Terminate minutes string
 
 //validate seconds portion of timestamp
@@ -378,7 +378,7 @@ unsigned long ConvertLRCTimestamp(char **ptr,int *errorstatus)
 		}
 	}
 
-	assert_wrapper(index <= LRCTIMESTAMPMAXFIELDLENGTH+1);	//Ensure that writing the NULL character won't overflow
+	assert_wrapper(index < LRCTIMESTAMPMAXFIELDLENGTH+1);	//Ensure that writing the NULL character won't overflow
 	seconds[index]='\0';	//Terminate seconds string
 
 //validate hundredths portion of timestamp
@@ -404,7 +404,7 @@ unsigned long ConvertLRCTimestamp(char **ptr,int *errorstatus)
 		}
 	}
 
-	assert_wrapper(index <= LRCTIMESTAMPMAXFIELDLENGTH+1);	//Ensure that writing the NULL character won't overflow
+	assert_wrapper(index < LRCTIMESTAMPMAXFIELDLENGTH+1);	//Ensure that writing the NULL character won't overflow
 	hundredths[index]='\0';	//Terminate hundredths string
 
 	if(failed)		//If parsing failed

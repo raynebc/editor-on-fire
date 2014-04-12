@@ -362,7 +362,7 @@ int eof_song_qsort_control_events(const void * e1, const void * e2)
 int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, unsigned short *user_warned)
 {
 	PACKFILE * fp;
-	char buffer[600] = {0}, buffer2[512] = {0};
+	char buffer[600] = {0}, buffer2[600] = {0};
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
 	unsigned long ctr, ctr2, ctr3, ctr4, ctr5, numsections, stringnum, bitmask, numsinglenotes, numchords, *chordlist, chordlistsize, *sectionlist, sectionlistsize, xml_end, numevents = 0;
@@ -1036,7 +1036,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//Write message boxes for the loading text song property (if defined) and each user defined popup message
 	if(sp->tags->loading_text[0] != '\0')
 	{	//If the loading text is defined
-		char expanded_text[512];	//A string to expand the user defined text into
+		char expanded_text[513];	//A string to expand the user defined text into, long enough for the text length limit of 512 + 1 more character for NULL termination
 		(void) strftime(expanded_text, sizeof(expanded_text), sp->tags->loading_text, caltime);	//Expand any user defined calendar date/time tokens
 		expand_xml_text(buffer2, sizeof(buffer2) - 1, expanded_text, 512);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 
@@ -3258,14 +3258,17 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 			//Determine if this chord uses the index finger, which will trigger a fret hand position change (if this chord's fingering is incomplete, perform a chord shape lookup)
 			force_change = 0;	//Reset this condition
 			np = tp->note[ctr];	//Unless the chord's fingering is incomplete, the note's current fingering will be used to determine whether the index finger triggers a position change
-			if(eof_pro_guitar_note_fingering_valid(tp, ctr) != 1)
-			{	//If the fingering for the note is not fully defined
-				if(eof_lookup_chord_shape(np, &shapenum, 0))
-				{	//If a fingering for the chord can be found in the chord shape definitions
-					memcpy(temp.frets, np->frets, 6);	//Clone the fretting of the original note into the temporary note
-					temp.note = np->note;				//Clone the note mask
-					eof_apply_chord_shape_definition(&temp, shapenum);	//Apply the matching chord shape definition's fingering to the temporary note
-					np = &temp;	//Check the temporary note for use of the index finger, instead of the original note
+			if((eof_note_count_colors(eof_song, track, ctr) > 1) && !eof_is_string_muted(eof_song, track, ctr))
+			{	//If this note is a chord that isn't completely string muted
+				if(eof_pro_guitar_note_fingering_valid(tp, ctr) != 1)
+				{	//If the fingering for the note is not fully defined
+					if(eof_lookup_chord_shape(np, &shapenum, 0))
+					{	//If a fingering for the chord can be found in the chord shape definitions
+						memcpy(temp.frets, np->frets, 6);	//Clone the fretting of the original note into the temporary note
+						temp.note = np->note;				//Clone the note mask
+						eof_apply_chord_shape_definition(&temp, shapenum);	//Apply the matching chord shape definition's fingering to the temporary note
+						np = &temp;	//Check the temporary note for use of the index finger, instead of the original note
+					}
 				}
 			}
 			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)

@@ -1486,7 +1486,8 @@ int eof_events_dialog_edit(DIALOG * d)
 {
 	int i;
 	short ecount = 0;
-	short event = -1;
+	unsigned short event;
+	char found = 0;
 	char undo_made = 0;
 
 	if(!d)
@@ -1503,6 +1504,7 @@ int eof_events_dialog_edit(DIALOG * d)
 			if(eof_events_dialog[1].d1 == ecount)
 			{
 				event = i;
+				found = 1;
 				break;
 			}
 
@@ -1513,10 +1515,12 @@ int eof_events_dialog_edit(DIALOG * d)
 			}
 		}
 	}
-
-	eof_add_or_edit_text_event(eof_song->text_event[event], 0, &undo_made);	//Run logic to edit an existing event
-	eof_render();
-	(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
+	if(found)
+	{	//If the selected event was found
+		eof_add_or_edit_text_event(eof_song->text_event[event], 0, &undo_made);	//Run logic to edit an existing event
+		eof_render();
+		(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
+	}
 	return D_O_K;
 }
 

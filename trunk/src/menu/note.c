@@ -2404,8 +2404,11 @@ int eof_menu_note_push_back(void)
 			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 			{	//If the note is selected
 				beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i));
-				porpos = eof_get_porpos(eof_get_note_pos(eof_song, eof_selected_track, i));
-				eof_set_note_pos(eof_song, eof_selected_track, i, eof_put_porpos(beat, porpos, eof_menu_note_push_get_offset()));
+				if(beat >= 0)
+				{	//As long as a beat was identified
+					porpos = eof_get_porpos(eof_get_note_pos(eof_song, eof_selected_track, i));
+					eof_set_note_pos(eof_song, eof_selected_track, i, eof_put_porpos(beat, porpos, eof_menu_note_push_get_offset()));
+				}
 			}
 		}
 	}
@@ -2416,8 +2419,11 @@ int eof_menu_note_push_back(void)
 			if(eof_get_note_pos(eof_song, eof_selected_track, i) >= eof_music_pos - eof_av_delay)
 			{
 				beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i));
-				porpos = eof_get_porpos(eof_get_note_pos(eof_song, eof_selected_track, i));
-				eof_set_note_pos(eof_song, eof_selected_track, i, eof_put_porpos(beat, porpos, eof_menu_note_push_get_offset()));
+				if(beat >= 0)
+				{	//As long as a beat was identified
+					porpos = eof_get_porpos(eof_get_note_pos(eof_song, eof_selected_track, i));
+					eof_set_note_pos(eof_song, eof_selected_track, i, eof_put_porpos(beat, porpos, eof_menu_note_push_get_offset()));
+				}
 			}
 		}
 	}
@@ -2443,8 +2449,11 @@ int eof_menu_note_push_up(void)
 			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 			{	//If the note is selected
 				beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i));
-				porpos = eof_get_porpos(eof_get_note_pos(eof_song, eof_selected_track, i));
-				eof_set_note_pos(eof_song, eof_selected_track, i, eof_put_porpos(beat, porpos, -eof_menu_note_push_get_offset()));
+				if(beat >= 0)
+				{	//As long as a beat was identified
+					porpos = eof_get_porpos(eof_get_note_pos(eof_song, eof_selected_track, i));
+					eof_set_note_pos(eof_song, eof_selected_track, i, eof_put_porpos(beat, porpos, -eof_menu_note_push_get_offset()));
+				}
 			}
 		}
 	}
@@ -2455,8 +2464,11 @@ int eof_menu_note_push_up(void)
 			if(eof_get_note_pos(eof_song, eof_selected_track, i) >= eof_music_pos - eof_av_delay)
 			{
 				beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i));
-				porpos = eof_get_porpos(eof_get_note_pos(eof_song, eof_selected_track, i));
-				eof_set_note_pos(eof_song, eof_selected_track, i, eof_put_porpos(beat, porpos, -eof_menu_note_push_get_offset()));
+				if(beat >= 0)
+				{	//As long as a beat was identified
+					porpos = eof_get_porpos(eof_get_note_pos(eof_song, eof_selected_track, i));
+					eof_set_note_pos(eof_song, eof_selected_track, i, eof_put_porpos(beat, porpos, -eof_menu_note_push_get_offset()));
+				}
 			}
 		}
 	}
@@ -8002,8 +8014,8 @@ int eof_note_menu_read_gp_lyric_texts(void)
 				{	//If this was the first character read for this lyric, it is interpreted as a pitch shift for the previous lyric text
 					buffer[index++] = '+';
 				}
-				else
-				{	//Otherwise it is included in the text read for this lyric so far and ends the current lyric text
+				else if(index < 100)
+				{	//Otherwise as long as it will fit in the buffer, it is included in the text read for this lyric so far and ends the current lyric text
 					buffer[index++] = '-';
 				}
 

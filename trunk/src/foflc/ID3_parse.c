@@ -545,7 +545,7 @@ unsigned long ID3FrameProcessor(struct ID3Tag *ptr)
 	struct ID3Frame *cond=NULL;		//Used as the conductor
 	unsigned long ctr=0;			//Count the number of frames processed
 	unsigned long framesize=0;		//Used to validate frame size
-	char buffer[31]={0};	//Used to read an ID3v1 tag in the absence of an ID3v2 tag
+	char buffer[31]={0};			//Used to read an ID3v1 tag in the absence of an ID3v2 tag
 	static struct ID3Frame emptyID3Frame;	//Auto-initialize all members to 0/NULL
 
 //Validate input parameter
@@ -556,11 +556,13 @@ unsigned long ID3FrameProcessor(struct ID3Tag *ptr)
 //ID3v1
 	fseek_err(ptr->fp,-128,SEEK_END);	//Seek 128 back from the end of the file, where this tag would exist
 	fread_err(buffer,3,1,ptr->fp);		//Read 3 bytes for the "TAG" header
+	buffer[3] = '\0';	//Ensure NULL termination
 	if(strcasecmp(buffer,"TAG") == 0)	//If this is an ID3v1 header
 	{
 		if(Lyrics.verbose)	(void) puts("Loading ID3v1 tag");
 		ptr->id3v1present=1;	//Track that this tag exists
 		fread_err(buffer,30,1,ptr->fp);		//Read the first field in the tag (song title)
+		buffer[30] = '\0';	//Ensure NULL termination
 		if(buffer[0] != '\0')	//If the string isn't empty
 		{
 			ptr->id3v1present=2;	//Track that this tag is populated
@@ -568,6 +570,7 @@ unsigned long ID3FrameProcessor(struct ID3Tag *ptr)
 			if(Lyrics.verbose)	(void) puts("\tTitle loaded");
 		}
 		fread_err(buffer,30,1,ptr->fp);		//Read the second field in the tag (artist)
+		buffer[30] = '\0';	//Ensure NULL termination
 		if(buffer[0] != '\0')	//If the string isn't empty
 		{
 			ptr->id3v1present=2;	//Track that this tag is populated
@@ -575,6 +578,7 @@ unsigned long ID3FrameProcessor(struct ID3Tag *ptr)
 			if(Lyrics.verbose)	(void) puts("\tArtist loaded");
 		}
 		fread_err(buffer,30,1,ptr->fp);		//Read the third field in the tag (album)
+		buffer[30] = '\0';	//Ensure NULL termination
 		if(buffer[0] != '\0')	//If the string isn't empty
 		{
 			ptr->id3v1present=2;	//Track that this tag is populated

@@ -29,7 +29,8 @@ void XML_Load(FILE *inf)
 	unsigned long starttime=0;		//Converted long int value of numerical string representing a lyric's start time
 	unsigned long stoptime=0;		//Converted long int value of numerical string representing a lyric's stop time
 	unsigned long processedctr=0;	//The current line number being processed in the text file
-	char textbuffer[101]={0};		//Allow for a 100 character lyric text
+	#define TEXTBUFFERLENGTH 100
+	char textbuffer[TEXTBUFFERLENGTH + 1]={0};		//Allow for a 100 character lyric text
 	char showread=0, textread=0, removeread=0;	//Tracks whether each of these tags have been read since the last lyric phrase was stored
 
 	assert_wrapper(inf != NULL);	//This must not be NULL
@@ -93,8 +94,8 @@ void XML_Load(FILE *inf)
 				{
 					if(substring[index] == '<')	//If the start of a tag was reached, it marks the end of the <text> tag
 						break;
-					if(index2 > 100)		//If the buffer would overflow by reading another character
-						break;			//Truncate the buffered data
+					if(index2 >= TEXTBUFFERLENGTH)	//If the buffer would overflow by reading another character
+						break;						//Truncate the buffered data
 					textbuffer[index2++]=substring[index++];	//Copy the character to the buffer
 				}
 				textbuffer[index2]='\0';	//Terminate the buffer
@@ -145,8 +146,8 @@ long int ParseLongIntXML(char *buffer,unsigned long linenum)
 	{
 		if(buffer[index] == '<')	//If the start of a tag was reached, it marks the end of the numerical tag
 			break;
-		if(index2 > 10)			//If the buffer would overflow by reading another character
-			break;			//Truncate the buffered data
+		if(index2 >= 10)			//If the buffer would overflow by reading another character
+			break;					//Truncate the buffered data
 		numberbuffer[index2++]=buffer[index++];	//Copy the character to the buffer
 	}
 	numberbuffer[index2]='\0';	//Terminate the buffer
