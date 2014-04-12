@@ -395,7 +395,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 	eof_log("eof_export_rocksmith_1_track() entered", 1);
 
-	if(!sp || !fn || !sp->beats || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !sp->track[track]->name || !user_warned)
+	if(!sp || !fn || !sp->beats || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !user_warned)
 	{
 		eof_log("\tError saving:  Invalid parameters", 1);
 		return 0;	//Return failure
@@ -1640,7 +1640,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 	eof_log("eof_export_rocksmith_2_track() entered", 1);
 
-	if(!sp || !fn || !sp->beats || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !sp->track[track]->name || !user_warned)
+	if(!sp || !fn || !sp->beats || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !user_warned)
 	{
 		eof_log("\tError saving:  Invalid parameters", 1);
 		return 0;	//Return failure
@@ -3066,7 +3066,7 @@ void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_ma
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				*undo_made = 1;
 			}
-			memset(tp->note[ctr2], 0, 8);	//Clear it
+			memset(tp->note[ctr2]->finger, 0, 8);	//Clear it
 		}
 	}
 }
@@ -3726,8 +3726,6 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 
 	if(compareto < 0)
 	{	//Compare the specified difficulty with the previous difficulty
-		if(!diff)
-			return 0;	//There is no difficulty before the first difficulty
 		comparediff = diff - 1;
 		if(((sp->track[track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) == 0) && (comparediff == 4))
 		{	//If the track is using the traditional 5 difficulty system and the difficulty previous to the being examined is the BRE difficulty

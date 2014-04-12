@@ -212,6 +212,8 @@ void eof_spectrogram_calculate_px_to_freq(struct spectrogramstruct *spectrogram)
 	{
 		height = spectrogram->right.height;
 	}
+	if(!height)
+		return;
 
 	//Just in case it didn't get marked
 	if(height != spectrogram->px_to_freq.height)
@@ -237,6 +239,7 @@ void eof_spectrogram_calculate_px_to_freq(struct spectrogramstruct *spectrogram)
 	if(spectrogram->px_to_freq.map == NULL)
 	{
 		eof_log("Couldn't allocate memory for px_to_freq map!",1);
+		return;
 	}
 
 	binsize=((double)spectrogram->rate/2.0)/(double)eof_spectrogram_windowsize;

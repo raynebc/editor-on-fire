@@ -2756,7 +2756,7 @@ int eof_save_helper(char *destfilename, char silent)
 	if(destfilename == NULL)
 	{	//Perform save
 		function = 1;
-		if((eof_song_path == NULL) || (eof_loaded_song_name == NULL))
+		if((eof_song_path[0] == '\0') || (eof_loaded_song_name[0] == '\0'))
 			return 3;	//Return failure:  Invalid paths
 		(void) append_filename(eof_temp_filename, eof_song_path, eof_loaded_song_name, (int) sizeof(eof_temp_filename));
 		(void) replace_filename(newfolderpath, eof_song_path, "", 1024);	//Obtain the destination path

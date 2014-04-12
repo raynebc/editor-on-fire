@@ -29,12 +29,12 @@ double notefunc_note_to_freq(char* note)
 	notename = note[0];
 	if(strlen(note) == 2)
 	{
-		strcpy(octavestr,note+1);
+		strncpy(octavestr, note + 1, sizeof(octavestr) - 1);
 		accidental = 0;
 	}
 	else if(strlen(note) == 3)
 	{
-		strcpy(octavestr,note+2);
+		strncpy(octavestr, note + 2, sizeof(octavestr) - 1);
 		accidental = note[1];
 	}
 	else

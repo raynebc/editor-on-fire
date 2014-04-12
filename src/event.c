@@ -124,12 +124,12 @@ void eof_sort_events(EOF_SONG * sp)
 
  	eof_log("eof_sort_events() entered", 1);
 
-	for(ctr = 0; ctr < sp->text_events; ctr++)
-	{	//For each text event in the project
-		sp->text_event[ctr]->index = ctr;	//Store the native index into the event to prevent qsort() from corrupting the order of events that otherwise have matching sort criteria
-	}
 	if(sp)
 	{
+		for(ctr = 0; ctr < sp->text_events; ctr++)
+		{	//For each text event in the project
+			sp->text_event[ctr]->index = ctr;	//Store the native index into the event to prevent qsort() from corrupting the order of events that otherwise have matching sort criteria
+		}
 		qsort(sp->text_event, (size_t)sp->text_events, sizeof(EOF_TEXT_EVENT *), eof_song_qsort_events);
 	}
 }
@@ -219,7 +219,7 @@ int eof_text_is_section_marker(const char *text)
 
 int eof_is_section_marker(EOF_TEXT_EVENT *ep, unsigned long track)
 {
-	if(ep && ep->text)
+	if(ep)
 	{
 		if((ep->flags & EOF_EVENT_FLAG_RS_PHRASE) || eof_text_is_section_marker(ep->text))
 		{	//If this event's flags denote it as a Rocksmith phrase, or its text indicates a section

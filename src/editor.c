@@ -136,7 +136,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 //	eof_log("eof_snap_logic() entered");
 
 	int i, least = -1;
-	int interval = 0;
+	int interval = 1;
 	char measure_snap = 0;	//Unless a custom per-measure grid snap is defined, all grid snaps are per beat
 	float snaplength, least_amount;
 

@@ -228,11 +228,7 @@ long eof_find_next_anchor(EOF_SONG * sp, unsigned long cbeat)
 
 void eof_realign_beats(EOF_SONG * sp, int cbeat)
 {
-	int i;
-	int last_anchor = eof_find_previous_anchor(sp, cbeat);
-	long next_anchor = eof_find_next_anchor(sp, cbeat);
-	int beats = 0;
-	int count = 1;
+	long i, last_anchor, next_anchor, beats = 0, count = 1;
 	double beats_length;
 	double newbpm;
 	double newppqn;
@@ -242,18 +238,24 @@ void eof_realign_beats(EOF_SONG * sp, int cbeat)
 	{
 		return;
 	}
+	last_anchor = eof_find_previous_anchor(sp, cbeat);
+	next_anchor = eof_find_next_anchor(sp, cbeat);
 	if(next_anchor < 0)
 	{
 		next_anchor = sp->beats;
 	}
+	if(last_anchor == next_anchor)
+	{	//Avoid a division by zero
+		return;
+	}
 
 	if(last_anchor < next_anchor)
-		beats=next_anchor - last_anchor;	//The number of beats between the previous and next anchor
+		beats = next_anchor - last_anchor;	//The number of beats between the previous and next anchor
 
 	/* figure out what the new BPM should be */
 	beats_length = sp->beat[next_anchor]->pos - sp->beat[last_anchor]->pos;
-	newbpm = (double)60000 / (beats_length / (double)beats);
-	newppqn = (double)60000000 / newbpm;
+	newbpm = (double)60000.0 / (beats_length / (double)beats);
+	newppqn = (double)60000000.0 / newbpm;
 
 	sp->beat[last_anchor]->ppqn = newppqn;
 
@@ -350,7 +352,7 @@ EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp)
 {
  	eof_log("eof_song_add_beat() entered", 2);
 
- 	if((sp == NULL) || (sp->beat == NULL))
+ 	if(sp == NULL)
 		return NULL;
 
 	if(sp->beats < EOF_MAX_BEATS)

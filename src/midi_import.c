@@ -91,12 +91,13 @@ unsigned long eof_parse_var_len(unsigned char * data, unsigned long pos, unsigne
 //	eof_log("eof_parse_var_len() entered");
 
 	int cpos = pos;
-	unsigned long val = *(&data[cpos]) & 0x7F;
+	unsigned long val;
 
 	if(!data || !bytes_used)
 	{
 		return 0;
 	}
+	val = *(&data[cpos]) & 0x7F;
 
 	while(data[cpos] & 0x80)
 	{
@@ -1082,6 +1083,10 @@ set_window_title(debugtext);
 				if(alert("Store the BEAT track as well?", "(Recommended)", NULL, "&Yes", "&No", 'y', 'n') == 1)
 				{	//If the user opts to store the beat track
 					ptr = eof_get_raw_MIDI_data(eof_work_midi, beat_track, 0);
+					if(!ptr)
+					{
+						return 0;	//Return error
+					}
 					if(ptr->trackname)
 					{	//If the track had a name (it should have)
 						free(ptr->trackname);

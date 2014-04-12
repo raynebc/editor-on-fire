@@ -748,13 +748,11 @@ void eof_vocal_track_sort_lyrics(EOF_VOCAL_TRACK * tp)
 
 long eof_fixup_previous_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric)
 {
-	long i;
-
 	if(tp)
 	{
-		for(i = lyric; i > 0; i--)
+		if(lyric > 0)
 		{
-			return i - 1;
+			return lyric - 1;
 		}
 	}
 	return -1;
@@ -762,13 +760,11 @@ long eof_fixup_previous_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric)
 
 long eof_fixup_next_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric)
 {
-	long i;
-
 	if(tp)
 	{
-		for(i = lyric + 1; i < tp->lyrics; i++)
+		if(lyric + 1 < tp->lyrics)
 		{
-			return i;
+			return lyric + 1;
 		}
 	}
 	return -1;
@@ -1134,8 +1130,6 @@ void eof_set_freestyle(char *ptr, char status)
 		{
 			ptr[ctr2-1]=style;
 		}
-		else					//special case: EOF_MAX_LYRIC_LENGTH is 0 for some reason
-			return;				//Don't do anything
 	}
 }
 
@@ -7029,7 +7023,7 @@ void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsign
 	}//For each note array being modified
 	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(tp)
 	{	//If the track being altered is a pro guitar track
 		//Update arpeggios
 		for(ctr = eof_get_num_arpeggios(sp, track); ctr > 0; ctr--)

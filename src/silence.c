@@ -91,11 +91,6 @@ static int save_wav_fp(SAMPLE * sp, PACKFILE * fp)
 	channels = sp->stereo ? (size_t)2 : (size_t)1;
 	bits = (size_t)sp->bits;
 
-	if((channels < 1) || (channels > 2))
-	{
-		return 0;
-	}
-
 	samples = (size_t)sp->len;
 	data_size = samples * channels * (bits / 8);
 	n = samples * channels;
