@@ -398,6 +398,7 @@ void eof_rebuild_tuning_strings(char *tuningarray)
 {
 	unsigned long tracknum, ctr;
 	int tuning, halfsteps;
+	char error;
 
 	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return;	//Return without rebuilding string tunings if there is an error
@@ -405,19 +406,20 @@ void eof_rebuild_tuning_strings(char *tuningarray)
 
 	for(ctr = 0; ctr < EOF_TUNING_LENGTH; ctr++)
 	{	//For each usable string in the track
+		error = 0;
 		if((ctr < eof_song->pro_guitar_track[tracknum]->numstrings) && (eof_fret_strings[ctr][0] != '\0'))
 		{	//If this string is used by the track and its tuning field is populated
 			halfsteps = atol(eof_fret_strings[ctr]);
 			if(!halfsteps && (eof_fret_strings[ctr][0] != '0'))
 			{	//If there was some kind of error converting this character to a number
-				strncpy(tuning_list[ctr], "   ", sizeof(tuning_list[0])-1);	//Empty the tuning string
+				error = 1;
 			}
 			else
 			{	//Otherwise look up the tuning
 				tuning = eof_lookup_tuned_note(eof_song->pro_guitar_track[tracknum], eof_selected_track, ctr, halfsteps);
 				if(tuning < 0)
 				{	//If there was an error determining the tuning
-					strncpy(tuning_list[ctr], "   ", sizeof(tuning_list[0])-1);	//Empty the tuning string
+					error = 1;
 				}
 				else
 				{	//Otherwise update the tuning string
@@ -430,7 +432,11 @@ void eof_rebuild_tuning_strings(char *tuningarray)
 		}
 		else
 		{	//Otherwise empty the string
-			strncpy(tuning_list[ctr], "   ", sizeof(tuning_list[0])-1);	//Empty the tuning string
+			error = 1;
+		}
+		if(error)
+		{	//If the tuning string couldn't be built, empty it
+			tuning_list[ctr][0] = '\0';
 		}
 	}
 

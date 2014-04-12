@@ -252,7 +252,7 @@ unsigned long ConvertSRTTimestamp(char **ptr,int *errorstatus)
 			}
 		}
 	}
-	assert_wrapper(index <= SRTTIMESTAMPMAXFIELDLENGTH+1);	//Ensure that writing the NULL character won't overflow
+	assert_wrapper(index < SRTTIMESTAMPMAXFIELDLENGTH+1);	//Ensure that writing the NULL character won't overflow
 	hours[index]='\0';	//Terminate hours string
 
 //validate minutes portion of timestamp
@@ -278,7 +278,7 @@ unsigned long ConvertSRTTimestamp(char **ptr,int *errorstatus)
 			}
 		}
 	}
-	assert_wrapper(index <= SRTTIMESTAMPMAXFIELDLENGTH+1);	//Ensure that writing the NULL character won't overflow
+	assert_wrapper(index < SRTTIMESTAMPMAXFIELDLENGTH+1);	//Ensure that writing the NULL character won't overflow
 	minutes[index]='\0';	//Terminate minutes string
 
 //validate seconds portion of timestamp
@@ -304,7 +304,7 @@ unsigned long ConvertSRTTimestamp(char **ptr,int *errorstatus)
 			}
 		}
 	}
-	assert_wrapper(index <= SRTTIMESTAMPMAXFIELDLENGTH+1);	//Ensure that writing the NULL character won't overflow
+	assert_wrapper(index < SRTTIMESTAMPMAXFIELDLENGTH+1);	//Ensure that writing the NULL character won't overflow
 	seconds[index]='\0';	//Terminate seconds string
 
 //validate milliseconds portion of timestamp
@@ -327,7 +327,7 @@ unsigned long ConvertSRTTimestamp(char **ptr,int *errorstatus)
 				millis[index++]=temp[ctr++];	//copy character into milliseconds string, increment indexes
 		}
 	}
-	assert_wrapper(index <= SRTTIMESTAMPMAXFIELDLENGTH+1);	//Ensure that writing the NULL character won't overflow
+	assert_wrapper(index < SRTTIMESTAMPMAXFIELDLENGTH+1);	//Ensure that writing the NULL character won't overflow
 	millis[index]='\0';	//Terminate milliseconds string
 
 	if(failed)		//If parsing failed

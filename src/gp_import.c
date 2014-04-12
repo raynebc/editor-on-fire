@@ -1646,7 +1646,8 @@ int main(int argc, char *argv[])
 
 struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 {
-	char buffer[256], *buffer2, buffer3[256], buffer4[256], byte, bytemask, usedstrings, *ptr;
+	#define EOF_GP_IMPORT_BUFFER_SIZE 256
+	char buffer[EOF_GP_IMPORT_BUFFER_SIZE + 1], *buffer2, buffer3[EOF_GP_IMPORT_BUFFER_SIZE + 1], buffer4[EOF_GP_IMPORT_BUFFER_SIZE + 1], byte, bytemask, usedstrings, *ptr;
 	unsigned word, fileversion;
 	unsigned long dword, ctr, ctr2, ctr3, ctr4, tracks, measures, *strings, beats;
 	PACKFILE *inf = NULL, *inf2;	//The GPA import logic will open the file handle for the Guitar Pro file in inf if applicable
@@ -1764,7 +1765,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			if(ptr)
 			{	//If the GP file name was present, parse it into a buffer
 				identity = 1;
-				for(ctr = 0; ctr < 256; ctr++)
+				for(ctr = 0; ctr < EOF_GP_IMPORT_BUFFER_SIZE; ctr++)
 				{	//For each character buffer3[] can hold
 					if((*ptr == '<') || (*ptr == '\0'))
 					{	//If end of string or end of XML tag are reached

@@ -163,10 +163,10 @@ int eof_popup_dialog(DIALOG * dp, int n)
 		/* special handling of the song properties box */
 		if(dp == eof_song_properties_dialog)
 		{
-			if(ustrlen(dp[14].dp) != oldlen)
-			{
-				(void) object_message(&dp[14], MSG_DRAW, 0);
-				oldlen = ustrlen(dp[14].dp);
+			if(ustrlen(dp[16].dp) != oldlen)
+			{	//If the loading text field was altered
+				(void) object_message(&dp[18], MSG_DRAW, 0);	//Redraw the loading text preview
+				oldlen = ustrlen(dp[18].dp);
 			}
 		}
 

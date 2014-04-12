@@ -204,6 +204,7 @@ DIALOG eof_ini_add_dialog[] =
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
+///When inserting items into this dialog menu that are before the loading text, update eof_popup_dialog() with the new indexes for the loading text related fields
 DIALOG eof_song_properties_dialog[] =
 {
 	/* (proc)              (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
@@ -277,7 +278,7 @@ void eof_prepare_song_menu(void)
 		{
 			char *ptr = eof_track_selected_menu_text[i];	//Do this to work around false alarm warnings
 			eof_track_selected_menu[i].flags = 0;
-			if((i + 1 < eof_song->tracks) && (eof_song->track[i+1] != NULL))
+			if((i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 			{	//If the track exists, copy its name into the string used by the track menu
 				ptr[0] = ' ';	//Add a leading space
 				(void) ustrncpy(&(ptr[1]),eof_song->track[i+1]->name,EOF_TRACK_NAME_SIZE-1);
@@ -2471,13 +2472,14 @@ int eof_menu_song_seek_next_grid_snap(void)
 
 int eof_menu_song_seek_previous_anchor(void)
 {
-	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	long b;
 
 	if(!eof_song)
 		return 1;
+	b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 
-	if(eof_song->beat[b]->pos == eof_music_pos - eof_av_delay)
-	{	//If the seek position was on the beat marker
+	if((b >= 0) && (eof_song->beat[b]->pos == eof_music_pos - eof_av_delay))
+	{	//If the beat in which the seek position is was found and the seek position was on the beat marker
 		b--;	//Go to the previous beat
 	}
 	while((b > 0) && ((eof_song->beat[b]->flags & EOF_BEAT_FLAG_ANCHOR) == 0))
@@ -2495,14 +2497,15 @@ int eof_menu_song_seek_previous_anchor(void)
 
 int eof_menu_song_seek_next_anchor(void)
 {
-	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
-	long b2 = b;
+	long b, b2;
 
 	if(!eof_song)
 		return 1;
+	b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	b2 = b;
 
-	if(eof_song->beat[b]->pos == eof_music_pos - eof_av_delay)
-	{	//If the seek position was on the beat marker
+	if((b >= 0) && (eof_song->beat[b]->pos == eof_music_pos - eof_av_delay))
+	{	//If the beat in which the seek position is was found and the seek position was on the beat marker
 		b++;	//Go to the next beat
 	}
 	while((b > 0) && (b < eof_song->beats) && ((eof_song->beat[b]->flags & EOF_BEAT_FLAG_ANCHOR) == 0))

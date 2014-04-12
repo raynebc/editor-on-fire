@@ -718,17 +718,17 @@ void eof_midi_play_note_ex(int note, unsigned char channel, unsigned char patch)
 	unsigned char SET_PATCH_DATA[2] = {0xC0|channel, 28}; 		// 28 = Electric Guitar (clean)
 	unsigned char NOTE_ON_DATA[3] = {0x90|channel, 0x0, 127};	//Data sequence for a Note On, channel 1, Note 0
 	unsigned char NOTE_OFF_DATA[3] = {0x80|channel, 0x0, 127};	//Data sequence for a Note Off, channel 1, Note 0
-	static unsigned char lastnote[6] = {0,0,0,0,0,0};			//Remembers the last note that was played, so it can be turned off
-	static unsigned char lastnotedefined[6] = {0,0,0,0,0,0};
+	static unsigned char lastnote[16] = {0};					//Remembers the last note that was played on each channel, so it can be turned off
+	static unsigned char lastnotedefined[16] = {0};
 	static unsigned char patches[16] = {0};	//The last instrument number played on each of the 16 usable channels, is set to nonzero after the instrument is set
 
 	if(midi_driver == NULL)
 	{	//Ensure Allegro's MIDI driver is loaded
 		return;
 	}
-	if(channel > 16)
+	if(channel > 15)
 	{	//Bounds check
-		channel = 16;
+		channel = 15;
 	}
 	if(patch |= patches[channel])
 	{	//If the instrument number needs to be changed for this channel

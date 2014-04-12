@@ -368,7 +368,7 @@ int eof_filebuffer_find_bytes(filebuffer *fb, const void *bytes, size_t searchle
 
 int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *target, char forcestrum)
 {
-	unsigned long numnotes, dword, ctr, notesize;
+	unsigned long numnotes, dword, ctr, notesize = 0;
 	unsigned int length, isexpertplus;
 	unsigned char notemask, accentmask, fixednotemask;
 	EOF_NOTE *newnote = NULL;
@@ -510,7 +510,7 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 				return -1;
 			}
 		}
-	}
+	}//For each note in the section
 	return 1;
 }
 

@@ -3270,20 +3270,21 @@ void eof_read_clipboard_note(PACKFILE *fp, EOF_EXTENDED_NOTE *temp_note, unsigne
 
 	/* read the note */
 	(void) eof_load_song_string_pf(temp_note->name, fp, (size_t)namelength);	//Read the note's name, up to the specified number of characters
-	temp_note->type = pack_getc(fp);	//Read the note's difficulty
-	temp_note->note = pack_getc(fp);	//Read the note bitmask value
-	temp_note->beat = pack_igetl(fp);	//Read the beat the note starts in
+	temp_note->type = pack_getc(fp);		//Read the note's difficulty
+	temp_note->note = pack_getc(fp);		//Read the note bitmask value
+	temp_note->beat = pack_igetl(fp);		//Read the beat the note starts in
 	temp_note->endbeat = pack_igetl(fp);	//Read the beat the note ends in
 	temp_note->pos = pack_igetl(fp);		//Read the note's position relative to within the selection
-	temp_note->length = pack_igetl(fp);	//Read the note's length
+	temp_note->length = pack_igetl(fp);		//Read the note's length
+	temp_note->midi_pos = temp_note->midi_length = 0;	//Initialize these unused variables
 	(void) pack_fread(&temp_note->porpos, (long)sizeof(float), fp);	//Read the percent representing the note's start position within a beat
 	(void) pack_fread(&temp_note->porendpos, (long)sizeof(float), fp);	//Read the percent representing the note's end position within a beat
-	temp_note->flags = pack_igetl(fp);	//Read the note's flags
-	temp_note->eflags = pack_igetl(fp);	//Read the note's extended track flags
+	temp_note->flags = pack_igetl(fp);		//Read the note's flags
+	temp_note->eflags = pack_igetl(fp);		//Read the note's extended track flags
 	temp_note->legacymask = pack_getc(fp);		//Read the note's legacy bitmask
 	(void) pack_fread(temp_note->frets, (long)sizeof(temp_note->frets), fp);	//Read the note's fret array
 	(void) pack_fread(temp_note->finger, (long)sizeof(temp_note->finger), fp);	//Read the note's finger array
-	temp_note->ghost = pack_getc(fp);		//Read the note's ghost bitmask
+	temp_note->ghost = pack_getc(fp);			//Read the note's ghost bitmask
 	temp_note->bendstrength = pack_getc(fp);	//Read the note's bend strength
 	temp_note->slideend = pack_getc(fp);		//Read the note's slide end position
 	temp_note->unpitchend = pack_getc(fp);		//Read the note's unpitched slide end position

@@ -988,8 +988,7 @@ void eof_sort_notes(EOF_SONG *sp)
 unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 {
 	unsigned long i;
-	int note_type;
-	unsigned char numdiffs = 5;
+	unsigned char numdiffs = 5, note_type;
 
  	eof_log("eof_detect_difficulties() entered", 1);
 
@@ -1027,7 +1026,7 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 				{	//If this note's difficulty is the highest encountered in the track so far
 					numdiffs = note_type + 1;
 				}
-				if((note_type >= 0) && (note_type < EOF_MAX_DIFFICULTIES))
+				if(note_type < EOF_MAX_DIFFICULTIES)
 				{	//If this note has a valid type (difficulty) in the traditional 5 difficulty system
 					if(track == EOF_TRACK_DANCE)
 					{	//If this is the dance track, update the dance track tabs
@@ -1323,7 +1322,7 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 	if((sp == NULL) || (trackdetails == NULL))
 		return 0;	//Return error
 
-	if(sp->tracks <= EOF_TRACKS_MAX)
+	if(sp->tracks < EOF_TRACKS_MAX)
 	{	//For each native track
 		ptr3 = malloc(sizeof(EOF_TRACK_ENTRY));
 		if(ptr3 == NULL)
@@ -3214,7 +3213,7 @@ unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track)
 {
 // 	eof_log("eof_count_track_lanes() entered");
 
-	if((track == 0) || (track > EOF_TRACKS_MAX) || (sp == NULL))
+	if((track == 0) || (track >= sp->tracks) || (sp == NULL))
 		return 5;	//Return default value if the specified track doesn't exist
 
 	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)

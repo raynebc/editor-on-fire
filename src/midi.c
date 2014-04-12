@@ -3129,8 +3129,9 @@ void eof_check_for_note_overlap(void)
 
 void eof_check_for_hopo_phrase_overlap(void)
 {
-	int HOPO_notes[] = {65, 66, 77, 78, 89, 90, 101, 102};	//A list of each of the HOPO on/off phrase markers
-	int HOPO_notes_off[] = {66, 65, 78, 77, 90, 89, 102, 101};	//A list of the opposite markers from each index in HOPO_notes[], ie. the phrase that should end before a corresponding HOPO phrase starts
+	#define HOPO_ARRAY_SIZE 8
+	int HOPO_notes[HOPO_ARRAY_SIZE] = {65, 66, 77, 78, 89, 90, 101, 102};	//A list of each of the HOPO on/off phrase markers
+	int HOPO_notes_off[HOPO_ARRAY_SIZE] = {66, 65, 78, 77, 90, 89, 102, 101};	//A list of the opposite markers from each index in HOPO_notes[], ie. the phrase that should end before a corresponding HOPO phrase starts
 	unsigned long ctr, ctr2, ctr3;
 	char phrasealtered;
 
@@ -3142,7 +3143,7 @@ void eof_check_for_hopo_phrase_overlap(void)
 			if(eof_midi_event[ctr]->off)
 			{	//If this is a note off event
 				phrasealtered = 0;
-				for(ctr2 = 0; ((size_t)ctr2 < sizeof(HOPO_notes)) && !phrasealtered; ctr2++)
+				for(ctr2 = 0; ((size_t)ctr2 < HOPO_ARRAY_SIZE) && !phrasealtered; ctr2++)
 				{	//For each of the note numbers in the HOPO marker list (or until the HOPO phrase's end position has been altered)
 					if(eof_midi_event[ctr]->note == HOPO_notes[ctr2])
 					{	//If the event is a HOPO phrase end marker

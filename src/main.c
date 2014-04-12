@@ -54,9 +54,9 @@
 #include "memwatch.h"
 #endif
 
-char        eof_note_type_name[5][32] = {" Supaeasy", " Easy", " Medium", " Amazing", " BRE"};
-char        eof_vocal_tab_name[5][32] = {" Lyrics", " ", " ", " ", " "};
-char        eof_dance_tab_name[5][32] = {" Beginner", " Easy", " Medium", " Hard", " Challenge"};
+char        eof_note_type_name[EOF_MAX_DIFFICULTIES][32] = {" Supaeasy", " Easy", " Medium", " Amazing", " BRE"};
+char        eof_vocal_tab_name[EOF_MAX_DIFFICULTIES][32] = {" Lyrics", " ", " ", " ", " "};
+char        eof_dance_tab_name[EOF_MAX_DIFFICULTIES][32] = {" Beginner", " Easy", " Medium", " Hard", " Challenge"};
 char        eof_track_diff_populated_status[256] = {0};
 char        eof_track_diff_populated_tech_note_status[256] = {0};
 char      * eof_snap_name[9] = {"Off", "1/4", "1/8", "1/12", "1/16", "1/24", "1/32", "1/48", "Custom"};
@@ -398,6 +398,10 @@ float eof_get_porpos(unsigned long pos)
 	eof_log("eof_get_porpos() entered", 2);
 
 	beat = eof_get_beat(eof_song, pos);
+	if(beat < 0)
+	{	//If eof_get_beat() returned error
+		beat = eof_song->beats - 1;	//Assume the note position is relative to the last beat marker
+	}
 	if(beat < eof_song->beats - 1)
 	{
 		blength = eof_song->beat[beat + 1]->pos - eof_song->beat[beat]->pos;
@@ -405,10 +409,6 @@ float eof_get_porpos(unsigned long pos)
 	else
 	{
 		blength = eof_song->beat[eof_song->beats - 1]->pos - eof_song->beat[eof_song->beats - 2]->pos;
-	}
-	if(beat < 0)
-	{	//If eof_get_beat() returned error
-		beat = eof_song->beats - 1;	//Assume the note position is relative to the last beat marker
 	}
 	rpos = pos - eof_song->beat[beat]->pos;
 	porpos = ((float)rpos / (float)blength) * 100.0;
@@ -1480,6 +1480,10 @@ unsigned long eof_get_selected_note_range(unsigned long *sel_start, unsigned lon
 				}
 			}
 		}
+	}
+	if(first)
+	{	//If no selected notes were found
+		return 0;
 	}
 	if(!function)
 	{	//Return the selection information as index numbers
