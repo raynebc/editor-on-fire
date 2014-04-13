@@ -34,7 +34,7 @@ char *ReadTextInfoFrame(FILE *inf)
 
 //Store the original file position
 	originalpos=ftell(inf);
-	if(ferror(inf))		//If there was a file I/O error
+	if(originalpos < 0)		//If there was a file I/O error
 		return NULL;
 
 	if(fread(buffer,4,1,inf) != 1)	//Read the frame ID

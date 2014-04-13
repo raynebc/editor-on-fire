@@ -244,13 +244,11 @@ void eof_realign_beats(EOF_SONG * sp, int cbeat)
 	{
 		next_anchor = sp->beats;
 	}
-	if(last_anchor == next_anchor)
-	{	//Avoid a division by zero
+	if(last_anchor >= next_anchor)
+	{	//Avoid a division by zero or negative number
 		return;
 	}
-
-	if(last_anchor < next_anchor)
-		beats = next_anchor - last_anchor;	//The number of beats between the previous and next anchor
+	beats = next_anchor - last_anchor;	//The number of beats between the previous and next anchor
 
 	/* figure out what the new BPM should be */
 	beats_length = sp->beat[next_anchor]->pos - sp->beat[last_anchor]->pos;

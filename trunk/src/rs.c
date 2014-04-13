@@ -3734,8 +3734,6 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 	}
 	else
 	{	//Compare the specified difficulty with the next difficulty
-		if(diff == 255)
-			return 0;	//There is no difficulty after the last difficulty
 		comparediff = diff + 1;
 		if(((sp->track[track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) == 0) && (comparediff == 4))
 		{	//If the track is using the traditional 5 difficulty system and the difficulty next to the being examined is the BRE difficulty

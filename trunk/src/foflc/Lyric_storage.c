@@ -2529,7 +2529,7 @@ int SearchPhrase(FILE *inf,unsigned long breakpos,unsigned long *pos,const char 
 	errno=0;
 	originalpos=ftell(inf);	//Store the original file position
 	currentpos=originalpos;
-	if(errno)		//If there was an I/O error
+	if(originalpos < 0)		//If there was an I/O error
 		return -1;
 
 	ret = fgetc(inf);		//Read the first character of the file
