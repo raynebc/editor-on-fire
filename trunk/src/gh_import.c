@@ -122,6 +122,19 @@ DIALOG eof_all_sections_dialog[] =
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
+void eof_destroy_qblyric_list(struct QBlyric *head)
+{
+	struct QBlyric *ptr = head;
+
+	while(ptr != NULL)
+	{	//While there are links remaining in the list
+		free(ptr->text);
+		head = ptr->next;	//The new head link will be the next link
+		free(ptr);			//Free the head link
+		ptr = head;			//Advance to the new head link
+	}
+}
+
 filebuffer *eof_filebuffer_load(const char * fn)
 {
 	filebuffer *buffer = NULL;
@@ -1004,6 +1017,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 		if(eof_filebuffer_get_dword(fb, &lyricstart))	//Read the lyric start position
 		{	//If there was an error reading the next 4 byte value
 			eof_log("\t\tError:  Could not read lyric position", 1);
+			free(lyricbuffer);
 			return -1;
 		}
 		if(!eof_gh_unicode_encoding_detected)
@@ -1011,6 +1025,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 			if(eof_filebuffer_memcpy(fb, lyricbuffer, (size_t)lyricsize - 4))	//Read 4 bytes less to account for the entry's position
 			{	//If there was an error reading the lyric entry
 				eof_log("\t\tError:  Could not read lyric text", 1);
+				free(lyricbuffer);
 				return -1;
 			}
 			//successfully read, convert to unicode for storage */
@@ -1024,6 +1039,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 			if(eof_filebuffer_read_unicode_chars(fb, lyricbuffer, 32))
 			{	//If there was an error reading 32 Unicode characters (68 bytes)
 				eof_log("\t\tError:  Could not read lyric text", 1);
+				free(lyricbuffer);
 				return -1;
 			}
 		}
@@ -1113,11 +1129,13 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 	if(eof_filebuffer_find_checksum(fb, eof_gh_checksum("vocalphrase")))	//Seek one byte past the target header
 	{	//If the target section couldn't be found
 		eof_log("\t\tCould not find section", 1);
+		free(lyricbuffer);
 		return 0;
 	}
 	if(eof_filebuffer_get_dword(fb, &numphrases))	//Read the number of lyric phrases in the section
 	{	//If there was an error reading the next 4 byte value
 		eof_log("\t\tError:  Could not read number of lyric phrases", 1);
+		free(lyricbuffer);
 		return -1;
 	}
 #ifdef GH_IMPORT_DEBUG
@@ -1130,11 +1148,13 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 		if(eof_filebuffer_get_dword(fb, &phrasesize))	//Read the size of the lyric phrase entry
 		{	//If there was an error reading the next 4 byte value
 			eof_log("\t\tError:  Could not read lyric phrase size", 1);
+			free(lyricbuffer);
 			return -1;
 		}
 		if(phrasesize != 4)
 		{	//Each lyric entry is expected to be 4 bytes long
 			eof_log("\t\tError:  Lyric phrase size is not 4", 1);
+			free(lyricbuffer);
 			return -1;
 		}
 	}
@@ -1148,6 +1168,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 		if(eof_filebuffer_get_dword(fb, &phrasestart))	//Read the lyric start position
 		{	//If there was an error reading the next 4 byte value
 			eof_log("\t\tError:  Could not read lyric phrase position", 1);
+			free(lyricbuffer);
 			return -1;
 		}
 #ifdef GH_IMPORT_DEBUG
@@ -2270,7 +2291,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 {
 	EOF_SONG * sp;
 	filebuffer *fb;
-	char filename[101], songname[41], buffer[101], forcestrum = 0;
+	char filename[101], songname[101], buffer[101], forcestrum = 0;
 	unsigned char byte;
 	unsigned long index, ctr, ctr2, ctr3, arraysize, *arrayptr, numbeats, numsigs, tsnum, tsden, dword, lastfretbar = 0, lastsig = 0;
 	unsigned long qbindex;	//Will store the file index of the QB header
@@ -2393,6 +2414,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 		{
 			eof_log("Error:  Invalid number of fretbars", 1);
 			eof_filebuffer_close(fb);
+			eof_destroy_song(sp);
 			free(arrayptr);
 			return NULL;
 		}
@@ -2600,6 +2622,7 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 		for(index2 = char_size; (index2 <= fb->index) && (fb->buffer[fb->index - index2 + char_size - 1] != '\"'); index2 += char_size);	//Find the opening quotation mark for this string
 		if(index2 > fb->index)
 		{	//If the opening quotation mark wasn't found
+			eof_destroy_qblyric_list(head);
 			return NULL;
 		}
 		if(fb->index - index2 >= quote_rewind)
@@ -2611,6 +2634,7 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 				if(eof_filebuffer_memcpy(fb, checksumbuffuni, 16) == EOF)	//Read the Unicode checksum into a buffer
 				{
 					eof_log("\t\tError:  Could not read Unicode section name checksum", 1);
+					eof_destroy_qblyric_list(head);
 					return NULL;
 				}
 				for(ctr = 0; ctr < 8; ctr++)
@@ -2623,6 +2647,7 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 				if(eof_filebuffer_memcpy(fb, checksumbuff, 8) == EOF)	//Read the checksum into a buffer
 				{
 					eof_log("\t\tError:  Could not read section name checksum", 1);
+					eof_destroy_qblyric_list(head);
 					return NULL;
 				}
 			}
@@ -2651,11 +2676,14 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 			if(buffer == NULL)
 			{	//If the memory couldn't be allocated
 				eof_log("\t\tError:  Cannot allocate memory", 1);
+				eof_destroy_qblyric_list(head);
 				return NULL;
 			}
 			if(eof_filebuffer_memcpy(fb, buffer, (size_t)index2 - 1) == EOF)	//Read the section name string into a buffer
 			{
 				eof_log("\t\tError:  Could not read section name text", 1);
+				free(buffer);
+				eof_destroy_qblyric_list(head);
 				return NULL;
 			}
 			if(eof_gh_unicode_encoding_detected)
@@ -2699,6 +2727,7 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 						{	//If the end of the string is reached unexpectedly
 							eof_log("\t\tError:  Malformed section name string", 1);
 							free(buffer);
+							eof_destroy_qblyric_list(head);
 							return NULL;
 						}
 						nameindex++;
@@ -2710,6 +2739,7 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 				{	//If the memory couldn't be allocated
 					eof_log("\t\tError:  Cannot allocate memory", 1);
 					free(buffer);
+					eof_destroy_qblyric_list(head);
 					return NULL;
 				}
 				strcpy(name, &buffer[nameindex]);	//Copy the clean section name into the new buffer
@@ -2726,6 +2756,7 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 					eof_log("\t\tError:  Cannot allocate memory", 1);
 					free(buffer);
 					free(name);
+					eof_destroy_qblyric_list(head);
 					return NULL;
 				}
 				linkptr->checksum = checksum;
@@ -2806,11 +2837,13 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 			if(eof_filebuffer_find_checksum(fb, eof_gh_checksum("guitarmarkers")))	//Seek one byte past the "guitarmarkers" header
 			{	//If the "guitarmarkers" section couldn't be found
 				eof_log("Error:  Failed to locate \"guitarmarkers\" header", 1);
+				eof_destroy_qblyric_list(head);
 				return -1;
 			}
 			if(eof_filebuffer_get_dword(fb, &numsections))	//Read the number of sections
 			{	//If there was an error reading the next 4 byte value
 				eof_log("Error:  Could not read number of sections", 1);
+				eof_destroy_qblyric_list(head);
 				return -1;
 			}
 		#ifdef GH_IMPORT_DEBUG
@@ -2821,11 +2854,13 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 			if(eof_filebuffer_get_dword(fb, &dword))	//Read the size of the section
 			{	//If there was an error reading the next 4 byte value
 				eof_log("Error:  Could not read section size", 1);
+				eof_destroy_qblyric_list(head);
 				return -1;
 			}
 			if(dword != 8)
 			{	//Each section is expected to be 8 bytes long
 				eof_log("Error:  Section size is not 8", 1);
+				eof_destroy_qblyric_list(head);
 				return -1;
 			}
 			for(ctr = 0; ctr < numsections; ctr++)
@@ -2833,11 +2868,13 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 				if(eof_filebuffer_get_dword(fb, &dword))
 				{	//If there was an error reading the next 4 byte value
 					eof_log("Error:  Could not read section timestamp", 1);
+					eof_destroy_qblyric_list(head);
 					return -1;
 				}
 				if(eof_filebuffer_get_dword(fb, &checksum))
 				{	//If there was an error reading the next 4 byte value
 					eof_log("Error:  Could not read section checksum", 1);
+					eof_destroy_qblyric_list(head);
 					return -1;
 				}
 
@@ -2868,14 +2905,7 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 			}//For each section in the chart file
 
 		//Cleanup
-			linkptr = head;
-			while(linkptr != NULL)
-			{	//While there are links remaining in the list
-				free(linkptr->text);
-				head = linkptr->next;	//The new head link will be the next link
-				free(linkptr);			//Free the head link
-				linkptr = head;			//Advance to the new head link
-			}
+			eof_destroy_qblyric_list(head);
 		}//Section names were found
 
 	//Prompt user

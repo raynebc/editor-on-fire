@@ -343,7 +343,9 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 
 	if(str[0] == '\0')			//If the string is empty
 	{
-		if(Lyrics.verbose>=2)	(void) puts("Empty lyric ignored");
+		if(Lyrics.verbose>=2)
+			(void) puts("Empty lyric ignored");
+		free(str);
 		return;
 	}
 
@@ -351,7 +353,9 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 	if(start-Lyrics.realoffset > end-Lyrics.realoffset)
 	{
 		(void) puts("Error: Cannot add piece with a negative duration\nAborting");
+		free(str);
 		exit_wrapper(2);
+		return;	//Put this return statement here so cppcheck realizes the function ends here
 	}
 
 	if(Lyrics.verbose>=2)
@@ -389,7 +393,8 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 		{
 			if(strchr(Lyrics.filter,str[strlen(str)-1]) != NULL)
 			{	//If the last character in the lyric piece is in the filter list, truncate it from the string
-				if(Lyrics.verbose)	printf("Filtered character '%c' removed\n",str[strlen(str)-1]);
+				if(Lyrics.verbose)
+					printf("Filtered character '%c' removed\n",str[strlen(str)-1]);
 				str[strlen(str)-1]='\0';	//Truncate the last character
 			}
 			else	//There is not a filtered character at the end of this piece of lyric, or no filtering was specified
@@ -401,7 +406,8 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 		Lyrics.lyric_defined=0;					//Expecting a new lyric event
 		Lyrics.lyric_on=0;						//Expecting a new Note On event as well
 		free(str);								//de-allocate newly-created string
-		if(Lyrics.verbose>=2)	(void) puts("(empty lyric dropped)");
+		if(Lyrics.verbose>=2)
+			(void) puts("(empty lyric dropped)");
 		return;			//return without adding the empty string
 	}
 
@@ -493,14 +499,17 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 	if(Lyrics.verbose>=2)
 	{
 		printf("start=%lu\tAdj. start=%lu",start,start-Lyrics.realoffset);
-		if(groupswithnext)	printf("\tGroupswithnext=TRUE");
-		if(trailspace)	printf("\n\t\tLyric \"%s\" detected as having trailing whitespace, this will defeat grouping with the next lyric if applicable",str);
+		if(groupswithnext)
+			printf("\tGroupswithnext=TRUE");
+		if(trailspace)
+			printf("\n\t\tLyric \"%s\" detected as having trailing whitespace, this will defeat grouping with the next lyric if applicable",str);
 		(void) putchar('\n');
 	}
 
 	if(linebreak)	//If the lyric triggers a line break in the middle of the line of lyrics
 	{
-		if(Lyrics.verbose)	(void) puts("(Lyric defines a line break)");
+		if(Lyrics.verbose)
+			(void) puts("(Lyric defines a line break)");
 		EndLyricLine();
 		CreateLyricLine();
 	}

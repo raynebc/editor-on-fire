@@ -302,6 +302,7 @@ EOF_SONG * eof_load_song(const char * fn)
 		if(!eof_load_song_pf(sp, fp))
 		{
 			(void) pack_fclose(fp);
+			eof_destroy_song(sp);	//Destroy the song and return on error
 			return NULL;
 		}
 		if(EOF_TRACK_DANCE >= sp->tracks)
@@ -1404,6 +1405,7 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 			break;
 			default:
 				eof_log("\tError:  Invalid track format", 1);
+				free(ptr3);
 			return 0;	//Return error
 		}
 
@@ -1691,7 +1693,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	}
 
 	custom_data_count = pack_igetl(fp);		//Read the number of custom data blocks
-	for(custom_data_ctr=0; custom_data_ctr<custom_data_count; custom_data_ctr++)
+	for(custom_data_ctr = 0; custom_data_ctr < custom_data_count; custom_data_ctr++)
 	{	//For each custom data block in the project
 		custom_data_size = pack_igetl(fp);	//Read the size of the custom data block
 		data_block_type = pack_igetl(fp);	//Read the data block type
@@ -1765,6 +1767,12 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 						free(trackptr->description);
 						free(trackptr);
 						eof_log("Error:  Couldn't allocate memory for raw MIDI text event", 1);
+						while(eventhead)
+						{	//Release all raw MIDI events
+							eventtail = eventhead->next;	//Save the address of the next link
+							free(eventhead);				//Free the head link
+							eventhead = eventtail;			//Point to the next link
+						}
 						return 0;	//Memory allocation error
 					}
 					(void) eof_load_song_string_pf(buffer, fp, sizeof(buffer));	//Read the timestamp string
@@ -1777,6 +1785,12 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 						free(trackptr);
 						free(eventptr);
 						eof_log("Error:  Couldn't allocate memory for raw MIDI timestamp", 1);
+						while(eventhead)
+						{	//Release all raw MIDI events
+							eventtail = eventhead->next;	//Save the address of the next link
+							free(eventhead);				//Free the head link
+							eventhead = eventtail;			//Point to the next link
+						}
 						return 0;	//Memory allocation error
 					}
 					strcpy(eventptr->stringtime, buffer);	//Store the timestamp string
@@ -1795,6 +1809,12 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 						free(eventptr->stringtime);
 						free(eventptr);
 						eof_log("Error:  Couldn't allocate memory for raw MIDI event data", 1);
+						while(eventhead)
+						{	//Release all raw MIDI events
+							eventtail = eventhead->next;	//Save the address of the next link
+							free(eventhead);				//Free the head link
+							eventhead = eventtail;			//Point to the next link
+						}
 						return 0;	//Memory allocation error
 					}
 					(void) pack_fread(eventptr->data, (long)eventptr->size, fp);	//Read the event's data
@@ -1812,8 +1832,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				trackptr->events = eventhead;	//Store the events linked list in the track link
 				trackptr->next = NULL;
 				eof_MIDI_add_track(sp, trackptr);	//Store the track link in the EOF_SONG structure
-			}
-		}
+			}//For each of the tracks to read
+		}//If this is a linked list of raw MIDI track data
 		else
 		{	//Otherwise, skip over the unknown data block
 			for(ctr=4; ctr<custom_data_size; ctr++)
@@ -3196,7 +3216,10 @@ EOF_SONG * eof_create_song_populated(void)
 		for(ctr = 1; ctr < EOF_TRACKS_MAX; ctr++)
 		{	//For each track in the eof_default_tracks[] array
 			if(eof_song_add_track(sp,&eof_default_tracks[ctr]) == 0)
+			{
+				eof_destroy_song(sp);	//Destroy the song and return on error
 				return NULL;
+			}
 		}
 	}
 
@@ -3207,7 +3230,7 @@ unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track)
 {
 // 	eof_log("eof_count_track_lanes() entered");
 
-	if((track == 0) || (track >= sp->tracks) || (sp == NULL))
+	if((sp == NULL) || (track == 0) || (track >= sp->tracks))
 		return 5;	//Return default value if the specified track doesn't exist
 
 	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)

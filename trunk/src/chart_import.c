@@ -195,8 +195,11 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 		(void) replace_filename(searchpath, oggfn, "", 1024);		//Store the path of the file's parent folder
 		ret = eof_mp3_to_ogg(oggfn,searchpath);				//Create guitar.ogg in the folder
-		if(ret != 0)										//If guitar.ogg was not created successfully
+		if(ret != 0)
+		{	//If guitar.ogg was not created successfully
+			DestroyFeedbackChart(chart, 1);
 			return NULL;
+		}
 		(void) replace_filename(oggfn, oggfn, "guitar.ogg", 1024);	//guitar.ogg is the expected file
 
 		if(!eof_load_ogg(oggfn, 1))	//If user does not provide audio, fail over to using silent audio
@@ -639,6 +642,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=3;
+				free(buffer);
+				free(buffer2);
 				return NULL;					//Malformed section header, return error
 			}
 
@@ -649,6 +654,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=4;
+				free(buffer);
+				free(buffer2);
 				return NULL;					//Malformed file, return error
 			}
 
@@ -662,6 +669,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
 						*error=5;
+					free(buffer);
+					free(buffer2);
 					return NULL;					//Multiple [song] sections, return error
 				}
 				songparsed=1;
@@ -679,6 +688,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 						if(error)
 							*error=6;
+						free(buffer);
+						free(buffer2);
 						return NULL;					//Multiple [SyncTrack] sections, return error
 					}
 					syncparsed=1;
@@ -696,6 +707,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 							DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 							if(error)
 								*error=7;
+							free(buffer);
+							free(buffer2);
 							return NULL;					//Multiple [Events] sections, return error
 						}
 						eventsparsed=1;
@@ -711,6 +724,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 							DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 							if(error)
 								*error=8;
+							free(buffer);
+							free(buffer2);
 							return NULL;					//Invalid instrument section, return error
 						}
 						currentsection=4;
@@ -748,6 +763,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=9;
+				free(buffer);
+				free(buffer2);
 				return NULL;					//Malformed file, return error
 			}
 			currentsection=0;
@@ -764,6 +781,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 			if(error)
 				*error=10;
+			free(buffer);
+			free(buffer2);
 			return NULL;					//Invalid section entry, return error
 		}
 
@@ -795,6 +814,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 						if(error)
 							*error=11;
+						free(buffer);
+						free(buffer2);
 						return NULL;					//Invalid number, return error
 					}
 					free(string2);	//This string is no longer used
@@ -824,6 +845,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=12;
+				free(buffer);
+				free(buffer2);
 				return NULL;					//Invalid number, return error
 			}
 
@@ -845,6 +868,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=13;
+				free(buffer);
+				free(buffer2);
 				return NULL;				//Invalid SyncTrack entry, return error
 			}
 
@@ -869,6 +894,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
 						*error=14;
+					free(buffer);
+					free(buffer2);
 					return NULL;					//Invalid anchor type, return error
 				}
 				index+=2;	//This anchor type is two characters instead of one
@@ -880,6 +907,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=15;
+				free(buffer);
+				free(buffer2);
 				return NULL;					//Invalid anchor type, return error
 			}
 
@@ -892,6 +921,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=16;
+				free(buffer);
+				free(buffer2);
 				return NULL;					//Invalid number, return error
 			}
 
@@ -911,6 +942,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					DestroyFeedbackChart(chart,1);
 					if(error)
 						*error=17;
+					free(buffer);
+					free(buffer2);
 					return NULL;			//Invalid anchor type, return error
 				}
 			}
@@ -951,7 +984,9 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 						eof_log(eof_log_string, 1);
 						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 						if(error)
-							*error=17;
+							*error=18;
+					free(buffer);
+					free(buffer2);
 					return NULL;			//Invalid anchor type, return error
 				}
 			}
@@ -968,7 +1003,9 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				eof_log(eof_log_string, 1);
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
-					*error=18;
+					*error=19;
+				free(buffer);
+				free(buffer2);
 				return NULL;					//Invalid number, return error
 			}
 
@@ -989,7 +1026,9 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				eof_log(eof_log_string, 1);
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
-					*error=19;
+					*error=20;
+				free(buffer);
+				free(buffer2);
 				return NULL;				//Invalid Event entry, return error
 			}
 
@@ -1015,6 +1054,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
 						*error=21;
+					free(buffer);
+					free(buffer2);
 					return NULL;					//Invalid Event entry, return error
 				}
 
@@ -1030,6 +1071,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 						if(error)
 							*error=22;
+						free(buffer);
+						free(buffer2);
 						return NULL;					//Invalid Event entry, return error
 					}
 					buffer2[index2++]=substring[index++];	//Copy the character to the second buffer, incrementing both indexes
@@ -1073,6 +1116,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=23;
+				free(buffer);
+				free(buffer2);
 				return NULL;					//Invalid number, return error
 			}
 
@@ -1094,6 +1139,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=24;
+				free(buffer);
+				free(buffer2);
 				return NULL;				//Invalid instrument entry, return error
 			}
 
@@ -1128,6 +1175,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
 						*error=25;
+				free(buffer);
+				free(buffer2);
 				return NULL;		//Invalid instrument entry, return error
 			}
 
@@ -1140,6 +1189,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=26;
+				free(buffer);
+				free(buffer2);
 				return NULL;					//Invalid number, return error
 			}
 
@@ -1152,6 +1203,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=27;
+				free(buffer);
+				free(buffer2);
 				return NULL;					//Invalid number, return error
 			}
 
@@ -1163,6 +1216,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=28;
+				free(buffer);
+				free(buffer2);
 				return NULL;					//Malformed file, return error
 			}
 
@@ -1193,6 +1248,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
 						*error=29;
+					free(buffer);
+					free(buffer2);
 					return NULL;					//Invalid player section marker, return error
 				}
 				curnote->gemcolor='0'+B;	//Store 0 as '0', 1 as '1' or 2 as '2', ...
@@ -1208,6 +1265,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 			if(error)
 				*error=30;
+			free(buffer);
+			free(buffer2);
 			return NULL;					//Malformed file, return error
 		}
 

@@ -3217,6 +3217,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									free(nonshiftslide);
 									free(gp);
 									free(tsarray);
+									free(strings);
 									return NULL;
 								}
 								gp->text_event[gp->text_events]->beat = curbeat - skipbeatsourcectr;
