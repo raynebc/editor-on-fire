@@ -42,6 +42,7 @@ double notefunc_note_to_freq(char* note)
 		return 440;
 	}
 
+	octavestr[9] = '\0';	//Ensure NULL termination
 	octavenum = atoi(octavestr);			//Parse the octave
 	if(notename > 90)
 	{ //Upper-case the note

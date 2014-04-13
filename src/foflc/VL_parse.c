@@ -236,6 +236,7 @@ int VL_PreLoad(FILE *inf,char validate)
 			else
 			{
 				printf("Error: Empty lyric string detected before file position 0x%lX\n",ftell_result);
+				free(temp);
 				if(validate)
 					return 10;
 				else
@@ -248,6 +249,7 @@ int VL_PreLoad(FILE *inf,char validate)
 		if((unsigned long)ftell_result > VL.textsize + 16)	//If reading this string caused the file position to cross into Sync chunk
 		{
 			(void) puts("Error: Lyric string overlapped into Sync chunk");
+			free(temp);
 			if(validate)
 				return 11;
 			else

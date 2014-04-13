@@ -555,6 +555,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			b = pack_igetl(fp);
 			if(!eof_song_resize_beats(sp, b))
 			{
+				eof_destroy_song(sp);
 				return 0;
 			}
 			for(i = 0; i < b; i++)
@@ -624,6 +625,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			b = pack_igetl(fp);
 			if(!eof_song_resize_beats(sp, b))
 			{
+				eof_destroy_song(sp);
 				return 0;
 			}
 			for(i = 0; i < b; i++)
@@ -707,6 +709,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			b = pack_igetl(fp);
 			if(!eof_song_resize_beats(sp, b))
 			{
+				eof_destroy_song(sp);
 				return 0;
 			}
 			for(i = 0; i < b; i++)
@@ -822,6 +825,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			b = pack_igetl(fp);
 			if(!eof_song_resize_beats(sp, b))
 			{
+				eof_destroy_song(sp);
 				return 0;
 			}
 			for(i = 0; i < b; i++)
@@ -936,6 +940,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			b = pack_igetl(fp);
 			if(!eof_song_resize_beats(sp, b))
 			{
+				eof_destroy_song(sp);
 				return 0;
 			}
 			for(i = 0; i < b; i++)
@@ -1068,6 +1073,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			b = pack_igetl(fp);
 			if(!eof_song_resize_beats(sp, b))
 			{
+				eof_destroy_song(sp);
 				return 0;
 			}
 			for(i = 0; i < b; i++)
@@ -1202,6 +1208,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			b = pack_igetl(fp);
 			if(!eof_song_resize_beats(sp, b))
 			{
+				eof_destroy_song(sp);
 				return 0;
 			}
 			for(i = 0; i < b; i++)
@@ -1297,9 +1304,6 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			return sp;
 		}
 	}
-	if(sp)
-	{
-		eof_destroy_song(sp);
-	}
+	eof_destroy_song(sp);
 	return NULL;
 }

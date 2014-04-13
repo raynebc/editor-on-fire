@@ -465,6 +465,7 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 			Export_Vrhythm(outf,pitchedlyrics,vrhythmid);
 			fflush_err(pitchedlyrics);	//Commit any pending pitched lyric writes to file
 			fclose_err(pitchedlyrics);	//Close pitched lyric file
+			free(vrhythmid);
 		break;
 
 		case SKAR_FORMAT:	//Export as Soft Karaoke.  Default export track is "Words"

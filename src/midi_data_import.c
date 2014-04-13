@@ -239,6 +239,8 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 									eof_MIDI_empty_tempo_list(tempohead);
 									free(trackptr);
 									eof_log("\tError allocating memory", 1);
+									if(trackname)
+										free(trackname);
 									return NULL;
 								}
 								tempoptr->absdelta = absdelta;
@@ -269,6 +271,8 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 							eof_MIDI_empty_tempo_list(tempohead);
 							free(trackptr);
 							eof_log("\tInvalid meta event", 1);
+							if(trackname)
+								free(trackname);
 							return NULL;
 						}
 					break;
@@ -278,6 +282,8 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 						eof_MIDI_empty_tempo_list(tempohead);
 						free(trackptr);
 						eof_log("\tInvalid MIDI event", 1);
+						if(trackname)
+							free(trackname);
 					return NULL;	//Invalid event
 				}
 				if((eventtype >> 4) != 0xF)		//If this event wasn't a Meta/Sysex event
@@ -294,6 +300,12 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 						eof_MIDI_empty_tempo_list(tempohead);
 						free(trackptr);
 						eof_log("\tError allocating memory", 1);
+						if(trackname)
+							free(trackname);
+						if(linkptr)
+							free(linkptr);
+						if(dataptr)
+							free(dataptr);
 						return NULL;
 					}
 					linkptr->size = size + 1 - runningstatus;	//Store the event's total size (including event ID, depending on whether or not running status is in effect)
@@ -327,6 +339,9 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 							eof_log("\tError:  Invalid negative MIDI delay", 1);
 							eof_MIDI_empty_tempo_list(tempohead);
 							eof_MIDI_empty_event_list(head);
+							free(trackptr);
+							if(trackname)
+								free(trackname);
 							return NULL;
 						}
 					}
@@ -340,6 +355,8 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 						eof_MIDI_empty_tempo_list(tempohead);
 						free(trackptr);
 						eof_log("\tError allocating memory", 1);
+						if(trackname)
+							free(trackname);
 						return NULL;
 					}
 					strcpy(linkptr->stringtime, buffer);	//Store the timestamp string

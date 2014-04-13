@@ -357,13 +357,14 @@ unsigned long ConvertSRTTimestamp(char **ptr,int *errorstatus)
 		if(conversion<1)	//Values of 0 are errors from atol(), negative values are not allowed for timestamps
 		{
 			(void) puts("Error converting string to integer\nAborting");
-		if(errorstatus != NULL)
-		{
-			*errorstatus=2;
-			return 0;
-		}
-		else
-			exit_wrapper(2);
+			free(temp);
+			if(errorstatus != NULL)
+			{
+				*errorstatus=2;
+				return 0;
+			}
+			else
+				exit_wrapper(2);
 		}
 		sum+=conversion*3600000;	//one hour is 3600000 milliseconds
 	}
@@ -377,13 +378,14 @@ unsigned long ConvertSRTTimestamp(char **ptr,int *errorstatus)
 		if(conversion<1)	//Values of 0 are errors from atol(), negative values are not allowed for timestamps
 		{
 			(void) puts("Error converting string to integer\nAborting");
-		if(errorstatus != NULL)
-		{
-			*errorstatus=2;
-			return 0;
-		}
-		else
-			exit_wrapper(2);
+			free(temp);
+			if(errorstatus != NULL)
+			{
+				*errorstatus=2;
+				return 0;
+			}
+			else
+				exit_wrapper(2);
 		}
 		sum+=conversion*60000;	//one minute is 60,000 milliseconds
 	}
@@ -397,6 +399,7 @@ unsigned long ConvertSRTTimestamp(char **ptr,int *errorstatus)
 		if(conversion<1)	//Values of 0 are errors from atol(), negative values are not allowed for timestamps
 		{
 			(void) puts("Error converting string to integer\nAborting");
+			free(temp);
 			if(errorstatus != NULL)
 			{
 				*errorstatus=3;
@@ -417,6 +420,7 @@ unsigned long ConvertSRTTimestamp(char **ptr,int *errorstatus)
 		if(conversion<1)	//Values of 0 are errors from atol(), negative values are not allowed for timestamps
 		{
 			(void) puts("Error converting string to integer\nAborting");
+			free(temp);
 			if(errorstatus != NULL)
 			{
 				*errorstatus=4;

@@ -9,6 +9,7 @@ Changelog: 2.39 to 2.40b (in progress)
 	Improved the noplus logic so that a lyric's duration extends to the end of a pitch shift instead of simply having the shift's duration added.  Previously, the distance between the start of the pitch shift and the end of the previous lyric was not taken into account.
 	Fixed a bug where the nolyrics parameter couldn't be specified without FoFLC reporting a usage error.
 	Fixed a bug with Rocksmith imports where a numerical field larger than 10 digits long or a lyric longer than 100 characters would cause a buffer overflow.
+	Fixed various memory leaks that could occur when parsing errors are encountered.
 
 Changelog: 2.38 to 2.39
 	Some code cleanup.

@@ -51,6 +51,7 @@ int eof_undo_load_state(const char * fn)
 	if(!eof_load_song_pf(sp, fp))
 	{	//If loading the undo state fails
 		allegro_message("Failed to perform undo");
+		eof_destroy_song(sp);
 		return 0;	//Return failure
 	}
 	if(eof_song)

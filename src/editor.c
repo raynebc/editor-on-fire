@@ -172,63 +172,63 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 				}
 			}
 		}
+		if(sp->beat < 0)
+		{	//if no suitable beat was found
+			return;
+		}
 
-		/* make sure we found a suitable snap beat before proceeding */
-		if(sp->beat >= 0)
+		if((sp->beat >= eof_song->beats - 2) && (sp->beat >= 2))
+		{	//Don't reference a negative index of eof_song->beat[]
+			sp->beat_length = eof_song->beat[sp->beat - 1]->pos - eof_song->beat[sp->beat - 2]->pos;
+		}
+		else if(sp->beat + 1 < eof_song->beats)
+		{	//As long as the next beat is in bounds
+			sp->beat_length = eof_song->beat[sp->beat + 1]->pos - eof_song->beat[sp->beat]->pos;
+		}
+		eof_get_snap_ts(sp, sp->beat);
+		switch(eof_snap_mode)
 		{
-			if((sp->beat >= eof_song->beats - 2) && (sp->beat >= 2))
-			{	//Don't reference a negative index of eof_song->beat[]
-				sp->beat_length = eof_song->beat[sp->beat - 1]->pos - eof_song->beat[sp->beat - 2]->pos;
-			}
-			else if(sp->beat + 1 < eof_song->beats)
-			{	//As long as the next beat is in bounds
-				sp->beat_length = eof_song->beat[sp->beat + 1]->pos - eof_song->beat[sp->beat]->pos;
-			}
-			eof_get_snap_ts(sp, sp->beat);
-			switch(eof_snap_mode)
+			case EOF_SNAP_QUARTER:
 			{
-				case EOF_SNAP_QUARTER:
-				{
-					interval = 1;
-					break;
-				}
-				case EOF_SNAP_EIGHTH:
-				{
-					interval = 2;
-					break;
-				}
-				case EOF_SNAP_TWELFTH:
-				{
-					interval = 3;
-					break;
-				}
-				case EOF_SNAP_SIXTEENTH:
-				{
-					interval = 4;
-					break;
-				}
-				case EOF_SNAP_TWENTY_FOURTH:
-				{
-					interval = 6;
-					break;
-				}
-				case EOF_SNAP_THIRTY_SECOND:
-				{
-					interval = 8;
-					break;
-				}
-				case EOF_SNAP_FORTY_EIGHTH:
-				{
-					interval = 12;
-					break;
-				}
-				case EOF_SNAP_CUSTOM:
-				{
-					interval = eof_snap_interval;
-					if(eof_custom_snap_measure)
-						measure_snap = 1;
-					break;
-				}
+				interval = 1;
+				break;
+			}
+			case EOF_SNAP_EIGHTH:
+			{
+				interval = 2;
+				break;
+			}
+			case EOF_SNAP_TWELFTH:
+			{
+				interval = 3;
+				break;
+			}
+			case EOF_SNAP_SIXTEENTH:
+			{
+				interval = 4;
+				break;
+			}
+			case EOF_SNAP_TWENTY_FOURTH:
+			{
+				interval = 6;
+				break;
+			}
+			case EOF_SNAP_THIRTY_SECOND:
+			{
+				interval = 8;
+				break;
+			}
+			case EOF_SNAP_FORTY_EIGHTH:
+			{
+				interval = 12;
+				break;
+			}
+			case EOF_SNAP_CUSTOM:
+			{
+				interval = eof_snap_interval;
+				if(eof_custom_snap_measure)
+					measure_snap = 1;
+				break;
 			}
 		}
 
