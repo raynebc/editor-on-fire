@@ -3004,10 +3004,10 @@ int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistp
 			free(tslist);					//Drop the previously created TS list
 			return 0;	//Return failure
 		}
+		free(tslist);					//Drop the previously created TS list
 		if(eof_use_ts)
 		{	//If the user opted to use the time signatures during export
-			free(tslist);					//Drop the previously created TS list
-			tslist=eof_build_ts_list(sp);	//And recreate it with a list of all TS changes in eof_song->beat[]
+			tslist = eof_build_ts_list(sp);	//And recreate it with a list of all TS changes in eof_song->beat[]
 			if(tslist == NULL)
 			{
 				eof_log("\tError saving:  Cannot build TS list", 1);

@@ -210,17 +210,20 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 							}
 							else if((meventtype == 0x3) && (ctr > 0))
 							{	//On the second pass, parse the track name
-								trackname = malloc((size_t)length + 1);	//Allocate a buffer large enough to store the track name
 								if(!trackname)
-								{	//Error allocating memory
-									eof_MIDI_empty_event_list(head);
-									eof_MIDI_empty_tempo_list(tempohead);
-									free(trackptr);
-									eof_log("\tError allocating memory", 1);
-									return NULL;
+								{	//If a track name hadn't already been found
+									trackname = malloc((size_t)length + 1);	//Allocate a buffer large enough to store the track name
+									if(!trackname)
+									{	//Error allocating memory
+										eof_MIDI_empty_event_list(head);
+										eof_MIDI_empty_tempo_list(tempohead);
+										free(trackptr);
+										eof_log("\tError allocating memory", 1);
+										return NULL;
+									}
+									memcpy(trackname, &midiptr->track[curtrack].data[track_pos], (size_t)length);	//Read the track name into the buffer
+									trackname[length] = '\0';	//Terminate the string
 								}
-								memcpy(trackname, &midiptr->track[curtrack].data[track_pos], (size_t)length);	//Read the track name into the buffer
-								trackname[length] = '\0';	//Terminate the string
 							}
 							else if((meventtype == 0x51) && (ctr == 0))
 							{	//On the first pass, process tempo changes to build the tempo map
@@ -239,8 +242,6 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 									eof_MIDI_empty_tempo_list(tempohead);
 									free(trackptr);
 									eof_log("\tError allocating memory", 1);
-									if(trackname)
-										free(trackname);
 									return NULL;
 								}
 								tempoptr->absdelta = absdelta;

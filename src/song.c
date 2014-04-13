@@ -1330,7 +1330,10 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 				count = sp->legacy_tracks;
 				ptr = malloc(sizeof(EOF_LEGACY_TRACK));
 				if(ptr == NULL)
+				{
+					free(ptr3);
 					return 0;	//Return error
+				}
 				ptr->notes = 0;
 				ptr->solos = 0;
 				ptr->star_power_paths = 0;
@@ -1357,7 +1360,10 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 				count = sp->vocal_tracks;
 				ptr2 = malloc(sizeof(EOF_VOCAL_TRACK));
 				if(ptr2 == NULL)
+				{
+					free(ptr3);
 					return 0;	//Return error
+				}
 				ptr2->lyrics = 0;
 				ptr2->lines = 0;
 				ptr2->parent = ptr3;
@@ -1370,7 +1376,10 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 				count = sp->pro_guitar_tracks;
 				ptr4 = malloc(sizeof(EOF_PRO_GUITAR_TRACK));
 				if(ptr4 == NULL)
+				{
+					free(ptr3);
 					return 0;	//Return error
+				}
 				memset(ptr4, 0, sizeof(EOF_PRO_GUITAR_TRACK));	//Initialize memory block to 0 to avoid crashes when not explicitly setting counters that were newly added to the pro guitar structure
 				if((trackdetails->track_type == EOF_TRACK_PRO_BASS_22) || (trackdetails->track_type == EOF_TRACK_PRO_GUITAR_22))
 				{	//If this is a 22 fret track
@@ -1391,6 +1400,7 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 				}
 				if(ptr4->numstrings > EOF_TUNING_LENGTH)	//Ensure that the tuning array is large enough
 				{
+					free(ptr3);
 					free(ptr4);
 					return 0;	//Return error
 				}

@@ -248,10 +248,25 @@ ALOGG_OGG *alogg_create_ogg_from_file(FILE *f) {
   ogg->data = NULL;
   ogg->data_cursor = NULL;
   {
-    int pos = ftell(f);
-    fseek(f, 0, SEEK_END);
+    long pos = ftell(f);
+    ret = fseek(f, 0, SEEK_END);
+    /* if error */
+    if(ret < 0) {
+      free((void *)ogg);
+      return NULL;
+    }
     ogg->data_len = ftell(f);
-    fseek(f, pos, SEEK_SET);
+    /* if error (use ferror() because data_len is an int instead of a long) */
+    if(ferror(f)) {
+      free((void *)ogg);
+      return NULL;
+    }
+    ret = fseek(f, pos, SEEK_SET);
+    /* if error */
+    if(ret < 0) {
+      free((void *)ogg);
+      return NULL;
+    }
   }
   memset((void *)&ogg->vf, 0, sizeof(ogg->vf));
   ogg->audiostream = NULL;
