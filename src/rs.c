@@ -3699,14 +3699,17 @@ void eof_delete_rocksmith_wav(void)
 		return;	//Don't perform this action unless a chart is loaded
 
 	eof_get_rocksmith_wav_path(checkfn, eof_song_path, sizeof(checkfn));	//Build the path to the WAV file written for Rocksmith during save
-	if(exists(checkfn))
-	{	//If the path based on the song title exists
-		(void) delete_file(checkfn);	//Delete it, if it exists, since changing the chart's OGG will necessitate rewriting the WAV file during save
-	}
-	else
-	{	//Otherwise delete guitar.wav because this is the name it will use if the song title has characters invalid for a filename
+	if(!exists(checkfn))
+	{	//If the path based on the song title does not exist, delete guitar.wav because this is the name it will use if the song title has characters invalid for a filename
 		(void) replace_filename(checkfn, eof_song_path, "guitar.wav", 1024);
+	}
+	if(exists(checkfn))
+	{	//If the target file exists
 		(void) delete_file(checkfn);
+		if(exists(checkfn))
+		{	//If the file still exists after the attempted deletion
+			allegro_message("Warning:  Couldn't delete the Rocksmith WAV file.  Please delete it manually so it will be recreated during the next save.");
+		}
 	}
 }
 

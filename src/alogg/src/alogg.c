@@ -249,6 +249,11 @@ ALOGG_OGG *alogg_create_ogg_from_file(FILE *f) {
   ogg->data_cursor = NULL;
   {
     long pos = ftell(f);
+    /* if error */
+    if(pos < 0) {
+      free((void *)ogg);
+      return NULL;
+    }
     ret = fseek(f, 0, SEEK_END);
     /* if error */
     if(ret < 0) {

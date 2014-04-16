@@ -163,28 +163,28 @@ int eof_popup_dialog(DIALOG * dp, int n)
 		/* special handling of the song properties box */
 		if(dp == eof_song_properties_dialog)
 		{
-			if(ustrlen(dp[16].dp) != oldlen)
+			if(ustrlen(eof_song_properties_dialog[16].dp) != oldlen)
 			{	//If the loading text field was altered
-				(void) object_message(&dp[18], MSG_DRAW, 0);	//Redraw the loading text preview
-				oldlen = ustrlen(dp[18].dp);
+				(void) object_message(&eof_song_properties_dialog[18], MSG_DRAW, 0);	//Redraw the loading text preview
+				oldlen = ustrlen(eof_song_properties_dialog[18].dp);
 			}
 		}
 
 		/* special handling of new project dialog */
 		if(dp == eof_file_new_windows_dialog)
 		{
-			if((dp[3].flags & D_SELECTED) && (ustrlen(eof_etext4) <= 0))
+			if((eof_file_new_windows_dialog[3].flags & D_SELECTED) && (ustrlen(eof_etext4) <= 0))
 			{
-				dp[5].flags = D_DISABLED;
-				(void) object_message(&dp[5], MSG_DRAW, 0);
+				eof_file_new_windows_dialog[5].flags = D_DISABLED;
+				(void) object_message(&eof_file_new_windows_dialog[5], MSG_DRAW, 0);
 				dflag = 1;
 			}
 			else
 			{
-				dp[5].flags = D_EXIT;
+				eof_file_new_windows_dialog[5].flags = D_EXIT;
 				if(dflag)
 				{
-					(void) object_message(&dp[5], MSG_DRAW, 0);
+					(void) object_message(&eof_file_new_windows_dialog[5], MSG_DRAW, 0);
 					dflag = 0;
 				}
 			}

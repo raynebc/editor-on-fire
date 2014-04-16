@@ -132,7 +132,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	long b = 0;
 	double solo_on = 0.0, solo_off = 0.0;
 	char solo_status = 0;	//0 = Off and awaiting a solo on marker, 1 = On and awaiting a solo off marker
-	unsigned long ctr, tracknum;
+	unsigned long ctr, ctr2, ctr3, tracknum;
 
 	eof_log("\tImporting Feedback chart", 1);
 	eof_log("eof_import_chart() entered", 1);
@@ -529,6 +529,39 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 	}
 
+	/* check if unofficial forced HOPO notation was found */
+	eof_sort_notes(sp);
+	for(ctr = 1; ctr < sp->tracks; ctr++)
+	{	//For each track
+		if(ctr == EOF_TRACK_DRUM)
+		{	//If this is the drum track
+			continue;	//Skip it, lane 6 for the drum track indicates a sixth lane and not HOPO
+		}
+		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
+		{	//For each note in the track
+			if(eof_get_note_note(sp, ctr, ctr2) & 32)
+			{	//If this note uses lane 6
+				unsigned long pos = eof_get_note_pos(sp, ctr, ctr2);
+				long len = eof_get_note_length(sp, ctr, ctr2);
+				unsigned char type = eof_get_note_type(sp, ctr, ctr2);
+
+				for(ctr3 = 0; ctr3 < eof_get_track_size(sp, ctr); ctr3++)
+				{	//For each note in the track
+					unsigned long pos2 = eof_get_note_pos(sp, ctr, ctr3);
+
+					if(pos2 > pos + len)
+					{	//If this note occurs after the span of the HOPO notation
+						break;	//Break from inner loop
+					}
+					if((pos2 >= pos) && (eof_get_note_type(sp, ctr, ctr3) == type))
+					{	//If this note is within the span of the HOPO notation and is in the same difficulty
+						eof_set_note_flags(sp, ctr, ctr3, (eof_get_note_flags(sp, ctr, ctr3) | EOF_NOTE_FLAG_F_HOPO));	//Set the forced HOPO flag for this note
+					}
+				}
+			}
+		}
+	}
+
 	eof_log("\tFeedback import completed", 1);
 //	eof_log_level |= 2;	//Enable verbose logging
 	return sp;
@@ -831,7 +864,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				free(string1);	//This string is no longer used
 				string1 = NULL;
 			}
-		}
+		}//Process [Song]
 
 	//Process [SyncTrack]
 		else if(currentsection == 2)
@@ -990,7 +1023,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					return NULL;			//Invalid anchor type, return error
 				}
 			}
-		}
+		}//Process [SyncTrack]
 
 	//Process [Events]
 		else if(currentsection == 3)
@@ -1102,7 +1135,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Ignoring unrecognized event on line #%lu:  \"%s\"", chart->linesprocessed, buffer);
 				eof_log(eof_log_string, 1);
 			}
-		}
+		}//Process [Events]
 
 	//Process instrument tracks
 		else if(currentsection == 4)
@@ -1255,7 +1288,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				curnote->gemcolor='0'+B;	//Store 0 as '0', 1 as '1' or 2 as '2', ...
 			}
 			curnote->duration=C;			//The third number read is the note duration
-		}
+		}//Process instrument tracks
 
 	//Error: Content in file outside of a defined section
 		else
