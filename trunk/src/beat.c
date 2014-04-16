@@ -1,3 +1,4 @@
+#include <assert.h>
 #include "beat.h"
 #include "main.h"
 #include "midi.h"
@@ -84,6 +85,7 @@ void eof_calculate_beats(EOF_SONG * sp)
 		{	//While there aren't enough beats to cover the length of the chart, add beats
 			if(eof_song_add_beat(sp))
 			{	//If the beat was successfully added
+				assert(sp->beats > 0);	//Put an assertion here to resolve a false positive with Coverity
 				sp->beat[sp->beats - 1]->ppqn = 500000;
 				sp->beat[sp->beats - 1]->fpos = (double)sp->tags->ogg[eof_selected_ogg].midi_offset + curpos;
 				sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos + 0.5;	//Round up
@@ -218,6 +220,7 @@ long eof_find_next_anchor(EOF_SONG * sp, unsigned long cbeat)
 	while(beat < sp->beats - 1)
 	{
 		beat++;
+		assert(beat < EOF_MAX_BEATS);	//Put an assertion here to resolve a false positive with Coverity
 		if(sp->beat[beat]->flags & EOF_BEAT_FLAG_ANCHOR)
 		{
 			return beat;
@@ -340,6 +343,7 @@ void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 	{
 		for(i = cbeat + 1; i < sp->beats; i++)
 		{
+			assert(i < EOF_MAX_BEATS);	//Put an assertion here to resolve a false positive with Coverity
 			sp->beat[i]->pos += eof_mickeys_x * eof_zoom;
 			sp->beat[i]->fpos = sp->beat[i]->pos;
 		}

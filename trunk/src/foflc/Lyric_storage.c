@@ -541,7 +541,7 @@ struct Lyric_Piece *FindLyricNumber(unsigned long number)
 			curpiece=curpiece->next;//Point to it
 		else if(curline->next != NULL)	//There's another line of lyrics
 		{
-			curline=curline->next;	//Point to it
+			curline=curline->next;		//Point to it
 			curpiece=curline->pieces;	//Point to first lyric in the line
 		}
 		else	//There are no more lyric pieces

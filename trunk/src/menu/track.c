@@ -175,7 +175,7 @@ void eof_prepare_track_menu(void)
 		for(i = 0; i < EOF_TRACKS_MAX; i++)
 		{	//For each track supported by EOF
 			eof_menu_track_rocksmith_popup_copy_menu[i].flags = 0;
-			if((i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
+			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 			{	//If the track exists, copy its name into the string used by the track menu
 				(void) ustrncpy(eof_menu_track_rocksmith_popup_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE - 1);
 					//Copy the track name to the menu string
@@ -1316,7 +1316,7 @@ DIALOG eof_song_rs_popup_add_dialog[] =
 
 int eof_track_rs_popup_add(void)
 {
-	unsigned long start, duration, i, sel_start, sel_end;
+	unsigned long start, duration, i, sel_start = 0, sel_end = 0;
 	char failed = 0;
 
 	if(!eof_song_loaded || !eof_song)

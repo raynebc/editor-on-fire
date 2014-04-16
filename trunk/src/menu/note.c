@@ -589,7 +589,7 @@ void eof_prepare_note_menu(void)
 		for(i = 0; i < EOF_TRACKS_MAX; i++)
 		{	//For each track supported by EOF
 			eof_menu_sp_copy_menu[i].flags = 0;
-			if((i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
+			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 			{	//If the track exists, copy its name into the string used by the track menu
 				(void) ustrncpy(eof_menu_sp_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE - 1);
 					//Copy the track name to the menu string

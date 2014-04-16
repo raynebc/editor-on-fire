@@ -278,7 +278,7 @@ void eof_prepare_song_menu(void)
 		{
 			char *ptr = eof_track_selected_menu_text[i];	//Do this to work around false alarm warnings
 			eof_track_selected_menu[i].flags = 0;
-			if((i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
+			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 			{	//If the track exists, copy its name into the string used by the track menu
 				ptr[0] = ' ';	//Add a leading space
 				(void) ustrncpy(&(ptr[1]),eof_song->track[i+1]->name,EOF_TRACK_NAME_SIZE-1);

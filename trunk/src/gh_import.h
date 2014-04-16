@@ -143,7 +143,7 @@ unsigned long eof_gh_process_section_header(filebuffer *fb, const char *sectionn
 	//qbindex is expected to be the buffer position of the QB header (which is required to seek within the QB data)
 	//If found, *arrayptr is assigned allocated memory and populated with the offsets for each 1D array in this section
 	//On success, the number of 1D arrays referenced in arrayptr[] is returned
-	//On error, 0 is returned and the memory allocated for *arrayptr is automatically released
+	//On error, 0 is returned, the memory allocated for *arrayptr is automatically released and *arrayptr is set to NULL
 unsigned long eof_gh_read_array_header(filebuffer *fb, unsigned long qbpos, unsigned long qbindex);
 	//Seeks the buffer to the specified QB position and parses the array size and data offset
 	//qbindex is expected to be the buffer position of the QB header (which is required to seek within the QB data)
