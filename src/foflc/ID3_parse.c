@@ -51,7 +51,7 @@ char *ReadTextInfoFrame(FILE *inf)
 //Read the frame size as a Big Endian integer (4 bytes)
 	framesize=((unsigned long)buffer2[0]<<24) | ((unsigned long)buffer2[1]<<16) | ((unsigned long)buffer2[2]<<8) | ((unsigned long)buffer2[3]);	//Convert to 4 byte integer
 
-	if(framesize < 2)	//The smallest valid frame size is 2, one for the encoding type and one for a null terminator (empty string)
+	if(framesize < 2)	//The smallest valid frame size is 2, one byte for the encoding type and one for a null terminator (empty string)
 	{
 		(void) fseek(inf,originalpos,SEEK_SET);	//Return to original file position
 		return NULL;
@@ -439,6 +439,8 @@ void SYLT_Parse(struct ID3Tag *tag)
 
 //Process framesize as a 4 byte Big Endian integer
 	framesize=((unsigned long)frameheader[4]<<24) | ((unsigned long)frameheader[5]<<16) | ((unsigned long)frameheader[6]<<8) | ((unsigned long)frameheader[7]);	//Convert to 4 byte integer
+	if(framesize & 0x80808080)	//According to the ID3v2 specification, the MSB of each of the 4 bytes defining the tag size must be zero
+		exit_wrapper(5);		//If this isn't the case, the size is invalid
 	breakpos=breakpos + framesize + 10;	//Find the position that is one byte past the end of the SYLT frame
 
 	if(Lyrics.verbose>=2)

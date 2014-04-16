@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <ctype.h>
 #include "main.h"
 #include "song.h"
@@ -992,6 +993,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				}
 				else
 				{
+					assert(curanchor != NULL);					//Put an assertion here to resolve a false positive with Coverity
 					curanchor->next=(struct dBAnchor *)temp;	//Conductor points forward to this link
 					curanchor=curanchor->next;					//Point conductor to this link
 				}
@@ -1122,6 +1124,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				}
 				else
 				{
+					assert(curevent != NULL);				//Put an assertion here to resolve a false positive with Coverity
 					curevent->next=(struct dbText *)temp;	//Conductor points forward to this link
 					curevent=curevent->next;				//Point conductor to this link
 				}
@@ -1263,6 +1266,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			}
 			else
 			{
+				assert(curnote != NULL);				//Put an assertion here to resolve a false positive with Coverity
 				curnote->next=(struct dbNote *)temp;	//Conductor points forward to this link
 				curnote=curnote->next;					//Point conductor to this link
 			}

@@ -610,7 +610,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 	//For applicable section types, name may point to a section name string in which case it will be copied to the section's name array, or NULL in which case it will be ignored
 	//The difficulty field is used for catalog, arpeggio and tremolo (if Rocksmith numbered difficulties are in effect) sections and fret hand positions
 	//Returns zero on error
-unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track);		//Returns the number of lanes in the specified track, or the default of 5
+unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track);		//Returns the number of lanes in the specified track, or the default of 5.  The value returned is expected to be less than EOF_MAX_FRETS
 int eof_track_add_trill(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a trill phrase at the specified start and stop timestamp
 unsigned long eof_get_num_trills(EOF_SONG *sp, unsigned long track);		//Returns the number of trill phrases in the specified track, or 0 on error
 EOF_PHRASE_SECTION *eof_get_trill(EOF_SONG *sp, unsigned long track, unsigned long index);		//Returns a pointer to the specified trill phrase, or NULL on error

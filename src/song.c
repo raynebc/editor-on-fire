@@ -3245,7 +3245,10 @@ unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track)
 
 	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
 	{	//If this is a legacy track, return the number of lanes it uses
-		return sp->legacy_track[sp->track[track]->tracknum]->numlanes;
+		if(sp->legacy_track[sp->track[track]->tracknum]->numlanes < EOF_MAX_FRETS)
+		{	//If the lane count is valid
+			return sp->legacy_track[sp->track[track]->tracknum]->numlanes;
+		}
 	}
 	else if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{
@@ -3255,13 +3258,15 @@ unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track)
 		}
 		else
 		{
-			return sp->pro_guitar_track[sp->track[track]->tracknum]->numstrings;
+			if(sp->pro_guitar_track[sp->track[track]->tracknum]->numstrings < EOF_MAX_FRETS)
+			{	//If the string count is valid
+				return sp->pro_guitar_track[sp->track[track]->tracknum]->numstrings;
+			}
 		}
 	}
-	else
-	{	//Otherwise return 5, as so far, other track formats don't store this information
-		return 5;
-	}
+
+	//Otherwise return 5, as so far, other track formats don't store this information, or an invalid lane count is in effect
+	return 5;
 }
 
 int eof_open_strum_enabled(unsigned long track)
