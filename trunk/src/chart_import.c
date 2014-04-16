@@ -773,6 +773,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 						}
 						else
 						{
+							assert(curtrack != NULL);				//Put an assertion here to resolve a false positive with Coverity
 							curtrack->next=(struct dbTrack *)temp;	//Conductor points forward to this link
 							curtrack=curtrack->next;				//Point conductor to this link
 						}

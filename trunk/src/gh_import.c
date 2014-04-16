@@ -1,4 +1,5 @@
 #include <allegro.h>
+#include <assert.h>
 #include "agup/agup.h"
 #include "beat.h"
 #include "dialog.h"
@@ -2242,13 +2243,13 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 	arraysize = eof_gh_process_section_header(fb, buffer, &arrayptr, qbindex);	//Parse the location of the 1D arrays of section data
 	for(ctr = 0; ctr < arraysize; ctr++)
 	{	//For each 1D array of voxnote data
+		assert(arrayptr != NULL);	//Put an assertion here to resolve a false positive with Coverity
 		numphrases = eof_gh_read_array_header(fb, arrayptr[ctr], qbindex);	//Process the array header (get size and seek to first data value)
 		if(numphrases % 2)
 		{	//The value in numphrases is the number of dwords used to define this vocal phrases array (each phrase should be 2 dwords in size)
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Invalid vocal phrase note array size (%lu)", numphrases);
 			eof_log(eof_log_string, 1);
-			if(arrayptr)
-				free(arrayptr);	//Even though arrayptr could not be NULL if arraysize was nonzero and the for loop was entered, add this check to avoid a false positive with Coverity
+			free(arrayptr);	//Even though arrayptr could not be NULL if arraysize was nonzero and the for loop was entered, add this check to avoid a false positive with Coverity
 			return -1;
 		}
 		numphrases /= 2;	//Determine the number of vocal phrases that are defined
@@ -2261,8 +2262,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 			if(eof_filebuffer_get_dword(fb, &phrasestart))	//Read the phrase position
 			{	//If there was an error reading the next 4 byte value
 				eof_log("\t\tError:  Could not vocal phrase position", 1);
-				if(arrayptr)
-					free(arrayptr);	//Even though arrayptr could not be NULL if arraysize was nonzero and the for loop was entered, add this check to avoid a false positive with Coverity
+				free(arrayptr);	//Even though arrayptr could not be NULL if arraysize was nonzero and the for loop was entered, add this check to avoid a false positive with Coverity
 				return -1;
 			}
 			fb->index += 4;	//Skip 4 bytes of uninteresting data
@@ -2479,14 +2479,14 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 		arraysize = eof_gh_process_section_header(fb, buffer, &arrayptr, qbindex);	//Parse the location of the 1D arrays of section data
 		for(ctr = 0; ctr < arraysize; ctr++)
 		{	//For each 1D array of timesig data
+			assert(arrayptr != NULL);	//Put an assertion here to resolve a false positive with Coverity
 			numsigs = eof_gh_read_array_header(fb, arrayptr[ctr], qbindex);	//Process the array header (get size and seek to first data value)
 			if(numsigs % 3)
 			{	//The value in numsigs is the number of dwords used to define this timesig array (each signature should be 3 dwords in size)
 					eof_log("Error:  Invalid time signature array size", 1);
 					eof_destroy_song(sp);
 					eof_filebuffer_close(fb);
-					if(arrayptr)
-						free(arrayptr);	//Even though arrayptr could not be NULL if arraysize was nonzero and the for loop was entered, add this check to resolve a false positive with Coverity
+					free(arrayptr);	//Even though arrayptr could not be NULL if arraysize was nonzero and the for loop was entered, add this check to resolve a false positive with Coverity
 					return NULL;
 			}
 			numsigs /= 3;	//Determine the number of time signatures that are defined
@@ -2501,8 +2501,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 					eof_log("Error:  Could not read time signature position", 1);
 					eof_destroy_song(sp);
 					eof_filebuffer_close(fb);
-					if(arrayptr)
-						free(arrayptr);	//Even though arrayptr could not be NULL if arraysize was nonzero and the for loop was entered, add this check to resolve a false positive with Coverity
+					free(arrayptr);	//Even though arrayptr could not be NULL if arraysize was nonzero and the for loop was entered, add this check to resolve a false positive with Coverity
 					return NULL;
 				}
 				if(ctr2 && (dword <= lastsig))
@@ -2510,8 +2509,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 					eof_log("Error:  Corrupted time signature", 1);
 					eof_destroy_song(sp);
 					eof_filebuffer_close(fb);
-					if(arrayptr)
-						free(arrayptr);	//Even though arrayptr could not be NULL if arraysize was nonzero and the for loop was entered, add this check to resolve a false positive with Coverity
+					free(arrayptr);	//Even though arrayptr could not be NULL if arraysize was nonzero and the for loop was entered, add this check to resolve a false positive with Coverity
 					return NULL;
 				}
 				if(eof_filebuffer_get_dword(fb, &tsnum) || eof_filebuffer_get_dword(fb, &tsden))
@@ -2519,8 +2517,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 					eof_log("Error:  Could not read time signature", 1);
 					eof_destroy_song(sp);
 					eof_filebuffer_close(fb);
-					if(arrayptr)
-						free(arrayptr);	//Even though arrayptr could not be NULL if arraysize was nonzero and the for loop was entered, add this check to resolve a false positive with Coverity
+					free(arrayptr);	//Even though arrayptr could not be NULL if arraysize was nonzero and the for loop was entered, add this check to resolve a false positive with Coverity
 					return NULL;
 				}
 #ifdef GH_IMPORT_DEBUG
