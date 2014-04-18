@@ -2038,6 +2038,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 	if(arraysize)
 	{	//If memory was allocated by eof_gh_process_section_header()
 		free(arrayptr);
+		arrayptr = NULL;
 	}
 	eof_track_sort_notes(sp, EOF_TRACK_VOCALS);
 

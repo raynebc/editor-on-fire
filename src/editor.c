@@ -488,6 +488,7 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 
 unsigned long eof_next_grid_snap(unsigned long pos)
 {
+	EOF_SNAP_DATA temp;
 	long beat;
 
 	if(!eof_song || (eof_snap_mode == EOF_SNAP_OFF))
@@ -497,12 +498,68 @@ unsigned long eof_next_grid_snap(unsigned long pos)
 	if(beat < 0)	//If the seek position is outside the chart
 		return 0;
 
-	if(pos >= eof_song->beat[eof_song->beats - 1]->pos)	//If th especified position is after the last beat marker
+	if(pos >= eof_song->beat[eof_song->beats - 1]->pos)	//If the specified position is after the last beat marker
 		return 0;
 
-	eof_snap_logic(&eof_tail_snap, pos);				//Find the next grid snap position that occurs after the specified position
+	eof_snap_logic(&temp, pos);				//Find the next grid snap position that occurs after the specified position
 
-	return eof_tail_snap.next_snap;
+	return temp.next_snap;
+}
+
+int eof_is_grid_snap_position(unsigned long pos)
+{
+	EOF_SNAP_DATA temp;
+	long beat;
+
+	if(!eof_song || (eof_snap_mode == EOF_SNAP_OFF))
+		return 0;
+
+	beat = eof_get_beat(eof_song, pos);	//Find which beat the specified position is in
+	if(beat < 0)	//If the seek position is outside the chart
+		return 0;
+
+	if(pos >= eof_song->beat[eof_song->beats - 1]->pos)	//If the specified position is after the last beat marker
+		return 0;
+
+	eof_snap_logic(&temp, pos);				//Find the next grid snap position that occurs after the specified position
+
+	return (temp.pos == pos);
+}
+
+int eof_is_any_grid_snap_position(unsigned long pos)
+{
+	EOF_SNAP_DATA temp;
+	long beat;
+	int retval = 0, ctr;
+	char temp_mode = eof_snap_mode;	//Store the grid snap setting in use
+
+	if(!eof_song)
+		return 0;
+
+	beat = eof_get_beat(eof_song, pos);	//Find which beat the specified position is in
+	if(beat < 0)	//If the seek position is outside the chart
+		return 0;
+
+	if(pos >= eof_song->beat[eof_song->beats - 1]->pos)	//If the specified position is after the last beat marker
+		return 0;
+
+	for(ctr = 1; ctr < 9; ctr++)
+	{	//For each of the grid snap settings
+		if((ctr == 8) && (temp_mode != EOF_SNAP_CUSTOM))
+		{	//If no custom grid snap is in effect
+			break;	//Don't compare this note against a custom grid snap position
+		}
+		eof_snap_mode = ctr;			//Put this grid snap setting into effect
+		eof_snap_logic(&temp, pos);		//Find the next grid snap position that occurs after the specified position
+		if(temp.pos == pos)
+		{
+			retval = 1;	//Track that a matching grid snap position was found
+			break;
+		}
+	}
+
+	eof_snap_mode = temp_mode;	//Restore the grid snap value that was in effect
+	return retval;
 }
 
 void eof_read_editor_keys(void)
