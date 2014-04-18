@@ -333,6 +333,7 @@ void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 		/* replace beat markers */
 		for(i = cbeat; i < next_anchor - 1; i++)
 		{
+			assert(i + 1< EOF_MAX_BEATS);	//Put an assertion here to resolve a false positive with Coverity
 			sp->beat[i + 1]->fpos = sp->beat[cbeat]->pos + (beats_length / (double)beats) * (double)count;
 			sp->beat[i + 1]->pos = sp->beat[i + 1]->fpos +0.5;	//Round up
 			sp->beat[i + 1]->ppqn = sp->beat[cbeat]->ppqn;

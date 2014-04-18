@@ -161,6 +161,9 @@ int eof_track_erase_track_difficulty(void);	//Allows the user to erase the activ
 
 int eof_menu_track_remove_highlighting(void);	//Removes highlighting from the notes in the active track
 int eof_menu_track_highlight_arpeggios(void);	//Enables highlighting for all notes in the active track that are within arpeggio phrases
+int eof_menu_track_highlight_non_grid_snapped_notes(void);
+	//Enables highlighting for all notes in the active track that aren't at any grid snap position
+	//If a custom grid snap is in effect, its position is also compared
 
 extern MENU eof_menu_track_rocksmith_popup_copy_menu[EOF_TRACKS_MAX];
 extern char eof_menu_track_rocksmith_popup_copy_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE];

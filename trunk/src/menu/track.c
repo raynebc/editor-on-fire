@@ -58,6 +58,7 @@ MENU eof_track_menu[] =
 	{"Erase highlighting", eof_menu_track_remove_highlighting, NULL, 0, NULL},
 	{"Thin diff. to match", NULL, eof_menu_thin_diff_menu, 0, NULL},
 	{"Delete active difficulty", eof_track_delete_difficulty, NULL, 0, NULL},
+	{"Highlight non grid snapped notes", eof_menu_track_highlight_non_grid_snapped_notes, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -194,7 +195,7 @@ void eof_prepare_track_menu(void)
 		for(i = 0; i < EOF_TRACKS_MAX; i++)
 		{	//For each track supported by EOF
 			eof_menu_thin_diff_menu[i].flags = D_DISABLED;
-			if((i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
+			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 			{	//If the track exists, copy its name into the string used by the track menu
 				(void) ustrncpy(eof_menu_thin_diff_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE - 1);
 					//Copy the track name to the menu string
@@ -3673,4 +3674,23 @@ void eof_menu_track_set_tech_view_state(EOF_SONG *sp, unsigned long track, char 
 	{	//The calling function specified to disable tech view
 		eof_menu_pro_guitar_track_disable_tech_view(tp);
 	}
+}
+
+int eof_menu_track_highlight_non_grid_snapped_notes(void)
+{
+	unsigned long ctr, flags;
+
+	if(!eof_song || !eof_song_loaded)
+		return 1;
+
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+	{	//For each note in the specified track
+		if(!eof_is_any_grid_snap_position(eof_get_note_pos(eof_song, eof_selected_track, ctr)))
+		{	//If this note position does not match that of any grid snap
+			flags = eof_get_note_flags(eof_song, eof_selected_track, ctr);
+			flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight the note
+			eof_set_note_flags(eof_song, eof_selected_track, ctr, flags);
+		}
+	}
+	return 1;
 }

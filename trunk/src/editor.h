@@ -57,6 +57,11 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp);
 	//Calculates the grid snap interval length for sp->beat
 unsigned long eof_next_grid_snap(unsigned long pos);
 	//Returns the timestamp of the next grid snap position, or 0 on error
+int eof_is_grid_snap_position(unsigned long pos);
+	//Returns nonzero if the specified timestamp is a grid snap position based on the current grid snap setting
+int eof_is_any_grid_snap_position(unsigned long pos);
+	//Returns nonzero if the specified timestamp is a grid snap position for ANY built in grid snap setting
+	//If a custom grid snap setting is in effect, its position is also compared
 void eof_read_editor_keys(void);
 void eof_editor_logic(void);
 void eof_editor_drum_logic(void);	//The drum record mode logic

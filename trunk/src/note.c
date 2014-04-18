@@ -1,4 +1,5 @@
 #include <allegro.h>
+#include <assert.h>
 #include "modules/ocd3d.h"
 #include "main.h"
 #include "note.h"
@@ -248,6 +249,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	int tcol = eof_color_black;	//This color is used as the fret text color (for pro guitar notes)
 	int dcol2 = dcol;
 	int ncol = eof_color_silver;	//Note color defaults to silver unless the note is not star power
+	int lcol = makecol(128, 128, 128);	//The color used to draw the vertical line over the note's position
 	unsigned long ctr;
 	unsigned long mask;	//Used to mask out colors in the for loop
 	int radius,dotsize;
@@ -386,7 +388,11 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		dotsize=eof_screen_layout.note_dot_size;
 	}
 
-	vline(window->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
+	if(track && eof_render_grid_lines && (eof_snap_mode != EOF_SNAP_OFF) && !eof_is_grid_snap_position(notepos))
+	{	//If an existing note is being rendered, grid lines are being displayed, a grid snap setting is set and the note in question is not on a grid snap position
+		lcol = eof_color_red;	//Render the note's vertical line in red so it will contrast with the grid lines' yellow color
+	}
+	vline(window->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.note_marker_size, lcol);
 	if(p == 3)
 	{
 		dcol = eof_color_white;
@@ -1261,6 +1267,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	ez = npos + notelength / eof_zoom_3d > 600 ? 600 : npos + notelength / eof_zoom_3d + 6;
 	for(ctr=0,mask=1; ctr < eof_count_track_lanes(eof_song, track); ctr++,mask=mask<<1)
 	{	//For each of the lanes in this track
+		assert(ctr < EOF_MAX_FRETS);	//Put an assertion here to resolve a false positive with Coverity
 		if(notenote & mask)
 		{	//If this lane has a gem to render
 			if((ctr == 5) && eof_open_strum_enabled(track))
