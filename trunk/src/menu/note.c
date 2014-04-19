@@ -423,6 +423,9 @@ void eof_prepare_note_menu(void)
 	EOF_PHRASE_SECTION *sectionptr = NULL;
 	unsigned long track_behavior = 0;
 
+	if(eof_selected_track >= EOF_TRACKS_MAX)
+		return;	//Invalid track selected
+
 	if(eof_song && eof_song_loaded)
 	{
 		int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
@@ -2552,8 +2555,8 @@ int eof_menu_split_lyric(void)
 	(void) ustrcpy(eof_etext, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text);
 	if(eof_popup_dialog(eof_split_lyric_dialog, 2) == 3)
 	{
-		if(ustricmp(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text, eof_etext))
-		{
+		if(strchr(eof_etext, ' ') && eof_check_string(eof_etext))
+		{	//If the string contains at least one space character and one non space character
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			(void) ustrcpy(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text, eof_etext);
 			eof_split_lyric(eof_selection.current);
