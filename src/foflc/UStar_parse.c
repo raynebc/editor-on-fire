@@ -850,8 +850,9 @@ void RemapPitches(void)
 
 //Determine the pitch that begins on the lowest octave of 12 usable notes
 	minoctave=(MINPITCH/12)*12;
-	if(minoctave < MINPITCH)	//If MINPITCH did not begin on an octave
-		minoctave+=12;		//The first usable full octave is the first octave above MINPITCH
+#if (MINPITCH % 12 != 0)
+	minoctave+=12;		//The first usable full octave is the first octave above MINPITCH
+#endif
 
 //Determine the pitch that begins AFTER the highest octave of 12 usable notes
 	maxoctave=(MAXPITCH/12)*12-12;	//The pitch of C in the octave below the maximum pitch
