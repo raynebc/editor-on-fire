@@ -115,6 +115,7 @@ void ReadMIDIHeader(FILE *inf,char suppress_errors)
 			(void) puts("Error: frames per second time division is not supported\nAborting.");
 		exit_wrapper(4);
 	}
+	assert(MIDIstruct.hchunk.numtracks <= 10000);		//Needless assert() to resolve a false positive with Coverity (it's probably impossible for this limit to be triggered with any sane MIDI file)
 	MIDIstruct.hchunk.tracks=(struct Track_chunk *)malloc_err(sizeof(struct Track_chunk)*MIDIstruct.hchunk.numtracks);
 	for(ctr=0;ctr<MIDIstruct.hchunk.numtracks;ctr++)	//Initialize track data to all zero values
 		MIDIstruct.hchunk.tracks[ctr]=emptyTrack_chunk;

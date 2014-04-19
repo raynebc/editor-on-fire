@@ -677,7 +677,7 @@ void eof_prepare_note_menu(void)
 			{	//Write a blank string for the track name
 				(void) ustrcpy(eof_menu_arpeggio_copy_menu_text[i],"");
 			}
-			if(!eof_get_num_arpeggios(eof_song, i + 1) || (i + 1 == eof_selected_track) || (eof_song->track[i + 1]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+			if((i + 1 < EOF_TRACKS_MAX) && (!eof_get_num_arpeggios(eof_song, i + 1) || (i + 1 == eof_selected_track) || (eof_song->track[i + 1]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)))
 			{	//If the track has no arpeggios, is the active track or is not a pro guitar/bass track
 				eof_menu_arpeggio_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
 			}

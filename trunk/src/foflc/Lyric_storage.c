@@ -537,6 +537,7 @@ struct Lyric_Piece *FindLyricNumber(unsigned long number)
 			(void) puts("Error: Invalid lyric entry\nAborting");
 			exit_wrapper(1);
 		}
+		assert((curpiece != NULL) && (curline != NULL));	//Redundant assert() to resolve a false positive with Coverity (this assertion will never be triggered because the above exit_wrapper() would run first)
 
 	//Traverse to next lyric piece
 		if(curpiece->next != NULL)	//There's another piece in this line
