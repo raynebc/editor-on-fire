@@ -50,6 +50,7 @@ char *ReadTextInfoFrame(FILE *inf)
 
 //Read the frame size as a Big Endian integer (4 bytes)
 	framesize=((unsigned long)buffer2[0]<<24) | ((unsigned long)buffer2[1]<<16) | ((unsigned long)buffer2[2]<<8) | ((unsigned long)buffer2[3]);	//Convert to 4 byte integer
+	assert(framesize <= 10000);		//Needless assert() to resolve a false positive with Coverity (it's probably impossible for this limit to be triggered with any sane ID3 tag)
 
 	if(framesize < 2)	//The smallest valid frame size is 2, one byte for the encoding type and one for a null terminator (empty string)
 	{
@@ -441,6 +442,7 @@ void SYLT_Parse(struct ID3Tag *tag)
 	framesize=((unsigned long)frameheader[4]<<24) | ((unsigned long)frameheader[5]<<16) | ((unsigned long)frameheader[6]<<8) | ((unsigned long)frameheader[7]);	//Convert to 4 byte integer
 	if(framesize & 0x80808080)	//According to the ID3v2 specification, the MSB of each of the 4 bytes defining the tag size must be zero
 		exit_wrapper(5);		//If this isn't the case, the size is invalid
+	assert(framesize < 0x80000000);	//Redundant assert() to resolve a false positive with Coverity (this assertion will never be triggered because the above exit_wrapper() call would be triggered first)
 	breakpos=breakpos + framesize + 10;	//Find the position that is one byte past the end of the SYLT frame
 
 	if(Lyrics.verbose>=2)
@@ -610,7 +612,10 @@ unsigned long ID3FrameProcessor(struct ID3Tag *ptr)
 	{	//While file position is at or after the end of the ID3 header, before or at end of the ID3 tag
 	//Read frame header into buffer
 		if(fread(header,10,1,ptr->fp) != 1)
+		{
+			ptr->frames=head;	//Store the linked list into the ID3 tag structure
 			return 0;	//Return failure on I/O error
+		}
 
 	//Validate frame ID
 		for(ctr2=0;ctr2<4;ctr2++)
@@ -625,7 +630,10 @@ unsigned long ID3FrameProcessor(struct ID3Tag *ptr)
 	//Validate frame end
 		framesize=((unsigned long)header[4]<<24) | ((unsigned long)header[5]<<16) | ((unsigned long)header[6]<<8) | ((unsigned long)header[7]);	//Convert to 4 byte integer
 		if(filepos + framesize + 10 > ptr->tagend)	//If the defined frame size would cause the frame to extend beyond the end of the ID3 tag
+		{
+			ptr->frames=head;	//Store the linked list into the ID3 tag structure
 			return 0;	//Return failure
+		}
 
 	//Initialize an ID3Frame structure
 		temp=malloc_err(sizeof(struct ID3Frame));	//Allocate memory

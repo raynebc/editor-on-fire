@@ -73,6 +73,8 @@ void InitLyrics(void)
 {
 	Lyrics.lines=NULL;	//Empty list
 	Lyrics.curline=NULL;
+	Lyrics.lastpiece=NULL;
+	Lyrics.prevlineslast=NULL;
 	Lyrics.linecount=0;
 	Lyrics.line_on=0;
 	Lyrics.lyric_defined=0;
@@ -123,7 +125,6 @@ void InitLyrics(void)
 	Lyrics.notenames=0;
 	Lyrics.relative=0;
 	Lyrics.nopitch=0;
-	Lyrics.prevlineslast=NULL;
 	Lyrics.reinit=1;	//Handler functions need to re-init static variables
 	Lyrics.last_pitch=0;
 	Lyrics.rocksmithver=1;
@@ -526,6 +527,7 @@ struct Lyric_Piece *FindLyricNumber(unsigned long number)
 
 	curline=Lyrics.lines;			//Point line conductor to first line of lyrics
 	assert_wrapper(curline != NULL);
+	assert(curline != NULL);		//Redundant assert() to resolve a false positive with Coverity (this assertion will never be triggered because the wrapper version runs first)
 	curpiece=curline->pieces;		//Point lyric conductor to first lyric
 
 	for(ctr=1;ctr<number;ctr++)

@@ -783,7 +783,7 @@ int eof_menu_file_lyrics_import(void)
 	int selectedformat=0;
 	char *selectedtrack;
 	int returncode = 1;	//Stores the return value of EOF_IMPORT_VIA_LC() to check for error
-	char tempfile = 0;	//Is set to nonzero if the selected lyric file's path contains any extended ASCII or Unicode characters, as a temporary file is created as a workaround
+	static char tempfile = 0;	//Is set to nonzero if the selected lyric file's path contains any extended ASCII or Unicode characters, as a temporary file is created as a workaround
 	char templyricfile[] = "lyricfile.tmp";	//The name of the temporary file created as per the above condition
 
 	eof_log("\tImporting lyrics", 1);
@@ -791,6 +791,7 @@ int eof_menu_file_lyrics_import(void)
 	if(eof_song == NULL)	//Do not import lyrics if no chart is open
 		return 0;
 
+	tempfile = 0;	//Keep tempfile a static variable because if setjmp's fail condition is reached, the value may be re-initialized, clobbering its value
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();

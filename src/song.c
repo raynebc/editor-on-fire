@@ -3258,7 +3258,7 @@ unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track)
 		}
 		else
 		{
-			if(sp->pro_guitar_track[sp->track[track]->tracknum]->numstrings < EOF_MAX_FRETS)
+			if(sp->pro_guitar_track[sp->track[track]->tracknum]->numstrings <= EOF_MAX_FRETS)
 			{	//If the string count is valid
 				return sp->pro_guitar_track[sp->track[track]->tracknum]->numstrings;
 			}
