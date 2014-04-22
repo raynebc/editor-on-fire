@@ -1684,7 +1684,7 @@ int eof_menu_edit_snap_custom(void)
 		eof_custom_snap_dialog[4].flags = D_SELECTED;	//Activate "per measure" radio button by default
 	}
 	if(eof_popup_dialog(eof_custom_snap_dialog, 2) == 5)
-	{
+	{	//User clicked OK
 		eof_snap_interval = atoi(eof_etext2);
 
 		if(eof_custom_snap_dialog[4].flags & D_SELECTED)	//If user selected per measure instead of per beat
@@ -1706,6 +1706,7 @@ int eof_menu_edit_snap_custom(void)
 		{
 			eof_snap_mode = EOF_SNAP_CUSTOM;
 		}
+		eof_fixup_notes(eof_song);	//Run the fixup logic for all tracks, so that if the "Highlight non grid snapped notes" feature is in use, the highlighting can take the custom grid snap into account
 	}
 	printf("%d\n", eof_snap_interval);
 	eof_cursor_visible = 1;

@@ -1411,6 +1411,7 @@ if(eof_key_code == KEY_PAUSE)
 		{
 			eof_snap_mode = EOF_SNAP_FORTY_EIGHTH;
 		}
+		eof_fixup_notes(eof_song);	//Run the fixup logic for all tracks, so that if the "Highlight non grid snapped notes" feature is in use, the highlighting can discontinue taking the custom grid snap into account
 		eof_use_key();
 	}
 
@@ -1427,6 +1428,7 @@ if(eof_key_code == KEY_PAUSE)
 		{
 			eof_snap_mode = 0;
 		}
+		eof_fixup_notes(eof_song);	//Run the fixup logic for all tracks, so that if the "Highlight non grid snapped notes" feature is in use, the highlighting can discontinue taking the custom grid snap into account
 		eof_use_key();
 	}
 
@@ -5728,7 +5730,7 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 	}
 
 	/* draw the current position */
-	if(pos > zoom)
+	if(pos >= zoom)
 	{
 		vline(window->screen, lpos + (eof_music_pos - eof_av_delay) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
 	}

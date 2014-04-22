@@ -171,4 +171,11 @@ int eof_check_fret_hand_positions_menu(void);
 int eof_menu_song_export_song_preview(void);
 	//Allows the user to define a portion of the chart audio to export to preview.wav and preview.ogg in the project folder
 
+int eof_menu_song_highlight_non_grid_snapped_notes(void);
+	//Toggles highlighting for all notes in the active track that aren't at any grid snap position
+	//The highlighting is recreated every time the track's fixup logic runs
+int eof_song_highlight_non_grid_snapped_notes(EOF_SONG *sp, unsigned long track);
+	//Performs highlighting for all notes in the active track that aren't at any grid snap position
+	//If a custom grid snap is in effect, its position is also compared
+
 #endif

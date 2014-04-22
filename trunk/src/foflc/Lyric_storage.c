@@ -545,10 +545,13 @@ struct Lyric_Piece *FindLyricNumber(unsigned long number)
 		else if(curline->next != NULL)	//There's another line of lyrics
 		{
 			curline=curline->next;		//Point to it
+			assert(curline != NULL);	//Redundant assert() to resolve a false positive with Coverity
 			curpiece=curline->pieces;	//Point to first lyric in the line
 		}
 		else	//There are no more lyric pieces
 			return NULL;
+
+		assert(curpiece != NULL);	//Redundant assert() to resolve a false positive with Coverity
 	}
 
 //At this point, curpiece is pointed at the appropriate lyric piece
