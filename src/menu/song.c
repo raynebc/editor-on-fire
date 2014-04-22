@@ -52,6 +52,10 @@ MENU eof_song_seek_bookmark_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+char eof_seek_menu_prev_anchor_text1[] = "Previous Anchor\t" CTRL_NAME "+Shift+PGUP";
+char eof_seek_menu_next_anchor_text1[] = "Next Anchor\t" CTRL_NAME "+Shift+PGDN";
+char eof_seek_menu_prev_anchor_text2[] = "Previous Anchor";
+char eof_seek_menu_next_anchor_text2[] = "Next Anchor";
 MENU eof_song_seek_menu[] =
 {
 	{"&Bookmark", NULL, eof_song_seek_bookmark_menu, 0, NULL},
@@ -74,8 +78,8 @@ MENU eof_song_seek_menu[] =
 	{"First Beat\t"  CTRL_NAME "+Shift+Home", eof_menu_song_seek_first_beat, NULL, 0, NULL},
 	{"Previous Beat\tPGUP", eof_menu_song_seek_previous_beat, NULL, 0, NULL},
 	{"Next Beat\tPGDN", eof_menu_song_seek_next_beat, NULL, 0, NULL},
-	{"Previous Anchor\t" CTRL_NAME "+Shift+PGUP", eof_menu_song_seek_previous_anchor, NULL, 0, NULL},
-	{"Next Anchor\t" CTRL_NAME "+Shift+PGDN", eof_menu_song_seek_next_anchor, NULL, 0, NULL},
+	{eof_seek_menu_prev_anchor_text1, eof_menu_song_seek_previous_anchor, NULL, 0, NULL},
+	{eof_seek_menu_next_anchor_text1, eof_menu_song_seek_next_anchor, NULL, 0, NULL},
 	{"Beat/&Measure\t" CTRL_NAME "+Shift+B", eof_menu_song_seek_beat_measure, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -164,6 +168,7 @@ MENU eof_song_menu[] =
 	{"Create image sequence", eof_write_image_sequence, NULL, 0, NULL},
 	{"&Waveform Graph", NULL, eof_waveform_menu, 0, NULL},
 	{"Spectrogra&m", NULL, eof_spectrogram_menu, 0, NULL},
+	{"Highlight non grid snapped notes", eof_menu_song_highlight_non_grid_snapped_notes, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Catalog", NULL, eof_catalog_menu, 0, NULL},
 	{"&INI Settings", eof_menu_song_ini_settings, NULL, 0, NULL},
@@ -448,15 +453,15 @@ void eof_prepare_song_menu(void)
 		{	//If grid snap is disabled
 			eof_song_seek_menu[14].flags = D_DISABLED;	//Previous grid snap
 			eof_song_seek_menu[15].flags = D_DISABLED;	//Next grid snap
-			eof_song_seek_menu[20].flags = 0;			//Previous anchor
-			eof_song_seek_menu[21].flags = 0;			//Next anchor
+			eof_song_seek_menu[20].text = eof_seek_menu_prev_anchor_text1;	//Display the previous anchor menu item with the shortcut
+			eof_song_seek_menu[21].text = eof_seek_menu_next_anchor_text1;	//Display the next anchor menu item with the shortcut
 		}
 		else
 		{
 			eof_song_seek_menu[14].flags = 0;			//Previous grid snap
 			eof_song_seek_menu[15].flags = 0;			//Next grid snap
-			eof_song_seek_menu[20].flags = D_DISABLED;	//Previous anchor
-			eof_song_seek_menu[21].flags = D_DISABLED;	//Next anchor
+			eof_song_seek_menu[20].text = eof_seek_menu_prev_anchor_text2;	//Display the previous anchor menu item with no shortcut
+			eof_song_seek_menu[21].text = eof_seek_menu_next_anchor_text2;	//Display the next anchor menu item with no shortcut
 		}
 
 		/* seek bookmark # */
@@ -534,11 +539,11 @@ void eof_prepare_song_menu(void)
 		/* catalog */
 		if(!eof_song->catalog->entries && (eof_catalog_menu[5].flags == D_DISABLED))
 		{	//If there are no catalog entries and no notes selected (in which case Song>Catalog>Add would have been disabled earlier)
-			eof_song_menu[8].flags = D_DISABLED;	//Song>Catalog> submenu
+			eof_song_menu[10].flags = D_DISABLED;	//Song>Catalog> submenu
 		}
 		else
 		{
-			eof_song_menu[8].flags = 0;
+			eof_song_menu[10].flags = 0;
 		}
 
 		/* track */
@@ -554,31 +559,41 @@ void eof_prepare_song_menu(void)
 			}
 		}
 
-		/* lock tempo map */
-		if(eof_song->tags->tempo_map_locked)
-		{
-			eof_song_menu[13].flags = D_SELECTED;	//Song>Lock tempo map
+		/* Highlight non grid snapped notes */
+		if(eof_song->tags->highlight_unsnapped_notes)
+		{	//If the user has enabled the dynamic highlighting of non grid snapped notes for this track
+			eof_song_menu[8].flags = D_SELECTED;
 		}
 		else
 		{
-			eof_song_menu[13].flags = 0;
+			eof_song_menu[8].flags = 0;
 		}
 
-		/* disable click and drag */
-		if(eof_song->tags->click_drag_disabled)
+		/* lock tempo map */
+		if(eof_song->tags->tempo_map_locked)
 		{
-			eof_song_menu[14].flags = D_SELECTED;	//Song>Disable click and drag
+			eof_song_menu[14].flags = D_SELECTED;	//Song>Lock tempo map
 		}
 		else
 		{
 			eof_song_menu[14].flags = 0;
 		}
 
+		/* disable click and drag */
+		if(eof_song->tags->click_drag_disabled)
+		{
+			eof_song_menu[15].flags = D_SELECTED;	//Song>Disable click and drag
+		}
+		else
+		{
+			eof_song_menu[15].flags = 0;
+		}
+
 		/* enable pro guitar and rocksmith submenus */
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is active
-			eof_song_menu[15].flags = 0;			//Song>Pro Guitar> submenu
-			eof_song_menu[16].flags = 0;			//Song>Rocksmith> submenu
+			eof_song_menu[16].flags = 0;			//Song>Pro Guitar> submenu
+			eof_song_menu[17].flags = 0;			//Song>Rocksmith> submenu
 
 			if(eof_enable_chord_cache && (eof_chord_lookup_count > 1))
 			{	//If an un-named note is selected and it has at least two chord matches
@@ -593,8 +608,8 @@ void eof_prepare_song_menu(void)
 		}
 		else
 		{	//Otherwise disable these menu items
-			eof_song_menu[15].flags = D_DISABLED;
 			eof_song_menu[16].flags = D_DISABLED;
+			eof_song_menu[17].flags = D_DISABLED;
 		}
 
 		/* Second piano roll>Sync with main piano roll */
@@ -3832,5 +3847,46 @@ int eof_menu_song_export_song_preview(void)
 		}
 	}
 
+	return 1;
+}
+
+int eof_menu_song_highlight_non_grid_snapped_notes(void)
+{
+	unsigned long ctr;
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 1;	//Invalid parameters
+
+	eof_song->tags->highlight_unsnapped_notes ^= 1;	//Toggle this setting
+	if(!eof_song->tags->highlight_unsnapped_notes)
+	{	//If this feature was toggled off
+		for(ctr = 1; ctr < eof_song->tracks; ctr++)
+		{	//For each track
+			eof_track_remove_highlighting(eof_song, ctr);	//Remove existing highlighting from the track
+		}
+	}
+	else
+	{	//This feature was toggled on
+		eof_fixup_notes(eof_song);	//Run the fixup logic on all tracks, which should rebuild the highlighting as relevant
+	}
+	return 1;
+}
+
+int eof_song_highlight_non_grid_snapped_notes(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long ctr, flags;
+
+	if(!sp || (track >= sp->tracks))
+		return 1;	//Invalid parameters
+
+	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
+	{	//For each note in the specified track
+		if(!eof_is_any_grid_snap_position(eof_get_note_pos(sp, track, ctr)))
+		{	//If this note position does not match that of any grid snap
+			flags = eof_get_note_flags(sp, track, ctr);
+			flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight the note
+			eof_set_note_flags(sp, track, ctr, flags);
+		}
+	}
 	return 1;
 }

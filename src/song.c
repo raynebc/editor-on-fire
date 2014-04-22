@@ -191,6 +191,7 @@ EOF_SONG * eof_create_song(void)
 	sp->tags->eof_fret_hand_pos_1_pg = 0;
 	sp->tags->eof_fret_hand_pos_1_pb = 0;
 	sp->tags->tempo_map_locked = 0;
+	sp->tags->highlight_unsnapped_notes = 0;
 	sp->tags->click_drag_disabled = 0;
 	sp->tags->rs_chord_technique_export = 0;
 	sp->tags->double_bass_drum_disabled = 0;
@@ -4136,6 +4137,12 @@ void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			eof_pro_guitar_track_fixup_notes(sp, track, sel);
 		break;
+	}
+
+	if(sp->tags->highlight_unsnapped_notes)
+	{	//If the user has enabled the dynamic highlighting of non grid snapped notes
+		eof_track_remove_highlighting(sp, track);	//Remove existing highlighting from the track
+		(void) eof_song_highlight_non_grid_snapped_notes(sp, track);	//Re-create the highlighting as appropriate
 	}
 }
 

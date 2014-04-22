@@ -1160,7 +1160,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 											tp->handposition[tp->handpositions].difficulty = curdiff;
 											tp->handpositions++;
 										}
-									}
+									}//If another chord can be stored
 								}//If this is an anchor tag
 
 								(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
