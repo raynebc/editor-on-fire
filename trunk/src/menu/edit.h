@@ -134,10 +134,14 @@ void eof_read_clipboard_note(PACKFILE *fp, EOF_EXTENDED_NOTE *temp_note, unsigne
 	//Reads one note definition from the specified clipboard file into the given extended note structure
 	//namelength specifies the maximum number of characters to store into temp_note
 	//  Notes can store EOF_NAME_LENGTH + 1 characters, but lyrics can store EOF_MAX_LYRIC_LENGTH + 1 characters
+void eof_read_clipboard_position_snap_data(PACKFILE *fp, int *beat, char *gridsnapvalue, unsigned char *gridsnapnum);
+	//Reads one timestamp's worth of grid snap position data from the specified clipboard file into the specified pointers
 void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long first_pos);
 	//Writes the specified note to the specified clipboard file
 	//first_pos is the position of the first note being copied to the clipboard, since each selected note's position is
 	//  written as a relative position of the first selected note (ie. the first note is written with a position of 0)
+void eof_write_clipboard_position_snap_data(PACKFILE *fp, unsigned long pos);
+	//Write's the specified timestamp's grid snap position data to the specified clipboard file
 unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long track_behavior, unsigned long notemask);
 	//Accepts an existing note's flags, the note's track behavior, and the bitmask of a note that will
 	//merge with the existing note.  Any lane-specific flag for a lane that is populated in the

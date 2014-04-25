@@ -297,7 +297,7 @@ void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 	}
 
 	/* figure out what the new BPM should be */
-	beats_length = sp->beat[cbeat]->pos - sp->beat[last_anchor]->pos;
+	beats_length = sp->beat[cbeat]->fpos - sp->beat[last_anchor]->fpos;
 	if(!beats_length || !beats)
 		return;	//Error condition
 	newbpm = (double)60000.0 / (beats_length / (double)beats);
@@ -307,21 +307,21 @@ void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 
 	/* replace beat markers */
 	for(i = last_anchor; i < cbeat - 1; i++)
-	{
+	{	//For all beats from the previous anchor up to the beat that was moved
 		sp->beat[i + 1]->fpos = sp->beat[last_anchor]->fpos + (beats_length / (double)beats) * (double)count;
-		sp->beat[i + 1]->pos = sp->beat[i + 1]->fpos +0.5;	//Round up
+		sp->beat[i + 1]->pos = sp->beat[i + 1]->fpos + 0.5;	//Round up
 		sp->beat[i + 1]->ppqn = sp->beat[last_anchor]->ppqn;
 		count++;
 	}
 
 	/* move rest of markers */
 	if(next_anchor >= 0)
-	{
+	{	//If there is another anchor, adjust all beat timings up until that anchor
 		beats = 0;
 		if(cbeat < next_anchor)
 			beats=next_anchor - cbeat;	//The number of beats between the specified beat and the next anchor
 
-		beats_length = sp->beat[next_anchor]->pos - sp->beat[cbeat]->pos;
+		beats_length = sp->beat[next_anchor]->fpos - sp->beat[cbeat]->fpos;
 		if(!beats_length || !beats)
 			return;	//Error condition
 		newbpm = (double)60000 / (beats_length / (double)beats);
@@ -334,19 +334,19 @@ void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 		for(i = cbeat; i < next_anchor - 1; i++)
 		{
 			assert(i + 1< EOF_MAX_BEATS);	//Put an assertion here to resolve a false positive with Coverity
-			sp->beat[i + 1]->fpos = sp->beat[cbeat]->pos + (beats_length / (double)beats) * (double)count;
-			sp->beat[i + 1]->pos = sp->beat[i + 1]->fpos +0.5;	//Round up
+			sp->beat[i + 1]->fpos = sp->beat[cbeat]->fpos + (beats_length / (double)beats) * (double)count;
+			sp->beat[i + 1]->pos = sp->beat[i + 1]->fpos + 0.5;	//Round up
 			sp->beat[i + 1]->ppqn = sp->beat[cbeat]->ppqn;
 			count++;
 		}
 	}
 	else
-	{
+	{	//Otherwise adjust beat timings for all remaining beats in the project
 		for(i = cbeat + 1; i < sp->beats; i++)
 		{
 			assert(i < EOF_MAX_BEATS);	//Put an assertion here to resolve a false positive with Coverity
-			sp->beat[i]->pos += eof_mickeys_x * eof_zoom;
-			sp->beat[i]->fpos = sp->beat[i]->pos;
+			sp->beat[i]->fpos += eof_mickeys_x * eof_zoom;
+			sp->beat[i]->pos = sp->beat[i]->fpos + 0.5;	//Round up
 		}
 	}
 }

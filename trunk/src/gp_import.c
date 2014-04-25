@@ -3903,7 +3903,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									}
 									else if(nonshiftslide[ctr2][ctr4] == 2)
 									{	//If this is the note that will need to be removed
-										np[ctr2]->flags |= EOF_NOTE_FLAG_HOPO;	//Use this flag to indicate that the note will need to be removed
+										np[ctr]->length = 0;			//Set an invalid length to indicate that the note will need to be removed after the slide direction is determined
 										nonshiftslide[ctr2][ctr4] = 0;	//Mark that the slide has been handled
 									}
 								}

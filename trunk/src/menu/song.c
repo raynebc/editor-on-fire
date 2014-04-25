@@ -3881,7 +3881,7 @@ int eof_song_highlight_non_grid_snapped_notes(EOF_SONG *sp, unsigned long track)
 
 	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
 	{	//For each note in the specified track
-		if(!eof_is_any_grid_snap_position(eof_get_note_pos(sp, track, ctr)))
+		if(!eof_is_any_grid_snap_position(eof_get_note_pos(sp, track, ctr), NULL, NULL, NULL))
 		{	//If this note position does not match that of any grid snap
 			flags = eof_get_note_flags(sp, track, ctr);
 			flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight the note

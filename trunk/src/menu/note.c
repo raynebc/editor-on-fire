@@ -4511,18 +4511,18 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 					if(np->frets[ctr] & 0x80)
 					{	//If the fret number's MSB is set, the string is muted
 						eof_pro_guitar_note_frets_dialog[27 - ctr].flags = D_SELECTED;	//Check the mute box for this string
-						if(np->finger[ctr] != 0)
-						{	//If the finger used to fret this string is defined
-							(void) snprintf(eof_finger_strings[ctr], sizeof(eof_finger_strings[ctr]) - 1, "%d", np->finger[ctr]);	//Create the finger string
-							if(eof_finger_strings[ctr][0] == '5')
-							{	//If this is the value for the thumb
-								eof_finger_strings[ctr][0] = '0';	//Convert to 0, which specifies the thumb in Rocksmith numbering
-							}
+					}
+					if(np->finger[ctr] != 0)
+					{	//If the finger used to fret this string is defined
+						(void) snprintf(eof_finger_strings[ctr], sizeof(eof_finger_strings[ctr]) - 1, "%d", np->finger[ctr]);	//Create the finger string
+						if(eof_finger_strings[ctr][0] == '5')
+						{	//If this is the value for the thumb
+							eof_finger_strings[ctr][0] = '0';	//Convert to 0, which specifies the thumb in Rocksmith numbering
 						}
-						else
-						{
-							eof_finger_strings[ctr][0] = '\0';	//Otherwise empty the string
-						}
+					}
+					else
+					{
+						eof_finger_strings[ctr][0] = '\0';	//Otherwise empty the string
 					}
 				}
 			}
@@ -4532,7 +4532,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 				eof_finger_strings[ctr][0] = '\0';
 				if(function)
 				{	//If the calling function wanted finger input boxes for unused strings hidden
-					eof_pro_guitar_note_frets_dialog[20 - ctr].flags = D_HIDDEN;		//Ensure this finger # input box is hidden
+					eof_pro_guitar_note_frets_dialog[20 - ctr].flags = D_DISABLED;		//Ensure this finger # input box is disabled
 				}
 				else
 				{

@@ -526,22 +526,30 @@ int eof_is_grid_snap_position(unsigned long pos)
 	return (temp.pos == pos);
 }
 
-int eof_is_any_grid_snap_position(unsigned long pos)
+int eof_is_any_grid_snap_position(unsigned long pos, int *beat, char *gridsnapvalue, unsigned char *gridsnapnum)
 {
 	EOF_SNAP_DATA temp;
-	long beat;
+	long beatnum;
 	int retval = 0, ctr;
 	char temp_mode = eof_snap_mode;	//Store the grid snap setting in use
 
 	if(!eof_song)
 		return 0;
 
-	beat = eof_get_beat(eof_song, pos);	//Find which beat the specified position is in
-	if(beat < 0)	//If the seek position is outside the chart
+	beatnum = eof_get_beat(eof_song, pos);	//Find which beat the specified position is in
+	if(beatnum < 0)	//If the seek position is outside the chart
 		return 0;
 
 	if(pos >= eof_song->beat[eof_song->beats - 1]->pos)	//If the specified position is after the last beat marker
 		return 0;
+
+	//Initialize the grid snap position data that will be returned, if applicable
+	if(gridsnapnum)
+		*gridsnapnum = 0;
+	if(gridsnapvalue)
+		*gridsnapvalue = 0;
+	if(beat)
+		*beat = -1;
 
 	for(ctr = 1; ctr < 9; ctr++)
 	{	//For each of the grid snap settings
@@ -554,12 +562,52 @@ int eof_is_any_grid_snap_position(unsigned long pos)
 		if(temp.pos == pos)
 		{
 			retval = 1;	//Track that a matching grid snap position was found
+			if(gridsnapvalue)
+			{	//If the calling function wanted to know which grid snap the position aligned with
+				*gridsnapvalue = eof_snap_mode;
+			}
+			if(beat)
+			{	//If the calling function wanted to know which beat the matching grid snap position was in
+				*beat = temp.beat;
+			}
+			if(gridsnapnum)
+			{	//If the calling function wanted to know which grid snap number the position aligned with
+				for(ctr = 0; (ctr < EOF_MAX_GRID_SNAP_INTERVALS) && (ctr < temp.intervals); ctr++)
+				{	//For each grid snap position determined by eof_snap_logic()
+					if((unsigned long)(temp.grid_pos[ctr] + 0.5) == pos)
+					{	//If this is the matching grid snap position, when rounded to the nearest millisecond
+						*gridsnapnum = ctr;
+						break;
+					}
+				}
+			}
 			break;
 		}
 	}
 
 	eof_snap_mode = temp_mode;	//Restore the grid snap value that was in effect
 	return retval;
+}
+
+int eof_find_grid_snap_position(int beat, char gridsnapvalue, unsigned char gridsnapnum, unsigned long *gridpos)
+{
+	EOF_SNAP_DATA temp;
+	char temp_mode = eof_snap_mode;	//Store the grid snap setting in use
+
+	if(!eof_song || (beat >= eof_song->beats) || !gridpos)
+		return 0;	//Invalid parameters
+
+	if((beat < 0) || !gridsnapvalue)
+		return 0;	//The parameters do not define a valid grid snap position
+
+	eof_snap_mode = gridsnapvalue;	//Put this grid snap setting into effect
+	eof_snap_logic(&temp, eof_song->beat[beat]->pos);	//Calculate grid snaps for the specified beat
+	eof_snap_mode = temp_mode;	//Restore the grid snap setting that was in use
+	if(gridsnapnum >= temp.intervals)
+		return 0;	//The gridsnapnum is not valid
+
+	*gridpos = temp.grid_pos[gridsnapnum] + 0.5;	//Store the grid snap's real time position, rounded up to the nearest millisecond
+	return 1;	//Return success
 }
 
 void eof_read_editor_keys(void)
@@ -6166,7 +6214,7 @@ void eof_editor_logic_common(void)
 								eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos + 0.5;	//Round up to nearest ms
 							}
 							else
-							{
+							{	//Update beat timings to reflect the beat being clicked and drug
 								eof_recalculate_beats(eof_song, eof_selected_beat);
 							}
 							eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
@@ -6185,7 +6233,7 @@ void eof_editor_logic_common(void)
 						if(eof_mouse_drug && (eof_song->tags->ogg[eof_selected_ogg].midi_offset != eof_last_midi_offset))
 						{	//If the first beat marker's position has changed
 							if((eof_note_auto_adjust && !KEY_EITHER_SHIFT) || (!eof_note_auto_adjust && KEY_EITHER_SHIFT))
-							{
+							{	//Move all notes by the same amount that the first beat moved
 								if(KEY_EITHER_SHIFT)
 								{
 									eof_shift_used = 1;	//Track that the SHIFT key was used
@@ -6199,7 +6247,7 @@ void eof_editor_logic_common(void)
 				if(eof_adjusted_anchor)
 				{
 					if((eof_note_auto_adjust && !KEY_EITHER_SHIFT) || (!eof_note_auto_adjust && KEY_EITHER_SHIFT))
-					{
+					{	//Auto-adjust the notes after clicking, dragging and releasing a beat
 						if(KEY_EITHER_SHIFT)
 						{
 							eof_shift_used = 1;	//Track that the SHIFT key was used

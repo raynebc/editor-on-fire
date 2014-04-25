@@ -2720,7 +2720,7 @@ void eof_render_note_window(void)
 //		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "#Beat pos = %lu : fpos = %f", eof_song->beat[eof_selected_beat]->pos, eof_song->beat[eof_selected_beat]->fpos);
 //#endif
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Key : %s maj (%s min)", eof_get_key_signature(eof_song, eof_selected_beat, 1, 0), eof_get_key_signature(eof_song, eof_selected_beat, 1, 1));
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Key : %s maj (%s min) : Fpos = %f", eof_get_key_signature(eof_song, eof_selected_beat, 1, 0), eof_get_key_signature(eof_song, eof_selected_beat, 1, 1), eof_song->beat[eof_selected_beat]->fpos);
 		ypos += 12;
 		if(eof_selected_measure >= 0)
 		{
@@ -4600,7 +4600,10 @@ void eof_init_after_load(char initaftersavestate)
 		eof_note_type = EOF_NOTE_AMAZING;
 	}
 	eof_menu_edit_zoom_level(eof_zoom);
-	eof_calculate_beats(eof_song);
+	if(!eof_song->fpbeattimes)
+	{	//If floating point beat times weren't loaded from the project file
+		eof_calculate_beats(eof_song);	//Rebuild the beat timings
+	}
 	eof_truncate_chart(eof_song);	//Add or remove beat markers as necessary and update the eof_chart_length variable
 	if(eof_selected_beat >= eof_song->beats)
 	{	//If the selected beat is no longer valid

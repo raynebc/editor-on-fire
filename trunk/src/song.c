@@ -223,6 +223,7 @@ EOF_SONG * eof_create_song(void)
 		sp->bookmark_pos[i] = 0;
 	}
 	sp->midi_data_head = sp->midi_data_tail = NULL;
+	sp->fpbeattimes = 0;
 	return sp;
 }
 
@@ -1567,7 +1568,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	unsigned long const inistringbuffersize[EOFNUMINISTRINGTYPES]={0,0,256,256,256,0,32,512,256};
 		//Store the buffer information of each of the INI strings to simplify the loading code
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
-	#define EOFNUMINIBOOLEANTYPES 10
+	#define EOFNUMINIBOOLEANTYPES 11
 	char *inibooleanbuffer[EOFNUMINIBOOLEANTYPES] = {NULL};
 		//Store the pointers to each of the boolean type INI settings (number 0 is reserved) to simplify the loading code
 	#define EOFNUMININUMBERTYPES 5
@@ -1606,6 +1607,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	inibooleanbuffer[7] = &sp->tags->click_drag_disabled;
 	inibooleanbuffer[8] = &sp->tags->rs_chord_technique_export;
 	inibooleanbuffer[9] = &unshare_drum_phrasing;
+	inibooleanbuffer[10] = &sp->tags->highlight_unsnapped_notes;
 	ininumberbuffer[2] = &sp->tags->difficulty;
 
 	/* read chart properties */
@@ -1684,7 +1686,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	{	//For each beat in the project
 		sp->beat[ctr]->ppqn = pack_igetl(fp);		//Read the beat's tempo
 		sp->beat[ctr]->pos = pack_igetl(fp);		//Read the beat's position (milliseconds or delta ticks)
-		sp->beat[ctr]->fpos = sp->beat[ctr]->pos;	//For now, assume the position is in milliseconds and copy to the fpos variable as-is
+		sp->beat[ctr]->fpos = sp->beat[ctr]->pos;	//For now, assume the position is in milliseconds and copy to the fpos variable as-is (if a custom data block containing floating point timings is found, they will be loaded)
 		sp->beat[ctr]->flags = pack_igetl(fp);		//Read the beat's flags
 		sp->beat[ctr]->key = pack_getc(fp);			//Read the beat's key signature
 	}
@@ -1845,6 +1847,15 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				eof_MIDI_add_track(sp, trackptr);	//Store the track link in the EOF_SONG structure
 			}//For each of the tracks to read
 		}//If this is a linked list of raw MIDI track data
+		else if(data_block_type == 2)
+		{	//If this is a set of floating point beat timings
+			for(ctr = 0; ctr < sp->beats; ctr++)
+			{	//For each beat in the project
+				(void) eof_load_song_string_pf(buffer, fp, sizeof(buffer));		//Read the timestamp string
+				(void) sscanf(buffer, "%99lf", &sp->beat[ctr]->fpos);			//Convert to double floating point (sscanf is width limited to prevent buffer overflow)
+			}
+			sp->fpbeattimes = 1;	//Have eof_init_after_load() skip the recalculation of beat timings, since the original floating point timings were loaded
+		}
 		else
 		{	//Otherwise, skip over the unknown data block
 			for(ctr=4; ctr<custom_data_size; ctr++)
@@ -2445,13 +2456,14 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};
 	unsigned long count,ctr,ctr2,tracknum;
 	unsigned long track_count,track_ctr,bookmark_count,bitmask,fingerdefinitions;
+	char has_raw_midi_data, has_fp_beat_timings = 1;
 	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes;
 
 	#define EOFNUMINISTRINGTYPES 9
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
 		//Store the buffer information of each of the 12 INI strings to simplify the loading code
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
-	#define EOFNUMINIBOOLEANTYPES 10
+	#define EOFNUMINIBOOLEANTYPES 11
 	char *inibooleanbuffer[EOFNUMINIBOOLEANTYPES] = {NULL};
 		//Store the pointers to each of the boolean type INI settings (number 0 is reserved) to simplify the loading code
 	#define EOFNUMININUMBERTYPES 5
@@ -2492,6 +2504,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	inibooleanbuffer[7] = &sp->tags->click_drag_disabled;
 	inibooleanbuffer[8] = &sp->tags->rs_chord_technique_export;
 	inibooleanbuffer[9] = &unshare_drum_phrasing;
+	inibooleanbuffer[10] = &sp->tags->highlight_unsnapped_notes;
 	ininumberbuffer[2] = &sp->tags->difficulty;
 
 	/* write file header */
@@ -2598,76 +2611,122 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 
 	/* write custom data blocks */
 //	(void) pack_iputl(0, fp);	//Write an empty custom data block
+	has_raw_midi_data = 0;
 	if(sp->midi_data_head)
-	{	//If there is raw MIDI data being stored, write it as a custom data block
-		PACKFILE *tfp;	//Used to create a temp file containing the MIDI data block, so its size can easily be determined before dumping into the output project file
-		struct eof_MIDI_data_track *trackptr = sp->midi_data_head;	//Point to the beginning of the track linked list
-		struct eof_MIDI_data_event *eventptr;
-		unsigned long filesize;
+	{	//If there is raw MIDI data being stored
+		has_raw_midi_data = 1;
+	}
+	if(has_raw_midi_data || has_fp_beat_timings)
+	{	//If writing data in a custom data block
+		(void) pack_iputl(has_raw_midi_data + has_fp_beat_timings, fp);	//Write the number of custom data blocks
+		if(has_raw_midi_data)
+		{	//If there is raw MIDI data being stored, write it as a custom data block
+			PACKFILE *tfp;	//Used to create a temp file containing the MIDI data block, so its size can easily be determined before dumping into the output project file
+			struct eof_MIDI_data_track *trackptr = sp->midi_data_head;	//Point to the beginning of the track linked list
+			struct eof_MIDI_data_event *eventptr;
+			unsigned long filesize;
 
-	//Parse the linked list to write the MIDI data to a temp file
-		tfp = pack_fopen("rawmididata.tmp", "w");
-		if(!tfp)
-		{	//If the temp file couldn't be opened for writing
-			eof_log("\tError creating temp file for raw MIDI data block", 1);
-			(void) pack_fclose(fp);
-			return 0;	//return error
-		}
-		for(ctr = 0, trackptr = sp->midi_data_head; trackptr != NULL; ctr++, trackptr = trackptr->next);	//Count the number of tracks in this list
-		(void) pack_iputl(1, tfp);			//Write the data block ID (1 = Raw MIDI data)
-		(void) pack_iputw(ctr, tfp);		//Write the number of tracks that will be stored in this data block
-		(void) pack_putc(1, tfp);			//Write the raw MIDI data block flags (delta timings allowed)
-		(void) pack_putc(0, tfp);			//Write the reserved byte (not used)
-		trackptr = sp->midi_data_head;	//Point to the beginning of the track linked list
-		while(trackptr != NULL)
-		{	//For each track of event data
-			(void) eof_save_song_string_pf(trackptr->trackname, tfp);		//Write the track name (this function allows for a NULL pointer)
-			(void) eof_save_song_string_pf(trackptr->description, tfp);	//Write the description
-			for(ctr = 0, eventptr = trackptr->events; eventptr != NULL; ctr++, eventptr = eventptr->next);	//Count the number of events in this track
-			(void) pack_iputl(ctr, tfp);	//Write the number of events for this track
-			if(trackptr->timedivision)
-			{	//If this stored MIDI track has a time division defined
-				(void) pack_putc(1, tfp);	//Write the delta timings present field to indicate each event will also have a delta time written
-				(void) pack_iputl(trackptr->timedivision, tfp);	//And write the track's time division
+		//Parse the linked list to write the MIDI data to a temp file
+			tfp = pack_fopen("rawmididata.tmp", "w");
+			if(!tfp)
+			{	//If the temp file couldn't be opened for writing
+				eof_log("\tError creating temp file for raw MIDI data block", 1);
+				(void) pack_fclose(fp);
+				return 0;	//return error
 			}
-			else
-			{
-				(void) pack_putc(0, tfp);	//Write the delta timings present field to indicate that events will not include delta times
-			}
-			eventptr = trackptr->events;	//Point to the beginning of this track's event linked list
-			while(eventptr != NULL)
-			{	//For each event
-				(void) eof_save_song_string_pf(eventptr->stringtime, tfp);	//Write the timestamp string
+			for(ctr = 0, trackptr = sp->midi_data_head; trackptr != NULL; ctr++, trackptr = trackptr->next);	//Count the number of tracks in this list
+			(void) pack_iputl(1, tfp);			//Write the data block ID (1 = Raw MIDI data)
+			(void) pack_iputw(ctr, tfp);		//Write the number of tracks that will be stored in this data block
+			(void) pack_putc(1, tfp);			//Write the raw MIDI data block flags (delta timings allowed)
+			(void) pack_putc(0, tfp);			//Write the reserved byte (not used)
+			trackptr = sp->midi_data_head;	//Point to the beginning of the track linked list
+			while(trackptr != NULL)
+			{	//For each track of event data
+				(void) eof_save_song_string_pf(trackptr->trackname, tfp);		//Write the track name (this function allows for a NULL pointer)
+				(void) eof_save_song_string_pf(trackptr->description, tfp);	//Write the description
+				for(ctr = 0, eventptr = trackptr->events; eventptr != NULL; ctr++, eventptr = eventptr->next);	//Count the number of events in this track
+				(void) pack_iputl(ctr, tfp);	//Write the number of events for this track
 				if(trackptr->timedivision)
 				{	//If this stored MIDI track has a time division defined
-					(void) pack_iputl(eventptr->deltatime, tfp);	//Write the event's delta time
+					(void) pack_putc(1, tfp);	//Write the delta timings present field to indicate each event will also have a delta time written
+					(void) pack_iputl(trackptr->timedivision, tfp);	//And write the track's time division
 				}
-				(void) pack_iputw(eventptr->size, tfp);	//Write the size of this event's data
-				(void) pack_fwrite(eventptr->data, eventptr->size, tfp);	//Write this event's data
-				eventptr = eventptr->next;	//Point to the next event
+				else
+				{
+					(void) pack_putc(0, tfp);	//Write the delta timings present field to indicate that events will not include delta times
+				}
+				eventptr = trackptr->events;	//Point to the beginning of this track's event linked list
+				while(eventptr != NULL)
+				{	//For each event
+					(void) eof_save_song_string_pf(eventptr->stringtime, tfp);	//Write the timestamp string
+					if(trackptr->timedivision)
+					{	//If this stored MIDI track has a time division defined
+						(void) pack_iputl(eventptr->deltatime, tfp);	//Write the event's delta time
+					}
+					(void) pack_iputw(eventptr->size, tfp);	//Write the size of this event's data
+					(void) pack_fwrite(eventptr->data, eventptr->size, tfp);	//Write this event's data
+					eventptr = eventptr->next;	//Point to the next event
+				}
+				trackptr = trackptr->next;	//Point to the next track
 			}
-			trackptr = trackptr->next;	//Point to the next track
-		}
-		(void) pack_fclose(tfp);	//Close temp file
+			(void) pack_fclose(tfp);	//Close temp file
 
-	//Write the custom data block
-		(void) pack_iputl(1, fp);	//Write one data block
-		filesize = (unsigned long)file_size_ex("rawmididata.tmp");
-		(void) pack_iputl(filesize, fp);	//Write the size of this data block
-		tfp = pack_fopen("rawmididata.tmp", "r");
-		if(!tfp)
-		{	//If the temp file couldn't be opened for writing
-			eof_log("\tError reading temp file for raw MIDI data block", 1);
-			(void) pack_fclose(fp);
-			return 0;	//return error
+		//Write the custom data block
+			filesize = (unsigned long)file_size_ex("rawmididata.tmp");
+			(void) pack_iputl(filesize, fp);	//Write the size of this data block
+			tfp = pack_fopen("rawmididata.tmp", "r");
+			if(!tfp)
+			{	//If the temp file couldn't be opened for writing
+				eof_log("\tError reading temp file for raw MIDI data block", 1);
+				(void) pack_fclose(fp);
+				return 0;	//return error
+			}
+			for(ctr = 0; ctr < filesize; ctr++)
+			{	//For each byte in the temp file
+				(void) pack_putc(pack_getc(tfp), fp);	//Copy the byte to the output project file
+			}
+			(void) pack_fclose(tfp);
+			(void) delete_file("rawmididata.tmp");	//Delete the temp file
+		}//If there is raw MIDI data being stored, write it as a custom data block
+		if(has_fp_beat_timings)
+		{	//If floating point beat timings are to be written
+			char buffer[100] = {0};	//Will be used to store an ASCII representation of the beat timestamps
+			PACKFILE *tfp;	//Used to create a temp file containing the beat timings, so its size can easily be determined before dumping into the output project file
+			unsigned long filesize;
+
+		//Write the beat timings to a temp file
+			tfp = pack_fopen("beattimes.tmp", "w");
+			if(!tfp)
+			{	//If the temp file couldn't be opened for writing
+				eof_log("\tError creating temp file for floating point beat timings data block", 1);
+				(void) pack_fclose(fp);
+				return 0;	//return error
+			}
+			for(ctr = 0; ctr < sp->beats; ctr++)
+			{	//For each beat in the project
+				(void) snprintf(buffer, sizeof(buffer) - 1, "%f", sp->beat[ctr]->fpos);	//Create a string representation of this beat's timestamp
+				(void) eof_save_song_string_pf(buffer, tfp);		//Write timing string
+			}
+			(void) pack_fclose(tfp);	//Close temp file
+
+		//Write the custom data block
+			filesize = (unsigned long)file_size_ex("beattimes.tmp");
+			(void) pack_iputl(filesize, fp);	//Write the size of this data block
+			tfp = pack_fopen("beattimes.tmp", "r");
+			if(!tfp)
+			{	//If the temp file couldn't be opened for writing
+				eof_log("\tError reading temp file for floating point beat timings data block", 1);
+				(void) pack_fclose(fp);
+				return 0;	//return error
+			}
+			for(ctr = 0; ctr < filesize; ctr++)
+			{	//For each byte in the temp file
+				(void) pack_putc(pack_getc(tfp), fp);	//Copy the byte to the output project file
+			}
+			(void) pack_fclose(tfp);
+			(void) delete_file("beattimes.tmp");	//Delete the temp file
 		}
-		for(ctr = 0; ctr < filesize; ctr++)
-		{	//For each byte in the temp file
-			(void) pack_putc(pack_getc(tfp), fp);	//Copy the byte to the output project file
-		}
-		(void) pack_fclose(tfp);
-		(void) delete_file("rawmididata.tmp");	//Delete the temp file
-	}//If there is raw MIDI data being stored, write it as a custom data block
+	}//If writing data in a custom data block
 	else
 	{	//Otherwise write a debug custom data block
 		(void) pack_iputl(1, fp);			//Write one data block

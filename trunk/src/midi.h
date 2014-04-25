@@ -57,8 +57,6 @@ typedef struct
 	unsigned long changes;					//The number of key signatures changes found in this list
 } EOF_MIDI_KS_LIST;
 
-long eof_figure_beat(double pos);				//Returns the beat marker immediately before the specified timestamp, or -1 on failure
-
 int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixvoxpitches, char fixvoxphrases);
 	//Writes the specified chart's contents to the specified file
 	//If featurerestriction is 0, all chart features are written to MIDI, and expert+.mid is written if double bass drum is charted
