@@ -356,27 +356,6 @@ int qsort_helper3(const void * e1, const void * e2)
 	return 0;
 }
 
-long eof_figure_beat(double pos)
-{
-	long i;
-
-	eof_log("eof_figure_beat() entered", 1);
-
-	for(i = 0; i < eof_song->beats - 1; i++)
-	{
-		if(i + 1 >= eof_song->beats)
-		{				//If i references the last defined beat
-			return i;	//return i instead of referencing an undefined beat
-		}
-
-		if((eof_song->beat[i]->pos <= pos) && (eof_song->beat[i + 1]->pos > pos))
-		{
-			return i;
-		}
-	}
-	return -1;
-}
-
 /* write MTrk data to a temp file so we can calculate the length in bytes of the track
    write MThd data and copy MTrk data from the temp file using the size of the temp file as the track length
    delete the temp file

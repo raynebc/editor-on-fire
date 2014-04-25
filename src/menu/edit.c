@@ -843,6 +843,7 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 			if((notepos + notelength >= start_pos) && (notepos < end_pos))
 			{	//If this note falls within the start->end time range
 				eof_write_clipboard_note(fp, eof_song, j, i, first_pos[j]);	//Write note data to disk
+				eof_write_clipboard_position_snap_data(fp, notepos);	//Write the grid snap position data for this note's position
 			}//If this note falls within the start->end time range
 		}//For each note in this track
 
@@ -1020,6 +1021,12 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 	long notelength = 0;
 	char affect_until_end = 0;	//Is set to nonzero if all notes until the end of the project are affected by this operation
 
+	//Grid snap variables used to automatically re-snap auto-adjusted timestamps
+	int beat;
+	char gridsnapvalue;
+	unsigned char gridsnapnum;
+	unsigned long gridpos;
+
 	for(i = 0; i < EOF_TRACKS_MAX; i++)
 	{
 		this_beat[i] = eof_find_previous_anchor(eof_song, anchor) + eof_anchor_diff[i];
@@ -1076,10 +1083,15 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		{
 		/* read the note */
 			eof_read_clipboard_note(fp, &temp_note, EOF_MAX_LYRIC_LENGTH + 1);
+			eof_read_clipboard_position_snap_data(fp, &beat, &gridsnapvalue, &gridsnapnum);
 
 			if(temp_note.pos + temp_note.length < eof_chart_length)
 			{
 				notepos = eof_put_porpos(temp_note.beat - first_beat[j] + this_beat[j], temp_note.porpos, 0.0);
+				if(eof_find_grid_snap_position(beat, gridsnapvalue, gridsnapnum, &gridpos))
+				{	//If the adjusted grid snap position can be calculated
+					notepos = gridpos;	//Update the adjusted position for the note
+				}
 				notelength = eof_put_porpos(temp_note.endbeat - first_beat[j] + this_beat[j], temp_note.porendpos, 0.0) - notepos;
 				new_note = eof_track_add_create_note(eof_song, j, temp_note.note, notepos, notelength, temp_note.type, temp_note.name);
 
@@ -3291,6 +3303,16 @@ void eof_read_clipboard_note(PACKFILE *fp, EOF_EXTENDED_NOTE *temp_note, unsigne
 	temp_note->unpitchend = pack_getc(fp);		//Read the note's unpitched slide end position
 }
 
+void eof_read_clipboard_position_snap_data(PACKFILE *fp, int *beat, char *gridsnapvalue, unsigned char *gridsnapnum)
+{
+	if(!fp || !beat || !gridsnapvalue || !gridsnapnum)
+		return;	//Invalid parameters
+
+	*beat = pack_igetl(fp);				//Read the beat number
+	*gridsnapvalue = pack_getc(fp);		//Read the grid snap setting
+	*gridsnapnum = pack_getc(fp);		//Read the grid snap number
+}
+
 void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long first_pos)
 {
 	long note_len;
@@ -3342,6 +3364,21 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 		(void) pack_putc(0, fp);	//Write a blank slide end position
 		(void) pack_putc(0, fp);	//Write a blank unpitched slide end position
 	}
+}
+
+void eof_write_clipboard_position_snap_data(PACKFILE *fp, unsigned long pos)
+{
+	char gridsnapvalue;
+	unsigned char gridsnapnum;
+	int beat;
+
+	if(!fp)
+		return;	//Invalid parameters
+
+	(void) eof_is_any_grid_snap_position(pos, &beat, &gridsnapvalue, &gridsnapnum);	//Determine grid snap position, if any, of the specified position
+	(void) pack_iputl(beat, fp);			//Write the beat number
+	(void) pack_putc(gridsnapvalue, fp);	//Write the grid snap setting
+	(void) pack_putc(gridsnapnum, fp);		//Write the grid snap number
 }
 
 unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long track_behavior, unsigned long notemask)
