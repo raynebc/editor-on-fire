@@ -3060,18 +3060,21 @@ int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistp
 							num = dataptr[eventindex];	//Read the numerator
 							den = dataptr[eventindex+1];	//Read the value to which the power of 2 must be raised to define the denominator
 							eventindex += 2;
-							for(ctr = 0, realden = 1; ctr < den; ctr++)
-							{	//Find 2^(d2), the actual denominator of this time signature
-								realden = realden << 1;
+							if(den <= 7)
+							{	//For now, don't support a time signature denominator larger than 128
+								for(ctr = 0, realden = 1; ctr < den; ctr++)
+								{	//Find 2^(d2), the actual denominator of this time signature
+									realden = realden << 1;
+								}
+								if(!tsstored && eventptr->deltatime)
+								{	//If this is the first TS change and it isn't at delta time 0
+									eof_midi_add_ts_realtime(tslist, sp->beat[0]->fpos, 4, 4, 0);	//Insert a TS of 4/4 at delta position 0 (the position of the first beat marker)
+									tslist->change[tslist->changes-1]->pos = 0;
+								}
+								eof_midi_add_ts_realtime(tslist, eventptr->realtime + sp->beat[0]->fpos, num, realden, 0);	//Store the beat marker's time signature, taking the MIDI delay into account
+								tslist->change[tslist->changes-1]->pos = eventptr->deltatime;					//Store the time signature's position in deltas
+								tsstored = 1;
 							}
-							if(!tsstored && eventptr->deltatime)
-							{	//If this is the first TS change and it isn't at delta time 0
-								eof_midi_add_ts_realtime(tslist, sp->beat[0]->fpos, 4, 4, 0);	//Insert a TS of 4/4 at delta position 0 (the position of the first beat marker)
-								tslist->change[tslist->changes-1]->pos = 0;
-							}
-							eof_midi_add_ts_realtime(tslist, eventptr->realtime + sp->beat[0]->fpos, num, realden, 0);	//Store the beat marker's time signature, taking the MIDI delay into account
-							tslist->change[tslist->changes-1]->pos = eventptr->deltatime;					//Store the time signature's position in deltas
-							tsstored = 1;
 						}
 					}
 				break;

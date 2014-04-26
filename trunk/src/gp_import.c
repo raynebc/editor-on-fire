@@ -173,6 +173,11 @@ int eof_gp_parse_bend(PACKFILE *inf, struct guitar_pro_bend *bp)
 			bp->bendpoints = 30;
 		}
 	}
+	if(points >= 100)
+	{	//Compare the bend point count against an arbitrarily large number to satisfy Coverity
+		eof_gp_debug_log(inf, "\t\t\tToo many bend points, aborting.");
+		return 1;
+	}
 	for(ctr = 0; ctr < points; ctr++)
 	{	//For each point in the bend
 		if(pack_feof(inf))
@@ -2196,6 +2201,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tNumber of tracks: %lu", tracks);
 	eof_log(eof_log_string, 1);
 #endif
+	if(tracks >= 100)
+	{	//Compare the track count against an arbitrarily large number to satisfy Coverity
+		eof_log("\t\t\tToo many tracks, aborting.", 1);
+		(void) pack_fclose(inf);
+		free(gp);
+		if(sync_points)
+			free(sync_points);
+		return NULL;
+	}
 	gp->numtracks = tracks;
 	gp->names = malloc(sizeof(char *) * tracks);			//Allocate memory for track name strings
 	np = malloc(sizeof(EOF_PRO_GUITAR_NOTE *) * tracks);	//Allocate memory for the array of last created notes
@@ -3903,7 +3917,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									}
 									else if(nonshiftslide[ctr2][ctr4] == 2)
 									{	//If this is the note that will need to be removed
-										np[ctr]->length = 0;			//Set an invalid length to indicate that the note will need to be removed after the slide direction is determined
+										np[ctr2]->length = 0;			//Set an invalid length to indicate that the note will need to be removed after the slide direction is determined
 										nonshiftslide[ctr2][ctr4] = 0;	//Mark that the slide has been handled
 									}
 								}
