@@ -1662,6 +1662,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	char *hopo;	//Will store the fret value of the previous note marked as HO/PO (in GP, if note #N is marked for this, note #N+1 is the one that is a HO or PO), otherwise -1, for each track
 	char user_warned = 0;	//Used to track user warnings about the file being corrupt
 	char string_warning = 0;	//Used to track a user warning about the string count for a track being higher than what EOF supports
+	char drop_7 = 0;			//Used to track whether string 7 is being dropped during import, if any tracks have 7 strings
 	char (*nonshiftslide)[7];		//Used to track, per GP track, whether the previous note on each string was a non shift slide (suppress the note after the slide)
 	unsigned long curbeat = 0;		//Tracks the current beat number for the current measure
 	double gp_durations[] = {1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625};	//The duration of each note type in terms of one whole note (whole note, half, 4th, 8th, 12th, 32nd, 64th)
@@ -1737,8 +1738,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			if(eof_song->tags->tempo_map_locked)
 			{	//If the user has locked the tempo map
 				eof_clear_input();
-				key[KEY_Y] = 0;
-				key[KEY_N] = 0;
 				if(alert(NULL, "The tempo map must be unlocked in order to import a Go PlayAlong file.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 				{	//If the user does not opt to unlock the tempo map
 					eof_log("\tUser cancellation.  Aborting", 1);
@@ -2551,8 +2550,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		if(eof_use_ts && !eof_song->tags->tempo_map_locked)
 		{	//If user has enabled the preference to import time signatures, and the project's tempo map isn't locked (skip the prompt if importing a Go PlayAlong file)
 			eof_clear_input();
-			key[KEY_Y] = 0;
-			key[KEY_N] = 0;
 			if(alert(NULL, "Import Guitar Pro file's time signatures?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 			{	//If the user opts to import those from this Guitar Pro file into the active project
 				import_ts = 1;
@@ -2903,19 +2900,50 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		(void) pack_fseek(inf, 40 - word);			//Skip the padding that follows the track name string
 		pack_ReadDWORDLE(inf, &strings[ctr]);		//Read the number of strings in this track
 		gp->track[ctr]->numstrings = strings[ctr];
+#ifdef GP_IMPORT_DEBUG
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu strings", strings[ctr]);
+		eof_log(eof_log_string, 1);
+#endif
+		if(strings[ctr] > 7)
+		{	//7 is the highest number of strings Guitar Pro supports for any track
+			eof_log("Invalid string count", 1);
+			(void) pack_fclose(inf);
+			while(ctr > 0)
+			{	//Free the previous track name strings
+				free(gp->names[ctr - 1]);
+				ctr--;
+			}
+			free(gp->names);
+			for(ctr = 0; ctr < tracks; ctr++)
+			{	//Free all previously allocated track structures
+				free(gp->track[ctr]);
+			}
+			for(ctr = 0; ctr < gp->text_events; ctr++)
+			{	//Free all allocated text events
+				free(gp->text_event[ctr]);
+			}
+			free(gp->track);
+			free(np);
+			free(hopo);
+			free(nonshiftslide);
+			free(gp);
+			free(tsarray);
+			free(strings);
+			return NULL;
+		}
 		if(strings[ctr] > 6)
 		{	//Warn that EOF will not import more than 6 strings
 			gp->track[ctr]->numstrings = 6;
 			if(!string_warning)
 			{
-				allegro_message("Warning:  At least one track uses more than 6 strings, string 7 will be dropped during import");
+				eof_clear_input();
+				if(alert("Warning:  At least one track uses 7 strings.", "Only 6 can be used.  Drop which string?", "(If you want to use the standard 6 strings, drop string 7)", "&1 (thinnest)", "&7 (thickest)", '1', '7') == 2)
+				{	//If the user opts to drop string 7
+					drop_7 = 1;
+				}
 				string_warning = 1;
 			}
 		}
-#ifdef GP_IMPORT_DEBUG
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu strings", strings[ctr]);
-		eof_log(eof_log_string, 1);
-#endif
 		for(ctr2 = 0; ctr2 < 7; ctr2++)
 		{	//For each of the 7 possible usable strings
 			if(ctr2 < strings[ctr])
@@ -3834,10 +3862,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								np[ctr2]->flags = flags;
 								for(ctr4 = 0; ctr4 < strings[ctr2]; ctr4++)
 								{	//For each of this track's natively supported strings
-									unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 16 fret values per note, it just only uses 6 by default)
-									if(strings[ctr2] > 6)
-									{	//If this is a 7 string Guitar Pro track
+									unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
+									if((strings[ctr2] > 6) && drop_7)
+									{	//If this is a 7 string Guitar Pro track and the user opted to drop string 7 instead of string 1
 										convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
+									}
+									if((convertednum > 6) || (ctr4 > 5))
+									{	//If convertednum became an unexpectedly large value (ie. integer underflow) or six strings have already been processed
+										break;	//Stop translating fretting and fingering data
 									}
 									np[ctr2]->frets[ctr4] = frets[convertednum];	//Copy the fret number for this string
 									np[ctr2]->finger[ctr4] = finger[convertednum];	//Copy the finger number used to fret the string (is nonzero if defined)
@@ -3856,11 +3888,19 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								np[ctr2]->name[0] = '\0';
 								if(strings[ctr2] > 6)
 								{	//If this is a 7 string track
-									np[ctr2]->note = usedstrings >> 1;	//Shift out string 7 to leave the first 6 strings
-									np[ctr2]->ghost = ghost >> 1;		//Likewise translate the ghost bit mask
+									if(drop_7)
+									{	//The user opted to drop string 7 instead of string 1
+										np[ctr2]->note = usedstrings >> 1;	//Shift out string 7 to leave the first 6 strings
+										np[ctr2]->ghost = ghost >> 1;		//Likewise translate the ghost bit mask
+									}
+									else
+									{	//The user opted to drop string 1
+										np[ctr2]->note = usedstrings & 63;	//Mask out string 1
+										np[ctr2]->ghost = ghost & 63;		//Likewise mask out string 1 of the ghost bit mask
+									}
 								}
 								else
-								{
+								{	//This track has less than 7 strings
 									np[ctr2]->note = usedstrings >> (7 - strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB
 									np[ctr2]->ghost = ghost >> (7 - strings[ctr2]);			//Likewise translate the ghost bit mask
 								}
@@ -3879,7 +3919,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									}
 								}
 
-	#ifdef GP_IMPORT_DEBUG
+#ifdef GP_IMPORT_DEBUG
 								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Start: %lums\tLength: %ldms\tFrets: ", gp->track[ctr2]->notes - 1, np[ctr2]->pos, np[ctr2]->length);
 								for(ctr4 = 0, bitmask = 1; ctr4 < strings[ctr2]; ctr4++, bitmask <<= 1)
 								{	//For each of this track's natively supported strings
@@ -3906,7 +3946,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									(void) strncat(eof_log_string, temp, sizeof(eof_log_string) - 1);
 								}
 								eof_log(eof_log_string, 1);
-	#endif
+#endif
 
 								//Track note slides
 								for(ctr4 = 0; ctr4 < strings[ctr2]; ctr4++)

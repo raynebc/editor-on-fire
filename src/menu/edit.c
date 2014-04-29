@@ -616,8 +616,6 @@ int eof_menu_edit_copy_vocal(void)
 				if(eof_song->beat[eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos) + 1]->pos - eof_song->vocal_track[tracknum]->lyric[i]->pos <= 10)
 				{
 					eof_clear_input();
-					key[KEY_Y] = 0;
-					key[KEY_N] = 0;
 					if(alert(NULL, "First note appears to be off.", "Adjust?", "&Yes", "&No", 'y', 'n') == 1)
 					{
 						eof_song->vocal_track[tracknum]->lyric[i]->pos = eof_song->beat[eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos) + 1]->pos;
@@ -1346,8 +1344,6 @@ int eof_menu_edit_copy(void)
 				if(eof_song->beat[eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i)) + 1]->pos - eof_get_note_pos(eof_song, eof_selected_track, i) <= 10)
 				{
 					eof_clear_input();
-					key[KEY_Y] = 0;
-					key[KEY_N] = 0;
 					if(alert(NULL, "First note appears to be off.", "Adjust?", "&Yes", "&No", 'y', 'n') == 1)
 					{
 						eof_set_note_pos(eof_song, eof_selected_track, i, eof_song->beat[eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i)) + 1]->pos);
@@ -1419,8 +1415,6 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			char message[120] = {0};
 			(void) snprintf(message, sizeof(message) - 1, "Warning:  This track's fret limit is exceeded by a pasted note's fret value of %lu.  Continue?", highestfret);
 			eof_clear_input();
-			key[KEY_Y] = 0;
-			key[KEY_N] = 0;
 			if(alert(NULL, message, NULL, "&Yes", "&No", 'y', 'n') != 1)
 			{	//If user does not opt to continue after being alerted of this fret limit issue
 				(void) pack_fclose(fp);
@@ -1434,8 +1428,6 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		char message[120] = {0};
 		(void) snprintf(message, sizeof(message) - 1, "Warning:  This track's highest lane number is exceeded by a pasted note with a gem on lane %lu.", highestlane);
 		eof_clear_input();
-		key[KEY_Y] = 0;
-		key[KEY_N] = 0;
 		if(alert(NULL, message, "Gems will either be dropped, or added to form all-lane chords for such notes.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If user does not opt to continue after being alerted of this lane limit issue
 			(void) pack_fclose(fp);
@@ -2741,8 +2733,6 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 	if(eof_track_diff_populated_status[eof_note_type])
 	{	//If the current difficulty is populated
 		eof_clear_input();
-		key[KEY_Y] = 0;
-		key[KEY_N] = 0;
 		if(alert(NULL, "This operation will replace this difficulty's contents.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If user does not opt to overwrite this difficulty
 			return 1;
@@ -2956,8 +2946,6 @@ int eof_menu_edit_paste_from_catalog(void)
 				char message[120] = {0};
 				(void) snprintf(message, sizeof(message) - 1, "Warning:  This track's fret limit is exceeded by a pasted note's fret value of %lu.  Continue?", highestfret);
 				eof_clear_input();
-				key[KEY_Y] = 0;
-				key[KEY_N] = 0;
 				if(alert(NULL, message, NULL, "&Yes", "&No", 'y', 'n') != 1)
 				{	//If user does not opt to continue after being alerted of this fret limit issue
 					return 0;
@@ -2969,8 +2957,6 @@ int eof_menu_edit_paste_from_catalog(void)
 			char message[120] = {0};
 			(void) snprintf(message, sizeof(message) - 1, "Warning:  This track's highest lane number is exceeded by a pasted note with a gem on lane %lu.", highestlane);
 			eof_clear_input();
-			key[KEY_Y] = 0;
-			key[KEY_N] = 0;
 			if(alert(NULL, message, "Such notes will be omitted.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
 			{	//If user does not opt to continue after being alerted of this lane limit issue
 				return 0;

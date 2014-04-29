@@ -739,8 +739,6 @@ int eof_menu_beat_reset_offset(void)
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 	{
 		eof_clear_input();
-		key[KEY_Y] = 0;
-		key[KEY_N] = 0;
 		if(alert("Cannot perform this operation while the tempo map is locked.", NULL, "Would you like to unlock the tempo map?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If user does not opt to unlock the tempo map to carry out the operation
 			return 1;	//Return without making changes
@@ -754,8 +752,6 @@ int eof_menu_beat_reset_offset(void)
 	if(eof_song->beat[0]->pos >= eof_song->beat[1]->pos - eof_song->beat[0]->pos)
 	{	//If the MIDI delay is at least one beat length long, offer to insert as many evenly spaced beats as possible
 		eof_clear_input();
-		key[KEY_Y] = 0;
-		key[KEY_N] = 0;
 		if(alert(NULL, "Insert evenly spaced beats at the beginning of the chart?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 		{	//If user opts to insert evenly spaced beats
 			while(eof_song->beat[0]->pos >= eof_song->beat[1]->pos - eof_song->beat[0]->pos)
@@ -944,11 +940,24 @@ int eof_menu_beat_delete_anchor(void)
 
 int eof_menu_beat_reset_bpm(void)
 {
-	int reset = 0;
+	int reset = 0, adjust = 0;
 	unsigned long startbeat = 0, i;
 
-	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
-		return 1;							//Return without making changes
+	if(!eof_song || eof_song->tags->tempo_map_locked)	//If no chart is loaded or the chart's tempo map is locked
+		return 1;										//Return without making changes
+
+	for(i = 1; i < eof_song->tracks; i++)
+	{	//For each track
+		if(eof_get_track_size(eof_song, i) || eof_get_track_tech_note_size(eof_song, i))
+		{	//If the track is populated with normal notes or tech notes
+			eof_clear_input();
+			if(alert(NULL, "Adjust notes?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+			{	//If the user opts to adjust the notes
+				adjust = 1;
+			}
+			break;
+		}
+	}
 
 	if(eof_selected_beat != 0)
 	{	//If a beat besides the first is selected
@@ -971,12 +980,20 @@ int eof_menu_beat_reset_bpm(void)
 		if(alert(NULL, "Erase specified BPM changes?", NULL, "OK", "Cancel", 0, 0) == 1)
 		{
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			if(adjust)
+			{	//If the user opted to auto adjust the notes
+				(void) eof_menu_edit_cut(startbeat + 1, 1);
+			}
 			for(i = startbeat + 1; i < eof_song->beats; i++)
 			{
 				eof_song->beat[i]->ppqn = eof_song->beat[startbeat]->ppqn;
 				eof_song->beat[i]->flags &= ~EOF_BEAT_FLAG_ANCHOR;	//Clear the anchor flag
 			}
-			eof_calculate_beats(eof_song);
+			eof_calculate_beats(eof_song);	//Rebuild the beat timings
+			if(adjust)
+			{	//If the user opted to auto adjust the notes
+				(void) eof_menu_edit_cut_paste(startbeat + 1, 1);
+			}
 			eof_truncate_chart(eof_song);	//Update number of beats and the chart length as appropriate
 			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 		}
@@ -1215,8 +1232,6 @@ int eof_menu_beat_clear_events(void)
 		return 1;
 	}
 	eof_clear_input();
-	key[KEY_Y] = 0;
-	key[KEY_N] = 0;
 	if(alert(NULL, "Erase all events?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -1242,8 +1257,6 @@ int eof_menu_beat_clear_non_rs_events(void)
 		return 1;
 	}
 	eof_clear_input();
-	key[KEY_Y] = 0;
-	key[KEY_N] = 0;
 	if(alert(NULL, "Erase all non Rocksmith events?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
 		for(i = eof_song->text_events; i > 0; i--)
@@ -1839,8 +1852,6 @@ int eof_menu_beat_trainer_event(void)
 		if(eof_song_contains_event(eof_song, selected_string, relevant_track, 0xFFFF, 1))
 		{	//If this training event is already defined in the active track
 			eof_clear_input();
-			key[KEY_Y] = 0;
-			key[KEY_N] = 0;
 			if(alert(NULL, "Warning:  This text event already exists in this track.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 			{	//If the user does not opt to place the duplicate text event
 				return 0;

@@ -820,8 +820,6 @@ int eof_track_set_num_frets_strings(void)
 				char message[120] = {0};
 				(void) snprintf(message, sizeof(message) - 1, "Warning:  This track uses frets as high as %lu, exceeding the proposed limit.", highestfret);
 				eof_clear_input();
-				key[KEY_Y] = 0;
-				key[KEY_N] = 0;
 				retval = alert3(NULL, message, "Continue?", "&Yes", "&No", "Highlight conflicts", 'y', 'n', 0);
 				if(retval != 1)
 				{	//If user does not opt to continue after being alerted of this fret limit issue
@@ -858,8 +856,6 @@ int eof_track_set_num_frets_strings(void)
 			if(eof_detect_string_gem_conflicts(eof_song->pro_guitar_track[tracknum], newnumstrings))
 			{
 				eof_clear_input();
-				key[KEY_Y] = 0;
-				key[KEY_N] = 0;
 				if(alert(NULL, "Warning:  Changing the # of strings will cause one or more gems to be deleted.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 				{	//If user opts to cancel
 					cancel = 1;
@@ -1895,8 +1891,6 @@ int eof_track_rocksmith_insert_difficulty(void)
 	tp = eof_song->pro_guitar_track[tracknum];
 
 	eof_clear_input();
-	key[KEY_A] = 0;
-	key[KEY_B] = 0;
 	if(alert(NULL, "Insert the new difficulty above or below the active difficulty?", NULL, "&Above", "&Below", 'a', 'b') == 1)
 	{	//If the user chooses to insert the difficulty above the active difficulty
 		newdiff = eof_note_type + 1;	//The difficulty number of all content at/above the difficulty immediately above the active difficulty will be incremented
@@ -1960,8 +1954,6 @@ int eof_track_rocksmith_insert_difficulty(void)
 	if(lower && !upper)
 	{	//If only the lower difficulty is populated, offer to copy it into the new difficulty
 		eof_clear_input();
-		key[KEY_Y] = 0;
-		key[KEY_N] = 0;
 		if(alert(NULL, "Would you like to copy the lower difficulty's contents?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 		{	//If user opted to copy the lower difficulty
 			(void) eof_menu_edit_paste_from_difficulty(newdiff - 1, &undo_made);
@@ -1970,8 +1962,6 @@ int eof_track_rocksmith_insert_difficulty(void)
 	else if(!lower && upper)
 	{	//If only the upper difficulty is populated, offer to copy it into the new difficulty
 		eof_clear_input();
-		key[KEY_Y] = 0;
-		key[KEY_N] = 0;
 		if(alert(NULL, "Would you like to copy the upper difficulty's contents?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 		{	//If user opted to copy the upper difficulty
 			(void) eof_menu_edit_paste_from_difficulty(newdiff + 1, &undo_made);
@@ -1980,13 +1970,9 @@ int eof_track_rocksmith_insert_difficulty(void)
 	else if(lower && upper)
 	{	//If both the upper and lower difficulties are populated, prompt whether to copy either into the new difficulty
 		eof_clear_input();
-		key[KEY_Y] = 0;
-		key[KEY_N] = 0;
 		if(alert(NULL, "Would you like to copy an adjacent difficulty's contents?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 		{	//If user opted to copy either the upper or lower difficulty
 			eof_clear_input();
-			key[KEY_U] = 0;
-			key[KEY_L] = 0;
 			if(alert(NULL, "Copy the upper difficulty or the lower difficulty?", NULL, "&Upper", "&Lower", 'u', 'l') == 1)
 			{	//If user opted to copy the upper difficulty
 				(void) eof_menu_edit_paste_from_difficulty(newdiff + 1, &undo_made);
@@ -2017,8 +2003,6 @@ int eof_track_delete_difficulty(void)
 	if(eof_track_diff_populated_status[eof_note_type])
 	{	//If the active track has any notes
 		eof_clear_input();
-		key[KEY_Y] = 0;
-		key[KEY_N] = 0;
 		if(alert(NULL, "Warning:  This difficulty contains at least one note.  Delete the difficulty anyway?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user doesn't opt to delete the populated track difficulty
 			return 1;
@@ -2138,8 +2122,6 @@ int eof_track_fret_hand_positions_copy_from(void)
 			if(tp->handposition[ctr - 1].difficulty == eof_note_type)
 			{	//If this hand position is in the active track difficulty
 				eof_clear_input();
-				key[KEY_Y] = 0;
-				key[KEY_N] = 0;
 				if(!user_warned && alert("Warning:  This track difficulty's existing fret hand positions will be replaced.", NULL, "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 				{	//If the user doesn't opt to replace the existing fret hand positions
 					eof_cursor_visible = 1;
@@ -2393,8 +2375,6 @@ int eof_track_manage_rs_phrases_add_or_remove_level(int function)
 	if(instancectr > 1)
 	{
 		eof_clear_input();
-		key[KEY_Y] = 0;
-		key[KEY_N] = 0;
 		if(alert(NULL, "Modify all instances of the selected phrase?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 		{	//If the user opts to increase the level of all instances of the selected phrase
 			ctr = 0;	//Parse the beats below starting from the first
@@ -2544,8 +2524,6 @@ int eof_menu_track_open_strum(void)
 				eof_pen_visible = 0;
 				eof_show_mouse(screen);
 				eof_clear_input();
-				key[KEY_Y] = 0;
-				key[KEY_N] = 0;
 				if(alert(NULL, "Warning: Open bass strum notes must have other lanes cleared to enable open bass.  Continue?", NULL, "&Yes", "&No", 'y', 'n') == 2)
 				{	//If user opts cancel the save
 					eof_show_mouse(NULL);
@@ -2626,8 +2604,6 @@ int eof_track_erase_track_difficulty(void)
 
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);
 	eof_clear_input();
-	key[KEY_Y] = 0;
-	key[KEY_N] = 0;
 	if(!eof_track_diff_populated_status[eof_note_type] || (alert(NULL, "This operation will erase this track difficulty's contents.", "Continue?", "&Yes", "&No", 'y', 'n') != 1))
 	{	//If this track difficulty isn't populated or the user does not opt to erase it
 		return 1;	//Cancel
@@ -2644,8 +2620,6 @@ int eof_track_erase_track(void)
 		return 0;	//Error
 
 	eof_clear_input();
-	key[KEY_Y] = 0;
-	key[KEY_N] = 0;
 	if(!eof_get_track_size(eof_song, eof_selected_track) || (alert(NULL, "This operation will erase this track's contents.", "Continue?", "&Yes", "&No", 'y', 'n') != 1))
 	{	//If this track isn't populated or the user does not opt to erase it
 		return 1;	//Cancel
@@ -3434,8 +3408,6 @@ int eof_menu_track_copy_popups_track_number(EOF_SONG *sp, int sourcetrack, int d
 	if(dtp->popupmessages)
 	{	//If there are already hand positions in the destination track
 		eof_clear_input();
-		key[KEY_Y] = 0;
-		key[KEY_N] = 0;
 		if(alert(NULL, "Warning:  Existing popup messages in this track will be lost.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user does not opt to continue
 			return 0;
@@ -3535,8 +3507,6 @@ int eof_track_fret_hand_positions_generate_all(void)
 	if(tp->handpositions)
 	{	//If the active track has at least one fret hand position already
 		eof_clear_input();
-		key[KEY_Y] = 0;
-		key[KEY_N] = 0;
 		if(alert(NULL, "Existing fret hand positions for the active track will be removed.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user does not opt to remove the existing hand positions
 			return 1;
