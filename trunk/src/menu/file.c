@@ -313,8 +313,6 @@ int eof_menu_file_new_supplement(char *directory, char check)
 		if(exists(eof_temp_filename))
 		{
 			eof_clear_input();
-			key[KEY_Y] = 0;
-			key[KEY_N] = 0;
 			if(alert(NULL, "Existing guitar.ogg will be overwritten. Proceed?", NULL, "&Yes", "&No", 'y', 'n') == 2)
 			{
 				return 0;
@@ -327,8 +325,6 @@ int eof_menu_file_new_supplement(char *directory, char check)
 		if(exists(eof_temp_filename))
 		{
 			eof_clear_input();
-			key[KEY_Y] = 0;
-			key[KEY_N] = 0;
 			if(alert(NULL, "Existing original.mp3 will be overwritten. Proceed?", NULL, "&Yes", "&No", 'y', 'n') == 2)
 			{
 				return 0;
@@ -366,8 +362,6 @@ int eof_menu_file_new_supplement(char *directory, char check)
 	if(err)
 	{
 		eof_clear_input();
-		key[KEY_Y] = 0;
-		key[KEY_N] = 0;
 		if(alert(NULL, "Some existing chart files will be overwritten. Proceed?", NULL, "&Yes", "&No", 'y', 'n') == 2)
 		{
 			return 0;
@@ -703,8 +697,6 @@ int eof_menu_file_save_logic(char silent)
 	{
 		eof_show_mouse(screen);
 		eof_clear_input();
-		key[KEY_Y] = 0;
-		key[KEY_N] = 0;
 		if(alert(NULL, "No Changes, save anyway?", NULL, "&Yes", "&No", 'y', 'n') == 2)
 		{
 			eof_show_mouse(NULL);
@@ -723,8 +715,6 @@ int eof_menu_file_save_logic(char silent)
 	if(!file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
 	{
 		eof_clear_input();
-		key[KEY_Y] = 0;
-		key[KEY_N] = 0;
 		if(alert("Song folder no longer exists.", "Recreate folder?", NULL, "&Yes", "&No", 'y', 'n') == 2)
 		{
 			eof_show_mouse(NULL);
@@ -1442,23 +1432,17 @@ int eof_menu_file_exit(void)
 	eof_pen_visible = 0;
 	eof_render();
 	eof_clear_input();
-	key[KEY_Y] = 0;
-	key[KEY_N] = 0;
 	if(alert(NULL, "Want to Quit?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
 		if(eof_changes)
 		{
 			eof_clear_input();
-			key[KEY_Y] = 0;
-			key[KEY_N] = 0;
 			ret = alert3(NULL, "Save changes before quitting?", NULL, "&Yes", "&No", "Cancel", 'y', 'n', 0);
 			if(ret == 1)
 			{
 				if(eof_menu_file_save() == 2)
 				{
 					eof_clear_input();
-					key[KEY_Y] = 0;
-					key[KEY_N] = 0;
 					ret2 = alert3(NULL, "Save failed! Exit without saving?", NULL, "&Yes", "&No", NULL, 'y', 'n', 0);
 				}
 			}
@@ -2384,8 +2368,6 @@ int eof_save_helper(char *destfilename, char silent)
 		{	//Only display this warning if there is chart audio loaded
 			(void) snprintf(oggfn, sizeof(oggfn) - 1, "Warning:  Track \"%s\" contains notes/lyrics extending beyond the chart's audio.", eof_song->track[notes_after_chart_audio]->name);
 			eof_clear_input();
-			key[KEY_Y] = 0;
-			key[KEY_N] = 0;
 			if(alert(oggfn, NULL, "This chart may not work properly.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
 			{	//If the user doesn't opt to continue due to this error condition
 				return 1;	//Return cancellation
@@ -2413,8 +2395,6 @@ int eof_save_helper(char *destfilename, char silent)
 						eof_pen_visible = 0;
 						eof_show_mouse(screen);
 						eof_clear_input();
-						key[KEY_Y] = 0;
-						key[KEY_N] = 0;
 						if(alert("Warning: One or more lyrics aren't within lyric phrases.", "These lyrics won't export to FoF script format.", "Continue?", "&Yes", "&No", 'y', 'n') == 2)
 						{	//If user opts to cancel the save
 							eof_show_mouse(NULL);
@@ -2441,8 +2421,6 @@ int eof_save_helper(char *destfilename, char silent)
 					if(eof_get_note_length(eof_song, ctr, ctr2) < eof_min_note_length)
 					{	//If this note's length is shorter than the minimum length
 						eof_clear_input();
-						key[KEY_Y] = 0;
-						key[KEY_N] = 0;
 						if(alert("Warning:  At least one note was truncated shorter", "than your defined minimum length.", "Cancel save and seek to the first such note?", "&Yes", "&No", 'y', 'n') == 1)
 						{	//If the user opted to seek to the first offending note (only prompt once per call)
 							eof_seek_and_render_position(ctr, eof_get_note_type(eof_song, ctr, ctr2), eof_get_note_pos(eof_song, ctr, ctr2));
@@ -2472,8 +2450,6 @@ int eof_save_helper(char *destfilename, char silent)
 						if(eof_get_note_pos(eof_song, ctr, next) - eof_get_note_pos(eof_song, ctr, ctr2) < eof_min_note_distance)
 						{	//If the notes are too close to enforce the minimum note distance
 							eof_clear_input();
-							key[KEY_Y] = 0;
-							key[KEY_N] = 0;
 							if(alert("Warning:  At least one note is too close to another", "to enforce the minimum note distance.", "Cancel save and seek to the first such note?", "&Yes", "&No", 'y', 'n') == 1)
 							{	//If the user opted to seek to the first offending note (only prompt once per call)
 								eof_seek_and_render_position(ctr, eof_get_note_type(eof_song, ctr, ctr2), eof_get_note_pos(eof_song, ctr, ctr2));
@@ -2513,8 +2489,6 @@ int eof_save_helper(char *destfilename, char silent)
 			if(eof_song->beat[0]->pos > 0)
 			{	//If there is a MIDI delay
 				eof_clear_input();
-				key[KEY_Y] = 0;
-				key[KEY_N] = 0;
 				if(alert("Warning:  The first beat marker (the MIDI delay) is not positioned at 0 seconds.", "This might prevent the song from playing from the beginning in Rocksmith.", "Correct this condition with \"Reset offset to zero\"?", "&Yes", "&No", 'y', 'n') == 1)
 				{	//If the user opts to correct the issue
 					(void) eof_menu_beat_reset_offset();	//Run the "Reset offset to zero" function.  If the tempo map is locked, the function will offer to unlock it before proceeding
@@ -2561,8 +2535,6 @@ int eof_save_helper(char *destfilename, char silent)
 					if(eof_track_rs_tone_names_list_strings_num == 1)
 					{	//If only one tone name is used
 						eof_clear_input();
-						key[KEY_Y] = 0;
-						key[KEY_N] = 0;
 						if(!warning3 && alert("Warning:  At least one track uses only one tone name.  You must use at least", "two different tone names and set one as default for them to work in Rocksmith 2014.", "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
 						{
 							eof_track_destroy_rs_tone_names_list_strings();
@@ -2578,8 +2550,6 @@ int eof_save_helper(char *destfilename, char silent)
 						if((tp->defaulttone[0] == '\0') && !warning1)
 						{	//If the default tone is not set, and the user wasn't warned about this yet
 							eof_clear_input();
-							key[KEY_Y] = 0;
-							key[KEY_N] = 0;
 							if(!warning1 && alert("Warning:  At least one track with tone changes has no default tone set.", NULL, "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
 							{
 								eof_track_destroy_rs_tone_names_list_strings();
@@ -2635,8 +2605,6 @@ int eof_save_helper(char *destfilename, char silent)
 					if(notectr < 2)
 					{
 						eof_clear_input();
-						key[KEY_Y] = 0;
-						key[KEY_N] = 0;
 						eof_seek_and_render_position(ctr, tp->arpeggio[ctr2].difficulty, tp->arpeggio[ctr2].start_pos);
 						if(alert("Warning:  At least one arpeggio phrase doesn't contain at least two notes.", "You should remove the arpeggio phrase or add additional notes into it.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
 						{	//If the user opts to cancel
@@ -2672,8 +2640,6 @@ int eof_save_helper(char *destfilename, char silent)
 							if(((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)) && !slide_warned)
 							{	//If the note has slide technique and is missing the end position, and the user hasn't been warned about this yet
 								eof_clear_input();
-								key[KEY_Y] = 0;
-								key[KEY_N] = 0;
 								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
 								if(alert("Warning:  At least one slide note doesn't define its ending position.", "Unless you define this information they will export as 1 fret slides.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
 								{	//If the user opts to cancel
@@ -2684,8 +2650,6 @@ int eof_save_helper(char *destfilename, char silent)
 							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND && !bend_warned)
 							{	//If the note has bend technique and is missing the bend strength, and the user hasn't been warned about this yet
 								eof_clear_input();
-								key[KEY_Y] = 0;
-								key[KEY_N] = 0;
 								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
 								if(alert("Warning:  At least one bend note doesn't define its bend strength.", "Unless you define this information they will export as bending 1 half step.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
 								{	//If the user opts to cancel
@@ -2734,8 +2698,6 @@ int eof_save_helper(char *destfilename, char silent)
 									eof_2d_render_top_option = 32;					//Change the user preference to render note names at the top of the piano roll
 									eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Render the track so the user can see where the correction needs to be made, along with the RS section in question
 									eof_clear_input();
-									key[KEY_Y] = 0;
-									key[KEY_N] = 0;
 									if(!user_prompted && alert("At least one chord has a defined name that has parentheses.", "This can cause Rocksmith to crash or hang.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
 									{	//If the user hasn't already answered this prompt, and doesn't opt to correct the issue
 										eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
@@ -3257,8 +3219,6 @@ int eof_gp_import_track(DIALOG * d)
 
 		//Prompt about overwriting the active track or track difficulty as appropriate
 		eof_clear_input();
-		key[KEY_Y] = 0;
-		key[KEY_N] = 0;
 		if(eof_gp_import_replaces_track)
 		{	//If the user preference to replace the entire active track with the imported track is enabled
 			if(eof_get_track_size(eof_song, eof_selected_track) && alert("This track already has notes", "Importing this GP track will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
@@ -3477,8 +3437,6 @@ int eof_menu_file_gp_import(void)
 			if(eof_parsed_gp_file->text_events)
 			{	//If there were text events imported
 				eof_clear_input();
-				key[KEY_Y] = 0;
-				key[KEY_N] = 0;
 				if(alert(NULL, "Import Guitar Pro file's section markers/beat text as Rocksmith phrases/sections?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 				{	//If the user opts to import RS phrases and sections from GP files
 					if(!gp_import_undo_made)
@@ -3648,8 +3606,6 @@ int eof_menu_file_rs_import(void)
 		return 1;	//Don't do anything unless the active track is a pro guitar/bass track
 
 	eof_clear_input();
-	key[KEY_Y] = 0;
-	key[KEY_N] = 0;
 	if(eof_get_track_size(eof_song, eof_selected_track) && alert("This track already has notes", "Importing this Rocksmith track will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 	{	//If the active track is already populated and the user doesn't opt to overwrite it
 		return 0;
@@ -3725,8 +3681,6 @@ int eof_menu_file_sonic_visualiser_import(void)
 	if(eof_song->tags->tempo_map_locked)
 	{	//If the user has locked the tempo map
 		eof_clear_input();
-		key[KEY_Y] = 0;
-		key[KEY_N] = 0;
 		if(alert(NULL, "The tempo map must be unlocked in order to import a Sonic Visualiser file.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user does not opt to unlock the tempo map
 			eof_log("\tUser cancellation.  Aborting", 1);

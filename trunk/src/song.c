@@ -6024,8 +6024,6 @@ int eof_create_image_sequence(char benchmark_only)
 		put_backslash(eof_temp_filename);
 		(void) ustrcat(eof_temp_filename, "sequence");
 		eof_clear_input();
-		key[KEY_Y] = 0;
-		key[KEY_N] = 0;
 		if(!file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
 		{	//If this folder doesn't already exist
 			err = eof_mkdir(eof_temp_filename);
@@ -7060,8 +7058,6 @@ void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsign
 				{	//If the user wasn't prompted about how to handle this condition yet, seek to the note in question and prompt the user whether to take action
 					eof_seek_and_render_position(eof_selected_track, eof_note_type, notepos);
 					eof_clear_input();
-					key[KEY_Y] = 0;
-					key[KEY_N] = 0;
 					if(alert("At least one note is between 1 and 10 ms before the phrase.", NULL, "Move such notes to the start of the phrase?", "&Yes", "&No", 'y', 'n') == 1)
 					{	//If the user opts to correct the note positions
 						prompt = 1;	//Store a "yes" response

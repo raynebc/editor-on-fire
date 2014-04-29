@@ -3136,10 +3136,10 @@ void eof_song_fix_fingerings(EOF_SONG *sp, char *undo_made)
 	{	//For each track (skipping the NULL global track 0)
 		if(sp->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If this is a pro guitar track
-			restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, ctr);
-			eof_menu_track_set_tech_view_state(eof_song, ctr, 0); //Disable tech view if applicable
+			restore_tech_view = eof_menu_track_get_tech_view_state(sp, ctr);
+			eof_menu_track_set_tech_view_state(sp, ctr, 0); //Disable tech view if applicable
 			eof_pro_guitar_track_fix_fingerings(sp->pro_guitar_track[sp->track[ctr]->tracknum], undo_made);	//Correct and complete note fingering where possible, performing an undo state before making changes
-			eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view); //Re-enable tech view if applicable
+			eof_menu_track_set_tech_view_state(sp, ctr, restore_tech_view); //Re-enable tech view if applicable
 		}
 	}
 }
@@ -3167,8 +3167,8 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 	{	//If there are no notes or the specified start or stop note numbers are not valid
 		return;	//Invalid parameters
 	}
-	restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track);
-	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0);	//Disable tech view for the active pro guitar track if applicable
+	restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
+	eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view for the specified pro guitar track if applicable
 	if(startnote == stopnote)
 	{	//If fret hand positions for the entire track difficulty are to be generated
 		all = 1;
@@ -3193,11 +3193,9 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 				if(warnuser)
 				{
 					eof_clear_input();
-					key[KEY_Y] = 0;
-					key[KEY_N] = 0;
 					if(alert(NULL, warning, "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 					{	//If the user does not opt to remove the existing hand positions
-						eof_menu_track_set_tech_view_state(eof_song, eof_selected_track2, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
+						eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
 						return;
 					}
 				}
@@ -3224,14 +3222,14 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 
 	if(!count)
 	{	//If this track difficulty has no notes
-		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track2, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
+		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
 		return;	//Exit function
 	}
 
 	eof_build_fret_range_tolerances(tp, difficulty, dynamic);	//Allocate and build eof_fret_range_tolerances[], using the calling function's chosen option regarding tolerances
 	if(!eof_fret_range_tolerances)
 	{	//eof_fret_range_tolerances[] wasn't built
-		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track2, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
+		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
 		return;
 	}
 
@@ -3386,7 +3384,7 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 	free(eof_fret_range_tolerances);
 	eof_fret_range_tolerances = NULL;	//Clear this array so that the next call to eof_build_fret_range_tolerances() rebuilds it accordingly
 	eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions
-	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
+	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
 	eof_render();
 }
 
@@ -3974,8 +3972,6 @@ int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track)
 				}
 				eof_seek_and_render_position(track, eof_note_type, sp->beat[ctr]->pos);	//Render the track so the user can see where the correction needs to be made, along with the RS section in question
 				eof_clear_input();
-				key[KEY_Y] = 0;
-				key[KEY_N] = 0;
 				if(!user_prompted && alert("At least one Rocksmith section doesn't have a Rocksmith phrase at the same position.", "This can cause the chart's sections to work incorrectly", "Would you like to place Rocksmith phrases to correct this?", "&Yes", "&No", 'y', 'n') != 1)
 				{	//If the user hasn't already answered this prompt, and doesn't opt to correct the issue
 					eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
@@ -3996,8 +3992,6 @@ int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track)
 					if(sp->beat[ctr]->contained_section_event < 0)
 					{	//If user added a text event, but it wasn't a Rocksmith phrase
 						eof_clear_input();
-						key[KEY_Y] = 0;
-						key[KEY_N] = 0;
 						if(alert("You didn't add a Rocksmith phrase.", NULL, "Do you want to continue adding RS phrases for RS sections that are missing them?", "&Yes", "&No", 'y', 'n') != 1)
 						{	//If the user doesn't opt to finish correcting the issue
 							return 2;	//Return user cancellation

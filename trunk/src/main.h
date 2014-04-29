@@ -524,7 +524,7 @@ unsigned long eof_get_selected_note_range(unsigned long *sel_start, unsigned lon
 	//The notes are expected to be sorted.  Zero is returned on error.
 void eof_fix_waveform_graph(void);	//Rebuild the waveform graph data if it exists
 void eof_fix_spectrogram(void);	//Rebuild the spectrogram data if it exists
-void eof_clear_input(void);	//Clears the keypress states in allegro's key[] array and uses eof_use_key() to clear EOF's key press handling system
+void eof_clear_input(void);	//Clears the keypress states in allegro's key[] array (except for CTRL, ALT and SHIFT) and uses eof_use_key() to clear EOF's key press handling system
 void eof_prepare_undo(int type);	//Adds an undo state, creating a backup of the project every 10 undo states.
 int eof_figure_difficulty(void);	//Returns -1 if the active track difficulty has no notes or pitched lyrics.  If the vocal track is active and has at least one pitched lyric, 0 is returned, otherwise the number of notes is returned
 int eof_figure_part(void);	//Returns the active track number in terms of FoF's command line play functionality, or -1 on error

@@ -2951,10 +2951,10 @@ void eof_render_note_window(void)
 		}//Display information specific to pro guitar tracks
 
 ///Keep for debugging
-#ifdef EOF_DEBUG
+///#ifdef EOF_DEBUG
 		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "CTRL:%c ALT:%c SHIFT:%c CODE:%d ASCII:%d ('%c')", KEY_EITHER_CTRL ? '*' : ' ', KEY_EITHER_ALT ? '*' : ' ', KEY_EITHER_SHIFT ? '*' : ' ', eof_last_key_code, eof_last_key_char, eof_last_key_char);
-#endif
+///#endif
 	}//If show catalog is disabled
 
 	if(!eof_full_screen_3d)
