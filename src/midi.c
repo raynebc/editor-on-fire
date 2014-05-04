@@ -2266,19 +2266,13 @@ unsigned char eof_get_midi_pitches(EOF_SONG *sp, unsigned long track, unsigned l
 	else if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//This is a pro guitar track
 		EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track]->tracknum];
-		int tone = eof_midi_synth_instrument_guitar;
-
-		if(tp->arrangement == 4)
-		{	//If this track's arrangement type is bass
-			tone = eof_midi_synth_instrument_bass;	//Use the configured bass MIDI tone instead
-		}
 
 		for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
 		{	//For each of the 6 supported strings
 			if((tp->note[note]->note & bitmask) && !(tp->note[note]->frets[ctr] & 0x80))
 			{	//If this string is used (and not muted)
 				//This note is found by adding default tuning for the string, the offset defining the current tuning and the fret number being played
-				pitches[ctr] = tp->tuning[ctr] + eof_lookup_default_string_tuning_absolute(tp, track, ctr) + tp->note[note]->frets[ctr] + tp->capo, ctr, tone;	//Store it in the pitch array
+				pitches[ctr] = tp->tuning[ctr] + eof_lookup_default_string_tuning_absolute(tp, track, ctr) + tp->note[note]->frets[ctr] + tp->capo;	//Store it in the pitch array
 				pitchmask |= bitmask;	//Set the appropriate bit in the mask
 			}
 		}
