@@ -310,6 +310,7 @@ extern int         eof_disable_2d_rendering;
 extern int         eof_disable_info_panel;
 extern int         eof_paste_erase_overlap;
 extern int         eof_write_rb_files;
+extern int         eof_write_music_midi;
 extern int         eof_write_rs_files;
 extern int         eof_write_rs2_files;
 extern int         eof_add_new_notes_to_selection;

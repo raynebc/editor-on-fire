@@ -22,7 +22,7 @@ typedef struct
 	int channel;
 	char * dp;
 	char allocation;		//This tracks whether dp points to allocated that should be freed after it is written to file
-	char filtered;			//This is set to nonzero if the event should be dropped instead of being written to MIDI
+	char filtered;			//This is set to nonzero by eof_check_for_note_overlap() if the event should be dropped instead of being written to MIDI (ie. overlaps another of the same MIDI note)
 	char on;				//Simplifies the use of running status by indicating if this is a note on event
 	char off;				//Simplifies the use of running status by indicating if this is a note off event
 	unsigned long index;	//For text events, a tie in the sorting order will be broken by whichever has the lower index number
@@ -65,6 +65,15 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	//If featurerestriction is 3, both RB2 features and pro guitar features are written to MIDI.  The C3 release of Magma supports pro guitar/bass.
 	//If fixvoxpitches is nonzero, any lyric that has a pitch of 0 (undefined) will be written with a generic pitch and a freestyle # marker
 	//If fixvoxphrases is nonzero, any lyric that is not within a lyric phrase will have a phrase written to contain it
+
+unsigned char eof_get_midi_pitches(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char *pitches);
+	//Returns a bitmask defining which elements in the pitches array are populated to define the pitches used by the specified note/lyric
+	//Each pitch is returned through *pitches array, which must be at least 6 elements large
+	//0 is returned on error or if the specified note contains no pitches (pitchless or percussion lyric, or fully string muted pro guitar note)
+int eof_export_music_midi(EOF_SONG *sp, char *fn);
+	//Writes a normal MIDI file of the specified chart's vocal and pro guitar tracks to the specified file
+	//For lyrics, each pitched lyric (vocal percussion notes are excluded) is written as a MIDI note on channel 0
+	//For pro guitar notes, each non muted note of each used string is written as a MIDI note, each string uses its own channel, 0 through 5
 
 struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp);
 	//Parses the chart, returning a linked list of anchors (tempo changes), or NULL on error
@@ -119,6 +128,12 @@ int eof_dump_midi_track(const char *inputfile,PACKFILE *outf);
 	//Writes a MIDI track header to the output file, followed by the size of the input file, followed by the contents of the input file
 void eof_write_text_event(unsigned long deltas, const char *str, PACKFILE *fp);
 	//Writes a text event to the given file stream
+void eof_write_lyric_event(unsigned long deltas, const char *str, PACKFILE *fp);
+	//Writes a lyric event to the given file stream
+void eof_write_tempo_track(char *trackname, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, EOF_MIDI_KS_LIST *kslist, PACKFILE *outf);
+	//Writes a tempo track to the given file stream, including all set tempo, set time signature and set key signature events and an end of track event
+	//If trackname is not NULL, a track name MIDI event is written accordingly
+
 void eof_add_sysex_event(unsigned long pos, int size, void *data);
 	//Stores a copy of the Sysex message data (used for custom phrase markers in Phase Shift) to eof_midi_event[]
 void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision);
@@ -147,8 +162,9 @@ void eof_check_for_hopo_phrase_overlap(void);
 void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int channel);
 	//Creates a new structure to store the specified values and appends it to eof_midi_event[]
 	//Note on/off events are also tracked in the eof_midi_note_status[] array
-void eof_add_midi_lyric_event(unsigned long pos, char * text);
+void eof_add_midi_lyric_event(unsigned long pos, char * text, char allocation);
 	//Creates a new structure to store the specified lyric event and appends it to eof_midi_event[]
+	//The allocation boolean value specifies whether the string is using dynamically allocated memory and should be freed when the array is emptied
 void eof_add_midi_text_event(unsigned long pos, char * text, char allocation, unsigned long index);
 	//Creates a new structure to store the specified text event and appends it to eof_midi_event[]
 	//The index parameter should be the event's index in the project, as it is used to resolve ties in MIDI event sorting

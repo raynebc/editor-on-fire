@@ -2183,6 +2183,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tNumber of measures: %lu", measures);
 	eof_log(eof_log_string, 1);
 #endif
+	if(measures > 5000)
+	{	//Compare the measure point count against an arbitrarily large number to satisfy Coverity
+		eof_gp_debug_log(inf, "\t\t\tToo many measures, aborting.");
+		(void) pack_fclose(inf);
+		free(gp);
+		if(sync_points)
+			free(sync_points);
+		return NULL;
+	}
 	tsarray = malloc(sizeof(struct eof_gp_measure) * measures);	//Allocate memory to store the time signature effective for each measure
 	if(!tsarray)
 	{
@@ -3921,6 +3930,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 #ifdef GP_IMPORT_DEBUG
 								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Start: %lums\tLength: %ldms\tFrets: ", gp->track[ctr2]->notes - 1, np[ctr2]->pos, np[ctr2]->length);
+								assert(strings[ctr2] < 8);	//Redundant assertion to resolve a false positive in Coverity
 								for(ctr4 = 0, bitmask = 1; ctr4 < strings[ctr2]; ctr4++, bitmask <<= 1)
 								{	//For each of this track's natively supported strings
 									char temp[10];

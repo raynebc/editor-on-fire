@@ -1949,7 +1949,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			slappop = 1;
 		}
 		if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC)
-		{	//If the note is played with vibrato
+		{	//If the note is played with pinch harmonic
 			pinch = 1;
 		}
 	}//For each note in the track
@@ -4747,7 +4747,21 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 		ptr->pinchharmonic = (flags & EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC) ? 1 : 0;
 		ptr->stringmute = (flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) ? 1 : 0;
 		ptr->tap = (flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP) ? 1 : 0;
-		ptr->vibrato = (flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO) ? 80 : 0;
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
+		{	//If the note has vibrato technique
+			if(tp->note[notenum]->vibrato)
+			{	//If the vibrato speed is defined
+				ptr->vibrato = tp->note[notenum]->vibrato;
+			}
+			else
+			{	//Otherwise the default vibrato speed is assumed
+				ptr->vibrato = 80;
+			}
+		}
+		else
+		{	//The note has no vibrato technique
+			ptr->vibrato = 0;
+		}
 		ptr->linknext = (flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT) ? 1 : 0;
 		if((ptr->pop > 0) || (ptr->slap > 0))
 		{	//If the note has pop or slap notation

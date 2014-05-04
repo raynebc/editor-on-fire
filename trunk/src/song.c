@@ -2093,6 +2093,33 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					}
 				break;
 
+				case 5:		//Pro guitar vibrato speeds
+					if(custom_data_size < 4)
+					{	//This is invalid, the size needed to have included the 4 byte ID
+						allegro_message("Error:  Invalid custom data block size (vibrato definitions).  Aborting");
+						eof_log("Error:  Invalid custom data block size (vibrato definitions).  Aborting", 1);
+						return 0;
+					}
+					custom_data_size -= 4;	//Subtract the size of the block ID, which was already read
+					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+					{	//Ensure this logic only runs for a pro guitar track
+						EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track_ctr]->tracknum];	//Get pointer to this pro guitar track
+						for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
+						{	//For each note in this track
+							if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
+							{	//If this note has vibrato technique
+								tp->note[ctr]->vibrato = pack_getc(fp);	//Read the vibrato speed for this note
+							}
+						}
+					}
+					else
+					{	//Corrupt file
+						allegro_message("Error: Invalid pro guitar vibrato data block.  Aborting");
+						eof_log("Error: Invalid pro guitar vibrato data block.  Aborting", 1);
+						return 0;
+					}
+				break;
+
 				case 6:		//Pro guitar capo position
 					if(custom_data_size != 5)
 					{	//This data block is expected to be 5 bytes long
@@ -2455,9 +2482,9 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	PACKFILE * fp = NULL;
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};
 	unsigned long count,ctr,ctr2,tracknum;
-	unsigned long track_count,track_ctr,bookmark_count,bitmask,fingerdefinitions;
+	unsigned long track_count,track_ctr,bookmark_count,track_custom_block_count,bitmask,fingerdefinitions,vibratodefinitions;
 	char has_raw_midi_data, has_fp_beat_timings = 1;
-	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes;
+	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes,has_vibrato;
 
 	#define EOFNUMINISTRINGTYPES 9
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
@@ -3143,7 +3170,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		}//Write other tracks
 
 		//Write custom track data blocks
-		fingerdefinitions = has_fingerdefinitions = has_arrangement = ignore_tuning = has_capo = has_tech_notes = 0;
+		fingerdefinitions = has_fingerdefinitions = has_arrangement = ignore_tuning = has_capo = has_tech_notes = vibratodefinitions = has_vibrato = 0;
 		if(track_ctr && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 		{	//If this is a pro guitar track
 			//Count the number of notes with finger definitions
@@ -3166,6 +3193,15 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			{	//If this track's tuning is ignored for chord detection
 				ignore_tuning = 1;
 			}
+			//Count the number of vibrato notes
+			for(ctr = 0; ctr < tp->notes; ctr++)
+			{	//For each note in the track
+				if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
+				{	//If this note has vibrato technique
+					vibratodefinitions++;	//Increment the counter representing the number of vibrato definition bytes to write in this block
+					has_vibrato = 1;
+				}
+			}
 			if(tp->capo)
 			{	//If this track uses a capo
 				has_capo = 1;
@@ -3175,11 +3211,12 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				has_tech_notes = 1;
 			}
 		}
-		if(has_fingerdefinitions || has_arrangement || ignore_tuning || has_capo || has_tech_notes)
+		track_custom_block_count = has_fingerdefinitions + has_arrangement + ignore_tuning + has_capo + has_tech_notes + has_vibrato;
+		if(track_custom_block_count)
 		{	//If writing data in a custom data block
 			if(track_ctr && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If this is a pro guitar track
-				(void) pack_iputl(has_fingerdefinitions + has_arrangement + ignore_tuning + has_capo + has_tech_notes, fp);		//Write the number of custom data blocks
+				(void) pack_iputl(track_custom_block_count, fp);		//Write the number of custom data blocks
 				if(has_fingerdefinitions)
 				{	//Write finger definitions
 					(void) pack_iputl(fingerdefinitions + 4, fp);	//Write the number of bytes this block will contain (finger data and a 4 byte block ID)
@@ -3206,6 +3243,18 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					(void) pack_iputl(5, fp);		//Write the number of bytes this block will contain (1 byte tuning not honored status and a 4 byte block ID)
 					(void) pack_iputl(4, fp);		//Write the pro guitar track tuning not honored custom data block ID
 					(void) pack_putc(1, fp);		//Write the track tuning not honored option
+				}
+				if(has_vibrato)
+				{	//Write vibrato definitions
+					(void) pack_iputl(vibratodefinitions + 4, fp);	//Write the number of bytes this block will contain (vibrato data and a 4 byte block ID)
+					(void) pack_iputl(5, fp);		//Write the pro guitar vibrato speeds custom data block ID
+					for(ctr = 0; ctr < tp->notes; ctr++)
+					{	//For each note in the track
+						if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
+						{	//If this note has vibrato technique
+							(void) pack_putc(tp->note[ctr]->vibrato, fp);	//Write this note's vibrato speed
+						}
+					}
 				}
 				if(has_capo)
 				{	//Write capo value
@@ -3908,6 +3957,7 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long
 				ptr3->bendstrength = 0;
 				ptr3->slideend = 0;
 				ptr3->unpitchend = 0;
+				ptr3->vibrato = 0;
 				if(eof_legacy_view)
 				{	//If legacy view is in effect, initialize the legacy bitmask to whichever lanes (1-5) created the note
 					ptr3->legacymask = note & 31;
@@ -4495,6 +4545,10 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 					{	//If the next note is an unpitched slide
 						tp->note[i-1]->unpitchend = tp->note[next]->unpitchend;	//Copy the unpitched slide end position
 					}
+					if(tp->note[next]->flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
+					{	//If the next note is a vibrato note
+						tp->note[i-1]->vibrato = tp->note[next]->vibrato;	//Copy the vibrato speed
+					}
 					flags = eof_prepare_note_flag_merge(tp->note[i-1]->flags, EOF_PRO_GUITAR_TRACK_BEHAVIOR, tp->note[next]->note);
 					//Get the flags of the overlapped note as they would be if all applicable lane-specific flags are cleared to inherit the flags of the note to merge
 					flags |= tp->note[next]->flags;	//Merge the next note's flags
@@ -4607,6 +4661,10 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 			{	//If the unpitched slide end position is invalid
 				tp->note[i-1]->unpitchend = 0;	//Clear it
 				tp->note[i-1]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;	//Clear the related flag
+			}
+			if(!(tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO))
+			{	//If the note has no vibrato status
+				tp->note[i-1]->vibrato = 0;	//Clear the vibrato speed
 			}
 			if(!tp->note[i-1]->slideend && !tp->note[i-1]->bendstrength)
 			{	//If this note has no slide end fret number or bend strength defined
@@ -5882,6 +5940,7 @@ void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourc
 				sp->pro_guitar_track[desttracknum]->note[newnotenum]->bendstrength = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->bendstrength;	//Copy the bend strength
 				sp->pro_guitar_track[desttracknum]->note[newnotenum]->slideend = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->slideend;			//Copy the slide end position
 				sp->pro_guitar_track[desttracknum]->note[newnotenum]->unpitchend = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->unpitchend;		//Copy the unpitched slide end position
+				sp->pro_guitar_track[desttracknum]->note[newnotenum]->vibrato = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->vibrato;			//Copy the vibrato speed
 				sp->pro_guitar_track[desttracknum]->note[newnotenum]->eflags = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->eflags;				//Copy the extended flags
 			}
 		}

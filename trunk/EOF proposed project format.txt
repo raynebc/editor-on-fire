@@ -182,7 +182,7 @@ Custom track data block definitions
 	Custom data block ID 5:  Pro guitar vibrato speeds
 		VIBRATO CHUNK, for each note in the track that is marked with vibrato (note flag value 16777216)
 		{
-			1 byte: Vibrato speed used for this note (40 = slow, 80 = medium, 120 = fast, the default value is 80)
+			1 byte: Vibrato speed used for this note (0 = undefined, 40 = slow, 80 = medium, 120 = fast, the default value is 80)
 		}
 	Custom data block ID 6:  Pro guitar capo position
 		1 byte:		The fret number at which a capo is placed for this track
