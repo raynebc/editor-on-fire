@@ -2027,6 +2027,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read tab string
 	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read instructions string
 	pack_ReadDWORDLE(inf, &dword);						//Read the number of notice entries
+	if(dword > 1000)
+	{	//Compare the notice entry count against an arbitrarily large number to satisfy Coverity
+		eof_gp_debug_log(inf, "\t\t\tToo many notice entries, aborting.");
+		(void) pack_fclose(inf);
+		free(gp);
+		if(sync_points)
+			free(sync_points);
+		return NULL;
+	}
 	while(dword > 0)
 	{	//Read each notice entry
 		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read notice string
@@ -3050,6 +3059,28 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			{	//For each voice
 				measure_position = 0.0;
 				pack_ReadDWORDLE(inf, &beats);	//Read number of "beats" (which are more accurately considered notes)
+				if(beats > 1000)
+				{	//Compare the beat count against an arbitrarily large number to satisfy Coverity
+					eof_gp_debug_log(inf, "\t\t\tToo many beats (notes) in this measure, aborting.");
+					(void) pack_fclose(inf);
+					free(gp->names);
+					for(ctr = 0; ctr < tracks; ctr++)
+					{	//Free all previously allocated track structures
+						free(gp->track[ctr]);
+					}
+					for(ctr = 0; ctr < gp->text_events; ctr++)
+					{	//Free all allocated text events
+						free(gp->text_event[ctr]);
+					}
+					free(gp->track);
+					free(np);
+					free(hopo);
+					free(nonshiftslide);
+					free(gp);
+					free(tsarray);
+					free(strings);
+					return NULL;
+				}
 				for(ctr3 = 0; ctr3 < beats; ctr3++)
 				{	//For each "beat"
 					char ghost = 0;	//Track the ghost status for notes

@@ -1109,7 +1109,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 						np->bendstrength = temp_note.bendstrength;						//Copy the bend height to the last created pro guitar note
 						np->slideend = temp_note.slideend;								//Copy the slide end position to the last created pro guitar note
 						np->unpitchend = temp_note.unpitchend;							//Copy the slide end position to the last created pro guitar note
-						np->unpitchend = temp_note.vibrato;								//Copy the vibrato speed to the last created pro guitar note
+						np->vibrato = temp_note.vibrato;								//Copy the vibrato speed to the last created pro guitar note
 						np->eflags = temp_note.eflags;									//Copy the extended track flags
 					}
 				}
@@ -1162,7 +1162,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 							np->bendstrength = temp_note.bendstrength;						//Copy the bend height to the last created pro guitar note
 							np->slideend = temp_note.slideend;								//Copy the slide end position to the last created pro guitar note
 							np->unpitchend = temp_note.unpitchend;							//Copy the slide end position to the last created pro guitar note
-							np->unpitchend = temp_note.vibrato;								//Copy the vibrato speed to the last created pro guitar note
+							np->vibrato = temp_note.vibrato;								//Copy the vibrato speed to the last created pro guitar note
 							np->eflags = temp_note.eflags;									//Copy the extended track flags
 						}
 					}
@@ -1582,7 +1582,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			np->bendstrength = temp_note.bendstrength;						//Copy the bend height to the last created pro guitar note
 			np->slideend = temp_note.slideend;								//Copy the slide end position to the last created pro guitar note
 			np->unpitchend = temp_note.unpitchend;							//Copy the slide end position to the last created pro guitar note
-			np->unpitchend = temp_note.vibrato;								//Copy the vibrato speed to the last created pro guitar note
+			np->vibrato = temp_note.vibrato;								//Copy the vibrato speed to the last created pro guitar note
 			np->eflags = temp_note.eflags;									//Copy the extended track flags
 			if(eof_song->track[sourcetrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If a non pro guitar note is being pasted into a pro guitar track
