@@ -2638,7 +2638,7 @@ int eof_menu_track_remove_highlighting(void)
 	eof_track_remove_highlighting(eof_song, eof_selected_track);
 	if(eof_song->tags->highlight_unsnapped_notes)
 	{	//If the feature highlight unsnapped notes is enabled, disable it now
-		eof_menu_song_highlight_non_grid_snapped_notes();
+		(void) eof_menu_song_highlight_non_grid_snapped_notes();
 	}
 	return 1;
 }

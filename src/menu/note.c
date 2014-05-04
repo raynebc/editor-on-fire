@@ -301,6 +301,7 @@ MENU eof_note_proguitar_menu[] =
 	{"Remove &Harmonic", eof_menu_note_remove_harmonic, NULL, 0, NULL},
 	{"Toggle vibrato\tShift+V", eof_menu_note_toggle_vibrato, NULL, 0, NULL},
 	{"Remove &Vibrato", eof_menu_note_remove_vibrato, NULL, 0, NULL},
+	{"Set vibrato speed", eof_pro_guitar_note_vibrato_speed_save, NULL, 0, NULL},
 	{"Toggle ghost\t"  CTRL_NAME "+G", eof_menu_note_toggle_ghost, NULL, 0, NULL},
 	{"Remove &Ghost", eof_menu_note_remove_ghost, NULL, 0, NULL},
 	{"Toggle string mute\tShift+X", eof_menu_pro_guitar_toggle_string_mute, NULL, 0, NULL},
@@ -7131,15 +7132,17 @@ int eof_menu_note_remove_vibrato(void)
 	long u = 0;
 	unsigned long flags, tracknum;
 	int note_selection_updated;
+	EOF_PRO_GUITAR_TRACK *tp;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
-	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->pro_guitar_track[tracknum]->note[i]->type == eof_note_type))
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (tp->note[i]->type == eof_note_type))
 		{	//If this note is selected and is in the active difficulty
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
@@ -7151,6 +7154,7 @@ int eof_menu_note_remove_vibrato(void)
 				}
 				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;	//Clear the vibrato flag
 				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+				tp->note[i]->vibrato = 0;	//Remove the vibrato speed
 			}
 		}
 	}
@@ -7167,7 +7171,7 @@ int eof_menu_note_toggle_vibrato(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags, tracknum;
-	int note_selection_updated;
+	int note_selection_updated, vibrato_present = 0;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
@@ -7180,6 +7184,10 @@ int eof_menu_note_toggle_vibrato(void)
 		{	//If this note is selected and is in the active difficulty
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 			flags ^= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;	//Toggle the vibrato flag
+			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
+			{	//If vibrato was just enabled
+				vibrato_present = 1;	//Track that at least one selected note now has vibrato technique
+			}
 			if(!u)
 			{	//Make a back up before changing the first note
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -7187,6 +7195,10 @@ int eof_menu_note_toggle_vibrato(void)
 			}
 			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 		}
+	}
+	if(eof_write_rs2_files && vibrato_present)
+	{	//If the user wants to save Rocksmith 2 capable files, prompt to set the speed of vibrato notes
+		(void) eof_pro_guitar_note_vibrato_speed_no_save();	//Don't make another undo state
 	}
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note
@@ -8451,4 +8463,127 @@ int eof_menu_note_move_tech_note_to_previous_note_pos(void)
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
 	return 1;
+}
+
+DIALOG eof_pro_guitar_note_vibrato_speed_dialog[] =
+{
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
+	{ d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Set vibrato speed", NULL, NULL },
+	{d_agup_radio_proc,		 40,  30,  48,  16,  2,   23,  0,    0,      1,   0,   "Slow",         NULL, NULL },
+	{d_agup_radio_proc,		 40,  50,  70,  16,  2,   23,  0,    0,      1,   0,   "Medium",         NULL, NULL },
+	{d_agup_radio_proc,		 40,  70,  46,  16,  2,   23,  0,    0,      1,   0,   "Fast",      NULL, NULL },
+	{ d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                 NULL, NULL },
+	{ d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",             NULL, NULL },
+	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                 NULL, NULL }
+};
+
+int eof_pro_guitar_note_vibrato_speed(char undo)
+{
+	unsigned long i, flags;
+	int note_selection_updated;
+	unsigned long tracknum;
+	EOF_PRO_GUITAR_TRACK *tp;
+	EOF_PRO_GUITAR_NOTE *np;
+	char undo_made = 0;
+	unsigned char oldspeed, newspeed;
+
+	if(!eof_song_loaded || !eof_song)
+		return 1;	//Do not allow this function to run if a chart is not loaded
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	if(eof_selection.current >= eof_song->pro_guitar_track[tracknum]->notes)
+		return 1;	//Invalid selected note number
+	tp = eof_song->pro_guitar_track[tracknum];
+	np = tp->note[eof_selection.current];
+
+	eof_render();
+	eof_color_dialog(eof_pro_guitar_note_vibrato_speed_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_pro_guitar_note_vibrato_speed_dialog);
+	eof_pro_guitar_note_vibrato_speed_dialog[1].flags = 0;
+	eof_pro_guitar_note_vibrato_speed_dialog[2].flags = 0;
+	eof_pro_guitar_note_vibrato_speed_dialog[3].flags = 0;
+	if(np->vibrato)
+	{	//If the note has a vibrato speed defined
+		if(np->vibrato == 80)
+		{	//Medium
+			eof_pro_guitar_note_vibrato_speed_dialog[2].flags = D_SELECTED;
+		}
+		else if(np->vibrato < 80)
+		{	//Slow
+			eof_pro_guitar_note_vibrato_speed_dialog[1].flags = D_SELECTED;
+		}
+		else
+		{	//Fast
+			eof_pro_guitar_note_vibrato_speed_dialog[3].flags = D_SELECTED;
+		}
+	}
+	else
+	{	//The note has no vibrato speed defined, default to medium
+		eof_pro_guitar_note_vibrato_speed_dialog[2].flags = D_SELECTED;
+	}
+
+	if(eof_popup_dialog(eof_pro_guitar_note_vibrato_speed_dialog, 0) == 4)
+	{	//User clicked OK
+		if(eof_pro_guitar_note_vibrato_speed_dialog[1].flags == D_SELECTED)
+		{	//User selected "slow"
+			newspeed = 40;
+		}
+		else if(eof_pro_guitar_note_vibrato_speed_dialog[2].flags == D_SELECTED)
+		{	//User selected "medium"
+			newspeed = 80;
+		}
+		else
+		{	//User selected "fast"
+			newspeed = 120;
+		}
+
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+		{	//For each note in the active track
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+			{	//If this note is in the currently active track and is selected
+				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
+				{	//If this note has vibrato technique
+					oldspeed = eof_song->pro_guitar_track[tracknum]->note[i]->vibrato;
+					if(!oldspeed)
+					{	//If the note had no vibrato speed defined
+						oldspeed = 80;	//Assume medium speed
+					}
+
+					if(newspeed != oldspeed)
+					{	//If the vibrato speed is different than what the note already has
+						if(undo && !undo_made)
+						{	//Make a back up before changing the first note (but only if the calling function specified to create an undo state)
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+							undo_made = 1;
+						}
+						eof_song->pro_guitar_track[tracknum]->note[i]->vibrato = newspeed;
+					}
+				}//If this note has vibrato technique
+			}//If this note is in the currently active track and is selected
+		}//For each note in the active track
+	}//User clicked OK
+
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(NULL);
+	return 1;
+}
+
+int eof_pro_guitar_note_vibrato_speed_save(void)
+{
+	return eof_pro_guitar_note_vibrato_speed(1);
+}
+
+int eof_pro_guitar_note_vibrato_speed_no_save(void)
+{
+	return eof_pro_guitar_note_vibrato_speed(0);
 }

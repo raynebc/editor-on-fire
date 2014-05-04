@@ -130,6 +130,7 @@ void eof_load_config(char * fn)
 	eof_set_percussion_cue(eof_selected_percussion_cue);
 	eof_paste_erase_overlap = get_config_int("preferences", "eof_paste_erase_overlap", 0);
 	eof_write_rb_files = get_config_int("preferences", "eof_write_rb_files", 0);
+	eof_write_music_midi = get_config_int("preferences", "eof_write_music_midi", 0);
 	eof_write_rs_files = get_config_int("preferences", "eof_write_rs_files", 0);
 	eof_write_rs2_files = get_config_int("preferences", "eof_write_rs2_files", 0);
 	eof_inverted_chords_slash = get_config_int("preferences", "eof_inverted_chords_slash", 0);
@@ -283,6 +284,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_selected_percussion_cue", eof_selected_percussion_cue);
 	set_config_int("preferences", "eof_paste_erase_overlap", eof_paste_erase_overlap);
 	set_config_int("preferences", "eof_write_rb_files", eof_write_rb_files);
+	set_config_int("preferences", "eof_write_music_midi", eof_write_music_midi);
 	set_config_int("preferences", "eof_write_rs_files", eof_write_rs_files);
 	set_config_int("preferences", "eof_write_rs2_files", eof_write_rs2_files);
 	set_config_int("preferences", "eof_inverted_chords_slash", eof_inverted_chords_slash);

@@ -1109,6 +1109,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 						np->bendstrength = temp_note.bendstrength;						//Copy the bend height to the last created pro guitar note
 						np->slideend = temp_note.slideend;								//Copy the slide end position to the last created pro guitar note
 						np->unpitchend = temp_note.unpitchend;							//Copy the slide end position to the last created pro guitar note
+						np->unpitchend = temp_note.vibrato;								//Copy the vibrato speed to the last created pro guitar note
 						np->eflags = temp_note.eflags;									//Copy the extended track flags
 					}
 				}
@@ -1161,6 +1162,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 							np->bendstrength = temp_note.bendstrength;						//Copy the bend height to the last created pro guitar note
 							np->slideend = temp_note.slideend;								//Copy the slide end position to the last created pro guitar note
 							np->unpitchend = temp_note.unpitchend;							//Copy the slide end position to the last created pro guitar note
+							np->unpitchend = temp_note.vibrato;								//Copy the vibrato speed to the last created pro guitar note
 							np->eflags = temp_note.eflags;									//Copy the extended track flags
 						}
 					}
@@ -1580,6 +1582,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			np->bendstrength = temp_note.bendstrength;						//Copy the bend height to the last created pro guitar note
 			np->slideend = temp_note.slideend;								//Copy the slide end position to the last created pro guitar note
 			np->unpitchend = temp_note.unpitchend;							//Copy the slide end position to the last created pro guitar note
+			np->unpitchend = temp_note.vibrato;								//Copy the vibrato speed to the last created pro guitar note
 			np->eflags = temp_note.eflags;									//Copy the extended track flags
 			if(eof_song->track[sourcetrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If a non pro guitar note is being pasted into a pro guitar track
@@ -3287,6 +3290,7 @@ void eof_read_clipboard_note(PACKFILE *fp, EOF_EXTENDED_NOTE *temp_note, unsigne
 	temp_note->bendstrength = pack_getc(fp);	//Read the note's bend strength
 	temp_note->slideend = pack_getc(fp);		//Read the note's slide end position
 	temp_note->unpitchend = pack_getc(fp);		//Read the note's unpitched slide end position
+	temp_note->vibrato = pack_getc(fp);			//Read the note's vibrato speed
 }
 
 void eof_read_clipboard_position_snap_data(PACKFILE *fp, int *beat, char *gridsnapvalue, unsigned char *gridsnapnum)
@@ -3338,6 +3342,7 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 		(void) pack_putc(np->bendstrength, fp);					//Write the note's bend strength
 		(void) pack_putc(np->slideend, fp);						//Write the note's slide end position
 		(void) pack_putc(np->unpitchend, fp);					//Write the note's unpitched slide end position
+		(void) pack_putc(np->vibrato, fp);						//Write the note's vibrato speed
 	}
 	else
 	{
@@ -3349,6 +3354,7 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 		(void) pack_putc(0, fp);	//Write a blank bend strength
 		(void) pack_putc(0, fp);	//Write a blank slide end position
 		(void) pack_putc(0, fp);	//Write a blank unpitched slide end position
+		(void) pack_putc(0, fp);	//Write a blank vibrato speed
 	}
 }
 

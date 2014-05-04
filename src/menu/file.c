@@ -100,7 +100,7 @@ DIALOG eof_settings_dialog[] =
 DIALOG eof_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  480, 412, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
+	{ d_agup_window_proc,0,   48,  480, 428, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
 	{ d_agup_check_proc, 16,  75,  110, 16,  2,   23,  0,    0,      1,   0,   "Inverted Notes",      NULL, NULL },
 	{ d_agup_check_proc, 150, 75,  92 , 16,  2,   23,  0,    0,      1,   0,   "Lefty Mode",          NULL, NULL },
 	{ d_agup_check_proc, 306, 75,  128, 16,  2,   23,  0,    0,      1,   0,   "Note Auto-Adjust",    NULL, NULL },
@@ -113,7 +113,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 16,  120, 116, 16,  2,   23,  0,    0,      1,   0,   "Hide info panel",NULL, NULL },
 	{ d_agup_check_proc, 150, 120, 206, 16,  2,   23,  0,    0,      1,   0,   "Erase overlapped pasted notes",NULL, NULL },
 	{ d_agup_check_proc, 16,  136, 208, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rock Band files",NULL, NULL },
-	{ d_agup_check_proc, 248, 136, 210, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
+	{ d_agup_check_proc, 248, 136, 210, 16,  2,   23,  0,    0,      1,   0,   "Save separate musical MIDI file",NULL, NULL },
 	{ d_agup_check_proc, 16,  152, 216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 1 files",NULL, NULL },
 	{ d_agup_check_proc, 248, 152, 216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 2 files",NULL, NULL },
 	{ d_agup_check_proc, 16,  168, 190, 16,  2,   23,  0,    0,      1,   0,   "Add new notes to selection",NULL, NULL },
@@ -128,9 +128,9 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_list_proc,  16,  302, 100, 110, 2,   23,  0,    0,      0,   0,   (void *)eof_input_list,        NULL, NULL },
 	{ d_agup_text_proc,  150, 302, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
 	{ d_agup_list_proc,  129, 317, 100, 95,  2,   23,  0,    0,      0,   0,   (void *)eof_colors_list,       NULL, NULL },
-	{ d_agup_button_proc,12,  417, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-	{ d_agup_button_proc,86,  417, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-	{ d_agup_button_proc,160, 417, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+	{ d_agup_button_proc,12,  433, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_button_proc,86,  433, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+	{ d_agup_button_proc,160, 433, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
 	{ d_agup_text_proc,  16,  206, 120, 12,  0,   0,   0,    0,      0,   0,   "Top of 2D pane shows:",NULL,NULL },
 	{ d_agup_radio_proc, 161, 206, 60,  16,  2,   23,  0,    0,      1,   0,   "Names",               NULL, NULL },
 	{ d_agup_radio_proc, 224, 206, 72,  16,  2,   23,  0,    0,      1,   0,   "Sections",            NULL, NULL },
@@ -149,6 +149,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 16,  252, 182, 16,  2,   23,  0,    0,      1,   0,   "Enable logging on launch",NULL, NULL },
 	{ d_agup_check_proc, 248, 412, 196, 16,  2,   23,  0,    0,      1,   0,   "Display seek pos. in seconds",NULL, NULL },
 	{ d_agup_check_proc, 248, 428, 174, 16,  2,   23,  0,    0,      1,   0,   "Make note tails clickable",NULL, NULL },
+	{ d_agup_check_proc, 248, 444, 210, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1050,7 +1051,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[10].flags = eof_disable_info_panel ? D_SELECTED : 0;			//Disable info panel
 	eof_preferences_dialog[11].flags = eof_paste_erase_overlap ? D_SELECTED : 0;		//Erase overlapped pasted notes
 	eof_preferences_dialog[12].flags = eof_write_rb_files ? D_SELECTED : 0;				//Save separate Rock Band files
-	eof_preferences_dialog[13].flags = eof_inverted_chords_slash ? D_SELECTED : 0;		//Treat inverted chords as slash
+	eof_preferences_dialog[13].flags = eof_write_music_midi ? D_SELECTED : 0;			//Save separate musical MIDI file
 	eof_preferences_dialog[14].flags = eof_write_rs_files ? D_SELECTED : 0;				//Save separate Rocksmith 1 files
 	original_rs1_export_setting = eof_write_rs_files;	//Back up this setting to track whether it is changed in the dialog
 	eof_preferences_dialog[15].flags = eof_write_rs2_files ? D_SELECTED : 0;			//Save separate Rocksmith 2 files
@@ -1071,6 +1072,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[46].flags = enable_logging ? D_SELECTED : 0;						//Enable logging on launch
 	eof_preferences_dialog[47].flags = eof_display_seek_pos_in_seconds ? D_SELECTED : 0;	//Display seek pos. in seconds
 	eof_preferences_dialog[48].flags = eof_note_tails_clickable ? D_SELECTED : 0;			//Make note tails clickable
+	eof_preferences_dialog[49].flags = eof_inverted_chords_slash ? D_SELECTED : 0;		//Treat inverted chords as slash
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1102,7 +1104,7 @@ int eof_menu_file_preferences(void)
 			eof_disable_info_panel = (eof_preferences_dialog[10].flags == D_SELECTED ? 1 : 0);
 			eof_paste_erase_overlap = (eof_preferences_dialog[11].flags == D_SELECTED ? 1 : 0);
 			eof_write_rb_files = (eof_preferences_dialog[12].flags == D_SELECTED ? 1 : 0);
-			eof_inverted_chords_slash = (eof_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
+			eof_write_music_midi = (eof_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
 			eof_write_rs_files = (eof_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
 			eof_write_rs2_files = (eof_preferences_dialog[15].flags == D_SELECTED ? 1 : 0);
 			eof_add_new_notes_to_selection = (eof_preferences_dialog[16].flags == D_SELECTED ? 1 : 0);
@@ -1165,6 +1167,7 @@ int eof_menu_file_preferences(void)
 			enable_logging = (eof_preferences_dialog[46].flags == D_SELECTED ? 1 : 0);
 			eof_display_seek_pos_in_seconds = (eof_preferences_dialog[47].flags == D_SELECTED ? 1 : 0);
 			eof_note_tails_clickable = (eof_preferences_dialog[48].flags == D_SELECTED ? 1 : 0);
+			eof_inverted_chords_slash = (eof_preferences_dialog[49].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 29)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1180,7 +1183,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[10].flags = 0;					//Disable info panel
 			eof_preferences_dialog[11].flags = 0;					//Erase overlapped pasted notes
 			eof_preferences_dialog[12].flags = 0;					//Save separate RBN MIDI files
-			eof_preferences_dialog[13].flags = 0;					//Treat inverted chords as slash
+			eof_preferences_dialog[13].flags = 0;					//Save separate musical MIDI file
 			eof_preferences_dialog[14].flags = 0;					//Save separate Rocksmith 1 files
 			eof_preferences_dialog[15].flags = 0;					//Save separate Rocksmith 2 files
 			eof_preferences_dialog[16].flags = 0;					//Add new notes to selection
@@ -1206,6 +1209,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[46].flags = D_SELECTED;			//Enable logging on launch
 			eof_preferences_dialog[47].flags = 0;					//Display seek pos. in seconds
 			eof_preferences_dialog[48].flags = 0;					//Make note tails clickable
+			eof_preferences_dialog[49].flags = 0;					//Treat inverted chords as slash
 		}//If the user clicked "Default
 	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -2834,6 +2838,12 @@ int eof_save_helper(char *destfilename, char silent)
 				(void) replace_filename(eof_temp_filename, eof_temp_filename, "upgrades.dta", (int) sizeof(eof_temp_filename));
 				(void) eof_save_upgrades_dta(eof_song, eof_temp_filename);		//Create the upgrades.dta file in the songs_upgrades folder if it does not already exist
 			}
+		}
+
+		if(eof_write_music_midi)
+		{	//If the user opted to also save a normal musical MIDI
+			(void) append_filename(eof_temp_filename, newfolderpath, "notes_music.mid", (int) sizeof(eof_temp_filename));
+			(void) eof_export_music_midi(eof_song, eof_temp_filename);
 		}
 
 		/* Save INI file */
