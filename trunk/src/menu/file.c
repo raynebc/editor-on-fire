@@ -3482,6 +3482,10 @@ int eof_menu_file_gp_import(void)
 				{	//For each note in the track
 					free(eof_parsed_gp_file->track[ctr]->note[ctr2]);	//Free its memory
 				}
+				for(ctr2 = 0; ctr2 < eof_parsed_gp_file->track[ctr]->technotes; ctr2++)
+				{	//For each tech note in the track
+					free(eof_parsed_gp_file->track[ctr]->technote[ctr2]);	//Free its memory
+				}
 				free(eof_parsed_gp_file->track[ctr]);	//Free the pro guitar track
 			}
 			free(eof_parsed_gp_file->names);

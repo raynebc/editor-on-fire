@@ -365,16 +365,13 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	char buffer[600] = {0}, buffer2[600] = {0};
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
-	unsigned long ctr, ctr2, ctr3, ctr4, ctr5, numsections, stringnum, bitmask, numsinglenotes, numchords, *chordlist, chordlistsize, *sectionlist, sectionlistsize, xml_end, numevents = 0;
+	unsigned long ctr, ctr2, ctr3, ctr4, ctr5, numsections, stringnum, bitmask, numsinglenotes, numchords, *chordlist, chordlistsize, xml_end, numevents = 0;
 	EOF_PRO_GUITAR_TRACK *tp;
 	char *arrangement_name;	//This will point to the track's native name unless it has an alternate name defined
 	unsigned numdifficulties;
 	unsigned char bre_populated = 0;
-	unsigned long phraseid;
 	unsigned beatspermeasure = 4, beatcounter = 0;
 	long displayedmeasure, measurenum = 0;
-	long startbeat;	//This will indicate the first beat containing a note in the track
-	long endbeat;	//This will indicate the first beat after the exported track's last note
 	char standard[] = {0,0,0,0,0,0};
 	char standardbass[] = {0,0,0,0};
 	char eb[] = {-1,-1,-1,-1,-1,-1};
@@ -386,7 +383,6 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	int scale, chord, isslash, bassnote;	//Used for power chord detection
 	int standard_tuning = 0, non_standard_chords = 0, barre_chords = 0, power_chords = 0, notenum, dropd_tuning = 1, dropd_power_chords = 0, open_chords = 0, double_stops = 0, palm_mutes = 0, harmonics = 0, hopo = 0, tremolo = 0, slides = 0, bends = 0, tapping = 0, vibrato = 0, slappop = 0, octaves = 0, fifths_and_octaves = 0;	//Used for technique detection
 	char is_bass = 0;	//Is set to nonzero if the specified track is to be considered a bass guitar track
-	char end_phrase_found = 0;	//Will track if there was a manually defined END phrase
 	unsigned long chordid, handshapectr;
 	unsigned long handshapestart, handshapeend;
 	long nextnote;
@@ -702,173 +698,12 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <arrangementProperties represent=\"1\" standardTuning=\"%d\" nonStandardChords=\"%d\" barreChords=\"%d\" powerChords=\"%d\" dropDPower=\"%d\" openChords=\"%d\" fingerPicking=\"0\" pickDirection=\"0\" doubleStops=\"%d\" palmMutes=\"%d\" harmonics=\"%d\" pinchHarmonics=\"0\" hopo=\"%d\" tremolo=\"%d\" slides=\"%d\" unpitchedSlides=\"0\" bends=\"%d\" tapping=\"%d\" vibrato=\"%d\" fretHandMutes=\"0\" slapPop=\"%d\" twoFingerPicking=\"0\" fifthsAndOctaves=\"%d\" syncopation=\"0\" bassPick=\"0\" />\n", standard_tuning, non_standard_chords, barre_chords, power_chords, dropd_power_chords, open_chords, double_stops, palm_mutes, harmonics, hopo, tremolo, slides, bends, tapping, vibrato, slappop, fifths_and_octaves);
 	(void) pack_fputs(buffer, fp);
 
-	//Check if any RS phrases or sections need to be added
-	startbeat = eof_get_beat(sp, tp->note[0]->pos);	//Find the beat containing the track's first note
-	if(startbeat < 0)
-	{	//If the beat couldn't be found
-		startbeat = 0;	//Set this to the first beat
-	}
-	endbeat = eof_get_beat(sp, tp->note[tp->notes - 1]->pos + tp->note[tp->notes - 1]->length);	//Find the beat containing the end of the track's last note
-	if((endbeat < 0) || (endbeat + 1 >= sp->beats))
-	{	//If the beat couldn't be found, or the extreme last beat in the track has the last note
-		endbeat = sp->beats - 1;	//Set this to the last beat
-	}
-	else
-	{
-		endbeat++;	//Otherwise set it to the first beat that follows the end of the last note
-	}
-	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
-	if(!eof_song_contains_event(sp, "COUNT", track, EOF_EVENT_FLAG_RS_PHRASE, 1) && !eof_song_contains_event(sp, "COUNT", 0, EOF_EVENT_FLAG_RS_PHRASE, 1))
-	{	//If the user did not define a COUNT phrase that applies to either the track being exported or all tracks
-		if((sp->beat[0]->contained_section_event >= 0) && ((*user_warned & 16) == 0))
-		{	//If there is already a phrase defined on the first beat, and the user wasn't warned of this problem yet
-			allegro_message("Warning:  There is no COUNT phrase, but the first beat marker already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.");
-			*user_warned |= 16;
-		}
-		eof_log("\t! Adding missing COUNT phrase", 1);
-		(void) eof_song_add_text_event(sp, 0, "COUNT", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it as a temporary event at the first beat
-	}
-	for(ctr = 0; ctr < sp->beats; ctr++)
-	{	//For each beat
-		if((sp->beat[ctr]->contained_section_event >= 0) && !ustricmp(sp->text_event[sp->beat[ctr]->contained_section_event]->text, "END"))
-		{	//If this beat contains an "END" RS phrase
-			for(ctr2 = ctr + 1; ctr2 < sp->beats; ctr2++)
-			{	//For each remaining beat
-				if(((sp->beat[ctr2]->contained_section_event >= 0) || (sp->beat[ctr2]->contained_rs_section_event >= 0)) && ((*user_warned & 32) == 0))
-				{	//If the beat contains an RS phrase or RS section, and the user wasn't warned of this problem yet
-					unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
-
-					eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
-					eof_selected_beat = ctr;		//Select it
-					eof_seek_and_render_position(track, eof_note_type, sp->beat[ctr]->pos);	//Show the offending END phrase
-					allegro_message("Warning:  Beat #%lu contains an END phrase, but there's at least one more phrase or section after it.\nThis will cause dynamic difficulty and/or riff repeater to not work correctly.", ctr);
-					eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-					*user_warned |= 32;
-					break;
-				}
-			}
-			end_phrase_found = 1;
-			break;
-		}
-	}
-	if(!end_phrase_found)
-	{	//If the user did not define a END phrase
-		if(sp->beat[endbeat]->contained_section_event >= 0)
-		{	//If there is already a phrase defined on the beat following the last note
-			unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
-
-			eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
-			eof_selected_beat = endbeat;		//Select it
-			eof_seek_and_render_position(track, eof_note_type, sp->beat[endbeat]->pos);	//Show where the END phrase should go
-			allegro_message("Warning:  There is no END phrase, but the beat marker after the last note in \"%s\" already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.", sp->track[track]->name);
-			eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-		}
-		eof_log("\t! Adding missing END phrase", 1);
-		(void) eof_song_add_text_event(sp, endbeat, "END", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it as a temporary event at the last beat
-	}
-	eof_sort_events(sp);	//Re-sort events
-	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
-	if(!eof_song_contains_event(sp, "intro", track, EOF_EVENT_FLAG_RS_SECTION, 1) && !eof_song_contains_event(sp, "intro", 0, EOF_EVENT_FLAG_RS_SECTION, 1))
-	{	//If the user did not define an intro RS section that applies to either the track being exported or all tracks
-		if((sp->beat[startbeat]->contained_rs_section_event >= 0) && ((*user_warned & 64) == 0))
-		{	//If there is already a RS section defined on the first beat containing a note, and the user wasn't warned of this problem yet
-			allegro_message("Warning:  There is no intro RS section, but the beat marker before the first note already has a section.\nYou should move that section because only one section per beat is exported.");
-			*user_warned |= 64;
-		}
-		eof_log("\t! Adding missing intro RS section", 1);
-		(void) eof_song_add_text_event(sp, startbeat, "intro", 0, EOF_EVENT_FLAG_RS_SECTION, 1);	//Add a temporary one
-	}
-	if(!eof_song_contains_event(sp, "noguitar", track, EOF_EVENT_FLAG_RS_SECTION, 1) && !eof_song_contains_event(sp, "noguitar", 0, EOF_EVENT_FLAG_RS_SECTION, 1))
-	{	//If the user did not define a noguitar RS section that applies to either the track being exported or all tracks
-		if((sp->beat[endbeat]->contained_rs_section_event >= 0) && ((*user_warned & 128) == 0))
-		{	//If there is already a RS section defined on the first beat after the last note, and the user wasn't warned of this problem yet
-			allegro_message("Warning:  There is no noguitar RS section, but the beat marker after the last note already has a section.\nYou should move that section because only one section per beat is exported.");
-			*user_warned |= 128;
-		}
-		eof_log("\t! Adding missing noguitar RS section", 1);
-		(void) eof_song_add_text_event(sp, endbeat, "noguitar", 0, EOF_EVENT_FLAG_RS_SECTION, 1);	//Add a temporary one
-	}
-
-	//Write the phrases
-	eof_sort_events(sp);	//Re-sort events
-	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
-	for(ctr = 0, numsections = 0; ctr < sp->beats; ctr++)
-	{	//For each beat in the chart
-		if(sp->beat[ctr]->contained_section_event >= 0)
-		{	//If this beat has a section event (RS phrase)
-			numsections++;	//Update section marker instance counter
-		}
-	}
-	sectionlistsize = eof_build_section_list(sp, &sectionlist, track);	//Build a list of all unique section markers (Rocksmith phrases) in the chart (from the perspective of the track being exported)
-	(void) snprintf(buffer, sizeof(buffer) - 1, "  <phrases count=\"%lu\">\n", sectionlistsize);	//Write the number of unique phrases
-	(void) pack_fputs(buffer, fp);
-	for(ctr = 0; ctr < sectionlistsize; ctr++)
-	{	//For each of the entries in the unique section (RS phrase) list
-		char * currentphrase = NULL;
-		unsigned long startpos = 0, endpos = 0;		//Track the start and end position of the each instance of the phrase
-		unsigned char maxdiff, ongoingmaxdiff = 0;	//Track the highest fully leveled difficulty used among all phraseinstances
-		char started = 0;
-
-		//Determine the highest maxdifficulty present among all instances of this phrase
-		for(ctr2 = 0; ctr2 < sp->beats; ctr2++)
-		{	//For each beat
-			if((sp->beat[ctr2]->contained_section_event >= 0) || ((ctr2 + 1 >= eof_song->beats) && started))
-			{	//If this beat contains a section event (Rocksmith phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
-				started = 0;
-				endpos = sp->beat[ctr2]->pos - 1;	//Track this as the end position of the previous phrase marker
-				if(currentphrase)
-				{	//If the first instance of the phrase was already encountered
-					if(!ustricmp(currentphrase, sp->text_event[sectionlist[ctr]]->text))
-					{	//If the phrase that just ended is an instance of the phrase being written
-						maxdiff = eof_find_fully_leveled_rs_difficulty_in_time_range(sp, track, startpos, endpos, 1);	//Find the maxdifficulty value for this phrase instance, converted to relative numbering
-						if(maxdiff > ongoingmaxdiff)
-						{	//If that phrase instance had a higher maxdifficulty than the other instances checked so far
-							ongoingmaxdiff = maxdiff;	//Track it
-						}
-					}
-				}
-				started = 1;
-				startpos = sp->beat[ctr2]->pos;	//Track the starting position
-				currentphrase = sp->text_event[eof_song->beat[ctr2]->contained_section_event]->text;	//Track which phrase is being examined
-			}
-		}
-
-		//Write the phrase definition using the highest difficulty found among all instances of the phrase
-		expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[sectionlist[ctr]]->text, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
-		(void) snprintf(buffer, sizeof(buffer) - 1, "    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"%u\" name=\"%s\" solo=\"0\"/>\n", ongoingmaxdiff, buffer2);
-		(void) pack_fputs(buffer, fp);
-	}//For each of the entries in the unique section (RS phrase) list
-	(void) pack_fputs("  </phrases>\n", fp);
-	(void) snprintf(buffer, sizeof(buffer) - 1, "  <phraseIterations count=\"%lu\">\n", numsections);	//Write the number of phrase instances
-	(void) pack_fputs(buffer, fp);
-	for(ctr = 0; ctr < sp->beats; ctr++)
-	{	//For each beat in the chart
-		if(sp->beat[ctr]->contained_section_event >= 0)
-		{	//If this beat has a section event
-			for(ctr2 = 0; ctr2 < sectionlistsize; ctr2++)
-			{	//For each of the entries in the unique section list
-				if(!ustricmp(sp->text_event[sp->beat[ctr]->contained_section_event]->text, sp->text_event[sectionlist[ctr2]]->text))
-				{	//If this event matches a section marker entry
-					phraseid = ctr2;
-					break;
-				}
-			}
-			if(ctr2 >= sectionlistsize)
-			{	//If the section couldn't be found
-				allegro_message("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.");
-				eof_log("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.", 1);
-				free(sectionlist);
-				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-				return 0;	//Return error
-			}
-			(void) snprintf(buffer, sizeof(buffer) - 1, "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\"/>\n", sp->beat[ctr]->fpos / 1000.0, phraseid);
-			(void) pack_fputs(buffer, fp);
-		}
-	}
-	(void) pack_fputs("  </phraseIterations>\n", fp);
-	if(sectionlistsize)
-	{	//If there were any entries in the unique section list
-		free(sectionlist);	//Free the list now
+	//Write the phrases and do other setup common to both Rocksmith exports
+	originalbeatcount = sp->beats;	//Store the original beat count
+	if(!eof_rs_export_common(sp, track, fp, user_warned))
+	{	//If there was an error adding temporary phrases, sections, beats tot he project and writing the phrases to file
+		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+		return 0;	//Return error
 	}
 
 	//Write some unknown information
@@ -989,18 +824,6 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 	//Write some unknown information
 	(void) pack_fputs("  <fretHandMuteTemplates count=\"0\"/>\n", fp);
-
-	//DDC prefers when the XML pads partially complete measures by adding beats to finish the measure and then going one beat into the next measure
-	originalbeatcount = sp->beats;	//Store the original beat count
-	if(sp->beat[endbeat]->beat_within_measure)
-	{	//If the first beat after the last note in this track isn't the first beat in a measure
-		ctr = sp->beat[endbeat]->num_beats_in_measure - sp->beat[endbeat]->beat_within_measure;	//This is how many beats need to be after endbeat
-		if(endbeat + ctr > sp->beats)
-		{	//If the project doesn't have enough beats to accommodate this padding
-			(void) eof_song_append_beats(sp, ctr);	//Append them to the end of the project
-		}
-	}
-	eof_process_beat_statistics(sp, track);	//Rebuild beat stats
 
 	//Write the beat timings
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <ebeats count=\"%lu\">\n", sp->beats);
@@ -1610,16 +1433,13 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	char buffer[600] = {0}, buffer2[512] = {0};
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
-	unsigned long ctr, ctr2, ctr3, ctr4, ctr5, numsections, stringnum, bitmask, numsinglenotes, numchords, *chordlist, chordlistsize, *sectionlist, sectionlistsize, xml_end, numevents = 0;
+	unsigned long ctr, ctr2, ctr3, ctr4, ctr5, numsections, stringnum, bitmask, numsinglenotes, numchords, *chordlist, chordlistsize, xml_end, numevents = 0;
 	EOF_PRO_GUITAR_TRACK *tp;
 	char *arrangement_name;	//This will point to the track's native name unless it has an alternate name defined
 	unsigned numdifficulties;
 	unsigned char bre_populated = 0;
-	unsigned long phraseid;
 	unsigned beatspermeasure = 4, beatcounter = 0;
 	long displayedmeasure, measurenum = 0;
-	long startbeat;	//This will indicate the first beat containing a note in the track
-	long endbeat;	//This will indicate the first beat after the exported track's last note
 	char standard[] = {0,0,0,0,0,0};
 	char eb[] = {-1,-1,-1,-1,-1,-1};
 	char *tuning;
@@ -1628,7 +1448,6 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	int scale, chord, isslash, bassnote;	//Used for power chord detection
 	int standard_tuning = 0, non_standard_chords = 0, barre_chords = 0, power_chords = 0, notenum, dropd_tuning = 1, dropd_power_chords = 0, open_chords = 0, double_stops = 0, palm_mutes = 0, harmonics = 0, hopo = 0, tremolo = 0, slides = 0, bends = 0, tapping = 0, vibrato = 0, slappop = 0, octaves = 0, fifths_and_octaves = 0, sustains = 0, pinch= 0;	//Used for technique detection
 	int is_lead = 0, is_rhythm = 0, is_bass = 0;	//Is set to nonzero if the specified track is to be considered any of these arrangement types
-	char end_phrase_found = 0;	//Will track if there was a manually defined END phrase
 	unsigned long chordid, handshapectr;
 	unsigned long handshapestart, handshapeend;
 	long nextnote, prevnote;
@@ -1964,173 +1783,12 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <arrangementProperties represent=\"1\" bonusArr=\"0\" standardTuning=\"%d\" nonStandardChords=\"%d\" barreChords=\"%d\" powerChords=\"%d\" dropDPower=\"%d\" openChords=\"%d\" fingerPicking=\"0\" pickDirection=\"0\" doubleStops=\"%d\" palmMutes=\"%d\" harmonics=\"%d\" pinchHarmonics=\"%d\" hopo=\"%d\" tremolo=\"%d\" slides=\"%d\" unpitchedSlides=\"0\" bends=\"%d\" tapping=\"%d\" vibrato=\"%d\" fretHandMutes=\"0\" slapPop=\"%d\" twoFingerPicking=\"0\" fifthsAndOctaves=\"%d\" syncopation=\"0\" bassPick=\"0\" sustain=\"%d\" pathLead=\"%d\" pathRhythm=\"%d\" pathBass=\"%d\" />\n", standard_tuning, non_standard_chords, barre_chords, power_chords, dropd_power_chords, open_chords, double_stops, palm_mutes, harmonics, pinch, hopo, tremolo, slides, bends, tapping, vibrato, slappop, fifths_and_octaves, sustains, is_lead, is_rhythm, is_bass);
 	(void) pack_fputs(buffer, fp);
 
-	//Check if any RS phrases or sections need to be added
-	startbeat = eof_get_beat(sp, tp->note[0]->pos);	//Find the beat containing the track's first note
-	if(startbeat < 0)
-	{	//If the beat couldn't be found
-		startbeat = 0;	//Set this to the first beat
-	}
-	endbeat = eof_get_beat(sp, tp->note[tp->notes - 1]->pos + tp->note[tp->notes - 1]->length);	//Find the beat containing the end of the track's last note
-	if((endbeat < 0) || (endbeat + 1 >= sp->beats))
-	{	//If the beat couldn't be found, or the extreme last beat in the track has the last note
-		endbeat = sp->beats - 1;	//Set this to the last beat
-	}
-	else
-	{
-		endbeat++;	//Otherwise set it to the first beat that follows the end of the last note
-	}
-	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
-	if(!eof_song_contains_event(sp, "COUNT", track, EOF_EVENT_FLAG_RS_PHRASE, 1) && !eof_song_contains_event(sp, "COUNT", 0, EOF_EVENT_FLAG_RS_PHRASE, 1))
-	{	//If the user did not define a COUNT phrase that applies to either the track being exported or all tracks
-		if((sp->beat[0]->contained_section_event >= 0) && ((*user_warned & 16) == 0))
-		{	//If there is already a phrase defined on the first beat, and the user wasn't warned of this problem yet
-			allegro_message("Warning:  There is no COUNT phrase, but the first beat marker already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.");
-			*user_warned |= 16;
-		}
-		eof_log("\t! Adding missing COUNT phrase", 1);
-		(void) eof_song_add_text_event(sp, 0, "COUNT", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it as a temporary event at the first beat
-	}
-	for(ctr = 0; ctr < sp->beats; ctr++)
-	{	//For each beat
-		if((sp->beat[ctr]->contained_section_event >= 0) && !ustricmp(sp->text_event[sp->beat[ctr]->contained_section_event]->text, "END"))
-		{	//If this beat contains an "END" RS phrase
-			for(ctr2 = ctr + 1; ctr2 < sp->beats; ctr2++)
-			{	//For each remaining beat
-				if(((sp->beat[ctr2]->contained_section_event >= 0) || (sp->beat[ctr2]->contained_rs_section_event >= 0)) && ((*user_warned & 32) == 0))
-				{	//If the beat contains an RS phrase or RS section, and the user wasn't warned of this problem yet
-					unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
-
-					eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
-					eof_selected_beat = ctr;		//Select it
-					eof_seek_and_render_position(track, eof_note_type, sp->beat[ctr]->pos);	//Show the offending END phrase
-					allegro_message("Warning:  Beat #%lu contains an END phrase, but there's at least one more phrase or section after it.\nThis will cause dynamic difficulty and/or riff repeater to not work correctly.", ctr);
-					eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-					*user_warned |= 32;
-					break;
-				}
-			}
-			end_phrase_found = 1;
-			break;
-		}
-	}
-	if(!end_phrase_found)
-	{	//If the user did not define a END phrase
-		if(sp->beat[endbeat]->contained_section_event >= 0)
-		{	//If there is already a phrase defined on the beat following the last note
-			unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
-
-			eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
-			eof_selected_beat = endbeat;		//Select it
-			eof_seek_and_render_position(track, eof_note_type, sp->beat[endbeat]->pos);	//Show where the END phrase should go
-			allegro_message("Warning:  There is no END phrase, but the beat marker after the last note in \"%s\" already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.", sp->track[track]->name);
-			eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-		}
-		eof_log("\t! Adding missing END phrase", 1);
-		(void) eof_song_add_text_event(sp, endbeat, "END", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it as a temporary event at the last beat
-	}
-	eof_sort_events(sp);	//Re-sort events
-	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
-	if(!eof_song_contains_event(sp, "intro", track, EOF_EVENT_FLAG_RS_SECTION, 1) && !eof_song_contains_event(sp, "intro", 0, EOF_EVENT_FLAG_RS_SECTION, 1))
-	{	//If the user did not define an intro RS section that applies to either the track being exported or all tracks
-		if((sp->beat[startbeat]->contained_rs_section_event >= 0) && ((*user_warned & 64) == 0))
-		{	//If there is already a RS section defined on the first beat containing a note, and the user wasn't warned of this problem yet
-			allegro_message("Warning:  There is no intro RS section, but the beat marker before the first note already has a section.\nYou should move that section because only one section per beat is exported.");
-			*user_warned |= 64;
-		}
-		eof_log("\t! Adding missing intro RS section", 1);
-		(void) eof_song_add_text_event(sp, startbeat, "intro", 0, EOF_EVENT_FLAG_RS_SECTION, 1);	//Add a temporary one
-	}
-	if(!eof_song_contains_event(sp, "noguitar", track, EOF_EVENT_FLAG_RS_SECTION, 1) && !eof_song_contains_event(sp, "noguitar", 0, EOF_EVENT_FLAG_RS_SECTION, 1))
-	{	//If the user did not define a noguitar RS section that applies to either the track being exported or all tracks
-		if((sp->beat[endbeat]->contained_rs_section_event >= 0) && ((*user_warned & 128) == 0))
-		{	//If there is already a RS section defined on the first beat after the last note, and the user wasn't warned of this problem yet
-			allegro_message("Warning:  There is no noguitar RS section, but the beat marker after the last note already has a section.\nYou should move that section because only one section per beat is exported.");
-			*user_warned |= 128;
-		}
-		eof_log("\t! Adding missing noguitar RS section", 1);
-		(void) eof_song_add_text_event(sp, endbeat, "noguitar", 0, EOF_EVENT_FLAG_RS_SECTION, 1);	//Add a temporary one
-	}
-
-	//Write the phrases
-	eof_sort_events(sp);	//Re-sort events
-	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
-	for(ctr = 0, numsections = 0; ctr < sp->beats; ctr++)
-	{	//For each beat in the chart
-		if(sp->beat[ctr]->contained_section_event >= 0)
-		{	//If this beat has a section event (RS phrase)
-			numsections++;	//Update section marker instance counter
-		}
-	}
-	sectionlistsize = eof_build_section_list(sp, &sectionlist, track);	//Build a list of all unique section markers (Rocksmith phrases) in the chart (from the perspective of the track being exported)
-	(void) snprintf(buffer, sizeof(buffer) - 1, "  <phrases count=\"%lu\">\n", sectionlistsize);	//Write the number of unique phrases
-	(void) pack_fputs(buffer, fp);
-	for(ctr = 0; ctr < sectionlistsize; ctr++)
-	{	//For each of the entries in the unique section (RS phrase) list
-		char * currentphrase = NULL;
-		unsigned long startpos = 0, endpos = 0;		//Track the start and end position of the each instance of the phrase
-		unsigned char maxdiff, ongoingmaxdiff = 0;	//Track the highest fully leveled difficulty used among all phraseinstances
-		char started = 0;
-
-		//Determine the highest maxdifficulty present among all instances of this phrase
-		for(ctr2 = 0; ctr2 < sp->beats; ctr2++)
-		{	//For each beat
-			if((sp->beat[ctr2]->contained_section_event >= 0) || ((ctr2 + 1 >= eof_song->beats) && started))
-			{	//If this beat contains a section event (Rocksmith phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
-				started = 0;
-				endpos = sp->beat[ctr2]->pos - 1;	//Track this as the end position of the previous phrase marker
-				if(currentphrase)
-				{	//If the first instance of the phrase was already encountered
-					if(!ustricmp(currentphrase, sp->text_event[sectionlist[ctr]]->text))
-					{	//If the phrase that just ended is an instance of the phrase being written
-						maxdiff = eof_find_fully_leveled_rs_difficulty_in_time_range(sp, track, startpos, endpos, 1);	//Find the maxdifficulty value for this phrase instance, converted to relative numbering
-						if(maxdiff > ongoingmaxdiff)
-						{	//If that phrase instance had a higher maxdifficulty than the other instances checked so far
-							ongoingmaxdiff = maxdiff;	//Track it
-						}
-					}
-				}
-				started = 1;
-				startpos = sp->beat[ctr2]->pos;	//Track the starting position
-				currentphrase = sp->text_event[eof_song->beat[ctr2]->contained_section_event]->text;	//Track which phrase is being examined
-			}
-		}
-
-		//Write the phrase definition using the highest difficulty found among all instances of the phrase
-		expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[sectionlist[ctr]]->text, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
-		(void) snprintf(buffer, sizeof(buffer) - 1, "    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"%u\" name=\"%s\" solo=\"0\"/>\n", ongoingmaxdiff, buffer2);
-		(void) pack_fputs(buffer, fp);
-	}//For each of the entries in the unique section (RS phrase) list
-	(void) pack_fputs("  </phrases>\n", fp);
-	(void) snprintf(buffer, sizeof(buffer) - 1, "  <phraseIterations count=\"%lu\">\n", numsections);	//Write the number of phrase instances
-	(void) pack_fputs(buffer, fp);
-	for(ctr = 0; ctr < sp->beats; ctr++)
-	{	//For each beat in the chart
-		if(sp->beat[ctr]->contained_section_event >= 0)
-		{	//If this beat has a section event
-			for(ctr2 = 0; ctr2 < sectionlistsize; ctr2++)
-			{	//For each of the entries in the unique section list
-				if(!ustricmp(sp->text_event[sp->beat[ctr]->contained_section_event]->text, sp->text_event[sectionlist[ctr2]]->text))
-				{	//If this event matches a section marker entry
-					phraseid = ctr2;
-					break;
-				}
-			}
-			if(ctr2 >= sectionlistsize)
-			{	//If the section couldn't be found
-				allegro_message("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.");
-				eof_log("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.", 1);
-				free(sectionlist);
-				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-				return 0;	//Return error
-			}
-			(void) snprintf(buffer, sizeof(buffer) - 1, "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\" variation=\"\"/>\n", sp->beat[ctr]->fpos / 1000.0, phraseid);
-			(void) pack_fputs(buffer, fp);
-		}
-	}
-	(void) pack_fputs("  </phraseIterations>\n", fp);
-	if(sectionlistsize)
-	{	//If there were any entries in the unique section list
-		free(sectionlist);	//Free the list now
+	//Write the phrases and do other setup common to both Rocksmith exports
+	originalbeatcount = sp->beats;	//Store the original beat count
+	if(!eof_rs_export_common(sp, track, fp, user_warned))
+	{	//If there was an error adding temporary phrases, sections, beats tot he project and writing the phrases to file
+		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+		return 0;	//Return error
 	}
 
 	//Write some unknown information
@@ -2186,7 +1844,6 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							{
 								allegro_message("Error:  Couldn't expand linked chords into single notes.  Aborting Rocksmith export.");
 								eof_log("Error:  Couldn't expand linked chords into single notes.  Aborting Rocksmith export.", 1);
-								free(sectionlist);
 								eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 								eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 								return 0;	//Return error
@@ -2224,7 +1881,6 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							{
 								allegro_message("Error:  Couldn't expand an arpeggio chord into single notes.  Aborting Rocksmith export.");
 								eof_log("Error:  Couldn't expand an arpeggio chord into single notes.  Aborting Rocksmith export.", 1);
-								free(sectionlist);
 								eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 								eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 								return 0;	//Return error
@@ -2273,7 +1929,6 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					{
 						allegro_message("Error:  Couldn't expand a non arpeggio partially ghosted chord into a non ghosted chord.  Aborting Rocksmith export.");
 						eof_log("Error:  Couldn't expand a non arpeggio partially ghosted chord into a non ghosted chord.  Aborting Rocksmith export.", 1);
-						free(sectionlist);
 						eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 						eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 						return 0;	//Return error
@@ -2373,18 +2028,6 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 	//Write some unknown information
 	(void) pack_fputs("  <fretHandMuteTemplates count=\"0\"/>\n", fp);
-
-	//DDC prefers when the XML pads partially complete measures by adding beats to finish the measure and then going one beat into the next measure
-	originalbeatcount = sp->beats;	//Store the original beat count
-	if(sp->beat[endbeat]->beat_within_measure)
-	{	//If the first beat after the last note in this track isn't the first beat in a measure
-		ctr = sp->beat[endbeat]->num_beats_in_measure - sp->beat[endbeat]->beat_within_measure;	//This is how many beats need to be after endbeat
-		if(endbeat + ctr > sp->beats)
-		{	//If the project doesn't have enough beats to accommodate this padding
-			(void) eof_song_append_beats(sp, ctr);	//Append them to the end of the project
-		}
-	}
-	eof_process_beat_statistics(sp, track);	//Rebuild beat stats
 
 	//Write the beat timings
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <ebeats count=\"%lu\">\n", sp->beats);
@@ -4969,4 +4612,202 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 		(void) snprintf(buffer, sizeof(buffer) - 1, "        %s</%s>\n", indentlevel, tagstring);
 		(void) pack_fputs(buffer, fp);
 	}//If the note is a bend, write the bendValues subtag and close the note tag
+}
+
+int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsigned short *user_warned)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long *sectionlist, sectionlistsize, ctr, ctr2, numsections, phraseid;
+	char end_phrase_found = 0;	//Will track if there was a manually defined END phrase
+	char buffer[200] = {0}, buffer2[50] = {0};
+	long startbeat;	//This will indicate the first beat containing a note in the track
+	long endbeat;	//This will indicate the first beat after the exported track's last note
+
+	if(!sp || !fp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !user_warned)
+		return 0;	//Invalid parameters
+
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+
+	//Check if any RS phrases need to be added
+	startbeat = eof_get_beat(sp, tp->note[0]->pos);	//Find the beat containing the track's first note
+	if(startbeat < 0)
+	{	//If the beat couldn't be found
+		startbeat = 0;	//Set this to the first beat
+	}
+	endbeat = eof_get_beat(sp, tp->note[tp->notes - 1]->pos + tp->note[tp->notes - 1]->length);	//Find the beat containing the end of the track's last note
+	if((endbeat < 0) || (endbeat + 1 >= sp->beats))
+	{	//If the beat couldn't be found, or the extreme last beat in the track has the last note
+		endbeat = sp->beats - 1;	//Set this to the last beat
+	}
+	else
+	{
+		endbeat++;	//Otherwise set it to the first beat that follows the end of the last note
+	}
+	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
+	if(!eof_song_contains_event(sp, "COUNT", track, EOF_EVENT_FLAG_RS_PHRASE, 1) && !eof_song_contains_event(sp, "COUNT", 0, EOF_EVENT_FLAG_RS_PHRASE, 1))
+	{	//If the user did not define a COUNT phrase that applies to either the track being exported or all tracks
+		if((sp->beat[0]->contained_section_event >= 0) && ((*user_warned & 16) == 0))
+		{	//If there is already a phrase defined on the first beat, and the user wasn't warned of this problem yet
+			allegro_message("Warning:  There is no COUNT phrase, but the first beat marker already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.");
+			*user_warned |= 16;
+		}
+		eof_log("\t! Adding missing COUNT phrase", 1);
+		(void) eof_song_add_text_event(sp, 0, "COUNT", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it as a temporary event at the first beat
+	}
+	for(ctr = 0; ctr < sp->beats; ctr++)
+	{	//For each beat
+		if((sp->beat[ctr]->contained_section_event >= 0) && !ustricmp(sp->text_event[sp->beat[ctr]->contained_section_event]->text, "END"))
+		{	//If this beat contains an "END" RS phrase
+			for(ctr2 = ctr + 1; ctr2 < sp->beats; ctr2++)
+			{	//For each remaining beat
+				if(((sp->beat[ctr2]->contained_section_event >= 0) || (sp->beat[ctr2]->contained_rs_section_event >= 0)) && ((*user_warned & 32) == 0))
+				{	//If the beat contains an RS phrase or RS section, and the user wasn't warned of this problem yet
+					unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+
+					eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
+					eof_selected_beat = ctr;		//Select it
+					eof_seek_and_render_position(track, eof_note_type, sp->beat[ctr]->pos);	//Show the offending END phrase
+					allegro_message("Warning:  Beat #%lu contains an END phrase, but there's at least one more phrase or section after it.\nThis will cause dynamic difficulty and/or riff repeater to not work correctly.", ctr);
+					eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+					*user_warned |= 32;
+					break;
+				}
+			}
+			end_phrase_found = 1;
+			break;
+		}
+	}
+	if(!end_phrase_found)
+	{	//If the user did not define a END phrase
+		if(sp->beat[endbeat]->contained_section_event >= 0)
+		{	//If there is already a phrase defined on the beat following the last note
+			unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+
+			eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
+			eof_selected_beat = endbeat;		//Select it
+			eof_seek_and_render_position(track, eof_note_type, sp->beat[endbeat]->pos);	//Show where the END phrase should go
+			allegro_message("Warning:  There is no END phrase, but the beat marker after the last note in \"%s\" already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.", sp->track[track]->name);
+			eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+		}
+		eof_log("\t! Adding missing END phrase", 1);
+		(void) eof_song_add_text_event(sp, endbeat, "END", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it as a temporary event at the last beat
+	}
+
+	//Check if any RS sections need to be added
+	eof_sort_events(sp);	//Re-sort events
+	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
+	if(!eof_song_contains_event(sp, "intro", track, EOF_EVENT_FLAG_RS_SECTION, 1) && !eof_song_contains_event(sp, "intro", 0, EOF_EVENT_FLAG_RS_SECTION, 1))
+	{	//If the user did not define an intro RS section that applies to either the track being exported or all tracks
+		if((sp->beat[startbeat]->contained_rs_section_event >= 0) && ((*user_warned & 64) == 0))
+		{	//If there is already a RS section defined on the first beat containing a note, and the user wasn't warned of this problem yet
+			allegro_message("Warning:  There is no intro RS section, but the beat marker before the first note already has a section.\nYou should move that section because only one section per beat is exported.");
+			*user_warned |= 64;
+		}
+		eof_log("\t! Adding missing intro RS section", 1);
+		(void) eof_song_add_text_event(sp, startbeat, "intro", 0, EOF_EVENT_FLAG_RS_SECTION, 1);	//Add a temporary one
+	}
+	if(!eof_song_contains_event(sp, "noguitar", track, EOF_EVENT_FLAG_RS_SECTION, 1) && !eof_song_contains_event(sp, "noguitar", 0, EOF_EVENT_FLAG_RS_SECTION, 1))
+	{	//If the user did not define a noguitar RS section that applies to either the track being exported or all tracks
+		if((sp->beat[endbeat]->contained_rs_section_event >= 0) && ((*user_warned & 128) == 0))
+		{	//If there is already a RS section defined on the first beat after the last note, and the user wasn't warned of this problem yet
+			allegro_message("Warning:  There is no noguitar RS section, but the beat marker after the last note already has a section.\nYou should move that section because only one section per beat is exported.");
+			*user_warned |= 128;
+		}
+		eof_log("\t! Adding missing noguitar RS section", 1);
+		(void) eof_song_add_text_event(sp, endbeat, "noguitar", 0, EOF_EVENT_FLAG_RS_SECTION, 1);	//Add a temporary one
+	}
+
+	//Check if any beats need to be added
+	//DDC prefers when the XML pads partially complete measures by adding beats to finish the measure and then going one beat into the next measure
+	if(sp->beat[endbeat]->beat_within_measure)
+	{	//If the first beat after the last note in this track isn't the first beat in a measure
+		ctr = sp->beat[endbeat]->num_beats_in_measure - sp->beat[endbeat]->beat_within_measure;	//This is how many beats need to be after endbeat
+		if(endbeat + ctr > sp->beats)
+		{	//If the project doesn't have enough beats to accommodate this padding
+			(void) eof_song_append_beats(sp, ctr);	//Append them to the end of the project
+		}
+	}
+
+	//Write the phrases
+	eof_sort_events(sp);	//Re-sort events
+	eof_process_beat_statistics(sp, track);	//Rebuild beat stats
+	for(ctr = 0, numsections = 0; ctr < sp->beats; ctr++)
+	{	//For each beat in the chart
+		if(sp->beat[ctr]->contained_section_event >= 0)
+		{	//If this beat has a section event (RS phrase)
+			numsections++;	//Update section marker instance counter
+		}
+	}
+	sectionlistsize = eof_build_section_list(sp, &sectionlist, track);	//Build a list of all unique section markers (Rocksmith phrases) in the chart (from the perspective of the track being exported)
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <phrases count=\"%lu\">\n", sectionlistsize);	//Write the number of unique phrases
+	(void) pack_fputs(buffer, fp);
+	for(ctr = 0; ctr < sectionlistsize; ctr++)
+	{	//For each of the entries in the unique section (RS phrase) list
+		char * currentphrase = NULL;
+		unsigned long startpos = 0, endpos = 0;		//Track the start and end position of the each instance of the phrase
+		unsigned char maxdiff, ongoingmaxdiff = 0;	//Track the highest fully leveled difficulty used among all phraseinstances
+		char started = 0;
+
+		//Determine the highest maxdifficulty present among all instances of this phrase
+		for(ctr2 = 0; ctr2 < sp->beats; ctr2++)
+		{	//For each beat
+			if((sp->beat[ctr2]->contained_section_event >= 0) || ((ctr2 + 1 >= eof_song->beats) && started))
+			{	//If this beat contains a section event (Rocksmith phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
+				started = 0;
+				endpos = sp->beat[ctr2]->pos - 1;	//Track this as the end position of the previous phrase marker
+				if(currentphrase)
+				{	//If the first instance of the phrase was already encountered
+					if(!ustricmp(currentphrase, sp->text_event[sectionlist[ctr]]->text))
+					{	//If the phrase that just ended is an instance of the phrase being written
+						maxdiff = eof_find_fully_leveled_rs_difficulty_in_time_range(sp, track, startpos, endpos, 1);	//Find the maxdifficulty value for this phrase instance, converted to relative numbering
+						if(maxdiff > ongoingmaxdiff)
+						{	//If that phrase instance had a higher maxdifficulty than the other instances checked so far
+							ongoingmaxdiff = maxdiff;	//Track it
+						}
+					}
+				}
+				started = 1;
+				startpos = sp->beat[ctr2]->pos;	//Track the starting position
+				currentphrase = sp->text_event[eof_song->beat[ctr2]->contained_section_event]->text;	//Track which phrase is being examined
+			}
+		}
+
+		//Write the phrase definition using the highest difficulty found among all instances of the phrase
+		expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[sectionlist[ctr]]->text, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+		(void) snprintf(buffer, sizeof(buffer) - 1, "    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"%u\" name=\"%s\" solo=\"0\"/>\n", ongoingmaxdiff, buffer2);
+		(void) pack_fputs(buffer, fp);
+	}//For each of the entries in the unique section (RS phrase) list
+	(void) pack_fputs("  </phrases>\n", fp);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <phraseIterations count=\"%lu\">\n", numsections);	//Write the number of phrase instances
+	(void) pack_fputs(buffer, fp);
+	for(ctr = 0; ctr < sp->beats; ctr++)
+	{	//For each beat in the chart
+		if(sp->beat[ctr]->contained_section_event >= 0)
+		{	//If this beat has a section event
+			for(ctr2 = 0; ctr2 < sectionlistsize; ctr2++)
+			{	//For each of the entries in the unique section list
+				if(!ustricmp(sp->text_event[sp->beat[ctr]->contained_section_event]->text, sp->text_event[sectionlist[ctr2]]->text))
+				{	//If this event matches a section marker entry
+					phraseid = ctr2;
+					break;
+				}
+			}
+			if(ctr2 >= sectionlistsize)
+			{	//If the section couldn't be found
+				allegro_message("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.");
+				eof_log("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.", 1);
+				free(sectionlist);
+				return 0;	//Return error
+			}
+			(void) snprintf(buffer, sizeof(buffer) - 1, "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\"/>\n", sp->beat[ctr]->fpos / 1000.0, phraseid);
+			(void) pack_fputs(buffer, fp);
+		}
+	}
+	(void) pack_fputs("  </phraseIterations>\n", fp);
+	if(sectionlistsize)
+	{	//If there were any entries in the unique section list
+		free(sectionlist);	//Free the list now
+	}
+
+	return 1;	//Return success
 }

@@ -53,6 +53,7 @@ int eof_clap_volume = 100;	//Stores the volume level for the clap cue, specified
 int eof_tick_volume = 100;	//Stores the volume level for the tick cue, specified as a percentage
 int eof_tone_volume = 100;	//Stores the volume level for the tone cue, specified as a percentage
 int eof_percussion_volume = 100;	//Stores the volume level for the vocal percussion cue, specified as a percentage
+int eof_clap_for_mutes = 1;	//Specifies whether fully string muted notes trigger the clap sound cue
 
 int           eof_mix_speed = 1000;
 char          eof_mix_speed_ticker;
@@ -314,8 +315,11 @@ void eof_mix_find_claps(void)
 		{	//For each note in the track
 			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_note(eof_song, eof_selected_track, i) & eof_mix_claps_note))
 			{	//If the note is in the active track difficulty and the clap sound cue applies to at least one gem used in the note
-				eof_mix_clap_pos[eof_mix_claps] = eof_mix_msec_to_sample(eof_get_note_pos(eof_song, eof_selected_track, i), alogg_get_wave_freq_ogg(eof_music_track));
-				eof_mix_claps++;
+				if(eof_clap_for_mutes || !(eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE))
+				{	//If clap cues should trigger for fully string muted notes, or if this note isn't fully string muted
+					eof_mix_clap_pos[eof_mix_claps] = eof_mix_msec_to_sample(eof_get_note_pos(eof_song, eof_selected_track, i), alogg_get_wave_freq_ogg(eof_music_track));
+					eof_mix_claps++;
+				}
 			}
 		}
 	}

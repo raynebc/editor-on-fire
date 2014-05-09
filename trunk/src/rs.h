@@ -267,4 +267,12 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 	//If target is 1, then Rocksmith 1 authoring rules are followed and a note cannot be both a slide/bend AND a pop/slap note, as they have conflicting sustain requirements
 	//The capo position is added to the end position of pitched and unpitched slides, as required by Rocksmith in order for them to display correctly for capo'd arrangements
 
+int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsigned short *user_warned);
+	//Count and end phrases are added automatically if they are found to be missing
+	//intro and noguitar sections are added automatically if they are found to be missing
+	//Pads the project with enough beats to go one beat into the first measure after all populated
+	// beats in the track, to satisfy DDC
+	//Writes the phrases XML tag to the specified packfile stream
+	//Returns 0 on error
+
 #endif

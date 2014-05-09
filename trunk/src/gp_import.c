@@ -15,6 +15,7 @@
 #include "tuning.h"
 #include "undo.h"
 #include "foflc/RS_parse.h"	//For shrink_xml_text()
+#include "menu/track.h"	//For tech view functions
 #endif
 
 #include <math.h>
@@ -3606,7 +3607,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											np[ctr2]->length = lastendpos - np[ctr2]->pos + 0.5;	//Round up to nearest millisecond
 
 #ifdef GP_IMPORT_DEBUG
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tTie note:  Note starting at %lums lengthened from %ldms to %ldms", np[ctr2]->pos, oldlength, np[ctr2]->length);
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tTie note:  Note starting at %lums lengthened from %ldms to %ldms", np[ctr2]->pos, oldlength, np[ctr2]->length);
 											eof_log(eof_log_string, 1);
 #endif
 
@@ -3681,8 +3682,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}
 								if(byte1 & 1)
 								{	//Bend
-									if(eof_gp_parse_bend(inf, &bendstruct))
-									{	//If there was an error parsing the bend
+									if(eof_gp_parse_bend(inf, &bendstruct) || (bendstruct.bendpoints > 30))
+									{	//If there was an error parsing the bend, or if bendpoints wasn't capped at 30 (a redundant check to satisfy a false positive in Coverity)
 										allegro_message("Error parsing bend, file is corrupt");
 										(void) pack_fclose(inf);
 										while(ctr > 0)
@@ -4207,9 +4208,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					}
 					gp->track[ctr]->tremolos++;
 				}
-			}
-		}
-	}
+			}//If this note is marked as being in a tremolo
+		}//For each note in the track
+	}//For each imported track
 
 //Validate any imported note/chord fingerings and duplicate defined fingerings to matching notes
 	for(ctr = 0; ctr < gp->numtracks; ctr++)
@@ -4408,7 +4409,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 #endif
 				if(!eof_copy_notes_in_beat_range(gp->track[track], measuremap[currentmeasure], gp->measure[currentmeasure].num, tp, beatctr))
 				{	//If there was an error unwrapping the repeat into the new pro guitar track
-					eof_log("\tError unwrapping beats", 1);
+					eof_log("\tError unwrapping beats (normal notes)", 1);
 					free(measuremap);
 					for(ctr = 0; ctr < tp->notes; ctr++)
 					{	//For each note that had been allocated for the unwrapped track
@@ -4422,6 +4423,27 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 					}
 					return 5;
 				}
+				eof_menu_pro_guitar_track_set_tech_view_state(gp->track[track], 1);	//Enable tech view for source track
+				eof_menu_pro_guitar_track_set_tech_view_state(tp, 1);				//Enable tech view for destination track
+				if(!eof_copy_notes_in_beat_range(gp->track[track], measuremap[currentmeasure], gp->measure[currentmeasure].num, tp, beatctr))
+				{	//If there was an error unwrapping tech notes within the repeat into the new pro guitar track
+					eof_log("\tError unwrapping beats (tech notes)", 1);
+					free(measuremap);
+					for(ctr = 0; ctr < tp->notes; ctr++)
+					{	//For each note that had been allocated for the unwrapped track
+						free(tp->note[ctr]);	//Free its memory
+					}
+					free(tp);
+					free(working_num_of_repeats);
+					for(ctr = 0; ctr < newevents; ctr++)
+					{	//For each unwrapped text event
+						free(newevent[ctr]);	//Free it
+					}
+					eof_menu_pro_guitar_track_set_tech_view_state(gp->track[track], 0);	//Disable tech view for source track
+					return 6;
+				}
+				eof_menu_pro_guitar_track_set_tech_view_state(gp->track[track], 0);	//Disable tech view for source track
+				eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);				//disable tech view for destination track
 			}
 
 			//Update the time signature if necessary
@@ -4459,7 +4481,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 								{	//For each unwrapped text event
 									free(newevent[ctr]);	//Free it
 								}
-								return 6;
+								return 7;
 							}
 							memcpy(newevent[newevents], gp->text_event[ctr], sizeof(EOF_TEXT_EVENT));	//Copy the text event
 							newevent[newevents]->beat = beatctr;	//Correct the beat number
@@ -4684,6 +4706,10 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 	for(ctr = 0; ctr < gp->track[track]->notes; ctr++)
 	{	//For each note in the target track
 		free(gp->track[track]->note[ctr]);	//Free its memory
+	}
+	for(ctr = 0; ctr < gp->track[track]->technotes; ctr++)
+	{	//For each tech note in the target track
+		free(gp->track[track]->technote[ctr]);	//Free its memory
 	}
 	free(gp->track[track]);	//Free the pro guitar track
 	gp->track[track] = tp;	//Insert the new pro guitar track into the array
