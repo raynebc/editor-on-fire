@@ -2289,7 +2289,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn)
 	PACKFILE * fp;
 	unsigned long i, j, k, bitmask, deltapos, deltalength;
 	unsigned long delta = 0;
-	int vel;
+	int vel, channel = 0;
 	unsigned long lastdelta=0;				//Keeps track of the last anchor's absolute delta time
 	unsigned long trackcounter = 0;			//Tracks the number of tracks to write to file
 	EOF_MIDI_TS_LIST *tslist=NULL;			//List containing TS changes
@@ -2402,8 +2402,8 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn)
 				{	//For each of the 6 possible values in the pitch array
 					if(pitchmask & bitmask)
 					{	//If this pitch is defined in the array
-						eof_add_midi_event(deltapos, 0x90, pitches[k], vel, k);
-						eof_add_midi_event(deltapos + deltalength, 0x80, pitches[k], vel, k);
+						eof_add_midi_event(deltapos, 0x90, pitches[k], vel, channel);
+						eof_add_midi_event(deltapos + deltalength, 0x80, pitches[k], vel, channel);
 					}
 				}
 
@@ -2438,8 +2438,8 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn)
 					eof_clear_midi_events();		//Free any memory allocated for the MIDI event array
 					return 0;	//Return failure
 				}
-			}
-		}
+			}//If at least one pitch is to be exported for this note/lyric
+		}//For each note/lyric in the track
 
 		//Cleanup
 		for(i = 0; i < 128; i++)
@@ -2486,6 +2486,20 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn)
 		WriteVarLen(ustrlen(sp->track[j]->name), fp);
 		(void) pack_fwrite(sp->track[j]->name, ustrlen(sp->track[j]->name), fp);
 
+		/* set the guitar/bass MIDI instrument as appropriate */
+		if(sp->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If this is a pro guitar/bass track
+			int tone = eof_midi_synth_instrument_guitar;	//By default, assume a guitar arrangement
+
+			if(sp->pro_guitar_track[sp->track[j]->tracknum]->arrangement == 4)
+			{	//If this track's arrangement type is bass
+				tone = eof_midi_synth_instrument_bass;	//Use the configured bass MIDI tone instead
+			}
+			WriteVarLen(0, fp);
+			(void) pack_putc(0xC0 + channel, fp);	//Write MIDI event 0xC (Program change)
+			(void) pack_putc(tone, fp);				//Write instrument number
+		}
+
 		/* add MIDI events */
 		lastdelta = 0;
 		for(i = 0; i < eof_midi_events; i++)
@@ -2528,6 +2542,8 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn)
 		(void) pack_putc(0x2F, fp);
 		(void) pack_putc(0x00, fp);
 		(void) pack_fclose(fp);
+
+		channel++;	//The next track to export will use a different MIDI channel for the note on/off events
 	}//For each track in the project
 
 /* make tempo track */
