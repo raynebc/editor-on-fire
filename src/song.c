@@ -3354,7 +3354,7 @@ unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track)
 
 	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
 	{	//If this is a legacy track, return the number of lanes it uses
-		if(sp->legacy_track[sp->track[track]->tracknum]->numlanes < EOF_MAX_FRETS)
+		if(sp->legacy_track[sp->track[track]->tracknum]->numlanes <= EOF_MAX_FRETS)
 		{	//If the lane count is valid
 			return sp->legacy_track[sp->track[track]->tracknum]->numlanes;
 		}

@@ -2374,18 +2374,45 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn)
 		for(i = 0; i < eof_get_track_size(sp, j); i++)
 		{	//For each note/lyric in the track
 			unsigned long pos = eof_get_note_pos(sp, j, i);	//Cache this value
+			unsigned long nextpos = 0, length, minlength;
+			long beat;
 
-			if((i + 1 < eof_get_track_size(sp, j)) && (pos == eof_get_note_pos(sp, j, i + 1)))
-			{	//If there is another note in the track, and it's in the same position
-				continue;	//Skip this one and use the higher difficulty note
+			length = eof_get_note_length(sp, j, i);
+			if(i + 1 < eof_get_track_size(sp, j))
+			{	//If there is another note in the track
+				nextpos = eof_get_note_pos(sp, j, i + 1);
+				if(pos == nextpos)
+				{	//If this note and the next one are at the same position
+					continue;	//Skip this one and use the higher difficulty note
+				}
 			}
-			pitchmask = eof_get_midi_pitches(sp, j, i, pitches);	//Determine how many exportable pitches this note/lyric has
+			beat = eof_get_beat(sp, pos);
+			if((beat >= 0) && (beat < sp->beats))
+			{	//If the beat in which this note exists could be determined
+				double beat_length = (double)60000 / ((double)60000000.0 / (double)sp->beat[beat]->ppqn);	//Get the length of the beat
+				minlength = beat_length / 8;	//Get the desired minimum length for the note (1/8 beat)
+				if(length < minlength)
+				{	//If the note's length is shorter than that
+					if(!nextpos || (pos + minlength < nextpos))
+					{	//If there is no next note or if this note can be extended without overlapping the next note
+						length = minlength;	//Do so
+					}
+					else
+					{	//Otherwise just extend it as far as it can go without overlapping
+						if(nextpos > pos + 1)
+						{	//This is only possible if the next note is more than 1ms away
+							length = nextpos - pos - 1;
+						}
+					}
+				}
+			}
 
+			pitchmask = eof_get_midi_pitches(sp, j, i, pitches);	//Determine how many exportable pitches this note/lyric has
 			if(pitchmask)
 			{	//If at least one pitch is to be exported for this note/lyric
 				//Write note/lyric pitches
 				deltapos = eof_ConvertToDeltaTime(pos, anchorlist, tslist, timedivision, 1);
-				deltalength = eof_ConvertToDeltaTime(pos + eof_get_note_length(sp, j, i), anchorlist, tslist, timedivision, 0) - deltapos;
+				deltalength = eof_ConvertToDeltaTime(pos + length, anchorlist, tslist, timedivision, 0) - deltapos;
 				if(deltalength < 1)
 				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 					deltalength = 1;

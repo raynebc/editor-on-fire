@@ -883,6 +883,10 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			eof_log("\tError saving:  Cannot allocate memory for control list", 1);
 			eof_rs_export_cleanup(sp, track);
 			eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+			if(chordlist)
+			{	//If the chord list was built
+				free(chordlist);
+			}
 			return 0;	//Return failure
 		}
 
@@ -904,6 +908,10 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				free(controls);
 				eof_rs_export_cleanup(sp, track);
 				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+				if(chordlist)
+				{	//If the chord list was built
+					free(chordlist);
+				}
 				return 0;	//Return failure
 			}
 			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"ShowMessageBox(hint%lu, %s)\"/>\n", tp->popupmessage[ctr].start_pos / 1000.0, ctr + 1, buffer2);
@@ -924,6 +932,10 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				free(controls);
 				eof_rs_export_cleanup(sp, track);
 				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+				if(chordlist)
+				{	//If the chord list was built
+					free(chordlist);
+				}
 				return 0;	//Return failure
 			}
 			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"ClearAllMessageBoxes()\"/>\n", tp->popupmessage[ctr].end_pos / 1000.0);
@@ -946,6 +958,10 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				free(controls);
 				eof_rs_export_cleanup(sp, track);
 				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+				if(chordlist)
+				{	//If the chord list was built
+					free(chordlist);
+				}
 				return 0;	//Return failure
 			}
 			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"CDlcTone(%s)\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tp->tonechange[ctr].name);
