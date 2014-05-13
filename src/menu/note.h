@@ -313,12 +313,4 @@ int eof_menu_note_reflect_both(void);
 int eof_menu_note_move_tech_note_to_previous_note_pos(void);
 	//Moves each selected tech notes to the start position of the regular notes before it, if any
 
-int eof_pro_guitar_note_vibrato_speed(char undo);
-	//Prompts the user for a vibrato speed to apply to all bend notes.  If save is nonzero, a save state is created before any notes are altered
-int eof_pro_guitar_note_vibrato_speed_save(void);
-	//Calls eof_pro_guitar_note_vibrato_speed() specifying to make an undo before making changes (for when setting vibrato speeds directly from the note menu)
-int eof_pro_guitar_note_vibrato_speed_no_save(void);
-	//Calls eof_pro_guitar_note_vibrato_speed() specifying not to make an undo before making changes
-	//(for when using the keyboard shortcut to toggle vibrato, since an undo would already have been created)
-
 #endif

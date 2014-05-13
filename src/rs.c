@@ -4408,14 +4408,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 		ptr->tap = (flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP) ? 1 : 0;
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
 		{	//If the note has vibrato technique
-			if(tp->note[notenum]->vibrato)
-			{	//If the vibrato speed is defined
-				ptr->vibrato = tp->note[notenum]->vibrato;
-			}
-			else
-			{	//Otherwise the default vibrato speed is assumed
-				ptr->vibrato = 80;
-			}
+			ptr->vibrato = 80;	//The default vibrato speed is assumed
 		}
 		else
 		{	//The note has no vibrato technique

@@ -1557,14 +1557,6 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
 		{
 			buffer[index++] = 'V';
-			if(np->vibrato)
-			{	//If a vibrato speed is defined
-				(void) snprintf(buffer2, sizeof(buffer2) - 1, "%d", np->vibrato);	//Build a string out of the vibrato speed
-				for(index2 = 0; buffer2[index2] != '\0'; index2++)
-				{	//For each character in the string
-					buffer[index++] = buffer2[index2];	//Append it to the notation string
-				}
-			}
 		}
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
 		{

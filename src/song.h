@@ -148,7 +148,6 @@ typedef struct
 	unsigned char bendstrength;	//The amount this note bends (0 if undefined or not applicable for regular notes, can be 0 for tech notes as that defines the release of a bend).  If the MSB is set, the value specifies quarter steps, otherwise it specifies half steps
 	unsigned char slideend;		//The fret at which this slide ends (0 if undefined or not applicable)
 	unsigned char unpitchend;	//The fret at which this unpitched slide ends (0 if undefined or not applicable)
-	unsigned char vibrato;		//The speed of this note's vibrato (0 if undefined or not applicable)
 	unsigned char tflags;		//Stores various temporary statuses (not written to project file)
 
 } EOF_PRO_GUITAR_NOTE;

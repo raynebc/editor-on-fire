@@ -102,7 +102,14 @@ Note and Beat Editing:
         Hold Ctrl while clicking to select multiple notes
     
         Hold Shift while clicking to select a range of notes
-    
+
+
+    Middle-Click (notes):
+
+        Open the selected pro guitar notes in the edit pro guitar
+        note dialog.  If no notes are selected, the note under
+        the mouse when the middle click is performed is opened in
+        the dialog.
 
     Left-Click+Drag (notes):
 
