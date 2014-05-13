@@ -179,7 +179,7 @@ Custom track data block definitions
 		1 byte:		Arrangement type (1 = Combo, 2 = Rhythm, 3 = Lead, 4 = Bass)
 	Custom data block ID 4:  Pro guitar track tuning not honored
 		1 byte:		If nonzero, indicates that the chord name detection reflects the DEFAULT tuning for the arrangement, and not the track's actual specified tuning.
-	Custom data block ID 5:  Pro guitar vibrato speeds
+	Custom data block ID 5:  Pro guitar vibrato speeds (this data block is deprecated but is reserved for backwards compatibility with 1.8RC9 era release candidates)
 		VIBRATO CHUNK, for each note in the track that is marked with vibrato (note flag value 16777216)
 		{
 			1 byte: Vibrato speed used for this note (0 = undefined, 40 = slow, 80 = medium, 120 = fast, the default value is 80)
