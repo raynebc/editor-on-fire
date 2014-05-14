@@ -174,7 +174,6 @@ typedef struct
 	unsigned char bendstrength;
 	unsigned char slideend;
 	unsigned char unpitchend;
-	unsigned char vibrato;
 
 } EOF_EXTENDED_NOTE;
 

@@ -3,6 +3,36 @@ EOF Version History
 
 1.8:
 
+Added a "Save separate musical MIDI file" preference, which will
+cause EOF to write a "notes_music.mid" file during save.  This MIDI
+file contains all populated vocal and pro guitar/bass tracks, and
+unlike the other MIDI files EOF writes, all MIDI notes included are
+the real pitches used in each lyric or guitar/bass note.  This file
+can be used in other music programs that use normal MIDI files, like
+Songs2See, Synthesia or even just your favorite MIDI player.
+
+Various improvements with beat timing accuracy and auto adjust.  Now
+when a note is auto-adjusted, its grid snap position is recorded
+and re-applied after the beats have been moved, helping to ensure a
+note that was grid snapped stays grid snapped when anchors are moved.
+
+Added a function (Song>Highlight non grid snapped notes) that
+dynamically highlights notes that aren't on any grid snap position,
+indicating they may need to be manually moved/resnapped.  If a
+custom grid snap value is in effect, its positions are also checked.
+
+Added an "Edit>Grid snap>Display grid lines" function that toggles
+the display of each grid snap position based on the current grid snap
+setting.  When grid lines are being displayed, any note that isn't at
+a grid snap position will have its vertical line rendered in red
+instead of gray, making it obvious that it doesn't line up with a
+grid line.  In addition to the beat marker arrows, beat lines will
+also now render in green if the mouse is hovered over the arrow.
+
+Added handling so that notes are not lost when pasting or adjusting
+notes to be beyond the end of the project.  Now, extra beats will be
+added to the project to accommodate such notes.
+
 Updated the EOF project file format to support new features including
 pro guitar/bass, keys, dance, open bass strumming, etc.
 
@@ -430,8 +460,8 @@ and create both a single and a double bass chart from it.
 
 Added a user preference (Use dB style seek controls) that reverses
 the roles of the page up and down keys (ie. allowing the Pg Up
-keyboard shortcuts to seek forward) and makes the up and down keys
-seek foward or backward instead of transposing notes.
+keyboard shortcuts to seek forward) and makes the left/right keys
+seek foward or backward by one grid snap interval at a time.
 
 Added the ability to lock the tempo map to avoid accidental changes
 to the beat markers (Song>Lock tempo map).
@@ -642,10 +672,11 @@ by holding both CTRL and SHIFT when using the Pg Up or Pg Dn key
 (when grid snap is enabled).
 
 Added the option (Preferences>Erase overlapped pasted notes) to delete
-notes that would be overlapped during a paste operation, similar to
-the behavior of the Feedback editor.  If this preference isn't in
-effect, a pasted note is allowed to merge with a note that is
-overlapped (is within 2ms of the pasted note), merging note statuses.
+notes whose start positions would be overlapped during a paste
+operation, similar to the behavior of the Feedback editor.  If this
+preference isn't in effect, a pasted note is allowed to merge with a
+note that is overlapped (is within 2ms of the pasted note), merging
+note statuses.
 
 Improved the undo/redo system by adding a random 3 digit number
 (created during launch of EOF) to the filenames, making it extremely
