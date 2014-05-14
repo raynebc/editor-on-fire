@@ -3349,7 +3349,6 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 		(void) pack_putc(0, fp);	//Write a blank bend strength
 		(void) pack_putc(0, fp);	//Write a blank slide end position
 		(void) pack_putc(0, fp);	//Write a blank unpitched slide end position
-		(void) pack_putc(0, fp);	//Write a blank vibrato speed
 	}
 }
 
