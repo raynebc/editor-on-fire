@@ -301,11 +301,12 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 
 			/* find the snap positions */
 			snaplength = (float)sp->measure_length / (float)interval;
-			for(i = 0; i < interval; i++)
+			sp->grid_pos[0] = eof_song->beat[sp->measure_beat]->fpos;	//Set first grid position
+			for(i = 1; i < interval; i++)
 			{
 				sp->grid_pos[i] = eof_song->beat[sp->measure_beat]->fpos + (snaplength * (float)i);
 			}
-			sp->grid_pos[interval] = eof_song->beat[sp->measure_beat]->fpos + sp->measure_length;
+			sp->grid_pos[interval] = eof_song->beat[sp->measure_beat]->fpos + sp->measure_length;	//Set last grid position
 
 			/* see which one we snap to */
 			for(i = 0; i < interval + 1; i++)
@@ -346,7 +347,8 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 		{	//If performing snap by beat logic
 			//Find the snap positions
 			snaplength = (float)sp->beat_length / (float)interval;
-			for(i = 0; i < interval; i++)
+			sp->grid_pos[0] = eof_song->beat[sp->beat]->fpos;	//Set the first grid position
+			for(i = 1; i < interval; i++)
 			{
 				sp->grid_pos[i] = eof_song->beat[sp->beat]->fpos + (snaplength * (float)i);
 			}
@@ -388,6 +390,12 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			}
 		}//If performing snap by beat logic
 		sp->intervals = interval + 1;	//Record the number of entries that are stored in the grid_pos[] and grid_distance[] arrays
+		if(sp->previous_snap == eof_song->beat[sp->beat]->pos + 1)
+		{	//Special case:  Rounding errors caused the previous snap to round up differently than the beat's integer timestamp
+			if(sp->pos == sp->previous_snap)
+				sp->pos = eof_song->beat[sp->beat]->pos;	//Correct the closest grid snap position if necessary
+			sp->previous_snap = eof_song->beat[sp->beat]->pos;	//Round it back down to avoid a condition where a note can't be shortened to before a beat line due to rounding errors
+		}
 	}//If grid snap is enabled
 }
 

@@ -6236,7 +6236,14 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 			}
 			else
 			{	//If adjusting by the current grid snap value
-				eof_snap_logic(&eof_tail_snap, notepos + notelength);	//Find grid snap positions before and after the tail's current ending position
+				unsigned long targetpos = notepos + notelength;	//The position from which the end of the note's tail will reposition
+				long beat = eof_get_beat(sp, targetpos);		//Get the beat in which the tail currently ends
+
+				if((dir < 0) && (beat > 0) && (beat < sp->beats) && (targetpos == sp->beat[beat]->pos))
+				{	//If the note is being shortened by a grid snap and the tail's current end position is found to be at the start of a beat
+					targetpos--;	//Consider the tail's current position to end in the previous beat so that the grid snap logic will find it a grid snap position in that beat
+				}
+				eof_snap_logic(&eof_tail_snap, targetpos);	//Find grid snap positions before and after the tail's current ending position
 				if(!undo_made)
 				{	//Ensure an undo state was made before increasing the length
 					eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
@@ -6675,19 +6682,14 @@ unsigned long eof_get_highest_fret_value(EOF_SONG *sp, unsigned long track, unsi
 	return highestfret;
 }
 
-unsigned char eof_get_lowest_fretted_string_fret(EOF_SONG *sp, unsigned long track, unsigned long note)
+unsigned char eof_pro_guitar_track_get_lowest_fretted_string_fret(EOF_PRO_GUITAR_TRACK *tp, unsigned long note)
 {
-	unsigned long ctr, bitmask, tracknum;
+	unsigned long ctr, bitmask;
 	EOF_PRO_GUITAR_NOTE *np;
 
-	if(!sp || (track >= sp->tracks))
+	if(!tp || (note >= tp->notes))
 		return 0;	//Invalid parameters
-	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)	//If the specified track is not a pro guitar track
-		return 0;	//Invalid parameters
-	tracknum = sp->track[track]->tracknum;
-	if(note >= sp->pro_guitar_track[tracknum]->notes)
-		return 0;	//Invalid parameters
-	np = sp->pro_guitar_track[tracknum]->note[note];
+	np = tp->note[note];
 
 	//Find the lowest fretted string's fret value
 	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
@@ -6702,6 +6704,19 @@ unsigned char eof_get_lowest_fretted_string_fret(EOF_SONG *sp, unsigned long tra
 	}
 
 	return 0;	//None of the strings were fretted
+}
+
+unsigned char eof_get_lowest_fretted_string_fret(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long tracknum;
+
+	if(!sp || (track >= sp->tracks))
+		return 0;	//Invalid parameters
+	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)	//If the specified track is not a pro guitar track
+		return 0;	//Invalid parameters
+	tracknum = sp->track[track]->tracknum;
+
+	return eof_pro_guitar_track_get_lowest_fretted_string_fret(sp->pro_guitar_track[tracknum], note);
 }
 
 unsigned long eof_determine_chart_length(EOF_SONG *sp)
