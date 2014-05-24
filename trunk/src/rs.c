@@ -1157,8 +1157,11 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						{	//For each of the entries in the unique chord list
 							if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
 							{	//If this note matches a chord list entry
-								chordid = ctr4;	//Store the chord list entry number
-								break;
+								if(!eof_pro_guitar_note_compare_fingerings(tp->note[ctr3], tp->note[chordlist[ctr4]]))
+								{	//If this note has identical fingering to chord list entry
+									chordid = ctr4;	//Store the chord list entry number
+									break;
+								}
 							}
 						}
 						if(ctr4 >= chordlistsize)
@@ -1270,8 +1273,11 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					{	//For each of the entries in the unique chord list
 						if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
 						{	//If this note matches a chord list entry
-							chordid = ctr4;	//Store the chord list entry number
-							break;
+							if(!eof_pro_guitar_note_compare_fingerings(tp->note[ctr3], tp->note[chordlist[ctr4]]))
+							{	//If this note has identical fingering to chord list entry
+								chordid = ctr4;	//Store the chord list entry number
+								break;
+							}
 						}
 					}
 					if(ctr4 >= chordlistsize)
@@ -1313,8 +1319,8 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					while(1)
 					{
 						nextnote = eof_track_fixup_next_note(sp, track, ctr3);
-						if((nextnote >= 0) && !eof_note_compare_simple(sp, track, chord, nextnote) && !eof_is_partially_ghosted(sp, track, nextnote))
-						{	//If there is another note, it matches this chord and it is not partially ghosted (an arpeggio)
+						if((nextnote >= 0) && !eof_note_compare_simple(sp, track, chord, nextnote) && !eof_is_partially_ghosted(sp, track, nextnote) && !eof_pro_guitar_note_compare_fingerings(tp->note[chord], tp->note[nextnote]))
+						{	//If there is another note, it matches this chord, it is not partially ghosted (an arpeggio) and it has the same fingering
 							ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
 						}
 						else
@@ -1344,8 +1350,11 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						{	//For each of the entries in the unique chord list
 							if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
 							{	//If this note matches a chord list entry
-								chordid = ctr4;	//Store the chord list entry number
-								break;
+								if(!eof_pro_guitar_note_compare_fingerings(tp->note[ctr3], tp->note[chordlist[ctr4]]))
+								{	//If this note has identical fingering to chord list entry
+									chordid = ctr4;	//Store the chord list entry number
+									break;
+								}
 							}
 						}
 						if(ctr4 >= chordlistsize)
@@ -1387,8 +1396,8 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						while(1)
 						{
 							nextnote = eof_track_fixup_next_note(sp, track, ctr3);
-							if((nextnote >= 0) && !eof_note_compare_simple(sp, track, chord, nextnote) && !eof_is_partially_ghosted(sp, track, nextnote))
-							{	//If there is another note, it matches this chord and it is not partially ghosted (an arpeggio)
+							if((nextnote >= 0) && !eof_note_compare_simple(sp, track, chord, nextnote) && !eof_is_partially_ghosted(sp, track, nextnote) && !eof_pro_guitar_note_compare_fingerings(tp->note[chord], tp->note[nextnote]))
+							{	//If there is another note, it matches this chord, it is not partially ghosted (an arpeggio) and it has the same fingering
 								ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
 							}
 							else
@@ -1999,7 +2008,14 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			{	//For each of the 6 supported strings
 				if((eof_get_note_note(sp, track, chordlist[ctr]) & bitmask) && (ctr2 < tp->numstrings))
 				{	//If the chord list entry uses this string (verifying that the string number is supported by the track)
-					*(fret[ctr2]) = tp->note[chordlist[ctr]]->frets[ctr2] & 0x7F;	//Retrieve the fret played on this string (masking out the muting bit)
+					if(tp->note[chordlist[ctr]]->frets[ctr2] == 0xFF)
+					{	//If this is a string mute with no defined fret number
+						*(fret[ctr2]) = 0;	//Assume muted open note
+					}
+					else
+					{	//Otherwise use the defined fret number
+						*(fret[ctr2]) = tp->note[chordlist[ctr]]->frets[ctr2] & 0x7F;	//Retrieve the fret played on this string (masking out the muting bit)
+					}
 					if(*(fret[ctr2]))
 					{	//If this string isn't played open
 						*(fret[ctr2]) += tp->capo;	//Apply the capo position
@@ -2470,8 +2486,11 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						{	//For each of the entries in the unique chord list
 							if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]) && (eof_is_partially_ghosted(sp, track, ctr3) == eof_is_partially_ghosted(sp, track, chordlist[ctr4])))
 							{	//If this note matches a chord list entry and has the same ghost status (either no gems ghosted or at least one gem ghosted)
-								chordid = ctr4;	//Store the chord list entry number
-								break;
+								if(!eof_pro_guitar_note_compare_fingerings(tp->note[ctr3], tp->note[chordlist[ctr4]]))
+								{	//If this note has identical fingering to chord list entry
+									chordid = ctr4;	//Store the chord list entry number
+									break;
+								}
 							}
 						}
 						if(ctr4 >= chordlistsize)
@@ -2521,8 +2540,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 									break;	//Break from while loop
 								}
 							}
-							if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chord, nextnote) || eof_is_string_muted(sp, track, nextnote)) && !eof_is_partially_ghosted(sp, track, nextnote))
-							{	//If there is another note, it either matches this chord or is completely string muted and it is not partially ghosted (an arpeggio)
+							if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chord, nextnote) || eof_is_string_muted(sp, track, nextnote)) && !eof_is_partially_ghosted(sp, track, nextnote) && !eof_pro_guitar_note_compare_fingerings(tp->note[chord], tp->note[nextnote]))
+							{	//If there is another note, it either matches this chord or is completely string muted, it is not partially ghosted (an arpeggio) and it has the same fingering
 								if(eof_is_partially_ghosted(sp, track, chord))
 								{	//If the handshape being written was for an arpeggio, and the next note isn't
 									handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of the arpeggio's last note
@@ -2560,8 +2579,11 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							{	//For each of the entries in the unique chord list
 								if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]) && (eof_is_partially_ghosted(sp, track, ctr3) == eof_is_partially_ghosted(sp, track, chordlist[ctr4])))
 								{	//If this note matches a chord list entry and has the same ghost status (either no gems ghosted or at least one gem ghosted)
-									chordid = ctr4;	//Store the chord list entry number
-									break;
+									if(!eof_pro_guitar_note_compare_fingerings(tp->note[ctr3], tp->note[chordlist[ctr4]]))
+									{	//If this note has identical fingering to chord list entry
+										chordid = ctr4;	//Store the chord list entry number
+										break;
+									}
 								}
 							}
 							if(ctr4 >= chordlistsize)
@@ -2611,8 +2633,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 										break;	//Break from while loop
 									}
 								}
-								if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chord, nextnote) || eof_is_string_muted(sp, track, nextnote)) && !eof_is_partially_ghosted(sp, track, nextnote))
-								{	//If there is another note, it either matches this chord or is completely string muted and it is not partially ghosted (an arpeggio)
+								if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chord, nextnote) || eof_is_string_muted(sp, track, nextnote)) && !eof_is_partially_ghosted(sp, track, nextnote) && !eof_pro_guitar_note_compare_fingerings(tp->note[chord], tp->note[nextnote]))
+								{	//If there is another note, it either matches this chord or is completely string muted, it is not partially ghosted (an arpeggio) and it has the same fingering
 									if(eof_is_partially_ghosted(sp, track, chord))
 									{	//If the handshape being written was for an arpeggio, and the next note isn't
 										handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of the arpeggio's last note

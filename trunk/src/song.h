@@ -827,6 +827,8 @@ unsigned long eof_get_highest_clipboard_lane(char *clipboardfile);
 unsigned long eof_get_highest_fret_value(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//Returns the highest used fret in the specified pro guitar note
 	//If the parameters are invalid or the specific pro guitar note's gems are all muted with no fret specified, 0 is returned
+
+unsigned char eof_pro_guitar_track_get_lowest_fretted_string_fret(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);
 unsigned char eof_get_lowest_fretted_string_fret(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//Returns the fret value of the lowest string that is fretted
 	//Returns zero on error or if none of the note's strings are fretted

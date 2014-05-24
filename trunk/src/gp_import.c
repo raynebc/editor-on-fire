@@ -3724,7 +3724,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								if(byte1 & 4)
 								{	//Slide from current note (GP3 format indicator)
 									flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
-									nonshiftslide[ctr2][ctr4] = 1;	//Track that the next note on this string for this track is to be removed (after slide directions are determined) because it only defines the end of the slide
 								}
 								if(byte1 & 8)
 								{	//Let ring
@@ -4110,11 +4109,33 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that the note has the slide ending defined
 						}
 						break;
+					}//If this string is used on this note as well as the next
+				}//For each of the 7 strings the GP format allows for
+				if(gp->track[ctr]->note[ctr2]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+				{	//If both the slide up and slide down flags are still set, the next note didn't use any of the same strings as the slide note
+					//Base the slide direction on the first populated string of that next note
+					startfret = eof_pro_guitar_track_get_lowest_fretted_string_fret(gp->track[ctr], ctr2);
+					endfret = eof_pro_guitar_track_get_lowest_fretted_string_fret(gp->track[ctr], ctr2 + 1);
+					if(startfret != endfret)
+					{	//If the slide and the following note start from different fret positions
+						if(startfret > endfret)
+						{	//This is a downward slide
+							gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;	//Clear the slide up flag
+						}
+						else
+						{	//This is an upward slide
+							gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//Clear the slide down flag
+						}
+						if(gp->track[ctr]->note[ctr2]->slideend == 0)
+						{	//If the slide ending hasn't been defined yet
+							gp->track[ctr]->note[ctr2]->slideend = endfret;
+							gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that the note has the slide ending defined
+						}
 					}
 				}
-			}
-		}
-	}
+			}//If this note is marked as being an undetermined direction slide, and there's a note that follows
+		}//For each note in the track
+	}//For each imported track
 
 //Delete notes that were marked to be removed (have a length of 0) because they were only present to define the end fret number for a slide
 	for(ctr = 0; ctr < gp->numtracks; ctr++)
