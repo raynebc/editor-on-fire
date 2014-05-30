@@ -109,7 +109,7 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 {
 	size_t input_length, index = 0, ctr;
 
-	if(!buffer || !input || !size)
+	if(!buffer || !input || !size || (warnsize > size))
 		return;	//Invalid parameters
 
 	input_length = strlen(input);
@@ -117,7 +117,7 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 	{	//For each character of the input string
 		if(input[ctr] == '\"')
 		{	//Expand quotation mark character
-			if(index + 6 + 1 >= size)
+			if(index + 6 + 1 > warnsize)
 			{	//If there isn't enough buffer left to expand this character and terminate the string
 				buffer[index] = '\0';	//Terminate the buffer
 				return;			//And return
@@ -131,7 +131,7 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 		}
 		else if(input[ctr] == '\'')
 		{	//Expand apostrophe
-			if(index + 6 + 1 >= size)
+			if(index + 6 + 1 > warnsize)
 			{	//If there isn't enough buffer left to expand this character and terminate the string
 				buffer[index] = '\0';	//Terminate the buffer
 				return;			//And return
@@ -145,7 +145,7 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 		}
 		else if(input[ctr] == '<')
 		{	//Expand less than sign
-			if(index + 4 + 1 >= size)
+			if(index + 4 + 1 > warnsize)
 			{	//If there isn't enough buffer left to expand this character and terminate the string
 				buffer[index] = '\0';	//Terminate the buffer
 				return;			//And return
@@ -157,7 +157,7 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 		}
 		else if(input[ctr] == '>')
 		{	//Expand greater than sign
-			if(index + 4 + 1 >= size)
+			if(index + 4 + 1 > warnsize)
 			{	//If there isn't enough buffer left to expand this character and terminate the string
 				buffer[index] = '\0';	//Terminate the buffer
 				return;			//And return
@@ -169,7 +169,7 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 		}
 		else if(input[ctr] == '&')
 		{	//Expand ampersand
-			if(index + 5 + 1 >= size)
+			if(index + 5 + 1 > warnsize)
 			{	//If there isn't enough buffer left to expand this character and terminate the string
 				buffer[index] = '\0';	//Terminate the buffer
 				return;			//And return
@@ -182,7 +182,7 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 		}
 		else
 		{	//Transfer character as-is
-			if(index + 1 + 1 >= size)
+			if(index + 1 + 1 > warnsize)
 			{	//If there isn't enough buffer left to copy this character and terminate the string
 				buffer[index] = '\0';	//Terminate the buffer
 				return;			//And return

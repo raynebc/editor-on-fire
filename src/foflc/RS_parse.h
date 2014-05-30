@@ -12,6 +12,7 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 	//than the given warning value, the user is given a warning message that the string will need to be shortened and the string
 	//is truncated to be warnsize number of characters.  If warnsize is zero, no check or truncation is performed.
 	//If size is zero, the function returns without doing anything.  Otherwise the buffer is guaranteed to be NULL terminated
+	//If warnsize is larger than size, the function returns without doing anything.
 
 void shrink_xml_text(char *buffer, size_t size, char *input);
 	//Does the reverse of expand_xml_text(), converting each escape sequence into the appropriate individual character.
