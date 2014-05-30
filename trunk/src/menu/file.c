@@ -229,12 +229,12 @@ DIALOG eof_file_new_windows_dialog[] =
 DIALOG eof_ogg_settings_dialog[] =
 {
 	/* (proc)                 (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)              (dp2) (dp3) */
-	{ d_agup_shadow_box_proc, 4,   200, 192, 190, 2,   23,  0,    0,      0,   0,   NULL,             NULL, NULL },
+	{ d_agup_shadow_box_proc, 4,   200, 192, 206, 2,   23,  0,    0,      0,   0,   NULL,             NULL, NULL },
 	{ d_agup_text_proc,       58,  208, 128, 8,   2,   23,  0,    0,      0,   0,   "OGG Settings",   NULL, NULL },
 	{ d_agup_text_proc,       49,  228, 48,  8,   2,   23,  0,    0,      0,   0,   "Encoder Quality",NULL, NULL },
-	{ d_agup_list_proc,       43,  244, 110, 96,  2,   23,  0,    0,      0,   0,   (void *)eof_ogg_list, NULL, NULL },
-	{ d_agup_button_proc,     16,  350, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",             NULL, NULL },
-	{ d_agup_button_proc,     116, 350, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",         NULL, NULL },
+	{ d_agup_list_proc,       43,  244, 110, 112, 2,   23,  0,    0,      0,   0,   (void *)eof_ogg_list, NULL, NULL },
+	{ d_agup_button_proc,     16,  366, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",             NULL, NULL },
+	{ d_agup_button_proc,     116, 366, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",         NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1515,7 +1515,7 @@ char * eof_ogg_list(int index, int * size)
 	{
 		case -1:
 		{
-			*size = 6;
+			*size = 7;
 			break;
 		}
 		case 0:
@@ -1541,6 +1541,10 @@ char * eof_ogg_list(int index, int * size)
 		case 5:
 		{
 			return "256kbps";
+		}
+		case 6:
+		{
+			return "320kbps";
 		}
 	}
 	return NULL;
@@ -2025,8 +2029,6 @@ int eof_mp3_to_ogg(char *file, char *directory)
 
 	if(!ustricmp(get_extension(file), "mp3"))
 	{
-		(void) snprintf(cfn, sizeof(cfn) - 1, "%soriginal.mp3", directory);		//Get the destination path of the original.mp3 to be created
-
 		//If an MP3 is to be encoded to OGG, store a copy of the MP3 as "original.mp3"
 		if(ustricmp(syscommand,directory))
 		{	//If the user did not select a file named original.mp3 in the chart's folder, check to see if a such-named file will be overwritten
@@ -2049,7 +2051,8 @@ int eof_mp3_to_ogg(char *file, char *directory)
 
 		if(eof_ogg_settings())
 		{
-			put_backslash(directory);
+			put_backslash(directory);												//Ensure that the directory string ends in a folder separator
+			(void) snprintf(cfn, sizeof(cfn) - 1, "%soriginal.mp3", directory);		//Get the destination path of the original.mp3 to be created
 			#ifdef ALLEGRO_WINDOWS
 				(void) eof_copy_file(file, "eoftemp.mp3");
 				(void) uszprintf(syscommand, (int) sizeof(syscommand), "mp3toogg \"eoftemp.mp3\" %s \"%sguitar.ogg\" \"%s\"", eof_ogg_quality[(int)eof_ogg_setting], directory, file);

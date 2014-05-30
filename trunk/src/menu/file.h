@@ -89,7 +89,8 @@ void EnumeratedBChartInfo(struct FeedbackChart *chart);
 
 int eof_mp3_to_ogg(char *file, char *directory);
 	//Uses the specified file to create guitar.ogg in the specified directory
-	//If the extension of the file is .mp3, it is converted to OGG format, otherwise the specified file is copied
+	//If the extension of the file is .mp3, it is converted to OGG format and a copy of the original mp3 file is stored at the specified directory,
+	// otherwise the specified file is simply copied to the specified directory
 	//Returns zero on successful conversion or nonzero if conversion was canceled/unsuccessful
 
 void eof_restore_oggs_helper(void);

@@ -339,7 +339,7 @@ extern int         eof_disable_vsync;
 extern int         eof_playback_speed;
 extern char        eof_playback_time_stretch;
 extern char        eof_ogg_setting;
-extern char      * eof_ogg_quality[6];
+extern char      * eof_ogg_quality[7];
 extern char        eof_cpu_saver;
 extern int         eof_note_type;
 extern int         eof_note_type_i;
