@@ -1660,7 +1660,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	struct eof_guitar_pro_struct *gp;
 	struct eof_gp_measure *tsarray;	//Stores measure information relating to time signatures, alternate endings and navigational symbols
 	EOF_PRO_GUITAR_NOTE **np;	//Will store the last created note for each track (for handling tie notes)
-	char *hopo;	//Will store the fret value of the previous note marked as HO/PO (in GP, if note #N is marked for this, note #N+1 is the one that is a HO or PO), otherwise -1, for each track
+	char *hopo;			//Will store the fret value of the previous note marked as HO/PO (in GP, if note #N is marked for this, note #N+1 is the one that is a HO or PO), otherwise -1, for each track
+	unsigned long *hopobeatnum;	//Will store the beat (note) number for which each track's last ho/po notation was defined, to ensure that the status is properly applied to the following note
 	char user_warned = 0;	//Used to track user warnings about the file being corrupt
 	char string_warning = 0;	//Used to track a user warning about the string count for a track being higher than what EOF supports
 	char drop_7 = 0;			//Used to track whether string 7 is being dropped during import, if any tracks have 7 strings
@@ -2232,8 +2233,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	gp->names = malloc(sizeof(char *) * tracks);			//Allocate memory for track name strings
 	np = malloc(sizeof(EOF_PRO_GUITAR_NOTE *) * tracks);	//Allocate memory for the array of last created notes
 	hopo = malloc(sizeof(char) * tracks);					//Allocate memory for storing HOPO information
+	hopobeatnum = malloc(sizeof(unsigned long) * tracks);	//Allocate memory for storing HOPO information
 	nonshiftslide = malloc(7 * sizeof(char) * tracks);		//Allocate a 7 byte array for each track to store string slide information
-	if(!gp->names || !np || !hopo || !nonshiftslide)
+	if(!gp->names || !np || !hopo || !hopobeatnum || !nonshiftslide)
 	{
 		eof_log("Error allocating memory (6)", 1);
 		(void) pack_fclose(inf);
@@ -2245,6 +2247,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	}
 	memset(np, 0, sizeof(EOF_PRO_GUITAR_NOTE *) * tracks);				//Set all last created note pointers to NULL
 	memset(hopo, -1, sizeof(char) * tracks);							//Set all tracks to have no HOPO status
+	memset(hopobeatnum, 0, sizeof(unsigned long) * tracks);
 	memset(nonshiftslide, 0, sizeof(char) * 7 * tracks);				//Clear all string slide statuses
 	gp->track = malloc(sizeof(EOF_PRO_GUITAR_TRACK *) * tracks);		//Allocate memory for pro guitar track pointers
 	gp->text_events = 0;
@@ -2256,6 +2259,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		free(gp->names);
 		free(np);
 		free(hopo);
+		free(hopobeatnum);
 		free(nonshiftslide);
 		free(gp);
 		free(tsarray);
@@ -2280,6 +2284,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(gp->track);	//Free array of track pointers
 			free(np);
 			free(hopo);
+			free(hopobeatnum);
 			free(nonshiftslide);
 			free(gp);
 			free(tsarray);
@@ -2309,6 +2314,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		free(gp->track);
 		free(np);
 		free(hopo);
+		free(hopobeatnum);
 		free(nonshiftslide);
 		free(gp);
 		free(tsarray);
@@ -2400,6 +2406,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							free(gp->track);
 							free(np);
 							free(hopo);
+							free(hopobeatnum);
 							free(nonshiftslide);
 							free(gp);
 							free(tsarray);
@@ -2462,6 +2469,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							free(gp->track);
 							free(np);
 							free(hopo);
+							free(hopobeatnum);
 							free(nonshiftslide);
 							free(gp);
 							free(tsarray);
@@ -2552,6 +2560,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				free(gp->track);
 				free(np);
 				free(hopo);
+				free(hopobeatnum);
 				free(nonshiftslide);
 				free(gp);
 				free(tsarray);
@@ -2661,6 +2670,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(gp->track);
 			free(np);
 			free(hopo);
+			free(hopobeatnum);
 			free(nonshiftslide);
 			free(gp);
 			free(tsarray);
@@ -2905,6 +2915,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(gp->track);
 			free(np);
 			free(hopo);
+			free(hopobeatnum);
 			free(nonshiftslide);
 			free(gp);
 			free(tsarray);
@@ -2944,6 +2955,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(gp->track);
 			free(np);
 			free(hopo);
+			free(hopobeatnum);
 			free(nonshiftslide);
 			free(gp);
 			free(tsarray);
@@ -3076,6 +3088,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					free(gp->track);
 					free(np);
 					free(hopo);
+					free(hopobeatnum);
 					free(nonshiftslide);
 					free(gp);
 					free(tsarray);
@@ -3297,6 +3310,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									free(gp->track);
 									free(np);
 									free(hopo);
+									free(hopobeatnum);
 									free(nonshiftslide);
 									free(gp);
 									free(tsarray);
@@ -3402,6 +3416,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								free(gp->track);
 								free(np);
 								free(hopo);
+								free(hopobeatnum);
 								free(nonshiftslide);
 								free(gp);
 								free(tsarray);
@@ -3639,7 +3654,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								byte = pack_getc(inf);	//Fret number
 								frets[ctr4] |= byte;	//OR this value, so that the muted status can be kept if it is set
 							}
-							if(hopo[ctr2] >= 0)
+							if((hopo[ctr2] >= 0) && (ctr3 > hopobeatnum[ctr2]))
 							{	//If the previous note was marked as leading into a hammer on or pull off with the next (this) note
 								if(byte < hopo[ctr2])
 								{	//If this note is a lower fret than the previous note
@@ -3649,8 +3664,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//Otherwise this note is a hammer on
 									flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;
 								}
+								hopo[ctr2] = -1;	//Reset this status before it is checked if this note is marked (to signal the next note being HO/PO)
 							}
-							hopo[ctr2] = -1;	//Reset this status before it is checked if this note is marked (to signal the next note being HO/PO)
+
 							if(bytemask & 128)
 							{	//Right/left hand fingering
 								byte = pack_getc(inf);	//Left hand fingering
@@ -3703,6 +3719,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										free(gp->track);
 										free(np);
 										free(hopo);
+										free(hopobeatnum);
 										free(nonshiftslide);
 										free(gp);
 										free(tsarray);
@@ -3720,6 +3737,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								if(byte1 & 2)
 								{	//Hammer on/pull off from current note (next note gets the HO/PO status)
 									hopo[ctr2] = frets[ctr4] & 0x8F;	//Store the fret value (masking out the MSB ghost bit) so that the next note can be determined as either a HO or a PO
+									hopobeatnum[ctr2] = ctr3;			//Track which beat (note) number has the HO/PO status
 								}
 								if(byte1 & 4)
 								{	//Slide from current note (GP3 format indicator)
@@ -3893,6 +3911,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									free(gp->track);
 									free(np);
 									free(hopo);
+									free(hopobeatnum);
 									free(nonshiftslide);
 									free(gp);
 									free(tsarray);
@@ -4036,6 +4055,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									free(gp->track);
 									free(np);
 									free(hopo);
+									free(hopobeatnum);
 									free(nonshiftslide);
 									free(gp);
 									free(tsarray);
@@ -4245,6 +4265,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	free(tsarray);
 	free(np);
 	free(hopo);
+	free(hopobeatnum);
 	free(nonshiftslide);
 	(void) puts("\nSuccess");
 	return gp;
@@ -4696,7 +4717,6 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 			eof_log(eof_log_string, 1);
 #endif
 			curr_alt_ending = gp->measure[currentmeasure].alt_endings;	//Remember the alternate ending number being skipped
-			currentmeasure++;	//Seek one measure into the beginning of the alternate ending
 			while(currentmeasure < gp->measures)
 			{	//While there are more measures
 				//Based on Guitar Pro's behavior, even when a time signature change is in an inactive alternate ending, the composition's meter takes it into effect
@@ -4710,7 +4730,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 					}
 				}
 				if(gp->measure[currentmeasure].num_of_repeats)
-				{	//If this is the first end of repeat that was reached
+				{	//If this is the first end of repeat that was reached, the scope of the alternate ending is over
 					currentmeasure++;	//Go beyond the end of repeat to the next measure
 					break;
 				}
