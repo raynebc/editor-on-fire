@@ -648,3 +648,26 @@ int eof_track_is_bass_arrangement(EOF_PRO_GUITAR_TRACK *tp, unsigned long track)
 
 	return is_bass;
 }
+
+int eof_track_is_drop_tuned(EOF_PRO_GUITAR_TRACK *tp)
+{
+	unsigned long ctr;
+
+	if(!tp)
+		return 0;	//Invalid parameter
+
+	if(tp->tuning[0] < 0)
+	{	//If the lowest string is drop tuned
+		for(ctr = 1; ctr < tp->numstrings; ctr++)
+		{	//For each of the other strings in the track
+			if(tp->tuning[ctr] != 0)
+			{	//If the string isn't tuned to standard
+				return 0;	//Not a drop tuning
+			}
+		}
+
+		return 1;	//All other strings were in standard tuning, this is a drop tuning
+	}
+
+	return 0;	//not a drop tuning
+}

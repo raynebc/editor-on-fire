@@ -106,4 +106,7 @@ char *eof_get_key_signature(EOF_SONG *sp, unsigned long beatnum, char failureopt
 int eof_track_is_bass_arrangement(EOF_PRO_GUITAR_TRACK *tp, unsigned long track);
 	//Returns nonzero if the track number reflects a bass track, or if the track's arrangement type is set to 4 (Bass)
 
+int eof_track_is_drop_tuned(EOF_PRO_GUITAR_TRACK *tp);
+	//Returns nonzero if the specified track's lowest string is tuned below standard and all other strings are tuned to standard
+
 #endif

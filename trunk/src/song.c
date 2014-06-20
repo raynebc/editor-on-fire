@@ -3165,10 +3165,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			{	//If this track has a Rocksmith arrangement type defined
 				has_arrangement = 1;
 			}
-			if(tp->ignore_tuning)
-			{	//If this track's tuning is ignored for chord detection
-				ignore_tuning = 1;
-			}
+			ignore_tuning = 1;	//For now, force the ignore tuning setting (on by default) to be written, so the user can explicitly disable it
 			if(tp->capo)
 			{	//If this track uses a capo
 				has_capo = 1;
@@ -3209,7 +3206,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				{	//Write track tuning not honored
 					(void) pack_iputl(5, fp);		//Write the number of bytes this block will contain (1 byte tuning not honored status and a 4 byte block ID)
 					(void) pack_iputl(4, fp);		//Write the pro guitar track tuning not honored custom data block ID
-					(void) pack_putc(1, fp);		//Write the track tuning not honored option
+					(void) pack_putc(tp->ignore_tuning, fp);	//Write the track tuning not honored boolean option
 				}
 				if(has_capo)
 				{	//Write capo value

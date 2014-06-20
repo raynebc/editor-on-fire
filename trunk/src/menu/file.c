@@ -3368,6 +3368,7 @@ int eof_gp_import_track(DIALOG * d)
 			}
 		}
 		eof_song->pro_guitar_track[tracknum]->capo = eof_parsed_gp_file->track[selected]->capo;	//Apply the capo position
+		eof_song->pro_guitar_track[tracknum]->ignore_tuning = eof_parsed_gp_file->track[selected]->ignore_tuning;	//Apply the option whether or not to ignore the tuning for chord name lookups
 
 		//Destroy the GP track that was imported and remove it from the list of GP tracks
 		for(ctr = 0; ctr < eof_parsed_gp_file->track[selected]->notes; ctr++)
