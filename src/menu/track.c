@@ -633,6 +633,16 @@ int eof_track_tuning(void)
 				tp->tuning[ctr] = 0;
 			}
 		}
+		if(eof_track_is_drop_tuned(tp))
+		{	//If the user has given a drop tuning
+			if(tp->ignore_tuning)
+			{	//If the option to disregard the tuning for chord name lookups is in effect
+				if(alert("This appears to be a drop tuning.", "Disable the option to ignore the tuning", "for chord names? (recommended)", "&Yes", "&No", 'y', 'n') == 1)
+				{	//If user opts to take the drop tuning into account for chord name lookups
+					tp->ignore_tuning = 0;
+				}
+			}
+		}
 		(void) eof_track_transpose_tuning(tp, newtuning);	//Offer to transpose any existing notes in the track to the new tuning
 	}//If user clicked OK
 

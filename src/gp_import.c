@@ -2994,6 +2994,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				pack_ReadDWORDLE(inf, NULL);	//Skip this padding
 			}
 		}
+		if(eof_track_is_drop_tuned(gp->track[ctr]))
+		{	//If this track has a drop tuning
+			gp->track[ctr]->ignore_tuning = 0;
+		}
 		pack_ReadDWORDLE(inf, &dword);	//Read the MIDI port used for this track
 		pack_ReadDWORDLE(inf, &dword);	//Read the MIDI channel used for this track
 		pack_ReadDWORDLE(inf, &dword);	//Read the MIDI channel used for this track's effects
