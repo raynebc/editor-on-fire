@@ -1096,7 +1096,7 @@ int eof_note_is_hopo(unsigned long cnote)
 
 void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 {
-	unsigned long i, j, tracknum;
+	unsigned long i, j, k, tracknum;
 	char st[EOF_MAX_PHRASES] = {0};
 	char so[EOF_MAX_PHRASES] = {0};
 	char trills[EOF_MAX_PHRASES] = {0};
@@ -1120,117 +1120,145 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 
 	tracknum = sp->track[track]->tracknum;
 	numnotes = eof_get_track_size(sp, track);
-	for(i = 0; i < numnotes; i++)
-	{	//For each note in the active track
-		/* clear the flags */
-		notepos = eof_get_note_pos(sp, track, i);
-		notetype = eof_get_note_type(sp, track, i);
-		flags = eof_get_note_flags(sp, track, i);
-		flags &= (~EOF_NOTE_FLAG_HOPO);
-		flags &= (~EOF_NOTE_FLAG_SP);
-		flags &= (~EOF_NOTE_FLAG_IS_TRILL);
-		flags &= (~EOF_NOTE_FLAG_IS_TREMOLO);
-		if((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT))
-		{	//Only clear the is slider flag if this is a legacy guitar track
-			flags &= (~EOF_GUITAR_NOTE_FLAG_IS_SLIDER);
-		}
-
-		/* mark HOPO */
-		if(eof_note_is_hopo(i))
-		{
-			flags |= EOF_NOTE_FLAG_HOPO;
-		}
-
-		/* mark and check star power notes */
-		numphrases = eof_get_num_star_power_paths(sp, track);
-		for(j = 0; j < numphrases; j++)
-		{	//For each star power path in the active track
-			sectionptr = eof_get_star_power_path(sp, track, j);
-			if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
-			{	//If the note is in this star power section
-				flags |= EOF_NOTE_FLAG_SP;
-				st[j] = 1;
+	for(k = 0; k < 2; k++)
+	{	//Perform two passes, because the two drum tracks can share their phrasing
+		if(k > 0)
+		{	//If this is the second pass
+			if(sp->tags->unshare_drum_phrasing)
+			{	//If drum phrase sharing isn't enabled
+				break;	//Don't perform a second pass
+			}
+			if(sp->track[track]->track_type == EOF_TRACK_DRUM_PS)
+			{	//If the first pass processed the Phase Shift drum track
+				track = EOF_TRACK_DRUM;	//The second pass will process the regular drum track
+				numnotes = eof_get_track_size(sp, track);
+			}
+			else if(sp->track[track]->track_type == EOF_TRACK_DRUM)
+			{	//And vice-versa
+				track = EOF_TRACK_DRUM_PS;
+				numnotes = eof_get_track_size(sp, track);
+			}
+			else
+			{	//Otherwise if it's not a drum track
+				break;	//Don't perform a second pass
 			}
 		}
 
-		/* check solos */
-		numphrases = eof_get_num_solos(sp, track);
-		for(j = 0; j < numphrases; j++)
-		{	//For each solo section in the active track
-			sectionptr = eof_get_solo(sp, track, j);
-			if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
-			{	//If the note is in this solo section
-				so[j] = 1;
+		for(i = 0; i < numnotes; i++)
+		{	//For each note in the active track
+			/* clear the flags */
+			notepos = eof_get_note_pos(sp, track, i);
+			notetype = eof_get_note_type(sp, track, i);
+			flags = eof_get_note_flags(sp, track, i);
+			flags &= (~EOF_NOTE_FLAG_HOPO);
+			flags &= (~EOF_NOTE_FLAG_SP);
+			flags &= (~EOF_NOTE_FLAG_IS_TRILL);
+			flags &= (~EOF_NOTE_FLAG_IS_TREMOLO);
+			if((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT))
+			{	//Only clear the is slider flag if this is a legacy guitar track
+				flags &= (~EOF_GUITAR_NOTE_FLAG_IS_SLIDER);
 			}
-		}
 
-		/* mark and check trills */
-		numphrases = eof_get_num_trills(sp, track);
-		for(j = 0; j < numphrases; j++)
-		{	//For each trill section in the active track
-			sectionptr = eof_get_trill(sp, track, j);
-			if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
-			{	//If the note is in this trill section
-				flags |= EOF_NOTE_FLAG_IS_TRILL;
-				trills[j] = 1;
+			/* mark HOPO */
+			if(eof_note_is_hopo(i))
+			{
+				flags |= EOF_NOTE_FLAG_HOPO;
 			}
-		}
 
-		/* mark and check tremolos */
-		numphrases = eof_get_num_tremolos(sp, track);
-		for(j = 0; j < numphrases; j++)
-		{	//For each tremolo section in the active track
-			sectionptr = eof_get_tremolo(sp, track, j);
-			if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
-			{	//If the note is in this tremolo section
-				if(eof_song->track[track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
-				{	//If the track's difficulty limit has been removed
-					if(sectionptr->difficulty == notetype)	//And the tremolo section applies to this note's track difficulty
-						flags |= EOF_NOTE_FLAG_IS_TREMOLO;
-				}
-				else
-				{
-					if(sectionptr->difficulty == 0xFF)	//Otherwise if the tremolo section applies to all track difficulties
-						flags |= EOF_NOTE_FLAG_IS_TREMOLO;
-				}
-
-				tremolos[j] = 1;
-			}
-		}
-
-		/* check arpeggios */
-		if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-		{	//If this is a pro guitar track
-			for(j = 0; j < sp->pro_guitar_track[tracknum]->arpeggios; j++)
-			{	//For each arpeggio section in the active track
-				sectionptr = &sp->pro_guitar_track[tracknum]->arpeggio[j];
+			/* mark and check star power notes */
+			numphrases = eof_get_num_star_power_paths(sp, track);
+			for(j = 0; j < numphrases; j++)
+			{	//For each star power path in the active track
+				sectionptr = eof_get_star_power_path(sp, track, j);
 				if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
-				{	//If the note is in this arpeggio section
-					if((sectionptr->difficulty == 0xFF) || (sectionptr->difficulty == notetype))
-					{	//If the arpeggio section applies to all difficulties or if it applies to this note's track difficulty
-						arpeggios[j] = 1;
+				{	//If the note is in this star power section
+					flags |= EOF_NOTE_FLAG_SP;
+					st[j] = 1;
+				}
+			}
+
+			/* check solos */
+			numphrases = eof_get_num_solos(sp, track);
+			for(j = 0; j < numphrases; j++)
+			{	//For each solo section in the active track
+				sectionptr = eof_get_solo(sp, track, j);
+				if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
+				{	//If the note is in this solo section
+					so[j] = 1;
+				}
+			}
+
+			/* mark and check trills */
+			numphrases = eof_get_num_trills(sp, track);
+			for(j = 0; j < numphrases; j++)
+			{	//For each trill section in the active track
+				sectionptr = eof_get_trill(sp, track, j);
+				if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
+				{	//If the note is in this trill section
+					flags |= EOF_NOTE_FLAG_IS_TRILL;
+					trills[j] = 1;
+				}
+			}
+
+			/* mark and check tremolos */
+			numphrases = eof_get_num_tremolos(sp, track);
+			for(j = 0; j < numphrases; j++)
+			{	//For each tremolo section in the active track
+				sectionptr = eof_get_tremolo(sp, track, j);
+				if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
+				{	//If the note is in this tremolo section
+					if(eof_song->track[track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+					{	//If the track's difficulty limit has been removed
+						if(sectionptr->difficulty == notetype)	//And the tremolo section applies to this note's track difficulty
+							flags |= EOF_NOTE_FLAG_IS_TREMOLO;
+					}
+					else
+					{
+						if(sectionptr->difficulty == 0xFF)	//Otherwise if the tremolo section applies to all track difficulties
+							flags |= EOF_NOTE_FLAG_IS_TREMOLO;
+					}
+
+					tremolos[j] = 1;
+				}
+			}
+
+			/* check arpeggios */
+			if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If this is a pro guitar track
+				for(j = 0; j < sp->pro_guitar_track[tracknum]->arpeggios; j++)
+				{	//For each arpeggio section in the active track
+					sectionptr = &sp->pro_guitar_track[tracknum]->arpeggio[j];
+					if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
+					{	//If the note is in this arpeggio section
+						if((sectionptr->difficulty == 0xFF) || (sectionptr->difficulty == notetype))
+						{	//If the arpeggio section applies to all difficulties or if it applies to this note's track difficulty
+							arpeggios[j] = 1;
+						}
 					}
 				}
 			}
-		}
 
-		/* mark and check sliders */
-		if((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT))
-		{	//Only check the is slider flag if this is a legacy guitar track
-			numphrases = eof_get_num_sliders(sp, track);
-			for(j = 0; j < numphrases; j++)
-			{	//For each slider section in the active track
-				sectionptr = eof_get_slider(sp, track, j);
-				if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
-				{	//If the note is in this slider section
-					flags |= EOF_GUITAR_NOTE_FLAG_IS_SLIDER;
-					sliders[j] = 1;
+			/* mark and check sliders */
+			if((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT))
+			{	//Only check the is slider flag if this is a legacy guitar track
+				numphrases = eof_get_num_sliders(sp, track);
+				for(j = 0; j < numphrases; j++)
+				{	//For each slider section in the active track
+					sectionptr = eof_get_slider(sp, track, j);
+					if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
+					{	//If the note is in this slider section
+						flags |= EOF_GUITAR_NOTE_FLAG_IS_SLIDER;
+						sliders[j] = 1;
+					}
 				}
 			}
-		}
 
-		eof_set_note_flags(sp, track, i, flags);	//Update the note's flags variable
-	}//For each note in the active track
+			if(!k)
+			{	//Only update note flags on the first pass
+				eof_set_note_flags(sp, track, i, flags);	//Update the note's flags variable
+			}
+		}//For each note in the active track
+	}//Perform two passes, because the two drum tracks can share their phrasing
 
 	/* delete star power phrases with no notes */
 	numphrases = eof_get_num_star_power_paths(sp, track);
