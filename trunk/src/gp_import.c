@@ -3619,18 +3619,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									{	//If this is the voice that is being imported
 										if(np[ctr2] && (np[ctr2]->note && bitmask))
 										{	//If there is a previously created note, and it used this string, alter its length
-											long oldlength;
-
 											tie_note = 1;
-											oldlength = np[ctr2]->length;
-											np[ctr2]->length = lastendpos - np[ctr2]->pos + 0.5;	//Round up to nearest millisecond
-
-#ifdef GP_IMPORT_DEBUG
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tTie note:  Note starting at %lums lengthened from %ldms to %ldms", np[ctr2]->pos, oldlength, np[ctr2]->length);
-											eof_log(eof_log_string, 1);
-#endif
-
-											usedstrings &= ~bitmask;	//Clear the bit used to indicate the tie note's string as being played, since overlapping guitar notes isn't supported in Rock Band or Rocksmith
 										}
 									}
 								}
@@ -3656,7 +3645,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							if(bytemask & 32)
 							{	//Note type is defined
 								byte = pack_getc(inf);	//Fret number
-								frets[ctr4] |= byte;	//OR this value, so that the muted status can be kept if it is set
+								if(!tie_note)
+								{	//If this is a tie note, force the fret number to remain the same, otherwise apply the defined fret value
+									frets[ctr4] |= byte;	//OR this value, so that the muted status can be kept if it is set
+								}
 							}
 							if((hopo[ctr2] >= 0) && (ctr3 > hopobeatnum[ctr2]))
 							{	//If the previous note was marked as leading into a hammer on or pull off with the next (this) note
@@ -3891,6 +3883,30 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					{	//If this is the voice that is being imported
 						if(importnote)
 						{	//If this note is being imported
+							if(tie_note)
+							{	//If this was defined as a tie note
+								if(flags == np[ctr2]->flags)
+								{	//If the flags between the previous note and this one are the same, alter the previous note's length to include the tie note
+									long oldlength;
+
+									tie_note = 1;
+									oldlength = np[ctr2]->length;
+									np[ctr2]->length = lastendpos - np[ctr2]->pos + 0.5;	//Round up to nearest millisecond
+
+#ifdef GP_IMPORT_DEBUG
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tTie note:  Note starting at %lums lengthened from %ldms to %ldms", np[ctr2]->pos, oldlength, np[ctr2]->length);
+									eof_log(eof_log_string, 1);
+#endif
+
+								}
+								else
+								{	//Otherwise create a new note, since the tie note changes the techniques in use
+									tie_note = 0;	//Reset this to prevent this note's flags and bend strength from overriding those of the previous note
+									new_note = 1;	//Set this to nonzero, the if() block below will create the note
+									np[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Set the linknext flag on the previous note
+								}
+							}
+
 							if(new_note)
 							{	//If a new note is to be created
 								np[ctr2] = eof_pro_guitar_track_add_note(gp->track[ctr2]);	//Add a new note to the current track
