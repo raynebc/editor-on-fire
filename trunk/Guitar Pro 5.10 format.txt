@@ -299,6 +299,7 @@ TRACK CHUNK, for each track:
 				!REST TYPE (if the beat bitmask declares the beat to be a rest)
 					[1 byte]:	Rest type (0 = empty beat, 2 = rest)
 				1 byte:		Beat duration (-2 = whole note, -1 = half note, 0 = quarter note, 1 = eighth note, 2 = sixteenth note, 3 = thirty-second note, 4 = sixty-fourth note)
+					!I've observed that Guitar Pro can author empty measures as a whole note rest even when that is musically inaccurate (ie. 5/8 meter)
 				!N-TUPLET TYPE (if the beat bitmask declares the beat to be an N-tuplet)
 					[4 bytes]:	The number of notes played within the "tuplet" (ie. 3 = triplet)
 				!CHORD DIAGRAM (if the beat bitmask declares that a chord diagram is present):
