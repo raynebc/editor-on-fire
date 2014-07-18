@@ -3270,6 +3270,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 
 	(void) pack_fclose(fp);
 	sp->tags->unshare_drum_phrasing = unshare_drum_phrasing;	//After all tracks have been formally written, store this value back into the project to optionally override drum phrase handling
+	eof_log("\tSave completed", 1);
 	return 1;	//Return success
 }
 

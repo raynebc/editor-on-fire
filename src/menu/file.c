@@ -2720,14 +2720,20 @@ int eof_save_helper(char *destfilename, char silent)
 				}//If this is a pro guitar/bass track
 			}//For each track (until the user is warned about any offending chord names)
 		}//If the user wants to save Rocksmith capable files
-	}
+	}//If checks and warnings aren't suppressed
 
 	/* build the target file name */
 	if(destfilename == NULL)
 	{	//Perform save
 		function = 1;
 		if((eof_song_path[0] == '\0') || (eof_loaded_song_name[0] == '\0'))
+		{
+			if(eof_song_path[0] == '\0')
+				eof_log("\t\teof_song_path string is empty", 1);
+			if(eof_loaded_song_name[0] == '\0')
+				eof_log("\t\teof_loaded_song_name string is empty", 1);
 			return 3;	//Return failure:  Invalid paths
+		}
 		(void) append_filename(eof_temp_filename, eof_song_path, eof_loaded_song_name, (int) sizeof(eof_temp_filename));
 		(void) replace_filename(newfolderpath, eof_song_path, "", 1024);	//Obtain the destination path
 	}
@@ -3228,6 +3234,9 @@ int eof_gp_import_track(DIALOG * d)
 		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 		selected = eof_gp_import_dialog[1].d1;
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tImporting track #%lu (%s) from GP file", selected + 1, eof_parsed_gp_file->names[selected]);
+		eof_log(eof_log_string, 1);
+
 		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0);	//Disable tech view if applicable
 
 		//Prompt about overwriting the active track or track difficulty as appropriate
@@ -3236,6 +3245,7 @@ int eof_gp_import_track(DIALOG * d)
 		{	//If the user preference to replace the entire active track with the imported track is enabled
 			if(eof_get_track_size(eof_song, eof_selected_track) && alert("This track already has notes", "Importing this GP track will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 			{	//If the active track is already populated and the user doesn't opt to overwrite it
+				eof_log("\t\tImport canceled", 1);
 				return 0;
 			}
 		}
@@ -3243,6 +3253,7 @@ int eof_gp_import_track(DIALOG * d)
 		{	//If the imported track will only replace the active track difficulty
 			if(eof_track_diff_populated_status[eof_note_type] && alert("This track difficulty already has notes", "Importing this GP track will overwrite this difficulty's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 			{	//If the active track difficulty is already populated and the user doesn't opt to overwrite it
+				eof_log("\t\tImport canceled", 1);
 				return 0;
 			}
 		}
@@ -3272,6 +3283,7 @@ int eof_gp_import_track(DIALOG * d)
 				if(!np)
 				{	//If the memory couldn't be allocated
 					allegro_message("Error allocating memory.  Aborting");
+					eof_log("\t\tImport failed", 1);
 					return 0;
 				}
 				memcpy(np, eof_parsed_gp_file->track[selected]->note[ctr], sizeof(EOF_PRO_GUITAR_NOTE));	//Clone the note from the GP track
@@ -3284,6 +3296,7 @@ int eof_gp_import_track(DIALOG * d)
 				if(!np)
 				{	//If the memory couldn't be allocated
 					allegro_message("Error allocating memory.  Aborting");
+					eof_log("\t\tImport failed", 1);
 					return 0;
 				}
 				memcpy(np, eof_parsed_gp_file->track[selected]->technote[ctr], sizeof(EOF_PRO_GUITAR_NOTE));	//Clone the tech note from the GP track
@@ -3400,6 +3413,7 @@ int eof_gp_import_track(DIALOG * d)
 		(void) dialog_message(eof_gp_import_dialog, MSG_DRAW, 0, &junk);	//Redraw the dialog since the list's contents have changed
 	}
 
+	eof_log("\t\tImport complete", 1);
 	return D_O_K;
 }
 

@@ -30,7 +30,7 @@
 #endif
 
 #ifndef EOF_BUILD
-char *eof_note_names_flat[12];		//The name of musical note 0 (0 semitones above A) to 11 (11 semitones above A)
+char *eof_note_names_flat[12] =	{"A","Bb","B","C","Db","D","Eb","E","F","Gb","G","Ab"};		//The name of each scale in order from 0 (0 semitones above A) to 11 (11 semitones above A)
 char **eof_note_names = eof_note_names_flat;
 #endif
 
@@ -1665,6 +1665,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	char user_warned = 0;	//Used to track user warnings about the file being corrupt
 	char string_warning = 0;	//Used to track a user warning about the string count for a track being higher than what EOF supports
 	char drop_7 = 0;			//Used to track whether string 7 is being dropped during import, if any tracks have 7 strings
+	char drop_1 = 0;			//Used to track whether string 1 is being dropped during import, if any tracks have 7 strings
 	char (*nonshiftslide)[7];		//Used to track, per GP track, whether the previous note on each string was a non shift slide (suppress the note after the slide)
 	unsigned long curbeat = 0;		//Tracks the current beat number for the current measure
 	double gp_durations[] = {1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625};	//The duration of each note type in terms of one whole note (whole note, half, 4th, 8th, 12th, 32nd, 64th)
@@ -2000,7 +2001,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	}
 	else
 	{
-		allegro_message("File format version not supported");
+		allegro_message("File format version not supported\n(make sure it's GP5 format or older)");
 		eof_log("File format version not supported", 1);
 		(void) pack_fclose(inf);
 		free(gp);
@@ -2031,7 +2032,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	pack_ReadDWORDLE(inf, &dword);						//Read the number of notice entries
 	if(dword > 1000)
 	{	//Compare the notice entry count against an arbitrarily large number to satisfy Coverity
-		eof_gp_debug_log(inf, "\t\t\tToo many notice entries, aborting.");
+		eof_log("\t\t\tToo many notice entries, aborting.", 1);
 		(void) pack_fclose(inf);
 		free(gp);
 		if(sync_points)
@@ -2196,7 +2197,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 #endif
 	if(measures > 5000)
 	{	//Compare the measure point count against an arbitrarily large number to satisfy Coverity
-		eof_gp_debug_log(inf, "\t\t\tToo many measures, aborting.");
+		eof_log("\t\t\tToo many measures, aborting.", 1);
 		(void) pack_fclose(inf);
 		free(gp);
 		if(sync_points)
@@ -2972,6 +2973,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				{	//If the user opts to drop string 7
 					drop_7 = 1;
 				}
+				else
+				{
+					drop_1 = 1;	//String 1 is being dropped
+				}
 				string_warning = 1;
 			}
 		}
@@ -2984,9 +2989,13 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tTuning for string #%lu: MIDI note %lu (%s)", ctr2 + 1, dword, eof_note_names[(dword + 3) % 12]);
 				eof_log(eof_log_string, 1);
 #endif
-				if(ctr2 < 6)
-				{	//Don't store the tuning for more than six strings, as EOF doesn't support 7
+				if(!drop_1 && (ctr2 < 6))
+				{	//If the user isn't importing string 7, don't store the tuning for anything after the first six strings
 					gp->track[ctr]->tuning[gp->track[ctr]->numstrings - 1 - ctr2] = dword;	//Store the absolute MIDI note, this will have to be converted to the track and string count specific relative value once mapped to an EOF instrument track (Guitar Pro stores the tuning in string order starting from #1, reversed from EOF)
+				}
+				else if(drop_1 && (ctr2 > 0))
+				{	//If the user is importing string 7, don't import the first string
+					gp->track[ctr]->tuning[gp->track[ctr]->numstrings - 1 - ctr2 + 1] = dword;	//Store the tuning for each string 1 index later, since string 2 is imported as string 1, etc.
 				}
 			}
 			else
@@ -3078,7 +3087,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				pack_ReadDWORDLE(inf, &beats);	//Read number of "beats" (which are more accurately considered notes)
 				if(beats > 1000)
 				{	//Compare the beat count against an arbitrarily large number to satisfy Coverity
-					eof_gp_debug_log(inf, "\t\t\tToo many beats (notes) in this measure, aborting.");
+					eof_log("\t\t\tToo many beats (notes) in this measure, aborting.", 1);
 					(void) pack_fclose(inf);
 					free(gp->names);
 					for(ctr = 0; ctr < tracks; ctr++)
@@ -3164,6 +3173,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					if(bytemask & 1)
 					{	//Dotted note
 						note_duration *= 1.5;	//A dotted note is one and a half times as long as normal
+					}
+					if(note_duration > 1.0)
+					{	//Some GP files have encoding errors where an empty measure is written as a whole note rest, even when that is musically inaccurate (ie. non 4/4 time signature)
+						note_duration = 1.0;	//Force the maximum length of a note to be 1 measure.  GP must correctly write tie notes to define longer notes
+						eof_log("\t\t\tWarning:  GP file defines an invalid note duration, capping to 1 measure long.", 1);
 					}
 					if(note_duration / ((double)curden / (double)curnum) < 0.25)
 					{	//If the note (after undoing the scaling for the time signature) is shorter than a quarter note
