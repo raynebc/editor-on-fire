@@ -26,8 +26,8 @@ char eof_arpeggio_menu_mark_text[32] = "&Mark";
 char eof_trill_menu_mark_text[32] = "&Mark";
 char eof_tremolo_menu_mark_text[32] = "&Mark";
 char eof_slider_menu_mark_text[32] = "&Mark";
-char eof_trill_menu_text[32] = "Trill";
-char eof_tremolo_menu_text[32] = "Tremolo";
+char eof_trill_menu_text[32] = "Tr&Ill";
+char eof_tremolo_menu_text[32] = "Tre&Molo";
 
 char eof_menu_solo_copy_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
 MENU eof_menu_solo_copy_menu[EOF_TRACKS_MAX] =
@@ -365,7 +365,7 @@ MENU eof_note_menu[] =
 	{"&HOPO", NULL, eof_legacy_hopo_menu, 0, NULL},
 	{eof_trill_menu_text, NULL, eof_trill_menu, 0, NULL},
 	{eof_tremolo_menu_text, NULL, eof_tremolo_menu, 0, NULL},
-	{"Slider", NULL, eof_slider_menu, 0, NULL},
+	{"Sli&Der", NULL, eof_slider_menu, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Drum", NULL, eof_note_drum_menu, 0, NULL},
 	{"Pro &Guitar", NULL, eof_note_proguitar_menu, 0, NULL},
