@@ -3857,9 +3857,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										{	//Tapped harmonic
 											(void) pack_getc(inf);	//Right hand fret
 										}
-										if(eof_gp_import_nat_harmonics_only)
+										if(!eof_gp_import_nat_harmonics_only)
 										{	//If the user opted to ignore harmonic status except for natural harmonics
-											flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
+											flags |= EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC;
 										}
 									}
 								}
