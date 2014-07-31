@@ -3549,28 +3549,58 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 					}
 					else if(position + tp->capo > 19)
 					{	//If an invalid fret hand position is in effect
-						if(report && !(ignorewarning & 1))
+						if(!report)
+						{	//If the calling function wanted to just check for presence of errors
+							unsigned long limit = 21;	//Rocksmith 2's fret hand position limit is 21
+
+							if(eof_write_rs_files)
+							{	//If Rocksmith 1 export is enabled
+								limit = 19;	//The limit is 19 instead
+							}
+							if(position + tp->capo > limit)
+							{
+								problem_found = 1;
+							}
+						}
+						else if(!(ignorewarning & 1))
 						{	//If the calling function wanted to prompt the user about each issue found, and this warning message hasn't been suppressed
 							unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+							char triggered = 0;
 
 							eof_2d_render_top_option = 34;			//Display fret hand positions at the top of the piano roll
 							eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
 
-							ret = alert3("Warning:  Fret hand positions higher than 19 (considering any capo in use) are invalid.", "You should change this to a lower number or delete/regenerate the fret hand positions.", "Continue?", "&Yes", "&No", "&Ignore", 'y', 'n', 'i');
-							if(ret == 2)
-							{	//If the user does not opt to continue looking for errors
-								eof_process_beat_statistics(eof_song, eof_selected_track);		//Cache section name information into the beat structures (from the perspective of the active track)
-								(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
+							if(eof_write_rs_files)
+							{	//If Rocksmith 1 files are to be exported
+								ret = alert3("Warning (RS1):  Fret hand positions higher than 19 (considering any capo in use) are invalid.", "You should change this to a lower number or delete/regenerate the fret hand positions.", "Continue?", "&Yes", "&No", "&Ignore", 'y', 'n', 'i');
+								problem_found = 1;
+								triggered = 1;
+							}
+							else if(eof_write_rs2_files)
+							{	//If Rocksmith 2 files are to be exported
+								if(position + tp->capo > 21)
+								{	//If the effective position is above fret 21
+									ret = alert3("Warning (RS2):  Fret hand positions higher than 21 (considering any capo in use) are invalid.", "You should change this to a lower number or delete/regenerate the fret hand positions.", "Continue?", "&Yes", "&No", "&Ignore", 'y', 'n', 'i');
+									problem_found = 1;
+									triggered = 1;
+								}
+							}
+							if(triggered)
+							{	//If the prompt was triggered
+								if(ret == 2)
+								{	//If the user does not opt to continue looking for errors
+									eof_process_beat_statistics(eof_song, eof_selected_track);		//Cache section name information into the beat structures (from the perspective of the active track)
+									(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
+									eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+									return 1;	//Return user cancellation
+								}
+								if(ret == 3)
+								{	//If the user chose to ignore instances of this issue
+									ignorewarning |= 1;
+								}
 								eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-								return 1;	//Return user cancellation
 							}
-							if(ret == 3)
-							{	//If the user chose to ignore instances of this issue
-								ignorewarning |= 1;
-							}
-							eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
 						}
-						problem_found = 1;
 					}
 					else
 					{	//A valid fret hand position is in effect, run other checks

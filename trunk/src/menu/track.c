@@ -974,11 +974,14 @@ int eof_track_pro_guitar_set_fret_hand_position(void)
 	EOF_PHRASE_SECTION *ptr = NULL;	//If the seek position has a fret hand position defined, this will reference it
 	unsigned long index;			//Will store the index number of the existing fret hand position being edited
 	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long limit = 21;		//Unless Rocksmith 1 or Rock Band export are enabled, assume Rocksmith 2's limit
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+	if(eof_write_rs_files || eof_write_rb_files)
+		limit = 19;	//Rocksmith 1 and Rock Band only support fret hand positions as high as fret 19
 
 	eof_render();
 	eof_color_dialog(eof_track_pro_guitar_set_fret_hand_position_dialog, gui_fg_color, gui_bg_color);
@@ -1008,18 +1011,27 @@ int eof_track_pro_guitar_set_fret_hand_position(void)
 				allegro_message("You cannot specify a fret hand position that is higher than this track's number of frets (%u).", tp->numfrets);
 				return 1;
 			}
-			else if(position + tp->capo > 19)
-			{	//19 is the highest valid anchor because fret 22 is the highest supported fret in both Rock Band and Rocksmith
-				if(tp->capo)
-				{	//If there is a capo in use
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "You cannot specify a fret hand position higher than %u when a capo is at fret %d (it will cause Rocksmith to crash).", 19 - tp->capo, tp->capo);
-					allegro_message(eof_log_string);
+			else if(position + tp->capo > limit)
+			{	//If the fret hand position (taking the capo into account) is higher than fret 19
+				if(eof_write_rs_files || eof_write_rb_files)
+				{	//Fret 22 is the highest supported fret in both Rock Band and Rocksmith 1
+					if(tp->capo)
+					{	//If there is a capo in use
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "You cannot specify a fret hand position higher than %u when a capo is at fret %d (it will cause Rocksmith 1 to crash).", 19 - tp->capo, tp->capo);
+						allegro_message(eof_log_string);
+					}
+					else
+					{
+						allegro_message("You cannot specify a fret hand position higher than 19 (it will cause Rocksmith 1 to crash).");
+					}
+					return 1;
 				}
-				else
-				{
-					allegro_message("You cannot specify a fret hand position higher than 19 (it will cause Rocksmith to crash).");
+				//If this line is reached, it's because the limit was exceeded and it wasn't that of Rocksmith 1 or Rock Band (is Rocksmith 2's limit)
+				if(eof_write_rs2_files)
+				{	//Fret 24 is the highest supported fret in Rocksmith 2
+					allegro_message("You cannot specify a fret hand position higher than 21 (it will cause Rocksmith 2 to crash).");
+					return 1;
 				}
-				return 1;
 			}
 			else if(!position)
 			{	//If the user gave a fret position of 0
@@ -1042,7 +1054,7 @@ int eof_track_pro_guitar_set_fret_hand_position(void)
 				(void) eof_track_add_section(eof_song, eof_selected_track, EOF_FRET_HAND_POS_SECTION, eof_note_type, eof_music_pos - eof_av_delay, position, 0, NULL);
 				eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions, since they must be in order for displaying to the user
 			}
-		}
+		}//If the user provided a number
 		else if(ptr)
 		{	//If the user left the input box empty and was editing an existing hand position
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);

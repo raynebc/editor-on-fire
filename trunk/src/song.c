@@ -2302,8 +2302,8 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				count = sp->pro_guitar_track[tracknum]->handpositions;
 				if(count < EOF_MAX_NOTES)
 				{	//If EOF can store the fret hand position
-					if(end <= 19)
-					{	//If the fret hand position is valid
+					if(end <= 21)
+					{	//If the fret hand position is valid (RS2's limit or lower)
 						sp->pro_guitar_track[tracknum]->handposition[count].start_pos = start;
 						sp->pro_guitar_track[tracknum]->handposition[count].end_pos = end;	//This will store the fret number the fretting hand is at
 						sp->pro_guitar_track[tracknum]->handposition[count].flags = 0;
