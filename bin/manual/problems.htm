@@ -39,9 +39,9 @@ When I play the song back the position marker moves faster initially before slow
 There is no way to prevent this from happening as it has to do with the way the OGG file is being played. You will just have to rewind slightly further so that the position marker is moving at the right speed when it hits the note or beat you are trying to sync.<br><br>
 
 <b>Problem:</b><br>
-A certain key press doesn't seem to work in EOF, even though it does in other programs.<br>
+One or more key presses don't seem to work in EOF, even though they do in other programs.<br>
 <b>Solution:</b><br>
-We usually find that the key input is being intercepted by another program at a low enough level in the operating system that Allegro (which provides the input functionality for EOF) cannot read the key press.  For example, if your computer has the "Microsoft eHome Infrared Transceiver" driver installed, it could prevent EOF from reacting to the apostrophe (') or other keys.  The only real solution is to disable/terminate the conflicting software, or if you would prefer to do without it, uninstall it.<br><br>
+We usually find that the key input is being intercepted by another program at a low enough level in the operating system that Allegro (which provides the input functionality for EOF) cannot read the key press.  For example, if your computer has the "Microsoft eHome Infrared Transceiver" driver installed, it could prevent EOF from reacting to the apostrophe (') or other keys.  Another example is Synergy, which is software to redirect your mouse and keyboard input between multiple computers.  The only real solution is to disable/terminate the conflicting software, or if you would prefer to do without it, uninstall it.<br><br>
 
 <b>Problem:</b><br>
 Notes are grid snapped at a small enough interval that they should play as HOPO notes in FoF/Phase Shift, but some of them do not register as HOPOs.<br>
