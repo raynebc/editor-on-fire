@@ -61,7 +61,7 @@
 	struct eof_gpa_sync_point
 	{
 		unsigned long realtime_pos;		//The realtime position of the sync point in milliseconds
-		unsigned long measure;			//The measure at which this sync point exists
+		unsigned long measure;			//The measure at which this sync point exists, numbered starting from 0
 		double pos_in_measure;			//The position (from 0 to 1) in the measure at which the sync point exists
 		double qnote_length;			//The length of each quarter note from this sync point until the next
 		double real_qnote_length;		//Multiple users have encountered instances where Go PlayAlong exported invalid quarter note timings to XML, EOF will recreate them by dividing the time between sync points by the number of beats between them
