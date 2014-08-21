@@ -279,7 +279,10 @@ unsigned long GetMP3FrameDuration(struct ID3Tag *ptr)
 		return 0;
 	}
 
-	if((Lyrics.verbose >=2) && samplerate)
+	if(!samplerate)
+		return 0;	//Error
+
+	if(Lyrics.verbose >=2)
 		printf("\tSample rate: %lu Hz\n",samplerate);
 
 //Check the Layer Description, located immediately after the MPEG audio version ID (bits 6 and 7 of the second header byte)
@@ -481,7 +484,8 @@ void SYLT_Parse(struct ID3Tag *tag)
 			timestamp=((double)timestamp * tag->frameduration + 0.5);	//Convert to milliseconds, rounding up
 
 	//Perform line break logic
-		if(string && ((string[0] == '\r') || (string[0] == '\n')))	//If this lyric begins with a newline or carriage return (check string for NULL again to satisfy cppcheck)
+		assert(string != NULL);		//(check string for NULL again to satisfy cppcheck)
+		if((string[0] == '\r') || (string[0] == '\n'))	//If this lyric begins with a newline or carriage return
 		{
 			EndLyricLine();		//End the lyric line before the lyric is added
 			linebreaks=1;		//Track that line break character(s) were found in the lyrics

@@ -1690,8 +1690,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	char note_is_short = 0;	//Will be set to nonzero if the note being parsed is shorter than a quarter note
 	char parse_gpa = 0;		//Will be set to nonzero if the specified file is detected to be XML, in which case, the Go PlayAlong file will be parsed
 	size_t maxlinelength;
-	unsigned long linectr = 2, num_sync_points = 0;
-	struct eof_gpa_sync_point *sync_points = NULL;
+	unsigned long linectr = 2, num_sync_points = 0, raw_num_sync_points = 0;
+	struct eof_gpa_sync_point *sync_points = NULL, temp_sync_point;
 	char error = 0;
 	char *musical_symbols[19] = {"Coda", "Double Coda", "Segno", "Segno Segno", "Fine", "Da Capo", "Da Capo al Coda", "Da Capo al double Coda", "Da Capo al Fine", "Da Segno", "Da Segno al Coda", "Da Segno al double Coda", "Da Segno al Fine", "Da Segno Segno", "Da Segno Segno al Coda", "Da Segno Segno al double Coda", "Da Segno Segno al Fine", "Da Coda", "Da double Coda"};
 	unsigned char unpitchend;	//Tracks the end position for imported notes that slide in/out with no formal slide definition
@@ -1831,12 +1831,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					break;
 				}
 				buffer3[ctr] = '\0';	//Terminate the string
-				num_sync_points = atol(buffer3);	//Convert to integer value
+				raw_num_sync_points = atol(buffer3);	//Convert to integer value
 
 				//Allocate array for sync points
-				if(num_sync_points)
+				if(raw_num_sync_points)
 				{	//If there is a valid number of sync entries
-					sync_points = malloc(sizeof(struct eof_gpa_sync_point) * num_sync_points);
+					sync_points = malloc(sizeof(struct eof_gpa_sync_point) * raw_num_sync_points);
 					if(!sync_points)
 					{
 						eof_log("\t\tError allocating memory (2).  Aborting", 1);
@@ -1845,19 +1845,23 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				}
 
 				//Store sync points into array
-				for(ctr = 0; ctr < num_sync_points; ctr++)
+				for(ctr = 0; ctr < raw_num_sync_points; ctr++)
 				{	//For each expected sync point
-					if(!eof_get_next_gpa_sync_point(&ptr, &sync_points[ctr]))
+					if(!eof_get_next_gpa_sync_point(&ptr, &temp_sync_point))
 					{	//If the sync point was not read
 						eof_log("\t\tError parsing sync tag.  Aborting", 1);
 						error = 1;
 						break;
 					}
-					if(ctr && ((sync_points[ctr].measure + sync_points[ctr].pos_in_measure <= sync_points[ctr - 1].measure + sync_points[ctr - 1].pos_in_measure) || (sync_points[ctr].realtime_pos <= sync_points[ctr - 1].realtime_pos)))
-					{	//If there was a previous sync point, and this sync point isn't a later timestamp or measure position
-						eof_log("\t\tSync points out of order.  Aborting", 1);
-						error = 1;
-						break;
+					if(num_sync_points && ((temp_sync_point.measure + temp_sync_point.pos_in_measure <= sync_points[num_sync_points - 1].measure + sync_points[num_sync_points - 1].pos_in_measure) || (temp_sync_point.realtime_pos <= sync_points[num_sync_points - 1].realtime_pos)))
+					{	//If there was a previous sync point added, and this sync point isn't a later timestamp or measure position
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSync point #%lu (time = %lums, measure = %f) is out of chronological order, it will be skipped.", ctr, temp_sync_point.realtime_pos, temp_sync_point.measure + 1.0 + temp_sync_point.pos_in_measure);
+						eof_log(eof_log_string, 1);
+					}
+					else
+					{	//This sync point is valid, add it to the array
+						memcpy(&sync_points[num_sync_points], &temp_sync_point, sizeof(temp_sync_point));	//Copy the structure to the array
+						num_sync_points++;	//Maintain this as the count of valid sync points
 					}
 				}
 			}//If the sync tag is present

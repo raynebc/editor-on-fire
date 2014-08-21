@@ -607,6 +607,7 @@ void eof_switch_in_callback(void)
 	eof_log("eof_switch_in_callback() entered", 2);
 
 	eof_use_key();
+	eof_read_keyboard_input(1);	//Update the keyboard input variables when EOF regains focus
 	eof_has_focus = 1;
 	gametime_reset();
 }
