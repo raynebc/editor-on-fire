@@ -2360,9 +2360,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							(void) eof_get_rs_techniques(sp, track, ctr3, 0, &tech, 2, 0);			//Determine techniques used by this chord (do not include applicable technote's techniques to the chord tag itself, they will apply to chordNotes instead)
 							highdensity = eof_note_has_high_chord_density(sp, track, ctr3, 2);	//Determine whether the chord will export with high density
 							notepos = tp->note[ctr3]->pos;
-							if((chordid != lastchordid) || !highdensity || chordnote)
-							{	//If this chord's ID is different from that of the previous chord, meets the normal criteria for a low density chord or otherwise requires chordNote tags to be written
-								chordnote = 1;		//Ensure chordNote subtags are written
+							if((chordid != lastchordid) || !highdensity)
+							{	//If this chord's ID is different from that of the previous chord or meets the normal criteria for a low density chord
 								highdensity = 0;	//Ensure the chord tag is written to reflect low density
 								tagend[0] = '\0';	//Drop the / from the string
 							}
