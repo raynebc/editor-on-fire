@@ -3120,6 +3120,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					unsigned long beat_position;
 					double partial_beat_position, beat_length;
 
+					unpitchend = 0;	//Assume no unpitched slide unless one is defined
 					new_note = 0;	//Assume no new note is to be added unless a normal/muted note is parsed
 					tie_note = 0;	//Assume a note isn't a tie note unless found otherwise
 					bendstruct.bendpoints = 0;	//Assume the note has no bend points unless any are parsed
@@ -3829,10 +3830,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										}
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
 									}
-								}
-								else
-								{
-									unpitchend = 0;	//No unpitched slide
 								}
 								if(byte2 & 16)
 								{	//Harmonic
@@ -4950,6 +4947,7 @@ int eof_get_next_gpa_sync_point(char **buffer, struct eof_gpa_sync_point *ptr)
 		else
 		{	//ctr is 3
 			ptr->qnote_length = value;
+			ptr->real_qnote_length = value;
 		}
 	}//For each of the 4 expected numbers in the timestamp
 

@@ -2306,14 +2306,13 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			//Write chords
 			if(numchords)
 			{	//If there's at least one chord in this difficulty
-				unsigned long chordid, flags;
+				unsigned long chordid, flags, stringnum, bitmask;
 				unsigned long lastchordid = 0;	//Stores the previous written chord's ID, so that when the ID changes, chordNote subtags can be forced to be written
 				char *upstrum = "up";
 				char *downstrum = "down";
 				char *direction;		//Will point to either upstrum or downstrum as appropriate
 				unsigned long notepos;
 				char highdensity;		//Various criteria determine whether the highDensity boolean property is set to true
-				char chordnote = 1;		//Tracks whether a chordNote subtag is to be written, at this point, it's been determined that all chords should be written this way
 
 				(void) snprintf(buffer, sizeof(buffer) - 1, "      <chords count=\"%lu\">\n", numchords);
 				(void) pack_fputs(buffer, fp);
@@ -2323,8 +2322,6 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems)
 						if(!(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE))
 						{	//If this chord wasn't split into single notes or converted into a non ghosted chord and is being ignored
-							char tagend[2] = "/";	//If a chord tag is to have a chordNote subtag, this string is emptied so that the chord tag doesn't end in the same line
-
 							for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
 							{	//For each of the entries in the unique chord list
 								if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]) && (eof_is_partially_ghosted(sp, track, ctr3) == eof_is_partially_ghosted(sp, track, chordlist[ctr4])))
@@ -2363,23 +2360,18 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							if((chordid != lastchordid) || !highdensity)
 							{	//If this chord's ID is different from that of the previous chord or meets the normal criteria for a low density chord
 								highdensity = 0;	//Ensure the chord tag is written to reflect low density
-								tagend[0] = '\0';	//Drop the / from the string
 							}
-							(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" chordId=\"%lu\" fretHandMute=\"%d\" highDensity=\"%d\" ignore=\"%d\" palmMute=\"%d\" hopo=\"%d\" strum=\"%s\"%s>\n", (double)notepos / 1000.0, tech.linknext, tech.accent, chordid, tech.stringmute, highdensity, tech.ignore, tech.palmmute, tech.hopo, direction, tagend);
+							(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" chordId=\"%lu\" fretHandMute=\"%d\" highDensity=\"%d\" ignore=\"%d\" palmMute=\"%d\" hopo=\"%d\" strum=\"%s\">\n", (double)notepos / 1000.0, tech.linknext, tech.accent, chordid, tech.stringmute, highdensity, tech.ignore, tech.palmmute, tech.hopo, direction);
 							(void) pack_fputs(buffer, fp);
-							if(chordnote)
-							{	//If chordNote tags are to be written
-								unsigned long stringnum, bitmask;
-
-								for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
-								{	//For each string used in this track, write chordNote tags
-									if((eof_get_note_note(sp, track, ctr3) & bitmask) && !(tp->note[ctr3]->ghost & bitmask))
-									{	//If this string is used in this note and it is not ghosted
-										eof_rs2_export_note_string_to_xml(sp, track, ctr3, stringnum, 1, chordlist[chordid], fp);	//Write this chordNote's XML tag
-									}//If this string is used in this note and it is not ghosted
-								}//For each string used in this track
-								(void) pack_fputs("        </chord>\n", fp);
-							}//If chordNote tags are to be written
+							//Write chordnote tags
+							for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
+							{	//For each string used in this track, write chordNote tags
+								if((eof_get_note_note(sp, track, ctr3) & bitmask) && !(tp->note[ctr3]->ghost & bitmask))
+								{	//If this string is used in this note and it is not ghosted
+									eof_rs2_export_note_string_to_xml(sp, track, ctr3, stringnum, 1, chordlist[chordid], fp);	//Write this chordNote's XML tag
+								}//If this string is used in this note and it is not ghosted
+							}//For each string used in this track
+							(void) pack_fputs("        </chord>\n", fp);
 							lastchordid = chordid;
 						}//If this chord wasn't split into single notes or converted into a non ghosted chord and is being ignored
 					}//If this note is in this difficulty and will export as a chord (at least two non ghosted gems)
