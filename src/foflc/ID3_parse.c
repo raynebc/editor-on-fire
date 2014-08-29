@@ -279,9 +279,6 @@ unsigned long GetMP3FrameDuration(struct ID3Tag *ptr)
 		return 0;
 	}
 
-	if(!samplerate)
-		return 0;	//Error
-
 	if(Lyrics.verbose >=2)
 		printf("\tSample rate: %lu Hz\n",samplerate);
 
