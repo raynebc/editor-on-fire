@@ -3900,8 +3900,18 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						{	//If this note is being imported
 							if(tie_note)
 							{	//If this was defined as a tie note
-								if(flags == np[ctr2]->flags)
-								{	//If the flags between the previous note and this one are the same, alter the previous note's length to include the tie note
+								char newtech = 0;	//Is set to nonzero if the tie note is determined to add techniques to the note it is extending
+
+								for(ctr4 = 0, bitmask = 1; ctr4 < 32; ctr4++, bitmask <<= 1)
+								{	//For each bit in the flags bitmask
+									if(!(np[ctr2]->flags & bitmask) && (flags & bitmask))
+									{	//If the previous note's flags bit was clear and this tie note's flags bit is not
+										newtech = 1;	//This tie note adds a status and should import as a linked note
+										break;
+									}
+								}
+								if(!newtech)
+								{	//If the tie note doesn't enable a technique not in use by the previous note, alter the previous note's length to include the tie note
 									long oldlength;
 
 									tie_note = 1;
@@ -3919,6 +3929,21 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									tie_note = 0;	//Reset this to prevent this note's flags and bend strength from overriding those of the previous note
 									new_note = 1;	//Set this to nonzero, the if() block below will create the note
 									np[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Set the linknext flag on the previous note
+
+									//Recall the fretting of the previous note, to apply to the tie note since GP doesn't redefine the correct fret number
+									for(ctr4 = 0; ctr4 < strings[ctr2]; ctr4++)
+									{	//For each of this track's natively supported strings
+										unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
+										if((strings[ctr2] > 6) && drop_7)
+										{	//If this is a 7 string Guitar Pro track and the user opted to drop string 7 instead of string 1
+											convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
+										}
+										if((convertednum > 6) || (ctr4 > 5))
+										{	//If convertednum became an unexpectedly large value (ie. integer underflow) or six strings have already been processed
+											break;	//Stop translating fretting and fingering data
+										}
+										frets[convertednum] = np[ctr2]->frets[ctr4];	//Copy the fret number for this string
+									}
 								}
 							}
 
@@ -4951,6 +4976,8 @@ int eof_get_next_gpa_sync_point(char **buffer, struct eof_gpa_sync_point *ptr)
 		}
 	}//For each of the 4 expected numbers in the timestamp
 
+	//Initialize some other member variables
+	ptr->beat_length = 0.0;
 	ptr->processed = 0;
 	return 1;	//Return success
 }
