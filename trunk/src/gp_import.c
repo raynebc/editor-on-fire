@@ -1655,7 +1655,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	#define EOF_GP_IMPORT_BUFFER_SIZE 256
 	char buffer[EOF_GP_IMPORT_BUFFER_SIZE + 1], *buffer2, buffer3[EOF_GP_IMPORT_BUFFER_SIZE + 1], buffer4[EOF_GP_IMPORT_BUFFER_SIZE + 1], byte, bytemask, usedstrings, *ptr;
 	unsigned word, fileversion;
-	unsigned long dword, ctr, ctr2, ctr3, ctr4, tracks, measures, *strings, beats;
+	unsigned long dword, ctr, ctr2, ctr3, ctr4, ctr5, tracks, measures, *strings, beats;
 	PACKFILE *inf = NULL, *inf2;	//The GPA import logic will open the file handle for the Guitar Pro file in inf if applicable
 	struct eof_guitar_pro_struct *gp;
 	struct eof_gp_measure *tsarray;	//Stores measure information relating to time signatures, alternate endings and navigational symbols
@@ -3713,6 +3713,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}
 								if(byte1 & 1)
 								{	//Bend
+									unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
+
+									if((strings[ctr2] > 6) && drop_7)
+									{	//If this is a 7 string Guitar Pro track and the user opted to drop string 7 instead of string 1
+										convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
+									}
 									if(eof_gp_parse_bend(inf, &bendstruct) || (bendstruct.bendpoints > 30))
 									{	//If there was an error parsing the bend, or if bendpoints wasn't capped at 30 (a redundant check to satisfy a false positive in Coverity)
 										allegro_message("Error parsing bend, file is corrupt");
@@ -3747,6 +3753,56 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										bendstrength = bendstruct.summaryheight;
 										bendstrength |= 0x80;	//Mark the MSB to indicate this value is measured in quarter steps
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that the note has the bend height defined
+									}
+									if(convertednum <= 6)
+									{	//Only if the converted string number is valid
+										for(ctr5 = 0; ctr5 < bendstruct.bendpoints; ctr5++)
+										{	//For each bend point that was parsed
+											EOF_PRO_GUITAR_NOTE *ptr = eof_pro_guitar_track_add_tech_note(gp->track[ctr2]);	//Add a new tech note to the current track
+											unsigned long length;
+											if(!ptr)
+											{
+												eof_log("Error allocating memory (15)", 1);
+												(void) pack_fclose(inf);
+												while(ctr > 0)
+												{	//Free the previous track name strings
+													free(gp->names[ctr - 1]);
+													ctr--;
+												}
+												free(gp->names);
+												for(ctr = 0; ctr < tracks; ctr++)
+												{	//Free all previously allocated track structures
+													free(gp->track[ctr]);
+												}
+												for(ctr = 0; ctr < gp->text_events; ctr++)
+												{	//Free all allocated text events
+													free(gp->text_event[ctr]);
+												}
+												free(gp->track);
+												free(np);
+												free(hopo);
+												free(hopobeatnum);
+												free(nonshiftslide);
+												free(gp);
+												free(tsarray);
+												free(strings);
+												return NULL;
+											}
+											ptr->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;	//Set the bend flag
+											ptr->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that a bend strength is defined
+											ptr->bendstrength = 0x80 + bendstruct.bendheight[ctr5];	//Store the bend strength and set the MSB to indicate the value is in quarter steps
+											ptr->note = 1 << convertednum;	//Determine the note bitmask of this string
+											if(bendstruct.bendpos[ctr5] == 60)
+											{	//If this bend point is at the end of the note
+												length = lastendpos - laststartpos - eof_min_note_distance;	//Take the minimum padding between notes into account to ensure it doesn't overlap the next note
+											}
+											else
+											{	//Otherwise use the normal note length
+												length = lastendpos - laststartpos;
+											}
+											ptr->pos = laststartpos + ((length * (double)bendstruct.bendpos[ctr5]) / 60.0);	//Determine the position of the bend point
+											ptr->length = 1;
+										}//For each bend point that was parsed
 									}
 								}
 								if(byte1 & 2)
@@ -3952,7 +4008,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								np[ctr2] = eof_pro_guitar_track_add_note(gp->track[ctr2]);	//Add a new note to the current track
 								if(!np[ctr2])
 								{
-									eof_log("Error allocating memory (15)", 1);
+									eof_log("Error allocating memory (16)", 1);
 									(void) pack_fclose(inf);
 									while(ctr > 0)
 									{	//Free the previous track name strings
@@ -4090,53 +4146,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									np[ctr2]->bendstrength = bendstrength;	//Apply this tie note's bend strength
 								}
 							}
-							for(ctr4 = 0; ctr4 < bendstruct.bendpoints; ctr4++)
-							{	//For each bend point that was parsed
-								EOF_PRO_GUITAR_NOTE *ptr = eof_pro_guitar_track_add_tech_note(gp->track[ctr2]);	//Add a new tech note to the current track
-								unsigned long length;
-								if(!ptr)
-								{
-									eof_log("Error allocating memory (16)", 1);
-									(void) pack_fclose(inf);
-									while(ctr > 0)
-									{	//Free the previous track name strings
-										free(gp->names[ctr - 1]);
-										ctr--;
-									}
-									free(gp->names);
-									for(ctr = 0; ctr < tracks; ctr++)
-									{	//Free all previously allocated track structures
-										free(gp->track[ctr]);
-									}
-									for(ctr = 0; ctr < gp->text_events; ctr++)
-									{	//Free all allocated text events
-										free(gp->text_event[ctr]);
-									}
-									free(gp->track);
-									free(np);
-									free(hopo);
-									free(hopobeatnum);
-									free(nonshiftslide);
-									free(gp);
-									free(tsarray);
-									free(strings);
-									return NULL;
-								}
-								ptr->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;	//Set the bend flag
-								ptr->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that a bend strength is defined
-								ptr->bendstrength = 0x80 + bendstruct.bendheight[ctr4];	//Store the bend strength and set the MSB to indicate the value is in quarter steps
-								ptr->note = np[ctr2]->note;	//Match the note bitmask of the last parsed GP note
-								if(bendstruct.bendpos[ctr4] == 60)
-								{	//If this bend point is at the end of the note
-									length = lastendpos - laststartpos - eof_min_note_distance;	//Take the minimum padding between notes into account to ensure it doesn't overlap the next note
-								}
-								else
-								{	//Otherwise use the normal note length
-									length = lastendpos - laststartpos;
-								}
-								ptr->pos = laststartpos + ((length * (double)bendstruct.bendpos[ctr4]) / 60.0);	//Determine the position of the bend point
-								ptr->length = 1;
-							}//For each bend point that was parsed
 						}//If this note is being imported
 					}//If this is the voice that is being imported
 					measure_position += note_duration;	//Update the measure position
