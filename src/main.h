@@ -12,13 +12,13 @@
 #define EOF_VERSION_STRING "EOF v1.8RC10"
 #define EOF_COPYRIGHT_STRING "(c)2008-2010 T^3 Software."
 
-#define KEY_EITHER_ALT (eof_key_shifts & KB_ALT_FLAG)
+#define KEY_EITHER_ALT (key[KEY_ALT] || key[KEY_ALTGR])
 #ifdef ALLEGRO_MACOSX
-     #define KEY_EITHER_CTRL (eof_key_shifts & KB_COMMAND_FLAG)
+		#define KEY_EITHER_CTRL (key[106])
 #else
-     #define KEY_EITHER_CTRL (eof_key_shifts & KB_CTRL_FLAG)
+		#define KEY_EITHER_CTRL (key[KEY_LCONTROL] || key[KEY_RCONTROL])
 #endif
-#define KEY_EITHER_SHIFT (eof_key_shifts & KB_SHIFT_FLAG)
+#define KEY_EITHER_SHIFT (key[KEY_LSHIFT] || key[KEY_RSHIFT])
 
 #ifdef ALLEGRO_MACOSX
 	#define CTRL_NAME "Cmd"
