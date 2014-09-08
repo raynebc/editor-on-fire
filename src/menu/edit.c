@@ -841,7 +841,7 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 			if((notepos + notelength >= start_pos) && (notepos < end_pos))
 			{	//If this note falls within the start->end time range
 				eof_write_clipboard_note(fp, eof_song, j, i, first_pos[j]);	//Write note data to disk
-				eof_write_clipboard_position_snap_data(fp, notepos);	//Write the grid snap position data for this note's position
+				eof_write_clipboard_position_snap_data(fp, notepos);		//Write the grid snap position data for this note's position
 			}//If this note falls within the start->end time range
 		}//For each note in this track
 
@@ -889,6 +889,7 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 				if((notepos + notelength >= start_pos) && (notepos < end_pos))
 				{	//If this note falls within the start->end time range
 					eof_write_clipboard_note(fp, eof_song, j, i, first_pos[j]);	//Write note data to disk
+					eof_write_clipboard_position_snap_data(fp, notepos);		//Write the grid snap position data for this tech note's position
 				}//If this note falls within the start->end time range
 			}//For each note in this track
 			eof_menu_pro_guitar_track_disable_tech_view(tp);
@@ -1138,10 +1139,15 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 			{
 				/* read the note */
 				eof_read_clipboard_note(fp, &temp_note, EOF_MAX_LYRIC_LENGTH + 1);
+				eof_read_clipboard_position_snap_data(fp, &beat, &gridsnapvalue, &gridsnapnum);
 
 				if(temp_note.pos + temp_note.length < eof_chart_length)
 				{
 					notepos = eof_put_porpos(temp_note.beat - first_beat[j] + this_tech_beat[j], temp_note.porpos, 0.0);
+					if(eof_find_grid_snap_position(beat, gridsnapvalue, gridsnapnum, &gridpos))
+					{	//If the adjusted grid snap position can be calculated
+						notepos = gridpos;	//Update the adjusted position for the note
+					}
 					notelength = eof_put_porpos(temp_note.endbeat - first_beat[j] + this_tech_beat[j], temp_note.porendpos, 0.0) - notepos;
 					new_note = eof_track_add_create_note(eof_song, j, temp_note.note, notepos, notelength, temp_note.type, temp_note.name);
 
