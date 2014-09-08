@@ -1910,7 +1910,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	{	//If the input GP file wasn't opened for reading by the GPA parse logic earlier
 		inf = pack_fopen(gpfile, "rb");
 	}
-	//The webtabplayer website corrupts GP files by inserting a BOM at the beginning of the file, check for this and pass it if necessary
+	//In the past, the WebTabPlayer website corrupted GP files in some ways, including by inserting a BOM at the beginning of the file, check for this and ignore it if necessary
 	if(inf)
 	{	//If the file was opened
 		char reopen = 1;	//If the BOM sequence is not read, the file will have to be reopened, since Allegro can't simply rewind it
@@ -3800,7 +3800,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											{	//Otherwise use the normal note length
 												length = lastendpos - laststartpos;
 											}
-											ptr->pos = laststartpos + ((length * (double)bendstruct.bendpos[ctr5]) / 60.0);	//Determine the position of the bend point
+											ptr->pos = laststartpos + ((length * (double)bendstruct.bendpos[ctr5]) / 60.0) + 0.5;	//Determine the position of the bend point, rounded to nearest ms
 											ptr->length = 1;
 										}//For each bend point that was parsed
 									}
