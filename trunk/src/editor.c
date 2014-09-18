@@ -1918,7 +1918,7 @@ if(eof_key_code == KEY_PAUSE)
 						eof_track_sort_notes(eof_song, eof_selected_track);
 					}
 				}
-				if(eof_entering_note)
+				if(eof_entering_note && eof_entering_note_lyric)
 				{
 					if(eof_snote != eof_last_snote)
 					{
