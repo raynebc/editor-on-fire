@@ -2355,9 +2355,9 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								direction = downstrum;
 							}
 							(void) eof_get_rs_techniques(sp, track, ctr3, 0, &tech, 2, 0);			//Determine techniques used by this chord (do not include applicable technote's techniques to the chord tag itself, they will apply to chordNotes instead)
-							highdensity = eof_note_has_high_chord_density(sp, track, ctr3, 2);	//Determine whether the chord will export with high density
+							highdensity = eof_note_has_high_chord_density(sp, track, ctr3, 2);		//Determine whether the chord will export with high density
 							notepos = tp->note[ctr3]->pos;
-							if((chordid != lastchordid) || !highdensity)
+							if(chordid != lastchordid)
 							{	//If this chord's ID is different from that of the previous chord or meets the normal criteria for a low density chord
 								highdensity = 0;	//Ensure the chord tag is written to reflect low density
 							}
@@ -4499,7 +4499,7 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned long fret;			//The fret number used for the specified string of the note
 	char tagend[2] = "/";		//If a bendValues subtag is to be written, this string is emptied so that the note/chordNote tag doesn't end in the same line
-	unsigned long flags, notepos, ctr, bitmask;
+	unsigned long flags, notepos, notelen, ctr, bitmask;
 	EOF_RS_TECHNIQUES tech;
 	unsigned char *finger = NULL;
 	long fingernum;
@@ -4513,6 +4513,7 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 		return;	//Invalid parameter
 	flags = tp->note[notenum]->flags;
 	notepos = tp->note[notenum]->pos;
+	notelen = tp->note[notenum]->length;
 	bitmask = 1 << stringnum;
 	if(ischordnote)
 	{	//If a chordNote is being exported
@@ -4603,13 +4604,13 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 			(void) pack_fputs(buffer, fp);
 			for(ctr = firstbend; ctr < tp->technotes; ctr++)
 			{	//For all tech notes, starting with the first applicable bend tech note
-				if(tp->technote[ctr]->pos > notepos + tech.length)
+				if(tp->technote[ctr]->pos > notepos + notelen)
 				{	//If this tech note (and all those that follow) are after the end position of this note
 					break;	//Break from loop, no more overlapping notes will be found
 				}
 				if((tp->technote[ctr]->type == tp->pgnote[notenum]->type) && (bitmask & tp->technote[ctr]->note))
 				{	//If the tech note is in the same difficulty as the pro guitar single note being exported and uses the same string
-					if((tp->technote[ctr]->pos >= notepos) && (tp->technote[ctr]->pos <= notepos + tech.length))
+					if((tp->technote[ctr]->pos >= notepos) && (tp->technote[ctr]->pos <= notepos + notelen))
 					{	//If this tech note overlaps with the specified pro guitar regular note
 						flags = tp->technote[ctr]->flags;
 						if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))

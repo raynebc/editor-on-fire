@@ -887,6 +887,7 @@ char eof_pro_guitar_note_has_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long n
 	//If technote_num is not NULL, the index number of the first relevant tech note is returned through it
 unsigned long eof_pro_guitar_note_bitmask_has_bend_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long mask, unsigned long *technote_num);
 	//Similar to eof_pro_guitar_note_has_tech_note(), but returns the number of overlapping tech notes that have bend technique
+	//If technote_num is not NULL, the index number of the first relevant bend tech note is returned through it
 char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long technote, unsigned long mask, unsigned long *note_num);
 	//Looks for the last regular pro guitar note that is overlapped by the specified tech note and mask
 	//Notes are iterated in reverse order because a note can end at the start position of the next note due to linknext status
