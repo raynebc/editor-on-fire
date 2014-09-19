@@ -54,6 +54,45 @@ unsigned long eof_note_count_colors_bitmask(unsigned long notemask)
 	return count;
 }
 
+unsigned long eof_note_count_set_bits(unsigned long notemask)
+{
+	unsigned long count = 0;
+
+	if(notemask & 1)
+	{
+		count++;
+	}
+	if(notemask & 2)
+	{
+		count++;
+	}
+	if(notemask & 4)
+	{
+		count++;
+	}
+	if(notemask & 8)
+	{
+		count++;
+	}
+	if(notemask & 16)
+	{
+		count++;
+	}
+	if(notemask & 32)
+	{
+		count++;
+	}
+	if(notemask & 64)
+	{
+		count++;
+	}
+	if(notemask & 128)
+	{
+		count++;
+	}
+	return count;
+}
+
 unsigned long eof_note_count_rs_lanes(EOF_SONG *sp, unsigned long track, unsigned long note, char target)
 {
 	unsigned long ctr, bitmask, tracknum, count = 0, notenote;
@@ -1673,6 +1712,15 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		if((tp->note != tp->technote) && eof_pro_guitar_note_has_tech_note(tp, note, NULL))
 		{	//If tech view is not in effect (this function isn't being used to generate the string being displayed in the tech not box), display an asterisk on notes that have an overlapping tech note
 			buffer[index++] = '*';
+			if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
+			{	//If the note isn't already explicitly marked with bend status
+				if(eof_pro_guitar_note_bitmask_has_bend_tech_note(tp, note, 0xFF, NULL))
+				{	//If any bend tech notes overlap this note
+					buffer[index++] = '(';
+					buffer[index++] = 'a';	//In the symbols font, a is the bend character
+					buffer[index++] = ')';
+				}
+			}
 		}
 	}//Check pro guitar statuses
 	else if((track == EOF_TRACK_DRUM) || (track == EOF_TRACK_DRUM_PS))

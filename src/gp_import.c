@@ -3747,7 +3747,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										free(strings);
 										return NULL;
 									}
-									flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+									//Don't mark entire chords with bend status, Guitar Pro defines which strings are to be bent
+									if(eof_note_count_set_bits(usedstrings) == 1)
+									{	//If the note being parsed is not a chord
+										flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+									}
 									if(bendstruct.summaryheight > 0)
 									{	//If the GP file defines the bend of being at least one quarter step
 										bendstrength = bendstruct.summaryheight;
@@ -3807,7 +3811,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}
 								if(byte1 & 2)
 								{	//Hammer on/pull off from current note (next note gets the HO/PO status)
-									hopo[ctr2] = frets[ctr4] & 0x8F;	//Store the fret value (masking out the MSB ghost bit) so that the next note can be determined as either a HO or a PO
+									hopo[ctr2] = frets[ctr4] & 0x7F;	//Store the fret value (masking out the MSB ghost bit) so that the next note can be determined as either a HO or a PO
 									hopobeatnum[ctr2] = ctr3;			//Track which beat (note) number has the HO/PO status
 								}
 								if(byte1 & 4)

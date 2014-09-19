@@ -1807,7 +1807,14 @@ void eof_read_keyboard_input(char function)
 	{
 		eof_key_pressed = 1;
 		eof_key_uchar = ureadkey(&eof_key_code);
-		eof_key_char = tolower(eof_key_uchar);
+		if(eof_key_uchar < 255)
+		{	//Standard US-English keys
+			eof_key_char = tolower(eof_key_uchar);
+		}
+		else
+		{	//Other, ie. non-ASCII
+			eof_key_char = eof_key_code + 96;
+		}
 //		eof_key_code = key_read >> 8;
 		eof_key_shifts = key_shifts;
 		if(function)
