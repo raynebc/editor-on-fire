@@ -514,6 +514,53 @@ unsigned long eof_next_grid_snap(unsigned long pos)
 	return temp.next_snap;
 }
 
+int eof_find_grid_snap(unsigned long pos, int dir, unsigned long *result)
+{
+	long beat;
+
+	if(!eof_song || !result || (eof_snap_mode == EOF_SNAP_OFF))
+		return 0;
+
+	beat = eof_get_beat(eof_song, pos);	//Find which beat the specified position is in
+	if(beat < 0)	//If the specified position is outside the chart
+		return 0;
+
+	if(dir < 0)
+	{	//If looking for the previous grid snap
+		if(pos <= eof_song->beat[0]->pos)
+			return 0;	//There are no seek positions before the first beat marker
+		if(pos == eof_song->beat[beat]->pos)
+			beat--;	//If the specified position is on a beat marker, the previous grid snap is in the previous beat
+	}
+	else
+	{	//If looking for the next grid snap
+		if(pos >= eof_song->beat[eof_song->beats - 1]->pos)
+			return 0;	//There are no seek positions after the last beat marker
+	}
+
+	if(dir < 0)
+	{	//If looking for the previous grid snap
+		eof_snap_logic(&eof_tail_snap, eof_song->beat[beat]->pos);	//Find beat/measure length
+		eof_snap_length_logic(&eof_tail_snap);	//Find length of one grid snap in the target beat
+		if(eof_tail_snap.length > pos)
+		{	//Special case:  Specified position is less than one grid snap from the beginning of the chart
+			*result = eof_song->beat[0]->pos;	//The result is the first beat marker
+		}
+		else
+		{
+			eof_snap_logic(&eof_tail_snap, pos - eof_tail_snap.length);	//Find the grid snapped position of the new seek position
+			*result = eof_tail_snap.pos;					//The result is the closest grid snap that is one snap length earlier than the specified position
+		}
+	}
+	else
+	{	//If looking for the next grid snap
+		eof_snap_logic(&eof_tail_snap, pos);					//Find the grid snapped position of the new seek position
+		*result = eof_tail_snap.next_snap;					//The result is the next grid snap position
+	}
+
+	return 1;	//Success
+}
+
 int eof_is_grid_snap_position(unsigned long pos)
 {
 	EOF_SNAP_DATA temp;
@@ -2056,57 +2103,73 @@ if(eof_key_code == KEY_PAUSE)
 			eof_use_key();
 		}
 
-	/* decrease note length ( [ , SHIFT+[ or CTRL+SHIFT+[) */
+	/* decrease note length ( [ , SHIFT+[ or CTRL+SHIFT+[ ) */
+	/* move notes backward one grid snap position ( CTRL+[ ) */
 		if(eof_key_code == KEY_OPENBRACE)
 		{
-			unsigned long reductionvalue = 100;	//Default decrease length when grid snap is disabled
-			if(eof_snap_mode == EOF_SNAP_OFF)
-			{
-				if(KEY_EITHER_SHIFT)
+			if(!KEY_EITHER_CTRL || (KEY_EITHER_CTRL && KEY_EITHER_SHIFT))
+			{	//If CTRL is not held or if both CTRL and SHIFT are held
+				unsigned long reductionvalue = 100;	//Default decrease length when grid snap is disabled
+				if(eof_snap_mode == EOF_SNAP_OFF)
 				{
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					if(KEY_EITHER_CTRL)
-					{	//If both CTRL and SHIFT are held
-						reductionvalue = 1;		//1 ms length change
-					}
-					else
-					{	//SHIFT+scroll wheel
-						reductionvalue = 10;	//10ms length change
+					if(KEY_EITHER_SHIFT)
+					{
+						eof_shift_used = 1;	//Track that the SHIFT key was used
+						if(KEY_EITHER_CTRL)
+						{	//If both CTRL and SHIFT are held
+							reductionvalue = 1;		//1 ms length change
+						}
+						else
+						{	//SHIFT+scroll wheel
+							reductionvalue = 10;	//10ms length change
+						}
 					}
 				}
+				else
+				{
+					reductionvalue = 0;	//Will indicate to eof_adjust_note_length() to use the grid snap value
+				}
+				eof_adjust_note_length(eof_song, eof_selected_track, reductionvalue, -1);	//Decrease selected notes by the appropriate length
 			}
 			else
-			{
-				reductionvalue = 0;	//Will indicate to eof_adjust_note_length() to use the grid snap value
+			{	//If CTRL is held but SHIFT is not
+				eof_menu_note_move_by_grid_snap(-1);
 			}
-			eof_adjust_note_length(eof_song, eof_selected_track, reductionvalue, -1);	//Decrease selected notes by the appropriate length
 			eof_use_key();
 		}
 
 	/* increase note length ( ] , SHIFT+ ] or CTRL+SHIFT+] ) */
+	/* move notes forward one grid snap position ( CTRL+] ) */
 		if(eof_key_code == KEY_CLOSEBRACE)
 		{
-			unsigned long increasevalue = 100;	//Default increase length when grid snap is disabled
-			if(eof_snap_mode == EOF_SNAP_OFF)
-			{
-				if(KEY_EITHER_SHIFT)
+			if(!KEY_EITHER_CTRL || (KEY_EITHER_CTRL && KEY_EITHER_SHIFT))
+			{	//If CTRL is not held or if both CTRL and SHIFT are held
+				unsigned long increasevalue = 100;	//Default increase length when grid snap is disabled
+				if(eof_snap_mode == EOF_SNAP_OFF)
 				{
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					if(KEY_EITHER_CTRL)
-					{	//If both CTRL and SHIFT are held
-						increasevalue = 1;		//1 ms length change
-					}
-					else
-					{	//SHIFT+scroll wheel
-						increasevalue = 10;	//10ms length change
+					if(KEY_EITHER_SHIFT)
+					{
+						eof_shift_used = 1;	//Track that the SHIFT key was used
+						if(KEY_EITHER_CTRL)
+						{	//If both CTRL and SHIFT are held
+							increasevalue = 1;		//1 ms length change
+						}
+						else
+						{	//SHIFT+scroll wheel
+							increasevalue = 10;	//10ms length change
+						}
 					}
 				}
+				else
+				{
+					increasevalue = 0;	//Will indicate to eof_adjust_note_length() to use the grid snap value
+				}
+				eof_adjust_note_length(eof_song, eof_selected_track, increasevalue, 1);	//Increase selected notes by the appropriate length
 			}
 			else
-			{
-				increasevalue = 0;	//Will indicate to eof_adjust_note_length() to use the grid snap value
+			{	//If CTRL is held but SHIFT is not
+				eof_menu_note_move_by_grid_snap(1);
 			}
-			eof_adjust_note_length(eof_song, eof_selected_track, increasevalue, 1);	//Increase selected notes by the appropriate length
 			eof_use_key();
 		}
 
@@ -3025,8 +3088,8 @@ if(eof_key_code == KEY_PAUSE)
 			eof_use_key();
 		}
 
-	/* place bookmark (CTRL+Numpad) */
-	/* seek to bookmark (Numpad) */
+	/* place bookmark (CTRL+Numpad #) */
+	/* seek to bookmark (Numpad #) */
 		if(!KEY_EITHER_SHIFT)
 		{	//If SHIFT is not held
 			if(eof_key_code == KEY_0_PAD)
@@ -3213,7 +3276,7 @@ if(eof_key_code == KEY_PAUSE)
 			}
 			eof_use_key();
 		}
-	}
+	}//If the chart is playing
 }
 
 void eof_editor_drum_logic(void)
