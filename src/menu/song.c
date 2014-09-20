@@ -2416,49 +2416,15 @@ void eof_set_percussion_cue(int cue_number)
 
 void eof_seek_by_grid_snap(int dir)
 {
-	long beat;
 	unsigned long adjustedpos = eof_music_pos - eof_av_delay;	//Find the actual chart position
 	unsigned long originalpos = adjustedpos;
+	unsigned long target;
 
-	if(!eof_song || (eof_snap_mode == EOF_SNAP_OFF))
+	if(!eof_find_grid_snap(adjustedpos, dir, &target))
+	{	//If the seek position couldn't be found
 		return;
-
-	beat = eof_get_beat(eof_song, adjustedpos);	//Find which beat the current seek position is in
-	if(beat < 0)	//If the seek position is outside the chart
-		return;
-
-	if(dir < 0)
-	{	//If seeking backward
-		if(adjustedpos <= eof_song->beat[0]->pos)
-			return;	//Do not allow this operation to seek before the first beat marker
-		if(adjustedpos == eof_song->beat[beat]->pos)
-			beat--;	//If the current position is on a beat marker, seeking back will take the previous beat into account instead
 	}
-	else
-	{	//If seeking forward
-		if(adjustedpos >= eof_song->beat[eof_song->beats - 1]->pos)
-			return;	//Do not allow this operation to seek after the last beat marker
-	}
-
-	if(dir < 0)
-	{	//If seeking backward
-		eof_snap_logic(&eof_tail_snap, eof_song->beat[beat]->pos);	//Find beat/measure length
-		eof_snap_length_logic(&eof_tail_snap);	//Find length of one grid snap in the target beat
-		if(eof_tail_snap.length > adjustedpos)
-		{	//Special case:  Current position is less than one grid snap from the beginning of the chart
-			eof_set_seek_position(eof_av_delay);	//Seek to the beginning of the chart
-		}
-		else
-		{
-			eof_snap_logic(&eof_tail_snap, adjustedpos - eof_tail_snap.length);	//Find the grid snapped position of the new seek position
-			eof_set_seek_position(eof_tail_snap.pos + eof_av_delay);	//Seek to the new seek position
-		}
-	}
-	else
-	{	//If seeking forward
-		eof_snap_logic(&eof_tail_snap, adjustedpos);					//Find the grid snapped position of the new seek position
-		eof_set_seek_position(eof_tail_snap.next_snap + eof_av_delay);	//Seek to the next calculated grid snap position
-	}
+	eof_set_seek_position(target + eof_av_delay);	//Seek to the position that was determined to be the previous/next grid snap position
 
 	if((eof_input_mode == EOF_INPUT_FEEDBACK) && (KEY_EITHER_SHIFT))
 	{

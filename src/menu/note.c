@@ -349,6 +349,13 @@ MENU eof_note_reflect_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_note_move_grid_snap_menu[] =
+{
+	{"&Backward\t" CTRL_NAME "+[", eof_menu_note_move_back_grid_snap, NULL, 0, NULL},
+	{"&Forward\t" CTRL_NAME "+]", eof_menu_note_move_forward_grid_snap, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_note_menu[] =
 {
 	{"&Toggle", NULL, eof_note_toggle_menu, 0, NULL},
@@ -374,6 +381,7 @@ MENU eof_note_menu[] =
 	{"Re&Flect", NULL, eof_note_reflect_menu, 0, NULL},
 	{"Remove statuses", eof_menu_remove_statuses, NULL, 0, NULL},
 	{"Simplify chords", eof_menu_note_simplify_chords, NULL, 0, NULL},
+	{"&Move grid snap", NULL, eof_note_move_grid_snap_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -8453,4 +8461,58 @@ int eof_menu_note_move_tech_note_to_previous_note_pos(void)
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
 	return 1;
+}
+
+int eof_menu_note_move_by_grid_snap(int dir)
+{
+	unsigned long target, current, i;
+	char undo_made = 0;
+
+	if(eof_count_selected_notes(NULL, 0) == 0)
+	{
+		return 1;
+	}
+
+	//First pass:  Ensure that each selected note can be moved forward/backward one grid snap
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If the note is selected
+			if(!eof_find_grid_snap(eof_get_note_pos(eof_song, eof_selected_track, i), dir, &target))
+			{	//If there is no previous/next grid snap position that can be determined
+				return 0;
+			}
+		}
+	}
+
+	//Second pass:  Move the notes
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If the note is selected
+			current = eof_get_note_pos(eof_song, eof_selected_track, i);
+			if(!eof_find_grid_snap(current, dir, &target))
+			{	//If there is no previous/next grid snap position that can be determined
+				break;	//Abort the rest of the operation
+			}
+			if(!undo_made)
+			{	//Only create the undo state before moving the first note
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				undo_made = 1;
+			}
+			eof_set_note_pos(eof_song, eof_selected_track, i, target);
+		}
+	}
+
+	return 1;
+}
+
+int eof_menu_note_move_back_grid_snap(void)
+{
+	return eof_menu_note_move_by_grid_snap(-1);
+}
+
+int eof_menu_note_move_forward_grid_snap(void)
+{
+	return eof_menu_note_move_by_grid_snap(1);
 }

@@ -55,6 +55,12 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p);
 	//sp->previous_snap and sp->next_snap are populated with the grid snap positions before/after sp->pos, with the limitation that previous_snap is no earlier than the beat's position itself (it won't go into the previous beat)
 void eof_snap_length_logic(EOF_SNAP_DATA * sp);
 	//Calculates the grid snap interval length for sp->beat
+int eof_find_grid_snap(unsigned long pos, int dir, unsigned long *result);
+	//Finds the next or previous gridsnap relative to the specified position
+	//If dir is >= 0, finds the timestamp of the next grid snap position
+	//If dir is < 0, finds the timestamp of the previous grid snap position
+	//Upon success, the resulting timestamp is returning through result and nonzero is returned
+	//Returns zero on error or if the requested grid snap position does not exist
 unsigned long eof_next_grid_snap(unsigned long pos);
 	//Returns the timestamp of the next grid snap position, or 0 on error
 int eof_is_grid_snap_position(unsigned long pos);

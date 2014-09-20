@@ -1888,8 +1888,8 @@ void eof_read_global_keys(void)
 //	eof_log("eof_read_global_keys() entered");
 
 	/* exit program (Esc) */
-	if((eof_key_char == 27) && !KEY_EITHER_SHIFT)
-	{
+	if((eof_key_code == KEY_ESC) && !KEY_EITHER_SHIFT)
+	{	//Use the key code for Escape instead of the ASCII char, since CTLR+[ triggers the same ASCII character value of 27
 		eof_menu_file_exit();
 		eof_use_key(); //If user cancelled quitting, make sure these keys are cleared
 	}
