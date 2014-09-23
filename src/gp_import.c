@@ -3119,6 +3119,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					unsigned char frets[7];		//Store fret values for each string
 					unsigned long beat_position;
 					double partial_beat_position, beat_length;
+					char notebends = 0;	//Tracks whether any bend points were parsed for the note, since they may be applied as tech notes instead of toward the regular note
 
 					unpitchend = 0;	//Assume no unpitched slide unless one is defined
 					new_note = 0;	//Assume no new note is to be added unless a normal/muted note is parsed
@@ -3143,6 +3144,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						user_warned = 1;
 						byte = 4;
 					}
+
+///DEBUG
+if((ctr == 149) && (ctr2 == 3))
+puts("Blarg");
+
 					note_duration = gp_durations[byte + 2] * (double)curden / (double)curnum;	//Get this note's duration in measures (accounting for the time signature)
 					if(bytemask & 32)
 					{	//Beat is an N-tuplet
@@ -3751,6 +3757,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									if(eof_note_count_set_bits(usedstrings) == 1)
 									{	//If the note being parsed is not a chord
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+										notebends = 1;
 									}
 									if(bendstruct.summaryheight > 0)
 									{	//If the GP file defines the bend of being at least one quarter step
@@ -3793,6 +3800,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 												return NULL;
 											}
 											ptr->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;	//Set the bend flag
+											notebends = 1;
 											ptr->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that a bend strength is defined
 											ptr->bendstrength = 0x80 + bendstruct.bendheight[ctr5];	//Store the bend strength and set the MSB to indicate the value is in quarter steps
 											ptr->note = 1 << convertednum;	//Determine the note bitmask of this string
@@ -3807,8 +3815,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											ptr->pos = laststartpos + ((length * (double)bendstruct.bendpos[ctr5]) / 60.0) + 0.5;	//Determine the position of the bend point, rounded to nearest ms
 											ptr->length = 1;
 										}//For each bend point that was parsed
-									}
-								}
+									}//Only if the converted string number is valid
+								}//Bend
 								if(byte1 & 2)
 								{	//Hammer on/pull off from current note (next note gets the HO/PO status)
 									hopo[ctr2] = frets[ctr4] & 0x7F;	//Store the fret value (masking out the MSB ghost bit) so that the next note can be determined as either a HO or a PO
@@ -4092,7 +4100,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 								if(note_is_short && eof_gp_import_truncate_short_notes)
 								{	//If this note is shorter than a quarter note, and the preference to drop the note's sustain in this circumstance is enabled
-									if(!(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))
+									if(!(notebends) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))
 									{	//If this note doesn't have bend, slide, vibrato or unpitched slide status
 										np[ctr2]->length = 1;	//Remove the note's sustain
 									}
