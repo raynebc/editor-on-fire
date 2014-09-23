@@ -14,6 +14,7 @@
 #include "song.h"
 #include "main.h"
 #include "lc_import.h"
+#include "utility.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -299,6 +300,7 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 	char *vrhythmid=NULL;
 	EOF_PHRASE_SECTION temp;	//Used to store the first lyric line in the project, which gets overridden with one covering all lyrics during RS1 export
 	unsigned long original_lines;
+	char *tempoutputfilename = "lyrics.temp";
 
 	eof_log("EOF_EXPORT_TO_LC() entered", 1);
 
@@ -362,7 +364,7 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 			{	//If this lyric's text isn't an empty string
 				if((tp->lyric[lyrctr])->pos < lastlyrtime)	//If this lyric precedes the previous lyric
 				{
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLogic error while preparing lyrics for export to file \"%s\"", outputfilename);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLogic error while preparing lyrics for export to file \"%s\"", tempoutputfilename);
 					eof_log(eof_log_string, 1);
 					ReleaseMemory(1);
 					return -1;				//Return failure
@@ -423,7 +425,7 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 	}
 
 //Export lyrics
-	Lyrics.outfilename=outputfilename;
+	Lyrics.outfilename=tempoutputfilename;
 	Lyrics.out_format=format;
 	switch(Lyrics.out_format)
 	{
@@ -514,6 +516,7 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 	fclose_err(outf);
 	tp->line[0] = temp;	//Restore the original lyric lines, which could have been destroyed by Rocksmith export
 	tp->lines = original_lines;
+	eof_copy_file(tempoutputfilename, outputfilename);	//Move the temporary file to the designated file path
 
 	ReleaseMemory(1);
 	return 1;	//Return success
