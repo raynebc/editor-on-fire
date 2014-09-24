@@ -2867,7 +2867,7 @@ int eof_save_helper(char *destfilename, char silent)
 			if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 			{	//Lyric export failed
 				(void) puts("Assert() handled sucessfully!");
-				allegro_message("Script lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in this chart's file path,\nbecause EOF's lyric export doesn't support them.");
+				allegro_message("Script lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in EOF's folder path,\nbecause EOF's lyric export doesn't support them.");
 			}
 			else
 			{
@@ -2930,7 +2930,7 @@ int eof_save_helper(char *destfilename, char silent)
 				if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 				{	//Lyric export failed
 					(void) puts("Assert() handled sucessfully!");
-					allegro_message("Rocksmith lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in this chart's file path,\nbecause EOF's lyric export doesn't support them.");
+					allegro_message("Rocksmith lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in EOF's folder path,\nbecause EOF's lyric export doesn't support them.");
 				}
 				else
 				{
@@ -2946,7 +2946,7 @@ int eof_save_helper(char *destfilename, char silent)
 				if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 				{	//Lyric export failed
 					(void) puts("Assert() handled sucessfully!");
-					allegro_message("Rocksmith lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in this chart's file path,\nbecause EOF's lyric export doesn't support them.");
+					allegro_message("Rocksmith lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in EOF's folder path,\nbecause EOF's lyric export doesn't support them.");
 				}
 				else
 				{

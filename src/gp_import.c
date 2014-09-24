@@ -3145,10 +3145,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						byte = 4;
 					}
 
-///DEBUG
-if((ctr == 149) && (ctr2 == 3))
-puts("Blarg");
-
 					note_duration = gp_durations[byte + 2] * (double)curden / (double)curnum;	//Get this note's duration in measures (accounting for the time signature)
 					if(bytemask & 32)
 					{	//Beat is an N-tuplet
