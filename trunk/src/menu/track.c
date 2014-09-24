@@ -2703,7 +2703,7 @@ DIALOG eof_track_rs_tone_change_add_dialog[] =
 int eof_track_rs_tone_change_add(void)
 {
 	EOF_PRO_GUITAR_TRACK *tp;
-	unsigned long tracknum;
+	unsigned long tracknum, ctr;
 	char defaulttone = 0;
 
 	if(!eof_song_loaded || !eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
@@ -2711,8 +2711,30 @@ int eof_track_rs_tone_change_add(void)
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	tp = eof_song->pro_guitar_track[tracknum];
-
 	eof_render();
+
+	//Find the tone change at the current seek position, if any
+	for(ctr = 0; ctr < tp->tonechanges; ctr++)
+	{	//For each tone change in the track
+		if(tp->tonechange[ctr].start_pos == eof_music_pos - eof_av_delay)
+		{	//If the tone change is at the current seek position, edit it instead of adding a new tone change
+			eof_color_dialog(eof_track_rs_tone_change_add_dialog, gui_fg_color, gui_bg_color);
+			centre_dialog(eof_track_rs_tone_change_add_dialog);
+			(void) ustrcpy(eof_etext, tp->tonechange[ctr].name);
+			eof_clear_input();
+			if(eof_popup_dialog(eof_track_rs_tone_change_add_dialog, 2) == 3)
+			{	//User clicked OK
+				if(eof_etext[0] != '\0')
+				{	//If a tone key name is specified
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					(void) ustrncpy(tp->tonechange[ctr].name, eof_etext, EOF_SECTION_NAME_LENGTH);	//Update the tone name string
+					tp->tonechange[ctr].name[EOF_SECTION_NAME_LENGTH] = '\0';	//Guarantee NULL termination
+				}
+			}
+			return 1;
+		}
+	}
+
 	eof_color_dialog(eof_track_rs_tone_change_add_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_track_rs_tone_change_add_dialog);
 
