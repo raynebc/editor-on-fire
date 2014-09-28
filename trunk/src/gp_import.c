@@ -3115,6 +3115,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				for(ctr3 = 0; ctr3 < beats; ctr3++)
 				{	//For each "beat"
 					char ghost = 0;	//Track the ghost status for notes
+					char mute = 0;	//Track the mute status for notes
 					unsigned bitmask;
 					unsigned char frets[7];		//Store fret values for each string
 					unsigned long beat_position;
@@ -3633,6 +3634,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//Normal note
 									frets[ctr4] = 0;	//Ensure this is cleared
 									new_note = 1;
+									mute |= 2;	//Set bit 1
 								}
 								else if(byte == 2)
 								{	//If this string is playing a tied note (it is still ringing from a previously played note)
@@ -3646,8 +3648,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}
 								else if(byte == 3)
 								{	//If this string is muted
-									frets[ctr4] = 128;	//Set the MSB, which is how EOF tracks muted status
+									frets[ctr4] = 0x80;	//Set the MSB, which is how EOF tracks muted status
 									new_note = 1;
+									mute |= 1;	//Set bit 0
 								}
 							}
 							if(bytemask & 4)
@@ -4013,6 +4016,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 							if(new_note)
 							{	//If a new note is to be created
+								char truncate = 0;	//Is set to nonzero if any conditions are met that should cause the note's sustain to be removed
+
 								np[ctr2] = eof_pro_guitar_track_add_note(gp->track[ctr2]);	//Add a new note to the current track
 								if(!np[ctr2])
 								{
@@ -4096,6 +4101,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 								if(note_is_short && eof_gp_import_truncate_short_notes)
 								{	//If this note is shorter than a quarter note, and the preference to drop the note's sustain in this circumstance is enabled
+									truncate = 1;
+								}
+								if((mute == 1) || (np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
+								{	//If this note is entirely string muted (only bit 0 of the mute variable was set, ie. no non-muted notes) or is palm muted
+									truncate = 1;
+								}
+								if(truncate)
+								{	//If the above conditions were triggered
 									if(!(notebends) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))
 									{	//If this note doesn't have bend, slide, vibrato or unpitched slide status
 										np[ctr2]->length = 1;	//Remove the note's sustain
