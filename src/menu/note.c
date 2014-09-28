@@ -7752,10 +7752,17 @@ int eof_pro_guitar_note_bend_strength(char undo)
 	eof_pro_guitar_note_bend_strength_dialog[2].flags = 0;	//Clear the half steps radio button
 	eof_pro_guitar_note_bend_strength_dialog[3].flags = 0;	//Clear the quarter steps radio button
 	if((np->bendstrength & 0x7F) == 0)
-	{	//If the selected note has no bend strength defined
+	{	//If the selected note has no bend strength defined, or otherwise a value of 0
 		if(tp->note != tp->technote)
-		{	//Tech notes are allows to have a bend strength of 0 (defines the release of a bend)
+		{	//Normal notes are not allowed to have a bend strength of 0
 			eof_etext[0] = '\0';	//Otherwise it's not valid, empty this string
+		}
+		else
+		{	//If tech view is in effect, bend status is allowed to have a strength of 0 (defines the release of a bend)
+			if(!(np->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
+			{	//If the note's flags indicate the bend strength is not defined
+				eof_etext[0] = '\0';	//Empty this string
+			}
 		}
 		eof_pro_guitar_note_bend_strength_dialog[lastselected].flags = D_SELECTED;
 	}
