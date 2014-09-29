@@ -4378,6 +4378,11 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 				{	//Don't allow the unpitched slide if it slides to the same fret this note/chord is already at
 					unpitchedslidediff = tp->note[notenum]->unpitchend - lowestfretted;	//Determine how many frets this slide travels
 					ptr->unpitchedslideto = fret + unpitchedslidediff + tp->capo;	//Get the correct ending fret for this string's slide, applying the capo position
+					if(target == 2)
+					{	//If the target game is Rocksmith 2
+						ptr->slideto = -1;	//Don't allow the note to export as both an unpitched and a pitched slide at the same time
+						techslideto = -1;	//Prevent the code block below from allow a tech note to override this constraint
+					}
 				}
 			}
 			if((target == 2) && checktechnotes)

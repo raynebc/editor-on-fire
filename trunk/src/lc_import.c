@@ -516,8 +516,11 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 	fclose_err(outf);
 	tp->line[0] = temp;	//Restore the original lyric lines, which could have been destroyed by Rocksmith export
 	tp->lines = original_lines;
-	eof_copy_file(tempoutputfilename, outputfilename);	//Move the temporary file to the designated file path
-
 	ReleaseMemory(1);
+	if(!eof_copy_file(tempoutputfilename, outputfilename))
+	{	//If the temporary file couldn't be copied to the designated file path
+		return -1;	//Return failure
+	}
+
 	return 1;	//Return success
 }
