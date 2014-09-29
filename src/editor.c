@@ -2133,7 +2133,7 @@ if(eof_key_code == KEY_PAUSE)
 			}
 			else
 			{	//If CTRL is held but SHIFT is not
-				eof_menu_note_move_by_grid_snap(-1);
+				(void) eof_menu_note_move_by_grid_snap(-1);
 			}
 			eof_use_key();
 		}
@@ -2168,7 +2168,7 @@ if(eof_key_code == KEY_PAUSE)
 			}
 			else
 			{	//If CTRL is held but SHIFT is not
-				eof_menu_note_move_by_grid_snap(1);
+				(void) eof_menu_note_move_by_grid_snap(1);
 			}
 			eof_use_key();
 		}
