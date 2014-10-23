@@ -1553,13 +1553,18 @@ int ParseTag(char startchar,char endchar,char *inputstring,char negatizeoffset)
 	}
 
 //Verify that a start of tag indicator occurs AFTER the tag identifier
-	temp2=strchr(temp,startchar);
-	if(temp2 == NULL)	//If the start of tag indicator was not found
-	{
-		free(str);		//release working copy of string
-		return -1;		//return invalid tag defined
+	assert_wrapper(temp != NULL);	//This must not be NULL
+	if(temp != NULL)
+	{	//Redundant check to satisfy cppcheck
+		temp2=strchr(temp,startchar);
+
+		if(temp2 == NULL)	//If the start of tag indicator was not found
+		{
+			free(str);		//release working copy of string
+			return -1;		//return invalid tag defined
+		}
+		temp2++;			//Seek past start of tag indicator
 	}
-	temp2++;			//Seek past start of tag indicator
 
 //Verify that an end of tag indicator occurs AFTER the start of tag indicator, truncate string at the end of tag indicator
 	if(endchar != '\0')	//Only truncate the string if an end of tag indicator is expected

@@ -4121,7 +4121,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 						eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_STOP;
 					}
 
-					if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+					if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 					{	//If this is a slide or bend note, retain the note's original RS notation flag so any existing bend strengths or slide positions are kept
 						flags |= (tp->note[i]->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION);
 					}
