@@ -2157,7 +2157,7 @@ int eof_new_chart(char * filename)
 				(void) GrabID3TextFrame(&tag,"TPE1",eof_etext,(unsigned long)(sizeof(eof_etext)/sizeof(char)));		//Store the Artist info in eof_etext[]
 				(void) GrabID3TextFrame(&tag,"TIT2",eof_etext2,(unsigned long)(sizeof(eof_etext2)/sizeof(char)));	//Store the Title info in eof_etext2[]
 				(void) GrabID3TextFrame(&tag,"TYER",year,(unsigned long)(sizeof(year)/sizeof(char)));				//Store the Year info in year[]
-				(void) GrabID3TextFrame(&tag,"TALB",album,(unsigned long)(sizeof(album)/sizeof(char)));			//Store the Album info in album[]
+				(void) GrabID3TextFrame(&tag,"TALB",album,(unsigned long)(sizeof(album)/sizeof(char)));				//Store the Album info in album[]
 			}
 
 			//If any of the information was not found in the ID3v2 tag, check for it from an ID3v1 tag
@@ -2165,13 +2165,13 @@ int eof_new_chart(char * filename)
 			if(tag.id3v1present > 1)	//If there were fields defined in an ID3v1 tag
 			{
 				if((eof_etext[0]=='\0') && (tag.id3v1artist != NULL))
-					strncpy(eof_etext,tag.id3v1artist,sizeof(eof_etext)/sizeof(char) - 1);
+					(void) ustrncpy(eof_etext, tag.id3v1artist, sizeof(eof_etext) - 1);
 				if((eof_etext2[0]=='\0') && (tag.id3v1title != NULL))
-					strncpy(eof_etext2,tag.id3v1title,sizeof(eof_etext2)/sizeof(char) - 1);
+					(void) ustrncpy(eof_etext2, tag.id3v1title, sizeof(eof_etext2) - 1);
 				if((year[0]=='\0') && (tag.id3v1year != NULL))
-					strncpy(year,tag.id3v1year,sizeof(year)/sizeof(char) - 1);
+					(void) ustrncpy(year, tag.id3v1year, sizeof(year) - 1);
 				if((album[0]=='\0') && (tag.id3v1album != NULL))
-					strncpy(album,tag.id3v1album,sizeof(album)/sizeof(char) - 1);
+					(void) ustrncpy(album, tag.id3v1album,sizeof(album) - 1);
 			}
 
 			//Validate year string
@@ -2395,7 +2395,7 @@ int eof_save_helper(char *destfilename, char silent)
 			if(eof_song->tags->lyrics)
 			{	//If user enabled the Lyrics checkbox in song properties
 				for(ctr = 0; ctr < eof_song->vocal_track[0]->lyrics; ctr++)
-				{
+				{	//For each lyric
 					if((eof_song->vocal_track[0]->lyric[ctr]->note != EOF_LYRIC_PERCUSSION) && (eof_find_lyric_line(ctr) == NULL))
 					{	//If any of the non vocal percussion lyrics are not within a line
 						eof_cursor_visible = 0;
@@ -2412,8 +2412,21 @@ int eof_save_helper(char *destfilename, char silent)
 						break;
 					}
 				}
+			}//If user enabled the Lyrics checkbox in song properties
+			for(ctr = 0; ctr < eof_song->vocal_track[0]->lyrics; ctr++)
+			{	//For each lyric
+				if((eof_song->vocal_track[0]->lyric[ctr]->text[0] != '\0') && (eof_string_has_non_ascii(eof_song->vocal_track[0]->lyric[ctr]->text)))
+				{	//If any of the lyrics that contain text have non ASCII characters
+					eof_clear_input();
+					if(alert("Warning: One or more lyrics have non ASCII characters.", "These lyrics may not work correctly for some rhythm games.", "Cancel and seek to first offending lyric?", "&Yes", "&No", 'y', 'n') == 1)
+					{	//If user opts to cancel the save
+						eof_seek_and_render_position(EOF_TRACK_VOCALS, eof_get_note_type(eof_song, EOF_TRACK_VOCALS, ctr), eof_get_note_pos(eof_song, EOF_TRACK_VOCALS, ctr));
+						return 1;	//Return cancellation
+					}
+					break;
+				}
 			}
-		}
+		}//If checks and warnings aren't suppressed
 	}
 
 	/* check 5 lane guitar note lengths */

@@ -346,7 +346,10 @@ unsigned long ConvertSRTTimestamp(char **ptr,int *errorstatus)
 	}
 
 	assert_wrapper((ptr != NULL) && (temp != NULL));
-	*ptr=&(temp[ctr+1]);	//Store address of first character following end of timestamp
+	if((ptr != NULL) && (temp != NULL))
+	{	//Redundant check to satisfy cppcheck
+		*ptr=&(temp[ctr+1]);	//Store address of first character following end of timestamp
+	}
 
 
 //Convert hours string to integer and add to sum
