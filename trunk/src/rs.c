@@ -1894,7 +1894,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_ARP;	//Mark this chord as being in an arpeggio phrase
 					if(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE)
 					{	//If this arpeggio is specified as exporting as a normal handshape instead of an arpeggio one
-						tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_ARP_HAND;	//Mark this chord as being in a handshape phrase
+						tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_HAND;	//Mark this chord as being in a handshape phrase
 					}
 					for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
 					{	//For each of the 6 supported strings
@@ -4495,7 +4495,7 @@ void eof_rs_export_cleanup(EOF_SONG * sp, unsigned long track)
 	{	//For each note in the track, in reverse order
 		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_IGNORE;	//Clear the ignore flag
 		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_ARP;		//Clear the arpeggio flag
-		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_ARP_HAND;	//Clear the arpeggio handshape flag
+		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_HAND;		//Clear the handshape flag
 		if(tp->note[ctr - 1]->tflags & EOF_NOTE_TFLAG_TEMP)
 		{	//If this is a temporary note that was added to split up an arpeggio's chord into single notes
 			eof_track_delete_note(sp, track, ctr - 1);	//Delete it
