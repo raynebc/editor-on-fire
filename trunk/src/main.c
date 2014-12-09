@@ -288,6 +288,7 @@ int eof_color_dark_green;
 int eof_color_blue;
 int eof_color_dark_blue;
 int eof_color_light_blue;
+int eof_color_lighter_blue;
 int eof_color_turquoise;
 int eof_color_yellow;
 int eof_color_purple;
@@ -1568,6 +1569,7 @@ int eof_load_ogg_quick(char * filename)
 	eof_destroy_ogg();
 	eof_music_data = (void *)eof_buffer_file(filename, 0);
 	eof_music_data_size = file_size_ex(filename);
+
 	if(eof_music_data)
 	{
 		eof_music_track = alogg_create_ogg_from_buffer(eof_music_data, eof_music_data_size);
@@ -1602,8 +1604,10 @@ int eof_load_ogg_quick(char * filename)
 			free(eof_music_data);
 		}
 	}
-	(void) ustrncpy(eof_loaded_ogg_name,filename,1024 - 1);	//Store the loaded OGG filename
+
+	(void) ustrcpy(eof_loaded_ogg_name,filename);	//Store the loaded OGG filename
 	eof_loaded_ogg_name[1023] = '\0';	//Guarantee NULL termination
+
 	return loaded;
 }
 
@@ -1681,7 +1685,7 @@ int eof_load_ogg(char * filename, char silence_failover)
 			}
 			eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
 			eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
-			(void) ustrncpy(eof_loaded_ogg_name,filename,1024 - 1);	//Store the loaded OGG filename
+			(void) ustrcpy(eof_loaded_ogg_name,filename);	//Store the loaded OGG filename
 			eof_loaded_ogg_name[1023] = '\0';	//Guarantee NULL termination
 		}
 	}
@@ -1713,6 +1717,7 @@ int eof_destroy_ogg(void)
 		eof_music_data = NULL;
 		failed = 0;
 	}
+
 	return !failed;
 }
 
@@ -3343,7 +3348,13 @@ void eof_render_3d_window(void)
 				sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 				sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 				if((-100 <= sez) && (600 >= sz))
-				{	//If the arpeggio section would render visibly, fill the topmost lane with turquoise
+				{	//If the arpeggio section would render visibly, fill the topmost lane with the appropriate color
+					int arpeggiocolor = eof_color_turquoise;	//Normal arpeggio phrases will render in turquoise
+
+					if(sectionptr->flags & EOF_RS_ARP_HANDSHAPE)
+					{	//If this arpeggio is configured to export as a normal handshape
+						arpeggiocolor = eof_color_lighter_blue;
+					}
 					spz = sz < -100 ? -100 : sz;
 					spez = sez > 600 ? 600 : sez;
 					point[0] = ocd3d_project_x(20, spez);
@@ -3354,7 +3365,7 @@ void eof_render_3d_window(void)
 					point[5] = ocd3d_project_y(200, spz);
 					point[6] = ocd3d_project_x(20, spz);
 					point[7] = point[5];
-					polygon(eof_window_3d->screen, 4, point, eof_color_turquoise);	//Fill with a turquoise color
+					polygon(eof_window_3d->screen, 4, point, arpeggiocolor);	//Fill with a turquoise or light blue color
 				}
 			}
 		}
@@ -3816,6 +3827,7 @@ int eof_load_data(void)
 	eof_color_blue = makecol(0, 0, 255);
 	eof_color_dark_blue = makecol(0, 0, 96);
 	eof_color_light_blue = makecol(96, 96, 255);
+	eof_color_lighter_blue = makecol(160, 160, 255);
 	eof_color_turquoise = makecol(51,166,153);	//(use (68,221,204) for light turquoise)
 	eof_color_yellow = makecol(255, 255, 0);
 	eof_color_purple = makecol(255, 0, 255);

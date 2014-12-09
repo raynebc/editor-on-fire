@@ -2273,15 +2273,16 @@ if(eof_key_code == KEY_PAUSE)
 	/* cycle HOPO status (H in a legacy track) */
 	/* toggle hammer on status (H in a pro guitar track) */
 	/* toggle harmonic (CTRL+H in a pro guitar track) */
-	/* toggle pinch harmonic (CTRL+SHIFT+H in a pro guitar track) */
+	/* toggle pinch harmonic (SHIFT+H in a pro guitar track) */
+	/* mark handshape phrase (CTRL+SHIFT+H in a pro guitar track) */
 		if((eof_key_char == 'h') && !KEY_EITHER_ALT)
 		{
 			if(KEY_EITHER_CTRL)
 			{	//If CTRL is held
 				if(KEY_EITHER_SHIFT)
 				{	//If SHIFT is also held
+					(void) eof_menu_handshape_mark();
 					eof_shift_used = 1;	//Track that the SHIFT key was used
-					(void) eof_menu_note_toggle_pinch_harmonic();
 				}
 				else
 				{	//Only CTRL is held
@@ -2293,13 +2294,21 @@ if(eof_key_code == KEY_PAUSE)
 			}
 			else
 			{	//If CTRL is not held
-				if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
-				{	//Cycle HO/PO
-					(void) eof_menu_hopo_cycle();
+				if(KEY_EITHER_SHIFT)
+				{	//If SHIFT is held
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					(void) eof_menu_note_toggle_pinch_harmonic();
 				}
-				else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-				{	//Toggle HO
-					(void) eof_menu_pro_guitar_toggle_hammer_on();
+				else
+				{	//SHIFT is not held
+					if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+					{	//Cycle HO/PO
+						(void) eof_menu_hopo_cycle();
+					}
+					else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+					{	//Toggle HO
+						(void) eof_menu_pro_guitar_toggle_hammer_on();
+					}
 				}
 			}
 			eof_use_key();
@@ -5363,7 +5372,13 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 				sectionptr = &eof_song->pro_guitar_track[tracknum]->arpeggio[i];
 				if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop) && ((sectionptr->difficulty == eof_note_type) || (sectionptr->difficulty == 0xFF)))
 				{	//If the arpeggio section would render between the left and right edges of the piano roll, and the section applies to the active difficulty, fill the bottom lane with turquoise
-					rectfill(window->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 2], lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 1], eof_color_turquoise);
+					int arpeggiocolor = eof_color_turquoise;	//Normal arpeggio phrases will render in turquoise
+
+					if(sectionptr->flags & EOF_RS_ARP_HANDSHAPE)
+					{	//If this arpeggio is configured to export as a normal handshape
+						arpeggiocolor = eof_color_lighter_blue;
+					}
+					rectfill(window->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 2], lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 1], arpeggiocolor);
 				}
 			}
 

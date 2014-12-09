@@ -177,7 +177,7 @@ void eof_prepare_track_menu(void)
 			eof_menu_track_rocksmith_popup_copy_menu[i].flags = 0;
 			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 			{	//If the track exists, copy its name into the string used by the track menu
-				(void) ustrncpy(eof_menu_track_rocksmith_popup_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE - 1);
+				(void) ustrcpy(eof_menu_track_rocksmith_popup_copy_menu_text[i], eof_song->track[i + 1]->name);
 					//Copy the track name to the menu string
 			}
 			else
@@ -196,7 +196,7 @@ void eof_prepare_track_menu(void)
 			eof_menu_thin_diff_menu[i].flags = D_DISABLED;
 			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 			{	//If the track exists, copy its name into the string used by the track menu
-				(void) ustrncpy(eof_menu_thin_diff_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE - 1);
+				(void) ustrcpy(eof_menu_thin_diff_menu_text[i], eof_song->track[i + 1]->name);
 					//Copy the track name to the menu string
 			}
 			else
@@ -369,13 +369,13 @@ int eof_track_rename(void)
 	eof_color_dialog(eof_track_rename_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_track_rename_dialog);
 
-	(void) ustrncpy(eof_etext, eof_song->track[eof_selected_track]->altname, EOF_NAME_LENGTH);	//Update the input field
+	(void) ustrcpy(eof_etext, eof_song->track[eof_selected_track]->altname);	//Update the input field
 	if(eof_popup_dialog(eof_track_rename_dialog, 2) == 3)
 	{	//If user clicked OK
 		if(ustrncmp(eof_etext, eof_song->track[eof_selected_track]->altname, EOF_NAME_LENGTH))
 		{	//If the user provided a different alternate track name
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			(void) ustrncpy(eof_song->track[eof_selected_track]->altname, eof_etext, EOF_NAME_LENGTH);	//Update the track entry
+			(void) ustrcpy(eof_song->track[eof_selected_track]->altname, eof_etext);	//Update the track entry
 			if(eof_etext[0] != '\0')
 			{	//If the alternate name string is not empty
 				eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_ALT_NAME;	//Set this flag
@@ -1661,7 +1661,7 @@ int eof_track_rs_popup_messages_edit(DIALOG * d)
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					eof_rs_popup_messages_dialog_undo_made = 1;
 				}
-				(void) ustrncpy(ptr->name, eof_etext, EOF_SECTION_NAME_LENGTH);	//Update the popup message string
+				(void) ustrcpy(ptr->name, eof_etext);	//Update the popup message string
 				ptr->name[EOF_SECTION_NAME_LENGTH] = '\0';	//Guarantee NULL termination
 				ptr->start_pos = start;				//Update start timestamp
 				ptr->end_pos = start + duration;	//Update end timestamp
@@ -2727,7 +2727,7 @@ int eof_track_rs_tone_change_add(void)
 				if(eof_etext[0] != '\0')
 				{	//If a tone key name is specified
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					(void) ustrncpy(tp->tonechange[ctr].name, eof_etext, EOF_SECTION_NAME_LENGTH);	//Update the tone name string
+					(void) ustrcpy(tp->tonechange[ctr].name, eof_etext);	//Update the tone name string
 					tp->tonechange[ctr].name[EOF_SECTION_NAME_LENGTH] = '\0';	//Guarantee NULL termination
 				}
 			}
@@ -3009,7 +3009,7 @@ int eof_track_rs_tone_changes_edit(DIALOG * d)
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				eof_track_rs_tone_changes_dialog_undo_made = 1;
 			}
-			(void) ustrncpy(ptr->name, eof_etext, EOF_SECTION_NAME_LENGTH);	//Update the tone name string
+			(void) ustrcpy(ptr->name, eof_etext);	//Update the tone name string
 			ptr->name[EOF_SECTION_NAME_LENGTH] = '\0';	//Guarantee NULL termination
 		}
 	}

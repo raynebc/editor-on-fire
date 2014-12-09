@@ -416,6 +416,8 @@ int eof_menu_file_load(void)
 		(void) ustrcpy(eof_filename, returnedfn);
 		(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
 		(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSet eof_loaded_song_name to \"%s\"", eof_loaded_song_name);
+		eof_log(eof_log_string, 1);
 
 		/* free the current project */
 		if(eof_song)
@@ -436,6 +438,8 @@ int eof_menu_file_load(void)
 			return 1;
 		}
 		(void) replace_filename(eof_song_path, eof_filename, "", 1024);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSet eof_song_path to \"%s\"", eof_song_path);
+		eof_log(eof_log_string, 1);
 
 		/* check song.ini and prompt user to load any external edits */
 		(void) replace_filename(temp_filename, eof_song_path, "song.ini", 1024);
@@ -475,6 +479,7 @@ int eof_menu_file_load(void)
 			}
 			eof_selected_ogg = 0;
 		}
+
 		eof_song_loaded = 1;
 		eof_chart_length = alogg_get_length_msecs_ogg(eof_music_track);
 		eof_init_after_load(0);
@@ -2165,13 +2170,13 @@ int eof_new_chart(char * filename)
 			if(tag.id3v1present > 1)	//If there were fields defined in an ID3v1 tag
 			{
 				if((eof_etext[0]=='\0') && (tag.id3v1artist != NULL))
-					(void) ustrncpy(eof_etext, tag.id3v1artist, sizeof(eof_etext) - 1);
+					(void) ustrcpy(eof_etext, tag.id3v1artist);
 				if((eof_etext2[0]=='\0') && (tag.id3v1title != NULL))
-					(void) ustrncpy(eof_etext2, tag.id3v1title, sizeof(eof_etext2) - 1);
+					(void) ustrcpy(eof_etext2, tag.id3v1title);
 				if((year[0]=='\0') && (tag.id3v1year != NULL))
-					(void) ustrncpy(year, tag.id3v1year, sizeof(year) - 1);
+					(void) ustrcpy(year, tag.id3v1year);
 				if((album[0]=='\0') && (tag.id3v1album != NULL))
-					(void) ustrncpy(album, tag.id3v1album,sizeof(album) - 1);
+					(void) ustrcpy(album, tag.id3v1album);
 			}
 
 			//Validate year string
@@ -2292,11 +2297,11 @@ int eof_new_chart(char * filename)
 	}
 
 	/* fill in information */
-	(void) ustrncpy(eof_song->tags->artist, eof_etext, (int) sizeof(eof_song->tags->artist) - 1);	//Prevent buffer overflow
-	(void) ustrncpy(eof_song->tags->title, eof_etext2, (int) sizeof(eof_song->tags->title) - 1);
-	(void) ustrncpy(eof_song->tags->frettist, eof_last_frettist, (int) sizeof(eof_song->tags->frettist) - 1);
-	(void) ustrncpy(eof_song->tags->year, year, (int) sizeof(eof_song->tags->year) - 1);	//The year tag that was read from an MP3 (if applicable)
-	(void) ustrncpy(eof_song->tags->album, album, (int) sizeof(eof_song->tags->album) - 1);
+	(void) ustrcpy(eof_song->tags->artist, eof_etext);	//Prevent buffer overflow
+	(void) ustrcpy(eof_song->tags->title, eof_etext2);
+	(void) ustrcpy(eof_song->tags->frettist, eof_last_frettist);
+	(void) ustrcpy(eof_song->tags->year, year);	//The year tag that was read from an MP3 (if applicable)
+	(void) ustrcpy(eof_song->tags->album, album);
 	(void) ustrcpy(oggfilename, filename);
 	(void) replace_filename(eof_last_ogg_path, oggfilename, "", 1024);
 
@@ -2496,22 +2501,6 @@ int eof_save_helper(char *destfilename, char silent)
 				{	//If the user opts to see the problems
 					(void) eof_check_fret_hand_positions_menu();
 					return 1;	//Return cancellation
-				}
-			}
-		}
-	}
-
-	/* check if there is a MIDI delay, offer to use Reset offset to zero */
-	if(!silent)
-	{	//If checks and warnings aren't suppressed
-		if(eof_write_rs_files || eof_write_rs2_files)
-		{	//If the user wants to save Rocksmith capable files
-			if(eof_song->beat[0]->pos > 0)
-			{	//If there is a MIDI delay
-				eof_clear_input();
-				if(alert("Warning:  The first beat marker (the MIDI delay) is not positioned at 0 seconds.", "This might prevent the song from playing from the beginning in Rocksmith.", "Correct this condition with \"Reset offset to zero\"?", "&Yes", "&No", 'y', 'n') == 1)
-				{	//If the user opts to correct the issue
-					(void) eof_menu_beat_reset_offset();	//Run the "Reset offset to zero" function.  If the tempo map is locked, the function will offer to unlock it before proceeding
 				}
 			}
 		}
@@ -2754,7 +2743,7 @@ int eof_save_helper(char *destfilename, char silent)
 	{	//Perform save as
 		function = 2;
 		(void) replace_extension(destfilename, destfilename, "eof", 1024);	//Ensure the chart is saved with a .eof extension
-		(void) ustrncpy(eof_temp_filename, destfilename, (int) sizeof(eof_temp_filename) - 1);
+		(void) ustrcpy(eof_temp_filename, destfilename);
 		if(eof_temp_filename[1022] != '\0')	//If the source filename was too long to store in the array
 			return 4;			//Return failure:  Destination path too long
 		(void) replace_filename(newfolderpath, destfilename, "", 1024);	//Obtain the destination path
@@ -2817,6 +2806,8 @@ int eof_save_helper(char *destfilename, char silent)
 		return 9;	//Return failure:  Could not create project file
 	}
 	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_temp_filename));
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSet eof_loaded_song_name to \"%s\"", eof_loaded_song_name);
+	eof_log(eof_log_string, 1);
 
 	/* save the MIDI, INI and other files*/
 	if(!silent)

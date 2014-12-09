@@ -2244,7 +2244,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				{	//If EOF can store the arpeggio section
 					sp->pro_guitar_track[tracknum]->arpeggio[count].start_pos = start;
 					sp->pro_guitar_track[tracknum]->arpeggio[count].end_pos = end;
-					sp->pro_guitar_track[tracknum]->arpeggio[count].flags = 0;
+					sp->pro_guitar_track[tracknum]->arpeggio[count].flags = flags;	//Specifies whether the arpeggio exports as an arpeggio or a normal handshape
 					if(name == NULL)
 					{
 						sp->pro_guitar_track[tracknum]->arpeggio[count].name[0] = '\0';
@@ -3053,11 +3053,11 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 						(void) pack_iputl(tp->arpeggios, fp);				//Write number of arpeggio sections for this track
 						for(ctr=0; ctr < tp->arpeggios; ctr++)
 						{	//For each arpegio section in the track
-							(void) eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
+							(void) eof_save_song_string_pf(NULL, fp);			//Write an empty section name string (not supported yet)
 							(void) pack_putc(tp->arpeggio[ctr].difficulty, fp);	//Write the arpeggio phrase's associated difficulty
 							(void) pack_iputl(tp->arpeggio[ctr].start_pos, fp);	//Write the arpeggio phrase's position
-							(void) pack_iputl(tp->arpeggio[ctr].end_pos, fp);		//Write the arpeggio phrase's end position
-							(void) pack_iputl(0, fp);						//Write section flags (not used)
+							(void) pack_iputl(tp->arpeggio[ctr].end_pos, fp);	//Write the arpeggio phrase's end position
+							(void) pack_iputl(tp->arpeggio[ctr].flags, fp);		//Write section flags
 						}
 					}
 					if(has_trills)
@@ -3849,7 +3849,7 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long
 				ptr->tflags = 0;
 				if(text != NULL)
 				{
-					(void) ustrncpy(ptr->name, text, EOF_NAME_LENGTH);
+					(void) ustrcpy(ptr->name, text);
 				}
 				else
 				{
@@ -3871,7 +3871,7 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long
 				ptr2->note = note;
 				if(text != NULL)
 				{
-					(void) ustrncpy(ptr2->text, text, EOF_MAX_LYRIC_LENGTH);
+					(void) ustrcpy(ptr2->text, text);
 				}
 				else
 				{
@@ -3889,7 +3889,7 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long
 				ptr3 = (EOF_PRO_GUITAR_NOTE *)new_note;
 				if(text != NULL)
 				{
-					(void) ustrncpy(ptr3->name, text, EOF_NAME_LENGTH);
+					(void) ustrcpy(ptr3->name, text);
 				}
 				else
 				{
@@ -6345,21 +6345,21 @@ void eof_set_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, ch
 		case EOF_LEGACY_TRACK_FORMAT:
 			if(note < sp->legacy_track[tracknum]->notes)
 			{
-				(void) ustrncpy(sp->legacy_track[tracknum]->note[note]->name, name, EOF_NAME_LENGTH);
+				(void) ustrcpy(sp->legacy_track[tracknum]->note[note]->name, name);
 			}
 		break;
 
 		case EOF_VOCAL_TRACK_FORMAT:
 			if(note < sp->vocal_track[tracknum]->lyrics)
 			{
-				(void) ustrncpy(sp->vocal_track[tracknum]->lyric[note]->text, name, EOF_MAX_LYRIC_LENGTH);
+				(void) ustrcpy(sp->vocal_track[tracknum]->lyric[note]->text, name);
 			}
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			if(note < sp->pro_guitar_track[tracknum]->notes)
 			{
-				(void) ustrncpy(sp->pro_guitar_track[tracknum]->note[note]->name, name, EOF_NAME_LENGTH);
+				(void) ustrcpy(sp->pro_guitar_track[tracknum]->note[note]->name, name);
 			}
 		break;
 	}

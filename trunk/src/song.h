@@ -85,6 +85,7 @@
 #define EOF_NOTE_TFLAG_TEMP       1	//This flag will represent a temporary status, such as a note that was generated for temporary use that will be removed
 #define EOF_NOTE_TFLAG_IGNORE     2	//This flag will represent a note that is not exported to XML (such as a chord within an arpeggio that is converted into single notes)
 #define EOF_NOTE_TFLAG_ARP        4	//This flag will represent a note that is a chord within an arpeggio, for RS export of arpeggio handshapes
+#define EOF_NOTE_TFLAG_HAND       8 //This flag will represent a note that is within a handshape phrase, which is treated as a variation of an arpeggio, affecting export to RS2 XML
 
 //The following extended flags pertain to pro guitar notes
 #define EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE  1		//This flag specifies a note that will export to RS2 format with the "ignore" status set to nonzero, for special uses
@@ -95,6 +96,7 @@
 #define EOF_MAX_PHRASES  1000
 #define EOF_MAX_OGGS        8
 
+//The following flags pertain to beats
 #define EOF_BEAT_FLAG_ANCHOR       1
 #define EOF_BEAT_FLAG_EVENTS       2
 #define EOF_BEAT_FLAG_START_4_4    4
@@ -105,7 +107,9 @@
 #define EOF_BEAT_FLAG_KEY_SIG    128
 #define EOF_BEAT_FLAG_EXTENDED 32768	//Reserve the highest unused bit to allow for another beat flag to be conditionally present
 
+//The following flags pertain to phrases
 #define EOF_LYRIC_LINE_FLAG_OVERDRIVE 1
+#define EOF_RS_ARP_HANDSHAPE          2	//A modifier for arpeggio sections that will cause the section to export to XML without "-arp" appended to the chord template name
 
 #define EOF_MAX_TEXT_EVENTS 4096
 

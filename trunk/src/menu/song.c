@@ -286,7 +286,7 @@ void eof_prepare_song_menu(void)
 			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 			{	//If the track exists, copy its name into the string used by the track menu
 				ptr[0] = ' ';	//Add a leading space
-				(void) ustrncpy(&(ptr[1]),eof_song->track[i+1]->name,EOF_TRACK_NAME_SIZE-1);
+				(void) ustrcpy(&(ptr[1]),eof_song->track[i+1]->name);
 					//Append the track name to the menu string, starting at index 1
 			}
 			else
