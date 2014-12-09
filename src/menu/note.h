@@ -104,10 +104,15 @@ int eof_menu_note_remove_slide(void);			//Removes the slide status of all select
 int eof_menu_note_reverse_slide(void);			//Reverses the slide direction of all selected notes that already slide (also removes the reverse slide status if it is applied)
 int eof_menu_note_toggle_palm_muting(void);		//Toggles the palm muting status of all selected notes
 int eof_menu_note_remove_palm_muting(void);		//Removes the palm muting status of all selected notes
+int eof_menu_arpeggio_mark_logic(int handshape);	//Marks/remarks the selected notes as an arpeggio phrase if handshape is 0, or otherwise as a handshape phrase (a variation of arpeggio phrase)
 int eof_menu_arpeggio_mark(void);				//Marks/remarks an arpeggio phrase encompassing the selected notes
+int eof_menu_handshape_mark(void);				//Marks/remarks a handshape phrase encompassing the selected notes
+int eof_menu_arpeggio_unmark_logic(int handshape);	//Removes either the arpeggio (if handshape is 0) or handshape (if handshape is nonzero) phrases encompassing the selected notes
 int eof_menu_arpeggio_unmark(void);				//Removes arpeggio phrases that include any of the selected notes
-void eof_pro_guitar_track_delete_arpeggio(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified arpeggio phrase
+int eof_menu_handshape_unmark(void);			//Removes handshape phrases that include any of the selected notes
+void eof_pro_guitar_track_delete_arpeggio(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified arpeggio or handshape phrase
 int eof_menu_arpeggio_erase_all(void);			//Removes all arpeggio phrases, freeing phrase names as necessary
+int eof_menu_handshape_erase_all(void);			//Removes all handshape phrases, freeing phrase names as necessary
 int eof_menu_trill_mark(void);					//Marks/remarks a trill phrase encompassing the seleted notes
 int eof_menu_tremolo_mark(void);				//Marks/remarks a tremolo phrase encompassing the seleted notes
 int eof_menu_slider_mark(void);					//Marks/remarks a slider phrase encompassing the selected notes

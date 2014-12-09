@@ -23,6 +23,7 @@ char eof_solo_menu_mark_text[32] = "&Mark";
 char eof_star_power_menu_mark_text[32] = "&Mark";
 char eof_lyric_line_menu_mark_text[32] = "&Mark";
 char eof_arpeggio_menu_mark_text[32] = "&Mark";
+char eof_handshape_menu_mark_text[32] = "&Mark";
 char eof_trill_menu_mark_text[32] = "&Mark";
 char eof_tremolo_menu_mark_text[32] = "&Mark";
 char eof_slider_menu_mark_text[32] = "&Mark";
@@ -120,6 +121,14 @@ MENU eof_arpeggio_menu[] =
 	{"&Remove", eof_menu_arpeggio_unmark, NULL, 0, NULL},
 	{"&Erase All", eof_menu_arpeggio_erase_all, NULL, 0, NULL},
 	{"&Copy From", NULL, eof_menu_arpeggio_copy_menu, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_handshape_menu[] =
+{
+	{eof_handshape_menu_mark_text, eof_menu_handshape_mark, NULL, 0, NULL},
+	{"&Remove", eof_menu_handshape_unmark, NULL, 0, NULL},
+	{"&Erase All", eof_menu_handshape_erase_all, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -309,6 +318,7 @@ MENU eof_note_proguitar_menu[] =
 
 MENU eof_note_rocksmith_menu[] =
 {
+	{"Han&Dshape", NULL, eof_handshape_menu, 0, NULL},
 	{"Edit &Frets/Fingering\tF", eof_menu_note_edit_pro_guitar_note_frets_fingers_menu, NULL, 0, NULL},
 	{"Clear fingering", eof_menu_pro_guitar_remove_fingering, NULL, 0, NULL},
 	{"Toggle pop\t" CTRL_NAME "+Shift+P", eof_menu_note_toggle_pop, NULL, 0, NULL},
@@ -317,7 +327,7 @@ MENU eof_note_rocksmith_menu[] =
 	{"Remove &Slap", eof_menu_note_remove_slap, NULL, 0, NULL},
 	{"Toggle accent\t" CTRL_NAME "+Shift+A", eof_menu_note_toggle_accent, NULL, 0, NULL},
 	{"Remove &Accent", eof_menu_note_remove_accent, NULL, 0, NULL},
-	{"Toggle pinch harmonic\t" CTRL_NAME "+Shift+H", eof_menu_note_toggle_pinch_harmonic, NULL, 0, NULL},
+	{"Toggle pinch harmonic\tShift+H", eof_menu_note_toggle_pinch_harmonic, NULL, 0, NULL},
 	{"Remove pinch &Harmonic", eof_menu_note_remove_pinch_harmonic, NULL, 0, NULL},
 	{"Define unpitched slide\t" CTRL_NAME "+U", eof_pro_guitar_note_define_unpitched_slide, NULL, 0, NULL},
 	{"Remove &Unpitched slide", eof_menu_note_remove_unpitched_slide, NULL, 0, NULL},
@@ -421,7 +431,7 @@ DIALOG eof_note_name_dialog[] =
 void eof_prepare_note_menu(void)
 {
 	int vselected;
-	int insp = 0, insolo = 0, inll = 0, inarpeggio = 0, intrill = 0, intremolo = 0, inslider = 0;
+	int insp = 0, insolo = 0, inll = 0, inarpeggio = 0, intrill = 0, intremolo = 0, inslider = 0, inhandshape = 0;
 	int spstart = -1, ssstart = -1, llstart = -1;
 	int spend = -1, ssend = -1, llend = -1;
 	int spp = 0, ssp = 0, llp = 0;
@@ -484,8 +494,15 @@ void eof_prepare_note_menu(void)
 					for(j = 0; j < eof_song->pro_guitar_track[tracknum]->arpeggios; j++)
 					{	//For each arpeggio phrase in the active track
 						if((sel_end >= eof_song->pro_guitar_track[tracknum]->arpeggio[j].start_pos) && (sel_start <= eof_song->pro_guitar_track[tracknum]->arpeggio[j].end_pos) && (eof_song->pro_guitar_track[tracknum]->arpeggio[j].difficulty == eof_note_type))
-						{
-							inarpeggio = 1;
+						{	//If the selection overlaps any arpeggio/handshape phrases
+							if(!(eof_song->pro_guitar_track[tracknum]->arpeggio[j].flags & EOF_RS_ARP_HANDSHAPE))
+							{	//If this is an arpeggio phrase instead of a handshape phrase
+								inarpeggio = 1;
+							}
+							else
+							{
+								inhandshape = 1;
+							}
 						}
 					}
 				}
@@ -602,7 +619,7 @@ void eof_prepare_note_menu(void)
 			eof_menu_sp_copy_menu[i].flags = 0;
 			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 			{	//If the track exists, copy its name into the string used by the track menu
-				(void) ustrncpy(eof_menu_sp_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE - 1);
+				(void) ustrcpy(eof_menu_sp_copy_menu_text[i], eof_song->track[i + 1]->name);
 					//Copy the track name to the menu string
 			}
 			else
@@ -633,7 +650,7 @@ void eof_prepare_note_menu(void)
 			eof_menu_solo_copy_menu[i].flags = 0;
 			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 			{	//If the track exists, copy its name into the string used by the track menu
-				(void) ustrncpy(eof_menu_solo_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE - 1);
+				(void) ustrcpy(eof_menu_solo_copy_menu_text[i], eof_song->track[i + 1]->name);
 					//Copy the track name to the menu string
 			}
 			else
@@ -672,13 +689,25 @@ void eof_prepare_note_menu(void)
 			(void) ustrcpy(eof_arpeggio_menu_mark_text, "&Mark\t" CTRL_NAME "+Shift+G");
 		}
 
+		/* handshape mark/remark */
+		if(inhandshape)
+		{
+			eof_handshape_menu[1].flags = 0;				//Note>Pro Guitar>Handshape>Remove
+			(void) ustrcpy(eof_handshape_menu_mark_text, "Re-&Mark\t" CTRL_NAME "+Shift+H");
+		}
+		else
+		{
+			eof_handshape_menu[1].flags = D_DISABLED;
+			(void) ustrcpy(eof_handshape_menu_mark_text, "&Mark\t" CTRL_NAME "+Shift+H");
+		}
+
 		/* arpeggio copy from */
 		for(i = 0; i < EOF_TRACKS_MAX; i++)
 		{	//For each track supported by EOF
 			eof_menu_arpeggio_copy_menu[i].flags = 0;
 			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 			{	//If the track exists, copy its name into the string used by the track menu
-				(void) ustrncpy(eof_menu_arpeggio_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE - 1);
+				(void) ustrcpy(eof_menu_arpeggio_copy_menu_text[i], eof_song->track[i + 1]->name);
 					//Copy the track name to the menu string
 			}
 			else
@@ -897,13 +926,19 @@ void eof_prepare_note_menu(void)
 				}
 
 				/* Arpeggio>Erase all */
-				if(tp->arpeggios)
-				{	//If there's at least one arpeggio phrase
-					eof_arpeggio_menu[2].flags = 0;		//Note>Pro Guitar>Arpeggio>Erase All
-				}
-				else
-				{
-					eof_arpeggio_menu[2].flags = D_DISABLED;
+				/* Handshape>Erase all */
+				eof_arpeggio_menu[2].flags = D_DISABLED;	//Unless an arpeggio phrase is found, disable Note>Pro Guitar>Arpeggio>Erase All
+				eof_handshape_menu[2].flags = D_DISABLED;	//Unless a handshape phrase is found, disable Note>Rocksmith>Handshape>Erase All
+				for(i = 0; i < tp->arpeggios; i++)
+				{	//For each arpeggio/handshape phrase
+					if(!(tp->arpeggio[i].flags & EOF_RS_ARP_HANDSHAPE))
+					{	//If this is an arpeggio phrase instead of a handshape phrase
+						eof_arpeggio_menu[2].flags = 0;		//Enable Note>Pro Guitar>Arpeggio>Erase All
+					}
+					else
+					{	//This is a handshape phrase
+						eof_handshape_menu[2].flags = 0;		//Enable Note>Rocksmith>Handshape>Erase All
+					}
 				}
 			}
 			else
@@ -930,7 +965,7 @@ void eof_prepare_note_menu(void)
 				eof_menu_trill_copy_menu[i].flags = 0;
 				if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 				{	//If the track exists, copy its name into the string used by the track menu
-					(void) ustrncpy(eof_menu_trill_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE - 1);
+					(void) ustrcpy(eof_menu_trill_copy_menu_text[i], eof_song->track[i + 1]->name);
 						//Copy the track name to the menu string
 				}
 				else
@@ -961,7 +996,7 @@ void eof_prepare_note_menu(void)
 				eof_menu_tremolo_copy_menu[i].flags = 0;
 				if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 				{	//If the track exists, copy its name into the string used by the track menu
-					(void) ustrncpy(eof_menu_tremolo_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE - 1);
+					(void) ustrcpy(eof_menu_tremolo_copy_menu_text[i], eof_song->track[i + 1]->name);
 						//Copy the track name to the menu string
 				}
 				else
@@ -3551,7 +3586,6 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	unsigned char ghostmask;		//Used to build the updated ghost bitmask
 	unsigned long flags;			//Used to build the updated flag bitmask
 	unsigned long eflags;			//Used to build the updated extended flag bitmask
-	EOF_PRO_GUITAR_NOTE junknote;	//Just used with sizeof() to get the name string's length to guarantee a safe string copy
 	char *newname = NULL, *tempptr;
 	char autoprompt[100] = {0};
 	char previously_refused;
@@ -4168,7 +4202,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 										eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 										undo_made = 1;
 									}
-									(void) ustrncpy(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_note_edit_name, (int)sizeof(junknote.name) - 1);
+									(void) ustrcpy(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_note_edit_name);
 								}
 							}
 						}
@@ -4223,7 +4257,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 													eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 													undo_made = 1;
 												}
-												(void) ustrncpy(tempptr, newname, (int)sizeof(junknote.name) - 1);	//Update the note's name to the user selection
+												(void) ustrcpy(tempptr, newname);	//Update the note's name to the user selection
 											}
 										}
 									}
@@ -5363,7 +5397,7 @@ int eof_menu_note_remove_palm_muting(void)
 	return 1;
 }
 
-int eof_menu_arpeggio_mark(void)
+int eof_menu_arpeggio_mark_logic(int handshape)
 {
 	unsigned long i, j, sel_start, sel_end;
 	char existingphrase = 0;				//Is set to nonzero if any selected notes are within an existing phrase
@@ -5371,20 +5405,23 @@ int eof_menu_arpeggio_mark(void)
 	unsigned long tracknum;
 	unsigned long flags;
 	int note_selection_updated;
+	EOF_PRO_GUITAR_TRACK *tp;
+	EOF_PHRASE_SECTION *pp;	//A pointer to the modified or newly-created arpeggio phrase
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run unless a pro guitar track is active
 
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	//Find the start and end position of the collection of selected notes in the active difficulty
 	if(!eof_get_selected_note_range(&sel_start, &sel_end, 1))	//Find the start and end position of the collection of selected notes in the active difficulty
 	{	//If no notes are selected
 		return 1;	//Return without doing anything
 	}
-	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	for(j = 0; j < eof_song->pro_guitar_track[tracknum]->arpeggios; j++)
+	for(j = 0; j < tp->arpeggios; j++)
 	{	//For each arpeggio section in the track
-		if((sel_end >= eof_song->pro_guitar_track[tracknum]->arpeggio[j].start_pos) && (sel_start <= eof_song->pro_guitar_track[tracknum]->arpeggio[j].end_pos) && (eof_song->pro_guitar_track[tracknum]->arpeggio[j].difficulty == eof_note_type))
+		if((sel_end >= tp->arpeggio[j].start_pos) && (sel_start <= tp->arpeggio[j].end_pos) && (tp->arpeggio[j].difficulty == eof_note_type))
 		{	//If the selection of notes is within this arpeggio's start and end position, and the arpeggio is also in the active difficulty
 			existingphrase = 1;	//Note it
 			existingphrasenum = j;
@@ -5394,11 +5431,21 @@ int eof_menu_arpeggio_mark(void)
 	if(!existingphrase)
 	{	//If the selected notes are not within an existing arpeggio phrase, create one applying to the active difficulty
 		(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, sel_start, sel_end, 0, NULL);
+		pp = &tp->arpeggio[tp->arpeggios - 1];
 	}
 	else
 	{	//Otherwise edit the existing phrase
-		eof_song->pro_guitar_track[tracknum]->arpeggio[existingphrasenum].start_pos = sel_start;
-		eof_song->pro_guitar_track[tracknum]->arpeggio[existingphrasenum].end_pos = sel_end;
+		tp->arpeggio[existingphrasenum].start_pos = sel_start;
+		tp->arpeggio[existingphrasenum].end_pos = sel_end;
+		pp = &tp->arpeggio[existingphrasenum];
+	}
+	if(handshape)
+	{	//If the phrase added/edited is intended to be a handshape
+		pp->flags |= EOF_RS_ARP_HANDSHAPE;	//Set this flag
+	}
+	else
+	{
+		pp->flags &= ~EOF_RS_ARP_HANDSHAPE;	//Otherwise clear the flag
 	}
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -5418,27 +5465,52 @@ int eof_menu_arpeggio_mark(void)
 	return 1;
 }
 
-int eof_menu_arpeggio_unmark(void)
+int eof_menu_arpeggio_mark(void)
+{
+	return eof_menu_arpeggio_mark_logic(0);
+}
+
+int eof_menu_handshape_mark(void)
+{
+	return eof_menu_arpeggio_mark_logic(1);
+}
+
+int eof_menu_arpeggio_unmark_logic(int handshape)
 {
 	unsigned long i, j;
 	unsigned long tracknum;
 	int note_selection_updated;
+	EOF_PRO_GUITAR_TRACK *tp;
+	char undo_made = 0;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Don't allow this function to run unless a pro guitar track is active
 
-	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{	//If the note is selected and is in the active track difficulty
-			for(j = 0; j < eof_song->pro_guitar_track[tracknum]->arpeggios; j++)
+			for(j = 0; j < tp->arpeggios; j++)
 			{	//For each arpeggio section in the track
-				if((eof_get_note_pos(eof_song, eof_selected_track, i) >= eof_song->pro_guitar_track[tracknum]->arpeggio[j].start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= eof_song->pro_guitar_track[tracknum]->arpeggio[j].end_pos) && (eof_song->pro_guitar_track[tracknum]->arpeggio[j].difficulty == eof_note_type))
+				if((eof_get_note_pos(eof_song, eof_selected_track, i) >= tp->arpeggio[j].start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= tp->arpeggio[j].end_pos) && (tp->arpeggio[j].difficulty == eof_note_type))
 				{	//If the note is encompassed within this arpeggio section, and the arpeggio section exists in the active difficulty
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					eof_pro_guitar_track_delete_arpeggio(eof_song->pro_guitar_track[tracknum], j);	//Delete the arpeggio section
+					if(handshape && !(tp->arpeggio[j].flags & EOF_RS_ARP_HANDSHAPE))
+					{	//If only handshape phrases were to be removed, but this is an arpeggio phrase
+						continue;	//Skip this phrase
+					}
+					if(!handshape && (tp->arpeggio[j].flags & EOF_RS_ARP_HANDSHAPE))
+					{	//If only arpeggio phrases were to be removed, but this is a handshape phrase
+						continue;	//Skip this phrase
+					}
+					if(!undo_made)
+					{	//If an undo hasn't been made yet
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						undo_made = 1;
+					}
+					eof_pro_guitar_track_delete_arpeggio(tp, j);	//Delete the arpeggio section
 					break;
 				}
 			}
@@ -5450,6 +5522,16 @@ int eof_menu_arpeggio_unmark(void)
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
 	return 1;
+}
+
+int eof_menu_arpeggio_unmark(void)
+{
+	return eof_menu_arpeggio_unmark_logic(0);
+}
+
+int eof_menu_handshape_unmark(void)
+{
+	return eof_menu_arpeggio_unmark_logic(1);
 }
 
 void eof_pro_guitar_track_delete_arpeggio(EOF_PRO_GUITAR_TRACK * tp, unsigned long index)
@@ -5470,6 +5552,7 @@ void eof_pro_guitar_track_delete_arpeggio(EOF_PRO_GUITAR_TRACK * tp, unsigned lo
 int eof_menu_arpeggio_erase_all(void)
 {
 	unsigned long ctr, tracknum;
+	EOF_PRO_GUITAR_TRACK * tp;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run unless a pro guitar track is active
@@ -5478,10 +5561,40 @@ int eof_menu_arpeggio_erase_all(void)
 	if(alert(NULL, "Erase all arpeggios from this track?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
+		tp = eof_song->pro_guitar_track[tracknum];
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->arpeggios; ctr++)
-		{	//For each arpeggio section in this track
-			eof_song->pro_guitar_track[tracknum]->arpeggio[ctr].name[0] = '\0';	//Empty the name string
+		for(ctr = tp->arpeggios; ctr > 0; ctr--)
+		{	//For each arpeggio section in this track, in reverse order
+			if(!(tp->arpeggio[ctr - 1].flags & EOF_RS_ARP_HANDSHAPE))
+			{	//If this is an arpeggio phrase and not a handshape phrase
+				eof_pro_guitar_track_delete_arpeggio(tp, ctr - 1);	//Remove it
+			}
+		}
+		eof_song->pro_guitar_track[tracknum]->arpeggios = 0;
+	}
+	return 1;
+}
+
+int eof_menu_handshape_erase_all(void)
+{
+	unsigned long ctr, tracknum;
+	EOF_PRO_GUITAR_TRACK * tp;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run unless a pro guitar track is active
+
+	eof_clear_input();
+	if(alert(NULL, "Erase all handshape phrases from this track?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+	{
+		tracknum = eof_song->track[eof_selected_track]->tracknum;
+		tp = eof_song->pro_guitar_track[tracknum];
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		for(ctr = tp->arpeggios; ctr > 0; ctr--)
+		{	//For each arpeggio section in this track, in reverse order
+			if(tp->arpeggio[ctr - 1].flags & EOF_RS_ARP_HANDSHAPE)
+			{	//If this is a handshape phrase instead of an arpeggio phrase
+				eof_pro_guitar_track_delete_arpeggio(tp, ctr - 1);	//Remove it
+			}
 		}
 		eof_song->pro_guitar_track[tracknum]->arpeggios = 0;
 	}
@@ -6386,8 +6499,8 @@ int eof_menu_copy_arpeggio_track_number(EOF_SONG *sp, int sourcetrack, int destt
 	for(ctr = 0; ctr < eof_get_num_arpeggios(sp, sourcetrack); ctr++)
 	{	//For each arpeggio phrase in the source track
 		ptr = eof_get_arpeggio(sp, sourcetrack, ctr);
-		if(ptr)
-		{	//If this phrase could be found
+		if(ptr && (!(ptr->flags & EOF_RS_ARP_HANDSHAPE)))
+		{	//If this phrase could be found and it is an arpeggio and not a handshape phrase
 			(void) eof_track_add_section(sp, desttrack, EOF_ARPEGGIO_SECTION, ptr->difficulty, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the destination track
 		}
 	}

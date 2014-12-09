@@ -95,8 +95,8 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 
 					equals[0] = '\0';
 					token = equals + 1;
-					(void) ustrncpy(eof_import_ini_setting[eof_import_ini_settings].type, line_token, 256-1);
-					(void) ustrncpy(eof_import_ini_setting[eof_import_ini_settings].value, token, 1024-1);
+					(void) ustrcpy(eof_import_ini_setting[eof_import_ini_settings].type, line_token);
+					(void) ustrcpy(eof_import_ini_setting[eof_import_ini_settings].value, token);
 					while(1)
 					{	//Drop all trailing space characters from the tag type string
 						stringlen = ustrlen(eof_import_ini_setting[eof_import_ini_settings].type);
@@ -456,7 +456,7 @@ int eof_compare_set_ini_string_field(char *dest, char *src, unsigned long maxcha
 			*function = 0;	//Disable any further user prompting regarding this INI file
 		}
 
-		(void) ustrncpy(dest, src, (int)maxchars);	//Copy the string
+		(void) ustrcpy(dest, src);	//Copy the string
 	}
 	return 0;
 }
