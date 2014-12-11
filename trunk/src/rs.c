@@ -177,8 +177,15 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 						{	//If this note has identical fingering to the one that follows it
 							if(!(tp->note[ctr2]->tflags & EOF_NOTE_TFLAG_IGNORE))
 							{	//If the note is not ignored
-								if(!(target & 2) || (eof_is_partially_ghosted(sp, track, ctr) == eof_is_partially_ghosted(sp, track, ctr2)))
-								{	//If the target is Rocksmith 1, or if both notes have the same ghost status (either no gems ghosted or at least one gem ghosted)
+								if(!(target & 2))
+								{	//If the target is Rocksmith 1
+									notelist[ctr] = NULL;	//Eliminate this note from the list
+									match = 1;	//Note that this chord matched one of the others
+									break;
+								}
+								if((eof_is_partially_ghosted(sp, track, ctr) == eof_is_partially_ghosted(sp, track, ctr2)) &&
+								   ((tp->note[ctr]->tflags & EOF_NOTE_TFLAG_HAND) == (tp->note[ctr2]->tflags & EOF_NOTE_TFLAG_HAND)))
+								{	//If both notes have the same ghost status (either no gems ghosted or at least one gem ghosted) and both are either both are in a handshape phrase or both are in an arpeggio phrase
 									notelist[ctr] = NULL;	//Eliminate this note from the list
 									match = 1;	//Note that this chord matched one of the others
 									break;
@@ -1881,6 +1888,24 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}//For each note in the active pro guitar track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
+	//Identify notes that are inside handshape phrases, handshapes for which will be treated differently than arpeggio phrases
+	for(ctr = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the active pro guitar track
+		if(!(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE))
+		{	//If this note isn't already ignored
+			for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
+			{	//For each arpeggio section in the track
+				if((tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
+				{	//If the note is within the arpeggio phrase
+					if(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE)
+					{	//If this arpeggio is specified as exporting as a normal handshape instead of an arpeggio one
+						tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_HAND;	//Mark this chord as being in a handshape phrase
+					}
+				}
+			}
+		}
+	}
+
 	//Identify chords that are inside arpeggio phrases, which will need to be broken into single notes so that they display correctly in-game
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the active pro guitar track
@@ -1892,10 +1917,6 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				{	//If the note is within the arpeggio phrase
 					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as single notes
 					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_ARP;	//Mark this chord as being in an arpeggio phrase
-					if(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE)
-					{	//If this arpeggio is specified as exporting as a normal handshape instead of an arpeggio one
-						tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_HAND;	//Mark this chord as being in a handshape phrase
-					}
 					for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
 					{	//For each of the 6 supported strings
 						if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
@@ -2048,8 +2069,15 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			}
 
 			if(eof_is_partially_ghosted(sp, track, chordlist[ctr]))
-			{	//If the chord list entry is partially ghosted (for arpeggio notation)
-				suffix = arp;	//Apply the "-arp" suffix to the chord template's display name
+			{	//If the chord list entry is partially ghosted (for arpeggio or handshape notation)
+				if(!(tp->note[chordlist[ctr]]->tflags & EOF_NOTE_TFLAG_HAND))
+				{	//If the chord is in an arpeggio phrase instead of a handshape phrase
+					suffix = arp;	//Apply the "-arp" suffix to the chord template's display name
+				}
+				else
+				{	//Otherwise the chord is in a handshape phrase
+					suffix = no_arp;
+				}
 			}
 			else
 			{
@@ -2483,8 +2511,11 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							{	//If this note matches a chord list entry and has the same ghost status (either no gems ghosted or at least one gem ghosted)
 								if(!eof_pro_guitar_note_compare_fingerings(tp->note[ctr3], tp->note[chordlist[ctr4]]))
 								{	//If this note has identical fingering to chord list entry
-									chordid = ctr4;	//Store the chord list entry number
-									break;
+									if((tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_HAND) == (tp->note[chordlist[ctr4]]->tflags & EOF_NOTE_TFLAG_HAND))
+									{	//If this note's handshape status is the same as that of the chord list entry
+										chordid = ctr4;	//Store the chord list entry number
+										break;
+									}
 								}
 							}
 						}
@@ -2576,8 +2607,11 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								{	//If this note matches a chord list entry and has the same ghost status (either no gems ghosted or at least one gem ghosted)
 									if(!eof_pro_guitar_note_compare_fingerings(tp->note[ctr3], tp->note[chordlist[ctr4]]))
 									{	//If this note has identical fingering to chord list entry
-										chordid = ctr4;	//Store the chord list entry number
-										break;
+										if((tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_HAND) == (tp->note[chordlist[ctr4]]->tflags & EOF_NOTE_TFLAG_HAND))
+										{	//If this note's handshape status is the same as that of the chord list entry
+											chordid = ctr4;	//Store the chord list entry number
+											break;
+										}
 									}
 								}
 							}
