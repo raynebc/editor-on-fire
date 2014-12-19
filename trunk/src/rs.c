@@ -185,7 +185,7 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 								}
 								if((eof_is_partially_ghosted(sp, track, ctr) == eof_is_partially_ghosted(sp, track, ctr2)) &&
 								   ((tp->note[ctr]->tflags & EOF_NOTE_TFLAG_HAND) == (tp->note[ctr2]->tflags & EOF_NOTE_TFLAG_HAND)))
-								{	//If both notes have the same ghost status (either no gems ghosted or at least one gem ghosted) and both are either both are in a handshape phrase or both are in an arpeggio phrase
+								{	//If both notes have the same ghost status (either no gems ghosted or at least one gem ghosted) and either both are in a handshape phrase or both are in an arpeggio phrase
 									notelist[ctr] = NULL;	//Eliminate this note from the list
 									match = 1;	//Note that this chord matched one of the others
 									break;
