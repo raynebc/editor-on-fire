@@ -2672,8 +2672,8 @@ int eof_save_helper(char *destfilename, char silent)
 					}
 				}
 			}
-		}
-	}
+		}//If the user wants to save Rocksmith capable files
+	}//If checks and warnings aren't suppressed
 
 	/* check if any chords have manually defined names with parentheses, which will cause Rocksmith to malfunction */
 	if(!silent)
@@ -3325,13 +3325,14 @@ int eof_gp_import_track(DIALOG * d)
 			}
 		}
 		//Copy tremolo phrases
-		for(ctr = 0, exists = 0; ctr < eof_parsed_gp_file->track[selected]->tremolos; ctr++)
+		for(ctr = 0; ctr < eof_parsed_gp_file->track[selected]->tremolos; ctr++)
 		{	//For each tremolo phrase in the GP track
+			exists = 0;	//Reset this status
 			ptr = &eof_parsed_gp_file->track[selected]->tremolo[ctr];
 			for(ctr2 = 0; ctr2 < eof_get_num_tremolos(eof_song, eof_selected_track); ctr2++)
 			{	//For each tremolo section already in the active track
 				ptr2 = eof_get_tremolo(eof_song, eof_selected_track, ctr2);
-				if((ptr->end_pos >= ptr2->start_pos) && (ptr->start_pos <= ptr2->end_pos))
+				if((ptr->end_pos >= ptr2->start_pos) && (ptr->start_pos <= ptr2->end_pos) && (ptr->difficulty == ptr2->difficulty))
 				{	//If the tremolo phrase in the GP track overlaps with any tremolo phrase already in the active track
 					exists = 1;	//Make a note
 					break;
@@ -3386,6 +3387,7 @@ int eof_gp_import_track(DIALOG * d)
 		}
 		eof_song->pro_guitar_track[tracknum]->capo = eof_parsed_gp_file->track[selected]->capo;	//Apply the capo position
 		eof_song->pro_guitar_track[tracknum]->ignore_tuning = eof_parsed_gp_file->track[selected]->ignore_tuning;	//Apply the option whether or not to ignore the tuning for chord name lookups
+		eof_track_sort_notes(eof_song, eof_selected_track);	//Sort notes so tech notes display with the correct status
 
 		//Destroy the GP track that was imported and remove it from the list of GP tracks
 		for(ctr = 0; ctr < eof_parsed_gp_file->track[selected]->notes; ctr++)
@@ -3415,7 +3417,7 @@ int eof_gp_import_track(DIALOG * d)
 		}
 		eof_parsed_gp_file->numtracks--;
 		(void) dialog_message(eof_gp_import_dialog, MSG_DRAW, 0, &junk);	//Redraw the dialog since the list's contents have changed
-	}
+	}//Only perform this action if a pro guitar/bass track is active
 
 	eof_log("\t\tImport complete", 1);
 	return D_O_K;

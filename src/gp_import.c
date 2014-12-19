@@ -159,10 +159,6 @@ int eof_gp_parse_bend(PACKFILE *inf, struct guitar_pro_bend *bp)
 	eof_gp_debug_log(inf, "\t\tHeight:  ");
 	pack_ReadDWORDLE(inf, &height);	//Read bend height
 	printf("%lu * 2 cents\n", height);
-	if(bp)
-	{	//If the calling function wanted to retrieve the bend height
-		bp->summaryheight = height / 25;	//Store the value in quarter steps (100 cents in a half step, and height is the bend measured in increments of 2 cents)
-	}
 	eof_gp_debug_log(inf, "\t\tNumber of points:  ");
 	pack_ReadDWORDLE(inf, &points);	//Read number of bend points
 	printf("%lu points\n", points);
@@ -214,7 +210,15 @@ int eof_gp_parse_bend(PACKFILE *inf, struct guitar_pro_bend *bp)
 		{	//If the calling function wanted to retrieve the bend height, store the first 30 definitions
 			bp->bendpos[ctr] = dword;
 			bp->bendheight[ctr] = dword2 / 25;	//Store the value in quarter steps
+			if(!height && bp->bendheight[ctr])
+			{	//If the bend did not have a summarized height
+				height = dword2;	//Store that bend value as the height, which will be converted to quarter steps after the loop completes
+			}
 		}
+	}//For each point in the bend
+	if(bp)
+	{	//If the calling function wanted to retrieve the bend height
+		bp->summaryheight = height / 25;	//Store the value in quarter steps (100 cents in a half step, and height is the bend measured in increments of 2 cents)
 	}
 	return 0;	//Return success
 }
@@ -4289,6 +4293,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						break;	//Break from while loop.  This note isn't a trill so the next pass doesn't need to check it either
 					}
 				}
+				if(endpos > startpos + 1)
+				{	//As long as the phrase is determined to be longer than 1ms
+					endpos--;	//Shorten the phrase so that a consecutive note isn't incorrectly included in the phrase just because it starts where the earlier note ended
+				}
 				count = gp->track[ctr]->trills;
 				if(count < EOF_MAX_PHRASES)
 				{	//If the track can store the trill section
@@ -4321,6 +4329,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					{
 						break;	//Break from while loop.  This note isn't a tremolo so the next pass doesn't need to check it either
 					}
+				}
+				if(endpos > startpos + 1)
+				{	//As long as the phrase is determined to be longer than 1ms
+					endpos--;	//Shorten the phrase so that a consecutive note isn't incorrectly included in the phrase just because it starts where the earlier note ended
 				}
 				count = gp->track[ctr]->tremolos;
 				if(count < EOF_MAX_PHRASES)
