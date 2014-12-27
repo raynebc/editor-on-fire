@@ -916,13 +916,13 @@ void eof_prepare_note_menu(void)
 				eof_note_menu[18].flags = 0;			//Note>Rocksmith> submenu
 				if(tp->note == tp->technote)
 				{	//If tech view is in effect
-					eof_note_rocksmith_menu[17].flags = 0;	//Note>Rocksmith>Move to note start
-					eof_note_rocksmith_menu[18].flags = D_DISABLED;	//Note>Rocksmith>Generate FHPs
+					eof_note_rocksmith_menu[18].flags = 0;	//Note>Rocksmith>Move to prev note
+					eof_note_rocksmith_menu[19].flags = D_DISABLED;	//Note>Rocksmith>Generate FHPs
 				}
 				else
 				{
-					eof_note_rocksmith_menu[17].flags = D_DISABLED;
-					eof_note_rocksmith_menu[18].flags = 0;
+					eof_note_rocksmith_menu[18].flags = D_DISABLED;
+					eof_note_rocksmith_menu[19].flags = 0;
 				}
 
 				/* Arpeggio>Erase all */
