@@ -985,7 +985,7 @@ set_window_title(debugtext);
 #endif
 
 		midbeatchange = 0;
-		beatlength = eof_work_midi->divisions;		//Determine the length of one full beat in delta ticks
+		beatlength = (double)eof_work_midi->divisions / (curden / 4.0);		//Determine the length of one full beat in delta ticks (time division is the number of ticks in a quarter note, scale by denominator/4 to account for current time signature)
 		nextanchor = deltafpos + beatlength + 0.5;	//By default, the delta position of the next beat will be the standard length of delta ticks
 		for(ctr = 0; ctr < eof_import_bpm_events->events; ctr++)
 		{	//For each imported tempo change

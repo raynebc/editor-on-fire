@@ -441,6 +441,12 @@ If the preference to export either Rocksmith 1 or Rocksmith 2 files is enabled, 
 <h1><a name="noterocksmith">Rocksmith</a></h1>
 <blockquote>
 Performs various note operations tailored for Rocksmith chart authoring.  If the active track is not a pro guitar or pro bass track, this sub-menu is grayed out and inaccessible.<br><br>
+<b><u>Handshape:</u></b>
+<blockquote>
+<b><u>Mark:</u></b><br>
+<b><u>Remove:</u></b><br>
+<b><u>Erase All:</u></b>  Creates or removes handshape phrases, for use in Rocksmith 2014.  Handshape phrases are exported similarly to arpeggio phrases, in that the base chords and any chords within the phrases are exported as individual notes inside a handshape tag (causing the border highlighting used for chords), but without the "-arp" suffix in the handshape tags' display names.  This difference will prevent the affected chords' names from being displayed.<br>
+</blockquote>
 <b><u>Edit frets/fingering:</u></b>  Allows the fret and finger values for selected pro guitar notes to be altered, as well as which strings are string muted (muted with the fretting hand).  Since none of the notes' other properties are altered, this function is useful for modifying multiple notes at once when they need to keep any unique features/techniques that they may have.<br><br>The finger values are used in Rocksmith when defining the fingering of each string of a chord (1 = index, 2 = middle, 3= ring, 4 = pinky, 0 or T = thumb).  It is unknown if Rocksmith 1 allows a string to be specified as being fretted with the thumb, but Rocksmith 2014 does.  When the fingering for any string is altered in this function, EOF will offer to update all instances of the note (based on the fret value of each used string) to use the specified fingering.  Some edit operations, such as adding a gem, will cause a note's finger definitions to be removed, since the fingering is assumed to no longer be correct.<br><br>
 <b><u>Clear fingering:</u></b>  Removes the fingering definitions for selected notes.<br><br>
 <b><u>Toggle pop:</u></b><br>
