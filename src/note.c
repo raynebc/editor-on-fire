@@ -1319,7 +1319,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 				point[5] = point[3];
 				point[6] = ocd3d_project_x(xchart[3] + 10, rz);
 				point[7] = point[1];
-				polygon(eof_window_3d->screen, 4, point, noteflags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : eof_color_silver) : (p ? eof_colors[ctr].hit : eof_colors[ctr].color));
+				polygon(eof_window_3d->screen, 4, point, (noteflags & EOF_NOTE_FLAG_SP) ? (p ? eof_color_white : eof_color_silver) : (p ? eof_colors[ctr].hit : eof_colors[ctr].color));
 			}
 			else
 			{	//Logic to render lanes 1 through 6
@@ -1333,7 +1333,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 					point[5] = point[3];
 					point[6] = ocd3d_project_x(xchart[ctr] + 10, rz);
 					point[7] = point[1];
-					polygon(eof_window_3d->screen, 4, point, noteflags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : eof_color_silver) : (p ? eof_colors[ctr].hit : eof_colors[ctr].color));
+					polygon(eof_window_3d->screen, 4, point, (noteflags & EOF_NOTE_FLAG_SP) ? (p ? eof_color_white : eof_color_silver) : (p ? eof_colors[ctr].hit : eof_colors[ctr].color));
 				}
 			}
 
