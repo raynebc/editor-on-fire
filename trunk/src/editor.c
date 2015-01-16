@@ -1355,6 +1355,7 @@ if(eof_key_code == KEY_PAUSE)
 						}
 					}while(eof_song->track[eof_selected_track]->track_format != format);
 					(void) eof_menu_track_selected_track_number(eof_selected_track, 1);	//Set the track
+					eof_mix_find_claps();		//Update sound cues
 				}
 				else if(eof_input_mode != EOF_INPUT_FEEDBACK)
 				{	//Only SHIFT is held, a non feedback input mode is in use
@@ -1453,6 +1454,7 @@ if(eof_key_code == KEY_PAUSE)
 						}
 					}while(eof_song->track[eof_selected_track]->track_format != format);
 					(void) eof_menu_track_selected_track_number(eof_selected_track, 1);	//Set the track
+					eof_mix_find_claps();		//Update sound cues
 				}
 				else if(eof_input_mode != EOF_INPUT_FEEDBACK)
 				{	//Only SHIFT is held, a non feedback input mode is in use
@@ -2687,138 +2689,161 @@ if(eof_key_code == KEY_PAUSE)
 			if(eof_key_code == KEY_TILDE)
 			{
 				(void) eof_set_active_difficulty(0);
+				eof_mix_find_claps();		//Update sound cues
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_use_key();
 			}
 			if(eof_key_char == '1')
 			{
 				(void) eof_set_active_difficulty(1);
+				eof_mix_find_claps();		//Update sound cues
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_use_key();
 			}
 			else if(eof_key_char == '2')
 			{
 				(void) eof_set_active_difficulty(2);
+				eof_mix_find_claps();		//Update sound cues
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_use_key();
 			}
 			else if(eof_key_char == '3')
 			{
 				(void) eof_set_active_difficulty(3);
+				eof_mix_find_claps();		//Update sound cues
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_use_key();
 			}
 			else if(eof_key_char == '4')
 			{
 				(void) eof_set_active_difficulty(4);
+				eof_mix_find_claps();		//Update sound cues
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_use_key();
 			}
 			else if(eof_key_char == '5')
 			{
 				(void) eof_set_active_difficulty(5);
+				eof_mix_find_claps();		//Update sound cues
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_use_key();
 			}
 			else if(eof_key_char == '6')
 			{
 				(void) eof_set_active_difficulty(6);
+				eof_mix_find_claps();		//Update sound cues
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_use_key();
 			}
 			else if(eof_key_char == '7')
 			{
 				(void) eof_set_active_difficulty(7);
+				eof_mix_find_claps();		//Update sound cues
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_use_key();
 			}
 			else if(eof_key_char == '8')
 			{
 				(void) eof_set_active_difficulty(8);
+				eof_mix_find_claps();		//Update sound cues
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_use_key();
 			}
 			else if(eof_key_char == '9')
 			{
 				(void) eof_set_active_difficulty(9);
+				eof_mix_find_claps();		//Update sound cues
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_use_key();
 			}
 			else if(eof_key_char == '0')
 			{
 				(void) eof_set_active_difficulty(10);
+				eof_mix_find_claps();		//Update sound cues
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_use_key();
 			}
 			else if(eof_key_code == KEY_F1)
 			{
 				(void) eof_set_active_difficulty(11);
+				eof_mix_find_claps();		//Update sound cues
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_use_key();
 			}
 			else if(eof_key_code == KEY_F2)
 			{
 				(void) eof_set_active_difficulty(12);
+				eof_mix_find_claps();		//Update sound cues
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_use_key();
 			}
 			else if(eof_key_code == KEY_F3)
 			{
 				(void) eof_set_active_difficulty(13);
+				eof_mix_find_claps();		//Update sound cues
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_use_key();
 			}
 			else if(eof_key_code == KEY_F4)
 			{
 				(void) eof_set_active_difficulty(14);
+				eof_mix_find_claps();		//Update sound cues
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_use_key();
 			}
 			else if(eof_key_code == KEY_F5)
 			{
 				(void) eof_set_active_difficulty(15);
+				eof_mix_find_claps();		//Update sound cues
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_use_key();
 			}
 			else if(eof_key_code == KEY_F6)
 			{
 				(void) eof_set_active_difficulty(16);
+				eof_mix_find_claps();		//Update sound cues
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_use_key();
 			}
 			else if(eof_key_code == KEY_F7)
 			{
 				(void) eof_set_active_difficulty(17);
+				eof_mix_find_claps();		//Update sound cues
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_use_key();
 			}
 			else if(eof_key_code == KEY_F8)
 			{
 				(void) eof_set_active_difficulty(18);
+				eof_mix_find_claps();		//Update sound cues
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_use_key();
 			}
 			else if(eof_key_code == KEY_F9)
 			{
 				(void) eof_set_active_difficulty(19);
+				eof_mix_find_claps();		//Update sound cues
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_use_key();
 			}
 			else if(eof_key_code == KEY_F10)
 			{
 				(void) eof_set_active_difficulty(20);
+				eof_mix_find_claps();		//Update sound cues
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_use_key();
 			}
 			else if(eof_key_code == KEY_F11)
 			{
 				(void) eof_set_active_difficulty(21);
+				eof_mix_find_claps();		//Update sound cues
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_use_key();
 			}
 			else if(eof_key_code == KEY_F12)
 			{
 				(void) eof_set_active_difficulty(22);
+				eof_mix_find_claps();		//Update sound cues
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_use_key();
 			}

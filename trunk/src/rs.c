@@ -13,10 +13,8 @@
 #include "song.h"	//For eof_pro_guitar_track_delete_hand_position()
 #include "tuning.h"	//For eof_lookup_tuned_note()
 #include "undo.h"
-#include "utility.h"	//For eof_system()
 #include "foflc/RS_parse.h"	//For expand_xml_text()
 #include "menu/beat.h"	//For eof_rocksmith_phrase_dialog_add()
-#include "menu/song.h"	//For eof_menu_track_selected_track_number()
 #include "menu/track.h"	//For eof_fret_hand_position_list_dialog_undo_made and eof_fret_hand_position_list_dialog[]
 
 #ifdef USEMEMWATCH

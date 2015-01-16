@@ -74,6 +74,8 @@ unsigned long eof_retrieve_text_event(unsigned long index);	//Returns the actual
 
 int eof_menu_beat_double_tempo(void);		//Performs eof_double_tempo() on the currently selected beat
 int eof_menu_beat_halve_tempo(void);		//Performs eof_halve_tempo() on the currently selected beat
+int eof_menu_beat_double_tempo_all(void);	//Performs eof_double_tempo() on all beats
+int eof_menu_beat_halve_tempo_all(void);	//Performs eof_halve_tempo() on tall beats
 int eof_menu_beat_set_RBN_tempos(void);
 	//Uses eof_double_tempo() and eof_halve_tempo() to attempt to get all tempos within RBN's requirements of 40BPM to 300BPM
 	//If this is not possible, the chart seeks to the problematic tempo and warns the user that it must be corrected manually
