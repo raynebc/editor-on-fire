@@ -67,6 +67,20 @@ MENU eof_beat_rocksmith_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_beat_double_bpm_menu[] =
+{
+	{"&Selected\t" CTRL_NAME "+Shift+D", eof_menu_beat_double_tempo, NULL, 0, NULL},
+	{"&All", eof_menu_beat_double_tempo_all, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_beat_halve_bpm_menu[] =
+{
+	{"&Selected\t" CTRL_NAME "+Shift+X", eof_menu_beat_halve_tempo, NULL, 0, NULL},
+	{"&All", eof_menu_beat_halve_tempo_all, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_beat_menu[] =
 {
 	{"&BPM Change", eof_menu_beat_bpm_change, NULL, 0, NULL},
@@ -80,12 +94,12 @@ MENU eof_beat_menu[] =
 	{"Reset Offset to Zero", eof_menu_beat_reset_offset, NULL, 0, NULL},
 	{"Anchor Beat\tShift+A", eof_menu_beat_anchor, NULL, 0, NULL},
 	{"Toggle Anchor\tA", eof_menu_beat_toggle_anchor, NULL, 0, NULL},
-	{"&Delete Anchor", eof_menu_beat_delete_anchor, NULL, 0, NULL},
+	{"De&Lete Anchor", eof_menu_beat_delete_anchor, NULL, 0, NULL},
 	{"Reset BPM", eof_menu_beat_reset_bpm, NULL, 0, NULL},
 	{"&Calculate BPM", eof_menu_beat_calculate_bpm, NULL, 0, NULL},
 	{"Estimate BPM", eof_menu_beat_estimate_bpm, NULL, 0, NULL},
-	{"Double BPM\t" CTRL_NAME "+Shift+D", eof_menu_beat_double_tempo, NULL, 0, NULL},
-	{"Halve BPM\t" CTRL_NAME "+Shift+X", eof_menu_beat_halve_tempo, NULL, 0, NULL},
+	{"&Double BPM", NULL, eof_beat_double_bpm_menu, 0, NULL},
+	{"&Halve BPM", NULL, eof_beat_halve_bpm_menu, 0, NULL},
 	{"Fix tempo for RBN", eof_menu_beat_set_RBN_tempos, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Rocksmith", NULL, eof_beat_rocksmith_menu, 0, NULL},
@@ -419,11 +433,11 @@ void eof_prepare_beat_menu(void)
 
 		if((eof_selected_beat + 1 < eof_song->beats) && (eof_song->beat[eof_selected_beat + 1]->ppqn != eof_song->beat[eof_selected_beat]->ppqn))
 		{	//If there is a beat after the current beat, and it has a different tempo
-			eof_beat_menu[16].flags = D_DISABLED;	//Disable Beat>Halve BPM
+			eof_beat_halve_bpm_menu[0].flags = D_DISABLED;	//Disable Beat>Halve BPM>Selected
 		}
 		else
 		{
-			eof_beat_menu[16].flags = 0;
+			eof_beat_halve_bpm_menu[0].flags = 0;
 		}
 
 		if(eof_song->tags->tempo_map_locked)
@@ -2041,6 +2055,48 @@ int eof_menu_beat_halve_tempo(void)
 		return 1;							//Return without making changes
 
 	(void) eof_halve_tempo(eof_song, eof_selected_beat, NULL);
+	return 1;
+}
+
+int eof_menu_beat_double_tempo_all(void)
+{
+	char undo_made = 0;
+	unsigned long i;
+
+	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
+		return 1;							//Return without making changes
+	if(!eof_song)
+		return 1;
+
+	for(i = 0; i < eof_song->beats; i++)
+	{	//For each beat
+		if(!i || (eof_song->beat[i]->ppqn != eof_song->beat[i - 1]->ppqn))
+		{	//If this is the first beat or this beat is a tempo change
+			eof_double_tempo(eof_song, i, &undo_made);	//Double its tempo
+		}
+	}
+
+	return 1;
+}
+
+int eof_menu_beat_halve_tempo_all(void)
+{
+	char undo_made = 0;
+	unsigned long i;
+
+	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
+		return 1;							//Return without making changes
+	if(!eof_song)
+		return 1;
+
+	for(i = 0; i < eof_song->beats; i++)
+	{	//For each beat
+		if(!i || (eof_song->beat[i]->ppqn != eof_song->beat[i - 1]->ppqn))
+		{	//If this is the first beat or this beat is a tempo change
+			eof_halve_tempo(eof_song, i, &undo_made);	//Halve its tempo
+		}
+	}
+
 	return 1;
 }
 
