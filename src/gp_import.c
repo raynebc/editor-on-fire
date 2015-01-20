@@ -3125,6 +3125,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					unsigned long beat_position;
 					double partial_beat_position, beat_length;
 					char notebends = 0;	//Tracks whether any bend points were parsed for the note, since they may be applied as tech notes instead of toward the regular note
+					char isquarterorlonger = 0, isaltered = 0;	//Boolean statuses used to more accurately track whether the "GP import truncates short notes" should take effect
 
 					unpitchend = 0;	//Assume no unpitched slide unless one is defined
 					new_note = 0;	//Assume no new note is to be added unless a normal/muted note is parsed
@@ -3151,6 +3152,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					}
 
 					note_duration = gp_durations[byte + 2] * (double)curden / (double)curnum;	//Get this note's duration in measures (accounting for the time signature)
+					if(byte <= 2)
+					{	//If this is a quarter note or longer
+						isquarterorlonger = 1;	//Track this
+					}
 					if(bytemask & 32)
 					{	//Beat is an N-tuplet
 						pack_ReadDWORDLE(inf, &dword);	//Number of notes played within the "tuplet" (ie. 3 = triplet)
@@ -3181,6 +3186,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								note_duration /= (double)dword / ((double)dword - 1.0);
 							break;
 						}
+						isaltered = 1;	//A note notated as a quarter note may now no longer be as long as one
 					}//(a triplet of quarter notes is 3 notes in the span of two quarter notes) (a quintuplet of eighth notes is 5 notes in the span of 4 eighth notes)
 					if(bytemask & 1)
 					{	//Dotted note
@@ -3193,7 +3199,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					}
 					if(note_duration / ((double)curden / (double)curnum) < 0.25)
 					{	//If the note (after undoing the scaling for the time signature) is shorter than a quarter note
-						note_is_short = 1;
+						if(!(!isaltered && isquarterorlonger))
+						{	//If the note was encoded as a quarter note and wasn't part of a tuplet, avoid math rounding errors causing the above logic to detect as shorter than a quarter note
+							note_is_short = 1;
+						}
 					}
 					else
 					{

@@ -3779,7 +3779,7 @@ int eof_menu_song_export_song_preview(void)
 	char syscommand[1024] = {0};
 	char wavname[270] = {0};
 
-	eof_log("eof_check_fret_hand_positions_option() entered", 1);
+	eof_log("eof_menu_song_export_song_preview() entered", 1);
 	eof_log("\tCreating preview audio", 1);
 
 	if(!eof_song)
@@ -3831,7 +3831,19 @@ int eof_menu_song_export_song_preview(void)
 					(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc --quiet -q %s --resample 44100 -s 0 \"%s%s\" -o \"%spreview.ogg\"", eof_ogg_quality[(int)eof_ogg_setting], targetpath, wavname, targetpath);
 				#endif
 				(void) eof_system(syscommand);
+				if(!exists(targetpath))
+				{
+					eof_log("\tError creating preview OGG file.", 1);
+				}
 			}
+			else
+			{
+				eof_log("\tError creating preview WAV file, aborting.", 1);
+			}
+		}
+		else
+		{
+			eof_log("\tUser cancellation.", 1);
 		}
 	}
 
