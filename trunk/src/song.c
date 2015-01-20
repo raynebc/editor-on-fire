@@ -1043,6 +1043,14 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 		{	//If a pro guitar track is being processed
 			EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 
+			if(tp->note == tp->technote)
+			{	//If tech view is in effect, the technotes counter is not yet up to date after a deletion operation
+				tp->technotes = tp->notes;	//Update it
+			}
+			else
+			{	//Otherwise if tech view is not in effect, the pgnotes counter is not yet up to date after a deletion operation
+				tp->pgnotes = tp->notes;	//Update it
+			}
 			memset(eof_track_diff_populated_tech_note_status, 0, sizeof(eof_track_diff_populated_tech_note_status));
 			for(i = 0; i < tp->technotes; i++)
 			{

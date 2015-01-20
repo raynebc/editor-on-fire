@@ -737,6 +737,7 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track);
 	//eof_track_diff_populated_tech_note_status[] is also updated if the specified track is a pro guitar track, so that each difficulty with at least one tech note results in the corresponding element number being nonzero
 	//Returns the number of difficulties present in the specified track (ie. if the highest used difficulty is 9, 10 is returned because the numbering begins with 0), or 0 is returned upon error or empty track
 	//If the specified track is also the active track, the program window title is redrawn to reflect the current populated status of the active track difficulty
+	//This function updates the technotes and pgnotes counters to ensure that if used after a deletion operation, those values are correct in the event that subsequent operations refer to them
 
 int eof_is_freestyle(char *ptr);
 	//Returns 1 if the specified lyric contains a freestyle character (# or ^)
