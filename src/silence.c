@@ -78,7 +78,6 @@ static int save_wav_fp(SAMPLE * sp, PACKFILE * fp)
 	size_t data_size;
 	size_t samples;
 	size_t i, n;
-	int val;
 	void * pval = NULL;
 	unsigned short *data;
 
@@ -128,7 +127,7 @@ static int save_wav_fp(SAMPLE * sp, PACKFILE * fp)
 	}
 	else
 	{
-		TRACE("Unknown audio depth (%d) when saving wav ALLEGRO_FILE.\n", val);
+		TRACE("Unknown audio depth (%d) when saving wav ALLEGRO_FILE.\n", bits);
 		return 0;
 	}
 
