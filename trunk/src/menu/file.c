@@ -712,31 +712,42 @@ int eof_menu_file_save_logic(char silent)
 		}
 	}
 
-	/* check to see if song folder still exists */
-	(void) ustrcpy(eof_temp_filename, eof_song_path);
-	if((eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] == '\\') || (eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] == '/'))
-	{	//If the path ends in a separator
-		eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] = '\0';	//Remove it
-	}
-	if(!file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
-	{
-		eof_clear_input();
-		if(alert("Song folder no longer exists.", "Recreate folder?", NULL, "&Yes", "&No", 'y', 'n') == 2)
-		{
-			eof_show_mouse(NULL);
-			eof_cursor_visible = 1;
-			eof_pen_visible = 1;
-			return 1;
+	/* check to see if the project file still exists */
+	if((eof_song_path[0] == '\0') || (eof_loaded_song_name[0] == '\0'))
+		return 1;	//Project path strings are invalid
+	(void) append_filename(eof_temp_filename, eof_song_path, eof_loaded_song_name, (int) sizeof(eof_temp_filename));	//Get full project path
+	if(!exists(eof_temp_filename))
+	{	//If the project file doesn't exist, check to see if song folder still exists
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tProject file \"%s\" does not exist.  Checking existence of project folder", eof_temp_filename);
+		eof_log(eof_log_string, 1);
+
+		(void) ustrcpy(eof_temp_filename, eof_song_path);
+		if((eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] == '\\') || (eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] == '/'))
+		{	//If the path ends in a separator
+			eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] = '\0';	//Remove it
 		}
-		err = eof_mkdir(eof_temp_filename);
-		if(err)
+		if(!file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
 		{
-			eof_render();
-			allegro_message("Could not create folder!\n%s", eof_temp_filename);
-			eof_show_mouse(NULL);
-			eof_cursor_visible = 1;
-			eof_pen_visible = 1;
-			return 1;
+			eof_clear_input();
+			if(alert("Song folder no longer exists.", "Recreate folder?", NULL, "&Yes", "&No", 'y', 'n') == 2)
+			{
+				eof_show_mouse(NULL);
+				eof_cursor_visible = 1;
+				eof_pen_visible = 1;
+				return 1;
+			}
+			err = eof_mkdir(eof_temp_filename);
+			if(err)
+			{
+				eof_render();
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError creating project folder:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+				eof_log(eof_log_string, 1);
+				allegro_message("Could not create folder!\n%s", eof_temp_filename);
+				eof_show_mouse(NULL);
+				eof_cursor_visible = 1;
+				eof_pen_visible = 1;
+				return 1;
+			}
 		}
 	}
 

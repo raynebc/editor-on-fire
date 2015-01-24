@@ -3820,6 +3820,15 @@ int eof_menu_song_export_song_preview(void)
 			(void) replace_filename(targetpath, eof_song_path, wavname, 1024);	//Build the target path for the preview WAV file
 			(void) delete_file(targetpath);	//Delete the preview WAV file if it already exists
 			eof_export_time_range(eof_music_track, start / 1000.0, stop / 1000.0, targetpath);	//Build the preview WAV file
+			if(!exists(targetpath))
+			{	//If the preview WAV file was not created, retry using a known acceptable file name
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError writing file \"%s\":  \"%s\", retrying with a target name of guitar_preview.wav", targetpath, strerror(errno));	//Get the Operating System's reason for the failure
+				eof_log(eof_log_string, 1);
+				(void) snprintf(wavname, sizeof(wavname), "guitar_preview.wav");
+				(void) replace_filename(targetpath, eof_song_path, wavname, 1024);	//Build the target path for the preview WAV file
+				(void) delete_file(targetpath);	//Delete the preview WAV file if it already exists
+				eof_export_time_range(eof_music_track, start / 1000.0, stop / 1000.0, targetpath);	//Build the preview WAV file
+			}
 			if(exists(targetpath))
 			{	//If the preview WAV file was created, convert it to OGG
 				(void) replace_filename(targetpath, eof_song_path, "preview.ogg", 1024);	//Build the target for the preview OGG file
