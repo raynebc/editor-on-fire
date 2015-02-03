@@ -569,7 +569,7 @@ void eof_find_lyric_preview_lines(void)
 
 void eof_emergency_stop_music(void)
 {
-	eof_log("eof_emergency_stop_music() entered", 2);
+	eof_log("eof_emergency_stop_music() entered", 1);
 
 	if(eof_song_loaded)
 	{
@@ -593,7 +593,7 @@ void eof_emergency_stop_music(void)
 
 void eof_switch_out_callback(void)
 {
-	eof_log("eof_switch_out_callback() entered", 2);
+	eof_log("eof_switch_out_callback() entered", 1);
 
 	eof_emergency_stop = 1;	//Trigger EOF to call eof_emergency_stop_music()
 	eof_use_key();
@@ -605,7 +605,7 @@ void eof_switch_out_callback(void)
 
 void eof_switch_in_callback(void)
 {
-	eof_log("eof_switch_in_callback() entered", 2);
+	eof_log("eof_switch_in_callback() entered", 1);
 
 	eof_use_key();
 	eof_read_keyboard_input(1);	//Update the keyboard input variables when EOF regains focus
@@ -1907,6 +1907,7 @@ void eof_read_global_keys(void)
 	/* activate the menu when ALT is pressed */
 	if(KEY_EITHER_ALT)
 	{
+		eof_log("ALT keypress detected, activating main menu", 1);
 		clear_keybuf();
 		eof_cursor_visible = 0;
 		eof_emergency_stop_music();
