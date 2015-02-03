@@ -2136,6 +2136,11 @@ if(eof_key_code == KEY_PAUSE)
 			else
 			{	//If CTRL is held but SHIFT is not
 				(void) eof_menu_note_move_by_grid_snap(-1);
+				if(eof_song->tags->highlight_unsnapped_notes)
+				{	//If the user has enabled the dynamic highlighting of non grid snapped notes
+					eof_track_remove_highlighting(eof_song, eof_selected_track);	//Remove existing highlighting from the track
+					(void) eof_song_highlight_non_grid_snapped_notes(eof_song, eof_selected_track);	//Re-create the highlighting as appropriate
+				}
 			}
 			eof_use_key();
 		}
@@ -2171,6 +2176,11 @@ if(eof_key_code == KEY_PAUSE)
 			else
 			{	//If CTRL is held but SHIFT is not
 				(void) eof_menu_note_move_by_grid_snap(1);
+				if(eof_song->tags->highlight_unsnapped_notes)
+				{	//If the user has enabled the dynamic highlighting of non grid snapped notes
+					eof_track_remove_highlighting(eof_song, eof_selected_track);	//Remove existing highlighting from the track
+					(void) eof_song_highlight_non_grid_snapped_notes(eof_song, eof_selected_track);	//Re-create the highlighting as appropriate
+				}
 			}
 			eof_use_key();
 		}

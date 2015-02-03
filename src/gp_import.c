@@ -3152,7 +3152,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					}
 
 					note_duration = gp_durations[byte + 2] * (double)curden / (double)curnum;	//Get this note's duration in measures (accounting for the time signature)
-					if(byte <= 2)
+					if(byte <= 0)
 					{	//If this is a quarter note or longer
 						isquarterorlonger = 1;	//Track this
 					}
