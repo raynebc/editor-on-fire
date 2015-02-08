@@ -3704,6 +3704,7 @@ int eof_menu_file_rs_import(void)
 			allegro_message("Failure.  Check log for details.");
 		}
 	}
+	eof_render();
 
 	return D_O_K;
 }
