@@ -1657,7 +1657,7 @@ int main(int argc, char *argv[])
 struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 {
 	#define EOF_GP_IMPORT_BUFFER_SIZE 256
-	char buffer[EOF_GP_IMPORT_BUFFER_SIZE + 1], *buffer2, buffer3[EOF_GP_IMPORT_BUFFER_SIZE + 1], buffer4[EOF_GP_IMPORT_BUFFER_SIZE + 1], byte, bytemask, usedstrings, *ptr;
+	char buffer[EOF_GP_IMPORT_BUFFER_SIZE + 1], *buffer2, buffer3[EOF_GP_IMPORT_BUFFER_SIZE + 1], buffer4[EOF_GP_IMPORT_BUFFER_SIZE + 1], byte, bytemask, usedstrings, *ptr, patches[64];
 	unsigned word, fileversion;
 	unsigned long dword, ctr, ctr2, ctr3, ctr4, ctr5, tracks, measures, *strings, beats;
 	PACKFILE *inf = NULL, *inf2;	//The GPA import logic will open the file handle for the Guitar Pro file in inf if applicable
@@ -2136,7 +2136,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	}
 	for(ctr = 0; ctr < 64; ctr++)
 	{
-		pack_ReadDWORDLE(inf, NULL);	//Read the instrument patch number
+		pack_ReadDWORDLE(inf, &dword);	//Read the instrument patch number
+		patches[ctr] = dword;			//Store the instrument patch for later reference
 		(void) pack_getc(inf);			//Read the volume
 		(void) pack_getc(inf);			//Read the pan value
 		(void) pack_getc(inf);			//Read the chorus value
@@ -2240,6 +2241,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	}
 	gp->numtracks = tracks;
 	gp->names = malloc(sizeof(char *) * tracks);			//Allocate memory for track name strings
+	gp->instrument_types = malloc(sizeof(char) * tracks);	//Allocate memory for the track instrument types
 	np = malloc(sizeof(EOF_PRO_GUITAR_NOTE *) * tracks);	//Allocate memory for the array of last created notes
 	hopo = malloc(sizeof(char) * tracks);					//Allocate memory for storing HOPO information
 	hopobeatnum = malloc(sizeof(unsigned long) * tracks);	//Allocate memory for storing HOPO information
@@ -2257,6 +2259,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	memset(np, 0, sizeof(EOF_PRO_GUITAR_NOTE *) * tracks);				//Set all last created note pointers to NULL
 	memset(hopo, -1, sizeof(char) * tracks);							//Set all tracks to have no HOPO status
 	memset(hopobeatnum, 0, sizeof(unsigned long) * tracks);
+	memset(gp->instrument_types, 0, sizeof(char) * tracks);				//Set the instrument type for all tracks to undefined
 	memset(nonshiftslide, 0, sizeof(char) * 7 * tracks);				//Clear all string slide statuses
 	gp->track = malloc(sizeof(EOF_PRO_GUITAR_TRACK *) * tracks);		//Allocate memory for pro guitar track pointers
 	gp->text_events = 0;
@@ -2266,6 +2269,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		(void) pack_fclose(inf);
 		free(gp->track);
 		free(gp->names);
+		free(gp->instrument_types);
 		free(np);
 		free(hopo);
 		free(hopobeatnum);
@@ -2284,6 +2288,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			eof_log("Error allocating memory (8)", 1);
 			(void) pack_fclose(inf);
 			free(gp->names);
+			free(gp->instrument_types);
 			free(gp->track[ctr]);
 			while(ctr > 0)
 			{	//Free all previously allocated track structures
@@ -2316,6 +2321,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		eof_log("Error allocating memory (9)", 1);
 		(void) pack_fclose(inf);
 		free(gp->names);
+		free(gp->instrument_types);
 		for(ctr = 0; ctr < tracks; ctr++)
 		{	//Free all previously allocated track structures
 			free(gp->track[ctr]);
@@ -2404,6 +2410,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							eof_log("Error allocating memory (10)", 1);
 							(void) pack_fclose(inf);
 							free(gp->names);
+							free(gp->instrument_types);
 							for(ctr = 0; ctr < tracks; ctr++)
 							{	//Free all previously allocated track structures
 								free(gp->track[ctr]);
@@ -2467,6 +2474,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							eof_log("Error allocating memory (11)", 1);
 							(void) pack_fclose(inf);
 							free(gp->names);
+							free(gp->instrument_types);
 							for(ctr = 0; ctr < tracks; ctr++)
 							{	//Free all previously allocated track structures
 								free(gp->track[ctr]);
@@ -2558,6 +2566,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				eof_log("Error allocating memory (12)", 1);
 				(void) pack_fclose(inf);
 				free(gp->names);
+				free(gp->instrument_types);
 				for(ctr = 0; ctr < tracks; ctr++)
 				{	//Free all previously allocated track structures
 					free(gp->track[ctr]);
@@ -2668,6 +2677,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			eof_log("Error allocating memory (13)", 1);
 			(void) pack_fclose(inf);
 			free(gp->names);
+			free(gp->instrument_types);
 			for(ctr = 0; ctr < tracks; ctr++)
 			{	//Free all previously allocated track structures
 				free(gp->track[ctr]);
@@ -2913,6 +2923,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				ctr--;
 			}
 			free(gp->names);
+			free(gp->instrument_types);
 			for(ctr = 0; ctr < tracks; ctr++)
 			{	//Free all previously allocated track structures
 				free(gp->track[ctr]);
@@ -2953,6 +2964,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				ctr--;
 			}
 			free(gp->names);
+			free(gp->instrument_types);
 			for(ctr = 0; ctr < tracks; ctr++)
 			{	//Free all previously allocated track structures
 				free(gp->track[ctr]);
@@ -3017,6 +3029,19 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 		pack_ReadDWORDLE(inf, &dword);	//Read the MIDI port used for this track
 		pack_ReadDWORDLE(inf, &dword);	//Read the MIDI channel used for this track
+		if((dword > 0) && (dword < 64))
+		{	//Bounds check the value of dword
+			int patchnum = patches[dword - 1];
+
+			if((patchnum >=24) && (patchnum <= 31))
+			{	//These are the defined guitar instrument numbers in Guitar Pro
+				gp->instrument_types[ctr] = 1;
+			}
+			else if((patchnum >= 32) && (patchnum <= 39))
+			{	//These are the defined bass guitar instrument numbers in Guitar Pro
+				gp->instrument_types[ctr] = 2;
+			}
+		}
 		pack_ReadDWORDLE(inf, &dword);	//Read the MIDI channel used for this track's effects
 		pack_ReadDWORDLE(inf, &dword);	//Read the number of frets used for this track
 #ifdef GP_IMPORT_DEBUG
@@ -3098,6 +3123,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					eof_log("\t\t\tToo many beats (notes) in this measure, aborting.", 1);
 					(void) pack_fclose(inf);
 					free(gp->names);
+					free(gp->instrument_types);
 					for(ctr = 0; ctr < tracks; ctr++)
 					{	//Free all previously allocated track structures
 						free(gp->track[ctr]);
@@ -3338,6 +3364,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									eof_log("Error allocating memory (14)", 1);
 									(void) pack_fclose(inf);
 									free(gp->names);
+									free(gp->instrument_types);
 									for(ctr = 0; ctr < tracks; ctr++)
 									{	//Free all previously allocated track structures
 										free(gp->track[ctr]);
@@ -3444,6 +3471,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									ctr--;
 								}
 								free(gp->names);
+								free(gp->instrument_types);
 								for(ctr = 0; ctr < tracks; ctr++)
 								{	//Free all previously allocated track structures
 									free(gp->track[ctr]);
@@ -3747,6 +3775,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											ctr--;
 										}
 										free(gp->names);
+										free(gp->instrument_types);
 										for(ctr = 0; ctr < tracks; ctr++)
 										{	//Free all previously allocated track structures
 											free(gp->track[ctr]);
@@ -3793,6 +3822,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 													ctr--;
 												}
 												free(gp->names);
+												free(gp->instrument_types);
 												for(ctr = 0; ctr < tracks; ctr++)
 												{	//Free all previously allocated track structures
 													free(gp->track[ctr]);
@@ -4042,6 +4072,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										ctr--;
 									}
 									free(gp->names);
+									free(gp->instrument_types);
 									for(ctr = 0; ctr < tracks; ctr++)
 									{	//Free all previously allocated track structures
 										free(gp->track[ctr]);

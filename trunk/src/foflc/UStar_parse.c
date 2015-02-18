@@ -559,6 +559,7 @@ void UStar_Load(FILE *inf)
 							//timing instead of absolute timing.  Relative timing causes the timestamp to reset to 0 at
 							//the beginning of each line of lyrics in the UltraStar file (reset at each linebreak)
 	unsigned long length=0;
+	char BOM[]={0xEF,0xBB,0xBF};
 
 	assert_wrapper(inf != NULL);	//This must not be NULL
 
@@ -571,6 +572,13 @@ void UStar_Load(FILE *inf)
 //Load each line and parse it
 	(void) fgets_err(buffer, (int)maxlinelength,inf);	//Read first line of text, capping it to prevent buffer overflow
 
+//Skip Byte Order Mark if one is found on the first line
+	if((buffer[0] == BOM[0]) && (buffer[1] == BOM[1]) && (buffer[2] == BOM[2]))
+	{
+		if(Lyrics.verbose)	puts("Skipping byte order mark on line 1");
+		buffer[0] = buffer[1] = buffer[2] = ' ';	//Overwrite the BOM with spaces
+	}
+
 	if(Lyrics.verbose)	printf("\nImporting UltraStar lyrics from file \"%s\"\n\n",Lyrics.infilename);
 
 //Look for required tags
@@ -582,6 +590,7 @@ void UStar_Load(FILE *inf)
 	while(!feof(inf))		//Until end of file is reached
 	{
 		processedctr++;
+
 //Skip leading whitespace
 		index=0;	//Reset index counter to beginning
 		while(1)
