@@ -3237,7 +3237,7 @@ int eof_gp_import_track(DIALOG * d)
 {
 	unsigned long ctr, ctr2, selected;
 	int junk;
-	char exists, tuning_prompted = 0;
+	char exists, tuning_prompted = 0, is_bass = 0;
 	char still_populated = 0;	//Will be set to nonzero if the track still contains notes after the track/difficulty is cleared before importing the GP track
 	EOF_PHRASE_SECTION *ptr, *ptr2;
 
@@ -3370,6 +3370,24 @@ int eof_gp_import_track(DIALOG * d)
 		if(eof_get_highest_fret(eof_song, eof_selected_track, 0) > eof_song->pro_guitar_track[tracknum]->numfrets)
 		{	//If the track being imported uses a fret value that is higher than what the active track's fret limit
 			eof_song->pro_guitar_track[tracknum]->numfrets = eof_get_highest_fret(eof_song, eof_selected_track, 0);	//Update the fret limit
+		}
+		if(eof_track_is_bass_arrangement(eof_song->pro_guitar_track[tracknum], eof_selected_track))
+		{	//If the track receiving the Guitar Pro import is configured as a bass guitar track
+			is_bass = 1;
+		}
+		if(is_bass && (eof_parsed_gp_file->instrument_types[selected] == 1))
+		{	//If the imported GP track is a guitar track and the user is importing it into an EOF track that's configured as a bass arrangement
+			if(alert("You are importing a guitar arrangement into a bass track.", NULL, "Update the recipient track's type to a non-bass arrangement type?", "&Yes", "&No", 'y', 'n') == 1)
+			{	//If the user opts to alter the arrangement type
+				eof_song->pro_guitar_track[tracknum]->arrangement = 0;	//Set it to undefined guitar arrangement
+			}
+		}
+		else if(!is_bass && (eof_parsed_gp_file->instrument_types[selected] == 2))
+		{	//If the imported GP track is a bass track and the user is importing it into an EOF track that's configured as a guitar arrangement
+			if(alert("You are importing a bass arrangement into a guitar track.", NULL, "Update the recipient track's type to a bass arrangement type?", "&Yes", "&No", 'y', 'n') == 1)
+			{	//If the user opts to alter the arrangement type
+				eof_song->pro_guitar_track[tracknum]->arrangement = 4;	//Set it to bass arrangement
+			}
 		}
 		for(ctr = 0; ctr < 6; ctr++)
 		{	//For each of the 6 supported strings
@@ -3521,6 +3539,7 @@ int eof_menu_file_gp_import(void)
 			}
 			free(eof_parsed_gp_file->names);
 			free(eof_parsed_gp_file->track);
+			free(eof_parsed_gp_file->instrument_types);
 			free(eof_parsed_gp_file);
 
 			(void) replace_filename(eof_last_gp_path, returnedfn, "", 1024);	//Set the last loaded GP file path

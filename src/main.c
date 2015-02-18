@@ -596,7 +596,7 @@ void eof_switch_out_callback(void)
 	eof_log("eof_switch_out_callback() entered", 1);
 
 	eof_emergency_stop = 1;	//Trigger EOF to call eof_emergency_stop_music()
-	eof_use_key();
+	eof_clear_input();
 
 	#ifndef ALLEGRO_MACOSX
 		eof_has_focus = 0;
@@ -607,18 +607,10 @@ void eof_switch_in_callback(void)
 {
 	eof_log("eof_switch_in_callback() entered", 1);
 
-	eof_use_key();
+	eof_clear_input();
 	eof_read_keyboard_input(1);	//Update the keyboard input variables when EOF regains focus
 	eof_has_focus = 1;
-	eof_log("\tLooping until Tab is released.", 1);
-	while(key[KEY_TAB])
-	{	//Wait until the tab key is not being held down, it often gets stuck when alt-tabbing EOF in and out of the foreground
-		poll_keyboard();
-	}
-	eof_log("\tTab is released.", 1);
 	gametime_reset();
-
-	eof_log("eof_switch_in_callback() completed", 1);
 }
 
 void eof_fix_catalog_selection(void)

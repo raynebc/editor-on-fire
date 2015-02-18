@@ -134,11 +134,11 @@ NOTICE CHUNK, for each notice entry:
 }
 !KEY INFORMATION (if the major file version is < 4)
 	[4 bytes]:	The song's key
-TRACK DATA
+CHANNEL DATA (each set of channel data, numbered beginning with 0, is referenced by the track's MIDI channel to identify the defined instrument, etc)
 {
-	TRACK DATA REPEATED 64 TIMES:
+	CHANNEL DATA REPEATED 64 TIMES:
 	{
-		4 bytes:	Instrument patch number
+		4 bytes:	Instrument patch number (24-31 represent guitars, 32-39 represent bass guitars, etc)
 		1 byte:		Volume (value from 0 to 16, default is 13)
 		1 byte:		Pan (value from 0 to 16, default is 8)
 		1 byte:		Chorus

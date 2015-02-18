@@ -7,6 +7,11 @@
 #include "../memwatch.h"
 #endif
 
+#define EOF_MSG_BUTTONFOCUS D_USER
+//Allegro's GUI system reserves bit flags 0 through 6 for its own use, the others are available for
+//program use.  Define a bitflag for use to filter dialog focus changing events that use the mouse
+//click from those that don't
+
 int eof_verified_edit_proc(int msg, DIALOG *d, int c)
 {
 	int i;
@@ -43,5 +48,20 @@ int eof_verified_edit_proc(int msg, DIALOG *d, int c)
 		if(!match)			//If there was no match
 			return D_USED_CHAR;	//Drop the character
 	}
+	if(msg == MSG_WANTFOCUS)
+	{	//If this field wants focus
+		if(d->flags & EOF_MSG_BUTTONFOCUS)
+		{	//If a custom button focus flag was set by the click event
+			d->flags &= ~EOF_MSG_BUTTONFOCUS;	//Clear it
+			return D_WANTFOCUS;	//And have the dialog system switch input focus
+		}
+		return D_O_K;	//Otherwise deny it, because simply mousing over it can cause this message
+	}
+	if(msg == MSG_CLICK)
+	{	//If this field is explicitly clicked on
+		d->flags |= EOF_MSG_BUTTONFOCUS;	//Set this custom flag to indicate a mouse click initiated the WANTFOCUS message
+		return d_agup_edit_proc(msg,d,c);	//Allow the dialog system to carry out the click processing
+	}
+
 	return d_agup_edit_proc(msg, d, c);	//Allow the input character to be returned
 }

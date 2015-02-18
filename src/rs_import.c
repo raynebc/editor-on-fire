@@ -915,8 +915,8 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		}//If this is the events tag and it isn't empty
 		else if(strcasestr_spec(buffer, "<levels") && !strstr(buffer, "/>"))
 		{	//If this is the levels tag and it isn't empty
-			long curdiff, time, step, bend, fret, hammeron, harmonic, palmmute, pluck, pulloff, slap, slideto, string, sustain, tremolo;
-			long linknext, accent, mute, pinchharmonic, slideunpitchto, tap, vibrato;
+			long curdiff, time, bend, fret, hammeron, harmonic, palmmute, pluck, pulloff, slap, slideto, string, sustain, tremolo;
+			long linknext, accent, mute, pinchharmonic, slideunpitchto, tap, vibrato, step;
 			unsigned long flags;
 			EOF_PRO_GUITAR_NOTE *np = NULL, *tnp = NULL;
 
