@@ -693,7 +693,10 @@ void eof_read_editor_keys(void)
 if(eof_key_code == KEY_PAUSE)
 {
 	//Debug action here
+	(void) eof_menu_file_bf_import();
 	eof_use_key();
+	if(!eof_song_loaded)
+		return;	//Don't handle these keyboard shortcuts unless a chart is loaded
 }
 
 /* keyboard shortcuts that may or may not be used when the chart/catalog is playing */

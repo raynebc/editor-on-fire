@@ -3570,8 +3570,8 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 					}
 					else
 					{	//A valid fret hand position is in effect, run other checks
-						if((lowest != 0) && ((highest > position + 3) || (lowest < position)))
-						{	//If the note is not open, and its fret value goes outside of the highlighted fret range based on the current fret hand position in place
+						if((lowest != 0) && ((eof_write_rs_files && (highest > position + 3)) || (lowest < position)))
+						{	//If the note is not open, and its fret value goes outside of the highlighted fret range based on the current fret hand position in place (too far above current FHP is only an error in Rocksmith 1)
 							unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
 
 							if(report)
@@ -3611,8 +3611,8 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 										warning = warning1;	//Select the appropriate warning message
 									}
 								}
-								else
-								{	//There is a fretted note more than 3 frets higher than the fret hand position
+								else if(eof_write_rs_files)
+								{	//There is a fretted note more than 3 frets higher than the fret hand position and Rocksmith 1 files are to be exported
 									if(!(ignorewarning & 4))
 									{	//If this warning message hasn't been suppressed
 										warning = warning2;	//Select the appropriate warning message

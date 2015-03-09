@@ -24,6 +24,7 @@
 #include "../rs.h"
 #include "../rs_import.h"
 #include "../silence.h"	//For save_wav_with_silence_appended
+#include "../bf.h"
 #include "beat.h"	//For eof_menu_beat_reset_offset()
 #include "edit.h"	//For eof_menu_edit_undo()
 #include "file.h"
@@ -113,7 +114,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 16,  120, 116, 16,  2,   23,  0,    0,      1,   0,   "Hide info panel",NULL, NULL },
 	{ d_agup_check_proc, 150, 120, 206, 16,  2,   23,  0,    0,      1,   0,   "Erase overlapped pasted notes",NULL, NULL },
 	{ d_agup_check_proc, 16,  136, 208, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rock Band files",NULL, NULL },
-	{ d_agup_check_proc, 248, 136, 210, 16,  2,   23,  0,    0,      1,   0,   "Save separate musical MIDI file",NULL, NULL },
+	{ d_agup_check_proc, 248, 136, 216, 16,  2,   23,  0,    0,      1,   0,   "Save separate musical MIDI file",NULL, NULL },
 	{ d_agup_check_proc, 16,  152, 216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 1 files",NULL, NULL },
 	{ d_agup_check_proc, 248, 152, 216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 2 files",NULL, NULL },
 	{ d_agup_check_proc, 16,  168, 190, 16,  2,   23,  0,    0,      1,   0,   "Add new notes to selection",NULL, NULL },
@@ -3670,7 +3671,7 @@ int eof_menu_file_rs_import(void)
 		return 1;	//Don't do anything unless the active track is a pro guitar/bass track
 
 	eof_clear_input();
-	if(eof_get_track_size(eof_song, eof_selected_track) && alert("This track already has notes", "Importing this Rocksmith track will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+	if(eof_get_track_size(eof_song, eof_selected_track) && alert("This track already has notes", "Importing this Bandfuse track will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 	{	//If the active track is already populated and the user doesn't opt to overwrite it
 		return 0;
 	}
@@ -3958,4 +3959,74 @@ int eof_menu_file_sonic_visualiser_import(void)
 	}//If the user selected a file
 
 	return 1;
+}
+
+int eof_menu_file_bf_import(void)
+{
+	char * returnedfn = NULL, *initial;
+
+	eof_log("eof_menu_file_bf_import() entered", 1);
+
+	if(eof_menu_prompt_save_changes() == 3)
+	{	//If user canceled closing the current, modified chart
+		return 1;
+	}
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	if((eof_last_bf_path[uoffset(eof_last_bf_path, ustrlen(eof_last_bf_path) - 1)] == '\\') || (eof_last_bf_path[uoffset(eof_last_bf_path, ustrlen(eof_last_bf_path) - 1)] == '/'))
+	{	//If the path ends in a separator
+		eof_last_bf_path[uoffset(eof_last_bf_path, ustrlen(eof_last_bf_path) - 1)] = '\0';	//Remove it
+	}
+	if(eof_imports_recall_last_path && file_exists(eof_last_bf_path, FA_RDONLY | FA_HIDDEN | FA_DIREC, NULL))
+	{	//If the user chose for the Rocksmith import dialog to start at the path of the last imported Rocksmith file and that path is valid
+		initial = eof_last_bf_path;	//Use it
+	}
+	else
+	{	//Otherwise start at the project's path
+		initial = eof_last_eof_path;
+	}
+	returnedfn = ncd_file_select(0, initial, "Import Bandfuse", eof_filter_bf_files);
+	eof_clear_input();
+	if(returnedfn)
+	{
+		eof_log("\tImporting Bandfuse", 1);
+
+		if(eof_song)
+		{
+			eof_destroy_song(eof_song);
+			eof_song = NULL;
+			eof_song_loaded = 0;
+			eof_changes = 0;
+			eof_undo_last_type = 0;
+			eof_change_count = 0;
+		}
+		(void) eof_destroy_ogg();
+		(void) ustrcpy(eof_filename, returnedfn);
+		(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+		(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
+		(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+
+		eof_song = eof_load_bf(eof_filename);
+		if(eof_song)
+		{
+			eof_song_loaded = 1;
+			eof_init_after_load(0);
+			eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
+			(void) replace_filename(eof_last_midi_path, returnedfn, "", 1024);	//Set the last loaded MIDI file path
+			eof_log("\tImport complete", 1);
+		}
+		else
+		{
+			allegro_message("Failure.  Check log for details.");
+			eof_log("\tImport failed", 1);
+		}
+	}
+	eof_reset_lyric_preview_lines();
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_render();
+
+	return D_O_K;
 }
