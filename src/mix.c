@@ -297,6 +297,8 @@ void eof_mix_find_claps(void)
 	eof_mix_current_clap = 0;
 	unsigned long tracknum;
 
+	if(!eof_music_track)
+		return;
 	eof_log("eof_mix_find_claps() entered", 1);
 
 	//Queue claps
@@ -814,11 +816,14 @@ struct ALOGG_OGG {
 
 void eof_set_seek_position(int pos)
 {
-	alogg_seek_abs_msecs_ogg(eof_music_track, pos);
-	eof_music_pos = pos;
-	eof_music_actual_pos = eof_music_pos;
-	eof_mix_seek(eof_music_actual_pos);
-	eof_reset_lyric_preview_lines();
+	if(eof_music_track)
+	{	//If chart audio is loaded
+		alogg_seek_abs_msecs_ogg(eof_music_track, pos);
+		eof_music_pos = pos;
+		eof_music_actual_pos = eof_music_pos;
+		eof_mix_seek(eof_music_actual_pos);
+		eof_reset_lyric_preview_lines();
+	}
 }
 
 void eof_play_queued_midi_tones(void)

@@ -1,7 +1,7 @@
 #include <allegro.h>
-#include "chart_import.h"
-#include "foflc/Lyric_storage.h"	//For FindLongestLineLength()
-#include "foflc/RS_parse.h"	//For XML parsing functions
+#include "chart_import.h"			//For FindLongestLineLength_ALLEGRO()
+#include "foflc/Lyric_storage.h"	//For strcasestr_spec()
+#include "foflc/RS_parse.h"			//For XML parsing functions
 #include "main.h"
 #include "rs.h"
 #include "rs_import.h"

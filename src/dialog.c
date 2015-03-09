@@ -44,6 +44,11 @@
 	char * eof_system_slash = "/";
 #endif
 
+#define EOF_MSG_BUTTONFOCUS D_USER
+//Allegro's GUI system reserves bit flags 0 through 6 for its own use, the others are available for
+//program use.  Define a bitflag for use to filter dialog focus changing events that use the mouse
+//click from those that don't
+
 /* editable/dynamic text fields */
 char eof_etext[1024] = {0};
 char eof_etext2[1024] = {0};
@@ -98,6 +103,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 	eof_log("eof_popup_dialog() entered", 2);
 
 	eof_prepare_menus();
+	dp[n].flags |= EOF_MSG_BUTTONFOCUS;		//Set the button focus flag of the object that needs to have the default focus
 	player = init_dialog(dp, n);
 	eof_show_mouse(screen);
 	clear_keybuf();

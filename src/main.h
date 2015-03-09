@@ -234,6 +234,7 @@ extern NCDFS_FILTER_LIST * eof_filter_gp_files;
 extern NCDFS_FILTER_LIST * eof_filter_text_files;
 extern NCDFS_FILTER_LIST * eof_filter_rs_files;
 extern NCDFS_FILTER_LIST * eof_filter_sonic_visualiser_files;
+extern NCDFS_FILTER_LIST * eof_filter_bf_files;
 
 extern int         eof_global_volume;
 
@@ -282,6 +283,7 @@ extern char        eof_last_lyric_path[1024];
 extern char        eof_last_gp_path[1024];
 extern char        eof_last_rs_path[1024];
 extern char        eof_last_sonic_visualiser_path[1024];
+extern char        eof_last_bf_path[1024];
 extern char        eof_loaded_song_name[1024];
 extern char        eof_loaded_ogg_name[1024];
 extern int         eof_quit;
@@ -589,7 +591,7 @@ void eof_log(const char *text, int level);
 	//Level indicates the minimum level of logging that must be in effect to log the message (ie. 1 = on, 2 = verbose)
 	//Verbose logging should be disabled during chart creation/deletion due to the large amount of note creations/deletions
 	//The logging verbosity can be altered by toggling bit 1, as bit 0 must be also set in order to log
-extern char eof_log_string[1024];	//A string reserved for use with eof_log()
+extern char eof_log_string[2048];	//A string reserved for use with eof_log()
 extern unsigned int eof_log_id;
 	//This will be set to a random value when logging is started, so if multiple instances of EOF are writing to the same
 	//log file (Windows does not prevent this), each instance's log entries can be identified separately from each other.

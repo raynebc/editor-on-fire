@@ -74,6 +74,7 @@ NCDFS_FILTER_LIST * eof_filter_gp_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_text_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_rs_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_sonic_visualiser_files = NULL;
+NCDFS_FILTER_LIST * eof_filter_bf_files = NULL;
 
 PALETTE     eof_palette;
 BITMAP *    eof_image[EOF_MAX_IMAGES] = {NULL};
@@ -204,6 +205,7 @@ char        eof_last_lyric_path[1024] = {0};			//The path to the folder containi
 char        eof_last_gp_path[1024] = {0};				//The path to the folder containing the last imported Guitar Pro file
 char        eof_last_rs_path[1024] = {0};				//The path to the folder containing the last imported Rocksmith XML file
 char        eof_last_sonic_visualiser_path[1024] = {0};	//The path to the folder containing the last imported Sonic Visualiser file
+char        eof_last_bf_path[1024] = {0};				//The path to the folder containing the last imported Bandfuse file
 char        eof_loaded_song_name[1024] = {0};			//The file name (minus the folder path) of the active project
 char        eof_loaded_ogg_name[1024] = {0};			//The full path of the loaded OGG file
 char        eof_window_title[4096] = {0};
@@ -4053,6 +4055,14 @@ int eof_initialize(int argc, char * argv[])
 	}
 	ncdfs_filter_list_add(eof_filter_sonic_visualiser_files, "svl", "Sonic Visualiser files (*.svl)", 1);
 
+	eof_filter_bf_files = ncdfs_filter_list_create();
+	if(!eof_filter_bf_files)
+	{
+		allegro_message("Could not create file list filter (*.rif)!");
+		return 0;
+	}
+	ncdfs_filter_list_add(eof_filter_rs_files, "rif", "Bandfuse chart files (*.rif)", 1);
+
 	/* check availability of MP3 conversion tools */
 	if(!eof_supports_mp3)
 	{
@@ -4449,6 +4459,9 @@ void eof_exit(void)
 	eof_filter_rs_files = NULL;
 	free(eof_filter_sonic_visualiser_files);
 	eof_filter_sonic_visualiser_files = NULL;
+	free(eof_filter_bf_files);
+	eof_filter_bf_files = NULL;
+
 	//Free command line storage variables (for Windows build)
 	#ifdef ALLEGRO_WINDOWS
 	for(i = 0; i < eof_windows_argc; i++)
@@ -4860,7 +4873,7 @@ void eof_stop_logging(void)
 	}
 }
 
-char eof_log_string[1024] = {0};
+char eof_log_string[2048] = {0};
 void eof_log(const char *text, int level)
 {
 	if(eof_log_fp && (eof_log_level & 1) && (eof_log_level >= level))
