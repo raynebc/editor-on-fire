@@ -24,7 +24,7 @@
 #include "../rs.h"
 #include "../rs_import.h"
 #include "../silence.h"	//For save_wav_with_silence_appended
-#include "../bf.h"
+#include "../bf_import.h"
 #include "beat.h"	//For eof_menu_beat_reset_offset()
 #include "edit.h"	//For eof_menu_edit_undo()
 #include "file.h"
@@ -64,12 +64,12 @@ MENU eof_file_menu[] =
 	{"Lyric Import\tF8", eof_menu_file_lyrics_import, NULL, 0, NULL},
 	{"&Guitar Pro Import", eof_menu_file_gp_import, NULL, 0, NULL},
 	{"&Rocksmith Import", eof_menu_file_rs_import, NULL, 0, NULL},
+	{"&Bandfuse Import", eof_menu_file_bf_import, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Settings\tF10", eof_menu_file_settings, NULL, 0, NULL},
 	{"&Preferences\tF11", eof_menu_file_preferences, NULL, 0, NULL},
 	{"&Display", NULL, eof_file_display_menu, 0, NULL},
 	{"&Controllers", eof_menu_file_controllers, NULL, 0, NULL},
-	{"", NULL, NULL, 0, NULL},
 	{"Song Folder", eof_menu_file_song_folder, NULL, 0, NULL},
 	{"Link to FOF", eof_menu_file_link_fof, NULL, EOF_LINUX_DISABLE, NULL},
 	{"Link to Phase Shift", eof_menu_file_link_ps, NULL, EOF_LINUX_DISABLE, NULL},
