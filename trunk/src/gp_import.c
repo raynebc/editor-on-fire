@@ -1682,8 +1682,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	char new_note;					//Tracks whether a new note is to be created
 	char tie_note;					//Tracks whether a note is a tie note
 	unsigned char finger[7];		//Store left (fretting hand) finger values for each string
-	unsigned long count;
-	unsigned long startpos, endpos;
 	unsigned char curnum = 4, curden = 4;	//Stores the current time signature (4/4 assumed until one is explicitly defined)
 	unsigned long totalbeats = 0;			//Count the total number of beats in the Guitar Pro file's transcription
 	unsigned long beatctr = 0;
@@ -4316,83 +4314,20 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 //Create trill phrases
 	for(ctr = 0; ctr < gp->numtracks; ctr++)
 	{	//For each imported track
-		for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
-		{	//For each note in the track
-			if(gp->track[ctr]->note[ctr2]->flags & EOF_NOTE_FLAG_IS_TRILL)
-			{	//If this note is marked as being in a trill
-				startpos = gp->track[ctr]->note[ctr2]->pos;	//Mark the start of this phrase
-				endpos = startpos + gp->track[ctr]->note[ctr2]->length;	//Initialize the end position of the phrase
-				while(++ctr2 < gp->track[ctr]->notes)
-				{	//For the consecutive remaining notes in the track
-					if(gp->track[ctr]->note[ctr2]->flags & EOF_NOTE_FLAG_IS_TRILL)
-					{	//And the next note is also marked as a trill
-						endpos = gp->track[ctr]->note[ctr2]->pos + gp->track[ctr]->note[ctr2]->length;	//Update the end position of the phrase
-					}
-					else
-					{
-						break;	//Break from while loop.  This note isn't a trill so the next pass doesn't need to check it either
-					}
-				}
-				if(endpos > startpos + 1)
-				{	//As long as the phrase is determined to be longer than 1ms
-					endpos--;	//Shorten the phrase so that a consecutive note isn't incorrectly included in the phrase just because it starts where the earlier note ended
-				}
-				count = gp->track[ctr]->trills;
-				if(count < EOF_MAX_PHRASES)
-				{	//If the track can store the trill section
-					gp->track[ctr]->trill[count].start_pos = startpos;
-					gp->track[ctr]->trill[count].end_pos = endpos;
-					gp->track[ctr]->trill[count].flags = 0;
-					gp->track[ctr]->trill[count].name[0] = '\0';
-					gp->track[ctr]->trills++;
-				}
-			}
-		}
+		eof_build_trill_phrases(gp->track[ctr]);	//Add trill phrases to encompass the notes that have the trill flag set
 	}
 
 //Create tremolo phrases
 	for(ctr = 0; ctr < gp->numtracks; ctr++)
 	{	//For each imported track
-		for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
-		{	//For each note in the track
-			if(gp->track[ctr]->note[ctr2]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
-			{	//If this note is marked as being in a tremolo
-				startpos = gp->track[ctr]->note[ctr2]->pos;	//Mark the start of this phrase
-				endpos = startpos + gp->track[ctr]->note[ctr2]->length;	//Initialize the end position of the phrase
-				while(++ctr2 < gp->track[ctr]->notes)
-				{	//For the consecutive remaining notes in the track
-					if(gp->track[ctr]->note[ctr2]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
-					{	//And the next note is also marked as a tremolo
-						endpos = gp->track[ctr]->note[ctr2]->pos + gp->track[ctr]->note[ctr2]->length;	//Update the end position of the phrase
-					}
-					else
-					{
-						break;	//Break from while loop.  This note isn't a tremolo so the next pass doesn't need to check it either
-					}
-				}
-				if(endpos > startpos + 1)
-				{	//As long as the phrase is determined to be longer than 1ms
-					endpos--;	//Shorten the phrase so that a consecutive note isn't incorrectly included in the phrase just because it starts where the earlier note ended
-				}
-				count = gp->track[ctr]->tremolos;
-				if(count < EOF_MAX_PHRASES)
-				{	//If the track can store the tremolo section
-					gp->track[ctr]->tremolo[count].start_pos = startpos;
-					gp->track[ctr]->tremolo[count].end_pos = endpos;
-					gp->track[ctr]->tremolo[count].flags = 0;
-					gp->track[ctr]->tremolo[count].name[0] = '\0';
-					if((eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) || !eof_gp_import_replaces_track)
-					{	//If the active project's active track already had the difficulty limit removed, or if the user preference is to import the GP file into the active track difficulty instead of replacing the whole track
-						gp->track[ctr]->tremolo[count].difficulty = eof_note_type;	//The tremolo will be made specific to the active track difficulty
-					}
-					else
-					{	//Otherwise it will apply to all track difficulties
-						gp->track[ctr]->tremolo[count].difficulty = 0xFF;
-					}
-					gp->track[ctr]->tremolos++;
-				}
-			}//If this note is marked as being in a tremolo
-		}//For each note in the track
+		if((eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) || !eof_gp_import_replaces_track)
+		{	//If the active project's active track already had the difficulty limit removed, or if the user preference is to import the GP file into the active track difficulty instead of replacing the whole track
+			eof_build_tremolo_phrases(gp->track[ctr], eof_note_type);	//Add tremolo phrases and define them to apply to the active track difficulty
+		}
+		else
+		{	//Otherwise it will apply to all track difficulties
+			eof_build_tremolo_phrases(gp->track[ctr], 0xFF);	//Add tremolo phrases and define them to apply to all track difficulties
+		}
 	}//For each imported track
 
 //Validate any imported note/chord fingerings and duplicate defined fingerings to matching notes

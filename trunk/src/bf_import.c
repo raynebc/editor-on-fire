@@ -137,6 +137,7 @@ EOF_SONG *eof_load_bf(char * fn)
 	double curbeatlen, curtime;					//Used to build the tempo map
 	unsigned long curtimems;					//Used to build the tempo map
 	unsigned long lastitem = 0;					//Used to track the realtime position of the last item in the chart, used to build the tempo map
+	unsigned long start, end, temp;				//Used to correct lyric line positions
 
 	eof_log("\tImporting Bandfuse file", 1);
 	eof_log("eof_load_bf() entered", 1);
@@ -210,6 +211,7 @@ EOF_SONG *eof_load_bf(char * fn)
 	{	//If the memory was not allocated
 		eof_log("\tError allocating memory for strings.  Aborting", 1);
 		(void) pack_fclose(inf);
+		free(sectiondata);
 		eof_destroy_song(sp);
 		return NULL;
 	}
@@ -527,15 +529,88 @@ EOF_SONG *eof_load_bf(char * fn)
 						pack_ReadDWORDBE(inf, &end);	//Read chord end time
 						pack_ReadQWORDBE(inf, &qword);	//Read chord name string index key
 						pack_ReadQWORDBE(inf, NULL);	//Read and ignore 8 bytes of padding
-						fileadd += 24;	//Update file address
+						fileadd += 24;			//Update file address
 						startms = start + 0.5;	//Round to nearest millisecond
 						endms = end + 0.5;		//Round to nearest millisecond
-						ptr = eof_lookup_bf_string_key(stringdata, numstrings, qword);	//Identify the string name of this chord
+						ptr = eof_lookup_bf_string_key(stringdata, numstrings, qword);	//Identify the string for this chord name
 						if(ptr)
 						{	//If the name was found
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tChord #%lu start = %lums, end = %lums, name = \"%s\"", ctr, startms, endms, ptr);
 							eof_log(eof_log_string, 1);
 						}
+					}
+				}
+				else if((entryid == 8) && (entrysize == 32))
+				{	//Vox object
+					EOF_LYRIC *lp;
+					char *type;
+
+					for(ctr = 0; ctr < entrycount; ctr++)
+					{	//For each lyric in this object
+						pack_ReadDWORDBE(inf, &start);	//Read lyric start time
+						pack_ReadDWORDBE(inf, &end);	//Read lyric end time
+						pack_ReadDWORDBE(inf, &dword);	//Read lyric pitch
+						pack_ReadDWORDBE(inf, NULL);	//Read and ignore 4 bytes of padding
+						pack_ReadQWORDBE(inf, &qword);	//Read lyric string index key
+						pack_ReadDWORDBE(inf, &dword2);	//Read lyric type (1 = normal, 2 = unpitched, 3 = extended (ie. pitch shift))
+						pack_ReadDWORDBE(inf, NULL);	//Read and ignore 4 bytes of padding
+						fileadd += 32;			//Update file address
+						startms = start + 0.5;	//Round to nearest millisecond
+						endms = end + 0.5;		//Round to nearest millisecond
+						ptr = eof_lookup_bf_string_key(stringdata, numstrings, qword);	//Identify the string for this lyric
+						if(ptr)
+						{	//If the name was found
+							if(dword2 == 1)
+							{
+								type = "normal";
+							}
+							else if(dword2 == 2)
+							{
+								type = "unpitched";
+							}
+							else
+							{
+								type = "extended";
+							}
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLyric #%lu start = %lums, end = %lums, name = \"%s\", type = %lu (%s)", ctr, startms, endms, ptr, dword2, type);
+							eof_log(eof_log_string, 1);
+							lp = eof_vocal_track_add_lyric(sp->vocal_track[0]);	//Create a lyric structure
+							if(!lp)
+							{	//If the lyric couldn't be added
+								eof_log("\t\tUnable to add lyric.  Aborting.", 1);
+								(void) pack_fclose(inf);
+								free(sectiondata);
+								for(ctr = 0; ctr < numstrings; free(stringdata[ctr].string), ctr++);	//Free the memory used to store each string
+								free(stringdata);
+								eof_destroy_song(sp);
+								return NULL;
+							}
+							ustrncpy(lp->text, ptr, EOF_MAX_LYRIC_LENGTH);	//Copy the lyric text into the lyric structure
+							lp->pos = startms;
+							lp->length = endms - startms + 0.5;	//Round to nearest millisecond
+							if(dword2 == 2)
+							{	//If this lyric is pitchless
+								lp->note = 0;	//Explicitly set it as such
+							}
+							else
+							{
+								lp->note = (dword & 0xFF00) >> 8;	//Otherwise set the defined pitch
+							}
+						}
+					}
+				}
+				else if((entryid == 10) && (entrysize == 8))
+				{	//voxpushphrase object
+					for(ctr = 0; ctr < entrycount; ctr++)
+					{	//For each lyric line in this object
+						pack_ReadDWORDBE(inf, &start);	//Read lyric line start time
+						pack_ReadDWORDBE(inf, &end);	//Read lyric line end time
+						fileadd += 8;			//Update file address
+						startms = start + 0.5;	//Round to nearest millisecond
+						endms = end + 0.5;		//Round to nearest millisecond
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLyric line #%lu start = %lums, end = %lums", ctr, startms, endms);
+						eof_log(eof_log_string, 1);
+///						(void) eof_vocal_track_add_line(sp->vocal_track[0], startms, endms);	//Add the lyric line
 					}
 				}
 				else if((entryid == 11) && (entrysize == 64))
@@ -547,7 +622,6 @@ EOF_SONG *eof_load_bf(char * fn)
 					unsigned char curdiff;				//The difficulty referenced by this ZOBJ object
 					unsigned long flags;
 					char *tech;
-					char linked;						//Used to track whether the previous note had a linked status regarding the one that followed
 					unsigned long prevfret = 0;			//Used to track the fret value of the previous note, for HO/PO tracking
 
 					//Determine the track difficulty this ZOBJ section refers to
@@ -675,7 +749,7 @@ EOF_SONG *eof_load_bf(char * fn)
 						np->note = 1 << dword;
 						np->frets[dword] = dword2;
 						np->pos = startms;
-						flags = linked = 0;
+						flags = 0;
 						if(end > start)
 						{
 							np->length = end - start + 0.5;
@@ -793,10 +867,24 @@ EOF_SONG *eof_load_bf(char * fn)
 						npp = np;			//Keep track of the previously created note
 						prevfret = dword2;	//And its fret value
 					}//For each note in this object
-//Create trill phrases
-///Use GP import logic's trill creation as a template
-//Create tremolo phrases
-///Use GP import logic's trill creation as a template
+					eof_build_trill_phrases(tp);	//Add trill phrases to encompass the notes that have the trill flag set
+					eof_build_tremolo_phrases(tp, curdiff);	//Add tremolo phrases and define them to apply to the track difficulty that this tab object contained notes for
+					//Apply string muting for notes
+					for(ctr = 0; ctr < tp->notes; ctr++)
+					{	//For each note in the track
+						unsigned long bitmask;
+
+						if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)
+						{	//If the string mute status was set during import
+							for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+							{	//For each of the 6 supported strings
+								if(tp->note[ctr]->note & bitmask)
+								{	//If this string is used
+									tp->note[ctr]->frets[ctr2] |= 0x80;	//Set the mute bit
+								}
+							}
+						}
+					}
 				}//Tab object
 				else
 				{	//Unknown section type
@@ -845,10 +933,57 @@ EOF_SONG *eof_load_bf(char * fn)
 	for(ctr = 0; ctr < numstrings; free(stringdata[ctr].string), ctr++);	//Free the memory used to store each string
 	free(stringdata);
 
+	//Correct the lyric phrases, as the Bandfuse format effectively only defines rough line break positions
+	eof_track_sort_notes(sp, EOF_TRACK_VOCALS);
+	start = 0;	//The lyric lines will begin at the start of the chart
+	for(ctr = 0; ctr < sp->vocal_track[0]->lines; ctr++)
+	{	//For each lyric line that was added
+		EOF_PHRASE_SECTION *llp = &sp->vocal_track[0]->line[ctr];	//A pointer to the lyric line being checked
+
+		//Extend the lyric line up to this line break
+		end = llp->start_pos;
+		temp = llp->end_pos;	//Retain the "end" position of the line break
+		llp->start_pos = start;
+		llp->end_pos = end;
+		start = temp;			//The next lyric line will begin at the end of this line break
+
+		//Re-position the beginning of the lyric line to match the start position of the first lyric in that line
+		for(ctr2 = 0; ctr2 < sp->vocal_track[0]->lyrics; ctr2++)
+		{	//For each lyric that was imported
+			EOF_LYRIC *lp = sp->vocal_track[0]->lyric[ctr2];			//A pointer to the lyric being checked
+
+			if(lp->pos < llp->start_pos)	//If the lyric begins before the lyric line
+				continue;					//Skip it
+			if(lp->pos > llp->end_pos)		//If the lyric begins after the end of the lyric line
+				break;						//All the rest of the lyrics will as well, break from lyric loop
+
+			//This lyric falls within the lyric line
+			llp->start_pos = lp->pos;		//Adjust the lyric line to begin at the start of this lyric
+		}
+
+///This logic doesn't sufficiently clean up the lines, base the start and end of lines on the last lyric in the line and the lyric that follows it
+		//Re-position the end of the lyric line to match the last lyric in that line
+		for(ctr2 = 0; ctr2 < sp->vocal_track[0]->lyrics; ctr2++)
+		{	//For each lyric that was imported
+			EOF_LYRIC *lp = sp->vocal_track[0]->lyric[ctr2];			//A pointer to the lyric being checked
+
+			if(lp->pos < llp->start_pos)	//If the lyric begins before the lyric line
+				continue;					//Skip it
+			if(lp->pos > llp->end_pos)		//If the lyric begins after the end of the lyric line
+				break;						//All the rest of the lyrics will as well, break from lyric loop
+
+			//This lyric falls within the lyric line
+			llp->end_pos = lp->pos + lp->length;	//Adjust the lyric line to end at the end of this lyric
+		}
+
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLyric line #%lu corrected to:  start = %lums, end = %lums", ctr, sp->vocal_track[0]->line[ctr].start_pos, sp->vocal_track[0]->line[ctr].end_pos);
+		eof_log(eof_log_string, 1);
+	}
+
 	//Build the tempo map, using the timestamps instead of the tempo changes, since the Bandfuse format doesn't use very accurate tempo values
 	qsort(changes, numchanges, sizeof(struct bf_timing_change), eof_bf_qsort_time_changes);	//Sort the time signature and tempo changes by timestamp
 	curnum = curden = lastnum = lastden = 4;	//Until a time signature change is reached, 4/4 is assumed
-	curbeatlen = 500.0;		//The corresponding beat length is 500ms
+	curbeatlen = 500.0;		//Until a tempo change is reached, 120BPM is assumed (the corresponding beat length is 500ms)
 	curtime = 0.0;
 	curtimems = 0;
 	while(curtimems <= lastitem)

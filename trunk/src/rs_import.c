@@ -1220,6 +1220,8 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 											error = 1;
 											break;	//Break from inner loop
 										}
+										mute = 0;
+										(void) parse_xml_attribute_number("fretHandMute", buffer, &mute);
 
 										//Add chord and set attributes
 										np = eof_pro_guitar_track_add_note(tp);	//Allocate, initialize and add the new note to the note array
@@ -1236,6 +1238,8 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;
 											strum_dir = 1;	//Track that this arrangement defines chord strum directions
 										}
+										if(mute)
+											flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;
 										np->flags = flags;
 										np->type = curdiff;
 										note_count++;
@@ -1380,6 +1384,23 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 							tp->tremolo[count].name[0] = '\0';
 							tp->tremolos++;
 						}
+					}
+				}
+			}
+		}
+
+		//Apply string muting for notes
+		for(ctr = 0; ctr < tp->notes; ctr++)
+		{	//For each note in the track
+			unsigned long bitmask;
+
+			if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)
+			{	//If the string mute status was set during import
+				for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+				{	//For each of the 6 supported strings
+					if(tp->note[ctr]->note & bitmask)
+					{	//If this string is used
+						tp->note[ctr]->frets[ctr2] |= 0x80;	//Set the mute bit
 					}
 				}
 			}

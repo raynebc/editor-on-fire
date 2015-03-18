@@ -69,15 +69,18 @@ int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, un
 	//3. The track is a pro guitar format track and both notes have the same bitmask (legacy bitmasks are not compared) and active frets have matching values
 	//If the thorough parameter is nonzero, the notes' flags must also be identical, and their lengths must be within 3ms of each other for them to match
 	//If the notes do not match, or are from differently formatted tracks, 1 is returned
+	//If the thorough parameter is nonzero, string mute status is also compared if the notes are pro guitar notes
 	//-1 is returned on error
 int eof_note_compare_simple(EOF_SONG *sp, unsigned long track, unsigned long note1, unsigned long note2);
 	//Compares two notes in the same track by invoking eof_note_compare, with the option of not comparing note lengths and flags
-int eof_pro_guitar_note_compare(EOF_PRO_GUITAR_TRACK *tp1, unsigned long note1, EOF_PRO_GUITAR_TRACK *tp2, unsigned long note2);
+int eof_pro_guitar_note_compare(EOF_PRO_GUITAR_TRACK *tp1, unsigned long note1, EOF_PRO_GUITAR_TRACK *tp2, unsigned long note2, char thorough);
 	//Compares two pro guitar notes and returns 0 if both notes have the same bitmask (legacy bitmasks are not compared) and active frets have matching values
 	//If the notes do not match, or are from differently formatted tracks, 1 is returned
+	//If the thorough parameter is nonzero, string mute status is also compared
 	//-1 is returned on error
 int eof_pro_guitar_note_compare_fingerings(EOF_PRO_GUITAR_NOTE *np1, EOF_PRO_GUITAR_NOTE *np2);
 	//Compares the fingering between the specified notes and returns 0 if both use the same strings and define the same fingering for all used strings
+	//The muting status is not taken into account in the comparison if the specified finger is the same in both notes
 	//-1 is returned on error
 char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, char *buffer);
 	//Copies the note name into the buffer, which is assumed to be large enough to store the name
@@ -95,5 +98,12 @@ unsigned char eof_pro_guitar_note_is_barre_chord(EOF_PRO_GUITAR_TRACK *tp, unsig
 	//Returns nonzero if the specified note is a barre chord (the lowest used fret is played on multiple non-contiguous strings, with no strings played open between the lowest fret instances)
 unsigned char eof_pro_guitar_note_is_double_stop(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);
 	//Returns nonzero if the specified note is a double stop (only two contiguous strings played)
+
+void eof_build_trill_phrases(EOF_PRO_GUITAR_TRACK *tp);
+	//Creates trill phrases for the specified track by checking which notes have the EOF_NOTE_FLAG_IS_TRILL flag set
+void eof_build_tremolo_phrases(EOF_PRO_GUITAR_TRACK *tp, unsigned char diff);
+	//Creates tremolo phrases for the specified track by checking which notes have the EOF_NOTE_FLAG_IS_TREMOLO flag set
+	//Diff refers to which difficulty of notes should be examined, or 0xFF to refer to all difficulties
+	//The created phrases apply to the corresponding difficulty as well (ie. Rocksmith authoring), or to all difficulties (ie. Rock Band authoring)
 
 #endif
