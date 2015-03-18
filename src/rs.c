@@ -2748,7 +2748,7 @@ void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_ma
 				array = tp->note[ctr2]->finger;
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track (inner loop)
-					if((ctr2 != ctr3) && (eof_pro_guitar_note_compare(tp, ctr2, tp, ctr3) == 0))
+					if((ctr2 != ctr3) && (eof_pro_guitar_note_compare(tp, ctr2, tp, ctr3, 0) == 0))
 					{	//If this note matches the note being examined in the outer loop, and we're not comparing the note to itself
 						if(eof_pro_guitar_note_fingering_valid(tp, ctr3) != 1)
 						{	//If the fingering of the inner loop's note is invalid/undefined

@@ -1852,7 +1852,7 @@ int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, un
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			tracknum = sp->track[track1]->tracknum;
 			tracknum2 = sp->track[track2]->tracknum;
-		return eof_pro_guitar_note_compare(sp->pro_guitar_track[tracknum], note1, sp->pro_guitar_track[tracknum2], note2);
+		return eof_pro_guitar_note_compare(sp->pro_guitar_track[tracknum], note1, sp->pro_guitar_track[tracknum2], note2, thorough);
 	}
 
 	return 1;	//Return not equal
@@ -1863,7 +1863,7 @@ int eof_note_compare_simple(EOF_SONG *sp, unsigned long track, unsigned long not
 	return eof_note_compare(sp, track, note1, track, note2, 0);
 }
 
-int eof_pro_guitar_note_compare(EOF_PRO_GUITAR_TRACK *tp1, unsigned long note1, EOF_PRO_GUITAR_TRACK *tp2, unsigned long note2)
+int eof_pro_guitar_note_compare(EOF_PRO_GUITAR_TRACK *tp1, unsigned long note1, EOF_PRO_GUITAR_TRACK *tp2, unsigned long note2, char thorough)
 {
 	unsigned long ctr, bitmask, note;
 
@@ -1877,8 +1877,12 @@ int eof_pro_guitar_note_compare(EOF_PRO_GUITAR_TRACK *tp1, unsigned long note1, 
 		{	//For each of the 6 supported strings
 			if(note & bitmask)
 			{	//If this string is used
-				if(tp1->note[note1]->frets[ctr] != tp2->note[note2]->frets[ctr])
-				{	//If this string's fret value isn't the same for both notes
+				if((tp1->note[note1]->frets[ctr] & 0x7F) != (tp2->note[note2]->frets[ctr] & 0x7F))
+				{	//If this string's fret value (when masking out the mute status) isn't the same for both notes
+					return 1;	//Return not equal
+				}
+				if(thorough && ((tp1->note[note1]->frets[ctr] & 0x80) != (tp2->note[note2]->frets[ctr] & 0x80)))
+				{	//If the mute status is to be compared, but they don't match
 					return 1;	//Return not equal
 				}
 			}
@@ -1903,10 +1907,11 @@ int eof_pro_guitar_note_compare_fingerings(EOF_PRO_GUITAR_NOTE *np1, EOF_PRO_GUI
 	{	//For each of the 6 supported strings
 		if(np1->note & bitmask)
 		{	//If this string is used
-			if((np1->frets[ctr] & 0x80) != (np2->frets[ctr] & 0x80))
-			{	//If this string's muted status isn't identical between both notes
-				return 1;	//Return not equal
-			}
+///This logic causes some problems preventing RS export of muted and non-muted chords (that are otherwise identical) with the same chord template
+//			if((np1->frets[ctr] & 0x80) != (np2->frets[ctr] & 0x80))
+//			{	//If this string's muted status isn't identical between both notes
+//				return 1;	//Return not equal
+//			}
 			if(np1->finger[ctr] != np2->finger[ctr])
 			{	//If the fingering isn't identical between both notes
 				return 1;	//Return not equal
@@ -2076,4 +2081,90 @@ char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, 
 	}
 
 	return 0;	//Return no name found/detected
+}
+
+void eof_build_trill_phrases(EOF_PRO_GUITAR_TRACK *tp)
+{
+	unsigned long ctr, startpos, endpos, count;
+
+	if(!tp)
+		return;
+
+	for(ctr = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the track
+		if(tp->note[ctr]->flags & EOF_NOTE_FLAG_IS_TRILL)
+		{	//If this note is marked as being in a trill
+			startpos = tp->note[ctr]->pos;	//Mark the start of this phrase
+			endpos = startpos + tp->note[ctr]->length;	//Initialize the end position of the phrase
+			while(++ctr < tp->notes)
+			{	//For the consecutive remaining notes in the track
+				if(tp->note[ctr]->flags & EOF_NOTE_FLAG_IS_TRILL)
+				{	//And the next note is also marked as a trill
+					endpos = tp->note[ctr]->pos + tp->note[ctr]->length;	//Update the end position of the phrase
+				}
+				else
+				{
+					break;	//Break from while loop.  This note isn't a trill so the next pass doesn't need to check it either
+				}
+			}
+			if(endpos > startpos + 1)
+			{	//As long as the phrase is determined to be longer than 1ms
+				endpos--;	//Shorten the phrase so that a consecutive note isn't incorrectly included in the phrase just because it starts where the earlier note ended
+			}
+			count = tp->trills;
+			if(count < EOF_MAX_PHRASES)
+			{	//If the track can store the trill section
+				tp->trill[count].start_pos = startpos;
+				tp->trill[count].end_pos = endpos;
+				tp->trill[count].flags = 0;
+				tp->trill[count].name[0] = '\0';
+				tp->trills++;
+			}
+		}
+	}
+}
+
+void eof_build_tremolo_phrases(EOF_PRO_GUITAR_TRACK *tp, unsigned char diff)
+{
+	unsigned long ctr, startpos, endpos, count;
+
+	if(!tp)
+		return;
+
+	for(ctr = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the track
+		if((diff == 0xFF) || (tp->note[ctr]->type == diff))
+		{	//If this note is in the target difficulty
+			if(tp->note[ctr]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
+			{	//If this note is marked as being in a tremolo
+				startpos = tp->note[ctr]->pos;	//Mark the start of this phrase
+				endpos = startpos + tp->note[ctr]->length;	//Initialize the end position of the phrase
+				while(++ctr < tp->notes)
+				{	//For the consecutive remaining notes in the track
+					if(tp->note[ctr]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
+					{	//And the next note is also marked as a tremolo
+						endpos = tp->note[ctr]->pos + tp->note[ctr]->length;	//Update the end position of the phrase
+					}
+					else
+					{
+						break;	//Break from while loop.  This note isn't a tremolo so the next pass doesn't need to check it either
+					}
+				}
+				if(endpos > startpos + 1)
+				{	//As long as the phrase is determined to be longer than 1ms
+					endpos--;	//Shorten the phrase so that a consecutive note isn't incorrectly included in the phrase just because it starts where the earlier note ended
+				}
+				count = tp->tremolos;
+				if(count < EOF_MAX_PHRASES)
+				{	//If the track can store the tremolo section
+					tp->tremolo[count].start_pos = startpos;
+					tp->tremolo[count].end_pos = endpos;
+					tp->tremolo[count].flags = 0;
+					tp->tremolo[count].name[0] = '\0';
+					tp->tremolo[count].difficulty = diff;	//Define the tremolo's difficulty as specified
+					tp->tremolos++;
+				}
+			}//If this note is marked as being in a tremolo
+		}
+	}//For each note in the track
 }
