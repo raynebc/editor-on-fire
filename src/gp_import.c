@@ -1851,10 +1851,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				{	//For each expected sync point
 					if(!eof_get_next_gpa_sync_point(&ptr, &temp_sync_point))
 					{	//If the sync point was not read
-						eof_log("\t\tError parsing sync tag.  Aborting", 1);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tError parsing sync point #%lu.  Aborting", ctr);
+						eof_log(eof_log_string, 1);
 						error = 1;
 						break;
 					}
+///FOR DEBUGGING
+//					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSync point #%lu (time = %lums, measure = %f)", ctr, temp_sync_point.realtime_pos, temp_sync_point.measure + 1.0 + temp_sync_point.pos_in_measure);
+//					eof_log(eof_log_string, 1);
 					if(num_sync_points && ((temp_sync_point.measure + temp_sync_point.pos_in_measure <= sync_points[num_sync_points - 1].measure + sync_points[num_sync_points - 1].pos_in_measure) || (temp_sync_point.realtime_pos <= sync_points[num_sync_points - 1].realtime_pos)))
 					{	//If there was a previous sync point added, and this sync point isn't a later timestamp or measure position
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSync point #%lu (time = %lums, measure = %f) is out of chronological order, it will be skipped.", ctr, temp_sync_point.realtime_pos, temp_sync_point.measure + 1.0 + temp_sync_point.pos_in_measure);
@@ -3808,8 +3812,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									{	//Only if the converted string number is valid
 										for(ctr5 = 0; ctr5 < bendstruct.bendpoints; ctr5++)
 										{	//For each bend point that was parsed
-											EOF_PRO_GUITAR_NOTE *ptr = eof_pro_guitar_track_add_tech_note(gp->track[ctr2]);	//Add a new tech note to the current track
+											EOF_PRO_GUITAR_NOTE *ptr;
 											unsigned long length;
+
+											if((ctr5 > 0) && (ctr5 == bendstruct.bendpoints - 1) && (bendstruct.bendheight[ctr5 - 1] == bendstruct.bendheight[ctr5]))
+											{	//If this is the last of multiple bendpoints, and its height is the same as the previous one
+												continue;	//Skip it since it doesn't change the bend, and since too many close bend points can cause crashes in Rocksmith
+											}
+											ptr = eof_pro_guitar_track_add_tech_note(gp->track[ctr2]);	//Add a new tech note to the current track
 											if(!ptr)
 											{
 												eof_log("Error allocating memory (15)", 1);
@@ -4922,7 +4932,7 @@ char eof_copy_notes_in_beat_range(EOF_PRO_GUITAR_TRACK *source, unsigned long st
 int eof_get_next_gpa_sync_point(char **buffer, struct eof_gpa_sync_point *ptr)
 {
 	unsigned long ctr, index;
-	char buffer2[21];
+	char buffer2[41];
 	double value;
 
 	if(!buffer || !(*buffer) || !ptr)
@@ -4938,8 +4948,8 @@ int eof_get_next_gpa_sync_point(char **buffer, struct eof_gpa_sync_point *ptr)
 	for(ctr = 0; ctr < 4; ctr++)
 	{	//For each of the 4 expected numbers in the timestamp
 		//Read the number and convert to floating point
-		for(index = 0; index < 20; index++)
-		{	//Read up to 20 characters for this number
+		for(index = 0; index < 40; index++)
+		{	//Read up to 40 characters for this number
 			if(**buffer == '\0')
 				return 0;	//The end of the string was unexpectedly reached
 			if((**buffer == '<') || (**buffer == '#'))
@@ -4966,7 +4976,7 @@ int eof_get_next_gpa_sync_point(char **buffer, struct eof_gpa_sync_point *ptr)
 			buffer2[index] = **buffer;	//Read the next character
 			(*buffer)++;	//Increment to next character to read
 		}
-		if(index >= 20)
+		if(index >= 40)
 		{	//If the number field was too long to parse
 			return 0;	//Malformed timestamp
 		}
