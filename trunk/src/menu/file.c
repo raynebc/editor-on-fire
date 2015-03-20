@@ -3237,7 +3237,6 @@ DIALOG eof_gp_import_dialog[] =
 int eof_gp_import_track(DIALOG * d)
 {
 	unsigned long ctr, ctr2, selected;
-	int junk;
 	char exists, tuning_prompted = 0, is_bass = 0;
 	char still_populated = 0;	//Will be set to nonzero if the track still contains notes after the track/difficulty is cleared before importing the GP track
 	EOF_PHRASE_SECTION *ptr, *ptr2;
@@ -3446,11 +3445,10 @@ int eof_gp_import_track(DIALOG * d)
 			eof_parsed_gp_file->names[ctr - 1] = eof_parsed_gp_file->names[ctr];	//Save this track's name into the previous track name's index
 		}
 		eof_parsed_gp_file->numtracks--;
-		(void) dialog_message(eof_gp_import_dialog, MSG_DRAW, 0, &junk);	//Redraw the dialog since the list's contents have changed
 	}//Only perform this action if a pro guitar/bass track is active
 
 	eof_log("\t\tImport complete", 1);
-	return D_O_K;
+	return D_CLOSE;
 }
 
 char gp_import_undo_made;

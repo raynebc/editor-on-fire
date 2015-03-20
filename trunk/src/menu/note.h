@@ -159,6 +159,8 @@ int eof_menu_note_toggle_ghost(void);			//Toggles the ghost flag for each popula
 int eof_menu_note_remove_ghost(void);			//Clears the ghost flag for each populated string (that has keyboard shortcuts enabled) on each selected note
 int eof_menu_note_remove_rs_ignore(void);		//Removes the ignore status of all selected pro guitar notes
 int eof_menu_note_toggle_rs_ignore(void);		//Toggles the ignore status of all selected pro guitar notes
+int eof_menu_note_remove_linknext(void);		//Removes the linknext status of all selected pro guitar notes
+int eof_menu_note_toggle_linknext(void);		//Toggles the linknext status of all selected pro guitar notes
 int eof_pro_guitar_note_slide_end_fret(char undo);
 	//Prompts the user for an ending fret number to apply to all selected slide notes.  The number is validated against each selected note's slide direction before it is applied
 	//If save is nonzero, a save state is created before any notes are altered

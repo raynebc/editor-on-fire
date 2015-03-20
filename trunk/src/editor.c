@@ -2422,10 +2422,20 @@ if(eof_key_code == KEY_PAUSE)
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If the active track is a pro guitar track
 	/* edit pro guitar note (N in a pro guitar track) */
+	/* toggle linknext status (SHIFT+N in a pro guitar track) */
 			if((eof_key_char == 'n') && !KEY_EITHER_CTRL)
 			{
-				(void) eof_menu_note_edit_pro_guitar_note();
-				eof_use_key();
+				if(!KEY_EITHER_SHIFT)
+				{	//If SHIFT is not held
+					(void) eof_menu_note_edit_pro_guitar_note();
+					eof_use_key();
+				}
+				else
+				{	//If SHIFT is held
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					(void) eof_menu_note_toggle_linknext();
+					eof_use_key();
+				}
 			}
 
 	/* edit pro guitar fret/finger values (F in a pro guitar track) */

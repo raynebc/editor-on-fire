@@ -75,5 +75,10 @@ Some higher end mice have really high movement resolution, and this doesn't seem
 Certain features like adding leading silence or exporting lyrics aren't working when I run EOF in a virtual Windows environment using Parallels on a Mac computer.<br>
 <b>Solution:</b><br>
 Make sure EOF and your project files are on the Windows installation's file system and not your Mac file system.<br><br>
+
+<b>Problem:</b><br>
+In Windows 8, EOF takes up the full screen and the mouse doesn't work.<br>
+<b>Solution:</b><br>
+Windows 8 may be allowing EOF to set a window size larger than the current screen resolution instead of refusing it.  Try setting EOF's screen resolution back to the default (640x480) by using the keyboard controls.  If that can't be done, you can edit the eof.cfg file in EOF's program folder and delete the lines beginning with "display_mode" and "eof_screen_width" under the "[display]" section or simply delete/rename the entire eof.cfg file and EOF will revert to all default settings.
 </BODY>
 </HTML>

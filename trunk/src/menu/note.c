@@ -336,6 +336,8 @@ MENU eof_note_rocksmith_menu[] =
 	{"Remove force sustain", eof_menu_note_remove_rs_sustain, NULL, 0, NULL},
 	{"Toggle ignore\t" CTRL_NAME "+Shift+I", eof_menu_note_toggle_rs_ignore, NULL, 0, NULL},
 	{"Remove &Ignore", eof_menu_note_remove_rs_ignore, NULL, 0, NULL},
+	{"Toggle linknext\tShift+N", eof_menu_note_toggle_linknext, NULL, 0, NULL},
+	{"Remove &Linknext", eof_menu_note_remove_linknext, NULL, 0, NULL},
 	{"&Move to prev note", eof_menu_note_move_tech_note_to_previous_note_pos, NULL, 0, NULL},
 	{"&Generate FHPs", eof_generate_efficient_hand_positions_for_selected_notes, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
@@ -7507,6 +7509,20 @@ int eof_menu_note_remove_rs_ignore(void)
 int eof_menu_note_toggle_rs_ignore(void)
 {
 	return eof_menu_note_toggle_flag(1, EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE);
+}
+
+int eof_menu_note_remove_linknext(void)
+{
+	int retval = eof_menu_note_clear_flag(0, EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT);
+	eof_pro_guitar_track_fixup_notes(eof_song, eof_selected_track, 1);
+	return retval;
+}
+
+int eof_menu_note_toggle_linknext(void)
+{
+	int retval = eof_menu_note_toggle_flag(0, EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT);
+	eof_track_fixup_notes(eof_song, eof_selected_track, 1);
+	return retval;
 }
 
 int eof_feedback_mode_update_note_selection(void)
