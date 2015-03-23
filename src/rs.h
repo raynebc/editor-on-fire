@@ -63,6 +63,8 @@ int eof_is_string_muted(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//Returns nonzero if all used strings in the note are fret hand muted
 int eof_is_partially_ghosted(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//Returns nonzero if the specified note contains at least one ghosted gem and one non ghosted gem
+int eof_is_partially_string_muted(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);
+	//Returns nonzero if the specified note contains at least one string muted gem and one non string muted gem
 
 unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned long **results, char target);
 	//Parses the given pro guitar track, building a list of all unique chords
