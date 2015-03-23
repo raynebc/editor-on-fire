@@ -129,6 +129,35 @@ int eof_is_partially_ghosted(EOF_SONG *sp, unsigned long track, unsigned long no
 	return (ghosted && nonghosted);	//Return nonzero if the note contained at least one ghosted gem AND one non ghosted gem
 }
 
+int eof_is_partially_string_muted(EOF_PRO_GUITAR_TRACK *tp, unsigned long note)
+{
+	unsigned long ctr, bitmask;
+	char muted = 0, nonmuted = 0;	//Tracks the number of gems in this note that are muted and non muted
+
+	if(!tp || (note >= tp->notes))
+		return 0;	//Return error
+
+	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+	{	//For each of the 6 supported strings
+		if(ctr < tp->numstrings)
+		{	//If this is a string used in the track
+			if(tp->note[note]->note & bitmask)
+			{	//If this is a string used in the note
+				if(tp->note[note]->frets[ctr] & 0x80)
+				{	//If this string is muted
+					muted++;
+				}
+				else
+				{	//This string is not muted
+					nonmuted++;
+				}
+			}
+		}
+	}
+
+	return (muted && nonmuted);	//Return nonzero if the note contained at least one ghosted gem AND one non ghosted gem
+}
+
 unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned long **results, char target)
 {
 	unsigned long ctr, ctr2, unique_count = 0;
@@ -2864,9 +2893,15 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the fret hand positions are generated
 	char all = 0;	//Is set to nonzero if the values passed for startnote and stopnote are equal, indicating all existing fret hand positions are to be replaced
 	char *warning, warning1[] = "Existing fret hand positions for the active track difficulty will be removed.", warning2[] = "Existing fret hand positions for the selected range of notes will be removed.";
+	unsigned limit = 21;	//Rocksmith 2's fret hand position limit is 21
 
 	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return;	//Invalid parameters
+
+	if(eof_write_rs_files || eof_write_rb_files)
+	{	//If Rocksmith 1 or Rock Band export is enabled
+		limit = 19;	//The highest fret hand position change is 19 instead
+	}
 
 	//Set up
 	tracknum = sp->track[track]->tracknum;
@@ -2988,9 +3023,9 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 
 			if(force_change || !eof_note_can_be_played_within_fret_tolerance(tp, ctr, &current_low, &current_high))
 			{	//If a position change was determined to be necessary based on fingering, or this note can't be included with previous notes within a single fret hand position
-				if(current_low + tp->capo > 19)
-				{	//Ensure the fret hand position (taking the capo position into account) is capped at 19, since 22 is the highest fret supported in either Rock Band or Rocksmith
-					current_low = 19 - tp->capo;
+				if(current_low + tp->capo > limit)
+				{	//Ensure the fret hand position is capped at the appropriate limit based on the game exports enabled
+					current_low = limit - tp->capo;
 				}
 				if(force_change)
 				{	//If a fret hand position change was forced due to note fingering
@@ -3055,9 +3090,9 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 			current_low = last_anchor;
 		}
 	}
-	else if(current_low + tp->capo > 19)
-	{	//Ensure the fret hand position (taking the capo position into account) is capped at 19, since 22 is the highest fret supported in either Rock Band or Rocksmith
-		current_low = 19 - tp->capo;
+	else if(current_low + tp->capo > limit)
+	{	//Ensure the fret hand position is capped at the appropriate limit based on the game exports enabled
+		current_low = limit - tp->capo;
 	}
 	if((current_low != last_anchor) && next_position)
 	{	//If the last parsed note requires a position change

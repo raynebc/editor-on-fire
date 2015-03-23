@@ -327,6 +327,7 @@ extern int         eof_min_note_length;
 extern int         eof_min_note_distance;
 extern int         eof_render_bass_drum_in_lane;
 extern int         eof_inverted_chords_slash;
+extern int         eof_click_changes_dialog_focus;
 extern int         eof_render_3d_rs_chords;
 extern int         eof_imports_recall_last_path;
 extern int         eof_rewind_at_end;
@@ -399,6 +400,8 @@ extern int         eof_hover_piece;		//The lane number that the mouse is over
 extern int         eof_hover_key;
 extern int         eof_hover_lyric;
 extern int         eof_last_tone;
+extern int         eof_mouse_x;
+extern int         eof_mouse_y;
 extern int         eof_mouse_z;
 extern int         eof_mickey_z;
 extern int         eof_mickeys_x;
@@ -622,5 +625,7 @@ void eof_read_keyboard_input(char function);
 	//  This functionality needs to be disabled in the dialogs or else the number pad keys cannot be used to type into input fields
 void eof_use_key(void);
 	//Erases the keypress state variables
+
+void eof_hidden_mouse_callback(int flags);	//A mouse callback that uninstalls itself and restores the mouse position to (eof_mouse_x, eof_mouse_y) if it has moved
 
 #endif

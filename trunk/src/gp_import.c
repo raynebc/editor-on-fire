@@ -1680,8 +1680,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	struct guitar_pro_bend bendstruct;	//Stores data about the bend being parsed
 	double laststartpos = 0, lastendpos = 0;	//Stores the start and end position of the last normal or tie note to be parsed, so bend point data can be used to create tech notes
 	double lastgracestartpos = 0, lastgraceendpos = 0;	//Stores the start and end position of the last grace note to be parsed
-	unsigned char graceonbeat;		//Tracks whether the currently-parsed grace note is on the beat instead of before it
-	unsigned char gracetrans;		//Tracks the grace note's transition type
+	unsigned char graceonbeat = 0;	//Tracks whether the currently-parsed grace note is on the beat instead of before it
+	unsigned char gracetrans = 0;	//Tracks the grace note's transition type
 	char new_note;					//Tracks whether a new note is to be created
 	char tie_note;					//Tracks whether a note is a tie note
 	unsigned char finger[7];		//Store left (fretting hand) finger values for each string
@@ -1692,7 +1692,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	char *rssectionname;
 	unsigned char start_of_repeat, num_of_repeats;
 	char import_ts = 0;		//Will be set to nonzero if user opts to import time signatures
-	char note_is_short = 0;	//Will be set to nonzero if the note being parsed is shorter than a quarter note
+	char note_is_short = 0;	//Will be set to nonzero if the note being parsed should have its sustain dropped (ie. shorter than a quarter note or is played staccato), pending techniques that overrule this
 	char parse_gpa = 0;		//Will be set to nonzero if the specified file is detected to be XML, in which case, the Go PlayAlong file will be parsed
 	size_t maxlinelength;
 	unsigned long linectr = 2, num_sync_points = 0, raw_num_sync_points = 0;
@@ -3889,6 +3889,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									double grace_durations[] = {0.015625, 0.03125, 0.0625};	//The duration of each grace note length in terms of one whole note (64th, 32nd, 16th)
 									double grace_duration, grace_position = measure_position;
 									unsigned char dur;
+									gracetrans = graceonbeat = 0;
 
 									grace |= bitmask;	//Mark this string as having a grace note
 									gracefrets[ctr4] = pack_getc(inf);	//Grace note fret number
@@ -3940,6 +3941,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}//Grace note
 								if(byte2 & 1)
 								{	//Note played staccato
+									note_is_short = 1;
 								}
 								if(byte2 & 2)
 								{	//Palm mute
@@ -4343,6 +4345,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										{	//Grace note slides into normal note
 											gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Define the grace note's end of slide position
 											gnp->slideend = np[ctr2]->frets[ctr4];				//The end of slide position is the fret position of the note the grace note affects
+											gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Add linknext status to the grace note so it appears nicely as a slide-in in Rocksmith
 											if(gnp->frets[ctr4] > np[ctr2]->frets[ctr4])
 											{	//If the grace note's fret value is higher than the normal note's
 												gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The grace note slides down
@@ -4350,6 +4353,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											else
 											{	//The grace note's fret value is lower than the normal note's
 												gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;	//The grace note slides up
+											}
+										}
+										else if(gracetrans == 2)
+										{	//Grace note bends to normal note
+											if(gnp->frets[ctr4] < np[ctr2]->frets[ctr4])
+											{	//This only makes sense if the grace note's fret value is lower than the normal note's
+												gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;		//The grace note bends up to the next note
+												gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Define the grace note's end of slide position
+												gnp->bendstrength = np[ctr2]->frets[ctr4] - gnp->frets[ctr4];	//Set the bend strength to the number of half steps needed to reach the normal note
 											}
 										}
 										else if(gracetrans == 3)
@@ -4484,6 +4496,31 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			if(gp->track[ctr]->note[ctr2 - 1]->length == 0)
 			{	//If this note has been given a length of 0
 				eof_pro_guitar_track_delete_note(gp->track[ctr], ctr2 - 1);	//Remove it
+			}
+		}
+	}
+
+//Remove string muted notes from chords that contain at least one non muted note
+	for(ctr = 0; ctr < gp->numtracks; ctr++)
+	{	//For each imported track
+		for(ctr2 = gp->track[ctr]->notes; ctr2 > 0; ctr2--)
+		{	//For each note in the track (in reverse order)
+			if(eof_is_partially_string_muted(gp->track[ctr], ctr2 - 1))
+			{	//If this note has at least one muted and one non muted gem
+				for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+				{	//For each of the 6 supported strings
+					if(ctr3 < gp->track[ctr]->numstrings)
+					{	//If this is a string used in the track
+						if(gp->track[ctr]->note[ctr2 - 1]->note & bitmask)
+						{	//If this is a string used in the note
+							if(gp->track[ctr]->note[ctr2 - 1]->frets[ctr3] & 0x80)
+							{	//If this string is muted
+								gp->track[ctr]->note[ctr2 - 1]->note &= ~bitmask;	//Clear this string's gem
+								gp->track[ctr]->note[ctr2 - 1]->frets[ctr3] = 0;	//Erase the fret value
+							}
+						}
+					}
+				}
 			}
 		}
 	}

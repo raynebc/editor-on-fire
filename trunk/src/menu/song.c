@@ -3467,10 +3467,15 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 	char width_warning = 0, problem_found = 0, started = 0, phrase_warning, unset_warning = 0;
 	unsigned long ignorewarning = 0;	//Tracks which warnings the user has suppressed by answering "Ignore" to a prompt
 	int ret;
+	unsigned limit = 21;	//Rocksmith 2's fret hand position limit is 21
 
 	if(!eof_song || !undo_made)
 		return 0;	//Invalid parameter
 
+	if(eof_write_rs_files || eof_write_rb_files)
+	{	//If Rocksmith 1 or Rock Band export is enabled
+		limit = 19;	//The highest fret hand position change is 19 instead
+	}
 	eof_log("eof_check_fret_hand_positions_option() entered", 1);
 
 	for(ctr = 1; ctr < eof_song->tracks; ctr++)
@@ -3513,20 +3518,11 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 							problem_found = 1;
 						}
 					}
-					else if(position + tp->capo > 19)
+					else if(position + tp->capo > limit)
 					{	//If an invalid fret hand position is in effect
 						if(!report)
 						{	//If the calling function wanted to just check for presence of errors
-							unsigned long limit = 21;	//Rocksmith 2's fret hand position limit is 21
-
-							if(eof_write_rs_files)
-							{	//If Rocksmith 1 export is enabled
-								limit = 19;	//The limit is 19 instead
-							}
-							if(position + tp->capo > limit)
-							{
-								problem_found = 1;
-							}
+							problem_found = 1;
 						}
 						else if(!(ignorewarning & 1))
 						{	//If the calling function wanted to prompt the user about each issue found, and this warning message hasn't been suppressed

@@ -1,6 +1,7 @@
 #include <allegro.h>
 #include <stdio.h>
 #include "../agup/agup.h"
+#include "../main.h"	//For declaration of eof_click_changes_dialog_focus
 #include "proc.h"
 
 #ifdef USEMEMWATCH
@@ -50,6 +51,10 @@ int eof_verified_edit_proc(int msg, DIALOG *d, int c)
 	}
 	if(msg == MSG_WANTFOCUS)
 	{	//If this field wants focus
+		if(!eof_click_changes_dialog_focus)
+		{	//If the user preference to require a mouse click to change field focus is not enabled
+			return d_agup_edit_proc(msg,d,c);	//Allow the dialog system to carry out normal logic
+		}
 		if(d->flags & EOF_MSG_BUTTONFOCUS)
 		{	//If a custom button focus flag was set by the click event
 			d->flags &= ~EOF_MSG_BUTTONFOCUS;	//Clear it

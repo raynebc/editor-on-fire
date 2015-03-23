@@ -133,6 +133,7 @@ int         eof_gp_import_nat_harmonics_only = 0;	//If nonzero during GP import,
 int         eof_min_note_length = 0;			//Specifies the user-configured minimum length for all non-drum notes (for making Guitar Hero customs, is set to 0 if undefined)
 int         eof_min_note_distance = 3;			//Specifies the user-configured minimum distance between notes (to avoid problems with timing conversion leading to precision loss that can cause notes to combine/drop)
 int         eof_render_bass_drum_in_lane = 0;	//If nonzero, the 3D rendering will draw bass drum gems in a lane instead of as a bar spanning all lanes
+int         eof_click_changes_dialog_focus = 1;	//If nonzero, eof_verified_proc will not change dialog focus on mouse-over, it requires an explicit mouse click
 int         eof_inverted_chords_slash = 0;
 int         eof_render_3d_rs_chords = 0;	//If nonzero, the 3D rendering will draw a rectangle to represent chords that will export to XML as repeats (Rocksmith), and 3D chord tails will not be rendered
 int         eof_imports_recall_last_path = 0;	//If nonzero, various import dialogs will initialize the dialog to the path containing the last chosen import, instead of initializing to the project's folder
@@ -247,6 +248,8 @@ int         eof_hover_piece = -1;
 int         eof_hover_key = -1;
 int         eof_hover_lyric = -1;
 int         eof_last_tone = -1;
+int         eof_mouse_x;				//Tracks the mouse's x coordinate when the main menu is opened, so it can be restored after the mouse moves
+int         eof_mouse_y;				//Tracks the mouse's y coordinate when the main menu is opened, so it can be restored after the mouse moves
 int         eof_mouse_z;
 int         eof_mickey_z;
 int         eof_mickeys_x;
@@ -1910,6 +1913,11 @@ void eof_read_global_keys(void)
 		eof_cursor_visible = 0;
 		eof_emergency_stop_music();
 		eof_render();
+		eof_mouse_x = mouse_x;	//Store the mouse's coordinates
+		eof_mouse_y = mouse_y;
+		mouse_x = mouse_y = 0;	//Move the mouse out of the way of the menu
+		eof_show_mouse(screen);
+		mouse_callback = eof_hidden_mouse_callback;	//Install a mouse callback that will restore the mouse's original position if it moves
 		(void) eof_popup_dialog(eof_main_dialog, 0);
 		eof_cursor_visible = 1;
 		eof_pen_visible = 1;
@@ -5289,6 +5297,17 @@ void eof_seek_and_render_position(unsigned long track, unsigned char diff, unsig
 	eof_set_seek_position(pos + eof_av_delay);		//Change the seek position
 	eof_find_lyric_preview_lines();
 	eof_render();						//Render the screen
+}
+
+void eof_hidden_mouse_callback(int flags)
+{
+	if(flags & MOUSE_FLAG_MOVE)
+	{	//If the mouse moved
+		mouse_x = eof_mouse_x;	//Restore the original mouse coordinates
+		mouse_y = eof_mouse_y;
+		eof_show_mouse(screen);	//Display the mouse
+		mouse_callback = NULL;	//Uninstall the callback
+	}
 }
 
 END_OF_MAIN()

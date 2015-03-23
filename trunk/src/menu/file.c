@@ -151,6 +151,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 412, 196, 16,  2,   23,  0,    0,      1,   0,   "Display seek pos. in seconds",NULL, NULL },
 	{ d_agup_check_proc, 248, 428, 174, 16,  2,   23,  0,    0,      1,   0,   "Make note tails clickable",NULL, NULL },
 	{ d_agup_check_proc, 248, 444, 210, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
+	{ d_agup_check_proc, 16,  268, 200, 16,  2,   23,  0,    0,      1,   0,   "Click to change dialog focus",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1089,7 +1090,8 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[46].flags = enable_logging ? D_SELECTED : 0;						//Enable logging on launch
 	eof_preferences_dialog[47].flags = eof_display_seek_pos_in_seconds ? D_SELECTED : 0;	//Display seek pos. in seconds
 	eof_preferences_dialog[48].flags = eof_note_tails_clickable ? D_SELECTED : 0;			//Make note tails clickable
-	eof_preferences_dialog[49].flags = eof_inverted_chords_slash ? D_SELECTED : 0;		//Treat inverted chords as slash
+	eof_preferences_dialog[49].flags = eof_inverted_chords_slash ? D_SELECTED : 0;			//Treat inverted chords as slash
+	eof_preferences_dialog[50].flags = eof_click_changes_dialog_focus ? D_SELECTED : 0;		//Click to change dialog focus
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1185,6 +1187,7 @@ int eof_menu_file_preferences(void)
 			eof_display_seek_pos_in_seconds = (eof_preferences_dialog[47].flags == D_SELECTED ? 1 : 0);
 			eof_note_tails_clickable = (eof_preferences_dialog[48].flags == D_SELECTED ? 1 : 0);
 			eof_inverted_chords_slash = (eof_preferences_dialog[49].flags == D_SELECTED ? 1 : 0);
+			eof_click_changes_dialog_focus = (eof_preferences_dialog[50].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 29)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1227,6 +1230,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[47].flags = 0;					//Display seek pos. in seconds
 			eof_preferences_dialog[48].flags = 0;					//Make note tails clickable
 			eof_preferences_dialog[49].flags = 0;					//Treat inverted chords as slash
+			eof_preferences_dialog[50].flags = 1;					//Click to change dialog focus
 		}//If the user clicked "Default
 	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);

@@ -135,6 +135,7 @@ void eof_load_config(char * fn)
 	eof_write_rs_files = get_config_int("preferences", "eof_write_rs_files", 0);
 	eof_write_rs2_files = get_config_int("preferences", "eof_write_rs2_files", 0);
 	eof_inverted_chords_slash = get_config_int("preferences", "eof_inverted_chords_slash", 0);
+	eof_click_changes_dialog_focus = get_config_int("preferences", "eof_click_changes_dialog_focus", 1);
 	enable_logging = get_config_int("preferences", "enable_logging", 1);
 	eof_2d_render_top_option = get_config_int("preferences", "eof_2d_render_top_option", 32);
 	if((eof_2d_render_top_option < 32) || (eof_2d_render_top_option > 36))
@@ -291,6 +292,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_write_rs_files", eof_write_rs_files);
 	set_config_int("preferences", "eof_write_rs2_files", eof_write_rs2_files);
 	set_config_int("preferences", "eof_inverted_chords_slash", eof_inverted_chords_slash);
+	set_config_int("preferences", "eof_click_changes_dialog_focus", eof_click_changes_dialog_focus);
 	set_config_int("preferences", "enable_logging", enable_logging);
 	set_config_int("preferences", "eof_color_set", eof_color_set);
 	set_config_int("preferences", "eof_2d_render_top_option", eof_2d_render_top_option);
