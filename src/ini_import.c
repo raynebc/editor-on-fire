@@ -140,7 +140,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 						value_index[0] = '\0';	//Make it an empty string so it can be compared against the string already in the project
 					}
 				}
-				if(eof_compare_set_ini_string_field(sp->tags->artist, value_index, 256-1, &function, eof_import_ini_setting[i].type))
+				if(eof_compare_set_ini_string_field(sp->tags->artist, value_index, &function, eof_import_ini_setting[i].type))
 				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 					free(textbuffer);	//Free buffered INI file from memory
 					return 0;
@@ -155,7 +155,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 						value_index[0] = '\0';	//Make it an empty string so it can be compared against the string already in the project
 					}
 				}
-				if(eof_compare_set_ini_string_field(sp->tags->title, value_index, 256-1, &function, eof_import_ini_setting[i].type))
+				if(eof_compare_set_ini_string_field(sp->tags->title, value_index, &function, eof_import_ini_setting[i].type))
 				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 					free(textbuffer);	//Free buffered INI file from memory
 					return 0;
@@ -163,7 +163,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "frets"))
 			{
-				if(eof_compare_set_ini_string_field(sp->tags->frettist, value_index, 256-1, &function, eof_import_ini_setting[i].type))
+				if(eof_compare_set_ini_string_field(sp->tags->frettist, value_index, &function, eof_import_ini_setting[i].type))
 				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 					free(textbuffer);	//Free buffered INI file from memory
 					return 0;
@@ -171,7 +171,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "album"))
 			{
-				if(eof_compare_set_ini_string_field(sp->tags->album, value_index, 256-1, &function, eof_import_ini_setting[i].type))
+				if(eof_compare_set_ini_string_field(sp->tags->album, value_index, &function, eof_import_ini_setting[i].type))
 				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 					free(textbuffer);	//Free buffered INI file from memory
 					return 0;
@@ -183,7 +183,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 				if(eof_is_number(value_index))
 				{	//If the number is a valid year (all numerical characters)
 					value_index[4] = '\0';	//Ensure the number is truncated to 4 characters
-					if(eof_compare_set_ini_string_field(sp->tags->year, value_index, 32-1, &function, eof_import_ini_setting[i].type))
+					if(eof_compare_set_ini_string_field(sp->tags->year, value_index, &function, eof_import_ini_setting[i].type))
 					{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 						free(textbuffer);	//Free buffered INI file from memory
 						return 0;
@@ -204,7 +204,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "loading_phrase"))
 			{
-				if(eof_compare_set_ini_string_field(sp->tags->loading_text, value_index, 512-1, &function, eof_import_ini_setting[i].type))
+				if(eof_compare_set_ini_string_field(sp->tags->loading_text, value_index, &function, eof_import_ini_setting[i].type))
 				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 					free(textbuffer);	//Free buffered INI file from memory
 					return 0;
@@ -436,7 +436,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 	return 1;
 }
 
-int eof_compare_set_ini_string_field(char *dest, char *src, unsigned long maxchars, int *function, char *tag)
+int eof_compare_set_ini_string_field(char *dest, char *src, int *function, char *tag)
 {
 	if(!dest || !src || !function || !tag)
 		return 1;	//Return error

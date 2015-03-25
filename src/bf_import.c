@@ -131,7 +131,7 @@ EOF_SONG *eof_load_bf(char * fn)
 	char parent;							//Tracks whether a parsed ZOBJ section is a parent or child object
 	char nfn[1024] = {0};
 	#define BF_IMPORT_TIME_CHANGE_NUM 400
-	struct bf_timing_change changes[BF_IMPORT_TIME_CHANGE_NUM] = {{0}};	//Used to store all time signature and tempo changes
+	struct bf_timing_change changes[BF_IMPORT_TIME_CHANGE_NUM] = {{0,0.0,0,0.0,0,0.0,0,0}};	//Used to store all time signature and tempo changes
 	unsigned long numchanges = 0;				//The number of changes stored in the above array
 	unsigned curnum, curden, lastnum, lastden;	//Used to build the tempo map
 	double curbeatlen, curtime;					//Used to build the tempo map
@@ -369,7 +369,7 @@ EOF_SONG *eof_load_bf(char * fn)
 						{	//If the string just read is at an offset at which a string is expected
 							if(stringdata[ctr2].string == NULL)
 							{	//If a string wasn't read for this offset yet
-								int size = ustrsize(buffer) + 1;	//Get the length of the string in bytes (UTF-8 aware size) and add 1 byte for NULL
+								size_t size = ustrsize(buffer) + 1;	//Get the length of the string in bytes (UTF-8 aware size) and add 1 byte for NULL
 								stringdata[ctr2].string = malloc(size);	//Allocate memory for the string
 								if(!stringdata[ctr2].string)
 								{	//If the memory couldn't be allocated
@@ -381,7 +381,7 @@ EOF_SONG *eof_load_bf(char * fn)
 									eof_destroy_song(sp);
 									return NULL;
 								}
-								ustrzcpy(stringdata[ctr2].string, size, buffer);
+								(void) ustrzcpy(stringdata[ctr2].string, size, buffer);
 							}
 						}
 					}
@@ -585,7 +585,7 @@ EOF_SONG *eof_load_bf(char * fn)
 								eof_destroy_song(sp);
 								return NULL;
 							}
-							ustrncpy(lp->text, ptr, EOF_MAX_LYRIC_LENGTH);	//Copy the lyric text into the lyric structure
+							(void) ustrncpy(lp->text, ptr, EOF_MAX_LYRIC_LENGTH);	//Copy the lyric text into the lyric structure
 							lp->pos = startms;
 							lp->length = endms - startms + 0.5;	//Round to nearest millisecond
 							if(dword2 == 2)
@@ -981,7 +981,7 @@ EOF_SONG *eof_load_bf(char * fn)
 	}
 
 	//Build the tempo map, using the timestamps instead of the tempo changes, since the Bandfuse format doesn't use very accurate tempo values
-	qsort(changes, numchanges, sizeof(struct bf_timing_change), eof_bf_qsort_time_changes);	//Sort the time signature and tempo changes by timestamp
+	qsort(changes, (size_t)numchanges, sizeof(struct bf_timing_change), eof_bf_qsort_time_changes);	//Sort the time signature and tempo changes by timestamp
 	curnum = curden = lastnum = lastden = 4;	//Until a time signature change is reached, 4/4 is assumed
 	curbeatlen = 500.0;		//Until a tempo change is reached, 120BPM is assumed (the corresponding beat length is 500ms)
 	curtime = 0.0;

@@ -2093,7 +2093,7 @@ int eof_menu_beat_halve_tempo_all(void)
 	{	//For each beat
 		if(!i || (eof_song->beat[i]->ppqn != eof_song->beat[i - 1]->ppqn))
 		{	//If this is the first beat or this beat is a tempo change
-			eof_halve_tempo(eof_song, i, &undo_made);	//Halve its tempo
+			(void) eof_halve_tempo(eof_song, i, &undo_made);	//Halve its tempo
 		}
 	}
 
