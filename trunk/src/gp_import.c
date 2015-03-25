@@ -3717,8 +3717,25 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							if(bytemask & 32)
 							{	//Note type is defined
 								byte = pack_getc(inf);	//Fret number
-								if(!tie_note)
-								{	//If this is a tie note, force the fret number to remain the same, otherwise apply the defined fret value
+								if(tie_note)
+								{	//If this is a tie note, recall the last fretting of this string in this track, since overlapping tie notes may prevent a simple check of the previous note from having the desired fret value
+									unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
+
+									if((strings[ctr2] > 6) && drop_7)
+									{	//If this is a 7 string Guitar Pro track and the user opted to drop string 7 instead of string 1
+										convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
+									}
+									for(ctr5 = gp->track[ctr2]->notes; ctr5 > 0; ctr5--)
+									{	//For each previous note created for this track
+										if(gp->track[ctr2]->note[ctr5 - 1]->note & (1 << convertednum))
+										{	//If the note has a gem on this string
+											frets[ctr4] = gp->track[ctr2]->note[ctr5 - 1]->frets[convertednum];	//Copy the fret number for this string
+											break;
+										}
+									}
+								}
+								else
+								{	//Assign the defined fret value
 									frets[ctr4] |= byte;	//OR this value, so that the muted status can be kept if it is set
 								}
 							}
@@ -4075,7 +4092,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//If the tie note doesn't enable a technique not in use by the previous note, alter the previous note's length to include the tie note
 									long oldlength;
 
-									tie_note = 1;
 									oldlength = np[ctr2]->length;
 									np[ctr2]->length = lastendpos - np[ctr2]->pos + 0.5;	//Round up to nearest millisecond
 
@@ -4091,22 +4107,23 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									new_note = 1;	//Set this to nonzero, the if() block below will create the note
 									np[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Set the linknext flag on the previous note
 
+///This logic is now performed when the note type is first found to be a "tie note"
 									//Recall the fretting of the previous note, to apply to the tie note since GP doesn't redefine the correct fret number
-									for(ctr4 = 0; ctr4 < strings[ctr2]; ctr4++)
-									{	//For each of this track's natively supported strings
-										unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
-										if((strings[ctr2] > 6) && drop_7)
-										{	//If this is a 7 string Guitar Pro track and the user opted to drop string 7 instead of string 1
-											convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
-										}
-										if((convertednum > 6) || (ctr4 > 5))
-										{	//If convertednum became an unexpectedly large value (ie. integer underflow) or six strings have already been processed
-											break;	//Stop translating fretting and fingering data
-										}
-										frets[convertednum] = np[ctr2]->frets[ctr4];	//Copy the fret number for this string
-									}
+//									for(ctr4 = 0; ctr4 < strings[ctr2]; ctr4++)
+//									{	//For each of this track's natively supported strings
+//										unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
+//										if((strings[ctr2] > 6) && drop_7)
+//										{	//If this is a 7 string Guitar Pro track and the user opted to drop string 7 instead of string 1
+//											convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
+//										}
+//										if((convertednum > 6) || (ctr4 > 5))
+//										{	//If convertednum became an unexpectedly large value (ie. integer underflow) or six strings have already been processed
+//											break;	//Stop translating fretting and fingering data
+//										}
+//										frets[convertednum] = np[ctr2]->frets[ctr4];	//Copy the fret number for this string
+//									}
 								}
-							}
+							}//If this was defined as a tie note
 
 							if(new_note)
 							{	//If a new note is to be created

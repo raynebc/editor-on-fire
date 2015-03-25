@@ -109,7 +109,7 @@ MENU eof_catalog_menu[] =
 	{"&Edit Name", eof_menu_catalog_edit_name, NULL, 0, NULL},
 	{"Edit &Timing", eof_menu_song_catalog_edit, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"&Add", eof_menu_catalog_add, NULL, 0, NULL},
+	{"&Add\tSHIFT+W", eof_menu_catalog_add, NULL, 0, NULL},
 	{"&Delete", eof_menu_catalog_delete, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Previous\tW", eof_menu_catalog_previous, NULL, 0, NULL},
@@ -1403,6 +1403,9 @@ int eof_menu_catalog_add(void)
 	long next;
 
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
+	if(!eof_count_selected_notes(NULL, 0))	//If there are still no notes selected
+		return 1;
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track

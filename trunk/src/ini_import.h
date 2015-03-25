@@ -11,11 +11,11 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function);
 	//externally altered and prompted whether or not to merge the file's changes into the project.  If the user declines, this function
 	//returns without processing the remainder of the file.
 
-int eof_compare_set_ini_string_field(char *dest, char *src, unsigned long maxchars, int *function, char *tag);
+int eof_compare_set_ini_string_field(char *dest, char *src, int *function, char *tag);
 	//If *function is nonzero, the destination string is compared against the source string (case insensitive)
 	//	and if not identical, prompts the user whether or not to replace the existing setting.  If user
-	//	allows, the source string is copied (bounded by maxchars) to the destination and zero is returned.  If
-	//	user denies, the string is not altered and nonzero is returned, signaling to eof_ini_import() to cancel
+	//	allows, the source string is copied to the destination and zero is returned.
+	//	If user denies, the string is not altered and nonzero is returned, signaling to eof_ini_import() to cancel
 	//	the processing of song.ini.  If user allows, an undo state is made and *function is set to zero
 	//If *function is zero, the source string is copied to the destination without prompting and zero is returned
 	//If the strings are identical, zero is returned regardless of the value of function

@@ -879,13 +879,19 @@ if(eof_key_code == KEY_PAUSE)
 	if(eof_key_char == 'w')
 	{
 		if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
-		{	//CTRL+SHIFT+W will cycle to the previous chord name match
+		{	//Both SHIFT and CTRL are held
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			(void) eof_menu_previous_chord_result();
 			eof_use_key();
 		}
+		else if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
+		{	//SHIFT is held but CTRL is not
+			eof_shift_used = 1;	//Track that the SHIFT key was used
+			(void) eof_menu_catalog_add();
+			eof_use_key();
+		}
 		else if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
-		{	//Otherwise W will cycle to the previous catalog entry
+		{	//Neither SHIFT nor CTRL are held
 			(void) eof_menu_catalog_previous();
 			eof_use_key();
 		}

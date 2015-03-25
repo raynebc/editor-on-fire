@@ -575,7 +575,7 @@ void UStar_Load(FILE *inf)
 //Skip Byte Order Mark if one is found on the first line
 	if((buffer[0] == BOM[0]) && (buffer[1] == BOM[1]) && (buffer[2] == BOM[2]))
 	{
-		if(Lyrics.verbose)	puts("Skipping byte order mark on line 1");
+		if(Lyrics.verbose)	(void) puts("Skipping byte order mark on line 1");
 		buffer[0] = buffer[1] = buffer[2] = ' ';	//Overwrite the BOM with spaces
 	}
 
