@@ -299,7 +299,7 @@ void eof_mix_find_claps(void)
 
 	if(!eof_music_track)
 		return;
-	eof_log("eof_mix_find_claps() entered", 1);
+	eof_log("eof_mix_find_claps() entered", 2);
 
 	//Queue claps
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -538,7 +538,7 @@ void eof_mix_start_helper(void)
 {
 	int i;
 
-	eof_log("eof_mix_start_helper() entered", 1);
+	eof_log("eof_mix_start_helper() entered", 2);
 
 	eof_mix_find_claps();
 	eof_mix_current_clap = -1;

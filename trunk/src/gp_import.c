@@ -4106,22 +4106,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									tie_note = 0;	//Reset this to prevent this note's flags and bend strength from overriding those of the previous note
 									new_note = 1;	//Set this to nonzero, the if() block below will create the note
 									np[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Set the linknext flag on the previous note
-
-///This logic is now performed when the note type is first found to be a "tie note"
-									//Recall the fretting of the previous note, to apply to the tie note since GP doesn't redefine the correct fret number
-//									for(ctr4 = 0; ctr4 < strings[ctr2]; ctr4++)
-//									{	//For each of this track's natively supported strings
-//										unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
-//										if((strings[ctr2] > 6) && drop_7)
-//										{	//If this is a 7 string Guitar Pro track and the user opted to drop string 7 instead of string 1
-//											convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
-//										}
-//										if((convertednum > 6) || (ctr4 > 5))
-//										{	//If convertednum became an unexpectedly large value (ie. integer underflow) or six strings have already been processed
-//											break;	//Stop translating fretting and fingering data
-//										}
-//										frets[convertednum] = np[ctr2]->frets[ctr4];	//Copy the fret number for this string
-//									}
 								}
 							}//If this was defined as a tie note
 

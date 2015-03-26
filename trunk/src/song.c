@@ -989,7 +989,7 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 	unsigned long i;
 	unsigned char numdiffs = 5, note_type;
 
- 	eof_log("eof_detect_difficulties() entered", 1);
+ 	eof_log("eof_detect_difficulties() entered", 2);
 
 	if(sp)
 	{
@@ -3341,6 +3341,9 @@ unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track)
 
 int eof_open_strum_enabled(unsigned long track)
 {
+	if(!eof_song)
+		return 0;
+
 	if((track == EOF_TRACK_DRUM) || (track == EOF_TRACK_DRUM_PS))
 	{	//Drum tracks do not use open strumming
 		return 0;
@@ -4490,12 +4493,31 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 			{	//If there is another note in this track
 				if(tp->note[i-1]->pos == tp->note[next]->pos)
 				{	//If this note and the next are at the same position, merge them
+					unsigned char lower = 0;	//Is set to nonzero if the next note has a lower string gem
+
+					//Determine which of the two notes uses the lowest string, as this determines which note's end of pitched/unpitched slide positions are kept
+					for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+					{	//For each of the next note's 6 usable strings, starting with the lowest
+						if((tp->note[next]->note & bitmask) && !(tp->note[i-1]->note & bitmask))
+						{	//If the next note uses this string but the current one doesn't
+							lower = 1;	//Note that the next string's end of pitched/unpitched slide takes priority
+							break;
+						}
+						if((tp->note[i-1]->note & bitmask) && !(tp->note[next]->note & bitmask))
+						{	//If the current note uses this string but the next one doesn't
+							break;
+						}
+					}
+
 					tp->note[i-1]->note |= tp->note[next]->note;	//Merge the two notes' bitmasks
 
 					//Perform additional merging logic for pro guitar tracks, because Rocksmith custom files define single notes and chords at the same position in order to define chord techniques
 					if(tp->note[next]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 					{	//If the next note is a slide
-						tp->note[i-1]->slideend = tp->note[next]->slideend;	//Copy the slide end position
+						if(lower)
+						{	//If the next note's slide end position is to be used
+							tp->note[i-1]->slideend = tp->note[next]->slideend;	//Copy the slide end position
+						}
 					}
 					if(tp->note[next]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
 					{	//If the next note is a bend
@@ -4503,7 +4525,10 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 					}
 					if(tp->note[next]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
 					{	//If the next note is an unpitched slide
-						tp->note[i-1]->unpitchend = tp->note[next]->unpitchend;	//Copy the unpitched slide end position
+						if(lower)
+						{	//If the next note's unpitched slide end position is to be used
+							tp->note[i-1]->unpitchend = tp->note[next]->unpitchend;	//Copy the unpitched slide end position
+						}
 					}
 					flags = eof_prepare_note_flag_merge(tp->note[i-1]->flags, EOF_PRO_GUITAR_TRACK_BEHAVIOR, tp->note[next]->note);
 					//Get the flags of the overlapped note as they would be if all applicable lane-specific flags are cleared to inherit the flags of the note to merge

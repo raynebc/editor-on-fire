@@ -4014,7 +4014,8 @@ int eof_menu_file_bf_import(void)
 		{
 			eof_song_loaded = 1;
 			eof_init_after_load(0);
-			eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
+			eof_sort_notes(eof_song);
+			eof_fixup_notes(eof_song);
 			(void) replace_filename(eof_last_midi_path, returnedfn, "", 1024);	//Set the last loaded MIDI file path
 			eof_log("\tImport complete", 1);
 		}

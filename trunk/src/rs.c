@@ -4452,7 +4452,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 					if(target == 2)
 					{	//If the target game is Rocksmith 2
 						ptr->slideto = -1;	//Don't allow the note to export as both an unpitched and a pitched slide at the same time
-						techslideto = -1;	//Prevent the code block below from allow a tech note to override this constraint
+						techslideto = -1;	//Prevent the code block below from allowing a tech note to override this constraint
 					}
 				}
 			}
