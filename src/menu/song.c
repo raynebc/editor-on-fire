@@ -1268,8 +1268,8 @@ int eof_menu_track_selected_track_number(int tracknum, int updatetitle)
 	unsigned long i;
 	unsigned char maxdiff = 4;	//By default, each track supports 5 difficulties
 
-	eof_log("\tChanging active track", 1);
-	eof_log("eof_menu_track_selected_track_number() entered", 1);
+	eof_log("\tChanging active track", 2);
+	eof_log("eof_menu_track_selected_track_number() entered", 2);
 
 	//Store the active difficulty number into the appropriate variable
 	if(eof_song->track[eof_selected_track]->track_format == EOF_VOCAL_TRACK_FORMAT)

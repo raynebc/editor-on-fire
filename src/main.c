@@ -4727,7 +4727,7 @@ void eof_scale_fretboard(unsigned long numlanes)
 	unsigned long ctr;
 	float lanewidth;
 
-	eof_log("eof_scale_fretboard() entered", 1);
+	eof_log("eof_scale_fretboard() entered", 2);
 
 	eof_screen_layout.string_space = eof_screen_layout.string_space_unscaled;
 
@@ -5194,7 +5194,7 @@ void eof_set_color_set(void)
 {
 	int x;
 
-	eof_log("eof_set_color_set() entered", 1);
+	eof_log("eof_set_color_set() entered", 2);
 
 	if(!eof_song)
 		return;

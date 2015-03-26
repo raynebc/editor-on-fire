@@ -773,7 +773,7 @@ EOF_SONG *eof_load_bf(char * fn)
 								else
 								{
 									flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
-									np->slideend = dword2 - ((amount / 0.5) + 0.5);
+									np->slideend = dword2 + ((amount / 0.5) + 0.5);
 								}
 							break;
 							case 3:	//Unpitched slide up
@@ -869,6 +869,7 @@ EOF_SONG *eof_load_bf(char * fn)
 					}//For each note in this object
 					eof_build_trill_phrases(tp);	//Add trill phrases to encompass the notes that have the trill flag set
 					eof_build_tremolo_phrases(tp, curdiff);	//Add tremolo phrases and define them to apply to the track difficulty that this tab object contained notes for
+
 					//Apply string muting for notes
 					for(ctr = 0; ctr < tp->notes; ctr++)
 					{	//For each note in the track
@@ -1037,15 +1038,15 @@ EOF_SONG *eof_load_bf(char * fn)
 	eof_calculate_tempo_map(sp);	//Rebuild the tempo changes based on the beat timestamps
 
 ///Debug readout of string array
-///	eof_log("English string list", 1);
-///	for(ctr = 0; ctr < numstrings; ctr++)
-///	{	//For each string in the array
-///		if(stringdata[ctr].string)
-///		{	//If this entry has a string
-///			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tString #%lu:\tIndex key = 0x%016I64X, string = \"%s\"", ctr, stringdata[ctr].indkey, stringdata[ctr].string);
-///			eof_log(eof_log_string, BF_IMPORT_LOGGING_LEVEL);
-///		}
-///	}
+//	eof_log("English string list", 1);
+//	for(ctr = 0; ctr < numstrings; ctr++)
+//	{	//For each string in the array
+//		if(stringdata[ctr].string)
+//		{	//If this entry has a string
+//			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tString #%lu:\tIndex key = 0x%016I64X, string = \"%s\"", ctr, stringdata[ctr].indkey, stringdata[ctr].string);
+//			eof_log(eof_log_string, BF_IMPORT_LOGGING_LEVEL);
+//		}
+//	}
 
 //Load guitar.ogg automatically if it's present, otherwise prompt user to browse for audio
 	(void) replace_filename(eof_song_path, fn, "", 1024);
@@ -1057,6 +1058,7 @@ EOF_SONG *eof_load_bf(char * fn)
 	}
 	eof_song_loaded = 1;
 	eof_chart_length = alogg_get_length_msecs_ogg(eof_music_track);
+	eof_log("\tImport complete", 1);
 
 	return sp;
 }
