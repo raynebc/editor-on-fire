@@ -217,7 +217,7 @@ typedef struct
 	unsigned long midi_end_pos;
 	unsigned long start_pos;
 	unsigned long end_pos;	//Will store other data in items that don't use an end position (such as the fret number for fret hand positions)
-	unsigned long flags;
+	unsigned long flags;	//Store various phrase-specific data, such as a fret catalog entry's source track
 	char name[EOF_SECTION_NAME_LENGTH + 1];
 	unsigned char difficulty;	//The difficulty this phrase applies to (ie. arpeggios, hand positions, RS tremolos), or 0xFF if it otherwise applies to all difficulties
 

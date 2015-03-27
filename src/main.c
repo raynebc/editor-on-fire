@@ -28,6 +28,7 @@
 #include "main.h"
 #include "utility.h"
 #include "player.h"
+#include "bf_import.h"
 #include "config.h"
 #include "midi.h"
 #include "midi_import.h"
@@ -4069,7 +4070,7 @@ int eof_initialize(int argc, char * argv[])
 		allegro_message("Could not create file list filter (*.rif)!");
 		return 0;
 	}
-	ncdfs_filter_list_add(eof_filter_rs_files, "rif", "Bandfuse chart files (*.rif)", 1);
+	ncdfs_filter_list_add(eof_filter_bf_files, "rif", "Bandfuse chart files (*.rif)", 1);
 
 	/* check availability of MP3 conversion tools */
 	if(!eof_supports_mp3)
@@ -4373,10 +4374,6 @@ int eof_initialize(int argc, char * argv[])
 				}
 				eof_song_loaded = 1;
 			}
-			else if(!ustricmp(get_extension(argv[i]), "ogg") || !ustricmp(get_extension(argv[i]), "mp3"))
-			{	//Launch new chart wizard via command line
-				eof_new_chart(argv[i]);
-			}
 			else if(strcasestr_spec(argv[i], ".pak."))
 			{	//Import a Guitar Hero file via command line
 				(void) ustrcpy(eof_song_path, argv[i]);
@@ -4391,6 +4388,25 @@ int eof_initialize(int argc, char * argv[])
 					return 0;
 				}
 				eof_song_loaded = 1;
+			}
+			else if(!ustricmp(get_extension(argv[i]), "rif"))
+			{	//Import a Bandfuse chart via command line
+				(void) ustrcpy(eof_song_path, argv[i]);
+				(void) ustrcpy(eof_filename, argv[i]);
+				(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+				(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+				(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
+				eof_song = eof_load_bf(eof_filename);
+				if(!eof_song)
+				{
+					allegro_message("Could not import song!");
+					return 0;
+				}
+				eof_song_loaded = 1;
+			}
+			else if(!ustricmp(get_extension(argv[i]), "ogg") || !ustricmp(get_extension(argv[i]), "mp3"))
+			{	//Launch new chart wizard via command line
+				eof_new_chart(argv[i]);
 			}
 		}//If the argument is not one of EOF's native command line parameters and no file is loaded yet
 	}//For each command line argument

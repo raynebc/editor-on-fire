@@ -130,14 +130,14 @@ EOF_SONG *eof_load_bf(char * fn)
 	unsigned long numstrings = 0;			//The number of strings stored in the above array
 	char parent;							//Tracks whether a parsed ZOBJ section is a parent or child object
 	char nfn[1024] = {0};
-	#define BF_IMPORT_TIME_CHANGE_NUM 400
+	#define BF_IMPORT_TIME_CHANGE_NUM 1000
 	struct bf_timing_change changes[BF_IMPORT_TIME_CHANGE_NUM] = {{0,0.0,0,0.0,0,0.0,0,0}};	//Used to store all time signature and tempo changes
 	unsigned long numchanges = 0;				//The number of changes stored in the above array
 	unsigned curnum, curden, lastnum, lastden;	//Used to build the tempo map
 	double curbeatlen, curtime;					//Used to build the tempo map
 	unsigned long curtimems;					//Used to build the tempo map
 	unsigned long lastitem = 0;					//Used to track the realtime position of the last item in the chart, used to build the tempo map
-	unsigned long start, end, temp;				//Used to correct lyric line positions
+	unsigned long start, temp;					//Used to correct lyric line positions
 
 	eof_log("\tImporting Bandfuse file", 1);
 	eof_log("eof_load_bf() entered", 1);
@@ -610,7 +610,7 @@ EOF_SONG *eof_load_bf(char * fn)
 						endms = end + 0.5;		//Round to nearest millisecond
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLyric line #%lu start = %lums, end = %lums", ctr, startms, endms);
 						eof_log(eof_log_string, 1);
-///						(void) eof_vocal_track_add_line(sp->vocal_track[0], startms, endms);	//Add the lyric line
+						(void) eof_vocal_track_add_line(sp->vocal_track[0], startms, endms);	//Add the lyric line
 					}
 				}
 				else if((entryid == 11) && (entrysize == 64))
@@ -934,52 +934,25 @@ EOF_SONG *eof_load_bf(char * fn)
 	for(ctr = 0; ctr < numstrings; free(stringdata[ctr].string), ctr++);	//Free the memory used to store each string
 	free(stringdata);
 
-	//Correct the lyric phrases, as the Bandfuse format effectively only defines rough line break positions
+	//Correct the lyric phrases, as the Bandfuse format effectively only roughly defines line break positions
 	eof_track_sort_notes(sp, EOF_TRACK_VOCALS);
-	start = 0;	//The lyric lines will begin at the start of the chart
+	start = 0;	//The first lyric line will apply beginning at the start of the chart
+
+	//Adjust the lyric line start and end positions to correctly reflect their scope
 	for(ctr = 0; ctr < sp->vocal_track[0]->lines; ctr++)
 	{	//For each lyric line that was added
 		EOF_PHRASE_SECTION *llp = &sp->vocal_track[0]->line[ctr];	//A pointer to the lyric line being checked
 
 		//Extend the lyric line up to this line break
-		end = llp->start_pos;
-		temp = llp->end_pos;	//Retain the "end" position of the line break
-		llp->start_pos = start;
-		llp->end_pos = end;
-		start = temp;			//The next lyric line will begin at the end of this line break
-
-		//Re-position the beginning of the lyric line to match the start position of the first lyric in that line
-		for(ctr2 = 0; ctr2 < sp->vocal_track[0]->lyrics; ctr2++)
-		{	//For each lyric that was imported
-			EOF_LYRIC *lp = sp->vocal_track[0]->lyric[ctr2];			//A pointer to the lyric being checked
-
-			if(lp->pos < llp->start_pos)	//If the lyric begins before the lyric line
-				continue;					//Skip it
-			if(lp->pos > llp->end_pos)		//If the lyric begins after the end of the lyric line
-				break;						//All the rest of the lyrics will as well, break from lyric loop
-
-			//This lyric falls within the lyric line
-			llp->start_pos = lp->pos;		//Adjust the lyric line to begin at the start of this lyric
-		}
-
-///This logic doesn't sufficiently clean up the lines, base the start and end of lines on the last lyric in the line and the lyric that follows it
-		//Re-position the end of the lyric line to match the last lyric in that line
-		for(ctr2 = 0; ctr2 < sp->vocal_track[0]->lyrics; ctr2++)
-		{	//For each lyric that was imported
-			EOF_LYRIC *lp = sp->vocal_track[0]->lyric[ctr2];			//A pointer to the lyric being checked
-
-			if(lp->pos < llp->start_pos)	//If the lyric begins before the lyric line
-				continue;					//Skip it
-			if(lp->pos > llp->end_pos)		//If the lyric begins after the end of the lyric line
-				break;						//All the rest of the lyrics will as well, break from lyric loop
-
-			//This lyric falls within the lyric line
-			llp->end_pos = lp->pos + lp->length;	//Adjust the lyric line to end at the end of this lyric
-		}
+		temp = llp->start_pos;
+		llp->start_pos = start;	//This lyric line begins where the previous line break ended (or the beginning of the chart if this is the first line break)
+		start = llp->end_pos;	//The next lyric line will begin at the end of this line break
+		llp->end_pos = temp;	//This lyric line extends to the beginning of the line break
 
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLyric line #%lu corrected to:  start = %lums, end = %lums", ctr, sp->vocal_track[0]->line[ctr].start_pos, sp->vocal_track[0]->line[ctr].end_pos);
 		eof_log(eof_log_string, 1);
 	}
+
 
 	//Build the tempo map, using the timestamps instead of the tempo changes, since the Bandfuse format doesn't use very accurate tempo values
 	qsort(changes, (size_t)numchanges, sizeof(struct bf_timing_change), eof_bf_qsort_time_changes);	//Sort the time signature and tempo changes by timestamp
@@ -1036,6 +1009,7 @@ EOF_SONG *eof_load_bf(char * fn)
 		curtimems = curtime + 0.5;
 	}
 	eof_calculate_tempo_map(sp);	//Rebuild the tempo changes based on the beat timestamps
+	eof_truncate_chart(eof_song);	//Update number of beats and the chart length as appropriate
 
 ///Debug readout of string array
 //	eof_log("English string list", 1);

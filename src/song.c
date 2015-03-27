@@ -6814,11 +6814,11 @@ void eof_truncate_chart(EOF_SONG *sp)
 		targetpos = eof_music_length;
 	}
 
-	if(sp->beat[sp->beats - 1]->pos < targetpos)
-	{	//If there aren't enough beats so that at least one starts at or after the target position
+	if(sp->beat[sp->beats - 1]->pos <= targetpos)
+	{	//If there aren't enough beats so that at least one starts after the target position
 		eof_log("\tAdding beats", 1);
-		while(sp->beat[sp->beats - 1]->pos < targetpos)
-		{	//While there aren't enough beats so that at least one starts at or after the target position
+		while(sp->beat[sp->beats - 1]->pos <= targetpos)
+		{	//While there aren't enough beats so that at least one starts after the target position
 			if(!eof_song_append_beats(sp, 1))
 			{	//If there was an error adding a beat
 				eof_log("\tError adding beat.  Aborting", 1);
