@@ -141,6 +141,7 @@ int eof_export_bandfuse(EOF_SONG * sp, char * fn, unsigned short *user_warned)
 										int trillwith = -1;						//If the note is in a trill phrase, this is set to the fret value of the next or previous gem on the string
 										long next;
 										unsigned long stringnum;				//The converted string number (ie. low E string is string 6)
+										char *sustainpadding;
 
 										trill_start = trill_stop = tp->note[ctr3]->pos;	//Initialize variables in order to track if the trill phrase can't be properly found
 										if(tp->note[ctr3]->flags & EOF_NOTE_FLAG_IS_TRILL)
@@ -218,9 +219,25 @@ int eof_export_bandfuse(EOF_SONG * sp, char * fn, unsigned short *user_warned)
 											}
 										}
 
+										if(tech.length < 10)
+										{	//The sustain is one digit
+											sustainpadding = "   ";
+										}
+										else if(tech.length < 100)
+										{	//The sustain is two digits
+											sustainpadding = "  ";
+										}
+										else if(tech.length < 1000)
+										{	//The sustain is three digits
+											sustainpadding = " ";
+										}
+										else
+										{	//It's four or more digits
+											sustainpadding = "";
+										}
 										fret += tp->capo;							//Compensate for the the capo position if applicable
 										stringnum = tp->numstrings - ctr4;			//Convert to tab string numbering (low E is string 6 in a 6 string track, string 4 on a 4 string track, etc)
-										(void) snprintf(buffer, sizeof(buffer) - 1, "        <note time=\"%lu\" linkNext=\"%d\" bend=\"%lu\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"0\" mute=\"%d\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%lu\" tremolo=\"%d\" harmonicPinch=\"%d\" slideUnpitchTo=\"%ld\" trillwith=\"%d\" finger=\"%lu\"/>\n", notepos, tech.linknext, tech.bendstrength_h, fret, tech.hammeron, tech.harmonic, tech.hopo, tech.stringmute, tech.palmmute, tech.pop, tech.pulloff, tech.slap, tech.slideto, stringnum, tech.length, tech.tremolo, tech.pinchharmonic, tech.unpitchedslideto, trillwith, finger);
+										(void) snprintf(buffer, sizeof(buffer) - 1, "        <note time=\"%lu\" linkNext=\"%d\" bend=\"%lu\" fret=%s\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"0\" mute=\"%d\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=%s\"%lu\" tremolo=\"%d\" harmonicPinch=\"%d\" slideUnpitchTo=\"%ld\" trillwith=\"%d\" finger=\"%lu\"/>\n", notepos, tech.linknext, tech.bendstrength_h, ((fret < 10) ? " " : ""), fret, tech.hammeron, tech.harmonic, tech.hopo, tech.stringmute, tech.palmmute, tech.pop, tech.pulloff, tech.slap, tech.slideto, stringnum, sustainpadding, tech.length, tech.tremolo, tech.pinchharmonic, tech.unpitchedslideto, trillwith, finger);
 										(void) pack_fputs(buffer, fp);
 									}//If this string has a gem and it's not ghosted
 								}//For each string in this track

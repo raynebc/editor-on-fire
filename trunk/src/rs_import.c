@@ -1296,9 +1296,8 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 											error = 1;
 											break;	//Break from inner loop
 										}
-										if(fret > 19)
-										{	//If the anchor is not valid, log it and warn the user
-											///When RS2 import is implemented, this check will need to take the capo position into account
+										if(fret - tp->capo > 19)
+										{	//If the anchor is not valid (taking the capo into account), log it and warn the user
 											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tIgnoring invalid anchor (fret %ld) at position %ld on line #%lu", fret, time, linectr);
 											eof_log(eof_log_string, 1);
 											if(!(warning & 1))
@@ -1310,7 +1309,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 										else
 										{	//Otherwise add it to the track
 											tp->handposition[tp->handpositions].start_pos = time;
-											tp->handposition[tp->handpositions].end_pos = fret;
+											tp->handposition[tp->handpositions].end_pos = fret - tp->capo;
 											tp->handposition[tp->handpositions].difficulty = curdiff;
 											tp->handpositions++;
 										}
