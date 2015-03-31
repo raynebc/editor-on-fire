@@ -628,4 +628,18 @@ void eof_use_key(void);
 
 void eof_hidden_mouse_callback(int flags);	//A mouse callback that uninstalls itself and restores the mouse position to (eof_mouse_x, eof_mouse_y) if it has moved
 
+EOF_SONG *eof_create_new_project_select_pro_guitar(void);
+	//Closes a project if one is open
+	//Prompts the user for a pro guitar/bass track to activate
+	//eof_etext[] is displayed to the user in the dialog
+	//Creates a new EOF_SONG structure and sets the active track to the user-selected one
+	//This is used to prepare for a Guitar Pro or Rocksmith import when no chart is loaded
+	//Returns the created project, or NULL on error
+
+int eof_identify_xml(char *fn);
+	//Parses the XML file and determines what file type it is
+	//Returns 0 on error or if the file type couldn't be determined
+	//Returns 1 if the file is determined to be Rocksmith format
+	//Returns 2 if the file is determined to be Go PlayAlong format
+
 #endif

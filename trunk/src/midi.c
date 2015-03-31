@@ -2573,6 +2573,8 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn)
 		channel++;	//The next track to export will use a different MIDI channel for the note on/off events
 	}//For each track in the project
 
+	eof_clear_midi_events();		//Free any memory allocated for the MIDI event array
+
 /* make tempo track */
 	fp = pack_fopen(tempotempname, "w");
 	if(!fp)

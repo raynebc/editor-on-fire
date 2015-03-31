@@ -118,7 +118,7 @@ EOF_SONG *eof_load_bf(char * fn)
 	#define BF_IMPORT_BUFFER_SIZE 2048
 	char buffer[BF_IMPORT_BUFFER_SIZE + 1] = {0};	//Used to read strings
 	char *lang, lang_english[] = "English", lang_japanese[] = "Japanese", lang_german[] = "German", lang_italian[] = "Italian", lang_spanish[] = "Spanish", lang_french[] = "French", *string;
-	unsigned long sectionctr, ctr, ctr2, dword = 0, dword2 = 0, dword3 = 0, dword4, dword5, dword6, dword7, dword8, numstbentries, offset;
+	unsigned long sectionctr, ctr, ctr2, dword = 0, dword2 = 0, dword3 = 0, dword4, numstbentries, offset;
 	unsigned long fileadd = 0;				//Use this to track the address within the input file, since Allegro's file I/O routines don't offer a way to determine this
 	unsigned long long qword, qword2, qword3;
 	int word;
@@ -620,7 +620,7 @@ EOF_SONG *eof_load_bf(char * fn)
 					EOF_PRO_GUITAR_NOTE *np = NULL;		//A pointer to the most recently created note
 					EOF_PRO_GUITAR_NOTE *npp = NULL;	//A pointer to the previously created note
 					unsigned char curdiff;				//The difficulty referenced by this ZOBJ object
-					unsigned long flags;
+					unsigned long flags, bendtype, vibrato, stringnum, fret, finger, statuses, statuses2, statuses3;
 					char *tech;
 					unsigned long prevfret = 0;			//Used to track the fret value of the previous note, for HO/PO tracking
 
@@ -673,51 +673,51 @@ EOF_SONG *eof_load_bf(char * fn)
 					for(ctr = 0; ctr < entrycount; ctr++)
 					{	//For each note in this object
 						//Read note data
-						pack_ReadDWORDBE(inf, &start);	//Read note start time
-						pack_ReadDWORDBE(inf, &end);	//Read note end time
-						pack_ReadDWORDBE(inf, &dword);	//Read note string number
-						pack_ReadDWORDBE(inf, &dword2);	//Read note fret number
-						pack_ReadDWORDBE(inf, &dword3);	//Read note finger number
-						pack_ReadDWORDBE(inf, &dword4);	//Read note statuses
-						pack_ReadDWORDBE(inf, &dword5);	//Read other statuses (least significant byte is bend type)
-						pack_ReadDWORDBE(inf, &amount);	//Read the slide/trill/bend amount (in steps)
-						pack_ReadDWORDBE(inf, &dword6);	//Read other statuses (least significant bit indicates tremolo)
-						pack_ReadDWORDBE(inf, NULL);	//Read and ignore 4 bytes of unknown use
-						pack_ReadQWORDBE(inf, NULL);	//Read the value expected to be 0x427c0000427c0000
-						pack_ReadDWORDBE(inf, NULL);	//Read and ignore 4 bytes of unknown use
-						pack_ReadDWORDBE(inf, NULL);	//Read and ignore 4 bytes of unknown use
-						pack_ReadDWORDBE(inf, &dword7);	//Read other statuses (byte 0 indicates linknext, byte 1 indicates palm mute, byte 2 indicates tremolo)
-						pack_ReadDWORDBE(inf, &dword8);	//Read pop/slap status (1 indicates slap, 2 indicates pop)
+						pack_ReadDWORDBE(inf, &start);		//Read note start time
+						pack_ReadDWORDBE(inf, &end);		//Read note end time
+						pack_ReadDWORDBE(inf, &stringnum);	//Read note string number
+						pack_ReadDWORDBE(inf, &fret);		//Read note fret number
+						pack_ReadDWORDBE(inf, &finger);		//Read note finger number
+						pack_ReadDWORDBE(inf, &statuses);	//Read note statuses
+						pack_ReadDWORDBE(inf, &bendtype);	//Read other statuses (least significant byte is bend type)
+						pack_ReadDWORDBE(inf, &amount);		//Read the slide/trill/bend amount (in steps)
+						pack_ReadDWORDBE(inf, &vibrato);	//Read other statuses (least significant bit indicates vibrato)
+						pack_ReadDWORDBE(inf, NULL);		//Read and ignore 4 bytes of unknown use
+						pack_ReadQWORDBE(inf, NULL);		//Read the value expected to be 0x427c0000427c0000
+						pack_ReadDWORDBE(inf, NULL);		//Read and ignore 4 bytes of unknown use
+						pack_ReadDWORDBE(inf, NULL);		//Read and ignore 4 bytes of unknown use
+						pack_ReadDWORDBE(inf, &statuses2);	//Read other statuses (byte 0 indicates linknext, byte 1 indicates palm mute, byte 2 indicates tremolo)
+						pack_ReadDWORDBE(inf, &statuses3);	//Read pop/slap status (1 indicates slap, 2 indicates pop)
 						fileadd += 64;	//Update file address
 						startms = start + 0.5;	//Round to nearest millisecond
 						endms = end + 0.5;		//Round to nearest millisecond
 						if(endms > lastitem)	//Keep track of the timestamp of the last imported item
 							lastitem = endms;
-						if(dword4 == 1)
+						if(statuses == 1)
 						{
 							tech = "Mute";
 						}
-						else if(dword4 == 2)
+						else if(statuses == 2)
 						{
 							tech = "Slide";
 						}
-						else if(dword4 == 3)
+						else if(statuses == 3)
 						{
 							tech = "UUp";
 						}
-						else if(dword4 == 4)
+						else if(statuses == 4)
 						{
 							tech = "UDown";
 						}
-						else if(dword4 == 9)
+						else if(statuses == 9)
 						{
 							tech = "Trill";
 						}
-						else if(dword4 == 10)
+						else if(statuses == 10)
 						{
 							tech = "Harm";
 						}
-						else if(dword4 == 11)
+						else if(statuses == 11)
 						{
 							tech = "PHarm";
 						}
@@ -729,7 +729,7 @@ EOF_SONG *eof_load_bf(char * fn)
 						{
 							tech = "";
 						}
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tNote #%4lu start = %6lums, end = %6lums, string = %lu, fret = %2lu, finger = %lu, statuses = %lu (%5s), statuses2 = 0x%lX, slide/bend/trill amount = %9f, statuses3 = 0x%lX, statuses4 = 0x%08lX, pop/slap = %s", ctr, startms, endms, dword, dword2, dword3, dword4, tech, dword5, amount, dword6, dword7, (!dword8 ? "neither" : (dword == 1 ? "slap" : "pop")));
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tNote #%4lu start = %6lums, end = %6lums, string = %lu, fret = %2lu, finger = %lu, statuses = %lu (%5s), bend type = %lu, slide/bend/trill amount = %9f, vibrato = 0x%lX, statuses2 = 0x%08lX, pop/slap = %s", ctr, startms, endms, stringnum, fret, finger, statuses, tech, bendtype, amount, vibrato, statuses2, (!statuses3 ? "neither" : (dword == 1 ? "slap" : "pop")));
 						eof_log(eof_log_string, 1);
 
 						//Create note
@@ -745,9 +745,9 @@ EOF_SONG *eof_load_bf(char * fn)
 							return NULL;
 						}
 						np->type = curdiff;
-						dword = tp->numstrings - dword;	//Convert the string numbering
-						np->note = 1 << dword;
-						np->frets[dword] = dword2;
+						stringnum = tp->numstrings - stringnum;	//Convert the string numbering
+						np->note = 1 << stringnum;
+						np->frets[stringnum] = fret;
 						np->pos = startms;
 						flags = 0;
 						if(end > start)
@@ -758,7 +758,7 @@ EOF_SONG *eof_load_bf(char * fn)
 						{
 							np->length = 1;
 						}
-						switch(dword4)
+						switch(statuses)
 						{
 							case 1:	//String mute
 								flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;
@@ -768,32 +768,32 @@ EOF_SONG *eof_load_bf(char * fn)
 								if(amount >= 0.0)
 								{
 									flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
-									np->slideend = dword2 + ((amount / 0.5) + 0.5);
+									np->slideend = fret + ((amount / 0.5) + 0.5);
 								}
 								else
 								{
 									flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
-									np->slideend = dword2 + ((amount / 0.5) + 0.5);
+									np->slideend = fret + ((amount / 0.5) + 0.5);
 								}
 							break;
 							case 3:	//Unpitched slide up
 								flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
 								if(amount > 0.0)
 								{
-									np->unpitchend = (dword2 + (amount / 0.5)) + 0.5;
+									np->unpitchend = (fret + (amount / 0.5)) + 0.5;
 								}
-								if(dword2 + 1 > tp->numfrets)
+								if(fret + 1 > tp->numfrets)
 								{	//If this track doesn't have enough frets to notate this
-									tp->numfrets = dword2 + 1;	//Increase its limit
+									tp->numfrets = fret + 1;	//Increase its limit
 								}
 							break;
 							case 4:	//Unpitched slide down
 								flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
 								if(amount < 0.0)
 								{	//This floating point value is expected to be negative
-									if(dword2 + amount > 0.0)
+									if(fret + amount > 0.0)
 									{	//Prevent integer underflow
-										np->unpitchend = (dword2 + (amount / 0.5)) + 0.5;
+										np->unpitchend = (fret + (amount / 0.5)) + 0.5;
 									}
 								}
 							break;
@@ -807,36 +807,36 @@ EOF_SONG *eof_load_bf(char * fn)
 								flags |= EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC;
 							break;
 						}
-						if(dword5)
+						if(bendtype)
 						{	//If this note bends
 							flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
-							if((dword5 == 1) && (amount > 0.0))
+							if((bendtype == 1) && (amount > 0.0))
 							{	//Normal bend
 								flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
 								np->bendstrength = (amount / 0.5) + 0.5;	//Round bend strength to the nearest number of half steps
 							}
 						}
-						if(dword6)
+						if(vibrato)
 						{	//If this note has vibrato
 							flags |= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
 						}
-						if((dword7 >> 24) & 0xFF)
+						if((statuses2 >> 24) & 0xFF)
 						{	//If this note links to the next note
 							flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;
 						}
-						if((dword7 >> 16) & 0xFF)
+						if((statuses2 >> 16) & 0xFF)
 						{	//If this note is palm muted
 							flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
 						}
-						if((dword7 >> 8) & 0xFF)
+						if((statuses2 >> 8) & 0xFF)
 						{	//If this note uses tremolo picking
 							flags |= EOF_NOTE_FLAG_IS_TREMOLO;	//Set this flag as a placeholder, the tremolo phrase will have to be created after the ZOBJ section is imported
 						}
-						if(((dword8 >> 24) & 0xFF) == 1)
+						if(((statuses3 >> 24) & 0xFF) == 1)
 						{	//If this note uses slap technique
 							flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLAP;
 						}
-						if(((dword8 >> 24) & 0xFF) == 2)
+						if(((statuses3 >> 24) & 0xFF) == 2)
 						{	//If this note uses pop technique
 							flags |= EOF_PRO_GUITAR_NOTE_FLAG_POP;
 						}
@@ -849,7 +849,7 @@ EOF_SONG *eof_load_bf(char * fn)
 								if(!(np->flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)))
 								{	//If the current note doesn't slide or bend either, assume the linked status refers to hammer on or pull off
 									npp->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Remove the linknext flag from the previous note
-									if(dword2 > prevfret)
+									if(fret > prevfret)
 									{	//If this note's fret is higher
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//It's a hammer on
 									}
@@ -862,10 +862,10 @@ EOF_SONG *eof_load_bf(char * fn)
 						}
 
 						np->flags = flags;
-						if(dword2 > tp->numfrets)
-							tp->numfrets = dword2;	//Track the highest used fret number
+						if(fret > tp->numfrets)
+							tp->numfrets = fret;	//Track the highest used fret number
 						npp = np;			//Keep track of the previously created note
-						prevfret = dword2;	//And its fret value
+						prevfret = fret;	//And its fret value
 					}//For each note in this object
 					eof_build_trill_phrases(tp);	//Add trill phrases to encompass the notes that have the trill flag set
 					eof_build_tremolo_phrases(tp, curdiff);	//Add tremolo phrases and define them to apply to the track difficulty that this tab object contained notes for
