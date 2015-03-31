@@ -43,9 +43,9 @@ static int redefine_index = -1;
 MENU eof_file_display_menu[] =
 {
 	{"&Display", eof_menu_file_display, NULL, 0, NULL},
-	{"Set display &Width", eof_set_display_width, NULL, EOF_LINUX_DISABLE, NULL},
+	{"Set display &Width", eof_set_display_width, NULL, 0, NULL},
 	{"x2 &Zoom", eof_toggle_display_zoom, NULL, 0, NULL},
-	{"&Redraw\tShift+F5", eof_redraw_display, NULL, EOF_LINUX_DISABLE, NULL},
+	{"&Redraw\tShift+F5", eof_redraw_display, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -3660,11 +3660,46 @@ int eof_toggle_display_zoom(void)
 	return D_O_K;
 }
 
+int eof_rs_import_common(char *fn)
+{
+	EOF_PRO_GUITAR_TRACK *tp = NULL;
+	unsigned long tracknum;
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	if(fn && (tracknum < EOF_PRO_GUITAR_TRACKS_MAX))
+	{	//If the file name and active track are valid
+		tp = eof_load_rs(fn);
+
+		if(tp)
+		{	//If the track was imported, replace the active track
+			eof_erase_track(eof_song, eof_selected_track);	//Delete all notes, tech notes, etc.
+			tp->parent = eof_song->pro_guitar_track[tracknum]->parent;
+			tp->parent->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//Remove the difficulty limit for this track
+			free(eof_song->pro_guitar_track[tracknum]);	//Free the active track
+			eof_song->pro_guitar_track[tracknum] = tp;	//Replace it with the track imported from the Rocksmith file
+
+			eof_log("Cleaning up beats", 1);
+			eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
+			eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
+			eof_log("Cleaning up imported notes", 1);
+			eof_song->track[eof_selected_track]->numdiffs = eof_detect_difficulties(eof_song, eof_selected_track);	//Update the number of difficulties used in this track
+			eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to clean up the track
+			(void) eof_menu_track_selected_track_number(eof_selected_track, 1);	//Re-select the active track to allow for a change in string count
+			(void) replace_filename(eof_last_rs_path, fn, "", 1024);	//Set the last loaded Rocksmith file path
+		}
+		else
+		{
+			allegro_message("Failure.  Check log for details.");
+			return 1;	//Return failure
+		}
+	}
+
+	return 0;	//Return success
+}
+
 int eof_menu_file_rs_import(void)
 {
 	char * returnedfn = NULL, *initial;
-	EOF_PRO_GUITAR_TRACK *tp = NULL;
-	unsigned long ctr;
 
 	if(!eof_song || !eof_song_loaded)
 		return 1;	//For now, don't do anything unless a project is active
@@ -3673,7 +3708,7 @@ int eof_menu_file_rs_import(void)
 		return 1;	//Don't do anything unless the active track is a pro guitar/bass track
 
 	eof_clear_input();
-	if(eof_get_track_size(eof_song, eof_selected_track) && alert("This track already has notes", "Importing this Bandfuse track will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+	if(eof_get_track_size(eof_song, eof_selected_track) && alert("This track already has notes", "Importing this Rocksmith track will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 	{	//If the active track is already populated and the user doesn't opt to overwrite it
 		return 0;
 	}
@@ -3695,40 +3730,37 @@ int eof_menu_file_rs_import(void)
 	}
 	returnedfn = ncd_file_select(0, initial, "Import Rocksmith", eof_filter_rs_files);
 	eof_clear_input();
-	if(returnedfn)
-	{
-		tp = eof_load_rs(returnedfn);
-
-		if(tp)
-		{	//If the track was imported, replace the active track
-			unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-
-			tp->parent = eof_song->pro_guitar_track[tracknum]->parent;
-			tp->parent->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//Remove the difficulty limit for this track
-			for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
-			{	//For each note in the active track
-				free(eof_song->pro_guitar_track[tracknum]->note[ctr]);	//Free its memory
-			}
-			free(eof_song->pro_guitar_track[tracknum]);	//Free the active track
-			eof_song->pro_guitar_track[tracknum] = tp;	//Replace it with the track imported from the Rocksmith file
-
-			eof_log("Cleaning up beats", 1);
-			eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
-			eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
-			eof_log("Cleaning up imported notes", 1);
-			eof_song->track[eof_selected_track]->numdiffs = eof_detect_difficulties(eof_song, eof_selected_track);	//Update the number of difficulties used in this track
-			eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to clean up the track
-			(void) eof_menu_track_selected_track_number(eof_selected_track, 1);	//Re-select the active track to allow for a change in string count
-			(void) replace_filename(eof_last_rs_path, returnedfn, "", 1024);	//Set the last loaded Rocksmith file path
-		}
-		else
-		{
-			allegro_message("Failure.  Check log for details.");
-		}
-	}
+	(void) eof_rs_import_common(returnedfn);	//Import the specified Rocksmith XML file into the active pro guitar/bass track
 	eof_render();
 
 	return D_O_K;
+}
+
+int eof_command_line_rs_import(char *fn)
+{
+	char nfn[1024] = {0};
+
+	eof_log("eof_command_line_rs_import() entered", 1);
+
+	if(!fn)
+		return 1;	//Return error
+
+	//Create a new project and have user select a target pro guitar/bass track
+	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "Import Rocksmith arrangement to:");
+	if(!eof_create_new_project_select_pro_guitar())
+		return 2;	//New project couldn't be created
+
+	if(eof_rs_import_common(fn))
+	{	//if there was an error importing the file
+		return 3;	//Return error
+	}
+	if(!eof_load_ogg(nfn, 1))	//If user does not provide audio, fail over to using silent audio
+	{
+		eof_destroy_song(eof_song);
+		return 4;	//Return error
+	}
+
+	return 0;	//Return success
 }
 
 int eof_menu_file_sonic_visualiser_import(void)
@@ -4016,7 +4048,7 @@ int eof_menu_file_bf_import(void)
 			eof_init_after_load(0);
 			eof_sort_notes(eof_song);
 			eof_fixup_notes(eof_song);
-			(void) replace_filename(eof_last_midi_path, returnedfn, "", 1024);	//Set the last loaded MIDI file path
+			(void) replace_filename(eof_last_bf_path, returnedfn, "", 1024);	//Set the last loaded Bandfuse file path
 			eof_log("\tImport complete", 1);
 		}
 		else

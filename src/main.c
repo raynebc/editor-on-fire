@@ -4404,6 +4404,31 @@ int eof_initialize(int argc, char * argv[])
 				}
 				eof_song_loaded = 1;
 			}
+			else if(!ustricmp(get_extension(argv[i]), "xml"))
+			{	//Import a Rocksmith arrangement or Go PlayAlong XML file via command line
+				int retval ;
+
+				(void) ustrcpy(eof_song_path, argv[i]);
+				(void) ustrcpy(eof_filename, argv[i]);
+				(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+				(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+				(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
+
+				retval = eof_identify_xml(eof_filename);
+				if(retval == 1)
+				{	//Import Rocksmith file
+					if(!eof_command_line_rs_import(eof_filename))
+					{	//If a new project was created and the RS file was imported successfully
+						(void) replace_filename(eof_last_rs_path, eof_filename, "", 1024);	//Set the last loaded Rocksmith file path
+						eof_log("\tImport complete", 1);
+					}
+					else
+					{
+						allegro_message("Could not import song!");
+						return 0;
+					}
+				}
+			}
 			else if(!ustricmp(get_extension(argv[i]), "ogg") || !ustricmp(get_extension(argv[i]), "mp3"))
 			{	//Launch new chart wizard via command line
 				eof_new_chart(argv[i]);
@@ -5324,6 +5349,135 @@ void eof_hidden_mouse_callback(int flags)
 		eof_show_mouse(screen);	//Display the mouse
 		mouse_callback = NULL;	//Uninstall the callback
 	}
+}
+
+DIALOG eof_import_to_track_dialog[] =
+{
+	/* (proc)             (x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1) (d2)  (dp)                   (dp2) (dp3) */
+	{ d_agup_window_proc, 0,   48, 480, 175,   2,   23,  0,    0,      0,   0,  "Import track",        NULL, NULL },
+	{ d_agup_text_proc,   16,  75,  48,  15,   2,   23,  0,    0,      0,   0,  eof_etext,             NULL, NULL },
+	{ d_agup_radio_proc,  16, 105, 136,  15,   2,   23,  0,    0,      1,   0,  "PART REAL_BASS",      NULL, NULL },
+	{ d_agup_radio_proc,  16, 120, 152,  15,   2,   23,  0,    0,      1,   0,  "PART REAL_GUITAR",    NULL, NULL },
+	{ d_agup_radio_proc,  16, 135, 156,  15,   2,   23,  0,    0,      1,   0,  "PART REAL_BASS_22",   NULL, NULL },
+	{ d_agup_radio_proc,  16, 150, 172 , 15,   2,   23,  0,    0,      1,   0,  "PART REAL_GUITAR_22", NULL, NULL },
+	{ d_agup_button_proc, 100,180,  68,  28,   2,   23, '\r', D_EXIT,  0,   0,  "OK",                  NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+EOF_SONG *eof_create_new_project_select_pro_guitar(void)
+{
+	unsigned long user_selection = EOF_TRACK_PRO_GUITAR;	//By default, a track imports to the 17 fret pro guitar track
+
+	eof_log("eof_create_new_project_select_pro_guitar() entered", 1);
+
+	if(eof_menu_prompt_save_changes() == 3)
+	{	//If user canceled closing the current, modified chart
+		return NULL;
+	}
+
+	eof_color_dialog(eof_import_to_track_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_import_to_track_dialog);
+	eof_popup_dialog(eof_import_to_track_dialog, 0);
+
+	if(eof_import_to_track_dialog[2].flags == D_SELECTED)
+	{
+		user_selection = EOF_TRACK_PRO_BASS;
+	}
+	else if(eof_import_to_track_dialog[4].flags == D_SELECTED)
+	{
+		user_selection = EOF_TRACK_PRO_BASS_22;
+	}
+	else if(eof_import_to_track_dialog[5].flags == D_SELECTED)
+	{
+		user_selection = EOF_TRACK_PRO_GUITAR_22;
+	}
+
+	if(eof_song)
+	{
+		eof_destroy_song(eof_song);
+		eof_song = NULL;
+		eof_song_loaded = 0;
+		eof_changes = 0;
+		eof_undo_last_type = 0;
+		eof_change_count = 0;
+	}
+	(void) eof_destroy_ogg();
+
+	eof_song = eof_create_song_populated();
+	if(eof_song)
+	{
+		eof_song_loaded = 1;
+		eof_menu_track_selected_track_number(user_selection, 1);	//Change to the user selected track
+	}
+
+	return eof_song;
+}
+
+int eof_identify_xml(char *fn)
+{
+	char *buffer;
+	PACKFILE *inf = NULL;
+	size_t maxlinelength;
+	int done = 0;
+	int retval = 0;
+	unsigned long linectr = 1;
+
+	if(!fn)
+		return 0;	//Return error
+
+	inf = pack_fopen(fn, "rt");	//Open file in text mode
+	if(!inf)
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError loading:  Cannot open input xml file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		eof_log(eof_log_string, 1);
+		return 0;	//Return error
+	}
+
+	//Allocate memory buffers large enough to hold any line in this file
+	maxlinelength = (size_t)FindLongestLineLength_ALLEGRO(fn, 0);
+	if(!maxlinelength)
+	{
+		eof_log("\tError finding the largest line in the file.  Aborting", 1);
+		(void) pack_fclose(inf);
+		return 0;	//Return error
+	}
+	buffer = (char *)malloc(maxlinelength);
+	if(!buffer)
+	{
+		(void) pack_fclose(inf);
+		return 0;	//Return error
+	}
+
+	//Read first line of text, capping it to prevent buffer overflow
+	if(!pack_fgets(buffer, (int)maxlinelength, inf))
+	{	//I/O error
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "XML inspection failed on line #%lu:  Unable to read from file:  \"%s\"", linectr, strerror(errno));
+		eof_log(eof_log_string, 1);
+		done = 1;
+	}
+
+	//Parse the contents of the file
+	while(!done && !pack_feof(inf))
+	{	//Until there was an error reading from the file or end of file is reached
+		if(strcasestr_spec(buffer, "<ebeats"))
+		{	//If this is the opening ebeats tag (Rocksmith XML file)
+			retval = 1;
+			done = 1;
+		}
+		else if(strcasestr_spec(buffer, "<scoreUrl>"))
+		{	//If this is a scoreUrl tag (Go PlayAlong XML file)
+			retval = 2;
+			done = 1;
+		}
+
+		(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+		linectr++;	//Increment line counter
+	}//Until there was an error reading from the file or end of file is reached
+
+	free(buffer);
+	(void) pack_fclose(inf);
+
+	return retval;
 }
 
 END_OF_MAIN()

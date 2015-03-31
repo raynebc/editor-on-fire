@@ -122,9 +122,16 @@ int eof_menu_file_gp_import(void);
 char * eof_gp_tracks_list(int index, int * size);
 	//Dialog logic to display the imported pro guitar tracks present in the eof_parsed_gp_file global pointer
 
+int eof_rs_import_common(char *fn);
+	//Imports the specified Rocksmith XML file to the active track if the active track is a pro guitar/bass track
+	//Returns nonzero on error
 int eof_menu_file_rs_import(void);
 	//Replaces the active pro guitar/bass track with the content of the selected arrangement in the user's selected Rocksmith XML file
 	//Beat timings in the active project are replaced with the timings in the XML file
+int eof_command_line_rs_import(char *fn);
+	//Creates a new project and imports the specified Rocksmith arrangement into the user-specified pro guitar/bass track
+	//Returns zero on success
+
 int eof_menu_file_bf_import(void);
 	//Replaces the active pro guitar/bass track with the content of the selected arrangement in the user's selected Bandfuse RIFF file
 	//Beat timings in the active project are replaced with the timings in the XML file
