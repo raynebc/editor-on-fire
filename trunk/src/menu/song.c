@@ -1152,14 +1152,14 @@ int eof_menu_song_test(char application)
 
 		if(phaseshiftfp)
 		{
-			fprintf(phaseshiftfp, "cd %s\n", temppath);
+			(void) fprintf(phaseshiftfp, "cd %s\n", temppath);
 			(void) replace_filename(temppath, temppath2, "", 1024);	//Get the path to the temporary chart's folder
 			if(temppath[strlen(temppath)-1] == '\\')
 			{	//Remove the trailing backslash because Phase Shift doesn't handle it correctly
 				temppath[strlen(temppath)-1] = '\0';
 			}
 			(void) snprintf(syscommand, sizeof(syscommand) - 1, "\"%s\" \"%s\" /p", executablepath, temppath);
-			fprintf(phaseshiftfp, "%s", syscommand);
+			(void) fprintf(phaseshiftfp, "%s", syscommand);
 			(void) fclose(phaseshiftfp);
 			(void) eof_system("launch_ps.bat");
 			(void) delete_file("launch_ps.bat");

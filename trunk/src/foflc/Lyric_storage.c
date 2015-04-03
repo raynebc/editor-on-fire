@@ -522,12 +522,10 @@ struct Lyric_Piece *FindLyricNumber(unsigned long number)
 	struct Lyric_Piece *curpiece=NULL;
 	unsigned long ctr=0;
 
-	if((number > Lyrics.piececount) || (number == 0))
+	if((number > Lyrics.piececount) || (number == 0) || (Lyrics.lines == NULL))
 		return NULL;	//Specified lyric does not exist
 
 	curline=Lyrics.lines;			//Point line conductor to first line of lyrics
-	assert_wrapper(curline != NULL);
-	assert(curline != NULL);		//Redundant assert() to resolve a false positive with Coverity (this assertion will never be triggered because the wrapper version runs first)
 	curpiece=curline->pieces;		//Point lyric conductor to first lyric
 
 	for(ctr=1;ctr<number;ctr++)

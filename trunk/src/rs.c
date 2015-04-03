@@ -1326,7 +1326,6 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 						return 0;	//Return error
 					}
-					handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position
 
 					//If this chord is at the beginning of an arpeggio phrase, skip the rest of the notes in that phrase
 					for(ctr5 = 0; ctr5 < tp->arpeggios; ctr5++)

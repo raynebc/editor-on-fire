@@ -4737,9 +4737,9 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 	if(eof_write_rs_files || eof_write_rs2_files)
 	{	//If the user wants to save Rocksmith capable files
 		for(ctr = 0; ctr < tp->arpeggios; ctr++)
-		{	//For each arpeggio phrase in the track
+		{	//For each arpeggio phrase in the track (outer for loop)
 			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
-			{	//For each note in the track
+			{	//For each note in the track (inner for loop)
 				if(((tp->note[ctr2]->pos + 10 >= tp->arpeggio[ctr].start_pos) && (tp->note[ctr2]->pos <= tp->arpeggio[ctr].start_pos + 10)) && (tp->note[ctr2]->type == tp->arpeggio[ctr].difficulty))
 				{	//If this note's start position is within 10ms of an arpeggio phrase in this track difficulty
 					unsigned char frets[6];	//Will be used to build a new fret array
@@ -4779,12 +4779,12 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 					}
 					else
 					{	//Otherwise stop processing the arpeggio phrases
-						ctr2 = tp->notes;	//Set a condition to exit the outer for loop
+						ctr = tp->arpeggios;	//Set a condition to exit the outer for loop
 						break;	//exit the inner for loop
 					}
 				}//If this note's start position is within 10ms of an arpeggio phrase in this track difficulty
-			}//For each note in the track
-		}//For each arpeggio phrase in the track
+			}//For each note in the track (inner for loop)
+		}//For each arpeggio phrase in the track (outer for loop)
 	}//If the user wants to save Rocksmith capable files
 
 	if(tp->arrangement > 4)

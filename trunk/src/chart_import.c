@@ -851,6 +851,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 							*error=11;
 						free(buffer);
 						free(buffer2);
+						free(string1);
+						free(string2);
 						return NULL;					//Invalid number, return error
 					}
 					free(string2);	//This string is no longer used

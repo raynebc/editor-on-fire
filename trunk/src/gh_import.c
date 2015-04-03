@@ -2217,7 +2217,6 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 				if(!matched)
 				{	//If there was still no match found, add it as a pitchless lyric
 					(void) eof_track_add_create_note(sp, EOF_TRACK_VOCALS, 0, voxstart, 10, 0, linkptr->text);
-					matched = 1;
 					break;
 				}
 			}//If this checksum matches the one in the list

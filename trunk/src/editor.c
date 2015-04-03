@@ -6004,7 +6004,6 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 						tab_text[0] = '*';
 					}
 				}
-				tab_name = tab_text;
 			}//If this track is not limited to 5 difficulties
 			else
 			{	//The track difficulty is named

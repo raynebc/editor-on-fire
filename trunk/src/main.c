@@ -4927,8 +4927,10 @@ void eof_log(const char *text, int level)
 {
 	if(eof_log_fp && (eof_log_level & 1) && (eof_log_level >= level))
 	{	//If the log file is open, logging is enabled and the current logging level is high enough
-		fprintf(eof_log_fp, "%03u: %s\n", eof_log_id, text);	//Prefix the log text with this EOF instance's logging ID
-		fflush(eof_log_fp);
+		if(fprintf(eof_log_fp, "%03u: %s\n", eof_log_id, text) > 0)	//Prefix the log text with this EOF instance's logging ID
+		{	//If the log line was successfully written
+			(void) fflush(eof_log_fp);	//Explicitly commit the write to disk
+		}
 	}
 }
 
@@ -5377,7 +5379,7 @@ EOF_SONG *eof_create_new_project_select_pro_guitar(void)
 
 	eof_color_dialog(eof_import_to_track_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_import_to_track_dialog);
-	eof_popup_dialog(eof_import_to_track_dialog, 0);
+	(void) eof_popup_dialog(eof_import_to_track_dialog, 0);
 
 	if(eof_import_to_track_dialog[2].flags == D_SELECTED)
 	{
