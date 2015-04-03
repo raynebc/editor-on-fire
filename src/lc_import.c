@@ -209,6 +209,8 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 	}
 	tp->lyrics = 0;
 	tp->lines = 0;
+	fclose_err(inf);	//Ensure this file gets closed
+	inf=NULL;
 
 	if(EOF_TRANSFER_FROM_LC(tp,&Lyrics) != 0)	//Pass the Lyrics global variable by reference
 	{
@@ -216,8 +218,6 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 		return 0;		//Return error (failed to import into EOF lyric structure)
 	}
 
-	fclose_err(inf);	//Ensure this file gets closed
-	inf=NULL;
 	ReleaseMemory(1);	//Release memory allocated during lyric import
 	return 1;	 		//Return finished EOF lyric structure
 }
@@ -417,6 +417,9 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 
 	PostProcessLyrics();	//Perform hyphen and grouping validation/handling
 
+	Lyrics.outfilename=tempoutputfilename;
+	Lyrics.out_format=format;
+
 	//If the export format is MIDI-based, write a MIDI file header and a MIDI track (track 0) specifying a tempo of 120BPM
 	if((Lyrics.out_format==MIDI_FORMAT) || (Lyrics.out_format==VRHYTHM_FORMAT) || (Lyrics.out_format==SKAR_FORMAT) || (Lyrics.out_format==KAR_FORMAT))
 	{
@@ -425,8 +428,6 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 	}
 
 //Export lyrics
-	Lyrics.outfilename=tempoutputfilename;
-	Lyrics.out_format=format;
 	switch(Lyrics.out_format)
 	{
 		case SCRIPT_FORMAT:	//Export as script.txt format file
@@ -460,7 +461,10 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 
 		case VRHYTHM_FORMAT:	//Export as Vocal Rhythm (MIDI and text file)
 			if(string2 == NULL)	//If a pitched lyric file wasn't given
+			{
+				fclose_err(outf);
 				return -1;	//Return failure
+			}
 
 			pitchedlyrics=fopen_err(string2,"wt");	//Pitched lyrics is a text format
 			vrhythmid=DuplicateString("G4");
