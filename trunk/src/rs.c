@@ -493,7 +493,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		if(bre_populated)
 		{	//If the BRE difficulty was the only one populated, warn that it is being omitted
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Track \"%s\" only has notes in the BRE difficulty.\nThese are not exported in Rocksmith format unless you remove the difficulty limit (Track>Rocksmith>Remove difficulty limit).", sp->track[track]->name);
-			allegro_message(eof_log_string);
+			allegro_message("%s", eof_log_string);
 			eof_log(eof_log_string, 1);
 		}
 		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
@@ -1279,7 +1279,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			{	//There are no anchors in this difficulty, write an empty anchors tag
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Failed to automatically generate fret hand positions for level %lu of\n\"%s\" during MIDI export.", ctr2, fn);
 				eof_log(eof_log_string, 1);
-				allegro_message(eof_log_string);
+				allegro_message("%s", eof_log_string);
 				(void) pack_fputs("      <anchors count=\"0\"/>\n", fp);
 			}
 			if(anchorsgenerated)
@@ -1583,7 +1583,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		if(bre_populated)
 		{	//If the BRE difficulty was the only one populated, warn that it is being omitted
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Track \"%s\" only has notes in the BRE difficulty.\nThese are not exported in Rocksmith format unless you remove the difficulty limit (Track>Rocksmith>Remove difficulty limit).", sp->track[track]->name);
-			allegro_message(eof_log_string);
+			allegro_message("%s", eof_log_string);
 			eof_log(eof_log_string, 1);
 		}
 		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
@@ -2505,7 +2505,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			{	//There are no anchors in this difficulty, write an empty anchors tag
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Failed to automatically generate fret hand positions for level %lu of\n\"%s\" during MIDI export.", ctr2, fn);
 				eof_log(eof_log_string, 1);
-				allegro_message(eof_log_string);
+				allegro_message("%s", eof_log_string);
 				(void) pack_fputs("      <anchors count=\"0\"/>\n", fp);
 			}
 			if(anchorsgenerated)

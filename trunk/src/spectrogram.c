@@ -476,9 +476,9 @@ void eof_generate_colorscale(char scalenum)
 				break;
 				case 1:
 					//More complex heatmap, rainbow (red->orange->green->blue)
-					rgb[0] = 384.0 - abs(scaledval-896.0);
-					rgb[1] = 384.0 - abs(scaledval-640.0);
-					rgb[2] = 384.0 - abs(scaledval-384.0);
+					rgb[0] = 384.0 - fabs(scaledval-896.0);
+					rgb[1] = 384.0 - fabs(scaledval-640.0);
+					rgb[2] = 384.0 - fabs(scaledval-384.0);
 					for(cnt=0;cnt<3;cnt++)
 					{
 						if(rgb[cnt] > 255)
@@ -539,7 +539,7 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 	eof_log("eof_create_spectrogram() entered", 1);
 	set_window_title("Generating Spectrogram...");
 
-	if((oggfilename == NULL))
+	if(oggfilename == NULL)
 	{
 		#ifdef EOF_DEBUG_SPECTROGRAM
 		allegro_message("Spectrogram: Invalid parameters");

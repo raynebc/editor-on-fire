@@ -526,7 +526,7 @@ struct Lyric_Piece *FindLyricNumber(unsigned long number)
 		return NULL;	//Specified lyric does not exist
 
 	curline=Lyrics.lines;			//Point line conductor to first line of lyrics
-	curpiece=curline->pieces;		//Point lyric conductor to first lyric
+	curpiece=Lyrics.lines->pieces;	//Point lyric conductor to first lyric
 
 	for(ctr=1;ctr<number;ctr++)
 	{

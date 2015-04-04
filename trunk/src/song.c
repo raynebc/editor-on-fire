@@ -1908,7 +1908,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				if(count > EOF_MAX_NOTES)
 				{
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error: Unsupported number of notes in track %lu.  Aborting", track_ctr);
-					allegro_message(eof_log_string);
+					allegro_message("%s", eof_log_string);
 					eof_log(eof_log_string, 1);
 					return 0;
 				}
@@ -1929,7 +1929,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				if(count > EOF_MAX_LYRICS)
 				{
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error: Unsupported number of lyrics in track %lu.  Aborting", track_ctr);
-					allegro_message(eof_log_string);
+					allegro_message("%s", eof_log_string);
 					eof_log(eof_log_string, 1);
 					return 0;
 				}
@@ -1956,7 +1956,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				if(count > 8)
 				{
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error: Unsupported number of strings in track %lu.  Aborting", track_ctr);
-					allegro_message(eof_log_string);
+					allegro_message("%s", eof_log_string);
 					eof_log(eof_log_string, 1);
 					return 0;
 				}
@@ -1964,7 +1964,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				if(tp->numstrings > EOF_TUNING_LENGTH)
 				{	//Prevent overflow
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Unsupported number of strings in track %lu.  Aborting", track_ctr);
-					allegro_message(eof_log_string);
+					allegro_message("%s", eof_log_string);
 					eof_log(eof_log_string, 1);
 					return 0;
 				}
@@ -1976,7 +1976,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				if(count > EOF_MAX_NOTES)
 				{
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error: Unsupported number of notes in track %lu.  Aborting", track_ctr);
-					allegro_message(eof_log_string);
+					allegro_message("%s", eof_log_string);
 					eof_log(eof_log_string, 1);
 					return 0;
 				}

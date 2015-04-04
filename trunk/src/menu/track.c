@@ -442,7 +442,7 @@ void eof_rebuild_tuning_strings(char *tuningarray)
 
 	//Rebuild the tuning name string
 	strncpy(eof_tuning_name, eof_lookup_tuning_name(eof_song, eof_selected_track, tuningarray), sizeof(eof_tuning_name)-1);
-	strncat(eof_tuning_name, "        ", sizeof(eof_tuning_name) - strlen(eof_tuning_name));	//Pad the end of the string with several spaces
+	strncat(eof_tuning_name, "        ", sizeof(eof_tuning_name) - 1 - strlen(eof_tuning_name));	//Pad the end of the string with several spaces
 }
 
 int eof_edit_tuning_proc(int msg, DIALOG *d, int c)
@@ -1018,7 +1018,7 @@ int eof_track_pro_guitar_set_fret_hand_position(void)
 					if(tp->capo)
 					{	//If there is a capo in use
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "You cannot specify a fret hand position higher than %u when a capo is at fret %d (it will cause Rocksmith 1 to crash).", 19 - tp->capo, tp->capo);
-						allegro_message(eof_log_string);
+						allegro_message("%s", eof_log_string);
 					}
 					else
 					{

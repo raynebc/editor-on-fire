@@ -736,11 +736,11 @@ void eof_midi_play_note_ex(int note, unsigned char channel, unsigned char patch)
 	{	//Bounds check
 		channel = 15;
 	}
-	if(patch |= patches[channel])
+	if(patch != patches[channel])
 	{	//If the instrument number needs to be changed for this channel
-		SET_PATCH_DATA[1] = patch;
+		SET_PATCH_DATA[1] = patch;	//Alter the data sequence to the appropriate channel number
 		midi_out(SET_PATCH_DATA, 2);
-		patches[channel] = patch;
+		patches[channel] = patch;	//Track which instrument patch this channel is using
 	}
 
 	if(note < EOF_MAX_VOCAL_TONES)

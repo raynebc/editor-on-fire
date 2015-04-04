@@ -1307,7 +1307,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					{	//If there was at least one note in the Expert difficulty, and fret hand positions couldn't be generated automatically, alert the user
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Failed to automatically generate fret hand positions for \"%s\" during MIDI export.", sp->track[j]->name);
 						eof_log(eof_log_string, 1);
-						allegro_message(eof_log_string);
+						allegro_message("%s", eof_log_string);
 					}
 				}
 			}

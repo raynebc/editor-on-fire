@@ -522,7 +522,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 				}
 			}
 
-			if((eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
+			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 			{	//Drum track specific dot color logic
 				if((notetype == EOF_NOTE_AMAZING) && (noteflags & EOF_DRUM_NOTE_FLAG_DBASS) && (mask == 1))
 				{	//If this is an Expert+ bass drum note
