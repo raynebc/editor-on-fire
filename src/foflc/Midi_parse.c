@@ -2524,7 +2524,10 @@ int Lyric_handler(struct TEPstruct *data)
 
 		assert_wrapper((Lyric_Piece->pitch == PITCHLESS) || (Lyric_Piece->pitch < 128));	//Valid MIDI notes are 0-127, or PITCHLESS
 
-		while(GetLyricPiece());	//Remove and store all completed MIDI lyrics from the front of the list
+		while(GetLyricPiece())	//Remove and store all completed MIDI lyrics from the front of the list
+		{
+			;	//No while loop body needed
+		}
 
   		return 1;
 	}//Note Off event

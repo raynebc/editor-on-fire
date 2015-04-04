@@ -2775,7 +2775,7 @@ int eof_save_helper(char *destfilename, char silent)
 		{	//Make sure it's gone
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Could not delete the previous_save backup file.  Aborting save.  Please use \"Save as\" to save to a new location.");
 			eof_log(eof_log_string, 1);
-			allegro_message(eof_log_string);
+			allegro_message("%s", eof_log_string);
 			return 5;	//Return failure:  Error deleting lastsave file
 		}
 	}
@@ -2786,7 +2786,7 @@ int eof_save_helper(char *destfilename, char silent)
 		{	//Make sure it was created
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Could not create the previous_save backup file.  Aborting save.  Please use \"Save as\" to save to a new location.");
 			eof_log(eof_log_string, 1);
-			allegro_message(eof_log_string);
+			allegro_message("%s", eof_log_string);
 			return 6;	//Return failure:  Could not create previous_save backup file
 		}
 		(void) delete_file(eof_temp_filename);	//Delete the target file name
@@ -2794,7 +2794,7 @@ int eof_save_helper(char *destfilename, char silent)
 		{	//Make sure it was deleted
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Could not delete the last save file.  Aborting save.  Please use \"Save as\" to save to a new location.");
 			eof_log(eof_log_string, 1);
-			allegro_message(eof_log_string);
+			allegro_message("%s", eof_log_string);
 			return 7;	//Return failure:  Could not delete the last save file
 		}
 	}
@@ -2818,7 +2818,7 @@ int eof_save_helper(char *destfilename, char silent)
 	{	//Make sure the target file was created
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Save operation did not create project file.  Please use \"Save as\" to save to a new location.");
 		eof_log(eof_log_string, 1);
-		allegro_message(eof_log_string);
+		allegro_message("%s", eof_log_string);
 		return 9;	//Return failure:  Could not create project file
 	}
 	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_temp_filename));
