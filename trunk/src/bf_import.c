@@ -748,6 +748,7 @@ EOF_SONG *eof_load_bf(char * fn)
 						stringnum = tp->numstrings - stringnum;	//Convert the string numbering
 						np->note = 1 << stringnum;
 						np->frets[stringnum] = fret;
+						np->finger[stringnum] = finger;
 						np->pos = startms;
 						flags = 0;
 						if(end > start)
