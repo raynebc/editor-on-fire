@@ -4544,6 +4544,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 						if(tp->note[next]->note & bitmask)
 						{	//If this string is used
 							tp->note[i-1]->frets[ctr] = tp->note[next]->frets[ctr];	//Overwrite this note's fret value on this string with that of the next note
+							tp->note[i-1]->finger[ctr] = tp->note[next]->finger[ctr];	//Overwrite this note's fingering on this string with that of the next note
 						}
 					}
 					eof_pro_guitar_track_delete_note(tp, next);

@@ -48,7 +48,30 @@ int eof_export_bandfuse(EOF_SONG * sp, char * fn, unsigned short *user_warned)
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <albumYear>%s</albumYear>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
 
-	///Write tempo changes
+	//Write tempo changes
+	(void) pack_fputs("  <tempochanges>\n", fp);
+	ctr = 0;	//Begin with the first beat
+	while(ctr < sp->beats)
+	{	//Until the last beat has been reached
+		for(ctr2 = ctr + 1; ctr2 < sp->beats; ctr2++)
+		{	//For each beat that follows
+			if(sp->beat[ctr]->ppqn != sp->beat[ctr2]->ppqn)
+			{	//If the following beat has a different tempo
+				break;	//Break from inner for loop
+			}
+		}
+		if(ctr2 < sp->beats)
+		{	//If a beat with a different tempo was found, that beat is written as the end position of this tempo change
+			(void) snprintf(buffer, sizeof(buffer) - 1, "    <tempo start=\"%lu\" end=\"%lu\" tempo=\"%f\">\n", sp->beat[ctr]->pos, sp->beat[ctr2]->pos, (double)60000000.0 / (double)sp->beat[ctr]->ppqn);
+		}
+		else
+		{	//No remaining beats had a different tempo, the outer for loop's beat is written as the end position of this tempo change
+			(void) snprintf(buffer, sizeof(buffer) - 1, "    <tempo start=\"%lu\" end=\"%lu\" tempo=\"%f\">\n", sp->beat[ctr]->pos, sp->beat[ctr]->pos, (double)60000000.0 / (double)sp->beat[ctr]->ppqn);
+		}
+		(void) pack_fputs(buffer, fp);
+		ctr = ctr2;	//Advance the beat counter
+	}
+	(void) pack_fputs("  </tempochanges>\n", fp);
 
 	for(ctr = 1; ctr < sp->tracks; ctr++)
 	{	//For each track
