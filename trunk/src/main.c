@@ -4959,12 +4959,12 @@ int main(int argc, char * argv[])
 	#ifdef ALLEGRO_WINDOWS
 		if(!eof_initialize_windows())
 		{
-			return 1;
+			eof_quit = 1;
 		}
 	#else
 		if(!eof_initialize(argc, argv))
 		{
-			return 1;
+			eof_quit = 1;
 		}
 	#endif
 

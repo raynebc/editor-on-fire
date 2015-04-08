@@ -4665,6 +4665,7 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 	if(tech.bend)
 	{	//If the note is a bend, write the bendValues subtag and close the note tag
 		unsigned long bendpoints, firstbend, flags, bendstrength_q;	//Used to parse any bend tech notes that may affect the exported note
+		long nextnote;
 
 		bendpoints = eof_pro_guitar_note_bitmask_has_bend_tech_note(tp, notenum, bitmask, &firstbend);	//Count how many bend tech notes overlap this note on the specified string
 		if(!bendpoints)
@@ -4678,6 +4679,14 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 		{	//If there's at least one bend tech note that overlaps the note being exported
 			(void) snprintf(buffer, sizeof(buffer) - 1, "          %s<bendValues count=\"%lu\">\n", indentlevel, bendpoints);
 			(void) pack_fputs(buffer, fp);
+			nextnote = eof_fixup_next_pro_guitar_note(tp, notenum);
+			if(nextnote > 0)
+			{	//If there was a next note
+				if(notepos + notelen == tp->pgnote[nextnote]->pos)
+				{	//And this note extends all the way to it with no gap in between (this note has linkNext status)
+					notelen--;	//Shorten the effective note length to ensure that a tech note at the next note's position is detected as affecting that note instead of this one
+				}
+			}
 			for(ctr = firstbend; ctr < tp->technotes; ctr++)
 			{	//For all tech notes, starting with the first applicable bend tech note
 				if(tp->technote[ctr]->pos > notepos + notelen)
