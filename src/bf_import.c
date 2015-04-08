@@ -369,8 +369,8 @@ EOF_SONG *eof_load_bf(char * fn)
 						{	//If the string just read is at an offset at which a string is expected
 							if(stringdata[ctr2].string == NULL)
 							{	//If a string wasn't read for this offset yet
-								size_t size = ustrsize(buffer) + 1;	//Get the length of the string in bytes (UTF-8 aware size) and add 1 byte for NULL
-								stringdata[ctr2].string = malloc(size);	//Allocate memory for the string
+								int size = ustrsize(buffer) + 1;	//Get the length of the string in bytes (UTF-8 aware size) and add 1 byte for NULL
+								stringdata[ctr2].string = malloc((size_t)size);	//Allocate memory for the string
 								if(!stringdata[ctr2].string)
 								{	//If the memory couldn't be allocated
 									eof_log("\t\tError storing string into array.  Aborting", 1);
@@ -949,8 +949,47 @@ EOF_SONG *eof_load_bf(char * fn)
 		llp->start_pos = start;	//This lyric line begins where the previous line break ended (or the beginning of the chart if this is the first line break)
 		start = llp->end_pos;	//The next lyric line will begin at the end of this line break
 		llp->end_pos = temp;	//This lyric line extends to the beginning of the line break
+	}
 
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLyric line #%lu corrected to:  start = %lums, end = %lums", ctr, sp->vocal_track[0]->line[ctr].start_pos, sp->vocal_track[0]->line[ctr].end_pos);
+	//Align the lyric line with the first and last lyric in its scope
+	for(ctr = 0; ctr < sp->vocal_track[0]->lines; ctr++)
+	{	//For each lyric line that was added
+		EOF_PHRASE_SECTION *llp = &sp->vocal_track[0]->line[ctr];	//A pointer to the lyric line being checked
+		EOF_LYRIC *lp;				//A pointer to the lyric being checked
+		EOF_LYRIC *nlp;				//A pointer to the lyric after the one being checked
+		char firstfound = 0;		//Tracks whether the first lyric in this line has been found
+
+		for(ctr2 = 0; ctr2 < sp->vocal_track[0]->lyrics; ctr2++)
+		{	//For each lyric in the chart
+			lp = sp->vocal_track[0]->lyric[ctr2];	//Simplify
+			if(ctr2 + 1 < sp->vocal_track[0]->lyrics)
+			{	//If there is another lyric
+				nlp = sp->vocal_track[0]->lyric[ctr2 + 1];	//Store a pointer to it
+			}
+			else
+			{	//This is the last lyric in the chart
+				nlp = NULL;
+			}
+
+			if((lp->pos >= llp->start_pos) && (lp->pos <= llp->end_pos))
+			{	//If this lyric is within the line
+				if(!firstfound)
+				{	//If this is the first lyric that was found to be within it
+					firstfound = 1;
+					llp->start_pos = lp->pos;	//Move the beginning of this line to match the beginning of the lyric
+				}
+				if(nlp && (nlp->pos > llp->end_pos))
+				{	//If there's another lyric but it is outside of this lyric line
+					llp->end_pos = lp->pos + lp->length;	//Move the end of this line to match the end of the line's last lyric
+
+					if(ctr + 1 < sp->vocal_track[0]->lines)
+					{	//If there's another lyric line
+						sp->vocal_track[0]->line[ctr + 1].start_pos = nlp->pos;	//Preemptively move the next line's start position to the start of the next lyric (some Bandfuse songs mark the next line as starting as early as on top of the last lyric of the previous line)
+					}
+				}
+			}
+		}
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLyric line #%lu corrected to:  start = %lums, end = %lums", ctr, llp->start_pos, llp->end_pos);
 		eof_log(eof_log_string, 1);
 	}
 

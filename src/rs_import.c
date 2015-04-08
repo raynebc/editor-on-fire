@@ -1297,16 +1297,26 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 											break;	//Break from inner loop
 										}
 										if(fret - tp->capo > 19)
-										{	//If the anchor is not valid (taking the capo into account), log it and warn the user
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tIgnoring invalid anchor (fret %ld) at position %ld on line #%lu", fret, time, linectr);
+										{	//If the anchor is higher than RS1 and RB3 support (taking the capo into account), log it and warn the user
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tHigh anchor (fret %ld) at position %ld on line #%lu", fret - tp->capo, time, linectr);
 											eof_log(eof_log_string, 1);
 											if(!(warning & 1))
 											{	//If the user wasn't warned about this error yet
-												allegro_message("Warning:  This arrangement contains at least one invalid fret hand position (higher than fret 19).\n  Offending positions were dropped");
+												allegro_message("Warning:  This arrangement contains at least one fret hand position higher than fret 19.\nOffending positions won't work in Rocksmith 1 or RB3.");
 												warning |= 1;
 											}
 										}
-										else
+ 										if(fret - tp->capo > 21)
+										{	//If the anchor is not valid (taking the capo into account), even for RS2, log it and warn the user
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tIgnoring invalid anchor (fret %ld) at position %ld on line #%lu", fret - tp->capo, time, linectr);
+ 											eof_log(eof_log_string, 1);
+ 											if(!(warning & 2))
+ 											{	//If the user wasn't warned about this error yet
+												allegro_message("Warning:  This arrangement contains at least one invalid fret hand position (higher than fret 21).\n  Offending positions were dropped");
+ 												warning |= 2;
+ 											}
+ 										}
+ 										else
 										{	//Otherwise add it to the track
 											tp->handposition[tp->handpositions].start_pos = time;
 											tp->handposition[tp->handpositions].end_pos = fret - tp->capo;
