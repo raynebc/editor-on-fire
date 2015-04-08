@@ -694,10 +694,6 @@ if(eof_key_code == KEY_PAUSE)
 {
 	eof_use_key();
 	//Debug action here
-
-	#include "bf.h"
-	unsigned short user_warned = 0;
-	eof_export_bandfuse(eof_song, "TEST_BF.xml", &user_warned);
 }
 
 /* keyboard shortcuts that may or may not be used when the chart/catalog is playing */

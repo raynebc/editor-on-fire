@@ -5086,8 +5086,8 @@ int eof_menu_note_toggle_bend(void)
 			}
 		}
 	}
-	if((eof_write_rs_files || eof_write_rs2_files) && bends_present)
-	{	//If the user wants to save Rocksmith capable files, prompt to set the strength of bend notes
+	if((eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files) && bends_present)
+	{	//If the user wants to save Rocksmith or Bandfuse capable files, prompt to set the strength of bend notes
 		(void) eof_pro_guitar_note_bend_strength_no_save();	//Don't make another undo state
 	}
 	if(note_selection_updated)
@@ -5183,8 +5183,8 @@ int eof_menu_note_toggle_slide_up(void)
 			}
 		}
 	}
-	if((eof_write_rs_files || eof_write_rs2_files) && slides_present)
-	{	//If the user wants to save Rocksmith capable files, prompt to set the ending fret for the slide notes
+	if((eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files) && slides_present)
+	{	//If the user wants to save Rocksmith or Bandfuse capable files, prompt to set the ending fret for the slide notes
 		(void) eof_pro_guitar_note_slide_end_fret_no_save();	//Don't make another undo state
 	}
 	eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes to adjust the slide note's length as appropriate
@@ -5235,8 +5235,8 @@ int eof_menu_note_toggle_slide_down(void)
 			}
 		}
 	}
-	if((eof_write_rs_files || eof_write_rs2_files) && slides_present)
-	{	//If the user wants to save Rocksmith capable files, prompt to set the ending fret for the slide notes
+	if((eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files) && slides_present)
+	{	//If the user wants to save Rocksmith or Bandfuse capable files, prompt to set the ending fret for the slide notes
 		(void) eof_pro_guitar_note_slide_end_fret_no_save();	//Don't make another undo state
 	}
 	eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes to adjust the slide note's length as appropriate

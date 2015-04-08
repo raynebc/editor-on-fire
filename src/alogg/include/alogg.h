@@ -1,8 +1,8 @@
 /* Allegro OGG */
 /* to play OGG files with Allegro */
 
-/* OGG decoder part ofOgg Vorbis (Xiph.org Foundation) */
-/* Allegro OGG is copyright (c) 2002 Javier Gonz lez */
+/* OGG decoder part of Ogg Vorbis (Xiph.org Foundation) */
+/* Allegro OGG is copyright (c) 2002 Javier González */
 
 /* See COPYING.txt for license */
 

@@ -25,6 +25,7 @@
 #include "../rs_import.h"
 #include "../silence.h"	//For save_wav_with_silence_appended
 #include "../bf_import.h"
+#include "../bf.h"
 #include "beat.h"	//For eof_menu_beat_reset_offset()
 #include "edit.h"	//For eof_menu_edit_undo()
 #include "file.h"
@@ -101,7 +102,7 @@ DIALOG eof_settings_dialog[] =
 DIALOG eof_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  480, 428, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
+	{ d_agup_window_proc,0,   48,  480, 444, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
 	{ d_agup_check_proc, 16,  75,  110, 16,  2,   23,  0,    0,      1,   0,   "Inverted Notes",      NULL, NULL },
 	{ d_agup_check_proc, 150, 75,  92 , 16,  2,   23,  0,    0,      1,   0,   "Lefty Mode",          NULL, NULL },
 	{ d_agup_check_proc, 306, 75,  128, 16,  2,   23,  0,    0,      1,   0,   "Note Auto-Adjust",    NULL, NULL },
@@ -117,7 +118,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 136, 216, 16,  2,   23,  0,    0,      1,   0,   "Save separate musical MIDI file",NULL, NULL },
 	{ d_agup_check_proc, 16,  152, 216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 1 files",NULL, NULL },
 	{ d_agup_check_proc, 248, 152, 216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 2 files",NULL, NULL },
-	{ d_agup_check_proc, 16,  168, 190, 16,  2,   23,  0,    0,      1,   0,   "Add new notes to selection",NULL, NULL },
+	{ d_agup_check_proc, 16,  284, 190, 16,  2,   23,  0,    0,      1,   0,   "Add new notes to selection",NULL, NULL },
 	{ d_agup_check_proc, 248, 168, 216, 16,  2,   23,  0,    0,      1,   0,   "Drum modifiers affect all diff's",NULL, NULL },
 	{ d_agup_text_proc,  16,  185, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note distance (ms):",NULL,NULL },
 	{ eof_verified_edit_proc,170,185,30,20,  0,   0,   0,    0,      3,   0,   eof_etext2,     "0123456789", NULL },
@@ -125,13 +126,13 @@ DIALOG eof_preferences_dialog[] =
 	{ eof_verified_edit_proc,392,185,30,20,  0,   0,   0,    0,      3,   0,   eof_etext,     "0123456789", NULL },
 	{ d_agup_check_proc, 248, 252, 214, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
 	{ d_agup_check_proc, 248, 268, 184, 16,  2,   23,  0,    0,      1,   0,   "Use dB style seek controls",NULL, NULL },
-	{ d_agup_text_proc,  24,  284, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
-	{ d_agup_list_proc,  16,  302, 100, 110, 2,   23,  0,    0,      0,   0,   (void *)eof_input_list,        NULL, NULL },
-	{ d_agup_text_proc,  150, 302, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
-	{ d_agup_list_proc,  129, 317, 100, 95,  2,   23,  0,    0,      0,   0,   (void *)eof_colors_list,       NULL, NULL },
-	{ d_agup_button_proc,12,  433, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-	{ d_agup_button_proc,86,  433, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-	{ d_agup_button_proc,160, 433, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+	{ d_agup_text_proc,  24,  300, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
+	{ d_agup_list_proc,  16,  318, 100, 110, 2,   23,  0,    0,      0,   0,   (void *)eof_input_list,        NULL, NULL },
+	{ d_agup_text_proc,  150, 318, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
+	{ d_agup_list_proc,  129, 333, 100, 95,  2,   23,  0,    0,      0,   0,   (void *)eof_colors_list,       NULL, NULL },
+	{ d_agup_button_proc,12,  449, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_button_proc,86,  449, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+	{ d_agup_button_proc,160, 449, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
 	{ d_agup_text_proc,  16,  206, 120, 12,  0,   0,   0,    0,      0,   0,   "Top of 2D pane shows:",NULL,NULL },
 	{ d_agup_radio_proc, 161, 206, 60,  16,  2,   23,  0,    0,      1,   0,   "Names",               NULL, NULL },
 	{ d_agup_radio_proc, 224, 206, 72,  16,  2,   23,  0,    0,      1,   0,   "Sections",            NULL, NULL },
@@ -152,6 +153,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 428, 174, 16,  2,   23,  0,    0,      1,   0,   "Make note tails clickable",NULL, NULL },
 	{ d_agup_check_proc, 248, 444, 210, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
 	{ d_agup_check_proc, 16,  268, 200, 16,  2,   23,  0,    0,      1,   0,   "Click to change dialog focus",NULL, NULL },
+	{ d_agup_check_proc, 16,  168, 200, 16,  2,   23,  0,    0,      1,   0,   "Save separate Bandfuse files",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -469,7 +471,7 @@ int eof_menu_file_load(void)
 			/* adjust MIDI offset if it is different */
 			if(eof_selected_ogg != 0)
 			{
-				int j;
+				unsigned long j;
 				if(eof_song->tags->ogg[0].midi_offset != eof_song->tags->ogg[eof_selected_ogg].midi_offset)
 				{
 					for(j = 0; j < eof_song->beats; j++)
@@ -578,7 +580,8 @@ int eof_menu_file_load_ogg(void)
 	char checkfn2[1024] = {0};
 	unsigned long new_length;
 	char * fn = NULL;
-	int i, j;
+	int i;
+	unsigned long j;
 
 	returnedfn = ncd_file_select(0, eof_last_ogg_path, "Select OGG File", eof_filter_ogg_files);
 	eof_clear_input();
@@ -1092,6 +1095,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[48].flags = eof_note_tails_clickable ? D_SELECTED : 0;			//Make note tails clickable
 	eof_preferences_dialog[49].flags = eof_inverted_chords_slash ? D_SELECTED : 0;			//Treat inverted chords as slash
 	eof_preferences_dialog[50].flags = eof_click_changes_dialog_focus ? D_SELECTED : 0;		//Click to change dialog focus
+	eof_preferences_dialog[51].flags = eof_write_bf_files ? D_SELECTED : 0;					//Save separate Bandfuse files
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1188,6 +1192,7 @@ int eof_menu_file_preferences(void)
 			eof_note_tails_clickable = (eof_preferences_dialog[48].flags == D_SELECTED ? 1 : 0);
 			eof_inverted_chords_slash = (eof_preferences_dialog[49].flags == D_SELECTED ? 1 : 0);
 			eof_click_changes_dialog_focus = (eof_preferences_dialog[50].flags == D_SELECTED ? 1 : 0);
+			eof_write_bf_files = (eof_preferences_dialog[51].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 29)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1230,7 +1235,8 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[47].flags = 0;					//Display seek pos. in seconds
 			eof_preferences_dialog[48].flags = 0;					//Make note tails clickable
 			eof_preferences_dialog[49].flags = 0;					//Treat inverted chords as slash
-			eof_preferences_dialog[50].flags = 1;					//Click to change dialog focus
+			eof_preferences_dialog[50].flags = D_SELECTED;			//Click to change dialog focus
+			eof_preferences_dialog[51].flags = 0;					//Save separate Bandfuse files
 		}//If the user clicked "Default
 	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -2376,6 +2382,7 @@ int eof_save_helper(char *destfilename, char silent)
 	char note_length_warned = 0, note_distance_warned = 0, arpeggio_warned = 0, slide_warned = 0, bend_warned = 0;
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
+	unsigned short user_warned = 0;	//Tracks whether the user was warned about hand positions being undefined and auto-generated during Rocksmith and Bandfuse exports
 
 	eof_log("eof_save_helper() entered", 1);
 
@@ -2508,8 +2515,8 @@ int eof_save_helper(char *destfilename, char silent)
 	/* perform checks for chord fingerings and fret hand positions */
 	if(!silent)
 	{	//If checks and warnings aren't suppressed
-		if(eof_write_rs_files || eof_write_rs2_files)
-		{	//If the user wants to save Rocksmith capable files
+		if(eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files)
+		{	//If the user wants to save Rocksmith or Bandfuse capable files
 			(void) eof_correct_chord_fingerings();			//Ensure all chords in each pro guitar track have valid finger arrays, prompt user to provide any that are missing
 			if(eof_check_fret_hand_positions())
 			{	//If any fret hand position errors were found
@@ -2525,8 +2532,8 @@ int eof_save_helper(char *destfilename, char silent)
 	/* check if any Rocksmith sections don't have a Rocksmith phrase at the same position */
 	if(!silent)
 	{	//If checks and warnings aren't suppressed
-		if(eof_write_rs_files || eof_write_rs2_files)
-		{	//If the user wants to save Rocksmith capable files
+		if(eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files)
+		{	//If the user wants to save Rocksmith or Bandfuse capable files
 			for(ctr = 1; ctr < eof_song->tracks; ctr++)
 			{	//For each track
 				if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -2646,8 +2653,8 @@ int eof_save_helper(char *destfilename, char silent)
 	/* check if any slide notes don't define their end position or bend notes don't define their bend strength */
 	if(!silent)
 	{	//If checks and warnings aren't suppressed
-		if(eof_write_rs_files || eof_write_rs2_files)
-		{	//If the user wants to save Rocksmith capable files
+		if(eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files)
+		{	//If the user wants to save Rocksmith or Bandfuse capable files
 			for(ctr = 1; ctr < eof_song->tracks; ctr++)
 			{	//For each track
 				if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -2898,7 +2905,6 @@ int eof_save_helper(char *destfilename, char silent)
 
 	if(eof_write_rs_files || eof_write_rs2_files)
 	{	//If the user wants to save Rocksmith capable files
-		unsigned short user_warned = 0;	//Tracks whether the user was warned about hand positions being undefined and auto-generated during export
 		eof_log("Exporting Rocksmith XML files", 1);
 		(void) append_filename(eof_temp_filename, newfolderpath, "xmlpath.xml", (int) sizeof(eof_temp_filename));	//Re-acquire the save's target folder
 
@@ -3017,6 +3023,32 @@ int eof_save_helper(char *destfilename, char silent)
 			}
 		}
 	}//If the user wants to save Rocksmith capable files
+
+	if(eof_write_bf_files)
+	{	//If the user wants to save Bandfuse capable files
+		eof_log("Exporting Bandfuse XML file", 1);
+
+		//Build the target file name
+		(void) append_filename(eof_temp_filename, newfolderpath, "xmlpath.xml", (int) sizeof(eof_temp_filename));	//Re-acquire the save's target folder
+		if(eof_song->tags->title[0] != '\0')
+		{	//If the song title is defined
+			if(eof_song->tags->artist[0] != '\0')
+			{	//If the artist name is also defined
+				(void) snprintf(tempfilename2, sizeof(tempfilename2), "%s- %s_BF.xml", eof_song->tags->artist, eof_song->tags->title);	//Build the relative file name
+			}
+			else
+			{	//Only the song title is defined
+				(void) snprintf(tempfilename2, sizeof(tempfilename2), "%s_BF.xml", eof_song->tags->title);
+			}
+		}
+		else
+		{
+			(void) snprintf(tempfilename2, sizeof(tempfilename2), "UNTITLED_BF.xml");
+		}
+		(void) append_filename(eof_temp_filename, newfolderpath, tempfilename2, (int) sizeof(eof_temp_filename));	//Build the full file name
+
+		(void) eof_export_bandfuse(eof_song, eof_temp_filename, &user_warned);
+	}//If the user wants to save Bandfuse capable files
 
 	/* save OGG file if necessary*/
 	if(!eof_silence_loaded)

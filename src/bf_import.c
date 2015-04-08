@@ -811,8 +811,11 @@ EOF_SONG *eof_load_bf(char * fn)
 						if(bendtype)
 						{	//If this note bends
 							flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
-							if((bendtype == 1) && (amount > 0.0))
-							{	//Normal bend
+///Look into adding logic for the different bend types, probably would involve adding tech notes
+///							if((bendtype == 1) && (amount > 0.0))
+///							{	//Normal bend
+							if(amount > 0.0)
+							{
 								flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
 								np->bendstrength = (amount / 0.5) + 0.5;	//Round bend strength to the nearest number of half steps
 							}
