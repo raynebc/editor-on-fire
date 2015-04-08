@@ -123,6 +123,7 @@ int         eof_write_rb_files = 0;				//If nonzero, extra files are written dur
 int         eof_write_music_midi = 0;			//If nonzero, an extra MIDI file is written during save that contains normal MIDI pitches and can be used for other MIDI based games like Songs2See and Synthesia
 int         eof_write_rs_files = 0;				//If nonzero, extra files are written during save that are used for authoring Rocksmith customs
 int         eof_write_rs2_files = 0;			//If nonzero, extra files are written during save that are used for authoring Rocksmith 2014 customs
+int         eof_write_bf_files = 0;				//If nonzero, an extra XML file is written during save that is used for authoring Bandfuse customs
 int         eof_add_new_notes_to_selection = 0;	//If nonzero, newly added gems cause notes to be added to the selection instead of the selection being cleared first
 int         eof_drum_modifiers_affect_all_difficulties = 1;	//If nonzero, a drum modifier (ie. open/pedal hi hat or rim shot apply to any notes at the same position in non active difficulties)
 int         eof_fb_seek_controls = 0;			//If nonzero, the page up/dn keys have their seek directions reversed, and up/down seek forward/backward
@@ -150,11 +151,11 @@ int         eof_disable_windows = 0;
 int         eof_disable_vsync = 0;
 int         eof_playback_speed = 1000;
 char        eof_playback_time_stretch = 1;
-char        eof_ogg_setting = 1;
+int         eof_ogg_setting = 1;
 char      * eof_ogg_quality[7] = {"1.0", "2.0", "4.0", "5.0", "6.0", "8.0", "10.0"};
 unsigned long eof_frame = 0;
 int         eof_debug_mode = 0;
-char        eof_cpu_saver = 0;
+int         eof_cpu_saver = 0;
 char        eof_has_focus = 1;
 char        eof_supports_mp3 = 0;
 char        eof_supports_oggcat = 0;		//Set to nonzero if EOF determines oggCat is usable
@@ -1580,8 +1581,8 @@ int eof_load_ogg_quick(char * filename)
 			loaded = 1;
 			if(!eof_silence_loaded)
 			{	//Only display song channel and sample rate warnings if chart audio is loaded
-				if(!eof_write_rs_files && !eof_write_rs2_files)
-				{	//If not authoring for Rocksmith
+				if(!eof_write_rs_files && !eof_write_rs2_files && !eof_write_bf_files)
+				{	//If not authoring for Rocksmith or Bandfuse
 					if(alogg_get_wave_freq_ogg(eof_music_track) != 44100)
 					{
 						allegro_message("OGG sampling rate is not 44.1khz.\nSong may not play back at the\ncorrect speed in FOF.");
@@ -1673,8 +1674,8 @@ int eof_load_ogg(char * filename, char silence_failover)
 			loaded = 1;
 			if(!eof_silence_loaded)
 			{	//Only display song channel and sample rate warnings if chart audio is loaded
-				if(!eof_write_rs_files && !eof_write_rs2_files)
-				{	//If not authoring for Rocksmith
+				if(!eof_write_rs_files && !eof_write_rs2_files && !eof_write_bf_files)
+				{	//If not authoring for Rocksmith or Bandfuse
 					if(alogg_get_wave_freq_ogg(eof_music_track) != 44100)
 					{
 						allegro_message("OGG sampling rate is not 44.1khz.\nSong may not play back at the\ncorrect speed in FOF.");
