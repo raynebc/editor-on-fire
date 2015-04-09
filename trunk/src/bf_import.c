@@ -623,6 +623,8 @@ EOF_SONG *eof_load_bf(char * fn)
 					unsigned long flags, bendtype, vibrato, stringnum, fret, finger, statuses, statuses2, statuses3;
 					char *tech;
 					unsigned long prevfret = 0;			//Used to track the fret value of the previous note, for HO/PO tracking
+					float prevamount;					//Used to track the slide/bend/trill amount of the previous note, for pre-bend tracking
+					unsigned long prevbendtype;
 
 					//Determine the track difficulty this ZOBJ section refers to
 					if(strstr(string, "bss_"))
@@ -810,12 +812,69 @@ EOF_SONG *eof_load_bf(char * fn)
 						}
 						if(bendtype)
 						{	//If this note bends
-							flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
-///Look into adding logic for the different bend types, probably would involve adding tech notes
-///							if((bendtype == 1) && (amount > 0.0))
-///							{	//Normal bend
-							if(amount > 0.0)
-							{
+							EOF_PRO_GUITAR_NOTE *tnp1;
+							int bendstrength;
+
+							if(bendtype != 1)
+							{	//Special bend types involve creating at least one pre-bend tech note
+								//Add a tech note defining the pre-bend
+								tnp1 = eof_pro_guitar_track_add_tech_note(tp);
+								if(!tnp1)
+								{
+									eof_log("\tError allocating memory.  Aborting", 1);
+									(void) pack_fclose(inf);
+									free(sectiondata);
+									for(ctr = 0; ctr < numstrings; free(stringdata[ctr].string), ctr++);	//Free the memory used to store each string
+									free(stringdata);
+									eof_destroy_song(sp);
+									return NULL;
+								}
+								bendstrength = (amount / 0.5) + 0.5;	//Round bend strength to the nearest number of half steps
+								if(!bendstrength)
+								{	//If this note doesn't have a pre-bend strength defined
+									bendstrength = (prevamount / 0.5) + 0.5;	//Use the previous note's bend strength instead
+									if(!bendstrength)
+										bendstrength = 1;	//Or 1 if that value wasn't defined for some reason
+								}
+
+								tnp1->type = curdiff;
+								tnp1->note = 1 << stringnum;
+								tnp1->frets[stringnum] = fret;
+								tnp1->finger[stringnum] = finger;
+								tnp1->pos = np->pos;	//Place this tech note at the beginning of the imported note containing the bend
+								tnp1->length = 1;
+								tnp1->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+								tnp1->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
+								tnp1->bendstrength = bendstrength;
+
+								if(bendtype == 2)
+								{	//Bend and release
+									//Add a tech note defining the release
+									EOF_PRO_GUITAR_NOTE *tnp2 = eof_pro_guitar_track_add_tech_note(tp);
+									if(!tnp2)
+									{
+										eof_log("\tError allocating memory.  Aborting", 1);
+										(void) pack_fclose(inf);
+										free(sectiondata);
+										for(ctr = 0; ctr < numstrings; free(stringdata[ctr].string), ctr++);	//Free the memory used to store each string
+										free(stringdata);
+										eof_destroy_song(sp);
+										return NULL;
+									}
+									tnp2->type = curdiff;
+									tnp2->note = 1 << stringnum;
+									tnp2->frets[stringnum] = fret;
+									tnp2->finger[stringnum] = finger;
+									tnp2->pos = np->pos + np->length - eof_min_note_distance;	//Place this tech note at the end of the imported note containing the bend
+									tnp2->length = 1;
+									tnp2->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+									tnp2->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
+									tnp2->bendstrength = 0;
+								}//Bend and release
+							}//Special bend types involve creating at least one pre-bend tech note
+							else if(amount > 0.0)
+							{	//Normal bend note
+								flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
 								flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
 								np->bendstrength = (amount / 0.5) + 0.5;	//Round bend strength to the nearest number of half steps
 							}
@@ -848,8 +907,8 @@ EOF_SONG *eof_load_bf(char * fn)
 						//Track HO/POs
 						if(npp && (npp->flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT))
 						{	//If there was a previous note and it was marked as linked with the current note
-							if(!(npp->flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)))
-							{	//If the previous note doesn't slide or bend
+							if(!prevbendtype && !(npp->flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)))
+							{	//If the previous note wasn't a slide or bend
 								if(!(np->flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)))
 								{	//If the current note doesn't slide or bend either, assume the linked status refers to hammer on or pull off
 									npp->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Remove the linknext flag from the previous note
@@ -868,8 +927,10 @@ EOF_SONG *eof_load_bf(char * fn)
 						np->flags = flags;
 						if(fret > tp->numfrets)
 							tp->numfrets = fret;	//Track the highest used fret number
-						npp = np;			//Keep track of the previously created note
-						prevfret = fret;	//And its fret value
+						npp = np;				//Keep track of the previously created note
+						prevfret = fret;		//And its fret value
+						prevamount = amount;	//And its slide/bend/trill amount
+						prevbendtype = bendtype;	//And its bend type
 					}//For each note in this object
 					eof_build_trill_phrases(tp);	//Add trill phrases to encompass the notes that have the trill flag set
 					eof_build_tremolo_phrases(tp, curdiff);	//Add tremolo phrases and define them to apply to the track difficulty that this tab object contained notes for

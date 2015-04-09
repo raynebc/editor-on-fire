@@ -156,7 +156,7 @@ char      * eof_ogg_quality[7] = {"1.0", "2.0", "4.0", "5.0", "6.0", "8.0", "10.
 unsigned long eof_frame = 0;
 int         eof_debug_mode = 0;
 int         eof_cpu_saver = 0;
-char        eof_has_focus = 1;
+char        eof_has_focus = 1;				//Indicates whether EOF is in foreground focus (if set to 2, EOF just switched back into focus)
 char        eof_supports_mp3 = 0;
 char        eof_supports_oggcat = 0;		//Set to nonzero if EOF determines oggCat is usable
 int         eof_new_idle_system = 0;
@@ -616,7 +616,7 @@ void eof_switch_in_callback(void)
 
 	eof_clear_input();
 	eof_read_keyboard_input(1);	//Update the keyboard input variables when EOF regains focus
-	eof_has_focus = 1;
+	eof_has_focus = 2;			//Signal EOF has just regained focus
 	gametime_reset();
 }
 
@@ -1812,7 +1812,7 @@ void eof_read_keyboard_input(char function)
 		//When these keys are pressed, the ASCII value must be ignored because they conflict with other keys on the keyboard
 
 	if(keypressed())
-	{
+	{	//If a keypress was detected, or the calling function is forcing the key state logic to be performed
 		eof_key_pressed = 1;
 		eof_key_uchar = ureadkey(&eof_key_code);
 		if(eof_key_uchar < 255)
@@ -4972,7 +4972,7 @@ int main(int argc, char * argv[])
 	eof_log("\tEntering main program loop", 1);
 
 	while(!eof_quit)
-	{
+	{	//While EOF isn't meant to quit
 		/* frame skip mode */
 		while(gametime_get_frames() - gametime_tick > 0)
 		{
@@ -4990,7 +4990,7 @@ int main(int argc, char * argv[])
 
 		/* update the music */
 		if(!eof_music_paused)
-		{
+		{	//Chart is not paused
 			int ret = alogg_poll_ogg(eof_music_track);
 			eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 			eof_play_queued_midi_tones();	//Played cued MIDI tones for pro guitar/bass notes
@@ -5019,7 +5019,7 @@ int main(int argc, char * argv[])
 
 		/* update the music for playing a portion from catalog */
 		else if(eof_music_catalog_playback)
-		{
+		{	//Catalog is playing
 			int ret = alogg_poll_ogg(eof_music_track);
 			if(ret == ALOGG_POLL_PLAYJUSTFINISHED)
 			{
@@ -5041,7 +5041,7 @@ int main(int argc, char * argv[])
 			}
 		}
 		else
-		{
+		{	//Chart is paused
 			if(eof_new_idle_system)
 			{
 				/* rest to save CPU */
@@ -5079,8 +5079,8 @@ int main(int argc, char * argv[])
 					gametime_reset();
 				}
 			}
-		}
-	}
+		}//Chart is paused
+	}//While EOF isn't meant to quit
 	eof_exit();
 	return 0;
 }

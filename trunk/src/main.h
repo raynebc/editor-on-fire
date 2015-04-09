@@ -506,6 +506,7 @@ extern char eof_display_flats;
 extern long xchart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D rendering, updated by eof_set_3D_lane_positions()
 extern long ychart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D rendering, updated by eof_set_2D_lane_positions()
 
+extern char eof_has_focus;
 extern int eof_key_pressed;
 extern int eof_key_char;
 extern int eof_key_uchar;

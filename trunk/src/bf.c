@@ -9,6 +9,45 @@
 #include "memwatch.h"
 #endif
 
+unsigned eof_pro_guitar_note_lookup_string_fingering(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long stringnum, unsigned defval)
+{
+	unsigned retval = defval;	//Unless a more suitable fingering for this note can be determined, assume the given default fingering
+	unsigned fret;
+	EOF_PRO_GUITAR_NOTE *np;
+
+	if(!tp || (note >= tp->notes) || (stringnum >= tp->numstrings))
+		return retval;	//Invalid parameters
+
+	np = tp->note[note];		//Simplify
+	fret = np->frets[stringnum];	//Simplify
+	if(fret == 0)
+	{	//If this is an open note
+		retval = 0;	//The note has no fingering
+	}
+	else if(np->finger[stringnum])
+	{	//If this string's fingering is defined for this note
+		retval = np->finger[stringnum];	//Use it
+	}
+	else
+	{
+		unsigned char fhp = eof_pro_guitar_track_find_effective_fret_hand_position(tp, np->type, np->pos);	//Determine what fret hand position is in effect in this note's difficulty at this note's position
+
+		if(fret >= fhp)
+		{	//If the fret hand position in effect is at or below the gem's fret value
+			if(fret < fhp + 4)
+			{	//If the fret is within 4 frets of the position
+				retval = fret + 1 - fhp;	//The index finger is at the hand position, each adjacent finger is one fret further away
+			}
+			else
+			{	//Otherwise assume the pinky is stretching to play this fret
+				retval = 4;
+			}
+		}
+	}
+
+	return retval;
+}
+
 int eof_export_bandfuse(EOF_SONG * sp, char * fn, unsigned short *user_warned)
 {
 	PACKFILE * fp;
@@ -124,7 +163,7 @@ int eof_export_bandfuse(EOF_SONG * sp, char * fn, unsigned short *user_warned)
 						//Generate fret hand positions if there are none for this difficulty
 						for(ctr3 = 0, anchorcount = 0; ctr3 < tp->handpositions; ctr3++)
 						{	//For each hand position defined in the track
-							if(tp->handposition[ctr3].difficulty == ctr)
+							if(tp->handposition[ctr3].difficulty == ctr2)
 							{	//If the hand position is in this difficulty
 								anchorcount++;
 							}
@@ -215,33 +254,7 @@ int eof_export_bandfuse(EOF_SONG * sp, char * fn, unsigned short *user_warned)
 										(void) eof_get_rs_techniques(sp, ctr, ctr3, ctr4, &tech, 2, 1);	//Determine techniques used by this note (honoring technotes where applicable)
 										notepos = eof_get_note_pos(sp, ctr, ctr3);
 										fret = tp->note[ctr3]->frets[ctr4] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
-
-										//Determine the fingering for the note
-										finger = 1;									//Unless a more suitable fingering for this note can be determined, assume 1 (index)
-										if(fret == 0)
-										{	//If this is an open note
-											finger = 0;	//The note has no fingering
-										}
-										else if(tp->note[ctr3]->finger[ctr4])
-										{	//If this string's fingering is defined for this note
-											finger = tp->note[ctr3]->finger[ctr4];	//Use it
-										}
-										else
-										{
-											unsigned char fhp = eof_pro_guitar_track_find_effective_fret_hand_position(tp, ctr2, notepos);	//Determine what fret hand position is in effect at this note
-											if(fret >= fhp)
-											{	//If the fret hand position in effect is at or below the note's fret
-												if(fret < fhp + 4)
-												{	//If the fret is within 4 frets of the position
-													finger = fret + 1 - fhp;	//The index finger is at the fret hand position, each other finger is one fret further away
-												}
-												else
-												{	//Otherwise assume the pinky is stretching to play this fret
-													finger = 4;
-												}
-											}
-										}
-
+										finger = eof_pro_guitar_note_lookup_string_fingering(tp, ctr3, ctr4, 1);	//Unless a more suitable fingering for this note can be determined, assume 1 (index)
 										if(tech.length < 10)
 										{	//The sustain is one digit
 											sustainpadding = "   ";
