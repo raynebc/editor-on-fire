@@ -2698,6 +2698,50 @@ int eof_save_helper(char *destfilename, char silent)
 		}//If the user wants to save Rocksmith capable files
 	}//If checks and warnings aren't suppressed
 
+	/* check if any bend notes define a bend strength higher than 3 half steps */
+	if(!silent)
+	{	//If checks and warnings aren't suppressed
+		if(eof_write_rs_files || eof_write_rs2_files)
+		{	//If the user wants to save Rocksmith capable files
+			char bendstrength_warned = 0;
+
+			for(ctr = 1; (ctr < eof_song->tracks) && !bendstrength_warned; ctr++)
+			{	//For each track (outer for loop)
+				if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//If this is a pro guitar/bass track
+					EOF_PRO_GUITAR_TRACK *tp;
+					unsigned long tracknum, flags;
+
+					tracknum = eof_song->track[ctr]->tracknum;
+					tp = eof_song->pro_guitar_track[tracknum];
+					for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+					{	//For each note in the track (inner for loop)
+						flags = tp->note[ctr2]->flags;
+						if((flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
+						{	//If the note contains a bend strength
+							if((tp->note[ctr2]->bendstrength & 0x80) && ((tp->note[ctr2]->bendstrength & 0x7F) <= 6))
+							{	//If the bend is defined in quarter steps and is less than or equal to 6 quarter steps (3 half steps)
+								continue;	//Advance to next note
+							}
+							if(tp->note[ctr2]->bendstrength <= 3)
+							{	//If the bend is defined in half steps and is less than or equal to 3 half steps
+								continue;	//Advance to next note
+							}
+							eof_clear_input();
+							eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
+							if(alert("Warning:  At least one note bends more than 3 half steps.", "Rocksmith doesn't indicate more than 3 half steps and probably can't detect a bend this strong.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+							{	//If the user opts to cancel
+								return 1;	//Return cancellation
+							}
+							bendstrength_warned = 1;	//Set a condition to break from the outer for loop
+							break;	//Break from the inner for loop
+						}
+					}
+				}
+			}
+		}
+	}
+
 	/* check if any chords have manually defined names with parentheses, which will cause Rocksmith to malfunction */
 	if(!silent)
 	{	//If checks and warnings aren't suppressed
