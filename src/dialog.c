@@ -27,6 +27,7 @@
 #include "undo.h"
 #include "mix.h"
 #include "tuning.h"
+#include "dialog/main.h"
 #include "menu/file.h"
 #include "menu/edit.h"
 #include "menu/song.h"
@@ -109,8 +110,8 @@ int eof_popup_dialog(DIALOG * dp, int n)
 	clear_keybuf();
 	while(1)
 	{
-		if(eof_has_focus == 2)
-		{	//If EOF just switched back into focus
+		if((eof_has_focus == 2) && (dp == eof_main_dialog))
+		{	//If EOF just switched back into focus and no dialogs except the main menu were running
 			eof_has_focus = 1;
 			break;	//Don't allow EOF to get stuck in this loop just because ALT+Tab was used
 		}
