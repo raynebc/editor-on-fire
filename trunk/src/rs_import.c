@@ -20,7 +20,7 @@
 int eof_parse_chord_template(char *name, size_t size, char *finger, char *frets, unsigned char *note, unsigned char *numstrings, unsigned long linectr, char *input)
 {
 	unsigned long ctr, bitmask;
-	long output;
+	long output = 0;
 	int success_count;
 
 	if(!name || !size || !finger || !frets || !note || !input)
@@ -127,6 +127,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 	unsigned long tech_note_count = 0;	//Keeps count of how many tech notes have been imported
 	char strum_dir = 0;					//Tracks whether any chords were marked as up strums
 	unsigned long ctr, ctr2, ctr3;
+	long output = 0;
 
 	if(!eof_song || !eof_song_loaded)
 		return NULL;	//For now, don't do anything unless a project is active
@@ -301,7 +302,6 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		else if(strcasestr_spec(buffer, "<tuning"))
 		{	//If this is the tuning tag
 			int success_count = 0;
-			long output;
 
 			success_count += parse_xml_attribute_number("string0", buffer, &output);	//Read the value of string 0's tuning from the opening tag
 			tp->tuning[0] = output;	//Store the tuning
@@ -401,7 +401,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		}//If this is the phrases tag and it isn't empty
 		else if(strcasestr_spec(buffer, "<phraseIterations") && !strstr(buffer, "/>"))
 		{	//If this is the phraseIterations tag and it isn't empty
-			long timestamp, id;
+			long timestamp = 0, id = 0;
 			unsigned long phraseitctr = 0;
 
 			#ifdef RS_IMPORT_DEBUG
@@ -492,7 +492,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		{	//If this is the chordTemplates tag and it isn't empty
 			char finger[8] = {0};
 			char frets[8] = {0};
-			unsigned char note;
+			unsigned char note = 0;
 
 			#ifdef RS_IMPORT_DEBUG
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tProcessing <chordTemplates> tag on line #%lu", linectr);
@@ -555,8 +555,6 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		}//If this is the chordTemplates tag and it isn't empty
 		else if(strcasestr_spec(buffer, "<ebeats") && !strstr(buffer, "/>"))
 		{	//If this is the ebeats tag and it isn't empty
-			long output;
-
 			#ifdef RS_IMPORT_DEBUG
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tProcessing <ebeats> tag on line #%lu", linectr);
 				eof_log(eof_log_string, 1);
@@ -614,8 +612,6 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		}//If this is the ebeats tag and it isn't empty
 		else if(strcasestr_spec(buffer, "<controls") && !strstr(buffer, "/>"))
 		{	//If this is the controls tag and it isn't empty
-			long output;
-
 			#ifdef RS_IMPORT_DEBUG
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tProcessing <controls> tag on line #%lu", linectr);
 				eof_log(eof_log_string, 1);
@@ -731,7 +727,6 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		}
 		else if(strcasestr_spec(buffer, "<tones") && !strstr(buffer, "/>"))
 		{	//If this is the tones tag (RS2) and it isn't empty
-			long output;
 			unsigned long tonectr = 0;
 
 			#ifdef RS_IMPORT_DEBUG
@@ -784,7 +779,6 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		}//If this is the tones tag (RS2) and it isn't empty
 		else if(strcasestr_spec(buffer, "<sections") && !strstr(buffer, "/>"))
 		{	//If this is the sections tag and it isn't empty
-			long output;
 			unsigned long sectionctr = 0;
 
 			#ifdef RS_IMPORT_DEBUG
@@ -852,7 +846,6 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		}//If this is the sections tag and it isn't empty
 		else if(strcasestr_spec(buffer, "<events") && !strstr(buffer, "/>"))
 		{	//If this is the events tag and it isn't empty
-			long output;
 			unsigned long eventctr = 0;
 
 			#ifdef RS_IMPORT_DEBUG
@@ -915,8 +908,8 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		}//If this is the events tag and it isn't empty
 		else if(strcasestr_spec(buffer, "<levels") && !strstr(buffer, "/>"))
 		{	//If this is the levels tag and it isn't empty
-			long curdiff, time, bend, fret, hammeron, harmonic, palmmute, pluck, pulloff, slap, slideto, string, sustain, tremolo;
-			long linknext, accent, mute, pinchharmonic, slideunpitchto, tap, vibrato, step;
+			long curdiff = 0, time = 0, bend, fret = 0, hammeron, harmonic, palmmute, pluck, pulloff, slap, slideto, string, sustain = 0, tremolo;
+			long linknext, accent, mute, pinchharmonic, slideunpitchto, tap, vibrato, step = 0;
 			unsigned long flags;
 			EOF_PRO_GUITAR_NOTE *np = NULL, *tnp = NULL;
 
@@ -1161,8 +1154,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						}//If this is a notes tag
 						else if(strcasestr_spec(buffer, "<chords") && !strstr(buffer, "/>"))
 						{	//If this is a chords tag and it isn't empty
-							long time, id;
-							unsigned long flags;
+							long id = 0;
 
 							#ifdef RS_IMPORT_DEBUG
 								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tProcessing <chords> tag on line #%lu", linectr);
@@ -1255,8 +1247,6 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						}//If this is a chords tag and it isn't empty
 						else if(strcasestr_spec(buffer, "<anchors") && !strstr(buffer, "/>"))
 						{	//If this is an anchors tag and it isn't empty
-							long time, fret;
-
 							#ifdef RS_IMPORT_DEBUG
 								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tProcessing <anchors> tag on line #%lu", linectr);
 								eof_log(eof_log_string, 1);

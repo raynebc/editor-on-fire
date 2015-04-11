@@ -2421,7 +2421,7 @@ void eof_seek_by_grid_snap(int dir)
 {
 	unsigned long adjustedpos = eof_music_pos - eof_av_delay;	//Find the actual chart position
 	unsigned long originalpos = adjustedpos;
-	unsigned long target;
+	unsigned long target = 0;
 
 	if(!eof_find_grid_snap(adjustedpos, dir, &target))
 	{	//If the seek position couldn't be found
@@ -2569,7 +2569,7 @@ int eof_menu_song_seek_next_beat(void)
 int eof_menu_song_seek_previous_measure(void)
 {
 	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
-	unsigned num, ctr;
+	unsigned num = 0, ctr;
 	unsigned long originalpos = eof_music_pos - eof_av_delay;
 
 	if(!eof_song)
@@ -3307,7 +3307,7 @@ int eof_find_note_sequence_time_range(EOF_SONG *sp, unsigned long target_track, 
 int eof_menu_catalog_find(char direction)
 {
 	EOF_CATALOG_ENTRY *entry;
-	unsigned long hit_pos;
+	unsigned long hit_pos = 0;
 
 	if(!eof_song || !eof_song->catalog->entries || (eof_selected_catalog_entry >= eof_song->catalog->entries))
 		return 1;
@@ -3469,7 +3469,7 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 	unsigned char position, lowest, highest;
 	char width_warning = 0, problem_found = 0, started = 0, phrase_warning, unset_warning = 0;
 	unsigned long ignorewarning = 0;	//Tracks which warnings the user has suppressed by answering "Ignore" to a prompt
-	int ret;
+	int ret = 0;
 	unsigned limit = 21;	//Rocksmith 2's fret hand position limit is 21
 
 	if(!eof_song || !undo_made)

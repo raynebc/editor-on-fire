@@ -1812,7 +1812,7 @@ void eof_read_keyboard_input(char function)
 		//When these keys are pressed, the ASCII value must be ignored because they conflict with other keys on the keyboard
 
 	if(keypressed())
-	{	//If a keypress was detected, or the calling function is forcing the key state logic to be performed
+	{	//If a keypress was detected
 		eof_key_pressed = 1;
 		eof_key_uchar = ureadkey(&eof_key_code);
 		if(eof_key_uchar < 255)
@@ -2169,7 +2169,7 @@ void eof_lyric_logic(void)
 	unsigned long i, k;
 	unsigned long tracknum;
 	eof_hover_key = -1;
-	int eof_mouse_x = mouse_x, eof_mouse_y = mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
+	int eof_scaled_mouse_x = mouse_x, eof_scaled_mouse_y = mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
 
 	if(eof_song == NULL)	//Do not allow lyric processing to occur if no song is loaded
 		return;
@@ -2179,24 +2179,24 @@ void eof_lyric_logic(void)
 
 	if(eof_screen_zoom)
 	{	//If x2 zoom is in effect, take that into account for the mouse position
-		eof_mouse_x = mouse_x / 2;
-		eof_mouse_y = mouse_y / 2;
+		eof_scaled_mouse_x = mouse_x / 2;
+		eof_scaled_mouse_y = mouse_y / 2;
 	}
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if(eof_music_paused)
 	{
-		if((eof_mouse_x >= eof_window_3d->x) && (eof_mouse_x < eof_window_3d->x + eof_window_3d->w) && (eof_mouse_y >= eof_window_3d->y + eof_window_3d->h - eof_screen_layout.lyric_view_key_height))
+		if((eof_scaled_mouse_x >= eof_window_3d->x) && (eof_scaled_mouse_x < eof_window_3d->x + eof_window_3d->w) && (eof_scaled_mouse_y >= eof_window_3d->y + eof_window_3d->h - eof_screen_layout.lyric_view_key_height))
 		{
 			/* check for black key */
-			if(eof_mouse_y < eof_window_3d->y + eof_window_3d->h - eof_screen_layout.lyric_view_key_height + eof_screen_layout.lyric_view_bkey_height)
+			if(eof_scaled_mouse_y < eof_window_3d->y + eof_window_3d->h - eof_screen_layout.lyric_view_key_height + eof_screen_layout.lyric_view_bkey_height)
 			{
 				for(i = 0; i < 28; i++)
 				{
 					k = i % 7;
 					if((k == 0) || (k == 1) || (k == 3) || (k == 4) || (k == 5))
 					{
-						if((eof_mouse_x - eof_window_3d->x >= i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 + eof_screen_layout.lyric_view_bkey_width) && (eof_mouse_x - eof_window_3d->x <= (i + 1) * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 - eof_screen_layout.lyric_view_bkey_width + 1))
+						if((eof_scaled_mouse_x - eof_window_3d->x >= i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 + eof_screen_layout.lyric_view_bkey_width) && (eof_scaled_mouse_x - eof_window_3d->x <= (i + 1) * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 - eof_screen_layout.lyric_view_bkey_width + 1))
 						{
 							eof_hover_key = MINPITCH + (i / 7) * 12 + bnote[k];
 							break;
@@ -2211,7 +2211,7 @@ void eof_lyric_logic(void)
 				for(i = 0; i < 29; i++)
 				{
 					k = i % 7;
-					if((eof_mouse_x - eof_window_3d->x >= i * eof_screen_layout.lyric_view_key_width) && (eof_mouse_x - eof_window_3d->x < i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width - 1))
+					if((eof_scaled_mouse_x - eof_window_3d->x >= i * eof_screen_layout.lyric_view_key_width) && (eof_scaled_mouse_x - eof_window_3d->x < i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width - 1))
 					{
 						eof_hover_key = MINPITCH + (i / 7) * 12 + note[k];
 						break;
@@ -2278,18 +2278,18 @@ void eof_lyric_logic(void)
 
 void eof_note_logic(void)
 {
-	int eof_mouse_x = mouse_x, eof_mouse_y = mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
+	int eof_scaled_mouse_x = mouse_x, eof_scaled_mouse_y = mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
 //	eof_log("eof_note_logic() entered");
 
 	if(eof_screen_zoom)
 	{	//If x2 zoom is in effect, take that into account for the mouse position
-		eof_mouse_x = mouse_x / 2;
-		eof_mouse_y = mouse_y / 2;
+		eof_scaled_mouse_x = mouse_x / 2;
+		eof_scaled_mouse_y = mouse_y / 2;
 	}
 
-	if((eof_catalog_menu[0].flags & D_SELECTED) && (eof_mouse_x >= 0) && (eof_mouse_x < 90) && (eof_mouse_y > 40 + eof_window_note->y) && (eof_mouse_y < 40 + 18 + eof_window_note->y))
+	if((eof_catalog_menu[0].flags & D_SELECTED) && (eof_scaled_mouse_x >= 0) && (eof_scaled_mouse_x < 90) && (eof_scaled_mouse_y > 40 + eof_window_note->y) && (eof_scaled_mouse_y < 40 + 18 + eof_window_note->y))
 	{
-		eof_cselected_control = eof_mouse_x / 30;
+		eof_cselected_control = eof_scaled_mouse_x / 30;
 		if(!eof_full_screen_3d && (mouse_b & 1))
 		{
 			eof_blclick_released = 0;
@@ -2318,7 +2318,7 @@ void eof_note_logic(void)
 	{
 		eof_cselected_control = -1;
 	}
-	if((eof_mouse_y >= eof_window_note->y) && (eof_mouse_y < eof_window_note->y + 12) && (eof_mouse_x >= 0) && (eof_mouse_x < ((eof_catalog_menu[0].flags & D_SELECTED) ? text_length(font, "Fret Catalog") : text_length(font, "Information Panel"))))
+	if((eof_scaled_mouse_y >= eof_window_note->y) && (eof_scaled_mouse_y < eof_window_note->y + 12) && (eof_scaled_mouse_x >= 0) && (eof_scaled_mouse_x < ((eof_catalog_menu[0].flags & D_SELECTED) ? text_length(font, "Fret Catalog") : text_length(font, "Information Panel"))))
 	{
 		if(!eof_full_screen_3d && (mouse_b & 1))
 		{

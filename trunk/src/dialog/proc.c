@@ -19,14 +19,15 @@ int eof_verified_edit_proc(int msg, DIALOG *d, int c)
 	char * string = NULL;
 	int key_list[32] = {KEY_BACKSPACE, KEY_DEL, KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_ESC, KEY_ENTER};
 	int match = 0;
+	unsigned c2 = (unsigned)c;	//Force cast this to unsigned because Splint is incapable of avoiding a false positive detecting it as negative despite assertions proving otherwise
 
 	if(msg == MSG_CHAR)
 	{
 		for(i = 0; i < 8; i++)
-		{
-			if(c >> 8 == key_list[i])			//If the input is permanently allowed
+		{	//Check each of the pre-defined allowable keys
+			if(c2 >> 8 == key_list[i])			//If the input is permanently allowed
 			{
-				return d_agup_edit_proc(msg, d, c);	//Immediately allow the input character to be returned
+				return d_agup_edit_proc(msg, d, c2);	//Immediately allow the input character to be returned
 			}
 		}
 

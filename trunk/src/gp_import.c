@@ -105,7 +105,7 @@ void eof_gp_debug_log(PACKFILE *inf, char *text)
 int eof_gp_parse_bend(PACKFILE *inf, struct guitar_pro_bend *bp)
 {
 	unsigned word;
-	unsigned long height, points, ctr, dword, dword2;
+	unsigned long height = 0, points = 0, ctr, dword = 0, dword2 = 0;
 
 	if(!inf)
 		return 1;	//Return error
@@ -1657,11 +1657,12 @@ int main(int argc, char *argv[])
 struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 {
 	#define EOF_GP_IMPORT_BUFFER_SIZE 256
-	char buffer[EOF_GP_IMPORT_BUFFER_SIZE + 1], *buffer2, buffer3[EOF_GP_IMPORT_BUFFER_SIZE + 1], buffer4[EOF_GP_IMPORT_BUFFER_SIZE + 1], byte, bytemask, usedstrings, *ptr, patches[64];
-	unsigned word, fileversion;
-	unsigned long dword, ctr, ctr2, ctr3, ctr4, ctr5, tracks, measures, *strings, beats;
+	char buffer[EOF_GP_IMPORT_BUFFER_SIZE + 1], *buffer2, buffer3[EOF_GP_IMPORT_BUFFER_SIZE + 1], buffer4[EOF_GP_IMPORT_BUFFER_SIZE + 1], byte, bytemask, *ptr, patches[64];
+	unsigned char usedstrings;
+	unsigned word = 0, fileversion;
+	unsigned long dword = 0, ctr, ctr2, ctr3, ctr4, ctr5, tracks = 0, measures = 0, *strings, beats = 0;
 	PACKFILE *inf = NULL, *inf2;	//The GPA import logic will open the file handle for the Guitar Pro file in inf if applicable
-	struct eof_guitar_pro_struct *gp;
+	struct eof_guitar_pro_struct *gp = NULL;
 	struct eof_gp_measure *tsarray;	//Stores measure information relating to time signatures, alternate endings and navigational symbols
 	EOF_PRO_GUITAR_NOTE **np;	//Will store the last created note for each track (for handling tie notes)
 	char *hopo;			//Will store the fret value of the previous note marked as HO/PO (in GP, if note #N is marked for this, note #N+1 is the one that is a HO or PO), otherwise -1, for each track
@@ -1677,7 +1678,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	double measure_position;		//Tracks the current position as a percentage within the current measure
 	unsigned long flags;			//Tracks the flags for the current note
 	unsigned char bendstrength;		//Tracks the note's bend strength if applicable
-	struct guitar_pro_bend bendstruct;	//Stores data about the bend being parsed
+	struct guitar_pro_bend bendstruct = {0, 0, {0}, {0}};	//Stores data about the bend being parsed
 	double laststartpos = 0, lastendpos = 0;	//Stores the start and end position of the last normal or tie note to be parsed, so bend point data can be used to create tech notes
 	double lastgracestartpos = 0, lastgraceendpos = 0;	//Stores the start and end position of the last grace note to be parsed
 	unsigned char graceonbeat = 0;	//Tracks whether the currently-parsed grace note is on the beat instead of before it
@@ -1696,7 +1697,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	char parse_gpa = 0;		//Will be set to nonzero if the specified file is detected to be XML, in which case, the Go PlayAlong file will be parsed
 	size_t maxlinelength;
 	unsigned long linectr = 2, num_sync_points = 0, raw_num_sync_points = 0;
-	struct eof_gpa_sync_point *sync_points = NULL, temp_sync_point;
+	struct eof_gpa_sync_point *sync_points = NULL, temp_sync_point = {0, 0, 0.0, 0.0, 0.0, 0.0, 0};
 	char error = 0;
 	char *musical_symbols[19] = {"Coda", "Double Coda", "Segno", "Segno Segno", "Fine", "Da Capo", "Da Capo al Coda", "Da Capo al double Coda", "Da Capo al Fine", "Da Segno", "Da Segno al Coda", "Da Segno al double Coda", "Da Segno al Fine", "Da Segno Segno", "Da Segno Segno al Coda", "Da Segno Segno al double Coda", "Da Segno Segno al Fine", "Da Coda", "Da double Coda"};
 	unsigned char unpitchend;	//Tracks the end position for imported notes that slide in/out with no formal slide definition
@@ -1862,6 +1863,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 ///FOR DEBUGGING
 //					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSync point #%lu (time = %lums, measure = %f)", ctr, temp_sync_point.realtime_pos, temp_sync_point.measure + 1.0 + temp_sync_point.pos_in_measure);
 //					eof_log(eof_log_string, 1);
+					assert(sync_points != NULL);	//Unneeded check to resolve false positive in Splint
 					if(num_sync_points && ((temp_sync_point.measure + temp_sync_point.pos_in_measure <= sync_points[num_sync_points - 1].measure + sync_points[num_sync_points - 1].pos_in_measure) || (temp_sync_point.realtime_pos <= sync_points[num_sync_points - 1].realtime_pos)))
 					{	//If there was a previous sync point added, and this sync point isn't a later timestamp or measure position
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSync point #%lu (time = %lums, measure = %f) is out of chronological order, it will be skipped.", ctr, temp_sync_point.realtime_pos, temp_sync_point.measure + 1.0 + temp_sync_point.pos_in_measure);
@@ -2645,7 +2647,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				}
 				else
 				{	//Otherwise clear all beat flags except those that aren't TS related
-					unsigned long flags = eof_song->beat[beatctr]->flags & (EOF_BEAT_FLAG_ANCHOR | EOF_BEAT_FLAG_EVENTS | EOF_BEAT_FLAG_KEY_SIG);	//Keep these flags as-is
+					flags = eof_song->beat[beatctr]->flags & (EOF_BEAT_FLAG_ANCHOR | EOF_BEAT_FLAG_EVENTS | EOF_BEAT_FLAG_KEY_SIG);	//Keep these flags as-is
 					eof_song->beat[beatctr]->flags = flags;
 				}
 			}
@@ -2657,7 +2659,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 //Correct Go PlayAlong timings by rebuilding the quarter note lengths
  	if(sync_points)
 	{	//If synchronization data was imported from the input Go PlayAlong file
-		double beatctr, qnotectr;
+		double fbeatctr, qnotectr;
 		unsigned char *num;	//Will point to an array with the TS numerator of every measure
 		unsigned char *den;	//Will point to an array with the TS denominator of every measure
 		unsigned long nummeasures;	//The number of entries in the above arrays
@@ -2727,23 +2729,23 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			{	//Otherwise base the quarter note length on the amount of time and number of beats between this next sync point and the next
 				if(sync_points[ctr + 1].measure > sync_points[ctr].measure)
 				{	//If the next sync point ends in a different measure
-					beatctr = (1.0 - sync_points[ctr].pos_in_measure) * num[sync_points[ctr].measure];	//Initialize the counter to the number of beats between this sync point and the end of the measure it's in
-					qnotectr = beatctr / ((double)den[sync_points[ctr].measure] / 4.0);	//Convert the beat counter to the number of quarter notes
+					fbeatctr = (1.0 - sync_points[ctr].pos_in_measure) * num[sync_points[ctr].measure];	//Initialize the counter to the number of beats between this sync point and the end of the measure it's in
+					qnotectr = fbeatctr / ((double)den[sync_points[ctr].measure] / 4.0);	//Convert the beat counter to the number of quarter notes
 					for(ctr2 = sync_points[ctr].measure + 1; ctr2 < sync_points[ctr + 1].measure; ctr2++)
 					{	//For each remaining measure until the one the sync point is in
-						beatctr += num[ctr2];	//Add this measure's number of beats to the counter
+						fbeatctr += num[ctr2];	//Add this measure's number of beats to the counter
 						qnotectr += num[ctr2] / ((double)den[ctr2] / 4.0);	//Add this measure's number of quarter notes to the counter
 					}
-					beatctr += sync_points[ctr + 1].pos_in_measure * num[sync_points[ctr + 1].measure];	//Add the number of beats into the measure the later sync point is
+					fbeatctr += sync_points[ctr + 1].pos_in_measure * num[sync_points[ctr + 1].measure];	//Add the number of beats into the measure the later sync point is
 					qnotectr += (sync_points[ctr + 1].pos_in_measure * num[sync_points[ctr + 1].measure]) / ((double)den[sync_points[ctr + 1].measure] / 4.0);	//Add the number of quarter notes into the measure the later sync point is
 				}
 				else
 				{	//This sync point and the next end in the same measure
-					beatctr = sync_points[ctr + 1].pos_in_measure - sync_points[ctr].pos_in_measure;	//Get the distance between them in measures
-					beatctr *= num[sync_points[ctr].measure];	//Convert this value to the number of beats between the sync points
-					qnotectr = beatctr / ((double)den[sync_points[ctr].measure] / 4.0);	//Convert the beat counter to the number of quarter notes
+					fbeatctr = sync_points[ctr + 1].pos_in_measure - sync_points[ctr].pos_in_measure;	//Get the distance between them in measures
+					fbeatctr *= num[sync_points[ctr].measure];	//Convert this value to the number of beats between the sync points
+					qnotectr = fbeatctr / ((double)den[sync_points[ctr].measure] / 4.0);	//Convert the beat counter to the number of quarter notes
 				}
-				sync_points[ctr].beat_length = ((double)sync_points[ctr + 1].realtime_pos - sync_points[ctr].realtime_pos) / beatctr;	//Get the beat length
+				sync_points[ctr].beat_length = ((double)sync_points[ctr + 1].realtime_pos - sync_points[ctr].realtime_pos) / fbeatctr;	//Get the beat length
 				sync_points[ctr].real_qnote_length = (sync_points[ctr + 1].realtime_pos - sync_points[ctr].realtime_pos) / qnotectr;	//Get the quarter note length (the distance between this sync point and the next divided by the number of quarter notes between them)
 			}
 #ifdef GP_IMPORT_DEBUG
@@ -3040,10 +3042,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 			if((patchnum >=24) && (patchnum <= 31))
 			{	//These are the defined guitar instrument numbers in Guitar Pro
+				assert(gp->instrument_types != NULL);	//Unneeded check to resolve a false positive in Splint
 				gp->instrument_types[ctr] = 1;
 			}
 			else if((patchnum >= 32) && (patchnum <= 39))
 			{	//These are the defined bass guitar instrument numbers in Guitar Pro
+				assert(gp->instrument_types != NULL);	//Unneeded check to resolve a false positive in Splint
 				gp->instrument_types[ctr] = 2;
 			}
 		}
@@ -3149,12 +3153,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				}
 				for(ctr3 = 0; ctr3 < beats; ctr3++)
 				{	//For each "beat" (note)
-					char ghost = 0;	//Track the ghost status for notes
-					char mute = 0;	//Track the mute status for notes
-					char grace = 0;	//Track the note mask for grace notes
-					unsigned bitmask;
-					unsigned char frets[7];			//Store fret values for each string
-					unsigned char gracefrets[7];	//Store fret values for each string (for tracking grace notes)
+					unsigned char ghost = 0;	//Track the ghost status for notes
+					unsigned char mute = 0;		//Track the mute status for notes
+					unsigned char grace = 0;	//Track the note mask for grace notes
+					unsigned char frets[7] = {0};		//Store fret values for each string
+					unsigned char gracefrets[7] = {0};	//Store fret values for each string (for tracking grace notes)
 					unsigned long beat_position;
 					double partial_beat_position, beat_length;
 					char notebends = 0;	//Tracks whether any bend points were parsed for the note, since they may be applied as tech notes instead of toward the regular note
@@ -3834,15 +3837,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									{	//Only if the converted string number is valid
 										for(ctr5 = 0; ctr5 < bendstruct.bendpoints; ctr5++)
 										{	//For each bend point that was parsed
-											EOF_PRO_GUITAR_NOTE *ptr;
+											EOF_PRO_GUITAR_NOTE *pgnp;
 											unsigned long length;
 
 											if((ctr5 > 0) && (ctr5 == bendstruct.bendpoints - 1) && (bendstruct.bendheight[ctr5 - 1] == bendstruct.bendheight[ctr5]))
 											{	//If this is the last of multiple bendpoints, and its height is the same as the previous one
 												continue;	//Skip it since it doesn't change the bend, and since too many close bend points can cause crashes in Rocksmith
 											}
-											ptr = eof_pro_guitar_track_add_tech_note(gp->track[ctr2]);	//Add a new tech note to the current track
-											if(!ptr)
+											pgnp = eof_pro_guitar_track_add_tech_note(gp->track[ctr2]);	//Add a new tech note to the current track
+											if(!pgnp)
 											{
 												eof_log("Error allocating memory (15)", 1);
 												(void) pack_fclose(inf);
@@ -3871,11 +3874,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 												free(strings);
 												return NULL;
 											}
-											ptr->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;	//Set the bend flag
+											pgnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;	//Set the bend flag
 											notebends = 1;
-											ptr->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that a bend strength is defined
-											ptr->bendstrength = 0x80 + bendstruct.bendheight[ctr5];	//Store the bend strength and set the MSB to indicate the value is in quarter steps
-											ptr->note = 1 << convertednum;	//Determine the note bitmask of this string
+											pgnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that a bend strength is defined
+											pgnp->bendstrength = 0x80 + bendstruct.bendheight[ctr5];	//Store the bend strength and set the MSB to indicate the value is in quarter steps
+											pgnp->note = 1 << convertednum;	//Determine the note bitmask of this string
 											if(bendstruct.bendpos[ctr5] == 60)
 											{	//If this bend point is at the end of the note
 												length = lastendpos - laststartpos - eof_min_note_distance;	//Take the minimum padding between notes into account to ensure it doesn't overlap the next note
@@ -3884,8 +3887,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											{	//Otherwise use the normal note length
 												length = lastendpos - laststartpos;
 											}
-											ptr->pos = laststartpos + ((length * (double)bendstruct.bendpos[ctr5]) / 60.0) + 0.5;	//Determine the position of the bend point, rounded to nearest ms
-											ptr->length = 1;
+											pgnp->pos = laststartpos + ((length * (double)bendstruct.bendpos[ctr5]) / 60.0) + 0.5;	//Determine the position of the bend point, rounded to nearest ms
+											pgnp->length = 1;
 										}//For each bend point that was parsed
 									}//Only if the converted string number is valid
 								}//Bend
@@ -4004,6 +4007,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									{
 										if(byte & 2)
 										{	//If this is a legato slide
+											assert(nonshiftslide != NULL);	//Unneeded check to resolve a false positive in Splint
 											nonshiftslide[ctr2][ctr4] = 1;	//Track that the next note on this string for this track is to be removed (after slide directions are determined) because it only defines the end of the slide
 										}
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
@@ -4244,6 +4248,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								//Track note slides
 								for(ctr4 = 0; ctr4 < strings[ctr2]; ctr4++)
 								{	//For each of this track's natively supported strings
+									assert(nonshiftslide != NULL);	//Unneeded check to resolve a false positive in Splint
 									if(nonshiftslide[ctr2][ctr4] == 1)
 									{	//If the next note on this track is to be removed (after slide directions are determined)
 										nonshiftslide[ctr2][ctr4] = 2;	//Indicate that the slide note is being added, the next note on this string will see 2 as the signal to mark itself for removal (set its length as 0)
@@ -4577,10 +4582,10 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 {
 	unsigned long ctr, currentmeasure, beatctr, last_start_of_repeat;
 	unsigned char has_repeats = 0, has_symbols = 0;
-	unsigned char *working_num_of_repeats;	//Will store a copy of gp->measure[]'s repeat information so that the information in gp isn't destroyed
+	unsigned char *working_num_of_repeats = NULL;	//Will store a copy of gp->measure[]'s repeat information so that the information in gp isn't destroyed
 	EOF_PRO_GUITAR_TRACK *tp;		//Stores the resulting unwrapped track that is inserted into gp
 	unsigned long *measuremap;		//Will be used to refer to a dynamically built array storing the beat number at which each measure begins
-	EOF_TEXT_EVENT * newevent[EOF_MAX_TEXT_EVENTS];	//Will be used to rebuild the text events array to the appropriate unwrapped beat positions, if the first track is being unwrapped
+	EOF_TEXT_EVENT * newevent[EOF_MAX_TEXT_EVENTS] = {0};	//Will be used to rebuild the text events array to the appropriate unwrapped beat positions, if the first track is being unwrapped
 	unsigned long newevents = 0;		//The number of events stored in the above array
 	char unwrapevents = 0;		//Will track whether text events are to be unwrapped
 	unsigned int working_symbols[19];	//Will store a copy of gp->symbols[] so that the information ingp isn't destroyed

@@ -496,7 +496,7 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 
 unsigned long eof_next_grid_snap(unsigned long pos)
 {
-	EOF_SNAP_DATA temp;
+	EOF_SNAP_DATA temp = {0, 0, 0, 0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
 	long beat;
 
 	if(!eof_song || (eof_snap_mode == EOF_SNAP_OFF))
@@ -563,7 +563,7 @@ int eof_find_grid_snap(unsigned long pos, int dir, unsigned long *result)
 
 int eof_is_grid_snap_position(unsigned long pos)
 {
-	EOF_SNAP_DATA temp;
+	EOF_SNAP_DATA temp = {0, 0, 0, 0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
 	long beat;
 
 	if(!eof_song || (eof_snap_mode == EOF_SNAP_OFF))
@@ -583,7 +583,7 @@ int eof_is_grid_snap_position(unsigned long pos)
 
 int eof_is_any_grid_snap_position(unsigned long pos, int *beat, char *gridsnapvalue, unsigned char *gridsnapnum)
 {
-	EOF_SNAP_DATA temp;
+	EOF_SNAP_DATA temp = {0, 0, 0, 0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
 	long beatnum;
 	int retval = 0, ctr;
 	char temp_mode = eof_snap_mode;	//Store the grid snap setting in use
@@ -646,7 +646,7 @@ int eof_is_any_grid_snap_position(unsigned long pos, int *beat, char *gridsnapva
 
 int eof_find_grid_snap_position(int beat, char gridsnapvalue, unsigned char gridsnapnum, unsigned long *gridpos)
 {
-	EOF_SNAP_DATA temp;
+	EOF_SNAP_DATA temp = {0, 0, 0, 0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
 	char temp_mode = eof_snap_mode;	//Store the grid snap setting in use
 
 	if(!eof_song || (beat >= eof_song->beats) || !gridpos)
@@ -676,14 +676,14 @@ void eof_read_editor_keys(void)
 	unsigned long numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	unsigned long note;
 	unsigned char do_pg_up = 0, do_pg_dn = 0;
-	int eof_mouse_y = mouse_y;	//Rescaled mouse coordinate that accounts for the x2 zoom display feature
+	int eof_scaled_mouse_y = mouse_y;	//Rescaled mouse coordinate that accounts for the x2 zoom display feature
 
 	if(!eof_song_loaded)
 		return;	//Don't handle these keyboard shortcuts unless a chart is loaded
 
 	if(eof_screen_zoom)
 	{	//If x2 zoom is in effect, take that into account for the mouse position
-		eof_mouse_y = mouse_y / 2;
+		eof_scaled_mouse_y = mouse_y / 2;
 	}
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	eof_read_controller(&eof_guitar);
@@ -2047,7 +2047,7 @@ if(eof_key_code == KEY_PAUSE)
 						}
 					}
 				}//If the user strummed
-				if(eof_entering_note)
+				if(eof_entering_note && eof_entering_note_note)
 				{
 					eof_entering_note_note->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_note->pos - 10;
 					if(eof_snote != eof_last_snote)
@@ -2963,7 +2963,7 @@ if(eof_key_code == KEY_PAUSE)
 		if(!KEY_EITHER_CTRL && ((eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK)))
 		{	//If CTRL is not held down and the input method is rex mundi or Feedback
 			eof_hover_piece = -1;
-			if((eof_input_mode == EOF_INPUT_FEEDBACK) || ((eof_mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (eof_mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET)))
+			if((eof_input_mode == EOF_INPUT_FEEDBACK) || ((eof_scaled_mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (eof_scaled_mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET)))
 			{	//If the mouse is in the fretboard area (or Feedback input method is in use)
 				if(KEY_EITHER_SHIFT)
 				{
@@ -3458,7 +3458,7 @@ void eof_editor_logic(void)
 	int pos = eof_music_pos / eof_zoom;
 	int lpos;
 	long notelength;
-	int eof_mouse_x = mouse_x, eof_mouse_y = mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
+	int eof_scaled_mouse_x = mouse_x, eof_scaled_mouse_y = mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
 
 	if(!eof_song_loaded)
 		return;
@@ -3467,8 +3467,8 @@ void eof_editor_logic(void)
 
 	if(eof_screen_zoom)
 	{	//If x2 zoom is in effect, take that into account for the mouse position
-		eof_mouse_x = mouse_x / 2;
-		eof_mouse_y = mouse_y / 2;
+		eof_scaled_mouse_x = mouse_x / 2;
+		eof_scaled_mouse_y = mouse_y / 2;
 	}
 	eof_editor_logic_common();
 
@@ -3490,7 +3490,7 @@ void eof_editor_logic(void)
 		}
 
 		/* mouse is in the fretboard area (or Feedback input method is in use) */
-		if((eof_mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (eof_mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
+		if((eof_scaled_mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (eof_scaled_mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
 		{	//If the mouse is in the fretboard area
 			infretboard = 1;
 		}
@@ -3503,7 +3503,7 @@ void eof_editor_logic(void)
 			int revert_amount = 0;
 			char undo_made = 0;
 
-			lpos = pos < 300 ? (eof_mouse_x - 20) * eof_zoom : ((pos - 300) + eof_mouse_x - 20) * eof_zoom;	//Translate mouse position to a time position
+			lpos = pos < 300 ? (eof_scaled_mouse_x - 20) * eof_zoom : ((pos - 300) + eof_scaled_mouse_x - 20) * eof_zoom;	//Translate mouse position to a time position
 			if(infretboard)
 			{	//Only search for the mouse hover note if the mouse is actually in the fretboard area
 				eof_hover_note = eof_find_hover_note(lpos, x_tolerance, 1);	//Find the mouse hover note
@@ -3587,8 +3587,8 @@ void eof_editor_logic(void)
 			{
 				int ignore_range = 0;
 
-				eof_click_x = eof_mouse_x;
-				eof_click_y = eof_mouse_y;
+				eof_click_x = eof_scaled_mouse_x;
+				eof_click_y = eof_scaled_mouse_y;
 				eof_lclick_released = 0;
 				if(eof_hover_note >= 0)
 				{
@@ -3808,7 +3808,7 @@ void eof_editor_logic(void)
 					eof_mouse_drug++;
 					if(eof_mouse_drug == 11)
 					{
-						eof_mickeys_x = eof_mouse_x - eof_click_x;
+						eof_mickeys_x = eof_scaled_mouse_x - eof_click_x;
 					}
 				}
 				if((eof_mickeys_x != 0) && !eof_mouse_drug)
@@ -4119,9 +4119,9 @@ void eof_editor_logic(void)
 
 	/* select difficulty */
 	numtabs = eof_get_number_displayed_tabs();
-	if((eof_mouse_y >= eof_window_editor->y + 7) && (eof_mouse_y < eof_window_editor->y + 20 + 8) && (eof_mouse_x > 12) && (eof_mouse_x < 12 + numtabs * 80 + 12 - 1) && (mouse_b & 1) && !eof_full_screen_3d)
+	if((eof_scaled_mouse_y >= eof_window_editor->y + 7) && (eof_scaled_mouse_y < eof_window_editor->y + 20 + 8) && (eof_scaled_mouse_x > 12) && (eof_scaled_mouse_x < 12 + numtabs * 80 + 12 - 1) && (mouse_b & 1) && !eof_full_screen_3d)
 	{	//If the left mouse button is held down and the mouse is over one of the difficulty tabs, and full screen 3d mode isn't in effect
-		eof_hover_type = (eof_mouse_x - 12) / 80;	//Determine which tab number was clicked
+		eof_hover_type = (eof_scaled_mouse_x - 12) / 80;	//Determine which tab number was clicked
 		if(eof_hover_type < 0)
 		{	//Bounds check
 			eof_hover_type = 0;
@@ -4179,14 +4179,14 @@ void eof_editor_logic(void)
 		}
 		else
 		{	//Full screen 3D view is not in effect
-			if((eof_mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4 - 19) && (eof_mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18 + 8))
+			if((eof_scaled_mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4 - 19) && (eof_scaled_mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18 + 8))
 			{	//mouse is in beat marker area
 				lpos = pos < 300 ? (eof_song->beat[eof_selected_beat]->pos / eof_zoom + 20) : 300;
 				eof_prepare_menus();
 				(void) do_menu(eof_beat_menu, lpos, mouse_y);
 				eof_clear_input();
 			}
-			else if((eof_mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (eof_mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
+			else if((eof_scaled_mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (eof_scaled_mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
 			{	//mouse is in the fretboard area
 				if(eof_hover_note >= 0)
 				{
@@ -4225,7 +4225,7 @@ void eof_editor_logic(void)
 				}
 				eof_clear_input();
 			}
-			else if(eof_mouse_y < eof_window_3d->y)
+			else if(eof_scaled_mouse_y < eof_window_3d->y)
 			{
 				eof_prepare_menus();
 				(void) do_menu(eof_right_click_menu_normal, mouse_x, mouse_y);
@@ -4242,8 +4242,8 @@ void eof_vocal_editor_logic(void)
 
 	unsigned long i, notepos;
 	unsigned long tracknum;
-	EOF_SNAP_DATA drag_snap; // help with dragging across snap locations
-	int eof_mouse_x = mouse_x, eof_mouse_y = mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
+	EOF_SNAP_DATA drag_snap = {0, 0, 0, 0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0}; // help with dragging across snap locations
+	int eof_scaled_mouse_x = mouse_x, eof_scaled_mouse_y = mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
 
 	if(!eof_song_loaded)
 		return;
@@ -4253,8 +4253,8 @@ void eof_vocal_editor_logic(void)
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if(eof_screen_zoom)
 	{	//If x2 zoom is in effect, take that into account for the mouse position
-		eof_mouse_x = mouse_x / 2;
-		eof_mouse_y = mouse_y / 2;
+		eof_scaled_mouse_x = mouse_x / 2;
+		eof_scaled_mouse_y = mouse_y / 2;
 	}
 	eof_editor_logic_common();
 
@@ -4272,11 +4272,11 @@ void eof_vocal_editor_logic(void)
 		}
 
 		/* mouse is in the mini keyboard area */
-		if((eof_mouse_x < 20) && (eof_mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (eof_mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
+		if((eof_scaled_mouse_x < 20) && (eof_scaled_mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (eof_scaled_mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
 		{
 			eof_pen_lyric.pos = -1;
 			eof_pen_lyric.length = 1;
-			eof_pen_lyric.note = eof_vocals_offset + (EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.vocal_y - eof_mouse_y) / eof_screen_layout.vocal_tail_size;
+			eof_pen_lyric.note = eof_vocals_offset + (EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.vocal_y - eof_scaled_mouse_y) / eof_screen_layout.vocal_tail_size;
 			if((eof_pen_lyric.note < eof_vocals_offset) || (eof_pen_lyric.note >= eof_vocals_offset + eof_screen_layout.vocal_view_size))
 			{
 				eof_pen_lyric.note = 0;
@@ -4287,7 +4287,7 @@ void eof_vocal_editor_logic(void)
 			}
 			if(!eof_full_screen_3d && (mouse_b & 1))
 			{
-				int n = eof_vocals_offset + (EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.vocal_y - eof_mouse_y) / eof_screen_layout.vocal_tail_size;
+				int n = eof_vocals_offset + (EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.vocal_y - eof_scaled_mouse_y) / eof_screen_layout.vocal_tail_size;
 				if((n >= eof_vocals_offset) && (n < eof_vocals_offset + eof_screen_layout.vocal_view_size) && (n != eof_last_tone))
 				{
 					eof_mix_play_note(n);
@@ -4297,11 +4297,11 @@ void eof_vocal_editor_logic(void)
 		}
 
 		/* mouse is in the fretboard area */
-		else if((eof_mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (eof_mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
+		else if((eof_scaled_mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (eof_scaled_mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
 		{
 			int x_tolerance = 6 * eof_zoom;	//This is how far left or right of a lyric the mouse is allowed to be to still be considered to hover over that lyric
 			int pos = eof_music_pos / eof_zoom;
-			int lpos = pos < 300 ? (eof_mouse_x - 20) * eof_zoom : ((pos - 300) + eof_mouse_x - 20) * eof_zoom;
+			int lpos = pos < 300 ? (eof_scaled_mouse_x - 20) * eof_zoom : ((pos - 300) + eof_scaled_mouse_x - 20) * eof_zoom;
 			int rpos; // place to store pen_lyric.pos in case we are hovering over a note and need the original position before it was changed to the note location
 			unsigned long move_offset = 0;
 			char move_direction = 1;	//Assume right mouse movement by default
@@ -4320,7 +4320,7 @@ void eof_vocal_editor_logic(void)
 			}
 			else
 			{
-				eof_pen_lyric.note = eof_vocals_offset + (EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.vocal_y - eof_mouse_y) / eof_screen_layout.vocal_tail_size;
+				eof_pen_lyric.note = eof_vocals_offset + (EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.vocal_y - eof_scaled_mouse_y) / eof_screen_layout.vocal_tail_size;
 			}
 			if((eof_pen_lyric.note < eof_vocals_offset) || (eof_pen_lyric.note >= eof_vocals_offset + eof_screen_layout.vocal_view_size))
 			{
@@ -4356,8 +4356,8 @@ void eof_vocal_editor_logic(void)
 			{
 				int ignore_range = 0;
 
-				eof_click_x = eof_mouse_x;
-				eof_click_y = eof_mouse_y;
+				eof_click_x = eof_scaled_mouse_x;
+				eof_click_y = eof_scaled_mouse_y;
 				eof_lclick_released = 0;
 				if(eof_hover_note >= 0)
 				{
@@ -4580,7 +4580,7 @@ void eof_vocal_editor_logic(void)
 					eof_mouse_drug++;
 					if(eof_mouse_drug == 11)
 					{
-						eof_mickeys_x = eof_mouse_x - eof_click_x;
+						eof_mickeys_x = eof_scaled_mouse_x - eof_click_x;
 					}
 				}
 				if((eof_mickeys_x != 0) && !eof_mouse_drug)
@@ -4683,7 +4683,7 @@ void eof_vocal_editor_logic(void)
 					}
 
 					/* delete whole lyric if clicking word */
-					if((eof_mouse_y >= EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.lyric_y) && (eof_mouse_y < EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.lyric_y + 16))
+					if((eof_scaled_mouse_y >= EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.lyric_y) && (eof_scaled_mouse_y < EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.lyric_y + 16))
 					{
 						eof_track_delete_note(eof_song, eof_selected_track, eof_hover_note);	//Delete the hovered over lyric
 						eof_selection.current = EOF_MAX_NOTES - 1;
@@ -4899,7 +4899,7 @@ void eof_vocal_editor_logic(void)
 		}
 		else
 		{	//Full screen 3D view is not in effect
-			if((eof_mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4 - 19) && (eof_mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18 + 8))
+			if((eof_scaled_mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4 - 19) && (eof_scaled_mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18 + 8))
 			{	//mouse is in beat marker area
 				int pos = eof_music_pos / eof_zoom;
 				int lpos = pos < 300 ? (eof_song->beat[eof_selected_beat]->pos / eof_zoom + 20) : 300;
@@ -4908,7 +4908,7 @@ void eof_vocal_editor_logic(void)
 				(void) do_menu(eof_beat_menu, lpos, mouse_y);
 				eof_clear_input();
 			}
-			else if((eof_mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (eof_mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
+			else if((eof_scaled_mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (eof_scaled_mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
 			{	//mouse is in the fretboard area
 				if(eof_hover_note >= 0)
 				{
@@ -4948,7 +4948,7 @@ void eof_vocal_editor_logic(void)
 					eof_clear_input();
 				}
 			}
-			else if(eof_mouse_y < eof_window_3d->y)
+			else if(eof_scaled_mouse_y < eof_window_3d->y)
 			{
 				eof_prepare_menus();
 				(void) do_menu(eof_right_click_menu_normal, mouse_x, mouse_y);
@@ -6178,11 +6178,11 @@ unsigned char eof_find_pen_note_mask(void)
 	unsigned long laneborder;
 	unsigned long i;
 	unsigned long lanecount;
-	int eof_mouse_y = mouse_y;	//Rescaled mouse y coordinate that accounts for the x2 zoom display feature
+	int eof_scaled_mouse_y = mouse_y;	//Rescaled mouse y coordinate that accounts for the x2 zoom display feature
 
 	if(eof_screen_zoom)
 	{	//If x2 zoom is in effect, take that into account for the mouse position
-		eof_mouse_y = mouse_y / 2;
+		eof_scaled_mouse_y = mouse_y / 2;
 	}
 
 	//Determine which lane the mouse is in
@@ -6191,7 +6191,7 @@ unsigned char eof_find_pen_note_mask(void)
 	for(i = 0; i < lanecount; i++)
 	{	//For each of the usable lanes
 		laneborder = eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 15 + 10 + eof_screen_layout.note_y[i];	//This represents the y position of the boundary between the current lane and the next
-		if((eof_mouse_y < laneborder) && (eof_mouse_y > laneborder - eof_screen_layout.string_space))
+		if((eof_scaled_mouse_y < laneborder) && (eof_scaled_mouse_y > laneborder - eof_screen_layout.string_space))
 		{	//If the mouse's Y position is below the boundary to the next lane but above the boundary to the previous lane
 			eof_hover_piece = i;	//Store the lane number
 		}
@@ -6216,7 +6216,7 @@ void eof_editor_logic_common(void)
 	int pos = eof_music_pos / eof_zoom;
 	int npos;
 	unsigned long i;
-	int eof_mouse_x = mouse_x, eof_mouse_y = mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
+	int eof_scaled_mouse_x = mouse_x, eof_scaled_mouse_y = mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
 
 	if(!eof_song_loaded)
 		return;
@@ -6231,14 +6231,14 @@ void eof_editor_logic_common(void)
 
 	if(eof_screen_zoom)
 	{	//If x2 zoom is in effect, take that into account for the mouse position
-		eof_mouse_x = mouse_x / 2;
-		eof_mouse_y = mouse_y / 2;
+		eof_scaled_mouse_x = mouse_x / 2;
+		eof_scaled_mouse_y = mouse_y / 2;
 	}
 
 	if(eof_music_paused)
 	{	//If the chart is paused
 		/* mouse is in beat marker area */
-		if((eof_mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4 - 19) && (eof_mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18 + 8))
+		if((eof_scaled_mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4 - 19) && (eof_scaled_mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18 + 8))
 		{
 			if(eof_blclick_released)
 			{	//If the left mouse button is released
@@ -6252,11 +6252,11 @@ void eof_editor_logic_common(void)
 					{
 						npos = (20 - (pos - 300) + (eof_song->beat[i]->pos / eof_zoom));
 					}
-					if(eof_mouse_x <= npos - 16)
+					if(eof_scaled_mouse_x <= npos - 16)
 					{	//If the mouse is too far to the left of this (and all subsequent) beat markers
 						break;	//Stop checking the beats because none of them could have been clicked on
 					}
-					else if(eof_mouse_x < npos + 16)
+					else if(eof_scaled_mouse_x < npos + 16)
 					{	//Otherwise if the mouse is within the left and right boundaries of this beat's click window
 						eof_hover_beat = i;
 						break;
@@ -6270,7 +6270,7 @@ void eof_editor_logic_common(void)
 					eof_mouse_drug++;
 					if(eof_mouse_drug == 11)
 					{
-						eof_mickeys_x = eof_mouse_x - eof_click_x;
+						eof_mickeys_x = eof_scaled_mouse_x - eof_click_x;
 					}
 				}
 				if((eof_mickeys_x != 0) && !eof_mouse_drug)
@@ -6285,7 +6285,7 @@ void eof_editor_logic_common(void)
 						eof_select_beat(eof_hover_beat);
 					}
 					eof_blclick_released = 0;
-					eof_click_x = eof_mouse_x;
+					eof_click_x = eof_scaled_mouse_x;
 					eof_mouse_drug = 0;
 				}
 
@@ -6417,11 +6417,11 @@ void eof_editor_logic_common(void)
 		}
 
 		/* handle scrollbar click */
-		if((eof_mouse_y >= eof_window_editor->y + eof_window_editor->h - 17) && (eof_mouse_y < eof_window_editor->y + eof_window_editor->h))
+		if((eof_scaled_mouse_y >= eof_window_editor->y + eof_window_editor->h - 17) && (eof_scaled_mouse_y < eof_window_editor->y + eof_window_editor->h))
 		{
 			if(!eof_full_screen_3d && (mouse_b & 1))
 			{
-				eof_music_actual_pos = ((float)eof_chart_length / (float)(eof_screen->w - 8)) * (float)(eof_mouse_x - 4);
+				eof_music_actual_pos = ((float)eof_chart_length / (float)(eof_screen->w - 8)) * (float)(eof_scaled_mouse_x - 4);
 				if(eof_music_actual_pos > eof_chart_length)
 				{
 					eof_music_actual_pos = eof_chart_length;
@@ -6514,11 +6514,11 @@ void eof_editor_logic_common(void)
 	}
 
 	/* handle playback controls */
-	if((eof_mouse_x >= eof_screen_layout.controls_x) && (eof_mouse_x < eof_screen_layout.controls_x + 139) && (eof_mouse_y >= 22 + 8) && (eof_mouse_y < 22 + 17 + 8))
+	if((eof_scaled_mouse_x >= eof_screen_layout.controls_x) && (eof_scaled_mouse_x < eof_screen_layout.controls_x + 139) && (eof_scaled_mouse_y >= 22 + 8) && (eof_scaled_mouse_y < 22 + 17 + 8))
 	{
 		if(!eof_full_screen_3d && (mouse_b & 1))
 		{
-			eof_selected_control = (eof_mouse_x - eof_screen_layout.controls_x) / 30;
+			eof_selected_control = (eof_scaled_mouse_x - eof_screen_layout.controls_x) / 30;
 			eof_blclick_released = 0;
 			if(eof_selected_control == 1)
 			{

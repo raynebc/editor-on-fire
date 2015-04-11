@@ -2620,7 +2620,7 @@ int eof_menu_split_lyric(void)
 
 int eof_menu_solo_mark(void)
 {
-	unsigned long j, sel_start, sel_end;
+	unsigned long j, sel_start = 0, sel_end = 0;
 	long insp = -1;
 	EOF_PHRASE_SECTION *soloptr = NULL;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
@@ -2699,7 +2699,7 @@ int eof_menu_solo_erase_all(void)
 
 int eof_menu_star_power_mark(void)
 {
-	unsigned long j, sel_start, sel_end;
+	unsigned long j, sel_start = 0, sel_end = 0;
 	long insp = -1;
 	EOF_PHRASE_SECTION *starpowerptr = NULL;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
@@ -2784,7 +2784,7 @@ int eof_menu_star_power_erase_all(void)
 
 int eof_menu_lyric_line_mark(void)
 {
-	unsigned long i, j, tracknum, sel_start, sel_end;
+	unsigned long i, j, tracknum, sel_start = 0, sel_end = 0;
 	int originalflags = 0; //Used to apply the line's original flags after the line is recreated
 	int note_selection_updated;
 
@@ -3887,13 +3887,13 @@ int eof_menu_note_edit_pro_guitar_note(void)
 
 			if(eof_count_selected_notes(NULL, 0) > 1)
 			{	//If multiple notes are selected, warn the user
-				int retval;
+				int retval2;
 
 				eof_clear_input();
 				if(!dont_ask)
 				{	//If the user didn't suppress this prompt
-					retval = alert3(NULL, "Warning:  This information will be applied to all selected notes.", NULL, "&OK", "&Cancel", "OK, don't ask again", 'y', 'n', 0);
-					if(retval == 2)
+					retval2 = alert3(NULL, "Warning:  This information will be applied to all selected notes.", NULL, "&OK", "&Cancel", "OK, don't ask again", 'y', 'n', 0);
+					if(retval2 == 2)
 					{	//If user opts to cancel the operation
 						if(note_selection_updated)
 						{	//If the only note modified was the seek hover note
@@ -3905,7 +3905,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 						eof_pen_visible = 1;
 						return 1;
 					}
-					if(retval == 3)
+					if(retval2 == 3)
 					{	//If this user is suppressing this prompt
 						dont_ask = 1;
 					}
@@ -4875,7 +4875,7 @@ int eof_correct_chord_fingerings_menu(void)
 
 int eof_correct_chord_fingerings_option(char report, char *undo_made)
 {
-	unsigned long ctr, ctr2, tracknum, shapenum;
+	unsigned long ctr, ctr2, tracknum, shapenum = 0;
 	EOF_PRO_GUITAR_TRACK *tp;
 	char cancelled, user_prompted = 0, auto_complete = 0, restore_tech_view;
 	int result;
@@ -5401,7 +5401,7 @@ int eof_menu_note_remove_palm_muting(void)
 
 int eof_menu_arpeggio_mark_logic(int handshape)
 {
-	unsigned long i, j, sel_start, sel_end;
+	unsigned long i, j, sel_start = 0, sel_end = 0;
 	char existingphrase = 0;				//Is set to nonzero if any selected notes are within an existing phrase
 	unsigned long existingphrasenum = 0;	//Is set to the last arpeggio phrase number that encompasses existing notes
 	unsigned long tracknum;
@@ -5605,7 +5605,7 @@ int eof_menu_handshape_erase_all(void)
 
 int eof_menu_trill_mark(void)
 {
-	unsigned long j, sel_start, sel_end;
+	unsigned long j, sel_start = 0, sel_end = 0;
 	char existingphrase = 0;				//Is set to nonzero if any selected notes are within an existing phrase
 	unsigned long existingphrasenum = 0;	//Is set to the last trill phrase number that encompasses existing notes
 	EOF_PHRASE_SECTION *sectionptr;
@@ -5650,7 +5650,7 @@ int eof_menu_trill_mark(void)
 
 int eof_menu_tremolo_mark(void)
 {
-	unsigned long j, sel_start, sel_end;
+	unsigned long j, sel_start = 0, sel_end = 0;
 	char existingphrase = 0;				//Is set to nonzero if any selected notes are within an existing phrase
 	unsigned long existingphrasenum = 0;	//Is set to the last tremolo phrase number that encompasses existing notes
 	EOF_PHRASE_SECTION *sectionptr;
@@ -5710,7 +5710,7 @@ int eof_menu_tremolo_mark(void)
 
 int eof_menu_slider_mark(void)
 {
-	unsigned long j, sel_start, sel_end;
+	unsigned long j, sel_start = 0, sel_end = 0;
 	char existingphrase = 0;				//Is set to nonzero if any selected notes are within an existing phrase
 	unsigned long existingphrasenum = 0;	//Is set to the last slider phrase number that encompasses existing notes
 	EOF_PHRASE_SECTION *sectionptr;
@@ -8023,7 +8023,7 @@ int eof_menu_pro_guitar_remove_fingering(void)
 
 int eof_note_menu_read_gp_lyric_texts(void)
 {
-	unsigned long ctr, tracknum, linestart, lastlyricend;
+	unsigned long ctr, tracknum, linestart, lastlyricend = 0;
 	char * returnedfn = NULL;
 	PACKFILE *fp;
 	EOF_VOCAL_TRACK *tp;
@@ -8601,7 +8601,7 @@ int eof_menu_note_move_tech_note_to_previous_note_pos(void)
 
 int eof_menu_note_move_by_grid_snap(int dir)
 {
-	unsigned long target, current, i;
+	unsigned long target = 0, current, i;
 	char undo_made = 0;
 
 	if(eof_count_selected_notes(NULL, 0) == 0)

@@ -382,9 +382,9 @@ int eof_filebuffer_find_bytes(filebuffer *fb, const void *bytes, size_t searchle
 
 int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *target, char forcestrum)
 {
-	unsigned long numnotes, dword, ctr, notesize = 0;
-	unsigned int length, isexpertplus;
-	unsigned char notemask, accentmask, fixednotemask;
+	unsigned long numnotes = 0, dword = 0, ctr, notesize = 0;
+	unsigned int length = 0, isexpertplus;
+	unsigned char notemask = 0, accentmask = 0, fixednotemask;
 	EOF_NOTE *newnote = NULL;
 
 	if(!fb || !sp || !target)
@@ -530,8 +530,8 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 
 int eof_gh_read_sp_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *target)
 {
-	unsigned long numphrases, phrasesize, dword, ctr;
-	unsigned int length;
+	unsigned long numphrases = 0, phrasesize = 0, dword = 0, ctr;
+	unsigned int length = 0;
 
 	if(!fb || !sp || !target)
 		return -1;
@@ -602,7 +602,7 @@ int eof_gh_read_sp_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *target
 
 int eof_gh_read_tap_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *target)
 {
-	unsigned long numphrases, phrasesize, dword, ctr, length;
+	unsigned long numphrases = 0, phrasesize = 0, dword = 0, ctr, length = 0;
 
 	if(!fb || !sp || !target)
 		return -1;
@@ -714,7 +714,7 @@ void eof_process_gh_lyric_text(EOF_SONG *sp)
 void eof_process_gh_lyric_text_u(EOF_SONG *sp)
 {
 	unsigned long ctr, ctr2, length, prevlength, index;
-	char *string, *prevstring, buffer[EOF_MAX_LYRIC_LENGTH+1];
+	char *string, *prevstring, buffer[EOF_MAX_LYRIC_LENGTH+1] = {0};
 
 	for(ctr = 0; ctr < eof_get_track_size(sp, EOF_TRACK_VOCALS); ctr++)
 	{	//For each lyric
@@ -831,10 +831,10 @@ void eof_process_gh_lyric_phrases(EOF_SONG *sp)
 
 int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 {
-	unsigned long ctr, ctr2, numvox, voxsize, voxstart, numlyrics, lyricsize, lyricstart, tracknum, phrasesize, numphrases, phrasestart;
+	unsigned long ctr, ctr2, numvox = 0, voxsize = 0, voxstart = 0, numlyrics = 0, lyricsize = 0, lyricstart = 0, tracknum, phrasesize = 0, numphrases = 0, phrasestart = 0;
 	char *lyricbuffer = NULL, matched;
-	unsigned int voxlength;
-	unsigned char voxpitch;
+	unsigned int voxlength = 0;
+	unsigned char voxpitch = 0;
 	EOF_LYRIC *ptr = NULL;
 	EOF_VOCAL_TRACK * tp = NULL;
 	char vocalsectionfound = 0;
@@ -1270,8 +1270,8 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 {
 	EOF_SONG * sp;
 	filebuffer *fb;
-	unsigned long dword, ctr, ctr2, numbeats, numsigs, lastfretbar = 0, lastsig = 0;
-	unsigned char tsnum, tsden;
+	unsigned long dword = 0, ctr, ctr2, numbeats = 0, numsigs = 0, lastfretbar = 0, lastsig = 0;
+	unsigned char tsnum = 0, tsden = 0;
 	char forcestrum = 0;
 
 //Load the GH file into memory
@@ -1505,7 +1505,7 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 
 unsigned long eof_gh_process_section_header(filebuffer *fb, const char *sectionname, unsigned long **arrayptr, unsigned long qbindex)
 {
-	unsigned long dword, arraysize, size, ctr;
+	unsigned long dword = 0, arraysize, size = 0, ctr;
 
 	if(!fb || !sectionname || !arrayptr)
 		return 0;	//Return error
@@ -1634,7 +1634,7 @@ unsigned long eof_gh_process_section_header(filebuffer *fb, const char *sectionn
 
 unsigned long eof_gh_read_array_header(filebuffer *fb, unsigned long qbpos, unsigned long qbindex)
 {
-	unsigned long size, offset;
+	unsigned long size = 0, offset = 0;
 
 	if(!fb)
 		return 0;
@@ -1673,8 +1673,8 @@ unsigned long eof_char_to_binary(unsigned char input)
 
 int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, gh_section *target, unsigned long qbindex, char forcestrum)
 {
-	unsigned long numnotes, dword, ctr, ctr2, arraysize, *arrayptr;
-	unsigned int length, notemask, fixednotemask, isexpertplus;
+	unsigned long numnotes, dword = 0, ctr, ctr2, arraysize, *arrayptr = NULL;
+	unsigned int length = 0, notemask = 0, fixednotemask, isexpertplus;
 	EOF_NOTE *newnote = NULL;
 	char buffer[101] = {0};
 
@@ -1687,6 +1687,7 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 	eof_log(eof_log_string, 1);
 #endif
 	arraysize = eof_gh_process_section_header(fb, buffer, &arrayptr, qbindex);	//Parse the location of the 1D arrays of section data
+	assert(arrayptr != NULL);	//Unneeded assertion to resolve a false positive in Splint
 	for(ctr = 0; ctr < arraysize; ctr++)
 	{	//For each 1D array of note data
 		numnotes = eof_gh_read_array_header(fb, arrayptr[ctr], qbindex);	//Process the array header (get size and seek to first data value)
@@ -1800,7 +1801,7 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 
 int eof_gh_read_sp_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, gh_section *target, unsigned long qbindex)
 {
-	unsigned long numphrases, dword, length, ctr, ctr2, arraysize, *arrayptr;
+	unsigned long numphrases, dword = 0, length = 0, ctr, ctr2, arraysize, *arrayptr = NULL;
 	char buffer[101] = {0};
 
 	if(!fb || !sp || !target || !songname)
@@ -1814,6 +1815,7 @@ int eof_gh_read_sp_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname
 	arraysize = eof_gh_process_section_header(fb, buffer, &arrayptr, qbindex);	//Parse the location of the 1D arrays of section data
 	for(ctr = 0; ctr < arraysize; ctr++)
 	{	//For each 1D array of star power data
+		assert(arrayptr != NULL);	//Unneeded check to resolve false positive in Splint
 		numphrases = eof_gh_read_array_header(fb, arrayptr[ctr], qbindex);	//Process the array header (get size and seek to first data value)
 		if(numphrases % 3)
 		{	//The value in numphrases is the number of dwords used to define this star power array (each phrase should be 3 dwords in size)
@@ -1870,7 +1872,7 @@ int eof_gh_read_sp_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname
 
 int eof_gh_read_tap_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, gh_section *target, unsigned long qbindex)
 {
-	unsigned long numphrases, dword, length, ctr, ctr2, arraysize, *arrayptr;
+	unsigned long numphrases, dword = 0, length = 0, ctr, ctr2, arraysize, *arrayptr = NULL;
 	char buffer[101] = {0};
 
 	if(!fb || !sp || !target || !songname)
@@ -1884,6 +1886,7 @@ int eof_gh_read_tap_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songnam
 	arraysize = eof_gh_process_section_header(fb, buffer, &arrayptr, qbindex);	//Parse the location of the 1D arrays of section data
 	for(ctr = 0; ctr < arraysize; ctr++)
 	{	//For each 1D array of tap phrase data
+		assert(arrayptr != NULL);	//Unneeded check to resolve a false positive with Coverity
 		numphrases = eof_gh_read_array_header(fb, arrayptr[ctr], qbindex);	//Process the array header (get size and seek to first data value)
 		if(numphrases % 3)
 		{	//The value in numphrases is the number of dwords used to define this tap array (each phrase should be 3 dwords in size)
@@ -1933,14 +1936,14 @@ int eof_gh_read_tap_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songnam
 
 int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, unsigned long qbindex)
 {
-	unsigned long ctr, ctr2, numvox, voxstart, voxlength, voxpitch, numphrases, phrasestart, arraysize, *arrayptr, dword, tracknum;
+	unsigned long ctr, ctr2, numvox, voxstart = 0, voxlength = 0, voxpitch = 0, numphrases, phrasestart = 0, arraysize, *arrayptr = NULL, dword = 0, tracknum;
 	EOF_LYRIC *ptr = NULL;
 	EOF_VOCAL_TRACK * tp = NULL;
 	char buffer[201], matched;
 	struct QBlyric *head = NULL, *tail = NULL, *linkptr = NULL;	//Used to maintain the linked list matching lyric text with checksums
 	unsigned char lyricid[] = {0x20, 0x22, 0x5C, 0x4C};	//This hex sequence is within each lyric entry between the lyric text and its checksum
 	char *newtext = NULL;
-	unsigned long checksum, length;
+	unsigned long checksum = 0, length;
 
 	if(!fb || !sp || !songname)
 		return -1;
@@ -1955,6 +1958,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 	arraysize = eof_gh_process_section_header(fb, buffer, &arrayptr, qbindex);	//Parse the location of the 1D arrays of section data
 	for(ctr = 0; ctr < arraysize; ctr++)
 	{	//For each 1D array of voxnote data
+		assert(arrayptr != NULL);	//Unneeded check to resolve a false positive with Coverity
 		numvox = eof_gh_read_array_header(fb, arrayptr[ctr], qbindex);	//Process the array header (get size and seek to first data value)
 		if(numvox % 3)
 		{	//The value in numvox is the number of dwords used to define this vox array (each vox note should be 3 dwords in size)
@@ -2115,6 +2119,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 	arraysize = eof_gh_process_section_header(fb, buffer, &arrayptr, qbindex);	//Parse the location of the 1D arrays of section data
 	for(ctr = 0; ctr < arraysize; ctr++)
 	{	//For each block of lyric text data
+		assert(arrayptr != NULL);	//Unneeded check to resolve a false positive with Coverity
 		fb->index = arrayptr[ctr] + qbindex + 4;	//Seek four bytes past the beginning of this block
 		if(eof_filebuffer_get_dword(fb, &dword))	//Read the offset of the start of data
 		{	//If there was an error reading the next 4 byte value
@@ -2241,7 +2246,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 	arraysize = eof_gh_process_section_header(fb, buffer, &arrayptr, qbindex);	//Parse the location of the 1D arrays of section data
 	for(ctr = 0; ctr < arraysize; ctr++)
 	{	//For each 1D array of voxnote data
-		assert(arrayptr != NULL);	//Put an assertion here to resolve a false positive with Coverity
+		assert(arrayptr != NULL);	//Unneeded check to resolve a false positive with Coverity
 		numphrases = eof_gh_read_array_header(fb, arrayptr[ctr], qbindex);	//Process the array header (get size and seek to first data value)
 		if(numphrases % 2)
 		{	//The value in numphrases is the number of dwords used to define this vocal phrases array (each phrase should be 2 dwords in size)
@@ -2295,9 +2300,9 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 {
 	EOF_SONG * sp;
 	filebuffer *fb;
-	char filename[101], songname[101], buffer[101], forcestrum = 0;
-	unsigned char byte;
-	unsigned long index, ctr, ctr2, ctr3, arraysize, *arrayptr, numbeats, numsigs, tsnum, tsden, dword, lastfretbar = 0, lastsig = 0;
+	char filename[101] = {0}, songname[101], buffer[101], forcestrum = 0;
+	unsigned char byte = 0;
+	unsigned long index, ctr, ctr2, ctr3, arraysize, *arrayptr = NULL, numbeats, numsigs, tsnum = 0, tsden = 0, dword = 0, lastfretbar = 0, lastsig = 0;
 	unsigned long qbindex;	//Will store the file index of the QB header
 
 	eof_log("Attempting to import QB format Guitar Hero chart", 1);
@@ -2409,6 +2414,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 	}
 	for(ctr = 0; ctr < arraysize; ctr++)
 	{	//For each 1D array of fretbar data
+		assert(arrayptr != NULL);	//Unneeded check to resolve a false positive with Coverity
 		numbeats = eof_gh_read_array_header(fb, arrayptr[ctr], qbindex);	//Process the array header (get size and seek to first data value)
 #ifdef GH_IMPORT_DEBUG
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \tNumber of fretbars = %lu", numbeats);
@@ -2590,7 +2596,7 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 	unsigned char *sectionid, char_size;
 	size_t section_id_size;
 	unsigned char quote_rewind;	//The number of bytes before a section name's opening quote mark its checknum exists
-	char *buffer, checksumbuff[9], checksumbuffuni[18], *name;
+	char *buffer = NULL, checksumbuff[9] = {0}, checksumbuffuni[18] = {0}, *name;
 	struct QBlyric *head = NULL, *tail = NULL, *linkptr = NULL, *temp;	//Used to maintain the linked list matching section names with checksums
 	char abnormal_markers = 0;	//Normally, section names don't begin with "\L", but some files have them with this prefix
 	unsigned long lastseekstartpos;
@@ -2817,7 +2823,7 @@ char *eof_sections_list_all(int index, int * size)
 
 int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 {
-	unsigned long numsections, checksum, dword, ctr, lastsectionpos = 0;
+	unsigned long numsections = 0, checksum = 0, dword = 0, ctr, lastsectionpos = 0;
 	char matched, sectionsfound = 0;
 	int prompt;
 	struct QBlyric *head = NULL, *linkptr = NULL;	//Used to maintain the linked list matching section names with checksums
@@ -2952,7 +2958,7 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 
 int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 {
-	unsigned long checksum, dword, ctr, findpos, findpos2, lastsectionpos = 0;
+	unsigned long checksum = 0, dword = 0, ctr, findpos, findpos2, lastsectionpos = 0;
 	char sectionsfound = 0, validated, found;
 	int prompt;
 	struct QBlyric *head = NULL, *linkptr = NULL;	//Used to maintain the linked list matching section names with checksums

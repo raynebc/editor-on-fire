@@ -374,6 +374,8 @@ EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp)
 			sp->beat[sp->beats]->num_beats_in_measure = 0;
 			sp->beat[sp->beats]->beat_unit = 0;
 			sp->beat[sp->beats]->contained_section_event = -1;
+			sp->beat[sp->beats]->contained_rs_section_event = -1;
+			sp->beat[sp->beats]->contained_rs_section_event_instance_number = -1;
 			sp->beat[sp->beats]->contains_tempo_change = 0;
 			sp->beat[sp->beats]->contains_ts_change = 0;
 			sp->beat[sp->beats]->contains_end_event = 0;

@@ -114,7 +114,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	char searchpath[1024] = {0};
 	char backup_filename[1024] = {0};
 	char oldoggpath[1024] = {0};
-	struct al_ffblk info; // for file search
+	struct al_ffblk info = {0, 0, 0, {0}, NULL}; // for file search
 	int ret=0;
 	struct dBAnchor * current_anchor;
 	struct dbText * current_event;
@@ -400,8 +400,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 				struct dbNote * current_note = current_track->notes;
 				unsigned long lastpos = -1;	//The position of the last imported note (not updated for sections that are parsed)
 				EOF_NOTE * new_note = NULL;
-				unsigned long tracknum = sp->track[track]->tracknum;
 
+				tracknum = sp->track[track]->tracknum;
 				while(current_note)
 				{
 					/* import star power */
@@ -518,6 +518,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	eof_selected_ogg = 0;
 
 	/* check if there were lane 5 drums imported */
+	assert(sp != NULL);	//Unneeded assertion to resolve false positive in Splint
 	tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
 	for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
 	{	//For each note in the drum track

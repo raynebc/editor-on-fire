@@ -118,7 +118,7 @@ EOF_SONG *eof_load_bf(char * fn)
 	#define BF_IMPORT_BUFFER_SIZE 2048
 	char buffer[BF_IMPORT_BUFFER_SIZE + 1] = {0};	//Used to read strings
 	char *lang, lang_english[] = "English", lang_japanese[] = "Japanese", lang_german[] = "German", lang_italian[] = "Italian", lang_spanish[] = "Spanish", lang_french[] = "French", *string;
-	unsigned long sectionctr, ctr, ctr2, dword = 0, dword2 = 0, dword3 = 0, dword4, numstbentries, offset;
+	unsigned long sectionctr, ctr, ctr2, dword = 0, dword2 = 0, dword3 = 0, dword4, numstbentries = 0, offset;
 	unsigned long fileadd = 0;				//Use this to track the address within the input file, since Allegro's file I/O routines don't offer a way to determine this
 	unsigned long long qword, qword2, qword3;
 	int word;
@@ -137,7 +137,7 @@ EOF_SONG *eof_load_bf(char * fn)
 	double curbeatlen, curtime;					//Used to build the tempo map
 	unsigned long curtimems;					//Used to build the tempo map
 	unsigned long lastitem = 0;					//Used to track the realtime position of the last item in the chart, used to build the tempo map
-	unsigned long start, temp;					//Used to correct lyric line positions
+	unsigned long lyrstart, temp;				//Used to correct lyric line positions
 
 	eof_log("\tImporting Bandfuse file", 1);
 	eof_log("eof_load_bf() entered", 1);
@@ -411,7 +411,7 @@ EOF_SONG *eof_load_bf(char * fn)
 		}//If this is an STbl header
 		else if(!strcmp(header,"ZOBJ"))
 		{	//If this is a ZOBJ header
-			unsigned long zobjsize;
+			unsigned long zobjsize = 0;
 
 			fileadd += 4;	//Update file address
 			dword = qword = qword2 = qword3 = 0;
@@ -460,8 +460,8 @@ EOF_SONG *eof_load_bf(char * fn)
 			if(string)
 			{	//If the name of the string was identified
 				char *ptr;
-				unsigned long entryid, entrysize, entrycount, startms, endms;
-				float start, end, tempo;
+				unsigned long entryid = 0, entrysize = 0, entrycount = 0, startms, endms;
+				float start = 0.0, end = 0.0, tempo = 0.0;
 
 				pack_ReadDWORDBE(inf, &entryid);	//Read entry ID
 				pack_ReadDWORDBE(inf, &entrysize);	//Read entry size
@@ -615,16 +615,16 @@ EOF_SONG *eof_load_bf(char * fn)
 				}
 				else if((entryid == 11) && (entrysize == 64))
 				{	//Tab object
-					float amount;
+					float amount = 0.0;
 					EOF_PRO_GUITAR_TRACK *tp = NULL;	//A pointer to appropriate destination pro guitar track referenced by this ZOBJ object
 					EOF_PRO_GUITAR_NOTE *np = NULL;		//A pointer to the most recently created note
 					EOF_PRO_GUITAR_NOTE *npp = NULL;	//A pointer to the previously created note
 					unsigned char curdiff;				//The difficulty referenced by this ZOBJ object
-					unsigned long flags, bendtype, vibrato, stringnum, fret, finger, statuses, statuses2, statuses3;
+					unsigned long flags, bendtype = 0 , vibrato = 0 , stringnum = 0 , fret = 0 , finger = 0 , statuses = 0 , statuses2 = 0 , statuses3 = 0 ;
 					char *tech;
 					unsigned long prevfret = 0;			//Used to track the fret value of the previous note, for HO/PO tracking
-					float prevamount;					//Used to track the slide/bend/trill amount of the previous note, for pre-bend tracking
-					unsigned long prevbendtype;
+					float prevamount = 0.0;				//Used to track the slide/bend/trill amount of the previous note, for pre-bend tracking
+					unsigned long prevbendtype = 0;
 
 					//Determine the track difficulty this ZOBJ section refers to
 					if(strstr(string, "bss_"))
@@ -1001,7 +1001,7 @@ EOF_SONG *eof_load_bf(char * fn)
 
 	//Correct the lyric phrases, as the Bandfuse format effectively only roughly defines line break positions
 	eof_track_sort_notes(sp, EOF_TRACK_VOCALS);
-	start = 0;	//The first lyric line will apply beginning at the start of the chart
+	lyrstart = 0;	//The first lyric line will apply beginning at the start of the chart
 
 	//Adjust the lyric line start and end positions to correctly reflect their scope
 	for(ctr = 0; ctr < sp->vocal_track[0]->lines; ctr++)
@@ -1010,9 +1010,9 @@ EOF_SONG *eof_load_bf(char * fn)
 
 		//Extend the lyric line up to this line break
 		temp = llp->start_pos;
-		llp->start_pos = start;	//This lyric line begins where the previous line break ended (or the beginning of the chart if this is the first line break)
-		start = llp->end_pos;	//The next lyric line will begin at the end of this line break
-		llp->end_pos = temp;	//This lyric line extends to the beginning of the line break
+		llp->start_pos = lyrstart;	//This lyric line begins where the previous line break ended (or the beginning of the chart if this is the first line break)
+		lyrstart = llp->end_pos;	//The next lyric line will begin at the end of this line break
+		llp->end_pos = temp;		//This lyric line extends to the beginning of the line break
 	}
 
 	//Align the lyric line with the first and last lyric in its scope

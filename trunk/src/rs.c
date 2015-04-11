@@ -1,4 +1,5 @@
 #include <allegro.h>
+#include <assert.h>
 #include <time.h>
 #include "agup/agup.h"
 #include "beat.h"
@@ -399,7 +400,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	char buffer[600] = {0}, buffer2[600] = {0};
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
-	unsigned long ctr, ctr2, ctr3, ctr4, ctr5, numsections, stringnum, bitmask, numsinglenotes, numchords, *chordlist, chordlistsize, xml_end, numevents = 0;
+	unsigned long ctr, ctr2, ctr3, ctr4, ctr5, numsections, stringnum, bitmask, numsinglenotes, numchords, *chordlist = NULL, chordlistsize, xml_end, numevents = 0;
 	EOF_PRO_GUITAR_TRACK *tp;
 	char *arrangement_name;	//This will point to the track's native name unless it has an alternate name defined
 	unsigned numdifficulties;
@@ -413,12 +414,12 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	char openg[] = {-2,-2,0,0,0,-2};
 	char *tuning;
 	char isebtuning = 1;	//Will track whether all strings are tuned to -1
-	char notename[EOF_NAME_LENGTH+1];	//String large enough to hold any chord name supported by EOF
-	int scale, chord, isslash, bassnote;	//Used for power chord detection
+	char notename[EOF_NAME_LENGTH+1] = {0};	//String large enough to hold any chord name supported by EOF
+	int scale = 0, chord = 0, isslash = 0, bassnote = 0;	//Used for power chord detection
 	int standard_tuning = 0, non_standard_chords = 0, barre_chords = 0, power_chords = 0, notenum, dropd_tuning = 1, dropd_power_chords = 0, open_chords = 0, double_stops = 0, palm_mutes = 0, harmonics = 0, hopo = 0, tremolo = 0, slides = 0, bends = 0, tapping = 0, vibrato = 0, slappop = 0, octaves = 0, fifths_and_octaves = 0;	//Used for technique detection
 	char is_bass = 0;	//Is set to nonzero if the specified track is to be considered a bass guitar track
-	unsigned long chordid, handshapectr;
-	unsigned long handshapestart, handshapeend;
+	unsigned long chordid = 0, handshapectr = 0;
+	unsigned long handshapestart = 0, handshapeend = 0;
 	long nextnote;
 	unsigned long originalbeatcount;	//If beats are padded to reach the beginning of the next measure (for DDC), this will track the project's original number of beats
 	char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct notes are exported
@@ -754,7 +755,6 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			if(eof_note_count_rs_lanes(sp, track, ctr - 1, 1) > 1)
 			{	//If this note will export as a chord (at least two non ghosted/muted gems)
 				unsigned long target = EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_HO | EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC | EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE | EOF_PRO_GUITAR_NOTE_FLAG_POP | EOF_PRO_GUITAR_NOTE_FLAG_SLAP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_NOTE_FLAG_IS_TREMOLO;	//A list of all statuses to try to notate for chords
-				unsigned long bitmask;
 				EOF_PRO_GUITAR_NOTE *new_note;
 
 				if(tp->note[ctr - 1]->flags & target)
@@ -790,15 +790,15 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}
 	else
 	{	//There were chords
-		long fret0, fret1, fret2, fret3, fret4, fret5;	//Will store the fret number played on each string (-1 means the string is not played)
+		long fret0 = 0, fret1 = 0, fret2 = 0, fret3 = 0, fret4 = 0, fret5 = 0;	//Will store the fret number played on each string (-1 means the string is not played)
 		long *fret[6] = {&fret0, &fret1, &fret2, &fret3, &fret4, &fret5};	//Allow the fret numbers to be accessed via array
 		char *fingerunused = "-1";
-		char *finger0, *finger1, *finger2, *finger3, *finger4, *finger5;	//Each will be set to either fingerunknown or fingerunused
+		char *finger0 = NULL, *finger1 = NULL, *finger2 = NULL, *finger3 = NULL, *finger4 = NULL, *finger5 = NULL;	//Each will be set to either fingerunknown or fingerunused
 		char **finger[6] = {&finger0, &finger1, &finger2, &finger3, &finger4, &finger5};	//Allow the finger strings to be accessed via array
 		char finger0def[2] = "0", finger1def[2] = "1", finger2def[2] = "2", finger3def[2] = "3", finger4def[2] = "4", finger5def[2] = "5";	//Static strings for building manually-defined finger information
 		char *fingerdef[6] = {finger0def, finger1def, finger2def, finger3def, finger4def, finger5def};	//Allow the fingerdef strings to be accessed via array
-		unsigned long bitmask, shapenum;
-		EOF_PRO_GUITAR_NOTE temp;	//Will have a matching chord shape definition's fingering applied to
+		unsigned long shapenum = 0;
+		EOF_PRO_GUITAR_NOTE temp = {{0}, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};	//Will have a matching chord shape definition's fingering applied to
 		unsigned char *effective_fingering;	//Will point to either a note's own finger array or one of that of the temp pro guitar note structure above
 
 		(void) snprintf(buffer, sizeof(buffer) - 1, "  <chordTemplates count=\"%lu\">\n", chordlistsize);
@@ -806,6 +806,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		for(ctr = 0; ctr < chordlistsize; ctr++)
 		{	//For each of the entries in the unique chord list
 			notename[0] = '\0';	//Empty the note name string
+			assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
 			(void) eof_build_note_name(sp, track, chordlist[ctr], notename);	//Build the note name (if it exists) into notename[]
 
 			effective_fingering = tp->note[chordlist[ctr]]->finger;	//By default, use the chord list entry's finger array
@@ -828,14 +829,14 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					*(fret[ctr2]) += tp->capo;	//Apply the capo position
 					if(effective_fingering[ctr2])
 					{	//If the fingering for this string is defined
-						char *temp = fingerdef[ctr2];	//Simplify logic below
-						temp[0] = '0' + effective_fingering[ctr2];	//Convert decimal to ASCII
-						temp[1] = '\0';	//Truncate string
-						if(temp[0] == '5')
+						char *str = fingerdef[ctr2];	//Simplify logic below
+						str[0] = '0' + effective_fingering[ctr2];	//Convert decimal to ASCII
+						str[1] = '\0';	//Truncate string
+						if(str[0] == '5')
 						{	//If this fingering specifies the thumb
-							temp[0] = '0';	//Convert from EOF's numbering (5 = thumb) to Rocksmith's numbering (0 = thumb)
+							str[0] = '0';	//Convert from EOF's numbering (5 = thumb) to Rocksmith's numbering (0 = thumb)
 						}
-						*(finger[ctr2]) = temp;
+						*(finger[ctr2]) = str;
 					}
 					else
 					{	//The fingering is not defined, regardless of whether the string is open or fretted
@@ -1134,7 +1135,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 								if((flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) == 0)
 								{	//At this point, it doesn't seem Rocksmith supports string muted notes
-									EOF_RS_TECHNIQUES tech;
+									EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0 ,0};
 									unsigned long notepos;
 									unsigned long fret;				//The fret number used for this string
 
@@ -1174,7 +1175,6 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			//Write chords
 			if(numchords)
 			{	//If there's at least one chord in this difficulty
-				unsigned long chordid;
 				char *upstrum = "up";
 				char *downstrum = "down";
 				char *direction;	//Will point to either upstrum or downstrum as appropriate
@@ -1189,6 +1189,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems)
 						for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
 						{	//For each of the entries in the unique chord list
+							assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
 							if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
 							{	//If this note matches a chord list entry
 								if(!eof_pro_guitar_note_compare_fingerings(tp->note[ctr3], tp->note[chordlist[ctr4]]))
@@ -1300,11 +1301,12 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			{	//For each note in the track
 				if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 1 | 4) > 1))
 				{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems) or an arpeggio handshape (at least two non muted notes)
-					unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
+					unsigned long chordnum = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
 
 					//Find this chord's ID
 					for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
 					{	//For each of the entries in the unique chord list
+						assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
 						if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
 						{	//If this note matches a chord list entry
 							if(!eof_pro_guitar_note_compare_fingerings(tp->note[ctr3], tp->note[chordlist[ctr4]]))
@@ -1352,7 +1354,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					while(1)
 					{
 						nextnote = eof_track_fixup_next_note(sp, track, ctr3);
-						if((nextnote >= 0) && !eof_note_compare_simple(sp, track, chord, nextnote) && !eof_is_partially_ghosted(sp, track, nextnote) && !eof_pro_guitar_note_compare_fingerings(tp->note[chord], tp->note[nextnote]))
+						if((nextnote >= 0) && !eof_note_compare_simple(sp, track, chordnum, nextnote) && !eof_is_partially_ghosted(sp, track, nextnote) && !eof_pro_guitar_note_compare_fingerings(tp->note[chordnum], tp->note[nextnote]))
 						{	//If there is another note, it matches this chord, it is not partially ghosted (an arpeggio) and it has the same fingering
 							ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
 						}
@@ -1376,11 +1378,12 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				{	//For each note in the track
 					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 1 | 4) > 1))
 					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems) or an arpeggio handshape (at least two non muted notes)
-						unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
+						unsigned long chordnum = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
 
 						//Find this chord's ID
 						for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
 						{	//For each of the entries in the unique chord list
+							assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
 							if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
 							{	//If this note matches a chord list entry
 								if(!eof_pro_guitar_note_compare_fingerings(tp->note[ctr3], tp->note[chordlist[ctr4]]))
@@ -1429,7 +1432,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						while(1)
 						{
 							nextnote = eof_track_fixup_next_note(sp, track, ctr3);
-							if((nextnote >= 0) && !eof_note_compare_simple(sp, track, chord, nextnote) && !eof_is_partially_ghosted(sp, track, nextnote) && !eof_pro_guitar_note_compare_fingerings(tp->note[chord], tp->note[nextnote]))
+							if((nextnote >= 0) && !eof_note_compare_simple(sp, track, chordnum, nextnote) && !eof_is_partially_ghosted(sp, track, nextnote) && !eof_pro_guitar_note_compare_fingerings(tp->note[chordnum], tp->note[nextnote]))
 							{	//If there is another note, it matches this chord, it is not partially ghosted (an arpeggio) and it has the same fingering
 								ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
 							}
@@ -1491,7 +1494,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	char buffer[600] = {0}, buffer2[512] = {0};
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
-	unsigned long ctr, ctr2, ctr3, ctr4, ctr5, numsections, stringnum, bitmask, numsinglenotes, numchords, *chordlist, chordlistsize, xml_end, numevents = 0;
+	unsigned long ctr, ctr2, ctr3, ctr4, ctr5, numsections, stringnum, bitmask, numsinglenotes, numchords, *chordlist = NULL, chordlistsize, xml_end, numevents = 0;
 	EOF_PRO_GUITAR_TRACK *tp;
 	char *arrangement_name;	//This will point to the track's native name unless it has an alternate name defined
 	unsigned numdifficulties;
@@ -1502,15 +1505,15 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	char eb[] = {-1,-1,-1,-1,-1,-1};
 	char *tuning;
 	char isebtuning = 1;	//Will track whether all strings are tuned to -1
-	char notename[EOF_NAME_LENGTH+1];	//String large enough to hold any chord name supported by EOF
-	int scale, chord, isslash, bassnote;	//Used for power chord detection
+	char notename[EOF_NAME_LENGTH+1] = {0};	//String large enough to hold any chord name supported by EOF
+	int scale = 0, chord = 0, isslash = 0, bassnote = 0;	//Used for power chord detection
 	int standard_tuning = 0, non_standard_chords = 0, barre_chords = 0, power_chords = 0, notenum, dropd_tuning = 1, dropd_power_chords = 0, open_chords = 0, double_stops = 0, palm_mutes = 0, harmonics = 0, hopo = 0, tremolo = 0, slides = 0, bends = 0, tapping = 0, vibrato = 0, slappop = 0, octaves = 0, fifths_and_octaves = 0, sustains = 0, pinch= 0;	//Used for technique detection
 	int is_lead = 0, is_rhythm = 0, is_bass = 0;	//Is set to nonzero if the specified track is to be considered any of these arrangement types
-	unsigned long chordid, handshapectr;
-	unsigned long handshapestart, handshapeend;
+	unsigned long chordid = 0, handshapectr = 0;
+	unsigned long handshapestart = 0, handshapeend = 0;
 	long nextnote, prevnote;
 	unsigned long originalbeatcount;	//If beats are padded to reach the beginning of the next measure (for DDC), this will track the project's original number of beats
-	EOF_RS_TECHNIQUES tech;
+	EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0 ,0};
 	EOF_PRO_GUITAR_NOTE *new_note;
 	char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct notes are exported
 	char match;		//Used for testing whether partially ghosted chords are inside of arpeggio phrases
@@ -2023,15 +2026,15 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}
 	else
 	{	//There were chords
-		long fret0, fret1, fret2, fret3, fret4, fret5;	//Will store the fret number played on each string (-1 means the string is not played)
+		long fret0 = 0, fret1 = 0, fret2 = 0, fret3 = 0, fret4 = 0, fret5 = 0;	//Will store the fret number played on each string (-1 means the string is not played)
 		long *fret[6] = {&fret0, &fret1, &fret2, &fret3, &fret4, &fret5};	//Allow the fret numbers to be accessed via array
 		char *fingerunused = "-1";
-		char *finger0, *finger1, *finger2, *finger3, *finger4, *finger5;	//Each will be set to either fingerunknown or fingerunused
+		char *finger0 = NULL, *finger1 = NULL, *finger2 = NULL, *finger3 = NULL, *finger4 = NULL, *finger5 = NULL;	//Each will be set to either fingerunknown or fingerunused
 		char **finger[6] = {&finger0, &finger1, &finger2, &finger3, &finger4, &finger5};	//Allow the finger strings to be accessed via array
 		char finger0def[2] = "0", finger1def[2] = "1", finger2def[2] = "2", finger3def[2] = "3", finger4def[2] = "4", finger5def[2] = "5";	//Static strings for building manually-defined finger information
 		char *fingerdef[6] = {finger0def, finger1def, finger2def, finger3def, finger4def, finger5def};	//Allow the fingerdef strings to be accessed via array
-		unsigned long bitmask, shapenum;
-		EOF_PRO_GUITAR_NOTE temp;	//Will have a matching chord shape definition's fingering applied to
+		unsigned long shapenum = 0;
+		EOF_PRO_GUITAR_NOTE temp = {{0}, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};	//Will have a matching chord shape definition's fingering applied to
 		unsigned char *effective_fingering;	//Will point to either a note's own finger array or one of that of the temp pro guitar note structure above
 		char arp[] = "-arp", no_arp[] = "";	//The suffix applied to the chord template's display name, depending on whether the template is for an arpeggio
 		char *suffix;	//Will point to either arp[] or no_arp[]
@@ -2041,6 +2044,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		for(ctr = 0; ctr < chordlistsize; ctr++)
 		{	//For each of the entries in the unique chord list
 			notename[0] = '\0';	//Empty the note name string
+			assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
 			(void) eof_build_note_name(sp, track, chordlist[ctr], notename);	//Build the note name (if it exists) into notename[]
 
 			effective_fingering = tp->note[chordlist[ctr]]->finger;	//By default, use the chord list entry's finger array
@@ -2073,14 +2077,14 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					}
 					if(effective_fingering[ctr2])
 					{	//If the fingering for this string is defined
-						char *temp = fingerdef[ctr2];	//Simplify logic below
-						temp[0] = '0' + effective_fingering[ctr2];	//Convert decimal to ASCII
-						temp[1] = '\0';	//Truncate string
-						if(temp[0] == '5')
+						char *str = fingerdef[ctr2];	//Simplify logic below
+						str[0] = '0' + effective_fingering[ctr2];	//Convert decimal to ASCII
+						str[1] = '\0';	//Truncate string
+						if(str[0] == '5')
 						{	//If this fingering specifies the thumb
-							temp[0] = '0';	//Convert from EOF's numbering (5 = thumb) to Rocksmith's numbering (0 = thumb)
+							str[0] = '0';	//Convert from EOF's numbering (5 = thumb) to Rocksmith's numbering (0 = thumb)
 						}
-						*(finger[ctr2]) = temp;
+						*(finger[ctr2]) = str;
 					}
 					else
 					{	//The fingering is not defined, regardless of whether the string is open or fretted
@@ -2364,7 +2368,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			//Write chords
 			if(numchords)
 			{	//If there's at least one chord in this difficulty
-				unsigned long chordid, flags, stringnum, bitmask;
+				unsigned long flags;
 				unsigned long lastchordid = 0;	//Stores the previous written chord's ID, so that when the ID changes, chordNote subtags can be forced to be written
 				char *upstrum = "up";
 				char *downstrum = "down";
@@ -2382,6 +2386,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						{	//If this chord wasn't split into single notes or converted into a non ghosted chord and is being ignored
 							for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
 							{	//For each of the entries in the unique chord list
+								assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
 								if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]) && (eof_is_partially_ghosted(sp, track, ctr3) == eof_is_partially_ghosted(sp, track, chordlist[ctr4])))
 								{	//If this note matches a chord list entry and has the same ghost status (either no gems ghosted or at least one gem ghosted)
 									if(!eof_pro_guitar_note_compare_fingerings(tp->note[ctr3], tp->note[chordlist[ctr4]]))
@@ -2426,6 +2431,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							{	//For each string used in this track, write chordNote tags
 								if((eof_get_note_note(sp, track, ctr3) & bitmask) && !(tp->note[ctr3]->ghost & bitmask))
 								{	//If this string is used in this note and it is not ghosted
+									assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
 									eof_rs2_export_note_string_to_xml(sp, track, ctr3, stringnum, 1, chordlist[chordid], fp);	//Write this chordNote's XML tag
 								}//If this string is used in this note and it is not ghosted
 							}//For each string used in this track
@@ -2528,11 +2534,12 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				{	//If this note is not ignored or is a chord within an arpeggio
 					if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1) || eof_is_partially_ghosted(sp, track, ctr3)))
 					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems) or an arpeggio handshape
-						unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
+						unsigned long chordnum = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
 
 						//Find this chord's ID
 						for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
 						{	//For each of the entries in the unique chord list
+							assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
 							if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]) && (eof_is_partially_ghosted(sp, track, ctr3) == eof_is_partially_ghosted(sp, track, chordlist[ctr4])))
 							{	//If this note matches a chord list entry and has the same ghost status (either no gems ghosted or at least one gem ghosted)
 								if(!eof_pro_guitar_note_compare_fingerings(tp->note[ctr3], tp->note[chordlist[ctr4]]))
@@ -2592,9 +2599,9 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 									break;	//Break from while loop
 								}
 							}
-							if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chord, nextnote) || eof_is_string_muted(sp, track, nextnote)) && !eof_is_partially_ghosted(sp, track, nextnote) && !eof_pro_guitar_note_compare_fingerings(tp->note[chord], tp->note[nextnote]))
+							if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chordnum, nextnote) || eof_is_string_muted(sp, track, nextnote)) && !eof_is_partially_ghosted(sp, track, nextnote) && !eof_pro_guitar_note_compare_fingerings(tp->note[chordnum], tp->note[nextnote]))
 							{	//If there is another note, it either matches this chord or is completely string muted, it is not partially ghosted (an arpeggio) and it has the same fingering
-								if(eof_is_partially_ghosted(sp, track, chord))
+								if(eof_is_partially_ghosted(sp, track, chordnum))
 								{	//If the handshape being written was for an arpeggio, and the next note isn't
 									handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of the arpeggio's last note
 									break;	//Break from while loop
@@ -2624,11 +2631,12 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					{	//If this note is not ignored or is a chord within an arpeggio
 						if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1) || eof_is_partially_ghosted(sp, track, ctr3)))
 						{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems) or an arpeggio handshape
-							unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
+							unsigned long chordnum = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
 
 							//Find this chord's ID
 							for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
 							{	//For each of the entries in the unique chord list
+								assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
 								if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]) && (eof_is_partially_ghosted(sp, track, ctr3) == eof_is_partially_ghosted(sp, track, chordlist[ctr4])))
 								{	//If this note matches a chord list entry and has the same ghost status (either no gems ghosted or at least one gem ghosted)
 									if(!eof_pro_guitar_note_compare_fingerings(tp->note[ctr3], tp->note[chordlist[ctr4]]))
@@ -2688,9 +2696,9 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 										break;	//Break from while loop
 									}
 								}
-								if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chord, nextnote) || eof_is_string_muted(sp, track, nextnote)) && !eof_is_partially_ghosted(sp, track, nextnote) && !eof_pro_guitar_note_compare_fingerings(tp->note[chord], tp->note[nextnote]))
+								if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chordnum, nextnote) || eof_is_string_muted(sp, track, nextnote)) && !eof_is_partially_ghosted(sp, track, nextnote) && !eof_pro_guitar_note_compare_fingerings(tp->note[chordnum], tp->note[nextnote]))
 								{	//If there is another note, it either matches this chord or is completely string muted, it is not partially ghosted (an arpeggio) and it has the same fingering
-									if(eof_is_partially_ghosted(sp, track, chord))
+									if(eof_is_partially_ghosted(sp, track, chordnum))
 									{	//If the handshape being written was for an arpeggio, and the next note isn't
 										handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of the arpeggio's last note
 										break;	//Break from while loop
@@ -2882,12 +2890,12 @@ void eof_song_fix_fingerings(EOF_SONG *sp, char *undo_made)
 
 void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long track, char difficulty, char warnuser, char dynamic, unsigned long startnote, unsigned long stopnote)
 {
-	unsigned long ctr, ctr2, tracknum, count, bitmask, beatctr, startpos = 0, endpos, shapenum;
+	unsigned long ctr, ctr2, tracknum, count, bitmask, beatctr, startpos = 0, endpos, shapenum = 0;
 	unsigned long effectivestart, effectivestop;	//The start and stop timestamps of the affected range of notes
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned char current_low, current_high, last_anchor = 0;
 	EOF_PRO_GUITAR_NOTE *next_position = NULL;	//Tracks the note at which the next fret hand position will be placed
-	EOF_PRO_GUITAR_NOTE *np, temp;
+	EOF_PRO_GUITAR_NOTE *np, temp = {{0}, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	char force_change, started = 0;
 	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the fret hand positions are generated
 	char all = 0;	//Is set to nonzero if the values passed for startnote and stopnote are equal, indicating all existing fret hand positions are to be replaced
@@ -3137,7 +3145,7 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 
 int eof_generate_hand_positions_current_track_difficulty(void)
 {
-	int junk;
+	int junk = 0;
 	unsigned long diffindex = 0;
 
 	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
@@ -3156,7 +3164,7 @@ int eof_generate_hand_positions_current_track_difficulty(void)
 
 int eof_generate_efficient_hand_positions_for_selected_notes(void)
 {
-	unsigned long sel_start, sel_end;
+	unsigned long sel_start = 0, sel_end = 0;
 
 	eof_fret_hand_position_list_dialog_undo_made = 0;	//Reset this condition
 	if(eof_get_selected_note_range(&sel_start, &sel_end, 0) > 1)
@@ -3169,7 +3177,7 @@ int eof_generate_efficient_hand_positions_for_selected_notes(void)
 
 int eof_note_can_be_played_within_fret_tolerance(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned char *current_low, unsigned char *current_high)
 {
-	unsigned char effective_lowest, effective_highest;	//Stores the cumulative highest and lowest fret values with the input range and the next note for tolerance testing
+	unsigned char effective_lowest = 0, effective_highest = 0;	//Stores the cumulative highest and lowest fret values with the input range and the next note for tolerance testing
 	long next;
 
 	if(!tp || !current_low || !current_high || (note >= tp->notes) || (*current_low > *current_high) || (*current_high > tp->numfrets) || !eof_fret_range_tolerances)
@@ -3816,7 +3824,7 @@ int eof_time_range_is_populated(EOF_SONG *sp, unsigned long track, unsigned long
 int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned long note, char target)
 {
 	long prev;
-	EOF_RS_TECHNIQUES tech;
+	EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0 ,0};
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return 0;	//Error
@@ -3864,7 +3872,7 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 
 int eof_enforce_rs_phrase_begin_with_fret_hand_position(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long startpos, unsigned long endpos, char *undo_made, char check_only)
 {
-	unsigned long ctr, firstnotepos, tracknum;
+	unsigned long ctr, firstnotepos = 0, tracknum;
 	int found = 0;
 	unsigned char position;
 	EOF_PRO_GUITAR_TRACK *tp;
@@ -4067,7 +4075,7 @@ void eof_load_chord_shape_definitions(char *fn)
 	char finger[8] = {0};
 	char frets[8] = {0};
 	char name[51] = {0};
-	unsigned char note, lowestfret;
+	unsigned char note = 0, lowestfret;
 	char error = 0;
 
 	eof_log("\tImporting chord shape definitions", 1);
@@ -4254,7 +4262,7 @@ unsigned long eof_get_highest_fret_in_time_range(EOF_SONG *sp, unsigned long tra
 
 unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long stringnum, EOF_RS_TECHNIQUES *ptr, char target, char checktechnotes)
 {
-	unsigned long tracknum, flags, eflags, techflags = 0, techeflags = 0, technote_num, ctr, bitmask, notepos, stop_tech_note_position = 0;
+	unsigned long tracknum, flags, eflags, techflags = 0, techeflags = 0, technote_num = 0, ctr, bitmask, notepos, stop_tech_note_position = 0;
 	long techslideto = -1, techunpitchedslideto = -1;	//These will track the first slide
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned char lowestfretted;
@@ -4576,7 +4584,7 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 	unsigned long fret;			//The fret number used for the specified string of the note
 	char tagend[2] = "/";		//If a bendValues subtag is to be written, this string is emptied so that the note/chordNote tag doesn't end in the same line
 	unsigned long flags, notepos, notelen, ctr, bitmask;
-	EOF_RS_TECHNIQUES tech;
+	EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0 ,0};
 	unsigned char *finger = NULL;
 	long fingernum;
 	char *tagstring, notestring[] = "note", chordnotestring[] = "chordNote", *indentlevel, noindent[] = "", indent[] = "  ", buffer[600] = {0};
@@ -4664,7 +4672,7 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 	(void) pack_fputs(buffer, fp);
 	if(tech.bend)
 	{	//If the note is a bend, write the bendValues subtag and close the note tag
-		unsigned long bendpoints, firstbend, flags, bendstrength_q;	//Used to parse any bend tech notes that may affect the exported note
+		unsigned long bendpoints, firstbend = 0, bendstrength_q;	//Used to parse any bend tech notes that may affect the exported note
 		long nextnote;
 
 		bendpoints = eof_pro_guitar_note_bitmask_has_bend_tech_note(tp, notenum, bitmask, &firstbend);	//Count how many bend tech notes overlap this note on the specified string
@@ -4725,7 +4733,7 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsigned short *user_warned)
 {
 	EOF_PRO_GUITAR_TRACK *tp;
-	unsigned long *sectionlist, sectionlistsize, ctr, ctr2, numsections, phraseid;
+	unsigned long *sectionlist = NULL, sectionlistsize, ctr, ctr2, numsections, phraseid = 0;
 	char end_phrase_found = 0;	//Will track if there was a manually defined END phrase
 	char buffer[200] = {0}, buffer2[50] = {0};
 	long startbeat;	//This will indicate the first beat containing a note in the track
@@ -4857,6 +4865,7 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 		char started = 0;
 
 		//Determine the highest maxdifficulty present among all instances of this phrase
+		assert(sectionlist != NULL);	//Unneeded check to resolve a false positive in Splint
 		for(ctr2 = 0; ctr2 < sp->beats; ctr2++)
 		{	//For each beat
 			if((sp->beat[ctr2]->contained_section_event >= 0) || ((ctr2 + 1 >= eof_song->beats) && started))
@@ -4894,6 +4903,7 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 		{	//If this beat has a section event
 			for(ctr2 = 0; ctr2 < sectionlistsize; ctr2++)
 			{	//For each of the entries in the unique section list
+				assert(sectionlist != NULL);	//Unneeded check to resolve a false positive in Splint
 				if(!ustricmp(sp->text_event[sp->beat[ctr]->contained_section_event]->text, sp->text_event[sectionlist[ctr2]]->text))
 				{	//If this event matches a section marker entry
 					phraseid = ctr2;

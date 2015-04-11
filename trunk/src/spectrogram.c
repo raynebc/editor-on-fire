@@ -458,6 +458,8 @@ void eof_generate_colorscale(char scalenum)
 			case 1:
 				eof_spectrogram_colorscale->maxval = 1280.0;
 				break;
+			default:	//If scalenum is some unexpected value, use the default value of 1 for it
+				eof_spectrogram_colorscale->maxval = 1280.0;
 		}
 
 		eof_spectrogram_colorscale->colortable = (int *)malloc((eof_spectrogram_colorscale->maxval+1) * sizeof(int));
