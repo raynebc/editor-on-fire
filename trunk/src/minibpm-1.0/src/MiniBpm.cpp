@@ -177,7 +177,7 @@ private:
     int m_binmin;
     int m_binmax;
     int m_bins;
-    
+
     double **m_sin;
     double **m_cos;
 
@@ -228,11 +228,11 @@ public:
     }
 
     void filter(const double *acf, int acfLength, double *filtered) {
-        
+
 	int flen = getFilteredLength();
-    
+
         for (int i = 0; i < flen; ++i) {
-            
+
             filtered[i] = 0.0;
 
             int lag = m_min + i;
@@ -258,12 +258,12 @@ public:
                 else multiple = multiple * 2;
             }
 
-            filtered[i] /= n;
+            if (n != 0) filtered[i] /= n;
         }
     }
 
     double refine(int lag, const double *acf, int acfLength) {
-        
+
         int multiple = 1;
         double interpolated = lag;
 
@@ -271,7 +271,7 @@ public:
         int n = 0;
 
         while (1) {
-            
+
             int base, count;
             getContributingRange(lag, multiple, base, count);
 
@@ -285,13 +285,13 @@ public:
                     peakidx = j;
                 }
             }
-            
+
             if (peak > 0.0) {
                 double scaled = double(peakidx) / multiple;
                 total += scaled;
                 ++n;
             }
-            
+
             if (multiple == 1) multiple = m_beatsPerBar;
             else multiple = multiple * 2;
         }
@@ -299,7 +299,7 @@ public:
         if (n > 0) {
             interpolated = total / n;
         }
-    
+
         double bpm = Autocorrelation::lagToBpm(interpolated, m_hopsPerSec);
         return bpm;
     }
@@ -360,10 +360,10 @@ public:
 	m_blockSize = (m_inputSampleRate * lfbinmax) / m_lfmax;
 	m_stepSize = m_blockSize / 2;
 
-	m_lf = new FourierFilterbank(m_blockSize, m_inputSampleRate, 
+	m_lf = new FourierFilterbank(m_blockSize, m_inputSampleRate,
 				     m_lfmin, m_lfmax, true);
 
-	m_hf = new FourierFilterbank(m_blockSize, m_inputSampleRate, 
+	m_hf = new FourierFilterbank(m_blockSize, m_inputSampleRate,
 				     m_hfmin, m_hfmax, true);
 
 	int lfsize = m_lf->getOutputSize();
@@ -385,7 +385,7 @@ public:
         zero(m_partial, m_stepSize);
         zero(m_frame, frameSize);
     }
-	
+
     ~D()
     {
 	delete m_lf;
@@ -481,7 +481,7 @@ public:
 	m_lf->forwardMagnitude(m_input, m_frame);
 	m_lfdf.push_back(specdiff(m_frame, m_lfprev, lfsize));
 	copy(m_lfprev, m_frame, lfsize);
-	
+
 	m_hf->forwardMagnitude(m_input, m_frame);
 	m_hfdf.push_back(specdiff(m_frame, m_hfprev, hfsize));
 	copy(m_hfprev, m_frame, hfsize);
@@ -520,6 +520,8 @@ public:
 
 	if (acfLength < maxlag) {
 	    // Not enough data
+	    delete[] acf;
+	    delete[] temp;
 	    return 0.0;
 	}
 
@@ -538,7 +540,7 @@ public:
                 weight = 1.0 - pow(fabs(centre - bpm) / 100.0, 2.4);
             } else {
                 weight = 1.0 - pow(fabs(centre - bpm) / 80.0, 2.4);
-            }                
+            }
 	    if (weight < 0.0) weight = 0.0;
 	    cf[i] *= weight;
 	}
@@ -551,6 +553,9 @@ public:
 	}
 
         if (candidateMap.empty()) {
+            delete[] cf;
+            delete[] acf;
+            delete[] temp;
             return 0.0;
         }
 
@@ -568,7 +573,7 @@ public:
 
 	return m_candidates[0];
     }
-	
+
 
 private:
     float m_inputSampleRate;
@@ -587,7 +592,7 @@ private:
 
     FourierFilterbank *m_lf;
     FourierFilterbank *m_hf;
-    
+
     double *m_input;
     double *m_partial;
     int m_partialFill;
