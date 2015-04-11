@@ -2053,6 +2053,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					custom_data_size -= 4;	//Subtract the size of the block ID, which was already read
 					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 					{	//Ensure this logic only runs for a pro guitar track
+						tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
 						for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
 						{	//For each note in this track
 							for(ctr2 = 0, bitmask = 1; ctr2 < tp->numstrings; ctr2++, bitmask <<= 1)
@@ -2081,6 +2082,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					}
 					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 					{	//Ensure this logic only runs for a pro guitar track
+						tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
 						tp->arrangement = pack_getc(fp);	//Read the track arrangement type
 					}
 				break;
@@ -2094,6 +2096,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					}
 					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 					{	//Ensure this logic only runs for a pro guitar track
+						tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
 						tp->ignore_tuning = pack_getc(fp);	//Read the option of whether the chord detection does not honor the track's defined tuning
 					}
 				break;
@@ -2110,6 +2113,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					}
 					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 					{	//Ensure this logic only runs for a pro guitar track
+						tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
 						tp->capo = pack_getc(fp);	//Read the capo position
 					}
 				break;
@@ -2123,6 +2127,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					}
 					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 					{	//Ensure this logic only runs for a pro guitar track
+						tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
 						tp->technotes = pack_igetl(fp);	//Read the number of tech notes
 						for(ctr = 0; ctr < tp->technotes; ctr++)
 						{	//For each tech note in the custom data block
