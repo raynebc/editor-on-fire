@@ -397,7 +397,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	unsigned char rootvel;					//Used to write root notes for pro guitar tracks
 	unsigned long note, noteflags, notepos, deltapos;
 	unsigned char type;
-	int channel, velocity, scale, chord, isslash, bassnote;	//Used for pro guitar export
+	int channel = 0, velocity = 0, scale, chord = 0, isslash = 0, bassnote = 0;	//Used for pro guitar export
 	unsigned long bitmask;
 	EOF_PHRASE_SECTION *sectionptr;
 	char *currentname = NULL, chordname[100]="";
@@ -2299,8 +2299,8 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn)
 	char notetrackspopulated[EOF_TRACKS_MAX+1] = {0};
 	char tempotempname[] = {"tempo.tmp"};
 	char eventtempname[] = {"event.tmp"};
-	unsigned char pitchmask, pitches[6];
-	char *name, notename[EOF_NAME_LENGTH+1];
+	unsigned char pitchmask, pitches[6] = {0};
+	char *name, notename[EOF_NAME_LENGTH+1] = {0};
 	char eventstrackwritten = 0;			//Tracks whether an events track has been written
 
 	eof_log("eof_export_music_midi() entered", 1);
@@ -2744,6 +2744,7 @@ struct Tempo_change *eof_add_to_tempo_list(unsigned long delta,double realtime,d
 	temp->realtime=realtime;
 	temp->BPM=BPM;
 	temp->next=NULL;
+	temp->TS_den=temp->TS_num=4;
 
 //Append to linked list
 	if(ptr == NULL)		//If the passed list was empty

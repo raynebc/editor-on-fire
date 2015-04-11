@@ -332,13 +332,13 @@ int eof_track_difficulty_dialog(void)
 			if(eof_selected_track == EOF_TRACK_DRUM)
 			{
 				eof_song->track[EOF_TRACK_DRUM]->flags &= ~(0xFF << 24);			//Clear the drum track's flag's most significant byte
-				eof_song->track[EOF_TRACK_DRUM]->flags |= (newdifficulty2 << 24);	//Store the pro drum difficulty in the drum track's flag's most significant byte
+				eof_song->track[EOF_TRACK_DRUM]->flags |= ((unsigned)newdifficulty2 << 24);	//Store the pro drum difficulty in the drum track's flag's most significant byte
 				eof_song->track[EOF_TRACK_DRUM]->flags |= 0xF0 << 24;				//Set the top nibble to 0xF for backwards compatibility from when this stored the PS drum track difficulty
 			}
 			else if(eof_selected_track == EOF_TRACK_VOCALS)
 			{
 				eof_song->track[EOF_TRACK_VOCALS]->flags &= ~(0xFF << 24);			//Clear the vocal track's flag's most significant byte
-				eof_song->track[EOF_TRACK_VOCALS]->flags |= (newdifficulty2 << 24);	//Store the harmony difficulty in the vocal track's flag's most significant byte
+				eof_song->track[EOF_TRACK_VOCALS]->flags |= ((unsigned)newdifficulty2 << 24);	//Store the harmony difficulty in the vocal track's flag's most significant byte
 			}
 		}
 	}
@@ -453,21 +453,22 @@ int eof_edit_tuning_proc(int msg, DIALOG *d, int c)
 	int match = 0;
 	int retval;
 	char tuning[EOF_TUNING_LENGTH];
+	unsigned c2 = (unsigned)c;	//Force cast this to unsigned because Splint is incapable of avoiding a false positive detecting it as negative despite assertions proving otherwise
 
 	if((msg == MSG_CHAR) || (msg == MSG_UCHAR))
 	{	//ASCII is not handled until the MSG_UCHAR event is sent
 		for(i = 0; i < 8; i++)
-		{
-			if((msg == MSG_UCHAR) && (c == 27))
+		{	//Check each of the pre-defined allowable keys
+			if((msg == MSG_UCHAR) && (c2 == 27))
 			{	//If the Escape ASCII character was trapped
-				return d_agup_edit_proc(msg, d, c);	//Immediately allow the input character to be returned (so the user can escape to cancel the dialog)
+				return d_agup_edit_proc(msg, d, c2);	//Immediately allow the input character to be returned (so the user can escape to cancel the dialog)
 			}
-			if((msg == MSG_CHAR) && ((c >> 8 == KEY_BACKSPACE) || (c >> 8 == KEY_DEL)))
+			if((msg == MSG_CHAR) && ((c2 >> 8 == KEY_BACKSPACE) || (c2 >> 8 == KEY_DEL)))
 			{	//If the backspace or delete keys are trapped
 				match = 1;	//Ensure the full function runs, so that the strings are rebuilt
 				break;
 			}
-			if(c >> 8 == key_list[i])			//If the input is permanently allowed
+			if(c2 >> 8 == key_list[i])			//If the input is permanently allowed
 			{
 				return d_agup_edit_proc(msg, d, c);	//Immediately allow the input character to be returned
 			}
@@ -972,7 +973,7 @@ int eof_track_pro_guitar_set_fret_hand_position(void)
 {
 	unsigned long position, tracknum;
 	EOF_PHRASE_SECTION *ptr = NULL;	//If the seek position has a fret hand position defined, this will reference it
-	unsigned long index;			//Will store the index number of the existing fret hand position being edited
+	unsigned long index = 0;		//Will store the index number of the existing fret hand position being edited
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned long limit = 21;		//Unless Rocksmith 1 or Rock Band export are enabled, assume Rocksmith 2's limit
 
@@ -1164,7 +1165,7 @@ int eof_fret_hand_position_delete_all(DIALOG * d)
 
 int eof_track_delete_effective_fret_hand_position(void)
 {
-	unsigned long index;
+	unsigned long index = 0;
 	EOF_PRO_GUITAR_TRACK *tp;
 
 	if(!eof_song_loaded || !eof_song)
@@ -1494,7 +1495,7 @@ int eof_find_effective_rs_popup_message(unsigned long pos, unsigned long *popupn
 int eof_track_rs_popup_messages(void)
 {
 	EOF_PRO_GUITAR_TRACK *tp;
-	unsigned long tracknum, ctr, popupmessage;
+	unsigned long tracknum, ctr, popupmessage = 0;
 
 	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return 1;	//Do not allow this function to run if a pro guitar track isn't active
@@ -2863,7 +2864,7 @@ int eof_track_find_effective_rs_tone_change(unsigned long pos, unsigned long *ch
 int eof_track_rs_tone_changes(void)
 {
 	EOF_PRO_GUITAR_TRACK *tp;
-	unsigned long tracknum, ctr, tonechange;
+	unsigned long tracknum, ctr, tonechange = 0;
 
 	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return 1;	//Do not allow this function to run if a pro guitar track isn't active

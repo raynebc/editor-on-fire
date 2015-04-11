@@ -1611,8 +1611,6 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		}
 		if(((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
 		{	//If the note slides up or down and defines the ending fret for the slide
-			unsigned long index2;
-
 			if(((np->slideend == lowestfret) || !lowestfret) && sanitycheck)
 			{	//If the slide is not valid (it ends on the same fret it starts on or the note/chord is played open) and sanity checking is enabled
 				buffer[index++] = '?';	//Place this character to alert the user
@@ -2049,7 +2047,7 @@ unsigned char eof_pro_guitar_note_is_double_stop(EOF_PRO_GUITAR_TRACK *tp, unsig
 char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, char *buffer)
 {
 	char *name;
-	int scale, chord, isslash, bassnote;
+	int scale = 0, chord = 0, isslash = 0, bassnote = 0;
 	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks) || (buffer == NULL))

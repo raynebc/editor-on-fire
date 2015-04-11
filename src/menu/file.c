@@ -793,7 +793,7 @@ int eof_menu_file_lyrics_import(void)
 	char * returnedfn = NULL, *initial;
 	int jumpcode = 0;
 	int selectedformat=0;
-	char *selectedtrack;
+	char *selectedtrack = NULL;
 	int returncode = 1;	//Stores the return value of EOF_IMPORT_VIA_LC() to check for error
 	static char tempfile = 0;	//Is set to nonzero if the selected lyric file's path contains any extended ASCII or Unicode characters, as a temporary file is created as a workaround
 	char templyricfile[] = "lyricfile.tmp";	//The name of the temporary file created as per the above condition
@@ -2378,7 +2378,7 @@ int eof_save_helper(char *destfilename, char silent)
 	char oggfn[1024] = {0};
 	char function;		//Will be set to 1 for "Save" or 2 for "Save as"
 	int jumpcode = 0;
-	char fixvoxpitches, fixvoxphrases;
+	char fixvoxpitches = 0, fixvoxphrases = 0;
 	char note_length_warned = 0, note_distance_warned = 0, arpeggio_warned = 0, slide_warned = 0, bend_warned = 0;
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
@@ -3844,9 +3844,9 @@ int eof_menu_file_sonic_visualiser_import(void)
 	char * returnedfn = NULL, *initial, *ptr;
 	PACKFILE *inf = NULL;
 	size_t maxlinelength;
-	char *buffer = NULL, error = 0, tempo_s[15], undo_made = 0, done = 0;
+	char *buffer = NULL, error = 0, tempo_s[15] = {0}, undo_made = 0, done = 0;
 	unsigned long linectr = 1, ctr, beatctr = 0, pointctr = 0;
-	long samplerate = 0, frame;
+	long samplerate = 0, frame = 0;
 	double frametime, tempo_f, beatlen = 500.0, timectr = 0.0, lastbeatlen = 500.0;
 
 	eof_log("eof_menu_file_sonic_visualiser_import() entered", 1);

@@ -92,7 +92,7 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 	unsigned char runningstatus, eventtype, lasteventtype, meventtype = 0, endreached, *dataptr;
 	struct eof_MIDI_data_event *head = NULL, *tail = NULL, *linkptr = NULL;
 	struct eof_MIDI_tempo_change *tempohead = NULL, *tempotail = NULL, *tempoptr = NULL;
-	struct eof_MIDI_data_track *trackptr;
+	struct eof_MIDI_data_track *trackptr = NULL;
 	double currentbpm = 120.0;	//As per the MIDI specification, until a tempo change is reached, 120BPM is assumed
 	double realtime = 0.0, preoffseted;
 	char *trackname = NULL;

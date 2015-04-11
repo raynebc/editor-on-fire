@@ -1589,7 +1589,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	struct eof_MIDI_data_event *eventptr, *eventhead, *eventtail;
 	unsigned char numdiffs;
 	char unshare_drum_phrasing;
-	EOF_PRO_GUITAR_TRACK *tp;
+	EOF_PRO_GUITAR_TRACK *tp = NULL;
 
  	eof_log("eof_load_song_pf() entered", 1);
 
@@ -1949,7 +1949,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				eof_log("Error: Pro Keys not supported yet.  Aborting", 1);
 			return 0;
 			case EOF_PRO_GUITAR_TRACK_FORMAT:	//Pro Guitar/Bass
-				tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Simplify
+				tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Simplify, tp is the pointer to the pro guitar track being parsed
 				numdiffs = 5;		//By default, assume there are 5 difficulties used in the track
 				tp->numfrets = pack_getc(fp);	//Read the number of frets used in this track
 				count = pack_getc(fp);	//Read the number of strings used in this track
@@ -2053,7 +2053,6 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					custom_data_size -= 4;	//Subtract the size of the block ID, which was already read
 					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 					{	//Ensure this logic only runs for a pro guitar track
-						EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track_ctr]->tracknum];	//Get pointer to this pro guitar track
 						for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
 						{	//For each note in this track
 							for(ctr2 = 0, bitmask = 1; ctr2 < tp->numstrings; ctr2++, bitmask <<= 1)
@@ -2082,7 +2081,6 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					}
 					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 					{	//Ensure this logic only runs for a pro guitar track
-						EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track_ctr]->tracknum];	//Get pointer to this pro guitar track
 						tp->arrangement = pack_getc(fp);	//Read the track arrangement type
 					}
 				break;
@@ -2096,7 +2094,6 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					}
 					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 					{	//Ensure this logic only runs for a pro guitar track
-						EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track_ctr]->tracknum];	//Get pointer to this pro guitar track
 						tp->ignore_tuning = pack_getc(fp);	//Read the option of whether the chord detection does not honor the track's defined tuning
 					}
 				break;
@@ -2113,7 +2110,6 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					}
 					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 					{	//Ensure this logic only runs for a pro guitar track
-						EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track_ctr]->tracknum];	//Get pointer to this pro guitar track
 						tp->capo = pack_getc(fp);	//Read the capo position
 					}
 				break;
@@ -2127,9 +2123,6 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					}
 					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 					{	//Ensure this logic only runs for a pro guitar track
-						EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track_ctr]->tracknum];	//Get pointer to this pro guitar track
-						unsigned long ctr;
-
 						tp->technotes = pack_igetl(fp);	//Read the number of tech notes
 						for(ctr = 0; ctr < tp->technotes; ctr++)
 						{	//For each tech note in the custom data block
@@ -4420,7 +4413,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 	long next;
 	char allmuted;	//Used to track whether all used strings are string muted
 	EOF_PRO_GUITAR_TRACK * tp;
-	EOF_RS_TECHNIQUES ptr;
+	EOF_RS_TECHNIQUES ptr = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0 ,0};
 	char has_link_next;	//Is set to nonzero if any strings used in the note have sustain status applied
 
 	if(!sp)
@@ -6047,7 +6040,7 @@ int eof_create_image_sequence(char benchmark_only)
 	char original_eof_desktop = eof_desktop;
 	int err;
 	char filename[20] = {0};
-	clock_t starttime, endtime;
+	clock_t starttime = 0, endtime = 0;
 
 	eof_log("eof_create_image_sequence() entered", 1);
 	if(!benchmark_only)
@@ -6605,7 +6598,7 @@ unsigned long eof_get_highest_clipboard_fret(char *clipboardfile)
 	unsigned long sourcetrack = 0, copy_notes = 0;
 	unsigned long i, j, bitmask;
 	unsigned long highestfret = 0, currentfret;	//Used to find if any pasted notes would use a higher fret than the active track supports
-	EOF_EXTENDED_NOTE temp_note;
+	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0};
 
 	if(!clipboardfile)
 	{	//If the passed clipboard filename is invalid
@@ -6652,7 +6645,7 @@ unsigned long eof_get_highest_clipboard_lane(char *clipboardfile)
 	unsigned long copy_notes = 0;
 	unsigned long i, j, bitmask;
 	unsigned long highestlane = 0;	//Used to find if any pasted notes would use a higher lane than the active track supports
-	EOF_EXTENDED_NOTE temp_note;
+	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0};
 
 	if(!clipboardfile)
 	{	//If the passed clipboard filename is invalid
@@ -6864,7 +6857,7 @@ void eof_truncate_chart(EOF_SONG *sp)
 unsigned long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long note, char enforcegap)
 {
 	long next = note;
-	unsigned long thisflags, thispos, nextpos;
+	unsigned long thisflags, thispos = 0, nextpos = 0;
 	unsigned char thisnote, nextnote;
 	int effective_min_note_distance = eof_min_note_distance;	//By default, the user configured minimum note distance is used
 
@@ -7411,8 +7404,7 @@ void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char di
 
 		if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
 		{
-			EOF_VOCAL_TRACK *tp = sp->vocal_track[tracknum];
-			tp->lines = 0;
+			sp->vocal_track[tracknum]->lines = 0;
 		}
 	}
 }

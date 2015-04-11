@@ -28,7 +28,7 @@ void Export_RS(FILE *outf)
 {
 	struct Lyric_Line *curline=NULL;	//Conductor of the lyric line linked list
 	struct Lyric_Piece *temp=NULL;		//A conductor for the lyric pieces list
-	char buffer2[260], buffer3[260];
+	char buffer2[260] = {0}, buffer3[260];
 	char *suffix, newline[]="+", nonewline[] = "";
 	unsigned index1, index2;
 
@@ -329,7 +329,7 @@ int parse_xml_attribute_number(char *target, char *input, long *output)
 
 int parse_xml_rs_timestamp(char *target, char *input, long *output)
 {
-	char buffer[11], buffer2[11], decimalfound = 0;
+	char buffer[11] = {0}, buffer2[11], decimalfound = 0;
 	unsigned long index = 0, index2 = 0;
 	long wholeseconds = 0, milliseconds = 0;
 
@@ -381,9 +381,9 @@ void RS_Load(FILE *inf)
 							//input file so I can create a buffer large enough to read any line into
 	char *buffer;			//Will be an array large enough to hold the largest line of text from input file
 	unsigned long processedctr=0;	//The current line number being processed in the text file
-	long time, note, length;
+	long time = 0, note = 0, length = 0;
 	char lyric[256], lyric2[256];
-	char *index;
+	char *index = NULL;
 
 	assert_wrapper(inf != NULL);	//This must not be NULL
 

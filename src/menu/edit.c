@@ -650,7 +650,7 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 	long new_pos = -1;
 	long new_end_pos = -1;
 	long last_pos = -1;
-	EOF_EXTENDED_NOTE temp_lyric;
+	EOF_EXTENDED_NOTE temp_lyric = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0};
 	EOF_LYRIC * new_lyric = NULL;
 	PACKFILE * fp;
 
@@ -1008,23 +1008,23 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 	unsigned long first_beat[EOF_TRACKS_MAX] = {0};
 	unsigned long this_beat[EOF_TRACKS_MAX] = {0};
 	unsigned long this_tech_beat[EOF_TRACKS_MAX] = {0};
-	unsigned long start_pos, end_pos;
+	unsigned long start_pos, end_pos = 0;
 	long last_anchor, next_anchor;
 	PACKFILE * fp;
 	unsigned long copy_notes[EOF_TRACKS_MAX];
-	EOF_EXTENDED_NOTE temp_note;
+	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0};
 	EOF_NOTE * new_note = NULL;
-	float tfloat;
+	float tfloat = 0.0;
 	EOF_PHRASE_SECTION *sectionptr = NULL;
 	unsigned long notepos = 0;
 	long notelength = 0;
 	char affect_until_end = 0;	//Is set to nonzero if all notes until the end of the project are affected by this operation
 
 	//Grid snap variables used to automatically re-snap auto-adjusted timestamps
-	int beat;
-	char gridsnapvalue;
-	unsigned char gridsnapnum;
-	unsigned long gridpos;
+	int beat = 0;
+	char gridsnapvalue = 0;
+	unsigned char gridsnapnum = 0;
+	unsigned long gridpos = 0;
 
 	for(i = 0; i < EOF_TRACKS_MAX; i++)
 	{
@@ -1381,7 +1381,8 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	long this_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	unsigned long copy_notes;
 	PACKFILE * fp;
-	EOF_EXTENDED_NOTE temp_note, first_note, last_note;
+	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0}, first_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0};
+	EOF_EXTENDED_NOTE last_note;
 	EOF_NOTE * new_note = NULL;
 	unsigned long sourcetrack = 0;	//Will store the track that this clipboard data was from
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -1493,7 +1494,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	}
 	for(i = 0; i < copy_notes; i++)
 	{	//For each note in the clipboard file
-		unsigned long newnotepos, match, flags;
+		unsigned long newnotepos, match = 0, flags;
 		long newnotelength;
 
 		eof_read_clipboard_note(fp, &temp_note, EOF_NAME_LENGTH + 1);	//Read the note
@@ -1558,7 +1559,6 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			//Erase ghost and legacy flags
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{
-				unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 				eof_song->pro_guitar_track[tracknum]->note[match]->legacymask = 0;	//Clear the legacy bit mask
 				eof_song->pro_guitar_track[tracknum]->note[match]->ghost = 0;	//Clear the ghost bit mask
 			}
@@ -2310,7 +2310,7 @@ int eof_menu_edit_select_all(void)
 int eof_menu_edit_select_like_function(char thorough)
 {
 	unsigned long i, j, ntypes = 0;
-	unsigned long ntype[100];	//This tracks each unique selected note to allow multiple dislike notes to be selected during a "select like" operation
+	unsigned long ntype[100] = {0};	//This tracks each unique selected note to allow multiple dislike notes to be selected during a "select like" operation
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
 	if(eof_selection.track != eof_selected_track)
@@ -3360,9 +3360,9 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 
 void eof_write_clipboard_position_snap_data(PACKFILE *fp, unsigned long pos)
 {
-	char gridsnapvalue;
-	unsigned char gridsnapnum;
-	int beat;
+	char gridsnapvalue = 0;
+	unsigned char gridsnapnum = 0;
+	int beat = 0;
 
 	if(!fp)
 		return;	//Invalid parameters

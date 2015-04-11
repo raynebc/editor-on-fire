@@ -331,7 +331,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	unsigned char last_event = 0;
 	unsigned char current_meta_event;
 	unsigned long d1=0, d2=0, d3, d4;
-	char text[EOF_MAX_MIDI_TEXT_SIZE+1];
+	char text[EOF_MAX_MIDI_TEXT_SIZE+1] = {0};
 	char nfn[1024] = {0};
 	char backup_filename[1024] = {0};
 	char ttit[256] = {0};
@@ -362,19 +362,19 @@ EOF_SONG * eof_import_midi(const char * fn)
 	unsigned char lane_chart[EOF_MAX_FRETS] = {1, 2, 4, 8, 16, 32};	//Maps each lane to a note bitmask value
 	long note_count[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};
 	long first_note;
-	unsigned long hopopos[4];			//Used for forced HOPO On/Off parsing
-	char hopotype[4];					//Used for forced HOPO On/Off parsing
+	unsigned long hopopos[4] = {0};		//Used for forced HOPO On/Off parsing
+	char hopotype[4] = {0};				//Used for forced HOPO On/Off parsing
 	int hopodiff;						//Used for forced HOPO On/Off parsing
-	unsigned long strumpos[4];			//Used for pro guitar strum direction parsing
-	char strumtype[4];					//Used for pro guitar strum direction parsing
+	unsigned long strumpos[4] = {0};	//Used for pro guitar strum direction parsing
+	char strumtype[4] = {0};			//Used for pro guitar strum direction parsing
 	int strumdiff;						//Used for pro guitar strum direction parsing
-	unsigned long arpegpos[4];			//Used for pro guitar arpeggio parsing
+	unsigned long arpegpos[4] = {0};	//Used for pro guitar arpeggio parsing
 	int arpegdiff;						//Used for pro guitar arpeggio parsing
 	char prodrums = 0;					//Tracks whether the drum track being written includes Pro drum notation
 	unsigned long tracknum;				//Used to de-obfuscate the legacy track number
 	int phrasediff;						//Used for parsing Sysex phrase markers
 	int slidediff;						//Used for parsing slide markers
-	unsigned char slidevelocity[4];		//Used for parsing slide markers
+	unsigned char slidevelocity[4] = {0};	//Used for parsing slide markers
 	unsigned long openstrumpos[4] = {0}, slideuppos[4] = {0}, slidedownpos[4] = {0}, openhihatpos[4] = {0}, pedalhihatpos[4] = {0}, rimshotpos[4] = {0}, sliderpos[4] = {0}, palmmutepos[4] = {0}, vibratopos[4] = {0}, harmpos[4] = {0}, pharmpos[4] = {0}, bendpos[4] = {0}, accentpos[4] = {0}, poppos[4] = {0}, slappos[4] = {0};	//Used for parsing Sysex phrase markers
 	int lc;
 	long b = -1;
@@ -819,7 +819,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 							/* time signature */
 							case 0x58:
 							{
-								unsigned long ctr,realden;
+								unsigned long realden;
 
 								track_pos++;
 								d1 = (eof_work_midi->track[track[i]].data[track_pos++]);	//Numerator
@@ -839,11 +839,11 @@ EOF_SONG * eof_import_midi(const char * fn)
 							/* key signature */
 							case 0x59:
 							{
-								char key;
+								char keyval;
 								track_pos++;
-								key = (eof_work_midi->track[track[i]].data[track_pos++]);	//Key
-								d2 = (eof_work_midi->track[track[i]].data[track_pos++]);	//Scale
-								eof_midi_import_add_event(eof_import_ks_events, absolute_pos, 0x59, key, d2, i);
+								keyval = (eof_work_midi->track[track[i]].data[track_pos++]);	//Key
+								d2 = (eof_work_midi->track[track[i]].data[track_pos++]);		//Scale
+								eof_midi_import_add_event(eof_import_ks_events, absolute_pos, 0x59, keyval, d2, i);
 								break;
 							}
 

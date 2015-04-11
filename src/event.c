@@ -18,6 +18,7 @@ EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long beat, char
 		sp->text_event[sp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
 		if(sp->text_event[sp->text_events])
 		{
+			sp->text_event[sp->text_events]->text[0] = '\0';	//Eliminate false positive in Splint
 			(void) ustrcpy(sp->text_event[sp->text_events]->text, text);
 			sp->text_event[sp->text_events]->beat = beat;
 			if(track >= sp->tracks)
@@ -28,6 +29,7 @@ EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long beat, char
 			sp->text_event[sp->text_events]->flags = flags;
 			sp->text_event[sp->text_events]->is_temporary = is_temporary;
 			sp->beat[beat]->flags |= EOF_BEAT_FLAG_EVENTS;	//Set the events flag for the beat
+			sp->text_event[sp->text_events]->index = 0;
 			sp->text_events++;
 			return sp->text_event[sp->text_events-1];	//Return successfully created text event
 		}

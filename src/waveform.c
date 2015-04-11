@@ -96,7 +96,7 @@ int eof_render_waveform(struct wavestruct *waveform)
 // 	eof_log("eof_render_waveform() entered");
 
 	unsigned long x,startslice,startpixel,ctr;
-	struct waveformslice left,right;
+	struct waveformslice left = {0, 0, 0.0}, right = {0, 0, 0.0};
 	unsigned long ycoord1,ycoord2;	//Stores the Y coordinates of graph 1's and 2's Y axis
 	unsigned long height;		//Stores the heigth of the fretboard area
 	unsigned long top,bottom;	//Stores the top and bottom coordinates for the area the graph will render to

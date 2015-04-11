@@ -1513,7 +1513,7 @@ int eof_events_dialog_edit(DIALOG * d)
 {
 	int i;
 	short ecount = 0;
-	unsigned short event;
+	unsigned short event = 0;
 	char found = 0;
 	char undo_made = 0;
 
@@ -1885,21 +1885,22 @@ int eof_edit_trainer_proc(int msg, DIALOG *d, int c)
 	int key_list[32] = {KEY_BACKSPACE, KEY_DEL, KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_ESC, KEY_ENTER};
 	int match = 0;
 	int retval;
+	unsigned c2 = (unsigned)c;	//Force cast this to unsigned because Splint is incapable of avoiding a false positive detecting it as negative despite assertions proving otherwise
 
 	if((msg == MSG_CHAR) || (msg == MSG_UCHAR))
 	{	//ASCII is not handled until the MSG_UCHAR event is sent
 		for(i = 0; i < 8; i++)
 		{	//See if any default accepted input characters were given
-			if((msg == MSG_UCHAR) && (c == 27))
+			if((msg == MSG_UCHAR) && (c2 == 27))
 			{	//If the Escape ASCII character was trapped
-				return d_agup_edit_proc(msg, d, c);	//Immediately allow the input character to be returned (so the user can escape to cancel the dialog)
+				return d_agup_edit_proc(msg, d, c2);	//Immediately allow the input character to be returned (so the user can escape to cancel the dialog)
 			}
-			if((msg == MSG_CHAR) && ((c >> 8 == KEY_BACKSPACE) || (c >> 8 == KEY_DEL)))
+			if((msg == MSG_CHAR) && ((c2 >> 8 == KEY_BACKSPACE) || (c2 >> 8 == KEY_DEL)))
 			{	//If the backspace or delete keys are trapped
 				match = 1;	//Ensure the full function runs, so that the strings are rebuilt
 				break;
 			}
-			if(c >> 8 == key_list[i])			//If the input is permanently allowed
+			if(c2 >> 8 == key_list[i])			//If the input is permanently allowed
 			{
 				return d_agup_edit_proc(msg, d, c);	//Immediately allow the input character to be returned
 			}
