@@ -136,6 +136,7 @@ int         eof_min_note_length = 0;			//Specifies the user-configured minimum l
 int         eof_min_note_distance = 3;			//Specifies the user-configured minimum distance between notes (to avoid problems with timing conversion leading to precision loss that can cause notes to combine/drop)
 int         eof_render_bass_drum_in_lane = 0;	//If nonzero, the 3D rendering will draw bass drum gems in a lane instead of as a bar spanning all lanes
 int         eof_click_changes_dialog_focus = 1;	//If nonzero, eof_verified_proc will not change dialog focus on mouse-over, it requires an explicit mouse click
+int         eof_stop_playback_leave_focus = 1;	//If nonzero, EOF stops playback when it is not in the foreground
 int         eof_inverted_chords_slash = 0;
 int         eof_render_3d_rs_chords = 0;	//If nonzero, the 3D rendering will draw a rectangle to represent chords that will export to XML as repeats (Rocksmith), and 3D chord tails will not be rendered
 int         eof_imports_recall_last_path = 0;	//If nonzero, various import dialogs will initialize the dialog to the path containing the last chosen import, instead of initializing to the project's folder
@@ -602,7 +603,10 @@ void eof_switch_out_callback(void)
 {
 	eof_log("eof_switch_out_callback() entered", 1);
 
-	eof_emergency_stop = 1;	//Trigger EOF to call eof_emergency_stop_music()
+	if(eof_stop_playback_leave_focus)
+	{	//If the user preference is to stop playback when EOF leaves the foreground
+		eof_emergency_stop = 1;	//Trigger EOF to call eof_emergency_stop_music()
+	}
 	eof_clear_input();
 
 	#ifndef ALLEGRO_MACOSX
@@ -3590,8 +3594,11 @@ void eof_render(void)
 
 	/* don't draw if window is out of focus */
 	if(!eof_has_focus)
-	{
-		return;
+	{	//If EOF is not in the foreground
+		if(eof_music_paused && !eof_music_catalog_playback)
+		{	//If neither the chart nor the catalog are playing (depending on user preference, playback is allowed when EOF is not in the foreground)
+			return;
+		}
 	}
 	if(eof_song_loaded)
 	{	//If a project is loaded
@@ -5043,16 +5050,16 @@ int main(int argc, char * argv[])
 		else
 		{	//Chart is paused
 			if(eof_new_idle_system)
-			{
+			{	//If the newer idle system was enabled via command line
 				/* rest to save CPU */
 				if(eof_has_focus)
 				{
 					#ifndef ALLEGRO_WINDOWS
-						Idle(eof_cpu_saver);
+						Idle(eof_cpu_saver * 5);
 					#else
 						if(eof_disable_vsync)
 						{
-							Idle(eof_cpu_saver);
+							Idle(eof_cpu_saver * 5);
 						}
 					#endif
 				}
@@ -5065,11 +5072,11 @@ int main(int argc, char * argv[])
 				}
 			}
 			else
-			{
+			{	//If the normal idle system is in effect
 				/* rest to save CPU */
 				if(eof_has_focus)
 				{
-					rest(eof_cpu_saver);
+					rest(eof_cpu_saver * 5);
 				}
 
 				/* make program "sleep" until it is back in focus */
