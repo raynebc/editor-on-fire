@@ -90,7 +90,7 @@ DIALOG eof_settings_dialog[] =
 	{ d_agup_text_proc,      16,  132, 64,  8,   2,   23,  0,    0,      0,   0,   "Buffer Size:",   NULL, NULL },
 	{ eof_verified_edit_proc,158, 128, 64,  20,  2,   23,  0,    0,      5,   0,   eof_etext2,       "0123456789", NULL },
 	{ d_agup_text_proc,      16,  156, 64,  8,   2,   23,  0,    0,      0,   0,   "CPU Saver",      NULL, NULL },
-	{ d_agup_slider_proc,    126,  156, 96,  16,  2,   23,  0,    0,      10,  0,   NULL,             NULL, NULL },
+	{ d_agup_slider_proc,    126, 156, 96,  16,  2,   23,  0,    0,      10,  0,   NULL,             NULL, NULL },
 	{ d_agup_check_proc,     16,  184, 160, 16,  2,   23,  0,    0,      1,   0,   "Smooth Playback",NULL, NULL },
 	{ d_agup_check_proc,     16,  204, 160, 16,  2,   23,  0,    0,      1,   0,   "Disable Windows UI",NULL, NULL },
 	{ d_agup_check_proc,     16,  224, 160, 16,  2,   23,  0,    0,      1,   0,   "Disable VSync",  NULL, NULL },
@@ -154,6 +154,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 444, 210, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
 	{ d_agup_check_proc, 16,  268, 200, 16,  2,   23,  0,    0,      1,   0,   "Click to change dialog focus",NULL, NULL },
 	{ d_agup_check_proc, 16,  168, 200, 16,  2,   23,  0,    0,      1,   0,   "Save separate Bandfuse files",NULL, NULL },
+	{ d_agup_check_proc, 248, 460, 230, 16,  2,   23,  0,    0,      1,   0,   "EOF leaving focus stops playback",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1096,6 +1097,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[49].flags = eof_inverted_chords_slash ? D_SELECTED : 0;			//Treat inverted chords as slash
 	eof_preferences_dialog[50].flags = eof_click_changes_dialog_focus ? D_SELECTED : 0;		//Click to change dialog focus
 	eof_preferences_dialog[51].flags = eof_write_bf_files ? D_SELECTED : 0;					//Save separate Bandfuse files
+	eof_preferences_dialog[52].flags = eof_stop_playback_leave_focus ? D_SELECTED : 0;		//EOF leaving focus stops playback
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1193,6 +1195,7 @@ int eof_menu_file_preferences(void)
 			eof_inverted_chords_slash = (eof_preferences_dialog[49].flags == D_SELECTED ? 1 : 0);
 			eof_click_changes_dialog_focus = (eof_preferences_dialog[50].flags == D_SELECTED ? 1 : 0);
 			eof_write_bf_files = (eof_preferences_dialog[51].flags == D_SELECTED ? 1 : 0);
+			eof_stop_playback_leave_focus = (eof_preferences_dialog[52].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 29)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1237,6 +1240,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[49].flags = 0;					//Treat inverted chords as slash
 			eof_preferences_dialog[50].flags = D_SELECTED;			//Click to change dialog focus
 			eof_preferences_dialog[51].flags = 0;					//Save separate Bandfuse files
+			eof_preferences_dialog[52].flags = 1;					//EOF leaving focus stops playback
 		}//If the user clicked "Default
 	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
