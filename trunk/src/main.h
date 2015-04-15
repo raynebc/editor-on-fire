@@ -635,7 +635,7 @@ EOF_SONG *eof_create_new_project_select_pro_guitar(void);
 	//Closes a project if one is open
 	//Prompts the user for a pro guitar/bass track to activate
 	//eof_etext[] is displayed to the user in the dialog
-	//Creates a new EOF_SONG structure and sets the active track to the user-selected one
+	//Creates a new EOF_SONG structure with two beats and sets the active track to the user-selected one
 	//This is used to prepare for a Guitar Pro or Rocksmith import when no chart is loaded
 	//Returns the created project, or NULL on error
 

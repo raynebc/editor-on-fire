@@ -1250,7 +1250,14 @@ EOF_SONG * eof_import_gh(const char * fn)
 			}
 		}
 
-//Load an audio file
+//Update path variables
+		(void) ustrcpy(eof_filename, fn);
+		(void) replace_filename(eof_song_path, fn, "", 1024);
+		(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+		(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+		(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
+
+//Load guitar.ogg automatically if it's present, otherwise prompt user to browse for audio
 		if(!eof_load_ogg(oggfn, 1))	//If user does not provide audio, fail over to using silent audio
 		{
 			eof_destroy_song(sp);
@@ -1261,7 +1268,7 @@ EOF_SONG * eof_import_gh(const char * fn)
 		eof_truncate_chart(sp);	//Update the chart length before performing lyric cleanup
 		eof_vocal_track_fixup_lyrics(sp, EOF_TRACK_VOCALS, 0);	//Clean up the lyrics
 		eof_log("\tGH import completed", 1);
-	}
+	}//If a GH file was loaded
 	eof_free_ucode_table();
 	return sp;
 }
