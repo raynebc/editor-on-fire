@@ -283,7 +283,6 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[6].flags = D_DISABLED; // Sonic Visualiser Import
 		eof_file_menu[10].flags = D_DISABLED; // Lyric Import
 		eof_file_menu[11].flags = D_DISABLED; // Guitar Pro Import
-		eof_file_menu[12].flags = D_DISABLED; // Rocksmith Import
 	}
 }
 
@@ -418,12 +417,6 @@ int eof_menu_file_load(void)
 	eof_clear_input();
 	if(returnedfn)
 	{	//If the user selected a file
-		(void) ustrcpy(eof_filename, returnedfn);
-		(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
-		(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSet eof_loaded_song_name to \"%s\"", eof_loaded_song_name);
-		eof_log(eof_log_string, 1);
-
 		/* free the current project */
 		if(eof_song)
 		{
@@ -434,7 +427,7 @@ int eof_menu_file_load(void)
 		(void) eof_destroy_ogg();
 
 		/* load the specified project */
-		eof_song = eof_load_song(eof_filename);
+		eof_song = eof_load_song(returnedfn);
 		if(!eof_song)
 		{
 			eof_song_loaded = 0;
@@ -442,7 +435,6 @@ int eof_menu_file_load(void)
 			eof_fix_window_title();
 			return 1;
 		}
-		(void) replace_filename(eof_song_path, eof_filename, "", 1024);
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSet eof_song_path to \"%s\"", eof_song_path);
 		eof_log(eof_log_string, 1);
 
@@ -552,8 +544,8 @@ int eof_menu_file_save_as(void)
 		retval = eof_save_helper(returnedfn, 0);	//Perform "Save As" operation to the selected path
 		if(retval == 0)
 		{	//If the "Save as" operation succeeded, update folder path strings
-			(void) ustrcpy(eof_song_path,new_foldername);
-			(void) ustrcpy(eof_last_eof_path,new_foldername);
+			(void) ustrcpy(eof_song_path, new_foldername);	//Set the project folder path
+			(void) ustrcpy(eof_last_eof_path, new_foldername);
 		}
 		else if(retval == 1)
 		{
@@ -947,14 +939,10 @@ int eof_menu_file_midi_import(void)
 			eof_song_loaded = 0;
 		}
 		(void) eof_destroy_ogg();
-		(void) ustrcpy(eof_filename, returnedfn);
-		(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
-		(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
-		(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
-		if(!ustricmp(get_extension(eof_filename), "rba"))
+		if(!ustricmp(get_extension(returnedfn), "rba"))
 		{
-			(void) replace_filename(tempfilename, eof_filename, "eof_rba_import.tmp", 1024);
-			if(eof_extract_rba_midi(eof_filename,tempfilename) == 0)
+			(void) replace_filename(tempfilename, returnedfn, "eof_rba_import.tmp", 1024);
+			if(eof_extract_rba_midi(returnedfn,tempfilename) == 0)
 			{	//If this was an RBA file and the MIDI was extracted successfully
 				eof_song = eof_import_midi(tempfilename);
 				(void) delete_file(tempfilename);	//Delete temporary file
@@ -962,7 +950,7 @@ int eof_menu_file_midi_import(void)
 		}
 		else
 		{	//Perform regular MIDI import
-			eof_song = eof_import_midi(eof_filename);
+			eof_song = eof_import_midi(returnedfn);
 		}
 		if(eof_song)
 		{
@@ -1956,10 +1944,6 @@ int eof_menu_file_feedback_import(void)
 				eof_song_loaded = 0;
 			}
 			(void) eof_destroy_ogg();
-			(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
-			(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
-			(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
-			(void) ustrcpy(eof_song_path, eof_last_eof_path);
 
 			/* import chart */
 			eof_song = eof_import_chart(returnedfn);
@@ -2877,8 +2861,6 @@ int eof_save_helper(char *destfilename, char silent)
 		return 9;	//Return failure:  Could not create project file
 	}
 	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_temp_filename));
-	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSet eof_loaded_song_name to \"%s\"", eof_loaded_song_name);
-	eof_log(eof_log_string, 1);
 
 	/* save the MIDI, INI and other files*/
 	if(!silent)
@@ -3241,7 +3223,6 @@ int eof_menu_file_gh_import(void)
 	eof_clear_input();
 	if(returnedfn)
 	{
-		(void) ustrcpy(eof_filename, returnedfn);
 		/* destroy loaded song */
 		if(eof_song)
 		{
@@ -3250,10 +3231,6 @@ int eof_menu_file_gh_import(void)
 			eof_song_loaded = 0;
 		}
 		(void) eof_destroy_ogg();
-		(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
-		(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
-		(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
-		(void) ustrcpy(eof_song_path, eof_last_eof_path);
 
 		/* import chart */
 		eof_song = eof_import_gh(returnedfn);
@@ -3773,6 +3750,10 @@ int eof_rs_import_common(char *fn)
 			return 1;	//Return failure
 		}
 	}
+	else
+	{
+		return 1;	//Return failure
+	}
 
 	return 0;	//Return success
 }
@@ -3780,22 +3761,28 @@ int eof_rs_import_common(char *fn)
 int eof_menu_file_rs_import(void)
 {
 	char * returnedfn = NULL, *initial;
-
-	if(!eof_song || !eof_song_loaded)
-		return 1;	//For now, don't do anything unless a project is active
-
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
-		return 1;	//Don't do anything unless the active track is a pro guitar/bass track
-
-	eof_clear_input();
-	if(eof_get_track_size(eof_song, eof_selected_track) && alert("This track already has notes", "Importing this Rocksmith track will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
-	{	//If the active track is already populated and the user doesn't opt to overwrite it
-		return 0;
-	}
+	char newchart = 0;	//Is set to nonzero if a new chart is created to store the imported RS file
 
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
+
+	if(!eof_song || !eof_song_loaded)
+	{	//If no project is loaded
+		newchart = 1;
+	}
+	else
+	{
+		if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			return 1;	//Don't do anything unless the active track is a pro guitar/bass track
+
+		eof_clear_input();
+		if(eof_get_track_size(eof_song, eof_selected_track) && alert("This track already has notes", "Importing this Rocksmith track will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+		{	//If the active track is already populated and the user doesn't opt to overwrite it
+			return 0;
+		}
+	}
+
 	if((eof_last_rs_path[uoffset(eof_last_rs_path, ustrlen(eof_last_rs_path) - 1)] == '\\') || (eof_last_rs_path[uoffset(eof_last_rs_path, ustrlen(eof_last_rs_path) - 1)] == '/'))
 	{	//If the path ends in a separator
 		eof_last_rs_path[uoffset(eof_last_rs_path, ustrlen(eof_last_rs_path) - 1)] = '\0';	//Remove it
@@ -3810,7 +3797,20 @@ int eof_menu_file_rs_import(void)
 	}
 	returnedfn = ncd_file_select(0, initial, "Import Rocksmith", eof_filter_rs_files);
 	eof_clear_input();
-	(void) eof_rs_import_common(returnedfn);	//Import the specified Rocksmith XML file into the active pro guitar/bass track
+	if(newchart)
+	{	//If a project wasn't already opened when the import was started
+		if(eof_command_line_rs_import(returnedfn))
+		{	//If user canceled the import of the import was otherwise unsuccessful
+			eof_destroy_song(eof_song);
+			eof_song = NULL;
+			eof_song_loaded = 0;
+		}
+	}
+	else
+	{	//A project was already open
+		(void) eof_rs_import_common(returnedfn);	//Import the specified Rocksmith XML file into the active pro guitar/bass track
+		(void) replace_filename(eof_last_rs_path, eof_filename, "", 1024);	//Set the last loaded Rocksmith file path
+	}
 	eof_render();
 
 	return D_O_K;
@@ -3839,6 +3839,13 @@ int eof_command_line_rs_import(char *fn)
 		eof_destroy_song(eof_song);
 		return 4;	//Return error
 	}
+
+//Update path variables
+	(void) ustrcpy(eof_filename, fn);
+	(void) replace_filename(eof_song_path, fn, "", 1024);	//Set the project folder path
+	(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 
 	return 0;	//Return success
 }
@@ -4116,12 +4123,9 @@ int eof_menu_file_bf_import(void)
 			eof_change_count = 0;
 		}
 		(void) eof_destroy_ogg();
-		(void) ustrcpy(eof_filename, returnedfn);
-		(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
-		(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
-		(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+		(void) replace_filename(eof_last_bf_path, eof_filename, "", 1024);
 
-		eof_song = eof_load_bf(eof_filename);
+		eof_song = eof_load_bf(returnedfn);
 		if(eof_song)
 		{
 			eof_song_loaded = 1;

@@ -167,6 +167,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 
 		/* load audio */
+		(void) replace_filename(eof_song_path, fn, "", 1024);	//Set the project folder path
 		(void) replace_filename(oggfn, fn, "guitar.ogg", 1024);	//Look for guitar.ogg by default
 		if((chart->audiofile != NULL) && !exists(oggfn))
 		{	//If the imported chart defines which audio file to use AND guitar.ogg doesn't exist
@@ -563,6 +564,13 @@ EOF_SONG * eof_import_chart(const char * fn)
 			}
 		}
 	}
+
+//Update path variables
+	(void) ustrcpy(eof_filename, fn);
+	(void) replace_filename(eof_song_path, fn, "", 1024);
+	(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 
 	eof_log("\tFeedback import completed", 1);
 //	eof_log_level |= 2;	//Enable verbose logging

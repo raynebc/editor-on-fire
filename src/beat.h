@@ -31,7 +31,8 @@ void eof_song_delete_beat(EOF_SONG * sp, unsigned long beat);
 int eof_song_resize_beats(EOF_SONG * sp, unsigned long beats);
 	//Grows or shrinks the beats array to fit the specified number of beats by allocating/freeing EOF_BEAT_MARKER structures.  Returns zero on error
 int eof_song_append_beats(EOF_SONG * sp, unsigned long beats);
-	//Adds the specified number of beats to the chart, initializing each to be the same tempo and length as the chart's current last beat.  Returns zero on error
+	//Adds the specified number of beats to the chart, initializing each to be the same tempo and length as the chart's current last beat.
+	//If there are no beats already, the first beat added is set to 500ms long (ie. 120BPM).  Returns zero on error.
 void eof_double_tempo(EOF_SONG * sp, unsigned long beat, char *undo_made);
 	//Doubles the tempo on the specified beat, effectively doubling the number of beats up to the next anchor
 	//If *undo_made is zero, this function will create an undo state before modifying the chart and will set the referenced variable to nonzero

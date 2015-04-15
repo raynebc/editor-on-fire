@@ -127,6 +127,7 @@ int eof_rs_import_common(char *fn);
 	//Returns nonzero on error
 int eof_menu_file_rs_import(void);
 	//Replaces the active pro guitar/bass track with the content of the selected arrangement in the user's selected Rocksmith XML file
+	//If no project is open, a new project is created and the user is prompted to select a pro guitar/bass track to import to
 	//Beat timings in the active project are replaced with the timings in the XML file
 int eof_command_line_rs_import(char *fn);
 	//Creates a new project and imports the specified Rocksmith arrangement into the user-specified pro guitar/bass track

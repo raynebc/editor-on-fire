@@ -440,22 +440,33 @@ int eof_song_resize_beats(EOF_SONG * sp, unsigned long beats)
 int eof_song_append_beats(EOF_SONG * sp, unsigned long beats)
 {
 	unsigned long i;
-	double beat_length;
+	double beat_length = 500.0;	//If the project has no beats yet, the first appended one will be in 120BPM by default
 
 	if(!sp)
 	{
 		return 0;
 	}
 
-	beat_length = (double)60000.0 / ((double)60000000.0 / (double)sp->beat[sp->beats - 1]->ppqn);	//Get the length of the current last beat
+	if(sp->beats)
+	{	//If there is at least one beat in the project already
+		beat_length = (double)60000.0 / ((double)60000000.0 / (double)sp->beat[sp->beats - 1]->ppqn);	//Get the length of the current last beat
+	}
 	for(i = 0; i < beats; i++)
 	{
 		if(!eof_song_add_beat(sp))
 		{
 			return 0;	//Return failure
 		}
-		sp->beat[sp->beats - 1]->ppqn = sp->beat[sp->beats - 2]->ppqn;		//Set this beat's tempo to match the previous beat
-		sp->beat[sp->beats - 1]->fpos = sp->beat[sp->beats - 2]->fpos + beat_length;	//Set this beat's position to one beat length after the previous beat
+		if(sp->beats >= 2)
+		{	//If there are at least two beats in the project now
+			sp->beat[sp->beats - 1]->ppqn = sp->beat[sp->beats - 2]->ppqn;		//Set this beat's tempo to match the previous beat
+			sp->beat[sp->beats - 1]->fpos = sp->beat[sp->beats - 2]->fpos + beat_length;	//Set this beat's position to one beat length after the previous beat
+		}
+		else
+		{	//Otherwise set this beat's tempo to 120BPM
+			sp->beat[sp->beats - 1]->ppqn = 500000;
+			sp->beat[sp->beats - 1]->fpos = 0;
+		}
 		sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos + 0.5;	//Round up
 	}
 

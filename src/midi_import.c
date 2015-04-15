@@ -3041,8 +3041,14 @@ eof_log("\tThird pass complete", 1);
 		}
 	}
 
-//Load guitar.ogg automatically if it's present, otherwise prompt user to browse for audio
+//Update path variables
+	(void) ustrcpy(eof_filename, fn);
 	(void) replace_filename(eof_song_path, fn, "", 1024);
+	(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
+
+//Load guitar.ogg automatically if it's present, otherwise prompt user to browse for audio
 	(void) append_filename(nfn, eof_song_path, "guitar.ogg", 1024);
 	if(!eof_load_ogg(nfn, 1))	//If user does not provide audio, fail over to using silent audio
 	{

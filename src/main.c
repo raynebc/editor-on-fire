@@ -2790,6 +2790,7 @@ void eof_render_note_window(void)
 			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Measure = (Time Sig. not defined)");
 		}
 		ypos += 12;
+
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
 			if(eof_selection.current < eof_song->vocal_track[tracknum]->lyrics)
@@ -4258,7 +4259,6 @@ int eof_initialize(int argc, char * argv[])
 							(void) ustrcpy(eof_filename, ptr);		//Set the full project path
 							(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);	//Set the last loaded song path
 							(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));	//Set the project filename
-							(void) replace_filename(eof_song_path, eof_filename, "", 1024);	//Set the project folder path
 							(void) append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);	//Construct the full OGG path
 							if(!eof_load_ogg(temp_filename, 1))	//If user does not provide audio, fail over to using silent audio
 							{
@@ -4299,17 +4299,12 @@ int eof_initialize(int argc, char * argv[])
 			if(!ustricmp(get_extension(argv[i]), "eof"))
 			{
 				/* load the specified project */
-				(void) ustrcpy(eof_song_path, argv[i]);
-				(void) ustrcpy(eof_filename, argv[i]);
-				(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
-				(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
-				eof_song = eof_load_song(eof_filename);
+				eof_song = eof_load_song(argv[i]);
 				if(!eof_song)
 				{
 					allegro_message("Unable to load project. File could be corrupt!");
 					return 0;
 				}
-				(void) replace_filename(eof_song_path, eof_filename, "", 1024);
 
 				/* check song.ini and prompt user to load any external edits */
 				(void) replace_filename(temp_filename, eof_song_path, "song.ini", 1024);
@@ -4327,12 +4322,7 @@ int eof_initialize(int argc, char * argv[])
 			}
 			else if(!ustricmp(get_extension(argv[i]), "mid"))
 			{
-				(void) ustrcpy(eof_song_path, argv[i]);
-				(void) ustrcpy(eof_filename, argv[i]);
-				(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
-				(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
-				(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
-				eof_song = eof_import_midi(eof_filename);
+				eof_song = eof_import_midi(argv[i]);
 				if(!eof_song)
 				{
 					allegro_message("Could not import song!");
@@ -4345,14 +4335,9 @@ int eof_initialize(int argc, char * argv[])
 			}
 			else if(!ustricmp(get_extension(argv[i]), "rba"))
 			{
-				(void) ustrcpy(eof_song_path, argv[i]);
-				(void) ustrcpy(eof_filename, argv[i]);
-				(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
-				(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
-				(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
-				(void) replace_filename(temp_filename, eof_filename, "eof_rba_import.tmp", 1024);
+				(void) replace_filename(temp_filename, argv[i], "eof_rba_import.tmp", 1024);
 
-				if(eof_extract_rba_midi(eof_filename,temp_filename) == 0)
+				if(eof_extract_rba_midi(argv[i], temp_filename) == 0)
 				{	//If this was an RBA file and the MIDI was extracted successfully
 					eof_song = eof_import_midi(temp_filename);
 					(void) delete_file(temp_filename);	//Delete temporary file
@@ -4369,12 +4354,7 @@ int eof_initialize(int argc, char * argv[])
 			}
 			else if(!ustricmp(get_extension(argv[i]), "chart"))
 			{	//Import a Feedback chart via command line
-				(void) ustrcpy(eof_song_path, argv[i]);
-				(void) ustrcpy(eof_filename, argv[i]);
-				(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
-				(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
-				(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
-				eof_song = eof_import_chart(eof_filename);
+				eof_song = eof_import_chart(argv[i]);
 				if(!eof_song)
 				{
 					allegro_message("Could not import song!");
@@ -4384,48 +4364,34 @@ int eof_initialize(int argc, char * argv[])
 			}
 			else if(strcasestr_spec(argv[i], ".pak."))
 			{	//Import a Guitar Hero file via command line
-				(void) ustrcpy(eof_song_path, argv[i]);
-				(void) ustrcpy(eof_filename, argv[i]);
-				(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
-				(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
-				(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
-				eof_song = eof_import_gh(eof_filename);
+				eof_song = eof_import_gh(argv[i]);
 				if(!eof_song)
 				{
 					allegro_message("Could not import song!");
 					return 0;
 				}
 				eof_song_loaded = 1;
+				(void) replace_filename(eof_last_gh_path, eof_filename, "", 1024);
 			}
 			else if(!ustricmp(get_extension(argv[i]), "rif"))
 			{	//Import a Bandfuse chart via command line
-				(void) ustrcpy(eof_song_path, argv[i]);
-				(void) ustrcpy(eof_filename, argv[i]);
-				(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
-				(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
-				(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
-				eof_song = eof_load_bf(eof_filename);
+				eof_song = eof_load_bf(argv[i]);
 				if(!eof_song)
 				{
 					allegro_message("Could not import song!");
 					return 0;
 				}
 				eof_song_loaded = 1;
+				(void) replace_filename(eof_last_bf_path, eof_filename, "", 1024);
 			}
 			else if(!ustricmp(get_extension(argv[i]), "xml"))
 			{	//Import a Rocksmith arrangement or Go PlayAlong XML file via command line
 				int retval ;
 
-				(void) ustrcpy(eof_song_path, argv[i]);
-				(void) ustrcpy(eof_filename, argv[i]);
-				(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
-				(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
-				(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
-
-				retval = eof_identify_xml(eof_filename);
+				retval = eof_identify_xml(argv[i]);
 				if(retval == 1)
 				{	//Import Rocksmith file
-					if(!eof_command_line_rs_import(eof_filename))
+					if(!eof_command_line_rs_import(argv[i]))
 					{	//If a new project was created and the RS file was imported successfully
 						(void) replace_filename(eof_last_rs_path, eof_filename, "", 1024);	//Set the last loaded Rocksmith file path
 						eof_log("\tImport complete", 1);
@@ -5418,6 +5384,17 @@ EOF_SONG *eof_create_new_project_select_pro_guitar(void)
 	{
 		eof_song_loaded = 1;
 		eof_menu_track_selected_track_number(user_selection, 1);	//Change to the user selected track
+	}
+
+	if(!eof_song_append_beats(eof_song, 1))
+	{	//If there was an error adding a beat
+		eof_destroy_song(eof_song);
+		return NULL;
+	}
+	if(!eof_song_append_beats(eof_song, 1))
+	{	//If there was an error adding a second beat
+		eof_destroy_song(eof_song);
+		return NULL;
 	}
 
 	return eof_song;

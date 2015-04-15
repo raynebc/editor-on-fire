@@ -17,11 +17,12 @@ icon.o : eof.rc
 
 clean:
 	@del *.o
-	@del menu\*.o
-	@del dialog\*.o
-	@del modules\*.o
-	@del agup\*.o
 	@del alogg\src\*.o
+	@del minibpm-1.0\src\*.o
+	@del menu\*.o
+	@del modules\*.o
+	@del dialog\*.o
+	@del agup\*.o
 	@del foflc\*.o
 	@del ..\bin\$(EXENAME)
 	@echo Cleanup complete!

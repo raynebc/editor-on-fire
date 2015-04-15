@@ -294,7 +294,7 @@ EOF_SONG * eof_load_song(const char * fn)
 //	eof_log_level &= ~2;	//Disable verbose logging
 	(void) pack_fread(rheader, 16, fp);
 	if(!ustricmp(rheader, header))
-	{
+	{	//Current project format
 		sp = eof_create_song();
 		if(!sp)
 		{
@@ -345,7 +345,7 @@ EOF_SONG * eof_load_song(const char * fn)
 		}
 	}
 	else
-	{
+	{	//Older project format
 		sp = eof_load_notes_legacy(fp, rheader[6]);
 	}
 	(void) pack_fclose(fp);
@@ -362,6 +362,12 @@ EOF_SONG * eof_load_song(const char * fn)
 			}
 		}
 	}
+
+//Update path variables
+	(void) ustrcpy(eof_filename, fn);
+	(void) replace_filename(eof_song_path, fn, "", 1024);	//Set the project folder path
+	(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 
 	eof_log("\tProject loaded", 1);
 //	eof_log_level |= 2;	//Enable verbose logging
