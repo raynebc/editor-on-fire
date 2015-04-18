@@ -514,6 +514,9 @@ TRACK CHUNK, for each track:
 						!TREMOLO PICKING (if the note effect 2 bitmask defines this)
 							[1 byte]:	Picking speed (3 = 32nd note, 2 = 16th note, 1 = 8th note)
 						!SLIDE (if the note effect 2 bitmask defines this)
+						If the major file version is < 5:
+							[1 byte]:	Slide type number (-2 = slide in from above, -1 = slide in from below, 1 = shift slide, 2 = legato slide, 3 = slide out and downwards, 4 = slide out and upwards)
+						If the major file version is >= 5:
 							[1 byte]:	Slide type bitmask (0 = no slide, 1 = shift slide, 2 = legato slide, 4 = slide out and downwards, 8 = slide out and upwards, 16 = slide in from below, 32 = slide in from above)
 						!HARMONIC (if the note effect 2 bitmask defines this)
 						{

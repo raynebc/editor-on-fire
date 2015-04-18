@@ -3221,6 +3221,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						}
 						isaltered = 1;	//A note notated as a quarter note may now no longer be as long as one
 					}//(a triplet of quarter notes is 3 notes in the span of two quarter notes) (a quintuplet of eighth notes is 5 notes in the span of 4 eighth notes)
+///This may be a good place to add handling for triplet feel
 					if(bytemask & 1)
 					{	//Dotted note
 						note_duration *= 1.5;	//A dotted note is one and a half times as long as normal
@@ -3968,43 +3969,87 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								if(byte2 & 8)
 								{	//Slide
 									byte = pack_getc(inf);	//Slide type
-									if(byte & 4)
-									{	//This note slides out and downwards
-										if(frets[ctr4] > 1 )
-										{	//Don't apply a downward slide unless the note is at fret 2 or higher
-											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-											unpitchend = frets[ctr4] - 1;
-										}
-									}
-									else if(byte & 8)
-									{	//This note slides out and upwards
-										flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-										unpitchend = frets[ctr4] + 1;
-									}
-									else if(byte & 16)
-									{	//This note slides in from below
-										if(frets[ctr4] > 1 )
-										{	//Don't allow this unless sliding into a fret higher than 1
+									if(fileversion < 500)
+									{	//If the GP file is older than version 5
+										flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//GP4 and older formats have a tendency to mark unpitched slides as "slide from note" as well, remove the redundant status set earlier
+										if(byte == - 2)
+										{	//Slide in from above
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
 											unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
-											frets[ctr4]--;				//Set the beginning of this slide one fret lower
+											frets[ctr4]++;				//Set the beginning of this slide one fret higher
 										}
-									}
-									else if(byte & 32)
-									{	//This note slides in from above
-										flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-										unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
-										frets[ctr4]++;				//Set the beginning of this slide one fret higher
-									}
-									else
-									{
-										if(byte & 2)
+										else if(byte == -1)
+										{	//Slide in from below
+											if(frets[ctr4] > 1 )
+											{	//Don't allow this unless sliding into a fret higher than 1
+												flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+												unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
+												frets[ctr4]--;				//Set the beginning of this slide one fret lower
+											}
+										}
+										else if(byte == 1)
+										{	//Shift slide
+											flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
+										}
+										else if(byte == 2)
 										{	//If this is a legato slide
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Mark the current note with linknext status to accurately describe how to play it in Rocksmith
+											flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
 										}
-										flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
+										else if(byte == 3)
+										{	//Slide out and downward
+											if(frets[ctr4] > 1 )
+											{	//Don't apply a downward slide unless the note is at fret 2 or higher
+												flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+												unpitchend = frets[ctr4] - 1;
+											}
+										}
+										else if(byte == 4)
+										{	//Slide out and upward
+											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+											unpitchend = frets[ctr4] + 1;
+										}
 									}
-								}
+									else
+									{	//Version 5 or newer GP file
+										if(byte & 4)
+										{	//This note slides out and downwards
+											if(frets[ctr4] > 1 )
+											{	//Don't apply a downward slide unless the note is at fret 2 or higher
+												flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+												unpitchend = frets[ctr4] - 1;
+											}
+										}
+										else if(byte & 8)
+										{	//This note slides out and upwards
+											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+											unpitchend = frets[ctr4] + 1;
+										}
+										else if(byte & 16)
+										{	//This note slides in from below
+											if(frets[ctr4] > 1 )
+											{	//Don't allow this unless sliding into a fret higher than 1
+												flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+												unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
+												frets[ctr4]--;				//Set the beginning of this slide one fret lower
+											}
+										}
+										else if(byte & 32)
+										{	//This note slides in from above
+											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+											unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
+											frets[ctr4]++;				//Set the beginning of this slide one fret higher
+										}
+										else
+										{
+											if(byte & 2)
+											{	//If this is a legato slide
+												flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Mark the current note with linknext status to accurately describe how to play it in Rocksmith
+											}
+											flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
+										}
+									}//Version 5 or newer GP file
+								}//Slide
 								if(byte2 & 16)
 								{	//Harmonic
 									byte = pack_getc(inf);	//Harmonic type
