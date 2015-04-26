@@ -40,6 +40,7 @@
 		unsigned char start_of_repeat;	//If nonzero, indicates that this measure is the start of a repeat (measure 0 is this by default)
 		unsigned char num_of_repeats;	//If nonzero, indicates the end of a repeat as well as how many repeats
 		unsigned char alt_endings; 		//Alternative endings mask, is 0 if no alternate ending occurs
+		unsigned char tripletfeel;		//The triplet feel duration in effect for this measure (0 = none, 1 = 8th note, 2 = 16th note)
 	};
 
 	struct eof_guitar_pro_struct

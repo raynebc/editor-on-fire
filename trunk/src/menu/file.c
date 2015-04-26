@@ -3058,6 +3058,11 @@ int eof_save_helper(char *destfilename, char silent)
 	{	//If the user wants to save Bandfuse capable files
 		eof_log("Exporting Bandfuse XML file", 1);
 
+		if(silent)
+		{	//If warnings are being suppressed
+			user_warned = 0xFFFF;	//Mark all warnings as already having been given so they won't be displayed again
+		}
+
 		//Build the target file name
 		(void) append_filename(eof_temp_filename, newfolderpath, "xmlpath.xml", (int) sizeof(eof_temp_filename));	//Re-acquire the save's target folder
 		if(eof_song->tags->title[0] != '\0')
@@ -3800,7 +3805,7 @@ int eof_menu_file_rs_import(void)
 	if(newchart)
 	{	//If a project wasn't already opened when the import was started
 		if(eof_command_line_rs_import(returnedfn))
-		{	//If user canceled the import of the import was otherwise unsuccessful
+		{	//If user canceled the import or the import was otherwise unsuccessful
 			eof_destroy_song(eof_song);
 			eof_song = NULL;
 			eof_song_loaded = 0;
