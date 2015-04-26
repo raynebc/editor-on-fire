@@ -2895,12 +2895,13 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned char current_low, current_high, last_anchor = 0;
 	EOF_PRO_GUITAR_NOTE *next_position = NULL;	//Tracks the note at which the next fret hand position will be placed
-	EOF_PRO_GUITAR_NOTE *np, temp = {{0}, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	EOF_PRO_GUITAR_NOTE *np, temp = {{0}, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, temp2 = {{0}, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};	//Used to track FHPs influenced by fingering or by slides
 	char force_change, started = 0;
 	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the fret hand positions are generated
 	char all = 0;	//Is set to nonzero if the values passed for startnote and stopnote are equal, indicating all existing fret hand positions are to be replaced
 	char *warning, warning1[] = "Existing fret hand positions for the active track difficulty will be removed.", warning2[] = "Existing fret hand positions for the selected range of notes will be removed.";
 	unsigned limit = 21;	//Rocksmith 2's fret hand position limit is 21
+	long lastnoteslide = 0;	//Tracks the number of frets the last processed note slid (for adding FHPs to track when the fret hand slides)
 
 	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return;	//Invalid parameters
@@ -3003,7 +3004,7 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 				next_position = tp->note[ctr];	//Store its address
 			}
 
-			//Determine if this chord uses the index finger, which will trigger a fret hand position change (if this chord's fingering is incomplete, perform a chord shape lookup)
+			//Determine if this note is a chord that uses the index finger, which will trigger a fret hand position change (if this chord's fingering is incomplete, perform a chord shape lookup)
 			force_change = 0;	//Reset this condition
 			np = tp->note[ctr];	//Unless the chord's fingering is incomplete, the note's current fingering will be used to determine whether the index finger triggers a position change
 			if((eof_note_count_colors(eof_song, track, ctr) > 1) && !eof_is_string_muted(eof_song, track, ctr))
@@ -3028,14 +3029,34 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 				}
 			}
 
+			//Determine if this note follows a slide and a fret hand position should be added due to the slide
+			if(!force_change && lastnoteslide)
+			{	//If this note didn't trigger a fret hand position change and the last note had a slide
+				if(lastnoteslide < 0)
+				{	//If the slide note went down
+					unsigned long lastnoteslide_abs = -lastnoteslide;
+					if((current_low >= lastnoteslide_abs) && (current_low - lastnoteslide <= eof_pro_guitar_note_lowest_fret(tp, ctr)))
+					{	//If the current fret hand position can be moved the same number of frets as the slide and still be valid for this note
+						force_change = 2;
+					}
+				}
+				else
+				{	//If the slide note went up
+					if(current_low + lastnoteslide <= eof_pro_guitar_note_lowest_fret(tp, ctr))
+					{	//If the current fret hand position can be moved the same number of frets as the slide and still be valid for this note
+						force_change = 2;
+					}
+				}
+			}
+
 			if(force_change || !eof_note_can_be_played_within_fret_tolerance(tp, ctr, &current_low, &current_high))
-			{	//If a position change was determined to be necessary based on fingering, or this note can't be included with previous notes within a single fret hand position
+			{	//If a position change was determined to be necessary based on fingering/sliding, or this note can't be included with previous notes within a single fret hand position
 				if(current_low + tp->capo > limit)
 				{	//Ensure the fret hand position is capped at the appropriate limit based on the game exports enabled
 					current_low = limit - tp->capo;
 				}
 				if(force_change)
-				{	//If a fret hand position change was forced due to note fingering
+				{	//If a fret hand position change was forced due to note fingering/sliding
 					if(next_position != tp->note[ctr])
 					{	//If the fret hand position for previous notes has not been placed yet, write it first
 						if(current_low && (current_low != last_anchor))
@@ -3048,7 +3069,15 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 							(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL);	//Add the fret hand position for this forced position change
 							last_anchor = current_low;
 						}
-						next_position = tp->note[ctr];	//The fret hand position for the current note will be written next
+						if(force_change == 1)
+						{	//If the position change is due to fingering
+							next_position = tp->note[ctr];	//The fret hand position for the current note will be written next
+						}
+						else
+						{	//If the position change is due to sliding
+							next_position = &temp2;	//The fret hand position for the end of the slide will be written next
+							current_low += lastnoteslide;	//And it will be the appropriate number of frets higher/lower depending on the slide's end position
+						}
 					}
 					//Now that the previous notes' position is in place, update the high and low fret tracking for the current note
 					current_low = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Track this note's high and low frets
@@ -3082,6 +3111,26 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 				current_low = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Track this note's high and low frets
 				current_high = eof_pro_guitar_note_highest_fret(tp, ctr);
 			}//If a position change was determined to be necessary based on fingering, or this note can't be included with previous notes within a single fret hand position
+
+			//Track the number of frets this note slides
+			lastnoteslide = 0;
+			np = tp->note[ctr];	//Simplify
+			if(np->flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))
+			{	//If the note that was just processed has slide technique
+				memcpy(&temp2, tp->note[ctr], sizeof(temp2));	//Clone the note
+				temp2.pos = temp2.pos + temp2.length;	//Change the clone's start position (the position where a fret hand position was be placed) to the end of the note
+				if((np->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) && (np->slideend || np->unpitchend))
+				{	//If the end of slide position is defined
+					if(np->flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+					{	//If the note was a pitched slide
+						lastnoteslide = np->slideend - eof_pro_guitar_note_lowest_fret(tp, ctr);
+					}
+					else
+					{	//If the note was an unpitched slide
+						lastnoteslide = np->unpitchend - eof_pro_guitar_note_lowest_fret(tp, ctr);
+					}
+				}
+			}
 		}//If it is in the specified difficulty and isn't marked as a temporary note (a single note inserted to allow chord techniques to appear in Rocksmith)
 	}//For each note in the track that is in the target range
 

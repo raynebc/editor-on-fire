@@ -168,7 +168,7 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 	//If eof_fret_hand_position_list_dialog_undo_made is nonzero, an undo state is made before changing the existing hand positions
 	//If warnuser is nonzero, the user is prompted to confirm deletion of existing fret hand positions
 	//The dynamic parameter is passed to eof_build_fret_range_tolerances(), indicating whether to base the fret range tolerances from the chart or leave them all at 4
-	//Dynamic should be left at 0 for generating positions for Rocksmith (limitation with the game only allows for range of 4).  It will produce higher quality positions for Rock Band 3 when dynamic is nonzero.
+	//Dynamic should be left at 0 for generating positions for Rocksmith (limitation with RS1 only allows for range of 4).  It will produce higher quality positions for Rock Band 3 when dynamic is nonzero.
 void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, char difficulty, char warnuser, char dynamic);
 	//Calls eof_generate_efficient_hand_positions_logic() to generate fret hand positions for the entirety of the specified track difficulty
 int eof_generate_efficient_hand_positions_for_selected_notes(void);
