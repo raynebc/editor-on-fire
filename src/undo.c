@@ -48,6 +48,7 @@ int eof_undo_load_state(const char * fn)
 	{
 		return 0;
 	}
+	sp->tags->accurate_ts = 0;	//For existing projects, this setting must be manually enabled in order to prevent unwanted alteration to beat timings
 	if(!eof_load_song_pf(sp, fp))
 	{	//If loading the undo state fails
 		allegro_message("Failed to perform undo");

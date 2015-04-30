@@ -213,7 +213,7 @@ DIALOG eof_ini_add_dialog[] =
 DIALOG eof_song_properties_dialog[] =
 {
 	/* (proc)              (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
-	{ d_agup_window_proc,  0,   0,   480, 292, 0,   0,   0,    0,      0,   0,   "Song Properties",      NULL, NULL },
+	{ d_agup_window_proc,  0,   0,   480, 307, 0,   0,   0,    0,      0,   0,   "Song Properties",      NULL, NULL },
 	{ d_agup_text_proc,    12,  40,  80,  12,  0,   0,   0,    0,      0,   0,   "Song Title",           NULL, NULL },
 	{ d_agup_edit_proc,    12,  56,  184, 20,  0,   0,   0,    0,      255, 0,   eof_etext,              NULL, NULL },
 	{ d_agup_text_proc,    12,  88,  96,  12,  0,   0,   0,    0,      0,   0,   "Artist",               NULL, NULL },
@@ -236,7 +236,8 @@ DIALOG eof_song_properties_dialog[] =
 	{ d_agup_check_proc,   160, 238, 136, 16,  0,   0,   0,    0,      1,   0,   "8th Note HO/PO",       NULL, NULL },
 	{ d_agup_check_proc,   160, 253, 215, 16,  0,   0,   0,    0,      1,   0,   "Use fret hand pos of 1 (pro g)", NULL, NULL },
 	{ d_agup_check_proc,   160, 268, 215, 16,  0,   0,   0,    0,      1,   0,   "Use fret hand pos of 1 (pro b)", NULL, NULL },
-	{ d_agup_button_proc,  380, 252, 84,  24,  0,   0,   '\r', D_EXIT, 0,   0,   "OK",                   NULL, NULL },
+	{ d_agup_check_proc,   160, 283, 200, 16,  0,   0,   0,    0,      1,   0,   "Use accurate time signatures", NULL, NULL },
+	{ d_agup_button_proc,  380, 267, 84,  24,  0,   0,   '\r', D_EXIT, 0,   0,   "OK",                   NULL, NULL },
 	{ NULL,                0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                   NULL, NULL }
 };
 
@@ -897,12 +898,13 @@ int eof_menu_song_properties(void)
 	int old_offset = 0;
 	int i, invalid = 0;
 	unsigned long difficulty, undo_made = 0;
-	char newlyrics, neweighth_note_hopo, neweof_fret_hand_pos_1_pg, neweof_fret_hand_pos_1_pb;
+	char newlyrics, neweighth_note_hopo, neweof_fret_hand_pos_1_pg, neweof_fret_hand_pos_1_pb, oldaccurate_ts, newaccurate_ts;
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
 
 	old_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
+	oldaccurate_ts = eof_song->tags->accurate_ts;
 	eof_cursor_visible = 0;
 	if(eof_song_loaded)
 	{
@@ -924,6 +926,7 @@ int eof_menu_song_properties(void)
 	eof_song_properties_dialog[20].flags = eof_song->tags->eighth_note_hopo ? D_SELECTED : 0;
 	eof_song_properties_dialog[21].flags = eof_song->tags->eof_fret_hand_pos_1_pg ? D_SELECTED : 0;
 	eof_song_properties_dialog[22].flags = eof_song->tags->eof_fret_hand_pos_1_pb ? D_SELECTED : 0;
+	eof_song_properties_dialog[23].flags = eof_song->tags->accurate_ts ? D_SELECTED : 0;
 	if(eof_song->tags->difficulty != 0xFF)
 	{	//If there is a band difficulty defined, populate the band difficulty field
 		(void) snprintf(eof_etext7, sizeof(eof_etext7) - 1, "%lu", eof_song->tags->difficulty);
@@ -932,12 +935,13 @@ int eof_menu_song_properties(void)
 	{	//Othewise leave the field blank
 		eof_etext7[0] = '\0';
 	}
-	if(eof_popup_dialog(eof_song_properties_dialog, 2) == 23)
+	if(eof_popup_dialog(eof_song_properties_dialog, 2) == 24)
 	{	//User clicked OK
 		newlyrics = (eof_song_properties_dialog[19].flags & D_SELECTED) ? 1 : 0;
 		neweighth_note_hopo = (eof_song_properties_dialog[20].flags & D_SELECTED) ? 1 : 0;
 		neweof_fret_hand_pos_1_pg = (eof_song_properties_dialog[21].flags & D_SELECTED) ? 1 : 0;
 		neweof_fret_hand_pos_1_pb = (eof_song_properties_dialog[22].flags & D_SELECTED) ? 1 : 0;
+		newaccurate_ts = (eof_song_properties_dialog[23].flags & D_SELECTED) ? 1 : 0;
 		//Ensure the boolean values use 1 to indicate true to simplify comparison below
 		if(eof_song->tags->lyrics)
 			eof_song->tags->lyrics = 1;
@@ -947,6 +951,8 @@ int eof_menu_song_properties(void)
 			eof_song->tags->eof_fret_hand_pos_1_pg = 1;
 		if(eof_song->tags->eof_fret_hand_pos_1_pb)
 			eof_song->tags->eof_fret_hand_pos_1_pb = 1;
+		if(eof_song->tags->accurate_ts)
+			eof_song->tags->accurate_ts = 1;
 		if(ustricmp(eof_song->tags->title, eof_etext) || ustricmp(eof_song->tags->artist, eof_etext2) || ustricmp(eof_song->tags->frettist, eof_etext3) || ustricmp(eof_song->tags->year, eof_etext5) || ustricmp(eof_song->tags->loading_text, eof_etext6) || ustricmp(eof_song->tags->album, eof_etext8))
 		{	//If any of the text fields were changed
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -961,7 +967,7 @@ int eof_menu_song_properties(void)
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			undo_made = 1;
 		}
-		else if((eof_song->tags->lyrics != newlyrics) || (eof_song->tags->eighth_note_hopo != neweighth_note_hopo) || (eof_song->tags->eof_fret_hand_pos_1_pg != neweof_fret_hand_pos_1_pg) || (eof_song->tags->eof_fret_hand_pos_1_pb != neweof_fret_hand_pos_1_pb))
+		else if((eof_song->tags->lyrics != newlyrics) || (eof_song->tags->eighth_note_hopo != neweighth_note_hopo) || (eof_song->tags->eof_fret_hand_pos_1_pg != neweof_fret_hand_pos_1_pg) || (eof_song->tags->eof_fret_hand_pos_1_pb != neweof_fret_hand_pos_1_pb) || (eof_song->tags->accurate_ts != newaccurate_ts))
 		{	//If any of the checkboxes were changed
 			undo_made = 1;
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -981,6 +987,7 @@ int eof_menu_song_properties(void)
 		eof_song->tags->eighth_note_hopo = neweighth_note_hopo;
 		eof_song->tags->eof_fret_hand_pos_1_pg = neweof_fret_hand_pos_1_pg;
 		eof_song->tags->eof_fret_hand_pos_1_pb = neweof_fret_hand_pos_1_pb;
+		eof_song->tags->accurate_ts = newaccurate_ts;
 		(void) ustrcpy(eof_last_frettist, eof_etext3);
 		if(!eof_is_number(eof_etext4))
 		{
