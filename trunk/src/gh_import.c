@@ -2696,6 +2696,7 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 				eof_destroy_qblyric_list(head);
 				return NULL;
 			}
+			memset(buffer, 0, (size_t)index2);		//Fill with 0s to satisfy Splint
 			if(eof_filebuffer_memcpy(fb, buffer, (size_t)index2 - 1) == EOF)	//Read the section name string into a buffer
 			{
 				eof_log("\t\tError:  Could not read section name text", 1);

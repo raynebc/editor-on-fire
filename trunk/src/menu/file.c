@@ -3999,7 +3999,7 @@ int eof_menu_file_sonic_visualiser_import(void)
 				else
 				{	//Otherwise convert the string to floating point
 					tempo_f = atof(tempo_s);
-					beatlen = 60000.0 / tempo_f;	//Get the length (in milliseconds) of one beat using this tempo
+					beatlen = 60000.0 / tempo_f;	//Get the length (in milliseconds) of one beat using this tempo (for now, don't take time signature into consideration because I don't believe Sonic Visualizer does)
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tFrame = %ld\ttime = %fms\ttempo = %.3fBPM\tbeat length = %f", frame, frametime, tempo_f, beatlen);
 					eof_log(eof_log_string, 1);
 				}

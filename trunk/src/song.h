@@ -515,7 +515,7 @@ typedef struct
 	/* song info */
 	EOF_SONG_TAGS * tags;
 
-	/* MIDI "resolution" used to determine how MIDI is exported,
+	/* MIDI "resolution" (time division, currently unused) used to determine how MIDI is exported,
 	 * when importing we should store the value from the source file here to
 	 * simplify import and to minimize changes made to the file upon export */
 	int resolution;
@@ -759,8 +759,8 @@ void eof_set_freestyle(char *ptr, char status);
 void eof_toggle_freestyle(EOF_VOCAL_TRACK * tp, unsigned long lyricnumber);
 	//Makes a lyric freestyle if it isn't already and vice versa
 
-long eof_song_tick_to_msec(EOF_SONG * sp, unsigned long tick); // convert tick value to real time, or -1 on error
-long eof_song_msec_to_tick(EOF_SONG * sp, unsigned long msec); // convert real time value to tick, or -1 on error
+double eof_calc_beat_length(EOF_SONG *sp, unsigned long beat);
+	//Returns the length of the specified beat based on the tempo and time signature in effect at its position or 0.0 on error
 
 char eof_check_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,unsigned long flag);
 	//Checks all notes in the track, from #notenum to the last, that are at the specified note's timestamp

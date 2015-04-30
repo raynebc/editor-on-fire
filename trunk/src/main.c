@@ -427,7 +427,7 @@ float eof_get_porpos(unsigned long pos)
 
 long eof_put_porpos(unsigned long beat, float porpos, float offset)
 {
-	float fporpos = porpos + offset;
+	double fporpos = porpos + offset;
 	unsigned long cbeat = beat;
 
 	eof_log("eof_put_porpos() entered", 2);
@@ -444,7 +444,7 @@ long eof_put_porpos(unsigned long beat, float porpos, float offset)
 			}
 			cbeat--;
 		}
-		return ((eof_song->beat[cbeat]->fpos + ((float)eof_get_beat_length(eof_song, cbeat) * fporpos) / 100.0) + 0.5);	//Round up to nearest millisecond
+		return ((eof_song->beat[cbeat]->fpos + (eof_get_beat_length(eof_song, cbeat) * fporpos) / 100.0) + 0.5);	//Round up to nearest millisecond
 	}
 	else if(fporpos >= 100.0)
 	{
@@ -456,7 +456,7 @@ long eof_put_porpos(unsigned long beat, float porpos, float offset)
 		}
 		if(cbeat < eof_song->beats)
 		{
-			return ((eof_song->beat[cbeat]->fpos + ((float)eof_get_beat_length(eof_song, cbeat) * fporpos) / 100.0) + 0.5);	//Round up to nearest millisecond
+			return ((eof_song->beat[cbeat]->fpos + (eof_get_beat_length(eof_song, cbeat) * fporpos) / 100.0) + 0.5);	//Round up to nearest millisecond
 		}
 		return -1;
 	}
@@ -464,7 +464,7 @@ long eof_put_porpos(unsigned long beat, float porpos, float offset)
 
 	if(cbeat < eof_song->beats)
 	{	//If cbeat is valid
-		return ((eof_song->beat[cbeat]->fpos + ((float)eof_get_beat_length(eof_song, cbeat) * fporpos) / 100.0) + 0.5);	//Round up to nearest millisecond
+		return ((eof_song->beat[cbeat]->fpos + (eof_get_beat_length(eof_song, cbeat) * fporpos) / 100.0) + 0.5);	//Round up to nearest millisecond
 	}
 	return -1;	//Error
 }
@@ -1077,7 +1077,7 @@ int eof_note_is_hopo(unsigned long cnote)
 	{
 		return 0;
 	}
-	bpm = (double)60000000.0 / (double)eof_song->beat[beat]->ppqn;
+	bpm = 60000000.0 / (double)eof_song->beat[beat]->ppqn;
 	scale = 120.0 / bpm;
 	if(cnote > 0)
 	{
@@ -2767,11 +2767,11 @@ void eof_render_note_window(void)
 		ypos += 12;
 		if(eof_hover_beat >= 0)
 		{
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Beat = %lu : BPM = %f : Hover = %ld", eof_selected_beat, (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn, eof_hover_beat);
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Beat = %lu : BPM = %f : Hover = %ld", eof_selected_beat, 60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn, eof_hover_beat);
 		}
 		else
 		{
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Beat = %lu : BPM = %f", eof_selected_beat, (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn);
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Beat = %lu : BPM = %f", eof_selected_beat, 60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn);
 		}
 ///Keep for debugging
 //#ifdef EOF_DEBUG

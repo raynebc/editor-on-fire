@@ -1905,11 +1905,6 @@ int eof_pro_guitar_note_compare_fingerings(EOF_PRO_GUITAR_NOTE *np1, EOF_PRO_GUI
 	{	//For each of the 6 supported strings
 		if(np1->note & bitmask)
 		{	//If this string is used
-///This logic causes some problems preventing RS export of muted and non-muted chords (that are otherwise identical) with the same chord template
-//			if((np1->frets[ctr] & 0x80) != (np2->frets[ctr] & 0x80))
-//			{	//If this string's muted status isn't identical between both notes
-//				return 1;	//Return not equal
-//			}
 			if(np1->finger[ctr] != np2->finger[ctr])
 			{	//If the fingering isn't identical between both notes
 				return 1;	//Return not equal

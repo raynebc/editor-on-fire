@@ -924,6 +924,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			}
 			return 0;	//Return failure
 		}
+		memset(controls, 0, sizeof(EOF_RS_CONTROL) * count);	//Fill with 0s to satisfy Splint
 
 		//Build the list of control events
 		for(ctr = 0; ctr < tp->popupmessages; ctr++)
@@ -1938,12 +1939,12 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//Identify chords that are inside arpeggio phrases, which will need to be broken into single notes so that they display correctly in-game
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the active pro guitar track
-		if((eof_note_count_rs_lanes(sp, track, ctr, 2) > 1) && !(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE))
-		{	//If this note would export as a chord and isn't already ignored
+		if(eof_note_count_rs_lanes(sp, track, ctr, 2) > 1)
+		{	//If this note would export as a chord
 			for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
 			{	//For each arpeggio section in the track
-				if((tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
-				{	//If the note is within the arpeggio phrase
+				if(!(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE) && (tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
+				{	//If the note is isn't already ignored and is within the arpeggio phrase
 					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as single notes
 					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_ARP;	//Mark this chord as being in an arpeggio phrase
 					for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)

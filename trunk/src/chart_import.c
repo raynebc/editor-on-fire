@@ -74,7 +74,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 		/* find current BPM */
 		if(current_anchor->BPM > 0)
 		{
-			beat_length = (double)60000000.0 / (double)current_anchor->BPM;
+			beat_length = 60000000.0 / (double)current_anchor->BPM;
 
 			/* adjust BPM if next beat marker is an anchor */
 			if(current_anchor->next && (current_anchor->next->usec > 0))

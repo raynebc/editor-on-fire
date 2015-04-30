@@ -101,11 +101,11 @@ int eof_export_bandfuse(EOF_SONG * sp, char * fn, unsigned short *user_warned)
 		}
 		if(ctr2 < sp->beats)
 		{	//If a beat with a different tempo was found, that beat is written as the end position of this tempo change
-			(void) snprintf(buffer, sizeof(buffer) - 1, "    <tempo start=\"%lu\" end=\"%lu\" tempo=\"%f\">\n", sp->beat[ctr]->pos, sp->beat[ctr2]->pos, (double)60000000.0 / (double)sp->beat[ctr]->ppqn);
+			(void) snprintf(buffer, sizeof(buffer) - 1, "    <tempo start=\"%lu\" end=\"%lu\" tempo=\"%f\">\n", sp->beat[ctr]->pos, sp->beat[ctr2]->pos, 60000000.0 / (double)sp->beat[ctr]->ppqn);
 		}
 		else
 		{	//No remaining beats had a different tempo, the outer for loop's beat is written as the end position of this tempo change
-			(void) snprintf(buffer, sizeof(buffer) - 1, "    <tempo start=\"%lu\" end=\"%lu\" tempo=\"%f\">\n", sp->beat[ctr]->pos, sp->beat[ctr]->pos, (double)60000000.0 / (double)sp->beat[ctr]->ppqn);
+			(void) snprintf(buffer, sizeof(buffer) - 1, "    <tempo start=\"%lu\" end=\"%lu\" tempo=\"%f\">\n", sp->beat[ctr]->pos, sp->beat[ctr]->pos, 60000000.0 / (double)sp->beat[ctr]->ppqn);
 		}
 		(void) pack_fputs(buffer, fp);
 		ctr = ctr2;	//Advance the beat counter

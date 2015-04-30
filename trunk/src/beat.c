@@ -39,7 +39,7 @@ long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 	return 0;
 }
 
-unsigned long eof_get_beat_length(EOF_SONG * sp, unsigned long beat)
+double eof_get_beat_length(EOF_SONG * sp, unsigned long beat)
 {
 	eof_log("eof_get_beat_length() entered", 2);
 
@@ -49,11 +49,11 @@ unsigned long eof_get_beat_length(EOF_SONG * sp, unsigned long beat)
 	}
 	if(beat < sp->beats - 1)
 	{
-		return sp->beat[beat + 1]->pos - sp->beat[beat]->pos;
+		return sp->beat[beat + 1]->fpos - sp->beat[beat]->fpos;
 	}
 	else
 	{
-		return sp->beat[sp->beats - 1]->pos - sp->beat[sp->beats - 2]->pos;
+		return sp->beat[sp->beats - 1]->fpos - sp->beat[sp->beats - 2]->fpos;
 	}
 }
 
@@ -80,17 +80,12 @@ void eof_calculate_beats(EOF_SONG * sp)
 	/* correct BPM if it hasn't been set at all */
 	if(sp->beats == 0)
 	{
-		beat_length = (double)60000.0 / ((double)60000000.0 / (double)500000.0);	//Default beat length is 500ms, which reflects a tempo of 120BPM
+		beat_length = 60000.0 / (60000000.0 / 500000.0);	//Default beat length is 500ms, which reflects a tempo of 120BPM in 4/4 meter
 		while(curpos < (double)target_length + beat_length)
 		{	//While there aren't enough beats to cover the length of the chart, add beats
-			if(eof_song_add_beat(sp))
-			{	//If the beat was successfully added
-				assert(sp->beats > 0);	//Put an assertion here to resolve a false positive with Coverity
-				sp->beat[sp->beats - 1]->ppqn = 500000;
-				sp->beat[sp->beats - 1]->fpos = (double)sp->tags->ogg[eof_selected_ogg].midi_offset + curpos;
-				sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos + 0.5;	//Round up
-				curpos += beat_length;
-			}
+			if(!eof_song_append_beats(sp, 1))	//If a beat couldn't be appended
+				return;
+			curpos += beat_length;
 		}
 		return;
 	}
@@ -99,7 +94,7 @@ void eof_calculate_beats(EOF_SONG * sp)
 	sp->beat[0]->pos = sp->beat[0]->fpos + 0.5;	//Round up
 
 	/* calculate the beat length */
-	beat_length = (double)60000 / ((double)60000000.0 / (double)sp->beat[0]->ppqn);
+	beat_length = eof_calc_beat_length(sp, 0);
 	sp->beat[0]->flags |= EOF_BEAT_FLAG_ANCHOR;	//The first beat is always an anchor
 	for(i = 1; i < sp->beats; i++)
 	{
@@ -111,8 +106,8 @@ void eof_calculate_beats(EOF_SONG * sp)
 		if(sp->beat[i]->ppqn != sp->beat[i - 1]->ppqn)
 		{
 			sp->beat[i]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Set the anchor flag
-			beat_length = (double)60000 / ((double)60000000.0 / (double)sp->beat[i]->ppqn);
 		}
+		beat_length = eof_calc_beat_length(sp, i);	//Recalculate the beat length every beat because either a time signature change or a tempo change will alter it
 	}
 	cbeat = sp->beats - 1;	//The index of the last beat in the beat[] array
 	curpos += beat_length;
@@ -255,8 +250,8 @@ void eof_realign_beats(EOF_SONG * sp, int cbeat)
 
 	/* figure out what the new BPM should be */
 	beats_length = sp->beat[next_anchor]->pos - sp->beat[last_anchor]->pos;
-	newbpm = (double)60000.0 / (beats_length / (double)beats);
-	newppqn = (double)60000000.0 / newbpm;
+	newbpm = 60000.0 / (beats_length / (double)beats);
+	newppqn = 60000000.0 / newbpm;
 
 	sp->beat[last_anchor]->ppqn = newppqn;
 
@@ -300,8 +295,8 @@ void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 	beats_length = sp->beat[cbeat]->fpos - sp->beat[last_anchor]->fpos;
 	if(!beats_length || !beats)
 		return;	//Error condition
-	newbpm = (double)60000.0 / (beats_length / (double)beats);
-	newppqn = (double)60000000.0 / newbpm;
+	newbpm = 60000.0 / (beats_length / (double)beats);
+	newppqn = 60000000.0 / newbpm;
 
 	sp->beat[last_anchor]->ppqn = newppqn;
 
@@ -324,8 +319,8 @@ void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 		beats_length = sp->beat[next_anchor]->fpos - sp->beat[cbeat]->fpos;
 		if(!beats_length || !beats)
 			return;	//Error condition
-		newbpm = (double)60000 / (beats_length / (double)beats);
-		newppqn = (double)60000000 / newbpm;
+		newbpm = 60000.0 / (beats_length / (double)beats);
+		newppqn = 60000000.0 / newbpm;
 
 		sp->beat[cbeat]->ppqn = newppqn;
 
@@ -449,7 +444,7 @@ int eof_song_append_beats(EOF_SONG * sp, unsigned long beats)
 
 	if(sp->beats)
 	{	//If there is at least one beat in the project already
-		beat_length = (double)60000.0 / ((double)60000000.0 / (double)sp->beat[sp->beats - 1]->ppqn);	//Get the length of the current last beat
+		beat_length = eof_calc_beat_length(sp, sp->beats - 1);	//Get the length of the current last beat
 	}
 	for(i = 0; i < beats; i++)
 	{
