@@ -545,6 +545,7 @@ int eof_menu_beat_bpm_change(void)
 int eof_menu_beat_ts_4_4(void)
 {
 	(void) eof_apply_ts(4,4,eof_selected_beat,eof_song,1);
+	eof_calculate_beats(eof_song);
 	eof_select_beat(eof_selected_beat);
 	return 1;
 }
@@ -552,6 +553,7 @@ int eof_menu_beat_ts_4_4(void)
 int eof_menu_beat_ts_3_4(void)
 {
 	(void) eof_apply_ts(3,4,eof_selected_beat,eof_song,1);
+	eof_calculate_beats(eof_song);
 	eof_select_beat(eof_selected_beat);
 	return 1;
 }
@@ -559,6 +561,7 @@ int eof_menu_beat_ts_3_4(void)
 int eof_menu_beat_ts_5_4(void)
 {
 	(void) eof_apply_ts(5,4,eof_selected_beat,eof_song,1);
+	eof_calculate_beats(eof_song);
 	eof_select_beat(eof_selected_beat);
 	return 1;
 }
@@ -566,6 +569,7 @@ int eof_menu_beat_ts_5_4(void)
 int eof_menu_beat_ts_6_4(void)
 {
 	(void) eof_apply_ts(6,4,eof_selected_beat,eof_song,1);
+	eof_calculate_beats(eof_song);
 	eof_select_beat(eof_selected_beat);
 	return 1;
 }
@@ -614,6 +618,7 @@ int eof_menu_beat_ts_custom(void)
 			else
 			{	//User provided a valid time signature
 				(void) eof_apply_ts(num,den,eof_selected_beat,eof_song,1);
+				eof_calculate_beats(eof_song);
 				eof_select_beat(eof_selected_beat);
 			}
 		}
@@ -661,8 +666,8 @@ int eof_menu_beat_delete(void)
 		if((eof_song->beat[eof_selected_beat - 1]->flags & EOF_BEAT_FLAG_ANCHOR) && (eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR))
 		{
 			double beats_length = eof_song->beat[eof_selected_beat]->pos - eof_song->beat[eof_selected_beat - 1]->pos;
-			double newbpm = (double)60000.0 / beats_length;
-			double newppqn = (double)60000000.0 / newbpm;
+			double newbpm = 60000.0 / beats_length;
+			double newppqn = 60000000.0 / newbpm;
 			eof_song->beat[eof_selected_beat - 1]->ppqn = newppqn;
 		}
 		else if(eof_song->beat[eof_selected_beat - 1]->flags & EOF_BEAT_FLAG_ANCHOR)
@@ -1088,7 +1093,7 @@ int eof_menu_beat_calculate_bpm(void)
 			{
 				delta = eof_get_note_pos(eof_song, eof_selected_track, i) - curpos;
 				curpos = eof_get_note_pos(eof_song, eof_selected_track, i);
-				bpm += (double)60000 / (double)delta;
+				bpm += 60000.0 / (double)delta;
 				bpm_count++;
 			}
 		}
@@ -1101,7 +1106,7 @@ int eof_menu_beat_calculate_bpm(void)
 		{
 			if(eof_song->beat[i]->ppqn == cppqn)
 			{
-				eof_song->beat[i]->ppqn = (double)60000000.0 / bpm;
+				eof_song->beat[i]->ppqn = 60000000.0 / bpm;
 			}
 			else
 			{

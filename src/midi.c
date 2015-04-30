@@ -2389,7 +2389,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn)
 			beat = eof_get_beat(sp, pos);
 			if((beat >= 0) && (beat < sp->beats))
 			{	//If the beat in which this note exists could be determined
-				double beat_length = (double)60000 / ((double)60000000.0 / (double)sp->beat[beat]->ppqn);	//Get the length of the beat
+				double beat_length = eof_calc_beat_length(sp, beat);	//Get the length of the beat
 				minlength = beat_length / 8;	//Get the desired minimum length for the note (1/8 beat)
 				if(length < minlength)
 				{	//If the note's length is shorter than that
@@ -2698,7 +2698,10 @@ struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp)
 	struct Tempo_change *list=NULL;	//The linked list
 	struct Tempo_change *temp=NULL;
 	unsigned long lastppqn=0;	//Tracks the last anchor's PPQN value
-	unsigned long deltactr=0;	//Counts the number of deltas between anchors
+	unsigned long deltapos = 0;		//Stores the ongoing delta time
+	double deltafpos = 0.0;			//Stores the ongoing delta time (with double floating precision)
+	double beatlength = 0.0;		//Stores the current beat's length in deltas
+	unsigned num=4,den=4;			//Stores the current time signature
 
 	eof_log("eof_build_tempo_list() entered", 1);
 
@@ -2708,10 +2711,11 @@ struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp)
 	}
 	for(ctr=0;ctr < sp->beats;ctr++)
 	{	//For each beat
+		(void) eof_get_ts(sp, &num, &den, ctr);	//Get the time signature in effect
 		if(sp->beat[ctr]->ppqn != lastppqn)
 		{	//If this beat has a different tempo than the last, or it is the first beat, add it to the list
 			lastppqn=sp->beat[ctr]->ppqn;	//Remember this ppqn
-			temp=eof_add_to_tempo_list(deltactr,sp->beat[ctr]->fpos,(double)60000000.0/lastppqn,list);
+			temp=eof_add_to_tempo_list(deltapos, sp->beat[ctr]->fpos, 60000000.0 / lastppqn, list);
 
 			if(temp == NULL)
 			{	//Test the return value of eof_add_to_tempo_list()
@@ -2721,7 +2725,9 @@ struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp)
 			list=temp;	//Update list pointer
 		}
 
-		deltactr+=(double)EOF_DEFAULT_TIME_DIVISION + 0.5;	//Add the number of deltas of one beat to the counter
+		beatlength = (double)EOF_DEFAULT_TIME_DIVISION / ((double)den / 4.0);		//Determine the length of this beat in deltas (taking the time signature into consideration)
+		deltafpos += beatlength;	//Add the delta length of this beat to the delta counter
+		deltapos = deltafpos + 0.5;	//Round up to nearest delta
 	}
 
 	return list;
@@ -3015,7 +3021,7 @@ EOF_MIDI_TS_LIST *eof_build_ts_list(EOF_SONG *sp)
 			tslist->change[tslist->changes-1]->pos = deltapos;	//Store the time signature's position in deltas
 		}
 
-		beatlength = (double)EOF_DEFAULT_TIME_DIVISION;		//Determine the length of this beat in deltas
+		beatlength = (double)EOF_DEFAULT_TIME_DIVISION / ((double)den / 4.0);		//Determine the length of this beat in deltas (taking the time signature into consideration)
 		deltafpos += beatlength;	//Add the delta length of this beat to the delta counter
 		deltapos = deltafpos + 0.5;	//Round up to nearest delta
 	}
@@ -3240,13 +3246,13 @@ void eof_write_tempo_track(char *trackname, struct Tempo_change *anchorlist, EOF
 				WriteVarLen(ptr->delta - lastdelta, outf);	//Write this anchor's relative delta time
 				lastdelta=ptr->delta;						//Store this anchor's absolute delta time
 
-				ppqn = ((double) 60000000.0 / ptr->BPM) + 0.5;	//Convert BPM to ppqn, rounding up
+				ppqn = (60000000.0 / ptr->BPM) + 0.5;		//Convert BPM to ppqn, rounding up
 				(void) pack_putc(0xFF, outf);						//Write Meta Event 0x51 (Set Tempo)
 				(void) pack_putc(0x51, outf);
 				(void) pack_putc(0x03, outf);						//Write event length of 3
 				(void) pack_putc((ppqn & 0xFF0000) >> 16, outf);	//Write high order byte of ppqn
 				(void) pack_putc((ppqn & 0xFF00) >> 8, outf);		//Write middle byte of ppqn
-				(void) pack_putc((ppqn & 0xFF), outf);			//Write low order byte of ppqn
+				(void) pack_putc((ppqn & 0xFF), outf);				//Write low order byte of ppqn
 			}
 			ptr=ptr->next;							//Iterate to next anchor
 		}
@@ -3518,7 +3524,7 @@ int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistp
 							ppqn = (dataptr[eventindex]<<16) | (dataptr[eventindex+1]<<8) | dataptr[eventindex+2];	//Read the 3 byte big endian value
 							eventindex += 3;
 							lastppqn = ppqn;	//Remember this value
-							temp = eof_add_to_tempo_list(eventptr->deltatime, eventptr->realtime + sp->beat[0]->fpos, (double)60000000.0/lastppqn,anchorlist);	//Store the tempo change, taking the MIDI delay into account
+							temp = eof_add_to_tempo_list(eventptr->deltatime, eventptr->realtime + sp->beat[0]->fpos, 60000000.0/lastppqn, anchorlist);	//Store the tempo change, taking the MIDI delay into account
 							if(temp == NULL)
 							{	//Test the return value of eof_add_to_tempo_list()
 								eof_destroy_tempo_list(anchorlist);	//Destroy list

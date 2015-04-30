@@ -34,7 +34,7 @@ double eof_MIDI_delta_to_realtime(struct eof_MIDI_tempo_change *tempolist, unsig
 		reldelta = absdelta - ptr->absdelta;
 	}
 
-	return time + (double)reldelta / timedivision * ((double)60000.0 / BPM);	//Calculate the number of milliseconds between the specified delta time and the prior tempo change, and add it to the time of that tempo change (if it exists)
+	return time + (double)reldelta / timedivision * (60000.0 / BPM);	//Calculate the number of milliseconds between the specified delta time and the prior tempo change, and add it to the time of that tempo change (if it exists)
 }
 
 void eof_MIDI_empty_event_list(struct eof_MIDI_data_event *ptr)
@@ -232,8 +232,8 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 
 								memcpy(mpqn_array, &midiptr->track[curtrack].data[track_pos], 3);
 								mpqn = (mpqn_array[0]<<16) | (mpqn_array[1]<<8) | mpqn_array[2];	//Convert MPQN data to a usable value
-								realtime += (double)reldelta / midiptr->divisions * ((double)60000.0 / currentbpm);	//Convert the relative delta time to real time and add it to the time counter
-								currentbpm = (double)60000000.0 / mpqn;	//Obtain the BPM value of this tempo change
+								realtime += (double)reldelta / midiptr->divisions * (60000.0 / currentbpm);	//Convert the relative delta time to real time and add it to the time counter
+								currentbpm = 60000000.0 / mpqn;	//Obtain the BPM value of this tempo change
 
 								tempoptr = malloc(sizeof(struct eof_MIDI_tempo_change));
 								if(!tempoptr)

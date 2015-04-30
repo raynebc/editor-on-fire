@@ -5449,6 +5449,7 @@ int eof_menu_arpeggio_mark_logic(int handshape)
 	{
 		pp->flags &= ~EOF_RS_ARP_HANDSHAPE;	//Otherwise clear the flag
 	}
+	//Mark notes inside of arpeggio phrases with crazy status
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && ((eof_get_note_pos(eof_song, eof_selected_track, i) >= sel_start) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= sel_end)))

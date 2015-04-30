@@ -728,7 +728,7 @@ void * mwMark( void *p, const char *desc, const char *file, unsigned line ) {
     if( desc == NULL ) desc = "unknown";
     if( file == NULL ) file = "unknown";
 
-    tot = sprintf( wherebuf, "%.48s called from %s(%d)", desc, file, line );
+    tot = sprintf( wherebuf, "%.48s called from %s(%u)", desc, file, line );
     if( tot >= (int)sizeof(wherebuf) ) { wherebuf[sizeof(wherebuf)-1] = 0; oflow = 1; }
 
     if( p == NULL ) {
@@ -1111,7 +1111,7 @@ void mwFree( void* p, const char* file, int line ) {
                 mw->size + mwDataSize+mwOverflowZoneSize+mwOverflowZoneSize );
             if( mwFBI ) {
                 memset( mw, '.', mwDataSize + mwOverflowZoneSize );
-                sprintf( buffer, "FBI<%ld>%s(%d)", mwCounter, file, line );
+                sprintf( buffer, "FBI<%lu>%s(%d)", mwCounter, file, line );
                 strncpy( (char*)(void*)mw, buffer, mwDataSize + mwOverflowZoneSize );
                 }
             free( mw );

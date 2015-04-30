@@ -321,7 +321,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 
 			if((tchunk->trackname != NULL) && (Lyrics.inputtrack != NULL))
 				if(strcasecmp(tchunk->trackname,Lyrics.inputtrack) == 0)
-					MIDIstruct.endtime=MIDIstruct.realtime+((double)MIDIstruct.deltacounter / (double)MIDIstruct.hchunk.division * ((double)60000.0 / MIDIstruct.BPM));
+					MIDIstruct.endtime=MIDIstruct.realtime+((double)MIDIstruct.deltacounter / (double)MIDIstruct.hchunk.division * (60000.0 / MIDIstruct.BPM));
 
 			if(vars.trackname != NULL)	//If there's a track name being remembered
 				vars.trackname=NULL;	//forget it now that the end of the track has been reached
@@ -610,7 +610,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 
 							if((tchunk->trackname != NULL) && (Lyrics.inputtrack != NULL))
 								if(strcasecmp(tchunk->trackname,Lyrics.inputtrack) == 0)
-									MIDIstruct.endtime=MIDIstruct.realtime+((double)MIDIstruct.deltacounter / (double)MIDIstruct.hchunk.division * ((double)60000.0 / MIDIstruct.BPM));
+									MIDIstruct.endtime=MIDIstruct.realtime+((double)MIDIstruct.deltacounter / (double)MIDIstruct.hchunk.division * (60000.0 / MIDIstruct.BPM));
 
 							if(vars.trackname != NULL)	//If there's a track name being remembered
 								vars.trackname=NULL;	//forget it now that the end of the track has been reached
@@ -639,8 +639,8 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 							vars.current_MPQN=(vars.parameters[0]<<16) | (vars.parameters[1]<<8) | vars.parameters[2];	//Convert MPQN (Microseconds per quarter note)
 							MIDIstruct.MPQN_defined=1;
 //Convert cumulative delta time to real time, add to our real time counter
-							MIDIstruct.realtime+=(double)MIDIstruct.deltacounter / (double)MIDIstruct.hchunk.division * ((double)60000.0 / MIDIstruct.BPM);
-							MIDIstruct.BPM=(double)60000000.0/(double)vars.current_MPQN;	//Calculate new tempo
+							MIDIstruct.realtime+=(double)MIDIstruct.deltacounter / (double)MIDIstruct.hchunk.division * (60000.0 / MIDIstruct.BPM);
+							MIDIstruct.BPM=60000000.0/(double)vars.current_MPQN;	//Calculate new tempo
 
 //Track the information in our tempo linked list by adding a link
 							if(MIDIstruct.hchunk.tempomap == NULL)
@@ -662,7 +662,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 							MIDIstruct.hchunk.curtempo->TS_den=MIDIstruct.TS_den;
 
 							MIDIstruct.deltacounter=0;		//Reset cumulative delta time to 0
-							if(Lyrics.verbose>=2)	printf("Meta Event: Set Tempo=%lu MPQN (%f BPM)\n",vars.current_MPQN,(double)60000000.0/(double)vars.current_MPQN);
+							if(Lyrics.verbose>=2)	printf("Meta Event: Set Tempo=%lu MPQN (%f BPM)\n",vars.current_MPQN,60000000.0/(double)vars.current_MPQN);
 						break;
 
 						case 0x54:	//SMPTE Offset
@@ -687,7 +687,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 							fread_err(vars.parameters,4,1,inf);
 
 //Convert cumulative delta time to real time, add to our real time counter
-							MIDIstruct.realtime+=(double)MIDIstruct.deltacounter / (double)MIDIstruct.hchunk.division * ((double)60000.0 / MIDIstruct.BPM);
+							MIDIstruct.realtime+=(double)MIDIstruct.deltacounter / (double)MIDIstruct.hchunk.division * (60000.0 / MIDIstruct.BPM);
 							MIDIstruct.TS_num=vars.parameters[0];			//Store the new TS numerator
 							MIDIstruct.TS_den=(1 << vars.parameters[1]);	//Store the new TS denominator
 
@@ -1082,7 +1082,7 @@ double ConvertToRealTime(unsigned long absolutedelta,double starttime)
 
 //At this point, we have reached the tempo change that absolutedelta resides within
 //tempdelta is now relative to this tempo change, find the realtime of tempdelta
-	temptimer+=(double)tempdelta / (double)MIDIstruct.hchunk.division * ((double)60000.0 / tempBPM);
+	temptimer+=(double)tempdelta / (double)MIDIstruct.hchunk.division * (60000.0 / tempBPM);
 
 	return temptimer;
 }
@@ -1152,8 +1152,8 @@ unsigned long ConvertToDeltaTime(unsigned long starttime)
 
 //temptime is the amount of time we need to find a delta for, and add to deltacounter
 //By using NewCreature's formula:	realtime = (delta / divisions) * (60000.0 / bpm)
-//The formula for delta is:		delta = realtime * divisions * bpm / 60000
-	deltacounter+=(unsigned long)((temptime * (double)MIDIstruct.hchunk.division * temp->BPM / (double)60000.0 + (double)0.5));
+//The formula for delta is:		delta = realtime * divisions * bpm / 60000.0
+	deltacounter+=(unsigned long)((temptime * (double)MIDIstruct.hchunk.division * temp->BPM / 60000.0 + 0.5));
 		//Add .5 so that the delta counter is rounded to the nearest 1
 
 	return deltacounter;

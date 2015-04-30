@@ -6,6 +6,7 @@
 #include "beat.h"
 #include "song.h"
 #include "legacy.h"
+#include "midi.h"	//For eof_get_ts()
 #include "midi_data_import.h"
 #include "mix.h"
 #include "rs.h"			//For eof_pro_guitar_track_find_effective_fret_hand_position_definition()
@@ -180,6 +181,7 @@ EOF_SONG * eof_create_song(void)
 		free(sp);
 		return NULL;
 	}
+	memset(sp->tags, 0, sizeof(EOF_SONG_TAGS));	//Fill with 0s to satisfy Splint
 	(void) ustrcpy(sp->tags->artist, "");
 	(void) ustrcpy(sp->tags->title, "");
 	(void) ustrcpy(sp->tags->frettist, "");
@@ -1173,63 +1175,23 @@ void eof_toggle_freestyle(EOF_VOCAL_TRACK * tp, unsigned long lyricnumber)
 		eof_set_freestyle(tp->lyric[lyricnumber]->text,1);	//Rewrite as freestyle
 }
 
-/* function to convert a MIDI-style tick to msec time */
-long eof_song_tick_to_msec(EOF_SONG * sp, unsigned long tick)
+double eof_calc_beat_length(EOF_SONG *sp, unsigned long beat)
 {
-	unsigned long beat; // which beat 'tick' lies in
-	double curpos;
-	double portion;
-	unsigned long i;
+	unsigned long ctr;
+	unsigned num = 4, den = 4;
+	double ms = 500.0;
 
-	if(!sp)
-	{
-		return -1;
-	}
-	curpos = sp->tags->ogg[eof_selected_ogg].midi_offset;
-	beat = tick / sp->resolution;
-	portion = (double)((tick % sp->resolution)) / (double)(sp->resolution);
+	if(!sp || (beat >= sp->beats))
+		return 0.0;	//Invalid parameters
 
-	/* calculate position up to the beat 'tick' lies in */
-	for(i = 0; i < beat; i++)
-	{
-		curpos += (double)60000.0 / ((double)60000000.0 / (double)sp->beat[i]->ppqn);
+	for(ctr = 0; ctr <= beat; ctr++)
+	{	//For each beat, including the target
+		(void) eof_get_ts(sp, &num, &den, ctr);	//Lookup any time signature defined at the beat
 	}
 
-	/* add the time from the beat marker to 'tick' */
-	curpos += ((double)60000.0 / ((double)60000000.0 / (double)sp->beat[beat]->ppqn)) * portion;
-
-	return curpos + 0.5;
-}
-
-/* function to convert msec time to a MIDI-style tick */
-long eof_song_msec_to_tick(EOF_SONG * sp, unsigned long msec)
-{
-	long beat; // which beat 'msec' lies in
-	long beat_tick;
-	long portion;
-	double beat_start, beat_end, beat_length;
-
-	/* figure out which beat we are in */
-	if(!sp)
-	{
-		return -1;
-	}
-	beat = eof_get_beat(sp, msec);
-	if(beat < 0)
-	{
-		return -1;
-	}
-
-	/* get the tick for the beat we are in */
-	beat_tick = beat * sp->resolution;
-
-	/* find which tick of the beat is closest to 'msec' */
-	beat_start = sp->beat[beat]->fpos;
-	beat_end = beat_start + (double)60000.0 / ((double)60000000.0 / (double)sp->beat[beat]->ppqn);
-	beat_length = beat_end - beat_start;
-	portion = (((double)msec - beat_start) / beat_length) * ((double)sp->resolution) + 0.5;
-
-	return beat_tick + portion;
+	ms = (60000.0 / (60000000.0 / (double)sp->beat[beat]->ppqn));	//Get the length of a quarter note based on the tempo in effect
+	ms /= (double)den / 4.0;	//Translate this into the length of a beat based on the time signature in effect
+	return ms;
 }
 
 char eof_check_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,unsigned long flag)
@@ -1590,7 +1552,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		//Store the pointers to each of the 5 number type INI settings (number 0 is reserved) to simplify the loading code
 
 	unsigned long data_block_type, num_midi_tracks, numevents;
-	char buffer[100];
+	char buffer[100] = {0};
 	struct eof_MIDI_data_track *trackptr;
 	struct eof_MIDI_data_event *eventptr, *eventhead, *eventtail;
 	unsigned char numdiffs;
@@ -2610,7 +2572,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	(void) pack_iputl(sp->beats, fp);	//Write the number of beats
 	for(ctr=0; ctr < sp->beats; ctr++)
 	{	//For each beat in the project
-		(void) pack_iputl(sp->beat[ctr]->ppqn, fp);	//Write the beat's tempo
+		(void) pack_iputl(sp->beat[ctr]->ppqn, fp);		//Write the beat's tempo
 		(void) pack_iputl(sp->beat[ctr]->pos, fp);		//Write the beat's position (milliseconds or delta ticks)
 		(void) pack_iputl(sp->beat[ctr]->flags, fp);	//Write the beat's flags
 		(void) pack_putc(sp->beat[ctr]->key, fp);		//Write the beat's key signature
@@ -4426,6 +4388,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 	EOF_PRO_GUITAR_TRACK * tp;
 	EOF_RS_TECHNIQUES ptr = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0 ,0};
 	char has_link_next;	//Is set to nonzero if any strings used in the note have sustain status applied
+	EOF_PHRASE_SECTION *pp, *ppp;
 
 	if(!sp)
 	{
@@ -4440,6 +4403,29 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 			eof_selection.multi[eof_selection.current] = 0;
 		}
 		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	//Check for overlapping arpeggio phrases and merge them
+	for(ctr = tp->arpeggios; ctr > 1; ctr--)
+	{	//For each arpeggio phrase, in reverse order from the last arpeggio to the second one
+		pp = &tp->arpeggio[ctr - 1];	//Get a pointer to this arpeggio
+		for(ctr2 = ctr - 1; ctr2 > 0; ctr2--)
+		{	//For each arpeggio phrase that precedes the one in the outer for loop
+			ppp = &tp->arpeggio[ctr2 - 1];	//Get a pointer to this preceding arpeggio
+
+			if((pp->start_pos <= ppp->end_pos) && (pp->end_pos >= ppp->start_pos))
+			{	//If this arpeggio overlaps a preceding one
+				if(pp->end_pos > ppp->end_pos)
+				{	//Keep the later end point of the two phrases
+					ppp->end_pos = pp->end_pos;
+				}
+				if(pp->start_pos < ppp->start_pos)
+				{	//Keep the earlier start point of the two phrases
+					ppp->start_pos = pp->start_pos;
+				}
+				eof_pro_guitar_track_delete_arpeggio(tp, ctr - 1);	//Delete the arpeggio phrase
+				break;	//Break from inner for loop
+			}
+		}
 	}
 	for(i = tp->notes; i > 0; i--)
 	{	//For each note in the track, in reverse order
@@ -6844,7 +6830,7 @@ void eof_truncate_chart(EOF_SONG *sp)
 				break;
 			}
 		}
-		beat_length = (double)60000.0 / ((double)60000000.0 / (double)sp->beat[targetbeat]->ppqn);	//Get the length of the beat
+		beat_length = eof_calc_beat_length(sp, targetbeat);				//Get the length of the beat
 		targetpos = sp->beat[targetbeat]->pos + beat_length + beat_length + 0.5;	//The chart length will be resized to last to the end of the last beat that has contents/audio, and another beat further for padding
 		eof_chart_length = targetpos;	//Resize the chart length accordingly
 

@@ -298,7 +298,7 @@ double eof_ConvertToRealTime(unsigned long absolutedelta,struct Tempo_change *an
 
 //reldelta is the amount of deltas we need to find a relative time for, and add to the absolute real time of the nearest preceding tempo/TS change
 //At this point, we have reached the tempo change that absolutedelta resides within, find the realtime
-	time+=(double)reldelta / (double)timedivision * ((double)60000.0 / (temp->BPM));
+	time+=(double)reldelta / (double)timedivision * (60000.0 / (temp->BPM));
 
 	return time+offset;
 }
@@ -351,7 +351,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	unsigned long curppqn=500000;	//Stores the current tempo in PPQN (default is 120BPM)
 	unsigned long ctr,ctr2,nextanchor;
 	char midbeatchange, midbeatchangefound = 0;
-	double beatlength, beatreallength;
+	double beatlength, beatreallength;	//The delta and realtime lengths, respectively, of the beat being processed
 	double BPM=120.0;	//Assume a default tempo of 120BPM and TS of 4/4 at 0 deltas
 	unsigned long event_realtime;		//Store the delta time converted to realtime to avoid having to convert multiple times per note
 	long beat;
@@ -1032,7 +1032,8 @@ snprintf(debugtext, sizeof(debugtext) - 1,"Start delta %lu / %lu: Updating count
 set_window_title(debugtext);
 #endif
 
-		beatreallength = (60000.0 / (60000000.0 / (double)curppqn));		//Determine the length of this beat in milliseconds
+		beatreallength = (60000.0 / (60000000.0 / (double)curppqn));	//Determine the current length (based on the tempo) of a quarter note in milliseconds
+		beatreallength /= (double)curden / 4.0;							//Take the current time signature into account to translate that to the current length of one beat
 		realtimepos += beatreallength;	//Add the realtime length of this beat to the time counter
 		deltafpos += beatlength;	//Add the delta length of this beat to the delta counter
 		deltapos = deltafpos + 0.5;	//Round up to nearest delta tick
@@ -1042,7 +1043,7 @@ set_window_title(debugtext);
 
 	/* If a mid beat tempo or TS change was found, offer to store the tempo map and the BEAT track into the project */
 	if(midbeatchangefound)
-	{
+	{	//If a mid beat tempo or TS change was found
 		eof_clear_input();
 		if(alert("Warning:  There were one or more mid beat tempo/TS changes.", "Store the tempo track into the project?", "(Recommended if creating RB3 upgrades)", "&Yes", "&No", 'y', 'n') == 1)
 		{	//If the user opts to import the tempo track
@@ -1107,8 +1108,8 @@ set_window_title(debugtext);
 			{	//If the user opts to lock the tempo map
 				sp->tags->tempo_map_locked |= 1;
 			}
-		}
-	}
+		}//If the user opts to import the tempo track
+	}//If a mid beat tempo or TS change was found
 
 	eof_log("\tPass two, configuring beat timings", 1);
 	realtimepos=0.0;
@@ -1163,7 +1164,11 @@ set_window_title(debugtext);
 		{	//If this track is to be skipped (ie. unidentified track)
 			continue;
 		}
-		picked_track = eof_import_events[i]->type >= 1 ? eof_import_events[i]->type : rbg == 0 ? EOF_TRACK_GUITAR : -1;
+		if(eof_import_events[i]->events == 0)
+		{	//If this track has no imported events
+			continue;
+		}
+		picked_track = (eof_import_events[i]->type >= 1) ? eof_import_events[i]->type : ((rbg == 0) ? EOF_TRACK_GUITAR : -1);	//If the imported track didn't have a defined name, assume it is the guitar track if that track wasn't already found (un-named tracks is a behavior of very old authoring tools like the Freetar SNG to MIDI converter)
 		if((picked_track >= 0) && (picked_track < sp->tracks) && !used_track[picked_track])
 		{	//If this is a valid track to process
 			int last_105 = 0;
@@ -1210,13 +1215,20 @@ set_window_title(debugtext);
 			}
 
 #ifdef EOF_DEBUG
-			if(eof_import_events[i]->game == 0)
-			{	//Rock Band format MIDI track
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tParsing track \"%s\"", eof_midi_tracks[picked_track].name);
+			if(eof_import_events[i]->type > 0)
+			{	//If the track name was defined instead of just assumed
+				if(eof_import_events[i]->game == 0)
+				{	//Rock Band format MIDI track
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tParsing track \"%s\"", eof_midi_tracks[picked_track].name);
+				}
+				else
+				{	//Power Gig format MIDI track
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tParsing track \"%s\"", eof_power_gig_tracks[eof_import_events[i]->tracknum].name);
+				}
 			}
 			else
-			{	//Power Gig format MIDI track
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tParsing track \"%s\"", eof_power_gig_tracks[eof_import_events[i]->tracknum].name);
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tParsing track #%lu", i);
 			}
 			eof_log(eof_log_string, 1);
 #endif

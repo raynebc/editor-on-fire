@@ -1657,7 +1657,7 @@ int main(int argc, char *argv[])
 struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 {
 	#define EOF_GP_IMPORT_BUFFER_SIZE 256
-	char buffer[EOF_GP_IMPORT_BUFFER_SIZE + 1], *buffer2, buffer3[EOF_GP_IMPORT_BUFFER_SIZE + 1], buffer4[EOF_GP_IMPORT_BUFFER_SIZE + 1], byte, bytemask, *ptr, patches[64];
+	char buffer[EOF_GP_IMPORT_BUFFER_SIZE + 1] = {0}, *buffer2, buffer3[EOF_GP_IMPORT_BUFFER_SIZE + 1] = {0}, buffer4[EOF_GP_IMPORT_BUFFER_SIZE + 1] = {0}, byte, bytemask, *ptr, patches[64] = {0};
 	unsigned char usedstrings;
 	unsigned word = 0, fileversion;
 	unsigned long dword = 0, ctr, ctr2, ctr3, ctr4, ctr5, tracks = 0, measures = 0, *strings, beats = 0;
@@ -1850,6 +1850,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						eof_log("\t\tError allocating memory (2).  Aborting", 1);
 						error = 1;
 					}
+					memset(sync_points, 0, sizeof(struct eof_gpa_sync_point) * raw_num_sync_points);	//Fill with 0s to satisfy Splint
 				}
 
 				//Store sync points into array
@@ -2232,6 +2233,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(sync_points);
 		return NULL;
 	}
+	memset(tsarray, 0, sizeof(struct eof_gp_measure) * measures);	//Fill with 0s to satisfy Splint
 	gp->measure = tsarray;		//Store this array into the Guitar Pro structure
 	gp->measures = measures;	//Store the measure count as well
 	pack_ReadDWORDLE(inf, &tracks);	//Read the number of tracks
@@ -2365,6 +2367,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(sync_points);
 		return NULL;
 	}
+	memset(strings, 0, sizeof(unsigned long) * tracks);	//Fill with 0s to satisfy Splint
 #ifdef GP_IMPORT_DEBUG
 	eof_log("\tParsing measure data", 1);
 #endif
@@ -2524,6 +2527,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								free(sync_points);
 							return NULL;
 						}
+						memset(gp->text_event[gp->text_events], 0, sizeof(EOF_TEXT_EVENT));	//Fill with 0s to satisfy Splint
 						gp->text_event[gp->text_events]->beat = ctr;	//For now, store the measure number, it will need to be converted to the beat number later
 						gp->text_event[gp->text_events]->track = 0;
 						rssectionname = eof_rs_section_text_valid(buffer);	//Determine whether this is a valid Rocksmith section name
@@ -2730,6 +2734,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(sync_points);
 			return NULL;
 		}
+		memset(num, 0, sizeof(char) * nummeasures);	//Fill with 0s to satisfy Splint
+		memset(den, 0, sizeof(char) * nummeasures);
 		for(ctr = 0; ctr < nummeasures; ctr++)
 		{	//For each unwrapped measure
 			for(ctr2 = 0; ctr2 < eof_song->beats; ctr2++)
@@ -4702,6 +4708,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 		eof_log("\tError allocating memory to unwrap GP track (1)", 1);
 		return 1;
 	}
+	memset(working_num_of_repeats, 0, sizeof(unsigned char) * gp->measures);	//Fill with 0s to satisfy Splint
 	for(ctr = 0; ctr < gp->measures; ctr++)
 	{	//For each measure in the GP file
 		working_num_of_repeats[ctr] = gp->measure[ctr].num_of_repeats;	//Copy the number of repeats

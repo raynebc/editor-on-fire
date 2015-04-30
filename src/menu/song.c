@@ -1771,7 +1771,7 @@ int eof_menu_song_add_silence(void)
 			}
 			else if(eof_leading_silence_dialog[3].flags & D_SELECTED)
 			{	//Add beats
-				beat_length = (double)60000 / ((double)60000000.0 / (double)eof_song->beat[0]->ppqn);
+				beat_length = eof_calc_beat_length(eof_song, 0);
 				silence_length = beat_length * (double)atoi(eof_etext);
 			}
 			else if(eof_leading_silence_dialog[5].flags & D_SELECTED)
@@ -1784,7 +1784,7 @@ int eof_menu_song_add_silence(void)
 			}
 			else if(eof_leading_silence_dialog[6].flags & D_SELECTED)
 			{	//Pad beats
-				beat_length = (double)60000 / ((double)60000000.0 / (double)eof_song->beat[0]->ppqn);
+				beat_length = eof_calc_beat_length(eof_song, 0);
 				silence_length = beat_length * (double)atoi(eof_etext);
 				printf("%lu\n", silence_length);
 				if(silence_length > eof_song->beat[0]->pos)

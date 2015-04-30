@@ -175,6 +175,8 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		(void) pack_fclose(inf);
 		return NULL;
 	}
+	memset(buffer, 0, maxlinelength);	//Fill with 0s to satisfy Splint
+	memset(buffer2, 0, maxlinelength);
 
 	//Allocate and initialize a pro guitar structure
 	tp = malloc(sizeof(EOF_PRO_GUITAR_TRACK));

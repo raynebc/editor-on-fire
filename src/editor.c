@@ -5009,7 +5009,7 @@ int eof_get_tempo_text(int beat, char * buffer)
 		return 0;
 	}
 
-	current_bpm = (double)60000000.0 / (double)eof_song->beat[beat]->ppqn;
+	current_bpm = 60000000.0 / (double)eof_song->beat[beat]->ppqn;
 	(void) uszprintf(buffer, 16, "%03.2f ", current_bpm);
 
 	return 1;
@@ -5695,12 +5695,12 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 
 			if(i == eof_selected_beat)
 			{	//Draw selected beat's tempo
-				current_bpm = (double)60000000.0 / (double)eof_song->beat[i]->ppqn;
+				current_bpm = 60000000.0 / (double)eof_song->beat[i]->ppqn;
 				textprintf_ex(window->screen, eof_mono_font, xcoord - 28, EOF_EDITOR_RENDER_OFFSET + 7 - (i % 2 == 0 ? 0 : 10), i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "<%03.2f>", current_bpm);
 			}
 			else if(eof_song->beat[i]->contains_tempo_change)
 			{	//Draw tempo if this beat has a tempo change
-				current_bpm = (double)60000000.0 / (double)eof_song->beat[i]->ppqn;
+				current_bpm = 60000000.0 / (double)eof_song->beat[i]->ppqn;
 				textprintf_ex(window->screen, eof_mono_font, xcoord - 20, EOF_EDITOR_RENDER_OFFSET + 7 - (i % 2 == 0 ? 0 : 10), i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "%03.2f", current_bpm);
 			}
 			else
