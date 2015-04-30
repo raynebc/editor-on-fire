@@ -445,6 +445,7 @@ typedef struct
 	char rs_chord_technique_export;
 	char unshare_drum_phrasing;
 	char highlight_unsnapped_notes;
+	char accurate_ts;
 
 	EOF_OGG_INFO ogg[EOF_MAX_OGGS];
 	short oggs;

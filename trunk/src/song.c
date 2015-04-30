@@ -194,6 +194,7 @@ EOF_SONG * eof_create_song(void)
 	sp->tags->eof_fret_hand_pos_1_pb = 0;
 	sp->tags->tempo_map_locked = 0;
 	sp->tags->highlight_unsnapped_notes = 0;
+	sp->tags->accurate_ts = 1;
 	sp->tags->click_drag_disabled = 0;
 	sp->tags->rs_chord_technique_export = 0;
 	sp->tags->double_bass_drum_disabled = 0;
@@ -303,6 +304,7 @@ EOF_SONG * eof_load_song(const char * fn)
 			(void) pack_fclose(fp);
 			return NULL;
 		}
+		sp->tags->accurate_ts = 0;	//For existing projects, this setting must be manually enabled in order to prevent unwanted alteration to beat timings
 		if(!eof_load_song_pf(sp, fp))
 		{
 			(void) pack_fclose(fp);
@@ -1190,7 +1192,10 @@ double eof_calc_beat_length(EOF_SONG *sp, unsigned long beat)
 	}
 
 	ms = (60000.0 / (60000000.0 / (double)sp->beat[beat]->ppqn));	//Get the length of a quarter note based on the tempo in effect
-	ms /= (double)den / 4.0;	//Translate this into the length of a beat based on the time signature in effect
+	if(sp->tags->accurate_ts)
+	{	//If the user enabled the accurate time signatures song property
+		ms /= (double)den / 4.0;	//Translate this into the length of a beat based on the time signature in effect
+	}
 	return ms;
 }
 
@@ -1544,7 +1549,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	unsigned long const inistringbuffersize[EOFNUMINISTRINGTYPES]={0,0,256,256,256,0,32,512,256};
 		//Store the buffer information of each of the INI strings to simplify the loading code
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
-	#define EOFNUMINIBOOLEANTYPES 11
+	#define EOFNUMINIBOOLEANTYPES 12
 	char *inibooleanbuffer[EOFNUMINIBOOLEANTYPES] = {NULL};
 		//Store the pointers to each of the boolean type INI settings (number 0 is reserved) to simplify the loading code
 	#define EOFNUMININUMBERTYPES 5
@@ -1584,6 +1589,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	inibooleanbuffer[8] = &sp->tags->rs_chord_technique_export;
 	inibooleanbuffer[9] = &unshare_drum_phrasing;
 	inibooleanbuffer[10] = &sp->tags->highlight_unsnapped_notes;
+	inibooleanbuffer[11] = &sp->tags->accurate_ts;
 	ininumberbuffer[2] = &sp->tags->difficulty;
 
 	/* read chart properties */
@@ -2440,7 +2446,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
 		//Store the buffer information of each of the 12 INI strings to simplify the loading code
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
-	#define EOFNUMINIBOOLEANTYPES 11
+	#define EOFNUMINIBOOLEANTYPES 12
 	char *inibooleanbuffer[EOFNUMINIBOOLEANTYPES] = {NULL};
 		//Store the pointers to each of the boolean type INI settings (number 0 is reserved) to simplify the loading code
 	#define EOFNUMININUMBERTYPES 5
@@ -2482,6 +2488,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	inibooleanbuffer[8] = &sp->tags->rs_chord_technique_export;
 	inibooleanbuffer[9] = &unshare_drum_phrasing;
 	inibooleanbuffer[10] = &sp->tags->highlight_unsnapped_notes;
+	inibooleanbuffer[11] = &sp->tags->accurate_ts;
 	ininumberbuffer[2] = &sp->tags->difficulty;
 
 	/* write file header */
