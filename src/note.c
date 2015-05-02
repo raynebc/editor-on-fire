@@ -130,43 +130,6 @@ unsigned long eof_note_count_rs_lanes(EOF_SONG *sp, unsigned long track, unsigne
 	return count;
 }
 
-void eof_legacy_track_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, char o, unsigned long pos, long length)
-{
-	eof_log("eof_legacy_track_note_create() entered", 1);
-
-	if(!np)
-	{
-		return;
-	}
-	np->note = 0;
-	if(g)
-	{
-		np->note |= 1;
-	}
-	if(y)
-	{
-		np->note |= 2;
-	}
-	if(r)
-	{
-		np->note |= 4;
-	}
-	if(b)
-	{
-		np->note |= 8;
-	}
-	if(p)
-	{
-		np->note |= 16;
-	}
-	if(o)
-	{
-		np->note |= 32;
-	}
-	np->pos = pos;
-	np->length = length;
-}
-
 int eof_adjust_notes(int offset)
 {
 	unsigned long i, j;

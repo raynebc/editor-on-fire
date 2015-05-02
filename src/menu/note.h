@@ -65,8 +65,6 @@ int eof_menu_note_default_open_hi_hat(void);		//Specifies whether newly-placed y
 int eof_menu_note_default_pedal_hi_hat(void);		//Specifies whether newly-placed yellow drum notes are marked as pedal hi hat automatically
 int eof_menu_note_default_sizzle_hi_hat(void);		//Specifies whether newly-placed yellow drum notes are marked as sizzle hi hat automatically
 int eof_menu_note_default_no_hi_hat(void);			//Specifies that newly-placed yellow drum notes are NOT marked as one of the hi hat statuses automatically
-int eof_menu_note_push_back(void);					//A currently unused Feedback input mode function
-int eof_menu_note_push_up(void);
 int eof_menu_note_delete(void);
 int eof_menu_set_freestyle(char status);	//Applies the specified freestyle status to all selected lyrics
 int eof_menu_set_freestyle_on(void);		//Applies freestyle for all selected lyrics

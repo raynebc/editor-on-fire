@@ -664,53 +664,6 @@ int eof_gh_read_tap_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *targe
 	return 1;
 }
 
-void eof_process_gh_lyric_text(EOF_SONG *sp)
-{
-	unsigned long ctr, ctr2, length, prevlength, index;
-	char *string, *prevstring, buffer[EOF_MAX_LYRIC_LENGTH+1];
-
-	for(ctr = 0; ctr < eof_get_track_size(sp, EOF_TRACK_VOCALS); ctr++)
-	{	//For each lyric
-		index = 0;	//Reset the index into the buffer
-		string = eof_get_note_name(sp, EOF_TRACK_VOCALS, ctr);
-		if(string == NULL)
-			return;	//If there is some kind of error
-		length = ustrlen(string);
-
-		for(ctr2 = 0; ctr2 < length; ctr2++)
-		{	//For each character in the the lyric's text
-			if((string[ctr2] == '=') && (ctr > 0))
-			{	//If this character is an equal sign, and there's a previous lyric, drop the character and append a hyphen to the previous lyric
-				prevstring = eof_get_note_name(sp, EOF_TRACK_VOCALS, ctr - 1);	//Get the string for the previous lyric
-				if(prevstring != NULL)
-				{	//If there wasn't an error getting that string
-					prevlength = ustrlen(prevstring);
-					if((prevstring[prevlength - 1] != '-') && (prevstring[prevlength - 1] != '='))
-					{	//If the previous lyric doesn't already end in a hyphen or equal sign
-						if(prevlength + 1 < EOF_MAX_LYRIC_LENGTH)
-						{	//Bounds check
-							prevstring[prevlength] = '-';		//Append a hyphen
-							prevstring[prevlength + 1] = '\0';	//Re-terminate the string
-						}
-					}
-				}
-			}
-			else if((string[ctr2] == '-') && (ctr2 + 1 == length))
-			{	//If this is the last character in the string and it is a hyphen
-				buffer[index++] = '=';	//Convert it to the equivalent RB notation
-			}
-			else
-			{	//This character isn't an equal sign or a hyphen at the end of the string
-				buffer[index++] = string[ctr2];	//Copy it as-is
-			}
-		}
-		buffer[index] = '\0';				//Terminate the finalized string
-		buffer[EOF_MAX_LYRIC_LENGTH - 1] = '\0';	//Ensure the last two bytes of the lyric text are NULL (Unicode terminator)
-		buffer[EOF_MAX_LYRIC_LENGTH] = '\0';
-		eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr, buffer);	//Update the string on the lyric
-	}
-}
-
 void eof_process_gh_lyric_text_u(EOF_SONG *sp)
 {
 	unsigned long ctr, ctr2, length, prevlength, index;

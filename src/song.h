@@ -594,10 +594,6 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long
 	//Adds and initializes the appropriate note for the specified track, returning the newly created note structure, or NULL on error
 	//Automatic flags will be applied appropriately (ie. crazy status for all notes in PART KEYS)
 	//text is used to initialize the note name or lyric text, and may be NULL
-void *eof_track_add_create_note2(EOF_SONG *sp, unsigned long track, EOF_NOTE *note);
-	//Adds and initializes the appropriate note for the specified track, returning the newly created note structure, or NULL on error
-	//If track refers to a legacy track, it is created and initialized using the passed structure
-	//If track refers to a pro guitar track, a pro guitar note is partially initialized and the rest of the data is set to default values, ie. fret values set to 0xFF (muted)
 void eof_track_sort_notes(EOF_SONG *sp, unsigned long track);		//Calls the appropriate sort function for the specified track.  eof_selection.multi[] is preserved before the sort and recreated afterward, since sorting invalidates the selection array due to note numbering being changed
 int eof_song_qsort_phrase_sections(const void * e1, const void * e2);	//A generic qsort comparitor that will sort phrase sections into chronological order
 long eof_track_fixup_previous_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note/lyric one before the specified note/lyric number that is in the same difficulty, or -1 if there is none

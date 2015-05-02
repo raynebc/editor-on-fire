@@ -4181,10 +4181,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							if(tie_note)
 							{	//If this was defined as a tie note
 								char newtech = 0;	//Is set to nonzero if the tie note is determined to add techniques to the note it is extending
+								unsigned long dwbitmask;	//A double word bitmask, since 32 bits need to be tested
 
-								for(ctr4 = 0, bitmask = 1; ctr4 < 32; ctr4++, bitmask <<= 1)
+								for(ctr4 = 0, dwbitmask = 1; ctr4 < 32; ctr4++, dwbitmask <<= 1)
 								{	//For each bit in the flags bitmask
-									if(!(np[ctr2]->flags & bitmask) && (flags & bitmask))
+									if(!(np[ctr2]->flags & dwbitmask) && (flags & dwbitmask))
 									{	//If the previous note's flags bit was clear and this tie note's flags bit is not
 										newtech = 1;	//This tie note adds a status and should import as a linked note
 										break;

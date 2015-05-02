@@ -505,7 +505,7 @@ d_abitmap_button_proc (int msg, DIALOG *d, int c)
 {
     if (msg == MSG_DRAW)
     {
-        int b = d->flags & D_SELECTED ? B_BUTTON_DOWN : B_BUTTON;
+        int b = (d->flags & D_SELECTED) ? B_BUTTON_DOWN : B_BUTTON;
         abitmap_draw_box (d, b);
         abitmap_draw_text (d, b, 0, 0, d->flags & D_SELECTED, 1, 1);
         return D_O_K;
@@ -518,8 +518,8 @@ d_abitmap_check_proc (int msg, DIALOG *d, int c)
 {
     if (msg == MSG_DRAW)
     {
-        int b = d->flags & D_SELECTED ? B_CHECK_DOWN : B_CHECK;
-        int bi = d->flags & D_SELECTED ? B_CHECK_ITEM_DOWN : B_CHECK_ITEM;
+        int b = (d->flags & D_SELECTED) ? B_CHECK_DOWN : B_CHECK;
+        int bi = (d->flags & D_SELECTED) ? B_CHECK_ITEM_DOWN : B_CHECK_ITEM;
         abitmap_draw_box (d, b);
         abitmap_draw_area (d, bi, 0, 0, 12, 12, 0, 1);
         abitmap_draw_text (d, b, 14, 0, 0, 0, 1);
@@ -533,8 +533,8 @@ d_abitmap_radio_proc (int msg, DIALOG *d, int c)
 {
     if (msg == MSG_DRAW)
     {
-        int b = d->flags & D_SELECTED ? B_RADIO_DOWN : B_RADIO;
-        int bi = d->flags & D_SELECTED ? B_RADIO_ITEM_DOWN : B_RADIO_ITEM;
+        int b = (d->flags & D_SELECTED) ? B_RADIO_DOWN : B_RADIO;
+        int bi = (d->flags & D_SELECTED) ? B_RADIO_ITEM_DOWN : B_RADIO_ITEM;
         abitmap_draw_box (d, b);
         abitmap_draw_area (d, bi, 0, 0, 12, 12, 0, 1);
         abitmap_draw_text (d, b, 14, 0, 0, 0, 1);
@@ -548,7 +548,7 @@ d_abitmap_icon_proc (int msg, DIALOG *d, int c)
 {
     if (msg == MSG_DRAW)
     {
-        int b = d->flags & D_SELECTED ? B_ICON_DOWN : B_ICON;
+        int b = (d->flags & D_SELECTED) ? B_ICON_DOWN : B_ICON;
         int px = 0, py = 0;
         abitmap_draw_box (d, b);
         if (d->flags & D_SELECTED)
@@ -1006,11 +1006,16 @@ static DATAFILE *used_dat = NULL;
 static void
 used_bitmap (BITMAP *bmp, char const *name)
 {
-    used_bitmaps = realloc (used_bitmaps,
+	void *temp;
+    temp = realloc (used_bitmaps,
         (used_bitmaps_count + 1) * sizeof *used_bitmaps);
+	if(temp)
+		used_bitmaps = temp;
     used_bitmaps[used_bitmaps_count] = bmp;
-    used_bitmaps_names = realloc (used_bitmaps_names,
+    temp = realloc (used_bitmaps_names,
         (used_bitmaps_count + 1) * sizeof *used_bitmaps_names);
+	if(temp)
+		used_bitmaps_names = temp;
     used_bitmaps_names[used_bitmaps_count] = name ? strdup (name) : NULL;
     used_bitmaps_count++;
 }
@@ -1409,6 +1414,7 @@ struct AGUP_THEME *agup_load_bitmap_theme (char const *path, DATAFILE *datafile)
     char const *box;
     DATAFILE *dat;
     char *name;
+    void *temp;
 
     push_config_state ();
     dat = set_theme_config (path, datafile);
@@ -1425,7 +1431,9 @@ struct AGUP_THEME *agup_load_bitmap_theme (char const *path, DATAFILE *datafile)
     }
 
     themes_count++;
-    themes = realloc (themes, themes_count * sizeof *themes);
+    temp = realloc (themes, themes_count * sizeof *themes);
+    if(temp)
+		themes = temp;
     themes[i] = calloc (1, sizeof *themes[i]);
     themes[i]->path = strdup (path);
     themes[i]->datafile = datafile;

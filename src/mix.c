@@ -757,11 +757,6 @@ void eof_midi_play_note_ex(int note, unsigned char channel, unsigned char patch)
 	}
 }
 
-void eof_midi_play_note(int note)
-{
-	eof_midi_play_note_ex(note, 0, 0);
-}
-
 void eof_play_pro_guitar_note_midi(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	EOF_PRO_GUITAR_TRACK *tp;

@@ -3909,16 +3909,6 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long
 	return NULL;	//Return error
 }
 
-void *eof_track_add_create_note2(EOF_SONG *sp, unsigned long track, EOF_NOTE *note)
-{
-	if(!sp || !note)
-	{
-		return NULL;
-	}
-
-	return eof_track_add_create_note(sp, track, note->note, note->pos, note->length, note->type, note->name);
-}
-
 unsigned long eof_get_num_solos(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum;
