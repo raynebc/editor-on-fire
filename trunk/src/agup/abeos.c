@@ -355,7 +355,7 @@ beos_box (BITMAP * bmp, int x, int y, int w, int h, int flags,
         int total = bdata->u.scroll.total;
         int visible = bdata->u.scroll.visible;
         BITMAP *handle =
-          flags & D_GOTFOCUS ? sliderhandle[1] : sliderhandle[0];
+          (flags & D_GOTFOCUS) ? sliderhandle[1] : sliderhandle[0];
 
         if (total > visible)
         {

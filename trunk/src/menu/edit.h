@@ -153,8 +153,6 @@ int eof_menu_edit_copy_vocal(void);
 	//Copies selected lyrics to the vocal clipboard file
 int eof_menu_edit_paste_vocal_logic(int oldpaste);
 	//Using the vocal clipboard file as the source, if oldpaste is nonzero, uses old paste logic (notes paste to positions relative to each other), otherwise uses new paste logic (notes paste into positions relative to the copied notes positions within their beats)
-int eof_menu_edit_paste_vocal(void);	//Uses eof_menu_edit_paste_vocal_logic() to perform a "new" style paste
-int eof_menu_edit_old_paste_vocal(void);	//Uses eof_menu_edit_paste_vocal_logic() to perform an "old" style paste
 int eof_menu_edit_bookmark_helper(int b);	//Sets the specified bookmark number to the current seek position
 char * eof_menu_song_paste_from_difficulty_list(int index, int * size);
 	//The list dialog function for eof_menu_song_paste_from_difficulty();

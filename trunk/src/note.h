@@ -19,10 +19,6 @@ unsigned long eof_note_count_rs_lanes(EOF_SONG *sp, unsigned long track, unsigne
 	//If target is 2, then Rocksmith 2 authoring rules are followed and string muted gems are counted, but ghosted gems still are not
 	//If (target & 4) is nonzero, then ghosted gems are also counted
 	//Returns 0 on error
-void eof_legacy_track_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, char o, unsigned long pos, long length);
-	//Initializes a note by by storing the specified on/off status of the green, yellow, red, blue and purple gem colors
-	//as well as the position and length into the given EOF_NOTE structure, whose contents are overwritten
-	//The note type and flags are not altered
 int eof_adjust_notes(int offset);
 	//Applies the given additive offset to all notes, lyrics, bookmarks, catalog entries and phrases
 int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW *window);

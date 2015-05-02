@@ -71,7 +71,6 @@ void eof_mix_play_note(int note);	//Plays the vocal tone for the specified note,
 void eof_midi_play_note_ex(int note, unsigned char channel, unsigned char patch);
 	//Sends MIDI commands to stop a note on the specified channel, change to the "clean guitar" MIDI instrument and plays the note
 	//If patch is nonzero, MIDI commands to set it as the active instrument number are sent
-void eof_midi_play_note(int note);	//Sends a Note On MIDI command
 void eof_play_pro_guitar_note_midi(EOF_SONG *sp, unsigned long track, unsigned long note);	//Immediately plays all the MIDI tones in the specified pro guitar note
 void eof_play_queued_midi_tones(void);	//Advances through and plays MIDI tones queued by eof_mix_find_claps(), similarly to how the OGG callback function plays other cues
 

@@ -83,8 +83,6 @@ int eof_gh_read_sp_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *target
 	//If the section is not found, 0 is returned
 	//If an error is detected, -1 is returned
 	//If it is found, it is parsed and the star power sections are added accordingly to the passed EOF_SONG structure
-void eof_process_gh_lyric_text(EOF_SONG *sp);
-	//Examines the lyric text in the EOF_SONG structure, and converts GH's hyphenating characters to conform to conventions used in Rock Band
 void eof_process_gh_lyric_phrases(EOF_SONG *sp);
 	//Determines appropriate ending positions for each lyric phrase, since GH files only define a start position for each
 	//The lyrics and lyric lines are expected to already be sorted by timestamp

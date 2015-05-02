@@ -739,16 +739,6 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 	return 1;
 }
 
-int eof_menu_edit_paste_vocal(void)
-{
-	return eof_menu_edit_paste_vocal_logic(0);	//Use new paste logic
-}
-
-int eof_menu_edit_old_paste_vocal(void)
-{
-	return eof_menu_edit_paste_vocal_logic(1);	//Use old paste logic
-}
-
 int eof_menu_edit_cut(unsigned long anchor, int option)
 {
 	unsigned long i, j;

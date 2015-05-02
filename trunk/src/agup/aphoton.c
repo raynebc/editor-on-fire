@@ -157,7 +157,7 @@ static void photon_textout(BITMAP *bmp, AL_CONST char *text, int x, int y,
     if (flags & D_DISABLED)
         gui_textout_ex(bmp, text, x+1, y+1, white, -1, centre);
 
-    gui_textout_ex(bmp, text, x, y, (flags & D_DISABLED? shadow : black), -1, centre);
+    gui_textout_ex(bmp, text, x, y, ((flags & D_DISABLED)? shadow : black), -1, centre);
 
     if (flags & D_GOTFOCUS) {
 	height = text_height(font);

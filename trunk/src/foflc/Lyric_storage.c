@@ -248,6 +248,7 @@ void EndLyricLine(void)
 //Special handling for 0 length duration
 			if(temp->duration == 0)
 			{
+				assert_wrapper(next != NULL);
 				if(temp->start == next->start)	//If this lyric starts at same time as next piece
 				{
 					printf("Warning: Lyric \"%s\" at %lums has a duration of 0, combining with next lyric\n",temp->lyric,temp->start);
@@ -263,7 +264,6 @@ void EndLyricLine(void)
 					temp->freestyle=next->freestyle;
 					temp->groupswithnext=next->groupswithnext;
 
-					assert_wrapper(next != NULL);
 					temp2=next->next;			//Remember address of the next lyric piece after the next piece
 				//Delete next lyric piece
 					free(next->lyric);			//release this string
