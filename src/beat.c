@@ -275,6 +275,7 @@ void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 	double beats_length;
 	double newbpm;
 	double newppqn;
+	double multiplier = 1.0;	//This is the multiplier used to convert between beat lengths and quarter note lengths, depending on whether the accurate TS chart property is enabled
 
 	eof_log("eof_recalculate_beats() entered", 2);	//Only log this if verbose logging is on
 
@@ -295,7 +296,16 @@ void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 	beats_length = sp->beat[cbeat]->fpos - sp->beat[last_anchor]->fpos;
 	if(!beats_length || !beats)
 		return;	//Error condition
-	newbpm = 60000.0 / (beats_length / (double)beats);
+	if(sp->tags->accurate_ts)
+	{	//If the user enabled the accurate time signatures song property
+		unsigned num = 4, den = 4;
+		for(i = 0; i <= cbeat; i++)
+		{	//For each beat, including the target
+			(void) eof_get_ts(sp, &num, &den, i);	//Lookup any time signature defined at the beat
+		}
+		multiplier = (double)den / 4.0;
+	}
+	newbpm = 60000.0 / (beats_length * multiplier / (double)beats);
 	newppqn = 60000000.0 / newbpm;
 
 	sp->beat[last_anchor]->ppqn = newppqn;
@@ -319,7 +329,7 @@ void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 		beats_length = sp->beat[next_anchor]->fpos - sp->beat[cbeat]->fpos;
 		if(!beats_length || !beats)
 			return;	//Error condition
-		newbpm = 60000.0 / (beats_length / (double)beats);
+		newbpm = 60000.0 / (beats_length * multiplier / (double)beats);	//Re-apply the accurate TS multiplier here if applicable
 		newppqn = 60000000.0 / newbpm;
 
 		sp->beat[cbeat]->ppqn = newppqn;

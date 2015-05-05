@@ -20,7 +20,7 @@ unsigned long eof_note_count_rs_lanes(EOF_SONG *sp, unsigned long track, unsigne
 	//If (target & 4) is nonzero, then ghosted gems are also counted
 	//Returns 0 on error
 int eof_adjust_notes(int offset);
-	//Applies the given additive offset to all notes, lyrics, bookmarks, catalog entries and phrases
+	//Applies the given additive offset to all notes, lyrics, bookmarks, catalog entries, phrases, etc.
 int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW *window);
 	//Renders the note to the specified window, unless it would be outside the viewable area
 	//If p is nonzero, the note is rendered as highlighted (selected/hovered)

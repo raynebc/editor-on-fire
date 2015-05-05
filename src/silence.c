@@ -290,7 +290,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 
 	if(!oggfn || (ms == 0) || eof_silence_loaded)
 	{
-		return 1;	//Return failure:  Invalid parameters
+		return 41;	//Return failure:  Invalid parameters
 	}
 	set_window_title("Adjusting Silence...");
 
@@ -308,14 +308,14 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading OGG:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
 		eof_log(eof_log_string, 1);
-		return 2;	//Return failure:  Could not buffer chart audio into memory
+		return 42;	//Return failure:  Could not buffer chart audio into memory
 	}
 	oggfile=alogg_create_ogg_from_buffer(oggbuffer, (int)file_size_ex(oggfn));
 	if(oggfile == NULL)
 	{
 		eof_log("ALOGG failed to open input audio file", 1);
 		free(oggbuffer);
-		return 3;	//Return failure:  Could not process buffered chart audio
+		return 43;	//Return failure:  Could not process buffered chart audio
 	}
 
 	//Decode OGG into memory
@@ -324,7 +324,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	{
 		alogg_destroy_ogg(oggfile);
 		free(oggbuffer);
-		return 4;	//Return failure:  Could not decode chart audio to memory
+		return 44;	//Return failure:  Could not decode chart audio to memory
 	}
 
 	/* Create a SAMPLE array large enough for the leading silence and the decoded OGG */
@@ -339,7 +339,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	if(combined == NULL)
 	{
 		destroy_sample(decoded);
-		return 5;	//Return failure:  Could not create a sample array for the combined audio
+		return 45;	//Return failure:  Could not create a sample array for the combined audio
 	}
 
 	/* Add the PCM data for the silence */
@@ -391,6 +391,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	#else
 		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, bitrate, wavfn);
 	#endif
+
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCalling oggenc as follows:  %s", sys_command);
 	eof_log(eof_log_string, 1);
 	if(eof_system(sys_command))
@@ -410,7 +411,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 			{	//Run one last time to catch the error output
 				eof_log("\tOggenc failed.  Please see oggenc.log for any errors it gave.", 1);
 				eof_fix_window_title();
-				return 6;	//Return failure:  Could not encode combined audio
+				return 46;	//Return failure:  Could not encode combined audio
 			}
 		}
 	}
@@ -431,7 +432,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	}
 	eof_fix_window_title();
 
-	return 7;	//Return error:  Could not load new audio
+	return 47;	//Return error:  Could not load new audio
 }
 
 int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
@@ -454,7 +455,7 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 
 	if(!oggfn || (ms == 0) || eof_silence_loaded)
 	{
-		return 1;	//Return error:  Invalid parameters
+		return 21;	//Return error:  Invalid parameters
 	}
 	set_window_title("Adjusting Silence...");
 
@@ -476,18 +477,18 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	if(!decoded)
 	{
 		allegro_message("Error opening file.\nMake sure there are no Unicode or extended ASCII characters in this chart's file path.");
-		return 2;	//Return failure:  Could not load decoded MP3 file
+		return 22;	//Return failure:  Could not load decoded MP3 file
 	}
 	bits = decoded->bits;
 	stereo = decoded->stereo;
 	freq = decoded->freq;
-	samples = msec_to_samples(ms);
+	samples = (decoded->freq * ms) / 1000;	//Calculate this manually instead of using msec_to_samples() because that function assumes the sample rate matches the current chart audio, and this may not be the case with the original MP3 file the user provided
 	channels = stereo ? 2 : 1;
 	combined = create_sample(bits,stereo,freq,samples+decoded->len);	//Create a sample array long enough for the silence and the OGG file
 	if(combined == NULL)
 	{
 		destroy_sample(decoded);
-		return 3;	//Return failure:  Could not create a sample array for the combined audio
+		return 23;	//Return failure:  Could not create a sample array for the combined audio
 	}
 	/* Add the PCM data for the silence */
 	if(bits == 8)
@@ -526,7 +527,7 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	{
 		destroy_sample(decoded);	//This is no longer needed
 		destroy_sample(combined);	//This is no longer needed
-		return 4;	//Return failure:  Could not create the combined audio WAV file
+		return 24;	//Return failure:  Could not create the combined audio WAV file
 	}
 
 	/* destroy samples */
@@ -542,10 +543,28 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
 	#endif
 
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCalling oggenc as follows:  %s", sys_command);
+	eof_log(eof_log_string, 1);
 	if(eof_system(sys_command))
-	{
-		eof_fix_window_title();
-		return 5;	//Return failure:  Could not encode combined audio WAV file
+	{	//If oggenc failed, retry again by specifying a quality level (specifying bitrate can fail in some circumstances)
+		eof_log("\t\toggenc failed.  Retrying by specifying a quality level instead of a target bitrate", 1);
+		#ifdef ALLEGRO_WINDOWS
+			(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -q 9 \"%s\"", soggfn, wavfn);
+		#else
+			(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc -o \"%s\" -q 9 \"%s\"", soggfn, wavfn);
+		#endif
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCalling oggenc as follows:  %s", sys_command);
+		eof_log(eof_log_string, 1);
+		if(eof_system(sys_command))
+		{	//If oggenc failed again
+			(void) ustrzcat(sys_command, (int) sizeof(sys_command) - 1, " 2> oggenc.log");	//Append a redirection to capture the output of oggenc
+			if(eof_system(sys_command))
+			{	//Run one last time to catch the error output
+				eof_log("\tOggenc failed.  Please see oggenc.log for any errors it gave.", 1);
+				eof_fix_window_title();
+				return 25;	//Return failure:  Could not encode combined audio
+			}
+		}
 	}
 
 	/* replace the current OGG file with the new file */
@@ -567,7 +586,7 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	}
 	eof_fix_window_title();
 
-	return 6;	//Return error:  Could not load new audio
+	return 26;	//Return error:  Could not load new audio
 }
 
 int save_wav_with_silence_appended(const char * fn, SAMPLE * sp, unsigned long ms)
