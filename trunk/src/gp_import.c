@@ -1687,6 +1687,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	unsigned char gracetrans = 0;	//Tracks the grace note's transition type
 	char new_note;					//Tracks whether a new note is to be created
 	char tie_note;					//Tracks whether a note is a tie note
+	char rest_note;					//Tracks whether a note is a rest note
 	unsigned char finger[7];		//Store left (fretting hand) finger values for each string
 	unsigned char curnum = 4, curden = 4;	//Stores the current time signature (4/4 assumed until one is explicitly defined)
 	unsigned long totalbeats = 0;			//Count the total number of beats in the Guitar Pro file's transcription
@@ -3206,6 +3207,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					unpitchend = 0;	//Assume no unpitched slide unless one is defined
 					new_note = 0;	//Assume no new note is to be added unless a normal/muted note is parsed
 					tie_note = 0;	//Assume a note isn't a tie note unless found otherwise
+					rest_note = 0;	//Assume a note isn't a rest note unless found otherwise
 					bendstruct.bendpoints = 0;	//Assume the note has no bend points unless any are parsed
 					flags = 0;
 					bendstrength = 0;
@@ -3215,6 +3217,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					{	//Beat is a rest
 						(void) pack_getc(inf);	//Rest beat type (empty/rest)
 						new_note = 0;
+						rest_note = 1;
 					}
 					byte = pack_getc(inf);		//Read beat duration
 					if((byte < -2) || (byte > 4))
@@ -3272,9 +3275,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						note_duration = 1.0;	//Force the maximum length of a note to be 1 measure.  GP must correctly write tie notes to define longer notes
 						eof_log("\t\t\tWarning:  GP file defines an invalid note duration, capping to 1 measure long.", 1);
 					}
-					if(tripletfeel && (byte == durations[ctr2]) && (byte == tripletfeel))
-					{	//If the note is the same length as the previously imported note for this track and is the length of any configured triplet feel notation, apply triplet feel modifications
-						np[ctr2]->length *= (4.0 / 3.0);	//Update the previous note to reflect triplet feel (it is made the length of two triplets)
+					if(tripletfeel && (byte == (durations[ctr2] & 0x7F)) && (byte == tripletfeel))
+					{	//If the note is the same length as the previously imported note for this track (masking out the MSB used to track whether that previous note was a rest) and is the length of any configured triplet feel notation, apply triplet feel modifications
+						if(np[ctr2] && !(durations[ctr2] & 0x80))
+						{	//If a previous note was imported and not a rest note
+							np[ctr2]->length *= (4.0 / 3.0);	//Update the previous note to reflect triplet feel (it is made the length of two triplets)
+						}
 						measure_position += (note_durations[ctr2] / 3.0);	//Advance the measure position by an extra third of the previously imported note's length
 						note_duration *= (2.0 / 3.0);		//Update the current note to reflect triplet feel (it is made the length of one triplet)
 						durations[ctr2] = 0;	//Reset the triplet feel notation to require two notes
@@ -3282,6 +3288,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					else
 					{	//Otherwise just track the duration of the note being imported
 						durations[ctr2] = byte;	//Track the duration of the note being imported for triplet feel
+						if(rest_note)
+						{	//If this is a rest note
+							durations[ctr2] |= 0x80;	//Set the MSB of this value to ensure EOF doesn't try to modify a note duration for a rest regarding triplet feel, since no note would have been created to represent a rest
+						}
 						note_durations[ctr2] = note_duration;
 					}
 					if(note_duration / ((double)curden / (double)curnum) < 0.25)
@@ -3717,6 +3727,41 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						partial_beat_position = (measure_position + note_duration) * curnum - beat_position;	//How far into this beat the note ends
 						beat_position += curbeat;	//Add the number of beats into the track the current measure is
 						beat_position -= skipbeatsourcectr;	//Offset by the number of beats being skipped
+
+						while(beat_position + 1 >= eof_song->beats)
+						{	//If there aren't enough beats in the project for some reason, add enough to continue
+							if(!eof_song_append_beats(eof_song, 1))
+							{	//If a beat couldn't be appended to the project
+								eof_log("Error allocating memory (15)", 1);
+								(void) pack_fclose(inf);
+								while(ctr > 0)
+								{	//Free the previous track name strings
+									free(gp->names[ctr - 1]);
+									ctr--;
+								}
+								free(gp->names);
+								free(gp->instrument_types);
+								for(ctr = 0; ctr < tracks; ctr++)
+								{	//Free all previously allocated track structures
+									free(gp->track[ctr]);
+								}
+								for(ctr = 0; ctr < gp->text_events; ctr++)
+								{	//Free all allocated text events
+									free(gp->text_event[ctr]);
+								}
+								free(gp->track);
+								free(np);
+								free(hopo);
+								free(hopobeatnum);
+								free(durations);
+								free(note_durations);
+								free(gp);
+								free(tsarray);
+								free(strings);
+								return NULL;
+							}//If a beat couldn't be appended to the project
+						}//If there aren't enough beats in the project for some reason, add enough to continue
+
 						beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
 						lastendpos = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position);
 					}
@@ -3901,7 +3946,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											pgnp = eof_pro_guitar_track_add_tech_note(gp->track[ctr2]);	//Add a new tech note to the current track
 											if(!pgnp)
 											{
-												eof_log("Error allocating memory (15)", 1);
+												eof_log("Error allocating memory (16)", 1);
 												(void) pack_fclose(inf);
 												while(ctr > 0)
 												{	//Free the previous track name strings
@@ -4219,7 +4264,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								np[ctr2] = eof_pro_guitar_track_add_note(gp->track[ctr2]);	//Add a new note to the current track
 								if(!np[ctr2])
 								{
-									eof_log("Error allocating memory (16)", 1);
+									eof_log("Error allocating memory (17)", 1);
 									(void) pack_fclose(inf);
 									while(ctr > 0)
 									{	//Free the previous track name strings
@@ -4367,7 +4412,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									gnp = eof_pro_guitar_track_add_note(gp->track[ctr2]);	//Add a new note to the current track
 									if(!gnp)
 									{
-										eof_log("Error allocating memory (17)", 1);
+										eof_log("Error allocating memory (18)", 1);
 										(void) pack_fclose(inf);
 										while(ctr > 0)
 										{	//Free the previous track name strings

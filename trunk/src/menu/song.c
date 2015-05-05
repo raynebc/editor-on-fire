@@ -1858,6 +1858,7 @@ int eof_menu_song_add_silence(void)
 		eof_fixup_notes(eof_song);
 		eof_calculate_beats(eof_song);
 		eof_fix_window_title();
+		eof_truncate_chart(eof_song);	//Update number of beats and the chart length as appropriate
 	}//User clicked OK
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
