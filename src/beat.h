@@ -20,6 +20,11 @@ void eof_calculate_beats(EOF_SONG * sp);
 	//Creates beats if there aren't enough to extend to one beat past the end of the chart as defined by eof_chart_length
 void eof_calculate_tempo_map(EOF_SONG * sp);
 	//Sets the tempo and anchor status of each beat in the EOF_SONG structure by using the configured time stamp of each beat
+void eof_change_accurate_ts(EOF_SONG * sp, char function);
+	//Recalculates the tempo on beats using a time signature with a denominator other than 4 depending on the value of function,
+	// allowing beats to retain the same real time length
+	//If function is nonzero, such beats are calculated without regard to time signature the way EOF originally did
+	//If function is zero, such beats are calculated with regard to time signature (ie. beats in 4/8 are shorter than 4/4 if they use the same tempo)
 void eof_realign_beats(EOF_SONG * sp, int cbeat);
 	//Recalculates and applies the tempo of the anchors before and after the specified beat, updating beat timestamps, etc.
 void eof_recalculate_beats(EOF_SONG * sp, int cbeat);

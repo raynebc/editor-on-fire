@@ -1460,13 +1460,13 @@ int eof_menu_file_exit(void)
 		if(eof_changes)
 		{
 			eof_clear_input();
-			ret = alert3(NULL, "Save changes before quitting?", NULL, "&Yes", "&No", "Cancel", 'y', 'n', 0);
+			ret = alert3(NULL, "Quick save changes before quitting?", NULL, "&Yes", "&No", "Cancel", 'y', 'n', 0);
 			if(ret == 1)
 			{
-				if(eof_menu_file_save() == 2)
+				if(eof_menu_file_quick_save() == 2)
 				{
 					eof_clear_input();
-					ret2 = alert3(NULL, "Save failed! Exit without saving?", NULL, "&Yes", "&No", NULL, 'y', 'n', 0);
+					ret2 = alert3(NULL, "Quick save failed! Exit without saving?", NULL, "&Yes", "&No", NULL, 'y', 'n', 0);
 				}
 			}
 		}
@@ -1952,6 +1952,7 @@ int eof_menu_file_feedback_import(void)
 				eof_song_loaded = 1;
 				eof_init_after_load(0);
 				(void) replace_filename(eof_last_db_path, returnedfn, "", 1024);	//Set the last loaded Feedback file path
+				eof_cleanup_beat_flags(eof_song);	//Update anchor flags as necessary for any time signature changes
 			}
 			else
 			{
@@ -3245,6 +3246,7 @@ int eof_menu_file_gh_import(void)
 			eof_song_loaded = 1;
 			eof_init_after_load(0);
 			(void) replace_filename(eof_last_gh_path, returnedfn, "", 1024);	//Set the last loaded GH file path
+			eof_cleanup_beat_flags(eof_song);	//Update anchor flags as necessary for any time signature changes
 		}
 		else
 		{
@@ -3512,6 +3514,7 @@ int eof_gp_import_track(DIALOG * d)
 			eof_parsed_gp_file->names[ctr - 1] = eof_parsed_gp_file->names[ctr];	//Save this track's name into the previous track name's index
 		}
 		eof_parsed_gp_file->numtracks--;
+		eof_cleanup_beat_flags(eof_song);	//Update anchor flags as necessary for any time signature changes
 	}//Only perform this action if a pro guitar/bass track is active
 
 	eof_log("\t\tImport complete", 1);
@@ -4139,6 +4142,7 @@ int eof_menu_file_bf_import(void)
 			eof_sort_notes(eof_song);
 			eof_fixup_notes(eof_song);
 			(void) replace_filename(eof_last_bf_path, returnedfn, "", 1024);	//Set the last loaded Bandfuse file path
+			eof_cleanup_beat_flags(eof_song);	//Update anchor flags as necessary for any time signature changes
 			eof_log("\tImport complete", 1);
 		}
 		else

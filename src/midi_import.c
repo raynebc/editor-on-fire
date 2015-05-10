@@ -956,6 +956,10 @@ assert(sp->tags != NULL);	//Prevent a NULL dereference below
 assert(sp->beats > 0);	//Prevent eof_apply_ts() below from failing
 
 			(void) eof_apply_ts(curnum,curden,sp->beats - 1,sp,0);	//Set the TS flags for this beat
+			if(lastden != curden)
+			{	//If the TS denominator changed
+				sp->beat[sp->beats - 1]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Anchor the beat because the length of a beat is influenced by the time signature
+			}
 		}
 
 assert(curppqn != 0);	//Avoid a division by 0 below

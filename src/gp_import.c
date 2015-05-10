@@ -2865,7 +2865,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		if(firstsyncpointbeat != 0)
 		{	//If the first sync point wasn't placed at the first beat
 			if(eof_song->beats > firstsyncpointbeat + 1)
-			{	//If there is at least two beats positioned by the sync points
+			{	//If there are at least two beats positioned by the sync points
 #ifdef GP_IMPORT_DEBUG
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFirst sync point is not at measure 1.0.  Positioning the %lu preceding beats using the first sync point's quarter note length of %fms", firstsyncpointbeat, sync_points[0].real_qnote_length);
 				eof_log(eof_log_string, 1);
@@ -2912,9 +2912,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					}
 					eof_cleanup_beat_flags(eof_song);	//Rebuild the beat flags so the correct beats are marked as having text events
 				}
-			}
-		}
+			}//If there are at least two beats positioned by the sync points
+		}//If the first sync point wasn't placed at the first beat
 		eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
+		eof_song->tags->accurate_ts = 1;	//Enable the accurate TS option, since comparable logic was used to calculate sync point positions
 		eof_calculate_tempo_map(eof_song);	//Update the tempo and anchor status of all beats
 		free(sync_points);
 		free(num);

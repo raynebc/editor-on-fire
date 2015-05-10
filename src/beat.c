@@ -64,6 +64,7 @@ void eof_calculate_beats(EOF_SONG * sp)
 	double beat_length;
 	unsigned long cbeat = 0;
 	unsigned long target_length = eof_music_length;
+	unsigned num = 4, den = 4, lastden = 4;
 
 	eof_log("eof_calculate_beats() entered", 1);
 
@@ -107,6 +108,13 @@ void eof_calculate_beats(EOF_SONG * sp)
 		{
 			sp->beat[i]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Set the anchor flag
 		}
+		/* TS denominator changed */
+		eof_get_ts(sp, &num, &den, i);	//Lookup any time signature defined at the beat
+		if(den != lastden)
+		{
+			sp->beat[i]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Set the anchor flag
+		}
+		lastden = den;	//Track the TS denominator in use
 		beat_length = eof_calc_beat_length(sp, i);	//Recalculate the beat length every beat because either a time signature change or a tempo change will alter it
 	}
 	cbeat = sp->beats - 1;	//The index of the last beat in the beat[] array
@@ -126,22 +134,63 @@ void eof_calculate_beats(EOF_SONG * sp)
 void eof_calculate_tempo_map(EOF_SONG * sp)
 {
 	unsigned long ctr, lastppqn = 0;
+	unsigned num = 4, den = 4, lastden = 4;
+	int has_ts_change;
 
 	if(!sp || (sp->beats < 3))
 		return;
 
 	for(ctr = 0; ctr < sp->beats - 1; ctr++)
 	{	//For each beat in the chart
-		sp->beat[ctr]->ppqn = 1000 * (sp->beat[ctr + 1]->pos - sp->beat[ctr]->pos);	//Calculate the tempo of the beat by getting its length
+		has_ts_change = eof_get_ts(sp, &num, &den, ctr);	//Lookup any time signature defined at the beat
+		sp->beat[ctr]->ppqn = 1000 * (sp->beat[ctr + 1]->pos - sp->beat[ctr]->pos);	//Calculate the tempo of the beat by getting its length (this is the formula "beat_length = 60000 / BPM" rewritten to solve for ppqn)
+		if(sp->tags->accurate_ts)
+		{	//If the accurate time signatures song property is enabled
+			sp->beat[ctr]->ppqn *= den / 4;	//Adjust for the time signature
+		}
 		if(!lastppqn || (lastppqn != sp->beat[ctr]->ppqn))
 		{	//If the tempo is being changed at this beat, or this is the first beat
 			sp->beat[ctr]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Set the anchor flag
 			lastppqn = sp->beat[ctr]->ppqn;
 		}
+		else if(has_ts_change && (den != lastden))
+		{	//If the time signature denominator changes
+			sp->beat[ctr]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Set the anchor flag
+		}
 		else
 		{
 			sp->beat[ctr]->flags &= ~EOF_BEAT_FLAG_ANCHOR;	//Clear the anchor flag
 		}
+		lastden = den;	//Track the TS denominator in use
+	}
+	sp->beat[sp->beats - 1]->ppqn = sp->beat[sp->beats - 2]->ppqn;	//The last beat's tempo is the same as the previous beat's
+}
+
+void eof_change_accurate_ts(EOF_SONG * sp, char function)
+{
+	unsigned long ctr, lastppqn = 0;
+	unsigned num = 4, den = 4;
+
+	if(!sp || (sp->beats < 3))
+		return;
+
+	for(ctr = 0; ctr < sp->beats - 1; ctr++)
+	{	//For each beat in the chart
+		(void) eof_get_ts(sp, &num, &den, ctr);	//Lookup any time signature defined at the beat
+		if(den != 4)
+		{	//If a denominator other than 4 is in effect, change the tempo
+			sp->beat[ctr]->ppqn = 1000 * (sp->beat[ctr + 1]->pos - sp->beat[ctr]->pos);	//Calculate the tempo of the beat by getting its length (this is the formula "beat_length = 60000 / BPM" rewritten to solve for ppqn)
+			if(function)
+			{	//If the time signature is to be observed
+				sp->beat[ctr]->ppqn *= den / 4;	//Adjust for the time signature
+			}
+			if(!lastppqn || (lastppqn != sp->beat[ctr]->ppqn))
+			{	//If the tempo is being changed at this beat, or this is the first beat
+				sp->beat[ctr]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Set the anchor flag
+				lastppqn = sp->beat[ctr]->ppqn;
+			}
+		}
+		lastppqn = sp->beat[ctr]->ppqn;	//Track the tempo in effect
 	}
 	sp->beat[sp->beats - 1]->ppqn = sp->beat[sp->beats - 2]->ppqn;	//The last beat's tempo is the same as the previous beat's
 }

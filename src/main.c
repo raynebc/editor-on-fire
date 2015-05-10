@@ -5061,6 +5061,7 @@ int main(int argc, char * argv[])
 void eof_cleanup_beat_flags(EOF_SONG *sp)
 {
 	unsigned long ctr;
+	unsigned num = 4, den = 4, lastden = 4;
 
 	eof_log("eof_cleanup_beat_flags() entered", 1);
 
@@ -5091,6 +5092,15 @@ void eof_cleanup_beat_flags(EOF_SONG *sp)
 		{	//If the beat has a different tempo than the previous beat
 			sp->beat[ctr]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Ensure the anchor status flag is set
 		}
+	}
+	for(ctr = 0; ctr < sp->beats; ctr++)
+	{	//For each beat
+		eof_get_ts(sp, &num, &den, ctr);	//Lookup any time signature defined at the beat
+		if(den != lastden)
+		{	//If the time signature denominator changes
+			sp->beat[ctr]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Set the anchor flag
+		}
+		lastden = den;	//Track the TS denominator in use
 	}
 }
 

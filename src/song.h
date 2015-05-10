@@ -836,7 +836,7 @@ unsigned char eof_get_lowest_fretted_string_fret(EOF_SONG *sp, unsigned long tra
 	//Returns zero on error or if none of the note's strings are fretted
 
 unsigned long eof_determine_chart_length(EOF_SONG *sp);
-	//Parses the project and returns the ending position of the last note/lyric/text event/bookmark
+	//Parses the project and returns the ending position of the last note/tech note/lyric/text event/bookmark
 void eof_truncate_chart(EOF_SONG *sp);
 	//Uses eof_determine_chart_length() to set eof_chart_length to the larger of the last chart content and the loaded chart audio
 	//Any beats that are more than one beat after this position are deleted from the project
