@@ -6742,19 +6742,43 @@ unsigned long eof_determine_chart_length(EOF_SONG *sp)
 {
 	unsigned long lastitempos = 0;	//This will track the position of the last text event, or the end of the last note/lyric, whichever is later
 	unsigned long ctr, ctr2, thisendpos, thiseventbeat;
+	EOF_PRO_GUITAR_TRACK *tp = NULL;
 
 	if(!sp)
 		return 0;
 
 	//Check notes
-	for(ctr = 0; ctr < sp->tracks; ctr++)
+	for(ctr = 1; ctr < sp->tracks; ctr++)
 	{	//For each track in the project
-		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
-		{	//For each note/lyric in the track
-			thisendpos = eof_get_note_pos(sp, ctr, ctr2) + eof_get_note_length(sp, ctr, ctr2);	//The end position of this note/lyric
-			if(thisendpos > lastitempos)
-			{
-				lastitempos = thisendpos;	//Track the end position of the last note/lyric
+		if(sp->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If this is a pro guitar track
+			tp = sp->pro_guitar_track[sp->track[ctr]->tracknum];
+			for(ctr2 = 0; ctr2 < tp->pgnotes; ctr2++)
+			{	//For each normal note in the track
+				thisendpos = tp->pgnote[ctr2]->pos + tp->pgnote[ctr2]->length;	//The end position of this note
+				if(thisendpos > lastitempos)
+				{
+					lastitempos = thisendpos;	//Track the end position of the last note/lyric
+				}
+			}
+			for(ctr2 = 0; ctr2 < tp->technotes; ctr2++)
+			{	//For each technote in the track
+				thisendpos = tp->technote[ctr2]->pos + tp->technote[ctr2]->length;	//The end position of this note
+				if(thisendpos > lastitempos)
+				{
+					lastitempos = thisendpos;	//Track the end position of the last note/lyric
+				}
+			}
+		}
+		else
+		{	//This is a non pro guitar track
+			for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
+			{	//For each note/lyric in the track
+				thisendpos = eof_get_note_pos(sp, ctr, ctr2) + eof_get_note_length(sp, ctr, ctr2);	//The end position of this note/lyric
+				if(thisendpos > lastitempos)
+				{
+					lastitempos = thisendpos;	//Track the end position of the last note/lyric
+				}
 			}
 		}
 	}

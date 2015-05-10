@@ -6355,7 +6355,7 @@ void eof_editor_logic_common(void)
 							}
 							eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
 							eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
-						}
+						}//If the tempo map is not locked
 					}//If moving a beat marker other than the first
 				}//If click and drag isn't disabled, check whether a beat marker is being moved
 			}//If full screen 3d is not in use and the left mouse button is held

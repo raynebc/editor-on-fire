@@ -942,17 +942,6 @@ int eof_menu_song_properties(void)
 		neweof_fret_hand_pos_1_pg = (eof_song_properties_dialog[21].flags & D_SELECTED) ? 1 : 0;
 		neweof_fret_hand_pos_1_pb = (eof_song_properties_dialog[22].flags & D_SELECTED) ? 1 : 0;
 		newaccurate_ts = (eof_song_properties_dialog[23].flags & D_SELECTED) ? 1 : 0;
-		//Ensure the boolean values use 1 to indicate true to simplify comparison below
-		if(eof_song->tags->lyrics)
-			eof_song->tags->lyrics = 1;
-		if(eof_song->tags->eighth_note_hopo)
-			eof_song->tags->eighth_note_hopo = 1;
-		if(eof_song->tags->eof_fret_hand_pos_1_pg)
-			eof_song->tags->eof_fret_hand_pos_1_pg = 1;
-		if(eof_song->tags->eof_fret_hand_pos_1_pb)
-			eof_song->tags->eof_fret_hand_pos_1_pb = 1;
-		if(eof_song->tags->accurate_ts)
-			eof_song->tags->accurate_ts = 1;
 		if(ustricmp(eof_song->tags->title, eof_etext) || ustricmp(eof_song->tags->artist, eof_etext2) || ustricmp(eof_song->tags->frettist, eof_etext3) || ustricmp(eof_song->tags->year, eof_etext5) || ustricmp(eof_song->tags->loading_text, eof_etext6) || ustricmp(eof_song->tags->album, eof_etext8))
 		{	//If any of the text fields were changed
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -1035,6 +1024,29 @@ int eof_menu_song_properties(void)
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		}
 		eof_song->tags->difficulty = difficulty;	//Save the value reflected by the band difficulty field
+		if(eof_song->tags->accurate_ts != oldaccurate_ts)
+		{	//If the time signature handling was changed
+			if(eof_song->beats >= 3)
+			{	//Only check this if there are more than 2 beats
+				unsigned num = 4, den = 4;
+				for(i = 0; i < eof_song->beats - 1; i++)
+				{	//For each beat in the chart
+					(void) eof_get_ts(eof_song, &num, &den, i);	//Lookup any time signature defined at the beat
+					if(den != 4)
+					{	//If a denominator other than 4 is in effect
+						break;
+					}
+				}
+				if(i < eof_song->beats - 1)
+				{	//If this condition is met, one of the time signatures used a TS with a denominator other than 4
+					eof_clear_input();
+					if(alert(NULL, "Alter tempos to keep beat positions intact?", NULL, "Yes", "No", 'y', 'n') == 1)
+					{	//If the user opted to keep them intact
+						eof_change_accurate_ts(eof_song, newaccurate_ts);
+					}
+				}
+			}
+		}
 		eof_calculate_beats(eof_song);
 		eof_truncate_chart(eof_song);
 		eof_fixup_notes(eof_song);
