@@ -919,10 +919,10 @@ int eof_menu_beat_toggle_anchor(void)
 	//Determine the time signature in effect immediately before the selected beat
 	for(ctr = 0; ctr < eof_selected_beat; ctr++)
 	{	//For each beat up to the selected one
-		eof_get_ts(eof_song, &num, &den, ctr);	//Lookup any time signature defined at the beat
+		(void) eof_get_ts(eof_song, &num, &den, ctr);	//Lookup any time signature defined at the beat
 	}
 	lastden = den;	//Track the TS denominator in use
-	eof_get_ts(eof_song, &num, &den, ctr);	//Lookup any time signature defined at the beat
+	(void) eof_get_ts(eof_song, &num, &den, ctr);	//Lookup any time signature defined at the beat
 	if(den != lastden)
 	{	//If the time signature denominator changes at the selected beat
 		eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Set the anchor flag by force

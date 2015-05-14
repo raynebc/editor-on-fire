@@ -5095,7 +5095,7 @@ void eof_cleanup_beat_flags(EOF_SONG *sp)
 	}
 	for(ctr = 0; ctr < sp->beats; ctr++)
 	{	//For each beat
-		eof_get_ts(sp, &num, &den, ctr);	//Lookup any time signature defined at the beat
+		(void) eof_get_ts(sp, &num, &den, ctr);	//Lookup any time signature defined at the beat
 		if(den != lastden)
 		{	//If the time signature denominator changes
 			sp->beat[ctr]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Set the anchor flag

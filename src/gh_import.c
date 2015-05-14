@@ -2590,8 +2590,8 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 	{	//While there are section name entries
 		lastfoundpos = fb->index;
 		for(index2 = char_size; (index2 <= fb->index) && (fb->buffer[fb->index - index2 + char_size - 1] != '\"'); index2 += char_size);	//Find the opening quotation mark for this string
-		if(index2 > fb->index)
-		{	//If the opening quotation mark wasn't found
+		if((index2 > fb->index) || (index2 < 1))
+		{	//If the opening quotation mark wasn't found or if there was some kind of logic error (ie. overflow)
 			eof_destroy_qblyric_list(head);
 			return NULL;
 		}
