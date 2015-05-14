@@ -1965,6 +1965,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(sync_points);
 		return NULL;
 	}
+	memset(gp, 0, sizeof(struct eof_guitar_pro_struct));	//Fill with 0s to satisfy Splint
 
 
 //Read file version string

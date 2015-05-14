@@ -109,7 +109,7 @@ void eof_calculate_beats(EOF_SONG * sp)
 			sp->beat[i]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Set the anchor flag
 		}
 		/* TS denominator changed */
-		eof_get_ts(sp, &num, &den, i);	//Lookup any time signature defined at the beat
+		(void) eof_get_ts(sp, &num, &den, i);	//Lookup any time signature defined at the beat
 		if(den != lastden)
 		{
 			sp->beat[i]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Set the anchor flag
@@ -279,6 +279,7 @@ void eof_realign_beats(EOF_SONG * sp, int cbeat)
 	double beats_length;
 	double newbpm;
 	double newppqn;
+	double multiplier = 1.0;	//This is the multiplier used to convert between beat lengths and quarter note lengths, depending on whether the accurate TS chart property is enabled
 
 	eof_log("eof_realign_beats() entered", 1);
 	if(!sp)
@@ -299,7 +300,16 @@ void eof_realign_beats(EOF_SONG * sp, int cbeat)
 
 	/* figure out what the new BPM should be */
 	beats_length = sp->beat[next_anchor]->pos - sp->beat[last_anchor]->pos;
-	newbpm = 60000.0 / (beats_length / (double)beats);
+	if(sp->tags->accurate_ts)
+	{	//If the user enabled the accurate time signatures song property
+		unsigned num = 4, den = 4;
+		for(i = 0; i <= cbeat; i++)
+		{	//For each beat, including the target
+			(void) eof_get_ts(sp, &num, &den, i);	//Lookup any time signature defined at the beat
+		}
+		multiplier = (double)den / 4.0;
+	}
+	newbpm = 60000.0 / (beats_length * multiplier / (double)beats);
 	newppqn = 60000000.0 / newbpm;
 
 	sp->beat[last_anchor]->ppqn = newppqn;
