@@ -1310,7 +1310,7 @@ int eof_menu_note_transpose_down_octave(void)
 
 int eof_menu_note_resnap(void)
 {
-	unsigned long i, x;
+	unsigned long i, x, notepos;
 	unsigned long oldnotes;
 	int note_selection_updated, user_warned = 0, cancel = 0;
 
@@ -1327,14 +1327,15 @@ int eof_menu_note_resnap(void)
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
 			/* snap the note itself */
-			eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_song, eof_selected_track, i));
+			notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
+			eof_snap_logic(&eof_tail_snap, notepos);
 			if(!user_warned)
 			{	//If the user hasn't been warned about resnapped notes overlapping and combining
 				for(x = 0; x < oldnotes; x++)
 				{	//For each note in the active track
 					if((eof_tail_snap.pos == eof_get_note_pos(eof_song, eof_selected_track, x)) && (x != i))
 					{	//If this note is in the same position as where the resnapped note will be moved
-						eof_seek_and_render_position(eof_selected_track, eof_note_type, eof_get_note_pos(eof_song, eof_selected_track, i));
+						eof_seek_and_render_position(eof_selected_track, eof_note_type, notepos);
 						if(alert("Warning: One or more notes/lyrics will snap to the same position", "and will be automatically combined.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 						{	//If user opts opts to cancel the operation
 							cancel = 1;

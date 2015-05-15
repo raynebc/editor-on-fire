@@ -369,7 +369,14 @@ int eof_track_rename(void)
 	eof_color_dialog(eof_track_rename_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_track_rename_dialog);
 
-	(void) ustrcpy(eof_etext, eof_song->track[eof_selected_track]->altname);	//Update the input field
+	if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_ALT_NAME)
+	{	//If the track already has an alternate name
+		(void) ustrcpy(eof_etext, eof_song->track[eof_selected_track]->altname);	//Copy it into the input field
+	}
+	else
+	{
+		eof_etext[0] = '\0';	//Otherwise empty the input field
+	}
 	if(eof_popup_dialog(eof_track_rename_dialog, 2) == 3)
 	{	//If user clicked OK
 		if(ustrncmp(eof_etext, eof_song->track[eof_selected_track]->altname, EOF_NAME_LENGTH))

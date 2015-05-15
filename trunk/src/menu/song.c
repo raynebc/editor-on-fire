@@ -3438,8 +3438,8 @@ int eof_menu_song_swap_piano_rolls(void)
 	temp_track = eof_selected_track;	//Remember the active track difficulty
 	temp_type = eof_note_type;
 	temp_pos = eof_music_pos;			//And remember the position
-	(void) eof_menu_track_selected_track_number(eof_selected_track2, 1);	//Change to the track difficulty of the secondary piano roll
-	eof_note_type = eof_note_type2;
+	eof_note_type = eof_note_type2;		//Update the active difficulty before updating the title bar
+	(void) eof_menu_track_selected_track_number(eof_selected_track2, 1);	//Change to the track difficulty of the secondary piano roll and update title bar
 	if(!eof_sync_piano_rolls)
 	{	//If the secondary piano roll is tracking its own position
 		eof_set_seek_position(eof_music_pos2);	//Seek to the secondary piano roll's position

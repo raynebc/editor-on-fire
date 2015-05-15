@@ -138,7 +138,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 	int i, least = -1;
 	int interval = 1;
 	char measure_snap = 0;	//Unless a custom per-measure grid snap is defined, all grid snaps are per beat
-	float snaplength, least_amount;
+	double snaplength, least_amount;
 
 	if(!sp)
 	{
@@ -179,11 +179,11 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 
 		if((sp->beat >= eof_song->beats - 2) && (sp->beat >= 2))
 		{	//Don't reference a negative index of eof_song->beat[]
-			sp->beat_length = eof_song->beat[sp->beat - 1]->pos - eof_song->beat[sp->beat - 2]->pos;
+			sp->beat_length = eof_song->beat[sp->beat - 1]->fpos - eof_song->beat[sp->beat - 2]->fpos;
 		}
 		else if(sp->beat + 1 < eof_song->beats)
 		{	//As long as the next beat is in bounds
-			sp->beat_length = eof_song->beat[sp->beat + 1]->pos - eof_song->beat[sp->beat]->pos;
+			sp->beat_length = eof_song->beat[sp->beat + 1]->fpos - eof_song->beat[sp->beat]->fpos;
 		}
 		eof_get_snap_ts(sp, sp->beat);
 		switch(eof_snap_mode)
@@ -237,7 +237,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 		if(measure_snap)
 		{	//If performing snap by measure logic
 			int ts = 1;
-			int bl; // current beat length
+			double bl; // current beat length
 
 			/* find the measure we are currently in */
 			sp->measure_beat = 0;
@@ -287,20 +287,20 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			/* add up beat times to find measure length */
 			if(sp->measure_beat + ts < eof_song->beats)
 			{
-				bl = eof_song->beat[sp->measure_beat + 1]->pos - eof_song->beat[sp->measure_beat]->pos;
-				sp->measure_length = 0;
+				bl = eof_song->beat[sp->measure_beat + 1]->fpos - eof_song->beat[sp->measure_beat]->fpos;
+				sp->measure_length = 0.0;
 				for(i = sp->measure_beat; i < sp->measure_beat + ts; i++)
 				{
 					if(i < eof_song->beats - 1)
 					{
-						bl = eof_song->beat[i + 1]->pos - eof_song->beat[i]->pos;
+						bl = eof_song->beat[i + 1]->fpos - eof_song->beat[i]->fpos;
 					}
 					sp->measure_length += bl;
 				}
 			}
 
 			/* find the snap positions */
-			snaplength = (float)sp->measure_length / (float)interval;
+			snaplength = sp->measure_length / (double)interval;
 			sp->grid_pos[0] = eof_song->beat[sp->measure_beat]->fpos;	//Set first grid position
 			for(i = 1; i < interval; i++)
 			{
@@ -346,36 +346,36 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 		else
 		{	//If performing snap by beat logic
 			//Find the snap positions
-			snaplength = (float)sp->beat_length / (float)interval;
-			sp->grid_pos[0] = eof_song->beat[sp->beat]->fpos;	//Set the first grid position
+			snaplength = sp->beat_length / (double)interval;
+			sp->grid_pos[0] = eof_song->beat[sp->beat]->fpos + 0.5;	//Set the first grid position, pre-rounded to nearest ms
 			for(i = 1; i < interval; i++)
 			{
-				sp->grid_pos[i] = eof_song->beat[sp->beat]->fpos + (snaplength * (float)i);
+				sp->grid_pos[i] = eof_song->beat[sp->beat]->fpos + (snaplength * (float)i) + 0.5;	//Set grid snap positions, pre-rounded to nearest ms
 			}
-			sp->grid_pos[interval] = eof_song->beat[sp->beat + 1]->fpos;	//Record the position of the last grid snap, which is the next beat
+			sp->grid_pos[interval] = eof_song->beat[sp->beat + 1]->fpos + 0.5;	//Record the position of the last grid snap, which is the next beat, pre-rounded to nearest ms
 
 			//see which one we snap to
 			for(i = 0; i < interval + 1; i++)
 			{
 				sp->grid_distance[i] = eof_pos_distance(sp->grid_pos[i], sp->pos);
 			}
-			sp->previous_snap = sp->grid_pos[0] + 0.5;		//Initialize these values
-			sp->next_snap = sp->grid_pos[1] + 0.5;
+			sp->previous_snap = sp->grid_pos[0];		//Initialize these values
+			sp->next_snap = sp->grid_pos[1];
 			for(i = 0; i < interval + 1; i++)
 			{	//For each calculated grid snap position
-				if((unsigned long)(sp->grid_pos[i] + 0.5) < p)
-				{	//If this grid snap position (rounded to nearest ms) is before the input timestamp
-					sp->previous_snap = sp->grid_pos[i] + 0.5;	//Round to nearest ms
+				if((unsigned long)(sp->grid_pos[i]) < p)
+				{	//If this grid snap position is before the input timestamp
+					sp->previous_snap = sp->grid_pos[i];
 					if(i < interval)
 					{	//As long as the next interval is defined in the snap data
-						sp->next_snap = sp->grid_pos[i + 1] + 0.5;	//Round to nearest ms
+						sp->next_snap = sp->grid_pos[i + 1];
 					}
 				}
-				else if((unsigned long)(sp->grid_pos[i] + 0.5) == p)
-				{	//If this grid snap position (rounded to nearest ms) is at the input timestamp
+				else if((unsigned long)(sp->grid_pos[i]) == p)
+				{	//If this grid snap position is at the input timestamp
 					if(i < interval)
 					{	//As long as the next interval is defined in the snap data
-						sp->next_snap = sp->grid_pos[i + 1] + 0.5;	//Round to nearest ms
+						sp->next_snap = sp->grid_pos[i + 1];
 					}
 				}
 				if(sp->grid_distance[i] < least_amount)
@@ -386,7 +386,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			}
 			if(least >= 0)
 			{
-				sp->pos = sp->grid_pos[least] + 0.5;	//Round to nearest ms
+				sp->pos = sp->grid_pos[least];
 			}
 		}//If performing snap by beat logic
 		sp->intervals = interval + 1;	//Record the number of entries that are stored in the grid_pos[] and grid_distance[] arrays
@@ -418,11 +418,11 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 		}
 		if((sp->beat >= eof_song->beats - 2) && (sp->beat >= 2))
 		{	//Don't reference a negative index of eof_song->beat[]
-			sp->beat_length = eof_song->beat[sp->beat - 1]->pos - eof_song->beat[sp->beat - 2]->pos;
+			sp->beat_length = eof_song->beat[sp->beat - 1]->fpos - eof_song->beat[sp->beat - 2]->fpos;
 		}
 		else if((sp->beat + 1 < eof_song->beats) && (sp->beat >= 0))
 		{	//Don't read out of bounds
-			sp->beat_length = eof_song->beat[sp->beat + 1]->pos - eof_song->beat[sp->beat]->pos;
+			sp->beat_length = eof_song->beat[sp->beat + 1]->fpos - eof_song->beat[sp->beat]->fpos;
 		}
 
 		/* calculate the length of the snap position */
@@ -478,11 +478,11 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 		}
 		if(measure_snap)
 		{
-			sp->length = ((double)sp->measure_length / (double)interval +0.5);	//Round up
+			sp->length = (sp->measure_length / (double)interval + 0.5);	//Round up
 		}
 		else
 		{
-			sp->length = ((double)sp->beat_length / (double)interval +0.5);	//Round up
+			sp->length = (sp->beat_length / (double)interval + 0.5);	//Round up
 		}
 		if(sp->length <= 0)
 			sp->length = 1;	//Enforce a minimum grid snap length of 1ms
