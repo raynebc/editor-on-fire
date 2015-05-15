@@ -30,13 +30,13 @@ typedef struct
 {
 
 	int beat;
-	int beat_length;
+	double beat_length;
 	int measure_beat;
-	int measure_length;
+	double measure_length;
 	int length;
 	int numerator, denominator;
-	float grid_pos[EOF_MAX_GRID_SNAP_INTERVALS];
-	float grid_distance[EOF_MAX_GRID_SNAP_INTERVALS];
+	double grid_pos[EOF_MAX_GRID_SNAP_INTERVALS];
+	double grid_distance[EOF_MAX_GRID_SNAP_INTERVALS];
 	unsigned long pos, previous_snap, next_snap;
 	int intervals;	//The number of grid snaps defined in the above arrays
 
