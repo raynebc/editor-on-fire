@@ -347,35 +347,35 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 		{	//If performing snap by beat logic
 			//Find the snap positions
 			snaplength = sp->beat_length / (double)interval;
-			sp->grid_pos[0] = eof_song->beat[sp->beat]->fpos + 0.5;	//Set the first grid position, pre-rounded to nearest ms
+			sp->grid_pos[0] = eof_song->beat[sp->beat]->fpos;	//Set the first grid position
 			for(i = 1; i < interval; i++)
 			{
-				sp->grid_pos[i] = eof_song->beat[sp->beat]->fpos + (snaplength * (float)i) + 0.5;	//Set grid snap positions, pre-rounded to nearest ms
+				sp->grid_pos[i] = eof_song->beat[sp->beat]->fpos + (snaplength * (float)i);	//Set grid snap positions
 			}
-			sp->grid_pos[interval] = eof_song->beat[sp->beat + 1]->fpos + 0.5;	//Record the position of the last grid snap, which is the next beat, pre-rounded to nearest ms
+			sp->grid_pos[interval] = eof_song->beat[sp->beat + 1]->fpos;	//Record the position of the last grid snap, which is the next beat
 
 			//see which one we snap to
 			for(i = 0; i < interval + 1; i++)
 			{
 				sp->grid_distance[i] = eof_pos_distance(sp->grid_pos[i], sp->pos);
 			}
-			sp->previous_snap = sp->grid_pos[0];		//Initialize these values
-			sp->next_snap = sp->grid_pos[1];
+			sp->previous_snap = sp->grid_pos[0] + 0.5;		//Initialize these values
+			sp->next_snap = sp->grid_pos[1] + 0.5;
 			for(i = 0; i < interval + 1; i++)
 			{	//For each calculated grid snap position
-				if((unsigned long)(sp->grid_pos[i]) < p)
-				{	//If this grid snap position is before the input timestamp
-					sp->previous_snap = sp->grid_pos[i];
+				if((unsigned long)(sp->grid_pos[i] + 0.5) < p)
+				{	//If this grid snap position (rounded to nearest ms) is before the input timestamp
+					sp->previous_snap = sp->grid_pos[i] + 0.5;	//Round to nearest ms
 					if(i < interval)
 					{	//As long as the next interval is defined in the snap data
-						sp->next_snap = sp->grid_pos[i + 1];
+						sp->next_snap = sp->grid_pos[i + 1] + 0.5;	//Round to nearest ms
 					}
 				}
-				else if((unsigned long)(sp->grid_pos[i]) == p)
-				{	//If this grid snap position is at the input timestamp
+				else if((unsigned long)(sp->grid_pos[i] + 0.5) == p)
+				{	//If this grid snap position (rounded to nearest ms) is at the input timestamp
 					if(i < interval)
 					{	//As long as the next interval is defined in the snap data
-						sp->next_snap = sp->grid_pos[i + 1];
+						sp->next_snap = sp->grid_pos[i + 1] + 0.5;	//Round to nearest ms
 					}
 				}
 				if(sp->grid_distance[i] < least_amount)
@@ -386,7 +386,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			}
 			if(least >= 0)
 			{
-				sp->pos = sp->grid_pos[least];
+				sp->pos = sp->grid_pos[least] + 0.5;	//Round to nearest ms
 			}
 		}//If performing snap by beat logic
 		sp->intervals = interval + 1;	//Record the number of entries that are stored in the grid_pos[] and grid_distance[] arrays
@@ -496,7 +496,7 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 
 unsigned long eof_next_grid_snap(unsigned long pos)
 {
-	EOF_SNAP_DATA temp = {0, 0, 0, 0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
+	EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
 	long beat;
 
 	if(!eof_song || (eof_snap_mode == EOF_SNAP_OFF))
@@ -563,7 +563,7 @@ int eof_find_grid_snap(unsigned long pos, int dir, unsigned long *result)
 
 int eof_is_grid_snap_position(unsigned long pos)
 {
-	EOF_SNAP_DATA temp = {0, 0, 0, 0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
+	EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
 	long beat;
 
 	if(!eof_song || (eof_snap_mode == EOF_SNAP_OFF))
@@ -583,7 +583,7 @@ int eof_is_grid_snap_position(unsigned long pos)
 
 int eof_is_any_grid_snap_position(unsigned long pos, int *beat, char *gridsnapvalue, unsigned char *gridsnapnum)
 {
-	EOF_SNAP_DATA temp = {0, 0, 0, 0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
+	EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
 	long beatnum;
 	int retval = 0, ctr;
 	char temp_mode = eof_snap_mode;	//Store the grid snap setting in use
@@ -646,7 +646,7 @@ int eof_is_any_grid_snap_position(unsigned long pos, int *beat, char *gridsnapva
 
 int eof_find_grid_snap_position(int beat, char gridsnapvalue, unsigned char gridsnapnum, unsigned long *gridpos)
 {
-	EOF_SNAP_DATA temp = {0, 0, 0, 0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
+	EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
 	char temp_mode = eof_snap_mode;	//Store the grid snap setting in use
 
 	if(!eof_song || (beat >= eof_song->beats) || !gridpos)
@@ -4242,7 +4242,7 @@ void eof_vocal_editor_logic(void)
 
 	unsigned long i, notepos;
 	unsigned long tracknum;
-	EOF_SNAP_DATA drag_snap = {0, 0, 0, 0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0}; // help with dragging across snap locations
+	EOF_SNAP_DATA drag_snap = {0, 0.0, 0, 0.0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0}; // help with dragging across snap locations
 	int eof_scaled_mouse_x = mouse_x, eof_scaled_mouse_y = mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
 
 	if(!eof_song_loaded)
