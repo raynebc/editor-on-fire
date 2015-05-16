@@ -1659,6 +1659,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	#define EOF_GP_IMPORT_BUFFER_SIZE 256
 	char buffer[EOF_GP_IMPORT_BUFFER_SIZE + 1] = {0}, *buffer2, buffer3[EOF_GP_IMPORT_BUFFER_SIZE + 1] = {0}, buffer4[EOF_GP_IMPORT_BUFFER_SIZE + 1] = {0}, byte, bytemask, *ptr, patches[64] = {0};
 	unsigned char usedstrings;
+	unsigned char usedtie;	//Tracks which strings in an imported note were tie notes
 	unsigned word = 0, fileversion;
 	unsigned long dword = 0, ctr, ctr2, ctr3, ctr4, ctr5, tracks = 0, measures = 0, *strings, beats = 0;
 	PACKFILE *inf = NULL, *inf2;	//The GPA import logic will open the file handle for the Guitar Pro file in inf if applicable
@@ -3773,6 +3774,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					}
 
 					usedstrings = pack_getc(inf);	//Used strings bitmask
+					usedtie = 0;	//Reset this bitmask
 					for(ctr4 = 0, bitmask = 64; ctr4 < 7; ctr4++, bitmask>>=1)
 					{	//For each of the 7 possible usable strings
 						if(bitmask & usedstrings)
@@ -3794,6 +3796,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										if(np[ctr2] && (np[ctr2]->note && bitmask))
 										{	//If there is a previously created note, and it used this string, alter its length
 											tie_note = 1;
+											usedtie |= bitmask;	//Track that this string is a tie note
 										}
 									}
 								}
@@ -4234,8 +4237,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//For each bit in the flags bitmask
 									if(!(np[ctr2]->flags & dwbitmask) && (flags & dwbitmask))
 									{	//If the previous note's flags bit was clear and this tie note's flags bit is not
-										newtech = 1;	//This tie note adds a status and should import as a linked note
-										break;
+										if(flags & ~(EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM | EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM))
+										{	//If the flags were different when disregarding strum direction
+											newtech = 1;	//This tie note adds a status and should import as a linked note
+											break;
+										}
 									}
 								}
 								if(!newtech)
@@ -4257,6 +4263,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									new_note = 1;	//Set this to nonzero, the if() block below will create the note
 									np[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Set the linknext flag on the previous note
 								}
+								usedstrings &= ~usedtie;	//Clear the bits used to indicate the tie notes' strings as being played, since overlapping guitar notes isn't supported in Rock Band or Rocksmith
 							}//If this was defined as a tie note
 
 							if(new_note)
@@ -4601,7 +4608,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						break;
 					}//If this string is used on this note as well as the next
 				}//For each of the 7 strings the GP format allows for
-				if(gp->track[ctr]->note[ctr2]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+				if((gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && (gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 				{	//If both the slide up and slide down flags are still set, the next note didn't use any of the same strings as the slide note
 					//Base the slide direction on the first populated string of that next note
 					startfret = eof_pro_guitar_track_get_lowest_fretted_string_fret(gp->track[ctr], ctr2);

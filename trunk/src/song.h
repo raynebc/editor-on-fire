@@ -833,6 +833,7 @@ unsigned long eof_get_highest_fret_value(EOF_SONG *sp, unsigned long track, unsi
 unsigned char eof_pro_guitar_track_get_lowest_fretted_string_fret(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);
 unsigned char eof_get_lowest_fretted_string_fret(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//Returns the fret value of the lowest string that is fretted
+	//Ghosted gems are ignored
 	//Returns zero on error or if none of the note's strings are fretted
 
 unsigned long eof_determine_chart_length(EOF_SONG *sp);
