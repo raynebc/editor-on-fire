@@ -1679,7 +1679,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	double gp_durations[] = {1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625};	//The duration of each note type in terms of one whole note (whole note, half, 4th, 8th, 16th, 32nd, 64th)
 	double note_duration;			//Tracks the note's duration as an amount of the current measure
 	double measure_position;		//Tracks the current position as an amount within the current measure
-	unsigned long flags;			//Tracks the flags for the current note
+	unsigned long allflags;			//Tracks the flags for the current note
+	unsigned long flags;			//Tracks the flags for the current string
+	unsigned long tieflags;			//Tracks the flags for tie notes only (so that tie chords containing a different string than the connecting note won't apply linknext status if it's not appropriate)
 	unsigned char bendstrength;		//Tracks the note's bend strength if applicable
 	struct guitar_pro_bend bendstruct = {0, 0, {0}, {0}};	//Stores data about the bend being parsed
 	double laststartpos = 0, lastendpos = 0;	//Stores the start and end position of the last normal or tie note to be parsed, so bend point data can be used to create tech notes
@@ -3212,7 +3214,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					tie_note = 0;	//Assume a note isn't a tie note unless found otherwise
 					rest_note = 0;	//Assume a note isn't a rest note unless found otherwise
 					bendstruct.bendpoints = 0;	//Assume the note has no bend points unless any are parsed
-					flags = 0;
+					tieflags = allflags = 0;
 					bendstrength = 0;
 					memset(finger, 0, sizeof(finger));	//Clear the finger array
 					bytemask = pack_getc(inf);	//Read beat bitmask
@@ -3777,6 +3779,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					usedtie = 0;	//Reset this bitmask
 					for(ctr4 = 0, bitmask = 64; ctr4 < 7; ctr4++, bitmask>>=1)
 					{	//For each of the 7 possible usable strings
+						char thisgemtype = 0;	//Tracks the note type for this string's gem (0 = undefined, 1 = normal, 2 = tie, 3 = dead (muted))
+						flags = 0;
+
 						if(bitmask & usedstrings)
 						{	//If this string is used
 							bytemask = pack_getc(inf);	//Note bitmask
@@ -3823,6 +3828,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							if(bytemask & 32)
 							{	//Note type is defined
 								byte = pack_getc(inf);	//Fret number
+								thisgemtype = byte;
 								if(tie_note)
 								{	//If this is a tie note, recall the last fretting of this string in this track, since overlapping tie notes may prevent a simple check of the previous note from having the desired fret value
 									unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
@@ -4214,8 +4220,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							{	//Heavy accented note (GP5 or higher only)
 								flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;
 							}
+							if(thisgemtype == 2)
+							{	//If the note on this string was a tie note
+								tieflags |= flags;	//Add this string's flags to the bitmask tracking flags for this note's tie gems
+							}
+							allflags |= flags;	//Add this string's flags to the bitmask tracking flags for the entire note
 						}//If this string is used
 					}//For each of the 7 possible usable strings
+					flags = allflags;	//Beyond this point, the flags variable is expected to reflect the combined flags for all gems in this note
 					if(fileversion >= 500)
 					{	//Version 5.0 and higher of the file format stores a note transpose mask and unknown data here
 						pack_ReadWORDLE(inf, &word);	//Transpose bitmask
@@ -4229,15 +4241,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						if(importnote)
 						{	//If this note is being imported
 							if(tie_note)
-							{	//If this was defined as a tie note
+							{	//If this note had one or more tie gems
 								char newtech = 0;	//Is set to nonzero if the tie note is determined to add techniques to the note it is extending
 								unsigned long dwbitmask;	//A double word bitmask, since 32 bits need to be tested
 
 								for(ctr4 = 0, dwbitmask = 1; ctr4 < 32; ctr4++, dwbitmask <<= 1)
 								{	//For each bit in the flags bitmask
-									if(!(np[ctr2]->flags & dwbitmask) && (flags & dwbitmask))
-									{	//If the previous note's flags bit was clear and this tie note's flags bit is not
-										if(flags & ~(EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM | EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM))
+									if(!(np[ctr2]->flags & dwbitmask) && (tieflags & dwbitmask))
+									{	//If the previous note's flags bit was clear and this note's tie flags bit is not (only checking the flags on the tie gems)
+										if(tieflags & ~(EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM | EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM))
 										{	//If the flags were different when disregarding strum direction
 											newtech = 1;	//This tie note adds a status and should import as a linked note
 											break;
