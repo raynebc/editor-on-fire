@@ -140,7 +140,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 	char measure_snap = 0;	//Unless a custom per-measure grid snap is defined, all grid snaps are per beat
 	double snaplength, least_amount;
 
-	if(!sp)
+	if(!sp || (eof_song->beats < 2))
 	{
 		return;
 	}
@@ -177,13 +177,17 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			return;
 		}
 
-		if((sp->beat >= eof_song->beats - 2) && (sp->beat >= 2))
-		{	//Don't reference a negative index of eof_song->beat[]
-			sp->beat_length = eof_song->beat[sp->beat - 1]->fpos - eof_song->beat[sp->beat - 2]->fpos;
-		}
-		else if(sp->beat + 1 < eof_song->beats)
+		if(sp->beat + 1 < eof_song->beats)
 		{	//As long as the next beat is in bounds
-			sp->beat_length = eof_song->beat[sp->beat + 1]->fpos - eof_song->beat[sp->beat]->fpos;
+			sp->beat_length = eof_song->beat[sp->beat + 1]->fpos - eof_song->beat[sp->beat]->fpos;	//Use its position to determine this beat's length
+		}
+		else if(sp->beat > 0)
+		{	//Otherwise use the previous beat's position to determine this beat's length
+			sp->beat_length = eof_song->beat[sp->beat]->fpos - eof_song->beat[sp->beat - 1]->fpos;
+		}
+		else
+		{	//Logic error, the presence of at least two beats was already confirmed, but there aren't any now
+			return;
 		}
 		eof_get_snap_ts(sp, sp->beat);
 		switch(eof_snap_mode)

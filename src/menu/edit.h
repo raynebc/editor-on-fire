@@ -62,6 +62,8 @@ int eof_menu_edit_select_all_longer_than(void);		//Selects all notes in the acti
 int eof_menu_edit_deselect_conditional(void);		//Allows user to specify conditions for deselecting notes from the current selection
 int eof_menu_edit_deselect_chords(void);			//Deselects notes that have more than 1 gem
 int eof_menu_edit_deselect_single_notes(void);		//Deselects notes that have only 1 gem
+int eof_menu_edit_deselect_toms(void);				//Deselects drum notes that contain any toms (lane 3, 4 or 5 gems that aren't cymbals)
+int eof_menu_edit_deselect_cymbals(void);			//Deselects drum notes that contain any cymbals (lane 3, 4 or 5 gems that aren't toms)
 int eof_menu_edit_invert_selection(void);			//Inverts the note selection (notes that aren't selected become selected and vice versa)
 int eof_menu_edit_deselect_note_number_in_sequence(void);	//Allows user to deselect one out of every set of a specified size of selected notes
 int eof_menu_edit_deselect_on_or_off_beat_notes(int function);	//Deselects notes that are either on a beat marker (function is nonzero) or not on a beat marker (function is zero)

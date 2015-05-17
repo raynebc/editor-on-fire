@@ -260,9 +260,9 @@ typedef struct
 #define EOF_BOOKMARK_SECTION			3
 #define EOF_FRET_CATALOG_SECTION		4
 #define EOF_LYRIC_PHRASE_SECTION		5
-#define EOF_YELLOW_CYMBAL_SECTION       6
-#define EOF_BLUE_CYMBAL_SECTION         7
-#define EOF_GREEN_CYMBAL_SECTION        8
+#define EOF_YELLOW_CYMBAL_SECTION       6	//Unused
+#define EOF_BLUE_CYMBAL_SECTION         7	//Unused
+#define EOF_GREEN_CYMBAL_SECTION        8	//Unused
 #define EOF_TRILL_SECTION				9
 #define EOF_ARPEGGIO_SECTION			10
 #define EOF_TRAINER_SECTION				11
