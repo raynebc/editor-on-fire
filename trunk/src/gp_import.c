@@ -1680,8 +1680,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	double note_duration;			//Tracks the note's duration as an amount of the current measure
 	double measure_position;		//Tracks the current position as an amount within the current measure
 	unsigned long allflags;			//Tracks the flags for the current note
-	unsigned long flags;			//Tracks the flags for the current string
-	unsigned long tieflags;			//Tracks the flags for tie notes only (so that tie chords containing a different string than the connecting note won't apply linknext status if it's not appropriate)
+	unsigned long flags;			//Tracks the flags for the current string while individual strings are being parsed, after which this variable stores the combined flags of all gems in the note
+	unsigned long tieflags;			//Tracks the flags for the tie gems only in the current note (so that tie chords containing a different string than the connecting note won't apply linknext status if it's not appropriate)
 	unsigned char bendstrength;		//Tracks the note's bend strength if applicable
 	struct guitar_pro_bend bendstruct = {0, 0, {0}, {0}};	//Stores data about the bend being parsed
 	double laststartpos = 0, lastendpos = 0;	//Stores the start and end position of the last normal or tie note to be parsed, so bend point data can be used to create tech notes

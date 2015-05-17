@@ -148,6 +148,8 @@ MENU eof_edit_selection_menu[] =
 	{"Deselect one in every", eof_menu_edit_deselect_note_number_in_sequence, NULL, 0, NULL},
 	{"Deselect on beat notes", eof_menu_edit_deselect_on_beat_notes, NULL, 0, NULL},
 	{"Deselect off beat notes", eof_menu_edit_deselect_off_beat_notes, NULL, 0, NULL},
+	{"Deselect toms", eof_menu_edit_deselect_toms, NULL, 0, NULL},
+	{"Deselect cymbals", eof_menu_edit_deselect_cymbals, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -2483,7 +2485,7 @@ int eof_menu_edit_select_all_longer_than(void)
 DIALOG eof_menu_edit_deselect_conditional_dialog[] =
 {
 	/*	(proc)           (x)  (y)  (w)  (h) (fg) (bg) (key) (flags)     (d1) (d2) (dp)                  (dp2) (dp3) */
-	{d_agup_window_proc, 0,   0,   376, 182,2,   23,  0,    0,          0,   0,   "Deselect notes that",  NULL, NULL },
+	{d_agup_window_proc, 0,   0,   376, 202,2,   23,  0,    0,          0,   0,   "Deselect notes that",  NULL, NULL },
 	{d_agup_radio_proc,	 16,  32,  38,  16, 2,   23,  0,    D_SELECTED, 1,   0,   "Do",                   NULL, NULL },
 	{d_agup_radio_proc,	 72,  32,  62,  16, 2,   23,  0,    0,          1,   0,   "Do not",               NULL, NULL },
 	{d_agup_radio_proc,	 16,  52,  116, 16, 2,   23,  0,    D_SELECTED, 2,   0,   "Contain any of",       NULL, NULL },
@@ -2496,14 +2498,18 @@ DIALOG eof_menu_edit_deselect_conditional_dialog[] =
 	{d_agup_check_proc,	 16,  112, 64,  16, 2,   23,  0,    0,          0,   0,   "Lane 4",               NULL, NULL },
 	{d_agup_check_proc,	 80,  112, 64,  16, 2,   23,  0,    0,          0,   0,   "Lane 5",               NULL, NULL },
 	{d_agup_check_proc,	 144, 112, 64,  16, 2,   23,  0,    0,          0,   0,   "Lane 6",               NULL, NULL },
-	{d_agup_button_proc, 12,  142, 68,  28, 2,   23,  '\r', D_EXIT,     0,   0,   "OK",                   NULL, NULL },
-	{d_agup_button_proc, 296, 142, 68,  28, 2,   23,  0,    D_EXIT,     0,   0,   "Cancel",               NULL, NULL },
+	{d_agup_text_proc,   16,  132, 44,  8,  2,   23,  0,    0,          0,   0,   "As:",                  NULL, NULL },
+	{d_agup_radio_proc,	 50,  132, 70,  16, 2,   23,  0,    0,          3,   0,   "Cymbals",              NULL, NULL },
+	{d_agup_radio_proc,	 124, 132, 54,  16, 2,   23,  0,    0,          3,   0,   "Toms",                 NULL, NULL },
+	{d_agup_radio_proc,	 180, 132, 58,  16, 2,   23,  0,    D_SELECTED, 3,   0,   "Either",               NULL, NULL },
+	{d_agup_button_proc, 12,  162, 68,  28, 2,   23,  '\r', D_EXIT,     0,   0,   "OK",                   NULL, NULL },
+	{d_agup_button_proc, 296, 162, 68,  28, 2,   23,  0,    D_EXIT,     0,   0,   "Cancel",               NULL, NULL },
 	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 int eof_menu_edit_deselect_conditional(void)
 {
-	unsigned long ctr, bitmask, match_bitmask = 0, stringcount, note;
+	unsigned long ctr, bitmask, match_bitmask = 0, stringcount, note, flags;
 	char match;
 
 	if(!eof_song || (eof_selected_track >= eof_song->tracks))
@@ -2525,9 +2531,19 @@ int eof_menu_edit_deselect_conditional(void)
 			eof_menu_edit_deselect_conditional_dialog[7 + ctr].flags = D_HIDDEN;	//Hide this lane's checkbox
 		}
 	}
+	if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+	{	//If a drum track is active
+		eof_menu_edit_deselect_conditional_dialog[13].flags = eof_menu_edit_deselect_conditional_dialog[14].flags =	eof_menu_edit_deselect_conditional_dialog[15].flags = 0;
+		eof_menu_edit_deselect_conditional_dialog[16].flags = D_SELECTED;	//Enable the cymbal/non cymbal checkboxes and enable the "either" option by default
+	}
+	else
+	{
+		eof_menu_edit_deselect_conditional_dialog[13].flags = eof_menu_edit_deselect_conditional_dialog[14].flags =
+		eof_menu_edit_deselect_conditional_dialog[15].flags = eof_menu_edit_deselect_conditional_dialog[16].flags = D_HIDDEN;	//Hide the cymbal/non cymbal checkboxes
+	}
 
 	//Process the dialog
-	if(eof_popup_dialog(eof_menu_edit_deselect_conditional_dialog, 0) == 13)
+	if(eof_popup_dialog(eof_menu_edit_deselect_conditional_dialog, 0) == 17)
 	{	//User clicked OK
 		for(ctr = 0, bitmask = 1; ctr < stringcount; ctr++, bitmask <<= 1)
 		{	//For each lane in use for this track
@@ -2543,6 +2559,7 @@ int eof_menu_edit_deselect_conditional(void)
 			{	//If the note is in the active instrument difficulty and is selected
 				match = 0;	//This will be set to nonzero if the user's criteria apply to the note, and will be checked against the "Do" or "Do not" criterion
 				note = eof_get_note_note(eof_song, eof_selected_track, ctr);
+				flags = eof_get_note_flags(eof_song, eof_selected_track, ctr);
 				if(eof_menu_edit_deselect_conditional_dialog[3].flags == D_SELECTED)
 				{	//Contain any of
 					if(note & match_bitmask)
@@ -2564,6 +2581,40 @@ int eof_menu_edit_deselect_conditional(void)
 						match = 1;
 					}
 				}
+				if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+				{	//If a drum track is active
+					if(eof_menu_edit_deselect_conditional_dialog[14].flags == D_SELECTED)
+					{	//Cymbals
+						if((match_bitmask & 4) && !(flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL))
+						{	//Criteria includes yellow cymbals and this note does not have one
+							match = 0;
+						}
+						if((match_bitmask & 8) && !(flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL))
+						{	//Criteria includes blue cymbals and this note does not have one
+							match = 0;
+						}
+						if((match_bitmask & 16) && !(flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL))
+						{	//Criteria includes green cymbals and this note does not have one
+							match = 0;
+						}
+					}
+					else if(eof_menu_edit_deselect_conditional_dialog[15].flags == D_SELECTED)
+					{	//Toms
+						if((match_bitmask & 4) && (flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL))
+						{	//Criteria includes yellow toms and this note does not have one
+							match = 0;
+						}
+						if((match_bitmask & 8) && (flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL))
+						{	//Criteria includes blue toms and this note does not have one
+							match = 0;
+						}
+						if((match_bitmask & 16) && (flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL))
+						{	//Criteria includes green toms and this note does not have one
+							match = 0;
+						}
+					}
+				}
+
 				if(eof_menu_edit_deselect_conditional_dialog[1].flags == D_SELECTED)
 				{	//"Do" is selected, deselect the note if the other criteria were matched
 					if(match)
@@ -2642,6 +2693,72 @@ int eof_menu_edit_deselect_single_notes(void)
 		if(eof_selection.multi[eof_selection.current] == 0)
 		{	//And it's not selected anymore
 			eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note
+		}
+	}
+
+	return 1;
+}
+
+int eof_menu_edit_deselect_toms(void)
+{
+	unsigned long ctr, flags, note;
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 0;	//Return error
+
+	if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+	{	//If a drum track is active
+		for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+		{	//For each note in the track
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type))
+			{	//If the note is in the active instrument difficulty and is selected
+				flags = eof_get_note_flags(eof_song, eof_selected_track, ctr);
+				note = eof_get_note_note(eof_song, eof_selected_track, ctr);
+				if((note & (4 | 8 | 16)) && !(flags & (EOF_DRUM_NOTE_FLAG_Y_CYMBAL | EOF_DRUM_NOTE_FLAG_B_CYMBAL | EOF_DRUM_NOTE_FLAG_G_CYMBAL)))
+				{	//If this note contains any gems on lanes 3, 4 or 5 and none are marked as cymbals
+					eof_selection.multi[ctr] = 0;	//Deselect it
+				}
+			}
+		}
+		if(eof_selection.current != EOF_MAX_NOTES - 1)
+		{	//If there was a last selected note
+			if(eof_selection.multi[eof_selection.current] == 0)
+			{	//And it's not selected anymore
+				eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note
+			}
+		}
+	}
+
+	return 1;
+}
+
+int eof_menu_edit_deselect_cymbals(void)
+{
+	unsigned long ctr, flags, note;
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 0;	//Return error
+
+	if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+	{	//If a drum track is active
+		for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+		{	//For each note in the track
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type))
+			{	//If the note is in the active instrument difficulty and is selected
+				flags = eof_get_note_flags(eof_song, eof_selected_track, ctr);
+				note = eof_get_note_note(eof_song, eof_selected_track, ctr);
+				if((note & (4 | 8 | 16)) && (flags & (EOF_DRUM_NOTE_FLAG_Y_CYMBAL | EOF_DRUM_NOTE_FLAG_B_CYMBAL | EOF_DRUM_NOTE_FLAG_G_CYMBAL)))
+				{	//If this note contains any gems on lanes 3, 4 or 5 and any are marked as cymbals
+					eof_selection.multi[ctr] = 0;	//Deselect it
+				}
+			}
+		}
+		if(eof_selection.current != EOF_MAX_NOTES - 1)
+		{	//If there was a last selected note
+			if(eof_selection.multi[eof_selection.current] == 0)
+			{	//And it's not selected anymore
+				eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note
+			}
 		}
 	}
 
