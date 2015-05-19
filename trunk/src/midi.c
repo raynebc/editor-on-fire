@@ -3074,6 +3074,30 @@ int eof_get_ts(EOF_SONG *sp,unsigned *num,unsigned *den,int beatnum)
 	return 1;	//Return success
 }
 
+int eof_get_effective_ts(EOF_SONG *sp, unsigned *num, unsigned *den, int beatnum)
+{
+	unsigned numerator = 4, denominator = 4;
+
+	if((sp == NULL) || (beatnum >= sp->beats) || (sp->beat[beatnum] == NULL))
+		return -1;	//Return error
+
+	while(eof_get_ts(sp, &numerator, &denominator, beatnum) != 1)
+	{	//Until a TS change is seen, check each beat in reverse, from the selected beat to the first one
+		if(beatnum == 0)
+		{	//If this is the first beat
+			break;	//There are no other beats to check
+		}
+		beatnum--;
+	}
+
+	if(num)
+		*num = numerator;
+	if(den)
+		*den = denominator;
+
+	return 1;	//Return success
+}
+
 int eof_apply_ts(unsigned num,unsigned den,int beatnum,EOF_SONG *sp,char undo)
 {
 //	eof_log("eof_apply_ts() entered");

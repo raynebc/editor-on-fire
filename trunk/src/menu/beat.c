@@ -32,6 +32,7 @@ MENU eof_beat_time_signature_menu[] =
 	{"&Custom", eof_menu_beat_ts_custom, NULL, 0, NULL},
 	{eof_ts_menu_off_text, eof_menu_beat_ts_off, NULL, 0, NULL},
 	{"Clear all", eof_menu_beat_remove_ts, NULL, 0, NULL},
+	{"Con&Vert", eof_menu_beat_ts_convert, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -256,6 +257,15 @@ void eof_prepare_beat_menu(void)
 		eof_beat_menu[16].flags = 0;	//Halve BPM
 		eof_beat_menu[17].flags = 0;	//Adjust tempo for RBN
 
+		//Ditto for time signature sub menu items
+		eof_beat_time_signature_menu[0].flags = 0;	//4/4
+		eof_beat_time_signature_menu[1].flags = 0;	//3/4
+		eof_beat_time_signature_menu[2].flags = 0;	//5/4
+		eof_beat_time_signature_menu[3].flags = 0;	//6/4
+		eof_beat_time_signature_menu[4].flags = 0;	//Custom
+		eof_beat_time_signature_menu[5].flags = 0;	//Off
+		eof_beat_time_signature_menu[6].flags = 0;	//Clear all
+
 //Beat>Add and Delete validation
 		if(eof_find_next_anchor(eof_song, eof_selected_beat) < 0)
 		{	//If there are no anchors after the selected beat, disable Beat>Add and Delete, as they'd have no effect
@@ -332,6 +342,15 @@ void eof_prepare_beat_menu(void)
 		else
 		{
 			eof_beat_menu[12].flags = 0;
+		}
+//Beat>Estimate validation
+		if(eof_silence_loaded || !eof_music_track)
+		{	//If no chart audio is loaded
+			eof_beat_menu[14].flags = D_DISABLED;
+		}
+		else
+		{
+			eof_beat_menu[14].flags = 0;
 		}
 //Beat>All Events and Clear Events validation
 		if(eof_song->text_events > 0)
@@ -456,6 +475,24 @@ void eof_prepare_beat_menu(void)
 			eof_beat_menu[15].flags = D_DISABLED;	//Double BPM
 			eof_beat_menu[16].flags = D_DISABLED;	//Halve BPM
 			eof_beat_menu[17].flags = D_DISABLED;	//Adjust tempo for RBN
+
+			//Also disable time signature functions that can change beat positions
+			eof_beat_time_signature_menu[0].flags = D_DISABLED;	//4/4
+			eof_beat_time_signature_menu[1].flags = D_DISABLED;	//3/4
+			eof_beat_time_signature_menu[2].flags = D_DISABLED;	//5/4
+			eof_beat_time_signature_menu[3].flags = D_DISABLED;	//6/4
+			eof_beat_time_signature_menu[4].flags = D_DISABLED;	//Custom
+			eof_beat_time_signature_menu[5].flags = D_DISABLED;	//Off
+			eof_beat_time_signature_menu[6].flags = D_DISABLED;	//Clear all
+		}
+
+		if(eof_song->tags->accurate_ts)
+		{	//If the chart's accurate TS option is enabled
+			eof_beat_time_signature_menu[7].flags = 0;	//Enable the TS Convert function
+		}
+		else
+		{	//Otherwise disable it
+			eof_beat_time_signature_menu[7].flags = D_DISABLED;
 		}
 	}//If a song is loaded
 }
@@ -546,6 +583,7 @@ int eof_menu_beat_ts_4_4(void)
 {
 	(void) eof_apply_ts(4,4,eof_selected_beat,eof_song,1);
 	eof_calculate_beats(eof_song);
+	eof_truncate_chart(eof_song);
 	eof_select_beat(eof_selected_beat);
 	return 1;
 }
@@ -554,6 +592,7 @@ int eof_menu_beat_ts_3_4(void)
 {
 	(void) eof_apply_ts(3,4,eof_selected_beat,eof_song,1);
 	eof_calculate_beats(eof_song);
+	eof_truncate_chart(eof_song);
 	eof_select_beat(eof_selected_beat);
 	return 1;
 }
@@ -562,6 +601,7 @@ int eof_menu_beat_ts_5_4(void)
 {
 	(void) eof_apply_ts(5,4,eof_selected_beat,eof_song,1);
 	eof_calculate_beats(eof_song);
+	eof_truncate_chart(eof_song);
 	eof_select_beat(eof_selected_beat);
 	return 1;
 }
@@ -570,35 +610,46 @@ int eof_menu_beat_ts_6_4(void)
 {
 	(void) eof_apply_ts(6,4,eof_selected_beat,eof_song,1);
 	eof_calculate_beats(eof_song);
+	eof_truncate_chart(eof_song);
 	eof_select_beat(eof_selected_beat);
 	return 1;
 }
 
 DIALOG eof_custom_ts_dialog[] =
 {
-	/* (proc)				(x)		(y)		(w)		(h)  		(fg)	(bg) (key) (flags)	(d1) (d2) (dp)			(dp2) (dp3) */
-	{ d_agup_shadow_box_proc,32,		68,		175, 	72 + 8 +15,	2,		23,  0,    0,		0,   0,   NULL,			NULL, NULL },
-	{ d_agup_text_proc,		42,		84,		35,		8,			2,		23,  0,    0,		0,   0,   "Beats per measure:",	NULL, NULL },
-	{ eof_verified_edit_proc,160,	80,		35,		20,			2,		23,  0,    0,		8,   0,   eof_etext,	"0123456789", NULL },
-	{ d_agup_text_proc,		42,		105,	35,		8,			2,		23,  0,    0,		0,   0,   "Beat unit:",	NULL, NULL },
-	{ eof_verified_edit_proc,160,	101,	35,		20,			2,		23,  0,    0,		8,   0,   eof_etext2,	"0123456789", NULL },
-	{ d_agup_button_proc,	42,		125,	68,		28,			2,		23,  '\r', D_EXIT,	0,   0,   "OK",			NULL, NULL },
-	{ d_agup_button_proc,	125,	125,	68,		28,			2,		23,  0,    D_EXIT,	0,   0,   "Cancel",		NULL, NULL },
+	/* (proc)				  (x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1) (d2) (dp)                 (dp2) (dp3) */
+	{ d_agup_shadow_box_proc, 32,  68,  175, 95, 2,   23,  0,    0,      0,   0,   NULL,                NULL, NULL },
+	{ d_agup_text_proc,		  42,  84,  35,  8,  2,   23,  0,    0,      0,   0,   "Beats per measure:",NULL, NULL },
+	{ eof_verified_edit_proc, 160, 80,  35,  20, 2,   23,  0,    0,      8,   0,   eof_etext,           "0123456789", NULL },
+	{ d_agup_text_proc,		  42,  105, 35,  8,  2,   23,  0,    0,      0,   0,   "Beat unit:",        NULL, NULL },
+	{ eof_verified_edit_proc, 160, 101, 35,  20, 2,   23,  0,    0,      8,   0,   eof_etext2,          "0123456789", NULL },
+	{ d_agup_button_proc,	  42,  125, 68,  28, 2,   23,  '\r', D_EXIT, 0,   0,   "OK",                NULL, NULL },
+	{ d_agup_button_proc,	  125, 125, 68,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",            NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
-int eof_menu_beat_ts_custom(void)
+int eof_menu_beat_ts_custom_dialog(unsigned start)
 {
-	unsigned num=0,den=0;
+	unsigned num = 4, den = 4;
+	int retval = 0;
 
 //Prompt the user for the custom time signature
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_custom_ts_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_custom_ts_dialog);
-	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%lu", ((eof_song->beat[eof_selected_beat]->flags & 0xFF000000)>>24) + 1);
-	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", ((eof_song->beat[eof_selected_beat]->flags & 0x00FF0000)>>16) + 1);
-	if(eof_popup_dialog(eof_custom_ts_dialog, 2) == 5)
+	(void) eof_get_effective_ts(eof_song, &num, &den, eof_selected_beat);
+	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%u", num);
+	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%u", den);
+	if(start)
+	{	//If the calling function wanted the numerator field to be given initial focus
+		start = 2;	//Set this to the dialog object index of that field
+	}
+	else
+	{	//Otherwise set it to make the denominator have default focus
+		start = 4;
+	}
+	if(eof_popup_dialog(eof_custom_ts_dialog, start) == 5)
 	{	//User clicked OK
 		num = atoi(eof_etext);
 		den = atoi(eof_etext2);
@@ -618,8 +669,7 @@ int eof_menu_beat_ts_custom(void)
 			else
 			{	//User provided a valid time signature
 				(void) eof_apply_ts(num,den,eof_selected_beat,eof_song,1);
-				eof_calculate_beats(eof_song);
-				eof_select_beat(eof_selected_beat);
+				retval = 1;
 			}
 		}
 	}
@@ -627,6 +677,56 @@ int eof_menu_beat_ts_custom(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);
+	return retval;
+}
+
+int eof_menu_beat_ts_custom(void)
+{
+	if(eof_menu_beat_ts_custom_dialog(1))
+	{	//If a valid time signature was chosen and applied
+		eof_calculate_beats(eof_song);
+		eof_truncate_chart(eof_song);
+		eof_select_beat(eof_selected_beat);
+	}
+
+	return 1;
+}
+
+int eof_menu_beat_ts_convert(void)
+{
+	unsigned long ctr;
+	unsigned int num, den, prevden;
+
+	if(!eof_song->tags->accurate_ts)
+		return 1;	//Don't allow this function to run if the accurate TS chart option is not enabled
+
+	if(eof_menu_beat_ts_custom_dialog(0))
+	{	//If a valid time signature was chosen and applied
+		(void) eof_get_ts(eof_song, &num, &den, eof_selected_beat);	//Obtain the new TS
+		for(ctr = eof_selected_beat; ctr + 1 < eof_song->beats;)
+		{	//For each beat that has a beat that follows it, starting with the selected one
+			eof_song->beat[ctr]->ppqn = 1000 * (eof_song->beat[ctr + 1]->pos - eof_song->beat[ctr]->pos);	//Calculate the tempo of the beat by getting its length (this is the formula "beat_length = 60000 / BPM" rewritten to solve for ppqn)
+			if(den != 4)
+			{	//If the time signature needs to be taken into account
+				eof_song->beat[ctr]->ppqn *= den / 4;	//Adjust for it
+			}
+			ctr++;	//Iterate to next beat
+			if(eof_get_ts(eof_song, &num, &den, ctr) == 1)
+			{	//If the next beat has a time signature change
+				eof_song->beat[ctr]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Anchor it to be safe
+				break;
+			}
+		}
+		if(eof_selected_beat > 0)
+		{	//If a beat other than the first one is selected, determine if it now needs to be anchored
+			eof_get_effective_ts(eof_song, NULL, &prevden, eof_selected_beat - 1);	//Determine what TS is in effect at the previous beat
+			if((prevden != den) || (eof_song->beat[eof_selected_beat]->ppqn != eof_song->beat[eof_selected_beat - 1]->ppqn))
+			{	//If the time signature denominator or the tempo is different from the previous beat
+				eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Set the anchor flag
+			}
+		}
+	}
+
 	return 1;
 }
 
@@ -646,8 +746,10 @@ int eof_menu_beat_ts_off(void)
 	{	//If the user has changed the time signature status of this beat
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		eof_song->beat[eof_selected_beat]->flags = flags;
-		eof_select_beat(eof_selected_beat);
 		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+		eof_calculate_beats(eof_song);
+		eof_truncate_chart(eof_song);
+		eof_select_beat(eof_selected_beat);
 	}
 	return 1;
 }
@@ -1072,6 +1174,8 @@ int eof_menu_beat_remove_ts(void)
 				eof_song->beat[i]->flags = flags;
 			}
 			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+			eof_calculate_beats(eof_song);
+			eof_truncate_chart(eof_song);
 		}
 	}
 	else

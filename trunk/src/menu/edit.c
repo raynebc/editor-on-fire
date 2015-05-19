@@ -2510,6 +2510,7 @@ DIALOG eof_menu_edit_deselect_conditional_dialog[] =
 int eof_menu_edit_deselect_conditional(void)
 {
 	unsigned long ctr, bitmask, match_bitmask = 0, stringcount, note, flags;
+	static unsigned last_selected_drum_filter = 16;	//Tracks whether cymbals, toms or either was selected from the last call to this dialog, defaults to "Either"
 	char match;
 
 	if(!eof_song || (eof_selected_track >= eof_song->tracks))
@@ -2533,13 +2534,14 @@ int eof_menu_edit_deselect_conditional(void)
 	}
 	if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 	{	//If a drum track is active
-		eof_menu_edit_deselect_conditional_dialog[13].flags = eof_menu_edit_deselect_conditional_dialog[14].flags =	eof_menu_edit_deselect_conditional_dialog[15].flags = 0;
-		eof_menu_edit_deselect_conditional_dialog[16].flags = D_SELECTED;	//Enable the cymbal/non cymbal checkboxes and enable the "either" option by default
+		eof_menu_edit_deselect_conditional_dialog[13].flags = eof_menu_edit_deselect_conditional_dialog[14].flags =
+		eof_menu_edit_deselect_conditional_dialog[15].flags = eof_menu_edit_deselect_conditional_dialog[16].flags = 0;	//Enable the cymbal/tom/either checkboxes
+		eof_menu_edit_deselect_conditional_dialog[last_selected_drum_filter].flags = D_SELECTED;	//Enable the cymbal/non cymbal checkboxes and enable the "either" option by default
 	}
 	else
 	{
 		eof_menu_edit_deselect_conditional_dialog[13].flags = eof_menu_edit_deselect_conditional_dialog[14].flags =
-		eof_menu_edit_deselect_conditional_dialog[15].flags = eof_menu_edit_deselect_conditional_dialog[16].flags = D_HIDDEN;	//Hide the cymbal/non cymbal checkboxes
+		eof_menu_edit_deselect_conditional_dialog[15].flags = eof_menu_edit_deselect_conditional_dialog[16].flags = D_HIDDEN;	//Hide the cymbal/tom/either checkboxes
 	}
 
 	//Process the dialog
@@ -2585,6 +2587,7 @@ int eof_menu_edit_deselect_conditional(void)
 				{	//If a drum track is active
 					if(eof_menu_edit_deselect_conditional_dialog[14].flags == D_SELECTED)
 					{	//Cymbals
+						last_selected_drum_filter = 14;
 						if((match_bitmask & 4) && !(flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL))
 						{	//Criteria includes yellow cymbals and this note does not have one
 							match = 0;
@@ -2600,6 +2603,7 @@ int eof_menu_edit_deselect_conditional(void)
 					}
 					else if(eof_menu_edit_deselect_conditional_dialog[15].flags == D_SELECTED)
 					{	//Toms
+						last_selected_drum_filter = 15;
 						if((match_bitmask & 4) && (flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL))
 						{	//Criteria includes yellow toms and this note does not have one
 							match = 0;
@@ -2612,6 +2616,10 @@ int eof_menu_edit_deselect_conditional(void)
 						{	//Criteria includes green toms and this note does not have one
 							match = 0;
 						}
+					}
+					else
+					{	//Either
+						last_selected_drum_filter = 16;
 					}
 				}
 
