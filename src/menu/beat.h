@@ -28,7 +28,12 @@ int eof_menu_beat_ts_4_4(void);
 int eof_menu_beat_ts_3_4(void);
 int eof_menu_beat_ts_5_4(void);
 int eof_menu_beat_ts_6_4(void);
-int eof_menu_beat_ts_custom(void);
+int eof_menu_beat_ts_custom_dialog(unsigned start);
+	//Calls the custom TS dialog and places the chosen TS on the selected beat, making an undo state, allowing the calling function to handle remaining steps
+	//If start is nonzero, the numerator field is given initial focus on dialog launch, otherwise the denominator is
+	//Returns nonzero if a valid time signature was chosen and applied to the selected beat
+int eof_menu_beat_ts_custom(void);	//Applies user-selected time signature and recalculates beat lengths depending on the accurate TS chart option
+int eof_menu_beat_ts_convert(void);	//Applies user-selected time signature and recalculates tempos to leave beat markers in their existing positions
 int eof_menu_beat_ts_off(void);
 
 int eof_apply_key_signature(int signature, unsigned long beatnum, EOF_SONG *sp);	//Applies the specified key signature to the specified beat
