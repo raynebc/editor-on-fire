@@ -565,7 +565,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 					break;
 				}
 
-				/* controller change */
+				/* control change */
 				case 0xB0:
 				{
 					eof_midi_import_add_event(eof_import_events[i], absolute_pos, current_event, d1, d2, i);

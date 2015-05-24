@@ -3945,15 +3945,19 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									}
 									if(convertednum <= 6)
 									{	//Only if the converted string number is valid
+										//Remove redundant bendpoints, any consecutive duplicate bend heights at the end of the bend have no effect and should be removed to avoid causing problems in Rocksmith
+										for(ctr5 = bendstruct.bendpoints; ctr5 > 1; ctr5--)
+										{	//For each bendpoint after the first, in reverse order
+											if(bendstruct.bendheight[ctr5 - 1] == bendstruct.bendheight[ctr5 - 2])
+											{	//If the bendpoint is the same height as the point before it
+												bendstruct.bendpoints--;	//Discard it
+											}
+										}
 										for(ctr5 = 0; ctr5 < bendstruct.bendpoints; ctr5++)
 										{	//For each bend point that was parsed
 											EOF_PRO_GUITAR_NOTE *pgnp;
 											unsigned long length;
 
-											if((ctr5 > 0) && (ctr5 == bendstruct.bendpoints - 1) && (bendstruct.bendheight[ctr5 - 1] == bendstruct.bendheight[ctr5]))
-											{	//If this is the last of multiple bendpoints, and its height is the same as the previous one
-												continue;	//Skip it since it doesn't change the bend, and since too many close bend points can cause crashes in Rocksmith
-											}
 											pgnp = eof_pro_guitar_track_add_tech_note(gp->track[ctr2]);	//Add a new tech note to the current track
 											if(!pgnp)
 											{
