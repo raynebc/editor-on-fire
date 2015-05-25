@@ -61,7 +61,7 @@ MENU eof_file_menu[] =
 	{"Sonic Visualiser Import", eof_menu_file_sonic_visualiser_import, NULL, 0, NULL},
 	{"&MIDI Import\tF6", eof_menu_file_midi_import, NULL, 0, NULL},
 	{"&Feedback Import\tF7", eof_menu_file_feedback_import, NULL, 0, NULL},
-	{"GH Import", eof_menu_file_gh_import, NULL, 0, NULL},
+	{"Guitar &Hero Import", eof_menu_file_gh_import, NULL, 0, NULL},
 	{"Lyric Import\tF8", eof_menu_file_lyrics_import, NULL, 0, NULL},
 	{"&Guitar Pro Import", eof_menu_file_gp_import, NULL, 0, NULL},
 	{"&Rocksmith Import", eof_menu_file_rs_import, NULL, 0, NULL},
@@ -3808,11 +3808,9 @@ int eof_menu_file_rs_import(void)
 	eof_clear_input();
 	if(newchart)
 	{	//If a project wasn't already opened when the import was started
-		if(eof_command_line_rs_import(returnedfn))
-		{	//If user canceled the import or the import was otherwise unsuccessful
-			eof_destroy_song(eof_song);
-			eof_song = NULL;
-			eof_song_loaded = 0;
+		if(!eof_command_line_rs_import(returnedfn))
+		{	//If the file was imported
+			eof_init_after_load(0);
 		}
 	}
 	else
@@ -3843,11 +3841,6 @@ int eof_command_line_rs_import(char *fn)
 	{	//if there was an error importing the file
 		return 3;	//Return error
 	}
-	if(!eof_load_ogg(nfn, 1))	//If user does not provide audio, fail over to using silent audio
-	{
-		eof_destroy_song(eof_song);
-		return 4;	//Return error
-	}
 
 //Update path variables
 	(void) ustrcpy(eof_filename, fn);
@@ -3855,6 +3848,16 @@ int eof_command_line_rs_import(char *fn)
 	(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
 	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
+
+//Load guitar.ogg automatically if it's present, otherwise prompt user to browse for audio
+	(void) append_filename(nfn, eof_song_path, "guitar.ogg", 1024);
+	if(!eof_load_ogg(nfn, 1))	//If user does not provide audio, fail over to using silent audio
+	{
+		eof_destroy_song(eof_song);
+		eof_song = NULL;
+		eof_song_loaded = 0;
+		return 4;	//Return error
+	}
 
 	return 0;	//Return success
 }
