@@ -282,7 +282,6 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[5].flags = D_DISABLED; // Load OGG
 		eof_file_menu[6].flags = D_DISABLED; // Sonic Visualiser Import
 		eof_file_menu[10].flags = D_DISABLED; // Lyric Import
-		eof_file_menu[11].flags = D_DISABLED; // Guitar Pro Import
 	}
 }
 
@@ -3522,38 +3521,15 @@ int eof_gp_import_track(DIALOG * d)
 }
 
 char gp_import_undo_made;
-int eof_menu_file_gp_import(void)
+int eof_gp_import_common(char *fn)
 {
-	char * returnedfn = NULL, *initial;
 	unsigned long ctr, ctr2;
 
-	if(!eof_song || !eof_song_loaded)
-		return 1;	//For now, don't do anything unless a project is active
-
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
-		return 1;	//Don't do anything unless the active track is a pro guitar/bass track
-
-	gp_import_undo_made = 0;	//Will ensure only one undo state is created during this import
-	eof_cursor_visible = 0;
-	eof_pen_visible = 0;
-	eof_render();
-	if((eof_last_gp_path[uoffset(eof_last_gp_path, ustrlen(eof_last_gp_path) - 1)] == '\\') || (eof_last_gp_path[uoffset(eof_last_gp_path, ustrlen(eof_last_gp_path) - 1)] == '/'))
-	{	//If the path ends in a separator
-		eof_last_gp_path[uoffset(eof_last_gp_path, ustrlen(eof_last_gp_path) - 1)] = '\0';	//Remove it
-	}
-	if(eof_imports_recall_last_path && file_exists(eof_last_gp_path, FA_RDONLY | FA_HIDDEN | FA_DIREC, NULL))
-	{	//If the user chose for the GP import dialog to start at the path of the last imported GP file and that path is valid
-		initial = eof_last_gp_path;	//Use it
-	}
-	else
-	{	//Otherwise start at the project's path
-		initial = eof_last_eof_path;
-	}
-	returnedfn = ncd_file_select(0, initial, "Import Guitar Pro", eof_filter_gp_files);
-	eof_clear_input();
-	if(returnedfn)
-	{
-		eof_parsed_gp_file = eof_load_gp(returnedfn, &gp_import_undo_made);	//Parse the GP file, make an undo state if time signatures are imported
+		return 1;	//Return failure
+	if(fn)
+	{	//If the file name is specified
+		eof_parsed_gp_file = eof_load_gp(fn, &gp_import_undo_made);	//Parse the GP file, make an undo state if time signatures are imported
 
 		if(eof_parsed_gp_file)
 		{	//The file was successfully parsed, allow the user to import a track into the active project
@@ -3611,11 +3587,12 @@ int eof_menu_file_gp_import(void)
 			free(eof_parsed_gp_file->instrument_types);
 			free(eof_parsed_gp_file);
 
-			(void) replace_filename(eof_last_gp_path, returnedfn, "", 1024);	//Set the last loaded GP file path
+			(void) replace_filename(eof_last_gp_path, fn, "", 1024);	//Set the last loaded GP file path
 		}//The file was successfully parsed...
 		else
 		{
-			allegro_message("Failure");
+			allegro_message("Failure.  Check log for details.");
+			return 1;	//Return failure
 		}
 
 		eof_log("Cleaning up beats", 1);
@@ -3625,7 +3602,99 @@ int eof_menu_file_gp_import(void)
 		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to clean up the track
 		(void) eof_menu_track_selected_track_number(eof_selected_track, 1);	//Re-select the active track to allow for a change in string count
 	}
+
+	return 0;	//Return success
+}
+
+int eof_menu_file_gp_import(void)
+{
+	char * returnedfn = NULL, *initial;
+	char newchart = 0;	//Is set to nonzero if a new chart is created to store the imported RS file
+
+	if(!eof_song || !eof_song_loaded)
+	{	//If no project is loaded
+		newchart = 1;
+	}
+	else
+	{
+		if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			return 1;	//Don't do anything unless the active track is a pro guitar/bass track
+	}
+
+	gp_import_undo_made = 0;	//Will ensure only one undo state is created during this import
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	if((eof_last_gp_path[uoffset(eof_last_gp_path, ustrlen(eof_last_gp_path) - 1)] == '\\') || (eof_last_gp_path[uoffset(eof_last_gp_path, ustrlen(eof_last_gp_path) - 1)] == '/'))
+	{	//If the path ends in a separator
+		eof_last_gp_path[uoffset(eof_last_gp_path, ustrlen(eof_last_gp_path) - 1)] = '\0';	//Remove it
+	}
+	if(eof_imports_recall_last_path && file_exists(eof_last_gp_path, FA_RDONLY | FA_HIDDEN | FA_DIREC, NULL))
+	{	//If the user chose for the GP import dialog to start at the path of the last imported GP file and that path is valid
+		initial = eof_last_gp_path;	//Use it
+	}
+	else
+	{	//Otherwise start at the project's path
+		initial = eof_last_eof_path;
+	}
+	returnedfn = ncd_file_select(0, initial, "Import Guitar Pro", eof_filter_gp_files);
+	eof_clear_input();
+	if(returnedfn)
+	{	//If a file was selected for import
+		if(newchart)
+		{	//If a project wasn't already opened when the import was started
+			if(!eof_command_line_gp_import(returnedfn))
+			{	//If the file was imported
+				eof_init_after_load(0);
+			}
+		}
+		else
+		{	//A project was already open
+			(void) eof_gp_import_common(returnedfn);
+		}
+	}
+	eof_render();
+
 	return 1;
+}
+
+int eof_command_line_gp_import(char *fn)
+{
+	char nfn[1024] = {0};
+
+	eof_log("eof_command_line_gp_import() entered", 1);
+
+	if(!fn)
+		return 1;	//Return error
+
+	//Create a new project and have user select a target pro guitar/bass track
+	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "Import Guitar Pro arrangement to:");
+	if(!eof_create_new_project_select_pro_guitar())
+		return 2;	//New project couldn't be created
+
+	if(eof_gp_import_common(fn))
+	{	//if there was an error importing the file
+		return 3;	//Return error
+	}
+
+//Update path variables
+	(void) ustrcpy(eof_filename, fn);
+	(void) replace_filename(eof_song_path, fn, "", 1024);	//Set the project folder path
+	(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
+
+//Load guitar.ogg automatically if it's present, otherwise prompt user to browse for audio
+	(void) append_filename(nfn, eof_song_path, "guitar.ogg", 1024);
+	if(!eof_load_ogg(nfn, 1))	//If user does not provide audio, fail over to using silent audio
+	{
+		eof_destroy_song(eof_song);
+		eof_song = NULL;
+		eof_song_loaded = 0;
+		return 4;	//Return error
+	}
+
+	return 0;	//Return success
 }
 
 char * eof_gp_tracks_list(int index, int * size)
@@ -3806,17 +3875,19 @@ int eof_menu_file_rs_import(void)
 	}
 	returnedfn = ncd_file_select(0, initial, "Import Rocksmith", eof_filter_rs_files);
 	eof_clear_input();
-	if(newchart)
-	{	//If a project wasn't already opened when the import was started
-		if(!eof_command_line_rs_import(returnedfn))
-		{	//If the file was imported
-			eof_init_after_load(0);
+	if(returnedfn)
+	{	//If a file was selected for import
+		if(newchart)
+		{	//If a project wasn't already opened when the import was started
+			if(!eof_command_line_rs_import(returnedfn))
+			{	//If the file was imported
+				eof_init_after_load(0);
+			}
 		}
-	}
-	else
-	{	//A project was already open
-		(void) eof_rs_import_common(returnedfn);	//Import the specified Rocksmith XML file into the active pro guitar/bass track
-		(void) replace_filename(eof_last_rs_path, eof_filename, "", 1024);	//Set the last loaded Rocksmith file path
+		else
+		{	//A project was already open
+			(void) eof_rs_import_common(returnedfn);	//Import the specified Rocksmith XML file into the active pro guitar/bass track
+		}
 	}
 	eof_render();
 

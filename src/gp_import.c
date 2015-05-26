@@ -3004,10 +3004,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		{	//7 is the highest number of strings Guitar Pro supports for any track
 			eof_log("Invalid string count", 1);
 			(void) pack_fclose(inf);
-			while(ctr > 0)
+			for(ctr = 0; ctr < tracks; ctr++)
 			{	//Free the previous track name strings
-				free(gp->names[ctr - 1]);
-				ctr--;
+				free(gp->names[ctr]);
 			}
 			free(gp->names);
 			free(gp->instrument_types);
@@ -3176,10 +3175,18 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				{	//Compare the beat count against an arbitrarily large number to satisfy Coverity
 					eof_log("\t\t\tToo many beats (notes) in this measure, aborting.", 1);
 					(void) pack_fclose(inf);
+					for(ctr = 0; ctr < tracks; ctr++)
+					{	//Free the previous track name strings
+						free(gp->names[ctr]);
+					}
 					free(gp->names);
 					free(gp->instrument_types);
 					for(ctr = 0; ctr < tracks; ctr++)
 					{	//Free all previously allocated track structures
+						for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
+						{	//Free all notes in this track
+							free(gp->track[ctr]->note[ctr2]);
+						}
 						free(gp->track[ctr]);
 					}
 					for(ctr = 0; ctr < gp->text_events; ctr++)
@@ -3439,10 +3446,18 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{
 									eof_log("Error allocating memory (14)", 1);
 									(void) pack_fclose(inf);
+									for(ctr = 0; ctr < tracks; ctr++)
+									{	//Free the previous track name strings
+										free(gp->names[ctr]);
+									}
 									free(gp->names);
 									free(gp->instrument_types);
 									for(ctr = 0; ctr < tracks; ctr++)
 									{	//Free all previously allocated track structures
+										for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
+										{	//Free all notes in this track
+											free(gp->track[ctr]->note[ctr2]);
+										}
 										free(gp->track[ctr]);
 									}
 									for(ctr = 0; ctr < gp->text_events; ctr++)
@@ -3542,15 +3557,18 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							{	//If there was an error parsing the bend
 								allegro_message("Error parsing bend, file is corrupt");
 								(void) pack_fclose(inf);
-								while(ctr > 0)
+								for(ctr = 0; ctr < tracks; ctr++)
 								{	//Free the previous track name strings
-									free(gp->names[ctr - 1]);
-									ctr--;
+									free(gp->names[ctr]);
 								}
 								free(gp->names);
 								free(gp->instrument_types);
 								for(ctr = 0; ctr < tracks; ctr++)
 								{	//Free all previously allocated track structures
+									for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
+									{	//Free all notes in this track
+										free(gp->track[ctr]->note[ctr2]);
+									}
 									free(gp->track[ctr]);
 								}
 								for(ctr = 0; ctr < gp->text_events; ctr++)
@@ -3739,15 +3757,18 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							{	//If a beat couldn't be appended to the project
 								eof_log("Error allocating memory (15)", 1);
 								(void) pack_fclose(inf);
-								while(ctr > 0)
+								for(ctr = 0; ctr < tracks; ctr++)
 								{	//Free the previous track name strings
-									free(gp->names[ctr - 1]);
-									ctr--;
+									free(gp->names[ctr]);
 								}
 								free(gp->names);
 								free(gp->instrument_types);
 								for(ctr = 0; ctr < tracks; ctr++)
 								{	//Free all previously allocated track structures
+									for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
+									{	//Free all notes in this track
+										free(gp->track[ctr]->note[ctr2]);
+									}
 									free(gp->track[ctr]);
 								}
 								for(ctr = 0; ctr < gp->text_events; ctr++)
@@ -3905,15 +3926,18 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									{	//If there was an error parsing the bend, or if bendpoints wasn't capped at 30 (a redundant check to satisfy a false positive in Coverity)
 										allegro_message("Error parsing bend, file is corrupt");
 										(void) pack_fclose(inf);
-										while(ctr > 0)
+										for(ctr = 0; ctr < tracks; ctr++)
 										{	//Free the previous track name strings
-											free(gp->names[ctr - 1]);
-											ctr--;
+											free(gp->names[ctr]);
 										}
 										free(gp->names);
 										free(gp->instrument_types);
 										for(ctr = 0; ctr < tracks; ctr++)
 										{	//Free all previously allocated track structures
+											for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
+											{	//Free all notes in this track
+												free(gp->track[ctr]->note[ctr2]);
+											}
 											free(gp->track[ctr]);
 										}
 										for(ctr = 0; ctr < gp->text_events; ctr++)
@@ -3963,15 +3987,18 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											{
 												eof_log("Error allocating memory (16)", 1);
 												(void) pack_fclose(inf);
-												while(ctr > 0)
+												for(ctr = 0; ctr < tracks; ctr++)
 												{	//Free the previous track name strings
-													free(gp->names[ctr - 1]);
-													ctr--;
+													free(gp->names[ctr]);
 												}
 												free(gp->names);
 												free(gp->instrument_types);
 												for(ctr = 0; ctr < tracks; ctr++)
 												{	//Free all previously allocated track structures
+													for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
+													{	//Free all notes in this track
+														free(gp->track[ctr]->note[ctr2]);
+													}
 													free(gp->track[ctr]);
 												}
 												for(ctr = 0; ctr < gp->text_events; ctr++)
@@ -4291,15 +4318,18 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{
 									eof_log("Error allocating memory (17)", 1);
 									(void) pack_fclose(inf);
-									while(ctr > 0)
+									for(ctr = 0; ctr < tracks; ctr++)
 									{	//Free the previous track name strings
-										free(gp->names[ctr - 1]);
-										ctr--;
+										free(gp->names[ctr]);
 									}
 									free(gp->names);
 									free(gp->instrument_types);
 									for(ctr = 0; ctr < tracks; ctr++)
 									{	//Free all previously allocated track structures
+										for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
+										{	//Free all notes in this track
+											free(gp->track[ctr]->note[ctr2]);
+										}
 										free(gp->track[ctr]);
 									}
 									for(ctr = 0; ctr < gp->text_events; ctr++)
@@ -4439,15 +4469,18 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									{
 										eof_log("Error allocating memory (18)", 1);
 										(void) pack_fclose(inf);
-										while(ctr > 0)
+										for(ctr = 0; ctr < tracks; ctr++)
 										{	//Free the previous track name strings
-											free(gp->names[ctr - 1]);
-											ctr--;
+											free(gp->names[ctr]);
 										}
 										free(gp->names);
 										free(gp->instrument_types);
 										for(ctr = 0; ctr < tracks; ctr++)
 										{	//Free all previously allocated track structures
+											for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
+											{	//Free all notes in this track
+												free(gp->track[ctr]->note[ctr2]);
+											}
 											free(gp->track[ctr]);
 										}
 										for(ctr = 0; ctr < gp->text_events; ctr++)

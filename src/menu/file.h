@@ -117,10 +117,17 @@ int eof_menu_prompt_save_changes(void);
 	//Stops playback and if the chart is modified, prompt whether to save changes (Save/Discard/Cancel)
 	//If Save is selected, the chart is saved, otherwise modified chart audio is restored if necessary
 	//The user's answer to the prompt is returned (1=save, 2=discard, 3=cancel), otherwise 0 is returned if the chart isn't loaded/modified
-int eof_menu_file_gp_import(void);
-	//Loads each track from a Guitar Pro file and prompts user which to import into the active project
+
 char * eof_gp_tracks_list(int index, int * size);
 	//Dialog logic to display the imported pro guitar tracks present in the eof_parsed_gp_file global pointer
+int eof_gp_import_common(char *fn);
+	//Imports the specified Guitar Pro file to the active track if the active track is a pro guitar/bass track
+	//Returns nonzero on error
+int eof_menu_file_gp_import(void);
+	//Loads each track from a Guitar Pro file and prompts user which to import into the active project
+int eof_command_line_gp_import(char *fn);
+	//Creates a new project and imports the specified Guitar Pro track into the user-specified pro guitar/bass track
+	//Returns zero on success
 
 int eof_rs_import_common(char *fn);
 	//Imports the specified Rocksmith XML file to the active track if the active track is a pro guitar/bass track
