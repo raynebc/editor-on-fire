@@ -1096,6 +1096,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 											np->flags = flags;
 											note_count++;
 											tagctr++;
+											tp->pgnotes++;
 
 											if(fret > tp->numfrets)
 												tp->numfrets = fret;	//Track the highest used fret number
@@ -1236,6 +1237,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;
 										np->flags = flags;
 										np->type = curdiff;
+										tp->pgnotes++;
 										note_count++;
 										tagctr++;
 									}
@@ -1494,6 +1496,14 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 	}
 	else
 	{
+		for(ctr = 0; ctr < tp->pgnotes; ctr++)
+		{	//For each normal note that was imported
+			free(tp->pgnote[ctr]);
+		}
+		for(ctr = 0; ctr < tp->technotes; ctr++)
+		{	//For each tech note that was imported
+			free(tp->technote[ctr]);
+		}
 		free(tp);
 		return NULL;
 	}

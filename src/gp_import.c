@@ -3187,6 +3187,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						{	//Free all notes in this track
 							free(gp->track[ctr]->note[ctr2]);
 						}
+						for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
+						{	//Free all tech notes in this track
+							free(gp->track[ctr]->technote[ctr2]);
+						}
 						free(gp->track[ctr]);
 					}
 					for(ctr = 0; ctr < gp->text_events; ctr++)
@@ -3458,6 +3462,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										{	//Free all notes in this track
 											free(gp->track[ctr]->note[ctr2]);
 										}
+										for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
+										{	//Free all tech notes in this track
+											free(gp->track[ctr]->technote[ctr2]);
+										}
 										free(gp->track[ctr]);
 									}
 									for(ctr = 0; ctr < gp->text_events; ctr++)
@@ -3568,6 +3576,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
 									{	//Free all notes in this track
 										free(gp->track[ctr]->note[ctr2]);
+									}
+									for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
+									{	//Free all tech notes in this track
+										free(gp->track[ctr]->technote[ctr2]);
 									}
 									free(gp->track[ctr]);
 								}
@@ -3769,6 +3781,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									{	//Free all notes in this track
 										free(gp->track[ctr]->note[ctr2]);
 									}
+									for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
+									{	//Free all tech notes in this track
+										free(gp->track[ctr]->technote[ctr2]);
+									}
 									free(gp->track[ctr]);
 								}
 								for(ctr = 0; ctr < gp->text_events; ctr++)
@@ -3938,6 +3954,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											{	//Free all notes in this track
 												free(gp->track[ctr]->note[ctr2]);
 											}
+											for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
+											{	//Free all tech notes in this track
+												free(gp->track[ctr]->technote[ctr2]);
+											}
 											free(gp->track[ctr]);
 										}
 										for(ctr = 0; ctr < gp->text_events; ctr++)
@@ -3998,6 +4018,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 													for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
 													{	//Free all notes in this track
 														free(gp->track[ctr]->note[ctr2]);
+													}
+													for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
+													{	//Free all tech notes in this track
+														free(gp->track[ctr]->technote[ctr2]);
 													}
 													free(gp->track[ctr]);
 												}
@@ -4330,6 +4354,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										{	//Free all notes in this track
 											free(gp->track[ctr]->note[ctr2]);
 										}
+										for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
+										{	//Free all tech notes in this track
+											free(gp->track[ctr]->technote[ctr2]);
+										}
 										free(gp->track[ctr]);
 									}
 									for(ctr = 0; ctr < gp->text_events; ctr++)
@@ -4480,6 +4508,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
 											{	//Free all notes in this track
 												free(gp->track[ctr]->note[ctr2]);
+											}
+											for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
+											{	//Free all tech notes in this track
+												free(gp->track[ctr]->technote[ctr2]);
 											}
 											free(gp->track[ctr]);
 										}
