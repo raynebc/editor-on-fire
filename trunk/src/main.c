@@ -4393,7 +4393,6 @@ int eof_initialize(int argc, char * argv[])
 				{	//Import Rocksmith file
 					if(!eof_command_line_rs_import(argv[i]))
 					{	//If a new project was created and the RS file was imported successfully
-						(void) replace_filename(eof_last_rs_path, eof_filename, "", 1024);	//Set the last loaded Rocksmith file path
 						eof_log("\tImport complete", 1);
 					}
 					else
@@ -4401,6 +4400,30 @@ int eof_initialize(int argc, char * argv[])
 						allegro_message("Could not import song!");
 						return 0;
 					}
+				}
+				else if(retval == 2)
+				{	//Go PlayAlong file
+					if(!eof_command_line_gp_import(argv[i]))
+					{	//If a new project was created and the Guitar Pro file was imported successfully
+						eof_log("\tImport complete", 1);
+					}
+					else
+					{
+						allegro_message("Could not import song!");
+						return 0;
+					}
+				}
+			}
+			else if(!ustricmp(get_extension(argv[i]), "gp3") || !ustricmp(get_extension(argv[i]), "gp4") || !ustricmp(get_extension(argv[i]), "gp5"))
+			{	//Import a Guitar Pro file via command line
+				if(!eof_command_line_gp_import(argv[i]))
+				{	//If a new project was created and the Guitar Pro file was imported successfully
+					eof_log("\tImport complete", 1);
+				}
+				else
+				{
+					allegro_message("Could not import song!");
+					return 0;
 				}
 			}
 			else if(!ustricmp(get_extension(argv[i]), "ogg") || !ustricmp(get_extension(argv[i]), "mp3"))
@@ -5339,14 +5362,14 @@ void eof_hidden_mouse_callback(int flags)
 
 DIALOG eof_import_to_track_dialog[] =
 {
-	/* (proc)             (x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1) (d2)  (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc, 0,   48, 480, 175,   2,   23,  0,    0,      0,   0,  "Import track",        NULL, NULL },
-	{ d_agup_text_proc,   16,  75,  48,  15,   2,   23,  0,    0,      0,   0,  eof_etext,             NULL, NULL },
-	{ d_agup_radio_proc,  16, 105, 136,  15,   2,   23,  0,    0,      1,   0,  "PART REAL_BASS",      NULL, NULL },
-	{ d_agup_radio_proc,  16, 120, 152,  15,   2,   23,  0,    0,      1,   0,  "PART REAL_GUITAR",    NULL, NULL },
-	{ d_agup_radio_proc,  16, 135, 156,  15,   2,   23,  0,    0,      1,   0,  "PART REAL_BASS_22",   NULL, NULL },
-	{ d_agup_radio_proc,  16, 150, 172 , 15,   2,   23,  0,    0,      1,   0,  "PART REAL_GUITAR_22", NULL, NULL },
-	{ d_agup_button_proc, 100,180,  68,  28,   2,   23, '\r', D_EXIT,  0,   0,  "OK",                  NULL, NULL },
+	/* (proc)             (x)  (y)  (w)  (h) (fg) (bg) (key) (flags)     (d1) (d2)  (dp)                   (dp2) (dp3) */
+	{ d_agup_window_proc, 0,   48, 480, 175,   2,   23,  0,    0,        0,   0,  "Import track",        NULL, NULL },
+	{ d_agup_text_proc,   16,  75,  48,  15,   2,   23,  0,    0,        0,   0,  eof_etext,             NULL, NULL },
+	{ d_agup_radio_proc,  16, 105, 136,  15,   2,   23,  0,    0,        1,   0,  "PART REAL_BASS",      NULL, NULL },
+	{ d_agup_radio_proc,  16, 120, 152,  15,   2,   23,  0,   D_SELECTED,1,   0,  "PART REAL_GUITAR",    NULL, NULL },
+	{ d_agup_radio_proc,  16, 135, 156,  15,   2,   23,  0,    0,        1,   0,  "PART REAL_BASS_22",   NULL, NULL },
+	{ d_agup_radio_proc,  16, 150, 172 , 15,   2,   23,  0,    0,        1,   0,  "PART REAL_GUITAR_22", NULL, NULL },
+	{ d_agup_button_proc, 100,180,  68,  28,   2,   23, '\r', D_EXIT,    0,   0,  "OK",                  NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
