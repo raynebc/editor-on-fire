@@ -6769,6 +6769,14 @@ unsigned long eof_determine_chart_length(EOF_SONG *sp)
 					lastitempos = thisendpos;	//Track the end position of the last note/lyric
 				}
 			}
+			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+			{	//For each note (either tech or normal, whichever is in effect, if the calling function didn't set pgnotes or technotes counters yet) in the track
+				thisendpos = tp->note[ctr2]->pos + tp->note[ctr2]->length;	//The end position of this note
+				if(thisendpos > lastitempos)
+				{
+					lastitempos = thisendpos;	//Track the end position of the last note/lyric
+				}
+			}
 		}
 		else
 		{	//This is a non pro guitar track

@@ -102,7 +102,7 @@ DIALOG eof_settings_dialog[] =
 DIALOG eof_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  480, 444, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
+	{ d_agup_window_proc,0,   48,  482, 478, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
 	{ d_agup_check_proc, 16,  75,  110, 16,  2,   23,  0,    0,      1,   0,   "Inverted Notes",      NULL, NULL },
 	{ d_agup_check_proc, 150, 75,  92 , 16,  2,   23,  0,    0,      1,   0,   "Lefty Mode",          NULL, NULL },
 	{ d_agup_check_proc, 306, 75,  128, 16,  2,   23,  0,    0,      1,   0,   "Note Auto-Adjust",    NULL, NULL },
@@ -118,43 +118,46 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 136, 216, 16,  2,   23,  0,    0,      1,   0,   "Save separate musical MIDI file",NULL, NULL },
 	{ d_agup_check_proc, 16,  152, 216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 1 files",NULL, NULL },
 	{ d_agup_check_proc, 248, 152, 216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 2 files",NULL, NULL },
-	{ d_agup_check_proc, 16,  284, 190, 16,  2,   23,  0,    0,      1,   0,   "Add new notes to selection",NULL, NULL },
+	{ d_agup_check_proc, 16,  305, 190, 16,  2,   23,  0,    0,      1,   0,   "Add new notes to selection",NULL, NULL },
 	{ d_agup_check_proc, 248, 168, 216, 16,  2,   23,  0,    0,      1,   0,   "Drum modifiers affect all diff's",NULL, NULL },
 	{ d_agup_text_proc,  16,  185, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note distance (ms):",NULL,NULL },
 	{ eof_verified_edit_proc,170,185,30,20,  0,   0,   0,    0,      3,   0,   eof_etext2,     "0123456789", NULL },
 	{ d_agup_text_proc,  248, 185, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note length (ms):",NULL,NULL },
 	{ eof_verified_edit_proc,392,185,30,20,  0,   0,   0,    0,      3,   0,   eof_etext,     "0123456789", NULL },
-	{ d_agup_check_proc, 248, 252, 214, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
-	{ d_agup_check_proc, 248, 268, 184, 16,  2,   23,  0,    0,      1,   0,   "Use dB style seek controls",NULL, NULL },
-	{ d_agup_text_proc,  24,  300, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
-	{ d_agup_list_proc,  16,  318, 100, 110, 2,   23,  0,    0,      0,   0,   (void *)eof_input_list,        NULL, NULL },
-	{ d_agup_text_proc,  150, 318, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
-	{ d_agup_list_proc,  129, 333, 100, 95,  2,   23,  0,    0,      0,   0,   (void *)eof_colors_list,       NULL, NULL },
-	{ d_agup_button_proc,12,  449, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-	{ d_agup_button_proc,86,  449, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-	{ d_agup_button_proc,160, 449, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
-	{ d_agup_text_proc,  16,  206, 120, 12,  0,   0,   0,    0,      0,   0,   "Top of 2D pane shows:",NULL,NULL },
-	{ d_agup_radio_proc, 161, 206, 60,  16,  2,   23,  0,    0,      1,   0,   "Names",               NULL, NULL },
-	{ d_agup_radio_proc, 224, 206, 72,  16,  2,   23,  0,    0,      1,   0,   "Sections",            NULL, NULL },
-	{ d_agup_radio_proc, 301, 206, 78,  16,  2,   23,  0,    0,      1,   0,   "Hand pos",            NULL, NULL },
-	{ d_agup_radio_proc, 384, 206, 92,  16,  2,   23,  0,    0,      1,   0,   "RS sections",         NULL, NULL },
-	{ d_agup_radio_proc, 161, 221, 150, 16,  2,   23,  0,    0,      1,   0,   "RS sections+Phrases",         NULL, NULL },
-	{ d_agup_check_proc, 248, 284, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are made 1ms long",NULL, NULL },
-	{ d_agup_check_proc, 16,  236, 340, 16,  2,   23,  0,    0,      1,   0,   "GP import beat text as sections, markers as phrases",NULL, NULL },
-	{ d_agup_check_proc, 248, 300, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short notes",NULL, NULL },
-	{ d_agup_check_proc, 248, 316, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import replaces active track",NULL, NULL },
-	{ d_agup_check_proc, 248, 332, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import nat. harmonics only",NULL, NULL },
-	{ d_agup_check_proc, 248, 348, 190, 16,  2,   23,  0,    0,      1,   0,   "3D render RS style chords",NULL, NULL },
-	{ d_agup_check_proc, 248, 364, 210, 16,  2,   23,  0,    0,      1,   0,   "Import dialogs recall last path",NULL, NULL },
-	{ d_agup_check_proc, 248, 380, 224, 16,  2,   23,  0,    0,      1,   0,   "Rewind when playback is at end",NULL, NULL },
-	{ d_agup_check_proc, 248, 396, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
-	{ d_agup_check_proc, 16,  252, 182, 16,  2,   23,  0,    0,      1,   0,   "Enable logging on launch",NULL, NULL },
-	{ d_agup_check_proc, 248, 412, 196, 16,  2,   23,  0,    0,      1,   0,   "Display seek pos. in seconds",NULL, NULL },
-	{ d_agup_check_proc, 248, 428, 174, 16,  2,   23,  0,    0,      1,   0,   "Make note tails clickable",NULL, NULL },
-	{ d_agup_check_proc, 248, 444, 210, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
-	{ d_agup_check_proc, 16,  268, 200, 16,  2,   23,  0,    0,      1,   0,   "Click to change dialog focus",NULL, NULL },
+	{ d_agup_check_proc, 248, 273, 214, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
+	{ d_agup_check_proc, 248, 289, 184, 16,  2,   23,  0,    0,      1,   0,   "Use dB style seek controls",NULL, NULL },
+	{ d_agup_text_proc,  24,  353, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
+	{ d_agup_list_proc,  16,  371, 100, 110, 2,   23,  0,    0,      0,   0,   (void *)eof_input_list,        NULL, NULL },
+	{ d_agup_text_proc,  150, 371, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
+	{ d_agup_list_proc,  129, 386, 100, 95,  2,   23,  0,    0,      0,   0,   (void *)eof_colors_list,       NULL, NULL },
+	{ d_agup_button_proc,12,  486, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_button_proc,86,  486, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+	{ d_agup_button_proc,160, 486, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+	{ d_agup_text_proc,  16,  227, 120, 12,  0,   0,   0,    0,      0,   0,   "Top of 2D pane shows:",NULL,NULL },
+	{ d_agup_radio_proc, 161, 227, 60,  16,  2,   23,  0,    0,      1,   0,   "Names",               NULL, NULL },
+	{ d_agup_radio_proc, 224, 227, 72,  16,  2,   23,  0,    0,      1,   0,   "Sections",            NULL, NULL },
+	{ d_agup_radio_proc, 301, 227, 78,  16,  2,   23,  0,    0,      1,   0,   "Hand pos",            NULL, NULL },
+	{ d_agup_radio_proc, 384, 227, 92,  16,  2,   23,  0,    0,      1,   0,   "RS sections",         NULL, NULL },
+	{ d_agup_radio_proc, 161, 242, 150, 16,  2,   23,  0,    0,      1,   0,   "RS sections+Phrases",         NULL, NULL },
+	{ d_agup_check_proc, 248, 305, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are made 1ms long",NULL, NULL },
+	{ d_agup_check_proc, 16,  257, 340, 16,  2,   23,  0,    0,      1,   0,   "GP import beat text as sections, markers as phrases",NULL, NULL },
+	{ d_agup_check_proc, 248, 321, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short notes",NULL, NULL },
+	{ d_agup_check_proc, 248, 353, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import replaces active track",NULL, NULL },
+	{ d_agup_check_proc, 248, 369, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import nat. harmonics only",NULL, NULL },
+	{ d_agup_check_proc, 248, 385, 190, 16,  2,   23,  0,    0,      1,   0,   "3D render RS style chords",NULL, NULL },
+	{ d_agup_check_proc, 248, 401, 210, 16,  2,   23,  0,    0,      1,   0,   "Import dialogs recall last path",NULL, NULL },
+	{ d_agup_check_proc, 248, 417, 224, 16,  2,   23,  0,    0,      1,   0,   "Rewind when playback is at end",NULL, NULL },
+	{ d_agup_check_proc, 248, 433, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
+	{ d_agup_check_proc, 16,  273, 182, 16,  2,   23,  0,    0,      1,   0,   "Enable logging on launch",NULL, NULL },
+	{ d_agup_check_proc, 248, 449, 196, 16,  2,   23,  0,    0,      1,   0,   "Display seek pos. in seconds",NULL, NULL },
+	{ d_agup_check_proc, 248, 465, 174, 16,  2,   23,  0,    0,      1,   0,   "Make note tails clickable",NULL, NULL },
+	{ d_agup_check_proc, 16,  321, 210, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
+	{ d_agup_check_proc, 16,  289, 200, 16,  2,   23,  0,    0,      1,   0,   "Click to change dialog focus",NULL, NULL },
 	{ d_agup_check_proc, 16,  168, 200, 16,  2,   23,  0,    0,      1,   0,   "Save separate Bandfuse files",NULL, NULL },
-	{ d_agup_check_proc, 248, 460, 230, 16,  2,   23,  0,    0,      1,   0,   "EOF leaving focus stops playback",NULL, NULL },
+	{ d_agup_check_proc, 248, 481, 230, 16,  2,   23,  0,    0,      1,   0,   "EOF leaving focus stops playback",NULL, NULL },
+	{ d_agup_text_proc,  16,  206, 200, 12,  0,   0,   0,    0,      0,   0,   "Chord density threshold (ms):",NULL,NULL },
+	{ eof_verified_edit_proc,204,206,40,20,  0,   0,   0,    0,      5,   0,   eof_etext3,     "0123456789", NULL },
+	{ d_agup_check_proc, 248, 337, 226, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short chords",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1033,7 +1036,7 @@ int eof_menu_file_settings(void)
 
 int eof_menu_file_preferences(void)
 {
-	int retval, original_input_mode, original_rs1_export_setting;
+	int retval, original_input_mode, original_rs1_export_setting, original_eof_min_note_distance = eof_min_note_distance, original_eof_chord_density_threshold = eof_chord_density_threshold;
 
 	if(eof_song_loaded)
 	{
@@ -1085,6 +1088,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[50].flags = eof_click_changes_dialog_focus ? D_SELECTED : 0;		//Click to change dialog focus
 	eof_preferences_dialog[51].flags = eof_write_bf_files ? D_SELECTED : 0;					//Save separate Bandfuse files
 	eof_preferences_dialog[52].flags = eof_stop_playback_leave_focus ? D_SELECTED : 0;		//EOF leaving focus stops playback
+	eof_preferences_dialog[55].flags = eof_gp_import_truncate_short_chords ? D_SELECTED : 0;//GP import truncates short chords
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1098,6 +1102,14 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[25].d1 = eof_input_mode;										//Input method
 	original_input_mode = eof_input_mode;												//Store this value
 	eof_preferences_dialog[27].d1 = eof_color_set;										//Color set
+	if(eof_chord_density_threshold)
+	{	//If the user has defined a chord density threshold
+		(void) snprintf(eof_etext3, sizeof(eof_etext3) - 1, "%d", eof_chord_density_threshold);	//Populate the field's string with it
+	}
+	else
+	{
+		eof_etext3[0] = '\0';	//Otherwise empty the string
+	}
 
 	do
 	{	//Run the dialog
@@ -1183,6 +1195,26 @@ int eof_menu_file_preferences(void)
 			eof_click_changes_dialog_focus = (eof_preferences_dialog[50].flags == D_SELECTED ? 1 : 0);
 			eof_write_bf_files = (eof_preferences_dialog[51].flags == D_SELECTED ? 1 : 0);
 			eof_stop_playback_leave_focus = (eof_preferences_dialog[52].flags == D_SELECTED ? 1 : 0);
+			if(eof_etext3[0] != '\0')
+			{	//If the chord density threshold field is populated
+				eof_chord_density_threshold = atol(eof_etext3);
+				if(eof_chord_density_threshold < 0)
+				{	//Validate this value
+					eof_chord_density_threshold = 10000;
+				}
+			}
+			else
+			{
+				eof_chord_density_threshold = 0;
+			}
+			if((original_eof_min_note_distance != eof_min_note_distance) || (original_eof_chord_density_threshold != eof_chord_density_threshold))
+			{	//If the minimum note distance or chord density threshold values were changes
+				if(eof_chord_density_threshold < eof_min_note_distance)
+				{	//If EOF is configured to truncate note tails to enforce a distance longer than the chord density threshold
+					allegro_message("Warning:  Configuring the minimum note distance to be longer than the chord density\nthreshold will eliminate chord repeat lines for all chords that aren't close enough to\neach others' start positions.");
+				}
+			}
+			eof_gp_import_truncate_short_chords = (eof_preferences_dialog[55].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 29)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1228,6 +1260,8 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[50].flags = D_SELECTED;			//Click to change dialog focus
 			eof_preferences_dialog[51].flags = 0;					//Save separate Bandfuse files
 			eof_preferences_dialog[52].flags = 1;					//EOF leaving focus stops playback
+			eof_preferences_dialog[55].flags = D_SELECTED;			//GP import truncates short chords
+			snprintf(eof_etext3, sizeof(eof_etext3) - 1, "10000");	//Chord density threshold
 		}//If the user clicked "Default
 	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);

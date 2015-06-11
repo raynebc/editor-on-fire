@@ -3892,8 +3892,8 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 	if(prev < 0)
 		return 0;	//No earlier note
 
-	if(eof_get_note_pos(sp, track, note) > eof_get_note_pos(sp, track, prev) + 10000)
-		return 0;	//Note is not within 10000ms of the previous note
+	if(eof_get_note_pos(sp, track, note) > eof_get_note_pos(sp, track, prev) + eof_get_note_length(sp, track, prev) + eof_chord_density_threshold)
+		return 0;	//Note is not within the configured threshold distance from the previous note
 
 	if(target == 2)
 	{	//Additional checks for Rocksmith 2
