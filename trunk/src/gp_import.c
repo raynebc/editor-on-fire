@@ -3814,7 +3814,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 					usedstrings = pack_getc(inf);	//Used strings bitmask
 					usedtie = 0;	//Reset this bitmask
-					for(ctr4 = 0, bitmask = 64; ctr4 < 7; ctr4++, bitmask>>=1)
+					for(ctr4 = 0, bitmask = 64; ctr4 < 7; ctr4++, bitmask >>= 1)
 					{	//For each of the 7 possible usable strings
 						char thisgemtype = 0;	//Tracks the note type for this string's gem (0 = undefined, 1 = normal, 2 = tie, 3 = dead (muted))
 						flags = 0;
@@ -4427,9 +4427,16 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								np[ctr2]->pos = laststartpos + 0.5;	//Round up to nearest millisecond
 								np[ctr2]->length = lastendpos - laststartpos + 0.5;	//Round up to nearest millisecond
 
-								if(note_is_short && eof_gp_import_truncate_short_notes)
-								{	//If this note is shorter than a quarter note, and the preference to drop the note's sustain in this circumstance is enabled
-									truncate = 1;
+								if(note_is_short)
+								{	//If this note is shorter than a quarter note
+									if((eof_note_count_colors_bitmask(np[ctr2]->note) == 1) && eof_gp_import_truncate_short_notes)
+									{	//If this is a single note and the preference to drop the note's sustain in this circumstance is enabled
+										truncate = 1;
+									}
+									else if((eof_note_count_colors_bitmask(np[ctr2]->note) > 1) && eof_gp_import_truncate_short_chords)
+									{	//If this is a chord and the preference to drop the note's sustain in this circumstance is enabled
+										truncate = 1;
+									}
 								}
 								if((mute == 1) || (np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
 								{	//If this note is entirely string muted (only bit 0 of the mute variable was set, ie. no non-muted notes) or is palm muted
