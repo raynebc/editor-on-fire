@@ -898,4 +898,10 @@ char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned
 	//If the tech note is found to overlap at least one note, 2 is returned
 	// If note_num is not NULL, the matching regular note number is returned through it
 
+void eof_pro_guitar_track_enforce_chord_density(EOF_PRO_GUITAR_TRACK *tp);
+	//If the "Apply crazy to repeated chords separated by a rest" preference is enabled,
+	//and if any chords are repeats of non-selected notes, and those chords are more than the
+	//configured minimum note distance apart from the preceding notes (or 2ms, whichever is
+	//larger) crazy status is applied so that the chords in question export as high density
+
 #endif
