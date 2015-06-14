@@ -134,6 +134,7 @@ int         eof_gp_import_truncate_short_chords = 1;	//If nonzero during GP impo
 int         eof_gp_import_replaces_track = 1;	//If nonzero during GP import, the imported track replaces the active track instead of just the active track difficulty
 int         eof_gp_import_nat_harmonics_only = 0;	//If nonzero during GP import, only natural harmonics are imported as notes with harmonic status
 int         eof_min_note_length = 0;			//Specifies the user-configured minimum length for all non-drum notes (for making Guitar Hero customs, is set to 0 if undefined)
+int         eof_enforce_chord_density = 0;		//Specifies whether repeated chords that are separated by a rest automatically have crazy status applied to force RS export as low density chords
 int         eof_chord_density_threshold = 10000;	//Specifies the maximum distance between repeated chords that allows them to be marked as high density (repeat lines)
 int         eof_min_note_distance = 3;			//Specifies the user-configured minimum distance between notes (to avoid problems with timing conversion leading to precision loss that can cause notes to combine/drop)
 int         eof_render_bass_drum_in_lane = 0;	//If nonzero, the 3D rendering will draw bass drum gems in a lane instead of as a bar spanning all lanes

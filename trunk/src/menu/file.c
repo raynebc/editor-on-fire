@@ -124,7 +124,7 @@ DIALOG eof_preferences_dialog[] =
 	{ eof_verified_edit_proc,170,185,30,20,  0,   0,   0,    0,      3,   0,   eof_etext2,     "0123456789", NULL },
 	{ d_agup_text_proc,  248, 185, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note length (ms):",NULL,NULL },
 	{ eof_verified_edit_proc,392,185,30,20,  0,   0,   0,    0,      3,   0,   eof_etext,     "0123456789", NULL },
-	{ d_agup_check_proc, 248, 273, 214, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
+	{ d_agup_check_proc, 248, 497, 214, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
 	{ d_agup_check_proc, 248, 289, 184, 16,  2,   23,  0,    0,      1,   0,   "Use dB style seek controls",NULL, NULL },
 	{ d_agup_text_proc,  24,  353, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
 	{ d_agup_list_proc,  16,  371, 100, 110, 2,   23,  0,    0,      0,   0,   (void *)eof_input_list,        NULL, NULL },
@@ -148,7 +148,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 401, 210, 16,  2,   23,  0,    0,      1,   0,   "Import dialogs recall last path",NULL, NULL },
 	{ d_agup_check_proc, 248, 417, 224, 16,  2,   23,  0,    0,      1,   0,   "Rewind when playback is at end",NULL, NULL },
 	{ d_agup_check_proc, 248, 433, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
-	{ d_agup_check_proc, 16,  273, 182, 16,  2,   23,  0,    0,      1,   0,   "Enable logging on launch",NULL, NULL },
+	{ d_agup_check_proc, 248, 206, 182, 16,  2,   23,  0,    0,      1,   0,   "Enable logging on launch",NULL, NULL },
 	{ d_agup_check_proc, 248, 449, 196, 16,  2,   23,  0,    0,      1,   0,   "Display seek pos. in seconds",NULL, NULL },
 	{ d_agup_check_proc, 248, 465, 174, 16,  2,   23,  0,    0,      1,   0,   "Make note tails clickable",NULL, NULL },
 	{ d_agup_check_proc, 16,  321, 210, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
@@ -158,6 +158,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_text_proc,  16,  206, 200, 12,  0,   0,   0,    0,      0,   0,   "Chord density threshold (ms):",NULL,NULL },
 	{ eof_verified_edit_proc,204,206,40,20,  0,   0,   0,    0,      5,   0,   eof_etext3,     "0123456789", NULL },
 	{ d_agup_check_proc, 248, 337, 226, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short chords",NULL, NULL },
+	{ d_agup_check_proc, 16,  273, 340, 16,  2,   23,  0,    0,      1,   0,   "Apply crazy to repeated chords separated by a rest",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1089,6 +1090,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[51].flags = eof_write_bf_files ? D_SELECTED : 0;					//Save separate Bandfuse files
 	eof_preferences_dialog[52].flags = eof_stop_playback_leave_focus ? D_SELECTED : 0;		//EOF leaving focus stops playback
 	eof_preferences_dialog[55].flags = eof_gp_import_truncate_short_chords ? D_SELECTED : 0;//GP import truncates short chords
+	eof_preferences_dialog[56].flags = eof_enforce_chord_density ? D_SELECTED : 0;			//Apply crazy to repeated chords separated by a rest
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1215,6 +1217,7 @@ int eof_menu_file_preferences(void)
 				}
 			}
 			eof_gp_import_truncate_short_chords = (eof_preferences_dialog[55].flags == D_SELECTED ? 1 : 0);
+			eof_enforce_chord_density = (eof_preferences_dialog[56].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 29)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1262,6 +1265,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[52].flags = 1;					//EOF leaving focus stops playback
 			eof_preferences_dialog[55].flags = D_SELECTED;			//GP import truncates short chords
 			snprintf(eof_etext3, sizeof(eof_etext3) - 1, "10000");	//Chord density threshold
+			eof_preferences_dialog[56].flags = 0;					//Apply crazy to repeated chords separated by a rest
 		}//If the user clicked "Default
 	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);

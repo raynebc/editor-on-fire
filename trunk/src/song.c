@@ -4780,6 +4780,11 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 		tp->arrangement = 0;	//Reset it to undefined
 	}
 
+	if(eof_enforce_chord_density)
+	{	//If the user opted to automatically apply crazy status for repeated chords that are separated from their preceding chords by a rest
+		eof_pro_guitar_track_enforce_chord_density(tp);
+	}
+
 	if(!sel)
 	{
 		if(eof_selection.current < tp->notes)
@@ -7669,4 +7674,36 @@ char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned
 
 	eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Re-enable tech view if applicable
 	return 0;	//No overlap note found
+}
+
+void eof_pro_guitar_track_enforce_chord_density(EOF_PRO_GUITAR_TRACK *tp)
+{
+	unsigned long ctr, threshold = 2;
+
+	if(!tp)
+		return;	//Invalid parameter
+
+	if(tp->notes < 2)
+		return;	//Don't run unless there are at least two notes in the track
+
+	if(eof_min_note_distance > threshold)
+	{	//If the configured minimum note distance is larger than the default threshold
+		threshold = eof_min_note_distance;
+	}
+	for(ctr = 0; ctr < tp->notes - 1; ctr++)
+	{	//For each note in the track from the first to the penultimate
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (tp->note[ctr]->type == eof_note_type))
+			continue;	//Skip this note if it is selected, as the user may wish to edit it before this function alters the next note
+
+		if(eof_note_count_colors_bitmask(tp->note[ctr]->note) > 1)
+		{	//If this note is a chord
+			if(eof_pro_guitar_note_compare(tp, ctr, tp, ctr + 1, 0) == 0)
+			{	//If the next note matches this chord
+				if(tp->note[ctr + 1]->pos - tp->note[ctr]->pos - tp->note[ctr]->length > threshold)
+				{	//If the space between these two chords is greater than the threshold distance
+					tp->note[ctr + 1]->flags |= EOF_NOTE_FLAG_CRAZY;	//Apply the crazy flag to the next chord to force it to be low density during RS export
+				}
+			}
+		}
+	}
 }
