@@ -297,6 +297,8 @@ extern char        eof_3d_fretboard_coordinates_cached;
 extern int         eof_av_delay;
 extern int         eof_midi_tone_delay;
 extern int         eof_midi_synth_instrument_guitar;
+extern int         eof_midi_synth_instrument_guitar_muted;
+extern int         eof_midi_synth_instrument_guitar_harm;
 extern int         eof_midi_synth_instrument_bass;
 extern int         eof_buffer_size;
 extern int         eof_audio_fine_tune;
@@ -311,6 +313,7 @@ extern int         eof_disable_3d_rendering;
 extern int         eof_disable_2d_rendering;
 extern int         eof_disable_info_panel;
 extern int         eof_paste_erase_overlap;
+extern int         eof_write_fof_files;
 extern int         eof_write_rb_files;
 extern int         eof_write_music_midi;
 extern int         eof_write_rs_files;
@@ -505,7 +508,7 @@ extern char eof_log_level;
 extern char enable_logging;
 
 extern int eof_custom_zoom_level;
-extern char eof_display_flats;
+extern int eof_display_flats;
 
 extern long xchart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D rendering, updated by eof_set_3D_lane_positions()
 extern long ychart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D rendering, updated by eof_set_2D_lane_positions()

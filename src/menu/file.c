@@ -119,14 +119,14 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 16,  152, 216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 1 files",NULL, NULL },
 	{ d_agup_check_proc, 248, 152, 216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 2 files",NULL, NULL },
 	{ d_agup_check_proc, 16,  305, 190, 16,  2,   23,  0,    0,      1,   0,   "Add new notes to selection",NULL, NULL },
-	{ d_agup_check_proc, 248, 168, 216, 16,  2,   23,  0,    0,      1,   0,   "Drum modifiers affect all diff's",NULL, NULL },
+	{ d_agup_check_proc, 16,  337, 216, 16,  2,   23,  0,    0,      1,   0,   "Drum modifiers affect all diff's",NULL, NULL },
 	{ d_agup_text_proc,  16,  185, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note distance (ms):",NULL,NULL },
 	{ eof_verified_edit_proc,170,185,30,20,  0,   0,   0,    0,      3,   0,   eof_etext2,     "0123456789", NULL },
 	{ d_agup_text_proc,  248, 185, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note length (ms):",NULL,NULL },
 	{ eof_verified_edit_proc,392,185,30,20,  0,   0,   0,    0,      3,   0,   eof_etext,     "0123456789", NULL },
 	{ d_agup_check_proc, 248, 497, 214, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
 	{ d_agup_check_proc, 248, 289, 184, 16,  2,   23,  0,    0,      1,   0,   "Use dB style seek controls",NULL, NULL },
-	{ d_agup_text_proc,  24,  353, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
+	{ d_agup_text_proc,  24,  354, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
 	{ d_agup_list_proc,  16,  371, 100, 110, 2,   23,  0,    0,      0,   0,   (void *)eof_input_list,        NULL, NULL },
 	{ d_agup_text_proc,  150, 371, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
 	{ d_agup_list_proc,  129, 386, 100, 95,  2,   23,  0,    0,      0,   0,   (void *)eof_colors_list,       NULL, NULL },
@@ -159,6 +159,7 @@ DIALOG eof_preferences_dialog[] =
 	{ eof_verified_edit_proc,204,206,40,20,  0,   0,   0,    0,      5,   0,   eof_etext3,     "0123456789", NULL },
 	{ d_agup_check_proc, 248, 337, 226, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short chords",NULL, NULL },
 	{ d_agup_check_proc, 16,  273, 340, 16,  2,   23,  0,    0,      1,   0,   "Apply crazy to repeated chords separated by a rest",NULL, NULL },
+	{ d_agup_check_proc, 248, 168, 182, 16,  2,   23,  0,    0,      1,   0,   "Save FoF/Phase Shift files",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -356,15 +357,18 @@ int eof_menu_file_new_supplement(char *directory, char check)
 		{
 			err = 1;
 		}
-		(void) replace_filename(eof_temp_filename, directory, "song.ini", 1024);
-		if(exists(eof_temp_filename))
-		{
-			err = 1;
-		}
-		(void) replace_filename(eof_temp_filename, directory, "notes.mid", 1024);
-		if(exists(eof_temp_filename))
-		{
-			err = 1;
+		if(eof_write_fof_files)
+		{	//If the user opted to save Frets on Fire and Phase Shift files
+			(void) replace_filename(eof_temp_filename, directory, "song.ini", 1024);
+			if(exists(eof_temp_filename))
+			{
+				err = 1;
+			}
+			(void) replace_filename(eof_temp_filename, directory, "notes.mid", 1024);
+			if(exists(eof_temp_filename))
+			{
+				err = 1;
+			}
 		}
 	}
 	if(err)
@@ -1091,6 +1095,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[52].flags = eof_stop_playback_leave_focus ? D_SELECTED : 0;		//EOF leaving focus stops playback
 	eof_preferences_dialog[55].flags = eof_gp_import_truncate_short_chords ? D_SELECTED : 0;//GP import truncates short chords
 	eof_preferences_dialog[56].flags = eof_enforce_chord_density ? D_SELECTED : 0;			//Apply crazy to repeated chords separated by a rest
+	eof_preferences_dialog[57].flags = eof_write_fof_files ? D_SELECTED : 0;				//Save FoF/Phase Shift files
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1218,6 +1223,7 @@ int eof_menu_file_preferences(void)
 			}
 			eof_gp_import_truncate_short_chords = (eof_preferences_dialog[55].flags == D_SELECTED ? 1 : 0);
 			eof_enforce_chord_density = (eof_preferences_dialog[56].flags == D_SELECTED ? 1 : 0);
+			eof_write_fof_files = (eof_preferences_dialog[57].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 29)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1266,6 +1272,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[55].flags = D_SELECTED;			//GP import truncates short chords
 			snprintf(eof_etext3, sizeof(eof_etext3) - 1, "10000");	//Chord density threshold
 			eof_preferences_dialog[56].flags = 0;					//Apply crazy to repeated chords separated by a rest
+			eof_preferences_dialog[57].flags = D_SELECTED;			//Save FoF/Phase Shift files
 		}//If the user clicked "Default
 	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -2446,8 +2453,8 @@ int eof_save_helper(char *destfilename, char silent)
 		/* pre-parse the lyrics to determine if any of them are not contained within a lyric phrase */
 		if(!silent)
 		{	//If checks and warnings aren't suppressed
-			if(eof_song->tags->lyrics)
-			{	//If user enabled the Lyrics checkbox in song properties
+			if(eof_song->tags->lyrics && eof_write_fof_files)
+			{	//If user enabled the Lyrics checkbox in song properties and wants to export FoF related files
 				for(ctr = 0; ctr < eof_song->vocal_track[0]->lyrics; ctr++)
 				{	//For each lyric
 					if((eof_song->vocal_track[0]->lyric[ctr]->note != EOF_LYRIC_PERCUSSION) && (eof_find_lyric_line(ctr) == NULL))
@@ -2909,46 +2916,12 @@ int eof_save_helper(char *destfilename, char silent)
 	{
 		fixvoxpitches = fixvoxphrases = 0;	//Answer no to the prompts on behalf of the user
 	}
-	(void) append_filename(eof_temp_filename, newfolderpath, "notes.mid", (int) sizeof(eof_temp_filename));
-	if(eof_export_midi(eof_song, eof_temp_filename, 0, fixvoxpitches, fixvoxphrases))
-	{	//If saving the normal MIDI succeeded, proceed with saving song.ini and additional MIDI files if applicable
-		if(eof_write_rb_files)
-		{	//If the user opted to also save RBN2 and RB3 pro guitar upgrade compliant MIDIs
-			(void) append_filename(eof_temp_filename, newfolderpath, "notes_rbn.mid", (int) sizeof(eof_temp_filename));
-			(void) eof_export_midi(eof_song, eof_temp_filename, 1, fixvoxpitches, fixvoxphrases);	//Write a RBN2 compliant MIDI
-			if(eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS) || eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS_22) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR_22))
-			{	//If any of the pro guitar tracks are populated
-				//Write the pro guitar upgrade MIDI
-				(void) append_filename(eof_temp_filename, newfolderpath, "notes_pro.mid", (int) sizeof(eof_temp_filename));
-				(void) eof_export_midi(eof_song, eof_temp_filename, 2, fixvoxpitches, fixvoxphrases);	//Write a RB3 pro guitar upgrade compliant MIDI
 
-				//Write the Rock Band MIDI that can be built by the C3 release of Magma
-				(void) append_filename(eof_temp_filename, newfolderpath, "notes_c3.mid", (int) sizeof(eof_temp_filename));
-				(void) eof_export_midi(eof_song, eof_temp_filename, 3, fixvoxpitches, fixvoxphrases);	//Write a MIDI containing the RBN and pro guitar content
-
-				//Write a DTA file for the pro guitar upgrade
-				(void) ustrcpy(eof_temp_filename, newfolderpath);
-				put_backslash(eof_temp_filename);
-				(void) ustrcat(eof_temp_filename, "songs_upgrades");
-				if(!file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
-				{	//If the songs_upgrades folder doesn't already exist
-					if(eof_mkdir(eof_temp_filename))
-					{	//And it couldn't be created
-						allegro_message("Could not create folder!\n%s", eof_temp_filename);
-						return 10;	//Return failure:  Could not recreate project folder
-					}
-				}
-				put_backslash(eof_temp_filename);
-				(void) replace_filename(eof_temp_filename, eof_temp_filename, "upgrades.dta", (int) sizeof(eof_temp_filename));
-				(void) eof_save_upgrades_dta(eof_song, eof_temp_filename);		//Create the upgrades.dta file in the songs_upgrades folder if it does not already exist
-			}
-		}
-
-		if(eof_write_music_midi)
-		{	//If the user opted to also save a normal musical MIDI
-			(void) append_filename(eof_temp_filename, newfolderpath, "notes_music.mid", (int) sizeof(eof_temp_filename));
-			(void) eof_export_music_midi(eof_song, eof_temp_filename);
-		}
+	if(eof_write_fof_files)
+	{	//If the user opted to save FoF related files
+		/* Save MIDI file */
+		(void) append_filename(eof_temp_filename, newfolderpath, "notes.mid", (int) sizeof(eof_temp_filename));
+		(void) eof_export_midi(eof_song, eof_temp_filename, 0, fixvoxpitches, fixvoxphrases);
 
 		/* Save INI file */
 		(void) append_filename(eof_temp_filename, newfolderpath, "song.ini", (int) sizeof(eof_temp_filename));
@@ -2969,7 +2942,45 @@ int eof_save_helper(char *destfilename, char silent)
 				(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,SCRIPT_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
 			}
 		}
-	}//If saving the normal MIDI succeeded, proceed with saving song.ini and additional MIDI files if applicable
+	}
+
+	if(eof_write_rb_files)
+	{	//If the user opted to also save RBN2 and RB3 pro guitar upgrade compliant MIDIs
+		(void) append_filename(eof_temp_filename, newfolderpath, "notes_rbn.mid", (int) sizeof(eof_temp_filename));
+		(void) eof_export_midi(eof_song, eof_temp_filename, 1, fixvoxpitches, fixvoxphrases);	//Write a RBN2 compliant MIDI
+		if(eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS) || eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS_22) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR_22))
+		{	//If any of the pro guitar tracks are populated
+			//Write the pro guitar upgrade MIDI
+			(void) append_filename(eof_temp_filename, newfolderpath, "notes_pro.mid", (int) sizeof(eof_temp_filename));
+			(void) eof_export_midi(eof_song, eof_temp_filename, 2, fixvoxpitches, fixvoxphrases);	//Write a RB3 pro guitar upgrade compliant MIDI
+
+			//Write the Rock Band MIDI that can be built by the C3 release of Magma
+			(void) append_filename(eof_temp_filename, newfolderpath, "notes_c3.mid", (int) sizeof(eof_temp_filename));
+			(void) eof_export_midi(eof_song, eof_temp_filename, 3, fixvoxpitches, fixvoxphrases);	//Write a MIDI containing the RBN and pro guitar content
+
+			//Write a DTA file for the pro guitar upgrade
+			(void) ustrcpy(eof_temp_filename, newfolderpath);
+			put_backslash(eof_temp_filename);
+			(void) ustrcat(eof_temp_filename, "songs_upgrades");
+			if(!file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
+			{	//If the songs_upgrades folder doesn't already exist
+				if(eof_mkdir(eof_temp_filename))
+				{	//And it couldn't be created
+					allegro_message("Could not create folder!\n%s", eof_temp_filename);
+					return 10;	//Return failure:  Could not recreate project folder
+				}
+			}
+			put_backslash(eof_temp_filename);
+			(void) replace_filename(eof_temp_filename, eof_temp_filename, "upgrades.dta", (int) sizeof(eof_temp_filename));
+			(void) eof_save_upgrades_dta(eof_song, eof_temp_filename);		//Create the upgrades.dta file in the songs_upgrades folder if it does not already exist
+		}
+	}
+
+	if(eof_write_music_midi)
+	{	//If the user opted to also save a normal musical MIDI
+		(void) append_filename(eof_temp_filename, newfolderpath, "notes_music.mid", (int) sizeof(eof_temp_filename));
+		(void) eof_export_music_midi(eof_song, eof_temp_filename);
+	}
 
 	if(eof_write_rs_files || eof_write_rs2_files)
 	{	//If the user wants to save Rocksmith capable files

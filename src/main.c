@@ -105,6 +105,8 @@ char        eof_desktop = 1;
 int         eof_av_delay = 200;
 int         eof_midi_tone_delay = 0;
 int         eof_midi_synth_instrument_guitar = 28;	//Electric Guitar (clean) MIDI instrument
+int         eof_midi_synth_instrument_guitar_muted = 29;	//An alternate MIDI instrument to play for palm muted guitar notes
+int         eof_midi_synth_instrument_guitar_harm = 32;		//An alternate MIDI instrument to play for harmonic guitar notes
 int         eof_midi_synth_instrument_bass = 34;	//Electric bass (fingered) MIDI instrument
 int         eof_buffer_size = 4096;
 int         eof_audio_fine_tune = 0;
@@ -119,6 +121,7 @@ int         eof_disable_3d_rendering = 0;
 int         eof_disable_2d_rendering = 0;
 int         eof_disable_info_panel = 0;
 int         eof_paste_erase_overlap = 0;
+int         eof_write_fof_files = 1;			//If nonzero, files are written during save that are used by Frets on Fire and Phase Shift
 int         eof_write_rb_files = 0;				//If nonzero, extra files are written during save that are used for authoring Rock Band customs
 int         eof_write_music_midi = 0;			//If nonzero, an extra MIDI file is written during save that contains normal MIDI pitches and can be used for other MIDI based games like Songs2See and Synthesia
 int         eof_write_rs_files = 0;				//If nonzero, extra files are written during save that are used for authoring Rocksmith customs
@@ -367,7 +370,7 @@ char eof_log_level = 0;		//Is set to 0 if logging is disabled
 char enable_logging = 1;	//Is set to 0 if logging is disabled
 
 int eof_custom_zoom_level = 0;	//Tracks any user-defined custom zoom level
-char eof_display_flats = 0;		//Used to allow eof_get_tone_name() to return note names containing flats.  By default, display as sharps instead
+int eof_display_flats = 0;		//Used to allow eof_get_tone_name() to return note names containing flats.  By default, display as sharps instead
 
 /* storage for keyboard input, needed since we use key data in more than one function */
 int eof_key_pressed = 0;

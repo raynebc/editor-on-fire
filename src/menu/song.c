@@ -570,6 +570,16 @@ void eof_prepare_song_menu(void)
 			eof_song_menu[8].flags = 0;
 		}
 
+		/* leading silence */
+		if(eof_silence_loaded)
+		{	//If no chart audio is loaded
+			eof_song_menu[13].flags = D_DISABLED;	//Song>Leading silence
+		}
+		else
+		{
+			eof_song_menu[13].flags = 0;
+		}
+
 		/* lock tempo map */
 		if(eof_song->tags->tempo_map_locked)
 		{
@@ -1722,8 +1732,7 @@ int eof_menu_song_add_silence(void)
 	eof_log("eof_menu_song_add_silence() entered", 1);
 
 	if(eof_silence_loaded)
-	{
-		allegro_message("Cannot add silence when no audio is loaded");
+	{	//Do not allow this function to run when no audio is loaded
 		return 1;
 	}
 
