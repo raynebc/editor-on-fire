@@ -698,7 +698,6 @@ if(eof_key_code == KEY_PAUSE)
 {
 	eof_use_key();
 	//Debug action here
-	eof_pro_guitar_track_enforce_chord_density(eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum]);
 }
 
 /* keyboard shortcuts that may or may not be used when the chart/catalog is playing */

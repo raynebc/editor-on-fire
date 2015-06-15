@@ -4,6 +4,7 @@
 #include "main.h"
 #include "mix.h"
 #include "menu/song.h"	//For eof_set_percussion_cue()
+#include "tuning.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -61,6 +62,8 @@ void eof_load_config(char * fn)
 	eof_av_delay = get_config_int("config", "av_delay", 300);
 	eof_midi_tone_delay = get_config_int("config", "eof_midi_tone_delay", 0);
 	eof_midi_synth_instrument_guitar = get_config_int("config", "eof_midi_synth_instrument_guitar", 28);
+	eof_midi_synth_instrument_guitar_muted = get_config_int("config", "eof_midi_synth_instrument_guitar_muted", 29);
+	eof_midi_synth_instrument_guitar_harm = get_config_int("config", "eof_midi_synth_instrument_guitar_harm", 32);
 	eof_midi_synth_instrument_bass = get_config_int("config", "eof_midi_synth_instrument_bass", 34);
 	eof_buffer_size = get_config_int("config", "buffer_size", 6144);
 	eof_smooth_pos = get_config_int("config", "smooth_playback", 1);
@@ -130,6 +133,7 @@ void eof_load_config(char * fn)
 	eof_clap_for_mutes = get_config_int("preferences", "eof_clap_for_mutes", 1);
 	eof_set_percussion_cue(eof_selected_percussion_cue);
 	eof_paste_erase_overlap = get_config_int("preferences", "eof_paste_erase_overlap", 0);
+	eof_write_fof_files = get_config_int("preferences", "eof_write_fof_files", 1);
 	eof_write_rb_files = get_config_int("preferences", "eof_write_rb_files", 0);
 	eof_write_music_midi = get_config_int("preferences", "eof_write_music_midi", 0);
 	eof_write_rs_files = get_config_int("preferences", "eof_write_rs_files", 0);
@@ -246,6 +250,14 @@ void eof_load_config(char * fn)
 		eof_controller_load_config(&eof_drums, "drums");
 		eof_controller_read_button_names(&eof_drums);
 	}
+
+	/* other */
+	eof_display_flats = get_config_int("other", "eof_display_flats", 0);
+	if(eof_display_flats)
+	{
+		eof_note_names = eof_note_names_flat;
+		eof_slash_note_names = eof_slash_note_names_flat;
+	}
 }
 
 void eof_save_config(char * fn)
@@ -262,6 +274,8 @@ void eof_save_config(char * fn)
 	set_config_int("config", "av_delay", eof_av_delay);
 	set_config_int("config", "eof_midi_tone_delay", eof_midi_tone_delay);
 	set_config_int("config", "eof_midi_synth_instrument_guitar", eof_midi_synth_instrument_guitar);
+	set_config_int("config", "eof_midi_synth_instrument_guitar_muted", eof_midi_synth_instrument_guitar_muted);
+	set_config_int("config", "eof_midi_synth_instrument_guitar_harm", eof_midi_synth_instrument_guitar_harm);
 	set_config_int("config", "eof_midi_synth_instrument_bass", eof_midi_synth_instrument_bass);
 	set_config_int("config", "buffer_size", eof_buffer_size);
 	set_config_int("config", "smooth_playback", eof_smooth_pos);
@@ -296,6 +310,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_selected_percussion_cue", eof_selected_percussion_cue);
 	set_config_int("preferences", "eof_clap_for_mutes", eof_clap_for_mutes);
 	set_config_int("preferences", "eof_paste_erase_overlap", eof_paste_erase_overlap);
+	set_config_int("preferences", "eof_write_fof_files", eof_write_fof_files);
 	set_config_int("preferences", "eof_write_rb_files", eof_write_rb_files);
 	set_config_int("preferences", "eof_write_music_midi", eof_write_music_midi);
 	set_config_int("preferences", "eof_write_rs_files", eof_write_rs_files);
@@ -369,4 +384,7 @@ void eof_save_config(char * fn)
 
 	eof_controller_save_config(&eof_guitar, "guitar");
 	eof_controller_save_config(&eof_drums, "drums");
+
+	/* write other settings */
+	set_config_int("other", "eof_display_flats", eof_display_flats);
 }
