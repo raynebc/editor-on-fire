@@ -4409,8 +4409,8 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 		{	//For each arpeggio phrase that precedes the one in the outer for loop
 			ppp = &tp->arpeggio[ctr2 - 1];	//Get a pointer to this preceding arpeggio
 
-			if((pp->start_pos <= ppp->end_pos) && (pp->end_pos >= ppp->start_pos))
-			{	//If this arpeggio overlaps a preceding one
+			if((pp->start_pos <= ppp->end_pos) && (pp->end_pos >= ppp->start_pos) && (pp->difficulty == ppp->difficulty))
+			{	//If this arpeggio overlaps a preceding one and they are in the same track difficulty
 				if(pp->end_pos > ppp->end_pos)
 				{	//Keep the later end point of the two phrases
 					ppp->end_pos = pp->end_pos;
@@ -4761,15 +4761,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 					memcpy(tp->note[ctr2]->frets, frets, 6);	//Apply changes (if any) to the note at the base of the arpeggio phrase
 					tp->note[ctr2]->note = note;
 					tp->note[ctr2]->ghost = ghost;
-					if(nextnote >= 0)
-					{	//If the last note in the track difficulty had not been reached
-						ctr2 = nextnote;	//Iterate to the next note that followed the arpeggio phrase
-					}
-					else
-					{	//Otherwise stop processing the arpeggio phrases
-						ctr = tp->arpeggios;	//Set a condition to exit the outer for loop
-						break;	//exit the inner for loop
-					}
+					break;	//Exit the inner for loop (no other notes in this track will be within the arpeggio phrase that was just parsed)
 				}//If this note's start position is within 10ms of an arpeggio phrase in this track difficulty
 			}//For each note in the track (inner for loop)
 		}//For each arpeggio phrase in the track (outer for loop)
@@ -7214,7 +7206,10 @@ void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsign
 					}
 					else
 					{	//The add level function is being performed, this arpeggio will be duplicated into the next higher difficulty instead of just having its difficulty incremented
+						EOF_PHRASE_SECTION *newptr;
 						(void) eof_track_add_section(sp, track, EOF_ARPEGGIO_SECTION, diff + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
+						newptr = &tp->arpeggio[tp->arpeggios - 1];	//Pointer to the new arpeggio phrase
+						newptr->flags = ptr->flags;	//Copy the arpeggio flags in case it was a handshape that was copied
 					}
 				}
 				else
