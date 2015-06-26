@@ -32,7 +32,7 @@ typedef struct
 	EOF_IMPORT_MIDI_EVENT * event[EOF_IMPORT_MAX_EVENTS];
 	unsigned long events;
 	int type;
-	int game;	//Is set to 0 to indicate a Frets on Fire, Rock Band or Guitar Hero style MIDI is being imported, set to 1 to indicate a Power Gig MIDI is being imported
+	int game;	//Is set to 0 to indicate a Frets on Fire, Rock Band or Guitar Hero style MIDI is being imported, 1 to indicate a Power Gig MIDI is being imported or 2 to indicate a Guitar Hero animation track is being imported
 	unsigned char diff;	//Some tracks (such as the pro keys and Power Gig tracks) have all of their contents applicable to a single difficulty level
 	unsigned long tracknum;
 } EOF_IMPORT_MIDI_EVENT_LIST;
@@ -728,20 +728,44 @@ EOF_SONG * eof_import_midi(const char * fn)
 									}
 									if(eof_import_events[i]->type == 0)
 									{	//If the track name didn't match any of the standard Power Gig track names either
-										if(ustrstr(text,"PART") || (ustrstr(text,"HARM") == text))
-										{	//If this is a track that contains the word "PART" in the name (or begins with "HARM")
-											eof_clear_input();
-											if(alert("Unsupported track:", text, "Import raw data?", "&Yes", "&No", 'y', 'n') == 1)
-											{	//If the user opts to import the raw track data
-												eof_MIDI_add_track(sp, eof_get_raw_MIDI_data(eof_work_midi, track[i], 0));	//Add this to the linked list of raw MIDI track data
+										for(j = 1; j < EOF_GUITAR_HERO_ANIMATION_TRACKS_MAX; j++)
+										{	//Compare the track name against the tracks in eof_guitar_hero_animation_tracks[]
+											if(!ustricmp(text, eof_guitar_hero_animation_tracks[j].name))
+											{	//If this track name matches an expected name
+												if(eof_midi_tracks[j].track_format == 0)
+												{	//If this is a track that is to be skipped
+													eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
+												}
+												else
+												{
+													eof_import_events[i]->type = eof_guitar_hero_animation_tracks[j].track_type;
+													eof_import_events[i]->game = 2;	//Note that this is a Guitar Hero animation track
+													eof_import_events[i]->diff = eof_guitar_hero_animation_tracks[j].difficulty;
+													eof_import_events[i]->tracknum = j;
+													if(eof_midi_tracks[j].track_type == EOF_TRACK_GUITAR)
+													{	//If this is the guitar track
+														rbg = 1;	//Note that the track has been found
+													}
+												}
 											}
-											eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
 										}
-										else if(!ustricmp(text, "EVENTS"))
-										{	//This track is the EVENTS track
-											is_event_track = 1;	//Store any encountered text events into the global events array
+										if(eof_import_events[i]->type == 0)
+										{	//If the track name didn't match any of the Guitar Hero animation track names either
+											if(ustrstr(text,"PART") || (ustrstr(text,"HARM") == text))
+											{	//If this is a track that contains the word "PART" in the name (or begins with "HARM")
+												eof_clear_input();
+												if(alert("Unsupported track:", text, "Import raw data?", "&Yes", "&No", 'y', 'n') == 1)
+												{	//If the user opts to import the raw track data
+													eof_MIDI_add_track(sp, eof_get_raw_MIDI_data(eof_work_midi, track[i], 0));	//Add this to the linked list of raw MIDI track data
+												}
+												eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
+											}
+											else if(!ustricmp(text, "EVENTS"))
+											{	//This track is the EVENTS track
+												is_event_track = 1;	//Store any encountered text events into the global events array
+											}
 										}
-									}
+									}//If the track name didn't match any of the standard Power Gig track names either
 								}//If the track name didn't match any of the standard Rock Band track names
 								break;
 							}
@@ -1225,9 +1249,13 @@ set_window_title(debugtext);
 				{	//Rock Band format MIDI track
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tParsing track \"%s\"", eof_midi_tracks[picked_track].name);
 				}
-				else
+				else if(eof_import_events[i]->game == 1)
 				{	//Power Gig format MIDI track
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tParsing track \"%s\"", eof_power_gig_tracks[eof_import_events[i]->tracknum].name);
+				}
+				else
+				{	//Guitar Hero animation MIDI track
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tParsing track \"%s\"", eof_guitar_hero_animation_tracks[eof_import_events[i]->tracknum].name);
 				}
 			}
 			else
@@ -1522,6 +1550,38 @@ set_window_title(debugtext);
 									break;
 								}
 							}
+							else if(eof_import_events[i]->game == 2)
+							{	//If the MIDI track being parsed is a Guitar Hero animation track, convert drum animations to drum notes
+								diff = eof_import_events[i]->diff;
+								switch(eof_import_events[i]->event[j]->d1)
+								{
+									case 24:	//Kick (bass) drum animation
+										lane = 0;
+									break;
+									case 25:	//Snare drum animation
+										lane = 1;
+									break;
+									case 26:	//Hi hat drum animation
+										lane = 2;
+									break;
+									case 36:	//Kick (bass) drum animation
+										lane = 0;
+									break;
+									case 37:	//Crash cymbal drum animation
+										lane = 4;
+									break;
+									case 60:	//Kick (bass) drum animation
+										lane = 0;
+									break;
+									case 61:	//Generic cymbal drum animation
+										lane = 4;
+									break;
+									default:
+										lane = 0;
+										diff = -1;	//Unknown item
+									break;
+								}
+							}
 							else
 							{	//Otherwise use the MIDI values used in Rock Band
 								if((eof_import_events[i]->event[j]->d1 >= 60) && (eof_import_events[i]->event[j]->d1 < 60 + 6))
@@ -1794,6 +1854,17 @@ set_window_title(debugtext);
 								if(powergig_hopo)
 								{	//If a HOPO phrase is in effect
 									eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_NOTE_FLAG_F_HOPO);	//Ensure the HOPO flag is set
+								}
+							}
+							if(eof_import_events[i]->game == 2)
+							{	//If the MIDI track is a Guitar Hero animation track
+								if(eof_get_note_note(sp, picked_track, notenum) & 4)
+								{	//Yellow notes are hi hat
+									eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_DRUM_NOTE_FLAG_Y_CYMBAL);
+								}
+								if(eof_get_note_note(sp, picked_track, notenum) & 16)
+								{	//Green notes are crash cymbal
+									eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_DRUM_NOTE_FLAG_G_CYMBAL);
 								}
 							}
 						}//If a note difficulty was identified above

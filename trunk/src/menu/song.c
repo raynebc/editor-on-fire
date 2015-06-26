@@ -1728,6 +1728,7 @@ int eof_menu_song_add_silence(void)
 	char mp3fn[1024] = {0};
 	static int creationmethod = 9;	//Stores the user's last selected leading silence creation method (default to oggCat, which is menu item 9 in eof_leading_silence_dialog[])
 	int retval;
+	unsigned long old_eof_music_length = eof_music_length;	//Keep track of the current chart audio's length to compare with after silence was added
 
 	eof_log("eof_menu_song_add_silence() entered", 1);
 
@@ -1850,36 +1851,47 @@ int eof_menu_song_add_silence(void)
 			eof_song->tags->ogg[eof_selected_ogg].modified = 1;
 		}//Add silence
 
-		/* adjust notes/beats */
-		if(eof_leading_silence_dialog[8].flags & D_SELECTED)
-		{
-			if(after_silence_length != 0)
-			{
-				adjust = after_silence_length - current_length;
+		if(eof_music_length < old_eof_music_length)
+		{	//If the operation malfunctioned (usually due to an incompatibility between OggCat and the chart audio)
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLeading silence failure detected.  Chart audio went from %lums to %lums in length", old_eof_music_length, eof_music_length);
+			eof_log(eof_log_string, 1);
+			if(alert("Warning:  The leading silence operation seemed to have failed.", NULL, "Undo?", "&Yes", "&No", 'y', 'n') == 1)
+			{	//If the user opts to undo the operation
+				(void) eof_undo_apply();
 			}
-			else
-			{
-				adjust = get_ogg_length(fn) - current_length;
-			}
-			if(eof_song->tags->ogg[eof_selected_ogg].midi_offset + adjust < 0)
-			{
-				adjust = 0;
-			}
-			eof_song->tags->ogg[eof_selected_ogg].midi_offset += adjust;
-			if(eof_song->beat[0]->pos != eof_song->tags->ogg[eof_selected_ogg].midi_offset)
-			{
-				for(i = 0; i < eof_song->beats; i++)
-				{
-					eof_song->beat[i]->fpos += (double)adjust;
-					eof_song->beat[i]->pos = eof_song->beat[i]->fpos + 0.5;	//Round up
-				}
-			}
-			(void) eof_adjust_notes(adjust);
 		}
-		eof_fixup_notes(eof_song);
-		eof_calculate_beats(eof_song);
-		eof_fix_window_title();
-		eof_truncate_chart(eof_song);	//Update number of beats and the chart length as appropriate
+		else
+		{	//Operation succeeded, adjust notes/beats
+			if(eof_leading_silence_dialog[8].flags & D_SELECTED)
+			{
+				if(after_silence_length != 0)
+				{
+					adjust = after_silence_length - current_length;
+				}
+				else
+				{
+					adjust = get_ogg_length(fn) - current_length;
+				}
+				if(eof_song->tags->ogg[eof_selected_ogg].midi_offset + adjust < 0)
+				{
+					adjust = 0;
+				}
+				eof_song->tags->ogg[eof_selected_ogg].midi_offset += adjust;
+				if(eof_song->beat[0]->pos != eof_song->tags->ogg[eof_selected_ogg].midi_offset)
+				{
+					for(i = 0; i < eof_song->beats; i++)
+					{
+						eof_song->beat[i]->fpos += (double)adjust;
+						eof_song->beat[i]->pos = eof_song->beat[i]->fpos + 0.5;	//Round up
+					}
+				}
+				(void) eof_adjust_notes(adjust);
+			}
+			eof_fixup_notes(eof_song);
+			eof_calculate_beats(eof_song);
+			eof_fix_window_title();
+			eof_truncate_chart(eof_song);	//Update number of beats and the chart length as appropriate
+		}
 	}//User clicked OK
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;

@@ -52,7 +52,8 @@ int eof_menu_note_transpose_down(void);
 int eof_menu_note_transpose_down_octave(void);	//Moves selected lyrics down one octave if possible
 int eof_menu_note_transpose_up_octave(void);	//Moves selected lyrics up one octave if possible
 int eof_menu_note_resnap(void);
-int eof_menu_note_toggle_crazy(void);
+int eof_menu_note_toggle_crazy(void);				//Toggles the crazy status on selected notes
+int eof_menu_note_remove_crazy(void);				//Removes the crazy status on selected notes
 int eof_menu_note_toggle_double_bass(void);			//Toggles the Expert+ double bass flag on selected expert bass drum notes
 int eof_menu_note_remove_double_bass(void);			//Removes the Expert+ double bass flag on selected expert bass drum notes
 int eof_menu_note_toggle_rb3_cymbal_green(void);	//Toggles the RB3 Pro green cymbal flag on selected purple drum notes (which correspond to green notes in RB)

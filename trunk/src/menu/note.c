@@ -368,6 +368,13 @@ MENU eof_note_move_grid_snap_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_note_crazy_menu[] =
+{
+	{"&Toggle\tT", eof_menu_note_toggle_crazy, NULL, 0, NULL},
+	{"&Remove", eof_menu_note_remove_crazy, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_note_menu[] =
 {
 	{"&Toggle", NULL, eof_note_toggle_menu, 0, NULL},
@@ -380,7 +387,7 @@ MENU eof_note_menu[] =
 	{"Delete\tDel", eof_menu_note_delete, NULL, 0, NULL},
 	{"Edit &Name", eof_menu_note_edit_name, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"Toggle &Crazy\tT", eof_menu_note_toggle_crazy, NULL, 0, NULL},
+	{"Cra&Zy", NULL, eof_note_crazy_menu, 0, NULL},
 	{"&HOPO", NULL, eof_legacy_hopo_menu, 0, NULL},
 	{eof_trill_menu_text, NULL, eof_trill_menu, 0, NULL},
 	{eof_tremolo_menu_text, NULL, eof_tremolo_menu, 0, NULL},
@@ -2078,7 +2085,7 @@ int eof_menu_note_clear_orange(void)
 
 int eof_menu_note_toggle_crazy(void)
 {
-	unsigned long i;
+	unsigned long i, crazycount1 = 0, crazycount2 = 0;;
 	int u = 0;	//Is set to nonzero when an undo state has been made
 	unsigned long track_behavior = eof_song->track[eof_selected_track]->track_behavior;
 	unsigned long flags;
@@ -2100,9 +2107,87 @@ int eof_menu_note_toggle_crazy(void)
 					u = 1;
 				}
 				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+				if(flags & EOF_NOTE_FLAG_CRAZY)
+				{	//If this note has crazy status
+					crazycount1++;	//Track the number of notes that this function modified
+				}
 				flags ^= EOF_NOTE_FLAG_CRAZY;
 				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 			}
+		}
+	}
+	//There are many circumstances where crazy status may be enforced for a note that would effectively undo this operation
+	//Run fixup function and compare the number of selected notes that still have crazy status with those that did at the beginning of the function
+	eof_track_fixup_notes(eof_song, eof_selected_track, 1);
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			if(eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_NOTE_FLAG_CRAZY)
+			{	//If this note has crazy status
+				crazycount2++;	//Track the number of selected notes that still have crazy status
+			}
+		}
+	}
+	if(u)
+	{	//If an undo state was made
+		if(crazycount1 == crazycount2)
+		{	//If the same number of selected notes have crazy status as did before this function modified anything
+			(void) eof_remove_undo();	//Remove the undo state that was created
+		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_note_remove_crazy(void)
+{
+	unsigned long i, crazycount1 = 0, crazycount2 = 0;
+	long u = 0;
+	unsigned long flags;
+	int note_selection_updated;
+
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			if(flags & EOF_NOTE_FLAG_CRAZY)
+			{	//If this note has crazy status
+				crazycount1++;	//Track the number of notes that this function modified
+				if(!u)
+				{
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					u = 1;
+				}
+				flags &= ~EOF_NOTE_FLAG_CRAZY;	//Remove crazy status
+				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+			}
+		}
+	}
+	//There are many circumstances where crazy status may be enforced for a note that would effectively undo this operation
+	//Run fixup function and compare the number of selected notes that still have crazy status with those that did at the beginning of the function
+	eof_track_fixup_notes(eof_song, eof_selected_track, 1);
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			if(eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_NOTE_FLAG_CRAZY)
+			{	//If this note has crazy status
+				crazycount2++;	//Track the number of selected notes that still have crazy status
+			}
+		}
+	}
+	if(u)
+	{	//If an undo state was made
+		if(crazycount1 == crazycount2)
+		{	//If the same number of selected notes have crazy status as did before this function modified anything
+			(void) eof_remove_undo();	//Remove the undo state that was created
 		}
 	}
 	if(note_selection_updated)
