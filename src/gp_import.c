@@ -3996,6 +3996,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											{	//If the bendpoint is the same height as the point before it
 												bendstruct.bendpoints--;	//Discard it
 											}
+											else
+												break;
 										}
 										for(ctr5 = 0; ctr5 < bendstruct.bendpoints; ctr5++)
 										{	//For each bend point that was parsed

@@ -493,12 +493,14 @@ typedef struct
 #define EOF_TRACKS_MAX	(EOF_LEGACY_TRACKS_MAX + EOF_VOCAL_TRACKS_MAX + EOF_PRO_GUITAR_TRACKS_MAX + 1)
 //Add 1 to reflect that track[0] is added but not used
 #define EOF_POWER_GIG_TRACKS_MAX (15 + 1)
+#define EOF_GUITAR_HERO_ANIMATION_TRACKS_MAX (2 + 1)
 
 extern EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1];
 	//The list of default tracks that should be presented in EOF
 extern EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 12];
 	//The list of MIDI track names pertaining to each instrument and harmony track
 extern EOF_TRACK_ENTRY eof_power_gig_tracks[EOF_POWER_GIG_TRACKS_MAX];
+extern EOF_TRACK_ENTRY eof_guitar_hero_animation_tracks[EOF_GUITAR_HERO_ANIMATION_TRACKS_MAX];
 
 struct eof_MIDI_data_track
 {

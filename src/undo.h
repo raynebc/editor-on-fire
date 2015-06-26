@@ -20,9 +20,11 @@ extern int eof_redo_count;
 extern int eof_undo_last_type;
 extern char * eof_undo_filename[EOF_MAX_UNDO];
 extern int eof_undo_states_initialized;
+extern int eof_undo_current_index;
 
 void eof_undo_reset(void);	//Clears all undo states
 int eof_undo_add(int type);	//Adds another undo state, except some cases where the requested undo type is the same as the previous undo (ie. a note addition/deletion)
+int eof_remove_undo(void);	//Removes the latest undo state.  Returns nonzero if an undo state was removed
 int eof_undo_apply(void);	//Saves the redo state and applies the next available undo state
 void eof_redo_apply(void);	//Applies the redo state
 int eof_undo_load_state(const char * fn);	//Applies the specified undo/redo state, or returns 0 upon error (called by eof_undo_apply() and eof_redo_apply())

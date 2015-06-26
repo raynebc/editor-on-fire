@@ -106,6 +106,13 @@ EOF_TRACK_ENTRY eof_power_gig_tracks[EOF_POWER_GIG_TRACKS_MAX] =
 	// logic to identify that it is a Power Gig MIDI instead of a FoF/RB MIDI
 	//The track format values of 0 for the lower difficulty vocal tracks indicate the track will be skipped during import
 
+EOF_TRACK_ENTRY eof_guitar_hero_animation_tracks[EOF_GUITAR_HERO_ANIMATION_TRACKS_MAX] =
+{
+	{0, 0, 0, 0, "", "", 0xFF, 0, 0},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_DRUM_TRACK_BEHAVIOR, EOF_TRACK_DRUM, 0, "TRIGGERS", "", EOF_NOTE_AMAZING, 5, 0},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_DRUM_TRACK_BEHAVIOR, EOF_TRACK_DRUM, 0, "BAND DRUMS", "", EOF_NOTE_AMAZING, 5, 0}
+};	//These entries describe the two Guitar Hero MIDI tracks that store drum animations, used to create a drum track
+
 /* sort all notes according to position */
 int eof_song_qsort_legacy_notes(const void * e1, const void * e2)
 {
@@ -7080,9 +7087,11 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 				else
 				{	//Otherwise add the arpeggio to the destination track difficulty by copying it from the source track
 					(void) eof_track_add_section(sp, desttrack, EOF_ARPEGGIO_SECTION, destdiff, tp->arpeggio[ctr].start_pos, tp->arpeggio[ctr].end_pos, 0, NULL);
+					tp->arpeggio[tp->arpeggios - 1].flags = tp->arpeggio[ctr].flags;	//Copy the arpeggio flags in case it was a handshape that was copied
 				}
 			}
-		}
+		}//For each pre-existing arpeggio in the source track
+		eof_track_fixup_notes(sp, desttrack, 1);	//Run cleanup logic to create base chords for arpeggio/handshape phrases if applicable
 	}//If this is a pro guitar/bass track
 }
 

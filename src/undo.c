@@ -338,3 +338,19 @@ void eof_destroy_undo(void)
 		}
 	}
 }
+
+int eof_remove_undo(void)
+{
+	if(!eof_undo_current_index || !eof_undo_count || !eof_change_count)
+	{	//If these variables don't reflect an undo state existing
+		return 0;
+	}
+	eof_undo_current_index--;
+	eof_undo_count--;
+	eof_change_count--;
+	if(eof_change_count == 0)
+	{
+		eof_changes = 0;
+	}
+	return 1;
+}

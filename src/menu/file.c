@@ -2908,8 +2908,8 @@ int eof_save_helper(char *destfilename, char silent)
 	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_temp_filename));
 
 	/* save the MIDI, INI and other files*/
-	if(!silent)
-	{	//If prompts aren't being suppressed
+	if(!silent && (eof_write_fof_files || eof_write_rb_files))
+	{	//If prompts aren't being suppressed, and FoF or RB MIDIs are to be exported
 		eof_check_vocals(eof_song, &fixvoxpitches, &fixvoxphrases);
 	}
 	else
@@ -2979,7 +2979,9 @@ int eof_save_helper(char *destfilename, char silent)
 	if(eof_write_music_midi)
 	{	//If the user opted to also save a normal musical MIDI
 		(void) append_filename(eof_temp_filename, newfolderpath, "notes_music.mid", (int) sizeof(eof_temp_filename));
-		(void) eof_export_music_midi(eof_song, eof_temp_filename);
+		(void) eof_export_music_midi(eof_song, eof_temp_filename, 0);	//Write a Synthesia formatted MIDI
+		(void) append_filename(eof_temp_filename, newfolderpath, "notes_fretlight.mid", (int) sizeof(eof_temp_filename));
+		(void) eof_export_music_midi(eof_song, eof_temp_filename, 1);	//Write a Fretlight formatted MIDI
 	}
 
 	if(eof_write_rs_files || eof_write_rs2_files)

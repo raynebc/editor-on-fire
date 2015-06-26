@@ -179,10 +179,10 @@ char        eof_render_grid_lines = 0;		//Specifies whether grid snap positions 
 int         eof_undo_toggle = 0;
 int         eof_redo_toggle = 0;
 int         eof_window_title_dirty = 0;	//This is set to true when an undo state is made and is cleared when the window title is recreated with eof_fix_window_title()
-int         eof_change_count = 0;
+int         eof_change_count = 0;	//Counts the number of undo states created since the last save operation
 int         eof_zoom = 10;			//The width of one pixel in the editor window in ms (smaller = higher zoom)
 int         eof_zoom_3d = 5;
-char        eof_changes = 0;
+char        eof_changes = 0;		//Tracks whether the chart has been modified since the last save operation
 ALOGG_OGG * eof_music_track = NULL;
 void      * eof_music_data = NULL;	//A memory buffer of the current chart audio's OGG file
 int         eof_silence_loaded = 0;

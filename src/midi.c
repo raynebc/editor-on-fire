@@ -2281,7 +2281,7 @@ unsigned char eof_get_midi_pitches(EOF_SONG *sp, unsigned long track, unsigned l
 	return pitchmask;
 }
 
-int eof_export_music_midi(EOF_SONG *sp, char *fn)
+int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 {
 	char header[14] = {'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 1, 0, 1, (EOF_DEFAULT_TIME_DIVISION >> 8), (EOF_DEFAULT_TIME_DIVISION & 0xFF)}; //The last two bytes are the time division
 	unsigned long timedivision = EOF_DEFAULT_TIME_DIVISION;	//Unless the project is storing a tempo track, EOF's default time division will be used
@@ -2417,18 +2417,29 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn)
 				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 					deltalength = 1;
 				}
-				if((sp->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_get_note_flags(sp, j, i) & EOF_PRO_GUITAR_NOTE_FLAG_ACCENT))
-				{	//If this is a pro guitar note played as an accent
-					vel = 127;	//Use the maximum velocity possible
+				if(!format)
+				{	//Writing a Synthesia style MIDI
+					if((sp->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_get_note_flags(sp, j, i) & EOF_PRO_GUITAR_NOTE_FLAG_ACCENT))
+					{	//If this is a pro guitar note played as an accent
+						vel = 127;	//Use the maximum velocity possible
+					}
+					else
+					{
+						vel = 64;	//Otherwise use half the maximum
+					}
 				}
 				else
-				{
-					vel = 64;	//Otherwise use half the maximum
+				{	//Writing a Fretlight style MIDI
+					vel = 127;
 				}
 				for(k = 0, bitmask = 1; k < 6; k++, bitmask <<= 1)
 				{	//For each of the 6 possible values in the pitch array
 					if(pitchmask & bitmask)
 					{	//If this pitch is defined in the array
+						if(format)
+						{	//Writing a Fretlight style MIDI
+							channel = 15 - k;	//Fretlight's channel numbering is such that low E uses channel 15 and high E uses channel 10
+						}
 						eof_add_midi_event(deltapos, 0x90, pitches[k], vel, channel);
 						eof_add_midi_event(deltapos + deltalength, 0x80, pitches[k], vel, channel);
 					}
@@ -2510,21 +2521,32 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn)
 		WriteVarLen(0, fp);
 		(void) pack_putc(0xFF, fp);
 		(void) pack_putc(0x03, fp);
-		WriteVarLen(ustrlen(sp->track[j]->name), fp);
-		(void) pack_fwrite(sp->track[j]->name, ustrlen(sp->track[j]->name), fp);
+		if(!format)
+		{	//If writing a Synthesia style MIDI
+			WriteVarLen(ustrlen(sp->track[j]->name), fp);
+			(void) pack_fwrite(sp->track[j]->name, ustrlen(sp->track[j]->name), fp);
 
-		/* set the guitar/bass MIDI instrument as appropriate */
-		if(sp->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-		{	//If this is a pro guitar/bass track
-			int tone = eof_midi_synth_instrument_guitar;	//By default, assume a guitar arrangement
+			/* set the guitar/bass MIDI instrument as appropriate */
+			if(sp->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If this is a pro guitar/bass track
+				int tone = eof_midi_synth_instrument_guitar;	//By default, assume a guitar arrangement
 
-			if(sp->pro_guitar_track[sp->track[j]->tracknum]->arrangement == 4)
-			{	//If this track's arrangement type is bass
-				tone = eof_midi_synth_instrument_bass;	//Use the configured bass MIDI tone instead
+				if(sp->pro_guitar_track[sp->track[j]->tracknum]->arrangement == 4)
+				{	//If this track's arrangement type is bass
+					tone = eof_midi_synth_instrument_bass;	//Use the configured bass MIDI tone instead
+				}
+				WriteVarLen(0, fp);
+				(void) pack_putc(0xC0 + channel, fp);	//Write MIDI event 0xC (Program change)
+				(void) pack_putc(tone, fp);				//Write instrument number
 			}
-			WriteVarLen(0, fp);
-			(void) pack_putc(0xC0 + channel, fp);	//Write MIDI event 0xC (Program change)
-			(void) pack_putc(tone, fp);				//Write instrument number
+		}
+		else
+		{	//If writing a Fretlight style MIDI
+			char prefix[] = "FMP - ";	//The required track name prefix
+
+			WriteVarLen(ustrlen(sp->track[j]->name) + ustrlen(prefix), fp);	//Include the extra number of characters needed for the prefix
+			(void) pack_fwrite(prefix, ustrlen(prefix), fp);
+			(void) pack_fwrite(sp->track[j]->name, ustrlen(sp->track[j]->name), fp);
 		}
 
 		/* add MIDI events */
@@ -2570,7 +2592,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn)
 		(void) pack_putc(0x00, fp);
 		(void) pack_fclose(fp);
 
-		channel++;	//The next track to export will use a different MIDI channel for the note on/off events
+		channel++;	//For Synthesia format MIDIs, the next track to export will use a different MIDI channel for the note on/off events
 	}//For each track in the project
 
 	eof_clear_midi_events();		//Free any memory allocated for the MIDI event array
