@@ -128,9 +128,10 @@ void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_ma
 	//If any note has invalid fingering, it is cleared and will be allowed to be set by a valid fingering from a matching note
 	//Single notes do not have their fingerings populated by this function, but if the fingering is invalid it is still cleared
 	//If *undo_made is zero, this function will create an undo state before modifying the chart and will set the referenced variable to nonzero
-int eof_pro_guitar_note_fingering_valid(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);
+int eof_pro_guitar_note_fingering_valid(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, char count_mutes);
 	//Returns 0 if the fingering is invalid for the specified note (partially defined, or a finger specified for a string that is played open)
-	//Returns 1 if the fingering is fully defined for the specified note
+	//Returns 1 if the fingering is fully defined for the specified note for fretted strings
+	//	If count_mutes is nonzero, then muted strings are inspected for fingering, otherwise they aren't
 	//Returns 2 if the fingering is undefined for the specified note
 void eof_song_fix_fingerings(EOF_SONG *sp, char *undo_made);
 	//Runs eof_pro_guitar_track_fix_fingerings() on all pro guitar tracks in the specified chart
@@ -239,6 +240,8 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 	//  uses a separate XML attribute to cause it to display as string muted.  Likewise if any technotes
 	//  overlap the chord on any of its strings, the chord is determined to be low density because the relevant
 	//  technique can only be exported to the chordNote
+	//If target is 2, and the specified note is fully string muted, has no fingering defined and follows a chord,
+	//  then a value of 2 is returned.  RS2 export can use this value to include such chords in the ongoing handshape
 
 int eof_enforce_rs_phrase_begin_with_fret_hand_position(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long startpos, unsigned long endpos, char *undo_made, char check_only);
 	//Looks at the fret hand positions in the specified track difficulty within the specified time span, which should be the beginning and end of a RS phrase.

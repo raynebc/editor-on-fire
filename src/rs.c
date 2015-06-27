@@ -812,7 +812,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			effective_fingering = tp->note[chordlist[ctr]]->finger;	//By default, use the chord list entry's finger array
 			memcpy(temp.frets, tp->note[chordlist[ctr]]->frets, 6);	//Clone the fretting of the chord into the temporary note
 			temp.note = tp->note[chordlist[ctr]]->note;				//Clone the note mask
-			if(eof_pro_guitar_note_fingering_valid(tp, chordlist[ctr]) != 1)
+			if(eof_pro_guitar_note_fingering_valid(tp, chordlist[ctr], 0) != 1)
 			{	//If the fingering for the note is not fully defined
 				if(eof_lookup_chord_shape(tp->note[chordlist[ctr]], &shapenum, 0))
 				{	//If a fingering for the chord can be found in the chord shape definitions
@@ -2051,7 +2051,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			effective_fingering = tp->note[chordlist[ctr]]->finger;	//By default, use the chord list entry's finger array
 			memcpy(temp.frets, tp->note[chordlist[ctr]]->frets, 6);	//Clone the fretting of the chord into the temporary note
 			temp.note = tp->note[chordlist[ctr]]->note;				//Clone the note mask
-			if(eof_pro_guitar_note_fingering_valid(tp, chordlist[ctr]) != 1)
+			if(eof_pro_guitar_note_fingering_valid(tp, chordlist[ctr], 0) != 1)
 			{	//If the fingering for the note is not fully defined
 				if(eof_lookup_chord_shape(tp->note[chordlist[ctr]], &shapenum, 0))
 				{	//If a fingering for the chord can be found in the chord shape definitions
@@ -2421,9 +2421,16 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							(void) eof_get_rs_techniques(sp, track, ctr3, 0, &tech, 2, 0);			//Determine techniques used by this chord (do not include applicable technote's techniques to the chord tag itself, they will apply to chordNotes instead)
 							highdensity = eof_note_has_high_chord_density(sp, track, ctr3, 2);		//Determine whether the chord will export with high density
 							notepos = tp->note[ctr3]->pos;
-							if(chordid != lastchordid)
-							{	//If this chord's ID is different from that of the previous chord or meets the normal criteria for a low density chord
-								highdensity = 0;	//Ensure the chord tag is written to reflect low density
+							if(highdensity != 2)
+							{	//If the chord isn't fully string muted with no fingering defined and following a chord, allow a chord ID change to mark as low density
+								if(chordid != lastchordid)
+								{	//If this chord's ID is different from that of the previous chord or meets the normal criteria for a low density chord
+									highdensity = 0;	//Ensure the chord tag is written to reflect low density
+								}
+							}
+							if(highdensity != 0)
+							{	//Force highdensity to a true/false value
+								highdensity = 1;
 							}
 							(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" chordId=\"%lu\" fretHandMute=\"%d\" highDensity=\"%d\" ignore=\"%d\" palmMute=\"%d\" hopo=\"%d\" strum=\"%s\">\n", (double)notepos / 1000.0, tech.linknext, tech.accent, chordid, tech.stringmute, highdensity, tech.ignore, tech.palmmute, tech.hopo, direction);
 							(void) pack_fputs(buffer, fp);
@@ -2532,7 +2539,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 			{	//For each note in the track
 				if(!(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE) || (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_ARP))
-				{	//If this note is not ignored or is a chord within an arpeggio
+				{	//If this note is not ignored or is a chord within an arpeggio/handshape
 					if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1) || eof_is_partially_ghosted(sp, track, ctr3)))
 					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems) or an arpeggio handshape
 						unsigned long chordnum = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
@@ -2600,7 +2607,11 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 									break;	//Break from while loop
 								}
 							}
-							if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chordnum, nextnote) || eof_is_string_muted(sp, track, nextnote)) && !eof_is_partially_ghosted(sp, track, nextnote) && !eof_pro_guitar_note_compare_fingerings(tp->note[chordnum], tp->note[nextnote]))
+							if((nextnote >= 0) && eof_is_string_muted(sp, track, nextnote) && (eof_pro_guitar_note_fingering_valid(tp, nextnote, 1) == 2))
+							{	//If there is another note, and it is fully string muted and has no fingering defined even for muted strings
+								ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
+							}
+							else if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chordnum, nextnote) || eof_is_string_muted(sp, track, nextnote)) && !eof_is_partially_ghosted(sp, track, nextnote) && !eof_pro_guitar_note_compare_fingerings(tp->note[chordnum], tp->note[nextnote]))
 							{	//If there is another note, it either matches this chord or is completely string muted, it is not partially ghosted (an arpeggio) and it has the same fingering
 								if(eof_is_partially_ghosted(sp, track, chordnum))
 								{	//If the handshape being written was for an arpeggio, and the next note isn't
@@ -2618,7 +2629,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 						handshapectr++;	//One more hand shape has been counted
 					}//If this note is in this difficulty and will export as a chord (at least two non ghosted gems) or an arpeggio handshape
-				}//If this note is not ignored or is a chord within an arpeggio
+				}//If this note is not ignored or is a chord within an arpeggio/handshape
 			}//For each note in the track
 
 			if(handshapectr)
@@ -2697,7 +2708,11 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 										break;	//Break from while loop
 									}
 								}
-								if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chordnum, nextnote) || eof_is_string_muted(sp, track, nextnote)) && !eof_is_partially_ghosted(sp, track, nextnote) && !eof_pro_guitar_note_compare_fingerings(tp->note[chordnum], tp->note[nextnote]))
+								if((nextnote >= 0) && eof_is_string_muted(sp, track, nextnote) && (eof_pro_guitar_note_fingering_valid(tp, nextnote, 1) == 2))
+								{	//If there is another note, and it is fully string muted and has no fingering defined even for muted strings
+									ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
+								}
+								else if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chordnum, nextnote) || eof_is_string_muted(sp, track, nextnote)) && !eof_is_partially_ghosted(sp, track, nextnote) && !eof_pro_guitar_note_compare_fingerings(tp->note[chordnum], tp->note[nextnote]))
 								{	//If there is another note, it either matches this chord or is completely string muted, it is not partially ghosted (an arpeggio) and it has the same fingering
 									if(eof_is_partially_ghosted(sp, track, chordnum))
 									{	//If the handshape being written was for an arpeggio, and the next note isn't
@@ -2777,7 +2792,7 @@ void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_ma
 
 	for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
 	{	//For each note in the track (outer loop)
-		retval = eof_pro_guitar_note_fingering_valid(tp, ctr2);
+		retval = eof_pro_guitar_note_fingering_valid(tp, ctr2, 0);
 		if(retval == 1)
 		{	//If the note's fingering was complete
 			if(eof_note_count_colors_bitmask(tp->note[ctr2]->note) > 1)
@@ -2787,7 +2802,7 @@ void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_ma
 				{	//For each note in the track (inner loop)
 					if((ctr2 != ctr3) && (eof_pro_guitar_note_compare(tp, ctr2, tp, ctr3, 0) == 0))
 					{	//If this note matches the note being examined in the outer loop, and we're not comparing the note to itself
-						if(eof_pro_guitar_note_fingering_valid(tp, ctr3) != 1)
+						if(eof_pro_guitar_note_fingering_valid(tp, ctr3, 0) != 1)
 						{	//If the fingering of the inner loop's note is invalid/undefined
 							if(undo_made && !(*undo_made))
 							{	//If an undo hasn't been made yet
@@ -2816,7 +2831,7 @@ void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_ma
 	}
 }
 
-int eof_pro_guitar_note_fingering_valid(EOF_PRO_GUITAR_TRACK *tp, unsigned long note)
+int eof_pro_guitar_note_fingering_valid(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, char count_mutes)
 {
 	unsigned long ctr, bitmask;
 	char string_finger_defined = 0, string_finger_undefined = 0, all_strings_open = 1;
@@ -2828,8 +2843,8 @@ int eof_pro_guitar_note_fingering_valid(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 	{	//For each string supported by this track
 		if(tp->note[note]->note & bitmask)
 		{	//If this string is used
-			if((tp->note[note]->frets[ctr] & 0x80) == 0)
-			{	//If the string isn't muted
+			if(!(tp->note[note]->frets[ctr] & 0x80) || count_mutes)
+			{	//If the string isn't muted, or if the calling function wants muted strings inspected
 				if(tp->note[note]->frets[ctr] != 0)
 				{	//If the string isn't being played open, it requires a fingering
 					all_strings_open = 0;	//Track that the note used at least one fretted string
@@ -2855,7 +2870,7 @@ int eof_pro_guitar_note_fingering_valid(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 	}
 
 	if(all_strings_open && !string_finger_defined)
-	{	//If the note only had open strings played, and no fingering was defined, this is valid
+	{	//If the note only had open or muted strings played, and no fingering was defined, this is valid
 		return 1;	//Return fingering valid
 	}
 	if(string_finger_defined && string_finger_undefined)
@@ -3010,7 +3025,7 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 			np = tp->note[ctr];	//Unless the chord's fingering is incomplete, the note's current fingering will be used to determine whether the index finger triggers a position change
 			if((eof_note_count_colors(eof_song, track, ctr) > 1) && !eof_is_string_muted(eof_song, track, ctr))
 			{	//If this note is a chord that isn't completely string muted
-				if(eof_pro_guitar_note_fingering_valid(tp, ctr) != 1)
+				if(eof_pro_guitar_note_fingering_valid(tp, ctr, 0) != 1)
 				{	//If the fingering for the note is not fully defined
 					if(eof_lookup_chord_shape(np, &shapenum, 0))
 					{	//If a fingering for the chord can be found in the chord shape definitions
@@ -3897,6 +3912,8 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 
 	if(target == 2)
 	{	//Additional checks for Rocksmith 2
+		EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+
 		if(eof_get_rs_techniques(sp, track, note, 0, NULL, 2, 1))
 		{	//If this note uses any techniques that require writing a low density chord
 			return 0;
@@ -3908,9 +3925,9 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 			return 0;
 		}
 
-		if(eof_is_string_muted(sp, track, note) && (eof_note_count_rs_lanes(sp, track, prev, target) > 1))
-		{	//If this chord is entirely string muted and the previous note was a chord
-			return 1;	//Export this chord as high density so that it is added to the same hand shape tag
+		if(eof_is_string_muted(sp, track, note) && (eof_pro_guitar_note_fingering_valid(tp, note, 1) == 2) && (eof_note_count_rs_lanes(sp, track, prev, target) > 1))
+		{	//If this chord is entirely string muted, has no fingering defined and the previous note was a chord
+			return 2;	//Export this chord as high density so that it is added to the same hand shape tag (return 2 to signal to RS2 export that this chord should be included in the previous chord's handshape)
 		}
 	}
 

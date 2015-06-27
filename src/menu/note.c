@@ -4802,7 +4802,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 					{	//For each note in the track
 						if((ctr != eof_selection.current) && !eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr))
 						{	//If this note isn't the one that was just edited, but it matches
-							if(eof_pro_guitar_note_fingering_valid(tp, ctr) != 1)
+							if(eof_pro_guitar_note_fingering_valid(tp, ctr, 0) != 1)
 							{	//If the fingering for the note is not fully defined
 								offerupdatefingering = 1;	//Note that the user should be prompted whether to update the fingering array of all matching notes
 								break;
@@ -4816,7 +4816,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 						{	//For each note in the track
 							if((ctr != eof_selection.current) && !eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr))
 							{	//If this note isn't the one that was just edited, but it matches
-								if(eof_pro_guitar_note_fingering_valid(tp, ctr) != 1)
+								if(eof_pro_guitar_note_fingering_valid(tp, ctr, 0) != 1)
 								{	//If the fingering for the note is not fully defined
 									if(!*undo_made)
 									{	//If an undo state hasn't been made yet
@@ -4897,7 +4897,7 @@ int eof_correct_chord_fingerings_option(char report, char *undo_made)
 			{	//For each note in this track
 				if((eof_note_count_colors(eof_song, ctr, ctr2) > 1) && !eof_is_string_muted(eof_song, ctr, ctr2))
 				{	//If this note is a chord that isn't completely string muted
-					if(eof_pro_guitar_note_fingering_valid(tp, ctr2) != 1)
+					if(eof_pro_guitar_note_fingering_valid(tp, ctr2, 0) != 1)
 					{	//If the fingering for this chord isn't valid or is undefined
 						if(!user_prompted)
 						{	//If the user hasn't been prompted whether to update the fingering (or if the prompt hasn't been suppressed)
