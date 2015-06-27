@@ -1270,7 +1270,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[51].flags = 0;					//Save separate Bandfuse files
 			eof_preferences_dialog[52].flags = 1;					//EOF leaving focus stops playback
 			eof_preferences_dialog[55].flags = D_SELECTED;			//GP import truncates short chords
-			snprintf(eof_etext3, sizeof(eof_etext3) - 1, "10000");	//Chord density threshold
+			(void) snprintf(eof_etext3, sizeof(eof_etext3) - 1, "10000");	//Chord density threshold
 			eof_preferences_dialog[56].flags = 0;					//Apply crazy to repeated chords separated by a rest
 			eof_preferences_dialog[57].flags = D_SELECTED;			//Save FoF/Phase Shift files
 		}//If the user clicked "Default
