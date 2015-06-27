@@ -2085,7 +2085,7 @@ int eof_menu_note_clear_orange(void)
 
 int eof_menu_note_toggle_crazy(void)
 {
-	unsigned long i, crazycount1 = 0, crazycount2 = 0;;
+	unsigned long i, crazycount1 = 0, crazycount2 = 0;
 	int u = 0;	//Is set to nonzero when an undo state has been made
 	unsigned long track_behavior = eof_song->track[eof_selected_track]->track_behavior;
 	unsigned long flags;

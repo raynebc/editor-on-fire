@@ -695,7 +695,7 @@ int eof_menu_beat_ts_custom(void)
 int eof_menu_beat_ts_convert(void)
 {
 	unsigned long ctr;
-	unsigned int num, den, prevden;
+	unsigned int num = 4, den = 4, prevden = 4;
 
 	if(!eof_song->tags->accurate_ts)
 		return 1;	//Don't allow this function to run if the accurate TS chart option is not enabled
@@ -719,7 +719,7 @@ int eof_menu_beat_ts_convert(void)
 		}
 		if(eof_selected_beat > 0)
 		{	//If a beat other than the first one is selected, determine if it now needs to be anchored
-			eof_get_effective_ts(eof_song, NULL, &prevden, eof_selected_beat - 1);	//Determine what TS is in effect at the previous beat
+			(void) eof_get_effective_ts(eof_song, NULL, &prevden, eof_selected_beat - 1);	//Determine what TS is in effect at the previous beat
 			if((prevden != den) || (eof_song->beat[eof_selected_beat]->ppqn != eof_song->beat[eof_selected_beat - 1]->ppqn))
 			{	//If the time signature denominator or the tempo is different from the previous beat
 				eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Set the anchor flag

@@ -3519,21 +3519,21 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						}
 						if(byte1 & 1)
 						{	//Vibrato
-							flags |= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
+							allflags |= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
 						}
 						if(byte1 & 2)
 						{	//Wide vibrato
-							flags |= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
+							allflags |= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
 						}
 						if(byte1 & 4)
 						{	//Natural harmonic
-							flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
+							allflags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
 						}
 						if(byte1 & 8)
 						{	//Artificial harmonic
 							if(!eof_gp_import_nat_harmonics_only)
 							{	//If the user didn't opt to ignore harmonic status except for natural harmonics
-								flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
+								allflags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
 							}
 						}
 						if(byte1 & 32)
@@ -3544,15 +3544,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							}
 							else if(byte == 1)
 							{	//Tapping
-								flags |= EOF_PRO_GUITAR_NOTE_FLAG_TAP;
+								allflags |= EOF_PRO_GUITAR_NOTE_FLAG_TAP;
 							}
 							else if(byte == 2)
 							{	//Slapping
-								flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLAP;
+								allflags |= EOF_PRO_GUITAR_NOTE_FLAG_SLAP;
 							}
 							else if(byte == 3)
 							{	//Popping
-								flags |= EOF_PRO_GUITAR_NOTE_FLAG_POP;
+								allflags |= EOF_PRO_GUITAR_NOTE_FLAG_POP;
 							}
 							if(fileversion < 400)
 							{
@@ -3606,11 +3606,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							(void) pack_getc(inf);				//Down strum speed
 							if(!upspeed)
 							{	//Strum down
-								flags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;
+								allflags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;
 							}
 							else
 							{	//Strum up
-								flags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;
+								allflags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;
 							}
 						}
 						if(byte2 & 2)
@@ -3618,11 +3618,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							byte = pack_getc(inf);	//Pickstroke effect (up/down)
 							if(byte == 1)
 							{	//Upward pick
-								flags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;
+								allflags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;
 							}
 							else if(byte == 2)
 							{	//Downward pick
-								flags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;
+								allflags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;
 							}
 						}
 					}//Beat has effects
