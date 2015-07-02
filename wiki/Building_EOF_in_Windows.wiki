@@ -29,7 +29,7 @@ Get MinGW (http://sourceforge.net/projects/mingw/) and install it.  You can use 
 
 Get the zlib and libpng packages (http://tjaden.strangesoft.net/loadpng/mingw.html).  Make sure they install to your MinGW installation directory and NOT to a subfolder, otherwise the source files won't get stored in the right folders and Allegro's CMake will not find them.
 
-Get MSYS (http://www.mingw.org/wiki/msys).  MSYS 1.0.11 is an older version, but it works just fine and includes all parts in one installer, making it very easy to install.  Install it and give it the correct path to your MinGW installation directory.  Remember to use the forward slash / instead of backward slash \ between each directory.  Allow it to run the post install process.
+Get MSYS (http://www.mingw.org/wiki/msys).  MSYS 1.0.11 is an older version, but it works just fine and includes all parts in one installer, making it very easy to install.  Install it and allow it to run the post install process.  During this post install process, give it the correct path to your MinGW installation directory.  Remember to use the forward slash / instead of backward slash \ between each directory (ie c:/mingw).
 
 Get the libogg and libvorbis Vorbis libraries (http://xiph.org/downloads).  Extract each someplace WITHOUT spaces in the folder path.  They will each be built using MSYS using the details below.  Libogg has to be built first.  If you extracted libogg to c:\libogg, launch MSYS, change to the right directory with:
 {{{
