@@ -908,6 +908,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		EOF_RS_CONTROL *controls = NULL;
 
 		//Allocate memory for a list of control events
+		eof_track_pro_guitar_sort_tone_changes(tp);	//Re-sort the tone changes
 		count = tp->popupmessages * 2;	//Each popup message needs one control message to display and one to clear
 		count += tp->tonechanges;		//Each tone change needs one control message
 		(void) snprintf(buffer, sizeof(buffer) - 1, "  <controls count=\"%lu\">\n", count);
@@ -2157,6 +2158,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 	//Write tone changes
 	//Build and count the size of the list of unique tone names used, and empty the default tone string if it is not valid
+	eof_track_pro_guitar_sort_tone_changes(tp);	//Re-sort the tone changes
 	eof_track_rebuild_rs_tone_names_list_strings(track, 0);	//Build the tone names list without the (D) default tone name suffix
 	if((tp->defaulttone[0] != '\0') && (eof_track_rs_tone_names_list_strings_num > 1))
 	{	//If the default tone is valid and at least two different tone names are referenced among the tone changes

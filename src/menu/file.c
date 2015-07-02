@@ -47,6 +47,7 @@ MENU eof_file_display_menu[] =
 	{"Set display &Width", eof_set_display_width, NULL, 0, NULL},
 	{"x2 &Zoom", eof_toggle_display_zoom, NULL, 0, NULL},
 	{"&Redraw\tShift+F5", eof_redraw_display, NULL, 0, NULL},
+	{"Benchmark image sequence", eof_benchmark_image_sequence, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -278,6 +279,7 @@ void eof_prepare_file_menu(void)
 			eof_file_menu[11].flags = D_DISABLED;
 			eof_file_menu[12].flags = D_DISABLED;
 		}
+		eof_file_display_menu[4].flags = 0;	//Benchmark image sequence
 	}
 	else
 	{
@@ -287,6 +289,7 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[5].flags = D_DISABLED; // Load OGG
 		eof_file_menu[6].flags = D_DISABLED; // Sonic Visualiser Import
 		eof_file_menu[10].flags = D_DISABLED; // Lyric Import
+		eof_file_display_menu[4].flags = D_DISABLED;	//Benchmark image sequence
 	}
 }
 
