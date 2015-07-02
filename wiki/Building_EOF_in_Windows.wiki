@@ -57,8 +57,8 @@ Get CMake (http://www.cmake.org).  Install it and ensure that CMake's "bin" fold
 
 Get Allegro's source (http://alleg.sourceforge.net/wip.html) and extract it someplace easy to get to (such as the root of a filesystem, such as c:\allegro).  Open a command shell, change to the Allegro directory, ie:
 {{{
-cd c:
-c:\allegro
+c:
+cd c:\allegro
 }}}
 Usually, there won't be a build directory, so make one and change to it:
 {{{
@@ -71,16 +71,18 @@ cmake -G "MinGW Makefiles" ..
 }}}
 Do include the two periods at the end, which refer cmake to the "CMakeLists.txt" file in the parent folder (c:\allegro).  This should create the files necessary in the build folder to build Allegro itself with make after this step is completed.  If you had tried to cmake Allegro before putting all of these dependencies in place, delete your "CMakeCache.txt" file and try cmake again.  If this CMakeCache.txt file is in the allegro folder or the allegro\build folder, make sure it's deleted, or else CMake won't put the files in the \build folder.  If you installed zlib and libpng to the correct directory, and built the vorbis files correctly, you should see that it says it found ZLIB, PNG and VORBIS among the other libraries that come with Allegro.
 
-Now Allegro can be built.  This process will install files into your MinGW installation, allowing you to compile applications designed to use Allegro (such as EOF).  You will need to make sure that you have defined the MINGDIR environment variable to be set to the path of your MinGW installation, and MinGW's \bin\ folder should be in your PATH environment variable, or this next part might fail to work.  While still in Allegro's \build directory, run these commands:
+If it reports an error, check to make sure your Antivirus software hasn't interfered.  I've noticed Avast would quarantine "conftest.exe" in the libogg and libvorbis folders, and I had to exempt those, re-run the 3 commands each to make libogg and libvorbis and then use cmake to build the Allegro makefile succeeded.
+
+Now Allegro can be built. This process will install files into your MinGW installation, allowing you to compile applications designed to use Allegro (such as EOF). You will need to make sure that you have defined the MINGDIR environment variable to be set to the path of your MinGW installation, and MinGW's \bin\ folder should be in your PATH environment variable, or this next part might fail to work.  To find out, run the "set" command and if those variables don't reflect these requirements, update them in System Properties, close an re-open the command prompt and change to build directory (ie. c:\allegro\build) again.  While still in Allegro's \build directory, run these commands:
 {{{
 mingw32-make
 mingw32-make install
 }}}
 
 *Note:*
-Some earlier versions of Allegro (ie. version 4.22) had some strange problems that would make Allegro fail to CMake and/or make.  Try the latest stable release, which fixes this problem.  Otherwise you may have to update part of the Allegro package (apparently binutils was the culprit).
+Some earlier versions of Allegro (ie. version 4.22) had some strange problems that would make Allegro fail to CMake and/or make.  Try the latest stable release, which fixes this problem.  Otherwise you may have to update part of the Allegro package (apparently binutils was the culprit).  If you get any strange errors during the make install command, try turning off your antivirus program and trying again.  I found that Avast would prevent the make install from setting the modification time on alleg44.dll and this was causing the process to abort.
 
-The FFTW library needs to be added.  Download the 32 bit precompiled DLL files from FFTW's website.  Inside it is several source and binary files.  The one needed for EOF is libfftw3-3.dll.  Copy this file into the "lib" directory in your MinGW installation and rename the file to "libfftw3.dll.a".  This naming convention is probably only one of many ways to do it, but it's how I got it to work as it allows MinGW to be told to link to the "fftw3" library when EOF is built.  Lastly, copy the fftw3.h file from the FFTW precompiled package and paste it into the "include" directory in your MinGW installation.
+Next, the FFTW library needs to be added.  Download the 32 bit precompiled DLL files from FFTW's website.  Inside it is several source and binary files.  The one needed for EOF is libfftw3-3.dll.  Copy this file into the "lib" directory in your MinGW installation and rename the file to "libfftw3.dll.a".  This naming convention is probably only one of many ways to do it, but it's how I got it to work as it allows MinGW to be told to link to the "fftw3" library when EOF is built.  Lastly, copy the fftw3.h file from the FFTW precompiled package and paste it into the "include" directory in your MinGW installation.
 
 
 ==Building rubberband:==
@@ -88,7 +90,7 @@ The rubberband library adds several dependencies, but it allows audio to be play
 
 First, get Vamp (http://www.vamp-plugins.org/develop.html).  It's easiest to download the pre-compiled library (labeled "Windows (MinGW)"), copy libvamp-sdk.a from the zip file into the "lib" directory of your MinGW installation.  The pre-compiled library package does not include the header files, so you will still have to download the source code (labeled "The main SDK"), copy the "vamp", "vamp-hostsdk" and "vamp-sdk" folders of header files into MinGW's "include" directory.
 
-Next, get libsndfile (http://www.mega-nerd.com/libsndfile).  As with Vamp, it's easiest to download the pre-compiled library (the "Win32 installer").  Install it directly into your MinGW installation if you like, or if you don't want it cluttered with miscellaneous files, install it elsewhere.  If you installed it outside of your MinGW installation, copy the libsndfile\bin\libsndfile-1.dll file to the "lib" directory of your MinGW installation and rename it to libsndfile.a, copy the two header files from libsndfile\include into the "include" directory of your MinGW installation and copy the libsndfile\lib\pkgconfig\sndfile.pc file to the "lib\pkgconfig" directory of your MinGW installation.
+Next, get libsndfile (http://www.mega-nerd.com/libsndfile).  As with Vamp, it's easiest to download the pre-compiled library (the "Win32 installer").  Install it directly into your MinGW installation if you like, or if you don't want it cluttered with miscellaneous files, install it elsewhere.  If you installed it outside of your MinGW installation, copy the libsndfile\bin\libsndfile-1.dll file to the "lib" directory of your MinGW installation and rename it to libsndfile.a, copy the two header files from libsndfile\include into the "include" directory of your MinGW installation and copy the libsndfile\lib\pkgconfig\sndfile.pc file to the "lib\pkgconfig" directory of your MinGW installation.  Even if you did install libsndfile into your MinGW installation, check to make sure those files ended up in the proper locations.
 
 Next, get libsamplerate (http://www.mega-nerd.com/SRC/download.html).  This doesn't have a pre-compiled library, so it will be built from source code.  Just as with the Vorbis libraries, it's easiest to extract the compressed folder of source files someplace simple like the root of your c drive.  Bring up the MSYS program again and change to the directory with libsamplerate's source files, for example:
 {{{
@@ -100,7 +102,7 @@ Run the configure script, specifying the path to your MinGW installation.  If Mi
 make
 make install
 }}}
-If you used the prefix correctly in the call to the configure script above, libsamplerate will be properly built and the files will be correctly copied to within your MinGW folder.  I saw some errors building some of the example programs that came with the source, but that shouldn't be a problem as long as libsamplerate.a was added to your MinGW "lib" directory and samplerate.h was added to the "include" directory.  I also found that samplerate.pc file that was created during the make wasn't automatically copied to the MinGW's "lib\pkgconfig" directory, and had to manually copy it to the MinGW installation.  Confirm these files were added before continuing.
+If any of these fail keep in mind your antivirus may be interfering again, Avast once again blocked "conftest.exe" during the configure process.  If you used the prefix correctly in the call to the configure script above, libsamplerate will be properly built and the files will be correctly copied to within your MinGW folder.  I saw some errors building some of the example programs that came with the source, but that shouldn't be a problem as long as libsamplerate.a was added to your MinGW "lib" directory and samplerate.h was added to the "include" directory.  I also found that samplerate.pc file that was created during the make wasn't automatically copied to the MinGW's "lib\pkgconfig" directory, and had to manually copy it to the MinGW installation.  Confirm these files were added before continuing.
 
 Next, get pkgconfig (http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/pkg-config_0.26-1_win32.zip).  Extract the pkg-config.exe file from that package's bin folder and copy it to the "bin" folder in your MinGW installation.  While you're here, copy libintl-8.dll and name the copy intl.dll to satisfy a requirement for pkgconfig.
 
