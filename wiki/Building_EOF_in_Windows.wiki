@@ -108,6 +108,8 @@ Next, get pkgconfig (http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/
 
 Next, get GLib (http://ftp.gnome.org/pub/gnome/binaries/win32/glib/2.28/glib_2.28.8-1_win32.zip).  Extract the libglib-2.0-0.dll file from that package's bin folder and copy it to the "bin" folder in your MinGW installation.
 
+I've found that depending on your environment, rubberband may or may not fail to build on Windows with a message along the lines of "cannot find -lpthread", due to missing a Posix style threading library.  If you are using MinGW's GCC distribution, you can install the mingw32-pthreads-w32 package and it seems to work just fine.  Other distributions may require their own equivalent (ie. TDM has a "winpthreads" library).
+
 At last, rubberband's dependencies are met and rubberband can be built from source (http://breakfastquay.com/rubberband/).  Extract the source folder someplace convenient like the root of your c drive.  Back in MSYS, change to the directory with rubberband's source files, for example:
 {{{
 cd /c/rubberband
