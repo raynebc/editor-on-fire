@@ -2758,6 +2758,7 @@ int eof_track_rs_tone_change_add(void)
 			}
 			(void) eof_track_add_section(eof_song, eof_selected_track, EOF_RS_TONE_CHANGE, 0, eof_music_pos - eof_av_delay, defaulttone, 0, eof_etext);
 		}
+        eof_track_pro_guitar_sort_tone_changes(tp);	//Re-sort the tone changes
 	}
 
 	return 1;

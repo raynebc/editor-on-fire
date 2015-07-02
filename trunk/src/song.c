@@ -6035,10 +6035,13 @@ int eof_create_image_sequence(char benchmark_only)
 	char windowtitle[101] = {0};
 	float fps = 0.0;
 	clock_t curtime, lastpolltime = 0;
-	char original_eof_desktop = eof_desktop;
 	int err;
 	char filename[20] = {0};
 	clock_t starttime = 0, endtime = 0;
+	char *function = "Exporting";
+
+	if(!eof_song_loaded || !eof_song)
+		return 1;	//Do not allow this function to run if a chart is not loaded
 
 	eof_log("eof_create_image_sequence() entered", 1);
 	if(!benchmark_only)
@@ -6069,12 +6072,9 @@ int eof_create_image_sequence(char benchmark_only)
 	else
 	{	//If performing a benchmark
 		starttime = clock();	//Get the start time of the image sequence export
+		function = "Benchmarking";
 		eof_log("\tBenchmarking rendering performance", 1);
 	}
-
-//Change to 8 bit color mode
-	eof_desktop = 0;
-	eof_apply_display_settings(eof_screen_layout.mode);
 
 	alogg_seek_abs_msecs_ogg(eof_music_track, 0);
 	eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
@@ -6091,20 +6091,14 @@ int eof_create_image_sequence(char benchmark_only)
 		//Update EOF's window title to provide a status
 			curtime = clock();	//Get the current time
 			fps = (float)(framectr - lastpollctr) / ((float)(curtime - lastpolltime) / (float)CLOCKS_PER_SEC);	//Find the number of FPS rendered since the last poll
-			(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "Exporting image sequence: %.2f%% (%.2fFPS) - Press Esc to cancel",(float)eof_music_pos/(float)eof_music_length * 100.0, fps);
+			(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "%s image sequence: %.2f%% (%.2fFPS) - Press Esc to cancel",function, (float)eof_music_pos/(float)eof_music_length * 100.0, fps);
 			set_window_title(windowtitle);
 			refreshctr -= 10;
 			lastpolltime = curtime;
 			lastpollctr = framectr;
 		}
 
-		//Render the screen
-		eof_find_lyric_preview_lines();
-		eof_render_editor_window(eof_window_editor, 1);	//Render the primary piano roll
-		eof_render_editor_window_2();	//Render the secondary piano roll if applicable
-		eof_render_3d_window();
-		eof_render_note_window();
-
+		eof_render();
 		if(!benchmark_only)
 		{	//If saving the image sequence to disk, export this frame to an image file
 			(void) snprintf(filename, sizeof(filename) - 1, "%08lu.pcx",framectr);
@@ -6134,10 +6128,6 @@ int eof_create_image_sequence(char benchmark_only)
 		eof_log(windowtitle, 1);
 	}
 
-//Restore original display settings
-	eof_desktop = original_eof_desktop;
-	eof_apply_display_settings(eof_screen_layout.mode);
-
 	eof_fix_window_title();
 
 	if(!benchmark_only)
@@ -6155,6 +6145,11 @@ int eof_create_image_sequence(char benchmark_only)
 int eof_write_image_sequence(void)
 {
 	return eof_create_image_sequence(0);	//Generate the image sequence and write it to disk
+}
+
+int eof_benchmark_image_sequence(void)
+{
+	return eof_create_image_sequence(1);	//Generate the image sequence and only display it to screen
 }
 
 unsigned long eof_get_num_lyric_sections(EOF_SONG *sp, unsigned long track)
