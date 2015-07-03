@@ -4618,8 +4618,8 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 				tp->note[i-1]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;		//Set the string mute flag
 			}
 
-			/* ensure that a note isn't both ghosted AND string muted/hammer on */
-			if(((tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) || (tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)) && tp->note[i-1]->ghost)
+			/* ensure that a note isn't both ghosted AND string muted (use conflicting channels during RB3 export) */
+			if((tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) && tp->note[i-1]->ghost)
 			{	//If this note is string muted and any strings are ghosted
 				tp->note[i-1]->ghost = 0;	//Remove ghost status from all strings
 			}

@@ -2291,17 +2291,20 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 	unsigned long delta = 0;
 	int vel, channel = 0;
 	unsigned long lastdelta=0;				//Keeps track of the last anchor's absolute delta time
-	unsigned long trackcounter = 0;			//Tracks the number of tracks to write to file
+	unsigned long trackcounter = 0;			//Tracks the number of pro guitar and vocal tracks to write to file
+	unsigned long totaltrackcounter = 0;	//Tracks the number of tracks to write to file
 	EOF_MIDI_TS_LIST *tslist=NULL;			//List containing TS changes
 	struct eof_MIDI_data_track *trackptr;		//Used to count the number of raw MIDI tracks to export
 	EOF_MIDI_KS_LIST *kslist;
-	char notetempname[EOF_TRACKS_MAX+1][15];
-	char notetrackspopulated[EOF_TRACKS_MAX+1] = {0};
+	#define EOF_MUSIC_MIDI_TRACKS_MAX (EOF_PRO_GUITAR_TRACKS_MAX + EOF_PRO_GUITAR_TRACKS_MAX + EOF_VOCAL_TRACKS_MAX + 1)
+	char notetempname[EOF_MUSIC_MIDI_TRACKS_MAX][EOF_NAME_LENGTH + 1];	//The list of temporary files created to store the binary content for each MIDI track, a maximum potential of two copies of each pro guitar track and one of each vocal track
 	char tempotempname[] = {"tempo.tmp"};
 	char eventtempname[] = {"event.tmp"};
 	unsigned char pitchmask, pitches[6] = {0};
 	char *name, notename[EOF_NAME_LENGTH+1] = {0};
 	char eventstrackwritten = 0;			//Tracks whether an events track has been written
+	char *arrangement_name;
+	unsigned long numpasses = 1, passnum;
 
 	eof_log("eof_export_music_midi() entered", 1);
 
@@ -2329,7 +2332,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 	header[13] = timedivision & 0xFF;
 
 	//Initialize the temporary filename array
-	for(i = 0; i < EOF_TRACKS_MAX+1; i++)
+	for(i = 0; i < EOF_MUSIC_MIDI_TRACKS_MAX; i++)
 	{
 		(void) snprintf(notetempname[i], sizeof(notetempname[i]) - 1, "eof%lu.tmp", i);
 	}
@@ -2337,263 +2340,293 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 	eof_sort_notes(sp);
 	eof_sort_events(sp);
 
+	if(format)
+	{	//If writing a Fretlight style MIDI
+		numpasses = 2;	//Each pro guitar/bass track will be written twice, once in Synthesia format and once in Fretlight format (the former is used for audio playback and the latter for tablature signaling)
+	}
+
 	//Write tracks
-	for(j = 1; j < sp->tracks; j++)
-	{	//For each track in the project
-		int lastevent = 0;	//Track the last event written so running status can be utilized
+	for(passnum = 0; passnum < numpasses; passnum++)
+	{	//Parse each track twice, on first pass write the tracks in Synthesia style, on second pass write the tracks in Fretlight style
+		for(j = 1; j < sp->tracks; j++)
+		{	//For each track in the project
+			int lastevent = 0;	//Track the last event written so running status can be utilized
 
-		if(eof_get_track_size(sp, j) == 0)	//If this track has no notes
-			continue;	//Skip the track
+			if(eof_get_track_size(sp, j) == 0)	//If this track has no notes
+				continue;	//Skip the track
 
-		if((sp->track[j]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (sp->track[j]->track_format != EOF_VOCAL_TRACK_FORMAT))	//If this isn't a vocal or pro guitar track
-			continue;	//Skip the track
+			if((sp->track[j]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (sp->track[j]->track_format != EOF_VOCAL_TRACK_FORMAT))	//If this isn't a vocal or pro guitar track
+				continue;	//Skip the track
 
-		if(eof_track_overridden_by_stored_MIDI_track(sp, j))	//If this track is overridden by a stored MIDI track
-			continue;	//Skip the track
+			if(passnum && (sp->track[j]->track_format == EOF_VOCAL_TRACK_FORMAT))
+				continue;	//Only write the vocal track once
 
-		trackcounter++;	//Count this track towards the number of tracks to write to the completed MIDI
-		notetrackspopulated[j] = 1;	//Remember that this track is populated
-		eof_clear_midi_events();
-		memset(eof_midi_note_status,0,sizeof(eof_midi_note_status));	//Clear note status array
+			if(eof_track_overridden_by_stored_MIDI_track(sp, j))	//If this track is overridden by a stored MIDI track
+				continue;	//Skip the track
 
-		//Write track specific text events
-		for(i = 0; i < sp->text_events; i++)
-		{	//For each event in the song
-			if(sp->text_event[i]->track == j)
-			{	//If this event is specific to this track
-				if(sp->text_event[i]->beat >= sp->beats)
-				{	//If the text event's beat number is invalid
-					sp->text_event[i]->beat = sp->beats - 1;	//Repair it by assigning it to the last beat marker
-				}
-				deltapos = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,tslist,timedivision,1);	//Store the tick position of the note
-				eof_add_midi_text_event(deltapos, sp->text_event[i]->text, 0, i);	//Send 0 for the allocation flag, because the text string is being stored in static memory
-			}
-		}
+			eof_clear_midi_events();
+			memset(eof_midi_note_status,0,sizeof(eof_midi_note_status));	//Clear note status array
 
-		//Write notes
-		for(i = 0; i < eof_get_track_size(sp, j); i++)
-		{	//For each note/lyric in the track
-			unsigned long pos = eof_get_note_pos(sp, j, i);	//Cache this value
-			unsigned long nextpos = 0, length, minlength;
-			long beat;
-
-			length = eof_get_note_length(sp, j, i);
-			if(i + 1 < eof_get_track_size(sp, j))
-			{	//If there is another note in the track
-				nextpos = eof_get_note_pos(sp, j, i + 1);
-				if(pos == nextpos)
-				{	//If this note and the next one are at the same position
-					continue;	//Skip this one and use the higher difficulty note
+			//Write track specific text events
+			for(i = 0; i < sp->text_events; i++)
+			{	//For each event in the song
+				if(sp->text_event[i]->track == j)
+				{	//If this event is specific to this track
+					if(sp->text_event[i]->beat >= sp->beats)
+					{	//If the text event's beat number is invalid
+						sp->text_event[i]->beat = sp->beats - 1;	//Repair it by assigning it to the last beat marker
+					}
+					deltapos = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,tslist,timedivision,1);	//Store the tick position of the note
+					eof_add_midi_text_event(deltapos, sp->text_event[i]->text, 0, i);	//Send 0 for the allocation flag, because the text string is being stored in static memory
 				}
 			}
-			beat = eof_get_beat(sp, pos);
-			if((beat >= 0) && (beat < sp->beats))
-			{	//If the beat in which this note exists could be determined
-				double beat_length = eof_calc_beat_length(sp, beat);	//Get the length of the beat
-				minlength = beat_length / 8;	//Get the desired minimum length for the note (1/8 beat)
-				if(length < minlength)
-				{	//If the note's length is shorter than that
-					if(!nextpos || (pos + minlength < nextpos))
-					{	//If there is no next note or if this note can be extended without overlapping the next note
-						length = minlength;	//Do so
+
+			//Write notes
+			for(i = 0; i < eof_get_track_size(sp, j); i++)
+			{	//For each note/lyric in the track
+				unsigned long pos = eof_get_note_pos(sp, j, i);	//Cache this value
+				unsigned long nextpos = 0, length, minlength;
+				long beat;
+
+				length = eof_get_note_length(sp, j, i);
+				if(i + 1 < eof_get_track_size(sp, j))
+				{	//If there is another note in the track
+					nextpos = eof_get_note_pos(sp, j, i + 1);
+					if(pos == nextpos)
+					{	//If this note and the next one are at the same position
+						continue;	//Skip this one and use the higher difficulty note
+					}
+				}
+				beat = eof_get_beat(sp, pos);
+				if((beat >= 0) && (beat < sp->beats))
+				{	//If the beat in which this note exists could be determined
+					double beat_length = eof_calc_beat_length(sp, beat);	//Get the length of the beat
+					minlength = beat_length / 8;	//Get the desired minimum length for the note (1/8 beat)
+					if(length < minlength)
+					{	//If the note's length is shorter than that
+						if(!nextpos || (pos + minlength < nextpos))
+						{	//If there is no next note or if this note can be extended without overlapping the next note
+							length = minlength;	//Do so
+						}
+						else
+						{	//Otherwise just extend it as far as it can go without overlapping
+							if(nextpos > pos + 1)
+							{	//This is only possible if the next note is more than 1ms away
+								length = nextpos - pos - 1;
+							}
+						}
+					}
+				}
+
+				pitchmask = eof_get_midi_pitches(sp, j, i, pitches);	//Determine how many exportable pitches this note/lyric has
+				if(pitchmask)
+				{	//If at least one pitch is to be exported for this note/lyric
+					//Write note/lyric pitches
+					deltapos = eof_ConvertToDeltaTime(pos, anchorlist, tslist, timedivision, 1);
+					deltalength = eof_ConvertToDeltaTime(pos + length, anchorlist, tslist, timedivision, 0) - deltapos;
+					if(deltalength < 1)
+					{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+						deltalength = 1;
+					}
+					if(!passnum)
+					{	//Writing a Synthesia style MIDI
+						if((sp->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_get_note_flags(sp, j, i) & EOF_PRO_GUITAR_NOTE_FLAG_ACCENT))
+						{	//If this is a pro guitar note played as an accent
+							vel = 127;	//Use the maximum velocity possible
+						}
+						else
+						{
+							vel = 64;	//Otherwise use half the maximum
+						}
 					}
 					else
-					{	//Otherwise just extend it as far as it can go without overlapping
-						if(nextpos > pos + 1)
-						{	//This is only possible if the next note is more than 1ms away
-							length = nextpos - pos - 1;
+					{	//Writing a Fretlight style MIDI
+						vel = 127;
+					}
+					for(k = 0, bitmask = 1; k < 6; k++, bitmask <<= 1)
+					{	//For each of the 6 possible values in the pitch array
+						if(pitchmask & bitmask)
+						{	//If this pitch is defined in the array
+							if(passnum)
+							{	//Writing a Fretlight style MIDI
+								channel = 15 - k;	//Fretlight's channel numbering is such that low E uses channel 15 and high E uses channel 10
+							}
+							eof_add_midi_event(deltapos, 0x90, pitches[k], vel, channel);
+							eof_add_midi_event(deltapos + deltalength, 0x80, pitches[k], vel, channel);
 						}
 					}
-				}
-			}
 
-			pitchmask = eof_get_midi_pitches(sp, j, i, pitches);	//Determine how many exportable pitches this note/lyric has
-			if(pitchmask)
-			{	//If at least one pitch is to be exported for this note/lyric
-				//Write note/lyric pitches
-				deltapos = eof_ConvertToDeltaTime(pos, anchorlist, tslist, timedivision, 1);
-				deltalength = eof_ConvertToDeltaTime(pos + length, anchorlist, tslist, timedivision, 0) - deltapos;
-				if(deltalength < 1)
-				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
-					deltalength = 1;
-				}
-				if(!format)
-				{	//Writing a Synthesia style MIDI
-					if((sp->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_get_note_flags(sp, j, i) & EOF_PRO_GUITAR_NOTE_FLAG_ACCENT))
-					{	//If this is a pro guitar note played as an accent
-						vel = 127;	//Use the maximum velocity possible
+					//Write note name or lyric text if applicable
+					if(sp->track[j]->track_format == EOF_VOCAL_TRACK_FORMAT)
+					{	//If a lyric is being exported
+						name = eof_get_note_name(sp, j, i);
+						if(name && (name[0] != '\0'))
+						{	//If the lyric has defined text
+							eof_add_midi_lyric_event(deltapos, name, 0);	//Track that the lyric text was NOT dynamically allocated
+						}
 					}
 					else
-					{
-						vel = 64;	//Otherwise use half the maximum
-					}
-				}
-				else
-				{	//Writing a Fretlight style MIDI
-					vel = 127;
-				}
-				for(k = 0, bitmask = 1; k < 6; k++, bitmask <<= 1)
-				{	//For each of the 6 possible values in the pitch array
-					if(pitchmask & bitmask)
-					{	//If this pitch is defined in the array
-						if(format)
-						{	//Writing a Fretlight style MIDI
-							channel = 15 - k;	//Fretlight's channel numbering is such that low E uses channel 15 and high E uses channel 10
-						}
-						eof_add_midi_event(deltapos, 0x90, pitches[k], vel, channel);
-						eof_add_midi_event(deltapos + deltalength, 0x80, pitches[k], vel, channel);
-					}
-				}
-
-				//Write note name or lyric text if applicable
-				if(sp->track[j]->track_format == EOF_VOCAL_TRACK_FORMAT)
-				{	//If a lyric is being exported
-					name = eof_get_note_name(sp, j, i);
-					if(name && (name[0] != '\0'))
-					{	//If the lyric has defined text
-						eof_add_midi_lyric_event(deltapos, name, 0);	//Track that the lyric text was NOT dynamically allocated
-					}
-				}
-				else
-				{	//A pro guitar note is being exported
-					if(eof_build_note_name(sp, j, i, notename))
-					{	//If the note's name was manually defined or could be detected automatically
-						char * tempstring = malloc((size_t)ustrsizez(notename));	//Allocate memory to store a copy of the note name, because chord detection will overwrite notename[] each time it is used
-						if(tempstring != NULL)
-						{	//If allocation was successful
-							memcpy(tempstring, notename, (size_t)ustrsizez(notename));	//Copy the string to the newly allocated memory
-							eof_add_midi_text_event(deltapos, tempstring, 1, 0xFFFFFFFF);	//Store the new string in a text event, send 1 for the allocation flag, because the text string is being stored in dynamic memory (provide a high index to ensure it doesn't influence sort order)
+					{	//A pro guitar note is being exported
+						if(eof_build_note_name(sp, j, i, notename))
+						{	//If the note's name was manually defined or could be detected automatically
+							char * tempstring = malloc((size_t)ustrsizez(notename));	//Allocate memory to store a copy of the note name, because chord detection will overwrite notename[] each time it is used
+							if(tempstring != NULL)
+							{	//If allocation was successful
+								memcpy(tempstring, notename, (size_t)ustrsizez(notename));	//Copy the string to the newly allocated memory
+								eof_add_midi_text_event(deltapos, tempstring, 1, 0xFFFFFFFF);	//Store the new string in a text event, send 1 for the allocation flag, because the text string is being stored in dynamic memory (provide a high index to ensure it doesn't influence sort order)
+							}
 						}
 					}
-				}
 
-				if(eof_midi_event_full)
-				{	//If the track exceeded the number of MIDI events that could be written
-					allegro_message("Error:  Too many MIDI events, aborting MIDI export.");
-					eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
-					eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
+					if(eof_midi_event_full)
+					{	//If the track exceeded the number of MIDI events that could be written
+						allegro_message("Error:  Too many MIDI events, aborting MIDI export.");
+						eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
+						eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
+						eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+						eof_clear_midi_events();		//Free any memory allocated for the MIDI event array
+						return 0;	//Return failure
+					}
+				}//If at least one pitch is to be exported for this note/lyric
+			}//For each note/lyric in the track
+
+			//Cleanup
+			for(i = 0; i < 128; i++)
+			{	//Ensure that any notes that are still on are terminated
+				if(eof_midi_note_status[i] != 0)	//If this note was left on, send an alert message, as this is abnormal
+				{
+					allegro_message("MIDI export error:  Note %lu was not turned off", i);
+					if(endbeatnum)
+					{	//If the chart has a manually defined end event, that's probably the cause
+						eof_clear_input();
+						if(alert("It appears this is due to an [end] event that cuts out a note early", "Would you like to seek to the beat containing this [end] event?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+						{	//If user opts to seek to the offending event
+							eof_set_seek_position(sp->beat[endbeatnum]->pos + eof_av_delay);
+							eof_selected_beat = endbeatnum;
+						}
+					}
 					eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+					eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
+					eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
 					eof_clear_midi_events();		//Free any memory allocated for the MIDI event array
 					return 0;	//Return failure
 				}
-			}//If at least one pitch is to be exported for this note/lyric
-		}//For each note/lyric in the track
+			}
+			qsort(eof_midi_event, (size_t)eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
+			eof_check_for_note_overlap();	//Filter out any improperly overlapping note on/off events
 
-		//Cleanup
-		for(i = 0; i < 128; i++)
-		{	//Ensure that any notes that are still on are terminated
-			if(eof_midi_note_status[i] != 0)	//If this note was left on, send an alert message, as this is abnormal
-			{
-				allegro_message("MIDI export error:  Note %lu was not turned off", i);
-				if(endbeatnum)
-				{	//If the chart has a manually defined end event, that's probably the cause
-					eof_clear_input();
-					if(alert("It appears this is due to an [end] event that cuts out a note early", "Would you like to seek to the beat containing this [end] event?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-					{	//If user opts to seek to the offending event
-						eof_set_seek_position(sp->beat[endbeatnum]->pos + eof_av_delay);
-						eof_selected_beat = endbeatnum;
-					}
-				}
-				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
-				eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
+			//Build temp file
+			/* open the file */
+			if(trackcounter >= EOF_MUSIC_MIDI_TRACKS_MAX)
+			{	//If this function attempted to store more tracks than it was prepared for
+				allegro_message("Error:  Too many MIDI tracks, aborting MIDI export.");
 				eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
+				eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
+				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 				eof_clear_midi_events();		//Free any memory allocated for the MIDI event array
 				return 0;	//Return failure
 			}
-		}
-		qsort(eof_midi_event, (size_t)eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
-		eof_check_for_note_overlap();	//Filter out any improperly overlapping note on/off events
-
-		//Build temp file
-		/* open the file */
-		fp = pack_fopen(notetempname[j], "w");
-		if(!fp)
-		{
-			eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
-			eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
-			eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
-			eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
-			eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
-			return 0;	//Return failure
-		}
-
-		/* write the track name */
-		WriteVarLen(0, fp);
-		(void) pack_putc(0xFF, fp);
-		(void) pack_putc(0x03, fp);
-		if(!format)
-		{	//If writing a Synthesia style MIDI
-			WriteVarLen(ustrlen(sp->track[j]->name), fp);
-			(void) pack_fwrite(sp->track[j]->name, ustrlen(sp->track[j]->name), fp);
-
-			/* set the guitar/bass MIDI instrument as appropriate */
-			if(sp->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{	//If this is a pro guitar/bass track
-				int tone = eof_midi_synth_instrument_guitar;	//By default, assume a guitar arrangement
-
-				if(sp->pro_guitar_track[sp->track[j]->tracknum]->arrangement == 4)
-				{	//If this track's arrangement type is bass
-					tone = eof_midi_synth_instrument_bass;	//Use the configured bass MIDI tone instead
-				}
-				WriteVarLen(0, fp);
-				(void) pack_putc(0xC0 + channel, fp);	//Write MIDI event 0xC (Program change)
-				(void) pack_putc(tone, fp);				//Write instrument number
+			fp = pack_fopen(notetempname[trackcounter], "w");
+			if(!fp)
+			{
+				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+				eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
+				eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
+				eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
+				eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
+				return 0;	//Return failure
 			}
-		}
-		else
-		{	//If writing a Fretlight style MIDI
-			char prefix[] = "FMP - ";	//The required track name prefix
 
-			WriteVarLen(ustrlen(sp->track[j]->name) + ustrlen(prefix), fp);	//Include the extra number of characters needed for the prefix
-			(void) pack_fwrite(prefix, ustrlen(prefix), fp);
-			(void) pack_fwrite(sp->track[j]->name, ustrlen(sp->track[j]->name), fp);
-		}
+			/* determine the track name */
+			arrangement_name = sp->track[j]->name;	//By default, the track's native name will be used
+			if(sp->track[j]->altname[0] != '\0')
+			{	//If this track has an alternate name defined
+				arrangement_name = sp->track[j]->altname;	//Use it
+			}
+			else if(strcasestr_spec(sp->track[j]->name, "PART ") != NULL)
+			{	//If this track's native name begins as expected
+				arrangement_name = strcasestr_spec(sp->track[j]->name, "PART ");	//Use the end part of the name
+			}
 
-		/* add MIDI events */
-		lastdelta = 0;
-		for(i = 0; i < eof_midi_events; i++)
-		{
-			if(!eof_midi_event[i]->filtered)
-			{	//If this event isn't being filtered
-				delta = eof_midi_event[i]->pos;
-				if(eof_midi_event[i]->type == 0x01)
-				{	//Write a note name text event
-					eof_write_text_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
-				}
-				else if(eof_midi_event[i]->type == 0x05)
-				{	//Write a lyric event
-					eof_write_lyric_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
-				}
-				else
-				{	//Write normal MIDI note events
-					WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
-					if(eof_midi_event[i]->type + eof_midi_event[i]->channel != lastevent)
-					{	//With running status, the MIDI event type needn't be written if it's the same as the previous event
-						(void) pack_putc(eof_midi_event[i]->type + eof_midi_event[i]->channel, fp);
+			/* write the track name */
+			WriteVarLen(0, fp);
+			(void) pack_putc(0xFF, fp);
+			(void) pack_putc(0x03, fp);
+			if(!passnum)
+			{	//If writing a Synthesia style MIDI
+				WriteVarLen(ustrlen(arrangement_name), fp);
+				(void) pack_fwrite(arrangement_name, ustrlen(arrangement_name), fp);
+
+				/* set the guitar/bass MIDI instrument as appropriate */
+				if(sp->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//If this is a pro guitar/bass track
+					int tone = eof_midi_synth_instrument_guitar;	//By default, assume a guitar arrangement
+
+					if(sp->pro_guitar_track[sp->track[j]->tracknum]->arrangement == 4)
+					{	//If this track's arrangement type is bass
+						tone = eof_midi_synth_instrument_bass;	//Use the configured bass MIDI tone instead
 					}
-					(void) pack_putc(eof_midi_event[i]->note, fp);
-					(void) pack_putc(eof_midi_event[i]->velocity, fp);
-					lastevent = eof_midi_event[i]->type + eof_midi_event[i]->channel;
+					WriteVarLen(0, fp);
+					(void) pack_putc(0xC0 + channel, fp);	//Write MIDI event 0xC (Program change)
+					(void) pack_putc(tone, fp);				//Write instrument number
 				}
-				if(eof_midi_event[i]->allocation && eof_midi_event[i]->dp)
-				{	//If this event has allocated memory to release
-					free(eof_midi_event[i]->dp);	//Free it now
-					eof_midi_event[i]->dp = NULL;
-					eof_midi_event[i]->allocation = 0;
-				}
-				lastdelta = delta;					//Store this event's absolute delta time
 			}
-		}
+			else
+			{	//If writing a Fretlight style MIDI
+				char prefix[] = "FMP - ";	//The required track name prefix
 
-		/* write end of track */
-		WriteVarLen(0, fp);
-		(void) pack_putc(0xFF, fp);
-		(void) pack_putc(0x2F, fp);
-		(void) pack_putc(0x00, fp);
-		(void) pack_fclose(fp);
+				WriteVarLen(ustrlen(arrangement_name) + ustrlen(prefix), fp);	//Include the extra number of characters needed for the prefix
+				(void) pack_fwrite(prefix, ustrlen(prefix), fp);
+				(void) pack_fwrite(arrangement_name, ustrlen(arrangement_name), fp);
+			}
 
-		channel++;	//For Synthesia format MIDIs, the next track to export will use a different MIDI channel for the note on/off events
-	}//For each track in the project
+			/* add MIDI events */
+			lastdelta = 0;
+			for(i = 0; i < eof_midi_events; i++)
+			{
+				if(!eof_midi_event[i]->filtered)
+				{	//If this event isn't being filtered
+					delta = eof_midi_event[i]->pos;
+					if(eof_midi_event[i]->type == 0x01)
+					{	//Write a note name text event
+						eof_write_text_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+					}
+					else if(eof_midi_event[i]->type == 0x05)
+					{	//Write a lyric event
+						eof_write_lyric_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+					}
+					else
+					{	//Write normal MIDI note events
+						WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
+						if(eof_midi_event[i]->type + eof_midi_event[i]->channel != lastevent)
+						{	//With running status, the MIDI event type needn't be written if it's the same as the previous event
+							(void) pack_putc(eof_midi_event[i]->type + eof_midi_event[i]->channel, fp);
+						}
+						(void) pack_putc(eof_midi_event[i]->note, fp);
+						(void) pack_putc(eof_midi_event[i]->velocity, fp);
+						lastevent = eof_midi_event[i]->type + eof_midi_event[i]->channel;
+					}
+					if(eof_midi_event[i]->allocation && eof_midi_event[i]->dp)
+					{	//If this event has allocated memory to release
+						free(eof_midi_event[i]->dp);	//Free it now
+						eof_midi_event[i]->dp = NULL;
+						eof_midi_event[i]->allocation = 0;
+					}
+					lastdelta = delta;					//Store this event's absolute delta time
+				}
+			}
+
+			/* write end of track */
+			WriteVarLen(0, fp);
+			(void) pack_putc(0xFF, fp);
+			(void) pack_putc(0x2F, fp);
+			(void) pack_putc(0x00, fp);
+			(void) pack_fclose(fp);
+
+			trackcounter++;	//Count this track towards the number of tracks to write to the completed MIDI
+			channel++;	//For Synthesia format MIDIs, the next track to export will use a different MIDI channel for the note on/off events
+		}//For each track in the project
+	}//Parse each track twice
 
 	eof_clear_midi_events();		//Free any memory allocated for the MIDI event array
 
@@ -2669,14 +2702,14 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 	}
 
 	/* write header data */
-	trackcounter += 1 + eventstrackwritten;		//Add 1 for track 0 and one for the events tracks if applicable
+	totaltrackcounter = trackcounter + 1 + eventstrackwritten;		//Add 1 for track 0 and one for the events tracks if applicable
 
-	for(trackptr = sp->midi_data_head; trackptr != NULL; trackptr = trackptr->next)	//Add the number of raw MIDI tracks to export to the track counter
+	for(trackptr = sp->midi_data_head; trackptr != NULL; trackptr = trackptr->next)	//Add the number of raw MIDI tracks to export to the total track counter
 	{	//For each stored MIDI track
 		if(!trackptr->timedivision)	//If the stored track does not contain a time division (is not a stored tempo track)
-			trackcounter++;			//Count it toward the number of tracks to be exported (track 0 is already counted)
+			totaltrackcounter++;			//Count it toward the number of tracks to be exported (track 0 is already counted)
 	}
-	header[11] = trackcounter;	//Write the number of tracks present into the MIDI header
+	header[11] = totaltrackcounter;	//Write the total number of tracks present into the MIDI header
 	(void) pack_fwrite(header, 14, fp);
 
 /* write tempo track */
@@ -2689,19 +2722,16 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 	}
 
 /* write the remaining tracks */
-	for(j = 1; j < sp->tracks; j++)
-	{
-		if(notetrackspopulated[j])
-		{	//If this track had a temp file created
-			(void) eof_dump_midi_track(notetempname[j],fp);
-		}
+	for(j = 0; j < trackcounter; j++)
+	{	//For each track that was written to a temporary file
+		(void) eof_dump_midi_track(notetempname[j],fp);
 	}
 	eof_MIDI_data_track_export(sp, fp, anchorlist, tslist, timedivision);	//Write any stored raw MIDI tracks to the output file
 
 /* cleanup */
 	(void) pack_fclose(fp);	//Close the output file
-	for(i = 0; i < EOF_TRACKS_MAX+1; i++)
-	{
+	for(i = 0; i < trackcounter; i++)
+	{	//For each temporary file that was created
 		(void) delete_file(notetempname[i]);
 	}
 	(void) delete_file(tempotempname);
@@ -2722,7 +2752,7 @@ struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp)
 	unsigned long lastppqn=0;	//Tracks the last anchor's PPQN value
 	unsigned long deltapos = 0;		//Stores the ongoing delta time
 	double deltafpos = 0.0;			//Stores the ongoing delta time (with double floating precision)
-	double beatlength = 0.0;		//Stores the current beat's length in deltas
+	double beatlength = EOF_DEFAULT_TIME_DIVISION;		//Stores the current beat's length in deltas
 	unsigned num=4,den=4;			//Stores the current time signature
 
 	eof_log("eof_build_tempo_list() entered", 1);
@@ -2747,7 +2777,10 @@ struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp)
 			list=temp;	//Update list pointer
 		}
 
-		beatlength = (double)EOF_DEFAULT_TIME_DIVISION / ((double)den / 4.0);		//Determine the length of this beat in deltas (taking the time signature into consideration)
+		if(sp->tags->accurate_ts)
+		{	//If accurate time signatures are to be observed for export
+			beatlength = (double)EOF_DEFAULT_TIME_DIVISION / ((double)den / 4.0);		//Determine the length of this beat in deltas (taking the time signature into consideration)
+		}
 		deltafpos += beatlength;	//Add the delta length of this beat to the delta counter
 		deltapos = deltafpos + 0.5;	//Round up to nearest delta
 	}
