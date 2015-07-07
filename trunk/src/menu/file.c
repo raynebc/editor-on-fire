@@ -3340,6 +3340,10 @@ char * eof_colors_list(int index, int * size)
 		{
 			return "Rocksmith";
 		}
+		case 4:
+		{
+			return "Bandfuse";
+		}
 	}
 	return NULL;
 }

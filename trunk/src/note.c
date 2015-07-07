@@ -2,6 +2,7 @@
 #include <assert.h>
 #include "modules/ocd3d.h"
 #include "main.h"
+#include "bf.h"	//For eof_pro_guitar_note_lookup_string_fingering()
 #include "note.h"
 #include "rs.h"	//For eof_note_has_high_chord_density()
 #include "tuning.h"
@@ -272,6 +273,8 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	unsigned char notetype = 0;
 	long length;
 
+	EOF_PRO_GUITAR_TRACK *tp = NULL;
+
 //Validate parameters
 	if(window == NULL)
 	{
@@ -401,9 +404,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	}
 
 	if(track != 0)
-	{	//If rendering an existing note instead of the pen note
-		EOF_PRO_GUITAR_TRACK *tp;
-
+	{	//If rendering an existing note instead of the pen note, draw tab notation
 		if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is being rendered
 			tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];
@@ -460,7 +461,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		//Render tab notations before the note, so that the former doesn't render a solid background over the latter
 		eof_get_note_notation(notation, track, notenum, 1);	//Get the tab playing notation for this note
 		textout_centre_ex(window->screen, eof_symbol_font, notation, x, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 6, eof_color_red, eof_color_black);
-	}//If rendering an existing note instead of the pen note
+	}//If rendering an existing note instead of the pen note, draw tab notation
 
 	for(ctr=0,mask=1;ctr<numlanes;ctr++,mask=mask<<1)
 	{	//Render for each of the available fret lanes
@@ -471,10 +472,30 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		{	//If this lane is populated
 			if(!(noteflags & EOF_NOTE_FLAG_SP))
 			{	//If the note is not star power
-				ncol = eof_colors[ctr].color;	//Assign the appropriate fret color
+				if(tp && (eof_color_set == EOF_COLORS_BF))
+				{	//If a pro guitar track is active (tp will have been set above) and the Bandfuse color set is in use, override the color based on the gem's fingering
+					unsigned fingering = eof_pro_guitar_note_lookup_string_fingering(tp, notenum, ctr, 6);	//Look up this gem's fingering (or return 6 if cannot be determined)
+					if(fingering < 6)
+					{	//If the finger was determined
+						ncol = eof_colors[fingering].color;	//Use the appropriate color
+					}
+					else
+					{	//Otherwise use the default silvering coloring
+						noteflags |= EOF_NOTE_FLAG_SP;	//And trigger the selection of the appropriate corresponding border color
+					}
+				}
+				else if(!track && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_color_set == EOF_COLORS_BF))
+				{	//If the pen note is being drawn, the active track is a pro guitar track and the Bandfuse color set is in use
+					ncol = eof_color_silver;		//Force the pen note to draw in silver (undefined fingering)
+					noteflags |= EOF_NOTE_FLAG_SP;	//And trigger the selection of the appropriate corresponding border color
+				}
+				else
+				{
+					ncol = eof_colors[ctr].color;	//Assign the appropriate fret color
+				}
 			}
 			if(p)
-			{	//For mouse over/highlight lyrics, render with note with its defined contrasting border color
+			{	//For mouse over/highlight lyrics, render note with its defined contrasting border color
 				if(!(noteflags & EOF_NOTE_FLAG_SP))
 				{	//If the note is not star power
 					pcol = eof_colors[ctr].border;	//Use the note's normal border color
@@ -505,7 +526,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 				dcol2 = dcol;			//Otherwise render with the expected dot color
 
 			if((notetype == EOF_NOTE_SPECIAL) || !((eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && eof_hide_drum_tails))
-			{	//If this is not a BRE note or it is otherwise not drum note that will have tails hidden due to the "Hide drum note tails" user option,
+			{	//If this is a BRE note or it is otherwise not drum note that will have tails hidden due to the "Hide drum note tails" user option,
 				rectfill(window->screen, x, y - eof_screen_layout.note_tail_size, x + length, y + eof_screen_layout.note_tail_size, ncol);	//Draw the note tail
 				if(p)
 				{	//If this note is moused over
@@ -611,7 +632,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			}
 		}//If this lane is populated
 		else if((eof_hover_note >= 0) && (p == 3))
-		{
+		{	//If this note is currently being moused over
 			rect(window->screen, x, y - eof_screen_layout.note_tail_size, x + length, y + eof_screen_layout.note_tail_size, eof_color_gray);
 			if(!iscymbal)
 			{	//If this note is not a cymbal, draw a non filled circle over the note
@@ -1093,7 +1114,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 				if(notenote & mask)
 				{	//If this lane is used
 					if((mask == 32) && eof_open_strum_enabled(track))
-					{	//Lane 6 for the bass track (if enabled) renders similarly to a bass drum note
+					{	//If drawing lane 6 as an open strum (renders similarly to a bass drum note)
 						rz = npos;
 						ez = npos + 14;
 						point[0] = ocd3d_project_x(bx - 10, rz);
@@ -1112,11 +1133,27 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 							else										//Otherwise render it in the standard lane six color for the current color set
 								polygon(eof_window_3d->screen, 4, point, p ? eof_colors[5].hit : eof_colors[5].color);
 						}
-					}
+					}//If drawing lane 6 as an open strum (renders similarly to a bass drum note)
 					else
 					{
 						if(track != EOF_TRACK_DANCE)
 						{	//If this is not a dance track
+							unsigned long color = ctr;	//By default, the color will be determined by the gem's lane number
+
+							if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_color_set == EOF_COLORS_BF))
+							{	//If a pro guitar track is active and the Bandfuse color set is in use, override the color based on the gem's fingering
+								unsigned fingering = eof_pro_guitar_note_lookup_string_fingering(eof_song->pro_guitar_track[tracknum], notenum, ctr, 6);	//Look up this gem's fingering (or return 6 if cannot be determined)
+
+								if(fingering < 6)
+								{	//If the finger was determined
+									color = fingering;	//Use the fingering's appropriate color
+								}
+								else
+								{	//Otherwise use the default silvering coloring
+									noteflags |= EOF_NOTE_FLAG_SP;	//And trigger the selection of the appropriate corresponding border color
+								}
+							}
+
 							if(noteflags & EOF_NOTE_FLAG_HOPO)
 							{	//If this is a HOPO note
 								if(noteflags & EOF_NOTE_FLAG_SP)
@@ -1125,18 +1162,18 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 								}
 								else
 								{
-									ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[eof_colors[ctr].hoponotehit3d] : eof_image[eof_colors[ctr].hoponote3d], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
+									ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[eof_colors[color].hoponotehit3d] : eof_image[eof_colors[color].hoponote3d], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
 								}
 							}
 							else
-							{
+							{	//This is not a HOPO note
 								if(noteflags & EOF_NOTE_FLAG_SP)
 								{	//If this is an SP note
 									ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
 								}
 								else
 								{
-									ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[eof_colors[ctr].notehit3d] : eof_image[eof_colors[ctr].note3d], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
+									ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[eof_colors[color].notehit3d] : eof_image[eof_colors[color].note3d], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
 								}
 							}
 
@@ -1286,6 +1323,22 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 			}
 			else
 			{	//Logic to render lanes 1 through 6
+				unsigned long color = ctr;	//By default, the color will be determined by the gem's lane number
+
+				if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_color_set == EOF_COLORS_BF))
+				{	//If a pro guitar track is active and the Bandfuse color set is in use, override the color based on the gem's fingering
+					unsigned fingering = eof_pro_guitar_note_lookup_string_fingering(eof_song->pro_guitar_track[tracknum], notenum, ctr, 6);	//Look up this gem's fingering (or return 6 if cannot be determined)
+
+					if(fingering < 6)
+					{	//If the finger was determined
+						color = fingering;	//Use the fingering's appropriate color
+					}
+					else
+					{	//Otherwise use the default silvering coloring
+						noteflags |= EOF_NOTE_FLAG_SP;	//And trigger the selection of the appropriate corresponding border color
+					}
+				}
+
 				if(!((ctr == 5) && (track == EOF_TRACK_BASS)))
 				{	//If this is not a hidden open bass note
 					point[0] = ocd3d_project_x(xchart[ctr] - 10, rz);
@@ -1296,7 +1349,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 					point[5] = point[3];
 					point[6] = ocd3d_project_x(xchart[ctr] + 10, rz);
 					point[7] = point[1];
-					polygon(eof_window_3d->screen, 4, point, (noteflags & EOF_NOTE_FLAG_SP) ? (p ? eof_color_white : eof_color_silver) : (p ? eof_colors[ctr].hit : eof_colors[ctr].color));
+					polygon(eof_window_3d->screen, 4, point, (noteflags & EOF_NOTE_FLAG_SP) ? (p ? eof_color_white : eof_color_silver) : (p ? eof_colors[color].hit : eof_colors[color].color));
 				}
 			}
 

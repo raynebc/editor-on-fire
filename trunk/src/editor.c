@@ -5607,9 +5607,9 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 							}
 						}
 					}
-				}
-			}
-		}
+				}//If the section exists
+			}//For each trill or tremolo section in the track
+		}//For each of the two phrase types (trills and tremolos)
 	}//If this track has any trill or tremolo sections
 
 	if(window != eof_window_editor2)

@@ -1395,8 +1395,8 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						}
 					}//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems)
 				}//For each note in the track
-				(void) pack_fputs("      </handShapes>\n", fp);
 			}//On first pass, reset the handshape counter and count the number of handshapes.  On second pass, write handshapes.
+			(void) pack_fputs("      </handShapes>\n", fp);
 
 			//Write closing level tag
 			(void) pack_fputs("    </level>\n", fp);
@@ -2614,8 +2614,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						}//If this note is in this difficulty and will export as a chord (at least two non ghosted gems) or an arpeggio/handshape or is in an arpeggio/handshape phrase
 					}//If this note is not ignored
 				}//For each note in the track
-				(void) pack_fputs("      </handShapes>\n", fp);
 			}//On first pass, count the number of handshapes.  On second pass, write handshapes.
+			(void) pack_fputs("      </handShapes>\n", fp);
 
 			//Write closing level tag
 			(void) pack_fputs("    </level>\n", fp);
