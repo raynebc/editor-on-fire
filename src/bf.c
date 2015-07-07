@@ -32,8 +32,8 @@ unsigned eof_pro_guitar_note_lookup_string_fingering(EOF_PRO_GUITAR_TRACK *tp, u
 	{
 		unsigned char fhp = eof_pro_guitar_track_find_effective_fret_hand_position(tp, np->type, np->pos);	//Determine what fret hand position is in effect in this note's difficulty at this note's position
 
-		if(fret >= fhp)
-		{	//If the fret hand position in effect is at or below the gem's fret value
+		if(fhp && (fret >= fhp))
+		{	//If there is a fret hand position in effect and it is at or below the gem's fret value
 			if(fret < fhp + 4)
 			{	//If the fret is within 4 frets of the position
 				retval = fret + 1 - fhp;	//The index finger is at the hand position, each adjacent finger is one fret further away

@@ -320,6 +320,7 @@ int eof_color_waveform_rms;
 int eof_color_set = EOF_COLORS_DEFAULT;
 eof_color eof_colors[6];	//Contain the color definitions for each lane
 eof_color eof_color_green_struct, eof_color_red_struct, eof_color_yellow_struct, eof_color_blue_struct, eof_color_orange_struct, eof_color_purple_struct;
+eof_color eof_lane_1_struct, eof_lane_2_struct, eof_lane_3_struct, eof_lane_4_struct, eof_lane_5_struct, eof_lane_6_struct;
 	//Color data
 
 EOF_SCREEN_LAYOUT eof_screen_layout;
@@ -5140,6 +5141,13 @@ char eof_color_blue_name[] = "&Blue";
 char eof_color_orange_name[] = "&Orange";
 char eof_color_purple_name[] = "&Purple";
 
+char eof_lane_1_name[] = "Lane &1";
+char eof_lane_2_name[] = "Lane &2";
+char eof_lane_3_name[] = "Lane &3";
+char eof_lane_4_name[] = "Lane &4";
+char eof_lane_5_name[] = "Lane &5";
+char eof_lane_6_name[] = "Lane &6";
+
 char eof_note_toggle_menu_string_1[20] = "";	//These strings are used in the eof_note_toggle_menu[] array
 char eof_note_toggle_menu_string_2[20] = "";
 char eof_note_toggle_menu_string_3[20] = "";
@@ -5244,6 +5252,24 @@ void eof_init_colors(void)
 	eof_color_purple_struct.arrow3d = EOF_IMAGE_NOTE_PURPLE;
 	eof_color_purple_struct.arrowhit3d = EOF_IMAGE_NOTE_PURPLE_HIT;
 	eof_color_purple_struct.colorname = eof_color_purple_name;
+	//Init lane 1 (will be used to represent open fingering in Bandfuse color mode)
+	eof_lane_1_struct = eof_color_purple_struct;
+	eof_lane_1_struct.colorname = eof_lane_1_name;
+	//Init lane 2 (will be used to represent index fingering in Bandfuse color mode)
+	eof_lane_2_struct = eof_color_green_struct;
+	eof_lane_2_struct.colorname = eof_lane_2_name;
+	//Init lane 3 (will be used to represent middle fingering in Bandfuse color mode)
+	eof_lane_3_struct = eof_color_red_struct;
+	eof_lane_3_struct.colorname = eof_lane_3_name;
+	//Init lane 4 (will be used to represent ring fingering in Bandfuse color mode)
+	eof_lane_4_struct = eof_color_yellow_struct;
+	eof_lane_4_struct.colorname = eof_lane_4_name;
+	//Init lane 5 (will be used to represent pinky fingering in Bandfuse color mode)
+	eof_lane_5_struct = eof_color_blue_struct;
+	eof_lane_5_struct.colorname = eof_lane_5_name;
+	//Init lane 6 (will be used to represent thumb fingering in Bandfuse color mode)
+	eof_lane_6_struct = eof_color_orange_struct;
+	eof_lane_6_struct.colorname = eof_lane_6_name;
 }
 
 void eof_set_color_set(void)
@@ -5264,8 +5290,8 @@ void eof_set_color_set(void)
 		eof_colors[4] = eof_color_purple_struct;
 		eof_colors[5] = eof_color_orange_struct;
 	}
-	else if((eof_color_set == EOF_COLORS_RB) || (eof_color_set == EOF_COLORS_RS))
-	{	//If user is using the Rock Band or Rocksmith color set
+	else if((eof_color_set == EOF_COLORS_RB) || (eof_color_set == EOF_COLORS_RS) || (eof_color_set == EOF_COLORS_BF))
+	{	//If user is using the Rock Band, Rocksmith or Bandfuse color sets
 		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//If a drum track is active
 			eof_colors[0] = eof_color_orange_struct;
@@ -5285,6 +5311,15 @@ void eof_set_color_set(void)
 				eof_colors[3] = eof_color_blue_struct;
 				eof_colors[4] = eof_color_yellow_struct;
 				eof_colors[5] = eof_color_purple_struct;
+			}
+			else if(eof_color_set == EOF_COLORS_BF)
+			{	//If the user is using the Bandfuse color set
+				eof_colors[0] = eof_lane_1_struct;
+				eof_colors[1] = eof_lane_2_struct;
+				eof_colors[2] = eof_lane_3_struct;
+				eof_colors[3] = eof_lane_4_struct;
+				eof_colors[4] = eof_lane_5_struct;
+				eof_colors[5] = eof_lane_6_struct;
 			}
 			else
 			{	//The user is using the Rocksmith color set

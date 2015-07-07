@@ -50,11 +50,12 @@
 #define EOF_INPUT_GUITAR_STRUM 5
 #define EOF_INPUT_FEEDBACK     6
 
-#define EOF_NUM_COLOR_SETS     4
+#define EOF_NUM_COLOR_SETS     5
 #define EOF_COLORS_DEFAULT     0
 #define EOF_COLORS_RB          1
 #define EOF_COLORS_GH          2
 #define EOF_COLORS_RS          3
+#define EOF_COLORS_BF          4
 
 #define EOF_MAX_IMAGES 82
 

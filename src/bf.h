@@ -5,7 +5,9 @@
 
 unsigned eof_pro_guitar_note_lookup_string_fingering(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long stringnum, unsigned defval);
 	//Determines an appropriate fingering for the specified gem of the specified note
+	//If the note is an open note, 0 is returned
 	//If the note's fingering is defined for that gem, that fingering is returned
+	// (1 = index, 2 = middle, 3 = ring, 4 = pinky, 5 = thumb)
 	//If no fingering is defined for that gem, it is derived from the fret hand position in effect at that note's position, if any
 	// (a gem at the FHP is assumed to be played with the index, one fret away is assumed to be played with the middle finger, etc)
 	//If no valid (designating a fret value less than or equal to the gem's fret value) FHP is in effect at the note's position, the given default value is returned
