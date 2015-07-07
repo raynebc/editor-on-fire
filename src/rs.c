@@ -418,7 +418,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	int scale = 0, chord = 0, isslash = 0, bassnote = 0;	//Used for power chord detection
 	int standard_tuning = 0, non_standard_chords = 0, barre_chords = 0, power_chords = 0, notenum, dropd_tuning = 1, dropd_power_chords = 0, open_chords = 0, double_stops = 0, palm_mutes = 0, harmonics = 0, hopo = 0, tremolo = 0, slides = 0, bends = 0, tapping = 0, vibrato = 0, slappop = 0, octaves = 0, fifths_and_octaves = 0;	//Used for technique detection
 	char is_bass = 0;	//Is set to nonzero if the specified track is to be considered a bass guitar track
-	unsigned long chordid = 0, handshapectr = 0;
+	unsigned long chordid = 0, handshapectr = 0, handshapeloop;
 	unsigned long handshapestart = 0, handshapeend = 0;
 	long nextnote;
 	unsigned long originalbeatcount;	//If beats are padded to reach the beginning of the next measure (for DDC), this will track the project's original number of beats
@@ -1296,86 +1296,20 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				}
 			}
 
-			//Write hand shapes
-			//Count the number of hand shapes to write
-			handshapectr = 0;
-			for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
-			{	//For each note in the track
-				if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 1 | 4) > 1))
-				{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems) or an arpeggio handshape (at least two non muted notes)
-					unsigned long chordnum = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
-
-					//Find this chord's ID
-					for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
-					{	//For each of the entries in the unique chord list
-						assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
-						if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
-						{	//If this note matches a chord list entry
-							if(!eof_pro_guitar_note_compare_fingerings(tp->note[ctr3], tp->note[chordlist[ctr4]]))
-							{	//If this note has identical fingering to chord list entry
-								chordid = ctr4;	//Store the chord list entry number
-								break;
-							}
-						}
+			//Count/write the hand shapes
+			for(handshapeloop = 0, handshapectr = 0; handshapeloop < 2; handshapeloop++)
+			{	//On first pass, reset the handshape counter and count the number of handshapes.  On second pass, write handshapes.
+				if(handshapeloop)
+				{	//If this is the second pass, write the opening of the handshapes tag
+					if(!handshapectr)
+					{	//If there were no handshapes
+						(void) pack_fputs("      <handShapes count=\"0\"/>\n", fp);
+						break;	//Exit loop
 					}
-					if(ctr4 >= chordlistsize)
-					{	//If the chord couldn't be found
-						allegro_message("Error:  Couldn't match chord with chord template while counting handshapes.  Aborting Rocksmith 1 export.");
-						eof_log("Error:  Couldn't match chord with chord template while counting handshapes.  Aborting Rocksmith 1 export.", 1);
-						if(chordlist)
-						{	//If the chord list was built
-							free(chordlist);
-						}
-						eof_rs_export_cleanup(sp, track);
-						eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-						return 0;	//Return error
-					}
+					(void) snprintf(buffer, sizeof(buffer) - 1, "      <handShapes count=\"%lu\">\n", handshapectr);
+					(void) pack_fputs(buffer, fp);
+				}
 
-					//If this chord is at the beginning of an arpeggio phrase, skip the rest of the notes in that phrase
-					for(ctr5 = 0; ctr5 < tp->arpeggios; ctr5++)
-					{	//For each arpeggio phrase in the track
-						if(((tp->note[ctr3]->pos + 10 >= tp->arpeggio[ctr5].start_pos) && (tp->note[ctr3]->pos <= tp->arpeggio[ctr5].start_pos + 10)) && (tp->note[ctr3]->type == tp->arpeggio[ctr5].difficulty))
-						{	//If this chord's start position is within 10ms of an arpeggio phrase in this track difficulty
-							while(1)
-							{
-								nextnote = eof_track_fixup_next_note(sp, track, ctr3);
-								if((nextnote >= 0) && (tp->note[nextnote]->pos <= tp->arpeggio[ctr5].end_pos))
-								{	//If there is another note and it is in the same arpeggio phrase
-									ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they are also in the phrase
-								}
-								else
-								{	//The next note (if any) is not in the arpeggio phrase
-									break;	//Break from while loop
-								}
-							}
-							break;	//Break from for loop
-						}
-					}
-
-					//Examine subsequent notes to see if they match this chord
-					while(1)
-					{
-						nextnote = eof_track_fixup_next_note(sp, track, ctr3);
-						if((nextnote >= 0) && !eof_note_compare_simple(sp, track, chordnum, nextnote) && !eof_is_partially_ghosted(sp, track, nextnote) && !eof_pro_guitar_note_compare_fingerings(tp->note[chordnum], tp->note[nextnote]))
-						{	//If there is another note, it matches this chord, it is not partially ghosted (an arpeggio) and it has the same fingering
-							ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
-						}
-						else
-						{	//The next note (if any) is not a repeat of this note
-							handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
-							break;	//Break from while loop
-						}
-					}
-
-					handshapectr++;	//One more hand shape has been counted
-				}//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems)
-			}//For each note in the track
-
-			if(handshapectr)
-			{	//If there was at least one hand shape to write
-				//Write the hand shapes
-				(void) snprintf(buffer, sizeof(buffer) - 1, "      <handShapes count=\"%lu\">\n", handshapectr);
-				(void) pack_fputs(buffer, fp);
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
 					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 1 | 4) > 1))
@@ -1450,17 +1384,19 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							}
 						}
 
-						//Write this hand shape
-						(void) snprintf(buffer, sizeof(buffer) - 1, "        <handShape chordId=\"%lu\" endTime=\"%.3f\" startTime=\"%.3f\"/>\n", chordid, (double)handshapeend / 1000.0, (double)handshapestart / 1000.0);
-						(void) pack_fputs(buffer, fp);
+						if(!handshapeloop)
+						{	//If this is the first pass
+							handshapectr++;	//One more hand shape has been counted
+						}
+						else
+						{	//Second pass, pad and write the handshape tag
+							(void) snprintf(buffer, sizeof(buffer) - 1, "        <handShape chordId=\"%lu\" endTime=\"%.3f\" startTime=\"%.3f\"/>\n", chordid, (double)handshapeend / 1000.0, (double)handshapestart / 1000.0);
+							(void) pack_fputs(buffer, fp);
+						}
 					}//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems)
 				}//For each note in the track
 				(void) pack_fputs("      </handShapes>\n", fp);
-			}
-			else
-			{	//There are no chords in this difficulty, write an empty hand shape tag
-				(void) pack_fputs("      <handShapes count=\"0\"/>\n", fp);
-			}
+			}//On first pass, reset the handshape counter and count the number of handshapes.  On second pass, write handshapes.
 
 			//Write closing level tag
 			(void) pack_fputs("    </level>\n", fp);
@@ -1496,7 +1432,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	char buffer[600] = {0}, buffer2[512] = {0};
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
-	unsigned long ctr, ctr2, ctr3, ctr4, ctr5, numsections, stringnum, bitmask, numsinglenotes, numchords, *chordlist = NULL, chordlistsize, xml_end, numevents = 0;
+	unsigned long ctr, ctr2, ctr3, ctr4, ctr5, handshapeloop, numsections, stringnum, bitmask, numsinglenotes, numchords, *chordlist = NULL, chordlistsize, xml_end, numevents = 0;
 	EOF_PRO_GUITAR_TRACK *tp;
 	char *arrangement_name;	//This will point to the track's native name unless it has an alternate name defined
 	unsigned numdifficulties;
@@ -1905,8 +1841,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							}
 							else
 							{
-								allegro_message("Error:  Couldn't expand linked chords into single notes.  Aborting Rocksmith export.");
-								eof_log("Error:  Couldn't expand linked chords into single notes.  Aborting Rocksmith export.", 1);
+								allegro_message("Error:  Couldn't expand linked chords into single notes.  Aborting Rocksmith 2 export.");
+								eof_log("Error:  Couldn't expand linked chords into single notes.  Aborting Rocksmith 2 export.", 1);
 								eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 								eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 								return 0;	//Return error
@@ -1937,17 +1873,19 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}
 	}
 
-	//Identify chords that are inside arpeggio phrases, which will need to be broken into single notes so that they display correctly in-game
+	//Identify chords that are inside arpeggio/handshape phrases, which will need to be broken into single notes so that they display correctly in-game
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the active pro guitar track
-		if(eof_note_count_rs_lanes(sp, track, ctr, 2) > 1)
-		{	//If this note would export as a chord
-			for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
-			{	//For each arpeggio section in the track
-				if(!(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE) && (tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
-				{	//If the note is isn't already ignored and is within the arpeggio phrase
+		for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
+		{	//For each arpeggio/handshape section in the track
+			unsigned long tflags = EOF_NOTE_TFLAG_ARP_FIRST | EOF_NOTE_TFLAG_ARP;	//The first note in each arpeggio phrase gets both of these flags, the other notes in the phrase just get the latter
+			if(!(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE) && (tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
+			{	//If the note is isn't already ignored and is within the arpeggio/handshape phrase
+				tp->note[ctr]->tflags |= tflags;	//Mark this note as being in an arpeggio/handshape phrase
+				tflags &= ~EOF_NOTE_TFLAG_ARP_FIRST;	//Clear this flag so that other notes in this phrase don't receive it
+				if(eof_note_count_rs_lanes(sp, track, ctr, 2) > 1)
+				{	//If this note would export as a chord
 					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as single notes
-					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_ARP;	//Mark this chord as being in an arpeggio phrase
 					for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
 					{	//For each of the 6 supported strings
 						if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
@@ -1960,8 +1898,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							}
 							else
 							{
-								allegro_message("Error:  Couldn't expand an arpeggio chord into single notes.  Aborting Rocksmith export.");
-								eof_log("Error:  Couldn't expand an arpeggio chord into single notes.  Aborting Rocksmith export.", 1);
+								allegro_message("Error:  Couldn't expand an arpeggio chord into single notes.  Aborting Rocksmith 2 export.");
+								eof_log("Error:  Couldn't expand an arpeggio chord into single notes.  Aborting Rocksmith 2 export.", 1);
 								eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 								eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 								return 0;	//Return error
@@ -2008,8 +1946,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					}
 					else
 					{
-						allegro_message("Error:  Couldn't expand a non arpeggio partially ghosted chord into a non ghosted chord.  Aborting Rocksmith export.");
-						eof_log("Error:  Couldn't expand a non arpeggio partially ghosted chord into a non ghosted chord.  Aborting Rocksmith export.", 1);
+						allegro_message("Error:  Couldn't expand a non arpeggio partially ghosted chord into a non ghosted chord.  Aborting Rocksmith 2 export.");
+						eof_log("Error:  Couldn't expand a non arpeggio partially ghosted chord into a non ghosted chord.  Aborting Rocksmith 2 export.", 1);
 						eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 						eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 						return 0;	//Return error
@@ -2535,116 +2473,26 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				}
 			}
 
-			//Write hand shapes
-			//Count the number of hand shapes to write
-			handshapectr = 0;
-			for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
-			{	//For each note in the track
-				if(!(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE) || (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_ARP))
-				{	//If this note is not ignored or is a chord within an arpeggio/handshape
-					if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1) || eof_is_partially_ghosted(sp, track, ctr3)))
-					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems) or an arpeggio handshape
-						unsigned long chordnum = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
+			//Count/write the hand shapes
+			for(handshapeloop = 0, handshapectr = 0; handshapeloop < 2; handshapeloop++)
+			{	//On first pass, reset the handshape counter and count the number of handshapes.  On second pass, write handshapes.
+				if(handshapeloop)
+				{	//If this is the second pass, write the opening of the handshapes tag
+					if(!handshapectr)
+					{	//If there were no handshapes
+						(void) pack_fputs("      <handShapes count=\"0\"/>\n", fp);
+						break;	//Exit loop
+					}
+					(void) snprintf(buffer, sizeof(buffer) - 1, "      <handShapes count=\"%lu\">\n", handshapectr);
+					(void) pack_fputs(buffer, fp);
+				}
 
-						//Find this chord's ID
-						for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
-						{	//For each of the entries in the unique chord list
-							assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
-							if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]) && (eof_is_partially_ghosted(sp, track, ctr3) == eof_is_partially_ghosted(sp, track, chordlist[ctr4])))
-							{	//If this note matches a chord list entry and has the same ghost status (either no gems ghosted or at least one gem ghosted)
-								if(!eof_pro_guitar_note_compare_fingerings(tp->note[ctr3], tp->note[chordlist[ctr4]]))
-								{	//If this note has identical fingering to chord list entry
-									if((tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_HAND) == (tp->note[chordlist[ctr4]]->tflags & EOF_NOTE_TFLAG_HAND))
-									{	//If this note's handshape status is the same as that of the chord list entry
-										chordid = ctr4;	//Store the chord list entry number
-										break;
-									}
-								}
-							}
-						}
-						if(ctr4 >= chordlistsize)
-						{	//If the chord couldn't be found
-							allegro_message("Error:  Couldn't match chord with chord template while counting handshapes.  Aborting Rocksmith 2 export.");
-							eof_log("Error:  Couldn't match chord with chord template while counting handshapes.  Aborting Rocksmith 2 export.", 1);
-							if(chordlist)
-							{	//If the chord list was built
-								free(chordlist);
-							}
-							eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-							eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-							return 0;	//Return error
-						}
-						handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position
-
-						//If this chord is at the beginning of an arpeggio phrase, skip the rest of the notes in that phrase
-						for(ctr5 = 0; ctr5 < tp->arpeggios; ctr5++)
-						{	//For each arpeggio phrase in the track
-							if(((tp->note[ctr3]->pos + 10 >= tp->arpeggio[ctr5].start_pos) && (tp->note[ctr3]->pos <= tp->arpeggio[ctr5].start_pos + 10)) && (tp->note[ctr3]->type == tp->arpeggio[ctr5].difficulty))
-							{	//If this chord's start position is within 10ms of an arpeggio phrase in this track difficulty
-								while(1)
-								{
-									nextnote = eof_track_fixup_next_note(sp, track, ctr3);
-									if((nextnote >= 0) && (tp->note[nextnote]->pos <= tp->arpeggio[ctr5].end_pos))
-									{	//If there is another note and it is in the same arpeggio phrase
-										ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they are also in the phrase
-									}
-									else
-									{	//The next note (if any) is not in the arpeggio phrase
-										break;	//Break from while loop
-									}
-								}
-								break;	//Break from for loop
-							}
-						}
-
-						//Examine subsequent notes to see if they match this chord
-						while(1)
-						{
-							nextnote = eof_track_fixup_next_note(sp, track, ctr3);
-							if((nextnote >= 0) && (eof_note_count_rs_lanes(sp, track, nextnote, 2) > 1))
-							{	//If there is another note and it is a chord
-								if(!eof_note_has_high_chord_density(sp, track, nextnote, 2))
-								{	//If the next note is low density (including if it has any techniques requiring a new handshape tag such as sliding)
-									handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
-									break;	//Break from while loop
-								}
-							}
-							if((nextnote >= 0) && eof_is_string_muted(sp, track, nextnote) && (eof_pro_guitar_note_fingering_valid(tp, nextnote, 1) == 2))
-							{	//If there is another note, and it is fully string muted and has no fingering defined even for muted strings
-								ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
-							}
-							else if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chordnum, nextnote) || eof_is_string_muted(sp, track, nextnote)) && !eof_is_partially_ghosted(sp, track, nextnote) && !eof_pro_guitar_note_compare_fingerings(tp->note[chordnum], tp->note[nextnote]))
-							{	//If there is another note, it either matches this chord or is completely string muted, it is not partially ghosted (an arpeggio) and it has the same fingering
-								if(eof_is_partially_ghosted(sp, track, chordnum))
-								{	//If the handshape being written was for an arpeggio, and the next note isn't
-									handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of the arpeggio's last note
-									break;	//Break from while loop
-								}
-								ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
-							}
-							else
-							{	//The next note (if any) is not a repeat of this note and is not completely string muted
-								handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
-								break;	//Break from while loop
-							}
-						}
-
-						handshapectr++;	//One more hand shape has been counted
-					}//If this note is in this difficulty and will export as a chord (at least two non ghosted gems) or an arpeggio handshape
-				}//If this note is not ignored or is a chord within an arpeggio/handshape
-			}//For each note in the track
-
-			if(handshapectr)
-			{	//If there was at least one hand shape to write
-				//Write the hand shapes
-				(void) snprintf(buffer, sizeof(buffer) - 1, "      <handShapes count=\"%lu\">\n", handshapectr);
-				(void) pack_fputs(buffer, fp);
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
-					if(!(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE) || (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_ARP))
-					{	//If this note is not ignored or is a chord within an arpeggio
-						if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1) || eof_is_partially_ghosted(sp, track, ctr3)))
-						{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems) or an arpeggio handshape
+					if(!(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE))
+					{	//If this note is not ignored
+						if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1) || eof_is_partially_ghosted(sp, track, ctr3) || (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_ARP)))
+						{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems) or an arpeggio/handshape or is in an arpeggio/handshape phrase
 							unsigned long chordnum = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
 
 							//Find this chord's ID
@@ -2675,13 +2523,16 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 								return 0;	//Return error
 							}
-							handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position (in seconds)
+							handshapestart = eof_get_note_pos(sp, track, ctr3);	//Use this chord's start position, unless the loop below finds it is inside an arpeggio/handshape
+							handshapeend = handshapestart;	//Set a condition that can be checked later to determine if an arpeggio/handshape phrase was parsed
 
-							//If this chord is at the beginning of an arpeggio phrase, skip the rest of the notes in that phrase
+							//If this chord is at the beginning of an arpeggio/handshape phrase, skip the rest of the notes in that phrase
 							for(ctr5 = 0; ctr5 < tp->arpeggios; ctr5++)
-							{	//For each arpeggio phrase in the track
-								if(((tp->note[ctr3]->pos + 10 >= tp->arpeggio[ctr5].start_pos) && (tp->note[ctr3]->pos <= tp->arpeggio[ctr5].start_pos + 10)) && (tp->note[ctr3]->type == tp->arpeggio[ctr5].difficulty))
-								{	//If this chord's start position is within 10ms of an arpeggio phrase in this track difficulty
+							{	//For each arpeggio/handshape phrase in the track
+								if(((tp->note[ctr3]->pos >= tp->arpeggio[ctr5].start_pos) && (tp->note[ctr3]->pos <= tp->arpeggio[ctr5].end_pos)) && (tp->note[ctr3]->type == tp->arpeggio[ctr5].difficulty))
+								{	//If this chord's start position is within an arpeggio/handshape phrase in this track difficulty
+									handshapestart = tp->arpeggio[ctr5].start_pos;	//This arpeggio/handshape phrase will define the start and stop positions for the exported handshape
+									handshapeend = tp->arpeggio[ctr5].end_pos;
 									while(1)
 									{
 										nextnote = eof_track_fixup_next_note(sp, track, ctr3);
@@ -2699,60 +2550,72 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							}
 
 							//Examine subsequent notes to see if they match this chord
-							while(1)
-							{
-								nextnote = eof_track_fixup_next_note(sp, track, ctr3);
-								if((nextnote >= 0) && (eof_note_count_rs_lanes(sp, track, nextnote, 2) > 1))
-								{	//If there is another note and it is a chord
-									if(!eof_note_has_high_chord_density(sp, track, nextnote, 2))
-									{	//If the next note is low density (including if it has any techniques requiring a new handshape tag such as sliding)
+							if(handshapeend == handshapestart)
+							{	//If the chord wasn't inside of an arpeggio/handshape phrase, generate the handshape tag automatically
+								while(1)
+								{
+									nextnote = eof_track_fixup_next_note(sp, track, ctr3);
+									if((nextnote >= 0) && (eof_note_count_rs_lanes(sp, track, nextnote, 2) > 1))
+									{	//If there is another note and it is a chord
+										if(!eof_note_has_high_chord_density(sp, track, nextnote, 2))
+										{	//If the next note is low density (including if it has any techniques requiring a new handshape tag such as sliding)
+											handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
+											break;	//Break from while loop
+										}
+									}
+									if((nextnote >= 0) && (tp->note[nextnote]->tflags & EOF_NOTE_TFLAG_ARP_FIRST))
+									{	//If there is another note, and it is the first note in a arpeggio/handshape phrase
+										handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
+										break;
+									}
+									if((nextnote >= 0) && eof_is_string_muted(sp, track, nextnote) && (eof_pro_guitar_note_fingering_valid(tp, nextnote, 1) == 2))
+									{	//If there is another note, and it is fully string muted and has no fingering defined even for muted strings
+										ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
+									}
+									else if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chordnum, nextnote) || eof_is_string_muted(sp, track, nextnote)) && !eof_is_partially_ghosted(sp, track, nextnote) && !eof_pro_guitar_note_compare_fingerings(tp->note[chordnum], tp->note[nextnote]))
+									{	//If there is another note, it either matches this chord or is completely string muted, it is not partially ghosted (an arpeggio) and it has the same fingering
+										if(eof_is_partially_ghosted(sp, track, chordnum))
+										{	//If the handshape being written was for an arpeggio, and the next note isn't
+											handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of the arpeggio's last note
+											break;	//Break from while loop
+										}
+										ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
+									}
+									else
+									{	//The next note (if any) is not a repeat of this note and is not completely string muted
 										handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
 										break;	//Break from while loop
 									}
 								}
-								if((nextnote >= 0) && eof_is_string_muted(sp, track, nextnote) && (eof_pro_guitar_note_fingering_valid(tp, nextnote, 1) == 2))
-								{	//If there is another note, and it is fully string muted and has no fingering defined even for muted strings
-									ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
-								}
-								else if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chordnum, nextnote) || eof_is_string_muted(sp, track, nextnote)) && !eof_is_partially_ghosted(sp, track, nextnote) && !eof_pro_guitar_note_compare_fingerings(tp->note[chordnum], tp->note[nextnote]))
-								{	//If there is another note, it either matches this chord or is completely string muted, it is not partially ghosted (an arpeggio) and it has the same fingering
-									if(eof_is_partially_ghosted(sp, track, chordnum))
-									{	//If the handshape being written was for an arpeggio, and the next note isn't
-										handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of the arpeggio's last note
-										break;	//Break from while loop
-									}
-									ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
-								}
-								else
-								{	//The next note (if any) is not a repeat of this note and is not completely string muted
-									handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
-									break;	//Break from while loop
-								}
-							}
-							if(handshapeend - handshapestart < 56)
-							{	//If the handshape is shorter than 56ms, see if it can be padded to 56ms
-								nextnote = ctr3;
-								do{	//Find the next note that isn't ignored, if any
-									nextnote = eof_track_fixup_next_note(sp, track, nextnote);
-								}while((nextnote >= 0) && (tp->note[nextnote]->tflags & EOF_NOTE_TFLAG_IGNORE));
-								if((nextnote < 0) || (handshapestart + 56 < eof_get_note_pos(sp, track, nextnote)))
-								{	//If no notes follow this chord, or if there's at least 56ms of gap between this chord and the next note, the handshape can be lengthened without any threat of overlapping another handshape tag
-									handshapeend = handshapestart + 56;
-								}
 							}
 
-							//Write this hand shape
-							(void) snprintf(buffer, sizeof(buffer) - 1, "        <handShape chordId=\"%lu\" endTime=\"%.3f\" startTime=\"%.3f\"/>\n", chordid, (double)handshapeend / 1000.0, (double)handshapestart / 1000.0);
-							(void) pack_fputs(buffer, fp);
-						}//If this note is not ignored, is in this difficulty and will export as a chord (at least two non ghosted gems) or an arpeggio handshape
-					}//If this note is not ignored or is a chord within an arpeggio
+							if(!handshapeloop)
+							{	//If this is the first pass
+								handshapectr++;	//One more hand shape has been counted
+							}
+							else
+							{	//Second pass, pad and write the handshape tag
+								if(handshapeend - handshapestart < 56)
+								{	//If the handshape is shorter than 56ms, see if it can be padded to 56ms
+									nextnote = ctr3;
+									do{	//Find the next note that isn't ignored, if any
+										nextnote = eof_track_fixup_next_note(sp, track, nextnote);
+									}while((nextnote >= 0) && (tp->note[nextnote]->tflags & EOF_NOTE_TFLAG_IGNORE));
+									if((nextnote < 0) || (handshapestart + 56 < eof_get_note_pos(sp, track, nextnote)))
+									{	//If no notes follow this chord, or if there's at least 56ms of gap between this chord and the next note, the handshape can be lengthened without any threat of overlapping another handshape tag
+										handshapeend = handshapestart + 56;
+									}
+								}
+
+								//Write this hand shape
+								(void) snprintf(buffer, sizeof(buffer) - 1, "        <handShape chordId=\"%lu\" endTime=\"%.3f\" startTime=\"%.3f\"/>\n", chordid, (double)handshapeend / 1000.0, (double)handshapestart / 1000.0);
+								(void) pack_fputs(buffer, fp);
+							}
+						}//If this note is in this difficulty and will export as a chord (at least two non ghosted gems) or an arpeggio/handshape or is in an arpeggio/handshape phrase
+					}//If this note is not ignored
 				}//For each note in the track
 				(void) pack_fputs("      </handShapes>\n", fp);
-			}
-			else
-			{	//There are no chords in this difficulty, write an empty hand shape tag
-				(void) pack_fputs("      <handShapes count=\"0\"/>\n", fp);
-			}
+			}//On first pass, count the number of handshapes.  On second pass, write handshapes.
 
 			//Write closing level tag
 			(void) pack_fputs("    </level>\n", fp);
@@ -4639,6 +4502,7 @@ void eof_rs_export_cleanup(EOF_SONG * sp, unsigned long track)
 		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_IGNORE;	//Clear the ignore flag
 		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_ARP;		//Clear the arpeggio flag
 		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_HAND;		//Clear the handshape flag
+		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_ARP_FIRST;	//Clear the first in arpeggio flag
 		if(tp->note[ctr - 1]->tflags & EOF_NOTE_TFLAG_TEMP)
 		{	//If this is a temporary note that was added to split up an arpeggio's chord into single notes
 			eof_track_delete_note(sp, track, ctr - 1);	//Delete it

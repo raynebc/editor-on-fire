@@ -2297,7 +2297,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 	struct eof_MIDI_data_track *trackptr;		//Used to count the number of raw MIDI tracks to export
 	EOF_MIDI_KS_LIST *kslist;
 	#define EOF_MUSIC_MIDI_TRACKS_MAX (EOF_PRO_GUITAR_TRACKS_MAX + EOF_PRO_GUITAR_TRACKS_MAX + EOF_VOCAL_TRACKS_MAX + 1)
-	char notetempname[EOF_MUSIC_MIDI_TRACKS_MAX][EOF_NAME_LENGTH + 1];	//The list of temporary files created to store the binary content for each MIDI track, a maximum potential of two copies of each pro guitar track and one of each vocal track
+	char notetempname[EOF_MUSIC_MIDI_TRACKS_MAX][15];	//The list of temporary files created to store the binary content for each MIDI track, a maximum potential of two copies of each pro guitar track and one of each vocal track
 	char tempotempname[] = {"tempo.tmp"};
 	char eventtempname[] = {"event.tmp"};
 	unsigned char pitchmask, pitches[6] = {0};

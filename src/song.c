@@ -4393,6 +4393,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 	EOF_RS_TECHNIQUES ptr = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0 ,0};
 	char has_link_next;	//Is set to nonzero if any strings used in the note have sustain status applied
 	EOF_PHRASE_SECTION *pp, *ppp;
+	EOF_PRO_GUITAR_NOTE *np;
 
 	if(!sp)
 	{
@@ -4728,9 +4729,30 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 		}
 	}
 
-	//Ensure that the note at the beginning of each arpeggio phrase is authored correctly
+	//Ensure that the note at the beginning of each arpeggio/handshape phrase is authored correctly
 	if(eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files)
 	{	//If the user wants to save Rocksmith or Bandfuse capable files
+		for(ctr = 0; ctr < tp->arpeggios; ctr++)
+		{	//For each arpeggio/handshape phrase in the track (outer for loop)
+			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+			{	//For each note in the track (inner for loop)
+				if(((tp->note[ctr2]->pos >= tp->arpeggio[ctr].start_pos) && (tp->note[ctr2]->pos <= tp->arpeggio[ctr].end_pos)) && (tp->note[ctr2]->type == tp->arpeggio[ctr].difficulty))
+				{	//If this note is within the phrase
+					if(tp->note[ctr2]->pos > tp->arpeggio[ctr].start_pos + 10)
+					{	//If the note is later than 10ms after the start of the phrase
+						np = eof_track_add_create_note(sp, track, tp->note[ctr2]->note, tp->arpeggio[ctr].start_pos, tp->note[ctr2]->length, tp->note[ctr2]->type, NULL);	//Initialize a new ghost note at the phrase's position
+						if(np)
+						{	//If the new note was created
+							np->ghost = np->note;	//Make all used gems ghosted
+							memcpy(np->frets, tp->note[ctr2]->frets, sizeof(np->frets));	//Clone the fret values
+						}
+					}
+					break;	//Break inner for loop after processing the first note in the phrase
+				}
+			}
+		}
+		eof_track_sort_notes(sp, track);
+
 		for(ctr = 0; ctr < tp->arpeggios; ctr++)
 		{	//For each arpeggio phrase in the track (outer for loop)
 			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
