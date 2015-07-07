@@ -3577,7 +3577,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long ctr, ctr2, stringcount, i;
 	char undo_made = 0;	//Set to nonzero when an undo state is created
-	long fretvalue;
+	long fretvalue, highfretvalue;
 	char allmuted;					//Used to track whether all used strings are string muted
 	unsigned long bitmask = 0;		//Used to build the updated pro guitar note bitmask
 	unsigned char legacymask;		//Used to build the updated legacy note bitmask
@@ -3607,6 +3607,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 
 	tp = eof_song->pro_guitar_track[tracknum];	//Simplify
 	np = tp->note[eof_selection.current];	//Simplify
+	highfretvalue = tp->numfrets;
 	if(!eof_music_paused)
 	{
 		eof_music_play(0);
@@ -3940,9 +3941,13 @@ int eof_menu_note_edit_pro_guitar_note(void)
 							if(!fretvalue)
 							{	//If the string didn't contain an X, convert it to an integer value
 								fretvalue = atol(eof_fret_strings[ctr]);
-								if((fretvalue < 0) || (fretvalue > tp->numfrets))
-								{	//If the conversion to number failed, or an invalid fret number was entered, enter a value of (muted) for the string
+								if((fretvalue < 0) || (fretvalue > 255))
+								{	//If the conversion to number failed or specifies a fret EOF cannot store as an 8 bit number
 									fretvalue = 0xFF;
+								}
+								else if(fretvalue > highfretvalue)
+								{
+									highfretvalue = fretvalue;	//Track the highest user-defined fret value
 								}
 							}
 							if((eof_pro_guitar_note_dialog[35 - ctr].flags == D_SELECTED) || (eof_pro_guitar_note_dialog[47].flags == D_SELECTED))
@@ -4397,6 +4402,14 @@ int eof_menu_note_edit_pro_guitar_note(void)
 
 	if(undo_made)
 	{	//If any notes were altered
+		if(highfretvalue > tp->numfrets)
+		{	//If the user input includes a fret value that exceeds the track's current maximum
+			snprintf(eof_etext, sizeof(eof_etext) - 1, "Increase the fret limit to %lu to compensate?", highfretvalue);
+			if(alert("One or more fret values specified exceed the track's fret limit", eof_etext, NULL, "&Yes", "&No", 'y', 'n') == 1)
+			{	//If user opts to increase the fret limit
+				tp->numfrets = highfretvalue;
+			}
+		}
 		eof_pro_guitar_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run the fixup logic for this track, since the alteration of the linkNext status can change the length of applicable notes
 	}
 
@@ -4473,7 +4486,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 {
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long ctr, ctr2, stringcount, i;
-	long fretvalue, fingervalue;
+	long fretvalue, fingervalue, highfretvalue;
 	unsigned long bitmask = 0;		//Used to build the updated pro guitar note bitmask
 	char allmuted;					//Used to track whether all used strings are string muted
 	unsigned long flags;			//Used to build the updated flag bitmask
@@ -4494,6 +4507,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 
 	tp = eof_song->pro_guitar_track[tracknum];
 	np = tp->note[eof_selection.current];	//Simplify
+	highfretvalue = tp->numfrets;
 	if(!eof_music_paused)
 	{
 		eof_music_play(0);
@@ -4714,9 +4728,13 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 								if(fretvalue != 0xFF)
 								{	//If the fret string didn't contain an X, convert it to an integer value
 									fretvalue += atol(eof_fret_strings[ctr]);	//Add the converted number so that string muting can be retained
-									if((fretvalue < 0) || ((fretvalue & 0x7F) > tp->numfrets))
-									{	//If the conversion to number failed, or an invalid fret number was entered, enter a value of (muted) for the string
+									if((fretvalue < 0) || (fretvalue > 255))
+									{	//If the conversion to number failed or specifies a fret EOF cannot store as an 8 bit number
 										fretvalue = 0xFF;
+									}
+									else if(fretvalue > highfretvalue)
+									{
+										highfretvalue = fretvalue;	//Track the highest user-defined fret value
 									}
 								}
 								if(fretvalue == 0xFF)
@@ -4829,7 +4847,18 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 						}
 					}
 				}//If the fingering is defined
-				break;
+
+				//Check for a conflict with the track's fret limit
+				if(highfretvalue > tp->numfrets)
+				{	//If the user input includes a fret value that exceeds the track's current maximum
+					snprintf(eof_etext, sizeof(eof_etext) - 1, "Increase the fret limit to %lu to compensate?", highfretvalue);
+					if(alert("One or more fret values specified exceed the track's fret limit", eof_etext, NULL, "&Yes", "&No", 'y', 'n') == 1)
+					{	//If user opts to increase the fret limit
+						tp->numfrets = highfretvalue;
+					}
+				}
+				eof_pro_guitar_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run the fixup logic for this track in order to enforce the fret limit
+				break;	//Changes were made, break from loop
 			}//If the finger entries weren't invalid
 		}//If user clicked OK
 		else
