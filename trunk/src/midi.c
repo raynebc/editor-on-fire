@@ -755,6 +755,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 								phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
 								eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom sizzle hi hat phrase stop marker
 							}
+							if(noteflags & EOF_DRUM_NOTE_FLAG_Y_COMBO)
+							{	//If this note is marked as a yellow tom/cymbal combo
+								phase_shift_sysex_phrase[5] = 17;	//Store the phrase ID (17 = yellow tom+cymbal)
+								phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+								eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom combo start marker
+								phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+								eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom combo stop marker
+							}
 						}//Only write these notations if not writing a Rock Band compliant MIDI
 					}
 				}
@@ -772,6 +780,16 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 3, vel, 0);
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 3, vel, 0);
+					if(noteflags & EOF_DRUM_NOTE_FLAG_B_COMBO)
+					{	//If this note is marked as a blue tom/cymbal combo
+						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+						phase_shift_sysex_phrase[5] = 18;	//Store the phrase ID (18 = blue tom+cymbal)
+						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom combo start marker
+						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom combo stop marker
+					}
 				}
 
 				/* write purple note */
@@ -787,6 +805,16 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 4, vel, 0);
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 4, vel, 0);
+					if(noteflags & EOF_DRUM_NOTE_FLAG_G_COMBO)
+					{	//If this note is marked as a green tom/cymbal combo
+						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+						phase_shift_sysex_phrase[5] = 19;	//Store the phrase ID (19 = green tom+cymbal)
+						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom combo start marker
+						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom combo stop marker
+					}
 				}
 
 				/* write open bass note marker, if the feature was enabled during save */

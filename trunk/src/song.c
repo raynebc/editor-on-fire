@@ -509,7 +509,7 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 				tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_DBASS;	//Clear the double bass flag
 			}
 			if((tp->note[i-1]->note & 2) == 0)
-			{	//If this note does not have a red tom, clear flags that are specific to that lane
+			{	//If this note does not have a red note (snare), clear flags that are specific to that lane
 				tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_R_RIMSHOT;
 			}
 			if(((tp->note[i-1]->note & 4) == 0) || ((tp->note[i-1]->flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL) == 0))
@@ -519,6 +519,7 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 					tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;
 					tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;
 					tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_SIZZLE;
+					tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_COMBO;
 				}
 			}
 		}
@@ -638,7 +639,8 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 				}
 				else
 				{
-					eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_G_CYMBAL,0,1);	//Mark all notes at this position as green drum
+					eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_G_CYMBAL,0,1);	//Mark all notes at this position as green tom
+					eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_G_COMBO,0,1);	//Remove green cymbal/tom combo status
 				}
 				lastcheckedgreenpos = tp->note[i]->pos;	//Remember that green notes at this position were already checked and fixed if applicable
 			}
@@ -650,7 +652,8 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 				}
 				else
 				{
-					eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_B_CYMBAL,0,1);	//Mark all notes at this position as blue drum
+					eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_B_CYMBAL,0,1);	//Mark all notes at this position as blue tom
+					eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_B_COMBO,0,1);	//Remove blue cymbal/tom combo status
 				}
 				lastcheckedbluepos = tp->note[i]->pos;	//Remember that blue notes at this position were already checked and fixed if applicable
 			}
@@ -662,9 +665,16 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 				}
 				else
 				{
-					eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_Y_CYMBAL,0,1);	//Mark all notes at this position as yellow drum
+					eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_Y_CYMBAL,0,1);	//Mark all notes at this position as yellow tom
+					eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_Y_COMBO,0,1);	//Remove yellow cymbal/tom combo status
 				}
 				lastcheckedyellowpos = tp->note[i]->pos;	//Remember that yellow notes at this position were already checked and fixed if applicable
+			}
+			if(track != EOF_TRACK_DRUM_PS)
+			{	//If this isn't the phase shift drum track
+				tp->note[i]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_COMBO;	//Remove yellow cymbal/tom combo status
+				tp->note[i]->flags &= ~EOF_DRUM_NOTE_FLAG_B_COMBO;	//Remove blue cymbal/tom combo status
+				tp->note[i]->flags &= ~EOF_DRUM_NOTE_FLAG_G_COMBO;	//Remove green cymbal/tom combo status
 			}
 		}//For each note in the drum track
 	}//If the track being cleaned is a drum track

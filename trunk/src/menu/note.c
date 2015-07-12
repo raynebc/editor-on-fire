@@ -289,6 +289,9 @@ MENU eof_note_drum_menu[] =
 	{"Mark new &Y notes as", NULL, eof_note_drum_hi_hat_menu, 0, NULL},
 	{"Toggle R note as rim shot\tShift+R",eof_menu_note_toggle_rimshot, NULL, 0, NULL},
 	{"Remove &Rim shot status", eof_menu_note_remove_rimshot, NULL, 0, NULL},
+	{"Toggle Y cymbal+tom", eof_menu_note_toggle_rb3_cymbal_combo_yellow, NULL, 0, NULL},
+	{"Toggle B cymbal+tom", eof_menu_note_toggle_rb3_cymbal_combo_blue, NULL, 0, NULL},
+	{"Toggle G cymbal+tom", eof_menu_note_toggle_rb3_cymbal_combo_green, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -879,6 +882,10 @@ void eof_prepare_note_menu(void)
 					eof_note_drum_menu[10].flags = 0;	//Enable toggle Y note as sizzle hi hat
 					eof_note_drum_menu[12].flags = 0;	//Enable mark new Y notes as submenu
 					eof_note_drum_menu[13].flags = 0;	//Enable toggle R note as rim shot
+					eof_note_drum_menu[14].flags = 0;	//Enable remove rim shot status
+					eof_note_drum_menu[15].flags = 0;	//Enable toggle Y cymbal+tom
+					eof_note_drum_menu[16].flags = 0;	//Enable toggle B cymbal+tom
+					eof_note_drum_menu[17].flags = 0;	//Enable toggle G cymbal+tom
 				}
 				else
 				{
@@ -887,6 +894,10 @@ void eof_prepare_note_menu(void)
 					eof_note_drum_menu[10].flags = D_DISABLED;
 					eof_note_drum_menu[12].flags = D_DISABLED;
 					eof_note_drum_menu[13].flags = D_DISABLED;
+					eof_note_drum_menu[14].flags = D_DISABLED;
+					eof_note_drum_menu[15].flags = D_DISABLED;
+					eof_note_drum_menu[16].flags = D_DISABLED;
+					eof_note_drum_menu[17].flags = D_DISABLED;
 				}
 			}
 
@@ -2267,16 +2278,20 @@ int eof_menu_note_remove_double_bass(void)
 	return 1;
 }
 
-int eof_menu_note_toggle_rb3_cymbal_green(void)
+int eof_menu_note_toggle_rb3_cymbal_green_logic(int function)
 {
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	long u = 0;
 	int note_selection_updated;
+	EOF_LEGACY_TRACK *tp;
 
 	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
 		return 1;	//Do not allow this function to run when a drum track is not active
+	if(function && (eof_selected_track != EOF_TRACK_DRUM_PS))
+		return 1;	//Do not allow this function to apply tom/cymbal combo status except in the Phase Shift drum track
 
+	tp = eof_song->legacy_track[tracknum];
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -2284,14 +2299,100 @@ int eof_menu_note_toggle_rb3_cymbal_green(void)
 		{	//If this note is in the currently active track and is selected
 			if(eof_get_note_note(eof_song, eof_selected_track, i) & 16)
 			{	//If this drum note is purple (represents a green drum in Rock Band)
-				if(!u)
-				{	//Make a back up before changing the first note
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					u = 1;
+				if(!function)
+				{	//Toggle green cymbal status
+					if(!u)
+					{	//Make a back up before changing the first note
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						u = 1;
+					}
+					eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_G_CYMBAL,2,0);	//Toggle the green cymbal flag on all drum notes at this position in all difficulties
 				}
-				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_G_CYMBAL,2,0);	//Toggle the green cymbal flag on all drum notes at this position
+				else
+				{	//Toggle green tom/cymbal combo status
+					if(tp->note[i]->flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL)
+					{	//If this note is already a cymbal
+						if(!u)
+						{	//Make a back up before changing the first note
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+							u = 1;
+						}
+						tp->note[i]->flags ^= EOF_DRUM_NOTE_FLAG_G_COMBO;						//Toggle the green tom/cymbal combo flag on this note only
+					}
+				}
 			}
 		}
+	}
+	if(u)
+	{	//If changes were made
+		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Remove tom+cymbal combo status from notes that are no longer cymbals
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_rb3_cymbal_green(void)
+{
+	return eof_menu_note_toggle_rb3_cymbal_green_logic(0);	//Toggle normal cymbal status
+}
+
+int eof_menu_note_toggle_rb3_cymbal_combo_green(void)
+{
+	return eof_menu_note_toggle_rb3_cymbal_green_logic(1);	//Toggle tom/cymbal combo status
+}
+
+int eof_menu_note_toggle_rb3_cymbal_yellow_logic(int function)
+{
+	unsigned long i;
+	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	long u = 0;
+	int note_selection_updated;
+	EOF_LEGACY_TRACK *tp;
+
+	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+		return 1;	//Do not allow this function to run when a drum track is not active
+	if(function && (eof_selected_track != EOF_TRACK_DRUM_PS))
+		return 1;	//Do not allow this function to apply tom/cymbal combo status except in the Phase Shift drum track
+
+	tp = eof_song->legacy_track[tracknum];
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			if(eof_get_note_note(eof_song, eof_selected_track, i) & 4)
+			{	//If this drum note is yellow
+				if(!function)
+				{	//Toggle yellow cymbal status
+					if(!u)
+					{	//Make a back up before changing the first note
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						u = 1;
+					}
+					eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_Y_CYMBAL,2,0);	//Toggle the yellow cymbal flag on all drum notes at this position
+				}
+				else
+				{	//Toggle yellow tom/cymbal combo status
+					if(tp->note[i]->flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL)
+					{	//If this note is already a cymbal
+						if(!u)
+						{	//Make a back up before changing the first note
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+							u = 1;
+						}
+						tp->note[i]->flags ^= EOF_DRUM_NOTE_FLAG_Y_COMBO;					//Toggle the yellow tom/cymbal combo flag on this note only
+					}
+				}
+			}
+		}
+	}
+	if(u)
+	{	//If changes were made
+		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Remove tom+cymbal combo status from notes that are no longer cymbals
 	}
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note
@@ -2303,29 +2404,62 @@ int eof_menu_note_toggle_rb3_cymbal_green(void)
 
 int eof_menu_note_toggle_rb3_cymbal_yellow(void)
 {
+	return eof_menu_note_toggle_rb3_cymbal_yellow_logic(0);	//Toggle normal cymbal status
+}
+
+int eof_menu_note_toggle_rb3_cymbal_combo_yellow(void)
+{
+	return eof_menu_note_toggle_rb3_cymbal_yellow_logic(1);	//Toggle tom/cymbal combo status
+}
+
+int eof_menu_note_toggle_rb3_cymbal_blue_logic(int function)
+{
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	long u = 0;
 	int note_selection_updated;
+	EOF_LEGACY_TRACK *tp;
 
 	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
 		return 1;	//Do not allow this function to run when a drum track is not active
+	if(function && (eof_selected_track != EOF_TRACK_DRUM_PS))
+		return 1;	//Do not allow this function to apply tom/cymbal combo status except in the Phase Shift drum track
 
+	tp = eof_song->legacy_track[tracknum];
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
-			if(eof_get_note_note(eof_song, eof_selected_track, i) & 4)
-			{	//If this drum note is yellow
-				if(!u)
-				{	//Make a back up before changing the first note
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					u = 1;
+			if(eof_get_note_note(eof_song, eof_selected_track, i) & 8)
+			{	//If this drum note is blue
+				if(!function)
+				{	//Toggle blue cymbal status
+					if(!u)
+					{	//Make a back up before changing the first note
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						u = 1;
+					}
+					eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_B_CYMBAL,2,0);	//Toggle the blue cymbal flag on all drum notes at this position
 				}
-				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_CYMBAL,2,0);	//Toggle the yellow cymbal flag on all drum notes at this position
+				else
+				{	//Toggle blue tom/cymbal combo status
+					if(tp->note[i]->flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL)
+					{	//If this note is already a cymbal
+						if(!u)
+						{	//Make a back up before changing the first note
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+							u = 1;
+						}
+						tp->note[i]->flags ^= EOF_DRUM_NOTE_FLAG_B_COMBO;					//Toggle the blue tom/cymbal combo flag on this note only
+					}
+				}
 			}
 		}
+	}
+	if(u)
+	{	//If changes were made
+		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Remove tom+cymbal combo status from notes that are no longer cymbals
 	}
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note
@@ -2337,36 +2471,12 @@ int eof_menu_note_toggle_rb3_cymbal_yellow(void)
 
 int eof_menu_note_toggle_rb3_cymbal_blue(void)
 {
-	unsigned long i;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	long u = 0;
-	int note_selection_updated;
+	return eof_menu_note_toggle_rb3_cymbal_blue_logic(0);	//Toggle normal cymbal status
+}
 
-	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
-		return 1;	//Do not allow this function to run when a drum track is not active
-
-	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-		{	//If this note is in the currently active track and is selected
-			if(eof_get_note_note(eof_song, eof_selected_track, i) & 8)
-			{	//If this drum note is blue
-				if(!u)
-				{	//Make a back up before changing the first note
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					u = 1;
-				}
-				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_B_CYMBAL,2,0);	//Toggle the blue cymbal flag on all drum notes at this position
-			}
-		}
-	}
-	if(note_selection_updated)
-	{	//If the only note modified was the seek hover note
-		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
-		eof_selection.current = EOF_MAX_NOTES - 1;
-	}
-	return 1;
+int eof_menu_note_toggle_rb3_cymbal_combo_blue(void)
+{
+	return eof_menu_note_toggle_rb3_cymbal_blue_logic(1);	//Toggle tom/cymbal combo status
 }
 
 int eof_menu_note_remove_cymbal(void)
@@ -2402,7 +2512,10 @@ int eof_menu_note_remove_cymbal(void)
 				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_G_CYMBAL,0,0);	//Clear the green cymbal flag on all drum notes at this position
 				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN,0,0);	//Clear the open hi hat cymbal flag on all drum notes at this position
 				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL,0,0);	//Clear the pedal hi hat cymbal flag on all drum notes at this position
-				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_SIZZLE,0,0);			//Clear the sizzle hi hat cymbal flag on all drum notes at this position
+				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_SIZZLE,0,0);		//Clear the sizzle hi hat cymbal flag on all drum notes at this position
+				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_COMBO,0,0);		//Clear the yellow tom/cymbal combo flag on all drum notes at this position
+				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_B_COMBO,0,0);		//Clear the blue tom/cymbal combo flag on all drum notes at this position
+				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_G_COMBO,0,0);		//Clear the green tom/cymbal combo flag on all drum notes at this position
 			}
 		}
 	}

@@ -3348,6 +3348,9 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 			*flags &= ~EOF_DRUM_NOTE_FLAG_B_CYMBAL;			//Erase the blue cymbal flag
 			*flags &= ~EOF_DRUM_NOTE_FLAG_G_CYMBAL;			//Erase the green cymbal flag
 			*flags &= ~EOF_DRUM_NOTE_FLAG_DBASS;			//Erase the double bass flag
+			*flags &= ~EOF_DRUM_NOTE_FLAG_Y_COMBO;			//Erase the yellow tom/cymbal combo flag
+			*flags &= ~EOF_DRUM_NOTE_FLAG_B_COMBO;			//Erase the blue tom/cymbal combo flag
+			*flags &= ~EOF_DRUM_NOTE_FLAG_G_COMBO;			//Erase the green tom/cymbal combo flag
 		}
 	}
 	else
@@ -3356,11 +3359,14 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 	}
 
 	if((eof_song->track[sourcetrack]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (desttrack != EOF_TRACK_DRUM_PS))
-	{	//If notes are being copied from a drum track and not being pasted into the PS drum track, erase the hi hat and rim shot flags
+	{	//If notes are being copied from a drum track and not being pasted into the PS drum track, erase flags exclusive to that track
 		*flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;	//Erase the open hi hat flag
 		*flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;	//Erase the pedal controlled hi hat flag
 		*flags &= ~EOF_DRUM_NOTE_FLAG_R_RIMSHOT;		//Erase the rim shot flag
 		*flags &= ~EOF_DRUM_NOTE_FLAG_Y_SIZZLE;			//Erase the sizzle hi hat flag
+		*flags &= ~EOF_DRUM_NOTE_FLAG_Y_COMBO;			//Erase the yellow tom/cymbal combo flag
+		*flags &= ~EOF_DRUM_NOTE_FLAG_B_COMBO;			//Erase the blue tom/cymbal combo flag
+		*flags &= ~EOF_DRUM_NOTE_FLAG_G_COMBO;			//Erase the green tom/cymbal combo flag
 	}
 
 	if(eof_song->track[desttrack]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR)
@@ -3523,6 +3529,7 @@ unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long tra
 			flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;
 			flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;
 			flags &= ~EOF_DRUM_NOTE_FLAG_Y_SIZZLE;
+			flags &= ~EOF_DRUM_NOTE_FLAG_Y_COMBO;
 		}
 		else if(track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
 		{
@@ -3534,6 +3541,7 @@ unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long tra
 		if(track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//Erase drum specific flags
 			flags &= ~EOF_DRUM_NOTE_FLAG_B_CYMBAL;
+			flags &= ~EOF_DRUM_NOTE_FLAG_B_COMBO;
 		}
 		else if(track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
 		{
@@ -3545,6 +3553,7 @@ unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long tra
 		if(track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//Erase drum specific flags
 			flags &= ~EOF_DRUM_NOTE_FLAG_G_CYMBAL;
+			flags &= ~EOF_DRUM_NOTE_FLAG_G_COMBO;
 		}
 	}
 	return flags;
