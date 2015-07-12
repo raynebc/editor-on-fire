@@ -67,6 +67,9 @@
 #define EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL	1024	//This flag means the yellow cymbal will be displayed in Phase Shift as a pedal controlled hi hat (lane 3)
 #define EOF_DRUM_NOTE_FLAG_R_RIMSHOT		2048	//This flag means the red drum note will be displayed in Phase Shift as a rim shot (lane 2)
 #define EOF_DRUM_NOTE_FLAG_Y_SIZZLE			4096	//This flag means the yellow cymbal will be displayed in Phase Shift as a "sizzle" (partially open) hi hat (lane 3)
+#define EOF_DRUM_NOTE_FLAG_Y_COMBO          8192	//This flag means the yellow drum note is treated as both a cymbal gem and a tom gem (for use in the Phase Shift drum track)
+#define EOF_DRUM_NOTE_FLAG_B_COMBO         16384	//This flag means the blue drum note is treated as both a cymbal gem and a tom gem (for use in the Phase Shift drum track)
+#define EOF_DRUM_NOTE_FLAG_G_COMBO         32768	//This flag means the green drum note is treated as both a cymbal gem and a tom gem (for use in the Phase Shift drum track)
 
 //The following flags pertain to dance notes
 #define EOF_DANCE_FLAG_LANE_1_MINE		512		//This flag will represent a mine note for lane 1
