@@ -1203,6 +1203,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						}
 						if(ctr4 >= chordlistsize)
 						{	//If the chord couldn't be found
+							eof_seek_and_render_position(track, tp->note[ctr3]->type, tp->note[ctr3]->pos);
 							allegro_message("Error:  Couldn't match chord with chord template while exporting chords.  Aborting Rocksmith 1 export.");
 							eof_log("Error:  Couldn't match chord with chord template while exporting chords.  Aborting Rocksmith 1 export.", 1);
 							if(chordlist)
@@ -1331,6 +1332,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						}
 						if(ctr4 >= chordlistsize)
 						{	//If the chord couldn't be found
+							eof_seek_and_render_position(track, tp->note[ctr3]->type, tp->note[ctr3]->pos);
 							allegro_message("Error:  Couldn't match chord with chord template while writing handshapes.  Aborting Rocksmith 1 export.");
 							eof_log("Error:  Couldn't match chord with chord template while writing handshapes.  Aborting Rocksmith 1 export.", 1);
 							if(chordlist)
@@ -2342,6 +2344,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							}
 							if(ctr4 >= chordlistsize)
 							{	//If the chord couldn't be found
+								eof_seek_and_render_position(track, tp->note[ctr3]->type, tp->note[ctr3]->pos);
 								allegro_message("Error:  Couldn't match chord with chord template while exporting chords.  Aborting Rocksmith 2 export.");
 								eof_log("Error:  Couldn't match chord with chord template while exporting chords.  Aborting Rocksmith 2 export.", 1);
 								if(chordlist)
@@ -2516,6 +2519,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							}
 							if(ctr4 >= chordlistsize)
 							{	//If the chord couldn't be found
+								eof_seek_and_render_position(track, tp->note[ctr3]->type, tp->note[ctr3]->pos);
 								allegro_message("Error:  Couldn't match chord with chord template while writing handshapes.  Aborting Rocksmith 2 export.");
 								eof_log("Error:  Couldn't match chord with chord template while writing handshapes.  Aborting Rocksmith 2 export.", 1);
 								if(chordlist)

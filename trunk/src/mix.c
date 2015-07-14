@@ -53,7 +53,8 @@ int eof_clap_volume = 100;	//Stores the volume level for the clap cue, specified
 int eof_tick_volume = 100;	//Stores the volume level for the tick cue, specified as a percentage
 int eof_tone_volume = 100;	//Stores the volume level for the tone cue, specified as a percentage
 int eof_percussion_volume = 100;	//Stores the volume level for the vocal percussion cue, specified as a percentage
-int eof_clap_for_mutes = 1;	//Specifies whether fully string muted notes trigger the clap sound cue
+int eof_clap_for_mutes = 1;		//Specifies whether fully string muted notes trigger the clap sound cue
+int eof_clap_for_ghosts = 1;	//Specifies whether ghosted pro guitar notes trigger the clap sound cue
 
 int           eof_mix_speed = 1000;
 char          eof_mix_speed_ticker;
@@ -292,17 +293,23 @@ unsigned long eof_mix_msec_to_sample(unsigned long msec, int freq)
 
 void eof_mix_find_claps(void)
 {
-	unsigned long i;
+	unsigned long i, bitmask;
 	eof_mix_claps = 0;
 	eof_mix_current_clap = 0;
 	unsigned long tracknum;
+	EOF_PRO_GUITAR_TRACK *tp = NULL;
 
 	if(!eof_music_track)
 		return;
 	eof_log("eof_mix_find_claps() entered", 2);
 
-	//Queue claps
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If a pro guitar/bass track is active
+		tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
+	}
+
+	//Queue claps
 	if(eof_vocals_selected)
 	{
 		for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
@@ -317,8 +324,16 @@ void eof_mix_find_claps(void)
 		{	//For each note in the track
 			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_note(eof_song, eof_selected_track, i) & eof_mix_claps_note))
 			{	//If the note is in the active track difficulty and the clap sound cue applies to at least one gem used in the note
-				if(eof_clap_for_mutes || !(eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE))
-				{	//If clap cues should trigger for fully string muted notes, or if this note isn't fully string muted
+				if(tp)
+				{	//If a pro guitar track is active, perform other checks
+					if(!eof_clap_for_mutes && (eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE))
+					{	//If clap cues should not trigger for fully string muted notes, and this note is
+						continue;	//Skip this note
+					}
+					if(!eof_clap_for_ghosts && !(tp->note[i]->note & ~tp->note[i]->ghost))
+					{	//If clap cues should not trigger for ghosted gems, or if this gem doesn't have any non-ghosted gems
+						continue;	//Skip this note
+					}
 					eof_mix_clap_pos[eof_mix_claps] = eof_mix_msec_to_sample(eof_get_note_pos(eof_song, eof_selected_track, i), alogg_get_wave_freq_ogg(eof_music_track));
 					eof_mix_claps++;
 				}
@@ -352,10 +367,10 @@ void eof_mix_find_claps(void)
 
 				tone = eof_lookup_midi_tone(eof_song, eof_selected_track, i);
 				EOF_PRO_GUITAR_NOTE *note = track->note[i];
-				for(j = 0; j < 6; j++)
+				for(j = 0, bitmask = 1; j < 6; j++, bitmask <<= 1)
 				{	//For each of the 6 supported strings
-					if((note->note & (1<<j)) && !(note->frets[j] & 0x80))
-					{	//If the string is used (and not muted)
+					if((note->note & bitmask) && !(note->frets[j] & 0x80) && !(note->ghost & bitmask))
+					{	//If the string is used (and not muted or ghosted)
 						eof_guitar_notes[eof_mix_guitar_notes].pos = pos;
 						eof_guitar_notes[eof_mix_guitar_notes].channel = j;
 						eof_guitar_notes[eof_mix_guitar_notes].note = track->tuning[j] + eof_lookup_default_string_tuning_absolute(track, eof_selected_track, j) + note->frets[j] + track->capo;
