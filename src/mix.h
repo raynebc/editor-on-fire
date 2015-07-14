@@ -31,6 +31,7 @@ extern int eof_tick_volume;					//Stores the volume level for the tick cue, spec
 extern int eof_tone_volume;					//Stores the volume level for the tone cue, specified as a percentage
 extern int eof_percussion_volume;			//Stores the volume level for the vocal percussion cue, specified as a percentage
 extern int eof_clap_for_mutes;				//Specifies whether fully string muted notes trigger the clap sound cue
+extern int eof_clap_for_ghosts;				//Specifies whether ghosted pro guitar notes trigger the clap sound cue
 extern int eof_selected_percussion_cue;		//The user selected percussion sound (cowbell by default), corresponds to the radio button in the eof_audio_cues_dialog[] array
 extern SAMPLE *eof_sound_chosen_percussion;	//The user-selected percussion sound
 extern SAMPLE *eof_sound_cowbell;

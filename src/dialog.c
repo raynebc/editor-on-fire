@@ -110,6 +110,12 @@ int eof_popup_dialog(DIALOG * dp, int n)
 	clear_keybuf();
 	while(1)
 	{
+		if((eof_has_focus == 2) && (dp == eof_main_dialog))
+		{	//If EOF just switched back into focus and no dialogs except the main menu were running
+			eof_has_focus = 1;
+			break;	//Don't allow EOF to get stuck in this loop just because ALT+Tab was used
+		}
+
 		/* Read the keyboard input and simulate the keypresses so the dialog
 		 * player can pick up keyboard input after we intercepted it. This lets
 		 * us be aware of any keyboard input so we can react accordingly. */

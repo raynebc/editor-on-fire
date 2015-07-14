@@ -2765,7 +2765,7 @@ void eof_render_note_window(void)
 
 		if(!eof_disable_sound_processing)
 		{	//If the user didn't disable sound processing, display the sound cue statuses
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Metronome: %s Claps: %s Tones: %s", eof_mix_metronome_enabled ? "On" : "Off", eof_mix_claps_enabled ? "On" : "Off", eof_mix_vocal_tones_enabled ? "On" : "Off");
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Metronome: %s Claps: %s Tones: %s mTones: %s", eof_mix_metronome_enabled ? "On" : "Off", eof_mix_claps_enabled ? "On" : "Off", eof_mix_vocal_tones_enabled ? "On" : "Off", eof_mix_midi_tones_enabled ? "On" : "Off");
 		}
 		else
 		{	//Otherwise indicate they are disabled
