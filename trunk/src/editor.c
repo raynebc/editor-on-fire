@@ -940,12 +940,9 @@ if(eof_key_code == KEY_PAUSE)
 	if(eof_key_char == 'g')
 	{
 		if(KEY_EITHER_CTRL)
-		{	//CTRL+G in the drum track will toggle Pro green cymbal notation
-			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-			{	//If a drum track is active
-				(void) eof_menu_note_toggle_rb3_cymbal_green();
-				eof_use_key();
-			}
+		{
+			(void) eof_menu_note_toggle_rb3_cymbal_green();
+			eof_use_key();
 		}
 		else
 		{	//CTRL is not held
