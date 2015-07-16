@@ -4797,6 +4797,19 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 							break;	//Break from while loop
 						}
 					}
+					if(eof_write_rs2_files && (eof_note_count_colors_bitmask(note) == 1))
+					{	//If RS2 export is enabled, and the base note for the arpeggio only has one gem in it, add another gem to force it to become a chord (required for RS2 export)
+						if(note == 1)
+						{	//If that base note is on low E
+							note |= 2;	//Add a gem on the next string up
+							ghost |= 2;	//And ghost it
+						}
+						else
+						{
+							note |= 1;	//Otherwise add a gem on low E
+							ghost |= 1;	//And ghost it
+						}
+					}
 					memcpy(tp->note[ctr2]->frets, frets, 6);	//Apply changes (if any) to the note at the base of the arpeggio phrase
 					tp->note[ctr2]->note = note;
 					tp->note[ctr2]->ghost = ghost;

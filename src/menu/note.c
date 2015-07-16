@@ -280,18 +280,18 @@ MENU eof_note_drum_menu[] =
 	{"Mark as &Non cymbal", eof_menu_note_remove_cymbal, NULL, 0, NULL},
 	{"Mark new notes as &Cymbals", eof_menu_note_default_cymbal, NULL, 0, NULL},
 	{"Toggle expert+ bass drum\t" CTRL_NAME "+E", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
-	{"Remove &Expert+ bass drum", eof_menu_note_remove_double_bass, NULL, 0, NULL},
-	{"&Mark new notes as Expert+", eof_menu_note_default_double_bass, NULL, 0, NULL},
+	{"Remove expert+ bass drum", eof_menu_note_remove_double_bass, NULL, 0, NULL},
+	{"Mark new notes as &Expert+", eof_menu_note_default_double_bass, NULL, 0, NULL},
 	{"Toggle Y note as &Open hi hat\tShift+O", eof_menu_note_toggle_hi_hat_open, NULL, 0, NULL},
 	{"Toggle Y note as &Pedal hi hat\tShift+P",eof_menu_note_toggle_hi_hat_pedal, NULL, 0, NULL},
 	{"Toggle Y note as &Sizzle hi hat\tShift+S", eof_menu_note_toggle_hi_hat_sizzle, NULL, 0, NULL},
 	{"Remove &Hi hat status", eof_menu_note_remove_hi_hat_status, NULL, 0, NULL},
-	{"Mark new &Y notes as", NULL, eof_note_drum_hi_hat_menu, 0, NULL},
+	{"&Mark new Y notes as", NULL, eof_note_drum_hi_hat_menu, 0, NULL},
 	{"Toggle R note as rim shot\tShift+R",eof_menu_note_toggle_rimshot, NULL, 0, NULL},
 	{"Remove &Rim shot status", eof_menu_note_remove_rimshot, NULL, 0, NULL},
-	{"Toggle Y cymbal+tom", eof_menu_note_toggle_rb3_cymbal_combo_yellow, NULL, 0, NULL},
-	{"Toggle B cymbal+tom", eof_menu_note_toggle_rb3_cymbal_combo_blue, NULL, 0, NULL},
-	{"Toggle G cymbal+tom", eof_menu_note_toggle_rb3_cymbal_combo_green, NULL, 0, NULL},
+	{"Toggle &Y cymbal+tom", eof_menu_note_toggle_rb3_cymbal_combo_yellow, NULL, 0, NULL},
+	{"Toggle &B cymbal+tom", eof_menu_note_toggle_rb3_cymbal_combo_blue, NULL, 0, NULL},
+	{"Toggle &G cymbal+tom", eof_menu_note_toggle_rb3_cymbal_combo_green, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -2483,8 +2483,8 @@ int eof_menu_note_remove_cymbal(void)
 {
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	long u = 0;
-	unsigned long flags, oldflags, note;
+	int undo_made = 0;
+	unsigned long flags, note;
 	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
@@ -2497,15 +2497,14 @@ int eof_menu_note_remove_cymbal(void)
 		{	//If this note is in the currently active track and is selected
 			note = eof_get_note_note(eof_song, eof_selected_track, i);
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			oldflags = flags;	//Save an extra copy of the original flags
 			if(	((note & 4) && (flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL)) ||
 				((note & 8) && (flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL)) ||
 				((note & 16) && (flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL)))
 			{	//If this note has a cymbal notation
-				if(!u && (oldflags != flags))
+				if(!undo_made)
 				{	//Make a back up before changing the first note
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					u = 1;
+					undo_made = 1;
 				}
 				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_CYMBAL,0,0);	//Clear the yellow cymbal flag on all drum notes at this position
 				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_B_CYMBAL,0,0);	//Clear the blue cymbal flag on all drum notes at this position
