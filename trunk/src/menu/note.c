@@ -4516,7 +4516,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	{	//If any notes were altered
 		if(highfretvalue > tp->numfrets)
 		{	//If the user input includes a fret value that exceeds the track's current maximum
-			snprintf(eof_etext, sizeof(eof_etext) - 1, "Increase the fret limit to %lu to compensate?", highfretvalue);
+			(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "Increase the fret limit to %ld to compensate?", highfretvalue);
 			if(alert("One or more fret values specified exceed the track's fret limit", eof_etext, NULL, "&Yes", "&No", 'y', 'n') == 1)
 			{	//If user opts to increase the fret limit
 				tp->numfrets = highfretvalue;
@@ -4963,7 +4963,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 				//Check for a conflict with the track's fret limit
 				if(highfretvalue > tp->numfrets)
 				{	//If the user input includes a fret value that exceeds the track's current maximum
-					snprintf(eof_etext, sizeof(eof_etext) - 1, "Increase the fret limit to %lu to compensate?", highfretvalue);
+					(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "Increase the fret limit to %ld to compensate?", highfretvalue);
 					if(alert("One or more fret values specified exceed the track's fret limit", eof_etext, NULL, "&Yes", "&No", 'y', 'n') == 1)
 					{	//If user opts to increase the fret limit
 						tp->numfrets = highfretvalue;

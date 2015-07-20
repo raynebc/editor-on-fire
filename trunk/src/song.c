@@ -6878,6 +6878,10 @@ void eof_truncate_chart(EOF_SONG *sp)
 		targetpos = eof_music_length;
 	}
 
+	if(sp->beats > 1)
+	{	//As long as there are multiple beats
+		targetpos += sp->beat[sp->beats - 1]->fpos - sp->beat[sp->beats - 2]->fpos + 0.5;	//Add an extra beat to the target position for padding
+	}
 	if(sp->beat[sp->beats - 1]->pos <= targetpos)
 	{	//If there aren't enough beats so that at least one starts after the target position
 		eof_log("\tAdding beats", 1);

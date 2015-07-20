@@ -2793,6 +2793,7 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 	char *warning, warning1[] = "Existing fret hand positions for the active track difficulty will be removed.", warning2[] = "Existing fret hand positions for the selected range of notes will be removed.";
 	unsigned limit = 21;	//Rocksmith 2's fret hand position limit is 21
 	long lastnoteslide = 0;	//Tracks the number of frets the last processed note slid (for adding FHPs to track when the fret hand slides)
+	long nextnote;
 
 	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return;	//Invalid parameters
@@ -2894,35 +2895,48 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 			{	//If this is the first note since the last hand position, or there was no hand position placed yet
 				next_position = tp->note[ctr];	//Store its address
 			}
-
-			//Determine if this note is a chord that uses the index finger, which will trigger a fret hand position change (if this chord's fingering is incomplete, perform a chord shape lookup)
 			force_change = 0;	//Reset this condition
-			np = tp->note[ctr];	//Unless the chord's fingering is incomplete, the note's current fingering will be used to determine whether the index finger triggers a position change
-			if((eof_note_count_colors(eof_song, track, ctr) > 1) && !eof_is_string_muted(eof_song, track, ctr))
-			{	//If this note is a chord that isn't completely string muted
-				if(eof_pro_guitar_note_fingering_valid(tp, ctr, 0) != 1)
-				{	//If the fingering for the note is not fully defined
-					if(eof_lookup_chord_shape(np, &shapenum, 0))
-					{	//If a fingering for the chord can be found in the chord shape definitions
-						memcpy(temp.frets, np->frets, 6);	//Clone the fretting of the original note into the temporary note
-						temp.note = np->note;				//Clone the note mask
-						eof_apply_chord_shape_definition(&temp, shapenum);	//Apply the matching chord shape definition's fingering to the temporary note
-						np = &temp;	//Check the temporary note for use of the index finger, instead of the original note
-					}
+
+			//Determine if this note is inside an arpeggio/handshape phrase.  The note at the beginning of such a phrase will trigger a change, but other notes inside the phrase will not
+			for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
+			{	//For each arpeggio/handshape phrase in the track
+				if(((tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos)) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
+				{	//If this note's start position is within an arpeggio/handshape phrase in this track difficulty
+					force_change = 3;
+					break;	//Break from for loop
 				}
 			}
-			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
-			{	//For each of the 6 supported strings
-				if((np->note & bitmask) && (np->finger[ctr2] == 1))
-				{	//If this note uses this string, and the string is defined as being fretted by the index finger
-					force_change = 1;
-					break;
+
+			//Determine if this note is a chord that uses the index finger, which will trigger a fret hand position change (if this chord's fingering is incomplete, perform a chord shape lookup)
+			if(!force_change)
+			{	//If a fret hand change wasn't already determined necessary
+				np = tp->note[ctr];	//Unless the chord's fingering is incomplete, the note's current fingering will be used to determine whether the index finger triggers a position change
+				if((eof_note_count_colors(eof_song, track, ctr) > 1) && !eof_is_string_muted(eof_song, track, ctr))
+				{	//If this note is a chord that isn't completely string muted
+					if(eof_pro_guitar_note_fingering_valid(tp, ctr, 0) != 1)
+					{	//If the fingering for the note is not fully defined
+						if(eof_lookup_chord_shape(np, &shapenum, 0))
+						{	//If a fingering for the chord can be found in the chord shape definitions
+							memcpy(temp.frets, np->frets, 6);	//Clone the fretting of the original note into the temporary note
+							temp.note = np->note;				//Clone the note mask
+							eof_apply_chord_shape_definition(&temp, shapenum);	//Apply the matching chord shape definition's fingering to the temporary note
+							np = &temp;	//Check the temporary note for use of the index finger, instead of the original note
+						}
+					}
+				}
+				for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+				{	//For each of the 6 supported strings
+					if((np->note & bitmask) && (np->finger[ctr2] == 1))
+					{	//If this note uses this string, and the string is defined as being fretted by the index finger
+						force_change = 1;
+						break;
+					}
 				}
 			}
 
 			//Determine if this note follows a slide and a fret hand position should be added due to the slide
 			if(!force_change && lastnoteslide)
-			{	//If this note didn't trigger a fret hand position change and the last note had a slide
+			{	//If this note didn't already trigger a fret hand position change and the last note had a slide
 				if(lastnoteslide < 0)
 				{	//If the slide note went down
 					unsigned long lastnoteslide_abs = -lastnoteslide;
@@ -2941,13 +2955,13 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 			}
 
 			if(force_change || !eof_note_can_be_played_within_fret_tolerance(tp, ctr, &current_low, &current_high))
-			{	//If a position change was determined to be necessary based on fingering/sliding, or this note can't be included with previous notes within a single fret hand position
+			{	//If a position change was determined to be necessary based on fingering/sliding or arpeggio/handshape phrasing, or this note can't be included with previous notes within a single fret hand position
 				if(current_low + tp->capo > limit)
 				{	//Ensure the fret hand position is capped at the appropriate limit based on the game exports enabled
 					current_low = limit - tp->capo;
 				}
 				if(force_change)
-				{	//If a fret hand position change was forced due to note fingering/sliding
+				{
 					if(next_position != tp->note[ctr])
 					{	//If the fret hand position for previous notes has not been placed yet, write it first
 						if(current_low && (current_low != last_anchor))
@@ -2964,17 +2978,21 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 						{	//If the position change is due to fingering
 							next_position = tp->note[ctr];	//The fret hand position for the current note will be written next
 						}
-						else
+						else if(force_change == 2)
 						{	//If the position change is due to sliding
 							next_position = &temp2;	//The fret hand position for the end of the slide will be written next
 							current_low += lastnoteslide;	//And it will be the appropriate number of frets higher/lower depending on the slide's end position
+						}
+						else if(force_change == 3)
+						{	//If the position change is due to arpeggio/handshape phrasing
+							next_position = tp->note[ctr];	//The fret hand position for the current note will be written next
 						}
 					}
 					//Now that the previous notes' position is in place, update the high and low fret tracking for the current note
 					current_low = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Track this note's high and low frets
 					current_high = eof_pro_guitar_note_highest_fret(tp, ctr);
-					if(current_low && (current_low != last_anchor))
-					{	//As long as the hand position being written is valid and is is different from the previous one
+					if((current_low && (current_low != last_anchor)) || (force_change == 3))
+					{	//As long as the hand position being written is valid and is is different from the previous one, or if arpeggio/handshape phrasing is forcing a change regardless of the previous position
 						if(!eof_fret_hand_position_list_dialog_undo_made)
 						{	//If an undo state hasn't been made yet since launching this dialog
 							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -2982,6 +3000,34 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 						}
 						(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL);	//Add the fret hand position for this forced position change
 						last_anchor = current_low;
+					}
+					//If necessary, seek to end of arpeggio/handshape phrase so the next FHP written is beyond it
+					if(force_change == 3)
+					{	//If the position change is due to arpeggio/handshape phrasing
+						for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
+						{	//For each arpeggio/handshape phrase in the track
+							if(((tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos)) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
+							{	//If this is the arpeggio/handshape phrase the note was in
+								while(1)
+								{
+									nextnote = eof_track_fixup_next_note(sp, track, ctr);
+									if(nextnote >= 0)
+									{	//If there is another note in this track difficulty
+										if(tp->note[nextnote]->pos <= tp->arpeggio[ctr2].end_pos)
+										{	//And it is inside the same arpeggio/handshape phrase
+											ctr = nextnote;	//Iterate to that note
+										}
+										else
+										{
+											break;	//Break from while loop
+										}
+									}
+									else
+										break;	//Break from while loop
+								}
+								break;	//Break from for loop
+							}
+						}
 					}
 					next_position = NULL;	//This note's position will not receive another hand position, the next loop iteration will look for any necessary position changes starting with the next note's location
 				}
@@ -3001,7 +3047,7 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 				}
 				current_low = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Track this note's high and low frets
 				current_high = eof_pro_guitar_note_highest_fret(tp, ctr);
-			}//If a position change was determined to be necessary based on fingering, or this note can't be included with previous notes within a single fret hand position
+			}//If a position change was determined to be necessary based on fingering/sliding or arpeggio/handshape phrasing, or this note can't be included with previous notes within a single fret hand position
 
 			//Track the number of frets this note slides
 			lastnoteslide = 0;
