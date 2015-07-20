@@ -3560,7 +3560,7 @@ void eof_editor_logic(void)
 			/* handle initial middle click (only if full screen 3D view is not in effect) */
 			if(!eof_full_screen_3d && (mouse_b & 4) && eof_mclick_released)
 			{	//If the middle click hasn't been processed yet
-				while(mouse_b & 4);	//Wait until the middle mouse button is released before proceeding
+				while(mouse_b & 4);	//Wait until the middle mouse button is released before proceeding (this depends on automatic mouse polling, so EOF cannot call poll_mouse() manually or this becomes an infinite loop)
 				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 				{	//If a pro guitar track is active
 					if(eof_count_selected_notes(NULL, 0))

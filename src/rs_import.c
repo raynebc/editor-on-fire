@@ -1146,7 +1146,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 											tnp->bendstrength = step / 1000;
 										}
 										tech_note_count++;
-									}
+									}//If another tech note can be stored
 								}//If this is a bendValue tag
 
 								(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
@@ -1240,7 +1240,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 										tp->pgnotes++;
 										note_count++;
 										tagctr++;
-									}
+									}//If another chord can be stored
 								}//If this is a chord tag
 
 								(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
@@ -1275,7 +1275,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 								if(ptr)
 								{	//If this is an anchor tag
 									if(tp->handpositions < EOF_MAX_NOTES)
-									{	//If another chord can be stored
+									{	//If another fret hand position can be stored
 										if(!parse_xml_rs_timestamp("time", buffer, &time))
 										{	//If the timestamp was not readable
 											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
@@ -1317,7 +1317,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 											tp->handposition[tp->handpositions].difficulty = curdiff;
 											tp->handpositions++;
 										}
-									}//If another chord can be stored
+									}//If another fret hand position can be stored
 								}//If this is an anchor tag
 
 								(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text

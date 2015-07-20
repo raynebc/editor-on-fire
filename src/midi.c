@@ -2299,9 +2299,12 @@ unsigned char eof_get_midi_pitches(EOF_SONG *sp, unsigned long track, unsigned l
 		{	//For each of the 6 supported strings
 			if((tp->note[note]->note & bitmask) && !(tp->note[note]->frets[ctr] & 0x80))
 			{	//If this string is used (and not muted)
-				//This note is found by adding default tuning for the string, the offset defining the current tuning and the fret number being played
-				pitches[ctr] = tp->tuning[ctr] + eof_lookup_default_string_tuning_absolute(tp, track, ctr) + tp->note[note]->frets[ctr] + tp->capo;	//Store it in the pitch array
-				pitchmask |= bitmask;	//Set the appropriate bit in the mask
+				if(!(tp->note[note]->ghost & bitmask))
+				{	//If this string is not ghosted
+					//This note is found by adding default tuning for the string, the offset defining the current tuning, the position of any capo in use and the fret number being played
+					pitches[ctr] = tp->tuning[ctr] + eof_lookup_default_string_tuning_absolute(tp, track, ctr) + tp->note[note]->frets[ctr] + tp->capo;	//Store it in the pitch array
+					pitchmask |= bitmask;	//Set the appropriate bit in the mask
+				}
 			}
 		}
 	}

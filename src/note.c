@@ -962,7 +962,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	unsigned long numlanes, tracknum;
 	long xoffset = 0;	//This will be used to draw bitmaps half a lane further left when the bass drum isn't rendering in a lane and drum gems render centered over fret lines instead of between them
 	int drawline;		//Set to nonzero if a bass drum style line is to be drawn for the gem
-	int linecol;		//The color of the line to be drawn
+	int linecol = eof_color_red;		//The color of the line to be drawn
 
 	//These variables are used for the name rendering logic
 	long x3d, y3d, z3d;			//The coordinate at which to draw the name string (right aligned)

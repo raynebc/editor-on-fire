@@ -68,8 +68,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 unsigned char eof_get_midi_pitches(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char *pitches);
 	//Returns a bitmask defining which elements in the pitches array are populated to define the pitches used by the specified note/lyric
+	//Gems that are string muted or ghosted are ignored
 	//Each pitch is returned through *pitches array, which must be at least 6 elements large
-	//0 is returned on error or if the specified note contains no pitches (pitchless or percussion lyric, or fully string muted pro guitar note)
+	//0 is returned on error or if the specified note contains no pitches (pitchless or percussion lyric, or fully string muted or fully ghosted pro guitar note)
 int eof_export_music_midi(EOF_SONG *sp, char *fn, char format);
 	//Writes a normal MIDI file of the specified chart's vocal and pro guitar tracks to the specified file
 	//For lyrics, each pitched lyric (vocal percussion notes are excluded) is written as a MIDI note on channel 0
