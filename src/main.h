@@ -57,7 +57,7 @@
 #define EOF_COLORS_RS          3
 #define EOF_COLORS_BF          4
 
-#define EOF_MAX_IMAGES 82
+#define EOF_MAX_IMAGES 84
 
 #define EOF_IMAGE_WAVE                    0
 #define EOF_IMAGE_TAB0                    1
@@ -133,6 +133,8 @@
 #define EOF_IMAGE_NOTE_ORANGE_CYMBAL_HIT 71
 #define EOF_IMAGE_TAB_FG                 72
 #define EOF_IMAGE_TAB_BG                 73
+#define EOF_IMAGE_NOTE_BLACK             74
+#define EOF_IMAGE_NOTE_BLACK_HIT         75
 
 #define EOF_DISPLAY_640             0
 #define EOF_DISPLAY_800             1

@@ -7072,6 +7072,11 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 		{	//For each pre-existing fret hand position in the source track
 			if(tp->handposition[ctr].difficulty <= srcdiff)
 			{	//If this hand position is at or below the target difficulty
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
 				ptr = eof_pro_guitar_track_find_effective_fret_hand_position_definition(dtp, destdiff, tp->handposition[ctr].start_pos, NULL, NULL, 1);
 				if(ptr)
 				{	//If there is already a fret hand position at this position in the destination track difficulty
@@ -7093,6 +7098,11 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 				{	//And it's in the same difficulty
 					if(dtp->handposition[ctr - 2].end_pos == dtp->handposition[ctr - 1].end_pos)
 					{	//And has the same fret number
+						if(!undo_made)
+						{	//If an undo state hasn't been made yet
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+							undo_made = 1;
+						}
 						eof_pro_guitar_track_delete_hand_position(dtp, ctr - 1);	//Delete this fret hand position and keep the earlier one
 					}
 				}
@@ -7116,6 +7126,11 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 							break;
 						}
 					}
+				}
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
 				}
 				if(ptr)
 				{	//If there is already an arpeggio at this position in the destination track difficulty

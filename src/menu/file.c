@@ -2852,9 +2852,9 @@ int eof_save_helper(char *destfilename, char silent)
 		(void) replace_filename(newfolderpath, destfilename, "", 1024);	//Obtain the destination path
 	}
 
-	/* rotate out the last save file (filename).previous_save.eof */
+	/* rotate out the last save file (filename).previous_save.eof.bak */
 	(void) replace_extension(eof_temp_filename, eof_temp_filename, "eof", (int) sizeof(eof_temp_filename));	//Ensure the chart's file path has a .eof extension
-	(void) replace_extension(tempfilename2, eof_temp_filename, "previous_save.eof", 1024);	//(filename).previous_save.eof will be store the last save operation
+	(void) replace_extension(tempfilename2, eof_temp_filename, "previous_save.eof.bak", 1024);	//(filename).previous_save.eof.bak will be store the last save operation
 	if(exists(tempfilename2))
 	{	//If the lastsave file exists
 		(void) delete_file(tempfilename2);	//Delete it
@@ -2868,7 +2868,7 @@ int eof_save_helper(char *destfilename, char silent)
 	}
 	if(exists(eof_temp_filename))
 	{	//If the target of the save operation already exists
-		(void) eof_copy_file(eof_temp_filename, tempfilename2);	//Back it up as (filename).previous_save.eof
+		(void) eof_copy_file(eof_temp_filename, tempfilename2);	//Back it up as (filename).previous_save.eof.bak
 		if(!exists(tempfilename2))
 		{	//Make sure it was created
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Could not create the previous_save backup file.  Aborting save.  Please use \"Save as\" to save to a new location.");
