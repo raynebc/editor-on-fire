@@ -1864,7 +1864,7 @@ int eof_track_rocksmith_toggle_difficulty_limit(void)
 
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Determine which difficulties are populated for the active track
 	if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
-	{	//If the active track already had the difficulty limit removed, toggle this flag off
+	{	//If the active track already had the difficulty limit removed
 		for(ctr = 5; ctr < 256; ctr++)
 		{	//For each possible difficulty, starting after the first 5
 			if(eof_track_diff_populated_status[ctr])

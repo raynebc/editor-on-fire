@@ -474,14 +474,21 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			{	//If the note is not star power
 				if(tp && (eof_color_set == EOF_COLORS_BF))
 				{	//If a pro guitar track is active (tp will have been set above) and the Bandfuse color set is in use, override the color based on the gem's fingering
-					unsigned fingering = eof_pro_guitar_note_lookup_string_fingering(tp, notenum, ctr, 6);	//Look up this gem's fingering (or return 6 if cannot be determined)
-					if(fingering < 6)
-					{	//If the finger was determined
-						ncol = eof_colors[fingering].color;	//Use the appropriate color
+					if(tp->note[notenum]->flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+					{	//If the note is tapped
+						ncol = makecol(51, 51, 51);	//Draw the note in black
 					}
 					else
-					{	//Otherwise use the default silvering coloring
-						noteflags |= EOF_NOTE_FLAG_SP;	//And trigger the selection of the appropriate corresponding border color
+					{
+						unsigned fingering = eof_pro_guitar_note_lookup_string_fingering(tp, notenum, ctr, 6);	//Look up this gem's fingering (or return 6 if cannot be determined)
+						if(fingering < 6)
+						{	//If the finger was determined
+							ncol = eof_colors[fingering].color;	//Use the appropriate color
+						}
+						else
+						{	//Otherwise use the default silvering coloring
+							noteflags |= EOF_NOTE_FLAG_SP;	//And trigger the selection of the appropriate corresponding border color
+						}
 					}
 				}
 				else if(!track && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_color_set == EOF_COLORS_BF))
@@ -1109,42 +1116,55 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 				{	//If not rendering a dance note
 					unsigned long color = ctr;	//By default, the color will be determined by the gem's lane number
 
+					imagenum = 0;
 					if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_color_set == EOF_COLORS_BF))
 					{	//If a pro guitar track is active and the Bandfuse color set is in use, override the color based on the gem's fingering
-						unsigned fingering = eof_pro_guitar_note_lookup_string_fingering(eof_song->pro_guitar_track[tracknum], notenum, ctr, 6);	//Look up this gem's fingering (or return 6 if cannot be determined)
+						EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 
-						if(fingering < 6)
-						{	//If the finger was determined
-							color = fingering;	//Use the fingering's appropriate color
-						}
-						else
-						{	//Otherwise use the default silvering coloring
-							noteflags |= EOF_NOTE_FLAG_SP;	//And trigger the selection of the appropriate corresponding border color
-						}
-					}
-
-					if(noteflags & EOF_NOTE_FLAG_HOPO)
-					{	//If this is a HOPO note
-						if(noteflags & EOF_NOTE_FLAG_SP)
-						{	//If this is also a SP note
-							imagenum = p ? EOF_IMAGE_NOTE_HWHITE_HIT : EOF_IMAGE_NOTE_HWHITE;
+						if(tp->note[notenum]->flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+						{	//If the note is tapped
+							imagenum = p ? EOF_IMAGE_NOTE_BLACK_HIT : EOF_IMAGE_NOTE_BLACK;	//Draw the note in black
 						}
 						else
 						{
-							imagenum = p ? eof_colors[color].hoponotehit3d : eof_colors[color].hoponote3d;
+							unsigned fingering = eof_pro_guitar_note_lookup_string_fingering(tp, notenum, ctr, 6);	//Look up this gem's fingering (or return 6 if cannot be determined)
+
+							if(fingering < 6)
+							{	//If the finger was determined
+								color = fingering;	//Use the fingering's appropriate color
+							}
+							else
+							{	//Otherwise use the default silvering coloring
+								noteflags |= EOF_NOTE_FLAG_SP;	//And trigger the selection of the appropriate corresponding border color
+							}
 						}
 					}
-					else
-					{	//This is not a HOPO note
-						if(noteflags & EOF_NOTE_FLAG_SP)
-						{	//If this is an SP note
-							imagenum = p ? EOF_IMAGE_NOTE_WHITE_HIT : EOF_IMAGE_NOTE_WHITE;
+
+					if(!imagenum)
+					{	//If the appropriate 3D image wasn't determined yet
+						if(noteflags & EOF_NOTE_FLAG_HOPO)
+						{	//If this is a HOPO note
+							if(noteflags & EOF_NOTE_FLAG_SP)
+							{	//If this is also a SP note
+								imagenum = p ? EOF_IMAGE_NOTE_HWHITE_HIT : EOF_IMAGE_NOTE_HWHITE;
+							}
+							else
+							{
+								imagenum = p ? eof_colors[color].hoponotehit3d : eof_colors[color].hoponote3d;
+							}
 						}
 						else
-						{
-							imagenum = p ? eof_colors[color].notehit3d : eof_colors[color].note3d;
+						{	//This is not a HOPO note
+							if(noteflags & EOF_NOTE_FLAG_SP)
+							{	//If this is an SP note
+								imagenum = p ? EOF_IMAGE_NOTE_WHITE_HIT : EOF_IMAGE_NOTE_WHITE;
+							}
+							else
+							{
+								imagenum = p ? eof_colors[color].notehit3d : eof_colors[color].note3d;
+							}
 						}
-					}
+					}//If the appropriate 3D image wasn't determined yet
 				}//If not rendering a dance note
 				else
 				{	//This is a dance note

@@ -319,7 +319,7 @@ int eof_color_waveform_rms;
 
 int eof_color_set = EOF_COLORS_DEFAULT;
 eof_color eof_colors[6];	//Contain the color definitions for each lane
-eof_color eof_color_green_struct, eof_color_red_struct, eof_color_yellow_struct, eof_color_blue_struct, eof_color_orange_struct, eof_color_purple_struct;
+eof_color eof_color_green_struct, eof_color_red_struct, eof_color_yellow_struct, eof_color_blue_struct, eof_color_orange_struct, eof_color_purple_struct, eof_color_black_struct;
 eof_color eof_lane_1_struct, eof_lane_2_struct, eof_lane_3_struct, eof_lane_4_struct, eof_lane_5_struct, eof_lane_6_struct;
 	//Color data
 
@@ -1022,7 +1022,7 @@ void eof_prepare_undo(int type)
 	eof_window_title_dirty = 1;	//Indicate that the window title will need to be redrawn during the next normal render, to reflect whatever change is to follow this undo state
 	if(eof_change_count % 10 == 0)
 	{
-		(void) replace_extension(fn, eof_filename, "backup.eof", 1024);
+		(void) replace_extension(fn, eof_filename, "backup.eof.bak", 1024);
 		eof_log("\tSaving periodic backup", 1);
 		if(!eof_save_song(eof_song, fn))
 		{
@@ -3806,6 +3806,8 @@ int eof_load_data(void)
 	eof_image[EOF_IMAGE_NOTE_ORANGE_CYMBAL_HIT] = load_pcx("eof.dat#note_orange_hit_cymbal.pcx", NULL);
 	eof_image[EOF_IMAGE_TAB_FG] = load_pcx("eof.dat#tabfg.pcx", NULL);
 	eof_image[EOF_IMAGE_TAB_BG] = load_pcx("eof.dat#tabbg.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_BLACK] = load_pcx("eof.dat#note_black.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_BLACK_HIT] = load_pcx("eof.dat#note_black_hit.pcx", NULL);
 
 	eof_font = load_bitmap_font("eof.dat#font_times_new_roman.pcx", NULL, NULL);
 	if(!eof_font)
@@ -5140,6 +5142,7 @@ char eof_color_yellow_name[] = "&Yellow";
 char eof_color_blue_name[] = "&Blue";
 char eof_color_orange_name[] = "&Orange";
 char eof_color_purple_name[] = "&Purple";
+char eof_color_black_name[] = "B&Lack";
 
 char eof_lane_1_name[] = "Lane &1";
 char eof_lane_2_name[] = "Lane &2";
@@ -5252,6 +5255,20 @@ void eof_init_colors(void)
 	eof_color_purple_struct.arrow3d = EOF_IMAGE_NOTE_PURPLE;
 	eof_color_purple_struct.arrowhit3d = EOF_IMAGE_NOTE_PURPLE_HIT;
 	eof_color_purple_struct.colorname = eof_color_purple_name;
+	//Init black
+	eof_color_black_struct.color = makecol(51, 51, 51);
+	eof_color_black_struct.hit = makecol(67, 67, 67);
+	eof_color_black_struct.lightcolor = eof_color_silver;
+	eof_color_black_struct.border = eof_color_green;
+	eof_color_black_struct.note3d = EOF_IMAGE_NOTE_BLACK;
+	eof_color_black_struct.notehit3d = EOF_IMAGE_NOTE_BLACK_HIT;
+	eof_color_black_struct.hoponote3d = EOF_IMAGE_NOTE_BLACK;
+	eof_color_black_struct.hoponotehit3d = EOF_IMAGE_NOTE_BLACK_HIT;
+	eof_color_black_struct.cymbal3d = EOF_IMAGE_NOTE_BLACK;
+	eof_color_black_struct.cymbalhit3d = EOF_IMAGE_NOTE_BLACK_HIT;
+	eof_color_black_struct.arrow3d = EOF_IMAGE_NOTE_BLACK;
+	eof_color_black_struct.arrowhit3d = EOF_IMAGE_NOTE_BLACK_HIT;
+	eof_color_black_struct.colorname = eof_color_black_name;
 	//Init lane 1 (will be used to represent open fingering in Bandfuse color mode)
 	eof_lane_1_struct = eof_color_purple_struct;
 	eof_lane_1_struct.colorname = eof_lane_1_name;

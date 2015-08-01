@@ -934,15 +934,18 @@ if(eof_key_code == KEY_PAUSE)
 		}
 	}
 
-	/* toggle green cymbal (CTRL+G in the drum track) */
+	/* toggle green cymbal (CTRL+G in a drum track) */
 	/* toggle grid snap (G) */
 	/* display grid lines (SHIFT+G) */
 	if(eof_key_char == 'g')
 	{
 		if(KEY_EITHER_CTRL)
 		{
-			(void) eof_menu_note_toggle_rb3_cymbal_green();
-			eof_use_key();
+			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+			{	//If a drum track is active
+				(void) eof_menu_note_toggle_rb3_cymbal_green();
+				eof_use_key();
+			}
 		}
 		else
 		{	//CTRL is not held
