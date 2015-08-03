@@ -1878,16 +1878,17 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}
 	}
 
-	//Identify chords that are inside arpeggio/handshape phrases, which will need to be broken into single notes so that they display correctly in-game
-	for(ctr = 0; ctr < tp->notes; ctr++)
-	{	//For each note in the active pro guitar track
-		for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
-		{	//For each arpeggio/handshape section in the track
-			unsigned long tflags = EOF_NOTE_TFLAG_ARP_FIRST | EOF_NOTE_TFLAG_ARP;	//The first note in each arpeggio phrase gets both of these flags, the other notes in the phrase just get the latter
+	//Identify notes that are inside arpeggio/handshape phrases, thos which are chords will need to be broken into single notes so that they display correctly in-game
+	for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
+	{	//For each arpeggio/handshape section in the track
+		unsigned long tflags = EOF_NOTE_TFLAG_ARP_FIRST | EOF_NOTE_TFLAG_ARP;	//The first note in each arpeggio phrase gets both of these flags, the other notes in the phrase just get the latter
+
+		for(ctr = 0; ctr < tp->notes; ctr++)
+		{	//For each note in the active pro guitar track
 			if(!(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE) && (tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
 			{	//If the note is isn't already ignored and is within the arpeggio/handshape phrase
 				tp->note[ctr]->tflags |= tflags;	//Mark this note as being in an arpeggio/handshape phrase
-				tflags &= ~EOF_NOTE_TFLAG_ARP_FIRST;	//Clear this flag so that other notes in this phrase don't receive it
+				tflags &= ~EOF_NOTE_TFLAG_ARP_FIRST;	//Clear this flag so that notes other than the first one in this phrase don't receive it
 				if(eof_note_count_rs_lanes(sp, track, ctr, 2) > 1)
 				{	//If this note would export as a chord
 					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as single notes
@@ -1913,8 +1914,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					}//For each of the 6 supported strings
 				}
 			}
-		}
-	}
+		}//For each note in the active pro guitar track
+	}//For each arpeggio/handshape section in the track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
 	//Identify partially ghosted chords that are NOT inside arpeggio phrases, which will need to be temporarily replaced with variations of the chords without the ghost notes
@@ -2495,10 +2496,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
-					if(!(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE))
-					{	//If this note is not ignored
-						if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1) || eof_is_partially_ghosted(sp, track, ctr3) || (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_ARP)))
-						{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems) or an arpeggio/handshape or is in an arpeggio/handshape phrase
+					if(!(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE) || (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_ARP_FIRST))
+					{	//If this note is not ignored or if it is the base chord for an arpeggio/handshape phrase
+						if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1) || eof_is_partially_ghosted(sp, track, ctr3) || (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_ARP_FIRST)))
+						{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems) or an arpeggio/handshape or is the first in an arpeggio/handshape phrase
 							unsigned long chordnum = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
 
 							//Find this chord's ID
@@ -2619,7 +2620,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								(void) pack_fputs(buffer, fp);
 							}
 						}//If this note is in this difficulty and will export as a chord (at least two non ghosted gems) or an arpeggio/handshape or is in an arpeggio/handshape phrase
-					}//If this note is not ignored
+					}//If this note is not ignored or if it is the base chord for an arpeggio/handshape phrase
 				}//For each note in the track
 			}//On first pass, count the number of handshapes.  On second pass, write handshapes.
 			if(handshapectr)
