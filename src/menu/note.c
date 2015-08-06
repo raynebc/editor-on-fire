@@ -1343,7 +1343,7 @@ int eof_menu_note_resnap(void)
 	for(i = 0; i < oldnotes; i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-		{
+		{	//If the note is selected and in the active track
 			/* snap the note itself */
 			notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
 			eof_snap_logic(&eof_tail_snap, notepos);
@@ -1351,8 +1351,8 @@ int eof_menu_note_resnap(void)
 			{	//If the user hasn't been warned about resnapped notes overlapping and combining
 				for(x = 0; x < oldnotes; x++)
 				{	//For each note in the active track
-					if((eof_tail_snap.pos == eof_get_note_pos(eof_song, eof_selected_track, x)) && (x != i))
-					{	//If this note is in the same position as where the resnapped note will be moved
+					if((eof_get_note_type(eof_song, eof_selected_track, x) == eof_note_type) && (eof_tail_snap.pos == eof_get_note_pos(eof_song, eof_selected_track, x)) && (x != i))
+					{	//If this note is in the active difficulty at same position as where the resnapped note will be moved (and the note isn't being compared to itself)
 						eof_seek_and_render_position(eof_selected_track, eof_note_type, notepos);
 						if(alert("Warning: One or more notes/lyrics will snap to the same position", "and will be automatically combined.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 						{	//If user opts opts to cancel the operation

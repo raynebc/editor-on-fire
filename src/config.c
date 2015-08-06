@@ -150,6 +150,10 @@ void eof_load_config(char * fn)
 		eof_2d_render_top_option = 32;	//Reset to default of displaying note names
 	}
 	eof_color_set = get_config_int("preferences", "eof_color_set", 0);
+	if(eof_color_set >= EOF_NUM_COLOR_SETS)
+	{	//Bounds check this value
+		eof_color_set = 0;
+	}
 	eof_add_new_notes_to_selection = get_config_int("preferences", "eof_add_new_notes_to_selection", 0);
 	eof_drum_modifiers_affect_all_difficulties = get_config_int("preferences", "eof_drum_modifiers_affect_all_difficulties", 1);
 	eof_fb_seek_controls = get_config_int("preferences", "eof_fb_seek_controls", 0);

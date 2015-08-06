@@ -968,27 +968,12 @@ void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, unsigned long index)
 /* make sure notes don't overlap */
 void eof_fixup_notes(EOF_SONG *sp)
 {
-	unsigned long i, j;
+	unsigned long j;
 
  	eof_log("eof_fixup_notes() entered", 1);
 
 	if(sp)
 	{
-		if(eof_selection.current < eof_get_track_size(sp, eof_selected_track))
-		{
-			eof_selection.multi[eof_selection.current] = 0;
-		}
-		eof_selection.current = EOF_MAX_NOTES - 1;
-
-	/* fix beats */
-		if(sp->beat[0]->pos != sp->tags->ogg[eof_selected_ogg].midi_offset)
-		{
-			for(i = 0; i < sp->beats; i++)
-			{
-				sp->beat[i]->pos += sp->tags->ogg[eof_selected_ogg].midi_offset - sp->beat[0]->pos;
-			}
-		}
-
 		for(j = 1; j < sp->tracks; j++)
 		{
 			eof_track_fixup_notes(sp, j, j == eof_selected_track);
@@ -2299,8 +2284,8 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				count = sp->pro_guitar_track[tracknum]->handpositions;
 				if(count < EOF_MAX_NOTES)
 				{	//If EOF can store the fret hand position
-					if(end <= 21)
-					{	//If the fret hand position is valid (RS2's limit or lower)
+					if(end && (end <= 21))
+					{	//If the fret hand position is valid (greater than zero and at or below RS2's limit)
 						sp->pro_guitar_track[tracknum]->handposition[count].start_pos = start;
 						sp->pro_guitar_track[tracknum]->handposition[count].end_pos = end;	//This will store the fret number the fretting hand is at
 						sp->pro_guitar_track[tracknum]->handposition[count].flags = 0;
@@ -2314,11 +2299,11 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 							(void) ustrcpy(sp->pro_guitar_track[tracknum]->handposition[count].name, name);
 						}
 						sp->pro_guitar_track[tracknum]->handpositions++;
+						return 1;	//Return success
 					}
 				}
-				return 1;
 			}
-		break;
+		return 0;	//Return error
 		case EOF_RS_POPUP_MESSAGE:	//Popup message
 			if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{
@@ -4729,13 +4714,21 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 		for(ctr2 = ctr; ctr2 < tp->handpositions; ctr2++)
 		{	//For each of the following fret hand positions in the track
 			if(tp->handposition[ctr - 1].start_pos != tp->handposition[ctr2].start_pos)
-			{	//If this fret hand position (all of subsequent ones) are at a different timestamp
+			{	//If this fret hand position (and all subsequent ones) are at a different timestamp
 				break;	//Exit inner loop
 			}
 			if(tp->handposition[ctr - 1].difficulty == tp->handposition[ctr2].difficulty)
 			{	//If the two hand positions at the same timestamp and track difficulty
 				eof_pro_guitar_track_delete_hand_position(tp, ctr2);	//Delete the latter
 			}
+		}
+		if(tp->handposition[ctr - 1].start_pos > sp->beat[sp->beats - 1]->pos)
+		{	//If this fret hand position is after the last beat marker
+			eof_pro_guitar_track_delete_hand_position(tp, ctr - 1);	//Delete it
+		}
+		else if((tp->handposition[ctr - 1].end_pos == 0) || (tp->handposition[ctr - 1].end_pos > 21))
+		{	//If this fret hand position is at an invalid fret value
+			eof_pro_guitar_track_delete_hand_position(tp, ctr - 1);	//Delete it
 		}
 	}
 
@@ -5909,7 +5902,7 @@ void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourc
 	char *text;
 	void *result = NULL;
 
- 	eof_log("eof_copy_note() entered", 1);
+ 	eof_log("eof_copy_note() entered", 2);
 
 	//Validate parameters
 	if((sp == NULL) || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcenote >= eof_get_track_size(sp, sourcetrack)))

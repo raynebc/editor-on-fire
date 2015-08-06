@@ -1878,7 +1878,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}
 	}
 
-	//Identify notes that are inside arpeggio/handshape phrases, thos which are chords will need to be broken into single notes so that they display correctly in-game
+	//Identify notes that are inside arpeggio/handshape phrases, those which are chords will need to be broken into single notes so that they display correctly in-game
 	for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
 	{	//For each arpeggio/handshape section in the track
 		unsigned long tflags = EOF_NOTE_TFLAG_ARP_FIRST | EOF_NOTE_TFLAG_ARP;	//The first note in each arpeggio phrase gets both of these flags, the other notes in the phrase just get the latter
@@ -2972,8 +2972,10 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 								eof_fret_hand_position_list_dialog_undo_made = 1;
 							}
-							(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL);	//Add the fret hand position for this forced position change
-							last_anchor = current_low;
+							if(eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL))
+							{	//Add the fret hand position for this forced position change, if successful
+								last_anchor = current_low;	//Track the current anchor
+							}
 						}
 						if(force_change == 1)
 						{	//If the position change is due to fingering
@@ -2982,7 +2984,6 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 						else if(force_change == 2)
 						{	//If the position change is due to sliding
 							next_position = &temp2;	//The fret hand position for the end of the slide will be written next
-							current_low += lastnoteslide;	//And it will be the appropriate number of frets higher/lower depending on the slide's end position
 						}
 						else if(force_change == 3)
 						{	//If the position change is due to arpeggio/handshape phrasing
@@ -2999,8 +3000,25 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 							eof_fret_hand_position_list_dialog_undo_made = 1;
 						}
-						(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL);	//Add the fret hand position for this forced position change
-						last_anchor = current_low;
+						if(current_low + tp->capo > limit)
+						{	//Ensure the fret hand position is capped at the appropriate limit based on the game exports enabled
+							current_low = limit - tp->capo;
+						}
+						if(!current_low)
+						{	//If the range of affected notes had only open notes
+							if(!last_anchor)
+							{	//If no fret hand positions were placed yet
+								current_low = 1;	//Place the fret hand position at fret 1
+							}
+							else
+							{	//Otherwise the last placed fret hand position remains in effect
+								current_low = last_anchor;
+							}
+						}
+						if(eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL))
+						{	//Add the fret hand position for this forced position change, if successful
+							last_anchor = current_low;	//Track the current anchor
+						}
 					}
 					//If necessary, seek to end of arpeggio/handshape phrase so the next FHP written is beyond it
 					if(force_change == 3)
@@ -3041,8 +3059,10 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 							eof_fret_hand_position_list_dialog_undo_made = 1;
 						}
-						(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL);	//Add the fret hand position for this forced position change
-						last_anchor = current_low;
+						if(eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL))
+						{	//Add the fret hand position for this forced position change, if successful
+							last_anchor = current_low;	//Track the current anchor
+						}
 					}
 					next_position = tp->note[ctr];	//The fret hand position for the current note will be written next
 				}
@@ -3074,7 +3094,7 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 
 	//The last one or more notes examined need to have their hand position placed
 	if(!current_low)
-	{	//If the range of affected notes ending on open notes
+	{	//If the range of affected notes had only open notes
 		if(!last_anchor)
 		{	//If no fret hand positions were placed
 			current_low = 1;	//Place the fret hand position at fret 1
@@ -3121,6 +3141,7 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 	free(eof_fret_range_tolerances);
 	eof_fret_range_tolerances = NULL;	//Clear this array so that the next call to eof_build_fret_range_tolerances() rebuilds it accordingly
 	eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions
+	eof_pro_guitar_track_fixup_notes(sp, track, 1);		//Run fixup logic to remove any instances of multiple FHPs at the same timestamp
 	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
 	eof_render();
 }
@@ -4254,7 +4275,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 	unsigned long tracknum, flags, eflags, techflags = 0, techeflags = 0, technote_num = 0, ctr, bitmask, notepos, stop_tech_note_position = 0;
 	long techslideto = -1, techunpitchedslideto = -1;	//These will track the first slide
 	EOF_PRO_GUITAR_TRACK *tp;
-	unsigned char lowestfretted;
+	unsigned char lowestfret;
 	long fret, slidediff = 0, unpitchedslidediff = 0;
 	char techbends = 0, thistechbends, has_stop = 0;
 
@@ -4277,7 +4298,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 	{
 		fret = 0;
 	}
-	lowestfretted = eof_get_lowest_fretted_string_fret(sp, track, notenum);	//Determine the fret value of the lowest fretted string
+	lowestfret = eof_pro_guitar_note_lowest_fret(tp, notenum);	//Determine the lowest used fret in this note
 
 	//If applicable, track the techniques for any tech notes that affect the specified string of the note
 	if(checktechnotes && eof_pro_guitar_note_bitmask_has_tech_note(tp, notenum, bitmask, &technote_num))
@@ -4342,19 +4363,19 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 						}
 						if((thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 						{	//If this tech note slides
-							lowestfretted = fret;	//This individual string's note will slide regardless of what the chord's lowest fretted string is
-							if(lowestfretted != tp->technote[ctr]->slideend)
+							lowestfret = fret;	//This individual string's note will slide regardless of what the chord's lowest fretted string is
+							if(lowestfret != tp->technote[ctr]->slideend)
 							{	//If the tech note's slide doesn't end at the position the lowest fretted string in the tech note is already at
-								slidediff = tp->technote[ctr]->slideend - lowestfretted;	//Determine how many frets this slide travels
+								slidediff = tp->technote[ctr]->slideend - lowestfret;	//Determine how many frets this slide travels
 								techslideto = fret + slidediff + tp->capo;	//Get the correct ending fret for this string's slide, applying the capo position
 							}
 						}
 					}
 					if((thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) && tp->technote[ctr]->unpitchend)
 					{	//If this note has an unpitched slide and the user has defined the ending fret of the slide
-						if(lowestfretted != tp->technote[ctr]->unpitchend)
+						if(lowestfret != tp->technote[ctr]->unpitchend)
 						{	//Don't allow the unpitched slide if it slides to the same fret this note/chord is already at
-							unpitchedslidediff = tp->technote[ctr]->unpitchend - lowestfretted;	//Determine how many frets this slide travels
+							unpitchedslidediff = tp->technote[ctr]->unpitchend - lowestfret;	//Determine how many frets this slide travels
 							techunpitchedslideto = fret + unpitchedslidediff + tp->capo;	//Get the correct ending fret for this string's slide, applying the capo position
 						}
 					}
@@ -4432,18 +4453,18 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 				}
 				if((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 				{	//If this note slides
-					if(lowestfretted != tp->note[notenum]->slideend)
+					if(lowestfret != tp->note[notenum]->slideend)
 					{	//If the note's slide doesn't end at the position the lowest fretted string in the note is already at
-						slidediff = tp->note[notenum]->slideend - lowestfretted;	//Determine how many frets this slide travels
+						slidediff = tp->note[notenum]->slideend - lowestfret;	//Determine how many frets this slide travels
 						ptr->slideto = fret + slidediff + tp->capo;	//Get the correct ending fret for this string's slide, applying the capo position
 					}
 				}
 			}
 			if((flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) && tp->note[notenum]->unpitchend)
 			{	//If this note has an unpitched slide and the user has defined the ending fret of the slide
-				if(lowestfretted != tp->note[notenum]->unpitchend)
+				if(lowestfret != tp->note[notenum]->unpitchend)
 				{	//Don't allow the unpitched slide if it slides to the same fret this note/chord is already at
-					unpitchedslidediff = tp->note[notenum]->unpitchend - lowestfretted;	//Determine how many frets this slide travels
+					unpitchedslidediff = tp->note[notenum]->unpitchend - lowestfret;	//Determine how many frets this slide travels
 					ptr->unpitchedslideto = fret + unpitchedslidediff + tp->capo;	//Get the correct ending fret for this string's slide, applying the capo position
 					if(target == 2)
 					{	//If the target game is Rocksmith 2
