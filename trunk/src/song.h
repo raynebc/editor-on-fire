@@ -733,7 +733,7 @@ void eof_pro_guitar_track_sort_fret_hand_positions(EOF_PRO_GUITAR_TRACK* tp);	//
 void eof_pro_guitar_track_delete_hand_position(EOF_PRO_GUITAR_TRACK *tp, unsigned long index);	//Deletes the specified fret hand position
 
 void eof_sort_notes(EOF_SONG *sp);	//Sorts the notes in all tracks
-void eof_fixup_notes(EOF_SONG *sp);	//Performs cleanup of the note selection, beats and all tracks
+void eof_fixup_notes(EOF_SONG *sp);	//Performs cleanup of the notes in all tracks
 unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track);
 	//Sets the populated status indicator for the specified track's difficulty names by prefixing each populated difficulty name in the current track (stored in eof_note_type_name[], eof_vocal_tab_name[] and eof_dance_tab_name[]) with an asterisk
 	//eof_track_diff_populated_status[] is updated so that each populated difficulty results in the corresponding element number being nonzero

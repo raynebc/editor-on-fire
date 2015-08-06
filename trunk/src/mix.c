@@ -334,9 +334,9 @@ void eof_mix_find_claps(void)
 					{	//If clap cues should not trigger for ghosted gems, or if this gem doesn't have any non-ghosted gems
 						continue;	//Skip this note
 					}
-					eof_mix_clap_pos[eof_mix_claps] = eof_mix_msec_to_sample(eof_get_note_pos(eof_song, eof_selected_track, i), alogg_get_wave_freq_ogg(eof_music_track));
-					eof_mix_claps++;
 				}
+				eof_mix_clap_pos[eof_mix_claps] = eof_mix_msec_to_sample(eof_get_note_pos(eof_song, eof_selected_track, i), alogg_get_wave_freq_ogg(eof_music_track));
+				eof_mix_claps++;
 			}
 		}
 	}
