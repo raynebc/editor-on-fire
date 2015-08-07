@@ -3141,7 +3141,7 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 	free(eof_fret_range_tolerances);
 	eof_fret_range_tolerances = NULL;	//Clear this array so that the next call to eof_build_fret_range_tolerances() rebuilds it accordingly
 	eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions
-	eof_pro_guitar_track_fixup_notes(sp, track, 1);		//Run fixup logic to remove any instances of multiple FHPs at the same timestamp
+	eof_pro_guitar_track_fixup_hand_positions(sp, track);	//Cleanup fret hand positions to remove any instances of multiple FHPs at the same timestamp
 	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
 	eof_render();
 }
