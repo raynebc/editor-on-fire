@@ -708,7 +708,10 @@ int eof_song_qsort_pro_guitar_notes(const void * e1, const void * e2);	//The com
 void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
 long eof_fixup_previous_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Returns the note one before the specified note number that is in the same difficulty, or -1 if there is none
 long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Returns the note one after the specified note number that is in the same difficulty, or -1 if there is none
-void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel);	//Performs cleanup of the specified instrument track.  If sel is zero, the currently selected note is deselected automatically.
+void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel);
+	//Performs cleanup of the specified instrument track.  If sel is zero, the currently selected note is deselected automatically.
+	//This function will abort if any notes with temp or ignore flags are encountered, as that signifies Rocksmith export is in progress and this function would otherwise merge/delete notes inappropriately
+void eof_pro_guitar_track_fixup_hand_positions(EOF_SONG *sp, unsigned long track);	//Performs cleanup of the specified pro guitar track's fret hand positions
 int eof_pro_guitar_track_add_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a star power phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 void eof_pro_guitar_track_delete_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
 int eof_pro_guitar_track_add_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success

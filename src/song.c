@@ -4377,6 +4377,43 @@ long eof_get_prev_note_type_num(EOF_SONG *sp, unsigned long track, unsigned long
 	return -1;	//Return note not found
 }
 
+void eof_pro_guitar_track_fixup_hand_positions(EOF_SONG *sp, unsigned long track)
+{
+	unsigned ctr, ctr2;
+	EOF_PRO_GUITAR_TRACK * tp;
+
+	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	{
+		return;	//Invalid parameters
+	}
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+
+	//Cleanup fret hand positions
+	eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Ensure fret hand positions are sorted
+	for(ctr = tp->handpositions; ctr > 0; ctr--)
+	{	//For each fret hand position in the track, in reverse order
+		for(ctr2 = ctr; ctr2 < tp->handpositions; ctr2++)
+		{	//For each of the following fret hand positions in the track
+			if(tp->handposition[ctr - 1].start_pos != tp->handposition[ctr2].start_pos)
+			{	//If this fret hand position (and all subsequent ones) are at a different timestamp
+				break;	//Exit inner loop
+			}
+			if(tp->handposition[ctr - 1].difficulty == tp->handposition[ctr2].difficulty)
+			{	//If the two hand positions at the same timestamp and track difficulty
+				eof_pro_guitar_track_delete_hand_position(tp, ctr2);	//Delete the latter
+			}
+		}
+		if(tp->handposition[ctr - 1].start_pos > sp->beat[sp->beats - 1]->pos)
+		{	//If this fret hand position is after the last beat marker
+			eof_pro_guitar_track_delete_hand_position(tp, ctr - 1);	//Delete it
+		}
+		else if((tp->handposition[ctr - 1].end_pos == 0) || (tp->handposition[ctr - 1].end_pos > 21))
+		{	//If this fret hand position is at an invalid fret value
+			eof_pro_guitar_track_delete_hand_position(tp, ctr - 1);	//Delete it
+		}
+	}
+}
+
 void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 {
 	unsigned long i, ctr, ctr2, ctr3, bitmask, tracknum, maxlength, flags;
@@ -4390,9 +4427,9 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 	EOF_PHRASE_SECTION *pp, *ppp;
 	EOF_PRO_GUITAR_NOTE *np;
 
-	if(!sp)
+	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 	{
-		return;
+		return;	//Invalid parameters
 	}
 	tracknum = sp->track[track]->tracknum;
 	tp = sp->pro_guitar_track[tracknum];
@@ -4403,6 +4440,16 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 			eof_selection.multi[eof_selection.current] = 0;
 		}
 		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	//Loop through notes looking for any marked as temporary or ignored and return from function if any are found to avoid merging/deleting them
+	for(i = 0; i < tp->notes; i++)
+	{	//For each note in the track
+		if(tp->note[i]->tflags & (EOF_NOTE_TFLAG_TEMP | EOF_NOTE_TFLAG_IGNORE))
+		{	//If this note has temporary or ignore flags
+			eof_log("eof_pro_guitar_track_fixup_notes() aborted due to presence of notes with temp/ignore flags", 1);
+			eof_log("Rocksmith 2 export is presumably in progress", 1);
+			return;
+		}
 	}
 	//Check for overlapping arpeggio phrases and merge them
 	for(ctr = tp->arpeggios; ctr > 1; ctr--)
@@ -4707,30 +4754,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 		}
 	}
 
-	//Cleanup fret hand positions
-	eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Ensure fret hand positions are sorted
-	for(ctr = tp->handpositions; ctr > 0; ctr--)
-	{	//For each fret hand position in the track, in reverse order
-		for(ctr2 = ctr; ctr2 < tp->handpositions; ctr2++)
-		{	//For each of the following fret hand positions in the track
-			if(tp->handposition[ctr - 1].start_pos != tp->handposition[ctr2].start_pos)
-			{	//If this fret hand position (and all subsequent ones) are at a different timestamp
-				break;	//Exit inner loop
-			}
-			if(tp->handposition[ctr - 1].difficulty == tp->handposition[ctr2].difficulty)
-			{	//If the two hand positions at the same timestamp and track difficulty
-				eof_pro_guitar_track_delete_hand_position(tp, ctr2);	//Delete the latter
-			}
-		}
-		if(tp->handposition[ctr - 1].start_pos > sp->beat[sp->beats - 1]->pos)
-		{	//If this fret hand position is after the last beat marker
-			eof_pro_guitar_track_delete_hand_position(tp, ctr - 1);	//Delete it
-		}
-		else if((tp->handposition[ctr - 1].end_pos == 0) || (tp->handposition[ctr - 1].end_pos > 21))
-		{	//If this fret hand position is at an invalid fret value
-			eof_pro_guitar_track_delete_hand_position(tp, ctr - 1);	//Delete it
-		}
-	}
+	eof_pro_guitar_track_fixup_hand_positions(sp, track);	//Cleanup fret hand positions
 
 	//Ensure that the note at the beginning of each arpeggio/handshape phrase is authored correctly
 	if(eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files)
