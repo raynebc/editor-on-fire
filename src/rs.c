@@ -4132,7 +4132,7 @@ void eof_load_chord_shape_definitions(char *fn)
 		if(num_eof_chord_shapes < EOF_MAX_CHORD_SHAPES)
 		{	//If another chord shape definition can be stored
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tProcessing line #%lu", linectr);
-			eof_log(eof_log_string, 1);
+			eof_log(eof_log_string, 2);
 
 			//Load chord shape definition
 			if(strcasestr_spec(buffer, "<chordTemplate"))
@@ -4144,7 +4144,7 @@ void eof_load_chord_shape_definitions(char *fn)
 
 				if(eof_note_count_colors_bitmask(note) < 2)
 				{	//If not at least two strings are used in the definition
-					eof_log("\t\tSkipping non chord definition", 1);
+					eof_log("\t\tSkipping non chord definition", 2);
 				}
 				else
 				{	//The chord shape is valid
@@ -4198,7 +4198,7 @@ void eof_load_chord_shape_definitions(char *fn)
 						memcpy(eof_chord_shape[num_eof_chord_shapes].frets, frets, 8);		//Store the fret array
 						eof_chord_shape[num_eof_chord_shapes].note = note;			//Store the note mask
 						num_eof_chord_shapes++;
-						eof_log("\t\tChord shape definition loaded", 1);
+						eof_log("\t\tChord shape definition loaded", 2);
 					}
 				}//The chord shape is valid
 			}//If this line contains a chord template tag (which defines a chord shape)

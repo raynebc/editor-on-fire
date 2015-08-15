@@ -2268,11 +2268,8 @@ int eof_menu_beat_set_RBN_tempos(void)
 	{	//For each beat
 		if((eof_song->beat[i]->ppqn < 200000) || (eof_song->beat[i]->ppqn > 1500000))
 		{	//If this beat's tempo is > 300BPM or < 40BPM
-			alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->beat[i]->pos + eof_av_delay);	//Seek to the offending beat
-			eof_music_pos = alogg_get_pos_msecs_ogg(eof_music_track);
-			eof_music_actual_pos = eof_music_pos;
-			eof_mix_seek(eof_music_pos);
 			eof_selected_beat = i;
+			eof_seek_and_render_position(eof_selected_track, eof_note_type, eof_song->beat[i]->pos);
 			allegro_message("Warning:  This beat has a tempo that must be manually corrected.");
 			return 1;
 		}

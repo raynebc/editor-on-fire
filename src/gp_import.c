@@ -4277,8 +4277,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							{	//Heavy accented note (GP5 or higher only)
 								flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;
 							}
-							if(thisgemtype == 2)
-							{	//If the note on this string was a tie note
+							if((thisgemtype == 2) || tie_note)
+							{	//If the note on this string was a tie note or the entire note itself was a tie
 								tieflags |= flags;	//Add this string's flags to the bitmask tracking flags for this note's tie gems
 							}
 							allflags |= flags;	//Add this string's flags to the bitmask tracking flags for the entire note
@@ -4325,6 +4325,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									eof_log(eof_log_string, 1);
 #endif
 
+									usedstrings &= ~usedtie;	//Clear the bits used to indicate the tie notes' strings as being played, since overlapping guitar notes isn't supported in Rock Band or Rocksmith
+																//This line had to be changed to not run when a tie note creates a new note, because the note bitmask needs to be intact in that condition
 								}
 								else
 								{	//Otherwise create a new note, since the tie note changes the techniques in use
@@ -4332,7 +4334,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									new_note = 1;	//Set this to nonzero, the if() block below will create the note
 									np[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Set the linknext flag on the previous note
 								}
-								usedstrings &= ~usedtie;	//Clear the bits used to indicate the tie notes' strings as being played, since overlapping guitar notes isn't supported in Rock Band or Rocksmith
 							}//If this was defined as a tie note
 
 							if(new_note)
