@@ -1297,7 +1297,7 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 	EOF_PRO_GUITAR_TRACK *ptr4 = NULL;
 	unsigned long count=0;
 
- 	eof_log("eof_song_add_track() entered", 1);
+ 	eof_log("eof_song_add_track() entered", 2);
 
 	if((sp == NULL) || (trackdetails == NULL))
 		return 0;	//Return error

@@ -1137,6 +1137,7 @@ set_window_title(debugtext);
 				sp->tags->tempo_map_locked |= 1;
 			}
 		}//If the user opts to import the tempo track
+		eof_clear_input();	//Clear input to avoid user answering the previous prompt with Escape key from aborting the entire import
 	}//If a mid beat tempo or TS change was found
 
 	eof_log("\tPass two, configuring beat timings", 1);
