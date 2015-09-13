@@ -543,7 +543,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
 		{	//For each note in the track
 			if(eof_get_note_note(sp, ctr, ctr2) & 32)
-			{	//If this note uses lane 6
+			{	//If this note uses lane 6 (A "N 5 #" .chart entry)
 				unsigned long pos = eof_get_note_pos(sp, ctr, ctr2);
 				long len = eof_get_note_length(sp, ctr, ctr2);
 				unsigned char type = eof_get_note_type(sp, ctr, ctr2);

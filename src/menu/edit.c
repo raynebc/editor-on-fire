@@ -747,10 +747,10 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 	char first_pos_found[EOF_TRACKS_MAX] = {0};
 	unsigned long first_pos[EOF_TRACKS_MAX] = {0};
 	char first_beat_found[EOF_TRACKS_MAX] = {0};
-	unsigned long first_beat[EOF_TRACKS_MAX] = {0};
+	unsigned long first_beat[EOF_TRACKS_MAX] = {0};	//The beat containing the first note stored for each track
 	unsigned long start_pos, end_pos;
 	long last_anchor, next_anchor;
-	unsigned long copy_notes[EOF_TRACKS_MAX] = {0};
+	unsigned long copy_notes[EOF_TRACKS_MAX] = {0};	//The number of notes to store to store for each track
 	float tfloat;
 	PACKFILE * fp;
 	EOF_PHRASE_SECTION *sectionptr = NULL;
@@ -997,13 +997,13 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 {
 	unsigned long i, j, b, notenum;
-	unsigned long first_beat[EOF_TRACKS_MAX] = {0};
+	unsigned long first_beat[EOF_TRACKS_MAX] = {0};	//The first beat of each track that contains a note being adjusted
 	unsigned long this_beat[EOF_TRACKS_MAX] = {0};
 	unsigned long this_tech_beat[EOF_TRACKS_MAX] = {0};
 	unsigned long start_pos, end_pos = 0;
 	long last_anchor, next_anchor;
 	PACKFILE * fp;
-	unsigned long copy_notes[EOF_TRACKS_MAX];
+	unsigned long copy_notes[EOF_TRACKS_MAX];	//The number of notes to adjust for each track
 	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0};
 	EOF_NOTE * new_note = NULL;
 	float tfloat = 0.0;
@@ -1070,6 +1070,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		//Re-populate the notes
 		copy_notes[j] = pack_igetl(fp);
 		first_beat[j] = pack_igetl(fp);
+
 		for(i = 0; i < copy_notes[j]; i++)
 		{
 		/* read the note */
@@ -1079,6 +1080,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 			if(temp_note.pos + temp_note.length < eof_chart_length)
 			{
 				notepos = eof_put_porpos(temp_note.beat - first_beat[j] + this_beat[j], temp_note.porpos, 0.0);
+
 				if(eof_find_grid_snap_position(beat, gridsnapvalue, gridsnapnum, &gridpos))
 				{	//If the adjusted grid snap position can be calculated
 					notepos = gridpos;	//Update the adjusted position for the note
@@ -1105,6 +1107,10 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 						np->eflags = temp_note.eflags;									//Copy the extended track flags
 					}
 				}
+			}
+			else
+			{
+				eof_log("Note dropped during cut paste", 2);
 			}
 		}
 		eof_track_sort_notes(eof_song, j);
@@ -1166,7 +1172,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 			}
 			eof_track_sort_notes(eof_song, j);
 			eof_menu_pro_guitar_track_disable_tech_view(tp);
-		}
+		}//If the track being exported is a pro guitar track
 
 		/* star power */
 		for(i = 0; i < eof_get_num_star_power_paths(eof_song, j); i++)

@@ -4585,7 +4585,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 						}
 					}
 					eof_pro_guitar_track_delete_note(tp, next);
-				}
+				}//If this note and the next are at the same position, merge them
 				else
 				{	//Otherwise ensure one doesn't overlap the other improperly
 					if(!eof_menu_track_get_tech_view_state(sp, track))
@@ -4853,6 +4853,8 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 			eof_selection.multi[eof_selection.current] = 1;
 		}
 	}
+
+	eof_menu_pro_guitar_track_update_note_counter(tp);	//Update the pgnotes or technotes counter as appropriate
 }
 
 unsigned long eof_get_num_star_power_paths(EOF_SONG *sp, unsigned long track)

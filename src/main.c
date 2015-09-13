@@ -4940,6 +4940,21 @@ void eof_log(const char *text, int level)
 	}
 }
 
+void eof_log_notes(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long ctr;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return;
+
+	eof_log("Dumping note timings:", 1);
+	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
+	{	//For each note in the track
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tNote #%lu: Start = %lums\tLength = %ldms", ctr, eof_get_note_pos(sp, track, ctr), eof_get_note_length(sp, track, ctr));
+		eof_log(eof_log_string, 1);
+	}
+}
+
 #ifdef ALLEGRO_WINDOWS
 	int eof_initialize_windows(void)
 	{

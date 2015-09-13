@@ -341,7 +341,7 @@ MENU eof_note_rocksmith_menu[] =
 	{"Remove &Ignore", eof_menu_note_remove_rs_ignore, NULL, 0, NULL},
 	{"Toggle linknext\tShift+N", eof_menu_note_toggle_linknext, NULL, 0, NULL},
 	{"Remove &Linknext", eof_menu_note_remove_linknext, NULL, 0, NULL},
-	{"&Move to prev note", eof_menu_note_move_tech_note_to_previous_note_pos, NULL, 0, NULL},
+	{"&Move t.n. to prev note", eof_menu_note_move_tech_note_to_previous_note_pos, NULL, 0, NULL},
 	{"&Generate FHPs", eof_generate_efficient_hand_positions_for_selected_notes, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -936,13 +936,13 @@ void eof_prepare_note_menu(void)
 				eof_note_menu[18].flags = 0;			//Note>Rocksmith> submenu
 				if(tp->note == tp->technote)
 				{	//If tech view is in effect
-					eof_note_rocksmith_menu[18].flags = 0;	//Note>Rocksmith>Move to prev note
-					eof_note_rocksmith_menu[19].flags = D_DISABLED;	//Note>Rocksmith>Generate FHPs
+					eof_note_rocksmith_menu[20].flags = 0;	//Note>Rocksmith>Move to prev note
+					eof_note_rocksmith_menu[21].flags = D_DISABLED;	//Note>Rocksmith>Generate FHPs
 				}
 				else
 				{
-					eof_note_rocksmith_menu[18].flags = D_DISABLED;
-					eof_note_rocksmith_menu[19].flags = 0;
+					eof_note_rocksmith_menu[20].flags = D_DISABLED;
+					eof_note_rocksmith_menu[21].flags = 0;
 				}
 
 				/* Arpeggio>Erase all */

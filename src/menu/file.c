@@ -293,7 +293,7 @@ void eof_prepare_file_menu(void)
 	}
 }
 
-int eof_menu_file_new_supplement(char *directory, char check)
+int eof_menu_file_new_supplement(char *directory, char *filename, char check)
 {
 	char syscommand[1024] = {0};
 	int err;
@@ -355,7 +355,14 @@ int eof_menu_file_new_supplement(char *directory, char check)
 		{
 			err = 1;
 		}
-		(void) replace_filename(eof_temp_filename, directory, "notes.eof", 1024);
+		if(filename)
+		{	//If the calling function specified a project file name to check for
+			(void) replace_filename(eof_temp_filename, directory, filename, 1024);
+		}
+		else
+		{	//Otherwise check for an existing project file named "notes.eof"
+			(void) replace_filename(eof_temp_filename, directory, "notes.eof", 1024);
+		}
 		if(exists(eof_temp_filename))
 		{
 			err = 1;
@@ -524,7 +531,7 @@ int eof_menu_file_save_as(void)
 		eof_log("\tPerforming \"Save as\"", 1);
 
 		(void) replace_filename(new_foldername, returnedfn, "", 1024);		//Obtain the chosen destination folder path
-		if(eof_menu_file_new_supplement(new_foldername, 3) == 0)	//If the folder doesn't exist, or the user has declined to overwrite any existing files
+		if(eof_menu_file_new_supplement(new_foldername, get_filename(returnedfn), 3) == 0)	//If the folder doesn't exist, or the user has declined to overwrite any existing files
 			return 1;	//Return failure
 
 		if(!eof_silence_loaded)
@@ -2095,7 +2102,7 @@ int eof_mp3_to_ogg(char *file, char *directory)
 		//If an MP3 is to be encoded to OGG, store a copy of the MP3 as "original.mp3"
 		if(ustricmp(syscommand,directory))
 		{	//If the user did not select a file named original.mp3 in the chart's folder, check to see if a such-named file will be overwritten
-			if(!eof_menu_file_new_supplement(directory, 2))
+			if(!eof_menu_file_new_supplement(directory, NULL, 2))
 			{	//If the user declined to overwrite an existing "original.mp3" file at the destination path
 				eof_cursor_visible = 1;
 				eof_pen_visible = 1;
@@ -2137,7 +2144,7 @@ int eof_mp3_to_ogg(char *file, char *directory)
 	/* otherwise copy it as-is (assume OGG file) */
 	else
 	{
-		if(!eof_menu_file_new_supplement(directory, 1))
+		if(!eof_menu_file_new_supplement(directory, NULL, 1))
 		{	//If the user declined to overwrite an existing "guitar.ogg" file at the destination path
 			eof_cursor_visible = 1;
 			eof_pen_visible = 1;

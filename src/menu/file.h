@@ -107,8 +107,9 @@ int eof_save_helper(char *destfilename, char silent);
 void eof_apply_display_settings(int mode);
 	//Used by eof_menu_file_display() and eof_create_image_sequence() to set EOF's display settings
 
-int eof_menu_file_new_supplement(char *directory, char check);
+int eof_menu_file_new_supplement(char *directory, char *filename, char check);
 	//Checks the specified directory for the presence of chart related files and prompts whether the user wants to overwrite existing files
+	//If filename isn't NULL, checks for the presence of this relative file name instead of notes.eof when checking if the folder contains the project file already
 	//If check equals 1, guitar.ogg is checked for
 	//If check equals 2, original.mp3 is checked for
 	//If check is neither 1 nor 2, guitar.ogg, original.mp3, notes.eof, song.ini and notes.mid are checked for

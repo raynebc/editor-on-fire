@@ -18,6 +18,7 @@ int eof_beat_is_anchor(EOF_SONG * sp, int cbeat);
 void eof_calculate_beats(EOF_SONG * sp);
 	//Sets the timestamp and anchor status of each beat existing for the duration of the chart by using the tempo map
 	//Creates beats if there aren't enough to extend to one beat past the end of the chart as defined by eof_chart_length
+	//Updates eof_chart_length to reflect the last beat's timestamp if the latter is larger
 void eof_calculate_tempo_map(EOF_SONG * sp);
 	//Sets the tempo and anchor status of each beat in the EOF_SONG structure by using the configured time stamp of each beat
 void eof_change_accurate_ts(EOF_SONG * sp, char function);

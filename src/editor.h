@@ -73,6 +73,7 @@ int eof_is_any_grid_snap_position(unsigned long pos, int *beat, char *gridsnapva
 	//If gridsnapnum is not NULL, the grid snap position number of the matching position is returned through it
 int eof_find_grid_snap_position(int beat, char gridsnapvalue, unsigned char gridsnapnum, unsigned long *gridpos);
 	//Determines the real time position of the specified grid snap
+	//Depends on eof_chart_length being large enough to reflect the last beat time stamp
 	//If it exists, it is returned through gridpos and nonzero is returned
 void eof_read_editor_keys(void);
 void eof_editor_logic(void);

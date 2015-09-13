@@ -2633,9 +2633,20 @@ int eof_track_erase_track_difficulty(void)
 		return 0;	//Error
 
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);
+	if(!eof_track_diff_populated_status[eof_note_type])
+	{	//If this track's difficulty isn't populated by the current note set (either normal or tech notes)
+		(void) eof_menu_track_toggle_tech_view();	//Change the note set if applicable (automatically calls eof_detect_difficulties() )
+		if(!eof_track_diff_populated_status[eof_note_type])
+		{	//If this track's difficulty isn't populated by either normal or tech notes
+			(void) eof_menu_track_toggle_tech_view();	//Change the note set back if applicable
+			return 1;	//Cancel
+		}
+		(void) eof_menu_track_toggle_tech_view();	//Change the note set back if applicable
+	}
+
 	eof_clear_input();
-	if(!eof_track_diff_populated_status[eof_note_type] || (alert(NULL, "This operation will erase this track difficulty's contents.", "Continue?", "&Yes", "&No", 'y', 'n') != 1))
-	{	//If this track difficulty isn't populated or the user does not opt to erase it
+	if(alert(NULL, "This operation will erase this track difficulty's contents.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+	{	//If the user does not opt to erase the track difficulty
 		return 1;	//Cancel
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -2650,8 +2661,20 @@ int eof_track_erase_track(void)
 		return 0;	//Error
 
 	eof_clear_input();
-	if(!eof_get_track_size(eof_song, eof_selected_track) || (alert(NULL, "This operation will erase this track's contents.", "Continue?", "&Yes", "&No", 'y', 'n') != 1))
-	{	//If this track isn't populated or the user does not opt to erase it
+	if(!eof_get_track_size(eof_song, eof_selected_track))
+	{	//If this track isn't populated by the current note set (either normal or tech notes)
+		(void) eof_menu_track_toggle_tech_view();	//Change the note set if applicable
+		if(!eof_get_track_size(eof_song, eof_selected_track))
+		{	//If this track isn't populated by either normal or tech notes
+			(void) eof_menu_track_toggle_tech_view();	//Change the note set back if applicable
+			return 1;
+		}
+		(void) eof_menu_track_toggle_tech_view();	//Change the note set back if applicable
+	}
+
+	eof_clear_input();
+	if(alert(NULL, "This operation will erase this track's contents.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+	{	//If user does not opt to erase the track
 		return 1;	//Cancel
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -3702,5 +3725,20 @@ void eof_menu_track_set_tech_view_state(EOF_SONG *sp, unsigned long track, char 
 	else
 	{	//The calling function specified to disable tech view
 		eof_menu_pro_guitar_track_disable_tech_view(tp);
+	}
+}
+
+void eof_menu_pro_guitar_track_update_note_counter(EOF_PRO_GUITAR_TRACK *tp)
+{
+	if(!tp)
+		return;	//Invalid parameter
+
+	if(tp->note == tp->technote)
+	{	//If tech view is in effect for the specified track
+		tp->technotes = tp->notes;	//Update the tech note counter
+	}
+	else
+	{
+		tp->pgnotes = tp->notes;	//Otherwise update the normal note counter
 	}
 }

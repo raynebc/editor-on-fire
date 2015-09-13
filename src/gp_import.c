@@ -4937,8 +4937,8 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 			}
 		}
 		else
-		{	//Version 4.x stored the actual number
-			if(gp->measure[currentmeasure].alt_endings == curr_repeat + 1)
+		{	//Version 4.x stores a number indicating the highest pass that plays the measure?
+			if(gp->measure[currentmeasure].alt_endings >= curr_repeat + 1)
 			{
 				in_alt_ending = 1;
 			}

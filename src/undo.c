@@ -224,7 +224,6 @@ int eof_undo_apply(void)
 		(void) eof_detect_difficulties(eof_song, eof_selected_track);
 		eof_select_beat(eof_selected_beat);
 		eof_fix_catalog_selection();
-		eof_fix_window_title();
 		eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
 
 		//Restore tech view for each pro guitar track that had it in use before the undo operation
@@ -237,6 +236,7 @@ int eof_undo_apply(void)
 			}
 		}
 
+		eof_fix_window_title();
 		return 1;
 	}
 	return 0;
@@ -307,7 +307,6 @@ void eof_redo_apply(void)
 		(void) eof_detect_difficulties(eof_song, eof_selected_track);
 		eof_select_beat(eof_selected_beat);
 		eof_fix_catalog_selection();
-		eof_fix_window_title();
 		eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
 
 		//Restore tech view for each pro guitar track that had it in use before the redo operation
@@ -319,6 +318,7 @@ void eof_redo_apply(void)
 				eof_menu_pro_guitar_track_enable_tech_view(tp);
 			}
 		}
+		eof_fix_window_title();
 	}
 }
 

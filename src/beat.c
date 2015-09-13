@@ -129,6 +129,10 @@ void eof_calculate_beats(EOF_SONG * sp)
 			curpos += beat_length;
 		}
 	}
+	if(eof_chart_length < sp->beat[sp->beats - 1]->pos)
+	{	//If the chart length needs to be updated to reflect the beat map making the chart longer
+		eof_chart_length = sp->beat[sp->beats - 1]->pos;
+	}
 }
 
 void eof_calculate_tempo_map(EOF_SONG * sp)

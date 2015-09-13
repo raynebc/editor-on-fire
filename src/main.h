@@ -606,6 +606,8 @@ void eof_log(const char *text, int level);
 	//Level indicates the minimum level of logging that must be in effect to log the message (ie. 1 = on, 2 = verbose)
 	//Verbose logging should be disabled during chart creation/deletion due to the large amount of note creations/deletions
 	//The logging verbosity can be altered by toggling bit 1, as bit 0 must be also set in order to log
+void eof_log_notes(EOF_SONG *sp, unsigned long track);
+	//Logs the position and length of each note in the specified track
 extern char eof_log_string[2048];	//A string reserved for use with eof_log()
 extern unsigned int eof_log_id;
 	//This will be set to a random value when logging is started, so if multiple instances of EOF are writing to the same

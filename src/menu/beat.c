@@ -566,13 +566,14 @@ int eof_menu_beat_bpm_change(void)
 		}
 		eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
 		eof_calculate_beats(eof_song);
+
 		if(eof_bpm_change_dialog[4].flags == D_SELECTED)
 		{	//If the "Adjust Notes" option was selected
 			(void) eof_menu_edit_cut_paste(eof_selected_beat + 1, 1);
 		}
 		eof_truncate_chart(eof_song);	//Update number of beats and the chart length as appropriate, but only after the notes are optionally auto-adjusted
 		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
-	}
+	}//If the user activated the "OK" button
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);
