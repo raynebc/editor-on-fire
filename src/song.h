@@ -90,6 +90,7 @@
 #define EOF_NOTE_TFLAG_ARP        4	//This flag will represent a note that is within an arpeggio, for RS export of arpeggio/handshape phrases as handshape tags
 #define EOF_NOTE_TFLAG_HAND       8 //This flag will represent a note that is within a handshape phrase, which is treated as a variation of an arpeggio, affecting export to RS2 XML
 #define EOF_NOTE_TFLAG_ARP_FIRST 16	//This flag will represent a note that is the first note within its arpeggio phrase
+#define EOF_NOTE_TFLAG_SORT      32 //This flag is applied to selected notes by eof_track_sort_notes() to allow it to recreate the note selection after sorting
 
 //The following extended flags pertain to pro guitar notes
 #define EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE  1		//This flag specifies a note that will export to RS2 format with the "ignore" status set to nonzero, for special uses

@@ -1854,7 +1854,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						eof_log("\t\tError allocating memory (2).  Aborting", 1);
 						error = 1;
 					}
-					memset(sync_points, 0, sizeof(struct eof_gpa_sync_point) * raw_num_sync_points);	//Fill with 0s to satisfy Splint
+					else
+					{
+						memset(sync_points, 0, sizeof(struct eof_gpa_sync_point) * raw_num_sync_points);	//Fill with 0s to satisfy Splint
+					}
 				}
 
 				//Store sync points into array

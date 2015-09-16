@@ -4113,7 +4113,7 @@ void eof_track_sort_notes(EOF_SONG *sp, unsigned long track)
 			if(eof_selection.multi[ctr - 1])
 			{	//If this note is selected
 				tflags = eof_get_note_flags(sp, track, ctr - 1);
-				tflags |= EOF_NOTE_TFLAG_TEMP;	//Set the temporary flag to track this note is selected
+				tflags |= EOF_NOTE_TFLAG_SORT;	//Set this temporary flag to track this note is selected
 				eof_set_note_tflags(sp, track, ctr - 1, tflags);	//Update the note flags
 			}
 		}
@@ -4140,9 +4140,9 @@ void eof_track_sort_notes(EOF_SONG *sp, unsigned long track)
 		for(ctr = eof_get_track_size(sp, track); ctr > 0; ctr--)
 		{	//For each note in the track, in reverse order
 			tflags = eof_get_note_tflags(sp, track, ctr - 1);
-			if(tflags & EOF_NOTE_TFLAG_TEMP)
+			if(tflags & EOF_NOTE_TFLAG_SORT)
 			{	//If this note was previously marked as selected
-				tflags &= ~EOF_NOTE_TFLAG_TEMP;	//Clear the temporary flag
+				tflags &= ~EOF_NOTE_TFLAG_SORT;	//Clear the temporary flag
 				eof_set_note_tflags(sp, track, ctr - 1, tflags);	//Restore the note's original flags
 				eof_selection.multi[ctr - 1] = 1;	//Mark this note as selected in the selection array
 			}

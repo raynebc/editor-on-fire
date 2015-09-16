@@ -1567,7 +1567,7 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		unsigned long tracknum = eof_song->track[track]->tracknum, index2;
 		EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 		EOF_PRO_GUITAR_NOTE *np = tp->note[note];
-		unsigned char lowestfret = eof_get_lowest_fretted_string_fret(eof_song, track, note);	//Determine the fret value of the lowest fretted string
+		unsigned char lowestfret = eof_pro_guitar_note_lowest_fret(tp, note);	//Determine the lowest used fret value
 
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
 		{

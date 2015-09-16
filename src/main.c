@@ -1424,8 +1424,8 @@ unsigned long eof_count_selected_notes(unsigned long * total, char v)
 					{
 						if(eof_selection.multi[i])
 						{
-							if((!v) || (v && eof_song->legacy_track[tracknum]->note[i]->note))
-							{
+							if(!v || eof_song->legacy_track[tracknum]->note[i]->note)
+							{	//If v is zero, or if both v and the note mask are nonzero
 								last = i;
 								count++;
 							}
@@ -1466,8 +1466,8 @@ unsigned long eof_count_selected_notes(unsigned long * total, char v)
 					{
 						if(eof_selection.multi[i])
 						{
-							if((!v) || (v && eof_song->pro_guitar_track[tracknum]->note[i]->note))
-							{
+							if(!v || eof_song->pro_guitar_track[tracknum]->note[i]->note)
+							{	//If v is zero, or if both v and the note mask are nonzero
 								last = i;
 								count++;
 							}
@@ -2842,7 +2842,7 @@ void eof_render_note_window(void)
 ///Keep for debugging
 //#ifdef EOF_DEBUG
 //				ypos += 12;
-//				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "#Mask = %ld : Flags = %lu", eof_get_note_note(eof_song, eof_selected_track, eof_selection.current), eof_get_note_flags(eof_song, eof_selected_track, eof_selection.current));
+//				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "#Mask=%ld : Flags=%lX : Eflags=%X : Tflags=%X", eof_get_note_note(eof_song, eof_selected_track, eof_selection.current), eof_get_note_flags(eof_song, eof_selected_track, eof_selection.current), eof_get_note_eflags(eof_song, eof_selected_track, eof_selection.current), eof_get_note_tflags(eof_song, eof_selected_track, eof_selection.current));
 //#endif
 			}
 			else

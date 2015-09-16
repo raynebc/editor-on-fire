@@ -750,7 +750,7 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 	unsigned long first_beat[EOF_TRACKS_MAX] = {0};	//The beat containing the first note stored for each track
 	unsigned long start_pos, end_pos;
 	long last_anchor, next_anchor;
-	unsigned long copy_notes[EOF_TRACKS_MAX] = {0};	//The number of notes to store to store for each track
+	unsigned long copy_notes[EOF_TRACKS_MAX] = {0};	//The number of notes to store for each track
 	float tfloat;
 	PACKFILE * fp;
 	EOF_PHRASE_SECTION *sectionptr = NULL;

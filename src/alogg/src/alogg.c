@@ -184,7 +184,7 @@ ov_callbacks _alogg_ogg_callbacks = {
 /* function called in an interrupt */
 
 static void alogg_autopoll_ogg(void *ogg) {
-  alogg_poll_ogg((ALOGG_OGG *)ogg);
+  (void) alogg_poll_ogg((ALOGG_OGG *)ogg);
 }
 END_OF_FUNCTION(alogg_autopoll_ogg);
 

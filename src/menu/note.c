@@ -4844,9 +4844,9 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 									{	//If the conversion to number failed or specifies a fret EOF cannot store as an 8 bit number
 										fretvalue = 0xFF;
 									}
-									else if(fretvalue > highfretvalue)
-									{
-										highfretvalue = fretvalue;	//Track the highest user-defined fret value
+									else if((fretvalue & 0x7F) > highfretvalue)
+									{	//If the fret value (masking out the mute bit) is higher than the fret value being tracked
+										highfretvalue = fretvalue & 0x7F;	//Track the new highest fret value
 									}
 								}
 								if(fretvalue == 0xFF)
@@ -7754,7 +7754,7 @@ int eof_pro_guitar_note_slide_end_fret(char undo)
 				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 				if((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 				{	//If this note is a slide
-					unsigned char lowestfret = eof_get_lowest_fretted_string_fret(eof_song, eof_selected_track, i);	//Determine the fret value of the lowest fretted string
+					unsigned char lowestfret = eof_pro_guitar_note_lowest_fret(eof_song->pro_guitar_track[tracknum], i);	//Determine the lowest used fret value
 
 					if(lowestfret && newend)
 					{	//If a fret value was used, and an ending fret was defined, validate the slide ending fret
@@ -7797,6 +7797,10 @@ int eof_pro_guitar_note_slide_end_fret(char undo)
 						{	//Otherwise it is now undefined
 							eof_song->pro_guitar_track[tracknum]->note[i]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag to indicate that the slide's ending fret is undefined
 						}
+					}
+					else
+					{
+						allegro_message("Error:  The fret number specified must be different from the selected note's lowest used fret");
 					}
 				}//If this note is a slide
 			}//If this note is in the currently active track and is selected
@@ -7892,7 +7896,7 @@ int eof_pro_guitar_note_define_unpitched_slide(void)
 				flags = eof_song->pro_guitar_track[tracknum]->note[i]->flags;
 				if(newend)
 				{	//If a slide end value was given
-					unsigned char lowestfret = eof_get_lowest_fretted_string_fret(eof_song, eof_selected_track, i);	//Determine the fret value of the lowest fretted string
+					unsigned char lowestfret = eof_pro_guitar_note_lowest_fret(eof_song->pro_guitar_track[tracknum], i);	//Determine the lowest used fret value
 
 					if(lowestfret && newend)
 					{	//If the note has a fretted string, and an ending fret was defined, validate the unpitched slide ending fret
@@ -7901,7 +7905,7 @@ int eof_pro_guitar_note_define_unpitched_slide(void)
 							eof_cursor_visible = 1;
 							eof_pen_visible = 1;
 							eof_show_mouse(NULL);
-							allegro_message("Error:  The fret number specified must be higher or lower than the bass note's fret");
+							allegro_message("Error:  The fret number specified must be higher or lower than the note's lowest used fret");
 							break;	//Stop processing selected notes
 						}
 					}
