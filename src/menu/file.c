@@ -2422,7 +2422,7 @@ int eof_save_helper(char *destfilename, char silent)
 	char function;		//Will be set to 1 for "Save" or 2 for "Save as"
 	int jumpcode = 0;
 	char fixvoxpitches = 0, fixvoxphrases = 0;
-	char note_length_warned = 0, note_distance_warned = 0, arpeggio_warned = 0, slide_warned = 0, bend_warned = 0;
+	char note_length_warned = 0, note_distance_warned = 0, arpeggio_warned = 0, slide_warned = 0, bend_warned = 0, slide_error = 0;
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
 	unsigned short user_warned = 0;	//Tracks whether the user was warned about hand positions being undefined and auto-generated during Rocksmith and Bandfuse exports
@@ -2693,7 +2693,7 @@ int eof_save_helper(char *destfilename, char silent)
 		}//For each track, or until the user is warned about an offending arpeggio
 	}
 
-	/* check if any slide notes don't define their end position or bend notes don't define their bend strength */
+	/* check if any slide notes don't validly define their end position or bend notes don't define their bend strength */
 	if(!silent)
 	{	//If checks and warnings aren't suppressed
 		if(eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files)
@@ -2733,8 +2733,46 @@ int eof_save_helper(char *destfilename, char silent)
 								bend_warned = 1;
 							}
 						}
-						if(slide_warned && bend_warned)
-							break;	//Exit for loop if both warnings were issued and the user declined both
+
+						if(!slide_error)
+						{	//If the user hasn't been warned about any slide related errors yet
+							unsigned char lowestfret = eof_pro_guitar_note_lowest_fret(tp, ctr2);	//Determine the note's lowest used fret value
+
+							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
+							{	//If the note has pitched slide end position data
+								if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+								{	//If the note slides up
+									if(tp->note[ctr2]->slideend <= lowestfret)
+									{	//The slide doesn't go higher than the current note
+										slide_error = 1;
+									}
+								}
+								if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+								{	//If the note slides down
+									if(tp->note[ctr2]->slideend >= lowestfret)
+									{	//The slide doesn't go lower than the current note
+										slide_error = 1;
+									}
+								}
+							}
+							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+							{	//If the note has an unpitched slide
+								if(tp->note[ctr2]->unpitchend == lowestfret)
+								{	//The slide doesn't move from the current note
+									slide_error = 1;
+								}
+							}
+							if(slide_error)
+							{	//If one of the above checks failed
+								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
+								if(alert("Warning:  At least one slide note has an error in its end position.", "Unless corrected, it will not export to XML as a slide.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+								{	//If the user opts to cancel
+									return 1;	//Return cancellation
+								}
+							}
+						}
+						if(slide_warned && bend_warned && slide_error)
+							break;	//Exit for loop if all warnings/errors were issued and declined by the user
 					}
 				}
 			}

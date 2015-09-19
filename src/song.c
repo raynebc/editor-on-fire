@@ -4112,7 +4112,7 @@ void eof_track_sort_notes(EOF_SONG *sp, unsigned long track)
 		{	//For each note in the track, in reverse order
 			if(eof_selection.multi[ctr - 1])
 			{	//If this note is selected
-				tflags = eof_get_note_flags(sp, track, ctr - 1);
+				tflags = eof_get_note_tflags(sp, track, ctr - 1);
 				tflags |= EOF_NOTE_TFLAG_SORT;	//Set this temporary flag to track this note is selected
 				eof_set_note_tflags(sp, track, ctr - 1, tflags);	//Update the note flags
 			}
@@ -4669,20 +4669,20 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 
 			/* cleanup Rocksmith related slide/bend statuses */
 			if((tp->note[i-1]->slideend > tp->numfrets) || !(tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
-			{	//If the slide end position is invalid
+			{	//If the slide end position is invalid or not indicated to be defined
 				tp->note[i-1]->slideend = 0;	//Clear it
 			}
 			if(tp->note[i-1]->bendstrength && !(tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
-			{	//If the bend strength is invalid
+			{	//If the bend strength is invalid or not indicated to be defined
 				tp->note[i-1]->bendstrength = 0;	//Clear it
 			}
 			if((tp->note[i-1]->unpitchend > tp->numfrets) || !tp->note[i-1]->unpitchend)
-			{	//If the unpitched slide end position is invalid
+			{	//If the unpitched slide end position is invalid or not indicated to be defined
 				tp->note[i-1]->unpitchend = 0;	//Clear it
 				tp->note[i-1]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;	//Clear the related flag
 			}
 			if(!tp->note[i-1]->slideend && !tp->note[i-1]->bendstrength)
-			{	//If this note has no slide end fret number or bend strength defined
+			{	//If this note has no slide end fret number or bend strength defined, or neither are indicated to be defined
 				if(!((tp->note == tp->technote) && (tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)))
 				{	//If tech view is in effect, a bend note is allowed to have a bend strength of 0
 					tp->note[i-1]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Otherwise both the slide end position and the bend strength are undefined, clear this flag
@@ -6333,7 +6333,10 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 				}
 				if(dir < 0)
 				{	//If the tail is being shortened by one grid snap
-					eof_note_set_tail_pos(sp, eof_selected_track, i, eof_tail_snap.previous_snap);
+					if(eof_tail_snap.previous_snap > notepos)
+					{	//Only allow the tail to move if it will still be at least 1ms after the start of the note
+						eof_note_set_tail_pos(sp, eof_selected_track, i, eof_tail_snap.previous_snap);
+					}
 				}
 				else
 				{	//If the tail is being lengthened by one grid snap
@@ -6358,8 +6361,12 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 						eof_note_set_tail_pos(sp, eof_selected_track, i, eof_tail_snap.previous_snap);
 					}
 				}
+			}//If adjusting by the current grid snap value
+			if(eof_get_note_length(sp, track, i) <= 0)
+			{	//If the note's length became less than 1 for any reason
+				eof_set_note_length(sp, track, i, 1);	//Set it to 1ms
 			}
-		}
+		}//If the note is selected and in the active instrument difficulty
 	}//For each note in the track
 	eof_track_fixup_notes(sp, eof_selected_track, 1);
 	if(note_selection_updated)
