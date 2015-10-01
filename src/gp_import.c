@@ -3828,6 +3828,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							if(bytemask & 32)
 							{	//Note type is defined
 								byte = pack_getc(inf);	//Note type (1 = normal, 2 = tie, 3 = dead (muted))
+								thisgemtype = byte;
 								if(byte == 1)
 								{	//Normal note
 									frets[ctr4] = 0;	//Ensure this is cleared
@@ -3868,9 +3869,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							if(bytemask & 32)
 							{	//Note type is defined
 								byte = pack_getc(inf);	//Fret number
-								thisgemtype = byte;
-								if(tie_note)
-								{	//If this is a tie note, recall the last fretting of this string in this track, since overlapping tie notes may prevent a simple check of the previous note from having the desired fret value
+								if(thisgemtype == 2)
+								{	//If this gem is a tie note, recall the last fretting of this string in this track, since overlapping tie notes may prevent a simple check of the previous note from having the desired fret value
 									unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
 
 									if((strings[ctr2] > 6) && drop_7)
@@ -4319,14 +4319,23 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								if(!newtech)
 								{	//If the tie note doesn't enable a technique not in use by the previous note, alter the previous note's length to include the tie note
 									long oldlength;
+									unsigned int convertedtie = usedtie >> (7 - strings[ctr2]);	//Re-map from GP's string numbering to EOF's
 
-									oldlength = np[ctr2]->length;
-									np[ctr2]->length = lastendpos - np[ctr2]->pos + 0.5;	//Round up to nearest millisecond
+									//Search backward for correct note to alter
+									for(ctr4 = gp->track[ctr2]->notes; ctr4 > 0; ctr4--)
+									{	//For each imported note in this track, in reverse order
+										if(gp->track[ctr2]->note[ctr4 - 1]->note & convertedtie)
+										{	//If the note uses any of the same gems as the tie note
+											oldlength = gp->track[ctr2]->note[ctr4 - 1]->length;
+											gp->track[ctr2]->note[ctr4 - 1]->length = lastendpos - gp->track[ctr2]->note[ctr4 - 1]->pos + 0.5;	//Round up to nearest millisecond
 
 #ifdef GP_IMPORT_DEBUG
-									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tTie note:  Note starting at %lums lengthened from %ldms to %ldms", np[ctr2]->pos, oldlength, np[ctr2]->length);
-									eof_log(eof_log_string, 1);
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tTie note:  Note starting at %lums lengthened from %ldms to %ldms", gp->track[ctr2]->note[ctr4 - 1]->pos, oldlength, gp->track[ctr2]->note[ctr4 - 1]->length);
+											eof_log(eof_log_string, 1);
 #endif
+											break;
+										}
+									}
 
 									usedstrings &= ~usedtie;	//Clear the bits used to indicate the tie notes' strings as being played, since overlapping guitar notes isn't supported in Rock Band or Rocksmith
 																//This line had to be changed to not run when a tie note creates a new note, because the note bitmask needs to be intact in that condition

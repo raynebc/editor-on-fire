@@ -4142,14 +4142,14 @@ void eof_track_sort_notes(EOF_SONG *sp, unsigned long track)
 			tflags = eof_get_note_tflags(sp, track, ctr - 1);
 			if(tflags & EOF_NOTE_TFLAG_SORT)
 			{	//If this note was previously marked as selected
-				tflags &= ~EOF_NOTE_TFLAG_SORT;	//Clear the temporary flag
-				eof_set_note_tflags(sp, track, ctr - 1, tflags);	//Restore the note's original flags
 				eof_selection.multi[ctr - 1] = 1;	//Mark this note as selected in the selection array
 			}
 			else
 			{	//This note was not selected before the sort was performed
 				eof_selection.multi[ctr - 1] = 0;
 			}
+			tflags &= ~EOF_NOTE_TFLAG_SORT;	//Clear the temporary flag
+			eof_set_note_tflags(sp, track, ctr - 1, tflags);	//Restore the note's original flags
 		}
 	}
 }

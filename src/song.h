@@ -606,7 +606,7 @@ int eof_song_qsort_phrase_sections(const void * e1, const void * e2);	//A generi
 long eof_track_fixup_previous_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note/lyric one before the specified note/lyric number that is in the same difficulty, or -1 if there is none
 long eof_track_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note/lyric one after the specified note/lyric number that is in the same difficulty, or -1 if there is none
 void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel);	//Calls the appropriate fixup function for the specified track.  If sel is zero, the currently selected note is deselected automatically.
-void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track);	//Used during MIDI import to mark a note as "crazy" if it overlaps with the next note in the same difficulty
+void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track);	//Used during MIDI and GP imports to mark a note as "crazy" if it overlaps with the next note in the same difficulty
 int eof_track_add_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a star power phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 void eof_track_delete_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long pathnum);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
 int eof_track_add_solo(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success

@@ -2990,6 +2990,10 @@ int eof_save_helper(char *destfilename, char silent)
 				(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,SCRIPT_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
 			}
 		}
+
+		/* Save GHWT drum animations */
+		(void) append_filename(eof_temp_filename, newfolderpath, "ghwt.array.txt", (int) sizeof(eof_temp_filename));
+		eof_write_ghwt_drum_animations(eof_song, eof_temp_filename);
 	}
 
 	if(eof_write_rb_files)
@@ -3702,6 +3706,7 @@ int eof_gp_import_common(char *fn)
 		eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
 		eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
 		eof_log("Cleaning up imported notes", 1);
+		eof_track_find_crazy_notes(eof_song, eof_selected_track);	//Mark notes that overlap others as crazy
 		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to clean up the track
 		(void) eof_menu_track_selected_track_number(eof_selected_track, 1);	//Re-select the active track to allow for a change in string count
 	}

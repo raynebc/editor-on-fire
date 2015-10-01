@@ -3825,3 +3825,62 @@ void eof_destroy_ks_list(EOF_MIDI_KS_LIST *ptr)
 		free(ptr);
 	}
 }
+
+void eof_write_ghwt_drum_animations(EOF_SONG *sp, char *fn)
+{
+	PACKFILE * fp;
+	char buffer[10] = {0};
+	unsigned long ctr;
+	EOF_LEGACY_TRACK *ptr;
+
+	eof_log("eof_write_ghwt_drum_animations() entered", 1);
+
+	if(!sp || !fn)
+	{
+		return;
+	}
+
+	ptr = sp->legacy_track[sp->track[EOF_TRACK_DRUM]->tracknum];
+	if(!ptr->notes)
+	{	//Empty drum track
+		return;
+	}
+
+	fp = pack_fopen(fn, "w");
+	if(!fp)
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open output GHWT animation file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		eof_log(eof_log_string, 1);
+		return;	//Return failure
+	}
+
+	for(ctr = 0; ctr < ptr->notes; ctr++)
+	{	//For each drum note
+		if(ptr->note[ctr]->type == EOF_NOTE_AMAZING)
+		{	//If the note is in the expert difficulty
+			if((ptr->note[ctr]->note & 2) || ((ptr->note[ctr]->flags & (EOF_DRUM_NOTE_FLAG_Y_CYMBAL | EOF_DRUM_NOTE_FLAG_B_CYMBAL)) && (ptr->note[ctr]->note & 12)))
+			{	//If this note has any gems that are to be exported with animation codes
+				(void) snprintf(buffer, sizeof(buffer) - 1, "%lu\n", ptr->note[ctr]->pos);	//Build a string with the note's timestamp
+				if(ptr->note[ctr]->note & 2)
+				{	//Snare
+					(void) pack_fputs(buffer, fp);
+					(void) pack_fputs("1682767963\n", fp);
+				}
+
+				if((ptr->note[ctr]->note & 4) && (ptr->note[ctr]->flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL))
+				{	//Yellow cymbal
+					(void) pack_fputs(buffer, fp);
+					(void) pack_fputs("1682833500\n", fp);
+				}
+
+				if((ptr->note[ctr]->note & 8) && (ptr->note[ctr]->flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL))
+				{	//Blue cymbal
+					(void) pack_fputs(buffer, fp);
+					(void) pack_fputs("1682964573\n", fp);
+				}
+			}
+		}
+	}
+
+	(void) pack_fclose(fp);
+}
