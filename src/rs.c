@@ -2780,7 +2780,7 @@ void eof_song_fix_fingerings(EOF_SONG *sp, char *undo_made)
 	}
 }
 
-void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long track, char difficulty, char warnuser, char dynamic, unsigned long startnote, unsigned long stopnote)
+void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long track, char difficulty, char warnuser, char dynamic, unsigned long startnote, unsigned long stopnote, char function)
 {
 	unsigned long ctr, ctr2, tracknum, count, bitmask, beatctr, startpos = 0, endpos, shapenum = 0;
 	unsigned long effectivestart, effectivestop;	//The start and stop timestamps of the affected range of notes
@@ -2834,8 +2834,8 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 		{	//If this hand position is defined for the specified difficulty
 			if(all || ((tp->handposition[ctr - 1].start_pos >= tp->note[startnote]->pos) && (tp->handposition[ctr - 1].start_pos <= tp->note[stopnote]->pos)))
 			{	//If this fret hand position is in the affected range of this function
-				if(warnuser)
-				{
+				if(warnuser && function)
+				{	//Skip the warning if the logic to delete FHPs in the specified range was called explicitly
 					eof_clear_input();
 					if(alert(NULL, warning, "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 					{	//If the user does not opt to remove the existing hand positions
@@ -2854,6 +2854,11 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 		}
 	}
 	eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions
+
+	if(!function)
+	{	//If this function was only called to delete fret hand positions
+		return;
+	}
 
 	//Count the number of notes in the specified track difficulty and allocate arrays large enough to store the lowest and highest fret number used in each
 	for(ctr = 0, count = 0; ctr < tp->notes; ctr++)
@@ -3148,7 +3153,7 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 
 void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, char difficulty, char warnuser, char dynamic)
 {
-	eof_generate_efficient_hand_positions_logic(sp, track, difficulty, warnuser, dynamic, 0, 0);	//Generate fret hand positions for the entire track
+	eof_generate_efficient_hand_positions_logic(sp, track, difficulty, warnuser, dynamic, 0, 0, 1);	//Generate fret hand positions for the entire track
 }
 
 int eof_generate_hand_positions_current_track_difficulty(void)
@@ -3177,12 +3182,24 @@ int eof_generate_efficient_hand_positions_for_selected_notes(void)
 	eof_fret_hand_position_list_dialog_undo_made = 0;	//Reset this condition
 	if(eof_get_selected_note_range(&sel_start, &sel_end, 0) > 1)
 	{	//If multiple notes are selected
-		eof_generate_efficient_hand_positions_logic(eof_song, eof_selected_track, eof_note_type, 1, 0, sel_start, sel_end);	//Generate fret hand positions for the range of the chart from the first to last selected note
+		eof_generate_efficient_hand_positions_logic(eof_song, eof_selected_track, eof_note_type, 1, 0, sel_start, sel_end, 1);	//Generate fret hand positions for the range of the chart from the first to last selected note
 	}
 
 	return 1;
 }
 
+int eof_delete_hand_positions_for_selected_notes(void)
+{
+	unsigned long sel_start = 0, sel_end = 0;
+
+	eof_fret_hand_position_list_dialog_undo_made = 0;	//Reset this condition
+	if(eof_get_selected_note_range(&sel_start, &sel_end, 0) > 1)
+	{	//If multiple notes are selected
+		eof_generate_efficient_hand_positions_logic(eof_song, eof_selected_track, eof_note_type, 1, 0, sel_start, sel_end, 0);	//Delete fret hand positions for the range of the chart from the first to last selected note
+	}
+
+	return 1;
+}
 int eof_note_can_be_played_within_fret_tolerance(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned char *current_low, unsigned char *current_high)
 {
 	unsigned char effective_lowest = 0, effective_highest = 0;	//Stores the cumulative highest and lowest fret values with the input range and the next note for tolerance testing

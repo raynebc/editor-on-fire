@@ -343,6 +343,7 @@ MENU eof_note_rocksmith_menu[] =
 	{"Remove &Linknext", eof_menu_note_remove_linknext, NULL, 0, NULL},
 	{"&Move t.n. to prev note", eof_menu_note_move_tech_note_to_previous_note_pos, NULL, 0, NULL},
 	{"&Generate FHPs", eof_generate_efficient_hand_positions_for_selected_notes, NULL, 0, NULL},
+	{"Remove FHPs", eof_delete_hand_positions_for_selected_notes, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 

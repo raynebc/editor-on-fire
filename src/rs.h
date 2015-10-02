@@ -162,7 +162,7 @@ void eof_build_fret_range_tolerances(EOF_PRO_GUITAR_TRACK *tp, unsigned char dif
 	//If dynamic is zero (should be used when generating hand positions for Rocksmith), the range tolerance for all frets is set to 4, otherwise they are defined as follows:
 	//For each note examined, the range of frets used is considered to be playable and the range for the note's lowest used fret position is updated accordingly
 	//If any particular fret is not used as the lowest fret for any chords, the fret range is defaulted to 4
-void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long track, char difficulty, char warnuser, char dynamic, unsigned long startnote, unsigned long stopnote);
+void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long track, char difficulty, char warnuser, char dynamic, unsigned long startnote, unsigned long stopnote, char function);
 	//Uses eof_note_can_be_played_within_fret_tolerance() and eof_build_fret_range_tolerances() to build an efficient set of fret hand positions for the specified track difficulty
 	//If startnote and stopnote are not equal, fret hand positions are only generated for that range of notes, replacing any positions that exist in that time range
 	//If startnote and stopnote are equal, fret hand positions are generated for the entire track difficulty, replacing any positions that exist
@@ -170,10 +170,13 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 	//If warnuser is nonzero, the user is prompted to confirm deletion of existing fret hand positions
 	//The dynamic parameter is passed to eof_build_fret_range_tolerances(), indicating whether to base the fret range tolerances from the chart or leave them all at 4
 	//Dynamic should be left at 0 for generating positions for Rocksmith (limitation with RS1 only allows for range of 4).  It will produce higher quality positions for Rock Band 3 when dynamic is nonzero.
+	//If function is zero, the function returns immediately after clearing any notes in the specified time range and doesn't generate new positions
 void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, char difficulty, char warnuser, char dynamic);
 	//Calls eof_generate_efficient_hand_positions_logic() to generate fret hand positions for the entirety of the specified track difficulty
 int eof_generate_efficient_hand_positions_for_selected_notes(void);
 	//Calls eof_generate_efficient_hand_positions_logic() to generate fret hand positions for the range of the active track difficulty between the first and last selected note
+int eof_delete_hand_positions_for_selected_notes(void);
+	//Calls eof_generate_efficient_hand_positions_logic() to remove fret hand positions for the range of the active track difficulty between the first and last selected note
 unsigned char eof_pro_guitar_track_find_effective_fret_hand_position(EOF_PRO_GUITAR_TRACK *tp, unsigned char difficulty, unsigned long position);
 	//Returns the fret hand position in effect (at or before) at the specified timestamp in the specified track difficulty
 	//Returns nonzero if a fret hand position is in effect
