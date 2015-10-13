@@ -84,7 +84,7 @@
 #define EOF_NOTE_FLAG_IS_TRILL		            65536	//This flag will be set by eof_determine_phrase_status() if the note is in a trill section
 #define EOF_NOTE_FLAG_IS_TREMOLO		        131072	//This flag will be set by eof_determine_phrase_status() if the note is in a tremolo section
 
-//The following temporary flags are maintained internally and do not save to file
+//The following temporary flags are maintained internally and do not save to file (even during project save, clipboard, auto-adjust, etc.)
 #define EOF_NOTE_TFLAG_TEMP       1	//This flag will represent a temporary status, such as a note that was generated for temporary use that will be removed
 #define EOF_NOTE_TFLAG_IGNORE     2	//This flag will represent a note that is not exported to XML (such as a chord within an arpeggio that is converted into single notes)
 #define EOF_NOTE_TFLAG_ARP        4	//This flag will represent a note that is within an arpeggio, for RS export of arpeggio/handshape phrases as handshape tags
@@ -130,6 +130,7 @@ typedef struct
     char name[EOF_NAME_LENGTH + 1];
 	unsigned char type;			//Stores the note's difficulty
 	unsigned char note;			//Stores the note's fret values
+	unsigned char accent;		//Stores the note's accent bitmask
 	unsigned long midi_pos;
 	unsigned long midi_length;
 	unsigned long pos;
@@ -166,6 +167,7 @@ typedef struct
 	char name[EOF_MAX_LYRIC_LENGTH + 1];	//Should be the longer of the note structure's name length or the lyric structure's name length
 	unsigned char type;
 	unsigned char note;
+	unsigned char accent;
 	unsigned long endbeat;
 	unsigned long beat; 		//Which beat this note was copied from
 	unsigned long pos;
@@ -593,8 +595,10 @@ unsigned char eof_get_note_tflags(EOF_SONG *sp, unsigned long track, unsigned lo
 void eof_set_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char tflags);	//Sets the temporary flags of the specified track's note/lyric
 unsigned char eof_get_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the extended flags of the specified track's note/lyric, or 0 on error
 void eof_set_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char eflags);	//Sets the extended flags of the specified track's note/lyric
-unsigned long eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the note bitflag of the specified track's note/lyric, or 0 on error
-void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long value);	//Sets the note value of the specified track's note/lyric
+unsigned char eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the note bitflag of the specified track's note/lyric, or 0 on error
+void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the note value of the specified track's note/lyric
+unsigned char eof_get_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the note bitflag of the specified track's note, or 0 on error
+void eof_set_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the accent bitmask value of the specified track's note
 char *eof_get_note_name(EOF_SONG *sp, unsigned long track, unsigned long note);				//Returns a pointer to the note's statically allocated name array, or a lyric's text array, or NULL on error
 void eof_set_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, char *name);	//Copies the string into the note's statically allocated name array, or a lyric's text array
 void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos, long length, char type, char *text);

@@ -77,7 +77,7 @@ TEXT EVENT CHUNK, for each text event:
 CUSTOM DATA BLOCK CHUNK, for each custom data block
 {
 *	4 bytes:	The number of bytes this custom data block consumes (including the block ID and the custom data itself)
-*	4 bytes:	Custom data block ID (1 = Raw MIDI data, 0xFFFFFFFF = Empty debugging block)
+*	4 bytes:	Custom data block ID (1 = Raw MIDI data, 2 = Floating point beat timings, 0xFFFFFFFF = Empty debugging block)
 *	[varies:]	(Custom data, can store anything)
 }
 !This will allow the storage of any data not specifically accounted for in this format, helping to future proof the format
@@ -161,13 +161,13 @@ TRACK CHUNK, for each track:
 *	TRACK CUSTOM DATA BLOCK CHUNK, for each custom data block
 *	{
 *		4 bytes:	The number of bytes this custom data block consumes  (including the block ID and the custom data itself)
-*		4 bytes:	Custom data block ID (1 = Extra note data, 2 = pro guitar finger arrays, 3 = pro guitar track arrangement type, 0xFFFFFFFF = Empty debugging block)
+*		4 bytes:	Custom data block ID (Defined below.  0xFFFFFFFF = Empty debugging block)
 *		[varies:]	(Custom data block, can store anything)
 *	}
 =========================================
 Custom track data block definitions
 =========================================
-	Custom data block ID 1:  Extra note data:
+	Custom data block ID 1:  Extra note data (not current used):
 		1 byte:		Number of additional data bytes per note
 		[varies]:	Number of data bytes * number of notes (defined above in the track data) bytes
 	Custom data block ID 2:  Pro guitar finger arrays, for each note in the pro guitar track:
@@ -191,6 +191,11 @@ Custom track data block definitions
 		PRO GUITAR NOTE CHUNK, for each tech note
 		{
 			(As defined in the "PRO GUITAR/PRO BASS TRACK FORMAT" section)
+		}
+	Custom data block ID 8:  Accent note bitmask
+		ACCENT CHUNK, for each note in the legacy track
+		{
+			1 byte: The accent note bitmask for the legacy note
 		}
 
 =========================================		

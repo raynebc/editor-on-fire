@@ -652,7 +652,7 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 	long new_pos = -1;
 	long new_end_pos = -1;
 	long last_pos = -1;
-	EOF_EXTENDED_NOTE temp_lyric = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0};
+	EOF_EXTENDED_NOTE temp_lyric = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0};
 	EOF_LYRIC * new_lyric = NULL;
 	PACKFILE * fp;
 
@@ -1004,7 +1004,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 	long last_anchor, next_anchor;
 	PACKFILE * fp;
 	unsigned long copy_notes[EOF_TRACKS_MAX];	//The number of notes to adjust for each track
-	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0};
+	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0};
 	EOF_NOTE * new_note = NULL;
 	float tfloat = 0.0;
 	EOF_PHRASE_SECTION *sectionptr = NULL;
@@ -1379,7 +1379,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	long this_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	unsigned long copy_notes;
 	PACKFILE * fp;
-	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0}, first_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0};
+	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0}, first_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0};
 	EOF_EXTENDED_NOTE last_note;
 	EOF_NOTE * new_note = NULL;
 	unsigned long sourcetrack = 0;	//Will store the track that this clipboard data was from
@@ -3406,7 +3406,8 @@ void eof_read_clipboard_note(PACKFILE *fp, EOF_EXTENDED_NOTE *temp_note, unsigne
 	/* read the note */
 	(void) eof_load_song_string_pf(temp_note->name, fp, (size_t)namelength);	//Read the note's name, up to the specified number of characters
 	temp_note->type = pack_getc(fp);		//Read the note's difficulty
-	temp_note->note = pack_getc(fp);		//Read the note bitmask value
+	temp_note->note = pack_getc(fp);		//Read the note's bitmask value
+	temp_note->accent = pack_getc(fp);		//Read the note's accent bitmask value
 	temp_note->beat = pack_igetl(fp);		//Read the beat the note starts in
 	temp_note->endbeat = pack_igetl(fp);	//Read the beat the note ends in
 	temp_note->pos = pack_igetl(fp);		//Read the note's position relative to within the selection
@@ -3449,6 +3450,7 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 	(void) eof_save_song_string_pf(eof_get_note_name(sp, track, note), fp);		//Write the note's name
 	(void) pack_putc(eof_get_note_type(sp, track, note), fp);					//Write the note's difficulty
 	(void) pack_putc(eof_get_note_note(sp, track, note), fp);					//Write the note bitmask value
+	(void) pack_putc(eof_get_note_accent(sp, track, note), fp);					//Write the note accent bitmask value
 	note_len = eof_get_note_length(sp, track, note);
 	(void) pack_iputl(eof_get_beat(sp, eof_get_note_pos(sp, track, note)), fp);	//Write the beat the note starts in
 	(void) pack_iputl(eof_get_beat(sp, eof_get_note_pos(sp, track, note) + note_len), fp);	//Write the beat the note ends in

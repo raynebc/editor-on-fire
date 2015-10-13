@@ -57,12 +57,18 @@ typedef struct
 	unsigned long changes;					//The number of key signatures changes found in this list
 } EOF_MIDI_KS_LIST;
 
-int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixvoxpitches, char fixvoxphrases);
+int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixvoxpitches, char fixvoxphrases, char format);
 	//Writes the specified chart's contents to the specified file
 	//If featurerestriction is 0, all chart features are written to MIDI, and expert+.mid is written if double bass drum is charted
 	//If featurerestriction is 1, only RBN2 features are written to MIDI
 	//If featurerestriction is 2, only pro guitar upgrade features are written to MIDI
-	//If featurerestriction is 3, both RB2 features and pro guitar features are written to MIDI.  The C3 release of Magma supports pro guitar/bass.
+	//If featurerestriction is 3, both RBN2 features and pro guitar features are written to MIDI.  The C3 release of Magma supports pro guitar/bass.
+	//If format is nonzero, a variation of the MIDI is exported that is meant to be converted to .chart format and used to create GHWT customs:
+	//	*Star power markers are written with MIDI note 106
+	//	*Lane 6 drum notes (where lane 1 is the bass drum) that aren't cymbals are written with MIDI note 105
+	//	*Open notes are written as 5 lane notes
+	//	*Slider note markers are written with MIDI note 103 and solo phrases are suppressed
+	///	*Accent drum notes are exported with track-specific text events defining accented lane numbers (numbered beginning with 1 instead of 0)
 	//If fixvoxpitches is nonzero, any lyric that has a pitch of 0 (undefined) will be written with a generic pitch and a freestyle # marker
 	//If fixvoxphrases is nonzero, any lyric that is not within a lyric phrase will have a phrase written to contain it
 
@@ -189,6 +195,6 @@ int qsort_helper3(const void * e1, const void * e2);
 	//A sort algorithm used when quick sorting the eof_midi_event[] array
 
 void eof_write_ghwt_drum_animations(EOF_SONG *sp, char *fn);
-	//Writes a text file containing timestamps and codes for the specified chart, for use with authoring animations for Guitar Hero World Tour
+	//Writes a text file containing timestamps and codes for the specified chart, for use with authoring drum animations for Guitar Hero World Tour
 
 #endif

@@ -1,7 +1,7 @@
 CC = gcc
-CFLAGS = -O2 -fomit-frame-pointer -ffast-math -arch i386 -arch ppc -mmacosx-version-min=10.5 -funroll-loops -Ialogg/include -DEOF_BUILD
+CFLAGS = -O2 -fomit-frame-pointer -ffast-math -arch i386 -mmacosx-version-min=10.5 -funroll-loops -Ialogg/include -DEOF_BUILD
 CXXFLAGS = $(CFLAGS)
-LIBS = `allegro-config --libs` -framework Cocoa -framework Carbon -framework IOKit -framework System -framework CoreAudio -framework AudioUnit -framework AudioToolBox -framework QuickTime -framework Accelerate -logg -lvorbis -lvorbisfile -lm -lfftw3 -lrubberband -lstdc++
+LIBS = `allegro-config --libs --static` -framework Cocoa -framework Carbon -framework IOKit -framework System -framework CoreAudio -framework AudioUnit -framework AudioToolBox -framework QuickTime -framework Accelerate -logg -lvorbis -lvorbisfile -lm -lfftw3 -lrubberband -lstdc++
 
 include makefile.common
 
@@ -39,6 +39,7 @@ $(BUNDLE).app : ../bin/$(EXENAME)
 	@cp ../bin/vocaltutorial/*.* $(BUNDLE).app/Contents/Resources/eof/vocaltutorial
 	@cp ../Info.plist $(BUNDLE).app/Contents
 	@cp ../PkgInfo $(BUNDLE).app/Contents
+	@dylibbundler -od -b -x $(BUNDLE).app/Contents/MacOS/$(EXENAME) -d $(BUNDLE).app/Contents/libs
 	@echo Application bundle created!
 
 ../bin/$(EXENAME) : $(MENUOFILES) $(OFILES) $(AGUPOFILES) $(ALOGGOFILES) $(LCOFILES)

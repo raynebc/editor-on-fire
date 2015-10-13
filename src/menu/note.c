@@ -255,6 +255,28 @@ MENU eof_note_clear_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_note_toggle_accent_menu[] =
+{
+	{eof_note_clear_menu_string_1, eof_menu_note_toggle_accent_green, NULL, 0, NULL},
+	{eof_note_clear_menu_string_2, eof_menu_note_toggle_accent_red, NULL, 0, NULL},
+	{eof_note_clear_menu_string_3, eof_menu_note_toggle_accent_yellow, NULL, 0, NULL},
+	{eof_note_clear_menu_string_4, eof_menu_note_toggle_accent_blue, NULL, 0, NULL},
+	{eof_note_clear_menu_string_5, eof_menu_note_toggle_accent_purple, NULL, 0, NULL},
+	{eof_note_clear_menu_string_6, eof_menu_note_toggle_accent_orange, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_clear_accent_menu[] =
+{
+	{eof_note_clear_menu_string_1, eof_menu_note_clear_accent_green, NULL, 0, NULL},
+	{eof_note_clear_menu_string_2, eof_menu_note_clear_accent_red, NULL, 0, NULL},
+	{eof_note_clear_menu_string_3, eof_menu_note_clear_accent_yellow, NULL, 0, NULL},
+	{eof_note_clear_menu_string_4, eof_menu_note_clear_accent_blue, NULL, 0, NULL},
+	{eof_note_clear_menu_string_5, eof_menu_note_clear_accent_purple, NULL, 0, NULL},
+	{eof_note_clear_menu_string_6, eof_menu_note_clear_accent_orange, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_note_freestyle_menu[] =
 {
 	{"&On", eof_menu_set_freestyle_on, NULL, 0, NULL},
@@ -269,6 +291,13 @@ MENU eof_note_drum_hi_hat_menu[] =
 	{"&Pedal hi hat",eof_menu_note_default_pedal_hi_hat, NULL, 0, NULL},
 	{"&Sizzle hi hat",eof_menu_note_default_sizzle_hi_hat, NULL, 0, NULL},
 	{"&Non hi hat",eof_menu_note_default_no_hi_hat, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_drum_accent_menu[] =
+{
+	{"&Toggle", NULL, eof_note_toggle_accent_menu, 0, NULL},
+	{"&Clear", NULL, eof_note_clear_accent_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -292,6 +321,7 @@ MENU eof_note_drum_menu[] =
 	{"Toggle &Y cymbal+tom", eof_menu_note_toggle_rb3_cymbal_combo_yellow, NULL, 0, NULL},
 	{"Toggle &B cymbal+tom", eof_menu_note_toggle_rb3_cymbal_combo_blue, NULL, 0, NULL},
 	{"Toggle &G cymbal+tom", eof_menu_note_toggle_rb3_cymbal_combo_green, NULL, 0, NULL},
+	{"&Accent", NULL, eof_note_drum_accent_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -2093,6 +2123,152 @@ int eof_menu_note_clear_orange(void)
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
 	return 1;
+}
+
+int eof_menu_note_toggle_accent_lane(unsigned int lanenum)
+{
+	unsigned long i;
+	unsigned char accent, mask, undo_made = 0;;
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
+	if((eof_count_track_lanes(eof_song, eof_selected_track) < lanenum) || !lanenum)
+	{
+		return 1;	//Don't do anything if the specified lane number is higher than the number the active track contains or if it is otherwise invalid
+	}
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	if(eof_count_selected_notes(NULL, 0) == 0)
+	{
+		return 1;
+	}
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			accent = eof_get_note_accent(eof_song, eof_selected_track, i);
+			mask = 1 << (lanenum - 1);
+			if(eof_get_note_note(eof_song, eof_selected_track, i) & mask)
+			{	//If the note has a gem on the specified lane
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				accent ^= mask;	//Toggle the accent bit for the specified lane
+				eof_set_note_accent(eof_song, eof_selected_track, i, accent);
+			}
+		}
+	}
+
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_accent_green(void)
+{
+	return eof_menu_note_toggle_accent_lane(1);
+}
+
+int eof_menu_note_toggle_accent_red(void)
+{
+	return eof_menu_note_toggle_accent_lane(2);
+}
+
+int eof_menu_note_toggle_accent_yellow(void)
+{
+	return eof_menu_note_toggle_accent_lane(3);
+}
+
+int eof_menu_note_toggle_accent_blue(void)
+{
+	return eof_menu_note_toggle_accent_lane(4);
+}
+
+int eof_menu_note_toggle_accent_purple(void)
+{
+	return eof_menu_note_toggle_accent_lane(5);
+}
+
+int eof_menu_note_toggle_accent_orange(void)
+{
+	return eof_menu_note_toggle_accent_lane(6);
+}
+
+int eof_menu_note_clear_accent_lane(unsigned int lanenum)
+{
+	unsigned long i;
+	unsigned char accent, mask, undo_made = 0;
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
+	if((eof_count_track_lanes(eof_song, eof_selected_track) < lanenum) || !lanenum)
+	{
+		return 1;	//Don't do anything if the specified lane number is higher than the number the active track contains or if it is otherwise invalid
+	}
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	if(eof_count_selected_notes(NULL, 0) == 0)
+	{
+		return 1;
+	}
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			accent = eof_get_note_accent(eof_song, eof_selected_track, i);
+			mask = 1 << (lanenum - 1);
+			if((eof_get_note_note(eof_song, eof_selected_track, i) & mask) && (accent & mask))
+			{	//If the note has a gem on the specified lane and it is accented
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				accent ^= (1 << (lanenum - 1));	//Toggle the accent bit off for the specified lane
+				eof_set_note_accent(eof_song, eof_selected_track, i, accent);
+			}
+		}
+	}
+
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_note_clear_accent_green(void)
+{
+	return eof_menu_note_clear_accent_lane(1);
+}
+
+int eof_menu_note_clear_accent_red(void)
+{
+	return eof_menu_note_clear_accent_lane(2);
+}
+
+int eof_menu_note_clear_accent_yellow(void)
+{
+	return eof_menu_note_clear_accent_lane(3);
+}
+
+int eof_menu_note_clear_accent_blue(void)
+{
+	return eof_menu_note_clear_accent_lane(4);
+}
+
+int eof_menu_note_clear_accent_purple(void)
+{
+	return eof_menu_note_clear_accent_lane(5);
+}
+
+int eof_menu_note_clear_accent_orange(void)
+{
+	return eof_menu_note_clear_accent_lane(6);
 }
 
 int eof_menu_note_toggle_crazy(void)

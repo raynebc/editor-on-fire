@@ -360,7 +360,7 @@ int qsort_helper3(const void * e1, const void * e2)
    write MThd data and copy MTrk data from the temp file using the size of the temp file as the track length
    delete the temp file
    voila, correctly formatted MIDI file */
-int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixvoxpitches, char fixvoxphrases)
+int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixvoxpitches, char fixvoxphrases, char format)
 {
 	char header[14] = {'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 1, 0, 1, (EOF_DEFAULT_TIME_DIVISION >> 8), (EOF_DEFAULT_TIME_DIVISION & 0xFF)}; //The last two bytes are the time division
 	unsigned long timedivision = EOF_DEFAULT_TIME_DIVISION;	//Unless the project is storing a tempo track, EOF's default time division will be used
@@ -410,6 +410,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	EOF_MIDI_KS_LIST *kslist;
 	char stored_beat_track = 0;	//Will be set to nonzero if there is found to be a stored BEAT track in the project
 	char slideup, slidedown;	//Will track whether a note has an upward/downward slide or unpitched slide
+	char *accentstrings[6] = {"[1]", "[2]", "[3]", "[4]", "[5]", "[6]"};	//Used to export text events for accent notes
 
 	memset(notetempname, 0, sizeof(notetempname));	//Init this memory to 0
 	eof_log("eof_export_midi() entered", 1);
@@ -558,7 +559,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{	//If the text event's beat number is invalid
 					sp->text_event[i]->beat = sp->beats - 1;	//Repair it by assigning it to the last beat marker
 				}
-				deltapos = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,tslist,timedivision,1);	//Store the tick position of the note
+				deltapos = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,tslist,timedivision,1);	//Store the tick position of the beat
 				eof_add_midi_text_event(deltapos, sp->text_event[i]->text, 0, i);	//Send 0 for the allocation flag, because the text string is being stored in static memory
 			}
 		}
@@ -574,6 +575,27 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 //Pro drum notation is that if a green, yellow or blue drum note is NOT to be marked as a cymbal,
 //it must be marked with the appropriate MIDI note, otherwise the note defaults as a cymbal
 			prodrums = eof_track_has_cymbals(sp, j);
+
+			//Create accent note text events as needed for the GHWT MIDI variant
+			if(format)
+			{	//If writing the GHWT variant MIDI
+				for(i = 0; i < eof_get_track_size(sp, j); i++)
+				{	//For each note in the track
+					unsigned char accent = eof_get_note_accent(sp, j, i);
+					unsigned char accentctr, accentmask;
+					if(accent)
+					{	//If this note has one or more accented gems
+						for(accentctr = 0, accentmask = 1; accentctr < 8; accentctr++, accentmask <<= 1)
+						{	//For each lane in the note
+							if(accent & accentmask)
+							{	//If this lane is accented
+								deltapos = eof_ConvertToDeltaTime(eof_get_note_pos(sp, j, i), anchorlist, tslist, timedivision, 1);	//Store the tick position of the note
+								eof_add_midi_text_event(deltapos, accentstrings[accentctr], 0, i);	//Send 0 for the allocation flag, because the text string is being stored in static memory
+							}
+						}
+					}
+				}
+			}
 
 			/* write the MTrk MIDI data to a temp file
 			use size of the file as the MTrk header length */
@@ -659,11 +681,22 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					deltalength = 1;
 				}
 
+				//Ensure open strum notes are prepared for export
 				if(eof_open_strum_enabled(j))
-				{	//Ensure that open strum notes don't have any gems except for lane 6
-					if((note & ~32) && (note & 32))
-					{	//If this bass guitar note has a gem on lane 6 (open strum bass) and any other lane
-						note = 32;	//Clear all lanes except lane 6
+				{	//If this is a non drum track with a sixth lane enabled
+					if(format)
+					{	//If writing the GHWT MIDI variant
+						if(note & 32)
+						{	//If this note has a gem on lane 6 (open strum)
+							note = 31;	//Convert it to a 5 lane chord
+						}
+					}
+					else
+					{
+						if((note & ~32) && (note & 32))
+						{	//If this note has a gem on lane 6 (open strum) and any other lane
+							note = 32;	//Clear all lanes except lane 6
+						}
 					}
 				}
 
@@ -837,10 +870,18 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				/* write fifth lane drum note, if the feature was enabled during save */
 				if(eof_five_lane_drums_enabled() && (sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (note & 32))
 				{	//If this is a lane 6 gem (referred to as lane 5 for drums, seeing as bass drum doesn't use a lane)
-					if(featurerestriction == 0)
-					{	//Only write this notation if not writing a Rock Band compliant MIDI
-						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 5, vel, 0);
-						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 5, vel, 0);
+					if(format)
+					{	//If writing the GHWT MIDI variant
+						eof_add_midi_event(deltapos, 0x90, 105, vel, 0);	//Explicitly write this gem using note 105
+						eof_add_midi_event(deltapos + deltalength, 0x80, 105, vel, 0);
+					}
+					else
+					{
+						if(featurerestriction == 0)
+						{	//Only write this notation if not writing a Rock Band compliant MIDI
+							eof_add_midi_event(deltapos, 0x90, midi_note_offset + 5, vel, 0);
+							eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 5, vel, 0);
+						}
 					}
 				}
 
@@ -870,6 +911,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			/* fill in star power */
 			for(i = 0; i < eof_get_num_star_power_paths(sp, j); i++)
 			{	//For each star power path in the track
+				int marker = 116;	//In Rock Band, star power is marked with note 116
+
 				sectionptr = eof_get_star_power_path(sp, j, i);
 				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,timedivision,1);	//Store the tick position of the phrase
 				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,timedivision,0) - deltapos;	//Store the number of delta ticks representing the phrase's length
@@ -877,22 +920,29 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 					deltalength = 1;
 				}
-				eof_add_midi_event(deltapos, 0x90, 116, vel, 0);
-				eof_add_midi_event(deltapos + deltalength, 0x80, 116, vel, 0);
+				if(format)
+				{	//If writing the GHWT MIDI variant
+					marker = 106;	//Use this marker instead
+				}
+				eof_add_midi_event(deltapos, 0x90, marker, vel, 0);
+				eof_add_midi_event(deltapos + deltalength, 0x80, marker, vel, 0);
 			}
 
 			/* fill in solos */
-			for(i = 0; i < eof_get_num_solos(sp, j); i++)
-			{	//For each solo in the track
-				sectionptr = eof_get_solo(sp, j, i);
-				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,timedivision,1);	//Store the tick position of the phrase
-				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,timedivision,0) - deltapos;	//Store the number of delta ticks representing the phrase's length
-				if(deltalength < 1)
-				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
-					deltalength = 1;
+			if(!format)
+			{	//If NOT writing the GHWT MIDI variant
+				for(i = 0; i < eof_get_num_solos(sp, j); i++)
+				{	//For each solo in the track
+					sectionptr = eof_get_solo(sp, j, i);
+					deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,timedivision,1);	//Store the tick position of the phrase
+					deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,timedivision,0) - deltapos;	//Store the number of delta ticks representing the phrase's length
+					if(deltalength < 1)
+					{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+						deltalength = 1;
+					}
+					eof_add_midi_event(deltapos, 0x90, 103, vel, 0);
+					eof_add_midi_event(deltapos + deltalength, 0x80, 103, vel, 0);
 				}
-				eof_add_midi_event(deltapos, 0x90, 103, vel, 0);
-				eof_add_midi_event(deltapos + deltalength, 0x80, 103, vel, 0);
 			}
 
 			/* fill in tremolos */
@@ -942,9 +992,17 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					phase_shift_sysex_phrase[4] = 0xFF;	//Store the difficulty ID (0xFF = all difficulties)
 					phase_shift_sysex_phrase[5] = 4;	//Store the phrase ID (4 = slider)
 					phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-					eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom slider start marker
-					phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-					eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom slider stop marker
+					if(format)
+					{	//If writing the GHWT MIDI variant
+						eof_add_midi_event(deltapos, 0x90, 103, vel, 0);	//Use note 103 to mark the slider
+						eof_add_midi_event(deltapos + deltalength, 0x80, 103, vel, 0);
+					}
+					else
+					{
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom slider start marker
+						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom slider stop marker
+					}
 				}
 			}
 
@@ -2179,7 +2237,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	trackcounter += 1 + eventstrackwritten + beattrackwritten;	//Add 1 for track 0 and one each for the events and beat tracks if applicable
 
 	if(featurerestriction != 2)
-	{	//If writing a RB3 compliant pro guitar upgrade MIDI, do NOT include stored MIDI tracks
+	{	//Unless writing a RB3 compliant pro guitar upgrade MIDI, include stored MIDI tracks
 		for(trackptr = sp->midi_data_head; trackptr != NULL; trackptr = trackptr->next)	//Add the number of raw MIDI tracks to export to the track counter
 		{	//For each stored MIDI track
 			if(!trackptr->timedivision)	//If the stored track does not contain a time division (is not a stored tempo track)
@@ -2250,7 +2308,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			}
 		}
 		if(featurerestriction != 2)
-		{	//If writing a RB3 compliant pro guitar upgrade MIDI, do NOT include stored MIDI tracks
+		{	//Unless writing a RB3 compliant pro guitar upgrade MIDI, include stored MIDI tracks
 			eof_MIDI_data_track_export(sp, fp, anchorlist, tslist, timedivision);	//Write any stored raw MIDI tracks to the output file
 		}
 		(void) pack_fclose(fp);	//Close the output file
@@ -3858,26 +3916,38 @@ void eof_write_ghwt_drum_animations(EOF_SONG *sp, char *fn)
 	{	//For each drum note
 		if(ptr->note[ctr]->type == EOF_NOTE_AMAZING)
 		{	//If the note is in the expert difficulty
-			if((ptr->note[ctr]->note & 2) || ((ptr->note[ctr]->flags & (EOF_DRUM_NOTE_FLAG_Y_CYMBAL | EOF_DRUM_NOTE_FLAG_B_CYMBAL)) && (ptr->note[ctr]->note & 12)))
-			{	//If this note has any gems that are to be exported with animation codes
-				(void) snprintf(buffer, sizeof(buffer) - 1, "%lu\n", ptr->note[ctr]->pos);	//Build a string with the note's timestamp
-				if(ptr->note[ctr]->note & 2)
-				{	//Snare
-					(void) pack_fputs(buffer, fp);
-					(void) pack_fputs("1682767963\n", fp);
-				}
+			(void) snprintf(buffer, sizeof(buffer) - 1, "%lu\n", ptr->note[ctr]->pos);	//Build a string with the note's timestamp
 
-				if((ptr->note[ctr]->note & 4) && (ptr->note[ctr]->flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL))
-				{	//Yellow cymbal
+			if(ptr->note[ctr]->note & 2)
+			{	//Snare
+				(void) pack_fputs(buffer, fp);
+				(void) pack_fputs("1682767963\n", fp);
+			}
+
+			if((ptr->note[ctr]->note & 4) && (ptr->note[ctr]->flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL))
+			{	//Yellow cymbal
+				if((ptr->note[ctr]->flags & EOF_NOTE_FLAG_IS_TRILL) || (ptr->note[ctr]->flags & EOF_NOTE_FLAG_IS_TREMOLO))
+				{	//If the cymbal is in a drum roll or special drum roll phrase, export it as a "fast" hi hat
+					(void) pack_fputs(buffer, fp);
+					(void) pack_fputs("1682833461\n", fp);
+				}
+				else
+				{	//Otherwise export it as a normal hi hat
 					(void) pack_fputs(buffer, fp);
 					(void) pack_fputs("1682833500\n", fp);
 				}
+			}
 
-				if((ptr->note[ctr]->note & 8) && (ptr->note[ctr]->flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL))
-				{	//Blue cymbal
-					(void) pack_fputs(buffer, fp);
-					(void) pack_fputs("1682964573\n", fp);
-				}
+			if((ptr->note[ctr]->note & 8) && (ptr->note[ctr]->flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL))
+			{	//Blue cymbal
+				(void) pack_fputs(buffer, fp);
+				(void) pack_fputs("1682964573\n", fp);
+			}
+
+			if((ptr->note[ctr]->note & 16) && (ptr->note[ctr]->flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL))
+			{	//Green cymbal
+				(void) pack_fputs(buffer, fp);
+				(void) pack_fputs("1683030076\n", fp);
 			}
 		}
 	}

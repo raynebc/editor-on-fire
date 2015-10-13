@@ -496,6 +496,10 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 					ncol = eof_color_silver;		//Force the pen note to draw in silver (undefined fingering)
 					noteflags |= EOF_NOTE_FLAG_SP;	//And trigger the selection of the appropriate corresponding border color
 				}
+				else if(track && (mask & eof_get_note_accent(eof_song, track, notenum)))
+				{	//If the note is accented
+					ncol = makecol(51, 51, 51);	//Draw the note in black
+				}
 				else
 				{
 					ncol = eof_colors[ctr].color;	//Assign the appropriate fret color

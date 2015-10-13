@@ -574,6 +574,8 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 				}
 			}
 		}//The note has valid gems, type and position
+
+		tp->note[i-1]->accent &= tp->note[i-1]->note;	//Clear all accent bits that don't have a corresponding gem that exists
 	}//For each note (in reverse order)
 
 	//Run another pass to check crazy notes overlapping with gems on their same lanes more than 1 note ahead
@@ -2120,6 +2122,22 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					}
 				break;
 
+				case 8:		//Accent note bitmasks
+					if(custom_data_size < 5)
+					{	//This data block is expected to be at least 5 bytes long
+						allegro_message("Error:  Invalid custom data block size (accent note bitmasks).  Aborting");
+						eof_log("Error:  Invalid custom data block size (accent note bitmasks).  Aborting", 1);
+						return 0;
+					}
+					if(sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT)
+					{	//Ensure this logic only runs for a legacy track
+						for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
+						{	//For each note in this track
+							sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->accent = pack_getc(fp);		//Read note accent bitmask
+						}
+					}
+				break;
+
 				default:	//Unknown custom data block ID
 					if(custom_data_size < 4)
 					{	//This is invalid, the size needed to have included the 4 byte ID
@@ -2442,7 +2460,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	unsigned long count,ctr,ctr2,tracknum;
 	unsigned long track_count,track_ctr,bookmark_count,track_custom_block_count,bitmask,fingerdefinitions;
 	char has_raw_midi_data, has_fp_beat_timings = 1;
-	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes;
+	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes,has_accent;
 
 	#define EOFNUMINISTRINGTYPES 9
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
@@ -3129,7 +3147,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		}//Write other tracks
 
 		//Write custom track data blocks
-		fingerdefinitions = has_fingerdefinitions = has_arrangement = ignore_tuning = has_capo = has_tech_notes = 0;
+		fingerdefinitions = has_fingerdefinitions = has_arrangement = ignore_tuning = has_capo = has_tech_notes = has_accent = 0;
 		if(track_ctr && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 		{	//If this is a pro guitar track
 			//Count the number of notes with finger definitions
@@ -3157,13 +3175,25 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			{	//If this track has any tech notes defined
 				has_tech_notes = 1;
 			}
+		}//If this is a pro guitar track
+		if(track_ctr && (sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT))
+		{	//If this is a legacy track
+			//Check if any notes use accent status
+			for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
+			{	//For each note in the track
+				if(eof_get_note_accent(sp, track_ctr, ctr))
+				{	//If at least one gem in the note is accented
+					has_accent = 1;
+					break;
+				}
+			}
 		}
-		track_custom_block_count = has_fingerdefinitions + has_arrangement + ignore_tuning + has_capo + has_tech_notes;
+		track_custom_block_count = has_fingerdefinitions + has_arrangement + ignore_tuning + has_capo + has_tech_notes + has_accent;
 		if(track_custom_block_count)
 		{	//If writing data in a custom data block
+			(void) pack_iputl(track_custom_block_count, fp);		//Write the number of custom data blocks
 			if(track_ctr && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If this is a pro guitar track
-				(void) pack_iputl(track_custom_block_count, fp);		//Write the number of custom data blocks
 				if(has_fingerdefinitions)
 				{	//Write finger definitions
 					(void) pack_iputl(fingerdefinitions + 4, fp);	//Write the number of bytes this block will contain (finger data and a 4 byte block ID)
@@ -3237,6 +3267,18 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 						(void) delete_file(tempfilename);	//And delete it
 					}
 				}//Write tech notes
+			}//If this is a pro guitar track
+			if(track_ctr && (sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT))
+			{	//If this is a legacy track
+				if(has_accent)
+				{	//Write accent note bitmasks
+					(void) pack_iputl(sp->legacy_track[tracknum]->notes + 4, fp);	//Write the number of bytes this block will contain (accent bitmask data and a 4 byte block ID)
+					(void) pack_iputl(8, fp);		//Write the accent note bitmask custom data block ID
+					for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
+					{	//For each note in the track
+						(void) pack_putc(eof_get_note_accent(sp, track_ctr, ctr), fp);	//Write this note's accent bitmask
+					}
+				}
 			}
 		}
 		else
@@ -3757,7 +3799,7 @@ unsigned char eof_get_note_eflags(EOF_SONG *sp, unsigned long track, unsigned lo
 	return 0;	//Return error
 }
 
-unsigned long eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long note)
+unsigned char eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	unsigned long tracknum;
 
@@ -3785,6 +3827,27 @@ unsigned long eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long
 			if(note < sp->pro_guitar_track[tracknum]->notes)
 			{
 				return sp->pro_guitar_track[tracknum]->note[note]->note;
+			}
+		break;
+	}
+
+	return 0;	//Return error
+}
+
+unsigned char eof_get_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks) || !track)
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				return sp->legacy_track[tracknum]->note[note]->accent;
 			}
 		break;
 	}
@@ -4059,7 +4122,7 @@ void eof_move_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note, un
 	}
 }
 
-void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long value)
+void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value)
 {
 // 	eof_log("eof_set_note_note() entered");
 
@@ -4075,6 +4138,7 @@ void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, un
 			if(note < sp->legacy_track[tracknum]->notes)
 			{
 				sp->legacy_track[tracknum]->note[note]->note = value;
+				sp->legacy_track[tracknum]->note[note]->accent &= value;	//Clear all accent bits that don't have a corresponding gem that exists
 			}
 		break;
 
@@ -4090,6 +4154,27 @@ void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, un
 			{
 				sp->pro_guitar_track[tracknum]->note[note]->note = value;
 				memset(sp->pro_guitar_track[tracknum]->note[note]->finger, 0, 8);	//Initialize all fingers to undefined
+			}
+		break;
+	}
+}
+
+void eof_set_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value)
+{
+// 	eof_log("eof_set_note_note() entered");
+
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				sp->legacy_track[tracknum]->note[note]->accent = value;
 			}
 		break;
 	}
@@ -6662,7 +6747,7 @@ unsigned long eof_get_highest_clipboard_fret(char *clipboardfile)
 	unsigned long sourcetrack = 0, copy_notes = 0;
 	unsigned long i, j, bitmask;
 	unsigned long highestfret = 0, currentfret;	//Used to find if any pasted notes would use a higher fret than the active track supports
-	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0};
+	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0};
 
 	if(!clipboardfile)
 	{	//If the passed clipboard filename is invalid
@@ -6709,7 +6794,7 @@ unsigned long eof_get_highest_clipboard_lane(char *clipboardfile)
 	unsigned long copy_notes = 0;
 	unsigned long i, j, bitmask;
 	unsigned long highestlane = 0;	//Used to find if any pasted notes would use a higher lane than the active track supports
-	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0};
+	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0};
 
 	if(!clipboardfile)
 	{	//If the passed clipboard filename is invalid

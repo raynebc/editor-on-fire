@@ -160,7 +160,7 @@ DIALOG eof_preferences_dialog[] =
 	{ eof_verified_edit_proc,204,206,40,20,  0,   0,   0,    0,      5,   0,   eof_etext3,     "0123456789", NULL },
 	{ d_agup_check_proc, 248, 337, 226, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short chords",NULL, NULL },
 	{ d_agup_check_proc, 16,  273, 340, 16,  2,   23,  0,    0,      1,   0,   "Apply crazy to repeated chords separated by a rest",NULL, NULL },
-	{ d_agup_check_proc, 248, 168, 182, 16,  2,   23,  0,    0,      1,   0,   "Save FoF/Phase Shift files",NULL, NULL },
+	{ d_agup_check_proc, 248, 168, 182, 16,  2,   23,  0,    0,      1,   0,   "Save FoF/GH/Phase Shift files",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1105,7 +1105,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[52].flags = eof_stop_playback_leave_focus ? D_SELECTED : 0;		//EOF leaving focus stops playback
 	eof_preferences_dialog[55].flags = eof_gp_import_truncate_short_chords ? D_SELECTED : 0;//GP import truncates short chords
 	eof_preferences_dialog[56].flags = eof_enforce_chord_density ? D_SELECTED : 0;			//Apply crazy to repeated chords separated by a rest
-	eof_preferences_dialog[57].flags = eof_write_fof_files ? D_SELECTED : 0;				//Save FoF/Phase Shift files
+	eof_preferences_dialog[57].flags = eof_write_fof_files ? D_SELECTED : 0;				//Save FoF/GH/Phase Shift files
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -2969,7 +2969,7 @@ int eof_save_helper(char *destfilename, char silent)
 	{	//If the user opted to save FoF related files
 		/* Save MIDI file */
 		(void) append_filename(eof_temp_filename, newfolderpath, "notes.mid", (int) sizeof(eof_temp_filename));
-		(void) eof_export_midi(eof_song, eof_temp_filename, 0, fixvoxpitches, fixvoxphrases);
+		(void) eof_export_midi(eof_song, eof_temp_filename, 0, fixvoxpitches, fixvoxphrases, 0);
 
 		/* Save INI file */
 		(void) append_filename(eof_temp_filename, newfolderpath, "song.ini", (int) sizeof(eof_temp_filename));
@@ -2992,23 +2992,27 @@ int eof_save_helper(char *destfilename, char silent)
 		}
 
 		/* Save GHWT drum animations */
-		(void) append_filename(eof_temp_filename, newfolderpath, "ghwt.array.txt", (int) sizeof(eof_temp_filename));
+		(void) append_filename(eof_temp_filename, newfolderpath, "ghwt_drum.array.txt", (int) sizeof(eof_temp_filename));
 		eof_write_ghwt_drum_animations(eof_song, eof_temp_filename);
+
+		/* Save GHWT MIDI variant */
+		(void) append_filename(eof_temp_filename, newfolderpath, "notes_ghwt.mid", (int) sizeof(eof_temp_filename));
+		(void) eof_export_midi(eof_song, eof_temp_filename, 0, fixvoxpitches, fixvoxphrases, 1);
 	}
 
 	if(eof_write_rb_files)
 	{	//If the user opted to also save RBN2 and RB3 pro guitar upgrade compliant MIDIs
 		(void) append_filename(eof_temp_filename, newfolderpath, "notes_rbn.mid", (int) sizeof(eof_temp_filename));
-		(void) eof_export_midi(eof_song, eof_temp_filename, 1, fixvoxpitches, fixvoxphrases);	//Write a RBN2 compliant MIDI
+		(void) eof_export_midi(eof_song, eof_temp_filename, 1, fixvoxpitches, fixvoxphrases, 0);	//Write a RBN2 compliant MIDI
 		if(eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS) || eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS_22) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR_22))
 		{	//If any of the pro guitar tracks are populated
 			//Write the pro guitar upgrade MIDI
 			(void) append_filename(eof_temp_filename, newfolderpath, "notes_pro.mid", (int) sizeof(eof_temp_filename));
-			(void) eof_export_midi(eof_song, eof_temp_filename, 2, fixvoxpitches, fixvoxphrases);	//Write a RB3 pro guitar upgrade compliant MIDI
+			(void) eof_export_midi(eof_song, eof_temp_filename, 2, fixvoxpitches, fixvoxphrases, 0);	//Write a RB3 pro guitar upgrade compliant MIDI
 
 			//Write the Rock Band MIDI that can be built by the C3 release of Magma
 			(void) append_filename(eof_temp_filename, newfolderpath, "notes_c3.mid", (int) sizeof(eof_temp_filename));
-			(void) eof_export_midi(eof_song, eof_temp_filename, 3, fixvoxpitches, fixvoxphrases);	//Write a MIDI containing the RBN and pro guitar content
+			(void) eof_export_midi(eof_song, eof_temp_filename, 3, fixvoxpitches, fixvoxphrases, 0);	//Write a MIDI containing the RBN and pro guitar content
 
 			//Write a DTA file for the pro guitar upgrade
 			(void) ustrcpy(eof_temp_filename, newfolderpath);
