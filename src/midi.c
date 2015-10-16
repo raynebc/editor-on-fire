@@ -872,8 +872,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{	//If this is a lane 6 gem (referred to as lane 5 for drums, seeing as bass drum doesn't use a lane)
 					if(format)
 					{	//If writing the GHWT MIDI variant
-						eof_add_midi_event(deltapos, 0x90, 105, vel, 0);	//Explicitly write this gem using note 105
-						eof_add_midi_event(deltapos + deltalength, 0x80, 105, vel, 0);
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 9, vel, 0);	//Explicitly write this gem using the MIDI note 9 higher than lane 1 gems (ie. 105 for expert difficulty)
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 9, vel, 0);
 					}
 					else
 					{
@@ -887,13 +887,21 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 				/* write forced HOPO */
 				if(noteflags & EOF_NOTE_FLAG_F_HOPO)
-				{	//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
-					if(deltapos > 0)
-					{	//Don't allow a number underflow
-						eof_add_midi_event(deltapos - 1, 0x80, midi_note_offset + 6, vel, 0);	//Place a HOPO off end marker 1 delta before this just in case a HOPO off phrase is in effect (the overlap logic will filter this if it isn't necessary)
+				{
+					if(format)
+					{	//If writing the GHWT MIDI variant
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 9, vel, 0);	//Explicitly write this marker using the MIDI note 9 higher than lane 1 gems (ie. 105 for expert difficulty)
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 9, vel, 0);
 					}
-					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 5, vel, 0);
-					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 5, vel, 0);
+					else
+					{	//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
+						if(deltapos > 0)
+						{	//Don't allow a number underflow
+							eof_add_midi_event(deltapos - 1, 0x80, midi_note_offset + 6, vel, 0);	//Place a HOPO off end marker 1 delta before this just in case a HOPO off phrase is in effect (the overlap logic will filter this if it isn't necessary)
+						}
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 5, vel, 0);
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 5, vel, 0);
+					}
 				}
 
 				/* write forced non-HOPO */
