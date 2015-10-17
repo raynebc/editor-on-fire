@@ -395,7 +395,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	char trackctr;							//Used in the temp data creation to handle Expert+
 	EOF_MIDI_TS_LIST *tslist=NULL;			//List containing TS changes
 	unsigned char rootvel;					//Used to write root notes for pro guitar tracks
-	unsigned long note, noteflags, notepos, deltapos;
+	unsigned long note, noteflags, notepos, deltapos, nextdeltapos;
 	unsigned char type;
 	int channel = 0, velocity = 0, scale, chord = 0, isslash = 0, bassnote = 0;	//Used for pro guitar export
 	unsigned long bitmask;
@@ -583,8 +583,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{	//For each note in the track
 					unsigned char accent = eof_get_note_accent(sp, j, i);
 					unsigned char accentctr, accentmask;
-					if(accent)
-					{	//If this note has one or more accented gems
+					if(accent && (eof_get_note_type(sp, j, i) == EOF_NOTE_AMAZING))
+					{	//If this note has one or more accented gems and is in the expert difficulty
 						for(accentctr = 0, accentmask = 1; accentctr < 8; accentctr++, accentmask <<= 1)
 						{	//For each lane in the note
 							if(accent & accentmask)
@@ -672,6 +672,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 				deltapos = eof_ConvertToDeltaTime(notepos,anchorlist,tslist,timedivision,1);	//Store the tick position of the note
 				deltalength = eof_ConvertToDeltaTime(notepos + length,anchorlist,tslist,timedivision,0) - deltapos;	//Store the number of delta ticks representing the note's length
+				if(i + 1 < eof_get_track_size(sp, j))
+				{	//If there is another note
+					nextdeltapos = eof_ConvertToDeltaTime(eof_get_note_pos(sp, j, i + 1), anchorlist, tslist, timedivision, 1);	//Store its tick position
+				}
+				else
+				{
+					nextdeltapos = 0;
+				}
 				if(deltalength < 1)
 				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 					deltalength = 1;
@@ -872,6 +880,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{	//If this is a lane 6 gem (referred to as lane 5 for drums, seeing as bass drum doesn't use a lane)
 					if(format)
 					{	//If writing the GHWT MIDI variant
+						long pad = EOF_DEFAULT_TIME_DIVISION / 16;	//To make this notation more visible in Feedback, pad to a minimum length of 1/64 (in #/4 meter) if possible
+						if(deltalength < pad)
+						{	//If the note being exported is shorter than 1/64
+							if(!nextdeltapos || (nextdeltapos > deltapos + pad))
+							{	//If there is no next note or there is one and it is far away enough
+								deltalength = pad;
+							}
+						}
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 9, vel, 0);	//Explicitly write this gem using the MIDI note 9 higher than lane 1 gems (ie. 105 for expert difficulty)
 						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 9, vel, 0);
 					}
@@ -890,6 +906,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{
 					if(format)
 					{	//If writing the GHWT MIDI variant
+						long pad = EOF_DEFAULT_TIME_DIVISION / 16;	//To make this notation more visible in Feedback, pad to a minimum length of 1/64 (in #/4 meter) if possible
+						if(deltalength < pad)
+						{	//If the note being exported is shorter than 1/64
+							if(!nextdeltapos || (nextdeltapos > deltapos + pad))
+							{	//If there is no next note or there is one and it is far away enough
+								deltalength = pad;
+							}
+						}
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 9, vel, 0);	//Explicitly write this marker using the MIDI note 9 higher than lane 1 gems (ie. 105 for expert difficulty)
 						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 9, vel, 0);
 					}
@@ -3926,36 +3950,74 @@ void eof_write_ghwt_drum_animations(EOF_SONG *sp, char *fn)
 		{	//If the note is in the expert difficulty
 			(void) snprintf(buffer, sizeof(buffer) - 1, "%lu\n", ptr->note[ctr]->pos);	//Build a string with the note's timestamp
 
+			if(ptr->note[ctr]->note & 1)
+			{	//Bass drum
+				(void) pack_fputs(buffer, fp);
+				(void) pack_fputs("2135490589\n", fp);
+				(void) pack_fputs(buffer, fp);
+				(void) pack_fputs("2134638621\n", fp);
+			}
+
 			if(ptr->note[ctr]->note & 2)
 			{	//Snare
 				(void) pack_fputs(buffer, fp);
 				(void) pack_fputs("1682767963\n", fp);
 			}
 
-			if((ptr->note[ctr]->note & 4) && (ptr->note[ctr]->flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL))
-			{	//Yellow cymbal
-				if((ptr->note[ctr]->flags & EOF_NOTE_FLAG_IS_TRILL) || (ptr->note[ctr]->flags & EOF_NOTE_FLAG_IS_TREMOLO))
-				{	//If the cymbal is in a drum roll or special drum roll phrase, export it as a "fast" hi hat
-					(void) pack_fputs(buffer, fp);
-					(void) pack_fputs("1682833461\n", fp);
+			if(ptr->note[ctr]->note & 4)
+			{
+				if(ptr->note[ctr]->flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL)
+				{	//Yellow cymbal
+					if((ptr->note[ctr]->flags & EOF_NOTE_FLAG_IS_TRILL) || (ptr->note[ctr]->flags & EOF_NOTE_FLAG_IS_TREMOLO))
+					{	//If the cymbal is in a drum roll or special drum roll phrase, export it as a "fast" hi hat
+						(void) pack_fputs(buffer, fp);
+						(void) pack_fputs("1682833461\n", fp);
+					}
+					else
+					{	//Otherwise export it as a normal hi hat
+						(void) pack_fputs(buffer, fp);
+						(void) pack_fputs("1682833500\n", fp);
+					}
 				}
 				else
-				{	//Otherwise export it as a normal hi hat
+				{	//Yellow tom
 					(void) pack_fputs(buffer, fp);
-					(void) pack_fputs("1682833500\n", fp);
+					(void) pack_fputs("1681850426\n", fp);
+					(void) pack_fputs(buffer, fp);
+					(void) pack_fputs("1682702394\n", fp);
 				}
 			}
 
-			if((ptr->note[ctr]->note & 8) && (ptr->note[ctr]->flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL))
-			{	//Blue cymbal
-				(void) pack_fputs(buffer, fp);
-				(void) pack_fputs("1682964573\n", fp);
+			if(ptr->note[ctr]->note & 8)
+			{
+				if(ptr->note[ctr]->flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL)
+				{	//Blue cymbal
+					(void) pack_fputs(buffer, fp);
+					(void) pack_fputs("1682964573\n", fp);
+				}
+				else
+				{	//Blue tom
+					(void) pack_fputs(buffer, fp);
+					(void) pack_fputs("1682636859\n", fp);
+					(void) pack_fputs(buffer, fp);
+					(void) pack_fputs("1681784891\n", fp);
+				}
 			}
 
-			if((ptr->note[ctr]->note & 16) && (ptr->note[ctr]->flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL))
-			{	//Green cymbal
-				(void) pack_fputs(buffer, fp);
-				(void) pack_fputs("1683030076\n", fp);
+			if(ptr->note[ctr]->note & 16)
+			{
+				if(ptr->note[ctr]->flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL)
+				{	//Green cymbal
+					(void) pack_fputs(buffer, fp);
+					(void) pack_fputs("1683030076\n", fp);
+				}
+				else
+				{	//Green tom
+					(void) pack_fputs(buffer, fp);
+					(void) pack_fputs("2135556125\n", fp);
+					(void) pack_fputs(buffer, fp);
+					(void) pack_fputs("2134704157\n", fp);
+				}
 			}
 		}
 	}

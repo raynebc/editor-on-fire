@@ -1092,6 +1092,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 				{	//If the note was successfully created
 					notenum = eof_get_track_size(eof_song, j) - 1;	//Get the index of the note that was just created
 					eof_set_note_flags(eof_song, j, notenum, temp_note.flags);	//Set the last created note's flags
+					eof_set_note_accent(eof_song, j, notenum, temp_note.accent);	//Set the last created note's accent bitmask
 
 					if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 					{	//If this is a pro guitar track
@@ -1554,6 +1555,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			flags |= temp_note.flags;	//Merge the pasted note's flags
 			eof_set_note_flags(eof_song, eof_selected_track, match, flags);	//Apply the updated flags to the overlapped note
 			eof_set_note_note(eof_song, eof_selected_track, match, eof_get_note_note(eof_song, eof_selected_track, match) | temp_note.note);	//Merge the note bitmask
+			eof_set_note_accent(eof_song, eof_selected_track, match, eof_get_note_accent(eof_song, eof_selected_track, match) | temp_note.accent);	//Merge the accent bitmask
 			//Erase ghost and legacy flags
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{
@@ -1567,6 +1569,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			if(new_note)
 			{
 				eof_set_note_flags(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.flags);
+				eof_set_note_accent(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.accent);
 				paste_pos[paste_count] = eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1);
 				paste_count++;
 			}

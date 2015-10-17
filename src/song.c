@@ -625,7 +625,7 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		}
 	}
 
-//Cleanup for pro drum notation
+//Cleanup for pro drum and accent notations
 	if(sp && (tp->parent->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
 	{	//If the track being cleaned is a drum track
 		unsigned lastcheckedgreenpos = 0;	//This will be used to prevent cymbal cleanup from operating on the same notes multiple times
@@ -677,6 +677,10 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 				tp->note[i]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_COMBO;	//Remove yellow cymbal/tom combo status
 				tp->note[i]->flags &= ~EOF_DRUM_NOTE_FLAG_B_COMBO;	//Remove blue cymbal/tom combo status
 				tp->note[i]->flags &= ~EOF_DRUM_NOTE_FLAG_G_COMBO;	//Remove green cymbal/tom combo status
+			}
+			if(tp->note[i]->accent)
+			{	//If the note has any gems with accent status
+				eof_set_accent_at_legacy_note_pos(tp, tp->note[i]->pos, tp->note[i]->accent, 1);	//Apply accent status to such gems on any notes in other difficulties at that position
 			}
 		}//For each note in the drum track
 	}//If the track being cleaned is a drum track
@@ -1257,6 +1261,38 @@ void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,unsi
 		else if(operation == 2)
 		{	//If the calling function indicated to toggle the flag
 			tp->note[ctr]->flags ^= flag;
+		}
+	}
+}
+
+void eof_set_accent_at_legacy_note_pos(EOF_LEGACY_TRACK *tp, unsigned long pos, unsigned long mask, char operation)
+{
+// 	eof_log("eof_set_accent_at_legacy_note_pos() entered");
+
+	unsigned long ctr;
+
+	if(tp == NULL)
+		return;
+
+	for(ctr = 0; ctr < tp->notes; ctr++)
+	{	//For each note starting with the one specified
+		if(tp->note[ctr]->pos > pos)
+			break;	//If there are no more notes at the specified note's position, stop looking
+
+		if(tp->note[ctr]->pos == pos)
+		{	//If this note is at the target position
+			if(operation == 0)
+			{	//If the calling function indicated to clear the specified accent bits
+				tp->note[ctr]->accent &= (~mask);
+			}
+			else if(operation == 1)
+			{	//If the calling function indicated to set the specified accent bits
+				tp->note[ctr]->accent |= mask;
+			}
+			else if(operation == 2)
+			{	//If the calling function indicated to toggle the specified accent bits
+				tp->note[ctr]->accent ^= mask;
+			}
 		}
 	}
 }

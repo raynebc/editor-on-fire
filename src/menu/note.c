@@ -2128,7 +2128,7 @@ int eof_menu_note_clear_orange(void)
 int eof_menu_note_toggle_accent_lane(unsigned int lanenum)
 {
 	unsigned long i;
-	unsigned char accent, mask, undo_made = 0;;
+	unsigned char mask, undo_made = 0;;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
 	if((eof_count_track_lanes(eof_song, eof_selected_track) < lanenum) || !lanenum)
@@ -2145,7 +2145,6 @@ int eof_menu_note_toggle_accent_lane(unsigned int lanenum)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{	//If the note is in the active instrument difficulty and is selected
-			accent = eof_get_note_accent(eof_song, eof_selected_track, i);
 			mask = 1 << (lanenum - 1);
 			if(eof_get_note_note(eof_song, eof_selected_track, i) & mask)
 			{	//If the note has a gem on the specified lane
@@ -2154,8 +2153,7 @@ int eof_menu_note_toggle_accent_lane(unsigned int lanenum)
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					undo_made = 1;
 				}
-				accent ^= mask;	//Toggle the accent bit for the specified lane
-				eof_set_note_accent(eof_song, eof_selected_track, i, accent);
+				eof_set_accent_at_legacy_note_pos(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum], eof_get_note_pos(eof_song, eof_selected_track, i), mask, 2);	//Toggle accent status from this lane for all notes at this position
 			}
 		}
 	}
@@ -2227,8 +2225,7 @@ int eof_menu_note_clear_accent_lane(unsigned int lanenum)
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					undo_made = 1;
 				}
-				accent ^= (1 << (lanenum - 1));	//Toggle the accent bit off for the specified lane
-				eof_set_note_accent(eof_song, eof_selected_track, i, accent);
+				eof_set_accent_at_legacy_note_pos(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum], eof_get_note_pos(eof_song, eof_selected_track, i), mask, 0);	//Clear accent status from this lane for all notes at this position
 			}
 		}
 	}
