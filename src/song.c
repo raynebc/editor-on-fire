@@ -6447,20 +6447,35 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 					targetpos--;	//Consider the tail's current position to end in the previous beat so that the grid snap logic will find it a grid snap position in that beat
 				}
 				eof_snap_logic(&eof_tail_snap, targetpos);	//Find grid snap positions before and after the tail's current ending position
-				if(!undo_made)
-				{	//Ensure an undo state was made before increasing the length
-					eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
-					undo_made = 1;
-				}
 				if(dir < 0)
 				{	//If the tail is being shortened by one grid snap
+					unsigned long newtailendpos;
+
 					if(eof_tail_snap.previous_snap > notepos)
-					{	//Only allow the tail to move if it will still be at least 1ms after the start of the note
-						eof_note_set_tail_pos(sp, eof_selected_track, i, eof_tail_snap.previous_snap);
+					{	//Only allow the tail to shorten to end at the previous grid snap if it will still end after the note begins
+						newtailendpos = eof_tail_snap.previous_snap;
+					}
+					else
+					{	//Otherwise enforce the minimum length of 1ms
+						newtailendpos = notepos + 1;
+					}
+					if(newtailendpos != notepos + notelength)
+					{	//If the note length is actually changing
+						if(!undo_made)
+						{	//Ensure an undo state was made before increasing the length
+							eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
+							undo_made = 1;
+						}
+						eof_note_set_tail_pos(sp, eof_selected_track, i, newtailendpos);
 					}
 				}
 				else
 				{	//If the tail is being lengthened by one grid snap
+					if(!undo_made)
+					{	//Ensure an undo state was made before increasing the length
+						eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
+						undo_made = 1;
+					}
 					eof_note_set_tail_pos(sp, eof_selected_track, i, eof_tail_snap.next_snap);
 				}
 				newnotelength = eof_get_note_length(sp, eof_selected_track, i);
