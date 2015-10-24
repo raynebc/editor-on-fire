@@ -3774,7 +3774,7 @@ char eof_note_edit_name[EOF_NAME_LENGTH+1] = {0};
 DIALOG eof_pro_guitar_note_dialog[] =
 {
 	/*	(proc)             (x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)       (d2) (dp)          (dp2)          (dp3) */
-	{d_agup_window_proc,    0,   48,  230, 452,2,   23,  0,    0,      0,         0,   "Edit pro guitar note",NULL, NULL },
+	{d_agup_window_proc,    0,   48,  230, 472,2,   23,  0,    0,      0,         0,   "Edit pro guitar note",NULL, NULL },
 	{d_agup_text_proc,      16,  80,  64,  8,  2,   23,  0,    0,      0,         0,   "Name:",      NULL,          NULL },
 	{d_agup_edit_proc,		74,  76,  134, 20, 2,   23,  0,    0, EOF_NAME_LENGTH,0,eof_note_edit_name,       NULL, NULL },
 
@@ -3835,11 +3835,11 @@ DIALOG eof_pro_guitar_note_dialog[] =
 	{d_agup_radio_proc,		128, 352, 54,  16, 2,   23,  0,    0,      4,         0,   "Down",       NULL,          NULL },
 	{d_agup_radio_proc,		180, 352, 46,  16, 2,   23,  0,    0,      4,         0,   "Any",        NULL,          NULL },
 
-	{d_agup_button_proc,    10,  460, 20,  28, 2,   23,  0,    D_EXIT, 0,         0,   "<-",         NULL,          NULL },
-	{d_agup_button_proc,    35,  460, 50,  28, 2,   23,  '\r', D_EXIT, 0,         0,   "OK",         NULL,          NULL },
-	{d_agup_button_proc,    90,  460, 50,  28, 2,   23,  0,    D_EXIT, 0,         0,   "Apply",      NULL,          NULL },
-	{d_agup_button_proc,    145, 460, 50,  28, 2,   23,  0,    D_EXIT, 0,         0,   "Cancel",     NULL,          NULL },
-	{d_agup_button_proc,    200, 460, 20,  28, 2,   23,  0,    D_EXIT, 0,         0,   "->",         NULL,          NULL },
+	{d_agup_button_proc,    10,  480, 20,  28, 2,   23,  0,    D_EXIT, 0,         0,   "<-",         NULL,          NULL },
+	{d_agup_button_proc,    35,  480, 50,  28, 2,   23,  '\r', D_EXIT, 0,         0,   "OK",         NULL,          NULL },
+	{d_agup_button_proc,    90,  480, 50,  28, 2,   23,  0,    D_EXIT, 0,         0,   "Apply",      NULL,          NULL },
+	{d_agup_button_proc,    145, 480, 50,  28, 2,   23,  0,    D_EXIT, 0,         0,   "Cancel",     NULL,          NULL },
+	{d_agup_button_proc,    200, 480, 20,  28, 2,   23,  0,    D_EXIT, 0,         0,   "->",         NULL,          NULL },
 
 	{d_agup_text_proc,      10,  372, 64,  8,  2,   23,  0,    0,      0,         0,   "Bass:",      NULL,          NULL },
 	{d_agup_radio_proc,		46,  372, 58,  16, 2,   23,  0,    0,      5,         0,   "Pop",        NULL,          NULL },
@@ -3855,6 +3855,7 @@ DIALOG eof_pro_guitar_note_dialog[] =
 	{d_agup_check_proc,		10,  432, 60,  16, 2,   23,  0,    0,      0,         0,   "Ignore",     NULL,          NULL },
 	{d_agup_check_proc,		87,  432, 65,  16, 2,   23,  0,    0,      0,         0,   "Sustain",    NULL,          NULL },
 	{d_agup_check_proc,		154, 432, 50,  16, 2,   23,  0,    0,      0,         0,   "Stop",       NULL,          NULL },
+	{d_agup_check_proc,		10,  452, 72,  16, 2,   23,  0,    0,      0,         0,   "Ghost HS",       NULL,          NULL },
 	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -4134,7 +4135,15 @@ int eof_menu_note_edit_pro_guitar_note(void)
 		}
 		if(!eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
 		{	//If tech view isn't in effect for the current track
-			eof_pro_guitar_note_dialog[71].flags = D_DISABLED;
+			eof_pro_guitar_note_dialog[71].flags = D_DISABLED;	//"Stop" status
+			if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS)
+			{	//Select "Ghost HS"
+				eof_pro_guitar_note_dialog[72].flags = D_SELECTED;
+			}
+			else
+			{	//Clear "Ghost HS"
+				eof_pro_guitar_note_dialog[72].flags = 0;
+			}
 		}
 		else
 		{
@@ -4146,6 +4155,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 			{	//Clear "Stop"
 				eof_pro_guitar_note_dialog[71].flags = 0;
 			}
+			eof_pro_guitar_note_dialog[72].flags = D_DISABLED;	//"Ghost HS" status
 		}
 
 		bitmask = 0;
@@ -4442,6 +4452,10 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					if(eof_pro_guitar_note_dialog[71].flags == D_SELECTED)
 					{	//Stop is selected
 						eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_STOP;
+					}
+					if(eof_pro_guitar_note_dialog[72].flags == D_SELECTED)
+					{	//Ghost HS is selected
+						eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS;
 					}
 
 					if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))

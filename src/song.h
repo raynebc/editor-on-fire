@@ -91,11 +91,15 @@
 #define EOF_NOTE_TFLAG_HAND       8 //This flag will represent a note that is within a handshape phrase, which is treated as a variation of an arpeggio, affecting export to RS2 XML
 #define EOF_NOTE_TFLAG_ARP_FIRST 16	//This flag will represent a note that is the first note within its arpeggio phrase
 #define EOF_NOTE_TFLAG_SORT      32 //This flag is applied to selected notes by eof_track_sort_notes() to allow it to recreate the note selection after sorting
+#define EOF_NOTE_TFLAG_GHOST_HS  64	//This flag will represent a note that is added during RS2 export that is observed during the chord list building and handshape exports, but ignored otherwise
 
 //The following extended flags pertain to pro guitar notes
-#define EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE  1		//This flag specifies a note that will export to RS2 format with the "ignore" status set to nonzero, for special uses
-#define EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN 2		//This flag specifies a note that will export to RS2 format with its sustain even when it's a chord without techniques that normally require chordNote tags
-#define EOF_PRO_GUITAR_NOTE_EFLAG_STOP    4		//This flag specifies a tech note that truncates the overlapped string's note at its position
+#define EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE   1	//This flag specifies a note that will export to RS2 format with the "ignore" status set to nonzero, for special uses
+#define EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN  2	//This flag specifies a note that will export to RS2 format with its sustain even when it's a chord without techniques that normally require chordNote tags
+#define EOF_PRO_GUITAR_NOTE_EFLAG_STOP     4	//This flag specifies a tech note that truncates the overlapped string's note at its position
+#define EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS 8	//This flag specifies a note that will export to RS2 format so that the chord tag written reflects ghost gems having been filtered out as per normal,
+												//	but the handshape tag written reflecting a chord where the ghost gems are included.  This allows the author to have multiple partial chords display
+												//	as if they all used the full chord's handshape in-game
 
 #define EOF_MAX_BEATS   32768
 #define EOF_MAX_PHRASES  1000
@@ -653,6 +657,7 @@ unsigned long eof_get_num_lyric_sections(EOF_SONG *sp, unsigned long track);	//R
 EOF_PHRASE_SECTION *eof_get_lyric_section(EOF_SONG *sp, unsigned long track, unsigned long sectionnum);	//Returns a pointer to the specified lyric section, or NULL on error
 void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourcenote, unsigned long desttrack, unsigned long pos, long length, char type);
 	//Copies the specified note to the specified track as a new note, returning a pointer to the newly created note structure, or NULL on error
+	//Temporary flags are not copied
 	//The specified position, length and type are applied to the new note.  Other note variables such as the bitmask/pitch and name/lyric text are copied as-is
 	//If the source is a pro guitar track and the destination is not, the source note's legacy bitmask is used if defined
 	//If the source and destination are both pro guitar tracks, the source note's fret array, finger array, ghost bitmask, legacy bitmask, bend strength, slide end position and extended flags are copied

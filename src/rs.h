@@ -72,7 +72,7 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 	//The function returns the number of unique chords contained in the list
 	//If there are no chords in the pro guitar track, or upon error, *results is set to NULL and 0 is returned
 	//If target is 1, then Rocksmith 1 authoring rules are also followed and chords that don't have at least two non string muted gems are not included
-	//Any chord that has the ignored temporary flag set is not included in the list
+	//Any chord that has the ignored temporary flag set is not included in the list unless it has the EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS flag set
 
 unsigned long eof_build_section_list(EOF_SONG *sp, unsigned long **results, unsigned long track);
 	//Parses the given chart, building a list of all unique section markers (case insensitive),

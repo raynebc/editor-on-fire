@@ -1522,6 +1522,11 @@ BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, char *text, uns
 			if(note->ghost & (1 << stringnum))
 			{	//This is a ghosted note
 				(void) snprintf(fretstring, sizeof(fretstring) - 1,"(%d)", note->frets[stringnum]);
+				if(note->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS)
+				{	//If this note has ghost handshape status
+					fillcol = eof_color_red;
+					textcol = eof_color_blue;
+				}
 			}
 			else
 			{	//This is a normal note
@@ -1731,6 +1736,12 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		if(np->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP)
 		{
 			buffer[index++] = 'k';	//In the symbols font, k is the stop status indicator
+		}
+		if(np->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS)
+		{
+			buffer[index++] = '(';
+			buffer[index++] = 'G';
+			buffer[index++] = ')';
 		}
 		if((tp->note != tp->technote) && eof_pro_guitar_note_has_tech_note(tp, note, NULL))
 		{	//If tech view is not in effect (this function isn't being used to generate the string being displayed in the tech not box), display an asterisk on notes that have an overlapping tech note
