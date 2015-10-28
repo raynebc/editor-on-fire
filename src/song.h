@@ -119,6 +119,7 @@
 //The following flags pertain to phrases
 #define EOF_LYRIC_LINE_FLAG_OVERDRIVE 1
 #define EOF_RS_ARP_HANDSHAPE          2	//A modifier for arpeggio sections that will cause the section to export to XML without "-arp" appended to the chord template name
+										//It will also not force notes within the phrase to have crazy status or for chords to split into single notes
 
 #define EOF_MAX_TEXT_EVENTS 4096
 

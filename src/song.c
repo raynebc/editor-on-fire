@@ -4597,13 +4597,16 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 	}
 	for(i = tp->notes; i > 0; i--)
 	{	//For each note in the track, in reverse order
-		/* ensure notes within an arpeggio phrase are marked as "crazy" */
+		/* ensure notes within an arpeggio phrase (but not a handshape phrase) are marked as "crazy" */
 		for(ctr = 0; ctr < tp->arpeggios; ctr++)
 		{	//For each arpeggio section in this track
 			if((tp->note[i-1]->pos >= tp->arpeggio[ctr].start_pos) && (tp->note[i-1]->pos <= tp->arpeggio[ctr].end_pos) && (tp->note[i-1]->type == tp->arpeggio[ctr].difficulty))
 			{	//If this note is in an arpeggio phrase and in the phrase's associated difficulty
-				tp->note[i-1]->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
-				break;
+				if(!(tp->arpeggio[ctr].flags & EOF_RS_ARP_HANDSHAPE))
+				{	//If this is explicitly an arpeggio phrase and NOT a handshape phrase
+					tp->note[i-1]->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
+					break;
+				}
 			}
 		}
 
