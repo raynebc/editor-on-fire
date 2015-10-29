@@ -605,14 +605,12 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 	}
 
 	if(eof_open_strum_enabled(track))
-	{	//If open strumming is enabled, check to ensure that open bass doesn't conflict with other notes/HOPOs/statuses
+	{	//If open strumming is enabled, check to ensure that open bass doesn't conflict with other notes/statuses
 		for(i = 0; i < tp->notes; i++)
 		{	//For each note in the track
 			if(tp->note[i]->note & 32)
 			{	//If this note contains open bass (lane 6)
 				tp->note[i]->note = 32;							//Clear all lanes except lane 6
-				tp->note[i]->flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear the forced HOPO on flag
-				tp->note[i]->flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Clear the forced HOPO off flag
 				tp->note[i]->flags &= (~EOF_NOTE_FLAG_CRAZY);	//Clear the crazy status
 			}
 		}
@@ -982,7 +980,7 @@ void eof_fixup_notes(EOF_SONG *sp)
 	{
 		for(j = 1; j < sp->tracks; j++)
 		{
-			eof_track_fixup_notes(sp, j, j == eof_selected_track);
+			eof_track_fixup_notes(sp, j, 1);
 		}
 	}
 }
@@ -6407,6 +6405,7 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(sp, eof_selected_track, i) == eof_note_type))
 		{	//If the note is selected and in the active instrument difficulty
+			next_note = eof_track_fixup_next_note(sp, track, i);	//Get the index of the next note in the active instrument difficulty
 			if(amount)
 			{	//If adjusted the note length by the specified number of ms
 				if(dir < 0)
@@ -6424,11 +6423,10 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 				}
 				else
 				{	//If the note length is to be increased
-					next_note = eof_track_fixup_next_note(sp, track, i);	//Get the index of the next note in the active instrument difficulty
 					if(next_note > 0)
 					{	//Check if the increase would be canceled due to being unable to overlap the next note
-						if((notepos + notelength + 1 >= eof_get_note_pos(sp, track, next_note)) && !(eof_get_note_flags(sp, track, i) & EOF_NOTE_FLAG_CRAZY))
-						{	//If this note cannot increase its length because it would overlap the next and the note isn't "crazy"
+						if((notepos + notelength + eof_min_note_distance >= eof_get_note_pos(sp, track, next_note)) && !(eof_get_note_flags(sp, track, i) & EOF_NOTE_FLAG_CRAZY))
+						{	//If this note cannot increase its length because it would overlap the next (taking the minimum note distance into account) and the note isn't "crazy"
 							continue;	//Skip adjusting this note
 						}
 					}
@@ -6444,6 +6442,7 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 			{	//If adjusting by the current grid snap value
 				unsigned long targetpos = notepos + notelength;	//The position from which the end of the note's tail will reposition
 				long beat = eof_get_beat(sp, targetpos);		//Get the beat in which the tail currently ends
+				unsigned long newtailendpos = targetpos;
 
 				if((dir < 0) && (beat > 0) && (beat < sp->beats) && (targetpos == sp->beat[beat]->pos))
 				{	//If the note is being shortened by a grid snap and the tail's current end position is found to be at the start of a beat
@@ -6452,8 +6451,6 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 				eof_snap_logic(&eof_tail_snap, targetpos);	//Find grid snap positions before and after the tail's current ending position
 				if(dir < 0)
 				{	//If the tail is being shortened by one grid snap
-					unsigned long newtailendpos;
-
 					if(eof_tail_snap.previous_snap > notepos)
 					{	//Only allow the tail to shorten to end at the previous grid snap if it will still end after the note begins
 						newtailendpos = eof_tail_snap.previous_snap;
@@ -6462,24 +6459,29 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 					{	//Otherwise enforce the minimum length of 1ms
 						newtailendpos = notepos + 1;
 					}
-					if(newtailendpos != notepos + notelength)
-					{	//If the note length is actually changing
-						if(!undo_made)
-						{	//Ensure an undo state was made before increasing the length
-							eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
-							undo_made = 1;
-						}
-						eof_note_set_tail_pos(sp, eof_selected_track, i, newtailendpos);
-					}
 				}
 				else
 				{	//If the tail is being lengthened by one grid snap
+					if(eof_tail_snap.next_snap > notepos + notelength)
+					{	//If the next grid snap position was able to be determined
+						if(next_note > 0)
+						{	//Check if the increase would be canceled due to being unable to overlap the next note
+							if((eof_tail_snap.next_snap + eof_min_note_distance >= eof_get_note_pos(sp, track, next_note)) && !(eof_get_note_flags(sp, track, i) & EOF_NOTE_FLAG_CRAZY))
+							{	//If this note cannot increase its length because it would overlap the next (taking the minimum note distance into account) and the note isn't "crazy"
+								continue;	//Skip adjusting this note
+							}
+						}
+						newtailendpos = eof_tail_snap.next_snap;
+					}
+				}
+				if(newtailendpos != notepos + notelength)
+				{	//If the note length is actually changing
 					if(!undo_made)
 					{	//Ensure an undo state was made before increasing the length
 						eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
 						undo_made = 1;
 					}
-					eof_note_set_tail_pos(sp, eof_selected_track, i, eof_tail_snap.next_snap);
+					eof_note_set_tail_pos(sp, eof_selected_track, i, newtailendpos);
 				}
 				newnotelength = eof_get_note_length(sp, eof_selected_track, i);
 				if(newnotelength > 1)

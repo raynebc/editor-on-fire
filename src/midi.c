@@ -692,18 +692,20 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				//Ensure open strum notes are prepared for export
 				if(eof_open_strum_enabled(j))
 				{	//If this is a non drum track with a sixth lane enabled
-					if(format)
-					{	//If writing the GHWT MIDI variant
-						if(note & 32)
-						{	//If this note has a gem on lane 6 (open strum)
+					if(note & 32)
+					{	//If this note has a gem on lane 6 (open strum)
+						if(format)
+						{	//If writing the GHWT MIDI variant
 							note = 31;	//Convert it to a 5 lane chord
 						}
-					}
-					else
-					{
-						if((note & ~32) && (note & 32))
-						{	//If this note has a gem on lane 6 (open strum) and any other lane
-							note = 32;	//Clear all lanes except lane 6
+						else
+						{
+							if(note & ~32)
+							{	//If this note also has a gem on any lanes other than 6
+								note = 32;	//Clear all lanes except lane 6
+							}
+							noteflags &= ~EOF_NOTE_FLAG_F_HOPO;		//Omit HOPO related statuses on the open strum note as they are not supported by non GHWT rhythm games
+							noteflags &= ~EOF_NOTE_FLAG_NO_HOPO;
 						}
 					}
 				}
@@ -858,7 +860,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 				}
 
-				/* write open bass note marker, if the feature was enabled during save */
+				/* write open strum note marker, if the feature was enabled during save */
 				if(eof_open_strum_enabled(j) && (note & 32))
 				{	//If this is an open strum note
 					if(featurerestriction == 0)

@@ -3213,25 +3213,22 @@ int eof_menu_hopo_auto(void)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If the note is selected
-			if(!((eof_selected_track == EOF_TRACK_BASS) && (eof_get_note_note(eof_song, eof_selected_track, i) & 32)))
-			{	//If the note is not an open bass strum note
-				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-				oldflags = flags;					//Save another copy of the original flags
-				flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO on flag
-				flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Clear the HOPO off flag
-				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-				{	//If this is a pro guitar note, ensure that various statuses are cleared (they would be invalid if this note was a HO/PO)
-					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Clear the hammer on flag
-					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
-					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
-				}
-				if(!undo_made && (flags != oldflags))
-				{	//If an undo state hasn't been made yet
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
-					undo_made = 1;
-				}
-				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			oldflags = flags;					//Save another copy of the original flags
+			flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO on flag
+			flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Clear the HOPO off flag
+			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If this is a pro guitar note, ensure that various statuses are cleared (they would be invalid if this note was a HO/PO)
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Clear the hammer on flag
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
 			}
+			if(!undo_made && (flags != oldflags))
+			{	//If an undo state hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+				undo_made = 1;
+			}
+			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 		}
 	}
 	eof_determine_phrase_status(eof_song, eof_selected_track);
@@ -3261,48 +3258,45 @@ int eof_menu_hopo_cycle(void)
 		{	//For each note in the active track
 			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 			{	//If the note is selected
-				if(!((eof_selected_track == EOF_TRACK_BASS) && (eof_get_note_note(eof_song, eof_selected_track, i) & 32)))
-				{	//If the note is not an open bass strum note
-					if(!undo_made)
-					{	//If an undo state hasn't been made yet
-						eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
-						undo_made = 1;
-					}
-					flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-					if(flags & EOF_NOTE_FLAG_F_HOPO)
-					{	//If the note was a forced on HOPO, make it a forced off HOPO
-						flags &= ~EOF_NOTE_FLAG_F_HOPO;	//Turn off forced on hopo
-						flags |= EOF_NOTE_FLAG_NO_HOPO;	//Turn on forced off hopo
-						if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-						{	//If this is a pro guitar note, ensure that Hammer on, Pull of and Tap statuses are cleared
-							flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Clear the hammer on flag
-							flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
-							flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
-						}
-					}
-					else if(flags & EOF_NOTE_FLAG_NO_HOPO)
-					{	//If the note was a forced off HOPO, make it an auto HOPO
-						flags &= ~EOF_NOTE_FLAG_F_HOPO;		//Clear the forced on hopo flag
-						flags &= ~EOF_NOTE_FLAG_NO_HOPO;	//Clear the forced off hopo flag
-						if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-						{	//If this is a pro guitar note, ensure that Hammer on, Pull of and Tap statuses are cleared
-							flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Clear the hammer on flag
-							flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
-							flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
-						}
-					}
-					else
-					{	//If the note was an auto HOPO, make it a forced on HOPO
-						flags |= EOF_NOTE_FLAG_F_HOPO;	//Turn on forced on hopo
-						if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-						{	//If this is a pro guitar note
-							flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Set the hammer on flag (default HOPO type)
-							flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
-							flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
-						}
-					}
-					eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+					undo_made = 1;
 				}
+				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+				if(flags & EOF_NOTE_FLAG_F_HOPO)
+				{	//If the note was a forced on HOPO, make it a forced off HOPO
+					flags &= ~EOF_NOTE_FLAG_F_HOPO;	//Turn off forced on hopo
+					flags |= EOF_NOTE_FLAG_NO_HOPO;	//Turn on forced off hopo
+					if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+					{	//If this is a pro guitar note, ensure that Hammer on, Pull of and Tap statuses are cleared
+						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Clear the hammer on flag
+						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
+						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
+					}
+				}
+				else if(flags & EOF_NOTE_FLAG_NO_HOPO)
+				{	//If the note was a forced off HOPO, make it an auto HOPO
+					flags &= ~EOF_NOTE_FLAG_F_HOPO;		//Clear the forced on hopo flag
+					flags &= ~EOF_NOTE_FLAG_NO_HOPO;	//Clear the forced off hopo flag
+					if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+					{	//If this is a pro guitar note, ensure that Hammer on, Pull of and Tap statuses are cleared
+						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Clear the hammer on flag
+						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
+						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
+					}
+				}
+				else
+				{	//If the note was an auto HOPO, make it a forced on HOPO
+					flags |= EOF_NOTE_FLAG_F_HOPO;	//Turn on forced on hopo
+					if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+					{	//If this is a pro guitar note
+						flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Set the hammer on flag (default HOPO type)
+						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
+						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
+					}
+				}
+				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 			}
 		}
 		eof_determine_phrase_status(eof_song, eof_selected_track);
@@ -3375,25 +3369,22 @@ int eof_menu_hopo_force_off(void)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{
-			if(!((eof_selected_track == EOF_TRACK_BASS) && (eof_get_note_note(eof_song, eof_selected_track, i) & 32)))
-			{	//If the note is not an open bass strum note
-				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-				oldflags = flags;					//Save another copy of the original flags
-				flags |= EOF_NOTE_FLAG_NO_HOPO;		//Set the HOPO off flag
-				flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO on flag
-				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-				{	//If this is a pro guitar note, ensure that Hammer on, Pull off, Tap and bend statuses are cleared
-					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Clear the hammer on flag
-					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
-					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
-				}
-				if(!undo_made && (flags != oldflags))
-				{	//If an undo state hasn't been made yet
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
-					undo_made = 1;
-				}
-				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			oldflags = flags;					//Save another copy of the original flags
+			flags |= EOF_NOTE_FLAG_NO_HOPO;		//Set the HOPO off flag
+			flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO on flag
+			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If this is a pro guitar note, ensure that Hammer on, Pull off, Tap and bend statuses are cleared
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Clear the hammer on flag
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
 			}
+			if(!undo_made && (flags != oldflags))
+			{	//If an undo state hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+				undo_made = 1;
+			}
+			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 		}
 	}
 	eof_determine_phrase_status(eof_song, eof_selected_track);

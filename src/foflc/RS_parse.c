@@ -61,11 +61,11 @@ void Export_RS(FILE *outf)
 		{
 			if(Lyrics.rocksmithver == 2)
 			{	//If Rocksmith 2014 format is being exported, the maximum length per lyric is 48 characters
-				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 48);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 48, 1);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Filter out characters suspected of causing the game to crash.
 			}
 			else
 			{	//Otherwise the lyric limit is 32 characters
-				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 32, 1);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Filter out characters suspected of causing the game to crash.
 			}
 			for(index1 = index2 = 0; (size_t)index1 < strlen(buffer2); index1++)
 			{	//For each character in the expanded XML string
@@ -105,7 +105,7 @@ void Export_RS(FILE *outf)
 	if(Lyrics.verbose)	printf("\nRocksmith XML export complete.  %lu lyrics written",Lyrics.piececount);
 }
 
-void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsize)
+void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsize, char rs_filter)
 {
 	size_t input_length, index = 0, ctr;
 
@@ -115,6 +115,9 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 	input_length = strlen(input);
 	for(ctr = 0; ctr < input_length; ctr++)
 	{	//For each character of the input string
+		if(rs_filter && ((input[ctr] == '(') || (input[ctr] == '}') || (input[ctr] == ',') || (input[ctr] == '/') || (input[ctr] == '\\') || (input[ctr] == ':') || (input[ctr] == '{') || (input[ctr] == '"') || (input[ctr] == ')')))
+			continue;	//If filtering out characters for Rocksmith, omit all of the above characters
+
 		if(input[ctr] == '\"')
 		{	//Expand quotation mark character
 			if(index + 6 + 1 > warnsize)

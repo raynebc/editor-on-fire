@@ -553,10 +553,10 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	(void) pack_fputs("<?xml version='1.0' encoding='UTF-8'?>\n", fp);
 	(void) pack_fputs("<song version=\"4\">\n", fp);
 	(void) pack_fputs("<!-- " EOF_VERSION_STRING " -->\n", fp);	//Write EOF's version in an XML comment
-	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->title, 64);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->title, 64, 0);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <title>%s</title>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
-	expand_xml_text(buffer2, sizeof(buffer2) - 1, arrangement_name, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, arrangement_name, 32, 0);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <arrangement>%s</arrangement>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
 	(void) pack_fputs("  <part>1</part>\n", fp);
@@ -610,13 +610,13 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <tuning string0=\"%d\" string1=\"%d\" string2=\"%d\" string3=\"%d\" string4=\"%d\" string5=\"%d\" />\n", tuning[0], tuning[1], tuning[2], tuning[3], tuning[4], tuning[5]);
 	(void) pack_fputs(buffer, fp);
-	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->artist, 256);	//Replace any special characters in the artist song property with escape sequences if necessary
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->artist, 256, 0);	//Replace any special characters in the artist song property with escape sequences if necessary
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <artistName>%s</artistName>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
-	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->album, 256);	//Replace any special characters in the album song property with escape sequences if necessary
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->album, 256, 0);	//Replace any special characters in the album song property with escape sequences if necessary
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <albumName>%s</albumName>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
-	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->year, 32);	//Replace any special characters in the year song property with escape sequences if necessary
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->year, 32, 0);	//Replace any special characters in the year song property with escape sequences if necessary
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <albumYear>%s</albumYear>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
 
@@ -866,7 +866,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				}
 			}
 
-			expand_xml_text(buffer2, sizeof(buffer2) - 1, notename, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+			expand_xml_text(buffer2, sizeof(buffer2) - 1, notename, 32, 0);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 			(void) snprintf(buffer, sizeof(buffer) - 1, "    <chordTemplate chordName=\"%s\" finger0=\"%s\" finger1=\"%s\" finger2=\"%s\" finger3=\"%s\" finger4=\"%s\" finger5=\"%s\" fret0=\"%ld\" fret1=\"%ld\" fret2=\"%ld\" fret3=\"%ld\" fret4=\"%ld\" fret5=\"%ld\"/>\n", buffer2, finger0, finger1, finger2, finger3, finger4, finger5, fret0, fret1, fret2, fret3, fret4, fret5);
 			(void) pack_fputs(buffer, fp);
 		}//For each of the entries in the unique chord list
@@ -912,7 +912,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	{	//If the loading text is defined
 		char expanded_text[513];	//A string to expand the user defined text into, long enough for the text length limit of 512 + 1 more character for NULL termination
 		(void) strftime(expanded_text, sizeof(expanded_text), sp->tags->loading_text, caltime);	//Expand any user defined calendar date/time tokens
-		expand_xml_text(buffer2, sizeof(buffer2) - 1, expanded_text, 512);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+		expand_xml_text(buffer2, sizeof(buffer2) - 1, expanded_text, 512, 0);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 
 		(void) eof_track_add_section(eof_song, track, EOF_RS_POPUP_MESSAGE, 0, 5100, 10100, 1, buffer2);	//Insert the expanded text as a popup message, setting the flag to nonzero to mark is as temporary
 		eof_track_pro_guitar_sort_popup_messages(tp);	//Sort the popup messages
@@ -947,7 +947,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		for(ctr = 0; ctr < tp->popupmessages; ctr++)
 		{	//For each popup message
 			//Add the popup message display control to the list
-			expand_xml_text(buffer2, sizeof(buffer2) - 1, tp->popupmessage[ctr].name, EOF_SECTION_NAME_LENGTH);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+			expand_xml_text(buffer2, sizeof(buffer2) - 1, tp->popupmessage[ctr].name, EOF_SECTION_NAME_LENGTH, 0);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 			stringlen = (size_t)snprintf(NULL, 0, "    <control time=\"%.3f\" code=\"ShowMessageBox(hint%lu, %s)\"/>\n", tp->popupmessage[ctr].start_pos / 1000.0, ctr + 1, buffer2) + 1;	//Find the number of characters needed to store this string
 			controls[controlctr].str = malloc(stringlen + 1);	//Allocate memory to build the string
 			if(!controls[controlctr].str)
@@ -1060,7 +1060,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		{	//For each beat in the chart
 			if(sp->beat[ctr]->contained_rs_section_event >= 0)
 			{	//If this beat has a Rocksmith section
-				expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[sp->beat[ctr]->contained_rs_section_event]->text, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+				expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[sp->beat[ctr]->contained_rs_section_event]->text, 32, 0);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 				(void) snprintf(buffer, sizeof(buffer) - 1, "    <section name=\"%s\" number=\"%d\" startTime=\"%.3f\"/>\n", buffer2, sp->beat[ctr]->contained_rs_section_event_instance_number, sp->beat[ctr]->fpos / 1000.0);
 				(void) pack_fputs(buffer, fp);
 			}
@@ -1093,7 +1093,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			{	//If the event is marked as a Rocksmith event
 				if(!sp->text_event[ctr]->track || (sp->text_event[ctr]->track  == track))
 				{	//If the event applies to the specified track
-					expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[ctr]->text, 256);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+					expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[ctr]->text, 256, 0);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 					(void) snprintf(buffer, sizeof(buffer) - 1, "    <event time=\"%.3f\" code=\"%s\"/>\n", sp->beat[sp->text_event[ctr]->beat]->fpos / 1000.0, buffer2);
 					(void) pack_fputs(buffer, fp);
 				}
@@ -1594,10 +1594,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	(void) pack_fputs("<?xml version='1.0' encoding='UTF-8'?>\n", fp);
 	(void) pack_fputs("<song version=\"7\">\n", fp);
 	(void) pack_fputs("<!-- " EOF_VERSION_STRING " -->\n", fp);	//Write EOF's version in an XML comment
-	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->title, 64);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->title, 64, 0);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <title>%s</title>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
-	expand_xml_text(buffer2, sizeof(buffer2) - 1, arrangement_name, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, arrangement_name, 32, 0);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <arrangement>%s</arrangement>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
 	(void) pack_fputs("  <part>1</part>\n", fp);
@@ -1656,15 +1656,15 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	(void) pack_fputs(buffer, fp);
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <capo>%d</capo>\n", tp->capo);
 	(void) pack_fputs(buffer, fp);
-	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->artist, 256);	//Replace any special characters in the artist song property with escape sequences if necessary
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->artist, 256, 0);	//Replace any special characters in the artist song property with escape sequences if necessary
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <artistName>%s</artistName>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <artistNameSort>%s</artistNameSort>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
-	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->album, 256);	//Replace any special characters in the album song property with escape sequences if necessary
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->album, 256, 0);	//Replace any special characters in the album song property with escape sequences if necessary
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <albumName>%s</albumName>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
-	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->year, 32);	//Replace any special characters in the year song property with escape sequences if necessary
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->year, 32, 0);	//Replace any special characters in the year song property with escape sequences if necessary
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <albumYear>%s</albumYear>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
 	(void) pack_fputs("  <crowdSpeed>1</crowdSpeed>\n", fp);
@@ -2147,7 +2147,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			{
 				suffix = no_arp;	//This chord template is not for an arpeggio chord, apply no suffix
 			}
-			expand_xml_text(buffer2, sizeof(buffer2) - 1, notename, 32 - 4);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field (reserve 4 characters for the "-arp" suffix)
+			expand_xml_text(buffer2, sizeof(buffer2) - 1, notename, 32 - 4, 0);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field (reserve 4 characters for the "-arp" suffix)
 			(void) snprintf(buffer, sizeof(buffer) - 1, "    <chordTemplate chordName=\"%s\" displayName=\"%s%s\" finger0=\"%s\" finger1=\"%s\" finger2=\"%s\" finger3=\"%s\" finger4=\"%s\" finger5=\"%s\" fret0=\"%ld\" fret1=\"%ld\" fret2=\"%ld\" fret3=\"%ld\" fret4=\"%ld\" fret5=\"%ld\"/>\n", buffer2, buffer2, suffix, finger0, finger1, finger2, finger3, finger4, finger5, fret0, fret1, fret2, fret3, fret4, fret5);
 			(void) pack_fputs(buffer, fp);
 		}//For each of the entries in the unique chord list
@@ -2290,7 +2290,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		{	//For each beat in the chart
 			if(sp->beat[ctr]->contained_rs_section_event >= 0)
 			{	//If this beat has a Rocksmith section
-				expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[sp->beat[ctr]->contained_rs_section_event]->text, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+				expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[sp->beat[ctr]->contained_rs_section_event]->text, 32, 0);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 				(void) snprintf(buffer, sizeof(buffer) - 1, "    <section name=\"%s\" number=\"%d\" startTime=\"%.3f\"/>\n", buffer2, sp->beat[ctr]->contained_rs_section_event_instance_number, sp->beat[ctr]->fpos / 1000.0);
 				(void) pack_fputs(buffer, fp);
 			}
@@ -2323,7 +2323,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			{	//If the event is marked as a Rocksmith event
 				if(!sp->text_event[ctr]->track || (sp->text_event[ctr]->track  == track))
 				{	//If the event applies to the specified track
-					expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[ctr]->text, 256);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+					expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[ctr]->text, 256, 0);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 					(void) snprintf(buffer, sizeof(buffer) - 1, "    <event time=\"%.3f\" code=\"%s\"/>\n", sp->beat[sp->text_event[ctr]->beat]->fpos / 1000.0, buffer2);
 					(void) pack_fputs(buffer, fp);
 				}
@@ -5025,7 +5025,7 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 		}
 
 		//Write the phrase definition using the highest difficulty found among all instances of the phrase
-		expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[sectionlist[ctr]]->text, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+		expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[sectionlist[ctr]]->text, 32, 1);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Filter out characters suspected of causing the game to crash.
 		(void) snprintf(buffer, sizeof(buffer) - 1, "    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"%u\" name=\"%s\" solo=\"0\"/>\n", ongoingmaxdiff, buffer2);
 		(void) pack_fputs(buffer, fp);
 	}//For each of the entries in the unique section (RS phrase) list

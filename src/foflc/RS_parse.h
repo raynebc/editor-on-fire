@@ -6,13 +6,14 @@ void Export_RS(FILE *outf);
 void RS_Load(FILE *inf);
 	//Perform all code necessary to load a Rocksmith format lyric file
 
-void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsize);
+void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsize, char rs_filter);
 	//Copies the input string into the specified buffer of the given size.  Any of the characters that XML requires to be escaped
 	//are converted into the appropriate character sequence (ie. ' becomes &apos;).  If the expanded string's length is longer
 	//than the given warning value, the user is given a warning message that the string will need to be shortened and the string
 	//is truncated to be warnsize number of characters.  If warnsize is zero, no check or truncation is performed.
 	//If size is zero, the function returns without doing anything.  Otherwise the buffer is guaranteed to be NULL terminated
 	//If warnsize is larger than size, the function returns without doing anything.
+	//If rs_filter is nonzero, the following characters are not copied to the buffer:  ( } ,  /  \  : { " )
 
 void shrink_xml_text(char *buffer, size_t size, char *input);
 	//Does the reverse of expand_xml_text(), converting each escape sequence into the appropriate individual character.
