@@ -17,13 +17,18 @@ int eof_verified_edit_proc(int msg, DIALOG *d, int c)
 {
 	int i;
 	char * string = NULL;
-	int key_list[32] = {KEY_BACKSPACE, KEY_DEL, KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_ESC, KEY_ENTER};
+	#define KEY_LIST_SIZE 9
+	int key_list[32] = {KEY_BACKSPACE, KEY_DEL, KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_ESC, KEY_ENTER, KEY_TAB};
 	int match = 0;
 	unsigned c2 = (unsigned)c;	//Force cast this to unsigned because Splint is incapable of avoiding a false positive detecting it as negative despite assertions proving otherwise
+	static char tabused = 0;	//Tracks whether the tab key was pressed but not completely processed yet
 
 	if(msg == MSG_CHAR)
 	{
-		for(i = 0; i < 8; i++)
+		if(c2 >> 8 == KEY_TAB)
+			tabused = 1;
+
+		for(i = 0; i < KEY_LIST_SIZE; i++)
 		{	//Check each of the pre-defined allowable keys
 			if(c2 >> 8 == key_list[i])			//If the input is permanently allowed
 			{
@@ -54,6 +59,11 @@ int eof_verified_edit_proc(int msg, DIALOG *d, int c)
 	{	//If this field wants focus
 		if(!eof_click_changes_dialog_focus)
 		{	//If the user preference to require a mouse click to change field focus is not enabled
+			return d_agup_edit_proc(msg,d,c);	//Allow the dialog system to carry out normal logic
+		}
+		if(tabused)
+		{	//If this dialog message was preceded by a tab keypress
+			tabused = 0;
 			return d_agup_edit_proc(msg,d,c);	//Allow the dialog system to carry out normal logic
 		}
 		if(d->flags & EOF_MSG_BUTTONFOCUS)

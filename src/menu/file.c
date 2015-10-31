@@ -2823,7 +2823,7 @@ int eof_save_helper(char *destfilename, char silent)
 		}
 	}
 
-	/* check if any chords have manually defined names with parentheses, which will cause Rocksmith to malfunction */
+	/* check if any chords have manually defined names with certain characters such as parentheses, which will cause Rocksmith to malfunction */
 	if(!silent)
 	{	//If checks and warnings aren't suppressed
 		if(eof_write_rs_files || eof_write_rs2_files)
@@ -2850,13 +2850,13 @@ int eof_save_helper(char *destfilename, char silent)
 							name = eof_get_note_name(eof_song, ctr, ctr2);	//Get pointer to the chord's name
 							if(name)
 							{	//If the name was retrievable
-								if(strchr(name, '(') || strchr(name, ')'))
-								{	//If the name is manually defined and contains either the opening or closing parenthesis character
+								if(rs_filter_string(name))
+								{	//If the name contains any invalid characters
 									eof_2d_render_top_option = 32;					//Change the user preference to render note names at the top of the piano roll
 									eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Render the track so the user can see where the correction needs to be made, along with the RS section in question
 									eof_clear_input();
-									if(!user_prompted && alert("At least one chord has a defined name that has parentheses.", "This can cause Rocksmith to crash or hang.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-									{	//If the user hasn't already answered this prompt, and doesn't opt to correct the issue
+									if(!user_prompted && alert("At least one chord has an unaccepted character: ( } ,  /  \\  : { \" )", "This can cause Rocksmith to crash or hang and will be removed.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+									{	//If the user hasn't already answered this prompt, and opts to correct the issue
 										eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
 										return 1;	//Return cancellation
 									}
@@ -2871,6 +2871,40 @@ int eof_save_helper(char *destfilename, char silent)
 			}//For each track (until the user is warned about any offending chord names)
 		}//If the user wants to save Rocksmith capable files
 	}//If checks and warnings aren't suppressed
+
+	if(!silent)
+	{	//If checks and warnings aren't suppressed
+		int suggested = 0;
+
+		eof_process_beat_statistics(eof_song, eof_selected_track);
+		for(ctr = 1; ctr < eof_song->beats; ctr++)
+		{	//For each beat after the first
+			if(eof_song->beat[ctr]->contains_ts_change)
+			{	//If this beat has a time signature change
+				if((eof_song->beat[ctr - 1]->beat_within_measure >= 0) && (eof_song->beat[ctr - 1]->beat_within_measure != eof_song->beat[ctr - 1]->num_beats_in_measure - 1))
+				{	//If the previous beat has a time signature in effect, but it wasn't the last beat in its measure (the beat_within_measure stat is numbered starting with 0)
+					suggested = eof_song->beat[ctr - 1]->beat_within_measure + 1;	//Track the last beat number in the measure and account for the zero numbering
+					for(ctr = ctr - 1; ctr > 0; ctr--)
+					{	//For each of the previous beats
+						if(eof_song->beat[ctr]->beat_within_measure == 0)
+						{	//If this is the first beat in the affected measure
+							break;
+						}
+					}
+					(void) snprintf(newfolderpath, sizeof(newfolderpath) - 1, "(Suggested T/S is %d/%d).  Cancel save?", suggested, eof_song->beat[ctr]->beat_unit);	//Determine a suitable time signature to suggest
+					eof_selected_beat = ctr;	//Select the affected beat marker
+					eof_beat_stats_cached = 0;
+					eof_seek_and_render_position(eof_selected_track, eof_note_type, eof_song->beat[ctr]->pos);	//seek to the beat in question and render
+					eof_clear_input();
+					if(alert("At least one measure is interrupted by a time signature.", "This can cause problems in some rhythm games.", newfolderpath, "&Yes", "&No", 'y', 'n') == 1)
+					{	//If the user opts to correct the issue
+						return 1;	//Return cancellation
+					}
+					break;
+				}
+			}
+		}
+	}
 
 	/* build the target file name */
 	if(destfilename == NULL)

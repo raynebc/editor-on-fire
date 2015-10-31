@@ -29,7 +29,7 @@ MENU eof_beat_time_signature_menu[] =
 	{"&3/4", eof_menu_beat_ts_3_4, NULL, 0, NULL},
 	{"&5/4", eof_menu_beat_ts_5_4, NULL, 0, NULL},
 	{"&6/4", eof_menu_beat_ts_6_4, NULL, 0, NULL},
-	{"&Custom", eof_menu_beat_ts_custom, NULL, 0, NULL},
+	{"&Custom\tShift+I", eof_menu_beat_ts_custom, NULL, 0, NULL},
 	{eof_ts_menu_off_text, eof_menu_beat_ts_off, NULL, 0, NULL},
 	{"Clear all", eof_menu_beat_remove_ts, NULL, 0, NULL},
 	{"Con&Vert", eof_menu_beat_ts_convert, NULL, 0, NULL},

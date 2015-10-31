@@ -3846,7 +3846,7 @@ DIALOG eof_pro_guitar_note_dialog[] =
 	{d_agup_check_proc,		10,  432, 60,  16, 2,   23,  0,    0,      0,         0,   "Ignore",     NULL,          NULL },
 	{d_agup_check_proc,		87,  432, 65,  16, 2,   23,  0,    0,      0,         0,   "Sustain",    NULL,          NULL },
 	{d_agup_check_proc,		154, 432, 50,  16, 2,   23,  0,    0,      0,         0,   "Stop",       NULL,          NULL },
-	{d_agup_check_proc,		10,  452, 72,  16, 2,   23,  0,    0,      0,         0,   "Ghost HS",       NULL,          NULL },
+	{d_agup_check_proc,		10,  452, 78,  16, 2,   23,  0,    0,      0,         0,   "Ghost HS",       NULL,          NULL },
 	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 

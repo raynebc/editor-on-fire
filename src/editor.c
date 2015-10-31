@@ -1656,20 +1656,33 @@ if(eof_key_code == KEY_PAUSE)
 		eof_use_key();
 	}
 
+	/* define custom time signature (SHIFT+I) */
 	/* toggle info panel rendering (CTRL+I) */
 	/* toggle ignore status (CTRL+SHIFT+I in a pro guitar track) */
-	if(KEY_EITHER_CTRL && (eof_key_char == 'i'))
+	if(eof_key_char == 'i')
 	{
-		if(!KEY_EITHER_SHIFT)
-		{	//CTRL is held but SHIFT is not
-			eof_disable_info_panel = 1 - eof_disable_info_panel;
+		if(KEY_EITHER_CTRL)
+		{	//If CTRL is held
+			if(!KEY_EITHER_SHIFT)
+			{	//CTRL is held but SHIFT is not
+				eof_disable_info_panel = 1 - eof_disable_info_panel;
+			}
+			else
+			{	//Both CTRL and SHIFT are held
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				(void) eof_menu_note_toggle_rs_ignore();
+			}
+			eof_use_key();
 		}
 		else
-		{	//Both CTRL and SHIFT are held
-			eof_shift_used = 1;	//Track that the SHIFT key was used
-			(void) eof_menu_note_toggle_rs_ignore();
+		{	//CTRL is not held
+			if(KEY_EITHER_SHIFT)
+			{	//SHIFT is held but CTRL is not
+				(void) eof_menu_beat_ts_custom();
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				eof_use_key();
+			}
 		}
-		eof_use_key();
 	}
 
 	/* Hold and Classic input method logic */

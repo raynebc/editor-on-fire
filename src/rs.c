@@ -866,7 +866,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				}
 			}
 
-			expand_xml_text(buffer2, sizeof(buffer2) - 1, notename, 32, 0);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+			expand_xml_text(buffer2, sizeof(buffer2) - 1, notename, 32, 1);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Filter out characters suspected of causing the game to crash.
 			(void) snprintf(buffer, sizeof(buffer) - 1, "    <chordTemplate chordName=\"%s\" finger0=\"%s\" finger1=\"%s\" finger2=\"%s\" finger3=\"%s\" finger4=\"%s\" finger5=\"%s\" fret0=\"%ld\" fret1=\"%ld\" fret2=\"%ld\" fret3=\"%ld\" fret4=\"%ld\" fret5=\"%ld\"/>\n", buffer2, finger0, finger1, finger2, finger3, finger4, finger5, fret0, fret1, fret2, fret3, fret4, fret5);
 			(void) pack_fputs(buffer, fp);
 		}//For each of the entries in the unique chord list
@@ -2147,7 +2147,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			{
 				suffix = no_arp;	//This chord template is not for an arpeggio chord, apply no suffix
 			}
-			expand_xml_text(buffer2, sizeof(buffer2) - 1, notename, 32 - 4, 0);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field (reserve 4 characters for the "-arp" suffix)
+			expand_xml_text(buffer2, sizeof(buffer2) - 1, notename, 32 - 4, 1);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field (reserve 4 characters for the "-arp" suffix).  Filter out characters suspected of causing the game to crash.
 			(void) snprintf(buffer, sizeof(buffer) - 1, "    <chordTemplate chordName=\"%s\" displayName=\"%s%s\" finger0=\"%s\" finger1=\"%s\" finger2=\"%s\" finger3=\"%s\" finger4=\"%s\" finger5=\"%s\" fret0=\"%ld\" fret1=\"%ld\" fret2=\"%ld\" fret3=\"%ld\" fret4=\"%ld\" fret5=\"%ld\"/>\n", buffer2, buffer2, suffix, finger0, finger1, finger2, finger3, finger4, finger5, fret0, fret1, fret2, fret3, fret4, fret5);
 			(void) pack_fputs(buffer, fp);
 		}//For each of the entries in the unique chord list

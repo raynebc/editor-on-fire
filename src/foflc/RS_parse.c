@@ -105,6 +105,30 @@ void Export_RS(FILE *outf)
 	if(Lyrics.verbose)	printf("\nRocksmith XML export complete.  %lu lyrics written",Lyrics.piececount);
 }
 
+int rs_filter_char(char character)
+{
+	if((character == '(') || (character == '}') || (character == ',') || (character == '/') || (character == '\\') || (character == ':') || (character == '{') || (character == '"') || (character == ')'))
+			return 1;
+
+	return 0;
+}
+
+int rs_filter_string(char *string)
+{
+	unsigned long ctr;
+
+	if(!string)
+		return -1;
+
+	for(ctr = 0; string[ctr] != '\0'; ctr++)
+	{	//For each character in the string until the terminator is reached
+		if(rs_filter_char(string[ctr]))	//If the character is rejected by the filter
+			return 1;
+	}
+
+	return 0;
+}
+
 void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsize, char rs_filter)
 {
 	size_t input_length, index = 0, ctr;
@@ -115,8 +139,8 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 	input_length = strlen(input);
 	for(ctr = 0; ctr < input_length; ctr++)
 	{	//For each character of the input string
-		if(rs_filter && ((input[ctr] == '(') || (input[ctr] == '}') || (input[ctr] == ',') || (input[ctr] == '/') || (input[ctr] == '\\') || (input[ctr] == ':') || (input[ctr] == '{') || (input[ctr] == '"') || (input[ctr] == ')')))
-			continue;	//If filtering out characters for Rocksmith, omit all of the above characters
+		if(rs_filter & rs_filter_char(input[ctr]))
+			continue;	//If filtering out characters for Rocksmith, omit affected characters
 
 		if(input[ctr] == '\"')
 		{	//Expand quotation mark character

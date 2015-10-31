@@ -6,6 +6,14 @@ void Export_RS(FILE *outf);
 void RS_Load(FILE *inf);
 	//Perform all code necessary to load a Rocksmith format lyric file
 
+int rs_filter_char(char character);
+	//Returns nonzero if character is any of the following characters:  ( } ,  /  \  : { " )
+	//These characters can cause Rocksmith to crash if they are present in various free-text fields like chord names, lyric text or phrase names
+	//Zero is returned if the character passed is not any of the offending characters
+int rs_filter_string(char *string);
+	//Returns 1 if any character in the provided string is considered a filtered character by rs_filter_char()
+	//Returns -1 on error
+
 void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsize, char rs_filter);
 	//Copies the input string into the specified buffer of the given size.  Any of the characters that XML requires to be escaped
 	//are converted into the appropriate character sequence (ie. ' becomes &apos;).  If the expanded string's length is longer

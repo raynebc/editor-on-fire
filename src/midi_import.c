@@ -1763,7 +1763,7 @@ set_window_title(debugtext);
 								phraseptr->name[0] = '\0';
 							}
 
-							/* rb pro markers */
+							/* rb3 pro drum markers */
 							if(prodrums)
 							{	//If the track was already found to have these markers
 								if(eof_import_events[i]->event[j]->d1 == RB3_DRUM_YELLOW_FORCE)

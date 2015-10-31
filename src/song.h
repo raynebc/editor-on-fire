@@ -424,6 +424,7 @@ typedef struct
 	double fpos;
 
 	//These variables, set with eof_process_beat_statistics(), track various properties of the beat to relieve rendering functions of some processing
+	//beat_within_measure is numbered starting with 0
 	unsigned long measurenum;
 	int beat_within_measure, num_beats_in_measure, beat_unit, contained_section_event, contained_rs_section_event, contained_rs_section_event_instance_number;
 	char contains_tempo_change, contains_ts_change, contains_end_event;
