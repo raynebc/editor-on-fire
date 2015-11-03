@@ -6466,7 +6466,7 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 					{	//If the next grid snap position was able to be determined
 						if(next_note > 0)
 						{	//Check if the increase would be canceled due to being unable to overlap the next note
-							if((eof_tail_snap.next_snap + eof_min_note_distance >= eof_get_note_pos(sp, track, next_note)) && !(eof_get_note_flags(sp, track, i) & EOF_NOTE_FLAG_CRAZY))
+							if((notepos + notelength + eof_min_note_distance >= eof_get_note_pos(sp, track, next_note)) && !(eof_get_note_flags(sp, track, i) & EOF_NOTE_FLAG_CRAZY))
 							{	//If this note cannot increase its length because it would overlap the next (taking the minimum note distance into account) and the note isn't "crazy"
 								continue;	//Skip adjusting this note
 							}

@@ -585,7 +585,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					unsigned char accentctr, accentmask;
 					if(accent && (eof_get_note_type(sp, j, i) == EOF_NOTE_AMAZING))
 					{	//If this note has one or more accented gems and is in the expert difficulty
-						for(accentctr = 0, accentmask = 1; accentctr < 8; accentctr++, accentmask <<= 1)
+						for(accentctr = 0, accentmask = 1; accentctr < 6; accentctr++, accentmask <<= 1)
 						{	//For each lane in the note
 							if(accent & accentmask)
 							{	//If this lane is accented

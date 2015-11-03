@@ -254,9 +254,12 @@ int eof_lookup_played_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsign
 
 	if(tp == NULL)
 		return -1;	//Invalid track pointer
-	if((stringnum >= tp->numstrings) || (fretnum > tp->numfrets))
-		return -1;	//Invalid string number or fret number
+	if((stringnum >= tp->numstrings) || ((fretnum & 0x7F) > tp->numfrets))
+		return -1;	//Invalid string number or fret number (after masking out the muting bit)
+	if(fretnum == 0xFF)
+		return -1;	//The fret value is undefined
 
+	fretnum &= 0x7F;	//Mask out the muting bit to reflect the defined fret value
 	if(tp->ignore_tuning)
 	{	//If the chord detection is to ignore this track's tuning and assume standard
 		notenum = eof_lookup_default_string_tuning(tp, track, stringnum);	//Look up the default tuning for this string
