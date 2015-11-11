@@ -6,14 +6,14 @@ void Export_RS(FILE *outf);
 void RS_Load(FILE *inf);
 	//Perform all code necessary to load a Rocksmith format lyric file
 
-int rs_filter_char(char character);
-	//Returns nonzero if character is any of the following characters:  ( } ,  /  \  : { " )
+int rs_filter_char(char character, char rs_filter);
+	//Returns nonzero if character is any of the following characters:  ( } ,  \  : { " )
+	//If rs_filter is greater than 1, the forward slash character is also not copied to the buffer
 	//These characters can cause Rocksmith to crash if they are present in various free-text fields like chord names, lyric text or phrase names
 	//Zero is returned if the character passed is not any of the offending characters
-int rs_filter_string(char *string);
+int rs_filter_string(char *string, char rs_filter);
 	//Returns 1 if any character in the provided string is considered a filtered character by rs_filter_char()
 	//Returns -1 on error
-
 void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsize, char rs_filter);
 	//Copies the input string into the specified buffer of the given size.  Any of the characters that XML requires to be escaped
 	//are converted into the appropriate character sequence (ie. ' becomes &apos;).  If the expanded string's length is longer
@@ -21,7 +21,8 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 	//is truncated to be warnsize number of characters.  If warnsize is zero, no check or truncation is performed.
 	//If size is zero, the function returns without doing anything.  Otherwise the buffer is guaranteed to be NULL terminated
 	//If warnsize is larger than size, the function returns without doing anything.
-	//If rs_filter is nonzero, the following characters are not copied to the buffer:  ( } ,  /  \  : { " )
+	//If rs_filter is nonzero, the following characters are not copied to the buffer:  ( } ,  \  : { " )
+	//If rs_filter is greater than 1, the forward slash character is also not copied to the buffer
 
 void shrink_xml_text(char *buffer, size_t size, char *input);
 	//Does the reverse of expand_xml_text(), converting each escape sequence into the appropriate individual character.

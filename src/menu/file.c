@@ -2850,12 +2850,12 @@ int eof_save_helper(char *destfilename, char silent)
 							name = eof_get_note_name(eof_song, ctr, ctr2);	//Get pointer to the chord's name
 							if(name)
 							{	//If the name was retrievable
-								if(rs_filter_string(name))
-								{	//If the name contains any invalid characters
+								if(rs_filter_string(name, 1))
+								{	//If the name contains any invalid characters (forward slash is allowed for denoting slash chords)
 									eof_2d_render_top_option = 32;					//Change the user preference to render note names at the top of the piano roll
 									eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Render the track so the user can see where the correction needs to be made, along with the RS section in question
 									eof_clear_input();
-									if(!user_prompted && alert("At least one chord has an unaccepted character: ( } ,  /  \\  : { \" )", "This can cause Rocksmith to crash or hang and will be removed.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+									if(!user_prompted && alert("At least one chord has an unaccepted character: ( } ,  \\  : { \" )", "This can cause Rocksmith to crash or hang and will be removed.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
 									{	//If the user hasn't already answered this prompt, and opts to correct the issue
 										eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
 										return 1;	//Return cancellation

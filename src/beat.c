@@ -307,11 +307,11 @@ void eof_realign_beats(EOF_SONG * sp, int cbeat)
 	if(sp->tags->accurate_ts)
 	{	//If the user enabled the accurate time signatures song property
 		unsigned num = 4, den = 4;
-		for(i = 0; i <= cbeat; i++)
-		{	//For each beat, including the target
+		for(i = 0; i < cbeat; i++)
+		{	//For each beat BEFORE the target
 			(void) eof_get_ts(sp, &num, &den, i);	//Lookup any time signature defined at the beat
 		}
-		multiplier = (double)den / 4.0;
+		multiplier = (double)den / 4.0;	//Get the beat length that is in effect when the target beat is reached
 	}
 	newbpm = 60000.0 / (beats_length * multiplier / (double)beats);
 	newppqn = 60000000.0 / newbpm;
@@ -362,11 +362,11 @@ void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 	if(sp->tags->accurate_ts)
 	{	//If the user enabled the accurate time signatures song property
 		unsigned num = 4, den = 4;
-		for(i = 0; i <= cbeat; i++)
-		{	//For each beat, including the target
+		for(i = 0; i < cbeat; i++)
+		{	//For each beat BEFORE the target
 			(void) eof_get_ts(sp, &num, &den, i);	//Lookup any time signature defined at the beat
 		}
-		multiplier = (double)den / 4.0;
+		multiplier = (double)den / 4.0;	//Get the beat length that is in effect when the target beat is reached
 	}
 	newbpm = 60000.0 / (beats_length * multiplier / (double)beats);
 	newppqn = 60000000.0 / newbpm;

@@ -1738,12 +1738,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				}
 				else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM)
 				{	//If this note strums in the middle
-					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 9, 109, 14);	//Down strum markers are note # (lane 1 + 9), channel 14 (velocity 109 is typical)
+					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 9, 109, 14);	//Middle strum markers are note # (lane 1 + 9), channel 14 (velocity 109 is typical)
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 9, velocity, 14);
 				}
 				else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
 				{	//If this note strums up
-					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 9, 96, 13);	//Down strum markers are note # (lane 1 + 9), channel 13 (velocity 96 is typical)
+					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 9, 96, 13);	//Up strum markers are note # (lane 1 + 9), channel 13 (velocity 96 is typical)
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 9, velocity, 13);
 				}
 
