@@ -459,7 +459,7 @@ int eof_edit_tuning_proc(int msg, DIALOG *d, int c)
 	int key_list[32] = {KEY_BACKSPACE, KEY_DEL, KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_ESC, KEY_ENTER};
 	int match = 0;
 	int retval;
-	char tuning[EOF_TUNING_LENGTH];
+	char tuning[EOF_TUNING_LENGTH] = {0};
 	unsigned c2 = (unsigned)c;	//Force cast this to unsigned because Splint is incapable of avoiding a false positive detecting it as negative despite assertions proving otherwise
 
 	if((msg == MSG_CHAR) || (msg == MSG_UCHAR))
@@ -928,7 +928,7 @@ int eof_track_pro_guitar_set_capo_position(void)
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	tp = eof_song->pro_guitar_track[tracknum];
-	(void) snprintf(eof_etext, 3, "%d", tp->capo);
+	(void) snprintf(eof_etext, 3, "%u", tp->capo);
 	if(eof_popup_dialog(eof_track_pro_guitar_set_capo_position_dialog, 2) == 3)
 	{	//User clicked OK
 		if(eof_etext[0] != '\0')
@@ -1025,7 +1025,7 @@ int eof_track_pro_guitar_set_fret_hand_position(void)
 				{	//Fret 22 is the highest supported fret in both Rock Band and Rocksmith 1
 					if(tp->capo)
 					{	//If there is a capo in use
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "You cannot specify a fret hand position higher than %u when a capo is at fret %d (it will cause Rocksmith 1 to crash).", 19 - tp->capo, tp->capo);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "You cannot specify a fret hand position higher than %u when a capo is at fret %u (it will cause Rocksmith 1 to crash).", 19U - tp->capo, tp->capo);
 						allegro_message("%s", eof_log_string);
 					}
 					else

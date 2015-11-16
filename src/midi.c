@@ -2229,10 +2229,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				//Write the note off event
 				WriteVarLen(delta2-lastdelta, fp);	//Write this event's relative delta time
 				lastdelta = delta2;					//Store this event's absolute delta time
-				if(lastevent != 0x90)
-				{	//If no MIDI notes have been written for the BEAT track yet
-					(void) pack_putc(0x90, fp);				//MIDI event 0x9 (note on, but will be equivalent to a note on if the velocity is 0), channel 0
-				}
 				(void) pack_putc(note_to_write, fp);		//Note 12 or 13
 				(void) pack_putc(0, fp);					//A note on with a velocity of 0 is treated as a note off
 			}
@@ -2420,7 +2416,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 	struct eof_MIDI_data_track *trackptr;		//Used to count the number of raw MIDI tracks to export
 	EOF_MIDI_KS_LIST *kslist;
 	#define EOF_MUSIC_MIDI_TRACKS_MAX (EOF_PRO_GUITAR_TRACKS_MAX + EOF_PRO_GUITAR_TRACKS_MAX + EOF_VOCAL_TRACKS_MAX + 1)
-	char notetempname[EOF_MUSIC_MIDI_TRACKS_MAX][15];	//The list of temporary files created to store the binary content for each MIDI track, a maximum potential of two copies of each pro guitar track and one of each vocal track
+	char notetempname[EOF_MUSIC_MIDI_TRACKS_MAX][15] = {0};	//The list of temporary files created to store the binary content for each MIDI track, a maximum potential of two copies of each pro guitar track and one of each vocal track
 	char tempotempname[] = {"tempo.tmp"};
 	char eventtempname[] = {"event.tmp"};
 	unsigned char pitchmask, pitches[6] = {0};

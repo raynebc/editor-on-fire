@@ -249,7 +249,7 @@ EOF_SONG *parse_gp(const char * fn)
 	(void) eof_read_gp_string(inf, &word, buffer, 0);	//Read file version string
 	(void) puts(buffer);
 	eof_gp_debug_log(inf, "(skipping ");
-	printf("%d bytes of padding)\n", 30 - word);
+	printf("%u bytes of padding)\n", 30 - word);
 	(void) pack_fseek(inf, 30 - word);	//Skip the padding that follows the version string
 	if(!strcmp(buffer, "FICHIER GUITARE PRO v1.01"))
 	{
@@ -572,7 +572,7 @@ EOF_SONG *parse_gp(const char * fn)
 		printf("\tStart of definition for measure #%lu\n", ctr + 1);
 		eof_gp_debug_log(inf, "\tMeasure bitmask:  ");
 		bytemask = pack_getc(inf);	//Read the measure bitmask
-		printf("%u\n", (bytemask & 0xFF));
+		printf("%d\n", (bytemask & 0xFF));
 		if(fileversion < 300)
 		{	//Versions of the format older than 3.0
 			if(bytemask & 1)
@@ -712,7 +712,7 @@ EOF_SONG *parse_gp(const char * fn)
 		printf("\tStart of definition for track #%lu\n", ctr + 1);
 		eof_gp_debug_log(inf, "\tTrack bitmask:  ");
 		bytemask = pack_getc(inf);	//Read the track bitmask
-		printf("%u\n", (bytemask & 0xFF));
+		printf("%d\n", (bytemask & 0xFF));
 		if(bytemask & 1)
 		{
 			(void) puts("\t\t\t(Is a drum track)");
@@ -745,7 +745,7 @@ EOF_SONG *parse_gp(const char * fn)
 		(void) eof_read_gp_string(inf, &word, buffer, 0);	//Read track name string
 		(void) puts(buffer);
 		eof_gp_debug_log(inf, "\t(skipping ");
-		printf("%d bytes of padding)\n", 40 - word);
+		printf("%u bytes of padding)\n", 40 - word);
 		(void) pack_fseek(inf, 40 - word);			//Skip the padding that follows the track name string
 		eof_gp_debug_log(inf, "\tNumber of strings:  ");
 		pack_ReadDWORDLE(inf, &strings[ctr]);	//Read the number of strings in this track
@@ -799,10 +799,10 @@ EOF_SONG *parse_gp(const char * fn)
 		{
 			eof_gp_debug_log(inf, "\tTrack properties 1 bitmask:  ");
 			bytemask = pack_getc(inf);
-			printf("%u\n", (bytemask & 0xFF));
+			printf("%d\n", (bytemask & 0xFF));
 			eof_gp_debug_log(inf, "\tTrack properties 2 bitmask:  ");
 			bytemask2 = pack_getc(inf);
-			printf("%u\n", (bytemask2 & 0xFF));
+			printf("%d\n", (bytemask2 & 0xFF));
 			eof_gp_debug_log(inf, "\t(skipping 1 byte of unknown data)\n");
 			(void) pack_getc(inf);			//Unknown data
 			eof_gp_debug_log(inf, "\tMIDI bank:  ");
@@ -877,7 +877,7 @@ EOF_SONG *parse_gp(const char * fn)
 					printf("\t-> M#%lu -> T#%lu -> Beat # %lu\n", ctr + 1, ctr2 + 1, ctr3 + 1);
 					eof_gp_debug_log(inf, "\tBeat bitmask:  ");
 					bytemask = pack_getc(inf);	//Read beat bitmask
-					printf("%u\n", (bytemask & 0xFF));
+					printf("%d\n", (bytemask & 0xFF));
 					if(bytemask & 64)
 					{	//Beat is a rest
 						eof_gp_debug_log(inf, "\t(Rest beat type:  ");
@@ -1118,12 +1118,12 @@ EOF_SONG *parse_gp(const char * fn)
 
 						eof_gp_debug_log(inf, "\tBeat effects bitmask:  ");
 						byte1 = pack_getc(inf);	//Read beat effects 1 bitmask
-						printf("%u\n", (byte1 & 0xFF));
+						printf("%d\n", (byte1 & 0xFF));
 						if(fileversion >= 400)
 						{	//Versions 4.0 and higher of the format have a second beat effects bitmask
 							eof_gp_debug_log(inf, "\tExtended beat effects bitmask:  ");
 							byte2 = pack_getc(inf);
-							printf("%u\n", (byte2 & 0xFF));
+							printf("%d\n", (byte2 & 0xFF));
 							if(byte2 & 1)
 							{
 								(void) puts("\t\tRasguedo");
@@ -1190,10 +1190,10 @@ EOF_SONG *parse_gp(const char * fn)
 						{	//Stroke effect
 							eof_gp_debug_log(inf, "\tUpstroke speed:  ");
 							byte = pack_getc(inf);
-							printf("%u\n", (byte & 0xFF));
+							printf("%d\n", (byte & 0xFF));
 							eof_gp_debug_log(inf, "\tDownstroke speed:  ");
 							byte = pack_getc(inf);
-							printf("%u\n", (byte & 0xFF));
+							printf("%d\n", (byte & 0xFF));
 						}
 						if(byte2 & 2)
 						{	//Pickstroke effect
@@ -1366,7 +1366,7 @@ EOF_SONG *parse_gp(const char * fn)
 						{	//This field is not in version 3.0 files, assume 4.x or higher
 							eof_gp_debug_log(inf, "\t\tMix table change applied tracks bitmask:  ");
 							byte = pack_getc(inf);
-							printf("%u\n", (byte & 0xFF));
+							printf("%d\n", (byte & 0xFF));
 						}
 						if(fileversion >= 500)
 						{	//This unknown byte is only in version 5.x files
@@ -1385,7 +1385,7 @@ EOF_SONG *parse_gp(const char * fn)
 					}//Beat has mix table change
 					eof_gp_debug_log(inf, "\tUsed strings bitmask:  ");
 					usedstrings = pack_getc(inf);
-					printf("%u\n", (usedstrings & 0xFF));
+					printf("%d\n", (usedstrings & 0xFF));
 					for(ctr4 = 0, bitmask = 64; ctr4 < 7; ctr4++, bitmask>>=1)
 					{	//For each of the 7 possible usable strings
 						if(bitmask & usedstrings)
@@ -1393,7 +1393,7 @@ EOF_SONG *parse_gp(const char * fn)
 							printf("\t\t\tString %lu:\n", ctr4 + 1);
 							eof_gp_debug_log(inf, "\t\tNote bitmask:  ");
 							bytemask = pack_getc(inf);
-							printf("%u\n", (bytemask & 0xFF));
+							printf("%d\n", (bytemask & 0xFF));
 							if(bytemask & 32)
 							{	//Note type is defined
 								eof_gp_debug_log(inf, "\t\tNote type:  ");
@@ -1404,9 +1404,9 @@ EOF_SONG *parse_gp(const char * fn)
 							{	//Time independent duration (for versions of the format older than 5.x)
 								eof_gp_debug_log(inf, "\t\tTime independent duration values:  ");
 								byte = pack_getc(inf);
-								printf("%u ", (byte & 0xFF));
+								printf("%d ", (byte & 0xFF));
 								byte = pack_getc(inf);
-								printf("%u\n", (byte & 0xFF));
+								printf("%d\n", (byte & 0xFF));
 							}
 							if(bytemask & 16)
 							{	//Note dynamic
@@ -1418,7 +1418,7 @@ EOF_SONG *parse_gp(const char * fn)
 							{	//Note type is defined
 								eof_gp_debug_log(inf, "\t\tFret number:  ");
 								byte = pack_getc(inf);
-								printf("%u\n", (byte & 0xFF));
+								printf("%d\n", (byte & 0xFF));
 							}
 							if(bytemask & 128)
 							{	//Right/left hand fingering
@@ -1444,12 +1444,12 @@ EOF_SONG *parse_gp(const char * fn)
 								char byte1, byte2 = 0;
 								eof_gp_debug_log(inf, "\t\tNote effect bitmask:  ");
 								byte1 = pack_getc(inf);
-								printf("%u\n", (byte1 & 0xFF));
+								printf("%d\n", (byte1 & 0xFF));
 								if(fileversion >= 400)
 								{	//Version 4.0 and higher of the file format has a second note effect bitmask
 									eof_gp_debug_log(inf, "\t\tNote effect 2 bitmask:  ");
 									byte2 = pack_getc(inf);
-									printf("%u\n", (byte2 & 0xFF));
+									printf("%d\n", (byte2 & 0xFF));
 								}
 								if(byte1 & 1)
 								{	//Bend
@@ -1478,7 +1478,7 @@ EOF_SONG *parse_gp(const char * fn)
 									(void) puts("\t\t\t\t(Grace note)");
 									eof_gp_debug_log(inf, "\t\t\tGrace note fret number:  ");
 									byte = pack_getc(inf);
-									printf("%u\n", (byte & 0xFF));
+									printf("%d\n", (byte & 0xFF));
 									eof_gp_debug_log(inf, "\t\t\tGrace note dynamic:  ");
 									word = (pack_getc(inf) - 1) % 8;	//Get the dynamic value and remap its values from 0 to 7
 									printf("%s\n", note_dynamics[word]);
@@ -1510,12 +1510,12 @@ EOF_SONG *parse_gp(const char * fn)
 									}
 									eof_gp_debug_log(inf, "\t\t\tGrace note duration:  ");
 									byte = pack_getc(inf);
-									printf("%u\n", (byte & 0xFF));
+									printf("%d\n", (byte & 0xFF));
 									if(fileversion >= 500)
 									{	//If the file version is 5.x or higher (this byte verified not to be in 3.0 and 4.06 files)
 										eof_gp_debug_log(inf, "\t\t\tGrace note position:  ");
 										byte = pack_getc(inf);
-										printf("%u\n", (byte & 0xFF));
+										printf("%d\n", (byte & 0xFF));
 										if(byte & 1)
 										{
 											(void) puts("\t\t\t\t\t(dead note)");
@@ -1535,19 +1535,19 @@ EOF_SONG *parse_gp(const char * fn)
 								{	//Tremolo picking
 									eof_gp_debug_log(inf, "\t\t\tTremolo picking speed:  ");
 									byte = pack_getc(inf);
-									printf("%u\n", (byte & 0xFF));
+									printf("%d\n", (byte & 0xFF));
 								}
 								if(byte2 & 8)
 								{	//Slide
 									eof_gp_debug_log(inf, "\t\t\tSlide type:  ");
 									byte = pack_getc(inf);
-									printf("%u\n", (byte & 0xFF));
+									printf("%d\n", (byte & 0xFF));
 								}
 								if(byte2 & 16)
 								{	//Harmonic
 									eof_gp_debug_log(inf, "\t\t\tHarmonic type:  ");
 									byte = pack_getc(inf);
-									printf("%u\n", (byte & 0xFF));
+									printf("%d\n", (byte & 0xFF));
 									if(byte == 2)
 									{	//Artificial harmonic
 										(void) puts("\t\t\t\t\t(Artificial harmonic)");
@@ -1583,17 +1583,17 @@ EOF_SONG *parse_gp(const char * fn)
 										(void) puts("\t\t\t\t\t(Tapped harmonic)");
 										eof_gp_debug_log(inf, "\t\t\t\tRight hand fret:  ");
 										byte = pack_getc(inf);
-										printf("%u\n", (byte & 0xFF));
+										printf("%d\n", (byte & 0xFF));
 									}
 								}
 								if(byte2 & 32)
 								{	//Trill
 									eof_gp_debug_log(inf, "\t\t\tTrill with fret:  ");
 									byte = pack_getc(inf);
-									printf("%u\n", (byte & 0xFF));
+									printf("%d\n", (byte & 0xFF));
 									eof_gp_debug_log(inf, "\t\t\tTrill duration:  ");
 									byte = pack_getc(inf);
-									printf("%u\n", (byte & 0xFF));
+									printf("%d\n", (byte & 0xFF));
 								}
 								if(byte2 & 64)
 								{

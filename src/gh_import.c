@@ -315,7 +315,7 @@ unsigned long eof_gh_checksum(const char *string)
 
 int eof_filebuffer_find_checksum(filebuffer *fb, unsigned long checksum)
 {
-	unsigned char checksumarray[4];
+	unsigned char checksumarray[4] = {0};
 
 	checksumarray[0] = checksum >> 24;	//Store the checksum into an array to simplify the search logic
 	checksumarray[1] = (checksum & 0xFF0000) >> 16;
@@ -2260,7 +2260,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 {
 	EOF_SONG * sp;
 	filebuffer *fb;
-	char filename[101] = {0}, songname[101], buffer[101], forcestrum = 0;
+	char filename[101] = {0}, songname[101] = {0}, buffer[101], forcestrum = 0;
 	unsigned char byte = 0;
 	unsigned long index, ctr, ctr2, ctr3, arraysize, *arrayptr = NULL, numbeats, numsigs, tsnum = 0, tsden = 0, dword = 0, lastfretbar = 0, lastsig = 0;
 	unsigned long qbindex;	//Will store the file index of the QB header

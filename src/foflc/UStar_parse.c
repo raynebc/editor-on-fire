@@ -375,7 +375,7 @@ void Export_UStar(FILE *outf)
 		else
 			rawpitch=PITCHLESS;	//Store it as the positive value representing a pitchless lyric
 
-		if(fprintf(outf,"%c %lu %ld %d ",pitch_char,start-linetime,dur,rawpitch) < 0)
+		if(fprintf(outf,"%c %ld %ld %d ",pitch_char,start-linetime,dur,rawpitch) < 0)
 			errornumber=errno;
 		if(!newline && !current->prev->groupswithnext)	//If this piece doesn't group with previous piece and isn't the first lyric in this line
 		{
@@ -397,7 +397,7 @@ void Export_UStar(FILE *outf)
 
 		if((current->next == NULL) && (next != NULL))
 		{	//If this is the last lyric piece in this line, and there's another line
-			if(fprintf(outf,"- %lu\n",start+dur-linetime) < 0)	//write end of line
+			if(fprintf(outf,"- %ld\n",start+dur-linetime) < 0)	//write end of line
 			{
 				printf("Error writing end of lyric line: %s\nAborting\n",strerror(errno));
 				exit_wrapper(8);

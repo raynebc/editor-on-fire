@@ -311,10 +311,10 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "multiplier_note"))
 			{
-				long value;
+				long mult_value = 0;
 
-				(void) eof_compare_set_ini_integer(&value, 116, value_index, &func, eof_import_ini_setting[i].type);
-				if(value == 116)
+				(void) eof_compare_set_ini_integer(&mult_value, 116, value_index, &func, eof_import_ini_setting[i].type);
+				if(mult_value == 116)
 				{
 					eof_ini_star_power_tag_present = 1;	//MIDI import won't have to convert solos phrases to star power, EOF's notation for star power style phrases was found
 				}

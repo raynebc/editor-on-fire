@@ -2128,7 +2128,7 @@ int eof_menu_note_clear_orange(void)
 int eof_menu_note_toggle_accent_lane(unsigned int lanenum)
 {
 	unsigned long i;
-	unsigned char mask, undo_made = 0;;
+	unsigned char mask, undo_made = 0;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
 	if((eof_count_track_lanes(eof_song, eof_selected_track) < lanenum) || !lanenum)
@@ -4843,7 +4843,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 					}
 					if(np->finger[ctr] != 0)
 					{	//If the finger used to fret this string is defined
-						(void) snprintf(eof_finger_strings[ctr], sizeof(eof_finger_strings[ctr]) - 1, "%d", np->finger[ctr]);	//Create the finger string
+						(void) snprintf(eof_finger_strings[ctr], sizeof(eof_finger_strings[ctr]) - 1, "%u", np->finger[ctr]);	//Create the finger string
 						if(eof_finger_strings[ctr][0] == '5')
 						{	//If this is the value for the thumb
 							eof_finger_strings[ctr][0] = '0';	//Convert to 0, which specifies the thumb in Rocksmith numbering
@@ -7907,7 +7907,7 @@ int eof_pro_guitar_note_slide_end_fret(char undo)
 	}
 	else
 	{	//Otherwise write the ending fret into the string
-		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", np->slideend);
+		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%u", np->slideend);
 	}
 
 	if(eof_popup_dialog(eof_pro_guitar_note_slide_end_fret_dialog, 2) == 3)
@@ -8049,7 +8049,7 @@ int eof_pro_guitar_note_define_unpitched_slide(void)
 	}
 	else
 	{	//Otherwise write the ending fret into the string
-		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", np->unpitchend);
+		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%u", np->unpitchend);
 	}
 
 	if(eof_popup_dialog(eof_pro_guitar_note_define_unpitched_slide_dialog, 2) == 3)

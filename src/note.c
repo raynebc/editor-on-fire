@@ -263,7 +263,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	char *nameptr = NULL;		//This points to the display name string for the note
 	char samename[] = "/";		//This is what a repeated note name will display as
 	char samenameauto[] = "[/]";	//This is what a repeated note for an non manually-named note will display as
-	char notename[EOF_NAME_LENGTH+1], prevnotename[EOF_NAME_LENGTH+1], namefound;	//Used for name display
+	char notename[EOF_NAME_LENGTH+1] = {0}, prevnotename[EOF_NAME_LENGTH+1] = {0}, namefound;	//Used for name display
 
 	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
 	unsigned long notepos = 0;
@@ -550,7 +550,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			{	//If rendering an existing pro guitar note that slides up or down or is an unpitched slide
 				long x2;			//Used for slide note rendering
 				unsigned long notepos2;		//Used for slide note rendering
-				int sliderect[8];		//An array of 4 vertices, used to draw a diagonal rectangle
+				int sliderect[8] = {0};		//An array of 4 vertices, used to draw a diagonal rectangle
 				int slidecolor = eof_color_dark_purple;	//By default, pro guitar slides are drawn in purple
 				char up = 0;		//Will be assumed to be a down slide by default
 
@@ -980,7 +980,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	char *nameptr = NULL;		//This points to the display name string for the note
 	char samename[] = "/";		//This is what a repeated note name will display as
 	char samenameauto[] = "[/]";	//This is what a repeated note for an non manually-named note will display as
-	char notename[EOF_NAME_LENGTH+1], prevnotename[EOF_NAME_LENGTH+1], namefound;	//Used for name display
+	char notename[EOF_NAME_LENGTH+1] = {0}, prevnotename[EOF_NAME_LENGTH+1] = {0}, namefound;	//Used for name display
 
 	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
 	unsigned long notepos = 0;
@@ -1521,7 +1521,7 @@ BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, char *text, uns
 		{	//This is a non muted fret
 			if(note->ghost & (1 << stringnum))
 			{	//This is a ghosted note
-				(void) snprintf(fretstring, sizeof(fretstring) - 1,"(%d)", note->frets[stringnum]);
+				(void) snprintf(fretstring, sizeof(fretstring) - 1,"(%u)", note->frets[stringnum]);
 				if(note->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS)
 				{	//If this note has ghost handshape status
 					fillcol = eof_color_red;
@@ -1530,7 +1530,7 @@ BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, char *text, uns
 			}
 			else
 			{	//This is a normal note
-				(void) snprintf(fretstring, sizeof(fretstring) - 1,"%d", note->frets[stringnum]);
+				(void) snprintf(fretstring, sizeof(fretstring) - 1,"%u", note->frets[stringnum]);
 			}
 		}
 		text = fretstring;	//This string will be rendered to the bitmap
@@ -1647,7 +1647,7 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 			}
 			else
 			{	//The slide is valid
-				(void) snprintf(buffer2, sizeof(buffer2) - 1, "%d", np->slideend);	//Build a string out of the ending fret value
+				(void) snprintf(buffer2, sizeof(buffer2) - 1, "%u", np->slideend);	//Build a string out of the ending fret value
 				for(index2 = 0; buffer2[index2] != '\0'; index2++)
 				{	//For each character in the string
 					buffer[index++] = buffer2[index2];	//Append it to the notation string
@@ -1718,7 +1718,7 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 				{	//If the unpitched slide goes higher than this position
 					buffer[index++] = 'i';	//In the symbols font, i is the unpitched slide up indicator
 				}
-				(void) snprintf(buffer2, sizeof(buffer2) - 1, "%d", np->unpitchend);	//Build a string out of the ending fret value
+				(void) snprintf(buffer2, sizeof(buffer2) - 1, "%u", np->unpitchend);	//Build a string out of the ending fret value
 				for(index2 = 0; buffer2[index2] != '\0'; index2++)
 				{	//For each character in the string
 					buffer[index++] = buffer2[index2];	//Append it to the notation string

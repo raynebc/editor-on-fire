@@ -473,7 +473,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			}
 			else if(eof_text_is_section_marker(current_event->text))
 			{	//If this is a section event, rebuild the string to ensure it's in the proper format
-				char buffer[256];
+				char buffer[256] = {0};
 				int index = 0, index2 = 0;	//index1 will index into the rebuilt buffer[] string, index2 will index into the original current_event->text[] string
 
 				buffer[index++] = '[';	//Begin with an open bracket

@@ -6059,7 +6059,7 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 	}//Only draw difficulty tabs for the main piano roll
 	else
 	{	//Otherwise display the secondary piano roll's track difficulty
-		char temp[101];
+		char temp[101] = {0};
 		temp[0] = '\0';	//Empty the string
 		eof_cat_track_difficulty_string(temp);	//Fill the string with the name and number of the track difficulty being rendered
 		textprintf_ex(window->screen, font, 50, 2 + 2 + 8, makecol(128, 128, 128), -1, "%s", temp);

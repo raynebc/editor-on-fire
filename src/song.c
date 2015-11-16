@@ -2491,7 +2491,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 {
 	PACKFILE * fp = NULL;
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};
-	unsigned long count,ctr,ctr2,tracknum;
+	unsigned long count, ctr, ctr2, tracknum = 0;
 	unsigned long track_count,track_ctr,bookmark_count,track_custom_block_count,bitmask,fingerdefinitions;
 	char has_raw_midi_data, has_fp_beat_timings = 1;
 	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes,has_accent;
@@ -5154,9 +5154,12 @@ void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track)
 		next = eof_track_fixup_next_note(sp, track, i);
 		if(next >= 0)
 		{
-			if(eof_get_note_pos(sp, track, i) + eof_get_note_length(sp, track, i) > eof_get_note_pos(sp, track, next))
-			{
-				eof_set_note_flags(sp, track, i, eof_get_note_flags(sp, track, i) | EOF_NOTE_FLAG_CRAZY);
+			if(eof_get_note_pos(sp, track, i) + eof_get_note_length(sp, track, i) > eof_get_note_pos(sp, track, next) + 1)
+			{	//If the note overlaps the next note by over one millisecond (to allow for rounding errors)
+				if((eof_get_note_note(sp, track, i) & eof_get_note_note(sp, track, next)) == 0)
+				{	//If the two notes have no lanes in common
+					eof_set_note_flags(sp, track, i, eof_get_note_flags(sp, track, i) | EOF_NOTE_FLAG_CRAZY);
+				}
 			}
 		}
 	}

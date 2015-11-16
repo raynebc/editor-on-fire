@@ -2018,7 +2018,7 @@ set_window_title(debugtext);
 								{	//If the note is in the same difficulty as this note off event and it contains one of the same gems
 //									allegro_message("break %d, %d, %d", k, sp->legacy_track[picked_track]->note[k]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);	//Debug
 #ifdef EOF_DEBUG
-									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%ld (Diff=%d, Pos=%lu, Mask=%d) from length %ld to %ld", k, eof_get_note_type(sp, picked_track, k), eof_get_note_pos(sp, picked_track, k), eof_get_note_note(sp, picked_track, k), eof_get_note_length(sp, picked_track, k), event_realtime - eof_get_note_pos(sp, picked_track, k));
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%ld (Diff=%d, Pos=%lu, Mask=%d) from length %ld to %lu", k, eof_get_note_type(sp, picked_track, k), eof_get_note_pos(sp, picked_track, k), eof_get_note_note(sp, picked_track, k), eof_get_note_length(sp, picked_track, k), event_realtime - eof_get_note_pos(sp, picked_track, k));
 									eof_log(eof_log_string, 1);
 #endif
 									eof_set_note_length(sp, picked_track, k, event_realtime - eof_get_note_pos(sp, picked_track, k));
@@ -2796,7 +2796,7 @@ set_window_title(debugtext);
 								{	//If the note is in the same difficulty as this note off event and it contains one of the same gems
 //									allegro_message("break %d, %d, %d", k, sp->legacy_track[picked_track]->note[k]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);	//Debug
 #ifdef EOF_DEBUG
-									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%ld (Diff=%d, Pos=%lu, Mask=%d) from length %ld to %ld", k, eof_get_note_type(sp, picked_track, k), eof_get_note_pos(sp, picked_track, k), eof_get_note_note(sp, picked_track, k), eof_get_note_length(sp, picked_track, k), event_realtime - eof_get_note_pos(sp, picked_track, k));
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%ld (Diff=%d, Pos=%lu, Mask=%d) from length %ld to %lu", k, eof_get_note_type(sp, picked_track, k), eof_get_note_pos(sp, picked_track, k), eof_get_note_note(sp, picked_track, k), eof_get_note_length(sp, picked_track, k), event_realtime - eof_get_note_pos(sp, picked_track, k));
 									eof_log(eof_log_string, 1);
 #endif
 									eof_set_note_length(sp, picked_track, k, event_realtime - eof_get_note_pos(sp, picked_track, k));

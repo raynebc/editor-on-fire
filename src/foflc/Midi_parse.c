@@ -406,13 +406,13 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 		switch(vars.eventtype>>4)	//Shift out the controller number, just look at the event
 		{
 			case 0x8:	//Note off
-				if(Lyrics.verbose>=2)	printf("Event: Note off (Channel=%d): Note #=%d, Velocity=%d\n",vars.eventtype&0xF,vars.parameters[0],vars.parameters[1]);
+				if(Lyrics.verbose>=2)	printf("Event: Note off (Channel=%d): Note #=%u, Velocity=%u\n",vars.eventtype&0xF,vars.parameters[0],vars.parameters[1]);
 			break;
 
 			case 0x9:	//Note on
 				if(Lyrics.verbose>=2)
 				{
-					printf("Event: Note on (Channel=%d): Note #=%d, Velocity=%d",vars.eventtype&0xF,vars.parameters[0],vars.parameters[1]);
+					printf("Event: Note on (Channel=%d): Note #=%u, Velocity=%u",vars.eventtype&0xF,vars.parameters[0],vars.parameters[1]);
 					if(vars.parameters[1] == 0)	//Note on with Velocity of 0 is equivalent to a Note off
 						(void) puts("\t(NOTE OFF)");
 					else
@@ -421,25 +421,25 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 			break;
 
 			case 0xA:	//Note Aftertouch
-				if(Lyrics.verbose>=2)	printf("Event: Note Aftertouch (Channel=%d): Note #=%d\tAmount=%d\n",vars.eventtype&0xF,vars.parameters[0],vars.parameters[1]);
+				if(Lyrics.verbose>=2)	printf("Event: Note Aftertouch (Channel=%d): Note #=%u\tAmount=%u\n",vars.eventtype&0xF,vars.parameters[0],vars.parameters[1]);
 			break;
 
 			case 0xB:	//Controller
-				if(Lyrics.verbose>=2)	printf("Event: Controller (Channel=%d): Controller type=%d\tValue=%d\n",vars.eventtype&0xF,vars.parameters[0],vars.parameters[1]);
+				if(Lyrics.verbose>=2)	printf("Event: Controller (Channel=%d): Controller type=%u\tValue=%u\n",vars.eventtype&0xF,vars.parameters[0],vars.parameters[1]);
 			break;
 
 			case 0xC:	//Program Change
 //This event only takes one parameter, rewind file pointer by one byte
 				fseek_err(inf,-1,SEEK_CUR);
 
-				if(Lyrics.verbose>=2)	printf("Event: Program Change (Channel=%d): Program number=%d\n",vars.eventtype&0xF,vars.parameters[0]);
+				if(Lyrics.verbose>=2)	printf("Event: Program Change (Channel=%d): Program number=%u\n",vars.eventtype&0xF,vars.parameters[0]);
 			break;
 
 			case 0xD:	//Channel Aftertouch
 //This event only takes one parameter, rewind file pointer by one byte
 				fseek_err(inf,-1,SEEK_CUR);
 
-				if(Lyrics.verbose>=2)	printf("Event: Channel Aftertouch (Channel=%d): Amount=%d\n",vars.eventtype&0xF,vars.parameters[0]);
+				if(Lyrics.verbose>=2)	printf("Event: Channel Aftertouch (Channel=%d): Amount=%u\n",vars.eventtype&0xF,vars.parameters[0]);
 			break;
 
 			case 0xE:	//Pitch Bend
@@ -561,7 +561,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 							}
 							vars.parameters[0]=fgetc_err(inf);
 
-							if(Lyrics.verbose>=2)	printf("Meta Event: MIDI channel prefix: %d\n",vars.parameters[0]);
+							if(Lyrics.verbose>=2)	printf("Meta Event: MIDI channel prefix: %u\n",vars.parameters[0]);
 						break;
 
 						case 0x21:	//UNOFFICIAL MIDI EVENT: MIDI port prefix
@@ -573,7 +573,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 							}
 							vars.parameters[0]=fgetc_err(inf);
 
-							if(Lyrics.verbose>=2)	printf("Meta Event: MIDI port prefix: %d\n",vars.parameters[0]);
+							if(Lyrics.verbose>=2)	printf("Meta Event: MIDI port prefix: %u\n",vars.parameters[0]);
 						break;
 
 //Upon reading the end of track midi event, return from function
@@ -711,7 +711,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 							MIDIstruct.hchunk.curtempo->TS_den=MIDIstruct.TS_den;
 
 							MIDIstruct.deltacounter=0;		//Reset cumulative delta time to 0
-							if(Lyrics.verbose)	printf("Meta Event: Time Signature: %u/%u (Num=%u, Den=(2^)%u, Metro=%u, 32nds=%u)\n",vars.parameters[0],(1 << vars.parameters[1]),vars.parameters[0],vars.parameters[1],vars.parameters[2],vars.parameters[3]);
+							if(Lyrics.verbose)	printf("Meta Event: Time Signature: %u/%u (Num=%u, Den=(2^)%u, Metro=%u, 32nds=%u)\n",vars.parameters[0],(1U << vars.parameters[1]),vars.parameters[0],vars.parameters[1],vars.parameters[2],vars.parameters[3]);
 						break;
 
 						case 0x59:	//Key Signature
@@ -723,7 +723,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 							}
 							fread_err(vars.parameters,2,1,inf);
 
-							if(Lyrics.verbose>=2)	printf("Meta Event: Key Signature: Key=%d, scale=%d\n",(char)vars.parameters[0],vars.parameters[1]);
+							if(Lyrics.verbose>=2)	printf("Meta Event: Key Signature: Key=%u, scale=%u\n",vars.parameters[0],vars.parameters[1]);
 						break;
 
 						case 0x7F:	//Sequencer-specific
@@ -1097,7 +1097,7 @@ void CopyTrack(FILE *inf,unsigned short tracknum,FILE *outf)	//Copies the specif
 //Validate track number from which to copy
 	if(tracknum >= MIDIstruct.hchunk.numtracks)	//MIDI track numbers count starting from 0
 	{
-		printf("Error copying track #%u.  The MIDI's last track is #%u\nAborting",tracknum,MIDIstruct.hchunk.numtracks-1);
+		printf("Error copying track #%u.  The MIDI's last track is #%u\nAborting",tracknum,MIDIstruct.hchunk.numtracks-1U);
 		exit_wrapper(1);
 	}
 
@@ -1733,13 +1733,13 @@ void VRhythm_Load(char *srclyrname,char *srcmidiname,FILE *inf)
 				return;													//return
 
 			note1=Lyrics.curline->curpiece->pitch;						//Store the note number of the first entry in this line
-			if(Lyrics.verbose)	printf("\t\tFirst fret in line is #%u\n",note1-MIDIstruct.diff_lo+1);
+			if(Lyrics.verbose)	printf("\t\tFirst fret in line is #%u\n",note1-MIDIstruct.diff_lo+1U);
 			Lyrics.curline->curpiece=Lyrics.curline->curpiece->next;	//Point to next lyric
 			if(Lyrics.curline->curpiece == NULL)						//If that was the only remaining lyric in the line
 				return;													//return
 
 			note2=Lyrics.curline->curpiece->pitch;						//Store the note number of the second entry in this line
-			if(Lyrics.verbose)	printf("\t\tSecond fret in line is #%u\n",note2-MIDIstruct.diff_lo+1);
+			if(Lyrics.verbose)	printf("\t\tSecond fret in line is #%u\n",note2-MIDIstruct.diff_lo+1U);
 
 			Lyrics.curline->curpiece=Lyrics.curline->curpiece->next;	//Point to next lyric
 			while(Lyrics.curline->curpiece != NULL)

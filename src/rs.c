@@ -1654,7 +1654,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <tuning string0=\"%d\" string1=\"%d\" string2=\"%d\" string3=\"%d\" string4=\"%d\" string5=\"%d\" />\n", tuning[0], tuning[1], tuning[2], tuning[3], tuning[4], tuning[5]);
 	(void) pack_fputs(buffer, fp);
-	(void) snprintf(buffer, sizeof(buffer) - 1, "  <capo>%d</capo>\n", tp->capo);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <capo>%u</capo>\n", tp->capo);
 	(void) pack_fputs(buffer, fp);
 	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->artist, 256, 0);	//Replace any special characters in the artist song property with escape sequences if necessary
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <artistName>%s</artistName>\n", buffer2);
@@ -4519,7 +4519,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 
 	if(ptr)
 	{	//If the calling function passed a techniques structure
-		ptr->length = eof_get_note_length(sp, track, notenum);;
+		ptr->length = eof_get_note_length(sp, track, notenum);
 
 		ptr->bendstrength_h = ptr->bendstrength_q = ptr->bend = 0;	//Initialize these to default values
 		ptr->slideto = ptr->unpitchedslideto = -1;

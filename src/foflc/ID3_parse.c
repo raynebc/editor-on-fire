@@ -446,7 +446,7 @@ void SYLT_Parse(struct ID3Tag *tag)
 	breakpos=breakpos + framesize + 10;	//Find the position that is one byte past the end of the SYLT frame
 
 	if(Lyrics.verbose>=2)
-		printf("SYLT frame info:\n\tFrame size is %lu bytes\n\tEnds after byte 0x%lX\n\tTimestamp format: %s\n\tLanguage: %c%c%c\n\tContent Type %d\n\tContent Descriptor: \"%s\"\n\n",framesize,breakpos-1,timestampformat == 1 ? "MPEG frames" : "Milliseconds",syltheader[1],syltheader[2],syltheader[3],syltheader[5],contentdescriptor != NULL ? contentdescriptor : "(none)");
+		printf("SYLT frame info:\n\tFrame size is %lu bytes\n\tEnds after byte 0x%lX\n\tTimestamp format: %s\n\tLanguage: %c%c%c\n\tContent Type %u\n\tContent Descriptor: \"%s\"\n\n",framesize,breakpos-1,timestampformat == 1 ? "MPEG frames" : "Milliseconds",syltheader[1],syltheader[2],syltheader[3],syltheader[5],contentdescriptor != NULL ? contentdescriptor : "(none)");
 
 	if(Lyrics.verbose)	(void) puts("Parsing SYLT frame:");
 
