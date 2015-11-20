@@ -352,7 +352,7 @@ void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 	}
 	if(last_anchor < cbeat)
 	{
-		beats=cbeat - last_anchor;	//The number of beats between the previous anchor and the specified beat
+		beats = cbeat - last_anchor;	//The number of beats between the previous anchor and the specified beat
 	}
 
 	/* figure out what the new BPM should be */
@@ -387,11 +387,17 @@ void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 	{	//If there is another anchor, adjust all beat timings up until that anchor
 		beats = 0;
 		if(cbeat < next_anchor)
-			beats=next_anchor - cbeat;	//The number of beats between the specified beat and the next anchor
+			beats = next_anchor - cbeat;	//The number of beats between the specified beat and the next anchor
 
 		beats_length = sp->beat[next_anchor]->fpos - sp->beat[cbeat]->fpos;
 		if(!beats_length || !beats)
 			return;	//Error condition
+		if(sp->tags->accurate_ts)
+		{	//If the user enabled the accurate time signatures song property
+			unsigned num = 4, den = 4;
+			(void) eof_get_ts(sp, &num, &den, cbeat);	//Lookup any time signature defined at the beat
+			multiplier = (double)den / 4.0;	//Get the beat length that is in effect when the target beat is reached
+		}
 		newbpm = 60000.0 / (beats_length * multiplier / (double)beats);	//Re-apply the accurate TS multiplier here if applicable
 		newppqn = 60000000.0 / newbpm;
 
