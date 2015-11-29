@@ -1342,7 +1342,7 @@ int eof_menu_edit_copy(void)
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-		{
+		{	//If the note is selected
 			/* check for accidentally moved note */
 			if(!note_check)
 			{
@@ -1385,10 +1385,12 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	EOF_NOTE * new_note = NULL;
 	unsigned long sourcetrack = 0;	//Will store the track that this clipboard data was from
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long srctracknum;
 	unsigned long highestfret, highestlane;
 	unsigned long numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	unsigned long maxbitmask = (1 << numlanes) - 1;	//A bitmask representing the highest valid note bitmask (a gem on all used lanes in the destination track)
 	float newpasteoffset = 0.0;	//This will be used to allow new paste to paste notes starting at the seek position instead of the original in-beat positions
+	unsigned long lastarpeggnum = 0xFFFFFFFF, arpeggstart, arpeggend;	//Used to create arpeggio/handshape phrases
 
 	if(eof_vocals_selected)
 	{	//The vocal track uses its own clipboard logic
@@ -1407,6 +1409,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		return 1;
 	}
 	sourcetrack = pack_igetl(fp);		//Read the source track of the clipboard data
+	srctracknum = eof_song->track[sourcetrack]->tracknum;
 	copy_notes = pack_igetl(fp);		//Read the number of notes on the clipboard
 	first_beat = pack_igetl(fp);		//Read the original beat number of the first note that was copied
 	if(!copy_notes)
@@ -1520,6 +1523,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 				eof_log("\tError adding beat.  Aborting", 1);
 				return 1;
 			}
+			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 		}
 		if((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (temp_note.legacymask != 0))
 		{	//If the copied note indicated that this overrides the original bitmask (pasting pro guitar into a legacy track)
@@ -1597,8 +1601,39 @@ int eof_menu_edit_paste_logic(int oldpaste)
 				}
 				np->legacymask = legacymask;
 			}
-		}
+
+			//Paste arpeggio/handshape phrasing if copying from a pro guitar track
+			if(eof_song->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{
+				if(temp_note.arpeggnum != lastarpeggnum)
+				{	//If this pasted note's source arpeggio is different from that of the previous pasted note
+					if(lastarpeggnum != 0xFFFFFFFF)
+					{	//If the previous pasted note's source note was in an arpeggio/handshape
+						if(lastarpeggnum < eof_song->pro_guitar_track[srctracknum]->arpeggios)
+						{	//Bounds check
+							(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, arpeggstart, arpeggend, eof_song->pro_guitar_track[srctracknum]->arpeggio[lastarpeggnum].flags, NULL);
+						}
+					}
+					arpeggstart = np->pos;	//Track start of new arpeggio
+				}
+				if(temp_note.arpeggnum != 0xFFFFFFFF)
+				{	//If this pasted note's source note is in an arpeggio/handshape
+					arpeggend = np->pos + np->length;	//Track end position of arpeggio
+				}
+				lastarpeggnum = temp_note.arpeggnum;
+			}
+		}//If the track being pasted into is a pro guitar track
 	}//For each note in the clipboard file
+	if((eof_song->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+	{	//If copying from a pro guitar track and pasting into a pro guitar track
+		if(lastarpeggnum != 0xFFFFFFFF)
+		{	//If an arpeggio phrase was in progress when the last of the notes were pasted, add the phrase now
+			if(lastarpeggnum < eof_song->pro_guitar_track[srctracknum]->arpeggios)
+			{	//Bounds check
+				(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, arpeggstart, arpeggend, eof_song->pro_guitar_track[srctracknum]->arpeggio[lastarpeggnum].flags, NULL);
+			}
+		}
+	}
 	(void) pack_fclose(fp);
 	eof_truncate_chart(eof_song);	//Update chart variables for any beats that were added to accommodate the paste
 	eof_track_sort_notes(eof_song, eof_selected_track);
@@ -3427,6 +3462,7 @@ void eof_read_clipboard_note(PACKFILE *fp, EOF_EXTENDED_NOTE *temp_note, unsigne
 	temp_note->bendstrength = pack_getc(fp);	//Read the note's bend strength
 	temp_note->slideend = pack_getc(fp);		//Read the note's slide end position
 	temp_note->unpitchend = pack_getc(fp);		//Read the note's unpitched slide end position
+	temp_note->arpeggnum = pack_igetl(fp);		//Read the arpeggio/handshape number the note is in
 }
 
 void eof_read_clipboard_position_snap_data(PACKFILE *fp, int *beat, char *gridsnapvalue, unsigned char *gridsnapnum)
@@ -3468,9 +3504,19 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 	/* Write pro guitar specific data to disk, or zeroed data */
 	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If this is a pro guitar note
+		unsigned long arpeggnum = 0xFFFFFFFF, ctr;
 		unsigned long tracknum = sp->track[track]->tracknum;
-		EOF_PRO_GUITAR_NOTE *np = sp->pro_guitar_track[tracknum]->note[note];	//Simplify
+		EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[tracknum];
+		EOF_PRO_GUITAR_NOTE *np = tp->note[note];	//Simplify
 
+		for(ctr = 0; ctr < tp->arpeggios; ctr++)
+		{	//For each apreggio/handshape phrase in this track
+			if((np->pos >= tp->arpeggio[ctr].start_pos) && (np->pos <= tp->arpeggio[ctr].end_pos))
+			{	//If the note being written to the clipboard is inside this phrase
+				arpeggnum = ctr;	//Record this phrase number
+				break;
+			}
+		}
 		(void) pack_iputl(np->eflags, fp);						//Write the note's extended track flags
 		(void) pack_putc(np->legacymask, fp);					//Write the pro guitar note's legacy bitmask
 		(void) pack_fwrite(np->frets, (long)sizeof(frets), fp);	//Write the note's fret array
@@ -3479,17 +3525,19 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 		(void) pack_putc(np->bendstrength, fp);					//Write the note's bend strength
 		(void) pack_putc(np->slideend, fp);						//Write the note's slide end position
 		(void) pack_putc(np->unpitchend, fp);					//Write the note's unpitched slide end position
+		(void) pack_iputl(arpeggnum, fp);						//Write the arpeggio/handshape number the phrase is in
 	}
 	else
 	{
-		(void) pack_iputl(0, fp);	//Write a blank extended track flag (for now, only pro guitar tracks will use these)
-		(void) pack_putc(0, fp);	//Write a legacy bitmask indicating that the original note bitmask is to be used
+		(void) pack_iputl(0, fp);			//Write a blank extended track flag (for now, only pro guitar tracks will use these)
+		(void) pack_putc(0, fp);			//Write a legacy bitmask indicating that the original note bitmask is to be used
 		(void) pack_fwrite(frets, (long)sizeof(frets), fp);	//Write 0 data for the note's fret array (legacy notes pasted into a pro guitar track will be played open by default)
 		(void) pack_fwrite(finger, (long)sizeof(finger), fp);	//Write 0 data for the note's finger array (legacy notes pasted into a pro guitar track will have no fingering by default)
-		(void) pack_putc(0, fp);	//Write a blank ghost bitmask (no strings are ghosted by default)
-		(void) pack_putc(0, fp);	//Write a blank bend strength
-		(void) pack_putc(0, fp);	//Write a blank slide end position
-		(void) pack_putc(0, fp);	//Write a blank unpitched slide end position
+		(void) pack_putc(0, fp);			//Write a blank ghost bitmask (no strings are ghosted by default)
+		(void) pack_putc(0, fp);			//Write a blank bend strength
+		(void) pack_putc(0, fp);			//Write a blank slide end position
+		(void) pack_putc(0, fp);			//Write a blank unpitched slide end position
+		(void) pack_iputl(0xFFFFFFFF, fp);	//Write an undefined arpeggio/handshape phrase number
 	}
 }
 

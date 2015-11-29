@@ -3628,7 +3628,7 @@ void eof_editor_logic(void)
 					if(KEY_EITHER_SHIFT)
 					{
 						eof_shift_used = 1;	//Track that the SHIFT key was used
-						if((eof_selection.range_pos_1 == 0) && (eof_selection.range_pos_2 == 0))
+						if((eof_selection.range_pos_1 == 0) && (eof_selection.range_pos_2 == 0) && (eof_selection.current_pos == 0))
 						{
 							ignore_range = 1;
 							eof_selection.range_pos_1 = eof_selection.current_pos;
@@ -4400,7 +4400,7 @@ void eof_vocal_editor_logic(void)
 					if(KEY_EITHER_SHIFT)
 					{
 						eof_shift_used = 1;	//Track that the SHIFT key was used
-						if((eof_selection.range_pos_1 == 0) && (eof_selection.range_pos_2 == 0))
+						if((eof_selection.range_pos_1 == 0) && (eof_selection.range_pos_2 == 0) && (eof_selection.current_pos == 0))
 						{
 							ignore_range = 1;
 							eof_selection.range_pos_1 = eof_selection.current_pos;

@@ -190,6 +190,7 @@ typedef struct
 	unsigned char bendstrength;
 	unsigned char slideend;
 	unsigned char unpitchend;
+	unsigned long arpeggnum;	//The arpeggio/handshape phrase number this note is part of (or 0xFFFFFFFF if not applicable)
 
 } EOF_EXTENDED_NOTE;
 

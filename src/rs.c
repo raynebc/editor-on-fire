@@ -3149,7 +3149,7 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 											ctr = nextnote;	//Iterate to that note
 										}
 										else
-										{
+										{	//It is the first note that is after the arpeggio/handshape phrase
 											break;	//Break from while loop
 										}
 									}
@@ -3178,8 +3178,11 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 					}
 					next_position = tp->note[ctr];	//The fret hand position for the current note will be written next
 				}
-				current_low = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Track this note's high and low frets
-				current_high = eof_pro_guitar_note_highest_fret(tp, ctr);
+				if(force_change != 3)
+				{	//If a FHP wasn't placed due to a handshape/arpeggio phrase
+					current_low = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Track this note's high and low frets
+					current_high = eof_pro_guitar_note_highest_fret(tp, ctr);
+				}
 			}//If a position change was determined to be necessary based on fingering/sliding or arpeggio/handshape phrasing, or this note can't be included with previous notes within a single fret hand position
 
 			//Track the number of frets this note slides

@@ -2652,6 +2652,7 @@ int eof_track_erase_track_difficulty(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	eof_erase_track_difficulty(eof_song, eof_selected_track, eof_note_type);
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);
+	eof_reset_lyric_preview_lines();
 	return 1;
 }
 
@@ -2680,6 +2681,7 @@ int eof_track_erase_track(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	eof_erase_track(eof_song, eof_selected_track);
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);
+	eof_reset_lyric_preview_lines();
 	return 1;
 }
 
