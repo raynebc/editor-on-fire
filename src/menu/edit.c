@@ -1390,7 +1390,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	unsigned long numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	unsigned long maxbitmask = (1 << numlanes) - 1;	//A bitmask representing the highest valid note bitmask (a gem on all used lanes in the destination track)
 	float newpasteoffset = 0.0;	//This will be used to allow new paste to paste notes starting at the seek position instead of the original in-beat positions
-	unsigned long lastarpeggnum = 0xFFFFFFFF, arpeggstart, arpeggend;	//Used to create arpeggio/handshape phrases
+	unsigned long lastarpeggnum = 0xFFFFFFFF, arpeggstart = 0, arpeggend = 0;	//Used to create arpeggio/handshape phrases
 
 	if(eof_vocals_selected)
 	{	//The vocal track uses its own clipboard logic

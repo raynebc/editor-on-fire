@@ -1983,14 +1983,16 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}//For each arpeggio/handshape section in the track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
-	//Identify partially ghosted chords that are NOT inside arpeggio phrases, which will need to be temporarily replaced with variations of the chords without the ghost notes
-	//This will ensure these chords don't use an arpeggio chord template for the chord instance or handshape
+	//Identify partially ghosted chords, those outside arpeggio phrases will need to be temporarily replaced with variations of the chords without the ghost notes
+	//Those inside arpeggio phrases will be copied without ghost notes.  The original's chord template will be used for handshape tag export and the copy will be used for chord tag export
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the active pro guitar track
 		if((eof_note_count_rs_lanes(sp, track, ctr, 4) > 1) && !(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE))
 		{	//If this note contains multiple gems and isn't already ignored
 			if(eof_is_partially_ghosted(sp, track, ctr))
 			{	//If it is partially ghosted
+				char failed = 0;
+				EOF_PRO_GUITAR_NOTE *new_note2;
 				for(ctr2 = 0, match = 0; ctr2 < tp->arpeggios; ctr2++)
 				{	//For each arpeggio section in the track
 					if((tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
@@ -2000,52 +2002,55 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					}
 				}
 				if(!match)
-				{	//If the partially ghosted chord wasn't in an arpeggio phrase, mark it as ignored and insert both a temporary chord that is the same except without the ghost gems and a temporary, ignored chord that is the same but with ghost gems converted to normal gems
-					char failed = 0;
-					EOF_PRO_GUITAR_NOTE *new_note2;
-
+				{	//If the partially ghosted chord wasn't in an arpeggio phrase, mark it as ignored
 					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as the newly built chord below
-					new_note = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);
-					if(new_note)
-					{	//If the new note was created
-						new_note->tflags |= EOF_NOTE_TFLAG_TEMP;				//Mark the note as temporary
-						new_note->ghost = 0;									//No ghost gems will be retained by this temporary note
-						new_note->note = 0;										//Clear the new note's note mask, it will be rebuilt below
-						for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
-						{	//For each of the 6 supported strings
-							if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
-							{	//If this string is used and not ghosted
-								new_note->note |= bitmask;	//Set this bit in the mask
-							}
-						}
-						if(tp->note[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS)
-						{	//If the chord is marked with ghost handshape status, create a copy of the chord with all ghosted gems as normal gems
-							new_note2 = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);
-							if(new_note2)
-							{	//If the new note was created
-								new_note2->ghost = 0;							//Clear all ghost status from this chord
-								new_note2->tflags |= EOF_NOTE_TFLAG_TEMP;		//Mark the note as temporary
-								new_note2->tflags |= EOF_NOTE_TFLAG_IGNORE;		//Mark it as ignored, it will only be used in the unique chord building logic and handshape tag export
-								new_note2->tflags |= EOF_NOTE_TFLAG_GHOST_HS;	//Mark that the note will only be partially used during the export
-							}
-							else
-							{
-								failed = 1;
-							}
+				}
+				//Insert a temporary chord that is the same except without the ghost gems
+				new_note = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);
+				if(new_note)
+				{	//If the new note was created
+					new_note->tflags |= EOF_NOTE_TFLAG_TEMP;				//Mark the note as temporary
+					new_note->ghost = 0;									//No ghost gems will be retained by this temporary note
+					new_note->note = 0;										//Clear the new note's note mask, it will be rebuilt below
+					for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+					{	//For each of the 6 supported strings
+						if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
+						{	//If this string is used and not ghosted
+							new_note->note |= bitmask;	//Set this bit in the mask
 						}
 					}
-					else
-					{
-						failed = 1;
+					if(match)
+					{	//If the partially ghosted chord was inside an arpeggio phrase, denote that the original and clone are both involved with this cloning process
+						tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_TWIN;	//The original (includes ghost gems) is NOT allowed to be have its chord tag export
+						new_note->tflags |= EOF_NOTE_TFLAG_TWIN;		//The clone (does not include ghost gems) is NOT allowed to have its chord template invoked during handshape tag export
 					}
-					if(failed)
-					{
-						allegro_message("Error:  Couldn't expand a non arpeggio partially ghosted chord into non ghosted chord(s).  Aborting Rocksmith 2 export.");
-						eof_log("Error:  Couldn't expand a non arpeggio partially ghosted chord into non ghosted chord(s).  Aborting Rocksmith 2 export.", 1);
-						eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-						eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-						return 0;	//Return error
+					if(tp->note[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS)
+					{	//If the chord is marked with ghost handshape status, create a copy of the chord with all ghosted gems as normal gems
+						new_note2 = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);
+						if(new_note2)
+						{	//If the new note was created
+							new_note2->ghost = 0;							//Clear all ghost status from this chord
+							new_note2->tflags |= EOF_NOTE_TFLAG_TEMP;		//Mark the note as temporary
+							new_note2->tflags |= EOF_NOTE_TFLAG_IGNORE;		//Mark it as ignored, it will only be used in the unique chord building logic and handshape tag export
+							new_note2->tflags |= EOF_NOTE_TFLAG_GHOST_HS;	//Mark that the note will only be partially used during the export
+						}
+						else
+						{
+							failed = 1;
+						}
 					}
+				}
+				else
+				{
+					failed = 1;
+				}
+				if(failed)
+				{
+					allegro_message("Error:  Couldn't expand a non arpeggio partially ghosted chord into non ghosted chord(s).  Aborting Rocksmith 2 export.");
+					eof_log("Error:  Couldn't expand a non arpeggio partially ghosted chord into non ghosted chord(s).  Aborting Rocksmith 2 export.", 1);
+					eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+					eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+					return 0;	//Return error
 				}
 			}//If it is partially ghosted
 		}//If this note would export as a chord and isn't already ignored
@@ -2366,6 +2371,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					}
 					else if(lanecount > 1)
 					{	//If the note has multiple gems
+						if(eof_is_partially_ghosted(sp, track, ctr3) && (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_TWIN))
+						{	//If the chord is partially ghosted and has this flag set, it has a clone without ghost gems that should instead be used for chord tag export
+							continue;
+						}
 						numchords++;	//Increment counter
 					}
 				}
@@ -2415,6 +2424,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				(void) pack_fputs(buffer, fp);
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
+					if(eof_is_partially_ghosted(sp, track, ctr3) && (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_TWIN))
+					{	//If the chord is partially ghosted and has this flag set, it has a clone without ghost gems that should instead be used for chord tag export
+						continue;
+					}
 					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1))
 					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems)
 						if(!(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE))
@@ -2587,6 +2600,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
+					if(!eof_is_partially_ghosted(sp, track, ctr3) && (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_TWIN))
+					{	//If the chord is NOT partially ghosted and has this flag set, it has a clone with ghost gems that should instead be used for handshape tag export
+						continue;
+					}
 					if(!(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE) || (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_ARP_FIRST))
 					{	//If this note is not ignored or if it is the base chord for an arpeggio/handshape phrase
 						if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1) || eof_is_partially_ghosted(sp, track, ctr3) || (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_ARP_FIRST)))
@@ -4708,6 +4725,7 @@ void eof_rs_export_cleanup(EOF_SONG * sp, unsigned long track)
 		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_ARP;		//Clear the arpeggio flag
 		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_HAND;		//Clear the handshape flag
 		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_ARP_FIRST;	//Clear the first in arpeggio flag
+		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_TWIN;		//Clear the partial ghosted chord twin flag
 		if(tp->note[ctr - 1]->tflags & EOF_NOTE_TFLAG_TEMP)
 		{	//If this is a temporary note that was added to split up an arpeggio's chord into single notes
 			eof_track_delete_note(sp, track, ctr - 1);	//Delete it

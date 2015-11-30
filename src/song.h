@@ -92,6 +92,7 @@
 #define EOF_NOTE_TFLAG_ARP_FIRST 16	//This flag will represent a note that is the first note within its arpeggio phrase
 #define EOF_NOTE_TFLAG_SORT      32 //This flag is applied to selected notes by eof_track_sort_notes() to allow it to recreate the note selection after sorting
 #define EOF_NOTE_TFLAG_GHOST_HS  64	//This flag will represent a note that is added during RS2 export that is observed during the chord list building and handshape exports, but ignored otherwise
+#define EOF_NOTE_TFLAG_TWIN     128	//This flag will represent a note that is either the original or ghost gem-less clone of a partial ghosted chord that is created during RS2 export
 
 //The following extended flags pertain to pro guitar notes
 #define EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE   1	//This flag specifies a note that will export to RS2 format with the "ignore" status set to nonzero, for special uses
