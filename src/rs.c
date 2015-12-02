@@ -1910,7 +1910,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			for(ctr = 0; ctr < tp->notes; ctr++)
 			{	//For each note in the active pro guitar track
 				if(!(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE) && (tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
-				{	//If the note is isn't already ignored and is within the arpeggio/ phrase
+				{	//If the note is isn't already ignored and is within the arpeggio phrase
 					tp->note[ctr]->tflags |= tflags;	//Mark this note as being in an arpeggio phrase
 					tflags &= ~EOF_NOTE_TFLAG_ARP_FIRST;	//Clear this flag so that notes other than the first one in this phrase don't receive it
 					if(eof_note_count_rs_lanes(sp, track, ctr, 2) > 1)
@@ -1940,6 +1940,44 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				}
 			}//For each note in the active pro guitar track
 		}//If this is not a handshape phrase
+	}//For each arpeggio/handshape section in the track
+	eof_track_sort_notes(sp, track);	//Re-sort the notes
+
+	//Identify crazy chords inside handshape phrases and add temporary single notes for each gem to simulate a low density chord within the handshape
+	for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
+	{	//For each arpeggio/handshape phrase in the track
+		if(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE)
+		{	//If this is a handshape phrase
+			for(ctr = 0; ctr < tp->notes; ctr++)
+			{	//For each note in the active pro guitar track
+				if(!(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE) && (tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
+				{	//If the note is isn't already ignored and is within the handshape phrase
+					if((eof_note_count_rs_lanes(sp, track, ctr, 2) > 1) && (tp->note[ctr]->flags & EOF_NOTE_FLAG_CRAZY))
+					{	//If this note would export as a chord and is marked with crazy status
+						for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+						{	//For each of the 6 supported strings
+							if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
+							{	//If this string is used and is not ghosted
+								new_note = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);
+								if(new_note)
+								{	//If the new note was created
+									new_note->tflags |= EOF_NOTE_TFLAG_TEMP;				//Mark the note as temporary
+									new_note->note = bitmask;								//Turn the cloned chord into a single note on the appropriate string
+								}
+								else
+								{
+									allegro_message("Error:  Couldn't expand a crazy handshape chord into single notes.  Aborting Rocksmith 2 export.");
+									eof_log("Error:  Couldn't expand a crazy handshape chord into single notes.  Aborting Rocksmith 2 export.", 1);
+									eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+									eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+									return 0;	//Return error
+								}
+							}//If this string is used and is not ghosted
+						}//For each of the 6 supported strings
+					}
+				}
+			}//For each note in the active pro guitar track
+		}//If this is a handshape phrase
 	}//For each arpeggio/handshape section in the track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
@@ -1985,12 +2023,13 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 	//Identify partially ghosted chords, those outside arpeggio phrases will need to be temporarily replaced with variations of the chords without the ghost notes
 	//Those inside arpeggio phrases will be copied without ghost notes.  The original's chord template will be used for handshape tag export and the copy will be used for chord tag export
+	//This logic must only run if the chord in question has more than one non ghosted gem
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the active pro guitar track
 		if((eof_note_count_rs_lanes(sp, track, ctr, 4) > 1) && !(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE))
 		{	//If this note contains multiple gems and isn't already ignored
-			if(eof_is_partially_ghosted(sp, track, ctr))
-			{	//If it is partially ghosted
+			if(eof_is_partially_ghosted(sp, track, ctr) && (eof_note_count_rs_lanes(sp, track, ctr, 2) > 1))
+			{	//If it is partially ghosted and would export as a chord instead of a single note
 				char failed = 0;
 				EOF_PRO_GUITAR_NOTE *new_note2;
 				for(ctr2 = 0, match = 0; ctr2 < tp->arpeggios; ctr2++)
@@ -2052,7 +2091,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 					return 0;	//Return error
 				}
-			}//If it is partially ghosted
+			}//If it is partially ghosted and would export as a chord instead of a single note
 		}//If this note would export as a chord and isn't already ignored
 	}
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
