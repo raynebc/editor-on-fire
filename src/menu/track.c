@@ -565,6 +565,7 @@ int eof_track_tuning(void)
 	long newval;
 	char undo_made = 0, newtuning[6] = {0};
 	EOF_PRO_GUITAR_TRACK *tp;
+	int focus = 5;	//By default, start dialog focus in the tuning box for string 1 (top-most box for 6 string track)
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run unless the pro guitar track is active
@@ -601,7 +602,13 @@ int eof_track_tuning(void)
 	}
 	eof_rebuild_tuning_strings(tp->tuning);
 
-	if(eof_popup_dialog(eof_pro_guitar_tuning_dialog, 0) == 22)
+	//Adjust initial focus to account for whichever the top-most string is
+	if(stringcount == 5)
+		focus = 8;
+	else if(stringcount == 4)
+		focus = 11;
+
+	if(eof_popup_dialog(eof_pro_guitar_tuning_dialog, focus) == 22)
 	{	//If user clicked OK
 		//Validate and store the input
 		for(ctr = 0; ctr < tp->numstrings; ctr++)

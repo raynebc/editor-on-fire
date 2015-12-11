@@ -1467,9 +1467,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	unsigned beatspermeasure = 4, beatcounter = 0;
 	long displayedmeasure, measurenum = 0;
 	char standard[] = {0,0,0,0,0,0};
-	char eb[] = {-1,-1,-1,-1,-1,-1};
-	char *tuning;
-	char isebtuning = 1;	//Will track whether all strings are tuned to -1
+	char tuning_all_same = 1;	//Set to nonzero if any strings are found to be tuned a different amount of half steps from standard
+	char tuning[6] = {0};
 	char notename[EOF_NAME_LENGTH+1] = {0};	//String large enough to hold any chord name supported by EOF
 	int scale = 0, chord = 0, isslash = 0, bassnote = 0;	//Used for power chord detection
 	int standard_tuning = 0, non_standard_chords = 0, barre_chords = 0, power_chords = 0, notenum, dropd_tuning = 1, dropd_power_chords = 0, open_chords = 0, double_stops = 0, palm_mutes = 0, harmonics = 0, hopo = 0, tremolo = 0, slides = 0, bends = 0, tapping = 0, vibrato = 0, slappop = 0, octaves = 0, fifths_and_octaves = 0, sustains = 0, pinch= 0;	//Used for technique detection
@@ -1623,20 +1622,11 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	(void) pack_fputs(buffer, fp);
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <averageTempo>%.3f</averageTempo>\n", 60000.0 / ((sp->beat[sp->beats - 1]->fpos - sp->beat[0]->fpos) / sp->beats));	//The average tempo (60000ms / the average beat length in ms)
 	(void) pack_fputs(buffer, fp);
-	tuning = tp->tuning;	//By default, use the track's original tuning array
 	for(ctr = 0; ctr < 6; ctr++)
 	{	//For each string EOF supports
 		if(ctr >= tp->numstrings)
 		{	//If the track doesn't use this string
 			tp->tuning[ctr] = 0;	//Ensure the tuning is cleared accordingly
-		}
-	}
-	for(ctr = 0; ctr < tp->numstrings; ctr++)
-	{	//For each string in this track
-		if(tp->tuning[ctr] != -1)
-		{	//If this string isn't tuned a half step down
-			isebtuning = 0;
-			break;
 		}
 	}
 	is_bass = eof_track_is_bass_arrangement(tp, track);
@@ -1648,9 +1638,23 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	{	//Lead arrangement
 		is_lead = 1;
 	}
-	if(isebtuning && !(is_bass && (tp->numstrings > 4)))
-	{	//If all strings were tuned down a half step (except for bass tracks with more than 4 strings, since in those cases, the lowest string is not tuned to E)
-		tuning = eb;	//Remap 4 or 5 string Eb tuning as {-1,-1,-1,-1,-1,-1}
+	for(ctr = 0; ctr < 6; ctr++)
+	{	//For each of the 6 supported strings
+		if(ctr < tp->numstrings)
+		{	//If this string is used in the track
+			if(ctr && (tp->tuning[ctr - 1] != tp->tuning[ctr]))
+			{	//If this isn't the first string, and this string's tuning value doesn't match the previous one
+				tuning_all_same = 0;
+			}
+			tuning[ctr] = tp->tuning[ctr];
+		}
+		else
+		{
+			if(ctr && tuning_all_same)
+			{	//If ctr is greater than 0 as expected and all the strings were tuned the same amount from standard
+				tuning[ctr] = tuning[ctr - 1];	//Give this unused string a matching tuning value
+			}
+		}
 	}
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <tuning string0=\"%d\" string1=\"%d\" string2=\"%d\" string3=\"%d\" string4=\"%d\" string5=\"%d\" />\n", tuning[0], tuning[1], tuning[2], tuning[3], tuning[4], tuning[5]);
 	(void) pack_fputs(buffer, fp);
@@ -1900,19 +1904,21 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}
 	}
 
-	//Identify notes that are inside arpeggio (but not handshape) phrases, those which are chords will need to be broken into single notes so that they display correctly in-game
+	//Identify notes that are inside arpeggio/handshape phrases
+	//Those which are chords inside arpeggio phrases will need to be broken into single notes so that they display correctly in-game
+	//Those which are chords inside handshape phrases that are also marked as crazy will likewise be broken into single notes
 	for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
 	{	//For each arpeggio phrase in the track
 		unsigned long tflags = EOF_NOTE_TFLAG_ARP_FIRST | EOF_NOTE_TFLAG_ARP;	//The first note in each arpeggio phrase gets both of these flags, the other notes in the phrase just get the latter
 
-		if(!(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE))
-		{	//If this is NOT a handshape phrase
-			for(ctr = 0; ctr < tp->notes; ctr++)
-			{	//For each note in the active pro guitar track
-				if(!(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE) && (tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
-				{	//If the note is isn't already ignored and is within the arpeggio phrase
-					tp->note[ctr]->tflags |= tflags;	//Mark this note as being in an arpeggio phrase
-					tflags &= ~EOF_NOTE_TFLAG_ARP_FIRST;	//Clear this flag so that notes other than the first one in this phrase don't receive it
+		for(ctr = 0; ctr < tp->notes; ctr++)
+		{	//For each note in the active pro guitar track
+			if(!(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE) && (tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
+			{	//If the note is isn't already ignored and is within the arpeggio/handshape phrase
+				tp->note[ctr]->tflags |= tflags;	//Mark this note as being in an arpeggio phrase
+				tflags &= ~EOF_NOTE_TFLAG_ARP_FIRST;	//Clear this flag so that notes other than the first one in this phrase don't receive it
+				if(!(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE) || (tp->note[ctr]->flags & EOF_NOTE_FLAG_CRAZY))
+				{	//If this is NOT a handshape phrase, or if the note is marked as crazy
 					if(eof_note_count_rs_lanes(sp, track, ctr, 2) > 1)
 					{	//If this note would export as a chord
 						tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as single notes
@@ -1937,47 +1943,9 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							}//If this string is used and is not ghosted
 						}//For each of the 6 supported strings
 					}
-				}
-			}//For each note in the active pro guitar track
-		}//If this is not a handshape phrase
-	}//For each arpeggio/handshape section in the track
-	eof_track_sort_notes(sp, track);	//Re-sort the notes
-
-	//Identify crazy chords inside handshape phrases and add temporary single notes for each gem to simulate a low density chord within the handshape
-	for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
-	{	//For each arpeggio/handshape phrase in the track
-		if(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE)
-		{	//If this is a handshape phrase
-			for(ctr = 0; ctr < tp->notes; ctr++)
-			{	//For each note in the active pro guitar track
-				if(!(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE) && (tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
-				{	//If the note is isn't already ignored and is within the handshape phrase
-					if((eof_note_count_rs_lanes(sp, track, ctr, 2) > 1) && (tp->note[ctr]->flags & EOF_NOTE_FLAG_CRAZY))
-					{	//If this note would export as a chord and is marked with crazy status
-						for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
-						{	//For each of the 6 supported strings
-							if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
-							{	//If this string is used and is not ghosted
-								new_note = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);
-								if(new_note)
-								{	//If the new note was created
-									new_note->tflags |= EOF_NOTE_TFLAG_TEMP;				//Mark the note as temporary
-									new_note->note = bitmask;								//Turn the cloned chord into a single note on the appropriate string
-								}
-								else
-								{
-									allegro_message("Error:  Couldn't expand a crazy handshape chord into single notes.  Aborting Rocksmith 2 export.");
-									eof_log("Error:  Couldn't expand a crazy handshape chord into single notes.  Aborting Rocksmith 2 export.", 1);
-									eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-									eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-									return 0;	//Return error
-								}
-							}//If this string is used and is not ghosted
-						}//For each of the 6 supported strings
-					}
-				}
-			}//For each note in the active pro guitar track
-		}//If this is a handshape phrase
+				}//If this is NOT a handshape phrase
+			}//If the note is isn't already ignored and is within the arpeggio/handshape phrase
+		}//For each note in the active pro guitar track
 	}//For each arpeggio/handshape section in the track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 

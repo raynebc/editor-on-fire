@@ -1217,6 +1217,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 										}
 										mute = 0;
 										(void) parse_xml_attribute_number("fretHandMute", buffer, &mute);
+										(void) parse_xml_attribute_number("palmMute", buffer, &palmmute);
 
 										//Add chord and set attributes
 										np = eof_pro_guitar_track_add_note(tp);	//Allocate, initialize and add the new note to the note array
@@ -1235,6 +1236,8 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 										}
 										if(mute)
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;
+										if(palmmute)
+											flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
 										np->flags = flags;
 										np->type = curdiff;
 										tp->pgnotes++;

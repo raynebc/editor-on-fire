@@ -2212,6 +2212,8 @@ int eof_new_chart(char * filename)
 				(void) alogg_get_ogg_comment(temp_ogg, "ARTIST", eof_etext);
 				(void) alogg_get_ogg_comment(temp_ogg, "TITLE", eof_etext2);
 				(void) alogg_get_ogg_comment(temp_ogg, "ALBUM", album);
+				(void) alogg_get_ogg_comment(temp_ogg, "DATE", eof_etext3);
+				strncpy(year, eof_etext3, sizeof(year) - 1);	//Truncate the string to fit
 			}
 		}
 	}
@@ -2243,14 +2245,6 @@ int eof_new_chart(char * filename)
 				if((album[0]=='\0') && (tag.id3v1album != NULL))
 					(void) ustrcpy(album, tag.id3v1album);
 			}
-
-			//Validate year string
-			if(strlen(year) != 4)		//If the year string isn't exactly 4 digits
-				year[0]='\0';			//Nullify it
-			else
-				for(ctr=0;ctr<4;ctr++)		//Otherwise check all digits to ensure they're numerical
-					if(!isdigit(year[ctr]))	//If it contains a non numerical character
-						year[0]='\0';		//Empty the year array
 
 			DestroyID3(&tag);	//Release the list of ID3 frames
 
@@ -2360,6 +2354,14 @@ int eof_new_chart(char * filename)
 		eof_show_mouse(NULL);
 		return 1;	//Return failure
 	}
+
+	//Validate year string
+	if(strlen(year) != 4)		//If the year string isn't exactly 4 digits
+		year[0]='\0';			//Nullify it
+	else
+		for(ctr=0;ctr<4;ctr++)		//Otherwise check all digits to ensure they're numerical
+			if(!isdigit(year[ctr]))	//If it contains a non numerical character
+				year[0]='\0';		//Empty the year array
 
 	/* fill in information */
 	(void) ustrcpy(eof_song->tags->artist, eof_etext);	//Prevent buffer overflow
