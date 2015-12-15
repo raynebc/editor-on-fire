@@ -754,6 +754,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	if(!eof_rs_export_common(sp, track, fp, user_warned))
 	{	//If there was an error adding temporary phrases, sections, beats tot he project and writing the phrases to file
 		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+		(void) pack_fclose(fp);
 		return 0;	//Return error
 	}
 
@@ -939,6 +940,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			{	//If the chord list was built
 				free(chordlist);
 			}
+			(void) pack_fclose(fp);
 			return 0;	//Return failure
 		}
 		memset(controls, 0, sizeof(EOF_RS_CONTROL) * count);	//Fill with 0s to satisfy Splint
@@ -965,6 +967,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				{	//If the chord list was built
 					free(chordlist);
 				}
+				(void) pack_fclose(fp);
 				return 0;	//Return failure
 			}
 			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"ShowMessageBox(hint%lu, %s)\"/>\n", tp->popupmessage[ctr].start_pos / 1000.0, ctr + 1, buffer2);
@@ -989,6 +992,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				{	//If the chord list was built
 					free(chordlist);
 				}
+				(void) pack_fclose(fp);
 				return 0;	//Return failure
 			}
 			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"ClearAllMessageBoxes()\"/>\n", tp->popupmessage[ctr].end_pos / 1000.0);
@@ -1015,6 +1019,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				{	//If the chord list was built
 					free(chordlist);
 				}
+				(void) pack_fclose(fp);
 				return 0;	//Return failure
 			}
 			(void) snprintf(controls[controlctr].str, stringlen, "    <control time=\"%.3f\" code=\"CDlcTone(%s)\"/>\n", tp->tonechange[ctr].start_pos / 1000.0, tp->tonechange[ctr].name);
@@ -1231,6 +1236,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							}
 							eof_rs_export_cleanup(sp, track);
 							eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+							(void) pack_fclose(fp);
 							return 0;	//Return error
 						}
 						if(tp->note[ctr3]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
@@ -1363,6 +1369,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							}
 							eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added
 							eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+							(void) pack_fclose(fp);
 							return 0;	//Return error
 						}
 						handshapestart = eof_get_note_pos(sp, track, ctr3);	//Store this chord's start position (in seconds)
@@ -1818,6 +1825,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	if(!eof_rs_export_common(sp, track, fp, user_warned))
 	{	//If there was an error adding temporary phrases, sections, beats tot he project and writing the phrases to file
 		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+		(void) pack_fclose(fp);
 		return 0;	//Return error
 	}
 
@@ -1876,6 +1884,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								eof_log("Error:  Couldn't expand linked chords into single notes.  Aborting Rocksmith 2 export.", 1);
 								eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 								eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+								(void) pack_fclose(fp);
 								return 0;	//Return error
 							}
 						}//If this string is used and is not ghosted
@@ -1938,6 +1947,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 									eof_log("Error:  Couldn't expand an arpeggio chord into single notes.  Aborting Rocksmith 2 export.", 1);
 									eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 									eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+									(void) pack_fclose(fp);
 									return 0;	//Return error
 								}
 							}//If this string is used and is not ghosted
@@ -1978,6 +1988,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								eof_log("Error:  Couldn't replace a handshape chord with an un-named copy.  Aborting Rocksmith 2 export.", 1);
 								eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 								eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+								(void) pack_fclose(fp);
 								return 0;	//Return error
 							}
 						}
@@ -2057,6 +2068,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					eof_log("Error:  Couldn't expand a non arpeggio partially ghosted chord into non ghosted chord(s).  Aborting Rocksmith 2 export.", 1);
 					eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 					eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+					(void) pack_fclose(fp);
 					return 0;	//Return error
 				}
 			}//If it is partially ghosted and would export as a chord instead of a single note
@@ -2465,6 +2477,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								}
 								eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 								eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+								(void) pack_fclose(fp);
 								return 0;	//Return error
 							}
 							flags = tp->note[ctr3]->flags;	//Simplify
@@ -2660,6 +2673,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								}
 								eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 								eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+								(void) pack_fclose(fp);
 								return 0;	//Return error
 							}
 							handshapestart = eof_get_note_pos(sp, track, ctr3);	//Use this chord's start position, unless the loop below finds it is inside an arpeggio/handshape

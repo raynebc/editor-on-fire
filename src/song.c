@@ -4906,8 +4906,8 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 		{	//For each arpeggio phrase in the track (outer for loop)
 			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
 			{	//For each note in the track (inner for loop)
-				if(((tp->note[ctr2]->pos + 10 >= tp->arpeggio[ctr].start_pos) && (tp->note[ctr2]->pos <= tp->arpeggio[ctr].start_pos + 10)) && (tp->note[ctr2]->type == tp->arpeggio[ctr].difficulty))
-				{	//If this note's start position is within 10ms of an arpeggio phrase in this track difficulty
+				if((tp->note[ctr2]->pos >= tp->arpeggio[ctr].start_pos) && (tp->note[ctr2]->pos <= tp->arpeggio[ctr].start_pos + 10) && (tp->note[ctr2]->type == tp->arpeggio[ctr].difficulty))
+				{	//If this note's start position is at or up to 10ms after the start of an arpeggio phrase in this track difficulty
 					unsigned char frets[6];	//Will be used to build a new fret array
 					unsigned char note;		//Will be used to build a new note bitmask
 					unsigned char ghost;	//Will be used to build a new ghost bitmask

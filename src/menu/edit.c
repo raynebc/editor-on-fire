@@ -384,6 +384,11 @@ void eof_prepare_edit_menu(void)
 		eof_edit_hopo_menu[(int)eof_hopo_view].flags = D_SELECTED;
 
 		/* speed */
+		eof_edit_playback_menu[0].flags = 0;
+		if(eof_playback_time_stretch)
+		{
+			eof_edit_playback_menu[0].flags = D_SELECTED;
+		}
 		for(i = 0; i < 3; i++)
 		{
 			eof_edit_speed_menu[i].flags = 0;
@@ -1980,11 +1985,6 @@ int eof_menu_edit_playback_speed_helper_slower(void)
 int eof_menu_edit_playback_time_stretch(void)
 {
 	eof_playback_time_stretch = 1 - eof_playback_time_stretch;
-	eof_edit_playback_menu[0].flags = 0;
-	if(eof_playback_time_stretch)
-	{
-		eof_edit_playback_menu[0].flags = D_SELECTED;
-	}
 	return 1;
 }
 
