@@ -103,7 +103,7 @@ DIALOG eof_settings_dialog[] =
 DIALOG eof_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  482, 478, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
+	{ d_agup_window_proc,0,   48,  482, 494, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
 	{ d_agup_check_proc, 16,  75,  110, 16,  2,   23,  0,    0,      1,   0,   "Inverted Notes",      NULL, NULL },
 	{ d_agup_check_proc, 150, 75,  92 , 16,  2,   23,  0,    0,      1,   0,   "Lefty Mode",          NULL, NULL },
 	{ d_agup_check_proc, 306, 75,  128, 16,  2,   23,  0,    0,      1,   0,   "Note Auto-Adjust",    NULL, NULL },
@@ -127,13 +127,13 @@ DIALOG eof_preferences_dialog[] =
 	{ eof_verified_edit_proc,392,185,30,20,  0,   0,   0,    0,      3,   0,   eof_etext,     "0123456789", NULL },
 	{ d_agup_check_proc, 248, 497, 214, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
 	{ d_agup_check_proc, 248, 289, 184, 16,  2,   23,  0,    0,      1,   0,   "Use dB style seek controls",NULL, NULL },
-	{ d_agup_text_proc,  24,  354, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
-	{ d_agup_list_proc,  16,  371, 100, 110, 2,   23,  0,    0,      0,   0,   (void *)eof_input_list,        NULL, NULL },
-	{ d_agup_text_proc,  150, 371, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
-	{ d_agup_list_proc,  129, 386, 100, 95,  2,   23,  0,    0,      0,   0,   (void *)eof_colors_list,       NULL, NULL },
-	{ d_agup_button_proc,12,  486, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-	{ d_agup_button_proc,86,  486, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-	{ d_agup_button_proc,160, 486, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+	{ d_agup_text_proc,  24,  370, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
+	{ d_agup_list_proc,  16,  387, 100, 110, 2,   23,  0,    0,      0,   0,   (void *)eof_input_list,        NULL, NULL },
+	{ d_agup_text_proc,  150, 387, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
+	{ d_agup_list_proc,  129, 402, 100, 95,  2,   23,  0,    0,      0,   0,   (void *)eof_colors_list,       NULL, NULL },
+	{ d_agup_button_proc,12,  502, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_button_proc,86,  502, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+	{ d_agup_button_proc,160, 502, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
 	{ d_agup_text_proc,  16,  227, 120, 12,  0,   0,   0,    0,      0,   0,   "Top of 2D pane shows:",NULL,NULL },
 	{ d_agup_radio_proc, 161, 227, 60,  16,  2,   23,  0,    0,      1,   0,   "Names",               NULL, NULL },
 	{ d_agup_radio_proc, 224, 227, 72,  16,  2,   23,  0,    0,      1,   0,   "Sections",            NULL, NULL },
@@ -161,6 +161,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 337, 226, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short chords",NULL, NULL },
 	{ d_agup_check_proc, 16,  273, 340, 16,  2,   23,  0,    0,      1,   0,   "Apply crazy to repeated chords separated by a rest",NULL, NULL },
 	{ d_agup_check_proc, 248, 168, 206, 16,  2,   23,  0,    0,      1,   0,   "Save FoF/GH/Phase Shift files",NULL, NULL },
+	{ d_agup_check_proc, 248, 513, 224, 16,  2,   23,  0,    0,      1,   0,   "Offer to auto complete fingering",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1106,6 +1107,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[55].flags = eof_gp_import_truncate_short_chords ? D_SELECTED : 0;//GP import truncates short chords
 	eof_preferences_dialog[56].flags = eof_enforce_chord_density ? D_SELECTED : 0;			//Apply crazy to repeated chords separated by a rest
 	eof_preferences_dialog[57].flags = eof_write_fof_files ? D_SELECTED : 0;				//Save FoF/GH/Phase Shift files
+	eof_preferences_dialog[58].flags = eof_auto_complete_fingering ? D_SELECTED : 0;		//Offer to auto complete fingering
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1234,6 +1236,7 @@ int eof_menu_file_preferences(void)
 			eof_gp_import_truncate_short_chords = (eof_preferences_dialog[55].flags == D_SELECTED ? 1 : 0);
 			eof_enforce_chord_density = (eof_preferences_dialog[56].flags == D_SELECTED ? 1 : 0);
 			eof_write_fof_files = (eof_preferences_dialog[57].flags == D_SELECTED ? 1 : 0);
+			eof_auto_complete_fingering = (eof_preferences_dialog[58].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 29)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1283,6 +1286,7 @@ int eof_menu_file_preferences(void)
 			(void) snprintf(eof_etext3, sizeof(eof_etext3) - 1, "10000");	//Chord density threshold
 			eof_preferences_dialog[56].flags = 0;					//Apply crazy to repeated chords separated by a rest
 			eof_preferences_dialog[57].flags = D_SELECTED;			//Save FoF/Phase Shift files
+			eof_preferences_dialog[58].flags = D_SELECTED;			//Offer to auto complete fingering
 		}//If the user clicked "Default
 	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);

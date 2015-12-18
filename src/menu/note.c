@@ -5105,8 +5105,8 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 				}//For each note in the track
 
 				//Offer to update the fingering for all notes in the track matching the selected note (which all selected notes now match because they were altered if they didn't)
-				if(fingeringdefined)
-				{	//If the fingering is defined
+				if(fingeringdefined && eof_auto_complete_fingering)
+				{	//If the fingering is defined, and the user didn't disable this auto-completion feature
 					for(ctr = 0; ctr < tp->notes; ctr++)
 					{	//For each note in the track
 						if((ctr != eof_selection.current) && !eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr))

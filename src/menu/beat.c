@@ -621,9 +621,9 @@ DIALOG eof_custom_ts_dialog[] =
 	/* (proc)				  (x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1) (d2) (dp)                 (dp2) (dp3) */
 	{ d_agup_shadow_box_proc, 32,  68,  175, 95, 2,   23,  0,    0,      0,   0,   NULL,                NULL, NULL },
 	{ d_agup_text_proc,		  42,  84,  35,  8,  2,   23,  0,    0,      0,   0,   "Beats per measure:",NULL, NULL },
-	{ eof_verified_edit_proc, 160, 80,  35,  20, 2,   23,  0,    0,      8,   0,   eof_etext,           "0123456789", NULL },
+	{ eof_verified_edit_proc, 160, 80,  35,  20, 2,   23,  0,    0,      3,   0,   eof_etext,           "0123456789", NULL },
 	{ d_agup_text_proc,		  42,  105, 35,  8,  2,   23,  0,    0,      0,   0,   "Beat unit:",        NULL, NULL },
-	{ eof_verified_edit_proc, 160, 101, 35,  20, 2,   23,  0,    0,      8,   0,   eof_etext2,          "0123456789", NULL },
+	{ eof_verified_edit_proc, 160, 101, 35,  20, 2,   23,  0,    0,      3,   0,   eof_etext2,          "0123456789", NULL },
 	{ d_agup_button_proc,	  42,  125, 68,  28, 2,   23,  '\r', D_EXIT, 0,   0,   "OK",                NULL, NULL },
 	{ d_agup_button_proc,	  125, 125, 68,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",            NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }

@@ -3,6 +3,7 @@
 #include "foflc/Lyric_storage.h"	//For strcasestr_spec()
 #include "foflc/RS_parse.h"			//For XML parsing functions
 #include "main.h"
+#include "midi.h"					//For eof_apply_ts()
 #include "rs.h"
 #include "rs_import.h"
 #include "undo.h"
@@ -1479,6 +1480,49 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		}
 		free(eventlist[ctr]);	//Free the text event, since it's been added to the project
 	}
+
+	//Convert imported events to time signature changes
+	if(eof_use_ts)
+	{	//If the user opted to import TS changes
+		for(ctr = eof_song->text_events; ctr > 0; ctr--)
+		{	//For each text event (in reverse order)
+			char buffer[5];
+			char *ptr = strcasestr_spec(eof_song->text_event[ctr - 1]->text, "TS:");
+			unsigned index = 0;
+			long num, den;
+			if(ptr)
+			{	//If this text event is formatted like a time signature change
+				while((index < 5) && (*ptr != '/'))
+				{	//Copy the numerator into the buffer
+					buffer[index++] = *ptr;
+					ptr++;
+				}
+				if(!index || (index >= 5))
+					continue;	//Skip converting this text event if an error was encountered
+				buffer[index] = '\0';	//Terminate the buffer
+				num = atol(buffer);		//Convert the string to a number
+				if(!num || (num > 999) || (*ptr != '/'))
+					continue;	//Skip converting this text event if an error was encountered
+				ptr++;	//Advance past the forward slash
+				index = 0;
+				while((index < 5) && (*ptr != '\0'))
+				{	//Copy the denominator into the buffer
+					buffer[index++] = *ptr;
+					ptr++;
+				}
+				if(!index || (index >= 5))
+					continue;	//Skip converting this text event if an error was encountered
+				buffer[index] = '\0';	//Terminate the buffer
+				den = atol(buffer);		//Convert the string to a number
+				if(!den || (den > 999))
+					continue;	//Skip converting this text event if an error was encountered
+				eof_apply_ts(num, den, eof_song->text_event[ctr - 1]->beat, eof_song, 0);	//Add the time signature to the active project
+				eof_song_delete_text_event(eof_song, ctr - 1);	//Delete the converted text event
+			}
+		}
+		eof_calculate_tempo_map(eof_song);	//Rebuild tempo map to account for any time signature changes
+	}
+
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	eventlist_count = 0;
 	for(ctr = 0; ctr < chordlist_count; ctr++)

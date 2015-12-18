@@ -135,7 +135,8 @@ float eof_pos_distance(float p1, float p2);
 void eof_get_snap_ts(EOF_SNAP_DATA * sp, int beat);
 	//Finds the time signature in effect for the specified beat and stores the numerator and denominator into sp
 int eof_get_ts_text(int beat, char * buffer);
-	//Writes a string into the provided buffer that represents the time signature on the specified beat (string will be empty if the beat has no time signature defined explicitly on it)
+	//Writes a string into the provided buffer that represents the time signature on the specified beat (string will be emptied if the beat has no time signature defined explicitly on it)
+	//Buffer is expected to be able to store up to 8 Unicode characters (16 bytes)
 	//Returns zero on error or if the beat does not contain a time signature change, otherwise nonzero is returned
 int eof_get_tempo_text(int beat, char * buffer);
 	//Writes a string into the provided buffer that represents the tempo of the specified beat, followed by a trailing space

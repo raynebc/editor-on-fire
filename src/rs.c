@@ -2326,6 +2326,20 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		allegro_message("Error:  Default RS sections that were added are missing.  Skipping writing the <sections> tag.");
 	}
 
+	//Add temporary events for time signature changes
+	for(ctr = 0; ctr < sp->beats; ctr++)
+	{	//For each beat
+		char buffer[16];
+		char buffer2[30];
+
+		if(eof_song->beat[ctr]->contains_ts_change && eof_get_ts_text(ctr, buffer))
+		{	//If this beat has a time signature defined
+			(void) uszprintf(buffer2, sizeof(buffer2), "TS:%s", buffer);		//Build a string to mark this change
+			(void) eof_song_add_text_event(sp, ctr, buffer2, track, EOF_EVENT_FLAG_RS_EVENT, 1);		//Add it as a temporary event at the change's beat number
+		}
+	}
+	eof_sort_events(sp);	//Re-sort
+
 	//Write events
 	for(ctr = 0, numevents = 0; ctr < sp->text_events; ctr++)
 	{	//For each event in the chart
@@ -2359,6 +2373,16 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	{	//Otherwise write an empty events tag
 		(void) pack_fputs("  <events count=\"0\"/>\n", fp);
 	}
+
+	//Remove all temporary text events that were added for time signatures
+	for(ctr = sp->text_events; ctr > 0; ctr--)
+	{	//For each text event (in reverse order)
+		if(sp->text_event[ctr-1]->is_temporary)
+		{	//If this text event has been marked as temporary
+			eof_song_delete_text_event(sp, ctr-1);	//Delete it
+		}
+	}
+	eof_sort_events(sp);	//Re-sort
 
 	//Write some unknown information
 	(void) pack_fputs("  <transcriptionTrack difficulty=\"-1\">\n", fp);
