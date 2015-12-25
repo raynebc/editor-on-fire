@@ -1,5 +1,6 @@
 #include <allegro.h>
 #include <assert.h>
+#include <string.h>
 #include <time.h>
 #include "agup/agup.h"
 #include "beat.h"
@@ -1895,6 +1896,32 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}//For each note in the active pro guitar track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
+	//Identify gems within chords that will combine with adjacent single notes due to linknext status during chordnote export
+	//Mark single notes as ignored where appropriate
+	for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
+	{	//For each note in the track
+		if(eof_is_partially_ghosted(sp, track, ctr3) && (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_TWIN))
+		{	//If the chord is partially ghosted and has this flag set, it has a clone without ghost gems that should instead be used for chord tag export
+			continue;
+		}
+		if(eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1)
+		{	//If this note will export as a chord (at least two non ghosted gems)
+			if(!(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE) || (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_COMBINE))
+			{	//If this chord wasn't split into single notes or converted into a non ghosted chord and is being ignored, or if it is marked for combination
+				for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
+				{	//For each string used in this track, write chordNote tags
+					if((eof_get_note_note(sp, track, ctr3) & bitmask) && !(tp->note[ctr3]->ghost & bitmask))
+					{	//If this string is used in this note and it is not ghosted
+						long originallength = tp->note[ctr3]->length;	//Back up the original length of this note because it may be altered before export
+
+						eof_rs_combine_linknext_logic(sp, track, ctr3, stringnum);
+						tp->note[ctr3]->length = originallength;	//Restore the original length to the chord
+					}
+				}
+			}
+		}
+	}
+
 	//Identify notes that are inside handshape phrases, handshapes for which will be treated differently than arpeggio phrases
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the active pro guitar track
@@ -2473,8 +2500,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					}
 					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1))
 					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems)
-						if(!(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE))
-						{	//If this chord wasn't split into single notes or converted into a non ghosted chord and is being ignored
+						if(!(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE) || (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_COMBINE))
+						{	//If this chord wasn't split into single notes or converted into a non ghosted chord and is being ignored, or if it is marked for combination
 							for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
 							{	//For each of the entries in the unique chord list
 								assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
@@ -2534,8 +2561,14 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							{	//For each string used in this track, write chordNote tags
 								if((eof_get_note_note(sp, track, ctr3) & bitmask) && !(tp->note[ctr3]->ghost & bitmask))
 								{	//If this string is used in this note and it is not ghosted
+									long originallength = tp->note[ctr3]->length;	//Back up the original length of this note because it may be altered before export
+
+									eof_rs_combine_linknext_logic(sp, track, ctr3, stringnum);
+
 									assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
 									eof_rs2_export_note_string_to_xml(sp, track, ctr3, stringnum, 1, chordlist[chordid], fp);	//Write this chordNote's XML tag
+
+									tp->note[ctr3]->length = originallength;	//Restore the original length to the chord
 								}//If this string is used in this note and it is not ghosted
 							}//For each string used in this track
 							(void) pack_fputs("        </chord>\n", fp);
@@ -4584,6 +4617,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 
 	if(ptr)
 	{	//If the calling function passed a techniques structure
+		memset(ptr, 0, sizeof(EOF_RS_TECHNIQUES));	//Force this structure to fill with zeroes to avoid scenarios where two identical structures fail memory comparison because of differences in the values of padding between variables
 		ptr->length = eof_get_note_length(sp, track, notenum);
 
 		ptr->bendstrength_h = ptr->bendstrength_q = ptr->bend = 0;	//Initialize these to default values
@@ -4771,6 +4805,8 @@ void eof_rs_export_cleanup(EOF_SONG * sp, unsigned long track)
 		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_HAND;		//Clear the handshape flag
 		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_ARP_FIRST;	//Clear the first in arpeggio flag
 		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_TWIN;		//Clear the partial ghosted chord twin flag
+		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_COMBINE;	//Clear the note/chordnote combine flag
+		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_NO_LN;		//Clear the ignore linknext flag
 		if(tp->note[ctr - 1]->tflags & EOF_NOTE_TFLAG_TEMP)
 		{	//If this is a temporary note that was added to split up an arpeggio's chord into single notes
 			eof_track_delete_note(sp, track, ctr - 1);	//Delete it
@@ -4867,6 +4903,10 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 	{	//This string is played open
 		fingernum = -1;
 	}
+
+	//If the EOF_NOTE_TFLAG_NO_LN flag is set, force the linknext status to be disregarded for this note
+	if(tp->note[notenum]->tflags & EOF_NOTE_TFLAG_NO_LN)
+		tech.linknext = 0;
 
 	//Write the note/chordNote tag
 	(void) snprintf(buffer, sizeof(buffer) - 1, "        %s<%s time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" bend=\"%d\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"%d\" leftHand=\"%ld\" mute=\"%d\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\" harmonicPinch=\"%d\" pickDirection=\"0\" rightHand=\"-1\" slideUnpitchTo=\"%ld\" tap=\"%d\" vibrato=\"%d\"%s>\n", indentlevel, tagstring, (double)notepos / 1000.0, tech.linknext, tech.accent, tech.bend, fret, tech.hammeron, tech.harmonic, tech.hopo, tech.ignore, fingernum, tech.stringmute, tech.palmmute, tech.pop, tech.pulloff, tech.slap, tech.slideto, stringnum, (double)tech.length / 1000.0, tech.tremolo, tech.pinchharmonic, tech.unpitchedslideto, tech.tap, tech.vibrato, tagend);
@@ -5129,4 +5169,79 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 	}
 
 	return 1;	//Return success
+}
+
+void eof_rs_combine_linknext_logic(EOF_SONG * sp, unsigned long track, unsigned long notenum, unsigned long stringnum)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+	EOF_RS_TECHNIQUES tech, tech2;
+
+	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || (stringnum > 5))
+		return;		//Invalid parameters
+
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+	if(!(tp->note[notenum]->note & (1 << stringnum)))	//If the specified chord doesn't have a gem on this string
+		return;		//Invalid paramter
+
+	(void) eof_get_rs_techniques(sp, track, notenum, stringnum, &tech, 2, 1);		//Determine techniques used by this gem (including applicable technotes)
+	(void) eof_get_rs_techniques(sp, track, notenum, stringnum, &tech2, 2, 1);
+
+	while(tech2.linknext)
+	{	//While linknext may have the effect of combining a single note's sustain with the chordnote
+		long target, target2;
+
+		target = notenum;
+		while(1)
+		{	//Find the first of the remaining notes that is not ignored (unless it is marked for combination) and is at/after the end position of the the chordnote, if any
+			target = eof_fixup_next_pro_guitar_note(tp, target);
+			if(target <= 0)
+				break;	//Out of notes to check, exit loop
+			if((tp->note[target]->tflags & EOF_NOTE_TFLAG_IGNORE) && !(tp->note[target]->tflags & EOF_NOTE_TFLAG_COMBINE))
+				continue;	//If this note is ignored and not marked for combination, skip it
+			if(tp->note[target]->pos >= tp->note[notenum]->pos + tp->note[notenum]->length)
+				break;	//If this note is at/after the end position of the chordnote, exit loop
+		}
+
+		if((target > 0) && (tp->note[target]->pos != tp->note[notenum]->pos))
+		{	//If such a note was found
+			EOF_PRO_GUITAR_NOTE *np1 = tp->note[target];	//Simplify
+
+			for(target2 = target; (target2 > 0) && (tp->note[target2]->pos == np1->pos); target2 = eof_fixup_next_pro_guitar_note(tp, target2))
+			{	//For all remaining notes at that timestamp
+				EOF_PRO_GUITAR_NOTE *np2 = tp->note[target2];	//Simplify
+				tech2.linknext = 0;	//Set the condition to break from the while loop
+
+				if((np2->tflags & EOF_NOTE_TFLAG_IGNORE) && !(np2->tflags & EOF_NOTE_TFLAG_COMBINE))
+					continue;	//If this single note is already being ignored, and isn't marked for combination, skip it
+
+				if(np2->note == (1 << stringnum))
+				{	//If it is a single note on the same string as the chordnote being exported
+					(void) eof_get_rs_techniques(sp, track, target2, stringnum, &tech2, 2, 1);		//Determine techniques used by this single note (including applicable technotes)
+					tech2.linknext = tech.linknext;	//Disregard any differences with the linknext status
+					tech2.length = tech.length;		//And length
+					tech2.sustain = tech.sustain;	//And sustain
+					if(!memcmp(&tech, &tech2, sizeof(EOF_RS_TECHNIQUES)) && (tp->note[notenum]->frets[stringnum] == np2->frets[stringnum]))
+					{	//If the used techniques and fret numbers were otherwise identical, combine this single note's sustain with that of the chordnote and don't export the single note
+						tp->note[notenum]->length = np2->pos + np2->length - tp->note[notenum]->pos;	//Adjust length of chordnote
+						np2->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark the single note as ignored
+						np2->tflags |= EOF_NOTE_TFLAG_COMBINE;	//Flag that the note is going to be combined with a chordnote during export
+						(void) eof_get_rs_techniques(sp, track, target2, stringnum, &tech2, 2, 1);	//Allow linknext on the merged note to cause the while loop to re-run
+						if(!tech2.linknext)
+						{	//If the merged note was not linked to the next one
+							tp->note[notenum]->tflags |= EOF_NOTE_TFLAG_NO_LN;	//Mark that the linknext status for the chordnote is to not be exported
+						}
+					}
+					else
+					{
+						tech2.linknext = 0;	//Set the condition to break from the while loop
+					}
+					break;	//Break from for loop to allow for checking of notes at a later timestamp
+				}
+			}
+		}
+		else
+		{
+			tech2.linknext = 0;	//Break from while loop
+		}
+	}
 }

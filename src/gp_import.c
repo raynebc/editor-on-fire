@@ -4716,14 +4716,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				{	//For each of the 7 strings the GP format allows for
 					if((bitmask & gp->track[ctr]->note[ctr2]->note) && (bitmask & gp->track[ctr]->note[ctr2 + 1]->note))
 					{	//If this string is used on this note as well as the next
-						startfret = gp->track[ctr]->note[ctr2]->frets[ctr3];	//Record the fret number used on this note
+						startfret = eof_pro_guitar_note_lowest_fret(gp->track[ctr], ctr2);	//Record the lowest used fret on this note
 						if(gp->track[ctr]->note[ctr2 + 1]->frets[ctr3] & 0x80)
 						{	//If the end of the slide is defined by a mute note
 							endfret =  0;	//Force it to be a downward slide, the end fret of the slide will be undefined
 						}
 						else
 						{
-							endfret = gp->track[ctr]->note[ctr2 + 1]->frets[ctr3];	//Record the fret number used on the next note
+							endfret = eof_pro_guitar_note_lowest_fret(gp->track[ctr], ctr2 + 1);	//Record the lowest used fret on the next note
 						}
 						if(startfret == endfret)
 						{	//If both strings use the same fret

@@ -261,6 +261,7 @@ unsigned long eof_get_highest_fret_in_time_range(EOF_SONG *sp, unsigned long tra
 
 unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long stringnum, EOF_RS_TECHNIQUES *ptr, char target, char checktechnotes);
 	//Reads the flags of the specified note and sets variables in the specified techniques structure
+	//The structure is explicitly block filled with zeroes to ensure that memory comparison functions between two instances of the technique structure will behave as expected
 	//  If checktechnotes is nonzero, the techniques of any tech notes applicable to the specified string of the note are taken into account
 	//  If the specified note extends all the way to the next note (has linkNext status), only the tech notes before the next note's position are checked
 	//stringnum is used to set the fret and pitched/unpitched slide end fret values (which take the track's capo into account) for a specified string,
@@ -282,5 +283,11 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 	// beats in the track, to satisfy DDC
 	//Writes the phrases XML tag to the specified packfile stream
 	//Returns 0 on error
+
+void eof_rs_combine_linknext_logic(EOF_SONG * sp, unsigned long track, unsigned long notenum, unsigned long stringnum);
+	//Examines the specified chord and if the specified gem is linked to a single notes on the same string with a matching technique set and fret number
+	// the single note is marked to be ignored and its sustain is added to the chord's sustain
+	//To be run after linked chords are broken up into single notes and before single notes are exported to XML
+	//Calling function must preserve and restore the chord's original sustain value as appropriate
 
 #endif

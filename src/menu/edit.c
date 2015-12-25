@@ -2365,8 +2365,11 @@ int eof_menu_edit_select_like_function(char thorough)
 			for(j = 0; j < ntypes; j++)
 			{	//For each unique note number in the ntype array
 				if(eof_note_compare_simple(eof_song, eof_selected_track, ntype[j], i) == 0)
-				{	//If the stored unique note is the same as this note
-					break;	//Break loop
+				{	//If the stored unique note mask is the same as this note mask
+					if(!thorough || (eof_get_note_ghost(eof_song, eof_selected_track, ntype[j]) == eof_get_note_ghost(eof_song, eof_selected_track, i)))
+					{	//If the option to compare ghost flags was not chosen, or the two notes' ghost bitmasks also match
+						break;	//Break loop to reject this notes from the unique note list
+					}
 				}
 			}
 			if(j == ntypes)
@@ -2386,8 +2389,8 @@ int eof_menu_edit_select_like_function(char thorough)
 		{	//For each note bitmask in the ntype array
 			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_note_compare_simple(eof_song, eof_selected_track, ntype[j], i) == 0))
 			{	//If the note is in the active difficulty and matches one of the unique notes that are selected
-				if(!thorough || ((eof_get_note_flags(eof_song, eof_selected_track, ntype[j]) == eof_get_note_flags(eof_song, eof_selected_track, i)) && (eof_get_note_eflags(eof_song, eof_selected_track, ntype[j]) == eof_get_note_eflags(eof_song, eof_selected_track, i))))
-				{	//If the option to compare note flags was not chosen, or if the extended and common flags do match
+				if(!thorough || ((eof_get_note_flags(eof_song, eof_selected_track, ntype[j]) == eof_get_note_flags(eof_song, eof_selected_track, i)) && (eof_get_note_eflags(eof_song, eof_selected_track, ntype[j]) == eof_get_note_eflags(eof_song, eof_selected_track, i)) && (eof_get_note_ghost(eof_song, eof_selected_track, ntype[j]) == eof_get_note_ghost(eof_song, eof_selected_track, i))))
+				{	//If the option to compare note flags was not chosen, or if the extended flags, common flags and ghost bitmasks do match
 					eof_selection.track = eof_selected_track;	//Change the selection's track to the active track
 					eof_selection.multi[i] = 1;					//Mark the note as selected
 				}

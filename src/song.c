@@ -3771,7 +3771,7 @@ unsigned long eof_get_note_flags(EOF_SONG *sp, unsigned long track, unsigned lon
 	return 0;	//Return error
 }
 
-unsigned char eof_get_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note)
+unsigned short eof_get_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	unsigned long tracknum;
 
@@ -3866,6 +3866,27 @@ unsigned char eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long
 	}
 
 	return 0;	//Return error
+}
+
+unsigned char eof_get_note_ghost(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(note < sp->pro_guitar_track[tracknum]->notes)
+			{
+				return sp->pro_guitar_track[tracknum]->note[note]->ghost;
+			}
+		break;
+	}
+
+	return 0;	//Return error or not applicable
 }
 
 unsigned char eof_get_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note)
@@ -4652,20 +4673,12 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 			{	//If there is another note in this track
 				if(tp->note[i-1]->pos == tp->note[next]->pos)
 				{	//If this note and the next are at the same position, merge them
-					unsigned char lower = 0;	//Is set to nonzero if the next note has a lower string gem
+					unsigned char lower = 0;	//Is set to nonzero if the next note has a lower fret value
 
-					//Determine which of the two notes uses the lowest string, as this determines which note's end of pitched/unpitched slide positions are kept
-					for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
-					{	//For each of the next note's 6 usable strings, starting with the lowest
-						if((tp->note[next]->note & bitmask) && !(tp->note[i-1]->note & bitmask))
-						{	//If the next note uses this string but the current one doesn't
-							lower = 1;	//Note that the next string's end of pitched/unpitched slide takes priority
-							break;
-						}
-						if((tp->note[i-1]->note & bitmask) && !(tp->note[next]->note & bitmask))
-						{	//If the current note uses this string but the next one doesn't
-							break;
-						}
+					//Determine which of the two notes uses the lowest fret value, as this determines which note's end of pitched/unpitched slide positions are kept
+					if(eof_pro_guitar_note_lowest_fret(tp, next) < eof_pro_guitar_note_lowest_fret(tp, i - 1))
+					{	//If the next note uses a lower fret value
+						lower = 1;	//Note that next note's end of pitched/unpitched slide takes priority
 					}
 
 					tp->note[i-1]->note |= tp->note[next]->note;	//Merge the two notes' bitmasks
@@ -5200,7 +5213,7 @@ void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, u
 	}
 }
 
-void eof_set_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char tflags)
+void eof_set_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned short tflags)
 {
 // 	eof_log("eof_set_note_flags() entered");
 
