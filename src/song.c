@@ -4894,6 +4894,10 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 	//Ensure that the note at the beginning of each arpeggio/handshape phrase is authored correctly
 	if(eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files)
 	{	//If the user wants to save Rocksmith or Bandfuse capable files
+		char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that tech notes don't get added instead of regular notes
+
+		restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
+		eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view if applicable
 		for(ctr = 0; ctr < tp->arpeggios; ctr++)
 		{	//For each arpeggio/handshape phrase in the track (outer for loop)
 			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
@@ -4913,6 +4917,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 				}
 			}
 		}
+		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 		eof_track_sort_notes(sp, track);
 
 		for(ctr = 0; ctr < tp->arpeggios; ctr++)
@@ -6903,6 +6908,31 @@ unsigned long eof_get_highest_clipboard_lane(char *clipboardfile)
 	return highestlane;
 }
 
+unsigned long eof_get_lowest_fret_value(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long lowestfret = 0, currentfret, ctr, tracknum, bitmask;
+
+	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+	if(note >= sp->pro_guitar_track[tracknum]->notes)
+		return 0;	//Return error
+
+	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
+	{	//For each of the 6 usable strings
+		if(sp->pro_guitar_track[tracknum]->note[note]->note & bitmask)
+		{	//If this string is in use
+			currentfret = sp->pro_guitar_track[tracknum]->note[note]->frets[ctr];
+			if((currentfret != 0xFF) && (((currentfret & 0x7F) < lowestfret) || !lowestfret))
+			{	//If this fret value (masking out the MSB, which is used for muting status) is lower than the previous lowest value, or no fret value has been stored
+				lowestfret = currentfret & 0x7F;
+			}
+		}
+	}
+
+	return lowestfret;
+}
+
 unsigned long eof_get_highest_fret_value(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	unsigned long highestfret = 0, currentfret, ctr, tracknum, bitmask;
@@ -6926,43 +6956,6 @@ unsigned long eof_get_highest_fret_value(EOF_SONG *sp, unsigned long track, unsi
 	}
 
 	return highestfret;
-}
-
-unsigned char eof_pro_guitar_track_get_lowest_fretted_string_fret(EOF_PRO_GUITAR_TRACK *tp, unsigned long note)
-{
-	unsigned long ctr, bitmask;
-	EOF_PRO_GUITAR_NOTE *np;
-
-	if(!tp || (note >= tp->notes))
-		return 0;	//Invalid parameters
-	np = tp->note[note];
-
-	//Find the lowest fretted string's fret value
-	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
-	{	//For each of the 6 supported strings
-		if((np->note & bitmask) && !(np->ghost & bitmask))
-		{	//If this string is used in this note and it is not ghosted
-			if((np->frets[ctr] != 0xFF) && np->frets[ctr])
-			{	//If this string has a defined fret number
-				return (np->frets[ctr] & 0x7F);	//Return it
-			}
-		}
-	}
-
-	return 0;	//None of the strings were fretted
-}
-
-unsigned char eof_get_lowest_fretted_string_fret(EOF_SONG *sp, unsigned long track, unsigned long note)
-{
-	unsigned long tracknum;
-
-	if(!sp || (track >= sp->tracks))
-		return 0;	//Invalid parameters
-	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)	//If the specified track is not a pro guitar track
-		return 0;	//Invalid parameters
-	tracknum = sp->track[track]->tracknum;
-
-	return eof_pro_guitar_track_get_lowest_fretted_string_fret(sp->pro_guitar_track[tracknum], note);
 }
 
 unsigned long eof_determine_chart_length(EOF_SONG *sp)

@@ -563,7 +563,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 					up = 1;
 				else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
 				{
-					unsigned char lowestfret = eof_get_lowest_fretted_string_fret(eof_song, track, notenum);	//Determine the fret value of the lowest fretted string
+					unsigned char lowestfret = eof_get_lowest_fret_value(eof_song, track, notenum);	//Determine the fret value of the lowest fretted string
 					if(lowestfret < eof_song->pro_guitar_track[tracknum]->note[notenum]->unpitchend)
 					{	//If the unpitched slide goes higher than this position
 						up = 1;
@@ -1380,7 +1380,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 					up = 1;
 				else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
 				{
-					unsigned char lowestfret = eof_get_lowest_fretted_string_fret(eof_song, track, notenum);	//Determine the fret value of the lowest fretted string
+					unsigned char lowestfret = eof_get_lowest_fret_value(eof_song, track, notenum);	//Determine the fret value of the lowest fretted string
 					if(lowestfret < eof_song->pro_guitar_track[eof_song->track[track]->tracknum]->note[notenum]->unpitchend)
 					{	//If the unpitched slide goes higher than this position
 						up = 1;

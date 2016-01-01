@@ -1914,7 +1914,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					{	//If this string is used in this note and it is not ghosted
 						long originallength = tp->note[ctr3]->length;	//Back up the original length of this note because it may be altered before export
 
-						eof_rs_combine_linknext_logic(sp, track, ctr3, stringnum);
+						(void) eof_rs_combine_linknext_logic(sp, track, ctr3, stringnum);
 						tp->note[ctr3]->length = originallength;	//Restore the original length to the chord
 					}
 				}
@@ -1957,16 +1957,29 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				{	//If this is NOT a handshape phrase, or if the note is marked as crazy
 					if(eof_note_count_rs_lanes(sp, track, ctr, 2) > 1)
 					{	//If this note would export as a chord
-						tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as single notes
+						if(!(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE))
+						{	//If this was an arpeggio phrase instead of a handshape phrase
+							tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as single notes
+						}
 						for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
 						{	//For each of the 6 supported strings
 							if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
 							{	//If this string is used and is not ghosted
-								new_note = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);
+								long originallength = tp->note[ctr]->length;	//Back up the original length of this note because it may be altered by eof_rs_combine_linknext_logic()
+								int linknextoff;
+
+								linknextoff = eof_rs_combine_linknext_logic(sp, track, ctr, ctr3);	//Run combination logic to set the chord's length to that which this string's chordnote will export, if applicable
+								new_note = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);	//Clone the note with the updated length
+								tp->note[ctr]->length = originallength;	//Restore the chord's original length if it had changed
 								if(new_note)
 								{	//If the new note was created
 									new_note->tflags |= EOF_NOTE_TFLAG_TEMP;				//Mark the note as temporary
 									new_note->note = bitmask;								//Turn the cloned chord into a single note on the appropriate string
+									if(linknextoff)
+									{	//If the chordnote corresponding to this single note will have its linknext status forced off during export
+										new_note->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//This single note should export the same way
+										new_note->tflags |= EOF_NOTE_TFLAG_NO_LN;			//Explicitly signal to export logic that this single note will not export with linknext, even due to tech notes
+									}
 								}
 								else
 								{
@@ -2029,13 +2042,12 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 	//Identify partially ghosted chords, those outside arpeggio phrases will need to be temporarily replaced with variations of the chords without the ghost notes
 	//Those inside arpeggio phrases will be copied without ghost notes.  The original's chord template will be used for handshape tag export and the copy will be used for chord tag export
-	//This logic must only run if the chord in question has more than one non ghosted gem
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the active pro guitar track
 		if((eof_note_count_rs_lanes(sp, track, ctr, 4) > 1) && !(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE))
 		{	//If this note contains multiple gems and isn't already ignored
-			if(eof_is_partially_ghosted(sp, track, ctr) && (eof_note_count_rs_lanes(sp, track, ctr, 2) > 1))
-			{	//If it is partially ghosted and would export as a chord instead of a single note
+			if(eof_is_partially_ghosted(sp, track, ctr))
+			{	//If it is partially ghosted
 				char failed = 0;
 				EOF_PRO_GUITAR_NOTE *new_note2;
 				for(ctr2 = 0, match = 0; ctr2 < tp->arpeggios; ctr2++)
@@ -2098,8 +2110,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					(void) pack_fclose(fp);
 					return 0;	//Return error
 				}
-			}//If it is partially ghosted and would export as a chord instead of a single note
-		}//If this note would export as a chord and isn't already ignored
+			}//If it is partially ghosted
+		}//If this note contains multiple gems and isn't already ignored
 	}
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
@@ -2563,7 +2575,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								{	//If this string is used in this note and it is not ghosted
 									long originallength = tp->note[ctr3]->length;	//Back up the original length of this note because it may be altered before export
 
-									eof_rs_combine_linknext_logic(sp, track, ctr3, stringnum);
+									(void) eof_rs_combine_linknext_logic(sp, track, ctr3, stringnum);
 
 									assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
 									eof_rs2_export_note_string_to_xml(sp, track, ctr3, stringnum, 1, chordlist[chordid], fp);	//Write this chordNote's XML tag
@@ -5171,17 +5183,18 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 	return 1;	//Return success
 }
 
-void eof_rs_combine_linknext_logic(EOF_SONG * sp, unsigned long track, unsigned long notenum, unsigned long stringnum)
+int eof_rs_combine_linknext_logic(EOF_SONG * sp, unsigned long track, unsigned long notenum, unsigned long stringnum)
 {
 	EOF_PRO_GUITAR_TRACK *tp;
 	EOF_RS_TECHNIQUES tech, tech2;
+	int retval = 0;
 
 	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || (stringnum > 5))
-		return;		//Invalid parameters
+		return 0;		//Invalid parameters
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 	if(!(tp->note[notenum]->note & (1 << stringnum)))	//If the specified chord doesn't have a gem on this string
-		return;		//Invalid paramter
+		return 0;		//Invalid paramter
 
 	(void) eof_get_rs_techniques(sp, track, notenum, stringnum, &tech, 2, 1);		//Determine techniques used by this gem (including applicable technotes)
 	(void) eof_get_rs_techniques(sp, track, notenum, stringnum, &tech2, 2, 1);
@@ -5229,6 +5242,7 @@ void eof_rs_combine_linknext_logic(EOF_SONG * sp, unsigned long track, unsigned 
 						if(!tech2.linknext)
 						{	//If the merged note was not linked to the next one
 							tp->note[notenum]->tflags |= EOF_NOTE_TFLAG_NO_LN;	//Mark that the linknext status for the chordnote is to not be exported
+							retval = 1;	//Signal to calling function that any linknext for this chordnote should be forced off during export
 						}
 					}
 					else
@@ -5244,4 +5258,6 @@ void eof_rs_combine_linknext_logic(EOF_SONG * sp, unsigned long track, unsigned 
 			tech2.linknext = 0;	//Break from while loop
 		}
 	}
+
+	return retval;
 }

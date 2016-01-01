@@ -4179,7 +4179,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										if(byte == - 2)
 										{	//Slide in from above
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-											unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
+											if(!unpitchend || (frets[ctr4] < unpitchend))
+											{	//Track the lowest fret value for the slide end position
+												unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
+											}
 											frets[ctr4]++;				//Set the beginning of this slide one fret higher
 										}
 										else if(byte == -1)
@@ -4187,7 +4190,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											if(frets[ctr4] > 1 )
 											{	//Don't allow this unless sliding into a fret higher than 1
 												flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-												unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
+												if(!unpitchend || (frets[ctr4] < unpitchend))
+												{	//Track the lowest fret value for the slide end position
+													unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
+												}
 												frets[ctr4]--;				//Set the beginning of this slide one fret lower
 											}
 										}
@@ -4205,13 +4211,19 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											if(frets[ctr4] > 1 )
 											{	//Don't apply a downward slide unless the note is at fret 2 or higher
 												flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-												unpitchend = frets[ctr4] - 1;
+												if(!unpitchend || (frets[ctr4] < unpitchend))
+												{	//Track the lowest fret value for the slide end position
+													unpitchend = frets[ctr4] - 1;
+												}
 											}
 										}
 										else if(byte == 4)
 										{	//Slide out and upward
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-											unpitchend = frets[ctr4] + 1;
+											if(!unpitchend || (frets[ctr4] < unpitchend))
+											{	//Track the lowest fret value for the slide end position
+												unpitchend = frets[ctr4] + 1;
+											}
 										}
 									}
 									else
@@ -4221,27 +4233,39 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											if(frets[ctr4] > 1 )
 											{	//Don't apply a downward slide unless the note is at fret 2 or higher
 												flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-												unpitchend = frets[ctr4] - 1;
+												if(!unpitchend || (frets[ctr4] < unpitchend))
+												{	//Track the lowest fret value for the slide end position
+													unpitchend = frets[ctr4] - 1;
+												}
 											}
 										}
 										else if(byte & 8)
 										{	//This note slides out and upwards
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-											unpitchend = frets[ctr4] + 1;
+											if(!unpitchend || (frets[ctr4] < unpitchend))
+											{	//Track the lowest fret value for the slide end position
+												unpitchend = frets[ctr4] + 1;
+											}
 										}
 										else if(byte & 16)
 										{	//This note slides in from below
 											if(frets[ctr4] > 1 )
 											{	//Don't allow this unless sliding into a fret higher than 1
 												flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-												unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
+												if(!unpitchend || (frets[ctr4] < unpitchend))
+												{	//Track the lowest fret value for the slide end position
+													unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
+												}
 												frets[ctr4]--;				//Set the beginning of this slide one fret lower
 											}
 										}
 										else if(byte & 32)
 										{	//This note slides in from above
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-											unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
+											if(!unpitchend || (frets[ctr4] < unpitchend))
+											{	//Track the lowest fret value for the slide end position
+												unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
+											}
 											frets[ctr4]++;				//Set the beginning of this slide one fret higher
 										}
 										else
@@ -4747,9 +4771,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				}//For each of the 7 strings the GP format allows for
 				if((gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && (gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 				{	//If both the slide up and slide down flags are still set, the next note didn't use any of the same strings as the slide note
-					//Base the slide direction on the first populated string of that next note
-					startfret = eof_pro_guitar_track_get_lowest_fretted_string_fret(gp->track[ctr], ctr2);
-					endfret = eof_pro_guitar_track_get_lowest_fretted_string_fret(gp->track[ctr], ctr2 + 1);
+					//Base the slide direction on the lowest fret value of that next note
+					startfret = eof_pro_guitar_note_lowest_fret(gp->track[ctr], ctr2);
+					endfret = eof_pro_guitar_note_lowest_fret(gp->track[ctr], ctr2 + 1);
 					if(startfret != endfret)
 					{	//If the slide and the following note start from different fret positions
 						if(startfret > endfret)

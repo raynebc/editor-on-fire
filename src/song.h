@@ -94,7 +94,7 @@
 #define EOF_NOTE_TFLAG_GHOST_HS  64	//This flag will represent a note that is added during RS2 export that is observed during the chord list building and handshape exports, but ignored otherwise
 #define EOF_NOTE_TFLAG_TWIN     128	//This flag will represent a note that is either the original or ghost gem-less clone of a partial ghosted chord that is created during RS2 export
 #define EOF_NOTE_TFLAG_COMBINE  256	//This flag will represent a note that was marked as ignored because its sustain is to be combined with that of a chordnote during RS2 export
-#define EOF_NOTE_TFLAG_NO_LN    512	//This flag will indicate that the linknext status of the affected note is to be interepreted to be not set, due to how chordnotes and linked single notes can be combined during RS2 export
+#define EOF_NOTE_TFLAG_NO_LN    512	//This flag will indicate that the linknext status of the affected note is to be interpreted to be not set, due to how chordnotes and linked single notes can be combined, during RS2 export
 
 //The following extended flags pertain to pro guitar notes
 #define EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE   1	//This flag specifies a note that will export to RS2 format with the "ignore" status set to nonzero, for special uses
@@ -861,15 +861,12 @@ unsigned long eof_get_highest_clipboard_fret(char *clipboardfile);
 	//Parses the notes in the clipboard file, returning the highest used fret among them (or 0 if all such notes are muted with no fret specified)
 unsigned long eof_get_highest_clipboard_lane(char *clipboardfile);
 	//Parses the notes in the clipboard file, returning the highest used lane among them (or 0 if all such notes have no gems, ie. corrupted clipboard)
+unsigned long eof_get_lowest_fret_value(EOF_SONG *sp, unsigned long track, unsigned long note);
+	//Returns the lowest used fret in the specified pro guitar note
+	//If the parameters are invalid or the specific pro guitar note's gems are all muted with no fret specified, 0 is returned
 unsigned long eof_get_highest_fret_value(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//Returns the highest used fret in the specified pro guitar note
 	//If the parameters are invalid or the specific pro guitar note's gems are all muted with no fret specified, 0 is returned
-
-unsigned char eof_pro_guitar_track_get_lowest_fretted_string_fret(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);
-unsigned char eof_get_lowest_fretted_string_fret(EOF_SONG *sp, unsigned long track, unsigned long note);
-	//Returns the fret value of the lowest string that is fretted
-	//Ghosted gems are ignored
-	//Returns zero on error or if none of the note's strings are fretted
 
 unsigned long eof_determine_chart_length(EOF_SONG *sp);
 	//Parses the project and returns the ending position of the last note/tech note/lyric/text event/bookmark

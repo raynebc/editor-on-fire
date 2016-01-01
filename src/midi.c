@@ -1561,7 +1561,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				}
 				else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
 				{	//If the note has an unpitched slide
-					unsigned char lowestfret = eof_get_lowest_fretted_string_fret(sp, j, i);	//Determine the fret value of the note's lowest fretted string
+					unsigned char lowestfret = eof_get_lowest_fret_value(sp, j, i);	//Determine the fret value of the note's lowest fretted string
 					if(lowestfret < tp->note[i]->unpitchend)
 					{	//If the unpitched slide goes higher than this position
 						slideup = 1;
