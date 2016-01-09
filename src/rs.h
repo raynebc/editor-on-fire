@@ -236,6 +236,7 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 	//Returns nonzero if the specified note will export to XML as a high density chord
 	//This is based on whether the chord is close enough to a matching, previous chord
 	//  and whether the note's "crazy" flag is set (which overrides it to be low density)
+	//For the sake of not hijacking RS1 and RS2 export functionality, this function does not observe the high density flag
 	//If target is 1, then Rocksmith 1 authoring rules are followed and string muted chords are ignored
 	//If target is 2, then Rocksmith 2 authoring rules are followed and a chord with techniques that
 	//  require chordNote tags to be written and chords that follow chord slides are reflected as low density,

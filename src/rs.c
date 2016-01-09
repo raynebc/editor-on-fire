@@ -2566,6 +2566,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							{	//Force highdensity to a true/false value
 								highdensity = 1;
 							}
+							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HD)
+							{	//Chord is explicitly specified to be high density
+								highdensity = 1;
+							}
 							(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" chordId=\"%lu\" fretHandMute=\"%d\" highDensity=\"%d\" ignore=\"%d\" palmMute=\"%d\" hopo=\"%d\" strum=\"%s\">\n", (double)notepos / 1000.0, tech.linknext, tech.accent, chordid, tech.stringmute, highdensity, tech.ignore, tech.palmmute, tech.hopo, direction);
 							(void) pack_fputs(buffer, fp);
 							//Write chordnote tags
@@ -4073,26 +4077,25 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 
 	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 0;	//Note is not a pro guitar/bass note
-
-	if(eof_get_note_flags(sp, track, note) & EOF_NOTE_FLAG_CRAZY)
-		return 0;	//Note is marked with crazy status, which forces it to export as low density
-
 	if(eof_note_count_rs_lanes(sp, track, note, target) < 2)
 		return 0;	//Note is not a chord from the perspective of the target game (RS1 ignored string muted notes)
+
+	if(eof_get_note_flags(sp, track, note) & EOF_NOTE_FLAG_CRAZY)
+		return 0;	//Chord is marked with crazy status, which forces it to export as low density
 
 	prev = eof_track_fixup_previous_note(sp, track, note);
 	if(prev < 0)
 		return 0;	//No earlier note
 
 	if(eof_get_note_pos(sp, track, note) > eof_get_note_pos(sp, track, prev) + eof_get_note_length(sp, track, prev) + eof_chord_density_threshold)
-		return 0;	//Note is not within the configured threshold distance from the previous note
+		return 0;	//Chord is not within the configured threshold distance from the previous note
 
 	if(target == 2)
 	{	//Additional checks for Rocksmith 2
 		EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 
 		if(eof_get_rs_techniques(sp, track, note, 0, NULL, 2, 1))
-		{	//If this note uses any techniques that require writing a low density chord
+		{	//If this chord uses any techniques that require writing a low density chord
 			return 0;
 		}
 
@@ -4109,9 +4112,9 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 	}
 
 	if(eof_note_compare(sp, track, note, track, prev, 0))
-		return 0;	//Note does not match the previous note (ignoring note flags and lengths)
+		return 0;	//Chord does not match the previous note (ignoring note flags and lengths)
 
-	return 1;	//All criteria passed, note is high density
+	return 1;	//All criteria passed, chord is high density
 }
 
 int eof_enforce_rs_phrase_begin_with_fret_hand_position(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long startpos, unsigned long endpos, char *undo_made, char check_only)

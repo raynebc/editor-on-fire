@@ -3739,6 +3739,25 @@ int eof_gp_import_common(char *fn)
 			free(eof_parsed_gp_file);
 
 			(void) replace_filename(eof_last_gp_path, fn, "", 1024);	//Set the last loaded GP file path
+
+			if(!(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS))
+			{	//If the track's difficulty limit is in place
+				for(ctr2 = 0; ctr2 < eof_get_num_tremolos(eof_song, eof_selected_track); ctr2++)
+				{	//For each tremolo phrase in the track
+					EOF_PHRASE_SECTION *ptr = eof_get_tremolo(eof_song, eof_selected_track, ctr2);
+					if(ptr)
+					{	//If the tremolo was successfully found
+						if(ptr->difficulty == eof_note_type)
+						{	//If the tremolo phrase is specific to the active track, it was newly imported
+							if(alert(NULL, "Remove the track difficulty limit to show imported tremolo phrases?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+							{	//If the user opts to remove the track difficulty limit
+								(void) eof_track_rocksmith_toggle_difficulty_limit();
+							}
+							break;
+						}
+					}
+				}
+			}
 		}//The file was successfully parsed...
 		else
 		{
@@ -3753,7 +3772,7 @@ int eof_gp_import_common(char *fn)
 		eof_track_find_crazy_notes(eof_song, eof_selected_track);	//Mark notes that overlap others as crazy
 		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to clean up the track
 		(void) eof_menu_track_selected_track_number(eof_selected_track, 1);	//Re-select the active track to allow for a change in string count
-	}
+	}//If the file name is specified
 
 	return 0;	//Return success
 }

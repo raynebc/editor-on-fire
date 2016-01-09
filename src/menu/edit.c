@@ -3319,6 +3319,7 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_POP;			//Erase the pro guitar pop flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLAP;			//Erase the pro guitar slap flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;		//Erase the pro guitar linknext flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HD;				//Erase the pro guitar high density flag
 		}
 		else
 		{	//If it is pasting into a pro guitar track

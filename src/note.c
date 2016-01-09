@@ -1056,8 +1056,9 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 				else										//Otherwise render it in the standard lane one color for the current color set
 					linecol = p ? eof_colors[0].hit : eof_colors[0].color;
 			}
-			else if(eof_render_3d_rs_chords && eof_note_has_high_chord_density(eof_song, track, notenum, 2))
-			{	//If the user has opted to 3D render Rocksmith style chords, and this is a high density pro guitar chord
+			else if(eof_render_3d_rs_chords && (eof_note_count_rs_lanes(eof_song, track, notenum, 2) >= 2) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) &&
+					((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HD) || (eof_note_has_high_chord_density(eof_song, track, notenum, 2))))
+			{	//If the user has opted to 3D render Rocksmith style chords, and this is a pro guitar chord that either has high density due to being explicitly defined as such or automatically due to other means
 				ctr = eof_count_track_lanes(eof_song, track) + 1;	//Set a condition that will exit the for loop after this line is drawn
 				drawline = 1;
 				linecol = p ? eof_color_cyan : eof_color_dark_cyan;
@@ -1724,6 +1725,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 					buffer[index++] = buffer2[index2];	//Append it to the notation string
 				}
 			}
+		}
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HD)
+		{
+			buffer[index++] = '|';
 		}
 		if(np->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE)
 		{

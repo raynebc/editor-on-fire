@@ -3846,7 +3846,8 @@ DIALOG eof_pro_guitar_note_dialog[] =
 	{d_agup_check_proc,		10,  432, 60,  16, 2,   23,  0,    0,      0,         0,   "Ignore",     NULL,          NULL },
 	{d_agup_check_proc,		87,  432, 65,  16, 2,   23,  0,    0,      0,         0,   "Sustain",    NULL,          NULL },
 	{d_agup_check_proc,		154, 432, 50,  16, 2,   23,  0,    0,      0,         0,   "Stop",       NULL,          NULL },
-	{d_agup_check_proc,		10,  452, 78,  16, 2,   23,  0,    0,      0,         0,   "Ghost HS",       NULL,          NULL },
+	{d_agup_check_proc,		10,  452, 78,  16, 2,   23,  0,    0,      0,         0,   "Ghost HS",   NULL,          NULL },
+	{d_agup_check_proc,		87,  452, 68,  16, 2,   23,  0,    0,      0,         0,   "Hi Dens",    NULL,          NULL },
 	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -4148,6 +4149,14 @@ int eof_menu_note_edit_pro_guitar_note(void)
 			}
 			eof_pro_guitar_note_dialog[72].flags = D_DISABLED;	//"Ghost HS" status
 		}
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HD)
+		{	//Select "Hi Dens"
+			eof_pro_guitar_note_dialog[73].flags = D_SELECTED;
+		}
+		else
+		{	//Clear "Sustain"
+			eof_pro_guitar_note_dialog[73].flags = 0;
+		}
 
 		bitmask = 0;
 		retval = eof_popup_dialog(eof_pro_guitar_note_dialog, 0);	//Run the dialog
@@ -4447,6 +4456,10 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					if(eof_pro_guitar_note_dialog[72].flags == D_SELECTED)
 					{	//Ghost HS is selected
 						eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS;
+					}
+					if(eof_pro_guitar_note_dialog[73].flags == D_SELECTED)
+					{	//High Density is selected
+						flags |= EOF_PRO_GUITAR_NOTE_FLAG_HD;
 					}
 
 					if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
