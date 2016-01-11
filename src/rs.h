@@ -249,9 +249,8 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 
 int eof_enforce_rs_phrase_begin_with_fret_hand_position(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long startpos, unsigned long endpos, char *undo_made, char check_only);
 	//Looks at the fret hand positions in the specified track difficulty within the specified time span, which should be the beginning and end of a RS phrase.
-	//  If no such fret hand position exists, but a fret hand position is defined earlier in the difficulty, that hand position is defined at the first note within the phrase,
-	//  ensuring that there is an explicit hand position defined within each difficulty of each phrase, which ensures that they work properly in Rocksmith,
-	//  which can otherwise skip displaying position changes depending on the difficulties in effect going from one phrase to the next
+	//  If no such fret hand position exists, but a fret hand position is defined earlier in the difficulty, that hand position is defined at startpos,
+	//  ensuring that there is an explicit hand position defined within each difficulty of each phrase, which ensures that they work properly in Rocksmith
 	//If *undo_made is zero, this function will create an undo state before adding any fret hand position
 	//Returns nonzero if it was found that a phrase was needed to be added
 

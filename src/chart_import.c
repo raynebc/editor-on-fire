@@ -130,6 +130,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	struct dbTrack * current_track;
 	int track;
 	int difficulty;
+	unsigned long lastchartpos = 0;	//Used to track HOPO notation
 	long b = 0;
 	double solo_on = 0.0, solo_off = 0.0;
 	char solo_status = 0;	//0 = Off and awaiting a solo on marker, 1 = On and awaiting a solo off marker
@@ -333,7 +334,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 		current_track = chart->tracks;
 		while(current_track)
 		{
-
 			/* convert track number to EOF numbering scheme */
 			switch(current_track->tracktype)
 			{
@@ -401,6 +401,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 				struct dbNote * current_note = current_track->notes;
 				unsigned long lastpos = -1;	//The position of the last imported note (not updated for sections that are parsed)
 				EOF_NOTE * new_note = NULL;
+				EOF_NOTE * prev_note = NULL;
 
 				tracknum = sp->track[track]->tracknum;
 				while(current_note)
@@ -424,19 +425,35 @@ EOF_SONG * eof_import_chart(const char * fn)
 					/* import regular note */
 					else
 					{
-						if(current_note->chartpos != lastpos)
-						{
+						if((current_note->chartpos != lastpos) || (current_note->gemcolor == 5))
+						{	//If this note was at a different position than the last, or if it represents toggle HOPO notation, create a new note
 							new_note = eof_legacy_track_add_note(sp->legacy_track[tracknum]);
 							if(new_note)
 							{
-								new_note->pos = chartpos_to_msec(chart, current_note->chartpos);
+								new_note->pos = chartpos_to_msec(chart, current_note->chartpos) + 0.5;	//Round up
 								new_note->length = chartpos_to_msec(chart, current_note->chartpos + current_note->duration) - (double)new_note->pos + 0.5;	//Round up
 								new_note->note = 1 << current_note->gemcolor;
 								new_note->type = difficulty;
+								if(prev_note)
+								{	//If a previous gem was imported
+									if(current_note->chartpos != lastchartpos)
+									{	//If this gem is at a different position than the last one that was imported
+										if((current_note->chartpos > lastchartpos) && (current_note->chartpos - lastchartpos < ((chart->resolution * (4.0 * 3.0 / 32.0)) + 0.5)))
+										{	//If the note starts less than 3/32 measure (4 times the chart resolution, which represents one beat length) from the previous note's start position
+											new_note->flags |= EOF_NOTE_FLAG_F_HOPO;	//It is a hammer on note
+										}
+										lastchartpos = current_note->chartpos;	//Track the position of the gem position for HOPO tracking
+									}
+									else
+									{	//It's a gem at the same position as the last imported gem
+										new_note->flags = prev_note->flags;	//It will inherit the same flags in terms of HOPO status
+									}
+								}
+								prev_note = new_note;	//Track the last created note
 							}
 						}
 						else
-						{
+						{	//Otherwise add a gem to the previously created note
 							if(new_note)
 							{
 								new_note->note |= (1 << current_note->gemcolor);
@@ -448,6 +465,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 				}
 			}
 			current_track = current_track->next;
+			lastchartpos = 0;	//Reset this value
 		}
 
 		/* load text events */
@@ -532,7 +550,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 	}
 
-	/* check if unofficial forced HOPO notation was found */
+	/* check if unofficial toggle HOPO notation was found */
 	eof_sort_notes(sp);
 	for(ctr = 1; ctr < sp->tracks; ctr++)
 	{	//For each track
@@ -558,7 +576,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 					}
 					if((pos2 >= pos) && (eof_get_note_type(sp, ctr, ctr3) == type))
 					{	//If this note is within the span of the HOPO notation and is in the same difficulty
-						eof_set_note_flags(sp, ctr, ctr3, (eof_get_note_flags(sp, ctr, ctr3) | EOF_NOTE_FLAG_F_HOPO));	//Set the forced HOPO flag for this note
+						eof_set_note_flags(sp, ctr, ctr3, (eof_get_note_flags(sp, ctr, ctr3) ^ EOF_NOTE_FLAG_F_HOPO));	//Toggle the forced HOPO flag for this note
 					}
 				}
 			}

@@ -3354,7 +3354,7 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 				endpos = sp->beat[beatctr]->pos - 1;	//Track this as the end position of the phrase
 				if((startpos >= effectivestart) && (startpos <= effectivestop))
 				{	//If this phrase begins in the portion of the chart affected by this function
-					(void) eof_enforce_rs_phrase_begin_with_fret_hand_position(sp, track, difficulty, startpos, endpos, &eof_fret_hand_position_list_dialog_undo_made, 0);	//Add a fret hand position
+					(void) eof_enforce_rs_phrase_begin_with_fret_hand_position(sp, track, difficulty, startpos, endpos, &eof_fret_hand_position_list_dialog_undo_made, 0);	//Add a fret hand position to the beginning of the phrase
 				}
 			}//If the first phrase marker has been encountered, this beat marks the end of a phrase
 
@@ -4170,7 +4170,7 @@ int eof_enforce_rs_phrase_begin_with_fret_hand_position(EOF_SONG *sp, unsigned l
 					*undo_made = 1;
 				}
 				//Place that fret hand position for the active difficulty
-				(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, diff, firstnotepos, position, 0, NULL);
+				(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, diff, startpos, position, 0, NULL);
 				eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions
 			}
 		}

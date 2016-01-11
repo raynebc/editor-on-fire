@@ -3741,7 +3741,7 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 									if(eof_time_range_is_populated(eof_song, ctr, startpos, endpos, ctr3))
 									{	//And there's at least one note in this RS phrase in this difficulty
 										if(!phrase_warning && !eof_enforce_rs_phrase_begin_with_fret_hand_position(eof_song, ctr, ctr3, startpos, endpos, undo_made, 1))
-										{	//If the user hasn't been warned about this issue yet for this track, check to see if a fret hand position was NOT defined at the first note in the phrase
+										{	//If the user hasn't been warned about this issue yet for this track, check to see if a fret hand position was NOT defined at or before the first note in the phrase
 											if(report)
 											{	//If the calling function wanted to prompt the user about each issue found
 												unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
