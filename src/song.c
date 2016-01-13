@@ -1873,6 +1873,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 			{	//For each beat in the project
 				(void) eof_load_song_string_pf(buffer, fp, sizeof(buffer));		//Read the timestamp string
 				(void) sscanf(buffer, "%99lf", &sp->beat[ctr]->fpos);			//Convert to double floating point (sscanf is width limited to prevent buffer overflow)
+				sp->beat[ctr]->pos = sp->beat[ctr]->fpos + 0.5;					//Round this up to the nearest millisecond to get the integer timestamp of the beat
 			}
 			sp->fpbeattimes = 1;	//Have eof_init_after_load() skip the recalculation of beat timings, since the original floating point timings were loaded
 		}
@@ -6824,7 +6825,7 @@ unsigned long eof_get_highest_clipboard_fret(char *clipboardfile)
 	unsigned long sourcetrack = 0, copy_notes = 0;
 	unsigned long i, j, bitmask;
 	unsigned long highestfret = 0, currentfret;	//Used to find if any pasted notes would use a higher fret than the active track supports
-	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0};
+	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0};
 
 	if(!clipboardfile)
 	{	//If the passed clipboard filename is invalid
@@ -6871,7 +6872,7 @@ unsigned long eof_get_highest_clipboard_lane(char *clipboardfile)
 	unsigned long copy_notes = 0;
 	unsigned long i, j, bitmask;
 	unsigned long highestlane = 0;	//Used to find if any pasted notes would use a higher lane than the active track supports
-	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0};
+	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0};
 
 	if(!clipboardfile)
 	{	//If the passed clipboard filename is invalid

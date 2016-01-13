@@ -2361,7 +2361,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		free(gp->instrument_types);
 		for(ctr = 0; ctr < tracks; ctr++)
 		{	//Free all previously allocated track structures
-			free(gp->track[ctr]);
+			if(gp->track[ctr])
+			{	//Redundant NULL check to satisfy Splint
+				free(gp->track[ctr]);
+			}
 		}
 		free(gp->track);
 		free(np);
@@ -2452,7 +2455,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							free(gp->instrument_types);
 							for(ctr = 0; ctr < tracks; ctr++)
 							{	//Free all previously allocated track structures
-								free(gp->track[ctr]);
+								if(gp->track[ctr])
+								{	//Redundant NULL check to satisfy Splint
+									free(gp->track[ctr]);
+								}
 							}
 							for(ctr = 0; ctr < gp->text_events; ctr++)
 							{	//Free all allocated text events
@@ -2612,7 +2618,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				free(gp->instrument_types);
 				for(ctr = 0; ctr < tracks; ctr++)
 				{	//Free all previously allocated track structures
-					free(gp->track[ctr]);
+					if(gp->track[ctr])
+					{	//Redundant NULL check to satisfy Splint
+						free(gp->track[ctr]);
+					}
 				}
 				for(ctr = 0; ctr < gp->text_events; ctr++)
 				{	//Free all allocated text events

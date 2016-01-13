@@ -291,7 +291,7 @@ int eof_track_difficulty_dialog(void)
 
 	if(eof_song->track[eof_selected_track]->difficulty != 0xFF)
 	{	//If the track difficulty is defined, write it in text format
-		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_song->track[eof_selected_track]->difficulty);
+		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%u", eof_song->track[eof_selected_track]->difficulty);
 	}
 	else
 	{	//Otherwise prepare an empty string
@@ -814,7 +814,7 @@ int eof_track_set_num_frets_strings(void)
 		return 1;	//Do not allow this function to run if a pro guitar track isn't active
 
 	//Update dialog fields
-	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%d", eof_song->pro_guitar_track[tracknum]->numfrets);
+	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%u", eof_song->pro_guitar_track[tracknum]->numfrets);
 	eof_note_set_num_frets_strings_dialog[4].flags = eof_note_set_num_frets_strings_dialog[5].flags = eof_note_set_num_frets_strings_dialog[6].flags = 0;
 	switch(eof_song->pro_guitar_track[tracknum]->numstrings)
 	{

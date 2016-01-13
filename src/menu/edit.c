@@ -657,7 +657,7 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 	long new_pos = -1;
 	long new_end_pos = -1;
 	long last_pos = -1;
-	EOF_EXTENDED_NOTE temp_lyric = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0};
+	EOF_EXTENDED_NOTE temp_lyric = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0};
 	EOF_LYRIC * new_lyric = NULL;
 	PACKFILE * fp;
 
@@ -1009,7 +1009,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 	long last_anchor, next_anchor;
 	PACKFILE * fp;
 	unsigned long copy_notes[EOF_TRACKS_MAX];	//The number of notes to adjust for each track
-	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0};
+	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0};
 	EOF_NOTE * new_note = NULL;
 	float tfloat = 0.0;
 	EOF_PHRASE_SECTION *sectionptr = NULL;
@@ -1385,7 +1385,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	long this_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	unsigned long copy_notes;
 	PACKFILE * fp;
-	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0}, first_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0};
+	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0}, first_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0};
 	EOF_EXTENDED_NOTE last_note;
 	EOF_NOTE * new_note = NULL;
 	unsigned long sourcetrack = 0;	//Will store the track that this clipboard data was from

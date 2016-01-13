@@ -111,7 +111,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 			{
 				if(sp->track[i]->difficulty != 0xFF)
 				{	//If the track's difficulty is defined
-					(void) snprintf(buffer, sizeof(buffer) - 1, "\r\n%s = %d", eof_difficulty_ini_tags[i], sp->track[i]->difficulty);
+					(void) snprintf(buffer, sizeof(buffer) - 1, "\r\n%s = %u", eof_difficulty_ini_tags[i], sp->track[i]->difficulty);
 					(void) ustrcat(ini_string, buffer);
 				}
 			}

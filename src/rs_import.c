@@ -1486,37 +1486,37 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 	{	//If the user opted to import TS changes
 		for(ctr = eof_song->text_events; ctr > 0; ctr--)
 		{	//For each text event (in reverse order)
-			char buffer[5];
-			char *ptr = strcasestr_spec(eof_song->text_event[ctr - 1]->text, "TS:");
+			char buffer3[5];
+			char *ptr3 = strcasestr_spec(eof_song->text_event[ctr - 1]->text, "TS:");
 			unsigned index = 0;
 			long num, den;
-			if(ptr)
+			if(ptr3)
 			{	//If this text event is formatted like a time signature change
-				while((index < 5) && (*ptr != '/'))
+				while((index < 5) && (*ptr3 != '/'))
 				{	//Copy the numerator into the buffer
-					buffer[index++] = *ptr;
-					ptr++;
+					buffer3[index++] = *ptr3;
+					ptr3++;
 				}
 				if(!index || (index >= 5))
 					continue;	//Skip converting this text event if an error was encountered
-				buffer[index] = '\0';	//Terminate the buffer
-				num = atol(buffer);		//Convert the string to a number
-				if(!num || (num > 999) || (*ptr != '/'))
+				buffer3[index] = '\0';		//Terminate the buffer
+				num = atol(buffer3);		//Convert the string to a number
+				if(!num || (num > 999) || (*ptr3 != '/'))
 					continue;	//Skip converting this text event if an error was encountered
-				ptr++;	//Advance past the forward slash
+				ptr3++;	//Advance past the forward slash
 				index = 0;
-				while((index < 5) && (*ptr != '\0'))
+				while((index < 5) && (*ptr3 != '\0'))
 				{	//Copy the denominator into the buffer
-					buffer[index++] = *ptr;
-					ptr++;
+					buffer3[index++] = *ptr3;
+					ptr3++;
 				}
 				if(!index || (index >= 5))
 					continue;	//Skip converting this text event if an error was encountered
-				buffer[index] = '\0';	//Terminate the buffer
-				den = atol(buffer);		//Convert the string to a number
+				buffer3[index] = '\0';		//Terminate the buffer
+				den = atol(buffer3);		//Convert the string to a number
 				if(!den || (den > 999))
 					continue;	//Skip converting this text event if an error was encountered
-				eof_apply_ts(num, den, eof_song->text_event[ctr - 1]->beat, eof_song, 0);	//Add the time signature to the active project
+				(void) eof_apply_ts(num, den, eof_song->text_event[ctr - 1]->beat, eof_song, 0);	//Add the time signature to the active project
 				eof_song_delete_text_event(eof_song, ctr - 1);	//Delete the converted text event
 			}
 		}
