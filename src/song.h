@@ -28,9 +28,6 @@
 #define EOF_NOTE_FLAG_CRAZY      4	//This flag will represent overlap allowed for guitar/dance/keys tracks, and will force pro guitar/bass chords to display with a chord box
 #define EOF_NOTE_FLAG_F_HOPO     8
 #define EOF_NOTE_FLAG_NO_HOPO    16
-#define EOF_NOTE_FLAG_RESERVED   268435456	//Reserved for future use
-#define EOF_NOTE_FLAG_EXTENDED   536870912	//This flag will be set if an additional common use (applicable to all tracks) flag variable is present for the note in the project file
-											//This flag will only be used during project save/load to determine whether another bytes variable is written/read
 #define EOF_NOTE_FLAG_HIGHLIGHT  1073741824	//This flag will represent a note that is highlighted in the editor window
 #define EOF_NOTE_FLAG_T_EXTENDED 2147483648UL	//The MSB will be set if an additional track-specific flag variable is present for the note in the project file
 												//This flag will only be used during project save/load to determine whether another bytes variable is written/read
@@ -58,6 +55,7 @@
 #define EOF_PRO_GUITAR_NOTE_FLAG_POP            67108864	//This flag will represent a note that is played with pop technique (ie. bass)
 #define EOF_PRO_GUITAR_NOTE_FLAG_SLAP           134217728	//This flag will represent a note that is played with slap technique (ie. bass)
 #define EOF_PRO_GUITAR_NOTE_FLAG_HD             268435456	//This flag will represent a note that exports to Rocksmith with high density (ie. a chord repeat line)
+#define EOF_PRO_GUITAR_NOTE_FLAG_SPLIT          536870912	//This flag will represent a chord that exports to Rocksmith as single notes instead of a chord
 
 //The following flags pertain to drum notes
 #define EOF_DRUM_NOTE_FLAG_Y_CYMBAL         32		//This flag represents a yellow drum note charted as a RB3 Pro style cymbal (lane 3)

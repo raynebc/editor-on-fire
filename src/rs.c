@@ -495,11 +495,12 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Cannot export track \"%s\"in Rocksmith format, it has no populated difficulties", sp->track[track]->name);
 		eof_log(eof_log_string, 1);
-		if(bre_populated)
-		{	//If the BRE difficulty was the only one populated, warn that it is being omitted
+		if(bre_populated && ((*user_warned & 1024) == 0))
+		{	//If the BRE difficulty was the only one populated, warn that it is being omitted (unless the user was already warned of this)
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Track \"%s\" only has notes in the BRE difficulty.\nThese are not exported in Rocksmith format unless you remove the difficulty limit (Track>Rocksmith>Remove difficulty limit).", sp->track[track]->name);
 			allegro_message("%s", eof_log_string);
 			eof_log(eof_log_string, 1);
+			*user_warned |= 1024;
 		}
 		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 		return 0;	//Return failure
@@ -605,9 +606,13 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}
 	if(memcmp(tuning, standard, 6) && memcmp(tuning, standardbass, 4) && memcmp(tuning, eb, 6) && memcmp(tuning, dropd, 6) && memcmp(tuning, openg, 6))
 	{	//If the track's tuning doesn't match any supported by Rocksmith
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  This track (%s) uses a tuning that isn't known to be supported in Rocksmith 1.  Tuning and note recognition may not work as expected in-game", sp->track[track]->name);
-		allegro_message("Warning:  This track (%s) uses a tuning that isn't one known to be supported in Rocksmith 1.\nTuning and note recognition may not work as expected in-game", sp->track[track]->name);
-		eof_log(eof_log_string, 1);
+		if((*user_warned & 2048) == 0)
+		{	//If the user wasn't warned about this yet
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  This track (%s) uses a tuning that isn't known to be supported in Rocksmith 1.  Tuning and note recognition may not work as expected in-game", sp->track[track]->name);
+			allegro_message("Warning:  This track (%s) uses a tuning that isn't one known to be supported in Rocksmith 1.\nTuning and note recognition may not work as expected in-game", sp->track[track]->name);
+			eof_log(eof_log_string, 1);
+			*user_warned |= 2048;
+		}
 	}
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <tuning string0=\"%d\" string1=\"%d\" string2=\"%d\" string3=\"%d\" string4=\"%d\" string5=\"%d\" />\n", tuning[0], tuning[1], tuning[2], tuning[3], tuning[4], tuning[5]);
 	(void) pack_fputs(buffer, fp);
@@ -1076,6 +1081,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	else
 	{
 		allegro_message("Error:  Default RS sections that were added are missing.  Skipping writing the <sections> tag.");
+		eof_log("Error:  Default RS sections that were added are missing.  Skipping writing the <sections> tag.", 1);
 	}
 
 	//Write events
@@ -1308,8 +1314,8 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			else
 			{	//There are no anchors in this difficulty, write an empty anchors tag
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Failed to automatically generate fret hand positions for level %lu of\n\"%s\" during MIDI export.", ctr2, fn);
-				eof_log(eof_log_string, 1);
 				allegro_message("%s", eof_log_string);
+				eof_log(eof_log_string, 1);
 				(void) pack_fputs("      <anchors count=\"0\"/>\n", fp);
 			}
 			if(anchorsgenerated)
@@ -1555,11 +1561,12 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Cannot export track \"%s\"in Rocksmith format, it has no populated difficulties", sp->track[track]->name);
 		eof_log(eof_log_string, 1);
-		if(bre_populated)
-		{	//If the BRE difficulty was the only one populated, warn that it is being omitted
+		if(bre_populated && ((*user_warned & 1024) == 0))
+		{	//If the BRE difficulty was the only one populated, warn that it is being omitted (unless the user was already warned of this)
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Track \"%s\" only has notes in the BRE difficulty.\nThese are not exported in Rocksmith format unless you remove the difficulty limit (Track>Rocksmith>Remove difficulty limit).", sp->track[track]->name);
 			allegro_message("%s", eof_log_string);
 			eof_log(eof_log_string, 1);
+			*user_warned |= 1024;
 		}
 		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 		return 0;	//Return failure
@@ -1953,8 +1960,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			{	//If the note is isn't already ignored and is within the arpeggio/handshape phrase
 				tp->note[ctr]->tflags |= tflags;	//Mark this note as being in an arpeggio phrase
 				tflags &= ~EOF_NOTE_TFLAG_ARP_FIRST;	//Clear this flag so that notes other than the first one in this phrase don't receive it
-				if(!(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE) || (tp->note[ctr]->flags & EOF_NOTE_FLAG_CRAZY))
-				{	//If this is NOT a handshape phrase, or if the note is marked as crazy
+				if(!(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE))
+				{	//If this is NOT a handshape phrase
 					if(eof_note_count_rs_lanes(sp, track, ctr, 2) > 1)
 					{	//If this note would export as a chord
 						if(!(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE))
@@ -1992,11 +1999,45 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								}
 							}//If this string is used and is not ghosted
 						}//For each of the 6 supported strings
-					}
+					}//If this note would export as a chord
 				}//If this is NOT a handshape phrase
 			}//If the note is isn't already ignored and is within the arpeggio/handshape phrase
 		}//For each note in the active pro guitar track
 	}//For each arpeggio/handshape section in the track
+	eof_track_sort_notes(sp, track);	//Re-sort the notes
+
+	//Identify chords that have the split status.  These will export as single notes instead of as chords.
+	for(ctr = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the active pro guitar track
+		if(eof_note_count_rs_lanes(sp, track, ctr, 2) > 1)
+		{	//If this note would export as a chord
+			if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT)
+			{	//If this chord has split status
+				for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+				{	//For each of the 6 supported strings
+					if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
+					{	//If this string is used and is not ghosted
+						new_note = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);	//Clone the note with the updated length
+						if(new_note)
+						{	//If the new note was created
+							new_note->tflags |= EOF_NOTE_TFLAG_TEMP;		//Mark the note as temporary
+							new_note->note = bitmask;						//Turn the cloned chord into a single note on the appropriate string
+						}
+						else
+						{
+							allegro_message("Error:  Couldn't expand a split status chord into single notes.  Aborting Rocksmith 2 export.");
+							eof_log("Error:  Couldn't expand a split status chord into single notes.  Aborting Rocksmith 2 export.", 1);
+							eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+							eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+							(void) pack_fclose(fp);
+							return 0;	//Return error
+						}
+					}//If this string is used and is not ghosted
+				}//For each of the 6 supported strings
+				tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic as it will be exported as single notes
+			}//If this chord has split status
+		}//If this note would export as a chord
+	}//For each note in the active pro guitar track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
 	//Identify chords inside handshape phrases and replace those with no manually defined name with temporary chords with a blank name to reduce screen clutter in-game
@@ -2363,6 +2404,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	else
 	{
 		allegro_message("Error:  Default RS sections that were added are missing.  Skipping writing the <sections> tag.");
+		eof_log("Error:  Default RS sections that were added are missing.  Skipping writing the <sections> tag.", 1);
 	}
 
 	//Add temporary events for time signature changes
@@ -2669,8 +2711,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			else
 			{	//There are no anchors in this difficulty, write an empty anchors tag
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Failed to automatically generate fret hand positions for level %lu of\n\"%s\" during MIDI export.", ctr2, fn);
-				eof_log(eof_log_string, 1);
 				allegro_message("%s", eof_log_string);
+				eof_log(eof_log_string, 1);
 				(void) pack_fputs("      <anchors count=\"0\"/>\n", fp);
 			}
 			if(anchorsgenerated)
@@ -5104,8 +5146,8 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 	}
 	if(!end_phrase_found)
 	{	//If the user did not define a END phrase
-		if(sp->beat[endbeat]->contained_section_event >= 0)
-		{	//If there is already a phrase defined on the beat following the last note
+		if((sp->beat[endbeat]->contained_section_event >= 0) && ((*user_warned & 512) == 0))
+		{	//If there is already a phrase defined on the beat following the last note, and the user wasn't warned of this problem yet
 			unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
 
 			eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
@@ -5113,6 +5155,7 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 			eof_seek_and_render_position(track, eof_note_type, sp->beat[endbeat]->pos);	//Show where the END phrase should go
 			allegro_message("Warning:  There is no END phrase, but the beat marker after the last note in \"%s\" already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.", sp->track[track]->name);
 			eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+			*user_warned |= 512;
 		}
 		eof_log("\t! Adding missing END phrase", 1);
 		(void) eof_song_add_text_event(sp, endbeat, "END", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it as a temporary event at the last beat

@@ -438,11 +438,10 @@ EOF_SONG * eof_import_chart(const char * fn)
 								{	//If a previous gem was imported
 									if(current_note->chartpos != lastchartpos)
 									{	//If this gem is at a different position than the last one that was imported
-										if((current_note->chartpos > lastchartpos) && (current_note->chartpos - lastchartpos < ((chart->resolution * (4.0 * 3.0 / 32.0)) + 0.5)))
+										if((current_note->chartpos > lastchartpos) && (current_note->chartpos - lastchartpos < ((chart->resolution * (3.0 / 8.0)) + 0.5)))
 										{	//If the note starts less than 3/32 measure (4 times the chart resolution, which represents one beat length) from the previous note's start position
 											new_note->flags |= EOF_NOTE_FLAG_F_HOPO;	//It is a hammer on note
 										}
-										lastchartpos = current_note->chartpos;	//Track the position of the gem position for HOPO tracking
 									}
 									else
 									{	//It's a gem at the same position as the last imported gem
@@ -450,6 +449,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 									}
 								}
 								prev_note = new_note;	//Track the last created note
+								lastchartpos = current_note->chartpos;	//Track the position of the gem position for HOPO tracking
 							}
 						}
 						else
@@ -550,8 +550,39 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 	}
 
-	/* check if unofficial toggle HOPO notation was found */
+	/* remove forced HOPO notation that may have been added to chords or to repeated single notes of the same gem, these can only gain that status via use of the toggle HOPO notation */
 	eof_sort_notes(sp);
+	for(ctr = 1; ctr < sp->tracks; ctr++)
+	{	//For each track
+		long prevnote;
+
+		if(ctr == EOF_TRACK_DRUM)
+		{	//If this is the drum track
+			continue;	//Skip it, lane 6 for the drum track indicates a sixth lane and not HOPO
+		}
+		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
+		{	//For each note in the track
+			if(eof_note_count_colors(sp, ctr, ctr2) > 1)
+			{	//If this note is a chord
+				eof_set_note_flags(sp, ctr, ctr2, (eof_get_note_flags(sp, ctr, ctr2) & (~EOF_NOTE_FLAG_F_HOPO)));	//Clear the forced HOPO flag for this note
+			}
+
+			prevnote = ctr2;
+			do{
+				prevnote = eof_track_fixup_previous_note(sp, ctr, prevnote);			//Keep reviewing previous notes in this track difficulty
+			}while((prevnote >= 0) && (eof_get_note_note(sp, ctr, prevnote) & 32));		//until there are no more notes or a non toggle HOPO note is reached
+
+			if(prevnote >= 0)
+			{	//If a previous note gem was found for this track difficulty
+				if(eof_get_note_note(sp, ctr, prevnote) == eof_get_note_note(sp, ctr, ctr2))
+				{	//If this note is a repeat of that note
+					eof_set_note_flags(sp, ctr, ctr2, (eof_get_note_flags(sp, ctr, ctr2) & (~EOF_NOTE_FLAG_F_HOPO)));	//Clear the forced HOPO flag for this note
+				}
+			}
+		}
+	}
+
+	/* check if unofficial toggle HOPO notation was found */
 	for(ctr = 1; ctr < sp->tracks; ctr++)
 	{	//For each track
 		if(ctr == EOF_TRACK_DRUM)

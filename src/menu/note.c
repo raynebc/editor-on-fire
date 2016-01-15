@@ -3848,6 +3848,7 @@ DIALOG eof_pro_guitar_note_dialog[] =
 	{d_agup_check_proc,		154, 432, 50,  16, 2,   23,  0,    0,      0,         0,   "Stop",       NULL,          NULL },
 	{d_agup_check_proc,		10,  452, 78,  16, 2,   23,  0,    0,      0,         0,   "Ghost HS",   NULL,          NULL },
 	{d_agup_check_proc,		87,  452, 68,  16, 2,   23,  0,    0,      0,         0,   "Hi Dens",    NULL,          NULL },
+	{d_agup_check_proc,		154, 452, 48,  16, 2,   23,  0,    0,      0,         0,   "Split",    NULL,          NULL },
 	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -4154,8 +4155,16 @@ int eof_menu_note_edit_pro_guitar_note(void)
 			eof_pro_guitar_note_dialog[73].flags = D_SELECTED;
 		}
 		else
-		{	//Clear "Sustain"
+		{	//Clear "Hi Dens"
 			eof_pro_guitar_note_dialog[73].flags = 0;
+		}
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT)
+		{	//Select "Split"
+			eof_pro_guitar_note_dialog[74].flags = D_SELECTED;
+		}
+		else
+		{	//Clear "Split"
+			eof_pro_guitar_note_dialog[74].flags = 0;
 		}
 
 		bitmask = 0;
@@ -4460,6 +4469,10 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					if(eof_pro_guitar_note_dialog[73].flags == D_SELECTED)
 					{	//High Density is selected
 						flags |= EOF_PRO_GUITAR_NOTE_FLAG_HD;
+					}
+					if(eof_pro_guitar_note_dialog[74].flags == D_SELECTED)
+					{	//Split is selected
+						flags |= EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;
 					}
 
 					if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))

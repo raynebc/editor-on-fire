@@ -1043,6 +1043,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			if(eof_midi_event_full)
 			{	//If the track exceeded the number of MIDI events that could be written
 				allegro_message("Error:  Too many MIDI events, aborting MIDI export.");
+				eof_log("Error:  Too many MIDI events, aborting MIDI export.", 1);
 				eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
 				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 				eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
@@ -1055,8 +1056,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				if(eof_midi_note_status[i] != 0)	//If this note was left on, send an alert message, as this is abnormal
 				{
 					allegro_message("MIDI export error:  Note %lu was not turned off", i);
+					eof_log("MIDI export error:  Note %lu was not turned off", 1);
 					if(endbeatnum)
 					{	//If the chart has a manually defined end event, that's probably the cause
+						eof_log("\tend event was manually defined", 1);
 						eof_clear_input();
 						if(alert("It appears this is due to an [end] event that cuts out a note early", "Would you like to seek to the beat containing this [end] event?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 						{	//If user opts to seek to the offending event
@@ -1305,6 +1308,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			if(eof_midi_event_full)
 			{	//If the track exceeded the number of MIDI events that could be written
 				allegro_message("Error:  Too many MIDI events, aborting MIDI export.");
+				eof_log("Error:  Too many MIDI events, aborting MIDI export.", 1);
 				eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
 				eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
 				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
@@ -1756,6 +1760,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						if(fret_hand_positions_present && !fret_hand_positions_generated && !fret_hand_pos_override_warning)
 						{	//If this track had manually defined fret hand positions, and they are being overridden by the song property to define a single fret hand position at fret 1
 							allegro_message("Warning:  This track has fret hand positions, but the song property to write a single fret hand position is overriding them");
+							eof_log("Warning:  This track has fret hand positions, but the song property to write a single fret hand position is overriding them", 1);
 							fret_hand_pos_override_warning = 1;
 						}
 						rootvel = 101;	//Velocity 101 represents the fretting hand positioned at fret 1
@@ -1932,6 +1937,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			if(eof_midi_event_full)
 			{	//If the track exceeded the number of MIDI events that could be written
 				allegro_message("Error:  Too many MIDI events, aborting MIDI export.");
+				eof_log("Error:  Too many MIDI events, aborting MIDI export.", 1);
 				eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
 				eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
 				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
@@ -1944,9 +1950,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				if(eof_midi_note_status[i] != 0)	//If this note was left on, send an alert message, as this is abnormal
 				{
 					allegro_message("MIDI export error:  Note %lu was not turned off", i);
+					eof_log("MIDI export error:  Note %lu was not turned off", 1);
 					if(endbeatnum)
 					{	//If the chart has a manually defined end event, that's probably the cause
 						eof_clear_input();
+						eof_log("\tend event was manually defined", 1);
 						if(alert("It appears this is due to an [end] event that cuts out a note early", "Would you like to seek to the beat containing this [end] event?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 						{	//If user opts to seek to the offending event
 							eof_set_seek_position(sp->beat[endbeatnum]->pos + eof_av_delay);
@@ -2600,6 +2608,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 					if(eof_midi_event_full)
 					{	//If the track exceeded the number of MIDI events that could be written
 						allegro_message("Error:  Too many MIDI events, aborting MIDI export.");
+						eof_log("Error:  Too many MIDI events, aborting MIDI export.", 1);
 						eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
 						eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
 						eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
@@ -2615,9 +2624,11 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 				if(eof_midi_note_status[i] != 0)	//If this note was left on, send an alert message, as this is abnormal
 				{
 					allegro_message("MIDI export error:  Note %lu was not turned off", i);
+					eof_log("MIDI export error:  Note %lu was not turned off", 1);
 					if(endbeatnum)
 					{	//If the chart has a manually defined end event, that's probably the cause
 						eof_clear_input();
+						eof_log("\tend event was manually defined", 1);
 						if(alert("It appears this is due to an [end] event that cuts out a note early", "Would you like to seek to the beat containing this [end] event?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 						{	//If user opts to seek to the offending event
 							eof_set_seek_position(sp->beat[endbeatnum]->pos + eof_av_delay);
@@ -2639,6 +2650,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 			if(trackcounter >= EOF_MUSIC_MIDI_TRACKS_MAX)
 			{	//If this function attempted to store more tracks than it was prepared for
 				allegro_message("Error:  Too many MIDI tracks, aborting MIDI export.");
+				eof_log("Error:  Too many MIDI tracks, aborting MIDI export.", 1);
 				eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
 				eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
 				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
