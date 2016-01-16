@@ -160,6 +160,14 @@ int eof_is_partially_string_muted(EOF_PRO_GUITAR_TRACK *tp, unsigned long note)
 	return (muted && nonmuted);	//Return nonzero if the note contained at least one ghosted gem AND one non ghosted gem
 }
 
+int eof_tflag_is_arpeggio(unsigned long tflag)
+{
+	if((tflag & EOF_NOTE_TFLAG_ARP) && !(tflag & EOF_NOTE_TFLAG_HAND))
+		return 1;	//Return 1 if the flag indicates the note is in an arpeggio/handshape phrase, but it is not a handshape phrase
+
+	return 0;
+}
+
 unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned long **results, char target)
 {
 	unsigned long ctr, ctr2, unique_count = 0;
@@ -196,7 +204,7 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 		if(eof_note_count_rs_lanes(sp, track, ctr, target) > 1)
 		{	//If this note is a valid chord based on the target
 			if(!(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE) || (tp->note[ctr]->tflags & EOF_NOTE_TFLAG_ARP) || (tp->note[ctr]->tflags & EOF_NOTE_TFLAG_GHOST_HS))
-			{	//If this note is not ignored, is a chord within an arpeggio or is a temporary chord created created due to ghost handshape status
+			{	//If this note is not ignored, is a chord within an arpeggio/handshape or is a temporary chord created created due to ghost handshape status
 				match = 0;
 				for(ctr2 = ctr + 1; ctr2 < tp->notes; ctr2++)
 				{	//For each note in the track that follows this note
@@ -215,8 +223,8 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 										break;
 									}
 									if((eof_is_partially_ghosted(sp, track, ctr) == eof_is_partially_ghosted(sp, track, ctr2)) &&
-									   ((tp->note[ctr]->tflags & EOF_NOTE_TFLAG_HAND) == (tp->note[ctr2]->tflags & EOF_NOTE_TFLAG_HAND)))
-									{	//If both notes have the same ghost status (either no gems ghosted or at least one gem ghosted) and either both are in a handshape phrase or both are in an arpeggio phrase
+									   (eof_tflag_is_arpeggio(tp->note[ctr]->tflags) == eof_tflag_is_arpeggio(tp->note[ctr2]->tflags)))
+									{	//If both notes have the same ghost status (either no gems ghosted or at least one gem ghosted) and both have the same arpeggio status (both are in an arpeggio and not a handshape, or at least one is otherwise)
 										notelist[ctr] = NULL;	//Eliminate this note from the list
 										match = 1;	//Note that this chord matched one of the others
 										break;
@@ -1346,7 +1354,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
 					if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 1) > 1) || ((eof_note_count_rs_lanes(sp, track, ctr3, 4) > 1) && tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_ARP_FIRST)))
-					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems) or an arpeggio handshape (at least two non muted notes)
+					{	//If this note is in this difficulty and will export as a chord (at least two non ghosted/muted gems) or an arpeggio/handshape (at least two non muted notes)
 						unsigned long chordnum = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
 
 						//Find this chord's ID
@@ -2773,8 +2781,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 									{	//If this note has identical fingering to chord list entry
 										if(!strcmp(tp->note[sourcenote]->name, tp->note[chordlist[ctr4]]->name))
 										{	//If the chord names match
-											if((tp->note[sourcenote]->tflags & EOF_NOTE_TFLAG_HAND) == (tp->note[chordlist[ctr4]]->tflags & EOF_NOTE_TFLAG_HAND))
-											{	//If this note's handshape status is the same as that of the chord list entry
+											if(eof_tflag_is_arpeggio(tp->note[sourcenote]->tflags) == eof_tflag_is_arpeggio(tp->note[chordlist[ctr4]]->tflags))
+											{	//If this note's arpeggio status (is in an arpeggio and not a handshape, or in no arpeggio/handshape at all) is the same as that of the chord list entry
 												chordid = ctr4;	//Store the chord list entry number
 												break;
 											}
