@@ -222,9 +222,8 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 										match = 1;	//Note that this chord matched one of the others
 										break;
 									}
-									if((eof_is_partially_ghosted(sp, track, ctr) == eof_is_partially_ghosted(sp, track, ctr2)) &&
-									   (eof_tflag_is_arpeggio(tp->note[ctr]->tflags) == eof_tflag_is_arpeggio(tp->note[ctr2]->tflags)))
-									{	//If both notes have the same ghost status (either no gems ghosted or at least one gem ghosted) and both have the same arpeggio status (both are in an arpeggio and not a handshape, or at least one is otherwise)
+									if(eof_tflag_is_arpeggio(tp->note[ctr]->tflags) == eof_tflag_is_arpeggio(tp->note[ctr2]->tflags))
+									{	//If both notes have the same arpeggio status (both are in an arpeggio and not a handshape), or at least one is otherwise
 										notelist[ctr] = NULL;	//Eliminate this note from the list
 										match = 1;	//Note that this chord matched one of the others
 										break;
@@ -2572,8 +2571,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
 							{	//For each of the entries in the unique chord list
 								assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
-								if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]) && (eof_is_partially_ghosted(sp, track, ctr3) == eof_is_partially_ghosted(sp, track, chordlist[ctr4])))
-								{	//If this note matches a chord list entry and has the same ghost status (either no gems ghosted or at least one gem ghosted)
+								if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
+								{	//If this note matches a chord list entry
 									if(!eof_pro_guitar_note_compare_fingerings(tp->note[ctr3], tp->note[chordlist[ctr4]]))
 									{	//If this note has identical fingering to chord list entry
 										if(!strcmp(tp->note[ctr3]->name, tp->note[chordlist[ctr4]]->name))
@@ -2775,8 +2774,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
 							{	//For each of the entries in the unique chord list
 								assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
-								if(!eof_note_compare_simple(sp, track, sourcenote, chordlist[ctr4]) && (eof_is_partially_ghosted(sp, track, sourcenote) == eof_is_partially_ghosted(sp, track, chordlist[ctr4])))
-								{	//If this note matches a chord list entry and has the same ghost status (either no gems ghosted or at least one gem ghosted)
+								if(!eof_note_compare_simple(sp, track, sourcenote, chordlist[ctr4]))
+								{	//If this note matches a chord list entry
 									if(!eof_pro_guitar_note_compare_fingerings(tp->note[sourcenote], tp->note[chordlist[ctr4]]))
 									{	//If this note has identical fingering to chord list entry
 										if(!strcmp(tp->note[sourcenote]->name, tp->note[chordlist[ctr4]]->name))
