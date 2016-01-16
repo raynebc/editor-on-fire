@@ -1949,7 +1949,6 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 	//Identify notes that are inside arpeggio/handshape phrases
 	//Those which are chords inside arpeggio phrases will need to be broken into single notes so that they display correctly in-game
-	//Those which are chords inside handshape phrases that are also marked as crazy will likewise be broken into single notes
 	for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
 	{	//For each arpeggio phrase in the track
 		unsigned long tflags = EOF_NOTE_TFLAG_ARP_FIRST | EOF_NOTE_TFLAG_ARP;	//The first note in each arpeggio phrase gets both of these flags, the other notes in the phrase just get the latter
@@ -2056,6 +2055,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						if((eof_note_count_rs_lanes(sp, track, ctr, 2) > 1) && (tp->note[ctr]->name[0] == '\0'))
 						{	//If this note would export as a chord and has no manually defined name
 							tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as single notes
+							tp->note[ctr]->tflags &= ~EOF_NOTE_TFLAG_ARP;	//Also clear this flag so the chord list building logic will disregard this chord in favor of the newly created one
 							new_note = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);
 							if(new_note)
 							{	//If the new note was created
@@ -2488,17 +2488,18 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			{	//For each note in the track
 				if((eof_get_note_type(sp, track, ctr3) == ctr) && !(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE))
 				{	//If the note is in this difficulty and isn't being ignored
-					unsigned long lanecount = eof_note_count_rs_lanes(sp, track, ctr3, 2);	//Count the number of non ghosted gems for this note
+					unsigned long lanecount;
+					if(eof_is_partially_ghosted(sp, track, ctr3) && (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_TWIN))
+					{	//If the chord is partially ghosted and has this flag set, it has a clone without ghost gems that should instead be used for chord tag export
+						continue;
+					}
+					lanecount = eof_note_count_rs_lanes(sp, track, ctr3, 2);	//Count the number of non ghosted gems for this note
 					if(lanecount == 1)
 					{	//If the note has only one gem
 						numsinglenotes++;	//Increment counter
 					}
 					else if(lanecount > 1)
 					{	//If the note has multiple gems
-						if(eof_is_partially_ghosted(sp, track, ctr3) && (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_TWIN))
-						{	//If the chord is partially ghosted and has this flag set, it has a clone without ghost gems that should instead be used for chord tag export
-							continue;
-						}
 						numchords++;	//Increment counter
 					}
 				}
@@ -2514,6 +2515,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				(void) pack_fputs(buffer, fp);
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
+					if(eof_is_partially_ghosted(sp, track, ctr3) && (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_TWIN))
+					{	//If the chord is partially ghosted and has this flag set, it has a clone without ghost gems that should instead be used for chord tag export
+						continue;
+					}
 					if(!(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE) && (eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_rs_lanes(sp, track, ctr3, 2) == 1))
 					{	//If this note is not ignored, is in this difficulty and will export as a single note (only one gem has non ghosted status)
 						for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
@@ -2611,13 +2616,6 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HD)
 							{	//Chord is explicitly specified to be high density
 								highdensity = 1;
-							}
-							if(!(flags & EOF_NOTE_FLAG_CRAZY))
-							{	//If the chord is not marked as crazy
-								if(eof_note_number_within_handshape(sp, track, ctr3) > 1)
-								{	//If this chord is in a handshape but is NOT the first chord in it
-									highdensity = 1;
-								}
 							}
 							(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" chordId=\"%lu\" fretHandMute=\"%d\" highDensity=\"%d\" ignore=\"%d\" palmMute=\"%d\" hopo=\"%d\" strum=\"%s\">\n", (double)notepos / 1000.0, tech.linknext, tech.accent, chordid, tech.stringmute, highdensity, tech.ignore, tech.palmmute, tech.hopo, direction);
 							(void) pack_fputs(buffer, fp);

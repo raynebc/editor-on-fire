@@ -614,6 +614,21 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 	}
 
+	/* mark anything that wasn't specifically made into a forced HOPO note as a forced strum */
+	for(ctr = 1; ctr < sp->tracks; ctr++)
+	{	//For each track
+		if(sp->track[ctr]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR)
+		{	//If this is a guitar or bass track
+			for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
+			{	//For each note in the track
+				if(!(eof_get_note_flags(sp, ctr, ctr2) & EOF_NOTE_FLAG_F_HOPO))
+				{	//If this note is not a forced HOPO note
+					eof_set_note_flags(sp, ctr, ctr2, (eof_get_note_flags(sp, ctr, ctr2) | EOF_NOTE_FLAG_NO_HOPO));	//Toggle the forced strum (non HOPO) flag for this note
+				}
+			}
+		}
+	}
+
 //Update path variables
 	(void) ustrcpy(eof_filename, fn);
 	(void) replace_filename(eof_song_path, fn, "", 1024);
