@@ -1059,9 +1059,14 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			else if(eof_render_3d_rs_chords && (eof_note_count_rs_lanes(eof_song, track, notenum, 2) >= 2) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) &&
 					((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HD) || (eof_note_has_high_chord_density(eof_song, track, notenum, 2))) && !(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT))
 			{	//If the user has opted to 3D render Rocksmith style chords, and this is a pro guitar chord that either has high density due to being explicitly defined as such or automatically due to other means, and this chord isn't marked with the split status
-				ctr = eof_count_track_lanes(eof_song, track) + 1;	//Set a condition that will exit the for loop after this line is drawn
-				drawline = 1;
-				linecol = p ? eof_color_cyan : eof_color_dark_cyan;
+				long prevnote = eof_track_fixup_previous_note(eof_song, track, notenum);
+
+				if(!(prevnote && strcmp(eof_get_note_name(eof_song, track, prevnote), eof_get_note_name(eof_song, track, notenum))) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HD))
+				{	//As long as there wasn't a previous chord with a different manually defined name than this one, or if the high density status was set
+					ctr = eof_count_track_lanes(eof_song, track) + 1;	//Set a condition that will exit the for loop after this line is drawn
+					drawline = 1;
+					linecol = p ? eof_color_cyan : eof_color_dark_cyan;
+				}
 			}
 			else if((mask == 32) && eof_open_strum_enabled(track))
 			{	//If drawing lane 6 as an open strum (renders similarly to a bass drum note)

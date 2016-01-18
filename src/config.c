@@ -190,6 +190,7 @@ void eof_load_config(char * fn)
 	}
 	eof_playback_time_stretch = get_config_int("preferences", "eof_playback_time_stretch", 1);
 	eof_auto_complete_fingering = get_config_int("preferences", "eof_auto_complete_fingering", 1);
+	eof_rbn_export_slider_hopo = get_config_int("preferences", "eof_rbn_export_slider_hopo", 0);
 
 	/* read display settings */
 	eof_screen_layout.mode = get_config_int("display", "display_mode", 0);
@@ -354,6 +355,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_note_tails_clickable", eof_note_tails_clickable);
 	set_config_int("preferences", "eof_render_grid_lines", eof_render_grid_lines);
 	set_config_int("preferences", "eof_auto_complete_fingering", eof_auto_complete_fingering);
+	set_config_int("preferences", "eof_rbn_export_slider_hopo", eof_rbn_export_slider_hopo);
 
 	/* write display settings */
 	set_config_int("display", "display_mode", eof_screen_layout.mode);

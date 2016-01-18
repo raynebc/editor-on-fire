@@ -144,13 +144,14 @@ int         eof_render_bass_drum_in_lane = 0;	//If nonzero, the 3D rendering wil
 int         eof_click_changes_dialog_focus = 1;	//If nonzero, eof_verified_proc will not change dialog focus on mouse-over, it requires an explicit mouse click
 int         eof_stop_playback_leave_focus = 1;	//If nonzero, EOF stops playback when it is not in the foreground
 int         eof_inverted_chords_slash = 0;
-int         eof_render_3d_rs_chords = 0;	//If nonzero, the 3D rendering will draw a rectangle to represent chords that will export to XML as repeats (Rocksmith), and 3D chord tails will not be rendered
+int         eof_render_3d_rs_chords = 0;		//If nonzero, the 3D rendering will draw a rectangle to represent chords that will export to XML as repeats (Rocksmith), and 3D chord tails will not be rendered
 int         eof_imports_recall_last_path = 0;	//If nonzero, various import dialogs will initialize the dialog to the path containing the last chosen import, instead of initializing to the project's folder
 int         eof_rewind_at_end = 1;				//If nonzero, chart rewinds when the end of chart is reached during playback
 int         eof_disable_rs_wav = 0;				//If nonzero, a WAV file for use in Rocksmith will not be maintained during save even if Rocksmith file export is enabled
 int         eof_display_seek_pos_in_seconds = 0;	//If nonzero, the seek position in the piano roll and information panel is given in seconds instead of minutes:seconds
-int         eof_note_tails_clickable = 0;	//If nonzero, when the mouse hovers over a note/lyric tail instead of just the note/lyric head, that note/lyric becomes the hover note
+int         eof_note_tails_clickable = 0;		//If nonzero, when the mouse hovers over a note/lyric tail instead of just the note/lyric head, that note/lyric becomes the hover note
 int         eof_auto_complete_fingering = 1;	//If nonzero, offer to apply specified chord fingering to matching notes in the track
+int         eof_rbn_export_slider_hopo = 0;		//If nonzero, notes in slider phrases will be exported to RBN MIDI as forced HOPO notes
 int         eof_smooth_pos = 1;
 int         eof_input_mode = EOF_INPUT_PIANO_ROLL;
 int         eof_windowed = 1;
@@ -2631,7 +2632,7 @@ void eof_render_note_window(void)
 			{	//If the catalog entry is not from a vocal track, determine the name of the active difficulty
 				if(eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 				{	//If this track is not limited to 5 difficulties
-					snprintf(diff_string, sizeof(diff_string) - 1, " Diff: %d", eof_song->catalog->entry[eof_selected_catalog_entry].type);
+					snprintf(diff_string, sizeof(diff_string) - 1, " Diff: %u", eof_song->catalog->entry[eof_selected_catalog_entry].type);
 					difficulty_name = diff_string;
 				}
 				else if(eof_song->catalog->entry[eof_selected_catalog_entry].track == EOF_TRACK_DANCE)
@@ -2725,7 +2726,7 @@ void eof_render_note_window(void)
 		//Display the difficulties associated with the active track
 		if(eof_song->track[eof_selected_track]->difficulty != 0xFF)
 		{	//If the active track has a defined difficulty
-			(void) snprintf(difficulty1, sizeof(difficulty1) - 1, "%d", eof_song->track[eof_selected_track]->difficulty);
+			(void) snprintf(difficulty1, sizeof(difficulty1) - 1, "%u", eof_song->track[eof_selected_track]->difficulty);
 		}
 		else
 		{

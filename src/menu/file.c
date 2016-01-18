@@ -162,6 +162,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 16,  273, 340, 16,  2,   23,  0,    0,      1,   0,   "Apply crazy to repeated chords separated by a rest",NULL, NULL },
 	{ d_agup_check_proc, 248, 168, 206, 16,  2,   23,  0,    0,      1,   0,   "Save FoF/GH/Phase Shift files",NULL, NULL },
 	{ d_agup_check_proc, 248, 513, 224, 16,  2,   23,  0,    0,      1,   0,   "Offer to auto complete fingering",NULL, NULL },
+	{ d_agup_check_proc, 16,  353, 174, 16,  2,   23,  0,    0,      1,   0,   "RBN export slider as HOPO",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1108,6 +1109,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[56].flags = eof_enforce_chord_density ? D_SELECTED : 0;			//Apply crazy to repeated chords separated by a rest
 	eof_preferences_dialog[57].flags = eof_write_fof_files ? D_SELECTED : 0;				//Save FoF/GH/Phase Shift files
 	eof_preferences_dialog[58].flags = eof_auto_complete_fingering ? D_SELECTED : 0;		//Offer to auto complete fingering
+	eof_preferences_dialog[59].flags = eof_rbn_export_slider_hopo ? D_SELECTED : 0;			//RBN export slider as HOPO
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1237,6 +1239,7 @@ int eof_menu_file_preferences(void)
 			eof_enforce_chord_density = (eof_preferences_dialog[56].flags == D_SELECTED ? 1 : 0);
 			eof_write_fof_files = (eof_preferences_dialog[57].flags == D_SELECTED ? 1 : 0);
 			eof_auto_complete_fingering = (eof_preferences_dialog[58].flags == D_SELECTED ? 1 : 0);
+			eof_rbn_export_slider_hopo = (eof_preferences_dialog[59].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 29)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1287,6 +1290,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[56].flags = 0;					//Apply crazy to repeated chords separated by a rest
 			eof_preferences_dialog[57].flags = D_SELECTED;			//Save FoF/Phase Shift files
 			eof_preferences_dialog[58].flags = D_SELECTED;			//Offer to auto complete fingering
+			eof_preferences_dialog[59].flags = 0;					//RBN export slider as HOPO
 		}//If the user clicked "Default
 	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);

@@ -710,6 +710,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 				}
 
+				if((featurerestriction == 1) || (featurerestriction == 3))
+				{	//If writing a RBN2 or C3 compliant MIDI
+					if((noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER) && eof_rbn_export_slider_hopo)
+					{	//If this note is in a slider phrase and the user opted to export such notes as forced HOPO notes
+						noteflags |= EOF_NOTE_FLAG_F_HOPO;	//Observe the forced HOPO flag being in use for the note
+					}
+				}
+
 				/* write green note */
 				if(note & 1)
 				{

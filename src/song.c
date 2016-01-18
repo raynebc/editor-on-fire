@@ -1565,10 +1565,10 @@ void eof_read_pro_guitar_note(EOF_PRO_GUITAR_NOTE *ptr, PACKFILE *fp)
 	{	//If this is an unpitched slide note
 		ptr->unpitchend = pack_getc(fp);	//Read the unpitched slide's ending fret
 	}
-	if(ptr->flags & EOF_NOTE_FLAG_T_EXTENDED)
-	{	//If this note uses any extended track flags
-		ptr->eflags = pack_igetl(fp);		//Read extended track flags
-		ptr->flags &= ~EOF_NOTE_FLAG_T_EXTENDED;	//Clear this flag, it won't be updated again until the project is saved/loaded
+	if(ptr->flags & EOF_NOTE_FLAG_EXTENDED)
+	{	//If this note uses any extended flags
+		ptr->eflags = pack_igetl(fp);		//Read extended flags
+		ptr->flags &= ~EOF_NOTE_FLAG_EXTENDED;	//Clear this flag, it won't be updated again until the project is saved/loaded
 	}
 }
 
@@ -2443,7 +2443,7 @@ void eof_write_pro_guitar_note(EOF_PRO_GUITAR_NOTE *ptr, PACKFILE *fp)
 		return;	//Invalid parameters
 
 	(void) eof_save_song_string_pf(ptr->name, fp);	//Write the note's name
-	(void) pack_putc(0, fp);			//Write the chord's number (not supported yet)
+	(void) pack_putc(0, fp);				//Write the chord's number (not supported yet)
 	(void) pack_putc(ptr->type, fp);		//Write the note's difficulty
 	(void) pack_putc(ptr->note, fp);		//Write the note's bitflags
 	(void) pack_putc(ptr->ghost, fp);		//Write the note's ghost bitflags
@@ -2455,15 +2455,15 @@ void eof_write_pro_guitar_note(EOF_PRO_GUITAR_NOTE *ptr, PACKFILE *fp)
 		}
 	}
 	(void) pack_putc(ptr->legacymask, fp);	//Write the legacy note bitmask
-	(void) pack_iputl(ptr->pos, fp);			//Write the note's position
+	(void) pack_iputl(ptr->pos, fp);		//Write the note's position
 	(void) pack_iputl(ptr->length, fp);		//Write the note's length
 	if(ptr->eflags)
-	{	//If this note uses any extended track flags
-		ptr->flags |= EOF_NOTE_FLAG_T_EXTENDED;	//Set this flag
+	{	//If this note uses any extended flags
+		ptr->flags |= EOF_NOTE_FLAG_EXTENDED;	//Set this flag
 	}
 	else
 	{
-		ptr->flags &= ~EOF_NOTE_FLAG_T_EXTENDED;	//Clear this flag
+		ptr->flags &= ~EOF_NOTE_FLAG_EXTENDED;	//Clear this flag
 	}
 	(void) pack_iputl(ptr->flags, fp);		//Write the note's flags
 	if(ptr->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
@@ -2481,10 +2481,10 @@ void eof_write_pro_guitar_note(EOF_PRO_GUITAR_NOTE *ptr, PACKFILE *fp)
 	{	//If this is an unpitched slide note
 		(void) pack_putc(ptr->unpitchend, fp);	//Write the unpitched slide's ending fret
 	}
-	if(ptr->flags & EOF_NOTE_FLAG_T_EXTENDED)
-	{	//if this note uses any extended track flags
+	if(ptr->flags & EOF_NOTE_FLAG_EXTENDED)
+	{	//if this note uses any extended flags
 		(void) pack_iputl(ptr->eflags, fp);		//Write the note's extended track flags
-		ptr->flags &= ~EOF_NOTE_FLAG_T_EXTENDED;	//Clear this flag, it won't be updated again until the project is saved/loaded
+		ptr->flags &= ~EOF_NOTE_FLAG_EXTENDED;	//Clear this flag, it won't be updated again until the project is saved/loaded
 	}
 }
 

@@ -409,6 +409,10 @@ EOF_SONG * eof_import_chart(const char * fn)
 					/* import star power */
 					if(current_note->gemcolor == '2')
 					{
+						if((current_note->duration > 2) && !((current_note->chartpos + current_note->duration) % chart->resolution))
+						{	//If this star power phrase is at least 3 ticks long and it ends on a beat marker, it's likely that the author of this .chart file improperly ended the phrase at another note's start position and didn't intend to mark that note
+							current_note->duration -= 2;	//Shorten the duration of the phrase
+						}
 						(void) eof_legacy_track_add_star_power(sp->legacy_track[tracknum], chartpos_to_msec(chart, current_note->chartpos), chartpos_to_msec(chart, current_note->chartpos + current_note->duration));
 					}
 
@@ -574,8 +578,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 			if(prevnote >= 0)
 			{	//If a previous note gem was found for this track difficulty
-				if(eof_get_note_note(sp, ctr, prevnote) == eof_get_note_note(sp, ctr, ctr2))
-				{	//If this note is a repeat of that note
+				if((eof_get_note_note(sp, ctr, prevnote) & 31) == (eof_get_note_note(sp, ctr, ctr2) & 31))
+				{	//If this note is a repeat of that note (only considering the standard 5 gems and ignoring any other unrecognized markers)
 					eof_set_note_flags(sp, ctr, ctr2, (eof_get_note_flags(sp, ctr, ctr2) & (~EOF_NOTE_FLAG_F_HOPO)));	//Clear the forced HOPO flag for this note
 				}
 			}

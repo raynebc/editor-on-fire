@@ -346,6 +346,7 @@ extern int         eof_disable_rs_wav;
 extern int         eof_display_seek_pos_in_seconds;
 extern int         eof_note_tails_clickable;
 extern int         eof_auto_complete_fingering;
+extern int         eof_rbn_export_slider_hopo;
 extern int         eof_smooth_pos;
 extern int         eof_windowed;
 extern int         eof_anchor_all_beats;

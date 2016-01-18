@@ -29,8 +29,8 @@
 #define EOF_NOTE_FLAG_F_HOPO     8
 #define EOF_NOTE_FLAG_NO_HOPO    16
 #define EOF_NOTE_FLAG_HIGHLIGHT  1073741824	//This flag will represent a note that is highlighted in the editor window
-#define EOF_NOTE_FLAG_T_EXTENDED 2147483648UL	//The MSB will be set if an additional track-specific flag variable is present for the note in the project file
-												//This flag will only be used during project save/load to determine whether another bytes variable is written/read
+#define EOF_NOTE_FLAG_EXTENDED 2147483648UL	//The MSB will be set if an additional flag variable is present for the note in the project file
+											//This flag will only be used during project save/load to determine whether another flags variable is written/read
 
 //The following flags pertain to pro guitar notes
 #define EOF_PRO_GUITAR_NOTE_FLAG_ACCENT         32			//This flag will represent a note that is played as an accent
@@ -161,7 +161,7 @@ typedef struct
 	unsigned long pos;
 	long length;				//Keep as signed, since the npos logic uses signed math
 	unsigned long flags;		//Stores various note statuses
-	unsigned long eflags;		//Stores extended, track specific note statuses
+	unsigned long eflags;		//Stores extended note statuses
 	unsigned char bendstrength;	//The amount this note bends (0 if undefined or not applicable for regular notes, can be 0 for tech notes as that defines the release of a bend).  If the MSB is set, the value specifies quarter steps, otherwise it specifies half steps
 	unsigned char slideend;		//The fret at which this slide ends (0 if undefined or not applicable)
 	unsigned char unpitchend;	//The fret at which this unpitched slide ends (0 if undefined or not applicable)

@@ -1486,7 +1486,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 	{	//If the user opted to import TS changes
 		for(ctr = eof_song->text_events; ctr > 0; ctr--)
 		{	//For each text event (in reverse order)
-			char buffer3[5];
+			char buffer3[5] = {0};
 			char *ptr3 = strcasestr_spec(eof_song->text_event[ctr - 1]->text, "TS:");
 			unsigned index = 0;
 			long num, den;

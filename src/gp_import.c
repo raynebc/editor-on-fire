@@ -5053,7 +5053,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 			if(!beats_only)
 			{	//If the track content besides just the beats and time signatures is being unwrapped
 #ifdef GP_IMPORT_DEBUG
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUnwrapping %d beats from measure #%lu (starts at beat %lu) from original track to beat %lu in new track", gp->measure[currentmeasure].num, currentmeasure + 1, measuremap[currentmeasure], beatctr);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUnwrapping %u beats from measure #%lu (starts at beat %lu) from original track to beat %lu in new track", gp->measure[currentmeasure].num, currentmeasure + 1, measuremap[currentmeasure], beatctr);
 				eof_log(eof_log_string, 1);
 #endif
 				if(!eof_copy_notes_in_beat_range(gp->track[track], measuremap[currentmeasure], gp->measure[currentmeasure].num, tp, beatctr))
@@ -5320,7 +5320,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 			unsigned char curr_alt_ending;
 
 #ifdef GP_IMPORT_DEBUG
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tMeasure #%lu is the start of another alternate ending (mask = %d), skipping to the end of the alternate ending", currentmeasure + 1, gp->measure[currentmeasure].alt_endings);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tMeasure #%lu is the start of another alternate ending (mask = %u), skipping to the end of the alternate ending", currentmeasure + 1, gp->measure[currentmeasure].alt_endings);
 			eof_log(eof_log_string, 1);
 #endif
 			curr_alt_ending = gp->measure[currentmeasure].alt_endings;	//Remember the alternate ending number being skipped

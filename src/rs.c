@@ -2046,7 +2046,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}//For each note in the active pro guitar track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
-	//Identify chords inside handshape phrases and replace those with no manually defined name with temporary chords with a blank name to reduce screen clutter in-game
+	//Identify low density chords inside handshape phrases and replace those with no manually defined name with temporary chords with a blank name to reduce screen clutter in-game
 	for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
 	{	//For each arpeggio phrase in the track
 		unsigned first = 1;	//Tracks whether the first note within the handshape has been processed
@@ -2061,23 +2061,26 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					{	//If this isn't the first such note within this handshape phrase
 						if((eof_note_count_rs_lanes(sp, track, ctr, 2) > 1) && (tp->note[ctr]->name[0] == '\0'))
 						{	//If this note would export as a chord and has no manually defined name
-							tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as single notes
-							tp->note[ctr]->tflags &= ~EOF_NOTE_TFLAG_ARP;	//Also clear this flag so the chord list building logic will disregard this chord in favor of the newly created one
-							new_note = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);
-							if(new_note)
-							{	//If the new note was created
-								new_note->tflags |= EOF_NOTE_TFLAG_TEMP;				//Mark the note as temporary
-								new_note->name[0] = ' ';								//Explicitly give it a blank name
-								new_note->name[1] = '\0';
-							}
-							else
-							{
-								allegro_message("Error:  Couldn't replace a handshape chord with an un-named copy.  Aborting Rocksmith 2 export.");
-								eof_log("Error:  Couldn't replace a handshape chord with an un-named copy.  Aborting Rocksmith 2 export.", 1);
-								eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-								eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-								(void) pack_fclose(fp);
-								return 0;	//Return error
+							if(!eof_note_has_high_chord_density(sp, track, ctr, 2))
+							{	//If this chord is low density
+								tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as single notes
+								tp->note[ctr]->tflags &= ~EOF_NOTE_TFLAG_ARP;	//Also clear this flag so the chord list building logic will disregard this chord in favor of the newly created one
+								new_note = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);
+								if(new_note)
+								{	//If the new note was created
+									new_note->tflags |= EOF_NOTE_TFLAG_TEMP;				//Mark the note as temporary
+									new_note->name[0] = ' ';								//Explicitly give it a blank name
+									new_note->name[1] = '\0';
+								}
+								else
+								{
+									allegro_message("Error:  Couldn't replace a handshape chord with an un-named copy.  Aborting Rocksmith 2 export.");
+									eof_log("Error:  Couldn't replace a handshape chord with an un-named copy.  Aborting Rocksmith 2 export.", 1);
+									eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+									eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+									(void) pack_fclose(fp);
+									return 0;	//Return error
+								}
 							}
 						}
 					}
@@ -4169,14 +4172,12 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 		if(handshapestatus == 1)
 			return 0;	//Chord is the first note in any handshape
 	}
-	else
-	{	//The chord is not in any handshape
-		if(eof_note_compare(sp, track, note, track, prev, 0))
-			return 0;	//Chord does not match the previous note (ignoring note flags and lengths)
 
-		if(eof_get_note_pos(sp, track, note) > eof_get_note_pos(sp, track, prev) + eof_get_note_length(sp, track, prev) + eof_chord_density_threshold)
-			return 0;	//Chord is not within the configured threshold distance from the previous note
-	}
+	if(eof_note_compare(sp, track, note, track, prev, 0))
+		return 0;	//Chord does not match the previous note (ignoring note flags and lengths)
+
+	if(eof_get_note_pos(sp, track, note) > eof_get_note_pos(sp, track, prev) + eof_get_note_length(sp, track, prev) + eof_chord_density_threshold)
+		return 0;	//Chord is not within the configured threshold distance from the previous note
 
 	return 1;	//All criteria passed, chord is high density
 }
