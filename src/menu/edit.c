@@ -247,7 +247,7 @@ void eof_prepare_edit_menu(void)
 		}
 
 		/* copy */
-		vselected = eof_count_selected_notes(NULL, 1);
+		vselected = eof_count_selected_notes(NULL);
 		if(vselected)
 		{	//If any notes in the active track difficulty are selected
 			eof_edit_menu[3].flags = 0;		//copy
@@ -2429,7 +2429,7 @@ int eof_menu_edit_select_rest(void)
 {
 	unsigned long i;
 
-	if(eof_count_selected_notes(NULL, 0) == 0)
+	if(eof_count_selected_notes(NULL) == 0)
 	{
 		return 1;
 	}
@@ -3264,7 +3264,7 @@ int eof_menu_edit_select_previous(void)
 {
 	unsigned long i;
 
-	if(eof_count_selected_notes(NULL, 0) == 0)	//If no notes are selected
+	if(eof_count_selected_notes(NULL) == 0)	//If no notes are selected
 	{
 		return 1;
 	}

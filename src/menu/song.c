@@ -500,7 +500,7 @@ void eof_prepare_song_menu(void)
 		}
 
 		/* add catalog entry */
-		if(eof_count_selected_notes(NULL,0))	//If there are notes selected
+		if(eof_count_selected_notes(NULL))	//If there are notes selected
 		{
 			eof_catalog_menu[5].flags = 0;
 		}
@@ -1433,7 +1433,7 @@ int eof_menu_catalog_add(void)
 
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(!eof_count_selected_notes(NULL, 0))	//If there are still no notes selected
+	if(!eof_count_selected_notes(NULL))	//If there are still no notes selected
 		return 1;
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)

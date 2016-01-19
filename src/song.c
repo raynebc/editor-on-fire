@@ -4332,14 +4332,6 @@ void eof_pro_guitar_track_sort_notes(EOF_PRO_GUITAR_TRACK * tp)
 	}
 }
 
-void eof_pro_guitar_track_sort_tech_notes(EOF_PRO_GUITAR_TRACK * tp)
-{
-	if(tp)
-	{
-		qsort(tp->technote, (size_t)tp->technotes, sizeof(EOF_PRO_GUITAR_NOTE *), eof_song_qsort_pro_guitar_notes);
-	}
-}
-
 int eof_song_qsort_fret_hand_positions(const void * e1, const void * e2)
 {
 	EOF_PHRASE_SECTION * thing1 = (EOF_PHRASE_SECTION *)e1;

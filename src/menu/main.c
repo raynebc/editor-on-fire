@@ -38,7 +38,7 @@ void eof_prepare_main_menu(void)
 		eof_main_menu[5].flags = 0; // Beat
 
 		/* disable Note menu when no notes are selected */
-		if(eof_count_selected_notes(NULL, 1) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
+		if(eof_count_selected_notes(NULL) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
 		{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
 			eof_main_menu[4].flags = 0; // Note
 		}

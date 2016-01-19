@@ -4400,20 +4400,6 @@ void eof_apply_chord_shape_definition(EOF_PRO_GUITAR_NOTE *np, unsigned long sha
 	}
 }
 
-unsigned long eof_count_chord_shape_matches(EOF_PRO_GUITAR_NOTE *np)
-{
-	unsigned long ctr = 0;
-
-	if(!np)
-		return 0;	//Invalid parameter
-
-	while(eof_lookup_chord_shape(np, NULL, ctr))
-	{	//While another chord shape definition match is found
-		ctr++;	//Try to find another
-	}
-	return ctr;
-}
-
 void eof_load_chord_shape_definitions(char *fn)
 {
 	char *buffer = NULL;	//Will be an array large enough to hold the largest line of text from input file

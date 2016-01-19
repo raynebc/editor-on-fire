@@ -213,18 +213,6 @@ extern char eof_note_clear_menu_string_5[20];
 extern char eof_note_clear_menu_string_6[20];
 extern char *eof_note_clear_menu_strings[6];
 
-struct MIDIentry
-{
-	unsigned char status;	//The current entry status (0=note not playing, 1=note playing)
-	unsigned char note;		//The MIDI note to be played
-	int startpos;			//The time at which the MIDI tone is to be started
-	int endpos;				//The time at which the MIDI tone is to be stopped
-	struct MIDIentry *prev;	//The previous link in the list
-	struct MIDIentry *next;	//The next link in the list
-};
-extern struct MIDIentry *MIDIqueue;		//Linked list of queued MIDI notes
-extern struct MIDIentry *MIDIqueuetail;	//Points to the tail of the list
-
 extern NCDFS_FILTER_LIST * eof_filter_music_files;
 extern NCDFS_FILTER_LIST * eof_filter_ogg_files;
 extern NCDFS_FILTER_LIST * eof_filter_midi_files;
@@ -534,10 +522,9 @@ void eof_reset_lyric_preview_lines(void);	//Resets the preview line variables to
 void eof_find_lyric_preview_lines(void);	//Sets the first and second preview line variables
 void eof_emergency_stop_music(void);	//Stops audio playback
 void eof_fix_catalog_selection(void);	//Ensures that a valid catalog entry is active, if any
-unsigned long eof_count_selected_notes(unsigned long * total, char v);
-	//Returns the number of notes selected in the active instrument difficulty
-	//If total is not NULL, its value is incremented once for each selected note in the active difficulty, regardless of whether it's selected
-	//The v parameter presently doesn't have any purpose and can be given as 0
+unsigned long eof_count_selected_notes(unsigned long *total);
+	//Returns the number of notes selected in the active track difficulty
+	//If total is not NULL, its value is incremented once for each note in the active difficulty, regardless of whether it's selected (to count the number of notes in the active difficulty)
 unsigned long eof_get_selected_note_range(unsigned long *sel_start, unsigned long *sel_end, char function);
 	//Returns the number of notes in the selected note range that are explicitly selected, allowing an easy way to check if more than one note is selected
 	//If sel_start and sel_end are not NULL, information about the first and last selected note are returned through them
@@ -554,7 +541,6 @@ int eof_set_display_mode_preset(int mode);	//Sets one of the pre-set window size
 int eof_set_display_mode_preset_custom_width(int mode, unsigned long width);	//Sets one of pre-set window heights and uses the specified width
 int eof_set_display_mode(unsigned long width, unsigned long height);	//Sets the program window size, rebuilds sub-windows and sets related variables
 void eof_set_3d_projection(void);	//Sets the 3d projection by calling ocd3d_set_projection() with the screen dimensions and vanishing coordinate
-void eof_debug_message(char * text);
 void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track);
 	//Re-applies the HOPO, SP, trill and tremolo status of each note in the specified track, as well as deleting empty SP, Solo, trill, tremolo and arpeggio phrases
 void eof_cat_track_difficulty_string(char *str);	//Concatenates the current track difficulty to the specified string
@@ -575,9 +561,6 @@ void eof_render_note_window(void);
 int eof_load_data(void);	//Loads graphics and fonts from eof.dat
 void eof_destroy_data(void);	//Frees graphics and fonts from memory
 char * eof_get_tone_name(int tone);	//Returns the name of the given note number (ie. C# or Db) based on the value of eof_display_flats
-void eof_process_midi_queue(int pos);	//Process the MIDI queue based on the given timestamp
-int eof_midi_queue_add(unsigned char note, int startpos, int endpos);	//Appends the Note On/Off data to the MIDI queue
-void eof_midi_queue_destroy(void);	//Destroys the MIDI queue
 void eof_all_midi_notes_off(void);	//Sends a channel mode message to turn off all active notes, as per MIDI specification
 void eof_stop_midi(void);	//To be called whenever playback stops, turning off all playing MIDI notes and destroying the MIDI queue
 void eof_exit(void);		//Formally exits the program, releasing all data structures allocated
@@ -609,7 +592,7 @@ void eof_log(const char *text, int level);
 	//Verbose logging should be disabled during chart creation/deletion due to the large amount of note creations/deletions
 	//The logging verbosity can be altered by toggling bit 1, as bit 0 must be also set in order to log
 void eof_log_notes(EOF_SONG *sp, unsigned long track);
-	//Logs the position and length of each note in the specified track
+	//Debug function that logs the position and length of each note in the specified track
 extern char eof_log_string[2048];	//A string reserved for use with eof_log()
 extern unsigned int eof_log_id;
 	//This will be set to a random value when logging is started, so if multiple instances of EOF are writing to the same
@@ -621,7 +604,6 @@ void eof_switch_out_callback(void);	//Performs some logic that needs to occur wh
 void eof_switch_in_callback(void);	//Performs some logic that needs to occur when EOF gains foreground focus
 long eof_get_previous_note(long cnote);	//Returns the note that exists immediately before the specified note in the active track difficulty, or -1 if no such note exists
 int eof_note_is_hopo(unsigned long cnote);	//Returns nonzero if the specified note in the active track difficulty should be rendered as a HOPO, based on the current HOPO preview setting
-int eof_notes_selected(void);	//Debugging:  Returns the number of notes that are selected by scanning the eof_selection.multi[] array (is deprecated by eof_count_selected_notes())
 void eof_read_global_keys(void);	//Reads and acts on various keyboard combinations
 void eof_lyric_logic(void);	//Performs various vocal editor logic
 void eof_note_logic(void);	//Performs various note catalog logic

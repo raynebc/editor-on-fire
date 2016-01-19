@@ -3579,7 +3579,7 @@ void eof_editor_logic(void)
 				while(mouse_b & 4);	//Wait until the middle mouse button is released before proceeding (this depends on automatic mouse polling, so EOF cannot call poll_mouse() manually or this becomes an infinite loop)
 				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 				{	//If a pro guitar track is active
-					if(eof_count_selected_notes(NULL, 0))
+					if(eof_count_selected_notes(NULL))
 					{	//If any notes in the active track difficulty are selected
 						(void) eof_menu_note_edit_pro_guitar_note();
 					}
@@ -3696,7 +3696,6 @@ void eof_editor_logic(void)
 						{
 							if(!eof_selection.multi[eof_selection.current])
 							{
-//								printf("notes %d\n", eof_notes_selected());	//Debugging
 								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 							}
 							if(eof_selection.multi[eof_selection.current] == 1)
@@ -4207,7 +4206,7 @@ void eof_editor_logic(void)
 			{	//mouse is in the fretboard area
 				if(eof_hover_note >= 0)
 				{
-					if(eof_count_selected_notes(NULL, 0) == 0)
+					if(eof_count_selected_notes(NULL) == 0)
 					{	//No notes are selected
 						eof_selection.current = eof_hover_note;
 						eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current);
@@ -4232,7 +4231,7 @@ void eof_editor_logic(void)
 					}
 				}
 				eof_prepare_menus();
-				if(eof_count_selected_notes(NULL, 0) > 0)
+				if(eof_count_selected_notes(NULL) > 0)
 				{
 					(void) do_menu(eof_right_click_menu_note, mouse_x, mouse_y);
 				}
@@ -4785,7 +4784,7 @@ void eof_vocal_editor_logic(void)
 					eof_rclick_released = 1;
 				}
 			}
-			if((eof_mickey_z != 0) && eof_count_selected_notes(NULL, 0))
+			if((eof_mickey_z != 0) && eof_count_selected_notes(NULL))
 			{
 				eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
 			}
@@ -4929,7 +4928,7 @@ void eof_vocal_editor_logic(void)
 			{	//mouse is in the fretboard area
 				if(eof_hover_note >= 0)
 				{
-					if(eof_count_selected_notes(NULL, 0) == 0)
+					if(eof_count_selected_notes(NULL) == 0)
 					{	//If no notes are selected
 						eof_selection.current = eof_hover_note;
 						eof_selection.current_pos = eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->pos;
@@ -4954,7 +4953,7 @@ void eof_vocal_editor_logic(void)
 					}
 				}
 				eof_prepare_menus();
-				if(eof_count_selected_notes(NULL, 0) > 0)
+				if(eof_count_selected_notes(NULL) > 0)
 				{
 					(void) do_menu(eof_right_click_menu_note, mouse_x, mouse_y);
 					eof_clear_input();

@@ -304,8 +304,6 @@ int eof_menu_copy_tremolo_track_13(void);
 int eof_menu_copy_tremolo_track_number(EOF_SONG *sp, int sourcetrack, int desttrack);
 	//Copies the tremolo phrases from the specified source track to the destination track
 
-float eof_menu_note_push_get_offset(void);
-	//Returns a value representing the currently-set grid snap interval as a percentage of the duration of one beat
 int eof_feedback_mode_update_note_selection(void);
 	//If Feedback input mode is in use, eof_selection.multi[] indicates no notes are selected and there is a seek hover note, note #eof_seek_hover_note is marked as selected in the array and nonzero is returned
 	//This allows the selection array to reflect the note at the seek position if no notes are explicitly selected, and after note manipulation, the seek hover note can be unselected

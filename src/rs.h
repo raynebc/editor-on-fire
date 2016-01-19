@@ -143,8 +143,6 @@ int eof_lookup_chord_shape(EOF_PRO_GUITAR_NOTE *np, unsigned long *shapenum, uns
 	//If skipctr is nonzero, then the first [skipctr] number of matches are ignored during the lookup process, allowing additional definition matches to be found
 void eof_apply_chord_shape_definition(EOF_PRO_GUITAR_NOTE *np, unsigned long shapenum);
 	//Applies the specified chord shape to the specified note, transposing the shape definition to suit the lowest fretted string of the specified note
-unsigned long eof_count_chord_shape_matches(EOF_PRO_GUITAR_NOTE *np);
-	//Returns the number of chord shape definitions that match the specified note
 void eof_load_chord_shape_definitions(char *fn);
 	//Reads chord templates from the specified file and stores them into the eof_chord_shape[] array
 void eof_destroy_shape_definitions(void);

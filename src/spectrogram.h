@@ -88,7 +88,7 @@ int eof_render_spectrogram(struct spectrogramstruct *spectrogram);
 	//Renders the left channel spectrogram into the editor window, taking the zoom level into account
 	//Returns nonzero on failure
 void eof_render_spectrogram_line(struct spectrogramstruct *spectrogram,struct spectrogramchanneldata *channel,unsigned amp,unsigned long x,int color);
-	//Used for testing a colorscale, draws a line of a given color on the spectrogram
+	//Debugging function used for testing a colorscale, draws a line of a given color on the spectrogram
 void eof_render_spectrogram_col(struct spectrogramstruct *spectrogram,struct spectrogramchanneldata *channel,struct spectrogramslice *ampdata, unsigned long x, unsigned long curms);
 	//Given the amplitude and the channel and spectrogram to process, renders a column of the channel's spectrogram at x for the time curms
 int eof_color_scale(double value, double max, short int scalenum);

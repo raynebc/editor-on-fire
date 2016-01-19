@@ -78,10 +78,6 @@ int eof_pro_guitar_note_compare_fingerings(EOF_PRO_GUITAR_NOTE *np1, EOF_PRO_GUI
 	//Compares the fingering between the specified notes and returns 0 if both use the same strings and define the same fingering for all used strings
 	//The muting status is not taken into account in the comparison if the specified finger is the same in both notes
 	//-1 is returned on error
-int eof_note_compare_non_ghosted_frets_fingering(EOF_PRO_GUITAR_NOTE *np1, EOF_PRO_GUITAR_NOTE *np2);
-	//Compares the fretting and fingering between the specified notes and returns 0 if both use the same strings and define the same fretting and fingering
-	//Only gems that are not ghosted are considered
-	//-1 is returned on error
 char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, char *buffer);
 	//Copies the note name into the buffer, which is assumed to be large enough to store the name
 	//If the note is named manually, that name is used, otherwise chord detection is used to build the name

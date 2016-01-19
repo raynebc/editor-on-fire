@@ -163,7 +163,6 @@ char        eof_playback_time_stretch = 1;
 int         eof_ogg_setting = 1;
 char      * eof_ogg_quality[7] = {"1.0", "2.0", "4.0", "5.0", "6.0", "8.0", "10.0"};
 unsigned long eof_frame = 0;
-int         eof_debug_mode = 0;
 int         eof_cpu_saver = 0;
 char        eof_has_focus = 1;				//Indicates whether EOF is in foreground focus (if set to 2, EOF just switched back into focus)
 char        eof_supports_mp3 = 0;
@@ -385,17 +384,6 @@ int eof_key_shifts = 0;
 ///DEBUG
 int eof_last_key_char = 0;
 int eof_last_key_code = 0;
-
-void eof_debug_message(char * text)
-{
-	eof_log("eof_debug_message() entered", 1);
-
-	if(text && eof_debug_mode)
-	{
-		allegro_message("%s", text);
-		gametime_reset();
-	}
-}
 
 void eof_show_mouse(BITMAP * bp)
 {
@@ -1403,85 +1391,33 @@ int eof_figure_difficulty(void)
 }
 
 /* total is used to determine the total number of notes including unselected notes */
-unsigned long eof_count_selected_notes(unsigned long * total, char v)
+unsigned long eof_count_selected_notes(unsigned long *total)
 {
 //	eof_log("eof_count_selected_notes() entered");
 
-	unsigned long tracknum;
-	unsigned long count=0, i;
+	unsigned long count = 0, i;
 	long last = -1;
 
 	if(!eof_song || (eof_selected_track >= eof_song->tracks))
 		return 0;	//Return error
 
-	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	switch(eof_song->track[eof_selected_track]->track_format)
-	{
-		case EOF_LEGACY_TRACK_FORMAT:
-			for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
-			{
-				if(eof_song->legacy_track[tracknum]->note[i]->type == eof_note_type)
-				{
-					if(eof_selection.track == eof_selected_track)
-					{
-						if(eof_selection.multi[i])
-						{
-							if(!v || eof_song->legacy_track[tracknum]->note[i]->note)
-							{	//If v is zero, or if both v and the note mask are nonzero
-								last = i;
-								count++;
-							}
-						}
-					}
-					if(total)
-					{
-						(*total)++;
-					}
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note/lyric in the active track
+		if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
+		{	//If the note is in the active difficulty
+			if(eof_selection.track == eof_selected_track)
+			{	//If the note selection pertains to the active track
+				if(eof_selection.multi[i])
+				{	//If the note is selected
+					last = i;
+					count++;
 				}
 			}
-		break;
-
-		case EOF_VOCAL_TRACK_FORMAT:
-			for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-			{
-				if(eof_selection.track == eof_selected_track)
-				{
-					if(eof_selection.multi[i])
-					{
-						last = i;
-						count++;
-					}
-				}
-				if(total)
-				{
-					(*total)++;
-				}
+			if(total)
+			{	//If the calling function passed a non NULL pointer
+				(*total)++;	//Increment the value it points to
 			}
-		break;
-
-		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			for(i = 0; i < eof_song->pro_guitar_track[tracknum]->notes; i++)
-			{
-				if(eof_song->pro_guitar_track[tracknum]->note[i]->type == eof_note_type)
-				{
-					if(eof_selection.track == eof_selected_track)
-					{
-						if(eof_selection.multi[i])
-						{
-							if(!v || eof_song->pro_guitar_track[tracknum]->note[i]->note)
-							{	//If v is zero, or if both v and the note mask are nonzero
-								last = i;
-								count++;
-							}
-						}
-					}
-					if(total)
-					{
-						(*total)++;
-					}
-				}
-			}
-		break;
+		}
 	}
 
 	/* if no notes remain selected, current note should be unset */
@@ -1755,24 +1691,6 @@ int eof_save_ogg(char * fn)
 		return 1;
 	}
 	return 0;
-}
-
-/* used for debugging */
-int eof_notes_selected(void)
-{
-	int count = 0;
-	int i;
-
-	eof_log("eof_notes_selected() entered", 1);
-
-	for(i = 0; i < EOF_MAX_NOTES; i++)
-	{
-		if(eof_selection.multi[i])
-		{
-			count++;
-		}
-	}
-	return count;
 }
 
 void eof_fix_waveform_graph(void)
@@ -2237,7 +2155,7 @@ void eof_lyric_logic(void)
 				{
 					if(KEY_EITHER_CTRL && (eof_selection.current < eof_song->vocal_track[tracknum]->lyrics))
 					{
-						if(eof_count_selected_notes(NULL, 0) == 1)
+						if(eof_count_selected_notes(NULL) == 1)
 						{
 							eof_prepare_undo(EOF_UNDO_TYPE_LYRIC_NOTE);
 							eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note = eof_hover_key;
@@ -2884,7 +2802,7 @@ void eof_render_note_window(void)
 		int iss;
 		int isms = ((eof_music_pos - eof_av_delay) % 1000);	//Get the number of milliseconds in the seek position, which is used the same regardless of which timing format is selected by the user
 		unsigned long itn = 0;
-		int isn = eof_count_selected_notes(&itn, 0);
+		int isn = eof_count_selected_notes(&itn);
 		ypos += 12;
 		if(!eof_display_seek_pos_in_seconds)
 		{	//If the seek position is to be displayed as minutes:seconds
@@ -3619,7 +3537,7 @@ void eof_render(void)
 		clear_to_color(eof_screen, eof_color_light_gray);
 		if(!eof_full_screen_3d && !eof_screen_zoom)
 		{	//Only blit the menu bar now if neither full screen 3D view nor x2 zoom is in effect, otherwise it will be blitted later
-			if((eof_count_selected_notes(NULL, 0) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
+			if((eof_count_selected_notes(NULL) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
 			{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
 				blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
 			}
@@ -3665,7 +3583,7 @@ void eof_render(void)
 		eof_render_note_window();
 		if(!eof_screen_zoom)
 		{	//If x2 zoom is not enabled, render the menu now
-			if((eof_count_selected_notes(NULL, 0) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
+			if((eof_count_selected_notes(NULL) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
 			{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
 				blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
 			}
@@ -3688,7 +3606,7 @@ void eof_render(void)
 		//Blitting straight to screen causes flickery menus
 		//Drawing the menu half size and then stretching it to full size makes it unreadable, but that may be better than not rendering them at all
 		//The highest quality (and most memory wasteful) solution would require another large bitmap to render the x2 program window and then the x1 menus on top, which would then be blit to screen
-		if((eof_count_selected_notes(NULL, 0) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
+		if((eof_count_selected_notes(NULL) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
 		{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
 			stretch_blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, eof_image[EOF_IMAGE_MENU_FULL]->w, eof_image[EOF_IMAGE_MENU_FULL]->h, 0, 0, eof_image[EOF_IMAGE_MENU_FULL]->w / 2, eof_image[EOF_IMAGE_MENU_FULL]->h / 2);
 		}
@@ -4297,11 +4215,7 @@ int eof_initialize(int argc, char * argv[])
 	/* see if we are opening a file on launch */
 	for(i = 1; i < argc; i++)
 	{	//For each command line argument
-		if(!ustricmp(argv[i], "-debug"))
-		{
-			eof_debug_mode = 1;
-		}
-		else if(!ustricmp(argv[i], "-newidle"))
+		if(!ustricmp(argv[i], "-newidle"))
 		{
 			eof_new_idle_system = 1;
 		}
@@ -4563,116 +4477,6 @@ void eof_exit(void)
 	}
 }
 
-void eof_process_midi_queue(int pos)
-{	//Process the MIDI queue based on the current chart timestamp (eof_music_pos)
-	unsigned char NOTE_ON_DATA[3] = {0x91,0x0,127};		//Data sequence for a Note On, channel 1, Note 0
-	unsigned char NOTE_OFF_DATA[3] = {0x81,0x0,127};	//Data sequence for a Note Off, channel 1, Note 0
-
-	struct MIDIentry *ptr = MIDIqueue;	//Points to the head of the list
-	struct MIDIentry *temp = NULL;
-
-	eof_log("eof_process_midi_queue() entered", 1);
-
-	if(midi_driver == NULL)
-		return;
-
-	while(ptr != NULL)
-	{	//Process all queue entries
-		if(ptr->status == 0)
-		{	//If this queued note has not been played yet
-			if(pos >= ptr->startpos)	//If the current chart position is at or past this note's start position
-			{
-				NOTE_ON_DATA[1] = ptr->note;	//Alter the data sequence to be the appropriate note number
-				midi_driver->raw_midi(NOTE_ON_DATA[0]);
-				midi_driver->raw_midi(NOTE_ON_DATA[1]);
-				midi_driver->raw_midi(NOTE_ON_DATA[2]);
-				ptr->status = 1;			//Track that it is playing
-			}
-		}
-		else
-		{	//This queued note has already been played
-			if(pos >= ptr->endpos)	//If the current chart position is at or past this note's stop position
-			{
-				NOTE_OFF_DATA[1] = ptr->note;	//Alter the data sequence to be the appropriate note number
-				midi_driver->raw_midi(NOTE_OFF_DATA[0]);
-				midi_driver->raw_midi(NOTE_OFF_DATA[1]);
-				midi_driver->raw_midi(NOTE_OFF_DATA[2]);
-
-			//Remove this link from the list
-				if(ptr->prev)	//If there's a link that precedes this link
-					ptr->prev->next = ptr->next;	//It now points forward to the next link (if there is one)
-				else
-					MIDIqueue = ptr->next;		//Update head of list
-
-				if(ptr->next)	//If there's a link that follows this link
-					ptr->next->prev = ptr->prev;	//It now points back to the previous link (if there is one)
-				else
-					MIDIqueuetail = ptr->prev;	//Update tail of list
-
-				temp = ptr->next;	//Save the address of the next link (if there is one)
-				free(ptr);
-				ptr = temp;	//Iterate to the link that followed the deleted link
-				continue;	//Restart at top of loop without iterating to the next link
-			}
-		}
-		ptr = ptr->next;	//Point to the next link
-	}
-}
-
-int eof_midi_queue_add(unsigned char note, int startpos, int endpos)
-{
-	struct MIDIentry *ptr = NULL;	//Stores the newly allocated link
-
-	eof_log("eof_midi_queue_add() entered", 1);
-
-//Validate input
-	if(note > 127)
-		return -1;	//return error:  Invalid MIDI note
-	if(startpos >= endpos)
-		return -1;	//return error:  Duration must be > 0
-
-//Allocate and initialize MIDI queue entry
-	ptr = malloc(sizeof(struct MIDIentry));
-	if(ptr == NULL)
-		return -1;	//return error:  Unable to allocate memory
-	ptr->status = 0;
-	ptr->note = note;
-	ptr->startpos = startpos;
-	ptr->endpos = endpos;
-	ptr->next = NULL;		//When appended to the end of the list, it will never point forward to anything
-
-//Append to list
-	if(MIDIqueuetail)	//If the list isn't empty
-	{
-		MIDIqueuetail->next = ptr;	//Tail points forward to new link
-		ptr->prev = MIDIqueuetail;	//New link points backward to tail
-		MIDIqueuetail = ptr;		//Update tail
-	}
-	else
-	{
-		MIDIqueue = MIDIqueuetail = ptr;	//This new link is both the head and the tail of the list
-		ptr->prev = NULL;				//New link points backward to nothing
-	}
-
-	return 0;	//return success
-}
-
-void eof_midi_queue_destroy(void)
-{
-	struct MIDIentry *ptr = MIDIqueue,*temp = NULL;
-
-	eof_log("eof_midi_queue_destroy() entered", 2);
-
-	while(ptr != NULL)	//For all links in the list
-	{
-		temp = ptr->next;	//Save address of next link
-		free(ptr);	//Destroy this link
-		ptr = temp;	//Point to next link
-	}
-
-	MIDIqueue = MIDIqueuetail = NULL;
-}
-
 void eof_all_midi_notes_off(void)
 {
 	eof_log("eof_all_midi_notes_off() entered", 2);
@@ -4694,7 +4498,6 @@ void eof_stop_midi(void)
 		eof_log("eof_stop_midi() entered", 2);
 
 		eof_all_midi_notes_off();
-		eof_midi_queue_destroy();
 	}
 }
 

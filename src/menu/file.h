@@ -85,7 +85,7 @@ int eof_test_controller_conflict(EOF_CONTROLLER *ct,int start,int stop);
 	//If there is a button conflict, nonzero is returned
 
 void EnumeratedBChartInfo(struct FeedbackChart *chart);
-	//Call an allegro_message with summary information about the passed chart
+	//Debug function to call an allegro_message with summary information about the passed chart
 
 int eof_mp3_to_ogg(char *file, char *directory);
 	//Uses the specified file to create guitar.ogg in the specified directory

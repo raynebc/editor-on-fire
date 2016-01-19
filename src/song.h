@@ -719,7 +719,6 @@ void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, unsigned long index);	//D
 EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_note(EOF_PRO_GUITAR_TRACK *tp);	//Allocates, initializes and stores a new EOF_PRO_GUITAR_NOTE structure into the note array.  Returns the newly allocated structure or NULL upon error
 EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_tech_note(EOF_PRO_GUITAR_TRACK *tp);	//Allocates, initializes and stores a new EOF_PRO_GUITAR_NOTE structure into the technote array.  Returns the newly allocated structure or NULL upon error
 void eof_pro_guitar_track_sort_notes(EOF_PRO_GUITAR_TRACK * tp);	//Performs a quicksort of the notes array
-void eof_pro_guitar_track_sort_tech_notes(EOF_PRO_GUITAR_TRACK * tp);	//Performs a quicksort of the tech notes array
 int eof_song_qsort_pro_guitar_notes(const void * e1, const void * e2);	//The comparitor function used to quicksort the pro guitar notes array
 void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
 long eof_fixup_previous_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Returns the note one before the specified note number that is in the same difficulty, or -1 if there is none

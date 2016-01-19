@@ -588,7 +588,7 @@ void eof_prepare_note_menu(void)
 				}
 			}//PART VOCALS NOT SELECTED
 		}
-		vselected = eof_count_selected_notes(NULL, 1);
+		vselected = eof_count_selected_notes(NULL);
 		if(vselected)
 		{	//ONE OR MORE NOTES/LYRICS SELECTED
 			/* star power mark */
@@ -1459,7 +1459,7 @@ int eof_menu_note_toggle_green(void)
 	unsigned long flags, note, tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_count_selected_notes(NULL, 0) == 0)
+	if(eof_count_selected_notes(NULL) == 0)
 	{
 		return 1;
 	}
@@ -1513,7 +1513,7 @@ int eof_menu_note_toggle_red(void)
 	unsigned long note, tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_count_selected_notes(NULL, 0) == 0)
+	if(eof_count_selected_notes(NULL) == 0)
 	{
 		return 1;
 	}
@@ -1558,7 +1558,7 @@ int eof_menu_note_toggle_yellow(void)
 	unsigned long flags, note;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_count_selected_notes(NULL, 0) == 0)
+	if(eof_count_selected_notes(NULL) == 0)
 	{
 		return 1;
 	}
@@ -1613,7 +1613,7 @@ int eof_menu_note_toggle_blue(void)
 	unsigned long flags, note;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_count_selected_notes(NULL, 0) == 0)
+	if(eof_count_selected_notes(NULL) == 0)
 	{
 		return 1;
 	}
@@ -1668,7 +1668,7 @@ int eof_menu_note_toggle_purple(void)
 	unsigned long flags, note;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_count_selected_notes(NULL, 0) == 0)
+	if(eof_count_selected_notes(NULL) == 0)
 	{
 		return 1;
 	}
@@ -1727,7 +1727,7 @@ int eof_menu_note_toggle_orange(void)
 		return 1;	//Don't do anything if there is less than 6 lanes available
 	}
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
-	if(eof_count_selected_notes(NULL, 0) == 0)
+	if(eof_count_selected_notes(NULL) == 0)
 	{
 		return 1;
 	}
@@ -1783,7 +1783,7 @@ int eof_menu_note_clear_green(void)
 	unsigned long note, tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_count_selected_notes(NULL, 0) == 0)
+	if(eof_count_selected_notes(NULL) == 0)
 	{
 		return 1;
 	}
@@ -1840,7 +1840,7 @@ int eof_menu_note_clear_red(void)
 	unsigned long note, tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_count_selected_notes(NULL, 0) == 0)
+	if(eof_count_selected_notes(NULL) == 0)
 	{
 		return 1;
 	}
@@ -1897,7 +1897,7 @@ int eof_menu_note_clear_yellow(void)
 	unsigned long note, tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_count_selected_notes(NULL, 0) == 0)
+	if(eof_count_selected_notes(NULL) == 0)
 	{
 		return 1;
 	}
@@ -1954,7 +1954,7 @@ int eof_menu_note_clear_blue(void)
 	unsigned long note, tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_count_selected_notes(NULL, 0) == 0)
+	if(eof_count_selected_notes(NULL) == 0)
 	{
 		return 1;
 	}
@@ -2011,7 +2011,7 @@ int eof_menu_note_clear_purple(void)
 	unsigned long note, tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_count_selected_notes(NULL, 0) == 0)
+	if(eof_count_selected_notes(NULL) == 0)
 	{
 		return 1;
 	}
@@ -2073,7 +2073,7 @@ int eof_menu_note_clear_orange(void)
 		return 1;	//Don't do anything if there is less than 6 lanes available
 	}
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
-	if(eof_count_selected_notes(NULL, 0) == 0)
+	if(eof_count_selected_notes(NULL) == 0)
 	{
 		return 1;
 	}
@@ -2136,7 +2136,7 @@ int eof_menu_note_toggle_accent_lane(unsigned int lanenum)
 		return 1;	//Don't do anything if the specified lane number is higher than the number the active track contains or if it is otherwise invalid
 	}
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
-	if(eof_count_selected_notes(NULL, 0) == 0)
+	if(eof_count_selected_notes(NULL) == 0)
 	{
 		return 1;
 	}
@@ -2207,7 +2207,7 @@ int eof_menu_note_clear_accent_lane(unsigned int lanenum)
 		return 1;	//Don't do anything if the specified lane number is higher than the number the active track contains or if it is otherwise invalid
 	}
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
-	if(eof_count_selected_notes(NULL, 0) == 0)
+	if(eof_count_selected_notes(NULL) == 0)
 	{
 		return 1;
 	}
@@ -2770,46 +2770,6 @@ int eof_menu_note_default_no_hi_hat(void)
 	return 1;
 }
 
-float eof_menu_note_push_get_offset(void)
-{
-	switch(eof_snap_mode)
-	{
-		case EOF_SNAP_QUARTER:
-		{
-			return 100.0;
-		}
-		case EOF_SNAP_EIGHTH:
-		{
-			return 50.0;
-		}
-		case EOF_SNAP_TWELFTH:
-		{
-			return 100.0 / 3.0;
-		}
-		case EOF_SNAP_SIXTEENTH:
-		{
-			return 25.0;
-		}
-		case EOF_SNAP_TWENTY_FOURTH:
-		{
-			return 100.0 / 6.0;
-		}
-		case EOF_SNAP_THIRTY_SECOND:
-		{
-			return 12.5;
-		}
-		case EOF_SNAP_FORTY_EIGHTH:
-		{
-			return 100.0 / 12.0;
-		}
-		case EOF_SNAP_CUSTOM:
-		{
-			return 100.0 / (float)eof_snap_interval;
-		}
-	}
-	return 0.0;
-}
-
 /* split a lyric into multiple pieces (look for ' ' characters) */
 static void eof_split_lyric(int lyric)
 {
@@ -2870,7 +2830,7 @@ int eof_menu_split_lyric(void)
 	if(!eof_vocals_selected)
 		return 1;
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
-	if(eof_count_selected_notes(NULL, 0) != 1)
+	if(eof_count_selected_notes(NULL) != 1)
 	{
 		return 1;
 	}
@@ -3252,7 +3212,7 @@ int eof_menu_hopo_cycle(void)
 		return 1;	//Do not allow this function to run unless a guitar track is active
 
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
-	if((eof_count_selected_notes(NULL, 0) > 0))
+	if((eof_count_selected_notes(NULL) > 0))
 	{
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the active track
@@ -3499,7 +3459,7 @@ int eof_transpose_possible(int dir)
 		{
 			retval = 0;
 		}
-		else if(eof_count_selected_notes(NULL, 1) == 0)
+		else if(eof_count_selected_notes(NULL) == 0)
 		{
 			retval = 0;
 		}
@@ -3543,7 +3503,7 @@ int eof_transpose_possible(int dir)
 		{
 			retval = 0;
 		}
-		else if(eof_count_selected_notes(NULL, 1) == 0)
+		else if(eof_count_selected_notes(NULL) == 0)
 		{
 			retval = 0;
 		}
@@ -3637,7 +3597,7 @@ int eof_edit_lyric_dialog(void)
 		return 1;
 
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
-	if(eof_count_selected_notes(NULL, 0) != 1)
+	if(eof_count_selected_notes(NULL) != 1)
 		return 1;
 
 	eof_cursor_visible = 0;
@@ -4187,7 +4147,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 				}
 			}
 
-			if(eof_count_selected_notes(NULL, 0) > 1)
+			if(eof_count_selected_notes(NULL) > 1)
 			{	//If multiple notes are selected, warn the user
 				int retval2;
 
@@ -4973,7 +4933,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 			//Apply changes
 			if(!retry)
 			{	//If the finger entries weren't invalid
-				if(eof_count_selected_notes(NULL, 0) > 1)
+				if(eof_count_selected_notes(NULL) > 1)
 				{	//If multiple notes are selected, warn the user
 					eof_clear_input();
 					if(!dont_ask)
@@ -7355,7 +7315,7 @@ int eof_menu_pro_guitar_toggle_hammer_on(void)
 		return 1;	//Do not allow this function to run unless a pro guitar track is active
 
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
-	if((eof_count_selected_notes(NULL, 0) > 0))
+	if((eof_count_selected_notes(NULL) > 0))
 	{
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the active track
@@ -7441,7 +7401,7 @@ int eof_menu_pro_guitar_toggle_pull_off(void)
 		return 1;	//Do not allow this function to run unless a pro guitar track is active
 
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
-	if((eof_count_selected_notes(NULL, 0) > 0))
+	if((eof_count_selected_notes(NULL) > 0))
 	{
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the active track
@@ -8680,7 +8640,7 @@ int eof_menu_pro_guitar_toggle_string_mute(void)
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
-	if((eof_count_selected_notes(NULL, 0) > 0))
+	if((eof_count_selected_notes(NULL) > 0))
 	{
 		for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 		{	//For each note in the active track
@@ -8954,7 +8914,7 @@ int eof_menu_note_move_by_grid_snap(int dir)
 	unsigned long target = 0, current, i;
 	char undo_made = 0;
 
-	if(eof_count_selected_notes(NULL, 0) == 0)
+	if(eof_count_selected_notes(NULL) == 0)
 	{
 		return 1;
 	}
