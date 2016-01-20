@@ -313,6 +313,7 @@ unsigned long ConvertLRCTimestamp(char **ptr,int *errorstatus)
 	unsigned int index=0;	//index variable into the 3 timestamp strings
 	unsigned long sum=0;
 	long conversion=0;	//Will store the integer conversions of each of the 3 timestamp strings
+	char thousandths = 0;	//Is set to nonzero if there was a third digit read from the last timing field, which will indicate the value is in milliseconds instead of centiseconds
 
 	if(ptr == NULL)
 		failed=1;
@@ -381,7 +382,7 @@ unsigned long ConvertLRCTimestamp(char **ptr,int *errorstatus)
 	assert_wrapper(index < LRCTIMESTAMPMAXFIELDLENGTH+1);	//Ensure that writing the NULL character won't overflow
 	seconds[index]='\0';	//Terminate seconds string
 
-//validate hundredths portion of timestamp
+//validate hundredths/milliseconds portion of timestamp
 	index=0;
 	while(!failed)
 	{
@@ -406,6 +407,10 @@ unsigned long ConvertLRCTimestamp(char **ptr,int *errorstatus)
 
 	assert_wrapper(index < LRCTIMESTAMPMAXFIELDLENGTH+1);	//Ensure that writing the NULL character won't overflow
 	hundredths[index]='\0';	//Terminate hundredths string
+	if(index == 3)
+	{	//If three characters were read from this timing field
+		thousandths = 1;	//This field will be interpreted as milliseconds instead of centiseconds
+	}
 
 	if(failed)		//If parsing failed
 	{
@@ -467,7 +472,7 @@ unsigned long ConvertLRCTimestamp(char **ptr,int *errorstatus)
 	}
 	free(temp);
 
-//Convert hundredths string to integer and add to sum
+//Convert hundredths/thousandths string to integer and add to sum
 	temp=RemoveLeadingZeroes(hundredths);
 	if(temp[0] != '0')	//If minutes is not 0
 	{
@@ -484,7 +489,14 @@ unsigned long ConvertLRCTimestamp(char **ptr,int *errorstatus)
 			else
 				exit_wrapper(4);
 		}
-		sum+=conversion*10;		//one hundredths of one second is 10 milliseconds
+		if(!thousandths)
+		{	//If the number was determined to be in centiseconds
+			sum+=conversion*10;		//one hundredths of one second is 10 milliseconds
+		}
+		else
+		{	//The number was determined to be in milliseconds
+			sum+=conversion;
+		}
 	}
 	free(temp);
 	return sum;

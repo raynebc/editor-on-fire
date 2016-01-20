@@ -11,6 +11,7 @@ Changelog: 2.39 to 2.40b (in progress)
 	Fixed a bug with Rocksmith imports where a numerical field larger than 10 digits long or a lyric longer than 100 characters would cause a buffer overflow.
 	Fixed various memory leaks that could occur when parsing errors are encountered.
 	Improved UltraStar import to skip the Byte Order Mark (BOM, a Unicode encoding mechanism) if one is present at the beginning of the imported file.  Previously the presence of the BOM would cause the import to fail.
+	Improved LRC/ELRC import to allow the hundredths timing field to contain a third digit, in which case it will be interpreted as defining the field in milliseconds.
 
 Changelog: 2.38 to 2.39
 	Some code cleanup.

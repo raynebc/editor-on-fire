@@ -1792,6 +1792,13 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 			buffer[index++] = 'R';
 		}
 	}
+	else if(eof_song->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	{
+		if((eof_song->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (flags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER))
+		{	//A guitar/bass note inside a slider phrase
+			buffer[index++] = 'S';
+		}
+	}
 
 	if(flags & EOF_NOTE_FLAG_IS_TRILL)
 	{
@@ -1833,11 +1840,6 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 				buffer[index++] = 'e';	//In the symbols font, e is the tremolo character
 			}
 		}
-	}
-
-	if(flags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
-	{	//A guitar/bass note inside a slider phrase
-		buffer[index++] = 'S';
 	}
 
 	buffer[index] = '\0';

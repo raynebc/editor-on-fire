@@ -1,16 +1,16 @@
 #ifndef _lrc_parse_h_
 #define _lrc_parse_h_
 
-#define LRCTIMESTAMPMAXFIELDLENGTH 2
-	//Used to define the max length of the minutes, seconds and hundredths fields in LRC timestamps
+#define LRCTIMESTAMPMAXFIELDLENGTH 3
+	//Used to define the max length of the minutes, seconds and hundredths/thousandths fields in LRC timestamps
 
 void LRC_Load(FILE *inf);
 	//Loads the LRC or ELRC formatted file into the Lyrics structure
 char *SeekNextLRCTimestamp(char *ptr);
-	//find next occurence of a timestamp in [xx:yy:zz] format, return pointer to beginning of timestamp, or NULL if no timestamp is found
+	//find next occurence of a timestamp in [xx:yy:zz[z]] format, return pointer to beginning of timestamp, or NULL if no timestamp is found
 	//If ptr is passed as NULL, NULL is returned
 unsigned long ConvertLRCTimestamp(char **ptr,int *errorstatus);
-	//Accepts pointer to a timestamp in [xx:yy:zz] format, returns conversion in milliseconds
+	//Accepts pointer to a timestamp in [xx:yy:zz[z]] format, returns conversion in milliseconds
 	//ptr is advanced to first character after end of timestamp
 	//If errorstatus is NOT NULL, a nonzero number is instead stored into it and 0 is returned upon parse error
 	//otherwise, program exits upon parse error

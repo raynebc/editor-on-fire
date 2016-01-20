@@ -1,4 +1,4 @@
-foflc 2.39 Notes:
+foflc 2.40b Notes:
 
 PURPOSE:
 --------
@@ -53,7 +53,7 @@ Ustar-
 	3.  Open the exported UltraStar file in a text editor.  Edit the text after "#TITLE:" and "#ARTIST:" to the Title and Artist for the song, respectively, and copy+paste the filename for the audio file after the colon on the line that says "#MP3:".  This filename cannot include a folder path as the file is expected to be in the same folder as the UltraStar file.  You shouldn't need to edit any other parts of the file unless you want to change the lyrics for a bit of fun.  You can also add a picture to display during song selection (similar to how FoF does) by saving a JPG format picture into the same folder as the UltraStar file.  Then insert a line at the top of the UltraStar text file that begins with "#COVER:" and copy+paste the name of the JPG file after the colon.  I have noticed that after adding a new song or a cover picture, you may need to restart UltraStar before it notices the change.
 NOTE:  UltraStar format only allows for one vocal style at a time, so a lyric cannot be both freestyle and overdrive in this format.  During UltraStar export, lyrics that are both styles will export as freestyle.
 Lrc-
-	LRC is an older lyric format that prefixes each line of lyrics with a timestamp in the format [mm:ss.xx].  This format does not contain durations or pitches, and is one of the less desirable lyric formats.
+	LRC is an older lyric format that prefixes each line of lyrics with a timestamp in the format [mm:ss.xx].  This format does not contain durations or pitches, and is one of the less desirable lyric formats.  Some lyric authoring utilities may allow the xx field to contain a third digit in order to define the value in milliseconds (thousandths of a second) instead of centiseconds (hundredths of a second).  FoFLC will allow this, but will only consider the timing to be in milliseconds if the field contains three digits.
 Elrc-
 	Extended LRC is an improvement over the original format in that timestamps may be inserted within a line of lyrics, providing the capability for syllable-synced accuracy.
 Vrhythm-
