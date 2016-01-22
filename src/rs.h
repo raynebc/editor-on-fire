@@ -290,8 +290,8 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 	//Returns 0 on error
 
 int eof_rs_combine_linknext_logic(EOF_SONG * sp, unsigned long track, unsigned long notenum, unsigned long stringnum);
-	//Examines the specified chord and if the specified gem is linked to a single note on the same string with a matching technique set and fret number,
-	// the single note is marked to be ignored and its sustain is added to the chord's sustain
+	//Examines the specified note and if the specified gem is linked to a single note on the same string with a matching technique set and fret number,
+	// the latter note is marked to be ignored and its sustain is added to the former note's sustain
 	//The notes that are marked to be ignored are also flagged in a way that will allow this function to be re-run and achieve the same effect
 	//To be run after linked chords are broken up into single notes and before single notes are exported to XML
 	//Calling function must preserve and restore the chord's original sustain value as appropriate

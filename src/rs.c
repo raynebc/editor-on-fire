@@ -1910,6 +1910,49 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}//For each note in the active pro guitar track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
+	//Identify chords that have the split status.  These will export as single notes instead of as chords.
+	for(ctr = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the active pro guitar track
+		if(eof_note_count_rs_lanes(sp, track, ctr, 2) > 1)
+		{	//If this note would export as a chord
+			if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT)
+			{	//If this chord has split status
+				for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+				{	//For each of the 6 supported strings
+					if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
+					{	//If this string is used and is not ghosted
+						(void) eof_get_rs_techniques(sp, track, ctr, ctr3, &tech, 2, 1);		//Get the end position of any pitched/unpitched slide this chord's gem has
+						new_note = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);	//Clone the note with the updated length
+						if(new_note)
+						{	//If the new note was created
+							new_note->tflags |= EOF_NOTE_TFLAG_TEMP;		//Mark the note as temporary
+							new_note->note = bitmask;						//Turn the cloned chord into a single note on the appropriate string
+							if(tp->note[ctr]->slideend && (tech.slideto >= 0))
+							{	//If this note has slide technique and a valid slide end position was found
+								new_note->slideend = tech.slideto - tp->capo;		//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
+							}
+							if(tp->note[ctr]->unpitchend && (tech.unpitchedslideto >= 0))
+							{	//If this note has unpitched slide technique and a valid unpitched slide end position was found
+								new_note->unpitchend = tech.unpitchedslideto - tp->capo;	//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
+							}
+						}
+						else
+						{
+							allegro_message("Error:  Couldn't expand a split status chord into single notes.  Aborting Rocksmith 2 export.");
+							eof_log("Error:  Couldn't expand a split status chord into single notes.  Aborting Rocksmith 2 export.", 1);
+							eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+							eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+							(void) pack_fclose(fp);
+							return 0;	//Return error
+						}
+					}//If this string is used and is not ghosted
+				}//For each of the 6 supported strings
+				tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic as it will be exported as single notes
+			}//If this chord has split status
+		}//If this note would export as a chord
+	}//For each note in the active pro guitar track
+	eof_track_sort_notes(sp, track);	//Re-sort the notes
+
 	//Identify gems within chords that will combine with adjacent single notes due to linknext status during chordnote export
 	//Mark single notes as ignored where appropriate
 	for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
@@ -2009,85 +2052,6 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				}//If this is NOT a handshape phrase
 			}//If the note is isn't already ignored and is within the arpeggio/handshape phrase
 		}//For each note in the active pro guitar track
-	}//For each arpeggio/handshape section in the track
-	eof_track_sort_notes(sp, track);	//Re-sort the notes
-
-	//Identify chords that have the split status.  These will export as single notes instead of as chords.
-	for(ctr = 0; ctr < tp->notes; ctr++)
-	{	//For each note in the active pro guitar track
-		if(eof_note_count_rs_lanes(sp, track, ctr, 2) > 1)
-		{	//If this note would export as a chord
-			if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT)
-			{	//If this chord has split status
-				for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
-				{	//For each of the 6 supported strings
-					if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
-					{	//If this string is used and is not ghosted
-						new_note = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);	//Clone the note with the updated length
-						if(new_note)
-						{	//If the new note was created
-							new_note->tflags |= EOF_NOTE_TFLAG_TEMP;		//Mark the note as temporary
-							new_note->note = bitmask;						//Turn the cloned chord into a single note on the appropriate string
-						}
-						else
-						{
-							allegro_message("Error:  Couldn't expand a split status chord into single notes.  Aborting Rocksmith 2 export.");
-							eof_log("Error:  Couldn't expand a split status chord into single notes.  Aborting Rocksmith 2 export.", 1);
-							eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-							eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-							(void) pack_fclose(fp);
-							return 0;	//Return error
-						}
-					}//If this string is used and is not ghosted
-				}//For each of the 6 supported strings
-				tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic as it will be exported as single notes
-			}//If this chord has split status
-		}//If this note would export as a chord
-	}//For each note in the active pro guitar track
-	eof_track_sort_notes(sp, track);	//Re-sort the notes
-
-	//Identify low density chords inside handshape phrases and replace those with no manually defined name with temporary chords with a blank name to reduce screen clutter in-game
-	for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
-	{	//For each arpeggio phrase in the track
-		unsigned first = 1;	//Tracks whether the first note within the handshape has been processed
-
-		if(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE)
-		{	//If this is a handshape phrase
-			for(ctr = 0; ctr < tp->notes; ctr++)
-			{	//For each note in the active pro guitar track
-				if(!(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE) && (tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
-				{	//If the note is isn't already ignored and is within the handshape phrase
-					if(!first)
-					{	//If this isn't the first such note within this handshape phrase
-						if((eof_note_count_rs_lanes(sp, track, ctr, 2) > 1) && (tp->note[ctr]->name[0] == '\0'))
-						{	//If this note would export as a chord and has no manually defined name
-							if(!eof_note_has_high_chord_density(sp, track, ctr, 2))
-							{	//If this chord is low density
-								tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as single notes
-								tp->note[ctr]->tflags &= ~EOF_NOTE_TFLAG_ARP;	//Also clear this flag so the chord list building logic will disregard this chord in favor of the newly created one
-								new_note = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);
-								if(new_note)
-								{	//If the new note was created
-									new_note->tflags |= EOF_NOTE_TFLAG_TEMP;				//Mark the note as temporary
-									new_note->name[0] = ' ';								//Explicitly give it a blank name
-									new_note->name[1] = '\0';
-								}
-								else
-								{
-									allegro_message("Error:  Couldn't replace a handshape chord with an un-named copy.  Aborting Rocksmith 2 export.");
-									eof_log("Error:  Couldn't replace a handshape chord with an un-named copy.  Aborting Rocksmith 2 export.", 1);
-									eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-									eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-									(void) pack_fclose(fp);
-									return 0;	//Return error
-								}
-							}
-						}
-					}
-					first = 0;
-				}
-			}//For each note in the active pro guitar track
-		}//If this is a handshape phrase
 	}//For each arpeggio/handshape section in the track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
@@ -2535,7 +2499,11 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						{	//For each string used in this track
 							if((eof_get_note_note(sp, track, ctr3) & bitmask) && !(tp->note[ctr3]->ghost & bitmask))
 							{	//If this string is used in this note and it is not ghosted
+								long originallength = tp->note[ctr3]->length;	//Back up the original length of this note because it may be altered before export
+
+								(void) eof_rs_combine_linknext_logic(sp, track, ctr3, stringnum);
 								eof_rs2_export_note_string_to_xml(sp, track, ctr3, stringnum, 0, 0, fp);	//Write this note's XML tag
+								tp->note[ctr3]->length = originallength;	//Restore the original length to the note
 								break;	//Only one note entry is valid for each single note, so break from loop
 							}//If this string is used in this note and it is not ghosted
 						}//For each string used in this track
@@ -2734,7 +2702,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				}
 			}
 
-			//Count/write the hand shapes
+			//Count/write the handshapes
 			for(handshapeloop = 0, handshapectr = 0; handshapeloop < 2; handshapeloop++)
 			{	//On first pass, reset the handshape counter and count the number of handshapes.  On second pass, write handshapes.
 				if(handshapeloop)
@@ -3057,7 +3025,7 @@ void eof_song_fix_fingerings(EOF_SONG *sp, char *undo_made)
 
 void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long track, char difficulty, char warnuser, char dynamic, unsigned long startnote, unsigned long stopnote, char function)
 {
-	unsigned long ctr, ctr2, tracknum, count, bitmask, beatctr, startpos = 0, endpos, shapenum = 0;
+	unsigned long ctr, ctr2, tracknum, count, bitmask, beatctr, startpos = 0, endpos, shapenum = 0, prevnote = 0;
 	unsigned long effectivestart, effectivestop;	//The start and stop timestamps of the affected range of notes
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned char current_low, current_high, last_anchor = 0;
@@ -3352,6 +3320,10 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 					current_high = eof_pro_guitar_note_highest_fret(tp, ctr);
 				}
 			}//If a position change was determined to be necessary based on fingering/sliding or arpeggio/handshape phrasing, or this note can't be included with previous notes within a single fret hand position
+			else if((ctr != prevnote) && !eof_note_compare_simple(sp, track, ctr, prevnote))
+			{	//Otherwise if there was a previous note and this note is a repeat of that note
+				next_position = NULL;	//Prevent a FHP change from taking place on this note when the same previous note wasn't targeted for one, as that wouldn't make sense
+			}
 
 			//Track the number of frets this note slides
 			lastnoteslide = 0;
@@ -3372,6 +3344,7 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 					}
 				}
 			}
+			prevnote = ctr;	//Track the last processed note number
 		}//If it is in the specified difficulty and isn't marked as a temporary note (a single note inserted to allow chord techniques to appear in Rocksmith)
 	}//For each note in the track that is in the target range
 

@@ -1061,10 +1061,27 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			{	//If the user has opted to 3D render Rocksmith style chords, and this is a pro guitar chord that either has high density due to being explicitly defined as such or automatically due to other means, and this chord isn't marked with the split status
 				long prevnote = eof_track_fixup_previous_note(eof_song, track, notenum);
 
-				if(!(prevnote && strcmp(eof_get_note_name(eof_song, track, prevnote), eof_get_note_name(eof_song, track, notenum))) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HD))
-				{	//As long as there wasn't a previous chord with a different manually defined name than this one, or if the high density status was set
-					ctr = eof_count_track_lanes(eof_song, track) + 1;	//Set a condition that will exit the for loop after this line is drawn
+				drawline = 1;
+				if(!prevnote)
+				{	//If there was a previous note
+					EOF_PRO_GUITAR_TRACK * tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];	//Simplify
+
+					if(strcmp(eof_get_note_name(eof_song, track, prevnote), eof_get_note_name(eof_song, track, notenum)))
+					{	//If the previous note had a different name defined
+						drawline = 0;
+					}
+					if(eof_pro_guitar_note_compare_fingerings(tp->note[prevnote], tp->note[notenum]))
+					{	//If the previous note had a different chord fingering defined
+						drawline = 0;
+					}
+				}
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HD)
+				{	//The high density status overrides all other conditions
 					drawline = 1;
+				}
+				if(drawline)
+				{	//If conditions were met to render this chord as a repeat line
+					ctr = eof_count_track_lanes(eof_song, track) + 1;	//Set a condition that will exit the for loop after this line is drawn
 					linecol = p ? eof_color_cyan : eof_color_dark_cyan;
 				}
 			}
