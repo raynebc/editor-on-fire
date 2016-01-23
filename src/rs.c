@@ -3220,9 +3220,13 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 								eof_fret_hand_position_list_dialog_undo_made = 1;
 							}
-							if(eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL))
-							{	//Add the fret hand position for this forced position change, if successful
-								last_anchor = current_low;	//Track the current anchor
+							if(eof_pro_guitar_track_find_effective_fret_hand_position(tp, difficulty, next_position->pos) != current_low)
+							{	//If the desired fret hand position isn't already in effect
+								if(eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL))
+								{	//Add the fret hand position for this forced position change, if successful
+									last_anchor = current_low;	//Track the current anchor
+									eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort fret hand positions
+								}
 							}
 						}
 						if(force_change == 1)
@@ -3263,9 +3267,13 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 								current_low = last_anchor;
 							}
 						}
-						if(eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL))
-						{	//Add the fret hand position for this forced position change, if successful
-							last_anchor = current_low;	//Track the current anchor
+						if(eof_pro_guitar_track_find_effective_fret_hand_position(tp, difficulty, next_position->pos) != current_low)
+						{	//If the desired fret hand position isn't already in effect
+							if(eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL))
+							{	//Add the fret hand position for this forced position change, if successful
+								last_anchor = current_low;	//Track the current anchor
+								eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort fret hand positions
+							}
 						}
 					}
 					//If necessary, seek to end of arpeggio/handshape phrase so the next FHP written is beyond it
@@ -3307,9 +3315,13 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 							eof_fret_hand_position_list_dialog_undo_made = 1;
 						}
-						if(eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL))
-						{	//Add the fret hand position for this forced position change, if successful
-							last_anchor = current_low;	//Track the current anchor
+						if(eof_pro_guitar_track_find_effective_fret_hand_position(tp, difficulty, next_position->pos) != current_low)
+						{	//If the desired fret hand position isn't already in effect
+							if(eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL))
+							{	//Add the fret hand position for this forced position change, if successful
+								last_anchor = current_low;	//Track the current anchor
+								eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort fret hand positions
+							}
 						}
 					}
 					next_position = tp->note[ctr];	//The fret hand position for the current note will be written next
@@ -3322,7 +3334,21 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 			}//If a position change was determined to be necessary based on fingering/sliding or arpeggio/handshape phrasing, or this note can't be included with previous notes within a single fret hand position
 			else if((ctr != prevnote) && !eof_note_compare_simple(sp, track, ctr, prevnote))
 			{	//Otherwise if there was a previous note and this note is a repeat of that note
-				next_position = NULL;	//Prevent a FHP change from taking place on this note when the same previous note wasn't targeted for one, as that wouldn't make sense
+				if(next_position)
+				{
+					unsigned char lastlow, lasthigh, thislow, thishigh;
+					lastlow = eof_pro_guitar_track_find_effective_fret_hand_position(tp, difficulty, next_position->pos);
+					if(lastlow)
+					{	//If there is already a fret hand position in effect at this note's position
+						lasthigh = lastlow + eof_fret_range_tolerances[lastlow] - 1;	//Recreate the fret range of the fret hand position in question
+						thislow = (lastlow < current_low) ? lastlow : current_low;		//Target the lesser of the previous FHP's low fret value and the current note range's low fret value
+						thishigh = (lasthigh > current_high) ? lasthigh : current_high;	//Target the greater of the previous FHP's highest valid fret and the current note range's high fret value
+						if(eof_note_can_be_played_within_fret_tolerance(tp, ctr, &thislow, &thishigh))
+						{	//If the pending range of notes can still fit within the effective fret hand position's range
+							next_position = NULL;	//Prevent a FHP change from taking place on this note when the same previous note wasn't targeted for one, as that wouldn't make sense
+						}
+					}
+				}
 			}
 
 			//Track the number of frets this note slides
@@ -3371,7 +3397,11 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			eof_fret_hand_position_list_dialog_undo_made = 1;
 		}
-		(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL);	//Add the best determined fret hand position
+		if(eof_pro_guitar_track_find_effective_fret_hand_position(tp, difficulty, next_position->pos) != current_low)
+		{	//If the desired fret hand position isn't already in effect
+			(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, next_position->pos, current_low, 0, NULL);	//Add the best determined fret hand position
+			eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort fret hand positions
+		}
 	}
 
 	//Ensure that a fret hand position is defined in each phrase, at or before its first note
