@@ -1029,6 +1029,13 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 										(void) parse_xml_attribute_number("tap", buffer, &tap);
 										(void) parse_xml_attribute_number("vibrato", buffer, &vibrato);
 
+										//Check for applicability of split status
+										if(np && (np->pos == time))
+										{	//If there was a previous single note imported for this difficulty level and it was at the same time as this note
+											np->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;	//Apply split status to the previous note
+											flags |= EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;		//And to this note as well
+										}
+
 										//Add note and set attributes
 										if((string >= 0) && (string < 6))
 										{	//As long as the string number is valid

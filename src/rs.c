@@ -1982,16 +1982,13 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//Identify notes that are inside handshape phrases, handshapes for which will be treated differently than arpeggio phrases
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the active pro guitar track
-		if(!(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE))
-		{	//If this note isn't already ignored
-			for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
-			{	//For each arpeggio section in the track
-				if((tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
-				{	//If the note is within the arpeggio phrase
-					if(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE)
-					{	//If this arpeggio is specified as exporting as a normal handshape instead of an arpeggio one
-						tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_HAND;	//Mark this chord as being in a handshape phrase
-					}
+		for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
+		{	//For each arpeggio section in the track
+			if((tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
+			{	//If the note is within the arpeggio phrase
+				if(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE)
+				{	//If this arpeggio is specified as exporting as a normal handshape instead of an arpeggio one
+					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_HAND;	//Mark this chord as being in a handshape phrase
 				}
 			}
 		}
@@ -2001,56 +1998,64 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//Those which are chords inside arpeggio phrases will need to be broken into single notes so that they display correctly in-game
 	for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
 	{	//For each arpeggio phrase in the track
-		unsigned long tflags = EOF_NOTE_TFLAG_ARP_FIRST | EOF_NOTE_TFLAG_ARP;	//The first note in each arpeggio phrase gets both of these flags, the other notes in the phrase just get the latter
+		unsigned long tflags = EOF_NOTE_TFLAG_ARP;	//The first note in each arpeggio phrase gets both of these flags, the other notes in the phrase just get the latter
+		unsigned long tflags2 = EOF_NOTE_TFLAG_ARP_FIRST;	//The first chord in each arpeggio gets this flag set
 
 		for(ctr = 0; ctr < tp->notes; ctr++)
 		{	//For each note in the active pro guitar track
-			if(!(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE) && (tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
-			{	//If the note is isn't already ignored and is within the arpeggio/handshape phrase
+			if((tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
+			{	//If the note is within the arpeggio/handshape phrase
 				tp->note[ctr]->tflags |= tflags;	//Mark this note as being in an arpeggio phrase
-				tflags &= ~EOF_NOTE_TFLAG_ARP_FIRST;	//Clear this flag so that notes other than the first one in this phrase don't receive it
-				if(!(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE))
-				{	//If this is NOT a handshape phrase
-					if(eof_note_count_rs_lanes(sp, track, ctr, 2) > 1)
-					{	//If this note would export as a chord
-						if(!(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE))
-						{	//If this was an arpeggio phrase instead of a handshape phrase
-							tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as single notes
-						}
-						for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
-						{	//For each of the 6 supported strings
-							if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
-							{	//If this string is used and is not ghosted
-								long originallength = tp->note[ctr]->length;	//Back up the original length of this note because it may be altered by eof_rs_combine_linknext_logic()
-								int linknextoff;
+				if(eof_note_count_rs_lanes(sp, track, ctr, 2) > 1)
+				{	//If this note would export as a chord
+					tp->note[ctr]->tflags |= tflags2;		//Mark this note as being the first in an arpeggio phrase if applicable
+					tflags2 &= ~EOF_NOTE_TFLAG_ARP_FIRST;	//Clear this flag so that chords other than the first one in this phrase don't receive it
+				}
+				if(!(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE))
+				{	//If this note isn't already ignored
+					if(!(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE))
+					{	//If this is NOT a handshape phrase
+						if(eof_note_count_rs_lanes(sp, track, ctr, 2) > 1)
+						{	//If this note would export as a chord
+							if(!(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE))
+							{	//If this was an arpeggio phrase instead of a handshape phrase
+								tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as single notes
+							}
+							for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+							{	//For each of the 6 supported strings
+								if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
+								{	//If this string is used and is not ghosted
+									long originallength = tp->note[ctr]->length;	//Back up the original length of this note because it may be altered by eof_rs_combine_linknext_logic()
+									int linknextoff;
 
-								linknextoff = eof_rs_combine_linknext_logic(sp, track, ctr, ctr3);	//Run combination logic to set the chord's length to that which this string's chordnote will export, if applicable
-								new_note = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);	//Clone the note with the updated length
-								tp->note[ctr]->length = originallength;	//Restore the chord's original length if it had changed
-								if(new_note)
-								{	//If the new note was created
-									new_note->tflags |= EOF_NOTE_TFLAG_TEMP;				//Mark the note as temporary
-									new_note->note = bitmask;								//Turn the cloned chord into a single note on the appropriate string
-									if(linknextoff)
-									{	//If the chordnote corresponding to this single note will have its linknext status forced off during export
-										new_note->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//This single note should export the same way
-										new_note->tflags |= EOF_NOTE_TFLAG_NO_LN;			//Explicitly signal to export logic that this single note will not export with linknext, even due to tech notes
+									linknextoff = eof_rs_combine_linknext_logic(sp, track, ctr, ctr3);	//Run combination logic to set the chord's length to that which this string's chordnote will export, if applicable
+									new_note = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);	//Clone the note with the updated length
+									tp->note[ctr]->length = originallength;	//Restore the chord's original length if it had changed
+									if(new_note)
+									{	//If the new note was created
+										new_note->tflags |= EOF_NOTE_TFLAG_TEMP;				//Mark the note as temporary
+										new_note->note = bitmask;								//Turn the cloned chord into a single note on the appropriate string
+										if(linknextoff)
+										{	//If the chordnote corresponding to this single note will have its linknext status forced off during export
+											new_note->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//This single note should export the same way
+											new_note->tflags |= EOF_NOTE_TFLAG_NO_LN;			//Explicitly signal to export logic that this single note will not export with linknext, even due to tech notes
+										}
 									}
-								}
-								else
-								{
-									allegro_message("Error:  Couldn't expand an arpeggio chord into single notes.  Aborting Rocksmith 2 export.");
-									eof_log("Error:  Couldn't expand an arpeggio chord into single notes.  Aborting Rocksmith 2 export.", 1);
-									eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-									eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-									(void) pack_fclose(fp);
-									return 0;	//Return error
-								}
-							}//If this string is used and is not ghosted
-						}//For each of the 6 supported strings
-					}//If this note would export as a chord
-				}//If this is NOT a handshape phrase
-			}//If the note is isn't already ignored and is within the arpeggio/handshape phrase
+									else
+									{
+										allegro_message("Error:  Couldn't expand an arpeggio chord into single notes.  Aborting Rocksmith 2 export.");
+										eof_log("Error:  Couldn't expand an arpeggio chord into single notes.  Aborting Rocksmith 2 export.", 1);
+										eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+										eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+										(void) pack_fclose(fp);
+										return 0;	//Return error
+									}
+								}//If this string is used and is not ghosted
+							}//For each of the 6 supported strings
+						}//If this note would export as a chord
+					}//If this is NOT a handshape phrase
+				}//If this note isn't already ignored
+			}//If the note is within the arpeggio/handshape phrase
 		}//For each note in the active pro guitar track
 	}//For each arpeggio/handshape section in the track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
@@ -2819,7 +2824,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 										handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
 										break;
 									}
-									if((nextnote >= 0) && eof_is_string_muted(sp, track, nextnote) && (eof_pro_guitar_note_fingering_valid(tp, nextnote, 1) == 2))
+									if((nextnote >= 0) && (eof_note_count_rs_lanes(sp, track, nextnote, 2) > 1) && eof_is_string_muted(sp, track, nextnote) && (eof_pro_guitar_note_fingering_valid(tp, nextnote, 1) == 2))
 									{	//If there is another note, and it is fully string muted and has no fingering defined even for muted strings
 										ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
 									}

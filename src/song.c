@@ -4698,6 +4698,10 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 					flags = eof_prepare_note_flag_merge(tp->note[i-1]->flags, EOF_PRO_GUITAR_TRACK_BEHAVIOR, tp->note[next]->note);
 					//Get the flags of the overlapped note as they would be if all applicable lane-specific flags are cleared to inherit the flags of the note to merge
 					flags |= tp->note[next]->flags;	//Merge the next note's flags
+					if((tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT) != (tp->note[next]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT))
+					{	//If the two merged notes had dislike split status
+						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;	//Remove split status from the merged flags to allow it to be nicely imported from RS files
+					}
 					tp->note[i-1]->flags = flags;	//Update the flags for the merged note
 					if(tp->note[next]->length > tp->note[i-1]->length)
 					{	//If the next note is longer

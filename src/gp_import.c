@@ -3240,6 +3240,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					double partial_beat_position, beat_length;
 					char notebends = 0;	//Tracks whether any bend points were parsed for the note, since they may be applied as tech notes instead of toward the regular note
 					char isquarterorlonger = 0, isaltered = 0;	//Boolean statuses used to more accurately track whether the "GP import truncates short notes" should take effect
+					char istuplet = 0;		//Set to nonzero if the note is explicitly in a tuplet (ie. triplet), which will cause any "triplet feel" notation to be ignored
 
 					unpitchend = 0;	//Assume no unpitched slide unless one is defined
 					new_note = 0;	//Assume no new note is to be added unless a normal/muted note is parsed
@@ -3302,7 +3303,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							break;
 						}
 						isaltered = 1;	//A note notated as a quarter note may now no longer be as long as one
-					}//(a triplet of quarter notes is 3 notes in the span of two quarter notes) (a quintuplet of eighth notes is 5 notes in the span of 4 eighth notes)
+						istuplet = 1;	//Tuplet timing will override triplet feel logic where applicable
+					}//Beat is an N-tuplet
 					if(bytemask & 1)
 					{	//Dotted note
 						note_duration *= 1.5;	//A dotted note is one and a half times as long as normal
@@ -3312,8 +3314,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						note_duration = 1.0;	//Force the maximum length of a note to be 1 measure.  GP must correctly write tie notes to define longer notes
 						eof_log("\t\t\tWarning:  GP file defines an invalid note duration, capping to 1 measure long.", 1);
 					}
-					if(tripletfeel && (byte == (durations[ctr2] & 0x3F)) && (byte == tripletfeel))
-					{	//If triplet feel is in effect, the note is the same length as the previously imported note for this track (masking out the MSB used to track whether that previous note was a rest and the second MSB used to track whether the previous note was dotted) and is the length of any configured triplet feel notation, apply triplet feel modifications
+					if(tripletfeel && (byte == (durations[ctr2] & 0x3F)) && (byte == tripletfeel) && !istuplet)
+					{	//If triplet feel is in effect, the note is the same length as the previously imported note for this track (masking out the MSB used to track whether that previous note was a rest and the second MSB used to track whether the previous note was dotted)
+						//is the length of any configured triplet feel notation and is not explicitly in a tuplet set of notes, apply triplet feel modifications
 						if(np[ctr2] && !(durations[ctr2] & 0x80))
 						{	//If a previous note was imported and not a rest note
 							np[ctr2]->length *= (4.0 / 3.0);	//Update the previous note to reflect triplet feel (it is made the length of two triplets)
@@ -3338,7 +3341,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					}
 					else
 					{	//Otherwise just track the duration of the note being imported
-						durations[ctr2] = byte;	//Track the duration of the note being imported for triplet feel
+						if(istuplet)
+						{	//If this note was in a tuplet
+							durations[ctr2] = 0;	//Reset the triplet feel notation to ignore this note and require two other ones
+						}
+						else
+						{
+							durations[ctr2] = byte;	//Track the duration of the note being imported for triplet feel
+						}
 						if(rest_note)
 						{	//If this is a rest note
 							durations[ctr2] |= 0x80;	//Set the MSB of this value to ensure EOF doesn't try to modify a note duration for a rest regarding triplet feel, since no note would have been created to represent a rest
