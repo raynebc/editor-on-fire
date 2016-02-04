@@ -4863,6 +4863,10 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 				ptr->length = 0;	//Remove all sustain for the note, otherwise Rocksmith 1 won't display the pop/slap sustain technique
 			}
 		}
+		if(ptr->palmmute || ptr->stringmute)
+		{	//If the note is palm or string muted
+			ptr->length = 0;	//Remove its sustain
+		}
 		if((eflags & EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE) && (target == 2))
 		{	//If the note's extended flags indicate the ignore status is applied and Rocksmith 2 export is in effect
 			ptr->ignore = 1;

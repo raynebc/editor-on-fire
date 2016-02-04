@@ -2673,9 +2673,12 @@ int eof_save_helper(char *destfilename, char silent)
 			{	//If this is a pro guitar/bass track
 				EOF_PRO_GUITAR_TRACK *tp;
 				unsigned long tracknum, notectr;
+				char restore_tech_view = 0;
 
 				tracknum = eof_song->track[ctr]->tracknum;
 				tp = eof_song->pro_guitar_track[tracknum];
+				restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
+				eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Activate the normal note set
 
 				for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
 				{	//For each arpeggio phrase in the track
@@ -2699,6 +2702,7 @@ int eof_save_helper(char *destfilename, char silent)
 						break;	//Break from inner for loop
 					}
 				}//For each arpeggio phrase in the track
+				eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Activate whichever note set was active for the track
 			}//If this is a pro guitar/bass track
 		}//For each track, or until the user is warned about an offending arpeggio
 	}
@@ -2713,125 +2717,92 @@ int eof_save_helper(char *destfilename, char silent)
 				if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 				{	//If this is a pro guitar/bass track
 					EOF_PRO_GUITAR_TRACK *tp;
-					unsigned long tracknum, flags;
+					unsigned long tracknum, flags, noteset;
+					char restore_tech_view = 0;
 
 					tracknum = eof_song->track[ctr]->tracknum;
 					tp = eof_song->pro_guitar_track[tracknum];
-					for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
-					{	//For each note in the track
-						flags = tp->note[ctr2]->flags;
-						if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
-						{	//If the note contains no bend strength or slide end position
-							if(((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)) && !slide_warned)
-							{	//If the note has slide technique and is missing the end position, and the user hasn't been warned about this yet
-								eof_clear_input();
-								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
-								if(alert("Warning:  At least one slide note doesn't define its ending position.", "Unless you define this information they will export as 1 fret slides.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-								{	//If the user opts to cancel
-									return 1;	//Return cancellation
+					restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
+					for(noteset = 0; noteset < 2; noteset++)
+					{	//For each note set
+						eof_menu_pro_guitar_track_set_tech_view_state(tp, noteset);	//Activate the appropriate note set
+						for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+						{	//For each note in the track
+							flags = tp->note[ctr2]->flags;
+							if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
+							{	//If the note contains no bend strength or slide end position
+								if(((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)) && !slide_warned)
+								{	//If the note has slide technique and is missing the end position, and the user hasn't been warned about this yet
+									eof_clear_input();
+									eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
+									if(alert("Warning:  At least one slide note doesn't define its ending position.", "Unless you define this information they will export as 1 fret slides.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+									{	//If the user opts to cancel
+										return 1;	//Return cancellation
+									}
+									slide_warned = 1;
 								}
-								slide_warned = 1;
-							}
-							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND && !bend_warned)
-							{	//If the note has bend technique and is missing the bend strength, and the user hasn't been warned about this yet
-								eof_clear_input();
-								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
-								if(alert("Warning:  At least one bend note doesn't define its bend strength.", "Unless you define this information they will export as bending 1 half step.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-								{	//If the user opts to cancel
-									return 1;	//Return cancellation
+								if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND && !bend_warned)
+								{	//If the note has bend technique and is missing the bend strength, and the user hasn't been warned about this yet
+									eof_clear_input();
+									eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
+									if(alert("Warning:  At least one bend note doesn't define its bend strength.", "Unless you define this information they will export as bending 1 half step.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+									{	//If the user opts to cancel
+										return 1;	//Return cancellation
+									}
+									bend_warned = 1;
 								}
-								bend_warned = 1;
 							}
-						}
 
-						if(!slide_error)
-						{	//If the user hasn't been warned about any slide related errors yet
-							unsigned char lowestfret = eof_pro_guitar_note_lowest_fret(tp, ctr2);	//Determine the note's lowest used fret value
+							if(!slide_error)
+							{	//If the user hasn't been warned about any slide related errors yet
+								unsigned char lowestfret = eof_pro_guitar_note_lowest_fret(tp, ctr2);	//Determine the note's lowest used fret value
 
-							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
-							{	//If the note has pitched slide end position data
-								if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-								{	//If the note slides up
-									if(tp->note[ctr2]->slideend <= lowestfret)
-									{	//The slide doesn't go higher than the current note
+								if(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
+								{	//If the note has pitched slide end position data
+									if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+									{	//If the note slides up
+										if(tp->note[ctr2]->slideend <= lowestfret)
+										{	//The slide doesn't go higher than the current note
+											slide_error = 1;
+										}
+									}
+									if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+									{	//If the note slides down
+										if(tp->note[ctr2]->slideend >= lowestfret)
+										{	//The slide doesn't go lower than the current note
+											slide_error = 1;
+										}
+									}
+								}
+								if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+								{	//If the note has an unpitched slide
+									if(tp->note[ctr2]->unpitchend == lowestfret)
+									{	//The slide doesn't move from the current note
 										slide_error = 1;
 									}
 								}
-								if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
-								{	//If the note slides down
-									if(tp->note[ctr2]->slideend >= lowestfret)
-									{	//The slide doesn't go lower than the current note
-										slide_error = 1;
+								if(slide_error)
+								{	//If one of the above checks failed
+									eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
+									if(alert("Warning:  At least one slide note has an error in its end position.", "Unless corrected, it will not export to XML as a slide.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+									{	//If the user opts to cancel
+										return 1;	//Return cancellation
 									}
 								}
 							}
-							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
-							{	//If the note has an unpitched slide
-								if(tp->note[ctr2]->unpitchend == lowestfret)
-								{	//The slide doesn't move from the current note
-									slide_error = 1;
-								}
-							}
-							if(slide_error)
-							{	//If one of the above checks failed
-								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
-								if(alert("Warning:  At least one slide note has an error in its end position.", "Unless corrected, it will not export to XML as a slide.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-								{	//If the user opts to cancel
-									return 1;	//Return cancellation
-								}
-							}
-						}
+							if(slide_warned && bend_warned && slide_error)
+								break;	//Exit for loop if all warnings/errors were issued and declined by the user
+						}//For each note in the track
 						if(slide_warned && bend_warned && slide_error)
 							break;	//Exit for loop if all warnings/errors were issued and declined by the user
-					}
-				}
-			}
+					}//For each note set
+					eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Restore the note set that was in use for the track
+					if(slide_warned && bend_warned && slide_error)
+						break;	//Exit for loop if all warnings/errors were issued and declined by the user
+				}//If this is a pro guitar/bass track
+			}//For each track
 		}//If the user wants to save Rocksmith capable files
 	}//If checks and warnings aren't suppressed
-
-	/* check if any bend notes define a bend strength higher than 3 half steps */
-	if(!silent)
-	{	//If checks and warnings aren't suppressed
-		if(eof_write_rs_files || eof_write_rs2_files)
-		{	//If the user wants to save Rocksmith capable files
-			char bendstrength_warned = 0;
-
-			for(ctr = 1; (ctr < eof_song->tracks) && !bendstrength_warned; ctr++)
-			{	//For each track (outer for loop)
-				if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-				{	//If this is a pro guitar/bass track
-					EOF_PRO_GUITAR_TRACK *tp;
-					unsigned long tracknum, flags;
-
-					tracknum = eof_song->track[ctr]->tracknum;
-					tp = eof_song->pro_guitar_track[tracknum];
-					for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
-					{	//For each note in the track (inner for loop)
-						flags = tp->note[ctr2]->flags;
-						if((flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
-						{	//If the note contains a bend strength
-							if((tp->note[ctr2]->bendstrength & 0x80) && ((tp->note[ctr2]->bendstrength & 0x7F) <= 6))
-							{	//If the bend is defined in quarter steps and is less than or equal to 6 quarter steps (3 half steps)
-								continue;	//Advance to next note
-							}
-							if(tp->note[ctr2]->bendstrength <= 3)
-							{	//If the bend is defined in half steps and is less than or equal to 3 half steps
-								continue;	//Advance to next note
-							}
-							eof_clear_input();
-							eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
-							if(alert("Warning:  At least one note bends more than 3 half steps.", "Rocksmith doesn't indicate more than 3 half steps and probably can't detect a bend this strong.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-							{	//If the user opts to cancel
-								return 1;	//Return cancellation
-							}
-							bendstrength_warned = 1;	//Set a condition to break from the outer for loop
-							break;	//Break from the inner for loop
-						}
-					}
-				}
-			}
-		}
-	}
 
 	/* check if any chords have manually defined names with certain characters such as parentheses, which will cause Rocksmith to malfunction */
 	if(!silent)
@@ -2850,9 +2821,12 @@ int eof_save_helper(char *destfilename, char silent)
 				{	//If this is a pro guitar/bass track
 					EOF_PRO_GUITAR_TRACK *tp;
 					unsigned long tracknum;
+					char restore_tech_view = 0;
 
 					tracknum = eof_song->track[ctr]->tracknum;
 					tp = eof_song->pro_guitar_track[tracknum];
+					restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
+					eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Activate the normal note set
 					for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
 					{	//For each note in the track
 						if(eof_note_count_rs_lanes(eof_song, ctr, ctr2, target) > 1)
@@ -2863,7 +2837,7 @@ int eof_save_helper(char *destfilename, char silent)
 								if(rs_filter_string(name, 1))
 								{	//If the name contains any invalid characters (forward slash is allowed for denoting slash chords)
 									eof_2d_render_top_option = 32;					//Change the user preference to render note names at the top of the piano roll
-									eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Render the track so the user can see where the correction needs to be made, along with the RS section in question
+									eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Render the track so the user can see where the correction needs to be made
 									eof_clear_input();
 									if(!user_prompted && alert("At least one chord has an unaccepted character: ( } ,  \\  : { \" )", "This can cause Rocksmith to crash or hang and will be removed.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
 									{	//If the user hasn't already answered this prompt, and opts to correct the issue
@@ -2877,11 +2851,13 @@ int eof_save_helper(char *destfilename, char silent)
 							}
 						}
 					}//For each note in the track
+					eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Restore the note set that was in use for the track
 				}//If this is a pro guitar/bass track
 			}//For each track (until the user is warned about any offending chord names)
 		}//If the user wants to save Rocksmith capable files
 	}//If checks and warnings aren't suppressed
 
+	/* check for any incomplete measures, where a time signature changed is placed mid-measure */
 	if(!silent)
 	{	//If checks and warnings aren't suppressed
 		int suggested = 0;
@@ -2911,6 +2887,111 @@ int eof_save_helper(char *destfilename, char silent)
 						return 1;	//Return cancellation
 					}
 					break;
+				}
+			}
+		}
+	}
+
+	/* check for arpeggio/handshape phrases that cross from one RS phrase into another, which may malfunction on charts with dynamic difficulty */
+	if(!silent)
+	{	//If checks and warnings aren't suppressed
+		if(eof_write_rs_files || eof_write_rs2_files)
+		{	//If the user wants to save Rocksmith capable files
+			char user_prompted = 0;
+			unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+
+			for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
+			{	//For each track (until the user is warned about any offending handshape phrases)
+				if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//If this is a pro guitar/bass track
+					EOF_PRO_GUITAR_TRACK *tp;
+					unsigned long tracknum;
+
+					tracknum = eof_song->track[ctr]->tracknum;
+					tp = eof_song->pro_guitar_track[tracknum];
+					for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
+					{	//For each arpeggio/handshape
+						long start, end;
+
+						start = eof_get_beat(eof_song, tp->arpeggio[ctr2].start_pos);
+						end = eof_get_beat(eof_song, tp->arpeggio[ctr2].end_pos);
+						if((start >= 0) && (end >= start))
+						{	//If the effective beat numbers for the start and end position of the arpeggio/handshape were identified
+							for(ctr3 = start; !user_prompted && (ctr3 <= end); ctr3++)
+							{	//For each beat between them
+								if(eof_song->beat[ctr3]->contained_section_event >= 0)
+								{	//If this beat has an RS phrase defined, it marks a phrase change
+									eof_2d_render_top_option = 36;					//Change the user preference to render RS phrases and sections at the top of the piano roll
+									eof_seek_and_render_position(ctr, eof_note_type, tp->arpeggio[ctr2].start_pos);	//Render the track so the user can see where the correction needs to be made
+									eof_clear_input();
+									if(!user_prompted && alert("At least one arpeggio/handshape crosses over into another RS phrase", "This can behave strangely in Rocksmith if the chart has dynamic difficulty.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+									{	//If the user hasn't already answered this prompt, and opts to correct the issue
+										eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+										return 1;	//Return cancellation
+									}
+									eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+									user_prompted = 1;	//Set the condition to exit outer for loops
+									break;	//Break from inner for loop
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/* check for any bend strengths higher than 3 half steps */
+	if(!silent)
+	{	//If checks and warnings aren't suppressed
+		if(eof_write_rs_files || eof_write_rs2_files)
+		{	//If the user wants to save Rocksmith capable files
+			char user_prompted = 0;
+			char restore_tech_view = 0;
+
+			for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
+			{	//For each track (until the user is warned about any offending handshape phrases)
+				if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//If this is a pro guitar/bass track
+					EOF_PRO_GUITAR_TRACK *tp;
+					unsigned long tracknum;
+
+					tracknum = eof_song->track[ctr]->tracknum;
+					tp = eof_song->pro_guitar_track[tracknum];
+					restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
+					for(ctr2 = 0; !user_prompted && (ctr2 < 2); ctr2++)
+					{	//For each note set
+						eof_menu_pro_guitar_track_set_tech_view_state(tp, ctr2);	//Activate the appropriate note set
+						for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
+						{	//For each note in the note set
+							unsigned long flags = tp->note[ctr3]->flags;
+
+							if((flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
+							{	//If the note contains a bend strength
+								unsigned char strength = tp->note[ctr3]->bendstrength;
+								if(!(strength & 0x80))
+								{	//If the MSB of this value isn't set, it is defined in half steps
+									strength = (strength & 0x7F) * 2;	//Convert to quarter steps
+								}
+								else
+								{
+									strength = strength & 0x7F;	//Mask out the MSB
+								}
+								if(strength > 6)
+								{	//If the bend strength is greater than 3 half steps (6 quarter steps)
+									eof_seek_and_render_position(ctr, tp->note[ctr3]->type, tp->note[ctr3]->pos);	//Render the track so the user can see where the correction needs to be made
+									eof_clear_input();
+									if(!user_prompted && alert("At least one bend note has a strength higher than 3 half steps.", "3 half steps is the strongest bend that Rocksmith supports.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+									{	//If the user hasn't already answered this prompt, and opts to correct the issue
+										return 1;	//Return cancellation
+									}
+									user_prompted = 1;	//Set the condition to exit outer for loops
+									break;	//Break from inner for loop
+								}
+							}
+						}
+					}
+					eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Restore the note set that was in use for the track
 				}
 			}
 		}

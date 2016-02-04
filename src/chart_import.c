@@ -166,6 +166,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 				(void) eof_copy_file(eof_temp_filename, backup_filename);
 			}
 		}
+		memcpy(backup_filename, fn, 1024);	//Back up the filename that is passed, if the calling function passed the file selection dialog's return path, that buffer will be clobbered if a file dialog to select the audio is launched
 
 		/* load audio */
 		(void) replace_filename(eof_song_path, fn, "", 1024);	//Set the project folder path
@@ -429,8 +430,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 					/* import regular note */
 					else
 					{
-						if((current_note->chartpos != lastpos) || (current_note->gemcolor == 5))
-						{	//If this note was at a different position than the last, or if it represents toggle HOPO notation, create a new note
+						if((current_note->chartpos != lastpos) || (current_note->gemcolor == 5) || (current_note->gemcolor == 6))
+						{	//If this note was at a different position than the last, if it represents toggle HOPO notation or if it represents slider notation, create a new note
 							new_note = eof_legacy_track_add_note(sp->legacy_track[tracknum]);
 							if(new_note)
 							{
@@ -618,6 +619,54 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 	}
 
+	/* check if unofficial slider notation was found */
+	for(ctr = 1; ctr < sp->tracks; ctr++)
+	{	//For each track
+		//Mark notes that have slider status
+		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
+		{	//For each note in the track
+			if(eof_get_note_note(sp, ctr, ctr2) & 64)
+			{	//If this note uses lane 7 (A "N 6 #" .chart entry)
+				unsigned long pos = eof_get_note_pos(sp, ctr, ctr2);
+				long len = eof_get_note_length(sp, ctr, ctr2);
+				unsigned char type = eof_get_note_type(sp, ctr, ctr2);
+
+				for(ctr3 = 0; ctr3 < eof_get_track_size(sp, ctr); ctr3++)
+				{	//For each note in the track
+					unsigned long pos2 = eof_get_note_pos(sp, ctr, ctr3);
+
+					if(pos2 > pos + len)
+					{	//If this note occurs after the span of the HOPO notation
+						break;	//Break from inner loop
+					}
+					if((pos2 >= pos) && (eof_get_note_type(sp, ctr, ctr3) == type))
+					{	//If this note is within the span of the HOPO notation and is in the same difficulty
+						eof_set_note_flags(sp, ctr, ctr3, (eof_get_note_flags(sp, ctr, ctr3) | EOF_GUITAR_NOTE_FLAG_IS_SLIDER));	//Set the slider flag for this note
+					}
+				}
+			}
+		}
+		//Add slider phrases to encompass marked notes
+		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
+		{	//For each note in the track
+			if(eof_get_note_flags(sp, ctr, ctr2) & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
+			{	//If this note is a slider note
+				unsigned long end = 0;
+				unsigned long start = eof_get_note_pos(sp, ctr, ctr2);	//Track the start position of this run of slider notes
+				while(ctr2 + 1 < eof_get_track_size(sp, ctr))
+				{	//While there are additional notes to check
+					if(!(eof_get_note_flags(sp, ctr, ctr2 + 1) & EOF_GUITAR_NOTE_FLAG_IS_SLIDER))
+						break;	//If the next note isn't a slider note, exit inner loop
+					if(eof_get_note_pos(sp, ctr, ctr2 + 1) > eof_get_note_pos(sp, ctr, ctr2) + eof_get_note_length(sp, ctr, ctr2) + 1000)
+						break;	//If the next note begins more than a second after this one ends, exit inner loop
+					ctr2++;		//Otherwise include this note in the slider note phrase
+				}
+				end = eof_get_note_pos(sp, ctr, ctr2) + eof_get_note_length(sp, ctr, ctr2);	//Track the end position of this run of slider notes
+				eof_track_add_section(sp, ctr, EOF_SLIDER_SECTION, 0, start, end, 0, NULL);	//Add the slider phrase
+			}
+		}
+	}
+
 	/* mark anything that wasn't specifically made into a forced HOPO note as a forced strum */
 	for(ctr = 1; ctr < sp->tracks; ctr++)
 	{	//For each track
@@ -634,8 +683,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 	}
 
 //Update path variables
-	(void) ustrcpy(eof_filename, fn);
-	(void) replace_filename(eof_song_path, fn, "", 1024);
+	(void) ustrcpy(eof_filename, backup_filename);
+	(void) replace_filename(eof_song_path, backup_filename, "", 1024);
 	(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
 	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);

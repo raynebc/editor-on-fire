@@ -669,7 +669,7 @@ int eof_track_tuning(void)
 
 int eof_track_transpose_tuning(EOF_PRO_GUITAR_TRACK* tp, char *tuningdiff)
 {
-	unsigned long ctr, ctr2, ctr3, bitmask;
+	unsigned long ctr, ctr2, ctr3, bitmask, noteset;
 	unsigned char prompt = 0, skiptranspose, warning = 0, first, diffmask = 0;
 	char val;
 	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
@@ -677,183 +677,189 @@ int eof_track_transpose_tuning(EOF_PRO_GUITAR_TRACK* tp, char *tuningdiff)
 	if(!tp || !tuningdiff)
 		return 0;	//Error
 
-	restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);
-	eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Disable tech view if applicable
+	restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
 
-	for(ctr = 0; ctr < tp->notes; ctr++)
-	{	//For each note in the track
-		skiptranspose = 0;	//This will be set to nonzero if the note won't be transposed automatically (in which case it will be highlighted for user action)
-		for(ctr2 = 0; ctr2 < 2; ctr2++)
-		{	//On the first pass, validate whether the note can be transposed automatically, on second pass, alter the note
-			for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
-			{	//For each of the 6 supported strings
-				val = tuningdiff[ctr3];	//Simplify
-				if(tuningdiff[ctr3])
-				{	//If this string's tuning is being changed
-					diffmask |= bitmask;	//Build a bitmask defining which strings are being transposed
-					if(tp->note[ctr]->note & bitmask)
-					{	//If this note uses this string
-						if(!prompt)
-						{	//If the user hasn't been prompted yet
-							if(alert("This track contains notes that would be affected by the tuning change.", "Would you like to transpose the notes to keep the same pitches where possible?", NULL, "&Yes", "&No", 'y', 'n') != 1)
-							{	//If the user doesn't opt to transpose the track
-								eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Re-enable tech view if applicable
-								return 1;
-							}
-							prompt = 1;
-						}
-						if(tuningdiff[ctr3] < 0)
-						{	//If the tuning for this string is being lowered, existing notes need to be moved up the fretboard
-							if(!ctr2)
-							{	//First pass of the note, just validate the tranpsose
-								if((tp->note[ctr]->frets[ctr3] & 0x7F) - val > tp->numfrets)
-								{	//If the note's fret value (masking out the muting flag) can't be raised an equivalent number of frets
-									skiptranspose = 1;	//Track that the note will be highlighted instead
-								}
-							}
-							else
-							{	//Second pass of the note
-								if(!skiptranspose)
-								{	//If the note is to be transposed automatically
-									tp->note[ctr]->frets[ctr3] -= val;
-								}
-								else if(skiptranspose & 1)
-								{	//Otherwise highlight it and warn about the note fret value
-									tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;
-									if(!(warning & 1))
-									{	//If the user hasn't been warned about this problem yet
-										eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
-										allegro_message("Warning:  At least one note will have to be manually transposed to another string or octave.\nThese notes will be highlighted.");
-										warning |= 1;
+	for(noteset = 0; noteset < 2; noteset++)
+	{	//For each the normal and the tech note set
+		eof_menu_pro_guitar_track_set_tech_view_state(tp, noteset);	//Activate the appropriate note set
+		for(ctr = 0; ctr < tp->notes; ctr++)
+		{	//For each note in the track
+			skiptranspose = 0;	//This will be set to nonzero if the note won't be transposed automatically (in which case it will be highlighted for user action)
+			for(ctr2 = 0; ctr2 < 2; ctr2++)
+			{	//On the first pass, validate whether the note can be transposed automatically, on second pass, alter the note
+				if(!noteset)
+				{	//Only check fret values for normal notes, because tech notes do not have any
+					for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+					{	//For each of the 6 supported strings
+						val = tuningdiff[ctr3];	//Simplify
+						if(tuningdiff[ctr3])
+						{	//If this string's tuning is being changed
+							diffmask |= bitmask;	//Build a bitmask defining which strings are being transposed
+							if(tp->note[ctr]->note & bitmask)
+							{	//If this note uses this string
+								if(!prompt)
+								{	//If the user hasn't been prompted yet
+									if(alert("This track contains notes that would be affected by the tuning change.", "Would you like to transpose the notes to keep the same pitches where possible?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+									{	//If the user doesn't opt to transpose the track
+										eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Re-enable the original note set in use
+										return 1;
 									}
-									break;	//Skip checking the rest of the strings
+									prompt = 1;
 								}
-							}
-						}
-						else
-						{	//The tuning for this string is being raised, existing notes need to be moved down the fretboard
-							if(!ctr2)
-							{	//First pass of the note, just validate the tranpsose
-								if((tp->note[ctr]->frets[ctr3] & 0x7f) < val)
-								{	//If the note's fret value (masking out the muting flag) can't be lowered an equivalent number of frets
-									skiptranspose = 1;	//Track that the note will be highlighted instead
-								}
-							}
-							else
-							{	//Second pass of the note
-								if(!skiptranspose)
-								{	//If the note is to be transposed automatically
-									tp->note[ctr]->frets[ctr3] -= val;
-								}
-								else if(skiptranspose & 1)
-								{	//Otherwise highlight it and warn about the note fret value
-									tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;
-									if(!(warning & 1))
-									{	//If the user hasn't been warned about this problem yet
-										eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
-										allegro_message("Warning:  At least one note will have to be manually transposed to another string or octave.\nThese notes will be highlighted.");
-										warning |= 1;
+								if(tuningdiff[ctr3] < 0)
+								{	//If the tuning for this string is being lowered, existing notes need to be moved up the fretboard
+									if(!ctr2)
+									{	//First pass of the note, just validate the tranpsose
+										if((tp->note[ctr]->frets[ctr3] & 0x7F) - val > tp->numfrets)
+										{	//If the note's fret value (masking out the muting flag) can't be raised an equivalent number of frets
+											skiptranspose = 1;	//Track that the note will be highlighted instead
+										}
 									}
-									break;	//Skip checking the rest of the strings
+									else
+									{	//Second pass of the note
+										if(!skiptranspose)
+										{	//If the note is to be transposed automatically
+											tp->note[ctr]->frets[ctr3] -= val;
+										}
+										else if(skiptranspose & 1)
+										{	//Otherwise highlight it and warn about the note fret value
+											tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;
+											if(!(warning & 1))
+											{	//If the user hasn't been warned about this problem yet
+												eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
+												allegro_message("Warning:  At least one note will have to be manually transposed to another string or octave.\nThese notes will be highlighted.");
+												warning |= 1;
+											}
+											break;	//Skip checking the rest of the strings
+										}
+									}
 								}
-							}
-						}
-					}//If this note uses this string
-				}//If this string's tuning is being changed
-			}//For each of the track's strings
+								else
+								{	//The tuning for this string is being raised, existing notes need to be moved down the fretboard
+									if(!ctr2)
+									{	//First pass of the note, just validate the tranpsose
+										if((tp->note[ctr]->frets[ctr3] & 0x7f) < val)
+										{	//If the note's fret value (masking out the muting flag) can't be lowered an equivalent number of frets
+											skiptranspose = 1;	//Track that the note will be highlighted instead
+										}
+									}
+									else
+									{	//Second pass of the note
+										if(!skiptranspose)
+										{	//If the note is to be transposed automatically
+											tp->note[ctr]->frets[ctr3] -= val;
+										}
+										else if(skiptranspose & 1)
+										{	//Otherwise highlight it and warn about the note fret value
+											tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;
+											if(!(warning & 1))
+											{	//If the user hasn't been warned about this problem yet
+												eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
+												allegro_message("Warning:  At least one note will have to be manually transposed to another string or octave.\nThese notes will be highlighted.");
+												warning |= 1;
+											}
+											break;	//Skip checking the rest of the strings
+										}
+									}
+								}
+							}//If this note uses this string
+						}//If this string's tuning is being changed
+					}//For each of the 6 supported strings
+				}//Only check fret values for normal notes, because tech notes do not have any
 
-			//Check slide end positions
-			if((tp->note[ctr]->slideend || tp->note[ctr]->unpitchend) && (tp->note[ctr]->note & diffmask))
-			{	//If this note slides and is altered by the transpose
-				//Determine whether the transpose would affect some but not all of the strings in a note, and set val to the number of halfsteps the transposition is
-				for(ctr3 = 0, bitmask = 1, first = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
-				{	//For each of the 6 supported strings
-					if(tp->note[ctr]->note & bitmask)
-					{	//If this note uses this string
-						if(!first)
-						{	//If this isn't the first string being examined in this note
-							if(val != tuningdiff[ctr3])
-							{	//If this string is being transposed a different amount than the previous string
-								skiptranspose = 2;	//Cancel transposing this chord's end slide position because the author will need to manually define it
-								break;				//Stop checking this chord's other strings
+				//Check slide end positions
+				if((tp->note[ctr]->slideend || tp->note[ctr]->unpitchend) && (tp->note[ctr]->note & diffmask))
+				{	//If this note slides and is altered by the transpose
+					//Determine whether the transpose would affect some but not all of the strings in a note, and set val to the number of halfsteps the transposition is
+					for(ctr3 = 0, bitmask = 1, first = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+					{	//For each of the 6 supported strings
+						if(tp->note[ctr]->note & bitmask)
+						{	//If this note uses this string
+							if(!first)
+							{	//If this isn't the first string being examined in this note
+								if(val != tuningdiff[ctr3])
+								{	//If this string is being transposed a different amount than the previous string
+									skiptranspose = 2;	//Cancel transposing this chord's end slide position because the author will need to manually define it
+									break;				//Stop checking this chord's other strings
+								}
 							}
+							val = tuningdiff[ctr3];
+							first = 0;
 						}
-						val = tuningdiff[ctr3];
-						first = 0;
 					}
-				}
-				if(!ctr2)
-				{	//First pass of the note, validate whether the slide end position can be transposed automatically
-					if(!first && !skiptranspose)
-					{	//If the note uses at least one string that is being transposed and transposing the note hasn't already been ruled out (ie. any used strings transpose different amounts)
-						if(val < 0)
-						{	//If the tuning for this string is being lowered, the slide end position needs to be moved up the fretboard
-							if(tp->note[ctr]->slideend && (tp->note[ctr]->slideend - val > tp->numfrets))
-							{	//If the note's slide end position can't be raised an equivalent number of frets
-								skiptranspose = 4;	//Track that the note will be highlighted instead
-							}
-							if(tp->note[ctr]->unpitchend && (tp->note[ctr]->unpitchend - val > tp->numfrets))
-							{	//If the note's unpitched slide end position can't be raised an equivalent number of frets
-								skiptranspose = 4;	//Track that the note will be highlighted instead
-							}
-						}
-						else
-						{	//The tuning for this string is being raised, the slide end position needs to be moved down the fretboard
-							if(eof_pro_guitar_note_lowest_fret(tp, ctr) == val)
-							{	//If the transpose would cause the start fret of any fretted string in the note to be 0
-								skiptranspose = 8;	//Track that the note will be highlighted instead
-							}
-							else
-							{
-								if(tp->note[ctr]->slideend && (tp->note[ctr]->slideend <= val))
-								{	//If the note's slide end position can't be lowered an equivalent number of frets and still be greater than 0 (not a valid end of slide position)
+					if(!ctr2)
+					{	//First pass of the note, validate whether the slide end position can be transposed automatically
+						if(!first && !skiptranspose)
+						{	//If the note uses at least one string that is being transposed and transposing the note hasn't already been ruled out (ie. any used strings transpose different amounts)
+							if(val < 0)
+							{	//If the tuning for this string is being lowered, the slide end position needs to be moved up the fretboard
+								if(tp->note[ctr]->slideend && (tp->note[ctr]->slideend - val > tp->numfrets))
+								{	//If the note's slide end position can't be raised an equivalent number of frets
 									skiptranspose = 4;	//Track that the note will be highlighted instead
 								}
-								if(tp->note[ctr]->unpitchend && (tp->note[ctr]->unpitchend <= val))
-								{	//If the note's unpitched slide end position can't be lowered an equivalent number of frets and still be greater than 0 (not a valid end of slide position)
+								if(tp->note[ctr]->unpitchend && (tp->note[ctr]->unpitchend - val > tp->numfrets))
+								{	//If the note's unpitched slide end position can't be raised an equivalent number of frets
 									skiptranspose = 4;	//Track that the note will be highlighted instead
 								}
 							}
+							else
+							{	//The tuning for this string is being raised, the slide end position needs to be moved down the fretboard
+								if(eof_pro_guitar_note_lowest_fret(tp, ctr) == val)
+								{	//If the transpose would cause the start fret of any fretted string in the note to be 0
+									skiptranspose = 8;	//Track that the note will be highlighted instead
+								}
+								else
+								{
+									if(tp->note[ctr]->slideend && (tp->note[ctr]->slideend <= val))
+									{	//If the note's slide end position can't be lowered an equivalent number of frets and still be greater than 0 (not a valid end of slide position)
+										skiptranspose = 4;	//Track that the note will be highlighted instead
+									}
+									if(tp->note[ctr]->unpitchend && (tp->note[ctr]->unpitchend <= val))
+									{	//If the note's unpitched slide end position can't be lowered an equivalent number of frets and still be greater than 0 (not a valid end of slide position)
+										skiptranspose = 4;	//Track that the note will be highlighted instead
+									}
+								}
+							}
 						}
 					}
-				}
-				else
-				{	//Second pass of the note, alter the slide end position if applicable
-					if(!skiptranspose)
-					{	//This end of slide position is to be transposed automatically
-						if(tp->note[ctr]->slideend)
-							tp->note[ctr]->slideend -= val;
-						if(tp->note[ctr]->unpitchend)
-							tp->note[ctr]->unpitchend -= val;
+					else
+					{	//Second pass of the note, alter the slide end position if applicable
+						if(!skiptranspose)
+						{	//This end of slide position is to be transposed automatically
+							if(tp->note[ctr]->slideend)
+								tp->note[ctr]->slideend -= val;
+							if(tp->note[ctr]->unpitchend)
+								tp->note[ctr]->unpitchend -= val;
+						}
+						else if(skiptranspose & (2 | 4 | 8))
+						{	//Otherwise highlight it and warn about the slide
+							tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;
+							if((skiptranspose & 2) && !(warning & 2))
+							{	//If the user hasn't been warned about this problem yet
+								eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
+								allegro_message("Warning:  At least one sliding chord will have to be manually transposed due to only some of its strings being affected.\nThese notes will be highlighted.");
+								warning |= 2;
+							}
+							if((skiptranspose & 4) && !(warning & 4))
+							{	//If the user hasn't been warned about this problem yet
+								eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
+								allegro_message("Warning:  At least one sliding chord will have to be manually transposed due to its end of slide position.\nThese notes will be highlighted.");
+								warning |= 4;
+							}
+							if((skiptranspose & 8) && !(warning & 8))
+							{	//If the user hasn't been warned about this problem yet
+								eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
+								allegro_message("Warning:  At least one sliding chord will have to be manually transposed due to its start of slide position.\nThese notes will be highlighted.");
+								warning |= 8;
+							}
+						}
 					}
-					else if(skiptranspose & (2 | 4 | 8))
-					{	//Otherwise highlight it and warn about the slide
-						tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;
-						if((skiptranspose & 2) && !(warning & 2))
-						{	//If the user hasn't been warned about this problem yet
-							eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
-							allegro_message("Warning:  At least one sliding chord will have to be manually transposed due to only some of its strings being affected.\nThese notes will be highlighted.");
-							warning |= 2;
-						}
-						if((skiptranspose & 4) && !(warning & 4))
-						{	//If the user hasn't been warned about this problem yet
-							eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
-							allegro_message("Warning:  At least one sliding chord will have to be manually transposed due to its end of slide position.\nThese notes will be highlighted.");
-							warning |= 4;
-						}
-						if((skiptranspose & 8) && !(warning & 8))
-						{	//If the user hasn't been warned about this problem yet
-							eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
-							allegro_message("Warning:  At least one sliding chord will have to be manually transposed due to its start of slide position.\nThese notes will be highlighted.");
-							warning |= 8;
-						}
-					}
-				}
-			}//If this note slides
-		}//On the first pass, validate whether the note can be transposed automatically, on second pass, alter the note
-	}//For each note in the track
+				}//If this note slides
+			}//On the first pass, validate whether the note can be transposed automatically, on second pass, alter the note
+		}//For each note in the track
+	}//For each the normal and the tech note set
 
-	eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Re-enable tech view if applicable
+	eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Re-enable the original note set in use
 	return 1;
 }
 
