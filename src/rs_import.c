@@ -18,16 +18,30 @@
 #define EOF_RS_EVENT_IMPORT_LIMIT 200
 #define EOF_RS_CHORD_TEMPLATE_IMPORT_LIMIT 400
 
-int eof_parse_chord_template(char *name, size_t size, char *finger, char *frets, unsigned char *note, unsigned char *numstrings, unsigned long linectr, char *input)
+int eof_parse_chord_template(char *name, size_t size, char *finger, char *frets, unsigned char *note, unsigned char *numstrings, unsigned char *isarp, unsigned long linectr, char *input)
 {
 	unsigned long ctr, bitmask;
 	long output = 0;
 	int success_count;
+	unsigned char arpfound = 0;
 
 	if(!name || !size || !finger || !frets || !note || !input)
-	{
+	{	//Note:  numstrings and isarp are allowed to be NULL
 		eof_log("Invalid parameters sent to eof_parse_chord_template()", 1);
 		return 1;	//Return error
+	}
+
+	//Read the chord's display name to determine if it refers to arpeggio notation
+	if(parse_xml_attribute_text(name, size, "displayName", input))
+	{	//If the display name was successfully read
+		if(strcasestr_spec(name, "-arp"))
+		{	//If the display name contains -arp
+			arpfound = 1;
+		}
+	}
+	if(isarp)
+	{	//If this pointer isn't NULL
+		*isarp = arpfound;
 	}
 
 	//Read chord name
@@ -121,7 +135,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 	unsigned long phraselist_count = 0;	//Keeps count of how many phrases have been imported
 	EOF_TEXT_EVENT *eventlist[EOF_RS_EVENT_IMPORT_LIMIT] = {0};	//Will store the list of imported RS phrases, RS sections and RS events
 	unsigned long eventlist_count = 0;	//Keeps count of how many events have been imported
-	EOF_PRO_GUITAR_NOTE *chordlist[EOF_RS_CHORD_TEMPLATE_IMPORT_LIMIT] = {0};	//Will store the list of chord templates
+	EOF_PRO_GUITAR_NOTE *chordlist[EOF_RS_CHORD_TEMPLATE_IMPORT_LIMIT] = {0};	//Will store the list of chord templates.  Those that are arpeggio templates will have the EOF_NOTE_TFLAG_ARP tflag set
 	unsigned long chordlist_count = 0;	//Keeps count of how many chord templates have been imported
 	unsigned long beat_count = 0;		//Keeps count of which ebeat is being parsed
 	unsigned long note_count = 0;		//Keeps count of how many notes have been imported
@@ -495,7 +509,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		{	//If this is the chordTemplates tag and it isn't empty
 			char finger[8] = {0};
 			char frets[8] = {0};
-			unsigned char note = 0;
+			unsigned char note = 0, isarp = 0;
 
 			#ifdef RS_IMPORT_DEBUG
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tProcessing <chordTemplates> tag on line #%lu", linectr);
@@ -514,7 +528,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 				}
 				if(chordlist_count < EOF_RS_CHORD_TEMPLATE_IMPORT_LIMIT)
 				{	//If another chord can be stored
-					if(eof_parse_chord_template(tag, sizeof(tag), finger, frets, &note, &(tp->numstrings), linectr, buffer))
+					if(eof_parse_chord_template(tag, sizeof(tag), finger, frets, &note, &(tp->numstrings), &isarp, linectr, buffer))
 					{	//If there was an error reading the chord template
 						error = 1;
 						break;
@@ -541,6 +555,10 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 					memcpy(chordlist[chordlist_count]->finger, finger, 8);	//Store the finger array
 					memcpy(chordlist[chordlist_count]->frets, frets, 8);	//Store the fret array
 					chordlist[chordlist_count]->note = note;	//Store the note mask
+					if(isarp)
+					{	//If the chord template was found to be associated with arpeggio technique
+						chordlist[chordlist_count]->tflags |= EOF_NOTE_TFLAG_ARP;
+					}
 					chordlist_count++;
 				}//If another chord can be stored
 				else
@@ -1338,6 +1356,129 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 							if(error)
 								break;	//Break from inner loop
 						}//If this is an anchors tag and it isn't empty
+						else if(strcasestr_spec(buffer, "<handShapes") && !strstr(buffer, "/>"))
+						{	//If this is an handShapes tag and it isn't empty
+							long start, end, chordid;
+
+							#ifdef RS_IMPORT_DEBUG
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tProcessing <handShapes> tag on line #%lu", linectr);
+								eof_log(eof_log_string, 1);
+							#endif
+
+							tagctr = 0;
+							(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+							linectr++;
+							while(!error || !pack_feof(inf))
+							{	//Until there was an error reading from the file or end of file is reached
+								if(strcasestr_spec(buffer, "</handShapes"))
+								{	//If this is the end of the handShapes tag
+									#ifdef RS_IMPORT_DEBUG
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tParsed %lu handshapes", tagctr);
+										eof_log(eof_log_string, 1);
+									#endif
+									break;	//Break from loop
+								}
+
+								//Read handShape tag
+								ptr = strcasestr_spec(buffer, "<handShape ");
+								if(ptr)
+								{	//If this is a handShape tag
+									char arp = 0, hand = 0;
+
+									if(!parse_xml_rs_timestamp("startTime", buffer, &start))
+									{	//If the start timestamp was not readable
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading start timestamp on line #%lu.  Aborting", linectr);
+										eof_log(eof_log_string, 1);
+										error = 1;
+										break;	//Break from inner loop
+									}
+									if(!parse_xml_rs_timestamp("endTime", buffer, &end))
+									{	//If the end timestamp was not readable
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading end timestamp on line #%lu.  Aborting", linectr);
+										eof_log(eof_log_string, 1);
+										error = 1;
+										break;	//Break from inner loop
+									}
+									if(!parse_xml_attribute_number("chordId", buffer, &chordid))
+									{	//If the chord ID number was not readable
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading chord ID number on line #%lu.  Aborting", linectr);
+										eof_log(eof_log_string, 1);
+										error = 1;
+										break;	//Break from inner loop
+									}
+									if(chordid >= chordlist_count)
+									{	//If this chord ID was not defined in the chordTemplates tag
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError:  Invalid chord ID on line #%lu.  Aborting", linectr);
+										eof_log(eof_log_string, 1);
+										error = 1;
+										break;	//Break from inner loop
+									}
+									if(chordlist[chordid]->tflags & EOF_NOTE_TFLAG_ARP)
+									{	//If this is an arpeggio
+										arp = 1;
+									}
+									else
+									{
+										char hassingle = 0;
+///										char haschord = 0;
+										long notenum = eof_track_fixup_first_pro_guitar_note(tp, curdiff);	//Find the first note in the current track difficulty
+										long prevnote = -1, nextnote = -1;
+										unsigned long notepos;
+
+										while(notenum >= 0)
+										{	//While there are notes in this track difficulty to examine
+											notepos = tp->note[notenum]->pos;	//Simplify
+											if(notepos > end)
+												break;	//This note and all subsequent notes are after the scope of this handshape tag
+											nextnote = eof_fixup_next_pro_guitar_note(tp, notenum);	//Find the next note in this track difficulty, if any
+											if(notepos > start)
+											{	//This note is within the handshape tag
+												if((prevnote < 0) || (tp->note[prevnote]->pos != notepos))
+												{	//If there is no previous note, or if this note starts at a different time than the previous note
+													if((nextnote < 0) || (tp->note[nextnote]->pos != notepos))
+													{	//If there is no next note, or if this note starts at a different time than the next note
+														hassingle = 1;	//This is a single note
+													}
+												}
+///												//Before fixup logic is run after import, multiple single notes at the same time stamp won't be combined into chords yet
+///												if(((prevnote >= 0) && (prevpos == notepos)) || ((nextnote > 0) && (nextpos == notepos)))
+///												{	//If this note starts at the same time as the previous note, or the same time as the next note
+///													haschord = 1;	//This is a chord
+///												}
+
+												prevnote = notenum;	//Track the last examined note that was in this handshape tag's scope
+											}
+											notenum = nextnote;	//Iterate to the next note in this track difficulty, if there is one
+										}
+										if(hassingle)
+										{	//If this handshape tag has single notes in it
+											hand = 1;	//This would have required a handshape phrase to author
+										}
+									}
+
+									//Add an arpeggio/handshape phrase to the project as appropriate
+									if(arp || hand)
+									{	//If the handshape tag was determined to be associated with a manually authored arpeggio or handshape phrase
+										if(tp->arpeggios < EOF_MAX_PHRASES)
+										{	//If another arpeggio/handshape can be stored
+											tp->arpeggio[tp->arpeggios].start_pos = start;
+											tp->arpeggio[tp->arpeggios].end_pos = end;
+											tp->arpeggio[tp->arpeggios].difficulty = curdiff;
+											if(hand)
+											{	//If this should be a handshape instead of an arpeggio
+												tp->arpeggio[tp->arpeggios].flags |= EOF_RS_ARP_HANDSHAPE;	//Set the appropriate flag
+											}
+											tp->arpeggios++;
+										}
+									}
+								}//If this is a handShape tag
+								(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+								linectr++;	//Increment line counter
+								tagctr++;
+							}
+							if(error)
+								break;	//Break from inner loop
+						}//If this is an handShapes tag and it isn't empty
 
 						(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 						linectr++;

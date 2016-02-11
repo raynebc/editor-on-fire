@@ -2302,7 +2302,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	{
 		eof_log("Error allocating memory (7)", 1);
 		(void) pack_fclose(inf);
-		free(gp->track);
 		free(gp->names);
 		free(gp->instrument_types);
 		free(np);
@@ -4391,6 +4390,22 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									long oldlength;
 									unsigned int convertedtie = usedtie >> (7 - strings[ctr2]);	//Re-map from GP's string numbering to EOF's
 
+									if(strings[ctr2] > 6)
+									{	//If this is a 7 string track
+										if(drop_7)
+										{	//The user opted to drop string 7 instead of string 1
+											convertedtie |= usedtie >> 1;	//Shift out string 7 to leave the first 6 strings (merge the bitmask so that on-beat grace notes combine with the note they affect)
+										}
+										else
+										{	//The user opted to drop string 1
+											convertedtie |= usedtie & 63;	//Mask out string 1 (merge the bitmask so that on-beat grace notes combine with the note they affect)
+										}
+									}
+									else
+									{	//This track has less than 7 strings
+										convertedtie |= usedtie >> (7 - strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB (merge the bitmask so that on-beat grace notes combine with the note they affect)
+									}
+
 									//Search backward for correct note to alter
 									for(ctr4 = gp->track[ctr2]->notes; ctr4 > 0; ctr4--)
 									{	//For each imported note in this track, in reverse order
@@ -4578,50 +4593,43 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							{	//If a new grace note is to be created
 								EOF_PRO_GUITAR_NOTE *gnp;
 
-								if(graceonbeat)
-								{	//If the grace note is on the beat, it will modify the note it is applied to instead of create a new one
-									gnp = np[ctr2];	//The pointer to the most recently created normal note on this string
-								}
-								else
-								{	//The grace note is before the beat, create a new note to represent it
-									gnp = eof_pro_guitar_track_add_note(gp->track[ctr2]);	//Add a new note to the current track
-									if(!gnp)
-									{
-										eof_log("Error allocating memory (18)", 1);
-										(void) pack_fclose(inf);
-										for(ctr = 0; ctr < tracks; ctr++)
-										{	//Free the previous track name strings
-											free(gp->names[ctr]);
-										}
-										free(gp->names);
-										free(gp->instrument_types);
-										for(ctr = 0; ctr < tracks; ctr++)
-										{	//Free all previously allocated track structures
-											for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
-											{	//Free all notes in this track
-												free(gp->track[ctr]->note[ctr2]);
-											}
-											for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
-											{	//Free all tech notes in this track
-												free(gp->track[ctr]->technote[ctr2]);
-											}
-											free(gp->track[ctr]);
-										}
-										for(ctr = 0; ctr < gp->text_events; ctr++)
-										{	//Free all allocated text events
-											free(gp->text_event[ctr]);
-										}
-										free(gp->track);
-										free(np);
-										free(hopo);
-										free(hopobeatnum);
-										free(durations);
-										free(note_durations);
-										free(gp);
-										free(tsarray);
-										free(strings);
-										return NULL;
+								gnp = eof_pro_guitar_track_add_note(gp->track[ctr2]);	//Add a new note to the current track
+								if(!gnp)
+								{
+									eof_log("Error allocating memory (18)", 1);
+									(void) pack_fclose(inf);
+									for(ctr = 0; ctr < tracks; ctr++)
+									{	//Free the previous track name strings
+										free(gp->names[ctr]);
 									}
+									free(gp->names);
+									free(gp->instrument_types);
+									for(ctr = 0; ctr < tracks; ctr++)
+									{	//Free all previously allocated track structures
+										for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
+										{	//Free all notes in this track
+											free(gp->track[ctr]->note[ctr2]);
+										}
+										for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
+										{	//Free all tech notes in this track
+											free(gp->track[ctr]->technote[ctr2]);
+										}
+										free(gp->track[ctr]);
+									}
+									for(ctr = 0; ctr < gp->text_events; ctr++)
+									{	//Free all allocated text events
+										free(gp->text_event[ctr]);
+									}
+									free(gp->track);
+									free(np);
+									free(hopo);
+									free(hopobeatnum);
+									free(durations);
+									free(note_durations);
+									free(gp);
+									free(tsarray);
+									free(strings);
+									return NULL;
 								}
 								if(gnp)
 								{	//If a valid new/existing note is selected for alteration by this grace note
@@ -4700,12 +4708,27 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									}//For each of this track's natively supported strings
 
 									//Set the start position and length of the note
-									if(!graceonbeat)
-									{	//If a new note was created to define the grace note, set its position and length
-										gnp->pos = lastgracestartpos + 0.5;	//Round up to nearest millisecond
-										gnp->length = lastgraceendpos - lastgracestartpos + 0.5;	//Round up to nearest millisecond
+									gnp->pos = lastgracestartpos + 0.5;	//Round up to nearest millisecond
+									gnp->length = lastgraceendpos - lastgracestartpos + 0.5;	//Round up to nearest millisecond
+
+									if(graceonbeat)
+									{	//If this grace note displaces the note it is associated with
+										np[ctr2]->pos += gnp->length;			//Delay the note by the length of the grace note
+										if(np[ctr2]->length >= gnp->length)
+											np[ctr2]->length -= gnp->length;	//Shorten the note by the same length if possible
 									}
 
+									if((gracetrans != 1) && (gracetrans != 2))
+									{	//If this grace note didn't transition with a bend or slide technique
+										if((eof_note_count_colors_bitmask(gnp->note) == 1) && eof_gp_import_truncate_short_notes)
+										{	//If this grace note is a single note and the preference to drop the note's sustain in this circumstance is enabled
+											gnp->length = 1;
+										}
+										else if((eof_note_count_colors_bitmask(gnp->note) > 1) && eof_gp_import_truncate_short_chords)
+										{	//If this grace note is a chord and the preference to drop the note's sustain in this circumstance is enabled
+											gnp->length = 1;
+										}
+									}
 #ifdef GP_IMPORT_DEBUG
 									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tGrace note #%lu:  Start: %lums\tLength: %ldms\tFrets: ", gp->track[ctr2]->notes - 1, gnp->pos, gnp->length);
 									assert(strings[ctr2] < 8);	//Redundant assertion to resolve a false positive in Coverity

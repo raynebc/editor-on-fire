@@ -152,6 +152,7 @@ int         eof_display_seek_pos_in_seconds = 0;	//If nonzero, the seek position
 int         eof_note_tails_clickable = 0;		//If nonzero, when the mouse hovers over a note/lyric tail instead of just the note/lyric head, that note/lyric becomes the hover note
 int         eof_auto_complete_fingering = 1;	//If nonzero, offer to apply specified chord fingering to matching notes in the track
 int         eof_rbn_export_slider_hopo = 0;		//If nonzero, notes in slider phrases will be exported to RBN MIDI as forced HOPO notes
+int         eof_db_import_drop_mid_beat_tempos = 0;	//If nonzero, any beats inserted due to mid beat tempo changes during Feedback import are deleted after the import
 int         eof_smooth_pos = 1;
 int         eof_input_mode = EOF_INPUT_PIANO_ROLL;
 int         eof_windowed = 1;

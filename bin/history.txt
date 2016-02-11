@@ -671,7 +671,7 @@ Added the ability to seek forward or backward one grid snap interval
 by holding both CTRL and SHIFT when using the Pg Up or Pg Dn key
 (when grid snap is enabled).
 
-Added the option (Preferences>Erase overlapped pasted notes) to delete
+Added the option (Preferences>Paste erases overlap) to delete
 notes whose start positions would be overlapped during a paste
 operation, similar to the behavior of the Feedback editor.  If this
 preference isn't in effect, a pasted note is allowed to merge with a

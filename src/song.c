@@ -14,6 +14,7 @@
 #include "tuning.h"
 #include "undo.h"
 #include "utility.h"
+#include "menu/beat.h"	//For eof_menu_beat_delete_logic()
 #include "menu/edit.h"
 #include "menu/file.h"
 #include "menu/note.h"	//For eof_feedback_mode_update_note_selection()
@@ -4493,6 +4494,23 @@ long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long not
 	return -1;
 }
 
+long eof_track_fixup_first_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned char diff)
+{
+	unsigned long ctr;
+
+	if(!tp || !tp->parent || (diff > tp->parent->numdiffs))
+		return -1;
+
+	for(ctr = 0; ctr < tp->notes; ctr++)
+	{	//For each normal note in the track
+		if(tp->note[ctr]->type == diff)
+		{	//If the note is in the target difficulty
+			return ctr;	//Return its index
+		}
+	}
+	return -1;	//Note was not found
+}
+
 long eof_get_prev_note_type_num(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	long i;
@@ -7939,6 +7957,26 @@ void eof_pro_guitar_track_enforce_chord_density(EOF_PRO_GUITAR_TRACK *tp)
 				{	//If the space between these two chords is greater than the threshold distance
 					tp->note[ctr + 1]->flags |= EOF_NOTE_FLAG_CRAZY;	//Apply the crazy flag to the next chord to force it to be low density during RS export
 				}
+			}
+		}
+	}
+}
+
+void eof_song_enforce_mid_beat_tempo_change_removal(void)
+{
+	unsigned long ctr;
+
+	if(!eof_song)
+		return;
+
+	for(ctr = eof_song->beats; ctr > 0; ctr--)
+	{	//For each beat (in reverse order)
+		if(eof_song->beat[ctr - 1]->flags & EOF_BEAT_FLAG_MIDBEAT)
+		{	//If this beat was flagged as a mid-beat tempo change during an import
+			eof_song->beat[ctr - 1]->flags &= ~EOF_BEAT_FLAG_MIDBEAT;	//Clear the flag
+			if(eof_db_import_drop_mid_beat_tempos)
+			{	//If the user set the preference to delete such tempo changes
+				eof_menu_beat_delete_logic(ctr - 1);
 			}
 		}
 	}

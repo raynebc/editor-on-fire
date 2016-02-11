@@ -266,7 +266,11 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	}
 	eof_fix_window_title();
 
-	return 6;	//Return error:  Could not load new audio
+	//If this part of the function is reached, the OGG failed to load
+	if(exists(oggfn))
+		return 6;	//Return error:  Could not load new audio, but audio file exists
+
+	return 7;	//Return error:  Could not load new audio, file does not exist
 }
 
 int eof_add_silence_recode(const char * oggfn, unsigned long ms)

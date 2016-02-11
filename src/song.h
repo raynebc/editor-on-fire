@@ -116,6 +116,7 @@
 #define EOF_BEAT_FLAG_START_6_4   32
 #define EOF_BEAT_FLAG_CUSTOM_TS   64	//If this is nonzero, indicates that the first and second most significant bytes of the beat's flags store the TS numerator and denominator, respectively
 #define EOF_BEAT_FLAG_KEY_SIG    128
+#define EOF_BEAT_FLAG_MIDBEAT    256	//If this is nonzero, indicates that a beat was inserted to accommodate a mid-beat tempo change (during Feedback import)
 #define EOF_BEAT_FLAG_EXTENDED 32768	//Reserve the highest unused bit to allow for another beat flag to be conditionally present
 
 //The following flags pertain to phrases
@@ -723,6 +724,7 @@ int eof_song_qsort_pro_guitar_notes(const void * e1, const void * e2);	//The com
 void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
 long eof_fixup_previous_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Returns the note one before the specified note number that is in the same difficulty, or -1 if there is none
 long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Returns the note one after the specified note number that is in the same difficulty, or -1 if there is none
+long eof_track_fixup_first_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned char diff);	//Returns the first note/lyric in the specified track difficulty, or -1 if there is none
 void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel);
 	//Performs cleanup of the specified instrument track.  If sel is zero, the currently selected note is deselected automatically.
 	//This function will abort if any notes with temp or ignore flags are encountered, as that signifies Rocksmith export is in progress and this function would otherwise merge/delete notes inappropriately
@@ -933,5 +935,9 @@ void eof_pro_guitar_track_enforce_chord_density(EOF_PRO_GUITAR_TRACK *tp);
 	//and if any chords are repeats of non-selected notes, and those chords are more than the
 	//configured minimum note distance apart from the preceding notes (or 2ms, whichever is
 	//larger) crazy status is applied so that the chords in question export as high density
+
+void eof_song_enforce_mid_beat_tempo_change_removal(void);
+	//If the "dB import drops mid beat tempos" preference is enabled, this function deletes beats that have the EOF_BEAT_FLAG_MIDBEAT flag
+	//Regardless of that preference's setting, the flag is removed from all beats in the project
 
 #endif

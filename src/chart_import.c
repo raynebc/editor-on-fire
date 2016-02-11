@@ -122,7 +122,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	EOF_BEAT_MARKER * new_beat = NULL;
 	struct dBAnchor *ptr, *ptr2;
 	unsigned curnum=4,curden=4;		//Stores the current time signature details (default is 4/4)
-	char midbeatchange;
+	char midbeatchange = 0;
 	unsigned long nextbeat;
 	unsigned long curppqn = 500000;	//Stores the current tempo (default is 120BPM)
 	double beatlength, chartfpos = 0;
@@ -297,6 +297,10 @@ EOF_SONG * eof_import_chart(const char * fn)
 				}
 				new_beat->ppqn = curppqn;
 				new_beat->midi_pos = chartpos;
+				if(chartpos % chart->resolution != 0)
+				{	//If this beat is not a multiple of the chart resolution, it was triggered by a mid-beat tempo change
+					new_beat->flags |= EOF_BEAT_FLAG_MIDBEAT;	//Flag the beat as such so it can be removed after import if the user preference is to do so
+				}
 
 				//Scan ahead to look for mid beat tempo or TS changes
 				midbeatchange = 0;
@@ -575,7 +579,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			prevnote = ctr2;
 			do{
 				prevnote = eof_track_fixup_previous_note(sp, ctr, prevnote);			//Keep reviewing previous notes in this track difficulty
-			}while((prevnote >= 0) && (eof_get_note_note(sp, ctr, prevnote) & 32));		//until there are no more notes or a non toggle HOPO note is reached
+			}while((prevnote >= 0) && (eof_get_note_note(sp, ctr, prevnote) & ~31));	//until there are no more notes using lanes higher than lane 5
 
 			if(prevnote >= 0)
 			{	//If a previous note gem was found for this track difficulty

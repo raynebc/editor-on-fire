@@ -54,6 +54,7 @@ int eof_menu_beat_ks_6_sharps(void);
 int eof_menu_beat_ks_7_sharps(void);
 int eof_menu_beat_ks_off(void);
 
+void eof_menu_beat_delete_logic(unsigned long beat);	//Deletes the specified beats, recalculates the tempo map and moves affected text events back one beat marker
 int eof_menu_beat_delete(void);
 int eof_menu_beat_anchor(void);
 int eof_menu_beat_push_offset_back(char *undo_made);

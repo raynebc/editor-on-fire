@@ -4469,7 +4469,7 @@ void eof_load_chord_shape_definitions(char *fn)
 			//Load chord shape definition
 			if(strcasestr_spec(buffer, "<chordTemplate"))
 			{	//If this line contains a chord template tag (which defines a chord shape)
-				if(eof_parse_chord_template(name, sizeof(name), finger, frets, &note, NULL, linectr, buffer))
+				if(eof_parse_chord_template(name, sizeof(name), finger, frets, &note, NULL, NULL, linectr, buffer))
 				{	//If there was an error reading the chord template
 					error = 1;
 				}

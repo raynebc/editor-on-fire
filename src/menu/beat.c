@@ -755,36 +755,47 @@ int eof_menu_beat_ts_off(void)
 	return 1;
 }
 
+void eof_menu_beat_delete_logic(unsigned long beat)
+{
+	int flags = eof_song->beat[beat]->flags;
+
+	if(!eof_song || !beat || (beat >= eof_song->beats))
+		return;	//Invalid parameters
+
+	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
+		return;								//Return without making changes
+
+	eof_song_delete_beat(eof_song, beat);
+	if((eof_song->beat[beat - 1]->flags & EOF_BEAT_FLAG_ANCHOR) && (eof_song->beat[beat]->flags & EOF_BEAT_FLAG_ANCHOR))
+	{
+		double beats_length = eof_song->beat[beat]->pos - eof_song->beat[beat - 1]->pos;
+		double newbpm = 60000.0 / beats_length;
+		double newppqn = 60000000.0 / newbpm;
+		eof_song->beat[beat - 1]->ppqn = newppqn;
+	}
+	else if(eof_song->beat[beat - 1]->flags & EOF_BEAT_FLAG_ANCHOR)
+	{
+		eof_realign_beats(eof_song, beat);
+	}
+	else
+	{
+		eof_realign_beats(eof_song, beat - 1);
+	}
+	eof_move_text_events(eof_song, beat, 1, -1);
+	flags &= (~EOF_BEAT_FLAG_ANCHOR);	//Clear the anchor flag
+	eof_song->beat[beat - 1]->flags |= flags;
+	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+}
+
 int eof_menu_beat_delete(void)
 {
-	int flags = eof_song->beat[eof_selected_beat]->flags;
-
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
 
 	if((eof_selected_beat > 0) && (eof_find_next_anchor(eof_song, eof_selected_beat) >= 0))
 	{	//Only process this function if a beat other than beat 0 is selected, and there is at least one anchor after the selected beat
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		eof_song_delete_beat(eof_song, eof_selected_beat);
-		if((eof_song->beat[eof_selected_beat - 1]->flags & EOF_BEAT_FLAG_ANCHOR) && (eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR))
-		{
-			double beats_length = eof_song->beat[eof_selected_beat]->pos - eof_song->beat[eof_selected_beat - 1]->pos;
-			double newbpm = 60000.0 / beats_length;
-			double newppqn = 60000000.0 / newbpm;
-			eof_song->beat[eof_selected_beat - 1]->ppqn = newppqn;
-		}
-		else if(eof_song->beat[eof_selected_beat - 1]->flags & EOF_BEAT_FLAG_ANCHOR)
-		{
-			eof_realign_beats(eof_song, eof_selected_beat);
-		}
-		else
-		{
-			eof_realign_beats(eof_song, eof_selected_beat - 1);
-		}
-		eof_move_text_events(eof_song, eof_selected_beat, 1, -1);
-		flags &= (~EOF_BEAT_FLAG_ANCHOR);	//Clear the anchor flag
-		eof_song->beat[eof_selected_beat - 1]->flags |= flags;
-		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+		eof_menu_beat_delete_logic(eof_selected_beat);
 	}
 	return 1;
 }

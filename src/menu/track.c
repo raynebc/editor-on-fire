@@ -671,7 +671,7 @@ int eof_track_transpose_tuning(EOF_PRO_GUITAR_TRACK* tp, char *tuningdiff)
 {
 	unsigned long ctr, ctr2, ctr3, bitmask, noteset;
 	unsigned char prompt = 0, skiptranspose, warning = 0, first, diffmask = 0;
-	char val;
+	char val = 0;
 	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
 
 	if(!tp || !tuningdiff)

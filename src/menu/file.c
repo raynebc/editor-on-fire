@@ -114,7 +114,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 150, 105, 148, 16,  2,   23,  0,    0,      1,   0,   "Disable 3D rendering",NULL, NULL },
 	{ d_agup_check_proc, 306, 105, 148, 16,  2,   23,  0,    0,      1,   0,   "Disable 2D rendering",NULL, NULL },
 	{ d_agup_check_proc, 16,  120, 116, 16,  2,   23,  0,    0,      1,   0,   "Hide info panel",NULL, NULL },
-	{ d_agup_check_proc, 150, 120, 206, 16,  2,   23,  0,    0,      1,   0,   "Erase overlapped pasted notes",NULL, NULL },
+	{ d_agup_check_proc, 150, 120, 206, 16,  2,   23,  0,    0,      1,   0,   "Paste erases overlap",NULL, NULL },
 	{ d_agup_check_proc, 16,  136, 208, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rock Band files",NULL, NULL },
 	{ d_agup_check_proc, 248, 136, 216, 16,  2,   23,  0,    0,      1,   0,   "Save separate musical MIDI file",NULL, NULL },
 	{ d_agup_check_proc, 16,  152, 216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 1 files",NULL, NULL },
@@ -151,7 +151,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 433, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
 	{ d_agup_check_proc, 248, 206, 182, 16,  2,   23,  0,    0,      1,   0,   "Enable logging on launch",NULL, NULL },
 	{ d_agup_check_proc, 248, 449, 196, 16,  2,   23,  0,    0,      1,   0,   "Display seek pos. in seconds",NULL, NULL },
-	{ d_agup_check_proc, 248, 465, 174, 16,  2,   23,  0,    0,      1,   0,   "Make note tails clickable",NULL, NULL },
+	{ d_agup_check_proc, 306, 120, 174, 16,  2,   23,  0,    0,      1,   0,   "Make note tails clickable",NULL, NULL },
 	{ d_agup_check_proc, 16,  321, 210, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
 	{ d_agup_check_proc, 16,  289, 200, 16,  2,   23,  0,    0,      1,   0,   "Click to change dialog focus",NULL, NULL },
 	{ d_agup_check_proc, 16,  168, 200, 16,  2,   23,  0,    0,      1,   0,   "Save separate Bandfuse files",NULL, NULL },
@@ -163,6 +163,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 168, 206, 16,  2,   23,  0,    0,      1,   0,   "Save FoF/GH/Phase Shift files",NULL, NULL },
 	{ d_agup_check_proc, 248, 513, 224, 16,  2,   23,  0,    0,      1,   0,   "Offer to auto complete fingering",NULL, NULL },
 	{ d_agup_check_proc, 16,  353, 174, 16,  2,   23,  0,    0,      1,   0,   "RBN export slider as HOPO",NULL, NULL },
+	{ d_agup_check_proc, 248, 465, 226, 16,  2,   23,  0,    0,      1,   0,   "dB import drops mid beat tempos",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1078,7 +1079,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[8].flags = eof_disable_3d_rendering ? D_SELECTED : 0;		//Disable 3D rendering
 	eof_preferences_dialog[9].flags = eof_disable_2d_rendering ? D_SELECTED : 0;		//Disable 2D rendering
 	eof_preferences_dialog[10].flags = eof_disable_info_panel ? D_SELECTED : 0;			//Disable info panel
-	eof_preferences_dialog[11].flags = eof_paste_erase_overlap ? D_SELECTED : 0;		//Erase overlapped pasted notes
+	eof_preferences_dialog[11].flags = eof_paste_erase_overlap ? D_SELECTED : 0;		//Paste erases overlap
 	eof_preferences_dialog[12].flags = eof_write_rb_files ? D_SELECTED : 0;				//Save separate Rock Band files
 	eof_preferences_dialog[13].flags = eof_write_music_midi ? D_SELECTED : 0;			//Save separate musical MIDI file
 	eof_preferences_dialog[14].flags = eof_write_rs_files ? D_SELECTED : 0;				//Save separate Rocksmith 1 files
@@ -1110,6 +1111,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[57].flags = eof_write_fof_files ? D_SELECTED : 0;				//Save FoF/GH/Phase Shift files
 	eof_preferences_dialog[58].flags = eof_auto_complete_fingering ? D_SELECTED : 0;		//Offer to auto complete fingering
 	eof_preferences_dialog[59].flags = eof_rbn_export_slider_hopo ? D_SELECTED : 0;			//RBN export slider as HOPO
+	eof_preferences_dialog[60].flags = eof_db_import_drop_mid_beat_tempos ? D_SELECTED : 0;	//dB import drops mid beat tempos
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1240,6 +1242,7 @@ int eof_menu_file_preferences(void)
 			eof_write_fof_files = (eof_preferences_dialog[57].flags == D_SELECTED ? 1 : 0);
 			eof_auto_complete_fingering = (eof_preferences_dialog[58].flags == D_SELECTED ? 1 : 0);
 			eof_rbn_export_slider_hopo = (eof_preferences_dialog[59].flags == D_SELECTED ? 1 : 0);
+			eof_db_import_drop_mid_beat_tempos = (eof_preferences_dialog[60].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 29)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1253,7 +1256,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[8].flags = 0;					//Disable 3D rendering
 			eof_preferences_dialog[9].flags = 0;					//Disable 2D rendering
 			eof_preferences_dialog[10].flags = 0;					//Disable info panel
-			eof_preferences_dialog[11].flags = 0;					//Erase overlapped pasted notes
+			eof_preferences_dialog[11].flags = 0;					//Paste erases overlap
 			eof_preferences_dialog[12].flags = 0;					//Save separate RBN MIDI files
 			eof_preferences_dialog[13].flags = 0;					//Save separate musical MIDI file
 			eof_preferences_dialog[14].flags = 0;					//Save separate Rocksmith 1 files
@@ -1291,6 +1294,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[57].flags = D_SELECTED;			//Save FoF/Phase Shift files
 			eof_preferences_dialog[58].flags = D_SELECTED;			//Offer to auto complete fingering
 			eof_preferences_dialog[59].flags = 0;					//RBN export slider as HOPO
+			eof_preferences_dialog[60].flags = 0;					//dB import drops mid beat tempos
 		}//If the user clicked "Default
 	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -2015,6 +2019,7 @@ int eof_menu_file_feedback_import(void)
 				eof_init_after_load(0);
 				(void) replace_filename(eof_last_db_path, returnedfn, "", 1024);	//Set the last loaded Feedback file path
 				eof_cleanup_beat_flags(eof_song);	//Update anchor flags as necessary for any time signature changes
+				eof_song_enforce_mid_beat_tempo_change_removal();	//Remove mid beat tempo changes if applicable
 			}
 			else
 			{
