@@ -428,6 +428,9 @@ long eof_fixup_previous_legacy_note(EOF_LEGACY_TRACK * tp, unsigned long note)
 {
 	long i;
 
+	if(!tp || (note >= tp->notes))
+		return -1;	//Invalid parameters
+
 	if(tp)
 	{
 		for(i = note; i > 0; i--)
@@ -444,6 +447,9 @@ long eof_fixup_previous_legacy_note(EOF_LEGACY_TRACK * tp, unsigned long note)
 long eof_fixup_next_legacy_note(EOF_LEGACY_TRACK * tp, unsigned long note)
 {
 	long i;
+
+	if(!tp || (note >= tp->notes))
+		return -1;	//Invalid parameters
 
 	if(tp)
 	{
@@ -4464,6 +4470,9 @@ long eof_fixup_previous_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long
 {
 	long i;
 
+	if(!tp || (note >= tp->notes))
+		return -1;	//Invalid parameters
+
 	if(tp)
 	{
 		for(i = note; i > 0; i--)
@@ -4480,6 +4489,9 @@ long eof_fixup_previous_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long
 long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note)
 {
 	long i;
+
+	if(!tp || (note >= tp->notes))
+		return -1;	//Invalid parameters
 
 	if(tp)
 	{

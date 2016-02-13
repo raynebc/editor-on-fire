@@ -561,6 +561,9 @@ unsigned long eof_check_against_chord_lookup_cache(EOF_PRO_GUITAR_TRACK *tp, uns
 {
 	unsigned long thisnote, ctr, bitmask, match = 0;
 
+	if(!tp || (note >= tp->notes))
+		return 0;	//Invalid parameters
+
 	//Check to see if the specified note matches that of the previously cached lookup
 	thisnote = eof_get_pro_guitar_note_note(tp, note);
 	if(eof_chord_lookup_note == thisnote)

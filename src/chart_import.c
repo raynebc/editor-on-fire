@@ -407,6 +407,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 				unsigned long lastpos = -1;	//The position of the last imported note (not updated for sections that are parsed)
 				EOF_NOTE * new_note = NULL;
 				EOF_NOTE * prev_note = NULL;
+				char gemtype = 0, lastgemtype;	//Tracks whether the current and previously added gems are normal notes or technique markers
 
 				tracknum = sp->track[track]->tracknum;
 				while(current_note)
@@ -434,8 +435,17 @@ EOF_SONG * eof_import_chart(const char * fn)
 					/* import regular note */
 					else
 					{
-						if((current_note->chartpos != lastpos) || (current_note->gemcolor == 5) || (current_note->gemcolor == 6))
-						{	//If this note was at a different position than the last, if it represents toggle HOPO notation or if it represents slider notation, create a new note
+						if((current_note->gemcolor == 5) || (current_note->gemcolor == 6))
+						{	//If this gem is inverted HOPO or slider notation
+							gemtype = 2;	//This gem is a technique marker
+						}
+						else
+						{
+							gemtype = 1;	//Otherwise it's a normal note
+						}
+
+						if((current_note->chartpos != lastpos) || (gemtype == 2) || (gemtype != lastgemtype))
+						{	//If this note was at a different position than the last, if it represents a technique marker or if it's a different gem type than the previous one
 							new_note = eof_legacy_track_add_note(sp->legacy_track[tracknum]);
 							if(new_note)
 							{
@@ -458,7 +468,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 									}
 								}
 								prev_note = new_note;	//Track the last created note
-								lastchartpos = current_note->chartpos;	//Track the position of the gem position for HOPO tracking
+								lastchartpos = current_note->chartpos;	//Track the position of the gem for HOPO tracking
 							}
 						}
 						else
@@ -469,6 +479,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 							}
 						}
 						lastpos = current_note->chartpos;
+						lastgemtype = gemtype;
 					}
 					current_note = current_note->next;
 				}

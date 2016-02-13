@@ -1106,18 +1106,18 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 												flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;
 											if(accent)
 												flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;
-                                            if(mute)
+											if(mute)
 												flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;
-                                            if(pinchharmonic)
+											if(pinchharmonic)
 												flags |= EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC;
-                                            if(slideunpitchto > 0)
+											if(slideunpitchto > 0)
 											{
 												flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
 												np->unpitchend = slideunpitchto;
 											}
 											if(tap)
 												flags |= EOF_PRO_GUITAR_NOTE_FLAG_TAP;
-                                            if(vibrato)
+											if(vibrato)
 												flags |= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
 											np->flags = flags;
 											note_count++;
@@ -1183,7 +1183,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						}//If this is a notes tag
 						else if(strcasestr_spec(buffer, "<chords") && !strstr(buffer, "/>"))
 						{	//If this is a chords tag and it isn't empty
-							long id = 0;
+							long id = 0, lastid = -1;
 
 							#ifdef RS_IMPORT_DEBUG
 								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tProcessing <chords> tag on line #%lu", linectr);
@@ -1208,6 +1208,8 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 								ptr = strcasestr_spec(buffer, "<chord ");
 								if(ptr)
 								{	//If this is a chord tag
+									long highdensity = 0;
+
 									if(note_count < EOF_MAX_NOTES)
 									{	//If another chord can be stored
 										flags = 0;
@@ -1243,6 +1245,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 										}
 										mute = 0;
 										(void) parse_xml_attribute_number("fretHandMute", buffer, &mute);
+										(void) parse_xml_attribute_number("highDensity", buffer, &highdensity);
 										(void) parse_xml_attribute_number("palmMute", buffer, &palmmute);
 
 										//Add chord and set attributes
@@ -1262,6 +1265,8 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 										}
 										if(mute)
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;
+										if(highdensity)
+											flags |= EOF_PRO_GUITAR_NOTE_FLAG_HD;
 										if(palmmute)
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
 										np->flags = flags;
@@ -1269,6 +1274,11 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 										tp->pgnotes++;
 										note_count++;
 										tagctr++;
+										if((lastid >= 0) && (lastid != id))
+										{	//If this chord tag references a different chord ID than the previous one
+											np->tflags |= EOF_NOTE_TFLAG_CCHANGE;	//Track this condition
+										}
+										lastid = id;	//Remember the last parsed chord's chord template ID
 									}//If another chord can be stored
 								}//If this is a chord tag
 
@@ -1365,6 +1375,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 								eof_log(eof_log_string, 1);
 							#endif
 
+							eof_pro_guitar_track_sort_notes(tp);
 							tagctr = 0;
 							(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 							linectr++;
@@ -1420,7 +1431,10 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 									else
 									{
 										char hassingle = 0;
-///										char haschord = 0;
+										char firstfound = 0;
+										char firstchordfound = 0;
+										char note_offset = 0;
+										char chord_change = 0;
 										long notenum = eof_track_fixup_first_pro_guitar_note(tp, curdiff);	//Find the first note in the current track difficulty
 										long prevnote = -1, nextnote = -1;
 										unsigned long notepos;
@@ -1431,27 +1445,48 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 											if(notepos > end)
 												break;	//This note and all subsequent notes are after the scope of this handshape tag
 											nextnote = eof_fixup_next_pro_guitar_note(tp, notenum);	//Find the next note in this track difficulty, if any
-											if(notepos > start)
+											if(notepos >= start)
 											{	//This note is within the handshape tag
-												if((prevnote < 0) || (tp->note[prevnote]->pos != notepos))
-												{	//If there is no previous note, or if this note starts at a different time than the previous note
-													if((nextnote < 0) || (tp->note[nextnote]->pos != notepos))
-													{	//If there is no next note, or if this note starts at a different time than the next note
-														hassingle = 1;	//This is a single note
+												if(!firstfound)
+												{	//If this is the first note found to be in the scope of the handshape tag
+													if(notepos > start)
+													{	//If the note begins after the start of the handshape tag, it must have been a handshape phrase manually defined by the author
+														note_offset = 1;	//Track this condition
 													}
 												}
-///												//Before fixup logic is run after import, multiple single notes at the same time stamp won't be combined into chords yet
-///												if(((prevnote >= 0) && (prevpos == notepos)) || ((nextnote > 0) && (nextpos == notepos)))
-///												{	//If this note starts at the same time as the previous note, or the same time as the next note
-///													haschord = 1;	//This is a chord
-///												}
+												if(eof_note_count_colors_bitmask(tp->note[notenum]->note) == 1)
+												{	//If this is a single note
+													if((prevnote < 0) || (tp->note[prevnote]->pos != notepos))
+													{	//If there is no previous note, or if this note starts at a different time than the previous note
+														if((nextnote < 0) || (tp->note[nextnote]->pos != notepos))
+														{	//If there is no next note, or if this note starts at a different time than the next note
+															hassingle = 1;	//This is a single note
+														}
+													}
+												}
+												else
+												{	//This is a chord
+													if(firstchordfound)
+													{	//If this isn't the first chord in the handshape tag's scope
+														if(tp->note[notenum]->tflags & EOF_NOTE_TFLAG_CCHANGE)
+														{	//If this chord represents a chord change
+															chord_change = 1;	//Track this condition
+														}
+														else
+														{	//Repeat chords are high density by default
+															tp->note[notenum]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HD;	//Don't keep high density explicitly flagged for them
+														}
+													}
+													firstchordfound = 1;
+												}
 
 												prevnote = notenum;	//Track the last examined note that was in this handshape tag's scope
+												firstfound = 1;
 											}
 											notenum = nextnote;	//Iterate to the next note in this track difficulty, if there is one
 										}
-										if(hassingle)
-										{	//If this handshape tag has single notes in it
+										if(hassingle || note_offset || chord_change)
+										{	//If this handshape tag has any of these criteria
 											hand = 1;	//This would have required a handshape phrase to author
 										}
 									}

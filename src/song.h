@@ -94,6 +94,7 @@
 #define EOF_NOTE_TFLAG_TWIN     128	//This flag will represent a note that is either the original or ghost gem-less clone of a partial ghosted chord that is created during RS2 export
 #define EOF_NOTE_TFLAG_COMBINE  256	//This flag will represent a note that was marked as ignored because its sustain is to be combined with that of a chordnote during RS2 export
 #define EOF_NOTE_TFLAG_NO_LN    512	//This flag will indicate that the linknext status of the affected note is to be interpreted to be not set, due to how chordnotes and linked single notes can be combined, during RS2 export
+#define EOF_NOTE_TFLAG_CCHANGE 1024	//This flag will indicate that a note is a chord change from RS import's perspective (for determining manually defined handshape phrases)
 
 //The following extended flags pertain to pro guitar notes
 #define EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE   1	//This flag specifies a note that will export to RS2 format with the "ignore" status set to nonzero, for special uses
@@ -135,7 +136,7 @@
 
 typedef struct
 {
-    char name[EOF_NAME_LENGTH + 1];
+	char name[EOF_NAME_LENGTH + 1];
 	unsigned char type;			//Stores the note's difficulty
 	unsigned char note;			//Stores the note's fret values
 	unsigned char accent;		//Stores the note's accent bitmask
@@ -201,7 +202,7 @@ typedef struct
 {
 	unsigned char type;		//The lyric set this lyric belongs to (0=PART VOCALS, 1=HARM1, 2=HARM2...)
 	unsigned char note;		//If zero, the lyric has no defined pitch
-	char          text[EOF_MAX_LYRIC_LENGTH + 1];
+	char text[EOF_MAX_LYRIC_LENGTH + 1];
 	unsigned long midi_pos;
 	long midi_length;		//Keep as signed, since the npos logic uses signed math
 	unsigned long pos;
@@ -214,16 +215,15 @@ typedef struct
 typedef struct
 {
 	unsigned char note;
-	char          text[EOF_MAX_LYRIC_LENGTH + 1];
+	char text[EOF_MAX_LYRIC_LENGTH + 1];
 	unsigned long midi_pos;
-	long          midi_length;	//Keep as signed, since the npos logic uses signed math
+	long midi_length;		//Keep as signed, since the npos logic uses signed math
 	unsigned long pos;
-	long          length;		//Keep as signed, since the npos logic uses signed math
-
-	unsigned long beat;       // which beat this note was copied from
-	unsigned long endbeat;    // which beat this note was copied from
-	float         porpos;     // position of note within the beat (100.0 = full beat)
-	float         porendpos;
+	long length;			//Keep as signed, since the npos logic uses signed math
+	unsigned long beat;		// which beat this note was copied from
+	unsigned long endbeat;	// which beat this note was copied from
+	float porpos;			// position of note within the beat (100.0 = full beat)
+	float porendpos;
 
 } EOF_EXTENDED_LYRIC;
 
@@ -669,7 +669,7 @@ void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourc
 	//If the source is a pro guitar track and the destination is not, the source note's legacy bitmask is used if defined
 	//If the source and destination are both pro guitar tracks, the source note's fret array, finger array, ghost bitmask, legacy bitmask, bend strength, slide end position and extended flags are copied
 long eof_get_prev_note_type_num(EOF_SONG *sp, unsigned long track, unsigned long note);
-	//Returns the note immediately before the specified that is in the same difficulty, provided that the notes are sorted chronologically, or -1 if no such note exists
+	//Returns the note immediately before the specified one that is in the same difficulty, provided that the notes are sorted chronologically, or -1 if no such note exists
 void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long amount, int dir);
 	//If dir is >= 0, increases all selected notes in the active instrument difficulty by the specified amount
 	//If dir is < 0, decreases all selected notes in the active instrument difficulty by the specified amount
