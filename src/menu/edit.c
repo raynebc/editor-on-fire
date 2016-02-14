@@ -660,6 +660,7 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 	EOF_EXTENDED_NOTE temp_lyric = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0};
 	EOF_LYRIC * new_lyric = NULL;
 	PACKFILE * fp;
+	float newpasteoffset = 0.0;	//This will be used to allow new paste to paste lyrics starting at the seek position instead of the original in-beat positions
 
 	if(!eof_vocals_selected)
 		return 1;	//Return error
@@ -682,6 +683,10 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 	eof_selection.current = EOF_MAX_NOTES - 1;
 	eof_selection.current_pos = 0;
 
+	if(!oldpaste)
+	{	//If using new paste, find the seek position's percentage within the current beat
+		newpasteoffset = eof_get_porpos(eof_music_pos - eof_av_delay);
+	}
 	for(i = 0; i < copy_notes; i++)
 	{
 		/* read the note */
@@ -695,8 +700,12 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 			}
 			if(!oldpaste)
 			{	//If new paste logic is being used, this lyric pastes into a position relative to the start and end of a beat marker
-				new_pos = eof_put_porpos(temp_lyric.beat - first_beat + this_beat, temp_lyric.porpos, 0.0);
-				new_end_pos = eof_put_porpos(temp_lyric.endbeat - first_beat + this_beat, temp_lyric.porendpos, 0.0);
+				if(i == 0)
+				{	//If this is the first lyric being pasted
+					newpasteoffset = newpasteoffset - temp_lyric.porpos;	//Find the percentage offset that needs to be applied to all start/stop timestamps
+				}
+				new_pos = eof_put_porpos(temp_lyric.beat - first_beat + this_beat, temp_lyric.porpos, newpasteoffset);
+				new_end_pos = eof_put_porpos(temp_lyric.endbeat - first_beat + this_beat, temp_lyric.porendpos, newpasteoffset);
 			}
 			else
 			{	//If old paste logic is being used, this lyric pastes into a position relative to the previous pasted note

@@ -139,6 +139,7 @@ MENU eof_song_proguitar_menu[] =
 	{"Enable &Legacy view", eof_menu_song_legacy_view, NULL, 0, NULL},
 	{"&Previous chord name\t" CTRL_NAME "+Shift+W", eof_menu_previous_chord_result, NULL, 0, NULL},
 	{"&Next chord name\t" CTRL_NAME "+Shift+E", eof_menu_next_chord_result, NULL, 0, NULL},
+	{"&Highlight notes in arpeggios", eof_menu_song_highlight_arpeggios, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -615,6 +616,15 @@ void eof_prepare_song_menu(void)
 			{
 				eof_song_proguitar_menu[1].flags = D_DISABLED;
 				eof_song_proguitar_menu[2].flags = D_DISABLED;
+			}
+
+			if(eof_song->tags->highlight_arpeggios)
+			{
+				eof_song_proguitar_menu[3].flags = D_SELECTED;	//Song>Pro Guitar>Highlight notes in arpeggios
+			}
+			else
+			{
+				eof_song_proguitar_menu[3].flags = 0;
 			}
 		}
 		else
@@ -3914,31 +3924,76 @@ int eof_menu_song_highlight_non_grid_snapped_notes(void)
 	{	//If this feature was toggled off
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track
-			eof_track_remove_highlighting(eof_song, ctr);	//Remove existing highlighting from the track
+			eof_track_remove_highlighting(eof_song, ctr, 1);	//Remove existing temporary highlighting from the track
 		}
 	}
-	else
-	{	//This feature was toggled on
+	if(eof_song->tags->highlight_arpeggios || eof_song->tags->highlight_unsnapped_notes)
+	{	//If either of these highlighting options are enabled
 		eof_fixup_notes(eof_song);	//Run the fixup logic on all tracks, which should rebuild the highlighting as relevant
 	}
 	return 1;
 }
 
-int eof_song_highlight_non_grid_snapped_notes(EOF_SONG *sp, unsigned long track)
+void eof_song_highlight_non_grid_snapped_notes(EOF_SONG *sp, unsigned long track)
 {
-	unsigned long ctr, flags;
+	unsigned long ctr, tflags;
 
 	if(!sp || (track >= sp->tracks))
-		return 1;	//Invalid parameters
+		return;	//Invalid parameters
 
 	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
 	{	//For each note in the specified track
 		if(!eof_is_any_grid_snap_position(eof_get_note_pos(sp, track, ctr), NULL, NULL, NULL))
 		{	//If this note position does not match that of any grid snap
-			flags = eof_get_note_flags(sp, track, ctr);
-			flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight the note
-			eof_set_note_flags(sp, track, ctr, flags);
+			tflags = eof_get_note_tflags(sp, track, ctr);
+			tflags |= EOF_NOTE_TFLAG_HIGHLIGHT;	//Highlight the note with the temporary flag
+			eof_set_note_tflags(sp, track, ctr, tflags);
 		}
 	}
+}
+
+int eof_menu_song_highlight_arpeggios(void)
+{
+	unsigned long ctr;
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 1;	//Invalid parameters
+
+	eof_song->tags->highlight_arpeggios ^= 1;	//Toggle this setting
+	if(!eof_song->tags->highlight_arpeggios)
+	{	//If this feature was toggled off
+		for(ctr = 1; ctr < eof_song->tracks; ctr++)
+		{	//For each track
+			eof_track_remove_highlighting(eof_song, ctr, 1);	//Remove existing temporary highlighting from the track
+		}
+	}
+	if(eof_song->tags->highlight_arpeggios || eof_song->tags->highlight_unsnapped_notes)
+	{	//If either of these highlighting options are enabled
+		eof_fixup_notes(eof_song);	//Run the fixup logic on all tracks, which should rebuild the highlighting as relevant
+	}
 	return 1;
+}
+
+void eof_song_highlight_arpeggios(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long ctr, ctr2, tracknum;
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if(!sp || (track >= sp->tracks))
+		return;	//Invalid parameters
+	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return;	//Do not allow this function to run when a pro guitar format track is not active
+
+	tracknum = sp->track[track]->tracknum;
+	tp = sp->pro_guitar_track[tracknum];
+	for(ctr = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the active pro guitar track
+		for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
+		{	//For each arpeggio section in the track
+			if((tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
+			{	//If the note is within the arpeggio phrase
+				tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_HIGHLIGHT;	//Highlight it with the temporary flag
+			}
+		}
+	}
 }

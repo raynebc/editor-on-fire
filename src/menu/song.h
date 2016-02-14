@@ -174,8 +174,11 @@ int eof_menu_song_export_song_preview(void);
 int eof_menu_song_highlight_non_grid_snapped_notes(void);
 	//Toggles highlighting for all notes in the active track that aren't at any grid snap position
 	//The highlighting is recreated every time the track's fixup logic runs
-int eof_song_highlight_non_grid_snapped_notes(EOF_SONG *sp, unsigned long track);
-	//Performs highlighting for all notes in the active track that aren't at any grid snap position
+void eof_song_highlight_non_grid_snapped_notes(EOF_SONG *sp, unsigned long track);
+	//Performs highlighting for all notes in the specified track that aren't at any grid snap position
 	//If a custom grid snap is in effect, its position is also compared
+int eof_menu_song_highlight_arpeggios(void);	//Enables highlighting for all notes in the active track that are within arpeggio phrases
+void eof_song_highlight_arpeggios(EOF_SONG *sp, unsigned long track);
+	//Performs highlighting for all notes in the specified track that are within arpeggio phrases
 
 #endif

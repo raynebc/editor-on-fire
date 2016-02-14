@@ -384,6 +384,7 @@ MENU eof_note_lyrics_menu[] =
 	{"&Lyric Lines", NULL, eof_lyric_line_menu, 0, NULL},
 	{"&Freestyle", NULL, eof_note_freestyle_menu, 0, NULL},
 	{"Import GP style lyric text", eof_note_menu_read_gp_lyric_texts, NULL, 0, NULL},
+	{"Remove pitch", eof_menu_lyric_remove_pitch, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -3712,6 +3713,39 @@ int eof_menu_toggle_freestyle(void)
 		}
 	}
 
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_lyric_remove_pitch(void)
+{
+	unsigned long i;
+	long u = 0;
+	int note_selection_updated;
+
+	if(!eof_vocals_selected)
+		return 1;
+
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each lyric in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this lyric is in the currently active track and is selected
+			if(eof_get_note_note(eof_song, eof_selected_track, i))
+			{	//If the lyric has a pitch defined
+				if(!u)
+				{	//Make a back up before changing the first note
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					u = 1;
+				}
+				eof_set_note_note(eof_song, eof_selected_track, i, 0);	//Set an undefined pitch
+			}
+		}
+	}
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note
 		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition

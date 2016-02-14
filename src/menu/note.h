@@ -74,6 +74,7 @@ int eof_menu_set_freestyle(char status);	//Applies the specified freestyle statu
 int eof_menu_set_freestyle_on(void);		//Applies freestyle for all selected lyrics
 int eof_menu_set_freestyle_off(void);		//Removes freestyle for all selected lyrics
 int eof_menu_toggle_freestyle(void);		//Toggles the freestyle status of all selected lyrics
+int eof_menu_lyric_remove_pitch(void);		//Removes the pitch for all selected lyrics
 
 int eof_menu_note_edit_pro_guitar_note(void);		//Allows a pro guitar note's properties to be defined
 int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_made);

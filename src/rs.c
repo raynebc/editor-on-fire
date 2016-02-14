@@ -4740,12 +4740,16 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 				ptr->length = stop_tech_note_position - notepos;
 			}
 		}
-		if((ptr->length == 1) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO))
-		{	//If the note is has the absolute minimum length and isn't a bend, vibrato, slide (bend and slide notes are required to have a length > 0 or Rocksmith will crash) or unpitched slide status
-			if(!((target == 2) && (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT)))
-			{	//Only if this note does not have the sustain or linknext status applied and the target is Rocksmith 2
+		if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO))
+		{	//If the note isn't a bend, vibrato, slide (bend and slide notes are required to have a length > 0 or Rocksmith will crash) or unpitched slide status
+			if((ptr->length == 1) && !((target == 2) && (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT)))
+			{	//Only if this note has the absolute minimum possible length and does not have the sustain or linknext status applied and the target is Rocksmith 2
 				ptr->length = 0;	//Convert to a length of 0 so that it doesn't display as a sustain note in-game
 			}
+		}
+		else if(ptr->palmmute || ptr->stringmute)
+		{	//Otherwise, if the note is palm or string muted
+			ptr->length = 0;	//Remove its sustain
 		}
 		if(fret)
 		{	//If this string is fretted (open notes don't have slide or bend attributes written)
@@ -4862,10 +4866,6 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 				ptr->bend = ptr->bendstrength_h = ptr->bendstrength_q = 0;	//Avoid allowing a 0 length bend note from crashing the game
 				ptr->length = 0;	//Remove all sustain for the note, otherwise Rocksmith 1 won't display the pop/slap sustain technique
 			}
-		}
-		if(ptr->palmmute || ptr->stringmute)
-		{	//If the note is palm or string muted
-			ptr->length = 0;	//Remove its sustain
 		}
 		if((eflags & EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE) && (target == 2))
 		{	//If the note's extended flags indicate the ignore status is applied and Rocksmith 2 export is in effect

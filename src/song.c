@@ -203,6 +203,7 @@ EOF_SONG * eof_create_song(void)
 	sp->tags->tempo_map_locked = 0;
 	sp->tags->highlight_unsnapped_notes = 0;
 	sp->tags->accurate_ts = 1;
+	sp->tags->highlight_arpeggios = 0;
 	sp->tags->click_drag_disabled = 0;
 	sp->tags->rs_chord_technique_export = 0;
 	sp->tags->double_bass_drum_disabled = 0;
@@ -1594,7 +1595,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	unsigned long const inistringbuffersize[EOFNUMINISTRINGTYPES]={0,0,256,256,256,0,32,512,256};
 		//Store the buffer information of each of the INI strings to simplify the loading code
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
-	#define EOFNUMINIBOOLEANTYPES 12
+	#define EOFNUMINIBOOLEANTYPES 13
 	char *inibooleanbuffer[EOFNUMINIBOOLEANTYPES] = {NULL};
 		//Store the pointers to each of the boolean type INI settings (number 0 is reserved) to simplify the loading code
 	#define EOFNUMININUMBERTYPES 5
@@ -1635,6 +1636,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	inibooleanbuffer[9] = &unshare_drum_phrasing;
 	inibooleanbuffer[10] = &sp->tags->highlight_unsnapped_notes;
 	inibooleanbuffer[11] = &sp->tags->accurate_ts;
+	inibooleanbuffer[12] = &sp->tags->highlight_arpeggios;
 	ininumberbuffer[2] = &sp->tags->difficulty;
 
 	/* read chart properties */
@@ -2508,7 +2510,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
 		//Store the buffer information of each of the 12 INI strings to simplify the loading code
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
-	#define EOFNUMINIBOOLEANTYPES 12
+	#define EOFNUMINIBOOLEANTYPES 13
 	char *inibooleanbuffer[EOFNUMINIBOOLEANTYPES] = {NULL};
 		//Store the pointers to each of the boolean type INI settings (number 0 is reserved) to simplify the loading code
 	#define EOFNUMININUMBERTYPES 5
@@ -2551,6 +2553,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	inibooleanbuffer[9] = &unshare_drum_phrasing;
 	inibooleanbuffer[10] = &sp->tags->highlight_unsnapped_notes;
 	inibooleanbuffer[11] = &sp->tags->accurate_ts;
+	inibooleanbuffer[12] = &sp->tags->highlight_arpeggios;
 	ininumberbuffer[2] = &sp->tags->difficulty;
 
 	/* write file header */
@@ -4324,10 +4327,13 @@ void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		break;
 	}
 
-	if(sp->tags->highlight_unsnapped_notes)
-	{	//If the user has enabled the dynamic highlighting of non grid snapped notes
-		eof_track_remove_highlighting(sp, track);	//Remove existing highlighting from the track
-		(void) eof_song_highlight_non_grid_snapped_notes(sp, track);	//Re-create the highlighting as appropriate
+	if(sp->tags->highlight_unsnapped_notes || sp->tags->highlight_arpeggios)
+	{	//If the user has enabled the dynamic highlighting of non grid snapped notes or notes in arpeggios
+		eof_track_remove_highlighting(sp, track, 1);	//Remove existing temporary highlighting from the track
+		if(sp->tags->highlight_unsnapped_notes)
+			eof_song_highlight_non_grid_snapped_notes(sp, track);	//Re-create the non grid snapped highlighting as appropriate
+		if(sp->tags->highlight_arpeggios)
+			eof_song_highlight_arpeggios(sp, track);	//Re-create the arpeggio highlighting as appropriate
 	}
 }
 
@@ -7735,7 +7741,7 @@ void eof_hightlight_all_notes_above_fret_number(EOF_SONG *sp, unsigned long trac
 	}
 }
 
-void eof_track_remove_highlighting(EOF_SONG *sp, unsigned long track)
+void eof_track_remove_highlighting(EOF_SONG *sp, unsigned long track, char function)
 {
 	unsigned long ctr, flags;
 
@@ -7744,9 +7750,18 @@ void eof_track_remove_highlighting(EOF_SONG *sp, unsigned long track)
 
 	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
 	{	//For each note in the specified track
-		flags = eof_get_note_flags(sp, track, ctr);
-		flags &= ~EOF_NOTE_FLAG_HIGHLIGHT;
-		eof_set_note_flags(sp, track, ctr, flags);	//Clear the note's hightlight flag
+		if(!function || (function > 1))
+		{	//If the calling function signaled to remove the permanent highlight flag
+			flags = eof_get_note_flags(sp, track, ctr);
+			flags &= ~EOF_NOTE_FLAG_HIGHLIGHT;
+			eof_set_note_flags(sp, track, ctr, flags);	//Clear the note's permanent hightlight flag
+		}
+		if((function == 1) || (function > 1))
+		{	//If the calling function signaled to remove the temporary highlight flag
+			flags = eof_get_note_tflags(sp, track, ctr);
+			flags &= ~EOF_NOTE_TFLAG_HIGHLIGHT;
+			eof_set_note_tflags(sp, track, ctr, flags);	//Clear the note's temporary hightlight flag
+		}
 	}
 }
 

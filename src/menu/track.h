@@ -160,7 +160,6 @@ int eof_track_erase_track(void);			//Allows the user to erase the active track's
 int eof_track_erase_track_difficulty(void);	//Allows the user to erase the active track difficulty's contents
 
 int eof_menu_track_remove_highlighting(void);	//Removes highlighting from the notes in the active track
-int eof_menu_track_highlight_arpeggios(void);	//Enables highlighting for all notes in the active track that are within arpeggio phrases
 
 extern MENU eof_menu_track_rocksmith_popup_copy_menu[EOF_TRACKS_MAX];
 extern char eof_menu_track_rocksmith_popup_copy_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE];

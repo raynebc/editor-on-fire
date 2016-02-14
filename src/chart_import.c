@@ -407,7 +407,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 				unsigned long lastpos = -1;	//The position of the last imported note (not updated for sections that are parsed)
 				EOF_NOTE * new_note = NULL;
 				EOF_NOTE * prev_note = NULL;
-				char gemtype = 0, lastgemtype;	//Tracks whether the current and previously added gems are normal notes or technique markers
+				char gemtype = 0, lastgemtype = 0;	//Tracks whether the current and previously added gems are normal notes or technique markers
+				unsigned long threshold = (chart->resolution * 4.0 * (11.0 / 128.0)) + 0.5;	//This is the tick distance at which notes become forced strums instead of HOPOs (11/128 measure or further)
 
 				tracknum = sp->track[track]->tracknum;
 				while(current_note)
@@ -457,7 +458,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 								{	//If a previous gem was imported
 									if(current_note->chartpos != lastchartpos)
 									{	//If this gem is at a different position than the last one that was imported
-										if((current_note->chartpos > lastchartpos) && (current_note->chartpos - lastchartpos < ((chart->resolution * (3.0 / 8.0)) + 0.5)))
+										if((current_note->chartpos > lastchartpos) && (current_note->chartpos - lastchartpos < threshold))
 										{	//If the note starts less than 3/32 measure (4 times the chart resolution, which represents one beat length) from the previous note's start position
 											new_note->flags |= EOF_NOTE_FLAG_F_HOPO;	//It is a hammer on note
 										}
@@ -583,20 +584,31 @@ EOF_SONG * eof_import_chart(const char * fn)
 		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
 		{	//For each note in the track
 			if(eof_note_count_colors(sp, ctr, ctr2) > 1)
-			{	//If this note is a chord
+			{	//If this note is a chord (Note:  Any technique markers will have been imported as single notes so it's not possible for them to be part of any chord at this point)
 				eof_set_note_flags(sp, ctr, ctr2, (eof_get_note_flags(sp, ctr, ctr2) & (~EOF_NOTE_FLAG_F_HOPO)));	//Clear the forced HOPO flag for this note
 			}
 
-			prevnote = ctr2;
-			do{
-				prevnote = eof_track_fixup_previous_note(sp, ctr, prevnote);			//Keep reviewing previous notes in this track difficulty
-			}while((prevnote >= 0) && (eof_get_note_note(sp, ctr, prevnote) & ~31));	//until there are no more notes using lanes higher than lane 5
+			if(eof_get_note_note(sp, ctr, ctr2) & 31)
+			{	//If this is a normal normal gem (using lanes 1 through 5), perform other checks to enforce proper forced HOPO rules
+				prevnote = ctr2;
+				do{
+					prevnote = eof_track_fixup_previous_note(sp, ctr, prevnote);			//Keep reviewing previous notes in this track difficulty
+					if(prevnote >= 0)
+					{	//If there was a previous note
+						if((eof_get_note_pos(sp, ctr, prevnote) == eof_get_note_pos(sp, ctr, ctr2)) && (eof_get_note_note(sp, ctr, prevnote) & 31))
+						{	//If that previous note is at the same timestamp and is a normal gem (using lanes 1 through 5), it will become a chord when fixup logic runs
+							eof_set_note_flags(sp, ctr, ctr2, (eof_get_note_flags(sp, ctr, ctr2) & (~EOF_NOTE_FLAG_F_HOPO)));			//Clear the forced HOPO flag for both single notes in the chord
+							eof_set_note_flags(sp, ctr, prevnote, (eof_get_note_flags(sp, ctr, prevnote) & (~EOF_NOTE_FLAG_F_HOPO)));
+						}
+					}
+				}while((prevnote >= 0) && (eof_get_note_note(sp, ctr, prevnote) & ~31));	//until there are no more notes using lanes higher than lane 5
 
-			if(prevnote >= 0)
-			{	//If a previous note gem was found for this track difficulty
-				if((eof_get_note_note(sp, ctr, prevnote) & 31) == (eof_get_note_note(sp, ctr, ctr2) & 31))
-				{	//If this note is a repeat of that note (only considering the standard 5 gems and ignoring any other unrecognized markers)
-					eof_set_note_flags(sp, ctr, ctr2, (eof_get_note_flags(sp, ctr, ctr2) & (~EOF_NOTE_FLAG_F_HOPO)));	//Clear the forced HOPO flag for this note
+				if(prevnote >= 0)
+				{	//If a previous note gem was found for this track difficulty
+					if((eof_get_note_note(sp, ctr, prevnote) & 31) == (eof_get_note_note(sp, ctr, ctr2) & 31))
+					{	//If this note is a repeat of that note (only considering the standard 5 gems and ignoring any other unrecognized markers)
+						eof_set_note_flags(sp, ctr, ctr2, (eof_get_note_flags(sp, ctr, ctr2) & (~EOF_NOTE_FLAG_F_HOPO)));	//Clear the forced HOPO flag for this note
+					}
 				}
 			}
 		}

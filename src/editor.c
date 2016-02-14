@@ -2161,8 +2161,8 @@ if(eof_key_code == KEY_PAUSE)
 				(void) eof_menu_note_move_by_grid_snap(-1);
 				if(eof_song->tags->highlight_unsnapped_notes)
 				{	//If the user has enabled the dynamic highlighting of non grid snapped notes
-					eof_track_remove_highlighting(eof_song, eof_selected_track);	//Remove existing highlighting from the track
-					(void) eof_song_highlight_non_grid_snapped_notes(eof_song, eof_selected_track);	//Re-create the highlighting as appropriate
+					eof_track_remove_highlighting(eof_song, eof_selected_track, 1);	//Remove existing temporary highlighting from the track
+					eof_song_highlight_non_grid_snapped_notes(eof_song, eof_selected_track);	//Re-create the temporary highlighting as appropriate
 				}
 			}
 			eof_use_key();
@@ -2201,8 +2201,8 @@ if(eof_key_code == KEY_PAUSE)
 				(void) eof_menu_note_move_by_grid_snap(1);
 				if(eof_song->tags->highlight_unsnapped_notes)
 				{	//If the user has enabled the dynamic highlighting of non grid snapped notes
-					eof_track_remove_highlighting(eof_song, eof_selected_track);	//Remove existing highlighting from the track
-					(void) eof_song_highlight_non_grid_snapped_notes(eof_song, eof_selected_track);	//Re-create the highlighting as appropriate
+					eof_track_remove_highlighting(eof_song, eof_selected_track, 1);	//Remove existing temporary highlighting from the track
+					eof_song_highlight_non_grid_snapped_notes(eof_song, eof_selected_track);	//Re-create the highlighting as appropriate
 				}
 			}
 			eof_use_key();
@@ -5525,7 +5525,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		}
 		if((eof_note_type == eof_get_note_type(eof_song, eof_selected_track, i)) && (notepos + notelength >= start))
 		{	//If this note is in the selected instrument difficulty and would render between the left and right edges of the piano roll
-			if(eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_NOTE_FLAG_HIGHLIGHT)
+			if((eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_NOTE_FLAG_HIGHLIGHT) || (eof_get_note_tflags(eof_song, eof_selected_track, i) & EOF_NOTE_TFLAG_HIGHLIGHT))
 			{	//If this note is flagged to be highlighted, render a yellow colored background
 				markerlength = notelength / eof_zoom;
 				if(markerlength < eof_screen_layout.note_size)

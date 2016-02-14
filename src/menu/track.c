@@ -723,7 +723,7 @@ int eof_track_transpose_tuning(EOF_PRO_GUITAR_TRACK* tp, char *tuningdiff)
 										}
 										else if(skiptranspose & 1)
 										{	//Otherwise highlight it and warn about the note fret value
-											tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;
+											tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight it with the permanent flag
 											if(!(warning & 1))
 											{	//If the user hasn't been warned about this problem yet
 												eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
@@ -751,7 +751,7 @@ int eof_track_transpose_tuning(EOF_PRO_GUITAR_TRACK* tp, char *tuningdiff)
 										}
 										else if(skiptranspose & 1)
 										{	//Otherwise highlight it and warn about the note fret value
-											tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;
+											tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight it with the permanent flag
 											if(!(warning & 1))
 											{	//If the user hasn't been warned about this problem yet
 												eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
@@ -833,7 +833,7 @@ int eof_track_transpose_tuning(EOF_PRO_GUITAR_TRACK* tp, char *tuningdiff)
 						}
 						else if(skiptranspose & (2 | 4 | 8))
 						{	//Otherwise highlight it and warn about the slide
-							tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;
+							tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight it with the permanent flag
 							if((skiptranspose & 2) && !(warning & 2))
 							{	//If the user hasn't been warned about this problem yet
 								eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
@@ -1866,7 +1866,6 @@ MENU eof_track_proguitar_menu[] =
 	{"Set number of &Frets/strings", eof_track_set_num_frets_strings, NULL, 0, NULL},
 	{"Set &Capo", eof_track_pro_guitar_set_capo_position, NULL, 0, NULL},
 	{"&Ignore tuning/capo", eof_track_pro_guitar_toggle_ignore_tuning, NULL, 0, NULL},
-	{"&Highlight notes in arpeggios", eof_menu_track_highlight_arpeggios, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -2799,35 +2798,15 @@ int eof_menu_track_remove_highlighting(void)
 	if(!eof_song || (eof_selected_track >= eof_song->tracks))
 		return 0;	//Error
 
-	eof_track_remove_highlighting(eof_song, eof_selected_track);
 	if(eof_song->tags->highlight_unsnapped_notes)
-	{	//If the feature highlight unsnapped notes is enabled, disable it now
-		(void) eof_menu_song_highlight_non_grid_snapped_notes();
+	{	//If the feature to highlight unsnapped notes is enabled, disable it now
+		eof_song->tags->highlight_unsnapped_notes = 0;
 	}
-	return 1;
-}
-
-int eof_menu_track_highlight_arpeggios(void)
-{
-	unsigned long ctr, ctr2, tracknum;
-	EOF_PRO_GUITAR_TRACK *tp;
-
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
-		return 1;	//Do not allow this function to run when a pro guitar format track is not active
-
-	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	tp = eof_song->pro_guitar_track[tracknum];
-	for(ctr = 0; ctr < tp->notes; ctr++)
-	{	//For each note in the active pro guitar track
-		for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
-		{	//For each arpeggio section in the track
-			if((tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
-			{	//If the note is within the arpeggio phrase
-				tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight it
-			}
-		}
+	if(eof_song->tags->highlight_arpeggios)
+	{	//If the feature to highlight notes in arpeggios is enabled, disable it now
+		eof_song->tags->highlight_arpeggios = 0;
 	}
-
+	eof_track_remove_highlighting(eof_song, eof_selected_track, 2);	//Remove all highlighting
 	return 1;
 }
 
