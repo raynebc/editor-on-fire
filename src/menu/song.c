@@ -3982,7 +3982,7 @@ void eof_song_highlight_arpeggios(EOF_SONG *sp, unsigned long track)
 	if(!sp || (track >= sp->tracks))
 		return;	//Invalid parameters
 	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
-		return;	//Do not allow this function to run when a pro guitar format track is not active
+		return;	//Do not allow this function to run on a non pro guitar track
 
 	tracknum = sp->track[track]->tracknum;
 	tp = sp->pro_guitar_track[tracknum];

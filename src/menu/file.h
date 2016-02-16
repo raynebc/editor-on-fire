@@ -87,9 +87,10 @@ int eof_test_controller_conflict(EOF_CONTROLLER *ct,int start,int stop);
 void EnumeratedBChartInfo(struct FeedbackChart *chart);
 	//Debug function to call an allegro_message with summary information about the passed chart
 
-int eof_mp3_to_ogg(char *file, char *directory);
+int eof_audio_to_ogg(char *file, char *directory);
 	//Uses the specified file to create guitar.ogg in the specified directory
 	//If the extension of the file is .mp3, it is converted to OGG format and a copy of the original mp3 file is stored at the specified directory,
+	// if the extension of the file is .wav, it is converted to OGG format,
 	// otherwise the specified file is simply copied to the specified directory
 	//Returns zero on successful conversion or nonzero if conversion was canceled/unsuccessful
 

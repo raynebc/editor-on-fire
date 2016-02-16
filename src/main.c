@@ -1588,10 +1588,10 @@ int eof_load_ogg(char * filename, char silence_failover)
 		returnedfn = ncd_file_select(0, directory, "Select Music File", eof_filter_music_files);
 		eof_clear_input();
 		if(returnedfn)
-		{	//User selected an OGG or MP3 file, write guitar.ogg into the chart's destination folder accordingly
+		{	//User selected an OGG, WAV or MP3 file, write guitar.ogg into the chart's destination folder accordingly
 			ptr = returnedfn;
 			(void) replace_filename(directory, filename, "", 1024);	//Store the path of the file's parent folder
-			if(!eof_mp3_to_ogg(returnedfn, directory))			//Create guitar.ogg in the folder
+			if(!eof_audio_to_ogg(returnedfn, directory))			//Create guitar.ogg in the folder
 			{	//If the copy or conversion to create guitar.ogg succeeded
 				(void) replace_filename(returnedfn, filename, "guitar.ogg", 1024);	//guitar.ogg is the expected file
 				eof_music_data = (void *)eof_buffer_file(returnedfn, 0);
@@ -4100,11 +4100,11 @@ int eof_initialize(int argc, char * argv[])
 	}
 	if(eof_supports_mp3)
 	{
-		ncdfs_filter_list_add(eof_filter_music_files, "ogg;mp3", "Music Files (*.ogg, *.mp3)", 1);
+		ncdfs_filter_list_add(eof_filter_music_files, "ogg;mp3;wav", "Music Files (*.ogg, *.mp3, *.wav)", 1);
 	}
 	else
 	{
-		ncdfs_filter_list_add(eof_filter_music_files, "ogg", "Music Files (*.ogg)", 1);
+		ncdfs_filter_list_add(eof_filter_music_files, "ogg;wav", "Music Files (*.ogg, *.wav)", 1);
 	}
 	eof_filter_ogg_files = ncdfs_filter_list_create();
 	if(!eof_filter_ogg_files)

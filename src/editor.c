@@ -589,8 +589,10 @@ int eof_is_any_grid_snap_position(unsigned long pos, int *beat, char *gridsnapva
 {
 	EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
 	long beatnum;
-	int retval = 0, ctr;
+	int retval = 0, ctr, lastsnap = 8;
 	char temp_mode = eof_snap_mode;	//Store the grid snap setting in use
+	char foundgridsnapvalue = 0, foundgridsnapnum = 0;
+	int foundbeat = -1;
 
 	if(!eof_song)
 		return 0;
@@ -602,40 +604,25 @@ int eof_is_any_grid_snap_position(unsigned long pos, int *beat, char *gridsnapva
 	if(pos >= eof_song->beat[eof_song->beats - 1]->pos)	//If the specified position is after the last beat marker
 		return 0;
 
-	//Initialize the grid snap position data that will be returned, if applicable
-	if(gridsnapnum)
-		*gridsnapnum = 0;
-	if(gridsnapvalue)
-		*gridsnapvalue = 0;
-	if(beat)
-		*beat = -1;
+	if(temp_mode != EOF_SNAP_CUSTOM)
+		lastsnap = 7;	//If no custom grid snap is in effect, it won't be checked in the loop below
 
-	for(ctr = 1; ctr < 9; ctr++)
-	{	//For each of the grid snap settings
-		if((ctr == 8) && (temp_mode != EOF_SNAP_CUSTOM))
-		{	//If no custom grid snap is in effect
-			break;	//Don't compare this note against a custom grid snap position
-		}
+	for(ctr = 1; ctr <= lastsnap; ctr++)
+	{	//For each of the applicable grid snap settings
 		eof_snap_mode = ctr;			//Put this grid snap setting into effect
 		eof_snap_logic(&temp, pos);		//Find the next grid snap position that occurs after the specified position
 		if(temp.pos == pos)
 		{
 			retval = 1;	//Track that a matching grid snap position was found
-			if(gridsnapvalue)
-			{	//If the calling function wanted to know which grid snap the position aligned with
-				*gridsnapvalue = eof_snap_mode;
-			}
-			if(beat)
-			{	//If the calling function wanted to know which beat the matching grid snap position was in
-				*beat = temp.beat;
-			}
+			foundgridsnapvalue = eof_snap_mode;
+			foundbeat = temp.beat;
 			if(gridsnapnum)
 			{	//If the calling function wanted to know which grid snap number the position aligned with
 				for(ctr = 0; (ctr < EOF_MAX_GRID_SNAP_INTERVALS) && (ctr < temp.intervals); ctr++)
 				{	//For each grid snap position determined by eof_snap_logic()
 					if((unsigned long)(temp.grid_pos[ctr] + 0.5) == pos)
 					{	//If this is the matching grid snap position, when rounded to the nearest millisecond
-						*gridsnapnum = ctr;
+						foundgridsnapnum = ctr;
 						break;
 					}
 				}
@@ -644,6 +631,13 @@ int eof_is_any_grid_snap_position(unsigned long pos, int *beat, char *gridsnapva
 		}
 	}
 
+	//Return any desired values back to the calling function
+	if(gridsnapnum)
+		*gridsnapnum = foundgridsnapnum;
+	if(gridsnapvalue)
+		*gridsnapvalue = foundgridsnapvalue;
+	if(beat)
+		*beat = foundbeat;
 	eof_snap_mode = temp_mode;	//Restore the grid snap value that was in effect
 	return retval;
 }
@@ -4365,6 +4359,24 @@ void eof_vocal_editor_logic(void)
 						eof_pen_lyric.pos = eof_song->vocal_track[tracknum]->lyric[eof_hover_note]->pos;
 					}
 				}
+			}
+
+			/* handle initial middle click (only if full screen 3D view is not in effect) */
+			if(!eof_full_screen_3d && (mouse_b & 4) && eof_mclick_released)
+			{	//If the middle click hasn't been processed yet
+				while(mouse_b & 4);	//Wait until the middle mouse button is released before proceeding (this depends on automatic mouse polling, so EOF cannot call poll_mouse() manually or this becomes an infinite loop)
+				if(eof_hover_lyric)
+				{	//If a lyric is being hovered over
+					(void) eof_menu_edit_deselect_all();
+					eof_selection.current = eof_hover_note;
+					eof_selection.multi[eof_hover_note] = 1;
+					(void) eof_edit_lyric_dialog();
+				}
+				eof_mclick_released = 0;
+			}
+			else
+			{	//If the middle mouse button is not held
+				eof_mclick_released = 1;	//Track that the middle click button has been release and is ready to be processed again the next time it is clicked
 			}
 
 			/* handle initial left click */

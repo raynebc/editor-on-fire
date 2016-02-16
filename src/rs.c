@@ -4727,6 +4727,8 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 
 	if(ptr)
 	{	//If the calling function passed a techniques structure
+		char keeplength = 0;	//Set to nonzero if the note's techniques require the sustain to be kept
+
 		memset(ptr, 0, sizeof(EOF_RS_TECHNIQUES));	//Force this structure to fill with zeroes to avoid scenarios where two identical structures fail memory comparison because of differences in the values of padding between variables
 		ptr->length = eof_get_note_length(sp, track, notenum);
 
@@ -4740,16 +4742,9 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 				ptr->length = stop_tech_note_position - notepos;
 			}
 		}
-		if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO))
-		{	//If the note isn't a bend, vibrato, slide (bend and slide notes are required to have a length > 0 or Rocksmith will crash) or unpitched slide status
-			if((ptr->length == 1) && !((target == 2) && (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT)))
-			{	//Only if this note has the absolute minimum possible length and does not have the sustain or linknext status applied and the target is Rocksmith 2
-				ptr->length = 0;	//Convert to a length of 0 so that it doesn't display as a sustain note in-game
-			}
-		}
-		else if(ptr->palmmute || ptr->stringmute)
-		{	//Otherwise, if the note is palm or string muted
-			ptr->length = 0;	//Remove its sustain
+		if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO))
+		{	//If this note has bend, vibrato, slide (bend and slide notes are required to have a length > 0 or Rocksmith will crash), unpitched slide or sustain status
+			keeplength = 1;
 		}
 		if(fret)
 		{	//If this string is fretted (open notes don't have slide or bend attributes written)
@@ -4878,10 +4873,22 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 		if((eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN) && (target == 2))
 		{	//If the note's extended flags indicate the sustain status is applied and Rocksmith 2 export is in effect
 			ptr->sustain = 1;
+			keeplength = 1;
 		}
 		else
 		{
 			ptr->sustain = 0;
+		}
+		if(!keeplength)
+		{	//If the note doesn't need to keep its sustain
+			if((ptr->length == 1) && !((target == 2) && (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT)))
+			{	//Only if this note has the absolute minimum possible length and does not have the sustain or linknext status applied and the target is Rocksmith 2
+				ptr->length = 0;	//Convert a 1ms note to a length of 0 so that it doesn't display as a sustain note in-game
+			}
+			if(ptr->palmmute || ptr->stringmute)
+			{	//If the note is palm or string muted
+				ptr->length = 0;	//Remove its sustain
+			}
 		}
 	}//If the calling function passed a techniques structure
 

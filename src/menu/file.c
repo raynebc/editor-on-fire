@@ -2093,12 +2093,12 @@ void EnumeratedBChartInfo(struct FeedbackChart *chart)
 	allegro_message("%s",chartinfo);
 }
 
-int eof_mp3_to_ogg(char *file, char *directory)
+int eof_audio_to_ogg(char *file, char *directory)
 {
 	char syscommand[1024] = {0};
 	char cfn[1024] = {0};
 
-	eof_log("eof_mp3_to_ogg() entered", 1);
+	eof_log("eof_audio_to_ogg() entered", 1);
 
 	if((file == NULL) || (directory == NULL))
 		return 3;	//Return invalid filename
@@ -2111,7 +2111,7 @@ int eof_mp3_to_ogg(char *file, char *directory)
 	}
 
 	if(!ustricmp(get_extension(file), "mp3"))
-	{
+	{	//Convert from MP3
 		//If an MP3 is to be encoded to OGG, store a copy of the MP3 as "original.mp3"
 		if(ustricmp(syscommand,directory))
 		{	//If the user did not select a file named original.mp3 in the chart's folder, check to see if a such-named file will be overwritten
@@ -2152,11 +2152,26 @@ int eof_mp3_to_ogg(char *file, char *directory)
 		{
 			return 2;	//Return user canceled conversion
 		}
-	}
-
-	/* otherwise copy it as-is (assume OGG file) */
+	}//Convert from MP3
+	else if(!ustricmp(get_extension(file), "wav"))
+	{	//Convert from WAV
+		if(eof_ogg_settings())
+		{
+			put_backslash(directory);												//Ensure that the directory string ends in a folder separator
+			#ifdef ALLEGRO_WINDOWS
+				(void) uszprintf(syscommand, (int) sizeof(syscommand), "wavtoogg \"%s\" %s \"%sguitar.ogg\"", file, eof_ogg_quality[(int)eof_ogg_setting], directory);
+			#else
+				(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc --quiet -q %s --resample 44100 -s 0 \"%s\" -o \"%sguitar.ogg\"", eof_ogg_quality[(int)eof_ogg_setting], file, directory);
+			#endif
+			(void) eof_system(syscommand);
+		}
+		else
+		{
+			return 2;	//Return user canceled conversion
+		}
+	}//Convert from WAV
 	else
-	{
+	{	//Copy as-is (assume OGG file)
 		if(!eof_menu_file_new_supplement(directory, NULL, 1))
 		{	//If the user declined to overwrite an existing "guitar.ogg" file at the destination path
 			eof_cursor_visible = 1;
@@ -2343,8 +2358,8 @@ int eof_new_chart(char * filename)
 		return 1;	//Return failure
 	}
 
-	/* if music file is MP3, convert it */
-	ret = eof_mp3_to_ogg(oggfilename,eof_etext3);
+	/* if music file is MP3/WAV, convert it */
+	ret = eof_audio_to_ogg(oggfilename,eof_etext3);
 	if(ret != 0)	//If guitar.ogg was not created successfully
 		return ret;	//Return failure
 
