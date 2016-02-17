@@ -2207,7 +2207,7 @@ int eof_menu_edit_claps_orange(void)
 	return eof_menu_edit_claps_helper(6,32);
 }
 
-int eof_menu_edit_claps_helper(unsigned long menu_item,char claps_flag)
+int eof_menu_edit_claps_helper(unsigned long menu_item, char claps_flag)
 {
 	int i;
 	for(i = 0; i < 7; i++)
@@ -2268,6 +2268,9 @@ int eof_menu_edit_midi_tones(void)
 
 int eof_menu_edit_bookmark_helper(int b)
 {
+	if(b >= EOF_MAX_BOOKMARK_ENTRIES)
+		return 0;	//Invalid parameter
+
 	if(eof_music_pos <= eof_av_delay)
 		return 1;	//Do not place a bookmark at a negative or zero chart position
 
@@ -3003,6 +3006,9 @@ static unsigned long notes_in_beat(int beat)
 	unsigned long count = 0;
 	unsigned long i;
 
+	if(!eof_song || (beat >= eof_song->beats))
+		return 0;	//Error
+
 	if(beat > eof_song->beats - 2)
 	{
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
@@ -3030,6 +3036,9 @@ static int lyrics_in_beat(int beat)
 {
 	unsigned long count = 0;
 	unsigned long i;
+
+	if(!eof_song || (beat >= eof_song->beats))
+		return 0;	//Error
 
 	if(beat > eof_song->beats - 2)
 	{
@@ -3291,7 +3300,7 @@ int eof_menu_edit_select_previous(void)
 	return 1;
 }
 
-void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, unsigned long desttrack)
+void eof_sanitize_note_flags(unsigned long *flags, unsigned long sourcetrack, unsigned long desttrack)
 {
 	if((flags == NULL) || (desttrack >= eof_song->tracks) || (sourcetrack >= eof_song->tracks))
 		return;
@@ -3659,7 +3668,8 @@ char * eof_menu_song_paste_from_difficulty_list(int index, int * size)
 	{
 		case -1:
 		{
-			*size = diffcount;
+			if(size)
+				*size = diffcount;
 			break;
 		}
 		default:

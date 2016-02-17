@@ -116,8 +116,8 @@ char *eof_lookup_tuning_name(EOF_SONG *sp, unsigned long track, char *tuning)
 	char matchfailed;
 	char is_bass = 0;	//Is set to nonzero if the specified track is to be considered a bass guitar track
 
-	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
-		return eof_tuning_unknown;	//Invalid song pointer or track number
+	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !tuning)
+		return eof_tuning_unknown;	//Invalid parameters
 	tracknum = sp->track[track]->tracknum;
 	if(sp->pro_guitar_track[tracknum]->numstrings > EOF_TUNING_LENGTH)
 		return eof_tuning_unknown;	//Unsupported number of strings

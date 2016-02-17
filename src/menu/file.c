@@ -301,6 +301,9 @@ int eof_menu_file_new_supplement(char *directory, char *filename, char check)
 	char syscommand[1024] = {0};
 	int err;
 
+	if(!directory)
+		return 0;	//Return error
+
 	(void) ustrcpy(syscommand, directory);
 
 	/* remove slash from folder name so we can check if it exists */
@@ -1559,7 +1562,8 @@ char * eof_input_list(int index, int * size)
 	{
 		case -1:
 		{
-			*size = EOF_INPUT_NAME_NUM;
+			if(size)
+				*size = EOF_INPUT_NAME_NUM;
 			break;
 		}
 		case 0:
@@ -1600,7 +1604,8 @@ char * eof_ogg_list(int index, int * size)
 	{
 		case -1:
 		{
-			*size = 7;
+			if(size)
+				*size = 7;
 			break;
 		}
 		case 0:
@@ -1648,7 +1653,8 @@ char * eof_guitar_list(int index, int * size)
 	{
 		case -1:
 		{
-			*size = 7;
+			if(size)
+				*size = 7;
 			break;
 		}
 		case 0:
@@ -1694,7 +1700,8 @@ char * eof_drum_list(int index, int * size)
 	{
 		case -1:
 		{
-			*size = 5;
+			if(size)
+				*size = 5;
 			break;
 		}
 		case 0:
@@ -1727,7 +1734,8 @@ char * eof_display_list(int index, int * size)
 	{
 		case -1:
 		{
-			*size = 3;
+			if(size)
+				*size = 3;
 			break;
 		}
 		case EOF_DISPLAY_640:
@@ -1847,20 +1855,21 @@ char *eof_lyric_detections_list_all(int index, int * size)
 
 	if(index >= 0)
 	{	//Return a display string for item #index
-		ptr=GetDetectionNumber(lyricdetectionlist,index);
+		ptr = GetDetectionNumber(lyricdetectionlist, index);
 		if(ptr == NULL)
 			return NULL;
 
-		if(printf("%s\t->\t%lu Lyrics",ptr->track,ptr->count) + 1 > 1024)	//If for some abnormal reason, the lyric info is too long to display in 1024 characters,
+		if(printf("%s\t->\t%lu Lyrics", ptr->track, ptr->count) + 1 > 1024)	//If for some abnormal reason, the lyric info is too long to display in 1024 characters,
 			return ptr->track;												//return just the track name instead of allowing an overflow
 
-		(void) snprintf(lyricdetectionstring, sizeof(lyricdetectionstring) - 1, "%s -> %lu Lyrics",ptr->track,ptr->count);	//Write a bounds-checked formatted string to the global lyricdetectionstring array
+		(void) snprintf(lyricdetectionstring, sizeof(lyricdetectionstring) - 1, "%s -> %lu Lyrics", ptr->track, ptr->count);	//Write a bounds-checked formatted string to the global lyricdetectionstring array
 		return lyricdetectionstring;	//and return it to be displayed in the list box
 	}
 
 	//Otherwise return NULL and set *size to the number of items to display in the list
-	for(ctr=1,ptr=lyricdetectionlist;ptr->next != NULL;ptr=ptr->next,ctr++);	//Count the number of lyric formats detected
-	*size=ctr;
+	for(ctr = 1, ptr = lyricdetectionlist; ptr->next != NULL; ptr = ptr->next, ctr++);	//Count the number of lyric formats detected
+	if(size)
+		*size = ctr;
 	return NULL;
 }
 
@@ -1869,13 +1878,16 @@ struct Lyric_Format *GetDetectionNumber(struct Lyric_Format *detectionlist, unsi
 	unsigned long ctr;
 	struct Lyric_Format *ptr;	//Linked list conductor
 
-	ptr=detectionlist;	//Point at front of list
-	for(ctr=0;ctr<number;ctr++)
+	if(!detectionlist)
+		return NULL;
+
+	ptr = detectionlist;	//Point at front of list
+	for(ctr = 0; ctr < number; ctr++)
 	{
 		if(ptr->next == NULL)
 			return NULL;
 
-		ptr=ptr->next;
+		ptr = ptr->next;
 	}
 
 	return ptr;
@@ -1908,12 +1920,15 @@ void eof_lyric_import_prompt(int *selectedformat, char **selectedtrack)
 	eof_show_mouse(NULL);
 }
 
-int eof_test_controller_conflict(EOF_CONTROLLER *controller,int start,int stop)
+int eof_test_controller_conflict(EOF_CONTROLLER *controller, int start, int stop)
 {
 	int ctr1;	//The counter for the key being tested
 	int ctr2;	//The counter for the keys being tested against
 
-	for(ctr1=start;ctr1<=stop;ctr1++)	//For each key to test
+	if(!controller)
+		return 2;	//Return error
+
+	for(ctr1 = start; ctr1 <= stop; ctr1++)	//For each key to test
 	{
 		if(controller->button[ctr1].type == EOF_CONTROLLER_BUTTON_TYPE_KEY)	//Keyboard button
 		{
@@ -2039,7 +2054,7 @@ void EnumeratedBChartInfo(struct FeedbackChart *chart)
 {
 	int printflen;	//Used to store the length of a printed format string
 	char *tempstr;	//Used to store a formatted print string
-	char *chartinfo=NULL;
+	char *chartinfo = NULL;
 
 	if(chart == NULL)
 		return;
@@ -3519,7 +3534,8 @@ char * eof_colors_list(int index, int * size)
 	{
 		case -1:
 		{
-			*size = EOF_NUM_COLOR_SETS;
+			if(size)
+				*size = EOF_NUM_COLOR_SETS;
 			break;
 		}
 		case 0:
@@ -3977,13 +3993,16 @@ char * eof_gp_tracks_list(int index, int * size)
 {
 	if(index < 0)
 	{	//Signal to return the list count
-		if(eof_parsed_gp_file)
+		if(size)
 		{
-			*size = eof_parsed_gp_file->numtracks;
-		}
-		else
-		{	//eof_parsed_gp_file pointer is not valid
-			*size = 0;
+			if(eof_parsed_gp_file)
+			{
+				*size = eof_parsed_gp_file->numtracks;
+			}
+			else
+			{	//eof_parsed_gp_file pointer is not valid
+				*size = 0;
+			}
 		}
 	}
 	else

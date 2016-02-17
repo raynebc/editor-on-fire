@@ -757,7 +757,7 @@ int eof_menu_beat_ts_off(void)
 
 void eof_menu_beat_delete_logic(unsigned long beat)
 {
-	int flags = eof_song->beat[beat]->flags;
+	int flags;
 
 	if(!eof_song || !beat || (beat >= eof_song->beats))
 		return;	//Invalid parameters
@@ -765,6 +765,7 @@ void eof_menu_beat_delete_logic(unsigned long beat)
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return;								//Return without making changes
 
+	flags = eof_song->beat[beat]->flags;
 	eof_song_delete_beat(eof_song, beat);
 	if((eof_song->beat[beat - 1]->flags & EOF_BEAT_FLAG_ANCHOR) && (eof_song->beat[beat]->flags & EOF_BEAT_FLAG_ANCHOR))
 	{
@@ -802,14 +803,16 @@ int eof_menu_beat_delete(void)
 
 int eof_menu_beat_push_offset_back(char *undo_made)
 {
-	unsigned long i;
-	unsigned long backamount = eof_song->beat[1]->pos - eof_song->beat[0]->pos;
+	unsigned long i, backamount;
 
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 0;							//Return without making changes
 	if(!undo_made)
 		return 0;	//Invalid parameter
+	if(eof_song->beats < 2)
+		return 0;	//Error condition
 
+	backamount = eof_song->beat[1]->pos - eof_song->beat[0]->pos;
 	if(eof_song->beat[0]->pos >= backamount)
 	{
 		if(*undo_made == 0)
@@ -1482,6 +1485,9 @@ char * eof_events_list(int index, int * size)
 	{
 		case -1:
 		{
+			if(!size)
+				return NULL;
+
 			*size = ecount;
 			(void) snprintf(eof_events_dialog_string, sizeof(eof_events_dialog_string) - 1, "Events (%lu)", ecount);
 			if(ecount > 0)
@@ -1556,6 +1562,9 @@ char * eof_events_list_all(int index, int * size)
 				}
 			}
 		}
+		if(!size)
+			return NULL;
+
 		*size = count;
 		(void) snprintf(eof_all_events_dialog_string, sizeof(eof_all_events_dialog_string) - 1, "All Events (%lu)", count);
 	}
@@ -2023,6 +2032,9 @@ int eof_edit_trainer_proc(int msg, DIALOG *d, int c)
 	int retval;
 	unsigned c2 = (unsigned)c;	//Force cast this to unsigned because Splint is incapable of avoiding a false positive detecting it as negative despite assertions proving otherwise
 
+	if(!d)	//If this pointer is NULL for any reason
+		return d_agup_edit_proc(msg, d, c);	//Allow the input character to be returned
+
 	if((msg == MSG_CHAR) || (msg == MSG_UCHAR))
 	{	//ASCII is not handled until the MSG_UCHAR event is sent
 		for(i = 0; i < 8; i++)
@@ -2093,6 +2105,9 @@ int eof_all_events_radio_proc(int msg, DIALOG *d, int c)
 
 	if(msg == MSG_CLICK)
 	{
+		if(!d)	//If this pointer is NULL for any reason
+			return d_agup_radio_proc(msg, d, c);	//Allow the input to be processed
+
 		selected_option = (int)d->dp2;	//Find out which radio button was clicked on
 
 		if(selected_option != previous_option)
@@ -2453,7 +2468,8 @@ char * eof_rs_section_add_list(int index, int * size)
 {
 	if(index < 0)
 	{	//Signal to return the list count
-		*size = EOF_NUM_RS_PREDEFINED_SECTIONS;
+		if(size)
+			*size = EOF_NUM_RS_PREDEFINED_SECTIONS;
 		return NULL;
 	}
 	else if(index < EOF_NUM_RS_PREDEFINED_SECTIONS)
@@ -2467,7 +2483,8 @@ char * eof_rs_event_add_list(int index, int * size)
 {
 	if(index < 0)
 	{	//Signal to return the list count
-		*size = EOF_NUM_RS_PREDEFINED_EVENTS;
+		if(size)
+			*size = EOF_NUM_RS_PREDEFINED_EVENTS;
 		return NULL;
 	}
 	else if(index < EOF_NUM_RS_PREDEFINED_EVENTS)

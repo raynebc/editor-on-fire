@@ -407,8 +407,8 @@ void eof_rebuild_tuning_strings(char *tuningarray)
 	int tuning, halfsteps;
 	char error;
 
-	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
-		return;	//Return without rebuilding string tunings if there is an error
+	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !tuningarray)
+		return;	//Invalid parameters
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 	for(ctr = 0; ctr < EOF_TUNING_LENGTH; ctr++)
@@ -461,6 +461,9 @@ int eof_edit_tuning_proc(int msg, DIALOG *d, int c)
 	int retval;
 	char tuning[EOF_TUNING_LENGTH] = {0};
 	unsigned c2 = (unsigned)c;	//Force cast this to unsigned because Splint is incapable of avoiding a false positive detecting it as negative despite assertions proving otherwise
+
+	if(!d)	//If this pointer is NULL for any reason
+		return d_agup_edit_proc(msg, d, c);	//Allow the input character to be returned
 
 	if((msg == MSG_CHAR) || (msg == MSG_UCHAR))
 	{	//ASCII is not handled until the MSG_UCHAR event is sent
@@ -1371,7 +1374,8 @@ char * eof_fret_hand_position_list(int index, int * size)
 	{
 		case -1:
 		{
-			*size = ecount;
+			if(size)
+				*size = ecount;
 			if(ecount > 0)
 			{	//If there is at least one fret hand position in the active difficulty
 				eof_fret_hand_position_list_dialog[2].flags = 0;	//Enable the Delete button
@@ -1387,7 +1391,8 @@ char * eof_fret_hand_position_list(int index, int * size)
 		}
 		default:
 		{
-			return eof_fret_hand_position_list_text[index];
+			if(index < EOF_MAX_NOTES)
+				return eof_fret_hand_position_list_text[index];
 		}
 	}
 	return NULL;
@@ -1536,12 +1541,18 @@ DIALOG eof_rs_popup_messages_dialog[] =
 
 char * eof_track_rs_popup_messages_list(int index, int * size)
 {
+	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return NULL;	//Incorrect track active
+
 	switch(index)
 	{
 		case -1:
 		{
-			*size = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum]->popupmessages;
-			(void) snprintf(eof_rs_popup_messages_dialog_string, sizeof(eof_rs_popup_messages_dialog_string) - 1, "RS popup messages (%lu)", eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum]->popupmessages);
+			if(size)
+				*size = eof_song->pro_guitar_track[tracknum]->popupmessages;
+			(void) snprintf(eof_rs_popup_messages_dialog_string, sizeof(eof_rs_popup_messages_dialog_string) - 1, "RS popup messages (%lu)", eof_song->pro_guitar_track[tracknum]->popupmessages);
 			break;
 		}
 		default:
@@ -2200,7 +2211,8 @@ char * eof_track_fret_hand_positions_copy_from_list(int index, int * size)
 	{
 		case -1:
 		{
-			*size = diffcount;
+			if(size)
+				*size = diffcount;
 			break;
 		}
 		default:
@@ -2310,7 +2322,8 @@ char * eof_magage_rs_phrases_list(int index, int * size)
 				}
 			}
 			(void) snprintf(eof_track_manage_rs_phrases_dialog_string, sizeof(eof_track_manage_rs_phrases_dialog_string) - 1, "Manage RS phrases (%lu)", numphrases);
-			*size = numphrases;
+			if(size)
+				*size = numphrases;
 			break;
 		}
 		default:
@@ -2901,7 +2914,8 @@ char * eof_track_rs_tone_changes_list(int index, int * size)
 		case -1:
 		{
 			unsigned long tonechanges = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum]->tonechanges;
-			*size = tonechanges;
+			if(size)
+				*size = tonechanges;
 			(void) snprintf(eof_track_rs_tone_changes_dialog_string, sizeof(eof_track_rs_tone_changes_dialog_string) - 1, "Rocksmith tone changes (%lu)", tonechanges);
 			break;
 		}
@@ -3260,7 +3274,8 @@ char * eof_track_rs_tone_names_list(int index, int * size)
 					namecount++;
 				}
 			}
-			*size = namecount;
+			if(size)
+				*size = namecount;
 			eof_track_rs_tone_names_list_strings_num = namecount;
 			(void) snprintf(eof_track_rs_tone_names_dialog_string, sizeof(eof_track_rs_tone_names_dialog_string) - 1, "Rocksmith tone names (%lu)", namecount);
 			break;
@@ -3488,10 +3503,6 @@ int eof_track_rs_tone_names_rename(DIALOG * d)
 
 	return D_REDRAW;	//Have Allegro redraw the dialog
 }
-
-
-
-
 
 int eof_menu_track_copy_popups_track_1(void)
 {

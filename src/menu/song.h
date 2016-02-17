@@ -146,7 +146,7 @@ int eof_menu_catalog_toggle_full_width(void);
 int eof_menu_song_seek_bookmark_help(int b);
 	//Seeks to the specified bookmark.  Returns nonzero on success
 int eof_is_number(char * buffer);
-	//Returns nonzero if all characters in the specified string are numerical.
+	//Returns nonzero if all characters in the specified string are numerical, or zero if otherwise or upon error
 
 int eof_menu_song_toggle_second_piano_roll(void);
 	//Toggles on/off the display of the secondary piano roll
@@ -176,6 +176,7 @@ int eof_menu_song_highlight_non_grid_snapped_notes(void);
 	//The highlighting is recreated every time the track's fixup logic runs
 void eof_song_highlight_non_grid_snapped_notes(EOF_SONG *sp, unsigned long track);
 	//Performs highlighting for all notes in the specified track that aren't at any grid snap position
+	//If notes are properly sorted, adjacent notes at the same timestamp in different difficulties will reduce processing time by re-using the grid snap lookup results
 	//If a custom grid snap is in effect, its position is also compared
 int eof_menu_song_highlight_arpeggios(void);	//Enables highlighting for all notes in the active track that are within arpeggio phrases
 void eof_song_highlight_arpeggios(EOF_SONG *sp, unsigned long track);

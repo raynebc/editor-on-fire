@@ -2774,16 +2774,19 @@ int eof_menu_note_default_no_hi_hat(void)
 /* split a lyric into multiple pieces (look for ' ' characters) */
 static void eof_split_lyric(int lyric)
 {
-	unsigned long i, l, c = 0, lastc;
+	unsigned long i, l, c = 0, lastc, stringlen;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long piece = 1, pieces = 1;
 	char * token = NULL;
 
 	if(!eof_vocals_selected)
 		return;
+	if(lyric >= eof_song->vocal_track[tracknum]->lyrics)
+		return;	//Invalid parameter
+	stringlen = strlen(eof_song->vocal_track[tracknum]->lyric[lyric]->text);
 
 	/* see how many pieces there are */
-	for(i = 0; i < (unsigned long)strlen(eof_song->vocal_track[tracknum]->lyric[lyric]->text); i++)
+	for(i = 0; i < stringlen; i++)
 	{
 		lastc = c;
 		c = eof_song->vocal_track[tracknum]->lyric[lyric]->text[i];
@@ -5216,7 +5219,7 @@ int eof_correct_chord_fingerings_option(char report, char *undo_made)
 	char cancelled, user_prompted = 0, auto_complete = 0, restore_tech_view;
 	int result;
 
-	if(!eof_song)
+	if(!eof_song || !undo_made)
 		return 0;	//Error
 
 	if(report)
@@ -5880,8 +5883,8 @@ void eof_pro_guitar_track_delete_arpeggio(EOF_PRO_GUITAR_TRACK * tp, unsigned lo
 {
 	unsigned long i;
 
-	if(index >= tp->arpeggios)
-		return;
+	if(!tp || (index >= tp->arpeggios))
+		return;	//Invalid parameters
 
 	tp->arpeggio[index].name[0] = '\0';	//Empty the name string
 	for(i = index; i < tp->arpeggios - 1; i++)
@@ -8611,6 +8614,9 @@ int eof_rocksmith_convert_mute_to_palm_mute_single_note(void)
 void eof_menu_note_cycle_selection_back(unsigned long notenum)
 {
 	unsigned long ctr;
+
+	if(notenum >= EOF_MAX_NOTES)
+		return;	//Invalid parameter
 
 	for(ctr = notenum; ctr + 1 < EOF_MAX_NOTES; ctr++)
 	{	//For each entry in the selection array, up to the second to last one

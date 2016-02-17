@@ -820,6 +820,9 @@ int eof_menu_song_seek_next_screen(void)
 
 int eof_menu_song_seek_bookmark_help(int b)
 {
+	if(b >= EOF_MAX_BOOKMARK_ENTRIES)
+		return 0;	//Invalid parameter
+
 	if(!eof_music_catalog_playback && (eof_song->bookmark_pos[b] != 0))
 	{
 		eof_set_seek_position(eof_song->bookmark_pos[b] + eof_av_delay);
@@ -902,6 +905,9 @@ int eof_menu_song_ini_settings(void)
 int eof_is_number(char * buffer)
 {
 	unsigned long i;
+
+	if(!buffer)
+		return 0;	//Invalid parameter
 
 	for(i = 0; i < ustrlen(buffer); i++)
 	{
@@ -1321,7 +1327,7 @@ int eof_menu_track_selected_track_number(int tracknum, int updatetitle)
 	}
 
 	if((tracknum > 0) && (tracknum < eof_song->tracks))
-	{
+	{	//If the specified track number is valid
 		for(i = 0; i < EOF_TRACKS_MAX; i++)
 		{
 			eof_track_selected_menu[i].flags = 0;
@@ -1391,7 +1397,8 @@ char * eof_ini_list(int index, int * size)
 	{
 		case -1:
 		{
-			*size = ecount;
+			if(size)
+				*size = ecount;
 			if(ecount > 0)
 			{
 				eof_ini_dialog[3].flags = 0;
@@ -2775,6 +2782,9 @@ char * eof_raw_midi_tracks_list(int index, int * size)
 	{
 		case -1:
 		{	//Return a count of the number of tracks
+			if(!size)
+				return NULL;	//Invalid parameter
+
 			if(!eof_MIDI_track_list_to_enumerate)
 			{
 				*size = 0;
@@ -3331,7 +3341,7 @@ int eof_find_note_sequence_time_range(EOF_SONG *sp, unsigned long target_track, 
 {
 	unsigned long ctr, target_start = 0, target_size = 0, notepos;
 
-	if(!sp || !hit_pos || (target_track >= sp->tracks))
+	if(!sp || !hit_pos || (target_track >= sp->tracks) || (input_track >= sp->tracks))
 		return 0;	//Return error
 
 	//Find the first note and count the total number of notes within the specified time span
@@ -3936,19 +3946,31 @@ int eof_menu_song_highlight_non_grid_snapped_notes(void)
 
 void eof_song_highlight_non_grid_snapped_notes(EOF_SONG *sp, unsigned long track)
 {
-	unsigned long ctr, tflags;
+	unsigned long ctr, tflags, thispos, lastpos = 0;
+	int thisisgridsnapped, lastisgridsnapped = 0;
 
 	if(!sp || (track >= sp->tracks))
 		return;	//Invalid parameters
 
 	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
 	{	//For each note in the specified track
-		if(!eof_is_any_grid_snap_position(eof_get_note_pos(sp, track, ctr), NULL, NULL, NULL))
+		thispos = eof_get_note_pos(sp, track, ctr);
+		if(ctr && (thispos == lastpos))
+		{	//If this isn't the first note, but it is at the same timestamp as the last examined note
+			thisisgridsnapped = lastisgridsnapped;	//Skip the number crunching and automatically assume the same highlighting status
+		}
+		else
+		{	//Otherwise do it the hard way
+			thisisgridsnapped = eof_is_any_grid_snap_position(thispos, NULL, NULL, NULL);
+		}
+		if(!thisisgridsnapped)
 		{	//If this note position does not match that of any grid snap
 			tflags = eof_get_note_tflags(sp, track, ctr);
 			tflags |= EOF_NOTE_TFLAG_HIGHLIGHT;	//Highlight the note with the temporary flag
 			eof_set_note_tflags(sp, track, ctr, tflags);
 		}
+		lastpos = thispos;						//Track the timestamp of the last examined note
+		lastisgridsnapped = thisisgridsnapped;	//And whether it was grid snapped
 	}
 }
 

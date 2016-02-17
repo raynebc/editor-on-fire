@@ -38,7 +38,7 @@ int eof_menu_edit_claps_blue(void);
 int eof_menu_edit_claps_purple(void);
 int eof_menu_edit_claps_orange(void);
 int eof_menu_edit_claps(void);
-int eof_menu_edit_claps_helper(unsigned long menu_item,char claps_flag);	//Sets the specified clap note setting
+int eof_menu_edit_claps_helper(unsigned long menu_item, char claps_flag);	//Sets the specified clap note setting
 int eof_menu_edit_vocal_tones(void);
 int eof_menu_edit_midi_tones(void);		//Toggle MIDI tones on/off
 int eof_menu_edit_bookmark_0(void);
