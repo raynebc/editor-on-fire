@@ -242,6 +242,9 @@ int eof_convert_extended_ascii(char * buffer, int size)
 {
 	char * workbuffer = NULL;
 
+	if(!buffer)
+		return 0;	//Invalid parameters
+
 	if(!eof_ucode_table)
 	{
 		return 0;

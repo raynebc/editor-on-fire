@@ -2927,39 +2927,39 @@ struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp)
 	return list;
 }
 
-struct Tempo_change *eof_add_to_tempo_list(unsigned long delta,double realtime,double BPM,struct Tempo_change *ptr)
+struct Tempo_change *eof_add_to_tempo_list(unsigned long delta, double realtime, double BPM, struct Tempo_change *ptr)
 {
 	struct Tempo_change *temp;
-	struct Tempo_change *cond=NULL;	//A conductor for the linked list
+	struct Tempo_change *cond = NULL;	//A conductor for the linked list
 
 	eof_log("eof_add_to_tempo_list() entered", 2);	//Only log this if verbose logging is on
 
 //Allocate and initialize new link
-	temp=(struct Tempo_change *)malloc(sizeof(struct Tempo_change));
+	temp = (struct Tempo_change *)malloc(sizeof(struct Tempo_change));
 	if(temp == NULL)
 	{
 		return NULL;
 	}
-	temp->delta=delta;
-	temp->realtime=realtime;
-	temp->BPM=BPM;
-	temp->next=NULL;
-	temp->TS_den=temp->TS_num=4;
+	temp->delta = delta;
+	temp->realtime = realtime;
+	temp->BPM = BPM;
+	temp->next = NULL;
+	temp->TS_den = temp->TS_num = 4;
 
 //Append to linked list
 	if(ptr == NULL)		//If the passed list was empty
 	{
 		return temp;	//Return the new head link
 	}
-	for(cond=ptr;cond->next != NULL;cond=cond->next);	//Seek to last link in the list
+	for(cond = ptr; cond->next != NULL; cond = cond->next);	//Seek to last link in the list
 
-	cond->next=temp;	//Last link points forward to new link
+	cond->next = temp;	//Last link points forward to new link
 	return ptr;			//Return original head link
 }
 
 void eof_destroy_tempo_list(struct Tempo_change *ptr)
 {
-	struct Tempo_change *temp=NULL;
+	struct Tempo_change *temp = NULL;
 
 	eof_log("eof_destroy_tempo_list() entered", 1);
 
@@ -2971,23 +2971,23 @@ void eof_destroy_tempo_list(struct Tempo_change *ptr)
 	}
 }
 
-unsigned long eof_ConvertToDeltaTime(double realtime,struct Tempo_change *anchorlist,EOF_MIDI_TS_LIST *tslist,unsigned long timedivision,char snaptobeat)
+unsigned long eof_ConvertToDeltaTime(double realtime, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision, char snaptobeat)
 {	//Uses the Tempo Changes list to calculate the absolute delta time of the specified realtime
 //	eof_log("eof_ConvertToDeltaTime() entered");
 
-	struct Tempo_change *temp=anchorlist;	//Stores the closest tempo change before the specified realtime
-	double tstime=0.0;						//Stores the realtime position of the closest TS change before the specified realtime
-	unsigned long tsdelta=0;				//Stores the delta time position of the closest TS change before the specified realtime
-	unsigned long delta=0;
-	double reltime=0.0;
-	unsigned long ctr=0;
+	struct Tempo_change *temp = anchorlist;	//Stores the closest tempo change before the specified realtime
+	double tstime = 0.0;						//Stores the realtime position of the closest TS change before the specified realtime
+	unsigned long tsdelta = 0;				//Stores the delta time position of the closest TS change before the specified realtime
+	unsigned long delta = 0;
+	double reltime = 0.0;
+	unsigned long ctr = 0;
 
 	assert_wrapper(temp != NULL);	//Ensure the tempomap is populated
 
 //Find the last time signature change at or before the specified real time value
 	if((tslist != NULL) && (tslist->changes > 0))
 	{	//If there's at least one TS change
-		for(ctr=0;ctr < tslist->changes;ctr++)
+		for(ctr = 0; ctr < tslist->changes; ctr++)
 		{
 			if(realtime >= tslist->change[ctr]->realtime)
 			{	//If the TS change is at or before the target realtime
@@ -3000,23 +3000,23 @@ unsigned long eof_ConvertToDeltaTime(double realtime,struct Tempo_change *anchor
 //Find the last tempo change at or before the specified real time value
 	while((temp->next != NULL) && (realtime >= (temp->next)->realtime))	//For each tempo change,
 	{	//If the tempo change is at or before the target realtime
-		temp=temp->next;	//Advance to that time stamp
+		temp = temp->next;	//Advance to that time stamp
 	}
 
 //Find the latest tempo or TS change that occurs before the target realtime position and use that event's timing for the conversion
 	if(tstime > temp->realtime)
 	{	//If the TS change is closer to the target realtime, find the delta time relative from this event
-		delta=tsdelta;				//Store the absolute delta time for this TS change
-		reltime=realtime - tstime;	//Find the relative timestamp from this TS change
+		delta = tsdelta;				//Store the absolute delta time for this TS change
+		reltime = realtime - tstime;	//Find the relative timestamp from this TS change
 	}
 	else
 	{	//Find the delta time relative from the closest tempo change
-		delta=temp->delta;	//Store the absolute delta time for the anchor
-		reltime=realtime - temp->realtime;	//Find the relative timestamp from this tempo change
+		delta = temp->delta;	//Store the absolute delta time for the anchor
+		reltime = realtime - temp->realtime;	//Find the relative timestamp from this tempo change
 	}
 
 //reltime is the amount of time we need to find a relative delta for, and add to the absolute delta time of the nearest preceding tempo/TS change
-	delta+=(unsigned long)((reltime * (double)timedivision * temp->BPM / 60000.0) + 0.5);
+	delta += (unsigned long)((reltime * (double)timedivision * temp->BPM / 60000.0) + 0.5);
 
 //Add logic so that if the calculated delta time is 1 delta away from lining up with a beat marker (based on time division), adjust to match
 	if(snaptobeat)
@@ -3036,11 +3036,11 @@ unsigned long eof_ConvertToDeltaTime(double realtime,struct Tempo_change *anchor
 
 int eof_extract_rba_midi(const char * source, const char * dest)
 {
-	FILE *fp=NULL;
-	FILE *tempfile=NULL;
-	unsigned long ctr=0;
+	FILE *fp = NULL;
+	FILE *tempfile = NULL;
+	unsigned long ctr = 0;
 	int jumpcode = 0;
-	char buffer[15]={0};
+	char buffer[15] = {0};
 
 	eof_log("eof_extract_rba_midi() entered", 1);
 
@@ -3049,15 +3049,15 @@ int eof_extract_rba_midi(const char * source, const char * dest)
 	{
 		return 1;	//Return failure
 	}
-	fp=fopen(source,"rb");
+	fp = fopen(source,"rb");
 	if(fp == NULL)
 	{
 		return 1;	//Return failure
 	}
 
 //Set up for catching an exception thrown by FoFLC's logic in the event of an error (such as an invalid MIDI file)
-	jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
-	if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
+	jumpcode = setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
+	if(jumpcode != 0) //if program control returned to the setjmp() call above returning any nonzero value
 	{
 		(void) puts("Assert() handled sucessfully!");
 		eof_show_mouse(NULL);
@@ -3076,16 +3076,16 @@ int eof_extract_rba_midi(const char * source, const char * dest)
 	ReleaseMemory(1);
 	InitMIDI();
 	InitLyrics();
-	Lyrics.quick=1;		//Should be fine to skip everything except loading basic track info
-	MIDI_Load(fp,NULL,0);
+	Lyrics.quick = 1;		//Should be fine to skip everything except loading basic track info
+	MIDI_Load(fp, NULL, 0);
 	if(MIDIstruct.hchunk.numtracks)
 	{	//If at least one valid MIDI track was parsed
 //Copy MIDI contents into file
-		tempfile=fopen(dest,"wb");
+		tempfile = fopen(dest,"wb");
 		if(tempfile != NULL)
 		{	//Seek to MIDI header and begin copying content
 			rewind(fp);
-			if(SearchPhrase(fp,0,NULL,"MThd",4,1) != 1)	//Search for and seek to MIDI header
+			if(SearchPhrase(fp, 0, NULL, "MThd", 4, 1) != 1)	//Search for and seek to MIDI header
 			{
 				(void) fclose(tempfile);
 				(void) fclose(fp);
@@ -3095,11 +3095,11 @@ int eof_extract_rba_midi(const char * source, const char * dest)
 			}
 
 			//Copy the file header
-			fread_err(buffer,14,1,fp);			//Read MIDI header
-			fwrite_err(buffer,14,1,tempfile);	//Write MIDI header
+			fread_err(buffer, 14, 1, fp);			//Read MIDI header
+			fwrite_err(buffer, 14, 1, tempfile);	//Write MIDI header
 
 			//Copy tracks
-			for(ctr=0;ctr<MIDIstruct.hchunk.numtracks;ctr++)	//For each track
+			for(ctr = 0; ctr < MIDIstruct.hchunk.numtracks; ctr++)	//For each track
 			{
 				CopyTrack(fp,ctr,tempfile);
 			}
@@ -3126,9 +3126,9 @@ EOF_MIDI_TS_LIST * eof_create_ts_list(void)
 		return NULL;
 	}
 
-	for(ctr=0;ctr<EOF_MAX_TS;ctr++)
+	for(ctr = 0; ctr < EOF_MAX_TS; ctr++)
 	{	//Init all pointers in the array as NULL
-		lp->change[ctr]=NULL;
+		lp->change[ctr] = NULL;
 	}
 	lp->changes = 0;
 	return lp;
@@ -3193,8 +3193,8 @@ void eof_destroy_ts_list(EOF_MIDI_TS_LIST *ptr)
 EOF_MIDI_TS_LIST *eof_build_ts_list(EOF_SONG *sp)
 {
 	unsigned long ctr;
-	unsigned num=4,den=4;			//Stores the current time signature
-	EOF_MIDI_TS_LIST * tslist=NULL;
+	unsigned num = 4, den = 4;			//Stores the current time signature
+	EOF_MIDI_TS_LIST * tslist = NULL;
 	unsigned long deltapos = 0;		//Stores the ongoing delta time
 	double deltafpos = 0.0;			//Stores the ongoing delta time (with double floating precision)
 	double beatlength = 0.0;		//Stores the current beat's length in deltas
@@ -3207,9 +3207,9 @@ EOF_MIDI_TS_LIST *eof_build_ts_list(EOF_SONG *sp)
 	if(tslist == NULL)
 		return NULL;
 
-	for(ctr=0;ctr < sp->beats;ctr++)
+	for(ctr = 0; ctr < sp->beats; ctr++)
 	{	//For each beat, create a list of Time Signature changes and store the appropriate delta position of each
-		if(eof_get_ts(sp,&num,&den,ctr) == 1)
+		if(eof_get_ts(sp, &num, &den, ctr) == 1)
 		{	//If a time signature exists on this beat
 			eof_midi_add_ts_realtime(tslist, sp->beat[ctr]->fpos, num, den, 0);	//Store the beat marker's time signature
 			tslist->change[tslist->changes-1]->pos = deltapos;	//Store the time signature's position in deltas
@@ -3223,11 +3223,11 @@ EOF_MIDI_TS_LIST *eof_build_ts_list(EOF_SONG *sp)
 	return tslist;
 }
 
-int eof_get_ts(EOF_SONG *sp,unsigned *num,unsigned *den,int beatnum)
+int eof_get_ts(EOF_SONG *sp, unsigned *num, unsigned *den, int beatnum)
 {
 //	eof_log("eof_get_ts() entered");
 
-	unsigned numerator=0,denominator=0;
+	unsigned numerator = 0, denominator = 0;
 
 	if((sp == NULL) || (beatnum >= sp->beats) || (sp->beat[beatnum] == NULL))
 		return -1;	//Return error
@@ -3292,7 +3292,7 @@ int eof_get_effective_ts(EOF_SONG *sp, unsigned *num, unsigned *den, int beatnum
 	return 1;	//Return success
 }
 
-int eof_apply_ts(unsigned num,unsigned den,int beatnum,EOF_SONG *sp,char undo)
+int eof_apply_ts(unsigned num, unsigned den, int beatnum, EOF_SONG *sp, char undo)
 {
 //	eof_log("eof_apply_ts() entered");
 
@@ -3347,7 +3347,7 @@ int eof_apply_ts(unsigned num,unsigned den,int beatnum,EOF_SONG *sp,char undo)
 	return 1;
 }
 
-int eof_dump_midi_track(const char *inputfile,PACKFILE *outf)
+int eof_dump_midi_track(const char *inputfile, PACKFILE *outf)
 {
 	unsigned long track_length;
 	PACKFILE *inf = NULL;
@@ -3548,7 +3548,7 @@ void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_chang
 			lastdelta = 0;
 			for(eventptr = trackptr->events; eventptr != NULL; eventptr = eventptr->next)
 			{	//For each event in the track
-				deltapos = eof_ConvertToDeltaTime(eventptr->realtime + anchorlist->realtime,anchorlist,tslist,timedivision,0);	//Store the tick position of the event (accounting for the MIDI delay of the active beat map)
+				deltapos = eof_ConvertToDeltaTime(eventptr->realtime + anchorlist->realtime, anchorlist, tslist, timedivision, 0);	//Store the tick position of the event (accounting for the MIDI delay of the active beat map)
 				WriteVarLen(deltapos - lastdelta, tempf);		//Write this event's relative delta time
 				if((eventptr->size == 2) && (((unsigned char *)eventptr->data)[0] == 0xFF) && (((unsigned char *)eventptr->data)[1] == 0x2F))
 				{	//If this is an end of track event that is missing the length field
@@ -3890,7 +3890,7 @@ EOF_MIDI_KS_LIST * eof_create_ks_list(void)
 EOF_MIDI_KS_LIST *eof_build_ks_list(EOF_SONG *sp)
 {
 	unsigned long ctr;
-	EOF_MIDI_KS_LIST * kslist=NULL;
+	EOF_MIDI_KS_LIST * kslist = NULL;
 
 	eof_log("eof_build_ks_list() entered", 1);
 
@@ -3900,7 +3900,7 @@ EOF_MIDI_KS_LIST *eof_build_ks_list(EOF_SONG *sp)
 	if(kslist == NULL)
 		return NULL;
 
-	for(ctr=0;ctr < sp->beats;ctr++)
+	for(ctr = 0; ctr < sp->beats; ctr++)
 	{	//For each beat, create a list of Time Signature changes and store the appropriate delta position of each
 		if((sp->beat[ctr]->flags & EOF_BEAT_FLAG_KEY_SIG) && (kslist->changes < EOF_MAX_KS))
 		{	//If a key signature exists on this beat, and the maximum number of key signatures hasn't been reached

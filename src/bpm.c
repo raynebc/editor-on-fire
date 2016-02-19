@@ -21,10 +21,12 @@ static void eof_bpm_estimator_callback(void * buffer, int nsamples, int stereo)
 	minibpm_process(eof_bpm_estimator_state, eof_bpm_estimator_buffer, nsamples / iter);
 }
 
-
 double eof_estimate_bpm(ALOGG_OGG * ogg)
 {
 	double bpm = 0.0;
+
+	if(!ogg)
+		return 0.0;
 
 	eof_bpm_estimator_state = minibpm_new((float)alogg_get_wave_freq_ogg(ogg));
 	if(eof_bpm_estimator_state)

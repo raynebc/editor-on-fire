@@ -689,7 +689,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 					ctr2++;		//Otherwise include this note in the slider note phrase
 				}
 				end = eof_get_note_pos(sp, ctr, ctr2) + eof_get_note_length(sp, ctr, ctr2);	//Track the end position of this run of slider notes
-				eof_track_add_section(sp, ctr, EOF_SLIDER_SECTION, 0, start, end, 0, NULL);	//Add the slider phrase
+				(void) eof_track_add_section(sp, ctr, EOF_SLIDER_SECTION, 0, start, end, 0, NULL);	//Add the slider phrase
 			}
 		}
 	}
@@ -1476,7 +1476,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 	return chart;
 }
 
-int Read_dB_string(char *source,char **str1, char **str2)
+int Read_dB_string(char *source, char **str1, char **str2)
 {
 	//Scans the source string for a valid dB tag: text = text	or	text = "text"
 	//The text to the left of the equal sign is returned through str1 as a new string, with whitespace truncated
@@ -1845,7 +1845,7 @@ void DestroyFeedbackChart(struct FeedbackChart *ptr, char freestruct)
 		free(ptr);
 }
 
-unsigned long FindLongestLineLength_ALLEGRO(const char *filename,char exit_on_empty)
+unsigned long FindLongestLineLength_ALLEGRO(const char *filename, char exit_on_empty)
 {
 	unsigned long maxlinelength=0;
 	unsigned long ctr=0;

@@ -491,7 +491,7 @@ int eof_compare_set_ini_string_setting(EOF_SONG *sp, char *tag, char *value, int
 	char *ptr;
 	char alter = 0, add = 0;
 
-	if(!sp || !tag || !value || !function)
+	if(!sp || !tag || !value || !function || !logtag)
 		return 1;	//Return error
 
 	index = sp->tags->ini_settings;	//If no match is found, the setting will be appended to the list
@@ -569,7 +569,7 @@ int eof_compare_set_ini_pro_guitar_tuning(EOF_PRO_GUITAR_TRACK *tp, char *string
 	if(*function)
 	{	//If the calling function wanted to check for differences and prompt the user to overwrite
 		char changes = 0;
-		if((ctr < 4 || ctr > 6))
+		if((ctr < 4) || (ctr > 6))
 		{	//If the number of strings defined isn't supported
 			allegro_message("Warning:  Invalid pro guitar tuning tag.  Reverting to 6 string standard tuning.");
 			ctr = 6;
@@ -595,15 +595,17 @@ int eof_compare_set_ini_pro_guitar_tuning(EOF_PRO_GUITAR_TRACK *tp, char *string
 		}
 		*function = 0;	//Disable any further user prompting regarding this INI file
 	}
-
-	tp->numstrings = ctr;	//Define the number of strings in the track based on the tuning tag
-	memcpy(tp->tuning, tuning, EOF_TUNING_LENGTH);	//Copy the tuning array
+	else
+	{	//If any differences in the INI are to be accepted automatically (ie. an import instead of a project load)
+		tp->numstrings = ctr;	//Define the number of strings in the track based on the tuning tag
+		memcpy(tp->tuning, tuning, EOF_TUNING_LENGTH);	//Copy the tuning array
+	}
 	return 0;
 }
 
 int eof_compare_set_ini_integer(long *value, long original, char *string, int *function, char *tag)
 {
-	if(!value || !string || !function)
+	if(!value || !string || !function || !tag)
 		return 1;	//Return error
 
 	*value = atoi(string);

@@ -43,7 +43,7 @@ double eof_get_beat_length(EOF_SONG * sp, unsigned long beat)
 {
 	eof_log("eof_get_beat_length() entered", 2);
 
-	if(!sp)
+	if(!sp || (beat >= sp->beats))
 	{
 		return 0;
 	}
@@ -206,7 +206,7 @@ int eof_beat_is_anchor(EOF_SONG * sp, int cbeat)
 	if(cbeat >= EOF_MAX_BEATS)	//Bounds check
 		return 0;
 
-	if(!sp)
+	if(!sp || (cbeat >= sp->beats))
 	{
 		return 0;
 	}
@@ -236,7 +236,7 @@ unsigned long eof_find_previous_anchor(EOF_SONG * sp, unsigned long cbeat)
 	{
 		return 0;
 	}
-	if(!sp)
+	if(!sp || (cbeat >= sp->beats))
 	{
 		return 0;
 	}
@@ -261,7 +261,7 @@ long eof_find_next_anchor(EOF_SONG * sp, unsigned long cbeat)
 	{
 		return 0;
 	}
-	if(!sp)
+	if(!sp || (cbeat >= sp->beats))
 	{
 		return 0;
 	}
@@ -346,7 +346,7 @@ void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 	{
 		return;
 	}
-	if(!sp)
+	if(!sp || (cbeat >= sp->beats))
 	{
 		return;
 	}
@@ -471,7 +471,7 @@ void eof_song_delete_beat(EOF_SONG * sp, unsigned long beat)
 
  	eof_log("eof_song_delete_beat() entered", 2);
 
-	if(sp)
+	if(sp && (beat < sp->beats))
 	{
 		free(sp->beat[beat]);
 		for(i = beat; i < sp->beats - 1; i++)
@@ -669,7 +669,7 @@ unsigned long eof_get_measure(unsigned long measure, unsigned char count_only)
 
 	for(i = 0; i < eof_song->beats; i++)
 	{
-		if(eof_get_ts(eof_song,&beats_per_measure,NULL,i) == 1)
+		if(eof_get_ts(eof_song, &beats_per_measure, NULL, i) == 1)
 		{	//If this beat has a time signature change
 			first_measure = 1;	//Note that a time signature change has been found
 			beat_counter = 0;

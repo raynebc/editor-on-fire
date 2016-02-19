@@ -130,7 +130,7 @@ unsigned char eof_find_pen_note_mask(void);
 
 void eof_editor_logic_common(void);
 	//Performs editor logic common to both the editor and vocal editor windows (some variable initialization, handling beat marker, seek bar and playback controls)
-float eof_pos_distance(float p1, float p2);
+double eof_pos_distance(double p1, double p2);
 	//Returns the difference between the two floating point numbers as a positive value
 void eof_get_snap_ts(EOF_SNAP_DATA * sp, int beat);
 	//Finds the time signature in effect for the specified beat and stores the numerator and denominator into sp

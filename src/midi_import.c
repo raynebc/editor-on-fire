@@ -254,16 +254,16 @@ static void eof_midi_import_add_sysex_event(EOF_IMPORT_MIDI_EVENT_LIST * events,
 	}
 }
 
-double eof_ConvertToRealTime(unsigned long absolutedelta,struct Tempo_change *anchorlist,EOF_MIDI_TS_LIST *tslist,unsigned long timedivision,unsigned long offset)
+double eof_ConvertToRealTime(unsigned long absolutedelta, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision, unsigned long offset)
 {
 //	eof_log("eof_ConvertToRealTime() entered");
 
-	struct Tempo_change *temp=anchorlist;	//Point to first link in list
-	double time=0.0;
-	unsigned long reldelta=0;
-	double tstime=0.0;			//Stores the realtime position of the closest TS change before the specified realtime
-	unsigned long tsdelta=0;	//Stores the delta time position of the closest TS change before the specified realtime
-	unsigned long ctr=0;
+	struct Tempo_change *temp = anchorlist;	//Point to first link in list
+	double time = 0.0;
+	unsigned long reldelta = 0;
+	double tstime = 0.0;			//Stores the realtime position of the closest TS change before the specified realtime
+	unsigned long tsdelta = 0;	//Stores the delta time position of the closest TS change before the specified realtime
+	unsigned long ctr = 0;
 
 //Find the last time signature change at or before the target delta time
 	if((tslist != NULL) && (tslist->changes > 0))
@@ -281,31 +281,31 @@ double eof_ConvertToRealTime(unsigned long absolutedelta,struct Tempo_change *an
 //Find the last tempo change before the target delta time
 	while((temp->next != NULL) && (absolutedelta >= (temp->next)->delta))	//For each tempo change
 	{	//If the tempo change is at or before the target delta time
-		temp=temp->next;	//Advance to that time stamp
+		temp = temp->next;	//Advance to that time stamp
 	}
 
 //Find the latest tempo or TS change that occurs before the target delta position and use that event's timing for the conversion
 	if(tsdelta > temp->delta)
 	{	//If the TS change is closer to the target realtime, find the delta time relative from this event
-		reldelta=absolutedelta - tsdelta;	//Find the relative delta time from this TS change
-		time=tstime;						//Store the absolute realtime for the TS change
+		reldelta = absolutedelta - tsdelta;	//Find the relative delta time from this TS change
+		time = tstime;						//Store the absolute realtime for the TS change
 	}
 	else
 	{	//Find the delta time relative from the closest tempo change
-		reldelta=absolutedelta - temp->delta;	//Find the relative delta time from this tempo change
-		time=temp->realtime;					//Store the absolute realtime for the tempo change
+		reldelta = absolutedelta - temp->delta;	//Find the relative delta time from this tempo change
+		time = temp->realtime;					//Store the absolute realtime for the tempo change
 	}
 
 //reldelta is the amount of deltas we need to find a relative time for, and add to the absolute real time of the nearest preceding tempo/TS change
 //At this point, we have reached the tempo change that absolutedelta resides within, find the realtime
-	time+=(double)reldelta / (double)timedivision * (60000.0 / (temp->BPM));
+	time += (double)reldelta / (double)timedivision * (60000.0 / (temp->BPM));
 
-	return time+offset;
+	return time + offset;
 }
 
-inline unsigned long eof_ConvertToRealTimeInt(unsigned long absolutedelta,struct Tempo_change *anchorlist,EOF_MIDI_TS_LIST *tslist,unsigned long timedivision,unsigned long offset)
+inline unsigned long eof_ConvertToRealTimeInt(unsigned long absolutedelta, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision, unsigned long offset)
 {
-	return eof_ConvertToRealTime(absolutedelta,anchorlist,tslist,timedivision,offset) + 0.5;
+	return eof_ConvertToRealTime(absolutedelta, anchorlist, tslist, timedivision, offset) + 0.5;
 }
 
 //#define EOF_DEBUG_MIDI_IMPORT

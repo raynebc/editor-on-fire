@@ -10,6 +10,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function);
 	//Otherwise if a tag in the file is found to be different from what's defined in the project, the user is notified that the INI file was
 	//externally altered and prompted whether or not to merge the file's changes into the project.  If the user declines, this function
 	//returns without processing the remainder of the file.
+	//At this time, only file imports call this with a function value of 0
 
 int eof_compare_set_ini_string_field(char *dest, char *src, int *function, char *tag);
 	//If *function is nonzero, the destination string is compared against the source string (case insensitive)
@@ -50,6 +51,7 @@ int eof_compare_set_ini_pro_guitar_tuning(EOF_PRO_GUITAR_TRACK *tp, char *string
 	//	eof_ini_import() to cancel the processing of song.ini.  If user allows, an undo state is made and
 	//	*function is set to zero.
 	//Otherwise the tuning is updated in the specified pro guitar track
+	//If *function is zero, the tunings and string counts in the INI tags override those in the passed pro guitar structures
 
 int eof_compare_set_ini_integer(long *value, long original, char *string, int *function, char *tag);
 	//The string is converted into numerical format with atoi() and returned through the value pointer.

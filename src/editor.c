@@ -46,7 +46,7 @@ long        eof_tech_anchor_diff[EOF_TRACKS_MAX] = {0};
 EOF_SNAP_DATA eof_snap;
 EOF_SNAP_DATA eof_tail_snap;
 
-float eof_pos_distance(float p1, float p2)
+double eof_pos_distance(double p1, double p2)
 {
 //	eof_log("eof_pos_distance() entered");
 
@@ -81,10 +81,9 @@ void eof_get_snap_ts(EOF_SNAP_DATA * sp, int beat)
 {
 //	eof_log("eof_get_snap_ts() entered");
 
-	int tsbeat = 0;
-	int i;
+	int tsbeat = 0, i;
 
-	if(!sp)
+	if(!sp || !eof_song || (beat >= eof_song->beats))
 	{
 		return;
 	}
@@ -140,7 +139,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 	char measure_snap = 0;	//Unless a custom per-measure grid snap is defined, all grid snaps are per beat
 	double snaplength, least_amount;
 
-	if(!sp || (eof_song->beats < 2))
+	if(!sp || !eof_song || (eof_song->beats < 2))
 	{
 		return;
 	}
@@ -873,6 +872,8 @@ if(eof_key_code == KEY_PAUSE)
 	}
 
 	/* previous chord name match (CTRL+SHIFT+W)  */
+	/* add catalog entry (SHIFT+W) */
+	/* mark star power (CTRL+W) */
 	/* previous catalog entry (W) */
 	if(eof_key_char == 'w')
 	{
@@ -886,6 +887,11 @@ if(eof_key_code == KEY_PAUSE)
 		{	//SHIFT is held but CTRL is not
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			(void) eof_menu_catalog_add();
+			eof_use_key();
+		}
+		else if(!KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
+		{	//SHIFT is not held but CTRL is
+			(void) eof_menu_star_power_mark();
 			eof_use_key();
 		}
 		else if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
@@ -4992,7 +4998,7 @@ int eof_get_ts_text(int beat, char * buffer)
 //	eof_log("eof_get_ts_text() entered");
 	int ret = 0;
 
-	if(!buffer)
+	if(!buffer || !eof_song || (beat >= eof_song->beats))
 	{
 		return 0;
 	}

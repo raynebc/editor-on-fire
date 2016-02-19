@@ -62,7 +62,7 @@ struct FeedbackChart
 	struct dbTrack *tracks;		//Linked list of note tracks
 };
 
-int Read_dB_string(char *source,char **str1, char **str2);
+int Read_dB_string(char *source, char **str1, char **str2);
 	//Scans the source string for a valid dB tag: text = text	or	text = "text"
 	//The text to the left of the equal sign is returned through str1 as a new string, with whitespace truncated
 	//The text to the right of the equal sign is returned through str2 as a new string, with whitespace truncated

@@ -3486,6 +3486,7 @@ int eof_delete_hand_positions_for_selected_notes(void)
 
 	return 1;
 }
+
 int eof_note_can_be_played_within_fret_tolerance(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned char *current_low, unsigned char *current_high)
 {
 	unsigned char effective_lowest = 0, effective_highest = 0;	//Stores the cumulative highest and lowest fret values with the input range and the next note for tolerance testing
@@ -3731,10 +3732,12 @@ unsigned long eof_get_rs_section_instance_number(EOF_SONG *sp, unsigned long tra
 
 void eof_get_rocksmith_wav_path(char *buffer, const char *parent_folder, size_t num)
 {
-	(void) replace_filename(buffer, parent_folder, "", (int)num - 1);	//Obtain the destination path
-
 	if(!eof_song_loaded)
 		return;	//Don't perform this action unless a chart is loaded
+	if(!buffer || !parent_folder)
+		return;	//Invalid parameters
+
+	(void) replace_filename(buffer, parent_folder, "", (int)num - 1);	//Obtain the destination path
 
 	//Build target WAV file name
 	put_backslash(buffer);
@@ -5303,6 +5306,8 @@ int eof_rs_combine_linknext_logic(EOF_SONG * sp, unsigned long track, unsigned l
 		return 0;		//Invalid parameters
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+	if(notenum >= tp->notes)
+		return 0;	//Invalid parameters
 	if(!(tp->note[notenum]->note & (1 << stringnum)))	//If the specified chord doesn't have a gem on this string
 		return 0;		//Invalid paramter
 

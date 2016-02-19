@@ -473,7 +473,7 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 	unsigned long tracknum;
 	EOF_LEGACY_TRACK * tp;
 
-	if(!sp)
+	if(!sp || (track >= sp->tracks))
 	{
 		return;
 	}
@@ -819,7 +819,7 @@ void eof_vocal_track_fixup_lyrics(EOF_SONG *sp, unsigned long track, int sel)
 	long next;
 	EOF_VOCAL_TRACK * tp;
 
-	if(!sp)
+	if(!sp || (track >= sp->tracks))
 	{
 		return;
 	}
@@ -1015,7 +1015,7 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 
  	eof_log("eof_detect_difficulties() entered", 2);
 
-	if(sp)
+	if(sp && (track < sp->tracks))
 	{
 		memset(eof_track_diff_populated_status, 0, sizeof(eof_track_diff_populated_status));
 		eof_note_type_name[0][0] = ' ';
@@ -1096,15 +1096,15 @@ int eof_lyric_is_freestyle(EOF_VOCAL_TRACK * tp, unsigned long lyricnumber)
 
 int eof_is_freestyle(char *ptr)
 {
-	unsigned long ctr=0;
-	char c=0;
+	unsigned long ctr = 0;
+	char c = 0;
 
 	if(ptr == NULL)
 		return -1;	//Return error
 
-	for(ctr=0;ctr<EOF_MAX_LYRIC_LENGTH;ctr++)
+	for(ctr = 0; ctr < EOF_MAX_LYRIC_LENGTH; ctr++)
 	{
-		c=ptr[ctr];
+		c = ptr[ctr];
 
 		if(c == '\0')	//End of string
 			break;
@@ -1120,19 +1120,19 @@ void eof_set_freestyle(char *ptr, char status)
 {
 // 	eof_log("eof_set_freestyle() entered");
 
-	unsigned long ctr=0,ctr2=0;
-	char c=0,style=0;
+	unsigned long ctr = 0, ctr2 = 0;
+	char c = 0, style = 0;
 
 	if(ptr == NULL)
 		return;	//Return if input is invalid
 
-	for(ctr=0;ctr<EOF_MAX_LYRIC_LENGTH;ctr++)
+	for(ctr = 0; ctr < EOF_MAX_LYRIC_LENGTH; ctr++)
 	{
-		c=ptr[ctr];
+		c = ptr[ctr];
 
 		if((c != '#') && (c != '^'))	//If this is not a freestyle character
 		{
-			ptr[ctr2]=c;				//keep it, otherwise it will be overwritten by the rest of the lyric text
+			ptr[ctr2] = c;				//keep it, otherwise it will be overwritten by the rest of the lyric text
 			if(c == '\0')				//If the end of the string was just parsed
 				break;					//Exit from loop
 			ctr2++;						//Increment destination index into lyric string
@@ -1140,30 +1140,30 @@ void eof_set_freestyle(char *ptr, char status)
 		else
 		{
 			if(!style)
-				style=c;				//Remember this lyric's first freestyle character
+				style = c;				//Remember this lyric's first freestyle character
 		}
 	}
 
 	if(ctr == EOF_MAX_LYRIC_LENGTH)
 	{	//If the lyric is not properly NULL terminated
-		ptr[EOF_MAX_LYRIC_LENGTH]='\0';	//Truncate the string at its max length
-		ctr2=EOF_MAX_LYRIC_LENGTH;
+		ptr[EOF_MAX_LYRIC_LENGTH] = '\0';	//Truncate the string at its max length
+		ctr2 = EOF_MAX_LYRIC_LENGTH;
 	}
 
 //At this point, ctr2 is the NULL terminator's index into the string
 	if(status)
 	{
 		if(!style)			//If the original string didn't have a particular freestyle marker
-			style='#';		//Default to using '#'
+			style = '#';	//Default to using '#'
 
 		if(ctr2 < EOF_MAX_LYRIC_LENGTH)	//If there is room to append the pound character
 		{
-			ptr[ctr2]=style;
-			ptr[ctr2+1]='\0';
+			ptr[ctr2] = style;
+			ptr[ctr2+1] = '\0';
 		}
 		else if(ctr2 > 0)		//If one byte of the string can be truncated to write the pound character
 		{
-			ptr[ctr2-1]=style;
+			ptr[ctr2-1] = style;
 		}
 	}
 }
@@ -1213,7 +1213,7 @@ double eof_calc_beat_length(EOF_SONG *sp, unsigned long beat)
 	return ms;
 }
 
-char eof_check_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,unsigned long flag)
+char eof_check_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp, unsigned notenum, unsigned long flag)
 {
 // 	eof_log("eof_check_flags_at_legacy_note_pos() entered");
 
@@ -1235,7 +1235,7 @@ char eof_check_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,un
 	return 0;	//Return no match
 }
 
-void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,unsigned long flag,char operation,char startpoint)
+void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp, unsigned notenum, unsigned long flag, char operation, char startpoint)
 {
 // 	eof_log("eof_set_flags_at_legacy_note_pos() entered");
 
@@ -1305,8 +1305,8 @@ void eof_set_accent_at_legacy_note_pos(EOF_LEGACY_TRACK *tp, unsigned long pos, 
 
 int eof_load_song_string_pf(char *const buffer, PACKFILE *fp, const size_t buffersize)
 {
-	unsigned long ctr=0,stringsize=0;
-	int inputc=0;
+	unsigned long ctr = 0, stringsize = 0;
+	int inputc = 0;
 
 	if((fp == NULL) || ((buffer == NULL) && (buffersize != 0)))
 		return 1;	//Return error
@@ -2422,7 +2422,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 
 int eof_save_song_string_pf(char *buffer, PACKFILE *fp)
 {
-	unsigned long length=0,ctr;
+	unsigned long length = 0, ctr;
 
 	if(fp == NULL)
 		return 1;	//Return error
@@ -3403,7 +3403,7 @@ unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track)
 
 int eof_open_strum_enabled(unsigned long track)
 {
-	if(!eof_song)
+	if(!eof_song || (track >= eof_song->tracks))
 		return 0;
 
 	if((track == EOF_TRACK_DRUM) || (track == EOF_TRACK_DRUM_PS))
@@ -3929,7 +3929,7 @@ unsigned long eof_get_pro_guitar_note_note(EOF_PRO_GUITAR_TRACK *tp, unsigned lo
 	return tp->note[note]->note;
 }
 
-void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos, long length, char type, char *text)
+void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned char note, unsigned long pos, long length, char type, char *text)
 {
 	void *new_note = NULL;
 	EOF_NOTE *ptr = NULL;
@@ -3938,7 +3938,7 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long
 
  	eof_log("eof_track_add_create_note() entered", 2);
 
-	if(!sp)
+	if(!sp || (track >= sp->tracks))
 	{
 		return NULL;
 	}
@@ -7220,7 +7220,7 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 	long targetlength;
 	char undo_made = 0;
 
-	if((sp == NULL) || (srctrack >= sp->tracks))
+	if((sp == NULL) || (srctrack >= sp->tracks) || (desttrack >= sp->tracks))
 		return;	//Invalid parameters
 
  	eof_log("eof_flatten_difficulties() entered", 1);

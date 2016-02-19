@@ -58,7 +58,7 @@ int eof_export_bandfuse(EOF_SONG * sp, char * fn, unsigned short *user_warned)
 
 	eof_log("eof_export_bandfuse() entered", 1);
 
-	if(!sp || !fn || !sp->beats)
+	if(!sp || !fn || !sp->beats || !user_warned)
 	{
 		eof_log("\tError saving:  Invalid parameters", 1);
 		return 0;	//Return failure

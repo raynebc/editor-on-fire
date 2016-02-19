@@ -100,6 +100,9 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 
 	eof_log("eof_get_raw_MIDI_data() entered", 1);
 
+	if(!midiptr)
+		return NULL;	//Invalid parameters
+
 #ifdef MIDI_DATA_IMPORT_DEBUG
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tEvents will be offset by %d ms", offset);
 	eof_log(eof_log_string, 1);

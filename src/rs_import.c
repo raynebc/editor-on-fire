@@ -1208,7 +1208,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 								ptr = strcasestr_spec(buffer, "<chord ");
 								if(ptr)
 								{	//If this is a chord tag
-									long highdensity = 0;
+									long highdensity;
 
 									if(note_count < EOF_MAX_NOTES)
 									{	//If another chord can be stored
@@ -1243,7 +1243,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 											error = 1;
 											break;	//Break from inner loop
 										}
-										mute = 0;
+										mute = highdensity = palmmute = 0;
 										(void) parse_xml_attribute_number("fretHandMute", buffer, &mute);
 										(void) parse_xml_attribute_number("highDensity", buffer, &highdensity);
 										(void) parse_xml_attribute_number("palmMute", buffer, &palmmute);
@@ -1396,6 +1396,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 								{	//If this is a handShape tag
 									char arp = 0, hand = 0;
 
+									start = end = chordid = 0;
 									if(!parse_xml_rs_timestamp("startTime", buffer, &start))
 									{	//If the start timestamp was not readable
 										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading start timestamp on line #%lu.  Aborting", linectr);

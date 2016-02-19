@@ -291,13 +291,13 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 	return 0;	//Return success
 }
 
-int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int format)
+int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp, char *outputfilename, char *string2, int format)
 {
-	unsigned long linectr=0,lyrctr=0,lastlyrtime=0,linestart=0,lineend=0;
-	unsigned char pitch=0;
-	FILE *outf=NULL;			//Used to open output file
-	FILE *pitchedlyrics=NULL;	//Used to open output pitched lyric fle
-	char *vrhythmid=NULL;
+	unsigned long linectr = 0, lyrctr = 0, lastlyrtime = 0, linestart = 0, lineend = 0;
+	unsigned char pitch = 0;
+	FILE *outf = NULL;			//Used to open output file
+	FILE *pitchedlyrics = NULL;	//Used to open output pitched lyric fle
+	char *vrhythmid = NULL;
 	EOF_PHRASE_SECTION temp;	//Used to store the first lyric line in the project, which gets overridden with one covering all lyrics during RS1 export
 	unsigned long original_lines;
 	char *tempoutputfilename = "lyrics.temp";
@@ -318,16 +318,16 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 //Set export-specific settings
 	if(format == SCRIPT_FORMAT)
 	{
-		Lyrics.grouping=2;	//Enable line grouping for script.txt export
-		Lyrics.nohyphens=3;	//Disable hyphen output
-		Lyrics.noplus=1;	//Disable plus output
-		Lyrics.filter=DuplicateString("^=%#/");	//Use default filter list
+		Lyrics.grouping = 2;	//Enable line grouping for script.txt export
+		Lyrics.nohyphens = 3;	//Disable hyphen output
+		Lyrics.noplus = 1;	//Disable plus output
+		Lyrics.filter = DuplicateString("^=%#/");	//Use default filter list
 		Lyrics.defaultfilter = 1;	//Track that the above string will need to be freed
 	}
 	else if((format == RS_FORMAT) || (format == RS2_FORMAT))
 	{
-		Lyrics.noplus=1;	//Disable plus output
-		Lyrics.filter=DuplicateString("^=%#/");	//Use default filter list
+		Lyrics.noplus = 1;	//Disable plus output
+		Lyrics.filter = DuplicateString("^=%#/");	//Use default filter list
 		Lyrics.defaultfilter = 1;	//Track that the above string will need to be freed
 		if((format == RS_FORMAT) || (!tp->lines))
 		{	//If exporting to Rocksmith 1 format or if the lyrics don't have any lines defined
@@ -337,12 +337,12 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 	}
 
 //Import lyrics from EOF structure
-	lyrctr=0;		//Begin indexing into lyrics from the very first
-	lastlyrtime=0;	//First lyric is expected to be greater than or equal to this timestamp
-	for(linectr=0;linectr<(unsigned long)tp->lines;linectr++)
+	lyrctr = 0;		//Begin indexing into lyrics from the very first
+	lastlyrtime = 0;	//First lyric is expected to be greater than or equal to this timestamp
+	for(linectr = 0; linectr < (unsigned long)tp->lines; linectr++)
 	{	//For each line of lyrics in the EOF structure
-		linestart=(tp->line[linectr]).start_pos;
-		lineend=(tp->line[linectr]).end_pos;
+		linestart = (tp->line[linectr]).start_pos;
+		lineend = (tp->line[linectr]).end_pos;
 
 		if(linestart > lineend)	//If the line starts after it ends
 		{
@@ -354,9 +354,9 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 			CreateLyricLine();	//Initialize new line of lyrics
 
 		if((tp->line[linectr]).flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE)	//If this line is overdrive
-			Lyrics.overdrive_on=1;
+			Lyrics.overdrive_on = 1;
 		else
-			Lyrics.overdrive_on=0;
+			Lyrics.overdrive_on = 0;
 
 		while(lyrctr < tp->lyrics)
 		{	//For each lyric
@@ -380,17 +380,17 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 					break;					//Break from this while loop to have another line created
 				}
 
-				pitch=(tp->lyric[lyrctr])->note;			//Store the lyric's pitch
+				pitch = (tp->lyric[lyrctr])->note;			//Store the lyric's pitch
 				if((tp->lyric[lyrctr])->note == 0)			//Remap EOF's pitchless value to FLC's pitchless value
-					pitch=PITCHLESS;
+					pitch = PITCHLESS;
 
 				if(!Lyrics.line_on)		//If a lyric line is not in progress
 					CreateLyricLine();	//Force one to be before adding the next lyric
-				AddLyricPiece((tp->lyric[lyrctr])->text,(tp->lyric[lyrctr])->pos,(tp->lyric[lyrctr])->pos+(tp->lyric[lyrctr])->length,pitch,0);
+				AddLyricPiece((tp->lyric[lyrctr])->text, (tp->lyric[lyrctr])->pos, (tp->lyric[lyrctr])->pos+(tp->lyric[lyrctr])->length, pitch, 0);
 					//Add the lyric to the Lyrics structure
 
 				if((Lyrics.lastpiece != NULL) && (Lyrics.lastpiece->lyric[strlen(Lyrics.lastpiece->lyric)-1] == '-'))	//If the piece that was just added ended in a hyphen
-					Lyrics.lastpiece->groupswithnext=1;	//Set its grouping status
+					Lyrics.lastpiece->groupswithnext = 1;	//Set its grouping status
 			}//If this lyric's text isn't an empty string
 
 			lyrctr++;	//Advance to next lyric
@@ -407,23 +407,23 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 
 //Load chart tags
 	if(eof_song->tags->artist[0] != '\0')
-		Lyrics.Artist=DuplicateString(eof_song->tags->artist);
+		Lyrics.Artist = DuplicateString(eof_song->tags->artist);
 	if(eof_song->tags->title[0] != '\0')
-		Lyrics.Title=DuplicateString(eof_song->tags->title);
+		Lyrics.Title = DuplicateString(eof_song->tags->title);
 	if(eof_song->tags->frettist[0] != '\0')
-		Lyrics.Editor=DuplicateString(eof_song->tags->frettist);
+		Lyrics.Editor = DuplicateString(eof_song->tags->frettist);
 	if(eof_song->tags->album[0] != '\0')
-		Lyrics.Album=DuplicateString(eof_song->tags->album);
+		Lyrics.Album = DuplicateString(eof_song->tags->album);
 
 	PostProcessLyrics();	//Perform hyphen and grouping validation/handling
 
-	Lyrics.outfilename=tempoutputfilename;
-	Lyrics.out_format=format;
+	Lyrics.outfilename = tempoutputfilename;
+	Lyrics.out_format = format;
 
 	//If the export format is MIDI-based, write a MIDI file header and a MIDI track (track 0) specifying a tempo of 120BPM
-	if((Lyrics.out_format==MIDI_FORMAT) || (Lyrics.out_format==VRHYTHM_FORMAT) || (Lyrics.out_format==SKAR_FORMAT) || (Lyrics.out_format==KAR_FORMAT))
+	if((Lyrics.out_format == MIDI_FORMAT) || (Lyrics.out_format == VRHYTHM_FORMAT) || (Lyrics.out_format == SKAR_FORMAT) || (Lyrics.out_format == KAR_FORMAT))
 	{
-		outf=fopen_err(Lyrics.outfilename,"wb");	//These are binary formats
+		outf = fopen_err(Lyrics.outfilename,"wb");	//These are binary formats
 		Write_Default_Track_Zero(outf);
 	}
 
@@ -431,31 +431,31 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 	switch(Lyrics.out_format)
 	{
 		case SCRIPT_FORMAT:	//Export as script.txt format file
-			outf=fopen_err(Lyrics.outfilename,"wt");	//Script.txt is a text format
+			outf = fopen_err(Lyrics.outfilename,"wt");	//Script.txt is a text format
 			Export_Script(outf);
 		break;
 
 		case VL_FORMAT:	//Export as VL format file
-			outf=fopen_err(Lyrics.outfilename,"wb");	//VL is a binary format
+			outf = fopen_err(Lyrics.outfilename,"wb");	//VL is a binary format
 			Export_VL(outf);
 		break;
 
 		case MIDI_FORMAT:	//Export as MIDI format file.  Default export track is "PART VOCALS"
 			if(string2 == NULL)						//If a destination track name wasn't given
-				Lyrics.outputtrack=DuplicateString("PART VOCALS");	//Write track name as PART VOCALS by default
+				Lyrics.outputtrack = DuplicateString("PART VOCALS");	//Write track name as PART VOCALS by default
 			else
-				Lyrics.outputtrack=DuplicateString(string2);
+				Lyrics.outputtrack = DuplicateString(string2);
 			Export_MIDI(outf);
 		break;
 
 		case USTAR_FORMAT:	//Export as UltraStar format file
-			outf=fopen_err(Lyrics.outfilename,"wt");	//UltraStar is a text format
+			outf = fopen_err(Lyrics.outfilename,"wt");	//UltraStar is a text format
 			Export_UStar(outf);
 		break;
 
 		case LRC_FORMAT:	//Export as simple LRC
 		case ELRC_FORMAT:	//Export as extended LRC
-			outf=fopen_err(Lyrics.outfilename,"wt");	//LRC is a text format
+			outf = fopen_err(Lyrics.outfilename,"wt");	//LRC is a text format
 			Export_LRC(outf);
 		break;
 
@@ -466,9 +466,9 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 				return -1;	//Return failure
 			}
 
-			pitchedlyrics=fopen_err(string2,"wt");	//Pitched lyrics is a text format
-			vrhythmid=DuplicateString("G4");
-			Export_Vrhythm(outf,pitchedlyrics,vrhythmid);
+			pitchedlyrics = fopen_err(string2,"wt");	//Pitched lyrics is a text format
+			vrhythmid = DuplicateString("G4");
+			Export_Vrhythm(outf, pitchedlyrics, vrhythmid);
 			fflush_err(pitchedlyrics);	//Commit any pending pitched lyric writes to file
 			fclose_err(pitchedlyrics);	//Close pitched lyric file
 			free(vrhythmid);
@@ -476,9 +476,9 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 
 		case SKAR_FORMAT:	//Export as Soft Karaoke.  Default export track is "Words"
 			if(string2 == NULL)						//If a destination track name wasn't given
-				Lyrics.outputtrack=DuplicateString("Words");	//Write track name as "Words" by default
+				Lyrics.outputtrack = DuplicateString("Words");	//Write track name as "Words" by default
 			else
-				Lyrics.outputtrack=DuplicateString(string2);
+				Lyrics.outputtrack = DuplicateString(string2);
 			Export_SKAR(outf);
 		break;
 
@@ -486,19 +486,19 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 			if(Lyrics.outputtrack == NULL)
 			{
 				(void) puts("\aNo ouput track name for KAR file was given.  A track named \"Melody\" will be used by default");
-				Lyrics.outputtrack=DuplicateString("Melody");
+				Lyrics.outputtrack = DuplicateString("Melody");
 			}
 			Export_MIDI(outf);
 		break;
 
 		case RS_FORMAT:	//Export as Rocksmith XML
-			outf=fopen_err(Lyrics.outfilename,"wt");	//XML is a text format
+			outf = fopen_err(Lyrics.outfilename,"wt");	//XML is a text format
 			Lyrics.rocksmithver = 1;
 			Export_RS(outf);
 		break;
 
 		case RS2_FORMAT:	//Export as Rocksmith 2 XML
-			outf=fopen_err(Lyrics.outfilename,"wt");	//XML is a text format
+			outf = fopen_err(Lyrics.outfilename,"wt");	//XML is a text format
 			Lyrics.rocksmithver = 2;
 			Export_RS(outf);
 		break;
@@ -509,11 +509,11 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 		break;
 	}
 
-	if((Lyrics.out_format==MIDI_FORMAT) || (Lyrics.out_format==VRHYTHM_FORMAT) || (Lyrics.out_format==SKAR_FORMAT) || (Lyrics.out_format==KAR_FORMAT))
+	if((Lyrics.out_format == MIDI_FORMAT) || (Lyrics.out_format == VRHYTHM_FORMAT) || (Lyrics.out_format == SKAR_FORMAT) || (Lyrics.out_format == KAR_FORMAT))
 	{	//Update the MIDI header to reflect the number of MIDI tracks written to file for all applicable export formats
-		fseek_err(outf,10,SEEK_SET);		//The number of tracks is 10 bytes in from the start of the file header
-		fputc_err(MIDIstruct.trackswritten>>8,outf);
-		fputc_err(MIDIstruct.trackswritten&0xFF,outf);
+		fseek_err(outf, 10, SEEK_SET);		//The number of tracks is 10 bytes in from the start of the file header
+		fputc_err(MIDIstruct.trackswritten>>8, outf);
+		fputc_err(MIDIstruct.trackswritten&0xFF, outf);
 	}
 
 //Cleanup

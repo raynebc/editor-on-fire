@@ -279,8 +279,8 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	char backupfn[1024] = {0};
 	char wavfn[1024] = {0};
 	char soggfn[1024] = {0};
-	ALOGG_OGG *oggfile=NULL;
-	SAMPLE *decoded=NULL,*combined=NULL;
+	ALOGG_OGG *oggfile = NULL;
+	SAMPLE *decoded = NULL, *combined = NULL;
 	int bits;
 	int stereo;
 	int freq;

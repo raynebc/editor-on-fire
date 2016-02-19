@@ -34,9 +34,9 @@ char *eof_note_names_flat[12] =	{"A","Bb","B","C","Db","D","Eb","E","F","Gb","G"
 char **eof_note_names = eof_note_names_flat;
 #endif
 
-void pack_ReadWORDLE(PACKFILE *inf,unsigned *data)
+void pack_ReadWORDLE(PACKFILE *inf, unsigned *data)
 {
-	unsigned char buffer[2]={0};
+	unsigned char buffer[2] = {0};
 
 	if(inf)
 	{
@@ -47,9 +47,9 @@ void pack_ReadWORDLE(PACKFILE *inf,unsigned *data)
 	}
 }
 
-void pack_ReadDWORDLE(PACKFILE *inf,unsigned long *data)
+void pack_ReadDWORDLE(PACKFILE *inf, unsigned long *data)
 {
-	unsigned char buffer[4]={0};
+	unsigned char buffer[4] = {0};
 
 	if(inf)
 	{

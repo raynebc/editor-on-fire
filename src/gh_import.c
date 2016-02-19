@@ -2766,6 +2766,9 @@ char *eof_sections_list_all(int index, int * size)
 {
 	if(index < 0)
 	{	//Signal to return the list count
+		if(!size)
+			return NULL;
+
 		if(!eof_sections_list_all_ptr)
 		{
 			*size = 0;

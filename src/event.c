@@ -77,7 +77,7 @@ void eof_song_delete_text_event(EOF_SONG * sp, unsigned long event)
 
  	eof_log("eof_song_delete_text_event() entered", 1);
 
-	if(sp)
+	if(sp && (event <= sp->text_events))
 	{
 		free(sp->text_event[event]);
 		for(i = event; i < sp->text_events - 1; i++)
@@ -237,4 +237,3 @@ int eof_is_section_marker(EOF_TEXT_EVENT *ep, unsigned long track)
 	}
 	return 0;
 }
-

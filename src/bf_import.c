@@ -73,6 +73,9 @@ char *eof_lookup_bf_string_key(struct bf_string *ptr, unsigned long arraysize, u
 	unsigned long ctr;
 	char *result = NULL;
 
+	if(!ptr)
+		return NULL;	//Invalid parameter
+
 	for(ctr = 0; ctr < arraysize; ctr++)
 	{	//For each string in the array
 		if(ptr[ctr].indkey == key)

@@ -882,6 +882,9 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 
 void eof_cat_track_difficulty_string(char *str)
 {
+	if(!str)
+		return;	//Invalid parameter
+
 	if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_ALT_NAME)
 	{	//If this track has an alternate name, append the track's alternate name
 		(void) ustrcat(str, eof_song->track[eof_selected_track]->altname);
@@ -3630,6 +3633,9 @@ static int work_around_fsel_bug = 0;
  */
 int d_hackish_edit_proc (int msg, DIALOG *d, int c)
 {
+	if(!d)	//If this pointer is NULL for any reason
+		return d_agup_edit_proc (msg, d, c);
+
 	if ((msg == MSG_START) && !work_around_fsel_bug)
 	{
 		/* Adjust position/dimension so it is the same as AGUP's. */
@@ -4737,7 +4743,7 @@ void eof_stop_logging(void)
 char eof_log_string[2048] = {0};
 void eof_log(const char *text, int level)
 {
-	if(eof_log_fp && (eof_log_level & 1) && (eof_log_level >= level))
+	if(text && eof_log_fp && (eof_log_level & 1) && (eof_log_level >= level))
 	{	//If the log file is open, logging is enabled and the current logging level is high enough
 		if(fprintf(eof_log_fp, "%03u: %s\n", eof_log_id, text) > 0)	//Prefix the log text with this EOF instance's logging ID
 		{	//If the log line was successfully written

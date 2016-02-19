@@ -20,7 +20,7 @@
 #endif
 
 char eof_solo_menu_mark_text[32] = "&Mark";
-char eof_star_power_menu_mark_text[32] = "&Mark";
+char eof_star_power_menu_mark_text[32] = "&Mark\t" CTRL_NAME "+W";
 char eof_lyric_line_menu_mark_text[32] = "&Mark";
 char eof_arpeggio_menu_mark_text[32] = "&Mark";
 char eof_handshape_menu_mark_text[32] = "&Mark";
@@ -649,12 +649,12 @@ void eof_prepare_note_menu(void)
 		if(insp)
 		{
 			eof_star_power_menu[1].flags = 0;
-			(void) ustrcpy(eof_star_power_menu_mark_text, "Re-&Mark");
+			(void) ustrcpy(eof_star_power_menu_mark_text, "Re-&Mark\t" CTRL_NAME "+W");
 		}
 		else
 		{
 			eof_star_power_menu[1].flags = D_DISABLED;
-			(void) ustrcpy(eof_star_power_menu_mark_text, "&Mark");
+			(void) ustrcpy(eof_star_power_menu_mark_text, "&Mark\t" CTRL_NAME "+W");
 		}
 
 		/* star power copy from */
@@ -2774,10 +2774,11 @@ int eof_menu_note_default_no_hi_hat(void)
 /* split a lyric into multiple pieces (look for ' ' characters) */
 static void eof_split_lyric(int lyric)
 {
-	unsigned long i, l, c = 0, lastc, stringlen;
+	unsigned long i, l, c = 0, lastc;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long piece = 1, pieces = 1;
 	char * token = NULL;
+	size_t stringlen;
 
 	if(!eof_vocals_selected)
 		return;
