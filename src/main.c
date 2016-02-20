@@ -1045,7 +1045,7 @@ long eof_get_previous_note(long cnote)
 int eof_note_is_hopo(unsigned long cnote)
 {
 	double delta;
-	float hopo_delta = eof_song->tags->eighth_note_hopo ? 250.0 : 170.0;	//The proximity threshold to determine HOPO eligibility, when the tempo is 120BPM (within 1/3 beat, or 1/2 beat if 8th note HOPO option is enabled)
+	double hopo_delta = eof_song->tags->eighth_note_hopo ? 250.0 : 170.0;	//The proximity threshold to determine HOPO eligibility, when the tempo is 120BPM (within 1/3 beat, or 1/2 beat if 8th note HOPO option is enabled)
 	unsigned long i, cnotepos;
 	long pnote;
 	long beat = -1;

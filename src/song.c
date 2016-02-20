@@ -6283,7 +6283,7 @@ int eof_create_image_sequence(char benchmark_only)
 	unsigned long framectr = 0, refreshctr = 0, lastpollctr = 0;
 	unsigned long remainder = 0;
 	char windowtitle[101] = {0};
-	float fps = 0.0;
+	double fps = 0.0;
 	clock_t curtime, lastpolltime = 0;
 	int err;
 	char filename[20] = {0};
@@ -6556,7 +6556,7 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 					newnotelength2 = eof_get_note_length(sp, eof_selected_track, i);
 					if((dir > 0) && (notelength == newnotelength2))
 					{	//Special case:  If the grid snap length increase was nullified by the snap logic, force the tail to increase one snap interval higher
-						float difference = eof_tail_snap.grid_pos[1] - eof_tail_snap.grid_pos[0];	//This is the length of one grid snap in the target beat
+						double difference = eof_tail_snap.grid_pos[1] - eof_tail_snap.grid_pos[0];	//This is the length of one grid snap in the target beat
 
 						eof_note_set_tail_pos(sp, eof_selected_track, i, notepos + notelength + difference + 0.5);	//Resnap the tail one grid snap higher
 					}

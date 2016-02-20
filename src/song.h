@@ -11,6 +11,7 @@
 #define EOF_MAX_LYRIC_LENGTH    255
 #define EOF_MAX_CATALOG_ENTRIES 256
 #define EOF_MAX_INI_SETTINGS     64
+#define EOF_INI_LENGTH          512
 #define EOF_MAX_BOOKMARK_ENTRIES 10
 
 #define EOF_NOTE_SUPAEASY    0
@@ -454,7 +455,7 @@ typedef struct
 	EOF_OGG_INFO ogg[EOF_MAX_OGGS];
 	short oggs;
 
-	char ini_setting[EOF_MAX_INI_SETTINGS][512];
+	char ini_setting[EOF_MAX_INI_SETTINGS][EOF_INI_LENGTH];
 	short ini_settings;
 
 	unsigned long revision;

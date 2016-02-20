@@ -71,6 +71,9 @@ int eof_menu_song_seek_catalog_entry(void);			//Seeks to the current fret catalo
 
 int eof_menu_song_file_info(void);
 int eof_menu_song_ini_settings(void);
+int eof_ini_dialog_add(DIALOG * d);			//Performs the INI setting add action presented in the INI settings dialog
+int eof_ini_dialog_delete(DIALOG * d);		//Performs the INI setting delete action presented in the INI settings dialog
+void eof_ini_delete(unsigned long index);	//Deletes the specified INI setting from the active project
 int eof_menu_song_properties(void);
 int eof_menu_song_test(char application);	//Launches the current chart in FoF if application is 1, otherwise launches the chart in Phase Shift
 int eof_menu_song_test_fof(void);	//Calls eof_menu_song_test() to launch the chart with FoF

@@ -10,6 +10,7 @@
 #include "../midi.h"
 #include "../midi_data_import.h"
 #include "../ini.h"
+#include "../ini_import.h"
 #include "../dialog/proc.h"
 #include "../undo.h"
 #include "../player.h"
@@ -1572,7 +1573,7 @@ int eof_ini_dialog_add(DIALOG * d)
 		if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext))
 		{
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			(void) ustrcpy(eof_song->tags->ini_setting[eof_song->tags->ini_settings], eof_etext);
+			(void) ustrncpy(eof_song->tags->ini_setting[eof_song->tags->ini_settings], eof_etext, EOF_INI_LENGTH - 1);
 			eof_song->tags->ini_settings++;
 		}
 	}
@@ -1582,6 +1583,20 @@ int eof_ini_dialog_add(DIALOG * d)
 	eof_pen_visible = 1;
 	eof_show_mouse(screen);
 	return D_O_K;
+}
+
+void eof_ini_delete(unsigned long index)
+{
+	unsigned long i;
+
+	if(!eof_song || (index >= eof_song->tags->ini_settings))
+		return;	//Invalid parameter
+
+	for(i = eof_ini_dialog[1].d1; i < eof_song->tags->ini_settings - 1; i++)
+	{
+		memcpy(eof_song->tags->ini_setting[i], eof_song->tags->ini_setting[i + 1], EOF_INI_LENGTH);
+	}
+	eof_song->tags->ini_settings--;
 }
 
 int eof_ini_dialog_delete(DIALOG * d)
@@ -1595,11 +1610,7 @@ int eof_ini_dialog_delete(DIALOG * d)
 	if(eof_song->tags->ini_settings > 0)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		for(i = eof_ini_dialog[1].d1; i < eof_song->tags->ini_settings - 1; i++)
-		{
-			memcpy(eof_song->tags->ini_setting[i], eof_song->tags->ini_setting[i + 1], 512);
-		}
-		eof_song->tags->ini_settings--;
+		eof_ini_delete(eof_ini_dialog[1].d1);
 		if(eof_ini_dialog[1].d1 >= eof_song->tags->ini_settings)
 		{
 			eof_ini_dialog[1].d1--;
@@ -3837,10 +3848,12 @@ DIALOG eof_menu_song_export_song_preview_dialog[] =
 
 int eof_menu_song_export_song_preview(void)
 {
-	unsigned long start, stop;
+	unsigned long start = 0, stop = 0;
 	char targetpath[1024] = {0};
 	char syscommand[1024] = {0};
 	char wavname[270] = {0};
+	unsigned long oldstarttag = 0, oldendtag = 0;
+	char *oldstartstring, *oldendstring;
 
 	eof_log("eof_menu_song_export_song_preview() entered", 1);
 	eof_log("\tCreating preview audio", 1);
@@ -3848,16 +3861,31 @@ int eof_menu_song_export_song_preview(void)
 	if(!eof_song)
 		return 0;
 
-	//Initialize the start and end positions as appropriate
-	if(eof_seek_selection_start != eof_seek_selection_end)
-	{	//If there is a seek selection
-		start = eof_seek_selection_start;
-		stop = eof_seek_selection_end;
+	//Determine if the preview start and end timestamps are already stored in the project
+	oldstartstring = eof_find_ini_setting_tag(eof_song, &oldstarttag, "preview_start_time");
+	oldendstring = eof_find_ini_setting_tag(eof_song, &oldendtag, "preview_end_time");
+	if(oldstartstring && oldendstring)
+	{	//If both timestamp tags were found in the INI settings
+		char *temp;
+		for(temp = oldstartstring; (*temp == ' ') && (*temp != '\0'); temp++);	//Skip past any leading whitespace in the value portion of the INI setting
+		start = atol(temp);
+		for(temp = oldendstring; (*temp == ' ') && (*temp != '\0'); temp++);	//Skip past any leading whitespace in the value portion of the INI setting
+		stop = atol(temp);
 	}
-	else
-	{	//Default the start time to the current seek position and the stop time 30 seconds later
-		start = eof_music_pos - eof_av_delay;
-		stop = start + 30000; //30,000 ms later
+
+	//Initialize the start and end positions as appropriate
+	if(!(oldstartstring && oldendstring && (start != stop)))
+	{	//If the positions were NOT read from the INI settings
+		if(eof_seek_selection_start != eof_seek_selection_end)
+		{	//If there is a seek selection
+			start = eof_seek_selection_start;
+			stop = eof_seek_selection_end;
+		}
+		else
+		{	//Default the start time to the current seek position and the stop time 30 seconds later
+			start = eof_music_pos - eof_av_delay;
+			stop = start + 30000; //30,000 ms later
+		}
 	}
 	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", start);	//Initialize the start time string
 	(void) snprintf(eof_etext3, sizeof(eof_etext3) - 1, "%lu", stop);	//Initialize the end time string
@@ -3866,8 +3894,40 @@ int eof_menu_song_export_song_preview(void)
 	centre_dialog(eof_menu_song_export_song_preview_dialog);
 	if(eof_popup_dialog(eof_menu_song_export_song_preview_dialog, 1) == 5)
 	{	//User clicked OK
+		if(!eof_check_string(eof_etext2) || !eof_check_string(eof_etext3))
+		{	//If either the start or stop fields had no non-space characters
+			return 1;
+		}
 		start = atol(eof_etext2);
 		stop = atol(eof_etext3);
+		if(start == stop)
+			return 1;	//This isn't a valid preview time range
+
+		if(!oldstartstring || oldendstring || (start != atol(oldstartstring)) || (stop != atol(oldendstring)))
+		{	//If the project didn't already have the start/stop preview tags stored, or if the times just entered are different from those already stored
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			if(oldstartstring)
+				eof_ini_delete(oldstarttag);	//Remove any existing preview start tag
+			oldendstring = eof_find_ini_setting_tag(eof_song, &oldendtag, "preview_end_time");	//Re-lookup the index for the end tag, since the index may have just changed due to the above deletion
+			if(oldendstring)
+				eof_ini_delete(oldendtag);	//Remove any existing preview start tag
+			if(eof_song->tags->ini_settings + 2 < EOF_MAX_INI_SETTINGS)
+			{	//If the start and end INI tags can be stored into the project
+				snprintf(eof_song->tags->ini_setting[eof_song->tags->ini_settings], EOF_INI_LENGTH - 1, "preview_start_time = %lu", start);
+				eof_song->tags->ini_settings++;
+				snprintf(eof_song->tags->ini_setting[eof_song->tags->ini_settings], EOF_INI_LENGTH - 1, "preview_end_time = %lu", stop);
+				eof_song->tags->ini_settings++;
+			}
+		}
+
+		if(eof_silence_loaded)
+		{	//If no chart audio is loaded
+			return 1;
+		}
+		if(alert(NULL, "Generate preview audio files?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+		{	//If the user declined to generate audio files
+			return 1;
+		}
 
 		if(eof_ogg_settings())
 		{	//If the user selected an OGG encoding quality

@@ -1158,7 +1158,7 @@ EOF_SONG * eof_import_gh(const char * fn)
 		{	//If there were any drum gems imported from this QB format GH file, add a "drum_fallback_blue = True" INI tag so Phase Shift knows how to downchart to 4 lanes
 			if(sp->tags->ini_settings < EOF_MAX_INI_SETTINGS)
 			{	//If this INI setting can be stored
-				(void) ustrcpy(sp->tags->ini_setting[sp->tags->ini_settings]," drum_fallback_blue = True");
+				(void) ustrncpy(sp->tags->ini_setting[sp->tags->ini_settings]," drum_fallback_blue = True", EOF_INI_LENGTH - 1);
 				sp->tags->ini_settings++;
 			}
 		}

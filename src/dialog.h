@@ -26,8 +26,6 @@ char * eof_input_list(int index, int * size);		//Dialog logic to display the usa
 char * eof_ini_list(int index, int * size);			//Dialog logic to display the chart's INI definitions in a list box
 char * eof_colors_list(int index, int * size);		//Dialog logic to display the usable color sets in the Preferences dialog
 int eof_ogg_settings(void);				//Launches eof_ogg_settings_dialog, allowing the user to specify an OGG encoding quality setting, returns 0 upon user cancellation
-int eof_ini_dialog_add(DIALOG * d);		//Performs the INI setting add action presented in the INI settings dialog
-int eof_ini_dialog_delete(DIALOG * d);	//Performs the INI setting delete action presented in the INI settings dialog
 int eof_new_lyric_dialog(void);		//Launches the input box to accept the text for a newly created lyric
 int eof_edit_lyric_dialog(void);	//Performs the Edit Lyric action presented in the note menu
 
