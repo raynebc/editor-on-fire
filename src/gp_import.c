@@ -5416,7 +5416,7 @@ char eof_copy_notes_in_beat_range(EOF_PRO_GUITAR_TRACK *source, unsigned long st
 {
 	unsigned long ctr;
 	long beatnum, endbeatnum, newpos, newend;
-	float notepos, noteendpos;
+	double notepos, noteendpos;
 
 	eof_log("eof_copy_notes_in_beat_range() entered", 1);
 

@@ -4345,7 +4345,7 @@ void eof_pro_guitar_track_sort_notes(EOF_PRO_GUITAR_TRACK * tp)
 	}
 }
 
-int eof_song_qsort_fret_hand_positions(const void * e1, const void * e2)
+int eof_song_qsort_phrases_diff_timestamp(const void * e1, const void * e2)
 {
 	EOF_PHRASE_SECTION * thing1 = (EOF_PHRASE_SECTION *)e1;
 	EOF_PHRASE_SECTION * thing2 = (EOF_PHRASE_SECTION *)e2;
@@ -4380,7 +4380,17 @@ void eof_pro_guitar_track_sort_fret_hand_positions(EOF_PRO_GUITAR_TRACK* tp)
 
 	if(tp)
 	{
-		qsort(tp->handposition, (size_t)tp->handpositions, sizeof(EOF_PHRASE_SECTION), eof_song_qsort_fret_hand_positions);
+		qsort(tp->handposition, (size_t)tp->handpositions, sizeof(EOF_PHRASE_SECTION), eof_song_qsort_phrases_diff_timestamp);
+	}
+}
+
+void eof_pro_guitar_track_sort_arpeggios(EOF_PRO_GUITAR_TRACK* tp)
+{
+ 	eof_log("eof_pro_guitar_track_sort_arpeggios() entered", 2);
+
+	if(tp)
+	{
+		qsort(tp->arpeggio, (size_t)tp->arpeggios, sizeof(EOF_PHRASE_SECTION), eof_song_qsort_phrases_diff_timestamp);
 	}
 }
 
@@ -6330,8 +6340,8 @@ int eof_create_image_sequence(char benchmark_only)
 		{
 		//Update EOF's window title to provide a status
 			curtime = clock();	//Get the current time
-			fps = (float)(framectr - lastpollctr) / ((float)(curtime - lastpolltime) / (float)CLOCKS_PER_SEC);	//Find the number of FPS rendered since the last poll
-			(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "%s image sequence: %.2f%% (%.2fFPS) - Press Esc to cancel",function, (float)eof_music_pos/(float)eof_music_length * 100.0, fps);
+			fps = (double)(framectr - lastpollctr) / ((double)(curtime - lastpolltime) / (double)CLOCKS_PER_SEC);	//Find the number of FPS rendered since the last poll
+			(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "%s image sequence: %.2f%% (%.2fFPS) - Press Esc to cancel",function, (double)eof_music_pos/(double)eof_music_length * 100.0, fps);
 			set_window_title(windowtitle);
 			refreshctr -= 10;
 			lastpolltime = curtime;
@@ -6362,7 +6372,7 @@ int eof_create_image_sequence(char benchmark_only)
 	if(benchmark_only)
 	{	//If performing a benchmark, calculate and display the rendering performance
 		endtime = clock();	//Get the start time of the image sequence export
-		fps = (float)framectr / ((float)(endtime - starttime) / (float)CLOCKS_PER_SEC);	//Find the average FPS
+		fps = (double)framectr / ((double)(endtime - starttime) / (double)CLOCKS_PER_SEC);	//Find the average FPS
 		(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "Average render rate was %.2fFPS",fps);
 		allegro_message("%s", windowtitle);
 		eof_log(windowtitle, 1);

@@ -66,8 +66,8 @@ int eof_waveform_slice_mean(struct waveformslice *left, struct waveformslice *ri
 
 		if(ctr2 > 1)
 		{	//If at least two slices' data was added, calculate the mean, round up
-			results->min = ((float)results->min / ctr2 + 0.5);
-			results->peak = ((float)results->peak / ctr2 + 0.5);
+			results->min = ((double)results->min / ctr2 + 0.5);
+			results->peak = ((double)results->peak / ctr2 + 0.5);
 			results->rms = ((double)results->rms / ctr2 );
 		}
 	}
@@ -352,7 +352,7 @@ struct wavestruct *eof_create_waveform(char *oggfilename, unsigned long slicelen
 				if((audio->freq * slicelength) % 1000)					//If there was any remainder
 					waveform->slicesize++;								//Increment the size of the slice
 
-				waveform->numslices = (float)audio->len / ((float)audio->freq * (float)slicelength / 1000.0);	//Find the number of slices to process
+				waveform->numslices = (double)audio->len / ((double)audio->freq * (double)slicelength / 1000.0);	//Find the number of slices to process
 				if(audio->len % waveform->numslices)		//If there's any remainder
 					waveform->numslices++;					//Increment the number of slices
 
@@ -451,7 +451,7 @@ int eof_process_next_waveform_slice(struct wavestruct *waveform, SAMPLE *audio, 
 	{
 //Initialize processing for this audio channel
 		sum = rms = min = peak = firstread = 0;
-		startsample = (float)slicenum * (float)audio->freq * (float)waveform->slicelength / 1000.0;	//This is the sample index for this slices starting sample
+		startsample = (double)slicenum * (double)audio->freq * (double)waveform->slicelength / 1000.0;	//This is the sample index for this slices starting sample
 		sampleindex = startsample * samplesize;		//This is the byte index for this slice's starting sample number
 
 		if(channel)							//If processing the sample for the right channel

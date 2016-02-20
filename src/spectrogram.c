@@ -621,9 +621,9 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 			else
 			{
 				spectrogram->rate = audio->freq;
-				spectrogram->windowlength = (float)eof_spectrogram_windowsize / (float)audio->freq * 1000.0;
+				spectrogram->windowlength = (double)eof_spectrogram_windowsize / (double)audio->freq * 1000.0;
 
-				spectrogram->numslices=(float)audio->len / ((float)audio->freq * spectrogram->windowlength / 1000.0);	//Find the number of slices to process
+				spectrogram->numslices=(double)audio->len / ((double)audio->freq * spectrogram->windowlength / 1000.0);	//Find the number of slices to process
 				if(audio->len % spectrogram->numslices)		//If there's any remainder
 					spectrogram->numslices++;					//Increment the number of slices
 

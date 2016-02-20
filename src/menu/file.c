@@ -2944,6 +2944,7 @@ int eof_save_helper(char *destfilename, char silent)
 
 					tracknum = eof_song->track[ctr]->tracknum;
 					tp = eof_song->pro_guitar_track[tracknum];
+					eof_pro_guitar_track_sort_arpeggios(tp);
 					for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
 					{	//For each arpeggio/handshape
 						long start, end;
@@ -2952,11 +2953,15 @@ int eof_save_helper(char *destfilename, char silent)
 						end = eof_get_beat(eof_song, tp->arpeggio[ctr2].end_pos);
 						if((start >= 0) && (end >= start))
 						{	//If the effective beat numbers for the start and end position of the arpeggio/handshape were identified
-							for(ctr3 = start; !user_prompted && (ctr3 <= end); ctr3++)
-							{	//For each beat between them
+							for(ctr3 = start + 1; !user_prompted && (ctr3 <= end); ctr3++)
+							{	//For each beat between them, after the first (which will always be at/before the beginning of the arpeggio, when the condition being checked can only happen to a beat AFTER the start of the arpeggio)
 								if(eof_song->beat[ctr3]->contained_section_event >= 0)
 								{	//If this beat has an RS phrase defined, it marks a phrase change
 									eof_2d_render_top_option = 36;					//Change the user preference to render RS phrases and sections at the top of the piano roll
+									if(tp->arpeggio[ctr2].difficulty != 0xFF)
+									{	//If this is a difficulty specific arpeggio
+										eof_note_type = tp->arpeggio[ctr2].difficulty;	//Change to the relevant difficulty
+									}
 									eof_seek_and_render_position(ctr, eof_note_type, tp->arpeggio[ctr2].start_pos);	//Render the track so the user can see where the correction needs to be made
 									eof_clear_input();
 									if(!user_prompted && alert("At least one arpeggio/handshape crosses over into another RS phrase", "This can behave strangely in Rocksmith if the chart has dynamic difficulty.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)

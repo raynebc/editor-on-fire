@@ -396,9 +396,9 @@ void eof_show_mouse(BITMAP * bp)
 	}
 }
 
-float eof_get_porpos(unsigned long pos)
+double eof_get_porpos(unsigned long pos)
 {
-	float porpos = 0.0;
+	double porpos = 0.0;
 	long beat;
 	int blength;
 	unsigned long rpos;
@@ -419,11 +419,11 @@ float eof_get_porpos(unsigned long pos)
 		blength = eof_song->beat[eof_song->beats - 1]->pos - eof_song->beat[eof_song->beats - 2]->pos;
 	}
 	rpos = pos - eof_song->beat[beat]->pos;
-	porpos = ((float)rpos / (float)blength) * 100.0;
+	porpos = ((double)rpos / (double)blength) * 100.0;
 	return porpos;
 }
 
-long eof_put_porpos(unsigned long beat, float porpos, float offset)
+long eof_put_porpos(unsigned long beat, double porpos, double offset)
 {
 	double fporpos = porpos + offset;
 	unsigned long cbeat = beat;
@@ -4584,7 +4584,7 @@ void eof_init_after_load(char initaftersavestate)
 void eof_scale_fretboard(unsigned long numlanes)
 {
 	unsigned long ctr;
-	float lanewidth;
+	double lanewidth;
 
 	eof_log("eof_scale_fretboard() entered", 2);
 
@@ -4593,7 +4593,7 @@ void eof_scale_fretboard(unsigned long numlanes)
 	if(!numlanes)	//If 0 was passed, find the number of lanes in the active track
 		numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 
-	lanewidth = (float)eof_screen_layout.string_space * (4.0 / (numlanes-1));	//This is the correct lane width for either 5 or 6 lanes
+	lanewidth = (double)eof_screen_layout.string_space * (4.0 / (numlanes-1));	//This is the correct lane width for either 5 or 6 lanes
 	if(numlanes > 5)
 	{	//If the active track has more than 5 lanes, scale the spacing between the fretboard lanes
 		eof_screen_layout.string_space = (double)eof_screen_layout.string_space * 5.0 / (double)numlanes;
@@ -4601,7 +4601,7 @@ void eof_scale_fretboard(unsigned long numlanes)
 
 	for(ctr = 0; ctr < EOF_MAX_FRETS; ctr++)
 	{	//For each fretboard lane after the first is eof_screen_layout.string_space higher than the previous lane
-		eof_screen_layout.note_y[ctr] = 20.0 + ((float)ctr * lanewidth) + 0.5;	//Round up to nearest pixel
+		eof_screen_layout.note_y[ctr] = 20.0 + ((double)ctr * lanewidth) + 0.5;	//Round up to nearest pixel
 	}
 }
 

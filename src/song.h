@@ -184,8 +184,8 @@ typedef struct
 	long length;				//Keep as signed, since the npos logic uses signed math
 	unsigned long midi_pos;
 	long midi_length;			//Keep as signed, since the npos logic uses signed math
-	float         porpos;		//Position of note within the beat (100.0 = full beat)
-	float         porendpos;	//Position of the end of the note within the beat
+	double        porpos;		//Position of note within the beat (100.0 = full beat)
+	double        porendpos;	//Position of the end of the note within the beat
 	unsigned long flags;
 	unsigned long eflags;
 	unsigned char legacymask;
@@ -212,21 +212,6 @@ typedef struct
 	unsigned short tflags;	//Stores various temporary statuses
 
 } EOF_LYRIC;
-
-typedef struct
-{
-	unsigned char note;
-	char text[EOF_MAX_LYRIC_LENGTH + 1];
-	unsigned long midi_pos;
-	long midi_length;		//Keep as signed, since the npos logic uses signed math
-	unsigned long pos;
-	long length;			//Keep as signed, since the npos logic uses signed math
-	unsigned long beat;		// which beat this note was copied from
-	unsigned long endbeat;	// which beat this note was copied from
-	float porpos;			// position of note within the beat (100.0 = full beat)
-	float porendpos;
-
-} EOF_EXTENDED_LYRIC;
 
 typedef struct
 {
@@ -751,8 +736,9 @@ int eof_detect_string_gem_conflicts(EOF_PRO_GUITAR_TRACK *tp, unsigned long newn
 	//0 is returned if there are no conflicts
 	//-1 is returned on error
 unsigned long eof_get_pro_guitar_note_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);		//Returns the note bitflag of the specified pro guitar note, or 0 on error
-void eof_pro_guitar_track_sort_fret_hand_positions(EOF_PRO_GUITAR_TRACK* tp);	//Sorts the specified tracks fret hand positions by difficulty and then by timestamp
+void eof_pro_guitar_track_sort_fret_hand_positions(EOF_PRO_GUITAR_TRACK* tp);	//Sorts the specified track's fret hand positions by difficulty and then by timestamp
 void eof_pro_guitar_track_delete_hand_position(EOF_PRO_GUITAR_TRACK *tp, unsigned long index);	//Deletes the specified fret hand position
+void eof_pro_guitar_track_sort_arpeggios(EOF_PRO_GUITAR_TRACK* tp);	//Sorts the specified track's arpeggios by difficulty and then by timestamp
 
 void eof_sort_notes(EOF_SONG *sp);	//Sorts the notes in all tracks
 void eof_fixup_notes(EOF_SONG *sp);	//Performs cleanup of the notes in all tracks

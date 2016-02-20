@@ -660,7 +660,7 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 	EOF_EXTENDED_NOTE temp_lyric = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0};
 	EOF_LYRIC * new_lyric = NULL;
 	PACKFILE * fp;
-	float newpasteoffset = 0.0;	//This will be used to allow new paste to paste lyrics starting at the seek position instead of the original in-beat positions
+	double newpasteoffset = 0.0;	//This will be used to allow new paste to paste lyrics starting at the seek position instead of the original in-beat positions
 
 	if(!eof_vocals_selected)
 		return 1;	//Return error
@@ -765,7 +765,7 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 	unsigned long start_pos, end_pos;
 	long last_anchor, next_anchor;
 	unsigned long copy_notes[EOF_TRACKS_MAX] = {0};	//The number of notes to store for each track
-	float tfloat;
+	double tfloat;
 	PACKFILE * fp;
 	EOF_PHRASE_SECTION *sectionptr = NULL;
 	unsigned long notepos=0;
@@ -908,10 +908,10 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 			sectionptr = eof_get_star_power_path(eof_song, j, i);
 			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->start_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
 			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->end_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
 		}
 
 		/* solos */
@@ -921,10 +921,10 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 			sectionptr = eof_get_solo(eof_song, j, i);
 			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->start_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
 			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->end_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
 		}
 
 		/* lyric lines */
@@ -934,10 +934,10 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 			sectionptr = eof_get_lyric_section(eof_song, j, i);
 			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->start_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
 			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->end_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
 		}
 
 		/* trills */
@@ -947,10 +947,10 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 			sectionptr = eof_get_trill(eof_song, j, i);
 			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->start_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
 			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->end_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
 		}
 
 		/* tremolos */
@@ -960,10 +960,10 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 			sectionptr = eof_get_tremolo(eof_song, j, i);
 			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->start_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
 			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->end_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
 		}
 
 		/* arpeggios */
@@ -973,10 +973,10 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 			sectionptr = eof_get_arpeggio(eof_song, j, i);
 			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->start_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
 			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->end_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
 		}
 
 		/* sliders */
@@ -986,10 +986,10 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 			sectionptr = eof_get_slider(eof_song, j, i);
 			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->start_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
 			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->end_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
 		}
 
 		/* fret hand positions (only the start position is stored, the end position stores the fret value) */
@@ -999,7 +999,7 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 			sectionptr = eof_get_fret_hand_position(eof_song, j, i);
 			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->start_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
 		}
 
 		eof_menu_track_set_tech_view_state(eof_song, j, restore_tech_view);	//Re-enable tech view if applicable
@@ -1020,7 +1020,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 	unsigned long copy_notes[EOF_TRACKS_MAX];	//The number of notes to adjust for each track
 	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0};
 	EOF_NOTE * new_note = NULL;
-	float tfloat = 0.0;
+	double tfloat = 0.0;
 	EOF_PHRASE_SECTION *sectionptr = NULL;
 	unsigned long notepos = 0;
 	long notelength = 0;
@@ -1194,11 +1194,11 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		{	//For each star power path in the active track
 			/* which beat */
 			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
 			sectionptr = eof_get_star_power_path(eof_song, j, i);
 			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
 			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
 			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
 		}
 
@@ -1207,11 +1207,11 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		{	//For each solo section in the active track
 			/* which beat */
 			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
 			sectionptr = eof_get_solo(eof_song, j, i);
 			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
 			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
 			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
 		}
 
@@ -1220,11 +1220,11 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		{	//For each lyric section in the active track
 			/* which beat */
 			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
 			sectionptr = eof_get_lyric_section(eof_song, j, i);
 			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
 			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
 			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
 		}
 
@@ -1233,11 +1233,11 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		{	//For each trill section in the active track
 			/* which beat */
 			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
 			sectionptr = eof_get_trill(eof_song, j, i);
 			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
 			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
 			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
 		}
 
@@ -1246,11 +1246,11 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		{	//For each tremolo section in the active track
 			/* which beat */
 			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
 			sectionptr = eof_get_tremolo(eof_song, j, i);
 			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
 			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
 			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
 		}
 
@@ -1259,11 +1259,11 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		{	//For each arpeggio section in the active track
 			/* which beat */
 			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
 			sectionptr = eof_get_arpeggio(eof_song, j, i);
 			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
 			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
 			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
 		}
 
@@ -1272,11 +1272,11 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		{	//For each slider section in the active track
 			/* which beat */
 			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
 			sectionptr = eof_get_slider(eof_song, j, i);
 			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
 			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
 			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
 		}
 
@@ -1285,7 +1285,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		{	//For each fret hand position in the active track
 			/* which beat */
 			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
 			sectionptr = eof_get_fret_hand_position(eof_song, j, i);
 			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
 		}
@@ -1403,7 +1403,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	unsigned long highestfret, highestlane;
 	unsigned long numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	unsigned long maxbitmask = (1 << numlanes) - 1;	//A bitmask representing the highest valid note bitmask (a gem on all used lanes in the destination track)
-	float newpasteoffset = 0.0;	//This will be used to allow new paste to paste notes starting at the seek position instead of the original in-beat positions
+	double newpasteoffset = 0.0;	//This will be used to allow new paste to paste notes starting at the seek position instead of the original in-beat positions
 	unsigned long lastarpeggnum = 0xFFFFFFFF, arpeggstart = 0, arpeggend = 0;	//Used to create arpeggio/handshape phrases
 
 	if(eof_vocals_selected)
@@ -3076,7 +3076,7 @@ int eof_menu_edit_paste_from_catalog(void)
 	long current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	long last_current_beat = current_beat;
 	long end_beat = -1;
-	float nporpos, nporendpos;
+	double nporpos, nporendpos;
 	EOF_NOTE * new_note = NULL;
 	unsigned long newnotenum, sourcetrack, highestfret = 0, highestlane = 0, currentfret;
 	unsigned long numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
@@ -3474,8 +3474,8 @@ void eof_read_clipboard_note(PACKFILE *fp, EOF_EXTENDED_NOTE *temp_note, unsigne
 	temp_note->pos = pack_igetl(fp);		//Read the note's position relative to within the selection
 	temp_note->length = pack_igetl(fp);		//Read the note's length
 	temp_note->midi_pos = temp_note->midi_length = 0;	//Initialize these unused variables
-	(void) pack_fread(&temp_note->porpos, (long)sizeof(float), fp);	//Read the percent representing the note's start position within a beat
-	(void) pack_fread(&temp_note->porendpos, (long)sizeof(float), fp);	//Read the percent representing the note's end position within a beat
+	(void) pack_fread(&temp_note->porpos, (long)sizeof(double), fp);	//Read the percent representing the note's start position within a beat
+	(void) pack_fread(&temp_note->porendpos, (long)sizeof(double), fp);	//Read the percent representing the note's end position within a beat
 	temp_note->flags = pack_igetl(fp);		//Read the note's flags
 	temp_note->eflags = pack_igetl(fp);		//Read the note's extended track flags
 	temp_note->legacymask = pack_getc(fp);		//Read the note's legacy bitmask
@@ -3501,7 +3501,7 @@ void eof_read_clipboard_position_snap_data(PACKFILE *fp, int *beat, char *gridsn
 void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long first_pos)
 {
 	long note_len;
-	float tfloat;
+	double tfloat;
 	unsigned char frets[8] = {0};	//Used to store NULL fret data to support copying legacy notes to a pro guitar track
 	unsigned char finger[8] = {0};	//Used to store NULL finger data to support copying legacy notes to a pro guitar track
 
@@ -3519,9 +3519,9 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 	(void) pack_iputl(eof_get_note_pos(sp, track, note) - first_pos, fp);		//Write the note's position relative to within the selection
 	(void) pack_iputl(note_len, fp);	//Write the note's length
 	tfloat = eof_get_porpos(eof_get_note_pos(sp, track, note));
-	(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);	//Write the percent representing the note's start position within a beat
+	(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);	//Write the percent representing the note's start position within a beat
 	tfloat = eof_get_porpos(eof_get_note_pos(sp, track, note) + note_len);
-	(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);	//Write the percent representing the note's end position within a beat
+	(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);	//Write the percent representing the note's end position within a beat
 	(void) pack_iputl(eof_get_note_flags(sp, track, note), fp);	//Write the note's flags
 
 	/* Write pro guitar specific data to disk, or zeroed data */

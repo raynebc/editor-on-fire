@@ -515,8 +515,8 @@ extern int eof_key_code;
 extern int eof_key_shifts;
 
 void eof_show_mouse(BITMAP * bp);	//Shows the software mouse if it is being used
-float eof_get_porpos(unsigned long pos);	//Returns the timestamp's position within a beat (percentage)
-long eof_put_porpos(unsigned long beat, float porpos, float offset);
+double eof_get_porpos(unsigned long pos);	//Returns the timestamp's position within a beat (percentage)
+long eof_put_porpos(unsigned long beat, double porpos, double offset);
 	//Returns the timestamp of the specified position within a beat, or -1 on error
 	//porpos can be a positive or negative value larger in magnitude than 100.0
 void eof_reset_lyric_preview_lines(void);	//Resets the preview line variables to 0

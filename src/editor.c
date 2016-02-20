@@ -307,7 +307,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			sp->grid_pos[0] = eof_song->beat[sp->measure_beat]->fpos;	//Set first grid position
 			for(i = 1; i < interval; i++)
 			{
-				sp->grid_pos[i] = eof_song->beat[sp->measure_beat]->fpos + (snaplength * (float)i);
+				sp->grid_pos[i] = eof_song->beat[sp->measure_beat]->fpos + (snaplength * (double)i);
 			}
 			sp->grid_pos[interval] = eof_song->beat[sp->measure_beat]->fpos + sp->measure_length;	//Set last grid position
 
@@ -353,7 +353,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			sp->grid_pos[0] = eof_song->beat[sp->beat]->fpos;	//Set the first grid position
 			for(i = 1; i < interval; i++)
 			{
-				sp->grid_pos[i] = eof_song->beat[sp->beat]->fpos + (snaplength * (float)i);	//Set grid snap positions
+				sp->grid_pos[i] = eof_song->beat[sp->beat]->fpos + (snaplength * (double)i);	//Set grid snap positions
 			}
 			sp->grid_pos[interval] = eof_song->beat[sp->beat + 1]->fpos;	//Record the position of the last grid snap, which is the next beat
 
@@ -6085,7 +6085,7 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 	/* render the scroll bar */
 	if(window != eof_window_editor2)
 	{	//Only draw the scroll bar for the main piano roll
-		scroll_pos = ((float)(eof_screen->w - 8) / (float)eof_chart_length) * (float)eof_music_pos;
+		scroll_pos = ((double)(eof_screen->w - 8.0) / (double)eof_chart_length) * (double)eof_music_pos;
 		rectfill(window->screen, 0, eof_screen_layout.scrollbar_y, window->w - 1, window->h - 2, eof_color_light_gray);
 		draw_sprite(window->screen, eof_image[EOF_IMAGE_SCROLL_HANDLE], scroll_pos + 2, eof_screen_layout.scrollbar_y);
 
@@ -6455,7 +6455,7 @@ void eof_editor_logic_common(void)
 		{
 			if(!eof_full_screen_3d && (mouse_b & 1))
 			{
-				eof_music_actual_pos = ((float)eof_chart_length / (float)(eof_screen->w - 8)) * (float)(eof_scaled_mouse_x - 4);
+				eof_music_actual_pos = ((double)eof_chart_length / (double)(eof_screen->w - 8.0)) * (double)(eof_scaled_mouse_x - 4.0);
 				if(eof_music_actual_pos > eof_chart_length)
 				{
 					eof_music_actual_pos = eof_chart_length;
