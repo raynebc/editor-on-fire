@@ -114,7 +114,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 150, 105, 148, 16,  2,   23,  0,    0,      1,   0,   "Disable 3D rendering",NULL, NULL },
 	{ d_agup_check_proc, 306, 105, 148, 16,  2,   23,  0,    0,      1,   0,   "Disable 2D rendering",NULL, NULL },
 	{ d_agup_check_proc, 16,  120, 116, 16,  2,   23,  0,    0,      1,   0,   "Hide info panel",NULL, NULL },
-	{ d_agup_check_proc, 150, 120, 206, 16,  2,   23,  0,    0,      1,   0,   "Paste erases overlap",NULL, NULL },
+	{ d_agup_check_proc, 150, 120, 148, 16,  2,   23,  0,    0,      1,   0,   "Paste erases overlap",NULL, NULL },
 	{ d_agup_check_proc, 16,  136, 208, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rock Band files",NULL, NULL },
 	{ d_agup_check_proc, 248, 136, 216, 16,  2,   23,  0,    0,      1,   0,   "Save separate musical MIDI file",NULL, NULL },
 	{ d_agup_check_proc, 16,  152, 216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 1 files",NULL, NULL },
@@ -162,7 +162,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 16,  273, 340, 16,  2,   23,  0,    0,      1,   0,   "Apply crazy to repeated chords separated by a rest",NULL, NULL },
 	{ d_agup_check_proc, 248, 168, 206, 16,  2,   23,  0,    0,      1,   0,   "Save FoF/GH/Phase Shift files",NULL, NULL },
 	{ d_agup_check_proc, 248, 513, 224, 16,  2,   23,  0,    0,      1,   0,   "Offer to auto complete fingering",NULL, NULL },
-	{ d_agup_check_proc, 16,  353, 174, 16,  2,   23,  0,    0,      1,   0,   "RBN export slider as HOPO",NULL, NULL },
+	{ d_agup_check_proc, 16,  353, 186, 16,  2,   23,  0,    0,      1,   0,   "RBN export slider as HOPO",NULL, NULL },
 	{ d_agup_check_proc, 248, 465, 226, 16,  2,   23,  0,    0,      1,   0,   "dB import drops mid beat tempos",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };

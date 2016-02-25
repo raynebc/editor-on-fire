@@ -526,5 +526,6 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp, char *outputfilename, char *string2, 
 		return -1;	//Return failure
 	}
 
+	(void) delete_file(tempoutputfilename);	//Delete the temporary lyric file
 	return 1;	//Return success
 }

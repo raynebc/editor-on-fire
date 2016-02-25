@@ -361,6 +361,8 @@ DIALOG eof_track_rename_dialog[] =
 
 int eof_track_rename(void)
 {
+	unsigned long ctr;
+
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
 
@@ -380,7 +382,20 @@ int eof_track_rename(void)
 	if(eof_popup_dialog(eof_track_rename_dialog, 2) == 3)
 	{	//If user clicked OK
 		if(ustrncmp(eof_etext, eof_song->track[eof_selected_track]->altname, EOF_NAME_LENGTH))
-		{	//If the user provided a different alternate track name
+		{	//If the user provided a different alternate track name than what was already defined
+			if(eof_etext != '\0')
+			{	//If the specified string isn't empty
+				//Verify that the provided name doesn't match the existing native or display name of any track in the project
+				for(ctr = 1; ctr < eof_song->tracks; ctr++)
+				{	//For each track in the project
+					if(!ustrncmp(eof_etext, eof_song->track[ctr]->name, EOF_NAME_LENGTH) || !ustrncmp(eof_etext, eof_song->track[ctr]->altname, EOF_NAME_LENGTH))
+					{	//If the provided name matches the track's native or display name
+						allegro_message("Error:  The provided name is already in use by this track:  %s", eof_song->track[ctr]->name);
+						return 1;
+					}
+				}
+			}
+
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			(void) ustrcpy(eof_song->track[eof_selected_track]->altname, eof_etext);	//Update the track entry
 			if(eof_etext[0] != '\0')

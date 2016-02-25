@@ -3558,6 +3558,43 @@ void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note
 	}
 }
 
+void eof_track_delete_note_with_difficulties(EOF_SONG *sp, unsigned long track, unsigned long notenum, int operation)
+{
+	unsigned long ctr, notepos;
+
+	if(!sp || (track >= sp->tracks))
+		return;	//Invalid parameters
+
+	//Delete notes in higher difficulties if applicable
+	notepos = eof_get_note_pos(sp, track, notenum);	//Cache this value
+	if(operation > 0)
+	{	//If the calling function wanted to delete ALL notes at the specified note's position
+		for(ctr = eof_get_track_size(sp, track); ctr > notenum + 1; ctr--)
+		{	//For each note in the track AFTER the specified one, in reverse order
+			if((notepos == eof_get_note_pos(sp, track, ctr - 1)) && (eof_get_note_type(sp, track, ctr - 1) > eof_note_type))
+			{	//If this note is at the same position and in a higher difficulty
+				eof_track_delete_note(sp, track, ctr - 1);
+			}
+		}
+	}
+
+	//Delete the note in the active difficulty
+	eof_track_delete_note(sp, track, notenum);
+	eof_selection.multi[notenum] = 0;
+
+	//Delete notes in lower difficulties if applicable
+	if(operation)
+	{	//If the calling function wanted to delete notes at the specified note's position in all difficulties or in lower difficulties
+		for(ctr = notenum; ctr > 0; ctr--)
+		{	//For each note in the track BEFORE the specified one, in reverse order
+			if((notepos == eof_get_note_pos(sp, track, ctr - 1)) && (eof_get_note_type(sp, track, ctr - 1) < eof_note_type))
+			{	//If this note is at the same position and in a lower difficulty
+				eof_track_delete_note(eof_song, eof_selected_track, ctr - 1);
+			}
+		}
+	}
+}
+
 void eof_song_empty_track(EOF_SONG * sp, unsigned long track)
 {
 	unsigned long i;

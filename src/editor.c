@@ -691,6 +691,7 @@ if(eof_key_code == KEY_PAUSE)
 {
 	eof_use_key();
 	//Debug action here
+	eof_menu_note_delete_with_lower_difficulties();
 }
 
 /* keyboard shortcuts that may or may not be used when the chart/catalog is playing */
@@ -3144,15 +3145,24 @@ if(eof_key_code == KEY_PAUSE)
 	/* delete note (Del) */
 	/* delete beat (CTRL+Del) */
 	/* delete effective fret hand position (SHIFT+Del in a pro guitar track) */
+	/* delete note with lower difficulties (CTRL+SHIFT+Del) */
 		if(eof_key_code == KEY_DEL)
 		{
 			if(KEY_EITHER_SHIFT)
 			{	//If SHIFT is held
-				(void) eof_track_delete_effective_fret_hand_position();
-				eof_shift_used = 1;	//Track that the SHIFT key was used
+				if(KEY_EITHER_CTRL)
+				{	//If CTRL is also held
+					(void) eof_menu_note_delete_with_lower_difficulties();
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+				}
+				else
+				{	//SHIFT is held but CTRL is not
+					(void) eof_track_delete_effective_fret_hand_position();
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+				}
 			}
 			else
-			{
+			{	//SHIFT is not held
 				if(KEY_EITHER_CTRL)
 				{	//If CTRL is held but SHIFT is not
 					(void) eof_menu_beat_delete();

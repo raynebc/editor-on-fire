@@ -86,6 +86,13 @@ MENU eof_star_power_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_menu_delete[] =
+{
+	{"Delete\tDel", eof_menu_note_delete, NULL, 0, NULL},
+	{"Delete w/ lower diffs\t" CTRL_NAME "+Shift+Del", eof_menu_note_delete_with_lower_difficulties, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_lyric_line_menu[] =
 {
 	{eof_lyric_line_menu_mark_text, eof_menu_lyric_line_mark, NULL, 0, NULL},
@@ -419,7 +426,7 @@ MENU eof_note_menu[] =
 	{"Resnap\t" CTRL_NAME "+Shift+R", eof_menu_note_resnap, NULL, 0, NULL},
 	{"&Solos", NULL, eof_solo_menu, 0, NULL},
 	{"Star &Power", NULL, eof_star_power_menu, 0, NULL},
-	{"Delete\tDel", eof_menu_note_delete, NULL, 0, NULL},
+	{"Delete", NULL, eof_menu_delete, 0, NULL},
 	{"Edit &Name", eof_menu_note_edit_name, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Cra&Zy", NULL, eof_note_crazy_menu, 0, NULL},
@@ -1427,6 +1434,7 @@ int eof_menu_note_delete(void)
 
 	(void) eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
+	//Count the number of selected notes in the active track difficulty
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
@@ -1435,14 +1443,14 @@ int eof_menu_note_delete(void)
 		}
 	}
 	if(d)
-	{
+	{	//If there's at least one selected note in the active track difficulty
 		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 		for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
-		{
-			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i-1] && (eof_get_note_type(eof_song, eof_selected_track, i-1) == eof_note_type))
+		{	//For each note (in reverse order)
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
 			{
-				eof_track_delete_note(eof_song, eof_selected_track, i-1);
-				eof_selection.multi[i-1] = 0;
+				eof_track_delete_note(eof_song, eof_selected_track, i - 1);
+				eof_selection.multi[i - 1] = 0;
 			}
 		}
 		(void) eof_menu_edit_deselect_all();	//Clear selection data
@@ -1451,6 +1459,28 @@ int eof_menu_note_delete(void)
 		(void) eof_detect_difficulties(eof_song, eof_selected_track);
 		eof_determine_phrase_status(eof_song, eof_selected_track);
 	}
+	return 1;
+}
+
+int eof_menu_note_delete_with_lower_difficulties(void)
+{
+	unsigned long ctr;
+	char undo_made = 0;
+
+	eof_track_sort_notes(eof_song, eof_selected_track);	//Ensure the notes are sorted ascending by timestamp and then by difficulty
+	for(ctr = eof_get_track_size(eof_song, eof_selected_track); ctr > 0; ctr--)
+	{	//For each note in the track, in reverse order
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr - 1] && (eof_get_note_type(eof_song, eof_selected_track, ctr - 1) == eof_note_type))
+		{	//If the note is selected
+			if(!undo_made)
+			{
+				eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
+				undo_made = 1;
+			}
+			eof_track_delete_note_with_difficulties(eof_song, eof_selected_track, ctr - 1, -1);	//Delete this note as well as all notes at the same position in lower difficulties
+		}
+	}
+
 	return 1;
 }
 

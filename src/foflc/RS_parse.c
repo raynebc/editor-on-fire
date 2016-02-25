@@ -111,6 +111,8 @@ int rs_filter_char(char character, char rs_filter)
 		return 1;
 	if((character == '(') || (character == '}') || (character == ',') || (character == '\\') || (character == ':') || (character == '{') || (character == '"') || (character == ')'))
 		return 1;
+	if(((unsigned) character > 127) || !isprint(character))
+		return 1;
 
 	return 0;
 }

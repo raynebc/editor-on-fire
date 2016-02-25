@@ -576,6 +576,12 @@ void eof_set_num_star_power_paths(EOF_SONG *sp, unsigned long track, unsigned lo
 EOF_PHRASE_SECTION *eof_get_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long pathnum);	//Returns a pointer to the specified star power path, or NULL on error
 void *eof_track_add_note(EOF_SONG *sp, unsigned long track);								//Calls the appropriate add function for the specified track, returning the newly allocated structure or NULL upon error
 void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note);			//Performs the appropriate logic to remove the specified note/lyric from the specified track
+void eof_track_delete_note_with_difficulties(EOF_SONG *sp, unsigned long track, unsigned long notenum, int operation);
+	//Deletes the specified note as well as other notes in the same position in other difficulties, depending on the value of the operation parameter:
+	// if operation is < 0, notes at the same timestamp as the specified note in lower difficulties are also deleted
+	// if operation is 0, only the specified note is deleted
+	// if operation is > 0, notes at the same timestamp as the specified note in ANY difficulty is deleted
+	//The specified track's notes are pre-sorted in order to ensure this function operates properly
 void eof_song_empty_track(EOF_SONG * sp, unsigned long track);								//Deletes all notes from the track
 void eof_track_resize(EOF_SONG *sp, unsigned long track, unsigned long size);				//Performs the appropriate logic to resize the specified track
 unsigned char eof_get_note_type(EOF_SONG *sp, unsigned long track, unsigned long note);				//Returns the type (difficulty/lyric set) of the specified track's note/lyric, or 0xFF on error
@@ -604,7 +610,10 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned char
 	//Adds and initializes the appropriate note for the specified track, returning the newly created note structure, or NULL on error
 	//Automatic flags will be applied appropriately (ie. crazy status for all notes in PART KEYS)
 	//text is used to initialize the note name or lyric text, and may be NULL
-void eof_track_sort_notes(EOF_SONG *sp, unsigned long track);		//Calls the appropriate sort function for the specified track.  eof_selection.multi[] is preserved before the sort and recreated afterward, since sorting invalidates the selection array due to note numbering being changed
+void eof_track_sort_notes(EOF_SONG *sp, unsigned long track);
+	//Calls the appropriate sort function for the specified track.  eof_selection.multi[] is preserved before the sort and recreated afterward, since sorting invalidates
+	// the selection array due to note numbering being changed
+	//Functions that depend on notes being sorted should be able to expect that notes are sorted primarily by timestamp and secondarily by difficulty number
 int eof_song_qsort_phrase_sections(const void * e1, const void * e2);	//A generic qsort comparitor that will sort phrase sections into chronological order
 long eof_track_fixup_previous_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note/lyric one before the specified note/lyric number that is in the same difficulty, or -1 if there is none
 long eof_track_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note/lyric one after the specified note/lyric number that is in the same difficulty, or -1 if there is none
@@ -681,7 +690,7 @@ void eof_erase_track_difficulty(EOF_SONG *sp, unsigned long track, unsigned char
 EOF_NOTE * eof_legacy_track_add_note(EOF_LEGACY_TRACK * tp);	//Allocates, initializes and stores a new EOF_NOTE structure into the notes array.  Returns the newly allocated structure or NULL upon error
 void eof_legacy_track_delete_note(EOF_LEGACY_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
 void eof_legacy_track_sort_notes(EOF_LEGACY_TRACK * tp);	//Performs a quicksort of the notes array
-int eof_song_qsort_legacy_notes(const void * e1, const void * e2);	//The comparitor function used to quicksort the legacy notes array
+int eof_song_qsort_legacy_notes(const void * e1, const void * e2);	//The comparitor function used to quicksort the legacy notes array, first by timestamp, second by difficulty, third by note mask
 long eof_fixup_previous_legacy_note(EOF_LEGACY_TRACK * tp, unsigned long note);	//Returns the note one before the specified note number that is in the same difficulty, or -1 if there is none
 long eof_fixup_next_legacy_note(EOF_LEGACY_TRACK * tp, unsigned long note);	//Returns the note one after the specified note number that is in the same difficulty, or -1 if there is none
 void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel);	//Performs cleanup of the specified instrument track.  If sel is zero, the currently selected note is deselected automatically
@@ -696,7 +705,7 @@ void eof_legacy_track_delete_tremolo(EOF_LEGACY_TRACK * tp, unsigned long index)
 
 EOF_LYRIC * eof_vocal_track_add_lyric(EOF_VOCAL_TRACK * tp);	//Allocates, initializes and stores a new EOF_LYRIC structure into the lyrics array.  Returns the newly allocated structure or NULL upon error
 void eof_vocal_track_delete_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//Removes and frees the specified lyric from the lyrics array.  All lyrics after the deleted lyric are moved back in the array one position
-void eof_vocal_track_sort_lyrics(EOF_VOCAL_TRACK * tp);		//Performs a quicksort of the lyrics array
+void eof_vocal_track_sort_lyrics(EOF_VOCAL_TRACK * tp);		//Performs a quicksort of the lyrics array by timestamp
 int eof_song_qsort_lyrics(const void * e1, const void * e2);	//The comparitor function used to quicksort the lyrics array
 long eof_fixup_previous_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//Returns the previous lyric, or -1 if there is none
 long eof_fixup_next_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//Returns the next lyric, or -1 if there is none
@@ -707,7 +716,7 @@ void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, unsigned long index);	//D
 
 EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_note(EOF_PRO_GUITAR_TRACK *tp);	//Allocates, initializes and stores a new EOF_PRO_GUITAR_NOTE structure into the note array.  Returns the newly allocated structure or NULL upon error
 EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_tech_note(EOF_PRO_GUITAR_TRACK *tp);	//Allocates, initializes and stores a new EOF_PRO_GUITAR_NOTE structure into the technote array.  Returns the newly allocated structure or NULL upon error
-void eof_pro_guitar_track_sort_notes(EOF_PRO_GUITAR_TRACK * tp);	//Performs a quicksort of the notes array
+void eof_pro_guitar_track_sort_notes(EOF_PRO_GUITAR_TRACK * tp);	//Performs a quicksort of the notes array, first by timestamp, second by difficulty, third by note mask
 int eof_song_qsort_pro_guitar_notes(const void * e1, const void * e2);	//The comparitor function used to quicksort the pro guitar notes array
 void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
 long eof_fixup_previous_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Returns the note one before the specified note number that is in the same difficulty, or -1 if there is none
