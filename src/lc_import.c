@@ -335,6 +335,16 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp, char *outputfilename, char *string2, 
 			(void) eof_vocal_track_add_line(tp, 0, tp->lyric[tp->lyrics - 1]->pos + 1);	//Create a single line encompassing all lyrics
 		}
 	}
+	else if(format == PLAIN_FORMAT)
+	{	//This format option is meant to invoke script export with the plain flag set and filtering enabled
+		Lyrics.nohyphens = 3;	//Disable hyphen output
+		Lyrics.noplus = 1;	//Disable plus output
+		Lyrics.filter = DuplicateString("^=%#/");	//Use default filter list
+		Lyrics.defaultfilter = 1;	//Track that the above string will need to be freed
+		format = SCRIPT_FORMAT;
+		Lyrics.plain = 1;
+		Lyrics.grouping = 2;	//Enable line grouping for script.txt export
+	}
 
 //Import lyrics from EOF structure
 	lyrctr = 0;		//Begin indexing into lyrics from the very first

@@ -4745,8 +4745,8 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 				ptr->length = stop_tech_note_position - notepos;
 			}
 		}
-		if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO))
-		{	//If this note has bend, vibrato, slide (bend and slide notes are required to have a length > 0 or Rocksmith will crash), unpitched slide or sustain status
+		if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO) || (flags & EOF_NOTE_FLAG_IS_TREMOLO))
+		{	//If this note has bend, vibrato, slide (bend and slide notes are required to have a length > 0 or Rocksmith will crash), unpitched slide, sustain or tremolo status
 			keeplength = 1;
 		}
 		if(fret)

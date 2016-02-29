@@ -161,34 +161,37 @@ void Export_Script(FILE *outf)
 
 	if(Lyrics.verbose)	printf("\nExporting script lyrics to file \"%s\"\n\nWriting tags\n",Lyrics.outfilename);
 
-//Write the tags if they were specified in the input file
-	if(Lyrics.Title != NULL)
-		if(fprintf(outf,"# [ti:%s]\n",Lyrics.Title) < 0)
-			errornumber=errno;
-
-	if(Lyrics.Artist != NULL)
-		if(fprintf(outf,"# [ar:%s]\n",Lyrics.Artist) < 0)
-			errornumber=errno;
-
-	if(Lyrics.Album != NULL)
-		if(fprintf(outf,"# [al:%s]\n",Lyrics.Album) < 0)
-			errornumber=errno;
-
-	if(Lyrics.Editor != NULL)
-		if(fprintf(outf,"# [by:%s]\n",Lyrics.Editor) < 0)
-			errornumber=errno;
-
-	if(Lyrics.marklines)
-		if(fprintf(outf,"# [marklines]\n") < 0)
-			errornumber=errno;
-
-	if(errornumber != 0)
+//If the plain flag isn't suppressing tags, write them now if they were specified in the input file
+	if(!Lyrics.plain)
 	{
-		printf("Error writing tags: %s\nAborting\n",strerror(errno));
-		exit_wrapper(1);
+		if(Lyrics.Title != NULL)
+			if(fprintf(outf,"# [ti:%s]\n",Lyrics.Title) < 0)
+				errornumber=errno;
+
+		if(Lyrics.Artist != NULL)
+			if(fprintf(outf,"# [ar:%s]\n",Lyrics.Artist) < 0)
+				errornumber=errno;
+
+		if(Lyrics.Album != NULL)
+			if(fprintf(outf,"# [al:%s]\n",Lyrics.Album) < 0)
+				errornumber=errno;
+
+		if(Lyrics.Editor != NULL)
+			if(fprintf(outf,"# [by:%s]\n",Lyrics.Editor) < 0)
+				errornumber=errno;
+
+		if(Lyrics.marklines)
+			if(fprintf(outf,"# [marklines]\n") < 0)
+				errornumber=errno;
+
+		if(errornumber != 0)
+		{
+			printf("Error writing tags: %s\nAborting\n",strerror(errno));
+			exit_wrapper(1);
+		}
+		//The delay tag is not written because the timestamps have already been modified to reflect it.  This will
+		//prevent them from being misinterpreted and having the timestamps delayed a second time
 	}
-	//The delay tag is not written because the timestamps have already been modified to reflect it.  This will
-	//prevent them from being misinterpreted and having the timestamps delayed a second time
 
 	if(Lyrics.verbose)	(void) puts("Writing lyrics");
 
@@ -202,7 +205,13 @@ void Export_Script(FILE *outf)
 
 		while(temp != NULL)				//For each piece of lyric in this line
 		{
-			if(fprintf(outf,"%lu\t%lu\ttext\t%s\n",temp->start,temp->duration,temp->lyric) < 0)
+			int retval;
+			if(!Lyrics.plain)	//If exporting standard format script
+				retval = fprintf(outf,"%lu\t%lu\ttext\t%s\n",temp->start,temp->duration,temp->lyric);
+			else				//If exporting the plain version with no timing
+				retval = fprintf(outf,"%s\n",temp->lyric);
+
+			if(retval < 0)
 			{
 				printf("Error exporting lyric %lu\t%lu\ttext\t%s: %s\nAborting\n",temp->start,temp->duration,temp->lyric,strerror(errno));
 				exit_wrapper(2);
@@ -215,9 +224,10 @@ void Export_Script(FILE *outf)
 
 		curline=curline->next;	//Advance to next line of lyrics
 
-		if(Lyrics.marklines && curline)	//Only write "#newlines" tag if there's another line of lyrics
-			if(Lyrics.grouping != 2)	//Only print #newline tags if line grouping isn't being used
-				fputs_err("#newline\n",outf);
+		if(Lyrics.marklines && curline)	//Only write #newline tags if there's another line of lyrics
+			if(Lyrics.grouping != 2)	//Only write #newline tags if line grouping isn't being used
+				if(!Lyrics.plain)		//Only write #newline tags if the plain variation script format isn't being exported
+					fputs_err("#newline\n",outf);
 
 		if(Lyrics.verbose)	(void) putchar('\n');
 	}

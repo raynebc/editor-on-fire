@@ -2642,7 +2642,7 @@ int eof_menu_beat_copy_rs_events(void)
 	}
 	if(!num)
 	{
-		allegro_message("This track has no applicable Rocksmith phrases or sections");
+		allegro_message("This beat has no applicable Rocksmith phrases or sections");
 		return 1;
 	}
 

@@ -77,8 +77,9 @@ Export functions are expected to:
 #define C9C_FORMAT 14
 #define RS_FORMAT 15
 #define RS2_FORMAT 16
+#define PLAIN_FORMAT 17
 
-#define NUMBEROFLYRICFORMATS 16
+#define NUMBEROFLYRICFORMATS 17
 	//This defined number should be equal to the number of defined lyric macros above, for use with the LYRICFORMATNAMES[] array
 
 //#define NDEBUG		//This will disable the assert macros in the source file if defined
@@ -207,6 +208,7 @@ struct _LYRICSSTRUCT_{
 								//			This is because when used in EOF, the program may require more than one import, and otherwise the static
 								//			variables would never re-initialize
 	char nofstyle;				//Boolean:	The freestyle indicator (#) is not added to pitchless/freestyle lyrics during MIDI export
+	char plain;					//Boolean:  Alters script format export to exclude all items except the lyrics themselves (no timing, no artist/album/etc. tags)
 
 //Various
 	unsigned long piececount;	//The number of lyric pieces in all lines.  Incremented upon adding a lyric piece

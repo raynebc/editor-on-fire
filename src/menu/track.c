@@ -131,7 +131,7 @@ void eof_prepare_track_menu(void)
 			eof_track_menu[1].flags = D_DISABLED;
 		}
 
-		/* enable open strum bass */
+		/* enable open strum */
 		if(eof_open_strum_enabled(eof_selected_track))
 		{
 			eof_track_phaseshift_menu[0].flags = D_SELECTED;	//Track>Phase Shift>Enable open strum

@@ -694,6 +694,26 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 	}
 
+	/* check if unofficial open strum notation was found */
+	for(ctr = 1; ctr < sp->tracks; ctr++)
+	{	//For each track
+		if(sp->track[ctr]->track_format != EOF_LEGACY_TRACK_FORMAT)
+		{	//If this isn't a legacy track
+			continue;	//Skip it
+		}
+		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
+		{	//For each note in the track
+			if(eof_get_note_note(sp, ctr, ctr2) == 31)
+			{	//If this note is a 5 lane chord, convert it to a lane 6 gem
+				unsigned long tracknum = sp->track[ctr]->tracknum;
+
+				sp->track[ctr]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
+				sp->legacy_track[tracknum]->numlanes = 6;	//Set this track to have 6 lanes instead of 5
+				eof_set_note_note(sp, ctr, ctr2, 32);
+			}
+		}
+	}
+
 	/* mark anything that wasn't specifically made into a forced HOPO note as a forced strum */
 	for(ctr = 1; ctr < sp->tracks; ctr++)
 	{	//For each track
@@ -1353,9 +1373,17 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					index++; 	//Increment index past N or S identifier
 				break;
 
-				case 'E':		//Text event, skip it
-					(void) pack_fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
-				continue;
+				case 'E':		//Text event, skip it unless it is unofficial toggle HOPO notation (E *)
+					if(strstr(&substring[index + 1], "*"))
+					{	//If the E is followed by an asterisk
+						notetype=2;	//This is a toggle HOPO marker
+					}
+					else
+					{
+						(void) pack_fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+						continue;
+					}
+				break;
 
 				case 'N':		//Note indicator, and increment index
 					index++; 	//Increment index past N or S identifier
@@ -1372,32 +1400,41 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				return NULL;		//Invalid instrument entry, return error
 			}
 
-		//Load second number
-			B=ParseLongInt(substring,&index,chart->linesprocessed,&errorstatus);
-			if(errorstatus)						//If ParseLongInt() failed
-			{
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Feedback import failed on line #%lu:  Invalid gem item parameter 1", chart->linesprocessed);
-				eof_log(eof_log_string, 1);
-				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
-				if(error)
-					*error=26;
-				free(buffer);
-				free(buffer2);
-				return NULL;					//Invalid number, return error
+			if(notetype == 2)
+			{	//If this is a toggle HOPO marker, treat it as a note authored as "N 5 0"
+				notetype=0;
+				B=5;
+				C=0;
 			}
+			else
+			{	//Otherwise parse the second and third parameters
+			//Load second number
+				B=ParseLongInt(substring,&index,chart->linesprocessed,&errorstatus);
+				if(errorstatus)						//If ParseLongInt() failed
+				{
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Feedback import failed on line #%lu:  Invalid gem item parameter 1", chart->linesprocessed);
+					eof_log(eof_log_string, 1);
+					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+					if(error)
+						*error=26;
+					free(buffer);
+					free(buffer2);
+					return NULL;					//Invalid number, return error
+				}
 
-		//Load third number
-			C=ParseLongInt(substring,&index,chart->linesprocessed,&errorstatus);
-			if(errorstatus)						//If ParseLongInt() failed
-			{
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Feedback import failed on line #%lu:  Invalid gem item parameter 2", chart->linesprocessed);
-				eof_log(eof_log_string, 1);
-				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
-				if(error)
-					*error=27;
-				free(buffer);
-				free(buffer2);
-				return NULL;					//Invalid number, return error
+			//Load third number
+				C=ParseLongInt(substring,&index,chart->linesprocessed,&errorstatus);
+				if(errorstatus)						//If ParseLongInt() failed
+				{
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Feedback import failed on line #%lu:  Invalid gem item parameter 2", chart->linesprocessed);
+					eof_log(eof_log_string, 1);
+					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+					if(error)
+						*error=27;
+					free(buffer);
+					free(buffer2);
+					return NULL;					//Invalid number, return error
+				}
 			}
 
 		//Create a note link and add it to the current Note list

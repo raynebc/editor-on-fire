@@ -3129,6 +3129,21 @@ int eof_save_helper(char *destfilename, char silent)
 	{
 		fixvoxpitches = fixvoxphrases = 0;	//Answer no to the prompts on behalf of the user
 	}
+	if(eof_song->tags->lyrics && eof_song->vocal_track[0]->lyrics)
+	{	//If user enabled the Lyrics checkbox in song properties and there are lyrics defined
+		//Save plain script format lyrics
+		(void) append_filename(eof_temp_filename, newfolderpath, "lyrics.txt", (int) sizeof(eof_temp_filename));
+		jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
+		if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
+		{	//Lyric export failed
+			(void) puts("Assert() handled sucessfully!");
+			allegro_message("Plain script lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in EOF's folder path,\nbecause EOF's lyric export doesn't support them.");
+		}
+		else
+		{
+			(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,PLAIN_FORMAT);	//Import lyrics into FLC lyrics structure and export to plain script format
+		}
+	}
 
 	if(eof_write_fof_files)
 	{	//If the user opted to save FoF related files
