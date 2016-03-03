@@ -61,7 +61,7 @@ MENU eof_beat_rocksmith_menu[] =
 {
 	{"Place RS Phrase\tShift+P", eof_rocksmith_phrase_dialog_add, NULL, 0, NULL},
 	{"Place RS &Section\tShift+S", eof_rocksmith_section_dialog_add, NULL, 0, NULL},
-	{"Place RS &Event\tShift+E", eof_rocksmith_event_dialog_add, NULL, 0, NULL},
+	{"Place RS &Event", eof_rocksmith_event_dialog_add, NULL, 0, NULL},
 	{"&Copy phrase/section\t" CTRL_NAME "+Shift+C", eof_menu_beat_copy_rs_events, NULL, 0, NULL},
 	{"&Paste phrase/section\t" CTRL_NAME "+Shift+V", eof_menu_beat_paste_rs_events, NULL, 0, NULL},
 	{"Clear non RS events", eof_menu_beat_clear_non_rs_events, NULL, 0, NULL},
@@ -79,6 +79,14 @@ MENU eof_beat_halve_bpm_menu[] =
 {
 	{"&Selected\t" CTRL_NAME "+Shift+X", eof_menu_beat_halve_tempo, NULL, 0, NULL},
 	{"&All", eof_menu_beat_halve_tempo_all, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_beat_events_menu[] =
+{
+	{"All E&vents", eof_menu_beat_all_events, NULL, 0, NULL},
+	{"&Events", eof_menu_beat_events, NULL, 0, NULL},
+	{"Clear all events", eof_menu_beat_clear_events, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -103,11 +111,10 @@ MENU eof_beat_menu[] =
 	{"&Halve BPM", NULL, eof_beat_halve_bpm_menu, 0, NULL},
 	{"Fix tempo for RBN", eof_menu_beat_set_RBN_tempos, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
+	{"&Events", NULL, eof_beat_events_menu, 0, NULL},
 	{"&Rocksmith", NULL, eof_beat_rocksmith_menu, 0, NULL},
-	{"All E&vents", eof_menu_beat_all_events, NULL, 0, NULL},
-	{"&Events", eof_menu_beat_events, NULL, 0, NULL},
-	{"Clear all events", eof_menu_beat_clear_events, NULL, 0, NULL},
-	{"Place &Trainer Event", eof_menu_beat_trainer_event, NULL, 0, NULL},
+	{"Place &Trainer event", eof_menu_beat_trainer_event, NULL, 0, NULL},
+	{"Place section event\tShift+E", eof_menu_beat_add_section, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -165,6 +172,19 @@ DIALOG eof_events_add_dialog[] =
 	{ d_agup_check_proc, 12, 170, 182, 16,  0,   0,   0,    0,      1,   0,   "Rocksmith event marker", NULL, NULL },
 	{ d_agup_button_proc,67, 194, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
 	{ d_agup_button_proc,163,194, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",      NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+char eof_section_add_dialog_string1[] = "Add section";
+char eof_section_add_dialog_string2[] = "Edit section";
+DIALOG eof_section_add_dialog[] =
+{
+	/* (proc)            (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
+	{ d_agup_window_proc,0,  48,  314, 100, 2,   23,  0,    0,      0,   0,   eof_section_add_dialog_string1,  NULL, NULL },
+	{ d_agup_text_proc,  12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",       NULL, NULL },
+	{ d_agup_edit_proc,  48, 80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,     NULL, NULL },
+	{ d_agup_button_proc,67, 108, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
+	{ d_agup_button_proc,163,108, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",      NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -274,8 +294,8 @@ void eof_prepare_beat_menu(void)
 		}
 		else
 		{
-			eof_beat_menu[4].flags = 0;
-			eof_beat_menu[5].flags = 0;
+			eof_beat_menu[4].flags = 0;	//Add
+			eof_beat_menu[5].flags = 0;	//Delete
 		}
 		if(eof_selected_beat == 0)
 		{	//If the first beat marker is selected, disable Beat>Delete, as this beat is not allowed to be deleted
@@ -284,7 +304,7 @@ void eof_prepare_beat_menu(void)
 //Beat>Push Offset Up and Push Offset Back validation
 		if(eof_song->beat[0]->pos >= eof_song->beat[1]->pos - eof_song->beat[0]->pos)
 		{	//If the current MIDI delay is at least as long as the first beat's length, enable Beat>Push Offset Back
-			eof_beat_menu[6].flags = 0;
+			eof_beat_menu[6].flags = 0;	//Push offset back
 		}
 		else
 		{
@@ -292,7 +312,7 @@ void eof_prepare_beat_menu(void)
 		}
 		if(eof_song->beats > 1)
 		{	//If the chart has at least two beat markers, enable Beat>Push Offset Up
-			eof_beat_menu[7].flags = 0;
+			eof_beat_menu[7].flags = 0;	//Push offset up
 		}
 		else
 		{
@@ -301,7 +321,7 @@ void eof_prepare_beat_menu(void)
 //Beat>Reset offset to zero validation
 		if(eof_song->beat[0]->pos > 0)
 		{	//If the current MIDI delay is not zero, enable Beat>Reset offset to zero
-			eof_beat_menu[8].flags = 0;
+			eof_beat_menu[8].flags = 0;	//Reset offset to zero
 		}
 		else
 		{
@@ -310,8 +330,8 @@ void eof_prepare_beat_menu(void)
 //Beat>Anchor Beat and Toggle Anchor validation
 		if(eof_selected_beat != 0)
 		{	//If the first beat marker is not selected, enable Beat>Anchor Beat and Toggle Anchor
-			eof_beat_menu[9].flags = 0;
-			eof_beat_menu[10].flags = 0;
+			eof_beat_menu[9].flags = 0;		//Anchor beat
+			eof_beat_menu[10].flags = 0;	//Toggle anchor
 		}
 		else
 		{
@@ -321,7 +341,7 @@ void eof_prepare_beat_menu(void)
 //Beat>Delete Anchor validation
 		if((eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR) && (eof_selected_beat != 0))
 		{	//If the selected beat is an anchor, and the first beat marker is not selected, enable Beat>Delete Anchor
-			eof_beat_menu[11].flags = 0;
+			eof_beat_menu[11].flags = 0;	//Delete anchor
 		}
 		else
 		{
@@ -341,7 +361,7 @@ void eof_prepare_beat_menu(void)
 		}
 		else
 		{
-			eof_beat_menu[12].flags = 0;
+			eof_beat_menu[12].flags = 0;	//Reset BPM
 		}
 //Beat>Estimate validation
 		if(eof_silence_loaded || !eof_music_track)
@@ -350,29 +370,29 @@ void eof_prepare_beat_menu(void)
 		}
 		else
 		{
-			eof_beat_menu[14].flags = 0;
+			eof_beat_menu[14].flags = 0;	//Estimate BPM
 		}
 //Beat>All Events and Clear Events validation
 		if(eof_song->text_events > 0)
 		{	//If there is at least one defined text event, enable Beat>All Events and Clear Events
-			eof_beat_menu[20].flags = 0;
-			eof_beat_menu[22].flags = 0;
+			eof_beat_events_menu[0].flags = 0;	//All events
+			eof_beat_events_menu[2].flags = 0;	//Clear all events
 		}
 		else
 		{
-			eof_beat_menu[20].flags = D_DISABLED;
-			eof_beat_menu[22].flags = D_DISABLED;
+			eof_beat_events_menu[0].flags = D_DISABLED;
+			eof_beat_events_menu[2].flags = D_DISABLED;
 		}
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar/bass track is active
-			eof_beat_menu[19].flags = 0;	//Beat>Rocksmith>
-			eof_beat_menu[23].flags = 0;	//Place Trainer Event
+			eof_beat_menu[20].flags = 0;	//Beat>Rocksmith>
+			eof_beat_menu[21].flags = 0;	//Place Trainer Event
 		}
 		else
 		{
-			eof_beat_menu[19].flags = D_DISABLED;
-			eof_beat_menu[23].flags = D_DISABLED;
+			eof_beat_menu[20].flags = D_DISABLED;
+			eof_beat_menu[21].flags = D_DISABLED;
 		}
 //Re-flag the active Time Signature for the selected beat
 		for(i = 0; i < 6; i++)
@@ -1637,6 +1657,79 @@ int eof_rocksmith_phrase_dialog_add(void)
 	{	//Launch the add text event dialog to add a new event, automatically checking the RS phrase marker option
 		return eof_events_dialog_add_function(EOF_EVENT_FLAG_RS_PHRASE);
 	}
+}
+
+int eof_menu_beat_add_section(void)
+{
+	unsigned long ctr;
+	char *ptr;
+	EOF_TEXT_EVENT *ep = NULL;
+	char text[EOF_TEXT_EVENT_LENGTH + 1] = {0};
+
+	if(!eof_song)
+		return D_O_K;
+
+	//Determine if the selected beat already has an existing section marker
+	for(ctr = 0; ctr < eof_song->text_events; ctr++)
+	{	//For each text event in the project
+		if(eof_song->text_event[ctr]->beat == eof_selected_beat)
+		{	//If the text event is assigned to the selected beat
+			if(!eof_song->text_event[ctr]->track || (eof_song->text_event[ctr]->track == eof_selected_track))
+			{	//If the text event has no associated track or is specific to the active track
+				ptr = strcasestr_spec(eof_song->text_event[ctr]->text, "section ");	//Find this substring within the text event
+				if(ptr)
+				{	//If it exists
+					ep = eof_song->text_event[ctr];	//Store this event's pointer
+					break;
+				}
+			}
+		}
+	}
+
+	//Prepare the dialog accordingly
+	if(ep)
+	{	//If the selected beat already had a section event in scope
+		eof_section_add_dialog[0].dp = eof_section_add_dialog_string2;	//Change the dialog title to "Edit section"
+		strncpy(eof_etext, ptr, sizeof(eof_etext) - 1);		//Copy the portion of the text event that came after "section "
+		if(eof_etext[strlen(eof_etext) - 1] == ']')
+		{	//If that included a trailing closing bracket
+			eof_etext[strlen(eof_etext) - 1] = '\0';	//Truncate it from the end of the string
+		}
+	}
+	else
+	{
+		eof_section_add_dialog[0].dp = eof_section_add_dialog_string1;	//Change the dialog title to "Add section"
+		eof_etext[0] = '\0';	//Empty the input field
+	}
+
+	//Process user input
+	eof_color_dialog(eof_section_add_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_section_add_dialog);
+	if(eof_popup_dialog(eof_section_add_dialog, 2) == 3)
+	{	//User clicked OK
+		if(strchr(eof_etext, '[') || strchr(eof_etext, ']'))
+		{
+			allegro_message("Section names cannot include opening or closing brackets [ ]");
+			return D_O_K;
+		}
+		snprintf(text, sizeof(text) - 1, "[section %s]", eof_etext);	//Format the section string
+		if(!ep || strcmp(ep->text, text))
+		{	//If there wasn't already a section event on this beat, or if the user altered its name
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		}
+		if(!ep)
+		{	//If there wasn't already a section event on this beat, add one now
+			(void) eof_song_add_text_event(eof_song, eof_selected_beat, text, 0, 0, 0);	//Add it as a global text event
+			eof_sort_events(eof_song);
+		}
+		else
+		{	//Otherwise edit the existing event
+			(void) strncpy(ep->text, text, sizeof(text) - 1);
+		}
+		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+	}
+
+	return D_O_K;
 }
 
 int eof_events_dialog_add_function(unsigned long function)

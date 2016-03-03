@@ -473,9 +473,10 @@ typedef struct
 
 } EOF_CATALOG_ENTRY;
 
+#define EOF_TEXT_EVENT_LENGTH 255
 typedef struct
 {
-	char text[256];
+	char text[EOF_TEXT_EVENT_LENGTH + 1];
 	unsigned long beat;
 	unsigned long track;	//The track this event is tied to, or 0 if it goes into the EVENTS track (such as a generic section marker)
 	char is_temporary;		//This is nonzero if the event is considered temporary (doesn't trigger undo/redo when added/deleted), required RBN events are added this way during save

@@ -904,7 +904,7 @@ if(eof_key_code == KEY_PAUSE)
 
 	/* toggle expert+ bass drum (CTRL+E) */
 	/* next chord name match (CTRL+SHIFT+E) */
-	/* place Rocksmith event (SHIFT+E) */
+	/* place section event (SHIFT+E) */
 	/* next catalog entry (E) */
 	if(eof_key_char == 'e')
 	{
@@ -927,9 +927,9 @@ if(eof_key_code == KEY_PAUSE)
 				eof_use_key();
 			}
 			else if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
-			{	//SHIFT+E will place a Rocksmith event
+			{	//SHIFT+E will place a section event
 				eof_shift_used = 1;	//Track that the SHIFT key was used
-				(void) eof_rocksmith_event_dialog_add();
+				(void) eof_menu_beat_add_section();
 				eof_use_key();
 			}
 		}

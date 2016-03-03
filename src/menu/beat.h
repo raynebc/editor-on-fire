@@ -74,6 +74,7 @@ int eof_menu_beat_clear_non_rs_events(void);	//Similar to eof_menu_beat_clear_ev
 int eof_menu_beat_reset_offset(void);	//Similar to eof_menu_beat_push_offset_back(), but uses anchoring to change the MIDI offset to 0 without moving any existing beats, notes, text events, etc.
 int eof_menu_beat_trainer_event(void);
 int eof_edit_trainer_proc(int msg, DIALOG *d, int c);	//This is a modification of eof_verified_edit_proc() allowing the trainer strings to be redrawn when the input field is altered
+int eof_menu_beat_add_section(void);
 
 int eof_all_events_radio_proc(int msg, DIALOG *d, int c);	//A radio button procedure that checks to see if the filter in the "All Events" dialog was changed.  If it was, it has Allegro redraw the list of events
 unsigned long eof_retrieve_text_event(unsigned long index);	//Returns the actual event number of the specified filtered event number (for use with the "All Events" dialog)

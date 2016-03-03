@@ -2006,8 +2006,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			if((tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
 			{	//If the note is within the arpeggio/handshape phrase
 				tp->note[ctr]->tflags |= tflags;	//Mark this note as being in an arpeggio phrase
-				if(eof_note_count_rs_lanes(sp, track, ctr, 2) > 1)
-				{	//If this note would export as a chord
+				if(eof_note_count_rs_lanes(sp, track, ctr, 2 | 4) > 1)
+				{	//If this note would export as a chord (also including ghost gems, in order to allow fully ghosted base chords to export as handshape tags)
 					tp->note[ctr]->tflags |= tflags2;		//Mark this note as being the first in an arpeggio phrase if applicable
 					tflags2 &= ~EOF_NOTE_TFLAG_ARP_FIRST;	//Clear this flag so that chords other than the first one in this phrase don't receive it
 				}
@@ -2016,7 +2016,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					if(!(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE))
 					{	//If this is NOT a handshape phrase
 						if(eof_note_count_rs_lanes(sp, track, ctr, 2) > 1)
-						{	//If this note would export as a chord
+						{	//If this note would export as a chord (not including ghost gems)
 							if(!(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE))
 							{	//If this was an arpeggio phrase instead of a handshape phrase
 								tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as single notes
