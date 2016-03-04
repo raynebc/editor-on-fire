@@ -55,6 +55,7 @@ int eof_enable_full_screen_3d(void)
 void eof_prepare_context_menu(void)
 {
 	int vselected = 0;
+	char clipboard_path[50];
 
 	if(eof_song && eof_song_loaded)
 	{
@@ -71,29 +72,21 @@ void eof_prepare_context_menu(void)
 		}
 		if(eof_vocals_selected)
 		{
-			if(exists("eof.vocals.clipboard"))
-			{	//If there is a vocal clipboard file, enable the Paste function
-				eof_right_click_menu_normal[1].flags = 0;
-				eof_right_click_menu_note[3].flags = 0;
-			}
-			else
-			{
-				eof_right_click_menu_normal[1].flags = D_DISABLED;
-				eof_right_click_menu_note[3].flags = D_DISABLED;
-			}
+			(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.vocals.clipboard", eof_temp_path);
 		}
 		else
 		{
-			if(exists("eof.clipboard"))
-			{	//If there is a note clipboard file, enable the Paste function
-				eof_right_click_menu_normal[1].flags = 0;
-				eof_right_click_menu_note[3].flags = 0;
-			}
-			else
-			{
-				eof_right_click_menu_normal[1].flags = D_DISABLED;
-				eof_right_click_menu_note[3].flags = D_DISABLED;
-			}
+			(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.clipboard", eof_temp_path);
+		}
+		if(exists(clipboard_path))
+		{	//If there is a note clipboard file, enable the Paste function
+			eof_right_click_menu_normal[1].flags = 0;	//Paste
+			eof_right_click_menu_note[3].flags = 0;		//Paste
+		}
+		else
+		{
+			eof_right_click_menu_normal[1].flags = D_DISABLED;
+			eof_right_click_menu_note[3].flags = D_DISABLED;
 		}
 		if(eof_track_diff_populated_status[eof_note_type])
 		{	//If the active instrument difficulty is populated, enable the Selection submenu

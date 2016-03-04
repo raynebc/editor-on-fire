@@ -59,11 +59,10 @@ MENU eof_beat_key_signature_menu[] =
 
 MENU eof_beat_rocksmith_menu[] =
 {
-	{"Place RS Phrase\tShift+P", eof_rocksmith_phrase_dialog_add, NULL, 0, NULL},
+	{"Place RS &Phrase\tShift+P", eof_rocksmith_phrase_dialog_add, NULL, 0, NULL},
 	{"Place RS &Section\tShift+S", eof_rocksmith_section_dialog_add, NULL, 0, NULL},
 	{"Place RS &Event", eof_rocksmith_event_dialog_add, NULL, 0, NULL},
-	{"&Copy phrase/section\t" CTRL_NAME "+Shift+C", eof_menu_beat_copy_rs_events, NULL, 0, NULL},
-	{"&Paste phrase/section\t" CTRL_NAME "+Shift+V", eof_menu_beat_paste_rs_events, NULL, 0, NULL},
+	{"&Copy phrase/section", eof_menu_beat_copy_rs_events, NULL, 0, NULL},
 	{"Clear non RS events", eof_menu_beat_clear_non_rs_events, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -87,6 +86,7 @@ MENU eof_beat_events_menu[] =
 	{"All E&vents", eof_menu_beat_all_events, NULL, 0, NULL},
 	{"&Events", eof_menu_beat_events, NULL, 0, NULL},
 	{"Clear all events", eof_menu_beat_clear_events, NULL, 0, NULL},
+	{"Place &Section\tShift+E", eof_menu_beat_add_section, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -114,7 +114,8 @@ MENU eof_beat_menu[] =
 	{"&Events", NULL, eof_beat_events_menu, 0, NULL},
 	{"&Rocksmith", NULL, eof_beat_rocksmith_menu, 0, NULL},
 	{"Place &Trainer event", eof_menu_beat_trainer_event, NULL, 0, NULL},
-	{"Place section event\tShift+E", eof_menu_beat_add_section, NULL, 0, NULL},
+	{"Copy events\t" CTRL_NAME "+Shift+C", eof_menu_beat_copy_events, NULL, 0, NULL},
+	{"&Paste events\t" CTRL_NAME "+Shift+V", eof_menu_beat_paste_events, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -2715,6 +2716,7 @@ int eof_menu_beat_copy_rs_events(void)
 	int contained_rs_phrase_event, contained_rs_section_event;
 	char write_rs_phrase = 0, write_rs_section = 0;
 	unsigned long num = 0;
+	char eof_events_clipboard_path[50];
 
 	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_selected_beat >= eof_song->beats))
 		return 1;	//Error
@@ -2740,7 +2742,17 @@ int eof_menu_beat_copy_rs_events(void)
 	}
 
 	//Create clipboard file
-	fp = pack_fopen("eof.events.clipboard", "w");
+	//Ensure the \temp subfolder exists in the program folder
+	if(!file_exists("temp", FA_DIREC | FA_HIDDEN, NULL))
+	{	//If this folder doesn't already exist
+		if(eof_mkdir("temp"))
+		{	//If the folder could not be created
+			allegro_message("Could not create temp folder!\n%s", eof_temp_path);
+			return 1;
+		}
+	}
+	(void) snprintf(eof_events_clipboard_path, sizeof(eof_events_clipboard_path) - 1, "%seof.events.clipboard", eof_temp_path);
+	fp = pack_fopen(eof_events_clipboard_path, "w");
 	if(!fp)
 	{
 		allegro_message("Clipboard error!");
@@ -2764,17 +2776,72 @@ int eof_menu_beat_copy_rs_events(void)
 	return 1;
 }
 
-int eof_menu_beat_paste_rs_events(void)
+int eof_menu_beat_copy_events(void)
+{
+	unsigned long ctr, ctr2, count = 0;
+	PACKFILE * fp = NULL;
+	char eof_events_clipboard_path[50];
+
+	for(ctr = 0; ctr < 2; ctr++)
+	{
+		for(ctr2 = 0; ctr2 < eof_song->text_events; ctr2++)
+		{	//For each text event in the project
+			if(eof_song->text_event[ctr2]->beat == eof_selected_beat)
+			{	//If the text event is assigned to this beat
+				if(!eof_song->text_event[ctr2]->track || (eof_song->text_event[ctr2]->track == eof_selected_track))
+				{	//If the text event has no associated track or is specific to the active track
+					if(!ctr)
+					{	//On the first pass, count the events that will be copied
+						count++;
+					}
+					else
+					{	//On the second pass, write the events to the clipboard file
+						(void) eof_save_song_string_pf(eof_song->text_event[ctr2]->text, fp);	//Write the event's name
+						(void) pack_iputl(eof_song->text_event[ctr2]->track, fp);				//Write the event's track
+						(void) pack_iputl(eof_song->text_event[ctr2]->flags, fp);				//Write the event's flags
+					}
+				}
+			}
+		}
+		if(!ctr)
+		{	//At the end of the first pass, open the clipboard file
+			//Ensure the \temp subfolder exists in the program folder
+			if(!file_exists("temp", FA_DIREC | FA_HIDDEN, NULL))
+			{	//If this folder doesn't already exist
+				if(eof_mkdir("temp"))
+				{	//If the folder could not be created
+					allegro_message("Could not create temp folder!\n%s", eof_temp_path);
+					return 1;
+				}
+			}
+			(void) snprintf(eof_events_clipboard_path, sizeof(eof_events_clipboard_path) - 1, "%seof.events.clipboard", eof_temp_path);
+			fp = pack_fopen(eof_events_clipboard_path, "w");
+			if(!fp)
+			{
+				allegro_message("Clipboard error!");
+				return 1;
+			}
+			(void) pack_iputl(count, fp);	//Write the number of events this clipboard file will contain
+		}
+	}
+	(void) pack_fclose(fp);
+
+	return 1;
+}
+
+int eof_menu_beat_paste_events(void)
 {
 	PACKFILE * fp;
 	char text[256];
 	unsigned long ctr, num, flags, track;
+	char eof_events_clipboard_path[50];
 
 	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_selected_beat >= eof_song->beats))
 		return 1;	//Error
 
 	//Open the clipboard
-	fp = pack_fopen("eof.events.clipboard", "r");
+	(void) snprintf(eof_events_clipboard_path, sizeof(eof_events_clipboard_path) - 1, "%seof.events.clipboard", eof_temp_path);
+	fp = pack_fopen(eof_events_clipboard_path, "r");
 	if(!fp)
 	{
 		allegro_message("Clipboard error!\nNothing to paste!");

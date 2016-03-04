@@ -126,7 +126,9 @@ char * eof_events_list_all(int index, int * size);	//Dialog logic to display the
 int eof_menu_beat_copy_rs_events(void);
 	//Copies the RS section and RS phrase applicable to the selected beat in the current track to an event clipboard file
 	//If the applicable RS section and phrase are the same event, only one event is stored on the clipboard
-int eof_menu_beat_paste_rs_events(void);
+int eof_menu_beat_copy_events(void);
+	//Copies all events on the selected beat that are visible to the active track to the event clipboard file
+int eof_menu_beat_paste_events(void);
 	//Adds the events stored in the event clipboard to the selected beat
 
 int eof_events_dialog_move_up(DIALOG * d);	//If the selected event in Beat>Events is not the first event listed, swaps its position to be one higher (earlier) in the list

@@ -205,6 +205,7 @@ int         eof_selected_ogg = 0;
 EOF_SONG    * eof_song = NULL;
 EOF_NOTE    eof_pen_note;
 EOF_LYRIC   eof_pen_lyric;
+char        eof_temp_path[20] = {0};					//The relative path to \temp\ in EOF's program folder
 char        eof_filename[1024] = {0};					//The full path of the EOF file that is loaded
 char        eof_song_path[1024] = {0};					//The path to active project's parent folder
 char        eof_songs_path[1024] = {0};					//The path to the user's song folder
@@ -3825,7 +3826,7 @@ void eof_destroy_data(void)
 int eof_initialize(int argc, char * argv[])
 {
 	int i, eof_zoom_backup;
-	char temp_filename[1024] = {0}, recovered = 0;
+	char temp_filename[1024] = {0}, eof_recover_on_path[50], eof_recover_path[50], recovered = 0;
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
 
@@ -3878,6 +3879,10 @@ int eof_initialize(int argc, char * argv[])
 			return 1;
 		}
 	}
+
+	//Build the path to the temp subfolder
+	snprintf(eof_temp_path, sizeof(eof_temp_path) - 1, "temp");
+	put_backslash(eof_temp_path);
 
 	//Set the locale back to the default "C" locale because on Linux builds of Allegro, the locale is set to the local system locale when the keyboard system is initialized above
 	(void) setlocale(LC_ALL, "C");
@@ -4166,14 +4171,25 @@ int eof_initialize(int argc, char * argv[])
 
 	/* check for a previous crash condition of EOF */
 	eof_log("\tChecking for crash recovery files", 1);
-	if(exists("eof.recover.on"))
+	//Ensure the \temp subfolder exists in the program folder
+	if(!file_exists("temp", FA_DIREC | FA_HIDDEN, NULL))
+	{	//If this folder doesn't already exist
+		if(eof_mkdir("temp"))
+		{	//If the folder could not be created
+			allegro_message("Could not create temp folder!\n%s", eof_temp_path);
+			return 0;
+		}
+	}
+	(void) snprintf(eof_recover_on_path, sizeof(eof_recover_on_path) - 1, "%seof.recover.on", eof_temp_path);
+	if(exists(eof_recover_on_path))
 	{	//If the recovery status file is present
-		(void) delete_file("eof.recover.on");	//Try to delete the file
-		if(!exists("eof.recover.on"))
+		(void) delete_file(eof_recover_on_path);	//Try to delete the file
+		if(!exists(eof_recover_on_path))
 		{	//If the file no longer exists, it is not open by another EOF instance
-			if(exists("eof.recover"))
+			(void) snprintf(eof_recover_path, sizeof(eof_recover_path) - 1, "%seof.recover", eof_temp_path);
+			if(exists(eof_recover_path))
 			{	//If the recovery file exists
-				char *buffer = eof_buffer_file("eof.recover", 1);	//Read its contents into a NULL terminated string buffer
+				char *buffer = eof_buffer_file(eof_recover_path, 1);	//Read its contents into a NULL terminated string buffer
 				char *ptr = NULL;
 				if(buffer)
 				{	//If the file could buffer
@@ -4206,17 +4222,17 @@ int eof_initialize(int argc, char * argv[])
 							recovered = 1;	//Remember that a file was recovered so an undo state can be made after the call to eof_init_after_load()
 						}
 
-						(void) delete_file("eof.recover");
+						(void) delete_file(eof_recover_path);
 					}
 					free(buffer);
 				}
-			}
-			eof_recovery = pack_fopen("eof.recover.on", "w");	//Open the recovery active file for writing
-		}
-	}
+			}//If the recovery file exists
+			eof_recovery = pack_fopen(eof_recover_on_path, "w");	//Open the recovery active file for writing
+		}//If the file no longer exists, it is not open by another EOF instance
+	}//If the recovery status file is present
 	else
 	{
-		eof_recovery = pack_fopen("eof.recover.on", "w");	//Open the recovery active file for writing
+		eof_recovery = pack_fopen(eof_recover_on_path, "w");	//Open the recovery active file for writing
 	}
 
 	/* see if we are opening a file on launch */
@@ -4383,7 +4399,7 @@ int eof_initialize(int argc, char * argv[])
 void eof_exit(void)
 {
 	unsigned long i;
-	char fn[1024] = {0};
+	char fn[1024] = {0}, eof_recover_on_path[50], eof_autoadjust_path[50];
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
 
@@ -4393,9 +4409,9 @@ void eof_exit(void)
 
 	//Delete the undo/redo related files
 	eof_save_config("eof.cfg");
-	(void) snprintf(fn, sizeof(fn) - 1, "eof%03u.redo", eof_log_id);	//Get the name of this EOF instance's redo file
+	(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo", eof_temp_path, eof_log_id);	//Get the name of this EOF instance's redo file
 	(void) delete_file(fn);	//And delete it if it exists
-	(void) snprintf(fn, sizeof(fn) - 1, "eof%03u.redo.ogg", eof_log_id);	//Get the name of this EOF instance's redo OGG
+	(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo.ogg", eof_temp_path, eof_log_id);	//Get the name of this EOF instance's redo OGG
 	(void) delete_file(fn);	//And delete it if it exists
 	if(eof_undo_states_initialized > 0)
 	{
@@ -4404,12 +4420,13 @@ void eof_exit(void)
 			if(eof_undo_filename[i])
 			{
 				(void) delete_file(eof_undo_filename[i]);	//Delete the undo file
-				(void) snprintf(fn, sizeof(fn) - 1, "%s.ogg", eof_undo_filename[i]);	//Get the filename of any associated undo OGG
+				(void) snprintf(fn, sizeof(fn) - 1, "%s%s.ogg", eof_temp_path, eof_undo_filename[i]);	//Get the filename of any associated undo OGG
 				(void) delete_file(fn);	//And delete it if it exists
 			}
 		}
 	}
-	(void) delete_file("eof.autoadjust");
+	(void) snprintf(eof_autoadjust_path, sizeof(eof_autoadjust_path) - 1, "%seof.autoadjust", eof_temp_path);
+	(void) delete_file(eof_autoadjust_path);
 	eof_destroy_undo();
 
 	//Free the file filters
@@ -4480,7 +4497,8 @@ void eof_exit(void)
 	{	//If this EOF instance is maintaining auto-recovery files
 		(void) pack_fclose(eof_recovery);
 		eof_recovery = NULL;
-		(void) delete_file("eof.recover.on");
+		(void) snprintf(eof_recover_on_path, sizeof(eof_recover_on_path) - 1, "%seof.recover.on", eof_temp_path);
+		(void) delete_file(eof_recover_on_path);
 	}
 }
 

@@ -24,9 +24,10 @@ int eof_undo_states_initialized = 0;
 int eof_undo_load_state(const char * fn)
 {
 	EOF_SONG * sp = NULL;
-	PACKFILE * fp = NULL;
+	PACKFILE * fp = NULL, * rfp = NULL;
 	char rheader[16] = {0};
 	int old_eof_silence_loaded = eof_silence_loaded;	//Retain this value, since it is destroyed by eof_destroy_song()
+	char eof_recover_path[50];
 
  	eof_log("eof_undo_load_state() entered", 1);
 
@@ -49,9 +50,12 @@ int eof_undo_load_state(const char * fn)
 		return 0;
 	}
 	sp->tags->accurate_ts = 0;	//For existing projects, this setting must be manually enabled in order to prevent unwanted alteration to beat timings
+	(void) snprintf(eof_recover_path, sizeof(eof_recover_path) - 1, "%seof.recover", eof_temp_path);
+	rfp = pack_fopen(eof_recover_path, "r");	//Open the recovery file to prevent eof_destroy_song() from deleting it
 	if(!eof_load_song_pf(sp, fp))
 	{	//If loading the undo state fails
 		allegro_message("Failed to perform undo");
+		(void) pack_fclose(rfp);	//Close this recovery file handle so that it will be deleted by the following call to eof_destroy_song()
 		eof_destroy_song(sp);
 		return 0;	//Return failure
 	}
@@ -59,6 +63,7 @@ int eof_undo_load_state(const char * fn)
 	{
 		eof_destroy_song(eof_song);	//Destroy the chart that is open
 	}
+	(void) pack_fclose(rfp);
 	eof_song = sp;	//Replacing it with the loaded undo state
 	eof_silence_loaded = old_eof_silence_loaded;	//Restore the status of whether chart audio is loaded
 
@@ -87,12 +92,22 @@ int eof_undo_add(int type)
 		return 0;
 	}
 
+	//Ensure the \temp subfolder exists in the program folder
+	if(!file_exists("temp", FA_DIREC | FA_HIDDEN, NULL))
+	{	//If this folder doesn't already exist
+		if(eof_mkdir("temp"))
+		{	//If the folder could not be created
+			allegro_message("Could not create temp folder!\n%s", eof_temp_path);
+			return 1;
+		}
+	}
+
 	if(!eof_undo_states_initialized)
 	{	//Initialize the undo filename array
 		for(ctr = 0; ctr < EOF_MAX_UNDO; ctr++)
 		{	//For each undo slot
-			(void) snprintf(fn, sizeof(fn) - 1, "eof%03u-%03lu.undo", eof_log_id, ctr);	//Build the undo filename in the format of "eof#-#.undo", where the first number is the EOF ID
-			eof_undo_filename[ctr] = malloc(sizeof(fn)+1);
+			(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u-%03lu.undo", eof_temp_path, eof_log_id, ctr);	//Build the undo filename in the format of "eof#-#.undo", where the first number is the EOF ID
+			eof_undo_filename[ctr] = malloc(sizeof(fn) + 1);
 			if(eof_undo_filename[ctr] == NULL)
 			{
 				allegro_message("Error initializing undo system.  Undo disabled");
@@ -122,15 +137,18 @@ int eof_undo_add(int type)
 	}
 	if(type == EOF_UNDO_TYPE_SILENCE)
 	{
-		(void) snprintf(fn, sizeof(fn) - 1, "%s.ogg", eof_undo_filename[eof_undo_current_index]);
+		(void) snprintf(fn, sizeof(fn) - 1, "%s%s.ogg", eof_temp_path, eof_undo_filename[eof_undo_current_index]);
 		(void) eof_copy_file(eof_loaded_ogg_name, fn);
 	}
 	eof_undo_last_type = type;
+
 	(void) eof_save_song(eof_song, eof_undo_filename[eof_undo_current_index]);
 	eof_undo_type[eof_undo_current_index] = type;
 	if(eof_recovery)
 	{	//If this EOF instance is maintaining auto-recovery files
-		PACKFILE *fp = pack_fopen("eof.recover", "w");	//Open the recovery definition file for writing
+		PACKFILE *fp;
+		(void) snprintf(fn, sizeof(fn) - 1, "%seof.recover", eof_temp_path);
+		fp = pack_fopen(fn, "w");	//Open the recovery definition file for writing
 		if(fp)
 		{	//If the file opened
 			(void) append_filename(temp, eof_song_path, eof_loaded_song_name, 1024);	//Construct the full path to the project file
@@ -178,7 +196,7 @@ int eof_undo_apply(void)
 
 		strncpy(title, eof_song->tags->title, sizeof(title) - 1);	//Backup the song title field, since if it changes as part of the undo, the Rocksmith WAV file should be deleted
 
-		(void) snprintf(fn, sizeof(fn) - 1, "eof%03u.redo", eof_log_id);	//Include EOF's log ID in the redo name to almost guarantee it is uniquely named
+		(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo", eof_temp_path, eof_log_id);	//Include EOF's log ID in the redo name to almost guarantee it is uniquely named
 		(void) eof_save_song(eof_song, fn);
 		eof_redo_type = 0;
 		eof_undo_current_index--;
@@ -193,9 +211,9 @@ int eof_undo_apply(void)
 		}
 		if(eof_undo_type[eof_undo_current_index] == EOF_UNDO_TYPE_SILENCE)
 		{
-			(void) snprintf(fn, sizeof(fn) - 1, "eof%03u.redo.ogg", eof_log_id);	//Include EOF's log ID in the redo name to almost guarantee it is uniquely named
+			(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo.ogg", eof_temp_path, eof_log_id);	//Include EOF's log ID in the redo name to almost guarantee it is uniquely named
 			(void) eof_copy_file(eof_loaded_ogg_name, fn);
-			(void) snprintf(fn, sizeof(fn) - 1, "%s.ogg", eof_undo_filename[eof_undo_current_index]);
+			(void) snprintf(fn, sizeof(fn) - 1, "%s%s.ogg", eof_temp_path, eof_undo_filename[eof_undo_current_index]);
 			(void) eof_copy_file(fn, eof_loaded_ogg_name);
 			(void) eof_load_ogg(eof_loaded_ogg_name, 0);
 			eof_delete_rocksmith_wav();		//Delete the Rocksmith WAV file since changing silence will require a new WAV file to be written
@@ -272,11 +290,11 @@ void eof_redo_apply(void)
 		{
 			eof_undo_current_index = 0;
 		}
-		(void) snprintf(fn, sizeof(fn) - 1, "eof%03u.redo", eof_log_id);	//Get the name of this EOF instance's redo file
+		(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo", eof_temp_path, eof_log_id);	//Get the name of this EOF instance's redo file
 		(void) eof_undo_load_state(fn);	//And load it
 		if(eof_redo_type == EOF_UNDO_TYPE_SILENCE)
 		{
-			(void) snprintf(fn, sizeof(fn) - 1, "eof%03u.redo.ogg", eof_log_id);	//Get the name of this EOF instance's redo OGG
+			(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo.ogg", eof_temp_path, eof_log_id);	//Get the name of this EOF instance's redo OGG
 			(void) eof_copy_file(fn, eof_loaded_ogg_name);	//And save the current audio to that filename
 			(void) eof_load_ogg(eof_loaded_ogg_name, 0);
 			eof_delete_rocksmith_wav();		//Delete the Rocksmith WAV file since changing silence will require a new WAV file to be written

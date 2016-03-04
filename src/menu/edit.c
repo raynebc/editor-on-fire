@@ -5,6 +5,7 @@
 #include "../mix.h"
 #include "../main.h"	//Inclusion for eof_custom_snap_measure
 #include "../dialog/proc.h"
+#include "../utility.h"
 #include "edit.h"
 #include "note.h"	//For eof_feedback_mode_update_note_selection()
 #include "song.h"
@@ -221,6 +222,7 @@ void eof_prepare_edit_menu(void)
 	unsigned long i, diffcount = 0;
 	unsigned long tracknum;
 	int vselected = 0;
+	char clipboard_path[50];
 
 	if(eof_song && eof_song_loaded)
 	{	//If a chart is loaded
@@ -297,32 +299,24 @@ void eof_prepare_edit_menu(void)
 			eof_edit_selection_menu[15].flags = D_DISABLED;	//deselect off beat notes
 		}
 
-		/* paste, paste old */
+		/* paste, old paste */
 		if(eof_vocals_selected)
 		{
-			if(exists("eof.vocals.clipboard"))
-			{
-				eof_edit_menu[4].flags = 0;
-				eof_edit_menu[5].flags = 0;
-			}
-			else
-			{
-				eof_edit_menu[4].flags = D_DISABLED;
-				eof_edit_menu[5].flags = D_DISABLED;
-			}
+			(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.vocals.clipboard", eof_temp_path);
 		}
 		else
 		{
-			if(exists("eof.clipboard"))
-			{
-				eof_edit_menu[4].flags = 0;
-				eof_edit_menu[5].flags = 0;
-			}
-			else
-			{
-				eof_edit_menu[4].flags = D_DISABLED;
-				eof_edit_menu[5].flags = D_DISABLED;
-			}
+			(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.clipboard", eof_temp_path);
+		}
+		if(exists(clipboard_path))
+		{
+			eof_edit_menu[4].flags = 0;
+			eof_edit_menu[5].flags = 0;
+		}
+		else
+		{
+			eof_edit_menu[4].flags = D_DISABLED;
+			eof_edit_menu[5].flags = D_DISABLED;
 		}
 
 		/* select all, selection */
@@ -577,6 +571,7 @@ int eof_menu_edit_copy_vocal(void)
 	int copy_notes = 0;
 	PACKFILE * fp;
 	int note_selection_updated;
+	char clipboard_path[50];
 
 	if(!eof_vocals_selected)
 		return 1;	//Return error
@@ -604,7 +599,17 @@ int eof_menu_edit_copy_vocal(void)
 	}
 
 	/* get ready to write clipboard to disk */
-	fp = pack_fopen("eof.vocals.clipboard", "w");
+	//Ensure the \temp subfolder exists in the program folder
+	if(!file_exists("temp", FA_DIREC | FA_HIDDEN, NULL))
+	{	//If this folder doesn't already exist
+		if(eof_mkdir("temp"))
+		{	//If the folder could not be created
+			allegro_message("Could not create temp folder!\n%s", eof_temp_path);
+			return 1;
+		}
+	}
+	(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.vocals.clipboard", eof_temp_path);
+	fp = pack_fopen(clipboard_path, "w");
 	if(!fp)
 	{
 		allegro_message("Clipboard error!");
@@ -661,12 +666,14 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 	EOF_LYRIC * new_lyric = NULL;
 	PACKFILE * fp;
 	double newpasteoffset = 0.0;	//This will be used to allow new paste to paste lyrics starting at the seek position instead of the original in-beat positions
+	char clipboard_path[50];
 
 	if(!eof_vocals_selected)
 		return 1;	//Return error
 
 	/* open the file */
-	fp = pack_fopen("eof.vocals.clipboard", "r");
+	(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.vocals.clipboard", eof_temp_path);
+	fp = pack_fopen(clipboard_path, "r");
 	if(!fp)
 	{
 		allegro_message("Clipboard error!\nNothing to paste!");
@@ -770,6 +777,7 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 	EOF_PHRASE_SECTION *sectionptr = NULL;
 	unsigned long notepos=0;
 	long notelength;
+	char eof_autoadjust_path[50];
 
 	/* set boundary */
 	for(i = 0; i < EOF_TRACKS_MAX; i++)
@@ -790,7 +798,17 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 	}
 
 	/* get ready to write clipboard to disk */
-	fp = pack_fopen("eof.autoadjust", "w");
+	//Ensure the \temp subfolder exists in the program folder
+	if(!file_exists("temp", FA_DIREC | FA_HIDDEN, NULL))
+	{	//If this folder doesn't already exist
+		if(eof_mkdir("temp"))
+		{	//If the folder could not be created
+			allegro_message("Could not create temp folder!\n%s", eof_temp_path);
+			return 1;
+		}
+	}
+	(void) snprintf(eof_autoadjust_path, sizeof(eof_autoadjust_path) - 1, "%seof.autoadjust", eof_temp_path);
+	fp = pack_fopen(eof_autoadjust_path, "w");
 	if(!fp)
 	{
 		allegro_message("Clipboard error!");
@@ -1025,6 +1043,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 	unsigned long notepos = 0;
 	long notelength = 0;
 	char affect_until_end = 0;	//Is set to nonzero if all notes until the end of the project are affected by this operation
+	char eof_autoadjust_path[50];
 
 	//Grid snap variables used to automatically re-snap auto-adjusted timestamps
 	int beat = 0;
@@ -1051,7 +1070,8 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		end_pos = eof_song->beat[next_anchor]->pos;
 	}
 
-	fp = pack_fopen("eof.autoadjust", "r");
+	(void) snprintf(eof_autoadjust_path, sizeof(eof_autoadjust_path) - 1, "%seof.autoadjust", eof_temp_path);
+	fp = pack_fopen(eof_autoadjust_path, "r");
 	if(!fp)
 	{
 		allegro_message("Clipboard error!");
@@ -1311,6 +1331,7 @@ int eof_menu_edit_copy(void)
 	unsigned long copy_notes = 0;
 	PACKFILE * fp;
 	int note_selection_updated;
+	char clipboard_path[50];
 
 	if(eof_vocals_selected)
 	{
@@ -1343,7 +1364,17 @@ int eof_menu_edit_copy(void)
 	}
 
 	/* get ready to write clipboard to disk */
-	fp = pack_fopen("eof.clipboard", "w");
+	//Ensure the \temp subfolder exists in the program folder
+	if(!file_exists("temp", FA_DIREC | FA_HIDDEN, NULL))
+	{	//If this folder doesn't already exist
+		if(eof_mkdir("temp"))
+		{	//If the folder could not be created
+			allegro_message("Could not create temp folder!\n%s", eof_temp_path);
+			return 1;
+		}
+	}
+	(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.clipboard", eof_temp_path);
+	fp = pack_fopen(clipboard_path, "w");
 	if(!fp)
 	{
 		allegro_message("Clipboard error!");
@@ -1405,6 +1436,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	unsigned long maxbitmask = (1 << numlanes) - 1;	//A bitmask representing the highest valid note bitmask (a gem on all used lanes in the destination track)
 	double newpasteoffset = 0.0;	//This will be used to allow new paste to paste notes starting at the seek position instead of the original in-beat positions
 	unsigned long lastarpeggnum = 0xFFFFFFFF, arpeggstart = 0, arpeggend = 0;	//Used to create arpeggio/handshape phrases
+	char clipboard_path[50];
 
 	if(eof_vocals_selected)
 	{	//The vocal track uses its own clipboard logic
@@ -1412,7 +1444,8 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	}
 
 	/* open the file */
-	fp = pack_fopen("eof.clipboard", "r");
+	(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.clipboard", eof_temp_path);
+	fp = pack_fopen(clipboard_path, "r");
 	if(!fp)
 	{
 		allegro_message("Clipboard error!\nNothing to paste!");
@@ -1432,7 +1465,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	}
 	if((eof_song->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 	{	//If the source and destination track are both pro guitar format, pre-check to ensure that the pasted notes won't go above the current track's fret limit
-		highestfret = eof_get_highest_clipboard_fret("eof.clipboard");
+		highestfret = eof_get_highest_clipboard_fret(clipboard_path);
 		if(highestfret > eof_song->pro_guitar_track[tracknum]->numfrets)
 		{	//If any notes on the clipboard would exceed the active track's fret limit
 			char message[120] = {0};
@@ -1445,7 +1478,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			}
 		}
 	}
-	highestlane = eof_get_highest_clipboard_lane("eof.clipboard");
+	highestlane = eof_get_highest_clipboard_lane(clipboard_path);
 	if(highestlane > numlanes)
 	{	//If any notes on the clipboard exceed the active track's lane limit
 		char message[120] = {0};
@@ -1493,7 +1526,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		eof_menu_edit_paste_clear_range(eof_selected_track, eof_note_type, clear_start, clear_end);
 		//The packfile functions have no seek routine, so the file has to be closed, re-opened and repositioned to the first clipboard note for the actual paste logic
 		(void) pack_fclose(fp);
-		fp = pack_fopen("eof.clipboard", "r");
+		fp = pack_fopen(clipboard_path, "r");
 		if(!fp)
 		{
 			allegro_message("Error re-opening clipboard");

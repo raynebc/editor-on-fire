@@ -242,6 +242,7 @@ EOF_SONG * eof_create_song(void)
 void eof_destroy_song(EOF_SONG * sp)
 {
 	unsigned long ctr;
+	char eof_recover_path[50];
 
  	eof_log("\tClosing project", 1);
  	eof_log("eof_destroy_song() entered", 1);
@@ -274,7 +275,8 @@ void eof_destroy_song(EOF_SONG * sp)
 	eof_log("\tProject closed", 1);
 	if(eof_recovery && (sp == eof_song))
 	{	//If this EOF instance is maintaining an auto-recovery file, and the currently-open song is being destroyed
-		(void) delete_file("eof.recover");	//Delete it when the active project is cleanly closed
+		(void) snprintf(eof_recover_path, sizeof(eof_recover_path) - 1, "%seof.recover", eof_temp_path);
+		(void) delete_file(eof_recover_path);	//Delete it when the active project is cleanly closed
 	}
 	free(sp);
 	eof_silence_loaded = 0;	//When the chart is destroyed, reset this condition so that if another project is being loaded, its playback will be allowed to work if audio is present

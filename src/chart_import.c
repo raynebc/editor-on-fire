@@ -642,6 +642,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 						eof_set_note_flags(sp, ctr, ctr3, (eof_get_note_flags(sp, ctr, ctr3) ^ EOF_NOTE_FLAG_F_HOPO));	//Toggle the forced HOPO flag for this note
 					}
 				}
+				eof_set_note_note(sp, ctr, ctr2, 0);	//Clear the gem so it will be removed by the cleanup logic and not be allowed to also import as an open strum note (gem on lane 6) if any 5 lane chords are converted to open strum notes
 			}
 		}
 	}

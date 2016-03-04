@@ -261,6 +261,7 @@ extern int         eof_selected_ogg;
 extern EOF_SONG    * eof_song;
 extern EOF_NOTE    eof_pen_note;
 extern EOF_LYRIC   eof_pen_lyric;
+extern char        eof_temp_path[20];
 extern char        eof_filename[1024];
 extern char        eof_song_path[1024];
 extern char        eof_songs_path[1024];

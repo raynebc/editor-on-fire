@@ -1591,7 +1591,7 @@ if(eof_key_code == KEY_PAUSE)
 
 	/* toggle claps (C) */
 	/* paste from catalog (SHIFT+C) */
-	/* copy Rocksmith phrase/section (CTRL+SHIFT+C)*/
+	/* copy events (CTRL+SHIFT+C)*/
 	if(eof_key_char == 'c')
 	{
 		if(!KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
@@ -1608,14 +1608,14 @@ if(eof_key_code == KEY_PAUSE)
 		else if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{	//If both CTRL and SHIFT are held
 			eof_shift_used = 1;	//Track that the SHIFT key was used
-			(void) eof_menu_beat_copy_rs_events();
+			(void) eof_menu_beat_copy_events();
 			eof_use_key();
 		}
 	}
 
 	/* toggle vocal tones (V) */
 	/* toggle vibrato (SHIFT+V in a pro guitar track) */
-	/* paste Rocksmith phrase/section (CTRL+SHIFT+V) */
+	/* paste events (CTRL+SHIFT+V) */
 	if(eof_key_char == 'v')
 	{
 		if(!KEY_EITHER_CTRL)
@@ -1634,7 +1634,7 @@ if(eof_key_code == KEY_PAUSE)
 		else if(KEY_EITHER_SHIFT)
 		{	//If both CTRL and SHIFT are held
 			eof_shift_used = 1;	//Track that the SHIFT key was used
-			(void) eof_menu_beat_paste_rs_events();
+			(void) eof_menu_beat_paste_events();
 			eof_use_key();
 		}
 	}
