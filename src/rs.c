@@ -434,6 +434,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	long nextnote;
 	unsigned long originalbeatcount;	//If beats are padded to reach the beginning of the next measure (for DDC), this will track the project's original number of beats
 	char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct notes are exported
+	char highlight_bad_slides = 0;	//Set to nonzero if the user opts to highlight notes that slide to or above fret 22
 
 	eof_log("eof_export_rocksmith_1_track() entered", 1);
 
@@ -443,17 +444,22 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		return 0;	//Return failure
 	}
 
+	//Check for invalid fret values
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 	restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
 	eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view if applicable
 	if(eof_get_highest_fret(sp, track, 0) > 22)
 	{	//If the track being exported uses any frets higher than 22
-		if((*user_warned & 2) == 0)
-		{	//If the user wasn't alerted about this issue yet
-			allegro_message("Warning:  At least one track (\"%s\") uses a fret higher than 22.  This will cause Rocksmith 1 to crash.", sp->track[track]->name);
-			*user_warned |= 2;
+		*user_warned |= 2;	//Track that this warning is given, but don't prevent it from prompting for each track, since a crash condition should not be ignored
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  At least one track (\"%s\") uses a fret higher than 22.", sp->track[track]->name);
+		if(alert(eof_log_string, "These will cause Rocksmith 1 to crash.", "Cancel its RS1 export and highlight offending notes?", "&Yes", "&No", 'y', 'n') == 1)
+		{	//If the user opts to cancel the save
+			eof_hightlight_all_notes_above_fret_number(sp, track, 22);
+			return 2;	//Return user cancellation
 		}
 	}
+
+	//Check for invalid slides
 	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
 	{	//For each note in the track
 		unsigned char slideend;
@@ -472,13 +478,24 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					if((*user_warned & 8) == 0)
 					{	//If the user wasn't alerted about this issue yet
 						eof_seek_and_render_position(track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
-						allegro_message("Warning:  At least one note slides to or above fret 22.  This will cause Rocksmith 1 to crash.");
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  At least one note in track \"%s\" slides to or above fret 22.", sp->track[track]->name);
+						if(alert(eof_log_string, "This will cause Rocksmith 1 to crash.", "Cancel its RS1 export and highlight offending notes?", "&Yes", "&No", 'y', 'n') == 1)
+						{	//If the user opts to cancel the save after the highlighting is performed
+							highlight_bad_slides = 1;
+						}
 						*user_warned |= 8;
 					}
-					break;
+					if(highlight_bad_slides)
+					{	//If the user chose to highlight such slide notes
+						tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;
+					}
 				}
 			}
 		}
+	}
+	if(highlight_bad_slides)
+	{	//If the user chose to cancel the export due to this condition
+		return 2;	//Return user cancellation
 	}
 
 	//Count the number of populated difficulties in the track
@@ -1502,6 +1519,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	EOF_PRO_GUITAR_NOTE *new_note;
 	char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct notes are exported
 	char match;		//Used for testing whether partially ghosted chords are inside of arpeggio phrases
+	char highlight_bad_slides = 0;	//Set to nonzero if the user opts to highlight notes that slide to or above fret 22
 
 	eof_log("eof_export_rocksmith_2_track() entered", 1);
 
@@ -1511,6 +1529,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		return 0;	//Return failure
 	}
 
+	//Check for invalid fret values
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 	restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
 	eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view if applicable
@@ -1518,10 +1537,17 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	{	//If the track being exported uses any frets higher than 24
 		if((*user_warned & 256) == 0)
 		{	//If the user wasn't alerted about this issue yet
-			allegro_message("Warning:  At least one track (\"%s\") uses a fret higher than 24.  These won't display correctly in Rocksmith 2.", sp->track[track]->name);
 			*user_warned |= 256;
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  At least one track (\"%s\") uses a fret higher than 24.", sp->track[track]->name);
+			if(alert(eof_log_string, "These won't display correctly in Rocksmith 2.", "Cancel its RS2 export and highlight offending notes?", "&Yes", "&No", 'y', 'n') == 1)
+			{	//If the user opts to cancel the save
+				eof_hightlight_all_notes_above_fret_number(sp, track, 24);
+				return 2;	//Return user cancellation
+			}
 		}
 	}
+
+	//Check for invalid slides
 	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
 	{	//For each note in the track
 		unsigned char slideend;
@@ -1539,12 +1565,23 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				if((*user_warned & 8) == 0)
 				{	//If the user wasn't alerted about this issue yet
 					eof_seek_and_render_position(track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
-					allegro_message("Warning:  At least one note slides to or above fret 22.  This could cause Rocksmith 2 to crash.");
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  At least one note in track \"%s\" slides to or above fret 22.", sp->track[track]->name);
+					if(alert(eof_log_string, "This could cause Rocksmith 2 to crash.", "Cancel its RS2 export and highlight offending notes?", "&Yes", "&No", 'y', 'n') == 1)
+					{	//If the user opts to cancel the save after the highlighting is performed
+						highlight_bad_slides = 1;
+					}
 					*user_warned |= 8;
 				}
-				break;
+				if(highlight_bad_slides)
+				{	//If the user chose to highlight such slide notes
+					tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;
+				}
 			}
 		}
+	}
+	if(highlight_bad_slides)
+	{	//If the user chose to cancel the export due to this condition
+		return 2;	//Return user cancellation
 	}
 
 	//Count the number of populated difficulties in the track

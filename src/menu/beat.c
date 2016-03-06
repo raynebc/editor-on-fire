@@ -194,7 +194,7 @@ DIALOG eof_bpm_change_dialog[] =
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)             (dp2) (dp3) */
 	{ d_agup_shadow_box_proc,32,  68,  170, 124, 2,   23,  0,    0,      0,   0,   NULL,            NULL, NULL },
 	{ d_agup_text_proc,      56,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "BPM:",          NULL, NULL },
-	{ eof_verified_edit_proc,112, 80,  66,  20,  2,   23,  0,    0,      255, 0,   eof_etext,       "1234567890.", NULL },
+	{ eof_verified_edit_proc,112, 80,  66,  20,  2,   23,  0,    0,      25,  0,   eof_etext,       "1234567890.", NULL },
 	{ d_agup_check_proc,     56,  108, 128, 16,  2,   23,  0,    0,      1,   0,   "This Beat Only",NULL, NULL },
 	{ d_agup_check_proc,     56,  128, 128, 16,  2,   23,  0,    0,      1,   0,   "Adjust Notes",  NULL, NULL },
 	{ d_agup_button_proc,    42,  152, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",            NULL, NULL },

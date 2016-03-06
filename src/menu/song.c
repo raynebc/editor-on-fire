@@ -1708,7 +1708,7 @@ DIALOG eof_leading_silence_dialog[] =
 	{ d_agup_text_proc,       16,  140, 110, 20,  2,   23,  0,    0,          0,   0,   "Pad:",                  NULL, NULL },
 	{ d_agup_radio_proc,      16,  160, 110, 15,  2,   23,  0,    0,          0,   0,   "Milliseconds",          NULL, NULL },
 	{ d_agup_radio_proc,      16,  180, 110, 15,  2,   23,  0,    0,          0,   0,   "Beats",                 NULL, NULL },
-	{ eof_verified_edit_proc, 16,  200, 110, 20,  2,   23,  0,    0,          255, 0,   eof_etext,       "1234567890", NULL },
+	{ eof_verified_edit_proc, 16,  200, 110, 20,  2,   23,  0,    0,          10,  0,   eof_etext,       "1234567890", NULL },
 	{ d_agup_check_proc,      16,  226, 180, 16,  2,   23,  0,    D_SELECTED, 1,   0,   "Adjust Notes/Beats",    NULL, NULL },
 	{ d_agup_radio_proc,      16,  246, 160, 15,  2,   23,  0,    0,          1,   0,   "Stream copy (oggCat)",  NULL, NULL },
 	{ d_agup_radio_proc,      16,  266, 90,  15,  2,   23,  0,    0,          1,   0,   "Re-encode",             NULL, NULL },
@@ -3903,7 +3903,7 @@ int eof_menu_song_export_song_preview(void)
 		if(start == stop)
 			return 1;	//This isn't a valid preview time range
 
-		if(!oldstartstring || oldendstring || (start != atol(oldstartstring)) || (stop != atol(oldendstring)))
+		if(!oldstartstring || !oldendstring || (start != atol(oldstartstring)) || (stop != atol(oldendstring)))
 		{	//If the project didn't already have the start/stop preview tags stored, or if the times just entered are different from those already stored
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			if(oldstartstring)

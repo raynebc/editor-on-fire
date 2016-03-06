@@ -383,7 +383,7 @@ int eof_track_rename(void)
 	{	//If user clicked OK
 		if(ustrncmp(eof_etext, eof_song->track[eof_selected_track]->altname, EOF_NAME_LENGTH))
 		{	//If the user provided a different alternate track name than what was already defined
-			if(eof_etext != '\0')
+			if(eof_etext[0] != '\0')
 			{	//If the specified string isn't empty
 				//Verify that the provided name doesn't match the existing native or display name of any track in the project
 				for(ctr = 1; ctr < eof_song->tracks; ctr++)
