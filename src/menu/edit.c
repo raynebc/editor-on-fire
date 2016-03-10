@@ -536,6 +536,17 @@ void eof_prepare_edit_menu(void)
 		/* MIDI tones */
 		if(!eof_midi_initialized)
 			eof_edit_menu[18].flags = D_DISABLED;
+
+		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//If a drum track is active
+			eof_edit_selection_menu[16].flags = 0;	//Edit>Selection>Deselect toms
+			eof_edit_selection_menu[17].flags = 0;	//Edit>Selection>Deselect cymbals
+		}
+		else
+		{
+			eof_edit_selection_menu[16].flags = D_DISABLED;
+			eof_edit_selection_menu[17].flags = D_DISABLED;
+		}
 	}//If a chart is loaded
 }
 

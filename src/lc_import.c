@@ -406,7 +406,7 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp, char *outputfilename, char *string2, 
 			lyrctr++;	//Advance to next lyric
 		}
 
-		EndLyricLine();	//End the current line of lyrics
+		ForceEndLyricLine();	//End the current line of lyrics
 	}
 
 	if(Lyrics.piececount == 0)	//No lyrics imported

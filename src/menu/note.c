@@ -593,9 +593,12 @@ void eof_prepare_note_menu(void)
 							inslider = 1;
 						}
 					}
-				}
+				}//If a legacy/pro guitar/bass/keys or drum track is active
 			}//PART VOCALS NOT SELECTED
-		}
+		}//If one or more notes/lyrics are selected
+		eof_note_reflect_menu[0].flags = 0;		//Note>Reflect>Vertical
+		eof_note_reflect_menu[1].flags = 0;		//Note>Reflect>Horizontal
+		eof_note_reflect_menu[2].flags = 0;		//Note>Reflect>Both
 		vselected = eof_count_selected_notes(NULL);
 		if(vselected)
 		{	//ONE OR MORE NOTES/LYRICS SELECTED
@@ -641,7 +644,13 @@ void eof_prepare_note_menu(void)
 			{
 				eof_note_menu[14].flags = D_DISABLED;
 			}
-		}
+
+			if(vselected == 1)
+			{	//If only one note/lyric is selected
+				eof_note_reflect_menu[1].flags = D_DISABLED;	//Note>Reflect>Horizontal
+				eof_note_reflect_menu[2].flags = D_DISABLED;	//Note>Reflect>Both
+			}
+		}//ONE OR MORE NOTES/LYRICS SELECTED
 		else
 		{	//NO NOTES/LYRICS SELECTED
 			eof_star_power_menu[0].flags = D_DISABLED;	//Note>Star Power>Mark/Remark
@@ -845,6 +854,8 @@ void eof_prepare_note_menu(void)
 			eof_note_menu[16].flags = D_DISABLED;	//Note>Drum> submenu
 			eof_note_menu[17].flags = D_DISABLED;	//Note>Pro Guitar> submenu
 			eof_note_menu[18].flags = D_DISABLED;	//Note>Rocksmith> submenu
+			eof_note_reflect_menu[0].flags = D_DISABLED;	//Note>Reflect>Vertical
+			eof_note_reflect_menu[2].flags = D_DISABLED;	//Note>Reflect>Both
 
 			eof_note_menu[19].flags = 0;	//Note>Lyrics> submenu
 			if((eof_selection.current < eof_song->vocal_track[tracknum]->lyrics) && (vselected == 1))

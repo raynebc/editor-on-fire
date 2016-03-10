@@ -1442,14 +1442,14 @@ unsigned long eof_count_selected_notes(unsigned long *total)
 
 unsigned long eof_get_selected_note_range(unsigned long *sel_start, unsigned long *sel_end, char function)
 {
-	unsigned long ctr, start, end, pos, startpos, endpos, count = 0;
-	long length;
+	unsigned long ctr, start, end, pos, startpos, endpos = 0, count = 0;
+	long length, after;
 	char first = 1;
 
 	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type))
-		{
+		{	//If the note is selected
 			pos = eof_get_note_pos(eof_song, eof_selected_track, ctr);
 			length = eof_get_note_length(eof_song, eof_selected_track, ctr);
 			count++;	//Track the number of notes within the selection that are explicitly selected
@@ -1476,6 +1476,17 @@ unsigned long eof_get_selected_note_range(unsigned long *sel_start, unsigned lon
 	if(first)
 	{	//If no selected notes were found
 		return 0;
+	}
+	after = eof_track_fixup_next_note(eof_song, eof_selected_track, end);
+	if(after > 0)
+	{	//If there is a note that follows the last selected note
+		if(endpos == eof_get_note_pos(eof_song, eof_selected_track, after))
+		{	//If that note begins at the same time the last selected note ends (can occur if linknext status is applied to the earlier note)
+			if(endpos - startpos > 1)
+			{	//If the selection range can be shortened
+				endpos--;	//Do so by 1ms so that phrase selection functions can still target the affected notes individually
+			}
+		}
 	}
 	if(!function)
 	{	//Return the selection information as index numbers
@@ -4374,7 +4385,7 @@ int eof_initialize(int argc, char * argv[])
 					return 0;
 				}
 			}
-			else if(!ustricmp(get_extension(argv[i]), "ogg") || !ustricmp(get_extension(argv[i]), "mp3"))
+			else if(!ustricmp(get_extension(argv[i]), "ogg") || !ustricmp(get_extension(argv[i]), "mp3") || !ustricmp(get_extension(argv[i]), "wav"))
 			{	//Launch new chart wizard via command line
 				eof_new_chart(argv[i]);
 			}
