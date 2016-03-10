@@ -114,7 +114,11 @@ Note and Beat Editing:
     Left-Click+Drag (notes):
 
         Move selected note(s)
-    
+
+    CTRL+[ , CTRL+]
+
+        Move selected note(s) backward ([) or forward (]) by one
+        grid snap.
 
     Mouse Wheel:
 
@@ -184,6 +188,12 @@ Note and Beat Editing:
 
         Toggle the Pro drum cymbal notation for selected blue drum notes.
 
+
+    Del
+
+        Delete selected notes.
+
+        Hold both Ctrl and Shift while deleting to perform the "Note>Delete>Delete w/ lower diffs" function.
 
     Tab:
 
@@ -290,5 +300,6 @@ Miscellaneous Controls:
     Ctrl + Shift + Up /Down:
 
         Cycle to the next/previous track of the same type (ie. "pro guitar/bass").
+
 
 EOF provides many useful functions which can be accessed through various menus and dialogs. Shortcuts keys are provided to access some of the more frequently used functions. This screen is not an exhaustive list of keyboard shortcuts. All menu functions with shortcuts will display that shortcut next to the name of the function in the menu.

@@ -3,13 +3,230 @@ EOF Version History
 
 1.8:
 
+Improved "Song>Create preview audio" to store the start and end
+times of the preview as INI tags (preview_start_time and
+preview_end_time) in the project.  Phase Shift currently supports
+using that start tag.  If chart audio is loaded, EOF will offer to
+create preview audio files using the given time range of the audio.
+Subsequent calls to this function will read existing start and time
+stamps from the INI settings and use them to fill out the input
+fields.
+
+Improved the new chart wizard so that if an OGG file is selected as
+the chart audio, it will read the year if it is stored in the
+"DATE" vorbis comment (some audio editors like Audacity store the
+year information this way).
+
+Added the ability to import Bandfuse RIFF chart files from the File
+menu or over the command line.  Experimental logic to export a
+Bandfuse XML file for custom charts is included and can be enabled
+in File>Preferences.  A Bandfuse color set has been added, which
+uses color to indicate the fingering (open string = purple,
+index = green, middle = red, ring = yellow, pinky = blue,
+thumb = orange).  If a note's fingering isn't defined, EOF will
+guess based on any fret hand position in effect, otherwise if no
+suitable fingering is determined, the note is drawn in white.  If
+the note uses tap technique, it is drawn in black.  The ability to
+make or use custom Bandfuse charts is pending some reverse
+engineering that is still incomplete.  Any and all people with
+relevant expertise with modding or hacking Xbox 360 games are
+encouraged to help.
+
+Improved LRC/ELRC lyric import to allow the hundredths timing field
+to contain a third digit, in which case it will be interpreted as
+defining the field in milliseconds.
+
+Improved UltraStar import to skip the Byte Order Mark (BOM, a
+Unicode encoding mechanism) if one is present at the beginning of
+the imported file.  Previously the presence of the BOM would cause
+the import to fail.
+
+Improved MIDI import to recognize drum animations in Guitar Hero 1
+and 2 MIDIs and convert them to drum notes where applicable.  Guitar
+Hero drum animations weren't authored as accurately as actual drum
+charts, but they are a good starting point.
+
+Many improvements to Feedback import:
+*Section names are altered to conform to the "[section SECTION_NAME]"
+format, [solo_on] and [solo_off] events into guitar and lead guitar
+solos
+*Improved error reporting/logging that occurs when import fails
+*Added the ability to import the keyboard tracks if present
+*song.ini is now imported with the Feedback chart
+*Added support for more instrument tracks used in Feedback
+*Added handling to ignore unrecognized events
+*Added support for filenames with special characters (ie. umlauts)
+*Added proper HOPO handling to follow Guitar Hero's rules where notes
+closer than 11/128 measure are given forced HOPO notation and other
+notes are forced strums.  If the unofficial "N 5 #" notation is
+applied to a note, that note's forced HOPO notation is inverted.  
+*Fixed a math error that could cause notes to round down instead of
+up to the nearest millisecond where appropriate.
+*Added logic so that if a star power phrase ends on a beat marker,
+it is shortened by 2 chart ticks under the likely assumption that the
+chart was misauthored and intended to not mark a note at the
+beginning of that beat.
+*Added handling for the unofficial "N 6 #" tapping notation by
+creating slider phrases to define such notes.
+*Fixed a bug where the target song folder for the new project created
+during import might not be correctly set to reflect the imported
+file's location.
+*Added a "dB import drops mid beat tempos" preference that removes
+beats that were added to compensate for mid-beat tempo changes during
+Feedback import of charts with unusual beat mapping.
+*Added handling for the unofficial "E *" toggle HOPO notation.
+*Added logic to convert 5 lane chords to open strum notes.
+
+Updated the save function to write a simplified lyrics file
+(lyrics.txt) if the Lyrics option in Song>Properties is checked.
+
+Added a "RBN export slider as HOPO" preference that will
+export notes in slider phrases as forced HOPO notes when
+writing the RBN and C3 MIDI files.
+
+Added a new GHWT related MIDI file that is created during
+save that can be converted to .chart format by importing into
+Feedback and then loaded with Buldy's GHWT Custom Songs Import
+Tool (http://www.scorehero.com/forum/viewtopic.php?t=110650)
+to create customs with GHWT features such as forced HOPO
+notes, open bass notes, lane 5 toms and accent drum notes.
+
+Added logic so that a ghwt.array.txt file is written during
+project save if FoF/Phase Shift export is enabled.  This file
+contains times and codes used to try to create drum
+animations for Guitar Hero World Tour charts.
+
+Added a "Save FoF/Phase Shift files" user preference to
+specify whether FoF, FoFiX or Phase Shift related files
+(notes.mid, song.ini and script.txt) are created during save.
+
+Added a warning during save if any lyrics have extended ASCII
+or Unicode characters, as these aren't compatible with various
+rhythm games.
+
+Improved lyric exports to be able to save lyrics into project
+folders whose paths contain special characters.
+
+Improved the organization of temporary files (undo/redo
+states, clipboard files, auto-recovery files, etc) to be in a
+"temp" subfolder of EOF's program folder.  Backup copies of
+the project will now be saved with a .bak extension.
+
+Fixed a bug where performing undo would delete auto-recovery
+information.
+
+Added a "Beat>Copy events" function (which has been assigned
+the CTRL+SHIFT+C shortcut) that copies the selected beat's
+visible events (ie. those not assigned to a track other than
+the active track) to the event clipboard.  The "Beat>
+Rocksmith>Paste phrase/section" function is now "Beat>
+Paste events" and can be used with both "Beat>Copy events"
+and "Beat>Rocksmith>Copy phrase/section".
+
+Added a "Beat>Events>Place section" function, which has been
+assigned the SHIFT+E keyboard shortcut, to simplify adding/
+editing section markers for use in FoF and Phase Shift.
+This function automatically inserts the specified name into a
+"[section NAME]" formatted text event.  A few event related
+functions in the Beat menu have been moved into the "Events"
+ submenu.
+
+Added a "Delete w/ lower diffs" function that deletes the
+selected notes as well as those in lower difficulties that are
+at the same timestamps as any of the selected notes.  This
+function has been assigned the CTRL+SHIFT+Del shortcut and both
+it and Note>Delete have been moved into a Note>Delete> submenu.
+
+Improved editor logic so that middle clicking on a lyric
+selects the lyric and opens the "Edit lyric" dialog for it.
+
+Added the ability to select a WAV file for audio when creating
+a new project or importing a Feedback chart.
+
+Added a "Note>Lyrics>Remove pitch" function.
+
+Added a check during save that will seek to and warn about
+incorrectly placed time signature changes that don't occur at
+the beginning of a measure, which causes problems in some games.
+
+Changed the forced HO/PO functions to allow them to be used on
+open strum notes, for use with GHWT authoring.  These statuses
+will NOT export to the FoF/Phase Shift related MIDI files because
+they do not support it.
+
+Fixed bugs where the note selection would change unexpectedly.
+
+Added the ability to author accent drum note status using the
+Note>Drum>Accent submenus, for Guitar Hero World Tour authoring.
+
+*Added functions to Note>Drum to mark yellow, blue or green cymbal
+notes as being both cymbals and toms simultaneously, for future
+use in Phase Shift.
+
+Updated to Allegro 4.4.2.  This version of Allegro reportedly
+fixes the annoying bug with the Tab key acting like it is held
+down when ALT+Tabbing EOF back into the foreground.
+
+Added new deselection functions to target cymbals or toms.
+
+Added a quick save function to the File menu. This saves the
+project without all of the prompts and warnings that the Save and
+Save as functions present.
+
+Changed the handling of time signatures so that the denominator
+(beat unit) alters the length of a beat as it does in music theory.
+To prevent unwanted alteration for existing projects' beat timings,
+this is not enabled by default for existing projects, but can be
+enabled or disabled by going into Song>Properties and toggling the
+"Use accurate time signatures" option.  When this option is changed,
+if the project uses any non #/4 time signatures, EOF will offer to
+alter tempos so that beat positions remain the same.  The new
+"Beat>Time signature>Convert" function can be used to likewise
+change a beat's T/S and its tempo while keeping the same length.
+Time signature changes that change the denominator are forced to be
+anchors, to prevent the ability to accidentally corrupt the tempo
+map.  File imports have been updated to handle this setting being
+enabled for new projects, and GPA import will forcibly enable this
+option because the Go PlayAlong format writes its timings in a way
+where time signatures must be taken into account.  Functions in the
+"Beat>Time signature" menu are now disabled as appropriate if the
+tempo map is locked, to ensure the beat positions remain unaltered.
+
+Added an "EOF leaving focus stops playback" user preference which
+can be disabled to allow the chart to remain playing even if you
+change from EOF to another program.
+
+Improved the menu system so that the mouse doesn't automatically
+activate submenus unless it is moved (ie. making it easier to use
+the keyboard to navigate the menus).
+
+Changed the input fields for some dialogs to not automatically take
+focus when the mouse moves over it, requiring a click.  This
+behavior change can be removed by disabling the new "Click to
+change dialog focus" user preference.
+
+Added "Beat>Double BPM" and "Beat>Halve BPM" menus so the user can
+specify whether to double or halve the tempo of just the selected
+beat, or to do so for all beats in the project.
+
+Fixed some memory corruption bugs regarding the handling of
+Unicode project paths.
+
+Added a "Note>Move grid snap" menu with functions that move all
+selected notes one grid snap position forward or backward.  The
+CTRL+[ and CTRL+] shortcuts have been assigned to these functions.
+
+Fixed some bugs pertaining to shortening notes.
+
 Added a "Save separate musical MIDI file" preference, which will
 cause EOF to write a "notes_music.mid" file during save.  This MIDI
 file contains all populated vocal and pro guitar/bass tracks, and
 unlike the other MIDI files EOF writes, all MIDI notes included are
 the real pitches used in each lyric or guitar/bass note.  This file
 can be used in other music programs that use normal MIDI files, like
-Songs2See, Synthesia or even just your favorite MIDI player.
+Songs2See, Synthesia or even just your favorite MIDI player.  A
+similar "notes_fretlight.mid" for use with the Fretlight M-Player
+program will also be written.
 
 Various improvements with beat timing accuracy and auto adjust.  Now
 when a note is auto-adjusted, its grid snap position is recorded
@@ -44,16 +261,38 @@ Added support for authoring custom Rocksmith and Rocksmith 2014
 charts, which include one or more pro guitar and bass tracks and
 lyrics.  This adds many more chart features on top of those used for
 authoring Rock Band 3 charts, such as Rocksmith phrases, Rocksmith
-sections, fret hand positions (the Expert difficulty of which is also
-used during MIDI export for allowing unusual situations such as
-authoring dislike guitar parts for each difficulty in a Rock Band 3
-pro guitar custom), chord fingering, bend strength, slide end
-position, various guitar and bass techniques and Rocksmith events.
+sections, Rocksmith events, fret hand positions (the Expert difficulty
+of which is also used during MIDI export for allowing manual authoring
+of positions for Rock Band 3 pro guitar customs), chord fingering, bend
+strength, slide end position and various other guitar/bass techniques.
 New functions to define and auto-generate several of these have also
-been added.  The new "Song>Pro Guitar>Remove difficulty limit" function
+been added.  The new "Track>Rocksmith>Remove difficulty limit" function
 enables up to 255 difficulties to be authored for a pro guitar/bass
-track.  A function to import Rocksmith XML files has been added to the
-File menu.
+track.  A new "tech notes" system has been added for authoring complex
+techniques for Rocksmith 2014.  These notes are placed by entering
+"tech view" with the "Track>Rocksmith>Enable tech view" (which can be
+activated by pressing F4) and placing "tech notes" on top of the
+track's regular notes.  A tech note effects the individual string of
+the note it overlaps, meaning that one string in a chord can have
+techniques that are different from those on the other strings.  When
+tech view is in effect, tech notes are color coded so that if a tech
+note begins at the same time as a regular note it renders with blue
+text on a white background, if it overlaps a regular note it renders
+with green text or if it does noes overlap (does not affect) any
+regular notes it renders with red text, if the tech note is selected it
+renders with white text.  As long as the tech note is overlapping a note
+it isn't required to be at a specific position unless you are defining
+specialized bend notes.  For example, a pre-bend needs to have a tech
+note with bend status at the start position of the note, so ideally you
+should ensure that tech note displays with blue text on a white
+background (you can use the "Note>Rocksmith>Move to prev note" function
+to move a tech note to the start of whichever note is is immediately
+before the tech note, if any), and then defines the release as a tech
+note with a bend strength of 0.  Bend notes export to XML reflecting
+however many tech notes that have bend status, so you could author a
+note that bends and releases several times before it ends.  A function
+to import Rocksmith XML files has been added to the File menu.  Such
+files can also be imported via the command line.
 
 Added a new preference (Save separate RBN MIDI files) that
 automatically will save a RBN specific and a pro guitar specific MIDI
@@ -77,10 +316,8 @@ program that can, with the first-party "Queen Mary Tempo and Beat
 Tracker" plugin installed, estimate the position of each beat in
 the song and save this information as an XML file.
 
-Made improvements to lyric export:  Fixed memory leaks that would
-occur during a failed export and added correction so that if a
-lyric is defined outsid of lyric lines, a line is temporarily
-created to hold it.
+Improved lyric export so that if a lyric is defined outsid of lyric
+lines, a line is temporarily created to hold it.
 
 Added a "Create preview audio" function to the song menu that
 exports the specified portion of the chart audio to
@@ -122,6 +359,11 @@ that change to the next/previous track of the same format.  This
 allows you, for example, to quickly cycle through the pro guitar
 tracks even though they are not all contiguous.
 
+Added keyboard shortcuts (CTRL+SHIFT+#) that change the active
+track difficulty based on the difficulty number (Supaeasy is
+number 0), using the same numbering keys (~ to 0, F1 to F12) as
+the shortcuts to set a pro guitar note's fret values.
+
 Improved MIDI import to support Power Gig format charts.
 
 Added a "precise select like" function that is similar to "select
@@ -150,10 +392,6 @@ exists), instead of always starting in the project directory.
 Added a song_length INI tag that will give the length of the
 chart's audio in milliseconds.
 
-Fixed a bug where the selected beat number could become invalid
-when performing an undo after certain chart operations, leading
-to a crash.
-
 Added an "Edit>MIDI tones" feature that outputs MIDI notes to
 your computer's default MIDI device to play a synthesized
 version of the active pro guitar/bass track during playback,
@@ -162,7 +400,10 @@ is enabled, clicking on a pro guitar/bass note will sound the
 tones for the note.  A MIDI tone delay value can be specified
 in File>Settings that will allow MIDI tones to play back
 earlier than notes, in order to compensate for MIDI lag from
-factors outside of EOF.
+factors outside of EOF.  The MIDI tone number used for muted
+(eof_midi_synth_instrument_guitar_muted) or harmonic
+(eof_midi_synth_instrument_guitar_harm) guitar notes can be
+defined by editing eof.cfg (while EOF isn't running).
 
 Improved the function to play the chart from the first to the
 last selected note (holding S while playing back the chart) by
@@ -318,7 +559,9 @@ Added a user preference for a minimum distance between two notes
 (defaulting to 3ms), since notes whose tails are too close to other
 notes can cause issues during timing conversion.
 
-Lots of code cleanup, fixing many crashes, memory leaks, etc.
+Began regular use of several tools such as Coverity Scan, memWatch,
+cppcheck and Splint to aid in a massive amount of code cleanup,
+fixing many crashes, memory leaks, various bugs, etc.
 
 Added a "Note>Lyrics>Import GP style lyric text from file" function
 that replace the text of lyrics in the vocal track with ones from a
@@ -367,7 +610,9 @@ issue.
 
 Added Guitar Pro file import capability.  Go PlayAlong XML files
 (which define synchronization for a Guitar Pro file) can also be
-imported.
+imported.  Such files can be imported via the command line or when
+no project is already open.  EOF will prompt which pro guitar/bass
+track to import into.
 
 Updated 3D rendering to display tempo and time signature changes.
 
@@ -540,16 +785,6 @@ tempos are between 40 and 300 BPM.
 Fixed a bug where anchors were automatically removed if they were the
 same tempo as the previous anchor.
 
-Made improvements to Feedback import:  Section names are altered to
-conform to the "[section SECTION_NAME]" format, [solo_on] and
-[solo_off] events into guitar and lead guitar solos, fixed memory
-leaks that could occur if the import fails, improved error
-reporting/logging that occurs when import fails, updated the import
-to allow the keyboard tracks to be loaded if present, song.ini is now
-imported with the Feedback chart, added support for more instrument
-tracks used in Feedback, added handling to ignore unrecognized events
-and added support for filenames with special characters (ie. umlauts).
-
 Added the display of section markers to the editor window.
 
 Added the option to mark new yellow drum gems as open, pedal or sizzle
@@ -588,7 +823,7 @@ Fixed some bugs regarding the placement of cymbal notes.
 Fixed various bugs that were specific to the Classic, Piano Roll and
 Hold input methods.
 
-Changed the note hit/highlight color for green and yellow notes in the
+Changed the note hit/selected color for green and yellow notes in the
 editor window to be red instead of white, which should contrast much
 better and make it easier to see the notes when selected, moused over
 or reached during playback.
@@ -708,9 +943,6 @@ in the drum track during save, allowing games to be able to determine if
 a chart without tom drums is supposed to be all toms or all cymbals.
 This tag is being implemented in both Phase Shift and FoFiX.
 
-Used cppcheck and added the Memwatch source package, identifying various
-memory leaks and other bugs that were fixed.
-
 Added the ability to author 5 lane (5 pads and one pedal) drums.
 
 Added the ability to define band and track-specific difficulties.
@@ -740,7 +972,7 @@ Fixed a couple paste related bugs.
 Fixed a bug where seek to previous beat wouldn't work correctly if the
 current seek position was before the first beat marker.
 
-Fixed some grid snap related bugs.
+Fixed some grid snap related bugs and improved their accuracy.
 
 Fixed the handling of time signatures in the MIDI import and export
 logic that would cause incorrect timings when #/8 time signatures
@@ -766,7 +998,10 @@ chart during playback.  Various video editing programs can import image
 sequences (such as VirtualDubMod) and treat it as raw video, allow you to
 add the chart audio and encode it together to produce a video.  Since each
 frame of the video is encoded one frame at a time and not recorded during
-playback, the resulting video is 100% lag and stutter free.
+playback, the resulting video is 100% lag and stutter free.  A
+"File>Display>Benchmark image sequence" function has been added to use this
+feature to test the render speed of EOF, for comparing performance with
+different computers, build options, OS settings, etc.
 
 
 1.71:
