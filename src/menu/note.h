@@ -106,6 +106,8 @@ int eof_menu_note_toggle_slide_up(void);		//Toggles the slide up status of all s
 int eof_menu_note_toggle_slide_down(void);		//Toggles the slide down status of all selected notes
 int eof_menu_note_remove_slide(void);			//Removes the slide status of all selected notes
 int eof_menu_note_reverse_slide(void);			//Reverses the slide direction of all selected notes that already slide (also removes the reverse slide status if it is applied)
+int eof_menu_note_convert_slide_to_unpitched(void);	//Converts selected slide notes to unpitched slide notes
+int eof_menu_note_convert_slide_to_pitched(void);	//Converts selected unpitched slide notes to pitched slide notes
 int eof_menu_note_toggle_palm_muting(void);		//Toggles the palm muting status of all selected notes
 int eof_menu_note_remove_palm_muting(void);		//Removes the palm muting status of all selected notes
 int eof_menu_arpeggio_mark_logic(int handshape);	//Marks/remarks the selected notes as an arpeggio phrase if handshape is 0, or otherwise as a handshape phrase (a variation of arpeggio phrase)

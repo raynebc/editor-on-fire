@@ -691,7 +691,6 @@ if(eof_key_code == KEY_PAUSE)
 {
 	eof_use_key();
 	//Debug action here
-	eof_menu_note_delete_with_lower_difficulties();
 }
 
 /* keyboard shortcuts that may or may not be used when the chart/catalog is playing */

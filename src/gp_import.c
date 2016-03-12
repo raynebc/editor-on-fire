@@ -4152,28 +4152,35 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									if(dur < 3)
 									{	//If the defined duration is valid
 										grace_duration = grace_durations[dur] * (double)curden / (double)curnum;	//Get this grace note's duration in measures (accounting for the time signature)
-										if(!graceonbeat)
-										{	//if the grace note is before the beat
-											grace_position = measure_position - grace_duration;	//Reposition it accordingly
+										if(measure_position < grace_duration)
+										{	//If this grace note is positioned before the beginning of the chart (ie. a before the beat grace note on a note at the beginning of measure 1)
+											grace = 0;	//Ignore this grace note
 										}
-										beat_position = grace_position * curnum;								//How many whole beats into the current measure the position is
-										partial_beat_position = (grace_position * curnum) - beat_position;	//How far into this beat the grace note begins
-										beat_position += curbeat;	//Add the number of beats into the track the current measure is
-										if(beat_position >= skipbeatsourcectr)
-										{	//If this beat's content is being imported
-											beat_position -= skipbeatsourcectr;	//Offset by the number of beats being skipped
-											beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
-											lastgracestartpos = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position);
-
-											//Determine the realtime end position of the note that was just parsed
-											beat_position = (grace_position + grace_duration) * curnum;
-											partial_beat_position = (grace_position + grace_duration) * curnum - beat_position;	//How far into this beat the grace note ends
+										else
+										{	//This grace note has a valid position
+											if(!graceonbeat)
+											{	//if the grace note is before the beat
+												grace_position = measure_position - grace_duration;	//Reposition it accordingly
+											}
+											beat_position = grace_position * curnum;								//How many whole beats into the current measure the position is
+											partial_beat_position = (grace_position * curnum) - beat_position;	//How far into this beat the grace note begins
 											beat_position += curbeat;	//Add the number of beats into the track the current measure is
-											beat_position -= skipbeatsourcectr;	//Offset by the number of beats being skipped
-											beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
-											lastgraceendpos = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position);
+											if(beat_position >= skipbeatsourcectr)
+											{	//If this beat's content is being imported
+												beat_position -= skipbeatsourcectr;	//Offset by the number of beats being skipped
+												beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
+												lastgracestartpos = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position);
+
+												//Determine the realtime end position of the note that was just parsed
+												beat_position = (grace_position + grace_duration) * curnum;
+												partial_beat_position = (grace_position + grace_duration) * curnum - beat_position;	//How far into this beat the grace note ends
+												beat_position += curbeat;	//Add the number of beats into the track the current measure is
+												beat_position -= skipbeatsourcectr;	//Offset by the number of beats being skipped
+												beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
+												lastgraceendpos = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position);
+											}
 										}
-									}
+									}//If the defined duration is valid
 								}//Grace note
 								if(byte2 & 1)
 								{	//Note played staccato
@@ -4407,6 +4414,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									}
 
 									//Search backward for correct note to alter
+									eof_pro_guitar_track_sort_notes(gp->track[ctr2]);	//Sort the track to ensure that before-the-beat grace notes are before the notes that they affect
 									for(ctr4 = gp->track[ctr2]->notes; ctr4 > 0; ctr4--)
 									{	//For each imported note in this track, in reverse order
 										if(gp->track[ctr2]->note[ctr4 - 1]->note & convertedtie)
@@ -4631,131 +4639,124 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									free(strings);
 									return NULL;
 								}
-								if(gnp)
-								{	//If a valid new/existing note is selected for alteration by this grace note
-									if(strings[ctr2] > 6)
-									{	//If this is a 7 string track
-										if(drop_7)
-										{	//The user opted to drop string 7 instead of string 1
-											gnp->note |= usedstrings >> 1;	//Shift out string 7 to leave the first 6 strings (merge the bitmask so that on-beat grace notes combine with the note they affect)
-										}
-										else
-										{	//The user opted to drop string 1
-											gnp->note |= usedstrings & 63;	//Mask out string 1 (merge the bitmask so that on-beat grace notes combine with the note they affect)
-										}
+								if(strings[ctr2] > 6)
+								{	//If this is a 7 string track
+									if(drop_7)
+									{	//The user opted to drop string 7 instead of string 1
+										gnp->note |= usedstrings >> 1;	//Shift out string 7 to leave the first 6 strings (merge the bitmask so that on-beat grace notes combine with the note they affect)
 									}
 									else
-									{	//This track has less than 7 strings
-										gnp->note |= usedstrings >> (7 - strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB (merge the bitmask so that on-beat grace notes combine with the note they affect)
+									{	//The user opted to drop string 1
+										gnp->note |= usedstrings & 63;	//Mask out string 1 (merge the bitmask so that on-beat grace notes combine with the note they affect)
 									}
-									gnp->type = eof_note_type;
-									for(ctr4 = 0, bitmask = 1; ctr4 < strings[ctr2]; ctr4++, bitmask <<= 1)
-									{	//For each of this track's natively supported strings
-										unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
-										if((strings[ctr2] > 6) && drop_7)
-										{	//If this is a 7 string Guitar Pro track and the user opted to drop string 7 instead of string 1
-											convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
-										}
-										if((convertednum > 6) || (ctr4 > 5))
-										{	//If convertednum became an unexpectedly large value (ie. integer underflow) or six strings have already been processed
-											break;	//Stop translating fretting and fingering data
-										}
-										if(!graceonbeat || gracefrets[convertednum])
-										{	//If this isn't an on-beat grace note (or if it is, but the fret value is nonzero)
-											//If an on-beat grace note is applied to a string that has no normal note, GP authors an open string to accommodate the grace note
-											//and the grace note defines an open fret for the string that the normal note uses.  This check ensures that the open
-											//notes don't override the real fret values
-											gnp->frets[ctr4] = gracefrets[convertednum];	//Copy the fret number for this string
-											gnp->finger[ctr4] = finger[convertednum];		//Copy the finger number used to fret the note the grace note is applied to
-										}
-										if(!graceonbeat && (gnp->note & bitmask))
-										{	//If this isn't an on-beat grace note, and this string is used by the grace note
-											if(gracetrans == 1)
-											{	//Grace note slides into normal note
-												gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Define the grace note's end of slide position
-												gnp->slideend = np[ctr2]->frets[ctr4];				//The end of slide position is the fret position of the note the grace note affects
-												gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Add linknext status to the grace note so it appears nicely as a slide-in in Rocksmith
-												if(gnp->frets[ctr4] > np[ctr2]->frets[ctr4])
-												{	//If the grace note's fret value is higher than the normal note's
-													gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The grace note slides down
-												}
-												else
-												{	//The grace note's fret value is lower than the normal note's
-													gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;	//The grace note slides up
-												}
-											}
-											else if(gracetrans == 2)
-											{	//Grace note bends to normal note
-												if(gnp->frets[ctr4] < np[ctr2]->frets[ctr4])
-												{	//This only makes sense if the grace note's fret value is lower than the normal note's
-													gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;		//The grace note bends up to the next note
-													gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Define the grace note's end of slide position
-													gnp->bendstrength = np[ctr2]->frets[ctr4] - gnp->frets[ctr4];	//Set the bend strength to the number of half steps needed to reach the normal note
-												}
-											}
-											else if(gracetrans == 3)
-											{	//Grace note is hammered onto or pulled off to perform the note it precedes
-												if(gnp->frets[ctr4] > np[ctr2]->frets[ctr4])
-												{	//If the grace note's fret value is higher than the normal note's
-													np[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;	//The grace note is pulled off of
-												}
-												else
-												{	//The grace note's fret value is lower than the normal note's
-													np[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//The grace note is hammered on from
-												}
-											}
-										}//If this isn't an on-beat grace note, and this string is used by the grace note
-									}//For each of this track's natively supported strings
-
-									//Set the start position and length of the note
-									gnp->pos = lastgracestartpos + 0.5;	//Round up to nearest millisecond
-									gnp->length = lastgraceendpos - lastgracestartpos + 0.5;	//Round up to nearest millisecond
-
-									if(graceonbeat)
-									{	//If this grace note displaces the note it is associated with
-										np[ctr2]->pos += gnp->length;			//Delay the note by the length of the grace note
-										if(np[ctr2]->length >= gnp->length)
-											np[ctr2]->length -= gnp->length;	//Shorten the note by the same length if possible
-									}
-
-									if((gracetrans != 1) && (gracetrans != 2))
-									{	//If this grace note didn't transition with a bend or slide technique
-										if((eof_note_count_colors_bitmask(gnp->note) == 1) && eof_gp_import_truncate_short_notes)
-										{	//If this grace note is a single note and the preference to drop the note's sustain in this circumstance is enabled
-											gnp->length = 1;
-										}
-										else if((eof_note_count_colors_bitmask(gnp->note) > 1) && eof_gp_import_truncate_short_chords)
-										{	//If this grace note is a chord and the preference to drop the note's sustain in this circumstance is enabled
-											gnp->length = 1;
-										}
-									}
-#ifdef GP_IMPORT_DEBUG
-									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tGrace note #%lu:  Start: %lums\tLength: %ldms\tFrets: ", gp->track[ctr2]->notes - 1, gnp->pos, gnp->length);
-									assert(strings[ctr2] < 8);	//Redundant assertion to resolve a false positive in Coverity
-									for(ctr4 = 0, bitmask = 1; ctr4 < strings[ctr2]; ctr4++, bitmask <<= 1)
-									{	//For each of this track's natively supported strings
-										char temp[10];
-										if(gnp->note & bitmask)
-										{	//If this string is used
-											(void) snprintf(temp, sizeof(temp) - 1, "%u", gnp->frets[ctr4]);
-										}
-										else
-										{
-											(void) snprintf(temp, sizeof(temp) - 1, "_");
-										}
-										if(ctr4 + 1 < strings[ctr2])
-										{	//If there is another string
-											(void) strncat(temp, ", ", sizeof(temp) - 1);
-										}
-										(void) strncat(eof_log_string, temp, sizeof(eof_log_string) - 1);
-									}
-									eof_log(eof_log_string, 1);
-#endif
-								}//If a valid new/existing note is selected for alteration by this grace note
-								else
-								{
-									eof_log("Skipping invalid grace note", 1);
 								}
+								else
+								{	//This track has less than 7 strings
+									gnp->note |= usedstrings >> (7 - strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB (merge the bitmask so that on-beat grace notes combine with the note they affect)
+								}
+								gnp->type = eof_note_type;
+								for(ctr4 = 0, bitmask = 1; ctr4 < strings[ctr2]; ctr4++, bitmask <<= 1)
+								{	//For each of this track's natively supported strings
+									unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
+									if((strings[ctr2] > 6) && drop_7)
+									{	//If this is a 7 string Guitar Pro track and the user opted to drop string 7 instead of string 1
+										convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
+									}
+									if((convertednum > 6) || (ctr4 > 5))
+									{	//If convertednum became an unexpectedly large value (ie. integer underflow) or six strings have already been processed
+										break;	//Stop translating fretting and fingering data
+									}
+									if(!graceonbeat || gracefrets[convertednum])
+									{	//If this isn't an on-beat grace note (or if it is, but the fret value is nonzero)
+										//If an on-beat grace note is applied to a string that has no normal note, GP authors an open string to accommodate the grace note
+										//and the grace note defines an open fret for the string that the normal note uses.  This check ensures that the open
+										//notes don't override the real fret values
+										gnp->frets[ctr4] = gracefrets[convertednum];	//Copy the fret number for this string
+										gnp->finger[ctr4] = finger[convertednum];		//Copy the finger number used to fret the note the grace note is applied to
+									}
+									if(!graceonbeat && (gnp->note & bitmask))
+									{	//If this isn't an on-beat grace note, and this string is used by the grace note
+										if(gracetrans == 1)
+										{	//Grace note slides into normal note
+											gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Define the grace note's end of slide position
+											gnp->slideend = np[ctr2]->frets[ctr4];				//The end of slide position is the fret position of the note the grace note affects
+											gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Add linknext status to the grace note so it appears nicely as a slide-in in Rocksmith
+											if(gnp->frets[ctr4] > np[ctr2]->frets[ctr4])
+											{	//If the grace note's fret value is higher than the normal note's
+												gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The grace note slides down
+											}
+											else
+											{	//The grace note's fret value is lower than the normal note's
+												gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;	//The grace note slides up
+											}
+										}
+										else if(gracetrans == 2)
+										{	//Grace note bends to normal note
+											if(gnp->frets[ctr4] < np[ctr2]->frets[ctr4])
+											{	//This only makes sense if the grace note's fret value is lower than the normal note's
+												gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;		//The grace note bends up to the next note
+												gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Define the grace note's end of slide position
+												gnp->bendstrength = np[ctr2]->frets[ctr4] - gnp->frets[ctr4];	//Set the bend strength to the number of half steps needed to reach the normal note
+											}
+										}
+										else if(gracetrans == 3)
+										{	//Grace note is hammered onto or pulled off to perform the note it precedes
+											if(gnp->frets[ctr4] > np[ctr2]->frets[ctr4])
+											{	//If the grace note's fret value is higher than the normal note's
+												np[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;	//The grace note is pulled off of
+											}
+											else
+											{	//The grace note's fret value is lower than the normal note's
+												np[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//The grace note is hammered on from
+											}
+										}
+									}//If this isn't an on-beat grace note, and this string is used by the grace note
+								}//For each of this track's natively supported strings
+
+								//Set the start position and length of the note
+								gnp->pos = lastgracestartpos + 0.5;	//Round up to nearest millisecond
+								gnp->length = lastgraceendpos - lastgracestartpos + 0.5;	//Round up to nearest millisecond
+
+								if(graceonbeat)
+								{	//If this grace note displaces the note it is associated with
+									np[ctr2]->pos += gnp->length;			//Delay the note by the length of the grace note
+									if(np[ctr2]->length >= gnp->length)
+										np[ctr2]->length -= gnp->length;	//Shorten the note by the same length if possible
+								}
+
+								if((gracetrans != 1) && (gracetrans != 2))
+								{	//If this grace note didn't transition with a bend or slide technique
+									if((eof_note_count_colors_bitmask(gnp->note) == 1) && eof_gp_import_truncate_short_notes)
+									{	//If this grace note is a single note and the preference to drop the note's sustain in this circumstance is enabled
+										gnp->length = 1;
+									}
+									else if((eof_note_count_colors_bitmask(gnp->note) > 1) && eof_gp_import_truncate_short_chords)
+									{	//If this grace note is a chord and the preference to drop the note's sustain in this circumstance is enabled
+										gnp->length = 1;
+									}
+								}
+#ifdef GP_IMPORT_DEBUG
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tGrace note #%lu:  Start: %lums\tLength: %ldms\tFrets: ", gp->track[ctr2]->notes - 1, gnp->pos, gnp->length);
+								assert(strings[ctr2] < 8);	//Redundant assertion to resolve a false positive in Coverity
+								for(ctr4 = 0, bitmask = 1; ctr4 < strings[ctr2]; ctr4++, bitmask <<= 1)
+								{	//For each of this track's natively supported strings
+									char temp[10];
+									if(gnp->note & bitmask)
+									{	//If this string is used
+										(void) snprintf(temp, sizeof(temp) - 1, "%u", gnp->frets[ctr4]);
+									}
+									else
+									{
+										(void) snprintf(temp, sizeof(temp) - 1, "_");
+									}
+									if(ctr4 + 1 < strings[ctr2])
+									{	//If there is another string
+										(void) strncat(temp, ", ", sizeof(temp) - 1);
+									}
+									(void) strncat(eof_log_string, temp, sizeof(eof_log_string) - 1);
+								}
+								eof_log(eof_log_string, 1);
+#endif
 							}//If a new grace note is to be created
 						}//If this note is being imported
 					}//If this is the voice that is being imported

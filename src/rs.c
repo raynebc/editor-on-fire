@@ -203,7 +203,12 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 	{	//For each note in the track
 		if(eof_note_count_rs_lanes(sp, track, ctr, target) > 1)
 		{	//If this note is a valid chord based on the target
-			if(!(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE) || (tp->note[ctr]->tflags & EOF_NOTE_TFLAG_ARP) || (tp->note[ctr]->tflags & EOF_NOTE_TFLAG_GHOST_HS))
+			if((tp->note[ctr]->tflags & EOF_NOTE_TFLAG_ARP) && !(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_ARP_FIRST) && (tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT))
+			{	//If this chord is in an arpeggio/handshape phrase but isn't the first one in the phrase, and it is split, it will not export with a chord tag or handshape tag
+				notelist[ctr] = NULL;	//Eliminate this note from the list
+				match = 1;	//Note that this chord matched one of the others
+			}
+			else if(!(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE) || (tp->note[ctr]->tflags & EOF_NOTE_TFLAG_ARP) || (tp->note[ctr]->tflags & EOF_NOTE_TFLAG_GHOST_HS))
 			{	//If this note is not ignored, is a chord within an arpeggio/handshape or is a temporary chord created created due to ghost handshape status
 				match = 0;
 				for(ctr2 = ctr + 1; ctr2 < tp->notes; ctr2++)
@@ -1994,16 +1999,19 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//Mark single notes as ignored where appropriate
 	for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 	{	//For each note in the track
+		unsigned long lanecount;
+
 		if(eof_is_partially_ghosted(sp, track, ctr3) && (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_TWIN))
 		{	//If the chord is partially ghosted and has this flag set, it has a clone without ghost gems that should instead be used for chord tag export
 			continue;
 		}
-		if(eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1)
-		{	//If this note will export as a chord (at least two non ghosted gems)
-			if(!(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE) || (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_COMBINE))
-			{	//If this chord wasn't split into single notes or converted into a non ghosted chord and is being ignored, or if it is marked for combination
+		lanecount = eof_note_count_rs_lanes(sp, track, ctr3, 2);
+		if(lanecount > 0)
+		{	//If this note will export as a note or chord (at least one non ghosted gem)
+			if(!(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE) || ((lanecount > 1) && (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_COMBINE)))
+			{	//If this note isn't already ignored, or if it is a chord marked for combination
 				for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
-				{	//For each string used in this track, write chordNote tags
+				{	//For each string used in this track
 					if((eof_get_note_note(sp, track, ctr3) & bitmask) && !(tp->note[ctr3]->ghost & bitmask))
 					{	//If this string is used in this note and it is not ghosted
 						long originallength = tp->note[ctr3]->length;	//Back up the original length of this note because it may be altered before export
@@ -2169,7 +2177,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				}
 			}//If it is partially ghosted
 		}//If this note contains multiple gems and isn't already ignored
-	}
+	}//For each note in the active pro guitar track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
 	//Write chord templates
