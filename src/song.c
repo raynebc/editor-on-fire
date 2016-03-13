@@ -1541,10 +1541,10 @@ void eof_read_pro_guitar_note(EOF_PRO_GUITAR_NOTE *ptr, PACKFILE *fp)
 		return;	//Invalid parameters
 
 	(void) eof_load_song_string_pf(ptr->name,fp,EOF_NAME_LENGTH);	//Read the note's name
-	(void) pack_getc(fp);																//Read the chord's number (not supported yet)
+	(void) pack_getc(fp);											//Read the chord's number (not supported yet)
 	ptr->type = pack_getc(fp);		//Read the note's difficulty
 	ptr->note = pack_getc(fp);		//Read note bitflags
-	ptr->ghost = pack_getc(fp);	//Read ghost bitflags
+	ptr->ghost = pack_getc(fp);		//Read ghost bitflags
 	for(ctr = 0, bitmask = 1; ctr < 8; ctr++, bitmask <<= 1)
 	{	//For each of the 8 bits in the note bitflag
 		if(ptr->note & bitmask)
@@ -1576,8 +1576,8 @@ void eof_read_pro_guitar_note(EOF_PRO_GUITAR_NOTE *ptr, PACKFILE *fp)
 		ptr->unpitchend = pack_getc(fp);	//Read the unpitched slide's ending fret
 	}
 	if(ptr->flags & EOF_NOTE_FLAG_EXTENDED)
-	{	//If this note uses any extended flags
-		ptr->eflags = pack_igetl(fp);		//Read extended flags
+	{	//If this note has an additional flags variable
+		ptr->eflags = pack_igetl(fp);			//Read extended flags
 		ptr->flags &= ~EOF_NOTE_FLAG_EXTENDED;	//Clear this flag, it won't be updated again until the project is saved/loaded
 	}
 }
@@ -1699,10 +1699,10 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		if(sp->tags->oggs < EOF_MAX_OGGS)
 		{	//IF EOF can store this OGG profile
 			(void) eof_load_song_string_pf(sp->tags->ogg[sp->tags->oggs].filename,fp,256);	//Read the OGG filename
-			(void) eof_load_song_string_pf(NULL,fp,0);				//Parse past the original audio file name (not supported yet)
+			(void) eof_load_song_string_pf(NULL,fp,0);					//Parse past the original audio file name (not supported yet)
 			(void) eof_load_song_string_pf(sp->tags->ogg[sp->tags->oggs].description,fp,0);	//Read the OGG profile description string
 			sp->tags->ogg[sp->tags->oggs].midi_offset = pack_igetl(fp);	//Read the profile's MIDI delay
-			(void) pack_igetl(fp);									//Read the OGG profile flags (not supported yet)
+			(void) pack_igetl(fp);										//Read the OGG profile flags (not supported yet)
 			sp->tags->oggs++;
 		}
 	}
@@ -7865,6 +7865,26 @@ char eof_pro_guitar_note_has_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long n
 		return 0;	//Return error
 
 	return eof_pro_guitar_note_bitmask_has_tech_note(tp, note, tp->note[note]->note, technote_num);	//Search for a technote on any of this note's used strings
+}
+
+char eof_pro_guitar_note_has_open_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note)
+{
+	unsigned long ctr, bitmask;
+	if((tp == NULL) || (note >= tp->notes))
+		return 0;	//Return error
+
+	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
+	{	//For each of the 6 usable strings
+		if(tp->note[note]->note & bitmask)
+		{	//If this string is in use
+			if(!tp->note[note]->frets[ctr])
+			{	//If this string is not fretted
+				return 1;	//It is played as an open note
+			}
+		}
+	}
+
+	return 0;
 }
 
 char eof_pro_guitar_note_bitmask_has_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long mask, unsigned long *technote_num)

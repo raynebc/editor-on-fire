@@ -99,12 +99,13 @@
 #define EOF_NOTE_TFLAG_HIGHLIGHT 2048	//This flag will represent a note that is highlighted in the editor window (non permanent, such as for toggleable highlighting options)
 
 //The following extended flags pertain to pro guitar notes
-#define EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE   1	//This flag specifies a note that will export to RS2 format with the "ignore" status set to nonzero, for special uses
-#define EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN  2	//This flag specifies a note that will export to RS2 format with its sustain even when it's a chord without techniques that normally require chordNote tags
-#define EOF_PRO_GUITAR_NOTE_EFLAG_STOP     4	//This flag specifies a tech note that truncates the overlapped string's note at its position
-#define EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS 8	//This flag specifies a note that will export to RS2 format so that the chord tag written reflects ghost gems having been filtered out as per normal,
+#define EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE    1	//This flag specifies a note that will export to RS2 format with the "ignore" status set to nonzero, for special uses
+#define EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN   2	//This flag specifies a note that will export to RS2 format with its sustain even when it's a chord without techniques that normally require chordNote tags
+#define EOF_PRO_GUITAR_NOTE_EFLAG_STOP      4	//This flag specifies a tech note that truncates the overlapped string's note at its position
+#define EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS  8	//This flag specifies a note that will export to RS2 format so that the chord tag written reflects ghost gems having been filtered out as per normal,
 												//	but the handshape tag written reflecting a chord where the ghost gems are included.  This allows the author to have multiple partial chords display
 												//	as if they all used the full chord's handshape in-game
+#define EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY 16	//This flag specifies a note with "chordify" status, affecting its export to RS2 XML as a chord tag with no chordnote subtags, and with ignored single notes if the chord uses sustain
 
 #define EOF_MAX_BEATS   32768
 #define EOF_MAX_PHRASES  1000
@@ -922,6 +923,9 @@ char eof_pro_guitar_note_bitmask_has_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigne
 char eof_pro_guitar_note_has_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long *technote_num);
 	//Uses eof_pro_guitar_note_bitmask_has_tech_note() to search for a technote overlapping any of the specified note's used strings
 	//If technote_num is not NULL, the index number of the first relevant tech note is returned through it
+char eof_pro_guitar_note_has_open_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);
+	//Returns nonzero if the specified note has any open notes
+	//Returns zero on error or if the note does not have any open notes
 unsigned long eof_pro_guitar_note_bitmask_has_bend_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long mask, unsigned long *technote_num);
 	//Similar to eof_pro_guitar_note_has_tech_note(), but returns the number of overlapping tech notes that have bend technique
 	//If technote_num is not NULL, the index number of the first relevant bend tech note is returned through it

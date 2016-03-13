@@ -1952,13 +1952,13 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}//For each note in the active pro guitar track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
-	//Identify chords that have the split status.  These will export as single notes instead of as chords.
+	//Identify chords that have split status.  These will export as single notes instead of as chords.
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the active pro guitar track
 		if(eof_note_count_rs_lanes(sp, track, ctr, 2) > 1)
 		{	//If this note would export as a chord
-			if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT)
-			{	//If this chord has split status
+			if((tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT) && !(tp->note[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY))
+			{	//If this chord has split status and does NOT also have chordify status
 				for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
 				{	//For each of the 6 supported strings
 					if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
@@ -1995,7 +1995,54 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}//For each note in the active pro guitar track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
-	//Identify gems within chords that will combine with adjacent single notes due to linknext status during chordnote export
+	//Identify chords that have chordify status.  These will export as chord tags and also ignored single note tags for the gems that require sustain
+	for(ctr = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the active pro guitar track
+		if(eof_note_count_rs_lanes(sp, track, ctr, 2) > 1)
+		{	//If this note would export as a chord
+			if((tp->note[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY) && !(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE))
+			{	//If this chord has chordify status and isn't already ignored
+				for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+				{	//For each of the 6 supported strings
+					if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
+					{	//If this string is used and is not ghosted
+						(void) eof_get_rs_techniques(sp, track, ctr, ctr3, &tech, 2, 1);	//Get the end position of any pitched/unpitched slide this chord's gem has
+						eof_rs2_adjust_chordnote_sustain(tp, ctr, ctr3, &tech);				//Set tech.length to 0 as appropriate depending on this gem's techniques
+						if(tech.length)
+						{	//If this gem would export with sustain
+							new_note = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);	//Clone the note with the updated length
+							if(new_note)
+							{	//If the new note was created
+								new_note->tflags |= EOF_NOTE_TFLAG_TEMP;		//Mark the note as temporary
+								new_note->note = bitmask;						//Turn the cloned chord into a single note on the appropriate string
+								if(tp->note[ctr]->slideend && (tech.slideto >= 0))
+								{	//If this note has slide technique and a valid slide end position was found
+									new_note->slideend = tech.slideto - tp->capo;		//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
+								}
+								if(tp->note[ctr]->unpitchend && (tech.unpitchedslideto >= 0))
+								{	//If this note has unpitched slide technique and a valid unpitched slide end position was found
+									new_note->unpitchend = tech.unpitchedslideto - tp->capo;	//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
+								}
+								new_note->eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE;	//This note will export with the "ignore" status
+							}
+							else
+							{
+								allegro_message("Error:  Couldn't expand a chordify status chord into single notes.  Aborting Rocksmith 2 export.");
+								eof_log("Error:  Couldn't expand a chordify status chord into single notes.  Aborting Rocksmith 2 export.", 1);
+								eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+								eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+								(void) pack_fclose(fp);
+								return 0;	//Return error
+							}
+						}//If this gem would export with sustain
+					}//If this string is used and is not ghosted
+				}//For each of the 6 supported strings
+			}//If this chord has chordify status
+		}//If this note would export as a chord
+	}//For each note in the active pro guitar track
+	eof_track_sort_notes(sp, track);	//Re-sort the notes
+
+	//Identify gems that will combine with adjacent single notes due to linknext status during chordnote export
 	//Mark single notes as ignored where appropriate
 	for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 	{	//For each note in the track
@@ -2569,13 +2616,16 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			//Write chords
 			if(numchords)
 			{	//If there's at least one chord in this difficulty
-				unsigned long flags;
+				unsigned long flags, eflags;
 				unsigned long lastchordid = 0;	//Stores the previous written chord's ID, so that when the ID changes, chordNote subtags can be forced to be written
 				char *upstrum = "up";
 				char *downstrum = "down";
 				char *direction;		//Will point to either upstrum or downstrum as appropriate
 				unsigned long notepos;
 				char highdensity;		//Various criteria determine whether the highDensity boolean property is set to true
+				char *chordifiedend = "/>";	//For chordified chords, there will be no subtags written, the chord tag will use this suffix to indicate this
+				char *normalend = ">";			//Otherwise it uses the normal suffix
+				char *chordtagend;
 
 				(void) snprintf(buffer, sizeof(buffer) - 1, "      <chords count=\"%lu\">\n", numchords);
 				(void) pack_fputs(buffer, fp);
@@ -2619,6 +2669,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								return 0;	//Return error
 							}
 							flags = tp->note[ctr3]->flags;	//Simplify
+							eflags = tp->note[ctr3]->eflags;
 							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
 							{	//If this note explicitly strums up
 								direction = upstrum;	//Set the direction string to match
@@ -2645,24 +2696,37 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							{	//Chord is explicitly specified to be high density
 								highdensity = 1;
 							}
-							(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" chordId=\"%lu\" fretHandMute=\"%d\" highDensity=\"%d\" ignore=\"%d\" palmMute=\"%d\" hopo=\"%d\" strum=\"%s\">\n", (double)notepos / 1000.0, tech.linknext, tech.accent, chordid, tech.stringmute, highdensity, tech.ignore, tech.palmmute, tech.hopo, direction);
+							if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY)
+							{	//If this chord has chordify status
+								highdensity = eof_pro_guitar_note_has_open_note(tp, ctr3);	//The density will be overridden based on whether the chord has open notes
+								chordtagend = chordifiedend;
+							}
+							else
+							{
+								chordtagend = normalend;
+							}
+							(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" chordId=\"%lu\" fretHandMute=\"%d\" highDensity=\"%d\" ignore=\"%d\" palmMute=\"%d\" hopo=\"%d\" strum=\"%s\"%s\n", (double)notepos / 1000.0, tech.linknext, tech.accent, chordid, tech.stringmute, highdensity, tech.ignore, tech.palmmute, tech.hopo, direction, chordtagend);
 							(void) pack_fputs(buffer, fp);
-							//Write chordnote tags
-							for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
-							{	//For each string used in this track, write chordNote tags
-								if((eof_get_note_note(sp, track, ctr3) & bitmask) && !(tp->note[ctr3]->ghost & bitmask))
-								{	//If this string is used in this note and it is not ghosted
-									long originallength = tp->note[ctr3]->length;	//Back up the original length of this note because it may be altered before export
 
-									(void) eof_rs_combine_linknext_logic(sp, track, ctr3, stringnum);
+							//Write chordnote tags, but only if this isn't a "chordified" chord
+							if(!(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY))
+							{
+								for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
+								{	//For each string used in this track, write chordNote tags
+									if((eof_get_note_note(sp, track, ctr3) & bitmask) && !(tp->note[ctr3]->ghost & bitmask))
+									{	//If this string is used in this note and it is not ghosted
+										long originallength = tp->note[ctr3]->length;	//Back up the original length of this note because it may be altered before export
 
-									assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
-									eof_rs2_export_note_string_to_xml(sp, track, ctr3, stringnum, 1, chordlist[chordid], fp);	//Write this chordNote's XML tag
+										(void) eof_rs_combine_linknext_logic(sp, track, ctr3, stringnum);
 
-									tp->note[ctr3]->length = originallength;	//Restore the original length to the chord
-								}//If this string is used in this note and it is not ghosted
-							}//For each string used in this track
-							(void) pack_fputs("        </chord>\n", fp);
+										assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
+										eof_rs2_export_note_string_to_xml(sp, track, ctr3, stringnum, 1, chordlist[chordid], fp);	//Write this chordNote's XML tag
+
+										tp->note[ctr3]->length = originallength;	//Restore the original length to the chord
+									}//If this string is used in this note and it is not ghosted
+								}//For each string used in this track
+								(void) pack_fputs("        </chord>\n", fp);
+							}
 							lastchordid = chordid;
 						}//If this chord wasn't split into single notes or converted into a non ghosted chord and is being ignored
 					}//If this note is in this difficulty and will export as a chord (at least two non ghosted gems)
@@ -4984,6 +5048,35 @@ void eof_rs_export_cleanup(EOF_SONG * sp, unsigned long track)
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 }
 
+void eof_rs2_adjust_chordnote_sustain(EOF_PRO_GUITAR_TRACK *tp, unsigned long notenum, unsigned long stringnum, EOF_RS_TECHNIQUES *tech)
+{
+	unsigned long fret, flags;
+
+	if((tp == NULL) || (notenum >= tp->notes) || !tech || (stringnum > 5))
+		return;	//Invalid parameters
+
+	if(tp->note[notenum]->frets[stringnum] == 0xFF)
+	{	//If this is a string mute with no defined fret number
+		fret = 0;	//Assume muted open note
+	}
+	else
+	{	//Otherwise use the defined fret number
+		fret = tp->note[notenum]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
+	}
+
+	flags = tp->note[notenum]->flags;
+	if(!tech->tremolo && !tech->bend && !tech->vibrato && (tech->slideto < 0) && (tech->unpitchedslideto < 0))
+	{	//If the chordNote does not have tremolo, bend, vibrato, slide or unpitched slide (all of which need to keep their sustain)
+		if(!((fret == 0) && ((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO))))
+		{	//If the chordNote is not fretted, it needs to keep its sustain if the fretted notes in the chord have bend, vibrato, slide or unpitched slide status
+			if(!tech->sustain && !tech->linknext)
+			{	//If the chordNote has the sustain or linknext status applied, it needs to keep its sustain
+				tech->length = 0;	//Otherwise force the chordNote to have no sustain
+			}
+		}
+	}
+}
+
 void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsigned long notenum, unsigned long stringnum, char ischordnote, unsigned long fingering, PACKFILE *fp)
 {
 	EOF_PRO_GUITAR_TRACK *tp;
@@ -5042,16 +5135,7 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 	//If a chordNote is being exported, determine if its sustain needs to be dropped
 	if(ischordnote)
 	{	//If a chordNote is being written
-		if(!tech.tremolo && !tech.bend && !tech.vibrato && (tech.slideto < 0) && (tech.unpitchedslideto < 0))
-		{	//If the chordNote does not have tremolo, bend, vibrato, slide or unpitched slide (all of which need to keep their sustain)
-			if(!((fret == 0) && ((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO))))
-			{	//If the chordNote is not fretted, it needs to keep its sustain if the fretted notes in the chord have bend, vibrato, slide or unpitched slide status
-				if(!tech.sustain && !tech.linknext)
-				{	//If the chordNote has the sustain or linknext status applied, it needs to keep its sustain
-					tech.length = 0;	//Otherwise force the chordNote to have no sustain
-				}
-			}
-		}
+		eof_rs2_adjust_chordnote_sustain(tp, notenum, stringnum, &tech);	//Set tech.length to 0 if none of the gem's techniques require sustain to be kept
 	}
 
 	if(tech.bend)
@@ -5393,6 +5477,10 @@ int eof_rs_combine_linknext_logic(EOF_SONG * sp, unsigned long track, unsigned l
 					tech2.linknext = tech.linknext;	//Disregard any differences with the linknext status
 					tech2.length = tech.length;		//And length
 					tech2.sustain = tech.sustain;	//And sustain
+					if(tp->note[notenum]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY)
+					{	//If the note receiving the combination is marked with chordify status
+						tech2.ignore = tech.ignore;	//It will have been given ignore status, the note being combined should disregard this discrepancy
+					}
 					if(!memcmp(&tech, &tech2, sizeof(EOF_RS_TECHNIQUES)) && (tp->note[notenum]->frets[stringnum] == np2->frets[stringnum]))
 					{	//If the used techniques and fret numbers were otherwise identical, combine this single note's sustain with that of the chordnote and don't export the single note
 						tp->note[notenum]->length = np2->pos + np2->length - tp->note[notenum]->pos;	//Adjust length of chordnote

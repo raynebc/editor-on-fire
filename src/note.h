@@ -55,7 +55,7 @@ BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, char *text, uns
 	//The specified font is used, allowing the mono-spaced symbol and regular fonts to be used interchangeably
 	//If note is NULL, a bitmap containing the string in the text pointer is used instead
 void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note, unsigned char sanitycheck);
-	//Used to store notations (ie. "PM" for palm mute) for the specified note into the buffer, which should be able to hold at least 30 characters
+	//Used to store notations (ie. "PM" for palm mute) for the specified note into the buffer, which should be able to hold at least 65 characters just to guarantee an overflow isn't possible
 	//If sanitycheck is nonzero and the specified note is a pro guitar note, the validity of any pitched/unpitched slide technique it has is checked
 	// and if the end position is not valid, a question mark is appended after the slide notation character
 int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, unsigned long track2, unsigned long note2, char thorough);

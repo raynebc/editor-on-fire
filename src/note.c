@@ -259,7 +259,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	char iscymbal;		//Used to track whether the specified note is marked as a cymbal
 	long x,y;
 	unsigned long numlanes, tracknum=0, numlanes2;
-	char notation[31] = {0};	//Used to store tab style notation for pro guitar notes
+	char notation[65] = {0};	//Used to store tab style notation for various note statuses
 	char *nameptr = NULL;		//This points to the display name string for the note
 	char samename[] = "/";		//This is what a repeated note name will display as
 	char samenameauto[] = "[/]";	//This is what a repeated note for an non manually-named note will display as
@@ -1057,32 +1057,35 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 					linecol = p ? eof_colors[0].hit : eof_colors[0].color;
 			}
 			else if(eof_render_3d_rs_chords && (eof_note_count_rs_lanes(eof_song, track, notenum, 2) >= 2) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) &&
-					((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HD) || (eof_note_has_high_chord_density(eof_song, track, notenum, 2))) && !(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT))
-			{	//If the user has opted to 3D render Rocksmith style chords, and this is a pro guitar chord that either has high density due to being explicitly defined as such or automatically due to other means, and this chord isn't marked with the split status
+					((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HD) || (eof_note_has_high_chord_density(eof_song, track, notenum, 2))))
+			{	//If the user has opted to 3D render Rocksmith style chords, and this is a pro guitar chord that either has high density due to being explicitly defined as such or automatically due to other means
 				long prevnote = eof_track_fixup_previous_note(eof_song, track, notenum);
 
-				drawline = 1;
-				if(!prevnote)
-				{	//If there was a previous note
-					EOF_PRO_GUITAR_TRACK * tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];	//Simplify
-
-					if(strcmp(eof_get_note_name(eof_song, track, prevnote), eof_get_note_name(eof_song, track, notenum)))
-					{	//If the previous note had a different name defined
-						drawline = 0;
-					}
-					if(eof_pro_guitar_note_compare_fingerings(tp->note[prevnote], tp->note[notenum]))
-					{	//If the previous note had a different chord fingering defined
-						drawline = 0;
-					}
-				}
-				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HD)
-				{	//The high density status overrides all other conditions
+				if(!(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT) && !(eof_get_note_eflags(eof_song, track, notenum) & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY))
+				{	//If this chord isn't marked with split status and isn't marked with chordify status
 					drawline = 1;
-				}
-				if(drawline)
-				{	//If conditions were met to render this chord as a repeat line
-					ctr = eof_count_track_lanes(eof_song, track) + 1;	//Set a condition that will exit the for loop after this line is drawn
-					linecol = p ? eof_color_cyan : eof_color_dark_cyan;
+					if(!prevnote)
+					{	//If there was a previous note
+						EOF_PRO_GUITAR_TRACK * tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];	//Simplify
+
+						if(strcmp(eof_get_note_name(eof_song, track, prevnote), eof_get_note_name(eof_song, track, notenum)))
+						{	//If the previous note had a different name defined
+							drawline = 0;
+						}
+						if(eof_pro_guitar_note_compare_fingerings(tp->note[prevnote], tp->note[notenum]))
+						{	//If the previous note had a different chord fingering defined
+							drawline = 0;
+						}
+					}
+					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HD)
+					{	//The high density status overrides all other conditions
+						drawline = 1;
+					}
+					if(drawline)
+					{	//If conditions were met to render this chord as a repeat line
+						ctr = eof_count_track_lanes(eof_song, track) + 1;	//Set a condition that will exit the for loop after this line is drawn
+						linecol = p ? eof_color_cyan : eof_color_dark_cyan;
+					}
 				}
 			}
 			else if((mask == 32) && eof_open_strum_enabled(track))
@@ -1790,6 +1793,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 					buffer[index++] = ')';
 				}
 			}
+		}
+		if(np->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY)
+		{
+			buffer[index++] = 'C';
 		}
 	}//Check pro guitar statuses
 	else if((track == EOF_TRACK_DRUM) || (track == EOF_TRACK_DRUM_PS))

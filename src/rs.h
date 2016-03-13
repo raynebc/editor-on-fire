@@ -114,6 +114,9 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//Rocksmith 2 supports arrangements using a capo, but it does not consider the capo to be the nut position, so the capo position still needs to be added
 	// to the fret values of all fretted notes
 
+void eof_rs2_adjust_chordnote_sustain(EOF_PRO_GUITAR_TRACK *tp, unsigned long notenum, unsigned long stringnum, EOF_RS_TECHNIQUES *tech);
+	//Performs some logic used in RS2 export to set tech->length to 0 if the specified gem doesn't have any techniques requiring the sustain to be kept for export
+
 void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsigned long notenum, unsigned long stringnum, char ischordnote, unsigned long fingering, PACKFILE *fp);
 	//Writes the note or chordNote XML tag for the specified gem of the specified note to the specified PACKFILE stream
 	//If ischordnote is nonzero, the tag is written as a chordNote tag with an additional two spaces of indentation, otherwise a note tag is written

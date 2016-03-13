@@ -3849,7 +3849,7 @@ DIALOG eof_pro_guitar_note_dialog[] =
 	{d_agup_check_proc,		140, 247, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
 
 	{d_agup_text_proc,      10,  292, 64,  8,  2,   23,  0,    0,      0,         0,   "Slide:",     NULL,          NULL },
-	{d_agup_check_proc,		58,  312, 138, 16, 2,   23,  0,    0,      0,         0,   "Reverse slide (RB3)",NULL,  NULL },
+	{d_agup_check_proc,		85,  312, 138, 16, 2,   23,  0,    0,      0,         0,   "Reverse slide (RB3)",NULL,  NULL },
 	{d_agup_text_proc,      10,  332, 64,  8,  2,   23,  0,    0,      0,         0,   "Mute:",      NULL,          NULL },
 	{d_agup_text_proc,      10,  352, 64,  8,  2,   23,  0,    0,      0,         0,   "Strum:",     NULL,          NULL },
 	{d_agup_radio_proc,		6,   272, 38,  16, 2,   23,  0,    0,      1,         0,   "HO",         NULL,          NULL },
@@ -3889,7 +3889,8 @@ DIALOG eof_pro_guitar_note_dialog[] =
 	{d_agup_check_proc,		154, 432, 50,  16, 2,   23,  0,    0,      0,         0,   "Stop",       NULL,          NULL },
 	{d_agup_check_proc,		10,  452, 78,  16, 2,   23,  0,    0,      0,         0,   "Ghost HS",   NULL,          NULL },
 	{d_agup_check_proc,		87,  452, 68,  16, 2,   23,  0,    0,      0,         0,   "Hi Dens",    NULL,          NULL },
-	{d_agup_check_proc,		154, 452, 48,  16, 2,   23,  0,    0,      0,         0,   "Split",    NULL,          NULL },
+	{d_agup_check_proc,		154, 452, 48,  16, 2,   23,  0,    0,      0,         0,   "Split",      NULL,          NULL },
+	{d_agup_check_proc,		10,  312, 78,  16, 2,   23,  0,    0,      0,         0,   "Chordify",   NULL,          NULL },
 	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -4207,6 +4208,14 @@ int eof_menu_note_edit_pro_guitar_note(void)
 		{	//Clear "Split"
 			eof_pro_guitar_note_dialog[74].flags = 0;
 		}
+		if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY)
+		{	//Select "Chordify"
+			eof_pro_guitar_note_dialog[75].flags = D_SELECTED;
+		}
+		else
+		{	//Clear "Chordify"
+			eof_pro_guitar_note_dialog[75].flags = 0;
+		}
 
 		bitmask = 0;
 		retval = eof_popup_dialog(eof_pro_guitar_note_dialog, 0);	//Run the dialog
@@ -4514,6 +4523,10 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					if(eof_pro_guitar_note_dialog[74].flags == D_SELECTED)
 					{	//Split is selected
 						flags |= EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;
+					}
+					if(eof_pro_guitar_note_dialog[75].flags == D_SELECTED)
+					{	//Chordify is selected
+						eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY;
 					}
 
 					if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
