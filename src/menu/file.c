@@ -4027,7 +4027,7 @@ char * eof_gp_tracks_list(int index, int * size)
 	}
 	else
 	{	//Return the specified list item
-		if(eof_parsed_gp_file && index < eof_parsed_gp_file->numtracks)
+		if(eof_parsed_gp_file && (index < eof_parsed_gp_file->numtracks))
 		{	//eof_parsed_gp_file and the referenced track index are valid
 			return eof_parsed_gp_file->names[index];
 		}
@@ -4048,7 +4048,7 @@ DIALOG eof_set_display_width_dialog[] =
 
 int eof_set_display_width(void)
 {
-	int width;
+	unsigned long width;
 
 	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "Set display width (>= %lu)", eof_screen_width_default);
 	eof_set_display_width_dialog[0].dp = eof_etext;	//Update the dialog window's title

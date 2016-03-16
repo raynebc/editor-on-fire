@@ -454,7 +454,7 @@ typedef struct
 	char highlight_arpeggios;
 
 	EOF_OGG_INFO ogg[EOF_MAX_OGGS];
-	short oggs;
+	unsigned short oggs;
 
 	char ini_setting[EOF_MAX_INI_SETTINGS][EOF_INI_LENGTH];
 	short ini_settings;

@@ -576,13 +576,14 @@ int eof_menu_edit_copy_vocal(void)
 {
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	int first_pos = -1;
+	unsigned long first_pos = -1;
 	long first_beat = -1;
 	char note_check = 0;
 	int copy_notes = 0;
 	PACKFILE * fp;
 	int note_selection_updated;
 	char clipboard_path[50];
+	int first_selected = 1;
 
 	if(!eof_vocals_selected)
 		return 1;	//Return error
@@ -594,14 +595,15 @@ int eof_menu_edit_copy_vocal(void)
 		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
 		{
 			copy_notes++;
-			if(eof_song->vocal_track[tracknum]->lyric[i]->pos < first_pos)
-			{
+			if(first_selected || (eof_song->vocal_track[tracknum]->lyric[i]->pos < first_pos))
+			{	//If this is the first selected lyric in the active track, or if this lyric is the earliest selected one found so far
 				first_pos = eof_song->vocal_track[tracknum]->lyric[i]->pos;
 			}
-			if(first_beat == -1)
-			{
+			if(first_selected)
+			{	//Track the beat number containing the first selected lyric
 				first_beat = eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos);
 			}
+			first_selected = 0;
 		}
 	}
 	if(copy_notes <= 0)
@@ -666,10 +668,10 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 	unsigned long i, j;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
-	long paste_count = 0;
+	unsigned long paste_count = 0;
 	long first_beat = 0;
 	long this_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
-	long copy_notes;
+	unsigned long copy_notes;
 	long new_pos = -1;
 	long new_end_pos = -1;
 	long last_pos = -1;

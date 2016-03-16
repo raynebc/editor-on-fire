@@ -5273,11 +5273,11 @@ void eof_render_editor_window_2(void)
 
 		restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track2);
 		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track2, 0);	//Disable tech view for the second piano roll's track if applicable
-		if(eof_note_type2 < 0)
+		if(eof_note_type2 > EOF_MAX_DIFFICULTIES)
 		{	//If the difficulty hasn't been initialized
 			eof_note_type2 = eof_note_type;
 		}
-		if(eof_selected_track2 < 0)
+		if(eof_selected_track2 == 0)
 		{	//If the track hasn't been initialized
 			eof_selected_track2 = eof_selected_track;
 		}

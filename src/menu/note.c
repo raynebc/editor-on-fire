@@ -4168,30 +4168,6 @@ int eof_menu_note_edit_pro_guitar_note(void)
 		{	//Clear "Sustain"
 			eof_pro_guitar_note_dialog[70].flags = 0;
 		}
-		if(!eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
-		{	//If tech view isn't in effect for the current track
-			eof_pro_guitar_note_dialog[71].flags = D_DISABLED;	//"Stop" status
-			if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS)
-			{	//Select "Ghost HS"
-				eof_pro_guitar_note_dialog[72].flags = D_SELECTED;
-			}
-			else
-			{	//Clear "Ghost HS"
-				eof_pro_guitar_note_dialog[72].flags = 0;
-			}
-		}
-		else
-		{
-			if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP)
-			{	//Select "Stop"
-				eof_pro_guitar_note_dialog[71].flags = D_SELECTED;
-			}
-			else
-			{	//Clear "Stop"
-				eof_pro_guitar_note_dialog[71].flags = 0;
-			}
-			eof_pro_guitar_note_dialog[72].flags = D_DISABLED;	//"Ghost HS" status
-		}
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HD)
 		{	//Select "Hi Dens"
 			eof_pro_guitar_note_dialog[73].flags = D_SELECTED;
@@ -4215,6 +4191,32 @@ int eof_menu_note_edit_pro_guitar_note(void)
 		else
 		{	//Clear "Chordify"
 			eof_pro_guitar_note_dialog[75].flags = 0;
+		}
+		if(!eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
+		{	//If tech view isn't in effect for the current track
+			eof_pro_guitar_note_dialog[71].flags = D_DISABLED;	//"Stop" status
+			if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS)
+			{	//Select "Ghost HS"
+				eof_pro_guitar_note_dialog[72].flags = D_SELECTED;
+			}
+			else
+			{	//Clear "Ghost HS"
+				eof_pro_guitar_note_dialog[72].flags = 0;
+			}
+		}
+		else
+		{	//Tech view is in effect
+			eof_pro_guitar_note_dialog[37].flags = D_DISABLED;	//Reverse slide
+			if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP)
+			{	//Select "Stop"
+				eof_pro_guitar_note_dialog[71].flags = D_SELECTED;
+			}
+			else
+			{	//Clear "Stop"
+				eof_pro_guitar_note_dialog[71].flags = 0;
+			}
+			eof_pro_guitar_note_dialog[72].flags = D_DISABLED;	//"Ghost HS" status
+			eof_pro_guitar_note_dialog[75].flags = D_DISABLED;	//"Chordify" status
 		}
 
 		bitmask = 0;
