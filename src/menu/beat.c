@@ -520,8 +520,7 @@ void eof_prepare_beat_menu(void)
 
 int eof_menu_beat_bpm_change(void)
 {
-	int i;
-	unsigned long cppqn, newppqn;
+	unsigned long cppqn, newppqn, i;
 	int old_flags;
 	double oldbpm;
 
@@ -869,7 +868,7 @@ int eof_menu_beat_push_offset_back_menu(void)
 
 int eof_menu_beat_push_offset_up(void)
 {
-	int i;
+	unsigned long i;
 
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
@@ -955,8 +954,8 @@ int eof_menu_beat_anchor(void)
 {
 	int mm, ss, ms;
 	int oldmm, oldss, oldms;
-	int oldpos = eof_song->beat[eof_selected_beat]->pos;
-	int newpos = 0;
+	unsigned long oldpos = eof_song->beat[eof_selected_beat]->pos;
+	unsigned long newpos = 0;
 	int revert = 0;
 	char ttext[4] = {0};
 
@@ -1074,8 +1073,7 @@ int eof_menu_beat_toggle_anchor(void)
 
 int eof_menu_beat_delete_anchor(void)
 {
-	int i;
-	unsigned long cppqn = eof_song->beat[eof_selected_beat]->ppqn;
+	unsigned long cppqn = eof_song->beat[eof_selected_beat]->ppqn, i;
 
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
@@ -1399,7 +1397,7 @@ int eof_menu_beat_events(void)
 
 int eof_menu_beat_clear_events(void)
 {
-	int i;
+	unsigned long i;
 	if(eof_song->text_events == 0)
 	{
 		allegro_message("No events to clear!");
@@ -1453,8 +1451,7 @@ int eof_menu_beat_clear_non_rs_events(void)
 
 char * eof_events_list(int index, int * size)
 {
-	int i;
-	unsigned long ecount = 0;
+	unsigned long ecount = 0, i;
 	char trackname[26] = {0};
 	char eventflags[30] = {0};
 
@@ -1982,7 +1979,7 @@ int eof_events_dialog_delete(DIALOG * d)
 
 int eof_menu_beat_add(void)
 {
-	int i;
+	unsigned long i;
 
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes

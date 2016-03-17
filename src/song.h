@@ -426,7 +426,7 @@ typedef struct
 typedef struct
 {
 	char filename[256];
-	long  midi_offset;	//Leave signed just in case this is eventually used to allow for insertion of leading silence via specifying a negative midi offset
+	long midi_offset;	//Leave signed just in case this is eventually used to allow for insertion of leading silence via specifying a negative midi offset
 	char modified;
 	char description[EOF_NAME_LENGTH + 1];
 
@@ -457,7 +457,7 @@ typedef struct
 	unsigned short oggs;
 
 	char ini_setting[EOF_MAX_INI_SETTINGS][EOF_INI_LENGTH];
-	short ini_settings;
+	unsigned short ini_settings;
 
 	unsigned long revision;
 	unsigned long difficulty;		//Specifies the difficulty level from 0-5 (standard 0-5 scale), or 6 for devil heads (extreme difficulty)
@@ -674,13 +674,13 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 	//If dir is < 0, decreases all selected notes in the active instrument difficulty by the specified amount
 	//If amount is 0, then the notes are adjusted by the current grid snap value
 	//An undo state is only created if at least one note's length is altered
-unsigned long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long note, char enforcegap);
+long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long note, char enforcegap);
 	//Determines the maximum valid length for the specified note by comparing its position to the next note that marks the threshold,
 	//minus the configured minimum distance between notes (if enforcegap is nonzero).  If the specified note is a crazy note, the threshold
 	//is based on the position of the next note in the same track difficulty that uses any gems on the same lane, otherwise it's based on
 	//that of the next note in the track difficulty.
 	//enforcegap should be given as nonzero unless the note has linknext status, which forces a mandatory distance between notes to be ignored
-	//0 is returned on error, ULONG_MAX is returned if there is no note that follows (indicating the note's length is only limited by its variable capacity)
+	//0 is returned on error, LONG_MAX is returned if there is no note that follows (indicating the note's length is only limited by its variable capacity)
 void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char diff, char diffonly);
 	//If diffonly is zero, the entire specified track has its contents deleted
 	//If diffonly is nonzero, only the content from the specified track difficulty is deleted

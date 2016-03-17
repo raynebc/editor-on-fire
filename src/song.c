@@ -7186,12 +7186,12 @@ void eof_truncate_chart(EOF_SONG *sp)
  	eof_log("eof_truncate_chart() exiting", 1);
 }
 
-unsigned long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long note, char enforcegap)
+long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long note, char enforcegap)
 {
 	long next = note;
 	unsigned long thisflags, thispos = 0, nextpos = 0;
 	unsigned char thisnote, nextnote;
-	int effective_min_note_distance = eof_min_note_distance;	//By default, the user configured minimum note distance is used
+	unsigned effective_min_note_distance = eof_min_note_distance;	//By default, the user configured minimum note distance is used
 
 	if(!sp || (track >= sp->tracks))
 		return 0;	//Return error
@@ -7207,7 +7207,7 @@ unsigned long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigne
 		next = eof_track_fixup_next_note(sp, track, next);	//Find the next note that follows the specified note
 		if(next < 0)
 		{	//If there was no next note
-			return ULONG_MAX;	//This note has no length limit
+			return LONG_MAX;	//This note has no length limit
 		}
 
 		nextnote = eof_get_note_note(sp, track, next);	//Get the next note's note bitflag

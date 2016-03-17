@@ -138,8 +138,8 @@ int         eof_gp_import_replaces_track = 1;	//If nonzero during GP import, the
 int         eof_gp_import_nat_harmonics_only = 0;	//If nonzero during GP import, only natural harmonics are imported as notes with harmonic status
 int         eof_min_note_length = 0;			//Specifies the user-configured minimum length for all non-drum notes (for making Guitar Hero customs, is set to 0 if undefined)
 int         eof_enforce_chord_density = 0;		//Specifies whether repeated chords that are separated by a rest automatically have crazy status applied to force RS export as low density chords
-int         eof_chord_density_threshold = 10000;	//Specifies the maximum distance between repeated chords that allows them to be marked as high density (repeat lines)
-int         eof_min_note_distance = 3;			//Specifies the user-configured minimum distance between notes (to avoid problems with timing conversion leading to precision loss that can cause notes to combine/drop)
+unsigned    eof_chord_density_threshold = 10000;	//Specifies the maximum distance between repeated chords that allows them to be marked as high density (repeat lines)
+unsigned     eof_min_note_distance = 3;			//Specifies the user-configured minimum distance between notes (to avoid problems with timing conversion leading to precision loss that can cause notes to combine/drop)
 int         eof_render_bass_drum_in_lane = 0;	//If nonzero, the 3D rendering will draw bass drum gems in a lane instead of as a bar spanning all lanes
 int         eof_click_changes_dialog_focus = 1;	//If nonzero, eof_verified_proc will not change dialog focus on mouse-over, it requires an explicit mouse click
 int         eof_stop_playback_leave_focus = 1;	//If nonzero, EOF stops playback when it is not in the foreground
@@ -338,9 +338,9 @@ char eof_screen_zoom = 0;							//Tracks whether EOF will perform a x2 zoom rend
 EOF_SELECTION_DATA eof_selection;
 
 /* lyric preview data */
-int eof_preview_line[2] = {0};
-int eof_preview_line_lyric[2] = {0};
-int eof_preview_line_end_lyric[2] = {0};
+unsigned long eof_preview_line[2] = {0};
+unsigned long eof_preview_line_lyric[2] = {0};
+unsigned long eof_preview_line_end_lyric[2] = {0};
 
 /* Windows-only data */
 #ifdef ALLEGRO_WINDOWS
@@ -3191,7 +3191,7 @@ void eof_render_3d_window(void)
 	static int fretboardpoint[8];		//Used to cache the 3D->2D coordinate projections for the 3D fretboard
 	int point[8];
 	unsigned long i;
-	short numsolos = 0;					//Used to abstract the solo sections
+	unsigned long numsolos = 0;					//Used to abstract the solo sections
 	unsigned long numnotes;				//Used to abstract the notes
 	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
 	unsigned long tracknum;
@@ -4554,7 +4554,7 @@ void eof_init_after_load(char initaftersavestate)
 	{	//Validate eof_zoom, to ensure a valid zoom level was loaded from the config file
 		eof_zoom = 10;
 	}
-	if((eof_note_type < EOF_NOTE_SUPAEASY) || (eof_note_type >= eof_song->track[eof_selected_track]->numdiffs))
+	if(eof_note_type >= eof_song->track[eof_selected_track]->numdiffs)
 	{	//Validate eof_note_type, to ensure a valid active difficulty was loaded from the config file
 		eof_note_type = EOF_NOTE_AMAZING;
 	}

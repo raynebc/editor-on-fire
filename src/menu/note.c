@@ -484,10 +484,10 @@ DIALOG eof_note_name_dialog[] =
 void eof_prepare_note_menu(void)
 {
 	int vselected;
-	int insp = 0, insolo = 0, inll = 0, inarpeggio = 0, intrill = 0, intremolo = 0, inslider = 0, inhandshape = 0;
-	int spstart = -1, ssstart = -1, llstart = -1;
-	int spend = -1, ssend = -1, llend = -1;
-	int spp = 0, ssp = 0, llp = 0;
+	unsigned long insp = 0, insolo = 0, inll = 0, inarpeggio = 0, intrill = 0, intremolo = 0, inslider = 0, inhandshape = 0;
+	unsigned long spstart = 0, ssstart = 0, llstart = 0;
+	unsigned long spend = 0, ssend = 0, llend = 0;
+	unsigned long spp = 0, ssp = 0, llp = 0;
 	unsigned long i, j;
 	unsigned long tracknum;
 	unsigned long sel_start = eof_chart_length, sel_end = 0;
@@ -2815,7 +2815,7 @@ int eof_menu_note_default_no_hi_hat(void)
 }
 
 /* split a lyric into multiple pieces (look for ' ' characters) */
-static void eof_split_lyric(int lyric)
+static void eof_split_lyric(unsigned long lyric)
 {
 	unsigned long i, l, c = 0, lastc;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -6835,7 +6835,7 @@ int eof_menu_copy_solos_track_13(void)
 	return eof_menu_copy_solos_track_number(eof_song, 13, eof_selected_track);
 }
 
-int eof_menu_copy_solos_track_number(EOF_SONG *sp, int sourcetrack, int desttrack)
+int eof_menu_copy_solos_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
 {
 	unsigned long ctr;
 	EOF_PHRASE_SECTION *ptr;
@@ -6936,7 +6936,7 @@ int eof_menu_copy_sp_track_13(void)
 	return eof_menu_copy_sp_track_number(eof_song, 13, eof_selected_track);
 }
 
-int eof_menu_copy_sp_track_number(EOF_SONG *sp, int sourcetrack, int desttrack)
+int eof_menu_copy_sp_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
 {
 	unsigned long ctr;
 	EOF_PHRASE_SECTION *ptr;
@@ -7037,7 +7037,7 @@ int eof_menu_copy_arpeggio_track_13(void)
 	return eof_menu_copy_arpeggio_track_number(eof_song, 13, eof_selected_track);
 }
 
-int eof_menu_copy_arpeggio_track_number(EOF_SONG *sp, int sourcetrack, int desttrack)
+int eof_menu_copy_arpeggio_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
 {
 	unsigned long ctr;
 	EOF_PHRASE_SECTION *ptr;
@@ -7138,7 +7138,7 @@ int eof_menu_copy_trill_track_13(void)
 	return eof_menu_copy_trill_track_number(eof_song, 13, eof_selected_track);
 }
 
-int eof_menu_copy_trill_track_number(EOF_SONG *sp, int sourcetrack, int desttrack)
+int eof_menu_copy_trill_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
 {
 	unsigned long ctr;
 	EOF_PHRASE_SECTION *ptr;
@@ -7239,7 +7239,7 @@ int eof_menu_copy_tremolo_track_13(void)
 	return eof_menu_copy_tremolo_track_number(eof_song, 13, eof_selected_track);
 }
 
-int eof_menu_copy_tremolo_track_number(EOF_SONG *sp, int sourcetrack, int desttrack)
+int eof_menu_copy_tremolo_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
 {
 	unsigned long ctr;
 	EOF_PHRASE_SECTION *ptr;

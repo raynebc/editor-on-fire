@@ -98,7 +98,7 @@ int eof_menu_track_selected_10(void);
 int eof_menu_track_selected_11(void);
 int eof_menu_track_selected_12(void);
 int eof_menu_track_selected_13(void);
-int eof_menu_track_selected_track_number(int tracknum, int updatetitle);
+int eof_menu_track_selected_track_number(unsigned long tracknum, int updatetitle);
 	//Changes to the specified track number
 	//If updatetitle is nonzero, EOF's program window title is set (it should not be updated when used to render the second piano roll)
 

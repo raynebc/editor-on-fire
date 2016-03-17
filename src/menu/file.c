@@ -1057,7 +1057,8 @@ int eof_menu_file_settings(void)
 
 int eof_menu_file_preferences(void)
 {
-	int retval, original_input_mode, original_rs1_export_setting, original_eof_min_note_distance = eof_min_note_distance, original_eof_chord_density_threshold = eof_chord_density_threshold;
+	int retval, original_input_mode, original_rs1_export_setting;
+	unsigned original_eof_min_note_distance = eof_min_note_distance, original_eof_chord_density_threshold = eof_chord_density_threshold;
 
 	if(eof_song_loaded)
 	{
@@ -1170,8 +1171,8 @@ int eof_menu_file_preferences(void)
 			if(eof_etext2[0] != '\0')
 			{	//If the minimum note distance field is populated
 				eof_min_note_distance = atol(eof_etext2);
-				if(eof_min_note_distance < 1)
-				{	//Validate this value
+				if(eof_min_note_distance > 999)
+				{	//Validate this value (no more than 3 digits)
 					eof_min_note_distance = 3;
 				}
 			}
@@ -1224,8 +1225,8 @@ int eof_menu_file_preferences(void)
 			if(eof_etext3[0] != '\0')
 			{	//If the chord density threshold field is populated
 				eof_chord_density_threshold = atol(eof_etext3);
-				if(eof_chord_density_threshold < 0)
-				{	//Validate this value
+				if(eof_chord_density_threshold > 99999)
+				{	//Validate this value (not expected to be more than 5 digits)
 					eof_chord_density_threshold = 10000;
 				}
 			}
@@ -2578,7 +2579,7 @@ int eof_save_helper(char *destfilename, char silent)
 			for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, ctr); ctr2++)
 			{	//For each note in the track
 				long next = eof_track_fixup_next_note(eof_song, ctr, ctr2);	//Get the next note, if it exists
-				unsigned long maxlength = eof_get_note_max_length(eof_song, ctr, ctr2, 1);	//Get the maximum length of this note
+				long maxlength = eof_get_note_max_length(eof_song, ctr, ctr2, 1);	//Get the maximum length of this note
 				if(next > 0)
 				{	//If there was a next note
 					if(eof_get_note_length(eof_song, ctr, ctr2) > maxlength)

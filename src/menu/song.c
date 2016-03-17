@@ -905,7 +905,7 @@ int eof_menu_song_ini_settings(void)
 
 int eof_is_number(char * buffer)
 {
-	unsigned long i;
+	int i;
 
 	if(!buffer)
 		return 0;	//Invalid parameter
@@ -923,7 +923,7 @@ int eof_is_number(char * buffer)
 int eof_menu_song_properties(void)
 {
 	int old_offset = 0;
-	int i, invalid = 0;
+	unsigned long i, invalid = 0;
 	unsigned long difficulty, undo_made = 0;
 	char newlyrics, neweighth_note_hopo, neweof_fret_hand_pos_1_pg, neweof_fret_hand_pos_1_pb, oldaccurate_ts, newaccurate_ts;
 
@@ -1309,7 +1309,7 @@ int eof_menu_track_selected_13(void)
 	return eof_menu_track_selected_track_number(13, 1);
 }
 
-int eof_menu_track_selected_track_number(int tracknum, int updatetitle)
+int eof_menu_track_selected_track_number(unsigned long tracknum, int updatetitle)
 {
 	unsigned long i;
 	unsigned char maxdiff = 4;	//By default, each track supports 5 difficulties
@@ -1444,10 +1444,9 @@ int eof_menu_catalog_show(void)
 
 int eof_menu_catalog_add(void)
 {
-	long first_pos = -1;
-	long last_pos = -1;
-	unsigned long i;
+	unsigned long first_pos = 0, last_pos = 0, i;
 	long next;
+	char first = 1;
 
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
@@ -1457,10 +1456,11 @@ int eof_menu_catalog_add(void)
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-		{
-			if(first_pos == -1)
-			{
+		{	//If this note is selected
+			if(first)
+			{	//If this was the first selected note found
 				first_pos = eof_get_note_pos(eof_song, eof_selected_track, i);
+				first = 0;
 			}
 			if(eof_get_note_length(eof_song, eof_selected_track, i) < 100)
 			{
@@ -1480,12 +1480,9 @@ int eof_menu_catalog_add(void)
 			}
 		}
 	}
-	if((eof_song->catalog->entry[eof_song->catalog->entries].start_pos != -1) && (eof_song->catalog->entry[eof_song->catalog->entries].end_pos != -1))
-	{
-		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		(void) eof_track_add_section(eof_song, 0, EOF_FRET_CATALOG_SECTION, eof_note_type, first_pos, last_pos, eof_selected_track, NULL);
-		eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
-	}
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	(void) eof_track_add_section(eof_song, 0, EOF_FRET_CATALOG_SECTION, eof_note_type, first_pos, last_pos, eof_selected_track, NULL);
+	eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note
@@ -1587,7 +1584,7 @@ int eof_ini_dialog_add(DIALOG * d)
 
 void eof_ini_delete(unsigned long index)
 {
-	unsigned long i;
+	unsigned short i;
 
 	if(!eof_song || (index >= eof_song->tags->ini_settings))
 		return;	//Invalid parameter
@@ -3264,7 +3261,8 @@ int eof_menu_song_seek_catalog_entry(void)
 
 int eof_find_note_sequence(EOF_SONG *sp, unsigned long target_track, unsigned long target_start, unsigned long target_size, unsigned long input_track, unsigned long input_diff, unsigned long start_pos, char direction, unsigned long *hit_pos)
 {
-	long input_note, next_note, match_count = 0, next_target_note = target_start, match_pos = 0;
+	long input_note, next_note, next_target_note = target_start, match_pos = 0;
+	unsigned long match_count = 0;
 	char start_found = 0, match;
 
 	if(!sp || !hit_pos || (target_track >= sp->tracks) || (input_track >= sp->tracks))

@@ -2518,7 +2518,8 @@ DIALOG eof_menu_edit_select_all_shorter_than_dialog[] =
 
 int eof_menu_edit_select_all_shorter_than(void)
 {
-	unsigned long i, threshold;
+	unsigned long i;
+	long threshold;
 
 	eof_etext[0] = '\0';	//Empty the string
 	eof_color_dialog(eof_menu_edit_select_all_shorter_than_dialog, gui_fg_color, gui_bg_color);
@@ -2529,16 +2530,19 @@ int eof_menu_edit_select_all_shorter_than(void)
 		if(eof_etext[0] != '\0')
 		{	//If the user entered a threshold
 			threshold = atol(eof_etext);
-			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-			{	//For each note in the active track
-				if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_length(eof_song, eof_selected_track, i) < threshold))
-				{	//If the note is in the active difficulty and is shorter than the user specified threshold length
-					eof_selection.track = eof_selected_track;
-					eof_selection.multi[i] = 1;
-				}
-				else
-				{	//Otherwise deselect the note from the selection array
-					eof_selection.multi[i] = 0;
+			if(threshold > 0)
+			{	//If the specified value is valid
+				for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+				{	//For each note in the active track
+					if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_length(eof_song, eof_selected_track, i) < threshold))
+					{	//If the note is in the active difficulty and is shorter than the user specified threshold length
+						eof_selection.track = eof_selected_track;
+						eof_selection.multi[i] = 1;
+					}
+					else
+					{	//Otherwise deselect the note from the selection array
+						eof_selection.multi[i] = 0;
+					}
 				}
 			}
 		}
@@ -2559,7 +2563,8 @@ DIALOG eof_menu_edit_select_all_longer_than_dialog[] =
 
 int eof_menu_edit_select_all_longer_than(void)
 {
-	unsigned long i, threshold;
+	unsigned long i;
+	long threshold;
 
 	eof_etext[0] = '\0';	//Empty the string
 	eof_color_dialog(eof_menu_edit_select_all_longer_than_dialog, gui_fg_color, gui_bg_color);
@@ -2570,16 +2575,19 @@ int eof_menu_edit_select_all_longer_than(void)
 		if(eof_etext[0] != '\0')
 		{	//If the user entered a threshold
 			threshold = atol(eof_etext);
-			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-			{	//For each note in the active track
-				if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_length(eof_song, eof_selected_track, i) > threshold))
-				{	//If the note is in the active difficulty and is longer than the user specified threshold length
-					eof_selection.track = eof_selected_track;
-					eof_selection.multi[i] = 1;
-				}
-				else
-				{	//Otherwise deselect the note from the selection array
-					eof_selection.multi[i] = 0;
+			if(threshold > 0)
+			{	//If the specified value is valid
+				for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+				{	//For each note in the active track
+					if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_length(eof_song, eof_selected_track, i) > threshold))
+					{	//If the note is in the active difficulty and is longer than the user specified threshold length
+						eof_selection.track = eof_selected_track;
+						eof_selection.multi[i] = 1;
+					}
+					else
+					{	//Otherwise deselect the note from the selection array
+						eof_selection.multi[i] = 0;
+					}
 				}
 			}
 		}
@@ -3113,7 +3121,7 @@ int eof_menu_edit_paste_from_catalog(void)
 {
 	unsigned long i, j, bitmask;
 	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
-	long paste_count = 0;
+	unsigned long paste_count = 0;
 	unsigned long note_count = 0;
 	long first = -1;
 	long first_beat = -1;

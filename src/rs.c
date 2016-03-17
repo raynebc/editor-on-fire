@@ -206,7 +206,7 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 			if((tp->note[ctr]->tflags & EOF_NOTE_TFLAG_ARP) && !(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_ARP_FIRST) && (tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT))
 			{	//If this chord is in an arpeggio/handshape phrase but isn't the first one in the phrase, and it is split, it will not export with a chord tag or handshape tag
 				notelist[ctr] = NULL;	//Eliminate this note from the list
-				match = 1;	//Note that this chord matched one of the others
+				match = 1;				//Note that this chord will not be retained in the list
 			}
 			else if(!(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE) || (tp->note[ctr]->tflags & EOF_NOTE_TFLAG_ARP) || (tp->note[ctr]->tflags & EOF_NOTE_TFLAG_GHOST_HS))
 			{	//If this note is not ignored, is a chord within an arpeggio/handshape or is a temporary chord created created due to ghost handshape status
@@ -224,23 +224,19 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 									if(!(target & 2))
 									{	//If the target is Rocksmith 1
 										notelist[ctr] = NULL;	//Eliminate this note from the list
-										match = 1;	//Note that this chord matched one of the others
+										match = 1;	//Note that this chord matched one of the others and won't be retained in the list
 										break;
 									}
 									if(eof_tflag_is_arpeggio(tp->note[ctr]->tflags) == eof_tflag_is_arpeggio(tp->note[ctr2]->tflags))
 									{	//If both notes have the same arpeggio status (both are in an arpeggio and not a handshape), or at least one is otherwise
 										notelist[ctr] = NULL;	//Eliminate this note from the list
-										match = 1;	//Note that this chord matched one of the others
+										match = 1;	//Note that this chord matched one of the others and won't be retained in the list
 										break;
 									}
 								}
 							}
 						}
 					}
-				}
-				if(!match)
-				{	//If this chord didn't match any of the other notes
-					unique_count++;	//Increment unique chord counter
 				}
 			}//If this note is not ignored, is a chord within an arpeggio or is a temporary chord created created due to ghost handshape status
 			else
@@ -251,6 +247,12 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 		else
 		{	//This not is not a chord
 			notelist[ctr] = NULL;	//Eliminate this note from the list since it's not a chord
+			match = 1;	//This note will not be retained in the list
+		}
+
+		if(!match)
+		{	//If this chord didn't match any of the other notes
+			unique_count++;	//Increment unique chord counter
 		}
 	}//For each note in the track
 

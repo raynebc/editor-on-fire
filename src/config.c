@@ -159,8 +159,8 @@ void eof_load_config(char * fn)
 	eof_fb_seek_controls = get_config_int("preferences", "eof_fb_seek_controls", 0);
 	eof_min_note_length = get_config_int("preferences", "eof_min_note_length", 0);
 	eof_chord_density_threshold = get_config_int("preferences", "eof_chord_density_threshold", 10000);
-	if(eof_chord_density_threshold < 0)
-	{	//If eof_chord_density_threshold is invalid
+	if(eof_chord_density_threshold > 99999)
+	{	//If eof_chord_density_threshold is invalid (more than 5 digits)
 		eof_chord_density_threshold = 10000;
 	}
 	eof_new_note_length_1ms = get_config_int("preferences", "eof_new_note_length_1ms", 0);
@@ -178,8 +178,8 @@ void eof_load_config(char * fn)
 	eof_display_seek_pos_in_seconds = get_config_int("preferences", "eof_display_seek_pos_in_seconds", 0);
 	eof_note_tails_clickable = get_config_int("preferences", "eof_note_tails_clickable", 0);
 	eof_render_grid_lines = get_config_int("preferences", "eof_render_grid_lines", 0);
-	if(eof_min_note_distance < 1)
-	{	//If the minimum note distance is invalid
+	if(eof_min_note_distance > 999)
+	{	//If the minimum note distance is invalid (more than 3 digits)
 		eof_min_note_distance = 3;	//Reset it to default
 	}
 	eof_render_bass_drum_in_lane = get_config_int("preferences", "eof_render_bass_drum_in_lane", 0);
