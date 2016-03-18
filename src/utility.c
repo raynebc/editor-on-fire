@@ -96,7 +96,7 @@ int eof_copy_file(char * src, char * dest)
 	PACKFILE * dest_fp = NULL;
 	void *ptr = NULL;	//Used to buffer memory
 	unsigned long src_size = 0;
-	int i;
+	unsigned long i;
 
  	eof_log("eof_copy_file() entered", 1);
 

@@ -77,11 +77,11 @@ void eof_select_beat(unsigned long beat)
 	eof_beats_in_measure = eof_song->beat[beat]->num_beats_in_measure;
 }
 
-void eof_get_snap_ts(EOF_SNAP_DATA * sp, int beat)
+void eof_get_snap_ts(EOF_SNAP_DATA * sp, unsigned long beat)
 {
 //	eof_log("eof_get_snap_ts() entered");
 
-	int tsbeat = 0, i;
+	unsigned long tsbeat = 0, i;
 
 	if(!sp || !eof_song || (beat >= eof_song->beats))
 	{
@@ -134,7 +134,8 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 {
 //	eof_log("eof_snap_logic() entered");
 
-	int i, least = -1;
+	int least = -1;
+	unsigned long i;
 	int interval = 1;
 	char measure_snap = 0;	//Unless a custom per-measure grid snap is defined, all grid snaps are per beat
 	double snaplength, least_amount;
@@ -641,7 +642,7 @@ int eof_is_any_grid_snap_position(unsigned long pos, int *beat, char *gridsnapva
 	return retval;
 }
 
-int eof_find_grid_snap_position(int beat, char gridsnapvalue, unsigned char gridsnapnum, unsigned long *gridpos)
+int eof_find_grid_snap_position(unsigned long beat, char gridsnapvalue, unsigned char gridsnapnum, unsigned long *gridpos)
 {
 	EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
 	char temp_mode = eof_snap_mode;	//Store the grid snap setting in use
@@ -649,7 +650,7 @@ int eof_find_grid_snap_position(int beat, char gridsnapvalue, unsigned char grid
 	if(!eof_song || (beat >= eof_song->beats) || !gridpos)
 		return 0;	//Invalid parameters
 
-	if((beat < 0) || !gridsnapvalue)
+	if(!gridsnapvalue)
 		return 0;	//The parameters do not define a valid grid snap position
 
 	eof_snap_mode = gridsnapvalue;	//Put this grid snap setting into effect
@@ -5002,7 +5003,7 @@ void eof_vocal_editor_logic(void)
 	}//If the right mouse button or Insert key is pressed, a song is loaded and Rex Mundi or Feedback input mode is in use
 }
 
-int eof_get_ts_text(int beat, char * buffer)
+int eof_get_ts_text(unsigned long beat, char * buffer)
 {
 //	eof_log("eof_get_ts_text() entered");
 	int ret = 0;
@@ -5043,7 +5044,7 @@ int eof_get_ts_text(int beat, char * buffer)
 	return ret;
 }
 
-int eof_get_tempo_text(int beat, char * buffer)
+int eof_get_tempo_text(unsigned long beat, char * buffer)
 {
 	double current_bpm;
 
@@ -5358,7 +5359,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	unsigned long start;				//Will store the timestamp of the left visible edge of the piano roll
 	unsigned long stop;					//Will store the timestamp of the right visible edge of the piano roll
 	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
-	short numsections = 0;					//Used to abstract the solo sections
+	unsigned long numsections = 0;		//Used to abstract the solo sections
 	EOF_PHRASE_SECTION *sectionptr = NULL;	//Used to abstract sections
 	unsigned long bitmask, usedlanes;
 	long notelength;

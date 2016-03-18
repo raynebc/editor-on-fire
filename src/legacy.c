@@ -13,9 +13,9 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 {
 	EOF_SONG * sp = NULL;
 	EOF_NOTE * new_note = NULL;
-	int i, j;
+	unsigned long b, i, j;
 	char a;
-	int b, c, t, tl;
+	int c, t, tl;
 	unsigned long lastppqn = 500000;
 	char buffer[1024] = {0};
 

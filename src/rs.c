@@ -201,6 +201,7 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 	//Overwrite each pointer in the duplicate note array that isn't a unique chord with NULL
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the track
+		match = 0;
 		if(eof_note_count_rs_lanes(sp, track, ctr, target) > 1)
 		{	//If this note is a valid chord based on the target
 			if((tp->note[ctr]->tflags & EOF_NOTE_TFLAG_ARP) && !(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_ARP_FIRST) && (tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT))
@@ -210,7 +211,6 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 			}
 			else if(!(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE) || (tp->note[ctr]->tflags & EOF_NOTE_TFLAG_ARP) || (tp->note[ctr]->tflags & EOF_NOTE_TFLAG_GHOST_HS))
 			{	//If this note is not ignored, is a chord within an arpeggio/handshape or is a temporary chord created created due to ghost handshape status
-				match = 0;
 				for(ctr2 = ctr + 1; ctr2 < tp->notes; ctr2++)
 				{	//For each note in the track that follows this note
 					if((eof_note_count_rs_lanes(sp, track, ctr2, target) > 1) && !eof_note_compare_simple(sp, track, ctr, ctr2))
@@ -242,6 +242,7 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 			else
 			{
 				notelist[ctr] = NULL;	//Eliminate this note from the list since it's not a unique chord
+				match = 1;	//This note will not be retained in the list
 			}
 		}//If this note is a valid chord based on the target
 		else

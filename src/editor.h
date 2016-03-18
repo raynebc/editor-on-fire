@@ -71,7 +71,7 @@ int eof_is_any_grid_snap_position(unsigned long pos, int *beat, char *gridsnapva
 	//If beat is not NULL, the beat number the grid snap position is in is returned through it, or -1 if the specified position is invalid
 	//If gridsnapvalue is not NULL, the grid snap setting of the matching position is returned through it, or 0 is if no match is found
 	//If gridsnapnum is not NULL, the grid snap position number of the matching position is returned through it
-int eof_find_grid_snap_position(int beat, char gridsnapvalue, unsigned char gridsnapnum, unsigned long *gridpos);
+int eof_find_grid_snap_position(unsigned long beat, char gridsnapvalue, unsigned char gridsnapnum, unsigned long *gridpos);
 	//Determines the real time position of the specified grid snap
 	//Depends on eof_chart_length being large enough to reflect the last beat time stamp
 	//If it exists, it is returned through gridpos and nonzero is returned
@@ -132,13 +132,13 @@ void eof_editor_logic_common(void);
 	//Performs editor logic common to both the editor and vocal editor windows (some variable initialization, handling beat marker, seek bar and playback controls)
 double eof_pos_distance(double p1, double p2);
 	//Returns the difference between the two floating point numbers as a positive value
-void eof_get_snap_ts(EOF_SNAP_DATA * sp, int beat);
+void eof_get_snap_ts(EOF_SNAP_DATA * sp, unsigned long beat);
 	//Finds the time signature in effect for the specified beat and stores the numerator and denominator into sp
-int eof_get_ts_text(int beat, char * buffer);
+int eof_get_ts_text(unsigned long beat, char * buffer);
 	//Writes a string into the provided buffer that represents the time signature on the specified beat (string will be emptied if the beat has no time signature defined explicitly on it)
 	//Buffer is expected to be able to store up to 8 Unicode characters (16 bytes)
 	//Returns zero on error or if the beat does not contain a time signature change, otherwise nonzero is returned
-int eof_get_tempo_text(int beat, char * buffer);
+int eof_get_tempo_text(unsigned long beat, char * buffer);
 	//Writes a string into the provided buffer that represents the tempo of the specified beat, followed by a trailing space
 	//Returns 0 on error
 

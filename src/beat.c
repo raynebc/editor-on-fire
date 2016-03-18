@@ -13,7 +13,7 @@ int eof_beat_stats_cached = 0;	//Tracks whether the cached statistics for the pr
 
 long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 {
-	long i;
+	unsigned long i;
 
 	eof_log("eof_get_beat() entered", 2);
 
@@ -199,7 +199,7 @@ void eof_change_accurate_ts(EOF_SONG * sp, char function)
 	sp->beat[sp->beats - 1]->ppqn = sp->beat[sp->beats - 2]->ppqn;	//The last beat's tempo is the same as the previous beat's
 }
 
-int eof_beat_is_anchor(EOF_SONG * sp, int cbeat)
+int eof_beat_is_anchor(EOF_SONG * sp, unsigned long cbeat)
 {
 	eof_log("eof_beat_is_anchor() entered", 2);
 
@@ -328,10 +328,10 @@ void eof_realign_beats(EOF_SONG * sp, int cbeat)
 	}
 }
 
-void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
+void eof_recalculate_beats(EOF_SONG * sp, unsigned long cbeat)
 {
-	int i;
-	int last_anchor = eof_find_previous_anchor(sp, cbeat);
+	unsigned long i;
+	unsigned long last_anchor = eof_find_previous_anchor(sp, cbeat);
 	long next_anchor = eof_find_next_anchor(sp, cbeat);
 	int beats = 0;
 	int count = 1;

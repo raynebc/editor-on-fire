@@ -3584,7 +3584,7 @@ int eof_menu_track_copy_popups_track_13(void)
 	return eof_menu_track_copy_popups_track_number(eof_song, 13, eof_selected_track);
 }
 
-int eof_menu_track_copy_popups_track_number(EOF_SONG *sp, int sourcetrack, int desttrack)
+int eof_menu_track_copy_popups_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
 {
 	unsigned long ctr;
 	EOF_PRO_GUITAR_TRACK *stp, *dtp;

@@ -5552,6 +5552,7 @@ int eof_menu_note_toggle_slide_up(void)
 	long u = 0;
 	unsigned long flags, tracknum;
 	char slides_present = 0;	//Will be set to nonzero if any selected notes become slide notes
+	char slide_change;
 	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -5563,12 +5564,14 @@ int eof_menu_note_toggle_slide_up(void)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
+			slide_change = 0;
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 			flags ^= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;			//Toggle the slide up flag
 			flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Clear the slide down flag
 			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
 			{	//If the note now slides up
 				slides_present = 1;	//Track that at least one selected note is an up slide
+				slide_change = 1;	//Track that this note became an upward slide
 			}
 			else
 			{	//If the note doesn't slide, clear the slide end fret status
@@ -5583,8 +5586,8 @@ int eof_menu_note_toggle_slide_up(void)
 				u = 1;
 			}
 			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
-			if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP))
-			{	//If this is not a slide note anymore
+			if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || slide_change)
+			{	//If this is not a slide note anymore, or it it just became an upward slide (ie. if it was a downward slide it may a now invalid end position)
 				eof_song->pro_guitar_track[tracknum]->note[i]->slideend = 0;	//Reset the ending fret number of the slide
 			}
 		}
@@ -5608,6 +5611,7 @@ int eof_menu_note_toggle_slide_down(void)
 	long u = 0;
 	unsigned long flags, tracknum;
 	char slides_present = 0;	//Will be set to nonzero if any selected notes become slide notes
+	char slide_change;
 	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -5619,12 +5623,14 @@ int eof_menu_note_toggle_slide_down(void)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
+			slide_change = 0;
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 			flags ^= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;		//Toggle the slide down flag
 			flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);		//Clear the slide down flag
 			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
 			{	//If the note now slides down
 				slides_present = 1;	//Track that at least one selected note is a down slide
+				slide_change = 1;	//Track that this note became a downward slide
 			}
 			else
 			{	//If the note doesn't slide, clear the slide end fret status
@@ -5639,8 +5645,8 @@ int eof_menu_note_toggle_slide_down(void)
 				u = 1;
 			}
 			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
-			if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
-			{	//If this is not a slide note anymore
+			if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || slide_change)
+			{	//If this is not a slide note anymore, or it it just became a downward slide (ie. if it was an upward slide it may a now invalid end position)
 				eof_song->pro_guitar_track[tracknum]->note[i]->slideend = 0;	//Reset the ending fret number of the slide
 			}
 		}
@@ -8206,8 +8212,8 @@ int eof_pro_guitar_note_slide_end_fret(char undo)
 							}
 						}
 					}
-					if(eof_song->pro_guitar_track[tracknum]->note[i]->slideend && (newend != eof_song->pro_guitar_track[tracknum]->note[i]->slideend))
-					{	//If the slide ending is different than what the note already has
+					if(!eof_song->pro_guitar_track[tracknum]->note[i]->slideend || (newend != eof_song->pro_guitar_track[tracknum]->note[i]->slideend))
+					{	//If the slide end position wasn't already defined, or the specified end position is different than what the note already had
 						if(undo && !undo_made)
 						{	//Make a back up before changing the first note (but only if the calling function specified to create an undo state)
 							eof_prepare_undo(EOF_UNDO_TYPE_NONE);

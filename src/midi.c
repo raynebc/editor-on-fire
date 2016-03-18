@@ -388,7 +388,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	long length, deltalength;				//Used to cap drum notes
 	char prodrums = 0;						//Tracks whether the drum track being written includes Pro drum notation
 	char expertplus = 0;					//Tracks whether an expert+.mid track should be created to hold the Expert+ drum track
-	char expertpluswritten = 0;				//Tracks whether an expert+.mid track has been written
+	unsigned char expertpluswritten = 0;	//Tracks whether an expert+.mid track has been written
 	char eventstrackwritten = 0;			//Tracks whether an events track has been written
 	char beattrackwritten = 0;				//Tracks whether a beat track has been written
 	unsigned long trackcounter = 0;			//Tracks the number of tracks to write to file
@@ -3223,7 +3223,7 @@ EOF_MIDI_TS_LIST *eof_build_ts_list(EOF_SONG *sp)
 	return tslist;
 }
 
-int eof_get_ts(EOF_SONG *sp, unsigned *num, unsigned *den, int beatnum)
+int eof_get_ts(EOF_SONG *sp, unsigned *num, unsigned *den, unsigned long beatnum)
 {
 //	eof_log("eof_get_ts() entered");
 
@@ -3268,7 +3268,7 @@ int eof_get_ts(EOF_SONG *sp, unsigned *num, unsigned *den, int beatnum)
 	return 1;	//Return success
 }
 
-int eof_get_effective_ts(EOF_SONG *sp, unsigned *num, unsigned *den, int beatnum)
+int eof_get_effective_ts(EOF_SONG *sp, unsigned *num, unsigned *den, unsigned long beatnum)
 {
 	unsigned numerator = 4, denominator = 4;
 
@@ -3292,11 +3292,11 @@ int eof_get_effective_ts(EOF_SONG *sp, unsigned *num, unsigned *den, int beatnum
 	return 1;	//Return success
 }
 
-int eof_apply_ts(unsigned num, unsigned den, int beatnum, EOF_SONG *sp, char undo)
+int eof_apply_ts(unsigned num, unsigned den, unsigned long beatnum, EOF_SONG *sp, char undo)
 {
 //	eof_log("eof_apply_ts() entered");
 
-	int flags = 0;
+	unsigned long flags = 0;
 
 	if((sp == NULL) || (beatnum >= sp->beats))
 	{

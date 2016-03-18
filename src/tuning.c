@@ -279,7 +279,7 @@ int eof_lookup_played_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsign
 int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long note, int *scale, int *chord, int *isslash, int *bassnote, unsigned long skipctr, int cache)
 {
 	unsigned long bitmask, stringctr = 0;
-	static char major_scales[12][7];
+	static unsigned char major_scales[12][7];
 	char notes_played[12] = {0}; 	//Will indicate which notes are present in the chord
 	static char scales_created = 0;	//This will be set to one after the major_scales[] array has been created
 	char chord_intervals[30];		//This stores the referred note's interval makeup for the current scale being checked against

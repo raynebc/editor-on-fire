@@ -231,7 +231,7 @@ int         eof_display_second_piano_roll = 0;		//If nonzero, a second piano rol
 unsigned    eof_note_type2 = EOF_MAX_DIFFICULTIES + 1;	//The difficulty to display in the secondary piano roll (EOF_MAX_DIFFICULTIES+1 means it will initialize to the current difficulty when it is enabled)
 unsigned    eof_selected_track2 = 0;	//The track to display in the secondary piano roll (0 means it will initialize to the current track when it is enabled)
 int         eof_vocals_selected = 0;	//Is set to nonzero if the active track is a vocal track
-int         eof_vocals_tab = 0;
+unsigned    eof_vocals_tab = 0;
 int         eof_vocals_offset = 60; // Start at "middle C"
 int         eof_song_loaded = 0;	//The boolean condition that a chart and its audio are successfully loaded
 int         eof_last_note = 0;
@@ -487,7 +487,7 @@ void eof_find_lyric_preview_lines(void)
 	unsigned long i, j;
 	int current_line = -1;
 	int next_line = -1;
-	int dist = -1;
+	unsigned long dist = 0;
 	int beyond = 1;
 	int adj_eof_music_pos=eof_music_pos - eof_av_delay;	//The current seek position of the chart, adjusted for AV delay
 
@@ -535,7 +535,7 @@ void eof_find_lyric_preview_lines(void)
 		}
 		for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
 		{
-			if((eof_song->vocal_track[0]->line[current_line].start_pos < eof_song->vocal_track[0]->line[i].start_pos) && (eof_song->vocal_track[0]->line[i].start_pos - eof_song->vocal_track[0]->line[current_line].start_pos < dist))
+			if((eof_song->vocal_track[0]->line[current_line].start_pos < eof_song->vocal_track[0]->line[i].start_pos) && (!dist || (eof_song->vocal_track[0]->line[i].start_pos - eof_song->vocal_track[0]->line[current_line].start_pos < dist)))
 			{
 				next_line = i;
 				dist = eof_song->vocal_track[0]->line[i].start_pos - eof_song->vocal_track[0]->line[current_line].start_pos;

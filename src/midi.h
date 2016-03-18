@@ -118,19 +118,19 @@ void eof_midi_add_ts_realtime(EOF_MIDI_TS_LIST * changes, double pos, unsigned l
 	//Adds the time signature information to the specified list of time signature changes, providing the absolute real time of the TS change
 EOF_MIDI_TS_LIST *eof_build_ts_list(EOF_SONG *sp);
 	//Parses sp->beat[], returning a list of time signature changes, or NULL on error
-int eof_get_ts(EOF_SONG *sp, unsigned *num, unsigned *den, int beatnum);
+int eof_get_ts(EOF_SONG *sp, unsigned *num, unsigned *den, unsigned long beatnum);
 	//If the specified beat number has a defined TS, return the num and den through the passed pointers if they are not NULL
 	//Returns 1 if a time signature was returned
 	//Returns 0 if the specified beat was not a time signature
 	//Returns -1 on error
 	//If 1 is not returned, the values referenced by numerator and denominator are not altered
-int eof_get_effective_ts(EOF_SONG *sp, unsigned *num, unsigned *den, int beatnum);
+int eof_get_effective_ts(EOF_SONG *sp, unsigned *num, unsigned *den, unsigned long beatnum);
 	//Get the time signature in effect at the specified beat, return the num and den through the passed pointers if they are not NULL
 	//If no time signature is found to be in effect, 4/4 is assumed
 	//Returns 1 on success
 	//Returns -1 on error
 	//If 1 is not returned, the values referenced by numerator and denominator are not altered
-int eof_apply_ts(unsigned num, unsigned den, int beatnum, EOF_SONG *sp, char undo);
+int eof_apply_ts(unsigned num, unsigned den, unsigned long beatnum, EOF_SONG *sp, char undo);
 	//Validates and applies the specified time signature to the specified beat
 	//If undo is nonzero, then an undo state is made before any changes are made
 

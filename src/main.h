@@ -356,7 +356,7 @@ extern unsigned    eof_note_type2;
 extern unsigned    eof_selected_track2;
 extern int         eof_vocals_selected;
 extern int         eof_vocals_offset;
-extern int         eof_vocals_tab;
+extern unsigned    eof_vocals_tab;
 extern int         eof_song_loaded;
 extern char        eof_fof_executable_path[1024];
 extern char        eof_fof_executable_name[1024];

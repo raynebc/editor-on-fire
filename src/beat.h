@@ -13,7 +13,7 @@ unsigned long eof_find_previous_anchor(EOF_SONG * sp, unsigned long cbeat);
 	//Returns the beat number of the last anchor that occurs before the specified beat
 long eof_find_next_anchor(EOF_SONG * sp, unsigned long cbeat);
 	//Returns the beat number of the first anchor that occurs after the specified beat, or -1 if there is no such anchor
-int eof_beat_is_anchor(EOF_SONG * sp, int cbeat);
+int eof_beat_is_anchor(EOF_SONG * sp, unsigned long cbeat);
 	//Returns nonzero if the specified beat number is an anchor based on its flag or a change in tempo from the prior beat, or if the specified beat number is negative
 void eof_calculate_beats(EOF_SONG * sp);
 	//Sets the timestamp and anchor status of each beat existing for the duration of the chart by using the tempo map
@@ -28,7 +28,7 @@ void eof_change_accurate_ts(EOF_SONG * sp, char function);
 	//If function is zero, such beats are calculated with regard to time signature (ie. beats in 4/8 are shorter than 4/4 if they use the same tempo)
 void eof_realign_beats(EOF_SONG * sp, int cbeat);
 	//Recalculates and applies the tempo of the anchors before and after the specified beat, updating beat timestamps, etc.
-void eof_recalculate_beats(EOF_SONG * sp, int cbeat);
+void eof_recalculate_beats(EOF_SONG * sp, unsigned long cbeat);
 	//Recalculates and applies the tempo and timings on both sides of cbeat based on the previous and next anchors, such as when dragging a beat marker to define cbeat as an anchor
 EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp);
 	//Allocates, initializes and stores a new EOF_BEAT_MARKER structure into the beats array.  Returns the newly allocated structure or NULL upon error

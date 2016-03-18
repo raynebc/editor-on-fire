@@ -131,7 +131,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	int track;
 	int difficulty;
 	unsigned long lastchartpos = 0;	//Used to track HOPO notation
-	long b = 0;
+	unsigned long b = 0;
 	double solo_on = 0.0, solo_off = 0.0;
 	char solo_status = 0;	//0 = Off and awaiting a solo on marker, 1 = On and awaiting a solo off marker
 	unsigned long ctr, ctr2, ctr3, tracknum;

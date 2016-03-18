@@ -176,7 +176,7 @@ int eof_menu_track_copy_popups_track_10(void);
 int eof_menu_track_copy_popups_track_11(void);
 int eof_menu_track_copy_popups_track_12(void);
 int eof_menu_track_copy_popups_track_13(void);
-int eof_menu_track_copy_popups_track_number(EOF_SONG *sp, int sourcetrack, int desttrack);
+int eof_menu_track_copy_popups_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack);
 	//Copies the popup messages from the specified source track to the destination track
 
 int eof_menu_thin_notes_track_1(void);

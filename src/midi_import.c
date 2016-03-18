@@ -65,7 +65,7 @@ static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_create_events_list(void)
 
 static void eof_import_destroy_events_list(EOF_IMPORT_MIDI_EVENT_LIST * lp)
 {
-	int i;
+	unsigned long i;
 
 	eof_log("eof_import_destroy_events_list() entered", 1);
 
@@ -316,10 +316,9 @@ EOF_SONG * eof_import_midi(const char * fn)
 	int pticker = 0;
 	int ptotal_events = 0;
 	int percent;
-	unsigned long i, j;
-	long k;			//k is being used with note_count[] with signed logic
-	int rbg = 0;	//Is set once the guitar track is parsed?
-	int tracks = 0;
+	unsigned long i, j, k;
+	int rbg = 0;			//Is set once the guitar track is parsed?
+	unsigned long tracks = 0;
 	int track[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};
 	int track_pos;
 	unsigned long delta;
@@ -355,12 +354,12 @@ EOF_SONG * eof_import_midi(const char * fn)
 	double BPM=120.0;	//Assume a default tempo of 120BPM and TS of 4/4 at 0 deltas
 	unsigned long event_realtime;		//Store the delta time converted to realtime to avoid having to convert multiple times per note
 	long beat;
-	int picked_track;
+	long picked_track;
 	char used_track[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};	//for Rock Band songs, we need to ignore certain tracks
 	unsigned char lane = 0;				//Used to track the lane referenced by a MIDI on/off note
 	char diff = -1;						//Used to track the difficulty referenced by a MIDI on/off note (-1 means difficulty undetermined)
 	unsigned char lane_chart[EOF_MAX_FRETS] = {1, 2, 4, 8, 16, 32};	//Maps each lane to a note bitmask value
-	long note_count[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};
+	unsigned long note_count[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};
 	long first_note;
 	unsigned long hopopos[4] = {0};		//Used for forced HOPO On/Off parsing
 	char hopotype[4] = {0};				//Used for forced HOPO On/Off parsing
@@ -1202,7 +1201,7 @@ set_window_title(debugtext);
 		{	//If this is a valid track to process
 			int last_105 = 0;
 			int last_106 = 0;
-			int overdrive_pos = -1;
+			unsigned long overdrive_pos = 0;
 			char rb_pro_yellow = 0;					//Tracks the status of forced yellow pro drum notation
 			unsigned long rb_pro_yellow_pos = 0;	//Tracks the last start time of a forced yellow pro drum phrase
 			char rb_pro_blue = 0;					//Tracks the status of forced yellow pro drum notation

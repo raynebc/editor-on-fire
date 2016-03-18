@@ -26,9 +26,8 @@ SAMPLE * create_silence_sample(unsigned long ms)
 	int bits;
 	int stereo;
 	int freq;
-	unsigned long samples;
-	int channels;
-	int i;
+	unsigned long samples, i;
+	unsigned channels;
 
 	eof_log("create_silence_sample() entered", 1);
 

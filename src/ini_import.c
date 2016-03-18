@@ -38,8 +38,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 	char * line_token = NULL;
 	char * token;
 	char * equals = NULL;
-	int i;
-	int j;
+	unsigned int i, j;
 	unsigned long stringlen, tracknum;
 	char setting_stored;
 	char *value_index;

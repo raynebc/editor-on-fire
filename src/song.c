@@ -429,7 +429,7 @@ void eof_legacy_track_sort_notes(EOF_LEGACY_TRACK * tp)
 
 long eof_fixup_previous_legacy_note(EOF_LEGACY_TRACK * tp, unsigned long note)
 {
-	long i;
+	unsigned long i;
 
 	if(!tp || (note >= tp->notes))
 		return -1;	//Invalid parameters
@@ -449,7 +449,7 @@ long eof_fixup_previous_legacy_note(EOF_LEGACY_TRACK * tp, unsigned long note)
 
 long eof_fixup_next_legacy_note(EOF_LEGACY_TRACK * tp, unsigned long note)
 {
-	long i;
+	unsigned long i;
 
 	if(!tp || (note >= tp->notes))
 		return -1;	//Invalid parameters
@@ -576,7 +576,7 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 				}
 				else
 				{	//Otherwise ensure on doesn't overlap the other improperly
-					unsigned long maxlength = eof_get_note_max_length(sp, track, i - 1, 1);	//Determine the maximum length for this note, taking its crazy status into account
+					long maxlength = eof_get_note_max_length(sp, track, i - 1, 1);	//Determine the maximum length for this note, taking its crazy status into account
 					if(maxlength && (eof_get_note_length(sp, track, i - 1) > maxlength))
 					{	//If the note is longer than its maximum length
 						eof_set_note_length(sp, track, i - 1, maxlength);	//Truncate it to its valid maximum length
@@ -4523,7 +4523,7 @@ void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long n
 
 long eof_fixup_previous_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note)
 {
-	long i;
+	unsigned long i;
 
 	if(!tp || (note >= tp->notes))
 		return -1;	//Invalid parameters
@@ -4543,7 +4543,7 @@ long eof_fixup_previous_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long
 
 long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note)
 {
-	long i;
+	unsigned long i;
 
 	if(!tp || (note >= tp->notes))
 		return -1;	//Invalid parameters
@@ -4634,7 +4634,8 @@ void eof_pro_guitar_track_fixup_hand_positions(EOF_SONG *sp, unsigned long track
 
 void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 {
-	unsigned long i, ctr, ctr2, ctr3, bitmask, tracknum, maxlength, flags;
+	unsigned long i, ctr, ctr2, ctr3, bitmask, tracknum, flags;
+	long maxlength;
 	long nextnote;
 	unsigned char fretvalue;
 	long next;
@@ -7417,7 +7418,7 @@ void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsign
 	unsigned long ctr, ctr2, ctr3;
 	EOF_PRO_GUITAR_TRACK *tp = NULL;
 	EOF_PHRASE_SECTION *ptr;
-	int notearrayctr = 1;	//If the target track is a pro guitar track, the note alteration logic will be run for both the normal AND tech note arrays
+	unsigned notearrayctr = 1;		//If the target track is a pro guitar track, the note alteration logic will be run for both the normal AND tech note arrays
 	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
 
 	if(!sp || !undo_made || (track >= sp->tracks) || (startpos >= endpos))
