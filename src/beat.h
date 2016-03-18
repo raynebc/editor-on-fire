@@ -14,7 +14,7 @@ unsigned long eof_find_previous_anchor(EOF_SONG * sp, unsigned long cbeat);
 long eof_find_next_anchor(EOF_SONG * sp, unsigned long cbeat);
 	//Returns the beat number of the first anchor that occurs after the specified beat, or -1 if there is no such anchor
 int eof_beat_is_anchor(EOF_SONG * sp, unsigned long cbeat);
-	//Returns nonzero if the specified beat number is an anchor based on its flag or a change in tempo from the prior beat, or if the specified beat number is negative
+	//Returns nonzero if the specified beat number is an anchor based on its flag or a change in tempo from the prior beat
 void eof_calculate_beats(EOF_SONG * sp);
 	//Sets the timestamp and anchor status of each beat existing for the duration of the chart by using the tempo map
 	//Creates beats if there aren't enough to extend to one beat past the end of the chart as defined by eof_chart_length

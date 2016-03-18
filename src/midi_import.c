@@ -477,7 +477,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	for(i = 0; i < tracks; i++)
 	{	//For each imported track
 //#ifdef EOF_DEBUG_MIDI_IMPORT
-		(void) snprintf(debugstring, sizeof(debugstring) - 1, "\t\tParsing track #%lu of %d",i,tracks);
+		(void) snprintf(debugstring, sizeof(debugstring) - 1, "\t\tParsing track #%lu of %lu", i, tracks);
 		eof_log(debugstring, 1);
 //#endif
 		last_event = 0;	//Running status resets at beginning of each track

@@ -25,11 +25,11 @@ long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 	{
 		return -1;
 	}
-	for(i = 0; i < sp->beats; i++)
-	{
+	for(i = 1; i < sp->beats; i++)
+	{	//For each beat after the first
 		if(sp->beat[i]->pos > pos)
-		{
-			return i - 1;
+		{	//If this beat is after the specified position
+			return i - 1;	//If is within the previous beat
 		}
 	}
 	if(pos >= sp->beat[sp->beats - 1]->pos)
@@ -210,7 +210,7 @@ int eof_beat_is_anchor(EOF_SONG * sp, unsigned long cbeat)
 	{
 		return 0;
 	}
-	if(cbeat <= 0)
+	if(cbeat == 0)
 	{
 		return 1;
 	}

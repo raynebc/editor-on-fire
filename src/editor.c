@@ -87,11 +87,11 @@ void eof_get_snap_ts(EOF_SNAP_DATA * sp, unsigned long beat)
 	{
 		return;
 	}
-	for(i = beat; i >= 0; i--)
-	{
-		if(eof_song->beat[i]->flags & (EOF_BEAT_FLAG_START_3_4 | EOF_BEAT_FLAG_START_4_4 | EOF_BEAT_FLAG_START_5_4 | EOF_BEAT_FLAG_START_6_4 | EOF_BEAT_FLAG_CUSTOM_TS))
+	for(i = beat + 1; i > 0; i--)
+	{	//For each beat at and before the specified beat, in reverse order
+		if(eof_song->beat[i - 1]->flags & (EOF_BEAT_FLAG_START_3_4 | EOF_BEAT_FLAG_START_4_4 | EOF_BEAT_FLAG_START_5_4 | EOF_BEAT_FLAG_START_6_4 | EOF_BEAT_FLAG_CUSTOM_TS))
 		{
-			tsbeat = i;
+			tsbeat = i - 1;
 			break;
 		}
 	}
@@ -245,36 +245,36 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 
 			/* find the measure we are currently in */
 			sp->measure_beat = 0;
-			for(i = sp->beat; i >= 0; i--)
-			{
-				if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_3_4)
+			for(i = sp->beat + 1; i > 0; i--)
+			{	//For each beat at and before the specified beat, in reverse order
+				if(eof_song->beat[i - 1]->flags & EOF_BEAT_FLAG_START_3_4)
 				{
 					ts = 3;
-					sp->measure_beat = i;
+					sp->measure_beat = i - 1;
 					break;
 				}
-				else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_4_4)
+				else if(eof_song->beat[i - 1]->flags & EOF_BEAT_FLAG_START_4_4)
 				{
 					ts = 4;
-					sp->measure_beat = i;
+					sp->measure_beat = i - 1;
 					break;
 				}
-				else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_5_4)
+				else if(eof_song->beat[i - 1]->flags & EOF_BEAT_FLAG_START_5_4)
 				{
 					ts = 5;
-					sp->measure_beat = i;
+					sp->measure_beat = i - 1;
 					break;
 				}
-				else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_6_4)
+				else if(eof_song->beat[i - 1]->flags & EOF_BEAT_FLAG_START_6_4)
 				{
 					ts = 6;
-					sp->measure_beat = i;
+					sp->measure_beat = i - 1;
 					break;
 				}
-				else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
+				else if(eof_song->beat[i - 1]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
 				{
-					ts = ((eof_song->beat[i]->flags & 0xFF000000)>>24) + 1;
-					sp->measure_beat = i;
+					ts = ((eof_song->beat[i - 1]->flags & 0xFF000000)>>24) + 1;
+					sp->measure_beat = i - 1;
 					break;
 				}
 			}

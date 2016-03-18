@@ -1124,14 +1124,14 @@ int eof_menu_file_preferences(void)
 	{
 		eof_etext[0] = '\0';	//Otherwise empty the string
 	}
-	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%d", eof_min_note_distance);	//Populate the min. note distance field's string
+	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%u", eof_min_note_distance);	//Populate the min. note distance field's string
 	eof_preferences_dialog[22].flags = eof_render_bass_drum_in_lane ? D_SELECTED : 0;	//3D render bass drum in a lane
 	eof_preferences_dialog[25].d1 = eof_input_mode;										//Input method
 	original_input_mode = eof_input_mode;												//Store this value
 	eof_preferences_dialog[27].d1 = eof_color_set;										//Color set
 	if(eof_chord_density_threshold)
 	{	//If the user has defined a chord density threshold
-		(void) snprintf(eof_etext3, sizeof(eof_etext3) - 1, "%d", eof_chord_density_threshold);	//Populate the field's string with it
+		(void) snprintf(eof_etext3, sizeof(eof_etext3) - 1, "%u", eof_chord_density_threshold);	//Populate the field's string with it
 	}
 	else
 	{
