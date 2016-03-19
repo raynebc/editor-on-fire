@@ -681,6 +681,11 @@ EOF_SONG * eof_import_midi(const char * fn)
 									(void) ustrcpy(text, "PART DRUMS");	//Correct the name
 								}
 
+								if(!ustricmp(text, "T1 GEMS"))
+								{	//If this MIDI track is using Guitar Hero 1's guitar track name
+									(void) ustrcpy(text, "PART GUITAR");	//Correct the name
+								}
+
 								if(!ustricmp(text, "BEAT"))
 								{	//If this is the BEAT track
 									beat_track = track[i];	//Note the track number
@@ -1790,9 +1795,9 @@ set_window_title(debugtext);
 							k = 0;
 							if(note_count[picked_track] > 0)
 							{	//If at least one note has been added already
-								for(k = note_count[picked_track] - 1; k >= first_note; k--)
+								for(k = note_count[picked_track]; k > first_note; k--)
 								{	//Traverse the note list in reverse order to identify the appropriate note to modify
-									if((eof_get_note_pos(sp, picked_track, k) == event_realtime) && (eof_get_note_type(sp, picked_track, k) == diff))
+									if((eof_get_note_pos(sp, picked_track, k - 1) == event_realtime) && (eof_get_note_type(sp, picked_track, k - 1) == diff))
 									{	//If the note is at the same timestamp and difficulty
 										match = 1;
 										break;	//End the search, as a match was found
@@ -1820,7 +1825,7 @@ set_window_title(debugtext);
 							}
 							else
 							{	//Otherwise just modify the existing note by adding a gem
-								notenum = k;
+								notenum = k - 1;
 #ifdef EOF_DEBUG
 								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%d, Pos=%lu) from mask %d to %d", notenum, eof_get_note_type(sp, picked_track, notenum), event_realtime, eof_get_note_note(sp, picked_track, notenum), eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
 								eof_log(eof_log_string, 1);
@@ -1928,17 +1933,17 @@ set_window_title(debugtext);
 								}
 								if(hopodiff >= 0)
 								{
-									for(k = note_count[picked_track] - 1; k >= first_note; k--)
+									for(k = note_count[picked_track]; k > first_note; k--)
 									{	//Check (in reverse) for each note that has been imported
-										if((eof_get_note_type(sp, picked_track, k) == hopodiff) && (eof_get_note_pos(sp, picked_track, k) >= hopopos[hopodiff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+										if((eof_get_note_type(sp, picked_track, k - 1) == hopodiff) && (eof_get_note_pos(sp, picked_track, k - 1) >= hopopos[hopodiff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 										{	//If the note is in the same difficulty as the HOPO phrase, and its timestamp falls between the HOPO On and HOPO Off marker
 											if(hopotype[hopodiff] == 0)
 											{	//Forced HOPO on
-												eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_NOTE_FLAG_F_HOPO);
+												eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_NOTE_FLAG_F_HOPO);
 											}
 											else
 											{	//Forced HOPO off
-												eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_NOTE_FLAG_NO_HOPO);
+												eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_NOTE_FLAG_NO_HOPO);
 											}
 										}
 									}
@@ -1950,33 +1955,33 @@ set_window_title(debugtext);
 							{	//If the track was already found to have these markers
 								if((eof_import_events[i]->event[j]->d1 == RB3_DRUM_YELLOW_FORCE) && rb_pro_yellow)
 								{	//If this event ends a pro yellow drum phrase
-									for(k = note_count[picked_track] - 1; k >= first_note; k--)
+									for(k = note_count[picked_track]; k > first_note; k--)
 									{	//Check for each note that has been imported for this track
-										if((sp->legacy_track[tracknum]->note[k]->pos >= rb_pro_yellow_pos) && (sp->legacy_track[tracknum]->note[k]->pos <= event_realtime))
+										if((sp->legacy_track[tracknum]->note[k - 1]->pos >= rb_pro_yellow_pos) && (sp->legacy_track[tracknum]->note[k - 1]->pos <= event_realtime))
 										{	//If the note is positioned within this pro yellow drum phrase
-											sp->legacy_track[tracknum]->note[k]->flags &= (~EOF_DRUM_NOTE_FLAG_Y_CYMBAL);	//Clear the yellow cymbal marker on the note
+											sp->legacy_track[tracknum]->note[k - 1]->flags &= (~EOF_DRUM_NOTE_FLAG_Y_CYMBAL);	//Clear the yellow cymbal marker on the note
 										}
 									}
 									rb_pro_yellow = 0;
 								}
 								else if((eof_import_events[i]->event[j]->d1 == RB3_DRUM_BLUE_FORCE) && rb_pro_blue)
 								{	//If this event ends a pro blue drum phrase
-									for(k = note_count[picked_track] - 1; k >= first_note; k--)
+									for(k = note_count[picked_track]; k > first_note; k--)
 									{	//Check for each note that has been imported for this track
-										if((sp->legacy_track[tracknum]->note[k]->pos >= rb_pro_blue_pos) && (sp->legacy_track[tracknum]->note[k]->pos <= event_realtime))
+										if((sp->legacy_track[tracknum]->note[k - 1]->pos >= rb_pro_blue_pos) && (sp->legacy_track[tracknum]->note[k - 1]->pos <= event_realtime))
 										{	//If the note is positioned within this pro blue drum phrase
-											sp->legacy_track[tracknum]->note[k]->flags &= (~EOF_DRUM_NOTE_FLAG_B_CYMBAL);	//Clear the blue cymbal marker on the note
+											sp->legacy_track[tracknum]->note[k - 1]->flags &= (~EOF_DRUM_NOTE_FLAG_B_CYMBAL);	//Clear the blue cymbal marker on the note
 										}
 									}
 									rb_pro_blue = 0;
 								}
 								else if((eof_import_events[i]->event[j]->d1 == RB3_DRUM_GREEN_FORCE) && rb_pro_green)
 								{	//If this event ends a pro green drum phrase
-									for(k = note_count[picked_track] - 1; k >= first_note; k--)
+									for(k = note_count[picked_track]; k > first_note; k--)
 									{	//Check for each note that has been imported for this track, in reverse order
-										if((sp->legacy_track[tracknum]->note[k]->pos >= rb_pro_green_pos) && (sp->legacy_track[tracknum]->note[k]->pos <= event_realtime))
+										if((sp->legacy_track[tracknum]->note[k - 1]->pos >= rb_pro_green_pos) && (sp->legacy_track[tracknum]->note[k - 1]->pos <= event_realtime))
 										{	//If the note is positioned within this pro green drum phrase
-											sp->legacy_track[tracknum]->note[k]->flags &= (~EOF_DRUM_NOTE_FLAG_G_CYMBAL);	//Clear the green cymbal marker on the note
+											sp->legacy_track[tracknum]->note[k - 1]->flags &= (~EOF_DRUM_NOTE_FLAG_G_CYMBAL);	//Clear the green cymbal marker on the note
 										}
 									}
 									rb_pro_green = 0;
@@ -2011,19 +2016,19 @@ set_window_title(debugtext);
 
 						if((note_count[picked_track] > 0) && (diff != -1))
 						{	//If there's at least one note on found for this track, and this note off event has a defined difficulty
-							for(k = note_count[picked_track] - 1; k >= first_note; k--)
+							for(k = note_count[picked_track]; k > first_note; k--)
 							{	//Check for each note that has been imported, in reverse order
-								if((eof_get_note_type(sp, picked_track, k) == diff) && (eof_get_note_note(sp, picked_track, k) & lane_chart[lane]))
+								if((eof_get_note_type(sp, picked_track, k - 1) == diff) && (eof_get_note_note(sp, picked_track, k - 1) & lane_chart[lane]))
 								{	//If the note is in the same difficulty as this note off event and it contains one of the same gems
-//									allegro_message("break %d, %d, %d", k, sp->legacy_track[picked_track]->note[k]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);	//Debug
+//									allegro_message("break %d, %d, %d", k - 1, sp->legacy_track[picked_track]->note[k - 1]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);	//Debug
 #ifdef EOF_DEBUG
-									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%ld (Diff=%d, Pos=%lu, Mask=%d) from length %ld to %lu", k, eof_get_note_type(sp, picked_track, k), eof_get_note_pos(sp, picked_track, k), eof_get_note_note(sp, picked_track, k), eof_get_note_length(sp, picked_track, k), event_realtime - eof_get_note_pos(sp, picked_track, k));
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%ld (Diff=%d, Pos=%lu, Mask=%d) from length %ld to %lu", k, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_length(sp, picked_track, k - 1), event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
 									eof_log(eof_log_string, 1);
 #endif
-									eof_set_note_length(sp, picked_track, k, event_realtime - eof_get_note_pos(sp, picked_track, k));
-									if(eof_get_note_length(sp, picked_track, k ) <= 0)
+									eof_set_note_length(sp, picked_track, k - 1, event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
+									if(eof_get_note_length(sp, picked_track, k - 1) <= 0)
 									{	//If the note somehow received a zero or negative length
-										eof_set_note_length(sp, picked_track, k, 1);
+										eof_set_note_length(sp, picked_track, k - 1, 1);
 									}
 									break;
 								}
@@ -2053,15 +2058,15 @@ set_window_title(debugtext);
 											}
 											else if(eof_import_events[i]->event[j]->dp[6] == 0)
 											{	//End of open strum phrase
-												for(k = note_count[picked_track] - 1; k >= first_note; k--)
+												for(k = note_count[picked_track]; k > first_note; k--)
 												{	//Check for each note that has been imported
-													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= openstrumpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= openstrumpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 													{	//If the note is in the same difficulty as the open strum phrase, and its timestamp falls between the phrase on and phrase off marker
 #ifdef EOF_DEBUG
-														(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%ld (Diff=%d, Pos=%lu, Mask=%d, Length=%ld) to have a note mask of 33", k, eof_get_note_type(sp, picked_track, k), eof_get_note_pos(sp, picked_track, k), eof_get_note_note(sp, picked_track, k), eof_get_note_length(sp, picked_track, k));
+														(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%ld (Diff=%d, Pos=%lu, Mask=%d, Length=%ld) to have a note mask of 33", k - 1, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_length(sp, picked_track, k - 1));
 														eof_log(eof_log_string, 1);
 #endif
-														eof_set_note_note(sp, picked_track, k, 33);	//Change this note to a lane 1+6 chord (the cleanup logic should later correct this to just a lane 6 gem, EOF's in-editor notation for open strum bass).  This modification is necessary so that the note off event representing the end of the lane 1 gem for an open bass note can be processed properly.
+														eof_set_note_note(sp, picked_track, k - 1, 33);	//Change this note to a lane 1+6 chord (the cleanup logic should later correct this to just a lane 6 gem, EOF's in-editor notation for open strum bass).  This modification is necessary so that the note off event representing the end of the lane 1 gem for an open bass note can be processed properly.
 														sp->track[picked_track]->flags = EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
 														tracknum = sp->track[picked_track]->tracknum;
 														sp->legacy_track[tracknum]->numlanes = 6;	//Set this track to have 6 lanes instead of 5
@@ -2102,11 +2107,11 @@ set_window_title(debugtext);
 												}
 												else if(eof_import_events[i]->event[j]->dp[6] == 0)
 												{	//End of phrase
-													for(k = note_count[picked_track] - 1; k >= first_note; k--)
+													for(k = note_count[picked_track]; k > first_note; k--)
 													{	//Check for each note that has been imported
-														if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= openhihatpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+														if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= openhihatpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 														{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
-															eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN);	//Set the open hi hat flag
+															eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN);	//Set the open hi hat flag
 														}
 													}
 												}
@@ -2125,11 +2130,11 @@ set_window_title(debugtext);
 												}
 												else if(eof_import_events[i]->event[j]->dp[6] == 0)
 												{	//End of phrase
-													for(k = note_count[picked_track] - 1; k >= first_note; k--)
+													for(k = note_count[picked_track]; k > first_note; k--)
 													{	//Check for each note that has been imported
-														if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= pedalhihatpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+														if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= pedalhihatpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 														{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
-															eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL);	//Set the pedal controlled hi hat flag
+															eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL);	//Set the pedal controlled hi hat flag
 														}
 													}
 												}
@@ -2148,11 +2153,11 @@ set_window_title(debugtext);
 												}
 												else if(eof_import_events[i]->event[j]->dp[6] == 0)
 												{	//End of phrase
-													for(k = note_count[picked_track] - 1; k >= first_note; k--)
+													for(k = note_count[picked_track]; k > first_note; k--)
 													{	//Check for each note that has been imported
-														if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= rimshotpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+														if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= rimshotpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 														{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
-															eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_DRUM_NOTE_FLAG_R_RIMSHOT);	//Set the rim shot flag
+															eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_DRUM_NOTE_FLAG_R_RIMSHOT);	//Set the rim shot flag
 														}
 													}
 												}
@@ -2171,11 +2176,11 @@ set_window_title(debugtext);
 												}
 												else if(eof_import_events[i]->event[j]->dp[6] == 0)
 												{	//End of phrase
-													for(k = note_count[picked_track] - 1; k >= first_note; k--)
+													for(k = note_count[picked_track]; k > first_note; k--)
 													{	//Check for each note that has been imported
-														if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= openhihatpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+														if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= openhihatpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 														{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
-															eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_DRUM_NOTE_FLAG_Y_SIZZLE);	//Set the sizzle hi hat flag
+															eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_DRUM_NOTE_FLAG_Y_SIZZLE);	//Set the sizzle hi hat flag
 														}
 													}
 												}
@@ -2194,11 +2199,11 @@ set_window_title(debugtext);
 												}
 												else if(eof_import_events[i]->event[j]->dp[6] == 0)
 												{	//End of phrase
-													for(k = note_count[picked_track] - 1; k >= first_note; k--)
+													for(k = note_count[picked_track]; k > first_note; k--)
 													{	//Check for each note that has been imported
-														if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= ycombopos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+														if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= ycombopos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 														{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
-															eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_DRUM_NOTE_FLAG_Y_COMBO);	//Set the yellow tom/cymbal combo flag
+															eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_DRUM_NOTE_FLAG_Y_COMBO);	//Set the yellow tom/cymbal combo flag
 														}
 													}
 												}
@@ -2217,11 +2222,11 @@ set_window_title(debugtext);
 												}
 												else if(eof_import_events[i]->event[j]->dp[6] == 0)
 												{	//End of phrase
-													for(k = note_count[picked_track] - 1; k >= first_note; k--)
+													for(k = note_count[picked_track]; k > first_note; k--)
 													{	//Check for each note that has been imported
-														if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= bcombopos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+														if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= bcombopos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 														{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
-															eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_DRUM_NOTE_FLAG_B_COMBO);	//Set the blue tom/cymbal combo flag
+															eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_DRUM_NOTE_FLAG_B_COMBO);	//Set the blue tom/cymbal combo flag
 														}
 													}
 												}
@@ -2240,11 +2245,11 @@ set_window_title(debugtext);
 												}
 												else if(eof_import_events[i]->event[j]->dp[6] == 0)
 												{	//End of phrase
-													for(k = note_count[picked_track] - 1; k >= first_note; k--)
+													for(k = note_count[picked_track]; k > first_note; k--)
 													{	//Check for each note that has been imported
-														if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= gcombopos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+														if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= gcombopos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 														{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
-															eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_DRUM_NOTE_FLAG_G_COMBO);	//Set the green tom/cymbal combo flag
+															eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_DRUM_NOTE_FLAG_G_COMBO);	//Set the green tom/cymbal combo flag
 														}
 													}
 												}
@@ -2512,9 +2517,9 @@ set_window_title(debugtext);
 							k = 0;
 							if(note_count[picked_track] > 0)
 							{	//If at least one note has been added already
-								for(k = note_count[picked_track] - 1; k >= first_note; k--)
+								for(k = note_count[picked_track]; k > first_note; k--)
 								{	//Traverse the note list in reverse to find the appropriate note to modify
-									if((eof_get_note_pos(sp, picked_track, k) == event_realtime) && (eof_get_note_type(sp, picked_track, k) == diff))
+									if((eof_get_note_pos(sp, picked_track, k - 1) == event_realtime) && (eof_get_note_type(sp, picked_track, k - 1) == diff))
 									{
 										match = 1;
 										break;	//End the search, as a match was found
@@ -2546,7 +2551,7 @@ set_window_title(debugtext);
 							}
 							else
 							{	//Otherwise just modify the existing note by adding a gem
-								notenum = k;
+								notenum = k - 1;
 #ifdef EOF_DEBUG
 								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%d, Pos=%lu) from mask %d to %d", notenum, eof_get_note_type(sp, picked_track, notenum), event_realtime, eof_get_note_note(sp, picked_track, notenum), eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
 								eof_log(eof_log_string, 1);
@@ -2633,11 +2638,11 @@ set_window_title(debugtext);
 						}
 						if(hopodiff >= 0)
 						{
-							for(k = note_count[picked_track] - 1; k >= first_note; k--)
+							for(k = note_count[picked_track]; k > first_note; k--)
 							{	//Check (in reverse) for each note that has been imported
-								if((eof_get_note_type(sp, picked_track, k) == hopodiff) && (eof_get_note_pos(sp, picked_track, k) >= hopopos[hopodiff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+								if((eof_get_note_type(sp, picked_track, k - 1) == hopodiff) && (eof_get_note_pos(sp, picked_track, k - 1) >= hopopos[hopodiff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 								{	//If the note is in the same difficulty as the HOPO phrase, and its timestamp falls within the Ho/Po marker
-									eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_HO);	//RB3 marks forced hammer ons the same as forced pull offs
+									eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_HO);	//RB3 marks forced hammer ons the same as forced pull offs
 								}
 							}
 						}/* detect forced HOPO */
@@ -2683,11 +2688,11 @@ set_window_title(debugtext);
 									slideflag |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;
 								}
 							}
-							for(k = note_count[picked_track] - 1; k >= first_note; k--)
+							for(k = note_count[picked_track]; k > first_note; k--)
 							{	//Check for each note that has been imported
-								if((eof_get_note_type(sp, picked_track, k) == slidediff) && (eof_get_note_pos(sp, picked_track, k) >= slideptr[slidediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+								if((eof_get_note_type(sp, picked_track, k - 1) == slidediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= slideptr[slidediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 								{	//If the note is in the same difficulty as the slide marker, and its timestamp falls between the start and stop of the marker
-									eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | slideflag);	//Set the appropriate slide flag for the note
+									eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | slideflag);	//Set the appropriate slide flag for the note
 								}
 							}
 						}
@@ -2742,22 +2747,24 @@ set_window_title(debugtext);
 						}
 						if(strumdiff >= 0)
 						{	//If a strum marker was found
-							for(k = note_count[picked_track] - 1; k >= first_note; k--)
+							for(k = note_count[picked_track]; k > first_note; k--)
 							{	//Check for each note that has been imported
-								if((eof_get_note_type(sp, picked_track, k) == strumdiff) && (eof_get_note_pos(sp, picked_track, k) >= strumpos[strumdiff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+								if((eof_get_note_type(sp, picked_track, k - 1) == strumdiff) && (eof_get_note_pos(sp, picked_track, k - 1) >= strumpos[strumdiff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 								{	//If the note is in the same difficulty as the strum direction marker, and its timestamp falls between the start and stop of the marker
+									unsigned long newflags = eof_get_note_flags(sp, picked_track, k - 1);
 									if(strumtype[strumdiff] == 0)
 									{	//This was an up strum marker
-										eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM);
+										newflags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;
 									}
 									else if(strumtype[strumdiff] == 1)
 									{	//This was a mid strum marker
-										eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM);
+										newflags |= EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM;
 									}
 									else
 									{	//This was a down strum marker
-										eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM);
+										newflags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;
 									}
+									eof_set_note_flags(sp, picked_track, k - 1, newflags);
 								}
 							}
 						}
@@ -2789,19 +2796,19 @@ set_window_title(debugtext);
 
 						if((note_count[picked_track] > 0) && (diff != -1))
 						{	//If there's at least one note on found for this track, and this note off event has a defined difficulty
-							for(k = note_count[picked_track] - 1; k >= first_note; k--)
+							for(k = note_count[picked_track]; k > first_note; k--)
 							{	//Check for each note that has been imported, in reverse order
-								if((eof_get_note_type(sp, picked_track, k) == diff) && (eof_get_note_note(sp, picked_track, k) & lane_chart[lane]))
+								if((eof_get_note_type(sp, picked_track, k - 1) == diff) && (eof_get_note_note(sp, picked_track, k - 1) & lane_chart[lane]))
 								{	//If the note is in the same difficulty as this note off event and it contains one of the same gems
-//									allegro_message("break %d, %d, %d", k, sp->legacy_track[picked_track]->note[k]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);	//Debug
+//									allegro_message("break %d, %d, %d", k - 1, sp->legacy_track[picked_track]->note[k - 1]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);	//Debug
 #ifdef EOF_DEBUG
-									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%ld (Diff=%d, Pos=%lu, Mask=%d) from length %ld to %lu", k, eof_get_note_type(sp, picked_track, k), eof_get_note_pos(sp, picked_track, k), eof_get_note_note(sp, picked_track, k), eof_get_note_length(sp, picked_track, k), event_realtime - eof_get_note_pos(sp, picked_track, k));
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%ld (Diff=%d, Pos=%lu, Mask=%d) from length %ld to %lu", k - 1, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_length(sp, picked_track, k - 1), event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
 									eof_log(eof_log_string, 1);
 #endif
-									eof_set_note_length(sp, picked_track, k, event_realtime - eof_get_note_pos(sp, picked_track, k));
-									if(eof_get_note_length(sp, picked_track, k ) <= 0)
+									eof_set_note_length(sp, picked_track, k - 1, event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
+									if(eof_get_note_length(sp, picked_track, k - 1) <= 0)
 									{	//If the note somehow received a zero or negative length
-										eof_set_note_length(sp, picked_track, k, 1);
+										eof_set_note_length(sp, picked_track, k - 1, 1);
 									}
 									break;
 								}
@@ -2873,11 +2880,11 @@ set_window_title(debugtext);
 											}
 											else if(eof_import_events[i]->event[j]->dp[6] == 0)
 											{	//End of pro guitar slide up phrase
-												for(k = note_count[picked_track] - 1; k >= first_note; k--)
+												for(k = note_count[picked_track]; k > first_note; k--)
 												{	//Check for each note that has been imported
-													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= slideuppos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= slideuppos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 													{	//If the note is in the same difficulty as the pro guitar slide up phrase, and its timestamp falls between the phrase on and phrase off marker
-														eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);	//Set the slide up flag
+														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);	//Set the slide up flag
 													}
 												}
 											}
@@ -2893,11 +2900,11 @@ set_window_title(debugtext);
 											}
 											else if(eof_import_events[i]->event[j]->dp[6] == 0)
 											{	//End of pro guitar slide down phrase
-												for(k = note_count[picked_track] - 1; k >= first_note; k--)
+												for(k = note_count[picked_track]; k > first_note; k--)
 												{	//Check for each note that has been imported
-													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= slidedownpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= slidedownpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 													{	//If the note is in the same difficulty as the pro guitar slide down phrase, and its timestamp falls between the phrase on and phrase off marker
-														eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Set the slide up flag
+														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Set the slide up flag
 													}
 												}
 											}
@@ -2913,11 +2920,11 @@ set_window_title(debugtext);
 											}
 											else if(eof_import_events[i]->event[j]->dp[6] == 0)
 											{	//End of pro guitar palm mute phrase
-												for(k = note_count[picked_track] - 1; k >= first_note; k--)
+												for(k = note_count[picked_track]; k > first_note; k--)
 												{	//Check for each note that has been imported
-													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= palmmutepos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= palmmutepos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 													{	//If the note is in the same difficulty as the pro guitar palm mute phrase, and its timestamp falls between the phrase on and phrase off marker
-														eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE);	//Set the palm mute flag
+														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE);	//Set the palm mute flag
 													}
 												}
 											}
@@ -2933,11 +2940,11 @@ set_window_title(debugtext);
 											}
 											else if(eof_import_events[i]->event[j]->dp[6] == 0)
 											{	//End of pro guitar vibrato phrase
-												for(k = note_count[picked_track] - 1; k >= first_note; k--)
+												for(k = note_count[picked_track]; k > first_note; k--)
 												{	//Check for each note that has been imported
-													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= vibratopos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= vibratopos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 													{	//If the note is in the same difficulty as the pro guitar vibrato phrase, and its timestamp falls between the phrase on and phrase off marker
-														eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO);	//Set the vibrato flag
+														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO);	//Set the vibrato flag
 													}
 												}
 											}
@@ -2953,11 +2960,11 @@ set_window_title(debugtext);
 											}
 											else if(eof_import_events[i]->event[j]->dp[6] == 0)
 											{	//End of pro guitar harmonic phrase
-												for(k = note_count[picked_track] - 1; k >= first_note; k--)
+												for(k = note_count[picked_track]; k > first_note; k--)
 												{	//Check for each note that has been imported
-													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= harmpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= harmpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 													{	//If the note is in the same difficulty as the pro guitar harmonic phrase, and its timestamp falls between the phrase on and phrase off marker
-														eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC);	//Set the harmonic flag
+														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC);	//Set the harmonic flag
 													}
 												}
 											}
@@ -2973,11 +2980,11 @@ set_window_title(debugtext);
 											}
 											else if(eof_import_events[i]->event[j]->dp[6] == 0)
 											{	//End of pro guitar pinch harmonic phrase
-												for(k = note_count[picked_track] - 1; k >= first_note; k--)
+												for(k = note_count[picked_track]; k > first_note; k--)
 												{	//Check for each note that has been imported
-													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= pharmpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= pharmpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 													{	//If the note is in the same difficulty as the pro guitar pinch harmonic phrase, and its timestamp falls between the phrase on and phrase off marker
-														eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC);	//Set the pinch harmonic flag
+														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC);	//Set the pinch harmonic flag
 													}
 												}
 											}
@@ -2993,11 +3000,11 @@ set_window_title(debugtext);
 											}
 											else if(eof_import_events[i]->event[j]->dp[6] == 0)
 											{	//End of pro guitar bend phrase
-												for(k = note_count[picked_track] - 1; k >= first_note; k--)
+												for(k = note_count[picked_track]; k > first_note; k--)
 												{	//Check for each note that has been imported
-													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= bendpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= bendpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 													{	//If the note is in the same difficulty as the pro guitar bend phrase, and its timestamp falls between the phrase on and phrase off marker
-														eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_BEND);	//Set the bend flag
+														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_BEND);	//Set the bend flag
 													}
 												}
 											}
@@ -3013,11 +3020,11 @@ set_window_title(debugtext);
 											}
 											else if(eof_import_events[i]->event[j]->dp[6] == 0)
 											{	//End of pro guitar accent phrase
-												for(k = note_count[picked_track] - 1; k >= first_note; k--)
+												for(k = note_count[picked_track]; k > first_note; k--)
 												{	//Check for each note that has been imported
-													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= accentpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= accentpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 													{	//If the note is in the same difficulty as the pro guitar accent phrase, and its timestamp falls between the phrase on and phrase off marker
-														eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_ACCENT);	//Set the accent flag
+														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_ACCENT);	//Set the accent flag
 													}
 												}
 											}
@@ -3033,11 +3040,11 @@ set_window_title(debugtext);
 											}
 											else if(eof_import_events[i]->event[j]->dp[6] == 0)
 											{	//End of pro guitar pop phrase
-												for(k = note_count[picked_track] - 1; k >= first_note; k--)
+												for(k = note_count[picked_track]; k > first_note; k--)
 												{	//Check for each note that has been imported
-													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= poppos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= poppos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 													{	//If the note is in the same difficulty as the pro guitar pop phrase, and its timestamp falls between the phrase on and phrase off marker
-														eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_POP);	//Set the pop flag
+														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_POP);	//Set the pop flag
 													}
 												}
 											}
@@ -3053,11 +3060,11 @@ set_window_title(debugtext);
 											}
 											else if(eof_import_events[i]->event[j]->dp[6] == 0)
 											{	//End of pro guitar slap phrase
-												for(k = note_count[picked_track] - 1; k >= first_note; k--)
+												for(k = note_count[picked_track]; k > first_note; k--)
 												{	//Check for each note that has been imported
-													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= slappos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= slappos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 													{	//If the note is in the same difficulty as the pro guitar slap phrase, and its timestamp falls between the phrase on and phrase off marker
-														eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_SLAP);	//Set the slap flag
+														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_SLAP);	//Set the slap flag
 													}
 												}
 											}
