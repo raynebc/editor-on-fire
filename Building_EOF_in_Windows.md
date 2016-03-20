@@ -10,7 +10,8 @@ Note:  Certain new Linux distributions use Pulse Audio, which messes up the abil
 ## Building Allegro and other dependencies: ##
 First, you need to build Allegro itself, along with some other dependencies that EOF needs.  This procedure should work with version 4.4.1.1 and 4.4.2 of Allegro.  At this time EOF will NOT WORK with Allegro 5.  To build EOF from source, you will need:
   1. MinGW (http://sourceforge.net/projects/mingw/)
-  1. Allegro source and a DirectX SDK (download from http://alleg.sourceforge.net/wip.html)
+  1. Allegro source (download from http://liballeg.org/old.html)
+  1. DirectX SDK (download from http://liballeg.org/download.html)
   1. zlib and libpng (download from http://tjaden.strangesoft.net/loadpng/mingw.html)
   1. libogg and libvorbis Vorbis packages (download from http://xiph.org/downloads)
   1. MSYS (download from http://www.mingw.org/wiki/msys)
@@ -23,11 +24,11 @@ First, you need to build Allegro itself, along with some other dependencies that
   1. GLib (download from http://ftp.gnome.org/pub/gnome/binaries/win32/glib/2.28/glib_2.28.8-1_win32.zip)
   1. rubberband (download from http://breakfastquay.com/rubberband/)
 
-Get MinGW (http://sourceforge.net/projects/mingw/) and install it.  You can use this with many modern IDE's such as Dev-Cpp or CodeBlocks.  Since Dev-Cpp is end of development and has some unresolved bugs, I personally recommend CodeBlocks.  Installing MinGW to the root of a file system (ie. c:\mingw) will make things easier.  When choosing which packages to install, make sure to select an appropriate posix style threads library (ie. "mingw32-pthreads-w32" if you are using the official release of MinGW).  Ensure that MinGW's "bin" folder is in your PATH environment variable, so you can use gcc and mingw32-make from any current working directory.  Allegro in Windows requires a DirectX SDK.  Get one of them from http://alleg.sourceforge.net/wip.html.  Ie. download dx70\_mgw.zip and extract its contents to your MinGW install path (ie. c:\mingw), allowing files to be overwritten.  This must be done in order for Allegro to build later.
+Get MinGW (http://sourceforge.net/projects/mingw/) and install it.  You can use this with many modern IDE's such as Dev-Cpp or CodeBlocks.  Since Dev-Cpp is end of development and has some unresolved bugs, I personally recommend CodeBlocks.  Installing MinGW to the root of a file system (ie. c:\mingw) will make things easier.  When choosing which packages to install, make sure to select an appropriate posix style threads library (ie. "mingw32-pthreads-w32" if you are using the official release of MinGW).  Ensure that MinGW's "bin" folder is in your PATH environment variable, so you can use gcc and mingw32-make from any current working directory.  Allegro in Windows requires a DirectX SDK.  Get one of them from http://liballeg.org/download.html.  Ie. download dx70\_mgw.zip and extract its contents to your MinGW install path (ie. c:\mingw), allowing files to be overwritten.  This must be done in order for Allegro to build later.
 
 Get the zlib and libpng packages (http://tjaden.strangesoft.net/loadpng/mingw.html).  Make sure they install to your MinGW installation directory and NOT to a subfolder, otherwise the source files won't get stored in the right folders and Allegro's CMake will not find them.
 
-Get MSYS (http://www.mingw.org/wiki/msys).  MSYS 1.0.11 is an older version, but it works just fine and includes all parts in one installer, making it very easy to install.  Install it and allow it to run the post install process.  During this post install process, give it the correct path to your MinGW installation directory.  Remember to use the forward slash / instead of backward slash \ between each directory (ie c:/mingw).
+Get MSYS (http://www.mingw.org/wiki/msys).  MSYS 1.0.11 is an older version, but it works just fine and includes all parts in one installer, making it very easy to install.  Install it to its default directory (c:\msys\1.0) and allow it to run the post install process.  During this post install process, give it the correct path to your MinGW installation directory.  Remember to use the forward slash / instead of backward slash \ between each directory (ie c:/mingw).
 
 Get the libogg and libvorbis Vorbis libraries (http://xiph.org/downloads).  Extract each someplace WITHOUT spaces in the folder path.  They will each be built using MSYS using the details below.  Libogg has to be built first.  If you extracted libogg to c:\libogg, launch MSYS, change to the right directory with:
 ```
@@ -53,7 +54,7 @@ Once all the above steps have been completed, the zlib, libpng, libogg and libvo
 
 Get CMake (http://www.cmake.org).  Install it and ensure that CMake's "bin" folder is in your PATH environment variable, so you can call cmake from any current working directory.
 
-Get Allegro's source (http://alleg.sourceforge.net/wip.html) and extract it someplace easy to get to (such as the root of a filesystem, such as c:\allegro).  Open a command shell, change to the Allegro directory, ie:
+Get Allegro's source (http://liballeg.org/old.html) and extract it someplace easy to get to (such as the root of a filesystem, such as c:\allegro).  Open a command shell, change to the Allegro directory, ie:
 ```
 c:
 cd c:\allegro
@@ -71,7 +72,7 @@ Do include the two periods at the end, which refer cmake to the "CMakeLists.txt"
 
 If it reports any errors, try running the cmake command again.  I found it would often mention "configuring incomplete, errors occurred" the first time, and running it again would report that it wrote build files to allegro\build.  If it still reports an error, check to make sure your Antivirus software hasn't interfered.  I've noticed Avast would quarantine "conftest.exe" in the libogg and libvorbis folders, and I had to exempt those, re-run the 3 commands each to make libogg and libvorbis and then use cmake to build the Allegro makefile succeeded.
 
-Now Allegro can be built. This process will install files into your MinGW installation, allowing you to compile applications designed to use Allegro (such as EOF). You will need to make sure that you have defined the MINGDIR environment variable to be set to the path of your MinGW installation, and MinGW's \bin\ folder should be in your PATH environment variable, or this next part might fail to work.  To find out, run the "set" command and if those variables don't reflect these requirements, update them in System Properties, close an re-open the command prompt and change to build directory (ie. c:\allegro\build) again.  While still in Allegro's \build directory, run these commands:
+Now Allegro can be built. This process will install files into your MinGW installation, allowing you to compile applications designed to use Allegro (such as EOF). You will need to make sure that you have defined the MINGDIR environment variable to be set to the path of your MinGW installation, and MinGW's \bin\ folder should be in your PATH environment variable, or this next part might fail to work.  To find out, run the "set" command and if those variables don't reflect these requirements, update them in System Properties, close and re-open the command prompt and change to build directory (ie. c:\allegro\build) again.  While still in Allegro's \build directory, run these commands:
 ```
 mingw32-make
 mingw32-make install
@@ -80,7 +81,7 @@ mingw32-make install
 **Note:**
 Some earlier versions of Allegro (ie. version 4.22) had some strange problems that would make Allegro fail to CMake and/or make.  Try the latest stable release, which fixes this problem.  Otherwise you may have to update part of the Allegro package (apparently binutils was the culprit).  If you get any strange errors during the make install command, try turning off your antivirus program and trying again.  I found that Avast would prevent the make install from setting the modification time on alleg44.dll and this was causing the process to abort.
 
-Next, the FFTW library needs to be added.  Download the 32 bit precompiled DLL files from FFTW's website.  Inside it is several source and binary files.  The one needed for EOF is libfftw3-3.dll.  Copy this file into the "lib" directory in your MinGW installation and rename the file to "libfftw3.dll.a".  This naming convention is probably only one of many ways to do it, but it's how I got it to work as it allows MinGW to be told to link to the "fftw3" library when EOF is built.  Lastly, copy the fftw3.h file from the FFTW precompiled package and paste it into the "include" directory in your MinGW installation.
+Next, the FFTW library needs to be added.  Download the 32 bit precompiled DLL files from FFTW's website (http://www.fftw.org/install/windows.html).  Inside it is several source and binary files.  The one needed for EOF is libfftw3-3.dll.  Copy this file into the "lib" directory in your MinGW installation and rename the file to "libfftw3.dll.a".  This naming convention is probably only one of many ways to do it, but it's how I got it to work as it allows MinGW to be told to link to the "fftw3" library when EOF is built.  Lastly, copy the fftw3.h file from the FFTW precompiled package and paste it into the "include" directory in your MinGW installation.
 
 
 ## Building rubberband: ##
@@ -106,7 +107,7 @@ Next, get pkgconfig (http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/
 
 Next, get GLib (http://ftp.gnome.org/pub/gnome/binaries/win32/glib/2.28/glib_2.28.8-1_win32.zip).  Extract the libglib-2.0-0.dll file from that package's bin folder and copy it to the "bin" folder in your MinGW installation.
 
-I've found that depending on your environment, rubberband may or may not fail to build on Windows with a message along the lines of "cannot find -lpthread", due to missing a Posix style threading library.  If you are using MinGW's GCC distribution, you can install the mingw32-pthreads-w32 package and it seems to work just fine.  Other distributions may require their own equivalent (ie. TDM has a "winpthreads" library).
+I've found that depending on your environment, rubberband may or may not fail to build on Windows with a message along the lines of "cannot find -lpthread", due to missing a Posix style threading library.  If you are using MinGW's GCC distribution, you can install the mingw32-pthreads-w32 package and it seems to work just fine.  Other distributions may require their own equivalent (ie. TDM has a "winpthreads" library).  Most recently, I had installed the TDM release of GCC and it was actually missing the pthreads library so I had to manually get it from the pthreads-win32 website (ftp://sourceware.org/pub/pthreads-win32/dll-latest/dll/x86/) by downloading pthreadGC2.dll, renaming it to libpthread.a and placing it into the "lib" folder of my MinGW installation to satisfy MSYS.
 
 At last, rubberband's dependencies are met and rubberband can be built from source (http://breakfastquay.com/rubberband/).  Extract the source folder someplace convenient like the root of your c drive.  Back in MSYS, change to the directory with rubberband's source files, for example:
 ```
@@ -121,13 +122,13 @@ If everything worked, it will indicate that it got to the point where it was cre
 make
 make install
 ```
-Don't be surprised if you see errors that indicate it failed (ie. when building libvamp-sdk.a), but even then, check the "lib" directory if the rubberband source folder for librubberband.a.  If it is there, then it worked enough to get the library built, go ahead and copy that file to the "lib" directory of your MinGW installation.  Then copy the "rubberband" headers folder from the rubberband source code folder to the "include" directory of your MinGW installation.
+Don't be surprised if you see errors that indicate it failed (ie. when building libvamp-sdk.a), but even then, check the "lib" directory of the rubberband source folder for librubberband.a.  If it is there, then it worked enough to get the library built, go ahead and copy that file to the "lib" directory of your MinGW installation.  Then copy the "rubberband" headers folder from the rubberband source code folder to the "include" directory of your MinGW installation.
 
 
 ## Building EOF: ##
 To build EOF, ensure that you have built Allegro and the other dependencies into your MinGW installation with the instructions given above.  If you are using Allegro 4.4 in Windows, I've found that it may have a different name for the main dll file (alleg.dll).  If so, you need to modify makefile.mingw so that the line that says "LIBS = -lalleg" is changed to "LIBS = -lalleg44.dll".  Before continuing, ensure that the folder containing the \src folder also contains a folder called "bin", or the make will fail.  To build EOF, change directory to EOF's \src folder and run "mingw32-make -f makefile.mingw"
 
-Copy all other resources (graphics, audio files, etc) from the source distrubution to the \bin folder, where the newly-built eof.exe should be.  The program should be ready to use.
+Copy all other resources (graphics, audio files, etc) from the source distrubution to the \bin folder, where the newly-built eof.exe should be.  Also, the libfftw3-3.dll file from the FFTW pre-compiled package will probably have to be put in the \bin folder unless you've changed the above steps so that it can be statically linked into EOF.  The program should be ready to use.
 
 To build in an IDE instead, create a project and manually add the source files and settings from the makefile:
 Code::Blocks instructions, in Windows (other OSs will require some different steps):
@@ -147,6 +148,7 @@ http://www.rarewares.org/mp3-lame-bundle.php
 
 You can download oggenc2 here (put oggenc2.exe in EOF's program folder):
 http://www.rarewares.org/ogg-oggenc.php
+Get the "P4 only" version unless you're running on a processor older than a Pentium 4 or want a less optimized oggenc for some reason.
 
-You can download oggCat, which is part of the Ogg video tools, here (put oggCat.exe and bgd.dll in EOF's program folder):
-http://sourceforge.net/projects/oggvideotools/files/
+You can download oggCat as part of the Ogg video tools.  The current latest binary release (0.8a) has a problem where it always re-encodes the OGG files, which defeats EOF's purpose of having it.  Get version 0.8 instead here (put oggCat.exe and bgd.dll in EOF's program folder):
+https://sourceforge.net/projects/oggvideotools/files/oggvideotools-win32/oggvideotools-0.8-win32/
