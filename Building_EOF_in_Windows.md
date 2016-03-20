@@ -128,7 +128,21 @@ Don't be surprised if you see errors that indicate it failed (ie. when building 
 ## Building EOF: ##
 To build EOF, ensure that you have built Allegro and the other dependencies into your MinGW installation with the instructions given above.  If you are using Allegro 4.4 in Windows, I've found that it may have a different name for the main dll file (alleg.dll).  If so, you need to modify makefile.mingw so that the line that says "LIBS = -lalleg" is changed to "LIBS = -lalleg44.dll".  Before continuing, ensure that the folder containing the \src folder also contains a folder called "bin", or the make will fail.  To build EOF, change directory to EOF's \src folder and run "mingw32-make -f makefile.mingw"
 
-Copy all other resources (graphics, audio files, etc) from the source distrubution to the \bin folder, where the newly-built eof.exe should be.  Also, the libfftw3-3.dll file from the FFTW pre-compiled package will probably have to be put in the \bin folder unless you've changed the above steps so that it can be statically linked into EOF.  The program should be ready to use.
+Copy all other resources (graphics, audio files, etc) from the source distrubution to the \bin folder, where the newly-built eof.exe should be.  Also, the following files will probably have to be put in the \bin folder unless you've changed the above steps so that they can be statically linked into EOF:
+```
+libfftw3-3.dll file (from the FFTW pre-compiled package)
+alleg44.dll file (just built from the Allegro source package)
+```
+And all of the following DLLs from your MinGW installation's "bin" folder:
+```
+libgcc_s_dw2-1.dll
+libsamplerate-0.dll
+libvorbisfile-3.dll
+libvorbis-0.dll
+libogg-0.dll
+libstdc++-6.dll
+```
+The program should now be ready to use.
 
 To build in an IDE instead, create a project and manually add the source files and settings from the makefile:
 Code::Blocks instructions, in Windows (other OSs will require some different steps):
