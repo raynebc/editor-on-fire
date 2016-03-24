@@ -25,7 +25,7 @@ EOF has several dependencies which need to be met before it can be built.  These
 
 **Note:** Users of Ubuntu and similar systems can get all of the dependencies with this command:
 ```
-sudo apt-get install build-essential liballegro4.2-dev libvorbis-dev libfftw3-dev librubberband-dev
+sudo apt-get install build-essential liballegro4-dev libvorbis-dev libfftw3-dev librubberband-dev
 ```
 If this works with your system, you can skip to the Building EOF section. Otherwise, continue reading.
 
