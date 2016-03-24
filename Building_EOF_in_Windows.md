@@ -154,8 +154,9 @@ Code::Blocks instructions, in Windows (other OSs will require some different ste
   1. Create a new project, select console application, click Go.  Specify it as a C program.  Remove any default source files (main.c) that are added to the project automatically.
   1. Examine the makefile and for each reference to some file file.o, it means that you have to add the appropriate source file to the project (file.c), so it will compile to file.o.  Make sure to pay attention to the paths indicated for each of the object files given.  CodeBlocks will allow you to add all C files within a folder and its subfolders, but some of the example source files in some of the third party modules EOF uses have main() functions declared, so you'd need to remove them from the project or you will have problems during the build process.
   1. Include the file eof.rc to the project.  Code::Blocks should add this to a "Resources" folder in the project so that EOF's program icon can be properly set up.
-  1. Open the project's build options, and for the top item listed in the Project build options (should apply to any build targets you created for the project),
-  1. Open Linker Settings.  Under "Other Linker Options", add "-lalleg44.dll -logg -lvorbisfile -mwindows" without quotation marks.  This adds the required libraries and the necessary "mwindows" parameter required for building EOF in Windows.  Under "Search Directories", add the "...\alogg\include" (within \src directory in the EOF sources package)
+  1. Open the project's build options, and for the top item listed in the Project build options (should apply to any build targets you created for the project).
+  1. Open Compiler Settings.  Under #defines, add "EOF_BUILD" without quotation marks.
+  1. Open Linker Settings.  Under "Other Linker Options", add "-lalleg44.dll -logg -lvorbisfile -mwindows -lm -lfftw3 -lrubberband -lsamplerate" without quotation marks.  This adds the required libraries and the necessary "mwindows" parameter required for building EOF in Windows.  Under "Search Directories", add the "...\alogg\include" (within \src directory in the EOF sources package)
   1. Go to Project Properties>Build Targets tab>Output Filename and ensure that you specify where the executable file is placed, otherwise it could end up in some unknown location.
 
 
