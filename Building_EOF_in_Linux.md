@@ -64,3 +64,9 @@ make -f makefile.linux
 When the build process completes, you will have an executable file ('eof') in the 'bin' directory along with the binary data that EOF uses. To run EOF, change to the 'bin' directory and run 'eof'.
 
 **Note:** EOF must be built in a part of the file system that you have full read/write access, typically somewhere in your home directory.
+
+## Adding decoding/encoding capability: ##
+During initialization, EOF will check for the existence of the LAME, oggenc2 and oggCat utilities, which are used to convert MP3 to OGG when creating a new chart or when adding leading silence.  You can add these capabilities to your system by installing the LAME and vorbis tools packages.  In Ubuntu, this would be done with the following command:
+```
+sudo apt-get install lame libmp3lame0 vorbis-tools
+```
