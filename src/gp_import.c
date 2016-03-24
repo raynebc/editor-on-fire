@@ -2723,8 +2723,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 		//Build a temporary tsarray[], since GPA import needs one reflecting unwrapped measures, and the GP import that follows needs one reflecting the original wrapped measures
 		nummeasures = eof_song->beat[eof_song->beats - 1]->measurenum;	//Derive the number of measures based off the last unwrapped beat's measure number
-		num = (unsigned char *)malloc(sizeof(char) * nummeasures);	//Allocate memory for the arrays
-		den = (unsigned char *)malloc(sizeof(char) * nummeasures);
+		num = (unsigned char *)malloc(sizeof(unsigned char) * nummeasures);	//Allocate memory for the arrays
+		den = (unsigned char *)malloc(sizeof(unsigned char) * nummeasures);
 		if(!num || !den)
 		{
 			if(num)
@@ -3129,7 +3129,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		(void) pack_getc(inf);						//Read unused value
 		if(fileversion > 500)
 		{
-			bytemask = pack_getc(inf);			//Track properties 1 bitmask
+			(void) pack_getc(inf);				//Track properties 1 bitmask
 			(void) pack_getc(inf);				//Track properties 2 bitmask
 			(void) pack_getc(inf);				//Unknown data
 			(void) pack_getc(inf);				//MIDI bank

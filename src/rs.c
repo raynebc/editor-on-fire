@@ -846,16 +846,34 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	else
 	{	//There were chords
 		long fret0 = 0, fret1 = 0, fret2 = 0, fret3 = 0, fret4 = 0, fret5 = 0;	//Will store the fret number played on each string (-1 means the string is not played)
-		long *fret[6] = {&fret0, &fret1, &fret2, &fret3, &fret4, &fret5};	//Allow the fret numbers to be accessed via array
+		long *fret[6];
 		char *fingerunused = "-1";
 		char *finger0 = NULL, *finger1 = NULL, *finger2 = NULL, *finger3 = NULL, *finger4 = NULL, *finger5 = NULL;	//Each will be set to either fingerunknown or fingerunused
-		char **finger[6] = {&finger0, &finger1, &finger2, &finger3, &finger4, &finger5};	//Allow the finger strings to be accessed via array
+		char **finger[6];
 		char finger0def[2] = "0", finger1def[2] = "1", finger2def[2] = "2", finger3def[2] = "3", finger4def[2] = "4", finger5def[2] = "5";	//Static strings for building manually-defined finger information
-		char *fingerdef[6] = {finger0def, finger1def, finger2def, finger3def, finger4def, finger5def};	//Allow the fingerdef strings to be accessed via array
+		char *fingerdef[6];
 		unsigned long shapenum = 0;
 		EOF_PRO_GUITAR_NOTE temp = {{0}, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};	//Will have a matching chord shape definition's fingering applied to
 		unsigned char *effective_fingering;	//Will point to either a note's own finger array or one of that of the temp pro guitar note structure above
 
+		fret[0] = &fret0;	//Allow the fret numbers to be accessed via array
+		fret[1] = &fret1;
+		fret[2] = &fret2;
+		fret[3] = &fret3;
+		fret[4] = &fret4;
+		fret[5] = &fret5;
+		finger[0] = &finger0;	//Allow the finger strings to be accessed via array
+		finger[1] = &finger1;
+		finger[2] = &finger2;
+		finger[3] = &finger3;
+		finger[4] = &finger4;
+		finger[5] = &finger5;
+		fingerdef[0] = finger0def;	//Allow the fingerdef strings to be accessed via array
+		fingerdef[1] = finger1def;
+		fingerdef[2] = finger2def;
+		fingerdef[3] = finger3def;
+		fingerdef[4] = finger4def;
+		fingerdef[5] = finger5def;
 		(void) snprintf(buffer, sizeof(buffer) - 1, "  <chordTemplates count=\"%lu\">\n", chordlistsize);
 		(void) pack_fputs(buffer, fp);
 		for(ctr = 0; ctr < chordlistsize; ctr++)
@@ -2239,17 +2257,36 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	else
 	{	//There were chords
 		long fret0 = 0, fret1 = 0, fret2 = 0, fret3 = 0, fret4 = 0, fret5 = 0;	//Will store the fret number played on each string (-1 means the string is not played)
-		long *fret[6] = {&fret0, &fret1, &fret2, &fret3, &fret4, &fret5};	//Allow the fret numbers to be accessed via array
+		long *fret[6];
 		char *fingerunused = "-1";
 		char *finger0 = NULL, *finger1 = NULL, *finger2 = NULL, *finger3 = NULL, *finger4 = NULL, *finger5 = NULL;	//Each will be set to either fingerunknown or fingerunused
-		char **finger[6] = {&finger0, &finger1, &finger2, &finger3, &finger4, &finger5};	//Allow the finger strings to be accessed via array
+		char **finger[6];
 		char finger0def[2] = "0", finger1def[2] = "1", finger2def[2] = "2", finger3def[2] = "3", finger4def[2] = "4", finger5def[2] = "5";	//Static strings for building manually-defined finger information
-		char *fingerdef[6] = {finger0def, finger1def, finger2def, finger3def, finger4def, finger5def};	//Allow the fingerdef strings to be accessed via array
+		char *fingerdef[6];
 		unsigned long shapenum = 0;
 		EOF_PRO_GUITAR_NOTE temp = {{0}, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};	//Will have a matching chord shape definition's fingering applied to
 		unsigned char *effective_fingering;	//Will point to either a note's own finger array or one of that of the temp pro guitar note structure above
 		char arp[] = "-arp", no_arp[] = "";	//The suffix applied to the chord template's display name, depending on whether the template is for an arpeggio
 		char *suffix;	//Will point to either arp[] or no_arp[]
+
+		fret[0] = &fret0;	//Allow the fret numbers to be accessed via array
+		fret[1] = &fret1;
+		fret[2] = &fret2;
+		fret[3] = &fret3;
+		fret[4] = &fret4;
+		fret[5] = &fret5;
+		finger[0] = &finger0;	//Allow the finger strings to be accessed via array
+		finger[1] = &finger1;
+		finger[2] = &finger2;
+		finger[3] = &finger3;
+		finger[4] = &finger4;
+		finger[5] = &finger5;
+		fingerdef[0] = finger0def;	//Allow the fingerdef strings to be accessed via array
+		fingerdef[1] = finger1def;
+		fingerdef[2] = finger2def;
+		fingerdef[3] = finger3def;
+		fingerdef[4] = finger4def;
+		fingerdef[5] = finger5def;
 
 		(void) snprintf(buffer, sizeof(buffer) - 1, "  <chordTemplates count=\"%lu\">\n", chordlistsize);
 		(void) pack_fputs(buffer, fp);
@@ -5097,7 +5134,6 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 	if(notenum >= tp->notes)
 		return;	//Invalid parameter
-	flags = tp->note[notenum]->flags;
 	notepos = tp->note[notenum]->pos;
 	notelen = tp->note[notenum]->length;
 	bitmask = 1 << stringnum;

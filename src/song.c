@@ -2673,7 +2673,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		if(has_raw_midi_data)
 		{	//If there is raw MIDI data being stored, write it as a custom data block
 			PACKFILE *tfp;	//Used to create a temp file containing the MIDI data block, so its size can easily be determined before dumping into the output project file
-			struct eof_MIDI_data_track *trackptr = sp->midi_data_head;	//Point to the beginning of the track linked list
+			struct eof_MIDI_data_track *trackptr;	//Used to point to the beginning of the track linked list
 			struct eof_MIDI_data_event *eventptr;
 			unsigned long filesize;
 
@@ -3992,6 +3992,10 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned char
 		switch(sp->track[track]->track_format)
 		{
 			case EOF_LEGACY_TRACK_FORMAT:
+				if(!((eof_count_track_lanes(sp, track) > 5) && (track != EOF_TRACK_BASS)))
+				{	//If the track storing the new note does not have six lanes (with the exclusion of the bass track's open strum lane)
+					note &= ~32;	//Clear lane 6
+				}
 				ptr = (EOF_NOTE *)new_note;
 				ptr->type = type;
 				ptr->note = note;
@@ -4008,10 +4012,6 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned char
 				else
 				{
 					ptr->name[0] = '\0';	//Empty the string
-				}
-				if(!((eof_count_track_lanes(sp, track) > 5) && (track != EOF_TRACK_BASS)))
-				{	//If the track storing the new note does not have six lanes (with the exclusion of the bass track's open strum lane)
-					note &= ~32;	//Clear lane 6
 				}
 				if(sp->track[track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR)
 				{	//In a keys track, all lanes are forced to be "crazy" and be allowed to overlap other lanes

@@ -706,8 +706,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		{	//For each note in the track
 			if(eof_get_note_note(sp, ctr, ctr2) == 31)
 			{	//If this note is a 5 lane chord, convert it to a lane 6 gem
-				unsigned long tracknum = sp->track[ctr]->tracknum;
-
+				tracknum = sp->track[ctr]->tracknum;
 				sp->track[ctr]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
 				sp->legacy_track[tracknum]->numlanes = 6;	//Set this track to have 6 lanes instead of 5
 				eof_set_note_note(sp, ctr, ctr2, 32);

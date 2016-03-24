@@ -1660,7 +1660,7 @@ int eof_rocksmith_phrase_dialog_add(void)
 int eof_menu_beat_add_section(void)
 {
 	unsigned long ctr;
-	char *ptr;
+	char *ptr = NULL;
 	EOF_TEXT_EVENT *ep = NULL;
 	char text[EOF_TEXT_EVENT_LENGTH + 1] = {0};
 
@@ -1685,7 +1685,7 @@ int eof_menu_beat_add_section(void)
 	}
 
 	//Prepare the dialog accordingly
-	if(ep)
+	if(ep && ptr)
 	{	//If the selected beat already had a section event in scope
 		eof_section_add_dialog[0].dp = eof_section_add_dialog_string2;	//Change the dialog title to "Edit section"
 		strncpy(eof_etext, ptr, sizeof(eof_etext) - 1);		//Copy the portion of the text event that came after "section "
@@ -1710,7 +1710,7 @@ int eof_menu_beat_add_section(void)
 			allegro_message("Section names cannot include opening or closing brackets [ ]");
 			return D_O_K;
 		}
-		snprintf(text, sizeof(text) - 1, "[section %s]", eof_etext);	//Format the section string
+		(void) snprintf(text, sizeof(text) - 1, "[section %s]", eof_etext);	//Format the section string
 		if(!ep || strcmp(ep->text, text))
 		{	//If there wasn't already a section event on this beat, or if the user altered its name
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);

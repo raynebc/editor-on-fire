@@ -294,8 +294,6 @@ unsigned long eof_mix_msec_to_sample(unsigned long msec, int freq)
 void eof_mix_find_claps(void)
 {
 	unsigned long i, bitmask;
-	eof_mix_claps = 0;
-	eof_mix_current_clap = 0;
 	unsigned long tracknum;
 	EOF_PRO_GUITAR_TRACK *tp = NULL;
 
@@ -303,6 +301,8 @@ void eof_mix_find_claps(void)
 		return;
 	eof_log("eof_mix_find_claps() entered", 2);
 
+	eof_mix_claps = 0;
+	eof_mix_current_clap = 0;
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If a pro guitar/bass track is active
@@ -364,9 +364,9 @@ void eof_mix_find_claps(void)
 			{	//If the note is in the active track difficulty
 				int j = 0;
 				unsigned long pos = eof_mix_msec_to_sample(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay - eof_midi_tone_delay, alogg_get_wave_freq_ogg(eof_music_track));
+				EOF_PRO_GUITAR_NOTE *note = track->note[i];
 
 				tone = eof_lookup_midi_tone(eof_song, eof_selected_track, i);
-				EOF_PRO_GUITAR_NOTE *note = track->note[i];
 				for(j = 0, bitmask = 1; j < 6; j++, bitmask <<= 1)
 				{	//For each of the 6 supported strings
 					if((note->note & bitmask) && !(note->frets[j] & 0x80) && !(note->ghost & bitmask))
@@ -733,10 +733,10 @@ void eof_mix_play_note(int note)
 
 void eof_midi_play_note_ex(int note, unsigned char channel, unsigned char patch)
 {
-	unsigned char SET_PATCH_DATA[2] = {0xC0|channel, 28}; 		// 28 = Electric Guitar (clean)
-	unsigned char NOTE_ON_DATA[3] = {0x90|channel, 0x0, 127};	//Data sequence for a Note On, channel 1, Note 0
-	unsigned char NOTE_OFF_DATA[3] = {0x80|channel, 0x0, 127};	//Data sequence for a Note Off, channel 1, Note 0
-	static unsigned char lastnote[16] = {0};					//Remembers the last note that was played on each channel, so it can be turned off
+	unsigned char SET_PATCH_DATA[2] = {0xC0, 28}; 		// 28 = Electric Guitar (clean)
+	unsigned char NOTE_ON_DATA[3] = {0x90, 0x0, 127};	//Data sequence for a Note On, channel 1, Note 0
+	unsigned char NOTE_OFF_DATA[3] = {0x80, 0x0, 127};	//Data sequence for a Note Off, channel 1, Note 0
+	static unsigned char lastnote[16] = {0};			//Remembers the last note that was played on each channel, so it can be turned off
 	static unsigned char lastnotedefined[16] = {0};
 	static unsigned char patches[16] = {0};	//The last instrument number played on each of the 16 usable channels, is set to nonzero after the instrument is set
 
@@ -748,6 +748,9 @@ void eof_midi_play_note_ex(int note, unsigned char channel, unsigned char patch)
 	{	//Bounds check
 		channel = 15;
 	}
+	SET_PATCH_DATA[0] = 0xC0 | channel;
+	NOTE_ON_DATA[0] = 0x90 | channel;
+	NOTE_OFF_DATA[0] = 0x80 | channel;
 	if(patch != patches[channel])
 	{	//If the instrument number needs to be changed for this channel
 		SET_PATCH_DATA[1] = patch;	//Alter the data sequence to the appropriate channel number

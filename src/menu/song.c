@@ -3911,9 +3911,9 @@ int eof_menu_song_export_song_preview(void)
 				eof_ini_delete(oldendtag);	//Remove any existing preview start tag
 			if(eof_song->tags->ini_settings + 2 < EOF_MAX_INI_SETTINGS)
 			{	//If the start and end INI tags can be stored into the project
-				snprintf(eof_song->tags->ini_setting[eof_song->tags->ini_settings], EOF_INI_LENGTH - 1, "preview_start_time = %lu", start);
+				(void) snprintf(eof_song->tags->ini_setting[eof_song->tags->ini_settings], EOF_INI_LENGTH - 1, "preview_start_time = %lu", start);
 				eof_song->tags->ini_settings++;
-				snprintf(eof_song->tags->ini_setting[eof_song->tags->ini_settings], EOF_INI_LENGTH - 1, "preview_end_time = %lu", stop);
+				(void) snprintf(eof_song->tags->ini_setting[eof_song->tags->ini_settings], EOF_INI_LENGTH - 1, "preview_end_time = %lu", stop);
 				eof_song->tags->ini_settings++;
 			}
 		}

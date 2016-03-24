@@ -2830,7 +2830,7 @@ static void eof_split_lyric(unsigned long lyric)
 	stringlen = strlen(eof_song->vocal_track[tracknum]->lyric[lyric]->text);
 
 	/* see how many pieces there are */
-	for(i = 0; i < stringlen; i++)
+	for(i = 0; i < (unsigned long) stringlen; i++)
 	{
 		lastc = c;
 		c = eof_song->vocal_track[tracknum]->lyric[lyric]->text[i];

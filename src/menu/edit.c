@@ -3224,7 +3224,6 @@ int eof_menu_edit_paste_from_catalog(void)
 					{
 						break;
 					}
-					last_current_beat = current_beat;
 					current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay) + (this_beat - first_beat);
 					if(current_beat >= eof_song->beats - 1)
 					{

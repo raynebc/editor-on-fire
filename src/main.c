@@ -896,12 +896,13 @@ void eof_cat_track_difficulty_string(char *str)
 	}
 	if(!eof_vocals_selected)
 	{	//If the vocal track isn't active, append other information such as the current difficulty
-		(void) ustrcat(str, "  ");
 		char *ptr;
+
+		(void) ustrcat(str, "  ");
 		if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 		{	//If this track is not limited to 5 difficulties
 			char diff_string[15] = {0};			//Used to generate the string for a numbered difficulty
-			(void) snprintf(diff_string, sizeof(diff_string) - 1, " Diff: %d", eof_note_type);
+			(void) snprintf(diff_string, sizeof(diff_string) - 1, " Diff: %u", eof_note_type);
 			if(eof_track_diff_populated_status[eof_note_type])
 			{	//If this difficulty is populated
 				diff_string[0] = '*';
@@ -1904,6 +1905,8 @@ void eof_read_global_keys(void)
 	/* stuff you can only do when a chart is loaded */
 	if(eof_song_loaded && eof_song)
 	{
+		double tempochange;
+
 		/* undo (CTRL+Z) */
 		if(KEY_EITHER_CTRL && (eof_key_char == 'z') && (eof_undo_count > 0))
 		{
@@ -1921,7 +1924,6 @@ void eof_read_global_keys(void)
 		/* decrease tempo by 1BPM (-) */
 		/* decrease tempo by .1BPM (SHIFT+-) */
 		/* decrease tempo by .01BPM (SHIFT+CTRL+-) */
-		double tempochange;
 		if(eof_key_code == KEY_MINUS)	//Use the scan code because CTRL+- cannot be reliably detected via ASCII value
 		{
 			if(KEY_EITHER_SHIFT)
@@ -2115,7 +2117,6 @@ void eof_lyric_logic(void)
 	int bnote[7] = {1, 3, 0, 6, 8, 10, 0};
 	unsigned long i, k;
 	unsigned long tracknum;
-	eof_hover_key = -1;
 	int eof_scaled_mouse_x = mouse_x, eof_scaled_mouse_y = mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
 
 	if(eof_song == NULL)	//Do not allow lyric processing to occur if no song is loaded
@@ -2124,6 +2125,7 @@ void eof_lyric_logic(void)
 	if(!eof_vocals_selected)
 		return;
 
+	eof_hover_key = -1;
 	if(eof_screen_zoom)
 	{	//If x2 zoom is in effect, take that into account for the mouse position
 		eof_scaled_mouse_x = mouse_x / 2;
@@ -2533,6 +2535,10 @@ void eof_render_note_window(void)
 		/* render catalog entry */
 		if(eof_song->catalog->entries > 0)
 		{
+			char emptystring[2] = "", *difficulty_name = emptystring;	//The empty string will be 2 characters, so that the first can (used to define populated status of each track) be skipped
+			char diff_string[12] = {0};				//Used to generate the string for a numbered difficulty (prefix with an extra space, since the string rendering skips the populated status character used for normal tracks
+			int zoom = eof_av_delay / eof_zoom;	//AV delay compensated for zoom level
+
 			pos = eof_music_catalog_pos / eof_zoom;
 			if(pos < 140)
 			{
@@ -2559,9 +2565,6 @@ void eof_render_note_window(void)
 			vline(eof_window_note->screen, lpos + (eof_chart_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
 
 			/* render information about the entry */
-			char emptystring[2] = "", *difficulty_name = emptystring;	//The empty string will be 2 characters, so that the first can (used to define populated status of each track) be skipped
-			char diff_string[12] = {0};				//Used to generate the string for a numbered difficulty (prefix with an extra space, since the string rendering skips the populated status character used for normal tracks
-
 			if(eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->track_format != EOF_VOCAL_TRACK_FORMAT)
 			{	//If the catalog entry is not from a vocal track, determine the name of the active difficulty
 				if(eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
@@ -2636,7 +2639,6 @@ void eof_render_note_window(void)
 				}
 			}//If drawing a non vocal catalog entry
 			/* draw the current position */
-			int zoom = eof_av_delay / eof_zoom;	//AV delay compensated for zoom level
 			if(pos > zoom)
 			{
 				if(pos < 140)
@@ -2652,6 +2654,12 @@ void eof_render_note_window(void)
 	}//If show catalog is selected
 	else
 	{	//If show catalog is disabled
+		int ism;
+		int iss;
+		int isms = ((eof_music_pos - eof_av_delay) % 1000);	//Get the number of milliseconds in the seek position, which is used the same regardless of which timing format is selected by the user
+		unsigned long itn = 0;
+		int isn = eof_count_selected_notes(&itn);
+
 		tracknum = eof_song->track[eof_selected_track]->tracknum;	//Information about the active track is going to be displayed
 		textprintf_ex(eof_window_note->screen, font, 2, 0, eof_info_color, -1, "Information Panel");
 		textprintf_ex(eof_window_note->screen, font, 2, 6, eof_color_white, -1, "----------------------------");
@@ -2814,11 +2822,6 @@ void eof_render_note_window(void)
 				}
 			}
 		}//If a non vocal track is active
-		int ism;
-		int iss;
-		int isms = ((eof_music_pos - eof_av_delay) % 1000);	//Get the number of milliseconds in the seek position, which is used the same regardless of which timing format is selected by the user
-		unsigned long itn = 0;
-		int isn = eof_count_selected_notes(&itn);
 		ypos += 12;
 		if(!eof_display_seek_pos_in_seconds)
 		{	//If the seek position is to be displayed as minutes:seconds
@@ -2863,6 +2866,9 @@ void eof_render_note_window(void)
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//Display information specific to pro guitar tracks
+			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+			unsigned char position = eof_pro_guitar_track_find_effective_fret_hand_position(tp, eof_note_type, eof_music_pos - eof_av_delay);	//Find if there's a fret hand position in effect
+
 			ypos += 12;
 			if(!eof_pro_guitar_fret_bitmask || (eof_pro_guitar_fret_bitmask == 63))
 			{	//If the fret shortcut bitmask is set to no strings or all 6 strings
@@ -2940,8 +2946,6 @@ void eof_render_note_window(void)
 				ypos += 2;	//Lower the virtual "cursor" because underscores for the fretting string are rendered low enough to touch text 12 pixels below the y position of the glyph
 			}//If a note in the active track is selected, display a line with its information
 
-			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
-			unsigned char position = eof_pro_guitar_track_find_effective_fret_hand_position(tp, eof_note_type, eof_music_pos - eof_av_delay);	//Find if there's a fret hand position in effect
 			ypos += 12;
 			if(position)
 			{	//If a fret hand position is in effect
@@ -3200,6 +3204,14 @@ void eof_render_3d_window(void)
 	char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the regular notes are rendered instead
 	unsigned long temptrack = 0;
 	int temphover = 0;
+	long sz, sez;
+	long spz, spez;
+	long halflanewidth;
+	long obx, oby, oex, oey;
+	long bz;
+	float y_projection;
+	char ts_text[16] = {0}, tempo_text[16] = {0};
+	long tr;
 
 	//Used to draw trill and tremolo sections:
 	unsigned long j, ctr, usedlanes, bitmask, numsections;
@@ -3266,8 +3278,6 @@ void eof_render_3d_window(void)
 	polygon(eof_window_3d->screen, 4, fretboardpoint, eof_color_black);
 
 	/* render solo sections */
-	long sz, sez;
-	long spz, spez;
 	numsolos = eof_get_num_solos(eof_song, eof_selected_track);
 	for(i = 0; i < numsolos; i++)
 	{
@@ -3329,7 +3339,7 @@ void eof_render_3d_window(void)
 	}
 
 	/* render seek selection */
-	long halflanewidth = (56.0 * (4.0 / (numlanes-1))) / 2;
+	halflanewidth = (56.0 * (4.0 / (numlanes-1))) / 2;
 	if(eof_seek_selection_start != eof_seek_selection_end)
 	{	//If there is a seek selection
 		sz = (long)(eof_seek_selection_start + eof_av_delay - eof_music_pos) / eof_zoom_3d;
@@ -3423,13 +3433,7 @@ void eof_render_3d_window(void)
 		}//For each of the two phrase types (trills and tremolos)
 	}//If this track has any trill or tremolo sections
 
-	/* draw the 'strings' */
-	long obx, oby, oex, oey;
-
 	/* draw the beat markers */
-	long bz;
-	float y_projection;
-	char ts_text[16] = {0}, tempo_text[16] = {0};
 	for(i = 0; i < eof_song->beats; i++)
 	{	//For each beat
 		bz = (long)(eof_song->beat[i]->pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
@@ -3474,7 +3478,6 @@ void eof_render_3d_window(void)
 
 //	int first_note = -1;	//Used for debugging
 //	int last_note = 0;		//Used for debugging
-	long tr;
 	/* draw the note tails and notes */
 	numnotes = eof_get_track_size(eof_song, eof_selected_track);	//Get the number of notes in this legacy/pro guitar track
 	for(i = numnotes; i > 0; i--)
@@ -4545,7 +4548,7 @@ void eof_init_after_load(char initaftersavestate)
 	eof_log("eof_init_after_load() entered", 1);
 
 	eof_music_paused = 1;
-	if((eof_selected_track <= 0) || (eof_selected_track >= eof_song->tracks))
+	if((eof_selected_track == 0) || (eof_selected_track >= eof_song->tracks))
 	{	//Validate eof_selected_track, to ensure a valid track was loaded from the config file
 		eof_selected_track = EOF_TRACK_GUITAR;
 	}

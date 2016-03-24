@@ -1664,11 +1664,12 @@ set_window_title(debugtext);
 					/* note on */
 					if(eof_import_events[i]->event[j]->type == 0x90)
 					{
+						char doublebass = 0;
+
 #ifdef EOF_DEBUG
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote on:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
 						eof_log(eof_log_string, 1);
 #endif
-						char doublebass = 0;
 
 						if(eof_import_events[i]->game == 0)
 						{	//If the MIDI is in Rock Band/FoF/Phase Shift notation
@@ -2022,7 +2023,7 @@ set_window_title(debugtext);
 								{	//If the note is in the same difficulty as this note off event and it contains one of the same gems
 //									allegro_message("break %d, %d, %d", k - 1, sp->legacy_track[picked_track]->note[k - 1]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);	//Debug
 #ifdef EOF_DEBUG
-									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%ld (Diff=%d, Pos=%lu, Mask=%d) from length %ld to %lu", k, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_length(sp, picked_track, k - 1), event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u) from length %ld to %lu", k, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_length(sp, picked_track, k - 1), event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
 									eof_log(eof_log_string, 1);
 #endif
 									eof_set_note_length(sp, picked_track, k - 1, event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
@@ -2063,7 +2064,7 @@ set_window_title(debugtext);
 													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= openstrumpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 													{	//If the note is in the same difficulty as the open strum phrase, and its timestamp falls between the phrase on and phrase off marker
 #ifdef EOF_DEBUG
-														(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%ld (Diff=%d, Pos=%lu, Mask=%d, Length=%ld) to have a note mask of 33", k - 1, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_length(sp, picked_track, k - 1));
+														(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u, Length=%ld) to have a note mask of 33", k - 1, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_length(sp, picked_track, k - 1));
 														eof_log(eof_log_string, 1);
 #endif
 														eof_set_note_note(sp, picked_track, k - 1, 33);	//Change this note to a lane 1+6 chord (the cleanup logic should later correct this to just a lane 6 gem, EOF's in-editor notation for open strum bass).  This modification is necessary so that the note off event representing the end of the lane 1 gem for an open bass note can be processed properly.
@@ -2802,7 +2803,7 @@ set_window_title(debugtext);
 								{	//If the note is in the same difficulty as this note off event and it contains one of the same gems
 //									allegro_message("break %d, %d, %d", k - 1, sp->legacy_track[picked_track]->note[k - 1]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);	//Debug
 #ifdef EOF_DEBUG
-									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%ld (Diff=%d, Pos=%lu, Mask=%d) from length %ld to %lu", k - 1, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_length(sp, picked_track, k - 1), event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u) from length %ld to %lu", k - 1, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_length(sp, picked_track, k - 1), event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
 									eof_log(eof_log_string, 1);
 #endif
 									eof_set_note_length(sp, picked_track, k - 1, event_realtime - eof_get_note_pos(sp, picked_track, k - 1));

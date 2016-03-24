@@ -362,7 +362,7 @@ int qsort_helper3(const void * e1, const void * e2)
    voila, correctly formatted MIDI file */
 int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixvoxpitches, char fixvoxphrases, char format)
 {
-	char header[14] = {'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 1, 0, 1, (EOF_DEFAULT_TIME_DIVISION >> 8), (EOF_DEFAULT_TIME_DIVISION & 0xFF)}; //The last two bytes are the time division
+	unsigned char header[14] = {'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 1, 0, 1, (EOF_DEFAULT_TIME_DIVISION >> 8), (EOF_DEFAULT_TIME_DIVISION & 0xFF)}; //The last two bytes are the time division
 	unsigned long timedivision = EOF_DEFAULT_TIME_DIVISION;	//Unless the project is storing a tempo track, EOF's default time division will be used
 	char notetempname[EOF_TRACKS_MAX+1][15];
 	char notetrackspopulated[EOF_TRACKS_MAX+1] = {0};
@@ -401,7 +401,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	unsigned long bitmask;
 	EOF_PHRASE_SECTION *sectionptr;
 	char *currentname = NULL, chordname[100]="";
-	char phase_shift_sysex_phrase[8] = {'P','S','\0',0,0,0,0,0xF7};	//This is used to write Sysex messages for features supported in Phase Shift (ie. open strum)
+	unsigned char phase_shift_sysex_phrase[8] = {'P','S','\0',0,0,0,0,0xF7};	//This is used to write Sysex messages for features supported in Phase Shift (ie. open strum)
 	char fret_hand_pos_written;					//This is used to track whether the track's fret hand positions were completely written yet
 	char fret_hand_positions_generated;			//This is used to track whether fret hand positions were automatically generated for an exported pro guitar/bass track's expert difficulty
 	char fret_hand_positions_present;			//This is used to track whether fret hand positions are defined for an exported pro guitar/bass track's expert difficulty
@@ -2418,7 +2418,7 @@ unsigned char eof_get_midi_pitches(EOF_SONG *sp, unsigned long track, unsigned l
 
 int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 {
-	char header[14] = {'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 1, 0, 1, (EOF_DEFAULT_TIME_DIVISION >> 8), (EOF_DEFAULT_TIME_DIVISION & 0xFF)}; //The last two bytes are the time division
+	unsigned char header[14] = {'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 1, 0, 1, (EOF_DEFAULT_TIME_DIVISION >> 8), (EOF_DEFAULT_TIME_DIVISION & 0xFF)}; //The last two bytes are the time division
 	unsigned long timedivision = EOF_DEFAULT_TIME_DIVISION;	//Unless the project is storing a tempo track, EOF's default time division will be used
 	struct Tempo_change *anchorlist=NULL;	//Linked list containing tempo changes
 	PACKFILE * fp;
@@ -3528,7 +3528,7 @@ void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_chang
 	struct eof_MIDI_data_track *trackptr;
 	struct eof_MIDI_data_event *eventptr;
 	char trackheader[4] = {'M', 'T', 'r', 'k'};
-	char endoftrack[3] = {0xFF, 0x2F, 0};
+	unsigned char endoftrack[3] = {0xFF, 0x2F, 0};
 	PACKFILE *tempf;
 	unsigned long lastdelta, deltapos, track_length, ctr;
 

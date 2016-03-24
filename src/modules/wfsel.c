@@ -60,7 +60,7 @@ int ncdfs_filter_list_add(NCDFS_FILTER_LIST * lp, char * ext, char * desc, int d
 static int ncd_file_select_allegro_want_all(NCDFS_FILTER_LIST * lp)
 {
 	int i;
-	
+
 	for(i = 0; i < lp->filters; i++)
 	{
 		if(!strcmp(lp->filter[i].extension, "*"))
@@ -137,9 +137,10 @@ char * ncd_file_select(int type, char * initial, const char * title, NCDFS_FILTE
 		char realfilter[1024] = {0}; // fill this buffer with U_UNICODE characters and cast to wchar_t *
 		int i, j, l, epos, cl = 0;
 		OPENFILENAME ofn;
+		HWND allegro_window;
 		memset(&ofn,0,sizeof(ofn));
 		ofn.lStructSize=sizeof(OPENFILENAME);
-		HWND allegro_window = win_get_window();
+		allegro_window = win_get_window();
 		if(ncdfs_use_allegro)
 		{
 			return ncd_file_select_allegro(type, initial, title, lp);

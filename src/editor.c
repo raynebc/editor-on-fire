@@ -3064,16 +3064,16 @@ if(eof_key_code == KEY_PAUSE)
 							else
 							{	//Otherwise check the note's normal bitmask and delete the note if necessary
 								note = eof_get_note_note(eof_song, eof_selected_track, effective_hover_note);
-								if(note == 0)
-								{	//If the note just had all lanes cleared, delete the note
-									eof_track_delete_note(eof_song, eof_selected_track, effective_hover_note);
-									eof_selection.multi[eof_selection.current] = 0;
-									eof_selection.current = EOF_MAX_NOTES - 1;
-									eof_track_sort_notes(eof_song, eof_selected_track);
-									eof_track_fixup_notes(eof_song, eof_selected_track, 1);
-									eof_determine_phrase_status(eof_song, eof_selected_track);
-									(void) eof_detect_difficulties(eof_song, eof_selected_track);
-								}
+							}
+							if(note == 0)
+							{	//If the note just had all lanes cleared, delete the note
+								eof_track_delete_note(eof_song, eof_selected_track, effective_hover_note);
+								eof_selection.multi[eof_selection.current] = 0;
+								eof_selection.current = EOF_MAX_NOTES - 1;
+								eof_track_sort_notes(eof_song, eof_selected_track);
+								eof_track_fixup_notes(eof_song, eof_selected_track, 1);
+								eof_determine_phrase_status(eof_song, eof_selected_track);
+								(void) eof_detect_difficulties(eof_song, eof_selected_track);
 							}
 
 							if(eof_selection.current != EOF_MAX_NOTES - 1)
@@ -6337,7 +6337,7 @@ void eof_editor_logic_common(void)
 				{	//If click and drag isn't disabled, check whether a beat marker is being moved
 					if((eof_mouse_drug > 10) && !eof_blclick_released && (eof_selected_beat == 0) && (eof_mickeys_x != 0) && (eof_hover_beat == eof_selected_beat) && !((eof_mickeys_x * eof_zoom < 0) && (eof_song->beat[0]->pos == 0)))
 					{	//If moving the first beat marker
-						int rdiff = eof_mickeys_x * eof_zoom;
+						long rdiff = eof_mickeys_x * eof_zoom;
 
 						if(!eof_undo_toggle)
 						{
@@ -6345,11 +6345,7 @@ void eof_editor_logic_common(void)
 							eof_moving_anchor = 1;
 							eof_last_midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
 						}
-						if((int)eof_song->beat[0]->pos + rdiff < 0)
-						{
-							rdiff = -eof_song->beat[0]->pos;
-						}
-						else
+						if((long)eof_song->beat[0]->pos + rdiff >= 0)
 						{
 							if(!KEY_EITHER_CTRL)
 							{

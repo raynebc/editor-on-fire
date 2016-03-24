@@ -216,7 +216,7 @@ void eof_allocate_ucode_table(void)
 
 	if(!eof_ucode_table)
 	{
-		eof_ucode_table = malloc(sizeof(short) * 256);
+		eof_ucode_table = malloc(sizeof(unsigned short) * 256);
 		if(eof_ucode_table)
 		{
 			for(i = 0; i < 256; i++)
