@@ -303,6 +303,7 @@ double eof_ConvertToRealTime(unsigned long absolutedelta, struct Tempo_change *a
 	return time + offset;
 }
 
+//Returns the value as if eof_ConvertToRealTime() was called, and the result was rounded up to the nearest unsigned long
 inline unsigned long eof_ConvertToRealTimeInt(unsigned long absolutedelta, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision, unsigned long offset)
 {
 	return eof_ConvertToRealTime(absolutedelta, anchorlist, tslist, timedivision, offset) + 0.5;

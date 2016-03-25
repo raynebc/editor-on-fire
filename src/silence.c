@@ -126,7 +126,7 @@ static int save_wav_fp(SAMPLE * sp, PACKFILE * fp)
 	}
 	else
 	{
-		TRACE("Unknown audio depth (%d) when saving wav ALLEGRO_FILE.\n", bits);
+		TRACE("Unknown audio depth (%lu) when saving wav ALLEGRO_FILE.\n", (unsigned long) bits);
 		return 0;
 	}
 
@@ -217,7 +217,12 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	}
 
 	/* stitch the original file to the silence file */
-	(void) getcwd(old_wd, 1024);
+	if(!getcwd(old_wd, 1024))
+	{	//If the current working directory could not be obtained
+		eof_fix_window_title();
+		return 4;	//Return error:  Could not obtain current working directory
+	}
+
 	(void) eof_chdir(eof_song_path);	//Change directory to the project's folder, since oggCat does not support paths that have any Unicode/extended ASCII, relative paths will be given
 	#ifdef ALLEGRO_WINDOWS
 		get_executable_name(oggcfn, 1024);
@@ -240,7 +245,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	if(eof_chdir(old_wd))
 	{
 		allegro_message("Could not change directory to EOF's program folder!\n%s", backupfn);
-		return 4;	//Return error:  Could not set working directory
+		return 5;	//Return error:  Could not set working directory
 	}
 
 	if(retval)
@@ -249,7 +254,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 		eof_log(eof_log_string, 1);
 		(void) eof_copy_file(backupfn, (char *)oggfn);	//Restore the original OGG file
 		eof_fix_window_title();
-		return 5;	//Return error:  oggCat failed
+		return 6;	//Return error:  oggCat failed
 	}
 
 	/* clean up */
@@ -267,9 +272,9 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 
 	//If this part of the function is reached, the OGG failed to load
 	if(exists(oggfn))
-		return 6;	//Return error:  Could not load new audio, but audio file exists
+		return 7;	//Return error:  Could not load new audio, but audio file exists
 
-	return 7;	//Return error:  Could not load new audio, file does not exist
+	return 8;	//Return error:  Could not load new audio, file does not exist
 }
 
 int eof_add_silence_recode(const char * oggfn, unsigned long ms)
@@ -409,7 +414,12 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 		eof_log(eof_log_string, 1);
 		if(eof_system(sys_command))
 		{	//If oggenc failed again
-			(void) ustrzcat(sys_command, (int) sizeof(sys_command) - 1, " 2> oggenc.log");	//Append a redirection to capture the output of oggenc
+		#ifdef ALLEGRO_WINDOWS
+			char *suffix = " 2> temp\\oggenc.log";
+		#else
+			char *suffix = " 2> temp/oggenc.log";
+		#endif
+			(void) ustrzcat(sys_command, (int) sizeof(sys_command) - 1, suffix);	//Append a redirection to the command to capture the output of oggenc
 			if(eof_system(sys_command))
 			{	//Run one last time to catch the error output
 				eof_log("\tOggenc failed.  Please see oggenc.log for any errors it gave.", 1);
@@ -560,7 +570,12 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 		eof_log(eof_log_string, 1);
 		if(eof_system(sys_command))
 		{	//If oggenc failed again
-			(void) ustrzcat(sys_command, (int) sizeof(sys_command) - 1, " 2> oggenc.log");	//Append a redirection to capture the output of oggenc
+			#ifdef ALLEGRO_WINDOWS
+				char *suffix = " 2> temp\\oggenc.log";
+			#else
+				char *suffix = " 2> temp/oggenc.log";
+			#endif
+			(void) ustrzcat(sys_command, (int) sizeof(sys_command) - 1, suffix);	//Append a redirection to the command to capture the output of oggenc
 			if(eof_system(sys_command))
 			{	//Run one last time to catch the error output
 				eof_log("\tOggenc failed.  Please see oggenc.log for any errors it gave.", 1);

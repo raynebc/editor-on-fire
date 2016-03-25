@@ -231,7 +231,11 @@ EOF_SONG *eof_load_bf(char * fn)
 		pack_ReadDWORDBE(inf, NULL);	//Read and ignore 4 bytes of padding
 		if(!qword || !dword)
 		{	//If valid values weren't read
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUnable to read INDX section #%lu (Index key ID = 0x%016I64X, address = 0x%lX).  Aborting.", sectionctr, qword, dword);
+			#ifdef ALLEGRO_WINDOWS
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUnable to read INDX section #%lu (Index key ID = 0x%016I64x, address = 0x%lX).  Aborting.", sectionctr, qword, dword);
+			#else
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUnable to read INDX section #%lu (Index key ID = 0x%016llux, address = 0x%lX).  Aborting.", sectionctr, qword, dword);
+			#endif
 			eof_log(eof_log_string, 1);
 			(void) pack_fclose(inf);
 			free(sectiondata);
@@ -240,7 +244,11 @@ EOF_SONG *eof_load_bf(char * fn)
 			return NULL;
 		}
 		fileadd += 16;	//Update file address
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSection #%lu:\tIndex key = 0x%016I64X, address = 0x%lX", sectionctr, qword, dword);
+		#ifdef ALLEGRO_WINDOWS
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSection #%lu:\tIndex key = 0x%016I64x, address = 0x%lX", sectionctr, qword, dword);
+		#else
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSection #%lu:\tIndex key = 0x%016llux, address = 0x%lX", sectionctr, qword, dword);
+		#endif
 		eof_log(eof_log_string, BF_IMPORT_LOGGING_LEVEL);
 	}
 
@@ -265,7 +273,11 @@ EOF_SONG *eof_load_bf(char * fn)
 			fileadd += 52;	//Update file address
 			if(!dword || !qword || !qword2 || !qword3 || !numstbentries || (dword2 != 12) || !dword3 || !dword4)
 			{	//If valid values weren't read
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tInvalid STbl header \"%s\" (size = %lu, index key = 0x%016I64X, folder key = 0x%016I64X, language key = 0x%016I64X, number of entries = %lu, table size = %lu, bytes until table = %lu.  Aborting.", header, dword, qword, qword2, qword3, numstbentries, dword3, dword4);
+				#ifdef ALLEGRO_WINDOWS
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tInvalid STbl header \"%s\" (size = %lu, index key = 0x%016I64x, folder key = 0x%016I64x, language key = 0x%016I64x, number of entries = %lu, table size = %lu, bytes until table = %lu.  Aborting.", header, dword, qword, qword2, qword3, numstbentries, dword3, dword4);
+				#else
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tInvalid STbl header \"%s\" (size = %lu, index key = 0x%016llux, folder key = 0x%016llux, language key = 0x%016llux, number of entries = %lu, table size = %lu, bytes until table = %lu.  Aborting.", header, dword, qword, qword2, qword3, numstbentries, dword3, dword4);
+				#endif
 				eof_log(eof_log_string, 1);
 				(void) pack_fclose(inf);
 				free(sectiondata);
@@ -296,7 +308,11 @@ EOF_SONG *eof_load_bf(char * fn)
 				default:
 					lang = "Unknown";
 			}
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSection #%lu (STbl) chunk size = %lu, index key = 0x%016I64X, folder key = 0x%016I64X, language key = 0x%016I64X (%s), number of entries = %lu, table size = %lu, bytes until table = %lu", sectionctr, dword, qword, qword2, qword3, lang, numstbentries, dword3, dword4);
+			#ifdef ALLEGRO_WINDOWS
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSection #%lu (STbl) chunk size = %lu, index key = 0x%016I64x, folder key = 0x%016I64x, language key = 0x%016I64x (%s), number of entries = %lu, table size = %lu, bytes until table = %lu", sectionctr, dword, qword, qword2, qword3, lang, numstbentries, dword3, dword4);
+			#else
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSection #%lu (STbl) chunk size = %lu, index key = 0x%016llux, folder key = 0x%016llux, language key = 0x%016llux (%s), number of entries = %lu, table size = %lu, bytes until table = %lu", sectionctr, dword, qword, qword2, qword3, lang, numstbentries, dword3, dword4);
+			#endif
 			eof_log(eof_log_string, 1);
 
 			//Parse STbl entries
@@ -306,7 +322,11 @@ EOF_SONG *eof_load_bf(char * fn)
 				pack_ReadDWORDBE(inf, &dword);	//Read the offset (from the start of the string table) to this entry's string (is allowed to be all 0s for an empty entry)
 				pack_ReadDWORDBE(inf, NULL);	//Read and ignore 4 bytes of padding
 				fileadd += 16;	//Update file address
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tEntry #%lu:\tIndex key = 0x%016I64X, offset from string table start = %lu", ctr, qword, dword);
+				#ifdef ALLEGRO_WINDOWS
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tEntry #%lu:\tIndex key = 0x%016I64x, offset from string table start = %lu", ctr, qword, dword);
+				#else
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tEntry #%lu:\tIndex key = 0x%016llux, offset from string table start = %lu", ctr, qword, dword);
+				#endif
 				eof_log(eof_log_string, 2);
 				if(lang == lang_english)
 				{	//If this is an English language string table
@@ -362,7 +382,11 @@ EOF_SONG *eof_load_bf(char * fn)
 						buffer[dword] = word;	//Store the byte into the buffer
 						dword++;				//Track the string's size
 				}while(word != '\0');	//Read all bytes into the buffer until a NULL terminator is reached
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tString #%lu:\tIndex key = 0x%016I64X, string table offset = %lu,\t\"%s\"", ctr, stringdata[ctr].indkey, offset, buffer);
+				#ifdef ALLEGRO_WINDOWS
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tString #%lu:\tIndex key = 0x%016I64x, string table offset = %lu,\t\"%s\"", ctr, stringdata[ctr].indkey, offset, buffer);
+				#else
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tString #%lu:\tIndex key = 0x%016llux, string table offset = %lu,\t\"%s\"", ctr, stringdata[ctr].indkey, offset, buffer);
+				#endif
 				eof_log(eof_log_string, 1);
 				if(lang == lang_english)
 				{	//If this is an English language string table
@@ -426,7 +450,11 @@ EOF_SONG *eof_load_bf(char * fn)
 			fileadd += 36;	//Update file address
 			if((zobjsize < 32) || !qword || !qword2 || !qword3)
 			{	//If valid values weren't read
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tUnable to read ZOBJ section (index key = 0x%016I64X, object key = 0x%016I64X, type string key = 0x%016I64X.  Aborting.", qword, qword2, qword3);
+				#ifdef ALLEGRO_WINDOWS
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tUnable to read ZOBJ section (index key = 0x%016I64x, object key = 0x%016I64x, type string key = 0x%016I64x.  Aborting.", qword, qword2, qword3);
+				#else
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tUnable to read ZOBJ section (index key = 0x%016llux, object key = 0x%016llux, type string key = 0x%016llux.  Aborting.", qword, qword2, qword3);
+				#endif
 				eof_log(eof_log_string, 1);
 				(void) pack_fclose(inf);
 				free(sectiondata);
@@ -452,7 +480,11 @@ EOF_SONG *eof_load_bf(char * fn)
 			}
 			sectiondata[ctr].objkey = qword2;	//Store the object key in the array so it's associated with this ZOBJ section
 			string = eof_lookup_bf_string_key(stringdata, numstrings, qword);	//Identify the string name of this ZOBJ section
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSection #%lu (ZOBJ) chunk size = %lu, index key = 0x%016I64X (\"%s\", %s), object key = 0x%016I64X, type string key = 0x%016I64X", sectionctr, zobjsize, qword, string ? string : "[UNKNOWN KEY]", parent ? "Parent" : "Child", qword2, qword3);
+			#ifdef ALLEGRO_WINDOWS
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSection #%lu (ZOBJ) chunk size = %lu, index key = 0x%016I64x (\"%s\", %s), object key = 0x%016I64x, type string key = 0x%016I64x", sectionctr, zobjsize, qword, string ? string : "[UNKNOWN KEY]", parent ? "Parent" : "Child", qword2, qword3);
+			#else
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSection #%lu (ZOBJ) chunk size = %lu, index key = 0x%016llux (\"%s\", %s), object key = 0x%016llux, type string key = 0x%016llux", sectionctr, zobjsize, qword, string ? string : "[UNKNOWN KEY]", parent ? "Parent" : "Child", qword2, qword3);
+			#endif
 			eof_log(eof_log_string, 1);
 
 			//Parse the ZOBJ section
@@ -1124,7 +1156,11 @@ EOF_SONG *eof_load_bf(char * fn)
 //	{	//For each string in the array
 //		if(stringdata[ctr].string)
 //		{	//If this entry has a string
-//			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tString #%lu:\tIndex key = 0x%016I64X, string = \"%s\"", ctr, stringdata[ctr].indkey, stringdata[ctr].string);
+//			#ifdef ALLEGRO_WINDOWS
+//				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tString #%lu:\tIndex key = 0x%016I64x, string = \"%s\"", ctr, stringdata[ctr].indkey, stringdata[ctr].string);
+//			#else
+//				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tString #%lu:\tIndex key = 0x%016llux, string = \"%s\"", ctr, stringdata[ctr].indkey, stringdata[ctr].string);
+//			#endif
 //			eof_log(eof_log_string, BF_IMPORT_LOGGING_LEVEL);
 //		}
 //	}

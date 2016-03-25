@@ -2191,15 +2191,16 @@ int eof_edit_trainer_proc(int msg, DIALOG *d, int c)
 
 int eof_all_events_radio_proc(int msg, DIALOG *d, int c)
 {
-	static int previous_option = 5;	//By default, eof_all_events_dialog[5] (all events) is selected
-	int selected_option, junk;
+	static uintptr_t previous_option = 5;	//By default, eof_all_events_dialog[5] (all events) is selected
+	uintptr_t selected_option;
+	int junk;
 
 	if(msg == MSG_CLICK)
 	{
 		if(!d)	//If this pointer is NULL for any reason
 			return d_agup_radio_proc(msg, d, c);	//Allow the input to be processed
 
-		selected_option = (int)d->dp2;	//Find out which radio button was clicked on
+		selected_option = (uintptr_t)d->dp2;	//Find out which radio button was clicked on
 
 		if(selected_option != previous_option)
 		{	//If the event display filter changed, have the event list redrawn

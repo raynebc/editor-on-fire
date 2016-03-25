@@ -5446,8 +5446,8 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 
 	/* draw track tuning */
-			if(pos <= 320)
-			{	//If the area left of the first beat marker is visible
+			if((pos <= 320) && !eof_legacy_view)
+			{	//If the area left of the first beat marker is visible and legacy view is not in effect
 				int notenum;
 
 				for(i = 0; i < EOF_TUNING_LENGTH; i++)

@@ -4185,9 +4185,20 @@ int eof_initialize(int argc, char * argv[])
 
 	/* check for a previous crash condition of EOF */
 	eof_log("\tChecking for crash recovery files", 1);
+
 	//Ensure the \temp subfolder exists in the program folder
 	if(!file_exists("temp", FA_DIREC | FA_HIDDEN, NULL))
 	{	//If this folder doesn't already exist
+		char wd[1025];
+		if(!getcwd(wd, 1024))
+		{	//If the current working directory couldn't be determined
+			eof_log("\tCould not detect temp folder", 1);
+		}
+		else
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCould not detect temp folder at:  %s", wd);
+			eof_log(eof_log_string, 1);
+		}
 		if(eof_mkdir("temp"))
 		{	//If the folder could not be created
 			allegro_message("Could not create temp folder!\n%s", eof_temp_path);
