@@ -41,8 +41,8 @@ void pack_ReadQWORDBE(PACKFILE *inf, void *data)
 
 int eof_bf_qsort_time_changes(const void * e1, const void * e2)
 {
-	struct bf_timing_change * thing1 = (struct bf_timing_change *)e1;
-	struct bf_timing_change * thing2 = (struct bf_timing_change *)e2;
+	const struct bf_timing_change * thing1 = (struct bf_timing_change *)e1;
+	const struct bf_timing_change * thing2 = (struct bf_timing_change *)e2;
 
 	//Sort by timestamp
 	if(thing1->realtimems < thing2->realtimems)

@@ -1470,7 +1470,6 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 						rz2 = npos2 < -100 ? -100 : npos2 + 10;
 
 						//Define the slide rectangle coordinates in clockwise order
-						#define EOF_SLIDER_LINE_THICKNESS_3D 4
 						point[0] = ocd3d_project_x(xchart[ctr], rz);	//X1 (X coordinate of the front end of the slide): The X position of this note
 						point[1] = ocd3d_project_y(200, rz);			//Y1 (Y coordinate of the front end of the slide): The Y position of this note
 						point[2] = ocd3d_project_x(xchart[ctr2], rz2);	//X2 (X coordinate of the back end of the slide): The X position of the next note

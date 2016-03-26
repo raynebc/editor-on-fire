@@ -144,7 +144,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		return NULL;
 	}
 //	eof_log_level &= ~2;	//Disable verbose logging
-	chart = ImportFeedback((char *)fn, &err);
+	chart = ImportFeedback(fn, &err);
 	if(chart == NULL)
 	{	//Import failed
 		(void) snprintf(oggfn, sizeof(oggfn) - 1, "Error:  %s", eof_chart_import_return_code_list[err % 31]);	//Display the appropriate error
@@ -741,7 +741,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	return sp;
 }
 
-struct FeedbackChart *ImportFeedback(char *filename, int *error)
+struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 {
 	PACKFILE *inf=NULL;
 	char songparsed=0,syncparsed=0,eventsparsed=0;

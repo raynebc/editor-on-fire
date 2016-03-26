@@ -50,7 +50,7 @@ int eof_undo_load_state(const char * fn)
 		return 0;
 	}
 	sp->tags->accurate_ts = 0;	//For existing projects, this setting must be manually enabled in order to prevent unwanted alteration to beat timings
-	(void) snprintf(eof_recover_path, sizeof(eof_recover_path) - 1, "%seof.recover", eof_temp_path);
+	(void) snprintf(eof_recover_path, sizeof(eof_recover_path) - 1, "%seof.recover", eof_temp_path_s);
 	rfp = pack_fopen(eof_recover_path, "r");	//Open the recovery file to prevent eof_destroy_song() from deleting it
 	if(!eof_load_song_pf(sp, fp))
 	{	//If loading the undo state fails
@@ -92,13 +92,13 @@ int eof_undo_add(int type)
 		return 0;
 	}
 
-	//Ensure the \temp subfolder exists in the program folder
-	if(!file_exists("temp", FA_DIREC | FA_HIDDEN, NULL))
+	//Ensure the temporary folder exists
+	if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
 	{	//If this folder doesn't already exist
-		if(eof_mkdir("temp"))
+		if(eof_mkdir(eof_temp_path))
 		{	//If the folder could not be created
-			allegro_message("Could not create temp folder!\n%s", eof_temp_path);
-			return 1;
+			allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
+			return 0;
 		}
 	}
 
@@ -106,7 +106,7 @@ int eof_undo_add(int type)
 	{	//Initialize the undo filename array
 		for(ctr = 0; ctr < EOF_MAX_UNDO; ctr++)
 		{	//For each undo slot
-			(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u-%03lu.undo", eof_temp_path, eof_log_id, ctr);	//Build the undo filename in the format of "eof#-#.undo", where the first number is the EOF ID
+			(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u-%03lu.undo", eof_temp_path_s, eof_log_id, ctr);	//Build the undo filename in the format of "eof#-#.undo", where the first number is the EOF ID
 			eof_undo_filename[ctr] = malloc(sizeof(fn) + 1);
 			if(eof_undo_filename[ctr] == NULL)
 			{
@@ -137,7 +137,7 @@ int eof_undo_add(int type)
 	}
 	if(type == EOF_UNDO_TYPE_SILENCE)
 	{
-		(void) snprintf(fn, sizeof(fn) - 1, "%s%s.ogg", eof_temp_path, eof_undo_filename[eof_undo_current_index]);
+		(void) snprintf(fn, sizeof(fn) - 1, "%s%s.ogg", eof_temp_path_s, eof_undo_filename[eof_undo_current_index]);
 		(void) eof_copy_file(eof_loaded_ogg_name, fn);
 	}
 	eof_undo_last_type = type;
@@ -147,7 +147,7 @@ int eof_undo_add(int type)
 	if(eof_recovery)
 	{	//If this EOF instance is maintaining auto-recovery files
 		PACKFILE *fp;
-		(void) snprintf(fn, sizeof(fn) - 1, "%seof.recover", eof_temp_path);
+		(void) snprintf(fn, sizeof(fn) - 1, "%seof.recover", eof_temp_path_s);
 		fp = pack_fopen(fn, "w");	//Open the recovery definition file for writing
 		if(fp)
 		{	//If the file opened
@@ -184,6 +184,16 @@ int eof_undo_apply(void)
 
 	if(eof_undo_count > 0)
 	{
+		//Ensure the temporary folder exists
+		if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
+		{	//If this folder doesn't already exist
+			if(eof_mkdir(eof_temp_path))
+			{	//If the folder could not be created
+				allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
+				return 0;
+			}
+		}
+
 		//Determine whether each pro guitar track was in tech view
 		for(ctr = 0; ctr < EOF_PRO_GUITAR_TRACKS_MAX; ctr++)
 		{	//For each pro guitar track in the project
@@ -196,7 +206,7 @@ int eof_undo_apply(void)
 
 		strncpy(title, eof_song->tags->title, sizeof(title) - 1);	//Backup the song title field, since if it changes as part of the undo, the Rocksmith WAV file should be deleted
 
-		(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo", eof_temp_path, eof_log_id);	//Include EOF's log ID in the redo name to almost guarantee it is uniquely named
+		(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo", eof_temp_path_s, eof_log_id);	//Include EOF's log ID in the redo name to almost guarantee it is uniquely named
 		(void) eof_save_song(eof_song, fn);
 		eof_redo_type = 0;
 		eof_undo_current_index--;
@@ -211,9 +221,9 @@ int eof_undo_apply(void)
 		}
 		if(eof_undo_type[eof_undo_current_index] == EOF_UNDO_TYPE_SILENCE)
 		{
-			(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo.ogg", eof_temp_path, eof_log_id);	//Include EOF's log ID in the redo name to almost guarantee it is uniquely named
+			(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo.ogg", eof_temp_path_s, eof_log_id);	//Include EOF's log ID in the redo name to almost guarantee it is uniquely named
 			(void) eof_copy_file(eof_loaded_ogg_name, fn);
-			(void) snprintf(fn, sizeof(fn) - 1, "%s%s.ogg", eof_temp_path, eof_undo_filename[eof_undo_current_index]);
+			(void) snprintf(fn, sizeof(fn) - 1, "%s%s.ogg", eof_temp_path_s, eof_undo_filename[eof_undo_current_index]);
 			(void) eof_copy_file(fn, eof_loaded_ogg_name);
 			(void) eof_load_ogg(eof_loaded_ogg_name, 0);
 			eof_delete_rocksmith_wav();		//Delete the Rocksmith WAV file since changing silence will require a new WAV file to be written
@@ -272,6 +282,16 @@ void eof_redo_apply(void)
 
 	if(eof_redo_count > 0)
 	{
+		//Ensure the temporary folder exists
+		if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
+		{	//If this folder doesn't already exist
+			if(eof_mkdir(eof_temp_path))
+			{	//If the folder could not be created
+				allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
+				return;
+			}
+		}
+
 		//Determine whether each pro guitar track was in tech view
 		for(ctr = 0; ctr < EOF_PRO_GUITAR_TRACKS_MAX; ctr++)
 		{	//For each pro guitar track in the project
@@ -290,11 +310,11 @@ void eof_redo_apply(void)
 		{
 			eof_undo_current_index = 0;
 		}
-		(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo", eof_temp_path, eof_log_id);	//Get the name of this EOF instance's redo file
+		(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo", eof_temp_path_s, eof_log_id);	//Get the name of this EOF instance's redo file
 		(void) eof_undo_load_state(fn);	//And load it
 		if(eof_redo_type == EOF_UNDO_TYPE_SILENCE)
 		{
-			(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo.ogg", eof_temp_path, eof_log_id);	//Get the name of this EOF instance's redo OGG
+			(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo.ogg", eof_temp_path_s, eof_log_id);	//Get the name of this EOF instance's redo OGG
 			(void) eof_copy_file(fn, eof_loaded_ogg_name);	//And save the current audio to that filename
 			(void) eof_load_ogg(eof_loaded_ogg_name, 0);
 			eof_delete_rocksmith_wav();		//Delete the Rocksmith WAV file since changing silence will require a new WAV file to be written

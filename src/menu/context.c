@@ -72,11 +72,11 @@ void eof_prepare_context_menu(void)
 		}
 		if(eof_vocals_selected)
 		{
-			(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.vocals.clipboard", eof_temp_path);
+			(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.vocals.clipboard", eof_temp_path_s);
 		}
 		else
 		{
-			(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.clipboard", eof_temp_path);
+			(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.clipboard", eof_temp_path_s);
 		}
 		if(exists(clipboard_path))
 		{	//If there is a note clipboard file, enable the Paste function

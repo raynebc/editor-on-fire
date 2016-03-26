@@ -20,8 +20,6 @@
 #include "memwatch.h"
 #endif
 
-#define EOF_MIDI_TIMER_FREQUENCY  40
-
 static EOF_MIDI_EVENT * eof_midi_event[EOF_MAX_MIDI_EVENTS];
 static unsigned long eof_midi_events = 0;
 static char eof_midi_event_full = 0;			//Is set to nonzero when an overflow of the eof_midi_event[] array was prevented, is reset by eof_clear_midi_events()
@@ -364,14 +362,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 {
 	unsigned char header[14] = {'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 1, 0, 1, (EOF_DEFAULT_TIME_DIVISION >> 8), (EOF_DEFAULT_TIME_DIVISION & 0xFF)}; //The last two bytes are the time division
 	unsigned long timedivision = EOF_DEFAULT_TIME_DIVISION;	//Unless the project is storing a tempo track, EOF's default time division will be used
-	char notetempname[EOF_TRACKS_MAX+1][15];
+	char notetempname[EOF_TRACKS_MAX+1][25];
 	char notetrackspopulated[EOF_TRACKS_MAX+1] = {0};
-	char expertplustempname[] = {"expert+.tmp"};	//Stores the temporary filename for the Expert+ track data
-	char tempotempname[] = {"tempo.tmp"};
-	char eventtempname[] = {"event.tmp"};
-	char beattempname[] = {"beat.tmp"};
+	char expertplustempname[30];	//Stores the temporary filename for the Expert+ track data
+	char tempotempname[30];
+	char eventtempname[30];
+	char beattempname[30];
 	char expertplusfilename[1024] = {0};
-	char expertplusshortname[] = {"expert+.mid"};
+	char expertplusshortname[30];
 	char *tempotrackname;
 	PACKFILE * fp;
 	PACKFILE * fp3 = NULL;					//File pointer for the Expert+ file
@@ -439,10 +437,24 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	header[12] = timedivision >> 8;		//Update the MIDI header to reflect the time division (which may have changed if a stored tempo track is present)
 	header[13] = timedivision & 0xFF;
 
-	//Initialize the temporary filename array
+	//Ensure the temporary folder exists
+	if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
+	{	//If this folder doesn't already exist
+		if(eof_mkdir(eof_temp_path))
+		{	//If the folder could not be created
+			allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
+			return 0;	//Return failure
+		}
+	}
+	//Generate temporary filenames
+	(void) snprintf(expertplustempname, sizeof(expertplustempname) - 1, "%sexpert+.tmp", eof_temp_path_s);
+	(void) snprintf(tempotempname, sizeof(tempotempname) - 1, "%stempo.tmp", eof_temp_path_s);
+	(void) snprintf(eventtempname, sizeof(eventtempname) - 1, "%sevent.tmp", eof_temp_path_s);
+	(void) snprintf(beattempname, sizeof(beattempname) - 1, "%sbeat.tmp", eof_temp_path_s);
+	(void) snprintf(expertplusshortname, sizeof(expertplusshortname) - 1, "%sexpert+.mid", eof_temp_path_s);
 	for(i = 0; i < EOF_TRACKS_MAX+1; i++)
 	{
-		(void) snprintf(notetempname[i], sizeof(notetempname[i]) - 1, "eof%lu.tmp", i);
+		(void) snprintf(notetempname[i], sizeof(notetempname[i]) - 1, "%seof%lu.tmp", eof_temp_path_s, i);
 	}
 
 	eof_sort_notes(sp);	//Writing efficient on-the-fly HOPO phrasing relies on all notes being sorted
@@ -2432,9 +2444,9 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 	struct eof_MIDI_data_track *trackptr;		//Used to count the number of raw MIDI tracks to export
 	EOF_MIDI_KS_LIST *kslist;
 	#define EOF_MUSIC_MIDI_TRACKS_MAX (EOF_PRO_GUITAR_TRACKS_MAX + EOF_PRO_GUITAR_TRACKS_MAX + EOF_VOCAL_TRACKS_MAX + 1)
-	char notetempname[EOF_MUSIC_MIDI_TRACKS_MAX][15] = {{0}};	//The list of temporary files created to store the binary content for each MIDI track, a maximum potential of two copies of each pro guitar track and one of each vocal track
-	char tempotempname[] = {"tempo.tmp"};
-	char eventtempname[] = {"event.tmp"};
+	char notetempname[EOF_MUSIC_MIDI_TRACKS_MAX][25] = {{0}};	//The list of temporary files created to store the binary content for each MIDI track, a maximum potential of two copies of each pro guitar track and one of each vocal track
+	char tempotempname[30];
+	char eventtempname[30];
 	unsigned char pitchmask, pitches[6] = {0};
 	char *name, notename[EOF_NAME_LENGTH+1] = {0};
 	char eventstrackwritten = 0;			//Tracks whether an events track has been written
@@ -2466,10 +2478,22 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 	header[12] = timedivision >> 8;		//Update the MIDI header to reflect the time division (which may have changed if a stored tempo track is present)
 	header[13] = timedivision & 0xFF;
 
-	//Initialize the temporary filename array
+	//Ensure the temporary folder exists
+	if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
+	{	//If this folder doesn't already exist
+		if(eof_mkdir(eof_temp_path))
+		{	//If the folder could not be created
+			allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
+			return 0;	//Return failure
+		}
+	}
+
+	//Generate temporary filenames
+	(void) snprintf(tempotempname, sizeof(tempotempname) - 1, "%stempo.tmp", eof_temp_path_s);
+	(void) snprintf(eventtempname, sizeof(eventtempname) - 1, "%sevent.tmp", eof_temp_path_s);
 	for(i = 0; i < EOF_MUSIC_MIDI_TRACKS_MAX; i++)
 	{
-		(void) snprintf(notetempname[i], sizeof(notetempname[i]) - 1, "eof%lu.tmp", i);
+		(void) snprintf(notetempname[i], sizeof(notetempname[i]) - 1, "%seof%lu.tmp", eof_temp_path_s, i);
 	}
 
 	eof_sort_notes(sp);
@@ -3529,6 +3553,7 @@ void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_chang
 	struct eof_MIDI_data_event *eventptr;
 	char trackheader[4] = {'M', 'T', 'r', 'k'};
 	unsigned char endoftrack[3] = {0xFF, 0x2F, 0};
+	char tempfname[30];
 	PACKFILE *tempf;
 	unsigned long lastdelta, deltapos, track_length, ctr;
 
@@ -3537,12 +3562,23 @@ void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_chang
 
 	eof_log("eof_MIDI_data_track_export() entered", 1);
 
+	//Ensure the temporary folder exists
+	if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
+	{	//If this folder doesn't already exist
+		if(eof_mkdir(eof_temp_path))
+		{	//If the folder could not be created
+			allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
+			return;
+		}
+	}
+
 	for(trackptr = sp->midi_data_head; trackptr != NULL; trackptr = trackptr->next)
 	{	//For each raw MIDI track
 		if(!trackptr->timedivision)
 		{	//Only write this track if it is not a tempo track, that will be written in eof_export_midi()
-	//Write the track's MIDI data to a temporary file so its size can be obtained easily
-			tempf = pack_fopen("mididatatemp.tmp", "w");	//Open temporary file for writing
+			//Write the track's MIDI data to a temporary file so its size can be obtained easily
+			(void) snprintf(tempfname, sizeof(tempfname) - 1, "%smididatatemp.tmp", eof_temp_path_s);
+			tempf = pack_fopen(tempfname, "w");	//Open temporary file for writing
 			if(!tempf)
 				return;
 			lastdelta = 0;
@@ -3563,8 +3599,8 @@ void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_chang
 			(void) pack_fclose(tempf);					//Close the temporary file
 
 	//Get the track's size and write it to the output MIDI file
-			track_length = (unsigned long)file_size_ex("mididatatemp.tmp");	//Get the temporary file's size
-			tempf = pack_fopen("mididatatemp.tmp", "r");		//Open temporary file for reading
+			track_length = (unsigned long)file_size_ex(tempfname);	//Get the temporary file's size
+			tempf = pack_fopen(tempfname, "r");			//Open temporary file for reading
 			if(!tempf)
 				return;
 			(void) pack_fwrite(trackheader, 4, outf);	//Write the output track header
@@ -3576,7 +3612,7 @@ void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_chang
 			(void) pack_fclose(tempf);	//Close the temporary file
 		}
 	}
-	(void) delete_file("mididatatemp.tmp");
+	(void) delete_file(tempfname);
 }
 
 void eof_check_vocals(EOF_SONG* sp, char *fixvoxpitches, char *fixvoxphrases)

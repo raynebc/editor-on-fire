@@ -90,7 +90,7 @@ void * eof_buffer_file(const char * fn, char appendnull)
 	return data;
 }
 
-int eof_copy_file(char * src, char * dest)
+int eof_copy_file(const char * src, const char * dest)
 {
 	PACKFILE * src_fp = NULL;
 	PACKFILE * dest_fp = NULL;

@@ -2740,16 +2740,16 @@ int eof_menu_beat_copy_rs_events(void)
 	}
 
 	//Create clipboard file
-	//Ensure the \temp subfolder exists in the program folder
-	if(!file_exists("temp", FA_DIREC | FA_HIDDEN, NULL))
+	//Ensure the temporary folder exists
+	if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
 	{	//If this folder doesn't already exist
-		if(eof_mkdir("temp"))
+		if(eof_mkdir(eof_temp_path))
 		{	//If the folder could not be created
-			allegro_message("Could not create temp folder!\n%s", eof_temp_path);
+			allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
 			return 1;
 		}
 	}
-	(void) snprintf(eof_events_clipboard_path, sizeof(eof_events_clipboard_path) - 1, "%seof.events.clipboard", eof_temp_path);
+	(void) snprintf(eof_events_clipboard_path, sizeof(eof_events_clipboard_path) - 1, "%seof.events.clipboard", eof_temp_path_s);
 	fp = pack_fopen(eof_events_clipboard_path, "w");
 	if(!fp)
 	{
@@ -2803,16 +2803,16 @@ int eof_menu_beat_copy_events(void)
 		}
 		if(!ctr)
 		{	//At the end of the first pass, open the clipboard file
-			//Ensure the \temp subfolder exists in the program folder
-			if(!file_exists("temp", FA_DIREC | FA_HIDDEN, NULL))
+			//Ensure the temporary folder exists
+			if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
 			{	//If this folder doesn't already exist
-				if(eof_mkdir("temp"))
+				if(eof_mkdir(eof_temp_path))
 				{	//If the folder could not be created
-					allegro_message("Could not create temp folder!\n%s", eof_temp_path);
+					allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
 					return 1;
 				}
 			}
-			(void) snprintf(eof_events_clipboard_path, sizeof(eof_events_clipboard_path) - 1, "%seof.events.clipboard", eof_temp_path);
+			(void) snprintf(eof_events_clipboard_path, sizeof(eof_events_clipboard_path) - 1, "%seof.events.clipboard", eof_temp_path_s);
 			fp = pack_fopen(eof_events_clipboard_path, "w");
 			if(!fp)
 			{
@@ -2838,7 +2838,7 @@ int eof_menu_beat_paste_events(void)
 		return 1;	//Error
 
 	//Open the clipboard
-	(void) snprintf(eof_events_clipboard_path, sizeof(eof_events_clipboard_path) - 1, "%seof.events.clipboard", eof_temp_path);
+	(void) snprintf(eof_events_clipboard_path, sizeof(eof_events_clipboard_path) - 1, "%seof.events.clipboard", eof_temp_path_s);
 	fp = pack_fopen(eof_events_clipboard_path, "r");
 	if(!fp)
 	{

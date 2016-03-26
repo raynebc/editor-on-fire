@@ -275,7 +275,7 @@ void eof_destroy_song(EOF_SONG * sp)
 	eof_log("\tProject closed", 1);
 	if(eof_recovery && (sp == eof_song))
 	{	//If this EOF instance is maintaining an auto-recovery file, and the currently-open song is being destroyed
-		(void) snprintf(eof_recover_path, sizeof(eof_recover_path) - 1, "%seof.recover", eof_temp_path);
+		(void) snprintf(eof_recover_path, sizeof(eof_recover_path) - 1, "%seof.recover", eof_temp_path_s);
 		(void) delete_file(eof_recover_path);	//Delete it when the active project is cleanly closed
 	}
 	free(sp);
@@ -2661,6 +2661,15 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	}
 
 	/* write custom data blocks */
+	//Ensure the temporary folder exists
+	if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
+	{	//If this folder doesn't already exist
+		if(eof_mkdir(eof_temp_path))
+		{	//If the folder could not be created
+			allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
+			return 0;	//Return error
+		}
+	}
 //	(void) pack_iputl(0, fp);	//Write an empty custom data block
 	has_raw_midi_data = 0;
 	if(sp->midi_data_head)
@@ -2676,9 +2685,11 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			struct eof_MIDI_data_track *trackptr;	//Used to point to the beginning of the track linked list
 			struct eof_MIDI_data_event *eventptr;
 			unsigned long filesize;
+			char rawmididatafn[30];
 
 		//Parse the linked list to write the MIDI data to a temp file
-			tfp = pack_fopen("rawmididata.tmp", "w");
+			snprintf(rawmididatafn, sizeof(rawmididatafn) - 1, "%srawmididata.tmp", eof_temp_path_s);
+			tfp = pack_fopen(rawmididatafn, "w");
 			if(!tfp)
 			{	//If the temp file couldn't be opened for writing
 				eof_log("\tError creating temp file for raw MIDI data block", 1);
@@ -2723,9 +2734,9 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			(void) pack_fclose(tfp);	//Close temp file
 
 		//Write the custom data block
-			filesize = (unsigned long)file_size_ex("rawmididata.tmp");
+			filesize = (unsigned long)file_size_ex(rawmididatafn);
 			(void) pack_iputl(filesize, fp);	//Write the size of this data block
-			tfp = pack_fopen("rawmididata.tmp", "r");
+			tfp = pack_fopen(rawmididatafn, "r");
 			if(!tfp)
 			{	//If the temp file couldn't be opened for writing
 				eof_log("\tError reading temp file for raw MIDI data block", 1);
@@ -2737,16 +2748,18 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				(void) pack_putc(pack_getc(tfp), fp);	//Copy the byte to the output project file
 			}
 			(void) pack_fclose(tfp);
-			(void) delete_file("rawmididata.tmp");	//Delete the temp file
+			(void) delete_file(rawmididatafn);	//Delete the temp file
 		}//If there is raw MIDI data being stored, write it as a custom data block
 		if(has_fp_beat_timings)
 		{	//If floating point beat timings are to be written
 			char buffer[100] = {0};	//Will be used to store an ASCII representation of the beat timestamps
 			PACKFILE *tfp;	//Used to create a temp file containing the beat timings, so its size can easily be determined before dumping into the output project file
 			unsigned long filesize;
+			char beattimesfn[30];
 
 		//Write the beat timings to a temp file
-			tfp = pack_fopen("beattimes.tmp", "w");
+			(void) snprintf(beattimesfn, sizeof(beattimesfn) - 1, "%sbeattimes.tmp", eof_temp_path_s);
+			tfp = pack_fopen(beattimesfn, "w");
 			if(!tfp)
 			{	//If the temp file couldn't be opened for writing
 				eof_log("\tError creating temp file for floating point beat timings data block", 1);
@@ -2761,9 +2774,9 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			(void) pack_fclose(tfp);	//Close temp file
 
 		//Write the custom data block
-			filesize = (unsigned long)file_size_ex("beattimes.tmp");
+			filesize = (unsigned long)file_size_ex(beattimesfn);
 			(void) pack_iputl(filesize, fp);	//Write the size of this data block
-			tfp = pack_fopen("beattimes.tmp", "r");
+			tfp = pack_fopen(beattimesfn, "r");
 			if(!tfp)
 			{	//If the temp file couldn't be opened for writing
 				eof_log("\tError reading temp file for floating point beat timings data block", 1);
@@ -2775,7 +2788,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				(void) pack_putc(pack_getc(tfp), fp);	//Copy the byte to the output project file
 			}
 			(void) pack_fclose(tfp);
-			(void) delete_file("beattimes.tmp");	//Delete the temp file
+			(void) delete_file(beattimesfn);	//Delete the temp file
 		}
 	}//If writing data in a custom data block
 	else
@@ -3278,8 +3291,9 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				{	//Write tech notes
 					PACKFILE *tempf;	//Since the size of the custom data block must be known in advance, write it to a temp file so its size can be read
 					unsigned long file_size;
-					char tempfilename[] = "eof_tech_notes.tmp";
+					char tempfilename[30];
 
+					(void) snprintf(tempfilename, sizeof(tempfilename) - 1, "%seof_tech_notes.tmp", eof_temp_path_s);
 					tempf = pack_fopen(tempfilename, "w");
 					if(!tempf)
 					{	//If there was an error opening the temp file for writing

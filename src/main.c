@@ -205,7 +205,8 @@ int         eof_selected_ogg = 0;
 EOF_SONG    * eof_song = NULL;
 EOF_NOTE    eof_pen_note;
 EOF_LYRIC   eof_pen_lyric;
-char        eof_temp_path[20] = {0};					//The relative path to \temp\ in EOF's program folder
+char        eof_temp_path[20] = {0};					//The relative path to the temp folder used by EOF
+char        eof_temp_path_s[20] = {0};					//The relative path to the temp folder used by EOF, with a path separator appended
 char        eof_filename[1024] = {0};					//The full path of the EOF file that is loaded
 char        eof_song_path[1024] = {0};					//The path to active project's parent folder
 char        eof_songs_path[1024] = {0};					//The path to the user's song folder
@@ -1580,7 +1581,7 @@ int eof_load_ogg_quick(char * filename)
 	return loaded;
 }
 
-int eof_load_ogg(char * filename, char silence_failover)
+int eof_load_ogg(const char * filename, char silence_failover)
 {
 	char * returnedfn = NULL;
 	char * ptr = filename;	//Used to refer to the OGG file that was processed from memory buffer
@@ -3895,8 +3896,13 @@ int eof_initialize(int argc, char * argv[])
 	}
 
 	//Build the path to the temp subfolder
-	snprintf(eof_temp_path, sizeof(eof_temp_path) - 1, "temp");
-	put_backslash(eof_temp_path);
+	#ifdef ALLEGRO_WINDOWS
+        snprintf(eof_temp_path, sizeof(eof_temp_path) - 1, "temp");
+    #else
+        snprintf(eof_temp_path, sizeof(eof_temp_path) - 1, "/tmp/eof");
+    #endif
+	strncpy(eof_temp_path_s, eof_temp_path, sizeof(eof_temp_path_s) - 1);
+	put_backslash(eof_temp_path_s);
 
 	//Set the locale back to the default "C" locale because on Linux builds of Allegro, the locale is set to the local system locale when the keyboard system is initialized above
 	(void) setlocale(LC_ALL, "C");
@@ -4186,8 +4192,8 @@ int eof_initialize(int argc, char * argv[])
 	/* check for a previous crash condition of EOF */
 	eof_log("\tChecking for crash recovery files", 1);
 
-	//Ensure the \temp subfolder exists in the program folder
-	if(!file_exists("temp", FA_DIREC | FA_HIDDEN, NULL))
+	//Ensure the temporary folder exists
+	if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
 	{	//If this folder doesn't already exist
 		char wd[1025];
 		if(!getcwd(wd, 1024))
@@ -4199,19 +4205,19 @@ int eof_initialize(int argc, char * argv[])
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCould not detect temp folder at:  %s", wd);
 			eof_log(eof_log_string, 1);
 		}
-		if(eof_mkdir("temp"))
+		if(eof_mkdir(eof_temp_path))
 		{	//If the folder could not be created
-			allegro_message("Could not create temp folder!\n%s", eof_temp_path);
+			allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
 			return 0;
 		}
 	}
-	(void) snprintf(eof_recover_on_path, sizeof(eof_recover_on_path) - 1, "%seof.recover.on", eof_temp_path);
+	(void) snprintf(eof_recover_on_path, sizeof(eof_recover_on_path) - 1, "%seof.recover.on", eof_temp_path_s);
 	if(exists(eof_recover_on_path))
 	{	//If the recovery status file is present
 		(void) delete_file(eof_recover_on_path);	//Try to delete the file
 		if(!exists(eof_recover_on_path))
 		{	//If the file no longer exists, it is not open by another EOF instance
-			(void) snprintf(eof_recover_path, sizeof(eof_recover_path) - 1, "%seof.recover", eof_temp_path);
+			(void) snprintf(eof_recover_path, sizeof(eof_recover_path) - 1, "%seof.recover", eof_temp_path_s);
 			if(exists(eof_recover_path))
 			{	//If the recovery file exists
 				char *buffer = eof_buffer_file(eof_recover_path, 1);	//Read its contents into a NULL terminated string buffer
@@ -4434,9 +4440,9 @@ void eof_exit(void)
 
 	//Delete the undo/redo related files
 	eof_save_config("eof.cfg");
-	(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo", eof_temp_path, eof_log_id);	//Get the name of this EOF instance's redo file
+	(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo", eof_temp_path_s, eof_log_id);	//Get the name of this EOF instance's redo file
 	(void) delete_file(fn);	//And delete it if it exists
-	(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo.ogg", eof_temp_path, eof_log_id);	//Get the name of this EOF instance's redo OGG
+	(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo.ogg", eof_temp_path_s, eof_log_id);	//Get the name of this EOF instance's redo OGG
 	(void) delete_file(fn);	//And delete it if it exists
 	if(eof_undo_states_initialized > 0)
 	{
@@ -4445,12 +4451,12 @@ void eof_exit(void)
 			if(eof_undo_filename[i])
 			{
 				(void) delete_file(eof_undo_filename[i]);	//Delete the undo file
-				(void) snprintf(fn, sizeof(fn) - 1, "%s%s.ogg", eof_temp_path, eof_undo_filename[i]);	//Get the filename of any associated undo OGG
+				(void) snprintf(fn, sizeof(fn) - 1, "%s%s.ogg", eof_temp_path_s, eof_undo_filename[i]);	//Get the filename of any associated undo OGG
 				(void) delete_file(fn);	//And delete it if it exists
 			}
 		}
 	}
-	(void) snprintf(eof_autoadjust_path, sizeof(eof_autoadjust_path) - 1, "%seof.autoadjust", eof_temp_path);
+	(void) snprintf(eof_autoadjust_path, sizeof(eof_autoadjust_path) - 1, "%seof.autoadjust", eof_temp_path_s);
 	(void) delete_file(eof_autoadjust_path);
 	eof_destroy_undo();
 
@@ -4522,7 +4528,7 @@ void eof_exit(void)
 	{	//If this EOF instance is maintaining auto-recovery files
 		(void) pack_fclose(eof_recovery);
 		eof_recovery = NULL;
-		(void) snprintf(eof_recover_on_path, sizeof(eof_recover_on_path) - 1, "%seof.recover.on", eof_temp_path);
+		(void) snprintf(eof_recover_on_path, sizeof(eof_recover_on_path) - 1, "%seof.recover.on", eof_temp_path_s);
 		(void) delete_file(eof_recover_on_path);
 	}
 }
@@ -4658,7 +4664,7 @@ void eof_set_3D_lane_positions(unsigned long track)
 	unsigned long newnumlanes = eof_count_track_lanes(eof_song, track);	//This is the number of lanes in the specified track
 	unsigned long numlaneswidth = 5 - 1;	//By default, the lane width will be based on a 5 lane track
 	unsigned long ctr;
-	float lanewidth = 0.0;
+	double lanewidth = 0.0;
 
 	if(!eof_song)	//If a song isn't loaded, ie. the user changed the lefty mode option with no song loaded
 		return;		//Return immediately

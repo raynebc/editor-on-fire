@@ -357,7 +357,7 @@ void eof_recalculate_beats(EOF_SONG * sp, unsigned long cbeat)
 
 	/* figure out what the new BPM should be */
 	beats_length = sp->beat[cbeat]->fpos - sp->beat[last_anchor]->fpos;
-	if(!beats_length || !beats)
+	if((cbeat == last_anchor) || !beats)
 		return;	//Error condition
 	if(sp->tags->accurate_ts)
 	{	//If the user enabled the accurate time signatures song property
@@ -390,7 +390,7 @@ void eof_recalculate_beats(EOF_SONG * sp, unsigned long cbeat)
 			beats = next_anchor - cbeat;	//The number of beats between the specified beat and the next anchor
 
 		beats_length = sp->beat[next_anchor]->fpos - sp->beat[cbeat]->fpos;
-		if(!beats_length || !beats)
+		if((next_anchor == cbeat) || !beats)
 			return;	//Error condition
 		if(sp->tags->accurate_ts)
 		{	//If the user enabled the accurate time signatures song property

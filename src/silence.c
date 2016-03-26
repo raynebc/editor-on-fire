@@ -191,7 +191,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	(void) snprintf(backupfn, sizeof(backupfn) - 1, "%s.backup", oggfn);
 	if(!exists(backupfn))
 	{
-		(void) eof_copy_file((char *)oggfn, backupfn);
+		(void) eof_copy_file(oggfn, backupfn);
 	}
 	(void) delete_file(oggfn);
 
@@ -252,7 +252,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	{	//If the command failed
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError issuing command \"%s\" from path \"%s\"", sys_command, eof_song_path);
 		eof_log(eof_log_string, 1);
-		(void) eof_copy_file(backupfn, (char *)oggfn);	//Restore the original OGG file
+		(void) eof_copy_file(backupfn, oggfn);	//Restore the original OGG file
 		eof_fix_window_title();
 		return 6;	//Return error:  oggCat failed
 	}
@@ -260,7 +260,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	/* clean up */
 	(void) delete_file(wavfn);	//Delete silence.wav
 	(void) delete_file(soggfn);	//Delete silence.ogg
-	if(eof_load_ogg((char *)oggfn, 0))
+	if(eof_load_ogg(oggfn, 0))
 	{	//If the combined audio was loaded
 		eof_fix_waveform_graph();
 		eof_fix_spectrogram();
@@ -306,7 +306,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	(void) snprintf(backupfn, sizeof(backupfn) - 1, "%s.backup", oggfn);
 	if(!exists(backupfn))
 	{
-		(void) eof_copy_file((char *)oggfn, backupfn);
+		(void) eof_copy_file(oggfn, backupfn);
 	}
 
 	/* Decode the OGG file into memory */
@@ -414,28 +414,37 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 		eof_log(eof_log_string, 1);
 		if(eof_system(sys_command))
 		{	//If oggenc failed again
-		#ifdef ALLEGRO_WINDOWS
-			char *suffix = " 2> temp\\oggenc.log";
-		#else
-			char *suffix = " 2> temp/oggenc.log";
-		#endif
-			(void) ustrzcat(sys_command, (int) sizeof(sys_command) - 1, suffix);	//Append a redirection to the command to capture the output of oggenc
+			char tempfname[30];
+
+			//Ensure the temporary folder exists
+			if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
+			{	//If this folder doesn't already exist
+				if(eof_mkdir(eof_temp_path))
+				{	//If the folder could not be created
+					allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
+					return 46;	//Return failure:  Could not create temp folder
+				}
+			}
+
+			(void) snprintf(tempfname, sizeof(tempfname) - 1, "%soggenc.log", eof_temp_path_s);
+			(void) ustrzcat(sys_command, (int) sizeof(sys_command) - 1, tempfname);	//Append a redirection to the command to capture the output of oggenc
 			if(eof_system(sys_command))
 			{	//Run one last time to catch the error output
-				eof_log("\tOggenc failed.  Please see oggenc.log for any errors it gave.", 1);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tOggenc failed.  Please see %s for any errors it gave.", tempfname);
+				eof_log(eof_log_string, 1);
 				eof_fix_window_title();
-				return 46;	//Return failure:  Could not encode combined audio
+				return 47;	//Return failure:  Could not encode combined audio
 			}
 		}
 	}
 
 	/* replace the current OGG file with the new file */
-	(void) eof_copy_file(soggfn, (char *)oggfn);	//Copy encode.ogg to the filename of the original OGG
+	(void) eof_copy_file(soggfn, oggfn);	//Copy encode.ogg to the filename of the original OGG
 
 	/* clean up */
 	(void) delete_file(soggfn);	//Delete encode.ogg
 	(void) delete_file(wavfn);		//Delete encode.wav
-	if(eof_load_ogg((char *)oggfn, 0))
+	if(eof_load_ogg(oggfn, 0))
 	{	//If the combined audio was loaded
 		eof_fix_waveform_graph();
 		eof_fix_spectrogram();
@@ -445,7 +454,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	}
 	eof_fix_window_title();
 
-	return 47;	//Return error:  Could not load new audio
+	return 48;	//Return error:  Could not load new audio
 }
 
 int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
@@ -476,7 +485,7 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	(void) snprintf(backupfn, sizeof(backupfn) - 1, "%s.backup", oggfn);
 	if(!exists(backupfn))
 	{
-		(void) eof_copy_file((char *)oggfn, backupfn);
+		(void) eof_copy_file(oggfn, backupfn);
 	}
 
 	/* decode MP3 */
@@ -570,23 +579,32 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 		eof_log(eof_log_string, 1);
 		if(eof_system(sys_command))
 		{	//If oggenc failed again
-			#ifdef ALLEGRO_WINDOWS
-				char *suffix = " 2> temp\\oggenc.log";
-			#else
-				char *suffix = " 2> temp/oggenc.log";
-			#endif
-			(void) ustrzcat(sys_command, (int) sizeof(sys_command) - 1, suffix);	//Append a redirection to the command to capture the output of oggenc
+			char tempfname[30];
+
+			//Ensure the temporary folder exists
+			if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
+			{	//If this folder doesn't already exist
+				if(eof_mkdir(eof_temp_path))
+				{	//If the folder could not be created
+					allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
+					return 25;	//Return failure:  Could not create temp folder
+				}
+			}
+
+			(void) snprintf(tempfname, sizeof(tempfname) - 1, "%soggenc.log", eof_temp_path_s);
+			(void) ustrzcat(sys_command, (int) sizeof(sys_command) - 1, tempfname);	//Append a redirection to the command to capture the output of oggenc
 			if(eof_system(sys_command))
 			{	//Run one last time to catch the error output
-				eof_log("\tOggenc failed.  Please see oggenc.log for any errors it gave.", 1);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tOggenc failed.  Please see %s for any errors it gave.", tempfname);
+				eof_log(eof_log_string, 1);
 				eof_fix_window_title();
-				return 25;	//Return failure:  Could not encode combined audio
+				return 26;	//Return failure:  Could not encode combined audio
 			}
 		}
 	}
 
 	/* replace the current OGG file with the new file */
-	(void) eof_copy_file(soggfn, (char *)oggfn);	//Copy encode.ogg to the filename of the original OGG
+	(void) eof_copy_file(soggfn, oggfn);	//Copy encode.ogg to the filename of the original OGG
 
 	/* clean up */
 	(void) replace_filename(wavfn, eof_song_path, "decode.wav", 1024);
@@ -594,7 +612,7 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	(void) replace_filename(wavfn, eof_song_path, "encode.wav", 1024);
 	(void) delete_file(wavfn);		//Delete encode.wav
 	(void) delete_file(soggfn);	//Delete encode.ogg
-	if(eof_load_ogg((char *)oggfn, 0))
+	if(eof_load_ogg(oggfn, 0))
 	{	//If the combined audio was loaded
 		eof_fix_waveform_graph();
 		eof_fix_spectrogram();
@@ -604,7 +622,7 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	}
 	eof_fix_window_title();
 
-	return 26;	//Return error:  Could not load new audio
+	return 27;	//Return error:  Could not load new audio
 }
 
 int save_wav_with_silence_appended(const char * fn, SAMPLE * sp, unsigned long ms)

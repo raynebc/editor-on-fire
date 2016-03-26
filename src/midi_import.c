@@ -45,6 +45,12 @@ static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_ks_events;
 static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_text_events;
 int eof_import_bpm_count = 0;
 
+//Returns the value as if eof_ConvertToRealTime() was called, and the result was rounded up to the nearest unsigned long
+static inline unsigned long eof_ConvertToRealTimeInt(unsigned long absolutedelta, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision, unsigned long offset)
+{
+	return eof_ConvertToRealTime(absolutedelta, anchorlist, tslist, timedivision, offset) + 0.5;
+}
+
 static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_create_events_list(void)
 {
 	EOF_IMPORT_MIDI_EVENT_LIST * lp;
@@ -301,12 +307,6 @@ double eof_ConvertToRealTime(unsigned long absolutedelta, struct Tempo_change *a
 	time += (double)reldelta / (double)timedivision * (60000.0 / (temp->BPM));
 
 	return time + offset;
-}
-
-//Returns the value as if eof_ConvertToRealTime() was called, and the result was rounded up to the nearest unsigned long
-inline unsigned long eof_ConvertToRealTimeInt(unsigned long absolutedelta, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision, unsigned long offset)
-{
-	return eof_ConvertToRealTime(absolutedelta, anchorlist, tslist, timedivision, offset) + 0.5;
 }
 
 //#define EOF_DEBUG_MIDI_IMPORT

@@ -302,11 +302,11 @@ void eof_prepare_edit_menu(void)
 		/* paste, old paste */
 		if(eof_vocals_selected)
 		{
-			(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.vocals.clipboard", eof_temp_path);
+			(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.vocals.clipboard", eof_temp_path_s);
 		}
 		else
 		{
-			(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.clipboard", eof_temp_path);
+			(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.clipboard", eof_temp_path_s);
 		}
 		if(exists(clipboard_path))
 		{
@@ -612,16 +612,16 @@ int eof_menu_edit_copy_vocal(void)
 	}
 
 	/* get ready to write clipboard to disk */
-	//Ensure the \temp subfolder exists in the program folder
-	if(!file_exists("temp", FA_DIREC | FA_HIDDEN, NULL))
+	//Ensure the temporary folder exists
+	if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
 	{	//If this folder doesn't already exist
-		if(eof_mkdir("temp"))
+		if(eof_mkdir(eof_temp_path))
 		{	//If the folder could not be created
-			allegro_message("Could not create temp folder!\n%s", eof_temp_path);
+			allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
 			return 1;
 		}
 	}
-	(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.vocals.clipboard", eof_temp_path);
+	(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.vocals.clipboard", eof_temp_path_s);
 	fp = pack_fopen(clipboard_path, "w");
 	if(!fp)
 	{
@@ -685,7 +685,7 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 		return 1;	//Return error
 
 	/* open the file */
-	(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.vocals.clipboard", eof_temp_path);
+	(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.vocals.clipboard", eof_temp_path_s);
 	fp = pack_fopen(clipboard_path, "r");
 	if(!fp)
 	{
@@ -811,16 +811,16 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 	}
 
 	/* get ready to write clipboard to disk */
-	//Ensure the \temp subfolder exists in the program folder
-	if(!file_exists("temp", FA_DIREC | FA_HIDDEN, NULL))
+	//Ensure the temporary folder exists
+	if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
 	{	//If this folder doesn't already exist
-		if(eof_mkdir("temp"))
+		if(eof_mkdir(eof_temp_path))
 		{	//If the folder could not be created
-			allegro_message("Could not create temp folder!\n%s", eof_temp_path);
+			allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
 			return 1;
 		}
 	}
-	(void) snprintf(eof_autoadjust_path, sizeof(eof_autoadjust_path) - 1, "%seof.autoadjust", eof_temp_path);
+	(void) snprintf(eof_autoadjust_path, sizeof(eof_autoadjust_path) - 1, "%seof.autoadjust", eof_temp_path_s);
 	fp = pack_fopen(eof_autoadjust_path, "w");
 	if(!fp)
 	{
@@ -1083,7 +1083,17 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		end_pos = eof_song->beat[next_anchor]->pos;
 	}
 
-	(void) snprintf(eof_autoadjust_path, sizeof(eof_autoadjust_path) - 1, "%seof.autoadjust", eof_temp_path);
+	//Ensure the temporary folder exists
+	if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
+	{	//If this folder doesn't already exist
+		if(eof_mkdir(eof_temp_path))
+		{	//If the folder could not be created
+			allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
+			return 1;
+		}
+	}
+
+	(void) snprintf(eof_autoadjust_path, sizeof(eof_autoadjust_path) - 1, "%seof.autoadjust", eof_temp_path_s);
 	fp = pack_fopen(eof_autoadjust_path, "r");
 	if(!fp)
 	{
@@ -1377,16 +1387,16 @@ int eof_menu_edit_copy(void)
 	}
 
 	/* get ready to write clipboard to disk */
-	//Ensure the \temp subfolder exists in the program folder
-	if(!file_exists("temp", FA_DIREC | FA_HIDDEN, NULL))
+	//Ensure the temporary folder exists
+	if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
 	{	//If this folder doesn't already exist
-		if(eof_mkdir("temp"))
+		if(eof_mkdir(eof_temp_path))
 		{	//If the folder could not be created
-			allegro_message("Could not create temp folder!\n%s", eof_temp_path);
+			allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
 			return 1;
 		}
 	}
-	(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.clipboard", eof_temp_path);
+	(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.clipboard", eof_temp_path_s);
 	fp = pack_fopen(clipboard_path, "w");
 	if(!fp)
 	{
@@ -1457,7 +1467,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	}
 
 	/* open the file */
-	(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.clipboard", eof_temp_path);
+	(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.clipboard", eof_temp_path_s);
 	fp = pack_fopen(clipboard_path, "r");
 	if(!fp)
 	{

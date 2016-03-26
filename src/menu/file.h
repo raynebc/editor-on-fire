@@ -122,7 +122,7 @@ int eof_menu_prompt_save_changes(void);
 
 char * eof_gp_tracks_list(int index, int * size);
 	//Dialog logic to display the imported pro guitar tracks present in the eof_parsed_gp_file global pointer
-int eof_gp_import_common(char *fn);
+int eof_gp_import_common(const char *fn);
 	//Imports the specified Guitar Pro file to the active track if the active track is a pro guitar/bass track
 	//Returns nonzero on error
 int eof_menu_file_gp_import(void);

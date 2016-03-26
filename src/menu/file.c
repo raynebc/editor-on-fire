@@ -810,15 +810,25 @@ int eof_menu_file_lyrics_import(void)
 	int jumpcode = 0;
 	int selectedformat=0;
 	char *selectedtrack = NULL;
-	int returncode = 1;	//Stores the return value of EOF_IMPORT_VIA_LC() to check for error
+	int returncode = 1;			//Stores the return value of EOF_IMPORT_VIA_LC() to check for error
 	static char tempfile = 0;	//Is set to nonzero if the selected lyric file's path contains any extended ASCII or Unicode characters, as a temporary file is created as a workaround
-	char templyricfile[] = "lyricfile.tmp";	//The name of the temporary file created as per the above condition
+	char templyricfile[30];		//The name of the temporary file created as per the above condition
 
 	eof_log("\tImporting lyrics", 1);
 
 	if(eof_song == NULL)	//Do not import lyrics if no chart is open
 		return 0;
 
+	//Ensure the temporary folder exists
+	if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
+	{	//If this folder doesn't already exist
+		if(eof_mkdir(eof_temp_path))
+		{	//If the folder could not be created
+			allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
+			return 1;
+		}
+	}
+	(void) snprintf(templyricfile, sizeof(templyricfile) - 1, "%slyricfile.tmp", eof_temp_path_s);
 	tempfile = 0;	//Keep tempfile a static variable because if setjmp's fail condition is reached, the value may be re-initialized, clobbering its value
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
@@ -843,7 +853,7 @@ int eof_menu_file_lyrics_import(void)
 		{	//If the string has any non ASCIi characters
 			eof_log("\t\tUnicode or extended ASCII file path detected.  Creating temporarily copy to use for import.", 1);
 			tempfile = 1;	//Track that EOF will create a temporary file to pass to FoFLC, since FoFLC uses standard C file I/O and cannot open file paths that aren't normal ASCII
-			(void) eof_copy_file(returnedfn, "lyricfile.tmp");	//Copy this to a temporary file containing normal ASCII characters
+			(void) eof_copy_file(returnedfn, templyricfile);	//Copy this to a temporary file containing normal ASCII characters
 			returnedfn = templyricfile;	//Change the target file path to the temporary file
 		}
 		(void) ustrcpy(eof_filename, returnedfn);	//Store another copy of the lyric file name, since if it's a vocal rhythm file, the user will have to select a MIDI file, whose path will be stored in returnedfn
@@ -856,7 +866,7 @@ int eof_menu_file_lyrics_import(void)
 			eof_pen_visible = 1;
 			if(tempfile)
 			{	//If a temporary file was created
-				(void) delete_file("lyricfile.tmp");	//Delete it
+				(void) delete_file(templyricfile);	//Delete it
 			}
 			eof_log("\t\tError:  Could not import lyrics.  Undetermined error.", 1);
 			(void) alert("Error", NULL, "Could not import lyrics.  Undetermined error.", "OK", NULL, 0, KEY_ENTER);
@@ -872,7 +882,7 @@ int eof_menu_file_lyrics_import(void)
 			{
 				if(tempfile)
 				{	//If a temporary file was created
-					(void) delete_file("lyricfile.tmp");	//Delete it
+					(void) delete_file(templyricfile);	//Delete it
 				}
 				(void) alert("Error", NULL, "No lyrics detected", "OK", NULL, 0, KEY_ENTER);
 				return 0;	//return error
@@ -912,7 +922,7 @@ int eof_menu_file_lyrics_import(void)
 		}
 		if(tempfile)
 		{	//If a temporary file was created
-			(void) delete_file("lyricfile.tmp");	//Delete it
+			(void) delete_file(templyricfile);	//Delete it
 		}
 	}//If the user selected a file
 	eof_show_mouse(NULL);
@@ -3814,7 +3824,7 @@ int eof_gp_import_track(DIALOG * d)
 }
 
 char gp_import_undo_made;
-int eof_gp_import_common(char *fn)
+int eof_gp_import_common(const char *fn)
 {
 	unsigned long ctr, ctr2;
 

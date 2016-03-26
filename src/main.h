@@ -262,6 +262,7 @@ extern EOF_SONG    * eof_song;
 extern EOF_NOTE    eof_pen_note;
 extern EOF_LYRIC   eof_pen_lyric;
 extern char        eof_temp_path[20];
+extern char        eof_temp_path_s[20];
 extern char        eof_filename[1024];
 extern char        eof_song_path[1024];
 extern char        eof_songs_path[1024];
@@ -548,7 +549,7 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track);
 void eof_cat_track_difficulty_string(char *str);	//Concatenates the current track difficulty to the specified string
 void eof_fix_window_title(void);
 int eof_load_ogg_quick(char * filename);
-int eof_load_ogg(char * filename, char silence_failover);
+int eof_load_ogg(const char * filename, char silence_failover);
 	//Loads the specified OGG file, or if it does not exist, have the user browse for an audio file.  Upon success, eof_loaded_ogg_name is updated and nonzero is returned.
 	//If silence_failover is nonzero, if the user cancels loading audio, "second_of_silence.ogg" is loaded instead, and nonzero is returned.
 int eof_load_complete_song(char * filename);
