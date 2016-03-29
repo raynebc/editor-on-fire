@@ -758,6 +758,7 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track);
 	//Sets the populated status indicator for the specified track's difficulty names by prefixing each populated difficulty name in the current track (stored in eof_note_type_name[], eof_vocal_tab_name[] and eof_dance_tab_name[]) with an asterisk
 	//eof_track_diff_populated_status[] is updated so that each populated difficulty results in the corresponding element number being nonzero
 	//eof_track_diff_populated_tech_note_status[] is also updated if the specified track is a pro guitar track, so that each difficulty with at least one tech note results in the corresponding element number being nonzero
+	//eof_track_diff_highlighted_status[] is also updated
 	//Returns the number of difficulties present in the specified track (ie. if the highest used difficulty is 9, 10 is returned because the numbering begins with 0), or 0 is returned upon error or empty track
 	//If the specified track is also the active track, the program window title is redrawn to reflect the current populated status of the active track difficulty
 	//This function updates the technotes and pgnotes counters to ensure that if used after a deletion operation, those values are correct in the event that subsequent operations refer to them

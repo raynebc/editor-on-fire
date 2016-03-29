@@ -5939,6 +5939,7 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 	int scroll_pos;
 	EOF_PRO_GUITAR_TRACK *tp = NULL;
 	unsigned char diffnum = 0, isdiff;
+	int bgcol;
 
 	if(!eof_song_loaded || !window)
 		return;
@@ -6070,13 +6071,21 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 					(void) strncat(tab_text, "(*)", sizeof(tab_text) - 1);	//Append the tech notes populated indicator
 				}
 			}
-			if(i == selected_tab)
-			{
-				textprintf_centre_ex(window->screen, font, 47 + i * 80, 2 + 8, eof_color_black, -1, "%s", tab_text);
+			if(eof_track_diff_highlighted_status[diffnum])
+			{	//If any notes in this tab have highlighting
+				bgcol = eof_color_yellow;	//Render a yellow background behind the difficulty name
 			}
 			else
 			{
-				textprintf_centre_ex(window->screen, font, 47 + i * 80, 2 + 2 + 8, makecol(128, 128, 128), -1, "%s", tab_text);
+				bgcol = -1;	//Otherwise use a transparent background
+			}
+			if(i == selected_tab)
+			{
+				textprintf_centre_ex(window->screen, font, 47 + i * 80, 2 + 8, eof_color_black, bgcol, "%s", tab_text);
+			}
+			else
+			{
+				textprintf_centre_ex(window->screen, font, 47 + i * 80, 2 + 2 + 8, makecol(128, 128, 128), bgcol, "%s", tab_text);
 			}
 			if((eof_selected_track == EOF_TRACK_VOCALS) && (i == eof_vocals_tab))
 			{	//Break after  rendering the one difficulty tab name for the vocal track
@@ -6089,7 +6098,15 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 		char temp[101] = {0};
 		temp[0] = '\0';	//Empty the string
 		eof_cat_track_difficulty_string(temp);	//Fill the string with the name and number of the track difficulty being rendered
-		textprintf_ex(window->screen, font, 50, 2 + 2 + 8, makecol(128, 128, 128), -1, "%s", temp);
+		if(eof_track_diff_highlighted_status[eof_note_type2])
+		{	//If any notes in the secondary piano roll's active tab have highlighting
+			bgcol = eof_color_yellow;	//Render a yellow background behind the difficulty name
+		}
+		else
+		{
+			bgcol = -1;	//Otherwise use a transparent background
+		}
+		textprintf_ex(window->screen, font, 50, 2 + 2 + 8, makecol(128, 128, 128), bgcol, "%s", temp);
 	}
 
 	/* render the scroll bar */

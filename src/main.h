@@ -484,6 +484,7 @@ extern char        eof_vocal_tab_name[5][32];
 extern char        eof_dance_tab_name[5][32];
 extern char        eof_track_diff_populated_status[256];	//For each of the 255 possible difficulties, the element is set to nonzero if populated
 extern char        eof_track_diff_populated_tech_note_status[256];	//Same as eof_track_diff_populated_status[], but for tech notes
+extern char        eof_track_diff_highlighted_status[256];	//For each of the 255 possible difficulties, the element is set to nonzero if any of its notes or technotes are highlighted
 
 extern char        eof_supports_mp3;
 extern char        eof_supports_oggcat;
@@ -549,7 +550,7 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track);
 void eof_cat_track_difficulty_string(char *str);	//Concatenates the current track difficulty to the specified string
 void eof_fix_window_title(void);
 int eof_load_ogg_quick(char * filename);
-int eof_load_ogg(const char * filename, char silence_failover);
+int eof_load_ogg(char * filename, char silence_failover);
 	//Loads the specified OGG file, or if it does not exist, have the user browse for an audio file.  Upon success, eof_loaded_ogg_name is updated and nonzero is returned.
 	//If silence_failover is nonzero, if the user cancels loading audio, "second_of_silence.ogg" is loaded instead, and nonzero is returned.
 int eof_load_complete_song(char * filename);

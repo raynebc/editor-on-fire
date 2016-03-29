@@ -3999,6 +3999,7 @@ int eof_menu_song_highlight_non_grid_snapped_notes(void)
 	{	//If either of these highlighting options are enabled
 		eof_fixup_notes(eof_song);	//Run the fixup logic on all tracks, which should rebuild the highlighting as relevant
 	}
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Rebuild eof_track_diff_highlighted_status[] to reflect the active track
 	return 1;
 }
 

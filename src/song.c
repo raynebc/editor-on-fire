@@ -1017,9 +1017,10 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 
  	eof_log("eof_detect_difficulties() entered", 2);
 
-	if(sp && (track < sp->tracks))
-	{
+	if(sp && track && (track < sp->tracks))
+	{	//If the specified track is valid
 		memset(eof_track_diff_populated_status, 0, sizeof(eof_track_diff_populated_status));
+		memset(eof_track_diff_highlighted_status, 0, sizeof(eof_track_diff_highlighted_status));
 		eof_note_type_name[0][0] = ' ';
 		eof_note_type_name[1][0] = ' ';
 		eof_note_type_name[2][0] = ' ';
@@ -1034,18 +1035,17 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 
 		for(i = 0; i < eof_get_track_size(sp, track); i++)
 		{
+			note_type = eof_get_note_type(sp, track, i);
 			if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
 			{
 				if(sp->vocal_track[sp->track[track]->tracknum]->lyrics)
 				{
 					eof_vocal_tab_name[0][0] = '*';
 					eof_track_diff_populated_status[0] = 1;
-					break;
 				}
 			}
 			else
 			{
-				note_type = eof_get_note_type(sp, track, i);
 				eof_track_diff_populated_status[note_type] = 1;
 				if(note_type >= numdiffs)
 				{	//If this note's difficulty is the highest encountered in the track so far
@@ -1062,6 +1062,10 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 						eof_note_type_name[note_type][0] = '*';
 					}
 				}
+			}
+			if((eof_get_note_flags(sp, track, i) & EOF_NOTE_FLAG_HIGHLIGHT) || (eof_get_note_tflags(sp, track, i) & EOF_NOTE_TFLAG_HIGHLIGHT))
+			{	//If the note/lyric has highlighting
+				eof_track_diff_highlighted_status[note_type] = 1;
 			}
 		}
 
@@ -1081,9 +1085,13 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 			for(i = 0; i < tp->technotes; i++)
 			{
 				eof_track_diff_populated_tech_note_status[tp->technote[i]->type] = 1;
+				if((tp->technote[i]->flags & EOF_NOTE_FLAG_HIGHLIGHT) || (tp->technote[i]->tflags & EOF_NOTE_TFLAG_HIGHLIGHT))
+				{	//If the tech note has highlighting
+					eof_track_diff_highlighted_status[note_type] = 1;
+				}
 			}
 		}
-	}
+	}//If the specified track is valid
 
 	return numdiffs;
 }

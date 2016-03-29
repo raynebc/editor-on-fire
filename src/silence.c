@@ -165,7 +165,7 @@ int save_wav(const char * fn, SAMPLE * sp)
 	return 1;
 }
 
-int eof_add_silence(const char * oggfn, unsigned long ms)
+int eof_add_silence(char * oggfn, unsigned long ms)
 {
 	char sys_command[1024] = {0};
 	char backupfn[1024] = {0};	//The file path of the backup of the target audio file
@@ -277,7 +277,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	return 8;	//Return error:  Could not load new audio, file does not exist
 }
 
-int eof_add_silence_recode(const char * oggfn, unsigned long ms)
+int eof_add_silence_recode(char * oggfn, unsigned long ms)
 {
 	char sys_command[1024] = {0};
 	char backupfn[1024] = {0};
@@ -457,7 +457,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	return 48;	//Return error:  Could not load new audio
 }
 
-int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
+int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 {
 	char sys_command[1024] = {0};
 	char backupfn[1024] = {0};
