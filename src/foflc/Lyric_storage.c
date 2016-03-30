@@ -1250,7 +1250,7 @@ size_t FindLongestLineLength(FILE *inf,char exit_on_empty)
 	do{
 		ctr=0;			//Reset line length counter
 		do{
-			inputchar=fgetc(inf);	//get a character, do not exit on EOF
+ 			inputchar=fgetc(inf);	//get a character, do not exit on EOF
 			ctr++;					//increment line length counter
 		}while((inputchar != EOF) && (inputchar != '\n'));//Repeat until end of file or newline character is read
 

@@ -5,11 +5,11 @@
 
 typedef struct
 {
-	
+
 	int x, y;
 	int w, h;
 	BITMAP * screen;
-	
+
 } EOF_WINDOW;
 
 EOF_WINDOW * eof_window_create(int x, int y, int w, int h, BITMAP * bp);
