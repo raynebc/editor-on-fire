@@ -3988,48 +3988,54 @@ int eof_menu_song_highlight_non_grid_snapped_notes(void)
 		return 1;	//Invalid parameters
 
 	eof_song->tags->highlight_unsnapped_notes ^= 1;	//Toggle this setting
-	if(!eof_song->tags->highlight_unsnapped_notes)
-	{	//If this feature was toggled off
-		for(ctr = 1; ctr < eof_song->tracks; ctr++)
-		{	//For each track
-			eof_track_remove_highlighting(eof_song, ctr, 1);	//Remove existing temporary highlighting from the track
-		}
+	for(ctr = 1; ctr < eof_song->tracks; ctr++)
+	{	//For each track
+		eof_track_remove_highlighting(eof_song, ctr, 1);	//Remove existing temporary highlighting from the track
+		if(eof_song->tags->highlight_unsnapped_notes)
+			eof_song_highlight_non_grid_snapped_notes(eof_song, ctr);	//Re-create the non grid snapped highlighting as appropriate
+		if(eof_song->tags->highlight_arpeggios)
+			eof_song_highlight_arpeggios(eof_song, ctr);		//Re-create the arpeggio highlighting as appropriate
 	}
-	if(eof_song->tags->highlight_arpeggios || eof_song->tags->highlight_unsnapped_notes)
-	{	//If either of these highlighting options are enabled
-		eof_fixup_notes(eof_song);	//Run the fixup logic on all tracks, which should rebuild the highlighting as relevant
-	}
-	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Rebuild eof_track_diff_highlighted_status[] to reflect the active track
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update arrays for note set population and highlighting to reflect the active track
 	return 1;
 }
 
 void eof_song_highlight_non_grid_snapped_notes(EOF_SONG *sp, unsigned long track)
 {
-	unsigned long ctr, tflags, thispos, lastpos = 0;
+	unsigned long ctr, ctr2, loopcount = 1, tflags, thispos, lastpos = 0;
 	int thisisgridsnapped, lastisgridsnapped = 0;
 
 	if(!sp || (track >= sp->tracks))
 		return;	//Invalid parameters
 
-	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
-	{	//For each note in the specified track
-		thispos = eof_get_note_pos(sp, track, ctr);
-		if(ctr && (thispos == lastpos))
-		{	//If this isn't the first note, but it is at the same timestamp as the last examined note
-			thisisgridsnapped = lastisgridsnapped;	//Skip the number crunching and automatically assume the same highlighting status
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If this is a pro guitar track
+		loopcount = 2;	//The main loop will run a second time to process the inactive note set
+	}
+
+	for(ctr2 = 0; ctr2 < loopcount; ctr2++)
+	{	//For each note set in the specified track
+		for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
+		{	//For each note in the specified track
+			thispos = eof_get_note_pos(sp, track, ctr);
+			if(ctr && (thispos == lastpos))
+			{	//If this isn't the first note, but it is at the same timestamp as the last examined note
+				thisisgridsnapped = lastisgridsnapped;	//Skip the number crunching and automatically assume the same highlighting status
+			}
+			else
+			{	//Otherwise do it the hard way
+				thisisgridsnapped = eof_is_any_grid_snap_position(thispos, NULL, NULL, NULL);
+			}
+			if(!thisisgridsnapped)
+			{	//If this note position does not match that of any grid snap
+				tflags = eof_get_note_tflags(sp, track, ctr);
+				tflags |= EOF_NOTE_TFLAG_HIGHLIGHT;	//Highlight the note with the temporary flag
+				eof_set_note_tflags(sp, track, ctr, tflags);
+			}
+			lastpos = thispos;						//Track the timestamp of the last examined note
+			lastisgridsnapped = thisisgridsnapped;	//And whether it was grid snapped
 		}
-		else
-		{	//Otherwise do it the hard way
-			thisisgridsnapped = eof_is_any_grid_snap_position(thispos, NULL, NULL, NULL);
-		}
-		if(!thisisgridsnapped)
-		{	//If this note position does not match that of any grid snap
-			tflags = eof_get_note_tflags(sp, track, ctr);
-			tflags |= EOF_NOTE_TFLAG_HIGHLIGHT;	//Highlight the note with the temporary flag
-			eof_set_note_tflags(sp, track, ctr, tflags);
-		}
-		lastpos = thispos;						//Track the timestamp of the last examined note
-		lastisgridsnapped = thisisgridsnapped;	//And whether it was grid snapped
+		eof_menu_track_toggle_tech_view_state(sp, track);	//Toggle to the other note set as applicable
 	}
 }
 
@@ -4041,23 +4047,20 @@ int eof_menu_song_highlight_arpeggios(void)
 		return 1;	//Invalid parameters
 
 	eof_song->tags->highlight_arpeggios ^= 1;	//Toggle this setting
-	if(!eof_song->tags->highlight_arpeggios)
-	{	//If this feature was toggled off
-		for(ctr = 1; ctr < eof_song->tracks; ctr++)
-		{	//For each track
-			eof_track_remove_highlighting(eof_song, ctr, 1);	//Remove existing temporary highlighting from the track
-		}
-	}
-	if(eof_song->tags->highlight_arpeggios || eof_song->tags->highlight_unsnapped_notes)
-	{	//If either of these highlighting options are enabled
-		eof_fixup_notes(eof_song);	//Run the fixup logic on all tracks, which should rebuild the highlighting as relevant
+	for(ctr = 1; ctr < eof_song->tracks; ctr++)
+	{	//For each track
+		eof_track_remove_highlighting(eof_song, ctr, 1);	//Remove existing temporary highlighting from the track
+		if(eof_song->tags->highlight_unsnapped_notes)
+			eof_song_highlight_non_grid_snapped_notes(eof_song, ctr);	//Re-create the non grid snapped highlighting as appropriate
+		if(eof_song->tags->highlight_arpeggios)
+			eof_song_highlight_arpeggios(eof_song, ctr);		//Re-create the arpeggio highlighting as appropriate
 	}
 	return 1;
 }
 
 void eof_song_highlight_arpeggios(EOF_SONG *sp, unsigned long track)
 {
-	unsigned long ctr, ctr2, tracknum;
+	unsigned long ctr, ctr2, tracknum, loopcount = 2;
 	EOF_PRO_GUITAR_TRACK *tp;
 
 	if(!sp || (track >= sp->tracks))
@@ -4067,14 +4070,18 @@ void eof_song_highlight_arpeggios(EOF_SONG *sp, unsigned long track)
 
 	tracknum = sp->track[track]->tracknum;
 	tp = sp->pro_guitar_track[tracknum];
-	for(ctr = 0; ctr < tp->notes; ctr++)
-	{	//For each note in the active pro guitar track
-		for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
-		{	//For each arpeggio section in the track
-			if((tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
-			{	//If the note is within the arpeggio phrase
-				tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_HIGHLIGHT;	//Highlight it with the temporary flag
+	for(ctr2 = 0; ctr2 < loopcount; ctr2++)
+	{	//For each note set in the specified track
+		for(ctr = 0; ctr < tp->notes; ctr++)
+		{	//For each note in the active pro guitar track
+			for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
+			{	//For each arpeggio section in the track
+				if((tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
+				{	//If the note is within the arpeggio phrase
+					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_HIGHLIGHT;	//Highlight it with the temporary flag
+				}
 			}
 		}
+		eof_menu_track_toggle_tech_view_state(sp, track);	//Toggle to the other note set as applicable
 	}
 }

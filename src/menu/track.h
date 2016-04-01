@@ -203,6 +203,7 @@ char eof_menu_pro_guitar_track_get_tech_view_state(EOF_PRO_GUITAR_TRACK *tp);	//
 void eof_menu_pro_guitar_track_set_tech_view_state(EOF_PRO_GUITAR_TRACK *tp, char state);	//Changes the tech view status for the specified pro guitar track to enabled if state is nonzero, otherwise tech view is disabled
 char eof_menu_track_get_tech_view_state(EOF_SONG *sp, unsigned long track);	//Returns nonzero if the specified track is a pro guitar track and has tech view enabled, otherwise returns zero
 void eof_menu_track_set_tech_view_state(EOF_SONG *sp, unsigned long track, char state);	//Changes the tech view status for the specified pro guitar track to enabled if state is nonzero, otherwise tech view is disabled
+void eof_menu_track_toggle_tech_view_state(EOF_SONG *sp, unsigned long track);	//Toggles the tech view status for the specified pro guitar track
 void eof_menu_pro_guitar_track_update_note_counter(EOF_PRO_GUITAR_TRACK *tp);	//Uses the value of tp->notes to update tp->pgnotes if tech view is NOT in effect, or tp->technotes if tech view is in effect
 
 #endif

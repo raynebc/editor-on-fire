@@ -61,6 +61,7 @@ char        eof_dance_tab_name[EOF_MAX_DIFFICULTIES][32] = {" Beginner", " Easy"
 char        eof_track_diff_populated_status[256] = {0};
 char        eof_track_diff_populated_tech_note_status[256] = {0};
 char        eof_track_diff_highlighted_status[256] = {0};
+char        eof_track_diff_highlighted_tech_note_status[256] = {0};
 char      * eof_snap_name[9] = {"Off", "1/4", "1/8", "1/12", "1/16", "1/24", "1/32", "1/48", "Custom"};
 char      * eof_input_name[EOF_INPUT_NAME_NUM + 1] = {"Classic", "Piano Roll", "Hold", "RexMundi", "Guitar Tap", "Guitar Strum", "Feedback"};
 

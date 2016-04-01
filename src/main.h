@@ -484,7 +484,8 @@ extern char        eof_vocal_tab_name[5][32];
 extern char        eof_dance_tab_name[5][32];
 extern char        eof_track_diff_populated_status[256];	//For each of the 255 possible difficulties, the element is set to nonzero if populated
 extern char        eof_track_diff_populated_tech_note_status[256];	//Same as eof_track_diff_populated_status[], but for tech notes
-extern char        eof_track_diff_highlighted_status[256];	//For each of the 255 possible difficulties, the element is set to nonzero if any of its notes or technotes are highlighted
+extern char        eof_track_diff_highlighted_status[256];	//For each of the 255 possible difficulties, the element is set to nonzero if any of its notes are highlighted
+extern char        eof_track_diff_highlighted_tech_note_status[256];	//Same as eof_track_diff_highlighted_status[], but for tech notes
 
 extern char        eof_supports_mp3;
 extern char        eof_supports_oggcat;

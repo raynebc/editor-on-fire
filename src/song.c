@@ -1021,6 +1021,7 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 	{	//If the specified track is valid
 		memset(eof_track_diff_populated_status, 0, sizeof(eof_track_diff_populated_status));
 		memset(eof_track_diff_highlighted_status, 0, sizeof(eof_track_diff_highlighted_status));
+		memset(eof_track_diff_highlighted_tech_note_status, 0, sizeof(eof_track_diff_highlighted_tech_note_status));
 		eof_note_type_name[0][0] = ' ';
 		eof_note_type_name[1][0] = ' ';
 		eof_note_type_name[2][0] = ' ';
@@ -1087,7 +1088,7 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 				eof_track_diff_populated_tech_note_status[tp->technote[i]->type] = 1;
 				if((tp->technote[i]->flags & EOF_NOTE_FLAG_HIGHLIGHT) || (tp->technote[i]->tflags & EOF_NOTE_TFLAG_HIGHLIGHT))
 				{	//If the tech note has highlighting
-					eof_track_diff_highlighted_status[note_type] = 1;
+					eof_track_diff_highlighted_tech_note_status[tp->technote[i]->type] = 1;
 				}
 			}
 		}
@@ -7815,25 +7816,37 @@ void eof_hightlight_all_notes_above_fret_number(EOF_SONG *sp, unsigned long trac
 
 void eof_track_remove_highlighting(EOF_SONG *sp, unsigned long track, char function)
 {
-	unsigned long ctr, flags;
+	unsigned long ctr, ctr2, flags, loopcount = 1;
 
 	if(!sp || (track >= sp->tracks))
 		return;	//Invalid parameters
 
-	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
-	{	//For each note in the specified track
-		if(!function || (function > 1))
-		{	//If the calling function signaled to remove the permanent highlight flag
-			flags = eof_get_note_flags(sp, track, ctr);
-			flags &= ~EOF_NOTE_FLAG_HIGHLIGHT;
-			eof_set_note_flags(sp, track, ctr, flags);	//Clear the note's permanent hightlight flag
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If this is a pro guitar track
+		loopcount = 2;	//The main loop will run a second time to process the inactive note set
+	}
+
+	memset(eof_track_diff_highlighted_status, 0, sizeof(eof_track_diff_highlighted_status));
+	memset(eof_track_diff_highlighted_tech_note_status, 0, sizeof(eof_track_diff_highlighted_tech_note_status));
+
+	for(ctr2 = 0; ctr2 < loopcount; ctr2++)
+	{	//For each note set in the specified track
+		for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
+		{	//For each note in the specified track
+			if(!function || (function > 1))
+			{	//If the calling function signaled to remove the permanent highlight flag
+				flags = eof_get_note_flags(sp, track, ctr);
+				flags &= ~EOF_NOTE_FLAG_HIGHLIGHT;
+				eof_set_note_flags(sp, track, ctr, flags);	//Clear the note's permanent hightlight flag
+			}
+			if((function == 1) || (function > 1))
+			{	//If the calling function signaled to remove the temporary highlight flag
+				flags = eof_get_note_tflags(sp, track, ctr);
+				flags &= ~EOF_NOTE_TFLAG_HIGHLIGHT;
+				eof_set_note_tflags(sp, track, ctr, flags);	//Clear the note's temporary hightlight flag
+			}
 		}
-		if((function == 1) || (function > 1))
-		{	//If the calling function signaled to remove the temporary highlight flag
-			flags = eof_get_note_tflags(sp, track, ctr);
-			flags &= ~EOF_NOTE_TFLAG_HIGHLIGHT;
-			eof_set_note_tflags(sp, track, ctr, flags);	//Clear the note's temporary hightlight flag
-		}
+		eof_menu_track_toggle_tech_view_state(sp, track);	//Toggle to the other note set as applicable
 	}
 }
 

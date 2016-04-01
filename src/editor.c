@@ -5939,7 +5939,7 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 	int scroll_pos;
 	EOF_PRO_GUITAR_TRACK *tp = NULL;
 	unsigned char diffnum = 0, isdiff;
-	int bgcol;
+	int xcoord, ycoord, fgcol, bgcol;
 
 	if(!eof_song_loaded || !window)
 		return;
@@ -6012,6 +6012,8 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 		//Draw difficulty tab text
 		for(i = 0; i < numtabs; i++)
 		{	//For each difficulty tab rendered
+			int has_tech = 0;	//Set to nonzero if this difficulty contains tech notes that aren't shown (due to tech view not being enabled)
+
 			isdiff = 1;	//Unless determined that the tab represents a change to lowest/highest difficulty (<< and >>), this condition is set
 			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 			{	//If this track is not limited to 5 difficulties
@@ -6069,6 +6071,7 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 				if((tp->note != tp->technote) && isdiff && eof_track_diff_populated_tech_note_status[diffnum])
 				{	//If tech view is NOT in effect, this tab represents a specific difficulty and there is at least one tech note in this difficulty
 					(void) strncat(tab_text, "(*)", sizeof(tab_text) - 1);	//Append the tech notes populated indicator
+					has_tech = 1;
 				}
 			}
 			if(eof_track_diff_highlighted_status[diffnum])
@@ -6079,13 +6082,29 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 			{
 				bgcol = -1;	//Otherwise use a transparent background
 			}
+			xcoord = 47 + i * 80;	//The center of the difficulty tab being rendered
 			if(i == selected_tab)
 			{
-				textprintf_centre_ex(window->screen, font, 47 + i * 80, 2 + 8, eof_color_black, bgcol, "%s", tab_text);
+				ycoord = 2 + 8;
+				fgcol = eof_color_black;
 			}
 			else
 			{
-				textprintf_centre_ex(window->screen, font, 47 + i * 80, 2 + 2 + 8, makecol(128, 128, 128), bgcol, "%s", tab_text);
+				ycoord = 2 + 2 + 8;
+				fgcol = makecol(128, 128, 128);
+			}
+			textprintf_centre_ex(window->screen, font, xcoord, ycoord, fgcol, bgcol, "%s", tab_text);
+			if(has_tech)
+			{	//If the tech notes indicator was drawn, it will need to be redrawn with the appropriate background color to indicate whether tech notes are highlighted
+				if(eof_track_diff_highlighted_tech_note_status[diffnum])
+				{	//If any of those tech notes are highlighted
+					bgcol = eof_color_yellow;
+				}
+				else
+				{
+					bgcol = eof_color_light_gray;
+				}
+				textout_ex(window->screen, font, "(*)", xcoord + text_length(font, tab_text) / 2 - text_length(font, "(*)"), ycoord, fgcol, bgcol);
 			}
 			if((eof_selected_track == EOF_TRACK_VOCALS) && (i == eof_vocals_tab))
 			{	//Break after  rendering the one difficulty tab name for the vocal track

@@ -619,7 +619,9 @@ void eof_track_sort_notes(EOF_SONG *sp, unsigned long track);
 int eof_song_qsort_phrase_sections(const void * e1, const void * e2);	//A generic qsort comparitor that will sort phrase sections into chronological order
 long eof_track_fixup_previous_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note/lyric one before the specified note/lyric number that is in the same difficulty, or -1 if there is none
 long eof_track_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note/lyric one after the specified note/lyric number that is in the same difficulty, or -1 if there is none
-void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel);	//Calls the appropriate fixup function for the specified track.  If sel is zero, the currently selected note is deselected automatically.
+void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel);
+	//Calls the appropriate fixup function for the specified track.  If sel is zero, the currently selected note is deselected automatically
+	//Dynamic highlighting for the track's active note set is also updated
 void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track);	//Used during MIDI and GP imports to mark a note as "crazy" if it overlaps with the next note in the same difficulty
 int eof_track_add_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a star power phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 void eof_track_delete_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long pathnum);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
@@ -758,7 +760,7 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track);
 	//Sets the populated status indicator for the specified track's difficulty names by prefixing each populated difficulty name in the current track (stored in eof_note_type_name[], eof_vocal_tab_name[] and eof_dance_tab_name[]) with an asterisk
 	//eof_track_diff_populated_status[] is updated so that each populated difficulty results in the corresponding element number being nonzero
 	//eof_track_diff_populated_tech_note_status[] is also updated if the specified track is a pro guitar track, so that each difficulty with at least one tech note results in the corresponding element number being nonzero
-	//eof_track_diff_highlighted_status[] is also updated
+	//eof_track_diff_highlighted_status[] and eof_track_diff_highlighted_tech_note_status[] are also updated
 	//Returns the number of difficulties present in the specified track (ie. if the highest used difficulty is 9, 10 is returned because the numbering begins with 0), or 0 is returned upon error or empty track
 	//If the specified track is also the active track, the program window title is redrawn to reflect the current populated status of the active track difficulty
 	//This function updates the technotes and pgnotes counters to ensure that if used after a deletion operation, those values are correct in the event that subsequent operations refer to them
@@ -907,7 +909,7 @@ void eof_unflatten_difficulties(EOF_SONG *sp, unsigned long track);
 void eof_hightlight_all_notes_above_fret_number(EOF_SONG *sp, unsigned long track, unsigned char fretnum);
 	//Sets the highlight status on all notes in the specified track that use any fret higher than the specified number
 void eof_track_remove_highlighting(EOF_SONG *sp, unsigned long track, char function);
-	//Removes the highlight status on all notes in the specified track
+	//Removes the highlight status on all notes (and tech notes if applicable) in the specified track
 	//If function is 0, the permanent highlight flag (EOF_NOTE_FLAG_HIGHLIGHT) is removed from the notes
 	//If function is 1, the temporary highlight flag (EOF_NOTE_TFLAG_HIGHLIGHT) is removed from the notes
 	//If function is any other value, both highlight flags are removed from the notes

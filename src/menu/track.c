@@ -3844,6 +3844,24 @@ void eof_menu_track_set_tech_view_state(EOF_SONG *sp, unsigned long track, char 
 	}
 }
 
+void eof_menu_track_toggle_tech_view_state(EOF_SONG *sp, unsigned long track)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return;	//Invalid parameters
+
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+	if(tp->note == tp->technote)
+	{	//If tech view is already in effect for the active track
+		eof_menu_pro_guitar_track_disable_tech_view(tp);
+	}
+	else
+	{	//Otherwise put the tech note array into effect
+		eof_menu_pro_guitar_track_enable_tech_view(tp);
+	}
+}
+
 void eof_menu_pro_guitar_track_update_note_counter(EOF_PRO_GUITAR_TRACK *tp)
 {
 	if(!tp)

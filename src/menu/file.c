@@ -504,6 +504,7 @@ int eof_menu_file_load(void)
 		eof_chart_length = alogg_get_length_msecs_ogg(eof_music_track);
 		eof_init_after_load(0);
 		eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
+		(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update arrays for note set population and highlighting
 	}//If the user selected a file
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
@@ -990,6 +991,7 @@ int eof_menu_file_midi_import(void)
 			eof_song_loaded = 1;
 			eof_init_after_load(0);
 			eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
+			(void) eof_detect_difficulties(eof_song, eof_selected_track);
 			(void) replace_filename(eof_last_midi_path, returnedfn, "", 1024);	//Set the last loaded MIDI file path
 		}
 		else
@@ -4541,6 +4543,7 @@ int eof_menu_file_bf_import(void)
 			eof_init_after_load(0);
 			eof_sort_notes(eof_song);
 			eof_fixup_notes(eof_song);
+			(void) eof_detect_difficulties(eof_song, eof_selected_track);
 			(void) replace_filename(eof_last_bf_path, returnedfn, "", 1024);	//Set the last loaded Bandfuse file path
 			eof_cleanup_beat_flags(eof_song);	//Update anchor flags as necessary for any time signature changes
 			eof_log("\tImport complete", 1);
