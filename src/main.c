@@ -240,7 +240,7 @@ int         eof_song_loaded = 0;	//The boolean condition that a chart and its au
 int         eof_last_note = 0;
 int         eof_last_midi_offset = 0;
 PACKFILE *  eof_recovery = NULL;
-unsigned long eof_seek_selection_start = 0, eof_seek_selection_end = 0;	//Used to track the keyboard driven note selection system in Feedback input mode
+unsigned long eof_seek_selection_start = 0, eof_seek_selection_end = 0;	//Used to track the keyboard driven note selection system in Feedback input mode.  If both variables are of equal value, no seek selection is in effect
 int         eof_shift_released = 1;	//Tracks the press/release of the SHIFT keys for the Feedback input mode seek selection system
 int         eof_shift_used = 0;	//Tracks whether the SHIFT key was used for a keyboard shortcut while SHIFT was held
 int         eof_emergency_stop = 0;	//Set to nonzero by eof_switch_out_callback() so that playback can be stopped OUTSIDE of the callback, in EOF's main loop so that a crash with time stretched playback can be avoided
@@ -250,7 +250,7 @@ int         eof_selected_control = -1;
 int         eof_cselected_control = -1;
 unsigned long eof_selected_catalog_entry = 0;
 unsigned long eof_selected_beat = 0;
-int         eof_selected_measure = 0;
+long        eof_selected_measure = 0;
 int         eof_beat_in_measure = 0;
 int         eof_beats_in_measure = 1;
 int         eof_pegged_note = -1;
@@ -303,6 +303,7 @@ int eof_color_gray2;
 int eof_color_gray3;
 int eof_color_light_gray;
 int eof_color_red;
+int eof_color_light_red;
 int eof_color_green;
 int eof_color_dark_green;
 int eof_color_blue;
@@ -492,7 +493,7 @@ void eof_find_lyric_preview_lines(void)
 	int next_line = -1;
 	unsigned long dist = 0;
 	int beyond = 1;
-	int adj_eof_music_pos=eof_music_pos - eof_av_delay;	//The current seek position of the chart, adjusted for AV delay
+	int adj_eof_music_pos = eof_music_pos - eof_av_delay;	//The current seek position of the chart, adjusted for AV delay
 
 	for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
 	{
@@ -2482,7 +2483,7 @@ void eof_render_note_window(void)
 	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
 	char temp[1024] = {0};
 	unsigned long notepos;
-	char pro_guitar_string[30] = {0};
+	char pro_guitar_string[30] = {0}, grid_snap_string[30] = {0};
 	char difficulty1[20] = {0}, difficulty2[50] = {0}, difficulty3[50] = {0};
 	int scale, chord, isslash, bassnote;	//Used when looking up the chord name (if the last selected note is not already named)
 
@@ -2737,7 +2738,7 @@ void eof_render_note_window(void)
 		ypos += 12;
 		if(eof_selected_measure >= 0)
 		{
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Measure = %d (Beat %d/%d)", eof_selected_measure, eof_beat_in_measure + 1, eof_beats_in_measure);
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Measure = %ld (Beat %d/%d)", eof_selected_measure, eof_beat_in_measure + 1, eof_beats_in_measure);
 		}
 		else
 		{
@@ -2796,12 +2797,58 @@ void eof_render_note_window(void)
 			{
 				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Note = None");
 			}
-			ypos += 12;
-			if(eof_seek_selection_start != eof_seek_selection_end)
-			{	//If there is a seek selection
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek selection start = %lu : stop = %lu", eof_seek_selection_start, eof_seek_selection_end);
-				ypos += 12;
+
+			tracknum = eof_song->track[eof_selected_track]->tracknum;
+			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//Display information specific to pro guitar tracks
+				if((eof_selection.current < eof_song->pro_guitar_track[tracknum]->notes) && (eof_selection.track == eof_selected_track))
+				{	//If a note in the active track is selected, display a line with its fretting information
+					ypos += 12;
+					if(eof_get_pro_guitar_note_fret_string(eof_song->pro_guitar_track[tracknum], eof_selection.current, pro_guitar_string))
+					{	//If the note's frets can be represented in string format
+						if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name[0] != '\0')
+						{	//If this note was manually given a name, display it in addition to the fretting
+							textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: %s", pro_guitar_string, eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name);
+							eof_enable_chord_cache = 0;	//When a manually-named note is selected, reset this variable so that previous/next chord name cannot be used
+						}
+						else
+						{
+							unsigned long matchcount;
+							char chord_match_string[30] = {0};
+
+							matchcount = eof_count_chord_lookup_matches(eof_song->pro_guitar_track[tracknum], eof_selected_track, eof_selection.current);
+							if(matchcount)
+							{	//If there's at least one chord lookup match, obtain the user's selected match
+								eof_lookup_chord(eof_song->pro_guitar_track[tracknum], eof_selected_track, eof_selection.current, &scale, &chord, &isslash, &bassnote, eof_selected_chord_lookup, 1);	//Run a cache-able lookup
+								scale %= 12;	//Ensure this is a value from 0 to 11
+								bassnote %= 12;
+								if(matchcount > 1)
+								{	//If there's more than one match
+									(void) snprintf(chord_match_string, sizeof(chord_match_string) - 1, " (match %lu/%lu)", eof_selected_chord_lookup + 1, matchcount);
+								}
+								if(!isslash)
+								{	//If it's a normal chord
+									textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: [%s%s]%s", pro_guitar_string, eof_note_names[scale], eof_chord_names[chord].chordname, chord_match_string);
+								}
+								else
+								{	//If it's a slash chord
+									textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: [%s%s%s]%s", pro_guitar_string, eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote], chord_match_string);
+								}
+							}
+							else
+							{	//Otherwise just display the fretting
+								textout_ex(eof_window_note->screen, font, pro_guitar_string, 2, ypos, eof_color_white, -1);
+								eof_chord_lookup_note = eof_get_pro_guitar_note_note(eof_song->pro_guitar_track[tracknum], eof_selection.current);		//Cache the failed, looked up note's details
+								memcpy(eof_chord_lookup_frets, eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets, 6);
+								eof_cached_chord_lookup_retval = 0;	//Cache a failed lookup result
+							}
+						}
+					}
+					ypos += 2;	//Lower the virtual "cursor" because underscores for the fretting string are rendered low enough to touch text 12 pixels below the y position of the glyph
+				}//If a note in the active track is selected, display a line with its fretting information
 			}
+			ypos += 12;
+
 			if(eof_hover_note >= 0)
 			{
 				if(eof_seek_hover_note >= 0)
@@ -2830,39 +2877,57 @@ void eof_render_note_window(void)
 		{	//If the seek position is to be displayed as minutes:seconds
 			ism = ((eof_music_pos - eof_av_delay) / 1000) / 60;
 			iss = ((eof_music_pos - eof_av_delay) / 1000) % 60;
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %02d:%02d.%03d", ism, iss, isms >= 0 ? isms : 0);
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %02d:%02d.%03d : %s Selected = %d/%lu", ism, iss, isms >= 0 ? isms : 0, eof_vocals_selected ? "Lyrics" : "Notes", isn, itn);
 		}
 		else
 		{	//If the seek position is to be displayed as seconds
 			iss = (eof_music_pos - eof_av_delay) / 1000;
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %d.%03ds", iss, isms >= 0 ? isms : 0);
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %d.%03ds : %s Selected = %d/%lu", iss, isms >= 0 ? isms : 0, eof_vocals_selected ? "Lyrics" : "Notes", isn, itn);
 		}
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s Selected = %d/%lu", eof_vocals_selected ? "Lyrics" : "Notes", isn, itn);
-		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Input Mode: %s", eof_input_name[eof_input_mode]);
+		if(eof_seek_selection_start != eof_seek_selection_end)
+		{	//If there is a seek selection
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek selection start = %lu : stop = %lu", eof_seek_selection_start, eof_seek_selection_end);
+			ypos += 12;
+		}
+		if((eof_song->tags->start_point != ULONG_MAX) || (eof_song->tags->end_point != ULONG_MAX))
+		{	//If either the start or end point is defined
+			if(eof_song->tags->start_point != ULONG_MAX)
+			{	//Start point is defined
+				if(eof_song->tags->end_point != ULONG_MAX)
+				{	//Both the start and end points are defined
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Start point = %lu : end = %lu", eof_song->tags->start_point, eof_song->tags->end_point);
+				}
+				else
+				{	//Only the start point is defined
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Start point = %lu", eof_song->tags->start_point);
+				}
+			}
+			else
+			{	//Only the end point is defined
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "End point = %lu", eof_song->tags->end_point);
+			}
+			ypos += 12;
+		}
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Input Mode: %s : Playback Speed: %d%%", eof_input_name[eof_input_mode], eof_playback_speed / 10);
 		ypos += 12;
 
+		if((eof_selected_catalog_entry < eof_song->catalog->entries) && (eof_song->catalog->entry[eof_selected_catalog_entry].name[0] != '\0'))
+		{	//If the active fret catalog has a defined name
+			snprintf(grid_snap_string, sizeof(grid_snap_string) - 1, "Catalog: %lu of %lu: %s", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries, eof_song->catalog->entry[eof_selected_catalog_entry].name);
+		}
+		else
+		{
+			snprintf(grid_snap_string, sizeof(grid_snap_string) - 1, "Catalog: %lu of %lu", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
+		}
 		if(eof_snap_mode != EOF_SNAP_CUSTOM)
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s", eof_snap_name[(int)eof_snap_mode]);
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s : %s", eof_snap_name[(int)eof_snap_mode], grid_snap_string);
 		else
 		{
 			if(eof_custom_snap_measure == 0)
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s (1/%d beat)", eof_snap_name[(int)eof_snap_mode],eof_snap_interval);
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s (1/%d beat) : %s", eof_snap_name[(int)eof_snap_mode], eof_snap_interval, grid_snap_string);
 			else
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s (1/%d measure)", eof_snap_name[(int)eof_snap_mode],eof_snap_interval);
-		}
-
-		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Playback Speed: %d%%", eof_playback_speed / 10);
-		ypos += 12;
-		if((eof_selected_catalog_entry < eof_song->catalog->entries) && (eof_song->catalog->entry[eof_selected_catalog_entry].name[0] != '\0'))
-		{	//If the active fret catalog has a defined name
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Catalog: %lu of %lu: %s", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries, eof_song->catalog->entry[eof_selected_catalog_entry].name);
-		}
-		else
-		{
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Catalog: %lu of %lu", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s (1/%d measure) : %s", eof_snap_name[(int)eof_snap_mode], eof_snap_interval, grid_snap_string);
 		}
 		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "OGG File: %s", eof_silence_loaded ? "(None)" : eof_song->tags->ogg[eof_selected_ogg].filename);
@@ -2901,55 +2966,8 @@ void eof_render_note_window(void)
 					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Fret value shortcuts apply to string %c", pro_guitar_string[0]);
 				}
 			}
-
-			tracknum = eof_song->track[eof_selected_track]->tracknum;
-			if((eof_selection.current < eof_song->pro_guitar_track[tracknum]->notes) && (eof_selection.track == eof_selected_track))
-			{	//If a note in the active track is selected, display a line with its fretting information
-				ypos += 12;
-				if(eof_get_pro_guitar_note_fret_string(eof_song->pro_guitar_track[tracknum], eof_selection.current, pro_guitar_string))
-				{	//If the note's frets can be represented in string format
-					if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name[0] != '\0')
-					{	//If this note was manually given a name, display it in addition to the fretting
-						textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: %s", pro_guitar_string, eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name);
-						eof_enable_chord_cache = 0;	//When a manually-named note is selected, reset this variable so that previous/next chord name cannot be used
-					}
-					else
-					{
-						unsigned long matchcount;
-						char chord_match_string[30] = {0};
-
-						matchcount = eof_count_chord_lookup_matches(eof_song->pro_guitar_track[tracknum], eof_selected_track, eof_selection.current);
-						if(matchcount)
-						{	//If there's at least one chord lookup match, obtain the user's selected match
-							eof_lookup_chord(eof_song->pro_guitar_track[tracknum], eof_selected_track, eof_selection.current, &scale, &chord, &isslash, &bassnote, eof_selected_chord_lookup, 1);	//Run a cache-able lookup
-							scale %= 12;	//Ensure this is a value from 0 to 11
-							bassnote %= 12;
-							if(matchcount > 1)
-							{	//If there's more than one match
-								(void) snprintf(chord_match_string, sizeof(chord_match_string) - 1, " (match %lu/%lu)", eof_selected_chord_lookup + 1, matchcount);
-							}
-							if(!isslash)
-							{	//If it's a normal chord
-								textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: [%s%s]%s", pro_guitar_string, eof_note_names[scale], eof_chord_names[chord].chordname, chord_match_string);
-							}
-							else
-							{	//If it's a slash chord
-								textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: [%s%s%s]%s", pro_guitar_string, eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote], chord_match_string);
-							}
-						}
-						else
-						{	//Otherwise just display the fretting
-							textout_ex(eof_window_note->screen, font, pro_guitar_string, 2, ypos, eof_color_white, -1);
-							eof_chord_lookup_note = eof_get_pro_guitar_note_note(eof_song->pro_guitar_track[tracknum], eof_selection.current);		//Cache the failed, looked up note's details
-							memcpy(eof_chord_lookup_frets, eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets, 6);
-							eof_cached_chord_lookup_retval = 0;	//Cache a failed lookup result
-						}
-					}
-				}
-				ypos += 2;	//Lower the virtual "cursor" because underscores for the fretting string are rendered low enough to touch text 12 pixels below the y position of the glyph
-			}//If a note in the active track is selected, display a line with its information
-
 			ypos += 12;
+
 			if(position)
 			{	//If a fret hand position is in effect
 				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Effective fret hand position:  %u", position);
@@ -3793,6 +3811,7 @@ int eof_load_data(void)
 	eof_color_gray3 = makecol(163, 163, 163);
 	eof_color_light_gray = makecol(224, 224, 224);
 	eof_color_red = makecol(255, 0, 0);
+	eof_color_light_red = makecol(255, 150, 150);
 	eof_color_green = makecol(0, 255, 0);
 	eof_color_dark_green = makecol(0, 128, 0);
 	eof_color_blue = makecol(0, 0, 255);

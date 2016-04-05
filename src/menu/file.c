@@ -51,6 +51,19 @@ MENU eof_file_display_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_file_import_menu[] =
+{
+	{"&Sonic visualiser", eof_menu_file_sonic_visualiser_import, NULL, 0, NULL},
+	{"&MIDI\tF6", eof_menu_file_midi_import, NULL, 0, NULL},
+	{"&Feedback\tF7", eof_menu_file_feedback_import, NULL, 0, NULL},
+	{"Guitar &Hero", eof_menu_file_gh_import, NULL, 0, NULL},
+	{"&Lyric\tF8", eof_menu_file_lyrics_import, NULL, 0, NULL},
+	{"&Guitar Pro", eof_menu_file_gp_import, NULL, 0, NULL},
+	{"&Rocksmith", eof_menu_file_rs_import, NULL, 0, NULL},
+	{"&Bandfuse", eof_menu_file_bf_import, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_file_menu[] =
 {
 	{"&New\t" CTRL_NAME "+N", eof_menu_file_new_wizard, NULL, 0, NULL},
@@ -59,14 +72,8 @@ MENU eof_file_menu[] =
 	{"Save &As", eof_menu_file_save_as, NULL, D_DISABLED, NULL},
 	{"&Quick save\t" CTRL_NAME "+Q", eof_menu_file_quick_save, NULL, D_DISABLED, NULL},
 	{"Load &OGG", eof_menu_file_load_ogg, NULL, D_DISABLED, NULL},
-	{"Sonic Visualiser Import", eof_menu_file_sonic_visualiser_import, NULL, 0, NULL},
-	{"&MIDI Import\tF6", eof_menu_file_midi_import, NULL, 0, NULL},
-	{"&Feedback Import\tF7", eof_menu_file_feedback_import, NULL, 0, NULL},
-	{"Guitar &Hero Import", eof_menu_file_gh_import, NULL, 0, NULL},
-	{"Lyric Import\tF8", eof_menu_file_lyrics_import, NULL, 0, NULL},
-	{"&Guitar Pro Import", eof_menu_file_gp_import, NULL, 0, NULL},
-	{"&Rocksmith Import", eof_menu_file_rs_import, NULL, 0, NULL},
-	{"&Bandfuse Import", eof_menu_file_bf_import, NULL, 0, NULL},
+	{"&Import", NULL, eof_file_import_menu, 0, NULL},
+	{"&Export time range", eof_menu_file_export_time_range, NULL, D_DISABLED, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Settings\tF10", eof_menu_file_settings, NULL, 0, NULL},
 	{"&Preferences\tF11", eof_menu_file_preferences, NULL, 0, NULL},
@@ -270,17 +277,18 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[3].flags = 0; // Save As
 		eof_file_menu[4].flags = 0; // Quick save
 		eof_file_menu[5].flags = 0; // Load OGG
-		eof_file_menu[6].flags = 0; // Sonic Visualiser Import
-		eof_file_menu[10].flags = 0; // Lyric Import
+		eof_file_menu[7].flags = 0;	// Export time range
+		eof_file_import_menu[0].flags = 0; // Import>Sonic Visualiser
+		eof_file_import_menu[4].flags = 0; // Import>Lyric
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{
-			eof_file_menu[11].flags = 0; // Guitar Pro Import
-			eof_file_menu[12].flags = 0; // Rocksmith Import
+			eof_file_import_menu[5].flags = 0; // Import>Guitar Pro
+			eof_file_import_menu[6].flags = 0; // Import>Rocksmith
 		}
 		else
 		{
-			eof_file_menu[11].flags = D_DISABLED;
-			eof_file_menu[12].flags = D_DISABLED;
+			eof_file_import_menu[5].flags = D_DISABLED;
+			eof_file_import_menu[6].flags = D_DISABLED;
 		}
 		eof_file_display_menu[4].flags = 0;	//Benchmark image sequence
 	}
@@ -290,8 +298,9 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[3].flags = D_DISABLED; // Save As
 		eof_file_menu[4].flags = D_DISABLED; // Quick save
 		eof_file_menu[5].flags = D_DISABLED; // Load OGG
-		eof_file_menu[6].flags = D_DISABLED; // Sonic Visualiser Import
-		eof_file_menu[10].flags = D_DISABLED; // Lyric Import
+		eof_file_menu[7].flags = D_DISABLED; // Export time range
+		eof_file_import_menu[0].flags = D_DISABLED; // Import>Sonic Visualiser
+		eof_file_import_menu[4].flags = D_DISABLED; // Import>Lyric
 		eof_file_display_menu[4].flags = D_DISABLED;	//Benchmark image sequence
 	}
 }
@@ -4561,4 +4570,51 @@ int eof_menu_file_bf_import(void)
 	eof_render();
 
 	return D_O_K;
+}
+
+int eof_menu_file_export_time_range(void)
+{
+	unsigned long start = 0, end;
+	EOF_SONG *csp;
+
+	if(!eof_song)
+		return 0;	//No chart open
+
+	eof_log("eof_menu_file_export_time_range() entered", 1);
+
+	//Initialize start and end timestamps
+	end = eof_determine_chart_length(eof_song);	//By default, start and end encompass all chart content
+	if(eof_seek_selection_start != eof_seek_selection_end)
+	{	//If there is a seek selection
+		start = eof_seek_selection_start;
+		end = eof_seek_selection_end;
+	}
+	else if((eof_song->tags->start_point != ULONG_MAX) && (eof_song->tags->end_point != ULONG_MAX) && (eof_song->tags->start_point != eof_song->tags->end_point))
+	{	//If both the start and end points are defined with different timestamps
+		start = eof_song->tags->start_point;
+		end = eof_song->tags->end_point;
+	}
+
+	strncpy(eof_etext, "Export time range", sizeof(eof_etext) - 1);	//Set the title of the eof_menu_song_time_range_dialog dialog
+	if(!eof_run_time_range_dialog(&start, &end))	//If a valid time range isn't provided by the user
+		return 0;									//Cancel
+
+	eof_log("\tCloning chart", 1);
+	csp = eof_clone_chart_time_range(eof_song, start, end);	//Build a new EOF project containing the specified time range's content from the active project
+	if(!csp)
+	{
+		eof_log("Failed to clone project.", 1);
+		return 0;
+	}
+
+	eof_log("\tSaving cloned chart", 1);
+	if(!eof_save_song(csp, "clone.eof"))
+	{
+		eof_log("Failed to save clone project.", 1);
+		eof_destroy_song(csp);
+		return 0;
+	}
+
+	eof_destroy_song(csp);
+	return 1;
 }

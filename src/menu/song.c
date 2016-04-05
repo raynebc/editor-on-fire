@@ -70,6 +70,8 @@ MENU eof_song_seek_menu[] =
 	{"Last Note\t" CTRL_NAME "+End", eof_menu_song_seek_last_note, NULL, 0, NULL},
 	{"Previous Note\tShift+PGUP", eof_menu_song_seek_previous_note, NULL, 0, NULL},
 	{"Next Note\tShift+PGDN", eof_menu_song_seek_next_note, NULL, 0, NULL},
+	{"Previous h.l. note\t" CTRL_NAME "+Shift+Y", eof_menu_song_seek_previous_highlighted_note, NULL, 0, NULL},
+	{"Next h.l. note\tShift+Y", eof_menu_song_seek_next_highlighted_note, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Previous Screen\t" CTRL_NAME "+PGUP", eof_menu_song_seek_previous_screen, NULL, 0, NULL},
 	{"Next Screen\t" CTRL_NAME "+PGDN", eof_menu_song_seek_next_screen, NULL, 0, NULL},
@@ -249,8 +251,7 @@ void eof_prepare_song_menu(void)
 	long firstnote = -1;
 	long lastnote = -1;
 	long noted[4] = {0};
-	long seekp = 0;
-	long seekn = 0;
+	int seekp = 0, seekph = 0, seekn = 0, seeknh = 0;
 
 	if(eof_song && eof_song_loaded)
 	{//If a chart is loaded
@@ -258,7 +259,7 @@ void eof_prepare_song_menu(void)
 
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-		{
+		{	//For each note in the active track
 			if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
 			{
 				if(firstnote < 0)
@@ -269,15 +270,25 @@ void eof_prepare_song_menu(void)
 			}
 			if(eof_get_note_type(eof_song, eof_selected_track, i) < 4)
 			{
-				noted[(int)eof_get_note_type(eof_song, eof_selected_track, i)] = 1;	//Type cast to avoid a nag warning about indexing with a char type
+				noted[(unsigned)eof_get_note_type(eof_song, eof_selected_track, i)] = 1;	//Type cast to avoid a nag warning about indexing with a char type
 			}
 			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
-			{
+			{	//If the note is earlier than the seek position
 				seekp = 1;
+				if(	(eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_NOTE_FLAG_HIGHLIGHT) ||
+					(eof_get_note_tflags(eof_song, eof_selected_track, i) & EOF_NOTE_TFLAG_HIGHLIGHT))
+				{	//If either the static or dynamic highlight flag of this note is set
+					seekph = 1;
+				}
 			}
 			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
-			{
+			{	//If the note is later than the seek position
 				seekn = 1;
+				if(	(eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_NOTE_FLAG_HIGHLIGHT) ||
+					(eof_get_note_tflags(eof_song, eof_selected_track, i) & EOF_NOTE_TFLAG_HIGHLIGHT))
+				{	//If either the static or dynamic highlight flag of this note is set
+					seeknh = 1;
+				}
 			}
 		}
 
@@ -303,24 +314,24 @@ void eof_prepare_song_menu(void)
 		if(eof_music_pos == eof_av_delay)
 		{	//If the seek position is already at the start of the chart
 			eof_song_seek_menu[1].flags = D_DISABLED;	//Seek start
-			eof_song_seek_menu[18].flags = D_DISABLED;	//Previous beat
+			eof_song_seek_menu[20].flags = D_DISABLED;	//Previous beat
 		}
 		else
 		{
 			eof_song_seek_menu[1].flags = 0;
-			eof_song_seek_menu[18].flags = 0;
+			eof_song_seek_menu[20].flags = 0;
 		}
 
 		/* seek end */
 		if(eof_music_pos >= eof_music_length - 1)
 		{	//If the seek position is already at the end of the chart
 			eof_song_seek_menu[2].flags = D_DISABLED;	//Seek end
-			eof_song_seek_menu[19].flags = D_DISABLED;	//Next beat
+			eof_song_seek_menu[21].flags = D_DISABLED;	//Next beat
 		}
 		else
 		{
 			eof_song_seek_menu[2].flags = 0;
-			eof_song_seek_menu[19].flags = 0;
+			eof_song_seek_menu[21].flags = 0;
 		}
 
 		/* show catalog */
@@ -431,40 +442,60 @@ void eof_prepare_song_menu(void)
 			eof_song_seek_menu[10].flags = D_DISABLED;
 		}
 
-		/* seek previous screen */
-		if(eof_music_pos <= eof_av_delay)
+		/* seek previous highlighed note */
+		if(seekph)
 		{
-			eof_song_seek_menu[12].flags = D_DISABLED;	//Previous screen
+			eof_song_seek_menu[11].flags = 0;	//Previous note
 		}
 		else
 		{
-			eof_song_seek_menu[12].flags = 0;
+			eof_song_seek_menu[11].flags = D_DISABLED;
+		}
+
+		/* seek next highlighted note */
+		if(seeknh)
+		{
+			eof_song_seek_menu[12].flags = 0;	//Next note
+		}
+		else
+		{
+			eof_song_seek_menu[12].flags = D_DISABLED;
+		}
+
+		/* seek previous screen */
+		if(eof_music_pos <= eof_av_delay)
+		{
+			eof_song_seek_menu[14].flags = D_DISABLED;	//Previous screen
+		}
+		else
+		{
+			eof_song_seek_menu[14].flags = 0;
 		}
 
 		/* seek next screen */
 		if(eof_music_pos >= eof_music_length - 1)
 		{
-			eof_song_seek_menu[13].flags = D_DISABLED;	//Next screen
+			eof_song_seek_menu[15].flags = D_DISABLED;	//Next screen
 		}
 		else
 		{
-			eof_song_seek_menu[13].flags = 0;
+			eof_song_seek_menu[15].flags = 0;
 		}
 
 		/* previous/next grid snap/anchor */
 		if(eof_snap_mode == EOF_SNAP_OFF)
 		{	//If grid snap is disabled
-			eof_song_seek_menu[14].flags = D_DISABLED;	//Previous grid snap
-			eof_song_seek_menu[15].flags = D_DISABLED;	//Next grid snap
-			eof_song_seek_menu[20].text = eof_seek_menu_prev_anchor_text1;	//Display the previous anchor menu item with the shortcut
-			eof_song_seek_menu[21].text = eof_seek_menu_next_anchor_text1;	//Display the next anchor menu item with the shortcut
+			eof_song_seek_menu[16].flags = D_DISABLED;	//Previous grid snap
+			eof_song_seek_menu[17].flags = D_DISABLED;	//Next grid snap
+			eof_song_seek_menu[22].text = eof_seek_menu_prev_anchor_text1;	//Display the previous anchor menu item with the shortcut
+			eof_song_seek_menu[23].text = eof_seek_menu_next_anchor_text1;	//Display the next anchor menu item with the shortcut
 		}
 		else
 		{
-			eof_song_seek_menu[14].flags = 0;			//Previous grid snap
-			eof_song_seek_menu[15].flags = 0;			//Next grid snap
-			eof_song_seek_menu[20].text = eof_seek_menu_prev_anchor_text2;	//Display the previous anchor menu item with no shortcut
-			eof_song_seek_menu[21].text = eof_seek_menu_next_anchor_text2;	//Display the next anchor menu item with no shortcut
+			eof_song_seek_menu[16].flags = 0;			//Previous grid snap
+			eof_song_seek_menu[17].flags = 0;			//Next grid snap
+			eof_song_seek_menu[22].text = eof_seek_menu_prev_anchor_text2;	//Display the previous anchor menu item with no shortcut
+			eof_song_seek_menu[23].text = eof_seek_menu_next_anchor_text2;	//Display the next anchor menu item with no shortcut
 		}
 
 		/* seek bookmark # */
@@ -763,10 +794,29 @@ int eof_menu_song_seek_previous_note(void)
 
 	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
 	{	//For each note in the active track
-		if((eof_get_note_type(eof_song, eof_selected_track, i-1) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i-1) < ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
+		if((eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i - 1) < ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
 		{
-			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, i-1) + eof_av_delay);
+			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, i - 1) + eof_av_delay);
 			break;
+		}
+	}
+	return 1;
+}
+
+int eof_menu_song_seek_previous_highlighted_note(void)
+{
+	unsigned long i;
+
+	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
+	{	//For each note in the active track
+		if((eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i - 1) < ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
+		{
+			if(	(eof_get_note_flags(eof_song, eof_selected_track, i - 1) & EOF_NOTE_FLAG_HIGHLIGHT) ||
+				(eof_get_note_tflags(eof_song, eof_selected_track, i - 1) & EOF_NOTE_TFLAG_HIGHLIGHT))
+			{	//If either the static or dynamic highlight flag of this note is set
+				eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, i - 1) + eof_av_delay);
+				break;
+			}
 		}
 	}
 	return 1;
@@ -782,6 +832,25 @@ int eof_menu_song_seek_next_note(void)
 		{
 			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay);
 			break;
+		}
+	}
+	return 1;
+}
+
+int eof_menu_song_seek_next_highlighted_note(void)
+{
+	unsigned long i;
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < eof_chart_length) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
+		{
+			if(	(eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_NOTE_FLAG_HIGHLIGHT) ||
+				(eof_get_note_tflags(eof_song, eof_selected_track, i) & EOF_NOTE_TFLAG_HIGHLIGHT))
+			{	//If either the static or dynamic highlight flag of this note is set
+				eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay);
+				break;
+			}
 		}
 	}
 	return 1;
@@ -3831,10 +3900,10 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 	return 0;	//Return completion
 }
 
-DIALOG eof_menu_song_export_song_preview_dialog[] =
+DIALOG eof_menu_song_time_range_dialog[] =
 {
-	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   200, 190, 0,   0,   0,    0,      0,   0,   "Set preview timings", NULL, NULL },
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
+	{ d_agup_window_proc,    0,   0,   200, 190, 0,   0,   0,    0,      0,   0,   eof_etext,             NULL, NULL },
 	{ d_agup_text_proc,      12,  56,  60,  12,  0,   0,   0,    0,      0,   0,   "Start position (ms)", NULL, NULL },
 	{ eof_verified_edit_proc,12,  72,  50,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789", NULL },
 	{ d_agup_text_proc,      12,  100, 60,  12,  0,   0,   0,    0,      0,   0,   "Stop position (ms)",  NULL, NULL },
@@ -3843,6 +3912,39 @@ DIALOG eof_menu_song_export_song_preview_dialog[] =
 	{ d_agup_button_proc,    110, 150, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
 	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                  NULL, NULL }
 };
+
+int eof_run_time_range_dialog(unsigned long *start, unsigned long *end)
+{
+	unsigned long newstart, newend;
+
+	if(!start || !end)
+		return 0;	//Invalid parameters
+
+	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", *start);	//Initialize the start time string
+	(void) snprintf(eof_etext3, sizeof(eof_etext3) - 1, "%lu", *end);	//Initialize the end time string
+
+	eof_render();
+	eof_color_dialog(eof_menu_song_time_range_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_menu_song_time_range_dialog);
+	if(eof_popup_dialog(eof_menu_song_time_range_dialog, 2) == 5)
+	{	//User clicked OK
+		if(!eof_check_string(eof_etext2) || !eof_check_string(eof_etext3))
+		{	//If either the start or stop fields had no non-space characters
+			return 0;	//Invalid input
+		}
+		newstart = atol(eof_etext2);
+		newend = atol(eof_etext3);
+		if(newstart == newend)
+			return 0;	//This isn't a valid preview time range
+
+		*start = newstart;
+		*end = newend;
+		return 1;
+	}
+
+	eof_render();
+	return 0;	//User cancelation
+}
 
 int eof_menu_song_export_song_preview(void)
 {
@@ -3879,102 +3981,95 @@ int eof_menu_song_export_song_preview(void)
 			start = eof_seek_selection_start;
 			stop = eof_seek_selection_end;
 		}
+		else if((eof_song->tags->start_point != ULONG_MAX) && (eof_song->tags->end_point != ULONG_MAX) && (eof_song->tags->start_point != eof_song->tags->end_point))
+		{	//If both the start and end points are defined with different timestamps
+			start = eof_song->tags->start_point;
+			stop = eof_song->tags->end_point;
+		}
 		else
 		{	//Default the start time to the current seek position and the stop time 30 seconds later
 			start = eof_music_pos - eof_av_delay;
 			stop = start + 30000; //30,000 ms later
 		}
 	}
-	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", start);	//Initialize the start time string
-	(void) snprintf(eof_etext3, sizeof(eof_etext3) - 1, "%lu", stop);	//Initialize the end time string
 
-	eof_color_dialog(eof_menu_song_export_song_preview_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_menu_song_export_song_preview_dialog);
-	if(eof_popup_dialog(eof_menu_song_export_song_preview_dialog, 1) == 5)
-	{	//User clicked OK
-		if(!eof_check_string(eof_etext2) || !eof_check_string(eof_etext3))
-		{	//If either the start or stop fields had no non-space characters
-			return 1;
-		}
-		start = atol(eof_etext2);
-		stop = atol(eof_etext3);
-		if(start == stop)
-			return 1;	//This isn't a valid preview time range
+	strncpy(eof_etext, "Set preview timings", sizeof(eof_etext) - 1);	//Set the title of the eof_menu_song_time_range_dialog dialog
+	if(!eof_run_time_range_dialog(&start, &stop))	//If a valid time range isn't provided by the user
+		return 0;									//Cancel
 
-		if(!oldstartstring || !oldendstring || (start != atol(oldstartstring)) || (stop != atol(oldendstring)))
-		{	//If the project didn't already have the start/stop preview tags stored, or if the times just entered are different from those already stored
-			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			if(oldstartstring)
-				eof_ini_delete(oldstarttag);	//Remove any existing preview start tag
-			oldendstring = eof_find_ini_setting_tag(eof_song, &oldendtag, "preview_end_time");	//Re-lookup the index for the end tag, since the index may have just changed due to the above deletion
-			if(oldendstring)
-				eof_ini_delete(oldendtag);	//Remove any existing preview start tag
-			if(eof_song->tags->ini_settings + 2 < EOF_MAX_INI_SETTINGS)
-			{	//If the start and end INI tags can be stored into the project
-				(void) snprintf(eof_song->tags->ini_setting[eof_song->tags->ini_settings], EOF_INI_LENGTH - 1, "preview_start_time = %lu", start);
-				eof_song->tags->ini_settings++;
-				(void) snprintf(eof_song->tags->ini_setting[eof_song->tags->ini_settings], EOF_INI_LENGTH - 1, "preview_end_time = %lu", stop);
-				eof_song->tags->ini_settings++;
-			}
+	if(!oldstartstring || !oldendstring || (start != atol(oldstartstring)) || (stop != atol(oldendstring)))
+	{	//If the project didn't already have the start/stop preview tags stored, or if the times just entered are different from those already stored
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		if(oldstartstring)
+			eof_ini_delete(oldstarttag);	//Remove any existing preview start tag
+		oldendstring = eof_find_ini_setting_tag(eof_song, &oldendtag, "preview_end_time");	//Re-lookup the index for the end tag, since the index may have just changed due to the above deletion
+		if(oldendstring)
+			eof_ini_delete(oldendtag);	//Remove any existing preview start tag
+		if(eof_song->tags->ini_settings + 2 < EOF_MAX_INI_SETTINGS)
+		{	//If the start and end INI tags can be stored into the project
+			(void) snprintf(eof_song->tags->ini_setting[eof_song->tags->ini_settings], EOF_INI_LENGTH - 1, "preview_start_time = %lu", start);
+			eof_song->tags->ini_settings++;
+			(void) snprintf(eof_song->tags->ini_setting[eof_song->tags->ini_settings], EOF_INI_LENGTH - 1, "preview_end_time = %lu", stop);
+			eof_song->tags->ini_settings++;
 		}
+	}
 
-		if(eof_silence_loaded)
-		{	//If no chart audio is loaded
-			return 1;
-		}
-		if(alert(NULL, "Generate preview audio files?", NULL, "&Yes", "&No", 'y', 'n') != 1)
-		{	//If the user declined to generate audio files
-			return 1;
-		}
+	if(eof_silence_loaded)
+	{	//If no chart audio is loaded
+		return 1;
+	}
+	if(alert(NULL, "Generate preview audio files?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+	{	//If the user declined to generate audio files
+		return 1;
+	}
 
-		if(eof_ogg_settings())
-		{	//If the user selected an OGG encoding quality
-			//Determine the name to save the WAV file to
-			if(eof_song->tags->title[0] != '\0')
-			{	//If the chart has a defined song title
-				(void) snprintf(wavname, sizeof(wavname), "%s_preview.wav", eof_song->tags->title);
-			}
-			else
-			{	//Otherwise default to "guitar"
-				(void) snprintf(wavname, sizeof(wavname), "guitar_preview.wav");
-			}
+	if(eof_ogg_settings())
+	{	//If the user selected an OGG encoding quality
+		//Determine the name to save the WAV file to
+		if(eof_song->tags->title[0] != '\0')
+		{	//If the chart has a defined song title
+			(void) snprintf(wavname, sizeof(wavname), "%s_preview.wav", eof_song->tags->title);
+		}
+		else
+		{	//Otherwise default to "guitar"
+			(void) snprintf(wavname, sizeof(wavname), "guitar_preview.wav");
+		}
+		(void) replace_filename(targetpath, eof_song_path, wavname, 1024);	//Build the target path for the preview WAV file
+		(void) delete_file(targetpath);	//Delete the preview WAV file if it already exists
+		eof_export_time_range(eof_music_track, start / 1000.0, stop / 1000.0, targetpath);	//Build the preview WAV file
+		if(!exists(targetpath))
+		{	//If the preview WAV file was not created, retry using a known acceptable file name
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError writing file \"%s\":  \"%s\", retrying with a target name of guitar_preview.wav", targetpath, strerror(errno));	//Get the Operating System's reason for the failure
+			eof_log(eof_log_string, 1);
+			(void) snprintf(wavname, sizeof(wavname), "guitar_preview.wav");
 			(void) replace_filename(targetpath, eof_song_path, wavname, 1024);	//Build the target path for the preview WAV file
 			(void) delete_file(targetpath);	//Delete the preview WAV file if it already exists
 			eof_export_time_range(eof_music_track, start / 1000.0, stop / 1000.0, targetpath);	//Build the preview WAV file
+		}
+		if(exists(targetpath))
+		{	//If the preview WAV file was created, convert it to OGG
+			(void) replace_filename(targetpath, eof_song_path, "preview.ogg", 1024);	//Build the target for the preview OGG file
+			(void) delete_file(targetpath);	//Delete the preview OGG file if it already exists
+			(void) replace_filename(targetpath, eof_song_path, "", 1024);	//Build the path for the preview files' parent folder
+			#ifdef ALLEGRO_WINDOWS
+				(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc2 --quiet -q %s --resample 44100 -s 0 \"%s%s\" -o \"%spreview.ogg\"", eof_ogg_quality[(int)eof_ogg_setting], targetpath, wavname, targetpath);
+			#else
+				(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc --quiet -q %s --resample 44100 -s 0 \"%s%s\" -o \"%spreview.ogg\"", eof_ogg_quality[(int)eof_ogg_setting], targetpath, wavname, targetpath);
+			#endif
+			(void) eof_system(syscommand);
 			if(!exists(targetpath))
-			{	//If the preview WAV file was not created, retry using a known acceptable file name
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError writing file \"%s\":  \"%s\", retrying with a target name of guitar_preview.wav", targetpath, strerror(errno));	//Get the Operating System's reason for the failure
-				eof_log(eof_log_string, 1);
-				(void) snprintf(wavname, sizeof(wavname), "guitar_preview.wav");
-				(void) replace_filename(targetpath, eof_song_path, wavname, 1024);	//Build the target path for the preview WAV file
-				(void) delete_file(targetpath);	//Delete the preview WAV file if it already exists
-				eof_export_time_range(eof_music_track, start / 1000.0, stop / 1000.0, targetpath);	//Build the preview WAV file
-			}
-			if(exists(targetpath))
-			{	//If the preview WAV file was created, convert it to OGG
-				(void) replace_filename(targetpath, eof_song_path, "preview.ogg", 1024);	//Build the target for the preview OGG file
-				(void) delete_file(targetpath);	//Delete the preview OGG file if it already exists
-				(void) replace_filename(targetpath, eof_song_path, "", 1024);	//Build the path for the preview files' parent folder
-				#ifdef ALLEGRO_WINDOWS
-					(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc2 --quiet -q %s --resample 44100 -s 0 \"%s%s\" -o \"%spreview.ogg\"", eof_ogg_quality[(int)eof_ogg_setting], targetpath, wavname, targetpath);
-				#else
-					(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc --quiet -q %s --resample 44100 -s 0 \"%s%s\" -o \"%spreview.ogg\"", eof_ogg_quality[(int)eof_ogg_setting], targetpath, wavname, targetpath);
-				#endif
-				(void) eof_system(syscommand);
-				if(!exists(targetpath))
-				{
-					eof_log("\tError creating preview OGG file.", 1);
-				}
-			}
-			else
 			{
-				eof_log("\tError creating preview WAV file, aborting.", 1);
+				eof_log("\tError creating preview OGG file.", 1);
 			}
 		}
 		else
 		{
-			eof_log("\tUser cancellation.", 1);
+			eof_log("\tError creating preview WAV file, aborting.", 1);
 		}
+	}
+	else
+	{
+		eof_log("\tUser cancellation.", 1);
 	}
 
 	return 1;

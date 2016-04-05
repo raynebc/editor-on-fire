@@ -1985,7 +1985,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
 					{	//If this string is used and is not ghosted
 						(void) eof_get_rs_techniques(sp, track, ctr, ctr3, &tech, 2, 1);		//Get the end position of any pitched/unpitched slide this chord's gem has
-						new_note = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);	//Clone the note with the updated length
+						new_note = eof_copy_note_simple(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);	//Clone the note with the updated length
 						if(new_note)
 						{	//If the new note was created
 							new_note->tflags |= EOF_NOTE_TFLAG_TEMP;		//Mark the note as temporary
@@ -2031,7 +2031,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						eof_rs2_adjust_chordnote_sustain(tp, ctr, ctr3, &tech);				//Set tech.length to 0 as appropriate depending on this gem's techniques
 						if(tech.length)
 						{	//If this gem would export with sustain
-							new_note = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);	//Clone the note with the updated length
+							new_note = eof_copy_note_simple(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);	//Clone the note with the updated length
 							if(new_note)
 							{	//If the new note was created
 								new_note->tflags |= EOF_NOTE_TFLAG_TEMP;		//Mark the note as temporary
@@ -2142,7 +2142,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 									int linknextoff;
 
 									linknextoff = eof_rs_combine_linknext_logic(sp, track, ctr, ctr3);	//Run combination logic to set the chord's length to that which this string's chordnote will export, if applicable
-									new_note = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);	//Clone the note with the updated length
+									new_note = eof_copy_note_simple(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);	//Clone the note with the updated length
 									tp->note[ctr]->length = originallength;	//Restore the chord's original length if it had changed
 									if(new_note)
 									{	//If the new note was created
@@ -2196,7 +2196,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as the newly built chord below
 				}
 				//Insert a temporary chord that is the same except without the ghost gems
-				new_note = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);
+				new_note = eof_copy_note_simple(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);
 				if(new_note)
 				{	//If the new note was created
 					new_note->tflags |= EOF_NOTE_TFLAG_TEMP;				//Mark the note as temporary
@@ -2216,7 +2216,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					}
 					if(tp->note[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS)
 					{	//If the chord is marked with ghost handshape status, create a copy of the chord with all ghosted gems as normal gems
-						new_note2 = eof_copy_note(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);
+						new_note2 = eof_copy_note_simple(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);
 						if(new_note2)
 						{	//If the new note was created
 							new_note2->ghost = 0;							//Clear all ghost status from this chord

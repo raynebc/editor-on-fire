@@ -72,9 +72,16 @@ void eof_select_beat(unsigned long beat)
 	{	//If the cached beat statistics are not current
 		eof_process_beat_statistics(eof_song, eof_selected_track);	//Rebuild them (from the perspective of the specified track)
 	}
-	eof_selected_measure = eof_song->beat[beat]->measurenum;
 	eof_beat_in_measure = eof_song->beat[beat]->beat_within_measure;
 	eof_beats_in_measure = eof_song->beat[beat]->num_beats_in_measure;
+	if((eof_beat_in_measure >= 0) && (eof_beats_in_measure >= 0))
+	{	//If valid measure information is available
+		eof_selected_measure = eof_song->beat[beat]->measurenum;
+	}
+	else
+	{	//Otherwise it's likely that no valid time signature is in effect
+		eof_selected_measure = -1;
+	}
 }
 
 void eof_get_snap_ts(EOF_SNAP_DATA * sp, unsigned long beat)
@@ -973,10 +980,33 @@ if(eof_key_code == KEY_PAUSE)
 	}
 
 	/* toggle yellow cymbal (CTRL+Y) */
-	if((eof_key_char == 'y') && KEY_EITHER_CTRL)
+	/* seek to next highlighted note (SHIFT+Y) */
+	/* seek to previous highlighted note (CTRL+SHIFT+Y) */
+	if(eof_key_char == 'y')
 	{	//CTRL+Y will toggle Pro yellow cymbal notation
-		(void) eof_menu_note_toggle_rb3_cymbal_yellow();
-		eof_use_key();
+		if(KEY_EITHER_CTRL)
+		{	//If CTRL is held
+			if(KEY_EITHER_SHIFT)
+			{	//If both CTRL and SHIFT are held
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				(void) eof_menu_song_seek_previous_highlighted_note();
+				eof_use_key();
+			}
+			else
+			{	//Only CTRL is held
+				(void) eof_menu_note_toggle_rb3_cymbal_yellow();
+				eof_use_key();
+			}
+		}
+		else
+		{	//CTRL is not held
+			if(KEY_EITHER_SHIFT)
+			{	//If only SHIFT is held
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				(void) eof_menu_song_seek_next_highlighted_note();
+				eof_use_key();
+			}
+		}
 	}
 
 	/* toggle blue cymbal (CTRL+B in the drum track) */
@@ -984,7 +1014,7 @@ if(eof_key_code == KEY_PAUSE)
 	/* set bend strength (SHIFT+B in a pro guitar track) */
 	/* seek to beat/measure (CTRL+SHIFT+B) */
 	if(eof_key_char == 'b')
-	{	//CTRL+B will toggle Pro blue cymbal notation
+	{
 		if(KEY_EITHER_CTRL)
 		{	//If CTRL is held
 			if(KEY_EITHER_SHIFT)
@@ -5580,8 +5610,15 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	/* draw seek selection */
 	if(eof_seek_selection_start != eof_seek_selection_end)
 	{	//If there is a seek selection
-		if((eof_seek_selection_end >= start) && (eof_seek_selection_start <= stop))	//If the star power section would render between the left and right edges of the piano roll, render a red rectangle from the top most lane to the bottom most lane
+		if((eof_seek_selection_end >= start) && (eof_seek_selection_start <= stop))	//If the selection would render between the left and right edges of the piano roll, render a red rectangle from the top most lane to the bottom most lane
 			rectfill(window->screen, lpos + eof_seek_selection_start / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0], lpos + eof_seek_selection_end / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 1], eof_color_red);
+	}
+
+	/* draw start/end point marking */
+	if((eof_song->tags->start_point != ULONG_MAX) && (eof_song->tags->end_point != ULONG_MAX) && (eof_song->tags->start_point != eof_song->tags->end_point))
+	{	//If both the start and end points are defined with different timestamps
+		if((eof_song->tags->end_point >= start) && (eof_song->tags->start_point <= stop))	//If the start/end marker would render between the left and right edges of the piano roll, render a light gray rectangle beneath the beat markers
+			rectfill(window->screen, lpos + eof_song->tags->start_point / eof_zoom, EOF_EDITOR_RENDER_OFFSET - 4, lpos + eof_song->tags->end_point / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, eof_color_light_red);
 	}
 
 	/* draw trill and tremolo sections */

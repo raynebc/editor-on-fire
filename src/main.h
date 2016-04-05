@@ -391,7 +391,7 @@ extern int         eof_selected_control;
 extern int         eof_cselected_control;
 extern unsigned long eof_selected_catalog_entry;
 extern unsigned long eof_selected_beat;
-extern int         eof_selected_measure;
+extern long        eof_selected_measure;
 extern int         eof_beat_in_measure;
 extern int         eof_beats_in_measure;
 extern int         eof_pegged_note;
@@ -439,6 +439,7 @@ extern int eof_color_gray2;
 extern int eof_color_gray3;
 extern int eof_color_light_gray;
 extern int eof_color_red;
+extern int eof_color_light_red;
 extern int eof_color_green;
 extern int eof_color_dark_green;
 extern int eof_color_blue;
@@ -609,7 +610,7 @@ void eof_switch_out_callback(void);	//Performs some logic that needs to occur wh
 void eof_switch_in_callback(void);	//Performs some logic that needs to occur when EOF gains foreground focus
 long eof_get_previous_note(long cnote);	//Returns the note that exists immediately before the specified note in the active track difficulty, or -1 if no such note exists
 int eof_note_is_hopo(unsigned long cnote);	//Returns nonzero if the specified note in the active track difficulty should be rendered as a HOPO, based on the current HOPO preview setting
-void eof_read_global_keys(void);	//Reads and acts on various keyboard combinations
+void eof_read_global_keys(void);	//Reads and acts on various keyboard combinations, only if the chart is paused
 void eof_lyric_logic(void);	//Performs various vocal editor logic
 void eof_note_logic(void);	//Performs various note catalog logic
 void eof_logic(void);		//Performs various editor logic

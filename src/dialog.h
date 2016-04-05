@@ -20,6 +20,7 @@ extern char eof_etext8[1024];
 extern char *eof_help_text;
 extern char eof_ctext[13][1024];
 
+extern int eof_close_menu;	//Set to nonzero to signal to eof_popup_dialog() that the menus should be closed
 
 //These functions are defined by source files in the /menu folder
 char * eof_input_list(int index, int * size);		//Dialog logic to display the usable input methods in a list box

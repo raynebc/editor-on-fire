@@ -177,8 +177,9 @@ MENU eof_edit_menu[] =
 	{"MIDI Tones\tShift+T", eof_menu_edit_midi_tones, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Bookmark", NULL, eof_edit_bookmark_menu, 0, NULL},
-	{"", NULL, NULL, 0, NULL},
 	{"&Selection", NULL, eof_edit_selection_menu, 0, NULL},
+	{"Set start point", eof_menu_edit_set_start_point, NULL, 0, NULL},
+	{"Set end point", eof_menu_edit_set_end_point, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -2998,7 +2999,7 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 		{	//If this note is in the source difficulty
 			pos = eof_get_note_pos(eof_song, eof_selected_track, i);
 			length = eof_get_note_length(eof_song, eof_selected_track, i);
-			(void) eof_copy_note(eof_song, eof_selected_track, i, eof_selected_track, pos, length, eof_note_type);
+			(void) eof_copy_note_simple(eof_song, eof_selected_track, i, eof_selected_track, pos, length, eof_note_type);
 		}
 	}
 
@@ -3012,7 +3013,7 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 			{	//If this note is in the source difficulty
 				pos = eof_get_note_pos(eof_song, eof_selected_track, i);
 				length = eof_get_note_length(eof_song, eof_selected_track, i);
-				(void) eof_copy_note(eof_song, eof_selected_track, i, eof_selected_track, pos, length, eof_note_type);
+				(void) eof_copy_note_simple(eof_song, eof_selected_track, i, eof_selected_track, pos, length, eof_note_type);
 			}
 		}
 		eof_track_sort_notes(eof_song, eof_selected_track);	//Sort tech notes before switching back to the normal note array
@@ -3308,7 +3309,7 @@ int eof_menu_edit_paste_from_catalog(void)
 				/* paste the note */
 				if(end_beat - first_beat + start_beat < eof_song->beats)
 				{
-					new_note = eof_copy_note(eof_song, sourcetrack, i, eof_selected_track, eof_put_porpos(current_beat, nporpos, 0.0), eof_put_porpos(end_beat - first_beat + start_beat, nporendpos, 0.0) - eof_put_porpos(current_beat, nporpos, 0.0), eof_note_type);
+					new_note = eof_copy_note_simple(eof_song, sourcetrack, i, eof_selected_track, eof_put_porpos(current_beat, nporpos, 0.0), eof_put_porpos(end_beat - first_beat + start_beat, nporendpos, 0.0) - eof_put_porpos(current_beat, nporpos, 0.0), eof_note_type);
 					if(new_note)
 					{	//If the note was successfully created
 						newnotenum = eof_get_track_size(eof_song, eof_selected_track) - 1;	//The index of the new note
@@ -3908,4 +3909,52 @@ int eof_menu_edit_deselect_on_beat_notes(void)
 int eof_menu_edit_deselect_off_beat_notes(void)
 {
 	return eof_menu_edit_deselect_on_or_off_beat_notes(0);
+}
+
+int eof_menu_edit_set_start_point(void)
+{
+	unsigned long temp;
+
+	if(!eof_song)
+		return 0;
+
+	if(eof_song->tags->start_point == eof_music_pos - eof_av_delay)
+	{	//If the start point is already set to the current seek position
+		eof_song->tags->start_point = ULONG_MAX;	//Clear the start point
+	}
+	else
+	{	//Otherwise update it to the current seek position
+		eof_song->tags->start_point = eof_music_pos - eof_av_delay;
+		if((eof_song->tags->end_point != ULONG_MAX) && (eof_song->tags->start_point > eof_song->tags->end_point))
+		{	//If the start and end points are defined out of order, swap them
+			temp =eof_song->tags-> end_point;
+			eof_song->tags->end_point = eof_song->tags->start_point;
+			eof_song->tags->start_point = temp;
+		}
+	}
+	return 1;
+}
+
+int eof_menu_edit_set_end_point(void)
+{
+	unsigned long temp;
+
+	if(!eof_song)
+		return 0;
+
+	if(eof_song->tags->end_point == eof_music_pos - eof_av_delay)
+	{	//If the end point is already set to the current seek position
+		eof_song->tags->end_point = ULONG_MAX;	//Clear the start point
+	}
+	else
+	{	//Otherwise update it to the current seek position
+		eof_song->tags->end_point = eof_music_pos - eof_av_delay;
+		if((eof_song->tags->start_point != ULONG_MAX) && (eof_song->tags->start_point > eof_song->tags->end_point))
+		{	//If the start and end points are defined out of order, swap them
+			temp = eof_song->tags->end_point;
+			eof_song->tags->end_point = eof_song->tags->start_point;
+			eof_song->tags->start_point = temp;
+		}
+	}
+	return 1;
 }

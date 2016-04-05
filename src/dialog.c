@@ -63,6 +63,7 @@ char *eof_help_text = NULL;
 char eof_ctext[13][1024] = {{0}};
 
 static int eof_keyboard_shortcut = 0;
+int eof_close_menu = 0;
 
 void eof_prepare_menus(void)
 {
@@ -127,6 +128,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 		{
 			if(eof_key_code == KEY_ESC)
 			{	//Escape causes the menu to close immediately
+				eof_close_menu = 1;	//Close a nested parent call to eof_popup_dialog, if any
 				break;
 			}
 			if(eof_key_char)
@@ -142,11 +144,16 @@ int eof_popup_dialog(DIALOG * dp, int n)
 		{
 			break;
 		}
+		if(eof_close_menu)
+		{	//If another function (ie. a dialog) signaled to close the menu, do so immediately
+			eof_close_menu = 0;
+			break;
+		}
 		/* special handling of the main menu */
 		if(dp[0].proc == d_agup_menu_proc)
 		{
-			/* use has opened the menu with a shortcut key */
-			if(eof_key_char == 'f' || eof_key_char == 'e' || eof_key_char == 's' || eof_key_char == 't' || eof_key_char == 'n' || eof_key_char == 'b' || eof_key_char == 'h')
+			/* user has opened the menu with a shortcut key */
+			if((eof_key_char == 'f') || (eof_key_char == 'e') || (eof_key_char == 's') || (eof_key_char == 't') || (eof_key_char == 'n') || (eof_key_char == 'b') || (eof_key_char == 'h'))
 			{
 				eof_keyboard_shortcut = 1;
 				player->mouse_obj = 0;

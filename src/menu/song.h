@@ -41,7 +41,9 @@ int eof_menu_song_seek_rewind(void);
 int eof_menu_song_seek_first_note(void);
 int eof_menu_song_seek_last_note(void);
 int eof_menu_song_seek_previous_note(void);
+int eof_menu_song_seek_previous_highlighted_note(void);
 int eof_menu_song_seek_next_note(void);
+int eof_menu_song_seek_next_highlighted_note(void);
 int eof_menu_song_seek_previous_screen(void);
 int eof_menu_song_seek_next_screen(void);
 int eof_menu_song_seek_bookmark_0(void);
@@ -171,6 +173,12 @@ int eof_check_fret_hand_positions(void);
 int eof_check_fret_hand_positions_menu(void);
 	//Calls eof_check_fret_hand_positions_option specifying to report if there were no corrections needed (to be called from menu)
 
+int eof_run_time_range_dialog(unsigned long *start, unsigned long *end);
+	//Runs the dialog to accept start and end timestamps from the user
+	//The input fields are initialized to the values at *start and *end
+	//eof_etext[] is used as the title for the dialog
+	//Returns nonzero if user clicks OK, and returns the specified timestamps through *start and *end
+	//Returns zero if user cancels, either field is empty, both fields have the same value or upon error
 int eof_menu_song_export_song_preview(void);
 	//Allows the user to define a portion of the chart audio to export to preview.wav and preview.ogg in the project folder
 

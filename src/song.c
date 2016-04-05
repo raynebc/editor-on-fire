@@ -215,6 +215,8 @@ EOF_SONG * eof_create_song(void)
 	sp->tags->oggs = 1;
 	sp->tags->revision = 0;
 	sp->tags->difficulty = 0xFF;
+	sp->tags->start_point = ULONG_MAX;
+	sp->tags->end_point = ULONG_MAX;
 	sp->resolution = 0;
 	sp->tracks = 0;
 	sp->legacy_tracks = 0;
@@ -251,10 +253,10 @@ void eof_destroy_song(EOF_SONG * sp)
 		return;
 
 // 	eof_log_level &= ~2;	//Disable verbose logging
-	for(ctr = sp->tracks - 1; ctr > 0; ctr--)
+	for(ctr = sp->tracks; ctr > 0; ctr--)
 	{	//For each entry in the track array, empty and then free it
-		eof_song_empty_track(sp, ctr);
-		(void) eof_song_delete_track(sp, ctr);
+		eof_song_empty_track(sp, ctr - 1);
+		(void) eof_song_delete_track(sp, ctr - 1);
 	}
 
 	for(ctr=0; ctr < sp->beats; ctr++)
@@ -1746,6 +1748,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	}
 
 	custom_data_count = pack_igetl(fp);		//Read the number of custom data blocks
+	sp->tags->start_point = sp->tags->end_point = ULONG_MAX;	//These will both be considered undefined unless the project being loaded defines them
 	for(custom_data_ctr = 0; custom_data_ctr < custom_data_count; custom_data_ctr++)
 	{	//For each custom data block in the project
 		custom_data_size = pack_igetl(fp);	//Read the size of the custom data block
@@ -1896,6 +1899,11 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				sp->beat[ctr]->pos = sp->beat[ctr]->fpos + 0.5;					//Round this up to the nearest millisecond to get the integer timestamp of the beat
 			}
 			sp->fpbeattimes = 1;	//Have eof_init_after_load() skip the recalculation of beat timings, since the original floating point timings were loaded
+		}
+		else if(data_block_type == 3)
+		{	//This is start and end point pair of timestamps
+			sp->tags->start_point = pack_igetl(fp);	//Read the start point
+			sp->tags->end_point = pack_igetl(fp);	//Read the end point
 		}
 		else
 		{	//Otherwise, skip over the unknown data block
@@ -2514,7 +2522,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};
 	unsigned long count, ctr, ctr2, tracknum = 0;
 	unsigned long track_count,track_ctr,bookmark_count,track_custom_block_count,bitmask,fingerdefinitions;
-	char has_raw_midi_data, has_fp_beat_timings = 1;
+	char has_raw_midi_data, has_fp_beat_timings = 1, has_start_end_points;
 	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes,has_accent;
 
 	#define EOFNUMINISTRINGTYPES 9
@@ -2680,14 +2688,18 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		}
 	}
 //	(void) pack_iputl(0, fp);	//Write an empty custom data block
-	has_raw_midi_data = 0;
+	has_raw_midi_data = has_start_end_points = 0;
 	if(sp->midi_data_head)
 	{	//If there is raw MIDI data being stored
 		has_raw_midi_data = 1;
 	}
-	if(has_raw_midi_data || has_fp_beat_timings)
+	if((sp->tags->start_point != ULONG_MAX) || (sp->tags->end_point != ULONG_MAX))
+	{	//If either the start or end points are defined
+		has_start_end_points = 1;
+	}
+	if(has_raw_midi_data || has_fp_beat_timings || has_start_end_points)
 	{	//If writing data in a custom data block
-		(void) pack_iputl(has_raw_midi_data + has_fp_beat_timings, fp);	//Write the number of custom data blocks
+		(void) pack_iputl(has_raw_midi_data + has_fp_beat_timings + has_start_end_points, fp);	//Write the number of custom data blocks
 		if(has_raw_midi_data)
 		{	//If there is raw MIDI data being stored, write it as a custom data block
 			PACKFILE *tfp;	//Used to create a temp file containing the MIDI data block, so its size can easily be determined before dumping into the output project file
@@ -2798,6 +2810,13 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			}
 			(void) pack_fclose(tfp);
 			(void) delete_file(beattimesfn);	//Delete the temp file
+		}
+		if(has_start_end_points)
+		{	//If the start and end points are to be written
+			(void) pack_iputl(12, fp);		//Write the number of bytes this block will contain (two 4 byte timestamps and a 4 byte block ID)
+			(void) pack_iputl(3, fp);		//Write the pro guitar track arrangement type custom data block ID
+			(void) pack_iputl(sp->tags->start_point, fp);	//Write the start point
+			(void) pack_iputl(sp->tags->end_point, fp);		//Write the end point
 		}
 	}//If writing data in a custom data block
 	else
@@ -6170,7 +6189,7 @@ char *eof_get_note_name(EOF_SONG *sp, unsigned long track, unsigned long note)
 	return NULL;	//Return error
 }
 
-void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourcenote, unsigned long desttrack, unsigned long pos, long length, char type)
+void *eof_copy_note(EOF_SONG *ssp, unsigned long sourcetrack, unsigned long sourcenote, EOF_SONG *dsp, unsigned long desttrack, unsigned long pos, long length, char type)
 {
 	unsigned long sourcetracknum, desttracknum, newnotenum;
 	unsigned long note, flags;
@@ -6180,54 +6199,59 @@ void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourc
  	eof_log("eof_copy_note() entered", 2);
 
 	//Validate parameters
-	if((sp == NULL) || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcenote >= eof_get_track_size(sp, sourcetrack)))
+	if((ssp == NULL) || (sourcetrack >= ssp->tracks) || (sourcenote >= eof_get_track_size(ssp, sourcetrack)) || (dsp == NULL) || (desttrack >= dsp->tracks))
 		return NULL;
 
 	//Don't allow copying instrument track notes to PART VOCALS and vice versa
 	if(((sourcetrack == EOF_TRACK_VOCALS) && (desttrack != EOF_TRACK_VOCALS)) || ((sourcetrack != EOF_TRACK_VOCALS) && (desttrack == EOF_TRACK_VOCALS)))
 		return NULL;
 
-	sourcetracknum = sp->track[sourcetrack]->tracknum;
-	desttracknum = sp->track[desttrack]->tracknum;
+	sourcetracknum = ssp->track[sourcetrack]->tracknum;
+	desttracknum = dsp->track[desttrack]->tracknum;
 
-	note = eof_get_note_note(sp, sourcetrack, sourcenote);
-	text = eof_get_note_name(sp, sourcetrack, sourcenote);
-	flags = eof_get_note_flags(sp, sourcetrack, sourcenote);
+	note = eof_get_note_note(ssp, sourcetrack, sourcenote);
+	text = eof_get_note_name(ssp, sourcetrack, sourcenote);
+	flags = eof_get_note_flags(ssp, sourcetrack, sourcenote);
 
 	if(desttrack == EOF_TRACK_VOCALS)
 	{	//If copying from PART VOCALS
-		return eof_track_add_create_note(sp, desttrack, note, pos, length, type, text);
+		return eof_track_add_create_note(dsp, desttrack, note, pos, length, type, text);
 	}
 	else
 	{	//If copying from a non vocal track
-		if((sp->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (sp->track[desttrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		if((ssp->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (dsp->track[desttrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		{	//If copying from a pro guitar track to a non pro guitar track
-			if(sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask != 0)
+			if(ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask != 0)
 			{	//If the user defined how this pro guitar note would transcribe to a legacy track
-				note = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask;	//Use that bitmask
+				note = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask;	//Use that bitmask
 			}
 		}
 
-		result = eof_track_add_create_note(sp, desttrack, note, pos, length, type, text);
+		result = eof_track_add_create_note(dsp, desttrack, note, pos, length, type, text);
 		if(result)
 		{	//If the note was successfully created
-			newnotenum = eof_get_track_size(sp, desttrack) - 1;		//The index of the new note
-			eof_set_note_flags(sp, desttrack, newnotenum, flags);	//Copy the source note's flags to the newly created note
-			if((sp->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (sp->track[desttrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+			newnotenum = eof_get_track_size(dsp, desttrack) - 1;		//The index of the new note
+			eof_set_note_flags(dsp, desttrack, newnotenum, flags);	//Copy the source note's flags to the newly created note
+			if((ssp->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (dsp->track[desttrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If the note was copied from a pro guitar track and pasted to a pro guitar track
-				memcpy(sp->pro_guitar_track[desttracknum]->note[newnotenum]->frets, sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->frets, 6);		//Copy the six usable string fret values from the source note to the newly created note
-				memcpy(sp->pro_guitar_track[desttracknum]->note[newnotenum]->finger, sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->finger, 6);	//Copy the six usable finger values from the source note to the newly created note
-				sp->pro_guitar_track[desttracknum]->note[newnotenum]->ghost = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->ghost;				//Copy the ghost bitmask
-				sp->pro_guitar_track[desttracknum]->note[newnotenum]->legacymask = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask;		//Copy the legacy bitmask
-				sp->pro_guitar_track[desttracknum]->note[newnotenum]->bendstrength = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->bendstrength;	//Copy the bend strength
-				sp->pro_guitar_track[desttracknum]->note[newnotenum]->slideend = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->slideend;			//Copy the slide end position
-				sp->pro_guitar_track[desttracknum]->note[newnotenum]->unpitchend = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->unpitchend;		//Copy the unpitched slide end position
-				sp->pro_guitar_track[desttracknum]->note[newnotenum]->eflags = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->eflags;				//Copy the extended flags
+				memcpy(dsp->pro_guitar_track[desttracknum]->note[newnotenum]->frets, ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->frets, 6);		//Copy the six usable string fret values from the source note to the newly created note
+				memcpy(dsp->pro_guitar_track[desttracknum]->note[newnotenum]->finger, ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->finger, 6);	//Copy the six usable finger values from the source note to the newly created note
+				dsp->pro_guitar_track[desttracknum]->note[newnotenum]->ghost = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->ghost;				//Copy the ghost bitmask
+				dsp->pro_guitar_track[desttracknum]->note[newnotenum]->legacymask = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask;		//Copy the legacy bitmask
+				dsp->pro_guitar_track[desttracknum]->note[newnotenum]->bendstrength = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->bendstrength;	//Copy the bend strength
+				dsp->pro_guitar_track[desttracknum]->note[newnotenum]->slideend = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->slideend;			//Copy the slide end position
+				dsp->pro_guitar_track[desttracknum]->note[newnotenum]->unpitchend = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->unpitchend;		//Copy the unpitched slide end position
+				dsp->pro_guitar_track[desttracknum]->note[newnotenum]->eflags = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->eflags;				//Copy the extended flags
 			}
 		}
 	}//If copying from a non vocal track
 
 	return result;
+}
+
+void *eof_copy_note_simple(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourcenote, unsigned long desttrack, unsigned long pos, long length, char type)
+{
+	return eof_copy_note(sp, sourcetrack, sourcenote, sp, desttrack, pos, length, type);
 }
 
 unsigned long eof_get_num_arpeggios(EOF_SONG *sp, unsigned long track)
@@ -7329,7 +7353,7 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					undo_made = 1;
 				}
-				(void) eof_copy_note(sp, srctrack, targetnote, desttrack, targetpos, targetlength, destdiff);	//Copy the note to the destination track difficulty
+				(void) eof_copy_note_simple(sp, srctrack, targetnote, desttrack, targetpos, targetlength, destdiff);	//Copy the note to the destination track difficulty
 				if(eof_get_note_flags(sp, srctrack, targetnote) & EOF_NOTE_FLAG_IS_TREMOLO)
 				{	//If the copied note has tremolo status
 					targetpos = eof_get_note_pos(sp, srctrack, targetnote);
@@ -7520,7 +7544,7 @@ void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsign
 					else
 					{	//The add level function is being performed, this note will be duplicated into the next higher difficulty instead of just having its difficulty incremented
 						long length = eof_get_note_length(sp, track, ctr - 1);
-						(void) eof_copy_note(sp, track, ctr - 1, track, notepos, length, diff + 1);
+						(void) eof_copy_note_simple(sp, track, ctr - 1, track, notepos, length, diff + 1);
 					}
 				}
 				else
@@ -8112,4 +8136,122 @@ void eof_song_enforce_mid_beat_tempo_change_removal(void)
 			}
 		}
 	}
+}
+
+EOF_SONG *eof_clone_chart_time_range(EOF_SONG *sp, unsigned long start, unsigned long end)
+{
+	EOF_SONG *csp = NULL;
+	unsigned long ctr, ctr2, ctr3, loopcount, beatoffset = 0;
+	char restore_tech_view, firstbeat = 1;
+
+	//Validate parameters
+	if((sp == NULL) || (start >= end))
+		return NULL;	//Invalid parameters
+
+	eof_log("eof_clone_chart_time_range() entered", 1);
+
+	//Allocate a new song structure and add the default tracks
+	csp = eof_create_song_populated();
+	if(csp == NULL)
+		return NULL;	//Failed to allocate memory for clone structure
+
+	//Clone/initialize miscellaneous items
+	memcpy(csp->tags, sp->tags, sizeof(EOF_SONG_TAGS));	//Copy the tags as-is
+	csp->tags->oggs = 1;								//But don't retain OGG profiles
+	csp->tags->ini_settings = 0;						//Don't retain INI settings
+	csp->tags->start_point = csp->tags->end_point = ULONG_MAX;	//And don't retain the start/end points
+	csp->resolution = sp->resolution;
+	csp->fpbeattimes = sp->fpbeattimes;
+	(void) ustrcpy(csp->tags->ogg[0].filename, "guitar.ogg");	//Create a default OGG profile
+	csp->tags->ogg[0].modified = 0;
+	(void) ustrcpy(csp->tags->ogg[0].description, "");
+
+	//Clone beat map
+	for(ctr = 0; ctr < sp->beats; ctr++)
+	{	//For each beat in the source chart
+		if((sp->beat[ctr]->pos >= start) && (sp->beat[ctr]->pos <= end))
+		{	//If the beat is in the time range being cloned
+			if(firstbeat)
+			{	//If this is the first beat being cloned
+				beatoffset = ctr;	//Track that this corresponds to the first beat in the destination project
+
+				if(sp->beat[ctr]->pos != start)
+				{	//If it is not at the beginning of the time range, an additional beat will be inserted to account for this
+					if(!eof_song_add_beat(csp))
+					{	//If a beat couldn't be added to the destination project
+						eof_destroy_song(csp);
+						return NULL;
+					}
+					csp->beat[0]->pos = start;	//Initialize the first beat to match the start of the export time range
+					csp->beat[0]->fpos = start;
+					beatoffset--;			//Update the offset to reflect that the offset for text events is one beat further into the project
+				}
+			}
+
+			//Clone the beat into the destination project
+			if(!eof_song_add_beat(csp))
+			{	//If a beat couldn't be added to the destination project
+				eof_destroy_song(csp);
+				return NULL;
+			}
+			memcpy(csp->beat[csp->beats - 1], sp->beat[ctr], sizeof(EOF_BEAT_MARKER));
+			csp->beat[csp->beats - 1]->fpos -= start;	//Offset the position of the new beat
+			csp->beat[csp->beats - 1]->pos -= start;
+
+			firstbeat = 0;
+		}
+	}
+
+	//Clone text events
+	for(ctr = 0; ctr < sp->text_events; ctr++)
+	{	//For each text event in the source project
+		unsigned long beat = sp->text_event[ctr]->beat;
+		if((beat < sp->beats) && (beat >= beatoffset) && (sp->beat[beat]->pos >= start) && (sp->beat[beat]->pos <= end))
+		{	//If this text event is in the time range being cloned, clone it
+			if(!eof_song_add_text_event(csp, beat - beatoffset, sp->text_event[ctr]->text, sp->text_event[ctr]->track, sp->text_event[ctr]->flags, 0))
+			{	//If the text event couldn't be added to the destination project
+				eof_destroy_song(csp);
+				return NULL;
+			}
+		}
+	}
+
+	//Clone tracks
+	for(ctr = 1; ctr < sp->tracks; ctr++)
+	{	//For each track in the source chart
+		if(sp->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If this is a pro guitar track
+			loopcount = 2;	//The second for loop will run a second time to process the tech note set
+			restore_tech_view = eof_menu_track_get_tech_view_state(sp, ctr);	//Track whether tech view was in effect
+			eof_menu_track_set_tech_view_state(sp, ctr, 0); //Disable tech view if applicable
+		}
+		else
+		{
+			loopcount = 1;
+		}
+
+		for(ctr2 = 0; ctr2 < loopcount; ctr2++)
+		{	//For each note set in the track
+			for(ctr3 = 0; ctr3 < eof_get_track_size(sp, ctr); ctr3++)
+			{	//For each note in the note set
+				unsigned long pos = eof_get_note_pos(sp, ctr, ctr3);
+
+				if((pos >= start) && (pos <= end))
+				{	//If this note is in the time range being cloned, copy it and offset its position to reflect the new start time
+					if(!eof_copy_note(sp, ctr, ctr3, csp, ctr, pos - start, eof_get_note_length(sp, ctr, ctr3), eof_get_note_type(sp, ctr, ctr3)))
+					{	//If the note couldn't be copied
+						eof_destroy_song(csp);
+						return NULL;
+					}
+				}
+			}
+
+			eof_menu_track_toggle_tech_view_state(sp, ctr);		//Toggle to the other note set as applicable
+			eof_menu_track_toggle_tech_view_state(csp, ctr);	//Do the same for the destination track
+		}
+
+		eof_menu_track_set_tech_view_state(sp, ctr, restore_tech_view); //Re-enable tech view if applicable
+	}
+
+	return csp;
 }

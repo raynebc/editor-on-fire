@@ -2484,6 +2484,9 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 		if(eof_mkdir(eof_temp_path))
 		{	//If the folder could not be created
 			allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
+			eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
+			eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
+			eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 			return 0;	//Return failure
 		}
 	}

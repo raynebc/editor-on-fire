@@ -77,7 +77,7 @@ TEXT EVENT CHUNK, for each text event:
 CUSTOM DATA BLOCK CHUNK, for each custom data block
 {
 *	4 bytes:	The number of bytes this custom data block consumes (including the block ID and the custom data itself)
-*	4 bytes:	Custom data block ID (1 = Raw MIDI data, 2 = Floating point beat timings, 0xFFFFFFFF = Empty debugging block)
+*	4 bytes:	Custom data block ID (1 = Raw MIDI data, 2 = Floating point beat timings, 3 = Start/end points, 0xFFFFFFFF = Empty debugging block)
 *	[varies:]	(Custom data, can store anything)
 }
 !This will allow the storage of any data not specifically accounted for in this format, helping to future proof the format
@@ -110,6 +110,9 @@ Custom data block ID 2:  Floating point beat timings:
 		2 bytes:  Length of floating point time string
 		[varies]:  String representation of the beat's position
 	}
+Custom data block ID 3:  Start/end points
+	4 bytes:  Start point
+	4 bytes:  End point
 
 
 	TRACK DATA:

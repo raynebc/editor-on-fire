@@ -462,6 +462,8 @@ typedef struct
 	unsigned long revision;
 	unsigned long difficulty;		//Specifies the difficulty level from 0-5 (standard 0-5 scale), or 6 for devil heads (extreme difficulty)
 
+	unsigned long start_point, end_point;	//Used to track manually set start and end timestamps for operations such as partial chart export.  A value of ULONG_MAX indicates that the point is undefined
+
 } EOF_SONG_TAGS;
 
 typedef struct
@@ -563,7 +565,8 @@ EOF_SONG * eof_create_song(void);	//Allocates, initializes and returns an EOF_SO
 void eof_destroy_song(EOF_SONG * sp);	//De-allocates the memory used by the EOF_SONG structure
 int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp);	//Loads data from the specified PACKFILE pointer into the given EOF_SONG structure (called by eof_load_song()).  Returns 0 on error
 EOF_SONG * eof_load_song(const char * fn);	//Loads the specified EOF file, validating the file header and loading the appropriate OGG file
-int eof_save_song(EOF_SONG * sp, const char * fn);	//Saves the song to file
+int eof_save_song(EOF_SONG * sp, const char * fn);	//Saves the song to file.  Returns zero on error
+EOF_SONG *eof_clone_chart_time_range(EOF_SONG *sp, unsigned long start, unsigned long end);	//Builds a new song structure containing the specified time range of content in the active project, or NULL on error
 
 unsigned long eof_get_track_size(EOF_SONG *sp, unsigned long track);						//Returns the number of notes/lyrics in the specified track, or 0 on error
 unsigned long eof_get_track_tech_note_size(EOF_SONG *sp, unsigned long track);				//Returns the number of tech notes in the specified pro guitar track, or 0 on error
@@ -663,12 +666,14 @@ void eof_track_delete_arpeggio(EOF_SONG *sp, unsigned long track, unsigned long 
 void eof_track_delete_slider(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified slider phrase and moves all phrases that follow back in the array one position
 unsigned long eof_get_num_lyric_sections(EOF_SONG *sp, unsigned long track);	//Returns the number of lyric sections in the specified track, or 0 on error
 EOF_PHRASE_SECTION *eof_get_lyric_section(EOF_SONG *sp, unsigned long track, unsigned long sectionnum);	//Returns a pointer to the specified lyric section, or NULL on error
-void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourcenote, unsigned long desttrack, unsigned long pos, long length, char type);
-	//Copies the specified note to the specified track as a new note, returning a pointer to the newly created note structure, or NULL on error
+void *eof_copy_note(EOF_SONG *ssp, unsigned long sourcetrack, unsigned long sourcenote, EOF_SONG *dsp, unsigned long desttrack, unsigned long pos, long length, char type);
+	//Copies the specified note from the specified source project track as a new note in the specified project track, returning a pointer to the newly created note structure, or NULL on error
 	//Temporary flags are not copied
 	//The specified position, length and type are applied to the new note.  Other note variables such as the bitmask/pitch and name/lyric text are copied as-is
 	//If the source is a pro guitar track and the destination is not, the source note's legacy bitmask is used if defined
 	//If the source and destination are both pro guitar tracks, the source note's fret array, finger array, ghost bitmask, legacy bitmask, bend strength, slide end position and extended flags are copied
+void *eof_copy_note_simple(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourcenote, unsigned long desttrack, unsigned long pos, long length, char type);
+	//Uses eof_copy_note() using the specified song structure as both the source and destination
 long eof_get_prev_note_type_num(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//Returns the note immediately before the specified one that is in the same difficulty, provided that the notes are sorted chronologically, or -1 if no such note exists
 void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long amount, int dir);
@@ -827,7 +832,7 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails);
 int eof_song_delete_track(EOF_SONG * sp, unsigned long track);
 	//Deletes the specified track from the main track array and the appropriate track type array, but only if the track contains no notes.  Returns zero on error
 EOF_SONG * eof_create_song_populated(void);
-	//Allocates, initializes and returns an EOF_SONG structure pre-populated with the default legacy and vocal tracks
+	//Allocates, initializes and returns an EOF_SONG structure pre-populated with the default legacy, vocal and pro guitar tracks
 
 int eof_open_strum_enabled(unsigned long track);
 	//A simple function returning nonzero if the specified track has open strumming enabled
