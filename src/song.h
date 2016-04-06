@@ -220,7 +220,7 @@ typedef struct
 	unsigned long midi_start_pos;
 	unsigned long midi_end_pos;
 	unsigned long start_pos;
-	unsigned long end_pos;	//Will store other data in items that don't use an end position (such as the fret number for fret hand positions)
+	unsigned long end_pos;	//Will store other data in items that don't use an end position (such as the fret number for fret hand positions or whether a tone change is to the default tone)
 	unsigned long flags;	//Store various phrase-specific data, such as a fret catalog entry's source track
 	char name[EOF_SECTION_NAME_LENGTH + 1];
 	unsigned char difficulty;	//The difficulty this phrase applies to (ie. arpeggios, hand positions, RS tremolos), or 0xFF if it otherwise applies to all difficulties
@@ -270,13 +270,14 @@ typedef struct
 #define EOF_TRILL_SECTION				9
 #define EOF_ARPEGGIO_SECTION			10
 #define EOF_TRAINER_SECTION				11
-#define EOF_CUSTOM_MIDI_NOTE_SECTION	12
+#define EOF_CUSTOM_MIDI_NOTE_SECTION	12	//Unused
 #define EOF_PREVIEW_SECTION				13
 #define EOF_TREMOLO_SECTION				14
 #define EOF_SLIDER_SECTION				15
 #define EOF_FRET_HAND_POS_SECTION       16
 #define EOF_RS_POPUP_MESSAGE            17
 #define EOF_RS_TONE_CHANGE              18
+#define EOF_NUM_SECTION_TYPES           18
 
 #define EOF_TRACK_FLAG_SIX_LANES		1
 	//Specifies if the track has open strumming enabled (legacy bass or guitar tracks) or a fifth drum lane enabled (PART DRUMS)
@@ -631,6 +632,10 @@ void eof_track_delete_star_power_path(EOF_SONG *sp, unsigned long track, unsigne
 int eof_track_add_solo(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 void eof_track_delete_solo(EOF_SONG *sp, unsigned long track, unsigned long pathnum);	//Deletes the specified solo phrase and moves all phrases that follow back in the array one position
 void eof_note_set_tail_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos);	//Sets the note's length value to (pos - [note]->pos)
+EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long track, unsigned long sectiontype, unsigned long *count, EOF_PHRASE_SECTION **ptr);
+	//Stores the count and address of the specified section type of the specified chart into *count and **ptr
+	//Returns the address of the section array (which is also stored into ptr) upon success, or NULL upon error
+	//If the section type is not applicable for the track in question, *count is set to 0 and *ptr is set to NULL
 int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, unsigned char difficulty, unsigned long start, unsigned long end, unsigned long flags, char *name);
 	//Adds the specified section to the specified track if it's valid for the track
 	//For bookmark sections, the end variable represents which bookmark number is being set
@@ -919,8 +924,8 @@ void eof_track_remove_highlighting(EOF_SONG *sp, unsigned long track, char funct
 	//If function is 1, the temporary highlight flag (EOF_NOTE_TFLAG_HIGHLIGHT) is removed from the notes
 	//If function is any other value, both highlight flags are removed from the notes
 
-extern SAMPLE *eof_export_time_range_sample;
-void eof_export_time_range(ALOGG_OGG * ogg, double start_time, double end_time, const char * fn);
+extern SAMPLE *eof_export_audio_time_range_sample;
+void eof_export_audio_time_range(ALOGG_OGG * ogg, double start_time, double end_time, const char * fn);
 	//Exports a time range of the specified OGG file to a file of the specified name
 	//start_time and end_time are both in seconds and not milliseconds
 

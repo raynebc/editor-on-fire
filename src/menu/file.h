@@ -112,9 +112,10 @@ void eof_apply_display_settings(int mode);
 int eof_menu_file_new_supplement(char *directory, char *filename, char check);
 	//Checks the specified directory for the presence of chart related files and prompts whether the user wants to overwrite existing files
 	//If filename isn't NULL, checks for the presence of this relative file name instead of notes.eof when checking if the folder contains the project file already
-	//If check equals 1, guitar.ogg is checked for
-	//If check equals 2, original.mp3 is checked for
-	//If check is neither 1 nor 2, guitar.ogg, original.mp3, notes.eof, song.ini and notes.mid are checked for
+	//If check & 1 is nonzero, guitar.ogg is checked for
+	//If check & 2 is nonzero, original.mp3 is checked for
+	//If check & 4 is nonzero, [filename].ogg, [filename].wav and [filename].eof are checked for
+	//If any bits other than the lowest 3 bits of check are set, guitar.ogg, original.mp3, notes.eof, song.ini and notes.mid are checked for
 
 int eof_menu_prompt_save_changes(void);
 	//Stops playback and if the chart is modified, prompt whether to save changes (Save/Discard/Cancel)

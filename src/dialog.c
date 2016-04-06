@@ -107,6 +107,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 	if(!dp)	//If this pointer is NULL for any reason
 		return D_O_K;
 
+	eof_close_menu = 0;
 	eof_prepare_menus();
 	dp[n].flags |= EOF_MSG_BUTTONFOCUS;		//Set the button focus flag of the object that needs to have the default focus
 	player = init_dialog(dp, n);

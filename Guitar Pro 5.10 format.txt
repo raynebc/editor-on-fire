@@ -302,6 +302,7 @@ TRACK CHUNK, for each track:
 					!I've observed that Guitar Pro can author empty measures as a whole note rest even when that is musically inaccurate (ie. 5/8 meter)
 				!N-TUPLET TYPE (if the beat bitmask declares the beat to be an N-tuplet)
 					[4 bytes]:	The number of notes played within the "tuplet" (ie. 3 = triplet)
+						!I've observed that Guitar Pro can inexplicably encode tuplets of ZERO divisions.  These instances should probably be interpreted as not being tuplets at all.
 				!CHORD DIAGRAM (if the beat bitmask declares that a chord diagram is present):
 				{
 					[1 byte]:	Chord diagram format (1 = GP4 format)

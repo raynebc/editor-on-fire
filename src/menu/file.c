@@ -334,7 +334,7 @@ int eof_menu_file_new_supplement(char *directory, char *filename, char check)
 	eof_render();
 	err = 0;
 	put_backslash(directory);
-	if(check == 1)
+	if(check & 1)
 	{	//If checking for the presence of guitar.ogg
 		(void) replace_filename(eof_temp_filename, directory, "guitar.ogg", 1024);
 		if(exists(eof_temp_filename))
@@ -346,7 +346,7 @@ int eof_menu_file_new_supplement(char *directory, char *filename, char check)
 			}
 		}
 	}
-	else if(check == 2)
+	if(check & 2)
 	{	//If checking for the presence of original.mp3
 		(void) replace_filename(eof_temp_filename, directory, "original.mp3", 1024);
 		if(exists(eof_temp_filename))
@@ -358,7 +358,41 @@ int eof_menu_file_new_supplement(char *directory, char *filename, char check)
 			}
 		}
 	}
-	else
+	if(check & 4)
+	{	//If checking for the presence of [filename].ogg and [filename].eof
+		(void) replace_filename(eof_temp_filename, directory, filename, 1024);
+		(void) replace_extension(eof_temp_filename, eof_temp_filename, "ogg", 1024);
+		if(exists(eof_temp_filename))
+		{
+			eof_clear_input();
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Existing OGG file will be overwritten.  Proceed?");
+			if(alert(NULL, eof_log_string, NULL, "&Yes", "&No", 'y', 'n') == 2)
+			{
+				return 0;
+			}
+		}
+		(void) replace_extension(eof_temp_filename, eof_temp_filename, "wav", 1024);
+		if(exists(eof_temp_filename))
+		{
+			eof_clear_input();
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Existing WAV file will be overwritten.  Proceed?");
+			if(alert(NULL, eof_log_string, NULL, "&Yes", "&No", 'y', 'n') == 2)
+			{
+				return 0;
+			}
+		}
+		(void) replace_filename(eof_temp_filename, directory, filename, 1024);
+		if(exists(eof_temp_filename))
+		{
+			eof_clear_input();
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Existing EOF project \"%s\" will be overwritten.  Proceed?", filename);
+			if(alert(NULL, eof_log_string, NULL, "&Yes", "&No", 'y', 'n') == 2)
+			{
+				return 0;
+			}
+		}
+	}
+	if(check & ~(1 | 2 | 4))
 	{	//If checking for the presence of any of the default chart file names
 		(void) replace_filename(eof_temp_filename, directory, "guitar.ogg", 1024);
 		if(exists(eof_temp_filename))
@@ -547,7 +581,7 @@ int eof_menu_file_save_as(void)
 		eof_log("\tPerforming \"Save as\"", 1);
 
 		(void) replace_filename(new_foldername, returnedfn, "", 1024);		//Obtain the chosen destination folder path
-		if(eof_menu_file_new_supplement(new_foldername, get_filename(returnedfn), 3) == 0)	//If the folder doesn't exist, or the user has declined to overwrite any existing files
+		if(eof_menu_file_new_supplement(new_foldername, get_filename(returnedfn), 8) == 0)	//If the folder doesn't exist, or the user has declined to overwrite any existing files
 			return 1;	//Return failure
 
 		if(!eof_silence_loaded)
@@ -4574,6 +4608,11 @@ int eof_menu_file_bf_import(void)
 
 int eof_menu_file_export_time_range(void)
 {
+	char oggpath[1024] = {0};
+	char temppath[1024] = {0};
+	char syscommand[1024] = {0};
+	char new_foldername[1024] = {0};
+	char * returnedfn = NULL;
 	unsigned long start = 0, end;
 	EOF_SONG *csp;
 
@@ -4607,12 +4646,45 @@ int eof_menu_file_export_time_range(void)
 		return 0;
 	}
 
-	eof_log("\tSaving cloned chart", 1);
-	if(!eof_save_song(csp, "clone.eof"))
+	returnedfn = ncd_file_select(1, eof_last_eof_path, "Export Song As", eof_filter_eof_files);
+	eof_clear_input();
+	if(returnedfn)
 	{
-		eof_log("Failed to save clone project.", 1);
-		eof_destroy_song(csp);
-		return 0;
+		eof_log("\tSaving cloned chart", 1);
+
+		(void) replace_extension(temppath, returnedfn, "eof", 1024);		//Ensure the chart is saved with a .eof extension
+		(void) replace_filename(new_foldername, temppath, "", 1024);		//Obtain the chosen destination folder path
+		if(eof_menu_file_new_supplement(new_foldername, get_filename(temppath), 4) == 0)	//If the folder doesn't exist, or the user has declined to overwrite any existing files
+		{
+			eof_destroy_song(csp);
+			return 0;	//Return failure
+		}
+
+		(void) replace_extension(oggpath, temppath, "ogg", 1024);			//Build the path to the target OGG file to create
+		(void) ustrcpy(csp->tags->ogg[0].filename, get_filename(oggpath));	//Create a default OGG profile using this name
+		if(!eof_save_song(csp, temppath))
+		{
+			eof_log("Failed to save clone project.", 1);
+			eof_destroy_song(csp);
+			return 0;
+		}
+
+		if(!eof_silence_loaded)
+		{	//If chart audio is loaded
+			eof_log("\tSaving audio excerpt.", 1);
+			(void) replace_extension(temppath, temppath, "wav", 1024);
+			eof_export_audio_time_range(eof_music_track, start / 1000.0, end / 1000.0, temppath);	//Build the preview WAV file
+			if(exists(temppath))
+			{	//If the WAV file was created, convert it to OGG
+				(void) delete_file(oggpath);	//Delete any existing OGG file with the same name
+				#ifdef ALLEGRO_WINDOWS
+					(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc2 --quiet -q %s --resample 44100 -s 0 \"%s\" -o \"%s\"", eof_ogg_quality[(int)eof_ogg_setting], temppath, oggpath);
+				#else
+					(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc --quiet -q %s --resample 44100 -s 0 \"%s\" -o \"%s\"", eof_ogg_quality[(int)eof_ogg_setting], temppath, oggpath);
+				#endif
+				(void) eof_system(syscommand);
+			}
+		}
 	}
 
 	eof_destroy_song(csp);

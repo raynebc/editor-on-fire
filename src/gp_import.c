@@ -3297,6 +3297,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							case 13:
 								note_duration /= 13.0 / 8.0;	//A triskaidekatuplet(?) is 13 notes in the span of 8 of that note
 							break;
+							case 0:	//Invalid tuplet duration
+								eof_log("\t\t\tWarning:  GP file defines an invalid \"0 tuplet\" notation.  Ignoring this.", 1);
+							break;
 							default:	//Otherwise assume the tuplet is n notes in the span of (n-1) of that note
 								note_duration /= (double)dword / ((double)dword - 1.0);
 							break;

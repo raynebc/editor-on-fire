@@ -2221,6 +2221,180 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	return 1;	//Return success
 }
 
+EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long track, unsigned long sectiontype, unsigned long *count, EOF_PHRASE_SECTION **ptr)
+{
+	unsigned long tracknum;
+
+	if(!sp || (track >= sp->tracks) || !count || !ptr)
+		return NULL;
+
+	*count = 0;	//These will be the default values unless applicable information is found for the specified track
+	*ptr = NULL;
+	tracknum = sp->track[track]->tracknum;
+	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	{	//Legacy track format
+		EOF_LEGACY_TRACK *tp = sp->legacy_track[tracknum];
+
+		switch(sectiontype)
+		{
+			case EOF_SOLO_SECTION:
+				*count = tp->solos;
+				*ptr = tp->solo;
+			break;
+			case EOF_SP_SECTION:
+				*count = tp->star_power_paths;
+				*ptr = tp->star_power_path;
+			break;
+			case EOF_BOOKMARK_SECTION:	//Not applicable
+			break;
+			case EOF_FRET_CATALOG_SECTION:	//Not applicable
+			break;
+			case EOF_LYRIC_PHRASE_SECTION:	//Not applicable
+			break;
+			case EOF_YELLOW_CYMBAL_SECTION:	//Unused
+			break;
+			case EOF_BLUE_CYMBAL_SECTION:	//Unused
+			break;
+			case EOF_GREEN_CYMBAL_SECTION:	//Unused
+			break;
+			case EOF_TRILL_SECTION:
+				*count = tp->trills;
+				*ptr = tp->trill;
+			break;
+			case EOF_ARPEGGIO_SECTION:	//Not applicable
+			break;
+			case EOF_TRAINER_SECTION:	//Not applicable
+			break;
+			case EOF_CUSTOM_MIDI_NOTE_SECTION:	//Not applicable
+			break;
+			case EOF_PREVIEW_SECTION:	//Unused
+			break;
+			case EOF_TREMOLO_SECTION:
+				*count = tp->tremolos;
+				*ptr = tp->tremolo;
+			break;
+			case EOF_SLIDER_SECTION:
+				*count = tp->sliders;
+				*ptr = tp->slider;
+			break;
+			case EOF_FRET_HAND_POS_SECTION:	//Not applicable
+			break;
+			case EOF_RS_POPUP_MESSAGE:	//Not applicable
+			break;
+			case EOF_RS_TONE_CHANGE:	//Not applicable
+			break;
+		}
+	}//Legacy track format
+	else if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+	{	//Vocal track format
+		EOF_VOCAL_TRACK *tp = sp->vocal_track[tracknum];
+
+		switch(sectiontype)
+		{
+			case EOF_SOLO_SECTION:	//Not applicable
+			break;
+			case EOF_SP_SECTION:	//Not applicable
+			break;
+			case EOF_BOOKMARK_SECTION:	//Not applicable
+			break;
+			case EOF_FRET_CATALOG_SECTION:	//Not applicable
+			break;
+			case EOF_LYRIC_PHRASE_SECTION:
+				*count = tp->lines;
+				*ptr = tp->line;
+			break;
+			case EOF_YELLOW_CYMBAL_SECTION:	//Unused
+			break;
+			case EOF_BLUE_CYMBAL_SECTION:	//Unused
+			break;
+			case EOF_GREEN_CYMBAL_SECTION:	//Unused
+			break;
+			case EOF_TRILL_SECTION:	//Not applicable
+			break;
+			case EOF_ARPEGGIO_SECTION:	//Not applicable
+			break;
+			case EOF_TRAINER_SECTION:	//Not applicable
+			break;
+			case EOF_CUSTOM_MIDI_NOTE_SECTION:	//Not applicable
+			break;
+			case EOF_PREVIEW_SECTION:	//Unused
+			break;
+			case EOF_TREMOLO_SECTION:	//Not applicable
+			break;
+			case EOF_SLIDER_SECTION:	//Not applicable
+			break;
+			case EOF_FRET_HAND_POS_SECTION:	//Not applicable
+			break;
+			case EOF_RS_POPUP_MESSAGE:	//Not applicable
+			break;
+			case EOF_RS_TONE_CHANGE:	//Not applicable
+			break;
+		}
+	}//Vocal track format
+	else if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//Pro guitar track format
+		EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[tracknum];
+
+		switch(sectiontype)
+		{
+			case EOF_SOLO_SECTION:
+				*count = tp->solos;
+				*ptr = tp->solo;
+			break;
+			case EOF_SP_SECTION:
+				*count = tp->star_power_paths;
+				*ptr = tp->star_power_path;
+			break;
+			case EOF_BOOKMARK_SECTION:	//Not applicable
+			break;
+			case EOF_FRET_CATALOG_SECTION:	//Not applicable
+			break;
+			case EOF_LYRIC_PHRASE_SECTION:	//Not applicable
+			break;
+			case EOF_YELLOW_CYMBAL_SECTION:	//Unused
+			break;
+			case EOF_BLUE_CYMBAL_SECTION:	//Unused
+			break;
+			case EOF_GREEN_CYMBAL_SECTION:	//Unused
+			break;
+			case EOF_TRILL_SECTION:
+				*count = tp->trills;
+				*ptr = tp->trill;
+			break;
+			case EOF_ARPEGGIO_SECTION:
+				*count = tp->arpeggios;
+				*ptr = tp->arpeggio;
+			break;
+			case EOF_TRAINER_SECTION:	//Not applicable
+			break;
+			case EOF_CUSTOM_MIDI_NOTE_SECTION:	//Not applicable
+			break;
+			case EOF_PREVIEW_SECTION:	//Unused
+			break;
+			case EOF_TREMOLO_SECTION:
+				*count = tp->tremolos;
+				*ptr = tp->tremolo;
+			break;
+			case EOF_SLIDER_SECTION:	//Not applicable
+			break;
+			case EOF_FRET_HAND_POS_SECTION:
+				*count = tp->handpositions;
+				*ptr = tp->handposition;
+			break;
+			case EOF_RS_POPUP_MESSAGE:
+				*count = tp->popupmessages;
+				*ptr = tp->popupmessage;
+			break;
+			case EOF_RS_TONE_CHANGE:
+				*count = tp->tonechanges;
+				*ptr = tp->tonechange;
+			break;
+		}
+	}//Pro guitar track format
+
+	return *ptr;
+}
+
 int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, unsigned char difficulty, unsigned long start, unsigned long end, unsigned long flags, char *name)
 {
 	unsigned long count,tracknum;	//Used to de-obfuscate the track handling
@@ -2392,7 +2566,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				if(count < EOF_MAX_PHRASES)
 				{	//If EOF can store the popup message
 					sp->pro_guitar_track[tracknum]->popupmessage[count].start_pos = start;
-					sp->pro_guitar_track[tracknum]->popupmessage[count].end_pos = end;	//This will store the fret number the fretting hand is at
+					sp->pro_guitar_track[tracknum]->popupmessage[count].end_pos = end;
 					sp->pro_guitar_track[tracknum]->popupmessage[count].flags = flags;
 					sp->pro_guitar_track[tracknum]->popupmessage[count].difficulty = 0;
 					if(name == NULL)
@@ -7874,30 +8048,30 @@ void eof_track_remove_highlighting(EOF_SONG *sp, unsigned long track, char funct
 	}
 }
 
-SAMPLE *eof_export_time_range_sample = NULL;
-unsigned long eof_export_time_range_ctr;
+SAMPLE *eof_export_audio_time_range_sample = NULL;
+unsigned long eof_export_audio_time_range_ctr;
 
-static void eof_export_time_range_callback(void * buffer, int nsamples, int stereo)
+static void eof_export_audio_time_range_callback(void * buffer, int nsamples, int stereo)
 {
 	int i;
 	int iter = stereo ? 2 : 1;
 	unsigned long index;
 	unsigned short *in_buffer = (unsigned short *)buffer;
-	unsigned short *out_buffer = (unsigned short *)eof_export_time_range_sample->data;
+	unsigned short *out_buffer = (unsigned short *)eof_export_audio_time_range_sample->data;
 
 	for(i = 0; i < nsamples / iter; i++)
 	{	//For each decoded sample
 		index = i * iter;
-		out_buffer[eof_export_time_range_ctr + index] = in_buffer[index];	//Copy amplitude to output buffer
+		out_buffer[eof_export_audio_time_range_ctr + index] = in_buffer[index];	//Copy amplitude to output buffer
 		if(stereo)
 		{
-			out_buffer[eof_export_time_range_ctr + index + 1] = in_buffer[index + 1];	//Copy the other channel's amplitude to output buffer
+			out_buffer[eof_export_audio_time_range_ctr + index + 1] = in_buffer[index + 1];	//Copy the other channel's amplitude to output buffer
 		}
 	}
-	eof_export_time_range_ctr += nsamples;
+	eof_export_audio_time_range_ctr += nsamples;
 }
 
-void eof_export_time_range(ALOGG_OGG * ogg, double start_time, double end_time, const char * fn)
+void eof_export_audio_time_range(ALOGG_OGG * ogg, double start_time, double end_time, const char * fn)
 {
 	unsigned long num_samples;
 
@@ -7905,17 +8079,17 @@ void eof_export_time_range(ALOGG_OGG * ogg, double start_time, double end_time, 
 		return;	//Invalid parameters
 
 	num_samples = (end_time - start_time) * alogg_get_wave_freq_ogg(ogg) * (alogg_get_wave_is_stereo_ogg(ogg) ? 2 : 1);
-	eof_export_time_range_sample = create_sample(alogg_get_wave_bits_ogg(ogg), alogg_get_wave_is_stereo_ogg(ogg), alogg_get_wave_freq_ogg(ogg), num_samples / (alogg_get_wave_is_stereo_ogg(ogg) ? 2 : 1));
-	eof_export_time_range_ctr = 0;
+	eof_export_audio_time_range_sample = create_sample(alogg_get_wave_bits_ogg(ogg), alogg_get_wave_is_stereo_ogg(ogg), alogg_get_wave_freq_ogg(ogg), num_samples / (alogg_get_wave_is_stereo_ogg(ogg) ? 2 : 1));
+	eof_export_audio_time_range_ctr = 0;
 
-	if(eof_export_time_range_sample)
+	if(eof_export_audio_time_range_sample)
 	{	//If memory for the decoded audio was allocated
-		if(alogg_process_ogg(ogg, eof_export_time_range_callback, 1024, start_time, end_time))
+		if(alogg_process_ogg(ogg, eof_export_audio_time_range_callback, 1024, start_time, end_time))
 		{	//Successfully decoded audio file
-			(void) save_wav(fn, eof_export_time_range_sample);	//Export it to WAV
+			(void) save_wav(fn, eof_export_audio_time_range_sample);	//Export it to WAV
 		}
-		destroy_sample(eof_export_time_range_sample);
-		eof_export_time_range_sample = NULL;
+		destroy_sample(eof_export_audio_time_range_sample);
+		eof_export_audio_time_range_sample = NULL;
 	}
 }
 
@@ -8141,8 +8315,9 @@ void eof_song_enforce_mid_beat_tempo_change_removal(void)
 EOF_SONG *eof_clone_chart_time_range(EOF_SONG *sp, unsigned long start, unsigned long end)
 {
 	EOF_SONG *csp = NULL;
-	unsigned long ctr, ctr2, ctr3, loopcount, beatoffset = 0;
-	char restore_tech_view, firstbeat = 1;
+	unsigned long ctr, ctr2, ctr3, loopcount, beatoffset = 0, sectioncount = 0;
+	char restore_tech_view = 0, firstbeat = 1;
+	EOF_PHRASE_SECTION *sections = NULL;
 
 	//Validate parameters
 	if((sp == NULL) || (start >= end))
@@ -8249,8 +8424,49 @@ EOF_SONG *eof_clone_chart_time_range(EOF_SONG *sp, unsigned long start, unsigned
 			eof_menu_track_toggle_tech_view_state(sp, ctr);		//Toggle to the other note set as applicable
 			eof_menu_track_toggle_tech_view_state(csp, ctr);	//Do the same for the destination track
 		}
-
 		eof_menu_track_set_tech_view_state(sp, ctr, restore_tech_view); //Re-enable tech view if applicable
+
+		for(ctr2 = 1; ctr2 <= EOF_NUM_SECTION_TYPES; ctr2++)
+		{	//For each type of section that exists
+			if(eof_lookup_track_section_type(sp, ctr, ctr2, &sectioncount, &sections) && sections)
+			{	//If this track has any of this type of section
+				for(ctr3 = 0; ctr3 < sectioncount; ctr3++)
+				{	//For each of the sections in the source track
+					unsigned char difficulty;
+					unsigned long startpos, endpos, effective_endpos, flags;
+					char *name;
+
+					difficulty = sections[ctr3].difficulty;
+					startpos = sections[ctr3].start_pos;
+					endpos = sections[ctr3].end_pos;
+					effective_endpos = endpos;
+					flags = sections[ctr3].flags;
+					name = sections[ctr3].name;
+
+					if((ctr2 == EOF_FRET_HAND_POS_SECTION) || (ctr2 == EOF_RS_TONE_CHANGE))
+					{	//If this is a section type that does not define an end position
+						effective_endpos = startpos;
+					}
+					if((startpos <= end) && (effective_endpos >= start))
+					{	//If this section is anywhere within the time range being cloned
+						if(startpos < start)
+						{	//If the section begins before the time range being cloned
+							startpos = start;	//Reset the start time
+						}
+						startpos -= start;		//Offset the section's start position
+						if((ctr2 != EOF_FRET_HAND_POS_SECTION) && (ctr2 != EOF_RS_TONE_CHANGE))
+						{	//If this is a section type that DOES define an end position, offset it as well
+							if(endpos > end)
+							{	//If the section ends after the time range being cloned
+								endpos = end;	//Reset the end time
+							}
+							endpos -= start;
+						}
+						(void) eof_track_add_section(csp, ctr, ctr2, difficulty, startpos, endpos, flags, name);	//Create the section in the clone structure
+					}
+				}
+			}
+		}
 	}
 
 	return csp;
