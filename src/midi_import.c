@@ -361,7 +361,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	char diff = -1;						//Used to track the difficulty referenced by a MIDI on/off note (-1 means difficulty undetermined)
 	unsigned char lane_chart[EOF_MAX_FRETS] = {1, 2, 4, 8, 16, 32};	//Maps each lane to a note bitmask value
 	unsigned long note_count[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};
-	long first_note;
+	unsigned long first_note;
 	unsigned long hopopos[4] = {0};		//Used for forced HOPO On/Off parsing
 	char hopotype[4] = {0};				//Used for forced HOPO On/Off parsing
 	int hopodiff;						//Used for forced HOPO On/Off parsing

@@ -24,7 +24,7 @@ typedef struct
 
 #define EOF_MAX_INI_IMPORTED_LINES 100
 EOF_IMPORT_INI_SETTING eof_import_ini_setting[EOF_MAX_INI_IMPORTED_LINES];
-int eof_import_ini_settings = 0;
+unsigned int eof_import_ini_settings = 0;
 
 char eof_ini_pro_drum_tag_present;		//Is set to nonzero if eof_import_ini() finds the "pro_drums = True" tag (to influence MIDI import)
 char eof_ini_star_power_tag_present;	//Is set to nonzero if eof_import_ini() finds the "multiplier_note = 116" tag (to influence MIDI import)
