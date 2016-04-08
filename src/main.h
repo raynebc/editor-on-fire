@@ -646,4 +646,8 @@ int eof_identify_xml(char *fn);
 	//Returns 1 if the file is determined to be Rocksmith format
 	//Returns 2 if the file is determined to be Go PlayAlong format
 
+int eof_validate_temp_folder(void);
+	//Ensures that the current working directory is EOF's program folder and verifies that the temporary folder exists
+	//Returns nonzero on error
+
 #endif

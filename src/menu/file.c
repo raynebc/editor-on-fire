@@ -863,15 +863,12 @@ int eof_menu_file_lyrics_import(void)
 	if(eof_song == NULL)	//Do not import lyrics if no chart is open
 		return 0;
 
-	//Ensure the temporary folder exists
-	if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
-	{	//If this folder doesn't already exist
-		if(eof_mkdir(eof_temp_path))
-		{	//If the folder could not be created
-			allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
-			return 1;
-		}
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		return 1;
 	}
+
 	(void) snprintf(templyricfile, sizeof(templyricfile) - 1, "%slyricfile.tmp", eof_temp_path_s);
 	tempfile = 0;	//Keep tempfile a static variable because if setjmp's fail condition is reached, the value may be re-initialized, clobbering its value
 	eof_cursor_visible = 0;

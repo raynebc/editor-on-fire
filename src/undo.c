@@ -92,14 +92,10 @@ int eof_undo_add(int type)
 		return 0;
 	}
 
-	//Ensure the temporary folder exists
-	if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
-	{	//If this folder doesn't already exist
-		if(eof_mkdir(eof_temp_path))
-		{	//If the folder could not be created
-			allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
-			return 0;
-		}
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		return 0;
 	}
 
 	if(!eof_undo_states_initialized)
@@ -184,14 +180,10 @@ int eof_undo_apply(void)
 
 	if(eof_undo_count > 0)
 	{
-		//Ensure the temporary folder exists
-		if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
-		{	//If this folder doesn't already exist
-			if(eof_mkdir(eof_temp_path))
-			{	//If the folder could not be created
-				allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
-				return 0;
-			}
+		if(eof_validate_temp_folder())
+		{	//Ensure the correct working directory and presence of the temporary folder
+			eof_log("\tCould not validate working directory and temp folder", 1);
+			return 0;
 		}
 
 		//Determine whether each pro guitar track was in tech view
@@ -282,14 +274,10 @@ void eof_redo_apply(void)
 
 	if(eof_redo_count > 0)
 	{
-		//Ensure the temporary folder exists
-		if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
-		{	//If this folder doesn't already exist
-			if(eof_mkdir(eof_temp_path))
-			{	//If the folder could not be created
-				allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
-				return;
-			}
+		if(eof_validate_temp_folder())
+		{	//Ensure the correct working directory and presence of the temporary folder
+			eof_log("\tCould not validate working directory and temp folder", 1);
+			return;
 		}
 
 		//Determine whether each pro guitar track was in tech view

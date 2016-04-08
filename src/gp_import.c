@@ -4584,9 +4584,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									}
 									if(ctr4 + 1 < strings[ctr2])
 									{	//If there is another string
-										(void) strncat(temp, ", ", sizeof(temp) - 1);
+										(void) strncat(temp, ", ", sizeof(temp) - strlen(temp) - 1);
 									}
-									(void) strncat(eof_log_string, temp, sizeof(eof_log_string) - 1);
+									(void) strncat(eof_log_string, temp, sizeof(eof_log_string) - strlen(eof_log_string) - 1);
 								}
 								eof_log(eof_log_string, 1);
 #endif
@@ -4754,9 +4754,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									}
 									if(ctr4 + 1 < strings[ctr2])
 									{	//If there is another string
-										(void) strncat(temp, ", ", sizeof(temp) - 1);
+										(void) strncat(temp, ", ", sizeof(temp) - strlen(temp) - 1);
 									}
-									(void) strncat(eof_log_string, temp, sizeof(eof_log_string) - 1);
+									(void) strncat(eof_log_string, temp, sizeof(eof_log_string) - strlen(eof_log_string) - 1);
 								}
 								eof_log(eof_log_string, 1);
 #endif

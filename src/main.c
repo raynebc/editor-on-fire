@@ -4213,25 +4213,12 @@ int eof_initialize(int argc, char * argv[])
 	/* check for a previous crash condition of EOF */
 	eof_log("\tChecking for crash recovery files", 1);
 
-	//Ensure the temporary folder exists
-	if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
-	{	//If this folder doesn't already exist
-		char wd[1025];
-		if(!getcwd(wd, 1024))
-		{	//If the current working directory couldn't be determined
-			eof_log("\tCould not detect temp folder", 1);
-		}
-		else
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCould not detect temp folder at:  %s", wd);
-			eof_log(eof_log_string, 1);
-		}
-		if(eof_mkdir(eof_temp_path))
-		{	//If the folder could not be created
-			allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
-			return 0;
-		}
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		return 0;
 	}
+
 	(void) snprintf(eof_recover_on_path, sizeof(eof_recover_on_path) - 1, "%seof.recover.on", eof_temp_path_s);
 	if(exists(eof_recover_on_path))
 	{	//If the recovery status file is present
@@ -5453,6 +5440,52 @@ int eof_identify_xml(char *fn)
 	(void) pack_fclose(inf);
 
 	return retval;
+}
+
+int eof_validate_temp_folder(void)
+{
+	char correct_wd[1024], cwd[1024];
+
+	//Determine the CWD and what it is supposed to be
+	get_executable_name(correct_wd, 1024);
+	(void) replace_filename(correct_wd, correct_wd, "", 1024);
+	if(!getcwd(cwd, 1024))
+	{	//Couldn't obtain current working directory
+		return 1;
+	}
+	put_backslash(cwd);	//Append a file separator if necessary
+
+	//Change CWD if necessary
+	if(stricmp(correct_wd, cwd))
+	{	//There's a discrepancy
+		eof_log("Correcting current working directory", 1);
+		if(eof_chdir(correct_wd))
+		{
+			eof_log("Could not change working directory", 1);
+			return 2;
+		}
+	}
+
+	//Ensure the temporary folder exists
+	if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
+	{	//If this folder doesn't already exist
+		if(!getcwd(cwd, 1024))
+		{	//Couldn't obtain current working directory
+			return 1;
+		}
+		put_backslash(cwd);	//Append a file separator if necessary
+
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCould not detect temp folder at:  %s", cwd);
+		eof_log(eof_log_string, 1);
+
+		if(eof_mkdir(eof_temp_path))
+		{	//If the folder could not be created
+			allegro_message("Could not create temp folder (%s)", eof_temp_path_s);
+			return 3;
+		}
+	}
+
+	return 0;
 }
 
 END_OF_MAIN()

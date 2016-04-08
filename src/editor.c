@@ -6107,7 +6107,7 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 				tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
 				if((tp->note != tp->technote) && isdiff && eof_track_diff_populated_tech_note_status[diffnum])
 				{	//If tech view is NOT in effect, this tab represents a specific difficulty and there is at least one tech note in this difficulty
-					(void) strncat(tab_text, "(*)", sizeof(tab_text) - 1);	//Append the tech notes populated indicator
+					(void) strncat(tab_text, "(*)", sizeof(tab_text) - strlen(tab_text) - 1);	//Append the tech notes populated indicator
 					has_tech = 1;
 				}
 			}

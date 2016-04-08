@@ -2852,15 +2852,12 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	}
 
 	/* write custom data blocks */
-	//Ensure the temporary folder exists
-	if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
-	{	//If this folder doesn't already exist
-		if(eof_mkdir(eof_temp_path))
-		{	//If the folder could not be created
-			allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
-			return 0;	//Return error
-		}
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		return 0;
 	}
+
 //	(void) pack_iputl(0, fp);	//Write an empty custom data block
 	has_raw_midi_data = has_start_end_points = 0;
 	if(sp->midi_data_head)

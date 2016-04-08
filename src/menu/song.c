@@ -1241,7 +1241,7 @@ int eof_menu_song_test(char application)
 	(void) snprintf(temppath2, sizeof(temppath2) - 1, "%sEOFTemp\\guitar.ogg", songs_path);
 	(void) eof_copy_file(syscommand, temppath2);
 
-	/* switch to application folder */
+	/* switch to EOF's program folder */
 	(void) replace_filename(temppath, executablepath, "", 1024);
 	if(eof_chdir(temppath))
 	{

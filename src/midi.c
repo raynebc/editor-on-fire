@@ -437,15 +437,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	header[12] = timedivision >> 8;		//Update the MIDI header to reflect the time division (which may have changed if a stored tempo track is present)
 	header[13] = timedivision & 0xFF;
 
-	//Ensure the temporary folder exists
-	if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
-	{	//If this folder doesn't already exist
-		if(eof_mkdir(eof_temp_path))
-		{	//If the folder could not be created
-			allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
-			return 0;	//Return failure
-		}
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		return 0;	//Return failure
 	}
+
 	//Generate temporary filenames
 	(void) snprintf(expertplustempname, sizeof(expertplustempname) - 1, "%sexpert+.tmp", eof_temp_path_s);
 	(void) snprintf(tempotempname, sizeof(tempotempname) - 1, "%stempo.tmp", eof_temp_path_s);
@@ -2478,17 +2475,10 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 	header[12] = timedivision >> 8;		//Update the MIDI header to reflect the time division (which may have changed if a stored tempo track is present)
 	header[13] = timedivision & 0xFF;
 
-	//Ensure the temporary folder exists
-	if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
-	{	//If this folder doesn't already exist
-		if(eof_mkdir(eof_temp_path))
-		{	//If the folder could not be created
-			allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
-			eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
-			eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
-			eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
-			return 0;	//Return failure
-		}
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		return 0;	//Return failure
 	}
 
 	//Generate temporary filenames
@@ -3565,14 +3555,10 @@ void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_chang
 
 	eof_log("eof_MIDI_data_track_export() entered", 1);
 
-	//Ensure the temporary folder exists
-	if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
-	{	//If this folder doesn't already exist
-		if(eof_mkdir(eof_temp_path))
-		{	//If the folder could not be created
-			allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
-			return;
-		}
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		return;
 	}
 
 	for(trackptr = sp->midi_data_head; trackptr != NULL; trackptr = trackptr->next)

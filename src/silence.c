@@ -241,7 +241,7 @@ int eof_add_silence(char * oggfn, unsigned long ms)
 	#endif
 	retval = eof_system(sys_command);
 
-	/* change back to the project directory */
+	/* change back to the program folder */
 	if(eof_chdir(old_wd))
 	{
 		allegro_message("Could not change directory to EOF's program folder!\n%s", backupfn);
@@ -416,14 +416,10 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 		{	//If oggenc failed again
 			char tempfname[30];
 
-			//Ensure the temporary folder exists
-			if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
-			{	//If this folder doesn't already exist
-				if(eof_mkdir(eof_temp_path))
-				{	//If the folder could not be created
-					allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
-					return 46;	//Return failure:  Could not create temp folder
-				}
+			if(eof_validate_temp_folder())
+			{	//Ensure the correct working directory and presence of the temporary folder
+				eof_log("\tCould not validate working directory and temp folder", 1);
+				return 46;	//Return failure:  Could not validate cwd and temp folder
 			}
 
 			(void) snprintf(tempfname, sizeof(tempfname) - 1, "%soggenc.log", eof_temp_path_s);
@@ -581,14 +577,10 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 		{	//If oggenc failed again
 			char tempfname[30];
 
-			//Ensure the temporary folder exists
-			if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
-			{	//If this folder doesn't already exist
-				if(eof_mkdir(eof_temp_path))
-				{	//If the folder could not be created
-					allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
-					return 25;	//Return failure:  Could not create temp folder
-				}
+			if(eof_validate_temp_folder())
+			{	//Ensure the correct working directory and presence of the temporary folder
+				eof_log("\tCould not validate working directory and temp folder", 1);
+				return 25;	//Return failure:  Could not validate cwd and temp folder
 			}
 
 			(void) snprintf(tempfname, sizeof(tempfname) - 1, "%soggenc.log", eof_temp_path_s);

@@ -1468,7 +1468,7 @@ char * eof_events_list(int index, int * size)
 						(void) snprintf(trackname, sizeof(trackname) - 1, "%s", eof_song->track[eof_song->text_event[i]->track]->name);
 						if(eof_song->text_event[i]->flags != 0)
 						{	//If the event has any other flags set
-							(void) strncat(trackname, ", ", sizeof(trackname) - 1);	//Append a comma
+							(void) strncat(trackname, ", ", sizeof(trackname) - strlen(trackname) - 1);	//Append a comma
 						}
 					}
 					else
@@ -1478,17 +1478,17 @@ char * eof_events_list(int index, int * size)
 					(void) snprintf(eventflags, sizeof(eventflags) - 1, "(%s", trackname);	//Start building the full flags string
 					if(eof_song->text_event[i]->flags & EOF_EVENT_FLAG_RS_PHRASE)
 					{	//If the event is an RS phrase
-						(void) strncat(eventflags, "P", sizeof(trackname) - 1);	//Append a P
+						(void) strncat(eventflags, "P", sizeof(trackname) - strlen(trackname) - 1);	//Append a P
 					}
 					if(eof_song->text_event[i]->flags & EOF_EVENT_FLAG_RS_SECTION)
 					{
-						(void) strncat(eventflags, "S", sizeof(trackname) - 1);	//Append an S
+						(void) strncat(eventflags, "S", sizeof(trackname) - strlen(trackname) - 1);	//Append an S
 					}
 					if(eof_song->text_event[i]->flags & EOF_EVENT_FLAG_RS_EVENT)
 					{
-						(void) strncat(eventflags, "E", sizeof(trackname) - 1);	//Append an E
+						(void) strncat(eventflags, "E", sizeof(trackname) - strlen(trackname) - 1);	//Append an E
 					}
-					(void) strncat(eventflags, ") ", sizeof(trackname) - 1);
+					(void) strncat(eventflags, ") ", sizeof(trackname) - strlen(trackname) - 1);
 				}
 				else
 				{
@@ -1600,7 +1600,7 @@ char * eof_events_list_all(int index, int * size)
 				(void) snprintf(trackname, sizeof(trackname) - 1, "%s", eof_song->track[eof_song->text_event[realindex]->track]->name);
 				if(eof_song->text_event[realindex]->flags != 0)
 				{	//If the event has any other flags set
-					(void) strncat(trackname, ", ", sizeof(trackname) - 1);	//Append a comma
+					(void) strncat(trackname, ", ", sizeof(trackname) - strlen(trackname) - 1);	//Append a comma
 				}
 			}
 			else
@@ -1610,15 +1610,15 @@ char * eof_events_list_all(int index, int * size)
 			(void) snprintf(eventflags, sizeof(eventflags) - 1, " %s", trackname);	//Start building the full flags string
 			if(eof_song->text_event[realindex]->flags & EOF_EVENT_FLAG_RS_PHRASE)
 			{	//If the event is an RS phrase
-				(void) strncat(eventflags, "P", sizeof(trackname) - 1);	//Append a P
+				(void) strncat(eventflags, "P", sizeof(trackname) - strlen(trackname) - 1);	//Append a P
 			}
 			if(eof_song->text_event[realindex]->flags & EOF_EVENT_FLAG_RS_SECTION)
 			{
-				(void) strncat(eventflags, "S", sizeof(trackname) - 1);	//Append an S
+				(void) strncat(eventflags, "S", sizeof(trackname) - strlen(trackname) - 1);	//Append an S
 			}
 			if(eof_song->text_event[realindex]->flags & EOF_EVENT_FLAG_RS_EVENT)
 			{
-				(void) strncat(eventflags, "E", sizeof(trackname) - 1);	//Append an E
+				(void) strncat(eventflags, "E", sizeof(trackname) - strlen(trackname) - 1);	//Append an E
 			}
 		}
 		else
@@ -2740,15 +2740,12 @@ int eof_menu_beat_copy_rs_events(void)
 	}
 
 	//Create clipboard file
-	//Ensure the temporary folder exists
-	if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
-	{	//If this folder doesn't already exist
-		if(eof_mkdir(eof_temp_path))
-		{	//If the folder could not be created
-			allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
-			return 1;
-		}
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		return 1;
 	}
+
 	(void) snprintf(eof_events_clipboard_path, sizeof(eof_events_clipboard_path) - 1, "%seof.events.clipboard", eof_temp_path_s);
 	fp = pack_fopen(eof_events_clipboard_path, "w");
 	if(!fp)
@@ -2803,15 +2800,12 @@ int eof_menu_beat_copy_events(void)
 		}
 		if(!ctr)
 		{	//At the end of the first pass, open the clipboard file
-			//Ensure the temporary folder exists
-			if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
-			{	//If this folder doesn't already exist
-				if(eof_mkdir(eof_temp_path))
-				{	//If the folder could not be created
-					allegro_message("Could not create temp folder!\n%s", eof_temp_path_s);
-					return 1;
-				}
+			if(eof_validate_temp_folder())
+			{	//Ensure the correct working directory and presence of the temporary folder
+				eof_log("\tCould not validate working directory and temp folder", 1);
+				return 1;
 			}
+
 			(void) snprintf(eof_events_clipboard_path, sizeof(eof_events_clipboard_path) - 1, "%seof.events.clipboard", eof_temp_path_s);
 			fp = pack_fopen(eof_events_clipboard_path, "w");
 			if(!fp)
