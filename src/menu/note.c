@@ -1405,13 +1405,27 @@ int eof_menu_note_resnap(void)
 				{	//For each note in the active track
 					if((eof_get_note_type(eof_song, eof_selected_track, x) == eof_note_type) && (eof_tail_snap.pos == eof_get_note_pos(eof_song, eof_selected_track, x)) && (x != i))
 					{	//If this note is in the active difficulty at same position as where the resnapped note will be moved (and the note isn't being compared to itself)
-						eof_seek_and_render_position(eof_selected_track, eof_note_type, notepos);
-						if(alert("Warning: One or more notes/lyrics will snap to the same position", "and will be automatically combined.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
-						{	//If user opts opts to cancel the operation
-							cancel = 1;
+						char note1ghosted = 0, note2ghosted = 0;
+
+						if(eof_get_note_note(eof_song, eof_selected_track, i) == eof_get_note_ghost(eof_song, eof_selected_track, i))
+						{	//If the note from the outer for loop is fully ghosted
+							note1ghosted = 1;
 						}
-						user_warned = 1;
-						break;
+						if(eof_get_note_note(eof_song, eof_selected_track, x) == eof_get_note_ghost(eof_song, eof_selected_track, x))
+						{	//If the note from the inner for loop is fully ghosted
+							note2ghosted = 1;
+						}
+
+						if(!note1ghosted && !note2ghosted)
+						{	//As long as neither note being merged is fully ghosted, warn the user
+							eof_seek_and_render_position(eof_selected_track, eof_note_type, notepos);
+							if(alert("Warning: One or more notes/lyrics will snap to the same position", "and will be automatically combined.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+							{	//If user opts opts to cancel the operation
+								cancel = 1;
+							}
+							user_warned = 1;
+							break;
+						}
 					}
 				}
 			}
@@ -1431,6 +1445,7 @@ int eof_menu_note_resnap(void)
 			}
 		}
 	}
+	eof_track_sort_notes(eof_song, eof_selected_track);
 	eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 	eof_determine_phrase_status(eof_song, eof_selected_track);
 	if(note_selection_updated)

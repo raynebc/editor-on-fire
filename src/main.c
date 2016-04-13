@@ -5358,7 +5358,7 @@ EOF_SONG *eof_create_new_project_select_pro_guitar(void)
 	if(eof_song)
 	{
 		eof_song_loaded = 1;
-		eof_menu_track_selected_track_number(user_selection, 1);	//Change to the user selected track
+		(void) eof_menu_track_selected_track_number(user_selection, 1);	//Change to the user selected track
 	}
 
 	if(!eof_song_append_beats(eof_song, 1))

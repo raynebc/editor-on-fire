@@ -4270,6 +4270,10 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned char
 				ptr3->midi_pos = 0;			//Not implemented yet
 				ptr3->midi_length = 0;		//Not implemented yet
 				ptr3->pos = pos;
+				if(eof_menu_track_get_tech_view_state(sp, track))
+				{	//If tech view is in effect
+					length = 1;	//A maximum length of 1ms for tech notes should be enforced
+				}
 				ptr3->length = length;
 				ptr3->flags = 0;
 				ptr3->eflags = 0;
@@ -4973,8 +4977,6 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 						lower = 1;	//Note that next note's end of pitched/unpitched slide takes priority
 					}
 
-					tp->note[i-1]->note |= tp->note[next]->note;	//Merge the two notes' bitmasks
-
 					//Perform additional merging logic for pro guitar tracks, because Rocksmith custom files define single notes and chords at the same position in order to define chord techniques
 					if(tp->note[next]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 					{	//If the next note is a slide
@@ -5011,8 +5013,18 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 					{	//For each of the next note's 6 usable strings
 						if(tp->note[next]->note & bitmask)
 						{	//If this string is used
-							tp->note[i-1]->frets[ctr] = tp->note[next]->frets[ctr];	//Overwrite this note's fret value on this string with that of the next note
-							tp->note[i-1]->finger[ctr] = tp->note[next]->finger[ctr];	//Overwrite this note's fingering on this string with that of the next note
+							if((tp->note[i-1]->note & bitmask) && !(tp->note[i-1]->ghost & bitmask) && (tp->note[next]->ghost & bitmask))
+							{	//If this note has a gem on this string that is not ghosted but that of the next note is, don't copy that gem from the latter
+							}
+							else
+							{
+								tp->note[i-1]->frets[ctr] = tp->note[next]->frets[ctr];		//Overwrite this note's fret value on this string with that of the next note
+								tp->note[i-1]->finger[ctr] = tp->note[next]->finger[ctr];	//Overwrite this note's fingering on this string with that of the next note
+
+								tp->note[i-1]->ghost &= ~bitmask;							//Clear this note's ghost status on this string
+								tp->note[i-1]->ghost |= (tp->note[next]->ghost & bitmask);	//Apply that of the next note
+								tp->note[i-1]->note |= bitmask;								//Track that there is a gem on this string
+							}
 						}
 					}
 					eof_pro_guitar_track_delete_note(tp, next);
@@ -8335,6 +8347,7 @@ EOF_SONG *eof_clone_chart_time_range(EOF_SONG *sp, unsigned long start, unsigned
 	csp->resolution = sp->resolution;
 	csp->fpbeattimes = sp->fpbeattimes;
 	(void) ustrcpy(csp->tags->ogg[0].filename, "guitar.ogg");	//Create a default OGG profile
+	csp->tags->ogg[0].midi_offset = 0;
 	csp->tags->ogg[0].modified = 0;
 	(void) ustrcpy(csp->tags->ogg[0].description, "");
 

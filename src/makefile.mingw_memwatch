@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -O2 -fomit-frame-pointer -ffast-math -funroll-loops -mwindows -static-libgcc -static-libstdc++ -Ialogg/include -DEOF_BUILD -DMEMWATCH -DMEMWATCH_STDIO -DUSEMEMWATCH
+CFLAGS = -Wall -O2 -fomit-frame-pointer -ffast-math -funroll-loops -mwindows -static-libgcc -static-libstdc++ -flto -Ialogg/include -DEOF_BUILD -DMEMWATCH -DMEMWATCH_STDIO -DUSEMEMWATCH
 CXXFLAGS = $(CFLAGS)
 LIBS = -lalleg44.dll -logg -lvorbisfile -lm -lfftw3 -lrubberband -lstdc++ -lsamplerate
 

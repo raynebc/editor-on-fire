@@ -68,7 +68,7 @@ int eof_render_spectrogram(struct spectrogramstruct *spectrogram)
 	unsigned long pos = eof_music_pos / eof_zoom;
 	unsigned long curms;
 
-	eof_log("eof_render_spectrogram() entered", 1);
+//	eof_log("eof_render_spectrogram() entered", 1);
 
 //validate input
 	if(!eof_song_loaded || !spectrogram)
@@ -534,12 +534,14 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 	static struct spectrogramstruct emptyspectrogram;	//all variables in this auto initialize to value 0
 	char done=0;	//-1 on unsuccessful completion, 1 on successful completion
 	unsigned long slicenum=0;
+	clock_t starttime = 0, endtime = 0;
 
 	fftw_plan fftplan;
 
 	eof_log("\tGenerating spectrogram", 1);
 	eof_log("eof_create_spectrogram() entered", 1);
 	set_window_title("Generating Spectrogram...");
+	starttime = clock();	//Get the start time of the spectrogram creation
 
 	if(oggfilename == NULL)
 	{
@@ -687,7 +689,9 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 		return NULL;	//Return error
 	}
 
-	eof_log("\tSpectrogram generated", 1);
+	endtime = clock();	//Get the start time of the spectrogram creation
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSpectrogram generated in %f seconds)", (double)(endtime - starttime) / (double)CLOCKS_PER_SEC);
+	eof_log(eof_log_string, 1);
 
 	return spectrogram;	//Return spectrogram data
 }

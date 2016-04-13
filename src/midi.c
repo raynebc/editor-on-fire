@@ -1333,6 +1333,29 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				return 0;	//Return failure
 			}
 
+			for(i=0;i < 128;i++)
+			{	//Ensure that any notes that are still on are terminated
+				if(eof_midi_note_status[i] != 0)	//If this note was left on, send an alert message, as this is abnormal
+				{
+					allegro_message("MIDI export error:  Note %lu was not turned off", i);
+					eof_log("MIDI export error:  Note %lu was not turned off", 1);
+					if(endbeatnum)
+					{	//If the chart has a manually defined end event, that's probably the cause
+						eof_log("\tend event was manually defined", 1);
+						eof_clear_input();
+						if(alert("It appears this is due to an [end] event that cuts out a note early", "Would you like to seek to the beat containing this [end] event?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+						{	//If user opts to seek to the offending event
+							eof_set_seek_position(sp->beat[endbeatnum]->pos + eof_av_delay);
+							eof_selected_beat = endbeatnum;
+						}
+					}
+					eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+					eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
+					eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
+					eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
+					return 0;	//Return failure
+				}
+			}
 			qsort(eof_midi_event, (size_t)eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
 			eof_check_for_note_overlap();	//Filter out any improperly overlapping note on/off events
 			/* open the file */
@@ -2458,6 +2481,12 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 		return 0;	//Return failure
 	}
 
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		return 0;	//Return failure
+	}
+
 	//Build tempo and TS lists
 	if(!eof_build_tempo_and_ts_lists(sp, &anchorlist, &tslist, &timedivision))
 	{
@@ -2474,12 +2503,6 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 	}
 	header[12] = timedivision >> 8;		//Update the MIDI header to reflect the time division (which may have changed if a stored tempo track is present)
 	header[13] = timedivision & 0xFF;
-
-	if(eof_validate_temp_folder())
-	{	//Ensure the correct working directory and presence of the temporary folder
-		eof_log("\tCould not validate working directory and temp folder", 1);
-		return 0;	//Return failure
-	}
 
 	//Generate temporary filenames
 	(void) snprintf(tempotempname, sizeof(tempotempname) - 1, "%stempo.tmp", eof_temp_path_s);
@@ -3848,6 +3871,16 @@ void eof_check_for_note_overlap(void)
 					eof_midi_note_status[eof_midi_event[ctr]->note] = 0;	//Track that it is now off
 				}
 			}
+		}
+	}
+
+	//Check eof_midi_note_status[] to make sure no notes remain on
+	for(ctr = 0; ctr < 128; ctr++)
+	{
+		if(eof_midi_note_status[ctr] != 0)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWarning:  Note %lu is not ended.", ctr);
+			eof_log(eof_log_string, 1);
 		}
 	}
 }

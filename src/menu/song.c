@@ -1386,6 +1386,9 @@ int eof_menu_track_selected_track_number(unsigned long tracknum, int updatetitle
 	eof_log("\tChanging active track", 2);
 	eof_log("eof_menu_track_selected_track_number() entered", 2);
 
+	if(!eof_song)
+		return 0;	//Error
+
 	//Store the active difficulty number into the appropriate variable
 	if(eof_song->track[eof_selected_track]->track_format == EOF_VOCAL_TRACK_FORMAT)
 	{	//If a vocal track is active
