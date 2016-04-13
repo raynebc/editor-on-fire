@@ -3814,7 +3814,7 @@ char eof_menu_track_get_tech_view_state(EOF_SONG *sp, unsigned long track)
 {
 	EOF_PRO_GUITAR_TRACK *tp;
 
-	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return 0;	//Invalid parameters
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
