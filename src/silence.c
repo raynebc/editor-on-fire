@@ -414,7 +414,8 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 		eof_log(eof_log_string, 1);
 		if(eof_system(sys_command))
 		{	//If oggenc failed again
-			char tempfname[30];
+			char tempfname[30] = {0};
+			char redirect[35] = {0};
 
 			if(eof_validate_temp_folder())
 			{	//Ensure the correct working directory and presence of the temporary folder
@@ -423,7 +424,8 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 			}
 
 			(void) snprintf(tempfname, sizeof(tempfname) - 1, "%soggenc.log", eof_temp_path_s);
-			(void) ustrzcat(sys_command, (int) sizeof(sys_command) - 1, tempfname);	//Append a redirection to the command to capture the output of oggenc
+			(void) snprintf(redirect, sizeof(redirect) - 1, " 2> %s", tempfname);
+			(void) ustrzcat(sys_command, (int) sizeof(sys_command) - 1, redirect);	//Append a redirection to the command to capture the output of oggenc
 			if(eof_system(sys_command))
 			{	//Run one last time to catch the error output
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tOggenc failed.  Please see %s for any errors it gave.", tempfname);
@@ -575,7 +577,8 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 		eof_log(eof_log_string, 1);
 		if(eof_system(sys_command))
 		{	//If oggenc failed again
-			char tempfname[30];
+			char tempfname[30] = {0};
+			char redirect[35] = {0};
 
 			if(eof_validate_temp_folder())
 			{	//Ensure the correct working directory and presence of the temporary folder
@@ -584,7 +587,8 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 			}
 
 			(void) snprintf(tempfname, sizeof(tempfname) - 1, "%soggenc.log", eof_temp_path_s);
-			(void) ustrzcat(sys_command, (int) sizeof(sys_command) - 1, tempfname);	//Append a redirection to the command to capture the output of oggenc
+			(void) snprintf(redirect, sizeof(redirect) - 1, " 2> %s", tempfname);
+			(void) ustrzcat(sys_command, (int) sizeof(sys_command) - 1, redirect);	//Append a redirection to the command to capture the output of oggenc
 			if(eof_system(sys_command))
 			{	//Run one last time to catch the error output
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tOggenc failed.  Please see %s for any errors it gave.", tempfname);

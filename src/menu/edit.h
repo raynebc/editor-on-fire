@@ -59,7 +59,15 @@ int eof_menu_edit_select_rest(void);
 int eof_menu_edit_select_previous(void);			//Selects all notes before the last selected note
 int eof_menu_edit_select_all_shorter_than(void);	//Selects all notes in the active track difficulty that are shorter than a user specified length
 int eof_menu_edit_select_all_longer_than(void);		//Selects all notes in the active track difficulty that are longer than a user specified length
+
+int eof_check_note_conditional_selection(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long match_bitmask);
+	//Examines the specified note and returns nonzero if it matches the conditions selected in eof_menu_edit_conditional_selection_dialog[]
+	//match_bitmask is a bitmask reflecting the checked lane numbers in the dialog
+int eof_menu_edit_conditional_selection_logic(int function);
+	//If function is zero, notes in the active track are deselected based on the criteria set in eof_menu_edit_conditional_selection_dialog[]
 int eof_menu_edit_deselect_conditional(void);		//Allows user to specify conditions for deselecting notes from the current selection
+int eof_menu_edit_select_conditional(void);			//Allows user to specify conditions for selecting notes in the current track
+
 int eof_menu_edit_deselect_chords(void);			//Deselects notes that have more than 1 gem
 int eof_menu_edit_deselect_single_notes(void);		//Deselects notes that have only 1 gem
 int eof_menu_edit_deselect_toms(void);				//Deselects drum notes that contain any toms (lane 3, 4 or 5 gems that aren't cymbals)

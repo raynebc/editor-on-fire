@@ -11,9 +11,11 @@
 #include "mix.h"
 #include "rs.h"			//For eof_pro_guitar_track_find_effective_fret_hand_position_definition()
 #include "silence.h"	//For save_wav()
+#include "spectrogram.h"
 #include "tuning.h"
 #include "undo.h"
 #include "utility.h"
+#include "waveform.h"
 #include "menu/beat.h"	//For eof_menu_beat_delete_logic()
 #include "menu/edit.h"
 #include "menu/file.h"
@@ -251,6 +253,19 @@ void eof_destroy_song(EOF_SONG * sp)
 
 	if(sp == NULL)
 		return;
+
+	if(sp == eof_song)
+	{	//If the active project is being closed
+		//De-activate the waveform if applicable
+		eof_destroy_waveform(eof_waveform);	//Frees memory used by any currently loaded waveform data
+		eof_waveform = NULL;
+		eof_waveform_menu[0].flags = 0;	//Clear the Show item in the Song>Waveform graph menu
+
+		//De-activate the spectrogram if applicable
+		eof_destroy_spectrogram(eof_spectrogram);	//Frees memory used by any currently loaded spectrogram data
+		eof_spectrogram = NULL;
+		eof_spectrogram_menu[0].flags = 0;	//Clear the Show item in the Song>Waveform graph menu
+	}
 
 // 	eof_log_level &= ~2;	//Disable verbose logging
 	for(ctr = sp->tracks; ctr > 0; ctr--)
@@ -2880,7 +2895,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			char rawmididatafn[30];
 
 		//Parse the linked list to write the MIDI data to a temp file
-			snprintf(rawmididatafn, sizeof(rawmididatafn) - 1, "%srawmididata.tmp", eof_temp_path_s);
+			(void) snprintf(rawmididatafn, sizeof(rawmididatafn) - 1, "%srawmididata.tmp", eof_temp_path_s);
 			tfp = pack_fopen(rawmididatafn, "w");
 			if(!tfp)
 			{	//If the temp file couldn't be opened for writing

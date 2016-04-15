@@ -56,6 +56,17 @@ void eof_destroy_spectrogram(struct spectrogramstruct *ptr)
 			free(ptr->px_to_freq.map);
 		free(ptr);
 	}
+
+	//Destroy any colorscale data
+	if(eof_spectrogram_colorscale != NULL)
+	{
+		if(eof_spectrogram_colorscale->colortable != NULL)
+		{
+			free(eof_spectrogram_colorscale->colortable);
+		}
+		free(eof_spectrogram_colorscale);
+	}
+	eof_spectrogram_colorscale = NULL;
 }
 
 int eof_render_spectrogram(struct spectrogramstruct *spectrogram)

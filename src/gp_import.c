@@ -3248,6 +3248,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					bendstruct.bendpoints = 0;	//Assume the note has no bend points unless any are parsed
 					tieflags = allflags = 0;
 					bendstrength = 0;
+					note_is_short = 0;
 					memset(finger, 0, sizeof(finger));	//Clear the finger array
 					bytemask = pack_getc(inf);	//Read beat bitmask
 					if(bytemask & 64)
@@ -3367,10 +3368,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						{	//If the note was encoded as a quarter note and wasn't part of a tuplet, avoid math rounding errors causing the above logic to detect as shorter than a quarter note
 							note_is_short = 1;
 						}
-					}
-					else
-					{
-						note_is_short = 0;
 					}
 
 					if(bytemask & 2)
