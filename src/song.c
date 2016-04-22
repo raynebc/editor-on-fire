@@ -254,8 +254,8 @@ void eof_destroy_song(EOF_SONG * sp)
 	if(sp == NULL)
 		return;
 
-	if(sp == eof_song)
-	{	//If the active project is being closed
+	if((sp == eof_song) && !eof_undo_in_progress)
+	{	//If the active project is being closed, and this function isn't being called by the undo/redo logic
 		//De-activate the waveform if applicable
 		eof_destroy_waveform(eof_waveform);	//Frees memory used by any currently loaded waveform data
 		eof_waveform = NULL;
@@ -5068,6 +5068,10 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 								tp->note[i-1]->flags |= EOF_NOTE_FLAG_CRAZY;	//This note will overlap at least one note, apply crazy status
 							}
 							maxlength = eof_get_note_max_length(sp, track, i - 1, 0);	//Determine the maximum length for this note, taking its crazy status into account and disregarding the minimum distance between notes
+							if(sp->beats && tp->note[i - 1]->length + maxlength > sp->beat[sp->beats - 1]->pos)
+							{	//If there was no note using any of the same lanes and would truncate the note
+								maxlength = sp->beat[sp->beats - 1]->pos - tp->note[i - 1]->pos;	//Cap it at the last beat's position
+							}
 							eof_set_note_length(sp, track, i - 1, maxlength);	//Extend it to the next note that has a gem on a matching string
 						}
 						else

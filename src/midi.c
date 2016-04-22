@@ -925,6 +925,35 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{
 					if(format)
 					{	//If writing the GHWT MIDI variant
+///The correct notes for GHWT forced HOPOs are not confirmed
+///						long pad = EOF_DEFAULT_TIME_DIVISION / 16;	//To make this notation more visible in Feedback, pad to a minimum length of 1/64 (in #/4 meter) if possible
+/*						if(deltalength < pad)
+						{	//If the note being exported is shorter than 1/64
+							if(!nextdeltapos || (nextdeltapos > deltapos + pad))
+							{	//If there is no next note or there is one and it is far away enough
+								deltalength = pad;
+							}
+						}
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 9, vel, 0);	//Explicitly write this marker using the MIDI note 9 higher than lane 1 gems (ie. 105 for expert difficulty)
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 9, vel, 0);
+*/
+					}
+					else
+					{	//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
+						if(deltapos > 0)
+						{	//Don't allow a number underflow
+							eof_add_midi_event(deltapos - 1, 0x80, midi_note_offset + 6, vel, 0);	//Place a HOPO off end marker 1 delta before this just in case a HOPO off phrase is in effect (the overlap logic will filter this if it isn't necessary)
+						}
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 5, vel, 0);
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 5, vel, 0);
+					}
+				}
+
+				/* write forced non-HOPO */
+				else if(noteflags & EOF_NOTE_FLAG_NO_HOPO)
+				{
+					if(format)
+					{	//If writing the GHWT MIDI variant
 						long pad = EOF_DEFAULT_TIME_DIVISION / 16;	//To make this notation more visible in Feedback, pad to a minimum length of 1/64 (in #/4 meter) if possible
 						if(deltalength < pad)
 						{	//If the note being exported is shorter than 1/64
@@ -940,22 +969,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					{	//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
 						if(deltapos > 0)
 						{	//Don't allow a number underflow
-							eof_add_midi_event(deltapos - 1, 0x80, midi_note_offset + 6, vel, 0);	//Place a HOPO off end marker 1 delta before this just in case a HOPO off phrase is in effect (the overlap logic will filter this if it isn't necessary)
+							eof_add_midi_event(deltapos - 1, 0x80, midi_note_offset + 5, vel, 0);	//Place a HOPO on end marker 1 delta before this just in case a HOPO on phrase is in effect (the overlap logic will filter this if it isn't necessary)
 						}
-						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 5, vel, 0);
-						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 5, vel, 0);
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 6, vel, 0);
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 6, vel, 0);
 					}
-				}
-
-				/* write forced non-HOPO */
-				else if(noteflags & EOF_NOTE_FLAG_NO_HOPO)
-				{	//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
-					if(deltapos > 0)
-					{	//Don't allow a number underflow
-						eof_add_midi_event(deltapos - 1, 0x80, midi_note_offset + 5, vel, 0);	//Place a HOPO on end marker 1 delta before this just in case a HOPO on phrase is in effect (the overlap logic will filter this if it isn't necessary)
-					}
-					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 6, vel, 0);
-					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 6, vel, 0);
 				}
 			}//For each note in the track
 

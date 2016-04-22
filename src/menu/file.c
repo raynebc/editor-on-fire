@@ -2841,8 +2841,8 @@ int eof_save_helper(char *destfilename, char silent)
 								}
 							}
 
-							if(!slide_error)
-							{	//If the user hasn't been warned about any slide related errors yet
+							if(!slide_error && !noteset)
+							{	//If the user hasn't been warned about any slide related errors yet, and this is the normal note set
 								unsigned char lowestfret = eof_pro_guitar_note_lowest_fret(tp, ctr2);	//Determine the note's lowest used fret value
 
 								if(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
@@ -3086,6 +3086,57 @@ int eof_save_helper(char *destfilename, char silent)
 					}
 					eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Restore the note set that was in use for the track
 				}
+			}
+		}
+	}
+
+	/* check for any notes that extend into a different RS phrase or section */
+	if(!silent)
+	{	//If checks and warnings aren't suppressed
+		if(eof_write_rs_files || eof_write_rs2_files)
+		{	//If the user wants to save Rocksmith capable files
+			char user_prompted = 0;
+
+			for(ctr = 1; (ctr < eof_song->tracks) && !arpeggio_warned; ctr++)
+			{	//For each track, or until the user is warned about an offending arpeggio
+				if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//If this is a pro guitar/bass track
+					EOF_PRO_GUITAR_TRACK *tp;
+					EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+					unsigned long tracknum, notectr, bitmask;
+					char restore_tech_view = 0;
+					unsigned long start, stop;
+
+					tracknum = eof_song->track[ctr]->tracknum;
+					tp = eof_song->pro_guitar_track[tracknum];
+					restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
+					eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Activate the normal note set
+
+					for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+					{	//For each note in the track
+						start = tp->note[ctr2]->pos;			//Record its start and stop position
+						stop = start + tp->note[ctr2]->length;
+
+						for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+						{	//For each of the 6 usable strings
+							if(tp->note[ctr2]->note & bitmask)
+							{	//If the note uses this string
+								(void) eof_get_rs_techniques(eof_song, track, ctr2, ctr3, &tech, 2, 1);	//Check to see if the gem on this string has linknext status applied
+								if(tech.linknext)
+								{	//If it does
+									long nextnote = eof_fixup_next_pro_guitar_note(tp, ctr2);
+
+									if(nextnote > 0)
+									{	//As long as the next note is identified
+										stop = tp->note[nextnote]->pos + tp->note[nextnote]->length;	//This is the effective end position to consider
+///FINISH
+									}
+								}
+							}
+						}
+					}
+					eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Activate whichever note set was active for the track
+				}//If this is a pro guitar/bass track
 			}
 		}
 	}
@@ -4303,7 +4354,7 @@ int eof_command_line_rs_import(char *fn)
 
 int eof_menu_file_sonic_visualiser_import(void)
 {
-	char * returnedfn = NULL, *initial, *ptr;
+	char * returnedfn = NULL, *initial, *ptr, skipline;
 	PACKFILE *inf = NULL;
 	size_t maxlinelength;
 	char *buffer = NULL, error = 0, tempo_s[15] = {0}, undo_made = 0, done = 0;
@@ -4403,7 +4454,7 @@ int eof_menu_file_sonic_visualiser_import(void)
 			}
 			else if(strcasestr_spec(buffer, "<point"))
 			{	//If this is a point tag
-				pointctr++;
+				skipline = 0;
 				if(!samplerate)
 				{	//If the sample rate hadn't been read yet
 					eof_log("\tError:  Sample rate not defined.  Aborting", 1);
@@ -4427,12 +4478,19 @@ int eof_menu_file_sonic_visualiser_import(void)
 						error = 1;
 						break;
 					}
-					for(ctr = 0; ctr < (unsigned long)strlen(tempo_s) && (tempo_s[ctr] != '\0'); ctr++)
-					{	//For each character in the label string
-						if(!isdigit(tempo_s[ctr]) && (tempo_s[ctr] != '.'))
-						{	//If this character isn't a number or decimal point
-							tempo_s[ctr] = '\0';	//Truncate string
-							break;
+					if(!strcasestr_spec(tempo_s, "BPM"))
+					{	//If this isn't a tempo definition
+						tempo_s[0] = '\0';	//Empty the string
+					}
+					else
+					{
+						for(ctr = 0; ctr < (unsigned long)strlen(tempo_s) && (tempo_s[ctr] != '\0'); ctr++)
+						{	//For each character in the label string
+							if(!isdigit(tempo_s[ctr]) && (tempo_s[ctr] != '.'))
+							{	//If this character isn't a number or decimal point
+								tempo_s[ctr] = '\0';	//Truncate string
+								break;
+							}
 						}
 					}
 				}
@@ -4440,7 +4498,7 @@ int eof_menu_file_sonic_visualiser_import(void)
 				{	//If the tempo string is empty (the last point tag in a beat estimation defines an empty tag attribute), keep the last beat length in effect
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tFrame = %ld\ttime = %fms", frame, frametime);
 					eof_log(eof_log_string, 1);
-					done = 1;
+					skipline = 1;
 				}
 				else
 				{	//Otherwise convert the string to floating point
@@ -4450,54 +4508,63 @@ int eof_menu_file_sonic_visualiser_import(void)
 					eof_log(eof_log_string, 1);
 				}
 
-				//Apply the beat timing
-				if(!undo_made)
-				{	//If an undo hasn't been made
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					undo_made = 1;
-				}
-				if(pointctr > 1)
-				{	//If this isn't the first point tag, apply timings for all beats between this point tag and the previous (if any)
-					while(timectr + lastbeatlen + 1 < frametime)
-					{	//While another beat fits before this frame's timestamp with at least an extra millisecond of room
-						if(beatctr >= eof_song->beats)
-						{	//If another beat needs to be added to the project
-							if(!eof_song_append_beats(eof_song, 1))
-							{	//If a beat couldn't be added
-								eof_log("\tError allocating memory to add a beat.  Aborting", 1);
-								error = 1;
-								break;
+				if(!skipline)
+				{	//If this line contained valid tempo data
+					pointctr++;
+
+					//Apply the beat timing
+					if(!undo_made)
+					{	//If an undo hasn't been made
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						undo_made = 1;
+					}
+					if(pointctr > 1)
+					{	//If this isn't the first point tag, apply timings for all beats between this point tag and the previous (if any)
+						while(timectr + lastbeatlen + 1 < frametime)
+						{	//While another beat fits before this frame's timestamp with at least an extra millisecond of room
+							if(beatctr >= eof_song->beats)
+							{	//If another beat needs to be added to the project
+								if(!eof_song_append_beats(eof_song, 1))
+								{	//If a beat couldn't be added
+									eof_log("\tError allocating memory to add a beat.  Aborting", 1);
+									error = 1;
+									break;
+								}
 							}
+							timectr += lastbeatlen;	//Advance the time counter by one beat length
+							eof_song->beat[beatctr]->fpos = timectr;
+							eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;
+							beatctr++;
 						}
-						timectr += lastbeatlen;	//Advance the time counter by one beat length
-						eof_song->beat[beatctr]->fpos = timectr;
-						eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;
-						beatctr++;
+						if(error)
+						{	//If an error was reached
+							break;	//Exit outer loop
+						}
 					}
-					if(error)
-					{	//If an error was reached
-						break;	//Exit outer loop
+					else
+					{	//This is the first point tag, update the chart's MIDI delay
+						eof_song->tags->ogg[eof_selected_ogg].midi_offset = frametime + 0.5;
 					}
-				}
-				else
-				{	//This is the first point tag, update the chart's MIDI delay
-					eof_song->tags->ogg[eof_selected_ogg].midi_offset = frametime + 0.5;
-				}
-				if(beatctr >= eof_song->beats)
-				{	//If another beat needs to be added to the project
-					if(!eof_song_append_beats(eof_song, 1))
-					{	//If a beat couldn't be added
-						eof_log("\tError allocating memory to add a beat.  Aborting", 1);
-						error = 1;
-						break;
+					if(beatctr >= eof_song->beats)
+					{	//If another beat needs to be added to the project
+						if(!eof_song_append_beats(eof_song, 1))
+						{	//If a beat couldn't be added
+							eof_log("\tError allocating memory to add a beat.  Aborting", 1);
+							error = 1;
+							break;
+						}
 					}
+					eof_song->beat[beatctr]->fpos = frametime;
+					eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;
+					beatctr++;
+					timectr = frametime;	//Track the position of the last processed beat
+					lastbeatlen = beatlen;	//Track the beat length of the last processed point tag
 				}
-				eof_song->beat[beatctr]->fpos = frametime;
-				eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;
-				beatctr++;
-				timectr = frametime;	//Track the position of the last processed beat
-				lastbeatlen = beatlen;	//Track the beat length of the last processed point tag
 			}//If this is a point tag
+			else if(strcasestr_spec(buffer, "</dataset>"))
+			{	//If this is the end of the dataset tag containing the point tags
+				done = 1;
+			}
 
 			(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 			linectr++;	//Increment line counter

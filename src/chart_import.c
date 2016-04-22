@@ -460,7 +460,10 @@ EOF_SONG * eof_import_chart(const char * fn)
 									{	//If this gem is at a different position than the last one that was imported
 										if((current_note->chartpos > lastchartpos) && (current_note->chartpos - lastchartpos < threshold))
 										{	//If the note starts less than 3/32 measure (4 times the chart resolution, which represents one beat length) from the previous note's start position
-											new_note->flags |= EOF_NOTE_FLAG_F_HOPO;	//It is a hammer on note
+											if(!current_track->isdrums)
+											{	//If it isn't a drum track being imported
+												new_note->flags |= EOF_NOTE_FLAG_F_HOPO;	//It is a hammer on note
+											}
 										}
 									}
 									else

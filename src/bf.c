@@ -196,7 +196,7 @@ int eof_export_bandfuse(EOF_SONG * sp, char * fn, unsigned short *user_warned)
 								{	//For each string in this track
 									if((tp->note[ctr3]->note & bitmask) && !(tp->note[ctr3]->ghost & bitmask))
 									{	//If this string has a gem and it's not ghosted
-										EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0 ,0};
+										EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 										unsigned long notepos;
 										unsigned long fret, finger;				//The fret and finger numbers used to play the gem on this string
 										unsigned long trill_start, trill_stop;	//The start and stop positions of the note's trill phrase

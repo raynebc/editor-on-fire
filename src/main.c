@@ -2790,7 +2790,7 @@ void eof_render_note_window(void)
 ///Keep for debugging
 //#ifdef EOF_DEBUG
 //				ypos += 12;
-//				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "#Mask=%ld : Flags=%lX : Eflags=%X : Tflags=%X", eof_get_note_note(eof_song, eof_selected_track, eof_selection.current), eof_get_note_flags(eof_song, eof_selected_track, eof_selection.current), eof_get_note_eflags(eof_song, eof_selected_track, eof_selection.current), eof_get_note_tflags(eof_song, eof_selected_track, eof_selection.current));
+//				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "#Mask=%d : Flags=%lu : Eflags=%Xx : Tflags=%Xx", eof_get_note_note(eof_song, eof_selected_track, eof_selection.current), eof_get_note_flags(eof_song, eof_selected_track, eof_selection.current), eof_get_note_eflags(eof_song, eof_selected_track, eof_selection.current), eof_get_note_tflags(eof_song, eof_selected_track, eof_selection.current));
 //#endif
 			}
 			else
@@ -4447,6 +4447,7 @@ void eof_exit(void)
 	StopIdleSystem();
 
 	//Delete the undo/redo related files
+	(void) eof_validate_temp_folder();	//Attempt to set the current working directory if it isn't EOF's program folder
 	eof_save_config("eof.cfg");
 	(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo", eof_temp_path_s, eof_log_id);	//Get the name of this EOF instance's redo file
 	(void) delete_file(fn);	//And delete it if it exists

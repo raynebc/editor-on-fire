@@ -1215,7 +1215,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 								if((flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) == 0)
 								{	//At this point, it doesn't seem Rocksmith supports string muted notes
-									EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0 ,0};
+									EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 									unsigned long notepos;
 									unsigned long fret;				//The fret number used for this string
 
@@ -1541,7 +1541,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	unsigned long handshapestart = 0, handshapeend = 0;
 	long nextnote, prevnote;
 	unsigned long originalbeatcount;	//If beats are padded to reach the beginning of the next measure (for DDC), this will track the project's original number of beats
-	EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0 ,0};
+	EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	EOF_PRO_GUITAR_NOTE *new_note;
 	char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct notes are exported
 	char match;		//Used for testing whether partially ghosted chords are inside of arpeggio phrases
@@ -2027,10 +2027,16 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				{	//For each of the 6 supported strings
 					if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
 					{	//If this string is used and is not ghosted
+						char minimumlength = 0;
+
 						(void) eof_get_rs_techniques(sp, track, ctr, ctr3, &tech, 2, 1);	//Get the end position of any pitched/unpitched slide this chord's gem has
 						eof_rs2_adjust_chordnote_sustain(tp, ctr, ctr3, &tech);				//Set tech.length to 0 as appropriate depending on this gem's techniques
-						if(tech.length)
-						{	//If this gem would export with sustain
+						if(tech.hastechnique)
+						{	//If this gem in the chord has any playable techniques
+							minimumlength = 1;	//Signal to the below logic that the sustain for this temporary note isn't to be truncated by the regular note export logic
+						}
+						if(tech.length || minimumlength)
+						{	//If this gem would export with sustain or is forced to export with a 1ms sustain to suit the presence of a technique
 							new_note = eof_copy_note_simple(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);	//Clone the note with the updated length
 							if(new_note)
 							{	//If the new note was created
@@ -2045,6 +2051,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 									new_note->unpitchend = tech.unpitchedslideto - tp->capo;	//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
 								}
 								new_note->eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE;	//This note will export with the "ignore" status
+								if(minimumlength)
+								{	//If the above logic signaled for this status to be applied to the new note
+									new_note->tflags |= EOF_NOTE_TFLAG_MINLENGTH;			//Apply the temporary flag that will achieve this
+								}
 							}
 							else
 							{
@@ -2739,6 +2749,14 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY)
 							{	//If this chord has chordify status
 								highdensity = eof_pro_guitar_note_has_open_note(tp, ctr3);	//The density will be overridden based on whether the chord has open notes
+								if(flags & EOF_NOTE_FLAG_CRAZY)
+								{	//The crazy status will still override the density to be low
+									highdensity = 0;
+								}
+								else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HD)
+								{	//The high density status will still override the density to be high
+									highdensity = 1;
+								}
 								chordtagend = chordifiedend;
 							}
 							else
@@ -4289,7 +4307,7 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 	long prev;
 	unsigned long handshapestatus;
 	EOF_PRO_GUITAR_TRACK *tp;
-	EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0 ,0};
+	EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return 0;	//Error
@@ -5033,15 +5051,33 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 		}
 		if(!keeplength)
 		{	//If the note doesn't need to keep its sustain
-			if((ptr->length == 1) && !((target == 2) && (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT)))
-			{	//Only if this note has the absolute minimum possible length and does not have the sustain or linknext status applied and the target is Rocksmith 2
-				ptr->length = 0;	//Convert a 1ms note to a length of 0 so that it doesn't display as a sustain note in-game
+			if((ptr->length == 1) && (target == 2))
+			{	//Only if this note has the absolute minimum possible length and the target is Rocksmith 2
+				if(!(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT))
+				{	//If the note doesn't have sustain or linknext status
+					if(!techbends && (techslideto <= 0) && (techunpitchedslideto <= 0))
+					{	//If the note doesn't have a tech note that applies bend, slide or unpitched slide technique
+						ptr->length = 0;	//Convert a 1ms note to a length of 0 so that it doesn't display as a sustain note in-game
+					}
+				}
 			}
 			if(ptr->palmmute || ptr->stringmute)
 			{	//If the note is palm or string muted
-				ptr->length = 0;	//Remove its sustain
+				if(!(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT))
+				{	//If the note doesn't have sustain or linknext status
+					ptr->length = 0;	//Remove its sustain
+				}
+			}
+			if(!ptr->length && (eof_get_note_tflags(sp, track, notenum) & EOF_NOTE_TFLAG_MINLENGTH))
+			{	//If this flag is set, the minimum length for the exported note needs to be 1ms
+				ptr->length = 1;
 			}
 		}
+		//Make a bitmask reflecting playable techniques used by the specified gem
+		ptr->hastechnique = flags & (	EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_HO | EOF_PRO_GUITAR_NOTE_FLAG_PO |
+										EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC | EOF_NOTE_FLAG_IS_TREMOLO | EOF_PRO_GUITAR_NOTE_FLAG_POP | EOF_PRO_GUITAR_NOTE_FLAG_SLAP | EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC |
+										EOF_PRO_GUITAR_NOTE_FLAG_TAP | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE | EOF_PRO_GUITAR_NOTE_FLAG_ACCENT |
+										EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE | EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE);
 	}//If the calling function passed a techniques structure
 
 	//Make a bitmask reflecting only the techniques this note (or any applicable tech notes) has that require a chordNote subtag to be written
@@ -5123,7 +5159,7 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 	unsigned long fret;			//The fret number used for the specified string of the note
 	char tagend[2] = "/";		//If a bendValues subtag is to be written, this string is emptied so that the note/chordNote tag doesn't end in the same line
 	unsigned long flags, notepos, notelen, ctr, bitmask;
-	EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0 ,0};
+	EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	unsigned char *finger = NULL;
 	long fingernum;
 	char *tagstring, notestring[] = "note", chordnotestring[] = "chordNote", *indentlevel, noindent[] = "", indent[] = "  ", buffer[600] = {0};
@@ -5467,7 +5503,7 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 int eof_rs_combine_linknext_logic(EOF_SONG * sp, unsigned long track, unsigned long notenum, unsigned long stringnum)
 {
 	EOF_PRO_GUITAR_TRACK *tp;
-	EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0 ,0}, tech2 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0 ,0};
+	EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, tech2 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	int retval = 0;
 
 	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || (stringnum > 5))

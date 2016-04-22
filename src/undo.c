@@ -20,6 +20,7 @@ int eof_undo_count = 0;
 int eof_redo_count = 0;
 int eof_redo_type = 0;
 int eof_undo_states_initialized = 0;
+int eof_undo_in_progress = 0;	//Used to prevent eof_destroy_song() from destroying the spectrogram and waveform data if they are already built
 
 int eof_undo_load_state(const char * fn)
 {
@@ -61,7 +62,9 @@ int eof_undo_load_state(const char * fn)
 	}
 	if(eof_song)
 	{
+		eof_undo_in_progress = 1;	//Signal to eof_destroy_song() that the waveform and spectrogram are not to be destroyed along with the active project structure
 		eof_destroy_song(eof_song);	//Destroy the chart that is open
+		eof_undo_in_progress = 0;
 	}
 	(void) pack_fclose(rfp);
 	eof_song = sp;	//Replacing it with the loaded undo state

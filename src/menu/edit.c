@@ -2598,7 +2598,7 @@ int eof_menu_edit_select_all_longer_than(void)
 DIALOG eof_menu_edit_conditional_selection_dialog[] =
 {
 	/*	(proc)           (x)  (y)  (w)  (h) (fg) (bg) (key) (flags)     (d1) (d2) (dp)                   (dp2) (dp3) */
-	{d_agup_window_proc, 0,   0,   376, 202,2,   23,  0,    0,          0,   0,   eof_etext,              NULL, NULL },
+	{d_agup_window_proc, 0,   0,   376, 222,2,   23,  0,    0,          0,   0,   eof_etext,              NULL, NULL },
 	{d_agup_radio_proc,	 16,  32,  38,  16, 2,   23,  0,    D_SELECTED, 1,   0,   "Do",                   NULL, NULL },
 	{d_agup_radio_proc,	 72,  32,  62,  16, 2,   23,  0,    0,          1,   0,   "Do not",               NULL, NULL },
 	{d_agup_radio_proc,	 16,  52,  116, 16, 2,   23,  0,    D_SELECTED, 2,   0,   "Contain any of",       NULL, NULL },
@@ -2615,15 +2615,19 @@ DIALOG eof_menu_edit_conditional_selection_dialog[] =
 	{d_agup_radio_proc,	 50,  132, 70,  16, 2,   23,  0,    0,          3,   0,   "Cymbals",              NULL, NULL },
 	{d_agup_radio_proc,	 124, 132, 54,  16, 2,   23,  0,    0,          3,   0,   "Toms",                 NULL, NULL },
 	{d_agup_radio_proc,	 180, 132, 58,  16, 2,   23,  0,    D_SELECTED, 3,   0,   "Either",               NULL, NULL },
-	{d_agup_button_proc, 12,  162, 68,  28, 2,   23,  '\r', D_EXIT,     0,   0,   "OK",                   NULL, NULL },
-	{d_agup_button_proc, 296, 162, 68,  28, 2,   23,  0,    D_EXIT,     0,   0,   "Cancel",               NULL, NULL },
+	{d_agup_text_proc,   16,  152, 44,  8,  2,   23,  0,    0,          0,   0,   "Of type:",             NULL, NULL },
+	{d_agup_check_proc,	 70,  152, 70,  16, 2,   23,  0,    D_SELECTED, 0,   0,   "Normal",               NULL, NULL },
+	{d_agup_check_proc,	 140, 152, 54,  16, 2,   23,  0,    D_SELECTED, 0,   0,   "Mute",                 NULL, NULL },
+	{d_agup_check_proc,	 200, 152, 58,  16, 2,   23,  0,    D_SELECTED, 0,   0,   "Ghost",                NULL, NULL },
+	{d_agup_button_proc, 12,  182, 68,  28, 2,   23,  '\r', D_EXIT,     0,   0,   "OK",                   NULL, NULL },
+	{d_agup_button_proc, 296, 182, 68,  28, 2,   23,  0,    D_EXIT,     0,   0,   "Cancel",               NULL, NULL },
 	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 int eof_check_note_conditional_selection(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long match_bitmask)
 {
 	int match = 0;	//This will be set to nonzero if the user's criteria apply to the note, and will ultimately be checked against the "Do" or "Do not" criterion
-	unsigned long note, flags;
+	unsigned long note, flags, ctr, bitmask;
 
 	if(!sp || (track >= sp->tracks))
 		return 0;	//Invalid parameters
@@ -2635,31 +2639,69 @@ int eof_check_note_conditional_selection(EOF_SONG *sp, unsigned long track, unsi
 		if(eof_menu_edit_conditional_selection_dialog[14].flags == D_SELECTED)
 		{	//Cymbals
 			if((match_bitmask & 4) && !(flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL))
-			{	//Criteria includes yellow cymbals and this note does not have one
+			{	//Criteria include yellow cymbals and this note does not have one
 				note &= ~4;	//Clear this from the effective note bitmask to indicate this gem isn't a match
 			}
 			if((match_bitmask & 8) && !(flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL))
-			{	//Criteria includes blue cymbals and this note does not have one
+			{	//Criteria include blue cymbals and this note does not have one
 				note &= ~8;	//Clear this from the effective note bitmask to indicate this gem isn't a match
 			}
 			if((match_bitmask & 16) && !(flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL))
-			{	//Criteria includes green cymbals and this note does not have one
+			{	//Criteria include green cymbals and this note does not have one
 				note &= ~16;	//Clear this from the effective note bitmask to indicate this gem isn't a match
 			}
 		}
 		else if(eof_menu_edit_conditional_selection_dialog[15].flags == D_SELECTED)
 		{	//Toms
 			if((match_bitmask & 4) && (flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL))
-			{	//Criteria includes yellow toms and this note does not have one
+			{	//Criteria include yellow toms and this note does not have one
 				note &= ~4;	//Clear this from the effective note bitmask to indicate this gem isn't a match
 			}
 			if((match_bitmask & 8) && (flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL))
-			{	//Criteria includes blue toms and this note does not have one
+			{	//Criteria include blue toms and this note does not have one
 				note &= ~8;	//Clear this from the effective note bitmask to indicate this gem isn't a match
 			}
 			if((match_bitmask & 16) && (flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL))
-			{	//Criteria includes green toms and this note does not have one
+			{	//Criteria include green toms and this note does not have one
 				note &= ~16;	//Clear this from the effective note bitmask to indicate this gem isn't a match
+			}
+		}
+	}
+	if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{
+		for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+		{	//For each of the 6 usable strings
+			if((match_bitmask & bitmask) && (note & bitmask))
+			{	//If this string is one of those the user included in the criteria, and is a string used in this note
+				EOF_PRO_GUITAR_NOTE *np = sp->pro_guitar_track[sp->track[track]->tracknum]->note[notenum];
+				int matched = 0;
+
+				if(eof_menu_edit_conditional_selection_dialog[18].flags == D_SELECTED)
+				{	//Criteria include normal note gems and this note has a gem on that string
+					if(!(np->frets[ctr] & 0x80) && !(np->ghost & bitmask))
+					{	//If this gem is not muted or ghosted
+						matched = 1;
+					}
+				}
+				if(eof_menu_edit_conditional_selection_dialog[19].flags == D_SELECTED)
+				{	//Criteria include muted note gems
+					if(np->frets[ctr] & 0x80)
+					{	//If this gem is muted
+						matched = 1;
+					}
+				}
+				if(eof_menu_edit_conditional_selection_dialog[20].flags == D_SELECTED)
+				{	//Criteria include ghosted note gems
+					if(np->ghost & bitmask)
+					{	//If this gem is ghosted
+						matched = 1;
+					}
+				}
+
+				if(!matched)
+				{	//If this gem did not meet any of those 3 criteria
+					note &= ~bitmask;	//Clear it from the effective note bitmask to indicate this gem isn't a match
+				}
 			}
 		}
 	}
@@ -2708,6 +2750,7 @@ int eof_menu_edit_conditional_selection_logic(int function)
 {
 	unsigned long ctr, bitmask, match_bitmask = 0, stringcount;
 	static unsigned last_selected_drum_filter = 16;	//Tracks whether cymbals, toms or either was selected from the last call to this dialog, defaults to "Either"
+	static unsigned last_selected_pg_normal = D_SELECTED, last_selected_pg_mute = D_SELECTED, last_selected_pg_ghost = D_SELECTED;	//Ditto for these pro guitar gem types
 
 	if(!eof_song || (eof_selected_track >= eof_song->tracks))
 		return 0;	//Return error
@@ -2741,17 +2784,29 @@ int eof_menu_edit_conditional_selection_logic(int function)
 	if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 	{	//If a drum track is active
 		eof_menu_edit_conditional_selection_dialog[13].flags = eof_menu_edit_conditional_selection_dialog[14].flags =
-		eof_menu_edit_conditional_selection_dialog[15].flags = eof_menu_edit_conditional_selection_dialog[16].flags = 0;	//Enable the cymbal/tom/either checkboxes
-		eof_menu_edit_conditional_selection_dialog[last_selected_drum_filter].flags = D_SELECTED;	//Enable the cymbal/non cymbal checkboxes and enable the "either" option by default
+		eof_menu_edit_conditional_selection_dialog[15].flags = eof_menu_edit_conditional_selection_dialog[16].flags = 0;	//Enable the cymbal/tom/either radio buttons
+		eof_menu_edit_conditional_selection_dialog[last_selected_drum_filter].flags = D_SELECTED;
 	}
 	else
 	{
 		eof_menu_edit_conditional_selection_dialog[13].flags = eof_menu_edit_conditional_selection_dialog[14].flags =
-		eof_menu_edit_conditional_selection_dialog[15].flags = eof_menu_edit_conditional_selection_dialog[16].flags = D_HIDDEN;	//Hide the cymbal/tom/either checkboxes
+		eof_menu_edit_conditional_selection_dialog[15].flags = eof_menu_edit_conditional_selection_dialog[16].flags = D_HIDDEN;	//Hide the cymbal/tom/either radio buttons
+	}
+	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If a pro guitar track is active
+		eof_menu_edit_conditional_selection_dialog[17].flags = 0;
+		eof_menu_edit_conditional_selection_dialog[18].flags = last_selected_pg_normal;
+		eof_menu_edit_conditional_selection_dialog[19].flags = last_selected_pg_mute;
+		eof_menu_edit_conditional_selection_dialog[20].flags = last_selected_pg_ghost;
+	}
+	else
+	{
+		eof_menu_edit_conditional_selection_dialog[17].flags = eof_menu_edit_conditional_selection_dialog[18].flags =
+		eof_menu_edit_conditional_selection_dialog[19].flags = eof_menu_edit_conditional_selection_dialog[20].flags = D_HIDDEN;	//Hide the normal/mute/ghost checkboxes
 	}
 
 	//Process the dialog
-	if(eof_popup_dialog(eof_menu_edit_conditional_selection_dialog, 0) == 17)
+	if(eof_popup_dialog(eof_menu_edit_conditional_selection_dialog, 0) == 21)
 	{	//User clicked OK
 		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//If a drum track is active
@@ -2767,6 +2822,12 @@ int eof_menu_edit_conditional_selection_logic(int function)
 			{	//Either
 				last_selected_drum_filter = 16;
 			}
+		}
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{
+			last_selected_pg_normal = eof_menu_edit_conditional_selection_dialog[18].flags;
+			last_selected_pg_mute = eof_menu_edit_conditional_selection_dialog[19].flags;
+			last_selected_pg_ghost = eof_menu_edit_conditional_selection_dialog[20].flags;
 		}
 		for(ctr = 0, bitmask = 1; ctr < stringcount; ctr++, bitmask <<= 1)
 		{	//For each lane in use for this track

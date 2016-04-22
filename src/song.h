@@ -97,6 +97,7 @@
 #define EOF_NOTE_TFLAG_NO_LN      512	//This flag will indicate that the linknext status of the affected note is to be interpreted to be not set, due to how chordnotes and linked single notes can be combined, during RS2 export
 #define EOF_NOTE_TFLAG_CCHANGE   1024	//This flag will indicate that a note is a chord change from RS import's perspective (for determining manually defined handshape phrases)
 #define EOF_NOTE_TFLAG_HIGHLIGHT 2048	//This flag will represent a note that is highlighted in the editor window (non permanent, such as for toggleable highlighting options)
+#define EOF_NOTE_TFLAG_MINLENGTH 4096	//This flag will indicate that a temporary ignored note added for the chordnote mechanism needs to export with a minimum length of 1ms
 
 //The following extended flags pertain to pro guitar notes
 #define EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE    1	//This flag specifies a note that will export to RS2 format with the "ignore" status set to nonzero, for special uses
@@ -563,7 +564,7 @@ typedef struct
 } EOF_SONG;
 
 EOF_SONG * eof_create_song(void);	//Allocates, initializes and returns an EOF_SONG structure
-void eof_destroy_song(EOF_SONG * sp);	//De-allocates the memory used by the EOF_SONG structure
+void eof_destroy_song(EOF_SONG * sp);	//De-allocates the memory used by the EOF_SONG structure.  If eof_undo_in_progress is nonzero, the spectrogram and waveform data are destroyed if applicable.
 int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp);	//Loads data from the specified PACKFILE pointer into the given EOF_SONG structure (called by eof_load_song()).  Returns 0 on error
 EOF_SONG * eof_load_song(const char * fn);	//Loads the specified EOF file, validating the file header and loading the appropriate OGG file
 int eof_save_song(EOF_SONG * sp, const char * fn);	//Saves the song to file.  Returns zero on error

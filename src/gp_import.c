@@ -1668,6 +1668,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	EOF_PRO_GUITAR_NOTE **np;	//Will store the last created note for each track (for handling tie and grace notes)
 	char *hopo;			//Will store the fret value of the previous note marked as HO/PO (in GP, if note #N is marked for this, note #N+1 is the one that is a HO or PO), otherwise -1, for each track
 	unsigned long *hopobeatnum;	//Will store the beat (note) number for which each track's last ho/po notation was defined, to ensure that the status is properly applied to the following note
+	unsigned long *hopomeasurenum;	//Likewise tracks which measure each track's last ho/po notation was defined, to allow tracking for these statuses between different measures
 	char *durations;	//Will store the last imported note duration for each track (to handle triplet feel notation)
 	double *note_durations;	//Will store the effective duration (in terms of a whole measure) for the last imported note in each track
 	char tripletfeel = 0;	//The current triplet feel notation in effect (0 = none, 1 = 8th note, 2 = 16th note)
@@ -2264,9 +2265,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	np = malloc(sizeof(EOF_PRO_GUITAR_NOTE *) * tracks);	//Allocate memory for the array of last created notes
 	hopo = malloc(sizeof(char) * tracks);					//Allocate memory for storing HOPO information
 	hopobeatnum = malloc(sizeof(unsigned long) * tracks);	//Allocate memory for storing HOPO information
+	hopomeasurenum = malloc(sizeof(unsigned long) * tracks);	//Allocate memory for storing HOPO information
 	durations = malloc(sizeof(char) * tracks);				//Allocate memory for storing note lengths
 	note_durations = malloc(sizeof(double) * tracks);		//Allocate memory for storing note durations
-	if(!gp->names || !gp->instrument_types || !np || !hopo || !hopobeatnum || !durations || !note_durations)
+	if(!gp->names || !gp->instrument_types || !np || !hopo || !hopobeatnum || !hopomeasurenum || !durations || !note_durations)
 	{
 		eof_log("Error allocating memory (6)", 1);
 		(void) pack_fclose(inf);
@@ -2280,6 +2282,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(hopo);
 		if(hopobeatnum)
 			free(hopobeatnum);
+		if(hopomeasurenum)
+			free(hopomeasurenum);
 		if(durations)
 			free(durations);
 		if(note_durations)
@@ -2293,6 +2297,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	memset(np, 0, sizeof(EOF_PRO_GUITAR_NOTE *) * tracks);				//Set all last created note pointers to NULL
 	memset(hopo, -1, sizeof(char) * tracks);							//Set all tracks to have no HOPO status
 	memset(hopobeatnum, 0, sizeof(unsigned long) * tracks);
+	memset(hopomeasurenum, 0, sizeof(unsigned long) * tracks);
 	memset(durations, 0, sizeof(char) * tracks);
 	memset(note_durations, 0, sizeof(double) * tracks);
 	memset(gp->instrument_types, 0, sizeof(char) * tracks);				//Set the instrument type for all tracks to undefined
@@ -2307,6 +2312,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		free(np);
 		free(hopo);
 		free(hopobeatnum);
+		free(hopomeasurenum);
 		free(durations);
 		free(note_durations);
 		free(gp);
@@ -2334,6 +2340,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(np);
 			free(hopo);
 			free(hopobeatnum);
+			free(hopomeasurenum);
 			free(durations);
 			free(note_durations);
 			free(gp);
@@ -2369,6 +2376,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		free(np);
 		free(hopo);
 		free(hopobeatnum);
+		free(hopomeasurenum);
 		free(durations);
 		free(note_durations);
 		free(gp);
@@ -2467,6 +2475,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							free(np);
 							free(hopo);
 							free(hopobeatnum);
+							free(hopomeasurenum);
 							free(durations);
 							free(note_durations);
 							free(gp);
@@ -2532,6 +2541,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							free(np);
 							free(hopo);
 							free(hopobeatnum);
+							free(hopomeasurenum);
 							free(durations);
 							free(note_durations);
 							free(gp);
@@ -2630,6 +2640,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				free(np);
 				free(hopo);
 				free(hopobeatnum);
+				free(hopomeasurenum);
 				free(durations);
 				free(note_durations);
 				free(gp);
@@ -2747,6 +2758,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(np);
 			free(hopo);
 			free(hopobeatnum);
+			free(hopomeasurenum);
 			free(durations);
 			free(note_durations);
 			free(gp);
@@ -3001,6 +3013,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(np);
 			free(hopo);
 			free(hopobeatnum);
+			free(hopomeasurenum);
 			free(durations);
 			free(note_durations);
 			free(gp);
@@ -3042,6 +3055,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(np);
 			free(hopo);
 			free(hopobeatnum);
+			free(hopomeasurenum);
 			free(durations);
 			free(note_durations);
 			free(gp);
@@ -3221,6 +3235,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					free(np);
 					free(hopo);
 					free(hopobeatnum);
+					free(hopomeasurenum);
 					free(durations);
 					free(note_durations);
 					free(gp);
@@ -3524,6 +3539,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									free(np);
 									free(hopo);
 									free(hopobeatnum);
+									free(hopomeasurenum);
 									free(durations);
 									free(note_durations);
 									free(gp);
@@ -3639,6 +3655,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								free(np);
 								free(hopo);
 								free(hopobeatnum);
+								free(hopomeasurenum);
 								free(durations);
 								free(note_durations);
 								free(gp);
@@ -3843,6 +3860,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								free(np);
 								free(hopo);
 								free(hopobeatnum);
+								free(hopomeasurenum);
 								free(durations);
 								free(note_durations);
 								free(gp);
@@ -3936,7 +3954,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									frets[ctr4] |= byte;	//OR this value, so that the muted status can be kept if it is set
 								}
 							}
-							if((hopo[ctr2] >= 0) && (ctr3 > hopobeatnum[ctr2]))
+							if((hopo[ctr2] >= 0) && ((ctr3 > hopobeatnum[ctr2]) || (ctr > hopomeasurenum[ctr2])))
 							{	//If the previous note was marked as leading into a hammer on or pull off with the next (this) note
 								if(byte < hopo[ctr2])
 								{	//If this note is a lower fret than the previous note
@@ -4016,6 +4034,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										free(np);
 										free(hopo);
 										free(hopobeatnum);
+										free(hopomeasurenum);
 										free(durations);
 										free(note_durations);
 										free(gp);
@@ -4083,6 +4102,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 												free(np);
 												free(hopo);
 												free(hopobeatnum);
+												free(hopomeasurenum);
 												free(durations);
 												free(note_durations);
 												free(gp);
@@ -4112,6 +4132,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//Hammer on/pull off from current note (next note gets the HO/PO status)
 									hopo[ctr2] = frets[ctr4] & 0x7F;	//Store the fret value (masking out the MSB ghost bit) so that the next note can be determined as either a HO or a PO
 									hopobeatnum[ctr2] = ctr3;			//Track which beat (note) number has the HO/PO status
+									hopomeasurenum[ctr2] = ctr;			//Track which measure number has the HO/PO status
 								}
 								if(byte1 & 4)
 								{	//Slide from current note (GP3 format indicator)
@@ -4476,6 +4497,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									free(np);
 									free(hopo);
 									free(hopobeatnum);
+									free(hopomeasurenum);
 									free(durations);
 									free(note_durations);
 									free(gp);
@@ -4632,6 +4654,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									free(np);
 									free(hopo);
 									free(hopobeatnum);
+									free(hopomeasurenum);
 									free(durations);
 									free(note_durations);
 									free(gp);
@@ -4905,6 +4928,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	free(np);
 	free(hopo);
 	free(hopobeatnum);
+	free(hopomeasurenum);
 	free(durations);
 	free(note_durations);
 	(void) puts("\nSuccess");
