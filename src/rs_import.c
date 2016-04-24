@@ -122,6 +122,200 @@ int eof_parse_chord_template(char *name, size_t size, char *finger, char *frets,
 	return 0;	//Return success
 }
 
+EOF_PRO_GUITAR_NOTE *eof_rs_import_note_tag_data(char *buffer, int function, EOF_PRO_GUITAR_TRACK *tp, unsigned long linectr)
+{
+	long curdiff = 0, time = 0, step = 0;
+	long bend = 0, fret = 0, hammeron = 0, harmonic = 0, palmmute = 0, pulloff = 0, string = 0, sustain = 0, tremolo = 0, linknext = 0, accent = 0, mute = 0, pinchharmonic = 0, tap = 0, vibrato = 0;
+	long pluck = -1, slap = -1, slideto = -1, slideunpitchto = -1;
+	unsigned long flags = 0;
+	static EOF_PRO_GUITAR_NOTE *np = NULL;
+	EOF_PRO_GUITAR_NOTE *tnp = NULL;
+	char *ptr;
+
+	if(!buffer || !tp)
+		return NULL;	//Invalid parameters
+
+	//Read note tag
+	ptr = strcasestr_spec(buffer, "<note ");
+	if(!ptr)
+	{	//If it is not a note tag, check if it's a chordnote tag
+		ptr = strcasestr_spec(buffer, "<chordNote ");
+	}
+
+	if(ptr)
+	{	//If this is a note or chordnote tag
+		//Read note attributes
+		if(!parse_xml_rs_timestamp("time", buffer, &time))
+		{	//If the timestamp was not readable
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading start timestamp on line #%lu.  Aborting", linectr);
+			eof_log(eof_log_string, 1);
+			return NULL;
+		}
+		(void) parse_xml_attribute_number("bend", buffer, &bend);
+		(void) parse_xml_attribute_number("fret", buffer, &fret);
+		if(fret >= tp->capo)
+			fret -= tp->capo;	//Apply the capo if applicable
+		(void) parse_xml_attribute_number("hammerOn", buffer, &hammeron);
+		(void) parse_xml_attribute_number("harmonic", buffer, &harmonic);
+		(void) parse_xml_attribute_number("palmMute", buffer, &palmmute);
+		(void) parse_xml_attribute_number("pluck", buffer, &pluck);
+		(void) parse_xml_attribute_number("pullOff", buffer, &pulloff);
+		(void) parse_xml_attribute_number("slap", buffer, &slap);
+		(void) parse_xml_attribute_number("slideTo", buffer, &slideto);
+		if(slideto >= tp->capo)
+			slideto -= tp->capo;	//Apply the capo if applicable
+		(void) parse_xml_attribute_number("string", buffer, &string);
+		if(!parse_xml_rs_timestamp("sustain", buffer, &sustain))
+		{	//If the timestamp was not readable
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading sustain time on line #%lu.  Aborting", linectr);
+			eof_log(eof_log_string, 1);
+			return NULL;
+		}
+		(void) parse_xml_attribute_number("tremolo", buffer, &tremolo);
+
+		//Read RS2 note attributes
+		(void) parse_xml_attribute_number("linkNext", buffer, &linknext);
+		(void) parse_xml_attribute_number("accent", buffer, &accent);
+		(void) parse_xml_attribute_number("mute", buffer, &mute);
+		(void) parse_xml_attribute_number("harmonicPinch", buffer, &pinchharmonic);
+		(void) parse_xml_attribute_number("slideUnpitchTo", buffer, &slideunpitchto);
+		if(slideunpitchto >= tp->capo)
+			slideunpitchto -= tp->capo;	//Apply the capo if applicable
+		(void) parse_xml_attribute_number("tap", buffer, &tap);
+		(void) parse_xml_attribute_number("vibrato", buffer, &vibrato);
+
+		//Check for applicability of split status
+		if(np && (np->pos == time))
+		{	//If there was a previous single note imported for this difficulty level and it was at the same time as this note
+			np->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;	//Apply split status to the previous note
+			flags |= EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;		//And to this note as well
+		}
+
+		//Add note and set attributes
+		if((string >= 0) && (string < 6))
+		{	//As long as the string number is valid
+			np = eof_pro_guitar_track_add_note(tp);	//Allocate, initialize and add the new note to the note array
+			if(!np)
+			{
+				eof_log("\tError allocating memory.", 1);
+				return NULL;
+			}
+			if(!function)
+			{	//If this note isn't to be retained in the note array
+				tp->notes--;
+				tp->pgnotes--;
+			}
+			np->type = curdiff;
+			np->note = 1 << (unsigned long) string;
+			np->frets[(unsigned long) string] = fret;
+			np->pos = time;
+			np->length = sustain;
+			if(bend)
+			{
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
+				np->bendstrength = bend;
+			}
+			if(hammeron)
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;
+			if(harmonic)
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
+			if(palmmute)
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
+			if(pulloff)
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;
+			if(tremolo)
+				flags |= EOF_NOTE_FLAG_IS_TREMOLO;
+			if(pluck > 0)
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_POP;
+			if(slap > 0)
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLAP;
+			if(slideto > 0)
+			{
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
+				np->slideend = slideto;
+				if(slideto > fret)
+				{	//The slide ends above the starting fret
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+				}
+				else
+				{	//The slide ends below the starting fret
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+				}
+			}
+			if(linknext)
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;
+			if(accent)
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;
+			if(mute)
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;
+			if(pinchharmonic)
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC;
+			if(slideunpitchto > 0)
+			{
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+				np->unpitchend = slideunpitchto;
+			}
+			if(tap)
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_TAP;
+			if(vibrato)
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
+			np->flags = flags;
+
+			if(fret > tp->numfrets)
+				tp->numfrets = fret;	//Track the highest used fret number
+
+			return np;
+		}//As long as the string number is valid
+	}//If this is a note tag
+
+	//Read bendValue tag
+	ptr = strcasestr_spec(buffer, "<bendValue ");
+	if(ptr && np)
+	{	//If this is a bendValue tag and a normal note tag was previously read
+		if(!parse_xml_rs_timestamp("time", buffer, &time))
+		{	//If the timestamp was not readable
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading start timestamp on line #%lu.  Aborting", linectr);
+			eof_log(eof_log_string, 1);
+			return NULL;
+		}
+		if(!parse_xml_rs_timestamp("step", buffer, &step))
+		{	//If the bend strength was not readable
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading bend strength on line #%lu.  Aborting", linectr);
+			eof_log(eof_log_string, 1);
+			return NULL;
+		}
+		tnp = eof_pro_guitar_track_add_tech_note(tp);
+		if(!tnp)
+		{
+			eof_log("\tError allocating memory.  Aborting", 1);
+			return NULL;
+		}
+		if(!function)
+		{	//If this note isn't to be retained in the note array
+			tp->technotes--;
+		}
+		tnp->type = np->type;	//This bend tech note will use the same difficulty and string as the note it is applied to
+		tnp->note = np->note;
+		tnp->pos = time;
+		tnp->length = 1;
+		tnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+		tnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
+		if(step % 1000)
+		{	//If the bend strength was defined in quarter steps
+			tnp->bendstrength = 0x80 | (step / 500);
+		}
+		else
+		{	//The bend strength was defined in half steps
+			tnp->bendstrength = step / 1000;
+		}
+
+		return tnp;
+	}//If this is a bendValue tag
+
+	return NULL;	//Input XML tag was not recognized
+}
+
 EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 {
 	char *buffer = NULL, *buffer2 = NULL;		//Will be an array large enough to hold the largest line of text from input file
@@ -139,7 +333,6 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 	unsigned long chordlist_count = 0;	//Keeps count of how many chord templates have been imported
 	unsigned long beat_count = 0;		//Keeps count of which ebeat is being parsed
 	unsigned long note_count = 0;		//Keeps count of how many notes have been imported
-	unsigned long tech_note_count = 0;	//Keeps count of how many tech notes have been imported
 	char strum_dir = 0;					//Tracks whether any chords were marked as up strums
 	unsigned long ctr, ctr2, ctr3;
 	long output = 0;
@@ -929,10 +1122,10 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		}//If this is the events tag and it isn't empty
 		else if(strcasestr_spec(buffer, "<levels") && !strstr(buffer, "/>"))
 		{	//If this is the levels tag and it isn't empty
-			long curdiff = 0, time = 0, bend, fret = 0, hammeron, harmonic, palmmute, pluck, pulloff, slap, slideto, string, sustain = 0, tremolo;
-			long linknext, accent, mute, pinchharmonic, slideunpitchto, tap, vibrato, step = 0;
+			long curdiff = 0, time = 0;
+			long fret, palmmute, mute;
 			unsigned long flags;
-			EOF_PRO_GUITAR_NOTE *np = NULL, *tnp = NULL;
+			EOF_PRO_GUITAR_NOTE *np = NULL;
 
 			#ifdef RS_IMPORT_DEBUG
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tProcessing <levels> tag on line #%lu", linectr);
@@ -1000,179 +1193,29 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 								ptr = strcasestr_spec(buffer, "<note ");
 								if(ptr)
 								{	//If this is a note tag
-									if(note_count < EOF_MAX_NOTES)
-									{	//If another note can be stored
-										bend = fret = hammeron = harmonic = palmmute = pulloff = string = tremolo = flags = linknext = accent = mute = pinchharmonic = tap = vibrato = 0;	//Init all of these to undefined
-										pluck = slap = slideto = slideunpitchto = -1;	//Init these to Rocksmith's undefined value
+									np = eof_rs_import_note_tag_data(buffer, 1, tp, linectr);	//Parse the note tag and add the note to the track
+									if(!np)
+									{	//If there was an error doing so
+										error = 1;
+										break;	//Break from inner loop
+									}
+									note_count++;
+									tagctr++;
 
-										//Read note attributes
-										if(!parse_xml_rs_timestamp("time", buffer, &time))
-										{	//If the timestamp was not readable
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading start timestamp on line #%lu.  Aborting", linectr);
-											eof_log(eof_log_string, 1);
-											error = 1;
-											break;	//Break from inner loop
-										}
-										(void) parse_xml_attribute_number("bend", buffer, &bend);
-										(void) parse_xml_attribute_number("fret", buffer, &fret);
-										if(fret >= tp->capo)
-											fret -= tp->capo;	//Apply the capo if applicable
-										(void) parse_xml_attribute_number("hammerOn", buffer, &hammeron);
-										(void) parse_xml_attribute_number("harmonic", buffer, &harmonic);
-										(void) parse_xml_attribute_number("palmMute", buffer, &palmmute);
-										(void) parse_xml_attribute_number("pluck", buffer, &pluck);
-										(void) parse_xml_attribute_number("pullOff", buffer, &pulloff);
-										(void) parse_xml_attribute_number("slap", buffer, &slap);
-										(void) parse_xml_attribute_number("slideTo", buffer, &slideto);
-										if(slideto >= tp->capo)
-											slideto -= tp->capo;	//Apply the capo if applicable
-										(void) parse_xml_attribute_number("string", buffer, &string);
-										if(!parse_xml_rs_timestamp("sustain", buffer, &sustain))
-										{	//If the timestamp was not readable
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading sustain time on line #%lu.  Aborting", linectr);
-											eof_log(eof_log_string, 1);
-											error = 1;
-											break;	//Break from inner loop
-										}
-										(void) parse_xml_attribute_number("tremolo", buffer, &tremolo);
-
-										//Read RS2 note attributes
-										(void) parse_xml_attribute_number("linkNext", buffer, &linknext);
-										(void) parse_xml_attribute_number("accent", buffer, &accent);
-										(void) parse_xml_attribute_number("mute", buffer, &mute);
-										(void) parse_xml_attribute_number("harmonicPinch", buffer, &pinchharmonic);
-										(void) parse_xml_attribute_number("slideUnpitchTo", buffer, &slideunpitchto);
-										if(slideunpitchto >= tp->capo)
-											slideunpitchto -= tp->capo;	//Apply the capo if applicable
-										(void) parse_xml_attribute_number("tap", buffer, &tap);
-										(void) parse_xml_attribute_number("vibrato", buffer, &vibrato);
-
-										//Check for applicability of split status
-										if(np && (np->pos == time))
-										{	//If there was a previous single note imported for this difficulty level and it was at the same time as this note
-											np->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;	//Apply split status to the previous note
-											flags |= EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;		//And to this note as well
-										}
-
-										//Add note and set attributes
-										if((string >= 0) && (string < 6))
-										{	//As long as the string number is valid
-											np = eof_pro_guitar_track_add_note(tp);	//Allocate, initialize and add the new note to the note array
-											if(!np)
-											{
-												eof_log("\tError allocating memory.  Aborting", 1);
-												error = 1;
-												break;	//Break from inner loop
-											}
-											np->type = curdiff;
-											np->note = 1 << (unsigned long) string;
-											np->frets[(unsigned long) string] = fret;
-											np->pos = time;
-											np->length = sustain;
-											if(bend)
-											{
-												flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
-												flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
-												np->bendstrength = bend;
-											}
-											if(hammeron)
-												flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;
-											if(harmonic)
-												flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
-											if(palmmute)
-												flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
-											if(pulloff)
-												flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;
-											if(tremolo)
-												flags |= EOF_NOTE_FLAG_IS_TREMOLO;
-											if(pluck > 0)
-												flags |= EOF_PRO_GUITAR_NOTE_FLAG_POP;
-											if(slap > 0)
-												flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLAP;
-											if(slideto > 0)
-											{
-												flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
-												np->slideend = slideto;
-												if(slideto > fret)
-												{	//The slide ends above the starting fret
-													flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
-												}
-												else
-												{	//The slide ends below the starting fret
-													flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
-												}
-											}
-											if(linknext)
-												flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;
-											if(accent)
-												flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;
-											if(mute)
-												flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;
-											if(pinchharmonic)
-												flags |= EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC;
-											if(slideunpitchto > 0)
-											{
-												flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-												np->unpitchend = slideunpitchto;
-											}
-											if(tap)
-												flags |= EOF_PRO_GUITAR_NOTE_FLAG_TAP;
-											if(vibrato)
-												flags |= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
-											np->flags = flags;
-											note_count++;
-											tagctr++;
-											tp->pgnotes++;
-
-											if(fret > tp->numfrets)
-												tp->numfrets = fret;	//Track the highest used fret number
-										}//As long as the string number is valid
-									}//If another note can be stored
+									fret = eof_get_pro_guitar_note_highest_fret_value(np);
+									if(fret > tp->numfrets)
+										tp->numfrets = fret;	//Track the highest used fret number
 								}//If this is a note tag
 
 								//Read bendValue tag
 								ptr = strcasestr_spec(buffer, "<bendValue ");
-								if(ptr && np)
-								{	//If this is a bendValue tag and a note was read
-									if(tech_note_count < EOF_MAX_NOTES)
-									{	//If another tech note can be stored
-										if(!parse_xml_rs_timestamp("time", buffer, &time))
-										{	//If the timestamp was not readable
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading start timestamp on line #%lu.  Aborting", linectr);
-											eof_log(eof_log_string, 1);
-											error = 1;
-											break;	//Break from inner loop
-										}
-										if(!parse_xml_rs_timestamp("step", buffer, &step))
-										{	//If the bend strength was not readable
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading bend strength on line #%lu.  Aborting", linectr);
-											eof_log(eof_log_string, 1);
-											error = 1;
-											break;	//Break from inner loop
-										}
-										tnp = eof_pro_guitar_track_add_tech_note(tp);
-										if(!tnp)
-										{
-											eof_log("\tError allocating memory.  Aborting", 1);
-											error = 1;
-											break;	//Break from inner loop
-										}
-										tnp->type = np->type;	//This bend tech note will use the same difficulty and string as the note it is applied to
-										tnp->note = np->note;
-										tnp->pos = time;
-										tnp->length = 1;
-										tnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
-										tnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
-										if(step % 1000)
-										{	//If the bend strength was defined in quarter steps
-											tnp->bendstrength = 0x80 | (step / 500);
-										}
-										else
-										{	//The bend strength was defined in half steps
-											tnp->bendstrength = step / 1000;
-										}
-										tech_note_count++;
-									}//If another tech note can be stored
+								if(ptr)
+								{	//If this is a bendValue tag
+									if(!eof_rs_import_note_tag_data(buffer, 1, tp, linectr))
+									{	//If there was an error parsing the bendvalue tag and adding a technote as appropriate
+										error = 1;
+										break;	//Break from inner loop
+									}
 								}//If this is a bendValue tag
 
 								(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
@@ -1271,7 +1314,6 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
 										np->flags = flags;
 										np->type = curdiff;
-										tp->pgnotes++;
 										note_count++;
 										tagctr++;
 										if((lastid >= 0) && (lastid != id))

@@ -2511,16 +2511,615 @@ int eof_new_chart(char * filename)
 	return 0;	//Return success
 }
 
+int eof_save_helper_checks(void)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long tracknum, notes_after_chart_audio, ctr, ctr2, ctr3;
+	int suggested = 0;
+	char oggfn[1024] = {0};
+	char newfolderpath[1024] = {0};
+	char note_length_warned = 0, note_distance_warned = 0, arpeggio_warned = 0, slide_warned = 0, bend_warned = 0, slide_error = 0;
+
+	/* check if there are any notes beyond the chart audio */
+	notes_after_chart_audio = eof_check_if_notes_exist_beyond_audio_end(eof_song);
+	if(notes_after_chart_audio && !eof_silence_loaded)
+	{	//Only display this warning if there is chart audio loaded
+		(void) snprintf(oggfn, sizeof(oggfn) - 1, "Warning:  Track \"%s\" contains notes/lyrics extending beyond the chart's audio.", eof_song->track[notes_after_chart_audio]->name);
+		eof_clear_input();
+		if(alert(oggfn, NULL, "This chart may not work properly.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
+		{	//If the user doesn't opt to continue due to this error condition
+			return 1;	//Return cancellation
+		}
+	}
+
+
+	/* check lyrics for lyrics outside of phrases or invalid characters */
+	if(eof_song->vocal_track[0]->lyrics > 0)
+	{
+		/* sort and validate lyrics */
+		eof_track_sort_notes(eof_song, EOF_TRACK_VOCALS);
+		eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
+
+		/* pre-parse the lyrics to determine if any of them are not contained within a lyric phrase */
+		if(eof_song->tags->lyrics && eof_write_fof_files)
+		{	//If user enabled the Lyrics checkbox in song properties and wants to export FoF related files
+			for(ctr = 0; ctr < eof_song->vocal_track[0]->lyrics; ctr++)
+			{	//For each lyric
+				if((eof_song->vocal_track[0]->lyric[ctr]->note != EOF_LYRIC_PERCUSSION) && (eof_find_lyric_line(ctr) == NULL))
+				{	//If any of the non vocal percussion lyrics are not within a line
+					eof_cursor_visible = 0;
+					eof_pen_visible = 0;
+					eof_show_mouse(screen);
+					eof_clear_input();
+					if(alert("Warning: One or more lyrics aren't within lyric phrases.", "These lyrics won't export to FoF script format.", "Continue?", "&Yes", "&No", 'y', 'n') == 2)
+					{	//If user opts to cancel the save
+						eof_show_mouse(NULL);
+						eof_cursor_visible = 1;
+						eof_pen_visible = 1;
+						return 1;	//Return cancellation
+					}
+					break;
+				}
+			}
+		}//If user enabled the Lyrics checkbox in song properties
+		for(ctr = 0; ctr < eof_song->vocal_track[0]->lyrics; ctr++)
+		{	//For each lyric
+			if((eof_song->vocal_track[0]->lyric[ctr]->text[0] != '\0') && (eof_string_has_non_ascii(eof_song->vocal_track[0]->lyric[ctr]->text)))
+			{	//If any of the lyrics that contain text have non ASCII characters
+				eof_clear_input();
+				if(alert("Warning: One or more lyrics have non ASCII characters.", "These lyrics may not work correctly for some rhythm games.", "Cancel and seek to first offending lyric?", "&Yes", "&No", 'y', 'n') == 1)
+				{	//If user opts to cancel the save
+					eof_seek_and_render_position(EOF_TRACK_VOCALS, eof_get_note_type(eof_song, EOF_TRACK_VOCALS, ctr), eof_get_note_pos(eof_song, EOF_TRACK_VOCALS, ctr));
+					return 1;	//Return cancellation
+				}
+				break;
+			}
+		}
+	}
+
+
+	/* check 5 lane guitar note lengths */
+	for(ctr = 1; !note_length_warned && eof_min_note_length && (ctr < eof_song->tracks); ctr++)
+	{	//For each track (only check if the user defined a minimum length, and only if the user didn't already decline to cancel when an offending note was found)
+		if((eof_song->track[ctr]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[ctr]->track_format == EOF_LEGACY_TRACK_FORMAT))
+		{	//If this is a 5 lane guitar track
+			for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, ctr); ctr2++)
+			{	//For each note in the track
+				if(eof_get_note_length(eof_song, ctr, ctr2) < eof_min_note_length)
+				{	//If this note's length is shorter than the minimum length
+					eof_clear_input();
+					if(alert("Warning:  At least one note was truncated shorter", "than your defined minimum length.", "Cancel save and seek to the first such note?", "&Yes", "&No", 'y', 'n') == 1)
+					{	//If the user opted to seek to the first offending note (only prompt once per call)
+						eof_seek_and_render_position(ctr, eof_get_note_type(eof_song, ctr, ctr2), eof_get_note_pos(eof_song, ctr, ctr2));
+						return 1;	//Return cancellation
+					}
+					note_length_warned = 1;
+					break;	//Stop checking after the first offending note is found
+				}
+			}
+		}
+	}
+
+
+	/* check note distances */
+	for(ctr = 1; !note_distance_warned && (ctr < eof_song->tracks); ctr++)
+	{	//For each track (and only if the user didn't already decline to cancel when an offending note was found)
+		for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, ctr); ctr2++)
+		{	//For each note in the track
+			long next = eof_track_fixup_next_note(eof_song, ctr, ctr2);	//Get the next note, if it exists
+			long maxlength = eof_get_note_max_length(eof_song, ctr, ctr2, 1);	//Get the maximum length of this note
+			if(next > 0)
+			{	//If there was a next note
+				if(eof_get_note_length(eof_song, ctr, ctr2) > maxlength)
+				{	//And this note is longer than its maximum length
+					if(eof_get_note_pos(eof_song, ctr, next) - eof_get_note_pos(eof_song, ctr, ctr2) < eof_min_note_distance)
+					{	//If the notes are too close to enforce the minimum note distance
+						eof_clear_input();
+						if(alert("Warning:  At least one note is too close to another", "to enforce the minimum note distance.", "Cancel save and seek to the first such note?", "&Yes", "&No", 'y', 'n') == 1)
+						{	//If the user opted to seek to the first offending note (only prompt once per call)
+							eof_seek_and_render_position(ctr, eof_get_note_type(eof_song, ctr, ctr2), eof_get_note_pos(eof_song, ctr, ctr2));
+							return 1;	//Return cancellation
+						}
+						note_distance_warned = 1;
+						break;	//Stop checking after the first offending note is found
+					}
+				}
+			}
+		}
+	}
+
+
+	/* check for any incomplete measures, where a time signature changed is placed mid-measure */
+	eof_process_beat_statistics(eof_song, eof_selected_track);
+	for(ctr = 1; ctr < eof_song->beats; ctr++)
+	{	//For each beat after the first
+		if(eof_song->beat[ctr]->contains_ts_change)
+		{	//If this beat has a time signature change
+			if((eof_song->beat[ctr - 1]->beat_within_measure >= 0) && (eof_song->beat[ctr - 1]->beat_within_measure != eof_song->beat[ctr - 1]->num_beats_in_measure - 1))
+			{	//If the previous beat has a time signature in effect, but it wasn't the last beat in its measure (the beat_within_measure stat is numbered starting with 0)
+				suggested = eof_song->beat[ctr - 1]->beat_within_measure + 1;	//Track the last beat number in the measure and account for the zero numbering
+				for(ctr = ctr - 1; ctr > 0; ctr--)
+				{	//For each of the previous beats
+					if(eof_song->beat[ctr]->beat_within_measure == 0)
+					{	//If this is the first beat in the affected measure
+						break;
+					}
+				}
+				(void) snprintf(newfolderpath, sizeof(newfolderpath) - 1, "(Suggested T/S is %d/%d).  Cancel save?", suggested, eof_song->beat[ctr]->beat_unit);	//Determine a suitable time signature to suggest
+				eof_selected_beat = ctr;	//Select the affected beat marker
+				eof_beat_stats_cached = 0;
+				eof_seek_and_render_position(eof_selected_track, eof_note_type, eof_song->beat[ctr]->pos);	//seek to the beat in question and render
+				eof_clear_input();
+				if(alert("At least one measure is interrupted by a time signature.", "This can cause problems in some rhythm games.", newfolderpath, "&Yes", "&No", 'y', 'n') == 1)
+				{	//If the user opts to correct the issue
+					return 1;	//Return cancellation
+				}
+				break;
+			}
+		}
+	}
+
+
+	/* perform checks for chord fingerings and fret hand positions */
+	if(eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files)
+	{	//If the user wants to save Rocksmith or Bandfuse capable files
+		(void) eof_correct_chord_fingerings();			//Ensure all chords in each pro guitar track have valid finger arrays, prompt user to provide any that are missing
+		if(eof_check_fret_hand_positions())
+		{	//If any fret hand position errors were found
+			if(alert("One or more problems with defined fret hand positions were found.", NULL, "Cancel save and review them now?", "&Yes", "&No", 'y', 'n') == 1)
+			{	//If the user opts to see the problems
+				(void) eof_check_fret_hand_positions_menu();
+				return 1;	//Return cancellation
+			}
+		}
+	}
+
+
+	/* check if any Rocksmith sections don't have a Rocksmith phrase at the same position */
+	if(eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files)
+	{	//If the user wants to save Rocksmith or Bandfuse capable files
+		for(ctr = 1; ctr < eof_song->tracks; ctr++)
+		{	//For each track
+			if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If this is a pro guitar/bass track
+				if(eof_check_rs_sections_have_phrases(eof_song, ctr))
+				{	//If the user canceled adding missing phrases
+					break;	//Stop fixing them and break from loop
+				}
+			}
+		}
+	}
+
+
+	/* check if any tracks use 2 or more tone names but doesn't define the default or uses more than 4 tone names */
+	if(eof_write_rs2_files)
+	{	//If the user wants to save Rocksmith 2 files
+		char warning1 = 0, warning2 = 0, warning3 = 0;
+		for(ctr = 1; ctr < eof_song->tracks; ctr++)
+		{	//For each track
+			if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If this is a pro guitar/bass track
+				tracknum = eof_song->track[ctr]->tracknum;
+				tp = eof_song->pro_guitar_track[tracknum];
+				//Build and count the size of the list of unique tone names used, and empty the default tone string if it is not valid
+				eof_track_rebuild_rs_tone_names_list_strings(ctr, 1);
+				if(eof_track_rs_tone_names_list_strings_num == 1)
+				{	//If only one tone name is used
+					eof_clear_input();
+					if(!warning3 && alert("Warning:  At least one track uses only one tone name.  You must use at least", "two different tone names and set one as default for them to work in Rocksmith 2014.", "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
+					{
+						eof_track_destroy_rs_tone_names_list_strings();
+						(void) eof_menu_track_selected_track_number(ctr, 1);	//Set the active instrument track
+						eof_render();
+						(void) eof_track_rs_tone_names();	//Call up the tone names dialog
+						return 1;	//Return cancellation
+					}
+					warning3 = 1;
+				}
+				else if(eof_track_rs_tone_names_list_strings_num > 1)
+				{	//If at least 2 unique tone names are used
+					if((tp->defaulttone[0] == '\0') && !warning1)
+					{	//If the default tone is not set, and the user wasn't warned about this yet
+						eof_clear_input();
+						if(!warning1 && alert("Warning:  At least one track with tone changes has no default tone set.", NULL, "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
+						{
+							eof_track_destroy_rs_tone_names_list_strings();
+							(void) eof_menu_track_selected_track_number(ctr, 1);	//Set the active instrument track
+							eof_render();
+							(void) eof_track_rs_tone_names();	//Call up the tone names dialog
+							return 1;	//Return cancellation
+						}
+						warning1 = 1;
+					}
+					if((eof_track_rs_tone_names_list_strings_num > 4) && !warning2)
+					{	//If there are more than 4 unique tone names used, and the user wasn't warned about this yet
+						if(!warning2 && alert("Warning:  At least one arrangement uses more than 4 different tones.", "Rocksmith doesn't support more than 4 so EOF will only export changes for 4 tone names.", "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
+						{
+							eof_track_destroy_rs_tone_names_list_strings();
+							(void) eof_menu_track_selected_track_number(ctr, 1);	//Set the active instrument track
+							eof_render();
+							(void) eof_track_rs_tone_names();	//Call up the tone names dialog
+							return 1;	//Return cancellation
+						}
+						warning2 = 1;
+					}
+				}
+				eof_track_destroy_rs_tone_names_list_strings();
+			}
+		}
+	}
+
+
+	/* check if any arpeggio phrases only have one note in them */
+	for(ctr = 1; (ctr < eof_song->tracks) && !arpeggio_warned; ctr++)
+	{	//For each track, or until the user is warned about an offending arpeggio
+		if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If this is a pro guitar/bass track
+			unsigned long notectr;
+			char restore_tech_view = 0;
+
+			tracknum = eof_song->track[ctr]->tracknum;
+			tp = eof_song->pro_guitar_track[tracknum];
+			restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
+			eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Activate the normal note set
+
+			for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
+			{	//For each arpeggio phrase in the track
+				notectr = 0;
+				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
+				{	//For each note in the track
+					if((tp->note[ctr3]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr3]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr3]->type == tp->arpeggio[ctr2].difficulty))
+					{	//If the note is within the arpeggio phrase
+						notectr++;	//Increment counter
+					}
+				}
+				if(notectr < 2)
+				{
+					eof_clear_input();
+					eof_seek_and_render_position(ctr, tp->arpeggio[ctr2].difficulty, tp->arpeggio[ctr2].start_pos);
+					if(alert("Warning:  At least one arpeggio phrase doesn't contain at least two notes.", "You should remove the arpeggio phrase or add additional notes into it.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+					{	//If the user opts to cancel
+						return 1;	//Return cancellation
+					}
+					arpeggio_warned = 1;	//Set a condition to exit outer for loop
+					break;	//Break from inner for loop
+				}
+			}//For each arpeggio phrase in the track
+			eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Activate whichever note set was active for the track
+		}//If this is a pro guitar/bass track
+	}//For each track, or until the user is warned about an offending arpeggio
+
+
+	/* check if any slide notes don't validly define their end position or bend notes don't define their bend strength */
+	if(eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files)
+	{	//If the user wants to save Rocksmith or Bandfuse capable files
+		for(ctr = 1; ctr < eof_song->tracks; ctr++)
+		{	//For each track
+			if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If this is a pro guitar/bass track
+				unsigned long flags, noteset;
+				char restore_tech_view = 0;
+
+				tracknum = eof_song->track[ctr]->tracknum;
+				tp = eof_song->pro_guitar_track[tracknum];
+				restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
+				for(noteset = 0; noteset < 2; noteset++)
+				{	//For each note set
+					eof_menu_pro_guitar_track_set_tech_view_state(tp, noteset);	//Activate the appropriate note set
+					for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+					{	//For each note in the track
+						flags = tp->note[ctr2]->flags;
+						if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
+						{	//If the note contains no bend strength or slide end position
+							if(((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)) && !slide_warned)
+							{	//If the note has slide technique and is missing the end position, and the user hasn't been warned about this yet
+								eof_clear_input();
+								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
+								if(alert("Warning:  At least one slide note doesn't define its ending position.", "Unless you define this information they will export as 1 fret slides.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+								{	//If the user opts to cancel
+									return 1;	//Return cancellation
+								}
+								slide_warned = 1;
+							}
+							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND && !bend_warned)
+							{	//If the note has bend technique and is missing the bend strength, and the user hasn't been warned about this yet
+								eof_clear_input();
+								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
+								if(alert("Warning:  At least one bend note doesn't define its bend strength.", "Unless you define this information they will export as bending 1 half step.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+								{	//If the user opts to cancel
+									return 1;	//Return cancellation
+								}
+								bend_warned = 1;
+							}
+						}
+
+						if(!slide_error && !noteset)
+						{	//If the user hasn't been warned about any slide related errors yet, and this is the normal note set
+							unsigned char lowestfret = eof_pro_guitar_note_lowest_fret(tp, ctr2);	//Determine the note's lowest used fret value
+
+							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
+							{	//If the note has pitched slide end position data
+								if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+								{	//If the note slides up
+									if(tp->note[ctr2]->slideend <= lowestfret)
+									{	//The slide doesn't go higher than the current note
+										slide_error = 1;
+									}
+								}
+								if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+								{	//If the note slides down
+									if(tp->note[ctr2]->slideend >= lowestfret)
+									{	//The slide doesn't go lower than the current note
+										slide_error = 1;
+									}
+								}
+							}
+							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+							{	//If the note has an unpitched slide
+								if(tp->note[ctr2]->unpitchend == lowestfret)
+								{	//The slide doesn't move from the current note
+									slide_error = 1;
+								}
+							}
+							if(slide_error)
+							{	//If one of the above checks failed
+								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
+								if(alert("Warning:  At least one slide note has an error in its end position.", "Unless corrected, it will not export to XML as a slide.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+								{	//If the user opts to cancel
+									return 1;	//Return cancellation
+								}
+							}
+						}
+						if(slide_warned && bend_warned && slide_error)
+							break;	//Exit for loop if all warnings/errors were issued and declined by the user
+					}//For each note in the track
+					if(slide_warned && bend_warned && slide_error)
+						break;	//Exit for loop if all warnings/errors were issued and declined by the user
+				}//For each note set
+				eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Restore the note set that was in use for the track
+				if(slide_warned && bend_warned && slide_error)
+					break;	//Exit for loop if all warnings/errors were issued and declined by the user
+			}//If this is a pro guitar/bass track
+		}//For each track
+	}//If the user wants to save Rocksmith capable files
+
+
+	/* check if any chords have manually defined names with certain characters such as parentheses, which will cause Rocksmith to malfunction */
+	if(eof_write_rs_files || eof_write_rs2_files)
+	{	//If the user wants to save Rocksmith capable files
+		char target = 1;	//Unless eof_write_rs2_files is enabled, only notes that are valid for RS1 export are checked
+		char *name, user_prompted = 0;
+		unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+
+		if(eof_write_rs2_files)
+			target = 2;
+		for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
+		{	//For each track (until the user is warned about any offending chord names)
+			if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If this is a pro guitar/bass track
+				char restore_tech_view = 0;
+
+				tracknum = eof_song->track[ctr]->tracknum;
+				tp = eof_song->pro_guitar_track[tracknum];
+				restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
+				eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Activate the normal note set
+				for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+				{	//For each note in the track
+					if(eof_note_count_rs_lanes(eof_song, ctr, ctr2, target) > 1)
+					{	//If the note will export as a chord to one or both user-configured target versions of Rocksmith
+						name = eof_get_note_name(eof_song, ctr, ctr2);	//Get pointer to the chord's name
+						if(name)
+						{	//If the name was retrievable
+							if(rs_filter_string(name, 1))
+							{	//If the name contains any invalid characters (forward slash is allowed for denoting slash chords)
+								eof_2d_render_top_option = 32;					//Change the user preference to render note names at the top of the piano roll
+								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Render the track so the user can see where the correction needs to be made
+								eof_clear_input();
+								if(!user_prompted && alert("At least one chord has an unaccepted character: ( } ,  \\  : { \" )", "This can cause Rocksmith to crash or hang and will be removed.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+								{	//If the user hasn't already answered this prompt, and opts to correct the issue
+									eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+									return 1;	//Return cancellation
+								}
+								eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+								user_prompted = 1;	//Set the condition to exit outer for loop
+								break;	//Break from inner for loop
+							}
+						}
+					}
+				}//For each note in the track
+				eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Restore the note set that was in use for the track
+			}//If this is a pro guitar/bass track
+		}//For each track (until the user is warned about any offending chord names)
+	}//If the user wants to save Rocksmith capable files
+
+
+	/* check for arpeggio/handshape phrases that cross from one RS phrase into another, which may malfunction on charts with dynamic difficulty */
+	if(eof_write_rs_files || eof_write_rs2_files)
+	{	//If the user wants to save Rocksmith capable files
+		char user_prompted = 0;
+		unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+
+		for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
+		{	//For each track (until the user is warned about any offending handshape phrases)
+			if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If this is a pro guitar/bass track
+				tracknum = eof_song->track[ctr]->tracknum;
+				tp = eof_song->pro_guitar_track[tracknum];
+				eof_pro_guitar_track_sort_arpeggios(tp);
+				for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
+				{	//For each arpeggio/handshape
+					long start, end;
+
+					start = eof_get_beat(eof_song, tp->arpeggio[ctr2].start_pos);
+					end = eof_get_beat(eof_song, tp->arpeggio[ctr2].end_pos);
+					if((start >= 0) && (end >= start))
+					{	//If the effective beat numbers for the start and end position of the arpeggio/handshape were identified
+						for(ctr3 = start + 1; !user_prompted && (ctr3 <= end); ctr3++)
+						{	//For each beat between them, after the first (which will always be at/before the beginning of the arpeggio, when the condition being checked can only happen to a beat AFTER the start of the arpeggio)
+							if(eof_song->beat[ctr3]->contained_section_event >= 0)
+							{	//If this beat has an RS phrase defined, it marks a phrase change
+								eof_2d_render_top_option = 36;					//Change the user preference to render RS phrases and sections at the top of the piano roll
+								if(tp->arpeggio[ctr2].difficulty != 0xFF)
+								{	//If this is a difficulty specific arpeggio
+									eof_note_type = tp->arpeggio[ctr2].difficulty;	//Change to the relevant difficulty
+								}
+								eof_seek_and_render_position(ctr, eof_note_type, tp->arpeggio[ctr2].start_pos);	//Render the track so the user can see where the correction needs to be made
+								eof_clear_input();
+								if(!user_prompted && alert("At least one arpeggio/handshape crosses over into another RS phrase", "This can behave strangely in Rocksmith if the chart has dynamic difficulty.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+								{	//If the user hasn't already answered this prompt, and opts to correct the issue
+									eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+									return 1;	//Return cancellation
+								}
+								eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+								user_prompted = 1;	//Set the condition to exit outer for loops
+								break;	//Break from inner for loop
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+
+	/* check for any bend strengths higher than 3 half steps */
+	if(eof_write_rs_files || eof_write_rs2_files)
+	{	//If the user wants to save Rocksmith capable files
+		char user_prompted = 0;
+		char restore_tech_view = 0;
+
+		for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
+		{	//For each track (until the user is warned about any offending handshape phrases)
+			if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If this is a pro guitar/bass track
+				tracknum = eof_song->track[ctr]->tracknum;
+				tp = eof_song->pro_guitar_track[tracknum];
+				restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
+				for(ctr2 = 0; !user_prompted && (ctr2 < 2); ctr2++)
+				{	//For each note set
+					eof_menu_pro_guitar_track_set_tech_view_state(tp, ctr2);	//Activate the appropriate note set
+					for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
+					{	//For each note in the note set
+						unsigned long flags = tp->note[ctr3]->flags;
+
+						if((flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
+						{	//If the note contains a bend strength
+							unsigned char strength = tp->note[ctr3]->bendstrength;
+							if(!(strength & 0x80))
+							{	//If the MSB of this value isn't set, it is defined in half steps
+								strength = (strength & 0x7F) * 2;	//Convert to quarter steps
+							}
+							else
+							{
+								strength = strength & 0x7F;	//Mask out the MSB
+							}
+							if(strength > 6)
+							{	//If the bend strength is greater than 3 half steps (6 quarter steps)
+								eof_seek_and_render_position(ctr, tp->note[ctr3]->type, tp->note[ctr3]->pos);	//Render the track so the user can see where the correction needs to be made
+								eof_clear_input();
+								if(!user_prompted && alert("At least one bend note has a strength higher than 3 half steps.", "3 half steps is the strongest bend that Rocksmith supports.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+								{	//If the user hasn't already answered this prompt, and opts to correct the issue
+									return 1;	//Return cancellation
+								}
+								user_prompted = 1;	//Set the condition to exit outer for loops
+								break;	//Break from inner for loop
+							}
+						}
+					}
+				}
+				eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Restore the note set that was in use for the track
+			}
+		}
+	}
+
+
+	/* check for any notes that extend into a different RS phrase or section */
+	if(eof_write_rs_files || eof_write_rs2_files)
+	{	//If the user wants to save Rocksmith capable files
+		char user_prompted = 0;
+		unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+
+		for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
+		{	//For each track (until the user is warned about any offending notes)
+			if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If this is a pro guitar/bass track
+				EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+				unsigned long bitmask;
+				char restore_tech_view = 0;
+				unsigned long start, stop;
+
+				tracknum = eof_song->track[ctr]->tracknum;
+				tp = eof_song->pro_guitar_track[tracknum];
+				restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
+				eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Activate the normal note set
+
+				for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+				{	//For each note in the track
+					long startbeat, stopbeat;
+
+					start = tp->note[ctr2]->pos;			//Record its start and stop position
+					stop = start + tp->note[ctr2]->length;
+
+					for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+					{	//For each of the 6 usable strings
+						if(tp->note[ctr2]->note & bitmask)
+						{	//If the note uses this string
+							(void) eof_get_rs_techniques(eof_song, ctr, ctr2, ctr3, &tech, 2, 1);	//Check to see if the gem on this string has linknext status applied
+							if(tech.linknext)
+							{	//If it does
+								long nextnote = eof_fixup_next_pro_guitar_note(tp, ctr2);	//Look for another note that follows in this track difficulty
+
+								if(nextnote > 0)
+								{	//If a next note is identified
+									stop = tp->note[nextnote]->pos + tp->note[nextnote]->length;	//Its ending is the effective end position to consider
+								}
+							}
+						}
+					}
+
+					startbeat = eof_get_beat(eof_song, start);	//Find the beat in which this note starts
+					stopbeat = eof_get_beat(eof_song, stop);	//And the beat in which it ends
+					if((startbeat >= 0) && (stopbeat >= 0) && (startbeat != stopbeat))
+					{	//If each of those beats was successfully identified and they are different beats
+						int startsection, stopsection, startphrase, stopphrase;
+
+						startsection = eof_song->beat[startbeat]->contained_rs_section_event;
+						stopsection = eof_song->beat[stopbeat]->contained_rs_section_event;
+						startphrase = eof_song->beat[startbeat]->contained_section_event;
+						stopphrase = eof_song->beat[stopbeat]->contained_section_event;
+						if(	(((startsection >= 0) || (stopsection >= 0)) && (startsection != stopsection)) ||
+							(((startphrase >= 0) || (stopphrase >= 0)) && (startphrase != stopphrase)))
+						{	//If the beats each have differing RS sections or RS phrases defined
+							eof_2d_render_top_option = 36;					//Change the user preference to render RS phrases and sections at the top of the piano roll
+							eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Render the track so the user can see where the correction needs to be made
+							eof_clear_input();
+							if(!user_prompted && alert("At least one note crosses an RS phrase or section boundary.", "This can behave strangely in Rocksmith if the chart has dynamic difficulty.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+							{	//If the user hasn't already answered this prompt, and opts to correct the issue
+								return 1;	//Return cancellation
+							}
+							eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+							user_prompted = 1;	//Set the condition to exit outer for loop
+							break;	//Break from inner for loop
+						}
+					}
+				}
+				eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Activate whichever note set was active for the track
+			}//If this is a pro guitar/bass track
+		}//For each track (until the user is warned about any offending notes)
+	}//If the user wants to save Rocksmith capable files
+
+	return 0;
+}
+
 int eof_save_helper(char *destfilename, char silent)
 {
-	unsigned long ctr, ctr2, ctr3, notes_after_chart_audio;
+	unsigned long ctr;
 	char newfolderpath[1024] = {0};
 	char tempfilename2[1024] = {0};
 	char oggfn[1024] = {0};
 	char function;		//Will be set to 1 for "Save" or 2 for "Save as"
 	int jumpcode = 0;
 	char fixvoxpitches = 0, fixvoxphrases = 0;
-	char note_length_warned = 0, note_distance_warned = 0, arpeggio_warned = 0, slide_warned = 0, bend_warned = 0, slide_error = 0;
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
 	unsigned short user_warned = 0;	//Tracks whether the user was warned about hand positions being undefined and auto-generated during Rocksmith and Bandfuse exports
@@ -2536,609 +3135,10 @@ int eof_save_helper(char *destfilename, char silent)
 	eof_sort_notes(eof_song);
 	eof_fixup_notes(eof_song);
 
-	/* check if there are any notes beyond the chart audio */
 	if(!silent)
-	{	//If checks and warnings aren't suppressed
-		notes_after_chart_audio = eof_check_if_notes_exist_beyond_audio_end(eof_song);
-		if(notes_after_chart_audio && !eof_silence_loaded)
-		{	//Only display this warning if there is chart audio loaded
-			(void) snprintf(oggfn, sizeof(oggfn) - 1, "Warning:  Track \"%s\" contains notes/lyrics extending beyond the chart's audio.", eof_song->track[notes_after_chart_audio]->name);
-			eof_clear_input();
-			if(alert(oggfn, NULL, "This chart may not work properly.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
-			{	//If the user doesn't opt to continue due to this error condition
-				return 1;	//Return cancellation
-			}
-		}
-	}
-
-	/* prepare lyrics if applicable */
-	if(eof_song->vocal_track[0]->lyrics > 0)
-	{
-		/* sort and validate lyrics */
-		eof_track_sort_notes(eof_song, EOF_TRACK_VOCALS);
-		eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
-
-		/* pre-parse the lyrics to determine if any of them are not contained within a lyric phrase */
-		if(!silent)
-		{	//If checks and warnings aren't suppressed
-			if(eof_song->tags->lyrics && eof_write_fof_files)
-			{	//If user enabled the Lyrics checkbox in song properties and wants to export FoF related files
-				for(ctr = 0; ctr < eof_song->vocal_track[0]->lyrics; ctr++)
-				{	//For each lyric
-					if((eof_song->vocal_track[0]->lyric[ctr]->note != EOF_LYRIC_PERCUSSION) && (eof_find_lyric_line(ctr) == NULL))
-					{	//If any of the non vocal percussion lyrics are not within a line
-						eof_cursor_visible = 0;
-						eof_pen_visible = 0;
-						eof_show_mouse(screen);
-						eof_clear_input();
-						if(alert("Warning: One or more lyrics aren't within lyric phrases.", "These lyrics won't export to FoF script format.", "Continue?", "&Yes", "&No", 'y', 'n') == 2)
-						{	//If user opts to cancel the save
-							eof_show_mouse(NULL);
-							eof_cursor_visible = 1;
-							eof_pen_visible = 1;
-							return 1;	//Return cancellation
-						}
-						break;
-					}
-				}
-			}//If user enabled the Lyrics checkbox in song properties
-			for(ctr = 0; ctr < eof_song->vocal_track[0]->lyrics; ctr++)
-			{	//For each lyric
-				if((eof_song->vocal_track[0]->lyric[ctr]->text[0] != '\0') && (eof_string_has_non_ascii(eof_song->vocal_track[0]->lyric[ctr]->text)))
-				{	//If any of the lyrics that contain text have non ASCII characters
-					eof_clear_input();
-					if(alert("Warning: One or more lyrics have non ASCII characters.", "These lyrics may not work correctly for some rhythm games.", "Cancel and seek to first offending lyric?", "&Yes", "&No", 'y', 'n') == 1)
-					{	//If user opts to cancel the save
-						eof_seek_and_render_position(EOF_TRACK_VOCALS, eof_get_note_type(eof_song, EOF_TRACK_VOCALS, ctr), eof_get_note_pos(eof_song, EOF_TRACK_VOCALS, ctr));
-						return 1;	//Return cancellation
-					}
-					break;
-				}
-			}
-		}//If checks and warnings aren't suppressed
-	}
-
-	/* check 5 lane guitar note lengths */
-	if(!silent)
-	{	//If checks and warnings aren't suppressed
-		for(ctr = 1; !note_length_warned && eof_min_note_length && (ctr < eof_song->tracks); ctr++)
-		{	//For each track (only check if the user defined a minimum length, and only if the user didn't already decline to cancel when an offending note was found)
-			if((eof_song->track[ctr]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[ctr]->track_format == EOF_LEGACY_TRACK_FORMAT))
-			{	//If this is a 5 lane guitar track
-				for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, ctr); ctr2++)
-				{	//For each note in the track
-					if(eof_get_note_length(eof_song, ctr, ctr2) < eof_min_note_length)
-					{	//If this note's length is shorter than the minimum length
-						eof_clear_input();
-						if(alert("Warning:  At least one note was truncated shorter", "than your defined minimum length.", "Cancel save and seek to the first such note?", "&Yes", "&No", 'y', 'n') == 1)
-						{	//If the user opted to seek to the first offending note (only prompt once per call)
-							eof_seek_and_render_position(ctr, eof_get_note_type(eof_song, ctr, ctr2), eof_get_note_pos(eof_song, ctr, ctr2));
-							return 1;	//Return cancellation
-						}
-						note_length_warned = 1;
-						break;	//Stop checking after the first offending note is found
-					}
-				}
-			}
-		}
-	}
-
-	/* check note distances */
-	if(!silent)
-	{	//If checks and warnings aren't suppressed
-		for(ctr = 1; !note_distance_warned && (ctr < eof_song->tracks); ctr++)
-		{	//For each track (and only if the user didn't already decline to cancel when an offending note was found)
-			for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, ctr); ctr2++)
-			{	//For each note in the track
-				long next = eof_track_fixup_next_note(eof_song, ctr, ctr2);	//Get the next note, if it exists
-				long maxlength = eof_get_note_max_length(eof_song, ctr, ctr2, 1);	//Get the maximum length of this note
-				if(next > 0)
-				{	//If there was a next note
-					if(eof_get_note_length(eof_song, ctr, ctr2) > maxlength)
-					{	//And this note is longer than its maximum length
-						if(eof_get_note_pos(eof_song, ctr, next) - eof_get_note_pos(eof_song, ctr, ctr2) < eof_min_note_distance)
-						{	//If the notes are too close to enforce the minimum note distance
-							eof_clear_input();
-							if(alert("Warning:  At least one note is too close to another", "to enforce the minimum note distance.", "Cancel save and seek to the first such note?", "&Yes", "&No", 'y', 'n') == 1)
-							{	//If the user opted to seek to the first offending note (only prompt once per call)
-								eof_seek_and_render_position(ctr, eof_get_note_type(eof_song, ctr, ctr2), eof_get_note_pos(eof_song, ctr, ctr2));
-								return 1;	//Return cancellation
-							}
-							note_distance_warned = 1;
-							break;	//Stop checking after the first offending note is found
-						}
-					}
-				}
-			}
-		}
-	}
-
-	/* perform checks for chord fingerings and fret hand positions */
-	if(!silent)
-	{	//If checks and warnings aren't suppressed
-		if(eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files)
-		{	//If the user wants to save Rocksmith or Bandfuse capable files
-			(void) eof_correct_chord_fingerings();			//Ensure all chords in each pro guitar track have valid finger arrays, prompt user to provide any that are missing
-			if(eof_check_fret_hand_positions())
-			{	//If any fret hand position errors were found
-				if(alert("One or more problems with defined fret hand positions were found.", NULL, "Cancel save and review them now?", "&Yes", "&No", 'y', 'n') == 1)
-				{	//If the user opts to see the problems
-					(void) eof_check_fret_hand_positions_menu();
-					return 1;	//Return cancellation
-				}
-			}
-		}
-	}
-
-	/* check if any Rocksmith sections don't have a Rocksmith phrase at the same position */
-	if(!silent)
-	{	//If checks and warnings aren't suppressed
-		if(eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files)
-		{	//If the user wants to save Rocksmith or Bandfuse capable files
-			for(ctr = 1; ctr < eof_song->tracks; ctr++)
-			{	//For each track
-				if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-				{	//If this is a pro guitar/bass track
-					if(eof_check_rs_sections_have_phrases(eof_song, ctr))
-					{	//If the user canceled adding missing phrases
-						break;	//Stop fixing them and break from loop
-					}
-				}
-			}
-		}
-	}
-
-	/* check if any tracks use 2 or more tone names but doesn't define the default or uses more than 4 tone names */
-	if(!silent)
-	{	//If checks and warnings aren't suppressed
-		if(eof_write_rs2_files)
-		{	//If the user wants to save Rocksmith 2 files
-			char warning1 = 0, warning2 = 0, warning3 = 0;
-			for(ctr = 1; ctr < eof_song->tracks; ctr++)
-			{	//For each track
-				if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-				{	//If this is a pro guitar/bass track
-					EOF_PRO_GUITAR_TRACK *tp;
-					unsigned long tracknum;
-
-					tracknum = eof_song->track[ctr]->tracknum;
-					tp = eof_song->pro_guitar_track[tracknum];
-					//Build and count the size of the list of unique tone names used, and empty the default tone string if it is not valid
-					eof_track_rebuild_rs_tone_names_list_strings(ctr, 1);
-					if(eof_track_rs_tone_names_list_strings_num == 1)
-					{	//If only one tone name is used
-						eof_clear_input();
-						if(!warning3 && alert("Warning:  At least one track uses only one tone name.  You must use at least", "two different tone names and set one as default for them to work in Rocksmith 2014.", "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
-						{
-							eof_track_destroy_rs_tone_names_list_strings();
-							(void) eof_menu_track_selected_track_number(ctr, 1);	//Set the active instrument track
-							eof_render();
-							(void) eof_track_rs_tone_names();	//Call up the tone names dialog
-							return 1;	//Return cancellation
-						}
-						warning3 = 1;
-					}
-					else if(eof_track_rs_tone_names_list_strings_num > 1)
-					{	//If at least 2 unique tone names are used
-						if((tp->defaulttone[0] == '\0') && !warning1)
-						{	//If the default tone is not set, and the user wasn't warned about this yet
-							eof_clear_input();
-							if(!warning1 && alert("Warning:  At least one track with tone changes has no default tone set.", NULL, "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
-							{
-								eof_track_destroy_rs_tone_names_list_strings();
-								(void) eof_menu_track_selected_track_number(ctr, 1);	//Set the active instrument track
-								eof_render();
-								(void) eof_track_rs_tone_names();	//Call up the tone names dialog
-								return 1;	//Return cancellation
-							}
-							warning1 = 1;
-						}
-						if((eof_track_rs_tone_names_list_strings_num > 4) && !warning2)
-						{	//If there are more than 4 unique tone names used, and the user wasn't warned about this yet
-							if(!warning2 && alert("Warning:  At least one arrangement uses more than 4 different tones.", "Rocksmith doesn't support more than 4 so EOF will only export changes for 4 tone names.", "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
-							{
-								eof_track_destroy_rs_tone_names_list_strings();
-								(void) eof_menu_track_selected_track_number(ctr, 1);	//Set the active instrument track
-								eof_render();
-								(void) eof_track_rs_tone_names();	//Call up the tone names dialog
-								return 1;	//Return cancellation
-							}
-							warning2 = 1;
-						}
-					}
-					eof_track_destroy_rs_tone_names_list_strings();
-				}
-			}
-		}
-	}
-
-	/* check if any arpeggio phrases only have one note in them */
-	if(!silent)
-	{	//If checks and warnings aren't suppressed
-		for(ctr = 1; (ctr < eof_song->tracks) && !arpeggio_warned; ctr++)
-		{	//For each track, or until the user is warned about an offending arpeggio
-			if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{	//If this is a pro guitar/bass track
-				EOF_PRO_GUITAR_TRACK *tp;
-				unsigned long tracknum, notectr;
-				char restore_tech_view = 0;
-
-				tracknum = eof_song->track[ctr]->tracknum;
-				tp = eof_song->pro_guitar_track[tracknum];
-				restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
-				eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Activate the normal note set
-
-				for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
-				{	//For each arpeggio phrase in the track
-					notectr = 0;
-					for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
-					{	//For each note in the track
-						if((tp->note[ctr3]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr3]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr3]->type == tp->arpeggio[ctr2].difficulty))
-						{	//If the note is within the arpeggio phrase
-							notectr++;	//Increment counter
-						}
-					}
-					if(notectr < 2)
-					{
-						eof_clear_input();
-						eof_seek_and_render_position(ctr, tp->arpeggio[ctr2].difficulty, tp->arpeggio[ctr2].start_pos);
-						if(alert("Warning:  At least one arpeggio phrase doesn't contain at least two notes.", "You should remove the arpeggio phrase or add additional notes into it.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-						{	//If the user opts to cancel
-							return 1;	//Return cancellation
-						}
-						arpeggio_warned = 1;	//Set a condition to exit outer for loop
-						break;	//Break from inner for loop
-					}
-				}//For each arpeggio phrase in the track
-				eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Activate whichever note set was active for the track
-			}//If this is a pro guitar/bass track
-		}//For each track, or until the user is warned about an offending arpeggio
-	}
-
-	/* check if any slide notes don't validly define their end position or bend notes don't define their bend strength */
-	if(!silent)
-	{	//If checks and warnings aren't suppressed
-		if(eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files)
-		{	//If the user wants to save Rocksmith or Bandfuse capable files
-			for(ctr = 1; ctr < eof_song->tracks; ctr++)
-			{	//For each track
-				if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-				{	//If this is a pro guitar/bass track
-					EOF_PRO_GUITAR_TRACK *tp;
-					unsigned long tracknum, flags, noteset;
-					char restore_tech_view = 0;
-
-					tracknum = eof_song->track[ctr]->tracknum;
-					tp = eof_song->pro_guitar_track[tracknum];
-					restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
-					for(noteset = 0; noteset < 2; noteset++)
-					{	//For each note set
-						eof_menu_pro_guitar_track_set_tech_view_state(tp, noteset);	//Activate the appropriate note set
-						for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
-						{	//For each note in the track
-							flags = tp->note[ctr2]->flags;
-							if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
-							{	//If the note contains no bend strength or slide end position
-								if(((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)) && !slide_warned)
-								{	//If the note has slide technique and is missing the end position, and the user hasn't been warned about this yet
-									eof_clear_input();
-									eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
-									if(alert("Warning:  At least one slide note doesn't define its ending position.", "Unless you define this information they will export as 1 fret slides.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-									{	//If the user opts to cancel
-										return 1;	//Return cancellation
-									}
-									slide_warned = 1;
-								}
-								if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND && !bend_warned)
-								{	//If the note has bend technique and is missing the bend strength, and the user hasn't been warned about this yet
-									eof_clear_input();
-									eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
-									if(alert("Warning:  At least one bend note doesn't define its bend strength.", "Unless you define this information they will export as bending 1 half step.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-									{	//If the user opts to cancel
-										return 1;	//Return cancellation
-									}
-									bend_warned = 1;
-								}
-							}
-
-							if(!slide_error && !noteset)
-							{	//If the user hasn't been warned about any slide related errors yet, and this is the normal note set
-								unsigned char lowestfret = eof_pro_guitar_note_lowest_fret(tp, ctr2);	//Determine the note's lowest used fret value
-
-								if(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
-								{	//If the note has pitched slide end position data
-									if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-									{	//If the note slides up
-										if(tp->note[ctr2]->slideend <= lowestfret)
-										{	//The slide doesn't go higher than the current note
-											slide_error = 1;
-										}
-									}
-									if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
-									{	//If the note slides down
-										if(tp->note[ctr2]->slideend >= lowestfret)
-										{	//The slide doesn't go lower than the current note
-											slide_error = 1;
-										}
-									}
-								}
-								if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
-								{	//If the note has an unpitched slide
-									if(tp->note[ctr2]->unpitchend == lowestfret)
-									{	//The slide doesn't move from the current note
-										slide_error = 1;
-									}
-								}
-								if(slide_error)
-								{	//If one of the above checks failed
-									eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
-									if(alert("Warning:  At least one slide note has an error in its end position.", "Unless corrected, it will not export to XML as a slide.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-									{	//If the user opts to cancel
-										return 1;	//Return cancellation
-									}
-								}
-							}
-							if(slide_warned && bend_warned && slide_error)
-								break;	//Exit for loop if all warnings/errors were issued and declined by the user
-						}//For each note in the track
-						if(slide_warned && bend_warned && slide_error)
-							break;	//Exit for loop if all warnings/errors were issued and declined by the user
-					}//For each note set
-					eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Restore the note set that was in use for the track
-					if(slide_warned && bend_warned && slide_error)
-						break;	//Exit for loop if all warnings/errors were issued and declined by the user
-				}//If this is a pro guitar/bass track
-			}//For each track
-		}//If the user wants to save Rocksmith capable files
-	}//If checks and warnings aren't suppressed
-
-	/* check if any chords have manually defined names with certain characters such as parentheses, which will cause Rocksmith to malfunction */
-	if(!silent)
-	{	//If checks and warnings aren't suppressed
-		if(eof_write_rs_files || eof_write_rs2_files)
-		{	//If the user wants to save Rocksmith capable files
-			char target = 1;	//Unless eof_write_rs2_files is enabled, only notes that are valid for RS1 export are checked
-			char *name, user_prompted = 0;
-			unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
-
-			if(eof_write_rs2_files)
-				target = 2;
-			for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
-			{	//For each track (until the user is warned about any offending chord names)
-				if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-				{	//If this is a pro guitar/bass track
-					EOF_PRO_GUITAR_TRACK *tp;
-					unsigned long tracknum;
-					char restore_tech_view = 0;
-
-					tracknum = eof_song->track[ctr]->tracknum;
-					tp = eof_song->pro_guitar_track[tracknum];
-					restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
-					eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Activate the normal note set
-					for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
-					{	//For each note in the track
-						if(eof_note_count_rs_lanes(eof_song, ctr, ctr2, target) > 1)
-						{	//If the note will export as a chord to one or both user-configured target versions of Rocksmith
-							name = eof_get_note_name(eof_song, ctr, ctr2);	//Get pointer to the chord's name
-							if(name)
-							{	//If the name was retrievable
-								if(rs_filter_string(name, 1))
-								{	//If the name contains any invalid characters (forward slash is allowed for denoting slash chords)
-									eof_2d_render_top_option = 32;					//Change the user preference to render note names at the top of the piano roll
-									eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Render the track so the user can see where the correction needs to be made
-									eof_clear_input();
-									if(!user_prompted && alert("At least one chord has an unaccepted character: ( } ,  \\  : { \" )", "This can cause Rocksmith to crash or hang and will be removed.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-									{	//If the user hasn't already answered this prompt, and opts to correct the issue
-										eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-										return 1;	//Return cancellation
-									}
-									eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-									user_prompted = 1;	//Set the condition to exit outer for loop
-									break;	//Break from inner for loop
-								}
-							}
-						}
-					}//For each note in the track
-					eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Restore the note set that was in use for the track
-				}//If this is a pro guitar/bass track
-			}//For each track (until the user is warned about any offending chord names)
-		}//If the user wants to save Rocksmith capable files
-	}//If checks and warnings aren't suppressed
-
-	/* check for any incomplete measures, where a time signature changed is placed mid-measure */
-	if(!silent)
-	{	//If checks and warnings aren't suppressed
-		int suggested = 0;
-
-		eof_process_beat_statistics(eof_song, eof_selected_track);
-		for(ctr = 1; ctr < eof_song->beats; ctr++)
-		{	//For each beat after the first
-			if(eof_song->beat[ctr]->contains_ts_change)
-			{	//If this beat has a time signature change
-				if((eof_song->beat[ctr - 1]->beat_within_measure >= 0) && (eof_song->beat[ctr - 1]->beat_within_measure != eof_song->beat[ctr - 1]->num_beats_in_measure - 1))
-				{	//If the previous beat has a time signature in effect, but it wasn't the last beat in its measure (the beat_within_measure stat is numbered starting with 0)
-					suggested = eof_song->beat[ctr - 1]->beat_within_measure + 1;	//Track the last beat number in the measure and account for the zero numbering
-					for(ctr = ctr - 1; ctr > 0; ctr--)
-					{	//For each of the previous beats
-						if(eof_song->beat[ctr]->beat_within_measure == 0)
-						{	//If this is the first beat in the affected measure
-							break;
-						}
-					}
-					(void) snprintf(newfolderpath, sizeof(newfolderpath) - 1, "(Suggested T/S is %d/%d).  Cancel save?", suggested, eof_song->beat[ctr]->beat_unit);	//Determine a suitable time signature to suggest
-					eof_selected_beat = ctr;	//Select the affected beat marker
-					eof_beat_stats_cached = 0;
-					eof_seek_and_render_position(eof_selected_track, eof_note_type, eof_song->beat[ctr]->pos);	//seek to the beat in question and render
-					eof_clear_input();
-					if(alert("At least one measure is interrupted by a time signature.", "This can cause problems in some rhythm games.", newfolderpath, "&Yes", "&No", 'y', 'n') == 1)
-					{	//If the user opts to correct the issue
-						return 1;	//Return cancellation
-					}
-					break;
-				}
-			}
-		}
-	}
-
-	/* check for arpeggio/handshape phrases that cross from one RS phrase into another, which may malfunction on charts with dynamic difficulty */
-	if(!silent)
-	{	//If checks and warnings aren't suppressed
-		if(eof_write_rs_files || eof_write_rs2_files)
-		{	//If the user wants to save Rocksmith capable files
-			char user_prompted = 0;
-			unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
-
-			for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
-			{	//For each track (until the user is warned about any offending handshape phrases)
-				if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-				{	//If this is a pro guitar/bass track
-					EOF_PRO_GUITAR_TRACK *tp;
-					unsigned long tracknum;
-
-					tracknum = eof_song->track[ctr]->tracknum;
-					tp = eof_song->pro_guitar_track[tracknum];
-					eof_pro_guitar_track_sort_arpeggios(tp);
-					for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
-					{	//For each arpeggio/handshape
-						long start, end;
-
-						start = eof_get_beat(eof_song, tp->arpeggio[ctr2].start_pos);
-						end = eof_get_beat(eof_song, tp->arpeggio[ctr2].end_pos);
-						if((start >= 0) && (end >= start))
-						{	//If the effective beat numbers for the start and end position of the arpeggio/handshape were identified
-							for(ctr3 = start + 1; !user_prompted && (ctr3 <= end); ctr3++)
-							{	//For each beat between them, after the first (which will always be at/before the beginning of the arpeggio, when the condition being checked can only happen to a beat AFTER the start of the arpeggio)
-								if(eof_song->beat[ctr3]->contained_section_event >= 0)
-								{	//If this beat has an RS phrase defined, it marks a phrase change
-									eof_2d_render_top_option = 36;					//Change the user preference to render RS phrases and sections at the top of the piano roll
-									if(tp->arpeggio[ctr2].difficulty != 0xFF)
-									{	//If this is a difficulty specific arpeggio
-										eof_note_type = tp->arpeggio[ctr2].difficulty;	//Change to the relevant difficulty
-									}
-									eof_seek_and_render_position(ctr, eof_note_type, tp->arpeggio[ctr2].start_pos);	//Render the track so the user can see where the correction needs to be made
-									eof_clear_input();
-									if(!user_prompted && alert("At least one arpeggio/handshape crosses over into another RS phrase", "This can behave strangely in Rocksmith if the chart has dynamic difficulty.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-									{	//If the user hasn't already answered this prompt, and opts to correct the issue
-										eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-										return 1;	//Return cancellation
-									}
-									eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-									user_prompted = 1;	//Set the condition to exit outer for loops
-									break;	//Break from inner for loop
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	/* check for any bend strengths higher than 3 half steps */
-	if(!silent)
-	{	//If checks and warnings aren't suppressed
-		if(eof_write_rs_files || eof_write_rs2_files)
-		{	//If the user wants to save Rocksmith capable files
-			char user_prompted = 0;
-			char restore_tech_view = 0;
-
-			for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
-			{	//For each track (until the user is warned about any offending handshape phrases)
-				if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-				{	//If this is a pro guitar/bass track
-					EOF_PRO_GUITAR_TRACK *tp;
-					unsigned long tracknum;
-
-					tracknum = eof_song->track[ctr]->tracknum;
-					tp = eof_song->pro_guitar_track[tracknum];
-					restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
-					for(ctr2 = 0; !user_prompted && (ctr2 < 2); ctr2++)
-					{	//For each note set
-						eof_menu_pro_guitar_track_set_tech_view_state(tp, ctr2);	//Activate the appropriate note set
-						for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
-						{	//For each note in the note set
-							unsigned long flags = tp->note[ctr3]->flags;
-
-							if((flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
-							{	//If the note contains a bend strength
-								unsigned char strength = tp->note[ctr3]->bendstrength;
-								if(!(strength & 0x80))
-								{	//If the MSB of this value isn't set, it is defined in half steps
-									strength = (strength & 0x7F) * 2;	//Convert to quarter steps
-								}
-								else
-								{
-									strength = strength & 0x7F;	//Mask out the MSB
-								}
-								if(strength > 6)
-								{	//If the bend strength is greater than 3 half steps (6 quarter steps)
-									eof_seek_and_render_position(ctr, tp->note[ctr3]->type, tp->note[ctr3]->pos);	//Render the track so the user can see where the correction needs to be made
-									eof_clear_input();
-									if(!user_prompted && alert("At least one bend note has a strength higher than 3 half steps.", "3 half steps is the strongest bend that Rocksmith supports.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-									{	//If the user hasn't already answered this prompt, and opts to correct the issue
-										return 1;	//Return cancellation
-									}
-									user_prompted = 1;	//Set the condition to exit outer for loops
-									break;	//Break from inner for loop
-								}
-							}
-						}
-					}
-					eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Restore the note set that was in use for the track
-				}
-			}
-		}
-	}
-
-	/* check for any notes that extend into a different RS phrase or section */
-	if(!silent)
-	{	//If checks and warnings aren't suppressed
-		if(eof_write_rs_files || eof_write_rs2_files)
-		{	//If the user wants to save Rocksmith capable files
-			char user_prompted = 0;
-
-			for(ctr = 1; (ctr < eof_song->tracks) && !arpeggio_warned; ctr++)
-			{	//For each track, or until the user is warned about an offending arpeggio
-				if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-				{	//If this is a pro guitar/bass track
-					EOF_PRO_GUITAR_TRACK *tp;
-					EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-					unsigned long tracknum, notectr, bitmask;
-					char restore_tech_view = 0;
-					unsigned long start, stop;
-
-					tracknum = eof_song->track[ctr]->tracknum;
-					tp = eof_song->pro_guitar_track[tracknum];
-					restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
-					eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Activate the normal note set
-
-					for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
-					{	//For each note in the track
-						start = tp->note[ctr2]->pos;			//Record its start and stop position
-						stop = start + tp->note[ctr2]->length;
-
-						for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
-						{	//For each of the 6 usable strings
-							if(tp->note[ctr2]->note & bitmask)
-							{	//If the note uses this string
-								(void) eof_get_rs_techniques(eof_song, track, ctr2, ctr3, &tech, 2, 1);	//Check to see if the gem on this string has linknext status applied
-								if(tech.linknext)
-								{	//If it does
-									long nextnote = eof_fixup_next_pro_guitar_note(tp, ctr2);
-
-									if(nextnote > 0)
-									{	//As long as the next note is identified
-										stop = tp->note[nextnote]->pos + tp->note[nextnote]->length;	//This is the effective end position to consider
-///FINISH
-									}
-								}
-							}
-						}
-					}
-					eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Activate whichever note set was active for the track
-				}//If this is a pro guitar/bass track
-			}
-		}
+	{	//If warning messages aren't suppressed
+		if(eof_save_helper_checks())	//If the user cancels the save via one of the prompts
+			return 1;	//Return cancellation
 	}
 
 	/* build the target file name */

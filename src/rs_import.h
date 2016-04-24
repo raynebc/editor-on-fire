@@ -14,6 +14,14 @@ int eof_parse_chord_template(char *name, size_t size, char *finger, char *frets,
 	//Returns zero on success
 	//Upon error, the specific cause for failure is logged regarding line number linectr and nonzero is returned
 
+EOF_PRO_GUITAR_NOTE *eof_rs_import_note_tag_data(char *buffer, int function, EOF_PRO_GUITAR_TRACK *tp, unsigned long linectr);
+	//Parses the note, chordnote or bendvalue XML tag contained in the specified array,
+	// creating a pro guitar note structure as defined by the tag
+	//If function is nonzero, the note is appended to the specified track structure
+	//If a bendvalue tag is parsed, the difficulty and string number of the last normal note to be parsed by this function is applied
+	//The created note is returned, or NULL is returned on error
+	//linectr is cited as the XML line number in error logging
+
 EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn);
 	//Parses the specified Rocksmith XML file and returns its content in a pro guitar track structure
 

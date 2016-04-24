@@ -98,6 +98,9 @@ int eof_audio_to_ogg(char *file, char *directory);
 void eof_restore_oggs_helper(void);
 	//Function to discard changes made to OGGs during editing
 
+int eof_save_helper_checks(void);
+	//Performs a series of checks on the active project and generates warnings, prompting the user to abort the save if a problem is found
+	//Returns 1 if the user opts to abort the save, otherwise returns 0
 int eof_save_helper(char *destfilename, char silent);
 	//Performs logic that is common among "Save" and "Save as", including various validation checks
 	//"Save as" operations should pass the destination file path through destfilename

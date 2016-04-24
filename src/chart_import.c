@@ -367,7 +367,14 @@ EOF_SONG * eof_import_chart(const char * fn)
 				/* PART DRUMS */
 				case 4:
 				{
-					track = EOF_TRACK_DRUM;
+					if(current_track->isdrums == 1)
+					{	//Normal drum track
+						track = EOF_TRACK_DRUM;
+					}
+					else
+					{	//Double drums track
+						track = EOF_TRACK_DRUM_PS;
+					}
 					break;
 				}
 
@@ -1695,12 +1702,12 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 								inststring=strcasestr_spec(diffstring,"10KeyGuitar]");
 								if(inststring == NULL)
 								{
-	//Test for Drums
-									inststring=strcasestr_spec(diffstring,"Drums]");
+	//Test for DoubleDrums (Expert+ drums)
+									inststring=strcasestr_spec(diffstring,"DoubleDrums]");
 									if(inststring == NULL)
 									{
-	//Test for DoubleDrums (Expert+ drums)
-										inststring=strcasestr_spec(diffstring,"DoubleDrums]");
+	//Test for Drums
+										inststring=strcasestr_spec(diffstring,"Drums]");
 										if(inststring == NULL)
 										{
 	//Test for Vocals (Vocal Rhythm)
@@ -1750,12 +1757,15 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 												tracktype=5;	//Track that this is a "Vocals" track
 										}
 										else
-											isdrums=1;	//DoubleDrums is a drums track
+										{
+											tracktype=4;	//Track that this is a "Drums" track
+											isdrums=1;
+										}
 									}
 									else
 									{
-										tracktype=4;	//Track that this is a "Drums" track
-										isdrums=1;
+										tracktype=4;	//Doubledrums is a drum track
+										isdrums=2;
 									}
 								}
 								else

@@ -25,6 +25,10 @@ long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 	{
 		return -1;
 	}
+	if(pos < sp->beat[0]->pos)
+	{
+		return -1;
+	}
 	for(i = 1; i < sp->beats; i++)
 	{	//For each beat after the first
 		if(sp->beat[i]->pos > pos)

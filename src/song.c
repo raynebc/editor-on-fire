@@ -3651,8 +3651,35 @@ EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_note(EOF_PRO_GUITAR_TRACK *tp)
 		if(tp->note[tp->notes])
 		{
 			memset(tp->note[tp->notes], 0, sizeof(EOF_PRO_GUITAR_NOTE));
-			tp->notes++;
+			tp->notes++;	//Update the generic note counter
+			if(tp->note == tp->technote)
+			{	//If tech view is in effect
+				tp->technotes++;	//Update the tech note counter
+			}
+			else
+			{
+				tp->pgnotes++;	//Update the normal note counter
+			}
 			return tp->note[tp->notes - 1];
+		}
+	}
+	return NULL;
+}
+
+EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_pgnote(EOF_PRO_GUITAR_TRACK *tp)
+{
+	if(tp && (tp->pgnotes < EOF_MAX_NOTES))
+	{
+		tp->pgnote[tp->pgnotes] = malloc(sizeof(EOF_PRO_GUITAR_NOTE));
+		if(tp->pgnote[tp->pgnotes])
+		{
+			memset(tp->pgnote[tp->pgnotes], 0, sizeof(EOF_PRO_GUITAR_NOTE));
+			tp->pgnotes++;
+			if(tp->note != tp->technote)
+			{	//If tech view is NOT in effect
+				tp->notes++;	//Update the generic note counter
+			}
+			return tp->pgnote[tp->pgnotes - 1];
 		}
 	}
 	return NULL;
@@ -3667,6 +3694,10 @@ EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_tech_note(EOF_PRO_GUITAR_TRACK *tp
 		{
 			memset(tp->technote[tp->technotes], 0, sizeof(EOF_PRO_GUITAR_NOTE));
 			tp->technotes++;
+			if(tp->note == tp->technote)
+			{	//If tech view is in effect
+				tp->notes++;	//Update the generic note counter
+			}
 			return tp->technote[tp->technotes - 1];
 		}
 	}
@@ -7265,21 +7296,18 @@ unsigned long eof_get_lowest_fret_value(EOF_SONG *sp, unsigned long track, unsig
 	return lowestfret;
 }
 
-unsigned long eof_get_highest_fret_value(EOF_SONG *sp, unsigned long track, unsigned long note)
+unsigned long eof_get_pro_guitar_note_highest_fret_value(EOF_PRO_GUITAR_NOTE *np)
 {
-	unsigned long highestfret = 0, currentfret, ctr, tracknum, bitmask;
+	unsigned long highestfret = 0, currentfret, ctr, bitmask;
 
-	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
-		return 0;	//Return error
-	tracknum = sp->track[track]->tracknum;
-	if(note >= sp->pro_guitar_track[tracknum]->notes)
+	if(!np)
 		return 0;	//Return error
 
 	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
 	{	//For each of the 6 usable strings
-		if(sp->pro_guitar_track[tracknum]->note[note]->note & bitmask)
+		if(np->note & bitmask)
 		{	//If this string is in use
-			currentfret = sp->pro_guitar_track[tracknum]->note[note]->frets[ctr];
+			currentfret = np->frets[ctr];
 			if((currentfret != 0xFF) && ((currentfret & 0x7F) > highestfret))
 			{	//If this fret value (masking out the MSB, which is used for muting status) is higher than the previous
 				highestfret = currentfret & 0x7F;
@@ -7288,6 +7316,19 @@ unsigned long eof_get_highest_fret_value(EOF_SONG *sp, unsigned long track, unsi
 	}
 
 	return highestfret;
+}
+
+unsigned long eof_get_highest_fret_value(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+	if(note >= sp->pro_guitar_track[tracknum]->notes)
+		return 0;	//Return error
+
+	return eof_get_pro_guitar_note_highest_fret_value(sp->pro_guitar_track[tracknum]->note[note]);
 }
 
 unsigned long eof_determine_chart_length(EOF_SONG *sp)
