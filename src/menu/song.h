@@ -161,6 +161,7 @@ int eof_menu_song_toggle_piano_roll_sync(void);
 	//Toggles on/off the synchronization of the two piano rolls
 
 int eof_menu_song_rocksmith_export_chord_techniques(void);	//Toggle the setting to export chords techniques by writing both a chord and a single note with appropriate techniques to XML at the same position
+int eof_menu_song_rocksmith_suppress_dynamic_difficulty_warnings(void);	//Toggle the setting to suppress dynamic difficulty warnings that are generated during save
 
 int eof_check_fret_hand_positions_option(char report, char *undo_made);
 	//Checks all pro guitar tracks that have any fret hand positions defined to see if changes are needed for the track to work properly in Rocksmith

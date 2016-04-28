@@ -566,17 +566,14 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 	oggbuffer = eof_buffer_file(oggfilename, 0);
 	if(!oggbuffer)
 	{
-		#ifdef EOF_DEBUG_SPECTROGRAM
-		allegro_message("Spectrogram: Failed to open input audio file: %s",strerror(errno));
-		#endif
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Spectrogram: Failed to open input audio file: %s",strerror(errno));
+		eof_log(eof_log_string, 1);
 		return NULL;
 	}
 	oggstruct=alogg_create_ogg_from_buffer(oggbuffer, (int) file_size_ex(oggfilename));
 	if(oggstruct == NULL)
 	{
-		#ifdef EOF_DEBUG_SPECTROGRAM
-		allegro_message("Spectrogram: ALOGG failed to open input audio file");
-		#endif
+		eof_log("Spectrogram: ALOGG failed to open input audio file", 1);
 		free(oggbuffer);
 		return NULL;
 	}
@@ -585,16 +582,12 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 	audio=alogg_create_sample_from_ogg(oggstruct);
 	if(audio == NULL)
 	{
-		#ifdef EOF_DEBUG_SPECTROGRAM
-		allegro_message("Spectrogram: ALOGG failed to decode input audio file");
-		#endif
+		eof_log("Spectrogram: ALOGG failed to decode input audio file", 1);
 		done=-1;
 	}
 	else if((audio->bits != 8) && (audio->bits != 16))	//This logic currently only supports 8 and 16 bit audio
 	{
-		#ifdef EOF_DEBUG_SPECTROGRAM
-		allegro_message("Spectrogram: Invalid sample size");
-		#endif
+		eof_log("Spectrogram: Invalid sample size", 1);
 		done=-1;
 	}
 	else
@@ -603,9 +596,7 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 		spectrogram=(struct spectrogramstruct *)malloc(sizeof(struct spectrogramstruct));
 		if(spectrogram == NULL)
 		{
-			#ifdef EOF_DEBUG_SPECTROGRAM
-			allegro_message("Spectrogram: Unable to allocate memory for the spectrogram structure");
-			#endif
+			eof_log("Spectrogram: Unable to allocate memory for the spectrogram structure", 1);
 			done=-1;
 		}
 		else
@@ -626,9 +617,7 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 			spectrogram->oggfilename = (char *)malloc(strlen(oggfilename)+1);
 			if(spectrogram->oggfilename == NULL)
 			{
-				#ifdef EOF_DEBUG_SPECTROGRAM
-				allegro_message("Spectrogram: Unable to allocate memory for the audio filename string");
-				#endif
+				eof_log("Spectrogram: Unable to allocate memory for the audio filename string", 1);
 				done=-1;
 			}
 			else
@@ -644,9 +633,7 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 				spectrogram->left.slices=(struct spectrogramslice *)malloc(sizeof(struct spectrogramslice) * spectrogram->numslices);
 				if(spectrogram->left.slices == NULL)
 				{
-					#ifdef EOF_DEBUG_SPECTROGRAM
-					allegro_message("Spectrogram: Unable to allocate memory for the left channel spectrogram data");
-					#endif
+					eof_log("Spectrogram: Unable to allocate memory for the left channel spectrogram data", 1);
 					done=-1;
 				}
 				else if(spectrogram->is_stereo)	//If this OGG is stereo
@@ -654,9 +641,7 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 					spectrogram->right.slices=(struct spectrogramslice *)malloc(sizeof(struct spectrogramslice) * spectrogram->numslices);
 					if(spectrogram->right.slices == NULL)
 					{
-						#ifdef EOF_DEBUG_SPECTROGRAM
-						allegro_message("Spectrogram: Unable to allocate memory for the right channel spectrogram data");
-						#endif
+						eof_log("Spectrogram: Unable to allocate memory for the right channel spectrogram data", 1);
 						done=-1;
 					}
 				}
@@ -694,9 +679,7 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 				free(spectrogram->oggfilename);
 			free(spectrogram);
 		}
-		#ifdef EOF_DEBUG_SPECTROGRAM
-		allegro_message("Spectrogram: Failed to generate spectrogram");
-		#endif
+		eof_log("Spectrogram: Failed to generate spectrogram", 1);
 		return NULL;	//Return error
 	}
 

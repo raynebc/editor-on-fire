@@ -1545,7 +1545,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	EOF_PRO_GUITAR_NOTE *new_note;
 	char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct notes are exported
 	char match;		//Used for testing whether partially ghosted chords are inside of arpeggio phrases
-	char highlight_bad_slides = 0;	//Set to nonzero if the user opts to highlight notes that slide to or above fret 22
+	char highlight_bad_slides = 0;	//Set to nonzero if the user opts to highlight notes that slide to or above fret 25
 
 	eof_log("eof_export_rocksmith_2_track() entered", 1);
 
@@ -1586,12 +1586,12 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			{	//If this pitched slide's end position is not defined
 				slideend = eof_get_highest_fret_value(sp, track, ctr) + 1;	//Assume a 1 fret slide
 			}
-			if((slideend >= 22) || ((tp->note[ctr]->unpitchend + tp->capo) >= 22))
-			{	//If either type of slide goes to or above fret 22 (after taking the capo position into account)
+			if((slideend >= 25) || ((tp->note[ctr]->unpitchend + tp->capo) >= 25))
+			{	//If either type of slide goes to or above fret 25 (after taking the capo position into account)
 				if((*user_warned & 8) == 0)
 				{	//If the user wasn't alerted about this issue yet
 					eof_seek_and_render_position(track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  At least one note in track \"%s\" slides to or above fret 22.", sp->track[track]->name);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  At least one note in track \"%s\" slides to or above fret 25.", sp->track[track]->name);
 					if(alert(eof_log_string, "This could cause Rocksmith 2 to crash.", "Cancel its RS2 export and highlight offending notes?", "&Yes", "&No", 'y', 'n') == 1)
 					{	//If the user opts to cancel the save after the highlighting is performed
 						highlight_bad_slides = 1;
@@ -5347,15 +5347,18 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 			{	//For each remaining beat
 				if(((sp->beat[ctr2]->contained_section_event >= 0) || (sp->beat[ctr2]->contained_rs_section_event >= 0)) && ((*user_warned & 32) == 0))
 				{	//If the beat contains an RS phrase or RS section, and the user wasn't warned of this problem yet
-					unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+					if(!sp->tags->rs_export_suppress_dd_warnings)
+					{	//If dynamic difficulty warnings haven't been suppressed for this chart
+						unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
 
-					eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
-					eof_selected_beat = ctr;		//Select it
-					eof_seek_and_render_position(track, eof_note_type, sp->beat[ctr]->pos);	//Show the offending END phrase
-					allegro_message("Warning:  Beat #%lu contains an END phrase, but there's at least one more phrase or section after it.\nThis will cause dynamic difficulty and/or riff repeater to not work correctly.", ctr);
-					eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-					*user_warned |= 32;
-					break;
+						eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
+						eof_selected_beat = ctr;		//Select it
+						eof_seek_and_render_position(track, eof_note_type, sp->beat[ctr]->pos);	//Show the offending END phrase
+						allegro_message("Warning:  Beat #%lu contains an END phrase, but there's at least one more phrase or section after it.\nThis will cause dynamic difficulty and/or riff repeater to not work correctly.", ctr);
+						eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+						*user_warned |= 32;
+						break;
+					}
 				}
 			}
 			end_phrase_found = 1;

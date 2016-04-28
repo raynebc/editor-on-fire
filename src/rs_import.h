@@ -18,7 +18,7 @@ EOF_PRO_GUITAR_NOTE *eof_rs_import_note_tag_data(char *buffer, int function, EOF
 	//Parses the note, chordnote or bendvalue XML tag contained in the specified array,
 	// creating a pro guitar note structure as defined by the tag
 	//If function is nonzero, the note is appended to the specified track structure
-	//If a bendvalue tag is parsed, the difficulty and string number of the last normal note to be parsed by this function is applied
+	//If a bendvalue tag is parsed, the difficulty and string number of the last normal note to be parsed by this function is applied to the created tech note
 	//The created note is returned, or NULL is returned on error
 	//linectr is cited as the XML line number in error logging
 

@@ -208,6 +208,7 @@ EOF_SONG * eof_create_song(void)
 	sp->tags->highlight_arpeggios = 0;
 	sp->tags->click_drag_disabled = 0;
 	sp->tags->rs_chord_technique_export = 0;
+	sp->tags->rs_export_suppress_dd_warnings = 0;
 	sp->tags->double_bass_drum_disabled = 0;
 	sp->tags->unshare_drum_phrasing = 0;
 	sp->tags->ini_settings = 0;
@@ -1623,7 +1624,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	unsigned long const inistringbuffersize[EOFNUMINISTRINGTYPES]={0,0,256,256,256,0,32,512,256};
 		//Store the buffer information of each of the INI strings to simplify the loading code
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
-	#define EOFNUMINIBOOLEANTYPES 13
+	#define EOFNUMINIBOOLEANTYPES 14
 	char *inibooleanbuffer[EOFNUMINIBOOLEANTYPES] = {NULL};
 		//Store the pointers to each of the boolean type INI settings (number 0 is reserved) to simplify the loading code
 	#define EOFNUMININUMBERTYPES 5
@@ -1665,6 +1666,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	inibooleanbuffer[10] = &sp->tags->highlight_unsnapped_notes;
 	inibooleanbuffer[11] = &sp->tags->accurate_ts;
 	inibooleanbuffer[12] = &sp->tags->highlight_arpeggios;
+	inibooleanbuffer[13] = &sp->tags->rs_export_suppress_dd_warnings;
 	ininumberbuffer[2] = &sp->tags->difficulty;
 
 	/* read chart properties */
@@ -2718,7 +2720,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
 		//Store the buffer information of each of the 12 INI strings to simplify the loading code
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
-	#define EOFNUMINIBOOLEANTYPES 13
+	#define EOFNUMINIBOOLEANTYPES 14
 	char *inibooleanbuffer[EOFNUMINIBOOLEANTYPES] = {NULL};
 		//Store the pointers to each of the boolean type INI settings (number 0 is reserved) to simplify the loading code
 	#define EOFNUMININUMBERTYPES 5
@@ -2762,6 +2764,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	inibooleanbuffer[10] = &sp->tags->highlight_unsnapped_notes;
 	inibooleanbuffer[11] = &sp->tags->accurate_ts;
 	inibooleanbuffer[12] = &sp->tags->highlight_arpeggios;
+	inibooleanbuffer[13] = &sp->tags->rs_export_suppress_dd_warnings;
 	ininumberbuffer[2] = &sp->tags->difficulty;
 
 	/* write file header */
@@ -4647,6 +4650,14 @@ void eof_pro_guitar_track_sort_notes(EOF_PRO_GUITAR_TRACK * tp)
 	}
 }
 
+void eof_pro_guitar_track_sort_tech_notes(EOF_PRO_GUITAR_TRACK * tp)
+{
+	if(tp)
+	{
+		qsort(tp->technote, (size_t)tp->technotes, sizeof(EOF_PRO_GUITAR_NOTE *), eof_song_qsort_pro_guitar_notes);
+	}
+}
+
 int eof_song_qsort_phrases_diff_timestamp(const void * e1, const void * e2)
 {
 	EOF_PHRASE_SECTION * thing1 = (EOF_PHRASE_SECTION *)e1;
@@ -4781,6 +4792,14 @@ void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long n
 			tp->note[i] = tp->note[i + 1];
 		}
 		tp->notes--;
+		if(tp->note == tp->technote)
+		{	//If tech view is in effect
+			tp->technotes--;	//Update the tech note counter
+		}
+		else
+		{
+			tp->pgnotes--;	//Update the normal note counter
+		}
 	}
 }
 

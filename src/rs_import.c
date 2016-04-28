@@ -125,7 +125,7 @@ int eof_parse_chord_template(char *name, size_t size, char *finger, char *frets,
 EOF_PRO_GUITAR_NOTE *eof_rs_import_note_tag_data(char *buffer, int function, EOF_PRO_GUITAR_TRACK *tp, unsigned long linectr)
 {
 	long curdiff = 0, time = 0, step = 0;
-	long bend = 0, fret = 0, hammeron = 0, harmonic = 0, palmmute = 0, pulloff = 0, string = 0, sustain = 0, tremolo = 0, linknext = 0, accent = 0, mute = 0, pinchharmonic = 0, tap = 0, vibrato = 0;
+	long bend = 0, fret = 0, hammeron = 0, harmonic = 0, palmmute = 0, pulloff = 0, string = 0, sustain = 0, tremolo = 0, linknext = 0, accent = 0, ignore = 0, mute = 0, pinchharmonic = 0, tap = 0, vibrato = 0;
 	long pluck = -1, slap = -1, slideto = -1, slideunpitchto = -1;
 	unsigned long flags = 0;
 	static EOF_PRO_GUITAR_NOTE *np = NULL;
@@ -176,6 +176,7 @@ EOF_PRO_GUITAR_NOTE *eof_rs_import_note_tag_data(char *buffer, int function, EOF
 		//Read RS2 note attributes
 		(void) parse_xml_attribute_number("linkNext", buffer, &linknext);
 		(void) parse_xml_attribute_number("accent", buffer, &accent);
+		(void) parse_xml_attribute_number("ignore", buffer, &ignore);
 		(void) parse_xml_attribute_number("mute", buffer, &mute);
 		(void) parse_xml_attribute_number("harmonicPinch", buffer, &pinchharmonic);
 		(void) parse_xml_attribute_number("slideUnpitchTo", buffer, &slideunpitchto);
@@ -183,13 +184,6 @@ EOF_PRO_GUITAR_NOTE *eof_rs_import_note_tag_data(char *buffer, int function, EOF
 			slideunpitchto -= tp->capo;	//Apply the capo if applicable
 		(void) parse_xml_attribute_number("tap", buffer, &tap);
 		(void) parse_xml_attribute_number("vibrato", buffer, &vibrato);
-
-		//Check for applicability of split status
-		if(np && (np->pos == time))
-		{	//If there was a previous single note imported for this difficulty level and it was at the same time as this note
-			np->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;	//Apply split status to the previous note
-			flags |= EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;		//And to this note as well
-		}
 
 		//Add note and set attributes
 		if((string >= 0) && (string < 6))
@@ -247,6 +241,8 @@ EOF_PRO_GUITAR_NOTE *eof_rs_import_note_tag_data(char *buffer, int function, EOF
 				flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;
 			if(accent)
 				flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;
+			if(ignore)
+				np->eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE;
 			if(mute)
 				flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;
 			if(pinchharmonic)
@@ -1170,6 +1166,8 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						//Read notes tag
 						if(strcasestr_spec(buffer, "<notes") && !strstr(buffer, "/>"))
 						{	//If this is the notes tag and it isn't empty
+							EOF_PRO_GUITAR_NOTE *npp = NULL;	//Track the previously imported single note for split status purposes
+
 							#ifdef RS_IMPORT_DEBUG
 								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tProcessing <notes> tag on line #%lu", linectr);
 								eof_log(eof_log_string, 1);
@@ -1199,6 +1197,15 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 										error = 1;
 										break;	//Break from inner loop
 									}
+									if(npp)
+									{	//If there was a previous single note imported for this difficulty
+										if(npp->pos == np->pos)
+										{	//If it was at the same timestamp, apply split status to both notes to ensure it's kept when fixup logic merges them
+											npp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;
+											np->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;
+										}
+									}
+									npp = np;	//Remember the last imported single note
 									note_count++;
 									tagctr++;
 
@@ -1227,6 +1234,9 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						else if(strcasestr_spec(buffer, "<chords") && !strstr(buffer, "/>"))
 						{	//If this is a chords tag and it isn't empty
 							long id = 0, lastid = -1;
+							EOF_PRO_GUITAR_NOTE *chordnote[6] = {NULL, NULL, NULL, NULL, NULL, NULL};	//Stores chordnote data
+							unsigned long chordnotectr = 7;	//Initialize this with an invalid value so chordnote parsing can track whether a chord tag is read
+							unsigned long numtechnotes = 0;	//The number of tech notes created for this chord
 
 							#ifdef RS_IMPORT_DEBUG
 								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tProcessing <chords> tag on line #%lu", linectr);
@@ -1238,8 +1248,8 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 							linectr++;
 							while(!error || !pack_feof(inf))
 							{	//Until there was an error reading from the file or end of file is reached
-								if(strcasestr_spec(buffer, "</chords"))
-								{	//If this is the end of the events tag
+								if(strcasestr_spec(buffer, "</chords>"))
+								{	//If this is the end of the chords tag
 									#ifdef RS_IMPORT_DEBUG
 										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tAdded %lu chords", tagctr);
 										eof_log(eof_log_string, 1);
@@ -1247,12 +1257,113 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 									break;	//Break from loop
 								}
 
+								if(strcasestr_spec(buffer, "</chord>"))
+								{	//If this is the end of the chord tag
+									if((chordnotectr > 0) && (chordnotectr < 7))
+									{	//If chordnote tags were parsed
+										unsigned long cflags;	//The flags that all the chordnotes have in common
+										unsigned long ceflags;	//The eflags that all the chordnotes have in common
+										unsigned neededtechnotes = 0, technotedistance;
+
+										//Examine chordnote lengths to detect stop and sustain statuses
+										for(ctr = 0; ctr < chordnotectr; ctr++)
+										{	//For each chordnote that was parsed
+											if(chordnote[ctr]->length)
+											{	//If this chordnote has a nonzero length
+												if(chordnote[ctr]->length < np->length)
+												{	//If the chordnote was shorter than any of the other chordnotes, add a stop tech note to define this
+													EOF_PRO_GUITAR_NOTE *tnp = eof_pro_guitar_track_add_tech_note(tp);
+													if(!tnp)
+													{
+														eof_log("\tError allocating memory for a stop tech note.  Aborting", 1);
+														error = 1;
+														break;	//Break from loop
+													}
+													tnp->pos = np->pos + chordnote[ctr]->length;	//The stop note is placed where this chordnote ends
+													tnp->type = np->type;
+													tnp->note = 1 << ctr;
+													tnp->eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_STOP;
+													numtechnotes++;	//Track that a technote was added
+												}
+												if(!(chordnote[ctr]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE  | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO | EOF_NOTE_FLAG_IS_TREMOLO)))
+												{	//If none of the techniques that normally warrant a chordnote's sustain to be kept are in use for the note
+													chordnote[ctr]->eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN;	//Consider it as having sustain status
+												}
+											}
+										}
+
+										//Examine chordnote flaqs to determine which statuses are used in all of the chord's chordnotes
+										cflags = chordnote[0]->flags;	//Initialize these variables with the first chordnote's flags
+										ceflags = chordnote[0]->eflags;
+										for(ctr = 1; ctr < chordnotectr; ctr++)
+										{	//For each of the chordnotes after the first
+											cflags &= chordnote[ctr]->flags;	//Clear any flags that this chordnote doesn't also have from the common flags variable
+											ceflags &= chordnote[ctr]->eflags;
+										}
+
+										//Move any flags that all chordnotes had in common from the chordnote flags to the chord itself
+										// and transfer leftover statuses to tech notes already applied to the chord where possible
+										np->flags |= cflags;
+										np->eflags |= ceflags;
+										for(ctr = 0; ctr < chordnotectr; ctr++)
+										{	//For each chordnote that was parsed
+											chordnote[ctr]->flags &= ~cflags;	//Clear any of the flags that were moved to the chord
+											chordnote[ctr]->eflags &= ~ceflags;
+
+											if(chordnote[ctr]->flags || chordnote[ctr]->eflags)
+											{	//If any of this chordnote's flags are still set
+												unsigned long tnnum = 0;
+
+												if(eof_pro_guitar_note_bitmask_has_tech_note(tp, tp->notes - 1, chordnote[ctr]->note, &tnnum))
+												{	//If the chord being parsed already has a technote on this string due to having added bend of stop tech notes
+													tp->technote[tnnum]->flags |= chordnote[ctr]->flags;	//Transfer the flags to it instead of creating another tech note
+													tp->technote[tnnum]->eflags |= chordnote[ctr]->eflags;
+													chordnote[ctr]->flags = chordnote[ctr]->eflags = 0;
+												}
+												else
+												{
+													neededtechnotes++;	//It will require a technote to apply to that individual gem in the chord
+												}
+											}
+										}
+
+										//Create technotes to store any remaining statuses
+										technotedistance = np->length / (numtechnotes + neededtechnotes + 1);	//Get the average distance the tech notes can get from each other
+										if(technotedistance < 1)
+										{	//If there's not enough space on this note to place technotes at least 1ms apart
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tWarning:  Chord at %lums is too short to place necessary tech notes", np->pos);
+											eof_log(eof_log_string, 1);
+										}
+										else
+										{
+											for(ctr = 0; ctr < chordnotectr; ctr++)
+											{	//For each chordnote that was parsed
+												eof_pro_guitar_track_sort_tech_notes(tp);	//Ensure tech notes are in order
+												if(chordnote[ctr]->flags || chordnote[ctr]->eflags)
+												{	//If this chordnote has any statuses left to be placed
+												}
+											}
+										}
+
+										//Cleanup
+										for(ctr = 0; ctr < 6; ctr++)
+										{	//For each entry in the chordnote array
+											if(chordnote[ctr])
+											{	//If this element has a pro guitar note structure pointer
+												free(chordnote[ctr]);
+												chordnote[ctr] = NULL;
+											}
+										}
+									}
+									chordnotectr = 7;	//Reset this to an invalid value so the chordnote logic can tell that a chord tag is NOT being parsed
+								}//If this is the end of the chord tag
+
 								//Read chord tag
-								ptr = strcasestr_spec(buffer, "<chord ");
-								if(ptr)
+								if(strcasestr_spec(buffer, "<chord "))
 								{	//If this is a chord tag
 									long highdensity;
 
+									chordnotectr = 0;	//Reset this so the chordnote logic can tell that a chord tag is being parsed
 									if(note_count < EOF_MAX_NOTES)
 									{	//If another chord can be stored
 										flags = 0;
@@ -1324,11 +1435,59 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 									}//If another chord can be stored
 								}//If this is a chord tag
 
+								//Read chordnote tag
+								if(strcasestr_spec(buffer, "<chordNote "))
+								{	//If this is a chordnote tag
+									EOF_PRO_GUITAR_NOTE *cnp;
+
+									if(chordnotectr >= 5)
+									{	//If six chordnotes were already read for this chord
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tChord contains too many chordnote tags on line #%lu.  Aborting", linectr);
+										eof_log(eof_log_string, 1);
+										error = 1;
+										break;	//Break from inner loop
+									}
+									cnp = eof_rs_import_note_tag_data(buffer, 0, tp, linectr);	//Parse the note tag and store the note data in the chordnote array
+									if(!cnp)
+									{	//If there was an error doing so
+										error = 1;
+										break;	//Break from inner loop
+									}
+									chordnote[chordnotectr] = cnp;
+									if(cnp->length > np->length)
+									{
+										np->length = cnp->length;	//The chord inherits its longest chordnote length
+									}
+									chordnotectr++;
+								}//If this is a chordnote tag
+
+								//Read bendValue tag
+								ptr = strcasestr_spec(buffer, "<bendValue ");
+								if(ptr)
+								{	//If this is a bendValue tag
+									if(!eof_rs_import_note_tag_data(buffer, 1, tp, linectr))
+									{	//If there was an error parsing the bendvalue tag and adding a technote as appropriate
+										error = 1;
+										break;	//Break from inner loop
+									}
+									numtechnotes++;	//Track that a technote was added
+								}//If this is a bendValue tag
+
 								(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 								linectr++;	//Increment line counter
-							}
+							}//If this is the end of the chord tag
 							if(error)
+							{
+								for(ctr = 0; ctr < 6; ctr++)
+								{	//For each entry in the chordnote array
+									if(chordnote[ctr])
+									{	//If this element has a pro guitar note structure pointer
+										free(chordnote[ctr]);
+										chordnote[ctr] = NULL;
+									}
+								}
 								break;	//Break from inner loop
+							}
 						}//If this is a chords tag and it isn't empty
 						else if(strcasestr_spec(buffer, "<anchors") && !strstr(buffer, "/>"))
 						{	//If this is an anchors tag and it isn't empty

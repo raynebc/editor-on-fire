@@ -2934,52 +2934,55 @@ int eof_save_helper_checks(void)
 
 
 	/* check for arpeggio/handshape phrases that cross from one RS phrase into another, which may malfunction on charts with dynamic difficulty */
-	if(eof_write_rs_files || eof_write_rs2_files)
-	{	//If the user wants to save Rocksmith capable files
-		char user_prompted = 0;
-		unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+	if(!eof_song->tags->rs_export_suppress_dd_warnings)
+	{	//If dynamic difficulty warnings haven't been suppressed for this chart
+		if(eof_write_rs_files || eof_write_rs2_files)
+		{	//If the user wants to save Rocksmith capable files
+			char user_prompted = 0;
+			unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
 
-		for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
-		{	//For each track (until the user is warned about any offending handshape phrases)
-			if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{	//If this is a pro guitar/bass track
-				tracknum = eof_song->track[ctr]->tracknum;
-				tp = eof_song->pro_guitar_track[tracknum];
-				eof_pro_guitar_track_sort_arpeggios(tp);
-				for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
-				{	//For each arpeggio/handshape
-					long start, end;
+			for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
+			{	//For each track (until the user is warned about any offending handshape phrases)
+				if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//If this is a pro guitar/bass track
+					tracknum = eof_song->track[ctr]->tracknum;
+					tp = eof_song->pro_guitar_track[tracknum];
+					eof_pro_guitar_track_sort_arpeggios(tp);
+					for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
+					{	//For each arpeggio/handshape
+						long start, end;
 
-					start = eof_get_beat(eof_song, tp->arpeggio[ctr2].start_pos);
-					end = eof_get_beat(eof_song, tp->arpeggio[ctr2].end_pos);
-					if((start >= 0) && (end >= start))
-					{	//If the effective beat numbers for the start and end position of the arpeggio/handshape were identified
-						for(ctr3 = start + 1; !user_prompted && (ctr3 <= end); ctr3++)
-						{	//For each beat between them, after the first (which will always be at/before the beginning of the arpeggio, when the condition being checked can only happen to a beat AFTER the start of the arpeggio)
-							if(eof_song->beat[ctr3]->contained_section_event >= 0)
-							{	//If this beat has an RS phrase defined, it marks a phrase change
-								eof_2d_render_top_option = 36;					//Change the user preference to render RS phrases and sections at the top of the piano roll
-								if(tp->arpeggio[ctr2].difficulty != 0xFF)
-								{	//If this is a difficulty specific arpeggio
-									eof_note_type = tp->arpeggio[ctr2].difficulty;	//Change to the relevant difficulty
-								}
-								eof_seek_and_render_position(ctr, eof_note_type, tp->arpeggio[ctr2].start_pos);	//Render the track so the user can see where the correction needs to be made
-								eof_clear_input();
-								if(!user_prompted && alert("At least one arpeggio/handshape crosses over into another RS phrase", "This can behave strangely in Rocksmith if the chart has dynamic difficulty.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-								{	//If the user hasn't already answered this prompt, and opts to correct the issue
+						start = eof_get_beat(eof_song, tp->arpeggio[ctr2].start_pos);
+						end = eof_get_beat(eof_song, tp->arpeggio[ctr2].end_pos);
+						if((start >= 0) && (end >= start))
+						{	//If the effective beat numbers for the start and end position of the arpeggio/handshape were identified
+							for(ctr3 = start + 1; !user_prompted && (ctr3 <= end); ctr3++)
+							{	//For each beat between them, after the first (which will always be at/before the beginning of the arpeggio, when the condition being checked can only happen to a beat AFTER the start of the arpeggio)
+								if(eof_song->beat[ctr3]->contained_section_event >= 0)
+								{	//If this beat has an RS phrase defined, it marks a phrase change
+									eof_2d_render_top_option = 36;					//Change the user preference to render RS phrases and sections at the top of the piano roll
+									if(tp->arpeggio[ctr2].difficulty != 0xFF)
+									{	//If this is a difficulty specific arpeggio
+										eof_note_type = tp->arpeggio[ctr2].difficulty;	//Change to the relevant difficulty
+									}
+									eof_seek_and_render_position(ctr, eof_note_type, tp->arpeggio[ctr2].start_pos);	//Render the track so the user can see where the correction needs to be made
+									eof_clear_input();
+									if(!user_prompted && alert("At least one arpeggio/handshape crosses over into another RS phrase", "This can behave strangely in Rocksmith if the chart has dynamic difficulty.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+									{	//If the user hasn't already answered this prompt, and opts to correct the issue
+										eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+										return 1;	//Return cancellation
+									}
 									eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-									return 1;	//Return cancellation
+									user_prompted = 1;	//Set the condition to exit outer for loops
+									break;	//Break from inner for loop
 								}
-								eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-								user_prompted = 1;	//Set the condition to exit outer for loops
-								break;	//Break from inner for loop
 							}
 						}
 					}
 				}
 			}
 		}
-	}
+	}//If dynamic difficulty warnings haven't been suppressed for this chart
 
 
 	/* check for any bend strengths higher than 3 half steps */
@@ -3034,79 +3037,88 @@ int eof_save_helper_checks(void)
 
 
 	/* check for any notes that extend into a different RS phrase or section */
-	if(eof_write_rs_files || eof_write_rs2_files)
-	{	//If the user wants to save Rocksmith capable files
-		char user_prompted = 0;
-		unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+	if(!eof_song->tags->rs_export_suppress_dd_warnings)
+	{	//If dynamic difficulty warnings haven't been suppressed for this chart
+		if(eof_write_rs_files || eof_write_rs2_files)
+		{	//If the user wants to save Rocksmith capable files
+			char user_prompted = 0;
+			unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
 
-		for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
-		{	//For each track (until the user is warned about any offending notes)
-			if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{	//If this is a pro guitar/bass track
-				EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-				unsigned long bitmask;
-				char restore_tech_view = 0;
-				unsigned long start, stop;
+			for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
+			{	//For each track (until the user is warned about any offending notes)
+				if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//If this is a pro guitar/bass track
+					EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+					unsigned long bitmask;
+					char restore_tech_view = 0;
+					unsigned long start, stop;
 
-				tracknum = eof_song->track[ctr]->tracknum;
-				tp = eof_song->pro_guitar_track[tracknum];
-				restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
-				eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Activate the normal note set
+					tracknum = eof_song->track[ctr]->tracknum;
+					tp = eof_song->pro_guitar_track[tracknum];
+					restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
+					eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Activate the normal note set
 
-				for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
-				{	//For each note in the track
-					long startbeat, stopbeat;
+					for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+					{	//For each note in the track
+						long startbeat, stopbeat;
 
-					start = tp->note[ctr2]->pos;			//Record its start and stop position
-					stop = start + tp->note[ctr2]->length;
+						start = tp->note[ctr2]->pos;			//Record its start and stop position
+						stop = start + tp->note[ctr2]->length;
 
-					for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
-					{	//For each of the 6 usable strings
-						if(tp->note[ctr2]->note & bitmask)
-						{	//If the note uses this string
-							(void) eof_get_rs_techniques(eof_song, ctr, ctr2, ctr3, &tech, 2, 1);	//Check to see if the gem on this string has linknext status applied
-							if(tech.linknext)
-							{	//If it does
-								long nextnote = eof_fixup_next_pro_guitar_note(tp, ctr2);	//Look for another note that follows in this track difficulty
+						for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+						{	//For each of the 6 usable strings
+							if(tp->note[ctr2]->note & bitmask)
+							{	//If the note uses this string
+								(void) eof_get_rs_techniques(eof_song, ctr, ctr2, ctr3, &tech, 2, 1);	//Check to see if the gem on this string has linknext status applied
+								if(tech.linknext)
+								{	//If it does
+									long nextnote = eof_fixup_next_pro_guitar_note(tp, ctr2);	//Look for another note that follows in this track difficulty
 
-								if(nextnote > 0)
-								{	//If a next note is identified
-									stop = tp->note[nextnote]->pos + tp->note[nextnote]->length;	//Its ending is the effective end position to consider
+									if(nextnote > 0)
+									{	//If a next note is identified
+										stop = tp->note[nextnote]->pos + tp->note[nextnote]->length;	//Its ending is the effective end position to consider
+									}
 								}
 							}
 						}
-					}
 
-					startbeat = eof_get_beat(eof_song, start);	//Find the beat in which this note starts
-					stopbeat = eof_get_beat(eof_song, stop);	//And the beat in which it ends
-					if((startbeat >= 0) && (stopbeat >= 0) && (startbeat != stopbeat))
-					{	//If each of those beats was successfully identified and they are different beats
-						int startsection, stopsection, startphrase, stopphrase;
+						startbeat = eof_get_beat(eof_song, start);	//Find the beat in which this note starts
+						stopbeat = eof_get_beat(eof_song, stop);	//And the beat in which it ends
+						if((stopbeat >= 0) && (stop == eof_song->beat[stopbeat]->pos) && (stopbeat > startbeat))
+						{	//If the note extends up to and ends on the beat
+							stopbeat--;	//Interpret it as ending at the previous beat instead of surpassing it
+						}
+						if((startbeat >= 0) && (stopbeat >= 0) && (startbeat != stopbeat))
+						{	//If each of those beats was successfully identified and they are different beats
+							int sectionchange = 0, phrasechange = 0;
 
-						startsection = eof_song->beat[startbeat]->contained_rs_section_event;
-						stopsection = eof_song->beat[stopbeat]->contained_rs_section_event;
-						startphrase = eof_song->beat[startbeat]->contained_section_event;
-						stopphrase = eof_song->beat[stopbeat]->contained_section_event;
-						if(	(((startsection >= 0) || (stopsection >= 0)) && (startsection != stopsection)) ||
-							(((startphrase >= 0) || (stopphrase >= 0)) && (startphrase != stopphrase)))
-						{	//If the beats each have differing RS sections or RS phrases defined
-							eof_2d_render_top_option = 36;					//Change the user preference to render RS phrases and sections at the top of the piano roll
-							eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Render the track so the user can see where the correction needs to be made
-							eof_clear_input();
-							if(!user_prompted && alert("At least one note crosses an RS phrase or section boundary.", "This can behave strangely in Rocksmith if the chart has dynamic difficulty.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-							{	//If the user hasn't already answered this prompt, and opts to correct the issue
-								return 1;	//Return cancellation
+							for(ctr3 = startbeat + 1; (ctr3 <= stopbeat) && (ctr3 < eof_song->beats); ctr3++)
+							{	//For each beat after the start beat up to and including the stop beat
+								if(eof_song->beat[ctr3]->contained_rs_section_event >= 0)
+									sectionchange = 1;	//This beat indicates a section change
+								if(eof_song->beat[ctr3]->contained_section_event >= 0)
+									phrasechange = 1;	//This beat indicates a phrase change
 							}
-							eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-							user_prompted = 1;	//Set the condition to exit outer for loop
-							break;	//Break from inner for loop
+							if(sectionchange || phrasechange)
+							{	//If the section or phrase changes during the course of the note
+								eof_2d_render_top_option = 36;					//Change the user preference to render RS phrases and sections at the top of the piano roll
+								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Render the track so the user can see where the correction needs to be made
+								eof_clear_input();
+								if(!user_prompted && alert("At least one note crosses an RS phrase or section boundary.", "This can behave strangely in Rocksmith if the chart has dynamic difficulty.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+								{	//If the user hasn't already answered this prompt, and opts to correct the issue
+									return 1;	//Return cancellation
+								}
+								eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+								user_prompted = 1;	//Set the condition to exit outer for loop
+								break;	//Break from inner for loop
+							}
 						}
 					}
-				}
-				eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Activate whichever note set was active for the track
-			}//If this is a pro guitar/bass track
-		}//For each track (until the user is warned about any offending notes)
-	}//If the user wants to save Rocksmith capable files
+					eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Activate whichever note set was active for the track
+				}//If this is a pro guitar/bass track
+			}//For each track (until the user is warned about any offending notes)
+		}//If the user wants to save Rocksmith capable files
+	}//If dynamic difficulty warnings haven't been suppressed for this chart
 
 	return 0;
 }

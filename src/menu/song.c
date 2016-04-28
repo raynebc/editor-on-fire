@@ -149,8 +149,10 @@ MENU eof_song_proguitar_menu[] =
 MENU eof_song_rocksmith_menu[] =
 {
 	{"&Correct chord fingerings", eof_correct_chord_fingerings_menu, NULL, 0, NULL},
-	{"Export chord techniques (RS1)", eof_menu_song_rocksmith_export_chord_techniques, NULL, 0, NULL},
 	{"Check &Fret hand positions", eof_check_fret_hand_positions_menu, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"Export chord techniques (RS1)", eof_menu_song_rocksmith_export_chord_techniques, NULL, 0, NULL},
+	{"Suppress DD warnings", eof_menu_song_rocksmith_suppress_dynamic_difficulty_warnings, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -678,11 +680,21 @@ void eof_prepare_song_menu(void)
 		/* Export chord techniques */
 		if(eof_song->tags->rs_chord_technique_export)
 		{
-			eof_song_rocksmith_menu[1].flags = D_SELECTED;
+			eof_song_rocksmith_menu[3].flags = D_SELECTED;
 		}
 		else
 		{
-			eof_song_rocksmith_menu[1].flags = 0;
+			eof_song_rocksmith_menu[3].flags = 0;
+		}
+
+		/* Suppress DD warnings */
+		if(eof_song->tags->rs_export_suppress_dd_warnings)
+		{
+			eof_song_rocksmith_menu[4].flags = D_SELECTED;
+		}
+		else
+		{
+			eof_song_rocksmith_menu[4].flags = 0;
 		}
 	}//If a chart is loaded
 }
@@ -3590,6 +3602,13 @@ int eof_menu_song_rocksmith_export_chord_techniques(void)
 {
 	if(eof_song)
 		eof_song->tags->rs_chord_technique_export ^= 1;	//Toggle this boolean variable
+	return 1;
+}
+
+int eof_menu_song_rocksmith_suppress_dynamic_difficulty_warnings(void)
+{
+	if(eof_song)
+		eof_song->tags->rs_export_suppress_dd_warnings ^= 1;	//Toggle this boolean variable
 	return 1;
 }
 

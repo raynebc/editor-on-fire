@@ -4248,6 +4248,7 @@ int eof_initialize(int argc, char * argv[])
 								return 0;
 							}
 							(void) ustrcpy(eof_filename, ptr);		//Set the full project path
+							(void) replace_filename(eof_song_path, eof_filename, "", 1024);		//Set the song folder path
 							(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);	//Set the last loaded song path
 							(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));	//Set the project filename
 							(void) append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);	//Construct the full OGG path

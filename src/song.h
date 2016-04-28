@@ -418,7 +418,7 @@ typedef struct
 	double fpos;
 
 	//These variables, set with eof_process_beat_statistics(), track various properties of the beat to relieve rendering functions of some processing
-	//beat_within_measure is numbered starting with 0
+	//beat_within_measure is numbered starting with 0, the contained... variables are set to -1 if the beat does not contain a qualifying text event
 	unsigned long measurenum;
 	int beat_within_measure, num_beats_in_measure, beat_unit, contained_section_event, contained_rs_section_event, contained_rs_section_event_instance_number;
 	char contains_tempo_change, contains_ts_change, contains_end_event;
@@ -450,6 +450,7 @@ typedef struct
 	char double_bass_drum_disabled;
 	char click_drag_disabled;
 	char rs_chord_technique_export;
+	char rs_export_suppress_dd_warnings;
 	char unshare_drum_phrasing;
 	char highlight_unsnapped_notes;
 	char accurate_ts;
@@ -733,7 +734,8 @@ EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_note(EOF_PRO_GUITAR_TRACK *tp);
 	//Allocates, initializes and stores a new EOF_PRO_GUITAR_NOTE structure into the note array of the active note set.  Returns the newly allocated structure or NULL upon error
 EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_pgnote(EOF_PRO_GUITAR_TRACK *tp);	//Allocates, initializes and stores a new EOF_PRO_GUITAR_NOTE structure into the normal note array.  Returns the newly allocated structure or NULL upon error
 EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_tech_note(EOF_PRO_GUITAR_TRACK *tp);	//Allocates, initializes and stores a new EOF_PRO_GUITAR_NOTE structure into the technote array.  Returns the newly allocated structure or NULL upon error
-void eof_pro_guitar_track_sort_notes(EOF_PRO_GUITAR_TRACK * tp);	//Performs a quicksort of the notes array, first by timestamp, second by difficulty, third by note mask
+void eof_pro_guitar_track_sort_notes(EOF_PRO_GUITAR_TRACK * tp);	//Performs a quicksort of the active note set, first by timestamp, second by difficulty, third by note mask
+void eof_pro_guitar_track_sort_tech_notes(EOF_PRO_GUITAR_TRACK * tp);	//Performs a quicksort of the specified track's tech notes, first by timestamp, second by difficulty, third by note mask
 int eof_song_qsort_pro_guitar_notes(const void * e1, const void * e2);	//The comparitor function used to quicksort the pro guitar notes array
 void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
 long eof_fixup_previous_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Returns the note one before the specified note number that is in the same difficulty, or -1 if there is none
