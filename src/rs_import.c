@@ -306,6 +306,10 @@ EOF_PRO_GUITAR_NOTE *eof_rs_import_note_tag_data(char *buffer, int function, EOF
 			tnp->bendstrength = step / 1000;
 		}
 
+///DEBUG
+(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tPlaced bend tech note at %lums", tnp->pos);
+eof_log(eof_log_string, 1);
+
 		return tnp;
 	}//If this is a bendValue tag
 
@@ -336,6 +340,276 @@ unsigned long eof_evaluate_rs_import_gap_solution(EOF_TECHNOTE_GAP *gaps, unsign
 	}
 
 	return lowestgapsize;
+}
+
+char eof_rs_import_process_chordnotes(EOF_PRO_GUITAR_TRACK *tp, EOF_PRO_GUITAR_NOTE *np, EOF_PRO_GUITAR_NOTE **chordnote, unsigned long chordnotectr, unsigned long numtechnotes)
+{
+	unsigned long cflags;	//The flags that all the chordnotes have in common
+	unsigned long ceflags;	//The eflags that all the chordnotes have in common
+	unsigned neededtechnotes = 0;
+	unsigned long ctr;
+	char error = 0;
+
+	if(!np || !chordnote || !chordnotectr || (chordnotectr >= 7))
+		return 1;	//Invalid parameters
+
+	//Examine chordnote lengths to detect stop and sustain statuses
+	for(ctr = 0; ctr < chordnotectr; ctr++)
+	{	//For each chordnote that was parsed
+		if(chordnote[ctr]->length)
+		{	//If this chordnote has a nonzero length
+			if(chordnote[ctr]->length < np->length)
+			{	//If the chordnote was shorter than any of the other chordnotes, add a stop tech note to define this
+				EOF_PRO_GUITAR_NOTE *tnp = eof_pro_guitar_track_add_tech_note(tp);
+				if(!tnp)
+				{
+					eof_log("\tError allocating memory for a stop tech note.  Aborting", 1);
+					error = 1;
+					break;	//Break from loop
+				}
+				tnp->pos = np->pos + chordnote[ctr]->length;	//The stop note is placed where this chordnote ends
+				tnp->type = np->type;
+				tnp->note = 1 << ctr;
+				tnp->eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_STOP;
+				numtechnotes++;	//Track that a technote was added
+
+///DEBUG
+(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tPlaced bend tech note at %lums", tnp->pos);
+eof_log(eof_log_string, 1);
+
+			}
+			if(!(chordnote[ctr]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE  | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO | EOF_NOTE_FLAG_IS_TREMOLO)))
+			{	//If none of the techniques that normally warrant a chordnote's sustain to be kept are in use for the note
+				chordnote[ctr]->eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN;	//Consider it as having sustain status
+			}
+		}
+	}
+
+	if(!error)
+	{	//If the chordnote lengths were processed
+		//Examine chordnote flaqs to determine which statuses are used in all of the chord's chordnotes
+		cflags = chordnote[0]->flags;	//Initialize these variables with the first chordnote's flags
+		ceflags = chordnote[0]->eflags;
+		for(ctr = 1; ctr < chordnotectr; ctr++)
+		{	//For each of the chordnotes after the first
+			cflags &= chordnote[ctr]->flags;	//Clear any flags that this chordnote doesn't also have from the common flags variable
+			ceflags &= chordnote[ctr]->eflags;
+		}
+
+		//Move any flags that all chordnotes had in common from the chordnote flags to the chord itself
+		// and transfer leftover statuses to tech notes already applied to the chord where possible
+		np->flags |= cflags;
+		np->eflags |= ceflags;
+		eof_pro_guitar_track_sort_tech_notes(tp);	//Ensure tech notes are in order
+		for(ctr = 0; ctr < chordnotectr; ctr++)
+		{	//For each chordnote that was parsed
+			chordnote[ctr]->flags &= ~cflags;	//Clear any of the flags that were moved to the chord
+			chordnote[ctr]->eflags &= ~ceflags;
+
+			if(chordnote[ctr]->flags || chordnote[ctr]->eflags)
+			{	//If any of this chordnote's flags are still set
+				unsigned long tnnum = 0;
+
+				if(eof_pro_guitar_note_bitmask_has_tech_note(tp, tp->notes - 1, chordnote[ctr]->note, &tnnum))
+				{	//If the chord being parsed already has a technote on this string due to having added bend of stop tech notes
+					tp->technote[tnnum]->flags |= chordnote[ctr]->flags;	//Transfer the flags to it instead of creating another tech note
+					tp->technote[tnnum]->eflags |= chordnote[ctr]->eflags;
+					chordnote[ctr]->flags = chordnote[ctr]->eflags = 0;
+				}
+				else
+				{
+					neededtechnotes++;	//It will require a technote to apply to that individual gem in the chord
+				}
+			}
+		}
+
+		//Create technotes to store any remaining statuses
+		if(neededtechnotes)
+		{	//If there are technotes remaining to be placed
+			EOF_TECHNOTE_GAP *gaps;	//Stores information about the spacing between the hard-coded points of this chord (its start and end points and fixed position stop/bend tech notes)
+			unsigned *solution;		//Stores a possible solution indicating which gap number each of the remaining technotes is to be placed into
+			unsigned long solutionval;	//The smallest amount of time between any technote in the solution and another obstacle (fixed position technote or chord start/end)
+			unsigned *bestsolution;		//Stores the solution that was evaluated with the largest buffer of time between each of the remaining technotes
+			unsigned long bestsolutionval;	//The value of the best evaluated solution (higher is better)
+			unsigned long numgaps = numtechnotes + 1;	//The number of gaps within which the remaining technotes may be placed
+			unsigned long tnnum = 0, lasttechpos;
+			int done = 0;
+
+			//Ensure the chord is long enough to encompass all its technotes
+			if(numtechnotes + neededtechnotes > 1)
+			{	//If the chord requires more than a total of 1 tech note
+				if(np->length / (numtechnotes + neededtechnotes + 1) < 1)
+				{	//If there's not enough space on this chord to place technotes with a 1ms buffer on each side, lengthen the chord
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tWarning:  Chord at %lums is too short to place necessary tech notes.  Adjusting to %lums length.", np->pos, numtechnotes + neededtechnotes + 1);
+					eof_log(eof_log_string, 1);
+					np->length = numtechnotes + neededtechnotes + 1;
+				}
+			}
+
+			//Build an array defining available spaces between the existing technotes on this chord
+			gaps = malloc(sizeof(EOF_TECHNOTE_GAP) * numgaps);
+			memset(gaps, 0, sizeof(EOF_TECHNOTE_GAP) * numgaps);
+
+			//Build one array each to store the solution currently being tested and the best examined solution
+			solution = malloc(sizeof(unsigned) * neededtechnotes);
+			memset(solution, 0, sizeof(unsigned) * neededtechnotes);
+			bestsolution = malloc(sizeof(unsigned) * neededtechnotes);
+			memset(bestsolution, 0, sizeof(unsigned) * neededtechnotes);
+			if(!gaps || !solution || !bestsolution)
+			{	//If the array was not allocated
+				if(gaps)
+					free(gaps);
+				if(solution)
+					free(solution);
+				if(bestsolution)
+					free(bestsolution);
+				eof_log("\tError allocating memory for technote placement logic.  Aborting", 1);
+				error = 1;
+			}
+			if(!error)
+			{	//If the solution arrays were created
+				lasttechpos = np->pos;	//The first gap will begin at the beginning of the chord
+				gaps[numgaps - 1].stop = np->pos + np->length;	//The last gap will end at the end of the chord
+				if(eof_pro_guitar_note_bitmask_has_tech_note(tp, tp->notes - 1, np->note, &tnnum))
+				{	//If there's at least one technote overlapping this chord
+					EOF_PRO_GUITAR_NOTE *tnp = tp->technote[tnnum];
+					unsigned long gapnum = 0;
+					long nexttn;
+					while(tnp)
+					{	//While the pointer refers to a technote that overlaps the chord being processed
+						if(gapnum >= numgaps)
+						{	//If more tech notes were encountered than expected
+							eof_log("\tError processing technote gaps.  Aborting", 1);
+							error = 1;
+							break;	//Break from loop
+						}
+						gaps[gapnum].start = lasttechpos;	//The previous gap's ending is the start of this gap
+						gaps[gapnum].stop = tnp->pos;		//This tech note marks the ending of this gap
+						lasttechpos = tnp->pos;				//As well as the beginning of the next gap
+						gapnum++;
+
+						//Iterate to the next technote that overlaps the chord being processed, if any
+						nexttn = eof_fixup_next_pro_guitar_technote(tp, tnnum);
+						if((nexttn > 0) && (tp->technote[nexttn]->pos >= np->pos) && (tp->technote[nexttn]->pos <= np->pos + np->length))
+						{	//If there is another technote in this track difficulty, and it overlaps the chord being processed
+							tnp = tp->technote[nexttn];
+							tnnum = nexttn;
+						}
+						else
+						{
+							if(gapnum < numgaps)
+							{	//Bounds check
+								gaps[gapnum].start = lasttechpos;	//The last tech note is the beginning of the final gap
+							}
+							tnp = NULL;
+						}
+					}
+				}
+				else
+				{	//No technotes were found, initialize the array to reflect one gap spanning the entire chord length
+					if(numtechnotes)
+					{	//If the expected number of technotes was greater than 0
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tError:  Cannot find tech notes for chord at %lums.  Aborting", np->pos);
+						eof_log(eof_log_string, 1);
+						error = 1;
+					}
+					gaps[0].start = np->pos;
+					gaps[0].stop = np->pos + np->length;
+				}
+				if(!error)
+				{	//If the gaps array was initialized
+					for(ctr = 0; ctr < numgaps; ctr++)
+					{	//For each of the gaps in the array
+						gaps[ctr].size = gaps[ctr].stop - gaps[ctr].start;	//Set the gap size variable
+					}
+
+					//Test the default solution of all technotes being placed in the first gap
+					bestsolutionval = eof_evaluate_rs_import_gap_solution(gaps, numgaps, solution, neededtechnotes);
+
+					//Until all solutions have been examined, build a new solution to be tested
+					while(!done)
+					{
+						unsigned elementnum = 0;
+
+						//Increment the solution
+						solution[0]++;	//Change the gap number this technote will use
+						while(solution[elementnum] >= numgaps)
+						{	//If this element is overflowed, reset and increment the next element of the solution
+							solution[elementnum] = 0;
+							elementnum++;	//Examine the next element
+							if(elementnum >= neededtechnotes)
+							{	//If all elements have been exhaused
+								done = 1;	//All permutations have been tested, set condition to break from outer while loop
+								break;		//Break from inner while loop
+							}
+							solution[elementnum]++;	//Increment this element
+						}
+						if(done)
+							break;
+
+						//Evaluate the new solution and keep it if it is better than the previous best solution
+						solutionval = eof_evaluate_rs_import_gap_solution(gaps, numgaps, solution, neededtechnotes);
+						if(solutionval > bestsolutionval)
+						{	//If this new solution is better
+							memcpy(bestsolution, solution, sizeof(unsigned) * neededtechnotes);	//Clone the solution
+							bestsolutionval = solutionval;
+						}
+					}
+
+					//Count how many technotes will be stored into each gap as part of the best solution
+					for(ctr = 0; ctr < neededtechnotes; ctr++)
+					{	//For each technote to be placed
+						gaps[bestsolution[ctr]].capacity++;
+					}
+
+					//Apply the timing of the best solution that was found
+					for(ctr = 0, solutionval = 0; ctr < chordnotectr; ctr++)
+					{	//For each chordnote that was parsed (re-use solutionval to track which technote number this is)
+						if(chordnote[ctr]->flags || chordnote[ctr]->eflags)
+						{	//If this chordnote has any statuses left to be placed
+							EOF_PRO_GUITAR_NOTE *tnp = eof_pro_guitar_track_add_tech_note(tp);
+							EOF_TECHNOTE_GAP *gp;
+							if(!tnp)
+							{
+								eof_log("\tError allocating memory for chord tech note.  Aborting", 1);
+								error = 1;
+								break;	//Break from loop
+							}
+							gp = &gaps[bestsolution[solutionval]];	//Determine which gap this technote will be placed into
+							tnp->pos = (double)gp->start + ((double)(gp->population + 1.0) * ((double)gp->size / (gp->capacity + 1.0))) + 0.5;	//Place this technote into the next available interval within this gap (round up to nearest ms)
+							gp->population++;		//This gap now has one more technote in it
+							tnp->type = np->type;
+							tnp->note = 1 << ctr;
+							tnp->flags = chordnote[ctr]->flags;
+							tnp->eflags = chordnote[ctr]->eflags;
+							solutionval++;
+
+///DEBUG
+(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tPlaced chordnote tech note at %lums", tnp->pos);
+eof_log(eof_log_string, 1);
+
+						}
+					}
+				}//If the gaps array was initialized
+
+				//Cleanup
+				free(gaps);
+				free(solution);
+				free(bestsolution);
+			}//If the solution arrays were created
+		}//If there are technotes remaining to be placed
+	}//If the chordnote lengths were processed
+
+	//Cleanup
+	for(ctr = 0; ctr < 6; ctr++)
+	{	//For each entry in the chordnote array
+		if(chordnote[ctr])
+		{	//If this element has a pro guitar note structure pointer
+			free(chordnote[ctr]);
+			chordnote[ctr] = NULL;
+		}
+	}
+	return error;	//Return success/error status
 }
 
 EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
@@ -1284,252 +1558,10 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 								}
 
 								if(strcasestr_spec(buffer, "</chord>"))
-								{	//If this is the end of the chord tag
-									if((chordnotectr > 0) && (chordnotectr < 7))
-									{	//If chordnote tags were parsed
-										unsigned long cflags;	//The flags that all the chordnotes have in common
-										unsigned long ceflags;	//The eflags that all the chordnotes have in common
-										unsigned neededtechnotes = 0;
-
-										//Examine chordnote lengths to detect stop and sustain statuses
-										for(ctr = 0; ctr < chordnotectr; ctr++)
-										{	//For each chordnote that was parsed
-											if(chordnote[ctr]->length)
-											{	//If this chordnote has a nonzero length
-												if(chordnote[ctr]->length < np->length)
-												{	//If the chordnote was shorter than any of the other chordnotes, add a stop tech note to define this
-													EOF_PRO_GUITAR_NOTE *tnp = eof_pro_guitar_track_add_tech_note(tp);
-													if(!tnp)
-													{
-														eof_log("\tError allocating memory for a stop tech note.  Aborting", 1);
-														error = 1;
-														break;	//Break from loop
-													}
-													tnp->pos = np->pos + chordnote[ctr]->length;	//The stop note is placed where this chordnote ends
-													tnp->type = np->type;
-													tnp->note = 1 << ctr;
-													tnp->eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_STOP;
-													numtechnotes++;	//Track that a technote was added
-												}
-												if(!(chordnote[ctr]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE  | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO | EOF_NOTE_FLAG_IS_TREMOLO)))
-												{	//If none of the techniques that normally warrant a chordnote's sustain to be kept are in use for the note
-													chordnote[ctr]->eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN;	//Consider it as having sustain status
-												}
-											}
-										}
-
-										//Examine chordnote flaqs to determine which statuses are used in all of the chord's chordnotes
-										cflags = chordnote[0]->flags;	//Initialize these variables with the first chordnote's flags
-										ceflags = chordnote[0]->eflags;
-										for(ctr = 1; ctr < chordnotectr; ctr++)
-										{	//For each of the chordnotes after the first
-											cflags &= chordnote[ctr]->flags;	//Clear any flags that this chordnote doesn't also have from the common flags variable
-											ceflags &= chordnote[ctr]->eflags;
-										}
-
-										//Move any flags that all chordnotes had in common from the chordnote flags to the chord itself
-										// and transfer leftover statuses to tech notes already applied to the chord where possible
-										np->flags |= cflags;
-										np->eflags |= ceflags;
-										eof_pro_guitar_track_sort_tech_notes(tp);	//Ensure tech notes are in order
-										for(ctr = 0; ctr < chordnotectr; ctr++)
-										{	//For each chordnote that was parsed
-											chordnote[ctr]->flags &= ~cflags;	//Clear any of the flags that were moved to the chord
-											chordnote[ctr]->eflags &= ~ceflags;
-
-											if(chordnote[ctr]->flags || chordnote[ctr]->eflags)
-											{	//If any of this chordnote's flags are still set
-												unsigned long tnnum = 0;
-
-												if(eof_pro_guitar_note_bitmask_has_tech_note(tp, tp->notes - 1, chordnote[ctr]->note, &tnnum))
-												{	//If the chord being parsed already has a technote on this string due to having added bend of stop tech notes
-													tp->technote[tnnum]->flags |= chordnote[ctr]->flags;	//Transfer the flags to it instead of creating another tech note
-													tp->technote[tnnum]->eflags |= chordnote[ctr]->eflags;
-													chordnote[ctr]->flags = chordnote[ctr]->eflags = 0;
-												}
-												else
-												{
-													neededtechnotes++;	//It will require a technote to apply to that individual gem in the chord
-												}
-											}
-										}
-
-										//Create technotes to store any remaining statuses
-										if(neededtechnotes)
-										{	//If there are technotes remaining to be placed
-											EOF_TECHNOTE_GAP *gaps;	//Stores information about the spacing between the hard-coded points of this chord (its start and end points and fixed position stop/bend tech notes)
-											unsigned *solution;		//Stores a possible solution indicating which gap number each of the remaining technotes is to be placed into
-											unsigned long solutionval;	//The smallest amount of time between any technote in the solution and another obstacle (fixed position technote or chord start/end)
-											unsigned *bestsolution;		//Stores the solution that was evaluated with the largest buffer of time between each of the remaining technotes
-											unsigned long bestsolutionval;	//The value of the best evaluated solution (higher is better)
-											unsigned long numgaps = numtechnotes + 1;	//The number of gaps within which the remaining technotes may be placed
-											unsigned long tnnum = 0, lasttechpos;
-											int done = 0;
-
-											//Ensure the chord is long enough to encompass all its technotes
-											if(np->length / (numtechnotes + neededtechnotes + 1) < 1)
-											{	//If there's not enough space on this chord to place technotes with a 1ms buffer on each side, lengthen the chord
-												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tWarning:  Chord at %lums is too short to place necessary tech notes.  Adjusting to %lums length.", np->pos, numtechnotes + neededtechnotes + 1);
-												eof_log(eof_log_string, 1);
-												np->length = numtechnotes + neededtechnotes + 1;
-											}
-
-											//Build an array defining available spaces between the existing technotes on this chord
-											gaps = malloc(sizeof(EOF_TECHNOTE_GAP) * numgaps);
-											memset(gaps, 0, sizeof(EOF_TECHNOTE_GAP) * numgaps);
-
-											//Build one array each to store the solution currently being tested and the best examined solution
-											solution = malloc(sizeof(unsigned) * neededtechnotes);
-											memset(solution, 0, sizeof(unsigned) * neededtechnotes);
-											bestsolution = malloc(sizeof(unsigned) * neededtechnotes);
-											memset(bestsolution, 0, sizeof(unsigned) * neededtechnotes);
-											if(!gaps || !solution || !bestsolution)
-											{	//If the array was not allocated
-												if(gaps)
-													free(gaps);
-												if(solution)
-													free(solution);
-												if(bestsolution)
-													free(bestsolution);
-												eof_log("\tError allocating memory for technote placement logic.  Aborting", 1);
-												error = 1;
-												break;	//Break from loop
-											}
-											lasttechpos = np->pos;	//The first gap will begin at the beginning of the chord
-											gaps[numgaps - 1].stop = np->pos + np->length;	//The last gap will end at the end of the chord
-											if(eof_pro_guitar_note_bitmask_has_tech_note(tp, tp->notes - 1, np->note, &tnnum))
-											{	//If there's at least one technote overlapping this chord
-												EOF_PRO_GUITAR_NOTE *tnp = tp->technote[tnnum];
-												unsigned long gapnum = 0;
-												long nexttn;
-												while(tnp)
-												{	//While the pointer refers to a technote that overlaps the chord being processed
-													if(gapnum >= numgaps)
-													{	//If more tech notes were encountered than expected
-														eof_log("\tError processing technote gaps.  Aborting", 1);
-														error = 1;
-														break;	//Break from inner while loop
-													}
-													gaps[gapnum].start = lasttechpos;	//The previous gap's ending is the start of this gap
-													gaps[gapnum].stop = tnp->pos;		//This tech note marks the ending of this gap
-													lasttechpos = tnp->pos;				//As well as the beginning of the next gap
-													gapnum++;
-
-													//Iterate to the next technote that overlaps the chord being processed, if any
-													nexttn = eof_fixup_next_pro_guitar_technote(tp, tnnum);
-													if((nexttn > 0) && (tp->technote[nexttn]->pos >= np->pos) && (tp->technote[nexttn]->pos <= np->pos + np->length))
-													{	//If there is another technote in this track difficulty, and it overlaps the chord being processed
-														tnp = tp->technote[nexttn];
-														tnnum = nexttn;
-													}
-													else
-													{
-														if(gapnum < numgaps)
-														{	//Bounds check
-															gaps[gapnum].start = lasttechpos;	//The last tech note is the beginning of the final gap
-														}
-														tnp = NULL;
-													}
-												}
-												if(error)
-													break;
-											}
-											else
-											{	//No technotes were found, initialize the array to reflect one gap spanning the entire chord length
-												if(numtechnotes)
-												{	//If the expected number of technotes was greater than 0
-													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tError:  Cannot find tech notes for chord at %lums.  Aborting", np->pos);
-													eof_log(eof_log_string, 1);
-													error = 1;
-													break;	//Break from loop
-												}
-												gaps[0].start = np->pos;
-												gaps[0].stop = np->pos + np->length;
-											}
-											for(ctr = 0; ctr < numgaps; ctr++)
-											{	//For each of the gaps in the array
-												gaps[ctr].size = gaps[ctr].stop - gaps[ctr].start;	//Set the gap size variable
-											}
-
-											//Test the default solution of all technotes being placed in the first gap
-											bestsolutionval = eof_evaluate_rs_import_gap_solution(gaps, numgaps, solution, neededtechnotes);
-
-											//Until all solutions have been examined, build a new solution to be tested
-											while(!done)
-											{
-												unsigned elementnum = 0;
-
-												//Increment the solution
-												solution[0]++;	//Change the gap number this technote will use
-                                                while(solution[elementnum] >= numgaps)
-												{	//If this element is overflowed, reset and increment the next element of the solution
-													solution[elementnum] = 0;
-													elementnum++;	//Examine the next element
-													if(elementnum >= neededtechnotes)
-													{	//If all elements have been exhaused
-														done = 1;	//All permutations have been tested, set condition to break from outer while loop
-														break;		//Break from inner while loop
-													}
-													solution[elementnum]++;	//Increment this element
-												}
-												if(done)
-													break;
-
-												//Evaluate the new solution and keep it if it is better than the previous best solution
-												solutionval = eof_evaluate_rs_import_gap_solution(gaps, numgaps, solution, neededtechnotes);
-												if(solutionval > bestsolutionval)
-												{	//If this new solution is better
-													memcpy(bestsolution, solution, sizeof(unsigned) * neededtechnotes);	//Clone the solution
-													bestsolutionval = solutionval;
-												}
-											}
-
-											//Count how many technotes will be stored into each gap as part of the best solution
-											for(ctr = 0; ctr < neededtechnotes; ctr++)
-											{	//For each technote to be placed
-												gaps[bestsolution[ctr]].capacity++;
-											}
-
-											//Apply the timing of the best solution that was found
-											for(ctr = 0, solutionval = 0; ctr < chordnotectr; ctr++)
-											{	//For each chordnote that was parsed (re-use solutionval to track which technote number this is)
-												if(chordnote[ctr]->flags || chordnote[ctr]->eflags)
-												{	//If this chordnote has any statuses left to be placed
-													EOF_PRO_GUITAR_NOTE *tnp = eof_pro_guitar_track_add_tech_note(tp);
-													EOF_TECHNOTE_GAP *gp;
-													if(!tnp)
-													{
-														eof_log("\tError allocating memory for chord tech note.  Aborting", 1);
-														error = 1;
-														break;	//Break from loop
-													}
-													gp = &gaps[bestsolution[solutionval]];	//Determine which gap this technote will be placed into
-													tnp->pos = (double)gp->start + ((double)(gp->population + 1.0) * ((double)gp->size / (gp->capacity + 1.0))) + 0.5;	//Place this technote into the next available interval within this gap (round up to nearest ms)
-													gp->population++;		//This gap now has one more technote in it
-													tnp->type = np->type;
-													tnp->note = 1 << ctr;
-													tnp->flags = chordnote[ctr]->flags;
-													tnp->eflags = chordnote[ctr]->eflags;
-													solutionval++;
-												}
-											}
-
-											//Cleanup
-											free(gaps);
-											free(solution);
-											free(bestsolution);
-										}//If there are technotes remaining to be placed
-
-										//Cleanup
-										for(ctr = 0; ctr < 6; ctr++)
-										{	//For each entry in the chordnote array
-											if(chordnote[ctr])
-											{	//If this element has a pro guitar note structure pointer
-												free(chordnote[ctr]);
-												chordnote[ctr] = NULL;
-											}
-										}
-									}//If chordnote tags were parsed
+								{	//If this is the end of the chord tag, process and add technotes for the contents of the chordnote[] array as appropriate
+									error = eof_rs_import_process_chordnotes(tp, np, chordnote, chordnotectr, numtechnotes);
+									if(error)	//If there was an error performing these tasks
+										break;	//Break from loop
 									chordnotectr = 7;	//Reset this to an invalid value so the chordnote logic can tell that a chord tag is NOT being parsed
 								}//If this is the end of the chord tag
 

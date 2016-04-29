@@ -4334,8 +4334,8 @@ int eof_menu_note_edit_pro_guitar_note(void)
 								}
 							}
 							if(eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
-							{	//If tech view is in effect, ignore the user specified fret value and keep it at 0
-								fretvalue = 0;
+							{	//If tech view is in effect, ignore the user specified fret value except for the MSB (mute status)
+								fretvalue &= 0x80;
 							}
 							if(fretvalue != tp->note[i]->frets[ctr])
 							{	//If this fret value (or the string's muting) changed

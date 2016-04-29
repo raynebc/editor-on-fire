@@ -4250,6 +4250,9 @@ int eof_rs_import_common(char *fn)
 			eof_log("Cleaning up imported notes", 1);
 			eof_song->track[eof_selected_track]->numdiffs = eof_detect_difficulties(eof_song, eof_selected_track);	//Update the number of difficulties used in this track
 			eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to clean up the track
+			eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 1);	//Activate the tech note set
+			eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to clean up the tech notes
+			eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0);	//Activate the normal note set
 			(void) eof_menu_track_selected_track_number(eof_selected_track, 1);	//Re-select the active track to allow for a change in string count
 			(void) replace_filename(eof_last_rs_path, fn, "", 1024);	//Set the last loaded Rocksmith file path
 		}

@@ -5202,10 +5202,6 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 	{	//If the note/chordNote is string muted
 		tech.stringmute = 1;	//Ensure the note/chordNote indicates this string is muted
 	}
-	else
-	{	//It is not string muted
-		tech.stringmute = 0;
-	}
 
 	//If a chordNote is being exported, determine if its sustain needs to be dropped
 	if(ischordnote)

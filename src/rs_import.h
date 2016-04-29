@@ -36,6 +36,13 @@ unsigned long eof_evaluate_rs_import_gap_solution(EOF_TECHNOTE_GAP *gaps, unsign
 	//The smallest of those amounts is returned as the value of the solution, or ULONG_MAX is returned on error
 	//A larger solution is desired as it indicates all technotes are as sparsely spaced as possible
 
+char eof_rs_import_process_chordnotes(EOF_PRO_GUITAR_TRACK *tp, EOF_PRO_GUITAR_NOTE *np, EOF_PRO_GUITAR_NOTE **chordnote, unsigned long chordnotectr, unsigned long numtechnotes);
+	//Accepts a pointer to the chord (np) being parsed, an array (chordnote) containing the chordnote data and the number (chordnotectr) of chordnotes in that array
+	// and adds optimally-spaced technotes over the duration of the specified chord
+	//numtechnotes is expected to be the number of technotes that have already been added to the specified note (ie. bend tech notes)
+	//This function frees the pro guitar note structures in the array and resets the array's pointers to NULL
+	//Returns nonzero on error
+
 EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn);
 	//Parses the specified Rocksmith XML file and returns its content in a pro guitar track structure
 
