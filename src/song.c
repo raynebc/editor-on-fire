@@ -4843,6 +4843,42 @@ long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long not
 	return -1;
 }
 
+long eof_fixup_next_pro_guitar_technote(EOF_PRO_GUITAR_TRACK * tp, unsigned long tnote)
+{
+	unsigned long i;
+
+	if(!tp || (tnote >= tp->technotes))
+		return -1;	//Invalid parameters
+
+	if(tp)
+	{
+		for(i = tnote + 1; i < tp->technotes; i++)
+		{
+			if(tp->technote[i]->type == tp->technote[tnote]->type)
+			{
+				return i;
+			}
+		}
+	}
+	return -1;
+}
+
+long eof_fixup_next_pro_guitar_note_ptr(EOF_PRO_GUITAR_TRACK * tp, EOF_PRO_GUITAR_NOTE * np)
+{
+	unsigned long i, note;
+
+	if(!tp || !np)
+		return -1;	//Invalid parameters
+
+	for(i = 0; (i < tp->notes) && (tp->note[i] != np); i++);	//Find the referenced pro guitar note in the array
+	if(i >= tp->notes)
+	{	//The note wasn't found
+		return -1;
+	}
+
+	return eof_fixup_next_pro_guitar_note(tp, i);
+}
+
 long eof_track_fixup_first_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned char diff)
 {
 	unsigned long ctr;

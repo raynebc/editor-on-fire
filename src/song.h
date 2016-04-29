@@ -740,6 +740,8 @@ int eof_song_qsort_pro_guitar_notes(const void * e1, const void * e2);	//The com
 void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
 long eof_fixup_previous_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Returns the note one before the specified note number that is in the same difficulty, or -1 if there is none
 long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Returns the note one after the specified note number that is in the same difficulty, or -1 if there is none
+long eof_fixup_next_pro_guitar_technote(EOF_PRO_GUITAR_TRACK * tp, unsigned long tnote);	//Returns the tech note one after the specified tech note number that is in the same difficulty, or -1 if there is none
+long eof_fixup_next_pro_guitar_note_ptr(EOF_PRO_GUITAR_TRACK * tp, EOF_PRO_GUITAR_NOTE * np);	//Finds the referenced note pointer in the specified track's active note set and sends it to eof_fixup_next_pro_guitar_note(), returning the result
 long eof_track_fixup_first_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned char diff);	//Returns the first note/lyric in the specified track difficulty, or -1 if there is none
 void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel);
 	//Performs cleanup of the specified instrument track.  If sel is zero, the currently selected note is deselected automatically.

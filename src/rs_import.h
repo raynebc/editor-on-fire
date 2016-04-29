@@ -3,6 +3,15 @@
 
 #include "song.h"
 
+typedef struct
+{
+	unsigned long start;
+	unsigned long stop;
+	unsigned long size;			//The size of the gap in ms
+	unsigned long capacity;		//The number of technotes that will be inserted into this gap during the final application of the solution
+	unsigned long population;	//The number of technotes that have been inserted into this gap during the final application of the solution
+} EOF_TECHNOTE_GAP;
+
 int eof_parse_chord_template(char *name, size_t size, char *finger, char *frets, unsigned char *note, unsigned char *numstrings, unsigned char *isarp, unsigned long linectr, char *input);
 	//Reads a Rocksmith XML format chord template from the input string into the destination variables:
 	//	The name attribute is read into name[] which is an array at least size number of bytes in size
@@ -21,6 +30,11 @@ EOF_PRO_GUITAR_NOTE *eof_rs_import_note_tag_data(char *buffer, int function, EOF
 	//If a bendvalue tag is parsed, the difficulty and string number of the last normal note to be parsed by this function is applied to the created tech note
 	//The created note is returned, or NULL is returned on error
 	//linectr is cited as the XML line number in error logging
+
+unsigned long eof_evaluate_rs_import_gap_solution(EOF_TECHNOTE_GAP *gaps, unsigned long numgaps, unsigned *solution, unsigned long solutionsize);
+	//Calculates the amount of space before and after each technote and other technotes or obstacles
+	//The smallest of those amounts is returned as the value of the solution, or ULONG_MAX is returned on error
+	//A larger solution is desired as it indicates all technotes are as sparsely spaced as possible
 
 EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn);
 	//Parses the specified Rocksmith XML file and returns its content in a pro guitar track structure
