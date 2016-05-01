@@ -131,27 +131,50 @@ MENU eof_edit_bookmark_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_edit_selection_select_menu[] =
+{
+	{"&Chords", eof_menu_edit_select_chords, NULL, 0, NULL},
+	{"Single &Notes", eof_menu_edit_select_single_notes, NULL, 0, NULL},
+	{"&Toms", eof_menu_edit_select_toms, NULL, 0, NULL},
+	{"c&Ymbals", eof_menu_edit_select_cymbals, NULL, 0, NULL},
+	{"&Shorter than", eof_menu_edit_select_all_shorter_than, NULL, 0, NULL},
+	{"&Longer than", eof_menu_edit_select_all_longer_than, NULL, 0, NULL},
+	{"&Of length", eof_menu_edit_select_all_of_length, NULL, 0, NULL},
+	{"On &Beat notes", eof_menu_edit_select_on_beat_notes, NULL, 0, NULL},
+	{"O&Ff Beat notes", eof_menu_edit_select_off_beat_notes, NULL, 0, NULL},
+	{"One in &Every", eof_menu_edit_select_note_number_in_sequence, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_edit_selection_deselect_menu[] =
+{
+	{"&Chords", eof_menu_edit_deselect_chords, NULL, 0, NULL},
+	{"Single &Notes", eof_menu_edit_deselect_single_notes, NULL, 0, NULL},
+	{"&Toms", eof_menu_edit_deselect_toms, NULL, 0, NULL},
+	{"c&Ymbals", eof_menu_edit_deselect_cymbals, NULL, 0, NULL},
+	{"&Shorter than", eof_menu_edit_deselect_all_shorter_than, NULL, 0, NULL},
+	{"&Longer than", eof_menu_edit_deselect_all_longer_than, NULL, 0, NULL},
+	{"&Of length", eof_menu_edit_deselect_all_of_length, NULL, 0, NULL},
+	{"On &Beat notes", eof_menu_edit_deselect_on_beat_notes, NULL, 0, NULL},
+	{"O&Ff Beat notes", eof_menu_edit_deselect_off_beat_notes, NULL, 0, NULL},
+	{"One in &Every", eof_menu_edit_deselect_note_number_in_sequence, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_edit_selection_menu[] =
 {
+	{"&Select", NULL, eof_edit_selection_select_menu, 0, NULL},
 	{"Select &All\t" CTRL_NAME "+A", eof_menu_edit_select_all, NULL, 0, NULL},
 	{"&Conditional select", eof_menu_edit_select_conditional, NULL, 0, NULL},
 	{"Select like\t" CTRL_NAME "+L", eof_menu_edit_select_like, NULL, 0, NULL},
 	{"&Precise select like\tShift+L", eof_menu_edit_precise_select_like, NULL, 0, NULL},
 	{"Select &Rest\tShift+End", eof_menu_edit_select_rest, NULL, 0, NULL},
 	{"Select previous\tShift+Home", eof_menu_edit_select_previous, NULL, 0, NULL},
-	{"Select all &Shorter than", eof_menu_edit_select_all_shorter_than, NULL, 0, NULL},
-	{"Select all &Longer than", eof_menu_edit_select_all_longer_than, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
+	{"&Deselect", NULL, eof_edit_selection_deselect_menu, 0, NULL},
 	{"Deselect All\t" CTRL_NAME "+D", eof_menu_edit_deselect_all, NULL, 0, NULL},
 	{"Conditional &Deselect", eof_menu_edit_deselect_conditional, NULL, 0, NULL},
-	{"Deselect chords", eof_menu_edit_deselect_chords, NULL, 0, NULL},
-	{"Deselect single notes", eof_menu_edit_deselect_single_notes, NULL, 0, NULL},
 	{"Invert selection", eof_menu_edit_invert_selection, NULL, 0, NULL},
-	{"Deselect one in every", eof_menu_edit_deselect_note_number_in_sequence, NULL, 0, NULL},
-	{"Deselect on beat notes", eof_menu_edit_deselect_on_beat_notes, NULL, 0, NULL},
-	{"Deselect off beat notes", eof_menu_edit_deselect_off_beat_notes, NULL, 0, NULL},
-	{"Deselect toms", eof_menu_edit_deselect_toms, NULL, 0, NULL},
-	{"Deselect cymbals", eof_menu_edit_deselect_cymbals, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -255,62 +278,52 @@ void eof_prepare_edit_menu(void)
 		if(vselected)
 		{	//If any notes in the active track difficulty are selected
 			eof_edit_menu[3].flags = 0;		//copy
-			eof_edit_selection_menu[2].flags = 0;	//select like
-			eof_edit_selection_menu[3].flags = 0;	//precise select like
+			eof_edit_selection_menu[3].flags = 0;	//select like
+			eof_edit_selection_menu[4].flags = 0;	//precise select like
 
 			/* select rest */
 			if(eof_selection.current != (eof_get_track_size(eof_song, eof_selected_track) - 1))
 			{	//If the selected note isn't the last in the track
-				eof_edit_selection_menu[4].flags = 0;
+				eof_edit_selection_menu[5].flags = 0;
 			}
 			else
 			{
-				eof_edit_selection_menu[4].flags = D_DISABLED;
+				eof_edit_selection_menu[5].flags = D_DISABLED;
 			}
 
 			if(eof_selection.current != 0)
 			{
-				eof_edit_selection_menu[5].flags = 0;	//select previous
+				eof_edit_selection_menu[6].flags = 0;	//select previous
 			}
 			else
 			{
-				eof_edit_selection_menu[5].flags = D_DISABLED;	//Select previous cannot be used when the first note/lyric was just selected
+				eof_edit_selection_menu[6].flags = D_DISABLED;	//Select previous cannot be used when the first note/lyric was just selected
 			}
 
+			eof_edit_selection_menu[8].flags = 0;	//deselect>
 			eof_edit_selection_menu[9].flags = 0;	//deselect all
 			eof_edit_selection_menu[10].flags = 0;	//conditional deselect
-			eof_edit_selection_menu[11].flags = 0;	//deselect chords
-			eof_edit_selection_menu[12].flags = 0;	//deselect single notes
-			eof_edit_selection_menu[14].flags = 0;	//deselect one in every
-			eof_edit_selection_menu[15].flags = 0;	//deselect on beat notes
-			eof_edit_selection_menu[16].flags = 0;	//deselect off beat notes
 			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 			{	//If a drum track is active
-				eof_edit_selection_menu[17].flags = 0;	//deselect toms
-				eof_edit_selection_menu[18].flags = 0;	//deselect cymbals
+				eof_edit_selection_deselect_menu[2].flags = 0;	//deselect>Toms
+				eof_edit_selection_deselect_menu[3].flags = 0;	//deselect>Cymbals
 			}
 			else
 			{
-				eof_edit_selection_menu[17].flags = D_DISABLED;
-				eof_edit_selection_menu[18].flags = D_DISABLED;
+				eof_edit_selection_deselect_menu[2].flags = D_DISABLED;
+				eof_edit_selection_deselect_menu[3].flags = D_DISABLED;
 			}
 		}
 		else
 		{	//If no notes in the active track difficulty are selected
 			eof_edit_menu[3].flags = D_DISABLED;			//copy
-			eof_edit_selection_menu[2].flags = D_DISABLED;	//select like
-			eof_edit_selection_menu[3].flags = D_DISABLED;	//precise select like
-			eof_edit_selection_menu[4].flags = D_DISABLED;	//select rest
-			eof_edit_selection_menu[5].flags = D_DISABLED;	//select previous
+			eof_edit_selection_menu[3].flags = D_DISABLED;	//select like
+			eof_edit_selection_menu[4].flags = D_DISABLED;	//precise select like
+			eof_edit_selection_menu[5].flags = D_DISABLED;	//select rest
+			eof_edit_selection_menu[6].flags = D_DISABLED;	//select previous
+			eof_edit_selection_menu[8].flags = D_DISABLED;	//deselect>
 			eof_edit_selection_menu[9].flags = D_DISABLED;	//deselect all
 			eof_edit_selection_menu[10].flags = D_DISABLED;	//conditional deselect
-			eof_edit_selection_menu[11].flags = D_DISABLED;	//deselect chords
-			eof_edit_selection_menu[12].flags = D_DISABLED;	//deselect single notes
-			eof_edit_selection_menu[14].flags = D_DISABLED;	//deselect one in every
-			eof_edit_selection_menu[15].flags = D_DISABLED;	//deselect on beat notes
-			eof_edit_selection_menu[16].flags = D_DISABLED;	//deselect off beat notes
-			eof_edit_selection_menu[17].flags = D_DISABLED;	//deselect toms
-			eof_edit_selection_menu[18].flags = D_DISABLED;	//deselect cymbals
 		}
 
 		/* paste, old paste */
@@ -338,12 +351,12 @@ void eof_prepare_edit_menu(void)
 		{
 			if(eof_song->vocal_track[tracknum]->lyrics > 0)
 			{
-				eof_edit_selection_menu[0].flags = 0;
+				eof_edit_selection_menu[1].flags = 0;
 				eof_edit_menu[22].flags = 0;
 			}
 			else
 			{
-				eof_edit_selection_menu[0].flags = D_DISABLED;
+				eof_edit_selection_menu[1].flags = D_DISABLED;
 				eof_edit_menu[22].flags = D_DISABLED;
 			}
 		}
@@ -351,12 +364,12 @@ void eof_prepare_edit_menu(void)
 		{
 			if(eof_track_diff_populated_status[eof_note_type])
 			{	//If the active track has one or more notes
-				eof_edit_selection_menu[0].flags = 0;
+				eof_edit_selection_menu[1].flags = 0;
 				eof_edit_menu[22].flags = 0;
 			}
 			else
 			{
-				eof_edit_selection_menu[0].flags = D_DISABLED;
+				eof_edit_selection_menu[1].flags = D_DISABLED;
 				eof_edit_menu[22].flags = D_DISABLED;
 			}
 		}
@@ -2505,43 +2518,60 @@ int eof_menu_edit_select_rest(void)
 	return 1;
 }
 
-DIALOG eof_menu_edit_select_all_shorter_than_dialog[] =
+DIALOG eof_menu_edit_select_by_note_length_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Select all notes shorter than", NULL, NULL },
+	{ d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   eof_etext, NULL, NULL },
 	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "This # of ms:",NULL, NULL },
-	{ eof_verified_edit_proc,12,  56,  90,  20,  0,   0,   0,    0,      7,   0,   eof_etext,     "0123456789",  NULL },
+	{ eof_verified_edit_proc,12,  56,  90,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789",  NULL },
 	{ d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                         NULL, NULL },
 	{ d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                     NULL, NULL },
 	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                         NULL, NULL }
 };
 
-int eof_menu_edit_select_all_shorter_than(void)
+int eof_menu_edit_select_by_note_length_logic(int (*check)(long, long), int function)
 {
 	unsigned long i;
 	long threshold;
 
-	eof_etext[0] = '\0';	//Empty the string
-	eof_color_dialog(eof_menu_edit_select_all_shorter_than_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_menu_edit_select_all_shorter_than_dialog);
+	if(!function && (eof_selection.track != eof_selected_track))
+		return 1;	//No notes in the active track are selected so none can become deselected
 
-	if(eof_popup_dialog(eof_menu_edit_select_all_shorter_than_dialog, 2) == 3)
+	eof_etext2[0] = '\0';	//Empty the string
+	eof_color_dialog(eof_menu_edit_select_by_note_length_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_menu_edit_select_by_note_length_dialog);
+
+	if(eof_popup_dialog(eof_menu_edit_select_by_note_length_dialog, 2) == 3)
 	{	//User clicked OK
-		if(eof_etext[0] != '\0')
+		if(eof_etext2[0] != '\0')
 		{	//If the user entered a threshold
-			threshold = atol(eof_etext);
+			threshold = atol(eof_etext2);
 			if(threshold > 0)
 			{	//If the specified value is valid
 				for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 				{	//For each note in the active track
-					if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_length(eof_song, eof_selected_track, i) < threshold))
-					{	//If the note is in the active difficulty and is shorter than the user specified threshold length
-						eof_selection.track = eof_selected_track;
-						eof_selection.multi[i] = 1;
+					if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (check(eof_get_note_length(eof_song, eof_selected_track, i), threshold)))
+					{	//If the note is in the active difficulty and matches the conditions the user specified
+						if(!function)
+						{	//Perform deselection
+							eof_selection.multi[i] = 0;
+						}
+						else
+						{	//Perform selection
+							if(eof_selection.track != eof_selected_track)
+							{	//If no notes in the current track are currently selected
+								(void) eof_menu_edit_deselect_all();		//Clear the selection variables if necessary
+								eof_selection.track = eof_selected_track;
+							}
+							eof_selection.multi[i] = 1;
+						}
 					}
-					else
-					{	//Otherwise deselect the note from the selection array
-						eof_selection.multi[i] = 0;
+				}
+				if(eof_selection.current != EOF_MAX_NOTES - 1)
+				{	//If there was a last selected note
+					if(eof_selection.multi[eof_selection.current] == 0)
+					{	//And it's not selected anymore
+						eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note
 					}
 				}
 			}
@@ -2550,49 +2580,46 @@ int eof_menu_edit_select_all_shorter_than(void)
 	return 1;
 }
 
-DIALOG eof_menu_edit_select_all_longer_than_dialog[] =
+int eof_menu_edit_select_all_shorter_than(void)
 {
-	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Select all notes longer than", NULL, NULL },
-	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "This # of ms:",NULL, NULL },
-	{ eof_verified_edit_proc,12,  56,  90,  20,  0,   0,   0,    0,      7,   0,   eof_etext,     "0123456789",  NULL },
-	{ d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                         NULL, NULL },
-	{ d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                     NULL, NULL },
-	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                         NULL, NULL }
-};
+	strncpy(eof_etext, "Select all notes shorter than", sizeof(eof_etext) - 1);
+	eof_etext2[0] = '\0';	//Empty the input field
+	return eof_menu_edit_select_by_note_length_logic(eof_length_is_shorter_than, 1);
+}
 
 int eof_menu_edit_select_all_longer_than(void)
 {
-	unsigned long i;
-	long threshold;
+	strncpy(eof_etext, "Select all notes longer than", sizeof(eof_etext) - 1);
+	eof_etext2[0] = '\0';	//Empty the input field
+	return eof_menu_edit_select_by_note_length_logic(eof_length_is_longer_than, 1);
+}
 
-	eof_etext[0] = '\0';	//Empty the string
-	eof_color_dialog(eof_menu_edit_select_all_longer_than_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_menu_edit_select_all_longer_than_dialog);
+int eof_menu_edit_select_all_of_length(void)
+{
+	strncpy(eof_etext, "Select notes with a length of", sizeof(eof_etext) - 1);
+	eof_etext2[0] = '\0';	//Empty the input field
+	return eof_menu_edit_select_by_note_length_logic(eof_length_is_equal_to, 1);
+}
 
-	if(eof_popup_dialog(eof_menu_edit_select_all_longer_than_dialog, 2) == 3)
-	{	//User clicked OK
-		if(eof_etext[0] != '\0')
-		{	//If the user entered a threshold
-			threshold = atol(eof_etext);
-			if(threshold > 0)
-			{	//If the specified value is valid
-				for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-				{	//For each note in the active track
-					if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_length(eof_song, eof_selected_track, i) > threshold))
-					{	//If the note is in the active difficulty and is longer than the user specified threshold length
-						eof_selection.track = eof_selected_track;
-						eof_selection.multi[i] = 1;
-					}
-					else
-					{	//Otherwise deselect the note from the selection array
-						eof_selection.multi[i] = 0;
-					}
-				}
-			}
-		}
-	}
-	return 1;
+int eof_menu_edit_deselect_all_shorter_than(void)
+{
+	strncpy(eof_etext, "Deselect all notes shorter than", sizeof(eof_etext) - 1);
+	eof_etext2[0] = '\0';	//Empty the input field
+	return eof_menu_edit_select_by_note_length_logic(eof_length_is_shorter_than, 0);
+}
+
+int eof_menu_edit_deselect_all_longer_than(void)
+{
+	strncpy(eof_etext, "Deselect all notes longer than", sizeof(eof_etext) - 1);
+	eof_etext2[0] = '\0';	//Empty the input field
+	return eof_menu_edit_select_by_note_length_logic(eof_length_is_longer_than, 0);
+}
+
+int eof_menu_edit_deselect_all_of_length(void)
+{
+	strncpy(eof_etext, "Deselect notes with a length of", sizeof(eof_etext) - 1);
+	eof_etext2[0] = '\0';	//Empty the input field
+	return eof_menu_edit_select_by_note_length_logic(eof_length_is_equal_to, 0);
 }
 
 DIALOG eof_menu_edit_conditional_selection_dialog[] =
@@ -2850,8 +2877,8 @@ int eof_menu_edit_conditional_selection_logic(int function)
 				}
 				else
 				{	//Perform conditional selection
-					if(!eof_selection.multi[ctr] && eof_check_note_conditional_selection(eof_song, eof_selected_track, ctr, match_bitmask))
-					{	//If this note isn't already selected and matches the conditions the user specified
+					if(eof_check_note_conditional_selection(eof_song, eof_selected_track, ctr, match_bitmask))
+					{	//If this note matches the conditions the user specified
 						if(eof_selection.track != eof_selected_track)
 						{	//If no notes in the current track are currently selected
 							(void) eof_menu_edit_deselect_all();		//Clear the selection variables if necessary
@@ -2884,19 +2911,67 @@ int eof_menu_edit_select_conditional(void)
 	return eof_menu_edit_conditional_selection_logic(1);
 }
 
-int eof_menu_edit_deselect_chords(void)
+int eof_menu_edit_select_logic(int (*check)(EOF_SONG *, unsigned long, unsigned long))
 {
 	unsigned long ctr;
 
-	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+	if(!eof_song || (eof_selected_track >= eof_song->tracks) || !check)
 		return 0;	//Return error
+
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+	{	//For each note in the track
+		if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
+		{	//If the note is in the active track difficulty
+			if(check(eof_song, eof_selected_track, ctr))
+			{	//If this note meets the criterion for being selected
+				if(eof_selection.track != eof_selected_track)
+				{	//If no notes in the current track are currently selected
+					(void) eof_menu_edit_deselect_all();		//Clear the selection variables if necessary
+					eof_selection.track = eof_selected_track;	//Indicate that the active track is the one with notes selected
+				}
+				eof_selection.multi[ctr] = 1;	//Select the note
+			}
+		}
+	}
+
+	return 1;
+}
+
+int eof_menu_edit_select_chords(void)
+{
+	return eof_menu_edit_select_logic(eof_note_is_chord);
+}
+
+int eof_menu_edit_select_single_notes(void)
+{
+	return eof_menu_edit_select_logic(eof_note_is_single_note);
+}
+
+int eof_menu_edit_select_toms(void)
+{
+	return eof_menu_edit_select_logic(eof_note_is_tom);
+}
+
+int eof_menu_edit_select_cymbals(void)
+{
+	return eof_menu_edit_select_logic(eof_note_is_cymbal);
+}
+
+int eof_menu_edit_deselect_logic(int (*check)(EOF_SONG *, unsigned long, unsigned long))
+{
+	unsigned long ctr;
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks) || !check)
+		return 0;	//Return error
+	if(eof_selection.track != eof_selected_track)
+		return 1;	//No notes in the active track are selected so none can become deselected
 
 	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 	{	//For each note in the track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type))
 		{	//If the note is in the active instrument difficulty and is selected
-			if(eof_note_count_colors(eof_song, eof_selected_track, ctr) > 1)
-			{	//If this note has at least two gems
+			if(check(eof_song, eof_selected_track, ctr))
+			{	//If this note meets the criterion for being deselected
 				eof_selection.multi[ctr] = 0;	//Deselect it
 			}
 		}
@@ -2910,100 +2985,26 @@ int eof_menu_edit_deselect_chords(void)
 	}
 
 	return 1;
+}
+
+int eof_menu_edit_deselect_chords(void)
+{
+	return eof_menu_edit_deselect_logic(eof_note_is_chord);
 }
 
 int eof_menu_edit_deselect_single_notes(void)
 {
-	unsigned long ctr;
-
-	if(!eof_song || (eof_selected_track >= eof_song->tracks))
-		return 0;	//Return error
-
-	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
-	{	//For each note in the track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type))
-		{	//If the note is in the active instrument difficulty and is selected
-			if(eof_note_count_colors(eof_song, eof_selected_track, ctr) < 2)
-			{	//If this note doesn't have at least two gems
-				eof_selection.multi[ctr] = 0;	//Deselect it
-			}
-		}
-	}
-	if(eof_selection.current != EOF_MAX_NOTES - 1)
-	{	//If there was a last selected note
-		if(eof_selection.multi[eof_selection.current] == 0)
-		{	//And it's not selected anymore
-			eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note
-		}
-	}
-
-	return 1;
+	return eof_menu_edit_deselect_logic(eof_note_is_single_note);
 }
 
 int eof_menu_edit_deselect_toms(void)
 {
-	unsigned long ctr, flags, note;
-
-	if(!eof_song || (eof_selected_track >= eof_song->tracks))
-		return 0;	//Return error
-
-	if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-	{	//If a drum track is active
-		for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
-		{	//For each note in the track
-			if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type))
-			{	//If the note is in the active instrument difficulty and is selected
-				flags = eof_get_note_flags(eof_song, eof_selected_track, ctr);
-				note = eof_get_note_note(eof_song, eof_selected_track, ctr);
-				if((note & (4 | 8 | 16)) && !(flags & (EOF_DRUM_NOTE_FLAG_Y_CYMBAL | EOF_DRUM_NOTE_FLAG_B_CYMBAL | EOF_DRUM_NOTE_FLAG_G_CYMBAL)))
-				{	//If this note contains any gems on lanes 3, 4 or 5 and none are marked as cymbals
-					eof_selection.multi[ctr] = 0;	//Deselect it
-				}
-			}
-		}
-		if(eof_selection.current != EOF_MAX_NOTES - 1)
-		{	//If there was a last selected note
-			if(eof_selection.multi[eof_selection.current] == 0)
-			{	//And it's not selected anymore
-				eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note
-			}
-		}
-	}
-
-	return 1;
+	return eof_menu_edit_deselect_logic(eof_note_is_tom);
 }
 
 int eof_menu_edit_deselect_cymbals(void)
 {
-	unsigned long ctr, flags, note;
-
-	if(!eof_song || (eof_selected_track >= eof_song->tracks))
-		return 0;	//Return error
-
-	if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-	{	//If a drum track is active
-		for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
-		{	//For each note in the track
-			if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type))
-			{	//If the note is in the active instrument difficulty and is selected
-				flags = eof_get_note_flags(eof_song, eof_selected_track, ctr);
-				note = eof_get_note_note(eof_song, eof_selected_track, ctr);
-				if((note & (4 | 8 | 16)) && (flags & (EOF_DRUM_NOTE_FLAG_Y_CYMBAL | EOF_DRUM_NOTE_FLAG_B_CYMBAL | EOF_DRUM_NOTE_FLAG_G_CYMBAL)))
-				{	//If this note contains any gems on lanes 3, 4 or 5 and any are marked as cymbals
-					eof_selection.multi[ctr] = 0;	//Deselect it
-				}
-			}
-		}
-		if(eof_selection.current != EOF_MAX_NOTES - 1)
-		{	//If there was a last selected note
-			if(eof_selection.multi[eof_selection.current] == 0)
-			{	//And it's not selected anymore
-				eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note
-			}
-		}
-	}
-
-	return 1;
+	return eof_menu_edit_deselect_logic(eof_note_is_cymbal);
 }
 
 int eof_menu_edit_invert_selection(void)
@@ -3895,55 +3896,85 @@ int eof_menu_song_paste_from_difficulty(void)
 	return 1;
 }
 
-DIALOG eof_deselect_note_number_in_sequence_dialog[] =
+DIALOG eof_menu_edit_select_note_number_in_sequence_logic_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg)  (bg) (key) (flags) (d1) (d2) (dp)         (dp2)         (dp3) */
 	{ d_agup_shadow_box_proc,32,  68,  188, 130, 2,    23,  0,    0,       0,   0,   NULL,       NULL,         NULL },
-	{ d_agup_text_proc,      56,  84,  64,  8,   2,    23,  0,    0,       0,   0,   "Deselect note #:", NULL,         NULL },
-	{ eof_verified_edit_proc,160, 80,  28,  20,  2,    23,  0,    0,       3,   0,   eof_etext, "0123456789", NULL },
+	{ d_agup_text_proc,      56,  84,  64,  8,   2,    23,  0,    0,       0,   0,   eof_etext, NULL,         NULL },
+	{ eof_verified_edit_proc,160, 80,  28,  20,  2,    23,  0,    0,       3,   0,   eof_etext2, "0123456789", NULL },
 	{ d_agup_text_proc,      56,  108, 64,  8,   2,    23,  0,    0,       0,   0,   "Out of every:", NULL,         NULL },
-	{ eof_verified_edit_proc,160, 104, 28,  20,  2,    23,  0,    0,       3,   0,   eof_etext2, "0123456789", NULL },
-	{ d_agup_text_proc,      56,  132, 64,  8,   2,    23,  0,    0,       0,   0,   "selected notes", NULL,         NULL },
+	{ eof_verified_edit_proc,160, 104, 28,  20,  2,    23,  0,    0,       3,   0,   eof_etext3, "0123456789", NULL },
+	{ d_agup_text_proc,      56,  132, 64,  8,   2,    23,  0,    0,       0,   0,   eof_etext4, NULL,         NULL },
 	{ d_agup_button_proc,    48,  156, 68,  28,  2,    23,  '\r', D_EXIT,  0,   0,   "OK",       NULL,         NULL },
 	{ d_agup_button_proc,    136, 156, 68,  28,  2,    23,  0,    D_EXIT,  0,   0,   "Cancel",   NULL,         NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
-int eof_menu_edit_deselect_note_number_in_sequence(void)
+int eof_menu_edit_select_note_number_in_sequence_logic(int function)
 {
 	int val1, val2, ctr;
 	unsigned long i;
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
+	if(!function && (eof_selection.track != eof_selected_track))
+		return 1;	//No notes in the active track are selected so none can become deselected
 
-	eof_color_dialog(eof_deselect_note_number_in_sequence_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_deselect_note_number_in_sequence_dialog);
+	eof_color_dialog(eof_menu_edit_select_note_number_in_sequence_logic_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_menu_edit_select_note_number_in_sequence_logic_dialog);
 
-	eof_etext[0] = '\0';	//Empty this field
+	if(!function)
+	{
+		strncpy(eof_etext, "Deselect note #:", sizeof(eof_etext) - 1);
+	}
+	else
+	{
+		strncpy(eof_etext, "Select note #:", sizeof(eof_etext) - 1);
+	}
 	eof_etext2[0] = '\0';	//Empty this field
+	eof_etext3[0] = '\0';	//Empty this field
 
-	if(eof_popup_dialog(eof_deselect_note_number_in_sequence_dialog, 2) == 6)
+	if(eof_popup_dialog(eof_menu_edit_select_note_number_in_sequence_logic_dialog, 2) == 6)
 	{	//If user clicked OK
-		val1 = atoi(eof_etext);
-		val2 = atoi(eof_etext2);
+		val1 = atoi(eof_etext2);
+		val2 = atoi(eof_etext3);
 		if((val1 >= 1) && (val2 >= 1))
 		{	//If the user entered valid values
 			for(i = 0, ctr = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 			{	//For each note in the active track
-				if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-				{	//If the note is selected
-					ctr++;	//Keep track of which note number in the sequence this is
-					if(ctr == val1)
-					{	//If this is the note the user wanted to deselect
-						eof_selection.multi[i] = 0;	//Deselect it
-					}
-					if(ctr == val2)
-					{	//If the counter resets after this note
-						ctr = 0;
+				if(!function)
+				{	//Perform deselection
+					if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+					{	//If the note is selected
+						ctr++;	//Keep track of which note number in the sequence this is
+						if(ctr == val1)
+						{	//If this is the note the user wanted to deselect
+							eof_selection.multi[i] = 0;	//Deselect it
+						}
+						if(ctr == val2)
+						{	//If the counter resets after this note
+							ctr = 0;
+						}
 					}
 				}
-			}
+				else
+				{	//Perform selection
+						ctr++;	//Keep track of which note number in the sequence this is
+						if(ctr == val1)
+						{	//If this is the note the user wanted to deselect
+							if(eof_selection.track != eof_selected_track)
+							{	//If no notes in the current track are currently selected
+								(void) eof_menu_edit_deselect_all();		//Clear the selection variables if necessary
+								eof_selection.track = eof_selected_track;
+							}
+							eof_selection.multi[i] = 1;	//Select it
+						}
+						if(ctr == val2)
+						{	//If the counter resets after this note
+							ctr = 0;
+						}
+				}
+			}//For each note in the active track
 
 			if(eof_selection.current != EOF_MAX_NOTES - 1)
 			{	//If there was a last selected note
@@ -3952,23 +3983,39 @@ int eof_menu_edit_deselect_note_number_in_sequence(void)
 					eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note
 				}
 			}
-		}
+		}//If the user entered valid values
 	}
 	return 1;
 }
 
-int eof_menu_edit_deselect_on_or_off_beat_notes(int function)
+int eof_menu_edit_select_note_number_in_sequence(void)
+{
+	strncpy(eof_etext, "Select note #:", sizeof(eof_etext) - 1);
+	strncpy(eof_etext4, "notes", sizeof(eof_etext4) - 1);
+	return eof_menu_edit_select_note_number_in_sequence_logic(1);
+}
+
+int eof_menu_edit_deselect_note_number_in_sequence(void)
+{
+	strncpy(eof_etext, "Deselect note #:", sizeof(eof_etext) - 1);
+	strncpy(eof_etext4, "selected notes", sizeof(eof_etext4) - 1);
+	return eof_menu_edit_select_note_number_in_sequence_logic(0);
+}
+
+int eof_menu_edit_select_on_or_off_beat_note_logic(int function, int position)
 {
 	unsigned long ctr, ctr2, notepos;
 	char match;
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
+	if(!function && (eof_selection.track != eof_selected_track))
+		return 1;	//No notes in the active track are selected so none can become deselected
 
 	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 	{	//For each note in the track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type))
-		{	//If the note is in the active instrument difficulty and is selected
+		if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
+		{	//If the note is in the active track difficulty
 			match = 0;	//Reset this condition
 			for(ctr2 = 0; ctr2 < eof_song->beats; ctr2++)
 			{	//For each beat in the project
@@ -3985,20 +4032,44 @@ int eof_menu_edit_deselect_on_or_off_beat_notes(int function)
 			}
 			if(match)
 			{	//If the note was on a beat marker
-				if(function)
-				{	//If the calling function wanted to deselect on-beat notes
-					eof_selection.multi[ctr] = 0;	//Deselect it
+				if(position)
+				{	//If on-beat notes are being examined
+					if(!function)
+					{	//If the calling function wanted to deselect on-beat notes
+						eof_selection.multi[ctr] = 0;	//Deselect it
+					}
+					else
+					{	//If the calling function wanted to select on-beat notes
+						if(eof_selection.track != eof_selected_track)
+						{	//If no notes in the current track are currently selected
+							(void) eof_menu_edit_deselect_all();		//Clear the selection variables if necessary
+							eof_selection.track = eof_selected_track;
+						}
+						eof_selection.multi[ctr] = 1;
+					}
 				}
 			}
 			else
 			{	//The note was not on a beat marker
-				if(!function)
-				{	//If the calling function wanted to deselect off-beat notes
-					eof_selection.multi[ctr] = 0;	//Deselect it
+				if(!position)
+				{	//If off-beat notes are being examined
+					if(!function)
+					{	//If the calling function wanted to deselect off-beat notes
+						eof_selection.multi[ctr] = 0;	//Deselect it
+					}
+					else
+					{	//If the calling function wanted to select off-beat notes
+						if(eof_selection.track != eof_selected_track)
+						{	//If no notes in the current track are currently selected
+							(void) eof_menu_edit_deselect_all();		//Clear the selection variables if necessary
+							eof_selection.track = eof_selected_track;
+						}
+						eof_selection.multi[ctr] = 1;
+					}
 				}
 			}
-		}
-	}
+		}//If the note is in the active track difficulty
+	}//For each note in the track
 	if(eof_selection.current != EOF_MAX_NOTES - 1)
 	{	//If there was a last selected note
 		if(eof_selection.multi[eof_selection.current] == 0)
@@ -4010,14 +4081,24 @@ int eof_menu_edit_deselect_on_or_off_beat_notes(int function)
 	return 1;
 }
 
+int eof_menu_edit_select_on_beat_notes(void)
+{
+	return eof_menu_edit_select_on_or_off_beat_note_logic(1, 1);
+}
+
+int eof_menu_edit_select_off_beat_notes(void)
+{
+	return eof_menu_edit_select_on_or_off_beat_note_logic(1, 0);
+}
+
 int eof_menu_edit_deselect_on_beat_notes(void)
 {
-	return eof_menu_edit_deselect_on_or_off_beat_notes(1);
+	return eof_menu_edit_select_on_or_off_beat_note_logic(0, 1);
 }
 
 int eof_menu_edit_deselect_off_beat_notes(void)
 {
-	return eof_menu_edit_deselect_on_or_off_beat_notes(0);
+	return eof_menu_edit_select_on_or_off_beat_note_logic(0, 0);
 }
 
 int eof_menu_edit_set_start_point(void)

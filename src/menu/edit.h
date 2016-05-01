@@ -51,32 +51,70 @@ int eof_menu_edit_bookmark_6(void);
 int eof_menu_edit_bookmark_7(void);
 int eof_menu_edit_bookmark_8(void);
 int eof_menu_edit_bookmark_9(void);
+
 int eof_menu_edit_select_all(void);
 int eof_menu_edit_select_like(void);			//For each unique selected note, selects all matching notes/lyrics in the same track and difficulty
 int eof_menu_edit_precise_select_like(void);	//Similar to eof_menu_edit_select_like(), but also requires notes have identical ghost bitmask, flags and extended flags in order to match
 int eof_menu_edit_deselect_all(void);
 int eof_menu_edit_select_rest(void);
 int eof_menu_edit_select_previous(void);			//Selects all notes before the last selected note
-int eof_menu_edit_select_all_shorter_than(void);	//Selects all notes in the active track difficulty that are shorter than a user specified length
-int eof_menu_edit_select_all_longer_than(void);		//Selects all notes in the active track difficulty that are longer than a user specified length
+int eof_menu_edit_invert_selection(void);			//Inverts the note selection (notes that aren't selected become selected and vice versa)
 
 int eof_check_note_conditional_selection(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long match_bitmask);
 	//Examines the specified note and returns nonzero if it matches the conditions selected in eof_menu_edit_conditional_selection_dialog[]
 	//match_bitmask is a bitmask reflecting the checked lane numbers in the dialog
 int eof_menu_edit_conditional_selection_logic(int function);
 	//If function is zero, notes in the active track are deselected based on the criteria set in eof_menu_edit_conditional_selection_dialog[]
+	//otherwise such notes are selected
 int eof_menu_edit_deselect_conditional(void);		//Allows user to specify conditions for deselecting notes from the current selection
 int eof_menu_edit_select_conditional(void);			//Allows user to specify conditions for selecting notes in the current track
 
+int eof_menu_edit_select_logic(int (*check)(EOF_SONG *, unsigned long, unsigned long));
+	//Passes notes in the active track difficulty to the specified function that accepts a song structure pointer, a track number and a note number (in that order)
+	// and which returns nonzero if it meets the conditions being checked, adding those that do to the current note selection
+	//Returns 0 on error
+int eof_menu_edit_select_chords(void);			//Selects notes that have more than 1 gem
+int eof_menu_edit_select_single_notes(void);	//Selects notes that have only 1 gem
+int eof_menu_edit_select_toms(void);			//Selects drum notes that contain any toms (lane 3, 4 or 5 gems that aren't cymbals)
+int eof_menu_edit_select_cymbals(void);			//Selects drum notes that contain any cymbals (lane 3, 4 or 5 gems that aren't toms)
+
+int eof_menu_edit_deselect_logic(int (*check)(EOF_SONG *, unsigned long, unsigned long));
+	//Passes notes in the active track difficulty to the specified function that returns nonzero if it meets the conditions being checked, removing those that do from the current note selection
+	//Returns 0 on error
 int eof_menu_edit_deselect_chords(void);			//Deselects notes that have more than 1 gem
 int eof_menu_edit_deselect_single_notes(void);		//Deselects notes that have only 1 gem
 int eof_menu_edit_deselect_toms(void);				//Deselects drum notes that contain any toms (lane 3, 4 or 5 gems that aren't cymbals)
 int eof_menu_edit_deselect_cymbals(void);			//Deselects drum notes that contain any cymbals (lane 3, 4 or 5 gems that aren't toms)
-int eof_menu_edit_invert_selection(void);			//Inverts the note selection (notes that aren't selected become selected and vice versa)
-int eof_menu_edit_deselect_note_number_in_sequence(void);	//Allows user to deselect one out of every set of a specified size of selected notes
-int eof_menu_edit_deselect_on_or_off_beat_notes(int function);	//Deselects notes that are either on a beat marker (function is nonzero) or not on a beat marker (function is zero)
-int eof_menu_edit_deselect_on_beat_notes(void);		//Calls eof_menu_edit_deselect_on_or_off_beat_notes() with the option to deselect off beat notes
-int eof_menu_edit_deselect_off_beat_notes(void);	//Calls eof_menu_edit_deselect_on_or_off_beat_notes() with the option to deselect off beat notes
+
+int eof_menu_edit_select_on_or_off_beat_note_logic(int function, int position);
+	//Alters the note selection based on notes in the active track difficulty that are either on a beat marker (position is nonzero) or not on a beat marker (position is zero)
+	//If function is nonzero such notes are deselected, otherwise such notes are selected
+	//Returns 0 on error
+int eof_menu_edit_deselect_on_beat_notes(void);		//Calls eof_menu_edit_select_on_or_off_beat_note_logic() with the option to deselect on beat notes
+int eof_menu_edit_deselect_off_beat_notes(void);	//Calls eof_menu_edit_select_on_or_off_beat_note_logic() with the option to deselect off beat notes
+int eof_menu_edit_select_on_beat_notes(void);		//Calls eof_menu_edit_select_on_or_off_beat_note_logic() with the option to select on beat notes
+int eof_menu_edit_select_off_beat_notes(void);		//Calls eof_menu_edit_select_on_or_off_beat_note_logic() with the option to select off beat notes
+
+int eof_menu_edit_select_note_number_in_sequence_logic(int function);
+	//Prompts user to specify a sequence number of a sequence length to alter the note selection
+	//If function is zero, note # (sequence number) of every (sequence length) number of notes that are already selected becomes deselected
+	//If function is nonzero, note # (sequence number) of every (sequence length) number of notes become selected, regardless of their current selection status
+int eof_menu_edit_select_note_number_in_sequence(void);		//Calls eof_menu_edit_select_note_number_in_sequence_logic() with the option to select notes
+int eof_menu_edit_deselect_note_number_in_sequence(void);	//eof_menu_edit_select_note_number_in_sequence_logic with the option to deselect notes
+
+int eof_menu_edit_select_by_note_length_logic(int (*check)(long, long), int function);
+	//Prompts the user to enter a threshold time using eof_menu_edit_select_by_note_length_dialog[]
+	//Passes notes in the active track difficulty to the specified function that compares the note length (first argument) with the threshold (second argument)
+	// and returns nonzero if the desired criterion is met
+	//If function is zero, matching notes are removed from the note selection, otherwise they are added to the note selection
+	//Returns 0 on error
+int eof_menu_edit_select_all_shorter_than(void);	//Selects all notes in the active track difficulty that are shorter than a user specified length
+int eof_menu_edit_select_all_longer_than(void);		//Selects all notes in the active track difficulty that are longer than a user specified length
+int eof_menu_edit_select_all_of_length(void);		//Selects all notes in the active track difficulty that are exactly of the user specified length
+int eof_menu_edit_deselect_all_shorter_than(void);	//Deselects all notes in the active track difficulty that are shorter than a user specified length
+int eof_menu_edit_deselect_all_longer_than(void);	//Deselects all notes in the active track difficulty that are longer than a user specified length
+int eof_menu_edit_deselect_all_of_length(void);		//Deselects all notes in the active track difficulty that are exactly of the user specified length
+
 int eof_menu_edit_set_start_point(void);
 int eof_menu_edit_set_end_point(void);
 

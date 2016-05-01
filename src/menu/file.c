@@ -3048,7 +3048,7 @@ int eof_save_helper_checks(void)
 			{	//For each track (until the user is warned about any offending notes)
 				if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 				{	//If this is a pro guitar/bass track
-					EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+					EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 					unsigned long bitmask;
 					char restore_tech_view = 0;
 					unsigned long start, stop;

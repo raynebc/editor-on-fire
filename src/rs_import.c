@@ -2117,12 +2117,10 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 	}
 
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
-	eventlist_count = 0;
 	for(ctr = 0; ctr < chordlist_count; ctr++)
 	{	//For each chord template that was stored
 		free(chordlist[ctr]);	//Free it
 	}
-	chordlist_count = 0;
 	(void) pack_fclose(inf);
 	free(buffer);
 	free(buffer2);

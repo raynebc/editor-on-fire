@@ -1785,7 +1785,6 @@ int eof_menu_note_toggle_orange(void)
 	{
 		return 1;	//Don't do anything if there is less than 6 lanes available
 	}
-	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	if(eof_count_selected_notes(NULL) == 0)
 	{
 		return 1;
@@ -2194,7 +2193,6 @@ int eof_menu_note_toggle_accent_lane(unsigned int lanenum)
 	{
 		return 1;	//Don't do anything if the specified lane number is higher than the number the active track contains or if it is otherwise invalid
 	}
-	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	if(eof_count_selected_notes(NULL) == 0)
 	{
 		return 1;
@@ -2265,7 +2263,6 @@ int eof_menu_note_clear_accent_lane(unsigned int lanenum)
 	{
 		return 1;	//Don't do anything if the specified lane number is higher than the number the active track contains or if it is otherwise invalid
 	}
-	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	if(eof_count_selected_notes(NULL) == 0)
 	{
 		return 1;

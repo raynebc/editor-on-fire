@@ -4865,7 +4865,7 @@ long eof_fixup_next_pro_guitar_technote(EOF_PRO_GUITAR_TRACK * tp, unsigned long
 
 long eof_fixup_next_pro_guitar_note_ptr(EOF_PRO_GUITAR_TRACK * tp, EOF_PRO_GUITAR_NOTE * np)
 {
-	unsigned long i, note;
+	unsigned long i;
 
 	if(!tp || !np)
 		return -1;	//Invalid parameters
@@ -8595,4 +8595,84 @@ EOF_SONG *eof_clone_chart_time_range(EOF_SONG *sp, unsigned long start, unsigned
 	}
 
 	return csp;
+}
+
+int eof_note_is_chord(EOF_SONG *sp, unsigned long track, unsigned long notenum)
+{
+	if(eof_note_count_colors(sp, track, notenum) > 1)
+		return 1;
+
+	return 0;
+}
+
+int eof_note_is_single_note(EOF_SONG *sp, unsigned long track, unsigned long notenum)
+{
+	if(eof_note_count_colors(sp, track, notenum) == 1)
+		return 1;
+
+	return 0;
+}
+
+int eof_note_is_tom(EOF_SONG *sp, unsigned long track, unsigned long notenum)
+{
+	if(sp && (track < sp->tracks))
+	{	//If the input is valid
+		if(sp->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//If a drum track is active
+			unsigned long note = eof_get_note_note(sp, track, notenum);
+			unsigned long flags = eof_get_note_flags(sp, track, notenum);
+			if( ((note & 4) && !(flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL)) ||
+				((note & 8) && !(flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL)) ||
+				((note & 16) && !(flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL)))
+			{	//If this note contains a tom on lane 3, 4 or 5
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
+
+int eof_note_is_cymbal(EOF_SONG *sp, unsigned long track, unsigned long notenum)
+{
+	if(sp && (track < sp->tracks))
+	{	//If the input is valid
+		if(sp->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//If a drum track is active
+			unsigned long note = eof_get_note_note(sp, track, notenum);
+			unsigned long flags = eof_get_note_flags(sp, track, notenum);
+			if( ((note & 4) && (flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL)) ||
+				((note & 8) && (flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL)) ||
+				((note & 16) && (flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL)))
+			{	//If this note contains a cymbal on lane 3, 4 or 5
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
+
+int eof_length_is_shorter_than(long length, long threshold)
+{
+	if(length < threshold)
+		return 1;
+
+	return 0;
+}
+
+int eof_length_is_longer_than(long length, long threshold)
+{
+	if(length > threshold)
+		return 1;
+
+	return 0;
+}
+
+int eof_length_is_equal_to(long length, long threshold)
+{
+	if(length == threshold)
+		return 1;
+
+	return 0;
 }

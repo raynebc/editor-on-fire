@@ -968,4 +968,13 @@ void eof_song_enforce_mid_beat_tempo_change_removal(void);
 	//If the "dB import drops mid beat tempos" preference is enabled, this function deletes beats that have the EOF_BEAT_FLAG_MIDBEAT flag
 	//Regardless of that preference's setting, the flag is removed from all beats in the project
 
+//Criterion checks for selection functions
+int eof_note_is_chord(EOF_SONG *sp, unsigned long track, unsigned long notenum);	//Returns nonzero if the specified note contains more than one gem
+int eof_note_is_single_note(EOF_SONG *sp, unsigned long track, unsigned long notenum);	//Returns nonzero if the specified not contains exactly one gem
+int eof_note_is_tom(EOF_SONG *sp, unsigned long track, unsigned long notenum);		//Returns nonzero if the specified note contains any gems on lane 3, 4 or 5 that are not marked as cymbals
+int eof_note_is_cymbal(EOF_SONG *sp, unsigned long track, unsigned long notenum);	//Returns nonzero if the specified note contains any gems on lane 3, 4 o4 5 that are cymbals
+int eof_length_is_shorter_than(long length, long threshold);	//Returns nonzero if the length parameter is shorter than the threshold parameter
+int eof_length_is_longer_than(long length, long threshold);		//Returns nonzero if the length parameter is longer than the threshold parameter
+int eof_length_is_equal_to(long length, long threshold);		//Returns nonzero if both parameters are equal
+
 #endif
