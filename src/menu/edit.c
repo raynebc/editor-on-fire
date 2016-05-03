@@ -137,6 +137,8 @@ MENU eof_edit_selection_select_menu[] =
 	{"Single &Notes", eof_menu_edit_select_single_notes, NULL, 0, NULL},
 	{"&Toms", eof_menu_edit_select_toms, NULL, 0, NULL},
 	{"c&Ymbals", eof_menu_edit_select_cymbals, NULL, 0, NULL},
+	{"&Grid snapped", eof_menu_edit_select_grid_snapped_notes, NULL, 0, NULL},
+	{"Non g&Rid snapped", eof_menu_edit_select_non_grid_snapped_notes, NULL, 0, NULL},
 	{"&Shorter than", eof_menu_edit_select_all_shorter_than, NULL, 0, NULL},
 	{"&Longer than", eof_menu_edit_select_all_longer_than, NULL, 0, NULL},
 	{"&Of length", eof_menu_edit_select_all_of_length, NULL, 0, NULL},
@@ -152,6 +154,8 @@ MENU eof_edit_selection_deselect_menu[] =
 	{"Single &Notes", eof_menu_edit_deselect_single_notes, NULL, 0, NULL},
 	{"&Toms", eof_menu_edit_deselect_toms, NULL, 0, NULL},
 	{"c&Ymbals", eof_menu_edit_deselect_cymbals, NULL, 0, NULL},
+	{"&Grid snapped", eof_menu_edit_deselect_grid_snapped_notes, NULL, 0, NULL},
+	{"Non g&Rid snapped", eof_menu_edit_deselect_non_grid_snapped_notes, NULL, 0, NULL},
 	{"&Shorter than", eof_menu_edit_deselect_all_shorter_than, NULL, 0, NULL},
 	{"&Longer than", eof_menu_edit_deselect_all_longer_than, NULL, 0, NULL},
 	{"&Of length", eof_menu_edit_deselect_all_of_length, NULL, 0, NULL},
@@ -2957,6 +2961,16 @@ int eof_menu_edit_select_cymbals(void)
 	return eof_menu_edit_select_logic(eof_note_is_cymbal);
 }
 
+int eof_menu_edit_select_grid_snapped_notes(void)
+{
+	return eof_menu_edit_select_logic(eof_note_is_grid_snapped);
+}
+
+int eof_menu_edit_select_non_grid_snapped_notes(void)
+{
+	return eof_menu_edit_select_logic(eof_note_is_not_grid_snapped);
+}
+
 int eof_menu_edit_deselect_logic(int (*check)(EOF_SONG *, unsigned long, unsigned long))
 {
 	unsigned long ctr;
@@ -3005,6 +3019,16 @@ int eof_menu_edit_deselect_toms(void)
 int eof_menu_edit_deselect_cymbals(void)
 {
 	return eof_menu_edit_deselect_logic(eof_note_is_cymbal);
+}
+
+int eof_menu_edit_deselect_grid_snapped_notes(void)
+{
+	return eof_menu_edit_deselect_logic(eof_note_is_grid_snapped);
+}
+
+int eof_menu_edit_deselect_non_grid_snapped_notes(void)
+{
+	return eof_menu_edit_deselect_logic(eof_note_is_not_grid_snapped);
 }
 
 int eof_menu_edit_invert_selection(void)

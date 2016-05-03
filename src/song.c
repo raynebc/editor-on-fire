@@ -8653,6 +8653,21 @@ int eof_note_is_cymbal(EOF_SONG *sp, unsigned long track, unsigned long notenum)
 	return 0;
 }
 
+int eof_note_is_grid_snapped(EOF_SONG *sp, unsigned long track, unsigned long notenum)
+{
+	return eof_is_grid_snap_position(eof_get_note_pos(sp, track, notenum));
+}
+
+int eof_note_is_not_grid_snapped(EOF_SONG *sp, unsigned long track, unsigned long notenum)
+{
+	if(eof_get_note_note(sp, track, notenum) && (eof_is_grid_snap_position(eof_get_note_pos(sp, track, notenum)) == 0))
+	{	//If the note exists and is not grid snapped
+		return 1;
+	}
+
+	return 0;
+}
+
 int eof_length_is_shorter_than(long length, long threshold)
 {
 	if(length < threshold)

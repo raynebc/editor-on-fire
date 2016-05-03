@@ -188,7 +188,7 @@ MENU eof_song_menu[] =
 	{"Manage raw MIDI tracks", eof_menu_song_raw_MIDI_tracks, NULL, 0, NULL},
 	{"Create pre&View audio", eof_menu_song_export_song_preview, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"T&est in FOF\tF12", eof_menu_song_test_fof, NULL, EOF_LINUX_DISABLE, NULL},
+	{"T&est in FOF", eof_menu_song_test_fof, NULL, EOF_LINUX_DISABLE, NULL},
 	{"Test i&N Phase Shift", eof_menu_song_test_ps, NULL, EOF_LINUX_DISABLE, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };

@@ -77,6 +77,8 @@ int eof_menu_edit_select_chords(void);			//Selects notes that have more than 1 g
 int eof_menu_edit_select_single_notes(void);	//Selects notes that have only 1 gem
 int eof_menu_edit_select_toms(void);			//Selects drum notes that contain any toms (lane 3, 4 or 5 gems that aren't cymbals)
 int eof_menu_edit_select_cymbals(void);			//Selects drum notes that contain any cymbals (lane 3, 4 or 5 gems that aren't toms)
+int eof_menu_edit_select_grid_snapped_notes(void);		//Selects notes that are on grid snap positions
+int eof_menu_edit_select_non_grid_snapped_notes(void);	//Selects notes that are not on grid snap positions
 
 int eof_menu_edit_deselect_logic(int (*check)(EOF_SONG *, unsigned long, unsigned long));
 	//Passes notes in the active track difficulty to the specified function that returns nonzero if it meets the conditions being checked, removing those that do from the current note selection
@@ -85,6 +87,8 @@ int eof_menu_edit_deselect_chords(void);			//Deselects notes that have more than
 int eof_menu_edit_deselect_single_notes(void);		//Deselects notes that have only 1 gem
 int eof_menu_edit_deselect_toms(void);				//Deselects drum notes that contain any toms (lane 3, 4 or 5 gems that aren't cymbals)
 int eof_menu_edit_deselect_cymbals(void);			//Deselects drum notes that contain any cymbals (lane 3, 4 or 5 gems that aren't toms)
+int eof_menu_edit_deselect_grid_snapped_notes(void);		//Deselects notes that are on grid snap positions
+int eof_menu_edit_deselect_non_grid_snapped_notes(void);	//Deselects notes that are not on grid snap positions
 
 int eof_menu_edit_select_on_or_off_beat_note_logic(int function, int position);
 	//Alters the note selection based on notes in the active track difficulty that are either on a beat marker (position is nonzero) or not on a beat marker (position is zero)

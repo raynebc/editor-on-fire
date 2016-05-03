@@ -2103,11 +2103,11 @@ void eof_read_global_keys(void)
 			eof_use_key();
 		}
 
-	/* test in FoF (F12) */
+	/* import Guitar Pro (F12) */
 		else if(eof_key_code == KEY_F12)
 		{
 			clear_keybuf();
-			(void) eof_menu_song_test_fof();
+			(void) eof_menu_file_gp_import();
 			eof_use_key();
 		}
 	}//If neither CTRL nor SHIFT are held
