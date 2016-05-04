@@ -2433,7 +2433,7 @@ unsigned char eof_get_midi_pitches(EOF_SONG *sp, unsigned long track, unsigned l
 {
 	unsigned char pitchmask = 0, notenote, ctr, bitmask;
 
-	if(!sp || (track == 0) || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)) || !pitches)
+	if(!sp || !track || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)) || !pitches)
 		return 0;	//Invalid parameters
 
 	if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)

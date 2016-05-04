@@ -99,7 +99,7 @@ unsigned long eof_note_count_rs_lanes(EOF_SONG *sp, unsigned long track, unsigne
 	unsigned long ctr, bitmask, tracknum, count = 0, notenote;
 	EOF_PRO_GUITAR_TRACK *tp;
 
-	if(!sp || (track >= sp->tracks))
+	if(!sp || !track || (track >= sp->tracks))
 		return 0;	//Invalid parameters
 
 	notenote = eof_get_note_note(sp, track, note);
@@ -403,8 +403,9 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		dcol = eof_color_white;
 	}
 
+	//Render tab notation
 	if(track != 0)
-	{	//If rendering an existing note instead of the pen note, draw tab notation
+	{	//If rendering an existing note instead of the pen note
 		if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is being rendered
 			tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];
@@ -463,6 +464,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		textout_centre_ex(window->screen, eof_symbol_font, notation, x, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 6, eof_color_red, eof_color_black);
 	}//If rendering an existing note instead of the pen note, draw tab notation
 
+	//Render note, tail, slide indicator, etc.
 	for(ctr=0,mask=1;ctr<numlanes;ctr++,mask=mask<<1)
 	{	//Render for each of the available fret lanes
 		iscymbal = 0;
@@ -470,6 +472,13 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 
 		if(notenote & mask)
 		{	//If this lane is populated
+			if((mask == 32) && !eof_lane_six_enabled(track))
+			{	//If this is a gem on lane 6 and this track doesn't have 6 active lanes
+				if(track)
+				{	//If this is the pen note, it could only have been set to lane 6 if that lane was enabled
+					continue;	//Skip rendering this note
+				}
+			}
 			if(!(noteflags & EOF_NOTE_FLAG_SP))
 			{	//If the note is not star power
 				if(tp && (eof_color_set == EOF_COLORS_BF))
@@ -667,9 +676,9 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		}
 	}//Render for each of the available fret lanes
 
+	//Render note names
 	if(track != 0)
 	{	//If rendering an existing note instead of the pen note
-		//Render note names
 		if(!eof_hide_note_names)
 		{	//If the user hasn't opted to hide note names
 			if((window == eof_window_note) || (eof_2d_render_top_option == 32))
@@ -1023,8 +1032,8 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	}
 
 	numlanes = eof_count_track_lanes(eof_song, track);	//Count the number of lanes in that note's track
-	if(eof_selected_track == EOF_TRACK_BASS)
-	{	//Special case:  The bass track can use a sixth lane but its 3D representation still only draws 5 lanes
+	if(eof_track_is_legacy_guitar(eof_song, track))
+	{	//Special case:  Legacy guitar tracks can use a sixth lane but their 3D representation still only draws 5 lanes
 		numlanes = 5;
 	}
 
@@ -1088,13 +1097,20 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 					}
 				}
 			}
-			else if((mask == 32) && eof_open_strum_enabled(track))
-			{	//If drawing lane 6 as an open strum (renders similarly to a bass drum note)
-				drawline = 1;
-				if(noteflags & EOF_NOTE_FLAG_SP)			//If this open bass note is star power, render it in silver
-					linecol = p ? eof_color_white : eof_color_silver;
-				else										//Otherwise render it in the standard lane six color for the current color set
-					linecol = p ? eof_colors[5].hit : eof_colors[5].color;
+			else if((mask == 32) && eof_track_is_legacy_guitar(eof_song, track))
+			{	//If drawing lane 6 of a legacy guitar track (renders similarly to a bass drum note)
+				if(eof_open_strum_enabled(track))
+				{	//If open strum is enabled for the track
+					drawline = 1;
+					if(noteflags & EOF_NOTE_FLAG_SP)			//If this open bass note is star power, render it in silver
+						linecol = p ? eof_color_white : eof_color_silver;
+					else										//Otherwise render it in the standard lane six color for the current color set
+						linecol = p ? eof_colors[5].hit : eof_colors[5].color;
+				}
+				else
+				{
+					continue;	//Skip rendering this gem
+				}
 			}
 
 			if(drawline)
@@ -1333,8 +1349,8 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 	//Determine the width of the fret lanes
 	numlanes = eof_count_track_lanes(eof_song, track);	//Count the number of lanes in that note's track
-	if(eof_selected_track == EOF_TRACK_BASS)
-	{	//Special case:  The bass track can use a sixth lane but its 3D representation still only draws 5 lanes
+	if(eof_open_strum_enabled(eof_selected_track))
+	{	//Special case:  5 lane guitar/bass tracks can use a sixth lane but its 3D representation still only draws 5 lanes
 		numlanes = 5;
 	}
 	rz = npos < -100 ? -100 : npos + 10;
@@ -1344,17 +1360,20 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 		assert(ctr < EOF_MAX_FRETS);	//Put an assertion here to resolve a false positive with Coverity
 		if(notenote & mask)
 		{	//If this lane has a gem to render
-			if((ctr == 5) && eof_open_strum_enabled(track))
-			{	//Logic to render open strum notes (a rectangle covering the width of rendering of frets 2, 3 and 4
-				point[0] = ocd3d_project_x(xchart[1] - 10, rz);
-				point[1] = ocd3d_project_y(200, rz);
-				point[2] = ocd3d_project_x(xchart[1] - 10, ez);
-				point[3] = ocd3d_project_y(200, ez);
-				point[4] = ocd3d_project_x(xchart[3] + 10, ez);
-				point[5] = point[3];
-				point[6] = ocd3d_project_x(xchart[3] + 10, rz);
-				point[7] = point[1];
-				polygon(eof_window_3d->screen, 4, point, (noteflags & EOF_NOTE_FLAG_SP) ? (p ? eof_color_white : eof_color_silver) : (p ? eof_colors[ctr].hit : eof_colors[ctr].color));
+			if((ctr == 5) && eof_track_is_legacy_guitar(eof_song, track))
+			{	//If drawing the tail of a gem on lane 6 of a legacy guitar track
+				if(eof_open_strum_enabled(track))
+				{	//And open strum notes are enabled, render open strum notes (a rectangle covering the width of rendering of frets 2, 3 and 4
+					point[0] = ocd3d_project_x(xchart[1] - 10, rz);
+					point[1] = ocd3d_project_y(200, rz);
+					point[2] = ocd3d_project_x(xchart[1] - 10, ez);
+					point[3] = ocd3d_project_y(200, ez);
+					point[4] = ocd3d_project_x(xchart[3] + 10, ez);
+					point[5] = point[3];
+					point[6] = ocd3d_project_x(xchart[3] + 10, rz);
+					point[7] = point[1];
+					polygon(eof_window_3d->screen, 4, point, (noteflags & EOF_NOTE_FLAG_SP) ? (p ? eof_color_white : eof_color_silver) : (p ? eof_colors[ctr].hit : eof_colors[ctr].color));
+				}
 			}
 			else
 			{	//Logic to render lanes 1 through 6
@@ -1374,18 +1393,15 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 					}
 				}
 
-				if(!((ctr == 5) && (track == EOF_TRACK_BASS)))
-				{	//If this is not a hidden open bass note
-					point[0] = ocd3d_project_x(xchart[ctr] - 10, rz);
-					point[1] = ocd3d_project_y(200, rz);
-					point[2] = ocd3d_project_x(xchart[ctr] - 10, ez);
-					point[3] = ocd3d_project_y(200, ez);
-					point[4] = ocd3d_project_x(xchart[ctr] + 10, ez);
-					point[5] = point[3];
-					point[6] = ocd3d_project_x(xchart[ctr] + 10, rz);
-					point[7] = point[1];
-					polygon(eof_window_3d->screen, 4, point, (noteflags & EOF_NOTE_FLAG_SP) ? (p ? eof_color_white : eof_color_silver) : (p ? eof_colors[color].hit : eof_colors[color].color));
-				}
+				point[0] = ocd3d_project_x(xchart[ctr] - 10, rz);
+				point[1] = ocd3d_project_y(200, rz);
+				point[2] = ocd3d_project_x(xchart[ctr] - 10, ez);
+				point[3] = ocd3d_project_y(200, ez);
+				point[4] = ocd3d_project_x(xchart[ctr] + 10, ez);
+				point[5] = point[3];
+				point[6] = ocd3d_project_x(xchart[ctr] + 10, rz);
+				point[7] = point[1];
+				polygon(eof_window_3d->screen, 4, point, (noteflags & EOF_NOTE_FLAG_SP) ? (p ? eof_color_white : eof_color_silver) : (p ? eof_colors[color].hit : eof_colors[color].color));
 			}
 
 			//Render pro guitar note slide if applicable
@@ -1582,7 +1598,7 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 	char buffer2[5] = {0};
 	long prevnotenum;
 
-	if((track >= eof_song->tracks) || (buffer == NULL) || ((eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT)))
+	if(!track || (track >= eof_song->tracks) || (buffer == NULL) || ((eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT)))
 	{
 		return;	//If this is an invalid track number, the buffer is NULL or the specified track isn't a pro guitar or legacy track, return
 	}
@@ -2129,8 +2145,8 @@ char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, 
 	int scale = 0, chord = 0, isslash = 0, bassnote = 0;
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks) || (buffer == NULL))
-		return 0;	//Return error
+	if((sp == NULL) || !track || (track >= sp->tracks) || (buffer == NULL))
+		return 0;	//Invalid parameters
 
 	name = eof_get_note_name(sp, track, note);	//Check if the note was manually assigned a name
 	if(name && (name[0] != '\0'))

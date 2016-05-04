@@ -2660,7 +2660,7 @@ int eof_check_note_conditional_selection(EOF_SONG *sp, unsigned long track, unsi
 	int match = 0;	//This will be set to nonzero if the user's criteria apply to the note, and will ultimately be checked against the "Do" or "Do not" criterion
 	unsigned long note, flags, ctr, bitmask;
 
-	if(!sp || (track >= sp->tracks))
+	if(!sp || (track >= sp->tracks) || !track)
 		return 0;	//Invalid parameters
 
 	note = eof_get_note_note(eof_song, eof_selected_track, notenum);
@@ -3703,7 +3703,7 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 	unsigned char frets[8] = {0};	//Used to store NULL fret data to support copying legacy notes to a pro guitar track
 	unsigned char finger[8] = {0};	//Used to store NULL finger data to support copying legacy notes to a pro guitar track
 
-	if(!fp || !sp || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)))
+	if(!fp || !sp || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)) || !track)
 		return;	//Invalid parameters
 
 	/* write the note */

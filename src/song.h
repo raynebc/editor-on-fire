@@ -639,7 +639,7 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 	//Returns the address of the section array (which is also stored into ptr) upon success, or NULL upon error
 	//If the section type is not applicable for the track in question, *count is set to 0 and *ptr is set to NULL
 int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, unsigned char difficulty, unsigned long start, unsigned long end, unsigned long flags, char *name);
-	//Adds the specified section to the specified track if it's valid for the track
+	//Adds the specified section to the specified track if it's valid for the track, track 0 is used to reference certain items that are project-wide in scope
 	//For bookmark sections, the end variable represents which bookmark number is being set
 	//For fret catalog sections, the flags variable represents which track the catalog entry belongs to, otherwise it's only used for lyric sections
 	//For lyric phrases, the difficulty field indicates which lyric set number (ie. PART VOCALS) the phrase applies to
@@ -847,7 +847,9 @@ EOF_SONG * eof_create_song_populated(void);
 	//Allocates, initializes and returns an EOF_SONG structure pre-populated with the default legacy, vocal and pro guitar tracks
 
 int eof_open_strum_enabled(unsigned long track);
-	//A simple function returning nonzero if the specified track has open strumming enabled
+	//Returns nonzero if the specified non drum track has the open strum flag set
+int eof_lane_six_enabled(unsigned long track);
+	//Returns nonzero if the specified track is a non drum legacy track with the open strum flag set, or if it's a pro guitar track with 6 strings
 int eof_create_image_sequence(char benchmark_only);
 	//Creates a PCX format image sequence in a subfolder of the chart's folder called "\sequence"
 	//If benchmark_only is nonzero, image files are not written and the rendering performance (in frames per second) is displayed in the title bar
@@ -865,6 +867,8 @@ int eof_five_lane_drums_enabled(void);
 
 char eof_track_has_cymbals(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified track is a drum track that contains notes marked as cymbals
+int eof_track_is_legacy_guitar(EOF_SONG *sp, unsigned long track);
+	//Returns nonzero if the specified track is a legacy guitar track
 
 char eof_search_for_note_near(EOF_SONG *sp, unsigned long track, unsigned long targetpos, unsigned long delta, char type, unsigned long *match);
 	//Looks for one or more notes within [delta] number of milliseconds of the specified position of the specified track difficulty

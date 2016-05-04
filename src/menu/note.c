@@ -1189,9 +1189,9 @@ int eof_menu_note_transpose_up(void)
 			}
 		}
 		else
-		{
-			if(eof_open_strum_enabled(eof_selected_track) || (eof_count_track_lanes(eof_song, eof_selected_track) > 5))
-			{	//If open strum is enabled, or the track has more than 5 lanes, lane 6 is valid for use
+		{	//Vocal track is not active
+			if(eof_lane_six_enabled(eof_selected_track))
+			{	//If lane 6 is enabled for use in the active track
 				max = 63;
 			}
 			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
@@ -1217,6 +1217,7 @@ int eof_menu_note_transpose_up(void)
 					{	//If open strum is enabled, and this transpose operation resulted in a bass guitar gem in lane 6
 						flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 						eof_set_note_note(eof_song, eof_selected_track, i, 32);		//Clear all lanes except lane 6
+						note = 32;													//Ensure remainder of this function's logic sees this change
 						flags &= ~(EOF_NOTE_FLAG_CRAZY);	//Clear the crazy flag, which is invalid for open strum notes
 						flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO flags, which are invalid for open strum notes
 						flags &= ~(EOF_NOTE_FLAG_NO_HOPO);
@@ -3546,9 +3547,9 @@ int eof_transpose_possible(int dir)
 		}
 	}
 	else
-	{
-		if(eof_open_strum_enabled(eof_selected_track) || (eof_count_track_lanes(eof_song, eof_selected_track) > 5))
-		{	//If open strum is enabled, or the track has more than 5 lanes, lane 5 can transpose up to lane 6
+	{	//Lyrics are not selected
+		if(eof_lane_six_enabled(eof_selected_track))
+		{	//If lane 6 is enabled for use in the active track
 			max = 32;
 		}
 		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))

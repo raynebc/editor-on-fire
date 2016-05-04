@@ -778,7 +778,7 @@ void eof_play_pro_guitar_note_midi(EOF_SONG *sp, unsigned long track, unsigned l
 	unsigned long tracknum, ctr, bitmask;
 	int tone;
 
-	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return;	//Invalid parameters
 
 	tracknum = sp->track[track]->tracknum;
@@ -804,7 +804,7 @@ int eof_lookup_midi_tone(EOF_SONG *sp, unsigned long track, unsigned long note)
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned long tracknum;
 
-	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return 0;	//Invalid parameters
 
 	tracknum = sp->track[track]->tracknum;

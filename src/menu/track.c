@@ -2677,7 +2677,6 @@ int eof_menu_track_open_strum(void)
 	if(eof_open_strum_enabled(eof_selected_track))
 	{	//Turn off open strum notes
 		eof_song->track[eof_selected_track]->flags &= ~(EOF_TRACK_FLAG_SIX_LANES);	//Clear the flag
-		eof_song->legacy_track[tracknum]->numlanes = 5;
 	}
 	else
 	{	//Turn on open bass notes
@@ -3311,7 +3310,7 @@ void eof_track_rebuild_rs_tone_names_list_strings(unsigned long track, char allo
 	char unique, *suffix, blank[] = "", def[] = " (D)", defaultfound = 0;
 	int junk;
 
-	if(!eof_song_loaded || !eof_song || (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!eof_song_loaded || !eof_song || !track || (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return;	//Do not allow this function to run if a chart is not loaded or a pro guitar/bass track is not active
 
 	tracknum = eof_song->track[track]->tracknum;
@@ -3830,7 +3829,7 @@ void eof_menu_track_set_tech_view_state(EOF_SONG *sp, unsigned long track, char 
 {
 	EOF_PRO_GUITAR_TRACK *tp;
 
-	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return;	//Invalid parameters
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
@@ -3848,7 +3847,7 @@ void eof_menu_track_toggle_tech_view_state(EOF_SONG *sp, unsigned long track)
 {
 	EOF_PRO_GUITAR_TRACK *tp;
 
-	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return;	//Invalid parameters
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];

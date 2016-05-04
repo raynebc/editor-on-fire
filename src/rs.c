@@ -78,7 +78,7 @@ int eof_is_string_muted(EOF_SONG *sp, unsigned long track, unsigned long note)
 	EOF_PRO_GUITAR_TRACK *tp;
 	int allmuted = 1;	//Will be set to nonzero if any used strings aren't fret hand muted
 
-	if(!sp || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!sp || !track || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return 0;	//Return error
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
@@ -106,7 +106,7 @@ int eof_is_partially_ghosted(EOF_SONG *sp, unsigned long track, unsigned long no
 	EOF_PRO_GUITAR_TRACK *tp;
 	char ghosted = 0, nonghosted = 0;	//Tracks the number of gems in this note that are ghosted and non ghosted
 
-	if(!sp || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!sp || !track || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return 0;	//Return error
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
@@ -180,7 +180,7 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 	if(!results)
 		return 0;	//Return error
 
-	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 	{
 		*results = NULL;
 		return 0;	//Invalid parameters
@@ -446,7 +446,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 	eof_log("eof_export_rocksmith_1_track() entered", 1);
 
-	if(!sp || !fn || !sp->beats || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !user_warned)
+	if(!sp || !fn || !sp->beats || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !user_warned)
 	{
 		eof_log("\tError saving:  Invalid parameters", 1);
 		return 0;	//Return failure
@@ -1549,7 +1549,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 	eof_log("eof_export_rocksmith_2_track() entered", 1);
 
-	if(!sp || !fn || !sp->beats || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !user_warned)
+	if(!sp || !fn || !sp->beats || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !user_warned)
 	{
 		eof_log("\tError saving:  Invalid parameters", 1);
 		return 0;	//Return failure
@@ -3211,7 +3211,7 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 	long lastnoteslide = 0;	//Tracks the number of frets the last processed note slid (for adding FHPs to track when the fret hand slides)
 	long nextnote;
 
-	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return;	//Invalid parameters
 
 	if(eof_write_rs_files || eof_write_rb_files)
@@ -3949,7 +3949,7 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 	unsigned char comparediff, thisdiff, populated = 0;
 	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
 
-	if(!sp || (track >= sp->tracks) || (start > stop))
+	if(!sp || !track || (track >= sp->tracks) || (start > stop))
 		return 0;	//Invalid parameters
 	if(!diff && (compareto < 0))
 		return 0;	//There is no difficulty before the first difficulty
@@ -4131,7 +4131,7 @@ unsigned char eof_find_fully_leveled_rs_difficulty_in_time_range(EOF_SONG *sp, u
 	unsigned long ctr;
 	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
 
-	if(!sp || (track >= sp->tracks) || (start > stop))
+	if(!sp || !track || (track >= sp->tracks) || (start > stop))
 		return 0;	//Invalid parameters
 
 	restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
@@ -4309,7 +4309,7 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 	EOF_PRO_GUITAR_TRACK *tp;
 	EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Error
 
 	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -4365,7 +4365,7 @@ unsigned long eof_note_number_within_handshape(EOF_SONG *sp, unsigned long track
 	unsigned long ctr, ctr2, count;
 	EOF_PRO_GUITAR_TRACK *tp;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Invalid parameters
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 	if(note >= tp->notes)
@@ -4403,7 +4403,7 @@ int eof_enforce_rs_phrase_begin_with_fret_hand_position(EOF_SONG *sp, unsigned l
 	unsigned char position;
 	EOF_PRO_GUITAR_TRACK *tp;
 
-	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return 0;	//Invalid parameters
 	tracknum = sp->track[track]->tracknum;
 	tp = sp->pro_guitar_track[tracknum];
@@ -4745,7 +4745,7 @@ unsigned long eof_get_highest_fret_in_time_range(EOF_SONG *sp, unsigned long tra
 	unsigned long highest = 0, temp, ctr, tracknum;
 	EOF_PRO_GUITAR_TRACK *tp;
 
-	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || (stop < start))
+	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || (stop < start))
 		return 0;	//Invalid parameters
 
 	tracknum = sp->track[track]->tracknum;
@@ -4781,7 +4781,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 	long fret, slidediff = 0, unpitchedslidediff = 0;
 	char techbends = 0, thistechbends, has_stop = 0;
 
-	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if((sp == NULL) || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return 0;	//Invalid parameters
 	tracknum = sp->track[track]->tracknum;
 	tp = sp->pro_guitar_track[tracknum];
@@ -5102,7 +5102,7 @@ void eof_rs_export_cleanup(EOF_SONG * sp, unsigned long track)
 	unsigned long ctr;
 	EOF_PRO_GUITAR_TRACK *tp;
 
-	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return;	//Invalid parameters
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 
@@ -5165,7 +5165,7 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 	char *tagstring, notestring[] = "note", chordnotestring[] = "chordNote", *indentlevel, noindent[] = "", indent[] = "  ", buffer[600] = {0};
 
 	//Validate parameters and initialize some variables
-	if(!sp || !fp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || (stringnum > 5))
+	if(!sp || !fp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || (stringnum > 5))
 		return;	//Invalid parameters
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 	if(notenum >= tp->notes)
@@ -5304,7 +5304,7 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 	long startbeat;	//This will indicate the first beat containing a note in the track
 	long endbeat;	//This will indicate the first beat after the exported track's last note
 
-	if(!sp || !fp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !user_warned)
+	if(!sp || !fp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !user_warned)
 		return 0;	//Invalid parameters
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
@@ -5505,7 +5505,7 @@ int eof_rs_combine_linknext_logic(EOF_SONG * sp, unsigned long track, unsigned l
 	EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, tech2 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	int retval = 0;
 
-	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || (stringnum > 5))
+	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || (stringnum > 5))
 		return 0;		//Invalid parameters
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];

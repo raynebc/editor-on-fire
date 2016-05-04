@@ -1130,7 +1130,7 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 
 	eof_log("eof_determine_phrase_status() entered", 2);
 
-	if(!sp || (track >= sp->tracks))
+	if(!sp || (track >= sp->tracks) || !track)
 		return;	//Invalid parameters
 	if(!eof_music_paused)
 		return;	//Do not allow this to run during playback because it causes too much lag when switching to a track with a large number of notes
@@ -3275,8 +3275,8 @@ void eof_render_3d_window(void)
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	lastlane = numlanes - 1;	//This variable begins lane numbering at 0 instead of 1
 	eof_set_3D_lane_positions(eof_selected_track);	//Update the xchart[] array
-	if(eof_selected_track == EOF_TRACK_BASS)
-	{	//Special case:  The bass track can use a sixth lane but its 3D representation still only draws 5 lanes
+	if(eof_track_is_legacy_guitar(eof_song, eof_selected_track))
+	{	//Special case:  Legacy guitar tracks can use a sixth lane but their 3D representation still only draws 5 lanes
 		numlanes = 5;
 		lastlane = 4;	//Don't render trill/tremolo markers for the 6th lane (render for lanes 0 through 4)
 	}
@@ -4650,7 +4650,13 @@ void eof_scale_fretboard(unsigned long numlanes)
 	eof_screen_layout.string_space = eof_screen_layout.string_space_unscaled;
 
 	if(!numlanes)	//If 0 was passed, find the number of lanes in the active track
+	{
 		numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
+		if(eof_track_is_legacy_guitar(eof_song, eof_selected_track) && !eof_open_strum_enabled(eof_selected_track))
+		{	//Special case:  Legacy guitar tracks can use a sixth lane but hide that lane if it is not enabled
+			numlanes = 5;
+		}
+	}
 
 	lanewidth = (double)eof_screen_layout.string_space * (4.0 / (numlanes-1));	//This is the correct lane width for either 5 or 6 lanes
 	if(numlanes > 5)
@@ -4671,7 +4677,7 @@ void eof_set_3D_lane_positions(unsigned long track)
 //	eof_log("eof_set_3D_lane_positions() entered");
 
 	static unsigned long numlanes = 0;	//This remembers the number of lanes handled by the previous call
-	unsigned long newnumlanes = eof_count_track_lanes(eof_song, track);	//This is the number of lanes in the specified track
+	unsigned long newnumlanes;			//This is the number of lanes in the specified track
 	unsigned long numlaneswidth = 5 - 1;	//By default, the lane width will be based on a 5 lane track
 	unsigned long ctr;
 	double lanewidth = 0.0;
@@ -4679,8 +4685,9 @@ void eof_set_3D_lane_positions(unsigned long track)
 	if(!eof_song)	//If a song isn't loaded, ie. the user changed the lefty mode option with no song loaded
 		return;		//Return immediately
 
-	if(eof_selected_track == EOF_TRACK_BASS)
-	{	//Special case:  The bass track can use a sixth lane but its 3D representation still only draws 5 lanes
+	newnumlanes = eof_count_track_lanes(eof_song, track);	//This is the number of lanes in the specified track
+	if(eof_track_is_legacy_guitar(eof_song, track))
+	{	//Special case:  Legacy guitar tracks can use a sixth lane but their 3D representation still only draws 5 lanes
 		newnumlanes = 5;
 	}
 	else if(track && (eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && !eof_render_bass_drum_in_lane)
@@ -4736,6 +4743,10 @@ void eof_set_2D_lane_positions(unsigned long track)
 
 	newnumlanes = eof_count_track_lanes(eof_song, eof_selected_track);	//Count the number of lanes in the active track
 	newnumlanes2 = eof_count_track_lanes(eof_song, track);	//Count the number of lanes in that note's track
+	if(eof_track_is_legacy_guitar(eof_song, track) && !eof_open_strum_enabled(track))
+	{	//Special case:  Legacy guitar tracks can use a sixth lane but hide that lane if it is not enabled
+		newnumlanes = 5;
+	}
 	if(newnumlanes > newnumlanes2)
 	{	//Special case (ie. viewing an open bass guitar catalog entry when any other legacy track is active)
 		newnumlanes = newnumlanes2;	//Use the number of lanes in the active track

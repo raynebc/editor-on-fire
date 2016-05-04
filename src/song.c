@@ -493,9 +493,9 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 	unsigned long tracknum;
 	EOF_LEGACY_TRACK * tp;
 
-	if(!sp || (track >= sp->tracks))
+	if(!sp || !track || (track >= sp->tracks))
 	{
-		return;
+		return;	//Invalid parameters
 	}
 	tracknum = sp->track[track]->tracknum;
 	tp = sp->legacy_track[tracknum];
@@ -839,9 +839,9 @@ void eof_vocal_track_fixup_lyrics(EOF_SONG *sp, unsigned long track, int sel)
 	long next;
 	EOF_VOCAL_TRACK * tp;
 
-	if(!sp || (track >= sp->tracks))
+	if(!sp || !track || (track >= sp->tracks))
 	{
-		return;
+		return;	//Invalid parameters
 	}
 	tracknum = sp->track[track]->tracknum;
 	tp = sp->vocal_track[tracknum];
@@ -1504,7 +1504,7 @@ int eof_song_delete_track(EOF_SONG * sp, unsigned long track)
 
  	eof_log("eof_song_delete_track() entered", 1);
 
-	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track] == NULL))
+	if((sp == NULL) || !track || (track >= sp->tracks) || (sp->track[track] == NULL))
 		return 0;	//Return error
 
 	//Remove the track from the appropriate track type array
@@ -2242,8 +2242,8 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 {
 	unsigned long tracknum;
 
-	if(!sp || (track >= sp->tracks) || !count || !ptr)
-		return NULL;
+	if(!sp || !track || (track >= sp->tracks) || !count || !ptr)
+		return NULL;	//Invalid parameters
 
 	*count = 0;	//These will be the default values unless applicable information is found for the specified track
 	*ptr = NULL;
@@ -3605,7 +3605,7 @@ unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track)
 {
 // 	eof_log("eof_count_track_lanes() entered");
 
-	if((sp == NULL) || (track == 0) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 5;	//Return default value if the specified track doesn't exist
 
 	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
@@ -3636,14 +3636,32 @@ unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track)
 
 int eof_open_strum_enabled(unsigned long track)
 {
-	if(!eof_song || (track >= eof_song->tracks))
+	if(!eof_song || !track || (track >= eof_song->tracks))
 		return 0;
 
-	if((track == EOF_TRACK_DRUM) || (track == EOF_TRACK_DRUM_PS))
-	{	//Drum tracks do not use open strumming
+	if(!eof_track_is_legacy_guitar(eof_song, track))
+	{	//If this isn't a legacy guitar track
 		return 0;
 	}
 	return (eof_song->track[track]->flags & EOF_TRACK_FLAG_SIX_LANES);
+}
+
+int eof_lane_six_enabled(unsigned long track)
+{
+	if(!eof_song || !track || (track >= eof_song->tracks))
+		return 0;
+
+	if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If this is a pro guitar track
+		return (eof_song->pro_guitar_track[eof_song->track[track]->tracknum]->numstrings == 6);
+	}
+	else if(eof_song->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	{	//If this is a five lane style track
+		if(eof_song->track[track]->flags & EOF_TRACK_FLAG_SIX_LANES)
+			return 1;
+	}
+
+	return 0;
 }
 
 EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_note(EOF_PRO_GUITAR_TRACK *tp)
@@ -3711,7 +3729,7 @@ unsigned long eof_get_track_size(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track] == NULL))
+	if((sp == NULL) || !track || (track >= sp->tracks) || (sp->track[track] == NULL))
 		return 0;
 	tracknum = sp->track[track]->tracknum;
 
@@ -3734,7 +3752,7 @@ unsigned long eof_get_track_tech_note_size(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track] == NULL))
+	if((sp == NULL) || !track || (track >= sp->tracks) || (sp->track[track] == NULL))
 		return 0;
 	tracknum = sp->track[track]->tracknum;
 
@@ -3774,7 +3792,7 @@ void *eof_track_add_note(EOF_SONG *sp, unsigned long track)
 
  	eof_log("eof_track_add_note() entered", 2);	//Only log this if verbose logging is on
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return NULL;
 	tracknum = sp->track[track]->tracknum;
 
@@ -3799,7 +3817,7 @@ void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note
 
  	eof_log("eof_track_delete_note() entered", 2);	//Only log this if verbose logging is on
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -3863,7 +3881,7 @@ void eof_song_empty_track(EOF_SONG * sp, unsigned long track)
 {
 	unsigned long i;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 
 	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -3912,7 +3930,7 @@ unsigned char eof_get_note_type(EOF_SONG *sp, unsigned long track, unsigned long
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0xFF;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -3947,7 +3965,7 @@ unsigned long eof_get_note_pos(EOF_SONG *sp, unsigned long track, unsigned long 
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -3982,7 +4000,7 @@ long eof_get_note_length(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -4019,7 +4037,7 @@ void eof_set_note_length(EOF_SONG *sp, unsigned long track, unsigned long note, 
 
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -4052,7 +4070,7 @@ unsigned long eof_get_note_flags(EOF_SONG *sp, unsigned long track, unsigned lon
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -4087,7 +4105,7 @@ unsigned short eof_get_note_tflags(EOF_SONG *sp, unsigned long track, unsigned l
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -4122,7 +4140,7 @@ unsigned char eof_get_note_eflags(EOF_SONG *sp, unsigned long track, unsigned lo
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -4149,7 +4167,7 @@ unsigned char eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -4184,7 +4202,7 @@ unsigned char eof_get_note_ghost(EOF_SONG *sp, unsigned long track, unsigned lon
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -4205,7 +4223,7 @@ unsigned char eof_get_note_accent(EOF_SONG *sp, unsigned long track, unsigned lo
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks) || !track)
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -4239,7 +4257,7 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned char
 
  	eof_log("eof_track_add_create_note() entered", 2);
 
-	if(!sp || (track >= sp->tracks))
+	if(!sp || !track || (track >= sp->tracks))
 	{
 		return NULL;
 	}
@@ -4254,9 +4272,12 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned char
 		switch(sp->track[track]->track_format)
 		{
 			case EOF_LEGACY_TRACK_FORMAT:
-				if(!((eof_count_track_lanes(sp, track) > 5) && (track != EOF_TRACK_BASS)))
-				{	//If the track storing the new note does not have six lanes (with the exclusion of the bass track's open strum lane)
-					note &= ~32;	//Clear lane 6
+				if(eof_count_track_lanes(sp, track) <= 5)
+				{	//If the track storing the new note does not have six lanes
+					if(track != EOF_TRACK_BASS)
+					{	//And the new note isn't using the bass track's open strum lane
+						note &= ~32;	//Clear lane 6
+					}
 				}
 				ptr = (EOF_NOTE *)new_note;
 				ptr->type = type;
@@ -4349,7 +4370,7 @@ unsigned long eof_get_num_solos(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -4373,7 +4394,7 @@ EOF_PHRASE_SECTION *eof_get_solo(EOF_SONG *sp, unsigned long track, unsigned lon
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return NULL;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -4408,7 +4429,7 @@ void eof_set_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note, uns
 
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -4443,7 +4464,7 @@ void eof_move_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note, un
 
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -4499,7 +4520,7 @@ void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, un
 
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -4536,7 +4557,7 @@ void eof_set_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note, 
 
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -4557,7 +4578,7 @@ void eof_track_sort_notes(EOF_SONG *sp, unsigned long track)
 
  	eof_log("eof_track_sort_notes() entered", 2);
 
-	if((sp == NULL) || (track >= sp->tracks) || (track == 0))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -4614,7 +4635,7 @@ void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 {
  	eof_log("eof_track_fixup_notes() entered", 2);
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 
 	switch(sp->track[track]->track_format)
@@ -4918,7 +4939,7 @@ void eof_pro_guitar_track_fixup_hand_positions(EOF_SONG *sp, unsigned long track
 	unsigned ctr, ctr2;
 	EOF_PRO_GUITAR_TRACK * tp;
 
-	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 	{
 		return;	//Invalid parameters
 	}
@@ -4964,7 +4985,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 	EOF_PHRASE_SECTION *pp, *ppp;
 	EOF_PRO_GUITAR_NOTE *np;
 
-	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 	{
 		return;	//Invalid parameters
 	}
@@ -5414,7 +5435,7 @@ unsigned long eof_get_num_star_power_paths(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -5438,7 +5459,7 @@ EOF_PHRASE_SECTION *eof_get_star_power_path(EOF_SONG *sp, unsigned long track, u
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return NULL;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -5475,7 +5496,7 @@ void eof_set_num_solos(EOF_SONG *sp, unsigned long track, unsigned long number)
 
  	eof_log("eof_set_num_solos() entered", 1);
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -5501,7 +5522,7 @@ void eof_set_num_star_power_paths(EOF_SONG *sp, unsigned long track, unsigned lo
 
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -5525,7 +5546,7 @@ long eof_track_fixup_previous_note(EOF_SONG *sp, unsigned long track, unsigned l
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return -1;
 	tracknum = sp->track[track]->tracknum;
 
@@ -5548,7 +5569,7 @@ long eof_track_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long 
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return -1;
 	tracknum = sp->track[track]->tracknum;
 
@@ -5574,7 +5595,7 @@ void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track)
 
  	eof_log("eof_track_find_crazy_notes() entered", 1);
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 
 	if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
@@ -5602,7 +5623,7 @@ void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, u
 
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -5637,7 +5658,7 @@ void eof_set_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note, 
 
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -5670,7 +5691,7 @@ void eof_set_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note, 
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -5691,7 +5712,7 @@ void eof_set_note_type(EOF_SONG *sp, unsigned long track, unsigned long note, un
 
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -5726,7 +5747,7 @@ void eof_track_delete_star_power_path(EOF_SONG *sp, unsigned long track, unsigne
 
  	eof_log("eof_track_delete_star_power_path() entered", 1);
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -5767,7 +5788,7 @@ int eof_track_add_star_power_path(EOF_SONG *sp, unsigned long track, unsigned lo
 
  	eof_log("eof_track_add_star_power_path() entered", 1);
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -5809,7 +5830,7 @@ void eof_track_delete_solo(EOF_SONG *sp, unsigned long track, unsigned long path
 
  	eof_log("eof_track_delete_solo() entered", 1);
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -5850,7 +5871,7 @@ int eof_track_add_solo(EOF_SONG *sp, unsigned long track, unsigned long start_po
 
  	eof_log("eof_track_add_solo() entered", 1);
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -5912,7 +5933,7 @@ unsigned long eof_get_num_trills(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -5936,7 +5957,7 @@ unsigned long eof_get_num_tremolos(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -5960,7 +5981,7 @@ unsigned long eof_get_num_sliders(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -5977,7 +5998,7 @@ EOF_PHRASE_SECTION *eof_get_trill(EOF_SONG *sp, unsigned long track, unsigned lo
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return NULL;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -6009,7 +6030,7 @@ EOF_PHRASE_SECTION *eof_get_tremolo(EOF_SONG *sp, unsigned long track, unsigned 
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return NULL;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -6041,7 +6062,7 @@ EOF_PHRASE_SECTION *eof_get_slider(EOF_SONG *sp, unsigned long track, unsigned l
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return NULL;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -6063,7 +6084,7 @@ void eof_track_delete_trill(EOF_SONG *sp, unsigned long track, unsigned long pat
 
  	eof_log("eof_track_delete_trill() entered", 1);
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -6119,7 +6140,7 @@ int eof_track_add_trill(EOF_SONG *sp, unsigned long track, unsigned long start_p
 
  	eof_log("eof_track_add_trill() entered", 1);
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -6172,7 +6193,7 @@ void eof_track_delete_tremolo(EOF_SONG *sp, unsigned long track, unsigned long i
 
  	eof_log("eof_track_delete_tremolo() entered", 1);
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -6228,7 +6249,7 @@ int eof_track_add_tremolo(EOF_SONG *sp, unsigned long track, unsigned long start
 
  	eof_log("eof_track_add_tremolo() entered", 1);
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -6284,7 +6305,7 @@ void eof_track_delete_slider(EOF_SONG *sp, unsigned long track, unsigned long in
 
  	eof_log("eof_track_delete_slider() entered", 1);
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -6310,7 +6331,7 @@ void eof_set_num_trills(EOF_SONG *sp, unsigned long track, unsigned long number)
 
  	eof_log("eof_set_num_trills() entered", 1);
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -6336,7 +6357,7 @@ void eof_set_num_tremolos(EOF_SONG *sp, unsigned long track, unsigned long numbe
 
  	eof_log("eof_set_num_tremolos() entered", 1);
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -6362,7 +6383,7 @@ void eof_set_num_sliders(EOF_SONG *sp, unsigned long track, unsigned long number
 
  	eof_log("eof_set_num_sliders() entered", 1);
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -6446,7 +6467,7 @@ char *eof_get_note_name(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return NULL;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -6546,7 +6567,7 @@ unsigned long eof_get_num_arpeggios(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -6563,7 +6584,7 @@ EOF_PHRASE_SECTION *eof_get_arpeggio(EOF_SONG *sp, unsigned long track, unsigned
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return NULL;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -6584,7 +6605,7 @@ unsigned long eof_get_num_popup_messages(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -6601,7 +6622,7 @@ unsigned long eof_get_num_fret_hand_positions(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -6618,7 +6639,7 @@ EOF_PHRASE_SECTION *eof_get_fret_hand_position(EOF_SONG *sp, unsigned long track
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return NULL;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -6641,7 +6662,7 @@ void eof_set_num_fret_hand_positions(EOF_SONG *sp, unsigned long track, unsigned
 
  	eof_log("eof_set_num_arpeggios() entered", 1);
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -6781,7 +6802,7 @@ unsigned long eof_get_num_lyric_sections(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -6798,7 +6819,7 @@ EOF_PHRASE_SECTION *eof_get_lyric_section(EOF_SONG *sp, unsigned long track, uns
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return NULL;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
@@ -6823,7 +6844,7 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 
  	eof_log("eof_adjust_note_length() entered", 1);
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 
 	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -6962,7 +6983,7 @@ void eof_set_num_arpeggios(EOF_SONG *sp, unsigned long track, unsigned long numb
 
  	eof_log("eof_set_num_arpeggios() entered", 1);
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -6981,7 +7002,7 @@ void eof_track_delete_arpeggio(EOF_SONG *sp, unsigned long track, unsigned long 
 
  	eof_log("eof_track_delete_arpeggio() entered", 1);
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -7007,7 +7028,7 @@ void eof_set_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, ch
 
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks) || (name == NULL))
+	if((sp == NULL) || !track || (track >= sp->tracks) || (name == NULL))
 		return;
 	tracknum = sp->track[track]->tracknum;
 
@@ -7118,7 +7139,7 @@ char eof_track_has_cymbals(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long i, note, noteflags;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;
 
 	if(sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
@@ -7137,6 +7158,17 @@ char eof_track_has_cymbals(EOF_SONG *sp, unsigned long track)
 	}
 
 	return 0;	//Track has no cymbals
+}
+
+int eof_track_is_legacy_guitar(EOF_SONG *sp, unsigned long track)
+{
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;
+
+	if((sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT) && (sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR))
+		return 1;
+
+	return 0;
 }
 
 char eof_search_for_note_near(EOF_SONG *sp, unsigned long track, unsigned long targetpos, unsigned long delta, char type, unsigned long *match)
@@ -7203,7 +7235,7 @@ unsigned long eof_get_highest_fret(EOF_SONG *sp, unsigned long track, char scope
 	unsigned long highestfret = 0, currentfret, ctr, ctr2, tracknum, bitmask;
 	int note_selection_updated;
 
-	if(!sp || (track >= sp->tracks))
+	if(!sp || !track || (track >= sp->tracks))
 		return 0;	//Invalid parameters
 	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 0;	//Only run this on a pro guitar/bass track
@@ -7330,7 +7362,7 @@ unsigned long eof_get_lowest_fret_value(EOF_SONG *sp, unsigned long track, unsig
 {
 	unsigned long lowestfret = 0, currentfret, ctr, tracknum, bitmask;
 
-	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if((sp == NULL) || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 	if(note >= sp->pro_guitar_track[tracknum]->notes)
@@ -7377,7 +7409,7 @@ unsigned long eof_get_highest_fret_value(EOF_SONG *sp, unsigned long track, unsi
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if((sp == NULL) || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 	if(note >= sp->pro_guitar_track[tracknum]->notes)
@@ -7539,7 +7571,7 @@ long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long no
 	unsigned char thisnote, nextnote;
 	unsigned effective_min_note_distance = eof_min_note_distance;	//By default, the user configured minimum note distance is used
 
-	if(!sp || (track >= sp->tracks))
+	if(!sp || !track || (track >= sp->tracks))
 		return 0;	//Return error
 
 	thisflags = eof_get_note_flags(sp, track, note);	//Get the note's flags so it can be checked for "crazy" status
@@ -7766,7 +7798,7 @@ void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsign
 	unsigned notearrayctr = 1;		//If the target track is a pro guitar track, the note alteration logic will be run for both the normal AND tech note arrays
 	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
 
-	if(!sp || !undo_made || (track >= sp->tracks) || (startpos >= endpos))
+	if(!sp || !undo_made || !track || (track >= sp->tracks) || (startpos >= endpos))
 		return;	//Invalid parameters
 
 	if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -7974,7 +8006,7 @@ void eof_unflatten_difficulties(EOF_SONG *sp, unsigned long track)
 	int prompt = 0;	//Only the first call to eof_track_add_or_remove_track_difficulty_content_range() for each phrase will check/prompt to re-align notes
 	char undo_made = 0, started = 0;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;	//Invalid parameters
 
  	eof_log("eof_unflatten_difficulties() entered", 1);
@@ -8021,7 +8053,7 @@ void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char di
 	EOF_PRO_GUITAR_TRACK *tp = NULL;
 	char restore_tech_view;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
 
-	if(!sp || (track >= sp->tracks))
+	if(!sp || !track || (track >= sp->tracks))
 		return;	//Invalid parameters
 
 	tracknum = sp->track[track]->tracknum;
@@ -8121,7 +8153,7 @@ void eof_hightlight_all_notes_above_fret_number(EOF_SONG *sp, unsigned long trac
 {
 	unsigned long ctr, tracknum;
 
-	if(!sp || (track >= sp->tracks))
+	if(!sp || !track || (track >= sp->tracks))
 		return;	//Invalid parameters
 	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return;	//Only run this on a pro guitar/bass track
@@ -8140,7 +8172,7 @@ void eof_track_remove_highlighting(EOF_SONG *sp, unsigned long track, char funct
 {
 	unsigned long ctr, ctr2, flags, loopcount = 1;
 
-	if(!sp || (track >= sp->tracks))
+	if(!sp || !track || (track >= sp->tracks))
 		return;	//Invalid parameters
 
 	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)

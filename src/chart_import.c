@@ -408,7 +408,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			difficulty = current_track->difftype - 1;
 
 			/* if it is a valid track */
-			if(track >= 0)
+			if(track > 0)
 			{
 				struct dbNote * current_note = current_track->notes;
 				unsigned long lastpos = -1;	//The position of the last imported note (not updated for sections that are parsed)

@@ -686,6 +686,10 @@ void eof_read_editor_keys(void)
 	if(!eof_song_loaded)
 		return;	//Don't handle these keyboard shortcuts unless a chart is loaded
 
+	if(eof_track_is_legacy_guitar(eof_song, eof_selected_track) && !eof_open_strum_enabled(eof_selected_track))
+	{	//Special case:  Legacy guitar tracks can use a sixth lane but hide that lane if it is not enabled
+		numlanes = 5;
+	}
 	if(eof_screen_zoom)
 	{	//If x2 zoom is in effect, take that into account for the mouse position
 		eof_scaled_mouse_y = mouse_y / 2;
@@ -3529,6 +3533,10 @@ void eof_editor_logic(void)
 	}
 	eof_editor_logic_common();
 
+	if((eof_pen_note.note & 32) && eof_track_is_legacy_guitar(eof_song, eof_selected_track) && !eof_open_strum_enabled(eof_selected_track))
+	{	//Special case:  Lane 6 of the pen note was enabled, but the active track does not currently have that lane enabled
+		eof_pen_note.note &= ~32;	//Clear that lane from the pen note
+	}
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if(eof_music_paused)
 	{	//If the chart is paused
@@ -5405,6 +5413,10 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		return;
 
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
+	if(eof_track_is_legacy_guitar(eof_song, eof_selected_track) && !eof_open_strum_enabled(eof_selected_track))
+	{	//Special case:  Legacy guitar tracks can use a sixth lane but hide that lane if it is not enabled
+		numlanes = 5;
+	}
 	eof_set_2D_lane_positions(eof_selected_track);	//Update the ychart[] array
 
 	if(eof_display_second_piano_roll)
@@ -5606,7 +5618,6 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			}
 		}
 	}
-
 
 	/* draw seek selection */
 	if(eof_seek_selection_start != eof_seek_selection_end)
@@ -5924,9 +5935,14 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		gridpos = eof_next_grid_snap(gridpos);	//Find the first grid snap from that timestamp
 		while((gridpos > 0) && (gridpos < stop))
 		{	//If a grid snap position was identified and it renders before the right edge of the screen
+			unsigned long lastgridpos = gridpos;
 			xcoord = lpos + gridpos / eof_zoom;
 			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10 - 1, eof_color_yellow);
 			gridpos = eof_next_grid_snap(gridpos);	//Find the next grid snap
+			if(gridpos == lastgridpos)
+			{	//If the grid snap logic couldn't find another grid snap position
+				break;
+			}
 		}
 	}
 
@@ -6191,8 +6207,8 @@ void eof_mark_edited_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned 
 
 	eof_log("eof_mark_edited_note_as_cymbal() entered", 1);
 
-	if((sp == NULL) || (track >= sp->tracks))
-		return;
+	if((sp == NULL) || (track >= sp->tracks) || !track)
+		return;	//Invalid parameters
 	tracknum = sp->track[track]->tracknum;
 
 	if(sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
@@ -6227,8 +6243,8 @@ void eof_mark_edited_note_as_double_bass(EOF_SONG *sp, unsigned long track, unsi
 
 	eof_log("eof_mark_edited_note_as_double_bass() entered", 1);
 
-	if((sp == NULL) || (track >= sp->tracks))
-		return;
+	if((sp == NULL) || (track >= sp->tracks) || !track)
+		return;	//Invalid parameters
 	tracknum = sp->track[track]->tracknum;
 
 	if((sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (eof_get_note_type(sp, eof_selected_track, notenum) == EOF_NOTE_AMAZING))
@@ -6256,8 +6272,8 @@ void eof_mark_edited_note_as_special_hi_hat(EOF_SONG *sp, unsigned long track, u
 
 	eof_log("eof_mark_edited_note_as_special_hi_hat() entered", 1);
 
-	if((sp == NULL) || (track >= sp->tracks))
-		return;
+	if((sp == NULL) || (track >= sp->tracks) || !track)
+		return;	//Invalid parameters
 	tracknum = sp->track[track]->tracknum;
 
 	if(sp->track[track]->track_type == EOF_TRACK_DRUM_PS)
@@ -6306,6 +6322,10 @@ unsigned char eof_find_pen_note_mask(void)
 	//Determine which lane the mouse is in
 	eof_hover_piece = -1;
 	lanecount = eof_count_track_lanes(eof_song, eof_selected_track);
+	if(eof_track_is_legacy_guitar(eof_song, eof_selected_track) && !eof_open_strum_enabled(eof_selected_track))
+	{	//Special case:  Legacy guitar tracks can use a sixth lane but hide that lane if it is not enabled
+		lanecount = 5;
+	}
 	for(i = 0; i < lanecount; i++)
 	{	//For each of the usable lanes
 		laneborder = eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 15 + 10 + eof_screen_layout.note_y[i];	//This represents the y position of the boundary between the current lane and the next

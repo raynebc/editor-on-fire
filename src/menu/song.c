@@ -4122,7 +4122,7 @@ void eof_song_highlight_non_grid_snapped_notes(EOF_SONG *sp, unsigned long track
 	unsigned long ctr, ctr2, loopcount = 1, tflags, thispos, lastpos = 0;
 	int thisisgridsnapped, lastisgridsnapped = 0;
 
-	if(!sp || (track >= sp->tracks))
+	if(!sp || (track >= sp->tracks) || !track)
 		return;	//Invalid parameters
 
 	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -4180,7 +4180,7 @@ void eof_song_highlight_arpeggios(EOF_SONG *sp, unsigned long track)
 	unsigned long ctr, ctr2, tracknum, loopcount = 2;
 	EOF_PRO_GUITAR_TRACK *tp;
 
-	if(!sp || (track >= sp->tracks))
+	if(!sp || (track >= sp->tracks) || !track)
 		return;	//Invalid parameters
 	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return;	//Do not allow this function to run on a non pro guitar track
