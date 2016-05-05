@@ -2615,49 +2615,58 @@ int eof_menu_song_seek_previous_anchor(void)
 
 	if(!eof_song)
 		return 1;
-	b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 
-	if((b >= 0) && (eof_song->beat[b]->pos == eof_music_pos - eof_av_delay))
-	{	//If the beat in which the seek position is was found and the seek position was on the beat marker
-		b--;	//Go to the previous beat
+	b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	if(EOF_BEAT_NUM_VALID(eof_song, b))
+	{	//If the beat containing the seek position was identified
+		if((eof_song->beat[b]->pos < eof_music_pos - eof_av_delay) && (eof_song->beat[b]->flags & EOF_BEAT_FLAG_ANCHOR))
+		{	//If the seek position is within (but not at the start of) a beat that is an anchor
+			eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);	//Seek to that beat
+		}
+		else
+		{
+			while(b > 0)
+			{	//While there's a previous beat
+				b--;	//Iterate to that beat
+				if(eof_song->beat[b]->flags & EOF_BEAT_FLAG_ANCHOR)
+				{	//If this beat is an anchor
+					eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);	//Seek to that beat
+					break;	//Break from loop
+				}
+			}
+		}
 	}
-	while((b > 0) && ((eof_song->beat[b]->flags & EOF_BEAT_FLAG_ANCHOR) == 0))
-	{	//Starting at/before the beat at the current seek position, until an anchor is found,
-		b--;	//Go back one beat
-	}
-	if(b < 0)
-	{	//If no other suitable anchor was found
-		b = 0;	//Seek to the first beat marker
-	}
-	eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);	//Seek to the anchor
 
 	return 1;
 }
 
 int eof_menu_song_seek_next_anchor(void)
 {
-	long b, b2;
+	long b;
 
 	if(!eof_song)
 		return 1;
-	b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
-	b2 = b;
 
-	if((b >= 0) && (eof_song->beat[b]->pos == eof_music_pos - eof_av_delay))
-	{	//If the beat in which the seek position is was found and the seek position was on the beat marker
-		b++;	//Go to the next beat
+	if(eof_music_pos - eof_av_delay < eof_song->beat[0]->pos)
+	{	//If the seek position is before the first beat
+		eof_set_seek_position(eof_song->beat[0]->pos + eof_av_delay);	//Seek to the first beat
 	}
-	while((b > 0) && (b < eof_song->beats) && ((eof_song->beat[b]->flags & EOF_BEAT_FLAG_ANCHOR) == 0))
-	{	//Starting at/before the beat at the current seek position, until an anchor is found,
-		b++;	//Go forward one beat
-	}
-	if((b < eof_song->beats) && (b != b2))
-	{	//Don't perform a seek if there was no anchor ahead of the current seek position
-		if(b < 0)
-		{	//If no other suitable anchor was found
-			b = 0;	//Seek to the first beat marker
+	else
+	{
+		b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+
+		if(EOF_BEAT_NUM_VALID(eof_song, b))
+		{	//If the beat containing the seek position was identified
+			while(EOF_BEAT_NUM_VALID(eof_song, b + 1))
+			{	//While there's another beat
+				b++;	//Iterate to that beat
+				if(eof_song->beat[b]->flags & EOF_BEAT_FLAG_ANCHOR)
+				{	//If this beat is an anchor
+					eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);	//Seek to that beat
+					break;	//Break from loop
+				}
+			}
 		}
-		eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);	//Seek to the anchor
 	}
 
 	return 1;
@@ -2680,7 +2689,7 @@ int eof_menu_song_seek_previous_beat(void)
 	if(!eof_song)
 		return 1;
 
-	if(b > 0)
+	if(EOF_BEAT_NUM_VALID(eof_song, b) && (b > 0))
 	{
 		if(eof_song->beat[b]->pos == eof_music_pos - eof_av_delay)
 		{
@@ -2711,7 +2720,7 @@ int eof_menu_song_seek_next_beat(void)
 		b = -1;
 	}
 
-	if((b < 0) || (b < eof_song->beats - 1))
+	if(!EOF_BEAT_NUM_VALID(eof_song, b) || (b < eof_song->beats - 1))
 	{	//If the seek position is before the first beat marker, or it is before the last beat marker
 		eof_set_seek_position(eof_song->beat[b + 1]->pos + eof_av_delay);	//Seek to the next beat's position
 	}
@@ -2728,7 +2737,7 @@ int eof_menu_song_seek_previous_measure(void)
 	if(!eof_song)
 		return 1;
 
-	while(b >= 0)
+	while(EOF_BEAT_NUM_VALID(eof_song, b))
 	{	//For each beat at or before the current seek position
 		if(eof_get_ts(eof_song, &num, NULL, b) == 1)
 		{	//If this beat is a time signature
@@ -2736,7 +2745,7 @@ int eof_menu_song_seek_previous_measure(void)
 		}
 		b--;	//Check previous beat on next loop
 	}
-	if(b < 0)
+	if(!EOF_BEAT_NUM_VALID(eof_song, b))
 	{	//If no time signature was found
 		num = 4;	//Assume 4/4
 	}
@@ -2772,7 +2781,7 @@ int eof_menu_song_seek_next_measure(void)
 	if(!eof_song)
 		return 1;
 
-	while(b >= 0)
+	while(EOF_BEAT_NUM_VALID(eof_song, b))
 	{	//For each beat at or before the current seek position
 		if(eof_get_ts(eof_song, &num, NULL, b) == 1)
 		{	//If this beat is a time signature
@@ -2780,7 +2789,7 @@ int eof_menu_song_seek_next_measure(void)
 		}
 		b--;	//Check previous beat on next loop
 	}
-	if(b < 0)
+	if(!EOF_BEAT_NUM_VALID(eof_song, b))
 	{	//If no time signature was found
 		num = 4;	//Assume 4/4
 	}

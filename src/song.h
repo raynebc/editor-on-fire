@@ -138,6 +138,8 @@
 #define EOF_NAME_LENGTH 30
 #define EOF_SECTION_NAME_LENGTH 50
 
+#define EOF_BEAT_NUM_VALID(sp, number) ((number >= 0) && (number < sp->beats))
+
 typedef struct
 {
 	char name[EOF_NAME_LENGTH + 1];

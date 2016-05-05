@@ -2954,7 +2954,7 @@ int eof_save_helper_checks(void)
 
 						start = eof_get_beat(eof_song, tp->arpeggio[ctr2].start_pos);
 						end = eof_get_beat(eof_song, tp->arpeggio[ctr2].end_pos);
-						if((start >= 0) && (end >= start))
+						if(EOF_BEAT_NUM_VALID(eof_song, start) && EOF_BEAT_NUM_VALID(eof_song, end) && (end >= start))
 						{	//If the effective beat numbers for the start and end position of the arpeggio/handshape were identified
 							for(ctr3 = start + 1; !user_prompted && (ctr3 <= end); ctr3++)
 							{	//For each beat between them, after the first (which will always be at/before the beginning of the arpeggio, when the condition being checked can only happen to a beat AFTER the start of the arpeggio)
@@ -3084,11 +3084,11 @@ int eof_save_helper_checks(void)
 
 						startbeat = eof_get_beat(eof_song, start);	//Find the beat in which this note starts
 						stopbeat = eof_get_beat(eof_song, stop);	//And the beat in which it ends
-						if((stopbeat >= 0) && (stop == eof_song->beat[stopbeat]->pos) && (stopbeat > startbeat))
+						if(EOF_BEAT_NUM_VALID(eof_song, stopbeat) && (stop == eof_song->beat[stopbeat]->pos) && (stopbeat > startbeat))
 						{	//If the note extends up to and ends on the beat
 							stopbeat--;	//Interpret it as ending at the previous beat instead of surpassing it
 						}
-						if((startbeat >= 0) && (stopbeat >= 0) && (startbeat != stopbeat))
+						if(EOF_BEAT_NUM_VALID(eof_song, startbeat) && EOF_BEAT_NUM_VALID(eof_song, stopbeat) && (startbeat != stopbeat))
 						{	//If each of those beats was successfully identified and they are different beats
 							int sectionchange = 0, phrasechange = 0;
 

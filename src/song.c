@@ -6904,7 +6904,7 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 				long beat = eof_get_beat(sp, targetpos);		//Get the beat in which the tail currently ends
 				unsigned long newtailendpos = targetpos;
 
-				if((dir < 0) && (beat > 0) && (beat < sp->beats) && (targetpos == sp->beat[beat]->pos))
+				if((dir < 0) && EOF_BEAT_NUM_VALID(sp, beat) && (beat > 0) && (beat < sp->beats) && (targetpos == sp->beat[beat]->pos))
 				{	//If the note is being shortened by a grid snap and the tail's current end position is found to be at the start of a beat
 					targetpos--;	//Consider the tail's current position to end in the previous beat so that the grid snap logic will find it a grid snap position in that beat
 				}
