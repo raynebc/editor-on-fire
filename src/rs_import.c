@@ -448,13 +448,10 @@ eof_log(eof_log_string, 1);
 
 			//Build an array defining available spaces between the existing technotes on this chord
 			gaps = malloc(sizeof(EOF_TECHNOTE_GAP) * numgaps);
-			memset(gaps, 0, sizeof(EOF_TECHNOTE_GAP) * numgaps);
 
 			//Build one array each to store the solution currently being tested and the best examined solution
 			solution = malloc(sizeof(unsigned) * neededtechnotes);
-			memset(solution, 0, sizeof(unsigned) * neededtechnotes);
 			bestsolution = malloc(sizeof(unsigned) * neededtechnotes);
-			memset(bestsolution, 0, sizeof(unsigned) * neededtechnotes);
 			if(!gaps || !solution || !bestsolution)
 			{	//If the array was not allocated
 				if(gaps)
@@ -466,6 +463,9 @@ eof_log(eof_log_string, 1);
 				eof_log("\tError allocating memory for technote placement logic.  Aborting", 1);
 				error = 1;
 			}
+			memset(gaps, 0, sizeof(EOF_TECHNOTE_GAP) * numgaps);
+			memset(solution, 0, sizeof(unsigned) * neededtechnotes);
+			memset(bestsolution, 0, sizeof(unsigned) * neededtechnotes);
 			if(!error)
 			{	//If the solution arrays were created
 				lasttechpos = np->pos;	//The first gap will begin at the beginning of the chord
@@ -1419,7 +1419,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		else if(strcasestr_spec(buffer, "<levels") && !strstr(buffer, "/>"))
 		{	//If this is the levels tag and it isn't empty
 			long curdiff = 0, time = 0;
-			long fret, palmmute, mute;
+			long fret = 0, palmmute, mute;
 			unsigned long flags;
 			EOF_PRO_GUITAR_NOTE *np = NULL;
 

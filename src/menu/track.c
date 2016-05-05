@@ -2380,7 +2380,14 @@ void eof_rebuild_manage_rs_phrases_strings(void)
 		}
 	}
 
-	eof_track_manage_rs_phrases_strings = malloc(sizeof(char *) * numphrases);	//Allocate enough pointers to have one for each phrase
+	if(numphrases)
+	{	//If at least one RS phrase was present
+		eof_track_manage_rs_phrases_strings = malloc(sizeof(char *) * numphrases);	//Allocate enough pointers to have one for each phrase
+	}
+	else
+	{
+		eof_track_manage_rs_phrases_strings = malloc(1);	//Otherwise allocate a non zero amount of bytes to satisfy Clang scan-build
+	}
 	if(!eof_track_manage_rs_phrases_strings)
 	{
 		allegro_message("Error allocating memory");

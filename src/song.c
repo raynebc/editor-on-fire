@@ -4980,7 +4980,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 	long next;
 	char allmuted;	//Used to track whether all used strings are string muted
 	EOF_PRO_GUITAR_TRACK * tp;
-	EOF_RS_TECHNIQUES ptr = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0 ,0};
+	EOF_RS_TECHNIQUES ptr = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	char has_link_next;	//Is set to nonzero if any strings used in the note have sustain status applied
 	EOF_PHRASE_SECTION *pp, *ppp;
 	EOF_PRO_GUITAR_NOTE *np;
