@@ -2611,7 +2611,7 @@ int eof_menu_song_seek_next_grid_snap(void)
 
 int eof_menu_song_seek_previous_anchor(void)
 {
-	long b;
+	unsigned long b;
 
 	if(!eof_song)
 		return 1;
@@ -2642,7 +2642,7 @@ int eof_menu_song_seek_previous_anchor(void)
 
 int eof_menu_song_seek_next_anchor(void)
 {
-	long b;
+	unsigned long b;
 
 	if(!eof_song)
 		return 1;
@@ -2684,7 +2684,7 @@ int eof_menu_song_seek_first_beat(void)
 
 int eof_menu_song_seek_previous_beat(void)
 {
-	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	unsigned long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 
 	if(!eof_song)
 		return 1;
@@ -2710,7 +2710,7 @@ int eof_menu_song_seek_previous_beat(void)
 
 int eof_menu_song_seek_next_beat(void)
 {
-	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	unsigned long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 
 	if(!eof_song)
 		return 1;
@@ -2730,7 +2730,7 @@ int eof_menu_song_seek_next_beat(void)
 
 int eof_menu_song_seek_previous_measure(void)
 {
-	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	unsigned long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	unsigned num = 0, ctr;
 	unsigned long originalpos = eof_music_pos - eof_av_delay;
 
@@ -2774,7 +2774,7 @@ int eof_menu_song_seek_previous_measure(void)
 
 int eof_menu_song_seek_next_measure(void)
 {
-	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	unsigned long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	unsigned num = 0, ctr;
 	unsigned long originalpos = eof_music_pos - eof_av_delay;
 

@@ -354,7 +354,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	double beatlength, beatreallength;	//The delta and realtime lengths, respectively, of the beat being processed
 	double BPM=120.0;	//Assume a default tempo of 120BPM and TS of 4/4 at 0 deltas
 	unsigned long event_realtime;		//Store the delta time converted to realtime to avoid having to convert multiple times per note
-	long beat;
+	unsigned long beat;
 	long picked_track;
 	char used_track[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};	//for Rock Band songs, we need to ignore certain tracks
 	unsigned char lane = 0;				//Used to track the lane referenced by a MIDI on/off note

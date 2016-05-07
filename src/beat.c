@@ -11,23 +11,23 @@
 
 int eof_beat_stats_cached = 0;	//Tracks whether the cached statistics for the projects beats is current (should be reset after each load, import, undo, redo or beat operation)
 
-long eof_get_beat(EOF_SONG * sp, unsigned long pos)
+unsigned long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 {
 	unsigned long i;
 
-	eof_log("eof_get_beat() entered", 2);
+//	eof_log("eof_get_beat() entered", 2);
 
 	if(!sp)
 	{
-		return -1;
+		return ULONG_MAX;
 	}
 	if(pos > eof_chart_length)
 	{
-		return -1;
+		return ULONG_MAX;
 	}
 	if(pos < sp->beat[0]->pos)
 	{
-		return -1;
+		return ULONG_MAX;
 	}
 	for(i = 1; i < sp->beats; i++)
 	{	//For each beat after the first
@@ -255,7 +255,7 @@ unsigned long eof_find_previous_anchor(EOF_SONG * sp, unsigned long cbeat)
 	return 0;
 }
 
-long eof_find_next_anchor(EOF_SONG * sp, unsigned long cbeat)
+unsigned long eof_find_next_anchor(EOF_SONG * sp, unsigned long cbeat)
 {
 	unsigned long beat = cbeat;
 
@@ -278,12 +278,12 @@ long eof_find_next_anchor(EOF_SONG * sp, unsigned long cbeat)
 			return beat;
 		}
 	}
-	return -1;
+	return ULONG_MAX;
 }
 
-void eof_realign_beats(EOF_SONG * sp, int cbeat)
+void eof_realign_beats(EOF_SONG * sp, unsigned long cbeat)
 {
-	long i, last_anchor, next_anchor, beats = 0, count = 1;
+	unsigned long i, last_anchor, next_anchor, beats = 0, count = 1;
 	double beats_length;
 	double newbpm;
 	double newppqn;
@@ -296,7 +296,7 @@ void eof_realign_beats(EOF_SONG * sp, int cbeat)
 	}
 	last_anchor = eof_find_previous_anchor(sp, cbeat);
 	next_anchor = eof_find_next_anchor(sp, cbeat);
-	if(next_anchor < 0)
+	if(!EOF_BEAT_NUM_VALID(sp, next_anchor))
 	{
 		next_anchor = sp->beats;
 	}
@@ -336,7 +336,7 @@ void eof_recalculate_beats(EOF_SONG * sp, unsigned long cbeat)
 {
 	unsigned long i;
 	unsigned long last_anchor = eof_find_previous_anchor(sp, cbeat);
-	long next_anchor = eof_find_next_anchor(sp, cbeat);
+	unsigned long next_anchor = eof_find_next_anchor(sp, cbeat);
 	int beats = 0;
 	int count = 1;
 	double beats_length;
@@ -387,7 +387,7 @@ void eof_recalculate_beats(EOF_SONG * sp, unsigned long cbeat)
 	}
 
 	/* move rest of markers */
-	if(next_anchor >= 0)
+	if(EOF_BEAT_NUM_VALID(sp, next_anchor))
 	{	//If there is another anchor, adjust all beat timings up until that anchor
 		beats = 0;
 		if(cbeat < next_anchor)

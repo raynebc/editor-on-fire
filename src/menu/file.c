@@ -2645,7 +2645,7 @@ int eof_save_helper_checks(void)
 						break;
 					}
 				}
-				(void) snprintf(newfolderpath, sizeof(newfolderpath) - 1, "(Suggested T/S is %d/%d).  Cancel save?", suggested, eof_song->beat[ctr]->beat_unit);	//Determine a suitable time signature to suggest
+				(void) snprintf(newfolderpath, sizeof(newfolderpath) - 1, "(Suggested T/S is %d/%u).  Cancel save?", suggested, eof_song->beat[ctr]->beat_unit);	//Determine a suitable time signature to suggest
 				eof_selected_beat = ctr;	//Select the affected beat marker
 				eof_beat_stats_cached = 0;
 				eof_seek_and_render_position(eof_selected_track, eof_note_type, eof_song->beat[ctr]->pos);	//seek to the beat in question and render
@@ -2950,7 +2950,7 @@ int eof_save_helper_checks(void)
 					eof_pro_guitar_track_sort_arpeggios(tp);
 					for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
 					{	//For each arpeggio/handshape
-						long start, end;
+						unsigned long start, end;
 
 						start = eof_get_beat(eof_song, tp->arpeggio[ctr2].start_pos);
 						end = eof_get_beat(eof_song, tp->arpeggio[ctr2].end_pos);
@@ -3060,7 +3060,7 @@ int eof_save_helper_checks(void)
 
 					for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
 					{	//For each note in the track
-						long startbeat, stopbeat;
+						unsigned long startbeat, stopbeat;
 
 						start = tp->note[ctr2]->pos;			//Record its start and stop position
 						stop = start + tp->note[ctr2]->length;

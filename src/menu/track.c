@@ -2321,7 +2321,7 @@ char **eof_track_manage_rs_phrases_strings = NULL;	//Stores allocated strings fo
 unsigned long eof_track_manage_rs_phrases_strings_size = 0;	//The number of strings stored in the above array
 char eof_track_manage_rs_phrases_dialog_string[25] = {0};	//The title string for the manage RS phrases dialog
 
-char * eof_magage_rs_phrases_list(int index, int * size)
+char * eof_manage_rs_phrases_list(int index, int * size)
 {
 	unsigned long ctr, numphrases;
 
@@ -2331,9 +2331,12 @@ char * eof_magage_rs_phrases_list(int index, int * size)
 		{
 			for(ctr = 0, numphrases = 0; ctr < eof_song->beats; ctr++)
 			{	//For each beat in the chart
-				if(eof_song->beat[ctr]->contained_section_event >= 0)
-				{	//If this beat has a section event (RS phrase)
-					numphrases++;	//Update counter
+				if(ctr != eof_song->beats - 1)
+				{	//As long as this isn't the last beat in the chart (to avoid a crash when the lack of a following beat prevents the string being built)
+					if(eof_song->beat[ctr]->contained_section_event >= 0)
+					{	//If this beat has a section event (RS phrase)
+						numphrases++;	//Update counter
+					}
 				}
 			}
 			(void) snprintf(eof_track_manage_rs_phrases_dialog_string, sizeof(eof_track_manage_rs_phrases_dialog_string) - 1, "Manage RS phrases (%lu)", numphrases);
@@ -2353,7 +2356,7 @@ DIALOG eof_track_manage_rs_phrases_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                 (dp2) (dp3) */
 	{ d_agup_window_proc,0,   48,  400, 237, 2,   23,  0,    0,      0,   0,   eof_track_manage_rs_phrases_dialog_string, NULL, NULL },
-	{ d_agup_list_proc,  12,  84,  300, 144, 2,   23,  0,    0,      0,   0,   (void *)eof_magage_rs_phrases_list,NULL, NULL },
+	{ d_agup_list_proc,  12,  84,  300, 144, 2,   23,  0,    0,      0,   0,   (void *)eof_manage_rs_phrases_list,NULL, NULL },
 	{ d_agup_push_proc,  325, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add level",        NULL, (void *)eof_track_manage_rs_phrases_add_level },
 	{ d_agup_push_proc,  325, 124, 68,  28,  2,   23,  'd',  D_EXIT, 0,   0,   "&Del level",        NULL, (void *)eof_track_manage_rs_phrases_remove_level },
 	{ d_agup_push_proc,  325, 164, 68,  28,  2,   23,  's',  D_EXIT, 0,   0,   "&Seek to",          NULL, (void *)eof_track_manage_rs_phrases_seek },
@@ -2370,8 +2373,16 @@ void eof_rebuild_manage_rs_phrases_strings(void)
 	char *currentphrase = NULL;
 	char started = 0;
 
+	if(eof_song->beats < 2)
+		return;
+
 	//Count the number of phrases in the active track
 	eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
+	if(eof_song->beat[eof_song->beats - 1]->contained_section_event >= 0)
+	{	//If the last beat in the project has a phrase
+		eof_truncate_chart(eof_song);	//Append some beats to allow the logic below to function properly
+		eof_process_beat_statistics(eof_song, eof_selected_track);	//Update beat stats
+	}
 	for(ctr = 0, numphrases = 0; ctr < eof_song->beats; ctr++)
 	{	//For each beat in the chart
 		if(eof_song->beat[ctr]->contained_section_event >= 0)

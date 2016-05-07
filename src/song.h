@@ -138,7 +138,7 @@
 #define EOF_NAME_LENGTH 30
 #define EOF_SECTION_NAME_LENGTH 50
 
-#define EOF_BEAT_NUM_VALID(sp, number) ((number >= 0) && (number < sp->beats))
+#define EOF_BEAT_NUM_VALID(sp, number) (number < sp->beats)
 
 typedef struct
 {
@@ -420,9 +420,11 @@ typedef struct
 	double fpos;
 
 	//These variables, set with eof_process_beat_statistics(), track various properties of the beat to relieve rendering functions of some processing
-	//beat_within_measure is numbered starting with 0, the contained... variables are set to -1 if the beat does not contain a qualifying text event
+	//beat_within_measure is numbered starting with 0 (or is -1 if the beat is in an area where no time signature is defined)
+	//the contained... variables are set to -1 if the beat does not contain a qualifying text event
 	unsigned long measurenum;
-	int beat_within_measure, num_beats_in_measure, beat_unit, contained_section_event, contained_rs_section_event, contained_rs_section_event_instance_number;
+	unsigned num_beats_in_measure, beat_unit;
+	int beat_within_measure, contained_section_event, contained_rs_section_event, contained_rs_section_event_instance_number;
 	char contains_tempo_change, contains_ts_change, contains_end_event;
 
 } EOF_BEAT_MARKER;

@@ -398,8 +398,8 @@ extern int         eof_pegged_note;
 extern int         eof_hover_note;		//The hover note that is tracked using the mouse position
 extern int         eof_seek_hover_note;	//The hover note that is tracked using the seek position (for Feedback input method)
 extern int         eof_hover_note_2;	//The hover note that is tracked for fret catalog playback
-extern long        eof_hover_beat;
-extern long        eof_hover_beat_2;
+extern unsigned long eof_hover_beat;	//The beat that is hovered over, set to ULONG_MAX if no beat is hovered over
+extern unsigned long eof_hover_beat_2;	//The last beat in which the current playback position was determined to be
 extern int         eof_hover_piece;		//The lane number that the mouse is over
 extern int         eof_hover_key;
 extern int         eof_hover_lyric;

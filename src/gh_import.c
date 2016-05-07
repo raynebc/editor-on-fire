@@ -2858,11 +2858,11 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 				{	//For each link in the sections checksum list (until a match has been made)
 					if(linkptr->checksum == checksum)
 					{	//If this checksum matches the one in the list
-						long beatnum;
+						unsigned long beatnum;
 
 						eof_chart_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
 						beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
-						if(beatnum >= 0)
+						if(EOF_BEAT_NUM_VALID(sp, beatnum))
 						{	//If there is such a beat
 							char buffer2[256] = {0};
 
@@ -2995,11 +2995,11 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 								{
 									if(!eof_filebuffer_get_dword(fb, &dword))	//Read the timestamp
 									{	//If the timestamp was successfully read
-										long beatnum;
+										unsigned long beatnum;
 
 										eof_chart_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
 										beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
-										if(beatnum >= 0)
+										if(EOF_BEAT_NUM_VALID(sp, beatnum))
 										{	//If there is such a beat
 											char buffer2[256] = {0};
 

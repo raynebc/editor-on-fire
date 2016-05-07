@@ -5440,7 +5440,8 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 char eof_copy_notes_in_beat_range(EOF_PRO_GUITAR_TRACK *source, unsigned long startbeat, unsigned long numbeats, EOF_PRO_GUITAR_TRACK *dest, unsigned long destbeat)
 {
 	unsigned long ctr;
-	long beatnum, endbeatnum, newpos, newend;
+	unsigned long beatnum, endbeatnum;
+	long newpos, newend;
 	double notepos, noteendpos;
 
 	eof_log("eof_copy_notes_in_beat_range() entered", 1);
@@ -5457,7 +5458,7 @@ char eof_copy_notes_in_beat_range(EOF_PRO_GUITAR_TRACK *source, unsigned long st
 		{	//If this note is positioned within the target range of beats
 			beatnum = eof_get_beat(eof_song, source->note[ctr]->pos);					//Find which beat this note is within
 			endbeatnum = eof_get_beat(eof_song, source->note[ctr]->pos + source->note[ctr]->length);	//Find which beat this note ends within
-			if((beatnum >= 0) && (endbeatnum >= 0))
+			if(EOF_BEAT_NUM_VALID(eof_song, beatnum) && EOF_BEAT_NUM_VALID(eof_song, endbeatnum))
 			{	//The beat positions were found
 				if(eof_song->beats < destbeat + endbeatnum - startbeat + 2)
 				{

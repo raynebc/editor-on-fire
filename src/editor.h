@@ -29,9 +29,9 @@ typedef struct
 typedef struct
 {
 
-	int beat;
+	long beat;
 	double beat_length;
-	int measure_beat;
+	long measure_beat;
 	double measure_length;
 	int length;
 	int numerator, denominator;
@@ -44,8 +44,8 @@ typedef struct
 
 extern EOF_SNAP_DATA eof_snap;
 extern EOF_SNAP_DATA eof_tail_snap;
-extern long        eof_anchor_diff[EOF_TRACKS_MAX];			//Used for note auto-adjust logic
-extern long        eof_tech_anchor_diff[EOF_TRACKS_MAX];	//Used for tech note auto-adjust logic
+extern unsigned long eof_anchor_diff[EOF_TRACKS_MAX];		//Used for note auto-adjust logic
+extern unsigned long eof_tech_anchor_diff[EOF_TRACKS_MAX];	//Used for tech note auto-adjust logic
 
 void eof_select_beat(unsigned long beat);
 	//Updates eof_selected_measure, eof_beat_in_measure, eof_beats_in_measure and eof_selected_beat to reflect the specified beat number
@@ -144,7 +144,7 @@ int eof_get_tempo_text(unsigned long beat, char * buffer);
 
 void eof_seek_to_nearest_grid_snap(void);
 	//Used in Feedback input method to seek to the nearest grid snap position when playback is stopped, provided there's a grid snap selected and the current seek position is valid.
-int eof_find_hover_note(int targetpos, int x_tolerance, char snaplogic);
+long eof_find_hover_note(long targetpos, int x_tolerance, char snaplogic);
 	//Finds and returns an appropriate hover note based on the specified position and the given x_tolerance
 	//If snaplogic is nonzero, also checks snap position data (should only be needed for tracking by mouse position)
 	//Returns -1 if no note was close enough to the specified position in the current instrument difficulty

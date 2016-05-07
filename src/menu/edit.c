@@ -597,7 +597,7 @@ int eof_menu_edit_copy_vocal(void)
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long first_pos = -1;
-	long first_beat = -1;
+	unsigned long first_beat = ULONG_MAX;
 	char note_check = 0;
 	int copy_notes = 0;
 	PACKFILE * fp;
@@ -655,16 +655,21 @@ int eof_menu_edit_copy_vocal(void)
 			/* check for accidentally moved note */
 			if(!note_check)
 			{
-				if(eof_song->beat[eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos) + 1]->pos - eof_song->vocal_track[tracknum]->lyric[i]->pos <= 10)
-				{
-					eof_clear_input();
-					if(alert(NULL, "First note appears to be off.", "Adjust?", "&Yes", "&No", 'y', 'n') == 1)
+				unsigned long beatnum = eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i));	//Find which beat that the first selected lyric is currently in
+
+				if(EOF_BEAT_NUM_VALID(eof_song, beatnum))
+				{	//If that beat was identified
+					if(eof_song->beat[beatnum + 1]->pos - eof_get_note_pos(eof_song, eof_selected_track, i) <= 10)
 					{
-						eof_song->vocal_track[tracknum]->lyric[i]->pos = eof_song->beat[eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos) + 1]->pos;
+						eof_clear_input();
+						if(alert(NULL, "First lyric appears to be off.", "Adjust?", "&Yes", "&No", 'y', 'n') == 1)
+						{
+							eof_set_note_pos(eof_song, eof_selected_track, i, eof_song->beat[beatnum + 1]->pos);	//Move the first selected lyric to the next beat
+						}
+						eof_clear_input();
 					}
-					eof_clear_input();
+					note_check = 1;
 				}
-				note_check = 1;
 			}
 
 			/* write note data to disk */
@@ -686,8 +691,8 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
 	unsigned long paste_count = 0;
-	long first_beat = 0;
-	long this_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	unsigned long first_beat = 0;
+	unsigned long this_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	unsigned long copy_notes;
 	long new_pos = -1;
 	long new_end_pos = -1;
@@ -700,6 +705,12 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 
 	if(!eof_vocals_selected)
 		return 1;	//Return error
+	if(!EOF_BEAT_NUM_VALID(eof_song, this_beat))
+		return 1;	//Return error if the seek position isn't within the chart
+	if(!oldpaste && (first_beat + this_beat >= eof_song->beats - 1))
+	{	//If new paste logic is being used, return from function if the first lyric would paste after the last beat
+		return 1;
+	}
 
 	/* open the file */
 	(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.vocals.clipboard", eof_temp_path_s);
@@ -707,10 +718,6 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 	if(!fp)
 	{
 		allegro_message("Clipboard error!\nNothing to paste!");
-		return 1;
-	}
-	if(!oldpaste && (first_beat + this_beat >= eof_song->beats - 1))
-	{	//If new paste logic is being used, return from function if the first lyric would paste after the last beat
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
@@ -800,7 +807,7 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 	char first_beat_found[EOF_TRACKS_MAX] = {0};
 	unsigned long first_beat[EOF_TRACKS_MAX] = {0};	//The beat containing the first note stored for each track
 	unsigned long start_pos, end_pos;
-	long last_anchor, next_anchor;
+	unsigned long last_anchor, next_anchor;
 	unsigned long copy_notes[EOF_TRACKS_MAX] = {0};	//The number of notes to store for each track
 	double tfloat;
 	PACKFILE * fp;
@@ -818,7 +825,7 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 	last_anchor = eof_find_previous_anchor(eof_song, anchor);
 	next_anchor = eof_find_next_anchor(eof_song, anchor);
 	start_pos = eof_song->beat[last_anchor]->pos;
-	if((next_anchor < 0) || (option == 1))
+	if(!EOF_BEAT_NUM_VALID(eof_song, next_anchor) || (option == 1))
 	{
 		end_pos = eof_song->beat[eof_song->beats - 1]->pos - 1;
 	}
@@ -1060,7 +1067,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 	unsigned long this_beat[EOF_TRACKS_MAX] = {0};
 	unsigned long this_tech_beat[EOF_TRACKS_MAX] = {0};
 	unsigned long start_pos, end_pos = 0;
-	long last_anchor, next_anchor;
+	unsigned long last_anchor, next_anchor;
 	PACKFILE * fp;
 	unsigned long copy_notes[EOF_TRACKS_MAX];	//The number of notes to adjust for each track
 	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0};
@@ -1088,7 +1095,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 	last_anchor = eof_find_previous_anchor(eof_song, anchor);
 	next_anchor = eof_find_next_anchor(eof_song, anchor);
 	start_pos = eof_song->beat[last_anchor]->pos;
-	if((next_anchor < 0) || (option == 1))
+	if(!EOF_BEAT_NUM_VALID(eof_song, next_anchor) || (option == 1))
 	{	//If there was no following anchor, or the notes are being auto-adjusted
 		affect_until_end = 1;	//Track this condition, as the last beat's position may now be before some notes and may no longer be a suitable end point
 	}
@@ -1358,7 +1365,7 @@ int eof_menu_edit_copy(void)
 	unsigned long i;
 	unsigned long first_pos = 0, note_pos;
 	char first_pos_read = 0;
-	long first_beat = 0;
+	unsigned long first_beat = 0;
 	char first_beat_read = 0;
 	char note_check = 0;
 	unsigned long copy_notes = 0;
@@ -1421,16 +1428,21 @@ int eof_menu_edit_copy(void)
 			/* check for accidentally moved note */
 			if(!note_check)
 			{
-				if(eof_song->beat[eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i)) + 1]->pos - eof_get_note_pos(eof_song, eof_selected_track, i) <= 10)
-				{
-					eof_clear_input();
-					if(alert(NULL, "First note appears to be off.", "Adjust?", "&Yes", "&No", 'y', 'n') == 1)
+				unsigned long beatnum = eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i));	//Find which beat that the first selected note is currently in
+
+				if(EOF_BEAT_NUM_VALID(eof_song, beatnum))
+				{	//If that beat was identified
+					if(eof_song->beat[beatnum + 1]->pos - eof_get_note_pos(eof_song, eof_selected_track, i) <= 10)
 					{
-						eof_set_note_pos(eof_song, eof_selected_track, i, eof_song->beat[eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i)) + 1]->pos);
+						eof_clear_input();
+						if(alert(NULL, "First note appears to be off.", "Adjust?", "&Yes", "&No", 'y', 'n') == 1)
+						{
+							eof_set_note_pos(eof_song, eof_selected_track, i, eof_song->beat[beatnum + 1]->pos);	//Move the first selected note to the next beat
+						}
+						eof_clear_input();
 					}
-					eof_clear_input();
+					note_check = 1;
 				}
-				note_check = 1;
 			}
 
 			/* write note data to disk */
@@ -1452,7 +1464,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
 	unsigned long paste_count = 0;
 	unsigned long first_beat = 0;
-	long this_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	unsigned long this_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	unsigned long copy_notes;
 	PACKFILE * fp;
 	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0}, first_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0};
@@ -3089,11 +3101,9 @@ int eof_menu_edit_paste_from_challenge(void)
 
 int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *undo_made)
 {
-	unsigned long i;
-	unsigned long pos;
+	unsigned long i, pos, tracknum;
 	long length;
 	EOF_PHRASE_SECTION *ptr;
-	unsigned long tracknum;
 	EOF_PRO_GUITAR_TRACK *tp = NULL;
 	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
 
@@ -3200,12 +3210,11 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 	return 1;
 }
 
-static unsigned long notes_in_beat(int beat)
+static unsigned long notes_in_beat(unsigned long beat)
 {
-	unsigned long count = 0;
-	unsigned long i;
+	unsigned long count = 0, i;
 
-	if(!eof_song || (beat >= eof_song->beats))
+	if(!eof_song || (!EOF_BEAT_NUM_VALID(eof_song, beat)))
 		return 0;	//Error
 
 	if(beat > eof_song->beats - 2)
@@ -3231,12 +3240,12 @@ static unsigned long notes_in_beat(int beat)
 	return count;
 }
 
-static int lyrics_in_beat(int beat)
+static unsigned long lyrics_in_beat(unsigned long beat)
 {
 	unsigned long count = 0;
 	unsigned long i;
 
-	if(!eof_song || (beat >= eof_song->beats))
+	if(!eof_song || (!EOF_BEAT_NUM_VALID(eof_song, beat)))
 		return 0;	//Error
 
 	if(beat > eof_song->beats - 2)
@@ -3268,13 +3277,13 @@ int eof_menu_edit_paste_from_catalog(void)
 	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
 	unsigned long paste_count = 0;
 	unsigned long note_count = 0;
-	long first = -1;
-	long first_beat = -1;
-	long start_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
-	long this_beat = -1;
-	long current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
-	long last_current_beat = current_beat;
-	long end_beat = -1;
+	unsigned long first = ULONG_MAX;
+	unsigned long first_beat = ULONG_MAX;
+	unsigned long start_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	unsigned long this_beat = ULONG_MAX;
+	unsigned long current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	unsigned long last_current_beat = current_beat;
+	unsigned long end_beat = ULONG_MAX;
 	double nporpos, nporendpos;
 	EOF_NOTE * new_note = NULL;
 	unsigned long newnotenum, sourcetrack, highestfret = 0, highestlane = 0, currentfret;
@@ -3360,17 +3369,17 @@ int eof_menu_edit_paste_from_catalog(void)
 				/* this note needs to be copied */
 				if((eof_get_note_type(eof_song, sourcetrack, i) == eof_song->catalog->entry[eof_selected_catalog_entry].type) && (eof_get_note_pos(eof_song, sourcetrack, i) >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_get_note_pos(eof_song, sourcetrack, i) + eof_get_note_length(eof_song, sourcetrack, i) <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos))
 				{
-					if(first == -1)
+					if(first == ULONG_MAX)
 					{
 						first_beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, sourcetrack, i));
 					}
 					this_beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, sourcetrack, i));
-					if(this_beat < 0)
+					if(!EOF_BEAT_NUM_VALID(eof_song, this_beat))
 					{
 						break;
 					}
 					current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay) + (this_beat - first_beat);
-					if(current_beat >= eof_song->beats - 1)
+					if(!EOF_BEAT_NUM_VALID(eof_song, current_beat) || (current_beat >= eof_song->beats - 1))
 					{
 						break;
 					}
@@ -3378,12 +3387,12 @@ int eof_menu_edit_paste_from_catalog(void)
 					nporpos = eof_get_porpos(eof_get_note_pos(eof_song, sourcetrack, i));
 					nporendpos = eof_get_porpos(eof_get_note_pos(eof_song, sourcetrack, i) + eof_get_note_length(eof_song, sourcetrack, i));
 					end_beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, sourcetrack, i) + eof_get_note_length(eof_song, sourcetrack, i));
-					if(end_beat < 0)
+					if(!EOF_BEAT_NUM_VALID(eof_song, end_beat))
 					{
 						break;
 					}
 
-					if(first == -1)
+					if(first == ULONG_MAX)
 					{	//Track the start of the range of notes to clear
 						clear_start = eof_put_porpos(current_beat, nporpos, 0.0);
 						first = 1;
@@ -3394,7 +3403,7 @@ int eof_menu_edit_paste_from_catalog(void)
 			eof_menu_edit_paste_clear_range(eof_selected_track, eof_note_type, clear_start, clear_end);	//Erase the notes that would get in the way of the pasted catalog entry
 
 			//Re-initialize some variables for the regular paste from catalog logic
-			first = first_beat = this_beat = end_beat = -1;
+			first = first_beat = this_beat = end_beat = ULONG_MAX;
 			current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 			last_current_beat = current_beat;
 		}
@@ -3403,20 +3412,20 @@ int eof_menu_edit_paste_from_catalog(void)
 			/* this note needs to be copied */
 			if((eof_get_note_type(eof_song, sourcetrack, i) == eof_song->catalog->entry[eof_selected_catalog_entry].type) && (eof_get_note_pos(eof_song, sourcetrack, i) >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_get_note_pos(eof_song, sourcetrack, i) + eof_get_note_length(eof_song, sourcetrack, i) <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos))
 			{
-				if(first == -1)
+				if(first == ULONG_MAX)
 				{
 					first_beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, sourcetrack, i));
 					first = 1;
 				}
 				this_beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, sourcetrack, i));
-				if(this_beat < 0)
+				if(!EOF_BEAT_NUM_VALID(eof_song, this_beat))
 				{
 					break;
 				}
 				last_current_beat = current_beat;
 				current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay) + (this_beat - first_beat);
-				if(current_beat >= eof_song->beats - 1)
-				{
+				if(!EOF_BEAT_NUM_VALID(eof_song, current_beat) || (current_beat >= eof_song->beats - 1))
+				{	//If the beat is at or after the last beat or otherwise not valid
 					break;
 				}
 
@@ -3435,13 +3444,13 @@ int eof_menu_edit_paste_from_catalog(void)
 				nporpos = eof_get_porpos(eof_get_note_pos(eof_song, sourcetrack, i));
 				nporendpos = eof_get_porpos(eof_get_note_pos(eof_song, sourcetrack, i) + eof_get_note_length(eof_song, sourcetrack, i));
 				end_beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, sourcetrack, i) + eof_get_note_length(eof_song, sourcetrack, i));
-				if(end_beat < 0)
+				if(!EOF_BEAT_NUM_VALID(eof_song, end_beat))
 				{
 					break;
 				}
 
 				/* paste the note */
-				if(end_beat - first_beat + start_beat < eof_song->beats)
+				if(EOF_BEAT_NUM_VALID(eof_song, end_beat - first_beat + start_beat))
 				{
 					new_note = eof_copy_note_simple(eof_song, sourcetrack, i, eof_selected_track, eof_put_porpos(current_beat, nporpos, 0.0), eof_put_porpos(end_beat - first_beat + start_beat, nporendpos, 0.0) - eof_put_porpos(current_beat, nporpos, 0.0), eof_note_type);
 					if(new_note)

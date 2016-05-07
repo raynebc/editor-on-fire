@@ -5301,8 +5301,8 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 	unsigned long *sectionlist = NULL, sectionlistsize, ctr, ctr2, numsections, phraseid = 0;
 	char end_phrase_found = 0;	//Will track if there was a manually defined END phrase
 	char buffer[200] = {0}, buffer2[50] = {0};
-	long startbeat;	//This will indicate the first beat containing a note in the track
-	long endbeat;	//This will indicate the first beat after the exported track's last note
+	unsigned long startbeat;	//This will indicate the first beat containing a note in the track
+	unsigned long endbeat;		//This will indicate the first beat after the exported track's last note
 
 	if(!sp || !fp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !user_warned)
 		return 0;	//Invalid parameters

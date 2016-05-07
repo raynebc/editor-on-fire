@@ -5,14 +5,14 @@
 
 extern int eof_beat_stats_cached;
 
-long eof_get_beat(EOF_SONG * sp, unsigned long pos);
-	//Returns the beat number at or immediately before the specified position, or -1 if the timestamp does not occur within the chart (before the first beat or after the last beat)
+unsigned long eof_get_beat(EOF_SONG * sp, unsigned long pos);
+	//Returns the beat number at or immediately before the specified position, or ULONG_MAX if the timestamp does not occur within the chart (before the first beat or after the last beat)
 double eof_get_beat_length(EOF_SONG * sp, unsigned long beat);
 	//Returns the difference in position between the specified beat marker and the next, or the difference between the last two beat markers if the beat marker specified is invalid
 unsigned long eof_find_previous_anchor(EOF_SONG * sp, unsigned long cbeat);
 	//Returns the beat number of the last anchor that occurs before the specified beat
-long eof_find_next_anchor(EOF_SONG * sp, unsigned long cbeat);
-	//Returns the beat number of the first anchor that occurs after the specified beat, or -1 if there is no such anchor
+unsigned long eof_find_next_anchor(EOF_SONG * sp, unsigned long cbeat);
+	//Returns the beat number of the first anchor that occurs after the specified beat, or ULONG_MAX if there is no such anchor
 int eof_beat_is_anchor(EOF_SONG * sp, unsigned long cbeat);
 	//Returns nonzero if the specified beat number is an anchor based on its flag or a change in tempo from the prior beat
 void eof_calculate_beats(EOF_SONG * sp);
@@ -26,7 +26,7 @@ void eof_change_accurate_ts(EOF_SONG * sp, char function);
 	// allowing beats to retain the same real time length
 	//If function is nonzero, such beats are calculated without regard to time signature the way EOF originally did
 	//If function is zero, such beats are calculated with regard to time signature (ie. beats in 4/8 are shorter than 4/4 if they use the same tempo)
-void eof_realign_beats(EOF_SONG * sp, int cbeat);
+void eof_realign_beats(EOF_SONG * sp, unsigned long cbeat);
 	//Recalculates and applies the tempo of the anchors before and after the specified beat, updating beat timestamps, etc.
 void eof_recalculate_beats(EOF_SONG * sp, unsigned long cbeat);
 	//Recalculates and applies the tempo and timings on both sides of cbeat based on the previous and next anchors, such as when dragging a beat marker to define cbeat as an anchor

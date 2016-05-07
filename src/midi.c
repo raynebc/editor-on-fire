@@ -2579,7 +2579,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 			{	//For each note/lyric in the track
 				unsigned long pos = eof_get_note_pos(sp, j, i);	//Cache this value
 				unsigned long nextpos = 0, length, minlength;
-				long beat;
+				unsigned long beat;
 
 				length = eof_get_note_length(sp, j, i);
 				if(i + 1 < eof_get_track_size(sp, j))
