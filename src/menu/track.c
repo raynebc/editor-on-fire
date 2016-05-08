@@ -2397,7 +2397,7 @@ void eof_rebuild_manage_rs_phrases_strings(void)
 	}
 	else
 	{
-		eof_track_manage_rs_phrases_strings = malloc(1);	//Otherwise allocate a non zero amount of bytes to satisfy Clang scan-build
+		eof_track_manage_rs_phrases_strings = malloc(sizeof(char *));	//Otherwise allocate a non zero amount of bytes to satisfy Clang scan-build
 	}
 	if(!eof_track_manage_rs_phrases_strings)
 	{

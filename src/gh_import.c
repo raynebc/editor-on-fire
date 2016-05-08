@@ -2862,7 +2862,7 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 
 						eof_chart_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
 						beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
-						if(EOF_BEAT_NUM_VALID(sp, beatnum))
+						if(eof_beat_num_valid(sp, beatnum))
 						{	//If there is such a beat
 							char buffer2[256] = {0};
 
@@ -2999,7 +2999,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 
 										eof_chart_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
 										beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
-										if(EOF_BEAT_NUM_VALID(sp, beatnum))
+										if(eof_beat_num_valid(sp, beatnum))
 										{	//If there is such a beat
 											char buffer2[256] = {0};
 

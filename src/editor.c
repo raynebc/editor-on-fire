@@ -179,12 +179,12 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 				}
 			}
 		}
-		if(!EOF_BEAT_NUM_VALID(eof_song, sp->beat))
+		if(!eof_beat_num_valid(eof_song, sp->beat))
 		{	//if no suitable beat was found
 			return;
 		}
 
-		if(EOF_BEAT_NUM_VALID(eof_song, sp->beat + 1))
+		if(eof_beat_num_valid(eof_song, sp->beat + 1))
 		{	//As long as the next beat is in bounds
 			sp->beat_length = eof_song->beat[sp->beat + 1]->fpos - eof_song->beat[sp->beat]->fpos;	//Use its position to determine this beat's length
 		}
@@ -514,7 +514,7 @@ unsigned long eof_next_grid_snap(unsigned long pos)
 		return 0;
 
 	beat = eof_get_beat(eof_song, pos);	//Find which beat the specified position is in
-	if(!EOF_BEAT_NUM_VALID(eof_song, beat))	//If the seek position is outside the chart
+	if(!eof_beat_num_valid(eof_song, beat))	//If the seek position is outside the chart
 		return 0;
 
 	if(pos >= eof_song->beat[eof_song->beats - 1]->pos)	//If the specified position is after the last beat marker
@@ -533,7 +533,7 @@ int eof_find_grid_snap(unsigned long pos, int dir, unsigned long *result)
 		return 0;
 
 	beat = eof_get_beat(eof_song, pos);	//Find which beat the specified position is in
-	if(!EOF_BEAT_NUM_VALID(eof_song, beat))	//If the specified position is outside the chart
+	if(!eof_beat_num_valid(eof_song, beat))	//If the specified position is outside the chart
 		return 0;
 
 	if(dir < 0)
@@ -581,7 +581,7 @@ int eof_is_grid_snap_position(unsigned long pos)
 		return 0;
 
 	beat = eof_get_beat(eof_song, pos);	//Find which beat the specified position is in
-	if(!EOF_BEAT_NUM_VALID(eof_song, beat))	//If the seek position is outside the chart
+	if(!eof_beat_num_valid(eof_song, beat))	//If the seek position is outside the chart
 		return 0;
 
 	if(pos >= eof_song->beat[eof_song->beats - 1]->pos)	//If the specified position is after the last beat marker
@@ -605,7 +605,7 @@ int eof_is_any_grid_snap_position(unsigned long pos, int *beat, char *gridsnapva
 		return 0;
 
 	beatnum = eof_get_beat(eof_song, pos);	//Find which beat the specified position is in
-	if(!EOF_BEAT_NUM_VALID(eof_song, beatnum))	//If the seek position is outside the chart
+	if(!eof_beat_num_valid(eof_song, beatnum))	//If the seek position is outside the chart
 		return 0;
 
 	if(pos >= eof_song->beat[eof_song->beats - 1]->pos)	//If the specified position is after the last beat marker
@@ -4887,7 +4887,7 @@ void eof_vocal_editor_logic(void)
 						if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
 						{
 							b = eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length - 1);
-							if(EOF_BEAT_NUM_VALID(eof_song, b))
+							if(eof_beat_num_valid(eof_song, b))
 							{
 								eof_snap_logic(&eof_tail_snap, eof_song->beat[b]->pos);
 							}
@@ -6418,7 +6418,7 @@ void eof_editor_logic_common(void)
 
 				if(eof_blclick_released)
 				{
-					if(EOF_BEAT_NUM_VALID(eof_song, eof_hover_beat))
+					if(eof_beat_num_valid(eof_song, eof_hover_beat))
 					{
 						eof_select_beat(eof_hover_beat);
 					}
@@ -6457,7 +6457,7 @@ void eof_editor_logic_common(void)
 						}
 						eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
 					}//If moving the first beat marker
-					else if((eof_mouse_drug > 10) && !eof_blclick_released && (EOF_BEAT_NUM_VALID(eof_song, eof_selected_beat)) && (eof_mickeys_x != 0) && ((eof_beat_is_anchor(eof_song, eof_hover_beat) || eof_anchor_all_beats || (eof_moving_anchor && (eof_hover_beat == eof_selected_beat)))))
+					else if((eof_mouse_drug > 10) && !eof_blclick_released && (eof_beat_num_valid(eof_song, eof_selected_beat)) && (eof_mickeys_x != 0) && ((eof_beat_is_anchor(eof_song, eof_hover_beat) || eof_anchor_all_beats || (eof_moving_anchor && (eof_hover_beat == eof_selected_beat)))))
 					{	//If moving a beat marker other than the first
 						if(!eof_song->tags->tempo_map_locked)
 						{	//If the tempo map is not locked
@@ -6530,7 +6530,7 @@ void eof_editor_logic_common(void)
 				eof_mouse_drug = 0;
 				eof_adjusted_anchor = 0;
 			}//If the left mouse button is not held
-			if(!eof_full_screen_3d && ((mouse_b & 2) || (eof_key_code == KEY_INSERT)) && eof_rclick_released && (EOF_BEAT_NUM_VALID(eof_song, eof_hover_beat)))
+			if(!eof_full_screen_3d && ((mouse_b & 2) || (eof_key_code == KEY_INSERT)) && eof_rclick_released && (eof_beat_num_valid(eof_song, eof_hover_beat)))
 			{	//If full screen 3d is not in use and the right mouse key or insert are held over a beat marker
 				eof_select_beat(eof_hover_beat);
 				alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->beat[eof_hover_beat]->pos + eof_av_delay);
@@ -6698,7 +6698,7 @@ void eof_seek_to_nearest_grid_snap(void)
 		return;	//Return if there's no song loaded, grid snap is off, or the seek position is outside the range of beats in the chart
 
 	beat = eof_get_beat(eof_song, eof_music_pos);	//Find which beat the current seek position is in
-	if(!EOF_BEAT_NUM_VALID(eof_song, beat))	//If the seek position is outside the chart
+	if(!eof_beat_num_valid(eof_song, beat))	//If the seek position is outside the chart
 		return;
 
 	if(eof_music_pos == eof_song->beat[beat]->pos)
@@ -6844,7 +6844,7 @@ void eof_feedback_input_mode_update_selected_beat(void)
 		beat = eof_get_beat(eof_song, adjustedpos);
 		if(beat != lastbeat)
 		{	//If the seek position is at a different beat than the last call
-			if(EOF_BEAT_NUM_VALID(eof_song, beat))
+			if(eof_beat_num_valid(eof_song, beat))
 			{	//If the seek position is within the chart
 				eof_select_beat(beat);	//Set eof_selected_beat and eof_selected_measure
 			}

@@ -410,8 +410,11 @@ double eof_get_porpos(unsigned long pos)
 
 	eof_log("eof_get_porpos() entered", 2);
 
+	if(!eof_song || (eof_song->beats < 2))
+		return 0.0;	//Invalid parameters
+
 	beat = eof_get_beat(eof_song, pos);
-	if(!EOF_BEAT_NUM_VALID(eof_song, beat))
+	if(!eof_beat_num_valid(eof_song, beat))
 	{	//If eof_get_beat() returned error
 		beat = eof_song->beats - 1;	//Assume the note position is relative to the last beat marker
 	}
@@ -2720,7 +2723,7 @@ void eof_render_note_window(void)
 			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "(Sound cues are currently disabled)");
 		}
 		ypos += 12;
-		if(EOF_BEAT_NUM_VALID(eof_song, eof_hover_beat))
+		if(eof_beat_num_valid(eof_song, eof_hover_beat))
 		{
 			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Beat = %lu : BPM = %f : Hover = %ld", eof_selected_beat, 60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn, eof_hover_beat);
 		}

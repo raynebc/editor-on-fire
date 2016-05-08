@@ -463,11 +463,11 @@ eof_log(eof_log_string, 1);
 				eof_log("\tError allocating memory for technote placement logic.  Aborting", 1);
 				error = 1;
 			}
-			memset(gaps, 0, sizeof(EOF_TECHNOTE_GAP) * numgaps);
-			memset(solution, 0, sizeof(unsigned) * neededtechnotes);
-			memset(bestsolution, 0, sizeof(unsigned) * neededtechnotes);
 			if(!error)
 			{	//If the solution arrays were created
+				memset(gaps, 0, sizeof(EOF_TECHNOTE_GAP) * numgaps);
+				memset(solution, 0, sizeof(unsigned) * neededtechnotes);
+				memset(bestsolution, 0, sizeof(unsigned) * neededtechnotes);
 				lasttechpos = np->pos;	//The first gap will begin at the beginning of the chord
 				gaps[numgaps - 1].stop = np->pos + np->length;	//The last gap will end at the end of the chord
 				if(eof_pro_guitar_note_bitmask_has_tech_note(tp, tp->notes - 1, np->note, &tnnum))

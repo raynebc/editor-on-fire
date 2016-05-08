@@ -5458,7 +5458,7 @@ char eof_copy_notes_in_beat_range(EOF_PRO_GUITAR_TRACK *source, unsigned long st
 		{	//If this note is positioned within the target range of beats
 			beatnum = eof_get_beat(eof_song, source->note[ctr]->pos);					//Find which beat this note is within
 			endbeatnum = eof_get_beat(eof_song, source->note[ctr]->pos + source->note[ctr]->length);	//Find which beat this note ends within
-			if(EOF_BEAT_NUM_VALID(eof_song, beatnum) && EOF_BEAT_NUM_VALID(eof_song, endbeatnum))
+			if(eof_beat_num_valid(eof_song, beatnum) && eof_beat_num_valid(eof_song, endbeatnum))
 			{	//The beat positions were found
 				if(eof_song->beats < destbeat + endbeatnum - startbeat + 2)
 				{

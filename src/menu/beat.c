@@ -288,7 +288,7 @@ void eof_prepare_beat_menu(void)
 		eof_beat_time_signature_menu[6].flags = 0;	//Clear all
 
 //Beat>Add and Delete validation
-		if(!EOF_BEAT_NUM_VALID(eof_song, eof_find_next_anchor(eof_song, eof_selected_beat)))
+		if(!eof_beat_num_valid(eof_song, eof_find_next_anchor(eof_song, eof_selected_beat)))
 		{	//If there are no anchors after the selected beat, disable Beat>Add and Delete, as they'd have no effect
 			eof_beat_menu[4].flags = D_DISABLED;
 			eof_beat_menu[5].flags = D_DISABLED;
@@ -813,7 +813,7 @@ int eof_menu_beat_delete(void)
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
 
-	if((eof_selected_beat > 0) && (EOF_BEAT_NUM_VALID(eof_song, eof_find_next_anchor(eof_song, eof_selected_beat))))
+	if((eof_selected_beat > 0) && (eof_beat_num_valid(eof_song, eof_find_next_anchor(eof_song, eof_selected_beat))))
 	{	//Only process this function if a beat other than beat 0 is selected, and there is at least one anchor after the selected beat
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		eof_menu_beat_delete_logic(eof_selected_beat);
@@ -1093,7 +1093,7 @@ int eof_menu_beat_delete_anchor(void)
 			}
 		}
 		eof_song->beat[eof_selected_beat]->flags = 0;
-		if(!EOF_BEAT_NUM_VALID(eof_song, eof_find_next_anchor(eof_song, eof_selected_beat)))
+		if(!eof_beat_num_valid(eof_song, eof_find_next_anchor(eof_song, eof_selected_beat)))
 		{	//If there's not an anchor after the selected beat
 			(void) eof_song_resize_beats(eof_song, eof_selected_beat);
 			eof_calculate_beats(eof_song);
@@ -2412,7 +2412,7 @@ int eof_menu_beat_adjust_bpm(double amount)
 		return 1;	//Return without changing anything if the chart's tempo map is locked
 
 	targetbeat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);	//Identify the beat at or before the seek position
-	if(!EOF_BEAT_NUM_VALID(eof_song, targetbeat))
+	if(!eof_beat_num_valid(eof_song, targetbeat))
 	{	//If the seek position is outside the scope of the chart
 		targetbeat = 0;	//Identify the first beat as the target
 	}

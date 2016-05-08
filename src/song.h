@@ -138,8 +138,6 @@
 #define EOF_NAME_LENGTH 30
 #define EOF_SECTION_NAME_LENGTH 50
 
-#define EOF_BEAT_NUM_VALID(sp, number) (number < sp->beats)
-
 typedef struct
 {
 	char name[EOF_NAME_LENGTH + 1];
@@ -986,5 +984,7 @@ int eof_note_is_not_grid_snapped(EOF_SONG *sp, unsigned long track, unsigned lon
 int eof_length_is_shorter_than(long length, long threshold);	//Returns nonzero if the length parameter is shorter than the threshold parameter
 int eof_length_is_longer_than(long length, long threshold);		//Returns nonzero if the length parameter is longer than the threshold parameter
 int eof_length_is_equal_to(long length, long threshold);		//Returns nonzero if both parameters are equal
+
+inline int eof_beat_num_valid(EOF_SONG *sp, unsigned long beatnum);
 
 #endif

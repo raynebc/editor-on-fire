@@ -3,6 +3,7 @@
 #include "main.h"
 #include "midi.h"
 #include "rs.h"
+#include "song.h"
 #include "undo.h"
 
 #ifdef USEMEMWATCH
@@ -27,6 +28,10 @@ unsigned long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 	}
 	if(pos < sp->beat[0]->pos)
 	{
+		return ULONG_MAX;
+	}
+	if(sp->beats < 1)
+	{	//This is not a valid beat count
 		return ULONG_MAX;
 	}
 	for(i = 1; i < sp->beats; i++)
@@ -296,7 +301,7 @@ void eof_realign_beats(EOF_SONG * sp, unsigned long cbeat)
 	}
 	last_anchor = eof_find_previous_anchor(sp, cbeat);
 	next_anchor = eof_find_next_anchor(sp, cbeat);
-	if(!EOF_BEAT_NUM_VALID(sp, next_anchor))
+	if(!eof_beat_num_valid(sp, next_anchor))
 	{
 		next_anchor = sp->beats;
 	}
@@ -387,7 +392,7 @@ void eof_recalculate_beats(EOF_SONG * sp, unsigned long cbeat)
 	}
 
 	/* move rest of markers */
-	if(EOF_BEAT_NUM_VALID(sp, next_anchor))
+	if(eof_beat_num_valid(sp, next_anchor))
 	{	//If there is another anchor, adjust all beat timings up until that anchor
 		beats = 0;
 		if(cbeat < next_anchor)

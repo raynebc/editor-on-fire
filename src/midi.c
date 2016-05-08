@@ -2591,7 +2591,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 					}
 				}
 				beat = eof_get_beat(sp, pos);
-				if(EOF_BEAT_NUM_VALID(sp, beat))
+				if(eof_beat_num_valid(sp, beat))
 				{	//If the beat in which this note exists could be determined
 					double beat_length = eof_calc_beat_length(sp, beat);	//Get the length of the beat
 					minlength = beat_length / 8;	//Get the desired minimum length for the note (1/8 beat)

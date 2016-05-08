@@ -5304,19 +5304,19 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 	unsigned long startbeat;	//This will indicate the first beat containing a note in the track
 	unsigned long endbeat;		//This will indicate the first beat after the exported track's last note
 
-	if(!sp || !fp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !user_warned)
+	if(!sp || !fp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !user_warned || !sp->beats)
 		return 0;	//Invalid parameters
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 
 	//Check if any RS phrases need to be added
 	startbeat = eof_get_beat(sp, tp->note[0]->pos);	//Find the beat containing the track's first note
-	if(!EOF_BEAT_NUM_VALID(sp, startbeat))
+	if(!eof_beat_num_valid(sp, startbeat))
 	{	//If the beat couldn't be found
 		startbeat = 0;	//Set this to the first beat
 	}
 	endbeat = eof_get_beat(sp, tp->note[tp->notes - 1]->pos + tp->note[tp->notes - 1]->length);	//Find the beat containing the end of the track's last note
-	if(!EOF_BEAT_NUM_VALID(sp, endbeat) || (endbeat + 1 >= sp->beats))
+	if(!eof_beat_num_valid(sp, endbeat) || (endbeat + 1 >= sp->beats))
 	{	//If the beat couldn't be found, or the extreme last beat in the track has the last note
 		endbeat = sp->beats - 1;	//Set this to the last beat
 	}

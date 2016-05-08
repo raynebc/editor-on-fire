@@ -657,7 +657,7 @@ int eof_menu_edit_copy_vocal(void)
 			{
 				unsigned long beatnum = eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i));	//Find which beat that the first selected lyric is currently in
 
-				if(EOF_BEAT_NUM_VALID(eof_song, beatnum))
+				if(eof_beat_num_valid(eof_song, beatnum))
 				{	//If that beat was identified
 					if(eof_song->beat[beatnum + 1]->pos - eof_get_note_pos(eof_song, eof_selected_track, i) <= 10)
 					{
@@ -705,7 +705,7 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 
 	if(!eof_vocals_selected)
 		return 1;	//Return error
-	if(!EOF_BEAT_NUM_VALID(eof_song, this_beat))
+	if(!eof_beat_num_valid(eof_song, this_beat))
 		return 1;	//Return error if the seek position isn't within the chart
 	if(!oldpaste && (first_beat + this_beat >= eof_song->beats - 1))
 	{	//If new paste logic is being used, return from function if the first lyric would paste after the last beat
@@ -816,6 +816,9 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 	long notelength;
 	char eof_autoadjust_path[50];
 
+	if(eof_song->beats < 1)
+		return 1;	//Invalid beat count
+
 	/* set boundary */
 	for(i = 0; i < EOF_TRACKS_MAX; i++)
 	{
@@ -825,7 +828,7 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 	last_anchor = eof_find_previous_anchor(eof_song, anchor);
 	next_anchor = eof_find_next_anchor(eof_song, anchor);
 	start_pos = eof_song->beat[last_anchor]->pos;
-	if(!EOF_BEAT_NUM_VALID(eof_song, next_anchor) || (option == 1))
+	if(!eof_beat_num_valid(eof_song, next_anchor) || (option == 1))
 	{
 		end_pos = eof_song->beat[eof_song->beats - 1]->pos - 1;
 	}
@@ -1095,7 +1098,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 	last_anchor = eof_find_previous_anchor(eof_song, anchor);
 	next_anchor = eof_find_next_anchor(eof_song, anchor);
 	start_pos = eof_song->beat[last_anchor]->pos;
-	if(!EOF_BEAT_NUM_VALID(eof_song, next_anchor) || (option == 1))
+	if(!eof_beat_num_valid(eof_song, next_anchor) || (option == 1))
 	{	//If there was no following anchor, or the notes are being auto-adjusted
 		affect_until_end = 1;	//Track this condition, as the last beat's position may now be before some notes and may no longer be a suitable end point
 	}
@@ -1430,7 +1433,7 @@ int eof_menu_edit_copy(void)
 			{
 				unsigned long beatnum = eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i));	//Find which beat that the first selected note is currently in
 
-				if(EOF_BEAT_NUM_VALID(eof_song, beatnum))
+				if(eof_beat_num_valid(eof_song, beatnum))
 				{	//If that beat was identified
 					if(eof_song->beat[beatnum + 1]->pos - eof_get_note_pos(eof_song, eof_selected_track, i) <= 10)
 					{
@@ -3214,7 +3217,7 @@ static unsigned long notes_in_beat(unsigned long beat)
 {
 	unsigned long count = 0, i;
 
-	if(!eof_song || (!EOF_BEAT_NUM_VALID(eof_song, beat)))
+	if(!eof_song || (!eof_beat_num_valid(eof_song, beat)))
 		return 0;	//Error
 
 	if(beat > eof_song->beats - 2)
@@ -3245,7 +3248,7 @@ static unsigned long lyrics_in_beat(unsigned long beat)
 	unsigned long count = 0;
 	unsigned long i;
 
-	if(!eof_song || (!EOF_BEAT_NUM_VALID(eof_song, beat)))
+	if(!eof_song || (!eof_beat_num_valid(eof_song, beat)))
 		return 0;	//Error
 
 	if(beat > eof_song->beats - 2)
@@ -3374,12 +3377,12 @@ int eof_menu_edit_paste_from_catalog(void)
 						first_beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, sourcetrack, i));
 					}
 					this_beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, sourcetrack, i));
-					if(!EOF_BEAT_NUM_VALID(eof_song, this_beat))
+					if(!eof_beat_num_valid(eof_song, this_beat))
 					{
 						break;
 					}
 					current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay) + (this_beat - first_beat);
-					if(!EOF_BEAT_NUM_VALID(eof_song, current_beat) || (current_beat >= eof_song->beats - 1))
+					if(!eof_beat_num_valid(eof_song, current_beat) || (current_beat >= eof_song->beats - 1))
 					{
 						break;
 					}
@@ -3387,7 +3390,7 @@ int eof_menu_edit_paste_from_catalog(void)
 					nporpos = eof_get_porpos(eof_get_note_pos(eof_song, sourcetrack, i));
 					nporendpos = eof_get_porpos(eof_get_note_pos(eof_song, sourcetrack, i) + eof_get_note_length(eof_song, sourcetrack, i));
 					end_beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, sourcetrack, i) + eof_get_note_length(eof_song, sourcetrack, i));
-					if(!EOF_BEAT_NUM_VALID(eof_song, end_beat))
+					if(!eof_beat_num_valid(eof_song, end_beat))
 					{
 						break;
 					}
@@ -3418,13 +3421,13 @@ int eof_menu_edit_paste_from_catalog(void)
 					first = 1;
 				}
 				this_beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, sourcetrack, i));
-				if(!EOF_BEAT_NUM_VALID(eof_song, this_beat))
+				if(!eof_beat_num_valid(eof_song, this_beat))
 				{
 					break;
 				}
 				last_current_beat = current_beat;
 				current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay) + (this_beat - first_beat);
-				if(!EOF_BEAT_NUM_VALID(eof_song, current_beat) || (current_beat >= eof_song->beats - 1))
+				if(!eof_beat_num_valid(eof_song, current_beat) || (current_beat >= eof_song->beats - 1))
 				{	//If the beat is at or after the last beat or otherwise not valid
 					break;
 				}
@@ -3444,13 +3447,13 @@ int eof_menu_edit_paste_from_catalog(void)
 				nporpos = eof_get_porpos(eof_get_note_pos(eof_song, sourcetrack, i));
 				nporendpos = eof_get_porpos(eof_get_note_pos(eof_song, sourcetrack, i) + eof_get_note_length(eof_song, sourcetrack, i));
 				end_beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, sourcetrack, i) + eof_get_note_length(eof_song, sourcetrack, i));
-				if(!EOF_BEAT_NUM_VALID(eof_song, end_beat))
-				{
+				if(end_beat == ULONG_MAX)
+				{	//If a valid beat number wasn't found by eof_get_beat()
 					break;
 				}
 
 				/* paste the note */
-				if(EOF_BEAT_NUM_VALID(eof_song, end_beat - first_beat + start_beat))
+				if(eof_beat_num_valid(eof_song, end_beat - first_beat + start_beat))
 				{
 					new_note = eof_copy_note_simple(eof_song, sourcetrack, i, eof_selected_track, eof_put_porpos(current_beat, nporpos, 0.0), eof_put_porpos(end_beat - first_beat + start_beat, nporendpos, 0.0) - eof_put_porpos(current_beat, nporpos, 0.0), eof_note_type);
 					if(new_note)

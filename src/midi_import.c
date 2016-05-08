@@ -1177,7 +1177,7 @@ set_window_title(debugtext);
 		event_realtime = eof_ConvertToRealTimeInt(eof_import_ks_events->event[ctr]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 		eof_chart_length = event_realtime;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
 		beat = eof_get_beat(sp, event_realtime);
-		if(EOF_BEAT_NUM_VALID(sp, beat))
+		if(eof_beat_num_valid(sp, beat))
 		{	//If the key signature is placed at a valid timestamp
 			(void) eof_apply_key_signature(eof_import_ks_events->event[ctr]->d1, beat, sp);	//Apply it to the beat
 		}
