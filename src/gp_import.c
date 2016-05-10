@@ -1658,7 +1658,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 {
 	#define EOF_GP_IMPORT_BUFFER_SIZE 256
 	char buffer[EOF_GP_IMPORT_BUFFER_SIZE + 1] = {0}, *buffer2, buffer3[EOF_GP_IMPORT_BUFFER_SIZE + 1] = {0}, buffer4[EOF_GP_IMPORT_BUFFER_SIZE + 1] = {0}, byte, bytemask, *ptr, patches[64] = {0};
-	unsigned char usedstrings;
+	unsigned char usedstrings, definedstrings;
 	unsigned char usedtie;	//Tracks which strings in an imported note were tie notes
 	unsigned word = 0, fileversion;
 	unsigned long dword = 0, ctr, ctr2, ctr3, ctr4, ctr5, tracks = 0, measures = 0, *strings, beats = 0;
@@ -3878,7 +3878,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						importnote = 0;
 					}
 
-					usedstrings = pack_getc(inf);	//Used strings bitmask
+					usedstrings = pack_getc(inf);		//Used strings bitmask
+					definedstrings = 0;	//Reset this bitmask, which will reflect which strings this note actually uses for playable notes, instead of what combination it and all other note effects (like grace notes) are in use
 					usedtie = 0;	//Reset this bitmask
 					for(ctr4 = 0, bitmask = 64; ctr4 < 7; ctr4++, bitmask >>= 1)
 					{	//For each of the 7 possible usable strings
@@ -3890,6 +3891,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							bytemask = pack_getc(inf);	//Note bitmask
 							if(bytemask & 32)
 							{	//Note type is defined
+								definedstrings |= bitmask;
 								byte = pack_getc(inf);	//Note type (1 = normal, 2 = tie, 3 = dead (muted))
 								thisgemtype = byte;
 								if(byte == 1)
@@ -4173,7 +4175,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									if(dur < 3)
 									{	//If the defined duration is valid
 										grace_duration = grace_durations[dur] * (double)curden / (double)curnum;	//Get this grace note's duration in measures (accounting for the time signature)
-										if(measure_position < grace_duration)
+										if(!curbeat && measure_position < grace_duration)
 										{	//If this grace note is positioned before the beginning of the chart (ie. a before the beat grace note on a note at the beginning of measure 1)
 											grace = 0;	//Ignore this grace note
 										}
@@ -4451,6 +4453,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										}
 									}
 
+									definedstrings &= ~usedtie;
 									usedstrings &= ~usedtie;	//Clear the bits used to indicate the tie notes' strings as being played, since overlapping guitar notes isn't supported in Rock Band or Rocksmith
 																//This line had to be changed to not run when a tie note creates a new note, because the note bitmask needs to be intact in that condition
 								}
@@ -4536,18 +4539,18 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//If this is a 7 string track
 									if(drop_7)
 									{	//The user opted to drop string 7 instead of string 1
-										np[ctr2]->note = usedstrings >> 1;	//Shift out string 7 to leave the first 6 strings
+										np[ctr2]->note = definedstrings >> 1;	//Shift out string 7 to leave the first 6 strings
 										np[ctr2]->ghost = ghost >> 1;		//Likewise translate the ghost bit mask
 									}
 									else
 									{	//The user opted to drop string 1
-										np[ctr2]->note = usedstrings & 63;	//Mask out string 1
+										np[ctr2]->note = definedstrings & 63;	//Mask out string 1
 										np[ctr2]->ghost = ghost & 63;		//Likewise mask out string 1 of the ghost bit mask
 									}
 								}
 								else
 								{	//This track has less than 7 strings
-									np[ctr2]->note = usedstrings >> (7 - strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB
+									np[ctr2]->note = definedstrings >> (7 - strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB
 									np[ctr2]->ghost = ghost >> (7 - strings[ctr2]);			//Likewise translate the ghost bit mask
 								}
 								np[ctr2]->type = eof_note_type;
@@ -4666,16 +4669,16 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//If this is a 7 string track
 									if(drop_7)
 									{	//The user opted to drop string 7 instead of string 1
-										gnp->note |= usedstrings >> 1;	//Shift out string 7 to leave the first 6 strings (merge the bitmask so that on-beat grace notes combine with the note they affect)
+										gnp->note |= grace >> 1;	//Shift out string 7 to leave the first 6 strings (merge the bitmask so that on-beat grace notes combine with the note they affect)
 									}
 									else
 									{	//The user opted to drop string 1
-										gnp->note |= usedstrings & 63;	//Mask out string 1 (merge the bitmask so that on-beat grace notes combine with the note they affect)
+										gnp->note |= grace & 63;	//Mask out string 1 (merge the bitmask so that on-beat grace notes combine with the note they affect)
 									}
 								}
 								else
 								{	//This track has less than 7 strings
-									gnp->note |= usedstrings >> (7 - strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB (merge the bitmask so that on-beat grace notes combine with the note they affect)
+									gnp->note |= grace >> (7 - strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB (merge the bitmask so that on-beat grace notes combine with the note they affect)
 								}
 								gnp->type = eof_note_type;
 								for(ctr4 = 0, bitmask = 1; ctr4 < strings[ctr2]; ctr4++, bitmask <<= 1)

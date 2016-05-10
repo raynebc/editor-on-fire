@@ -801,7 +801,7 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 
 int eof_menu_edit_cut(unsigned long anchor, int option)
 {
-	unsigned long i, j;
+	unsigned long i, j, sectiontype;
 	char first_pos_found[EOF_TRACKS_MAX] = {0};
 	unsigned long first_pos[EOF_TRACKS_MAX] = {0};
 	char first_beat_found[EOF_TRACKS_MAX] = {0};
@@ -811,7 +811,6 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 	unsigned long copy_notes[EOF_TRACKS_MAX] = {0};	//The number of notes to store for each track
 	double tfloat;
 	PACKFILE * fp;
-	EOF_PHRASE_SECTION *sectionptr = NULL;
 	unsigned long notepos=0;
 	long notelength;
 	char eof_autoadjust_path[50];
@@ -956,105 +955,40 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 			eof_menu_pro_guitar_track_disable_tech_view(tp);
 		}
 
-		/* star power */
-		for(i = 0; i < eof_get_num_star_power_paths(eof_song, j); i++)
-		{	//For each star power path in the track
-			/* which beat */
-			sectionptr = eof_get_star_power_path(eof_song, j, i);
-			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
-			tfloat = eof_get_porpos(sectionptr->start_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
-			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
-			tfloat = eof_get_porpos(sectionptr->end_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
-		}
+		for(sectiontype = 1; sectiontype <= EOF_NUM_SECTION_TYPES; sectiontype++)
+		{	//For each type of section that exists
+			unsigned long sectionnum, sectioncount;
+			EOF_PHRASE_SECTION *phrase;
+			int skip = 0;
 
-		/* solos */
-		for(i = 0; i < eof_get_num_solos(eof_song, j); i++)
-		{	//For each solo section in the track
-			/* which beat */
-			sectionptr = eof_get_solo(eof_song, j, i);
-			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
-			tfloat = eof_get_porpos(sectionptr->start_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
-			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
-			tfloat = eof_get_porpos(sectionptr->end_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
-		}
+			switch(sectiontype)
+			{
+				case EOF_BOOKMARK_SECTION:
+				case EOF_FRET_CATALOG_SECTION:
+				case EOF_TRAINER_SECTION:
+				case EOF_PREVIEW_SECTION:
+				case EOF_RS_POPUP_MESSAGE:
+				case EOF_RS_TONE_CHANGE:
+					skip = 1;	//These section types are not modified by the auto adjust logic
+			}
 
-		/* lyric lines */
-		for(i = 0; i < eof_get_num_lyric_sections(eof_song, j); i++)
-		{	//For each lyric section in the track
-			/* which beat */
-			sectionptr = eof_get_lyric_section(eof_song, j, i);
-			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
-			tfloat = eof_get_porpos(sectionptr->start_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
-			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
-			tfloat = eof_get_porpos(sectionptr->end_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
-		}
+			if(!skip && eof_lookup_track_section_type(eof_song, j, sectiontype, &sectioncount, &phrase) && phrase)
+			{	//If this type of section gets updated by the auto adjust logic, and this track has any instances of this type of section
+				for(sectionnum = 0; sectionnum < sectioncount; sectionnum++)
+				{	//For each instance of this type of section in the track
+					/* which beat */
+					(void) pack_iputl(eof_get_beat(eof_song, phrase[sectionnum].start_pos), fp);
+					tfloat = eof_get_porpos(phrase[sectionnum].start_pos);
+					(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
 
-		/* trills */
-		for(i = 0; i < eof_get_num_trills(eof_song, j); i++)
-		{	//For each trill section in the track
-			/* which beat */
-			sectionptr = eof_get_trill(eof_song, j, i);
-			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
-			tfloat = eof_get_porpos(sectionptr->start_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
-			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
-			tfloat = eof_get_porpos(sectionptr->end_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
-		}
-
-		/* tremolos */
-		for(i = 0; i < eof_get_num_tremolos(eof_song, j); i++)
-		{	//For each tremolo section in the track
-			/* which beat */
-			sectionptr = eof_get_tremolo(eof_song, j, i);
-			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
-			tfloat = eof_get_porpos(sectionptr->start_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
-			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
-			tfloat = eof_get_porpos(sectionptr->end_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
-		}
-
-		/* arpeggios */
-		for(i = 0; i < eof_get_num_arpeggios(eof_song, j); i++)
-		{	//For each tremolo section in the track
-			/* which beat */
-			sectionptr = eof_get_arpeggio(eof_song, j, i);
-			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
-			tfloat = eof_get_porpos(sectionptr->start_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
-			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
-			tfloat = eof_get_porpos(sectionptr->end_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
-		}
-
-		/* sliders */
-		for(i = 0; i < eof_get_num_sliders(eof_song, j); i++)
-		{	//For each slider section in the track
-			/* which beat */
-			sectionptr = eof_get_slider(eof_song, j, i);
-			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
-			tfloat = eof_get_porpos(sectionptr->start_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
-			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
-			tfloat = eof_get_porpos(sectionptr->end_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
-		}
-
-		/* fret hand positions (only the start position is stored, the end position stores the fret value) */
-		for(i = 0; i < eof_get_num_fret_hand_positions(eof_song, j); i++)
-		{	//For each fret hand position in the track
-			/* which beat */
-			sectionptr = eof_get_fret_hand_position(eof_song, j, i);
-			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
-			tfloat = eof_get_porpos(sectionptr->start_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
+					if(sectiontype != EOF_FRET_HAND_POS_SECTION)
+					{	//Each of the auto adjusted phrase types have an end position variable to adjust, except for fret hand positions, which instead store the fret number with that value
+						(void) pack_iputl(eof_get_beat(eof_song, phrase[sectionnum].end_pos), fp);
+						tfloat = eof_get_porpos(phrase[sectionnum].end_pos);
+						(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
+					}
+				}
+			}
 		}
 
 		eof_menu_track_set_tech_view_state(eof_song, j, restore_tech_view);	//Re-enable tech view if applicable
@@ -1065,7 +999,7 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 
 int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 {
-	unsigned long i, j, b, notenum;
+	unsigned long i, j, b, notenum, sectiontype;
 	unsigned long first_beat[EOF_TRACKS_MAX] = {0};	//The first beat of each track that contains a note being adjusted
 	unsigned long this_beat[EOF_TRACKS_MAX] = {0};
 	unsigned long this_tech_beat[EOF_TRACKS_MAX] = {0};
@@ -1076,7 +1010,6 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0};
 	EOF_NOTE * new_note = NULL;
 	double tfloat = 0.0;
-	EOF_PHRASE_SECTION *sectionptr = NULL;
 	unsigned long notepos = 0;
 	long notelength = 0;
 	char affect_until_end = 0;	//Is set to nonzero if all notes until the end of the project are affected by this operation
@@ -1252,105 +1185,40 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 			eof_menu_pro_guitar_track_disable_tech_view(tp);
 		}//If the track being exported is a pro guitar track
 
-		/* star power */
-		for(i = 0; i < eof_get_num_star_power_paths(eof_song, j); i++)
-		{	//For each star power path in the active track
-			/* which beat */
-			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
-			sectionptr = eof_get_star_power_path(eof_song, j, i);
-			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
-			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
-			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
-		}
+		for(sectiontype = 1; sectiontype <= EOF_NUM_SECTION_TYPES; sectiontype++)
+		{	//For each type of section that exists
+			unsigned long sectionnum, sectioncount;
+			EOF_PHRASE_SECTION *phrase;
+			int skip = 0;
 
-		/* solos */
-		for(i = 0; i < eof_get_num_solos(eof_song, j); i++)
-		{	//For each solo section in the active track
-			/* which beat */
-			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
-			sectionptr = eof_get_solo(eof_song, j, i);
-			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
-			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
-			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
-		}
+			switch(sectiontype)
+			{
+				case EOF_BOOKMARK_SECTION:
+				case EOF_FRET_CATALOG_SECTION:
+				case EOF_TRAINER_SECTION:
+				case EOF_PREVIEW_SECTION:
+				case EOF_RS_POPUP_MESSAGE:
+				case EOF_RS_TONE_CHANGE:
+					skip = 1;	//These section types are not modified by the auto adjust logic
+			}
 
-		/* lyric lines */
-		for(i = 0; i < eof_get_num_lyric_sections(eof_song, j); i++)
-		{	//For each lyric section in the active track
-			/* which beat */
-			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
-			sectionptr = eof_get_lyric_section(eof_song, j, i);
-			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
-			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
-			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
-		}
+			if(!skip && eof_lookup_track_section_type(eof_song, j, sectiontype, &sectioncount, &phrase) && phrase)
+			{	//If this type of section gets updated by the auto adjust logic, and this track has any instances of this type of section
+				for(sectionnum = 0; sectionnum < sectioncount; sectionnum++)
+				{	//For each instance of this type of section in the track
+					/* which beat */
+					b = pack_igetl(fp);
+					(void) pack_fread(&tfloat, (long)sizeof(double), fp);
+					phrase[sectionnum].start_pos = eof_put_porpos(b, tfloat, 0.0);
 
-		/* trills */
-		for(i = 0; i < eof_get_num_trills(eof_song, j); i++)
-		{	//For each trill section in the active track
-			/* which beat */
-			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
-			sectionptr = eof_get_trill(eof_song, j, i);
-			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
-			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
-			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
-		}
-
-		/* tremolos */
-		for(i = 0; i < eof_get_num_tremolos(eof_song, j); i++)
-		{	//For each tremolo section in the active track
-			/* which beat */
-			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
-			sectionptr = eof_get_tremolo(eof_song, j, i);
-			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
-			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
-			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
-		}
-
-		/* arpeggios */
-		for(i = 0; i < eof_get_num_arpeggios(eof_song, j); i++)
-		{	//For each arpeggio section in the active track
-			/* which beat */
-			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
-			sectionptr = eof_get_arpeggio(eof_song, j, i);
-			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
-			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
-			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
-		}
-
-		/* sliders */
-		for(i = 0; i < eof_get_num_sliders(eof_song, j); i++)
-		{	//For each slider section in the active track
-			/* which beat */
-			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
-			sectionptr = eof_get_slider(eof_song, j, i);
-			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
-			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
-			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
-		}
-
-		/* fret hand positions (only the start position changes, the end position stores the fret value) */
-		for(i = 0; i < eof_get_num_fret_hand_positions(eof_song, j); i++)
-		{	//For each fret hand position in the active track
-			/* which beat */
-			b = pack_igetl(fp);
-			(void) pack_fread(&tfloat, (long)sizeof(double), fp);
-			sectionptr = eof_get_fret_hand_position(eof_song, j, i);
-			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
+					if(sectiontype != EOF_FRET_HAND_POS_SECTION)
+					{	//Each of the auto adjusted phrase types have an end position variable to adjust, except for fret hand positions, which instead store the fret number with that value
+						b = pack_igetl(fp);
+						(void) pack_fread(&tfloat, (long)sizeof(double), fp);
+						phrase[sectionnum].end_pos = eof_put_porpos(b, tfloat, 0.0);
+					}
+				}
+			}
 		}
 
 		eof_menu_track_set_tech_view_state(eof_song, j, restore_tech_view);	//Re-enable tech view if applicable
