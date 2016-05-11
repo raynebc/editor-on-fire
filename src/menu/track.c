@@ -471,7 +471,7 @@ int eof_edit_tuning_proc(int msg, DIALOG *d, int c)
 {
 	int i;
 	char * string = NULL;
-	int key_list[32] = {KEY_BACKSPACE, KEY_DEL, KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_ESC, KEY_ENTER};
+	unsigned key_list[32] = {KEY_BACKSPACE, KEY_DEL, KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_ESC, KEY_ENTER};
 	int match = 0;
 	int retval;
 	char tuning[EOF_TUNING_LENGTH] = {0};
@@ -1211,6 +1211,8 @@ int eof_fret_hand_position_delete(DIALOG * d)
 	}
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return D_O_K;
+	if(eof_fret_hand_position_list_dialog[1].d1 < 0)
+		return D_O_K;
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if(eof_song->pro_guitar_track[tracknum]->handpositions == 0)
@@ -1222,7 +1224,7 @@ int eof_fret_hand_position_delete(DIALOG * d)
 		if(eof_song->pro_guitar_track[tracknum]->handposition[i].difficulty == eof_note_type)
 		{	//If the fret hand position is in the active difficulty
 			/* if we've reached the item that is selected, delete it */
-			if(eof_fret_hand_position_list_dialog[1].d1 == ecount)
+			if((unsigned long)eof_fret_hand_position_list_dialog[1].d1 == ecount)
 			{
 				if(!eof_fret_hand_position_list_dialog_undo_made)
 				{	//If an undo state hasn't been made yet since launching this dialog
@@ -1241,7 +1243,7 @@ int eof_fret_hand_position_delete(DIALOG * d)
 						ecount++;
 					}
 				}
-				if((eof_fret_hand_position_list_dialog[1].d1 >= ecount) && (ecount > 0))
+				if(((unsigned long)eof_fret_hand_position_list_dialog[1].d1 >= ecount) && (ecount > 0))
 				{	//If the last list item was deleted and others remain
 					eof_fret_hand_position_list_dialog[1].d1--;	//Select the one before the one that was deleted, or the last event, whichever one remains
 				}
@@ -1328,6 +1330,8 @@ int eof_fret_hand_position_seek(DIALOG * d)
 	}
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return D_O_K;
+	if(eof_fret_hand_position_list_dialog[1].d1 < 0)
+		return D_O_K;
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if(eof_song->pro_guitar_track[tracknum]->handpositions == 0)
@@ -1339,7 +1343,7 @@ int eof_fret_hand_position_seek(DIALOG * d)
 		if(eof_song->pro_guitar_track[tracknum]->handposition[i].difficulty == eof_note_type)
 		{	//If the fret hand position is in the active difficulty
 			/* if we've reached the item that is selected, seek to it */
-			if(eof_fret_hand_position_list_dialog[1].d1 == ecount)
+			if((unsigned long)eof_fret_hand_position_list_dialog[1].d1 == ecount)
 			{
 				eof_set_seek_position(eof_song->pro_guitar_track[tracknum]->handposition[i].start_pos + eof_av_delay);	//Seek to the hand position's timestamp
 				eof_render();	//Redraw screen
@@ -1361,9 +1365,7 @@ char eof_fret_hand_position_list_text[EOF_MAX_NOTES][25] = {{0}};
 
 char * eof_fret_hand_position_list(int index, int * size)
 {
-	int i;
-	int ecount = 0;
-	unsigned long tracknum;
+	unsigned long i, tracknum, ecount = 0;
 	int ism, iss, isms;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -1390,7 +1392,12 @@ char * eof_fret_hand_position_list(int index, int * size)
 		case -1:
 		{
 			if(size)
-				*size = ecount;
+			{
+				if(ecount <= INT_MAX)
+					*size = ecount;
+				else
+					*size = INT_MAX;
+			}
 			if(ecount > 0)
 			{	//If there is at least one fret hand position in the active difficulty
 				eof_fret_hand_position_list_dialog[2].flags = 0;	//Enable the Delete button
@@ -1401,7 +1408,7 @@ char * eof_fret_hand_position_list(int index, int * size)
 				eof_fret_hand_position_list_dialog[2].flags = D_DISABLED;
 				eof_fret_hand_position_list_dialog[3].flags = D_DISABLED;
 			}
-			(void) snprintf(eof_fret_hand_position_list_dialog_title_string, sizeof(eof_fret_hand_position_list_dialog_title_string) - 1, "Fret hand positions (%d)", ecount);	//Redraw the dialog's title bar to reflect the number of hand positions
+			(void) snprintf(eof_fret_hand_position_list_dialog_title_string, sizeof(eof_fret_hand_position_list_dialog_title_string) - 1, "Fret hand positions (%lu)", ecount);	//Redraw the dialog's title bar to reflect the number of hand positions
 			break;
 		}
 		default:
@@ -1514,7 +1521,7 @@ int eof_track_rs_popup_add(void)
 		}
 		else
 		{
-			for(i = 0; i < ustrlen(eof_etext); i ++)
+			for(i = 0; i < (unsigned long)ustrlen(eof_etext); i ++)
 			{	//For each character in the user-specified string
 				if((ugetat(eof_etext, i) == '(') || (ugetat(eof_etext, i) == ')'))
 				{	//If the character is an open or close parenthesis
@@ -1708,6 +1715,8 @@ int eof_track_rs_popup_messages_delete(DIALOG * d)
 	}
 	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return D_O_K;	//Do not allow this function to run if a pro guitar track isn't active
+	if(eof_rs_popup_messages_dialog[1].d1 < 0)
+		return D_O_K;
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	tp = eof_song->pro_guitar_track[tracknum];
@@ -1716,7 +1725,7 @@ int eof_track_rs_popup_messages_delete(DIALOG * d)
 
 	for(ctr = 0; ctr < tp->popupmessages; ctr++)
 	{	//For each popup message
-		if(ctr == eof_rs_popup_messages_dialog[1].d1)
+		if(ctr == (unsigned long)eof_rs_popup_messages_dialog[1].d1)
 		{	//If this is the popup message selected from the list
 			if(!eof_rs_popup_messages_dialog_undo_made)
 			{	//If an undo state hasn't been made yet since launching this dialog
@@ -1735,7 +1744,7 @@ int eof_track_rs_popup_messages_delete(DIALOG * d)
 			/* remove the popup message, update the selection in the list box and exit */
 			eof_track_pro_guitar_delete_popup_message(tp, ctr);
 			eof_track_pro_guitar_sort_popup_messages(tp);	//Re-sort the remaining popup messages
-			if((eof_fret_hand_position_list_dialog[1].d1 >= tp->popupmessages) && (tp->popupmessages > 0))
+			if(((unsigned long)eof_rs_popup_messages_dialog[1].d1 >= tp->popupmessages) && (tp->popupmessages > 0))
 			{	//If the last list item was deleted and others remain
 				eof_rs_popup_messages_dialog[1].d1--;	//Select the one before the one that was deleted, or the last message, whichever one remains
 			}
@@ -1769,7 +1778,7 @@ int eof_track_rs_popup_messages_edit(DIALOG * d)
 	//Initialize the dialog fields
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	tp = eof_song->pro_guitar_track[tracknum];
-	if(eof_rs_popup_messages_dialog[1].d1 >= tp->popupmessages)
+	if((eof_rs_popup_messages_dialog[1].d1 < 0) || ((unsigned long)eof_rs_popup_messages_dialog[1].d1 >= tp->popupmessages))
 		return D_O_K;	//Invalid popup message selected in list
 	ptr = &(tp->popupmessage[eof_rs_popup_messages_dialog[1].d1]);
 	(void) ustrcpy(eof_etext, ptr->name);
@@ -1779,8 +1788,8 @@ int eof_track_rs_popup_messages_edit(DIALOG * d)
 	eof_clear_input();
 	if(eof_popup_dialog(eof_song_rs_popup_add_dialog, 1) == 6)
 	{	//User clicked OK
-		start = atol(eof_etext2);
-		duration = atol(eof_etext3);
+		start = strtoul(eof_etext2, NULL, 10);
+		duration = strtoul(eof_etext3, NULL, 10);
 
 		if(!duration)
 		{	//If the given timing is not valid
@@ -1788,7 +1797,7 @@ int eof_track_rs_popup_messages_edit(DIALOG * d)
 		}
 		else
 		{
-			for(i = 0; i < ustrlen(eof_etext); i ++)
+			for(i = 0; i < (unsigned long)ustrlen(eof_etext); i ++)
 			{	//For each character in the user-specified string
 				if((ugetat(eof_etext, i) == '(') || (ugetat(eof_etext, i) == ')'))
 				{	//If the character is an open or close parenthesis
@@ -1875,7 +1884,7 @@ int eof_track_rs_popup_messages_seek(DIALOG * d)
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	tp = eof_song->pro_guitar_track[tracknum];
-	if(eof_rs_popup_messages_dialog[1].d1 >= tp->popupmessages)
+	if((eof_rs_popup_messages_dialog[1].d1 < 0) || ((unsigned long)eof_rs_popup_messages_dialog[1].d1 >= tp->popupmessages))
 	{	//Invalid popup selected
 		return D_O_K;
 	}
@@ -2474,12 +2483,14 @@ int eof_track_manage_rs_phrases_seek(DIALOG * d)
 	}
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return D_O_K;
+	if(eof_track_manage_rs_phrases_dialog[1].d1 < 0)
+		return D_O_K;
 
 	for(ctr = 0, numphrases = 0; ctr < eof_song->beats; ctr++)
 	{	//For each beat in the chart
 		if(eof_song->beat[ctr]->contained_section_event >= 0)
 		{	//If this beat has a section event (RS phrase)
-			if(eof_track_manage_rs_phrases_dialog[1].d1 == numphrases)
+			if((unsigned long)eof_track_manage_rs_phrases_dialog[1].d1 == numphrases)
 			{	//If we've reached the item that is selected, seek to it
 				eof_set_seek_position(eof_song->beat[ctr]->pos + eof_av_delay);	//Seek to the beat containing the phrase
 				eof_render();	//Redraw screen
@@ -2525,13 +2536,15 @@ int eof_track_manage_rs_phrases_add_or_remove_level(int function)
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return D_O_K;
+	if(eof_track_manage_rs_phrases_dialog[1].d1 < 0)
+		return D_O_K;
 
 	//Identify the phrase that was selected
 	for(ctr = 0, numphrases = 0; ctr < eof_song->beats; ctr++)
 	{	//For each beat in the chart
 		if(eof_song->beat[ctr]->contained_section_event >= 0)
 		{	//If this beat has a section event (RS phrase)
-			if(eof_track_manage_rs_phrases_dialog[1].d1 == numphrases)
+			if((unsigned long)eof_track_manage_rs_phrases_dialog[1].d1 == numphrases)
 			{	//If we've reached the selected phrase
 				targetbeat = ctr;			//Track the beat containing the selected phrase
 				phrasename = eof_song->text_event[eof_song->beat[ctr]->contained_section_event]->text;	//Track the name of the phrase
@@ -3102,6 +3115,8 @@ int eof_track_rs_tone_changes_delete(DIALOG * d)
 	}
 	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return D_O_K;	//Do not allow this function to run if a pro guitar track isn't active
+	if(eof_track_rs_tone_changes_dialog[1].d1 < 0)
+		return D_O_K;
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	tp = eof_song->pro_guitar_track[tracknum];
@@ -3110,7 +3125,7 @@ int eof_track_rs_tone_changes_delete(DIALOG * d)
 
 	for(ctr = 0; ctr < tp->tonechanges; ctr++)
 	{	//For each tone change
-		if(ctr == eof_track_rs_tone_changes_dialog[1].d1)
+		if(ctr == (unsigned long)eof_track_rs_tone_changes_dialog[1].d1)
 		{	//If this is the tone change selected from the list
 			if(!eof_track_rs_tone_changes_dialog_undo_made)
 			{	//If an undo state hasn't been made yet since launching this dialog
@@ -3129,7 +3144,7 @@ int eof_track_rs_tone_changes_delete(DIALOG * d)
 			/* remove the tone change, update the selection in the list box and exit */
 			eof_track_pro_guitar_delete_tone_change(tp, ctr);
 			eof_track_pro_guitar_sort_tone_changes(tp);	//Re-sort the remaining tone changes
-			if((eof_track_rs_tone_changes_dialog[1].d1 >= tp->tonechanges) && (tp->tonechanges > 0))
+			if(((unsigned long)eof_track_rs_tone_changes_dialog[1].d1 >= tp->tonechanges) && (tp->tonechanges > 0))
 			{	//If the last list item was deleted and others remain
 				eof_track_rs_tone_changes_dialog[1].d1--;	//Select the one before the one that was deleted, or the last message, whichever one remains
 			}
@@ -3155,6 +3170,8 @@ int eof_track_rs_tone_changes_edit(DIALOG * d)
 
 	if(!eof_song_loaded || !eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return D_O_K;	//Do not allow this function to run if a chart is not loaded or a pro guitar/bass track is not active
+	if(eof_track_rs_tone_changes_dialog[1].d1 < 0)
+		return D_O_K;
 
 	eof_color_dialog(eof_track_rs_tone_change_add_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_track_rs_tone_change_add_dialog);
@@ -3162,7 +3179,7 @@ int eof_track_rs_tone_changes_edit(DIALOG * d)
 	//Initialize the dialog fields
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	tp = eof_song->pro_guitar_track[tracknum];
-	if(eof_track_rs_tone_changes_dialog[1].d1 >= tp->tonechanges)
+	if((unsigned long)eof_track_rs_tone_changes_dialog[1].d1 >= tp->tonechanges)
 		return D_O_K;	//Invalid tone change selected in list
 	ptr = &(tp->tonechange[eof_track_rs_tone_changes_dialog[1].d1]);
 	(void) ustrcpy(eof_etext, ptr->name);
@@ -3245,10 +3262,12 @@ int eof_track_rs_tone_changes_seek(DIALOG * d)
 	}
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return D_O_K;
+	if(eof_track_rs_tone_changes_dialog[1].d1 < 0)
+		return D_O_K;
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	tp = eof_song->pro_guitar_track[tracknum];
-	if(eof_track_rs_tone_changes_dialog[1].d1 >= tp->tonechanges)
+	if((unsigned long)eof_track_rs_tone_changes_dialog[1].d1 >= tp->tonechanges)
 	{	//Invalid tone change selected
 		return D_O_K;
 	}

@@ -5816,7 +5816,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			}
 			else
 			{	//Otherwise render it in gray (if it's not the start of a measure) or in white
-				beatlinecol = (eof_song->beat[i]->beat_within_measure == 0) ? eof_color_white : col;
+				beatlinecol = (eof_song->beat[i]->has_ts && (eof_song->beat[i]->beat_within_measure == 0)) ? eof_color_white : col;
 			}
 			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10 - 1, beatlinecol);
 			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + 34, eof_color_gray);
@@ -5826,7 +5826,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			}
 			else
 			{
-				vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + (i % 2 == 0 ? 19 : 9), EOF_EDITOR_RENDER_OFFSET + 24, eof_song->beat[i]->beat_within_measure == 0 ? eof_color_white : col2);
+				vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + (i % 2 == 0 ? 19 : 9), EOF_EDITOR_RENDER_OFFSET + 24, (eof_song->beat[i]->has_ts && (eof_song->beat[i]->beat_within_measure == 0)) ? eof_color_white : col2);
 			}
 		}//The beat would render visibly
 
@@ -5907,7 +5907,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			}
 		}//If this beat has any text events
 
-		if((eof_song->beat[i]->measurenum != 0) && (eof_song->beat[i]->beat_within_measure == 0))
+		if(eof_song->beat[i]->has_ts && (eof_song->beat[i]->beat_within_measure == 0))
 		{	//If this is a measure marker, draw the measure number to the right of the beat line
 			textprintf_ex(window->screen, eof_mono_font, xcoord + 2, EOF_EDITOR_RENDER_OFFSET + 22 - 7, eof_color_yellow, -1, "%lu", eof_song->beat[i]->measurenum);
 		}
@@ -6895,7 +6895,7 @@ unsigned long eof_get_number_displayed_tabs(void)
 		//The tabs begin rendering 8 pixels from the left edge of the screen, end where the playback controls are rendered and need
 		// to allow two more pixels since the foreground tab is 2 pixels wider than background tabs
 		numtabs = (eof_screen_layout.controls_x - 10) / 80;	//Find the maximum number of displayable tabs
-		if(numtabs > eof_song->track[eof_selected_track]->numdiffs + 2)
+		if(numtabs > (unsigned long)eof_song->track[eof_selected_track]->numdiffs + 2)
 		{	//Only allow enough tabs to display the difficulties in use, plus an additional tab each for << and >>
 			numtabs = eof_song->track[eof_selected_track]->numdiffs + 2;
 		}

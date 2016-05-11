@@ -417,13 +417,13 @@ typedef struct
 	char key;	//If negative, the value defines the number of flats present, ie. -2 is Bb.  If positive, the value defines the number of sharps present, ie. 4 is E
 	double fpos;
 
-	//These variables, set with eof_process_beat_statistics(), track various properties of the beat to relieve rendering functions of some processing
-	//beat_within_measure is numbered starting with 0 (or is -1 if the beat is in an area where no time signature is defined)
-	//the contained... variables are set to -1 if the beat does not contain a qualifying text event
+	//These variables, set with eof_process_beat_statistics(), track various properties of the beat to relieve various functions of related processing
+	//If has_ts is nonzero, num_beats_in_measure, beat_unit and beat_within_measure will be defined.  beat_within_measure is numbered starting with 0
+	//the contained...event variables are set to -1 if the beat does not contain a qualifying text event
 	unsigned long measurenum;
-	unsigned num_beats_in_measure, beat_unit;
-	int beat_within_measure, contained_section_event, contained_rs_section_event, contained_rs_section_event_instance_number;
-	char contains_tempo_change, contains_ts_change, contains_end_event;
+	unsigned num_beats_in_measure, beat_unit, beat_within_measure;
+	int contained_section_event, contained_rs_section_event, contained_rs_section_event_instance_number;
+	char contains_tempo_change, contains_ts_change, contains_end_event, has_ts;
 
 } EOF_BEAT_MARKER;
 

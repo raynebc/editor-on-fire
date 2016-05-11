@@ -320,7 +320,7 @@ unsigned long eof_build_section_list(EOF_SONG *sp, unsigned long **results, unsi
 		match = 0;
 		for(ctr2 = 0; ctr2 < sp->beats; ctr2++)
 		{	//For each beat in the chart
-			if(sp->beat[ctr2]->contained_section_event == ctr)
+			if((sp->beat[ctr2]->contained_section_event >= 0) && ((unsigned long)sp->beat[ctr2]->contained_section_event == ctr))
 			{	//If the beat's statistics indicate this section is used
 				match = 1;	//Note that this section is to be kept
 				break;
@@ -3762,7 +3762,7 @@ void eof_build_fret_range_tolerances(EOF_PRO_GUITAR_TRACK *tp, unsigned char dif
 
 	//Update the array so that any range that is valid for a lower fret number is valid for a higher fret number
 	range = eof_fret_range_tolerances[1];	//Start with the range of fret 1
-	for(ctr = 2; ctr < tp->numfrets + 1; ctr++)
+	for(ctr = 2; ctr < (unsigned long)tp->numfrets + 1; ctr++)
 	{	//For each of the frets in the array, starting with the second
 		if(eof_fret_range_tolerances[ctr] < range)
 		{	//If this fret's defined range is lower than a lower (longer fret)

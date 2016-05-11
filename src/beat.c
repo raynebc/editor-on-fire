@@ -457,7 +457,7 @@ EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp)
 			sp->beat[sp->beats]->key = 0;
 			sp->beat[sp->beats]->fpos = 0.0;
 			sp->beat[sp->beats]->measurenum = 0;
-			sp->beat[sp->beats]->beat_within_measure = -1;
+			sp->beat[sp->beats]->beat_within_measure = 0;
 			sp->beat[sp->beats]->num_beats_in_measure = 0;
 			sp->beat[sp->beats]->beat_unit = 0;
 			sp->beat[sp->beats]->contained_section_event = -1;
@@ -466,6 +466,7 @@ EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp)
 			sp->beat[sp->beats]->contains_tempo_change = 0;
 			sp->beat[sp->beats]->contains_ts_change = 0;
 			sp->beat[sp->beats]->contains_end_event = 0;
+			sp->beat[sp->beats]->has_ts = 0;
 			sp->beats++;
 			return sp->beat[sp->beats - 1];
 		}
@@ -708,7 +709,7 @@ unsigned long eof_get_measure(unsigned long measure, unsigned char count_only)
 void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 {
 	unsigned long current_ppqn = 0;
-	int beat_counter = -1;
+	unsigned beat_counter = 0;
 	unsigned beats_per_measure = 0;
 	unsigned beat_unit = 0;
 	unsigned long measure_counter = 0;
@@ -724,6 +725,10 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 	{	//For each beat
 		if(eof_get_ts(sp, &beats_per_measure, &beat_unit, i) == 1)
 		{	//If this beat has a time signature change
+			if(!first_measure)
+			{	//If this is the first time signature change encountered
+				measure_counter = 1;	//This marks the beginning of the first measure
+			}
 			first_measure = 1;	//Note that a time signature change has been found
 			beat_counter = 0;
 			sp->beat[i]->contains_ts_change = 1;
@@ -732,16 +737,13 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 		{
 			sp->beat[i]->contains_ts_change = 0;
 		}
-		if(first_measure && (beat_counter == 0))
-		{	//If there was a TS change or the beat markers incremented enough to reach the next measure
-			measure_counter++;
-		}
 
 	//Cache beat statistics
 		sp->beat[i]->measurenum = measure_counter;
 		sp->beat[i]->beat_within_measure = beat_counter;
 		sp->beat[i]->beat_unit = beat_unit;
 		sp->beat[i]->num_beats_in_measure = beats_per_measure;
+		sp->beat[i]->has_ts = first_measure;	//Track whether a TS is in effect
 		if(sp->beat[i]->ppqn != current_ppqn)
 		{	//If this beat contains a tempo change
 			current_ppqn = sp->beat[i]->ppqn;
@@ -794,8 +796,9 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 	//Update beat counter
 		beat_counter++;
 		if(beat_counter >= beats_per_measure)
-		{
+		{	//if the beat count has incremented enough to reach the next measure
 			beat_counter = 0;
+			measure_counter++;
 		}
 	}//For each beat
 

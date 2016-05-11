@@ -1747,9 +1747,8 @@ int eof_events_dialog_add_function(unsigned long function)
 
 int eof_events_dialog_edit(DIALOG * d)
 {
-	int i;
-	short ecount = 0;
-	unsigned short event = 0;
+	unsigned long i, event = 0;
+	int ecount = 0, junk = 0;
 	char found = 0;
 	char undo_made = 0;
 
@@ -1778,11 +1777,11 @@ int eof_events_dialog_edit(DIALOG * d)
 			}
 		}
 	}
-	if(found)
+	if(found && (i <= INT_MAX))
 	{	//If the selected event was found
 		eof_add_or_edit_text_event(eof_song->text_event[event], 0, &undo_made);	//Run logic to edit an existing event
 		eof_render();
-		(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
+		(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &junk);
 	}
 	return D_O_K;
 }
@@ -1932,15 +1931,14 @@ unsigned long eof_events_dialog_delete_events_count(void)
 
 int eof_events_dialog_delete(DIALOG * d)
 {
-	int i;
-	unsigned long c;
-	int ecount = 0;
+	unsigned long c, i;
+	int ecount = 0, junk = 0;
 
 	if(!d)
 	{	//Satisfy Splint by checking value of d
 		return D_O_K;
 	}
-	if(eof_song->text_events == 0)
+	if((eof_song->text_events == 0) || (eof_events_dialog[1].d1 < 0))
 	{
 		return D_O_K;
 	}
@@ -1958,11 +1956,11 @@ int eof_events_dialog_delete(DIALOG * d)
 
 				/* remove flag if no more events tied to this beat */
 				c = eof_events_dialog_delete_events_count();
-				if((eof_events_dialog[1].d1 >= c) && (c > 0))
+				if(((unsigned long)eof_events_dialog[1].d1 >= c) && (c > 0))
 				{
 					eof_events_dialog[1].d1--;
 				}
-				(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
+				(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &junk);
 				eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 				return D_REDRAW;
 			}
@@ -2118,7 +2116,7 @@ int eof_edit_trainer_proc(int msg, DIALOG *d, int c)
 {
 	int i;
 	char * string = NULL;
-	int key_list[32] = {KEY_BACKSPACE, KEY_DEL, KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_ESC, KEY_ENTER};
+	unsigned key_list[32] = {KEY_BACKSPACE, KEY_DEL, KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_ESC, KEY_ENTER};
 	int match = 0;
 	int retval;
 	unsigned c2 = (unsigned)c;	//Force cast this to unsigned because Splint is incapable of avoiding a false positive detecting it as negative despite assertions proving otherwise
@@ -2871,12 +2869,15 @@ int eof_events_dialog_move(char direction)
 	int junk;
 	EOF_TEXT_EVENT *ptr;
 
+	if(eof_events_dialog[1].d1 < 0)
+		return D_O_K;
+
 	/* find the relevant event indexes */
 	for(i = 0; i < eof_song->text_events; i++)
 	{	//For each text event
 		if(eof_song->text_event[i]->beat == eof_selected_beat)
 		{	//If the text event is applied to the selected beat
-			if(eof_events_dialog[1].d1 == ecount)
+			if((unsigned long)eof_events_dialog[1].d1 == ecount)
 			{	//If the text event is the one selected in the Events dialog
 				selected = i;
 			}

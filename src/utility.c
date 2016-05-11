@@ -106,6 +106,8 @@ int eof_copy_file(const char * src, const char * dest)
 		return 0;				//Return success without copying any files
 
 	src_size = (unsigned long)file_size_ex(src);
+	if(src_size > LONG_MAX)
+		return 0;	//Unable to validate I/O due to Allegro's usage of signed values
 	src_fp = pack_fopen(src, "r");
 	if(!src_fp)
 	{
@@ -118,10 +120,11 @@ int eof_copy_file(const char * src, const char * dest)
 		return 0;
 	}
 //Attempt to buffer the input file into memory for faster read and write
-	ptr=malloc((size_t)src_size);
+	ptr = malloc((size_t)src_size);
 	if(ptr != NULL)
 	{	//If a buffer large enough to store the input file was created
-		if((pack_fread(ptr, (long)src_size, src_fp) != src_size) || (pack_fwrite(ptr, src_size, dest_fp) != src_size))
+		long long_src_size = src_size;
+		if((pack_fread(ptr, long_src_size, src_fp) != long_src_size) || (pack_fwrite(ptr, long_src_size, dest_fp) != long_src_size))
 		{	//If there was an error reading from file or writing from memory
 			free(ptr);	//Release buffer
 			return 0;	//Return error

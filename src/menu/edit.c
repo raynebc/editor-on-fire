@@ -957,8 +957,8 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 
 		for(sectiontype = 1; sectiontype <= EOF_NUM_SECTION_TYPES; sectiontype++)
 		{	//For each type of section that exists
-			unsigned long sectionnum, sectioncount;
-			EOF_PHRASE_SECTION *phrase;
+			unsigned long sectionnum, sectioncount = 0;
+			EOF_PHRASE_SECTION *phrase = NULL;
 			int skip = 0;
 
 			switch(sectiontype)

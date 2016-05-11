@@ -15,7 +15,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 	EOF_NOTE * new_note = NULL;
 	unsigned long b, i, j;
 	char a;
-	int c, t, tl;
+	int c, tl;
 	unsigned long lastppqn = 500000;
 	char buffer[1024] = {0};
 
@@ -280,8 +280,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			}
 
 			/* read events info */
-			t = pack_igetl(fp);
-			for(i = 0; i < t; i++)
+			j = pack_igetl(fp);
+			for(i = 0; i < j; i++)
 			{
 				(void) pack_fread(buffer, 256, fp);
 				b = pack_igetl(fp);
@@ -335,8 +335,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			}
 
 			/* read events info */
-			t = pack_igetl(fp);
-			for(i = 0; i < t; i++)
+			j = pack_igetl(fp);
+			for(i = 0; i < j; i++)
 			{
 				(void) pack_fread(buffer, 256, fp);
 				b = pack_igetl(fp);
@@ -411,8 +411,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			}
 
 			/* read events info */
-			t = pack_igetl(fp);
-			for(i = 0; i < t; i++)
+			j = pack_igetl(fp);
+			for(i = 0; i < j; i++)
 			{
 				(void) pack_fread(buffer, 256, fp);
 				b = pack_igetl(fp);
@@ -487,8 +487,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			}
 
 			/* read events info */
-			t = pack_igetl(fp);
-			for(i = 0; i < t; i++)
+			j = pack_igetl(fp);
+			for(i = 0; i < j; i++)
 			{
 				(void) pack_fread(buffer, 256, fp);
 				b = pack_igetl(fp);

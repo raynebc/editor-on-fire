@@ -18,7 +18,7 @@ int eof_verified_edit_proc(int msg, DIALOG *d, int c)
 	int i;
 	char * string = NULL;
 	#define KEY_LIST_SIZE 9
-	int key_list[32] = {KEY_BACKSPACE, KEY_DEL, KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_ESC, KEY_ENTER, KEY_TAB};
+	unsigned key_list[32] = {KEY_BACKSPACE, KEY_DEL, KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_ESC, KEY_ENTER, KEY_TAB};
 	int match = 0;
 	unsigned c2 = (unsigned)c;	//Force cast this to unsigned because Splint is incapable of avoiding a false positive detecting it as negative despite assertions proving otherwise
 	static char tabused = 0;	//Tracks whether the tab key was pressed but not completely processed yet

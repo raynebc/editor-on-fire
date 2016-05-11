@@ -1203,7 +1203,7 @@ set_window_title(debugtext);
 			continue;
 		}
 		picked_track = (eof_import_events[i]->type >= 1) ? eof_import_events[i]->type : ((rbg == 0) ? EOF_TRACK_GUITAR : -1);	//If the imported track didn't have a defined name, assume it is the guitar track if that track wasn't already found (un-named tracks is a behavior of very old authoring tools like the Freetar SNG to MIDI converter)
-		if((picked_track >= 0) && (picked_track < sp->tracks) && !used_track[picked_track])
+		if((picked_track >= 0) && ((unsigned long)picked_track < sp->tracks) && !used_track[picked_track])
 		{	//If this is a valid track to process
 			int last_105 = 0;
 			int last_106 = 0;

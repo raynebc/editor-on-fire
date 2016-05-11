@@ -2635,7 +2635,7 @@ int eof_save_helper_checks(void)
 	{	//For each beat after the first
 		if(eof_song->beat[ctr]->contains_ts_change)
 		{	//If this beat has a time signature change
-			if((eof_song->beat[ctr - 1]->beat_within_measure >= 0) && (eof_song->beat[ctr - 1]->beat_within_measure != eof_song->beat[ctr - 1]->num_beats_in_measure - 1))
+			if(eof_song->beat[ctr - 1]->has_ts && (eof_song->beat[ctr - 1]->beat_within_measure != eof_song->beat[ctr - 1]->num_beats_in_measure - 1))
 			{	//If the previous beat has a time signature in effect, but it wasn't the last beat in its measure (the beat_within_measure stat is numbered starting with 0)
 				suggested = eof_song->beat[ctr - 1]->beat_within_measure + 1;	//Track the last beat number in the measure and account for the zero numbering
 				for(ctr = ctr - 1; ctr > 0; ctr--)
@@ -3717,7 +3717,7 @@ int eof_gp_import_track(DIALOG * d)
 	char still_populated = 0;	//Will be set to nonzero if the track still contains notes after the track/difficulty is cleared before importing the GP track
 	EOF_PHRASE_SECTION *ptr, *ptr2;
 
-	if(!d || (d->d1 >= eof_parsed_gp_file->numtracks))
+	if(!d || (eof_parsed_gp_file->numtracks > INT_MAX) || (d->d1 >= (int)eof_parsed_gp_file->numtracks))
 		return 0;
 
 	if(eof_song && eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -4143,7 +4143,7 @@ char * eof_gp_tracks_list(int index, int * size)
 	}
 	else
 	{	//Return the specified list item
-		if(eof_parsed_gp_file && (index < eof_parsed_gp_file->numtracks))
+		if(eof_parsed_gp_file && (eof_parsed_gp_file->numtracks <= INT_MAX) && (index < (int)eof_parsed_gp_file->numtracks))
 		{	//eof_parsed_gp_file and the referenced track index are valid
 			return eof_parsed_gp_file->names[index];
 		}

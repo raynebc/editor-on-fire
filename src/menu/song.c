@@ -2879,42 +2879,38 @@ char * eof_raw_midi_tracks_list(int index, int * size)
 	struct eof_MIDI_data_track *trackptr;
 	unsigned long ctr;
 
-	switch(index)
-	{
-		case -1:
-		{	//Return a count of the number of tracks
-			if(!size)
-				return NULL;	//Invalid parameter
+	if(index < 0)
+	{	//Return a count of the number of tracks
+		if(!size)
+			return NULL;	//Invalid parameter
 
-			if(!eof_MIDI_track_list_to_enumerate)
-			{
-				*size = 0;
-				return NULL;
-			}
-
-			for(ctr = 0, trackptr = eof_MIDI_track_list_to_enumerate; trackptr != NULL; ctr++, trackptr = trackptr->next);	//Count the number of tracks in this list
-			if(ctr > 0)
-			{	//If there is at least stored MIDI track
-				eof_raw_midi_tracks_dialog[3].flags = 0;	//Enable the Delete button
-			}
-			else
-			{
-				eof_raw_midi_tracks_dialog[3].flags = D_DISABLED;
-			}
-			*size = ctr;
-			break;
-		}
-		default:
+		if(!eof_MIDI_track_list_to_enumerate)
 		{
-			if(!eof_MIDI_track_list_to_enumerate)
-				return eof_raw_midi_track_error;
-
-			for(ctr = 0, trackptr = eof_MIDI_track_list_to_enumerate; (trackptr != NULL) && (ctr < index); ctr++, trackptr = trackptr->next);	//Seek to the appropriate track link
-			if(!trackptr)
-				return eof_raw_midi_track_error;
-
-			return trackptr->trackname;
+			*size = 0;
+			return NULL;
 		}
+
+		for(ctr = 0, trackptr = eof_MIDI_track_list_to_enumerate; trackptr != NULL; ctr++, trackptr = trackptr->next);	//Count the number of tracks in this list
+		if(ctr > 0)
+		{	//If there is at least stored MIDI track
+			eof_raw_midi_tracks_dialog[3].flags = 0;	//Enable the Delete button
+		}
+		else
+		{
+			eof_raw_midi_tracks_dialog[3].flags = D_DISABLED;
+		}
+		*size = ctr;
+	}
+	else
+	{
+		if(!eof_MIDI_track_list_to_enumerate)
+			return eof_raw_midi_track_error;
+
+		for(ctr = 0, trackptr = eof_MIDI_track_list_to_enumerate; (trackptr != NULL) && (ctr < (unsigned long)index); ctr++, trackptr = trackptr->next);	//Seek to the appropriate track link
+		if(!trackptr)
+			return eof_raw_midi_track_error;
+
+		return trackptr->trackname;
 	}
 	return NULL;
 }
@@ -2932,9 +2928,13 @@ int eof_raw_midi_dialog_delete(DIALOG * d)
 	{	//If there are no stored MIDI tracks
 		return D_O_K;
 	}
+	if(eof_raw_midi_tracks_dialog[1].d1 < 0)
+	{	//If there isn't a valid selection
+		return D_O_K;
+	}
 	for(ctr = 0, trackptr = eof_song->midi_data_head; trackptr != NULL; ctr++, trackptr = trackptr->next)
 	{	//For each stored MIDI track
-		if(eof_raw_midi_tracks_dialog[1].d1 == ctr)
+		if((unsigned long)eof_raw_midi_tracks_dialog[1].d1 == ctr)
 		{	//If this is the track to be removed
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			tempptr = trackptr->next;
@@ -2983,17 +2983,17 @@ int eof_raw_midi_track_import(DIALOG * d)
 	char canceled = 0;
 	int junk;
 
-	if(!eof_parsed_MIDI || !eof_song || !d)
+	if(!eof_parsed_MIDI || !eof_song || !d || (eof_raw_midi_add_track_dialog[1].d1 < 0))
 		return D_O_K;
 
 	//Find the selected track in the linked list
 	for(ctr = 0, ptr = eof_parsed_MIDI; ptr != NULL; ctr++, ptr = ptr->next)
 	{	//For each track in the user-selected MIDI
-		if(eof_raw_midi_add_track_dialog[1].d1 - 1 == ctr)
+		if((eof_raw_midi_add_track_dialog[1].d1 > 0) && ((unsigned long)eof_raw_midi_add_track_dialog[1].d1 - 1 == ctr))
 		{	//If the next track is the one to import
 			prev = ptr;	//Keep track of the link prior to the one that is kept (for modifying the linked list)
 		}
-		else if(eof_raw_midi_add_track_dialog[1].d1 == ctr)
+		else if((unsigned long)eof_raw_midi_add_track_dialog[1].d1 == ctr)
 		{	//If this is the track to import
 			selected = ptr;	//Keep track of the link that is to be kept
 			break;
@@ -3999,9 +3999,9 @@ int eof_menu_song_export_song_preview(void)
 	{	//If both timestamp tags were found in the INI settings
 		char *temp;
 		for(temp = oldstartstring; (*temp == ' ') && (*temp != '\0'); temp++);	//Skip past any leading whitespace in the value portion of the INI setting
-		start = atol(temp);
+		start = strtoul(temp, NULL, 10);
 		for(temp = oldendstring; (*temp == ' ') && (*temp != '\0'); temp++);	//Skip past any leading whitespace in the value portion of the INI setting
-		stop = atol(temp);
+		stop = strtoul(temp, NULL, 10);
 	}
 
 	//Initialize the start and end positions as appropriate
@@ -4028,7 +4028,7 @@ int eof_menu_song_export_song_preview(void)
 	if(!eof_run_time_range_dialog(&start, &stop))	//If a valid time range isn't provided by the user
 		return 0;									//Cancel
 
-	if(!oldstartstring || !oldendstring || (start != atol(oldstartstring)) || (stop != atol(oldendstring)))
+	if(!oldstartstring || !oldendstring || (start != strtoul(oldstartstring, NULL, 10)) || (stop != strtoul(oldendstring, NULL, 10)))
 	{	//If the project didn't already have the start/stop preview tags stored, or if the times just entered are different from those already stored
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		if(oldstartstring)

@@ -952,14 +952,14 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 							error = 1;
 							break;	//Break from inner loop
 						}
-						if(!parse_xml_attribute_number("phraseId", buffer, &id))
-						{	//If the phrase ID was not readable
+						if(!parse_xml_attribute_number("phraseId", buffer, &id) || (id < 0))
+						{	//If the phrase ID was not readable or was invalid
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading phrase ID on line #%lu.  Aborting", linectr);
 							eof_log(eof_log_string, 1);
 							error = 1;
 							break;	//Break from inner loop
 						}
-						if(id >= phraselist_count)
+						if((unsigned long)id >= phraselist_count)
 						{	//If this phrase ID was not defined in the phrase tag
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError:  Invalid phrase ID on line #%lu.  Aborting", linectr);
 							eof_log(eof_log_string, 1);
@@ -1584,14 +1584,14 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 											error = 1;
 											break;	//Break from inner loop
 										}
-										if(!parse_xml_attribute_number("chordId", buffer, &id))
-										{	//If the chord ID was not readable
+										if(!parse_xml_attribute_number("chordId", buffer, &id) || (id < 0))
+										{	//If the chord ID was not readable or was invalid
 											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading chord ID on line #%lu.  Aborting", linectr);
 											eof_log(eof_log_string, 1);
 											error = 1;
 											break;	//Break from inner loop
 										}
-										if(id >= chordlist_count)
+										if((unsigned long)id >= chordlist_count)
 										{	//If this chord ID was not defined in the chordTemplates tag
 											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError:  Invalid chord ID on line #%lu.  Aborting", linectr);
 											eof_log(eof_log_string, 1);
@@ -1806,28 +1806,28 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 									char arp = 0, hand = 0;
 
 									start = end = chordid = 0;
-									if(!parse_xml_rs_timestamp("startTime", buffer, &start))
-									{	//If the start timestamp was not readable
+									if(!parse_xml_rs_timestamp("startTime", buffer, &start) || (start < 0))
+									{	//If the start timestamp was not readable or was invalid
 										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading start timestamp on line #%lu.  Aborting", linectr);
 										eof_log(eof_log_string, 1);
 										error = 1;
 										break;	//Break from inner loop
 									}
-									if(!parse_xml_rs_timestamp("endTime", buffer, &end))
-									{	//If the end timestamp was not readable
+									if(!parse_xml_rs_timestamp("endTime", buffer, &end) || (end < 0))
+									{	//If the end timestamp was not readable or was invalid
 										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading end timestamp on line #%lu.  Aborting", linectr);
 										eof_log(eof_log_string, 1);
 										error = 1;
 										break;	//Break from inner loop
 									}
-									if(!parse_xml_attribute_number("chordId", buffer, &chordid))
-									{	//If the chord ID number was not readable
+									if(!parse_xml_attribute_number("chordId", buffer, &chordid) || (chordid < 0))
+									{	//If the chord ID number was not readable or was invalid
 										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading chord ID number on line #%lu.  Aborting", linectr);
 										eof_log(eof_log_string, 1);
 										error = 1;
 										break;	//Break from inner loop
 									}
-									if(chordid >= chordlist_count)
+									if((unsigned long)chordid >= chordlist_count)
 									{	//If this chord ID was not defined in the chordTemplates tag
 										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError:  Invalid chord ID on line #%lu.  Aborting", linectr);
 										eof_log(eof_log_string, 1);
@@ -1852,14 +1852,14 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 										while(notenum >= 0)
 										{	//While there are notes in this track difficulty to examine
 											notepos = tp->note[notenum]->pos;	//Simplify
-											if(notepos > end)
+											if(notepos > (unsigned long)end)
 												break;	//This note and all subsequent notes are after the scope of this handshape tag
 											nextnote = eof_fixup_next_pro_guitar_note(tp, notenum);	//Find the next note in this track difficulty, if any
-											if(notepos >= start)
+											if(notepos >= (unsigned long)start)
 											{	//This note is within the handshape tag
 												if(!firstfound)
 												{	//If this is the first note found to be in the scope of the handshape tag
-													if(notepos > start)
+													if(notepos > (unsigned long)start)
 													{	//If the note begins after the start of the handshape tag, it must have been a handshape phrase manually defined by the author
 														note_offset = 1;	//Track this condition
 													}

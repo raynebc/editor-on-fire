@@ -34,7 +34,7 @@ unsigned eof_pro_guitar_note_lookup_string_fingering(EOF_PRO_GUITAR_TRACK *tp, u
 
 		if(fhp && (fret >= fhp))
 		{	//If there is a fret hand position in effect and it is at or below the gem's fret value
-			if(fret < fhp + 4)
+			if(fret < (unsigned)fhp + 4)
 			{	//If the fret is within 4 frets of the position
 				retval = fret + 1 - fhp;	//The index finger is at the hand position, each adjacent finger is one fret further away
 			}

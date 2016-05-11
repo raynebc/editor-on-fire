@@ -2558,7 +2558,7 @@ int SearchPhrase(FILE *inf,unsigned long breakpos,unsigned long *pos,const char 
 	{
 		if(breakpos != 0)
 		{
-			if(currentpos >= breakpos)	//If the exit position was reached
+			if((unsigned long)currentpos >= breakpos)	//If the exit position was reached
 			{
 				(void) fseek(inf,originalpos,SEEK_SET);
 				return 0;				//Return no match

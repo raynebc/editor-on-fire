@@ -71,7 +71,7 @@ int eof_read_gp_string(PACKFILE *inf, unsigned *length, char *buffer, char readf
 		pack_ReadDWORDLE(inf, NULL);	//Read the 4 byte field length that prefixes the string length
 
 	len = pack_getc(inf);	//Read the string length
-	if(len == EOF)
+	if((int)len == EOF)
 		return 0;	//Return error
 	if(length)
 	{	//If the calling function passed a non NULL pointer

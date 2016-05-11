@@ -2739,7 +2739,7 @@ void eof_render_note_window(void)
 		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Key : %s maj (%s min) : Fpos = %f", eof_get_key_signature(eof_song, eof_selected_beat, 1, 0), eof_get_key_signature(eof_song, eof_selected_beat, 1, 1), eof_song->beat[eof_selected_beat]->fpos);
 		ypos += 12;
-		if(eof_selected_measure >= 0)
+		if(eof_song->beat[eof_selected_beat]->has_ts)
 		{
 			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Measure = %ld (Beat %d/%d)", eof_selected_measure, eof_beat_in_measure + 1, eof_beats_in_measure);
 		}
@@ -3464,7 +3464,7 @@ void eof_render_3d_window(void)
 		if((bz >= -100) && (bz <= 600))
 		{	//If the beat is visible
 			y_projection = ocd3d_project_y(200, bz);
-			hline(eof_window_3d->screen, ocd3d_project_x(48, bz), y_projection, ocd3d_project_x(48 + 4 * 56, bz), eof_song->beat[i]->beat_within_measure == 0 ? eof_color_white : eof_color_dark_silver);
+			hline(eof_window_3d->screen, ocd3d_project_x(48, bz), y_projection, ocd3d_project_x(48 + 4 * 56, bz), (eof_song->beat[i]->has_ts && (eof_song->beat[i]->beat_within_measure == 0)) ? eof_color_white : eof_color_dark_silver);
 			if(eof_song->beat[i]->contains_tempo_change || eof_song->beat[i]->contains_ts_change)
 			{	//If this beat contains either a tempo or TS change
 				if(eof_song->beat[i]->contains_tempo_change)
@@ -4442,6 +4442,7 @@ int eof_initialize(int argc, char * argv[])
 void eof_exit(void)
 {
 	unsigned long i;
+	int x;
 	char fn[1024] = {0}, eof_recover_on_path[50], eof_autoadjust_path[50];
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
@@ -4503,10 +4504,10 @@ void eof_exit(void)
 
 	//Free command line storage variables (for Windows build)
 	#ifdef ALLEGRO_WINDOWS
-	for(i = 0; i < eof_windows_argc; i++)
+	for(x = 0; x < eof_windows_argc; x++)
 	{	//For each stored command line parameter
-		free(eof_windows_argv[i]);
-		eof_windows_argv[i] = NULL;
+		free(eof_windows_argv[x]);
+		eof_windows_argv[x] = NULL;
 	}
 	free(eof_windows_argv);
 	eof_windows_argv = NULL;

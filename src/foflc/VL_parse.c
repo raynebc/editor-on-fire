@@ -273,8 +273,8 @@ int VL_PreLoad(FILE *inf,char validate)
 		else
 		{
 			assert_wrapper(curtext != NULL);
-			assert(curtext != NULL);	//Redundant assert() to satisfy Cppcheck
-			curtext->next=ptr1;	//The end of the list points forward to this new link
+			if(curtext != NULL)		//Redundant check to satisfy Cppcheck
+				curtext->next=ptr1;	//The end of the list points forward to this new link
 		}
 
 		curtext=ptr1;	//This link is now at the end of the list

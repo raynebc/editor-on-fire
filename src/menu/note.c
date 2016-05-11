@@ -4239,7 +4239,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 			//Validate and store the input
 			if(eof_note_edit_name[0] != '\0')
 			{	//If the user specified a name, ensure it does not include brackets
-				for(i = 0; i < ustrlen(eof_note_edit_name); i++)
+				for(i = 0; i < (unsigned long)ustrlen(eof_note_edit_name); i++)
 				{	//For each character in the name field
 					if((eof_note_edit_name[i] == '[') || (eof_note_edit_name[i] == ']'))
 					{	//If the character is a bracket
@@ -6578,7 +6578,7 @@ int eof_menu_note_edit_name(void)
 			}
 			else
 			{
-				for(i = 0; i < ustrlen(eof_etext); i++)
+				for(i = 0; i < (unsigned long)ustrlen(eof_etext); i++)
 				{	//For each character in the name field
 					if((eof_etext[i] == '[') || (eof_etext[i] == ']'))
 					{	//If the character is a bracket

@@ -297,7 +297,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 		if(Lyrics.verbose>=2)	printf("Delta file pos=0x%lX\t",vars.startindex);
 
 //Check if the we have reached past the end of the track, some malformed MIDI files don't define end of track events between each track
-		if(vars.startindex >= tchunk->fileposition + tchunk->chunksize + 8)
+		if(vars.startindex >= tchunk->fileposition + (long)tchunk->chunksize + 8)
 		{
 			(void) puts("Warning:  This MIDI did not properly end this track.  Correcting.");
 			if(Lyrics.verbose)

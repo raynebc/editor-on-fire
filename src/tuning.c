@@ -507,7 +507,7 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 							*chord = ctr2;	//Pass the chord name back through the pointer
 							if(!pass)
 							{	//This is the first pass (normal chord)
-								if((bass != scalenum) && eof_inverted_chords_slash)
+								if(((unsigned long)bass != scalenum) && eof_inverted_chords_slash)
 								{	//If this is an inverted chord and the user opted to have such chords detect as slash chords
 									if(cache)
 									{	//If a successful lookup is to be cached to global variables
