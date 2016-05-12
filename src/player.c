@@ -48,7 +48,7 @@ void eof_music_play(char resumelastspeed)
 		eof_log("\tStopping playback", 1);
 		eof_stop_midi();
 		alogg_stop_ogg(eof_music_track);
-		eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
+		eof_music_actual_pos = alogg_get_pos_msecs_ogg_ul(eof_music_track);
 		if(eof_play_selection)
 		{
 			eof_music_seek(eof_music_rewind_pos);
@@ -95,9 +95,9 @@ void eof_music_play(char resumelastspeed)
 		/* in Windows, subtracting the buffer size (buffer_size * 2 according to the Allegro manual)
 		 * seems to get rid of the stuttering. */
 		#ifdef ALLEGRO_WINDOWS
-			alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_pos - ((eof_buffer_size * (eof_smooth_pos ? 2 : 1)) * 1000 / alogg_get_wave_freq_ogg(eof_music_track)));
+			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos - ((eof_buffer_size * (eof_smooth_pos ? 2 : 1)) * 1000 / (unsigned long)alogg_get_wave_freq_ogg(eof_music_track)));
 		#else
-			alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_pos);
+			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos);
 		#endif
 		eof_mix_find_claps();
 
@@ -129,7 +129,7 @@ void eof_music_play(char resumelastspeed)
 			eof_entering_note = 0;
 			eof_snote = 0;
 			(void) alogg_poll_ogg(eof_music_track);
-			eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
+			eof_music_actual_pos = alogg_get_pos_msecs_ogg_ul(eof_music_track);
 		}
 		else
 		{
@@ -159,16 +159,16 @@ void eof_catalog_play(void)
 			eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 			eof_stop_midi();
 			alogg_stop_ogg(eof_music_track);
-			alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_pos);
+			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos);
 		}
 		else
 		{
-			alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->catalog->entry[eof_selected_catalog_entry].start_pos);
+			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_song->catalog->entry[eof_selected_catalog_entry].start_pos);
 			eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 			eof_music_catalog_playback = 1;
 			if(alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, 128, 1000 + eof_audio_fine_tune, 0) == ALOGG_OK)
 			{
-				eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
+				eof_music_actual_pos = alogg_get_pos_msecs_ogg_ul(eof_music_track);
 				eof_mix_find_claps();
 				eof_mix_start(1000);
 			}
@@ -184,7 +184,7 @@ void eof_music_seek(unsigned long pos)
 {
 	eof_log("eof_music_seek() entered", 1);
 
-	alogg_seek_abs_msecs_ogg(eof_music_track, pos + eof_av_delay);
+	alogg_seek_abs_msecs_ogg_ul(eof_music_track, pos + eof_av_delay);
 	eof_music_pos = pos + eof_av_delay;
 	eof_music_actual_pos = eof_music_pos;
 	eof_mix_seek(eof_music_actual_pos);
@@ -193,7 +193,7 @@ void eof_music_seek(unsigned long pos)
 
 void eof_music_rewind(void)
 {
-	int amount = 0;
+	unsigned long amount = 0;
 	eof_log("eof_music_rewind() entered", 2);
 
 	eof_stop_midi();
@@ -232,7 +232,7 @@ void eof_music_rewind(void)
 
 void eof_music_forward(void)
 {
-	int amount = 0, target;
+	unsigned long amount = 0, target;
 	eof_log("eof_music_forward() entered", 2);
 
 	eof_stop_midi();

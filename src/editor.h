@@ -2,6 +2,7 @@
 #define EOF_EDITOR_H
 
 #include "song.h"
+#include "window.h"
 
 typedef struct
 {

@@ -654,7 +654,7 @@ void eof_mix_start(int speed)
 
 	eof_mix_speed = speed;
 	eof_mix_speed_ticker = 0;
-	eof_mix_sample_count = eof_mix_msec_to_sample(alogg_get_pos_msecs_ogg(eof_music_track), alogg_get_wave_freq_ogg(eof_music_track));
+	eof_mix_sample_count = eof_mix_msec_to_sample(alogg_get_pos_msecs_ogg_ul(eof_music_track), alogg_get_wave_freq_ogg(eof_music_track));
 	eof_mix_sample_increment = (1.0) * (44100.0 / (double)alogg_get_wave_freq_ogg(eof_music_track));
 	eof_mix_start_helper();
 
@@ -664,7 +664,7 @@ void eof_mix_start(int speed)
 	}
 }
 
-void eof_mix_seek(int pos)
+void eof_mix_seek(unsigned long pos)
 {
 	int i;
 
@@ -848,11 +848,11 @@ struct ALOGG_OGG {
 };
 */
 
-void eof_set_seek_position(int pos)
+void eof_set_seek_position(unsigned long pos)
 {
 	if(eof_music_track)
 	{	//If chart audio is loaded
-		alogg_seek_abs_msecs_ogg(eof_music_track, pos);
+		alogg_seek_abs_msecs_ogg_ul(eof_music_track, pos);
 		eof_music_pos = pos;
 		eof_music_actual_pos = eof_music_pos;
 		eof_mix_seek(eof_music_actual_pos);

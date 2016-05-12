@@ -1894,6 +1894,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 	struct ID3Tag tag={NULL,0,0,0,0,0,0.0,NULL,0,NULL,NULL,NULL,NULL};	//Used for ID3 detection
 	static const struct Lyric_Format emptyLyric_Format;	//Auto-initialize all members to 0/NULL
 	char isxml=0;	//Tracks whether an XML file header was read
+	int readerrordetected = 0;	//Set to nonzero if fgets() returns an error condition
 
 	assert_wrapper(file != NULL);
 	InitLyrics();	//Initialize all variables in the Lyrics structure
@@ -1949,7 +1950,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 	}
 
 //Continue reading lines until one begins with something other than #, then test for the text based formats (Script, UltraStar, LRC/ELRC)
-	while(!feof(inf))		//Until end of file is reached
+	while(!feof(inf) && !readerrordetected)		//Until end of file is reached or fgets() returns an I/O error
 	{
 		processedctr++;
 
@@ -1977,13 +1978,15 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 
 		if(buffer[index] == '\0')		//If this line was just whitespace
 		{
-			(void) fgets(buffer, (int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			if(fgets(buffer, (int)maxlinelength,inf) == NULL)	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+				readerrordetected = 1;
 			continue;							//Process next line
 		}
 
 		if(buffer[index]=='#')	//If this line is a Script or UltraStar tag
 		{
-			(void) fgets(buffer, (int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			if(fgets(buffer, (int)maxlinelength,inf) == NULL)	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+				readerrordetected = 1;
 			continue;			//Skip this line
 		}
 		temp3=buffer[index];	//Store this character
@@ -2010,7 +2013,8 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 
 			if(errorcode)	//If the timestamp, duration or the pitch failed to parse
 			{
-				(void) fgets(buffer, (int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+				if(fgets(buffer, (int)maxlinelength,inf) == NULL)	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+					readerrordetected = 1;
 				continue;
 			}
 			else			//Otherwise, this was a standard lyric definition (valid UltraStar syntax)
@@ -2064,7 +2068,8 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 				}
 			}
 
-			(void) fgets(buffer, (int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			if(fgets(buffer, (int)maxlinelength,inf) == NULL)	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+				readerrordetected = 1;
 			continue;
 		}
 
@@ -2094,7 +2099,8 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 				}
 			}
 
-			(void) fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			if(fgets(buffer, (int)maxlinelength,inf) == NULL)	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+				readerrordetected = 1;
 			continue;
 		}
 
@@ -2108,8 +2114,9 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 		}
 
 	//At this point, the line wasn't identified to be any particular format, process next line
-		(void) fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
-	}//while(!feof(inf))
+		if(fgets(buffer, (int)maxlinelength,inf) == NULL)	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			readerrordetected = 1;
+	}//while(!feof(inf) && !readerrordetected)
 
 	if(detectionlist->format == LRC_FORMAT)
 	{

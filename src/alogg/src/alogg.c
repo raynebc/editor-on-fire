@@ -509,6 +509,17 @@ void alogg_seek_abs_msecs_ogg(ALOGG_OGG *ogg, int msec) {
 }
 
 
+void alogg_seek_abs_msecs_ogg_ul(ALOGG_OGG *ogg, unsigned long msec) {
+  /* convert msec to pcm sample position */
+  double s = msec;
+  s /= 1000;
+
+  ov_time_seek(&(ogg->vf), s);
+  if (ogg->time_stretch)
+    rubberband_reset(ogg->time_stretch_state);
+}
+
+
 void alogg_seek_abs_secs_ogg(ALOGG_OGG *ogg, int sec) {
   ov_time_seek(&(ogg->vf), sec);
   if (ogg->time_stretch)
@@ -811,6 +822,11 @@ int alogg_get_pos_msecs_ogg(ALOGG_OGG *ogg) {
 }
 
 
+unsigned long alogg_get_pos_msecs_ogg_ul(ALOGG_OGG *ogg) {
+  return (unsigned long)(ov_time_tell(&(ogg->vf)) * 1000);
+}
+
+
 int alogg_get_pos_secs_ogg(ALOGG_OGG *ogg) {
   return (int)ov_time_tell(&(ogg->vf));
 }
@@ -824,6 +840,12 @@ int alogg_get_pos_bytes_ogg(ALOGG_OGG *ogg) {
 int alogg_get_length_msecs_ogg(ALOGG_OGG *ogg) {
   double s = ov_time_total(&(ogg->vf), -1) * 1000;
   return (int)s;
+}
+
+
+unsigned long alogg_get_length_msecs_ogg_ul(ALOGG_OGG *ogg) {
+  double s = ov_time_total(&(ogg->vf), -1) * 1000;
+  return (unsigned long)s;
 }
 
 

@@ -32,6 +32,7 @@ void XML_Load(FILE *inf)
 	#define TEXTBUFFERLENGTH 100
 	char textbuffer[TEXTBUFFERLENGTH + 1]={0};		//Allow for a 100 character lyric text
 	char showread=0, textread=0, removeread=0;	//Tracks whether each of these tags have been read since the last lyric phrase was stored
+	int readerrordetected = 0;
 
 	assert_wrapper(inf != NULL);	//This must not be NULL
 
@@ -48,7 +49,7 @@ void XML_Load(FILE *inf)
 	if(Lyrics.verbose)	printf("\nImporting XML lyrics from file \"%s\"\n\n",Lyrics.infilename);
 
 	processedctr=0;			//This will be set to 1 at the beginning of the main while loop
-	while(!feof(inf))		//Until end of file is reached
+	while(!feof(inf) && !readerrordetected)		//Until end of file is reached or fgets() returns an I/O error
 	{
 		processedctr++;
 		if(Lyrics.verbose)
@@ -123,8 +124,9 @@ void XML_Load(FILE *inf)
 			}
 		}
 
-		(void) fgets(buffer, (int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
-	}//end while(!feof())
+		if(fgets(buffer, (int)maxlinelength,inf) == NULL)	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			readerrordetected = 1;
+	}//while(!feof(inf) && !readerrordetected)
 
 	free(buffer);	//No longer needed, release the memory before exiting function
 

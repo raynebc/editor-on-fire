@@ -560,6 +560,7 @@ void UStar_Load(FILE *inf)
 							//the beginning of each line of lyrics in the UltraStar file (reset at each linebreak)
 	unsigned long length=0;
 	unsigned char BOM[]={0xEF,0xBB,0xBF};
+	int readerrordetected = 0;
 
 	assert_wrapper(inf != NULL);	//This must not be NULL
 
@@ -587,7 +588,7 @@ void UStar_Load(FILE *inf)
 	Lyrics.OffsetStringID=DuplicateString("#GAP");
 
 	processedctr=0;			//This will be set to 1 at the beginning of the main while loop
-	while(!feof(inf))		//Until end of file is reached
+	while(!feof(inf) && !readerrordetected)		//Until end of file is reached or fgets() returns an I/O error
 	{
 		processedctr++;
 
@@ -602,7 +603,8 @@ void UStar_Load(FILE *inf)
 		if((buffer[index] == '\r') || (buffer[index] == '\n'))	//If it was a blank line
 		{
 			if(Lyrics.verbose)	printf("Ignoring blank line (line #%lu) in input file\n",processedctr);
-			(void) fgets(buffer, (int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			if(fgets(buffer, (int)maxlinelength,inf) == NULL)	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+				readerrordetected = 1;
 			continue;	//Skip processing for a blank line
 		}
 
@@ -643,7 +645,8 @@ void UStar_Load(FILE *inf)
 						if(strcasestr_spec(buffer,"yes"))	//And the string "yes" occurs in the same line
 							relative_timing=1;				//Activate relative timing
 			}
-			(void) fgets(buffer, (int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			if(fgets(buffer, (int)maxlinelength,inf) == NULL)	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+				readerrordetected = 1;
 			continue;	//Restart at next iteration of loop
 		}//end if(buffer[index]=='#')
 		else	//This line does not contain a tag
@@ -690,7 +693,8 @@ void UStar_Load(FILE *inf)
 						linetime+=starttime;	//Otherwise add the number that was already read to find the line break's absolute timestamp
 				}
 
-				(void) fgets(buffer, (int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+				if(fgets(buffer, (int)maxlinelength,inf) == NULL)	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+					readerrordetected = 1;
 			continue;
 
 			default:
@@ -807,8 +811,9 @@ void UStar_Load(FILE *inf)
 //the pitch, AddLyricPiece() will receive a string of 0 characters, and it will ignore it
 		AddLyricPiece(&(buffer[index]),starttime,starttime+duration,pitch,0);	//Add lyric (remapped to Rock Band's pitch system)
 
-		(void) fgets(buffer, (int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
-	}//end while(!feof(inf))
+		if(fgets(buffer, (int)maxlinelength,inf) == NULL)	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			readerrordetected = 1;
+	}//while(!feof(inf) && !readerrordetected)
 
 	if(feof(inf))	//If end of file was reached before a line beginning with E
 		(void) puts("Warning: UltraStar file did not properly end with a line beginning with 'E'");

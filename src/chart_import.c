@@ -212,7 +212,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			(void) ustrcpy(eof_last_ogg_path, oldoggpath); // remember previous OGG directory if we fail
 			return NULL;
 		}
-		eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
+		eof_music_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
 
 		/* create empty song */
 		sp = eof_create_song_populated();

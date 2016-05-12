@@ -3230,7 +3230,7 @@ eof_log("\tThird pass complete", 1);
 		return NULL;
 	}
 	eof_song_loaded = 1;
-	eof_chart_length = alogg_get_length_msecs_ogg(eof_music_track);
+	eof_chart_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
 
 	/* create text events */
 	for(i = 0; i < eof_import_text_events->events; i++)

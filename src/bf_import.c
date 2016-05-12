@@ -1180,7 +1180,7 @@ EOF_SONG *eof_load_bf(char * fn)
 		return NULL;
 	}
 	eof_song_loaded = 1;
-	eof_chart_length = alogg_get_length_msecs_ogg(eof_music_track);
+	eof_chart_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
 	eof_log("\tImport complete", 1);
 
 	return sp;

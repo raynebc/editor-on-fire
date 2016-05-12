@@ -4,6 +4,7 @@
 #include "../dialog.h"
 #include "../mix.h"
 #include "../main.h"	//Inclusion for eof_custom_snap_measure
+#include "../song.h"
 #include "../dialog/proc.h"
 #include "../utility.h"
 #include "edit.h"
@@ -652,15 +653,15 @@ int eof_menu_edit_copy_vocal(void)
 	{
 		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
 		{
-			/* check for accidentally moved note */
+			/* check for accidentally moved lyric */
 			if(!note_check)
 			{
 				unsigned long beatnum = eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i));	//Find which beat that the first selected lyric is currently in
 
 				if(eof_beat_num_valid(eof_song, beatnum))
 				{	//If that beat was identified
-					if(eof_song->beat[beatnum + 1]->pos - eof_get_note_pos(eof_song, eof_selected_track, i) <= 10)
-					{
+					if(eof_beat_num_valid(eof_song, beatnum + 1) && (beatnum < ULONG_MAX - 1) && (eof_song->beat[beatnum + 1]->pos - eof_get_note_pos(eof_song, eof_selected_track, i) <= 10))
+					{	//If there is a next beat and the first selected lyric is within 10 ms of it
 						eof_clear_input();
 						if(alert(NULL, "First lyric appears to be off.", "Adjust?", "&Yes", "&No", 'y', 'n') == 1)
 						{
@@ -672,7 +673,7 @@ int eof_menu_edit_copy_vocal(void)
 				}
 			}
 
-			/* write note data to disk */
+			/* write lyric data to disk */
 			eof_write_clipboard_note(fp, eof_song, EOF_TRACK_VOCALS, i, first_pos);
 		}
 	}
@@ -1187,8 +1188,8 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 
 		for(sectiontype = 1; sectiontype <= EOF_NUM_SECTION_TYPES; sectiontype++)
 		{	//For each type of section that exists
-			unsigned long sectionnum, sectioncount;
-			EOF_PHRASE_SECTION *phrase;
+			unsigned long sectionnum, sectioncount = 0;
+			EOF_PHRASE_SECTION *phrase = NULL;
 			int skip = 0;
 
 			switch(sectiontype)
@@ -1303,8 +1304,8 @@ int eof_menu_edit_copy(void)
 
 				if(eof_beat_num_valid(eof_song, beatnum))
 				{	//If that beat was identified
-					if(eof_song->beat[beatnum + 1]->pos - eof_get_note_pos(eof_song, eof_selected_track, i) <= 10)
-					{
+					if(eof_beat_num_valid(eof_song, beatnum + 1) && (beatnum < ULONG_MAX - 1) && (eof_song->beat[beatnum + 1]->pos - eof_get_note_pos(eof_song, eof_selected_track, i) <= 10))
+					{	//If there is a next beat and the first selected note is within 10 ms of it
 						eof_clear_input();
 						if(alert(NULL, "First note appears to be off.", "Adjust?", "&Yes", "&No", 'y', 'n') == 1)
 						{

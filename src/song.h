@@ -985,6 +985,9 @@ int eof_length_is_shorter_than(long length, long threshold);	//Returns nonzero i
 int eof_length_is_longer_than(long length, long threshold);		//Returns nonzero if the length parameter is longer than the threshold parameter
 int eof_length_is_equal_to(long length, long threshold);		//Returns nonzero if both parameters are equal
 
-inline int eof_beat_num_valid(EOF_SONG *sp, unsigned long beatnum);
+static inline int eof_beat_num_valid(EOF_SONG *sp, unsigned long beatnum)
+{
+	return (sp && (beatnum < sp->beats));
+}
 
 #endif

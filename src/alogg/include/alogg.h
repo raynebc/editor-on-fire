@@ -32,7 +32,7 @@ extern "C" {
 #define ALOGG_DATE                   20021015    /* yyyymmdd */
 
 /* error codes */
-                                  
+
 #define ALOGG_OK                     0
 
 #define ALOGG_PLAY_BUFFERTOOSMALL    -1
@@ -66,6 +66,7 @@ ALOGG_DLL_DECLSPEC int alogg_process_ogg(ALOGG_OGG * ogg, void(*callback)(void *
 
 ALOGG_DLL_DECLSPEC void alogg_rewind_ogg(ALOGG_OGG *ogg);
 ALOGG_DLL_DECLSPEC void alogg_seek_abs_msecs_ogg(ALOGG_OGG *ogg, int msecs);
+ALOGG_DLL_DECLSPEC void alogg_seek_abs_msecs_ogg_ul(ALOGG_OGG *ogg, unsigned long msec);	//The same as alogg_seek_abs_msecs_ogg(), except that the input isn't casted to signed int
 ALOGG_DLL_DECLSPEC void alogg_seek_abs_secs_ogg(ALOGG_OGG *ogg, int secs);
 ALOGG_DLL_DECLSPEC void alogg_seek_abs_bytes_ogg(ALOGG_OGG *ogg, int bytes);
 ALOGG_DLL_DECLSPEC void alogg_seek_rel_msecs_ogg(ALOGG_OGG *ogg, int msec);
@@ -77,11 +78,13 @@ ALOGG_DLL_DECLSPEC void alogg_start_autopoll_ogg(ALOGG_OGG *ogg, int speed);
 ALOGG_DLL_DECLSPEC void alogg_stop_autopoll_ogg(ALOGG_OGG *ogg);
 
 ALOGG_DLL_DECLSPEC int alogg_get_pos_msecs_ogg(ALOGG_OGG *ogg);
+ALOGG_DLL_DECLSPEC unsigned long alogg_get_pos_msecs_ogg_ul(ALOGG_OGG *ogg);	//The same as alogg_get_pos_msecs_ogg(), except that the position is casted to unsigned long
 ALOGG_DLL_DECLSPEC int alogg_get_pos_secs_ogg(ALOGG_OGG *ogg);
 ALOGG_DLL_DECLSPEC int alogg_get_pos_bytes_ogg(ALOGG_OGG *ogg);
 
 ALOGG_DLL_DECLSPEC int alogg_get_length_secs_ogg(ALOGG_OGG *ogg);
 ALOGG_DLL_DECLSPEC int alogg_get_length_msecs_ogg(ALOGG_OGG *ogg);
+ALOGG_DLL_DECLSPEC unsigned long alogg_get_length_msecs_ogg_ul(ALOGG_OGG *ogg);	//The same as alogg_get_length_msecs_ogg(), except that the length is casted to unsigned long
 ALOGG_DLL_DECLSPEC int alogg_get_length_bytes_ogg(ALOGG_OGG *ogg);
 
 ALOGG_DLL_DECLSPEC int alogg_get_bitrate_ogg(ALOGG_OGG *ogg);

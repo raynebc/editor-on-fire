@@ -24,6 +24,7 @@
 #include "../rs.h"
 #include "../rs_import.h"
 #include "../silence.h"	//For save_wav_with_silence_appended
+#include "../song.h"
 #include "../bf_import.h"
 #include "../bf.h"
 #include "beat.h"	//For eof_menu_beat_reset_offset()
@@ -544,7 +545,7 @@ int eof_menu_file_load(void)
 		}
 
 		eof_song_loaded = 1;
-		eof_chart_length = alogg_get_length_msecs_ogg(eof_music_track);
+		eof_chart_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
 		eof_init_after_load(0);
 		eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
 		(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update arrays for note set population and highlighting
@@ -727,7 +728,7 @@ int eof_menu_file_load_ogg(void)
 			}
 		}
 
-		new_length = alogg_get_length_msecs_ogg(eof_music_track);
+		new_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
 		if(new_length > eof_chart_length)
 		{
 			eof_chart_length = new_length;
@@ -1068,7 +1069,7 @@ int eof_menu_file_settings(void)
 	eof_render();
 	eof_color_dialog(eof_settings_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_settings_dialog);
-	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_av_delay);
+	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%lu", eof_av_delay);
 	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%d", eof_buffer_size);
 	(void) snprintf(eof_etext3, sizeof(eof_etext2) - 1, "%d", eof_midi_tone_delay);
 	eof_settings_dialog[8].d2 = eof_cpu_saver;
@@ -1077,12 +1078,7 @@ int eof_menu_file_settings(void)
 	eof_settings_dialog[11].flags = eof_disable_vsync ? D_SELECTED : 0;
 	if(eof_popup_dialog(eof_settings_dialog, 0) == 12)
 	{	//User clicked OK
-		eof_av_delay = atol(eof_etext);
-		if(eof_av_delay < 0)
-		{
-			allegro_message("AV Delay must be at least 0.\nIt has been set to 0 for now.");
-			eof_av_delay = 0;
-		}
+		eof_av_delay = strtoul(eof_etext, NULL, 10);
 		eof_buffer_size = atol(eof_etext2);
 		if(eof_buffer_size < 1024)
 		{
@@ -1570,7 +1566,7 @@ int eof_menu_file_exit(void)
 			eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 			eof_stop_midi();
 			alogg_stop_ogg(eof_music_track);
-			alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_pos);
+			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos);
 		}
 	}
 	eof_cursor_visible = 0;
@@ -2494,7 +2490,7 @@ int eof_new_chart(char * filename)
 			return 1;	//Return failure
 		}
 	}
-	eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
+	eof_music_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
 	(void) ustrcpy(eof_loaded_song_name, "notes.eof");
 	(void) append_filename(eof_filename, eof_song_path, eof_loaded_song_name, (int) sizeof(eof_filename));	//Build the full path to the project file
 

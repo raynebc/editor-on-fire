@@ -274,7 +274,7 @@ void eof_prepare_song_menu(void)
 			{
 				noted[(unsigned)eof_get_note_type(eof_song, eof_selected_track, i)] = 1;	//Type cast to avoid a nag warning about indexing with a char type
 			}
-			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
+			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < ((eof_music_pos >= eof_av_delay) ? eof_music_pos - eof_av_delay : 0)))
 			{	//If the note is earlier than the seek position
 				seekp = 1;
 				if(	(eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_NOTE_FLAG_HIGHLIGHT) ||
@@ -283,7 +283,7 @@ void eof_prepare_song_menu(void)
 					seekph = 1;
 				}
 			}
-			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
+			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos >= eof_av_delay) ? eof_music_pos - eof_av_delay : 0)))
 			{	//If the note is later than the seek position
 				seekn = 1;
 				if(	(eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_NOTE_FLAG_HIGHLIGHT) ||
@@ -806,7 +806,7 @@ int eof_menu_song_seek_previous_note(void)
 
 	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
 	{	//For each note in the active track
-		if((eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i - 1) < ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
+		if((eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i - 1) < ((eof_music_pos >= eof_av_delay) ? eof_music_pos - eof_av_delay : 0)))
 		{
 			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, i - 1) + eof_av_delay);
 			break;
@@ -821,7 +821,7 @@ int eof_menu_song_seek_previous_highlighted_note(void)
 
 	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
 	{	//For each note in the active track
-		if((eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i - 1) < ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
+		if((eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i - 1) < ((eof_music_pos >= eof_av_delay) ? eof_music_pos - eof_av_delay : 0)))
 		{
 			if(	(eof_get_note_flags(eof_song, eof_selected_track, i - 1) & EOF_NOTE_FLAG_HIGHLIGHT) ||
 				(eof_get_note_tflags(eof_song, eof_selected_track, i - 1) & EOF_NOTE_TFLAG_HIGHLIGHT))
@@ -840,7 +840,7 @@ int eof_menu_song_seek_next_note(void)
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < eof_chart_length) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
+		if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < eof_chart_length) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos >= eof_av_delay) ? eof_music_pos - eof_av_delay : 0)))
 		{
 			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay);
 			break;
@@ -855,7 +855,7 @@ int eof_menu_song_seek_next_highlighted_note(void)
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < eof_chart_length) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
+		if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < eof_chart_length) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos >= eof_av_delay) ? eof_music_pos - eof_av_delay : 0)))
 		{
 			if(	(eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_NOTE_FLAG_HIGHLIGHT) ||
 				(eof_get_note_tflags(eof_song, eof_selected_track, i) & EOF_NOTE_TFLAG_HIGHLIGHT))
@@ -872,8 +872,8 @@ int eof_menu_song_seek_previous_screen(void)
 {
 	if(!eof_music_catalog_playback)
 	{
-		if(eof_music_pos - SCREEN_W * eof_zoom < 0)
-		{
+		if(eof_music_pos < SCREEN_W * eof_zoom)
+		{	//Cannot seek left one full screen
 			(void) eof_menu_song_seek_start();
 		}
 		else
@@ -1818,7 +1818,7 @@ static long get_ogg_length(const char * fn)
 		free(oggbuffer);
 		return 0;	//Return failure
 	}
-	length = alogg_get_length_msecs_ogg(ogg);
+	length = alogg_get_length_msecs_ogg_ul(ogg);
 	alogg_destroy_ogg(ogg);
 	free(oggbuffer);
 

@@ -8,6 +8,7 @@
 #include "midi_import.h"	//For eof_parse_var_len()
 #include "mix.h"	//For eof_set_seek_position()
 #include "rs.h"		//For automated fret hand position generation functions
+#include "song.h"
 #include "undo.h"
 #include "utility.h"
 #include "tuning.h"

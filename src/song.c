@@ -116,11 +116,6 @@ EOF_TRACK_ENTRY eof_guitar_hero_animation_tracks[EOF_GUITAR_HERO_ANIMATION_TRACK
 	{EOF_LEGACY_TRACK_FORMAT, EOF_DRUM_TRACK_BEHAVIOR, EOF_TRACK_DRUM, 0, "BAND DRUMS", "", EOF_NOTE_AMAZING, 5, 0}
 };	//These entries describe the two Guitar Hero MIDI tracks that store drum animations, used to create a drum track
 
-inline int eof_beat_num_valid(EOF_SONG *sp, unsigned long beatnum)
-{
-	return (sp && (beatnum < sp->beats));
-}
-
 /* sort all notes according to position */
 int eof_song_qsort_legacy_notes(const void * e1, const void * e2)
 {
@@ -6727,8 +6722,8 @@ int eof_create_image_sequence(char benchmark_only)
 		eof_log("\tBenchmarking rendering performance", 1);
 	}
 
-	alogg_seek_abs_msecs_ogg(eof_music_track, 0);
-	eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
+	alogg_seek_abs_msecs_ogg_ul(eof_music_track, 0);
+	eof_music_actual_pos = alogg_get_pos_msecs_ogg_ul(eof_music_track);
 	eof_music_pos = eof_music_actual_pos + eof_av_delay;
 	clear_to_color(eof_screen, eof_color_light_gray);
 	blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
@@ -6909,9 +6904,12 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 				unsigned long beat = eof_get_beat(sp, targetpos);	//Get the beat in which the tail currently ends
 				unsigned long newtailendpos = targetpos;
 
-				if((dir < 0) && eof_beat_num_valid(sp, beat) && (beat > 0) && (targetpos == sp->beat[beat]->pos))
-				{	//If the note is being shortened by a grid snap and the tail's current end position is found to be at the start of a beat
-					targetpos--;	//Consider the tail's current position to end in the previous beat so that the grid snap logic will find it a grid snap position in that beat
+				if(eof_beat_num_valid(sp, beat) && (beat > 0) && (beat < sp->beats))
+				{	//If the beat containing the tail's current end position was located, add a redundant bounds check to avoid a false positive with Coverity
+					if((dir < 0) && (targetpos == sp->beat[beat]->pos))
+					{	//If the note is being shortened by a grid snap and the tail's current end position is found to be at the start of a beat
+						targetpos--;	//Consider the tail's current position to end in the previous beat so that the grid snap logic will find it a grid snap position in that beat
+					}
 				}
 				eof_snap_logic(&eof_tail_snap, targetpos);	//Find grid snap positions before and after the tail's current ending position
 				if(dir < 0)

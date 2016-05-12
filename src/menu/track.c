@@ -1507,7 +1507,7 @@ int eof_track_rs_popup_add(void)
 	}
 	else
 	{
-		(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%d", eof_music_pos - eof_av_delay);	//Otherwise initialize the start time with the current seek position
+		(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", eof_music_pos - eof_av_delay);	//Otherwise initialize the start time with the current seek position
 		(void) ustrcpy(eof_etext3, "");
 	}
 	if(eof_popup_dialog(eof_song_rs_popup_add_dialog, 1) == 6)

@@ -64,7 +64,7 @@ void eof_mix_init(void);	//Inits variables and loads cues (clap, metronome tick,
 void eof_mix_exit(void);	//Releases memory used by audio cues
 void eof_mix_start_helper(void);	//Finds the next clap, tick and vocal tone timestamps?
 void eof_mix_start(int speed);	//Prepares variables for chart playback
-void eof_mix_seek(int pos);	//Performs a seek and updates the position of the next of each audio cue
+void eof_mix_seek(unsigned long pos);	//Performs a seek and updates the position of the next of each audio cue
 SAMPLE *eof_mix_load_ogg_sample(char *fn);	//Loads the specified OGG sample from a dat file, returning it in SAMPLE format
 
 void eof_mix_find_claps(void);		//Populates counters and arrays for the sound cues based on the active track difficulty's contents
@@ -76,7 +76,7 @@ void eof_play_pro_guitar_note_midi(EOF_SONG *sp, unsigned long track, unsigned l
 void eof_play_queued_midi_tones(void);	//Advances through and plays MIDI tones queued by eof_mix_find_claps(), similarly to how the OGG callback function plays other cues
 int eof_lookup_midi_tone(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the appropriate MIDI instrument number to use for the specified note, or 0 on error
 
-void eof_set_seek_position(int pos);
+void eof_set_seek_position(unsigned long pos);
 	//Updates variables to set the audio and seek position to the specified timestamp in ms
 
 #endif

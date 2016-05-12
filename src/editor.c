@@ -1,5 +1,4 @@
 #include <math.h>
-#include "main.h"
 #include "menu/file.h"
 #include "menu/edit.h"
 #include "menu/song.h"
@@ -10,19 +9,21 @@
 #include "menu/context.h"
 #include "modules/ocd3d.h"
 #include "foflc/Lyric_storage.h"
-#include "player.h"
-#include "mix.h"
-#include "undo.h"
 #include "dialog.h"
 #include "beat.h"
 #include "editor.h"
-#include "utility.h"	//For eof_check_string()
-#include "note.h"		//For EOF_LYRIC_PERCUSSION definition
+#include "main.h"
 #include "midi.h"
+#include "mix.h"
+#include "note.h"		//For EOF_LYRIC_PERCUSSION definition
+#include "player.h"
 #include "rs.h"
-#include "waveform.h"
+#include "song.h"
 #include "spectrogram.h"
 #include "tuning.h"
+#include "undo.h"
+#include "utility.h"	//For eof_check_string()
+#include "waveform.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -179,7 +180,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 				}
 			}
 		}
-		if(!eof_beat_num_valid(eof_song, sp->beat))
+		if((sp->beat < 0) || !eof_beat_num_valid(eof_song, sp->beat))
 		{	//if no suitable beat was found
 			return;
 		}
@@ -1125,7 +1126,7 @@ if(eof_key_code == KEY_PAUSE)
 				eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 				eof_stop_midi();
 				alogg_stop_ogg(eof_music_track);
-				alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_pos);
+				alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos);
 			}
 			else
 			{
@@ -5451,7 +5452,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		{
 			draw_sprite(eof_screen, eof_image[EOF_IMAGE_CONTROLS_0 + eof_selected_control], eof_screen_layout.controls_x, 22 + 8);
 		}
-		textprintf_ex(eof_screen, eof_mono_font, eof_screen_layout.controls_x + 153, 23 + 8, eof_color_white, -1, "%02d:%02d", ((eof_music_pos - eof_av_delay) / 1000) / 60, ((eof_music_pos - eof_av_delay) / 1000) % 60);
+		textprintf_ex(eof_screen, eof_mono_font, eof_screen_layout.controls_x + 153, 23 + 8, eof_color_white, -1, "%02lu:%02lu", ((eof_music_pos - eof_av_delay) / 1000) / 60, ((eof_music_pos - eof_av_delay) / 1000) % 60);
 	}
 
 	/* draw fretboard area */
@@ -6533,7 +6534,7 @@ void eof_editor_logic_common(void)
 			if(!eof_full_screen_3d && ((mouse_b & 2) || (eof_key_code == KEY_INSERT)) && eof_rclick_released && (eof_beat_num_valid(eof_song, eof_hover_beat)))
 			{	//If full screen 3d is not in use and the right mouse key or insert are held over a beat marker
 				eof_select_beat(eof_hover_beat);
-				alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->beat[eof_hover_beat]->pos + eof_av_delay);
+				alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_song->beat[eof_hover_beat]->pos + eof_av_delay);
 				eof_music_actual_pos = eof_song->beat[eof_hover_beat]->pos + eof_av_delay;
 				eof_music_pos = eof_music_actual_pos;
 				eof_reset_lyric_preview_lines();

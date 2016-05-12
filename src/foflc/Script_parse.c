@@ -35,6 +35,7 @@ void Script_Load(FILE *inf)
 									//	begin with "#newline" as the end of a line of lyrics.  This,
 									//	along with using trailing hyphens, allows for grouping logic
 									//	on word or syllable synced script files
+	int readerrordetected = 0;
 
 	assert_wrapper(inf != NULL);	//This must not be NULL
 
@@ -58,7 +59,7 @@ void Script_Load(FILE *inf)
 	if(Lyrics.verbose)	printf("\nImporting script lyrics from file \"%s\"\n\n",Lyrics.infilename);
 
 	processedctr=0;			//This will be set to 1 at the beginning of the main while loop
-	while(!feof(inf))		//Until end of file is reached
+	while(!feof(inf) && !readerrordetected)		//Until end of file is reached or fgets() returns an I/O error
 	{
 		processedctr++;
 //Skip leading whitespace
@@ -91,7 +92,8 @@ void Script_Load(FILE *inf)
 				}
 			}
 
-			(void) fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			if(fgets(buffer, (int)maxlinelength,inf) == NULL)	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+				readerrordetected = 1;
 			continue;
 		}//end if(buffer[index]=='#')
 
@@ -135,9 +137,10 @@ void Script_Load(FILE *inf)
 			if(endlines == 0)		//If newline recognition is not enabled
 				EndLyricLine();		//End line of lyrics after each line entry in input file
 
-			(void) fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			if(fgets(buffer, (int)maxlinelength,inf) == NULL)	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+				readerrordetected = 1;
 		}
-	}//end while(!feof())
+	}//while(!feof(inf) && !readerrordetected)
 
 	free(buffer);	//No longer needed, release the memory before exiting function
 

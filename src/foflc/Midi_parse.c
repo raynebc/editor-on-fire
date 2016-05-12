@@ -1782,6 +1782,7 @@ void PitchedLyric_Load(FILE *inf)
 	int octavenum=0;
 	char negativeoctave=0;
 	char invalidnote=0;
+	int readerrordetected = 0;
 
 	assert_wrapper(inf != NULL);	//This must not be NULL
 
@@ -1809,7 +1810,7 @@ void PitchedLyric_Load(FILE *inf)
 	}
 
 	processedctr=1;			//This will be set to 2 at the beginning of the main loop, denoting starting at line 2
-	while(!feof(inf))		//Until end of file is reached
+	while(!feof(inf) && !readerrordetected)		//Until end of file is reached or fgets() returns an I/O error
 	{
 		if(fgets(buffer,(int)maxlinelength,inf) == NULL)	//Read next line of text, capping it to prevent buffer overflow, don't exit on EOF
 			break;	//If NULL is returned, EOF was reached and no bytes were read from file
@@ -1828,7 +1829,8 @@ void PitchedLyric_Load(FILE *inf)
 		if((buffer[index] == '\r') || (buffer[index] == '\n'))	//If it was a blank line
 		{
 			if(Lyrics.verbose)	printf("Ignoring blank line (line #%lu) in input file\n",processedctr);
-			(void) fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			if(fgets(buffer, (int)maxlinelength,inf) == NULL)	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+				readerrordetected = 1;
 			continue;	//Skip processing for a blank line
 		}
 
@@ -2042,7 +2044,7 @@ void PitchedLyric_Load(FILE *inf)
 			printf("Error: Invalid input \"%s\" in line %lu during pitched lyric import\nAborting\n",&(buffer[index]),processedctr);
 			exit_wrapper(3);
 		}
-	}//while(!feof(inf))
+	}//while(!feof(inf) && !readerrordetected)
 
 	free(buffer);	//No longer needed, release the memory before exiting function
 

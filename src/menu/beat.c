@@ -12,6 +12,7 @@
 #include "../midi_data_import.h"	//For eof_events_overridden_by_stored_MIDI_track()
 #include "../rs.h"
 #include "../bpm.h"	//For eof_estimate_bpm()
+#include "../song.h"
 #include "beat.h"
 #include "edit.h"
 #include "song.h"
@@ -1777,7 +1778,7 @@ int eof_events_dialog_edit(DIALOG * d)
 			}
 		}
 	}
-	if(found && (i <= INT_MAX))
+	if(found && (event < eof_song->text_events))
 	{	//If the selected event was found
 		eof_add_or_edit_text_event(eof_song->text_event[event], 0, &undo_made);	//Run logic to edit an existing event
 		eof_render();

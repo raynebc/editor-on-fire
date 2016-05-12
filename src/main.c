@@ -50,6 +50,7 @@
 #include "ini_import.h"
 #include "midi_data_import.h"	//For eof_track_overridden_by_stored_MIDI_track()
 #include "rs.h"	//for eof_pro_guitar_track_find_effective_fret_hand_position()
+#include "song.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -104,7 +105,7 @@ char        eof_last_frettist[256] = {0};
 char        eof_temp_filename[1024] = {0};	//A string for temporarily storing file paths
 char        eof_soft_cursor = 0;
 char        eof_desktop = 1;
-int         eof_av_delay = 200;
+unsigned long eof_av_delay = 200;
 int         eof_midi_tone_delay = 0;
 int         eof_midi_synth_instrument_guitar = 28;	//Electric Guitar (clean) MIDI instrument
 int         eof_midi_synth_instrument_guitar_muted = 29;	//An alternate MIDI instrument to play for palm muted guitar notes
@@ -196,10 +197,10 @@ unsigned long eof_music_length = 0;
 int         eof_music_pos;
 int         eof_music_pos2 = -1;		//The position to display in the secondary piano roll (-1 means it will initialize to the current track when it is enabled)
 int         eof_sync_piano_rolls = 1;	//If nonzero, the secondary piano roll will render with the current chart position instead of its own
-int         eof_music_actual_pos;
-int         eof_music_rewind_pos;
+unsigned long eof_music_actual_pos;
+unsigned long eof_music_rewind_pos;
 int         eof_music_catalog_pos;
-int         eof_music_end_pos;
+unsigned long eof_music_end_pos;
 int         eof_music_paused = 1;
 char        eof_music_catalog_playback = 0;
 char        eof_play_selection = 0;
@@ -1570,7 +1571,7 @@ int eof_load_ogg_quick(char * filename)
 	}
 	if(loaded)
 	{
-		eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
+		eof_music_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
 		eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
 	}
 	else
@@ -1659,7 +1660,7 @@ int eof_load_ogg(char * filename, char silence_failover)
 					}
 				}
 			}
-			eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
+			eof_music_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
 			eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
 			(void) ustrcpy(eof_loaded_ogg_name,filename);	//Store the loaded OGG filename
 			eof_loaded_ogg_name[1023] = '\0';	//Guarantee NULL termination
@@ -2338,7 +2339,7 @@ void eof_logic(void)
 			eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 			eof_stop_midi();
 			alogg_stop_ogg(eof_music_track);
-			alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_pos);
+			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos);
 		}
 	}
 	else if(!eof_music_paused)
@@ -2428,7 +2429,7 @@ void eof_logic(void)
 			eof_music_pos = eof_music_rewind_pos;
 			eof_stop_midi();
 			alogg_stop_ogg(eof_music_track);
-			alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_pos);
+			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos);
 			if(key[KEY_S])
 			{	//If S is still being held down, replay the note selection
 				eof_music_play(0);
@@ -4261,7 +4262,7 @@ int eof_initialize(int argc, char * argv[])
 								return 0;
 							}
 							eof_song_loaded = 1;
-							eof_chart_length = alogg_get_length_msecs_ogg(eof_music_track);
+							eof_chart_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
 							recovered = 1;	//Remember that a file was recovered so an undo state can be made after the call to eof_init_after_load()
 						}
 
@@ -4309,7 +4310,7 @@ int eof_initialize(int argc, char * argv[])
 					return 0;
 				}
 				eof_song_loaded = 1;
-				eof_chart_length = alogg_get_length_msecs_ogg(eof_music_track);
+				eof_chart_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
 			}
 			else if(!ustricmp(get_extension(argv[i]), "mid"))
 			{
@@ -4442,7 +4443,6 @@ int eof_initialize(int argc, char * argv[])
 void eof_exit(void)
 {
 	unsigned long i;
-	int x;
 	char fn[1024] = {0}, eof_recover_on_path[50], eof_autoadjust_path[50];
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
@@ -4504,13 +4504,16 @@ void eof_exit(void)
 
 	//Free command line storage variables (for Windows build)
 	#ifdef ALLEGRO_WINDOWS
-	for(x = 0; x < eof_windows_argc; x++)
-	{	//For each stored command line parameter
-		free(eof_windows_argv[x]);
-		eof_windows_argv[x] = NULL;
+	{
+		int x;
+		for(x = 0; x < eof_windows_argc; x++)
+		{	//For each stored command line parameter
+			free(eof_windows_argv[x]);
+			eof_windows_argv[x] = NULL;
+		}
+		free(eof_windows_argv);
+		eof_windows_argv = NULL;
 	}
-	free(eof_windows_argv);
-	eof_windows_argv = NULL;
 	#endif
 
 	agup_shutdown();
@@ -4898,21 +4901,20 @@ int main(int argc, char * argv[])
 		if(!eof_music_paused)
 		{	//Chart is not paused
 			int ret = alogg_poll_ogg(eof_music_track);
-			eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
+			eof_music_actual_pos = alogg_get_pos_msecs_ogg_ul(eof_music_track);
 			eof_play_queued_midi_tones();	//Played cued MIDI tones for pro guitar/bass notes
 			if((ret == ALOGG_POLL_PLAYJUSTFINISHED) && !eof_rewind_at_end)
 			{	//If the end of the chart has been reached during playback, and the user did not want the chart to automatically rewind
 				(void) eof_menu_song_seek_end();	//Re-seek to end of the audio
 				eof_music_paused = 1;
 			}
-			else if((ret == ALOGG_POLL_PLAYJUSTFINISHED) || (ret == ALOGG_POLL_NOTPLAYING) || (ret == ALOGG_POLL_FRAMECORRUPT) || (ret == ALOGG_POLL_INTERNALERROR) || (eof_music_actual_pos > alogg_get_length_msecs_ogg(eof_music_track)))
+			else if((ret == ALOGG_POLL_PLAYJUSTFINISHED) || (ret == ALOGG_POLL_NOTPLAYING) || (ret == ALOGG_POLL_FRAMECORRUPT) || (ret == ALOGG_POLL_INTERNALERROR) || (eof_music_actual_pos > alogg_get_length_msecs_ogg_ul(eof_music_track)))
 			{	//Otherwise if ALOGG reported a completed/error condition or if the reported position is greater than the length of the audio
 				eof_music_pos = eof_music_actual_pos + eof_av_delay;
 				eof_music_paused = 1;
 			}
 			else
 			{
-				eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 				if(eof_smooth_pos)
 				{
 					if((eof_music_actual_pos > eof_music_pos) || eof_music_paused)
@@ -4939,7 +4941,7 @@ int main(int argc, char * argv[])
 			}
 			else
 			{
-				int ap = alogg_get_pos_msecs_ogg(eof_music_track);
+				unsigned long ap = alogg_get_pos_msecs_ogg_ul(eof_music_track);
 				if((ap > eof_music_catalog_pos) || !eof_music_catalog_playback)
 				{
 					eof_music_catalog_pos = ap;
