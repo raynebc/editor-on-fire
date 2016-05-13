@@ -1121,7 +1121,7 @@ EOF_SONG *eof_load_bf(char * fn)
 				else
 				{	//This is a tempo change
 					unsigned numbeats;	//The approximate number of beats between this tempo change and the next
-					double tempbeatlen = 60000.0 / (changes[ctr].BPM * curden / 4.0);	//Determine the beat length as specified by the given BPM value (taking the time signature into account)
+					double tempbeatlen = 60000.0 / (changes[ctr].BPM * (double)curden / 4.0);	//Determine the beat length as specified by the given BPM value (taking the time signature into account)
 					numbeats = (changes[ctr].realtime2ms - changes[ctr].realtimems) / tempbeatlen + 0.5;	//Determine the approximate number of beats between this tempo change and the next
 					if(numbeats)
 					{	//If the start and end positions are far enough apart to denote at least one beat

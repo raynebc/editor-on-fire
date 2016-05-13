@@ -597,7 +597,7 @@ void eof_emergency_stop_music(void)
 		}
 		else if(eof_music_catalog_playback)
 		{
-			eof_log("\tStopping playback", 1);
+			eof_log("\tStopping catalog playback", 1);
 			eof_music_catalog_playback = 0;
 			eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 			eof_stop_midi();
@@ -2881,12 +2881,12 @@ void eof_render_note_window(void)
 		{	//If the seek position is to be displayed as minutes:seconds
 			ism = ((eof_music_pos - eof_av_delay) / 1000) / 60;
 			iss = ((eof_music_pos - eof_av_delay) / 1000) % 60;
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %02d:%02d.%03d : %s Selected = %d/%lu", ism, iss, isms >= 0 ? isms : 0, eof_vocals_selected ? "Lyrics" : "Notes", isn, itn);
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %02d:%02d.%03d : %s Selected = %d/%lu", ism, iss, isms, eof_vocals_selected ? "Lyrics" : "Notes", isn, itn);
 		}
 		else
 		{	//If the seek position is to be displayed as seconds
 			iss = (eof_music_pos - eof_av_delay) / 1000;
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %d.%03ds : %s Selected = %d/%lu", iss, isms >= 0 ? isms : 0, eof_vocals_selected ? "Lyrics" : "Notes", isn, itn);
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %d.%03ds : %s Selected = %d/%lu", iss, isms, eof_vocals_selected ? "Lyrics" : "Notes", isn, itn);
 		}
 		ypos += 12;
 		if(eof_seek_selection_start != eof_seek_selection_end)

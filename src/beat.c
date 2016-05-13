@@ -159,7 +159,7 @@ void eof_calculate_tempo_map(EOF_SONG * sp)
 		sp->beat[ctr]->ppqn = 1000 * (sp->beat[ctr + 1]->pos - sp->beat[ctr]->pos);	//Calculate the tempo of the beat by getting its length (this is the formula "beat_length = 60000 / BPM" rewritten to solve for ppqn)
 		if(sp->tags->accurate_ts)
 		{	//If the accurate time signatures song property is enabled
-			sp->beat[ctr]->ppqn *= den / 4;	//Adjust for the time signature
+			sp->beat[ctr]->ppqn *= (double)den / 4.0;	//Adjust for the time signature
 		}
 		if(!lastppqn || (lastppqn != sp->beat[ctr]->ppqn))
 		{	//If the tempo is being changed at this beat, or this is the first beat
@@ -195,7 +195,7 @@ void eof_change_accurate_ts(EOF_SONG * sp, char function)
 			sp->beat[ctr]->ppqn = 1000 * (sp->beat[ctr + 1]->pos - sp->beat[ctr]->pos);	//Calculate the tempo of the beat by getting its length (this is the formula "beat_length = 60000 / BPM" rewritten to solve for ppqn)
 			if(function)
 			{	//If the time signature is to be observed
-				sp->beat[ctr]->ppqn *= den / 4;	//Adjust for the time signature
+				sp->beat[ctr]->ppqn *= (double)den / 4.0;	//Adjust for the time signature
 			}
 			if(!lastppqn || (lastppqn != sp->beat[ctr]->ppqn))
 			{	//If the tempo is being changed at this beat, or this is the first beat
@@ -470,6 +470,10 @@ EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp)
 			sp->beats++;
 			return sp->beat[sp->beats - 1];
 		}
+	}
+	else
+	{
+		eof_log("Cannot add another beat.  Limit has been reached.", 1);
 	}
 
 	return NULL;

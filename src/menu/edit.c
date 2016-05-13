@@ -660,7 +660,7 @@ int eof_menu_edit_copy_vocal(void)
 
 				if(eof_beat_num_valid(eof_song, beatnum))
 				{	//If that beat was identified
-					if(eof_beat_num_valid(eof_song, beatnum + 1) && (beatnum < ULONG_MAX - 1) && (eof_song->beat[beatnum + 1]->pos - eof_get_note_pos(eof_song, eof_selected_track, i) <= 10))
+					if(eof_beat_num_valid(eof_song, beatnum + 1) && (beatnum < eof_song->beats - 1) && (eof_song->beat[beatnum + 1]->pos - eof_get_note_pos(eof_song, eof_selected_track, i) <= 10))
 					{	//If there is a next beat and the first selected lyric is within 10 ms of it
 						eof_clear_input();
 						if(alert(NULL, "First lyric appears to be off.", "Adjust?", "&Yes", "&No", 'y', 'n') == 1)
@@ -1304,7 +1304,7 @@ int eof_menu_edit_copy(void)
 
 				if(eof_beat_num_valid(eof_song, beatnum))
 				{	//If that beat was identified
-					if(eof_beat_num_valid(eof_song, beatnum + 1) && (beatnum < ULONG_MAX - 1) && (eof_song->beat[beatnum + 1]->pos - eof_get_note_pos(eof_song, eof_selected_track, i) <= 10))
+					if(eof_beat_num_valid(eof_song, beatnum + 1) && (beatnum < eof_song->beats - 1) && (eof_song->beat[beatnum + 1]->pos - eof_get_note_pos(eof_song, eof_selected_track, i) <= 10))
 					{	//If there is a next beat and the first selected note is within 10 ms of it
 						eof_clear_input();
 						if(alert(NULL, "First note appears to be off.", "Adjust?", "&Yes", "&No", 'y', 'n') == 1)

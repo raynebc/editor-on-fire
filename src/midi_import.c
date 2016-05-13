@@ -1018,7 +1018,7 @@ set_window_title(debugtext);
 #endif
 
 		midbeatchange = 0;
-		beatlength = (double)eof_work_midi->divisions / (curden / 4.0);		//Determine the length of one full beat in delta ticks (time division is the number of ticks in a quarter note, scale by denominator/4 to account for current time signature)
+		beatlength = (double)eof_work_midi->divisions / ((double)curden / 4.0);		//Determine the length of one full beat in delta ticks (time division is the number of ticks in a quarter note, scale by denominator/4 to account for current time signature)
 		nextanchor = deltafpos + beatlength + 0.5;	//By default, the delta position of the next beat will be the standard length of delta ticks
 		for(ctr = 0; ctr < eof_import_bpm_events->events; ctr++)
 		{	//For each imported tempo change
@@ -1166,8 +1166,8 @@ set_window_title(debugtext);
 		}
 
 		//Store the TS change's realtime position, using the appropriate formula to find the time beyond the beat real time position if the TS change is not on a beat marker:
-		//time = deltas / (time division) * (60000.0 / (BPM * (TS denominator) / 4))
-		eof_import_ts_changes[0]->change[ctr]->realtime = (double)realtimepos + (eof_import_ts_changes[0]->change[ctr]->pos - deltapos) / eof_work_midi->divisions * (60000.0 / (BPM * lastden / 4.0));
+		//time = deltas / (time division) * (60000.0 / (BPM * (TS denominator) / 4.0))
+		eof_import_ts_changes[0]->change[ctr]->realtime = (double)realtimepos + (eof_import_ts_changes[0]->change[ctr]->pos - deltapos) / eof_work_midi->divisions * (60000.0 / (BPM * (double)lastden / 4.0));
 		lastden=curden;
 	}
 

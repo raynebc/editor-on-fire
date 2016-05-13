@@ -730,7 +730,7 @@ int eof_menu_beat_ts_convert(void)
 			eof_song->beat[ctr]->ppqn = 1000 * (eof_song->beat[ctr + 1]->pos - eof_song->beat[ctr]->pos);	//Calculate the tempo of the beat by getting its length (this is the formula "beat_length = 60000 / BPM" rewritten to solve for ppqn)
 			if(den != 4)
 			{	//If the time signature needs to be taken into account
-				eof_song->beat[ctr]->ppqn *= den / 4;	//Adjust for it
+				eof_song->beat[ctr]->ppqn *= (double)den / 4.0;	//Adjust for it
 			}
 			ctr++;	//Iterate to next beat
 			if(eof_get_ts(eof_song, &num, &den, ctr) == 1)
