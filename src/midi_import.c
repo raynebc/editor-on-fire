@@ -3087,7 +3087,7 @@ set_window_title(debugtext);
 			{	//If this is not a Power Gig formatted MIDI, only allow one MIDI track to import into each track in the project
 				if(eof_get_track_size(sp, picked_track) > 0)
 				{	//If at least one note was imported
-					eof_track_find_crazy_notes(sp, picked_track);
+					eof_track_find_crazy_notes(sp, picked_track, 0);
 					used_track[picked_track] = 1;	//Note that this track has been imported, duplicate instances of the track will be ignored
 				}
 			}

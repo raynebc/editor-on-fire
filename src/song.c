@@ -5588,9 +5588,9 @@ long eof_track_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long 
 	return -1;
 }
 
-void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track)
+void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track, int option)
 {
-	unsigned long i;
+	unsigned long i, pos1, pos2;
 	long next;
 
  	eof_log("eof_track_find_crazy_notes() entered", 1);
@@ -5606,11 +5606,17 @@ void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track)
 		next = eof_track_fixup_next_note(sp, track, i);
 		if(next >= 0)
 		{
-			if(eof_get_note_pos(sp, track, i) + eof_get_note_length(sp, track, i) > eof_get_note_pos(sp, track, next) + 1)
+			pos1 = eof_get_note_pos(sp, track, i);
+			pos2 = eof_get_note_pos(sp, track, next);
+			if(pos1 + eof_get_note_length(sp, track, i) > pos2 + 1)
 			{	//If the note overlaps the next note by over one millisecond (to allow for rounding errors)
 				if((eof_get_note_note(sp, track, i) & eof_get_note_note(sp, track, next)) == 0)
 				{	//If the two notes have no lanes in common
-					eof_set_note_flags(sp, track, i, eof_get_note_flags(sp, track, i) | EOF_NOTE_FLAG_CRAZY);
+					if(!option || (pos1 != pos2))
+					{	//If the calling function doesn't care if different notes starting at the same timestamp are given crazy status,
+						//or if the notes don't start at the same timestamp
+						eof_set_note_flags(sp, track, i, eof_get_note_flags(sp, track, i) | EOF_NOTE_FLAG_CRAZY);
+					}
 				}
 			}
 		}

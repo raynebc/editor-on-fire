@@ -3712,6 +3712,7 @@ int eof_gp_import_track(DIALOG * d)
 	char exists, tuning_prompted = 0, is_bass = 0;
 	char still_populated = 0;	//Will be set to nonzero if the track still contains notes after the track/difficulty is cleared before importing the GP track
 	EOF_PHRASE_SECTION *ptr, *ptr2;
+	int voicespresent = 0, importvoice = 0;
 
 	if(!d || (eof_parsed_gp_file->numtracks > INT_MAX) || (d->d1 >= (int)eof_parsed_gp_file->numtracks))
 		return 0;
@@ -3762,10 +3763,61 @@ int eof_gp_import_track(DIALOG * d)
 				still_populated = 1;
 		}
 
-		//Copy the content from the selected GP track into the active track
-		//Copy notes
+		//Parse the track to see which voices were populated, and if more than one is, prompt user which voice(s) to import
 		for(ctr = 0; ctr < eof_parsed_gp_file->track[selected]->notes; ctr++)
 		{	//For each note in the GP track
+			if(eof_parsed_gp_file->track[selected]->note[ctr]->type == 0)
+			{	//This is a note in the lead voice
+				voicespresent |= 1;
+			}
+			else
+			{	//This is a note in the bass voice
+				voicespresent |= 2;
+			}
+			if((voicespresent == 3) && !importvoice)
+			{	//If notes in both voices have been encountered and the user hasn't been prompted about which to import
+				int ret = alert3(NULL, "Import which voices from this track?", NULL, "&Lead", "&Bass", "B&Oth", 'l', 'b', 'o');
+				if(ret == 1)
+				{	//Import lead voice only
+					importvoice = 1;
+				}
+				else if(ret == 2)
+				{	//Import bass voice only
+					importvoice = 2;
+				}
+				else
+				{	//Import both voices
+					importvoice = 3;
+				}
+			}
+			if(importvoice == 3)
+			{	//If the user has opted to import both voices
+				if(ctr > 0)
+				{	//If there was a previous note
+					EOF_PRO_GUITAR_NOTE *np = eof_parsed_gp_file->track[selected]->note[ctr];	//Simplify
+					EOF_PRO_GUITAR_NOTE *pnp = eof_parsed_gp_file->track[selected]->note[ctr - 1];
+					if(np->pos == pnp->pos)
+					{	//If it starts at the same time stamp, ensure both notes have the same length so that eof_track_find_crazy_notes() works as intended
+						if(np->length > pnp->length)
+						{	//This note is longer
+							pnp->length = np->length;
+						}
+						else
+						{	//The other note is longer or of equal length
+							np->length = pnp->length;
+						}
+					}
+				}
+			}
+		}
+
+		//Copy the content from the selected GP track into the active track
+		//Copy notes
+		eof_pro_guitar_track_sort_notes(eof_parsed_gp_file->track[selected]);
+		for(ctr = 0; ctr < eof_parsed_gp_file->track[selected]->notes; ctr++)
+		{	//For each note in the GP track
+			if(importvoice & (eof_parsed_gp_file->track[selected]->note[ctr]->type + 1))
+			{	//If this voice is to be imported
 				EOF_PRO_GUITAR_NOTE *np = eof_pro_guitar_track_add_note(eof_song->pro_guitar_track[tracknum]);	//Allocate a new note
 				if(!np)
 				{	//If the memory couldn't be allocated
@@ -3775,10 +3827,13 @@ int eof_gp_import_track(DIALOG * d)
 				}
 				memcpy(np, eof_parsed_gp_file->track[selected]->note[ctr], sizeof(EOF_PRO_GUITAR_NOTE));	//Clone the note from the GP track
 				np->type = eof_note_type;	//Update the note difficulty
+			}
 		}
 		//Copy tech notes
 		for(ctr = 0; ctr < eof_parsed_gp_file->track[selected]->technotes; ctr++)
 		{	//For each tech note in the GP track
+			if(importvoice & (eof_parsed_gp_file->track[selected]->technote[ctr]->type + 1))
+			{	//If this voice is to be imported
 				EOF_PRO_GUITAR_NOTE *np = eof_pro_guitar_track_add_tech_note(eof_song->pro_guitar_track[tracknum]);	//Allocate a new note
 				if(!np)
 				{	//If the memory couldn't be allocated
@@ -3788,6 +3843,7 @@ int eof_gp_import_track(DIALOG * d)
 				}
 				memcpy(np, eof_parsed_gp_file->track[selected]->technote[ctr], sizeof(EOF_PRO_GUITAR_NOTE));	//Clone the tech note from the GP track
 				np->type = eof_note_type;	//Update the note difficulty
+			}
 		}
 		//Copy trill phrases
 		for(ctr = 0, exists = 0; ctr < eof_parsed_gp_file->track[selected]->trills; ctr++)
@@ -4022,8 +4078,9 @@ int eof_gp_import_common(const char *fn)
 		eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
 		eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
 		eof_log("Cleaning up imported notes", 1);
-		eof_track_find_crazy_notes(eof_song, eof_selected_track);	//Mark notes that overlap others as crazy
-		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to clean up the track
+		eof_track_find_crazy_notes(eof_song, eof_selected_track, 1);	//Mark notes that overlap others as crazy, if they don't begin at the same timestamp (ie. should become a normal chord)
+		eof_track_fixup_notes(eof_song, eof_selected_track, 1);			//Run fixup logic to clean up the track
+		eof_track_fixup_notes(eof_song, eof_selected_track, 1);			//Run fixup logic again to ensure that notes that were combined into chords (on the previous call) during a multi-voice import truncate as appropriate
 		(void) eof_menu_track_selected_track_number(eof_selected_track, 1);	//Re-select the active track to allow for a change in string count
 	}//If the file name is specified
 
