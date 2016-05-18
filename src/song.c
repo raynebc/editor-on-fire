@@ -1082,7 +1082,7 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 					}
 				}
 			}
-			if((eof_get_note_flags(sp, track, i) & EOF_NOTE_FLAG_HIGHLIGHT) || (eof_get_note_tflags(sp, track, i) & EOF_NOTE_TFLAG_HIGHLIGHT))
+			if(eof_note_is_highlighted(sp, track, i))
 			{	//If the note/lyric has highlighting
 				eof_track_diff_highlighted_status[note_type] = 1;
 			}
@@ -8703,6 +8703,26 @@ int eof_note_is_not_grid_snapped(EOF_SONG *sp, unsigned long track, unsigned lon
 {
 	if(eof_get_note_note(sp, track, notenum) && (eof_is_grid_snap_position(eof_get_note_pos(sp, track, notenum)) == 0))
 	{	//If the note exists and is not grid snapped
+		return 1;
+	}
+
+	return 0;
+}
+
+int eof_note_is_highlighted(EOF_SONG *sp, unsigned long track, unsigned long notenum)
+{
+	if((eof_get_note_flags(sp, track, notenum) & EOF_NOTE_FLAG_HIGHLIGHT) || (eof_get_note_tflags(sp, track, notenum) & EOF_NOTE_TFLAG_HIGHLIGHT))
+	{	//If either the static or dynamic highlight flag of this note is set
+		return 1;
+	}
+
+	return 0;
+}
+
+int eof_note_is_not_highlighted(EOF_SONG *sp, unsigned long track, unsigned long notenum)
+{
+	if(eof_get_note_note(sp, track, notenum) && !eof_note_is_highlighted(sp, track, notenum))
+	{	//If the note exists and is not highlighted
 		return 1;
 	}
 

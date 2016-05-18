@@ -145,6 +145,8 @@ MENU eof_edit_selection_select_menu[] =
 	{"&Of length", eof_menu_edit_select_all_of_length, NULL, 0, NULL},
 	{"On &Beat notes", eof_menu_edit_select_on_beat_notes, NULL, 0, NULL},
 	{"O&Ff Beat notes", eof_menu_edit_select_off_beat_notes, NULL, 0, NULL},
+	{"&Highlighted", eof_menu_edit_select_highlighted_notes, NULL, 0, NULL},
+	{"Not h&Ighlighted", eof_menu_edit_select_non_highlighted_notes, NULL, 0, NULL},
 	{"One in &Every", eof_menu_edit_select_note_number_in_sequence, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -162,6 +164,8 @@ MENU eof_edit_selection_deselect_menu[] =
 	{"&Of length", eof_menu_edit_deselect_all_of_length, NULL, 0, NULL},
 	{"On &Beat notes", eof_menu_edit_deselect_on_beat_notes, NULL, 0, NULL},
 	{"O&Ff Beat notes", eof_menu_edit_deselect_off_beat_notes, NULL, 0, NULL},
+	{"&Highlighted", eof_menu_edit_deselect_highlighted_notes, NULL, 0, NULL},
+	{"Not h&Ighlighted", eof_menu_edit_deselect_non_highlighted_notes, NULL, 0, NULL},
 	{"One in &Every", eof_menu_edit_deselect_note_number_in_sequence, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -178,7 +182,7 @@ MENU eof_edit_selection_menu[] =
 	{"", NULL, NULL, 0, NULL},
 	{"&Deselect", NULL, eof_edit_selection_deselect_menu, 0, NULL},
 	{"Deselect All\t" CTRL_NAME "+D", eof_menu_edit_deselect_all, NULL, 0, NULL},
-	{"Conditional &Deselect", eof_menu_edit_deselect_conditional, NULL, 0, NULL},
+	{"Conditional d&Eselect", eof_menu_edit_deselect_conditional, NULL, 0, NULL},
 	{"Invert selection", eof_menu_edit_invert_selection, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -2855,6 +2859,16 @@ int eof_menu_edit_select_non_grid_snapped_notes(void)
 	return eof_menu_edit_select_logic(eof_note_is_not_grid_snapped);
 }
 
+int eof_menu_edit_select_highlighted_notes(void)
+{
+	return eof_menu_edit_select_logic(eof_note_is_highlighted);
+}
+
+int eof_menu_edit_select_non_highlighted_notes(void)
+{
+	return eof_menu_edit_select_logic(eof_note_is_not_highlighted);
+}
+
 int eof_menu_edit_deselect_logic(int (*check)(EOF_SONG *, unsigned long, unsigned long))
 {
 	unsigned long ctr;
@@ -2913,6 +2927,16 @@ int eof_menu_edit_deselect_grid_snapped_notes(void)
 int eof_menu_edit_deselect_non_grid_snapped_notes(void)
 {
 	return eof_menu_edit_deselect_logic(eof_note_is_not_grid_snapped);
+}
+
+int eof_menu_edit_deselect_highlighted_notes(void)
+{
+	return eof_menu_edit_deselect_logic(eof_note_is_highlighted);
+}
+
+int eof_menu_edit_deselect_non_highlighted_notes(void)
+{
+	return eof_menu_edit_deselect_logic(eof_note_is_not_highlighted);
 }
 
 int eof_menu_edit_invert_selection(void)

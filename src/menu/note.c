@@ -419,12 +419,26 @@ MENU eof_note_crazy_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_note_transpose_menu[] =
+{
+	{"&Up\tUp", eof_menu_note_transpose_up, NULL, 0, NULL},
+	{"&Down\tDown", eof_menu_note_transpose_down, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_highlight_menu[] =
+{
+	{"&On", eof_menu_note_highlight_on, NULL, 0, NULL},
+	{"O&Ff", eof_menu_note_highlight_off, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_note_menu[] =
 {
 	{"&Toggle", NULL, eof_note_toggle_menu, 0, NULL},
 	{"&Clear", NULL, eof_note_clear_menu, 0, NULL},
-	{"Transpose Up\tUp", eof_menu_note_transpose_up, NULL, 0, NULL},
-	{"Transpose Down\tDown", eof_menu_note_transpose_down, NULL, 0, NULL},
+	{"Tr&Anspose", NULL, eof_note_transpose_menu, 0, NULL},
+	{"&Highlight", NULL, eof_note_highlight_menu, 0, NULL},
 	{"Resnap\t" CTRL_NAME "+Shift+R", eof_menu_note_resnap, NULL, 0, NULL},
 	{"&Solos", NULL, eof_solo_menu, 0, NULL},
 	{"Star &Power", NULL, eof_star_power_menu, 0, NULL},
@@ -432,7 +446,7 @@ MENU eof_note_menu[] =
 	{"Edit &Name", eof_menu_note_edit_name, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Cra&Zy", NULL, eof_note_crazy_menu, 0, NULL},
-	{"&HOPO", NULL, eof_legacy_hopo_menu, 0, NULL},
+	{"H&OPO", NULL, eof_legacy_hopo_menu, 0, NULL},
 	{eof_trill_menu_text, NULL, eof_trill_menu, 0, NULL},
 	{eof_tremolo_menu_text, NULL, eof_tremolo_menu, 0, NULL},
 	{"Sl&Ider", NULL, eof_slider_menu, 0, NULL},
@@ -1142,21 +1156,21 @@ void eof_prepare_note_menu(void)
 		/* transpose up */
 		if(eof_transpose_possible(-1))
 		{
-			eof_note_menu[2].flags = 0;			//Note>Transpose Up
+			eof_note_transpose_menu[0].flags = 0;			//Note>Transpose>Up
 		}
 		else
 		{
-			eof_note_menu[2].flags = D_DISABLED;
+			eof_note_transpose_menu[0].flags = D_DISABLED;
 		}
 
 		/* transpose down */
 		if(eof_transpose_possible(1))
 		{
-			eof_note_menu[3].flags = 0;			//Note>Transpose Down
+			eof_note_transpose_menu[1].flags = 0;			//Note>Transpose>Down
 		}
 		else
 		{
-			eof_note_menu[3].flags = D_DISABLED;
+			eof_note_transpose_menu[1].flags = D_DISABLED;
 		}
 		if(note_selection_updated)
 		{	//If the only note modified was the seek hover note
@@ -8105,6 +8119,21 @@ int eof_menu_note_toggle_linknext(void)
 	int retval = eof_menu_note_toggle_flag(0, EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT);
 	eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 	return retval;
+}
+
+int eof_menu_note_highlight_on(void)
+{
+	(void) eof_menu_note_clear_flag(0, EOF_ANY_TRACK_FORMAT, EOF_NOTE_FLAG_HIGHLIGHT);	//Clear the highlight flag
+	(void) eof_menu_note_toggle_flag(0, EOF_ANY_TRACK_FORMAT, EOF_NOTE_FLAG_HIGHLIGHT);	//Toggle the highlight flag, which combined with the above clear, causes selected notes to have this flag set
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update highlighting variables
+	return 1;
+}
+
+int eof_menu_note_highlight_off(void)
+{
+	(void) eof_menu_note_clear_flag(0, EOF_ANY_TRACK_FORMAT, EOF_NOTE_FLAG_HIGHLIGHT);	//Clear the highlight flag
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update highlighting variables
+	return 1;
 }
 
 int eof_feedback_mode_update_note_selection(void)

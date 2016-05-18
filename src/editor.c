@@ -5597,7 +5597,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		}
 		if((eof_note_type == eof_get_note_type(eof_song, eof_selected_track, i)) && (notepos + notelength >= start))
 		{	//If this note is in the selected instrument difficulty and would render between the left and right edges of the piano roll
-			if((eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_NOTE_FLAG_HIGHLIGHT) || (eof_get_note_tflags(eof_song, eof_selected_track, i) & EOF_NOTE_TFLAG_HIGHLIGHT))
+			if(eof_note_is_highlighted(eof_song, eof_selected_track, i))
 			{	//If this note is flagged to be highlighted, render a yellow colored background
 				markerlength = notelength / eof_zoom;
 				if(markerlength < eof_screen_layout.note_size)
@@ -6129,8 +6129,8 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 					has_tech = 1;
 				}
 			}
-			if(eof_track_diff_highlighted_status[diffnum])
-			{	//If any notes in this tab have highlighting
+			if((eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) && (i != numtabs - 1) && eof_track_diff_highlighted_status[diffnum])
+			{	//If this tab isn't being displayed as ">>" and any notes in this difficulty have highlighting
 				bgcol = eof_color_yellow;	//Render a yellow background behind the difficulty name
 			}
 			else

@@ -277,8 +277,7 @@ void eof_prepare_song_menu(void)
 			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < ((eof_music_pos >= eof_av_delay) ? eof_music_pos - eof_av_delay : 0)))
 			{	//If the note is earlier than the seek position
 				seekp = 1;
-				if(	(eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_NOTE_FLAG_HIGHLIGHT) ||
-					(eof_get_note_tflags(eof_song, eof_selected_track, i) & EOF_NOTE_TFLAG_HIGHLIGHT))
+				if(eof_note_is_highlighted(eof_song, eof_selected_track, i))
 				{	//If either the static or dynamic highlight flag of this note is set
 					seekph = 1;
 				}
@@ -286,8 +285,7 @@ void eof_prepare_song_menu(void)
 			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos >= eof_av_delay) ? eof_music_pos - eof_av_delay : 0)))
 			{	//If the note is later than the seek position
 				seekn = 1;
-				if(	(eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_NOTE_FLAG_HIGHLIGHT) ||
-					(eof_get_note_tflags(eof_song, eof_selected_track, i) & EOF_NOTE_TFLAG_HIGHLIGHT))
+				if(eof_note_is_highlighted(eof_song, eof_selected_track, i))
 				{	//If either the static or dynamic highlight flag of this note is set
 					seeknh = 1;
 				}
@@ -823,8 +821,7 @@ int eof_menu_song_seek_previous_highlighted_note(void)
 	{	//For each note in the active track
 		if((eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i - 1) < ((eof_music_pos >= eof_av_delay) ? eof_music_pos - eof_av_delay : 0)))
 		{
-			if(	(eof_get_note_flags(eof_song, eof_selected_track, i - 1) & EOF_NOTE_FLAG_HIGHLIGHT) ||
-				(eof_get_note_tflags(eof_song, eof_selected_track, i - 1) & EOF_NOTE_TFLAG_HIGHLIGHT))
+			if(eof_note_is_highlighted(eof_song, eof_selected_track, i - 1))
 			{	//If either the static or dynamic highlight flag of this note is set
 				eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, i - 1) + eof_av_delay);
 				break;
@@ -857,8 +854,7 @@ int eof_menu_song_seek_next_highlighted_note(void)
 	{	//For each note in the active track
 		if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < eof_chart_length) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos >= eof_av_delay) ? eof_music_pos - eof_av_delay : 0)))
 		{
-			if(	(eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_NOTE_FLAG_HIGHLIGHT) ||
-				(eof_get_note_tflags(eof_song, eof_selected_track, i) & EOF_NOTE_TFLAG_HIGHLIGHT))
+			if(eof_note_is_highlighted(eof_song, eof_selected_track, i))
 			{	//If either the static or dynamic highlight flag of this note is set
 				eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay);
 				break;
@@ -3644,6 +3640,7 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 	unsigned long ignorewarning = 0;	//Tracks which warnings the user has suppressed by answering "Ignore" to a prompt
 	int ret = 0;
 	unsigned limit = 21;	//Rocksmith 2's fret hand position limit is 21
+	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
 
 	if(!eof_song || !undo_made)
 		return 0;	//Invalid parameter
@@ -3661,6 +3658,9 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 			tracknum = eof_song->track[ctr]->tracknum;
 			tp = eof_song->pro_guitar_track[tracknum];
 			unset_warning = 0;
+
+			restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, ctr);
+			eof_menu_track_set_tech_view_state(eof_song, ctr, 0);	//Disable tech view if applicable
 
 			//Check to ensure that defined fret hand positions don't conflict with defined notes
 			if(tp->handpositions)
@@ -3686,6 +3686,7 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 									eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
 									(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
 									eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+									eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 									return 1;	//Return user cancellation
 								}
 								eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
@@ -3730,6 +3731,7 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 									eof_process_beat_statistics(eof_song, eof_selected_track);		//Cache section name information into the beat structures (from the perspective of the active track)
 									(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
 									eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+									eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 									return 1;	//Return user cancellation
 								}
 								if(ret == 3)
@@ -3763,6 +3765,7 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 										eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
 										(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
 										eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+										eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 										return 1;	//Return user cancellation
 									}
 									eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
@@ -3797,6 +3800,7 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 									{	//If the user does not opt to continue looking for errors
 										eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
 										(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
+										eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 										return 1;	//Return user cancellation
 									}
 									if(ret == 3)
@@ -3835,6 +3839,7 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 											eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
 											(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
 											eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+											eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 											return 1;	//Return user cancellation
 										}
 										if(ret == 3)
@@ -3885,6 +3890,7 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 													eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
 													(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
 													eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+													eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 													return 1;	//Return user cancellation
 												}
 												eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
@@ -3913,6 +3919,8 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 					}//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
 				}//For each beat in the project
 			}//If this track has any manually defined fret hand positions
+
+			eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 		}//If this is a pro guitar/bass track
 	}//For each track in the project
 
