@@ -3810,6 +3810,17 @@ int eof_gp_import_track(DIALOG * d)
 				}
 			}
 		}
+		if(!importvoice)
+		{	//If only one voice was in the Guitar Pro file had notes
+			if(voicespresent == 1)
+			{	//Import the lead voice if it was the only voice with notes
+				importvoice = 1;
+			}
+			else
+			{	//Import the bass voice if it was the only voice with notes
+				importvoice = 2;
+			}
+		}
 
 		//Copy the content from the selected GP track into the active track
 		//Copy notes
