@@ -2742,26 +2742,22 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							{	//Force highdensity to a true/false value
 								highdensity = 1;
 							}
-							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HD)
-							{	//Chord is explicitly specified to be high density
-								highdensity = 1;
-							}
 							if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY)
 							{	//If this chord has chordify status
 								highdensity = eof_pro_guitar_note_has_open_note(tp, ctr3);	//The density will be overridden based on whether the chord has open notes
 								if(flags & EOF_NOTE_FLAG_CRAZY)
-								{	//The crazy status will still override the density to be low
+								{	//The crazy status will override the density to be low
 									highdensity = 0;
-								}
-								else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HD)
-								{	//The high density status will still override the density to be high
-									highdensity = 1;
 								}
 								chordtagend = chordifiedend;
 							}
 							else
 							{
 								chordtagend = normalend;
+							}
+							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HD)
+							{	//Chord is explicitly specified to be high density
+								highdensity = 1;	//This status has the highest precedence for setting the density
 							}
 							(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" chordId=\"%lu\" fretHandMute=\"%d\" highDensity=\"%d\" ignore=\"%d\" palmMute=\"%d\" hopo=\"%d\" strum=\"%s\"%s\n", (double)notepos / 1000.0, tech.linknext, tech.accent, chordid, tech.stringmute, highdensity, tech.ignore, tech.palmmute, tech.hopo, direction, chordtagend);
 							(void) pack_fputs(buffer, fp);

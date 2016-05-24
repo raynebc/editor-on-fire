@@ -3882,15 +3882,15 @@ int eof_gp_import_track(DIALOG * d)
 			for(ctr2 = 0; ctr2 < eof_get_num_tremolos(eof_song, eof_selected_track); ctr2++)
 			{	//For each tremolo section already in the active track
 				ptr2 = eof_get_tremolo(eof_song, eof_selected_track, ctr2);
-				if((ptr->end_pos >= ptr2->start_pos) && (ptr->start_pos <= ptr2->end_pos) && (ptr->difficulty == ptr2->difficulty))
-				{	//If the tremolo phrase in the GP track overlaps with any tremolo phrase already in the active track
+				if((ptr->end_pos >= ptr2->start_pos) && (ptr->start_pos <= ptr2->end_pos) && (ptr->difficulty == eof_note_type))
+				{	//If the tremolo phrase in the GP track overlaps with any tremolo phrase already in the active track difficulty
 					exists = 1;	//Make a note
 					break;
 				}
 			}
 			if(!exists)
 			{	//If this tremolo phrase doesn't overlap with any existing tremolo phrases in the active track
-				(void) eof_track_add_section(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, ptr->difficulty, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the active track
+				(void) eof_track_add_section(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, eof_note_type, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the active track difficulty
 			}
 		}
 

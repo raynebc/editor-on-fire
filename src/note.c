@@ -1070,8 +1070,8 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			{	//If the user has opted to 3D render Rocksmith style chords, and this is a pro guitar chord that either has high density due to being explicitly defined as such or automatically due to other means
 				long prevnote = eof_track_fixup_previous_note(eof_song, track, notenum);
 
-				if(!(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT) && !(eof_get_note_eflags(eof_song, track, notenum) & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY))
-				{	//If this chord isn't marked with split status and isn't marked with chordify status
+				if((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HD) || (!(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT) && !(eof_get_note_eflags(eof_song, track, notenum) & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY)))
+				{	//If this chord has "hi dens" status, or if it isn't marked with split or chordify statuses
 					drawline = 1;
 					if(!prevnote)
 					{	//If there was a previous note

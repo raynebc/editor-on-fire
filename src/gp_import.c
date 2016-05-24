@@ -4557,13 +4557,16 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 							if(note_is_short)
 							{	//If this note is shorter than a quarter note
-								if((eof_note_count_colors_bitmask(np[ctr2]->note) == 1) && eof_gp_import_truncate_short_notes)
-								{	//If this is a single note and the preference to drop the note's sustain in this circumstance is enabled
-									truncate = 1;
-								}
-								else if((eof_note_count_colors_bitmask(np[ctr2]->note) > 1) && eof_gp_import_truncate_short_chords)
-								{	//If this is a chord and the preference to drop the note's sustain in this circumstance is enabled
-									truncate = 1;
+								if(!(np[ctr2]->flags & EOF_NOTE_FLAG_IS_TREMOLO))
+								{	//If this note doesn't have tremolo status
+									if((eof_note_count_colors_bitmask(np[ctr2]->note) == 1) && eof_gp_import_truncate_short_notes)
+									{	//If this is a single note and the preference to drop the note's sustain in this circumstance is enabled
+										truncate = 1;
+									}
+									else if((eof_note_count_colors_bitmask(np[ctr2]->note) > 1) && eof_gp_import_truncate_short_chords)
+									{	//If this is a chord and the preference to drop the note's sustain in this circumstance is enabled
+										truncate = 1;
+									}
 								}
 							}
 							if((mute == 1) || (np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
@@ -4904,7 +4907,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	{	//For each imported track
 		if((eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) || !eof_gp_import_replaces_track)
 		{	//If the active project's active track already had the difficulty limit removed, or if the user preference is to import the GP file into the active track difficulty instead of replacing the whole track
-			eof_build_tremolo_phrases(gp->track[ctr], eof_note_type);	//Add tremolo phrases and define them to apply to the active track difficulty
+			eof_build_tremolo_phrases(gp->track[ctr], 0);	//Add tremolo phrases defined in the lead voice
+			eof_build_tremolo_phrases(gp->track[ctr], 1);	//Add tremolo phrases defined in the rhythm voice
 		}
 		else
 		{	//Otherwise it will apply to all track difficulties
