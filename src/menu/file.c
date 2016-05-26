@@ -4139,6 +4139,13 @@ int eof_menu_file_gp_import(void)
 			{	//If the file was imported
 				eof_init_after_load(0);
 			}
+			else
+			{	//Import failed
+				eof_destroy_song(eof_song);
+				eof_song = NULL;
+				eof_song_loaded = 0;
+				eof_changes = 0;
+			}
 		}
 		else
 		{	//A project was already open
@@ -4380,6 +4387,13 @@ int eof_menu_file_rs_import(void)
 			if(!eof_command_line_rs_import(returnedfn))
 			{	//If the file was imported
 				eof_init_after_load(0);
+			}
+			else
+			{	//Import failed
+				eof_destroy_song(eof_song);
+				eof_song = NULL;
+				eof_song_loaded = 0;
+				eof_changes = 0;
 			}
 		}
 		else

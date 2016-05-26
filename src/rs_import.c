@@ -1648,7 +1648,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 								{	//If this is a chordnote tag
 									EOF_PRO_GUITAR_NOTE *cnp;
 
-									if(chordnotectr >= 5)
+									if(chordnotectr >= 6)
 									{	//If six chordnotes were already read for this chord
 										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tChord contains too many chordnote tags on line #%lu.  Aborting", linectr);
 										eof_log(eof_log_string, 1);

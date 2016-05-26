@@ -552,6 +552,9 @@ void eof_mix_start_helper(void)
 
 	eof_log("eof_mix_start_helper() entered", 2);
 
+	if(!eof_music_track)
+		return;
+
 	eof_mix_find_claps();
 	eof_mix_current_clap = -1;
 	eof_mix_next_clap = -1;
