@@ -699,10 +699,14 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 				lastcheckedyellowpos = tp->note[i]->pos;	//Remember that yellow notes at this position were already checked and fixed if applicable
 			}
 			if(track != EOF_TRACK_DRUM_PS)
-			{	//If this isn't the phase shift drum track
-				tp->note[i]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_COMBO;	//Remove yellow cymbal/tom combo status
-				tp->note[i]->flags &= ~EOF_DRUM_NOTE_FLAG_B_COMBO;	//Remove blue cymbal/tom combo status
-				tp->note[i]->flags &= ~EOF_DRUM_NOTE_FLAG_G_COMBO;	//Remove green cymbal/tom combo status
+			{	//If this isn't the phase shift drum track, remove all statuses that are exclusive to the Phase Shift drum track
+				tp->note[i]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_COMBO;
+				tp->note[i]->flags &= ~EOF_DRUM_NOTE_FLAG_B_COMBO;
+				tp->note[i]->flags &= ~EOF_DRUM_NOTE_FLAG_G_COMBO;
+				tp->note[i]->flags &= ~EOF_DRUM_NOTE_FLAG_R_RIMSHOT;
+				tp->note[i]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;
+				tp->note[i]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;
+				tp->note[i]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_SIZZLE;
 			}
 			if(tp->note[i]->accent)
 			{	//If the note has any gems with accent status

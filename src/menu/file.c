@@ -3706,19 +3706,158 @@ DIALOG eof_gp_import_dialog[] =
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
-int eof_gp_import_track(DIALOG * d)
+int eof_gp_import_drum_track(DIALOG * d, int importvoice, int function)
+{
+	unsigned long populated = 0, populated2 = 0, bitmask, ctr, ctr2, selected;
+
+	eof_log("\tImporting as a drum track", 1);
+	selected = eof_gp_import_dialog[1].d1;
+	if(function | 1)
+	{	//Import into normal drum track
+		populated = eof_get_track_size(eof_song, EOF_TRACK_DRUM);
+	}
+	if(function | 2)
+	{	//Import into Phase Shift drum track
+		populated2 = eof_get_track_size(eof_song, EOF_TRACK_DRUM_PS);
+	}
+
+	//Prompt about overwriting the active track or track difficulty as appropriate
+	eof_clear_input();
+	if(populated || populated2)
+	{	//If the destination track(s) have notes in them
+		if(alert("The destination drum track(s) have notes", "Importing this GP track will overwrite their contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+		{	//If the drum track(s) are already populated and the user doesn't opt to overwrite them
+			eof_log("\t\tImport canceled", 1);
+			return 0;
+		}
+	}
+	if(!gp_import_undo_made)
+	{	//If an undo state wasn't already made
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one now
+		gp_import_undo_made = 1;
+	}
+	if(function & 1)
+	{	//Import into normal drum track
+		eof_erase_track(eof_song, EOF_TRACK_DRUM);
+	}
+	if(function & 2)
+	{	//Import into Phase Shift drum track
+		eof_erase_track(eof_song, EOF_TRACK_DRUM_PS);
+	}
+
+	//Copy notes
+	eof_pro_guitar_track_sort_notes(eof_parsed_gp_file->track[selected]);
+	for(ctr = 0; ctr < eof_parsed_gp_file->track[selected]->notes; ctr++)
+	{	//For each note in the GP track
+		if(importvoice & (eof_parsed_gp_file->track[selected]->note[ctr]->type + 1))
+		{	//If this voice is to be imported
+			EOF_PRO_GUITAR_NOTE *gnp = eof_parsed_gp_file->track[selected]->note[ctr];
+
+			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+			{	//For each of the 6 usable strings
+				if(gnp->note & bitmask)
+				{	//If this string has a gem on it
+					EOF_NOTE *np;
+					unsigned char note = 0;
+					unsigned long flags = 0, psflags = 0;
+					unsigned char fret = gnp->frets[ctr2] & 0x7F;
+
+					switch(fret)
+					{
+						case 35:	//Bass drum
+						case 36:
+							note = 1;
+						break;
+
+						case 37:	//Snare
+						case 38:
+							note = 2;
+							if(fret == 37)
+								psflags |= EOF_DRUM_NOTE_FLAG_R_RIMSHOT;
+						break;
+
+						case 47:	//Yellow tom
+							note = 4;
+						break;
+
+						case 42:	//Yellow cymbal
+						case 44:
+						case 46:
+						case 54:
+							note = 4;
+							flags |= EOF_DRUM_NOTE_FLAG_Y_CYMBAL;
+							if(fret == 44)
+								psflags |= EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;
+							else if(fret == 46)
+								psflags |= EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;
+						break;
+
+						case 45:	//Blue tom
+							note = 8;
+						break;
+
+						case 51:	//Blue cymbal
+						case 53:
+						case 56:
+						case 59:
+							note = 8;
+							flags |= EOF_DRUM_NOTE_FLAG_B_CYMBAL;
+						break;
+
+						case 41:	//Green tom
+						case 43:
+							note = 16;
+						break;
+
+						case 49:	//Green cymbal
+						case 52:
+						case 55:
+						case 57:
+							note = 16;
+							flags |= EOF_DRUM_NOTE_FLAG_G_CYMBAL;
+						break;
+					}
+					if(function & 1)
+					{	//Import into normal drum track
+						np = eof_track_add_create_note(eof_song, EOF_TRACK_DRUM, note, gnp->pos, 1, EOF_NOTE_AMAZING, NULL);
+						if(!np)
+						{	//If the memory couldn't be allocated
+							allegro_message("Error allocating memory.  Aborting");
+							eof_log("\t\tImport failed", 1);
+							return 0;
+						}
+						np->flags = flags;
+					}
+					if(function & 2)
+					{	//Import into Phase Shift drum track
+						np = eof_track_add_create_note(eof_song, EOF_TRACK_DRUM_PS, note, gnp->pos, 1, EOF_NOTE_AMAZING, NULL);
+						if(!np)
+						{	//If the memory couldn't be allocated
+							allegro_message("Error allocating memory.  Aborting");
+							eof_log("\t\tImport failed", 1);
+							return 0;
+						}
+						np->flags = flags | psflags;
+					}
+				}
+			}
+		}
+	}
+
+	eof_fixup_notes(eof_song);
+	eof_log("\t\tImport complete", 1);
+	return D_CLOSE;
+}
+
+int eof_gp_import_guitar_track(DIALOG * d, int importvoice)
 {
 	unsigned long ctr, ctr2, selected;
 	char exists, tuning_prompted = 0, is_bass = 0;
 	char still_populated = 0;	//Will be set to nonzero if the track still contains notes after the track/difficulty is cleared before importing the GP track
 	EOF_PHRASE_SECTION *ptr, *ptr2;
-	int voicespresent = 0, importvoice = 0;
-
-	if(!d || (eof_parsed_gp_file->numtracks > INT_MAX) || (d->d1 >= (int)eof_parsed_gp_file->numtracks))
-		return 0;
 
 	if(eof_song && eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-	{	//Only perform this action if a pro guitar/bass track is active
+	{	//Only continue if a pro guitar/bass track is active
 		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 		selected = eof_gp_import_dialog[1].d1;
@@ -3761,65 +3900,6 @@ int eof_gp_import_track(DIALOG * d)
 		if(eof_get_track_size(eof_song, eof_selected_track))
 		{	//If the track still has notes in it after the removal of the track or track difficulty's notes
 				still_populated = 1;
-		}
-
-		//Parse the track to see which voices were populated, and if more than one is, prompt user which voice(s) to import
-		for(ctr = 0; ctr < eof_parsed_gp_file->track[selected]->notes; ctr++)
-		{	//For each note in the GP track
-			if(eof_parsed_gp_file->track[selected]->note[ctr]->type == 0)
-			{	//This is a note in the lead voice
-				voicespresent |= 1;
-			}
-			else
-			{	//This is a note in the bass voice
-				voicespresent |= 2;
-			}
-			if((voicespresent == 3) && !importvoice)
-			{	//If notes in both voices have been encountered and the user hasn't been prompted about which to import
-				int ret = alert3(NULL, "Import which voices from this track?", NULL, "&Lead", "&Bass", "B&Oth", 'l', 'b', 'o');
-				if(ret == 1)
-				{	//Import lead voice only
-					importvoice = 1;
-				}
-				else if(ret == 2)
-				{	//Import bass voice only
-					importvoice = 2;
-				}
-				else
-				{	//Import both voices
-					importvoice = 3;
-				}
-			}
-			if(importvoice == 3)
-			{	//If the user has opted to import both voices
-				if(ctr > 0)
-				{	//If there was a previous note
-					EOF_PRO_GUITAR_NOTE *np = eof_parsed_gp_file->track[selected]->note[ctr];	//Simplify
-					EOF_PRO_GUITAR_NOTE *pnp = eof_parsed_gp_file->track[selected]->note[ctr - 1];
-					if(np->pos == pnp->pos)
-					{	//If it starts at the same time stamp, ensure both notes have the same length so that eof_track_find_crazy_notes() works as intended
-						if(np->length > pnp->length)
-						{	//This note is longer
-							pnp->length = np->length;
-						}
-						else
-						{	//The other note is longer or of equal length
-							np->length = pnp->length;
-						}
-					}
-				}
-			}
-		}
-		if(!importvoice)
-		{	//If only one voice was in the Guitar Pro file had notes
-			if(voicespresent == 1)
-			{	//Import the lead voice if it was the only voice with notes
-				importvoice = 1;
-			}
-			else
-			{	//Import the bass voice if it was the only voice with notes
-				importvoice = 2;
-			}
 		}
 
 		//Copy the content from the selected GP track into the active track
@@ -3956,39 +4036,93 @@ int eof_gp_import_track(DIALOG * d)
 		eof_song->pro_guitar_track[tracknum]->capo = eof_parsed_gp_file->track[selected]->capo;	//Apply the capo position
 		eof_song->pro_guitar_track[tracknum]->ignore_tuning = eof_parsed_gp_file->track[selected]->ignore_tuning;	//Apply the option whether or not to ignore the tuning for chord name lookups
 		eof_track_sort_notes(eof_song, eof_selected_track);	//Sort notes so tech notes display with the correct status
-
-		//Destroy the GP track that was imported and remove it from the list of GP tracks
-		for(ctr = 0; ctr < eof_parsed_gp_file->track[selected]->notes; ctr++)
-		{	//For each note in the imported track
-			free(eof_parsed_gp_file->track[selected]->note[ctr]);	//Free its memory
-		}
-		for(ctr = 0; ctr < eof_parsed_gp_file->track[selected]->technotes; ctr++)
-		{	//For each tech note in the imported track
-			free(eof_parsed_gp_file->track[selected]->technote[ctr]);	//Free its memory
-		}
-		free(eof_parsed_gp_file->names[selected]);	//Free the imported track's name
-		free(eof_parsed_gp_file->track[selected]);	//Free the imported track
-		if(eof_gp_import_replaces_track)
-		{	//If the user preference to replace the entire active track with the imported track is enabled
-			for(ctr = eof_song->text_events; ctr > 0; ctr--)
-			{	//For each of the project's text events (in reverse order)
-				if(eof_song->text_event[ctr - 1]->track == eof_selected_track)
-				{	//If the text event is assigned to the track being replaced
-					eof_song_delete_text_event(eof_song, ctr - 1);	//Delete it
-				}
-			}
-		}
-		for(ctr = selected + 1; ctr < eof_parsed_gp_file->numtracks; ctr++)
-		{	//For all remaining tracks imported from the Guitar Pro file
-			eof_parsed_gp_file->track[ctr - 1] = eof_parsed_gp_file->track[ctr];	//Save this track into the previous track's index
-			eof_parsed_gp_file->names[ctr - 1] = eof_parsed_gp_file->names[ctr];	//Save this track's name into the previous track name's index
-		}
-		eof_parsed_gp_file->numtracks--;
-		eof_cleanup_beat_flags(eof_song);	//Update anchor flags as necessary for any time signature changes
 	}//Only perform this action if a pro guitar/bass track is active
 
 	eof_log("\t\tImport complete", 1);
 	return D_CLOSE;
+}
+
+int eof_gp_import_track(DIALOG * d)
+{
+	unsigned long ctr, selected;
+	int voicespresent = 0, importvoice = 0;
+
+	if(!d || (eof_parsed_gp_file->numtracks > INT_MAX) || (d->d1 >= (int)eof_parsed_gp_file->numtracks))
+		return 0;
+
+	selected = eof_gp_import_dialog[1].d1;
+
+	//Parse the track to see which voices were populated, and if more than one is, prompt user which voice(s) to import
+	for(ctr = 0; ctr < eof_parsed_gp_file->track[selected]->notes; ctr++)
+	{	//For each note in the GP track
+		if(eof_parsed_gp_file->track[selected]->note[ctr]->type == 0)
+		{	//This is a note in the lead voice
+			voicespresent |= 1;
+		}
+		else
+		{	//This is a note in the bass voice
+			voicespresent |= 2;
+		}
+		if((voicespresent == 3) && !importvoice)
+		{	//If notes in both voices have been encountered and the user hasn't been prompted about which to import
+			int ret = alert3(NULL, "Import which voices from this track?", NULL, "&Lead", "&Bass", "B&Oth", 'l', 'b', 'o');
+			if(ret == 1)
+			{	//Import lead voice only
+				importvoice = 1;
+			}
+			else if(ret == 2)
+			{	//Import bass voice only
+				importvoice = 2;
+			}
+			else
+			{	//Import both voices
+				importvoice = 3;
+			}
+		}
+		if(importvoice == 3)
+		{	//If the user has opted to import both voices
+			if(ctr > 0)
+			{	//If there was a previous note
+				EOF_PRO_GUITAR_NOTE *np = eof_parsed_gp_file->track[selected]->note[ctr];	//Simplify
+				EOF_PRO_GUITAR_NOTE *pnp = eof_parsed_gp_file->track[selected]->note[ctr - 1];
+				if(np->pos == pnp->pos)
+				{	//If it starts at the same time stamp, ensure both notes have the same length so that eof_track_find_crazy_notes() works as intended
+					if(np->length > pnp->length)
+					{	//This note is longer
+						pnp->length = np->length;
+					}
+					else
+					{	//The other note is longer or of equal length
+						np->length = pnp->length;
+					}
+				}
+			}
+		}
+	}
+	if(!importvoice)
+	{	//If only one voice was in the Guitar Pro file had notes
+		if(voicespresent == 1)
+		{	//Import the lead voice if it was the only voice with notes
+			importvoice = 1;
+		}
+		else
+		{	//Import the bass voice if it was the only voice with notes
+			importvoice = 2;
+		}
+	}
+
+	if(eof_parsed_gp_file->instrument_types[selected] == 3)
+	{	//If this is a drum track
+		eof_clear_input();
+		if(alert(NULL, "Import the selected track as a drum track?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+		{	//If the user opts to import this drum track as a drum track
+			int ret = alert3(NULL, "Import into which drum track(s)?", NULL, "&Normal", "&Phase Shift", "&Both", 'n', 'p', 'b');
+
+			return eof_gp_import_drum_track(d, importvoice, ret);
+		}
+	}
+
+	return eof_gp_import_guitar_track(d, importvoice);	//Import into the active pro guitar track
 }
 
 char gp_import_undo_made;
@@ -4167,7 +4301,7 @@ int eof_command_line_gp_import(char *fn)
 		return 1;	//Return error
 
 	//Create a new project and have user select a target pro guitar/bass track
-	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "Import Guitar Pro arrangement to:");
+	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "Import Guitar Pro (guitar) arrangement to:");
 	if(!eof_create_new_project_select_pro_guitar())
 		return 2;	//New project couldn't be created
 

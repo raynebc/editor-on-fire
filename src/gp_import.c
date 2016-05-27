@@ -2963,6 +2963,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		bytemask = pack_getc(inf);	//Read the track bitmask
 		if(bytemask & 1)
 		{	//Is a drum track
+			gp->instrument_types[ctr] = 3;	//Note that this is a drum track
 		}
 		if(bytemask & 2)
 		{	//Is a 12 string guitar track
@@ -3062,8 +3063,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(strings);
 			return NULL;
 		}
-		if(strings[ctr] > 6)
-		{	//Warn that EOF will not import more than 6 strings
+		if((gp->instrument_types[ctr] != 3) && (strings[ctr] > 6))
+		{	//If this isn't a drum track, warn user that EOF will not import more than 6 strings if applicable
 			gp->track[ctr]->numstrings = 6;
 			if(!string_warning)
 			{
@@ -3192,6 +3193,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		for(ctr2 = 0; ctr2 < tracks; ctr2++)
 		{	//For each track
 			unsigned voice, maxvoices = 1;
+			char effective_drop_7 = drop_7;	//By default, this will reflect the user's choice regarding 7 string guitar tracks
+
+			if(gp->instrument_types[ctr2] == 3)
+			{	//If this track is a drum track
+				effective_drop_7 = 1;	//It is assumed that only the first 6 strings encode drum notes
+			}
 #ifdef GP_IMPORT_DEBUG
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tTrack #%lu", ctr2 + 1);
 			eof_log(eof_log_string, 1);
@@ -3934,7 +3941,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//If this gem is a tie note, recall the last fretting of this string in this track, since overlapping tie notes may prevent a simple check of the previous note from having the desired fret value
 									unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
 
-									if((strings[ctr2] > 6) && drop_7)
+									if((strings[ctr2] > 6) && effective_drop_7)
 									{	//If this is a 7 string Guitar Pro track and the user opted to drop string 7 instead of string 1
 										convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
 									}
@@ -3998,7 +4005,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//Bend
 									unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
 
-									if((strings[ctr2] > 6) && drop_7)
+									if((strings[ctr2] > 6) && effective_drop_7)
 									{	//If this is a 7 string Guitar Pro track and the user opted to drop string 7 instead of string 1
 										convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
 									}
@@ -4417,7 +4424,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 								if(strings[ctr2] > 6)
 								{	//If this is a 7 string track
-									if(drop_7)
+									if(effective_drop_7)
 									{	//The user opted to drop string 7 instead of string 1
 										convertedtie |= usedtie >> 1;	//Shift out string 7 to leave the first 6 strings (merge the bitmask so that on-beat grace notes combine with the note they affect)
 									}
@@ -4507,7 +4514,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							for(ctr4 = 0; ctr4 < strings[ctr2]; ctr4++)
 							{	//For each of this track's natively supported strings
 								unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
-								if((strings[ctr2] > 6) && drop_7)
+								if((strings[ctr2] > 6) && effective_drop_7)
 								{	//If this is a 7 string Guitar Pro track and the user opted to drop string 7 instead of string 1
 									convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
 								}
@@ -4532,7 +4539,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							np[ctr2]->name[0] = '\0';
 							if(strings[ctr2] > 6)
 							{	//If this is a 7 string track
-								if(drop_7)
+								if(effective_drop_7)
 								{	//The user opted to drop string 7 instead of string 1
 									np[ctr2]->note = definedstrings >> 1;	//Shift out string 7 to leave the first 6 strings
 									np[ctr2]->ghost = ghost >> 1;		//Likewise translate the ghost bit mask
@@ -4665,7 +4672,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							}
 							if(strings[ctr2] > 6)
 							{	//If this is a 7 string track
-								if(drop_7)
+								if(effective_drop_7)
 								{	//The user opted to drop string 7 instead of string 1
 									gnp->note |= grace >> 1;	//Shift out string 7 to leave the first 6 strings (merge the bitmask so that on-beat grace notes combine with the note they affect)
 								}
@@ -4682,7 +4689,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							for(ctr4 = 0, bitmask = 1; ctr4 < strings[ctr2]; ctr4++, bitmask <<= 1)
 							{	//For each of this track's natively supported strings
 								unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
-								if((strings[ctr2] > 6) && drop_7)
+								if((strings[ctr2] > 6) && effective_drop_7)
 								{	//If this is a 7 string Guitar Pro track and the user opted to drop string 7 instead of string 1
 									convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
 								}
