@@ -2728,7 +2728,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		unsigned long firstsyncpointbeat = 0;	//This will track the first beat to have its position set by a sync point
 
 		eof_log("Unwrapping beats", 1);
-		(void) eof_unwrap_gp_track(gp, 0, 1, 1);	//Unwrap all measures in the GP file, applying time signatures where appropriate
+		(void) eof_unwrap_gp_track(gp, 0, 1, 0);	//Unwrap all measures in the GP file, applying time signatures where appropriate.  No notes are imported yet, but allow text events to be unwrapped
 		eof_process_beat_statistics(eof_song, eof_selected_track);		//Find the measure numbering for all beats
 
 		//Build a temporary tsarray[], since GPA import needs one reflecting unwrapped measures, and the GP import that follows needs one reflecting the original wrapped measures

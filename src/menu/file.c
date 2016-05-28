@@ -3712,11 +3712,11 @@ int eof_gp_import_drum_track(DIALOG * d, int importvoice, int function)
 
 	eof_log("\tImporting as a drum track", 1);
 	selected = eof_gp_import_dialog[1].d1;
-	if(function | 1)
+	if(function & 1)
 	{	//Import into normal drum track
 		populated = eof_get_track_size(eof_song, EOF_TRACK_DRUM);
 	}
-	if(function | 2)
+	if(function & 2)
 	{	//Import into Phase Shift drum track
 		populated2 = eof_get_track_size(eof_song, EOF_TRACK_DRUM_PS);
 	}
