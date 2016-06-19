@@ -125,7 +125,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			continue;	//Skip this INI type if its string is empty
 
 		value_index = eof_import_ini_setting[i].value;	//Prepare to skip leading whitespace
-		while((*value_index != '\0') && (*value_index == ' '))
+		while(*value_index == ' ')
 		{	//If this is a space character
 			value_index++;	//Point to the next character
 		}

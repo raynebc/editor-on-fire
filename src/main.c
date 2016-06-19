@@ -156,6 +156,7 @@ int         eof_note_tails_clickable = 0;		//If nonzero, when the mouse hovers o
 int         eof_auto_complete_fingering = 1;	//If nonzero, offer to apply specified chord fingering to matching notes in the track
 int         eof_rbn_export_slider_hopo = 0;		//If nonzero, notes in slider phrases will be exported to RBN MIDI as forced HOPO notes
 int         eof_db_import_drop_mid_beat_tempos = 0;	//If nonzero, any beats inserted due to mid beat tempo changes during Feedback import are deleted after the import
+int         eof_db_import_suppress_5nc_conversion = 0;	//If nonzero, five note chords are not converted to open notes during Feedback import
 int         eof_smooth_pos = 1;
 int         eof_input_mode = EOF_INPUT_PIANO_ROLL;
 int         eof_windowed = 1;
@@ -3284,7 +3285,7 @@ void eof_render_3d_window(void)
 		numlanes = 5;
 		lastlane = 4;	//Don't render trill/tremolo markers for the 6th lane (render for lanes 0 through 4)
 	}
-	if((eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) & !eof_render_bass_drum_in_lane)
+	if((eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && !eof_render_bass_drum_in_lane)
 	{	//If a drum track is active and the user hasn't enabled the preference to render the bass drum in its own lane
 		firstlane = 1;		//Don't render drum roll/special drum roll markers for the first lane, 0 (unless user enabled the preference to render bass drum in its own lane)
 	}

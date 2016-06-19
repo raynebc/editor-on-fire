@@ -192,6 +192,7 @@ void eof_load_config(char * fn)
 	eof_auto_complete_fingering = get_config_int("preferences", "eof_auto_complete_fingering", 1);
 	eof_rbn_export_slider_hopo = get_config_int("preferences", "eof_rbn_export_slider_hopo", 0);
 	eof_db_import_drop_mid_beat_tempos = get_config_int("preferences", "eof_db_import_drop_mid_beat_tempos", 0);
+	eof_db_import_suppress_5nc_conversion = get_config_int("preferences", "eof_db_import_suppress_5nc_conversion", 0);
 
 	/* read display settings */
 	eof_screen_layout.mode = get_config_int("display", "display_mode", 0);
@@ -358,6 +359,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_auto_complete_fingering", eof_auto_complete_fingering);
 	set_config_int("preferences", "eof_rbn_export_slider_hopo", eof_rbn_export_slider_hopo);
 	set_config_int("preferences", "eof_db_import_drop_mid_beat_tempos", eof_db_import_drop_mid_beat_tempos);
+	set_config_int("preferences", "eof_db_import_suppress_5nc_conversion", eof_db_import_suppress_5nc_conversion);
 
 	/* write display settings */
 	set_config_int("display", "display_mode", eof_screen_layout.mode);

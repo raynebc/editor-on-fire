@@ -705,21 +705,24 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 	}
 
-	/* check if unofficial open strum notation was found */
-	for(ctr = 1; ctr < sp->tracks; ctr++)
-	{	//For each track
-		if(sp->track[ctr]->track_format != EOF_LEGACY_TRACK_FORMAT)
-		{	//If this isn't a legacy track
-			continue;	//Skip it
-		}
-		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
-		{	//For each note in the track
-			if(eof_get_note_note(sp, ctr, ctr2) == 31)
-			{	//If this note is a 5 lane chord, convert it to a lane 6 gem
-				tracknum = sp->track[ctr]->tracknum;
-				sp->track[ctr]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
-				sp->legacy_track[tracknum]->numlanes = 6;	//Set this track to have 6 lanes instead of 5
-				eof_set_note_note(sp, ctr, ctr2, 32);
+	/* check if unofficial open strum notation (5 lane chord) was found */
+	if(!eof_db_import_suppress_5nc_conversion)
+	{	//If the user did not suppress converting these types of chords into open notes
+		for(ctr = 1; ctr < sp->tracks; ctr++)
+		{	//For each track
+			if(sp->track[ctr]->track_format != EOF_LEGACY_TRACK_FORMAT)
+			{	//If this isn't a legacy track
+				continue;	//Skip it
+			}
+			for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
+			{	//For each note in the track
+				if(eof_get_note_note(sp, ctr, ctr2) == 31)
+				{	//If this note is a 5 lane chord, convert it to a lane 6 gem
+					tracknum = sp->track[ctr]->tracknum;
+					sp->track[ctr]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
+					sp->legacy_track[tracknum]->numlanes = 6;	//Set this track to have 6 lanes instead of 5
+					eof_set_note_note(sp, ctr, ctr2, 32);
+				}
 			}
 		}
 	}

@@ -2016,13 +2016,16 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}//For each note in the active pro guitar track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
-	//Identify chords that have chordify status.  These will export as chord tags and also ignored single note tags for the gems that require sustain
+	//Identify chords that have chordify status.  These will export as chord tags that are linked to the single notes in the chord that require sustain
+	//Such single note are marked as ignored and are moved forward 1ms so they start after the chord tag, and their sustains are shortened by 1ms (if possible) to compensate
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the active pro guitar track
 		if(eof_note_count_rs_lanes(sp, track, ctr, 2) > 1)
 		{	//If this note would export as a chord
 			if((tp->note[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY) && !(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE))
 			{	//If this chord has chordify status and isn't already ignored
+				unsigned notetagcount = 0;	//Count the number of single note tags created for this chordified chord
+
 				for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
 				{	//For each of the 6 supported strings
 					if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
@@ -2037,7 +2040,9 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						}
 						if(tech.length || minimumlength)
 						{	//If this gem would export with sustain or is forced to export with a 1ms sustain to suit the presence of a technique
-							new_note = eof_copy_note_simple(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);	//Clone the note with the updated length
+							unsigned long pos = tp->note[ctr]->pos + 1;	//The single note created for this effect will be 1ms later than the chord tag
+							long length = (tp->note[ctr]->length > 0) ? (tp->note[ctr]->length - 1) : 1;	//It will be 1ms shorter (if possible) to compensate for being moved forward
+							new_note = eof_copy_note_simple(sp, track, ctr, track, pos, length, tp->note[ctr]->type);	//Clone the note with the updated length and position
 							if(new_note)
 							{	//If the new note was created
 								new_note->tflags |= EOF_NOTE_TFLAG_TEMP;		//Mark the note as temporary
@@ -2055,6 +2060,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								{	//If the above logic signaled for this status to be applied to the new note
 									new_note->tflags |= EOF_NOTE_TFLAG_MINLENGTH;			//Apply the temporary flag that will achieve this
 								}
+								notetagcount++;
 							}
 							else
 							{
@@ -2068,6 +2074,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						}//If this gem would export with sustain
 					}//If this string is used and is not ghosted
 				}//For each of the 6 supported strings
+				if(notetagcount)
+				{	//If at least one single note tag was created for this chordified chord
+					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_LN;	//Mark this chord as needing to export with the chordnote's linknext attribute enabled
+				}
 			}//If this chord has chordify status
 		}//If this note would export as a chord
 	}//For each note in the active pro guitar track
@@ -2666,7 +2676,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			//Write chords
 			if(numchords)
 			{	//If there's at least one chord in this difficulty
-				unsigned long flags, eflags;
+				unsigned long flags, eflags, tflags;
 				unsigned long lastchordid = 0;	//Stores the previous written chord's ID, so that when the ID changes, chordNote subtags can be forced to be written
 				char *upstrum = "up";
 				char *downstrum = "down";
@@ -2720,6 +2730,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							}
 							flags = tp->note[ctr3]->flags;	//Simplify
 							eflags = tp->note[ctr3]->eflags;
+							tflags = tp->note[ctr3]->tflags;
 							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
 							{	//If this note explicitly strums up
 								direction = upstrum;	//Set the direction string to match
@@ -2758,6 +2769,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HD)
 							{	//Chord is explicitly specified to be high density
 								highdensity = 1;	//This status has the highest precedence for setting the density
+							}
+							if(tflags & EOF_NOTE_TFLAG_LN)
+							{	//Chordify will override the chord tag's linknext status to enabled if temporary single notes were created for it
+								tech.linknext = 1;
 							}
 							(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" chordId=\"%lu\" fretHandMute=\"%d\" highDensity=\"%d\" ignore=\"%d\" palmMute=\"%d\" hopo=\"%d\" strum=\"%s\"%s\n", (double)notepos / 1000.0, tech.linknext, tech.accent, chordid, tech.stringmute, highdensity, tech.ignore, tech.palmmute, tech.hopo, direction, chordtagend);
 							(void) pack_fputs(buffer, fp);
@@ -5105,17 +5120,21 @@ void eof_rs_export_cleanup(EOF_SONG * sp, unsigned long track)
 	//Remove all temporary notes that were added and remove the ignore status from all notes
 	for(ctr = tp->notes; ctr > 0; ctr--)
 	{	//For each note in the track, in reverse order
+		if(tp->note[ctr - 1]->tflags & EOF_NOTE_TFLAG_TEMP)
+		{	//If this is a temporary note that was added to split up an arpeggio's chord into single notes
+			eof_track_delete_note(sp, track, ctr - 1);	//Delete it
+			continue;	//Skip clearing flags for the note because it no longer exists
+		}
 		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_IGNORE;	//Clear the ignore flag
 		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_ARP;		//Clear the arpeggio flag
 		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_HAND;		//Clear the handshape flag
 		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_ARP_FIRST;	//Clear the first in arpeggio flag
+		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_GHOST_HS;	//Clear the ghost handshape flag
 		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_TWIN;		//Clear the partial ghosted chord twin flag
 		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_COMBINE;	//Clear the note/chordnote combine flag
 		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_NO_LN;		//Clear the ignore linknext flag
-		if(tp->note[ctr - 1]->tflags & EOF_NOTE_TFLAG_TEMP)
-		{	//If this is a temporary note that was added to split up an arpeggio's chord into single notes
-			eof_track_delete_note(sp, track, ctr - 1);	//Delete it
-		}
+		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_MINLENGTH;	//Clear the minimum 1ms length flag
+		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_LN;		//Clear the forced linknext flag
 	}
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 }
