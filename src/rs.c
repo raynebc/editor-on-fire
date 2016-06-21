@@ -2764,23 +2764,27 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								{	//Chordify will override the chord tag's linknext status to enabled if temporary single notes were created for it
 									tech.linknext = 1;
 								}
-								else
-								{	//This chord did not have temporary single notes created
+								if(!eof_pro_guitar_note_has_open_note(tp, ctr3))
+								{	//If this chord does not have any open notes, no chordnote tags are needed
 									chordtagend = chordifiedend;	//Write the chord tag as ending in a single line with no sub tags
 								}
 							}
 							(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" chordId=\"%lu\" fretHandMute=\"%d\" highDensity=\"%d\" ignore=\"%d\" palmMute=\"%d\" hopo=\"%d\" strum=\"%s\"%s\n", (double)notepos / 1000.0, tech.linknext, tech.accent, chordid, tech.stringmute, highdensity, tech.ignore, tech.palmmute, tech.hopo, direction, chordtagend);
 							(void) pack_fputs(buffer, fp);
 
-							//Write chordnote tags, but only if this isn't a "chordified" chord
-							if(!(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY))
-							{
+							//Write chordnote tags if appropriate
+							if(chordtagend == normalend)
+							{	//If it was determined the chord tag wouldn't end on a single line and has chordnote subtags
 								for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
 								{	//For each string used in this track, write chordNote tags
 									if((eof_get_note_note(sp, track, ctr3) & bitmask) && !(tp->note[ctr3]->ghost & bitmask))
 									{	//If this string is used in this note and it is not ghosted
 										long originallength = tp->note[ctr3]->length;	//Back up the original length of this note because it may be altered before export
 
+										if((eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY) && (tp->note[ctr3]->frets[stringnum] & 0x7F))
+										{	//If this is a chordified chord and the gem on this string is not an open note
+											continue;	//Do not write a chordnote tag for it
+										}
 										(void) eof_rs_combine_linknext_logic(sp, track, ctr3, stringnum);
 
 										assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
@@ -5238,9 +5242,16 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 		fingernum = -1;
 	}
 
-	//If the EOF_NOTE_TFLAG_NO_LN flag is set, force the linknext status to be disregarded for this note
-	if(tp->note[notenum]->tflags & EOF_NOTE_TFLAG_NO_LN)
+	//If the specified note is a chordified chord and this string plays an open note and is being exported as a chordnote
+	if((tp->note[notenum]->tflags & EOF_NOTE_TFLAG_LN) && !fret && ischordnote)
+	{	//It should export with linknext status as part of the chordified mechanism's defined behavior
+		tech.linknext = 1;
+		tech.length = 1;
+	}
+	else if(tp->note[notenum]->tflags & EOF_NOTE_TFLAG_NO_LN)
+	{	//If the EOF_NOTE_TFLAG_NO_LN flag is set, force the linknext status to be disregarded for this note
 		tech.linknext = 0;
+	}
 
 	//Write the note/chordNote tag
 	(void) snprintf(buffer, sizeof(buffer) - 1, "        %s<%s time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" bend=\"%d\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"%d\" leftHand=\"%ld\" mute=\"%d\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\" harmonicPinch=\"%d\" pickDirection=\"0\" rightHand=\"-1\" slideUnpitchTo=\"%ld\" tap=\"%d\" vibrato=\"%d\"%s>\n", indentlevel, tagstring, (double)notepos / 1000.0, tech.linknext, tech.accent, tech.bend, fret, tech.hammeron, tech.harmonic, tech.hopo, tech.ignore, fingernum, tech.stringmute, tech.palmmute, tech.pop, tech.pulloff, tech.slap, tech.slideto, stringnum, (double)tech.length / 1000.0, tech.tremolo, tech.pinchharmonic, tech.unpitchedslideto, tech.tap, tech.vibrato, tagend);

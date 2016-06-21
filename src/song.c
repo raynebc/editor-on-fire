@@ -8280,8 +8280,8 @@ char eof_pro_guitar_note_has_open_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long n
 	{	//For each of the 6 usable strings
 		if(tp->note[note]->note & bitmask)
 		{	//If this string is in use
-			if(!tp->note[note]->frets[ctr])
-			{	//If this string is not fretted
+			if(!(tp->note[note]->frets[ctr] & 0x7F))
+			{	//If this string is not fretted (masking out the muting bit)
 				return 1;	//It is played as an open note
 			}
 		}
