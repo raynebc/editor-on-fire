@@ -3049,6 +3049,7 @@ int eof_save_helper_checks(void)
 					char restore_tech_view = 0;
 					unsigned long start, stop;
 
+					eof_process_beat_statistics(eof_song, ctr);	//Rebuild beat statistics from the perspective of this track
 					tracknum = eof_song->track[ctr]->tracknum;
 					tp = eof_song->pro_guitar_track[tracknum];
 					restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use

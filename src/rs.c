@@ -2025,9 +2025,13 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			if((tp->note[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY) && !(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE))
 			{	//If this chord has chordify status and isn't already ignored
 				unsigned notetagcount = 0;	//Count the number of single note tags created for this chordified chord
+				char prebend = 0;	//Set to nonzero if any of the individual non-open notes in this chord have a pre-bend technote
+				char disablechordln = 0;	//Set to nonzero if any of the individual non-open notes in this chord use a technique that should prevent the chord's linknext tag from being set
 
 				for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
 				{	//For each of the 6 supported strings
+///					char thisprebend = 0;	//Tracks whether this string's note specifically has pre-bend technique
+
 					if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
 					{	//If this string is used and is not ghosted
 						char minimumlength = 0;
@@ -2038,10 +2042,35 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						{	//If this gem in the chord has any playable techniques
 							minimumlength = 1;	//Signal to the below logic that the sustain for this temporary note isn't to be truncated by the regular note export logic
 						}
+						if((tp->note[ctr]->frets[ctr3] & 0x7F) && (tech.hammeron || tech.pulloff || tech.stringmute || tech.harmonic || tech.pinchharmonic || tech.tap || tech.slap || tech.pop || tech.accent))
+						{	//If this string is NOT an open note and uses any of these techniques
+							disablechordln = 1;	//The presence of these statuses should prevent the chord from exporting with linknext status
+						}
 						if(tech.length || minimumlength)
 						{	//If this gem would export with sustain or is forced to export with a 1ms sustain to suit the presence of a technique
-							unsigned long pos = tp->note[ctr]->pos + 1;	//The single note created for this effect will be 1ms later than the chord tag
-							long length = (tp->note[ctr]->length > 0) ? (tp->note[ctr]->length - 1) : 1;	//It will be 1ms shorter (if possible) to compensate for being moved forward
+							unsigned long pos = tp->note[ctr]->pos;
+							long length = tp->note[ctr]->length;
+							unsigned long tn = 0;
+							char skipoffset = 0;
+
+							if((tp->note[ctr]->frets[ctr3] & 0x7F) && eof_pro_guitar_note_bitmask_has_tech_note(tp, ctr, bitmask, &tn))
+							{	//If this string in the chord is NOT an open note and has at least one tech note affecting it
+								if(tp->technote[tn]->pos == tp->note[ctr]->pos)
+								{	//If the first such technote is at the start position of this chord
+									skipoffset = 1;	//Do not offset the single note created for this string, to ensure the tech note still affects it properly
+									if((tp->technote[tn]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
+									{	//If this string is NOT an open note and the affecting tech note is a bend tech note
+										prebend = 1;	//The presence of this pre-bend should prevent the chord from exporting with linknext status
+///										thisprebend = 1;
+									}
+								}
+							}
+							if(!skipoffset)
+							{	//If this gem in the chord needn't stay at its original position to satisfy a tech note
+								pos++;		//The single note created for this effect will be 1ms later than the chord tag
+								if(length > 0)
+									length--;	//It will be 1ms shorter (if possible) to compensate for being moved forward
+							}
 							new_note = eof_copy_note_simple(sp, track, ctr, track, pos, length, tp->note[ctr]->type);	//Clone the note with the updated length and position
 							if(new_note)
 							{	//If the new note was created
@@ -2076,7 +2105,14 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				}//For each of the 6 supported strings
 				if(notetagcount)
 				{	//If at least one single note tag was created for this chordified chord
-					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_LN;	//Mark this chord as needing to export with the chordnote's linknext attribute enabled
+					if(!disablechordln && !prebend)
+					{	//Only if none of the notes in this chord had a technique that should prevent this
+						tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_LN;	//Mark this chord as needing to export with the chordnote's linknext attribute enabled
+					}
+					if(prebend)
+					{	//If any of the chord's individual notes have pre-bend status
+						tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_HD;	//Force the chord tag to export with high density
+					}
 				}
 			}//If this chord has chordify status
 		}//If this note would export as a chord
@@ -2768,6 +2804,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 								{	//If this chord does not have any open notes, no chordnote tags are needed
 									chordtagend = chordifiedend;	//Write the chord tag as ending in a single line with no sub tags
 								}
+							}
+							if(tflags & EOF_NOTE_TFLAG_HD)
+							{	//If this chord has chordify status and one of its individual notes has pre-bend status
+								highdensity = 1;	//Export the chord as high density to ensure proper display of the bend notes
 							}
 							(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" chordId=\"%lu\" fretHandMute=\"%d\" highDensity=\"%d\" ignore=\"%d\" palmMute=\"%d\" hopo=\"%d\" strum=\"%s\"%s\n", (double)notepos / 1000.0, tech.linknext, tech.accent, chordid, tech.stringmute, highdensity, tech.ignore, tech.palmmute, tech.hopo, direction, chordtagend);
 							(void) pack_fputs(buffer, fp);
@@ -5134,6 +5174,7 @@ void eof_rs_export_cleanup(EOF_SONG * sp, unsigned long track)
 		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_NO_LN;		//Clear the ignore linknext flag
 		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_MINLENGTH;	//Clear the minimum 1ms length flag
 		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_LN;		//Clear the forced linknext flag
+		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_HD;		//Clear the forced high density flag
 	}
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 }

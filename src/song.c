@@ -5329,7 +5329,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 
 	eof_pro_guitar_track_fixup_hand_positions(sp, track);	//Cleanup fret hand positions
 
-	//Ensure that the note at the beginning of each arpeggio/handshape phrase is authored correctly
+	//Ensure that the note at the beginning of each arpeggio/handshape phrase is authored correctly, converting into a base chord if necessary
 	if(eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files)
 	{	//If the user wants to save Rocksmith or Bandfuse capable files
 		char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that tech notes don't get added instead of regular notes
@@ -5355,7 +5355,6 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 				}
 			}
 		}
-		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 		eof_track_sort_notes(sp, track);
 
 		for(ctr = 0; ctr < tp->arpeggios; ctr++)
@@ -5412,6 +5411,8 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 				}//If this note's start position is within 10ms of an arpeggio phrase in this track difficulty
 			}//For each note in the track (inner for loop)
 		}//For each arpeggio phrase in the track (outer for loop)
+
+		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 	}//If the user wants to save Rocksmith capable files
 
 	if(tp->arrangement > 4)
