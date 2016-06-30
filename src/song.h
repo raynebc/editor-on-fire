@@ -98,7 +98,7 @@
 #define EOF_NOTE_TFLAG_CCHANGE   1024	//This flag will indicate that a note is a chord change from RS import's perspective (for determining manually defined handshape phrases)
 #define EOF_NOTE_TFLAG_HIGHLIGHT 2048	//This flag will represent a note that is highlighted in the editor window (non permanent, such as for toggleable highlighting options)
 #define EOF_NOTE_TFLAG_MINLENGTH 4096	//This flag will indicate that a temporary ignored note added for the chordnote mechanism needs to RS2 export with a minimum length of 1ms
-#define EOF_NOTE_TFLAG_LN        8192	//This flag will indicate that the affected chord has chordify status and the chord tag (and chordnote tags for any open notes) should RS2 export with the linknext tag overridden to be enabled, which will cause the chord to link to the temporary single notes written for the chord
+#define EOF_NOTE_TFLAG_LN        8192	//This flag will indicate that the affected chord has chordify status and the chord tag should RS2 export with the linknext tag overridden to be enabled, which will cause the chord to link to the temporary single notes written for the chord
 #define EOF_NOTE_TFLAG_HD       16384	//This flag will indicate that the affected chord should export with high density regardless of the value of the regular high density flag
 
 //The following extended flags pertain to pro guitar notes

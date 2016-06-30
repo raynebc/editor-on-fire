@@ -2016,7 +2016,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}//For each note in the active pro guitar track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
-	//Identify chords that have chordify status.  These will export as chord tags that are linked to the single notes in the chord that require sustain
+	//Identify chords that have chordify status.  These will export as chord tags that are linked to the single notes in the chord
 	//Such single note are marked as ignored and are moved forward 1ms so they start after the chord tag, and their sustains are shortened by 1ms (if possible) to compensate
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the active pro guitar track
@@ -2030,11 +2030,14 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 				for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
 				{	//For each of the 6 supported strings
-///					char thisprebend = 0;	//Tracks whether this string's note specifically has pre-bend technique
-
 					if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
 					{	//If this string is used and is not ghosted
 						char minimumlength = 0;
+						unsigned long pos = tp->note[ctr]->pos;
+						long length = tp->note[ctr]->length;
+						unsigned long tn = 0;
+						char skipoffset = 0;
+						EOF_PRO_GUITAR_NOTE *transfer = NULL;	//Used to track whether a tech note's statuses need to be manually copied to an offset temporary single note
 
 						(void) eof_get_rs_techniques(sp, track, ctr, ctr3, &tech, 2, 1);	//Get the end position of any pitched/unpitched slide this chord's gem has
 						eof_rs2_adjust_chordnote_sustain(tp, ctr, ctr3, &tech);				//Set tech.length to 0 as appropriate depending on this gem's techniques
@@ -2042,72 +2045,81 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						{	//If this gem in the chord has any playable techniques
 							minimumlength = 1;	//Signal to the below logic that the sustain for this temporary note isn't to be truncated by the regular note export logic
 						}
-						if((tp->note[ctr]->frets[ctr3] & 0x7F) && (tech.hammeron || tech.pulloff || tech.stringmute || tech.harmonic || tech.pinchharmonic || tech.tap || tech.slap || tech.pop || tech.accent))
+						if((tp->note[ctr]->frets[ctr3] & 0x7F) && (tech.hammeron || tech.pulloff || tech.stringmute || tech.harmonic || tech.pinchharmonic || tech.tap || (tech.slap > 0) || (tech.pop > 0) || tech.accent))
 						{	//If this string is NOT an open note and uses any of these techniques
 							disablechordln = 1;	//The presence of these statuses should prevent the chord from exporting with linknext status
 						}
-						if(tech.length || minimumlength)
-						{	//If this gem would export with sustain or is forced to export with a 1ms sustain to suit the presence of a technique
-							unsigned long pos = tp->note[ctr]->pos;
-							long length = tp->note[ctr]->length;
-							unsigned long tn = 0;
-							char skipoffset = 0;
+						if(!(tp->note[ctr]->frets[ctr3] & 0x7F) && (tech.accent))
+						{	//If this string is an open note and has accent status
+							disablechordln = 1;	//This set of conditions should prevent the chord from exporting with linknext status
+						}
 
-							if((tp->note[ctr]->frets[ctr3] & 0x7F) && eof_pro_guitar_note_bitmask_has_tech_note(tp, ctr, bitmask, &tn))
-							{	//If this string in the chord is NOT an open note and has at least one tech note affecting it
-								if(tp->technote[tn]->pos == tp->note[ctr]->pos)
-								{	//If the first such technote is at the start position of this chord
+						if(eof_pro_guitar_note_bitmask_has_tech_note(tp, ctr, bitmask, &tn))
+						{	//If this string in the chord has at least one tech note affecting it
+							if(tp->technote[tn]->pos == tp->note[ctr]->pos)
+							{	//If the first such technote is at the start position of this chord
+								if((tp->note[ctr]->frets[ctr3] & 0x7F) && (tp->technote[tn]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
+								{	//If this string is NOT an open note and the affecting tech note is a bend tech note
 									skipoffset = 1;	//Do not offset the single note created for this string, to ensure the tech note still affects it properly
-									if((tp->technote[tn]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
-									{	//If this string is NOT an open note and the affecting tech note is a bend tech note
-										prebend = 1;	//The presence of this pre-bend should prevent the chord from exporting with linknext status
-///										thisprebend = 1;
-									}
+									prebend = 1;	//The presence of this pre-bend should prevent the chord from exporting with linknext status
+								}
+								else if(tp->technote[tn]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP)
+								{	//If the affecting tech note is a stop tech note
+									skipoffset = 1;	//Do not offset the single note created for this string, to ensure the tech note still affects it properly
+								}
+								else
+								{	//If the affecting tech note adds any other statuses
+									transfer = tp->technote[tn];	//Note that this tech note's statuses need to be copied to the newly created note, which will begin after the tech note and would otherwise not have the tech note's statuses applied
 								}
 							}
-							if(!skipoffset)
-							{	//If this gem in the chord needn't stay at its original position to satisfy a tech note
-								pos++;		//The single note created for this effect will be 1ms later than the chord tag
-								if(length > 0)
-									length--;	//It will be 1ms shorter (if possible) to compensate for being moved forward
+						}
+						if(!skipoffset)
+						{	//If this gem in the chord needn't stay at its original position to satisfy a tech note
+							pos++;		//The single note created for this effect will be 1ms later than the chord tag
+							if(length > 0)
+								length--;	//It will be 1ms shorter (if possible) to compensate for being moved forward
+						}
+						new_note = eof_copy_note_simple(sp, track, ctr, track, pos, length, tp->note[ctr]->type);	//Clone the note with the updated length and position
+						if(new_note)
+						{	//If the new note was created
+							new_note->tflags |= EOF_NOTE_TFLAG_TEMP;		//Mark the note as temporary
+							new_note->note = bitmask;						//Turn the cloned chord into a single note on the appropriate string
+							if(tp->note[ctr]->slideend && (tech.slideto >= 0))
+							{	//If this note has slide technique and a valid slide end position was found
+								new_note->slideend = tech.slideto - tp->capo;		//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
 							}
-							new_note = eof_copy_note_simple(sp, track, ctr, track, pos, length, tp->note[ctr]->type);	//Clone the note with the updated length and position
-							if(new_note)
-							{	//If the new note was created
-								new_note->tflags |= EOF_NOTE_TFLAG_TEMP;		//Mark the note as temporary
-								new_note->note = bitmask;						//Turn the cloned chord into a single note on the appropriate string
-								if(tp->note[ctr]->slideend && (tech.slideto >= 0))
-								{	//If this note has slide technique and a valid slide end position was found
-									new_note->slideend = tech.slideto - tp->capo;		//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
-								}
-								if(tp->note[ctr]->unpitchend && (tech.unpitchedslideto >= 0))
-								{	//If this note has unpitched slide technique and a valid unpitched slide end position was found
-									new_note->unpitchend = tech.unpitchedslideto - tp->capo;	//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
-								}
-								new_note->eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE;	//This note will export with the "ignore" status
-								if(minimumlength)
-								{	//If the above logic signaled for this status to be applied to the new note
-									new_note->tflags |= EOF_NOTE_TFLAG_MINLENGTH;			//Apply the temporary flag that will achieve this
-								}
-								notetagcount++;
+							if(tp->note[ctr]->unpitchend && (tech.unpitchedslideto >= 0))
+							{	//If this note has unpitched slide technique and a valid unpitched slide end position was found
+								new_note->unpitchend = tech.unpitchedslideto - tp->capo;	//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
 							}
-							else
-							{
-								allegro_message("Error:  Couldn't expand a chordify status chord into single notes.  Aborting Rocksmith 2 export.");
-								eof_log("Error:  Couldn't expand a chordify status chord into single notes.  Aborting Rocksmith 2 export.", 1);
-								eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-								eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-								(void) pack_fclose(fp);
-								return 0;	//Return error
+							new_note->eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE;	//This note will export with the "ignore" status
+							if(minimumlength)
+							{	//If the above logic signaled for this status to be applied to the new note
+								new_note->tflags |= EOF_NOTE_TFLAG_MINLENGTH;			//Apply the temporary flag that will achieve this
 							}
-						}//If this gem would export with sustain
+							if(transfer && !skipoffset)
+							{	//If this offset single note begins after its tech note and needs that tech note's statuses copied over
+								new_note->flags |= transfer->flags;
+								new_note->eflags |= transfer->eflags;
+							}
+							notetagcount++;
+						}
+						else
+						{
+							allegro_message("Error:  Couldn't expand a chordify status chord into single notes.  Aborting Rocksmith 2 export.");
+							eof_log("Error:  Couldn't expand a chordify status chord into single notes.  Aborting Rocksmith 2 export.", 1);
+							eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+							eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+							(void) pack_fclose(fp);
+							return 0;	//Return error
+						}
 					}//If this string is used and is not ghosted
 				}//For each of the 6 supported strings
 				if(notetagcount)
 				{	//If at least one single note tag was created for this chordified chord
 					if(!disablechordln && !prebend)
 					{	//Only if none of the notes in this chord had a technique that should prevent this
-						tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_LN;	//Mark this chord as needing to export with the chordnote's linknext attribute enabled
+						tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_LN;	//Mark this chord as needing to export with the chord tag's linknext attribute enabled
 					}
 					if(prebend)
 					{	//If any of the chord's individual notes have pre-bend status
@@ -5284,8 +5296,8 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 	}
 
 	//If the specified note is a chordified chord and this string plays an open note and is being exported as a chordnote
-	if((tp->note[notenum]->tflags & EOF_NOTE_TFLAG_LN) && !fret && ischordnote)
-	{	//It should export with linknext status as part of the chordified mechanism's defined behavior
+	if((tp->note[notenum]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY) && !fret && ischordnote)
+	{	//It should export with linknext status with a sustain of 1ms as part of the chordified mechanism's defined behavior
 		tech.linknext = 1;
 		tech.length = 1;
 	}
