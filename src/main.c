@@ -154,6 +154,7 @@ int         eof_disable_rs_wav = 0;				//If nonzero, a WAV file for use in Rocks
 int         eof_display_seek_pos_in_seconds = 0;	//If nonzero, the seek position in the piano roll and information panel is given in seconds instead of minutes:seconds
 int         eof_note_tails_clickable = 0;		//If nonzero, when the mouse hovers over a note/lyric tail instead of just the note/lyric head, that note/lyric becomes the hover note
 int         eof_auto_complete_fingering = 1;	//If nonzero, offer to apply specified chord fingering to matching notes in the track
+int         eof_dont_auto_name_double_stops = 0;	//If nonzero, the chord detection logic will not name chords that have only two pitches (unique or otherwise)
 int         eof_rbn_export_slider_hopo = 0;		//If nonzero, notes in slider phrases will be exported to RBN MIDI as forced HOPO notes
 int         eof_db_import_drop_mid_beat_tempos = 0;	//If nonzero, any beats inserted due to mid beat tempo changes during Feedback import are deleted after the import
 int         eof_db_import_suppress_5nc_conversion = 0;	//If nonzero, five note chords are not converted to open notes during Feedback import
@@ -179,7 +180,7 @@ char        eof_mark_drums_as_double_bass = 0;	//Allows the user to specify whet
 unsigned long eof_mark_drums_as_hi_hat = 0;		//Allows the user to specify whether Y drum notes in the PS drum track will be placed with one of the hi hat statuses by default (this variable holds the note flag of the desired status)
 unsigned long eof_pro_guitar_fret_bitmask = 63;	//Defines which lanes are affected by these shortcuts:  CTRL+# to set fret numbers, CTRL+(plus/minus) increment/decrement fret values, CTRL+G to toggle ghost status
 char		eof_legacy_view = 0;				//Specifies whether pro guitar notes will render as legacy notes
-unsigned char eof_2d_render_top_option = 32;	//Specifies what item displays at the top of the 2D panel (defaults to note names)
+unsigned char eof_2d_render_top_option = 5;	//Specifies what item displays at the top of the 2D panel (defaults to note names)
 char        eof_render_grid_lines = 0;		//Specifies whether grid snap positions will render in the editor window
 
 int         eof_undo_toggle = 0;

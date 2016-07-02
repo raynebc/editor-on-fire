@@ -397,6 +397,10 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 		{	//If there aren't at least two strings used, or if no actual notes (only muted strings) are played
 			return 0;		//Return no matches
 		}
+		if((stringctr == 2) && eof_dont_auto_name_double_stops)
+		{	//If the user opted to not allow double stops to have detected names
+			return 0;		//Return no matches
+		}
 
 		for(pass = 0; pass < 2; pass++)
 		{	//On the first pass, perform normal lookup.  On the second pass, perform (hybrid) slash chord lookup (disregarding the bass note)

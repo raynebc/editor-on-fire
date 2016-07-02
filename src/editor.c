@@ -5835,7 +5835,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
 		{	//If this beat has any text events
 			line(window->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
-			if((eof_2d_render_top_option == 33) || (eof_2d_render_top_option == 36))
+			if((eof_2d_render_top_option == 6) || (eof_2d_render_top_option == 9))
 			{	//If the user has opted to render section names (Rocksmith phrases) at the top of the 2D window, either by themselves or in combination with RS sections
 				char *string = "%s";	//If the phrase isn't track specific, it will display normally
 				char *string2 = "*%s";	//Otherwise it will be prefixed by an asterisk
@@ -5878,7 +5878,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 					{	//If this RS phrase is track specific
 						ptr = string2;
 					}
-					if(eof_2d_render_top_option == 33)
+					if(eof_2d_render_top_option == 6)
 					{	//If the RS phrases are being rendered by themselves, place them at the top of the piano roll
 						textprintf_ex(window->screen, eof_font, xcoord - 6, 30, eof_color_yellow, bg_color, ptr, eof_song->text_event[eof_song->beat[i]->contained_section_event]->text);	//Display it
 					}
@@ -5892,7 +5892,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 					textprintf_ex(window->screen, eof_font, xcoord - 6, 25 + 5, eof_color_red, eof_color_black, "[end]");	//Display it
 				}
 			}
-			if((eof_2d_render_top_option == 35) || (eof_2d_render_top_option == 36))
+			if((eof_2d_render_top_option == 8) || (eof_2d_render_top_option == 9))
 			{	//If the user has opted to render Rocksmith sections at the top of the 2D window, either by themselves or in combination with RS phrases
 				char *string = "%s %d";		//If the RS section isn't track specific, it will display normally
 				char *string2 = "*%s %d";	//Otherwise it will be prefixed by an asterisk
@@ -5957,7 +5957,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	}
 
 	/* draw fret hand positions */
-	if((eof_2d_render_top_option == 34) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+	if((eof_2d_render_top_option == 7) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 	{	//If the user opted to render fret hand positions at the top of the 2D panel, and this is a pro guitar track
 		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 		EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];

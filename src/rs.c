@@ -2045,7 +2045,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						{	//If this gem in the chord has any playable techniques
 							minimumlength = 1;	//Signal to the below logic that the sustain for this temporary note isn't to be truncated by the regular note export logic
 						}
-						if((tp->note[ctr]->frets[ctr3] & 0x7F) && (tech.hammeron || tech.pulloff || tech.stringmute || tech.harmonic || tech.pinchharmonic || tech.tap || (tech.slap > 0) || (tech.pop > 0) || tech.accent))
+						if((tp->note[ctr]->frets[ctr3] & 0x7F) && (tech.hammeron || tech.pulloff || tech.stringmute || tech.harmonic || tech.pinchharmonic || tech.tap || (tech.slap > 0) || (tech.pop > 0) || tech.accent || tech.palmmute))
 						{	//If this string is NOT an open note and uses any of these techniques
 							disablechordln = 1;	//The presence of these statuses should prevent the chord from exporting with linknext status
 						}
@@ -4259,9 +4259,9 @@ int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track)
 				unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
 
 				eof_selected_beat = ctr;					//Change the selected beat
-				if(eof_2d_render_top_option != 36)
+				if(eof_2d_render_top_option != 9)
 				{	//If the piano roll isn't already displaying both RS sections and phrases
-					eof_2d_render_top_option = 35;					//Change the user preference to render RS sections at the top of the piano roll
+					eof_2d_render_top_option = 8;					//Change the user preference to render RS sections at the top of the piano roll
 				}
 				eof_seek_and_render_position(track, eof_note_type, sp->beat[ctr]->pos);	//Render the track so the user can see where the correction needs to be made, along with the RS section in question
 				eof_clear_input();
@@ -5421,7 +5421,7 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 					{	//If dynamic difficulty warnings haven't been suppressed for this chart
 						unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
 
-						eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
+						eof_2d_render_top_option = 9;	//Change the user preference to display RS phrases and sections
 						eof_selected_beat = ctr;		//Select it
 						eof_seek_and_render_position(track, eof_note_type, sp->beat[ctr]->pos);	//Show the offending END phrase
 						allegro_message("Warning:  Beat #%lu contains an END phrase, but there's at least one more phrase or section after it.\nThis will cause dynamic difficulty and/or riff repeater to not work correctly.", ctr);
@@ -5441,7 +5441,7 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 		{	//If there is already a phrase defined on the beat following the last note, and the user wasn't warned of this problem yet
 			unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
 
-			eof_2d_render_top_option = 36;	//Change the user preference to display RS phrases and sections
+			eof_2d_render_top_option = 9;	//Change the user preference to display RS phrases and sections
 			eof_selected_beat = endbeat;		//Select it
 			eof_seek_and_render_position(track, eof_note_type, sp->beat[endbeat]->pos);	//Show where the END phrase should go
 			allegro_message("Warning:  There is no END phrase, but the beat marker after the last note in \"%s\" already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.", sp->track[track]->name);

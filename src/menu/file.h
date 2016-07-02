@@ -53,6 +53,7 @@ int eof_menu_file_export_time_range(void);	//Exports a set time range of the pro
 int eof_menu_file_midi_import(void);
 int eof_menu_file_settings(void);
 int eof_menu_file_preferences(void);
+int eof_menu_file_import_export_preferences(void);
 int eof_menu_file_display(void);
 int eof_set_display_width(void);			//Overrides the current program window width with a user defined value
 int eof_redraw_display(void);				//Rebuilds the program window with the current window size

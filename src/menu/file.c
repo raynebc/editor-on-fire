@@ -65,6 +65,13 @@ MENU eof_file_import_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_file_menu_preferences[] =
+{
+	{"&Preferences\tF11", eof_menu_file_preferences, NULL, 0, NULL},
+	{"&Import/Export", eof_menu_file_import_export_preferences, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_file_menu[] =
 {
 	{"&New\t" CTRL_NAME "+N", eof_menu_file_new_wizard, NULL, 0, NULL},
@@ -77,7 +84,7 @@ MENU eof_file_menu[] =
 	{"&Export time range", eof_menu_file_export_time_range, NULL, D_DISABLED, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Settings\tF10", eof_menu_file_settings, NULL, 0, NULL},
-	{"&Preferences\tF11", eof_menu_file_preferences, NULL, 0, NULL},
+	{"&Preferences", NULL, eof_file_menu_preferences, 0, NULL},
 	{"&Display", NULL, eof_file_display_menu, 0, NULL},
 	{"&Controllers", eof_menu_file_controllers, NULL, 0, NULL},
 	{"Song Folder", eof_menu_file_song_folder, NULL, 0, NULL},
@@ -111,67 +118,79 @@ DIALOG eof_settings_dialog[] =
 DIALOG eof_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  482, 494, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
+	{ d_agup_window_proc,0,   48,  482, 423, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
+	{ d_agup_button_proc,12,  431, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_button_proc,86,  431, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+	{ d_agup_button_proc,160, 431, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+	{ d_agup_text_proc,  16,  186, 120, 12,  0,   0,   0,    0,      0,   0,   "Top of 2D pane shows:",NULL,NULL },
+	{ d_agup_radio_proc, 161, 186, 60,  16,  2,   23,  0,    0,      1,   0,   "Names",               NULL, NULL },
+	{ d_agup_radio_proc, 224, 186, 72,  16,  2,   23,  0,    0,      1,   0,   "Sections",            NULL, NULL },
+	{ d_agup_radio_proc, 301, 186, 78,  16,  2,   23,  0,    0,      1,   0,   "Hand pos",            NULL, NULL },
+	{ d_agup_radio_proc, 384, 186, 92,  16,  2,   23,  0,    0,      1,   0,   "RS sections",         NULL, NULL },
+	{ d_agup_radio_proc, 161, 202, 150, 16,  2,   23,  0,    0,      1,   0,   "RS sections+Phrases",         NULL, NULL },
 	{ d_agup_check_proc, 16,  75,  110, 16,  2,   23,  0,    0,      1,   0,   "Inverted Notes",      NULL, NULL },
 	{ d_agup_check_proc, 150, 75,  92 , 16,  2,   23,  0,    0,      1,   0,   "Lefty Mode",          NULL, NULL },
 	{ d_agup_check_proc, 306, 75,  128, 16,  2,   23,  0,    0,      1,   0,   "Note Auto-Adjust",    NULL, NULL },
-	{ d_agup_check_proc, 16,  90,  124, 16,  2,   23,  0,    0,      1,   0,   "Import/Export TS",    NULL, NULL },
-	{ d_agup_check_proc, 150, 90,  148, 16,  2,   23,  0,    0,      1,   0,   "Hide drum note tails",NULL, NULL },
-	{ d_agup_check_proc, 306, 90,  122, 16,  2,   23,  0,    0,      1,   0,   "Hide note names",     NULL, NULL },
-	{ d_agup_check_proc, 16,  105, 130, 16,  2,   23,  0,    0,      1,   0,   "Disable sound FX",NULL, NULL },
-	{ d_agup_check_proc, 150, 105, 148, 16,  2,   23,  0,    0,      1,   0,   "Disable 3D rendering",NULL, NULL },
-	{ d_agup_check_proc, 306, 105, 148, 16,  2,   23,  0,    0,      1,   0,   "Disable 2D rendering",NULL, NULL },
-	{ d_agup_check_proc, 16,  120, 116, 16,  2,   23,  0,    0,      1,   0,   "Hide info panel",NULL, NULL },
-	{ d_agup_check_proc, 150, 120, 148, 16,  2,   23,  0,    0,      1,   0,   "Paste erases overlap",NULL, NULL },
-	{ d_agup_check_proc, 16,  136, 208, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rock Band files",NULL, NULL },
-	{ d_agup_check_proc, 248, 136, 216, 16,  2,   23,  0,    0,      1,   0,   "Save separate musical MIDI file",NULL, NULL },
-	{ d_agup_check_proc, 16,  152, 216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 1 files",NULL, NULL },
-	{ d_agup_check_proc, 248, 152, 216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 2 files",NULL, NULL },
-	{ d_agup_check_proc, 16,  305, 190, 16,  2,   23,  0,    0,      1,   0,   "Add new notes to selection",NULL, NULL },
-	{ d_agup_check_proc, 16,  337, 216, 16,  2,   23,  0,    0,      1,   0,   "Drum modifiers affect all diff's",NULL, NULL },
-	{ d_agup_text_proc,  16,  185, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note distance (ms):",NULL,NULL },
-	{ eof_verified_edit_proc,170,185,30,20,  0,   0,   0,    0,      3,   0,   eof_etext2,     "0123456789", NULL },
-	{ d_agup_text_proc,  248, 185, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note length (ms):",NULL,NULL },
-	{ eof_verified_edit_proc,392,185,30,20,  0,   0,   0,    0,      3,   0,   eof_etext,     "0123456789", NULL },
-	{ d_agup_check_proc, 248, 497, 214, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
-	{ d_agup_check_proc, 248, 289, 184, 16,  2,   23,  0,    0,      1,   0,   "Use dB style seek controls",NULL, NULL },
-	{ d_agup_text_proc,  24,  370, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
-	{ d_agup_list_proc,  16,  387, 100, 110, 2,   23,  0,    0,      0,   0,   (void *)eof_input_list,        NULL, NULL },
-	{ d_agup_text_proc,  150, 387, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
-	{ d_agup_list_proc,  129, 402, 100, 95,  2,   23,  0,    0,      0,   0,   (void *)eof_colors_list,       NULL, NULL },
-	{ d_agup_button_proc,12,  502, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-	{ d_agup_button_proc,86,  502, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-	{ d_agup_button_proc,160, 502, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
-	{ d_agup_text_proc,  16,  227, 120, 12,  0,   0,   0,    0,      0,   0,   "Top of 2D pane shows:",NULL,NULL },
-	{ d_agup_radio_proc, 161, 227, 60,  16,  2,   23,  0,    0,      1,   0,   "Names",               NULL, NULL },
-	{ d_agup_radio_proc, 224, 227, 72,  16,  2,   23,  0,    0,      1,   0,   "Sections",            NULL, NULL },
-	{ d_agup_radio_proc, 301, 227, 78,  16,  2,   23,  0,    0,      1,   0,   "Hand pos",            NULL, NULL },
-	{ d_agup_radio_proc, 384, 227, 92,  16,  2,   23,  0,    0,      1,   0,   "RS sections",         NULL, NULL },
-	{ d_agup_radio_proc, 161, 242, 150, 16,  2,   23,  0,    0,      1,   0,   "RS sections+Phrases",         NULL, NULL },
-	{ d_agup_check_proc, 248, 305, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are made 1ms long",NULL, NULL },
-	{ d_agup_check_proc, 16,  257, 340, 16,  2,   23,  0,    0,      1,   0,   "GP import beat text as sections, markers as phrases",NULL, NULL },
-	{ d_agup_check_proc, 248, 321, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short notes",NULL, NULL },
-	{ d_agup_check_proc, 248, 353, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import replaces active track",NULL, NULL },
-	{ d_agup_check_proc, 248, 369, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import nat. harmonics only",NULL, NULL },
-	{ d_agup_check_proc, 248, 385, 190, 16,  2,   23,  0,    0,      1,   0,   "3D render RS style chords",NULL, NULL },
-	{ d_agup_check_proc, 248, 401, 210, 16,  2,   23,  0,    0,      1,   0,   "Import dialogs recall last path",NULL, NULL },
-	{ d_agup_check_proc, 248, 417, 224, 16,  2,   23,  0,    0,      1,   0,   "Rewind when playback is at end",NULL, NULL },
-	{ d_agup_check_proc, 248, 433, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
-	{ d_agup_check_proc, 248, 206, 182, 16,  2,   23,  0,    0,      1,   0,   "Enable logging on launch",NULL, NULL },
-	{ d_agup_check_proc, 248, 449, 196, 16,  2,   23,  0,    0,      1,   0,   "Display seek pos. in seconds",NULL, NULL },
-	{ d_agup_check_proc, 306, 120, 174, 16,  2,   23,  0,    0,      1,   0,   "Make note tails clickable",NULL, NULL },
-	{ d_agup_check_proc, 16,  321, 210, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
-	{ d_agup_check_proc, 16,  289, 200, 16,  2,   23,  0,    0,      1,   0,   "Click to change dialog focus",NULL, NULL },
-	{ d_agup_check_proc, 16,  168, 200, 16,  2,   23,  0,    0,      1,   0,   "Save separate Bandfuse files",NULL, NULL },
-	{ d_agup_check_proc, 248, 481, 230, 16,  2,   23,  0,    0,      1,   0,   "EOF leaving focus stops playback",NULL, NULL },
-	{ d_agup_text_proc,  16,  206, 200, 12,  0,   0,   0,    0,      0,   0,   "Chord density threshold (ms):",NULL,NULL },
-	{ eof_verified_edit_proc,204,206,40,20,  0,   0,   0,    0,      5,   0,   eof_etext3,     "0123456789", NULL },
-	{ d_agup_check_proc, 248, 337, 226, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short chords",NULL, NULL },
-	{ d_agup_check_proc, 16,  273, 340, 16,  2,   23,  0,    0,      1,   0,   "Apply crazy to repeated chords separated by a rest",NULL, NULL },
-	{ d_agup_check_proc, 248, 168, 206, 16,  2,   23,  0,    0,      1,   0,   "Save FoF/GH/Phase Shift files",NULL, NULL },
-	{ d_agup_check_proc, 248, 513, 224, 16,  2,   23,  0,    0,      1,   0,   "Offer to auto complete fingering",NULL, NULL },
-	{ d_agup_check_proc, 16,  353, 186, 16,  2,   23,  0,    0,      1,   0,   "RBN export slider as HOPO",NULL, NULL },
-	{ d_agup_check_proc, 248, 465, 226, 16,  2,   23,  0,    0,      1,   0,   "dB import drops mid beat tempos",NULL, NULL },
+	{ d_agup_check_proc, 16,  91,  115, 16,  2,   23,  0,    0,      1,   0,   "Enable logging",      NULL, NULL },
+	{ d_agup_check_proc, 150, 91,  148, 16,  2,   23,  0,    0,      1,   0,   "Hide drum note tails",NULL, NULL },
+	{ d_agup_check_proc, 306, 91,  122, 16,  2,   23,  0,    0,      1,   0,   "Hide note names",     NULL, NULL },
+	{ d_agup_check_proc, 16,  107, 130, 16,  2,   23,  0,    0,      1,   0,   "Disable sound FX",NULL, NULL },
+	{ d_agup_check_proc, 150, 107, 148, 16,  2,   23,  0,    0,      1,   0,   "Disable 3D rendering",NULL, NULL },
+	{ d_agup_check_proc, 306, 107, 148, 16,  2,   23,  0,    0,      1,   0,   "Disable 2D rendering",NULL, NULL },
+	{ d_agup_check_proc, 16,  123, 116, 16,  2,   23,  0,    0,      1,   0,   "Hide info panel",NULL, NULL },
+	{ d_agup_check_proc, 150, 123, 148, 16,  2,   23,  0,    0,      1,   0,   "Paste erases overlap",NULL, NULL },
+	{ d_agup_check_proc, 306, 123, 174, 16,  2,   23,  0,    0,      1,   0,   "Make note tails clickable",NULL, NULL },
+	{ d_agup_check_proc, 16,  282, 216, 16,  2,   23,  0,    0,      1,   0,   "Drum modifiers affect all diff's",NULL, NULL },
+	{ d_agup_text_proc,  16,  144, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note distance (ms):",NULL,NULL },
+	{ eof_verified_edit_proc,170,144,30,20,  0,   0,   0,    0,      3,   0,   eof_etext2,     "0123456789", NULL },
+	{ d_agup_text_proc,  248, 144, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note length (ms):",NULL,NULL },
+	{ eof_verified_edit_proc,392,144,30,20,  0,   0,   0,    0,      3,   0,   eof_etext,     "0123456789", NULL },
+	{ d_agup_check_proc, 248, 314, 214, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
+	{ d_agup_check_proc, 248, 234, 156, 16,  2,   23,  0,    0,      1,   0,   "dB style seek controls",NULL, NULL },
+	{ d_agup_text_proc,  24,  298, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
+	{ d_agup_list_proc,  16,  315, 100, 110, 2,   23,  0,    0,      0,   0,   (void *)eof_input_list,        NULL, NULL },
+	{ d_agup_text_proc,  150, 315, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
+	{ d_agup_list_proc,  129, 330, 100, 95,  2,   23,  0,    0,      0,   0,   (void *)eof_colors_list,       NULL, NULL },
+	{ d_agup_check_proc, 248, 165, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are made 1ms long",NULL, NULL },
+	{ d_agup_check_proc, 248, 250, 190, 16,  2,   23,  0,    0,      1,   0,   "3D render RS style chords",NULL, NULL },
+	{ d_agup_check_proc, 248, 266, 224, 16,  2,   23,  0,    0,      1,   0,   "Rewind when playback is at end",NULL, NULL },
+	{ d_agup_check_proc, 248, 282, 196, 16,  2,   23,  0,    0,      1,   0,   "Display seek pos. in seconds",NULL, NULL },
+	{ d_agup_check_proc, 16,  250, 190, 16,  2,   23,  0,    0,      1,   0,   "Add new notes to selection",NULL, NULL },
+	{ d_agup_check_proc, 16,  266, 210, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
+	{ d_agup_check_proc, 16,  234, 200, 16,  2,   23,  0,    0,      1,   0,   "Click to change dialog focus",NULL, NULL },
+	{ d_agup_check_proc, 248, 298, 230, 16,  2,   23,  0,    0,      1,   0,   "EOF leaving focus stops playback",NULL, NULL },
+	{ d_agup_text_proc,  16,  165, 200, 12,  0,   0,   0,    0,      0,   0,   "Chord density threshold (ms):",NULL,NULL },
+	{ eof_verified_edit_proc,204,165,40,20,  0,   0,   0,    0,      5,   0,   eof_etext3,     "0123456789", NULL },
+	{ d_agup_check_proc, 16,  218, 340, 16,  2,   23,  0,    0,      1,   0,   "Apply crazy to repeated chords separated by a rest",NULL, NULL },
+	{ d_agup_check_proc, 248, 330, 224, 16,  2,   23,  0,    0,      1,   0,   "Offer to auto complete fingering",NULL, NULL },
+	{ d_agup_check_proc, 248, 346, 206, 16,  2,   23,  0,    0,      1,   0,   "Don't auto-name double stops",NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+DIALOG eof_import_export_preferences_dialog[] =
+{
+	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
+	{ d_agup_window_proc,0,   48,  482, 208, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
+	{ d_agup_button_proc,12,  216, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_button_proc,86,  216, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+	{ d_agup_button_proc,160, 216, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+	{ d_agup_check_proc, 16,  75,  208, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rock Band files",NULL, NULL },
+	{ d_agup_check_proc, 248, 75,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate musical MIDI file",NULL, NULL },
+	{ d_agup_check_proc, 16,  90,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 1 files",NULL, NULL },
+	{ d_agup_check_proc, 248, 90,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 2 files",NULL, NULL },
+	{ d_agup_check_proc, 16,  105, 200, 16,  2,   23,  0,    0,      1,   0,   "Save separate Bandfuse files",NULL, NULL },
+	{ d_agup_check_proc, 248, 105, 206, 16,  2,   23,  0,    0,      1,   0,   "Save FoF/GH/Phase Shift files",NULL, NULL },
+	{ d_agup_check_proc, 16,  120, 340, 16,  2,   23,  0,    0,      1,   0,   "GP import beat text as sections, markers as phrases",NULL, NULL },
+	{ d_agup_check_proc, 16,  135, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short notes",NULL, NULL },
+	{ d_agup_check_proc, 248, 135, 186, 16,  2,   23,  0,    0,      1,   0,   "RBN export slider as HOPO",NULL, NULL },
+	{ d_agup_check_proc, 16,  150, 226, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short chords",NULL, NULL },
+	{ d_agup_check_proc, 248, 150, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
+	{ d_agup_check_proc, 16,  165, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import replaces active track",NULL, NULL },
+	{ d_agup_check_proc, 248, 165, 226, 16,  2,   23,  0,    0,      1,   0,   "dB import drops mid beat tempos",NULL, NULL },
+	{ d_agup_check_proc, 16,  180, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import nat. harmonics only",NULL, NULL },
+	{ d_agup_check_proc, 248, 180, 210, 16,  2,   23,  0,    0,      1,   0,   "Import dialogs recall last path",NULL, NULL },
+	{ d_agup_check_proc, 16,  195, 124, 16,  2,   23,  0,    0,      1,   0,   "Import/Export TS",NULL, NULL },
+	{ d_agup_check_proc, 248, 195, 214, 16,  2,   23,  0,    0,      1,   0,   "dB import skips 5nc conversion",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1105,7 +1124,7 @@ int eof_menu_file_settings(void)
 
 int eof_menu_file_preferences(void)
 {
-	int retval, original_input_mode, original_rs1_export_setting;
+	int retval, original_input_mode;
 	unsigned original_eof_min_note_distance = eof_min_note_distance, original_eof_chord_density_threshold = eof_chord_density_threshold;
 
 	if(eof_song_loaded)
@@ -1121,49 +1140,37 @@ int eof_menu_file_preferences(void)
 	eof_color_dialog(eof_preferences_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_preferences_dialog);
 	//Use the currently configured settings to populate the dialog selections
-	eof_preferences_dialog[1].flags = eof_inverted_notes ? D_SELECTED : 0;				//Inverted notes
-	eof_preferences_dialog[2].flags = eof_lefty_mode ? D_SELECTED : 0;					//Lefty mode
-	eof_preferences_dialog[3].flags = eof_note_auto_adjust ? D_SELECTED : 0;			//Note auto adjust
-	eof_preferences_dialog[4].flags = eof_use_ts ? D_SELECTED : 0;						//Import/Export TS
-	eof_preferences_dialog[5].flags = eof_hide_drum_tails ? D_SELECTED : 0;				//Hide drum note tails
-	eof_preferences_dialog[6].flags = eof_hide_note_names ? D_SELECTED : 0;				//Hide note names
-	eof_preferences_dialog[7].flags = eof_disable_sound_processing ? D_SELECTED : 0;	//Disable sound effects
-	eof_preferences_dialog[8].flags = eof_disable_3d_rendering ? D_SELECTED : 0;		//Disable 3D rendering
-	eof_preferences_dialog[9].flags = eof_disable_2d_rendering ? D_SELECTED : 0;		//Disable 2D rendering
-	eof_preferences_dialog[10].flags = eof_disable_info_panel ? D_SELECTED : 0;			//Disable info panel
-	eof_preferences_dialog[11].flags = eof_paste_erase_overlap ? D_SELECTED : 0;		//Paste erases overlap
-	eof_preferences_dialog[12].flags = eof_write_rb_files ? D_SELECTED : 0;				//Save separate Rock Band files
-	eof_preferences_dialog[13].flags = eof_write_music_midi ? D_SELECTED : 0;			//Save separate musical MIDI file
-	eof_preferences_dialog[14].flags = eof_write_rs_files ? D_SELECTED : 0;				//Save separate Rocksmith 1 files
-	original_rs1_export_setting = eof_write_rs_files;	//Back up this setting to track whether it is changed in the dialog
-	eof_preferences_dialog[15].flags = eof_write_rs2_files ? D_SELECTED : 0;			//Save separate Rocksmith 2 files
-	eof_preferences_dialog[16].flags = eof_add_new_notes_to_selection ? D_SELECTED : 0;	//Add new notes to selection
-	eof_preferences_dialog[17].flags = eof_drum_modifiers_affect_all_difficulties ? D_SELECTED : 0;	//Drum modifiers affect all diff's
-	eof_preferences_dialog[23].flags = eof_fb_seek_controls ? D_SELECTED : 0;			//Use dB style seek controls
-	eof_preferences_dialog[32].flags = eof_preferences_dialog[33].flags = eof_preferences_dialog[34].flags = eof_preferences_dialog[35].flags = eof_preferences_dialog[36].flags = 0;	//Options for what to display at top of 2D panel
+	eof_preferences_dialog[5].flags = eof_preferences_dialog[6].flags = eof_preferences_dialog[7].flags = eof_preferences_dialog[8].flags = eof_preferences_dialog[9].flags = 0;	//Options for what to display at top of 2D panel
 	eof_preferences_dialog[eof_2d_render_top_option].flags = D_SELECTED;
-	eof_preferences_dialog[37].flags = eof_new_note_length_1ms ? D_SELECTED : 0;			//New notes are made 1ms long
-	eof_preferences_dialog[38].flags = eof_gp_import_preference_1 ? D_SELECTED : 0;			//GP import beat text as sections, markers as phrases
-	eof_preferences_dialog[39].flags = eof_gp_import_truncate_short_notes ? D_SELECTED : 0;	//GP import truncates short notes
-	eof_preferences_dialog[40].flags = eof_gp_import_replaces_track ? D_SELECTED : 0;		//GP import replaces active track
-	eof_preferences_dialog[41].flags = eof_gp_import_nat_harmonics_only ? D_SELECTED : 0;	//GP import nat. harmonics only
-	eof_preferences_dialog[42].flags = eof_render_3d_rs_chords ? D_SELECTED : 0;			//3D render Rocksmith style chords
-	eof_preferences_dialog[43].flags = eof_imports_recall_last_path ? D_SELECTED : 0;		//Import dialogs recall last path
-	eof_preferences_dialog[44].flags = eof_rewind_at_end ? D_SELECTED : 0;					//Rewind when playback is at end
-	eof_preferences_dialog[45].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
-	eof_preferences_dialog[46].flags = enable_logging ? D_SELECTED : 0;						//Enable logging on launch
-	eof_preferences_dialog[47].flags = eof_display_seek_pos_in_seconds ? D_SELECTED : 0;	//Display seek pos. in seconds
-	eof_preferences_dialog[48].flags = eof_note_tails_clickable ? D_SELECTED : 0;			//Make note tails clickable
-	eof_preferences_dialog[49].flags = eof_inverted_chords_slash ? D_SELECTED : 0;			//Treat inverted chords as slash
-	eof_preferences_dialog[50].flags = eof_click_changes_dialog_focus ? D_SELECTED : 0;		//Click to change dialog focus
-	eof_preferences_dialog[51].flags = eof_write_bf_files ? D_SELECTED : 0;					//Save separate Bandfuse files
-	eof_preferences_dialog[52].flags = eof_stop_playback_leave_focus ? D_SELECTED : 0;		//EOF leaving focus stops playback
-	eof_preferences_dialog[55].flags = eof_gp_import_truncate_short_chords ? D_SELECTED : 0;//GP import truncates short chords
-	eof_preferences_dialog[56].flags = eof_enforce_chord_density ? D_SELECTED : 0;			//Apply crazy to repeated chords separated by a rest
-	eof_preferences_dialog[57].flags = eof_write_fof_files ? D_SELECTED : 0;				//Save FoF/GH/Phase Shift files
-	eof_preferences_dialog[58].flags = eof_auto_complete_fingering ? D_SELECTED : 0;		//Offer to auto complete fingering
-	eof_preferences_dialog[59].flags = eof_rbn_export_slider_hopo ? D_SELECTED : 0;			//RBN export slider as HOPO
-	eof_preferences_dialog[60].flags = eof_db_import_drop_mid_beat_tempos ? D_SELECTED : 0;	//dB import drops mid beat tempos
+	eof_preferences_dialog[10].flags = eof_inverted_notes ? D_SELECTED : 0;				//Inverted notes
+	eof_preferences_dialog[11].flags = eof_lefty_mode ? D_SELECTED : 0;					//Lefty mode
+	eof_preferences_dialog[12].flags = eof_note_auto_adjust ? D_SELECTED : 0;			//Note auto adjust
+	eof_preferences_dialog[13].flags = enable_logging ? D_SELECTED : 0;						//Enable logging
+	eof_preferences_dialog[14].flags = eof_hide_drum_tails ? D_SELECTED : 0;			//Hide drum note tails
+	eof_preferences_dialog[15].flags = eof_hide_note_names ? D_SELECTED : 0;			//Hide note names
+	eof_preferences_dialog[16].flags = eof_disable_sound_processing ? D_SELECTED : 0;	//Disable sound effects
+	eof_preferences_dialog[17].flags = eof_disable_3d_rendering ? D_SELECTED : 0;		//Disable 3D rendering
+	eof_preferences_dialog[18].flags = eof_disable_2d_rendering ? D_SELECTED : 0;		//Disable 2D rendering
+	eof_preferences_dialog[19].flags = eof_disable_info_panel ? D_SELECTED : 0;			//Disable info panel
+	eof_preferences_dialog[20].flags = eof_paste_erase_overlap ? D_SELECTED : 0;		//Paste erases overlap
+	eof_preferences_dialog[21].flags = eof_note_tails_clickable ? D_SELECTED : 0;			//Make note tails clickable
+	eof_preferences_dialog[22].flags = eof_drum_modifiers_affect_all_difficulties ? D_SELECTED : 0;	//Drum modifiers affect all diff's
+	eof_preferences_dialog[27].flags = eof_render_bass_drum_in_lane ? D_SELECTED : 0;	//3D render bass drum in a lane
+	eof_preferences_dialog[28].flags = eof_fb_seek_controls ? D_SELECTED : 0;			//dB style seek controls
+	eof_preferences_dialog[30].d1 = eof_input_mode;										//Input method
+	original_input_mode = eof_input_mode;												//Store this value
+	eof_preferences_dialog[32].d1 = eof_color_set;										//Color set
+	eof_preferences_dialog[33].flags = eof_new_note_length_1ms ? D_SELECTED : 0;			//New notes are made 1ms long
+	eof_preferences_dialog[34].flags = eof_render_3d_rs_chords ? D_SELECTED : 0;			//3D render Rocksmith style chords
+	eof_preferences_dialog[35].flags = eof_rewind_at_end ? D_SELECTED : 0;					//Rewind when playback is at end
+	eof_preferences_dialog[36].flags = eof_display_seek_pos_in_seconds ? D_SELECTED : 0;	//Display seek pos. in seconds
+	eof_preferences_dialog[37].flags = eof_add_new_notes_to_selection ? D_SELECTED : 0;	//Add new notes to selection
+	eof_preferences_dialog[38].flags = eof_inverted_chords_slash ? D_SELECTED : 0;			//Treat inverted chords as slash
+	eof_preferences_dialog[39].flags = eof_click_changes_dialog_focus ? D_SELECTED : 0;		//Click to change dialog focus
+	eof_preferences_dialog[40].flags = eof_stop_playback_leave_focus ? D_SELECTED : 0;		//EOF leaving focus stops playback
+	eof_preferences_dialog[43].flags = eof_enforce_chord_density ? D_SELECTED : 0;			//Apply crazy to repeated chords separated by a rest
+	eof_preferences_dialog[44].flags = eof_auto_complete_fingering ? D_SELECTED : 0;		//Offer to auto complete fingering
+	eof_preferences_dialog[45].flags = eof_dont_auto_name_double_stops ? D_SELECTED : 0;	//Don't auto-name double stops
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1173,10 +1180,6 @@ int eof_menu_file_preferences(void)
 		eof_etext[0] = '\0';	//Otherwise empty the string
 	}
 	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%u", eof_min_note_distance);	//Populate the min. note distance field's string
-	eof_preferences_dialog[22].flags = eof_render_bass_drum_in_lane ? D_SELECTED : 0;	//3D render bass drum in a lane
-	eof_preferences_dialog[25].d1 = eof_input_mode;										//Input method
-	original_input_mode = eof_input_mode;												//Store this value
-	eof_preferences_dialog[27].d1 = eof_color_set;										//Color set
 	if(eof_chord_density_threshold)
 	{	//If the user has defined a chord density threshold
 		(void) snprintf(eof_etext3, sizeof(eof_etext3) - 1, "%u", eof_chord_density_threshold);	//Populate the field's string with it
@@ -1189,25 +1192,41 @@ int eof_menu_file_preferences(void)
 	do
 	{	//Run the dialog
 		retval = eof_popup_dialog(eof_preferences_dialog, 0);	//Run the dialog
-		if(retval == 28)
+		if(retval == 1)
 		{	//If the user clicked OK, update EOF's configured settings from the dialog selections
-			eof_inverted_notes = (eof_preferences_dialog[1].flags == D_SELECTED ? 1 : 0);
-			eof_lefty_mode = (eof_preferences_dialog[2].flags == D_SELECTED ? 1 : 0);
-			eof_note_auto_adjust = (eof_preferences_dialog[3].flags == D_SELECTED ? 1 : 0);
-			eof_use_ts = (eof_preferences_dialog[4].flags == D_SELECTED ? 1 : 0);
-			eof_hide_drum_tails = (eof_preferences_dialog[5].flags == D_SELECTED ? 1 : 0);
-			eof_hide_note_names = (eof_preferences_dialog[6].flags == D_SELECTED ? 1 : 0);
-			eof_disable_sound_processing = (eof_preferences_dialog[7].flags == D_SELECTED ? 1 : 0);
-			eof_disable_3d_rendering = (eof_preferences_dialog[8].flags == D_SELECTED ? 1 : 0);
-			eof_disable_2d_rendering = (eof_preferences_dialog[9].flags == D_SELECTED ? 1 : 0);
-			eof_disable_info_panel = (eof_preferences_dialog[10].flags == D_SELECTED ? 1 : 0);
-			eof_paste_erase_overlap = (eof_preferences_dialog[11].flags == D_SELECTED ? 1 : 0);
-			eof_write_rb_files = (eof_preferences_dialog[12].flags == D_SELECTED ? 1 : 0);
-			eof_write_music_midi = (eof_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
-			eof_write_rs_files = (eof_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
-			eof_write_rs2_files = (eof_preferences_dialog[15].flags == D_SELECTED ? 1 : 0);
-			eof_add_new_notes_to_selection = (eof_preferences_dialog[16].flags == D_SELECTED ? 1 : 0);
-			eof_drum_modifiers_affect_all_difficulties = (eof_preferences_dialog[17].flags == D_SELECTED ? 1 : 0);
+			if(eof_preferences_dialog[5].flags == D_SELECTED)
+			{	//User opted to display note names at top of 2D panel
+				eof_2d_render_top_option = 5;
+			}
+			else if(eof_preferences_dialog[6].flags == D_SELECTED)
+			{	//User opted to display section names at top of 2D panel
+				eof_2d_render_top_option = 6;
+			}
+			else if(eof_preferences_dialog[7].flags == D_SELECTED)
+			{	//User opted to display fret hand positions at top of 2D panel
+				eof_2d_render_top_option = 7;
+			}
+			else if(eof_preferences_dialog[8].flags == D_SELECTED)
+			{	//User opted to display Rocksmith sections at top of 2D panel
+				eof_2d_render_top_option = 8;
+			}
+			else if(eof_preferences_dialog[9].flags == D_SELECTED)
+			{	//User opted to display both Rocksmith sections and Rocksmith phrases at top of 2D panel
+				eof_2d_render_top_option = 9;
+			}
+			eof_inverted_notes = (eof_preferences_dialog[10].flags == D_SELECTED ? 1 : 0);
+			eof_lefty_mode = (eof_preferences_dialog[11].flags == D_SELECTED ? 1 : 0);
+			eof_note_auto_adjust = (eof_preferences_dialog[12].flags == D_SELECTED ? 1 : 0);
+			enable_logging = (eof_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
+			eof_hide_drum_tails = (eof_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
+			eof_hide_note_names = (eof_preferences_dialog[15].flags == D_SELECTED ? 1 : 0);
+			eof_disable_sound_processing = (eof_preferences_dialog[16].flags == D_SELECTED ? 1 : 0);
+			eof_disable_3d_rendering = (eof_preferences_dialog[17].flags == D_SELECTED ? 1 : 0);
+			eof_disable_2d_rendering = (eof_preferences_dialog[18].flags == D_SELECTED ? 1 : 0);
+			eof_disable_info_panel = (eof_preferences_dialog[19].flags == D_SELECTED ? 1 : 0);
+			eof_paste_erase_overlap = (eof_preferences_dialog[20].flags == D_SELECTED ? 1 : 0);
+			eof_note_tails_clickable = (eof_preferences_dialog[21].flags == D_SELECTED ? 1 : 0);
+			eof_drum_modifiers_affect_all_difficulties = (eof_preferences_dialog[22].flags == D_SELECTED ? 1 : 0);
 			if(eof_etext[0] != '\0')
 			{	//If the minimum note length field is populated
 				eof_min_note_length = atol(eof_etext);
@@ -1228,48 +1247,18 @@ int eof_menu_file_preferences(void)
 			{
 				eof_min_note_distance = 3;
 			}
-			eof_render_bass_drum_in_lane = (eof_preferences_dialog[22].flags == D_SELECTED ? 1 : 0);
-			eof_fb_seek_controls = (eof_preferences_dialog[23].flags == D_SELECTED ? 1 : 0);
-			eof_input_mode = eof_preferences_dialog[25].d1;
-			eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case eof_inverted_notes was changed
-			eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case eof_lefty_mode was changed
-			eof_color_set = eof_preferences_dialog[27].d1;
-			if(eof_preferences_dialog[32].flags == D_SELECTED)
-			{	//User opted to display note names at top of 2D panel
-				eof_2d_render_top_option = 32;
-			}
-			else if(eof_preferences_dialog[33].flags == D_SELECTED)
-			{	//User opted to display section names at top of 2D panel
-				eof_2d_render_top_option = 33;
-			}
-			else if(eof_preferences_dialog[34].flags == D_SELECTED)
-			{	//User opted to display fret hand positions at top of 2D panel
-				eof_2d_render_top_option = 34;
-			}
-			else if(eof_preferences_dialog[35].flags == D_SELECTED)
-			{	//User opted to display Rocksmith sections at top of 2D panel
-				eof_2d_render_top_option = 35;
-			}
-			else if(eof_preferences_dialog[36].flags == D_SELECTED)
-			{	//User opted to display both Rocksmith sections and Rocksmith phrases at top of 2D panel
-				eof_2d_render_top_option = 36;
-			}
-			eof_new_note_length_1ms = (eof_preferences_dialog[37].flags == D_SELECTED ? 1 : 0);
-			eof_gp_import_preference_1 = (eof_preferences_dialog[38].flags == D_SELECTED ? 1 : 0);
-			eof_gp_import_truncate_short_notes = (eof_preferences_dialog[39].flags == D_SELECTED ? 1 : 0);
-			eof_gp_import_replaces_track = (eof_preferences_dialog[40].flags == D_SELECTED ? 1 : 0);
-			eof_gp_import_nat_harmonics_only = (eof_preferences_dialog[41].flags == D_SELECTED ? 1 : 0);
-			eof_render_3d_rs_chords = (eof_preferences_dialog[42].flags == D_SELECTED ? 1 : 0);
-			eof_imports_recall_last_path = (eof_preferences_dialog[43].flags == D_SELECTED ? 1 : 0);
-			eof_rewind_at_end = (eof_preferences_dialog[44].flags == D_SELECTED ? 1 : 0);
-			eof_disable_rs_wav = (eof_preferences_dialog[45].flags == D_SELECTED ? 1 : 0);
-			enable_logging = (eof_preferences_dialog[46].flags == D_SELECTED ? 1 : 0);
-			eof_display_seek_pos_in_seconds = (eof_preferences_dialog[47].flags == D_SELECTED ? 1 : 0);
-			eof_note_tails_clickable = (eof_preferences_dialog[48].flags == D_SELECTED ? 1 : 0);
-			eof_inverted_chords_slash = (eof_preferences_dialog[49].flags == D_SELECTED ? 1 : 0);
-			eof_click_changes_dialog_focus = (eof_preferences_dialog[50].flags == D_SELECTED ? 1 : 0);
-			eof_write_bf_files = (eof_preferences_dialog[51].flags == D_SELECTED ? 1 : 0);
-			eof_stop_playback_leave_focus = (eof_preferences_dialog[52].flags == D_SELECTED ? 1 : 0);
+			eof_render_bass_drum_in_lane = (eof_preferences_dialog[27].flags == D_SELECTED ? 1 : 0);
+			eof_fb_seek_controls = (eof_preferences_dialog[28].flags == D_SELECTED ? 1 : 0);
+			eof_input_mode = eof_preferences_dialog[30].d1;
+			eof_color_set = eof_preferences_dialog[32].d1;
+			eof_new_note_length_1ms = (eof_preferences_dialog[33].flags == D_SELECTED ? 1 : 0);
+			eof_render_3d_rs_chords = (eof_preferences_dialog[34].flags == D_SELECTED ? 1 : 0);
+			eof_rewind_at_end = (eof_preferences_dialog[35].flags == D_SELECTED ? 1 : 0);
+			eof_display_seek_pos_in_seconds = (eof_preferences_dialog[36].flags == D_SELECTED ? 1 : 0);
+			eof_add_new_notes_to_selection = (eof_preferences_dialog[37].flags == D_SELECTED ? 1 : 0);
+			eof_inverted_chords_slash = (eof_preferences_dialog[38].flags == D_SELECTED ? 1 : 0);
+			eof_click_changes_dialog_focus = (eof_preferences_dialog[39].flags == D_SELECTED ? 1 : 0);
+			eof_stop_playback_leave_focus = (eof_preferences_dialog[40].flags == D_SELECTED ? 1 : 0);
 			if(eof_etext3[0] != '\0')
 			{	//If the chord density threshold field is populated
 				eof_chord_density_threshold = atol(eof_etext3);
@@ -1289,66 +1278,50 @@ int eof_menu_file_preferences(void)
 					allegro_message("Warning:  Configuring the minimum note distance to be longer than the chord density\nthreshold will eliminate chord repeat lines for all chords that aren't close enough to\neach others' start positions.");
 				}
 			}
-			eof_gp_import_truncate_short_chords = (eof_preferences_dialog[55].flags == D_SELECTED ? 1 : 0);
-			eof_enforce_chord_density = (eof_preferences_dialog[56].flags == D_SELECTED ? 1 : 0);
-			eof_write_fof_files = (eof_preferences_dialog[57].flags == D_SELECTED ? 1 : 0);
-			eof_auto_complete_fingering = (eof_preferences_dialog[58].flags == D_SELECTED ? 1 : 0);
-			eof_rbn_export_slider_hopo = (eof_preferences_dialog[59].flags == D_SELECTED ? 1 : 0);
-			eof_db_import_drop_mid_beat_tempos = (eof_preferences_dialog[60].flags == D_SELECTED ? 1 : 0);
+			eof_enforce_chord_density = (eof_preferences_dialog[43].flags == D_SELECTED ? 1 : 0);
+			eof_auto_complete_fingering = (eof_preferences_dialog[44].flags == D_SELECTED ? 1 : 0);
+			eof_dont_auto_name_double_stops = (eof_preferences_dialog[45].flags == D_SELECTED ? 1 : 0);
+			eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case eof_inverted_notes was changed
+			eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case eof_lefty_mode was changed
 		}//If the user clicked OK
-		else if(retval == 29)
+		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
-			eof_preferences_dialog[1].flags = 0;					//Inverted notes
-			eof_preferences_dialog[2].flags = 0;					//Lefty mode
-			eof_preferences_dialog[3].flags = D_SELECTED;			//Note auto adjust
-			eof_preferences_dialog[4].flags = D_SELECTED;			//Import/Export TS
-			eof_preferences_dialog[5].flags = 0;					//Hide drum note tails
-			eof_preferences_dialog[6].flags = 0;					//Hide note names
-			eof_preferences_dialog[7].flags = 0;					//Disable sound effects
-			eof_preferences_dialog[8].flags = 0;					//Disable 3D rendering
-			eof_preferences_dialog[9].flags = 0;					//Disable 2D rendering
-			eof_preferences_dialog[10].flags = 0;					//Disable info panel
-			eof_preferences_dialog[11].flags = 0;					//Paste erases overlap
-			eof_preferences_dialog[12].flags = 0;					//Save separate RBN MIDI files
-			eof_preferences_dialog[13].flags = 0;					//Save separate musical MIDI file
-			eof_preferences_dialog[14].flags = 0;					//Save separate Rocksmith 1 files
-			eof_preferences_dialog[15].flags = 0;					//Save separate Rocksmith 2 files
-			eof_preferences_dialog[16].flags = 0;					//Add new notes to selection
-			eof_preferences_dialog[17].flags = D_SELECTED;			//Drum modifiers affect all diff's
+			eof_preferences_dialog[5].flags = D_SELECTED;			//Display note names at top of 2D panel
+			eof_preferences_dialog[6].flags = eof_preferences_dialog[7].flags = eof_preferences_dialog[8].flags = eof_preferences_dialog[9].flags = 0;	//Display sections/fret hand positions at top of 2D panel
+			eof_preferences_dialog[10].flags = 0;					//Inverted notes
+			eof_preferences_dialog[11].flags = 0;					//Lefty mode
+			eof_preferences_dialog[12].flags = D_SELECTED;			//Note auto adjust
+			eof_preferences_dialog[13].flags = D_SELECTED;			//Enable logging
+			eof_preferences_dialog[14].flags = 0;					//Hide drum note tails
+			eof_preferences_dialog[15].flags = 0;					//Hide note names
+			eof_preferences_dialog[16].flags = 0;					//Disable sound effects
+			eof_preferences_dialog[17].flags = 0;					//Disable 3D rendering
+			eof_preferences_dialog[18].flags = 0;					//Disable 2D rendering
+			eof_preferences_dialog[19].flags = 0;					//Disable info panel
+			eof_preferences_dialog[20].flags = 0;					//Paste erases overlap
+			eof_preferences_dialog[21].flags = 0;					//Make note tails clickable
+			eof_preferences_dialog[22].flags = D_SELECTED;			//Drum modifiers affect all diff's
 			eof_etext2[0] = '3';									//Min. note distance
 			eof_etext2[1] = '\0';
 			eof_etext[0] = '\0';									//Min. note length
-			eof_preferences_dialog[22].flags = 0;					//3D render bass drum in a lane
-			eof_preferences_dialog[23].flags = 0;					//Use dB style seek controls
-			eof_preferences_dialog[25].d1 = EOF_INPUT_PIANO_ROLL;	//Input method
-			eof_preferences_dialog[27].d1 = EOF_COLORS_DEFAULT;		//Color set
-			eof_preferences_dialog[32].flags = D_SELECTED;			//Display note names at top of 2D panel
-			eof_preferences_dialog[33].flags = eof_preferences_dialog[34].flags = eof_preferences_dialog[35].flags = eof_preferences_dialog[36].flags = 0;	//Display sections/fret hand positions at top of 2D panel
-			eof_preferences_dialog[37].flags = 0;					//New notes are made 1ms long
-			eof_preferences_dialog[38].flags = 0;					//GP import beat text as sections, markers as phrases
-			eof_preferences_dialog[39].flags = D_SELECTED;			//GP import truncates short notes
-			eof_preferences_dialog[40].flags = D_SELECTED;			//GP import replaces active track
-			eof_preferences_dialog[41].flags = 0;					//GP import nat. harmonics only
-			eof_preferences_dialog[42].flags = 0;					//3D render Rocksmith style chords
-			eof_preferences_dialog[43].flags = 0;					//Import dialogs recall last path
-			eof_preferences_dialog[44].flags = D_SELECTED;			//Rewind when playback is at end
-			eof_preferences_dialog[45].flags = 0;					//Don't write Rocksmith WAV file
-			eof_preferences_dialog[46].flags = D_SELECTED;			//Enable logging on launch
-			eof_preferences_dialog[47].flags = 0;					//Display seek pos. in seconds
-			eof_preferences_dialog[48].flags = 0;					//Make note tails clickable
-			eof_preferences_dialog[49].flags = 0;					//Treat inverted chords as slash
-			eof_preferences_dialog[50].flags = D_SELECTED;			//Click to change dialog focus
-			eof_preferences_dialog[51].flags = 0;					//Save separate Bandfuse files
-			eof_preferences_dialog[52].flags = 1;					//EOF leaving focus stops playback
-			eof_preferences_dialog[55].flags = D_SELECTED;			//GP import truncates short chords
+			eof_preferences_dialog[27].flags = 0;					//3D render bass drum in a lane
+			eof_preferences_dialog[28].flags = 0;					//dB style seek controls
+			eof_preferences_dialog[30].d1 = EOF_INPUT_PIANO_ROLL;	//Input method
+			eof_preferences_dialog[32].d1 = EOF_COLORS_DEFAULT;		//Color set
+			eof_preferences_dialog[33].flags = 0;					//New notes are made 1ms long
+			eof_preferences_dialog[34].flags = 0;					//3D render Rocksmith style chords
+			eof_preferences_dialog[35].flags = D_SELECTED;			//Rewind when playback is at end
+			eof_preferences_dialog[36].flags = 0;					//Display seek pos. in seconds
+			eof_preferences_dialog[37].flags = 0;					//Add new notes to selection
+			eof_preferences_dialog[38].flags = 0;					//Treat inverted chords as slash
+			eof_preferences_dialog[39].flags = D_SELECTED;			//Click to change dialog focus
+			eof_preferences_dialog[40].flags = 1;					//EOF leaving focus stops playback
 			(void) snprintf(eof_etext3, sizeof(eof_etext3) - 1, "10000");	//Chord density threshold
-			eof_preferences_dialog[56].flags = 0;					//Apply crazy to repeated chords separated by a rest
-			eof_preferences_dialog[57].flags = D_SELECTED;			//Save FoF/Phase Shift files
-			eof_preferences_dialog[58].flags = D_SELECTED;			//Offer to auto complete fingering
-			eof_preferences_dialog[59].flags = 0;					//RBN export slider as HOPO
-			eof_preferences_dialog[60].flags = 0;					//dB import drops mid beat tempos
+			eof_preferences_dialog[43].flags = 0;					//Apply crazy to repeated chords separated by a rest
+			eof_preferences_dialog[44].flags = D_SELECTED;			//Offer to auto complete fingering
+			eof_preferences_dialog[45].flags = 0;					//Don't auto-name double stops
 		}//If the user clicked "Default
-	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
+	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -1357,6 +1330,93 @@ int eof_menu_file_preferences(void)
 	{	//If the input mode was changed
 		eof_seek_selection_start = eof_seek_selection_end = 0;	//Clear the seek selection
 	}
+	return 1;
+}
+
+int eof_menu_file_import_export_preferences(void)
+{
+	int retval, original_rs1_export_setting;
+
+	if(eof_song_loaded)
+	{
+		if(!eof_music_paused)
+		{
+			eof_music_play(0);
+		}
+	}
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_import_export_preferences_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_import_export_preferences_dialog);
+	//Use the currently configured settings to populate the dialog selections
+	eof_import_export_preferences_dialog[4].flags = eof_write_rb_files ? D_SELECTED : 0;					//Save separate Rock Band files
+	eof_import_export_preferences_dialog[5].flags = eof_write_music_midi ? D_SELECTED : 0;					//Save separate musical MIDI file
+	eof_import_export_preferences_dialog[6].flags = eof_write_rs_files ? D_SELECTED : 0;					//Save separate Rocksmith 1 files
+	original_rs1_export_setting = eof_write_rs_files;	//Back up this setting to track whether it is changed in the dialog
+	eof_import_export_preferences_dialog[7].flags = eof_write_rs2_files ? D_SELECTED : 0;					//Save separate Rocksmith 2 files
+	eof_import_export_preferences_dialog[8].flags = eof_write_bf_files ? D_SELECTED : 0;					//Save separate Bandfuse files
+	eof_import_export_preferences_dialog[9].flags = eof_write_fof_files ? D_SELECTED : 0;					//Save FoF/GH/Phase Shift files
+	eof_import_export_preferences_dialog[10].flags = eof_gp_import_preference_1 ? D_SELECTED : 0;			//GP import beat text as sections, markers as phrases
+	eof_import_export_preferences_dialog[11].flags = eof_gp_import_truncate_short_notes ? D_SELECTED : 0;	//GP import truncates short notes
+	eof_import_export_preferences_dialog[12].flags = eof_rbn_export_slider_hopo ? D_SELECTED : 0;			//RBN export slider as HOPO
+	eof_import_export_preferences_dialog[13].flags = eof_gp_import_truncate_short_chords ? D_SELECTED : 0;	//GP import truncates short chords
+	eof_import_export_preferences_dialog[14].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
+	eof_import_export_preferences_dialog[15].flags = eof_gp_import_replaces_track ? D_SELECTED : 0;			//GP import replaces active track
+	eof_import_export_preferences_dialog[16].flags = eof_db_import_drop_mid_beat_tempos ? D_SELECTED : 0;	//dB import drops mid beat tempos
+	eof_import_export_preferences_dialog[17].flags = eof_gp_import_nat_harmonics_only ? D_SELECTED : 0;		//GP import nat. harmonics only
+	eof_import_export_preferences_dialog[18].flags = eof_imports_recall_last_path ? D_SELECTED : 0;			//Import dialogs recall last path
+	eof_import_export_preferences_dialog[19].flags = eof_use_ts ? D_SELECTED : 0;							//Import/Export TS
+	eof_import_export_preferences_dialog[20].flags = eof_db_import_suppress_5nc_conversion ? D_SELECTED : 0;//dB import skips 5nc conversion
+
+	do
+	{	//Run the dialog
+		retval = eof_popup_dialog(eof_import_export_preferences_dialog, 0);	//Run the dialog
+		if(retval == 1)
+		{	//If the user clicked OK, update EOF's configured settings from the dialog selections
+			eof_write_rb_files = (eof_import_export_preferences_dialog[4].flags == D_SELECTED ? 1 : 0);
+			eof_write_music_midi = (eof_import_export_preferences_dialog[5].flags == D_SELECTED ? 1 : 0);
+			eof_write_rs_files = (eof_import_export_preferences_dialog[6].flags == D_SELECTED ? 1 : 0);
+			eof_write_rs2_files = (eof_import_export_preferences_dialog[7].flags == D_SELECTED ? 1 : 0);
+			eof_write_bf_files = (eof_import_export_preferences_dialog[8].flags == D_SELECTED ? 1 : 0);
+			eof_write_fof_files = (eof_import_export_preferences_dialog[9].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_preference_1 = (eof_import_export_preferences_dialog[10].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_truncate_short_notes = (eof_import_export_preferences_dialog[11].flags == D_SELECTED ? 1 : 0);
+			eof_rbn_export_slider_hopo = (eof_import_export_preferences_dialog[12].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_truncate_short_chords = (eof_import_export_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
+			eof_disable_rs_wav = (eof_import_export_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_replaces_track = (eof_import_export_preferences_dialog[15].flags == D_SELECTED ? 1 : 0);
+			eof_db_import_drop_mid_beat_tempos = (eof_import_export_preferences_dialog[16].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_nat_harmonics_only = (eof_import_export_preferences_dialog[17].flags == D_SELECTED ? 1 : 0);
+			eof_imports_recall_last_path = (eof_import_export_preferences_dialog[18].flags == D_SELECTED ? 1 : 0);
+			eof_use_ts = (eof_import_export_preferences_dialog[19].flags == D_SELECTED ? 1 : 0);
+			eof_db_import_suppress_5nc_conversion = (eof_import_export_preferences_dialog[20].flags == D_SELECTED ? 1 : 0);
+		}//If the user clicked OK
+		else if(retval == 2)
+		{	//If the user clicked "Default, change all selections to EOF's default settings
+			eof_import_export_preferences_dialog[4].flags = 0;				//Save separate Rock Band files
+			eof_import_export_preferences_dialog[5].flags = 0;				//Save separate musical MIDI file
+			eof_import_export_preferences_dialog[6].flags = 0;				//Save separate Rocksmith 1 files
+			eof_import_export_preferences_dialog[7].flags = 0;				//Save separate Rocksmith 2 files
+			eof_import_export_preferences_dialog[8].flags = 0;				//Save separate Bandfuse files
+			eof_import_export_preferences_dialog[9].flags = D_SELECTED;		//Save FoF/GH/Phase Shift files
+			eof_import_export_preferences_dialog[10].flags = 0;				//GP import beat text as sections, markers as phrases
+			eof_import_export_preferences_dialog[11].flags = D_SELECTED;	//GP import truncates short notes
+			eof_import_export_preferences_dialog[12].flags = 0;				//RBN export slider as HOPO
+			eof_import_export_preferences_dialog[13].flags = D_SELECTED;	//GP import truncates short chords
+			eof_import_export_preferences_dialog[14].flags = 0;				//Don't write Rocksmith WAV file
+			eof_import_export_preferences_dialog[15].flags = D_SELECTED;	//GP import replaces active track
+			eof_import_export_preferences_dialog[16].flags = 0;				//dB import drops mid beat tempos
+			eof_import_export_preferences_dialog[17].flags = 0;				//GP import nat. harmonics only
+			eof_import_export_preferences_dialog[18].flags = 0;				//Import dialogs recall last path
+			eof_import_export_preferences_dialog[19].flags = D_SELECTED;	//Import/Export TS
+			eof_import_export_preferences_dialog[20].flags = 0;				//dB import skips 5nc conversion
+		}//If the user clicked "Default
+	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_set_color_set();
 	if(original_rs1_export_setting != eof_write_rs_files)
 	{	//If the preference for exporting RS1 file was changed
 		eof_delete_rocksmith_wav();	//Delete the Rocksmith WAV file since the amount of silence appended to it will differ
@@ -2746,7 +2806,7 @@ int eof_save_helper_checks(void)
 	}
 
 
-	/* check if any arpeggio phrases only have one note in them */
+	/* check if any arpeggio phrases only have one note in them (handshapes do not trigger this warning) */
 	for(ctr = 1; (ctr < eof_song->tracks) && !arpeggio_warned; ctr++)
 	{	//For each track, or until the user is warned about an offending arpeggio
 		if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -2760,25 +2820,28 @@ int eof_save_helper_checks(void)
 			eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Activate the normal note set
 
 			for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
-			{	//For each arpeggio phrase in the track
-				notectr = 0;
-				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
-				{	//For each note in the track
-					if((tp->note[ctr3]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr3]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr3]->type == tp->arpeggio[ctr2].difficulty))
-					{	//If the note is within the arpeggio phrase
-						notectr++;	//Increment counter
+			{	//For each arpeggio/handshape phrase in the track
+				if(!(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE))
+				{	//If this is an arpeggio phrase and NOT a handshape phrase
+					notectr = 0;
+					for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
+					{	//For each note in the track
+						if((tp->note[ctr3]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr3]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr3]->type == tp->arpeggio[ctr2].difficulty))
+						{	//If the note is within the arpeggio phrase
+							notectr++;	//Increment counter
+						}
 					}
-				}
-				if(notectr < 2)
-				{
-					eof_clear_input();
-					eof_seek_and_render_position(ctr, tp->arpeggio[ctr2].difficulty, tp->arpeggio[ctr2].start_pos);
-					if(alert("Warning:  At least one arpeggio phrase doesn't contain at least two notes.", "You should remove the arpeggio phrase or add additional notes into it.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-					{	//If the user opts to cancel
-						return 1;	//Return cancellation
+					if(notectr < 2)
+					{
+						eof_clear_input();
+						eof_seek_and_render_position(ctr, tp->arpeggio[ctr2].difficulty, tp->arpeggio[ctr2].start_pos);
+						if(alert("Warning:  At least one arpeggio phrase doesn't contain at least two notes.", "You should remove the arpeggio phrase or add additional notes into it.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+						{	//If the user opts to cancel
+							return 1;	//Return cancellation
+						}
+						arpeggio_warned = 1;	//Set a condition to exit outer for loop
+						break;	//Break from inner for loop
 					}
-					arpeggio_warned = 1;	//Set a condition to exit outer for loop
-					break;	//Break from inner for loop
 				}
 			}//For each arpeggio phrase in the track
 			eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Activate whichever note set was active for the track
@@ -2908,7 +2971,7 @@ int eof_save_helper_checks(void)
 						{	//If the name was retrievable
 							if(rs_filter_string(name, 1))
 							{	//If the name contains any invalid characters (forward slash is allowed for denoting slash chords)
-								eof_2d_render_top_option = 32;					//Change the user preference to render note names at the top of the piano roll
+								eof_2d_render_top_option = 5;					//Change the user preference to render note names at the top of the piano roll
 								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Render the track so the user can see where the correction needs to be made
 								eof_clear_input();
 								if(!user_prompted && alert("At least one chord has an unaccepted character: ( } ,  \\  : { \" )", "This can cause Rocksmith to crash or hang and will be removed.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
@@ -2956,7 +3019,7 @@ int eof_save_helper_checks(void)
 							{	//For each beat between them, after the first (which will always be at/before the beginning of the arpeggio, when the condition being checked can only happen to a beat AFTER the start of the arpeggio)
 								if(eof_song->beat[ctr3]->contained_section_event >= 0)
 								{	//If this beat has an RS phrase defined, it marks a phrase change
-									eof_2d_render_top_option = 36;					//Change the user preference to render RS phrases and sections at the top of the piano roll
+									eof_2d_render_top_option = 9;					//Change the user preference to render RS phrases and sections at the top of the piano roll
 									if(tp->arpeggio[ctr2].difficulty != 0xFF)
 									{	//If this is a difficulty specific arpeggio
 										eof_note_type = tp->arpeggio[ctr2].difficulty;	//Change to the relevant difficulty
@@ -3098,7 +3161,7 @@ int eof_save_helper_checks(void)
 							}
 							if(sectionchange || phrasechange)
 							{	//If the section or phrase changes during the course of the note
-								eof_2d_render_top_option = 36;					//Change the user preference to render RS phrases and sections at the top of the piano roll
+								eof_2d_render_top_option = 9;					//Change the user preference to render RS phrases and sections at the top of the piano roll
 								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Render the track so the user can see where the correction needs to be made
 								eof_clear_input();
 								if(!user_prompted && alert("At least one note crosses an RS phrase or section boundary.", "This can behave strangely in Rocksmith if the chart has dynamic difficulty.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)

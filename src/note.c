@@ -681,7 +681,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	{	//If rendering an existing note instead of the pen note
 		if(!eof_hide_note_names)
 		{	//If the user hasn't opted to hide note names
-			if((window == eof_window_note) || (eof_2d_render_top_option == 32))
+			if((window == eof_window_note) || (eof_2d_render_top_option == 5))
 			{	//If rendering to the fret catalog, or to the 2D window and the user opted to display note names at the top of the window
 				notename[0] = prevnotename[0] = '\0';	//Empty these strings
 				namefound = eof_build_note_name(eof_song, track, notenum, notename);

@@ -144,10 +144,10 @@ void eof_load_config(char * fn)
 	eof_click_changes_dialog_focus = get_config_int("preferences", "eof_click_changes_dialog_focus", 1);
 	eof_stop_playback_leave_focus = get_config_int("preferences", "eof_stop_playback_leave_focus", 1);
 	enable_logging = get_config_int("preferences", "enable_logging", 1);
-	eof_2d_render_top_option = get_config_int("preferences", "eof_2d_render_top_option", 32);
-	if((eof_2d_render_top_option < 32) || (eof_2d_render_top_option > 36))
+	eof_2d_render_top_option = get_config_int("preferences", "eof_2d_render_top_option", 5);
+	if((eof_2d_render_top_option < 5) || (eof_2d_render_top_option > 9))
 	{	//If eof_2d_render_top_option is invalid
-		eof_2d_render_top_option = 32;	//Reset to default of displaying note names
+		eof_2d_render_top_option = 5;	//Reset to default of displaying note names
 	}
 	eof_color_set = get_config_int("preferences", "eof_color_set", 0);
 	if(eof_color_set >= EOF_NUM_COLOR_SETS)
@@ -193,6 +193,7 @@ void eof_load_config(char * fn)
 	eof_rbn_export_slider_hopo = get_config_int("preferences", "eof_rbn_export_slider_hopo", 0);
 	eof_db_import_drop_mid_beat_tempos = get_config_int("preferences", "eof_db_import_drop_mid_beat_tempos", 0);
 	eof_db_import_suppress_5nc_conversion = get_config_int("preferences", "eof_db_import_suppress_5nc_conversion", 0);
+	eof_dont_auto_name_double_stops = get_config_int("preferences", "eof_dont_auto_name_double_stops", 0);
 
 	/* read display settings */
 	eof_screen_layout.mode = get_config_int("display", "display_mode", 0);
@@ -360,6 +361,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_rbn_export_slider_hopo", eof_rbn_export_slider_hopo);
 	set_config_int("preferences", "eof_db_import_drop_mid_beat_tempos", eof_db_import_drop_mid_beat_tempos);
 	set_config_int("preferences", "eof_db_import_suppress_5nc_conversion", eof_db_import_suppress_5nc_conversion);
+	set_config_int("preferences", "eof_dont_auto_name_double_stops", eof_dont_auto_name_double_stops);
 
 	/* write display settings */
 	set_config_int("display", "display_mode", eof_screen_layout.mode);

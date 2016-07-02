@@ -3678,7 +3678,7 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 							{	//If the calling function wanted to prompt the user about each issue found
 								unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
 
-								eof_2d_render_top_option = 34;			//Display fret hand positions at the top of the piano roll
+								eof_2d_render_top_option = 7;			//Display fret hand positions at the top of the piano roll
 								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
 
 								if(alert("Warning:  A fret hand position was not defined at/before the first note in this track difficulty.", "You should correct this by setting the fret hand position at or before this note,", "or by deleting/regenerating the fret hand positions.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
@@ -3706,7 +3706,7 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 							unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
 							char triggered = 0;
 
-							eof_2d_render_top_option = 34;			//Display fret hand positions at the top of the piano roll
+							eof_2d_render_top_option = 7;			//Display fret hand positions at the top of the piano roll
 							eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
 
 							if(eof_write_rs_files)
@@ -3750,7 +3750,7 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 
 							if(report)
 							{	//If the calling function wanted to prompt the user about each issue found
-								eof_2d_render_top_option = 34;			//Display fret hand positions at the top of the piano roll
+								eof_2d_render_top_option = 7;			//Display fret hand positions at the top of the piano roll
 								eof_selection.current = ctr2;			//Select the note in question
 								eof_selection.track = ctr;
 								eof_selection.multi[ctr2] = 1;
@@ -3828,7 +3828,7 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 									{	//If the calling function wanted to prompt the user about each issue found, and this warning message hasn't been suppressed
 										unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
 
-										eof_2d_render_top_option = 34;			//Display fret hand positions at the top of the piano roll
+										eof_2d_render_top_option = 7;			//Display fret hand positions at the top of the piano roll
 										eof_selection.current = ctr2;			//Select the note in question
 										eof_selection.track = ctr;
 										eof_selection.multi[ctr2] = 1;
@@ -3880,7 +3880,7 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 											{	//If the calling function wanted to prompt the user about each issue found
 												unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
 
-												eof_2d_render_top_option = 34;			//Display fret hand positions at the top of the piano roll
+												eof_2d_render_top_option = 7;			//Display fret hand positions at the top of the piano roll
 												eof_selected_beat = ctr2;				//Change the selected beat
 												eof_seek_and_render_position(ctr, ctr3, eof_song->beat[ctr2]->pos);
 												eof_clear_input();

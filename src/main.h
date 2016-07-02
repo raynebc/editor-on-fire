@@ -336,6 +336,7 @@ extern int         eof_disable_rs_wav;
 extern int         eof_display_seek_pos_in_seconds;
 extern int         eof_note_tails_clickable;
 extern int         eof_auto_complete_fingering;
+extern int         eof_dont_auto_name_double_stops;
 extern int         eof_rbn_export_slider_hopo;
 extern int         eof_db_import_drop_mid_beat_tempos;
 extern int         eof_db_import_suppress_5nc_conversion;
