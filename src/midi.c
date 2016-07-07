@@ -1163,6 +1163,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						if(eof_midi_event[i]->type == 0x01)
 						{	//Text event
 							eof_write_text_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+							lastevent = 0; // reset running status after a meta/sysex event
 						}
 						else if(eof_midi_event[i]->type == 0xF0)
 						{	//Sysex message
@@ -1170,6 +1171,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 							(void) pack_putc(0xF0, fp);						//Sysex event
 							WriteVarLen(eof_midi_event[i]->note, fp);	//Write the Sysex message's size
 							(void) pack_fwrite(eof_midi_event[i]->dp, eof_midi_event[i]->note, fp);	//Write the Sysex data
+							lastevent = 0; // reset running status after a meta/sysex event
 						}
 						else
 						{	//Note on/off
@@ -1406,10 +1408,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					if(eof_midi_event[i]->type == 0x01)
 					{	//Text event
 						eof_write_text_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+						lastevent = 0; // reset running status after a meta/sysex event
 					}
 					else if(eof_midi_event[i]->type == 0x05)
 					{	//Lyric event
 						eof_write_lyric_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+						lastevent = 0; // reset running status after a meta/sysex event
 					}
 					else
 					{
@@ -2060,6 +2064,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					if(eof_midi_event[i]->type == 0x01)
 					{	//Write a note name text event
 						eof_write_text_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+						lastevent = 0; // reset running status after a meta/sysex event
 					}
 					else if(eof_midi_event[i]->type == 0xF0)
 					{	//If this is a Sysex message
@@ -2067,6 +2072,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						(void) pack_putc(0xF0, fp);						//Sysex event
 						WriteVarLen(eof_midi_event[i]->note, fp);	//Write the Sysex message's size
 						(void) pack_fwrite(eof_midi_event[i]->dp, eof_midi_event[i]->note, fp);	//Write the Sysex data
+						lastevent = 0; // reset running status after a meta/sysex event
 					}
 					else
 					{	//Write a non meta MIDI event
@@ -2788,10 +2794,12 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 					if(eof_midi_event[i]->type == 0x01)
 					{	//Write a note name text event
 						eof_write_text_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+						lastevent = 0; // reset running status after a meta/sysex event
 					}
 					else if(eof_midi_event[i]->type == 0x05)
 					{	//Write a lyric event
 						eof_write_lyric_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+						lastevent = 0; // reset running status after a meta/sysex event
 					}
 					else
 					{	//Write normal MIDI note events
