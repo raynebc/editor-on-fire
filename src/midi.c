@@ -1116,7 +1116,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			qsort(eof_midi_event, (size_t)eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);	//Re-sort, since the previous function may have changed the events' order
 //			allegro_message("break1");
 
-			for(trackctr=0;trackctr<=expertplus;trackctr++)
+			for(trackctr = 0; trackctr <= expertplus; trackctr++)
 			{	//This loop makes a second pass to write the expert+ drum MIDI if applicable
 				int lastevent = 0;	//Track the last event written so running status can be utilized
 
@@ -1163,6 +1163,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						if(eof_midi_event[i]->type == 0x01)
 						{	//Text event
 							eof_write_text_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+							lastevent = 0;	//Reset running status after a meta/sysex event
 						}
 						else if(eof_midi_event[i]->type == 0xF0)
 						{	//Sysex message
@@ -1170,6 +1171,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 							(void) pack_putc(0xF0, fp);						//Sysex event
 							WriteVarLen(eof_midi_event[i]->note, fp);	//Write the Sysex message's size
 							(void) pack_fwrite(eof_midi_event[i]->dp, eof_midi_event[i]->note, fp);	//Write the Sysex data
+							lastevent = 0;	//Reset running status after a meta/sysex event
 						}
 						else
 						{	//Note on/off
@@ -1352,7 +1354,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				return 0;	//Return failure
 			}
 
-			for(i=0;i < 128;i++)
+			for(i = 0;i < 128; i++)
 			{	//Ensure that any notes that are still on are terminated
 				if(eof_midi_note_status[i] != 0)	//If this note was left on, send an alert message, as this is abnormal
 				{
@@ -1397,7 +1399,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			(void) pack_fwrite(sp->track[j]->name, ustrlen(sp->track[j]->name), fp);
 
 			/* add MIDI events */
-			lastdelta=0;
+			lastdelta = 0;
 			for(i = 0; i < eof_midi_events; i++)
 			{
 				if(!eof_midi_event[i]->filtered)
@@ -1406,10 +1408,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					if(eof_midi_event[i]->type == 0x01)
 					{	//Text event
 						eof_write_text_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+						lastevent = 0;	//Reset running status after a meta/sysex event
 					}
 					else if(eof_midi_event[i]->type == 0x05)
 					{	//Lyric event
 						eof_write_lyric_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+						lastevent = 0;	//Reset running status after a meta/sysex event
 					}
 					else
 					{
@@ -2060,6 +2064,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					if(eof_midi_event[i]->type == 0x01)
 					{	//Write a note name text event
 						eof_write_text_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+						lastevent = 0;	//Reset running status after a meta/sysex event
 					}
 					else if(eof_midi_event[i]->type == 0xF0)
 					{	//If this is a Sysex message
@@ -2067,6 +2072,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						(void) pack_putc(0xF0, fp);						//Sysex event
 						WriteVarLen(eof_midi_event[i]->note, fp);	//Write the Sysex message's size
 						(void) pack_fwrite(eof_midi_event[i]->dp, eof_midi_event[i]->note, fp);	//Write the Sysex data
+						lastevent = 0;	//Reset running status after a meta/sysex event
 					}
 					else
 					{	//Write a non meta MIDI event
@@ -2788,10 +2794,12 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 					if(eof_midi_event[i]->type == 0x01)
 					{	//Write a note name text event
 						eof_write_text_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+						lastevent = 0;	//Reset running status after a meta/sysex event
 					}
 					else if(eof_midi_event[i]->type == 0x05)
 					{	//Write a lyric event
 						eof_write_lyric_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+						lastevent = 0;	//Reset running status after a meta/sysex event
 					}
 					else
 					{	//Write normal MIDI note events
