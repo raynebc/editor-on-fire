@@ -719,6 +719,7 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 	unsigned long measure_counter = 0;
 	char first_measure = 0;	//Set to nonzero when the first measure marker is reached
 	unsigned long i;
+	unsigned curnum = 0, curden = 0;
 
 	eof_log("eof_process_beat_statistics() entered", 2);
 
@@ -727,19 +728,32 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 
 	for(i = 0; i < sp->beats; i++)
 	{	//For each beat
-		if(eof_get_ts(sp, &beats_per_measure, &beat_unit, i) == 1)
-		{	//If this beat has a time signature change
+		//Update measure counter
+		if((eof_get_ts(sp, &beats_per_measure, &beat_unit, i) == 1) && ((beats_per_measure != curnum) || (beat_unit != curden)))
+		{	//If this beat has a time signature, and it is different from the time signature in effect
 			if(!first_measure)
 			{	//If this is the first time signature change encountered
 				measure_counter = 1;	//This marks the beginning of the first measure
 			}
+			else
+			{	//If this time signature change interrupts a measure in progress
+				measure_counter++;	//This marks the start of a new measure
+			}
 			first_measure = 1;	//Note that a time signature change has been found
 			beat_counter = 0;
 			sp->beat[i]->contains_ts_change = 1;
+			curnum = beats_per_measure;	//Keep track of the current time signature
+			curden = beat_unit;
 		}
 		else
 		{
 			sp->beat[i]->contains_ts_change = 0;
+
+			if(beat_counter >= beats_per_measure)
+			{	//if the beat count has incremented enough to reach the next measure
+				beat_counter = 0;
+				measure_counter++;
+			}
 		}
 
 	//Cache beat statistics
@@ -797,13 +811,7 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 			}
 		}
 
-	//Update beat counter
-		beat_counter++;
-		if(beat_counter >= beats_per_measure)
-		{	//if the beat count has incremented enough to reach the next measure
-			beat_counter = 0;
-			measure_counter++;
-		}
+		beat_counter++;	//Update beat counter
 	}//For each beat
 
 	eof_beat_stats_cached = 1;

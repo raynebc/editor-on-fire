@@ -5801,8 +5801,8 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			{	//Draw beat arrow
 				textprintf_ex(window->screen, eof_mono_font, xcoord - 20 + 9, EOF_EDITOR_RENDER_OFFSET + 6 - (i % 2 == 0 ? 0 : 10), i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "-->");
 			}
-			if(eof_song->beat[i]->contains_ts_change && eof_get_ts_text(i, buffer))
-			{	//If this beat has a time signature
+			if(eof_song->beat[i]->has_ts && eof_get_ts_text(i, buffer))
+			{	//If this beat has a time signature, regardless of whether it is different from the one in effect
 				textprintf_centre_ex(window->screen, eof_mono_font, xcoord - 20 + 19, EOF_EDITOR_RENDER_OFFSET - 4 - (i % 2 == 0 ? 0 : 10), i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "(%s)", buffer);
 			}
 
