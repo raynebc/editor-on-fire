@@ -170,20 +170,19 @@ int eof_lookup_default_string_tuning(EOF_PRO_GUITAR_TRACK *tp, unsigned long tra
 	{	//Standard tuning for guitar tracks is EADGBe
 		return default_tuning_6_string[stringnum];	//Return this string's default tuning
 	}
-	else
-	{	//Standard tuning for bass tracks depends on the number of strings
-		if(tp->numstrings == 4)
-		{	//Standard tuning for 4 string bass is EADG
-			return default_tuning_4_string_bass[stringnum];	//Return this string's default tuning
-		}
-		else if(tp->numstrings == 5)
-		{	//Standard tuning for 5 string bass is BEADG
-			return default_tuning_5_string_bass[stringnum];	//Return this string's default tuning
-		}
-		else if(tp->numstrings == 6)
-		{	//Standard tuning for 6 string bass is BEADGC
-			return default_tuning_6_string_bass[stringnum];	//Return this string's default tuning
-		}
+
+	//Standard tuning for bass tracks depends on the number of strings
+	if(tp->numstrings == 4)
+	{	//Standard tuning for 4 string bass is EADG
+		return default_tuning_4_string_bass[stringnum];	//Return this string's default tuning
+	}
+	else if(tp->numstrings == 5)
+	{	//Standard tuning for 5 string bass is BEADG
+		return default_tuning_5_string_bass[stringnum];	//Return this string's default tuning
+	}
+	else if(tp->numstrings == 6)
+	{	//Standard tuning for 6 string bass is BEADGC
+		return default_tuning_6_string_bass[stringnum];	//Return this string's default tuning
 	}
 
 	return -1;	//Error (ie. invalid string count)
@@ -208,20 +207,18 @@ int eof_lookup_default_string_tuning_absolute(EOF_PRO_GUITAR_TRACK *tp, unsigned
 	{	//Guitar standard tuning is EADGBe
 		return default_tuning_6_string[stringnum];	//Return this string's default tuning
 	}
-	else
-	{
-		if(tp->numstrings == 4)
-		{	//Standard tuning for 4 string bass is EADG
-			return default_tuning_4_string_bass[stringnum];	//Return this string's default tuning
-		}
-		else if(tp->numstrings == 5)
-		{	//Standard tuning for 5 string bass is BEADG
-			return default_tuning_5_string_bass[stringnum];	//Return this string's default tuning
-		}
-		else if(tp->numstrings == 6)
-		{	//Standard tuning for 6 string bass is BEADGC
-			return default_tuning_6_string_bass[stringnum];	//Return this string's default tuning
-		}
+
+	if(tp->numstrings == 4)
+	{	//Standard tuning for 4 string bass is EADG
+		return default_tuning_4_string_bass[stringnum];	//Return this string's default tuning
+	}
+	else if(tp->numstrings == 5)
+	{	//Standard tuning for 5 string bass is BEADG
+		return default_tuning_5_string_bass[stringnum];	//Return this string's default tuning
+	}
+	else if(tp->numstrings == 6)
+	{	//Standard tuning for 6 string bass is BEADGC
+		return default_tuning_6_string_bass[stringnum];	//Return this string's default tuning
 	}
 
 	return -1;	//Unsupported pro guitar track
@@ -531,23 +528,21 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 								*isslash = 0;	//This was detected as a normal chord, not a slash chord
 								return 1;		//Return match found
 							}
-							else
-							{	//This is the second pass (hybrid slash chord)
-								if(cache)
-								{	//If a successful lookup is to be cached to global variables
-									eof_cached_chord_lookup_isslash = 1;
-									eof_cached_chord_lookup_bassnote = bass;
-									eof_cached_chord_lookup_retval = 3;
-								}
-								*isslash = 1;		//This was detected as a slash chord
-								*bassnote = bass;	//Pass the bass note back through the pointer
-								return 3;			//Return slash chord match found
+
+							//This is the second pass (hybrid slash chord)
+							if(cache)
+							{	//If a successful lookup is to be cached to global variables
+								eof_cached_chord_lookup_isslash = 1;
+								eof_cached_chord_lookup_bassnote = bass;
+								eof_cached_chord_lookup_retval = 3;
 							}
+							*isslash = 1;		//This was detected as a slash chord
+							*bassnote = bass;	//Pass the bass note back through the pointer
+							return 3;			//Return slash chord match found
 						}
-						else
-						{	//If this match is supposed to be skipped
-							skipctr--;	//Decrement the number of matches to skip
-						}
+
+						//If this match is supposed to be skipped
+						skipctr--;	//Decrement the number of matches to skip
 					}
 				}
 			}//For each of the 12 major scales, starting with whichever one the bass note was in
@@ -618,15 +613,15 @@ char *eof_get_key_signature(EOF_SONG *sp, unsigned long beatnum, char failureopt
 		{	//If the key signature is valid
 			if(!scale)
 				return eof_key_names_major[sp->beat[beatnum]->key + 7];	//Return the appropriate key name from the array
-			else
-				return eof_key_names_minor[sp->beat[beatnum]->key + 7];	//Return the appropriate key name from the array
+
+			return eof_key_names_minor[sp->beat[beatnum]->key + 7];	//Return the appropriate key name from the array
 		}
 	}
 
 	if(failureoption)
 		return eof_none_string;
-	else
-		return NULL;
+
+	return NULL;
 }
 
 int eof_track_is_bass_arrangement(EOF_PRO_GUITAR_TRACK *tp, unsigned long track)

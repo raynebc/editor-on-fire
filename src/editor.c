@@ -55,10 +55,8 @@ double eof_pos_distance(double p1, double p2)
 	{
 		return p1 - p2;
 	}
-	else
-	{
-		return p2 - p1;
-	}
+
+	return p2 - p1;
 }
 
 void eof_select_beat(unsigned long beat)
@@ -3000,17 +2998,17 @@ if(eof_key_code == KEY_PAUSE)
 			}
 
 	/* Redraw display (SHIFT+F5) */
+#ifdef ALLEGRO_WINDOWS
 			if(eof_key_code == KEY_F5)
 			{
 				if(!KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 				{	//If SHIFT is held but CTRL is not
-#ifdef ALLEGRO_WINDOWS
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 					(void) eof_redraw_display();
 					eof_use_key();
-#endif
 				}
 			}
+#endif
 		}//If SHIFT is held down and CTRL is not
 
 		if(!KEY_EITHER_CTRL && ((eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK)))
@@ -3819,10 +3817,7 @@ void eof_editor_logic(void)
 					{
 						if(!KEY_EITHER_CTRL)
 						{
-							if(KEY_EITHER_SHIFT)
-							{
-							}
-							else
+							if(!KEY_EITHER_SHIFT)
 							{	//SHIFT is not held
 								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 								if(eof_selection.multi[eof_selection.current])
@@ -4609,10 +4604,7 @@ void eof_vocal_editor_logic(void)
 					{
 						if(!KEY_EITHER_CTRL)
 						{
-							if(KEY_EITHER_SHIFT)
-							{
-							}
-							else
+							if(!KEY_EITHER_SHIFT)
 							{	//SHIFT is not held
 								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 								if(eof_selection.multi[eof_selection.current])
@@ -5363,10 +5355,9 @@ unsigned long eof_determine_piano_roll_left_edge(void)
 	{
 		return 0;
 	}
-	else
-	{	//Return the lowest timestamp that would be displayable given the current seek position and zoom level,
-		return ((pos - 320) * eof_zoom);
-	}
+
+	//Return the lowest timestamp that would be displayable given the current seek position and zoom level,
+	return ((pos - 320) * eof_zoom);
 }
 
 unsigned long eof_determine_piano_roll_right_edge(void)
@@ -5379,10 +5370,8 @@ unsigned long eof_determine_piano_roll_right_edge(void)
 	{
 		return ((eof_window_editor->screen->w - 1) - 20) * eof_zoom;
 	}
-	else
-	{
-		return ((eof_window_editor->screen->w - 1) - 320 + pos) * eof_zoom;
-	}
+
+	return ((eof_window_editor->screen->w - 1) - 320 + pos) * eof_zoom;
 }
 
 void eof_render_editor_window_common(EOF_WINDOW *window)

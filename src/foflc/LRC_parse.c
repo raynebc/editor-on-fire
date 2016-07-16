@@ -420,8 +420,8 @@ unsigned long ConvertLRCTimestamp(char **ptr,int *errorstatus)
 			*errorstatus=1;
 			return 0;
 		}
-		else
-			exit_wrapper(1);
+
+		exit_wrapper(1);
 	}
 
 	assert_wrapper((ptr != NULL) && (temp != NULL));
@@ -444,8 +444,8 @@ unsigned long ConvertLRCTimestamp(char **ptr,int *errorstatus)
 				*errorstatus=2;
 				return 0;
 			}
-			else
-				exit_wrapper(2);
+
+			exit_wrapper(2);
 		}
 		sum+=conversion*60000;	//one minute is 60,000 milliseconds
 	}
@@ -465,8 +465,8 @@ unsigned long ConvertLRCTimestamp(char **ptr,int *errorstatus)
 				*errorstatus=3;
 				return 0;
 			}
-			else
-				exit_wrapper(3);
+
+			exit_wrapper(3);
 		}
 		sum+=conversion*1000;	//one second is 1,000 milliseconds
 	}
@@ -486,8 +486,8 @@ unsigned long ConvertLRCTimestamp(char **ptr,int *errorstatus)
 				*errorstatus=4;
 				return 0;
 			}
-			else
-				exit_wrapper(4);
+
+			exit_wrapper(4);
 		}
 		if(!thousandths)
 		{	//If the number was determined to be in centiseconds

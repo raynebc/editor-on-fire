@@ -304,15 +304,15 @@ int qsort_helper3(const void * e1, const void * e2)
 	{
 		if(((*thing2)->note == 105) || ((*thing2)->note == 106))
 			return 1;	//lyric phrases should be written before the lyric event
-		else
-			return -1;
+
+		return -1;
 	}
 	if(((*thing1)->type == 0x90) && ((*thing2)->type == 0x05))
 	{
 		if(((*thing1)->note == 105) || ((*thing1)->note == 106))
 			return -1;	//lyric phrase should be written before the lyric event
-		else
-			return 1;
+
+		return 1;
 	}
 
 	/* put pro drum phrase on markers before regular notes */
@@ -3789,66 +3789,64 @@ int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistp
 				eventindex++;		//Not a running event, so advance forward in the event data
 			}
 
-			switch(eventtype >> 4)
-			{
-				case 0xF:	//Meta/Sysex Event
-					if((eventtype & 0xF) == 0xF)
-					{	//If it's a meta event
-						meventtype = dataptr[eventindex];	//Read the meta event type
-						eventindex++;
-						bytes_used = 0;
-						(void) eof_parse_var_len(dataptr, eventindex, &bytes_used);	//Read the meta event length
-						eventindex += bytes_used;	//Advance by the size of the variable length value parsed above
-						if(meventtype == 0x51)
-						{	//Tempo change
-							unsigned long ppqn;
+			if((eventtype >> 4) == 0xF)
+			{	//Meta/Sysex Event
+				if((eventtype & 0xF) == 0xF)
+				{	//If it's a meta event
+					meventtype = dataptr[eventindex];	//Read the meta event type
+					eventindex++;
+					bytes_used = 0;
+					(void) eof_parse_var_len(dataptr, eventindex, &bytes_used);	//Read the meta event length
+					eventindex += bytes_used;	//Advance by the size of the variable length value parsed above
+					if(meventtype == 0x51)
+					{	//Tempo change
+						unsigned long ppqn;
 
-							if(!lastppqn && eventptr->deltatime)
-							{	//If this is the first tempo change and it isn't at delta time 0
-								temp = eof_add_to_tempo_list(0, sp->beat[0]->fpos, 120.0, anchorlist);	//Insert a tempo of 120BPM at delta position 0 (the position of the first beat marker)
-								if(!temp)
-								{	//Error creating link in tempo list
-									eof_destroy_tempo_list(anchorlist);	//Destroy list
-									eof_destroy_ts_list(tslist);
-									return 0;			//Return failure
-								}
-								anchorlist = temp;	//Update list pointer
-							}
-							ppqn = (dataptr[eventindex]<<16) | (dataptr[eventindex+1]<<8) | dataptr[eventindex+2];	//Read the 3 byte big endian value
-							eventindex += 3;
-							lastppqn = ppqn;	//Remember this value
-							temp = eof_add_to_tempo_list(eventptr->deltatime, eventptr->realtime + sp->beat[0]->fpos, 60000000.0/lastppqn, anchorlist);	//Store the tempo change, taking the MIDI delay into account
-							if(temp == NULL)
-							{	//Test the return value of eof_add_to_tempo_list()
+						if(!lastppqn && eventptr->deltatime)
+						{	//If this is the first tempo change and it isn't at delta time 0
+							temp = eof_add_to_tempo_list(0, sp->beat[0]->fpos, 120.0, anchorlist);	//Insert a tempo of 120BPM at delta position 0 (the position of the first beat marker)
+							if(!temp)
+							{	//Error creating link in tempo list
 								eof_destroy_tempo_list(anchorlist);	//Destroy list
 								eof_destroy_ts_list(tslist);
 								return 0;			//Return failure
 							}
 							anchorlist = temp;	//Update list pointer
 						}
-						else if(meventtype == 0x58)
-						{	//Time signature change
-							num = dataptr[eventindex];	//Read the numerator
-							den = dataptr[eventindex+1];	//Read the value to which the power of 2 must be raised to define the denominator
-							eventindex += 2;
-							if(den <= 7)
-							{	//For now, don't support a time signature denominator larger than 128
-								for(ctr = 0, realden = 1; ctr < den; ctr++)
-								{	//Find 2^(d2), the actual denominator of this time signature
-									realden = realden << 1;
-								}
-								if(!tsstored && eventptr->deltatime)
-								{	//If this is the first TS change and it isn't at delta time 0
-									eof_midi_add_ts_realtime(tslist, sp->beat[0]->fpos, 4, 4, 0);	//Insert a TS of 4/4 at delta position 0 (the position of the first beat marker)
-									tslist->change[tslist->changes-1]->pos = 0;
-								}
-								eof_midi_add_ts_realtime(tslist, eventptr->realtime + sp->beat[0]->fpos, num, realden, 0);	//Store the beat marker's time signature, taking the MIDI delay into account
-								tslist->change[tslist->changes-1]->pos = eventptr->deltatime;					//Store the time signature's position in deltas
-								tsstored = 1;
+						ppqn = (dataptr[eventindex]<<16) | (dataptr[eventindex+1]<<8) | dataptr[eventindex+2];	//Read the 3 byte big endian value
+						eventindex += 3;
+						lastppqn = ppqn;	//Remember this value
+						temp = eof_add_to_tempo_list(eventptr->deltatime, eventptr->realtime + sp->beat[0]->fpos, 60000000.0/lastppqn, anchorlist);	//Store the tempo change, taking the MIDI delay into account
+						if(temp == NULL)
+						{	//Test the return value of eof_add_to_tempo_list()
+							eof_destroy_tempo_list(anchorlist);	//Destroy list
+							eof_destroy_ts_list(tslist);
+							return 0;			//Return failure
+						}
+						anchorlist = temp;	//Update list pointer
+					}
+					else if(meventtype == 0x58)
+					{	//Time signature change
+						num = dataptr[eventindex];	//Read the numerator
+						den = dataptr[eventindex+1];	//Read the value to which the power of 2 must be raised to define the denominator
+						eventindex += 2;
+						if(den <= 7)
+						{	//For now, don't support a time signature denominator larger than 128
+							for(ctr = 0, realden = 1; ctr < den; ctr++)
+							{	//Find 2^(d2), the actual denominator of this time signature
+								realden = realden << 1;
 							}
+							if(!tsstored && eventptr->deltatime)
+							{	//If this is the first TS change and it isn't at delta time 0
+								eof_midi_add_ts_realtime(tslist, sp->beat[0]->fpos, 4, 4, 0);	//Insert a TS of 4/4 at delta position 0 (the position of the first beat marker)
+								tslist->change[tslist->changes-1]->pos = 0;
+							}
+							eof_midi_add_ts_realtime(tslist, eventptr->realtime + sp->beat[0]->fpos, num, realden, 0);	//Store the beat marker's time signature, taking the MIDI delay into account
+							tslist->change[tslist->changes-1]->pos = eventptr->deltatime;					//Store the time signature's position in deltas
+							tsstored = 1;
 						}
 					}
-				break;
+				}
 			}
 		}
 	}

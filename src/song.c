@@ -2475,21 +2475,21 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 			}
 		return 0;	//Return error
 
-		case EOF_YELLOW_CYMBAL_SECTION:	//Yellow cymbal section (not supported yet)
-			if(sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-			{	//Cymbal sections are only valid for drum tracks
-			}
-		break;
-		case EOF_BLUE_CYMBAL_SECTION:	//Blue cymbal section (not supported yet)
-			if(sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-			{	//Cymbal sections are only valid for drum tracks
-			}
-		break;
-		case EOF_GREEN_CYMBAL_SECTION:	//Green cymbal section (not supported yet)
-			if(sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-			{	//Cymbal sections are only valid for drum tracks
-			}
-		break;
+//		case EOF_YELLOW_CYMBAL_SECTION:	//Yellow cymbal section (not supported yet)
+//			if(sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+//			{	//Cymbal sections are only valid for drum tracks
+//			}
+//		break;
+//		case EOF_BLUE_CYMBAL_SECTION:	//Blue cymbal section (not supported yet)
+//			if(sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+//			{	//Cymbal sections are only valid for drum tracks
+//			}
+//		break;
+//		case EOF_GREEN_CYMBAL_SECTION:	//Green cymbal section (not supported yet)
+//			if(sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+//			{	//Cymbal sections are only valid for drum tracks
+//			}
+//		break;
 
 		case EOF_TRILL_SECTION:
 		return eof_track_add_trill(sp, track, start, end);
@@ -3625,12 +3625,10 @@ unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track)
 		{	//If the legacy view is in effect, force pro guitar tracks to render as 5 lane tracks
 			return 5;
 		}
-		else
-		{
-			if(sp->pro_guitar_track[sp->track[track]->tracknum]->numstrings <= EOF_MAX_FRETS)
-			{	//If the string count is valid
-				return sp->pro_guitar_track[sp->track[track]->tracknum]->numstrings;
-			}
+
+		if(sp->pro_guitar_track[sp->track[track]->tracknum]->numstrings <= EOF_MAX_FRETS)
+		{	//If the string count is valid
+			return sp->pro_guitar_track[sp->track[track]->tracknum]->numstrings;
 		}
 	}
 
@@ -4210,14 +4208,12 @@ unsigned char eof_get_note_ghost(EOF_SONG *sp, unsigned long track, unsigned lon
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	switch(sp->track[track]->track_format)
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{
-		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			if(note < sp->pro_guitar_track[tracknum]->notes)
-			{
-				return sp->pro_guitar_track[tracknum]->note[note]->ghost;
-			}
-		break;
+		if(note < sp->pro_guitar_track[tracknum]->notes)
+		{
+			return sp->pro_guitar_track[tracknum]->note[note]->ghost;
+		}
 	}
 
 	return 0;	//Return error or not applicable
@@ -4231,14 +4227,12 @@ unsigned char eof_get_note_accent(EOF_SONG *sp, unsigned long track, unsigned lo
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	switch(sp->track[track]->track_format)
+	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
 	{
-		case EOF_LEGACY_TRACK_FORMAT:
-			if(note < sp->legacy_track[tracknum]->notes)
-			{
-				return sp->legacy_track[tracknum]->note[note]->accent;
-			}
-		break;
+		if(note < sp->legacy_track[tracknum]->notes)
+		{
+			return sp->legacy_track[tracknum]->note[note]->accent;
+		}
 	}
 
 	return 0;	//Return error
@@ -4565,14 +4559,12 @@ void eof_set_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note, 
 		return;
 	tracknum = sp->track[track]->tracknum;
 
-	switch(sp->track[track]->track_format)
+	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
 	{
-		case EOF_LEGACY_TRACK_FORMAT:
-			if(note < sp->legacy_track[tracknum]->notes)
-			{
-				sp->legacy_track[tracknum]->note[note]->accent = value;
-			}
-		break;
+		if(note < sp->legacy_track[tracknum]->notes)
+		{
+			sp->legacy_track[tracknum]->note[note]->accent = value;
+		}
 	}
 }
 
@@ -5706,14 +5698,12 @@ void eof_set_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note, 
 		return;
 	tracknum = sp->track[track]->tracknum;
 
-	switch(sp->track[track]->track_format)
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{
-		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			if(note < sp->pro_guitar_track[tracknum]->notes)
-			{
-				sp->pro_guitar_track[tracknum]->note[note]->eflags = eflags;
-			}
-		break;
+		if(note < sp->pro_guitar_track[tracknum]->notes)
+		{
+			sp->pro_guitar_track[tracknum]->note[note]->eflags = eflags;
+		}
 	}
 }
 
@@ -5996,9 +5986,8 @@ unsigned long eof_get_num_sliders(EOF_SONG *sp, unsigned long track)
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	switch(sp->track[track]->track_format)
+	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
 	{
-		case EOF_LEGACY_TRACK_FORMAT:
 		return sp->legacy_track[tracknum]->sliders;
 	}
 
@@ -6077,14 +6066,12 @@ EOF_PHRASE_SECTION *eof_get_slider(EOF_SONG *sp, unsigned long track, unsigned l
 		return NULL;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	switch(sp->track[track]->track_format)
+	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
 	{
-		case EOF_LEGACY_TRACK_FORMAT:
-			if(index < EOF_MAX_PHRASES)
-			{
-				return &sp->legacy_track[tracknum]->slider[index];
-			}
-		break;
+		if(index < EOF_MAX_PHRASES)
+		{
+			return &sp->legacy_track[tracknum]->slider[index];
+		}
 	}
 	return NULL;	//Return error
 }
@@ -6320,19 +6307,17 @@ void eof_track_delete_slider(EOF_SONG *sp, unsigned long track, unsigned long in
 		return;
 	tracknum = sp->track[track]->tracknum;
 
-	switch(sp->track[track]->track_format)
+	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
 	{
-		case EOF_LEGACY_TRACK_FORMAT:
-			if(index < sp->legacy_track[tracknum]->sliders)
+		if(index < sp->legacy_track[tracknum]->sliders)
+		{
+			sp->legacy_track[tracknum]->slider[index].name[0] = '\0';	//Empty the name string
+			for(ctr = index; ctr < sp->legacy_track[tracknum]->sliders; ctr++)
 			{
-				sp->legacy_track[tracknum]->slider[index].name[0] = '\0';	//Empty the name string
-				for(ctr = index; ctr < sp->legacy_track[tracknum]->sliders; ctr++)
-				{
-					memcpy(&sp->legacy_track[tracknum]->slider[ctr], &sp->legacy_track[tracknum]->slider[ctr + 1], sizeof(EOF_PHRASE_SECTION));
-				}
-				sp->legacy_track[tracknum]->sliders--;
+				memcpy(&sp->legacy_track[tracknum]->slider[ctr], &sp->legacy_track[tracknum]->slider[ctr + 1], sizeof(EOF_PHRASE_SECTION));
 			}
-		break;
+			sp->legacy_track[tracknum]->sliders--;
+		}
 	}
 }
 
@@ -6398,11 +6383,9 @@ void eof_set_num_sliders(EOF_SONG *sp, unsigned long track, unsigned long number
 		return;
 	tracknum = sp->track[track]->tracknum;
 
-	switch(sp->track[track]->track_format)
+	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
 	{
-		case EOF_LEGACY_TRACK_FORMAT:
-			sp->legacy_track[tracknum]->sliders = number;
-		break;
+		sp->legacy_track[tracknum]->sliders = number;
 	}
 }
 
@@ -6537,34 +6520,33 @@ void *eof_copy_note(EOF_SONG *ssp, unsigned long sourcetrack, unsigned long sour
 	{	//If copying from PART VOCALS
 		return eof_track_add_create_note(dsp, desttrack, note, pos, length, type, text);
 	}
-	else
-	{	//If copying from a non vocal track
-		if((ssp->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (dsp->track[desttrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
-		{	//If copying from a pro guitar track to a non pro guitar track
-			if(ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask != 0)
-			{	//If the user defined how this pro guitar note would transcribe to a legacy track
-				note = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask;	//Use that bitmask
-			}
-		}
 
-		result = eof_track_add_create_note(dsp, desttrack, note, pos, length, type, text);
-		if(result)
-		{	//If the note was successfully created
-			newnotenum = eof_get_track_size(dsp, desttrack) - 1;		//The index of the new note
-			eof_set_note_flags(dsp, desttrack, newnotenum, flags);	//Copy the source note's flags to the newly created note
-			if((ssp->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (dsp->track[desttrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-			{	//If the note was copied from a pro guitar track and pasted to a pro guitar track
-				memcpy(dsp->pro_guitar_track[desttracknum]->note[newnotenum]->frets, ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->frets, 6);		//Copy the six usable string fret values from the source note to the newly created note
-				memcpy(dsp->pro_guitar_track[desttracknum]->note[newnotenum]->finger, ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->finger, 6);	//Copy the six usable finger values from the source note to the newly created note
-				dsp->pro_guitar_track[desttracknum]->note[newnotenum]->ghost = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->ghost;				//Copy the ghost bitmask
-				dsp->pro_guitar_track[desttracknum]->note[newnotenum]->legacymask = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask;		//Copy the legacy bitmask
-				dsp->pro_guitar_track[desttracknum]->note[newnotenum]->bendstrength = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->bendstrength;	//Copy the bend strength
-				dsp->pro_guitar_track[desttracknum]->note[newnotenum]->slideend = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->slideend;			//Copy the slide end position
-				dsp->pro_guitar_track[desttracknum]->note[newnotenum]->unpitchend = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->unpitchend;		//Copy the unpitched slide end position
-				dsp->pro_guitar_track[desttracknum]->note[newnotenum]->eflags = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->eflags;				//Copy the extended flags
-			}
+	//If copying from a non vocal track
+	if((ssp->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (dsp->track[desttrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	{	//If copying from a pro guitar track to a non pro guitar track
+		if(ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask != 0)
+		{	//If the user defined how this pro guitar note would transcribe to a legacy track
+			note = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask;	//Use that bitmask
 		}
-	}//If copying from a non vocal track
+	}
+
+	result = eof_track_add_create_note(dsp, desttrack, note, pos, length, type, text);
+	if(result)
+	{	//If the note was successfully created
+		newnotenum = eof_get_track_size(dsp, desttrack) - 1;		//The index of the new note
+		eof_set_note_flags(dsp, desttrack, newnotenum, flags);	//Copy the source note's flags to the newly created note
+		if((ssp->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (dsp->track[desttrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If the note was copied from a pro guitar track and pasted to a pro guitar track
+			memcpy(dsp->pro_guitar_track[desttracknum]->note[newnotenum]->frets, ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->frets, 6);		//Copy the six usable string fret values from the source note to the newly created note
+			memcpy(dsp->pro_guitar_track[desttracknum]->note[newnotenum]->finger, ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->finger, 6);	//Copy the six usable finger values from the source note to the newly created note
+			dsp->pro_guitar_track[desttracknum]->note[newnotenum]->ghost = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->ghost;				//Copy the ghost bitmask
+			dsp->pro_guitar_track[desttracknum]->note[newnotenum]->legacymask = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask;		//Copy the legacy bitmask
+			dsp->pro_guitar_track[desttracknum]->note[newnotenum]->bendstrength = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->bendstrength;	//Copy the bend strength
+			dsp->pro_guitar_track[desttracknum]->note[newnotenum]->slideend = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->slideend;			//Copy the slide end position
+			dsp->pro_guitar_track[desttracknum]->note[newnotenum]->unpitchend = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->unpitchend;		//Copy the unpitched slide end position
+			dsp->pro_guitar_track[desttracknum]->note[newnotenum]->eflags = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->eflags;				//Copy the extended flags
+		}
+	}
 
 	return result;
 }
@@ -6582,9 +6564,8 @@ unsigned long eof_get_num_arpeggios(EOF_SONG *sp, unsigned long track)
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	switch(sp->track[track]->track_format)
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{
-		case EOF_PRO_GUITAR_TRACK_FORMAT:
 		return sp->pro_guitar_track[tracknum]->arpeggios;
 	}
 
@@ -6599,14 +6580,12 @@ EOF_PHRASE_SECTION *eof_get_arpeggio(EOF_SONG *sp, unsigned long track, unsigned
 		return NULL;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	switch(sp->track[track]->track_format)
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{
-		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			if(index < EOF_MAX_PHRASES)
-			{
-				return &sp->pro_guitar_track[tracknum]->arpeggio[index];
-			}
-		break;
+		if(index < EOF_MAX_PHRASES)
+		{
+			return &sp->pro_guitar_track[tracknum]->arpeggio[index];
+		}
 	}
 
 	return NULL;	//Return error
@@ -6620,9 +6599,8 @@ unsigned long eof_get_num_popup_messages(EOF_SONG *sp, unsigned long track)
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	switch(sp->track[track]->track_format)
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{
-		case EOF_PRO_GUITAR_TRACK_FORMAT:
 		return sp->pro_guitar_track[tracknum]->popupmessages;
 	}
 
@@ -6637,9 +6615,8 @@ unsigned long eof_get_num_fret_hand_positions(EOF_SONG *sp, unsigned long track)
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	switch(sp->track[track]->track_format)
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{
-		case EOF_PRO_GUITAR_TRACK_FORMAT:
 		return sp->pro_guitar_track[tracknum]->handpositions;
 	}
 
@@ -6654,14 +6631,12 @@ EOF_PHRASE_SECTION *eof_get_fret_hand_position(EOF_SONG *sp, unsigned long track
 		return NULL;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	switch(sp->track[track]->track_format)
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{
-		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			if(index < EOF_MAX_PHRASES)
-			{
-				return &sp->pro_guitar_track[tracknum]->handposition[index];
-			}
-		break;
+		if(index < EOF_MAX_PHRASES)
+		{
+			return &sp->pro_guitar_track[tracknum]->handposition[index];
+		}
 	}
 
 	return NULL;	//Return error
@@ -6677,11 +6652,9 @@ void eof_set_num_fret_hand_positions(EOF_SONG *sp, unsigned long track, unsigned
 		return;
 	tracknum = sp->track[track]->tracknum;
 
-	switch(sp->track[track]->track_format)
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{
-		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			sp->pro_guitar_track[tracknum]->handpositions = number;
-		break;
+		sp->pro_guitar_track[tracknum]->handpositions = number;
 	}
 }
 
@@ -6817,9 +6790,8 @@ unsigned long eof_get_num_lyric_sections(EOF_SONG *sp, unsigned long track)
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	switch(sp->track[track]->track_format)
+	if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
 	{
-		case EOF_VOCAL_TRACK_FORMAT:
 		return sp->vocal_track[tracknum]->lines;
 	}
 
@@ -6834,14 +6806,12 @@ EOF_PHRASE_SECTION *eof_get_lyric_section(EOF_SONG *sp, unsigned long track, uns
 		return NULL;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	switch(sp->track[track]->track_format)
+	if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
 	{
-		case EOF_VOCAL_TRACK_FORMAT:
-			if(sectionnum < EOF_MAX_LYRIC_LINES)
-			{
-				return &sp->vocal_track[tracknum]->line[sectionnum];
-			}
-		break;
+		if(sectionnum < EOF_MAX_LYRIC_LINES)
+		{
+			return &sp->vocal_track[tracknum]->line[sectionnum];
+		}
 	}
 
 	return NULL;	//Return error
@@ -7001,11 +6971,9 @@ void eof_set_num_arpeggios(EOF_SONG *sp, unsigned long track, unsigned long numb
 		return;
 	tracknum = sp->track[track]->tracknum;
 
-	switch(sp->track[track]->track_format)
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{
-		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			sp->pro_guitar_track[tracknum]->arpeggios = number;
-		break;
+		sp->pro_guitar_track[tracknum]->arpeggios = number;
 	}
 }
 
@@ -7020,19 +6988,17 @@ void eof_track_delete_arpeggio(EOF_SONG *sp, unsigned long track, unsigned long 
 		return;
 	tracknum = sp->track[track]->tracknum;
 
-	switch(sp->track[track]->track_format)
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{
-		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			if(index < sp->pro_guitar_track[tracknum]->arpeggios)
+		if(index < sp->pro_guitar_track[tracknum]->arpeggios)
+		{
+			sp->pro_guitar_track[tracknum]->arpeggio[index].name[0] = '\0';	//Empty the name string
+			for(ctr = index; ctr < sp->pro_guitar_track[tracknum]->arpeggios; ctr++)
 			{
-				sp->pro_guitar_track[tracknum]->arpeggio[index].name[0] = '\0';	//Empty the name string
-				for(ctr = index; ctr < sp->pro_guitar_track[tracknum]->arpeggios; ctr++)
-				{
-					memcpy(&sp->pro_guitar_track[tracknum]->arpeggio[ctr], &sp->pro_guitar_track[tracknum]->arpeggio[ctr + 1], sizeof(EOF_PHRASE_SECTION));
-				}
-				sp->pro_guitar_track[tracknum]->arpeggios--;
+				memcpy(&sp->pro_guitar_track[tracknum]->arpeggio[ctr], &sp->pro_guitar_track[tracknum]->arpeggio[ctr + 1], sizeof(EOF_PHRASE_SECTION));
 			}
-		break;
+			sp->pro_guitar_track[tracknum]->arpeggios--;
+		}
 	}
 }
 
@@ -7617,19 +7583,15 @@ long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long no
 		{	//If the notes aren't far enough apart to enforce the minimum note distance
 			return 1;
 		}
-		else
-		{
-			break;
-		}
+
+		break;
 	}
 	if(enforcegap)
 	{	//If the minimum distance between notes is being observed
 		return (nextpos - thispos - effective_min_note_distance);
 	}
-	else
-	{
-		return (nextpos - thispos);
-	}
+
+	return (nextpos - thispos);
 }
 
 int eof_check_if_notes_exist_beyond_audio_end(EOF_SONG *sp)

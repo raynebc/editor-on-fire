@@ -704,8 +704,8 @@ unsigned long ParseUnicodeString(FILE *inf)
 
 		if((input[0]==0) && (input[1]==0))	//We read the unicode null terminator
 			return ctr;	//return length of string, not counting NULL terminator
-		else
-			ctr++;	//one more character has been parsed
+
+		ctr++;	//one more character has been parsed
 	}
 }
 
@@ -788,11 +788,10 @@ long int ParseLongInt(char *buffer,unsigned long *startindex,unsigned long linen
 					*errorstatus=1;
 					return 0;
 				}
-				else
-				{	//Print error and exit
-					printf("Error: Invalid character encountered when numerical string is expected.\nError occurs in line %lu of input file\nAborting\n",linenum);
-					exit_wrapper(1);
-				}
+
+				//Print error and exit
+				printf("Error: Invalid character encountered when numerical string is expected.\nError occurs in line %lu of input file\nAborting\n",linenum);
+				exit_wrapper(1);
 			}
 		}
 	}
@@ -805,11 +804,9 @@ long int ParseLongInt(char *buffer,unsigned long *startindex,unsigned long linen
 			*errorstatus=2;
 			return 0;
 		}
-		else
-		{
-			printf("Error: Unexpected end of line encountered.\nError occurs in line %lu of input file\nAborting\n",linenum);
-			exit_wrapper(2);
-		}
+
+		printf("Error: Unexpected end of line encountered.\nError occurs in line %lu of input file\nAborting\n",linenum);
+		exit_wrapper(2);
 	}
 
 	while(isspace((unsigned char)buffer[index]) == 0)
@@ -828,11 +825,9 @@ long int ParseLongInt(char *buffer,unsigned long *startindex,unsigned long linen
 				*errorstatus=3;
 				return 0;
 			}
-			else
-			{
-				printf("Error: Non-numerical character encountered when numerical string is expected.\nError occurs in line %lu of input file\nAborting\n",linenum);
-				exit_wrapper(3);
-			}
+
+			printf("Error: Non-numerical character encountered when numerical string is expected.\nError occurs in line %lu of input file\nAborting\n",linenum);
+			exit_wrapper(3);
 		}
 
 		if(index2 > 10)	//We only are accounting for a numerical string 10 characters long
@@ -842,11 +837,9 @@ long int ParseLongInt(char *buffer,unsigned long *startindex,unsigned long linen
 				*errorstatus=4;
 				return 0;
 			}
-			else
-			{
-				printf("Error: The encountered numerical string is too large.\nError occurs in line %lu of input file\nAborting\n",linenum);
-				exit_wrapper(4);
-			}
+
+			printf("Error: The encountered numerical string is too large.\nError occurs in line %lu of input file\nAborting\n",linenum);
+			exit_wrapper(4);
 		}
 
 		index++;	//Look at next character
@@ -867,11 +860,9 @@ long int ParseLongInt(char *buffer,unsigned long *startindex,unsigned long linen
 				*errorstatus=5;
 				return 0;
 			}
-			else
-			{
-				printf("Error converting numerical string to numerical value.\nError occurs in line %lu of input file\nAborting\n",linenum);
-				exit_wrapper(5);
-			}
+
+			printf("Error converting numerical string to numerical value.\nError occurs in line %lu of input file\nAborting\n",linenum);
+			exit_wrapper(5);
 		}
 	}
 
@@ -1265,11 +1256,9 @@ size_t FindLongestLineLength(FILE *inf,char exit_on_empty)
 			rewind_err(inf);
 			return 0;
 		}
-		else
-		{
-			(void) puts("Error: File is empty\nAborting");
-			exit_wrapper(1);
-		}
+
+		(void) puts("Error: File is empty\nAborting");
+		exit_wrapper(1);
 	}
 	maxlinelength++;		//Must increment this to account for newline character
 

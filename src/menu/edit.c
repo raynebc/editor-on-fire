@@ -1738,10 +1738,9 @@ int eof_menu_edit_zoom_helper_in(void)
 	{	//If the current zoom level is user defined
 		return eof_menu_edit_zoom_level(EOF_NUM_ZOOM_LEVELS);	//Zoom in to the highest preset zoom level
 	}
-	else
-	{	//Otherwise zoom in normally
-		return eof_menu_edit_zoom_level(eof_zoom - 1);
-	}
+
+	//Otherwise zoom in normally
+	return eof_menu_edit_zoom_level(eof_zoom - 1);
 }
 
 int eof_menu_edit_zoom_helper_out(void)

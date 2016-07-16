@@ -168,10 +168,8 @@ static long eof_import_closest_beat(EOF_SONG * sp, unsigned long pos)
 		{
 			return bb;
 		}
-		else
-		{
-			return ab;
-		}
+
+		return ab;
 	}
 	return -1;
 }
@@ -196,10 +194,10 @@ static void eof_midi_import_add_event(EOF_IMPORT_MIDI_EVENT_LIST * events, unsig
 			events->events++;
 		}
 	}
-	else
-	{
+//	else
+//	{
 //		allegro_message("too many events!");
-	}
+//	}
 }
 
 static void eof_midi_import_add_text_event(EOF_IMPORT_MIDI_EVENT_LIST * events, unsigned long pos, unsigned char event, char * text, unsigned long size, unsigned long track)
@@ -224,10 +222,10 @@ static void eof_midi_import_add_text_event(EOF_IMPORT_MIDI_EVENT_LIST * events, 
 			events->events++;
 		}
 	}
-	else
-	{
+//	else
+//	{
 //		allegro_message("too many events!");
-	}
+//	}
 }
 
 static void eof_midi_import_add_sysex_event(EOF_IMPORT_MIDI_EVENT_LIST * events, unsigned long pos, char * data, unsigned long size, unsigned long track)
@@ -254,10 +252,10 @@ static void eof_midi_import_add_sysex_event(EOF_IMPORT_MIDI_EVENT_LIST * events,
 			}
 		}
 	}
-	else
-	{
+//	else
+//	{
 //		allegro_message("too many events!");
-	}
+//	}
 }
 
 double eof_ConvertToRealTime(unsigned long absolutedelta, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision, unsigned long offset)
@@ -607,9 +605,9 @@ EOF_SONG * eof_import_midi(const char * fn)
 					{
 						current_meta_event = eof_work_midi->track[track[i]].data[track_pos];
 						track_pos++;
-						if(current_meta_event != 0x51)
-						{
-						}
+//						if(current_meta_event != 0x51)
+//						{
+//						}
 						switch(current_meta_event)
 						{
 

@@ -933,54 +933,53 @@ int eof_menu_file_lyrics_import(void)
 			(void) alert("Error", NULL, "Could not import lyrics.  Undetermined error.", "OK", NULL, 0, KEY_ENTER);
 			return 1;
 		}
-		else
-		{
-		//Detect if the selected file has lyrics
-			eof_log("\t\tDetecting lyric format.", 1);
-			lyricdetectionlist=DetectLyricFormat(returnedfn);	//Auto detect the lyric format of the chosen file
-			ReleaseMemory(1);	//Release memory allocated during lyric import
-			if(lyricdetectionlist == NULL)
-			{
-				if(tempfile)
-				{	//If a temporary file was created
-					(void) delete_file(templyricfile);	//Delete it
-				}
-				(void) alert("Error", NULL, "No lyrics detected", "OK", NULL, 0, KEY_ENTER);
-				return 0;	//return error
-			}
 
-		//Import lyrics
-			eof_log("\t\tParsing lyrics.", 1);
-			if(lyricdetectionlist->next == NULL)	//If this file had only one detected lyric format
+		//Detect if the selected file has lyrics
+		eof_log("\t\tDetecting lyric format.", 1);
+		lyricdetectionlist=DetectLyricFormat(returnedfn);	//Auto detect the lyric format of the chosen file
+		ReleaseMemory(1);	//Release memory allocated during lyric import
+		if(lyricdetectionlist == NULL)
+		{
+			if(tempfile)
+			{	//If a temporary file was created
+				(void) delete_file(templyricfile);	//Delete it
+			}
+			(void) alert("Error", NULL, "No lyrics detected", "OK", NULL, 0, KEY_ENTER);
+			return 0;	//return error
+		}
+
+	//Import lyrics
+		eof_log("\t\tParsing lyrics.", 1);
+		if(lyricdetectionlist->next == NULL)	//If this file had only one detected lyric format
+		{
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make a generic undo state
+			returncode = EOF_IMPORT_VIA_LC(eof_song->vocal_track[0], NULL, lyricdetectionlist->format, returnedfn, lyricdetectionlist->track);
+				//Import the format
+		}
+		else
+		{	//Prompt user to select from the multiple possible imports
+			eof_lyric_import_prompt(&selectedformat,&selectedtrack);
+			if(selectedformat)	//If a selection was made
 			{
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make a generic undo state
-				returncode = EOF_IMPORT_VIA_LC(eof_song->vocal_track[0], NULL, lyricdetectionlist->format, returnedfn, lyricdetectionlist->track);
-					//Import the format
-			}
-			else
-			{	//Prompt user to select from the multiple possible imports
-				eof_lyric_import_prompt(&selectedformat,&selectedtrack);
-				if(selectedformat)	//If a selection was made
-				{
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make a generic undo state
-					returncode = EOF_IMPORT_VIA_LC(eof_song->vocal_track[0], NULL, selectedformat, returnedfn, selectedtrack);
-				}
-			}
-			if(returncode == 0)
-			{	//This was initialized to nonzero, so if it's zero now, the import above failed, undo the import by loading the last undo state
-				eof_log("\t\tError:  Invalid lyric file", 1);
-				(void) alert("Error", NULL, "Invalid lyric file", "OK", NULL, 0, KEY_ENTER);
-				(void) eof_menu_edit_undo();
-			}
-			else
-			{	//Import succeeded
-				eof_log("\tLyric import successful", 1);
-				eof_truncate_chart(eof_song);	//Add beats to the chart if necessary to encompass the imported lyrics
-				eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
-				eof_reset_lyric_preview_lines();
-				(void) replace_filename(eof_last_lyric_path, returnedfn, "", 1024);	//Set the last loaded lyric file path
+				returncode = EOF_IMPORT_VIA_LC(eof_song->vocal_track[0], NULL, selectedformat, returnedfn, selectedtrack);
 			}
 		}
+		if(returncode == 0)
+		{	//This was initialized to nonzero, so if it's zero now, the import above failed, undo the import by loading the last undo state
+			eof_log("\t\tError:  Invalid lyric file", 1);
+			(void) alert("Error", NULL, "Invalid lyric file", "OK", NULL, 0, KEY_ENTER);
+			(void) eof_menu_edit_undo();
+		}
+		else
+		{	//Import succeeded
+			eof_log("\tLyric import successful", 1);
+			eof_truncate_chart(eof_song);	//Add beats to the chart if necessary to encompass the imported lyrics
+			eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
+			eof_reset_lyric_preview_lines();
+			(void) replace_filename(eof_last_lyric_path, returnedfn, "", 1024);	//Set the last loaded lyric file path
+		}
+
 		if(tempfile)
 		{	//If a temporary file was created
 			(void) delete_file(templyricfile);	//Delete it
@@ -2124,33 +2123,31 @@ int eof_menu_file_feedback_import(void)
 			eof_pen_visible = 1;
 			return 1;
 		}
+
+		/* destroy loaded song */
+		if(eof_song)
+		{
+			eof_destroy_song(eof_song);
+			eof_song = NULL;
+			eof_song_loaded = 0;
+		}
+		(void) eof_destroy_ogg();
+
+		/* import chart */
+		eof_song = eof_import_chart(returnedfn);
+		if(eof_song)
+		{
+			eof_song_loaded = 1;
+			eof_init_after_load(0);
+			(void) replace_filename(eof_last_db_path, returnedfn, "", 1024);	//Set the last loaded Feedback file path
+			eof_cleanup_beat_flags(eof_song);	//Update anchor flags as necessary for any time signature changes
+			eof_song_enforce_mid_beat_tempo_change_removal();	//Remove mid beat tempo changes if applicable
+		}
 		else
 		{
-			/* destroy loaded song */
-			if(eof_song)
-			{
-				eof_destroy_song(eof_song);
-				eof_song = NULL;
-				eof_song_loaded = 0;
-			}
-			(void) eof_destroy_ogg();
-
-			/* import chart */
-			eof_song = eof_import_chart(returnedfn);
-			if(eof_song)
-			{
-				eof_song_loaded = 1;
-				eof_init_after_load(0);
-				(void) replace_filename(eof_last_db_path, returnedfn, "", 1024);	//Set the last loaded Feedback file path
-				eof_cleanup_beat_flags(eof_song);	//Update anchor flags as necessary for any time signature changes
-				eof_song_enforce_mid_beat_tempo_change_removal();	//Remove mid beat tempo changes if applicable
-			}
-			else
-			{
-				eof_song_loaded = 0;
-				eof_changes = 0;
-				eof_fix_window_title();
-			}
+			eof_song_loaded = 0;
+			eof_changes = 0;
+			eof_fix_window_title();
 		}
 	}
 	eof_show_mouse(NULL);

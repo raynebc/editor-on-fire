@@ -288,17 +288,13 @@ unsigned long spectrogram_get_freq_from_px(struct spectrogramstruct *spectrogram
 	{
 		return 0;
 	}
-	else
+
+	if(px > 0 && px <= spectrogram->px_to_freq.height)
 	{
-		if(px > 0 && px <= spectrogram->px_to_freq.height)
-		{
-			return spectrogram->px_to_freq.map[px];
-		}
-		else
-		{
-			return 0;
-		}
+		return spectrogram->px_to_freq.map[px];
 	}
+
+	return 0;
 }
 
 /**
@@ -316,10 +312,8 @@ double eof_spectrogram_freq_from_y(long rate, double y)
 	{
 		return MINFREQ * pow(((double)rate/2.0) / MINFREQ, y);
 	}
-	else
-	{
-		return MINFREQ + y * (((double)rate/2.0) - MINFREQ);
-	}
+
+	return MINFREQ + y * (((double)rate/2.0) - MINFREQ);
 }
 
 /**
@@ -339,10 +333,8 @@ double eof_spectrogram_y_from_freq(long rate, double freq)
 		lograte = log(((double)rate/2.0) / MINFREQ);	//Cache this to avoid Splint's nag about multiple calls to log() in one line of code, obscuring which one may have returned an error through errno
 		return log(freq / MINFREQ) / lograte;
 	}
-	else
-	{
-		return (freq - MINFREQ) / (((double)rate/2.0) - MINFREQ);
-	}
+
+	return (freq - MINFREQ) / (((double)rate/2.0) - MINFREQ);
 }
 
 void eof_render_spectrogram_col(struct spectrogramstruct *spectrogram,struct spectrogramchanneldata *channel,struct spectrogramslice *ampdata, unsigned long x, unsigned long curms)
@@ -421,10 +413,8 @@ int eof_color_scale(double value, double max, short int scalenum)
 
 		return eof_spectrogram_colorscale->colortable[(int)(value * eof_spectrogram_colorscale->maxval)];
 	}
-	else
-	{
-		return 0;
-	}
+
+	return 0;
 }
 
 /**

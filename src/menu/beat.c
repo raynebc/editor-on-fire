@@ -1652,10 +1652,9 @@ int eof_rocksmith_phrase_dialog_add(void)
 		eof_add_or_edit_text_event(eof_song->text_event[contained_section_event], 0, &undo_made);	//Run logic to edit an existing event
 		return D_O_K;
 	}
-	else
-	{	//Launch the add text event dialog to add a new event, automatically checking the RS phrase marker option
-		return eof_events_dialog_add_function(EOF_EVENT_FLAG_RS_PHRASE);
-	}
+
+	//Launch the add text event dialog to add a new event, automatically checking the RS phrase marker option
+	return eof_events_dialog_add_function(EOF_EVENT_FLAG_RS_PHRASE);
 }
 
 int eof_menu_beat_add_section(void)
@@ -1967,10 +1966,7 @@ int eof_events_dialog_delete(DIALOG * d)
 			}
 
 			/* go to next event */
-			else
-			{
-				ecount++;
-			}
+			ecount++;
 		}
 	}
 	return D_O_K;
@@ -1996,8 +1992,8 @@ int eof_menu_beat_add(void)
 		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 		return 1;
 	}
-	else
-		return -1;	//Otherwise return error
+
+	return -1;	//Otherwise return error
 }
 
 void eof_rebuild_trainer_strings(void)

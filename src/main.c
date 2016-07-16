@@ -835,10 +835,8 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 				allegro_message("Can't set up screen!  Error: %s",allegro_error);
 				return 0;
 			}
-			else
-			{
-				allegro_message("EOF is in safe mode!\nThings may not work as expected.");
-			}
+
+			allegro_message("EOF is in safe mode!\nThings may not work as expected.");
 		}
 	}
 	eof_screen = create_bitmap(eof_screen_width, eof_screen_height);
@@ -4322,10 +4320,9 @@ int eof_initialize(int argc, char * argv[])
 					allegro_message("Could not import song!");
 					return 0;
 				}
-				else
-				{	//!This will need to be updated to scan for lyric tracks and fix them
-					eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
-				}
+
+				//!This will need to be updated to scan for lyric tracks and fix them
+				eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
 			}
 			else if(!ustricmp(get_extension(argv[i]), "rba"))
 			{
@@ -4341,10 +4338,8 @@ int eof_initialize(int argc, char * argv[])
 					allegro_message("Could not import song!");
 					return 0;
 				}
-				else
-				{
-					eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
-				}
+
+				eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
 			}
 			else if(!ustricmp(get_extension(argv[i]), "chart"))
 			{	//Import a Feedback chart via command line

@@ -1253,10 +1253,7 @@ int eof_fret_hand_position_delete(DIALOG * d)
 			}
 
 			/* go to next event */
-			else
-			{
-				ecount++;
-			}
+			ecount++;
 		}
 	}
 	return D_O_K;
@@ -1352,10 +1349,7 @@ int eof_fret_hand_position_seek(DIALOG * d)
 			}
 
 			/* go to next event */
-			else
-			{
-				ecount++;
-			}
+			ecount++;
 		}
 	}
 	return D_O_K;
@@ -2497,10 +2491,8 @@ int eof_track_manage_rs_phrases_seek(DIALOG * d)
 				(void) dialog_message(eof_track_manage_rs_phrases_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
 				return D_O_K;
 			}
-			else
-			{
-				numphrases++;	//Update counter
-			}
+
+			numphrases++;	//Update counter
 		}
 	}
 	return D_O_K;

@@ -4006,9 +4006,9 @@ int eof_menu_song_export_song_preview(void)
 	if(oldstartstring && oldendstring)
 	{	//If both timestamp tags were found in the INI settings
 		char *temp;
-		for(temp = oldstartstring; (*temp == ' '); temp++);	//Skip past any leading whitespace in the value portion of the INI setting
+		for(temp = oldstartstring; *temp == ' '; temp++);	//Skip past any leading whitespace in the value portion of the INI setting
 		start = strtoul(temp, NULL, 10);
-		for(temp = oldendstring; (*temp == ' '); temp++);	//Skip past any leading whitespace in the value portion of the INI setting
+		for(temp = oldendstring; *temp == ' '; temp++);	//Skip past any leading whitespace in the value portion of the INI setting
 		stop = strtoul(temp, NULL, 10);
 	}
 

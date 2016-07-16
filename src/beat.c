@@ -60,10 +60,8 @@ double eof_get_beat_length(EOF_SONG * sp, unsigned long beat)
 	{
 		return sp->beat[beat + 1]->fpos - sp->beat[beat]->fpos;
 	}
-	else
-	{
-		return sp->beat[sp->beats - 1]->fpos - sp->beat[sp->beats - 2]->fpos;
-	}
+
+	return sp->beat[sp->beats - 1]->fpos - sp->beat[sp->beats - 2]->fpos;
 }
 
 void eof_calculate_beats(EOF_SONG * sp)

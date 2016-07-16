@@ -62,11 +62,9 @@ int VL_PreLoad(FILE *inf,char validate)
 	{
 		if(validate)
 			return 1;
-		else
-		{
-			(void) puts("Error: Invalid file header string\nAborting");
-			exit_wrapper(1);
-		}
+
+		(void) puts("Error: Invalid file header string\nAborting");
+		exit_wrapper(1);
 	}
 
 //Read text header
@@ -79,11 +77,9 @@ int VL_PreLoad(FILE *inf,char validate)
 		(void) puts("Error: VL spec. violation: Sync chunk is not padded to a double-word alignment");
 		if(validate)
 			return 2;
-		else
-		{
-			(void) puts("Aborting");
-			exit_wrapper(2);
-		}
+
+		(void) puts("Aborting");
+		exit_wrapper(2);
 	}
 
 	if(strncmp(buffer,"TEXT",5) != 0)
@@ -91,11 +87,9 @@ int VL_PreLoad(FILE *inf,char validate)
 		(void) puts("Error: Invalid text header string");
 		if(validate)
 			return 3;
-		else
-		{
-			(void) puts("Aborting");
-			exit_wrapper(3);
-		}
+
+		(void) puts("Aborting");
+		exit_wrapper(3);
 	}
 
 //Read sync header, which should be th.textsize+16 bytes into the file
@@ -109,11 +103,9 @@ int VL_PreLoad(FILE *inf,char validate)
 		(void) puts("Error: Invalid sync header string");
 		if(validate)
 			return 4;
-		else
-		{
-			(void) puts("Aborting");
-			exit_wrapper(4);
-		}
+
+		(void) puts("Aborting");
+		exit_wrapper(4);
 	}
 
 //Validate chunk sizes given in headers (textsize was already validated if the Sync header was correctly read)
@@ -124,33 +116,27 @@ int VL_PreLoad(FILE *inf,char validate)
 		printf("Error determining file length during file size validation: %s\n",strerror(errno));
 		if(validate)
 			return 5;
-		else
-		{
-			(void) puts("Aborting");
-			exit_wrapper(5);
-		}
+
+		(void) puts("Aborting");
+		exit_wrapper(5);
 	}
 	if((unsigned long)ftell_result != VL.filesize+8)	//Validate filesize
 	{
 		(void) puts("Error: Filesize does not match size given in file header");
 		if(validate)
 			return 6;
-		else
-		{
-			(void) puts("Aborting");
-			exit_wrapper(6);
-		}
+
+		(void) puts("Aborting");
+		exit_wrapper(6);
 	}
 	if(VL.filesize != VL.textsize + VL.syncsize + 16)	//Validate syncsize
 	{
 		(void) puts("Error: Incorrect size given in sync chunk");
 		if(validate)
 			return 7;
-		else
-		{
-			(void) puts("Aborting");
-			exit_wrapper(7);
-		}
+
+		(void) puts("Aborting");
+		exit_wrapper(7);
 	}
 
 //Load tags
@@ -188,11 +174,9 @@ int VL_PreLoad(FILE *inf,char validate)
 					(void) puts("Unexpected error");
 					if(validate)
 						return 8;
-					else
-					{
-						(void) puts("Aborting");
-						exit_wrapper(8);
-					}
+
+					(void) puts("Aborting");
+					exit_wrapper(8);
 				break;
 			}//end switch(ctr)
 
@@ -206,11 +190,9 @@ int VL_PreLoad(FILE *inf,char validate)
 			(void) puts("Error: Reserved string is not empty during load");
 			if(validate)
 				return 9;
-			else
-			{
-				(void) puts("Aborting");
-				exit_wrapper(9);
-			}
+
+			(void) puts("Aborting");
+			exit_wrapper(9);
 		}
 
 //Load the lyric strings
@@ -239,11 +221,9 @@ int VL_PreLoad(FILE *inf,char validate)
 				free(temp);
 				if(validate)
 					return 10;
-				else
-				{
-					(void) puts("Aborting");
-					exit_wrapper(10);
-				}
+
+				(void) puts("Aborting");
+				exit_wrapper(10);
 			}
 		}
 		if((unsigned long)ftell_result > VL.textsize + 16)	//If reading this string caused the file position to cross into Sync chunk
@@ -252,11 +232,9 @@ int VL_PreLoad(FILE *inf,char validate)
 			free(temp);
 			if(validate)
 				return 11;
-			else
-			{
-				(void) puts("Aborting");
-				exit_wrapper(11);
-			}
+
+			(void) puts("Aborting");
+			exit_wrapper(11);
 		}
 
 		if(Lyrics.verbose)	printf("\tLoading text piece #%lu: \"%s\"\n",VL.numlines,temp);
@@ -296,11 +274,9 @@ int VL_PreLoad(FILE *inf,char validate)
 			(void) puts("Error: Invalid sync point offset is specified to start after end offset");
 			if(validate)
 				return 12;
-			else
-			{
-				(void) puts("Aborting");
-				exit_wrapper(12);
-			}
+
+			(void) puts("Aborting");
+			exit_wrapper(12);
 		}
 
 		if(se.lyric_number!=0xFFFF && se.start_char!=0xFFFF && se.start_time!=0xFFFFFFFF)

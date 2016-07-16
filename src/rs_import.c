@@ -2132,17 +2132,16 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 
 		return tp;
 	}
-	else
-	{
-		for(ctr = 0; ctr < tp->pgnotes; ctr++)
-		{	//For each normal note that was imported
-			free(tp->pgnote[ctr]);
-		}
-		for(ctr = 0; ctr < tp->technotes; ctr++)
-		{	//For each tech note that was imported
-			free(tp->technote[ctr]);
-		}
-		free(tp);
-		return NULL;
+
+	for(ctr = 0; ctr < tp->pgnotes; ctr++)
+	{	//For each normal note that was imported
+		free(tp->pgnote[ctr]);
 	}
+	for(ctr = 0; ctr < tp->technotes; ctr++)
+	{	//For each tech note that was imported
+		free(tp->technote[ctr]);
+	}
+	free(tp);
+
+	return NULL;
 }

@@ -149,13 +149,11 @@ int eof_song_qsort_events(const void * e1, const void * e2)
 	{
 		if((*thing1)->index < ((*thing2)->index))
 			return -1;	//If the first event's index is lower, it will sort earlier
-		else
-			return 1;
-	}
-	else
-	{
+
 		return 1;
 	}
+
+	return 1;
 }
 
 char eof_song_contains_event(EOF_SONG *sp, const char *text, unsigned long track, unsigned long flags, unsigned char track_specific)
