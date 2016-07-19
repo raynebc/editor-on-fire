@@ -307,6 +307,7 @@ EOF_SONG *eof_load_bf(char * fn)
 				break;
 				default:
 					lang = "Unknown";
+				break;
 			}
 			#ifdef ALLEGRO_WINDOWS
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSection #%lu (STbl) chunk size = %lu, index key = 0x%016I64x, folder key = 0x%016I64x, language key = 0x%016I64x (%s), number of entries = %lu, table size = %lu, bytes until table = %lu", sectionctr, dword, qword, qword2, qword3, lang, numstbentries, dword3, dword4);
@@ -318,6 +319,8 @@ EOF_SONG *eof_load_bf(char * fn)
 			//Parse STbl entries
 			for(ctr = 0; ctr < numstbentries; ctr++)
 			{	//For each entry in the string table
+				char duplicate = 0;
+
 				pack_ReadQWORDBE(inf, &qword);	//Read the entry key (is allowed to be all 0s for an empty entry)
 				pack_ReadDWORDBE(inf, &dword);	//Read the offset (from the start of the string table) to this entry's string (is allowed to be all 0s for an empty entry)
 				pack_ReadDWORDBE(inf, NULL);	//Read and ignore 4 bytes of padding
@@ -328,25 +331,24 @@ EOF_SONG *eof_load_bf(char * fn)
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tEntry #%lu:\tIndex key = 0x%016llux, offset from string table start = %lu", ctr, qword, dword);
 				#endif
 				eof_log(eof_log_string, 2);
-				if(lang == lang_english)
-				{	//If this is an English language string table
-					char duplicate = 0;
-					if(numstrings < BF_IMPORT_STRING_NUM)
-					{	//If the string table is large enough to add this to the string array
-						for(ctr2 = 0; ctr2 < numstrings; ctr2++)
-						{	//For each existing entry in the string array
-							if(stringdata[ctr2].indkey == qword)
-							{	//If the key already exists in the list
-								duplicate = 1;
-								break;
-							}
+				if(lang != lang_english)
+					continue;	//If this is not an English language string table, skip it
+
+				if(numstrings < BF_IMPORT_STRING_NUM)
+				{	//If the string table is large enough to add this to the string array
+					for(ctr2 = 0; ctr2 < numstrings; ctr2++)
+					{	//For each existing entry in the string array
+						if(stringdata[ctr2].indkey == qword)
+						{	//If the key already exists in the list
+							duplicate = 1;
+							break;
 						}
-						if(!duplicate)
-						{	//If an array entry with this key didn't already exist, add it
-							stringdata[numstrings].indkey = qword;
-							stringdata[numstrings].offset = dword;
-							numstrings++;
-						}
+					}
+					if(!duplicate)
+					{	//If an array entry with this key didn't already exist, add it
+						stringdata[numstrings].indkey = qword;
+						stringdata[numstrings].offset = dword;
+						numstrings++;
 					}
 				}
 			}
@@ -392,24 +394,24 @@ EOF_SONG *eof_load_bf(char * fn)
 				{	//If this is an English language string table
 					for(ctr2 = 0; ctr2 < numstrings; ctr2++)
 					{	//For each entry in the string array
-						if(stringdata[ctr2].offset == offset)
-						{	//If the string just read is at an offset at which a string is expected
-							if(stringdata[ctr2].string == NULL)
-							{	//If a string wasn't read for this offset yet
-								int size = ustrsize(buffer) + 1;	//Get the length of the string in bytes (UTF-8 aware size) and add 1 byte for NULL
-								stringdata[ctr2].string = malloc((size_t)size);	//Allocate memory for the string
-								if(!stringdata[ctr2].string)
-								{	//If the memory couldn't be allocated
-									eof_log("\t\tError storing string into array.  Aborting", 1);
-									(void) pack_fclose(inf);
-									free(sectiondata);
-									for(ctr = 0; ctr < numstrings; free(stringdata[ctr].string), ctr++);	//Free the memory used to store each string
-									free(stringdata);
-									eof_destroy_song(sp);
-									return NULL;
-								}
-								(void) ustrzcpy(stringdata[ctr2].string, size, buffer);
+						if(stringdata[ctr2].offset != offset)
+							continue;	//If the string just read is not at an offset at which a string is expected, skip this string entry
+
+						if(stringdata[ctr2].string == NULL)
+						{	//If a string wasn't read for this offset yet
+							int size = ustrsize(buffer) + 1;	//Get the length of the string in bytes (UTF-8 aware size) and add 1 byte for NULL
+							stringdata[ctr2].string = malloc((size_t)size);	//Allocate memory for the string
+							if(!stringdata[ctr2].string)
+							{	//If the memory couldn't be allocated
+								eof_log("\t\tError storing string into array.  Aborting", 1);
+								(void) pack_fclose(inf);
+								free(sectiondata);
+								for(ctr = 0; ctr < numstrings; free(stringdata[ctr].string), ctr++);	//Free the memory used to store each string
+								free(stringdata);
+								eof_destroy_song(sp);
+								return NULL;
 							}
+							(void) ustrzcpy(stringdata[ctr2].string, size, buffer);
 						}
 					}
 				}
@@ -593,44 +595,44 @@ EOF_SONG *eof_load_bf(char * fn)
 						startms = start + 0.5;	//Round to nearest millisecond
 						endms = end + 0.5;		//Round to nearest millisecond
 						ptr = eof_lookup_bf_string_key(stringdata, numstrings, qword);	//Identify the string for this lyric
-						if(ptr)
-						{	//If the name was found
-							if(dword2 == 1)
-							{
-								type = "normal";
-							}
-							else if(dword2 == 2)
-							{
-								type = "unpitched";
-							}
-							else
-							{
-								type = "extended";
-							}
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLyric #%lu start = %lums, end = %lums, name = \"%s\", type = %lu (%s)", ctr, startms, endms, ptr, dword2, type);
-							eof_log(eof_log_string, 1);
-							lp = eof_vocal_track_add_lyric(sp->vocal_track[0]);	//Create a lyric structure
-							if(!lp)
-							{	//If the lyric couldn't be added
-								eof_log("\t\tUnable to add lyric.  Aborting.", 1);
-								(void) pack_fclose(inf);
-								free(sectiondata);
-								for(ctr = 0; ctr < numstrings; free(stringdata[ctr].string), ctr++);	//Free the memory used to store each string
-								free(stringdata);
-								eof_destroy_song(sp);
-								return NULL;
-							}
-							(void) ustrncpy(lp->text, ptr, EOF_MAX_LYRIC_LENGTH);	//Copy the lyric text into the lyric structure
-							lp->pos = startms;
-							lp->length = endms - startms + 0.5;	//Round to nearest millisecond
-							if(dword2 == 2)
-							{	//If this lyric is pitchless
-								lp->note = 0;	//Explicitly set it as such
-							}
-							else
-							{
-								lp->note = (dword & 0xFF00) >> 8;	//Otherwise set the defined pitch
-							}
+						if(!ptr)
+							continue;	//If the name was not found, skip this lyric
+
+						if(dword2 == 1)
+						{
+							type = "normal";
+						}
+						else if(dword2 == 2)
+						{
+							type = "unpitched";
+						}
+						else
+						{
+							type = "extended";
+						}
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLyric #%lu start = %lums, end = %lums, name = \"%s\", type = %lu (%s)", ctr, startms, endms, ptr, dword2, type);
+						eof_log(eof_log_string, 1);
+						lp = eof_vocal_track_add_lyric(sp->vocal_track[0]);	//Create a lyric structure
+						if(!lp)
+						{	//If the lyric couldn't be added
+							eof_log("\t\tUnable to add lyric.  Aborting.", 1);
+							(void) pack_fclose(inf);
+							free(sectiondata);
+							for(ctr = 0; ctr < numstrings; free(stringdata[ctr].string), ctr++);	//Free the memory used to store each string
+							free(stringdata);
+							eof_destroy_song(sp);
+							return NULL;
+						}
+						(void) ustrncpy(lp->text, ptr, EOF_MAX_LYRIC_LENGTH);	//Copy the lyric text into the lyric structure
+						lp->pos = startms;
+						lp->length = endms - startms + 0.5;	//Round to nearest millisecond
+						if(dword2 == 2)
+						{	//If this lyric is pitchless
+							lp->note = 0;	//Explicitly set it as such
+						}
+						else
+						{
+							lp->note = (dword & 0xFF00) >> 8;	//Otherwise set the defined pitch
 						}
 					}
 				}
@@ -843,6 +845,8 @@ EOF_SONG *eof_load_bf(char * fn)
 							break;
 							case 11:	//Pinch harmonic
 								flags |= EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC;
+							break;
+							default:
 							break;
 						}
 						if(bendtype)
@@ -1111,26 +1115,26 @@ EOF_SONG *eof_load_bf(char * fn)
 		//Find the tempo and time signature in effect at this beat
 		for(ctr = 0; ctr < numchanges; ctr++)
 		{	//For each imported time signature and tempo change
-			if(curtimems >= changes[ctr].realtimems)
-			{	//If the change is at or before the current beat time
-				if(!changes[ctr].type)
-				{	//If this is a time signature change
-					curnum = changes[ctr].TS_num;
-					curden = changes[ctr].TS_den;
+			if(curtimems < changes[ctr].realtimems)
+				continue;	//If the change is after the current beat time, skip it
+
+			if(!changes[ctr].type)
+			{	//If this is a time signature change
+				curnum = changes[ctr].TS_num;
+				curden = changes[ctr].TS_den;
+			}
+			else
+			{	//This is a tempo change
+				unsigned numbeats;	//The approximate number of beats between this tempo change and the next
+				double tempbeatlen = 60000.0 / (changes[ctr].BPM * (double)curden / 4.0);	//Determine the beat length as specified by the given BPM value (taking the time signature into account)
+				numbeats = (changes[ctr].realtime2ms - changes[ctr].realtimems) / tempbeatlen + 0.5;	//Determine the approximate number of beats between this tempo change and the next
+				if(numbeats)
+				{	//If the start and end positions are far enough apart to denote at least one beat
+					curbeatlen = ((double)changes[ctr].realtime2ms - changes[ctr].realtimems) / numbeats;	//Get a beat length that more accurately reflects the chart
 				}
 				else
-				{	//This is a tempo change
-					unsigned numbeats;	//The approximate number of beats between this tempo change and the next
-					double tempbeatlen = 60000.0 / (changes[ctr].BPM * (double)curden / 4.0);	//Determine the beat length as specified by the given BPM value (taking the time signature into account)
-					numbeats = (changes[ctr].realtime2ms - changes[ctr].realtimems) / tempbeatlen + 0.5;	//Determine the approximate number of beats between this tempo change and the next
-					if(numbeats)
-					{	//If the start and end positions are far enough apart to denote at least one beat
-						curbeatlen = ((double)changes[ctr].realtime2ms - changes[ctr].realtimems) / numbeats;	//Get a beat length that more accurately reflects the chart
-					}
-					else
-					{	//The final defined tempo change defines both positions with the same value
-						curbeatlen = tempbeatlen;	//Just base the beat length on the tempo
-					}
+				{	//The final defined tempo change defines both positions with the same value
+					curbeatlen = tempbeatlen;	//Just base the beat length on the tempo
 				}
 			}
 		}

@@ -99,21 +99,20 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	{	//For each track in the chart
 		if(i == 0)
 			continue;	//Until the band difficulty is implemented, skip this iteration
+		if(eof_difficulty_ini_tags[i][0] == '\0')
+			continue;	//If this track does not have a defined difficulty tag
 
-		if(eof_difficulty_ini_tags[i][0] != '\0')
-		{	//If this track has a supported difficulty tag
-			if(!eof_get_track_size(sp, i))
-			{	//If this track is empty
-				(void) snprintf(buffer, sizeof(buffer) - 1, "\r\n%s = -1", eof_difficulty_ini_tags[i]);	//Write an "empty track" difficulty tag
+		if(!eof_get_track_size(sp, i))
+		{	//If this track is empty
+			(void) snprintf(buffer, sizeof(buffer) - 1, "\r\n%s = -1", eof_difficulty_ini_tags[i]);	//Write an "empty track" difficulty tag
+			(void) ustrcat(ini_string, buffer);
+		}
+		else
+		{
+			if(sp->track[i]->difficulty != 0xFF)
+			{	//If the track's difficulty is defined
+				(void) snprintf(buffer, sizeof(buffer) - 1, "\r\n%s = %u", eof_difficulty_ini_tags[i], sp->track[i]->difficulty);
 				(void) ustrcat(ini_string, buffer);
-			}
-			else
-			{
-				if(sp->track[i]->difficulty != 0xFF)
-				{	//If the track's difficulty is defined
-					(void) snprintf(buffer, sizeof(buffer) - 1, "\r\n%s = %u", eof_difficulty_ini_tags[i], sp->track[i]->difficulty);
-					(void) ustrcat(ini_string, buffer);
-				}
 			}
 		}
 	}

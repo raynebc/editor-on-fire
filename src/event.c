@@ -13,26 +13,26 @@ EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long beat, char
 {
 // 	eof_log("eof_song_add_text_event() entered");
 
-	if(sp && text && (sp->text_events < EOF_MAX_TEXT_EVENTS) && (beat < sp->beats))
-	{	//If the maximum number of text events hasn't already been defined, and the specified beat number is valid
-		sp->text_event[sp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
-		if(sp->text_event[sp->text_events])
-		{
-			sp->text_event[sp->text_events]->text[0] = '\0';	//Eliminate false positive in Splint
-			(void) ustrcpy(sp->text_event[sp->text_events]->text, text);
-			sp->text_event[sp->text_events]->beat = beat;
-			if(track >= sp->tracks)
-			{	//If this is an invalid track
-				track = 0;	//Make this a global text event
-			}
-			sp->text_event[sp->text_events]->track = track;
-			sp->text_event[sp->text_events]->flags = flags;
-			sp->text_event[sp->text_events]->is_temporary = is_temporary;
-			sp->beat[beat]->flags |= EOF_BEAT_FLAG_EVENTS;	//Set the events flag for the beat
-			sp->text_event[sp->text_events]->index = 0;
-			sp->text_events++;
-			return sp->text_event[sp->text_events-1];	//Return successfully created text event
+	if(!sp || !text || (sp->text_events >= EOF_MAX_TEXT_EVENTS) || (beat >= sp->beats))
+		return NULL;	//Invalid parameters
+
+	sp->text_event[sp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
+	if(sp->text_event[sp->text_events])
+	{
+		sp->text_event[sp->text_events]->text[0] = '\0';	//Eliminate false positive in Splint
+		(void) ustrcpy(sp->text_event[sp->text_events]->text, text);
+		sp->text_event[sp->text_events]->beat = beat;
+		if(track >= sp->tracks)
+		{	//If this is an invalid track
+			track = 0;	//Make this a global text event
 		}
+		sp->text_event[sp->text_events]->track = track;
+		sp->text_event[sp->text_events]->flags = flags;
+		sp->text_event[sp->text_events]->is_temporary = is_temporary;
+		sp->beat[beat]->flags |= EOF_BEAT_FLAG_EVENTS;	//Set the events flag for the beat
+		sp->text_event[sp->text_events]->index = 0;
+		sp->text_events++;
+		return sp->text_event[sp->text_events-1];	//Return successfully created text event
 	}
 	return NULL;	//Return failure
 }
@@ -49,25 +49,25 @@ void eof_move_text_events(EOF_SONG * sp, unsigned long beat, unsigned long offse
 	}
 	for(i = 0; i < sp->text_events; i++)
 	{
-		if(sp->text_event[i]->beat >= beat)
+		if(sp->text_event[i]->beat < beat)
+			continue;	//If this event's beat is before the move takes effect, skip it
+
+		if(sp->text_event[i]->beat >= sp->beats)
+			continue;	//Do not allow an out of bound access
+		sp->beat[sp->text_event[i]->beat]->flags &= ~(EOF_BEAT_FLAG_EVENTS);	//Clear the event flag
+		if(dir < 0)
 		{
-			if(sp->text_event[i]->beat >= sp->beats)
-				continue;	//Do not allow an out of bound access
-			sp->beat[sp->text_event[i]->beat]->flags &= ~(EOF_BEAT_FLAG_EVENTS);	//Clear the event flag
-			if(dir < 0)
-			{
-				if(offset > sp->text_event[i]->beat)
-					continue;	//Do not allow an underflow
-				sp->text_event[i]->beat -= offset;
-			}
-			else
-			{
-				if(sp->text_event[i]->beat + offset >= sp->beats)
-					continue;	//Do not allow an overflow
-				sp->text_event[i]->beat += offset;
-			}
-			sp->beat[sp->text_event[i]->beat]->flags |= EOF_BEAT_FLAG_EVENTS;	//Set the event flag
+			if(offset > sp->text_event[i]->beat)
+				continue;	//Do not allow an underflow
+			sp->text_event[i]->beat -= offset;
 		}
+		else
+		{
+			if(sp->text_event[i]->beat + offset >= sp->beats)
+				continue;	//Do not allow an overflow
+			sp->text_event[i]->beat += offset;
+		}
+		sp->beat[sp->text_event[i]->beat]->flags |= EOF_BEAT_FLAG_EVENTS;	//Set the event flag
 	}
 }
 
@@ -160,25 +160,25 @@ char eof_song_contains_event(EOF_SONG *sp, const char *text, unsigned long track
 {
 	unsigned long i;
 
-	if(sp && text)
+	if(!sp || !text)
+		return 0;	//Invalid parameters
+
+	for(i = 0; i < sp->text_events; i++)
 	{
-		for(i = 0; i < sp->text_events; i++)
-		{
-			if((sp->text_event[i]->flags & flags) == 0)
-			{	//If the specified flags filters out this event
+		if((sp->text_event[i]->flags & flags) == 0)
+		{	//If the specified flags filters out this event
+			continue;	//Skip this event
+		}
+		if(track_specific)
+		{	//If the track specific flag is to be matched
+			if(sp->text_event[i]->track != track)
+			{	//If this event isn't in the specified track
 				continue;	//Skip this event
 			}
-			if(track_specific)
-			{	//If the track specific flag is to be matched
-				if(sp->text_event[i]->track != track)
-				{	//If this event isn't in the specified track
-					continue;	//Skip this event
-				}
-			}
-			if(!ustrcmp(sp->text_event[i]->text, text))
-			{
-				return 1;	//Return match found
-			}
+		}
+		if(!ustrcmp(sp->text_event[i]->text, text))
+		{
+			return 1;	//Return match found
 		}
 	}
 	return 0;	//Return no match found

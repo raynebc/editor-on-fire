@@ -739,34 +739,34 @@ void eof_process_gh_lyric_phrases(EOF_SONG *sp)
 		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, EOF_TRACK_VOCALS); ctr2++)
 		{	//For each lyric
 			voxstart = eof_get_note_pos(sp, EOF_TRACK_VOCALS, ctr2);	//Store this position
-			if(voxstart >= tp->line[ctr].start_pos)
-			{	//If this lyric is at or after this line
-				if(ctr + 1 < tp->lines)
-				{	//If there is another line of lyrics
-					if(voxstart < tp->line[ctr + 1].start_pos)
-					{	//If this lyric is before the next lyric line
-#ifdef GH_IMPORT_DEBUG
-						if(tp->line[ctr].start_pos >= tp->line[ctr + 1].start_pos)
-						{
-							allegro_message("Error:  GH lyric phrases are not in order!");
-						}
-#endif
-						phraseend = voxstart + eof_get_note_length(sp, EOF_TRACK_VOCALS, ctr2);		//Set the phrase end to the end of this lyric
+			if(voxstart < tp->line[ctr].start_pos)
+				continue;	//If this lyric is before this line, skip it
 
-						if(!phrasestart)
-						{	//If this is the first lyric that is positioned at or after the start of this phrase
-							phrasestart = voxstart;
-						}
+			if(ctr + 1 < tp->lines)
+			{	//If there is another line of lyrics
+				if(voxstart < tp->line[ctr + 1].start_pos)
+				{	//If this lyric is before the next lyric line
+#ifdef GH_IMPORT_DEBUG
+					if(tp->line[ctr].start_pos >= tp->line[ctr + 1].start_pos)
+					{
+						allegro_message("Error:  GH lyric phrases are not in order!");
 					}
-					else
-					{	//This lyric is in the next line
-						break;
+#endif
+					phraseend = voxstart + eof_get_note_length(sp, EOF_TRACK_VOCALS, ctr2);		//Set the phrase end to the end of this lyric
+
+					if(!phrasestart)
+					{	//If this is the first lyric that is positioned at or after the start of this phrase
+						phrasestart = voxstart;
 					}
 				}
 				else
-				{	//This is the final line of lyrics
-					phraseend = voxstart + eof_get_note_length(sp, EOF_TRACK_VOCALS, ctr2);		//Set the phrase end to the end of this lyric
+				{	//This lyric is in the next line
+					break;
 				}
+			}
+			else
+			{	//This is the final line of lyrics
+				phraseend = voxstart + eof_get_note_length(sp, EOF_TRACK_VOCALS, ctr2);		//Set the phrase end to the end of this lyric
 			}
 		}
 		if(phrasestart || phraseend)
@@ -1020,46 +1020,47 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 			eof_log("\t\tThere is a bug in this NOTE file (no defined vocal pitch has a matching position).  Estimating the appropriate pitch to match with.", 1);
 			for(ctr2 = 0; ctr2 < eof_get_track_size(sp, EOF_TRACK_VOCALS); ctr2++)
 			{	//For each lyric pitch in the EOF_SONG structure
-				if(eof_get_note_name(sp, EOF_TRACK_VOCALS, ctr2) && (eof_get_note_name(sp, EOF_TRACK_VOCALS, ctr2)[0] == '+'))
-				{	//If this lyric pitch has no text assigned to it yet
-					thispos = eof_get_note_pos(sp, EOF_TRACK_VOCALS, ctr2);
-					if(thispos > lyricstart)
-					{	//If this lyric pitch is defined before the lyric text
-						eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, lyricbuffer);	//Update the text on this lyric
-						matched = 1;
-						break;
-					}
-					if(ctr2 + 1 < eof_get_track_size(sp, EOF_TRACK_VOCALS))
-					{	//If there is another lyric pitch that follows this one
-						nextpos = eof_get_note_pos(sp, EOF_TRACK_VOCALS, ctr2 + 1);
-						if(nextpos <= lyricstart)
-						{	//If that lyric pitch is closer to this unmatched lyric text
-							continue;	//Skip this lyric pitch because it's not a suitable match
-						}
-						else
-						{	//That next lyric pitch is after this unmatched lyric text, find which pitch is closer
-							if((lyricstart - thispos < nextpos - lyricstart))
-							{	//If the earlier pitch is closer to the unmatched lyric text then the later pitch
-								eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, lyricbuffer);	//Update the text on this lyric
-								matched = 1;
-								break;
-							}
-							else
-							{	//The later pitch is closer to the unmatched lyric text
-								eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2 + 1, lyricbuffer);	//Update the text on this lyric
-								thispos = nextpos;
-								matched = 1;
-								break;
-							}
-						}
+				char *name = eof_get_note_name(sp, EOF_TRACK_VOCALS, ctr2);
+				if(!name || (name[0] != '+'))
+					continue;	//If this lyric pitch already has text assigned to it, skip it
+
+				thispos = eof_get_note_pos(sp, EOF_TRACK_VOCALS, ctr2);
+				if(thispos > lyricstart)
+				{	//If this lyric pitch is defined before the lyric text
+					eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, lyricbuffer);	//Update the text on this lyric
+					matched = 1;
+					break;
+				}
+				if(ctr2 + 1 < eof_get_track_size(sp, EOF_TRACK_VOCALS))
+				{	//If there is another lyric pitch that follows this one
+					nextpos = eof_get_note_pos(sp, EOF_TRACK_VOCALS, ctr2 + 1);
+					if(nextpos <= lyricstart)
+					{	//If that lyric pitch is closer to this unmatched lyric text
+						continue;	//Skip this lyric pitch because it's not a suitable match
 					}
 					else
-					{	//There is not another lyric pitch that follows this one
-						eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, lyricbuffer);	//Update the text on this lyric
-						matched = 1;
-						break;
+					{	//That next lyric pitch is after this unmatched lyric text, find which pitch is closer
+						if((lyricstart - thispos < nextpos - lyricstart))
+						{	//If the earlier pitch is closer to the unmatched lyric text then the later pitch
+							eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, lyricbuffer);	//Update the text on this lyric
+							matched = 1;
+							break;
+						}
+						else
+						{	//The later pitch is closer to the unmatched lyric text
+							eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2 + 1, lyricbuffer);	//Update the text on this lyric
+							thispos = nextpos;
+							matched = 1;
+							break;
+						}
 					}
-				}//If this lyric pitch has no text assigned to it yet
+				}
+				else
+				{	//There is not another lyric pitch that follows this one
+					eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, lyricbuffer);	//Update the text on this lyric
+					matched = 1;
+					break;
+				}
 			}//For each lyric pitch in the EOF_SONG structure
 #ifdef GH_IMPORT_DEBUG
 			if(matched)
@@ -2106,81 +2107,83 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 		matched = 0;
 		for(linkptr = head; (linkptr != NULL) && !matched; linkptr = linkptr->next)
 		{	//For each link in the lyric checksum list (until a match has been made)
-			if(linkptr->checksum == checksum)
-			{	//If this checksum matches the one in the list (until a match has been made)
+			if(linkptr->checksum != checksum)
+				continue;	//If this checksum does not match the one in the list, skip it
+
+			for(ctr2 = 0; ctr2 < eof_get_track_size(sp, EOF_TRACK_VOCALS); ctr2++)
+			{	//For each lyric pitch in the EOF_SONG structure
+				if(eof_get_note_pos(sp, EOF_TRACK_VOCALS, ctr2) == voxstart)
+				{	//If this lyric has a matching timestamp
+#ifdef GH_IMPORT_DEBUG
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tMatched lyric position:  Text = \"%s\"\tPosition = %lu", linkptr->text, voxstart);
+					eof_log(eof_log_string, 1);
+#endif
+					eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, linkptr->text);	//Update the text on this lyric
+					matched = 1;
+					break;
+				}
+			}
+			if(!matched)
+			{	//If there was not a lyric position that matched, one will have to be guessed
+				unsigned long thispos = 0, nextpos;
+				eof_log("\t\tThere is a bug in this QB file (no defined vocal pitch has a matching position).  Estimating the appropriate pitch to match with.", 1);
 				for(ctr2 = 0; ctr2 < eof_get_track_size(sp, EOF_TRACK_VOCALS); ctr2++)
 				{	//For each lyric pitch in the EOF_SONG structure
-					if(eof_get_note_pos(sp, EOF_TRACK_VOCALS, ctr2) == voxstart)
-					{	//If this lyric has a matching timestamp
-#ifdef GH_IMPORT_DEBUG
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tMatched lyric position:  Text = \"%s\"\tPosition = %lu", linkptr->text, voxstart);
-						eof_log(eof_log_string, 1);
-#endif
+					char *name = eof_get_note_name(sp, EOF_TRACK_VOCALS, ctr2);
+
+					if(!name || (name[0] != '+'))
+						continue;	//If this lyric pitch already has text assigned to it, skip it
+
+					thispos = eof_get_note_pos(sp, EOF_TRACK_VOCALS, ctr2);
+					if(thispos > voxstart)
+					{	//If this lyric pitch is defined before the lyric text
 						eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, linkptr->text);	//Update the text on this lyric
 						matched = 1;
 						break;
 					}
-				}
-				if(!matched)
-				{	//If there was not a lyric position that matched, one will have to be guessed
-					unsigned long thispos = 0, nextpos;
-					eof_log("\t\tThere is a bug in this QB file (no defined vocal pitch has a matching position).  Estimating the appropriate pitch to match with.", 1);
-					for(ctr2 = 0; ctr2 < eof_get_track_size(sp, EOF_TRACK_VOCALS); ctr2++)
-					{	//For each lyric pitch in the EOF_SONG structure
-						if(eof_get_note_name(sp, EOF_TRACK_VOCALS, ctr2) && (eof_get_note_name(sp, EOF_TRACK_VOCALS, ctr2)[0] == '+'))
-						{	//If this lyric pitch has no text assigned to it yet
-							thispos = eof_get_note_pos(sp, EOF_TRACK_VOCALS, ctr2);
-							if(thispos > voxstart)
-							{	//If this lyric pitch is defined before the lyric text
+					if(ctr2 + 1 < eof_get_track_size(sp, EOF_TRACK_VOCALS))
+					{	//If there is another lyric pitch that follows this one
+						nextpos = eof_get_note_pos(sp, EOF_TRACK_VOCALS, ctr2 + 1);
+						if(nextpos <= voxstart)
+						{	//If that lyric pitch is closer to this unmatched lyric text
+							continue;	//Skip this lyric pitch becauase it's not a suitable match
+						}
+						else
+						{	//That next lyric pitch is after this unmatched lyric text, find which pitch is closer
+							if((voxstart - thispos < nextpos - voxstart))
+							{	//If the earlier pitch is closer to the unmatched lyric text then the later pitch
 								eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, linkptr->text);	//Update the text on this lyric
 								matched = 1;
 								break;
-							}
-							if(ctr2 + 1 < eof_get_track_size(sp, EOF_TRACK_VOCALS))
-							{	//If there is another lyric pitch that follows this one
-								nextpos = eof_get_note_pos(sp, EOF_TRACK_VOCALS, ctr2 + 1);
-								if(nextpos <= voxstart)
-								{	//If that lyric pitch is closer to this unmatched lyric text
-									continue;	//Skip this lyric pitch becauase it's not a suitable match
-								}
-								else
-								{	//That next lyric pitch is after this unmatched lyric text, find which pitch is closer
-									if((voxstart - thispos < nextpos - voxstart))
-									{	//If the earlier pitch is closer to the unmatched lyric text then the later pitch
-										eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, linkptr->text);	//Update the text on this lyric
-										matched = 1;
-										break;
-									}
-									else
-									{	//The later pitch is closer to the unmatched lyric text
-										eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2 + 1, linkptr->text);	//Update the text on this lyric
-										matched = 1;
-										break;
-									}
-								}
 							}
 							else
-							{	//There is not another lyric pitch that follows this one
-								eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, linkptr->text);	//Update the text on this lyric
+							{	//The later pitch is closer to the unmatched lyric text
+								eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2 + 1, linkptr->text);	//Update the text on this lyric
 								matched = 1;
 								break;
 							}
-						}//If this lyric pitch has no text assigned to it yet
-					}//For each lyric pitch in the EOF_SONG structure
-#ifdef GH_IMPORT_DEBUG
-					if(thispos)
-					{	//If a match was determined
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tDecided match:  Text = \"%s\"\tPosition = %lu", linkptr->text, thispos);
-						eof_log(eof_log_string, 1);
+						}
 					}
-#endif
-				}//If there was not a lyric position that matched
-				if(!matched)
-				{	//If there was still no match found, add it as a pitchless lyric
-					(void) eof_track_add_create_note(sp, EOF_TRACK_VOCALS, 0, voxstart, 10, 0, linkptr->text);
-					break;
+					else
+					{	//There is not another lyric pitch that follows this one
+						eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, linkptr->text);	//Update the text on this lyric
+						matched = 1;
+						break;
+					}
+				}//For each lyric pitch in the EOF_SONG structure
+#ifdef GH_IMPORT_DEBUG
+				if(thispos)
+				{	//If a match was determined
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tDecided match:  Text = \"%s\"\tPosition = %lu", linkptr->text, thispos);
+					eof_log(eof_log_string, 1);
 				}
-			}//If this checksum matches the one in the list
+#endif
+			}//If there was not a lyric position that matched
+			if(!matched)
+			{	//If there was still no match found, add it as a pitchless lyric
+				(void) eof_track_add_create_note(sp, EOF_TRACK_VOCALS, 0, voxstart, 10, 0, linkptr->text);
+				break;
+			}
 		}//For each link in the lyric checksum list (until a match has been made)
 	}//For each block of lyric text data
 	if(arraysize)
@@ -2852,25 +2855,25 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 				matched = 0;
 				for(linkptr = head; (linkptr != NULL) && !matched; linkptr = linkptr->next)
 				{	//For each link in the sections checksum list (until a match has been made)
-					if(linkptr->checksum == checksum)
-					{	//If this checksum matches the one in the list
-						unsigned long beatnum;
+					unsigned long beatnum;
 
-						eof_chart_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
-						beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
-						if(eof_beat_num_valid(sp, beatnum))
-						{	//If there is such a beat
-							char buffer2[256] = {0};
+					if(linkptr->checksum != checksum)
+						continue;	//If this checksum does not match the one in the list, skip it
 
-		#ifdef GH_IMPORT_DEBUG
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSection:  Position = %lums, checksum = 0x%08lX: %s", dword, checksum, linkptr->text);
-							eof_log(eof_log_string, 1);
-		#endif
-							(void) snprintf(buffer2, sizeof(buffer2) - 1, "[section %s]", linkptr->text);	//Alter the section name formatting
-							(void) eof_song_add_text_event(sp, beatnum, buffer2, 0, 0, 0);	//Add the text event
-						}
-						break;
+					eof_chart_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
+					beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
+					if(eof_beat_num_valid(sp, beatnum))
+					{	//If there is such a beat
+						char buffer2[256] = {0};
+
+#ifdef GH_IMPORT_DEBUG
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSection:  Position = %lums, checksum = 0x%08lX: %s", dword, checksum, linkptr->text);
+						eof_log(eof_log_string, 1);
+#endif
+						(void) snprintf(buffer2, sizeof(buffer2) - 1, "[section %s]", linkptr->text);	//Alter the section name formatting
+						(void) eof_song_add_text_event(sp, beatnum, buffer2, 0, 0, 0);	//Add the text event
 					}
+					break;
 				}
 			}//For each section in the chart file
 
@@ -3100,23 +3103,23 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 					eof_clear_input();
 					sectionfn = ncd_file_select(0, eof_last_eof_path, "Import GH section name file", eof_filter_gh_files);
 					eof_clear_input();
-					if(sectionfn)
-					{	//If the user selected a file
-						eof_show_mouse(NULL);
-						eof_cursor_visible = 1;
-						eof_pen_visible = 1;
-						sections_file = eof_filebuffer_load(sectionfn);
-						if(sections_file == NULL)
-						{	//Section names file failed to buffer
-							allegro_message("Error:  Failed to buffer section name file");
-						}
-						else
-						{	//Section names file buffered successfully
-							eof_log("\tGH: Searching for sections in user-specified external file", 1);
-							lastsectionpos = 0;	//The next loop iteration will rewind to beginning of section name file buffer (so the next pass can load the first language of sections again)
-							break;	//Break from while loop
-						}//Section names file buffered successfully
+					if(!sectionfn)
+						continue;	//If the user didn't select a file, try again
+
+					eof_show_mouse(NULL);
+					eof_cursor_visible = 1;
+					eof_pen_visible = 1;
+					sections_file = eof_filebuffer_load(sectionfn);
+					if(sections_file == NULL)
+					{	//Section names file failed to buffer
+						allegro_message("Error:  Failed to buffer section name file");
 					}
+					else
+					{	//Section names file buffered successfully
+						eof_log("\tGH: Searching for sections in user-specified external file", 1);
+						lastsectionpos = 0;	//The next loop iteration will rewind to beginning of section name file buffer (so the next pass can load the first language of sections again)
+						break;	//Break from while loop
+					}//Section names file buffered successfully
 				}//Prompt user about browsing for an external file with section names until explicitly declined
 			}//There are no sections found in this file
 		}//There were no sections loaded during this loop iteration

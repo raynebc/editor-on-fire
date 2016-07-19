@@ -49,21 +49,21 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			for(i = 0; i < 4; i++)
 			{
 				a = pack_getc(fp);
-				if(a)
+				if(!a)
+					continue;	//If valid data for this track wasn't read, skip it
+
+				(void) pack_fread(buffer, 256, fp);
+				for(j = 0; j < eof_old_max_notes; j++)
 				{
-					(void) pack_fread(buffer, 256, fp);
-					for(j = 0; j < eof_old_max_notes; j++)
+					a = pack_getc(fp);
+					if(a)
 					{
-						a = pack_getc(fp);
-						if(a)
-						{
-							new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
-							new_note->type = pack_getc(fp);
-							new_note->note = pack_getc(fp);
-							new_note->pos = pack_igetl(fp);
-							new_note->length = pack_igetw(fp);
-							new_note->flags = pack_getc(fp);
-						}
+						new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
+						new_note->type = pack_getc(fp);
+						new_note->note = pack_getc(fp);
+						new_note->pos = pack_igetl(fp);
+						new_note->length = pack_igetw(fp);
+						new_note->flags = pack_getc(fp);
 					}
 				}
 			}
@@ -83,21 +83,21 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			for(i = 0; i < 4; i++)
 			{
 				a = pack_getc(fp);
-				if(a)
+				if(!a)
+					continue;	//If valid data for this track wasn't read, skip it
+
+				(void) pack_fread(buffer, 256, fp);
+				for(j = 0; j < eof_old_max_notes; j++)
 				{
-					(void) pack_fread(buffer, 256, fp);
-					for(j = 0; j < eof_old_max_notes; j++)
+					a = pack_getc(fp);
+					if(a)
 					{
-						a = pack_getc(fp);
-						if(a)
-						{
-							new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
-							new_note->type = pack_getc(fp);
-							new_note->note = pack_getc(fp);
-							new_note->pos = pack_igetl(fp);
-							new_note->length = pack_igetw(fp);
-							new_note->flags = pack_getc(fp);
-						}
+						new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
+						new_note->type = pack_getc(fp);
+						new_note->note = pack_getc(fp);
+						new_note->pos = pack_igetl(fp);
+						new_note->length = pack_igetw(fp);
+						new_note->flags = pack_getc(fp);
 					}
 				}
 			}
@@ -137,34 +137,34 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			for(i = 0; i < eof_tracks_max; i++)
 			{
 				a = pack_getc(fp);
-				if(a)
+				if(!a)
+					continue;	//If valid data for this track wasn't read, skip it
+
+				(void) pack_fread(buffer, 256, fp);
+				for(j = 0; j < eof_old_max_notes; j++)
 				{
-					(void) pack_fread(buffer, 256, fp);
-					for(j = 0; j < eof_old_max_notes; j++)
+					a = pack_getc(fp);
+					if(j < eof_max_notes)
 					{
-						a = pack_getc(fp);
-						if(j < eof_max_notes)
+						if(a)
 						{
-							if(a)
-							{
-								new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
-								new_note->type = pack_getc(fp);
-								new_note->note = pack_getc(fp);
-								new_note->pos = pack_igetl(fp);
-								new_note->length = pack_igetw(fp);
-								new_note->flags = pack_getc(fp);
-							}
+							new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
+							new_note->type = pack_getc(fp);
+							new_note->note = pack_getc(fp);
+							new_note->pos = pack_igetl(fp);
+							new_note->length = pack_igetw(fp);
+							new_note->flags = pack_getc(fp);
 						}
-						else
+					}
+					else
+					{
+						if(a)
 						{
-							if(a)
-							{
-								(void) pack_getc(fp);
-								(void) pack_getc(fp);
-								(void) pack_igetl(fp);
-								(void) pack_igetw(fp);
-								(void) pack_getc(fp);
-							}
+							(void) pack_getc(fp);
+							(void) pack_getc(fp);
+							(void) pack_igetl(fp);
+							(void) pack_igetw(fp);
+							(void) pack_getc(fp);
 						}
 					}
 				}
@@ -195,21 +195,21 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			for(i = 0; i < eof_tracks_max; i++)
 			{
 				a = pack_getc(fp);
-				if(a)
+				if(!a)
+					continue;	//If valid data for this track wasn't read, skip it
+
+				(void) pack_fread(buffer, 256, fp);
+				for(j = 0; j < eof_old_max_notes; j++)
 				{
-					(void) pack_fread(buffer, 256, fp);
-					for(j = 0; j < eof_old_max_notes; j++)
+					a = pack_getc(fp);
+					if(a)
 					{
-						a = pack_getc(fp);
-						if(a)
-						{
-							new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
-							new_note->type = pack_getc(fp);
-							new_note->note = pack_getc(fp);
-							new_note->pos = pack_igetl(fp);
-							new_note->length = pack_igetw(fp);
-							new_note->flags = pack_getc(fp);
-						}
+						new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
+						new_note->type = pack_getc(fp);
+						new_note->note = pack_getc(fp);
+						new_note->pos = pack_igetl(fp);
+						new_note->length = pack_igetw(fp);
+						new_note->flags = pack_getc(fp);
 					}
 				}
 			}
@@ -239,21 +239,21 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			for(i = 0; i < eof_tracks_max; i++)
 			{
 				a = pack_getc(fp);
-				if(a)
+				if(!a)
+					continue;	//If valid data for this track wasn't read, skip it
+
+				(void) pack_fread(buffer, 256, fp);
+				for(j = 0; j < eof_max_notes; j++)
 				{
-					(void) pack_fread(buffer, 256, fp);
-					for(j = 0; j < eof_max_notes; j++)
+					a = pack_getc(fp);
+					if(a)
 					{
-						a = pack_getc(fp);
-						if(a)
-						{
-							new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
-							new_note->type = pack_getc(fp);
-							new_note->note = pack_getc(fp);
-							new_note->pos = pack_igetl(fp);
-							new_note->length = pack_igetw(fp);
-							new_note->flags = pack_getc(fp);
-						}
+						new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
+						new_note->type = pack_getc(fp);
+						new_note->note = pack_getc(fp);
+						new_note->pos = pack_igetl(fp);
+						new_note->length = pack_igetw(fp);
+						new_note->flags = pack_getc(fp);
 					}
 				}
 			}
@@ -292,21 +292,21 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			for(i = 0; i < eof_tracks_max; i++)
 			{
 				a = pack_getc(fp);
-				if(a)
+				if(!a)
+					continue;	//If valid data for this track wasn't read, skip it
+
+				(void) pack_fread(buffer, 256, fp);
+				for(j = 0; j < eof_max_notes; j++)
 				{
-					(void) pack_fread(buffer, 256, fp);
-					for(j = 0; j < eof_max_notes; j++)
+					a = pack_getc(fp);
+					if(a)
 					{
-						a = pack_getc(fp);
-						if(a)
-						{
-							new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
-							new_note->type = pack_getc(fp);
-							new_note->note = pack_getc(fp);
-							new_note->pos = pack_igetl(fp);
-							new_note->length = pack_igetw(fp);
-							new_note->flags = pack_getc(fp);
-						}
+						new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
+						new_note->type = pack_getc(fp);
+						new_note->note = pack_getc(fp);
+						new_note->pos = pack_igetl(fp);
+						new_note->length = pack_igetw(fp);
+						new_note->flags = pack_getc(fp);
 					}
 				}
 			}
@@ -347,21 +347,21 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			for(i = 0; i < eof_tracks_max; i++)
 			{
 				a = pack_getc(fp);
-				if(a)
+				if(!a)
+					continue;	//If valid data for this track wasn't read, skip it
+
+				(void) pack_fread(buffer, 256, fp);
+				for(j = 0; j < eof_max_notes; j++)
 				{
-					(void) pack_fread(buffer, 256, fp);
-					for(j = 0; j < eof_max_notes; j++)
+					a = pack_getc(fp);
+					if(a)
 					{
-						a = pack_getc(fp);
-						if(a)
-						{
-							new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
-							new_note->type = pack_getc(fp);
-							new_note->note = pack_getc(fp);
-							new_note->pos = pack_igetl(fp);
-							new_note->length = pack_igetw(fp);
-							new_note->flags = pack_getc(fp);
-						}
+						new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
+						new_note->type = pack_getc(fp);
+						new_note->note = pack_getc(fp);
+						new_note->pos = pack_igetl(fp);
+						new_note->length = pack_igetw(fp);
+						new_note->flags = pack_getc(fp);
 					}
 				}
 			}
@@ -423,21 +423,21 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			for(i = 0; i < eof_tracks_max; i++)
 			{
 				a = pack_getc(fp);
-				if(a)
+				if(!a)
+					continue;	//If valid data for this track wasn't read, skip it
+
+				(void) pack_fread(buffer, 256, fp);
+				for(j = 0; j < eof_max_notes; j++)
 				{
-					(void) pack_fread(buffer, 256, fp);
-					for(j = 0; j < eof_max_notes; j++)
+					a = pack_getc(fp);
+					if(a)
 					{
-						a = pack_getc(fp);
-						if(a)
-						{
-							new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
-							new_note->type = pack_getc(fp);
-							new_note->note = pack_getc(fp);
-							new_note->pos = pack_igetl(fp);
-							new_note->length = pack_igetw(fp);
-							new_note->flags = pack_getc(fp);
-						}
+						new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
+						new_note->type = pack_getc(fp);
+						new_note->note = pack_getc(fp);
+						new_note->pos = pack_igetl(fp);
+						new_note->length = pack_igetw(fp);
+						new_note->flags = pack_getc(fp);
 					}
 				}
 			}
@@ -499,21 +499,21 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			for(i = 0; i < eof_tracks_max; i++)
 			{
 				a = pack_getc(fp);
-				if(a)
+				if(!a)
+					continue;	//If valid data for this track wasn't read, skip it
+
+				(void) pack_fread(buffer, 256, fp);
+				for(j = 0; j < eof_max_notes; j++)
 				{
-					(void) pack_fread(buffer, 256, fp);
-					for(j = 0; j < eof_max_notes; j++)
+					a = pack_getc(fp);
+					if(a)
 					{
-						a = pack_getc(fp);
-						if(a)
-						{
-							new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
-							new_note->type = pack_getc(fp);
-							new_note->note = pack_getc(fp);
-							new_note->pos = pack_igetl(fp);
-							new_note->length = pack_igetw(fp);
-							new_note->flags = pack_getc(fp);
-						}
+						new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
+						new_note->type = pack_getc(fp);
+						new_note->note = pack_getc(fp);
+						new_note->pos = pack_igetl(fp);
+						new_note->length = pack_igetw(fp);
+						new_note->flags = pack_getc(fp);
 					}
 				}
 			}
@@ -1303,6 +1303,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			}
 			return sp;
 		}
+		default:
+		break;
 	}
 	eof_destroy_song(sp);
 	return NULL;

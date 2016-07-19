@@ -144,6 +144,8 @@ void eof_read_controller(EOF_CONTROLLER * cp)
 				}
 				break;
 			}
+			default:
+			break;
 		}
 	}
 }
@@ -288,6 +290,8 @@ void eof_controller_read_button_names(EOF_CONTROLLER * cp)
 				(void) snprintf(cp->button[i].name, sizeof(cp->button[i].name) - 1, "Joy %d %s Axis (%s)", cp->button[i].joy, joy[cp->button[i].joy].stick[cp->button[i].index].axis[cp->button[i].key].name, cp->button[i].d == 0 ? "-" : "+");
 				break;
 			}
+			default:
+			break;
 		}
 	}
 }
@@ -335,6 +339,8 @@ void eof_controller_save_config(EOF_CONTROLLER * cp, char * name)
 				set_config_int(name, string, cp->button[i].key);
 				break;
 			}
+			default:
+			break;
 		}
 	}
 	set_config_int(name, "delay", cp->delay);
@@ -383,6 +389,8 @@ void eof_controller_load_config(EOF_CONTROLLER * cp, char * name)
 				cp->button[i].key = get_config_int(name, string, 0);
 				break;
 			}
+			default:
+			break;
 		}
 	}
 	cp->delay = get_config_int(name, "delay", 0);

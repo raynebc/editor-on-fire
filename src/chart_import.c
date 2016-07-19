@@ -151,402 +151,400 @@ EOF_SONG * eof_import_chart(const char * fn)
 		(void) alert("Error:", NULL, eof_chart_import_return_code_list[err % 31], "OK", NULL, 0, KEY_ENTER);
 		return NULL;
 	}
-	else
+
+	/* backup "song.ini" if it exists in the folder with the imported MIDI
+	as it will be overwritten upon save */
+	(void) replace_filename(eof_temp_filename, fn, "song.ini", 1024);
+	if(exists(eof_temp_filename))
 	{
-		/* backup "song.ini" if it exists in the folder with the imported MIDI
-		as it will be overwritten upon save */
-		(void) replace_filename(eof_temp_filename, fn, "song.ini", 1024);
-		if(exists(eof_temp_filename))
+		/* do not overwrite an existing backup, this prevents the original backed up song.ini from
+		being overwritten if the user imports the MIDI again */
+		(void) replace_filename(backup_filename, fn, "song.ini.backup", 1024);
+		if(!exists(backup_filename))
 		{
-			/* do not overwrite an existing backup, this prevents the original backed up song.ini from
-			being overwritten if the user imports the MIDI again */
-			(void) replace_filename(backup_filename, fn, "song.ini.backup", 1024);
-			if(!exists(backup_filename))
-			{
-				(void) eof_copy_file(eof_temp_filename, backup_filename);
-			}
+			(void) eof_copy_file(eof_temp_filename, backup_filename);
 		}
-		memcpy(backup_filename, fn, 1024);	//Back up the filename that is passed, if the calling function passed the file selection dialog's return path, that buffer will be clobbered if a file dialog to select the audio is launched
+	}
+	memcpy(backup_filename, fn, 1024);	//Back up the filename that is passed, if the calling function passed the file selection dialog's return path, that buffer will be clobbered if a file dialog to select the audio is launched
 
-		/* load audio */
-		(void) replace_filename(eof_song_path, fn, "", 1024);	//Set the project folder path
-		(void) replace_filename(oggfn, fn, "guitar.ogg", 1024);	//Look for guitar.ogg by default
-		if((chart->audiofile != NULL) && !exists(oggfn))
-		{	//If the imported chart defines which audio file to use AND guitar.ogg doesn't exist
-			(void) replace_filename(oggfn, fn, chart->audiofile, 1024);
-			if(!exists(oggfn))	//If the file doesn't exist in the chart's parent directory
-				(void) replace_filename(oggfn, fn, "guitar.ogg", 1024);	//Look for guitar.ogg instead
-		}
+	/* load audio */
+	(void) replace_filename(eof_song_path, fn, "", 1024);	//Set the project folder path
+	(void) replace_filename(oggfn, fn, "guitar.ogg", 1024);	//Look for guitar.ogg by default
+	if((chart->audiofile != NULL) && !exists(oggfn))
+	{	//If the imported chart defines which audio file to use AND guitar.ogg doesn't exist
+		(void) replace_filename(oggfn, fn, chart->audiofile, 1024);
+		if(!exists(oggfn))	//If the file doesn't exist in the chart's parent directory
+			(void) replace_filename(oggfn, fn, "guitar.ogg", 1024);	//Look for guitar.ogg instead
+	}
 
-		/* if the audio file doesn't exist, look for any OGG file in the chart directory */
-		if(!exists(oggfn))
+	/* if the audio file doesn't exist, look for any OGG file in the chart directory */
+	if(!exists(oggfn))
+	{
+		/* no OGG file found, start file selector at chart directory */
+		(void) replace_filename(searchpath, fn, "*.ogg", 1024);
+		if(al_findfirst(searchpath, &info, FA_ALL))
 		{
-			/* no OGG file found, start file selector at chart directory */
-			(void) replace_filename(searchpath, fn, "*.ogg", 1024);
-			if(al_findfirst(searchpath, &info, FA_ALL))
-			{
-				(void) ustrcpy(oldoggpath, eof_last_ogg_path);
-				(void) replace_filename(eof_last_ogg_path, fn, "", 1024);
-			}
-
-			/* if there is only one OGG file, load it */
-			else if(al_findnext(&info))
-			{
-				(void) replace_filename(oggfn, fn, info.name, 1024);
-			}
-			al_findclose(&info);
+			(void) ustrcpy(oldoggpath, eof_last_ogg_path);
+			(void) replace_filename(eof_last_ogg_path, fn, "", 1024);
 		}
 
-		(void) replace_filename(searchpath, oggfn, "", 1024);	//Store the path of the file's parent folder
-		ret = eof_audio_to_ogg(oggfn,searchpath);				//Create guitar.ogg in the folder
-		if(ret != 0)
-		{	//If guitar.ogg was not created successfully
-			DestroyFeedbackChart(chart, 1);
-			return NULL;
-		}
-		(void) replace_filename(oggfn, oggfn, "guitar.ogg", 1024);	//guitar.ogg is the expected file
-
-		if(!eof_load_ogg(oggfn, 1))	//If user does not provide audio, fail over to using silent audio
+		/* if there is only one OGG file, load it */
+		else if(al_findnext(&info))
 		{
-			DestroyFeedbackChart(chart, 1);
-			(void) ustrcpy(eof_last_ogg_path, oldoggpath); // remember previous OGG directory if we fail
-			return NULL;
+			(void) replace_filename(oggfn, fn, info.name, 1024);
 		}
-		eof_music_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
+		al_findclose(&info);
+	}
 
-		/* create empty song */
-		sp = eof_create_song_populated();
-		if(!sp)
+	(void) replace_filename(searchpath, oggfn, "", 1024);	//Store the path of the file's parent folder
+	ret = eof_audio_to_ogg(oggfn,searchpath);				//Create guitar.ogg in the folder
+	if(ret != 0)
+	{	//If guitar.ogg was not created successfully
+		DestroyFeedbackChart(chart, 1);
+		return NULL;
+	}
+	(void) replace_filename(oggfn, oggfn, "guitar.ogg", 1024);	//guitar.ogg is the expected file
+
+	if(!eof_load_ogg(oggfn, 1))	//If user does not provide audio, fail over to using silent audio
+	{
+		DestroyFeedbackChart(chart, 1);
+		(void) ustrcpy(eof_last_ogg_path, oldoggpath); // remember previous OGG directory if we fail
+		return NULL;
+	}
+	eof_music_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
+
+	/* create empty song */
+	sp = eof_create_song_populated();
+	if(!sp)
+	{
+		DestroyFeedbackChart(chart, 1);
+		return NULL;
+	}
+
+	/* copy tags */
+	if(chart->name)
+	{
+		strncpy(sp->tags->title, chart->name, sizeof(sp->tags->title) - 1);
+	}
+	if(chart->artist)
+	{
+		strncpy(sp->tags->artist, chart->artist, sizeof(sp->tags->artist) - 1);
+	}
+	if(chart->charter)
+	{
+		strncpy(sp->tags->frettist, chart->charter, sizeof(sp->tags->frettist) - 1);
+	}
+
+	/* read INI file */
+	(void) replace_filename(oggfn, fn, "song.ini", 1024);
+	(void) eof_import_ini(sp, oggfn, 0);
+
+	/* set up beat markers */
+	sp->tags->ogg[0].midi_offset = chart->offset * 1000.0;
+	current_anchor = chart->anchors;
+	current_event = chart->events;
+	chartpos = max_chartpos = 0;
+
+	/* find the highest chartpos for beat markers */
+	while(current_anchor)
+	{
+		if(current_anchor->chartpos > max_chartpos)
 		{
-			DestroyFeedbackChart(chart, 1);
-			return NULL;
+			max_chartpos = current_anchor->chartpos;
 		}
 
-		/* copy tags */
-		if(chart->name)
+		current_anchor = current_anchor->next;
+	}
+	while(current_event)
+	{
+		if(current_event->chartpos > max_chartpos)
 		{
-			strncpy(sp->tags->title, chart->name, sizeof(sp->tags->title) - 1);
+			max_chartpos = current_event->chartpos;
 		}
-		if(chart->artist)
-		{
-			strncpy(sp->tags->artist, chart->artist, sizeof(sp->tags->artist) - 1);
-		}
-		if(chart->charter)
-		{
-			strncpy(sp->tags->frettist, chart->charter, sizeof(sp->tags->frettist) - 1);
-		}
+		current_event = current_event->next;
+	}
 
-		/* read INI file */
-		(void) replace_filename(oggfn, fn, "song.ini", 1024);
-		(void) eof_import_ini(sp, oggfn, 0);
-
-		/* set up beat markers */
-		sp->tags->ogg[0].midi_offset = chart->offset * 1000.0;
-		current_anchor = chart->anchors;
-		current_event = chart->events;
-		chartpos = max_chartpos = 0;
-
-		/* find the highest chartpos for beat markers */
-		while(current_anchor)
-		{
-			if(current_anchor->chartpos > max_chartpos)
-			{
-				max_chartpos = current_anchor->chartpos;
-			}
-
-			current_anchor = current_anchor->next;
-		}
-		while(current_event)
-		{
-			if(current_event->chartpos > max_chartpos)
-			{
-				max_chartpos = current_event->chartpos;
-			}
-			current_event = current_event->next;
-		}
-
-		/* create beat markers */
-		beatlength = chart->resolution;
-		while(chartpos <= max_chartpos)
-		{	//Add new beats until enough have been added to encompass the last item in the chart
-			new_beat = eof_song_add_beat(sp);
-			if(new_beat)
-			{	//If the beat was created successfully
-				//Find the relevant tempo and time signature for the beat
-				for(ptr = chart->anchors, tschange = 0; ptr != NULL; ptr = ptr->next)
-				{	//For each anchor in the chart
-					if(ptr->chartpos <= chartpos)
-					{	//If the anchor is at or before the current position
-						if(ptr->BPM)
-						{	//If this anchor defines a tempo change (is nonzero)
-							curppqn = (60000000.0 / (ptr->BPM / 1000.0)) + 0.5;	//Convert tempo
-						}
-						if(ptr->TS)
-						{	//If this anchor defines a tempo change (is nonzero)
-							curnum = ptr->TS;	//Store this anchor's time signature (which Feedback stores as #/4)
-							if(ptr->chartpos == chartpos)
-							{	//If this change is at the current position
-								tschange = 1;	//Keep note
-							}
+	/* create beat markers */
+	beatlength = chart->resolution;
+	while(chartpos <= max_chartpos)
+	{	//Add new beats until enough have been added to encompass the last item in the chart
+		new_beat = eof_song_add_beat(sp);
+		if(new_beat)
+		{	//If the beat was created successfully
+			//Find the relevant tempo and time signature for the beat
+			for(ptr = chart->anchors, tschange = 0; ptr != NULL; ptr = ptr->next)
+			{	//For each anchor in the chart
+				if(ptr->chartpos <= chartpos)
+				{	//If the anchor is at or before the current position
+					if(ptr->BPM)
+					{	//If this anchor defines a tempo change (is nonzero)
+						curppqn = (60000000.0 / (ptr->BPM / 1000.0)) + 0.5;	//Convert tempo
+					}
+					if(ptr->TS)
+					{	//If this anchor defines a tempo change (is nonzero)
+						curnum = ptr->TS;	//Store this anchor's time signature (which Feedback stores as #/4)
+						if(ptr->chartpos == chartpos)
+						{	//If this change is at the current position
+							tschange = 1;	//Keep note
 						}
 					}
 				}
-				if(eof_use_ts && (tschange || (sp->beats == 1)))
-				{	//If the user opted to import TS changes, and this anchor has a TS change (or this is the first beat)
-					(void) eof_apply_ts(curnum,curden,sp->beats - 1,sp,0);	//Set the TS flags for this beat
-				}
-				new_beat->ppqn = curppqn;
-				new_beat->midi_pos = chartpos;
-				if(chartpos % chart->resolution != 0)
-				{	//If this beat is not a multiple of the chart resolution, it was triggered by a mid-beat tempo change
-					new_beat->flags |= EOF_BEAT_FLAG_MIDBEAT;	//Flag the beat as such so it can be removed after import if the user preference is to do so
-				}
+			}
+			if(eof_use_ts && (tschange || (sp->beats == 1)))
+			{	//If the user opted to import TS changes, and this anchor has a TS change (or this is the first beat)
+				(void) eof_apply_ts(curnum,curden,sp->beats - 1,sp,0);	//Set the TS flags for this beat
+			}
+			new_beat->ppqn = curppqn;
+			new_beat->midi_pos = chartpos;
+			if(chartpos % chart->resolution != 0)
+			{	//If this beat is not a multiple of the chart resolution, it was triggered by a mid-beat tempo change
+				new_beat->flags |= EOF_BEAT_FLAG_MIDBEAT;	//Flag the beat as such so it can be removed after import if the user preference is to do so
+			}
 
-				//Scan ahead to look for mid beat tempo or TS changes
-				midbeatchange = 0;
-				beatlength = chart->resolution;		//Determine the length of one full beat in delta ticks
-				nextbeat = chartpos + beatlength + 0.5;	//By default, the delta position of the next beat will be the standard length of delta ticks
-				for(ptr2 = chart->anchors; ptr2 != NULL; ptr2 = ptr2->next)
-				{	//For each anchor in the chart
-					if(ptr2->chartpos  > chartpos)
-					{	//If this anchor is ahead of the current delta position
-						if(ptr2->chartpos < nextbeat)
-						{	//If this anchor occurs before the next beat marker
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMid beat tempo change at chart position %lu", ptr2->chartpos);
-							eof_log(eof_log_string, 1);
-							nextbeat = ptr2->chartpos;	//Store its delta time
-							midbeatchange = 1;
-						}
-						break;
+			//Scan ahead to look for mid beat tempo or TS changes
+			midbeatchange = 0;
+			beatlength = chart->resolution;		//Determine the length of one full beat in delta ticks
+			nextbeat = chartpos + beatlength + 0.5;	//By default, the delta position of the next beat will be the standard length of delta ticks
+			for(ptr2 = chart->anchors; ptr2 != NULL; ptr2 = ptr2->next)
+			{	//For each anchor in the chart
+				if(ptr2->chartpos  > chartpos)
+				{	//If this anchor is ahead of the current delta position
+					if(ptr2->chartpos < nextbeat)
+					{	//If this anchor occurs before the next beat marker
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMid beat tempo change at chart position %lu", ptr2->chartpos);
+						eof_log(eof_log_string, 1);
+						nextbeat = ptr2->chartpos;	//Store its delta time
+						midbeatchange = 1;
 					}
+					break;
 				}
-				if(midbeatchange)
-				{	//If there is a mid-beat tempo/TS change, this beat needs to be anchored and its tempo (and the current tempo) altered
-					//Also update beatlength to reflect that less than a full beat's worth of deltas will be used to advance to the next beat marker
-					sp->beat[sp->beats - 1]->flags |= EOF_BEAT_FLAG_ANCHOR;
-					curppqn = (double)curppqn * (((double)nextbeat - chartpos) / beatlength) + 0.5;	//Scale the current beat's tempo based on the adjusted delta length (rounded to nearest whole number)
-					sp->beat[sp->beats - 1]->ppqn = curppqn;		//Update the beat's (now an anchor) tempo
-					beatlength = (double)nextbeat - chartpos;	//This is the distance between the current beat, and the upcoming mid-beat change
-				}
-			}//If the beat was created successfully
-			chartfpos += beatlength;	//Add the delta length of this beat to the delta counter
-			chartpos = chartfpos + 0.5;	//Get the current chart position, rounded up to an integer value
-		}//Add new beats until enough have been added to encompass the last item in the chart
+			}
+			if(midbeatchange)
+			{	//If there is a mid-beat tempo/TS change, this beat needs to be anchored and its tempo (and the current tempo) altered
+				//Also update beatlength to reflect that less than a full beat's worth of deltas will be used to advance to the next beat marker
+				sp->beat[sp->beats - 1]->flags |= EOF_BEAT_FLAG_ANCHOR;
+				curppqn = (double)curppqn * (((double)nextbeat - chartpos) / beatlength) + 0.5;	//Scale the current beat's tempo based on the adjusted delta length (rounded to nearest whole number)
+				sp->beat[sp->beats - 1]->ppqn = curppqn;		//Update the beat's (now an anchor) tempo
+				beatlength = (double)nextbeat - chartpos;	//This is the distance between the current beat, and the upcoming mid-beat change
+			}
+		}//If the beat was created successfully
+		chartfpos += beatlength;	//Add the delta length of this beat to the delta counter
+		chartpos = chartfpos + 0.5;	//Get the current chart position, rounded up to an integer value
+	}//Add new beats until enough have been added to encompass the last item in the chart
 
-		eof_calculate_beats(sp);		//Set the beats' timestamps based on their tempo changes
+	eof_calculate_beats(sp);		//Set the beats' timestamps based on their tempo changes
 
-		/* fill in notes */
-		current_track = chart->tracks;
-		while(current_track)
+	/* fill in notes */
+	current_track = chart->tracks;
+	while(current_track)
+	{
+		/* convert track number to EOF numbering scheme */
+		switch(current_track->tracktype)
 		{
-			/* convert track number to EOF numbering scheme */
-			switch(current_track->tracktype)
+
+			/* PART GUITAR */
+			case 1:
 			{
+				track = EOF_TRACK_GUITAR;
+				break;
+			}
 
-				/* PART GUITAR */
-				case 1:
+			/* PART GUITAR COOP */
+			case 2:
+			{
+				track = EOF_TRACK_GUITAR_COOP;
+				break;
+			}
+
+			/* PART BASS */
+			case 3:
+			{
+				track = EOF_TRACK_BASS;
+				break;
+			}
+
+			/* PART DRUMS */
+			case 4:
+			{
+				if(current_track->isdrums == 1)
+				{	//Normal drum track
+					track = EOF_TRACK_DRUM;
+				}
+				else
+				{	//Double drums track
+					track = EOF_TRACK_DRUM_PS;
+				}
+				break;
+			}
+
+			/* PART VOCALS */
+			case 5:
+			{
+				track = EOF_TRACK_VOCALS;
+				break;
+			}
+
+			/* PART RHYTHM */
+			case 6:
+			{
+				track = EOF_TRACK_RHYTHM;
+				break;
+			}
+
+			/* PART KEYS */
+			case 7:
+			{
+				track = EOF_TRACK_KEYS;
+				break;
+			}
+
+			default:
+			{
+				track = -1;
+				break;
+			}
+		}
+		difficulty = current_track->difftype - 1;
+
+		/* if it is a valid track */
+		if(track > 0)
+		{
+			struct dbNote * current_note = current_track->notes;
+			unsigned long lastpos = -1;	//The position of the last imported note (not updated for sections that are parsed)
+			EOF_NOTE * new_note = NULL;
+			EOF_NOTE * prev_note = NULL;
+			char gemtype = 0, lastgemtype = 0;	//Tracks whether the current and previously added gems are normal notes or technique markers
+			unsigned long threshold = (chart->resolution * 4.0 * (11.0 / 128.0)) + 0.5;	//This is the tick distance at which notes become forced strums instead of HOPOs (11/128 measure or further)
+
+			tracknum = sp->track[track]->tracknum;
+			while(current_note)
+			{
+				/* import star power */
+				if(current_note->gemcolor == '2')
 				{
-					track = EOF_TRACK_GUITAR;
-					break;
+					if((current_note->duration > 2) && !((current_note->chartpos + current_note->duration) % chart->resolution))
+					{	//If this star power phrase is at least 3 ticks long and it ends on a beat marker, it's likely that the author of this .chart file improperly ended the phrase at another note's start position and didn't intend to mark that note
+						current_note->duration -= 2;	//Shorten the duration of the phrase
+					}
+					(void) eof_legacy_track_add_star_power(sp->legacy_track[tracknum], chartpos_to_msec(chart, current_note->chartpos), chartpos_to_msec(chart, current_note->chartpos + current_note->duration));
 				}
 
-				/* PART GUITAR COOP */
-				case 2:
+				/* skip face-off sections for now */
+				else if((current_note->gemcolor == '0') || (current_note->gemcolor == '1'))
 				{
-					track = EOF_TRACK_GUITAR_COOP;
-					break;
 				}
 
-				/* PART BASS */
-				case 3:
+				/* skip unknown section markers */
+				else if((current_note->gemcolor == '3') || (current_note->gemcolor == '4'))
 				{
-					track = EOF_TRACK_BASS;
-					break;
 				}
 
-				/* PART DRUMS */
-				case 4:
+				/* import regular note */
+				else
 				{
-					if(current_track->isdrums == 1)
-					{	//Normal drum track
-						track = EOF_TRACK_DRUM;
+					if((current_note->gemcolor == 5) || (current_note->gemcolor == 6))
+					{	//If this gem is inverted HOPO or slider notation
+						gemtype = 2;	//This gem is a technique marker
 					}
 					else
-					{	//Double drums track
-						track = EOF_TRACK_DRUM_PS;
-					}
-					break;
-				}
-
-				/* PART VOCALS */
-				case 5:
-				{
-					track = EOF_TRACK_VOCALS;
-					break;
-				}
-
-				/* PART RHYTHM */
-				case 6:
-				{
-					track = EOF_TRACK_RHYTHM;
-					break;
-				}
-
-				/* PART KEYS */
-				case 7:
-				{
-					track = EOF_TRACK_KEYS;
-					break;
-				}
-
-				default:
-				{
-					track = -1;
-					break;
-				}
-			}
-			difficulty = current_track->difftype - 1;
-
-			/* if it is a valid track */
-			if(track > 0)
-			{
-				struct dbNote * current_note = current_track->notes;
-				unsigned long lastpos = -1;	//The position of the last imported note (not updated for sections that are parsed)
-				EOF_NOTE * new_note = NULL;
-				EOF_NOTE * prev_note = NULL;
-				char gemtype = 0, lastgemtype = 0;	//Tracks whether the current and previously added gems are normal notes or technique markers
-				unsigned long threshold = (chart->resolution * 4.0 * (11.0 / 128.0)) + 0.5;	//This is the tick distance at which notes become forced strums instead of HOPOs (11/128 measure or further)
-
-				tracknum = sp->track[track]->tracknum;
-				while(current_note)
-				{
-					/* import star power */
-					if(current_note->gemcolor == '2')
 					{
-						if((current_note->duration > 2) && !((current_note->chartpos + current_note->duration) % chart->resolution))
-						{	//If this star power phrase is at least 3 ticks long and it ends on a beat marker, it's likely that the author of this .chart file improperly ended the phrase at another note's start position and didn't intend to mark that note
-							current_note->duration -= 2;	//Shorten the duration of the phrase
-						}
-						(void) eof_legacy_track_add_star_power(sp->legacy_track[tracknum], chartpos_to_msec(chart, current_note->chartpos), chartpos_to_msec(chart, current_note->chartpos + current_note->duration));
+						gemtype = 1;	//Otherwise it's a normal note
 					}
 
-					/* skip face-off sections for now */
-					else if((current_note->gemcolor == '0') || (current_note->gemcolor == '1'))
-					{
-					}
-
-					/* skip unknown section markers */
-					else if((current_note->gemcolor == '3') || (current_note->gemcolor == '4'))
-					{
-					}
-
-					/* import regular note */
-					else
-					{
-						if((current_note->gemcolor == 5) || (current_note->gemcolor == 6))
-						{	//If this gem is inverted HOPO or slider notation
-							gemtype = 2;	//This gem is a technique marker
-						}
-						else
+					if((current_note->chartpos != lastpos) || (gemtype == 2) || (gemtype != lastgemtype))
+					{	//If this note was at a different position than the last, if it represents a technique marker or if it's a different gem type than the previous one
+						new_note = eof_legacy_track_add_note(sp->legacy_track[tracknum]);
+						if(new_note)
 						{
-							gemtype = 1;	//Otherwise it's a normal note
-						}
-
-						if((current_note->chartpos != lastpos) || (gemtype == 2) || (gemtype != lastgemtype))
-						{	//If this note was at a different position than the last, if it represents a technique marker or if it's a different gem type than the previous one
-							new_note = eof_legacy_track_add_note(sp->legacy_track[tracknum]);
-							if(new_note)
-							{
-								new_note->pos = chartpos_to_msec(chart, current_note->chartpos) + 0.5;	//Round up
-								new_note->length = chartpos_to_msec(chart, current_note->chartpos + current_note->duration) - (double)new_note->pos + 0.5;	//Round up
-								new_note->note = 1 << current_note->gemcolor;
-								new_note->type = difficulty;
-								if(prev_note)
-								{	//If a previous gem was imported
-									if(current_note->chartpos != lastchartpos)
-									{	//If this gem is at a different position than the last one that was imported
-										if((current_note->chartpos > lastchartpos) && (current_note->chartpos - lastchartpos < threshold))
-										{	//If the note starts less than 3/32 measure (4 times the chart resolution, which represents one beat length) from the previous note's start position
-											if(!current_track->isdrums)
-											{	//If it isn't a drum track being imported
-												new_note->flags |= EOF_NOTE_FLAG_F_HOPO;	//It is a hammer on note
-											}
+							new_note->pos = chartpos_to_msec(chart, current_note->chartpos) + 0.5;	//Round up
+							new_note->length = chartpos_to_msec(chart, current_note->chartpos + current_note->duration) - (double)new_note->pos + 0.5;	//Round up
+							new_note->note = 1 << current_note->gemcolor;
+							new_note->type = difficulty;
+							if(prev_note)
+							{	//If a previous gem was imported
+								if(current_note->chartpos != lastchartpos)
+								{	//If this gem is at a different position than the last one that was imported
+									if((current_note->chartpos > lastchartpos) && (current_note->chartpos - lastchartpos < threshold))
+									{	//If the note starts less than 3/32 measure (4 times the chart resolution, which represents one beat length) from the previous note's start position
+										if(!current_track->isdrums)
+										{	//If it isn't a drum track being imported
+											new_note->flags |= EOF_NOTE_FLAG_F_HOPO;	//It is a hammer on note
 										}
 									}
-									else
-									{	//It's a gem at the same position as the last imported gem
-										new_note->flags = prev_note->flags;	//It will inherit the same flags in terms of HOPO status
-									}
 								}
-								prev_note = new_note;	//Track the last created note
-								lastchartpos = current_note->chartpos;	//Track the position of the gem for HOPO tracking
+								else
+								{	//It's a gem at the same position as the last imported gem
+									new_note->flags = prev_note->flags;	//It will inherit the same flags in terms of HOPO status
+								}
 							}
+							prev_note = new_note;	//Track the last created note
+							lastchartpos = current_note->chartpos;	//Track the position of the gem for HOPO tracking
 						}
-						else
-						{	//Otherwise add a gem to the previously created note
-							if(new_note)
-							{
-								new_note->note |= (1 << current_note->gemcolor);
-							}
+					}
+					else
+					{	//Otherwise add a gem to the previously created note
+						if(new_note)
+						{
+							new_note->note |= (1 << current_note->gemcolor);
 						}
-						lastpos = current_note->chartpos;
-						lastgemtype = gemtype;
 					}
-					current_note = current_note->next;
+					lastpos = current_note->chartpos;
+					lastgemtype = gemtype;
 				}
+				current_note = current_note->next;
 			}
-			current_track = current_track->next;
-			lastchartpos = 0;	//Reset this value
 		}
-
-		/* load text events */
-		current_event = chart->events;
-		while(current_event)
-		{
-			b = current_event->chartpos / chart->resolution;
-			if(b >= sp->beats)
-			{
-				b = sp->beats - 1;
-			}
-			if(!ustricmp(current_event->text, "[solo_on]") && !solo_status)
-			{	//If this is a solo on event (and a solo_off event isn't expected)
-				solo_on = chartpos_to_msec(chart, current_event->chartpos);	//Store the real timestamp associated with the start of the phrase
-				solo_status = 1;
-			}
-			else if(!ustricmp(current_event->text, "[solo_off]") && solo_status)
-			{	//If this is a solo off event (and a solo_off event is expected), add it to the guitar and lead guitar tracks (FoF's original behavior for these events)
-				solo_off = chartpos_to_msec(chart, current_event->chartpos);	//Store the real timestamp associated with the end of the phrase
-				solo_status = 0;
-				(void) eof_track_add_solo(sp, EOF_TRACK_GUITAR, solo_on + 0.5, solo_off + 0.5);	//Add the solo to the guitar track
-				(void) eof_track_add_solo(sp, EOF_TRACK_GUITAR_COOP, solo_on + 0.5, solo_off + 0.5);	//Add the solo to the lead guitar track
-			}
-			else if(eof_text_is_section_marker(current_event->text))
-			{	//If this is a section event, rebuild the string to ensure it's in the proper format
-				char buffer[256] = {0};
-				int index = 0, index2 = 0;	//index1 will index into the rebuilt buffer[] string, index2 will index into the original current_event->text[] string
-
-				buffer[index++] = '[';	//Begin with an open bracket
-				while(current_event->text[index2] != '\0' && (index < 254))
-				{	//While the end of the string hasn't been reached (with an additional overflow check)
-					if((current_event->text[index2] != '[') && (current_event->text[index2] != ']'))
-					{	//If this character isn't a bracket
-							buffer[index++] = current_event->text[index2];	//Copy it into the rebuilt string
-					}
-					index2++;	//Iterate to the next character
-				}
-				buffer[index++] = ']';	//End with a closing bracket
-				buffer[index++] = '\0';	//Terminate the string
-				(void) eof_song_add_text_event(sp, b, buffer, 0, 0, 0);
-			}
-			else
-			{	//Otherwise copy the string as-is
-				(void) eof_song_add_text_event(sp, b, current_event->text, 0, 0, 0);
-			}
-			current_event = current_event->next;	//Iterate to the next text event
-		}
-
-		DestroyFeedbackChart(chart, 1);	//Free memory used by Feedback chart before exiting function
+		current_track = current_track->next;
+		lastchartpos = 0;	//Reset this value
 	}
+
+	/* load text events */
+	current_event = chart->events;
+	while(current_event)
+	{
+		b = current_event->chartpos / chart->resolution;
+		if(b >= sp->beats)
+		{
+			b = sp->beats - 1;
+		}
+		if(!ustricmp(current_event->text, "[solo_on]") && !solo_status)
+		{	//If this is a solo on event (and a solo_off event isn't expected)
+			solo_on = chartpos_to_msec(chart, current_event->chartpos);	//Store the real timestamp associated with the start of the phrase
+			solo_status = 1;
+		}
+		else if(!ustricmp(current_event->text, "[solo_off]") && solo_status)
+		{	//If this is a solo off event (and a solo_off event is expected), add it to the guitar and lead guitar tracks (FoF's original behavior for these events)
+			solo_off = chartpos_to_msec(chart, current_event->chartpos);	//Store the real timestamp associated with the end of the phrase
+			solo_status = 0;
+			(void) eof_track_add_solo(sp, EOF_TRACK_GUITAR, solo_on + 0.5, solo_off + 0.5);	//Add the solo to the guitar track
+			(void) eof_track_add_solo(sp, EOF_TRACK_GUITAR_COOP, solo_on + 0.5, solo_off + 0.5);	//Add the solo to the lead guitar track
+		}
+		else if(eof_text_is_section_marker(current_event->text))
+		{	//If this is a section event, rebuild the string to ensure it's in the proper format
+			char buffer[256] = {0};
+			int index = 0, index2 = 0;	//index1 will index into the rebuilt buffer[] string, index2 will index into the original current_event->text[] string
+
+			buffer[index++] = '[';	//Begin with an open bracket
+			while(current_event->text[index2] != '\0' && (index < 254))
+			{	//While the end of the string hasn't been reached (with an additional overflow check)
+				if((current_event->text[index2] != '[') && (current_event->text[index2] != ']'))
+				{	//If this character isn't a bracket
+						buffer[index++] = current_event->text[index2];	//Copy it into the rebuilt string
+				}
+				index2++;	//Iterate to the next character
+			}
+			buffer[index++] = ']';	//End with a closing bracket
+			buffer[index++] = '\0';	//Terminate the string
+			(void) eof_song_add_text_event(sp, b, buffer, 0, 0, 0);
+		}
+		else
+		{	//Otherwise copy the string as-is
+			(void) eof_song_add_text_event(sp, b, current_event->text, 0, 0, 0);
+		}
+		current_event = current_event->next;	//Iterate to the next text event
+	}
+
+	DestroyFeedbackChart(chart, 1);	//Free memory used by Feedback chart before exiting function
 	eof_selected_ogg = 0;
 
 	/* check if there were lane 5 drums imported */
@@ -580,27 +578,28 @@ EOF_SONG * eof_import_chart(const char * fn)
 				eof_set_note_flags(sp, ctr, ctr2, (eof_get_note_flags(sp, ctr, ctr2) & (~EOF_NOTE_FLAG_F_HOPO)));	//Clear the forced HOPO flag for this note
 			}
 
-			if(eof_get_note_note(sp, ctr, ctr2) & 31)
-			{	//If this is a normal normal gem (using lanes 1 through 5), perform other checks to enforce proper forced HOPO rules
-				prevnote = ctr2;
-				do{
-					prevnote = eof_track_fixup_previous_note(sp, ctr, prevnote);			//Keep reviewing previous notes in this track difficulty
-					if(prevnote >= 0)
-					{	//If there was a previous note
-						if((eof_get_note_pos(sp, ctr, prevnote) == eof_get_note_pos(sp, ctr, ctr2)) && (eof_get_note_note(sp, ctr, prevnote) & 31))
-						{	//If that previous note is at the same timestamp and is a normal gem (using lanes 1 through 5), it will become a chord when fixup logic runs
-							eof_set_note_flags(sp, ctr, ctr2, (eof_get_note_flags(sp, ctr, ctr2) & (~EOF_NOTE_FLAG_F_HOPO)));			//Clear the forced HOPO flag for both single notes in the chord
-							eof_set_note_flags(sp, ctr, prevnote, (eof_get_note_flags(sp, ctr, prevnote) & (~EOF_NOTE_FLAG_F_HOPO)));
-						}
-					}
-				}while((prevnote >= 0) && (eof_get_note_note(sp, ctr, prevnote) & ~31));	//until there are no more notes using lanes higher than lane 5
+			if(!(eof_get_note_note(sp, ctr, ctr2) & 31))
+				continue;	//If this is not a normal gem (one which uses lanes 1 through 5), skip it.
 
+			//Otherwise perform other checks to enforce proper forced HOPO rules
+			prevnote = ctr2;
+			do{
+				prevnote = eof_track_fixup_previous_note(sp, ctr, prevnote);			//Keep reviewing previous notes in this track difficulty
 				if(prevnote >= 0)
-				{	//If a previous note gem was found for this track difficulty
-					if((eof_get_note_note(sp, ctr, prevnote) & 31) == (eof_get_note_note(sp, ctr, ctr2) & 31))
-					{	//If this note is a repeat of that note (only considering the standard 5 gems and ignoring any other unrecognized markers)
-						eof_set_note_flags(sp, ctr, ctr2, (eof_get_note_flags(sp, ctr, ctr2) & (~EOF_NOTE_FLAG_F_HOPO)));	//Clear the forced HOPO flag for this note
+				{	//If there was a previous note
+					if((eof_get_note_pos(sp, ctr, prevnote) == eof_get_note_pos(sp, ctr, ctr2)) && (eof_get_note_note(sp, ctr, prevnote) & 31))
+					{	//If that previous note is at the same timestamp and is a normal gem (using lanes 1 through 5), it will become a chord when fixup logic runs
+						eof_set_note_flags(sp, ctr, ctr2, (eof_get_note_flags(sp, ctr, ctr2) & (~EOF_NOTE_FLAG_F_HOPO)));			//Clear the forced HOPO flag for both single notes in the chord
+						eof_set_note_flags(sp, ctr, prevnote, (eof_get_note_flags(sp, ctr, prevnote) & (~EOF_NOTE_FLAG_F_HOPO)));
 					}
+				}
+			}while((prevnote >= 0) && (eof_get_note_note(sp, ctr, prevnote) & ~31));	//until there are no more notes using lanes higher than lane 5
+
+			if(prevnote >= 0)
+			{	//If a previous note gem was found for this track difficulty
+				if((eof_get_note_note(sp, ctr, prevnote) & 31) == (eof_get_note_note(sp, ctr, ctr2) & 31))
+				{	//If this note is a repeat of that note (only considering the standard 5 gems and ignoring any other unrecognized markers)
+					eof_set_note_flags(sp, ctr, ctr2, (eof_get_note_flags(sp, ctr, ctr2) & (~EOF_NOTE_FLAG_F_HOPO)));	//Clear the forced HOPO flag for this note
 				}
 			}
 		}
@@ -615,27 +614,27 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
 		{	//For each note in the track
-			if(eof_get_note_note(sp, ctr, ctr2) & 32)
-			{	//If this note uses lane 6 (A "N 5 #" .chart entry)
-				unsigned long pos = eof_get_note_pos(sp, ctr, ctr2);
-				long len = eof_get_note_length(sp, ctr, ctr2);
-				unsigned char type = eof_get_note_type(sp, ctr, ctr2);
+			unsigned long pos = eof_get_note_pos(sp, ctr, ctr2);
+			long len = eof_get_note_length(sp, ctr, ctr2);
+			unsigned char type = eof_get_note_type(sp, ctr, ctr2);
 
-				for(ctr3 = 0; ctr3 < eof_get_track_size(sp, ctr); ctr3++)
-				{	//For each note in the track
-					unsigned long pos2 = eof_get_note_pos(sp, ctr, ctr3);
+			if(!(eof_get_note_note(sp, ctr, ctr2) & 32))
+				continue;	//If this note does not use lane 6 (a "N 5 #" .chart entry), skip it
 
-					if(pos2 > pos + len)
-					{	//If this note occurs after the span of the HOPO notation
-						break;	//Break from inner loop
-					}
-					if((pos2 >= pos) && (eof_get_note_type(sp, ctr, ctr3) == type))
-					{	//If this note is within the span of the HOPO notation and is in the same difficulty
-						eof_set_note_flags(sp, ctr, ctr3, (eof_get_note_flags(sp, ctr, ctr3) ^ EOF_NOTE_FLAG_F_HOPO));	//Toggle the forced HOPO flag for this note
-					}
+			for(ctr3 = 0; ctr3 < eof_get_track_size(sp, ctr); ctr3++)
+			{	//For each note in the track
+				unsigned long pos2 = eof_get_note_pos(sp, ctr, ctr3);
+
+				if(pos2 > pos + len)
+				{	//If this note occurs after the span of the HOPO notation
+					break;	//Break from inner loop
 				}
-				eof_set_note_note(sp, ctr, ctr2, 0);	//Clear the gem so it will be removed by the cleanup logic and not be allowed to also import as an open strum note (gem on lane 6) if any 5 lane chords are converted to open strum notes
+				if((pos2 >= pos) && (eof_get_note_type(sp, ctr, ctr3) == type))
+				{	//If this note is within the span of the HOPO notation and is in the same difficulty
+					eof_set_note_flags(sp, ctr, ctr3, (eof_get_note_flags(sp, ctr, ctr3) ^ EOF_NOTE_FLAG_F_HOPO));	//Toggle the forced HOPO flag for this note
+				}
 			}
+			eof_set_note_note(sp, ctr, ctr2, 0);	//Clear the gem so it will be removed by the cleanup logic and not be allowed to also import as an open strum note (gem on lane 6) if any 5 lane chords are converted to open strum notes
 		}
 	}
 
@@ -645,24 +644,24 @@ EOF_SONG * eof_import_chart(const char * fn)
 		//Mark notes that have slider status
 		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
 		{	//For each note in the track
-			if(eof_get_note_note(sp, ctr, ctr2) & 64)
-			{	//If this note uses lane 7 (A "N 6 #" .chart entry)
-				unsigned long pos = eof_get_note_pos(sp, ctr, ctr2);
-				long len = eof_get_note_length(sp, ctr, ctr2);
-				unsigned char type = eof_get_note_type(sp, ctr, ctr2);
+			unsigned long pos = eof_get_note_pos(sp, ctr, ctr2);
+			long len = eof_get_note_length(sp, ctr, ctr2);
+			unsigned char type = eof_get_note_type(sp, ctr, ctr2);
 
-				for(ctr3 = 0; ctr3 < eof_get_track_size(sp, ctr); ctr3++)
-				{	//For each note in the track
-					unsigned long pos2 = eof_get_note_pos(sp, ctr, ctr3);
+			if(!(eof_get_note_note(sp, ctr, ctr2) & 64))
+				continue;	//If this note does not use lane 7 (a "N 6 #" .chart entry), skip it
 
-					if(pos2 > pos + len)
-					{	//If this note occurs after the span of the HOPO notation
-						break;	//Break from inner loop
-					}
-					if((pos2 >= pos) && (eof_get_note_type(sp, ctr, ctr3) == type))
-					{	//If this note is within the span of the HOPO notation and is in the same difficulty
-						eof_set_note_flags(sp, ctr, ctr3, (eof_get_note_flags(sp, ctr, ctr3) | EOF_GUITAR_NOTE_FLAG_IS_SLIDER));	//Set the slider flag for this note
-					}
+			for(ctr3 = 0; ctr3 < eof_get_track_size(sp, ctr); ctr3++)
+			{	//For each note in the track
+				unsigned long pos2 = eof_get_note_pos(sp, ctr, ctr3);
+
+				if(pos2 > pos + len)
+				{	//If this note occurs after the span of the HOPO notation
+					break;	//Break from inner loop
+				}
+				if((pos2 >= pos) && (eof_get_note_type(sp, ctr, ctr3) == type))
+				{	//If this note is within the span of the HOPO notation and is in the same difficulty
+					eof_set_note_flags(sp, ctr, ctr3, (eof_get_note_flags(sp, ctr, ctr3) | EOF_GUITAR_NOTE_FLAG_IS_SLIDER));	//Set the slider flag for this note
 				}
 			}
 		}
@@ -1646,8 +1645,8 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 				diffstring=strcasestr_spec(&buffer[1],"Expert");
 				if(diffstring == NULL)	//If none of the four valid difficulty strings were found
 					return NULL;	//Return error
-				else
-					difftype=4;	//Track that this is an Expert difficulty
+
+				difftype=4;	//Track that this is an Expert difficulty
 			}
 			else
 				difftype=3;	//Track that this is a Hard difficulty
@@ -1717,11 +1716,9 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 															{		//If none of the valid instrument names were found
 																return NULL;	//Return error
 															}
-															else
-															{
-																tracktype=6;	//Track that this is a "Rhythm" track
-																isguitar=1;
-															}
+
+															tracktype=6;	//Track that this is a "Rhythm" track
+															isguitar=1;
 														}
 														else
 														{
@@ -1915,11 +1912,9 @@ unsigned long FindLongestLineLength_ALLEGRO(const char *filename, char exit_on_e
 			(void) pack_fclose(inf);
 			return 0;
 		}
-		else
-		{
-			(void) puts("Error: File is empty\nAborting");
-			exit_wrapper(2);
-		}
+
+		(void) puts("Error: File is empty\nAborting");
+		exit_wrapper(2);
 	}
 	maxlinelength++;		//Must increment this to account for newline character
 

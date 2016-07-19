@@ -29,7 +29,6 @@ struct _MIDI_LYRIC_STRUCT_ MIDI_Lyrics;
 struct Tempo_change DEFAULTTEMPO={0,0.0,120.0,0,0,NULL};
 	//Until a Set Tempo event is encountered in a track, 120BPM will be assumed
 
-
 void InitMIDI(void)
 {
 	if(Lyrics.verbose)	(void) puts("Initializing MIDI variables");

@@ -240,6 +240,8 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 					measure_snap = 1;
 				break;
 			}
+			default:
+			break;
 		}
 
 		/* do the actual snapping */
@@ -617,24 +619,24 @@ int eof_is_any_grid_snap_position(unsigned long pos, int *beat, char *gridsnapva
 	{	//For each of the applicable grid snap settings
 		eof_snap_mode = ctr;			//Put this grid snap setting into effect
 		eof_snap_logic(&temp, pos);		//Find the next grid snap position that occurs after the specified position
-		if(temp.pos == pos)
-		{
-			retval = 1;	//Track that a matching grid snap position was found
-			foundgridsnapvalue = eof_snap_mode;
-			foundbeat = temp.beat;
-			if(gridsnapnum)
-			{	//If the calling function wanted to know which grid snap number the position aligned with
-				for(ctr = 0; (ctr < EOF_MAX_GRID_SNAP_INTERVALS) && (ctr < temp.intervals); ctr++)
-				{	//For each grid snap position determined by eof_snap_logic()
-					if((unsigned long)(temp.grid_pos[ctr] + 0.5) == pos)
-					{	//If this is the matching grid snap position, when rounded to the nearest millisecond
-						foundgridsnapnum = ctr;
-						break;
-					}
+		if(temp.pos != pos)
+			continue;	//If the nearest grid snap position isn't the position specified by the calling function, skip this grid snap setting
+
+		retval = 1;	//Track that a matching grid snap position was found
+		foundgridsnapvalue = eof_snap_mode;
+		foundbeat = temp.beat;
+		if(gridsnapnum)
+		{	//If the calling function wanted to know which grid snap number the position aligned with
+			for(ctr = 0; (ctr < EOF_MAX_GRID_SNAP_INTERVALS) && (ctr < temp.intervals); ctr++)
+			{	//For each grid snap position determined by eof_snap_logic()
+				if((unsigned long)(temp.grid_pos[ctr] + 0.5) == pos)
+				{	//If this is the matching grid snap position, when rounded to the nearest millisecond
+					foundgridsnapnum = ctr;
+					break;
 				}
 			}
-			break;
 		}
+		break;
 	}
 
 	//Return any desired values back to the calling function
@@ -3905,50 +3907,50 @@ void eof_editor_logic(void)
 					}
 					for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 					{	//For each note in the active track
-						if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-						{	//If the note is selected
-							notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
-							if(notepos == eof_selection.current_pos)
-							{
-								if(move_direction < 0)
-								{	//Left mouse movement
-									eof_selection.current_pos -= move_offset;
-								}
-								else
-								{	//Right mouse movement
-									eof_selection.current_pos += move_offset;
-								}
-							}
+						if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+							continue;	//If the note is not selected, skip it
+
+						notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
+						if(notepos == eof_selection.current_pos)
+						{
 							if(move_direction < 0)
-							{	//If the user is moving notes left
-								if((move_offset > notepos) || (notepos - move_offset < eof_song->beat[0]->pos))
-								{	//If the move would make the note position negative or otherwise earlier than the first beat
-									move_offset = notepos - eof_song->beat[0]->pos;	//Adjust the move offset to line it up with the first beat marker
-								}
+							{	//Left mouse movement
+								eof_selection.current_pos -= move_offset;
 							}
-							if(move_offset == 0)
-							{	//If the offset has become 0
-								break;	//Don't move the notes
+							else
+							{	//Right mouse movement
+								eof_selection.current_pos += move_offset;
 							}
-							if(!undo_made)
-							{	//Only create the undo state before moving the first note
-								eof_notes_moved = 1;
-								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-								undo_made = 1;
+						}
+						if(move_direction < 0)
+						{	//If the user is moving notes left
+							if((move_offset > notepos) || (notepos - move_offset < eof_song->beat[0]->pos))
+							{	//If the move would make the note position negative or otherwise earlier than the first beat
+								move_offset = notepos - eof_song->beat[0]->pos;	//Adjust the move offset to line it up with the first beat marker
 							}
-							eof_move_note_pos(eof_song, eof_selected_track, i, move_offset, move_direction);
-							notepos = eof_get_note_pos(eof_song, eof_selected_track, i);	//Get the updated note position
-							notelength = eof_get_note_length(eof_song, eof_selected_track, i);
-							if(notepos + notelength >= eof_chart_length)
-							{	//If the moved note is at or after the end of the chart
-								revert |= 1;
-								revert_amount = notepos + notelength - eof_chart_length;	//This positive value will be subtracted from the note via the revert loop
-							}
-							else if(notepos <= eof_song->beat[0]->pos)
-							{	//If the moved note is at or before the first beat marker
-								revert |= 2;
-								revert_amount = eof_song->beat[0]->pos - notepos;			//This negative value will be subtracted from the note via the revert loop
-							}
+						}
+						if(move_offset == 0)
+						{	//If the offset has become 0
+							break;	//Don't move the notes
+						}
+						if(!undo_made)
+						{	//Only create the undo state before moving the first note
+							eof_notes_moved = 1;
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+							undo_made = 1;
+						}
+						eof_move_note_pos(eof_song, eof_selected_track, i, move_offset, move_direction);
+						notepos = eof_get_note_pos(eof_song, eof_selected_track, i);	//Get the updated note position
+						notelength = eof_get_note_length(eof_song, eof_selected_track, i);
+						if(notepos + notelength >= eof_chart_length)
+						{	//If the moved note is at or after the end of the chart
+							revert |= 1;
+							revert_amount = notepos + notelength - eof_chart_length;	//This positive value will be subtracted from the note via the revert loop
+						}
+						else if(notepos <= eof_song->beat[0]->pos)
+						{	//If the moved note is at or before the first beat marker
+							revert |= 2;
+							revert_amount = eof_song->beat[0]->pos - notepos;			//This negative value will be subtracted from the note via the revert loop
 						}
 					}
 					if(revert)
@@ -4695,43 +4697,43 @@ void eof_vocal_editor_logic(void)
 					for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 					{	//For each lyric in the track
 						notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
-						if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-						{	//If the lyric is selected
-							if(notepos == eof_selection.current_pos)
-							{
-								if(move_direction < 0)
-								{	//Left mouse movement
-									eof_selection.current_pos -= move_offset;
-								}
-								else
-								{	//Right mouse movement
-									eof_selection.current_pos += move_offset;
-								}
-							}
+						if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+							continue;	//If this lyric is not selected, skip it
+
+						if(notepos == eof_selection.current_pos)
+						{
 							if(move_direction < 0)
-							{	//If the user is moving lyrics left
-								if((move_offset > notepos) || (notepos - move_offset < eof_song->beat[0]->pos))
-								{	//If the move would make the lyric position negative or otherwise earlier than the first beat
-									move_offset = notepos - eof_song->beat[0]->pos;	//Adjust the move offset to line it up with the first beat marker
-								}
+							{	//Left mouse movement
+								eof_selection.current_pos -= move_offset;
 							}
-							if(move_offset == 0)
-							{	//If the offset has become 0
-								break;	//Don't move the notes
+							else
+							{	//Right mouse movement
+								eof_selection.current_pos += move_offset;
 							}
-							if(!undo_made)
-							{	//Only create the undo state before moving the first note
-								eof_notes_moved = 1;
-								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-								undo_made = 1;
+						}
+						if(move_direction < 0)
+						{	//If the user is moving lyrics left
+							if((move_offset > notepos) || (notepos - move_offset < eof_song->beat[0]->pos))
+							{	//If the move would make the lyric position negative or otherwise earlier than the first beat
+								move_offset = notepos - eof_song->beat[0]->pos;	//Adjust the move offset to line it up with the first beat marker
 							}
-							eof_move_note_pos(eof_song, eof_selected_track, i, move_offset, move_direction);
-							notepos = eof_get_note_pos(eof_song, eof_selected_track, i);	//Get the updated lyric position
-							if(notepos + eof_song->vocal_track[tracknum]->lyric[i]->length >= eof_chart_length)
-							{
-								revert = 1;
-								revert_amount = notepos + eof_song->vocal_track[tracknum]->lyric[i]->length - eof_chart_length;
-							}
+						}
+						if(move_offset == 0)
+						{	//If the offset has become 0
+							break;	//Don't move the notes
+						}
+						if(!undo_made)
+						{	//Only create the undo state before moving the first note
+							eof_notes_moved = 1;
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+							undo_made = 1;
+						}
+						eof_move_note_pos(eof_song, eof_selected_track, i, move_offset, move_direction);
+						notepos = eof_get_note_pos(eof_song, eof_selected_track, i);	//Get the updated lyric position
+						if(notepos + eof_song->vocal_track[tracknum]->lyric[i]->length >= eof_chart_length)
+						{
+							revert = 1;
+							revert_amount = notepos + eof_song->vocal_track[tracknum]->lyric[i]->length - eof_chart_length;
 						}
 					}
 					if(revert)
@@ -4877,25 +4879,25 @@ void eof_vocal_editor_logic(void)
 				{
 					for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 					{
-						if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
+						if((eof_selection.track != EOF_TRACK_VOCALS) || !eof_selection.multi[i])
+							continue;	//If the vocal track isn't selected or this lyric isn't selected, skip this lyric
+
+						b = eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length - 1);
+						if(eof_beat_num_valid(eof_song, b))
 						{
-							b = eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length - 1);
-							if(eof_beat_num_valid(eof_song, b))
-							{
-								eof_snap_logic(&eof_tail_snap, eof_song->beat[b]->pos);
-							}
-							else
-							{
-								eof_snap_logic(&eof_tail_snap, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length - 1);
-							}
-							eof_snap_length_logic(&eof_tail_snap);
+							eof_snap_logic(&eof_tail_snap, eof_song->beat[b]->pos);
+						}
+						else
+						{
+							eof_snap_logic(&eof_tail_snap, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length - 1);
+						}
+						eof_snap_length_logic(&eof_tail_snap);
 //							allegro_message("%d, %d\n%lu, %lu", eof_tail_snap.length, eof_tail_snap.beat, eof_get_note_pos(eof_selected_track, i) + eof_get_note_length(eof_selected_track, i), eof_song->beat[eof_tail_snap.beat]->pos);	//Debugging
-							eof_song->vocal_track[tracknum]->lyric[i]->length -= eof_tail_snap.length;
-							if(eof_song->vocal_track[tracknum]->lyric[i]->length > 1)
-							{
-								eof_snap_logic(&eof_tail_snap, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length);
-								eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
-							}
+						eof_song->vocal_track[tracknum]->lyric[i]->length -= eof_tail_snap.length;
+						if(eof_song->vocal_track[tracknum]->lyric[i]->length > 1)
+						{
+							eof_snap_logic(&eof_tail_snap, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length);
+							eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
 						}
 					}
 				}
@@ -4903,20 +4905,20 @@ void eof_vocal_editor_logic(void)
 				{
 					for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 					{
-						if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
+						if((eof_selection.track != EOF_TRACK_VOCALS) || !eof_selection.multi[i])
+							continue;	//If the vocal track isn't selected or this lyric isn't selected, skip this lyric
+
+						eof_snap_logic(&eof_tail_snap, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length + 1);
+						if(eof_tail_snap.pos > eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length + 1)
 						{
-							eof_snap_logic(&eof_tail_snap, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length + 1);
-							if(eof_tail_snap.pos > eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length + 1)
-							{
-								eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
-							}
-							else
-							{
-								eof_snap_length_logic(&eof_tail_snap);
-								eof_song->vocal_track[tracknum]->lyric[i]->length += eof_tail_snap.length;
-								eof_snap_logic(&eof_tail_snap, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length);
-								eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
-							}
+							eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
+						}
+						else
+						{
+							eof_snap_length_logic(&eof_tail_snap);
+							eof_song->vocal_track[tracknum]->lyric[i]->length += eof_tail_snap.length;
+							eof_snap_logic(&eof_tail_snap, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length);
+							eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
 						}
 					}
 				}
@@ -5519,26 +5521,26 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 				{	//For each note in this track
 					notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
 					notelength = eof_get_note_length(eof_song, eof_selected_track, i);
-					if((eof_note_type == eof_get_note_type(eof_song, eof_selected_track, i)) && (notepos + notelength >= start) && (notepos <= stop))
-					{	//If this note is in the selected instrument difficulty and would render between the left and right edges of the piano roll
-						if(eof_song->pro_guitar_track[tracknum]->note[i]->legacymask == 0)
-						{	//If this note does not have a defined legacy mask, render a maroon colored section a minimum of eof_screen_layout.note_size pixels long
-							markerlength = notelength / eof_zoom;
-							if(markerlength < eof_screen_layout.note_size)
-							{	//If this marker isn't at least as wide as a note gem
-								markerlength = eof_screen_layout.note_size;	//Make it longer
+					if((eof_note_type != eof_get_note_type(eof_song, eof_selected_track, i)) || (notepos + notelength < start) || (notepos > stop))
+						continue;	//If this note isn't in the active difficulty, or would render before the left edge of the piano roll or after the right edge, skip it
+
+					if(eof_song->pro_guitar_track[tracknum]->note[i]->legacymask == 0)
+					{	//If this note does not have a defined legacy mask, render a maroon colored section a minimum of eof_screen_layout.note_size pixels long
+						markerlength = notelength / eof_zoom;
+						if(markerlength < eof_screen_layout.note_size)
+						{	//If this marker isn't at least as wide as a note gem
+							markerlength = eof_screen_layout.note_size;	//Make it longer
+						}
+						markerpos = lpos + (notepos / eof_zoom);
+						if(notepos + notelength >= start)
+						{	//If the notes ends at or right of the left edge of the screen
+							if(markerpos <= window->screen->w)
+							{	//If the marker starts at or left of the right edge of the screen (is visible)
+								rectfill(window->screen, markerpos, EOF_EDITOR_RENDER_OFFSET + 25, markerpos + markerlength, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, col);
 							}
-							markerpos = lpos + (notepos / eof_zoom);
-							if(notepos + notelength >= start)
-							{	//If the notes ends at or right of the left edge of the screen
-								if(markerpos <= window->screen->w)
-								{	//If the marker starts at or left of the right edge of the screen (is visible)
-									rectfill(window->screen, markerpos, EOF_EDITOR_RENDER_OFFSET + 25, markerpos + markerlength, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, col);
-								}
-								else
-								{	//Otherwise this and all remaining undefined legacy mask markers are not visible
-									break;	//Stop rendering them
-								}
+							else
+							{	//Otherwise this and all remaining undefined legacy mask markers are not visible
+								break;	//Stop rendering them
 							}
 						}
 					}
@@ -5584,26 +5586,26 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		{	//If the note would render beyond the right edge of the piano roll
 			break;	//This note and all remaining notes are too far ahead to render on-screen
 		}
-		if((eof_note_type == eof_get_note_type(eof_song, eof_selected_track, i)) && (notepos + notelength >= start))
-		{	//If this note is in the selected instrument difficulty and would render between the left and right edges of the piano roll
-			if(eof_note_is_highlighted(eof_song, eof_selected_track, i))
-			{	//If this note is flagged to be highlighted, render a yellow colored background
-				markerlength = notelength / eof_zoom;
-				if(markerlength < eof_screen_layout.note_size)
-				{	//If this marker isn't at least as wide as a note gem
-					markerlength = eof_screen_layout.note_size;	//Make it longer
+		if((eof_note_type != eof_get_note_type(eof_song, eof_selected_track, i)) || (notepos + notelength < start))
+			continue;	//If this note is not in the active difficulty or would render before the left edge of the piano roll, skip it
+
+		if(eof_note_is_highlighted(eof_song, eof_selected_track, i))
+		{	//If this note is flagged to be highlighted, render a yellow colored background
+			markerlength = notelength / eof_zoom;
+			if(markerlength < eof_screen_layout.note_size)
+			{	//If this marker isn't at least as wide as a note gem
+				markerlength = eof_screen_layout.note_size;	//Make it longer
+			}
+			markerpos = lpos + (notepos / eof_zoom);
+			if(notepos + notelength >= start)
+			{	//If the notes ends at or right of the left edge of the screen
+				if(markerpos <= window->screen->w)
+				{	//If the marker starts at or left of the right edge of the screen (is visible)
+					rectfill(window->screen, markerpos, EOF_EDITOR_RENDER_OFFSET + 25, markerpos + markerlength, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_yellow);
 				}
-				markerpos = lpos + (notepos / eof_zoom);
-				if(notepos + notelength >= start)
-				{	//If the notes ends at or right of the left edge of the screen
-					if(markerpos <= window->screen->w)
-					{	//If the marker starts at or left of the right edge of the screen (is visible)
-						rectfill(window->screen, markerpos, EOF_EDITOR_RENDER_OFFSET + 25, markerpos + markerlength, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_yellow);
-					}
-					else
-					{	//Otherwise this and all remaining highlighted notes are not visible
-						break;	//Stop rendering them
-					}
+				else
+				{	//Otherwise this and all remaining highlighted notes are not visible
+					break;	//Stop rendering them
 				}
 			}
 		}
@@ -5647,46 +5649,46 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 				{	//On the second pass, render tremolo sections
 					sectionptr = eof_get_tremolo(eof_song, eof_selected_track, i);
 				}
-				if(sectionptr != NULL)
-				{	//If the section exists
-					if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop))
-					{	//If the trill or tremolo section would render between the left and right edges of the piano roll
-						if(j)
-						{	//If tremolo sections are being rendered
-							if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
-							{	//If the track's difficulty limit has been removed
-								if(sectionptr->difficulty != eof_note_type)	//And the tremolo section does not apply to the active track difficulty
-									continue;	//Skip rendering it
-							}
-							else
-							{
-								if(sectionptr->difficulty != 0xFF)	//Otherwise if the tremolo section does not apply to all track difficulties
-									continue;	//Skip rendering it
-							}
-						}
-						usedlanes = eof_get_used_lanes(eof_selected_track, sectionptr->start_pos, sectionptr->end_pos, eof_note_type);	//Determine which lane(s) use this phrase
-						if(usedlanes == 0)
-						{	//If there are no notes in this marker, render the marker in all lanes
-							usedlanes = 0xFF;
-						}
-						for(ctr = 0, bitmask = 1; ctr < numlanes; ctr++, bitmask <<= 1)
-						{	//For each of the track's usable lanes
-							if(usedlanes & bitmask)
-							{	//If this lane is used in the phrase
-								int x1 = lpos + sectionptr->start_pos / eof_zoom;
-								int y1 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - half_string_space;
-								int x2 = lpos + sectionptr->end_pos / eof_zoom;
-								int y2 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + half_string_space;
+				if(sectionptr == NULL)
+					continue;	//If the section does not exist, skip it
 
-								if(y1 < EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0])
-									y1 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0];	//Ensure that the phrase cannot render above the top most lane
-								if(y2 > EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes-1])
-									y2 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes-1];	//Ensure that the phrase cannot render below the bottom most lane
-								rectfill(window->screen, x1, y1, x2, y2, eof_colors[ctr].lightcolor);	//Draw a rectangle one lane high centered over that lane's fret line
-							}
+				if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop))
+				{	//If the trill or tremolo section would render between the left and right edges of the piano roll
+					if(j)
+					{	//If tremolo sections are being rendered
+						if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+						{	//If the track's difficulty limit has been removed
+							if(sectionptr->difficulty != eof_note_type)	//And the tremolo section does not apply to the active track difficulty
+								continue;	//Skip rendering it
+						}
+						else
+						{
+							if(sectionptr->difficulty != 0xFF)	//Otherwise if the tremolo section does not apply to all track difficulties
+								continue;	//Skip rendering it
 						}
 					}
-				}//If the section exists
+					usedlanes = eof_get_used_lanes(eof_selected_track, sectionptr->start_pos, sectionptr->end_pos, eof_note_type);	//Determine which lane(s) use this phrase
+					if(usedlanes == 0)
+					{	//If there are no notes in this marker, render the marker in all lanes
+						usedlanes = 0xFF;
+					}
+					for(ctr = 0, bitmask = 1; ctr < numlanes; ctr++, bitmask <<= 1)
+					{	//For each of the track's usable lanes
+						if(usedlanes & bitmask)
+						{	//If this lane is used in the phrase
+							int x1 = lpos + sectionptr->start_pos / eof_zoom;
+							int y1 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - half_string_space;
+							int x2 = lpos + sectionptr->end_pos / eof_zoom;
+							int y2 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + half_string_space;
+
+							if(y1 < EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0])
+								y1 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0];	//Ensure that the phrase cannot render above the top most lane
+							if(y2 > EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes-1])
+								y2 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes-1];	//Ensure that the phrase cannot render below the bottom most lane
+							rectfill(window->screen, x1, y1, x2, y2, eof_colors[ctr].lightcolor);	//Draw a rectangle one lane high centered over that lane's fret line
+						}
+					}
+				}
 			}//For each trill or tremolo section in the track
 		}//For each of the two phrase types (trills and tremolos)
 	}//If this track has any trill or tremolo sections
@@ -5719,41 +5721,41 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	roundedstart *= 1000;		//Roundedstart is start rounded down to nearest second
 	for(msec = roundedstart; msec < stop + 1000; msec += 1000)
 	{	//Draw up to 1 second beyond the right edge of the screen's worth of second markers
-		if(msec < eof_chart_length)
-		{
-			for(j = 0; j < 1000; j+=100)
-			{	//Draw markers every 100ms (1/10 second)
-				xcoord = lpos + (msec + j) / eof_zoom;
-				if(xcoord > window->screen->w)	//If this and all remaining second markers would render out of view
-					break;
-				if(xcoord >= 0)	//If this second marker would be visible
-				{
-					vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 9, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_gray);
-					if(j == 0)
-					{	//Each second marker is drawn taller
-						if(!capo)
-						{	//If this second marker isn't being skipped to avoid rendering on top of the capo indicator
-							vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 5, eof_color_white);
-						}
-						capo = 0;	//All second markers after the first will render regardless of whether the capo indicator is shown
-					}
-					else
-					{	//Each 1/10 second marker is drawn shorter
-						vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 1, eof_color_white);
-					}
+		if(msec >= eof_chart_length)
+			continue;	//If this millisecond is beyond the end of the chart, skip it
+
+		for(j = 0; j < 1000; j+=100)
+		{	//Draw markers every 100ms (1/10 second)
+			xcoord = lpos + (msec + j) / eof_zoom;
+			if(xcoord > window->screen->w)	//If this and all remaining second markers would render out of view
+				break;
+			if(xcoord < 0)
+				continue;	//If this second marker would not be visible, skip it
+
+			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 9, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_gray);
+			if(j == 0)
+			{	//Each second marker is drawn taller
+				if(!capo)
+				{	//If this second marker isn't being skipped to avoid rendering on top of the capo indicator
+					vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 5, eof_color_white);
 				}
-			}
-			if(!eof_display_seek_pos_in_seconds)
-			{	//If the seek position is to be displayed as minutes:seconds
-				pmin = msec / 60000;		//Find minute count of this second marker
-				psec = (msec % 60000)/1000;	//Find second count of this second marker
-				textprintf_ex(window->screen, eof_mono_font, lpos + (msec / eof_zoom) - 16, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 6, eof_color_white, -1, "%02d:%02d", pmin, psec);
+				capo = 0;	//All second markers after the first will render regardless of whether the capo indicator is shown
 			}
 			else
-			{	//If the seek position is to be displayed as seconds
-				psec = msec/1000;	//Find second count of this second marker
-				textprintf_centre_ex(window->screen, eof_mono_font, lpos + (msec / eof_zoom), EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 6, eof_color_white, -1, "%ds", psec);
+			{	//Each 1/10 second marker is drawn shorter
+				vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 1, eof_color_white);
 			}
+		}
+		if(!eof_display_seek_pos_in_seconds)
+		{	//If the seek position is to be displayed as minutes:seconds
+			pmin = msec / 60000;		//Find minute count of this second marker
+			psec = (msec % 60000)/1000;	//Find second count of this second marker
+			textprintf_ex(window->screen, eof_mono_font, lpos + (msec / eof_zoom) - 16, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 6, eof_color_white, -1, "%02d:%02d", pmin, psec);
+		}
+		else
+		{	//If the seek position is to be displayed as seconds
+			psec = msec/1000;	//Find second count of this second marker
+			textprintf_centre_ex(window->screen, eof_mono_font, lpos + (msec / eof_zoom), EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 6, eof_color_white, -1, "%ds", psec);
 		}
 	}
 	vline(window->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
@@ -5839,28 +5841,29 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 						char retval;
 						for(i2 = i + 1; i2 < eof_song->beats; i2++)
 						{	//For each remaining beat
-							if((eof_song->beat[i2]->contained_section_event >= 0) || (i2 + 1 >= eof_song->beats))
-							{	//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
-								startpos = eof_song->beat[i]->pos;		//The outer loop is tracking the phrase being processed
-								endpos = eof_song->beat[i2]->pos - 1;	//Track this as the end position of the previous phrase marker
-								retval = eof_compare_time_range_with_previous_or_next_difficulty(eof_song, eof_selected_track, startpos, endpos, eof_note_type, 1);	//Compare the phrase's content between this difficulty and the next
-								if(retval < 0)
-								{	//If the phrase was empty in this difficulty, render the section name with a blue background
-									bg_color = eof_color_blue;
-								}
-								else if(eof_note_type < 255)
-								{	//If there's a higher difficulty than the active difficulty
-									if(!eof_time_range_is_populated(eof_song, eof_selected_track, startpos, endpos, eof_note_type + 1))
-									{	//If the next difficulty is empty, render the section name with a green background
-										bg_color = eof_color_dark_green;
-									}
-									else if(!retval)
-									{	//If this phrase is identical among this difficulty and the next, render the section name with a red background
-										bg_color = eof_color_red;
-									}
-								}
-								break;
+							if((eof_song->beat[i2]->contained_section_event < 0) && (i2 + 1 < eof_song->beats))
+								continue;	//If this beat does not have a section event (RS phrase) and isn't the last beat of the chart, skip it
+
+							//Otherwise it marks the end of any current phrase and the potential start of another
+							startpos = eof_song->beat[i]->pos;		//The outer loop is tracking the phrase being processed
+							endpos = eof_song->beat[i2]->pos - 1;	//Track this as the end position of the previous phrase marker
+							retval = eof_compare_time_range_with_previous_or_next_difficulty(eof_song, eof_selected_track, startpos, endpos, eof_note_type, 1);	//Compare the phrase's content between this difficulty and the next
+							if(retval < 0)
+							{	//If the phrase was empty in this difficulty, render the section name with a blue background
+								bg_color = eof_color_blue;
 							}
+							else if(eof_note_type < 255)
+							{	//If there's a higher difficulty than the active difficulty
+								if(!eof_time_range_is_populated(eof_song, eof_selected_track, startpos, endpos, eof_note_type + 1))
+								{	//If the next difficulty is empty, render the section name with a green background
+									bg_color = eof_color_dark_green;
+								}
+								else if(!retval)
+								{	//If this phrase is identical among this difficulty and the next, render the section name with a red background
+									bg_color = eof_color_red;
+								}
+							}
+							break;
 						}
 					}
 					if(eof_song->text_event[eof_song->beat[i]->contained_section_event]->track != 0)
@@ -6720,55 +6723,55 @@ long eof_find_hover_note(long targetpos, int x_tolerance, char snaplogic)
 	}
 	for(i = 0; (i < eof_get_track_size(eof_song, eof_selected_track)); i++)
 	{	//For each note in the active track, until a hover note is found
-		if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
-		{	//If the note is in the active difficulty
-			npos = eof_get_note_pos(eof_song, eof_selected_track, i);
-			if(npos < x_tolerance)
-			{	//Avoid an underflow here
-				leftboundary = 0;
-			}
-			else
-			{
-				leftboundary = npos - x_tolerance;
-			}
-			if(eof_note_tails_clickable && (eof_vocals_selected || (hoverlane & eof_get_note_note(eof_song, eof_selected_track, i))))
-			{	//If the user enabled the preference to include note tails in the clickable area for notes, and the vocal track is active or the mouse is hovering over a lane this note uses
-				long next = eof_track_fixup_next_note(eof_song, eof_selected_track, i);	//Find the next note in the track difficulty
+		if(eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type)
+			continue;	//If the note is not in the active difficulty, skip it
 
-				nlen = eof_get_note_length(eof_song, eof_selected_track, i);
-				if(nlen < 0)
-				{	//If the note length was not retrievable
-					nlen = 0;
-				}
-				else if(next > 0)
-				{	//If there was a next note, ensure that the clickable area of the note is shortened to allow clickable space for that next note
-					unsigned long nextpos = eof_get_note_pos(eof_song, eof_selected_track, next);
+		npos = eof_get_note_pos(eof_song, eof_selected_track, i);
+		if(npos < x_tolerance)
+		{	//Avoid an underflow here
+			leftboundary = 0;
+		}
+		else
+		{
+			leftboundary = npos - x_tolerance;
+		}
+		if(eof_note_tails_clickable && (eof_vocals_selected || (hoverlane & eof_get_note_note(eof_song, eof_selected_track, i))))
+		{	//If the user enabled the preference to include note tails in the clickable area for notes, and the vocal track is active or the mouse is hovering over a lane this note uses
+			long next = eof_track_fixup_next_note(eof_song, eof_selected_track, i);	//Find the next note in the track difficulty
 
-					if(npos + nlen + x_tolerance >= nextpos - x_tolerance)
-					{	//If the note's tail extends into the clickable area of the next note
-						if(nlen >= x_tolerance)
-						{	//If the note length's clickable area can be reduced by the tolerance
-							nlen -= x_tolerance;
-						}
-						else
-						{	//Otherwise don't allow the note's tail to be clickable because it's too close to the next note
-							nlen = 0;
-						}
+			nlen = eof_get_note_length(eof_song, eof_selected_track, i);
+			if(nlen < 0)
+			{	//If the note length was not retrievable
+				nlen = 0;
+			}
+			else if(next > 0)
+			{	//If there was a next note, ensure that the clickable area of the note is shortened to allow clickable space for that next note
+				unsigned long nextpos = eof_get_note_pos(eof_song, eof_selected_track, next);
+
+				if(npos + nlen + x_tolerance >= nextpos - x_tolerance)
+				{	//If the note's tail extends into the clickable area of the next note
+					if(nlen >= x_tolerance)
+					{	//If the note length's clickable area can be reduced by the tolerance
+						nlen -= x_tolerance;
+					}
+					else
+					{	//Otherwise don't allow the note's tail to be clickable because it's too close to the next note
+						nlen = 0;
 					}
 				}
 			}
-			else
-			{	//Otherwise only include the note head as the clickable area, including the specified tolerance
-				nlen = 0;
-			}
-			if((targetpos >= leftboundary) && (targetpos <= npos + nlen + x_tolerance))
-			{
-				return i;
-			}
-			else if(snaplogic && ((eof_pen_note.pos >= npos - x_tolerance) && (eof_pen_note.pos <= npos + nlen + x_tolerance)))
-			{	//If the position wasn't close enough to a note, but snaplogic is enabled, check the position's closest grid snap
-				return i;
-			}
+		}
+		else
+		{	//Otherwise only include the note head as the clickable area, including the specified tolerance
+			nlen = 0;
+		}
+		if((targetpos >= leftboundary) && (targetpos <= npos + nlen + x_tolerance))
+		{
+			return i;
+		}
+		else if(snaplogic && ((eof_pen_note.pos >= npos - x_tolerance) && (eof_pen_note.pos <= npos + nlen + x_tolerance)))
+		{	//If the position wasn't close enough to a note, but snaplogic is enabled, check the position's closest grid snap
+			return i;
 		}
 	}
 	return -1;	//No appropriate hover note found

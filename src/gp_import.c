@@ -1911,6 +1911,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				case 2:	//Rocksmith XML file
 					allegro_message("This appears to be a Rocksmith XML file.  Use \"File>Rocksmith Import\" instead.");
 				break;
+				default:
+				break;
 			}
 			if(inf)
 				(void) pack_fclose(inf);
@@ -2618,37 +2620,38 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 #endif
 		while(eof_song->beats < totalbeats + 2)
 		{	//Until the loaded project has enough beats to contain the Guitar Pro transcriptions, and two extra to allow room for processing beat lengths later
-			if(!eof_song_append_beats(eof_song, 1))
-			{	//Append them to the end of the project
-				eof_log("Error allocating memory (12)", 1);
-				(void) pack_fclose(inf);
-				free(gp->names);
-				free(gp->instrument_types);
-				for(ctr = 0; ctr < tracks; ctr++)
-				{	//Free all previously allocated track structures
-					if(gp->track[ctr])
-					{	//Redundant NULL check to satisfy Splint
-						free(gp->track[ctr]);
-					}
+			if(eof_song_append_beats(eof_song, 1))
+				continue;	//If the beat was appended, add more as needed
+
+			//Otherwise if the beat was not appended
+			eof_log("Error allocating memory (12)", 1);
+			(void) pack_fclose(inf);
+			free(gp->names);
+			free(gp->instrument_types);
+			for(ctr = 0; ctr < tracks; ctr++)
+			{	//Free all previously allocated track structures
+				if(gp->track[ctr])
+				{	//Redundant NULL check to satisfy Splint
+					free(gp->track[ctr]);
 				}
-				for(ctr = 0; ctr < gp->text_events; ctr++)
-				{	//Free all allocated text events
-					free(gp->text_event[ctr]);
-				}
-				free(gp->track);
-				free(np);
-				free(hopo);
-				free(hopobeatnum);
-				free(hopomeasurenum);
-				free(durations);
-				free(note_durations);
-				free(gp);
-				free(tsarray);
-				free(strings);
-				if(sync_points)
-					free(sync_points);
-				return NULL;
 			}
+			for(ctr = 0; ctr < gp->text_events; ctr++)
+			{	//Free all allocated text events
+				free(gp->text_event[ctr]);
+			}
+			free(gp->track);
+			free(np);
+			free(hopo);
+			free(hopobeatnum);
+			free(hopomeasurenum);
+			free(durations);
+			free(note_durations);
+			free(gp);
+			free(tsarray);
+			free(strings);
+			if(sync_points)
+				free(sync_points);
+			return NULL;
 		}
 		eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
 	}
@@ -2826,52 +2829,52 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			measure_position = (double)eof_song->beat[ctr]->beat_within_measure / (double)eof_song->beat[ctr]->num_beats_in_measure;	//Find this beat's position in the measure, as a value between 0 and 1
 			for(ctr2 = 0; ctr2 < num_sync_points; ctr2++)
 			{	//For each sync point from the Go PlayAlong file
-				if(!sync_points[ctr2].processed)
-				{	//If the sync point hasn't been handled already
-					if(sync_points[ctr2].measure + 1 == eof_song->beat[ctr]->measurenum)
-					{	//If the sync point belongs in the same measure as this beat (GPA files number measures starting with 0)
-						if(fabs(measure_position - sync_points[ctr2].pos_in_measure) < (1.0 / (double)eof_song->beat[ctr]->num_beats_in_measure) * 0.05)
-						{	//If this sync point is close enough (within 5% of the beat's length) to this beat to be considered tied to the beat
+				if(sync_points[ctr2].processed)
+					continue;	//If the sync point was already handled, skip it
+
+				if(sync_points[ctr2].measure + 1 == eof_song->beat[ctr]->measurenum)
+				{	//If the sync point belongs in the same measure as this beat (GPA files number measures starting with 0)
+					if(fabs(measure_position - sync_points[ctr2].pos_in_measure) < (1.0 / (double)eof_song->beat[ctr]->num_beats_in_measure) * 0.05)
+					{	//If this sync point is close enough (within 5% of the beat's length) to this beat to be considered tied to the beat
 #ifdef GP_IMPORT_DEBUG
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSync point #%lu (On-beat):  Pos:  %lums\tMeasure:  %f\tQuarter note length:  %fms\tCorrected length:  %fms", ctr2, sync_points[ctr2].realtime_pos, sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure, sync_points[ctr2].qnote_length, sync_points[ctr2].real_qnote_length);
-							eof_log(eof_log_string, 1);
-#endif
-							eof_song->beat[ctr]->fpos = eof_song->beat[ctr]->pos = sync_points[ctr2].realtime_pos;	//Apply the timestamp
-							curpos = sync_points[ctr2].realtime_pos;			//Update the ongoing position variable
-							last_qnote_length = sync_points[ctr2].real_qnote_length;
-							sync_points[ctr2].processed = 1;
-							if(!ctr2)
-							{	//If this is the first sync point
-								firstsyncpointbeat = ctr;	//Track which beat was the first to be affected by any sync points
-							}
-							break;	//Exit sync point loop
-						}
-					}
-					if((double)sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure < (double)eof_song->beat[ctr]->measurenum + measure_position)
-					{	//If the beat is beyond the sync point, the sync point is not within 5% of a beat line and is located between beats
-						double temp;
-#ifdef GP_IMPORT_DEBUG
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSync point #%lu (Mid-beat):  Pos:  %lums\tMeasure:  %f\tQuarter note length:  %fms\tCorrected length:  %fms", ctr2, sync_points[ctr2].realtime_pos, sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure, sync_points[ctr2].qnote_length, sync_points[ctr2].real_qnote_length);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSync point #%lu (On-beat):  Pos:  %lums\tMeasure:  %f\tQuarter note length:  %fms\tCorrected length:  %fms", ctr2, sync_points[ctr2].realtime_pos, sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure, sync_points[ctr2].qnote_length, sync_points[ctr2].real_qnote_length);
 						eof_log(eof_log_string, 1);
 #endif
-						//This is the first beat that surpassed this sync point, find out how far into last beat the sync point is, and use the beat length to derive the position of the next beat
-						mid_beat = 1;
-						temp = (double)eof_song->beat[ctr]->measurenum + measure_position - ((double)sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure);	//The number of measures between this beat and the sync point before it
-						temp *= (double)num[sync_points[ctr2].measure];	//The number of beats between this beat and the sync point before it
-						curpos = sync_points[ctr2].realtime_pos + (temp * sync_points[ctr2].real_qnote_length);
+						eof_song->beat[ctr]->fpos = eof_song->beat[ctr]->pos = sync_points[ctr2].realtime_pos;	//Apply the timestamp
+						curpos = sync_points[ctr2].realtime_pos;			//Update the ongoing position variable
 						last_qnote_length = sync_points[ctr2].real_qnote_length;
-						sync_points[ctr2].processed = 1;	//Mark this sync point as processed, but don't break from loop, so that if there are multiple sync points within the span of one beat, only the last one is used to alter beat timings
+						sync_points[ctr2].processed = 1;
 						if(!ctr2)
 						{	//If this is the first sync point
 							firstsyncpointbeat = ctr;	//Track which beat was the first to be affected by any sync points
 						}
 						break;	//Exit sync point loop
 					}
-					else
-					{	//Otherwise if the beat is before the sync point
-						break;
+				}
+				if((double)sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure < (double)eof_song->beat[ctr]->measurenum + measure_position)
+				{	//If the beat is beyond the sync point, the sync point is not within 5% of a beat line and is located between beats
+					double temp;
+#ifdef GP_IMPORT_DEBUG
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSync point #%lu (Mid-beat):  Pos:  %lums\tMeasure:  %f\tQuarter note length:  %fms\tCorrected length:  %fms", ctr2, sync_points[ctr2].realtime_pos, sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure, sync_points[ctr2].qnote_length, sync_points[ctr2].real_qnote_length);
+					eof_log(eof_log_string, 1);
+#endif
+					//This is the first beat that surpassed this sync point, find out how far into last beat the sync point is, and use the beat length to derive the position of the next beat
+					mid_beat = 1;
+					temp = (double)eof_song->beat[ctr]->measurenum + measure_position - ((double)sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure);	//The number of measures between this beat and the sync point before it
+					temp *= (double)num[sync_points[ctr2].measure];	//The number of beats between this beat and the sync point before it
+					curpos = sync_points[ctr2].realtime_pos + (temp * sync_points[ctr2].real_qnote_length);
+					last_qnote_length = sync_points[ctr2].real_qnote_length;
+					sync_points[ctr2].processed = 1;	//Mark this sync point as processed, but don't break from loop, so that if there are multiple sync points within the span of one beat, only the last one is used to alter beat timings
+					if(!ctr2)
+					{	//If this is the first sync point
+						firstsyncpointbeat = ctr;	//Track which beat was the first to be affected by any sync points
 					}
-				}//If the sync point hasn't been handled already
+					break;	//Exit sync point loop
+				}
+				else
+				{	//Otherwise if the beat is before the sync point
+					break;
+				}
 			}//For each sync point from the Go PlayAlong file
 			eof_song->beat[ctr]->fpos = curpos;							//Apply the current position to this beat
 			eof_song->beat[ctr]->pos = eof_song->beat[ctr]->fpos + 0.5;	//Round up
@@ -3836,44 +3839,45 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 						while(beat_position + 1 >= eof_song->beats)
 						{	//If there aren't enough beats in the project for some reason, add enough to continue
-							if(!eof_song_append_beats(eof_song, 1))
-							{	//If a beat couldn't be appended to the project
-								eof_log("Error allocating memory (15)", 1);
-								(void) pack_fclose(inf);
-								for(ctr = 0; ctr < tracks; ctr++)
-								{	//Free the previous track name strings
-									free(gp->names[ctr]);
+							if(eof_song_append_beats(eof_song, 1))
+								continue;	//If a beat was appended to the project, add more as needed
+
+							//Otherwise if a beat couldn't be appended to the project
+							eof_log("Error allocating memory (15)", 1);
+							(void) pack_fclose(inf);
+							for(ctr = 0; ctr < tracks; ctr++)
+							{	//Free the previous track name strings
+								free(gp->names[ctr]);
+							}
+							free(gp->names);
+							free(gp->instrument_types);
+							for(ctr = 0; ctr < tracks; ctr++)
+							{	//Free all previously allocated track structures
+								for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
+								{	//Free all notes in this track
+									free(gp->track[ctr]->note[ctr2]);
 								}
-								free(gp->names);
-								free(gp->instrument_types);
-								for(ctr = 0; ctr < tracks; ctr++)
-								{	//Free all previously allocated track structures
-									for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
-									{	//Free all notes in this track
-										free(gp->track[ctr]->note[ctr2]);
-									}
-									for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
-									{	//Free all tech notes in this track
-										free(gp->track[ctr]->technote[ctr2]);
-									}
-									free(gp->track[ctr]);
+								for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
+								{	//Free all tech notes in this track
+									free(gp->track[ctr]->technote[ctr2]);
 								}
-								for(ctr = 0; ctr < gp->text_events; ctr++)
-								{	//Free all allocated text events
-									free(gp->text_event[ctr]);
-								}
-								free(gp->track);
-								free(np);
-								free(hopo);
-								free(hopobeatnum);
-								free(hopomeasurenum);
-								free(durations);
-								free(note_durations);
-								free(gp);
-								free(tsarray);
-								free(strings);
-								return NULL;
-							}//If a beat couldn't be appended to the project
+								free(gp->track[ctr]);
+							}
+							for(ctr = 0; ctr < gp->text_events; ctr++)
+							{	//Free all allocated text events
+								free(gp->text_event[ctr]);
+							}
+							free(gp->track);
+							free(np);
+							free(hopo);
+							free(hopobeatnum);
+							free(hopomeasurenum);
+							free(durations);
+							free(note_durations);
+							free(gp);
+							free(tsarray);
+							free(strings);
+							return NULL;
 						}//If there aren't enough beats in the project for some reason, add enough to continue
 
 						beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
@@ -3892,503 +3896,503 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						char thisgemtype = 0;	//Tracks the note type for this string's gem (0 = undefined, 1 = normal, 2 = tie, 3 = dead (muted))
 						flags = 0;
 
-						if(bitmask & usedstrings)
-						{	//If this string is used
-							bytemask = pack_getc(inf);	//Note bitmask
-							if(bytemask & 32)
-							{	//Note type is defined
-								definedstrings |= bitmask;
-								byte = pack_getc(inf);	//Note type (1 = normal, 2 = tie, 3 = dead (muted))
-								thisgemtype = byte;
-								if(byte == 1)
-								{	//Normal note
-									frets[ctr4] = 0;	//Ensure this is cleared
-									new_note = 1;
-									mute |= 2;	//Set bit 1
-								}
-								else if(byte == 2)
-								{	//If this string is playing a tied note (it is still ringing from a previously played note)
-									if(np[ctr2] && (np[ctr2]->note && bitmask))
-									{	//If there is a previously created note, and it used this string, alter its length
-										tie_note = 1;
-										usedtie |= bitmask;	//Track that this string is a tie note
-									}
-								}
-								else if(byte == 3)
-								{	//If this string is muted
-									frets[ctr4] = 0x80;	//Set the MSB, which is how EOF tracks muted status
-									new_note = 1;
-									mute |= 1;	//Set bit 0
-								}
-							}
-							if(bytemask & 4)
-							{	//Ghost note
-								ghost |= bitmask;	//Mark this string as being ghosted
-							}
-							if((bytemask & 1) && (fileversion < 500))
-							{	//Time independent duration (for versions of the format older than 5.x)
-								(void) pack_getc(inf);	//Time independent duration value
-								(void) pack_getc(inf);	//Time independent duration values
-							}
-							if(bytemask & 16)
-							{	//Note dynamic
-								(void) pack_getc(inf);	//Get the dynamic value
-							}
-							if(bytemask & 32)
-							{	//Note type is defined
-								byte = pack_getc(inf);	//Fret number
-								if(thisgemtype == 2)
-								{	//If this gem is a tie note, recall the last fretting of this string in this track, since overlapping tie notes may prevent a simple check of the previous note from having the desired fret value
-									unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
+						if(!(bitmask & usedstrings))
+							continue;	//If this string is not used, skip it
 
-									if((strings[ctr2] > 6) && effective_drop_7)
-									{	//If this is a 7 string Guitar Pro track and the user opted to drop string 7 instead of string 1
-										convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
+						bytemask = pack_getc(inf);	//Note bitmask
+						if(bytemask & 32)
+						{	//Note type is defined
+							definedstrings |= bitmask;
+							byte = pack_getc(inf);	//Note type (1 = normal, 2 = tie, 3 = dead (muted))
+							thisgemtype = byte;
+							if(byte == 1)
+							{	//Normal note
+								frets[ctr4] = 0;	//Ensure this is cleared
+								new_note = 1;
+								mute |= 2;	//Set bit 1
+							}
+							else if(byte == 2)
+							{	//If this string is playing a tied note (it is still ringing from a previously played note)
+								if(np[ctr2] && (np[ctr2]->note && bitmask))
+								{	//If there is a previously created note, and it used this string, alter its length
+									tie_note = 1;
+									usedtie |= bitmask;	//Track that this string is a tie note
+								}
+							}
+							else if(byte == 3)
+							{	//If this string is muted
+								frets[ctr4] = 0x80;	//Set the MSB, which is how EOF tracks muted status
+								new_note = 1;
+								mute |= 1;	//Set bit 0
+							}
+						}
+						if(bytemask & 4)
+						{	//Ghost note
+							ghost |= bitmask;	//Mark this string as being ghosted
+						}
+						if((bytemask & 1) && (fileversion < 500))
+						{	//Time independent duration (for versions of the format older than 5.x)
+							(void) pack_getc(inf);	//Time independent duration value
+							(void) pack_getc(inf);	//Time independent duration values
+						}
+						if(bytemask & 16)
+						{	//Note dynamic
+							(void) pack_getc(inf);	//Get the dynamic value
+						}
+						if(bytemask & 32)
+						{	//Note type is defined
+							byte = pack_getc(inf);	//Fret number
+							if(thisgemtype == 2)
+							{	//If this gem is a tie note, recall the last fretting of this string in this track, since overlapping tie notes may prevent a simple check of the previous note from having the desired fret value
+								unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
+
+								if((strings[ctr2] > 6) && effective_drop_7)
+								{	//If this is a 7 string Guitar Pro track and the user opted to drop string 7 instead of string 1
+									convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
+								}
+								for(ctr5 = gp->track[ctr2]->notes; ctr5 > 0; ctr5--)
+								{	//For each previous note created for this track
+									if(gp->track[ctr2]->note[ctr5 - 1]->note & (1 << convertednum))
+									{	//If the note has a gem on this string
+										frets[ctr4] = gp->track[ctr2]->note[ctr5 - 1]->frets[convertednum];	//Copy the fret number for this string
+										break;
 									}
-									for(ctr5 = gp->track[ctr2]->notes; ctr5 > 0; ctr5--)
-									{	//For each previous note created for this track
-										if(gp->track[ctr2]->note[ctr5 - 1]->note & (1 << convertednum))
-										{	//If the note has a gem on this string
-											frets[ctr4] = gp->track[ctr2]->note[ctr5 - 1]->frets[convertednum];	//Copy the fret number for this string
+								}
+							}
+							else
+							{	//Assign the defined fret value
+								frets[ctr4] |= byte;	//OR this value, so that the muted status can be kept if it is set
+							}
+						}
+						if((hopo[ctr2] >= 0) && ((ctr3 > hopobeatnum[ctr2]) || (ctr > hopomeasurenum[ctr2])))
+						{	//If the previous note was marked as leading into a hammer on or pull off with the next (this) note
+							if(byte < hopo[ctr2])
+							{	//If this note is a lower fret than the previous note
+								flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;	//This note is a pull off
+							}
+							else
+							{	//Otherwise this note is a hammer on
+								flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;
+							}
+							hopo[ctr2] = -1;	//Reset this status before it is checked if this note is marked (to signal the next note being HO/PO)
+						}
+
+						if(bytemask & 128)
+						{	//Right/left hand fingering
+							byte = pack_getc(inf);	//Left hand fingering
+							if(byte == 0)
+							{	//Thumb, remap to EOF's definition of thumb = 5
+								byte = 5;
+							}
+							if(byte > 0)
+							{	//If the finger number is defined
+								finger[ctr4] = byte;	//Store into the finger array
+							}
+							(void) pack_getc(inf);	//Right hand fingering
+						}
+						if((bytemask & 1) && (fileversion >= 500))
+						{	//Time independent duration (for versions of the format 5.x or newer)
+							(void) pack_fseek(inf, 8);		//Unknown data
+						}
+						if(fileversion >= 500)
+						{	//This padding isn't in version 3.x and 4.x files
+							(void) pack_fseek(inf, 1);		//Unknown data
+						}
+						if(bytemask & 8)
+						{	//Note effects
+							char byte1, byte2 = 0;
+							byte1 = pack_getc(inf);	//Note effect bitmask
+							if(fileversion >= 400)
+							{	//Version 4.0 and higher of the file format has a second note effect bitmask
+								byte2 = pack_getc(inf);	//Note effect 2 bitmask
+							}
+							if(byte1 & 1)
+							{	//Bend
+								unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
+
+								if((strings[ctr2] > 6) && effective_drop_7)
+								{	//If this is a 7 string Guitar Pro track and the user opted to drop string 7 instead of string 1
+									convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
+								}
+								if(eof_gp_parse_bend(inf, &bendstruct) || (bendstruct.bendpoints > 30))
+								{	//If there was an error parsing the bend, or if bendpoints wasn't capped at 30 (a redundant check to satisfy a false positive in Coverity)
+									allegro_message("Error parsing bend, file is corrupt");
+									(void) pack_fclose(inf);
+									for(ctr = 0; ctr < tracks; ctr++)
+									{	//Free the previous track name strings
+										free(gp->names[ctr]);
+									}
+									free(gp->names);
+									free(gp->instrument_types);
+									for(ctr = 0; ctr < tracks; ctr++)
+									{	//Free all previously allocated track structures
+										for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
+										{	//Free all notes in this track
+											free(gp->track[ctr]->note[ctr2]);
+										}
+										for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
+										{	//Free all tech notes in this track
+											free(gp->track[ctr]->technote[ctr2]);
+										}
+										free(gp->track[ctr]);
+									}
+									for(ctr = 0; ctr < gp->text_events; ctr++)
+									{	//Free all allocated text events
+										free(gp->text_event[ctr]);
+									}
+									free(gp->track);
+									free(np);
+									free(hopo);
+									free(hopobeatnum);
+									free(hopomeasurenum);
+									free(durations);
+									free(note_durations);
+									free(gp);
+									free(tsarray);
+									free(strings);
+									return NULL;
+								}
+								//Don't mark entire chords with bend status, Guitar Pro defines which strings are to be bent
+								if(eof_note_count_set_bits(usedstrings) == 1)
+								{	//If the note being parsed is not a chord
+									flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+									notebends = 1;
+								}
+								if(bendstruct.summaryheight > 0)
+								{	//If the GP file defines the bend of being at least one quarter step
+									bendstrength = bendstruct.summaryheight;
+									bendstrength |= 0x80;	//Mark the MSB to indicate this value is measured in quarter steps
+									flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that the note has the bend height defined
+								}
+								if(convertednum <= 6)
+								{	//Only if the converted string number is valid
+									//Remove redundant bendpoints, any consecutive duplicate bend heights at the end of the bend have no effect and should be removed to avoid causing problems in Rocksmith
+									for(ctr5 = bendstruct.bendpoints; ctr5 > 1; ctr5--)
+									{	//For each bendpoint after the first, in reverse order
+										if(bendstruct.bendheight[ctr5 - 1] == bendstruct.bendheight[ctr5 - 2])
+										{	//If the bendpoint is the same height as the point before it
+											bendstruct.bendpoints--;	//Discard it
+										}
+										else
 											break;
-										}
 									}
-								}
-								else
-								{	//Assign the defined fret value
-									frets[ctr4] |= byte;	//OR this value, so that the muted status can be kept if it is set
-								}
-							}
-							if((hopo[ctr2] >= 0) && ((ctr3 > hopobeatnum[ctr2]) || (ctr > hopomeasurenum[ctr2])))
-							{	//If the previous note was marked as leading into a hammer on or pull off with the next (this) note
-								if(byte < hopo[ctr2])
-								{	//If this note is a lower fret than the previous note
-									flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;	//This note is a pull off
-								}
-								else
-								{	//Otherwise this note is a hammer on
-									flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;
-								}
-								hopo[ctr2] = -1;	//Reset this status before it is checked if this note is marked (to signal the next note being HO/PO)
-							}
+									for(ctr5 = 0; ctr5 < bendstruct.bendpoints; ctr5++)
+									{	//For each bend point that was parsed
+										EOF_PRO_GUITAR_NOTE *pgnp;
+										unsigned long length;
 
-							if(bytemask & 128)
-							{	//Right/left hand fingering
-								byte = pack_getc(inf);	//Left hand fingering
-								if(byte == 0)
-								{	//Thumb, remap to EOF's definition of thumb = 5
-									byte = 5;
-								}
-								if(byte > 0)
-								{	//If the finger number is defined
-									finger[ctr4] = byte;	//Store into the finger array
-								}
-								(void) pack_getc(inf);	//Right hand fingering
-							}
-							if((bytemask & 1) && (fileversion >= 500))
-							{	//Time independent duration (for versions of the format 5.x or newer)
-								(void) pack_fseek(inf, 8);		//Unknown data
-							}
-							if(fileversion >= 500)
-							{	//This padding isn't in version 3.x and 4.x files
-								(void) pack_fseek(inf, 1);		//Unknown data
-							}
-							if(bytemask & 8)
-							{	//Note effects
-								char byte1, byte2 = 0;
-								byte1 = pack_getc(inf);	//Note effect bitmask
-								if(fileversion >= 400)
-								{	//Version 4.0 and higher of the file format has a second note effect bitmask
-									byte2 = pack_getc(inf);	//Note effect 2 bitmask
-								}
-								if(byte1 & 1)
-								{	//Bend
-									unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
-
-									if((strings[ctr2] > 6) && effective_drop_7)
-									{	//If this is a 7 string Guitar Pro track and the user opted to drop string 7 instead of string 1
-										convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
-									}
-									if(eof_gp_parse_bend(inf, &bendstruct) || (bendstruct.bendpoints > 30))
-									{	//If there was an error parsing the bend, or if bendpoints wasn't capped at 30 (a redundant check to satisfy a false positive in Coverity)
-										allegro_message("Error parsing bend, file is corrupt");
-										(void) pack_fclose(inf);
-										for(ctr = 0; ctr < tracks; ctr++)
-										{	//Free the previous track name strings
-											free(gp->names[ctr]);
-										}
-										free(gp->names);
-										free(gp->instrument_types);
-										for(ctr = 0; ctr < tracks; ctr++)
-										{	//Free all previously allocated track structures
-											for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
-											{	//Free all notes in this track
-												free(gp->track[ctr]->note[ctr2]);
-											}
-											for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
-											{	//Free all tech notes in this track
-												free(gp->track[ctr]->technote[ctr2]);
-											}
-											free(gp->track[ctr]);
-										}
-										for(ctr = 0; ctr < gp->text_events; ctr++)
-										{	//Free all allocated text events
-											free(gp->text_event[ctr]);
-										}
-										free(gp->track);
-										free(np);
-										free(hopo);
-										free(hopobeatnum);
-										free(hopomeasurenum);
-										free(durations);
-										free(note_durations);
-										free(gp);
-										free(tsarray);
-										free(strings);
-										return NULL;
-									}
-									//Don't mark entire chords with bend status, Guitar Pro defines which strings are to be bent
-									if(eof_note_count_set_bits(usedstrings) == 1)
-									{	//If the note being parsed is not a chord
-										flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
-										notebends = 1;
-									}
-									if(bendstruct.summaryheight > 0)
-									{	//If the GP file defines the bend of being at least one quarter step
-										bendstrength = bendstruct.summaryheight;
-										bendstrength |= 0x80;	//Mark the MSB to indicate this value is measured in quarter steps
-										flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that the note has the bend height defined
-									}
-									if(convertednum <= 6)
-									{	//Only if the converted string number is valid
-										//Remove redundant bendpoints, any consecutive duplicate bend heights at the end of the bend have no effect and should be removed to avoid causing problems in Rocksmith
-										for(ctr5 = bendstruct.bendpoints; ctr5 > 1; ctr5--)
-										{	//For each bendpoint after the first, in reverse order
-											if(bendstruct.bendheight[ctr5 - 1] == bendstruct.bendheight[ctr5 - 2])
-											{	//If the bendpoint is the same height as the point before it
-												bendstruct.bendpoints--;	//Discard it
-											}
-											else
-												break;
-										}
-										for(ctr5 = 0; ctr5 < bendstruct.bendpoints; ctr5++)
-										{	//For each bend point that was parsed
-											EOF_PRO_GUITAR_NOTE *pgnp;
-											unsigned long length;
-
-											pgnp = eof_pro_guitar_track_add_tech_note(gp->track[ctr2]);	//Add a new tech note to the current track
-											if(!pgnp)
-											{
-												eof_log("Error allocating memory (16)", 1);
-												(void) pack_fclose(inf);
-												for(ctr = 0; ctr < tracks; ctr++)
-												{	//Free the previous track name strings
-													free(gp->names[ctr]);
-												}
-												free(gp->names);
-												free(gp->instrument_types);
-												for(ctr = 0; ctr < tracks; ctr++)
-												{	//Free all previously allocated track structures
-													for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
-													{	//Free all notes in this track
-														free(gp->track[ctr]->note[ctr2]);
-													}
-													for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
-													{	//Free all tech notes in this track
-														free(gp->track[ctr]->technote[ctr2]);
-													}
-													free(gp->track[ctr]);
-												}
-												for(ctr = 0; ctr < gp->text_events; ctr++)
-												{	//Free all allocated text events
-													free(gp->text_event[ctr]);
-												}
-												free(gp->track);
-												free(np);
-												free(hopo);
-												free(hopobeatnum);
-												free(hopomeasurenum);
-												free(durations);
-												free(note_durations);
-												free(gp);
-												free(tsarray);
-												free(strings);
-												return NULL;
-											}
-											pgnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;	//Set the bend flag
-											notebends = 1;
-											pgnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that a bend strength is defined
-											pgnp->bendstrength = 0x80 + bendstruct.bendheight[ctr5];	//Store the bend strength and set the MSB to indicate the value is in quarter steps
-											pgnp->note = 1 << convertednum;	//Determine the note bitmask of this string
-											if(bendstruct.bendpos[ctr5] == 60)
-											{	//If this bend point is at the end of the note
-												length = lastendpos - laststartpos - eof_min_note_distance;	//Take the minimum padding between notes into account to ensure it doesn't overlap the next note
-											}
-											else
-											{	//Otherwise use the normal note length
-												length = lastendpos - laststartpos;
-											}
-											pgnp->pos = laststartpos + ((length * (double)bendstruct.bendpos[ctr5]) / 60.0) + 0.5;	//Determine the position of the bend point, rounded to nearest ms
-											pgnp->length = 1;
-											pgnp->type = voice;		//Store lead voice notes in difficulty 0, bass voice notes in difficulty 1
-										}//For each bend point that was parsed
-									}//Only if the converted string number is valid
-								}//Bend
-								if(byte1 & 2)
-								{	//Hammer on/pull off from current note (next note gets the HO/PO status)
-									hopo[ctr2] = frets[ctr4] & 0x7F;	//Store the fret value (masking out the MSB ghost bit) so that the next note can be determined as either a HO or a PO
-									hopobeatnum[ctr2] = ctr3;			//Track which beat (note) number has the HO/PO status
-									hopomeasurenum[ctr2] = ctr;			//Track which measure number has the HO/PO status
-								}
-								if(byte1 & 4)
-								{	//Slide from current note (GP3 format indicator)
-									flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
-								}
-								if(byte1 & 8)
-								{	//Let ring
-								}
-								if(byte1 & 16)
-								{	//Grace note
-									double grace_durations[] = {0.015625, 0.03125, 0.0625};	//The duration of each grace note length in terms of one whole note (64th, 32nd, 16th)
-									double grace_duration, grace_position = measure_position;
-									unsigned char dur;
-									gracetrans = graceonbeat = 0;
-
-									grace |= bitmask;	//Mark this string as having a grace note
-									gracefrets[ctr4] = pack_getc(inf);	//Grace note fret number
-
-									(void) pack_getc(inf);	//Grace note dynamic value
-									if(fileversion >= 500)
-									{	//If the file version is 5.x or higher (this byte verified not to be in 3.0 and 4.06 files)
-										gracetrans = pack_getc(inf);	//Grace note transition type
-									}
-									else
-									{	//The purpose of this field in 4.x or older files is unknown
-										(void) pack_fseek(inf, 1);		//Unknown data
-									}
-									dur = pack_getc(inf) - 1;	//Grace note duration
-									if(fileversion >= 500)
-									{	//If the file version is 5.x or higher (this byte verified not to be in 3.0 and 4.06 files)
-										graceonbeat = pack_getc(inf);	//Grace note position
-										if(graceonbeat & 1)
-										{	//If this grace note is string muted
-											gracefrets[ctr4] |= 0x80;	//Set the mute bit
-										}
-										graceonbeat &= 2;	//Mask out everything except bit 1, which indicates whether the note is "on the beat" instead of before it
-									}
-									if(dur < 3)
-									{	//If the defined duration is valid
-										grace_duration = grace_durations[dur] * (double)curden / (double)curnum;	//Get this grace note's duration in measures (accounting for the time signature)
-										if(!curbeat && measure_position < grace_duration)
-										{	//If this grace note is positioned before the beginning of the chart (ie. a before the beat grace note on a note at the beginning of measure 1)
-											grace = 0;	//Ignore this grace note
-										}
-										else
-										{	//This grace note has a valid position
-											if(!graceonbeat)
-											{	//if the grace note is before the beat
-												grace_position = measure_position - grace_duration;	//Reposition it accordingly
-											}
-											beat_position = grace_position * curnum;								//How many whole beats into the current measure the position is
-											partial_beat_position = (grace_position * curnum) - beat_position;	//How far into this beat the grace note begins
-											beat_position += curbeat;	//Add the number of beats into the track the current measure is
-											if(beat_position >= skipbeatsourcectr)
-											{	//If this beat's content is being imported
-												beat_position -= skipbeatsourcectr;	//Offset by the number of beats being skipped
-												beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
-												lastgracestartpos = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position);
-
-												//Determine the realtime end position of the note that was just parsed
-												beat_position = (grace_position + grace_duration) * curnum;
-												partial_beat_position = (grace_position + grace_duration) * curnum - beat_position;	//How far into this beat the grace note ends
-												beat_position += curbeat;	//Add the number of beats into the track the current measure is
-												beat_position -= skipbeatsourcectr;	//Offset by the number of beats being skipped
-												beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
-												lastgraceendpos = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position);
-											}
-										}
-									}//If the defined duration is valid
-								}//Grace note
-								if(byte2 & 1)
-								{	//Note played staccato
-									note_is_short = 1;
-								}
-								if(byte2 & 2)
-								{	//Palm mute
-									flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
-								}
-								if(byte2 & 4)
-								{	//Tremolo picking
-									(void) pack_getc(inf);	//Tremolo picking speed
-									flags |= EOF_NOTE_FLAG_IS_TREMOLO;
-								}
-								if(byte2 & 8)
-								{	//Slide
-									byte = pack_getc(inf);	//Slide type
-									if(fileversion < 500)
-									{	//If the GP file is older than version 5
-										flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//GP4 and older formats have a tendency to mark unpitched slides as "slide from note" as well, remove the redundant status set earlier
-										if(byte == - 2)
-										{	//Slide in from above
-											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-											if(!unpitchend || (frets[ctr4] < unpitchend))
-											{	//Track the lowest fret value for the slide end position
-												unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
-											}
-											frets[ctr4]++;				//Set the beginning of this slide one fret higher
-										}
-										else if(byte == -1)
-										{	//Slide in from below
-											if(frets[ctr4] > 1 )
-											{	//Don't allow this unless sliding into a fret higher than 1
-												flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-												if(!unpitchend || (frets[ctr4] < unpitchend))
-												{	//Track the lowest fret value for the slide end position
-													unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
-												}
-												frets[ctr4]--;				//Set the beginning of this slide one fret lower
-											}
-										}
-										else if(byte == 1)
-										{	//Shift slide
-											flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
-										}
-										else if(byte == 2)
-										{	//If this is a legato slide
-											flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Mark the current note with linknext status to accurately describe how to play it in Rocksmith
-											flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
-										}
-										else if(byte == 3)
-										{	//Slide out and downward
-											if(frets[ctr4] > 1 )
-											{	//Don't apply a downward slide unless the note is at fret 2 or higher
-												flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-												if(!unpitchend || (frets[ctr4] < unpitchend))
-												{	//Track the lowest fret value for the slide end position
-													unpitchend = frets[ctr4] - 1;
-												}
-											}
-										}
-										else if(byte == 4)
-										{	//Slide out and upward
-											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-											if(!unpitchend || (frets[ctr4] < unpitchend))
-											{	//Track the lowest fret value for the slide end position
-												unpitchend = frets[ctr4] + 1;
-											}
-										}
-									}
-									else
-									{	//Version 5 or newer GP file
-										if(byte & 4)
-										{	//This note slides out and downwards
-											if(frets[ctr4] > 1 )
-											{	//Don't apply a downward slide unless the note is at fret 2 or higher
-												flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-												if(!unpitchend || (frets[ctr4] < unpitchend))
-												{	//Track the lowest fret value for the slide end position
-													unpitchend = frets[ctr4] - 1;
-												}
-											}
-										}
-										else if(byte & 8)
-										{	//This note slides out and upwards
-											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-											if(!unpitchend || (frets[ctr4] < unpitchend))
-											{	//Track the lowest fret value for the slide end position
-												unpitchend = frets[ctr4] + 1;
-											}
-										}
-										else if(byte & 16)
-										{	//This note slides in from below
-											if(frets[ctr4] > 1 )
-											{	//Don't allow this unless sliding into a fret higher than 1
-												flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-												if(!unpitchend || (frets[ctr4] < unpitchend))
-												{	//Track the lowest fret value for the slide end position
-													unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
-												}
-												frets[ctr4]--;				//Set the beginning of this slide one fret lower
-											}
-										}
-										else if(byte & 32)
-										{	//This note slides in from above
-											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-											if(!unpitchend || (frets[ctr4] < unpitchend))
-											{	//Track the lowest fret value for the slide end position
-												unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
-											}
-											frets[ctr4]++;				//Set the beginning of this slide one fret higher
-										}
-										else
+										pgnp = eof_pro_guitar_track_add_tech_note(gp->track[ctr2]);	//Add a new tech note to the current track
+										if(!pgnp)
 										{
-											if(byte & 2)
-											{	//If this is a legato slide
-												flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Mark the current note with linknext status to accurately describe how to play it in Rocksmith
+											eof_log("Error allocating memory (16)", 1);
+											(void) pack_fclose(inf);
+											for(ctr = 0; ctr < tracks; ctr++)
+											{	//Free the previous track name strings
+												free(gp->names[ctr]);
 											}
-											flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
+											free(gp->names);
+											free(gp->instrument_types);
+											for(ctr = 0; ctr < tracks; ctr++)
+											{	//Free all previously allocated track structures
+												for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
+												{	//Free all notes in this track
+													free(gp->track[ctr]->note[ctr2]);
+												}
+												for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
+												{	//Free all tech notes in this track
+													free(gp->track[ctr]->technote[ctr2]);
+												}
+												free(gp->track[ctr]);
+											}
+											for(ctr = 0; ctr < gp->text_events; ctr++)
+											{	//Free all allocated text events
+												free(gp->text_event[ctr]);
+											}
+											free(gp->track);
+											free(np);
+											free(hopo);
+											free(hopobeatnum);
+											free(hopomeasurenum);
+											free(durations);
+											free(note_durations);
+											free(gp);
+											free(tsarray);
+											free(strings);
+											return NULL;
 										}
-									}//Version 5 or newer GP file
-								}//Slide
-								if(byte2 & 16)
-								{	//Harmonic
-									byte = pack_getc(inf);	//Harmonic type
-									if(byte == 1)
-									{	//Natural harmonic
-										flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
+										pgnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;	//Set the bend flag
+										notebends = 1;
+										pgnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that a bend strength is defined
+										pgnp->bendstrength = 0x80 + bendstruct.bendheight[ctr5];	//Store the bend strength and set the MSB to indicate the value is in quarter steps
+										pgnp->note = 1 << convertednum;	//Determine the note bitmask of this string
+										if(bendstruct.bendpos[ctr5] == 60)
+										{	//If this bend point is at the end of the note
+											length = lastendpos - laststartpos - eof_min_note_distance;	//Take the minimum padding between notes into account to ensure it doesn't overlap the next note
+										}
+										else
+										{	//Otherwise use the normal note length
+											length = lastendpos - laststartpos;
+										}
+										pgnp->pos = laststartpos + ((length * (double)bendstruct.bendpos[ctr5]) / 60.0) + 0.5;	//Determine the position of the bend point, rounded to nearest ms
+										pgnp->length = 1;
+										pgnp->type = voice;		//Store lead voice notes in difficulty 0, bass voice notes in difficulty 1
+									}//For each bend point that was parsed
+								}//Only if the converted string number is valid
+							}//Bend
+							if(byte1 & 2)
+							{	//Hammer on/pull off from current note (next note gets the HO/PO status)
+								hopo[ctr2] = frets[ctr4] & 0x7F;	//Store the fret value (masking out the MSB ghost bit) so that the next note can be determined as either a HO or a PO
+								hopobeatnum[ctr2] = ctr3;			//Track which beat (note) number has the HO/PO status
+								hopomeasurenum[ctr2] = ctr;			//Track which measure number has the HO/PO status
+							}
+							if(byte1 & 4)
+							{	//Slide from current note (GP3 format indicator)
+								flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
+							}
+							if(byte1 & 8)
+							{	//Let ring
+							}
+							if(byte1 & 16)
+							{	//Grace note
+								double grace_durations[] = {0.015625, 0.03125, 0.0625};	//The duration of each grace note length in terms of one whole note (64th, 32nd, 16th)
+								double grace_duration, grace_position = measure_position;
+								unsigned char dur;
+								gracetrans = graceonbeat = 0;
+
+								grace |= bitmask;	//Mark this string as having a grace note
+								gracefrets[ctr4] = pack_getc(inf);	//Grace note fret number
+
+								(void) pack_getc(inf);	//Grace note dynamic value
+								if(fileversion >= 500)
+								{	//If the file version is 5.x or higher (this byte verified not to be in 3.0 and 4.06 files)
+									gracetrans = pack_getc(inf);	//Grace note transition type
+								}
+								else
+								{	//The purpose of this field in 4.x or older files is unknown
+									(void) pack_fseek(inf, 1);		//Unknown data
+								}
+								dur = pack_getc(inf) - 1;	//Grace note duration
+								if(fileversion >= 500)
+								{	//If the file version is 5.x or higher (this byte verified not to be in 3.0 and 4.06 files)
+									graceonbeat = pack_getc(inf);	//Grace note position
+									if(graceonbeat & 1)
+									{	//If this grace note is string muted
+										gracefrets[ctr4] |= 0x80;	//Set the mute bit
+									}
+									graceonbeat &= 2;	//Mask out everything except bit 1, which indicates whether the note is "on the beat" instead of before it
+								}
+								if(dur < 3)
+								{	//If the defined duration is valid
+									grace_duration = grace_durations[dur] * (double)curden / (double)curnum;	//Get this grace note's duration in measures (accounting for the time signature)
+									if(!curbeat && measure_position < grace_duration)
+									{	//If this grace note is positioned before the beginning of the chart (ie. a before the beat grace note on a note at the beginning of measure 1)
+										grace = 0;	//Ignore this grace note
+									}
+									else
+									{	//This grace note has a valid position
+										if(!graceonbeat)
+										{	//if the grace note is before the beat
+											grace_position = measure_position - grace_duration;	//Reposition it accordingly
+										}
+										beat_position = grace_position * curnum;								//How many whole beats into the current measure the position is
+										partial_beat_position = (grace_position * curnum) - beat_position;	//How far into this beat the grace note begins
+										beat_position += curbeat;	//Add the number of beats into the track the current measure is
+										if(beat_position >= skipbeatsourcectr)
+										{	//If this beat's content is being imported
+											beat_position -= skipbeatsourcectr;	//Offset by the number of beats being skipped
+											beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
+											lastgracestartpos = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position);
+
+											//Determine the realtime end position of the note that was just parsed
+											beat_position = (grace_position + grace_duration) * curnum;
+											partial_beat_position = (grace_position + grace_duration) * curnum - beat_position;	//How far into this beat the grace note ends
+											beat_position += curbeat;	//Add the number of beats into the track the current measure is
+											beat_position -= skipbeatsourcectr;	//Offset by the number of beats being skipped
+											beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
+											lastgraceendpos = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position);
+										}
+									}
+								}//If the defined duration is valid
+							}//Grace note
+							if(byte2 & 1)
+							{	//Note played staccato
+								note_is_short = 1;
+							}
+							if(byte2 & 2)
+							{	//Palm mute
+								flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
+							}
+							if(byte2 & 4)
+							{	//Tremolo picking
+								(void) pack_getc(inf);	//Tremolo picking speed
+								flags |= EOF_NOTE_FLAG_IS_TREMOLO;
+							}
+							if(byte2 & 8)
+							{	//Slide
+								byte = pack_getc(inf);	//Slide type
+								if(fileversion < 500)
+								{	//If the GP file is older than version 5
+									flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//GP4 and older formats have a tendency to mark unpitched slides as "slide from note" as well, remove the redundant status set earlier
+									if(byte == - 2)
+									{	//Slide in from above
+										flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+										if(!unpitchend || (frets[ctr4] < unpitchend))
+										{	//Track the lowest fret value for the slide end position
+											unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
+										}
+										frets[ctr4]++;				//Set the beginning of this slide one fret higher
+									}
+									else if(byte == -1)
+									{	//Slide in from below
+										if(frets[ctr4] > 1 )
+										{	//Don't allow this unless sliding into a fret higher than 1
+											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+											if(!unpitchend || (frets[ctr4] < unpitchend))
+											{	//Track the lowest fret value for the slide end position
+												unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
+											}
+											frets[ctr4]--;				//Set the beginning of this slide one fret lower
+										}
+									}
+									else if(byte == 1)
+									{	//Shift slide
+										flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
+									}
+									else if(byte == 2)
+									{	//If this is a legato slide
+										flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Mark the current note with linknext status to accurately describe how to play it in Rocksmith
+										flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
+									}
+									else if(byte == 3)
+									{	//Slide out and downward
+										if(frets[ctr4] > 1 )
+										{	//Don't apply a downward slide unless the note is at fret 2 or higher
+											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+											if(!unpitchend || (frets[ctr4] < unpitchend))
+											{	//Track the lowest fret value for the slide end position
+												unpitchend = frets[ctr4] - 1;
+											}
+										}
 									}
 									else if(byte == 4)
-									{	//Pinch harmonic
-										flags |= EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC;
+									{	//Slide out and upward
+										flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+										if(!unpitchend || (frets[ctr4] < unpitchend))
+										{	//Track the lowest fret value for the slide end position
+											unpitchend = frets[ctr4] + 1;
+										}
 									}
-									else if(byte == 5)
-									{	//"Semi" harmonic (similar to a pinch harmonic)
-										flags |= EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC;
+								}
+								else
+								{	//Version 5 or newer GP file
+									if(byte & 4)
+									{	//This note slides out and downwards
+										if(frets[ctr4] > 1 )
+										{	//Don't apply a downward slide unless the note is at fret 2 or higher
+											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+											if(!unpitchend || (frets[ctr4] < unpitchend))
+											{	//Track the lowest fret value for the slide end position
+												unpitchend = frets[ctr4] - 1;
+											}
+										}
+									}
+									else if(byte & 8)
+									{	//This note slides out and upwards
+										flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+										if(!unpitchend || (frets[ctr4] < unpitchend))
+										{	//Track the lowest fret value for the slide end position
+											unpitchend = frets[ctr4] + 1;
+										}
+									}
+									else if(byte & 16)
+									{	//This note slides in from below
+										if(frets[ctr4] > 1 )
+										{	//Don't allow this unless sliding into a fret higher than 1
+											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+											if(!unpitchend || (frets[ctr4] < unpitchend))
+											{	//Track the lowest fret value for the slide end position
+												unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
+											}
+											frets[ctr4]--;				//Set the beginning of this slide one fret lower
+										}
+									}
+									else if(byte & 32)
+									{	//This note slides in from above
+										flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+										if(!unpitchend || (frets[ctr4] < unpitchend))
+										{	//Track the lowest fret value for the slide end position
+											unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
+										}
+										frets[ctr4]++;				//Set the beginning of this slide one fret higher
 									}
 									else
-									{	//Other harmonic types will only be applied to imported notes if the user didn't enable the preference to ignore them
-										if(byte == 2)
-										{	//Artificial harmonic
-											(void) pack_getc(inf);	//Read harmonic note
-											(void) pack_getc(inf);	//Read sharp/flat status
-											(void) pack_getc(inf);	//Read octave status
+									{
+										if(byte & 2)
+										{	//If this is a legato slide
+											flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Mark the current note with linknext status to accurately describe how to play it in Rocksmith
 										}
-										else if(byte == 3)
-										{	//Tapped harmonic
-											(void) pack_getc(inf);	//Right hand fret
-										}
-										if(!eof_gp_import_nat_harmonics_only)
-										{	//If the user opted to ignore harmonic status except for natural harmonics
-											flags |= EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC;
-										}
+										flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
+									}
+								}//Version 5 or newer GP file
+							}//Slide
+							if(byte2 & 16)
+							{	//Harmonic
+								byte = pack_getc(inf);	//Harmonic type
+								if(byte == 1)
+								{	//Natural harmonic
+									flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
+								}
+								else if(byte == 4)
+								{	//Pinch harmonic
+									flags |= EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC;
+								}
+								else if(byte == 5)
+								{	//"Semi" harmonic (similar to a pinch harmonic)
+									flags |= EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC;
+								}
+								else
+								{	//Other harmonic types will only be applied to imported notes if the user didn't enable the preference to ignore them
+									if(byte == 2)
+									{	//Artificial harmonic
+										(void) pack_getc(inf);	//Read harmonic note
+										(void) pack_getc(inf);	//Read sharp/flat status
+										(void) pack_getc(inf);	//Read octave status
+									}
+									else if(byte == 3)
+									{	//Tapped harmonic
+										(void) pack_getc(inf);	//Right hand fret
+									}
+									if(!eof_gp_import_nat_harmonics_only)
+									{	//If the user opted to ignore harmonic status except for natural harmonics
+										flags |= EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC;
 									}
 								}
-								if(byte2 & 32)
-								{	//Trill
-									(void) pack_getc(inf);	//Trill with fret
-									(void) pack_getc(inf);	//Trill duration
-									flags |= EOF_NOTE_FLAG_IS_TRILL;
+							}
+							if(byte2 & 32)
+							{	//Trill
+								(void) pack_getc(inf);	//Trill with fret
+								(void) pack_getc(inf);	//Trill duration
+								flags |= EOF_NOTE_FLAG_IS_TRILL;
 ///It might be necessary to insert notes here for the trill phrase
-								}
-								if(byte2 & 64)
-								{	//Vibrato
-									flags |= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
-								}
-							}//Note effects
-							if(bytemask & 64)
-							{	//Heavy accented or accented note
-								flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;
 							}
-							if((fileversion >= 500) && (bytemask & 2))
-							{	//Heavy accented note (GP5 or higher only)
-								flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;
+							if(byte2 & 64)
+							{	//Vibrato
+								flags |= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
 							}
-							if((thisgemtype == 2) || tie_note)
-							{	//If the note on this string was a tie note or the entire note itself was a tie
-								tieflags |= flags;	//Add this string's flags to the bitmask tracking flags for this note's tie gems
-							}
-							allflags |= flags;	//Add this string's flags to the bitmask tracking flags for the entire note
-						}//If this string is used
+						}//Note effects
+						if(bytemask & 64)
+						{	//Heavy accented or accented note
+							flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;
+						}
+						if((fileversion >= 500) && (bytemask & 2))
+						{	//Heavy accented note (GP5 or higher only)
+							flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;
+						}
+						if((thisgemtype == 2) || tie_note)
+						{	//If the note on this string was a tie note or the entire note itself was a tie
+							tieflags |= flags;	//Add this string's flags to the bitmask tracking flags for this note's tie gems
+						}
+						allflags |= flags;	//Add this string's flags to the bitmask tracking flags for the entire note
 					}//For each of the 7 possible usable strings
 					flags = allflags;	//Beyond this point, the flags variable is expected to reflect the combined flags for all gems in this note
 					if(fileversion >= 500)
@@ -4705,43 +4709,43 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									gnp->frets[ctr4] = gracefrets[convertednum];	//Copy the fret number for this string
 									gnp->finger[ctr4] = finger[convertednum];		//Copy the finger number used to fret the note the grace note is applied to
 								}
-								if(!graceonbeat && (gnp->note & bitmask))
-								{	//If this isn't an on-beat grace note, and this string is used by the grace note
-									if(gracetrans == 1)
-									{	//Grace note slides into normal note
+								if(graceonbeat || !(gnp->note & bitmask))
+									continue;	//If this is an on beat grace note or if this string isn't used by the grace note, skip it
+
+								if(gracetrans == 1)
+								{	//Grace note slides into normal note
+									gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Define the grace note's end of slide position
+									gnp->slideend = np[ctr2]->frets[ctr4];				//The end of slide position is the fret position of the note the grace note affects
+									gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Add linknext status to the grace note so it appears nicely as a slide-in in Rocksmith
+									if(gnp->frets[ctr4] > np[ctr2]->frets[ctr4])
+									{	//If the grace note's fret value is higher than the normal note's
+										gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The grace note slides down
+									}
+									else
+									{	//The grace note's fret value is lower than the normal note's
+										gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;	//The grace note slides up
+									}
+								}
+								else if(gracetrans == 2)
+								{	//Grace note bends to normal note
+									if(gnp->frets[ctr4] < np[ctr2]->frets[ctr4])
+									{	//This only makes sense if the grace note's fret value is lower than the normal note's
+										gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;		//The grace note bends up to the next note
 										gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Define the grace note's end of slide position
-										gnp->slideend = np[ctr2]->frets[ctr4];				//The end of slide position is the fret position of the note the grace note affects
-										gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Add linknext status to the grace note so it appears nicely as a slide-in in Rocksmith
-										if(gnp->frets[ctr4] > np[ctr2]->frets[ctr4])
-										{	//If the grace note's fret value is higher than the normal note's
-											gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The grace note slides down
-										}
-										else
-										{	//The grace note's fret value is lower than the normal note's
-											gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;	//The grace note slides up
-										}
+										gnp->bendstrength = np[ctr2]->frets[ctr4] - gnp->frets[ctr4];	//Set the bend strength to the number of half steps needed to reach the normal note
 									}
-									else if(gracetrans == 2)
-									{	//Grace note bends to normal note
-										if(gnp->frets[ctr4] < np[ctr2]->frets[ctr4])
-										{	//This only makes sense if the grace note's fret value is lower than the normal note's
-											gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;		//The grace note bends up to the next note
-											gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Define the grace note's end of slide position
-											gnp->bendstrength = np[ctr2]->frets[ctr4] - gnp->frets[ctr4];	//Set the bend strength to the number of half steps needed to reach the normal note
-										}
+								}
+								else if(gracetrans == 3)
+								{	//Grace note is hammered onto or pulled off to perform the note it precedes
+									if(gnp->frets[ctr4] > np[ctr2]->frets[ctr4])
+									{	//If the grace note's fret value is higher than the normal note's
+										np[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;	//The grace note is pulled off of
 									}
-									else if(gracetrans == 3)
-									{	//Grace note is hammered onto or pulled off to perform the note it precedes
-										if(gnp->frets[ctr4] > np[ctr2]->frets[ctr4])
-										{	//If the grace note's fret value is higher than the normal note's
-											np[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;	//The grace note is pulled off of
-										}
-										else
-										{	//The grace note's fret value is lower than the normal note's
-											np[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//The grace note is hammered on from
-										}
+									else
+									{	//The grace note's fret value is lower than the normal note's
+										np[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//The grace note is hammered on from
 									}
-								}//If this isn't an on-beat grace note, and this string is used by the grace note
+								}
 							}//For each of this track's natively supported strings
 
 							//Set the start position and length of the note
@@ -4806,65 +4810,65 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	{	//For each imported track
 		for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
 		{	//For each note in the track
-			if((gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && (gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) && (ctr2 + 1 < gp->track[ctr]->notes))
-			{	//If this note is marked as being an undetermined direction slide, and there's a note that follows
-				startfret = 0;
-				for(ctr3 = 0, bitmask = 1; ctr3 < 7; ctr3++, bitmask<<=1)
-				{	//For each of the 7 strings the GP format allows for
-					if((bitmask & gp->track[ctr]->note[ctr2]->note) && (bitmask & gp->track[ctr]->note[ctr2 + 1]->note))
-					{	//If this string is used on this note as well as the next
-						startfret = eof_pro_guitar_note_lowest_fret(gp->track[ctr], ctr2);	//Record the lowest used fret on this note
-						if(gp->track[ctr]->note[ctr2 + 1]->frets[ctr3] & 0x80)
-						{	//If the end of the slide is defined by a mute note
-							endfret =  0;	//Force it to be a downward slide, the end fret of the slide will be undefined
-						}
-						else
-						{
-							endfret = eof_pro_guitar_note_lowest_fret(gp->track[ctr], ctr2 + 1);	//Record the lowest used fret on the next note
-						}
-						if(startfret == endfret)
-						{	//If both strings use the same fret
-							continue;	//Check the next string instead (this one might be being played open)
-						}
-						if(startfret > endfret)
-						{	//This is a downward slide
-							gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;	//Clear the slide up flag
-						}
-						else
-						{	//This is an upward slide
-							gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//Clear the slide down flag
-						}
-						if(gp->track[ctr]->note[ctr2]->slideend == 0)
-						{	//If the slide ending hasn't been defined yet
-							gp->track[ctr]->note[ctr2]->slideend = endfret;
-							gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that the note has the slide ending defined
-						}
-						break;
-					}//If this string is used on this note as well as the next
-				}//For each of the 7 strings the GP format allows for
-				if((gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && (gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
-				{	//If both the slide up and slide down flags are still set, the next note didn't use any of the same strings as the slide note
-					//Base the slide direction on the lowest fret value of that next note
-					startfret = eof_pro_guitar_note_lowest_fret(gp->track[ctr], ctr2);
-					endfret = eof_pro_guitar_note_lowest_fret(gp->track[ctr], ctr2 + 1);
-					if(startfret != endfret)
-					{	//If the slide and the following note start from different fret positions
-						if(startfret > endfret)
-						{	//This is a downward slide
-							gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;	//Clear the slide up flag
-						}
-						else
-						{	//This is an upward slide
-							gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//Clear the slide down flag
-						}
-						if(gp->track[ctr]->note[ctr2]->slideend == 0)
-						{	//If the slide ending hasn't been defined yet
-							gp->track[ctr]->note[ctr2]->slideend = endfret;
-							gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that the note has the slide ending defined
-						}
+			if(!(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || !(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (ctr2 + 1 >= gp->track[ctr]->notes))
+				continue;	//If this not isn't marked as being an undetermined direction of slide, or there's no note that follows, skip it
+
+			startfret = 0;
+			for(ctr3 = 0, bitmask = 1; ctr3 < 7; ctr3++, bitmask<<=1)
+			{	//For each of the 7 strings the GP format allows for
+				if(!(bitmask & gp->track[ctr]->note[ctr2]->note) || !(bitmask & gp->track[ctr]->note[ctr2 + 1]->note))
+					continue;	//If this string is not used for both this note and the next, skip it
+
+				startfret = eof_pro_guitar_note_lowest_fret(gp->track[ctr], ctr2);	//Record the lowest used fret on this note
+				if(gp->track[ctr]->note[ctr2 + 1]->frets[ctr3] & 0x80)
+				{	//If the end of the slide is defined by a mute note
+					endfret =  0;	//Force it to be a downward slide, the end fret of the slide will be undefined
+				}
+				else
+				{
+					endfret = eof_pro_guitar_note_lowest_fret(gp->track[ctr], ctr2 + 1);	//Record the lowest used fret on the next note
+				}
+				if(startfret == endfret)
+				{	//If both strings use the same fret
+					continue;	//Check the next string instead (this one might be being played open)
+				}
+				if(startfret > endfret)
+				{	//This is a downward slide
+					gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;	//Clear the slide up flag
+				}
+				else
+				{	//This is an upward slide
+					gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//Clear the slide down flag
+				}
+				if(gp->track[ctr]->note[ctr2]->slideend == 0)
+				{	//If the slide ending hasn't been defined yet
+					gp->track[ctr]->note[ctr2]->slideend = endfret;
+					gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that the note has the slide ending defined
+				}
+				break;
+			}//For each of the 7 strings the GP format allows for
+			if((gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && (gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+			{	//If both the slide up and slide down flags are still set, the next note didn't use any of the same strings as the slide note
+				//Base the slide direction on the lowest fret value of that next note
+				startfret = eof_pro_guitar_note_lowest_fret(gp->track[ctr], ctr2);
+				endfret = eof_pro_guitar_note_lowest_fret(gp->track[ctr], ctr2 + 1);
+				if(startfret != endfret)
+				{	//If the slide and the following note start from different fret positions
+					if(startfret > endfret)
+					{	//This is a downward slide
+						gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;	//Clear the slide up flag
+					}
+					else
+					{	//This is an upward slide
+						gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//Clear the slide down flag
+					}
+					if(gp->track[ctr]->note[ctr2]->slideend == 0)
+					{	//If the slide ending hasn't been defined yet
+						gp->track[ctr]->note[ctr2]->slideend = endfret;
+						gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that the note has the slide ending defined
 					}
 				}
-			}//If this note is marked as being an undetermined direction slide, and there's a note that follows
+			}
 		}//For each note in the track
 	}//For each imported track
 
@@ -4873,19 +4877,19 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	{	//For each imported track
 		for(ctr2 = gp->track[ctr]->notes; ctr2 > 0; ctr2--)
 		{	//For each note in the track (in reverse order)
-			if(eof_is_partially_string_muted(gp->track[ctr], ctr2 - 1))
-			{	//If this note has at least one muted and one non muted gem
-				for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
-				{	//For each of the 6 supported strings
-					if(ctr3 < gp->track[ctr]->numstrings)
-					{	//If this is a string used in the track
-						if(gp->track[ctr]->note[ctr2 - 1]->note & bitmask)
-						{	//If this is a string used in the note
-							if(gp->track[ctr]->note[ctr2 - 1]->frets[ctr3] & 0x80)
-							{	//If this string is muted
-								gp->track[ctr]->note[ctr2 - 1]->note &= ~bitmask;	//Clear this string's gem
-								gp->track[ctr]->note[ctr2 - 1]->frets[ctr3] = 0;	//Erase the fret value
-							}
+			if(!eof_is_partially_string_muted(gp->track[ctr], ctr2 - 1))
+				continue;	//If this note doesn't have at least one muted and one non muted gem, skip it
+
+			for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+			{	//For each of the 6 supported strings
+				if(ctr3 < gp->track[ctr]->numstrings)
+				{	//If this is a string used in the track
+					if(gp->track[ctr]->note[ctr2 - 1]->note & bitmask)
+					{	//If this is a string used in the note
+						if(gp->track[ctr]->note[ctr2 - 1]->frets[ctr3] & 0x80)
+						{	//If this string is muted
+							gp->track[ctr]->note[ctr2 - 1]->note &= ~bitmask;	//Clear this string's gem
+							gp->track[ctr]->note[ctr2 - 1]->frets[ctr3] = 0;	//Erase the fret value
 						}
 					}
 				}
@@ -5177,31 +5181,31 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 			{	//If text events are being unwrapped
 				for(ctr = 0; ctr < gp->text_events; ctr++)
 				{	//For each text event that was imported from the gp file
-					if(gp->text_event[ctr]->beat == measuremap[currentmeasure])
-					{	//If the text event is positioned at this measure
-						if(newevents < EOF_MAX_TEXT_EVENTS)
-						{	//If the maximum number of text events hasn't already been defined
-							newevent[newevents] = malloc(sizeof(EOF_TEXT_EVENT));	//Allocate space for the text event
-							if(!newevent[newevents])
-							{
-								eof_log("\tError allocating memory to unwrap GP track (5)", 1);
-								free(measuremap);
-								for(ctr = 0; ctr < tp->notes; ctr++)
-								{	//For each note that had been allocated for the unwrapped track
-									free(tp->note[ctr]);	//Free its memory
-								}
-								free(tp);
-								free(working_num_of_repeats);
-								for(ctr = 0; ctr < newevents; ctr++)
-								{	//For each unwrapped text event
-									free(newevent[ctr]);	//Free it
-								}
-								return 7;
+					if(gp->text_event[ctr]->beat != measuremap[currentmeasure])
+						continue;	//If the text event is not positioned at this measure, skip it
+
+					if(newevents < EOF_MAX_TEXT_EVENTS)
+					{	//If the maximum number of text events hasn't already been defined
+						newevent[newevents] = malloc(sizeof(EOF_TEXT_EVENT));	//Allocate space for the text event
+						if(!newevent[newevents])
+						{
+							eof_log("\tError allocating memory to unwrap GP track (5)", 1);
+							free(measuremap);
+							for(ctr = 0; ctr < tp->notes; ctr++)
+							{	//For each note that had been allocated for the unwrapped track
+								free(tp->note[ctr]);	//Free its memory
 							}
-							memcpy(newevent[newevents], gp->text_event[ctr], sizeof(EOF_TEXT_EVENT));	//Copy the text event
-							newevent[newevents]->beat = beatctr;	//Correct the beat number
-							newevents++;
+							free(tp);
+							free(working_num_of_repeats);
+							for(ctr = 0; ctr < newevents; ctr++)
+							{	//For each unwrapped text event
+								free(newevent[ctr]);	//Free it
+							}
+							return 7;
 						}
+						memcpy(newevent[newevents], gp->text_event[ctr], sizeof(EOF_TEXT_EVENT));	//Copy the text event
+						newevent[newevents]->beat = beatctr;	//Correct the beat number
+						newevents++;
 					}
 				}
 			}
@@ -5462,55 +5466,55 @@ char eof_copy_notes_in_beat_range(EOF_PRO_GUITAR_TRACK *source, unsigned long st
 
 	for(ctr = 0; ctr < source->notes; ctr++)
 	{	//For each note in the source track
-		if((source->note[ctr]->pos >= eof_song->beat[startbeat]->pos) && (source->note[ctr]->pos < eof_song->beat[startbeat + numbeats]->pos))
-		{	//If this note is positioned within the target range of beats
-			beatnum = eof_get_beat(eof_song, source->note[ctr]->pos);					//Find which beat this note is within
-			endbeatnum = eof_get_beat(eof_song, source->note[ctr]->pos + source->note[ctr]->length);	//Find which beat this note ends within
-			if(eof_beat_num_valid(eof_song, beatnum) && eof_beat_num_valid(eof_song, endbeatnum))
-			{	//The beat positions were found
-				if(eof_song->beats < destbeat + endbeatnum - startbeat + 2)
-				{
-#ifdef GP_IMPORT_DEBUG
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tUnwrapping note #%lu requires %lu beats, but project only has %lu beats.  Appending %lu beats to the project to allow for this note and 2 bytes of padding.", ctr, destbeat + endbeatnum - startbeat, eof_song->beats, destbeat + endbeatnum - startbeat + 2 - eof_song->beats);
-					eof_log(eof_log_string, 1);
-#endif
-					while(eof_song->beats < destbeat + endbeatnum - startbeat + 2)
-					{	//Until the loaded project has enough beats to contain the unwrapped note, and two extra to allow room for processing beat lengths later
-						if(!eof_song_append_beats(eof_song, 1))
-						{
-							eof_log("\tError allocating memory to unwrap GP track (6)", 1);
-							return 0;	//Return error
-						}
-					}
-					eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
-				}
+		if((source->note[ctr]->pos < eof_song->beat[startbeat]->pos) || (source->note[ctr]->pos >= eof_song->beat[startbeat + numbeats]->pos))
+			continue;	//If this note is before or after the target range of beats, skip it
 
-				notepos = eof_get_porpos(source->note[ctr]->pos);									//Get the note's position as a percentage within its beat
-				noteendpos = eof_get_porpos(source->note[ctr]->pos + source->note[ctr]->length);	//Get the note end's end position as a percentage within its beat
-				newpos = eof_put_porpos(destbeat + beatnum - startbeat, notepos, 0.0);				//Get the position for the copied note
-				newend = eof_put_porpos(destbeat + endbeatnum - startbeat, noteendpos, 0.0);		//Get the end position for the copied note
-				if((newpos < 0) || (newend < 0))
-				{	//If the positioning for the copied note couldn't be determined
-					eof_log("\tError finding position for unwrapped note", 1);
-					return 0;	//Return error
+		beatnum = eof_get_beat(eof_song, source->note[ctr]->pos);					//Find which beat this note is within
+		endbeatnum = eof_get_beat(eof_song, source->note[ctr]->pos + source->note[ctr]->length);	//Find which beat this note ends within
+		if(eof_beat_num_valid(eof_song, beatnum) && eof_beat_num_valid(eof_song, endbeatnum))
+		{	//The beat positions were found
+			if(eof_song->beats < destbeat + endbeatnum - startbeat + 2)
+			{
+#ifdef GP_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tUnwrapping note #%lu requires %lu beats, but project only has %lu beats.  Appending %lu beats to the project to allow for this note and 2 bytes of padding.", ctr, destbeat + endbeatnum - startbeat, eof_song->beats, destbeat + endbeatnum - startbeat + 2 - eof_song->beats);
+				eof_log(eof_log_string, 1);
+#endif
+				while(eof_song->beats < destbeat + endbeatnum - startbeat + 2)
+				{	//Until the loaded project has enough beats to contain the unwrapped note, and two extra to allow room for processing beat lengths later
+					if(!eof_song_append_beats(eof_song, 1))
+					{
+						eof_log("\tError allocating memory to unwrap GP track (6)", 1);
+						return 0;	//Return error
+					}
 				}
-				if(dest->notes >= EOF_MAX_NOTES)
-				{	//If the track can't hold any more notes
-					eof_log("\tNote limit exceeded", 1);
-					return 0;	//Return error
-				}
-				dest->note[dest->notes] = malloc(sizeof(EOF_PRO_GUITAR_NOTE));	//Allocate memory for the copied note
-				if(!dest->note[dest->notes])
-				{
-					eof_log("\tError allocating memory", 1);
-					return 0;	//Return error
-				}
-				memcpy(dest->note[dest->notes], source->note[ctr], sizeof(EOF_PRO_GUITAR_NOTE));	//Copy the note
-				dest->note[dest->notes]->pos = newpos;				//Set the unwrapped note's position
-				dest->note[dest->notes]->length = newend - newpos;	//Set its length
-				dest->notes++;	//Increment the destination track's note counter
-			}//The beat positions were found
-		}//If this note is positioned within the target range of beats
+				eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
+			}
+
+			notepos = eof_get_porpos(source->note[ctr]->pos);									//Get the note's position as a percentage within its beat
+			noteendpos = eof_get_porpos(source->note[ctr]->pos + source->note[ctr]->length);	//Get the note end's end position as a percentage within its beat
+			newpos = eof_put_porpos(destbeat + beatnum - startbeat, notepos, 0.0);				//Get the position for the copied note
+			newend = eof_put_porpos(destbeat + endbeatnum - startbeat, noteendpos, 0.0);		//Get the end position for the copied note
+			if((newpos < 0) || (newend < 0))
+			{	//If the positioning for the copied note couldn't be determined
+				eof_log("\tError finding position for unwrapped note", 1);
+				return 0;	//Return error
+			}
+			if(dest->notes >= EOF_MAX_NOTES)
+			{	//If the track can't hold any more notes
+				eof_log("\tNote limit exceeded", 1);
+				return 0;	//Return error
+			}
+			dest->note[dest->notes] = malloc(sizeof(EOF_PRO_GUITAR_NOTE));	//Allocate memory for the copied note
+			if(!dest->note[dest->notes])
+			{
+				eof_log("\tError allocating memory", 1);
+				return 0;	//Return error
+			}
+			memcpy(dest->note[dest->notes], source->note[ctr], sizeof(EOF_PRO_GUITAR_NOTE));	//Copy the note
+			dest->note[dest->notes]->pos = newpos;				//Set the unwrapped note's position
+			dest->note[dest->notes]->length = newend - newpos;	//Set its length
+			dest->notes++;	//Increment the destination track's note counter
+		}//The beat positions were found
 	}//For each note in the source track
 
 	return 1;	//Return success
