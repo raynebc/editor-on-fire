@@ -1090,31 +1090,32 @@ int eof_note_is_hopo(unsigned long cnote)
 	}
 	bpm = 60000000.0 / (double)eof_song->beat[beat]->ppqn;
 	scale = 120.0 / bpm;
-	if(cnote > 0)
+	if(cnote <= 0)
+		return 0;	//If the specified note isn't at least the second note in the track, it can't be a HOPO
+
+	pnote = eof_get_previous_note(cnote);
+	if(pnote < 0)
 	{
-		pnote = eof_get_previous_note(cnote);
-		if(pnote < 0)
-		{
-			return 0;
-		}
-		if(eof_hopo_view == EOF_HOPO_RF)
-		{
-			delta = cnotepos - eof_get_note_pos(eof_song, eof_selected_track, pnote);
-			if((delta <= (hopo_delta * scale)) && (eof_note_count_colors(eof_song, eof_selected_track, pnote) == 1) && (eof_note_count_colors(eof_song, eof_selected_track, cnote) == 1) && (eof_get_note_note(eof_song, eof_selected_track, pnote) != eof_get_note_note(eof_song, eof_selected_track, cnote)))
-			{	//If this note is close enough to the previous note, both notes are not chords, and both notes are a different gem
-				return 1;
-			}
-		}
-		else if(eof_hopo_view == EOF_HOPO_FOF)
-		{
-			delta = cnotepos - (eof_get_note_pos(eof_song, eof_selected_track, pnote) + eof_get_note_length(eof_song, eof_selected_track, pnote));
-			if((delta <= hopo_delta * scale) && !(eof_get_note_note(eof_song, eof_selected_track, pnote) & eof_get_note_note(eof_song, eof_selected_track, cnote)))
-			{	//If this note is close enough to the previous note and both notes have no gems in common
-				return 1;
-			}
-		}
-//		allegro_message("bpm = %f\nscale = %f\ndelta = %f\npnote = %d(%d), cnote = %d(%d)", bpm, scale, delta, pnote, eof_song->legacy_track[tracknum]->note[pnote].pos, cnote, eof_song->legacy_track[tracknum]->note[cnote].pos);	//Debug
+		return 0;
 	}
+	if(eof_hopo_view == EOF_HOPO_RF)
+	{
+		delta = cnotepos - eof_get_note_pos(eof_song, eof_selected_track, pnote);
+		if((delta <= (hopo_delta * scale)) && (eof_note_count_colors(eof_song, eof_selected_track, pnote) == 1) && (eof_note_count_colors(eof_song, eof_selected_track, cnote) == 1) && (eof_get_note_note(eof_song, eof_selected_track, pnote) != eof_get_note_note(eof_song, eof_selected_track, cnote)))
+		{	//If this note is close enough to the previous note, both notes are not chords, and both notes are a different gem
+			return 1;
+		}
+	}
+	else if(eof_hopo_view == EOF_HOPO_FOF)
+	{
+		delta = cnotepos - (eof_get_note_pos(eof_song, eof_selected_track, pnote) + eof_get_note_length(eof_song, eof_selected_track, pnote));
+		if((delta <= hopo_delta * scale) && !(eof_get_note_note(eof_song, eof_selected_track, pnote) & eof_get_note_note(eof_song, eof_selected_track, cnote)))
+		{	//If this note is close enough to the previous note and both notes have no gems in common
+			return 1;
+		}
+	}
+//	allegro_message("bpm = %f\nscale = %f\ndelta = %f\npnote = %d(%d), cnote = %d(%d)", bpm, scale, delta, pnote, eof_song->legacy_track[tracknum]->note[pnote].pos, cnote, eof_song->legacy_track[tracknum]->note[cnote].pos);	//Debug
+
 	return 0;
 }
 
@@ -1457,28 +1458,28 @@ unsigned long eof_get_selected_note_range(unsigned long *sel_start, unsigned lon
 
 	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type))
-		{	//If the note is selected
-			pos = eof_get_note_pos(eof_song, eof_selected_track, ctr);
-			length = eof_get_note_length(eof_song, eof_selected_track, ctr);
-			count++;	//Track the number of notes within the selection that are explicitly selected
-			if(first)
-			{	//The first selected note is always the earliest in the selection, since notes are sorted
-				start = end = ctr;
-				startpos = pos;
-				endpos = pos + length;
-				first = 0;
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[ctr] || (eof_get_note_type(eof_song, eof_selected_track, ctr) != eof_note_type))
+			continue;	//If the note is not selected, skip it
+
+		pos = eof_get_note_pos(eof_song, eof_selected_track, ctr);
+		length = eof_get_note_length(eof_song, eof_selected_track, ctr);
+		count++;	//Track the number of notes within the selection that are explicitly selected
+		if(first)
+		{	//The first selected note is always the earliest in the selection, since notes are sorted
+			start = end = ctr;
+			startpos = pos;
+			endpos = pos + length;
+			first = 0;
+		}
+		else
+		{
+			if(ctr > end)
+			{	//Track the index of the last note that is selected
+				end = ctr;
 			}
-			else
-			{
-				if(ctr > end)
-				{	//Track the index of the last note that is selected
-					end = ctr;
-				}
-				if(pos + length > endpos)
-				{	//Track the latest end position among all selected notes, due to crazy notes overlapping, end and endpos may reflect different notes
-					endpos = pos + length;
-				}
+			if(pos + length > endpos)
+			{	//Track the latest end position among all selected notes, due to crazy notes overlapping, end and endpos may reflect different notes
+				endpos = pos + length;
 			}
 		}
 	}
@@ -3172,38 +3173,38 @@ void eof_render_lyric_window(void)
 	{
 		n = (i / 7) * 12 + bnote[i % 7] + MINPITCH;
 		k = n % 12;
-		if((k == 1) || (k == 3) || (k == 6) || (k == 8) || (k == 10))
+		if((k != 1) && (k != 3) && (k != 6) && (k != 8) && (k != 10))
+			continue;	//If this isn't a black key, skip this rendering logic
+
+		if(n == eof_hover_key)
 		{
-			if(n == eof_hover_key)
+			if((n >= eof_vocals_offset) && (n < eof_vocals_offset + eof_screen_layout.vocal_view_size))
 			{
-				if((n >= eof_vocals_offset) && (n < eof_vocals_offset + eof_screen_layout.vocal_view_size))
-				{
-					kcol = eof_color_green;
-					kcol2 = makecol(0, 192, 0);
-				}
-				else
-				{
-					kcol = makecol(0, 160, 0);
-					kcol2 = makecol(0, 96, 0);
-				}
-				textout_centre_ex(eof_window_3d->screen, font, eof_get_tone_name(eof_hover_key), i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 + eof_screen_layout.lyric_view_bkey_width + eof_screen_layout.lyric_view_bkey_width / 2, eof_window_3d->h - eof_screen_layout.lyric_view_key_height - text_height(font), eof_color_white, eof_color_black);
+				kcol = eof_color_green;
+				kcol2 = makecol(0, 192, 0);
 			}
 			else
 			{
-				if((n >= eof_vocals_offset) && (n < eof_vocals_offset + eof_screen_layout.vocal_view_size))
-				{
-					kcol = makecol(48, 48, 48);
-					kcol2 = makecol(24, 24, 24);
-				}
-				else
-				{
-					kcol = makecol(16, 16, 16);
-					kcol2 = eof_color_black;
-				}
+				kcol = makecol(0, 160, 0);
+				kcol2 = makecol(0, 96, 0);
 			}
-			rectfill(eof_window_3d->screen, i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 + eof_screen_layout.lyric_view_bkey_width, eof_window_3d->screen->h - eof_screen_layout.lyric_view_key_height, (i + 1) * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 - eof_screen_layout.lyric_view_bkey_width + 1, eof_window_3d->screen->h - eof_screen_layout.lyric_view_key_height + eof_screen_layout.lyric_view_bkey_height, kcol);
-			vline(eof_window_3d->screen, (i + 1) * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 - eof_screen_layout.lyric_view_bkey_width + 1, eof_window_3d->screen->h - eof_screen_layout.lyric_view_key_height, eof_window_3d->screen->h - eof_screen_layout.lyric_view_key_height + eof_screen_layout.lyric_view_bkey_height, kcol2);
+			textout_centre_ex(eof_window_3d->screen, font, eof_get_tone_name(eof_hover_key), i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 + eof_screen_layout.lyric_view_bkey_width + eof_screen_layout.lyric_view_bkey_width / 2, eof_window_3d->h - eof_screen_layout.lyric_view_key_height - text_height(font), eof_color_white, eof_color_black);
 		}
+		else
+		{
+			if((n >= eof_vocals_offset) && (n < eof_vocals_offset + eof_screen_layout.vocal_view_size))
+			{
+				kcol = makecol(48, 48, 48);
+				kcol2 = makecol(24, 24, 24);
+			}
+			else
+			{
+				kcol = makecol(16, 16, 16);
+				kcol2 = eof_color_black;
+			}
+		}
+		rectfill(eof_window_3d->screen, i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 + eof_screen_layout.lyric_view_bkey_width, eof_window_3d->screen->h - eof_screen_layout.lyric_view_key_height, (i + 1) * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 - eof_screen_layout.lyric_view_bkey_width + 1, eof_window_3d->screen->h - eof_screen_layout.lyric_view_key_height + eof_screen_layout.lyric_view_bkey_height, kcol);
+		vline(eof_window_3d->screen, (i + 1) * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 - eof_screen_layout.lyric_view_bkey_width + 1, eof_window_3d->screen->h - eof_screen_layout.lyric_view_key_height, eof_window_3d->screen->h - eof_screen_layout.lyric_view_key_height + eof_screen_layout.lyric_view_bkey_height, kcol2);
 	}
 	eof_render_lyric_preview(eof_window_3d->screen);
 
@@ -3307,24 +3308,24 @@ void eof_render_3d_window(void)
 	for(i = 0; i < numsolos; i++)
 	{
 		sectionptr = eof_get_solo(eof_song, eof_selected_track, i);	//Obtain the information for this legacy/pro guitar solo
-		if(sectionptr != NULL)
+		if(sectionptr == NULL)
+			continue;	//If the solo section couldn't be found, skip it
+
+		sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+		sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+		if((-100 <= sez) && (600 >= sz))
 		{
-			sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
-			sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
-			if((-100 <= sez) && (600 >= sz))
-			{
-				spz = sz < -100 ? -100 : sz;
-				spez = sez > 600 ? 600 : sez;
-				point[0] = ocd3d_project_x(20, spez);
-				point[1] = ocd3d_project_y(200, spez);
-				point[2] = ocd3d_project_x(300, spez);
-				point[3] = point[1];
-				point[4] = ocd3d_project_x(300, spz);
-				point[5] = ocd3d_project_y(200, spz);
-				point[6] = ocd3d_project_x(20, spz);
-				point[7] = point[5];
-				polygon(eof_window_3d->screen, 4, point, eof_color_dark_blue);
-			}
+			spz = sz < -100 ? -100 : sz;
+			spez = sez > 600 ? 600 : sez;
+			point[0] = ocd3d_project_x(20, spez);
+			point[1] = ocd3d_project_y(200, spez);
+			point[2] = ocd3d_project_x(300, spez);
+			point[3] = point[1];
+			point[4] = ocd3d_project_x(300, spz);
+			point[5] = ocd3d_project_y(200, spz);
+			point[6] = ocd3d_project_x(20, spz);
+			point[7] = point[5];
+			polygon(eof_window_3d->screen, 4, point, eof_color_dark_blue);
 		}
 	}
 
@@ -3335,30 +3336,30 @@ void eof_render_3d_window(void)
 		for(i = 0; i < eof_song->pro_guitar_track[tracknum]->arpeggios; i++)
 		{	//For each arpeggio section in the track
 			sectionptr = &eof_song->pro_guitar_track[tracknum]->arpeggio[i];
-			if(sectionptr->difficulty == eof_note_type)
-			{	//If this arpeggio is assigned to the active difficulty
-				sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
-				sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
-				if((-100 <= sez) && (600 >= sz))
-				{	//If the arpeggio section would render visibly, fill the topmost lane with the appropriate color
-					int arpeggiocolor = eof_color_turquoise;	//Normal arpeggio phrases will render in turquoise
+			if(sectionptr->difficulty != eof_note_type)
+				continue;	//If this arpeggio isn't in the active difficulty, skip it
 
-					if(sectionptr->flags & EOF_RS_ARP_HANDSHAPE)
-					{	//If this arpeggio is configured to export as a normal handshape
-						arpeggiocolor = eof_color_lighter_blue;
-					}
-					spz = sz < -100 ? -100 : sz;
-					spez = sez > 600 ? 600 : sez;
-					point[0] = ocd3d_project_x(20, spez);
-					point[1] = ocd3d_project_y(200, spez);
-					point[2] = ocd3d_project_x(300, spez);
-					point[3] = point[1];
-					point[4] = ocd3d_project_x(300, spz);
-					point[5] = ocd3d_project_y(200, spz);
-					point[6] = ocd3d_project_x(20, spz);
-					point[7] = point[5];
-					polygon(eof_window_3d->screen, 4, point, arpeggiocolor);	//Fill with a turquoise or light blue color
+			sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+			sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+			if((-100 <= sez) && (600 >= sz))
+			{	//If the arpeggio section would render visibly, fill the topmost lane with the appropriate color
+				int arpeggiocolor = eof_color_turquoise;	//Normal arpeggio phrases will render in turquoise
+
+				if(sectionptr->flags & EOF_RS_ARP_HANDSHAPE)
+				{	//If this arpeggio is configured to export as a normal handshape
+					arpeggiocolor = eof_color_lighter_blue;
 				}
+				spz = sz < -100 ? -100 : sz;
+				spez = sez > 600 ? 600 : sez;
+				point[0] = ocd3d_project_x(20, spez);
+				point[1] = ocd3d_project_y(200, spez);
+				point[2] = ocd3d_project_x(300, spez);
+				point[3] = point[1];
+				point[4] = ocd3d_project_x(300, spz);
+				point[5] = ocd3d_project_y(200, spz);
+				point[6] = ocd3d_project_x(20, spz);
+				point[7] = point[5];
+				polygon(eof_window_3d->screen, 4, point, arpeggiocolor);	//Fill with a turquoise or light blue color
 			}
 		}
 	}
@@ -3415,45 +3416,45 @@ void eof_render_3d_window(void)
 				{	//On the second pass, render tremolo sections
 					sectionptr = eof_get_tremolo(eof_song, eof_selected_track, i);
 				}
-				if(sectionptr != NULL)
-				{	//If the section exists
-					if(j)
-					{	//If tremolo sections are being rendered
-						if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
-						{	//If the track's difficulty limit has been removed
-							if(sectionptr->difficulty != eof_note_type)	//And the tremolo section does not apply to the active track difficulty
-								continue;	//Skip rendering it
-						}
-						else
-						{
-							if(sectionptr->difficulty != 0xFF)	//Otherwise if the tremolo section does not apply to all track difficulties
-								continue;	//Skip rendering it
+				if(sectionptr == NULL)
+					continue;	//If the section could not be found for some reason, skip it
+
+				if(j)
+				{	//If tremolo sections are being rendered
+					if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+					{	//If the track's difficulty limit has been removed
+						if(sectionptr->difficulty != eof_note_type)	//And the tremolo section does not apply to the active track difficulty
+							continue;	//Skip rendering it
+					}
+					else
+					{
+						if(sectionptr->difficulty != 0xFF)	//Otherwise if the tremolo section does not apply to all track difficulties
+							continue;	//Skip rendering it
+					}
+				}
+				sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+				sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+				spz = sz < -100 ? -100 : sz;
+				spez = sez > 600 ? 600 : sez;
+				if((-100 <= sez) && (600 >= sz))
+				{	//If the section would render to the visible portion of the screen
+					usedlanes = eof_get_used_lanes(eof_selected_track, sectionptr->start_pos, sectionptr->end_pos, eof_note_type);	//Determine which lane(s) use this phrase
+					for(ctr = firstlane, bitmask = (1 << firstlane); ctr <= lastlane; ctr++, bitmask <<= 1)
+					{	//For each of the usable lanes (that are allowed to have lane specific marker rendering)
+						if(usedlanes & bitmask)
+						{	//If this lane is used in the phrase and the lane is active
+							point[0] = ocd3d_project_x(xchart[ctr] - halflanewidth - xoffset, spez);	//Offset drum lanes by drawing them one lane further left than other tracks
+							point[1] = ocd3d_project_y(200, spez);
+							point[2] = ocd3d_project_x(xchart[ctr] + halflanewidth - xoffset, spez);
+							point[3] = point[1];
+							point[4] = ocd3d_project_x(xchart[ctr] + halflanewidth - xoffset, spz);
+							point[5] = ocd3d_project_y(200, spz);
+							point[6] = ocd3d_project_x(xchart[ctr] - halflanewidth - xoffset, spz);
+							point[7] = point[5];
+							polygon(eof_window_3d->screen, 4, point, eof_colors[ctr].lightcolor);
 						}
 					}
-					sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
-					sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
-					spz = sz < -100 ? -100 : sz;
-					spez = sez > 600 ? 600 : sez;
-					if((-100 <= sez) && (600 >= sz))
-					{	//If the section would render to the visible portion of the screen
-						usedlanes = eof_get_used_lanes(eof_selected_track, sectionptr->start_pos, sectionptr->end_pos, eof_note_type);	//Determine which lane(s) use this phrase
-						for(ctr = firstlane, bitmask = (1 << firstlane); ctr <= lastlane; ctr++, bitmask <<= 1)
-						{	//For each of the usable lanes (that are allowed to have lane specific marker rendering)
-							if(usedlanes & bitmask)
-							{	//If this lane is used in the phrase and the lane is active
-								point[0] = ocd3d_project_x(xchart[ctr] - halflanewidth - xoffset, spez);	//Offset drum lanes by drawing them one lane further left than other tracks
-								point[1] = ocd3d_project_y(200, spez);
-								point[2] = ocd3d_project_x(xchart[ctr] + halflanewidth - xoffset, spez);
-								point[3] = point[1];
-								point[4] = ocd3d_project_x(xchart[ctr] + halflanewidth - xoffset, spz);
-								point[5] = ocd3d_project_y(200, spz);
-								point[6] = ocd3d_project_x(xchart[ctr] - halflanewidth - xoffset, spz);
-								point[7] = point[5];
-								polygon(eof_window_3d->screen, 4, point, eof_colors[ctr].lightcolor);
-							}
-						}
-					}
-				}//If the section exists
+				}
 			}//For each trill or tremolo section in the track
 		}//For each of the two phrase types (trills and tremolos)
 	}//If this track has any trill or tremolo sections
@@ -3507,32 +3508,34 @@ void eof_render_3d_window(void)
 	numnotes = eof_get_track_size(eof_song, eof_selected_track);	//Get the number of notes in this legacy/pro guitar track
 	for(i = numnotes; i > 0; i--)
 	{	//Render 3D notes from last to first so that the earlier notes are in front
-		if(eof_note_type == eof_get_note_type(eof_song, eof_selected_track, i-1))
-		{
-			int p = ((eof_selection.track == eof_selected_track) && eof_selection.multi[i-1] && eof_music_paused) ? 1 : (i-1) == eof_hover_note ? 2 : 0;	//Cache this result to use it twice
-			tr = eof_note_tail_draw_3d(eof_selected_track, i-1, p);
-			(void) eof_note_draw_3d(eof_selected_track, i-1, p);
+		int p;
 
-			if(tr < 0)	//if eof_note_tail_draw_3d skipped rendering the tail because it renders before the visible area
-				break;	//Stop rendering 3d notes
+		if(eof_note_type != eof_get_note_type(eof_song, eof_selected_track, i - 1))
+			continue;	//If this note isn't in the active difficulty, skip it
+
+		p = ((eof_selection.track == eof_selected_track) && eof_selection.multi[i-1] && eof_music_paused) ? 1 : (i-1) == eof_hover_note ? 2 : 0;	//Cache this result to use it twice
+		tr = eof_note_tail_draw_3d(eof_selected_track, i-1, p);
+		(void) eof_note_draw_3d(eof_selected_track, i-1, p);
+
+		if(tr < 0)	//if eof_note_tail_draw_3d skipped rendering the tail because it renders before the visible area
+			break;	//Stop rendering 3d notes
 /*	Used for debugging
-			if(tr == 0)
+		if(tr == 0)
+		{
+			if(first_note < 0)
 			{
-				if(first_note < 0)
-				{
-					first_note = i;
-				}
+				first_note = i;
 			}
-			else if(tr < 0)
-			{
-				if(first_note >= 0)
-				{
-					last_note = i;
-					break;
-				}
-			}
-*/
 		}
+		else if(tr < 0)
+		{
+			if(first_note >= 0)
+			{
+				last_note = i;
+				break;
+			}
+		}
+*/
 	}
 //	allegro_message("first = %d\nlast = %d", first_note, last_note);	//Debug
 
@@ -5483,22 +5486,22 @@ int eof_validate_temp_folder(void)
 	}
 
 	//Ensure the temporary folder exists
-	if(!file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
-	{	//If this folder doesn't already exist
-		if(!getcwd(cwd, 1024))
-		{	//Couldn't obtain current working directory
-			return 1;
-		}
-		put_backslash(cwd);	//Append a file separator if necessary
+	if(file_exists(eof_temp_path, FA_DIREC | FA_HIDDEN, NULL))
+		return 0;	//If this folder already exists
 
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCould not detect temp folder at:  %s", cwd);
-		eof_log(eof_log_string, 1);
+	if(!getcwd(cwd, 1024))
+	{	//Couldn't obtain current working directory
+		return 1;
+	}
+	put_backslash(cwd);	//Append a file separator if necessary
 
-		if(eof_mkdir(eof_temp_path))
-		{	//If the folder could not be created
-			allegro_message("Could not create temp folder (%s)", eof_temp_path_s);
-			return 3;
-		}
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCould not detect temp folder at:  %s", cwd);
+	eof_log(eof_log_string, 1);
+
+	if(eof_mkdir(eof_temp_path))
+	{	//If the folder could not be created
+		allegro_message("Could not create temp folder (%s)", eof_temp_path_s);
+		return 3;
 	}
 
 	return 0;
