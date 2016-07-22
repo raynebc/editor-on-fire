@@ -184,21 +184,21 @@ void eof_mix_callback_stereo(void * buf, int length)
 		/* mix voices */
 		for(j = 0; j < EOF_MIX_MAX_CHANNELS; j++)
 		{
-			if(eof_voice[j].playing)
+			if(!eof_voice[j].playing)
+				continue;	//If this voice isn't playing, skip it
+
+			cuesample = ((unsigned short *)(eof_voice[j].sp->data))[(unsigned long)eof_voice[j].pos] - 32768;
+			if(eof_voice[j].volume != 100)
+				cuesample *= eof_voice[j].multiplier;	//Change the cue to the specified loudness
+
+			sum += cuesample;
+			sum2 += cuesample;	//If this is a stereo audio file, mix the voice into the other channel as well
+
+			eof_voice[j].fpos += eof_mix_sample_increment;
+			eof_voice[j].pos = eof_voice[j].fpos + 0.5;	//Round to nearest full sample number
+			if(eof_voice[j].pos >= eof_voice[j].sp->len)
 			{
-				cuesample = ((unsigned short *)(eof_voice[j].sp->data))[(unsigned long)eof_voice[j].pos] - 32768;
-				if(eof_voice[j].volume != 100)
-					cuesample *= eof_voice[j].multiplier;	//Change the cue to the specified loudness
-
-				sum += cuesample;
-				sum2 += cuesample;	//If this is a stereo audio file, mix the voice into the other channel as well
-
-				eof_voice[j].fpos += eof_mix_sample_increment;
-				eof_voice[j].pos = eof_voice[j].fpos + 0.5;	//Round to nearest full sample number
-				if(eof_voice[j].pos >= eof_voice[j].sp->len)
-				{
-					eof_voice[j].playing = 0;
-				}
+				eof_voice[j].playing = 0;
 			}
 		}
 
@@ -322,22 +322,22 @@ void eof_mix_find_claps(void)
 	{	//If a vocal track is not selected
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the track
-			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_note(eof_song, eof_selected_track, i) & eof_mix_claps_note))
-			{	//If the note is in the active track difficulty and the clap sound cue applies to at least one gem used in the note
-				if(tp)
-				{	//If a pro guitar track is active, perform other checks
-					if(!eof_clap_for_mutes && (eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE))
-					{	//If clap cues should not trigger for fully string muted notes, and this note is
-						continue;	//Skip this note
-					}
-					if(!eof_clap_for_ghosts && !(tp->note[i]->note & ~tp->note[i]->ghost))
-					{	//If clap cues should not trigger for ghosted gems, or if this gem doesn't have any non-ghosted gems
-						continue;	//Skip this note
-					}
+			if((eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type) || !(eof_get_note_note(eof_song, eof_selected_track, i) & eof_mix_claps_note))
+				continue;	//If the note is not in the active track difficulty or the clap sound cue doesn't apply to at least one gem used in the note, skip it
+
+			if(tp)
+			{	//If a pro guitar track is active, perform other checks
+				if(!eof_clap_for_mutes && (eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE))
+				{	//If clap cues should not trigger for fully string muted notes, and this note is
+					continue;	//Skip this note
 				}
-				eof_mix_clap_pos[eof_mix_claps] = eof_mix_msec_to_sample(eof_get_note_pos(eof_song, eof_selected_track, i), alogg_get_wave_freq_ogg(eof_music_track));
-				eof_mix_claps++;
+				if(!eof_clap_for_ghosts && !(tp->note[i]->note & ~tp->note[i]->ghost))
+				{	//If clap cues should not trigger for ghosted gems, or if this gem doesn't have any non-ghosted gems
+					continue;	//Skip this note
+				}
 			}
+			eof_mix_clap_pos[eof_mix_claps] = eof_mix_msec_to_sample(eof_get_note_pos(eof_song, eof_selected_track, i), alogg_get_wave_freq_ogg(eof_music_track));
+			eof_mix_claps++;
 		}
 	}
 
@@ -360,23 +360,26 @@ void eof_mix_find_claps(void)
 
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the track
-			if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
-			{	//If the note is in the active track difficulty
-				int j = 0;
-				unsigned long pos = eof_mix_msec_to_sample(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay - eof_midi_tone_delay, alogg_get_wave_freq_ogg(eof_music_track));
-				EOF_PRO_GUITAR_NOTE *note = track->note[i];
+			int j = 0;
+			unsigned long pos;
+			EOF_PRO_GUITAR_NOTE *note;
 
-				tone = eof_lookup_midi_tone(eof_song, eof_selected_track, i);
-				for(j = 0, bitmask = 1; j < 6; j++, bitmask <<= 1)
-				{	//For each of the 6 supported strings
-					if((note->note & bitmask) && !(note->frets[j] & 0x80) && !(note->ghost & bitmask))
-					{	//If the string is used (and not muted or ghosted)
-						eof_guitar_notes[eof_mix_guitar_notes].pos = pos;
-						eof_guitar_notes[eof_mix_guitar_notes].channel = j;
-						eof_guitar_notes[eof_mix_guitar_notes].note = track->tuning[j] + eof_lookup_default_string_tuning_absolute(track, eof_selected_track, j) + note->frets[j] + track->capo;
-						eof_guitar_notes[eof_mix_guitar_notes].tone = tone;
-						eof_mix_guitar_notes++;
-					}
+			if(eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type)
+				continue;	//If the note is not in the active track difficulty, skip it
+
+			pos = eof_mix_msec_to_sample(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay - eof_midi_tone_delay, alogg_get_wave_freq_ogg(eof_music_track));
+			note = track->note[i];
+
+			tone = eof_lookup_midi_tone(eof_song, eof_selected_track, i);
+			for(j = 0, bitmask = 1; j < 6; j++, bitmask <<= 1)
+			{	//For each of the 6 supported strings
+				if((note->note & bitmask) && !(note->frets[j] & 0x80) && !(note->ghost & bitmask))
+				{	//If the string is used (and not muted or ghosted)
+					eof_guitar_notes[eof_mix_guitar_notes].pos = pos;
+					eof_guitar_notes[eof_mix_guitar_notes].channel = j;
+					eof_guitar_notes[eof_mix_guitar_notes].note = track->tuning[j] + eof_lookup_default_string_tuning_absolute(track, eof_selected_track, j) + note->frets[j] + track->capo;
+					eof_guitar_notes[eof_mix_guitar_notes].tone = tone;
+					eof_mix_guitar_notes++;
 				}
 			}
 		}

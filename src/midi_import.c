@@ -706,70 +706,70 @@ EOF_SONG * eof_import_midi(const char * fn)
 										}
 									}
 								}
+								if(eof_import_events[i]->type != 0)
+									continue;	//If the track name matched any of the standard Rock Band track names, skip additional processing
+
+								for(j = 1; j < EOF_POWER_GIG_TRACKS_MAX; j++)
+								{	//Compare the track name against the tracks in eof_power_gig_tracks[]
+									if(ustricmp(text, eof_power_gig_tracks[j].name))
+										continue;	//If this track name doesn't match an expected name, skip it
+
+									if(eof_midi_tracks[j].track_format == 0)
+									{	//If this is a track that is to be skipped
+										eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
+									}
+									else
+									{
+										eof_import_events[i]->type = eof_power_gig_tracks[j].track_type;
+										eof_import_events[i]->game = 1;	//Note that this is a Power Gig style MIDI
+										eof_import_events[i]->diff = eof_power_gig_tracks[j].difficulty;
+										eof_import_events[i]->tracknum = j;
+										if(eof_midi_tracks[j].track_type == EOF_TRACK_GUITAR)
+										{	//If this is the guitar track
+											rbg = 1;	//Note that the track has been found
+										}
+									}
+								}
 								if(eof_import_events[i]->type == 0)
-								{	//If the track name didn't match any of the standard Rock Band track names
-									for(j = 1; j < EOF_POWER_GIG_TRACKS_MAX; j++)
-									{	//Compare the track name against the tracks in eof_power_gig_tracks[]
-										if(!ustricmp(text, eof_power_gig_tracks[j].name))
-										{	//If this track name matches an expected name
-											if(eof_midi_tracks[j].track_format == 0)
-											{	//If this is a track that is to be skipped
-												eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
-											}
-											else
-											{
-												eof_import_events[i]->type = eof_power_gig_tracks[j].track_type;
-												eof_import_events[i]->game = 1;	//Note that this is a Power Gig style MIDI
-												eof_import_events[i]->diff = eof_power_gig_tracks[j].difficulty;
-												eof_import_events[i]->tracknum = j;
-												if(eof_midi_tracks[j].track_type == EOF_TRACK_GUITAR)
-												{	//If this is the guitar track
-													rbg = 1;	//Note that the track has been found
-												}
+								{	//If the track name didn't match any of the standard Power Gig track names either
+									for(j = 1; j < EOF_GUITAR_HERO_ANIMATION_TRACKS_MAX; j++)
+									{	//Compare the track name against the tracks in eof_guitar_hero_animation_tracks[]
+										if(ustricmp(text, eof_guitar_hero_animation_tracks[j].name))
+											continue;	//If this track name doesn't match an expected name, skip it
+
+										if(eof_midi_tracks[j].track_format == 0)
+										{	//If this is a track that is to be skipped
+											eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
+										}
+										else
+										{
+											eof_import_events[i]->type = eof_guitar_hero_animation_tracks[j].track_type;
+											eof_import_events[i]->game = 2;	//Note that this is a Guitar Hero animation track
+											eof_import_events[i]->diff = eof_guitar_hero_animation_tracks[j].difficulty;
+											eof_import_events[i]->tracknum = j;
+											if(eof_midi_tracks[j].track_type == EOF_TRACK_GUITAR)
+											{	//If this is the guitar track
+												rbg = 1;	//Note that the track has been found
 											}
 										}
 									}
 									if(eof_import_events[i]->type == 0)
-									{	//If the track name didn't match any of the standard Power Gig track names either
-										for(j = 1; j < EOF_GUITAR_HERO_ANIMATION_TRACKS_MAX; j++)
-										{	//Compare the track name against the tracks in eof_guitar_hero_animation_tracks[]
-											if(!ustricmp(text, eof_guitar_hero_animation_tracks[j].name))
-											{	//If this track name matches an expected name
-												if(eof_midi_tracks[j].track_format == 0)
-												{	//If this is a track that is to be skipped
-													eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
-												}
-												else
-												{
-													eof_import_events[i]->type = eof_guitar_hero_animation_tracks[j].track_type;
-													eof_import_events[i]->game = 2;	//Note that this is a Guitar Hero animation track
-													eof_import_events[i]->diff = eof_guitar_hero_animation_tracks[j].difficulty;
-													eof_import_events[i]->tracknum = j;
-													if(eof_midi_tracks[j].track_type == EOF_TRACK_GUITAR)
-													{	//If this is the guitar track
-														rbg = 1;	//Note that the track has been found
-													}
-												}
+									{	//If the track name didn't match any of the Guitar Hero animation track names either
+										if(ustrstr(text,"PART") || (ustrstr(text,"HARM") == text))
+										{	//If this is a track that contains the word "PART" in the name (or begins with "HARM")
+											eof_clear_input();
+											if(alert("Unsupported track:", text, "Import raw data?", "&Yes", "&No", 'y', 'n') == 1)
+											{	//If the user opts to import the raw track data
+												eof_MIDI_add_track(sp, eof_get_raw_MIDI_data(eof_work_midi, track[i], 0));	//Add this to the linked list of raw MIDI track data
 											}
+											eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
 										}
-										if(eof_import_events[i]->type == 0)
-										{	//If the track name didn't match any of the Guitar Hero animation track names either
-											if(ustrstr(text,"PART") || (ustrstr(text,"HARM") == text))
-											{	//If this is a track that contains the word "PART" in the name (or begins with "HARM")
-												eof_clear_input();
-												if(alert("Unsupported track:", text, "Import raw data?", "&Yes", "&No", 'y', 'n') == 1)
-												{	//If the user opts to import the raw track data
-													eof_MIDI_add_track(sp, eof_get_raw_MIDI_data(eof_work_midi, track[i], 0));	//Add this to the linked list of raw MIDI track data
-												}
-												eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
-											}
-											else if(!ustricmp(text, "EVENTS"))
-											{	//This track is the EVENTS track
-												is_event_track = 1;	//Store any encountered text events into the global events array
-											}
+										else if(!ustricmp(text, "EVENTS"))
+										{	//This track is the EVENTS track
+											is_event_track = 1;	//Store any encountered text events into the global events array
 										}
-									}//If the track name didn't match any of the standard Power Gig track names either
-								}//If the track name didn't match any of the standard Rock Band track names
+									}
+								}//If the track name didn't match any of the standard Power Gig track names either
 								break;
 							}
 
@@ -1192,6 +1192,20 @@ set_window_title(debugtext);
 
 	for(i = 0; i < tracks; i++)
 	{	//For each imported track
+		int last_105 = 0;
+		int last_106 = 0;
+		unsigned long overdrive_pos = 0;
+		char rb_pro_yellow = 0;					//Tracks the status of forced yellow pro drum notation
+		unsigned long rb_pro_yellow_pos = 0;	//Tracks the last start time of a forced yellow pro drum phrase
+		char rb_pro_blue = 0;					//Tracks the status of forced yellow pro drum notation
+		unsigned long rb_pro_blue_pos = 0;		//Tracks the last start time of a forced blue pro drum phrase
+		char rb_pro_green = 0;					//Tracks the status of forced yellow pro drum notation
+		unsigned long rb_pro_green_pos = 0;		//Tracks the last start time of a forced green pro drum phrase
+		unsigned long notenum = 0;
+		char fretwarning = 0;					//Tracks whether the user was warned about the track violating its standard fret limit, if applicable
+		unsigned long linestart = 0;			//Tracks the start of a line of lyrics for Power Gig MIDIs, which don't formally mark line placements with a note
+		char linetrack = 0;						//Is set to nonzero when linestart is tracking the position of the current line of lyrics
+
 		if(eof_import_events[i]->type < 0)
 		{	//If this track is to be skipped (ie. unidentified track)
 			continue;
@@ -1201,456 +1215,409 @@ set_window_title(debugtext);
 			continue;
 		}
 		picked_track = (eof_import_events[i]->type >= 1) ? eof_import_events[i]->type : ((rbg == 0) ? EOF_TRACK_GUITAR : -1);	//If the imported track didn't have a defined name, assume it is the guitar track if that track wasn't already found (un-named tracks is a behavior of very old authoring tools like the Freetar SNG to MIDI converter)
-		if((picked_track >= 0) && ((unsigned long)picked_track < sp->tracks) && !used_track[picked_track])
-		{	//If this is a valid track to process
-			int last_105 = 0;
-			int last_106 = 0;
-			unsigned long overdrive_pos = 0;
-			char rb_pro_yellow = 0;					//Tracks the status of forced yellow pro drum notation
-			unsigned long rb_pro_yellow_pos = 0;	//Tracks the last start time of a forced yellow pro drum phrase
-			char rb_pro_blue = 0;					//Tracks the status of forced yellow pro drum notation
-			unsigned long rb_pro_blue_pos = 0;		//Tracks the last start time of a forced blue pro drum phrase
-			char rb_pro_green = 0;					//Tracks the status of forced yellow pro drum notation
-			unsigned long rb_pro_green_pos = 0;		//Tracks the last start time of a forced green pro drum phrase
-			unsigned long notenum = 0;
-			char fretwarning = 0;					//Tracks whether the user was warned about the track violating its standard fret limit, if applicable
-			unsigned long linestart = 0;			//Tracks the start of a line of lyrics for Power Gig MIDIs, which don't formally mark line placements with a note
-			char linetrack = 0;						//Is set to nonzero when linestart is tracking the position of the current line of lyrics
+		if((picked_track < 0) || ((unsigned long)picked_track >= sp->tracks) || used_track[picked_track])
+			continue;	//If this is not a valid track to process, skip it
 
-			first_note = note_count[picked_track];
-			tracknum = sp->track[picked_track]->tracknum;
+		first_note = note_count[picked_track];
+		tracknum = sp->track[picked_track]->tracknum;
 
-			powergig_hopo = powergig_sp = 0;	//Reset these statuses
+		powergig_hopo = powergig_sp = 0;	//Reset these statuses
 
 //Detect whether Pro drum notation is being used
 //Pro drum notation is that if a green, yellow or blue drum note is NOT to be marked as a cymbal,
 //it must be marked with the appropriate MIDI note, otherwise the note defaults as a cymbal
-			if(eof_ini_pro_drum_tag_present)
-			{	//If the "pro_drums = True" ini tag was present
-				prodrums = 1;	//Assume pro drum markers are present in the MIDI
-			}
-			else if(eof_midi_tracks[picked_track].track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-			{	//Otherwise determine by scanning the notes.  If the track being imported is a drum track,
-				for(j = 0; j < eof_import_events[i]->events; j++)
-				{	//For each event in the track
-					if(eof_import_events[i]->event[j]->type == 0x90)
-					{	//If this is a Note on event
-						if(	(eof_import_events[i]->event[j]->d1 == RB3_DRUM_YELLOW_FORCE) ||
-							(eof_import_events[i]->event[j]->d1 == RB3_DRUM_BLUE_FORCE) ||
-							(eof_import_events[i]->event[j]->d1 == RB3_DRUM_GREEN_FORCE))
-						{	//If this is a pro drum marker
-								prodrums = 1;
-								break;
-						}
+		if(eof_ini_pro_drum_tag_present)
+		{	//If the "pro_drums = True" ini tag was present
+			prodrums = 1;	//Assume pro drum markers are present in the MIDI
+		}
+		else if(eof_midi_tracks[picked_track].track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//Otherwise determine by scanning the notes.  If the track being imported is a drum track,
+			for(j = 0; j < eof_import_events[i]->events; j++)
+			{	//For each event in the track
+				if(eof_import_events[i]->event[j]->type == 0x90)
+				{	//If this is a Note on event
+					if(	(eof_import_events[i]->event[j]->d1 == RB3_DRUM_YELLOW_FORCE) ||
+						(eof_import_events[i]->event[j]->d1 == RB3_DRUM_BLUE_FORCE) ||
+						(eof_import_events[i]->event[j]->d1 == RB3_DRUM_GREEN_FORCE))
+					{	//If this is a pro drum marker
+							prodrums = 1;
+							break;
 					}
 				}
 			}
+		}
 
 #ifdef EOF_DEBUG
-			if(eof_import_events[i]->type > 0)
-			{	//If the track name was defined instead of just assumed
-				if(eof_import_events[i]->game == 0)
-				{	//Rock Band format MIDI track
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tParsing track \"%s\"", eof_midi_tracks[picked_track].name);
-				}
-				else if(eof_import_events[i]->game == 1)
-				{	//Power Gig format MIDI track
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tParsing track \"%s\"", eof_power_gig_tracks[eof_import_events[i]->tracknum].name);
-				}
-				else
-				{	//Guitar Hero animation MIDI track
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tParsing track \"%s\"", eof_guitar_hero_animation_tracks[eof_import_events[i]->tracknum].name);
-				}
+		if(eof_import_events[i]->type > 0)
+		{	//If the track name was defined instead of just assumed
+			if(eof_import_events[i]->game == 0)
+			{	//Rock Band format MIDI track
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tParsing track \"%s\"", eof_midi_tracks[picked_track].name);
+			}
+			else if(eof_import_events[i]->game == 1)
+			{	//Power Gig format MIDI track
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tParsing track \"%s\"", eof_power_gig_tracks[eof_import_events[i]->tracknum].name);
 			}
 			else
-			{
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tParsing track #%lu", i);
+			{	//Guitar Hero animation MIDI track
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tParsing track \"%s\"", eof_guitar_hero_animation_tracks[eof_import_events[i]->tracknum].name);
 			}
-			eof_log(eof_log_string, 1);
+		}
+		else
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tParsing track #%lu", i);
+		}
+		eof_log(eof_log_string, 1);
 #endif
 
-			for(j = 0; j < eof_import_events[i]->events; j++)
-			{	//For each event in this track
-				if(key[KEY_ESC])
-				{	/* clean up and return */
-					eof_import_destroy_events_list(eof_import_bpm_events);
-					eof_import_destroy_events_list(eof_import_text_events);
-					eof_import_destroy_events_list(eof_import_ks_events);
-					eof_destroy_tempo_list(anchorlist);
-					for(i = 0; i < tracks; i++)
-					{
-						eof_import_destroy_events_list(eof_import_events[i]);
-					}
-					destroy_midi(eof_work_midi);
-					eof_destroy_song(sp);
-					set_window_title("EOF - No Song");
-					return NULL;
-				}
-				if(pticker % 200 == 0)
+		for(j = 0; j < eof_import_events[i]->events; j++)
+		{	//For each event in this track
+			if(key[KEY_ESC])
+			{	/* clean up and return */
+				eof_import_destroy_events_list(eof_import_bpm_events);
+				eof_import_destroy_events_list(eof_import_text_events);
+				eof_import_destroy_events_list(eof_import_ks_events);
+				eof_destroy_tempo_list(anchorlist);
+				for(i = 0; i < tracks; i++)
 				{
-					percent = (pticker * 100) / ptotal_events;
-					(void) snprintf(ttit, sizeof(ttit) - 1, "MIDI Import (%d%%)", percent <= 100 ? percent : 100);
-					set_window_title(ttit);
+					eof_import_destroy_events_list(eof_import_events[i]);
 				}
+				destroy_midi(eof_work_midi);
+				eof_destroy_song(sp);
+				set_window_title("EOF - No Song");
+				return NULL;
+			}
+			if(pticker % 200 == 0)
+			{
+				percent = (pticker * 100) / ptotal_events;
+				(void) snprintf(ttit, sizeof(ttit) - 1, "MIDI Import (%d%%)", percent <= 100 ? percent : 100);
+				set_window_title(ttit);
+			}
 
-				event_realtime = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
-				eof_track_resize(sp, picked_track, note_count[picked_track] + 1);	//Ensure the track can accommodate another note
+			event_realtime = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
+			eof_track_resize(sp, picked_track, note_count[picked_track] + 1);	//Ensure the track can accommodate another note
 
-				if((eof_import_events[i]->event[j]->type == 0x01) && (ustrstr(eof_import_events[i]->event[j]->text, "[chrd") != eof_import_events[i]->event[j]->text))
-				{	//If this is a track specific text event (chord names excluded, that will be handled by track specific logic)
-					for(k = 0; k + 1 < sp->beats; k++)
-					{	//For each beat
-						if(event_realtime < sp->beat[k + 1]->pos)
-						{	//If the text event is earlier than the next beat
-							break;	//Stop parsing beats
-						}
-					}	//k now refers to the appropriate beat this event is assigned to
-					(void) eof_song_add_text_event(sp, k, eof_import_events[i]->event[j]->text, picked_track, 0, 0);	//Store this as a text event specific to the track being parsed
-				}
+			if((eof_import_events[i]->event[j]->type == 0x01) && (ustrstr(eof_import_events[i]->event[j]->text, "[chrd") != eof_import_events[i]->event[j]->text))
+			{	//If this is a track specific text event (chord names excluded, that will be handled by track specific logic)
+				for(k = 0; k + 1 < sp->beats; k++)
+				{	//For each beat
+					if(event_realtime < sp->beat[k + 1]->pos)
+					{	//If the text event is earlier than the next beat
+						break;	//Stop parsing beats
+					}
+				}	//k now refers to the appropriate beat this event is assigned to
+				(void) eof_song_add_text_event(sp, k, eof_import_events[i]->event[j]->text, picked_track, 0, 0);	//Store this as a text event specific to the track being parsed
+			}
 
-				if(eof_midi_tracks[picked_track].track_format == EOF_VOCAL_TRACK_FORMAT)
-				{	//If parsing a vocal track
-					/* note on */
-					if(eof_import_events[i]->event[j]->type == 0x90)
+			if(eof_midi_tracks[picked_track].track_format == EOF_VOCAL_TRACK_FORMAT)
+			{	//If parsing a vocal track
+				/* note on */
+				if(eof_import_events[i]->event[j]->type == 0x90)
+				{
+					/* lyric line indicator */
+					if(eof_import_events[i]->event[j]->d1 == 105)
 					{
-						/* lyric line indicator */
-						if(eof_import_events[i]->event[j]->d1 == 105)
+						sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = event_realtime;
+						sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags=0;	//Init flags for this line as 0
+						last_105 = sp->vocal_track[0]->lines;
+					}
+					else if(eof_import_events[i]->event[j]->d1 == 106)
+					{
+						sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = event_realtime;
+						sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags=0;	//Init flags for this line as 0
+						last_106 = sp->vocal_track[0]->lines;
+					}
+					/* overdrive */
+					else if(eof_import_events[i]->event[j]->d1 == 116)
+					{
+						overdrive_pos = event_realtime;
+					}
+					else if((eof_import_events[i]->event[j]->d1 == 96) || (eof_import_events[i]->event[j]->d1 == 97) || ((eof_import_events[i]->event[j]->d1 >= MINPITCH) && (eof_import_events[i]->event[j]->d1 <= MAXPITCH)))
+					{	//If this is a vocal percussion note (96 or 97) or if it is a valid vocal pitch
+						for(k = 0; k < note_count[picked_track]; k++)
 						{
-							sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = event_realtime;
-							sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags=0;	//Init flags for this line as 0
-							last_105 = sp->vocal_track[0]->lines;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 106)
-						{
-							sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = event_realtime;
-							sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags=0;	//Init flags for this line as 0
-							last_106 = sp->vocal_track[0]->lines;
-						}
-						/* overdrive */
-						else if(eof_import_events[i]->event[j]->d1 == 116)
-						{
-							overdrive_pos = event_realtime;
-						}
-						else if((eof_import_events[i]->event[j]->d1 == 96) || (eof_import_events[i]->event[j]->d1 == 97) || ((eof_import_events[i]->event[j]->d1 >= MINPITCH) && (eof_import_events[i]->event[j]->d1 <= MAXPITCH)))
-						{	//If this is a vocal percussion note (96 or 97) or if it is a valid vocal pitch
-							for(k = 0; k < note_count[picked_track]; k++)
+							if(sp->vocal_track[0]->lyric[k]->pos == event_realtime)
 							{
-								if(sp->vocal_track[0]->lyric[k]->pos == event_realtime)
-								{
-									break;
+								break;
+							}
+						}
+						/* no note associated with this lyric so create a new note */
+						if(k == note_count[picked_track])
+						{
+							sp->vocal_track[0]->lyric[note_count[picked_track]]->note = eof_import_events[i]->event[j]->d1;
+							sp->vocal_track[0]->lyric[note_count[picked_track]]->pos = event_realtime;
+							sp->vocal_track[0]->lyric[note_count[picked_track]]->length = 100;
+							note_count[picked_track]++;
+						}
+						else
+						{
+							sp->vocal_track[0]->lyric[k]->note = eof_import_events[i]->event[j]->d1;
+						}
+					}
+				}
+
+				/* note off so get length of note */
+				else if(eof_import_events[i]->event[j]->type == 0x80)
+				{
+					/* lyric line indicator */
+					if(eof_import_events[i]->event[j]->d1 == 105)
+					{
+						sp->vocal_track[0]->line[last_105].end_pos = event_realtime;
+						sp->vocal_track[0]->lines++;
+						if(overdrive_pos == sp->vocal_track[0]->line[last_105].start_pos)
+						{
+							sp->vocal_track[0]->line[last_105].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;
+						}
+					}
+					else if(eof_import_events[i]->event[j]->d1 == 106)
+					{
+						sp->vocal_track[0]->line[last_106].end_pos = event_realtime;
+						sp->vocal_track[0]->lines++;
+						if(overdrive_pos == sp->vocal_track[0]->line[last_106].start_pos)
+						{
+							sp->vocal_track[0]->line[last_106].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;
+						}
+					}
+					/* overdrive */
+					else if(eof_import_events[i]->event[j]->d1 == 116)
+					{
+					}
+					/* percussion */
+					else if((eof_import_events[i]->event[j]->d1 == 96) || (eof_import_events[i]->event[j]->d1 == 97))
+					{
+					}
+					else if((eof_import_events[i]->event[j]->d1 >= MINPITCH) && (eof_import_events[i]->event[j]->d1 <= MAXPITCH))
+					{
+						if(note_count[picked_track] > 0)
+						{
+							sp->vocal_track[0]->lyric[note_count[picked_track] - 1]->length = event_realtime - sp->vocal_track[0]->lyric[note_count[picked_track] - 1]->pos;
+						}
+					}
+				}
+
+				/* lyric */
+				else if(((eof_import_events[i]->event[j]->type == 0x05) || (eof_import_events[i]->event[j]->type == 0x01)) && (eof_import_events[i]->event[j]->text[0] != '['))
+				{	//!Note: The text event import puts all text events in a global list instead of the track event list, so it's not currently possible for EOF to import text events as lyrics
+					if(eof_import_events[i]->game == 1)
+					{	//If a Power Gig MIDI is being imported
+						unsigned long len = ustrlen(eof_import_events[i]->event[j]->text);
+						if(len)
+						{	//If the lyric has text
+							for(k = 0; k < len; k++)
+							{	//For each character in the text event
+								if(ugetat(eof_import_events[i]->event[j]->text, k) == '*')
+								{	//If it is an asterisk (what Power Gig uses to denote a pitch shift)
+									(void) usetat(eof_import_events[i]->event[j]->text, k, '+');	//Replace it with a plus sign, the Rock Band equivalent
 								}
 							}
-							/* no note associated with this lyric so create a new note */
-							if(k == note_count[picked_track])
+							if(ugetat(eof_import_events[i]->event[j]->text, len - 1) == ' ')
+							{	//If the last character in the string is a space
+								(void) usetat(eof_import_events[i]->event[j]->text, len - 1, '\0');	//Truncate the character from the string
+							}
+							else
+							{	//Otherwise the next lyric groups with this one, append a hyphen
+								if(len < EOF_MAX_MIDI_TEXT_SIZE)
+								{	//If the array storing the string can accommodate one more character
+									(void) usetat(eof_import_events[i]->event[j]->text, len, '-');
+									(void) usetat(eof_import_events[i]->event[j]->text, len + 1, '\0');
+								}
+							}
+						}
+					}
+
+					if(!ustrstr(eof_import_events[i]->event[j]->text, "\\n"))
+					{	//Only import the lyric if it isn't a newline character, which some Power Gig MIDIs use in addition to carriage return
+						//Determine which note this lyric event lines up with
+						for(k = 0; k < note_count[picked_track]; k++)
+						{
+							if(sp->vocal_track[0]->lyric[k]->pos == event_realtime)
 							{
-								sp->vocal_track[0]->lyric[note_count[picked_track]]->note = eof_import_events[i]->event[j]->d1;
+								break;
+							}
+						}
+						/* no note associated with this lyric so create a new note */
+						if(k == note_count[picked_track])
+						{
+							if(ustrstr(eof_import_events[i]->event[j]->text, "\\r"))
+							{	//If this lyric contains the string Power Gig uses for a line break, add the line definition
+								sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = linestart;
+								sp->vocal_track[0]->line[sp->vocal_track[0]->lines].end_pos = event_realtime;
+								sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags = 0;	//Init flags for this line as 0
+								sp->vocal_track[0]->lines++;
+								linetrack = 0;
+							}
+							else
+							{	//Otherwise add the lyric
+								strcpy(sp->vocal_track[0]->lyric[note_count[picked_track]]->text, eof_import_events[i]->event[j]->text);
+								sp->vocal_track[0]->lyric[note_count[picked_track]]->note = 0;
 								sp->vocal_track[0]->lyric[note_count[picked_track]]->pos = event_realtime;
 								sp->vocal_track[0]->lyric[note_count[picked_track]]->length = 100;
-								note_count[picked_track]++;
-							}
-							else
-							{
-								sp->vocal_track[0]->lyric[k]->note = eof_import_events[i]->event[j]->d1;
-							}
-						}
-					}
-
-					/* note off so get length of note */
-					else if(eof_import_events[i]->event[j]->type == 0x80)
-					{
-						/* lyric line indicator */
-						if(eof_import_events[i]->event[j]->d1 == 105)
-						{
-							sp->vocal_track[0]->line[last_105].end_pos = event_realtime;
-							sp->vocal_track[0]->lines++;
-							if(overdrive_pos == sp->vocal_track[0]->line[last_105].start_pos)
-							{
-								sp->vocal_track[0]->line[last_105].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;
-							}
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 106)
-						{
-							sp->vocal_track[0]->line[last_106].end_pos = event_realtime;
-							sp->vocal_track[0]->lines++;
-							if(overdrive_pos == sp->vocal_track[0]->line[last_106].start_pos)
-							{
-								sp->vocal_track[0]->line[last_106].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;
-							}
-						}
-						/* overdrive */
-						else if(eof_import_events[i]->event[j]->d1 == 116)
-						{
-						}
-						/* percussion */
-						else if((eof_import_events[i]->event[j]->d1 == 96) || (eof_import_events[i]->event[j]->d1 == 97))
-						{
-						}
-						else if((eof_import_events[i]->event[j]->d1 >= MINPITCH) && (eof_import_events[i]->event[j]->d1 <= MAXPITCH))
-						{
-							if(note_count[picked_track] > 0)
-							{
-								sp->vocal_track[0]->lyric[note_count[picked_track] - 1]->length = event_realtime - sp->vocal_track[0]->lyric[note_count[picked_track] - 1]->pos;
-							}
-						}
-					}
-
-					/* lyric */
-					else if(((eof_import_events[i]->event[j]->type == 0x05) || (eof_import_events[i]->event[j]->type == 0x01)) && (eof_import_events[i]->event[j]->text[0] != '['))
-					{	//!Note: The text event import puts all text events in a global list instead of the track event list, so it's not currently possible for EOF to import text events as lyrics
-						if(eof_import_events[i]->game == 1)
-						{	//If a Power Gig MIDI is being imported
-							unsigned long len = ustrlen(eof_import_events[i]->event[j]->text);
-							if(len)
-							{	//If the lyric has text
-								for(k = 0; k < len; k++)
-								{	//For each character in the text event
-									if(ugetat(eof_import_events[i]->event[j]->text, k) == '*')
-									{	//If it is an asterisk (what Power Gig uses to denote a pitch shift)
-										(void) usetat(eof_import_events[i]->event[j]->text, k, '+');	//Replace it with a plus sign, the Rock Band equivalent
-									}
-								}
-								if(ugetat(eof_import_events[i]->event[j]->text, len - 1) == ' ')
-								{	//If the last character in the string is a space
-									(void) usetat(eof_import_events[i]->event[j]->text, len - 1, '\0');	//Truncate the character from the string
-								}
-								else
-								{	//Otherwise the next lyric groups with this one, append a hyphen
-									if(len < EOF_MAX_MIDI_TEXT_SIZE)
-									{	//If the array storing the string can accommodate one more character
-										(void) usetat(eof_import_events[i]->event[j]->text, len, '-');
-										(void) usetat(eof_import_events[i]->event[j]->text, len + 1, '\0');
-									}
-								}
-							}
-						}
-
-						if(!ustrstr(eof_import_events[i]->event[j]->text, "\\n"))
-						{	//Only import the lyric if it isn't a newline character, which some Power Gig MIDIs use in addition to carriage return
-							//Determine which note this lyric event lines up with
-							for(k = 0; k < note_count[picked_track]; k++)
-							{
-								if(sp->vocal_track[0]->lyric[k]->pos == event_realtime)
-								{
-									break;
-								}
-							}
-							/* no note associated with this lyric so create a new note */
-							if(k == note_count[picked_track])
-							{
-								if(ustrstr(eof_import_events[i]->event[j]->text, "\\r"))
-								{	//If this lyric contains the string Power Gig uses for a line break, add the line definition
-									sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = linestart;
-									sp->vocal_track[0]->line[sp->vocal_track[0]->lines].end_pos = event_realtime;
-									sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags = 0;	//Init flags for this line as 0
-									sp->vocal_track[0]->lines++;
-									linetrack = 0;
-								}
-								else
-								{	//Otherwise add the lyric
-									strcpy(sp->vocal_track[0]->lyric[note_count[picked_track]]->text, eof_import_events[i]->event[j]->text);
-									sp->vocal_track[0]->lyric[note_count[picked_track]]->note = 0;
-									sp->vocal_track[0]->lyric[note_count[picked_track]]->pos = event_realtime;
-									sp->vocal_track[0]->lyric[note_count[picked_track]]->length = 100;
-									if(!linetrack)
-									{	//If this is the first lyric in this line of lyrics
-										linestart = event_realtime;	//This is the starting position
-										linetrack = 1;
-									}
-									if(eof_import_events[i]->game == 1)
-									{	//If the MIDI is in Power Gig notation
-										if(powergig_sp)
-										{	//If a star power phrase is in progress
-											sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;	//The line this lyric is in gets marked with star power status
-										}
-									}
-									note_count[picked_track]++;
-								}
-							}
-							else
-							{
-								strcpy(sp->vocal_track[0]->lyric[k]->text, eof_import_events[i]->event[j]->text);
 								if(!linetrack)
 								{	//If this is the first lyric in this line of lyrics
 									linestart = event_realtime;	//This is the starting position
 									linetrack = 1;
 								}
-							}
-						}//Only import the lyric if it isn't a newline character, which some Power Gig MIDIs use in addition to carriage return
-					}//Lyric event
-
-					/* Control change event (Used in Power Gig to mark the equivalent of star power sections */
-					else if(eof_import_events[i]->event[j]->type == 0xB0)
-					{	//Control change event
-						if(eof_import_events[i]->game == 1)
-						{	//If the MIDI is in Power Gig notation
-#ifdef EOF_DEBUG
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tControl change:  Controller type %d, value %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->d2, eof_import_events[i]->event[j]->pos, event_realtime);
-							eof_log(eof_log_string, 1);
-#endif
-							if((eof_import_events[i]->event[j]->d1 >= 80) && (eof_import_events[i]->event[j]->d1 <= 82))
-							{	//These control change events mark "mojo" sections (the equivalent of star power phrases)
-								if(eof_import_events[i]->event[j]->d2 == 127)
-								{	//This starts the phrase
-									powergig_sp = 1;
-									sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;	//Any lyric line in progress gets marked with star power status
+								if(eof_import_events[i]->game == 1)
+								{	//If the MIDI is in Power Gig notation
+									if(powergig_sp)
+									{	//If a star power phrase is in progress
+										sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;	//The line this lyric is in gets marked with star power status
+									}
 								}
-								else
-								{	//This ends the phrase
-									powergig_sp = 0;
-								}
-							}
-						}//If the MIDI is in Power Gig notation
-					}//Control change event
-				}//If parsing a vocal track
-				else if(eof_midi_tracks[picked_track].track_format == EOF_LEGACY_TRACK_FORMAT)
-				{	//If parsing a legacy track
-					if((eof_import_events[i]->event[j]->type == 0x80) || (eof_import_events[i]->event[j]->type == 0x90))
-					{	//For note on/off events, determine the type (difficulty) of the event
-						diff = -1;	//No difficulty is assumed until the note number is examined
-						if(picked_track != EOF_TRACK_DANCE)
-						{	//All legacy style tracks besides the dance track use the same offsets
-							if(eof_import_events[i]->game == 1)
-							{	//If the MIDI being parsed is a Power Gig MIDI, remap it to Rock Band numbering
-								diff = eof_import_events[i]->diff;
-								switch(eof_import_events[i]->event[j]->d1)
-								{
-									case 60:	//This is used as an open strum in Power Gig
-										lane = 5;	//EOF maps this to lane 6
-										sp->track[picked_track]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
-										sp->legacy_track[tracknum]->numlanes = 6;	//Set this track to have 6 lanes instead of 5
-									break;
-									case 62:
-										if(eof_midi_tracks[picked_track].track_type == EOF_TRACK_DRUM)
-										{	//In the drum track, this value is high tom
-											lane = 4;
-										}
-										else
-										{	//Otherwise it's the lowest fret
-											lane = 0;
-										}
-									break;
-									case 64:
-										lane = 1;
-									break;
-									case 65:
-										lane = 2;
-									break;
-									case 67:
-										lane = 3;
-									break;
-									case 69:
-										if(eof_midi_tracks[picked_track].track_type == EOF_TRACK_DRUM)
-										{	//In the drum track, this value is bass drum
-											lane = 0;
-										}
-										else
-										{	//Otherwise it's the highest fret
-											lane = 4;
-										}
-									break;
-									default:
-										lane = 0;
-										diff = -1;	//Unknown item
-									break;
-								}
-							}
-							else if(eof_import_events[i]->game == 2)
-							{	//If the MIDI track being parsed is a Guitar Hero animation track, convert drum animations to drum notes
-								diff = eof_import_events[i]->diff;
-								switch(eof_import_events[i]->event[j]->d1)
-								{
-									case 24:	//Kick (bass) drum animation
-										lane = 0;
-									break;
-									case 25:	//Snare drum animation
-										lane = 1;
-									break;
-									case 26:	//Hi hat drum animation
-										lane = 2;
-									break;
-									case 36:	//Kick (bass) drum animation
-										lane = 0;
-									break;
-									case 37:	//Crash cymbal drum animation
-										lane = 4;
-									break;
-									case 60:	//Kick (bass) drum animation
-										lane = 0;
-									break;
-									case 61:	//Generic cymbal drum animation
-										lane = 4;
-									break;
-									default:
-										lane = 0;
-										diff = -1;	//Unknown item
-									break;
-								}
-							}
-							else
-							{	//Otherwise use the MIDI values used in Rock Band
-								if((eof_import_events[i]->event[j]->d1 >= 60) && (eof_import_events[i]->event[j]->d1 < 60 + 6))
-								{	//Lane 5 + 1 is used for a lane 5 drum gem, so include it in the difficulty checks here
-									lane = eof_import_events[i]->event[j]->d1 - 60;
-									diff = EOF_NOTE_SUPAEASY;
-								}
-								else if((eof_import_events[i]->event[j]->d1 >= 72) && (eof_import_events[i]->event[j]->d1 < 72 + 6))
-								{
-									lane = eof_import_events[i]->event[j]->d1 - 72;
-									diff = EOF_NOTE_EASY;
-								}
-								else if((eof_import_events[i]->event[j]->d1 >= 84) && (eof_import_events[i]->event[j]->d1 < 84 + 6))
-								{
-									lane = eof_import_events[i]->event[j]->d1 - 84;
-									diff = EOF_NOTE_MEDIUM;
-								}
-								else if((eof_import_events[i]->event[j]->d1 >= 96) && (eof_import_events[i]->event[j]->d1 < 102))
-								{
-									lane = eof_import_events[i]->event[j]->d1 - 96;
-									diff = EOF_NOTE_AMAZING;
-								}
-								else if((eof_import_events[i]->event[j]->d1 >= 120) && (eof_import_events[i]->event[j]->d1 <= 124))
-								{
-									lane = eof_import_events[i]->event[j]->d1 - 120;
-									diff = EOF_NOTE_SPECIAL;
-								}
-								else if(((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS)) && (eof_import_events[i]->event[j]->d1 == 95))
-								{	//If the track being read is a drum track, and this note is marked for Expert+ double bass
-									lane = eof_import_events[i]->event[j]->d1 - 96 + 1;	//Treat as gem 1 (bass drum)
-									diff = EOF_NOTE_AMAZING;
-								}
-								else
-								{
-									lane = 0;	//No defined lane
-									diff = -1;	//No defined difficulty
-								}
+								note_count[picked_track]++;
 							}
 						}
 						else
-						{	//This is the dance track
-							if((eof_import_events[i]->event[j]->d1 >= 48) && (eof_import_events[i]->event[j]->d1 < 60))
-							{	//Notes 48-59
-								lane = eof_import_events[i]->event[j]->d1 - 48;
+						{
+							strcpy(sp->vocal_track[0]->lyric[k]->text, eof_import_events[i]->event[j]->text);
+							if(!linetrack)
+							{	//If this is the first lyric in this line of lyrics
+								linestart = event_realtime;	//This is the starting position
+								linetrack = 1;
+							}
+						}
+					}//Only import the lyric if it isn't a newline character, which some Power Gig MIDIs use in addition to carriage return
+				}//Lyric event
+
+				/* Control change event (Used in Power Gig to mark the equivalent of star power sections */
+				else if(eof_import_events[i]->event[j]->type == 0xB0)
+				{	//Control change event
+					if(eof_import_events[i]->game == 1)
+					{	//If the MIDI is in Power Gig notation
+#ifdef EOF_DEBUG
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tControl change:  Controller type %d, value %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->d2, eof_import_events[i]->event[j]->pos, event_realtime);
+						eof_log(eof_log_string, 1);
+#endif
+						if((eof_import_events[i]->event[j]->d1 >= 80) && (eof_import_events[i]->event[j]->d1 <= 82))
+						{	//These control change events mark "mojo" sections (the equivalent of star power phrases)
+							if(eof_import_events[i]->event[j]->d2 == 127)
+							{	//This starts the phrase
+								powergig_sp = 1;
+								sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;	//Any lyric line in progress gets marked with star power status
+							}
+							else
+							{	//This ends the phrase
+								powergig_sp = 0;
+							}
+						}
+					}//If the MIDI is in Power Gig notation
+				}//Control change event
+			}//If parsing a vocal track
+			else if(eof_midi_tracks[picked_track].track_format == EOF_LEGACY_TRACK_FORMAT)
+			{	//If parsing a legacy track
+				if((eof_import_events[i]->event[j]->type == 0x80) || (eof_import_events[i]->event[j]->type == 0x90))
+				{	//For note on/off events, determine the type (difficulty) of the event
+					diff = -1;	//No difficulty is assumed until the note number is examined
+					if(picked_track != EOF_TRACK_DANCE)
+					{	//All legacy style tracks besides the dance track use the same offsets
+						if(eof_import_events[i]->game == 1)
+						{	//If the MIDI being parsed is a Power Gig MIDI, remap it to Rock Band numbering
+							diff = eof_import_events[i]->diff;
+							switch(eof_import_events[i]->event[j]->d1)
+							{
+								case 60:	//This is used as an open strum in Power Gig
+									lane = 5;	//EOF maps this to lane 6
+									sp->track[picked_track]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
+									sp->legacy_track[tracknum]->numlanes = 6;	//Set this track to have 6 lanes instead of 5
+								break;
+								case 62:
+									if(eof_midi_tracks[picked_track].track_type == EOF_TRACK_DRUM)
+									{	//In the drum track, this value is high tom
+										lane = 4;
+									}
+									else
+									{	//Otherwise it's the lowest fret
+										lane = 0;
+									}
+								break;
+								case 64:
+									lane = 1;
+								break;
+								case 65:
+									lane = 2;
+								break;
+								case 67:
+									lane = 3;
+								break;
+								case 69:
+									if(eof_midi_tracks[picked_track].track_type == EOF_TRACK_DRUM)
+									{	//In the drum track, this value is bass drum
+										lane = 0;
+									}
+									else
+									{	//Otherwise it's the highest fret
+										lane = 4;
+									}
+								break;
+								default:
+									lane = 0;
+									diff = -1;	//Unknown item
+								break;
+							}
+						}
+						else if(eof_import_events[i]->game == 2)
+						{	//If the MIDI track being parsed is a Guitar Hero animation track, convert drum animations to drum notes
+							diff = eof_import_events[i]->diff;
+							switch(eof_import_events[i]->event[j]->d1)
+							{
+								case 24:	//Kick (bass) drum animation
+									lane = 0;
+								break;
+								case 25:	//Snare drum animation
+									lane = 1;
+								break;
+								case 26:	//Hi hat drum animation
+									lane = 2;
+								break;
+								case 36:	//Kick (bass) drum animation
+									lane = 0;
+								break;
+								case 37:	//Crash cymbal drum animation
+									lane = 4;
+								break;
+								case 60:	//Kick (bass) drum animation
+									lane = 0;
+								break;
+								case 61:	//Generic cymbal drum animation
+									lane = 4;
+								break;
+								default:
+									lane = 0;
+									diff = -1;	//Unknown item
+								break;
+							}
+						}
+						else
+						{	//Otherwise use the MIDI values used in Rock Band
+							if((eof_import_events[i]->event[j]->d1 >= 60) && (eof_import_events[i]->event[j]->d1 < 60 + 6))
+							{	//Lane 5 + 1 is used for a lane 5 drum gem, so include it in the difficulty checks here
+								lane = eof_import_events[i]->event[j]->d1 - 60;
 								diff = EOF_NOTE_SUPAEASY;
 							}
-							else if((eof_import_events[i]->event[j]->d1 >= 60) && (eof_import_events[i]->event[j]->d1 < 72))
-							{	//notes 60-71
-								lane = eof_import_events[i]->event[j]->d1 - 60;
+							else if((eof_import_events[i]->event[j]->d1 >= 72) && (eof_import_events[i]->event[j]->d1 < 72 + 6))
+							{
+								lane = eof_import_events[i]->event[j]->d1 - 72;
 								diff = EOF_NOTE_EASY;
 							}
-							else if((eof_import_events[i]->event[j]->d1 >= 72) && (eof_import_events[i]->event[j]->d1 < 84))
-							{	//notes 72-83
-								lane = eof_import_events[i]->event[j]->d1 - 72;
+							else if((eof_import_events[i]->event[j]->d1 >= 84) && (eof_import_events[i]->event[j]->d1 < 84 + 6))
+							{
+								lane = eof_import_events[i]->event[j]->d1 - 84;
 								diff = EOF_NOTE_MEDIUM;
 							}
-							else if((eof_import_events[i]->event[j]->d1 >= 84) && (eof_import_events[i]->event[j]->d1 < 96))
-							{	//notes 84-95
-								lane = eof_import_events[i]->event[j]->d1 - 84;
+							else if((eof_import_events[i]->event[j]->d1 >= 96) && (eof_import_events[i]->event[j]->d1 < 102))
+							{
+								lane = eof_import_events[i]->event[j]->d1 - 96;
 								diff = EOF_NOTE_AMAZING;
 							}
-							else if((eof_import_events[i]->event[j]->d1 >= 96) && (eof_import_events[i]->event[j]->d1 < 108))
-							{	//notes 96-107
-								lane = eof_import_events[i]->event[j]->d1 - 96;
-								diff = EOF_NOTE_CHALLENGE;
+							else if((eof_import_events[i]->event[j]->d1 >= 120) && (eof_import_events[i]->event[j]->d1 <= 124))
+							{
+								lane = eof_import_events[i]->event[j]->d1 - 120;
+								diff = EOF_NOTE_SPECIAL;
+							}
+							else if(((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS)) && (eof_import_events[i]->event[j]->d1 == 95))
+							{	//If the track being read is a drum track, and this note is marked for Expert+ double bass
+								lane = eof_import_events[i]->event[j]->d1 - 96 + 1;	//Treat as gem 1 (bass drum)
+								diff = EOF_NOTE_AMAZING;
 							}
 							else
 							{
@@ -1658,689 +1625,33 @@ set_window_title(debugtext);
 								diff = -1;	//No defined difficulty
 							}
 						}
-					}//Note on or note off
-
-					/* note on */
-					if(eof_import_events[i]->event[j]->type == 0x90)
-					{
-						char doublebass = 0;
-
-#ifdef EOF_DEBUG
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote on:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
-						eof_log(eof_log_string, 1);
-#endif
-
-						if(eof_import_events[i]->game == 0)
-						{	//If the MIDI is in Rock Band/FoF/Phase Shift notation
-							if(((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS)) && (eof_import_events[i]->event[j]->d1 == 95))
-							{	//If the track being read is a drum track, and this note is marked for Expert+ double bass
-								doublebass = 1;	//Track that double bass was found for this note, and apply it after the note flag for a newly created note is initialized to zero
-							}
-							if(eof_midi_tracks[picked_track].track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-							{	//If this is a drum track, lane 6 is used for the fifth drum lane and not a HOPO marker
-								if(lane == 5)
-								{	//A lane 6 gem encountered for a drum track will cause the track to be marked as being a "five lane" drum track
-									sp->track[picked_track]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the six lane flag
-									sp->legacy_track[tracknum]->numlanes = 6;
-								}
-							}
-							else
-							{	/* store forced HOPO marker, when the note off for this marker occurs, search for note with same position and apply it to that note */
-								//Forced HOPO on are marked as lane 1 + 5
-								if(eof_import_events[i]->event[j]->d1 == 60 + 5)
-								{
-									diff = -1;	//HOPO Markers will not be processed as regular gems
-									hopopos[0] = event_realtime;
-									hopotype[0] = 0;
-								}
-								else if(eof_import_events[i]->event[j]->d1 == 72 + 5)
-								{
-									diff = -1;	//HOPO Markers will not be processed as regular gems
-									hopopos[1] = event_realtime;
-									hopotype[1] = 0;
-								}
-								else if(eof_import_events[i]->event[j]->d1 == 84 + 5)
-								{
-									diff = -1;	//HOPO Markers will not be processed as regular gems
-									hopopos[2] = event_realtime;
-									hopotype[2] = 0;
-								}
-								else if(eof_import_events[i]->event[j]->d1 == 96 + 5)
-								{
-									diff = -1;	//HOPO Markers will not be processed as regular gems
-									hopopos[3] = event_realtime;
-									hopotype[3] = 0;
-								}
-								//Forced HOPO off are marked as lane 1 + 6
-								else if(eof_import_events[i]->event[j]->d1 == 60 + 6)
-								{
-									diff = -1;	//HOPO Markers will not be processed as regular gems
-									hopopos[0] = event_realtime;
-									hopotype[0] = 1;
-								}
-								else if(eof_import_events[i]->event[j]->d1 == 72 + 6)
-								{
-									diff = -1;	//HOPO Markers will not be processed as regular gems
-									hopopos[1] = event_realtime;
-									hopotype[1] = 1;
-								}
-								else if(eof_import_events[i]->event[j]->d1 == 84 + 6)
-								{
-									diff = -1;	//HOPO Markers will not be processed as regular gems
-									hopopos[2] = event_realtime;
-									hopotype[2] = 1;
-								}
-								else if(eof_import_events[i]->event[j]->d1 == 96 + 6)
-								{
-									diff = -1;	//HOPO Markers will not be processed as regular gems
-									hopopos[3] = event_realtime;
-									hopotype[3] = 1;
-								}
-							}//store forced HOPO marker
-
-							/* solos, star power, tremolos and trills */
-							phraseptr = NULL;
-							if((eof_import_events[i]->event[j]->d1 == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
-							{	//Legacy solos are marked with note 103
-								phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
-								phraseptr->start_pos = event_realtime;
-							}
-							else if((eof_import_events[i]->event[j]->d1 == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
-							{	//Star power is marked with note 116
-								phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
-								phraseptr->start_pos = event_realtime;
-							}
-							else if((eof_import_events[i]->event[j]->d1 == 126) && (eof_get_num_tremolos(sp, picked_track) < EOF_MAX_PHRASES))
-							{	//Tremolos are marked with note 126
-								phraseptr = eof_get_tremolo(sp, picked_track, eof_get_num_tremolos(sp, picked_track));
-								phraseptr->start_pos = event_realtime;
-								phraseptr->difficulty = 0xFF;	//Tremolo phrases imported from MIDI apply to all difficulties
-							}
-							else if((eof_import_events[i]->event[j]->d1 == 127) && (eof_get_num_trills(sp, picked_track) < EOF_MAX_PHRASES))
-							{	//Trills are marked with note 127
-								phraseptr = eof_get_trill(sp, picked_track, eof_get_num_trills(sp, picked_track));
-								phraseptr->start_pos = event_realtime;
-							}
-							if(phraseptr)
-							{	//If a phrase was created, initialize some other values
-								phraseptr->flags = 0;
-								phraseptr->name[0] = '\0';
-							}
-
-							/* rb3 pro drum markers */
-							if(prodrums)
-							{	//If the track was already found to have these markers
-								if(eof_import_events[i]->event[j]->d1 == RB3_DRUM_YELLOW_FORCE)
-								{
-									rb_pro_yellow = 1;
-									rb_pro_yellow_pos = event_realtime;
-								}
-								else if(eof_import_events[i]->event[j]->d1 == RB3_DRUM_BLUE_FORCE)
-								{
-									rb_pro_blue = 1;
-									rb_pro_blue_pos = event_realtime;
-								}
-								else if(eof_import_events[i]->event[j]->d1 == RB3_DRUM_GREEN_FORCE)
-								{
-									rb_pro_green = 1;
-									rb_pro_green_pos = event_realtime;
-								}
-							}
-						}//If the MIDI is in Rock Band/FoF/Phase Shift notation
-
-						if(diff != -1)
-						{	//If a note difficulty was identified above
-							char match = 0;	//Is set to nonzero if this note on is matched with a previously added note
-
-							k = 0;
-							if(note_count[picked_track] > 0)
-							{	//If at least one note has been added already
-								for(k = note_count[picked_track]; k > first_note; k--)
-								{	//Traverse the note list in reverse order to identify the appropriate note to modify
-									if((eof_get_note_pos(sp, picked_track, k - 1) == event_realtime) && (eof_get_note_type(sp, picked_track, k - 1) == diff))
-									{	//If the note is at the same timestamp and difficulty
-										match = 1;
-										break;	//End the search, as a match was found
-									}
-								}
-							}
-							if(!match)
-							{	//If the note doesn't match the same time and difficulty as an existing note, this MIDI event represents a new note, initialize it now and increment the note count
-								notenum = note_count[picked_track];
-								if(notenum >= EOF_MAX_NOTES)
-								{
-									allegro_message("Error:  The maximum number of notes is exceeded by track \"%s\".  Truncating track.", eof_midi_tracks[picked_track].name);
-									break;	//Exit outer for loop
-								}
-								eof_set_note_note(sp, picked_track, notenum, lane_chart[lane]);
-								eof_set_note_pos(sp, picked_track, notenum, event_realtime);
-								eof_set_note_length(sp, picked_track, notenum, 0);				//The length will be kept at 0 until the end of the note is found
-								eof_set_note_flags(sp, picked_track, notenum, 0);				//Clear the flag here so that the flag can be set later (ie. if it's an Expert+ double bass note)
-								eof_set_note_type(sp, picked_track, notenum, diff);				//Apply the determined difficulty
-								note_count[picked_track]++;
-#ifdef EOF_DEBUG
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tInitializing note #%lu (Diff=%d):  Mask=%u, Pos=%lu, Length=%d", notenum, eof_get_note_type(sp, picked_track, notenum), lane_chart[lane], event_realtime, 0);
-								eof_log(eof_log_string, 1);
-#endif
-							}
-							else
-							{	//Otherwise just modify the existing note by adding a gem
-								notenum = k - 1;
-#ifdef EOF_DEBUG
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%d, Pos=%lu) from mask %d to %d", notenum, eof_get_note_type(sp, picked_track, notenum), event_realtime, eof_get_note_note(sp, picked_track, notenum), eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
-								eof_log(eof_log_string, 1);
-#endif
-								eof_set_note_note(sp, picked_track, notenum, eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
-							}
-							if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
-							{
-								if(doublebass)
-								{	//If the note was found to be double bass
-									eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_DRUM_NOTE_FLAG_DBASS);	//Set the double bass flag
-								}
-								if(prodrums && (eof_get_note_type(sp, picked_track, notenum) != EOF_NOTE_SPECIAL))
-								{	//If pro drum notation is in effect and this was a non BRE drum note, assume cymbal notation until a tom marker ending is found
-									if(eof_get_note_note(sp, picked_track, notenum) & 4)
-									{	//This is a yellow drum note, assume it is a cymbal unless a pro drum phrase indicates otherwise
-										eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_DRUM_NOTE_FLAG_Y_CYMBAL);	//Ensure the cymbal flag is set
-									}
-									if(eof_get_note_note(sp, picked_track, notenum) & 8)
-									{	//This is a blue drum note, assume it is a cymbal unless a pro drum phrase indicates otherwise
-										eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_DRUM_NOTE_FLAG_B_CYMBAL);	//Ensure the cymbal flag is set
-									}
-									if(eof_get_note_note(sp, picked_track, notenum) & 16)
-									{	//This is a purle drum note (green in Rock Band), assume it is a cymbal unless a pro drum phrase indicates otherwise
-										eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_DRUM_NOTE_FLAG_G_CYMBAL);	//Ensure the cymbal flag is set
-									}
-								}
-							}
-							if(eof_import_events[i]->game == 1)
-							{	//If the MIDI is in Power Gig notation
-								if(powergig_hopo)
-								{	//If a HOPO phrase is in effect
-									eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_NOTE_FLAG_F_HOPO);	//Ensure the HOPO flag is set
-								}
-							}
-							if(eof_import_events[i]->game == 2)
-							{	//If the MIDI track is a Guitar Hero animation track
-								if(eof_get_note_note(sp, picked_track, notenum) & 4)
-								{	//Yellow notes are hi hat
-									eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_DRUM_NOTE_FLAG_Y_CYMBAL);
-								}
-								if(eof_get_note_note(sp, picked_track, notenum) & 16)
-								{	//Green notes are crash cymbal
-									eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_DRUM_NOTE_FLAG_G_CYMBAL);
-								}
-							}
-						}//If a note difficulty was identified above
-					}//Note on event
-
-					/* note off so get length of note */
-					else if(eof_import_events[i]->event[j]->type == 0x80)
-					{
-#ifdef EOF_DEBUG
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote off:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
-						eof_log(eof_log_string, 1);
-#endif
-
-						if(eof_import_events[i]->game == 0)
-						{	//If the MIDI is in Rock Band/FoF/Phase Shift notation
-							if(eof_midi_tracks[picked_track].track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-							{	//If this is a drum track, lane 6 is used for the fifth drum lane and not a HOPO marker
-							}
-							else
-							{	/* detect forced HOPO */
-								hopodiff = -1;
-								if(eof_import_events[i]->event[j]->d1 == 60 + 5)
-								{
-									diff = -1;	//HOPO Markers will not be processed as regular gems
-									hopodiff = 0;
-								}
-								else if(eof_import_events[i]->event[j]->d1 == 72 + 5)
-								{
-									diff = -1;	//HOPO Markers will not be processed as regular gems
-									hopodiff = 1;
-								}
-								else if(eof_import_events[i]->event[j]->d1 == 84 + 5)
-								{
-									diff = -1;	//HOPO Markers will not be processed as regular gems
-									hopodiff = 2;
-								}
-								else if(eof_import_events[i]->event[j]->d1 == 96 + 5)
-								{
-									diff = -1;	//HOPO Markers will not be processed as regular gems
-									hopodiff = 3;
-								}
-								else if(eof_import_events[i]->event[j]->d1 == 60 + 6)
-								{
-									diff = -1;	//HOPO Markers will not be processed as regular gems
-									hopodiff = 0;
-								}
-								else if(eof_import_events[i]->event[j]->d1 == 72 + 6)
-								{
-									diff = -1;	//HOPO Markers will not be processed as regular gems
-									hopodiff = 1;
-								}
-								else if(eof_import_events[i]->event[j]->d1 == 84 + 6)
-								{
-									diff = -1;	//HOPO Markers will not be processed as regular gems
-									hopodiff = 2;
-								}
-								else if(eof_import_events[i]->event[j]->d1 == 96 + 6)
-								{
-									diff = -1;	//HOPO Markers will not be processed as regular gems
-									hopodiff = 3;
-								}
-								if(hopodiff >= 0)
-								{
-									for(k = note_count[picked_track]; k > first_note; k--)
-									{	//Check (in reverse) for each note that has been imported
-										if((eof_get_note_type(sp, picked_track, k - 1) == hopodiff) && (eof_get_note_pos(sp, picked_track, k - 1) >= hopopos[hopodiff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-										{	//If the note is in the same difficulty as the HOPO phrase, and its timestamp falls between the HOPO On and HOPO Off marker
-											if(hopotype[hopodiff] == 0)
-											{	//Forced HOPO on
-												eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_NOTE_FLAG_F_HOPO);
-											}
-											else
-											{	//Forced HOPO off
-												eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_NOTE_FLAG_NO_HOPO);
-											}
-										}
-									}
-								}
-							}/* detect forced HOPO */
-
-							/* rb pro markers */
-							if(prodrums)
-							{	//If the track was already found to have these markers
-								if((eof_import_events[i]->event[j]->d1 == RB3_DRUM_YELLOW_FORCE) && rb_pro_yellow)
-								{	//If this event ends a pro yellow drum phrase
-									for(k = note_count[picked_track]; k > first_note; k--)
-									{	//Check for each note that has been imported for this track
-										if((sp->legacy_track[tracknum]->note[k - 1]->pos >= rb_pro_yellow_pos) && (sp->legacy_track[tracknum]->note[k - 1]->pos <= event_realtime))
-										{	//If the note is positioned within this pro yellow drum phrase
-											sp->legacy_track[tracknum]->note[k - 1]->flags &= (~EOF_DRUM_NOTE_FLAG_Y_CYMBAL);	//Clear the yellow cymbal marker on the note
-										}
-									}
-									rb_pro_yellow = 0;
-								}
-								else if((eof_import_events[i]->event[j]->d1 == RB3_DRUM_BLUE_FORCE) && rb_pro_blue)
-								{	//If this event ends a pro blue drum phrase
-									for(k = note_count[picked_track]; k > first_note; k--)
-									{	//Check for each note that has been imported for this track
-										if((sp->legacy_track[tracknum]->note[k - 1]->pos >= rb_pro_blue_pos) && (sp->legacy_track[tracknum]->note[k - 1]->pos <= event_realtime))
-										{	//If the note is positioned within this pro blue drum phrase
-											sp->legacy_track[tracknum]->note[k - 1]->flags &= (~EOF_DRUM_NOTE_FLAG_B_CYMBAL);	//Clear the blue cymbal marker on the note
-										}
-									}
-									rb_pro_blue = 0;
-								}
-								else if((eof_import_events[i]->event[j]->d1 == RB3_DRUM_GREEN_FORCE) && rb_pro_green)
-								{	//If this event ends a pro green drum phrase
-									for(k = note_count[picked_track]; k > first_note; k--)
-									{	//Check for each note that has been imported for this track, in reverse order
-										if((sp->legacy_track[tracknum]->note[k - 1]->pos >= rb_pro_green_pos) && (sp->legacy_track[tracknum]->note[k - 1]->pos <= event_realtime))
-										{	//If the note is positioned within this pro green drum phrase
-											sp->legacy_track[tracknum]->note[k - 1]->flags &= (~EOF_DRUM_NOTE_FLAG_G_CYMBAL);	//Clear the green cymbal marker on the note
-										}
-									}
-									rb_pro_green = 0;
-								}
-							}
-
-							if((eof_import_events[i]->event[j]->d1 == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
-							{	//End of a solo phrase
-								phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
-								phraseptr->end_pos = event_realtime;
-								eof_set_num_solos(sp, picked_track, eof_get_num_solos(sp, picked_track) + 1);
-							}
-							else if((eof_import_events[i]->event[j]->d1 == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
-							{	//End of a star power phrase
-								phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
-								phraseptr->end_pos = event_realtime;
-								eof_set_num_star_power_paths(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track) + 1);
-							}
-							else if((eof_import_events[i]->event[j]->d1 == 126) && (eof_get_num_tremolos(sp, picked_track) < EOF_MAX_PHRASES))
-							{	//End of a tremolo phrase
-								phraseptr = eof_get_tremolo(sp, picked_track, eof_get_num_tremolos(sp, picked_track));
-								phraseptr->end_pos = event_realtime;
-								eof_set_num_tremolos(sp, picked_track, eof_get_num_tremolos(sp, picked_track) + 1);
-							}
-							else if((eof_import_events[i]->event[j]->d1 == 127) && (eof_get_num_trills(sp, picked_track) < EOF_MAX_PHRASES))
-							{	//End of a trill phrase
-								phraseptr = eof_get_trill(sp, picked_track, eof_get_num_trills(sp, picked_track));
-								phraseptr->end_pos = event_realtime;
-								eof_set_num_trills(sp, picked_track, eof_get_num_trills(sp, picked_track) + 1);
-							}
-						}//If the MIDI is in Rock Band/FoF/Phase Shift notation
-
-						if((note_count[picked_track] > 0) && (diff != -1))
-						{	//If there's at least one note on found for this track, and this note off event has a defined difficulty
-							for(k = note_count[picked_track]; k > first_note; k--)
-							{	//Check for each note that has been imported, in reverse order
-								if((eof_get_note_type(sp, picked_track, k - 1) == diff) && (eof_get_note_note(sp, picked_track, k - 1) & lane_chart[lane]))
-								{	//If the note is in the same difficulty as this note off event and it contains one of the same gems
-//									allegro_message("break %d, %d, %d", k - 1, sp->legacy_track[picked_track]->note[k - 1]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);	//Debug
-#ifdef EOF_DEBUG
-									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u) from length %ld to %lu", k, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_length(sp, picked_track, k - 1), event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
-									eof_log(eof_log_string, 1);
-#endif
-									eof_set_note_length(sp, picked_track, k - 1, event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
-									if(eof_get_note_length(sp, picked_track, k - 1) <= 0)
-									{	//If the note somehow received a zero or negative length
-										eof_set_note_length(sp, picked_track, k - 1, 1);
-									}
-									break;
-								}
-							}
-						}
-					}//Note off event
-
-					/* Sysex event (custom phrase markers for Phase Shift) */
-					else if((eof_import_events[i]->event[j]->type == 0xF0) && eof_import_events[i]->event[j]->dp)
-					{	//Sysex event
-						if((eof_import_events[i]->event[j]->d1 == 8) && (!strncmp(eof_import_events[i]->event[j]->dp, "PS", 3)))
-						{	//If this is a custom Sysex Phase Shift marker (8 bytes long, beginning with the NULL terminated string "PS")
-							switch(eof_import_events[i]->event[j]->dp[3])
-							{	//Check the value of the message ID
-								case 0:	//Phrase marker
-									phrasediff = eof_import_events[i]->event[j]->dp[4];	//Store the difficulty ID
-									switch(eof_import_events[i]->event[j]->dp[5])
-									{	//Check the value of the phrase ID
-										case 1:	//Open strum
-#ifdef EOF_DEBUG
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Open strum (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
-											eof_log(eof_log_string, 1);
-#endif
-											if(eof_import_events[i]->event[j]->dp[6] == 1)
-											{	//Start of open strum phrase
-												openstrumpos[phrasediff] = event_realtime;
-											}
-											else if(eof_import_events[i]->event[j]->dp[6] == 0)
-											{	//End of open strum phrase
-												for(k = note_count[picked_track]; k > first_note; k--)
-												{	//Check for each note that has been imported
-													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= openstrumpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-													{	//If the note is in the same difficulty as the open strum phrase, and its timestamp falls between the phrase on and phrase off marker
-#ifdef EOF_DEBUG
-														(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u, Length=%ld) to have a note mask of 33", k - 1, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_length(sp, picked_track, k - 1));
-														eof_log(eof_log_string, 1);
-#endif
-														eof_set_note_note(sp, picked_track, k - 1, 33);	//Change this note to a lane 1+6 chord (the cleanup logic should later correct this to just a lane 6 gem, EOF's in-editor notation for open strum bass).  This modification is necessary so that the note off event representing the end of the lane 1 gem for an open bass note can be processed properly.
-														sp->track[picked_track]->flags = EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
-														tracknum = sp->track[picked_track]->tracknum;
-														sp->legacy_track[tracknum]->numlanes = 6;	//Set this track to have 6 lanes instead of 5
-													}
-												}
-											}
-										break;
-										case 4:	//Slider
-											if((sp->track[picked_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[picked_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
-											{	//Only parse slider phrases for legacy guitar tracks
-#ifdef EOF_DEBUG
-												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Slider (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
-												eof_log(eof_log_string, 1);
-#endif
-												if(eof_import_events[i]->event[j]->dp[6] == 1)
-												{	//Start of phrase
-													sliderpos[0] = event_realtime;
-												}
-												else if(eof_import_events[i]->event[j]->dp[6] == 0)
-												{	//End of phrase
-													phraseptr = eof_get_slider(sp, picked_track, eof_get_num_sliders(sp, picked_track));
-													phraseptr->start_pos = sliderpos[0];
-													phraseptr->end_pos = event_realtime;
-													eof_set_num_sliders(sp, picked_track, eof_get_num_sliders(sp, picked_track) + 1);
-												}
-											}
-										break;
-										case 5:	//Open hi hat
-											if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
-											{	//Only parse hi hat phrases for the drum tracks
-#ifdef EOF_DEBUG
-												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Open hi hat (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
-												eof_log(eof_log_string, 1);
-#endif
-												if(eof_import_events[i]->event[j]->dp[6] == 1)
-												{	//Start of phrase
-													openhihatpos[phrasediff] = event_realtime;
-												}
-												else if(eof_import_events[i]->event[j]->dp[6] == 0)
-												{	//End of phrase
-													for(k = note_count[picked_track]; k > first_note; k--)
-													{	//Check for each note that has been imported
-														if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= openhihatpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-														{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
-															eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN);	//Set the open hi hat flag
-														}
-													}
-												}
-											}
-										break;
-										case 6:	//Pedal controlled hi hat
-											if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
-											{	//Only parse hi hat phrases for the drum tracks
-#ifdef EOF_DEBUG
-												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pedal hi hat (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
-												eof_log(eof_log_string, 1);
-#endif
-												if(eof_import_events[i]->event[j]->dp[6] == 1)
-												{	//Start of phrase
-													pedalhihatpos[phrasediff] = event_realtime;
-												}
-												else if(eof_import_events[i]->event[j]->dp[6] == 0)
-												{	//End of phrase
-													for(k = note_count[picked_track]; k > first_note; k--)
-													{	//Check for each note that has been imported
-														if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= pedalhihatpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-														{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
-															eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL);	//Set the pedal controlled hi hat flag
-														}
-													}
-												}
-											}
-										break;
-										case 7:	//Snare rim shot
-											if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
-											{	//Only parse rim shot phrases for the drum tracks
-#ifdef EOF_DEBUG
-												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Rim shot (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
-												eof_log(eof_log_string, 1);
-#endif
-												if(eof_import_events[i]->event[j]->dp[6] == 1)
-												{	//Start of phrase
-													rimshotpos[phrasediff] = event_realtime;
-												}
-												else if(eof_import_events[i]->event[j]->dp[6] == 0)
-												{	//End of phrase
-													for(k = note_count[picked_track]; k > first_note; k--)
-													{	//Check for each note that has been imported
-														if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= rimshotpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-														{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
-															eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_DRUM_NOTE_FLAG_R_RIMSHOT);	//Set the rim shot flag
-														}
-													}
-												}
-											}
-										break;
-										case 8:	//Sizzle hi hat
-											if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
-											{	//Only parse hi hat phrases for the drum tracks
-#ifdef EOF_DEBUG
-												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Sizzle hi hat (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
-												eof_log(eof_log_string, 1);
-#endif
-												if(eof_import_events[i]->event[j]->dp[6] == 1)
-												{	//Start of phrase
-													openhihatpos[phrasediff] = event_realtime;
-												}
-												else if(eof_import_events[i]->event[j]->dp[6] == 0)
-												{	//End of phrase
-													for(k = note_count[picked_track]; k > first_note; k--)
-													{	//Check for each note that has been imported
-														if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= openhihatpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-														{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
-															eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_DRUM_NOTE_FLAG_Y_SIZZLE);	//Set the sizzle hi hat flag
-														}
-													}
-												}
-											}
-										break;
-										case 17:	//Yellow Tom + Cymbal
-											if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
-											{	//Only parse hi hat phrases for the drum tracks
-#ifdef EOF_DEBUG
-												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Yellow tom/cymbal combo (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
-												eof_log(eof_log_string, 1);
-#endif
-												if(eof_import_events[i]->event[j]->dp[6] == 1)
-												{	//Start of phrase
-													ycombopos[phrasediff] = event_realtime;
-												}
-												else if(eof_import_events[i]->event[j]->dp[6] == 0)
-												{	//End of phrase
-													for(k = note_count[picked_track]; k > first_note; k--)
-													{	//Check for each note that has been imported
-														if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= ycombopos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-														{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
-															eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_DRUM_NOTE_FLAG_Y_COMBO);	//Set the yellow tom/cymbal combo flag
-														}
-													}
-												}
-											}
-										break;
-										case 18:	//Blue Tom + Cymbal
-											if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
-											{	//Only parse hi hat phrases for the drum tracks
-#ifdef EOF_DEBUG
-												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Blue tom/cymbal combo (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
-												eof_log(eof_log_string, 1);
-#endif
-												if(eof_import_events[i]->event[j]->dp[6] == 1)
-												{	//Start of phrase
-													bcombopos[phrasediff] = event_realtime;
-												}
-												else if(eof_import_events[i]->event[j]->dp[6] == 0)
-												{	//End of phrase
-													for(k = note_count[picked_track]; k > first_note; k--)
-													{	//Check for each note that has been imported
-														if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= bcombopos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-														{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
-															eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_DRUM_NOTE_FLAG_B_COMBO);	//Set the blue tom/cymbal combo flag
-														}
-													}
-												}
-											}
-										break;
-										case 19:	//Green Tom + Cymbal
-											if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
-											{	//Only parse hi hat phrases for the drum tracks
-#ifdef EOF_DEBUG
-												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Green tom/cymbal combo (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
-												eof_log(eof_log_string, 1);
-#endif
-												if(eof_import_events[i]->event[j]->dp[6] == 1)
-												{	//Start of phrase
-													gcombopos[phrasediff] = event_realtime;
-												}
-												else if(eof_import_events[i]->event[j]->dp[6] == 0)
-												{	//End of phrase
-													for(k = note_count[picked_track]; k > first_note; k--)
-													{	//Check for each note that has been imported
-														if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= gcombopos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-														{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
-															eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_DRUM_NOTE_FLAG_G_COMBO);	//Set the green tom/cymbal combo flag
-														}
-													}
-												}
-											}
-										break;
-									}
-								break;
-							}
-						}
-						free(eof_import_events[i]->event[j]->dp);	//The the memory allocated to store this Sysex message's data
-						eof_import_events[i]->event[j]->dp = NULL;
-					}//Sysex event
-
-					/* Control change event (Used in Power Gig to mark HO/PO and the equivalent of star power sections */
-					else if(eof_import_events[i]->event[j]->type == 0xB0)
-					{	//Control change event
-						if(eof_import_events[i]->game == 1)
-						{	//If the MIDI is in Power Gig notation
-#ifdef EOF_DEBUG
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tControl change:  Controller type %d, value %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->d2, eof_import_events[i]->event[j]->pos, event_realtime);
-							eof_log(eof_log_string, 1);
-#endif
-							if(eof_import_events[i]->event[j]->d1 == 68)
-							{	//This control change event marks forced HOPO phrases
-								if(eof_import_events[i]->event[j]->d2 == 127)
-								{	//This starts the phrase
-									powergig_hopo = 1;
-								}
-								else
-								{	//This ends the phrase
-									powergig_hopo = 0;
-								}
-							}
-							else if((eof_import_events[i]->event[j]->d1 >= 80) && (eof_import_events[i]->event[j]->d1 <= 82))
-							{	//These control change events mark "mojo" sections (the equivalent of star power phrases)
-								if(eof_import_events[i]->event[j]->d2 == 127)
-								{	//This starts the phrase
-									if(!powergig_sp && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
-									{	//If a star power phrase had not been started, and another phrase can be stored
-										phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
-										phraseptr->start_pos = event_realtime;
-										powergig_sp = 1;
-									}
-								}
-								else
-								{	//This ends the phrase
-									if(powergig_sp && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
-									{	//If a star power phrase had been started, and another phrase can be stored
-										phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
-										phraseptr->end_pos = event_realtime;
-										eof_set_num_star_power_paths(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track) + 1);
-									}
-									powergig_sp = 0;
-								}
-							}
-						}//If the MIDI is in Power Gig notation
-					}//Control change event
-				}//If parsing a legacy track
-				else if(eof_midi_tracks[picked_track].track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-				{	//If parsing a pro guitar track
-					if((eof_import_events[i]->event[j]->type == 0x80) || (eof_import_events[i]->event[j]->type == 0x90))
-					{	//For note on/off events, determine the type (difficulty) of the event
-						if((eof_import_events[i]->event[j]->d1 >= 24) && (eof_import_events[i]->event[j]->d1 <= 29))
-						{	//Notes 24 through 29 represent supaeasy pro guitar
-							lane = eof_import_events[i]->event[j]->d1 - 24;
-							diff = EOF_NOTE_SUPAEASY;
-							chordname = chord0name;		//Have this pointer reference the supaeasy note name array
-						}
-						else if((eof_import_events[i]->event[j]->d1 >= 48) && (eof_import_events[i]->event[j]->d1 <= 53))
-						{	//Notes 48 through 53 represent easy pro guitar
+					}
+					else
+					{	//This is the dance track
+						if((eof_import_events[i]->event[j]->d1 >= 48) && (eof_import_events[i]->event[j]->d1 < 60))
+						{	//Notes 48-59
 							lane = eof_import_events[i]->event[j]->d1 - 48;
-							diff = EOF_NOTE_EASY;
-							chordname = chord1name;		//Have this pointer reference the easy note name array
+							diff = EOF_NOTE_SUPAEASY;
 						}
-						else if((eof_import_events[i]->event[j]->d1 >= 72) && (eof_import_events[i]->event[j]->d1 <= 77))
-						{	//Notes 72 through 77 represent medium pro guitar
+						else if((eof_import_events[i]->event[j]->d1 >= 60) && (eof_import_events[i]->event[j]->d1 < 72))
+						{	//notes 60-71
+							lane = eof_import_events[i]->event[j]->d1 - 60;
+							diff = EOF_NOTE_EASY;
+						}
+						else if((eof_import_events[i]->event[j]->d1 >= 72) && (eof_import_events[i]->event[j]->d1 < 84))
+						{	//notes 72-83
 							lane = eof_import_events[i]->event[j]->d1 - 72;
 							diff = EOF_NOTE_MEDIUM;
-							chordname = chord2name;		//Have this pointer reference the medium note name array
 						}
-						else if((eof_import_events[i]->event[j]->d1 >= 96) && (eof_import_events[i]->event[j]->d1 <= 101))
-						{	//Notes 96 through 101 represent amazing pro guitar
-							lane = eof_import_events[i]->event[j]->d1 - 96;
+						else if((eof_import_events[i]->event[j]->d1 >= 84) && (eof_import_events[i]->event[j]->d1 < 96))
+						{	//notes 84-95
+							lane = eof_import_events[i]->event[j]->d1 - 84;
 							diff = EOF_NOTE_AMAZING;
-							chordname = chord3name;		//Have this pointer reference the amazing note name array
 						}
-						else if((eof_import_events[i]->event[j]->d1 >= 120) && (eof_import_events[i]->event[j]->d1 <= 125))
-						{
-							lane = eof_import_events[i]->event[j]->d1 - 120;
-							diff = EOF_NOTE_SPECIAL;
-							chordname = NULL;		//BRE notes do not store chord names
+						else if((eof_import_events[i]->event[j]->d1 >= 96) && (eof_import_events[i]->event[j]->d1 < 108))
+						{	//notes 96-107
+							lane = eof_import_events[i]->event[j]->d1 - 96;
+							diff = EOF_NOTE_CHALLENGE;
 						}
 						else
 						{
@@ -2348,129 +1659,90 @@ set_window_title(debugtext);
 							diff = -1;	//No defined difficulty
 						}
 					}
+				}//Note on or note off
 
-					/* note on */
-					if(eof_import_events[i]->event[j]->type == 0x90)
-					{	//Note on event
-						unsigned long *slideptr;	//This will point to either the up or down slide position array as appropriate, so the velocity can be checked just once
-						char strum = 0;	//Will store the strum type, to reduce duplicated logic below
+				/* note on */
+				if(eof_import_events[i]->event[j]->type == 0x90)
+				{
+					char doublebass = 0;
 
 #ifdef EOF_DEBUG
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote on:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
-						eof_log(eof_log_string, 1);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote on:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
+					eof_log(eof_log_string, 1);
 #endif
-						/* store forced Ho/Po markers, when the note off for this marker occurs, search for note with same position and apply it to that note */
-						//Pro guitar forced Ho/Po are both marked as lane 1 + 6
-						if(eof_import_events[i]->event[j]->d1 == 24 + 6)
-						{
-							hopopos[0] = event_realtime;
-							hopotype[0] = 1;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 48 + 6)
-						{
-							hopopos[1] = event_realtime;
-							hopotype[1] = 1;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 72 + 6)
-						{
-							hopopos[2] = event_realtime;
-							hopotype[2] = 1;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 96 + 6)
-						{
-							hopopos[3] = event_realtime;
-							hopotype[3] = 1;
-						}
 
-						/* store slide marker, when the note off for this marker occurs, search for notes within the phrase and apply the status to them */
-						//Slide phrases are marked as lane (1 + 7)
-						if(eof_import_events[i]->event[j]->d2 >= 108)
-						{	//For slide markers, velocity 108 or higher represents a down slide
-							slideptr = slidedownpos;	//The slide marker (if present) would be a down slide
+					if(eof_import_events[i]->game == 0)
+					{	//If the MIDI is in Rock Band/FoF/Phase Shift notation
+						if(((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS)) && (eof_import_events[i]->event[j]->d1 == 95))
+						{	//If the track being read is a drum track, and this note is marked for Expert+ double bass
+							doublebass = 1;	//Track that double bass was found for this note, and apply it after the note flag for a newly created note is initialized to zero
+						}
+						if(eof_midi_tracks[picked_track].track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+						{	//If this is a drum track, lane 6 is used for the fifth drum lane and not a HOPO marker
+							if(lane == 5)
+							{	//A lane 6 gem encountered for a drum track will cause the track to be marked as being a "five lane" drum track
+								sp->track[picked_track]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the six lane flag
+								sp->legacy_track[tracknum]->numlanes = 6;
+							}
 						}
 						else
-						{	//Other velocities represent an up slide
-							slideptr = slideuppos;		//The slide marker (if present) would be an up slide
-						}
-						if(eof_import_events[i]->event[j]->d1 == 24 + 7)
-						{
-							slideptr[0] = event_realtime;
-							slidevelocity[0] = eof_import_events[i]->event[j]->d2;	//Cache the velocity of the slide, because the slide end marker won't use it
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 48 + 7)
-						{
-							slideptr[1] = event_realtime;
-							slidevelocity[1] = eof_import_events[i]->event[j]->d2;	//Cache the velocity of the slide, because the slide end marker won't use it
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 72 + 7)
-						{
-							slideptr[2] = event_realtime;
-							slidevelocity[2] = eof_import_events[i]->event[j]->d2;	//Cache the velocity of the slide, because the slide end marker won't use it
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 96 + 7)
-						{
-							slideptr[3] = event_realtime;
-							slidevelocity[3] = eof_import_events[i]->event[j]->d2;	//Cache the velocity of the slide, because the slide end marker won't use it
-						}
+						{	/* store forced HOPO marker, when the note off for this marker occurs, search for note with same position and apply it to that note */
+							//Forced HOPO on are marked as lane 1 + 5
+							if(eof_import_events[i]->event[j]->d1 == 60 + 5)
+							{
+								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopopos[0] = event_realtime;
+								hopotype[0] = 0;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 72 + 5)
+							{
+								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopopos[1] = event_realtime;
+								hopotype[1] = 0;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 84 + 5)
+							{
+								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopopos[2] = event_realtime;
+								hopotype[2] = 0;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 96 + 5)
+							{
+								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopopos[3] = event_realtime;
+								hopotype[3] = 0;
+							}
+							//Forced HOPO off are marked as lane 1 + 6
+							else if(eof_import_events[i]->event[j]->d1 == 60 + 6)
+							{
+								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopopos[0] = event_realtime;
+								hopotype[0] = 1;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 72 + 6)
+							{
+								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopopos[1] = event_realtime;
+								hopotype[1] = 1;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 84 + 6)
+							{
+								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopopos[2] = event_realtime;
+								hopotype[2] = 1;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 96 + 6)
+							{
+								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopopos[3] = event_realtime;
+								hopotype[3] = 1;
+							}
+						}//store forced HOPO marker
 
-						/* store arpeggio marker, when the note off for this marker occurs, search for notes with same position and apply it to them */
-						//Arpeggio phrases on are marked as lane (1 + 8)
-						if(eof_import_events[i]->event[j]->d1 == 24 + 8)
-						{
-							arpegpos[0] = event_realtime;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 48 + 8)
-						{
-							arpegpos[1] = event_realtime;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 72 + 8)
-						{
-							arpegpos[2] = event_realtime;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 96 + 8)
-						{
-							arpegpos[3] = event_realtime;
-						}
-
-						/* store strum direction marker, when the note off for this marker occurs, search for notes with same position and apply it to them */
-						//Lane (1 + 9), channel 13 is used in up strum markers
-						if(eof_import_events[i]->event[j]->channel == 13)
-						{	//Channel 13 is used in up strum markers
-							strum = 0;
-						}
-						else if(eof_import_events[i]->event[j]->channel == 14)
-						{	//Channel 14 is used in mid strum markers
-							strum = 1;
-						}
-						else if(eof_import_events[i]->event[j]->channel == 15)
-						{	//Channel 15 is used in down strum markers
-							strum = 2;
-						}
-						if(eof_import_events[i]->event[j]->d1 == 24 + 9)
-						{
-							strumpos[0] = event_realtime;
-							strumtype[0] = strum;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 48 + 9)
-						{
-							strumpos[1] = event_realtime;
-							strumtype[1] = strum;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 72 + 9)
-						{
-							strumpos[2] = event_realtime;
-							strumtype[2] = strum;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 96 + 9)
-						{
-							strumpos[3] = event_realtime;
-							strumtype[3] = strum;
-						}
-
-						/* arpeggios, solos, star power, tremolos and trills */
+						/* solos, star power, tremolos and trills */
 						phraseptr = NULL;
-						if((eof_import_events[i]->event[j]->d1 == 115) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
-						{	//Pro guitar solos are marked with note 115
+						if((eof_import_events[i]->event[j]->d1 == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
+						{	//Legacy solos are marked with note 103
 							phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
 							phraseptr->start_pos = event_realtime;
 						}
@@ -2496,280 +1768,228 @@ set_window_title(debugtext);
 							phraseptr->name[0] = '\0';
 						}
 
-						/* fret hand positions */
-						if(eof_import_events[i]->event[j]->d1 == 108)
-						{	//Pro guitar fret hand positions are marked with note 108
-							if(eof_import_events[i]->event[j]->d2 < 100)
-							{	//If this is an invalid velocity for a fret hand position
-#ifdef EOF_DEBUG
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying fret hand position at pos=%lu from velocity %d to 101", event_realtime, eof_import_events[i]->event[j]->d2);
-								eof_log(eof_log_string, 1);
-#endif
-								eof_import_events[i]->event[j]->d2 = 101;	//Reset it to a position of 1
-							}
-							(void) eof_track_add_section(sp, picked_track, EOF_FRET_HAND_POS_SECTION, EOF_NOTE_AMAZING, event_realtime, eof_import_events[i]->event[j]->d2 - 100, 0, NULL);
-						}
-
-						if(diff != -1)
-						{	//If a note difficulty was identified above
-							char match = 0;	//Is set to nonzero if this note on is matched with a previously added note
-
-							k = 0;
-							if(note_count[picked_track] > 0)
-							{	//If at least one note has been added already
-								for(k = note_count[picked_track]; k > first_note; k--)
-								{	//Traverse the note list in reverse to find the appropriate note to modify
-									if((eof_get_note_pos(sp, picked_track, k - 1) == event_realtime) && (eof_get_note_type(sp, picked_track, k - 1) == diff))
-									{
-										match = 1;
-										break;	//End the search, as a match was found
-									}
-								}
-							}
-							if(!match)
-							{	//If the note doesn't match the same time and difficulty as an existing note, this MIDI event represents a new note, initialize it now and increment the note count
-								notenum = note_count[picked_track];
-								eof_set_note_note(sp, picked_track, notenum, lane_chart[lane]);
-								eof_set_note_pos(sp, picked_track, notenum, event_realtime);
-								eof_set_note_length(sp, picked_track, notenum, 0);	//The length will be kept at 0 until the end of the note is found
-								eof_set_note_flags(sp, picked_track, notenum, 0);	//Clear the flag here so that the flag can be set if it has a special status
-								eof_set_note_type(sp, picked_track, notenum, diff);	//Apply the determined difficulty
-								if(chordname && (chordname[0] != '\0'))
-								{	//If there is a chord name stored for this difficulty
-									eof_set_note_name(sp, picked_track, notenum, chordname);	//Populate the note name with whatever name was read last
-									chordname[0] = '\0';										//Empty the chord name array for this difficulty
-								}
-								else
-								{	//Otherwise ensure the note has an empty name string
-									eof_set_note_name(sp, picked_track, notenum, "");
-								}
-								note_count[picked_track]++;
-#ifdef EOF_DEBUG
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tInitializing note #%lu (Diff=%d):  Mask=%u, Pos=%lu, Length=%d", notenum, eof_get_note_type(sp, picked_track, notenum), lane_chart[lane], event_realtime, 0);
-								eof_log(eof_log_string, 1);
-#endif
-							}
-							else
-							{	//Otherwise just modify the existing note by adding a gem
-								notenum = k - 1;
-#ifdef EOF_DEBUG
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%d, Pos=%lu) from mask %d to %d", notenum, eof_get_note_type(sp, picked_track, notenum), event_realtime, eof_get_note_note(sp, picked_track, notenum), eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
-								eof_log(eof_log_string, 1);
-#endif
-								eof_set_note_note(sp, picked_track, notenum, eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
-							}
-							if(eof_import_events[i]->event[j]->d2 < 100)
-							{	//Some other editors may have an invalid velocity defined
-#ifdef EOF_DEBUG
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%d, Pos=%lu) from velocity %d to 100", notenum, eof_get_note_type(sp, picked_track, notenum), event_realtime, eof_import_events[i]->event[j]->d2);
-								eof_log(eof_log_string, 1);
-#endif
-								eof_import_events[i]->event[j]->d2 = 100;	//In which case, revert the velocity to the lowest usable value
-							}
-							sp->pro_guitar_track[tracknum]->note[notenum]->frets[lane] = eof_import_events[i]->event[j]->d2 - 100;	//Velocity (100 + X) represents fret # X
-							if(sp->pro_guitar_track[tracknum]->note[notenum]->frets[lane] > sp->pro_guitar_track[tracknum]->numfrets)
-							{	//If this fret value is higher than this track's recorded maximum
-								if(!fretwarning)
-								{	//If the user hasn't been warned about this problem for this track
-									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  At least one note (at %lu ms) in %s breaks the track's fret limit of %u.  This can cause Rock Band to crash.", event_realtime, eof_midi_tracks[picked_track].name, sp->pro_guitar_track[tracknum]->numfrets);
-									eof_log(eof_log_string, 1);
-									allegro_message("Warning:  At least one note (at %lu ms) in %s breaks the track's fret limit of %u.\nThis can cause Rock Band to crash.", event_realtime, eof_midi_tracks[picked_track].name, sp->pro_guitar_track[tracknum]->numfrets);
-									fretwarning = 1;
-								}
-								sp->pro_guitar_track[tracknum]->numfrets = sp->pro_guitar_track[tracknum]->note[notenum]->frets[lane];	//Increase the maximum to reflect this fret value
-							}
-							if(eof_import_events[i]->event[j]->channel == 1)
-							{	//If this note was sent over channel 1, it is a ghost note
-								sp->pro_guitar_track[tracknum]->note[notenum]->ghost |= lane_chart[lane];	//Set the ghost flag for this gem's string
-							}
-							else if(eof_import_events[i]->event[j]->channel == 2)
-							{	//If this note was sent over channel 2, it is a bend
-								sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;	//Set the bend flag
-							}
-							else if(eof_import_events[i]->event[j]->channel == 3)
-							{	//If this note was sent over channel 3, the gem is muted
-								sp->pro_guitar_track[tracknum]->note[notenum]->frets[lane] |= 0x80;	//Set the MSB to indicate the string is muted
-							}
-							else if(eof_import_events[i]->event[j]->channel == 4)
-							{	//If this note was sent over channel 4, it is tapped
-								sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_TAP;	//Set the tap flag
-							}
-							else if(eof_import_events[i]->event[j]->channel == 5)
-							{	//If this note was sent over channel 5, it is a harmonic
-								sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;	//Set the harmonic flag
-							}
-							else if(eof_import_events[i]->event[j]->channel == 6)
-							{	//If this note was sent over channel 6, it is a pinch harmonic
-								sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;	//Set the harmonic flag
-							}
-///KEEP FOR DEBUGGING
-/*							else if(eof_import_events[i]->event[j]->channel == 13)
+						/* rb3 pro drum markers */
+						if(prodrums)
+						{	//If the track was already found to have these markers
+							if(eof_import_events[i]->event[j]->d1 == RB3_DRUM_YELLOW_FORCE)
 							{
-								sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Set the highlight flag
+								rb_pro_yellow = 1;
+								rb_pro_yellow_pos = event_realtime;
 							}
-*/
-						}//If a note difficulty was identified above
-					}//Note on event
+							else if(eof_import_events[i]->event[j]->d1 == RB3_DRUM_BLUE_FORCE)
+							{
+								rb_pro_blue = 1;
+								rb_pro_blue_pos = event_realtime;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == RB3_DRUM_GREEN_FORCE)
+							{
+								rb_pro_green = 1;
+								rb_pro_green_pos = event_realtime;
+							}
+						}
+					}//If the MIDI is in Rock Band/FoF/Phase Shift notation
 
-					/* note off so get length of note */
-					else if(eof_import_events[i]->event[j]->type == 0x80)
-					{	//Note off event
-#ifdef EOF_DEBUG
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote off:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
-						eof_log(eof_log_string, 1);
-#endif
-						/* detect forced HOPO */
-						hopodiff = -1;
-						if(eof_import_events[i]->event[j]->d1 == 24 + 6)
-						{
-							hopodiff = 0;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 48 + 6)
-						{
-							hopodiff = 1;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 72 + 6)
-						{
-							hopodiff = 2;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 96 + 6)
-						{
-							hopodiff = 3;
-						}
-						if(hopodiff >= 0)
-						{
+					if(diff != -1)
+					{	//If a note difficulty was identified above
+						char match = 0;	//Is set to nonzero if this note on is matched with a previously added note
+
+						k = 0;
+						if(note_count[picked_track] > 0)
+						{	//If at least one note has been added already
 							for(k = note_count[picked_track]; k > first_note; k--)
-							{	//Check (in reverse) for each note that has been imported
-								if((eof_get_note_type(sp, picked_track, k - 1) == hopodiff) && (eof_get_note_pos(sp, picked_track, k - 1) >= hopopos[hopodiff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-								{	//If the note is in the same difficulty as the HOPO phrase, and its timestamp falls within the Ho/Po marker
-									eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_HO);	//RB3 marks forced hammer ons the same as forced pull offs
+							{	//Traverse the note list in reverse order to identify the appropriate note to modify
+								if((eof_get_note_pos(sp, picked_track, k - 1) == event_realtime) && (eof_get_note_type(sp, picked_track, k - 1) == diff))
+								{	//If the note is at the same timestamp and difficulty
+									match = 1;
+									break;	//End the search, as a match was found
+								}
+							}
+						}
+						if(!match)
+						{	//If the note doesn't match the same time and difficulty as an existing note, this MIDI event represents a new note, initialize it now and increment the note count
+							notenum = note_count[picked_track];
+							if(notenum >= EOF_MAX_NOTES)
+							{
+								allegro_message("Error:  The maximum number of notes is exceeded by track \"%s\".  Truncating track.", eof_midi_tracks[picked_track].name);
+								break;	//Exit outer for loop
+							}
+							eof_set_note_note(sp, picked_track, notenum, lane_chart[lane]);
+							eof_set_note_pos(sp, picked_track, notenum, event_realtime);
+							eof_set_note_length(sp, picked_track, notenum, 0);				//The length will be kept at 0 until the end of the note is found
+							eof_set_note_flags(sp, picked_track, notenum, 0);				//Clear the flag here so that the flag can be set later (ie. if it's an Expert+ double bass note)
+							eof_set_note_type(sp, picked_track, notenum, diff);				//Apply the determined difficulty
+							note_count[picked_track]++;
+#ifdef EOF_DEBUG
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tInitializing note #%lu (Diff=%d):  Mask=%u, Pos=%lu, Length=%d", notenum, eof_get_note_type(sp, picked_track, notenum), lane_chart[lane], event_realtime, 0);
+							eof_log(eof_log_string, 1);
+#endif
+						}
+						else
+						{	//Otherwise just modify the existing note by adding a gem
+							notenum = k - 1;
+#ifdef EOF_DEBUG
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%d, Pos=%lu) from mask %d to %d", notenum, eof_get_note_type(sp, picked_track, notenum), event_realtime, eof_get_note_note(sp, picked_track, notenum), eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
+							eof_log(eof_log_string, 1);
+#endif
+							eof_set_note_note(sp, picked_track, notenum, eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
+						}
+						if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
+						{
+							if(doublebass)
+							{	//If the note was found to be double bass
+								eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_DRUM_NOTE_FLAG_DBASS);	//Set the double bass flag
+							}
+							if(prodrums && (eof_get_note_type(sp, picked_track, notenum) != EOF_NOTE_SPECIAL))
+							{	//If pro drum notation is in effect and this was a non BRE drum note, assume cymbal notation until a tom marker ending is found
+								if(eof_get_note_note(sp, picked_track, notenum) & 4)
+								{	//This is a yellow drum note, assume it is a cymbal unless a pro drum phrase indicates otherwise
+									eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_DRUM_NOTE_FLAG_Y_CYMBAL);	//Ensure the cymbal flag is set
+								}
+								if(eof_get_note_note(sp, picked_track, notenum) & 8)
+								{	//This is a blue drum note, assume it is a cymbal unless a pro drum phrase indicates otherwise
+									eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_DRUM_NOTE_FLAG_B_CYMBAL);	//Ensure the cymbal flag is set
+								}
+								if(eof_get_note_note(sp, picked_track, notenum) & 16)
+								{	//This is a purle drum note (green in Rock Band), assume it is a cymbal unless a pro drum phrase indicates otherwise
+									eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_DRUM_NOTE_FLAG_G_CYMBAL);	//Ensure the cymbal flag is set
+								}
+							}
+						}
+						if(eof_import_events[i]->game == 1)
+						{	//If the MIDI is in Power Gig notation
+							if(powergig_hopo)
+							{	//If a HOPO phrase is in effect
+								eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_NOTE_FLAG_F_HOPO);	//Ensure the HOPO flag is set
+							}
+						}
+						if(eof_import_events[i]->game == 2)
+						{	//If the MIDI track is a Guitar Hero animation track
+							if(eof_get_note_note(sp, picked_track, notenum) & 4)
+							{	//Yellow notes are hi hat
+								eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_DRUM_NOTE_FLAG_Y_CYMBAL);
+							}
+							if(eof_get_note_note(sp, picked_track, notenum) & 16)
+							{	//Green notes are crash cymbal
+								eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_DRUM_NOTE_FLAG_G_CYMBAL);
+							}
+						}
+					}//If a note difficulty was identified above
+				}//Note on event
+
+				/* note off so get length of note */
+				else if(eof_import_events[i]->event[j]->type == 0x80)
+				{
+#ifdef EOF_DEBUG
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote off:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
+					eof_log(eof_log_string, 1);
+#endif
+
+					if(eof_import_events[i]->game == 0)
+					{	//If the MIDI is in Rock Band/FoF/Phase Shift notation
+						if(eof_midi_tracks[picked_track].track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+						{	//If this is a drum track, lane 6 is used for the fifth drum lane and not a HOPO marker
+						}
+						else
+						{	/* detect forced HOPO */
+							hopodiff = -1;
+							if(eof_import_events[i]->event[j]->d1 == 60 + 5)
+							{
+								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopodiff = 0;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 72 + 5)
+							{
+								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopodiff = 1;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 84 + 5)
+							{
+								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopodiff = 2;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 96 + 5)
+							{
+								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopodiff = 3;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 60 + 6)
+							{
+								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopodiff = 0;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 72 + 6)
+							{
+								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopodiff = 1;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 84 + 6)
+							{
+								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopodiff = 2;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 96 + 6)
+							{
+								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopodiff = 3;
+							}
+							if(hopodiff >= 0)
+							{
+								for(k = note_count[picked_track]; k > first_note; k--)
+								{	//Check (in reverse) for each note that has been imported
+									if((eof_get_note_type(sp, picked_track, k - 1) == hopodiff) && (eof_get_note_pos(sp, picked_track, k - 1) >= hopopos[hopodiff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+									{	//If the note is in the same difficulty as the HOPO phrase, and its timestamp falls between the HOPO On and HOPO Off marker
+										if(hopotype[hopodiff] == 0)
+										{	//Forced HOPO on
+											eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_NOTE_FLAG_F_HOPO);
+										}
+										else
+										{	//Forced HOPO off
+											eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_NOTE_FLAG_NO_HOPO);
+										}
+									}
 								}
 							}
 						}/* detect forced HOPO */
 
-						/* detect slide markers */
-						slidediff = -1;	//Don't process a slide marker unless one was found
-						if(eof_import_events[i]->event[j]->d1 == 24 + 7)
-						{
-							slidediff = 0;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 48 + 7)
-						{
-							slidediff = 1;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 72 + 7)
-						{
-							slidediff = 2;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 96 + 7)
-						{
-							slidediff = 3;
-						}
-						if(slidediff >= 0)
-						{	//If a slide marker was found
-							unsigned long *slideptr;	//This will point to either the up or down slide position array as appropriate, so the velocity can be checked just once
-							unsigned long slideflag;	//Cache the slide flag to avoid having to do redundant checks
-
-							if(slidevelocity[slidediff] >= 108)
-							{	//For slide markers, velocity 108 or higher represents a down slide.  Read the slide velocity that was cached at the start of the slide
-								slideptr = slidedownpos;	//The slide marker is a down slide
-								slideflag = EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
-								if(eof_import_events[i]->event[j]->channel == 11)
-								{	//Unless the channel for the marker is 11, in which case it's reversed
-									slideflag |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;
-								}
-							}
-							else
-							{	//Other velocities represent an up slide
-								slideptr = slideuppos;		//The slide marker is an up slide
-								slideflag = EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
-								if(eof_import_events[i]->event[j]->channel == 11)
-								{	//Unless the channel for the marker is 11, in which case it's reversed
-									slideflag |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;
-								}
-							}
-							for(k = note_count[picked_track]; k > first_note; k--)
-							{	//Check for each note that has been imported
-								if((eof_get_note_type(sp, picked_track, k - 1) == slidediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= slideptr[slidediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-								{	//If the note is in the same difficulty as the slide marker, and its timestamp falls between the start and stop of the marker
-									eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | slideflag);	//Set the appropriate slide flag for the note
-								}
-							}
-						}
-
-						/* detect arpeggio markers */
-						arpegdiff = -1;	//Don't process an arpeggio marker unless one was found
-						if(eof_import_events[i]->event[j]->d1 == 24 + 8)
-						{
-							arpegdiff = 0;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 48 + 8)
-						{
-							arpegdiff = 1;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 72 + 8)
-						{
-							arpegdiff = 2;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 96 + 8)
-						{
-							arpegdiff = 3;
-						}
-						if((arpegdiff >= 0) && (eof_get_num_arpeggios(sp, picked_track) < EOF_MAX_PHRASES))
-						{	//If an arpeggio marker was found, and the max number of arpeggio phrases haven't already been added
-							phraseptr = eof_get_arpeggio(sp, picked_track, eof_get_num_arpeggios(sp, picked_track));
-							phraseptr->start_pos = arpegpos[arpegdiff];
-							phraseptr->end_pos = event_realtime;
-							phraseptr->difficulty = arpegdiff;	//Set the difficulty for this arpeggio
-							eof_set_num_arpeggios(sp, picked_track, eof_get_num_arpeggios(sp, picked_track) + 1);
-						}
-
-						/* detect strum direction markers */
-						strumdiff = -1;	//Don't process a strum marker unless one was found
-						if((eof_import_events[i]->event[j]->channel >= 13) && (eof_import_events[i]->event[j]->channel <= 15))
-						{	//Lane (1 + 9), channel 13, 14 and 15 are used in up, mid and down strum markers
-							if(eof_import_events[i]->event[j]->d1 == 24 + 9)
-							{
-								strumdiff = 0;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 48 + 9)
-							{
-								strumdiff = 1;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 72 + 9)
-							{
-								strumdiff = 2;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 96 + 9)
-							{
-								strumdiff = 3;
-							}
-						}
-						if(strumdiff >= 0)
-						{	//If a strum marker was found
-							for(k = note_count[picked_track]; k > first_note; k--)
-							{	//Check for each note that has been imported
-								if((eof_get_note_type(sp, picked_track, k - 1) == strumdiff) && (eof_get_note_pos(sp, picked_track, k - 1) >= strumpos[strumdiff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-								{	//If the note is in the same difficulty as the strum direction marker, and its timestamp falls between the start and stop of the marker
-									unsigned long newflags = eof_get_note_flags(sp, picked_track, k - 1);
-									if(strumtype[strumdiff] == 0)
-									{	//This was an up strum marker
-										newflags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;
+						/* rb pro markers */
+						if(prodrums)
+						{	//If the track was already found to have these markers
+							if((eof_import_events[i]->event[j]->d1 == RB3_DRUM_YELLOW_FORCE) && rb_pro_yellow)
+							{	//If this event ends a pro yellow drum phrase
+								for(k = note_count[picked_track]; k > first_note; k--)
+								{	//Check for each note that has been imported for this track
+									if((sp->legacy_track[tracknum]->note[k - 1]->pos >= rb_pro_yellow_pos) && (sp->legacy_track[tracknum]->note[k - 1]->pos <= event_realtime))
+									{	//If the note is positioned within this pro yellow drum phrase
+										sp->legacy_track[tracknum]->note[k - 1]->flags &= (~EOF_DRUM_NOTE_FLAG_Y_CYMBAL);	//Clear the yellow cymbal marker on the note
 									}
-									else if(strumtype[strumdiff] == 1)
-									{	//This was a mid strum marker
-										newflags |= EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM;
-									}
-									else
-									{	//This was a down strum marker
-										newflags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;
-									}
-									eof_set_note_flags(sp, picked_track, k - 1, newflags);
 								}
+								rb_pro_yellow = 0;
+							}
+							else if((eof_import_events[i]->event[j]->d1 == RB3_DRUM_BLUE_FORCE) && rb_pro_blue)
+							{	//If this event ends a pro blue drum phrase
+								for(k = note_count[picked_track]; k > first_note; k--)
+								{	//Check for each note that has been imported for this track
+									if((sp->legacy_track[tracknum]->note[k - 1]->pos >= rb_pro_blue_pos) && (sp->legacy_track[tracknum]->note[k - 1]->pos <= event_realtime))
+									{	//If the note is positioned within this pro blue drum phrase
+										sp->legacy_track[tracknum]->note[k - 1]->flags &= (~EOF_DRUM_NOTE_FLAG_B_CYMBAL);	//Clear the blue cymbal marker on the note
+									}
+								}
+								rb_pro_blue = 0;
+							}
+							else if((eof_import_events[i]->event[j]->d1 == RB3_DRUM_GREEN_FORCE) && rb_pro_green)
+							{	//If this event ends a pro green drum phrase
+								for(k = note_count[picked_track]; k > first_note; k--)
+								{	//Check for each note that has been imported for this track, in reverse order
+									if((sp->legacy_track[tracknum]->note[k - 1]->pos >= rb_pro_green_pos) && (sp->legacy_track[tracknum]->note[k - 1]->pos <= event_realtime))
+									{	//If the note is positioned within this pro green drum phrase
+										sp->legacy_track[tracknum]->note[k - 1]->flags &= (~EOF_DRUM_NOTE_FLAG_G_CYMBAL);	//Clear the green cymbal marker on the note
+									}
+								}
+								rb_pro_green = 0;
 							}
 						}
 
-						if((eof_import_events[i]->event[j]->d1 == 115) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
+						if((eof_import_events[i]->event[j]->d1 == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//End of a solo phrase
 							phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
 							phraseptr->end_pos = event_realtime;
@@ -2793,303 +2013,1095 @@ set_window_title(debugtext);
 							phraseptr->end_pos = event_realtime;
 							eof_set_num_trills(sp, picked_track, eof_get_num_trills(sp, picked_track) + 1);
 						}
+					}//If the MIDI is in Rock Band/FoF/Phase Shift notation
 
-						if((note_count[picked_track] > 0) && (diff != -1))
-						{	//If there's at least one note on found for this track, and this note off event has a defined difficulty
-							for(k = note_count[picked_track]; k > first_note; k--)
-							{	//Check for each note that has been imported, in reverse order
-								if((eof_get_note_type(sp, picked_track, k - 1) == diff) && (eof_get_note_note(sp, picked_track, k - 1) & lane_chart[lane]))
-								{	//If the note is in the same difficulty as this note off event and it contains one of the same gems
+					if((note_count[picked_track] > 0) && (diff != -1))
+					{	//If there's at least one note on found for this track, and this note off event has a defined difficulty
+						for(k = note_count[picked_track]; k > first_note; k--)
+						{	//Check for each note that has been imported, in reverse order
+							if((eof_get_note_type(sp, picked_track, k - 1) == diff) && (eof_get_note_note(sp, picked_track, k - 1) & lane_chart[lane]))
+							{	//If the note is in the same difficulty as this note off event and it contains one of the same gems
 //									allegro_message("break %d, %d, %d", k - 1, sp->legacy_track[picked_track]->note[k - 1]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);	//Debug
 #ifdef EOF_DEBUG
-									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u) from length %ld to %lu", k - 1, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_length(sp, picked_track, k - 1), event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
-									eof_log(eof_log_string, 1);
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u) from length %ld to %lu", k, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_length(sp, picked_track, k - 1), event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
+								eof_log(eof_log_string, 1);
 #endif
-									eof_set_note_length(sp, picked_track, k - 1, event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
-									if(eof_get_note_length(sp, picked_track, k - 1) <= 0)
-									{	//If the note somehow received a zero or negative length
-										eof_set_note_length(sp, picked_track, k - 1, 1);
-									}
+								eof_set_note_length(sp, picked_track, k - 1, event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
+								if(eof_get_note_length(sp, picked_track, k - 1) <= 0)
+								{	//If the note somehow received a zero or negative length
+									eof_set_note_length(sp, picked_track, k - 1, 1);
+								}
+								break;
+							}
+						}
+					}
+				}//Note off event
+
+				/* Sysex event (custom phrase markers for Phase Shift) */
+				else if((eof_import_events[i]->event[j]->type == 0xF0) && eof_import_events[i]->event[j]->dp)
+				{	//Sysex event
+					if((eof_import_events[i]->event[j]->d1 == 8) && (!strncmp(eof_import_events[i]->event[j]->dp, "PS", 3)))
+					{	//If this is a custom Sysex Phase Shift marker (8 bytes long, beginning with the NULL terminated string "PS")
+						switch(eof_import_events[i]->event[j]->dp[3])
+						{	//Check the value of the message ID
+							case 0:	//Phrase marker
+								phrasediff = eof_import_events[i]->event[j]->dp[4];	//Store the difficulty ID
+								switch(eof_import_events[i]->event[j]->dp[5])
+								{	//Check the value of the phrase ID
+									case 1:	//Open strum
+#ifdef EOF_DEBUG
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Open strum (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+										eof_log(eof_log_string, 1);
+#endif
+										if(eof_import_events[i]->event[j]->dp[6] == 1)
+										{	//Start of open strum phrase
+											openstrumpos[phrasediff] = event_realtime;
+										}
+										else if(eof_import_events[i]->event[j]->dp[6] == 0)
+										{	//End of open strum phrase
+											for(k = note_count[picked_track]; k > first_note; k--)
+											{	//Check for each note that has been imported
+												if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= openstrumpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+												{	//If the note is in the same difficulty as the open strum phrase, and its timestamp falls between the phrase on and phrase off marker
+#ifdef EOF_DEBUG
+													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u, Length=%ld) to have a note mask of 33", k - 1, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_length(sp, picked_track, k - 1));
+													eof_log(eof_log_string, 1);
+#endif
+													eof_set_note_note(sp, picked_track, k - 1, 33);	//Change this note to a lane 1+6 chord (the cleanup logic should later correct this to just a lane 6 gem, EOF's in-editor notation for open strum bass).  This modification is necessary so that the note off event representing the end of the lane 1 gem for an open bass note can be processed properly.
+													sp->track[picked_track]->flags = EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
+													tracknum = sp->track[picked_track]->tracknum;
+													sp->legacy_track[tracknum]->numlanes = 6;	//Set this track to have 6 lanes instead of 5
+												}
+											}
+										}
+									break;
+									case 4:	//Slider
+										if((sp->track[picked_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[picked_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
+										{	//Only parse slider phrases for legacy guitar tracks
+#ifdef EOF_DEBUG
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Slider (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+											eof_log(eof_log_string, 1);
+#endif
+											if(eof_import_events[i]->event[j]->dp[6] == 1)
+											{	//Start of phrase
+												sliderpos[0] = event_realtime;
+											}
+											else if(eof_import_events[i]->event[j]->dp[6] == 0)
+											{	//End of phrase
+												phraseptr = eof_get_slider(sp, picked_track, eof_get_num_sliders(sp, picked_track));
+												phraseptr->start_pos = sliderpos[0];
+												phraseptr->end_pos = event_realtime;
+												eof_set_num_sliders(sp, picked_track, eof_get_num_sliders(sp, picked_track) + 1);
+											}
+										}
+									break;
+									case 5:	//Open hi hat
+										if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
+										{	//Only parse hi hat phrases for the drum tracks
+#ifdef EOF_DEBUG
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Open hi hat (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+											eof_log(eof_log_string, 1);
+#endif
+											if(eof_import_events[i]->event[j]->dp[6] == 1)
+											{	//Start of phrase
+												openhihatpos[phrasediff] = event_realtime;
+											}
+											else if(eof_import_events[i]->event[j]->dp[6] == 0)
+											{	//End of phrase
+												for(k = note_count[picked_track]; k > first_note; k--)
+												{	//Check for each note that has been imported
+													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= openhihatpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+													{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
+														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN);	//Set the open hi hat flag
+													}
+												}
+											}
+										}
+									break;
+									case 6:	//Pedal controlled hi hat
+										if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
+										{	//Only parse hi hat phrases for the drum tracks
+#ifdef EOF_DEBUG
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pedal hi hat (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+											eof_log(eof_log_string, 1);
+#endif
+											if(eof_import_events[i]->event[j]->dp[6] == 1)
+											{	//Start of phrase
+												pedalhihatpos[phrasediff] = event_realtime;
+											}
+											else if(eof_import_events[i]->event[j]->dp[6] == 0)
+											{	//End of phrase
+												for(k = note_count[picked_track]; k > first_note; k--)
+												{	//Check for each note that has been imported
+													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= pedalhihatpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+													{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
+														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL);	//Set the pedal controlled hi hat flag
+													}
+												}
+											}
+										}
+									break;
+									case 7:	//Snare rim shot
+										if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
+										{	//Only parse rim shot phrases for the drum tracks
+#ifdef EOF_DEBUG
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Rim shot (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+											eof_log(eof_log_string, 1);
+#endif
+											if(eof_import_events[i]->event[j]->dp[6] == 1)
+											{	//Start of phrase
+												rimshotpos[phrasediff] = event_realtime;
+											}
+											else if(eof_import_events[i]->event[j]->dp[6] == 0)
+											{	//End of phrase
+												for(k = note_count[picked_track]; k > first_note; k--)
+												{	//Check for each note that has been imported
+													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= rimshotpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+													{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
+														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_DRUM_NOTE_FLAG_R_RIMSHOT);	//Set the rim shot flag
+													}
+												}
+											}
+										}
+									break;
+									case 8:	//Sizzle hi hat
+										if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
+										{	//Only parse hi hat phrases for the drum tracks
+#ifdef EOF_DEBUG
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Sizzle hi hat (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+											eof_log(eof_log_string, 1);
+#endif
+											if(eof_import_events[i]->event[j]->dp[6] == 1)
+											{	//Start of phrase
+												openhihatpos[phrasediff] = event_realtime;
+											}
+											else if(eof_import_events[i]->event[j]->dp[6] == 0)
+											{	//End of phrase
+												for(k = note_count[picked_track]; k > first_note; k--)
+												{	//Check for each note that has been imported
+													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= openhihatpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+													{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
+														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_DRUM_NOTE_FLAG_Y_SIZZLE);	//Set the sizzle hi hat flag
+													}
+												}
+											}
+										}
+									break;
+									case 17:	//Yellow Tom + Cymbal
+										if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
+										{	//Only parse hi hat phrases for the drum tracks
+#ifdef EOF_DEBUG
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Yellow tom/cymbal combo (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+											eof_log(eof_log_string, 1);
+#endif
+											if(eof_import_events[i]->event[j]->dp[6] == 1)
+											{	//Start of phrase
+												ycombopos[phrasediff] = event_realtime;
+											}
+											else if(eof_import_events[i]->event[j]->dp[6] == 0)
+											{	//End of phrase
+												for(k = note_count[picked_track]; k > first_note; k--)
+												{	//Check for each note that has been imported
+													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= ycombopos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+													{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
+														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_DRUM_NOTE_FLAG_Y_COMBO);	//Set the yellow tom/cymbal combo flag
+													}
+												}
+											}
+										}
+									break;
+									case 18:	//Blue Tom + Cymbal
+										if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
+										{	//Only parse hi hat phrases for the drum tracks
+#ifdef EOF_DEBUG
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Blue tom/cymbal combo (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+											eof_log(eof_log_string, 1);
+#endif
+											if(eof_import_events[i]->event[j]->dp[6] == 1)
+											{	//Start of phrase
+												bcombopos[phrasediff] = event_realtime;
+											}
+											else if(eof_import_events[i]->event[j]->dp[6] == 0)
+											{	//End of phrase
+												for(k = note_count[picked_track]; k > first_note; k--)
+												{	//Check for each note that has been imported
+													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= bcombopos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+													{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
+														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_DRUM_NOTE_FLAG_B_COMBO);	//Set the blue tom/cymbal combo flag
+													}
+												}
+											}
+										}
+									break;
+									case 19:	//Green Tom + Cymbal
+										if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
+										{	//Only parse hi hat phrases for the drum tracks
+#ifdef EOF_DEBUG
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Green tom/cymbal combo (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+											eof_log(eof_log_string, 1);
+#endif
+											if(eof_import_events[i]->event[j]->dp[6] == 1)
+											{	//Start of phrase
+												gcombopos[phrasediff] = event_realtime;
+											}
+											else if(eof_import_events[i]->event[j]->dp[6] == 0)
+											{	//End of phrase
+												for(k = note_count[picked_track]; k > first_note; k--)
+												{	//Check for each note that has been imported
+													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= gcombopos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+													{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
+														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_DRUM_NOTE_FLAG_G_COMBO);	//Set the green tom/cymbal combo flag
+													}
+												}
+											}
+										}
+									break;
+									default:
 									break;
 								}
+							break;
+							default:
+							break;
+						}
+					}
+					free(eof_import_events[i]->event[j]->dp);	//The the memory allocated to store this Sysex message's data
+					eof_import_events[i]->event[j]->dp = NULL;
+				}//Sysex event
+
+				/* Control change event (Used in Power Gig to mark HO/PO and the equivalent of star power sections */
+				else if(eof_import_events[i]->event[j]->type == 0xB0)
+				{	//Control change event
+					if(eof_import_events[i]->game == 1)
+					{	//If the MIDI is in Power Gig notation
+#ifdef EOF_DEBUG
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tControl change:  Controller type %d, value %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->d2, eof_import_events[i]->event[j]->pos, event_realtime);
+						eof_log(eof_log_string, 1);
+#endif
+						if(eof_import_events[i]->event[j]->d1 == 68)
+						{	//This control change event marks forced HOPO phrases
+							if(eof_import_events[i]->event[j]->d2 == 127)
+							{	//This starts the phrase
+								powergig_hopo = 1;
+							}
+							else
+							{	//This ends the phrase
+								powergig_hopo = 0;
 							}
 						}
-					}//Note off event
-
-					else if((eof_import_events[i]->event[j]->type == 0x01) && (ustrstr(eof_import_events[i]->event[j]->text, "[chrd") == eof_import_events[i]->event[j]->text))
-					{	//If this is a text event that begins with RB3's note name notation "[chrd"
-						char *ptr = NULL;	//This will point to the destination name array
-						char *ptr2 = NULL;	//This will be used to index into the text event
-						unsigned long index = 0;
-
-						if(eof_import_events[i]->event[j]->text[5] != '\0')
-						{	//If the string is long enough to have a difficulty ID
-							switch(eof_import_events[i]->event[j]->text[5])
-							{
-								case '0':	//Easy
-									ptr = chord0name;
-								break;
-								case '1':	//Medium
-									ptr = chord1name;
-								break;
-								case '2':	//Hard
-									ptr = chord2name;
-								break;
-								case '3':	//Expert
-									ptr = chord3name;
-								break;
+						else if((eof_import_events[i]->event[j]->d1 >= 80) && (eof_import_events[i]->event[j]->d1 <= 82))
+						{	//These control change events mark "mojo" sections (the equivalent of star power phrases)
+							if(eof_import_events[i]->event[j]->d2 == 127)
+							{	//This starts the phrase
+								if(!powergig_sp && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
+								{	//If a star power phrase had not been started, and another phrase can be stored
+									phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
+									phraseptr->start_pos = event_realtime;
+									powergig_sp = 1;
+								}
 							}
-							if((ptr != NULL) && (eof_import_events[i]->event[j]->text[6] == ' '))
-							{	//If a valid difficulty ID was parsed and the following character is a space
-								ptr2 = ustrchr(eof_import_events[i]->event[j]->text, ' ');	//Get the address of the string's first space character
-								if(ptr2 != NULL)
+							else
+							{	//This ends the phrase
+								if(powergig_sp && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
+								{	//If a star power phrase had been started, and another phrase can be stored
+									phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
+									phraseptr->end_pos = event_realtime;
+									eof_set_num_star_power_paths(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track) + 1);
+								}
+								powergig_sp = 0;
+							}
+						}
+					}//If the MIDI is in Power Gig notation
+				}//Control change event
+			}//If parsing a legacy track
+			else if(eof_midi_tracks[picked_track].track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If parsing a pro guitar track
+				if((eof_import_events[i]->event[j]->type == 0x80) || (eof_import_events[i]->event[j]->type == 0x90))
+				{	//For note on/off events, determine the type (difficulty) of the event
+					if((eof_import_events[i]->event[j]->d1 >= 24) && (eof_import_events[i]->event[j]->d1 <= 29))
+					{	//Notes 24 through 29 represent supaeasy pro guitar
+						lane = eof_import_events[i]->event[j]->d1 - 24;
+						diff = EOF_NOTE_SUPAEASY;
+						chordname = chord0name;		//Have this pointer reference the supaeasy note name array
+					}
+					else if((eof_import_events[i]->event[j]->d1 >= 48) && (eof_import_events[i]->event[j]->d1 <= 53))
+					{	//Notes 48 through 53 represent easy pro guitar
+						lane = eof_import_events[i]->event[j]->d1 - 48;
+						diff = EOF_NOTE_EASY;
+						chordname = chord1name;		//Have this pointer reference the easy note name array
+					}
+					else if((eof_import_events[i]->event[j]->d1 >= 72) && (eof_import_events[i]->event[j]->d1 <= 77))
+					{	//Notes 72 through 77 represent medium pro guitar
+						lane = eof_import_events[i]->event[j]->d1 - 72;
+						diff = EOF_NOTE_MEDIUM;
+						chordname = chord2name;		//Have this pointer reference the medium note name array
+					}
+					else if((eof_import_events[i]->event[j]->d1 >= 96) && (eof_import_events[i]->event[j]->d1 <= 101))
+					{	//Notes 96 through 101 represent amazing pro guitar
+						lane = eof_import_events[i]->event[j]->d1 - 96;
+						diff = EOF_NOTE_AMAZING;
+						chordname = chord3name;		//Have this pointer reference the amazing note name array
+					}
+					else if((eof_import_events[i]->event[j]->d1 >= 120) && (eof_import_events[i]->event[j]->d1 <= 125))
+					{
+						lane = eof_import_events[i]->event[j]->d1 - 120;
+						diff = EOF_NOTE_SPECIAL;
+						chordname = NULL;		//BRE notes do not store chord names
+					}
+					else
+					{
+						lane = 0;	//No defined lane
+						diff = -1;	//No defined difficulty
+					}
+				}
+
+				/* note on */
+				if(eof_import_events[i]->event[j]->type == 0x90)
+				{	//Note on event
+					unsigned long *slideptr;	//This will point to either the up or down slide position array as appropriate, so the velocity can be checked just once
+					char strum = 0;	//Will store the strum type, to reduce duplicated logic below
+
+#ifdef EOF_DEBUG
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote on:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
+					eof_log(eof_log_string, 1);
+#endif
+					/* store forced Ho/Po markers, when the note off for this marker occurs, search for note with same position and apply it to that note */
+					//Pro guitar forced Ho/Po are both marked as lane 1 + 6
+					if(eof_import_events[i]->event[j]->d1 == 24 + 6)
+					{
+						hopopos[0] = event_realtime;
+						hopotype[0] = 1;
+					}
+					else if(eof_import_events[i]->event[j]->d1 == 48 + 6)
+					{
+						hopopos[1] = event_realtime;
+						hopotype[1] = 1;
+					}
+					else if(eof_import_events[i]->event[j]->d1 == 72 + 6)
+					{
+						hopopos[2] = event_realtime;
+						hopotype[2] = 1;
+					}
+					else if(eof_import_events[i]->event[j]->d1 == 96 + 6)
+					{
+						hopopos[3] = event_realtime;
+						hopotype[3] = 1;
+					}
+
+					/* store slide marker, when the note off for this marker occurs, search for notes within the phrase and apply the status to them */
+					//Slide phrases are marked as lane (1 + 7)
+					if(eof_import_events[i]->event[j]->d2 >= 108)
+					{	//For slide markers, velocity 108 or higher represents a down slide
+						slideptr = slidedownpos;	//The slide marker (if present) would be a down slide
+					}
+					else
+					{	//Other velocities represent an up slide
+						slideptr = slideuppos;		//The slide marker (if present) would be an up slide
+					}
+					if(eof_import_events[i]->event[j]->d1 == 24 + 7)
+					{
+						slideptr[0] = event_realtime;
+						slidevelocity[0] = eof_import_events[i]->event[j]->d2;	//Cache the velocity of the slide, because the slide end marker won't use it
+					}
+					else if(eof_import_events[i]->event[j]->d1 == 48 + 7)
+					{
+						slideptr[1] = event_realtime;
+						slidevelocity[1] = eof_import_events[i]->event[j]->d2;	//Cache the velocity of the slide, because the slide end marker won't use it
+					}
+					else if(eof_import_events[i]->event[j]->d1 == 72 + 7)
+					{
+						slideptr[2] = event_realtime;
+						slidevelocity[2] = eof_import_events[i]->event[j]->d2;	//Cache the velocity of the slide, because the slide end marker won't use it
+					}
+					else if(eof_import_events[i]->event[j]->d1 == 96 + 7)
+					{
+						slideptr[3] = event_realtime;
+						slidevelocity[3] = eof_import_events[i]->event[j]->d2;	//Cache the velocity of the slide, because the slide end marker won't use it
+					}
+
+					/* store arpeggio marker, when the note off for this marker occurs, search for notes with same position and apply it to them */
+					//Arpeggio phrases on are marked as lane (1 + 8)
+					if(eof_import_events[i]->event[j]->d1 == 24 + 8)
+					{
+						arpegpos[0] = event_realtime;
+					}
+					else if(eof_import_events[i]->event[j]->d1 == 48 + 8)
+					{
+						arpegpos[1] = event_realtime;
+					}
+					else if(eof_import_events[i]->event[j]->d1 == 72 + 8)
+					{
+						arpegpos[2] = event_realtime;
+					}
+					else if(eof_import_events[i]->event[j]->d1 == 96 + 8)
+					{
+						arpegpos[3] = event_realtime;
+					}
+
+					/* store strum direction marker, when the note off for this marker occurs, search for notes with same position and apply it to them */
+					//Lane (1 + 9), channel 13 is used in up strum markers
+					if(eof_import_events[i]->event[j]->channel == 13)
+					{	//Channel 13 is used in up strum markers
+						strum = 0;
+					}
+					else if(eof_import_events[i]->event[j]->channel == 14)
+					{	//Channel 14 is used in mid strum markers
+						strum = 1;
+					}
+					else if(eof_import_events[i]->event[j]->channel == 15)
+					{	//Channel 15 is used in down strum markers
+						strum = 2;
+					}
+					if(eof_import_events[i]->event[j]->d1 == 24 + 9)
+					{
+						strumpos[0] = event_realtime;
+						strumtype[0] = strum;
+					}
+					else if(eof_import_events[i]->event[j]->d1 == 48 + 9)
+					{
+						strumpos[1] = event_realtime;
+						strumtype[1] = strum;
+					}
+					else if(eof_import_events[i]->event[j]->d1 == 72 + 9)
+					{
+						strumpos[2] = event_realtime;
+						strumtype[2] = strum;
+					}
+					else if(eof_import_events[i]->event[j]->d1 == 96 + 9)
+					{
+						strumpos[3] = event_realtime;
+						strumtype[3] = strum;
+					}
+
+					/* arpeggios, solos, star power, tremolos and trills */
+					phraseptr = NULL;
+					if((eof_import_events[i]->event[j]->d1 == 115) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
+					{	//Pro guitar solos are marked with note 115
+						phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
+						phraseptr->start_pos = event_realtime;
+					}
+					else if((eof_import_events[i]->event[j]->d1 == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
+					{	//Star power is marked with note 116
+						phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
+						phraseptr->start_pos = event_realtime;
+					}
+					else if((eof_import_events[i]->event[j]->d1 == 126) && (eof_get_num_tremolos(sp, picked_track) < EOF_MAX_PHRASES))
+					{	//Tremolos are marked with note 126
+						phraseptr = eof_get_tremolo(sp, picked_track, eof_get_num_tremolos(sp, picked_track));
+						phraseptr->start_pos = event_realtime;
+						phraseptr->difficulty = 0xFF;	//Tremolo phrases imported from MIDI apply to all difficulties
+					}
+					else if((eof_import_events[i]->event[j]->d1 == 127) && (eof_get_num_trills(sp, picked_track) < EOF_MAX_PHRASES))
+					{	//Trills are marked with note 127
+						phraseptr = eof_get_trill(sp, picked_track, eof_get_num_trills(sp, picked_track));
+						phraseptr->start_pos = event_realtime;
+					}
+					if(phraseptr)
+					{	//If a phrase was created, initialize some other values
+						phraseptr->flags = 0;
+						phraseptr->name[0] = '\0';
+					}
+
+					/* fret hand positions */
+					if(eof_import_events[i]->event[j]->d1 == 108)
+					{	//Pro guitar fret hand positions are marked with note 108
+						if(eof_import_events[i]->event[j]->d2 < 100)
+						{	//If this is an invalid velocity for a fret hand position
+#ifdef EOF_DEBUG
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying fret hand position at pos=%lu from velocity %d to 101", event_realtime, eof_import_events[i]->event[j]->d2);
+							eof_log(eof_log_string, 1);
+#endif
+							eof_import_events[i]->event[j]->d2 = 101;	//Reset it to a position of 1
+						}
+						(void) eof_track_add_section(sp, picked_track, EOF_FRET_HAND_POS_SECTION, EOF_NOTE_AMAZING, event_realtime, eof_import_events[i]->event[j]->d2 - 100, 0, NULL);
+					}
+
+					if(diff != -1)
+					{	//If a note difficulty was identified above
+						char match = 0;	//Is set to nonzero if this note on is matched with a previously added note
+
+						k = 0;
+						if(note_count[picked_track] > 0)
+						{	//If at least one note has been added already
+							for(k = note_count[picked_track]; k > first_note; k--)
+							{	//Traverse the note list in reverse to find the appropriate note to modify
+								if((eof_get_note_pos(sp, picked_track, k - 1) == event_realtime) && (eof_get_note_type(sp, picked_track, k - 1) == diff))
 								{
-									ptr2++;	//Advance past the first space character
-									while((ptr2[0] != '\0') && (ptr2[0] != ']'))
-									{	//Until the end of string or end of chord name are reached
-										if(index >= 99)
-											break;	//Prevent a buffer overflow
-										ptr[index++] = ptr2[0];	//Store this character into the appropriate string
-										ptr2++;	//Advance to the next character
-									}
-									ptr[index]='\0';	//Terminate the string
+									match = 1;
+									break;	//End the search, as a match was found
 								}
 							}
 						}
-					}//If this is a text event that begins with RB3's note name notation "[chrd"
+						if(!match)
+						{	//If the note doesn't match the same time and difficulty as an existing note, this MIDI event represents a new note, initialize it now and increment the note count
+							notenum = note_count[picked_track];
+							eof_set_note_note(sp, picked_track, notenum, lane_chart[lane]);
+							eof_set_note_pos(sp, picked_track, notenum, event_realtime);
+							eof_set_note_length(sp, picked_track, notenum, 0);	//The length will be kept at 0 until the end of the note is found
+							eof_set_note_flags(sp, picked_track, notenum, 0);	//Clear the flag here so that the flag can be set if it has a special status
+							eof_set_note_type(sp, picked_track, notenum, diff);	//Apply the determined difficulty
+							if(chordname && (chordname[0] != '\0'))
+							{	//If there is a chord name stored for this difficulty
+								eof_set_note_name(sp, picked_track, notenum, chordname);	//Populate the note name with whatever name was read last
+								chordname[0] = '\0';										//Empty the chord name array for this difficulty
+							}
+							else
+							{	//Otherwise ensure the note has an empty name string
+								eof_set_note_name(sp, picked_track, notenum, "");
+							}
+							note_count[picked_track]++;
+#ifdef EOF_DEBUG
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tInitializing note #%lu (Diff=%d):  Mask=%u, Pos=%lu, Length=%d", notenum, eof_get_note_type(sp, picked_track, notenum), lane_chart[lane], event_realtime, 0);
+							eof_log(eof_log_string, 1);
+#endif
+						}
+						else
+						{	//Otherwise just modify the existing note by adding a gem
+							notenum = k - 1;
+#ifdef EOF_DEBUG
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%d, Pos=%lu) from mask %d to %d", notenum, eof_get_note_type(sp, picked_track, notenum), event_realtime, eof_get_note_note(sp, picked_track, notenum), eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
+							eof_log(eof_log_string, 1);
+#endif
+							eof_set_note_note(sp, picked_track, notenum, eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
+						}
+						if(eof_import_events[i]->event[j]->d2 < 100)
+						{	//Some other editors may have an invalid velocity defined
+#ifdef EOF_DEBUG
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%d, Pos=%lu) from velocity %d to 100", notenum, eof_get_note_type(sp, picked_track, notenum), event_realtime, eof_import_events[i]->event[j]->d2);
+							eof_log(eof_log_string, 1);
+#endif
+							eof_import_events[i]->event[j]->d2 = 100;	//In which case, revert the velocity to the lowest usable value
+						}
+						sp->pro_guitar_track[tracknum]->note[notenum]->frets[lane] = eof_import_events[i]->event[j]->d2 - 100;	//Velocity (100 + X) represents fret # X
+						if(sp->pro_guitar_track[tracknum]->note[notenum]->frets[lane] > sp->pro_guitar_track[tracknum]->numfrets)
+						{	//If this fret value is higher than this track's recorded maximum
+							if(!fretwarning)
+							{	//If the user hasn't been warned about this problem for this track
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  At least one note (at %lu ms) in %s breaks the track's fret limit of %u.  This can cause Rock Band to crash.", event_realtime, eof_midi_tracks[picked_track].name, sp->pro_guitar_track[tracknum]->numfrets);
+								eof_log(eof_log_string, 1);
+								allegro_message("Warning:  At least one note (at %lu ms) in %s breaks the track's fret limit of %u.\nThis can cause Rock Band to crash.", event_realtime, eof_midi_tracks[picked_track].name, sp->pro_guitar_track[tracknum]->numfrets);
+								fretwarning = 1;
+							}
+							sp->pro_guitar_track[tracknum]->numfrets = sp->pro_guitar_track[tracknum]->note[notenum]->frets[lane];	//Increase the maximum to reflect this fret value
+						}
+						if(eof_import_events[i]->event[j]->channel == 1)
+						{	//If this note was sent over channel 1, it is a ghost note
+							sp->pro_guitar_track[tracknum]->note[notenum]->ghost |= lane_chart[lane];	//Set the ghost flag for this gem's string
+						}
+						else if(eof_import_events[i]->event[j]->channel == 2)
+						{	//If this note was sent over channel 2, it is a bend
+							sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;	//Set the bend flag
+						}
+						else if(eof_import_events[i]->event[j]->channel == 3)
+						{	//If this note was sent over channel 3, the gem is muted
+							sp->pro_guitar_track[tracknum]->note[notenum]->frets[lane] |= 0x80;	//Set the MSB to indicate the string is muted
+						}
+						else if(eof_import_events[i]->event[j]->channel == 4)
+						{	//If this note was sent over channel 4, it is tapped
+							sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_TAP;	//Set the tap flag
+						}
+						else if(eof_import_events[i]->event[j]->channel == 5)
+						{	//If this note was sent over channel 5, it is a harmonic
+							sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;	//Set the harmonic flag
+						}
+						else if(eof_import_events[i]->event[j]->channel == 6)
+						{	//If this note was sent over channel 6, it is a pinch harmonic
+							sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;	//Set the harmonic flag
+						}
+///KEEP FOR DEBUGGING
+/*							else if(eof_import_events[i]->event[j]->channel == 13)
+						{
+							sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Set the highlight flag
+						}
+*/
+					}//If a note difficulty was identified above
+				}//Note on event
 
-					/* Sysex event (custom phrase markers for Phase Shift) */
-					if((eof_import_events[i]->event[j]->type == 0xF0) && eof_import_events[i]->event[j]->dp)
-					{	//Sysex event
-						if((eof_import_events[i]->event[j]->d1 == 8) && (!strncmp(eof_import_events[i]->event[j]->dp, "PS", 3)))
-						{	//If this is a custom Sysex Phase Shift marker (8 bytes long, beginning with the NULL terminated string "PS")
-							switch(eof_import_events[i]->event[j]->dp[3])
-							{	//Check the value of the message ID
-								case 0:	//Phrase marker
-									phrasediff = eof_import_events[i]->event[j]->dp[4];	//Store the difficulty ID
-									switch(eof_import_events[i]->event[j]->dp[5])
-									{	//Check the value of the phrase ID
-										case 2:	//Pro guitar slide up
+				/* note off so get length of note */
+				else if(eof_import_events[i]->event[j]->type == 0x80)
+				{	//Note off event
 #ifdef EOF_DEBUG
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar slide up (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
-											eof_log(eof_log_string, 1);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote off:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
+					eof_log(eof_log_string, 1);
 #endif
-											if(eof_import_events[i]->event[j]->dp[6] == 1)
-											{	//Start of pro guitar slide up phrase
-												slideuppos[phrasediff] = event_realtime;
-											}
-											else if(eof_import_events[i]->event[j]->dp[6] == 0)
-											{	//End of pro guitar slide up phrase
-												for(k = note_count[picked_track]; k > first_note; k--)
-												{	//Check for each note that has been imported
-													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= slideuppos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-													{	//If the note is in the same difficulty as the pro guitar slide up phrase, and its timestamp falls between the phrase on and phrase off marker
-														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);	//Set the slide up flag
-													}
-												}
-											}
-										break;
-										case 3:	//Pro guitar slide down
+					/* detect forced HOPO */
+					hopodiff = -1;
+					if(eof_import_events[i]->event[j]->d1 == 24 + 6)
+					{
+						hopodiff = 0;
+					}
+					else if(eof_import_events[i]->event[j]->d1 == 48 + 6)
+					{
+						hopodiff = 1;
+					}
+					else if(eof_import_events[i]->event[j]->d1 == 72 + 6)
+					{
+						hopodiff = 2;
+					}
+					else if(eof_import_events[i]->event[j]->d1 == 96 + 6)
+					{
+						hopodiff = 3;
+					}
+					if(hopodiff >= 0)
+					{
+						for(k = note_count[picked_track]; k > first_note; k--)
+						{	//Check (in reverse) for each note that has been imported
+							if((eof_get_note_type(sp, picked_track, k - 1) == hopodiff) && (eof_get_note_pos(sp, picked_track, k - 1) >= hopopos[hopodiff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+							{	//If the note is in the same difficulty as the HOPO phrase, and its timestamp falls within the Ho/Po marker
+								eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_HO);	//RB3 marks forced hammer ons the same as forced pull offs
+							}
+						}
+					}/* detect forced HOPO */
+
+					/* detect slide markers */
+					slidediff = -1;	//Don't process a slide marker unless one was found
+					if(eof_import_events[i]->event[j]->d1 == 24 + 7)
+					{
+						slidediff = 0;
+					}
+					else if(eof_import_events[i]->event[j]->d1 == 48 + 7)
+					{
+						slidediff = 1;
+					}
+					else if(eof_import_events[i]->event[j]->d1 == 72 + 7)
+					{
+						slidediff = 2;
+					}
+					else if(eof_import_events[i]->event[j]->d1 == 96 + 7)
+					{
+						slidediff = 3;
+					}
+					if(slidediff >= 0)
+					{	//If a slide marker was found
+						unsigned long *slideptr;	//This will point to either the up or down slide position array as appropriate, so the velocity can be checked just once
+						unsigned long slideflag;	//Cache the slide flag to avoid having to do redundant checks
+
+						if(slidevelocity[slidediff] >= 108)
+						{	//For slide markers, velocity 108 or higher represents a down slide.  Read the slide velocity that was cached at the start of the slide
+							slideptr = slidedownpos;	//The slide marker is a down slide
+							slideflag = EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+							if(eof_import_events[i]->event[j]->channel == 11)
+							{	//Unless the channel for the marker is 11, in which case it's reversed
+								slideflag |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;
+							}
+						}
+						else
+						{	//Other velocities represent an up slide
+							slideptr = slideuppos;		//The slide marker is an up slide
+							slideflag = EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+							if(eof_import_events[i]->event[j]->channel == 11)
+							{	//Unless the channel for the marker is 11, in which case it's reversed
+								slideflag |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;
+							}
+						}
+						for(k = note_count[picked_track]; k > first_note; k--)
+						{	//Check for each note that has been imported
+							if((eof_get_note_type(sp, picked_track, k - 1) == slidediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= slideptr[slidediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+							{	//If the note is in the same difficulty as the slide marker, and its timestamp falls between the start and stop of the marker
+								eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | slideflag);	//Set the appropriate slide flag for the note
+							}
+						}
+					}
+
+					/* detect arpeggio markers */
+					arpegdiff = -1;	//Don't process an arpeggio marker unless one was found
+					if(eof_import_events[i]->event[j]->d1 == 24 + 8)
+					{
+						arpegdiff = 0;
+					}
+					else if(eof_import_events[i]->event[j]->d1 == 48 + 8)
+					{
+						arpegdiff = 1;
+					}
+					else if(eof_import_events[i]->event[j]->d1 == 72 + 8)
+					{
+						arpegdiff = 2;
+					}
+					else if(eof_import_events[i]->event[j]->d1 == 96 + 8)
+					{
+						arpegdiff = 3;
+					}
+					if((arpegdiff >= 0) && (eof_get_num_arpeggios(sp, picked_track) < EOF_MAX_PHRASES))
+					{	//If an arpeggio marker was found, and the max number of arpeggio phrases haven't already been added
+						phraseptr = eof_get_arpeggio(sp, picked_track, eof_get_num_arpeggios(sp, picked_track));
+						phraseptr->start_pos = arpegpos[arpegdiff];
+						phraseptr->end_pos = event_realtime;
+						phraseptr->difficulty = arpegdiff;	//Set the difficulty for this arpeggio
+						eof_set_num_arpeggios(sp, picked_track, eof_get_num_arpeggios(sp, picked_track) + 1);
+					}
+
+					/* detect strum direction markers */
+					strumdiff = -1;	//Don't process a strum marker unless one was found
+					if((eof_import_events[i]->event[j]->channel >= 13) && (eof_import_events[i]->event[j]->channel <= 15))
+					{	//Lane (1 + 9), channel 13, 14 and 15 are used in up, mid and down strum markers
+						if(eof_import_events[i]->event[j]->d1 == 24 + 9)
+						{
+							strumdiff = 0;
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 48 + 9)
+						{
+							strumdiff = 1;
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 72 + 9)
+						{
+							strumdiff = 2;
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 96 + 9)
+						{
+							strumdiff = 3;
+						}
+					}
+					if(strumdiff >= 0)
+					{	//If a strum marker was found
+						for(k = note_count[picked_track]; k > first_note; k--)
+						{	//Check for each note that has been imported
+							unsigned long newflags;
+
+							if((eof_get_note_type(sp, picked_track, k - 1) != strumdiff) | (eof_get_note_pos(sp, picked_track, k - 1) < strumpos[strumdiff]) || (eof_get_note_pos(sp, picked_track, k - 1) > event_realtime))
+								continue;	//If the note isn't in the same difficulty as the strum direction marker, or its timestamp falls outside the start and stop time of the marker, skip this note
+
+							newflags = eof_get_note_flags(sp, picked_track, k - 1);
+							if(strumtype[strumdiff] == 0)
+							{	//This was an up strum marker
+								newflags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;
+							}
+							else if(strumtype[strumdiff] == 1)
+							{	//This was a mid strum marker
+								newflags |= EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM;
+							}
+							else
+							{	//This was a down strum marker
+								newflags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;
+							}
+							eof_set_note_flags(sp, picked_track, k - 1, newflags);
+						}
+					}
+
+					if((eof_import_events[i]->event[j]->d1 == 115) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
+					{	//End of a solo phrase
+						phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
+						phraseptr->end_pos = event_realtime;
+						eof_set_num_solos(sp, picked_track, eof_get_num_solos(sp, picked_track) + 1);
+					}
+					else if((eof_import_events[i]->event[j]->d1 == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
+					{	//End of a star power phrase
+						phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
+						phraseptr->end_pos = event_realtime;
+						eof_set_num_star_power_paths(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track) + 1);
+					}
+					else if((eof_import_events[i]->event[j]->d1 == 126) && (eof_get_num_tremolos(sp, picked_track) < EOF_MAX_PHRASES))
+					{	//End of a tremolo phrase
+						phraseptr = eof_get_tremolo(sp, picked_track, eof_get_num_tremolos(sp, picked_track));
+						phraseptr->end_pos = event_realtime;
+						eof_set_num_tremolos(sp, picked_track, eof_get_num_tremolos(sp, picked_track) + 1);
+					}
+					else if((eof_import_events[i]->event[j]->d1 == 127) && (eof_get_num_trills(sp, picked_track) < EOF_MAX_PHRASES))
+					{	//End of a trill phrase
+						phraseptr = eof_get_trill(sp, picked_track, eof_get_num_trills(sp, picked_track));
+						phraseptr->end_pos = event_realtime;
+						eof_set_num_trills(sp, picked_track, eof_get_num_trills(sp, picked_track) + 1);
+					}
+
+					if((note_count[picked_track] > 0) && (diff != -1))
+					{	//If there's at least one note on found for this track, and this note off event has a defined difficulty
+						for(k = note_count[picked_track]; k > first_note; k--)
+						{	//Check for each note that has been imported, in reverse order
+							if((eof_get_note_type(sp, picked_track, k - 1) == diff) && (eof_get_note_note(sp, picked_track, k - 1) & lane_chart[lane]))
+							{	//If the note is in the same difficulty as this note off event and it contains one of the same gems
+//									allegro_message("break %d, %d, %d", k - 1, sp->legacy_track[picked_track]->note[k - 1]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);	//Debug
 #ifdef EOF_DEBUG
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar slide down (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
-											eof_log(eof_log_string, 1);
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u) from length %ld to %lu", k - 1, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_length(sp, picked_track, k - 1), event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
+								eof_log(eof_log_string, 1);
 #endif
-											if(eof_import_events[i]->event[j]->dp[6] == 1)
-											{	//Start of pro guitar slide down phrase
-												slidedownpos[phrasediff] = event_realtime;
-											}
-											else if(eof_import_events[i]->event[j]->dp[6] == 0)
-											{	//End of pro guitar slide down phrase
-												for(k = note_count[picked_track]; k > first_note; k--)
-												{	//Check for each note that has been imported
-													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= slidedownpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-													{	//If the note is in the same difficulty as the pro guitar slide down phrase, and its timestamp falls between the phrase on and phrase off marker
-														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Set the slide up flag
-													}
-												}
-											}
-										break;
-										case 9:	//Pro guitar palm mute
-#ifdef EOF_DEBUG
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar palm mute (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
-											eof_log(eof_log_string, 1);
-#endif
-											if(eof_import_events[i]->event[j]->dp[6] == 1)
-											{	//Start of pro guitar palm mute phrase
-												palmmutepos[phrasediff] = event_realtime;
-											}
-											else if(eof_import_events[i]->event[j]->dp[6] == 0)
-											{	//End of pro guitar palm mute phrase
-												for(k = note_count[picked_track]; k > first_note; k--)
-												{	//Check for each note that has been imported
-													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= palmmutepos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-													{	//If the note is in the same difficulty as the pro guitar palm mute phrase, and its timestamp falls between the phrase on and phrase off marker
-														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE);	//Set the palm mute flag
-													}
-												}
-											}
-										break;
-										case 10:	//Pro guitar vibrato
-#ifdef EOF_DEBUG
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar vibrato (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
-											eof_log(eof_log_string, 1);
-#endif
-											if(eof_import_events[i]->event[j]->dp[6] == 1)
-											{	//Start of pro guitar vibrato phrase
-												vibratopos[phrasediff] = event_realtime;
-											}
-											else if(eof_import_events[i]->event[j]->dp[6] == 0)
-											{	//End of pro guitar vibrato phrase
-												for(k = note_count[picked_track]; k > first_note; k--)
-												{	//Check for each note that has been imported
-													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= vibratopos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-													{	//If the note is in the same difficulty as the pro guitar vibrato phrase, and its timestamp falls between the phrase on and phrase off marker
-														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO);	//Set the vibrato flag
-													}
-												}
-											}
-										break;
-										case 11:	//Pro guitar harmonic
-#ifdef EOF_DEBUG
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar harmonic (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
-											eof_log(eof_log_string, 1);
-#endif
-											if(eof_import_events[i]->event[j]->dp[6] == 1)
-											{	//Start of pro guitar harmonic phrase
-												harmpos[phrasediff] = event_realtime;
-											}
-											else if(eof_import_events[i]->event[j]->dp[6] == 0)
-											{	//End of pro guitar harmonic phrase
-												for(k = note_count[picked_track]; k > first_note; k--)
-												{	//Check for each note that has been imported
-													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= harmpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-													{	//If the note is in the same difficulty as the pro guitar harmonic phrase, and its timestamp falls between the phrase on and phrase off marker
-														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC);	//Set the harmonic flag
-													}
-												}
-											}
-										break;
-										case 12:	//Pro guitar pinch harmonic
-#ifdef EOF_DEBUG
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar pinch harmonic (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
-											eof_log(eof_log_string, 1);
-#endif
-											if(eof_import_events[i]->event[j]->dp[6] == 1)
-											{	//Start of pro guitar pinch harmonic phrase
-												pharmpos[phrasediff] = event_realtime;
-											}
-											else if(eof_import_events[i]->event[j]->dp[6] == 0)
-											{	//End of pro guitar pinch harmonic phrase
-												for(k = note_count[picked_track]; k > first_note; k--)
-												{	//Check for each note that has been imported
-													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= pharmpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-													{	//If the note is in the same difficulty as the pro guitar pinch harmonic phrase, and its timestamp falls between the phrase on and phrase off marker
-														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC);	//Set the pinch harmonic flag
-													}
-												}
-											}
-										break;
-										case 13:	//Pro guitar bend
-#ifdef EOF_DEBUG
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar bend (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
-											eof_log(eof_log_string, 1);
-#endif
-											if(eof_import_events[i]->event[j]->dp[6] == 1)
-											{	//Start of pro guitar bend phrase
-												bendpos[phrasediff] = event_realtime;
-											}
-											else if(eof_import_events[i]->event[j]->dp[6] == 0)
-											{	//End of pro guitar bend phrase
-												for(k = note_count[picked_track]; k > first_note; k--)
-												{	//Check for each note that has been imported
-													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= bendpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-													{	//If the note is in the same difficulty as the pro guitar bend phrase, and its timestamp falls between the phrase on and phrase off marker
-														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_BEND);	//Set the bend flag
-													}
-												}
-											}
-										break;
-										case 14:	//Pro guitar accent
-#ifdef EOF_DEBUG
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar accent (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
-											eof_log(eof_log_string, 1);
-#endif
-											if(eof_import_events[i]->event[j]->dp[6] == 1)
-											{	//Start of pro guitar accent phrase
-												accentpos[phrasediff] = event_realtime;
-											}
-											else if(eof_import_events[i]->event[j]->dp[6] == 0)
-											{	//End of pro guitar accent phrase
-												for(k = note_count[picked_track]; k > first_note; k--)
-												{	//Check for each note that has been imported
-													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= accentpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-													{	//If the note is in the same difficulty as the pro guitar accent phrase, and its timestamp falls between the phrase on and phrase off marker
-														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_ACCENT);	//Set the accent flag
-													}
-												}
-											}
-										break;
-										case 15:	//Pro guitar pop
-#ifdef EOF_DEBUG
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar pop (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
-											eof_log(eof_log_string, 1);
-#endif
-											if(eof_import_events[i]->event[j]->dp[6] == 1)
-											{	//Start of pro guitar pop phrase
-												poppos[phrasediff] = event_realtime;
-											}
-											else if(eof_import_events[i]->event[j]->dp[6] == 0)
-											{	//End of pro guitar pop phrase
-												for(k = note_count[picked_track]; k > first_note; k--)
-												{	//Check for each note that has been imported
-													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= poppos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-													{	//If the note is in the same difficulty as the pro guitar pop phrase, and its timestamp falls between the phrase on and phrase off marker
-														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_POP);	//Set the pop flag
-													}
-												}
-											}
-										break;
-										case 16:	//Pro guitar slap
-#ifdef EOF_DEBUG
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar slap (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
-											eof_log(eof_log_string, 1);
-#endif
-											if(eof_import_events[i]->event[j]->dp[6] == 1)
-											{	//Start of pro guitar slap phrase
-												slappos[phrasediff] = event_realtime;
-											}
-											else if(eof_import_events[i]->event[j]->dp[6] == 0)
-											{	//End of pro guitar slap phrase
-												for(k = note_count[picked_track]; k > first_note; k--)
-												{	//Check for each note that has been imported
-													if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= slappos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-													{	//If the note is in the same difficulty as the pro guitar slap phrase, and its timestamp falls between the phrase on and phrase off marker
-														eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_SLAP);	//Set the slap flag
-													}
-												}
-											}
-										break;
-									}
+								eof_set_note_length(sp, picked_track, k - 1, event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
+								if(eof_get_note_length(sp, picked_track, k - 1) <= 0)
+								{	//If the note somehow received a zero or negative length
+									eof_set_note_length(sp, picked_track, k - 1, 1);
+								}
 								break;
 							}
-						}//If this is a custom Sysex Phase Shift marker (8 bytes long, beginning with the NULL terminated string "PS")
-						free(eof_import_events[i]->event[j]->dp);	//The the memory allocated to store this Sysex message's data
-						eof_import_events[i]->event[j]->dp = NULL;
-					}//Sysex event
-				}//If parsing a pro guitar track
-				pticker++;
-			}//For each event in this track
+						}
+					}
+				}//Note off event
 
-			eof_track_resize(sp, picked_track, note_count[picked_track]);
-			if(eof_import_events[i]->game == 0)
-			{	//If this is not a Power Gig formatted MIDI, only allow one MIDI track to import into each track in the project
-				if(eof_get_track_size(sp, picked_track) > 0)
-				{	//If at least one note was imported
-					eof_track_find_crazy_notes(sp, picked_track, 0);
-					used_track[picked_track] = 1;	//Note that this track has been imported, duplicate instances of the track will be ignored
-				}
+				else if((eof_import_events[i]->event[j]->type == 0x01) && (ustrstr(eof_import_events[i]->event[j]->text, "[chrd") == eof_import_events[i]->event[j]->text))
+				{	//If this is a text event that begins with RB3's note name notation "[chrd"
+					char *ptr = NULL;	//This will point to the destination name array
+					char *ptr2 = NULL;	//This will be used to index into the text event
+					unsigned long index = 0;
+
+					if(eof_import_events[i]->event[j]->text[5] != '\0')
+					{	//If the string is long enough to have a difficulty ID
+						switch(eof_import_events[i]->event[j]->text[5])
+						{
+							case '0':	//Easy
+								ptr = chord0name;
+							break;
+							case '1':	//Medium
+								ptr = chord1name;
+							break;
+							case '2':	//Hard
+								ptr = chord2name;
+							break;
+							case '3':	//Expert
+								ptr = chord3name;
+							break;
+							default:
+							break;
+						}
+						if((ptr != NULL) && (eof_import_events[i]->event[j]->text[6] == ' '))
+						{	//If a valid difficulty ID was parsed and the following character is a space
+							ptr2 = ustrchr(eof_import_events[i]->event[j]->text, ' ');	//Get the address of the string's first space character
+							if(ptr2 != NULL)
+							{
+								ptr2++;	//Advance past the first space character
+								while((ptr2[0] != '\0') && (ptr2[0] != ']'))
+								{	//Until the end of string or end of chord name are reached
+									if(index >= 99)
+										break;	//Prevent a buffer overflow
+									ptr[index++] = ptr2[0];	//Store this character into the appropriate string
+									ptr2++;	//Advance to the next character
+								}
+								ptr[index]='\0';	//Terminate the string
+							}
+						}
+					}
+				}//If this is a text event that begins with RB3's note name notation "[chrd"
+
+				/* Sysex event (custom phrase markers for Phase Shift) */
+				if((eof_import_events[i]->event[j]->type == 0xF0) && eof_import_events[i]->event[j]->dp)
+				{	//Sysex event
+					if((eof_import_events[i]->event[j]->d1 == 8) && (!strncmp(eof_import_events[i]->event[j]->dp, "PS", 3)))
+					{	//If this is a custom Sysex Phase Shift marker (8 bytes long, beginning with the NULL terminated string "PS")
+						switch(eof_import_events[i]->event[j]->dp[3])
+						{	//Check the value of the message ID
+							case 0:	//Phrase marker
+								phrasediff = eof_import_events[i]->event[j]->dp[4];	//Store the difficulty ID
+								switch(eof_import_events[i]->event[j]->dp[5])
+								{	//Check the value of the phrase ID
+									case 2:	//Pro guitar slide up
+#ifdef EOF_DEBUG
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar slide up (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+										eof_log(eof_log_string, 1);
+#endif
+										if(eof_import_events[i]->event[j]->dp[6] == 1)
+										{	//Start of pro guitar slide up phrase
+											slideuppos[phrasediff] = event_realtime;
+										}
+										else if(eof_import_events[i]->event[j]->dp[6] == 0)
+										{	//End of pro guitar slide up phrase
+											for(k = note_count[picked_track]; k > first_note; k--)
+											{	//Check for each note that has been imported
+												if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= slideuppos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+												{	//If the note is in the same difficulty as the pro guitar slide up phrase, and its timestamp falls between the phrase on and phrase off marker
+													eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);	//Set the slide up flag
+												}
+											}
+										}
+									break;
+									case 3:	//Pro guitar slide down
+#ifdef EOF_DEBUG
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar slide down (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+										eof_log(eof_log_string, 1);
+#endif
+										if(eof_import_events[i]->event[j]->dp[6] == 1)
+										{	//Start of pro guitar slide down phrase
+											slidedownpos[phrasediff] = event_realtime;
+										}
+										else if(eof_import_events[i]->event[j]->dp[6] == 0)
+										{	//End of pro guitar slide down phrase
+											for(k = note_count[picked_track]; k > first_note; k--)
+											{	//Check for each note that has been imported
+												if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= slidedownpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+												{	//If the note is in the same difficulty as the pro guitar slide down phrase, and its timestamp falls between the phrase on and phrase off marker
+													eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Set the slide up flag
+												}
+											}
+										}
+									break;
+									case 9:	//Pro guitar palm mute
+#ifdef EOF_DEBUG
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar palm mute (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+										eof_log(eof_log_string, 1);
+#endif
+										if(eof_import_events[i]->event[j]->dp[6] == 1)
+										{	//Start of pro guitar palm mute phrase
+											palmmutepos[phrasediff] = event_realtime;
+										}
+										else if(eof_import_events[i]->event[j]->dp[6] == 0)
+										{	//End of pro guitar palm mute phrase
+											for(k = note_count[picked_track]; k > first_note; k--)
+											{	//Check for each note that has been imported
+												if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= palmmutepos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+												{	//If the note is in the same difficulty as the pro guitar palm mute phrase, and its timestamp falls between the phrase on and phrase off marker
+													eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE);	//Set the palm mute flag
+												}
+											}
+										}
+									break;
+									case 10:	//Pro guitar vibrato
+#ifdef EOF_DEBUG
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar vibrato (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+										eof_log(eof_log_string, 1);
+#endif
+										if(eof_import_events[i]->event[j]->dp[6] == 1)
+										{	//Start of pro guitar vibrato phrase
+											vibratopos[phrasediff] = event_realtime;
+										}
+										else if(eof_import_events[i]->event[j]->dp[6] == 0)
+										{	//End of pro guitar vibrato phrase
+											for(k = note_count[picked_track]; k > first_note; k--)
+											{	//Check for each note that has been imported
+												if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= vibratopos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+												{	//If the note is in the same difficulty as the pro guitar vibrato phrase, and its timestamp falls between the phrase on and phrase off marker
+													eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO);	//Set the vibrato flag
+												}
+											}
+										}
+									break;
+									case 11:	//Pro guitar harmonic
+#ifdef EOF_DEBUG
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar harmonic (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+										eof_log(eof_log_string, 1);
+#endif
+										if(eof_import_events[i]->event[j]->dp[6] == 1)
+										{	//Start of pro guitar harmonic phrase
+											harmpos[phrasediff] = event_realtime;
+										}
+										else if(eof_import_events[i]->event[j]->dp[6] == 0)
+										{	//End of pro guitar harmonic phrase
+											for(k = note_count[picked_track]; k > first_note; k--)
+											{	//Check for each note that has been imported
+												if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= harmpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+												{	//If the note is in the same difficulty as the pro guitar harmonic phrase, and its timestamp falls between the phrase on and phrase off marker
+													eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC);	//Set the harmonic flag
+												}
+											}
+										}
+									break;
+									case 12:	//Pro guitar pinch harmonic
+#ifdef EOF_DEBUG
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar pinch harmonic (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+										eof_log(eof_log_string, 1);
+#endif
+										if(eof_import_events[i]->event[j]->dp[6] == 1)
+										{	//Start of pro guitar pinch harmonic phrase
+											pharmpos[phrasediff] = event_realtime;
+										}
+										else if(eof_import_events[i]->event[j]->dp[6] == 0)
+										{	//End of pro guitar pinch harmonic phrase
+											for(k = note_count[picked_track]; k > first_note; k--)
+											{	//Check for each note that has been imported
+												if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= pharmpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+												{	//If the note is in the same difficulty as the pro guitar pinch harmonic phrase, and its timestamp falls between the phrase on and phrase off marker
+													eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC);	//Set the pinch harmonic flag
+												}
+											}
+										}
+									break;
+									case 13:	//Pro guitar bend
+#ifdef EOF_DEBUG
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar bend (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+										eof_log(eof_log_string, 1);
+#endif
+										if(eof_import_events[i]->event[j]->dp[6] == 1)
+										{	//Start of pro guitar bend phrase
+											bendpos[phrasediff] = event_realtime;
+										}
+										else if(eof_import_events[i]->event[j]->dp[6] == 0)
+										{	//End of pro guitar bend phrase
+											for(k = note_count[picked_track]; k > first_note; k--)
+											{	//Check for each note that has been imported
+												if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= bendpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+												{	//If the note is in the same difficulty as the pro guitar bend phrase, and its timestamp falls between the phrase on and phrase off marker
+													eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_BEND);	//Set the bend flag
+												}
+											}
+										}
+									break;
+									case 14:	//Pro guitar accent
+#ifdef EOF_DEBUG
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar accent (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+										eof_log(eof_log_string, 1);
+#endif
+										if(eof_import_events[i]->event[j]->dp[6] == 1)
+										{	//Start of pro guitar accent phrase
+											accentpos[phrasediff] = event_realtime;
+										}
+										else if(eof_import_events[i]->event[j]->dp[6] == 0)
+										{	//End of pro guitar accent phrase
+											for(k = note_count[picked_track]; k > first_note; k--)
+											{	//Check for each note that has been imported
+												if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= accentpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+												{	//If the note is in the same difficulty as the pro guitar accent phrase, and its timestamp falls between the phrase on and phrase off marker
+													eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_ACCENT);	//Set the accent flag
+												}
+											}
+										}
+									break;
+									case 15:	//Pro guitar pop
+#ifdef EOF_DEBUG
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar pop (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+										eof_log(eof_log_string, 1);
+#endif
+										if(eof_import_events[i]->event[j]->dp[6] == 1)
+										{	//Start of pro guitar pop phrase
+											poppos[phrasediff] = event_realtime;
+										}
+										else if(eof_import_events[i]->event[j]->dp[6] == 0)
+										{	//End of pro guitar pop phrase
+											for(k = note_count[picked_track]; k > first_note; k--)
+											{	//Check for each note that has been imported
+												if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= poppos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+												{	//If the note is in the same difficulty as the pro guitar pop phrase, and its timestamp falls between the phrase on and phrase off marker
+													eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_POP);	//Set the pop flag
+												}
+											}
+										}
+									break;
+									case 16:	//Pro guitar slap
+#ifdef EOF_DEBUG
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar slap (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+										eof_log(eof_log_string, 1);
+#endif
+										if(eof_import_events[i]->event[j]->dp[6] == 1)
+										{	//Start of pro guitar slap phrase
+											slappos[phrasediff] = event_realtime;
+										}
+										else if(eof_import_events[i]->event[j]->dp[6] == 0)
+										{	//End of pro guitar slap phrase
+											for(k = note_count[picked_track]; k > first_note; k--)
+											{	//Check for each note that has been imported
+												if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= slappos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+												{	//If the note is in the same difficulty as the pro guitar slap phrase, and its timestamp falls between the phrase on and phrase off marker
+													eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_SLAP);	//Set the slap flag
+												}
+											}
+										}
+									break;
+									default:
+									break;
+								}
+							break;
+							default:
+							break;
+						}
+					}//If this is a custom Sysex Phase Shift marker (8 bytes long, beginning with the NULL terminated string "PS")
+					free(eof_import_events[i]->event[j]->dp);	//The the memory allocated to store this Sysex message's data
+					eof_import_events[i]->event[j]->dp = NULL;
+				}//Sysex event
+			}//If parsing a pro guitar track
+			pticker++;
+		}//For each event in this track
+
+		eof_track_resize(sp, picked_track, note_count[picked_track]);
+		if(eof_import_events[i]->game == 0)
+		{	//If this is not a Power Gig formatted MIDI, only allow one MIDI track to import into each track in the project
+			if(eof_get_track_size(sp, picked_track) > 0)
+			{	//If at least one note was imported
+				eof_track_find_crazy_notes(sp, picked_track, 0);
+				used_track[picked_track] = 1;	//Note that this track has been imported, duplicate instances of the track will be ignored
 			}
-		}//If this is a valid track to process
+		}
 	}//For each imported track
 
 //#ifdef EOF_DEBUG_MIDI_IMPORT
@@ -3149,41 +3161,42 @@ eof_log("\tThird pass complete", 1);
 	tracknum = sp->track[EOF_TRACK_BASS]->tracknum;
 	for(i = 0; i < sp->legacy_track[tracknum]->notes; i++)
 	{	//For each note in the bass track
-		if(!eof_ini_sysex_open_bass_present && (sp->legacy_track[tracknum]->note[i]->note & 1) && (sp->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO))
-		{	//If Sysex open strum notation isn't present, and this note has a gem in lane one that is forced as a HOPO, prompt the user how to handle them
-			eof_cursor_visible = 0;
-			eof_pen_visible = 0;
-			eof_show_mouse(screen);
-			eof_clear_input();
-			if(alert(NULL, "Import lane 1 forced HOPO bass notes as open strums (ie. this is a Guitar Hero chart)?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-			{	//If the user opts to import lane 1 HOPO bass notes as open strums
-				sp->legacy_track[tracknum]->numlanes = 6;						//Set this track to have 6 lanes instead of 5
-				sp->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
-				for(k = 0; k < sp->legacy_track[tracknum]->notes; k++)
-				{	//For each note in the bass track
-					if((sp->legacy_track[tracknum]->note[k]->note & 1) && (sp->legacy_track[tracknum]->note[k]->flags & EOF_NOTE_FLAG_F_HOPO))
-					{	//If this note has a gem in lane one and is forced as a HOPO, convert it to open bass
-						sp->legacy_track[tracknum]->note[k]->note &= ~(1);	//Clear lane 1
-						sp->legacy_track[tracknum]->note[k]->note |= 32;		//Set lane 6
-						sp->legacy_track[tracknum]->note[k]->flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the forced HOPO on flag
-					}
+		if(eof_ini_sysex_open_bass_present || !(sp->legacy_track[tracknum]->note[i]->note & 1) || !(sp->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO))
+			continue;	//If Sysex open strum notation is present, or this note has a forced HOPO in lane one, skip this note
+
+		//Otheriwse prompt the user how to handle them
+		eof_cursor_visible = 0;
+		eof_pen_visible = 0;
+		eof_show_mouse(screen);
+		eof_clear_input();
+		if(alert(NULL, "Import lane 1 forced HOPO bass notes as open strums (ie. this is a Guitar Hero chart)?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+		{	//If the user opts to import lane 1 HOPO bass notes as open strums
+			sp->legacy_track[tracknum]->numlanes = 6;						//Set this track to have 6 lanes instead of 5
+			sp->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
+			for(k = 0; k < sp->legacy_track[tracknum]->notes; k++)
+			{	//For each note in the bass track
+				if((sp->legacy_track[tracknum]->note[k]->note & 1) && (sp->legacy_track[tracknum]->note[k]->flags & EOF_NOTE_FLAG_F_HOPO))
+				{	//If this note has a gem in lane one and is forced as a HOPO, convert it to open bass
+					sp->legacy_track[tracknum]->note[k]->note &= ~(1);	//Clear lane 1
+					sp->legacy_track[tracknum]->note[k]->note |= 32;		//Set lane 6
+					sp->legacy_track[tracknum]->note[k]->flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the forced HOPO on flag
 				}
 			}
-			else
-			{	//Otherwise ensure that no open bass notation is present in the bass track
-				for(k = 0; k < sp->legacy_track[tracknum]->notes; k++)
-				{	//For each note in the bass track
-					if(sp->legacy_track[tracknum]->note[k]->note & 32)
-					{	//If this note has a gem in lane 6 (used as the HOPO on marker if not as a lane 6 gem)
-						sp->legacy_track[tracknum]->note[k]->note &= ~32;	//Clear lane 6
-					}
-				}
-			}
-			eof_show_mouse(NULL);
-			eof_cursor_visible = 1;
-			eof_pen_visible = 1;
-			break;
 		}
+		else
+		{	//Otherwise ensure that no open bass notation is present in the bass track
+			for(k = 0; k < sp->legacy_track[tracknum]->notes; k++)
+			{	//For each note in the bass track
+				if(sp->legacy_track[tracknum]->note[k]->note & 32)
+				{	//If this note has a gem in lane 6 (used as the HOPO on marker if not as a lane 6 gem)
+					sp->legacy_track[tracknum]->note[k]->note &= ~32;	//Clear lane 6
+				}
+			}
+		}
+		eof_show_mouse(NULL);
+		eof_cursor_visible = 1;
+		eof_pen_visible = 1;
+		break;
 	}
 
 //Check for string muted notes and force them to use the 0xFF (muted) fret value so the pro guitar fixup logic won't remove the string mute status

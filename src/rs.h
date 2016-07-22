@@ -212,6 +212,7 @@ void eof_get_rocksmith_wav_path(char *buffer, const char *parent_folder, size_t 
 	//Builds the path to the WAV file (used for Rocksmith) that is written to specified parent folder path during save
 	//num defines the buffer's maximum size
 	//This is (song name).wav if the song title song property is defined, otherwise guitar.wav
+	//If the song name contains characters that are not legal in Windows file names, those characters are replaced with underscores
 
 void eof_delete_rocksmith_wav(void);
 	//Deletes the Rocksmith WAV file based on the path created by the chart's song title

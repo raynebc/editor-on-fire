@@ -3335,32 +3335,34 @@ void eof_render_3d_window(void)
 	{
 		for(i = 0; i < eof_song->pro_guitar_track[tracknum]->arpeggios; i++)
 		{	//For each arpeggio section in the track
+			int arpeggiocolor;
+
 			sectionptr = &eof_song->pro_guitar_track[tracknum]->arpeggio[i];
 			if(sectionptr->difficulty != eof_note_type)
 				continue;	//If this arpeggio isn't in the active difficulty, skip it
 
 			sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 			sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
-			if((-100 <= sez) && (600 >= sz))
-			{	//If the arpeggio section would render visibly, fill the topmost lane with the appropriate color
-				int arpeggiocolor = eof_color_turquoise;	//Normal arpeggio phrases will render in turquoise
+			if((-100 > sez) || (600 < sz))
+				continue;	//If the arpeggio section would not render visibly, skip it
 
-				if(sectionptr->flags & EOF_RS_ARP_HANDSHAPE)
-				{	//If this arpeggio is configured to export as a normal handshape
-					arpeggiocolor = eof_color_lighter_blue;
-				}
-				spz = sz < -100 ? -100 : sz;
-				spez = sez > 600 ? 600 : sez;
-				point[0] = ocd3d_project_x(20, spez);
-				point[1] = ocd3d_project_y(200, spez);
-				point[2] = ocd3d_project_x(300, spez);
-				point[3] = point[1];
-				point[4] = ocd3d_project_x(300, spz);
-				point[5] = ocd3d_project_y(200, spz);
-				point[6] = ocd3d_project_x(20, spz);
-				point[7] = point[5];
-				polygon(eof_window_3d->screen, 4, point, arpeggiocolor);	//Fill with a turquoise or light blue color
+			//Otherwise fill the topmost lane with the appropriate color
+			arpeggiocolor = eof_color_turquoise;	//Normal arpeggio phrases will render in turquoise
+			if(sectionptr->flags & EOF_RS_ARP_HANDSHAPE)
+			{	//If this arpeggio is configured to export as a normal handshape
+				arpeggiocolor = eof_color_lighter_blue;
 			}
+			spz = sz < -100 ? -100 : sz;
+			spez = sez > 600 ? 600 : sez;
+			point[0] = ocd3d_project_x(20, spez);
+			point[1] = ocd3d_project_y(200, spez);
+			point[2] = ocd3d_project_x(300, spez);
+			point[3] = point[1];
+			point[4] = ocd3d_project_x(300, spz);
+			point[5] = ocd3d_project_y(200, spz);
+			point[6] = ocd3d_project_x(20, spz);
+			point[7] = point[5];
+			polygon(eof_window_3d->screen, 4, point, arpeggiocolor);	//Fill with a turquoise or light blue color
 		}
 	}
 
@@ -3436,23 +3438,23 @@ void eof_render_3d_window(void)
 				sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 				spz = sz < -100 ? -100 : sz;
 				spez = sez > 600 ? 600 : sez;
-				if((-100 <= sez) && (600 >= sz))
-				{	//If the section would render to the visible portion of the screen
-					usedlanes = eof_get_used_lanes(eof_selected_track, sectionptr->start_pos, sectionptr->end_pos, eof_note_type);	//Determine which lane(s) use this phrase
-					for(ctr = firstlane, bitmask = (1 << firstlane); ctr <= lastlane; ctr++, bitmask <<= 1)
-					{	//For each of the usable lanes (that are allowed to have lane specific marker rendering)
-						if(usedlanes & bitmask)
-						{	//If this lane is used in the phrase and the lane is active
-							point[0] = ocd3d_project_x(xchart[ctr] - halflanewidth - xoffset, spez);	//Offset drum lanes by drawing them one lane further left than other tracks
-							point[1] = ocd3d_project_y(200, spez);
-							point[2] = ocd3d_project_x(xchart[ctr] + halflanewidth - xoffset, spez);
-							point[3] = point[1];
-							point[4] = ocd3d_project_x(xchart[ctr] + halflanewidth - xoffset, spz);
-							point[5] = ocd3d_project_y(200, spz);
-							point[6] = ocd3d_project_x(xchart[ctr] - halflanewidth - xoffset, spz);
-							point[7] = point[5];
-							polygon(eof_window_3d->screen, 4, point, eof_colors[ctr].lightcolor);
-						}
+				if((-100 > sez) || (600 < sz))
+					continue;	//If the section would not render to the visible portion of the screen, skip it
+
+				usedlanes = eof_get_used_lanes(eof_selected_track, sectionptr->start_pos, sectionptr->end_pos, eof_note_type);	//Determine which lane(s) use this phrase
+				for(ctr = firstlane, bitmask = (1 << firstlane); ctr <= lastlane; ctr++, bitmask <<= 1)
+				{	//For each of the usable lanes (that are allowed to have lane specific marker rendering)
+					if(usedlanes & bitmask)
+					{	//If this lane is used in the phrase and the lane is active
+						point[0] = ocd3d_project_x(xchart[ctr] - halflanewidth - xoffset, spez);	//Offset drum lanes by drawing them one lane further left than other tracks
+						point[1] = ocd3d_project_y(200, spez);
+						point[2] = ocd3d_project_x(xchart[ctr] + halflanewidth - xoffset, spez);
+						point[3] = point[1];
+						point[4] = ocd3d_project_x(xchart[ctr] + halflanewidth - xoffset, spz);
+						point[5] = ocd3d_project_y(200, spz);
+						point[6] = ocd3d_project_x(xchart[ctr] - halflanewidth - xoffset, spz);
+						point[7] = point[5];
+						polygon(eof_window_3d->screen, 4, point, eof_colors[ctr].lightcolor);
 					}
 				}
 			}//For each trill or tremolo section in the track

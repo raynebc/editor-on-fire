@@ -3498,7 +3498,8 @@ int eof_save_helper(char *destfilename, char silent)
 						}
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Writing RS WAV file (%s) with %lums of silence", eof_temp_filename, silence);
 						eof_log(eof_log_string, 1);
-						if(!save_wav_with_silence_appended(eof_temp_filename, decoded, silence))	//Write a WAV file with it, appending either 0 or 8 seconds of silence to it
+						//Write a WAV file with it, appending either 0 or 8 seconds of silence to it
+						if(!save_wav_with_silence_appended(eof_temp_filename, decoded, silence))
 						{	//If it didn't save, try saving again as "guitar.wav", just in case the user put invalid characters in the song title
 							eof_log("Retrying as \"guitar.wav\"", 1);
 							(void) replace_filename(eof_temp_filename, newfolderpath, "guitar.wav", (int) sizeof(eof_temp_filename));

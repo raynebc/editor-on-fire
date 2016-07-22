@@ -281,3 +281,25 @@ int eof_string_has_non_ascii(char *str)
 	}
 	return 0;
 }
+
+int eof_is_illegal_filename_character(char c)
+{
+	switch(c)
+	{
+		case '\\':
+		case '/':
+		case ':':
+		case '*':
+		case '?':
+		case '"':
+		case '<':
+		case '>':
+		case '|':
+		return 1;	//Characters that are illegal in Windows file names
+
+		default:
+		break;
+	}
+
+	return 0;	//Valid for use in a filename
+}

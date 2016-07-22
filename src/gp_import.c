@@ -4847,27 +4847,28 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				}
 				break;
 			}//For each of the 7 strings the GP format allows for
-			if((gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && (gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
-			{	//If both the slide up and slide down flags are still set, the next note didn't use any of the same strings as the slide note
-				//Base the slide direction on the lowest fret value of that next note
-				startfret = eof_pro_guitar_note_lowest_fret(gp->track[ctr], ctr2);
-				endfret = eof_pro_guitar_note_lowest_fret(gp->track[ctr], ctr2 + 1);
-				if(startfret != endfret)
-				{	//If the slide and the following note start from different fret positions
-					if(startfret > endfret)
-					{	//This is a downward slide
-						gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;	//Clear the slide up flag
-					}
-					else
-					{	//This is an upward slide
-						gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//Clear the slide down flag
-					}
-					if(gp->track[ctr]->note[ctr2]->slideend == 0)
-					{	//If the slide ending hasn't been defined yet
-						gp->track[ctr]->note[ctr2]->slideend = endfret;
-						gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that the note has the slide ending defined
-					}
-				}
+			if(!(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || !(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+				continue;	//If either of the up/down slide flags aren't set, skip this note
+
+			//Otherwise if both are set, the next note didn't use any of the same strings as the slide note
+			//Base the slide direction on the lowest fret value of that next note
+			startfret = eof_pro_guitar_note_lowest_fret(gp->track[ctr], ctr2);
+			endfret = eof_pro_guitar_note_lowest_fret(gp->track[ctr], ctr2 + 1);
+			if(startfret == endfret)
+				continue;	//If the slide and the following note start at the same fret position, skip this note as a slide direction can't be determined
+
+			if(startfret > endfret)
+			{	//This is a downward slide
+				gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;	//Clear the slide up flag
+			}
+			else
+			{	//This is an upward slide
+				gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//Clear the slide down flag
+			}
+			if(gp->track[ctr]->note[ctr2]->slideend == 0)
+			{	//If the slide ending hasn't been defined yet
+				gp->track[ctr]->note[ctr2]->slideend = endfret;
+				gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that the note has the slide ending defined
 			}
 		}//For each note in the track
 	}//For each imported track
@@ -5184,29 +5185,29 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 					if(gp->text_event[ctr]->beat != measuremap[currentmeasure])
 						continue;	//If the text event is not positioned at this measure, skip it
 
-					if(newevents < EOF_MAX_TEXT_EVENTS)
-					{	//If the maximum number of text events hasn't already been defined
-						newevent[newevents] = malloc(sizeof(EOF_TEXT_EVENT));	//Allocate space for the text event
-						if(!newevent[newevents])
-						{
-							eof_log("\tError allocating memory to unwrap GP track (5)", 1);
-							free(measuremap);
-							for(ctr = 0; ctr < tp->notes; ctr++)
-							{	//For each note that had been allocated for the unwrapped track
-								free(tp->note[ctr]);	//Free its memory
-							}
-							free(tp);
-							free(working_num_of_repeats);
-							for(ctr = 0; ctr < newevents; ctr++)
-							{	//For each unwrapped text event
-								free(newevent[ctr]);	//Free it
-							}
-							return 7;
+					if(newevents >= EOF_MAX_TEXT_EVENTS)
+						continue;	//If the max number of text events has already been defined, skip adding this one
+
+					newevent[newevents] = malloc(sizeof(EOF_TEXT_EVENT));	//Allocate space for the text event
+					if(!newevent[newevents])
+					{
+						eof_log("\tError allocating memory to unwrap GP track (5)", 1);
+						free(measuremap);
+						for(ctr = 0; ctr < tp->notes; ctr++)
+						{	//For each note that had been allocated for the unwrapped track
+							free(tp->note[ctr]);	//Free its memory
 						}
-						memcpy(newevent[newevents], gp->text_event[ctr], sizeof(EOF_TEXT_EVENT));	//Copy the text event
-						newevent[newevents]->beat = beatctr;	//Correct the beat number
-						newevents++;
+						free(tp);
+						free(working_num_of_repeats);
+						for(ctr = 0; ctr < newevents; ctr++)
+						{	//For each unwrapped text event
+							free(newevent[ctr]);	//Free it
+						}
+						return 7;
 					}
+					memcpy(newevent[newevents], gp->text_event[ctr], sizeof(EOF_TEXT_EVENT));	//Copy the text event
+					newevent[newevents]->beat = beatctr;	//Correct the beat number
+					newevents++;
 				}
 			}
 
@@ -5471,50 +5472,50 @@ char eof_copy_notes_in_beat_range(EOF_PRO_GUITAR_TRACK *source, unsigned long st
 
 		beatnum = eof_get_beat(eof_song, source->note[ctr]->pos);					//Find which beat this note is within
 		endbeatnum = eof_get_beat(eof_song, source->note[ctr]->pos + source->note[ctr]->length);	//Find which beat this note ends within
-		if(eof_beat_num_valid(eof_song, beatnum) && eof_beat_num_valid(eof_song, endbeatnum))
-		{	//The beat positions were found
-			if(eof_song->beats < destbeat + endbeatnum - startbeat + 2)
-			{
-#ifdef GP_IMPORT_DEBUG
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tUnwrapping note #%lu requires %lu beats, but project only has %lu beats.  Appending %lu beats to the project to allow for this note and 2 bytes of padding.", ctr, destbeat + endbeatnum - startbeat, eof_song->beats, destbeat + endbeatnum - startbeat + 2 - eof_song->beats);
-				eof_log(eof_log_string, 1);
-#endif
-				while(eof_song->beats < destbeat + endbeatnum - startbeat + 2)
-				{	//Until the loaded project has enough beats to contain the unwrapped note, and two extra to allow room for processing beat lengths later
-					if(!eof_song_append_beats(eof_song, 1))
-					{
-						eof_log("\tError allocating memory to unwrap GP track (6)", 1);
-						return 0;	//Return error
-					}
-				}
-				eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
-			}
+		if(!eof_beat_num_valid(eof_song, beatnum) || !eof_beat_num_valid(eof_song, endbeatnum))
+			continue;	//If the beat positions were not found, skip this note
 
-			notepos = eof_get_porpos(source->note[ctr]->pos);									//Get the note's position as a percentage within its beat
-			noteendpos = eof_get_porpos(source->note[ctr]->pos + source->note[ctr]->length);	//Get the note end's end position as a percentage within its beat
-			newpos = eof_put_porpos(destbeat + beatnum - startbeat, notepos, 0.0);				//Get the position for the copied note
-			newend = eof_put_porpos(destbeat + endbeatnum - startbeat, noteendpos, 0.0);		//Get the end position for the copied note
-			if((newpos < 0) || (newend < 0))
-			{	//If the positioning for the copied note couldn't be determined
-				eof_log("\tError finding position for unwrapped note", 1);
-				return 0;	//Return error
+		if(eof_song->beats < destbeat + endbeatnum - startbeat + 2)
+		{
+#ifdef GP_IMPORT_DEBUG
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tUnwrapping note #%lu requires %lu beats, but project only has %lu beats.  Appending %lu beats to the project to allow for this note and 2 bytes of padding.", ctr, destbeat + endbeatnum - startbeat, eof_song->beats, destbeat + endbeatnum - startbeat + 2 - eof_song->beats);
+			eof_log(eof_log_string, 1);
+#endif
+			while(eof_song->beats < destbeat + endbeatnum - startbeat + 2)
+			{	//Until the loaded project has enough beats to contain the unwrapped note, and two extra to allow room for processing beat lengths later
+				if(!eof_song_append_beats(eof_song, 1))
+				{
+					eof_log("\tError allocating memory to unwrap GP track (6)", 1);
+					return 0;	//Return error
+				}
 			}
-			if(dest->notes >= EOF_MAX_NOTES)
-			{	//If the track can't hold any more notes
-				eof_log("\tNote limit exceeded", 1);
-				return 0;	//Return error
-			}
-			dest->note[dest->notes] = malloc(sizeof(EOF_PRO_GUITAR_NOTE));	//Allocate memory for the copied note
-			if(!dest->note[dest->notes])
-			{
-				eof_log("\tError allocating memory", 1);
-				return 0;	//Return error
-			}
-			memcpy(dest->note[dest->notes], source->note[ctr], sizeof(EOF_PRO_GUITAR_NOTE));	//Copy the note
-			dest->note[dest->notes]->pos = newpos;				//Set the unwrapped note's position
-			dest->note[dest->notes]->length = newend - newpos;	//Set its length
-			dest->notes++;	//Increment the destination track's note counter
-		}//The beat positions were found
+			eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
+		}
+
+		notepos = eof_get_porpos(source->note[ctr]->pos);									//Get the note's position as a percentage within its beat
+		noteendpos = eof_get_porpos(source->note[ctr]->pos + source->note[ctr]->length);	//Get the note end's end position as a percentage within its beat
+		newpos = eof_put_porpos(destbeat + beatnum - startbeat, notepos, 0.0);				//Get the position for the copied note
+		newend = eof_put_porpos(destbeat + endbeatnum - startbeat, noteendpos, 0.0);		//Get the end position for the copied note
+		if((newpos < 0) || (newend < 0))
+		{	//If the positioning for the copied note couldn't be determined
+			eof_log("\tError finding position for unwrapped note", 1);
+			return 0;	//Return error
+		}
+		if(dest->notes >= EOF_MAX_NOTES)
+		{	//If the track can't hold any more notes
+			eof_log("\tNote limit exceeded", 1);
+			return 0;	//Return error
+		}
+		dest->note[dest->notes] = malloc(sizeof(EOF_PRO_GUITAR_NOTE));	//Allocate memory for the copied note
+		if(!dest->note[dest->notes])
+		{
+			eof_log("\tError allocating memory", 1);
+			return 0;	//Return error
+		}
+		memcpy(dest->note[dest->notes], source->note[ctr], sizeof(EOF_PRO_GUITAR_NOTE));	//Copy the note
+		dest->note[dest->notes]->pos = newpos;				//Set the unwrapped note's position
+		dest->note[dest->notes]->length = newend - newpos;	//Set its length
+		dest->notes++;	//Increment the destination track's note counter
 	}//For each note in the source track
 
 	return 1;	//Return success

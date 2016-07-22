@@ -334,22 +334,22 @@ EOF_SONG *eof_load_bf(char * fn)
 				if(lang != lang_english)
 					continue;	//If this is not an English language string table, skip it
 
-				if(numstrings < BF_IMPORT_STRING_NUM)
-				{	//If the string table is large enough to add this to the string array
-					for(ctr2 = 0; ctr2 < numstrings; ctr2++)
-					{	//For each existing entry in the string array
-						if(stringdata[ctr2].indkey == qword)
-						{	//If the key already exists in the list
-							duplicate = 1;
-							break;
-						}
+				if(numstrings >= BF_IMPORT_STRING_NUM)
+					continue;	//If the string table is not large enough to add this to the string array, skip it
+
+				for(ctr2 = 0; ctr2 < numstrings; ctr2++)
+				{	//For each existing entry in the string array
+					if(stringdata[ctr2].indkey == qword)
+					{	//If the key already exists in the list
+						duplicate = 1;
+						break;
 					}
-					if(!duplicate)
-					{	//If an array entry with this key didn't already exist, add it
-						stringdata[numstrings].indkey = qword;
-						stringdata[numstrings].offset = dword;
-						numstrings++;
-					}
+				}
+				if(!duplicate)
+				{	//If an array entry with this key didn't already exist, add it
+					stringdata[numstrings].indkey = qword;
+					stringdata[numstrings].offset = dword;
+					numstrings++;
 				}
 			}
 
@@ -394,25 +394,26 @@ EOF_SONG *eof_load_bf(char * fn)
 				{	//If this is an English language string table
 					for(ctr2 = 0; ctr2 < numstrings; ctr2++)
 					{	//For each entry in the string array
+						int size;
+
 						if(stringdata[ctr2].offset != offset)
 							continue;	//If the string just read is not at an offset at which a string is expected, skip this string entry
+						if(stringdata[ctr2].string != NULL)
+							continue;	//If a string was already read for this offset, skip it
 
-						if(stringdata[ctr2].string == NULL)
-						{	//If a string wasn't read for this offset yet
-							int size = ustrsize(buffer) + 1;	//Get the length of the string in bytes (UTF-8 aware size) and add 1 byte for NULL
-							stringdata[ctr2].string = malloc((size_t)size);	//Allocate memory for the string
-							if(!stringdata[ctr2].string)
-							{	//If the memory couldn't be allocated
-								eof_log("\t\tError storing string into array.  Aborting", 1);
-								(void) pack_fclose(inf);
-								free(sectiondata);
-								for(ctr = 0; ctr < numstrings; free(stringdata[ctr].string), ctr++);	//Free the memory used to store each string
-								free(stringdata);
-								eof_destroy_song(sp);
-								return NULL;
-							}
-							(void) ustrzcpy(stringdata[ctr2].string, size, buffer);
+						size = ustrsize(buffer) + 1;	//Get the length of the string in bytes (UTF-8 aware size) and add 1 byte for NULL
+						stringdata[ctr2].string = malloc((size_t)size);	//Allocate memory for the string
+						if(!stringdata[ctr2].string)
+						{	//If the memory couldn't be allocated
+							eof_log("\t\tError storing string into array.  Aborting", 1);
+							(void) pack_fclose(inf);
+							free(sectiondata);
+							for(ctr = 0; ctr < numstrings; free(stringdata[ctr].string), ctr++);	//Free the memory used to store each string
+							free(stringdata);
+							eof_destroy_song(sp);
+							return NULL;
 						}
+						(void) ustrzcpy(stringdata[ctr2].string, size, buffer);
 					}
 				}
 				offset += dword;	//Advance the offset byte counter by the size of the string (including NULL terminator)
@@ -1074,21 +1075,21 @@ EOF_SONG *eof_load_bf(char * fn)
 				nlp = NULL;
 			}
 
-			if((lp->pos >= llp->start_pos) && (lp->pos <= llp->end_pos))
-			{	//If this lyric is within the line
-				if(!firstfound)
-				{	//If this is the first lyric that was found to be within it
-					firstfound = 1;
-					llp->start_pos = lp->pos;	//Move the beginning of this line to match the beginning of the lyric
-				}
-				if(nlp && (nlp->pos > llp->end_pos))
-				{	//If there's another lyric but it is outside of this lyric line
-					llp->end_pos = lp->pos + lp->length;	//Move the end of this line to match the end of the line's last lyric
+			if((lp->pos < llp->start_pos) || (lp->pos > llp->end_pos))
+				continue;	//If this lyric is not within the line, skip it
 
-					if(ctr + 1 < sp->vocal_track[0]->lines)
-					{	//If there's another lyric line
-						sp->vocal_track[0]->line[ctr + 1].start_pos = nlp->pos;	//Preemptively move the next line's start position to the start of the next lyric (some Bandfuse songs mark the next line as starting as early as on top of the last lyric of the previous line)
-					}
+			if(!firstfound)
+			{	//If this is the first lyric that was found to be within it
+				firstfound = 1;
+				llp->start_pos = lp->pos;	//Move the beginning of this line to match the beginning of the lyric
+			}
+			if(nlp && (nlp->pos > llp->end_pos))
+			{	//If there's another lyric but it is outside of this lyric line
+				llp->end_pos = lp->pos + lp->length;	//Move the end of this line to match the end of the line's last lyric
+
+				if(ctr + 1 < sp->vocal_track[0]->lines)
+				{	//If there's another lyric line
+					sp->vocal_track[0]->line[ctr + 1].start_pos = nlp->pos;	//Preemptively move the next line's start position to the start of the next lyric (some Bandfuse songs mark the next line as starting as early as on top of the last lyric of the previous line)
 				}
 			}
 		}

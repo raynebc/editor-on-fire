@@ -5524,24 +5524,25 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 					if((eof_note_type != eof_get_note_type(eof_song, eof_selected_track, i)) || (notepos + notelength < start) || (notepos > stop))
 						continue;	//If this note isn't in the active difficulty, or would render before the left edge of the piano roll or after the right edge, skip it
 
-					if(eof_song->pro_guitar_track[tracknum]->note[i]->legacymask == 0)
-					{	//If this note does not have a defined legacy mask, render a maroon colored section a minimum of eof_screen_layout.note_size pixels long
-						markerlength = notelength / eof_zoom;
-						if(markerlength < eof_screen_layout.note_size)
-						{	//If this marker isn't at least as wide as a note gem
-							markerlength = eof_screen_layout.note_size;	//Make it longer
+					if(eof_song->pro_guitar_track[tracknum]->note[i]->legacymask)
+						continue;	//If this note has a defined legacy mask, skip it
+
+					//Otherwise render a maroon colored section a minimum of eof_screen_layout.note_size pixels long
+					markerlength = notelength / eof_zoom;
+					if(markerlength < eof_screen_layout.note_size)
+					{	//If this marker isn't at least as wide as a note gem
+						markerlength = eof_screen_layout.note_size;	//Make it longer
+					}
+					markerpos = lpos + (notepos / eof_zoom);
+					if(notepos + notelength >= start)
+					{	//If the notes ends at or right of the left edge of the screen
+						if(markerpos <= window->screen->w)
+						{	//If the marker starts at or left of the right edge of the screen (is visible)
+							rectfill(window->screen, markerpos, EOF_EDITOR_RENDER_OFFSET + 25, markerpos + markerlength, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, col);
 						}
-						markerpos = lpos + (notepos / eof_zoom);
-						if(notepos + notelength >= start)
-						{	//If the notes ends at or right of the left edge of the screen
-							if(markerpos <= window->screen->w)
-							{	//If the marker starts at or left of the right edge of the screen (is visible)
-								rectfill(window->screen, markerpos, EOF_EDITOR_RENDER_OFFSET + 25, markerpos + markerlength, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, col);
-							}
-							else
-							{	//Otherwise this and all remaining undefined legacy mask markers are not visible
-								break;	//Stop rendering them
-							}
+						else
+						{	//Otherwise this and all remaining undefined legacy mask markers are not visible
+							break;	//Stop rendering them
 						}
 					}
 				}
@@ -5589,24 +5590,25 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		if((eof_note_type != eof_get_note_type(eof_song, eof_selected_track, i)) || (notepos + notelength < start))
 			continue;	//If this note is not in the active difficulty or would render before the left edge of the piano roll, skip it
 
-		if(eof_note_is_highlighted(eof_song, eof_selected_track, i))
-		{	//If this note is flagged to be highlighted, render a yellow colored background
-			markerlength = notelength / eof_zoom;
-			if(markerlength < eof_screen_layout.note_size)
-			{	//If this marker isn't at least as wide as a note gem
-				markerlength = eof_screen_layout.note_size;	//Make it longer
+		if(!eof_note_is_highlighted(eof_song, eof_selected_track, i))
+			continue;	//If this note is not flagged to be highlighted, skip it
+
+		//Otherwise render a yellow colored background
+		markerlength = notelength / eof_zoom;
+		if(markerlength < eof_screen_layout.note_size)
+		{	//If this marker isn't at least as wide as a note gem
+			markerlength = eof_screen_layout.note_size;	//Make it longer
+		}
+		markerpos = lpos + (notepos / eof_zoom);
+		if(notepos + notelength >= start)
+		{	//If the notes ends at or right of the left edge of the screen
+			if(markerpos <= window->screen->w)
+			{	//If the marker starts at or left of the right edge of the screen (is visible)
+				rectfill(window->screen, markerpos, EOF_EDITOR_RENDER_OFFSET + 25, markerpos + markerlength, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_yellow);
 			}
-			markerpos = lpos + (notepos / eof_zoom);
-			if(notepos + notelength >= start)
-			{	//If the notes ends at or right of the left edge of the screen
-				if(markerpos <= window->screen->w)
-				{	//If the marker starts at or left of the right edge of the screen (is visible)
-					rectfill(window->screen, markerpos, EOF_EDITOR_RENDER_OFFSET + 25, markerpos + markerlength, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_yellow);
-				}
-				else
-				{	//Otherwise this and all remaining highlighted notes are not visible
-					break;	//Stop rendering them
-				}
+			else
+			{	//Otherwise this and all remaining highlighted notes are not visible
+				break;	//Stop rendering them
 			}
 		}
 	}
@@ -5652,41 +5654,41 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 				if(sectionptr == NULL)
 					continue;	//If the section does not exist, skip it
 
-				if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop))
-				{	//If the trill or tremolo section would render between the left and right edges of the piano roll
-					if(j)
-					{	//If tremolo sections are being rendered
-						if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
-						{	//If the track's difficulty limit has been removed
-							if(sectionptr->difficulty != eof_note_type)	//And the tremolo section does not apply to the active track difficulty
-								continue;	//Skip rendering it
-						}
-						else
-						{
-							if(sectionptr->difficulty != 0xFF)	//Otherwise if the tremolo section does not apply to all track difficulties
-								continue;	//Skip rendering it
-						}
-					}
-					usedlanes = eof_get_used_lanes(eof_selected_track, sectionptr->start_pos, sectionptr->end_pos, eof_note_type);	//Determine which lane(s) use this phrase
-					if(usedlanes == 0)
-					{	//If there are no notes in this marker, render the marker in all lanes
-						usedlanes = 0xFF;
-					}
-					for(ctr = 0, bitmask = 1; ctr < numlanes; ctr++, bitmask <<= 1)
-					{	//For each of the track's usable lanes
-						if(usedlanes & bitmask)
-						{	//If this lane is used in the phrase
-							int x1 = lpos + sectionptr->start_pos / eof_zoom;
-							int y1 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - half_string_space;
-							int x2 = lpos + sectionptr->end_pos / eof_zoom;
-							int y2 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + half_string_space;
+				if((sectionptr->end_pos < start) || (sectionptr->start_pos > stop))
+					continue;	//If the trill or tremolo section would render outside the left and right edges of the piano roll, skip it
 
-							if(y1 < EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0])
-								y1 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0];	//Ensure that the phrase cannot render above the top most lane
-							if(y2 > EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes-1])
-								y2 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes-1];	//Ensure that the phrase cannot render below the bottom most lane
-							rectfill(window->screen, x1, y1, x2, y2, eof_colors[ctr].lightcolor);	//Draw a rectangle one lane high centered over that lane's fret line
-						}
+				if(j)
+				{	//If tremolo sections are being rendered
+					if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+					{	//If the track's difficulty limit has been removed
+						if(sectionptr->difficulty != eof_note_type)	//And the tremolo section does not apply to the active track difficulty
+							continue;	//Skip rendering it
+					}
+					else
+					{
+						if(sectionptr->difficulty != 0xFF)	//Otherwise if the tremolo section does not apply to all track difficulties
+							continue;	//Skip rendering it
+					}
+				}
+				usedlanes = eof_get_used_lanes(eof_selected_track, sectionptr->start_pos, sectionptr->end_pos, eof_note_type);	//Determine which lane(s) use this phrase
+				if(usedlanes == 0)
+				{	//If there are no notes in this marker, render the marker in all lanes
+					usedlanes = 0xFF;
+				}
+				for(ctr = 0, bitmask = 1; ctr < numlanes; ctr++, bitmask <<= 1)
+				{	//For each of the track's usable lanes
+					if(usedlanes & bitmask)
+					{	//If this lane is used in the phrase
+						int x1 = lpos + sectionptr->start_pos / eof_zoom;
+						int y1 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - half_string_space;
+						int x2 = lpos + sectionptr->end_pos / eof_zoom;
+						int y2 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + half_string_space;
+
+						if(y1 < EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0])
+							y1 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0];	//Ensure that the phrase cannot render above the top most lane
+						if(y2 > EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes-1])
+							y2 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes-1];	//Ensure that the phrase cannot render below the bottom most lane
+						rectfill(window->screen, x1, y1, x2, y2, eof_colors[ctr].lightcolor);	//Draw a rectangle one lane high centered over that lane's fret line
 					}
 				}
 			}//For each trill or tremolo section in the track

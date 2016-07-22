@@ -19,4 +19,6 @@ int eof_convert_extended_ascii(char * buffer, int size);
 
 int eof_string_has_non_ascii(char *str);	//Returns nonzero if any characters in the string have non ASCII characters (any character valued over 127)
 
+int eof_is_illegal_filename_character(char c);	//Returns nonzero if the specified character is not legal for use in a filename in Windows
+
 #endif

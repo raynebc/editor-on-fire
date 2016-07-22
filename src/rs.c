@@ -15,6 +15,7 @@
 #include "song.h"	//For eof_pro_guitar_track_delete_hand_position()
 #include "tuning.h"	//For eof_lookup_tuned_note()
 #include "undo.h"
+#include "utility.h"	//For eof_is_illegal_filename_character()
 #include "foflc/RS_parse.h"	//For expand_xml_text()
 #include "menu/beat.h"	//For eof_rocksmith_phrase_dialog_add()
 #include "menu/track.h"	//For eof_fret_hand_position_list_dialog_undo_made and eof_fret_hand_position_list_dialog[]
@@ -3961,6 +3962,9 @@ unsigned long eof_get_rs_section_instance_number(EOF_SONG *sp, unsigned long tra
 
 void eof_get_rocksmith_wav_path(char *buffer, const char *parent_folder, size_t num)
 {
+	unsigned long ctr;
+	char temptitle[256];
+
 	if(!eof_song_loaded)
 		return;	//Don't perform this action unless a chart is loaded
 	if(!buffer || !parent_folder)
@@ -3972,7 +3976,15 @@ void eof_get_rocksmith_wav_path(char *buffer, const char *parent_folder, size_t 
 	put_backslash(buffer);
 	if(eof_song->tags->title[0] != '\0')
 	{	//If the chart has a defined song title
-		(void) ustrncat(buffer, eof_song->tags->title, (int)num - 1);
+		memcpy(temptitle, eof_song->tags->title, 256);	//Clone the song title
+		for(ctr = 0; temptitle[ctr] != '\0'; ctr++)
+		{	//For each character in the song title
+			if(eof_is_illegal_filename_character(temptitle[ctr]))
+			{	//If the character isn't valid for use in a filename
+				temptitle[ctr] = '_';	//Substitute it with an underscore
+			}
+		}
+		(void) ustrncat(buffer, temptitle, (int)num - 1);
 	}
 	else
 	{	//Otherwise default to "guitar"
