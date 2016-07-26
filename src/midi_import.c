@@ -730,46 +730,47 @@ EOF_SONG * eof_import_midi(const char * fn)
 										}
 									}
 								}
-								if(eof_import_events[i]->type == 0)
-								{	//If the track name didn't match any of the standard Power Gig track names either
-									for(j = 1; j < EOF_GUITAR_HERO_ANIMATION_TRACKS_MAX; j++)
-									{	//Compare the track name against the tracks in eof_guitar_hero_animation_tracks[]
-										if(ustricmp(text, eof_guitar_hero_animation_tracks[j].name))
-											continue;	//If this track name doesn't match an expected name, skip it
+								if(eof_import_events[i]->type != 0)
+									break;	//If the track name was matched by now, skip the below logic
 
-										if(eof_midi_tracks[j].track_format == 0)
-										{	//If this is a track that is to be skipped
-											eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
-										}
-										else
-										{
-											eof_import_events[i]->type = eof_guitar_hero_animation_tracks[j].track_type;
-											eof_import_events[i]->game = 2;	//Note that this is a Guitar Hero animation track
-											eof_import_events[i]->diff = eof_guitar_hero_animation_tracks[j].difficulty;
-											eof_import_events[i]->tracknum = j;
-											if(eof_midi_tracks[j].track_type == EOF_TRACK_GUITAR)
-											{	//If this is the guitar track
-												rbg = 1;	//Note that the track has been found
-											}
+								//If the track name didn't match any of the standard Power Gig track names either
+								for(j = 1; j < EOF_GUITAR_HERO_ANIMATION_TRACKS_MAX; j++)
+								{	//Compare the track name against the tracks in eof_guitar_hero_animation_tracks[]
+									if(ustricmp(text, eof_guitar_hero_animation_tracks[j].name))
+										continue;	//If this track name doesn't match an expected name, skip it
+
+									if(eof_midi_tracks[j].track_format == 0)
+									{	//If this is a track that is to be skipped
+										eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
+									}
+									else
+									{
+										eof_import_events[i]->type = eof_guitar_hero_animation_tracks[j].track_type;
+										eof_import_events[i]->game = 2;	//Note that this is a Guitar Hero animation track
+										eof_import_events[i]->diff = eof_guitar_hero_animation_tracks[j].difficulty;
+										eof_import_events[i]->tracknum = j;
+										if(eof_midi_tracks[j].track_type == EOF_TRACK_GUITAR)
+										{	//If this is the guitar track
+											rbg = 1;	//Note that the track has been found
 										}
 									}
-									if(eof_import_events[i]->type == 0)
-									{	//If the track name didn't match any of the Guitar Hero animation track names either
-										if(ustrstr(text,"PART") || (ustrstr(text,"HARM") == text))
-										{	//If this is a track that contains the word "PART" in the name (or begins with "HARM")
-											eof_clear_input();
-											if(alert("Unsupported track:", text, "Import raw data?", "&Yes", "&No", 'y', 'n') == 1)
-											{	//If the user opts to import the raw track data
-												eof_MIDI_add_track(sp, eof_get_raw_MIDI_data(eof_work_midi, track[i], 0));	//Add this to the linked list of raw MIDI track data
-											}
-											eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
+								}
+								if(eof_import_events[i]->type == 0)
+								{	//If the track name didn't match any of the Guitar Hero animation track names either
+									if(ustrstr(text,"PART") || (ustrstr(text,"HARM") == text))
+									{	//If this is a track that contains the word "PART" in the name (or begins with "HARM")
+										eof_clear_input();
+										if(alert("Unsupported track:", text, "Import raw data?", "&Yes", "&No", 'y', 'n') == 1)
+										{	//If the user opts to import the raw track data
+											eof_MIDI_add_track(sp, eof_get_raw_MIDI_data(eof_work_midi, track[i], 0));	//Add this to the linked list of raw MIDI track data
 										}
-										else if(!ustricmp(text, "EVENTS"))
-										{	//This track is the EVENTS track
-											is_event_track = 1;	//Store any encountered text events into the global events array
-										}
+										eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
 									}
-								}//If the track name didn't match any of the standard Power Gig track names either
+									else if(!ustricmp(text, "EVENTS"))
+									{	//This track is the EVENTS track
+										is_event_track = 1;	//Store any encountered text events into the global events array
+									}
+								}
 								break;
 							}
 

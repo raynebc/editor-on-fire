@@ -133,8 +133,9 @@ unsigned long eof_note_count_rs_lanes(EOF_SONG *sp, unsigned long track, unsigne
 
 int eof_adjust_notes(int offset)
 {
-	unsigned long i, j;
+	unsigned long i, j, tracknum;
 	EOF_PHRASE_SECTION *phraseptr = NULL;
+	EOF_PRO_GUITAR_TRACK *tp;
 
 	eof_log("eof_adjust_notes() entered", 1);
 
@@ -203,28 +204,26 @@ int eof_adjust_notes(int offset)
 			phraseptr->start_pos += offset;
 			phraseptr->end_pos += offset;
 		}
-		if(eof_song->track[i]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-		{	//If this is a pro guitar track
-			EOF_PRO_GUITAR_TRACK *tp;
-			unsigned long tracknum;
 
-			tracknum = eof_song->track[i]->tracknum;
-			tp = eof_song->pro_guitar_track[tracknum];
+		if(eof_song->track[i]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			continue;	//If this isn't a pro guitar track, skip the logic below to adjust pro guitar specific items
 
-			for(j = 0; j < tp->handpositions; j++)
-			{	//For each fret hand position in the track (only change the start_pos variable, end_pos stores the fret position and not a timestamp)
-				tp->handposition[j].start_pos += offset;
-			}
-			for(j = 0; j < tp->popupmessages; j++)
-			{	//For each popup message in the track
-				tp->popupmessage[j].start_pos += offset;
-				tp->popupmessage[j].end_pos += offset;
-			}
-			for(j = 0; j < tp->tonechanges; j++)
-			{	//For each tone change in the track (only change the start_pos variable, end_pos is unused)
-				tp->tonechange[j].start_pos += offset;
-			}
-		}//If this is a pro guitar track
+		tracknum = eof_song->track[i]->tracknum;
+		tp = eof_song->pro_guitar_track[tracknum];
+
+		for(j = 0; j < tp->handpositions; j++)
+		{	//For each fret hand position in the track (only change the start_pos variable, end_pos stores the fret position and not a timestamp)
+			tp->handposition[j].start_pos += offset;
+		}
+		for(j = 0; j < tp->popupmessages; j++)
+		{	//For each popup message in the track
+			tp->popupmessage[j].start_pos += offset;
+			tp->popupmessage[j].end_pos += offset;
+		}
+		for(j = 0; j < tp->tonechanges; j++)
+		{	//For each tone change in the track (only change the start_pos variable, end_pos is unused)
+			tp->tonechange[j].start_pos += offset;
+		}
 	}
 	for(i = 0; i < eof_song->catalog->entries; i++)
 	{
@@ -423,37 +422,37 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 				}
 				for(ctr = 0, mask = 1; ctr < numlanes; ctr++, mask = mask << 1)
 				{	//Render for each of the available fret lanes
-					if(notenote & mask)
-					{	//If this lane is populated
-						textcol = eof_color_red;	//Unless the technote overlaps at least one normal note or is highlighted, it will render in red
-						bgcol = eof_color_black;	//Unless the technote begins at the same timestamp as a normal note, the background will be black
-						if(p)
-						{	//If the tech note is highlighted
-							textcol = eof_color_white;
-						}
-						else
-						{	//Otherwise determine what color to render it in
-							char retval = eof_pro_guitar_tech_note_overlaps_a_note(tp, notenum, mask, NULL);	//Determine if the tech note overlaps any regular notes
+					if(!(notenote & mask))
+						continue;	//If this lane is not populated, skip it
 
-							if(retval == 1)
-							{	//If the technote overlaps with and starts at the same timestamp as a regular note on this lane
-								textcol = eof_color_blue;
-								bgcol = eof_color_white;	//Blue on white background should be more readable
-							}
-							else if(retval == 2)
-							{	//If the technote overlaps with a regular note on this lane
-								textcol = eof_color_green;
-							}
-						}
+					textcol = eof_color_red;	//Unless the technote overlaps at least one normal note or is highlighted, it will render in red
+					bgcol = eof_color_black;	//Unless the technote begins at the same timestamp as a normal note, the background will be black
+					if(p)
+					{	//If the tech note is highlighted
+						textcol = eof_color_white;
+					}
+					else
+					{	//Otherwise determine what color to render it in
+						char retval = eof_pro_guitar_tech_note_overlaps_a_note(tp, notenum, mask, NULL);	//Determine if the tech note overlaps any regular notes
 
-						fretbmp = eof_create_fret_number_bitmap(NULL, notation, 0, 2, textcol, bgcol, eof_symbol_font);	//Build a bordered bitmap for the technique, allow 2 pixels for padding
-						if(fretbmp != NULL)
-						{	//Render the bitmap in place of the note and then destroy the bitmap
-							y = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr];	//Store this to make the code more readable
-							draw_sprite(window->screen, fretbmp, x - (fretbmp->w/2), y - (text_height(font)/2));	//Fudge (x,y) to make it print centered over the gem
+						if(retval == 1)
+						{	//If the technote overlaps with and starts at the same timestamp as a regular note on this lane
+							textcol = eof_color_blue;
+							bgcol = eof_color_white;	//Blue on white background should be more readable
 						}
-						destroy_bitmap(fretbmp);
-					}//If this lane is populated
+						else if(retval == 2)
+						{	//If the technote overlaps with a regular note on this lane
+							textcol = eof_color_green;
+						}
+					}
+
+					fretbmp = eof_create_fret_number_bitmap(NULL, notation, 0, 2, textcol, bgcol, eof_symbol_font);	//Build a bordered bitmap for the technique, allow 2 pixels for padding
+					if(fretbmp != NULL)
+					{	//Render the bitmap in place of the note and then destroy the bitmap
+						y = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr];	//Store this to make the code more readable
+						draw_sprite(window->screen, fretbmp, x - (fretbmp->w/2), y - (text_height(font)/2));	//Fudge (x,y) to make it print centered over the gem
+					}
+					destroy_bitmap(fretbmp);
 				}//Render for each of the available fret lanes
 				return 0;	//Return status:  Note was not clipped in its entirety
 			}//If tech view is in effect, render the tab notation for the note and nothing else
@@ -676,52 +675,48 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		}
 	}//Render for each of the available fret lanes
 
-	//Render note names
-	if(track != 0)
-	{	//If rendering an existing note instead of the pen note
-		if(!eof_hide_note_names)
-		{	//If the user hasn't opted to hide note names
-			if((window == eof_window_note) || (eof_2d_render_top_option == 5))
-			{	//If rendering to the fret catalog, or to the 2D window and the user opted to display note names at the top of the window
-				notename[0] = prevnotename[0] = '\0';	//Empty these strings
-				namefound = eof_build_note_name(eof_song, track, notenum, notename);
-				if(namefound)
-				{	//If this note has a name, prepare it for rendering
-					(void) eof_build_note_name(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum), prevnotename);	//Get the previous note's name
-					if(!ustricmp(notename, prevnotename))
-					{	//If this note and the previous one have the same name
-						if(namefound == 1)
-						{	//If the name for this note was manually assigned
-							nameptr = samename;	//Display this note's name as "/" to indicate a repeat of the last note
-						}
-						else
-						{	//The name for this note was detected
-							nameptr = samenameauto;	//Display this note's name as "[/]" to indicate a repeat of the last note
-						}
-					}
-					else
-					{	//This note doesn't have the same name as the previous note
-						if(namefound == 1)
-						{	//If the name for this note was manually assigned
-							nameptr = notename;	//Display the note name as-is
-						}
-						else
-						{	//The name for this note was detected
-							(void) snprintf(prevnotename, sizeof(notename) - 1, "[%s]", notename);	//Rebuild the note name to be enclosed in brackets
-							nameptr = prevnotename;
-						}
-					}
-					if(window == eof_window_note)
-					{	//If rendering to the note window
-						textout_centre_ex(window->screen, font, nameptr, x, EOF_EDITOR_RENDER_OFFSET + 10, eof_color_white, -1);
-					}
-					else
-					{	//If rendering to either editor window
-						textout_centre_ex(window->screen, font, nameptr, x, 25 + 5, eof_color_white, -1);
-					}
+	if((track == 0) || eof_hide_note_names)
+		return 0;	//If the pen note is being drawn, or the user opted to hide note names, skip the logic below
+
+	if((window == eof_window_note) || (eof_2d_render_top_option == 5))
+	{	//If rendering to the fret catalog, or to the 2D window and the user opted to display note names at the top of the window
+		notename[0] = prevnotename[0] = '\0';	//Empty these strings
+		namefound = eof_build_note_name(eof_song, track, notenum, notename);
+		if(namefound)
+		{	//If this note has a name, prepare it for rendering
+			(void) eof_build_note_name(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum), prevnotename);	//Get the previous note's name
+			if(!ustricmp(notename, prevnotename))
+			{	//If this note and the previous one have the same name
+				if(namefound == 1)
+				{	//If the name for this note was manually assigned
+					nameptr = samename;	//Display this note's name as "/" to indicate a repeat of the last note
+				}
+				else
+				{	//The name for this note was detected
+					nameptr = samenameauto;	//Display this note's name as "[/]" to indicate a repeat of the last note
 				}
 			}
-		}//If the user hasn't opted to hide note names
+			else
+			{	//This note doesn't have the same name as the previous note
+				if(namefound == 1)
+				{	//If the name for this note was manually assigned
+					nameptr = notename;	//Display the note name as-is
+				}
+				else
+				{	//The name for this note was detected
+					(void) snprintf(prevnotename, sizeof(notename) - 1, "[%s]", notename);	//Rebuild the note name to be enclosed in brackets
+					nameptr = prevnotename;
+				}
+			}
+			if(window == eof_window_note)
+			{	//If rendering to the note window
+				textout_centre_ex(window->screen, font, nameptr, x, EOF_EDITOR_RENDER_OFFSET + 10, eof_color_white, -1);
+			}
+			else
+			{	//If rendering to either editor window
+				textout_centre_ex(window->screen, font, nameptr, x, 25 + 5, eof_color_white, -1);
+			}
+		}
 	}
 
 	return 0;	//Return status:  Note was not clipped in its entirety
@@ -1048,244 +1043,243 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	{	//For each lane used in this note
 		//Determine if this gem is to be drawn as a 3D rectangle instead of a bitmap
 		drawline = 0;	//Reset this condition
-		if(notenote & mask)
-		{	//If this lane is used
-			if((eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (mask == 1) && !eof_render_bass_drum_in_lane)
-			{	//If this is a drum track, the bass drum gem is being drawn and it isn't being rendered in its own lane
-				drawline = 1;
-				if(noteflags & EOF_NOTE_FLAG_SP)			//If this bass drum note is star power, render it in silver
-					linecol = p ? eof_color_white : eof_color_silver;
-				else if(noteflags & EOF_DRUM_NOTE_FLAG_DBASS)
-				{	//Or if it is double bass
-					if(!eof_song->tags->double_bass_drum_disabled)	//If the user has not disabled expert+ bass drum notes
-						linecol = p ? makecol(255, 192, 192) : eof_color_red;	//Render it in red
-					else
-						linecol = p ? makecol(192, 192, 255) : eof_color_blue;	//Render it in blue
-				}
-				else										//Otherwise render it in the standard lane one color for the current color set
-					linecol = p ? eof_colors[0].hit : eof_colors[0].color;
-			}
-			else if(eof_render_3d_rs_chords && (eof_note_count_rs_lanes(eof_song, track, notenum, 2) >= 2) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) &&
-					((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HD) || (eof_note_has_high_chord_density(eof_song, track, notenum, 2))))
-			{	//If the user has opted to 3D render Rocksmith style chords, and this is a pro guitar chord that either has high density due to being explicitly defined as such or automatically due to other means
-				long prevnote = eof_track_fixup_previous_note(eof_song, track, notenum);
+		if(!(notenote & mask))
+			continue;	//If this lane is not used, skip it
 
-				if((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HD) || (!(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT) && !(eof_get_note_eflags(eof_song, track, notenum) & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY)))
-				{	//If this chord has "hi dens" status, or if it isn't marked with split or chordify statuses
-					drawline = 1;
-					if(!prevnote)
-					{	//If there was a previous note
-						EOF_PRO_GUITAR_TRACK * tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];	//Simplify
-
-						if(strcmp(eof_get_note_name(eof_song, track, prevnote), eof_get_note_name(eof_song, track, notenum)))
-						{	//If the previous note had a different name defined
-							drawline = 0;
-						}
-						if(eof_pro_guitar_note_compare_fingerings(tp->note[prevnote], tp->note[notenum]))
-						{	//If the previous note had a different chord fingering defined
-							drawline = 0;
-						}
-					}
-					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HD)
-					{	//The high density status overrides all other conditions
-						drawline = 1;
-					}
-					if(drawline)
-					{	//If conditions were met to render this chord as a repeat line
-						ctr = eof_count_track_lanes(eof_song, track) + 1;	//Set a condition that will exit the for loop after this line is drawn
-						linecol = p ? eof_color_cyan : eof_color_dark_cyan;
-					}
-				}
-			}
-			else if((mask == 32) && eof_track_is_legacy_guitar(eof_song, track))
-			{	//If drawing lane 6 of a legacy guitar track (renders similarly to a bass drum note)
-				if(eof_open_strum_enabled(track))
-				{	//If open strum is enabled for the track
-					drawline = 1;
-					if(noteflags & EOF_NOTE_FLAG_SP)			//If this open bass note is star power, render it in silver
-						linecol = p ? eof_color_white : eof_color_silver;
-					else										//Otherwise render it in the standard lane six color for the current color set
-						linecol = p ? eof_colors[5].hit : eof_colors[5].color;
-				}
+		if((eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (mask == 1) && !eof_render_bass_drum_in_lane)
+		{	//If this is a drum track, the bass drum gem is being drawn and it isn't being rendered in its own lane
+			drawline = 1;
+			if(noteflags & EOF_NOTE_FLAG_SP)			//If this bass drum note is star power, render it in silver
+				linecol = p ? eof_color_white : eof_color_silver;
+			else if(noteflags & EOF_DRUM_NOTE_FLAG_DBASS)
+			{	//Or if it is double bass
+				if(!eof_song->tags->double_bass_drum_disabled)	//If the user has not disabled expert+ bass drum notes
+					linecol = p ? makecol(255, 192, 192) : eof_color_red;	//Render it in red
 				else
-				{
-					continue;	//Skip rendering this gem
+					linecol = p ? makecol(192, 192, 255) : eof_color_blue;	//Render it in blue
+			}
+			else										//Otherwise render it in the standard lane one color for the current color set
+				linecol = p ? eof_colors[0].hit : eof_colors[0].color;
+		}
+		else if(eof_render_3d_rs_chords && (eof_note_count_rs_lanes(eof_song, track, notenum, 2) >= 2) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) &&
+				((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HD) || (eof_note_has_high_chord_density(eof_song, track, notenum, 2))))
+		{	//If the user has opted to 3D render Rocksmith style chords, and this is a pro guitar chord that either has high density due to being explicitly defined as such or automatically due to other means
+			long prevnote = eof_track_fixup_previous_note(eof_song, track, notenum);
+
+			if((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HD) || (!(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT) && !(eof_get_note_eflags(eof_song, track, notenum) & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY)))
+			{	//If this chord has "hi dens" status, or if it isn't marked with split or chordify statuses
+				drawline = 1;
+				if(!prevnote)
+				{	//If there was a previous note
+					EOF_PRO_GUITAR_TRACK * tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];	//Simplify
+
+					if(strcmp(eof_get_note_name(eof_song, track, prevnote), eof_get_note_name(eof_song, track, notenum)))
+					{	//If the previous note had a different name defined
+						drawline = 0;
+					}
+					if(eof_pro_guitar_note_compare_fingerings(tp->note[prevnote], tp->note[notenum]))
+					{	//If the previous note had a different chord fingering defined
+						drawline = 0;
+					}
+				}
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HD)
+				{	//The high density status overrides all other conditions
+					drawline = 1;
+				}
+				if(drawline)
+				{	//If conditions were met to render this chord as a repeat line
+					ctr = eof_count_track_lanes(eof_song, track) + 1;	//Set a condition that will exit the for loop after this line is drawn
+					linecol = p ? eof_color_cyan : eof_color_dark_cyan;
 				}
 			}
-
-			if(drawline)
-			{	//If rendering a line
-				rz = npos;
-				ez = npos + 14;
-				point[0] = ocd3d_project_x(bx - 10, rz);
-				point[1] = ocd3d_project_y(200, rz);
-				point[2] = ocd3d_project_x(bx - 10, ez);
-				point[3] = ocd3d_project_y(200, ez);
-				point[4] = ocd3d_project_x(bx + 232, ez);
-				point[5] = point[3];
-				point[6] = ocd3d_project_x(bx + 232, rz);
-				point[7] = point[1];
-
-				if((point[0] != -65536) && (point[1] != -65536) && (point[2] != -65536) && (point[3] != -65536) && (point[4] != -65536) && (point[6] != -65536))
-				{	//If none of the coordinate projections failed
-					polygon(eof_window_3d->screen, 4, point, linecol);
-				}
+		}
+		else if((mask == 32) && eof_track_is_legacy_guitar(eof_song, track))
+		{	//If drawing lane 6 of a legacy guitar track (renders similarly to a bass drum note)
+			if(eof_open_strum_enabled(track))
+			{	//If open strum is enabled for the track
+				drawline = 1;
+				if(noteflags & EOF_NOTE_FLAG_SP)			//If this open bass note is star power, render it in silver
+					linecol = p ? eof_color_white : eof_color_silver;
+				else										//Otherwise render it in the standard lane six color for the current color set
+					linecol = p ? eof_colors[5].hit : eof_colors[5].color;
 			}
 			else
-			{	//If rendering a bitmap
-				if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-				{	//If rendering a drum note
-					if(((noteflags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((noteflags & EOF_DRUM_NOTE_FLAG_B_CYMBAL) && (mask == 8)) || ((noteflags & EOF_DRUM_NOTE_FLAG_G_CYMBAL) && (mask == 16)))
-					{	//If this is a cymbal note, render with the cymbal image
-						if(noteflags & EOF_NOTE_FLAG_SP)
-						{	//If this cymbal note is star power, render it in silver
-							imagenum = p ? EOF_IMAGE_NOTE_WHITE_CYMBAL_HIT : EOF_IMAGE_NOTE_WHITE_CYMBAL;
-						}
-						else
-						{	//Otherwise render in the appropriate color
-							imagenum = p ? eof_colors[ctr].cymbalhit3d : eof_colors[ctr].cymbal3d;
-						}
+			{
+				continue;	//Skip rendering this gem
+			}
+		}
+
+		if(drawline)
+		{	//If rendering a line
+			rz = npos;
+			ez = npos + 14;
+			point[0] = ocd3d_project_x(bx - 10, rz);
+			point[1] = ocd3d_project_y(200, rz);
+			point[2] = ocd3d_project_x(bx - 10, ez);
+			point[3] = ocd3d_project_y(200, ez);
+			point[4] = ocd3d_project_x(bx + 232, ez);
+			point[5] = point[3];
+			point[6] = ocd3d_project_x(bx + 232, rz);
+			point[7] = point[1];
+
+			if((point[0] != -65536) && (point[1] != -65536) && (point[2] != -65536) && (point[3] != -65536) && (point[4] != -65536) && (point[6] != -65536))
+			{	//If none of the coordinate projections failed
+				polygon(eof_window_3d->screen, 4, point, linecol);
+			}
+		}
+		else
+		{	//If rendering a bitmap
+			if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+			{	//If rendering a drum note
+				if(((noteflags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((noteflags & EOF_DRUM_NOTE_FLAG_B_CYMBAL) && (mask == 8)) || ((noteflags & EOF_DRUM_NOTE_FLAG_G_CYMBAL) && (mask == 16)))
+				{	//If this is a cymbal note, render with the cymbal image
+					if(noteflags & EOF_NOTE_FLAG_SP)
+					{	//If this cymbal note is star power, render it in silver
+						imagenum = p ? EOF_IMAGE_NOTE_WHITE_CYMBAL_HIT : EOF_IMAGE_NOTE_WHITE_CYMBAL;
 					}
 					else
-					{	//Otherwise render with the standard note image
-						if(noteflags & EOF_NOTE_FLAG_SP)
-						{	//If this drum note is star power, render it in silver
-							imagenum = p ? EOF_IMAGE_NOTE_WHITE_HIT: EOF_IMAGE_NOTE_WHITE;
+					{	//Otherwise render in the appropriate color
+						imagenum = p ? eof_colors[ctr].cymbalhit3d : eof_colors[ctr].cymbal3d;
+					}
+				}
+				else
+				{	//Otherwise render with the standard note image
+					if(noteflags & EOF_NOTE_FLAG_SP)
+					{	//If this drum note is star power, render it in silver
+						imagenum = p ? EOF_IMAGE_NOTE_WHITE_HIT: EOF_IMAGE_NOTE_WHITE;
+					}
+					else
+					{	//Otherwise render in the appropriate color
+						imagenum = p ? eof_colors[ctr].notehit3d : eof_colors[ctr].note3d;
+					}
+				}
+			}//If rendering a drum note
+			else if(track != EOF_TRACK_DANCE)
+			{	//If not rendering a dance note
+				unsigned long color = ctr;	//By default, the color will be determined by the gem's lane number
+
+				imagenum = 0;
+				if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_color_set == EOF_COLORS_BF))
+				{	//If a pro guitar track is active and the Bandfuse color set is in use, override the color based on the gem's fingering
+					EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+
+					if(tp->note[notenum]->flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+					{	//If the note is tapped
+						imagenum = p ? EOF_IMAGE_NOTE_BLACK_HIT : EOF_IMAGE_NOTE_BLACK;	//Draw the note in black
+					}
+					else
+					{
+						unsigned fingering = eof_pro_guitar_note_lookup_string_fingering(tp, notenum, ctr, 6);	//Look up this gem's fingering (or return 6 if cannot be determined)
+
+						if(fingering < 6)
+						{	//If the finger was determined
+							color = fingering;	//Use the fingering's appropriate color
 						}
 						else
-						{	//Otherwise render in the appropriate color
-							imagenum = p ? eof_colors[ctr].notehit3d : eof_colors[ctr].note3d;
+						{	//Otherwise use the default silvering coloring
+							noteflags |= EOF_NOTE_FLAG_SP;	//And trigger the selection of the appropriate corresponding border color
 						}
 					}
-				}//If rendering a drum note
-				else if(track != EOF_TRACK_DANCE)
-				{	//If not rendering a dance note
-					unsigned long color = ctr;	//By default, the color will be determined by the gem's lane number
+				}
 
-					imagenum = 0;
-					if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_color_set == EOF_COLORS_BF))
-					{	//If a pro guitar track is active and the Bandfuse color set is in use, override the color based on the gem's fingering
-						EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
-
-						if(tp->note[notenum]->flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
-						{	//If the note is tapped
-							imagenum = p ? EOF_IMAGE_NOTE_BLACK_HIT : EOF_IMAGE_NOTE_BLACK;	//Draw the note in black
+				if(!imagenum)
+				{	//If the appropriate 3D image wasn't determined yet
+					if(noteflags & EOF_NOTE_FLAG_HOPO)
+					{	//If this is a HOPO note
+						if(noteflags & EOF_NOTE_FLAG_SP)
+						{	//If this is also a SP note
+							imagenum = p ? EOF_IMAGE_NOTE_HWHITE_HIT : EOF_IMAGE_NOTE_HWHITE;
 						}
 						else
 						{
-							unsigned fingering = eof_pro_guitar_note_lookup_string_fingering(tp, notenum, ctr, 6);	//Look up this gem's fingering (or return 6 if cannot be determined)
-
-							if(fingering < 6)
-							{	//If the finger was determined
-								color = fingering;	//Use the fingering's appropriate color
-							}
-							else
-							{	//Otherwise use the default silvering coloring
-								noteflags |= EOF_NOTE_FLAG_SP;	//And trigger the selection of the appropriate corresponding border color
-							}
+							imagenum = p ? eof_colors[color].hoponotehit3d : eof_colors[color].hoponote3d;
 						}
 					}
-
-					if(!imagenum)
-					{	//If the appropriate 3D image wasn't determined yet
-						if(noteflags & EOF_NOTE_FLAG_HOPO)
-						{	//If this is a HOPO note
-							if(noteflags & EOF_NOTE_FLAG_SP)
-							{	//If this is also a SP note
-								imagenum = p ? EOF_IMAGE_NOTE_HWHITE_HIT : EOF_IMAGE_NOTE_HWHITE;
-							}
-							else
-							{
-								imagenum = p ? eof_colors[color].hoponotehit3d : eof_colors[color].hoponote3d;
-							}
+					else
+					{	//This is not a HOPO note
+						if(noteflags & EOF_NOTE_FLAG_SP)
+						{	//If this is an SP note
+							imagenum = p ? EOF_IMAGE_NOTE_WHITE_HIT : EOF_IMAGE_NOTE_WHITE;
 						}
 						else
-						{	//This is not a HOPO note
-							if(noteflags & EOF_NOTE_FLAG_SP)
-							{	//If this is an SP note
-								imagenum = p ? EOF_IMAGE_NOTE_WHITE_HIT : EOF_IMAGE_NOTE_WHITE;
-							}
-							else
-							{
-								imagenum = p ? eof_colors[color].notehit3d : eof_colors[color].note3d;
-							}
-						}
-					}//If the appropriate 3D image wasn't determined yet
-				}//If not rendering a dance note
-				else
-				{	//This is a dance note
-					imagenum = p ? eof_colors[ctr].arrowhit3d : eof_colors[ctr].arrow3d;
-				}
-
-				ocd3d_draw_bitmap(eof_window_3d->screen, eof_image[imagenum], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH - xoffset, 200 - EOF_3D_IMAGE_HEIGHT, npos);
-
-				if(!eof_legacy_view && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-				{	//If legacy view is disabled and this is a pro guitar note, render the fret number over the center of the note
-					BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], NULL, ctr, 8, eof_color_white, eof_color_black, font);	//Allow one extra character's width for padding
-					if(fretbmp != NULL)
-					{	//Render the bitmap on top of the 3D note and then destroy the bitmap
-						ocd3d_draw_bitmap(eof_window_3d->screen, fretbmp, xchart[ctr] - 8, 200 - (EOF_3D_IMAGE_HEIGHT / 2), npos);
-						destroy_bitmap(fretbmp);
-					}
-				}
-				else if(track == EOF_TRACK_DRUM_PS)
-				{	//If this was a note in the Phase Shift drum track
-					if(	((mask == 4) && (noteflags & EOF_DRUM_NOTE_FLAG_Y_COMBO)) ||
-						((mask == 8) && (noteflags & EOF_DRUM_NOTE_FLAG_B_COMBO)) ||
-						((mask == 16) && (noteflags & EOF_DRUM_NOTE_FLAG_G_COMBO)))
-					{	//If the gem just drawn is a tom/cymbal combo
-						int x, y, x2;
-						x = ocd3d_project_x(xchart[ctr] - xoffset, npos);
-						y = ocd3d_project_y(200 - (EOF_3D_IMAGE_HEIGHT / 4), npos);
-						x2 = ocd3d_project_x(xchart[ctr] + (xchart[1] - xchart[0]) - xoffset, npos);	//The x coordinate one lane over
-						if((x != -65536) && (y != -65536))
-						{	//If none of the coordinate projections failed
-							circlefill(eof_window_3d->screen, x, y, (x2 - x) / 6, eof_color_black);	//Draw a large dot in the center of the cymbal's 3D image
+						{
+							imagenum = p ? eof_colors[color].notehit3d : eof_colors[color].note3d;
 						}
 					}
+				}//If the appropriate 3D image wasn't determined yet
+			}//If not rendering a dance note
+			else
+			{	//This is a dance note
+				imagenum = p ? eof_colors[ctr].arrowhit3d : eof_colors[ctr].arrow3d;
+			}
+
+			ocd3d_draw_bitmap(eof_window_3d->screen, eof_image[imagenum], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH - xoffset, 200 - EOF_3D_IMAGE_HEIGHT, npos);
+
+			if(!eof_legacy_view && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+			{	//If legacy view is disabled and this is a pro guitar note, render the fret number over the center of the note
+				BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], NULL, ctr, 8, eof_color_white, eof_color_black, font);	//Allow one extra character's width for padding
+				if(fretbmp != NULL)
+				{	//Render the bitmap on top of the 3D note and then destroy the bitmap
+					ocd3d_draw_bitmap(eof_window_3d->screen, fretbmp, xchart[ctr] - 8, 200 - (EOF_3D_IMAGE_HEIGHT / 2), npos);
+					destroy_bitmap(fretbmp);
 				}
-			}//If rendering a bitmap
-		}//If this lane is used
+			}
+			else if(track == EOF_TRACK_DRUM_PS)
+			{	//If this was a note in the Phase Shift drum track
+				if(	((mask == 4) && (noteflags & EOF_DRUM_NOTE_FLAG_Y_COMBO)) ||
+					((mask == 8) && (noteflags & EOF_DRUM_NOTE_FLAG_B_COMBO)) ||
+					((mask == 16) && (noteflags & EOF_DRUM_NOTE_FLAG_G_COMBO)))
+				{	//If the gem just drawn is a tom/cymbal combo
+					int x, y, x2;
+					x = ocd3d_project_x(xchart[ctr] - xoffset, npos);
+					y = ocd3d_project_y(200 - (EOF_3D_IMAGE_HEIGHT / 4), npos);
+					x2 = ocd3d_project_x(xchart[ctr] + (xchart[1] - xchart[0]) - xoffset, npos);	//The x coordinate one lane over
+					if((x != -65536) && (y != -65536))
+					{	//If none of the coordinate projections failed
+						circlefill(eof_window_3d->screen, x, y, (x2 - x) / 6, eof_color_black);	//Draw a large dot in the center of the cymbal's 3D image
+					}
+				}
+			}
+		}//If rendering a bitmap
 	}//For each lane used in this note
 
-	//Render note names
-	if(!eof_hide_note_names)
-	{	//If the user hasn't opted to hide note names
-		notename[0] = prevnotename[0] = '\0';	//Empty these strings
-		namefound = eof_build_note_name(eof_song, track, notenum, notename);
-		if(namefound)
-		{	//If this note has a name, prepare it for rendering
-			(void) eof_build_note_name(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum), prevnotename);	//Get the previous note's name
-			if(!ustricmp(notename, prevnotename))
-			{	//If this note and the previous one have the same name
-				if(namefound == 1)
-				{	//If the name for this note was manually assigned
-					nameptr = samename;	//Display this note's name as "/" to indicate a repeat of the last note
-				}
-				else
-				{	//The name for this note was detected
-					nameptr = samenameauto;	//Display this note's name as "[/]" to indicate a repeat of the last note
-				}
+	if(eof_hide_note_names)
+		return 0;	//If the user opted to hide note names, skip the logic below
+
+	notename[0] = prevnotename[0] = '\0';	//Empty these strings
+	namefound = eof_build_note_name(eof_song, track, notenum, notename);
+	if(namefound)
+	{	//If this note has a name, prepare it for rendering
+		(void) eof_build_note_name(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum), prevnotename);	//Get the previous note's name
+		if(!ustricmp(notename, prevnotename))
+		{	//If this note and the previous one have the same name
+			if(namefound == 1)
+			{	//If the name for this note was manually assigned
+				nameptr = samename;	//Display this note's name as "/" to indicate a repeat of the last note
 			}
 			else
-			{	//This note doesn't have the same name as the previous note
-				if(namefound == 1)
-				{	//If the name for this note was manually assigned
-					nameptr = notename;	//Display the note name as-is
-				}
-				else
-				{	//The name for this note was detected
-					(void) snprintf(prevnotename, sizeof(prevnotename) - 1, "[%s]", notename);	//Rebuild the note name to be enclosed in brackets
-					nameptr = prevnotename;
-				}
+			{	//The name for this note was detected
+				nameptr = samenameauto;	//Display this note's name as "[/]" to indicate a repeat of the last note
 			}
-			z3d = npos + 6 + text_height(font);	//Restore the 6 that was subtracted earlier when finding npos, and add the font's height to have the text line up with the note's z position
-			z3d = z3d < -100 ? -100 : z3d;
-			x3d = ocd3d_project_x(20 - 4, z3d);
-			y3d = ocd3d_project_y(200, z3d);
-			textout_right_ex(eof_window_3d->screen, font, nameptr, x3d, y3d, eof_color_white, -1);
 		}
-	}//If the user hasn't opted to hide note names
+		else
+		{	//This note doesn't have the same name as the previous note
+			if(namefound == 1)
+			{	//If the name for this note was manually assigned
+				nameptr = notename;	//Display the note name as-is
+			}
+			else
+			{	//The name for this note was detected
+				(void) snprintf(prevnotename, sizeof(prevnotename) - 1, "[%s]", notename);	//Rebuild the note name to be enclosed in brackets
+				nameptr = prevnotename;
+			}
+		}
+		z3d = npos + 6 + text_height(font);	//Restore the 6 that was subtracted earlier when finding npos, and add the font's height to have the text line up with the note's z position
+		z3d = z3d < -100 ? -100 : z3d;
+		x3d = ocd3d_project_x(20 - 4, z3d);
+		y3d = ocd3d_project_y(200, z3d);
+		textout_right_ex(eof_window_3d->screen, font, nameptr, x3d, y3d, eof_color_white, -1);
+	}
 
 	return 0;	//Return status:  Note was not clipped in its entirety
 }
@@ -1358,148 +1352,148 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	for(ctr=0,mask=1; ctr < eof_count_track_lanes(eof_song, track); ctr++,mask=mask<<1)
 	{	//For each of the lanes in this track
 		assert(ctr < EOF_MAX_FRETS);	//Put an assertion here to resolve a false positive with Coverity
-		if(notenote & mask)
-		{	//If this lane has a gem to render
-			if((ctr == 5) && eof_track_is_legacy_guitar(eof_song, track))
-			{	//If drawing the tail of a gem on lane 6 of a legacy guitar track
-				if(eof_open_strum_enabled(track))
-				{	//And open strum notes are enabled, render open strum notes (a rectangle covering the width of rendering of frets 2, 3 and 4
-					point[0] = ocd3d_project_x(xchart[1] - 10, rz);
-					point[1] = ocd3d_project_y(200, rz);
-					point[2] = ocd3d_project_x(xchart[1] - 10, ez);
-					point[3] = ocd3d_project_y(200, ez);
-					point[4] = ocd3d_project_x(xchart[3] + 10, ez);
-					point[5] = point[3];
-					point[6] = ocd3d_project_x(xchart[3] + 10, rz);
-					point[7] = point[1];
-					polygon(eof_window_3d->screen, 4, point, (noteflags & EOF_NOTE_FLAG_SP) ? (p ? eof_color_white : eof_color_silver) : (p ? eof_colors[ctr].hit : eof_colors[ctr].color));
+		if(!(notenote & mask))
+			continue;	//If this lane does not have a gem to render, skip it
+
+		if((ctr == 5) && eof_track_is_legacy_guitar(eof_song, track))
+		{	//If drawing the tail of a gem on lane 6 of a legacy guitar track
+			if(eof_open_strum_enabled(track))
+			{	//And open strum notes are enabled, render open strum notes (a rectangle covering the width of rendering of frets 2, 3 and 4
+				point[0] = ocd3d_project_x(xchart[1] - 10, rz);
+				point[1] = ocd3d_project_y(200, rz);
+				point[2] = ocd3d_project_x(xchart[1] - 10, ez);
+				point[3] = ocd3d_project_y(200, ez);
+				point[4] = ocd3d_project_x(xchart[3] + 10, ez);
+				point[5] = point[3];
+				point[6] = ocd3d_project_x(xchart[3] + 10, rz);
+				point[7] = point[1];
+				polygon(eof_window_3d->screen, 4, point, (noteflags & EOF_NOTE_FLAG_SP) ? (p ? eof_color_white : eof_color_silver) : (p ? eof_colors[ctr].hit : eof_colors[ctr].color));
+			}
+		}
+		else
+		{	//Logic to render lanes 1 through 6
+			unsigned long color = ctr;	//By default, the color will be determined by the gem's lane number
+
+			if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_color_set == EOF_COLORS_BF))
+			{	//If a pro guitar track is active and the Bandfuse color set is in use, override the color based on the gem's fingering
+				unsigned fingering = eof_pro_guitar_note_lookup_string_fingering(eof_song->pro_guitar_track[tracknum], notenum, ctr, 6);	//Look up this gem's fingering (or return 6 if cannot be determined)
+
+				if(fingering < 6)
+				{	//If the finger was determined
+					color = fingering;	//Use the fingering's appropriate color
 				}
+				else
+				{	//Otherwise use the default silvering coloring
+					noteflags |= EOF_NOTE_FLAG_SP;	//And trigger the selection of the appropriate corresponding border color
+				}
+			}
+
+			point[0] = ocd3d_project_x(xchart[ctr] - 10, rz);
+			point[1] = ocd3d_project_y(200, rz);
+			point[2] = ocd3d_project_x(xchart[ctr] - 10, ez);
+			point[3] = ocd3d_project_y(200, ez);
+			point[4] = ocd3d_project_x(xchart[ctr] + 10, ez);
+			point[5] = point[3];
+			point[6] = ocd3d_project_x(xchart[ctr] + 10, rz);
+			point[7] = point[1];
+			polygon(eof_window_3d->screen, 4, point, (noteflags & EOF_NOTE_FLAG_SP) ? (p ? eof_color_white : eof_color_silver) : (p ? eof_colors[color].hit : eof_colors[color].color));
+		}
+
+		//Render pro guitar note slide if applicable
+		if((track != 0) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)))
+		{	//If rendering an existing pro guitar track that slides up or down or is an unpitched slide
+			long npos2, rz2;
+			unsigned long notepos2;		//Used for slide note rendering
+			unsigned long halflanewidth = (56.0 * (4.0 / (numlanes-1))) / 2;
+			int slidecolor = eof_color_dark_purple;	//By default, pro guitar slides are drawn in purple
+			char up = 0;		//Will be assumed to be a down slide by default
+
+			if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE)
+				slidecolor = eof_color_white;	//If it's a reverse slide though, draw in white
+			if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+				slidecolor = eof_color_black;	//If it's an unpitched slide, draw in black
+
+			if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+				up = 1;
+			else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+			{
+				unsigned char lowestfret = eof_get_lowest_fret_value(eof_song, track, notenum);	//Determine the fret value of the lowest fretted string
+				if(lowestfret < eof_song->pro_guitar_track[eof_song->track[track]->tracknum]->note[notenum]->unpitchend)
+				{	//If the unpitched slide goes higher than this position
+					up = 1;
+				}
+			}
+
+			notepos2 = notepos + notelength;	//Find the position of the end of the note
+			npos2 = (long)(notepos2 + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
+			rz2 = npos2 < -100 ? -100 : npos2 + 10;
+
+			//Define the slide rectangle coordinates in clockwise order
+			#define EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D 4
+			if(up)
+			{	//If this note slides up (3D view from left to right), start the slide line at the left of this note
+				point[0] = ocd3d_project_x(xchart[ctr] - halflanewidth, rz);	//X1 (X coordinate of the front end of the slide)
 			}
 			else
-			{	//Logic to render lanes 1 through 6
-				unsigned long color = ctr;	//By default, the color will be determined by the gem's lane number
-
-				if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_color_set == EOF_COLORS_BF))
-				{	//If a pro guitar track is active and the Bandfuse color set is in use, override the color based on the gem's fingering
-					unsigned fingering = eof_pro_guitar_note_lookup_string_fingering(eof_song->pro_guitar_track[tracknum], notenum, ctr, 6);	//Look up this gem's fingering (or return 6 if cannot be determined)
-
-					if(fingering < 6)
-					{	//If the finger was determined
-						color = fingering;	//Use the fingering's appropriate color
-					}
-					else
-					{	//Otherwise use the default silvering coloring
-						noteflags |= EOF_NOTE_FLAG_SP;	//And trigger the selection of the appropriate corresponding border color
-					}
-				}
-
-				point[0] = ocd3d_project_x(xchart[ctr] - 10, rz);
-				point[1] = ocd3d_project_y(200, rz);
-				point[2] = ocd3d_project_x(xchart[ctr] - 10, ez);
-				point[3] = ocd3d_project_y(200, ez);
-				point[4] = ocd3d_project_x(xchart[ctr] + 10, ez);
-				point[5] = point[3];
-				point[6] = ocd3d_project_x(xchart[ctr] + 10, rz);
-				point[7] = point[1];
-				polygon(eof_window_3d->screen, 4, point, (noteflags & EOF_NOTE_FLAG_SP) ? (p ? eof_color_white : eof_color_silver) : (p ? eof_colors[color].hit : eof_colors[color].color));
+			{	//Otherwise start the slide line at the right of this note
+				point[0] = ocd3d_project_x(xchart[ctr] + halflanewidth, rz);	//X1 (X coordinate of the front end of the slide)
 			}
+			point[1] = ocd3d_project_y(200, rz);	//Y1 (Y coordinate of the front end of the slide)
+			if(up)
+			{	//If this note slides up (3D view from left to right), end the slide line at the right of the next note
+				point[2] = ocd3d_project_x(xchart[ctr] + halflanewidth, rz2);	//X2 (X coordinate of the back end of the slide)
+			}
+			else
+			{	//Otherwise end the slide line at the left of the next note
+				point[2] = ocd3d_project_x(xchart[ctr] - halflanewidth, rz2);	//X2 (X coordinate of the back end of the slide)
+			}
+			point[3] = ocd3d_project_y(200, rz2);	//Y2 (Y coordinate of the back end of the slide
+			point[4] = point[2] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X3 (the specified number of pixels right of X2)
+			point[5] = point[3];	//Y3 (Y coordinate of the back end of the slide)
+			point[6] = point[0] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X4 (the specified number of pixels right of X1)
+			point[7] = point[1];	//Y4 (Y coordinate of the front end of the slide)
+			polygon(eof_window_3d->screen, 4, point, slidecolor);	//Render the 4 point polygon in the appropriate color
+		}//If rendering an existing pro guitar track that slides up or down or is an unpitched slide
 
-			//Render pro guitar note slide if applicable
-			if((track != 0) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)))
-			{	//If rendering an existing pro guitar track that slides up or down or is an unpitched slide
-				long npos2, rz2;
-				unsigned long notepos2;		//Used for slide note rendering
-				unsigned long halflanewidth = (56.0 * (4.0 / (numlanes-1))) / 2;
-				int slidecolor = eof_color_dark_purple;	//By default, pro guitar slides are drawn in purple
-				char up = 0;		//Will be assumed to be a down slide by default
+		//Render slider note slide if applicable
+		if((eof_song->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER))
+		{
+			unsigned long nextnotenum;
+			if(eof_track_fixup_next_note(eof_song, track, notenum) >= 0)
+			{	//If there is another note in this difficulty
+				nextnotenum = eof_track_fixup_next_note(eof_song, track, notenum);
+				if(eof_get_note_flags(eof_song, track, nextnotenum) & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
+				{	//If that next note is also a slider note, draw a dark purple line between this note and the next
+					long npos2, rz2;
+					unsigned long notepos2, nextnotenote, ctr2, mask2;		//Used for slide note rendering
 
-				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE)
-					slidecolor = eof_color_white;	//If it's a reverse slide though, draw in white
-				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
-					slidecolor = eof_color_black;	//If it's an unpitched slide, draw in black
-
-				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-					up = 1;
-				else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
-				{
-					unsigned char lowestfret = eof_get_lowest_fret_value(eof_song, track, notenum);	//Determine the fret value of the lowest fretted string
-					if(lowestfret < eof_song->pro_guitar_track[eof_song->track[track]->tracknum]->note[notenum]->unpitchend)
-					{	//If the unpitched slide goes higher than this position
-						up = 1;
-					}
-				}
-
-				notepos2 = notepos + notelength;	//Find the position of the end of the note
-				npos2 = (long)(notepos2 + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
-				rz2 = npos2 < -100 ? -100 : npos2 + 10;
-
-				//Define the slide rectangle coordinates in clockwise order
-				#define EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D 4
-				if(up)
-				{	//If this note slides up (3D view from left to right), start the slide line at the left of this note
-					point[0] = ocd3d_project_x(xchart[ctr] - halflanewidth, rz);	//X1 (X coordinate of the front end of the slide)
-				}
-				else
-				{	//Otherwise start the slide line at the right of this note
-					point[0] = ocd3d_project_x(xchart[ctr] + halflanewidth, rz);	//X1 (X coordinate of the front end of the slide)
-				}
-				point[1] = ocd3d_project_y(200, rz);	//Y1 (Y coordinate of the front end of the slide)
-				if(up)
-				{	//If this note slides up (3D view from left to right), end the slide line at the right of the next note
-					point[2] = ocd3d_project_x(xchart[ctr] + halflanewidth, rz2);	//X2 (X coordinate of the back end of the slide)
-				}
-				else
-				{	//Otherwise end the slide line at the left of the next note
-					point[2] = ocd3d_project_x(xchart[ctr] - halflanewidth, rz2);	//X2 (X coordinate of the back end of the slide)
-				}
-				point[3] = ocd3d_project_y(200, rz2);	//Y2 (Y coordinate of the back end of the slide
-				point[4] = point[2] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X3 (the specified number of pixels right of X2)
-				point[5] = point[3];	//Y3 (Y coordinate of the back end of the slide)
-				point[6] = point[0] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X4 (the specified number of pixels right of X1)
-				point[7] = point[1];	//Y4 (Y coordinate of the front end of the slide)
-				polygon(eof_window_3d->screen, 4, point, slidecolor);	//Render the 4 point polygon in the appropriate color
-			}//If rendering an existing pro guitar track that slides up or down or is an unpitched slide
-
-			//Render slider note slide if applicable
-			if((eof_song->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER))
-			{
-				unsigned long nextnotenum;
-				if(eof_track_fixup_next_note(eof_song, track, notenum) >= 0)
-				{	//If there is another note in this difficulty
-					nextnotenum = eof_track_fixup_next_note(eof_song, track, notenum);
-					if(eof_get_note_flags(eof_song, track, nextnotenum) & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
-					{	//If that next note is also a slider note, draw a dark purple line between this note and the next
-						long npos2, rz2;
-						unsigned long notepos2, nextnotenote, ctr2, mask2;		//Used for slide note rendering
-
-						nextnotenote = eof_get_note_note(eof_song, track, nextnotenum);
-						for(ctr2=0,mask2=1; ctr2 < eof_count_track_lanes(eof_song, track); ctr2++,mask2=mask2<<1)
-						{
-							if(nextnotenote & mask2)
-							{	//If this lane is populated for the next note
-								break;
-							}
+					nextnotenote = eof_get_note_note(eof_song, track, nextnotenum);
+					for(ctr2=0,mask2=1; ctr2 < eof_count_track_lanes(eof_song, track); ctr2++,mask2=mask2<<1)
+					{
+						if(nextnotenote & mask2)
+						{	//If this lane is populated for the next note
+							break;
 						}
-
-						notepos2 = eof_get_note_pos(eof_song, track, nextnotenum);	//Find the position of the next note
-						npos2 = (long)(notepos2 + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
-						rz2 = npos2 < -100 ? -100 : npos2 + 10;
-
-						//Define the slide rectangle coordinates in clockwise order
-						point[0] = ocd3d_project_x(xchart[ctr], rz);	//X1 (X coordinate of the front end of the slide): The X position of this note
-						point[1] = ocd3d_project_y(200, rz);			//Y1 (Y coordinate of the front end of the slide): The Y position of this note
-						point[2] = ocd3d_project_x(xchart[ctr2], rz2);	//X2 (X coordinate of the back end of the slide): The X position of the next note
-						point[3] = ocd3d_project_y(200, rz2);			//Y2 (Y coordinate of the back end of the slide): The Y position of the next note
-
-						point[4] = point[2] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X3 (the specified number of pixels right of X2)
-						point[5] = point[3];							//Y3 (Y coordinate of the back end of the slide)
-						point[6] = point[0] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X4 (the specified number of pixels right of X1)
-						point[7] = point[1];							//Y4 (Y coordinate of the front end of the slide)
-						polygon(eof_window_3d->screen, 4, point, eof_color_dark_purple);	//Render the 4 point polygon in dark purple
 					}
+
+					notepos2 = eof_get_note_pos(eof_song, track, nextnotenum);	//Find the position of the next note
+					npos2 = (long)(notepos2 + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
+					rz2 = npos2 < -100 ? -100 : npos2 + 10;
+
+					//Define the slide rectangle coordinates in clockwise order
+					point[0] = ocd3d_project_x(xchart[ctr], rz);	//X1 (X coordinate of the front end of the slide): The X position of this note
+					point[1] = ocd3d_project_y(200, rz);			//Y1 (Y coordinate of the front end of the slide): The Y position of this note
+					point[2] = ocd3d_project_x(xchart[ctr2], rz2);	//X2 (X coordinate of the back end of the slide): The X position of the next note
+					point[3] = ocd3d_project_y(200, rz2);			//Y2 (Y coordinate of the back end of the slide): The Y position of the next note
+
+					point[4] = point[2] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X3 (the specified number of pixels right of X2)
+					point[5] = point[3];							//Y3 (Y coordinate of the back end of the slide)
+					point[6] = point[0] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X4 (the specified number of pixels right of X1)
+					point[7] = point[1];							//Y4 (Y coordinate of the front end of the slide)
+					polygon(eof_window_3d->screen, 4, point, eof_color_dark_purple);	//Render the 4 point polygon in dark purple
 				}
 			}
-		}//If this lane has a gem to render
+		}
 	}//For each of the lanes in this track
 	return 0;
 }
@@ -1951,6 +1945,9 @@ int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, un
 			tracknum = sp->track[track1]->tracknum;
 			tracknum2 = sp->track[track2]->tracknum;
 		return eof_pro_guitar_note_compare(sp->pro_guitar_track[tracknum], note1, sp->pro_guitar_track[tracknum2], note2, thorough);
+
+		default:
+		break;
 	}
 
 	return 1;	//Return not equal
@@ -1969,26 +1966,25 @@ int eof_pro_guitar_note_compare(EOF_PRO_GUITAR_TRACK *tp1, unsigned long note1, 
 		return -1;	//Invalid parameters
 
 	note = tp1->note[note1]->note;	//Cache this for easier access
-	if(note == tp2->note[note2]->note)
-	{	//If both note's bitmasks match
-		for(ctr = 0, bitmask = 1; ctr < 6; ctr ++, bitmask <<= 1)
-		{	//For each of the 6 supported strings
-			if(note & bitmask)
-			{	//If this string is used
-				if((tp1->note[note1]->frets[ctr] & 0x7F) != (tp2->note[note2]->frets[ctr] & 0x7F))
-				{	//If this string's fret value (when masking out the mute status) isn't the same for both notes
-					return 1;	//Return not equal
-				}
-				if(thorough && ((tp1->note[note1]->frets[ctr] & 0x80) != (tp2->note[note2]->frets[ctr] & 0x80)))
-				{	//If the mute status is to be compared, but they don't match
-					return 1;	//Return not equal
-				}
+	if(note != tp2->note[note2]->note)
+		return 1;	//The note bitmasks don't match
+
+	for(ctr = 0, bitmask = 1; ctr < 6; ctr ++, bitmask <<= 1)
+	{	//For each of the 6 supported strings
+		if(note & bitmask)
+		{	//If this string is used
+			if((tp1->note[note1]->frets[ctr] & 0x7F) != (tp2->note[note2]->frets[ctr] & 0x7F))
+			{	//If this string's fret value (when masking out the mute status) isn't the same for both notes
+				return 1;	//Return not equal
+			}
+			if(thorough && ((tp1->note[note1]->frets[ctr] & 0x80) != (tp2->note[note2]->frets[ctr] & 0x80)))
+			{	//If the mute status is to be compared, but they don't match
+				return 1;	//Return not equal
 			}
 		}
-		return 0;	//Return equal
 	}
 
-	return 1;	//Return not equal
+	return 0;	//Return equal
 }
 
 int eof_pro_guitar_note_compare_fingerings(EOF_PRO_GUITAR_NOTE *np1, EOF_PRO_GUITAR_NOTE *np2)
@@ -2155,22 +2151,23 @@ char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, 
 		return 1;
 	}
 
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-	{	//If this is a pro guitar/bass track, perform chord detection
-		tracknum = sp->track[track]->tracknum;
-		if(eof_lookup_chord(sp->pro_guitar_track[tracknum], track, note, &scale, &chord, &isslash, &bassnote, 0, 0))
-		{	//If the chord lookup found a match
-			if(!isslash)
-			{	//If it's a normal chord
-				(void) snprintf(buffer, EOF_NAME_LENGTH, "%s%s", eof_note_names[scale], eof_chord_names[chord].chordname);
-			}
-			else
-			{	//If it's a slash chord
-				(void) snprintf(buffer, EOF_NAME_LENGTH, "%s%s%s", eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote]);
-			}
-			buffer[EOF_NAME_LENGTH] = '\0';	//Ensure this buffer is truncated
-			return 2;
+	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 0;	//If this isn't a pro guitar/bass track, chord detection can't be used
+
+
+	tracknum = sp->track[track]->tracknum;
+	if(eof_lookup_chord(sp->pro_guitar_track[tracknum], track, note, &scale, &chord, &isslash, &bassnote, 0, 0))
+	{	//If the chord lookup found a match
+		if(!isslash)
+		{	//If it's a normal chord
+			(void) snprintf(buffer, EOF_NAME_LENGTH, "%s%s", eof_note_names[scale], eof_chord_names[chord].chordname);
 		}
+		else
+		{	//If it's a slash chord
+			(void) snprintf(buffer, EOF_NAME_LENGTH, "%s%s%s", eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote]);
+		}
+		buffer[EOF_NAME_LENGTH] = '\0';	//Ensure this buffer is truncated
+		return 2;
 	}
 
 	return 0;	//Return no name found/detected
@@ -2185,34 +2182,34 @@ void eof_build_trill_phrases(EOF_PRO_GUITAR_TRACK *tp)
 
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the track
-		if(tp->note[ctr]->flags & EOF_NOTE_FLAG_IS_TRILL)
-		{	//If this note is marked as being in a trill
-			startpos = tp->note[ctr]->pos;	//Mark the start of this phrase
-			endpos = startpos + tp->note[ctr]->length;	//Initialize the end position of the phrase
-			while(++ctr < tp->notes)
-			{	//For the consecutive remaining notes in the track
-				if(tp->note[ctr]->flags & EOF_NOTE_FLAG_IS_TRILL)
-				{	//And the next note is also marked as a trill
-					endpos = tp->note[ctr]->pos + tp->note[ctr]->length;	//Update the end position of the phrase
-				}
-				else
-				{
-					break;	//Break from while loop.  This note isn't a trill so the next pass doesn't need to check it either
-				}
+		if(!(tp->note[ctr]->flags & EOF_NOTE_FLAG_IS_TRILL))
+			continue;	//If this note does not have trill status, skip it
+
+		startpos = tp->note[ctr]->pos;	//Mark the start of this phrase
+		endpos = startpos + tp->note[ctr]->length;	//Initialize the end position of the phrase
+		while(++ctr < tp->notes)
+		{	//For the consecutive remaining notes in the track
+			if(tp->note[ctr]->flags & EOF_NOTE_FLAG_IS_TRILL)
+			{	//And the next note is also marked as a trill
+				endpos = tp->note[ctr]->pos + tp->note[ctr]->length;	//Update the end position of the phrase
 			}
-			if(endpos > startpos + 1)
-			{	//As long as the phrase is determined to be longer than 1ms
-				endpos--;	//Shorten the phrase so that a consecutive note isn't incorrectly included in the phrase just because it starts where the earlier note ended
+			else
+			{
+				break;	//Break from while loop.  This note isn't a trill so the next pass doesn't need to check it either
 			}
-			count = tp->trills;
-			if(count < EOF_MAX_PHRASES)
-			{	//If the track can store the trill section
-				tp->trill[count].start_pos = startpos;
-				tp->trill[count].end_pos = endpos;
-				tp->trill[count].flags = 0;
-				tp->trill[count].name[0] = '\0';
-				tp->trills++;
-			}
+		}
+		if(endpos > startpos + 1)
+		{	//As long as the phrase is determined to be longer than 1ms
+			endpos--;	//Shorten the phrase so that a consecutive note isn't incorrectly included in the phrase just because it starts where the earlier note ended
+		}
+		count = tp->trills;
+		if(count < EOF_MAX_PHRASES)
+		{	//If the track can store the trill section
+			tp->trill[count].start_pos = startpos;
+			tp->trill[count].end_pos = endpos;
+			tp->trill[count].flags = 0;
+			tp->trill[count].name[0] = '\0';
+			tp->trills++;
 		}
 	}
 }
@@ -2226,38 +2223,38 @@ void eof_build_tremolo_phrases(EOF_PRO_GUITAR_TRACK *tp, unsigned char diff)
 
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the track
-		if((diff == 0xFF) || (tp->note[ctr]->type == diff))
-		{	//If this note is in the target difficulty
-			if(tp->note[ctr]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
-			{	//If this note is marked as being in a tremolo
-				startpos = tp->note[ctr]->pos;	//Mark the start of this phrase
-				endpos = startpos + tp->note[ctr]->length;	//Initialize the end position of the phrase
-				while(++ctr < tp->notes)
-				{	//For the consecutive remaining notes in the track
-					if(tp->note[ctr]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
-					{	//And the next note is also marked as a tremolo
-						endpos = tp->note[ctr]->pos + tp->note[ctr]->length;	//Update the end position of the phrase
-					}
-					else
-					{
-						break;	//Break from while loop.  This note isn't a tremolo so the next pass doesn't need to check it either
-					}
+		if((diff != 0xFF) && (tp->note[ctr]->type != diff))
+			continue;	//If this phrase doesn't apply to all difficulties or this note is not in the target difficulty, skip this note
+
+		if(tp->note[ctr]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
+		{	//If this note is marked as being in a tremolo
+			startpos = tp->note[ctr]->pos;	//Mark the start of this phrase
+			endpos = startpos + tp->note[ctr]->length;	//Initialize the end position of the phrase
+			while(++ctr < tp->notes)
+			{	//For the consecutive remaining notes in the track
+				if(tp->note[ctr]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
+				{	//And the next note is also marked as a tremolo
+					endpos = tp->note[ctr]->pos + tp->note[ctr]->length;	//Update the end position of the phrase
 				}
-				if(endpos > startpos + 1)
-				{	//As long as the phrase is determined to be longer than 1ms
-					endpos--;	//Shorten the phrase so that a consecutive note isn't incorrectly included in the phrase just because it starts where the earlier note ended
+				else
+				{
+					break;	//Break from while loop.  This note isn't a tremolo so the next pass doesn't need to check it either
 				}
-				count = tp->tremolos;
-				if(count < EOF_MAX_PHRASES)
-				{	//If the track can store the tremolo section
-					tp->tremolo[count].start_pos = startpos;
-					tp->tremolo[count].end_pos = endpos;
-					tp->tremolo[count].flags = 0;
-					tp->tremolo[count].name[0] = '\0';
-					tp->tremolo[count].difficulty = diff;	//Define the tremolo's difficulty as specified
-					tp->tremolos++;
-				}
-			}//If this note is marked as being in a tremolo
-		}
+			}
+			if(endpos > startpos + 1)
+			{	//As long as the phrase is determined to be longer than 1ms
+				endpos--;	//Shorten the phrase so that a consecutive note isn't incorrectly included in the phrase just because it starts where the earlier note ended
+			}
+			count = tp->tremolos;
+			if(count < EOF_MAX_PHRASES)
+			{	//If the track can store the tremolo section
+				tp->tremolo[count].start_pos = startpos;
+				tp->tremolo[count].end_pos = endpos;
+				tp->tremolo[count].flags = 0;
+				tp->tremolo[count].name[0] = '\0';
+				tp->tremolo[count].difficulty = diff;	//Define the tremolo's difficulty as specified
+				tp->tremolos++;
+			}
+		}//If this note is marked as being in a tremolo
 	}//For each note in the track
 }
