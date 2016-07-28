@@ -1,2 +1,1 @@
-*Simplifications and default switch cases added to satisfy OCLint.
 *Improved RS WAV export so that if the chart's song title has any characters that aren't usable in file names in Windows, the WAV file name substitutes them with underscores.
