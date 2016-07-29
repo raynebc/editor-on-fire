@@ -207,48 +207,48 @@ int eof_render_waveform(struct wavestruct *waveform)
 	}
 	for(x = startpixel, ctr = 0; x < eof_window_editor->w; x++, ctr += eof_zoom)
 	{	//for each pixel in the piano roll's visible width
-		if(eof_waveform_slice_mean(&left, &right, waveform, startslice + ctr, eof_zoom) == 0)
-		{	//processing was successful
-			if(eof_waveform_renderleftchannel)
-			{	//If the left channel rendering is enabled
-				if(waveform->left.maxampoffset)
-				{	//Additional check to avoid divide by zero on account of silent chart audio
-					if(left.peak != zeroamp)	//If there was a nonzero left peak amplitude, scale it to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
-					{
-						if(left.peak < zeroamp)	//If the peak is a negative amplitude
-						{	//Render it after the minimum amplitude to ensure it is visible
-							eof_render_waveform_line(zeroamp, leftchannel, left.min, x, eof_color_waveform_trough);	//Render the minimum amplitude (default color is dark green)
-							eof_render_waveform_line(zeroamp, leftchannel, left.rms, x, eof_color_waveform_rms);	//Render the root mean square amplitude (default color is red)
-							eof_render_waveform_line(zeroamp, leftchannel, left.peak, x, eof_color_waveform_peak);	//Render the peak amplitude (default color is green)
-						}
-						else
-						{	//Otherwise render it first
-							eof_render_waveform_line(zeroamp, leftchannel, left.peak, x, eof_color_waveform_peak);	//Render the peak amplitude
-							eof_render_waveform_line(zeroamp, leftchannel, left.rms, x, eof_color_waveform_rms);	//Render the root mean square
-							eof_render_waveform_line(zeroamp, leftchannel, left.min, x, eof_color_waveform_trough);	//Render the minimum amplitude
-						}
+		if(eof_waveform_slice_mean(&left, &right, waveform, startslice + ctr, eof_zoom) != 0)
+			continue;	//If the processing was not successful, skip this iteration
+
+		if(eof_waveform_renderleftchannel)
+		{	//If the left channel rendering is enabled
+			if(waveform->left.maxampoffset)
+			{	//Additional check to avoid divide by zero on account of silent chart audio
+				if(left.peak != zeroamp)	//If there was a nonzero left peak amplitude, scale it to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
+				{
+					if(left.peak < zeroamp)	//If the peak is a negative amplitude
+					{	//Render it after the minimum amplitude to ensure it is visible
+						eof_render_waveform_line(zeroamp, leftchannel, left.min, x, eof_color_waveform_trough);	//Render the minimum amplitude (default color is dark green)
+						eof_render_waveform_line(zeroamp, leftchannel, left.rms, x, eof_color_waveform_rms);	//Render the root mean square amplitude (default color is red)
+						eof_render_waveform_line(zeroamp, leftchannel, left.peak, x, eof_color_waveform_peak);	//Render the peak amplitude (default color is green)
+					}
+					else
+					{	//Otherwise render it first
+						eof_render_waveform_line(zeroamp, leftchannel, left.peak, x, eof_color_waveform_peak);	//Render the peak amplitude
+						eof_render_waveform_line(zeroamp, leftchannel, left.rms, x, eof_color_waveform_rms);	//Render the root mean square
+						eof_render_waveform_line(zeroamp, leftchannel, left.min, x, eof_color_waveform_trough);	//Render the minimum amplitude
 					}
 				}
 			}
+		}
 
-			if(render_right_channel)
-			{	//If the right channel rendering is enabled and the audio file is in stereo
-				if(waveform->right.maxampoffset)
-				{	//Additional check to avoid divide by zero on account of silent chart audio
-					if(right.peak != zeroamp)	//If there was a nonzero right peak amplitude, scale it to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
-					{
-						if(right.peak < zeroamp)	//If the peak is a negative amplitude
-						{	//Render it after the minimum amplitude to ensure it is visible
-							eof_render_waveform_line(zeroamp, rightchannel, right.min, x, eof_color_waveform_trough);	//Render the minimum amplitude
-							eof_render_waveform_line(zeroamp, rightchannel, right.rms, x, eof_color_waveform_rms);		//Render the root mean square
-							eof_render_waveform_line(zeroamp, rightchannel, right.peak, x, eof_color_waveform_peak);	//Render the peak amplitude
-						}
-						else
-						{	//Otherwise render it first
-							eof_render_waveform_line(zeroamp, rightchannel, right.peak, x, eof_color_waveform_peak);	//Render the peak amplitude
-							eof_render_waveform_line(zeroamp, rightchannel, right.rms, x, eof_color_waveform_rms);		//Render the root mean square
-							eof_render_waveform_line(zeroamp, rightchannel, right.min, x, eof_color_waveform_trough);	//Render the minimum amplitude
-						}
+		if(render_right_channel)
+		{	//If the right channel rendering is enabled and the audio file is in stereo
+			if(waveform->right.maxampoffset)
+			{	//Additional check to avoid divide by zero on account of silent chart audio
+				if(right.peak != zeroamp)	//If there was a nonzero right peak amplitude, scale it to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
+				{
+					if(right.peak < zeroamp)	//If the peak is a negative amplitude
+					{	//Render it after the minimum amplitude to ensure it is visible
+						eof_render_waveform_line(zeroamp, rightchannel, right.min, x, eof_color_waveform_trough);	//Render the minimum amplitude
+						eof_render_waveform_line(zeroamp, rightchannel, right.rms, x, eof_color_waveform_rms);		//Render the root mean square
+						eof_render_waveform_line(zeroamp, rightchannel, right.peak, x, eof_color_waveform_peak);	//Render the peak amplitude
+					}
+					else
+					{	//Otherwise render it first
+						eof_render_waveform_line(zeroamp, rightchannel, right.peak, x, eof_color_waveform_peak);	//Render the peak amplitude
+						eof_render_waveform_line(zeroamp, rightchannel, right.rms, x, eof_color_waveform_rms);		//Render the root mean square
+						eof_render_waveform_line(zeroamp, rightchannel, right.min, x, eof_color_waveform_trough);	//Render the minimum amplitude
 					}
 				}
 			}

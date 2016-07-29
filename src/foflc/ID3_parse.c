@@ -145,40 +145,38 @@ int FindID3Tag(struct ID3Tag *ptr)
 	if((ptr == NULL) || (ptr->fp == NULL))
 		return 0;	//Return failure
 
-	if((SearchPhrase(ptr->fp,ptr->tagend,&tagpos,tagid,3,1) == 1) && (tagpos == 0))
-	{	//Search for an ID3 tag header at the beginnning of the file and seek to it
-		if(ferror(ptr->fp))
-			return 0;	//Return failure upon file I/O error
+	if((SearchPhrase(ptr->fp,ptr->tagend,&tagpos,tagid,3,1) != 1) || (tagpos != 0))
+		return 0;	//If an ID3 tag header wasn't found at the beginning of the file, return failure
 
-		if(fread(header,10,1,ptr->fp) != 1)	//Read ID3 header
-			return 0;	//Return failure upon I/O error
+	if(ferror(ptr->fp))
+		return 0;	//Return failure upon file I/O error
+
+	if(fread(header,10,1,ptr->fp) != 1)	//Read ID3 header
+		return 0;	//Return failure upon I/O error
 
 //Examine the flag in the header pertaining to extended header.  Parse the extended header if applicable
-		if(header[5] & 64)	//If the extended header present bit is set
-			if(fread(exheader,6,1,ptr->fp) != 1)	//Read extended header
-				return 0;	//Return failure upon I/O error
+	if(header[5] & 64)	//If the extended header present bit is set
+		if(fread(exheader,6,1,ptr->fp) != 1)	//Read extended header
+			return 0;	//Return failure upon I/O error
 
 //If applicable, examine the CRC present flag in the extended header.  Parse the CRC data if applicable
-		if(exheader[4] & 128)	//If the CRC present bit is set
-			if(fread(&(exheader[6]),4,1,ptr->fp) != 1)	//Read CRC data
-				return 0;	//Return failure upon I/O error
+	if(exheader[4] & 128)	//If the CRC present bit is set
+		if(fread(&(exheader[6]),4,1,ptr->fp) != 1)	//Read CRC data
+			return 0;	//Return failure upon I/O error
 
-		ptr->framestart=ftell(ptr->fp);	//Store the file position of the first byte beyond the header (first ID3 frame)
+	ptr->framestart=ftell(ptr->fp);	//Store the file position of the first byte beyond the header (first ID3 frame)
 
-	//Calculate the tag size.  The MSB of each byte is ignored, but otherwise the 4 bytes are treated as Big Endian
-		tagsize=(((header[6] & 127) << 21) | ((header[7] & 127) << 14) | ((header[8] & 127) << 7) | (header[9] & 127));
+//Calculate the tag size.  The MSB of each byte is ignored, but otherwise the 4 bytes are treated as Big Endian
+	tagsize=(((header[6] & 127) << 21) | ((header[7] & 127) << 14) | ((header[8] & 127) << 7) | (header[9] & 127));
 
-	//Calculate the position of the first byte outside the ID3 tag: tagpos + tagsize + tag header size
-		ptr->tagstart=tagpos;
-		ptr->tagend=ptr->framestart+tagsize;
+//Calculate the position of the first byte outside the ID3 tag: tagpos + tagsize + tag header size
+	ptr->tagstart=tagpos;
+	ptr->tagend=ptr->framestart+tagsize;
 
-		if(Lyrics.verbose>=2)
-			printf("ID3v2 tag info:\n\tBegins at byte 0x%lX\n\tEnds after byte 0x%lX\n\tTag size is %lu bytes\n\tFirst frame begins at byte 0x%lX\n\n",ptr->tagstart,ptr->tagend-1,tagsize,ptr->framestart);
+	if(Lyrics.verbose>=2)
+		printf("ID3v2 tag info:\n\tBegins at byte 0x%lX\n\tEnds after byte 0x%lX\n\tTag size is %lu bytes\n\tFirst frame begins at byte 0x%lX\n\n",ptr->tagstart,ptr->tagend-1,tagsize,ptr->framestart);
 
-		return 1;
-	}
-
-	return 0;
+	return 1;
 }
 
 unsigned long GetMP3FrameDuration(struct ID3Tag *ptr)

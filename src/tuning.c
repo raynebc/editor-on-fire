@@ -418,24 +418,51 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 					{	//Wrap around the note
 						halfstep -= 12;
 					}
-					if(notes_played[halfstep])
-					{	//If this note is played, check to see if it matches an interval
-						for(ctr3 = 0; ctr3 < 7; ctr3++)
-						{	//For each interval in the scale
-							if(halfstep == major_scales[scalenum][ctr3])
-							{	//If the note matches this interval
-								if(chord_intervals[0] != '\0')
-								{	//If this isn't the first interval stored in the array
-									*(chord_intervals_index++) = ',';			//Append a comma first
-								}
-								*(chord_intervals_index++) = '0' + (ctr3 + 1);	//Write the interval value into the string
-								break;
+					if(!notes_played[halfstep])
+						continue;	//If this note is not played, skip it
+
+					//Otherwise check to see if it matches an interval
+					for(ctr3 = 0; ctr3 < 7; ctr3++)
+					{	//For each interval in the scale
+						if(halfstep == major_scales[scalenum][ctr3])
+						{	//If the note matches this interval
+							if(chord_intervals[0] != '\0')
+							{	//If this isn't the first interval stored in the array
+								*(chord_intervals_index++) = ',';			//Append a comma first
 							}
-							else
-							{	//The normal interval is not played in this note
-								halfstep2 = (major_scales[scalenum][ctr3] + 11) % 12;	//Get the note value for the flat of this interval
+							*(chord_intervals_index++) = '0' + (ctr3 + 1);	//Write the interval value into the string
+							break;
+						}
+						else
+						{	//The normal interval is not played in this note
+							halfstep2 = (major_scales[scalenum][ctr3] + 11) % 12;	//Get the note value for the flat of this interval
+							if(halfstep == halfstep2)
+							{	//If the note matches the flat of this interval
+								skipaccidental = 0;	//Reset this status
+								for(ctr4 = 0; ctr4 < 7; ctr4++)
+								{	//Check to make sure the flat of this interval isn't already a non accidental interval (ie. In the A major scale, interval 3 and flat interval 4 are the same note)
+									if(halfstep2 == major_scales[scalenum][ctr4])
+									{	//The flat of this interval is already a non accidental interval for this scale, don't add this to the ongoing interal list
+										skipaccidental = 1;
+										break;
+									}
+								}
+								if(!skipaccidental)
+								{	//If the flat of this interval is played in this note
+									if(chord_intervals[0] != '\0')
+									{	//If this isn't the first interval stored in the array
+										*(chord_intervals_index++) = ',';			//Append a comma first
+									}
+									*(chord_intervals_index++) = 'b';				//Write flat character into the string
+									*(chord_intervals_index++) = '0' + (ctr3 + 1);	//Write the interval value
+									break;
+								}
+							}
+							else if(ctr3 == 4)
+							{	//The flat interval is not played in this note (only check for a sharp of the fifth interval to avoid matching issues)
+								halfstep2 = (halfstep2 + 2) % 12;	//Get the note value for the sharp of this interval (two halfsteps above the previous flat value)
 								if(halfstep == halfstep2)
-								{	//If the note matches the flat of this interval
+								{	//If the note matches the sharp of this interval
 									skipaccidental = 0;	//Reset this status
 									for(ctr4 = 0; ctr4 < 7; ctr4++)
 									{	//Check to make sure the flat of this interval isn't already a non accidental interval (ie. In the A major scale, interval 3 and flat interval 4 are the same note)
@@ -446,104 +473,78 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 										}
 									}
 									if(!skipaccidental)
-									{	//If the flat of this interval is played in this note
+									{	//If the sharp of this interval is played in this note
 										if(chord_intervals[0] != '\0')
 										{	//If this isn't the first interval stored in the array
 											*(chord_intervals_index++) = ',';			//Append a comma first
 										}
-										*(chord_intervals_index++) = 'b';				//Write flat character into the string
+										*(chord_intervals_index++) = '#';				//Write sharp character into the string
 										*(chord_intervals_index++) = '0' + (ctr3 + 1);	//Write the interval value
 										break;
 									}
-								}
-								else if(ctr3 == 4)
-								{	//The flat interval is not played in this note (only check for a sharp of the fifth interval to avoid matching issues)
-									halfstep2 = (halfstep2 + 2) % 12;	//Get the note value for the sharp of this interval (two halfsteps above the previous flat value)
-									if(halfstep == halfstep2)
-									{	//If the note matches the sharp of this interval
-										skipaccidental = 0;	//Reset this status
-										for(ctr4 = 0; ctr4 < 7; ctr4++)
-										{	//Check to make sure the flat of this interval isn't already a non accidental interval (ie. In the A major scale, interval 3 and flat interval 4 are the same note)
-											if(halfstep2 == major_scales[scalenum][ctr4])
-											{	//The flat of this interval is already a non accidental interval for this scale, don't add this to the ongoing interal list
-												skipaccidental = 1;
-												break;
-											}
-										}
-										if(!skipaccidental)
-										{	//If the sharp of this interval is played in this note
-											if(chord_intervals[0] != '\0')
-											{	//If this isn't the first interval stored in the array
-												*(chord_intervals_index++) = ',';			//Append a comma first
-											}
-											*(chord_intervals_index++) = '#';				//Write sharp character into the string
-											*(chord_intervals_index++) = '0' + (ctr3 + 1);	//Write the interval value
-											break;
-										}
-									}//If the note matches the sharp of this interval
-								}//The flat interval is not played in this note (only check for a sharp of the fifth interval to avoid matching issues)
-							}//The normal interval is not played in this note
-						}//For each interval in the scale
-					}//If this note is played, check to see if it matches an interval
+								}//If the note matches the sharp of this interval
+							}//The flat interval is not played in this note (only check for a sharp of the fifth interval to avoid matching issues)
+						}//The normal interval is not played in this note
+					}//For each interval in the scale
 				}//For each of the 12 notes, starting which the note that is represented by interval 1 of this scale
 
 				*(chord_intervals_index) = '\0';				//Terminate the string
 				//Look up the list of defined chords to see if this note's intervals matches any
 				for(ctr2 = 0; ctr2 < EOF_NUM_DEFINED_CHORDS; ctr2++)
 				{	//For each defined chord
-					if(!strcmp(eof_chord_names[ctr2].formula, chord_intervals))
-					{	//A match was found
-						if(!skipctr)
-						{	//If this match is not supposed to be skipped
-							if(cache)
-							{	//If a successful lookup is to be cached to global variables
-								eof_cached_chord_lookup_scale = scalenum;
-								eof_cached_chord_lookup_chord = ctr2;
-								eof_cached_chord_lookup_variation = originalskipctr;
-								eof_chord_lookup_note = eof_get_pro_guitar_note_note(tp, note);		//Cache the looked up note's details
-								memcpy(eof_chord_lookup_frets, tp->note[note]->frets, 6);
-								eof_enable_chord_cache = 1;
-							}
-							*scale = scalenum;	//Pass the scale back through the pointer
-							*chord = ctr2;	//Pass the chord name back through the pointer
-							if(!pass)
-							{	//This is the first pass (normal chord)
-								if(((unsigned long)bass != scalenum) && eof_inverted_chords_slash)
-								{	//If this is an inverted chord and the user opted to have such chords detect as slash chords
-									if(cache)
-									{	//If a successful lookup is to be cached to global variables
-										eof_cached_chord_lookup_isslash = 1;
-										eof_cached_chord_lookup_bassnote = bass;
-										eof_cached_chord_lookup_retval = 3;
-									}
-									*isslash = 1;		//This was detected as a slash chord
-									*bassnote = bass;	//Pass the bass note back through the pointer
-									return 3;			//Return slash chord match found
-								}
+					if(strcmp(eof_chord_names[ctr2].formula, chord_intervals))
+						continue;	//If a match was not found, skip this chord definition
+
+					if(!skipctr)
+					{	//If this match is not supposed to be skipped
+						if(cache)
+						{	//If a successful lookup is to be cached to global variables
+							eof_cached_chord_lookup_scale = scalenum;
+							eof_cached_chord_lookup_chord = ctr2;
+							eof_cached_chord_lookup_variation = originalskipctr;
+							eof_chord_lookup_note = eof_get_pro_guitar_note_note(tp, note);		//Cache the looked up note's details
+							memcpy(eof_chord_lookup_frets, tp->note[note]->frets, 6);
+							eof_enable_chord_cache = 1;
+						}
+						*scale = scalenum;	//Pass the scale back through the pointer
+						*chord = ctr2;	//Pass the chord name back through the pointer
+						if(!pass)
+						{	//This is the first pass (normal chord)
+							if(((unsigned long)bass != scalenum) && eof_inverted_chords_slash)
+							{	//If this is an inverted chord and the user opted to have such chords detect as slash chords
 								if(cache)
 								{	//If a successful lookup is to be cached to global variables
-									eof_cached_chord_lookup_isslash = 0;
-									eof_cached_chord_lookup_retval = 1;
+									eof_cached_chord_lookup_isslash = 1;
+									eof_cached_chord_lookup_bassnote = bass;
+									eof_cached_chord_lookup_retval = 3;
 								}
-								*isslash = 0;	//This was detected as a normal chord, not a slash chord
-								return 1;		//Return match found
+								*isslash = 1;		//This was detected as a slash chord
+								*bassnote = bass;	//Pass the bass note back through the pointer
+								return 3;			//Return slash chord match found
 							}
-
-							//This is the second pass (hybrid slash chord)
 							if(cache)
 							{	//If a successful lookup is to be cached to global variables
-								eof_cached_chord_lookup_isslash = 1;
-								eof_cached_chord_lookup_bassnote = bass;
-								eof_cached_chord_lookup_retval = 3;
+								eof_cached_chord_lookup_isslash = 0;
+								eof_cached_chord_lookup_retval = 1;
 							}
-							*isslash = 1;		//This was detected as a slash chord
-							*bassnote = bass;	//Pass the bass note back through the pointer
-							return 3;			//Return slash chord match found
+							*isslash = 0;	//This was detected as a normal chord, not a slash chord
+							return 1;		//Return match found
 						}
 
-						//If this match is supposed to be skipped
-						skipctr--;	//Decrement the number of matches to skip
+						//This is the second pass (hybrid slash chord)
+						if(cache)
+						{	//If a successful lookup is to be cached to global variables
+							eof_cached_chord_lookup_isslash = 1;
+							eof_cached_chord_lookup_bassnote = bass;
+							eof_cached_chord_lookup_retval = 3;
+						}
+						*isslash = 1;		//This was detected as a slash chord
+						*bassnote = bass;	//Pass the bass note back through the pointer
+						return 3;			//Return slash chord match found
 					}
+
+					//If this match is supposed to be skipped
+					skipctr--;	//Decrement the number of matches to skip
 				}
 			}//For each of the 12 major scales, starting with whichever one the bass note was in
 			if(bass >= 0)

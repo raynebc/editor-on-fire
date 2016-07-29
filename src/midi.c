@@ -421,6 +421,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		return 0;	//Return failure
 	}
 
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		return 0;	//Return failure
+	}
+
 	//Build tempo and TS lists
 	if(!eof_build_tempo_and_ts_lists(sp, &anchorlist, &tslist, &timedivision))
 	{
@@ -437,12 +443,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	}
 	header[12] = timedivision >> 8;		//Update the MIDI header to reflect the time division (which may have changed if a stored tempo track is present)
 	header[13] = timedivision & 0xFF;
-
-	if(eof_validate_temp_folder())
-	{	//Ensure the correct working directory and presence of the temporary folder
-		eof_log("\tCould not validate working directory and temp folder", 1);
-		return 0;	//Return failure
-	}
 
 	//Generate temporary filenames
 	(void) snprintf(expertplustempname, sizeof(expertplustempname) - 1, "%sexpert+.tmp", eof_temp_path_s);

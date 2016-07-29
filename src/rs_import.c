@@ -267,53 +267,51 @@ EOF_PRO_GUITAR_NOTE *eof_rs_import_note_tag_data(char *buffer, int function, EOF
 
 	//Read bendValue tag
 	ptr = strcasestr_spec(buffer, "<bendValue ");
-	if(ptr && np)
-	{	//If this is a bendValue tag and a normal note tag was previously read
-		if(!parse_xml_rs_timestamp("time", buffer, &time))
-		{	//If the timestamp was not readable
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading start timestamp on line #%lu.  Aborting", linectr);
-			eof_log(eof_log_string, 1);
-			return NULL;
-		}
-		if(!parse_xml_rs_timestamp("step", buffer, &step))
-		{	//If the bend strength was not readable
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading bend strength on line #%lu.  Aborting", linectr);
-			eof_log(eof_log_string, 1);
-			return NULL;
-		}
-		tnp = eof_pro_guitar_track_add_tech_note(tp);
-		if(!tnp)
-		{
-			eof_log("\tError allocating memory.  Aborting", 1);
-			return NULL;
-		}
-		if(!function)
-		{	//If this note isn't to be retained in the note array
-			tp->technotes--;
-		}
-		tnp->type = np->type;	//This bend tech note will use the same difficulty and string as the note it is applied to
-		tnp->note = np->note;
-		tnp->pos = time;
-		tnp->length = 1;
-		tnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
-		tnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
-		if(step % 1000)
-		{	//If the bend strength was defined in quarter steps
-			tnp->bendstrength = 0x80 | (step / 500);
-		}
-		else
-		{	//The bend strength was defined in half steps
-			tnp->bendstrength = step / 1000;
-		}
+	if(!ptr || !np)
+		return NULL;	//If this isn't a bendValue tag or a normal note tag wasn't previously read, the tag hasn't been recognized
 
-///DEBUG
-(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tPlaced bend tech note at %lums", tnp->pos);
-eof_log(eof_log_string, 1);
+	if(!parse_xml_rs_timestamp("time", buffer, &time))
+	{	//If the timestamp was not readable
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading start timestamp on line #%lu.  Aborting", linectr);
+		eof_log(eof_log_string, 1);
+		return NULL;
+	}
+	if(!parse_xml_rs_timestamp("step", buffer, &step))
+	{	//If the bend strength was not readable
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading bend strength on line #%lu.  Aborting", linectr);
+		eof_log(eof_log_string, 1);
+		return NULL;
+	}
+	tnp = eof_pro_guitar_track_add_tech_note(tp);
+	if(!tnp)
+	{
+		eof_log("\tError allocating memory.  Aborting", 1);
+		return NULL;
+	}
+	if(!function)
+	{	//If this note isn't to be retained in the note array
+		tp->technotes--;
+	}
+	tnp->type = np->type;	//This bend tech note will use the same difficulty and string as the note it is applied to
+	tnp->note = np->note;
+	tnp->pos = time;
+	tnp->length = 1;
+	tnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+	tnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
+	if(step % 1000)
+	{	//If the bend strength was defined in quarter steps
+		tnp->bendstrength = 0x80 | (step / 500);
+	}
+	else
+	{	//The bend strength was defined in half steps
+		tnp->bendstrength = step / 1000;
+	}
 
-		return tnp;
-	}//If this is a bendValue tag
+	///DEBUG
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tPlaced bend tech note at %lums", tnp->pos);
+	eof_log(eof_log_string, 1);
 
-	return NULL;	//Input XML tag was not recognized
+	return tnp;
 }
 
 unsigned long eof_evaluate_rs_import_gap_solution(EOF_TECHNOTE_GAP *gaps, unsigned long numgaps, unsigned *solution, unsigned long solutionsize)
@@ -356,32 +354,31 @@ char eof_rs_import_process_chordnotes(EOF_PRO_GUITAR_TRACK *tp, EOF_PRO_GUITAR_N
 	//Examine chordnote lengths to detect stop and sustain statuses
 	for(ctr = 0; ctr < chordnotectr; ctr++)
 	{	//For each chordnote that was parsed
-		if(chordnote[ctr]->length)
-		{	//If this chordnote has a nonzero length
-			if(chordnote[ctr]->length < np->length)
-			{	//If the chordnote was shorter than any of the other chordnotes, add a stop tech note to define this
-				EOF_PRO_GUITAR_NOTE *tnp = eof_pro_guitar_track_add_tech_note(tp);
-				if(!tnp)
-				{
-					eof_log("\tError allocating memory for a stop tech note.  Aborting", 1);
-					error = 1;
-					break;	//Break from loop
-				}
-				tnp->pos = np->pos + chordnote[ctr]->length;	//The stop note is placed where this chordnote ends
-				tnp->type = np->type;
-				tnp->note = 1 << ctr;
-				tnp->eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_STOP;
-				numtechnotes++;	//Track that a technote was added
+		if(!chordnote[ctr]->length)
+			continue;	//If this chordnote has a zero length, skip it
 
-///DEBUG
-(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tPlaced bend tech note at %lums", tnp->pos);
-eof_log(eof_log_string, 1);
+		if(chordnote[ctr]->length < np->length)
+		{	//If the chordnote was shorter than any of the other chordnotes, add a stop tech note to define this
+			EOF_PRO_GUITAR_NOTE *tnp = eof_pro_guitar_track_add_tech_note(tp);
+			if(!tnp)
+			{
+				eof_log("\tError allocating memory for a stop tech note.  Aborting", 1);
+				error = 1;
+				break;	//Break from loop
+			}
+			tnp->pos = np->pos + chordnote[ctr]->length;	//The stop note is placed where this chordnote ends
+			tnp->type = np->type;
+			tnp->note = 1 << ctr;
+			tnp->eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_STOP;
+			numtechnotes++;	//Track that a technote was added
 
-			}
-			if(!(chordnote[ctr]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE  | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO | EOF_NOTE_FLAG_IS_TREMOLO)))
-			{	//If none of the techniques that normally warrant a chordnote's sustain to be kept are in use for the note
-				chordnote[ctr]->eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN;	//Consider it as having sustain status
-			}
+			///DEBUG
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tPlaced bend tech note at %lums", tnp->pos);
+			eof_log(eof_log_string, 1);
+		}
+		if(!(chordnote[ctr]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE  | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO | EOF_NOTE_FLAG_IS_TREMOLO)))
+		{	//If none of the techniques that normally warrant a chordnote's sustain to be kept are in use for the note
+			chordnote[ctr]->eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN;	//Consider it as having sustain status
 		}
 	}
 
@@ -565,30 +562,31 @@ eof_log(eof_log_string, 1);
 					//Apply the timing of the best solution that was found
 					for(ctr = 0, solutionval = 0; ctr < chordnotectr; ctr++)
 					{	//For each chordnote that was parsed (re-use solutionval to track which technote number this is)
-						if(chordnote[ctr]->flags || chordnote[ctr]->eflags)
-						{	//If this chordnote has any statuses left to be placed
-							EOF_PRO_GUITAR_NOTE *tnp = eof_pro_guitar_track_add_tech_note(tp);
-							EOF_TECHNOTE_GAP *gp;
-							if(!tnp)
-							{
-								eof_log("\tError allocating memory for chord tech note.  Aborting", 1);
-								error = 1;
-								break;	//Break from loop
-							}
-							gp = &gaps[bestsolution[solutionval]];	//Determine which gap this technote will be placed into
-							tnp->pos = (double)gp->start + ((double)(gp->population + 1.0) * ((double)gp->size / (gp->capacity + 1.0))) + 0.5;	//Place this technote into the next available interval within this gap (round up to nearest ms)
-							gp->population++;		//This gap now has one more technote in it
-							tnp->type = np->type;
-							tnp->note = 1 << ctr;
-							tnp->flags = chordnote[ctr]->flags;
-							tnp->eflags = chordnote[ctr]->eflags;
-							solutionval++;
+						EOF_PRO_GUITAR_NOTE *tnp;
+						EOF_TECHNOTE_GAP *gp;
 
-///DEBUG
-(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tPlaced chordnote tech note at %lums", tnp->pos);
-eof_log(eof_log_string, 1);
+						if(!chordnote[ctr]->flags && !chordnote[ctr]->eflags)
+							continue;	//If this chordnote doesn't have any statuses left to be placed, skip it
 
+						tnp = eof_pro_guitar_track_add_tech_note(tp);
+						if(!tnp)
+						{
+							eof_log("\tError allocating memory for chord tech note.  Aborting", 1);
+							error = 1;
+							break;	//Break from loop
 						}
+						gp = &gaps[bestsolution[solutionval]];	//Determine which gap this technote will be placed into
+						tnp->pos = (double)gp->start + ((double)(gp->population + 1.0) * ((double)gp->size / (gp->capacity + 1.0))) + 0.5;	//Place this technote into the next available interval within this gap (round up to nearest ms)
+						gp->population++;		//This gap now has one more technote in it
+						tnp->type = np->type;
+						tnp->note = 1 << ctr;
+						tnp->flags = chordnote[ctr]->flags;
+						tnp->eflags = chordnote[ctr]->eflags;
+						solutionval++;
+
+						///DEBUG
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tPlaced chordnote tech note at %lums", tnp->pos);
+						eof_log(eof_log_string, 1);
 					}
 				}//If the gaps array was initialized
 
@@ -1952,38 +1950,38 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		{	//For each of the 256 possible difficulties
 			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
 			{	//For each note in the track
-				if(tp->note[ctr2]->type == ctr3)
-				{	//If the note is in the difficulty being parsed
-					if(tp->note[ctr2]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
-					{	//If this note is marked as being in a tremolo
-						unsigned long startpos, endpos, count;
+				if(tp->note[ctr2]->type != ctr3)
+					continue;	//If the note is not in the difficulty being parsed, skip it
 
-						startpos = tp->note[ctr2]->pos;	//Mark the start of this phrase
-						endpos = startpos + tp->note[ctr2]->length;	//Initialize the end position of the phrase
-						while(++ctr2 < tp->notes)
-						{	//For the consecutive remaining notes in the track
-							if(tp->note[ctr2]->type == ctr3)
-							{	//If the note is in the difficulty being parsed
-								if(tp->note[ctr2]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
-								{	//And the next note is also marked as a tremolo
-									endpos = tp->note[ctr2]->pos + tp->note[ctr2]->length;	//Update the end position of the phrase
-								}
-								else
-								{
-									break;	//Break from while loop.  This note isn't a tremolo so the next pass doesn't need to check it either
-								}
+				if(tp->note[ctr2]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
+				{	//If this note is marked as being in a tremolo
+					unsigned long startpos, endpos, count;
+
+					startpos = tp->note[ctr2]->pos;	//Mark the start of this phrase
+					endpos = startpos + tp->note[ctr2]->length;	//Initialize the end position of the phrase
+					while(++ctr2 < tp->notes)
+					{	//For the consecutive remaining notes in the track
+						if(tp->note[ctr2]->type == ctr3)
+						{	//If the note is in the difficulty being parsed
+							if(tp->note[ctr2]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
+							{	//And the next note is also marked as a tremolo
+								endpos = tp->note[ctr2]->pos + tp->note[ctr2]->length;	//Update the end position of the phrase
+							}
+							else
+							{
+								break;	//Break from while loop.  This note isn't a tremolo so the next pass doesn't need to check it either
 							}
 						}
-						count = tp->tremolos;
-						if(tp->tremolos < EOF_MAX_PHRASES)
-						{	//If the track can store the tremolo section
-							tp->tremolo[count].start_pos = startpos;
-							tp->tremolo[count].end_pos = endpos;
-							tp->tremolo[count].flags = 0;
-							tp->tremolo[count].difficulty = ctr3;	//Tremolo phrases are difficulty-specific in Rocksmith
-							tp->tremolo[count].name[0] = '\0';
-							tp->tremolos++;
-						}
+					}
+					count = tp->tremolos;
+					if(tp->tremolos < EOF_MAX_PHRASES)
+					{	//If the track can store the tremolo section
+						tp->tremolo[count].start_pos = startpos;
+						tp->tremolo[count].end_pos = endpos;
+						tp->tremolo[count].flags = 0;
+						tp->tremolo[count].difficulty = ctr3;	//Tremolo phrases are difficulty-specific in Rocksmith
+						tp->tremolo[count].name[0] = '\0';
+						tp->tremolos++;
 					}
 				}
 			}
@@ -2032,20 +2030,21 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		eof_pro_guitar_track_sort_notes(tp);
 		for(ctr = 0; ctr < tp->notes; ctr++)
 		{	//For each note in the track
-			if(eof_note_count_colors_bitmask(tp->note[ctr]->note) > 1)
-			{	//If the note is a chord, look for single notes at the same position in other difficulties
-				for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
-				{	//For each note in the track
-					if(tp->note[ctr2]->pos > tp->note[ctr]->pos)
-					{	//If the note is beyond the note from the outer loop
-						break;	//None of the remaining notes will be at the appropriate position
-					}
-					else if(tp->note[ctr2]->pos == tp->note[ctr]->pos)
-					{	//If the notes are at the same position
-						if(tp->note[ctr2]->length > tp->note[ctr]->length)
-						{	//If the note in the inner loop is longer (ie. a single note)
-							tp->note[ctr]->length = tp->note[ctr2]->length;	//Assign its length to the chord from the outer loop
-						}
+			if(eof_note_count_colors_bitmask(tp->note[ctr]->note) <= 1)
+				continue;	//If the note is not a chord, skip it
+
+			//Otherwise look for single notes at the same position in other difficulties
+			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+			{	//For each note in the track
+				if(tp->note[ctr2]->pos > tp->note[ctr]->pos)
+				{	//If the note is beyond the note from the outer loop
+					break;	//None of the remaining notes will be at the appropriate position
+				}
+				else if(tp->note[ctr2]->pos == tp->note[ctr]->pos)
+				{	//If the notes are at the same position
+					if(tp->note[ctr2]->length > tp->note[ctr]->length)
+					{	//If the note in the inner loop is longer (ie. a single note)
+						tp->note[ctr]->length = tp->note[ctr2]->length;	//Assign its length to the chord from the outer loop
 					}
 				}
 			}
@@ -2083,35 +2082,36 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 			char *ptr3 = strcasestr_spec(eof_song->text_event[ctr - 1]->text, "TS:");
 			unsigned index = 0;
 			long num, den;
-			if(ptr3)
-			{	//If this text event is formatted like a time signature change
-				while((index < 5) && (*ptr3 != '/'))
-				{	//Copy the numerator into the buffer
-					buffer3[index++] = *ptr3;
-					ptr3++;
-				}
-				if(!index || (index >= 5))
-					continue;	//Skip converting this text event if an error was encountered
-				buffer3[index] = '\0';		//Terminate the buffer
-				num = atol(buffer3);		//Convert the string to a number
-				if(!num || (num > 999) || (*ptr3 != '/'))
-					continue;	//Skip converting this text event if an error was encountered
-				ptr3++;	//Advance past the forward slash
-				index = 0;
-				while((index < 5) && (*ptr3 != '\0'))
-				{	//Copy the denominator into the buffer
-					buffer3[index++] = *ptr3;
-					ptr3++;
-				}
-				if(!index || (index >= 5))
-					continue;	//Skip converting this text event if an error was encountered
-				buffer3[index] = '\0';		//Terminate the buffer
-				den = atol(buffer3);		//Convert the string to a number
-				if(!den || (den > 999))
-					continue;	//Skip converting this text event if an error was encountered
-				(void) eof_apply_ts(num, den, eof_song->text_event[ctr - 1]->beat, eof_song, 0);	//Add the time signature to the active project
-				eof_song_delete_text_event(eof_song, ctr - 1);	//Delete the converted text event
+
+			if(!ptr3)
+				continue;	//If this text event is not formatted like a time signature change, skip it
+
+			while((index < 5) && (*ptr3 != '/'))
+			{	//Copy the numerator into the buffer
+				buffer3[index++] = *ptr3;
+				ptr3++;
 			}
+			if(!index || (index >= 5))
+				continue;	//Skip converting this text event if an error was encountered
+			buffer3[index] = '\0';		//Terminate the buffer
+			num = atol(buffer3);		//Convert the string to a number
+			if(!num || (num > 999) || (*ptr3 != '/'))
+				continue;	//Skip converting this text event if an error was encountered
+			ptr3++;	//Advance past the forward slash
+			index = 0;
+			while((index < 5) && (*ptr3 != '\0'))
+			{	//Copy the denominator into the buffer
+				buffer3[index++] = *ptr3;
+				ptr3++;
+			}
+			if(!index || (index >= 5))
+				continue;	//Skip converting this text event if an error was encountered
+			buffer3[index] = '\0';		//Terminate the buffer
+			den = atol(buffer3);		//Convert the string to a number
+			if(!den || (den > 999))
+				continue;	//Skip converting this text event if an error was encountered
+			(void) eof_apply_ts(num, den, eof_song->text_event[ctr - 1]->beat, eof_song, 0);	//Add the time signature to the active project
+			eof_song_delete_text_event(eof_song, ctr - 1);	//Delete the converted text event
 		}
 		eof_calculate_tempo_map(eof_song);	//Rebuild tempo map to account for any time signature changes
 	}

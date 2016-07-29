@@ -49,21 +49,21 @@ SAMPLE * create_silence_sample(unsigned long ms)
 	}
 
 	sp = create_sample(bits, stereo, freq, samples);
-	if(sp)
+	if(!sp)
+		return NULL;	//Return error
+
+	if(bits == 8)
 	{
-		if(bits == 8)
+		for(i = 0; i < samples * channels; i++)
 		{
-			for(i = 0; i < samples * channels; i++)
-			{
-				((unsigned char *)(sp->data))[i] = 0x80;
-			}
+			((unsigned char *)(sp->data))[i] = 0x80;
 		}
-		else
+	}
+	else
+	{
+		for(i = 0; i < samples * channels; i++)
 		{
-			for(i = 0; i < samples * channels; i++)
-			{
-				((unsigned short *)(sp->data))[i] = 0x8000;
-			}
+			((unsigned short *)(sp->data))[i] = 0x8000;
 		}
 	}
 

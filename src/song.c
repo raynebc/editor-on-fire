@@ -1548,6 +1548,9 @@ int eof_song_delete_track(EOF_SONG * sp, unsigned long track)
 		break;
 		case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:	//Variable Lane Legacy (not implemented yet)
 		break;
+
+		default:
+		break;
 	}
 
 	//Remove the track from the main track array
@@ -2088,6 +2091,9 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 							case EOF_FRET_CATALOG_SECTION:	//Fret Catalog section
 								(void) eof_track_add_section(sp,0,EOF_FRET_CATALOG_SECTION,inputc,section_start,section_end,inputl,name);	//For fret catalog sections, the flag represents the associated track number
 							break;
+
+							default:
+							break;
 						}
 					break;
 
@@ -2304,6 +2310,9 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 			break;
 			case EOF_RS_TONE_CHANGE:	//Not applicable
 			break;
+
+			default:
+			break;
 		}
 	}//Legacy track format
 	else if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
@@ -2349,6 +2358,9 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 			case EOF_RS_POPUP_MESSAGE:	//Not applicable
 			break;
 			case EOF_RS_TONE_CHANGE:	//Not applicable
+			break;
+
+			default:
 			break;
 		}
 	}//Vocal track format
@@ -2409,6 +2421,9 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 			case EOF_RS_TONE_CHANGE:
 				*count = tp->tonechanges;
 				*ptr = tp->tonechange;
+			break;
+
+			default:
 			break;
 		}
 	}//Pro guitar track format
@@ -2629,6 +2644,9 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				}
 				return 1;
 			}
+		break;
+
+		default:
 		break;
 	}
 	return 0;	//Return error
@@ -3745,6 +3763,9 @@ unsigned long eof_get_track_size(EOF_SONG *sp, unsigned long track)
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 		return sp->pro_guitar_track[tracknum]->notes;
+
+		default:
+		break;
 	}
 
 	return 0;
@@ -3768,6 +3789,9 @@ unsigned long eof_get_track_tech_note_size(EOF_SONG *sp, unsigned long track)
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 		return sp->pro_guitar_track[tracknum]->technotes;
+
+		default:
+		break;
 	}
 
 	return 0;
@@ -3808,6 +3832,9 @@ void *eof_track_add_note(EOF_SONG *sp, unsigned long track)
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 		return eof_pro_guitar_track_add_note(sp->pro_guitar_track[tracknum]);
+
+		default:
+		break;
 	}
 
 	return NULL;
@@ -3837,6 +3864,9 @@ void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note
 
 			case EOF_PRO_GUITAR_TRACK_FORMAT:
 				eof_pro_guitar_track_delete_note(sp->pro_guitar_track[tracknum], note);
+			break;
+
+			default:
 			break;
 		}
 	}
@@ -3958,6 +3988,9 @@ unsigned char eof_get_note_type(EOF_SONG *sp, unsigned long track, unsigned long
 				return sp->pro_guitar_track[tracknum]->note[note]->type;
 			}
 		break;
+
+		default:
+		break;
 	}
 
 	return 0xFF;	//Return error
@@ -3993,6 +4026,9 @@ unsigned long eof_get_note_pos(EOF_SONG *sp, unsigned long track, unsigned long 
 				return sp->pro_guitar_track[tracknum]->note[note]->pos;
 			}
 		break;
+
+		default:
+		break;
 	}
 
 	return 0;	//Return error
@@ -4027,6 +4063,9 @@ long eof_get_note_length(EOF_SONG *sp, unsigned long track, unsigned long note)
 			{
 				return sp->pro_guitar_track[tracknum]->note[note]->length;
 			}
+		break;
+
+		default:
 		break;
 	}
 
@@ -4065,6 +4104,9 @@ void eof_set_note_length(EOF_SONG *sp, unsigned long track, unsigned long note, 
 				sp->pro_guitar_track[tracknum]->note[note]->length = length;
 			}
 		break;
+
+		default:
+		break;
 	}
 }
 
@@ -4097,6 +4139,9 @@ unsigned long eof_get_note_flags(EOF_SONG *sp, unsigned long track, unsigned lon
 			{
 				return sp->pro_guitar_track[tracknum]->note[note]->flags;
 			}
+		break;
+
+		default:
 		break;
 	}
 
@@ -4133,6 +4178,9 @@ unsigned short eof_get_note_tflags(EOF_SONG *sp, unsigned long track, unsigned l
 				return sp->pro_guitar_track[tracknum]->note[note]->tflags;
 			}
 		break;
+
+		default:
+		break;
 	}
 
 	return 0;	//Return error
@@ -4159,6 +4207,9 @@ unsigned char eof_get_note_eflags(EOF_SONG *sp, unsigned long track, unsigned lo
 			{
 				return sp->pro_guitar_track[tracknum]->note[note]->eflags;
 			}
+		break;
+
+		default:
 		break;
 	}
 
@@ -4194,6 +4245,9 @@ unsigned char eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long
 			{
 				return sp->pro_guitar_track[tracknum]->note[note]->note;
 			}
+		break;
+
+		default:
 		break;
 	}
 
@@ -4358,6 +4412,9 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned char
 					ptr3->legacymask = 0;
 				}
 			return ptr3;
+
+			default:
+			break;
 		}
 	}
 
@@ -4383,6 +4440,9 @@ unsigned long eof_get_num_solos(EOF_SONG *sp, unsigned long track)
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 		return sp->pro_guitar_track[tracknum]->solos;
+
+		default:
+		break;
 	}
 
 	return 0;	//Return error
@@ -4415,6 +4475,9 @@ EOF_PHRASE_SECTION *eof_get_solo(EOF_SONG *sp, unsigned long track, unsigned lon
 			{
 				return &sp->pro_guitar_track[tracknum]->solo[solonum];
 			}
+		break;
+
+		default:
 		break;
 	}
 
@@ -4452,6 +4515,9 @@ void eof_set_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note, uns
 			{
 				sp->pro_guitar_track[tracknum]->note[note]->pos = pos;
 			}
+		break;
+
+		default:
 		break;
 	}
 }
@@ -4509,6 +4575,9 @@ void eof_move_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note, un
 				}
 			}
 		break;
+
+		default:
+		break;
 	}
 }
 
@@ -4545,6 +4614,9 @@ void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, un
 				sp->pro_guitar_track[tracknum]->note[note]->note = value;
 				memset(sp->pro_guitar_track[tracknum]->note[note]->finger, 0, 8);	//Initialize all fingers to undefined
 			}
+		break;
+
+		default:
 		break;
 	}
 }
@@ -4605,6 +4677,9 @@ void eof_track_sort_notes(EOF_SONG *sp, unsigned long track)
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			eof_pro_guitar_track_sort_notes(sp->pro_guitar_track[tracknum]);
 		break;
+
+		default:
+		break;
 	}
 
 	//Recreate the note selection if applicable
@@ -4646,6 +4721,9 @@ void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			eof_pro_guitar_track_fixup_notes(sp, track, sel);
+		break;
+
+		default:
 		break;
 	}
 
@@ -5447,6 +5525,9 @@ unsigned long eof_get_num_star_power_paths(EOF_SONG *sp, unsigned long track)
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 		return sp->pro_guitar_track[tracknum]->star_power_paths;
+
+		default:
+		break;
 	}
 
 	return 0;	//Return error
@@ -5482,6 +5563,9 @@ EOF_PHRASE_SECTION *eof_get_star_power_path(EOF_SONG *sp, unsigned long track, u
 				return &sp->pro_guitar_track[tracknum]->star_power_path[pathnum];
 			}
 		break;
+
+		default:
+		break;
 	}
 
 	return NULL;	//Return error
@@ -5510,6 +5594,9 @@ void eof_set_num_solos(EOF_SONG *sp, unsigned long track, unsigned long number)
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			sp->pro_guitar_track[tracknum]->solos = number;
 		break;
+
+		default:
+		break;
 	}
 }
 
@@ -5536,6 +5623,9 @@ void eof_set_num_star_power_paths(EOF_SONG *sp, unsigned long track, unsigned lo
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			sp->pro_guitar_track[tracknum]->star_power_paths = number;
 		break;
+
+		default:
+		break;
 	}
 }
 
@@ -5557,6 +5647,9 @@ long eof_track_fixup_previous_note(EOF_SONG *sp, unsigned long track, unsigned l
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 		return eof_fixup_previous_pro_guitar_note(sp->pro_guitar_track[tracknum], note);
+
+		default:
+		break;
 	}
 
 	return -1;
@@ -5580,6 +5673,9 @@ long eof_track_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long 
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 		return eof_fixup_next_pro_guitar_note(sp->pro_guitar_track[tracknum], note);
+
+		default:
+		break;
 	}
 
 	return -1;
@@ -5652,6 +5748,9 @@ void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, u
 				sp->pro_guitar_track[tracknum]->note[note]->flags = flags;
 			}
 		break;
+
+		default:
+		break;
 	}
 }
 
@@ -5686,6 +5785,9 @@ void eof_set_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note, 
 			{
 				sp->pro_guitar_track[tracknum]->note[note]->tflags = tflags;
 			}
+		break;
+
+		default:
 		break;
 	}
 }
@@ -5739,6 +5841,9 @@ void eof_set_note_type(EOF_SONG *sp, unsigned long track, unsigned long note, un
 				sp->pro_guitar_track[tracknum]->note[note]->type = type;
 			}
 		break;
+
+		default:
+		break;
 	}
 }
 
@@ -5764,6 +5869,9 @@ void eof_track_delete_star_power_path(EOF_SONG *sp, unsigned long track, unsigne
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			eof_pro_guitar_track_delete_star_power(sp->pro_guitar_track[tracknum], pathnum);
+		break;
+
+		default:
 		break;
 	}
 }
@@ -5807,6 +5915,9 @@ int eof_track_add_star_power_path(EOF_SONG *sp, unsigned long track, unsigned lo
 
 		case EOF_VOCAL_TRACK_FORMAT:
 		return eof_vocal_track_add_star_power(sp->vocal_track[tracknum], start_pos, end_pos);
+
+		default:
+		break;
 	}
 	return 0;	//Return error
 }
@@ -5848,6 +5959,9 @@ void eof_track_delete_solo(EOF_SONG *sp, unsigned long track, unsigned long path
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			eof_pro_guitar_track_delete_solo(sp->pro_guitar_track[tracknum], pathnum);
 		break;
+
+		default:
+		break;
 	}
 }
 
@@ -5887,6 +6001,9 @@ int eof_track_add_solo(EOF_SONG *sp, unsigned long track, unsigned long start_po
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 		return eof_pro_guitar_track_add_solo(sp->pro_guitar_track[tracknum], start_pos, end_pos);
+
+		default:
+		break;
 	}
 	return 0;	//Return error
 }
@@ -5949,6 +6066,9 @@ unsigned long eof_get_num_trills(EOF_SONG *sp, unsigned long track)
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 		return sp->pro_guitar_track[tracknum]->trills;
+
+		default:
+		break;
 	}
 
 	return 0;	//Return error
@@ -5973,6 +6093,9 @@ unsigned long eof_get_num_tremolos(EOF_SONG *sp, unsigned long track)
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 		return sp->pro_guitar_track[tracknum]->tremolos;
+
+		default:
+		break;
 	}
 
 	return 0;	//Return error
@@ -6021,6 +6144,9 @@ EOF_PHRASE_SECTION *eof_get_trill(EOF_SONG *sp, unsigned long track, unsigned lo
 				return &sp->pro_guitar_track[tracknum]->trill[index];
 			}
 		break;
+
+		default:
+		break;
 	}
 
 	return NULL;	//Return error
@@ -6052,6 +6178,9 @@ EOF_PHRASE_SECTION *eof_get_tremolo(EOF_SONG *sp, unsigned long track, unsigned 
 			{
 				return &sp->pro_guitar_track[tracknum]->tremolo[index];
 			}
+		break;
+
+		default:
 		break;
 	}
 
@@ -6098,6 +6227,9 @@ void eof_track_delete_trill(EOF_SONG *sp, unsigned long track, unsigned long pat
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			eof_pro_guitar_track_delete_trill(sp->pro_guitar_track[tracknum], pathnum);
+		break;
+
+		default:
 		break;
 	}
 }
@@ -6153,6 +6285,9 @@ int eof_track_add_trill(EOF_SONG *sp, unsigned long track, unsigned long start_p
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 		return eof_pro_guitar_track_add_trill(sp->pro_guitar_track[tracknum], start_pos, end_pos);
+
+		default:
+		break;
 	}
 	return 0;	//Return error
 }
@@ -6208,6 +6343,9 @@ void eof_track_delete_tremolo(EOF_SONG *sp, unsigned long track, unsigned long i
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			eof_pro_guitar_track_delete_tremolo(sp->pro_guitar_track[tracknum], index);
 		break;
+
+		default:
+		break;
 	}
 }
 
@@ -6262,6 +6400,9 @@ int eof_track_add_tremolo(EOF_SONG *sp, unsigned long track, unsigned long start
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 		return eof_pro_guitar_track_add_tremolo(sp->pro_guitar_track[tracknum], start_pos, end_pos, diff);
+
+		default:
+		break;
 	}
 	return 0;	//Return error
 }
@@ -6344,6 +6485,9 @@ void eof_set_num_trills(EOF_SONG *sp, unsigned long track, unsigned long number)
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			sp->pro_guitar_track[tracknum]->trills = number;
 		break;
+
+		default:
+		break;
 	}
 }
 
@@ -6369,6 +6513,9 @@ void eof_set_num_tremolos(EOF_SONG *sp, unsigned long track, unsigned long numbe
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			sp->pro_guitar_track[tracknum]->tremolos = number;
+		break;
+
+		default:
 		break;
 	}
 }
@@ -6431,6 +6578,9 @@ void eof_set_pro_guitar_fret_number(char function, unsigned long fretvalue)
 							if(oldfretvalue > 0)	//Don't decrement an open note
 								newfretvalue--;
 						break;
+
+						default:
+						break;
 					}
 					if((newfretvalue <= eof_song->pro_guitar_track[tracknum]->numfrets) || (newfretvalue == 0xFF))
 					{	//Only set the fret value if it is valid
@@ -6486,6 +6636,9 @@ char *eof_get_note_name(EOF_SONG *sp, unsigned long track, unsigned long note)
 			{
 				return sp->pro_guitar_track[tracknum]->note[note]->name;
 			}
+		break;
+
+		default:
 		break;
 	}
 
@@ -7033,6 +7186,9 @@ void eof_set_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, ch
 			{
 				(void) ustrcpy(sp->pro_guitar_track[tracknum]->note[note]->name, name);
 			}
+		break;
+
+		default:
 		break;
 	}
 }

@@ -181,88 +181,87 @@ int eof_undo_apply(void)
 
  	eof_log("eof_undo_apply() entered", 1);
 
-	if(eof_undo_count > 0)
-	{
-		if(eof_validate_temp_folder())
-		{	//Ensure the correct working directory and presence of the temporary folder
-			eof_log("\tCould not validate working directory and temp folder", 1);
-			return 0;
-		}
+ 	if(eof_undo_count <= 0)
+		return 0;	//If there are no undo states to apply, return
 
-		//Determine whether each pro guitar track was in tech view
-		for(ctr = 0; ctr < EOF_PRO_GUITAR_TRACKS_MAX; ctr++)
-		{	//For each pro guitar track in the project
-			tp = eof_song->pro_guitar_track[ctr];
-			if(tp->note == tp->technote)
-			{	//If tech view was in effect for this track
-				tech_view_status[ctr] = 1;
-			}
-		}
-
-		strncpy(title, eof_song->tags->title, sizeof(title) - 1);	//Backup the song title field, since if it changes as part of the undo, the Rocksmith WAV file should be deleted
-
-		(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo", eof_temp_path_s, eof_log_id);	//Include EOF's log ID in the redo name to almost guarantee it is uniquely named
-		(void) eof_save_song(eof_song, fn);
-		eof_redo_type = 0;
-		eof_undo_current_index--;
-		if(eof_undo_current_index < 0)
-		{
-			eof_undo_current_index = EOF_MAX_UNDO - 1;
-		}
-		(void) eof_undo_load_state(eof_undo_filename[eof_undo_current_index]);
-		if(eof_undo_type[eof_undo_current_index] == EOF_UNDO_TYPE_NOTE_SEL)
-		{
-			(void) eof_menu_edit_deselect_all();
-		}
-		if(eof_undo_type[eof_undo_current_index] == EOF_UNDO_TYPE_SILENCE)
-		{
-			(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo.ogg", eof_temp_path_s, eof_log_id);	//Include EOF's log ID in the redo name to almost guarantee it is uniquely named
-			(void) eof_copy_file(eof_loaded_ogg_name, fn);
-			(void) snprintf(fn, sizeof(fn) - 1, "%s%s.ogg", eof_temp_path_s, eof_undo_filename[eof_undo_current_index]);
-			(void) eof_copy_file(fn, eof_loaded_ogg_name);
-			(void) eof_load_ogg(eof_loaded_ogg_name, 0);
-			eof_delete_rocksmith_wav();		//Delete the Rocksmith WAV file since changing silence will require a new WAV file to be written
-			eof_fix_waveform_graph();
-			eof_fix_spectrogram();
-			eof_redo_type = EOF_UNDO_TYPE_SILENCE;
-		}
-		if(strcmp(title, eof_song->tags->title))
-		{	//If the song title changed as part of the undo, delete the Rocksmith WAV file, since changing the title will cause a new WAV file to be written
-			eof_delete_rocksmith_wav();
-		}
-		eof_undo_count--;
-		eof_redo_count = 1;
-		eof_change_count--;
-		if(eof_change_count == 0)
-		{
-			eof_changes = 0;
-		}
-		else
-		{
-			eof_changes = 1;
-		}
-		eof_undo_last_type = 0;
-
-		eof_init_after_load(1);	//Perform various cleanup
-		(void) eof_detect_difficulties(eof_song, eof_selected_track);
-		eof_select_beat(eof_selected_beat);
-		eof_fix_catalog_selection();
-		eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
-
-		//Restore tech view for each pro guitar track that had it in use before the undo operation
-		for(ctr = 0; ctr < EOF_PRO_GUITAR_TRACKS_MAX; ctr++)
-		{	//For each pro guitar track in the project
-			tp = eof_song->pro_guitar_track[ctr];
-			if(tech_view_status[ctr])
-			{	//If tech view was in effect for this track
-				eof_menu_pro_guitar_track_enable_tech_view(tp);
-			}
-		}
-
-		eof_fix_window_title();
-		return 1;
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		return 0;
 	}
-	return 0;
+
+	//Determine whether each pro guitar track was in tech view
+	for(ctr = 0; ctr < EOF_PRO_GUITAR_TRACKS_MAX; ctr++)
+	{	//For each pro guitar track in the project
+		tp = eof_song->pro_guitar_track[ctr];
+		if(tp->note == tp->technote)
+		{	//If tech view was in effect for this track
+			tech_view_status[ctr] = 1;
+		}
+	}
+
+	strncpy(title, eof_song->tags->title, sizeof(title) - 1);	//Backup the song title field, since if it changes as part of the undo, the Rocksmith WAV file should be deleted
+
+	(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo", eof_temp_path_s, eof_log_id);	//Include EOF's log ID in the redo name to almost guarantee it is uniquely named
+	(void) eof_save_song(eof_song, fn);
+	eof_redo_type = 0;
+	eof_undo_current_index--;
+	if(eof_undo_current_index < 0)
+	{
+		eof_undo_current_index = EOF_MAX_UNDO - 1;
+	}
+	(void) eof_undo_load_state(eof_undo_filename[eof_undo_current_index]);
+	if(eof_undo_type[eof_undo_current_index] == EOF_UNDO_TYPE_NOTE_SEL)
+	{
+		(void) eof_menu_edit_deselect_all();
+	}
+	if(eof_undo_type[eof_undo_current_index] == EOF_UNDO_TYPE_SILENCE)
+	{
+		(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo.ogg", eof_temp_path_s, eof_log_id);	//Include EOF's log ID in the redo name to almost guarantee it is uniquely named
+		(void) eof_copy_file(eof_loaded_ogg_name, fn);
+		(void) snprintf(fn, sizeof(fn) - 1, "%s%s.ogg", eof_temp_path_s, eof_undo_filename[eof_undo_current_index]);
+		(void) eof_copy_file(fn, eof_loaded_ogg_name);
+		(void) eof_load_ogg(eof_loaded_ogg_name, 0);
+		eof_delete_rocksmith_wav();		//Delete the Rocksmith WAV file since changing silence will require a new WAV file to be written
+		eof_fix_waveform_graph();
+		eof_fix_spectrogram();
+		eof_redo_type = EOF_UNDO_TYPE_SILENCE;
+	}
+	if(strcmp(title, eof_song->tags->title))
+	{	//If the song title changed as part of the undo, delete the Rocksmith WAV file, since changing the title will cause a new WAV file to be written
+		eof_delete_rocksmith_wav();
+	}
+	eof_undo_count--;
+	eof_redo_count = 1;
+	eof_change_count--;
+	if(eof_change_count == 0)
+	{
+		eof_changes = 0;
+	}
+	else
+	{
+		eof_changes = 1;
+	}
+	eof_undo_last_type = 0;
+
+	eof_init_after_load(1);	//Perform various cleanup
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);
+	eof_select_beat(eof_selected_beat);
+	eof_fix_catalog_selection();
+	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
+
+	//Restore tech view for each pro guitar track that had it in use before the undo operation
+	for(ctr = 0; ctr < EOF_PRO_GUITAR_TRACKS_MAX; ctr++)
+	{	//For each pro guitar track in the project
+		tp = eof_song->pro_guitar_track[ctr];
+		if(tech_view_status[ctr])
+		{	//If tech view was in effect for this track
+			eof_menu_pro_guitar_track_enable_tech_view(tp);
+		}
+	}
+
+	eof_fix_window_title();
+	return 1;
 }
 
 void eof_redo_apply(void)

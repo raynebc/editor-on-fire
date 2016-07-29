@@ -856,29 +856,27 @@ int Lyricless_handler(struct TEPstruct *data)
 	}
 
 //Handle Note Off event
-	if((eventtype>>4) == 0x8)
-	{	//If note off in the vocal track
-		//Ensure that the lyric has had a Note On event already
-		if((data->parameters[0] < MIDIstruct.diff_lo) || (data->parameters[0] > MIDIstruct.diff_hi))
-			return 0;	//If this note is outside the target difficulty, ignore it
+	if((eventtype>>4) != 0x8)
+		return 0;	//If this is not a note off event, stop processing as there are no other events to handle
 
-		if(Lyrics.lyric_on == 0)
-		{
-			printf("Error: Lyric note off detected without note on (Delta time for the event is at file position %lX)\nAborting\n",data->startindex);
-			exit_wrapper(1);
-		}
-		if(data->parameters[0] != lyric_note_num )	//If this Note Off doesn't correspond to the note number we're expecting
-			return 0;								//ignore it
-	//Add the lyric piece
-		time=ConvertToRealTime(MIDIstruct.absdelta,0.0);	//Get the realtime by parsing the entire tempo list, in case this track's TS changes are causing problems
-		AddLyricPiece(placeholder,lastlyrictime,(unsigned long)time,lyric_note_num,0);	//Add the lyric placeholder to the lyric storage by providing the lyric string, the start time
-			//in milliseconds and the end time in millieseconds.  Store the pitch specified by the Note number
-		if(Lyrics.verbose>=2)	printf("Added lyric placeholder %lu: Start=%lu\tEnd=%lu\n",Lyrics.piececount,lastlyrictime,(unsigned long)time);
+	//Ensure that the lyric has had a Note On event already
+	if((data->parameters[0] < MIDIstruct.diff_lo) || (data->parameters[0] > MIDIstruct.diff_hi))
+		return 0;	//If this note is outside the target difficulty, ignore it
 
-  		return 1;
+	if(Lyrics.lyric_on == 0)
+	{
+		printf("Error: Lyric note off detected without note on (Delta time for the event is at file position %lX)\nAborting\n",data->startindex);
+		exit_wrapper(1);
 	}
+	if(data->parameters[0] != lyric_note_num )	//If this Note Off doesn't correspond to the note number we're expecting
+		return 0;								//ignore it
+//Add the lyric piece
+	time=ConvertToRealTime(MIDIstruct.absdelta,0.0);	//Get the realtime by parsing the entire tempo list, in case this track's TS changes are causing problems
+	AddLyricPiece(placeholder,lastlyrictime,(unsigned long)time,lyric_note_num,0);	//Add the lyric placeholder to the lyric storage by providing the lyric string, the start time
+		//in milliseconds and the end time in millieseconds.  Store the pitch specified by the Note number
+	if(Lyrics.verbose>=2)	printf("Added lyric placeholder %lu: Start=%lu\tEnd=%lu\n",Lyrics.piececount,lastlyrictime,(unsigned long)time);
 
-	return 0;
+	return 1;
 }
 
 void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppress_errors)
@@ -2182,92 +2180,90 @@ int SKAR_handler(struct TEPstruct *data)
 		return 0;
 
 //Handle Lyric or text event
-	if((eventtype==0xFF) && ((data->m_eventtype==0x5) || (data->m_eventtype==0x1)))
-	{	//Lyric or Text event in the appropriate vocal track
-		if(data->buffer == NULL)			//If the lyric string is NULL, skip it
+	if((eventtype!=0xFF) || ((data->m_eventtype!=0x5) && (data->m_eventtype!=0x1)))
+		return 0;	//If this isn't a lyric or text event in the appropriate vocal track, return early
+
+	if(data->buffer == NULL)			//If the lyric string is NULL, skip it
+		return 0;
+
+//Handle KAR control events
+	if(data->buffer[0] == '@')
+	{
+		if(strlen(data->buffer) < 3)	//A valid KAR control is @, the control identifier and at least one more character
 			return 0;
 
-	//Handle KAR control events
-		if(data->buffer[0] == '@')
+		if(Lyrics.verbose)	printf("\tKAR control event: \"%s\"\n",data->buffer);
+
+		if(toupper(data->buffer[1]) == 'T')	//Title KAR event
 		{
-			if(strlen(data->buffer) < 3)	//A valid KAR control is @, the control identifier and at least one more character
-				return 0;
+			if(titlecount<1)		//First instance, treat as song title
+				SetTag(&(data->buffer[2]),'n',0);	//Store Title tag
+			else if(titlecount<2)	//Second instance, treat as artist
+				SetTag(&(data->buffer[2]),'s',0);	//Store Artist tag
 
-			if(Lyrics.verbose)	printf("\tKAR control event: \"%s\"\n",data->buffer);
+			titlecount++;
 
-			if(toupper(data->buffer[1]) == 'T')	//Title KAR event
-			{
-				if(titlecount<1)		//First instance, treat as song title
-					SetTag(&(data->buffer[2]),'n',0);	//Store Title tag
-				else if(titlecount<2)	//Second instance, treat as artist
-					SetTag(&(data->buffer[2]),'s',0);	//Store Artist tag
-
-				titlecount++;
-
-				if(titlecount <= 2)	//If the tag was processed
-					return 1;
-			}
-
-			return 0;
+			if(titlecount <= 2)	//If the tag was processed
+				return 1;
 		}
 
-	//Handle new line markers \ and /
-		if((data->buffer[0] == '\\') || (data->buffer[0] == '/'))
+		return 0;
+	}
+
+//Handle new line markers \ and /
+	if((data->buffer[0] == '\\') || (data->buffer[0] == '/'))
+	{
+		if(Lyrics.line_on)	//If there is a line of lyrics in progress
+			EndLyricLine();	//Close it
+
+		CreateLyricLine();	//Start a new line
+		buffer=DuplicateString(data->buffer+1);	//Copy the rest of the lyric that follows the \ or / character
+	}
+	else
+	{
+		if(!Lyrics.line_on)		//If a lyric was given with no line started
 		{
-			if(Lyrics.line_on)	//If there is a line of lyrics in progress
-				EndLyricLine();	//Close it
-
-			CreateLyricLine();	//Start a new line
-			buffer=DuplicateString(data->buffer+1);	//Copy the rest of the lyric that follows the \ or / character
-		}
-		else
-		{
-			if(!Lyrics.line_on)		//If a lyric was given with no line started
-			{
-				printf("Error: KAR lyric defined (\"%s\") with no line started\nAborting\n",data->buffer);
-				exit_wrapper(1);
-			}
-
-			buffer=DuplicateString(data->buffer);
+			printf("Error: KAR lyric defined (\"%s\") with no line started\nAborting\n",data->buffer);
+			exit_wrapper(1);
 		}
 
-		assert_wrapper(Lyrics.curline != NULL);
-		lastlyrictime=(unsigned long)ConvertToRealTime(MIDIstruct.absdelta,0.0);	//Get the realtime by parsing the entire tempo list, in case this track's TS changes are causing problems
+		buffer=DuplicateString(data->buffer);
+	}
+
+	assert_wrapper(Lyrics.curline != NULL);
+	lastlyrictime=(unsigned long)ConvertToRealTime(MIDIstruct.absdelta,0.0);	//Get the realtime by parsing the entire tempo list, in case this track's TS changes are causing problems
 
 //Handle whitespace at the beginning of any parsed lyric piece as a signal that the piece will not group with previous piece
-		if(isspace(buffer[0]))
+	if(isspace(buffer[0]))
+	{
+		if(Lyrics.curline->pieces != NULL)	//If there was a previous lyric piece on this line
 		{
-			if(Lyrics.curline->pieces != NULL)	//If there was a previous lyric piece on this line
-			{
-				assert_wrapper(Lyrics.lastpiece != NULL);
-				Lyrics.lastpiece->groupswithnext=0;	//Ensure it is set to not group with this lyric piece
-				Lyrics.lastpiece->duration=1;		//Ensure it has a generic duration of 1ms
-			}
+			assert_wrapper(Lyrics.lastpiece != NULL);
+			Lyrics.lastpiece->groupswithnext=0;	//Ensure it is set to not group with this lyric piece
+			Lyrics.lastpiece->duration=1;		//Ensure it has a generic duration of 1ms
 		}
-		else
-		{	//If there was a previous lyric in this line
-			if(Lyrics.curline->piececount > 0)
-			{
-				assert_wrapper(Lyrics.lastpiece != NULL);
-				if(Lyrics.lastpiece->groupswithnext)	//If this piece groups with the previous piece
-					Lyrics.lastpiece->duration=lastlyrictime-Lyrics.realoffset-Lyrics.lastpiece->start;	//Extend previous piece's length to reach this piece, take the current offset into account
-			}
+	}
+	else
+	{	//If there was a previous lyric in this line
+		if(Lyrics.curline->piececount > 0)
+		{
+			assert_wrapper(Lyrics.lastpiece != NULL);
+			if(Lyrics.lastpiece->groupswithnext)	//If this piece groups with the previous piece
+				Lyrics.lastpiece->duration=lastlyrictime-Lyrics.realoffset-Lyrics.lastpiece->start;	//Extend previous piece's length to reach this piece, take the current offset into account
 		}
+	}
 
-		if(isspace(buffer[strlen(buffer)-1]))	//If the lyric ends in a space
-			groupswithnext=0;
-		else
-			groupswithnext=1;
+	if(isspace(buffer[strlen(buffer)-1]))	//If the lyric ends in a space
+		groupswithnext=0;
+	else
+		groupswithnext=1;
 
-		AddLyricPiece(buffer,lastlyrictime,lastlyrictime+1,PITCHLESS,groupswithnext);	//Add lyric with no defined pitch and generic duration of 1ms
+	AddLyricPiece(buffer,lastlyrictime,lastlyrictime+1,PITCHLESS,groupswithnext);	//Add lyric with no defined pitch and generic duration of 1ms
 
-		if(Lyrics.verbose)	printf("\tAdded lyric piece \"%s\"\n",buffer);
+	if(Lyrics.verbose)	printf("\tAdded lyric piece \"%s\"\n",buffer);
 
-		free(buffer);
-		return 1;
-	}//Lyric or Text event in the appropriate vocal track
-
-	return 0;
+	free(buffer);
+	return 1;
 }
 
 int Lyric_handler(struct TEPstruct *data)
@@ -2557,24 +2553,22 @@ int Lyric_handler(struct TEPstruct *data)
 	#endif
 
 //Normal lyric logic
-	if((lastlyric != NULL) && (lyric_note_num != 0xFF))
-	{	//If a Lyric and Note On with the same timing have been parsed
-		AddMIDILyric(lastlyric,lastlyrictime,lyric_note_num,overdrive_on,groupswithnext);
-		MIDIstruct.unfinalizedlyric=NULL;
+	if((lastlyric == NULL) || (lyric_note_num == 0xFF))
+		return 0;	//If a lyric and note on with the same timing have not been parsed, return indicating nothing was done
 
-		if(end_line_after_piece)
-		{
-			AddMIDILyric(NULL,0,0xFF,0,0);	//Append a line break to the list
-			end_line_after_piece=0;			//Reset this condition
-		}
+	AddMIDILyric(lastlyric,lastlyrictime,lyric_note_num,overdrive_on,groupswithnext);
+	MIDIstruct.unfinalizedlyric=NULL;
 
-		lastlyric=NULL;	//Reset this status
-		lyric_note_num=0xFF;	//Reset this status
-
-		return 1;
+	if(end_line_after_piece)
+	{
+		AddMIDILyric(NULL,0,0xFF,0,0);	//Append a line break to the list
+		end_line_after_piece=0;			//Reset this condition
 	}
 
-	return 0;	//Nothing was done
+	lastlyric=NULL;	//Reset this status
+	lyric_note_num=0xFF;	//Reset this status
+
+	return 1;
 }
 
 void AddMIDILyric(char *str,unsigned long start,unsigned char pitch,char isoverdrive,char groupswithnext)
@@ -3216,28 +3210,29 @@ int MIDI_Stats(struct TEPstruct *data)
 	if(data->buffer == NULL)
 		return -1;	//Text/lyric events can't be statistically tracked if not passed to this handler
 
-	if((eventtype == 0xFF) && ((data->m_eventtype == 0x1) || (data->m_eventtype == 0x5)))	//Track text/lyric events
-	{
-		for(ctr=0;data->buffer[ctr]!='\0';ctr++)
-		{
-			if(data->buffer[ctr]=='[')		//If the first non whitespace character in the string is an open bracket
-				break;						//Stop parsing string, don't count this in our statistics
-			if((data->buffer[ctr]=='@') && (data->m_eventtype == 0x1))	//If this is a text event, and the first non whitespace character in the string is an @ symbol (ie. Soft Karaoke tag)
-				break;						//Stop parsing string, don't count this in our statistics
+	if((eventtype != 0xFF) || ((data->m_eventtype != 0x1) && (data->m_eventtype != 0x5)))	//Track text/lyric events
+		return 1;	//If this isn't a text/lyric event, return early
 
-			if(!isspace(data->buffer[ctr]))	//Otherwise, if it isn't a whitespace character
-			{
-				if(data->m_eventtype == 0x1)	//If this is a text event
-					(MIDIstruct.hchunk.tracks[data->tracknum]).textcount++;	//One more text event was read
-				else
-					(MIDIstruct.hchunk.tracks[data->tracknum]).lyrcount++;		//One more lyric event was read
-				break;
-			}
+	for(ctr=0;data->buffer[ctr]!='\0';ctr++)
+	{
+		if(data->buffer[ctr]=='[')		//If the first non whitespace character in the string is an open bracket
+			break;						//Stop parsing string, don't count this in our statistics
+		if((data->buffer[ctr]=='@') && (data->m_eventtype == 0x1))	//If this is a text event, and the first non whitespace character in the string is an @ symbol (ie. Soft Karaoke tag)
+			break;						//Stop parsing string, don't count this in our statistics
+
+		if(!isspace(data->buffer[ctr]))	//Otherwise, if it isn't a whitespace character
+		{
+			if(data->m_eventtype == 0x1)	//If this is a text event
+				(MIDIstruct.hchunk.tracks[data->tracknum]).textcount++;	//One more text event was read
 			else
-				whitespace=1;	//Whitespace was found
+				(MIDIstruct.hchunk.tracks[data->tracknum]).lyrcount++;		//One more lyric event was read
+			break;
 		}
-		if(whitespace)	//If this text/lyric event had any leading/trailing whitespace
-			(MIDIstruct.hchunk.tracks[data->tracknum]).spacecount++;	//Track this
+		else
+			whitespace=1;	//Whitespace was found
 	}
+	if(whitespace)	//If this text/lyric event had any leading/trailing whitespace
+		(MIDIstruct.hchunk.tracks[data->tracknum]).spacecount++;	//Track this
+
 	return 1;
 }
