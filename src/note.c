@@ -677,46 +677,46 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 
 	if((track == 0) || eof_hide_note_names)
 		return 0;	//If the pen note is being drawn, or the user opted to hide note names, skip the logic below
+	if((window != eof_window_note) && (eof_2d_render_top_option != 5))
+		return 0;	//If not rendering to the fret catalog or to the 2D window with the option to display note names, skip the logic below
 
-	if((window == eof_window_note) || (eof_2d_render_top_option == 5))
-	{	//If rendering to the fret catalog, or to the 2D window and the user opted to display note names at the top of the window
-		notename[0] = prevnotename[0] = '\0';	//Empty these strings
-		namefound = eof_build_note_name(eof_song, track, notenum, notename);
-		if(namefound)
-		{	//If this note has a name, prepare it for rendering
-			(void) eof_build_note_name(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum), prevnotename);	//Get the previous note's name
-			if(!ustricmp(notename, prevnotename))
-			{	//If this note and the previous one have the same name
-				if(namefound == 1)
-				{	//If the name for this note was manually assigned
-					nameptr = samename;	//Display this note's name as "/" to indicate a repeat of the last note
-				}
-				else
-				{	//The name for this note was detected
-					nameptr = samenameauto;	//Display this note's name as "[/]" to indicate a repeat of the last note
-				}
-			}
-			else
-			{	//This note doesn't have the same name as the previous note
-				if(namefound == 1)
-				{	//If the name for this note was manually assigned
-					nameptr = notename;	//Display the note name as-is
-				}
-				else
-				{	//The name for this note was detected
-					(void) snprintf(prevnotename, sizeof(notename) - 1, "[%s]", notename);	//Rebuild the note name to be enclosed in brackets
-					nameptr = prevnotename;
-				}
-			}
-			if(window == eof_window_note)
-			{	//If rendering to the note window
-				textout_centre_ex(window->screen, font, nameptr, x, EOF_EDITOR_RENDER_OFFSET + 10, eof_color_white, -1);
-			}
-			else
-			{	//If rendering to either editor window
-				textout_centre_ex(window->screen, font, nameptr, x, 25 + 5, eof_color_white, -1);
-			}
+	notename[0] = prevnotename[0] = '\0';	//Empty these strings
+	namefound = eof_build_note_name(eof_song, track, notenum, notename);
+	if(!namefound)
+		return 0;	//If the note does not have a name, skip the logic below
+
+	//Otherwise prepare it for rendering
+	(void) eof_build_note_name(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum), prevnotename);	//Get the previous note's name
+	if(!ustricmp(notename, prevnotename))
+	{	//If this note and the previous one have the same name
+		if(namefound == 1)
+		{	//If the name for this note was manually assigned
+			nameptr = samename;	//Display this note's name as "/" to indicate a repeat of the last note
 		}
+		else
+		{	//The name for this note was detected
+			nameptr = samenameauto;	//Display this note's name as "[/]" to indicate a repeat of the last note
+		}
+	}
+	else
+	{	//This note doesn't have the same name as the previous note
+		if(namefound == 1)
+		{	//If the name for this note was manually assigned
+			nameptr = notename;	//Display the note name as-is
+		}
+		else
+		{	//The name for this note was detected
+			(void) snprintf(prevnotename, sizeof(notename) - 1, "[%s]", notename);	//Rebuild the note name to be enclosed in brackets
+			nameptr = prevnotename;
+		}
+	}
+	if(window == eof_window_note)
+	{	//If rendering to the note window
+		textout_centre_ex(window->screen, font, nameptr, x, EOF_EDITOR_RENDER_OFFSET + 10, eof_color_white, -1);
+	}
+	else
+	{	//If rendering to either editor window
+		textout_centre_ex(window->screen, font, nameptr, x, 25 + 5, eof_color_white, -1);
 	}
 
 	return 0;	//Return status:  Note was not clipped in its entirety
@@ -1248,38 +1248,39 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 	notename[0] = prevnotename[0] = '\0';	//Empty these strings
 	namefound = eof_build_note_name(eof_song, track, notenum, notename);
-	if(namefound)
-	{	//If this note has a name, prepare it for rendering
-		(void) eof_build_note_name(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum), prevnotename);	//Get the previous note's name
-		if(!ustricmp(notename, prevnotename))
-		{	//If this note and the previous one have the same name
-			if(namefound == 1)
-			{	//If the name for this note was manually assigned
-				nameptr = samename;	//Display this note's name as "/" to indicate a repeat of the last note
-			}
-			else
-			{	//The name for this note was detected
-				nameptr = samenameauto;	//Display this note's name as "[/]" to indicate a repeat of the last note
-			}
+	if(!namefound)
+		return 0;	//If the note has no name, return from function early
+
+	//Otherwise prepare the name for rendering
+	(void) eof_build_note_name(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum), prevnotename);	//Get the previous note's name
+	if(!ustricmp(notename, prevnotename))
+	{	//If this note and the previous one have the same name
+		if(namefound == 1)
+		{	//If the name for this note was manually assigned
+			nameptr = samename;	//Display this note's name as "/" to indicate a repeat of the last note
 		}
 		else
-		{	//This note doesn't have the same name as the previous note
-			if(namefound == 1)
-			{	//If the name for this note was manually assigned
-				nameptr = notename;	//Display the note name as-is
-			}
-			else
-			{	//The name for this note was detected
-				(void) snprintf(prevnotename, sizeof(prevnotename) - 1, "[%s]", notename);	//Rebuild the note name to be enclosed in brackets
-				nameptr = prevnotename;
-			}
+		{	//The name for this note was detected
+			nameptr = samenameauto;	//Display this note's name as "[/]" to indicate a repeat of the last note
 		}
-		z3d = npos + 6 + text_height(font);	//Restore the 6 that was subtracted earlier when finding npos, and add the font's height to have the text line up with the note's z position
-		z3d = z3d < -100 ? -100 : z3d;
-		x3d = ocd3d_project_x(20 - 4, z3d);
-		y3d = ocd3d_project_y(200, z3d);
-		textout_right_ex(eof_window_3d->screen, font, nameptr, x3d, y3d, eof_color_white, -1);
 	}
+	else
+	{	//This note doesn't have the same name as the previous note
+		if(namefound == 1)
+		{	//If the name for this note was manually assigned
+			nameptr = notename;	//Display the note name as-is
+		}
+		else
+		{	//The name for this note was detected
+			(void) snprintf(prevnotename, sizeof(prevnotename) - 1, "[%s]", notename);	//Rebuild the note name to be enclosed in brackets
+			nameptr = prevnotename;
+		}
+	}
+	z3d = npos + 6 + text_height(font);	//Restore the 6 that was subtracted earlier when finding npos, and add the font's height to have the text line up with the note's z position
+	z3d = z3d < -100 ? -100 : z3d;
+	x3d = ocd3d_project_x(20 - 4, z3d);
+	y3d = ocd3d_project_y(200, z3d);
+	textout_right_ex(eof_window_3d->screen, font, nameptr, x3d, y3d, eof_color_white, -1);
 
 	return 0;	//Return status:  Note was not clipped in its entirety
 }
@@ -1351,6 +1352,8 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	ez = npos + notelength / eof_zoom_3d > 600 ? 600 : npos + notelength / eof_zoom_3d + 6;
 	for(ctr=0,mask=1; ctr < eof_count_track_lanes(eof_song, track); ctr++,mask=mask<<1)
 	{	//For each of the lanes in this track
+		unsigned long nextnotenum;
+
 		assert(ctr < EOF_MAX_FRETS);	//Put an assertion here to resolve a false positive with Coverity
 		if(!(notenote & mask))
 			continue;	//If this lane does not have a gem to render, skip it
@@ -1456,43 +1459,41 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 		}//If rendering an existing pro guitar track that slides up or down or is an unpitched slide
 
 		//Render slider note slide if applicable
-		if((eof_song->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER))
-		{
-			unsigned long nextnotenum;
-			if(eof_track_fixup_next_note(eof_song, track, notenum) >= 0)
-			{	//If there is another note in this difficulty
-				nextnotenum = eof_track_fixup_next_note(eof_song, track, notenum);
-				if(eof_get_note_flags(eof_song, track, nextnotenum) & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
-				{	//If that next note is also a slider note, draw a dark purple line between this note and the next
-					long npos2, rz2;
-					unsigned long notepos2, nextnotenote, ctr2, mask2;		//Used for slide note rendering
+		if((eof_song->track[track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) || !(noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER))
+			continue;	//If the note isn't in a guitar track or isn't in a slider, skip the remaining logic that renders slider phrases
+		if(eof_track_fixup_next_note(eof_song, track, notenum) < 0)
+			continue;	//If there isn't another note in this difficulty, don't render a slider phrase for a single note
 
-					nextnotenote = eof_get_note_note(eof_song, track, nextnotenum);
-					for(ctr2=0,mask2=1; ctr2 < eof_count_track_lanes(eof_song, track); ctr2++,mask2=mask2<<1)
-					{
-						if(nextnotenote & mask2)
-						{	//If this lane is populated for the next note
-							break;
-						}
-					}
+		nextnotenum = eof_track_fixup_next_note(eof_song, track, notenum);
+		if(eof_get_note_flags(eof_song, track, nextnotenum) & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
+		{	//If that next note is also a slider note, draw a dark purple line between this note and the next
+			long npos2, rz2;
+			unsigned long notepos2, nextnotenote, ctr2, mask2;		//Used for slide note rendering
 
-					notepos2 = eof_get_note_pos(eof_song, track, nextnotenum);	//Find the position of the next note
-					npos2 = (long)(notepos2 + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
-					rz2 = npos2 < -100 ? -100 : npos2 + 10;
-
-					//Define the slide rectangle coordinates in clockwise order
-					point[0] = ocd3d_project_x(xchart[ctr], rz);	//X1 (X coordinate of the front end of the slide): The X position of this note
-					point[1] = ocd3d_project_y(200, rz);			//Y1 (Y coordinate of the front end of the slide): The Y position of this note
-					point[2] = ocd3d_project_x(xchart[ctr2], rz2);	//X2 (X coordinate of the back end of the slide): The X position of the next note
-					point[3] = ocd3d_project_y(200, rz2);			//Y2 (Y coordinate of the back end of the slide): The Y position of the next note
-
-					point[4] = point[2] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X3 (the specified number of pixels right of X2)
-					point[5] = point[3];							//Y3 (Y coordinate of the back end of the slide)
-					point[6] = point[0] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X4 (the specified number of pixels right of X1)
-					point[7] = point[1];							//Y4 (Y coordinate of the front end of the slide)
-					polygon(eof_window_3d->screen, 4, point, eof_color_dark_purple);	//Render the 4 point polygon in dark purple
+			nextnotenote = eof_get_note_note(eof_song, track, nextnotenum);
+			for(ctr2=0,mask2=1; ctr2 < eof_count_track_lanes(eof_song, track); ctr2++,mask2=mask2<<1)
+			{
+				if(nextnotenote & mask2)
+				{	//If this lane is populated for the next note
+					break;
 				}
 			}
+
+			notepos2 = eof_get_note_pos(eof_song, track, nextnotenum);	//Find the position of the next note
+			npos2 = (long)(notepos2 + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
+			rz2 = npos2 < -100 ? -100 : npos2 + 10;
+
+			//Define the slide rectangle coordinates in clockwise order
+			point[0] = ocd3d_project_x(xchart[ctr], rz);	//X1 (X coordinate of the front end of the slide): The X position of this note
+			point[1] = ocd3d_project_y(200, rz);			//Y1 (Y coordinate of the front end of the slide): The Y position of this note
+			point[2] = ocd3d_project_x(xchart[ctr2], rz2);	//X2 (X coordinate of the back end of the slide): The X position of the next note
+			point[3] = ocd3d_project_y(200, rz2);			//Y2 (Y coordinate of the back end of the slide): The Y position of the next note
+
+			point[4] = point[2] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X3 (the specified number of pixels right of X2)
+			point[5] = point[3];							//Y3 (Y coordinate of the back end of the slide)
+			point[6] = point[0] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X4 (the specified number of pixels right of X1)
+			point[7] = point[1];							//Y4 (Y coordinate of the front end of the slide)
+			polygon(eof_window_3d->screen, 4, point, eof_color_dark_purple);	//Render the 4 point polygon in dark purple
 		}
 	}//For each of the lanes in this track
 	return 0;
@@ -2225,36 +2226,35 @@ void eof_build_tremolo_phrases(EOF_PRO_GUITAR_TRACK *tp, unsigned char diff)
 	{	//For each note in the track
 		if((diff != 0xFF) && (tp->note[ctr]->type != diff))
 			continue;	//If this phrase doesn't apply to all difficulties or this note is not in the target difficulty, skip this note
+		if(!(tp->note[ctr]->flags & EOF_NOTE_FLAG_IS_TREMOLO))
+			continue;	//If this note is not marked as being in a tremolo, skip it
 
-		if(tp->note[ctr]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
-		{	//If this note is marked as being in a tremolo
-			startpos = tp->note[ctr]->pos;	//Mark the start of this phrase
-			endpos = startpos + tp->note[ctr]->length;	//Initialize the end position of the phrase
-			while(++ctr < tp->notes)
-			{	//For the consecutive remaining notes in the track
-				if(tp->note[ctr]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
-				{	//And the next note is also marked as a tremolo
-					endpos = tp->note[ctr]->pos + tp->note[ctr]->length;	//Update the end position of the phrase
-				}
-				else
-				{
-					break;	//Break from while loop.  This note isn't a tremolo so the next pass doesn't need to check it either
-				}
+		startpos = tp->note[ctr]->pos;	//Mark the start of this phrase
+		endpos = startpos + tp->note[ctr]->length;	//Initialize the end position of the phrase
+		while(++ctr < tp->notes)
+		{	//For the consecutive remaining notes in the track
+			if(tp->note[ctr]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
+			{	//And the next note is also marked as a tremolo
+				endpos = tp->note[ctr]->pos + tp->note[ctr]->length;	//Update the end position of the phrase
 			}
-			if(endpos > startpos + 1)
-			{	//As long as the phrase is determined to be longer than 1ms
-				endpos--;	//Shorten the phrase so that a consecutive note isn't incorrectly included in the phrase just because it starts where the earlier note ended
+			else
+			{
+				break;	//Break from while loop.  This note isn't a tremolo so the next pass doesn't need to check it either
 			}
-			count = tp->tremolos;
-			if(count < EOF_MAX_PHRASES)
-			{	//If the track can store the tremolo section
-				tp->tremolo[count].start_pos = startpos;
-				tp->tremolo[count].end_pos = endpos;
-				tp->tremolo[count].flags = 0;
-				tp->tremolo[count].name[0] = '\0';
-				tp->tremolo[count].difficulty = diff;	//Define the tremolo's difficulty as specified
-				tp->tremolos++;
-			}
-		}//If this note is marked as being in a tremolo
+		}
+		if(endpos > startpos + 1)
+		{	//As long as the phrase is determined to be longer than 1ms
+			endpos--;	//Shorten the phrase so that a consecutive note isn't incorrectly included in the phrase just because it starts where the earlier note ended
+		}
+		count = tp->tremolos;
+		if(count < EOF_MAX_PHRASES)
+		{	//If the track can store the tremolo section
+			tp->tremolo[count].start_pos = startpos;
+			tp->tremolo[count].end_pos = endpos;
+			tp->tremolo[count].flags = 0;
+			tp->tremolo[count].name[0] = '\0';
+			tp->tremolo[count].difficulty = diff;	//Define the tremolo's difficulty as specified
+			tp->tremolos++;
+		}
 	}//For each note in the track
 }

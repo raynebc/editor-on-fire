@@ -2562,6 +2562,9 @@ void eof_set_percussion_cue(int cue_number)
 		case 36:
 			eof_sound_chosen_percussion = eof_sound_clap4;
 		break;
+
+		default:
+		break;
 	}
 	eof_selected_percussion_cue = cue_number;
 }

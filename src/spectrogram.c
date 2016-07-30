@@ -461,6 +461,7 @@ void eof_generate_colorscale(char scalenum)
 				break;
 			default:	//If scalenum is some unexpected value, use the default value of 1 for it
 				eof_spectrogram_colorscale->maxval = 1280.0;
+				break;
 		}
 
 		eof_spectrogram_colorscale->colortable = (int *)malloc((eof_spectrogram_colorscale->maxval+1) * sizeof(int));
@@ -494,6 +495,8 @@ void eof_generate_colorscale(char scalenum)
 						}
 					}
 					break;
+				default:
+				break;
 			}
 			eof_spectrogram_colorscale->colortable[scaledval] = makecol(rgb[0],rgb[1],rgb[2]);
 		}

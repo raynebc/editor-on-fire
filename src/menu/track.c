@@ -947,6 +947,8 @@ int eof_track_set_num_frets_strings(void)
 		case 6:
 			eof_note_set_num_frets_strings_dialog[6].flags = D_SELECTED;
 		break;
+		default:
+		break;
 	}
 
 	eof_cursor_visible = 0;

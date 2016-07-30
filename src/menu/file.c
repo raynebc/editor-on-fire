@@ -1702,7 +1702,11 @@ char * eof_input_list(int index, int * size)
 		{
 			return "Feedback";
 		}
+
+		default:
+		break;
 	}
+
 	return NULL;
 }
 
@@ -1744,7 +1748,11 @@ char * eof_ogg_list(int index, int * size)
 		{
 			return "320kbps";
 		}
+
+		default:
+		break;
 	}
+
 	return NULL;
 }
 
@@ -1793,7 +1801,11 @@ char * eof_guitar_list(int index, int * size)
 		{
 			return eof_ctext[6];
 		}
+
+		default:
+		break;
 	}
+
 	return NULL;
 }
 
@@ -1832,7 +1844,11 @@ char * eof_drum_list(int index, int * size)
 		{
 			return eof_ctext[4];
 		}
+
+		default:
+		break;
 	}
+
 	return NULL;
 }
 
@@ -1858,7 +1874,11 @@ char * eof_display_list(int index, int * size)
 		{
 			return "1024x768";
 		}
+
+		default:
+		break;
 	}
+
 	return NULL;
 }
 
@@ -3752,7 +3772,11 @@ char * eof_colors_list(int index, int * size)
 		{
 			return "Bandfuse";
 		}
+
+		default:
+		break;
 	}
+
 	return NULL;
 }
 
@@ -3877,6 +3901,9 @@ int eof_gp_import_drum_track(DIALOG * d, int importvoice, int function)
 						case 57:
 							note = 16;
 							flags |= EOF_DRUM_NOTE_FLAG_G_CYMBAL;
+						break;
+
+						default:
 						break;
 					}
 					if(function & 1)

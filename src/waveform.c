@@ -232,28 +232,27 @@ int eof_render_waveform(struct wavestruct *waveform)
 			}
 		}
 
-		if(render_right_channel)
-		{	//If the right channel rendering is enabled and the audio file is in stereo
-			if(waveform->right.maxampoffset)
-			{	//Additional check to avoid divide by zero on account of silent chart audio
-				if(right.peak != zeroamp)	//If there was a nonzero right peak amplitude, scale it to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
-				{
-					if(right.peak < zeroamp)	//If the peak is a negative amplitude
-					{	//Render it after the minimum amplitude to ensure it is visible
-						eof_render_waveform_line(zeroamp, rightchannel, right.min, x, eof_color_waveform_trough);	//Render the minimum amplitude
-						eof_render_waveform_line(zeroamp, rightchannel, right.rms, x, eof_color_waveform_rms);		//Render the root mean square
-						eof_render_waveform_line(zeroamp, rightchannel, right.peak, x, eof_color_waveform_peak);	//Render the peak amplitude
-					}
-					else
-					{	//Otherwise render it first
-						eof_render_waveform_line(zeroamp, rightchannel, right.peak, x, eof_color_waveform_peak);	//Render the peak amplitude
-						eof_render_waveform_line(zeroamp, rightchannel, right.rms, x, eof_color_waveform_rms);		//Render the root mean square
-						eof_render_waveform_line(zeroamp, rightchannel, right.min, x, eof_color_waveform_trough);	//Render the minimum amplitude
-					}
-				}
-			}
+		if(!render_right_channel)
+			continue;	//If the right channel rendering is not enabled (or the audio file is not in stereo), skip the rendering logic below
+		if(!waveform->right.maxampoffset)
+			continue;	//Additional check to avoid divide by zero on account of silent chart audio
+		if(right.peak == zeroamp)
+			continue;	//If there was a zero right peak amplitude, skip rendering that channel
+
+		//Otherwise scale the right peak amplitude to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
+		if(right.peak < zeroamp)	//If the peak is a negative amplitude
+		{	//Render it after the minimum amplitude to ensure it is visible
+			eof_render_waveform_line(zeroamp, rightchannel, right.min, x, eof_color_waveform_trough);	//Render the minimum amplitude
+			eof_render_waveform_line(zeroamp, rightchannel, right.rms, x, eof_color_waveform_rms);		//Render the root mean square
+			eof_render_waveform_line(zeroamp, rightchannel, right.peak, x, eof_color_waveform_peak);	//Render the peak amplitude
 		}
-	}
+		else
+		{	//Otherwise render it first
+			eof_render_waveform_line(zeroamp, rightchannel, right.peak, x, eof_color_waveform_peak);	//Render the peak amplitude
+			eof_render_waveform_line(zeroamp, rightchannel, right.rms, x, eof_color_waveform_rms);		//Render the root mean square
+			eof_render_waveform_line(zeroamp, rightchannel, right.min, x, eof_color_waveform_trough);	//Render the minimum amplitude
+		}
+	}//for each pixel in the piano roll's visible width
 
 	return 0;
 }

@@ -8717,43 +8717,43 @@ EOF_SONG *eof_clone_chart_time_range(EOF_SONG *sp, unsigned long start, unsigned
 
 		for(ctr2 = 1; ctr2 <= EOF_NUM_SECTION_TYPES; ctr2++)
 		{	//For each type of section that exists
-			if(eof_lookup_track_section_type(sp, ctr, ctr2, &sectioncount, &sections) && sections)
-			{	//If this track has any of this type of section
-				for(ctr3 = 0; ctr3 < sectioncount; ctr3++)
-				{	//For each of the sections in the source track
-					unsigned char difficulty;
-					unsigned long startpos, endpos, effective_endpos, flags;
-					char *name;
+			if(!eof_lookup_track_section_type(sp, ctr, ctr2, &sectioncount, &sections) || !sections)
+				continue;	//If this track doesn't have any of this type of section, skip it
 
-					difficulty = sections[ctr3].difficulty;
-					startpos = sections[ctr3].start_pos;
-					endpos = sections[ctr3].end_pos;
-					effective_endpos = endpos;
-					flags = sections[ctr3].flags;
-					name = sections[ctr3].name;
+			for(ctr3 = 0; ctr3 < sectioncount; ctr3++)
+			{	//For each of the sections in the source track
+				unsigned char difficulty;
+				unsigned long startpos, endpos, effective_endpos, flags;
+				char *name;
 
-					if((ctr2 == EOF_FRET_HAND_POS_SECTION) || (ctr2 == EOF_RS_TONE_CHANGE))
-					{	//If this is a section type that does not define an end position
-						effective_endpos = startpos;
-					}
-					if((startpos <= end) && (effective_endpos >= start))
-					{	//If this section is anywhere within the time range being cloned
-						if(startpos < start)
-						{	//If the section begins before the time range being cloned
-							startpos = start;	//Reset the start time
-						}
-						startpos -= start;		//Offset the section's start position
-						if((ctr2 != EOF_FRET_HAND_POS_SECTION) && (ctr2 != EOF_RS_TONE_CHANGE))
-						{	//If this is a section type that DOES define an end position, offset it as well
-							if(endpos > end)
-							{	//If the section ends after the time range being cloned
-								endpos = end;	//Reset the end time
-							}
-							endpos -= start;
-						}
-						(void) eof_track_add_section(csp, ctr, ctr2, difficulty, startpos, endpos, flags, name);	//Create the section in the clone structure
-					}
+				difficulty = sections[ctr3].difficulty;
+				startpos = sections[ctr3].start_pos;
+				endpos = sections[ctr3].end_pos;
+				effective_endpos = endpos;
+				flags = sections[ctr3].flags;
+				name = sections[ctr3].name;
+
+				if((ctr2 == EOF_FRET_HAND_POS_SECTION) || (ctr2 == EOF_RS_TONE_CHANGE))
+				{	//If this is a section type that does not define an end position
+					effective_endpos = startpos;
 				}
+				if((startpos > end) || (effective_endpos < start))
+					continue;	//If this section is not anywhere within the time range being cloned, skip it
+
+				if(startpos < start)
+				{	//If the section begins before the time range being cloned
+					startpos = start;	//Reset the start time
+				}
+				startpos -= start;		//Offset the section's start position
+				if((ctr2 != EOF_FRET_HAND_POS_SECTION) && (ctr2 != EOF_RS_TONE_CHANGE))
+				{	//If this is a section type that DOES define an end position, offset it as well
+					if(endpos > end)
+					{	//If the section ends after the time range being cloned
+						endpos = end;	//Reset the end time
+					}
+					endpos -= start;
+				}
+				(void) eof_track_add_section(csp, ctr, ctr2, difficulty, startpos, endpos, flags, name);	//Create the section in the clone structure
 			}
 		}
 	}

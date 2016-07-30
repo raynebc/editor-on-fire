@@ -1950,39 +1950,38 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		{	//For each of the 256 possible difficulties
 			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
 			{	//For each note in the track
+				unsigned long startpos, endpos, count;
+
 				if(tp->note[ctr2]->type != ctr3)
 					continue;	//If the note is not in the difficulty being parsed, skip it
+				if(!(tp->note[ctr2]->flags & EOF_NOTE_FLAG_IS_TREMOLO))
+					continue;	//If this note is not marked as being in a tremolo, skip it
 
-				if(tp->note[ctr2]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
-				{	//If this note is marked as being in a tremolo
-					unsigned long startpos, endpos, count;
-
-					startpos = tp->note[ctr2]->pos;	//Mark the start of this phrase
-					endpos = startpos + tp->note[ctr2]->length;	//Initialize the end position of the phrase
-					while(++ctr2 < tp->notes)
-					{	//For the consecutive remaining notes in the track
-						if(tp->note[ctr2]->type == ctr3)
-						{	//If the note is in the difficulty being parsed
-							if(tp->note[ctr2]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
-							{	//And the next note is also marked as a tremolo
-								endpos = tp->note[ctr2]->pos + tp->note[ctr2]->length;	//Update the end position of the phrase
-							}
-							else
-							{
-								break;	//Break from while loop.  This note isn't a tremolo so the next pass doesn't need to check it either
-							}
+				startpos = tp->note[ctr2]->pos;	//Mark the start of this phrase
+				endpos = startpos + tp->note[ctr2]->length;	//Initialize the end position of the phrase
+				while(++ctr2 < tp->notes)
+				{	//For the consecutive remaining notes in the track
+					if(tp->note[ctr2]->type == ctr3)
+					{	//If the note is in the difficulty being parsed
+						if(tp->note[ctr2]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
+						{	//And the next note is also marked as a tremolo
+							endpos = tp->note[ctr2]->pos + tp->note[ctr2]->length;	//Update the end position of the phrase
+						}
+						else
+						{
+							break;	//Break from while loop.  This note isn't a tremolo so the next pass doesn't need to check it either
 						}
 					}
-					count = tp->tremolos;
-					if(tp->tremolos < EOF_MAX_PHRASES)
-					{	//If the track can store the tremolo section
-						tp->tremolo[count].start_pos = startpos;
-						tp->tremolo[count].end_pos = endpos;
-						tp->tremolo[count].flags = 0;
-						tp->tremolo[count].difficulty = ctr3;	//Tremolo phrases are difficulty-specific in Rocksmith
-						tp->tremolo[count].name[0] = '\0';
-						tp->tremolos++;
-					}
+				}
+				count = tp->tremolos;
+				if(tp->tremolos < EOF_MAX_PHRASES)
+				{	//If the track can store the tremolo section
+					tp->tremolo[count].start_pos = startpos;
+					tp->tremolo[count].end_pos = endpos;
+					tp->tremolo[count].flags = 0;
+					tp->tremolo[count].difficulty = ctr3;	//Tremolo phrases are difficulty-specific in Rocksmith
+					tp->tremolo[count].name[0] = '\0';
+					tp->tremolos++;
 				}
 			}
 		}

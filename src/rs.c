@@ -216,27 +216,24 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 				{	//For each note in the track that follows this note
 					if((eof_note_count_rs_lanes(sp, track, ctr2, target) <= 1) || eof_note_compare_simple(sp, track, ctr, ctr2))
 						continue;	//If the note that follows is not a valid chord for the target Rocksmith game or doesn't match the preceding note, skip it
+					if(eof_pro_guitar_note_compare_fingerings(tp->note[ctr], tp->note[ctr2]))
+						continue;	//If this note does not have identical fingering to the one that follows it, skip it
+					if((tp->note[ctr2]->tflags & EOF_NOTE_TFLAG_IGNORE) && !(tp->note[ctr2]->tflags & EOF_NOTE_TFLAG_GHOST_HS))
+						continue;	//If this note is ignored and if it was not created due to ghost handshape status, skip it
+					if(strcmp(tp->note[ctr]->name, tp->note[ctr2]->name))
+						continue;	//If both notes do not have the same name, skip it
 
-					if(!eof_pro_guitar_note_compare_fingerings(tp->note[ctr], tp->note[ctr2]))
-					{	//If this note has identical fingering to the one that follows it
-						if(!(tp->note[ctr2]->tflags & EOF_NOTE_TFLAG_IGNORE) || (tp->note[ctr2]->tflags & EOF_NOTE_TFLAG_GHOST_HS))
-						{	//If the note is not ignored or if the note was created due to ghost handshape status
-							if(!strcmp(tp->note[ctr]->name, tp->note[ctr2]->name))
-							{	//If both notes have the same name (or both have no defined name)
-								if(!(target & 2))
-								{	//If the target is Rocksmith 1
-									notelist[ctr] = NULL;	//Eliminate this note from the list
-									match = 1;	//Note that this chord matched one of the others and won't be retained in the list
-									break;
-								}
-								if(eof_tflag_is_arpeggio(tp->note[ctr]->tflags) == eof_tflag_is_arpeggio(tp->note[ctr2]->tflags))
-								{	//If both notes have the same arpeggio status (both are in an arpeggio and not a handshape), or at least one is otherwise
-									notelist[ctr] = NULL;	//Eliminate this note from the list
-									match = 1;	//Note that this chord matched one of the others and won't be retained in the list
-									break;
-								}
-							}
-						}
+					if(!(target & 2))
+					{	//If the target is Rocksmith 1
+						notelist[ctr] = NULL;	//Eliminate this note from the list
+						match = 1;	//Note that this chord matched one of the others and won't be retained in the list
+						break;
+					}
+					if(eof_tflag_is_arpeggio(tp->note[ctr]->tflags) == eof_tflag_is_arpeggio(tp->note[ctr2]->tflags))
+					{	//If both notes have the same arpeggio status (both are in an arpeggio and not a handshape), or at least one is otherwise
+						notelist[ctr] = NULL;	//Eliminate this note from the list
+						match = 1;	//Note that this chord matched one of the others and won't be retained in the list
+						break;
 					}
 				}
 			}//If this note is not ignored, is a chord within an arpeggio or is a temporary chord created created due to ghost handshape status
@@ -476,29 +473,29 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		if(eof_note_count_rs_lanes(sp, track, ctr, 1) != 1)
 			continue;	//If the note will not export as a single note, skip it
 
-		if(eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-		{	//If the note slides up
-			slideend = tp->note[ctr]->slideend + tp->capo;	//Obtain the end position of the slide, take the capo position into account
-			if(!(eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
-			{	//If this slide's end position is not defined
-				slideend = eof_get_highest_fret_value(sp, track, ctr) + 1;	//Assume a 1 fret slide
+		if(!(eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP))
+			continue;	//If the note does not slide up, skip it
+
+		slideend = tp->note[ctr]->slideend + tp->capo;	//Obtain the end position of the slide, take the capo position into account
+		if(!(eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
+		{	//If this slide's end position is not defined
+			slideend = eof_get_highest_fret_value(sp, track, ctr) + 1;	//Assume a 1 fret slide
+		}
+		if(slideend >= 22)
+		{	//If the slide goes to or above fret 22
+			if((*user_warned & 8) == 0)
+			{	//If the user wasn't alerted about this issue yet
+				eof_seek_and_render_position(track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  At least one note in track \"%s\" slides to or above fret 22.", sp->track[track]->name);
+				if(alert(eof_log_string, "This will cause Rocksmith 1 to crash.", "Cancel its RS1 export and highlight offending notes?", "&Yes", "&No", 'y', 'n') == 1)
+				{	//If the user opts to cancel the save after the highlighting is performed
+					highlight_bad_slides = 1;
+				}
+				*user_warned |= 8;
 			}
-			if(slideend >= 22)
-			{	//If the slide goes to or above fret 22
-				if((*user_warned & 8) == 0)
-				{	//If the user wasn't alerted about this issue yet
-					eof_seek_and_render_position(track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  At least one note in track \"%s\" slides to or above fret 22.", sp->track[track]->name);
-					if(alert(eof_log_string, "This will cause Rocksmith 1 to crash.", "Cancel its RS1 export and highlight offending notes?", "&Yes", "&No", 'y', 'n') == 1)
-					{	//If the user opts to cancel the save after the highlighting is performed
-						highlight_bad_slides = 1;
-					}
-					*user_warned |= 8;
-				}
-				if(highlight_bad_slides)
-				{	//If the user chose to highlight such slide notes
-					tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;
-				}
+			if(highlight_bad_slides)
+			{	//If the user chose to highlight such slide notes
+				tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;
 			}
 		}
 	}
@@ -815,24 +812,24 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			if(eof_note_count_rs_lanes(sp, track, ctr - 1, 1) <= 1)
 				continue;	//If this note will not export as a chord (doesn't have at least two non ghosted/muted gems), skip it
 
-			if(tp->note[ctr - 1]->flags & target)
-			{	//If this note has any of the statuses that can be displayed in Rocksmith for single notes
-				for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
-				{	//For each of the 6 supported strings
-					if(tp->note[ctr - 1]->note & bitmask)
-					{	//If this string is used
-						new_note = eof_track_add_create_note(sp, track, bitmask, tp->note[ctr - 1]->pos, tp->note[ctr - 1]->length, tp->note[ctr - 1]->type, NULL);	//Initialize a new single note at this position
-						if(new_note)
-						{	//If the new note was created
-							new_note->flags = tp->note[ctr - 1]->flags;					//Clone the flags
-							new_note->eflags = tp->note[ctr]->eflags;					//Clone the extended flags
-							new_note->tflags |= EOF_NOTE_TFLAG_TEMP;					//Mark the note as temporary
-							new_note->bendstrength = tp->note[ctr - 1]->bendstrength;	//Copy the bend strength
-							new_note->slideend = tp->note[ctr - 1]->slideend;			//And the slide end position
-							new_note->frets[ctr2] = tp->note[ctr - 1]->frets[ctr2];		//And this string's fret value
-						}
-						break;
+			if(!(tp->note[ctr - 1]->flags & target))
+				continue;	//If this note does not have any statuses that can be displayed in Rocksmith for single notes, skip it
+
+			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+			{	//For each of the 6 supported strings
+				if(tp->note[ctr - 1]->note & bitmask)
+				{	//If this string is used
+					new_note = eof_track_add_create_note(sp, track, bitmask, tp->note[ctr - 1]->pos, tp->note[ctr - 1]->length, tp->note[ctr - 1]->type, NULL);	//Initialize a new single note at this position
+					if(new_note)
+					{	//If the new note was created
+						new_note->flags = tp->note[ctr - 1]->flags;					//Clone the flags
+						new_note->eflags = tp->note[ctr]->eflags;					//Clone the extended flags
+						new_note->tflags |= EOF_NOTE_TFLAG_TEMP;					//Mark the note as temporary
+						new_note->bendstrength = tp->note[ctr - 1]->bendstrength;	//Copy the bend strength
+						new_note->slideend = tp->note[ctr - 1]->slideend;			//And the slide end position
+						new_note->frets[ctr2] = tp->note[ctr - 1]->frets[ctr2];		//And this string's fret value
 					}
+					break;
 				}
 			}
 		}
@@ -1214,39 +1211,37 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
 				{	//For each string used in this track
 					unsigned long flags;
+					EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+					unsigned long notepos;
+					unsigned long fret;				//The fret number used for this string
 
 					if(!(eof_get_note_note(sp, track, ctr3) & bitmask) || ((tp->note[ctr3]->frets[stringnum] & 0x80) != 0) || (tp->note[ctr3]->ghost & bitmask))
 						continue;	//If this string is not used in this note, or if it is fret hand muted or ghosted, skip it
-
 					flags = eof_get_note_flags(sp, track, ctr3);
-					if((flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) == 0)
-					{	//At this point, it doesn't seem Rocksmith supports string muted notes
-						EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-						unsigned long notepos;
-						unsigned long fret;				//The fret number used for this string
+					if(flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)
+						continue;	//At this point, it doesn't seem Rocksmith supports string muted notes, skip it
 
-						(void) eof_get_rs_techniques(sp, track, ctr3, stringnum, &tech, 1, 0);	//Determine techniques used by this note (run the RS1 check to ensure a pop/slap note isn't allowed to also have bend/slide technique)
-						notepos = eof_get_note_pos(sp, track, ctr3);
-						fret = tp->note[ctr3]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
-						fret += tp->capo;	//Apply the capo position
-						if(!eof_pro_guitar_note_lowest_fret(tp, ctr3))
-						{	//If this note contains no fretted strings
-							if(tech.bend || (tech.slideto >= 0))
-							{	//If it is also marked as a bend or slide note, omit these statuses because they're invalid for open notes
-								tech.bend = tech.bendstrength_h = tech.bendstrength_q = 0;
-								tech.slideto = -1;
-								if((*user_warned & 4) == 0)
-								{	//If the user wasn't alerted that one or more open notes have these statuses improperly applied
-									eof_seek_and_render_position(track, eof_get_note_type(sp, track, ctr3), eof_get_note_pos(sp, track, ctr3));
-									allegro_message("Warning:  At least one open note is marked with bend or slide status.\nThis is not supported, so these statuses are being omitted for such notes.");
-									*user_warned |= 4;
-								}
+					(void) eof_get_rs_techniques(sp, track, ctr3, stringnum, &tech, 1, 0);	//Determine techniques used by this note (run the RS1 check to ensure a pop/slap note isn't allowed to also have bend/slide technique)
+					notepos = eof_get_note_pos(sp, track, ctr3);
+					fret = tp->note[ctr3]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
+					fret += tp->capo;	//Apply the capo position
+					if(!eof_pro_guitar_note_lowest_fret(tp, ctr3))
+					{	//If this note contains no fretted strings
+						if(tech.bend || (tech.slideto >= 0))
+						{	//If it is also marked as a bend or slide note, omit these statuses because they're invalid for open notes
+							tech.bend = tech.bendstrength_h = tech.bendstrength_q = 0;
+							tech.slideto = -1;
+							if((*user_warned & 4) == 0)
+							{	//If the user wasn't alerted that one or more open notes have these statuses improperly applied
+								eof_seek_and_render_position(track, eof_get_note_type(sp, track, ctr3), eof_get_note_pos(sp, track, ctr3));
+								allegro_message("Warning:  At least one open note is marked with bend or slide status.\nThis is not supported, so these statuses are being omitted for such notes.");
+								*user_warned |= 4;
 							}
 						}
-						(void) snprintf(buffer, sizeof(buffer) - 1, "        <note time=\"%.3f\" bend=\"%lu\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"0\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\"/>\n", (double)notepos / 1000.0, tech.bendstrength_h, fret, tech.hammeron, tech.harmonic, tech.hopo, tech.palmmute, tech.pop, tech.pulloff, tech.slap, tech.slideto, stringnum, (double)tech.length / 1000.0, tech.tremolo);
-						(void) pack_fputs(buffer, fp);
-						break;	//Only one note entry is valid for each single note, so break from loop
-					}//If the note isn't string muted
+					}
+					(void) snprintf(buffer, sizeof(buffer) - 1, "        <note time=\"%.3f\" bend=\"%lu\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"0\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\"/>\n", (double)notepos / 1000.0, tech.bendstrength_h, fret, tech.hammeron, tech.harmonic, tech.hopo, tech.palmmute, tech.pop, tech.pulloff, tech.slap, tech.slideto, stringnum, (double)tech.length / 1000.0, tech.tremolo);
+					(void) pack_fputs(buffer, fp);
+					break;	//Only one note entry is valid for each single note, so break from loop
 				}//For each string used in this track
 			}//For each note in the track
 			(void) pack_fputs("      </notes>\n", fp);
@@ -1592,22 +1587,22 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		{	//If this pitched slide's end position is not defined
 			slideend = eof_get_highest_fret_value(sp, track, ctr) + 1;	//Assume a 1 fret slide
 		}
-		if((slideend >= 25) || ((tp->note[ctr]->unpitchend + tp->capo) >= 25))
-		{	//If either type of slide goes to or above fret 25 (after taking the capo position into account)
-			if((*user_warned & 8) == 0)
-			{	//If the user wasn't alerted about this issue yet
-				eof_seek_and_render_position(track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  At least one note in track \"%s\" slides to or above fret 25.", sp->track[track]->name);
-				if(alert(eof_log_string, "This could cause Rocksmith 2 to crash.", "Cancel its RS2 export and highlight offending notes?", "&Yes", "&No", 'y', 'n') == 1)
-				{	//If the user opts to cancel the save after the highlighting is performed
-					highlight_bad_slides = 1;
-				}
-				*user_warned |= 8;
+		if((slideend < 25) && ((tp->note[ctr]->unpitchend + tp->capo) < 25))
+			continue;	//If neither type of slide goes at or above fret 25 (after taking the capo position into account), skip it
+
+		if((*user_warned & 8) == 0)
+		{	//If the user wasn't alerted about this issue yet
+			eof_seek_and_render_position(track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  At least one note in track \"%s\" slides to or above fret 25.", sp->track[track]->name);
+			if(alert(eof_log_string, "This could cause Rocksmith 2 to crash.", "Cancel its RS2 export and highlight offending notes?", "&Yes", "&No", 'y', 'n') == 1)
+			{	//If the user opts to cancel the save after the highlighting is performed
+				highlight_bad_slides = 1;
 			}
-			if(highlight_bad_slides)
-			{	//If the user chose to highlight such slide notes
-				tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;
-			}
+			*user_warned |= 8;
+		}
+		if(highlight_bad_slides)
+		{	//If the user chose to highlight such slide notes
+			tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;
 		}
 	}
 	if(highlight_bad_slides)
@@ -1920,61 +1915,61 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//Identify chords that follow a note with linkNext status, which will need to be broken into single notes so that they display correctly in-game
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the active pro guitar track
+		char linked = 0;	//Will be set to nonzero if the previous note had any strings with linkNext status applied (including tech notes)
+
 		if(eof_note_count_rs_lanes(sp, track, ctr, 2) <= 1)
 			continue;	//If this note would not export as a chord, skip it
-
 		prevnote = eof_track_fixup_previous_note(sp, track, ctr);	//Identify the previous note in this track difficulty, if there is one
-		if(prevnote >= 0)
-		{	//If there is a previous note, check to see if it contains linkNext status
-			char linked = 0;	//Will be set to nonzero if the previous note had any strings with linkNext status applied (including tech notes)
+		if(prevnote < 0)
+			continue;	//If there is no previous note, skip it
 
-			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
-			{	//For each of the 6 supported strings
-				(void) eof_get_rs_techniques(sp, track, prevnote, ctr2, &tech, 2, 1);	//Obtain all techniques that apply to this string
-				if(tech.linknext)
-				{	//If the linknext status is applied
-					linked = 1;
-					break;
-				}
+		//Otherwise check to see if it contains linkNext status
+		for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+		{	//For each of the 6 supported strings
+			(void) eof_get_rs_techniques(sp, track, prevnote, ctr2, &tech, 2, 1);	//Obtain all techniques that apply to this string
+			if(tech.linknext)
+			{	//If the linknext status is applied
+				linked = 1;
+				break;
 			}
-			if(linked)
-			{	//If the previous note has linkNext status applied to any string
-				tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as single notes
-				for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
-				{	//For each of the 6 supported strings
-					if(!(tp->note[ctr]->note & bitmask) || (tp->note[ctr]->ghost & bitmask))
-						continue;	//If this string is not used or is ghosted, skip it
+		}
+		if(linked)
+		{	//If the previous note has linkNext status applied to any string
+			tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as single notes
+			for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+			{	//For each of the 6 supported strings
+				if(!(tp->note[ctr]->note & bitmask) || (tp->note[ctr]->ghost & bitmask))
+					continue;	//If this string is not used or is ghosted, skip it
 
-					(void) eof_get_rs_techniques(sp, track, ctr, ctr3, &tech, 2, 1);		//Get the end position of any pitched/unpitched slide this chord's gem has
-					new_note = eof_track_add_create_note(sp, track, bitmask, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type, NULL);	//Initialize a new single note at this position
-					if(new_note)
-					{	//If the new note was created
-						new_note->flags = tp->note[ctr]->flags;					//Clone the flags
-						new_note->eflags = tp->note[ctr]->eflags;				//Clone the extended flags
-						new_note->tflags |= EOF_NOTE_TFLAG_TEMP;				//Mark the note as temporary
-						new_note->bendstrength = tp->note[ctr]->bendstrength;	//Copy the bend strength
-						new_note->frets[ctr3] = tp->note[ctr]->frets[ctr3];		//And this string's fret value
-						if(tp->note[ctr]->slideend && (tech.slideto >= 0))
-						{	//If this note has slide technique and a valid slide end position was found
-							new_note->slideend = tech.slideto - tp->capo;		//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
-						}
-						if(tp->note[ctr]->unpitchend && (tech.unpitchedslideto >= 0))
-						{	//If this note has unpitched slide technique and a valid unpitched slide end position was found
-							new_note->unpitchend = tech.unpitchedslideto - tp->capo;	//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
-						}
+				(void) eof_get_rs_techniques(sp, track, ctr, ctr3, &tech, 2, 1);		//Get the end position of any pitched/unpitched slide this chord's gem has
+				new_note = eof_track_add_create_note(sp, track, bitmask, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type, NULL);	//Initialize a new single note at this position
+				if(new_note)
+				{	//If the new note was created
+					new_note->flags = tp->note[ctr]->flags;					//Clone the flags
+					new_note->eflags = tp->note[ctr]->eflags;				//Clone the extended flags
+					new_note->tflags |= EOF_NOTE_TFLAG_TEMP;				//Mark the note as temporary
+					new_note->bendstrength = tp->note[ctr]->bendstrength;	//Copy the bend strength
+					new_note->frets[ctr3] = tp->note[ctr]->frets[ctr3];		//And this string's fret value
+					if(tp->note[ctr]->slideend && (tech.slideto >= 0))
+					{	//If this note has slide technique and a valid slide end position was found
+						new_note->slideend = tech.slideto - tp->capo;		//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
 					}
-					else
-					{
-						allegro_message("Error:  Couldn't expand linked chords into single notes.  Aborting Rocksmith 2 export.");
-						eof_log("Error:  Couldn't expand linked chords into single notes.  Aborting Rocksmith 2 export.", 1);
-						eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-						eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-						(void) pack_fclose(fp);
-						return 0;	//Return error
+					if(tp->note[ctr]->unpitchend && (tech.unpitchedslideto >= 0))
+					{	//If this note has unpitched slide technique and a valid unpitched slide end position was found
+						new_note->unpitchend = tech.unpitchedslideto - tp->capo;	//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
 					}
-				}//For each of the 6 supported strings
-			}//If the previous note has linkNext status applied to any string
-		}//If there is a previous note and it has the linkNext status applied to it
+				}
+				else
+				{
+					allegro_message("Error:  Couldn't expand linked chords into single notes.  Aborting Rocksmith 2 export.");
+					eof_log("Error:  Couldn't expand linked chords into single notes.  Aborting Rocksmith 2 export.", 1);
+					eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+					eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+					(void) pack_fclose(fp);
+					return 0;	//Return error
+				}
+			}//For each of the 6 supported strings
+		}//If the previous note has linkNext status applied to any string
 	}//For each note in the active pro guitar track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
@@ -1983,41 +1978,40 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	{	//For each note in the active pro guitar track
 		if(eof_note_count_rs_lanes(sp, track, ctr, 2) <= 1)
 			continue;	//If this note would not export as a chord, skip it
+		if(!(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT) || (tp->note[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY))
+			continue;	//If this chord doesn't have split status or if it has chordify status, skip it
 
-		if((tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT) && !(tp->note[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY))
-		{	//If this chord has split status and does NOT also have chordify status
-			for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
-			{	//For each of the 6 supported strings
-				if(!(tp->note[ctr]->note & bitmask) || (tp->note[ctr]->ghost & bitmask))
-					continue;	//If this string is not used or is ghosted, skip it
+		for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+		{	//For each of the 6 supported strings
+			if(!(tp->note[ctr]->note & bitmask) || (tp->note[ctr]->ghost & bitmask))
+				continue;	//If this string is not used or is ghosted, skip it
 
-				(void) eof_get_rs_techniques(sp, track, ctr, ctr3, &tech, 2, 1);		//Get the end position of any pitched/unpitched slide this chord's gem has
-				new_note = eof_copy_note_simple(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);	//Clone the note with the updated length
-				if(new_note)
-				{	//If the new note was created
-					new_note->tflags |= EOF_NOTE_TFLAG_TEMP;		//Mark the note as temporary
-					new_note->note = bitmask;						//Turn the cloned chord into a single note on the appropriate string
-					if(tp->note[ctr]->slideend && (tech.slideto >= 0))
-					{	//If this note has slide technique and a valid slide end position was found
-						new_note->slideend = tech.slideto - tp->capo;		//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
-					}
-					if(tp->note[ctr]->unpitchend && (tech.unpitchedslideto >= 0))
-					{	//If this note has unpitched slide technique and a valid unpitched slide end position was found
-						new_note->unpitchend = tech.unpitchedslideto - tp->capo;	//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
-					}
+			(void) eof_get_rs_techniques(sp, track, ctr, ctr3, &tech, 2, 1);		//Get the end position of any pitched/unpitched slide this chord's gem has
+			new_note = eof_copy_note_simple(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);	//Clone the note with the updated length
+			if(new_note)
+			{	//If the new note was created
+				new_note->tflags |= EOF_NOTE_TFLAG_TEMP;		//Mark the note as temporary
+				new_note->note = bitmask;						//Turn the cloned chord into a single note on the appropriate string
+				if(tp->note[ctr]->slideend && (tech.slideto >= 0))
+				{	//If this note has slide technique and a valid slide end position was found
+					new_note->slideend = tech.slideto - tp->capo;		//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
 				}
-				else
-				{
-					allegro_message("Error:  Couldn't expand a split status chord into single notes.  Aborting Rocksmith 2 export.");
-					eof_log("Error:  Couldn't expand a split status chord into single notes.  Aborting Rocksmith 2 export.", 1);
-					eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-					eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-					(void) pack_fclose(fp);
-					return 0;	//Return error
+				if(tp->note[ctr]->unpitchend && (tech.unpitchedslideto >= 0))
+				{	//If this note has unpitched slide technique and a valid unpitched slide end position was found
+					new_note->unpitchend = tech.unpitchedslideto - tp->capo;	//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
 				}
-			}//For each of the 6 supported strings
-			tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic as it will be exported as single notes
-		}//If this chord has split status
+			}
+			else
+			{
+				allegro_message("Error:  Couldn't expand a split status chord into single notes.  Aborting Rocksmith 2 export.");
+				eof_log("Error:  Couldn't expand a split status chord into single notes.  Aborting Rocksmith 2 export.", 1);
+				eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+				(void) pack_fclose(fp);
+				return 0;	//Return error
+			}
+		}//For each of the 6 supported strings
+		tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic as it will be exported as single notes
 	}//For each note in the active pro guitar track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
@@ -2025,114 +2019,113 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//Such single note are marked as ignored and are moved forward 1ms so they start after the chord tag, and their sustains are shortened by 1ms (if possible) to compensate
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the active pro guitar track
+		unsigned notetagcount = 0;	//Count the number of single note tags created for this chordified chord
+		char prebend = 0;	//Set to nonzero if any of the individual non-open notes in this chord have a pre-bend technote
+		char disablechordln = 0;	//Set to nonzero if any of the individual non-open notes in this chord use a technique that should prevent the chord's linknext tag from being set
+
 		if(eof_note_count_rs_lanes(sp, track, ctr, 2) <= 1)
 			continue;	//If this note would not export as a chord, skip it
+		if(!(tp->note[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY) || (tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE))
+			continue;	//If this chord doesn't have chordify status or if it is being ignored, skip it
 
-		if((tp->note[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY) && !(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE))
-		{	//If this chord has chordify status and isn't already ignored
-			unsigned notetagcount = 0;	//Count the number of single note tags created for this chordified chord
-			char prebend = 0;	//Set to nonzero if any of the individual non-open notes in this chord have a pre-bend technote
-			char disablechordln = 0;	//Set to nonzero if any of the individual non-open notes in this chord use a technique that should prevent the chord's linknext tag from being set
+		for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+		{	//For each of the 6 supported strings
+			char minimumlength = 0;
+			unsigned long pos = tp->note[ctr]->pos;
+			long length = tp->note[ctr]->length;
+			unsigned long tn = 0;
+			char skipoffset = 0;
+			EOF_PRO_GUITAR_NOTE *transfer = NULL;	//Used to track whether a tech note's statuses need to be manually copied to an offset temporary single note
 
-			for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
-			{	//For each of the 6 supported strings
-				char minimumlength = 0;
-				unsigned long pos = tp->note[ctr]->pos;
-				long length = tp->note[ctr]->length;
-				unsigned long tn = 0;
-				char skipoffset = 0;
-				EOF_PRO_GUITAR_NOTE *transfer = NULL;	//Used to track whether a tech note's statuses need to be manually copied to an offset temporary single note
+			if(!(tp->note[ctr]->note & bitmask) || (tp->note[ctr]->ghost & bitmask))
+				continue;	//If this string is not used or is ghosted, skip it
 
-				if(!(tp->note[ctr]->note & bitmask) || (tp->note[ctr]->ghost & bitmask))
-					continue;	//If this string is not used or is ghosted, skip it
+			(void) eof_get_rs_techniques(sp, track, ctr, ctr3, &tech, 2, 1);	//Get the end position of any pitched/unpitched slide this chord's gem has
+			eof_rs2_adjust_chordnote_sustain(tp, ctr, ctr3, &tech);				//Set tech.length to 0 as appropriate depending on this gem's techniques
+			if(tech.hastechnique)
+			{	//If this gem in the chord has any playable techniques
+				minimumlength = 1;	//Signal to the below logic that the sustain for this temporary note isn't to be truncated by the regular note export logic
+			}
+			if((tp->note[ctr]->frets[ctr3] & 0x7F) && (tech.hammeron || tech.pulloff || tech.stringmute || tech.harmonic || tech.pinchharmonic || tech.tap || (tech.slap > 0) || (tech.pop > 0) || tech.accent || tech.palmmute))
+			{	//If this string is NOT an open note and uses any of these techniques
+				disablechordln = 1;	//The presence of these statuses should prevent the chord from exporting with linknext status
+			}
+			if(!(tp->note[ctr]->frets[ctr3] & 0x7F) && (tech.accent))
+			{	//If this string is an open note and has accent status
+				disablechordln = 1;	//This set of conditions should prevent the chord from exporting with linknext status
+			}
 
-				(void) eof_get_rs_techniques(sp, track, ctr, ctr3, &tech, 2, 1);	//Get the end position of any pitched/unpitched slide this chord's gem has
-				eof_rs2_adjust_chordnote_sustain(tp, ctr, ctr3, &tech);				//Set tech.length to 0 as appropriate depending on this gem's techniques
-				if(tech.hastechnique)
-				{	//If this gem in the chord has any playable techniques
-					minimumlength = 1;	//Signal to the below logic that the sustain for this temporary note isn't to be truncated by the regular note export logic
-				}
-				if((tp->note[ctr]->frets[ctr3] & 0x7F) && (tech.hammeron || tech.pulloff || tech.stringmute || tech.harmonic || tech.pinchharmonic || tech.tap || (tech.slap > 0) || (tech.pop > 0) || tech.accent || tech.palmmute))
-				{	//If this string is NOT an open note and uses any of these techniques
-					disablechordln = 1;	//The presence of these statuses should prevent the chord from exporting with linknext status
-				}
-				if(!(tp->note[ctr]->frets[ctr3] & 0x7F) && (tech.accent))
-				{	//If this string is an open note and has accent status
-					disablechordln = 1;	//This set of conditions should prevent the chord from exporting with linknext status
-				}
-
-				if(eof_pro_guitar_note_bitmask_has_tech_note(tp, ctr, bitmask, &tn))
-				{	//If this string in the chord has at least one tech note affecting it
-					if(tp->technote[tn]->pos == tp->note[ctr]->pos)
-					{	//If the first such technote is at the start position of this chord
-						if((tp->note[ctr]->frets[ctr3] & 0x7F) && (tp->technote[tn]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
-						{	//If this string is NOT an open note and the affecting tech note is a bend tech note
-							skipoffset = 1;	//Do not offset the single note created for this string, to ensure the tech note still affects it properly
-							prebend = 1;	//The presence of this pre-bend should prevent the chord from exporting with linknext status
-						}
-						else if(tp->technote[tn]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP)
-						{	//If the affecting tech note is a stop tech note
-							skipoffset = 1;	//Do not offset the single note created for this string, to ensure the tech note still affects it properly
-						}
-						else
-						{	//If the affecting tech note adds any other statuses
-							transfer = tp->technote[tn];	//Note that this tech note's statuses need to be copied to the newly created note, which will begin after the tech note and would otherwise not have the tech note's statuses applied
-						}
+			if(eof_pro_guitar_note_bitmask_has_tech_note(tp, ctr, bitmask, &tn))
+			{	//If this string in the chord has at least one tech note affecting it
+				if(tp->technote[tn]->pos == tp->note[ctr]->pos)
+				{	//If the first such technote is at the start position of this chord
+					if((tp->note[ctr]->frets[ctr3] & 0x7F) && (tp->technote[tn]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
+					{	//If this string is NOT an open note and the affecting tech note is a bend tech note
+						skipoffset = 1;	//Do not offset the single note created for this string, to ensure the tech note still affects it properly
+						prebend = 1;	//The presence of this pre-bend should prevent the chord from exporting with linknext status
 					}
-				}
-				if(!skipoffset)
-				{	//If this gem in the chord needn't stay at its original position to satisfy a tech note
-					pos++;		//The single note created for this effect will be 1ms later than the chord tag
-					if(length > 0)
-						length--;	//It will be 1ms shorter (if possible) to compensate for being moved forward
-				}
-				new_note = eof_copy_note_simple(sp, track, ctr, track, pos, length, tp->note[ctr]->type);	//Clone the note with the updated length and position
-				if(new_note)
-				{	//If the new note was created
-					new_note->tflags |= EOF_NOTE_TFLAG_TEMP;		//Mark the note as temporary
-					new_note->note = bitmask;						//Turn the cloned chord into a single note on the appropriate string
-					if(tp->note[ctr]->slideend && (tech.slideto >= 0))
-					{	//If this note has slide technique and a valid slide end position was found
-						new_note->slideend = tech.slideto - tp->capo;		//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
+					else if(tp->technote[tn]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP)
+					{	//If the affecting tech note is a stop tech note
+						skipoffset = 1;	//Do not offset the single note created for this string, to ensure the tech note still affects it properly
 					}
-					if(tp->note[ctr]->unpitchend && (tech.unpitchedslideto >= 0))
-					{	//If this note has unpitched slide technique and a valid unpitched slide end position was found
-						new_note->unpitchend = tech.unpitchedslideto - tp->capo;	//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
+					else
+					{	//If the affecting tech note adds any other statuses
+						transfer = tp->technote[tn];	//Note that this tech note's statuses need to be copied to the newly created note, which will begin after the tech note and would otherwise not have the tech note's statuses applied
 					}
-					new_note->eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE;	//This note will export with the "ignore" status
-					if(minimumlength)
-					{	//If the above logic signaled for this status to be applied to the new note
-						new_note->tflags |= EOF_NOTE_TFLAG_MINLENGTH;			//Apply the temporary flag that will achieve this
-					}
-					if(transfer && !skipoffset)
-					{	//If this offset single note begins after its tech note and needs that tech note's statuses copied over
-						new_note->flags |= transfer->flags;
-						new_note->eflags |= transfer->eflags;
-					}
-					notetagcount++;
-				}
-				else
-				{
-					allegro_message("Error:  Couldn't expand a chordify status chord into single notes.  Aborting Rocksmith 2 export.");
-					eof_log("Error:  Couldn't expand a chordify status chord into single notes.  Aborting Rocksmith 2 export.", 1);
-					eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-					eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-					(void) pack_fclose(fp);
-					return 0;	//Return error
-				}
-			}//For each of the 6 supported strings
-			if(notetagcount)
-			{	//If at least one single note tag was created for this chordified chord
-				if(!disablechordln && !prebend)
-				{	//Only if none of the notes in this chord had a technique that should prevent this
-					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_LN;	//Mark this chord as needing to export with the chord tag's linknext attribute enabled
-				}
-				if(prebend)
-				{	//If any of the chord's individual notes have pre-bend status
-					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_HD;	//Force the chord tag to export with high density
 				}
 			}
-		}//If this chord has chordify status
+			if(!skipoffset)
+			{	//If this gem in the chord needn't stay at its original position to satisfy a tech note
+				pos++;		//The single note created for this effect will be 1ms later than the chord tag
+				if(length > 0)
+					length--;	//It will be 1ms shorter (if possible) to compensate for being moved forward
+			}
+			new_note = eof_copy_note_simple(sp, track, ctr, track, pos, length, tp->note[ctr]->type);	//Clone the note with the updated length and position
+			if(new_note)
+			{	//If the new note was created
+				new_note->tflags |= EOF_NOTE_TFLAG_TEMP;		//Mark the note as temporary
+				new_note->note = bitmask;						//Turn the cloned chord into a single note on the appropriate string
+				if(tp->note[ctr]->slideend && (tech.slideto >= 0))
+				{	//If this note has slide technique and a valid slide end position was found
+					new_note->slideend = tech.slideto - tp->capo;		//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
+				}
+				if(tp->note[ctr]->unpitchend && (tech.unpitchedslideto >= 0))
+				{	//If this note has unpitched slide technique and a valid unpitched slide end position was found
+					new_note->unpitchend = tech.unpitchedslideto - tp->capo;	//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
+				}
+				new_note->eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE;	//This note will export with the "ignore" status
+				if(minimumlength)
+				{	//If the above logic signaled for this status to be applied to the new note
+					new_note->tflags |= EOF_NOTE_TFLAG_MINLENGTH;			//Apply the temporary flag that will achieve this
+				}
+				if(transfer && !skipoffset)
+				{	//If this offset single note begins after its tech note and needs that tech note's statuses copied over
+					new_note->flags |= transfer->flags;
+					new_note->eflags |= transfer->eflags;
+				}
+				notetagcount++;
+			}
+			else
+			{
+				allegro_message("Error:  Couldn't expand a chordify status chord into single notes.  Aborting Rocksmith 2 export.");
+				eof_log("Error:  Couldn't expand a chordify status chord into single notes.  Aborting Rocksmith 2 export.", 1);
+				eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+				(void) pack_fclose(fp);
+				return 0;	//Return error
+			}
+		}//For each of the 6 supported strings
+		if(notetagcount)
+		{	//If at least one single note tag was created for this chordified chord
+			if(!disablechordln && !prebend)
+			{	//Only if none of the notes in this chord had a technique that should prevent this
+				tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_LN;	//Mark this chord as needing to export with the chord tag's linknext attribute enabled
+			}
+			if(prebend)
+			{	//If any of the chord's individual notes have pre-bend status
+				tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_HD;	//Force the chord tag to export with high density
+			}
+		}
 	}//For each note in the active pro guitar track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
@@ -2198,50 +2191,49 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				tp->note[ctr]->tflags |= tflags2;		//Mark this note as being the first in an arpeggio phrase if applicable
 				tflags2 &= ~EOF_NOTE_TFLAG_ARP_FIRST;	//Clear this flag so that chords other than the first one in this phrase don't receive it
 			}
-			if(!(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE))
-			{	//If this note isn't already ignored
-				if(!(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE))
-				{	//If this is NOT a handshape phrase
-					if(eof_note_count_rs_lanes(sp, track, ctr, 2) > 1)
-					{	//If this note would export as a chord (not including ghost gems)
-						if(!(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE))
-						{	//If this was an arpeggio phrase instead of a handshape phrase
-							tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as single notes
-						}
-						for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
-						{	//For each of the 6 supported strings
-							long originallength = tp->note[ctr]->length;	//Back up the original length of this note because it may be altered by eof_rs_combine_linknext_logic()
-							int linknextoff;
 
-							if(!(tp->note[ctr]->note & bitmask) || (tp->note[ctr]->ghost & bitmask))
-								continue;	//If this string is not used or it is ghosted, skip it
+			if(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE)
+				continue;	//If this note is being ignored, skip it
+			if(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE)
+				continue;	//If this is a handshape phrase, skip it
+			if(eof_note_count_rs_lanes(sp, track, ctr, 2) <= 1)
+				continue;	//If this note would not export as a chord (not including ghost gems), skip it
 
-							linknextoff = eof_rs_combine_linknext_logic(sp, track, ctr, ctr3);	//Run combination logic to set the chord's length to that which this string's chordnote will export, if applicable
-							new_note = eof_copy_note_simple(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);	//Clone the note with the updated length
-							tp->note[ctr]->length = originallength;	//Restore the chord's original length if it had changed
-							if(new_note)
-							{	//If the new note was created
-								new_note->tflags |= EOF_NOTE_TFLAG_TEMP;				//Mark the note as temporary
-								new_note->note = bitmask;								//Turn the cloned chord into a single note on the appropriate string
-								if(linknextoff)
-								{	//If the chordnote corresponding to this single note will have its linknext status forced off during export
-									new_note->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//This single note should export the same way
-									new_note->tflags |= EOF_NOTE_TFLAG_NO_LN;			//Explicitly signal to export logic that this single note will not export with linknext, even due to tech notes
-								}
-							}
-							else
-							{
-								allegro_message("Error:  Couldn't expand an arpeggio chord into single notes.  Aborting Rocksmith 2 export.");
-								eof_log("Error:  Couldn't expand an arpeggio chord into single notes.  Aborting Rocksmith 2 export.", 1);
-								eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-								eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-								(void) pack_fclose(fp);
-								return 0;	//Return error
-							}
-						}//For each of the 6 supported strings
-					}//If this note would export as a chord
-				}//If this is NOT a handshape phrase
-			}//If this note isn't already ignored
+			if(!(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE))
+			{	//If this was an arpeggio phrase instead of a handshape phrase
+				tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as single notes
+			}
+			for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+			{	//For each of the 6 supported strings
+				long originallength = tp->note[ctr]->length;	//Back up the original length of this note because it may be altered by eof_rs_combine_linknext_logic()
+				int linknextoff;
+
+				if(!(tp->note[ctr]->note & bitmask) || (tp->note[ctr]->ghost & bitmask))
+					continue;	//If this string is not used or it is ghosted, skip it
+
+				linknextoff = eof_rs_combine_linknext_logic(sp, track, ctr, ctr3);	//Run combination logic to set the chord's length to that which this string's chordnote will export, if applicable
+				new_note = eof_copy_note_simple(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);	//Clone the note with the updated length
+				tp->note[ctr]->length = originallength;	//Restore the chord's original length if it had changed
+				if(new_note)
+				{	//If the new note was created
+					new_note->tflags |= EOF_NOTE_TFLAG_TEMP;				//Mark the note as temporary
+					new_note->note = bitmask;								//Turn the cloned chord into a single note on the appropriate string
+					if(linknextoff)
+					{	//If the chordnote corresponding to this single note will have its linknext status forced off during export
+						new_note->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//This single note should export the same way
+						new_note->tflags |= EOF_NOTE_TFLAG_NO_LN;			//Explicitly signal to export logic that this single note will not export with linknext, even due to tech notes
+					}
+				}
+				else
+				{
+					allegro_message("Error:  Couldn't expand an arpeggio chord into single notes.  Aborting Rocksmith 2 export.");
+					eof_log("Error:  Couldn't expand an arpeggio chord into single notes.  Aborting Rocksmith 2 export.", 1);
+					eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+					eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+					(void) pack_fclose(fp);
+					return 0;	//Return error
+				}
+			}//For each of the 6 supported strings
 		}//For each note in the active pro guitar track
 	}//For each arpeggio/handshape section in the track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
@@ -2250,74 +2242,74 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//Those inside arpeggio phrases will be copied without ghost notes.  The original's chord template will be used for handshape tag export and the copy will be used for chord tag export
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the active pro guitar track
+		char failed = 0;
+
 		if((eof_note_count_rs_lanes(sp, track, ctr, 4) <= 1) || (tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE))
 			continue;	//If this note does not contain multiple gems or is ignored, skip it
+		if(!eof_is_partially_ghosted(sp, track, ctr))
+			continue;	//If this note is not partially ghosted, skip it
 
-		if(eof_is_partially_ghosted(sp, track, ctr))
-		{	//If it is partially ghosted
-			char failed = 0;
-			EOF_PRO_GUITAR_NOTE *new_note2;
-			for(ctr2 = 0, match = 0; ctr2 < tp->arpeggios; ctr2++)
-			{	//For each arpeggio section in the track
-				if((tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
-				{	//If the note is within the arpeggio phrase
-					match = 1;	//Track that it was inside an arpeggio phrase
-					break;	//Exit inner for loop
+		EOF_PRO_GUITAR_NOTE *new_note2;
+		for(ctr2 = 0, match = 0; ctr2 < tp->arpeggios; ctr2++)
+		{	//For each arpeggio section in the track
+			if((tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
+			{	//If the note is within the arpeggio phrase
+				match = 1;	//Track that it was inside an arpeggio phrase
+				break;	//Exit inner for loop
+			}
+		}
+		if(!match)
+		{	//If the partially ghosted chord wasn't in an arpeggio phrase, mark it as ignored
+			tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as the newly built chord below
+		}
+		//Insert a temporary chord that is the same except without the ghost gems
+		new_note = eof_copy_note_simple(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);
+		if(new_note)
+		{	//If the new note was created
+			new_note->tflags |= EOF_NOTE_TFLAG_TEMP;				//Mark the note as temporary
+			new_note->ghost = 0;									//No ghost gems will be retained by this temporary note
+			new_note->note = 0;										//Clear the new note's note mask, it will be rebuilt below
+			for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+			{	//For each of the 6 supported strings
+				if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
+				{	//If this string is used and not ghosted
+					new_note->note |= bitmask;	//Set this bit in the mask
 				}
 			}
-			if(!match)
-			{	//If the partially ghosted chord wasn't in an arpeggio phrase, mark it as ignored
-				tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as the newly built chord below
+			if(match)
+			{	//If the partially ghosted chord was inside an arpeggio phrase, denote that the original and clone are both involved with this cloning process
+				tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_TWIN;	//The original (includes ghost gems) is NOT allowed to be have its chord tag export
+				new_note->tflags |= EOF_NOTE_TFLAG_TWIN;		//The clone (does not include ghost gems) is NOT allowed to have its chord template invoked during handshape tag export
 			}
-			//Insert a temporary chord that is the same except without the ghost gems
-			new_note = eof_copy_note_simple(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);
-			if(new_note)
-			{	//If the new note was created
-				new_note->tflags |= EOF_NOTE_TFLAG_TEMP;				//Mark the note as temporary
-				new_note->ghost = 0;									//No ghost gems will be retained by this temporary note
-				new_note->note = 0;										//Clear the new note's note mask, it will be rebuilt below
-				for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
-				{	//For each of the 6 supported strings
-					if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->ghost & bitmask))
-					{	//If this string is used and not ghosted
-						new_note->note |= bitmask;	//Set this bit in the mask
-					}
+			if(tp->note[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS)
+			{	//If the chord is marked with ghost handshape status, create a copy of the chord with all ghosted gems as normal gems
+				new_note2 = eof_copy_note_simple(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);
+				if(new_note2)
+				{	//If the new note was created
+					new_note2->ghost = 0;							//Clear all ghost status from this chord
+					new_note2->tflags |= EOF_NOTE_TFLAG_TEMP;		//Mark the note as temporary
+					new_note2->tflags |= EOF_NOTE_TFLAG_IGNORE;		//Mark it as ignored, it will only be used in the unique chord building logic and handshape tag export
+					new_note2->tflags |= EOF_NOTE_TFLAG_GHOST_HS;	//Mark that the note will only be partially used during the export
 				}
-				if(match)
-				{	//If the partially ghosted chord was inside an arpeggio phrase, denote that the original and clone are both involved with this cloning process
-					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_TWIN;	//The original (includes ghost gems) is NOT allowed to be have its chord tag export
-					new_note->tflags |= EOF_NOTE_TFLAG_TWIN;		//The clone (does not include ghost gems) is NOT allowed to have its chord template invoked during handshape tag export
-				}
-				if(tp->note[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS)
-				{	//If the chord is marked with ghost handshape status, create a copy of the chord with all ghosted gems as normal gems
-					new_note2 = eof_copy_note_simple(sp, track, ctr, track, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type);
-					if(new_note2)
-					{	//If the new note was created
-						new_note2->ghost = 0;							//Clear all ghost status from this chord
-						new_note2->tflags |= EOF_NOTE_TFLAG_TEMP;		//Mark the note as temporary
-						new_note2->tflags |= EOF_NOTE_TFLAG_IGNORE;		//Mark it as ignored, it will only be used in the unique chord building logic and handshape tag export
-						new_note2->tflags |= EOF_NOTE_TFLAG_GHOST_HS;	//Mark that the note will only be partially used during the export
-					}
-					else
-					{
-						failed = 1;
-					}
+				else
+				{
+					failed = 1;
 				}
 			}
-			else
-			{
-				failed = 1;
-			}
-			if(failed)
-			{
-				allegro_message("Error:  Couldn't expand a non arpeggio partially ghosted chord into non ghosted chord(s).  Aborting Rocksmith 2 export.");
-				eof_log("Error:  Couldn't expand a non arpeggio partially ghosted chord into non ghosted chord(s).  Aborting Rocksmith 2 export.", 1);
-				eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-				(void) pack_fclose(fp);
-				return 0;	//Return error
-			}
-		}//If it is partially ghosted
+		}
+		else
+		{
+			failed = 1;
+		}
+		if(failed)
+		{
+			allegro_message("Error:  Couldn't expand a non arpeggio partially ghosted chord into non ghosted chord(s).  Aborting Rocksmith 2 export.");
+			eof_log("Error:  Couldn't expand a non arpeggio partially ghosted chord into non ghosted chord(s).  Aborting Rocksmith 2 export.", 1);
+			eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+			eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+			(void) pack_fclose(fp);
+			return 0;	//Return error
+		}
 	}//For each note in the active pro guitar track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
@@ -2752,111 +2744,110 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				}
 				if((eof_get_note_type(sp, track, ctr3) != ctr) || (eof_note_count_rs_lanes(sp, track, ctr3, 2) <= 1))
 					continue;	//If this note is not in this difficulty or would not export as a chord (at least two non ghosted gems), skip it
+				if((tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE) && !(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_COMBINE))
+					continue;	//If this chord is being ignored (was split into single notes or converted into a non ghosted chord) and isn't marked for combination, skip it
 
-				if(!(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE) || (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_COMBINE))
-				{	//If this chord wasn't split into single notes or converted into a non ghosted chord and is being ignored, or if it is marked for combination
-					for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
-					{	//For each of the entries in the unique chord list
-						assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
-						if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
-						{	//If this note matches a chord list entry
-							if(!eof_pro_guitar_note_compare_fingerings(tp->note[ctr3], tp->note[chordlist[ctr4]]))
-							{	//If this note has identical fingering to chord list entry
-								if(!strcmp(tp->note[ctr3]->name, tp->note[chordlist[ctr4]]->name))
-								{	//If the chord names match
-									chordid = ctr4;	//Store the chord list entry number
-									break;
-								}
+				for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
+				{	//For each of the entries in the unique chord list
+					assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
+					if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
+					{	//If this note matches a chord list entry
+						if(!eof_pro_guitar_note_compare_fingerings(tp->note[ctr3], tp->note[chordlist[ctr4]]))
+						{	//If this note has identical fingering to chord list entry
+							if(!strcmp(tp->note[ctr3]->name, tp->note[chordlist[ctr4]]->name))
+							{	//If the chord names match
+								chordid = ctr4;	//Store the chord list entry number
+								break;
 							}
 						}
 					}
-					if(ctr4 >= chordlistsize)
-					{	//If the chord couldn't be found
-						eof_seek_and_render_position(track, tp->note[ctr3]->type, tp->note[ctr3]->pos);
-						allegro_message("Error:  Couldn't match chord with chord template while exporting chords.  Aborting Rocksmith 2 export.");
-						eof_log("Error:  Couldn't match chord with chord template while exporting chords.  Aborting Rocksmith 2 export.", 1);
-						if(chordlist)
-						{	//If the chord list was built
-							free(chordlist);
-						}
-						eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-						eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-						(void) pack_fclose(fp);
-						return 0;	//Return error
+				}
+				if(ctr4 >= chordlistsize)
+				{	//If the chord couldn't be found
+					eof_seek_and_render_position(track, tp->note[ctr3]->type, tp->note[ctr3]->pos);
+					allegro_message("Error:  Couldn't match chord with chord template while exporting chords.  Aborting Rocksmith 2 export.");
+					eof_log("Error:  Couldn't match chord with chord template while exporting chords.  Aborting Rocksmith 2 export.", 1);
+					if(chordlist)
+					{	//If the chord list was built
+						free(chordlist);
 					}
-					flags = tp->note[ctr3]->flags;	//Simplify
-					eflags = tp->note[ctr3]->eflags;
-					tflags = tp->note[ctr3]->tflags;
-					if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
-					{	//If this note explicitly strums up
-						direction = upstrum;	//Set the direction string to match
+					eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+					eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+					(void) pack_fclose(fp);
+					return 0;	//Return error
+				}
+				flags = tp->note[ctr3]->flags;	//Simplify
+				eflags = tp->note[ctr3]->eflags;
+				tflags = tp->note[ctr3]->tflags;
+				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
+				{	//If this note explicitly strums up
+					direction = upstrum;	//Set the direction string to match
+				}
+				else
+				{	//Otherwise the direction defaults to down
+					direction = downstrum;
+				}
+				(void) eof_get_rs_techniques(sp, track, ctr3, 0, &tech, 2, 0);			//Determine techniques used by this chord (do not include applicable technote's techniques to the chord tag itself, they will apply to chordNotes instead)
+				highdensity = eof_note_has_high_chord_density(sp, track, ctr3, 2);		//Determine whether the chord will export with high density
+				notepos = tp->note[ctr3]->pos;
+				if(highdensity != 2)
+				{	//If the chord isn't fully string muted with no fingering defined and following a chord, allow a chord ID change to mark as low density
+					if(chordid != lastchordid)
+					{	//If this chord's ID is different from that of the previous chord or meets the normal criteria for a low density chord
+						highdensity = 0;	//Ensure the chord tag is written to reflect low density
 					}
-					else
-					{	//Otherwise the direction defaults to down
-						direction = downstrum;
+				}
+				if(highdensity > 1)
+				{	//Force highdensity to a true/false value
+					highdensity = 1;
+				}
+				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HD)
+				{	//Chord is explicitly specified to be high density
+					highdensity = 1;	//This status has the highest precedence for setting the density
+				}
+				chordtagend = normalend;	//By default, chordnote tags are to be written
+				if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY)
+				{	//If this chord has chordify status
+					if(tflags & EOF_NOTE_TFLAG_LN)
+					{	//Chordify will override the chord tag's linknext status to enabled if temporary single notes were created for it
+						tech.linknext = 1;
 					}
-					(void) eof_get_rs_techniques(sp, track, ctr3, 0, &tech, 2, 0);			//Determine techniques used by this chord (do not include applicable technote's techniques to the chord tag itself, they will apply to chordNotes instead)
-					highdensity = eof_note_has_high_chord_density(sp, track, ctr3, 2);		//Determine whether the chord will export with high density
-					notepos = tp->note[ctr3]->pos;
-					if(highdensity != 2)
-					{	//If the chord isn't fully string muted with no fingering defined and following a chord, allow a chord ID change to mark as low density
-						if(chordid != lastchordid)
-						{	//If this chord's ID is different from that of the previous chord or meets the normal criteria for a low density chord
-							highdensity = 0;	//Ensure the chord tag is written to reflect low density
-						}
+					if(!eof_pro_guitar_note_has_open_note(tp, ctr3))
+					{	//If this chord does not have any open notes, no chordnote tags are needed
+						chordtagend = chordifiedend;	//Write the chord tag as ending in a single line with no sub tags
 					}
-					if(highdensity > 1)
-					{	//Force highdensity to a true/false value
-						highdensity = 1;
-					}
-					if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HD)
-					{	//Chord is explicitly specified to be high density
-						highdensity = 1;	//This status has the highest precedence for setting the density
-					}
-					chordtagend = normalend;	//By default, chordnote tags are to be written
-					if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY)
-					{	//If this chord has chordify status
-						if(tflags & EOF_NOTE_TFLAG_LN)
-						{	//Chordify will override the chord tag's linknext status to enabled if temporary single notes were created for it
-							tech.linknext = 1;
-						}
-						if(!eof_pro_guitar_note_has_open_note(tp, ctr3))
-						{	//If this chord does not have any open notes, no chordnote tags are needed
-							chordtagend = chordifiedend;	//Write the chord tag as ending in a single line with no sub tags
-						}
-					}
-					if(tflags & EOF_NOTE_TFLAG_HD)
-					{	//If this chord has chordify status and one of its individual notes has pre-bend status
-						highdensity = 1;	//Export the chord as high density to ensure proper display of the bend notes
-					}
-					(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" chordId=\"%lu\" fretHandMute=\"%d\" highDensity=\"%d\" ignore=\"%d\" palmMute=\"%d\" hopo=\"%d\" strum=\"%s\"%s\n", (double)notepos / 1000.0, tech.linknext, tech.accent, chordid, tech.stringmute, highdensity, tech.ignore, tech.palmmute, tech.hopo, direction, chordtagend);
-					(void) pack_fputs(buffer, fp);
+				}
+				if(tflags & EOF_NOTE_TFLAG_HD)
+				{	//If this chord has chordify status and one of its individual notes has pre-bend status
+					highdensity = 1;	//Export the chord as high density to ensure proper display of the bend notes
+				}
+				(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" chordId=\"%lu\" fretHandMute=\"%d\" highDensity=\"%d\" ignore=\"%d\" palmMute=\"%d\" hopo=\"%d\" strum=\"%s\"%s\n", (double)notepos / 1000.0, tech.linknext, tech.accent, chordid, tech.stringmute, highdensity, tech.ignore, tech.palmmute, tech.hopo, direction, chordtagend);
+				(void) pack_fputs(buffer, fp);
 
-					//Write chordnote tags if appropriate
-					if(chordtagend == normalend)
-					{	//If it was determined the chord tag wouldn't end on a single line and has chordnote subtags
-						for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
-						{	//For each string used in this track, write chordNote tags
-							if((eof_get_note_note(sp, track, ctr3) & bitmask) && !(tp->note[ctr3]->ghost & bitmask))
-							{	//If this string is used in this note and it is not ghosted
-								long originallength = tp->note[ctr3]->length;	//Back up the original length of this note because it may be altered before export
+				//Write chordnote tags if appropriate
+				if(chordtagend == normalend)
+				{	//If it was determined the chord tag wouldn't end on a single line and has chordnote subtags
+					for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
+					{	//For each string used in this track, write chordNote tags
+						if((eof_get_note_note(sp, track, ctr3) & bitmask) && !(tp->note[ctr3]->ghost & bitmask))
+						{	//If this string is used in this note and it is not ghosted
+							long originallength = tp->note[ctr3]->length;	//Back up the original length of this note because it may be altered before export
 
-								if((eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY) && (tp->note[ctr3]->frets[stringnum] & 0x7F))
-								{	//If this is a chordified chord and the gem on this string is not an open note
-									continue;	//Do not write a chordnote tag for it
-								}
-								(void) eof_rs_combine_linknext_logic(sp, track, ctr3, stringnum);
+							if((eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY) && (tp->note[ctr3]->frets[stringnum] & 0x7F))
+							{	//If this is a chordified chord and the gem on this string is not an open note
+								continue;	//Do not write a chordnote tag for it
+							}
+							(void) eof_rs_combine_linknext_logic(sp, track, ctr3, stringnum);
 
-								assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
-								eof_rs2_export_note_string_to_xml(sp, track, ctr3, stringnum, 1, chordlist[chordid], fp);	//Write this chordNote's XML tag
+							assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
+							eof_rs2_export_note_string_to_xml(sp, track, ctr3, stringnum, 1, chordlist[chordid], fp);	//Write this chordNote's XML tag
 
-								tp->note[ctr3]->length = originallength;	//Restore the original length to the chord
-							}//If this string is used in this note and it is not ghosted
-						}//For each string used in this track
-						(void) pack_fputs("        </chord>\n", fp);
-					}
-					lastchordid = chordid;
-				}//If this chord wasn't split into single notes or converted into a non ghosted chord and is being ignored
+							tp->note[ctr3]->length = originallength;	//Restore the original length to the chord
+						}//If this string is used in this note and it is not ghosted
+					}//For each string used in this track
+					(void) pack_fputs("        </chord>\n", fp);
+				}
+				lastchordid = chordid;
 			}//For each note in the track
 			(void) pack_fputs("      </chords>\n", fp);
 		}
@@ -2959,152 +2950,149 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 			for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 			{	//For each note in the track
+				unsigned long chordnum = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
+				unsigned long sourcenote = ctr3;	//The note number to match against the chord list
+
 				if(!eof_is_partially_ghosted(sp, track, ctr3) && (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_TWIN))
-				{	//If the chord is NOT partially ghosted and has this flag set, it has a clone with ghost gems that should instead be used for handshape tag export
-					continue;
-				}
+					continue;	//If the chord is NOT partially ghosted and has this flag set, it has a clone with ghost gems that should instead be used for handshape tag export, skip it
 				if((tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_IGNORE) && !(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_ARP_FIRST))
 					continue;	//If the note is ignored and it isn't the base chord for an arpeggio/handshape phrase, skip it
+				if((eof_get_note_type(sp, track, ctr3) != ctr) || ((eof_note_count_rs_lanes(sp, track, ctr3, 2) <= 1) && !eof_is_partially_ghosted(sp, track, ctr3) && !(tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_ARP_FIRST)))
+					continue;	//If this note is not in this difficulty or if it won't export as a chord (at least two non ghosted gems) and won't export as an arpeggio/handshape and isn't the first in an arpeggio/handshape phrase, skip it
 
-				if((eof_get_note_type(sp, track, ctr3) == ctr) && ((eof_note_count_rs_lanes(sp, track, ctr3, 2) > 1) || eof_is_partially_ghosted(sp, track, ctr3) || (tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_ARP_FIRST)))
-				{	//If this note is in this difficulty and will export as a chord (at least two non ghosted gems) or an arpeggio/handshape or is the first in an arpeggio/handshape phrase
-					unsigned long chordnum = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
-					unsigned long sourcenote = ctr3;	//The note number to match against the chord list
-
-					//Find this chord's ID
-					chordid = chordlistsize;	//Initialize this to an invalid value
-					if((tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_TEMP) && (tp->note[ctr3]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS))
-					{	//If this was a temporary note created due to ghost handshape status, find the note representing the whole handshape
-						for(ctr4 = 0; ctr4 < tp->notes; ctr4++)
-						{	//For each note in the track
-							if((tp->note[ctr4]->type == tp->note[ctr3]->type) && (tp->note[ctr4]->pos == tp->note[ctr3]->pos) && (tp->note[ctr4]->tflags & EOF_NOTE_TFLAG_GHOST_HS))
-							{	//If it's the matching chord
-								sourcenote = ctr4;
-								break;
-							}
+				//Find this chord's ID
+				chordid = chordlistsize;	//Initialize this to an invalid value
+				if((tp->note[ctr3]->tflags & EOF_NOTE_TFLAG_TEMP) && (tp->note[ctr3]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS))
+				{	//If this was a temporary note created due to ghost handshape status, find the note representing the whole handshape
+					for(ctr4 = 0; ctr4 < tp->notes; ctr4++)
+					{	//For each note in the track
+						if((tp->note[ctr4]->type == tp->note[ctr3]->type) && (tp->note[ctr4]->pos == tp->note[ctr3]->pos) && (tp->note[ctr4]->tflags & EOF_NOTE_TFLAG_GHOST_HS))
+						{	//If it's the matching chord
+							sourcenote = ctr4;
+							break;
 						}
 					}
-					for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
-					{	//For each of the entries in the unique chord list
-						assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
-						if(!eof_note_compare_simple(sp, track, sourcenote, chordlist[ctr4]))
-						{	//If this note matches a chord list entry
-							if(!eof_pro_guitar_note_compare_fingerings(tp->note[sourcenote], tp->note[chordlist[ctr4]]))
-							{	//If this note has identical fingering to chord list entry
-								if(!strcmp(tp->note[sourcenote]->name, tp->note[chordlist[ctr4]]->name))
-								{	//If the chord names match
-									if(eof_tflag_is_arpeggio(tp->note[sourcenote]->tflags) == eof_tflag_is_arpeggio(tp->note[chordlist[ctr4]]->tflags))
-									{	//If this note's arpeggio status (is in an arpeggio and not a handshape, or in no arpeggio/handshape at all) is the same as that of the chord list entry
-										chordid = ctr4;	//Store the chord list entry number
-										break;
-									}
+				}
+				for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
+				{	//For each of the entries in the unique chord list
+					assert(chordlist != NULL);	//Unneeded check to resolve a false positive in Splint
+					if(!eof_note_compare_simple(sp, track, sourcenote, chordlist[ctr4]))
+					{	//If this note matches a chord list entry
+						if(!eof_pro_guitar_note_compare_fingerings(tp->note[sourcenote], tp->note[chordlist[ctr4]]))
+						{	//If this note has identical fingering to chord list entry
+							if(!strcmp(tp->note[sourcenote]->name, tp->note[chordlist[ctr4]]->name))
+							{	//If the chord names match
+								if(eof_tflag_is_arpeggio(tp->note[sourcenote]->tflags) == eof_tflag_is_arpeggio(tp->note[chordlist[ctr4]]->tflags))
+								{	//If this note's arpeggio status (is in an arpeggio and not a handshape, or in no arpeggio/handshape at all) is the same as that of the chord list entry
+									chordid = ctr4;	//Store the chord list entry number
+									break;
 								}
 							}
 						}
 					}
-					if((ctr4 >= chordlistsize) || (chordid >= chordlistsize))
-					{	//If the chord couldn't be found
-						eof_seek_and_render_position(track, tp->note[ctr3]->type, tp->note[ctr3]->pos);
-						allegro_message("Error:  Couldn't match chord with chord template while writing handshapes.  Aborting Rocksmith 2 export.");
-						eof_log("Error:  Couldn't match chord with chord template while writing handshapes.  Aborting Rocksmith 2 export.", 1);
-						if(chordlist)
-						{	//If the chord list was built
-							free(chordlist);
-						}
-						eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-						eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-						(void) pack_fclose(fp);
-						return 0;	//Return error
+				}
+				if((ctr4 >= chordlistsize) || (chordid >= chordlistsize))
+				{	//If the chord couldn't be found
+					eof_seek_and_render_position(track, tp->note[ctr3]->type, tp->note[ctr3]->pos);
+					allegro_message("Error:  Couldn't match chord with chord template while writing handshapes.  Aborting Rocksmith 2 export.");
+					eof_log("Error:  Couldn't match chord with chord template while writing handshapes.  Aborting Rocksmith 2 export.", 1);
+					if(chordlist)
+					{	//If the chord list was built
+						free(chordlist);
 					}
-					handshapestart = eof_get_note_pos(sp, track, ctr3);	//Use this chord's start position, unless the loop below finds it is inside an arpeggio/handshape
-					handshapeend = handshapestart;	//Set a condition that can be checked later to determine if an arpeggio/handshape phrase was parsed
+					eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+					eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+					(void) pack_fclose(fp);
+					return 0;	//Return error
+				}
+				handshapestart = eof_get_note_pos(sp, track, ctr3);	//Use this chord's start position, unless the loop below finds it is inside an arpeggio/handshape
+				handshapeend = handshapestart;	//Set a condition that can be checked later to determine if an arpeggio/handshape phrase was parsed
 
-					//If this chord is at the beginning of an arpeggio/handshape phrase, skip the rest of the notes in that phrase
-					for(ctr5 = 0; ctr5 < tp->arpeggios; ctr5++)
-					{	//For each arpeggio/handshape phrase in the track
-						if(((tp->note[ctr3]->pos < tp->arpeggio[ctr5].start_pos) || (tp->note[ctr3]->pos > tp->arpeggio[ctr5].end_pos)) || (tp->note[ctr3]->type != tp->arpeggio[ctr5].difficulty))
-							continue;	//If this arpeggio/handshape phrase doesn't contain the chord, skip it
+				//If this chord is at the beginning of an arpeggio/handshape phrase, skip the rest of the notes in that phrase
+				for(ctr5 = 0; ctr5 < tp->arpeggios; ctr5++)
+				{	//For each arpeggio/handshape phrase in the track
+					if(((tp->note[ctr3]->pos < tp->arpeggio[ctr5].start_pos) || (tp->note[ctr3]->pos > tp->arpeggio[ctr5].end_pos)) || (tp->note[ctr3]->type != tp->arpeggio[ctr5].difficulty))
+						continue;	//If this arpeggio/handshape phrase doesn't contain the chord, skip it
 
-						handshapestart = tp->arpeggio[ctr5].start_pos;	//This arpeggio/handshape phrase will define the start and stop positions for the exported handshape
-						handshapeend = tp->arpeggio[ctr5].end_pos;
-						while(1)
-						{
-							nextnote = eof_track_fixup_next_note(sp, track, ctr3);
-							if((nextnote >= 0) && (tp->note[nextnote]->pos <= tp->arpeggio[ctr5].end_pos))
-							{	//If there is another note and it is in the same arpeggio phrase
-								ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they are also in the phrase
-							}
-							else
-							{	//The next note (if any) is not in the arpeggio phrase
-								break;	//Break from while loop
-							}
+					handshapestart = tp->arpeggio[ctr5].start_pos;	//This arpeggio/handshape phrase will define the start and stop positions for the exported handshape
+					handshapeend = tp->arpeggio[ctr5].end_pos;
+					while(1)
+					{
+						nextnote = eof_track_fixup_next_note(sp, track, ctr3);
+						if((nextnote >= 0) && (tp->note[nextnote]->pos <= tp->arpeggio[ctr5].end_pos))
+						{	//If there is another note and it is in the same arpeggio phrase
+							ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they are also in the phrase
 						}
-						break;	//Break from for loop
+						else
+						{	//The next note (if any) is not in the arpeggio phrase
+							break;	//Break from while loop
+						}
 					}
+					break;	//Break from for loop
+				}
 
-					//Examine subsequent notes to see if they match this chord
-					if(handshapeend == handshapestart)
-					{	//If the chord wasn't inside of an arpeggio/handshape phrase, generate the handshape tag automatically
-						while(1)
-						{
-							nextnote = eof_track_fixup_next_note(sp, track, ctr3);
-							if((nextnote >= 0) && (eof_note_count_rs_lanes(sp, track, nextnote, 2) > 1))
-							{	//If there is another note and it is a chord
-								if(!eof_note_has_high_chord_density(sp, track, nextnote, 2))
-								{	//If the next note is low density (including if it has any techniques requiring a new handshape tag such as sliding)
-									handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
-									break;	//Break from while loop
-								}
-							}
-							if((nextnote >= 0) && (tp->note[nextnote]->tflags & EOF_NOTE_TFLAG_ARP_FIRST))
-							{	//If there is another note, and it is the first note in a arpeggio/handshape phrase
-								handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
-								break;
-							}
-							if((nextnote >= 0) && (eof_note_count_rs_lanes(sp, track, nextnote, 2) > 1) && eof_is_string_muted(sp, track, nextnote) && (eof_pro_guitar_note_fingering_valid(tp, nextnote, 1) == 2))
-							{	//If there is another note, and it is fully string muted and has no fingering defined even for muted strings
-								ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
-							}
-							else if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chordnum, nextnote) || eof_is_string_muted(sp, track, nextnote)) && !eof_is_partially_ghosted(sp, track, nextnote) && !eof_pro_guitar_note_compare_fingerings(tp->note[chordnum], tp->note[nextnote]))
-							{	//If there is another note, it either matches this chord or is completely string muted, it is not partially ghosted (an arpeggio) and it has the same fingering
-								if(eof_is_partially_ghosted(sp, track, chordnum))
-								{	//If the handshape being written was for an arpeggio, and the next note isn't
-									handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of the arpeggio's last note
-									break;	//Break from while loop
-								}
-								ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
-							}
-							else
-							{	//The next note (if any) is not a repeat of this note and is not completely string muted
+				//Examine subsequent notes to see if they match this chord
+				if(handshapeend == handshapestart)
+				{	//If the chord wasn't inside of an arpeggio/handshape phrase, generate the handshape tag automatically
+					while(1)
+					{
+						nextnote = eof_track_fixup_next_note(sp, track, ctr3);
+						if((nextnote >= 0) && (eof_note_count_rs_lanes(sp, track, nextnote, 2) > 1))
+						{	//If there is another note and it is a chord
+							if(!eof_note_has_high_chord_density(sp, track, nextnote, 2))
+							{	//If the next note is low density (including if it has any techniques requiring a new handshape tag such as sliding)
 								handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
 								break;	//Break from while loop
 							}
 						}
-					}
-
-					if(!handshapeloop)
-					{	//If this is the first pass
-						handshapectr++;	//One more hand shape has been counted
-					}
-					else
-					{	//Second pass, pad and write the handshape tag
-						if(handshapeend - handshapestart < 56)
-						{	//If the handshape is shorter than 56ms, see if it can be padded to 56ms
-							nextnote = ctr3;
-							do{	//Find the next note that isn't ignored, if any
-								nextnote = eof_track_fixup_next_note(sp, track, nextnote);
-							}while((nextnote >= 0) && (tp->note[nextnote]->tflags & EOF_NOTE_TFLAG_IGNORE));
-							if((nextnote < 0) || (handshapestart + 56 < eof_get_note_pos(sp, track, nextnote)))
-							{	//If no notes follow this chord, or if there's at least 56ms of gap between this chord and the next note, the handshape can be lengthened without any threat of overlapping another handshape tag
-								handshapeend = handshapestart + 56;
-							}
+						if((nextnote >= 0) && (tp->note[nextnote]->tflags & EOF_NOTE_TFLAG_ARP_FIRST))
+						{	//If there is another note, and it is the first note in a arpeggio/handshape phrase
+							handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
+							break;
 						}
-
-						//Write this hand shape
-						(void) snprintf(buffer, sizeof(buffer) - 1, "        <handShape chordId=\"%lu\" endTime=\"%.3f\" startTime=\"%.3f\"/>\n", chordid, (double)handshapeend / 1000.0, (double)handshapestart / 1000.0);
-						(void) pack_fputs(buffer, fp);
+						if((nextnote >= 0) && (eof_note_count_rs_lanes(sp, track, nextnote, 2) > 1) && eof_is_string_muted(sp, track, nextnote) && (eof_pro_guitar_note_fingering_valid(tp, nextnote, 1) == 2))
+						{	//If there is another note, and it is fully string muted and has no fingering defined even for muted strings
+							ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
+						}
+						else if((nextnote >= 0) && (!eof_note_compare_simple(sp, track, chordnum, nextnote) || eof_is_string_muted(sp, track, nextnote)) && !eof_is_partially_ghosted(sp, track, nextnote) && !eof_pro_guitar_note_compare_fingerings(tp->note[chordnum], tp->note[nextnote]))
+						{	//If there is another note, it either matches this chord or is completely string muted, it is not partially ghosted (an arpeggio) and it has the same fingering
+							if(eof_is_partially_ghosted(sp, track, chordnum))
+							{	//If the handshape being written was for an arpeggio, and the next note isn't
+								handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of the arpeggio's last note
+								break;	//Break from while loop
+							}
+							ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
+						}
+						else
+						{	//The next note (if any) is not a repeat of this note and is not completely string muted
+							handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
+							break;	//Break from while loop
+						}
 					}
-				}//If this note is in this difficulty and will export as a chord (at least two non ghosted gems) or an arpeggio/handshape or is in an arpeggio/handshape phrase
+				}
+
+				if(!handshapeloop)
+				{	//If this is the first pass
+					handshapectr++;	//One more hand shape has been counted
+				}
+				else
+				{	//Second pass, pad and write the handshape tag
+					if(handshapeend - handshapestart < 56)
+					{	//If the handshape is shorter than 56ms, see if it can be padded to 56ms
+						nextnote = ctr3;
+						do{	//Find the next note that isn't ignored, if any
+							nextnote = eof_track_fixup_next_note(sp, track, nextnote);
+						}while((nextnote >= 0) && (tp->note[nextnote]->tflags & EOF_NOTE_TFLAG_IGNORE));
+						if((nextnote < 0) || (handshapestart + 56 < eof_get_note_pos(sp, track, nextnote)))
+						{	//If no notes follow this chord, or if there's at least 56ms of gap between this chord and the next note, the handshape can be lengthened without any threat of overlapping another handshape tag
+							handshapeend = handshapestart + 56;
+						}
+					}
+
+					//Write this hand shape
+					(void) snprintf(buffer, sizeof(buffer) - 1, "        <handShape chordId=\"%lu\" endTime=\"%.3f\" startTime=\"%.3f\"/>\n", chordid, (double)handshapeend / 1000.0, (double)handshapestart / 1000.0);
+					(void) pack_fputs(buffer, fp);
+				}
 			}//For each note in the track
 		}//On first pass, count the number of handshapes.  On second pass, write handshapes.
 		if(handshapectr)
@@ -3203,27 +3191,27 @@ int eof_pro_guitar_note_fingering_valid(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 		if(!(tp->note[note]->note & bitmask))
 			continue;	//If this string is not used, skip it
 
-		if(!(tp->note[note]->frets[ctr] & 0x80) || count_mutes)
-		{	//If the string isn't muted, or if the calling function wants muted strings inspected
-			if(tp->note[note]->frets[ctr] != 0)
-			{	//If the string isn't being played open, it requires a fingering
-				all_strings_open = 0;	//Track that the note used at least one fretted string
-				if(tp->note[note]->finger[ctr] != 0)
-				{	//If this string has a finger definition
-					string_finger_defined = 1;	//Track that a string was defined
-				}
-				else
-				{	//This string does not have a finger definition
-					string_finger_undefined = 1;	//Track that a string was undefined
-				}
+		if((tp->note[note]->frets[ctr] & 0x80) && !count_mutes)
+			continue;	//If the string is muted and the calling function didn't want muted strings inspected, skip it
+
+		if(tp->note[note]->frets[ctr] != 0)
+		{	//If the string isn't being played open, it requires a fingering
+			all_strings_open = 0;	//Track that the note used at least one fretted string
+			if(tp->note[note]->finger[ctr] != 0)
+			{	//If this string has a finger definition
+				string_finger_defined = 1;	//Track that a string was defined
 			}
 			else
-			{	//If the string is being played open, it must not have a finger defined
-				if(tp->note[note]->finger[ctr] != 0)
-				{	//If this string has a finger definition
-					string_finger_defined = string_finger_undefined = 1;	//Set an error condition
-					break;
-				}
+			{	//This string does not have a finger definition
+				string_finger_undefined = 1;	//Track that a string was undefined
+			}
+		}
+		else
+		{	//If the string is being played open, it must not have a finger defined
+			if(tp->note[note]->finger[ctr] != 0)
+			{	//If this string has a finger definition
+				string_finger_defined = string_finger_undefined = 1;	//Set an error condition
+				break;
 			}
 		}
 	}
@@ -3315,26 +3303,25 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 	{	//For each existing hand positions in this track (in reverse order)
 		if(tp->handposition[ctr - 1].difficulty != difficulty)
 			continue;	//If this hand position is not in the specified difficulty, skip it
+		if(!all && ((tp->handposition[ctr - 1].start_pos < tp->note[startnote]->pos) || (tp->handposition[ctr - 1].start_pos > tp->note[stopnote]->pos)))
+			continue;	//If this fret hand position is not in the affected range of this function, skip it
 
-		if(all || ((tp->handposition[ctr - 1].start_pos >= tp->note[startnote]->pos) && (tp->handposition[ctr - 1].start_pos <= tp->note[stopnote]->pos)))
-		{	//If this fret hand position is in the affected range of this function
-			if(warnuser && function)
-			{	//Skip the warning if the logic to delete FHPs in the specified range was called explicitly
-				eof_clear_input();
-				if(alert(NULL, warning, "Continue?", "&Yes", "&No", 'y', 'n') != 1)
-				{	//If the user does not opt to remove the existing hand positions
-					eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
-					return;
-				}
+		if(warnuser && function)
+		{	//Skip the warning if the logic to delete FHPs in the specified range was called explicitly
+			eof_clear_input();
+			if(alert(NULL, warning, "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+			{	//If the user does not opt to remove the existing hand positions
+				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
+				return;
 			}
-			warnuser = 0;
-			if(!eof_fret_hand_position_list_dialog_undo_made)
-			{	//If an undo state hasn't been made yet since launching this dialog
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				eof_fret_hand_position_list_dialog_undo_made = 1;
-			}
-			eof_pro_guitar_track_delete_hand_position(tp, ctr - 1);	//Delete the hand position
 		}
+		warnuser = 0;
+		if(!eof_fret_hand_position_list_dialog_undo_made)
+		{	//If an undo state hasn't been made yet since launching this dialog
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			eof_fret_hand_position_list_dialog_undo_made = 1;
+		}
+		eof_pro_guitar_track_delete_hand_position(tp, ctr - 1);	//Delete the hand position
 	}
 	eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions
 
@@ -4069,61 +4056,61 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 
 		//Otherwise check its difficulty
 		thisdiff = eof_get_note_type(sp, track, ctr2);	//Get this note's difficulty
-		if(thisdiff == diff)
-		{	//If this note is in the difficulty being examined
-			populated = 1;	//Track that there was at least 1 note in the specified difficulty of the phrase
-			//Compare this note to the one at the same position in the comparing difficulty, if there is one
-			note_found = 0;	//This condition will be set if this note is found in the comparing difficulty
-			if(compareto < 0)
-			{	//If comparing to the previous difficulty, parse notes backwards
-				for(ctr3 = ctr2; ctr3 > 0; ctr3--)
-				{	//For each previous note in the track, for performance reasons going backward from the one being examined in the outer loop (which has a higher note number when sorted)
-					thispos2 = eof_get_note_pos(sp, track, ctr3 - 1);	//Get this note's position
-					thisdiff = eof_get_note_type(sp, track, ctr3 - 1);	//Get this note's difficulty
-					if(thispos2 < thispos)
-					{	//If this note and all previous ones are before the one being examined in the outer loop
-						break;
+		if(thisdiff != diff)
+			continue;	//If this note is not in the difficulty being examined, skip it
+
+		populated = 1;	//Track that there was at least 1 note in the specified difficulty of the phrase
+		//Compare this note to the one at the same position in the comparing difficulty, if there is one
+		note_found = 0;	//This condition will be set if this note is found in the comparing difficulty
+		if(compareto < 0)
+		{	//If comparing to the previous difficulty, parse notes backwards
+			for(ctr3 = ctr2; ctr3 > 0; ctr3--)
+			{	//For each previous note in the track, for performance reasons going backward from the one being examined in the outer loop (which has a higher note number when sorted)
+				thispos2 = eof_get_note_pos(sp, track, ctr3 - 1);	//Get this note's position
+				thisdiff = eof_get_note_type(sp, track, ctr3 - 1);	//Get this note's difficulty
+				if(thispos2 < thispos)
+				{	//If this note and all previous ones are before the one being examined in the outer loop
+					break;
+				}
+				if((thispos == thispos2) && (thisdiff == comparediff))
+				{	//If this note is at the same position and one difficulty lower than the one being examined in the outer loop
+					note_found = 1;	//Track that a note at the same position was found in the previous difficulty
+					if(eof_note_compare(sp, track, ctr2, track, ctr3 - 1, 1))
+					{	//If the two notes don't match (including lengths and flags)
+						eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+						return 1;	//Return difference found
 					}
-					if((thispos == thispos2) && (thisdiff == comparediff))
-					{	//If this note is at the same position and one difficulty lower than the one being examined in the outer loop
-						note_found = 1;	//Track that a note at the same position was found in the previous difficulty
-						if(eof_note_compare(sp, track, ctr2, track, ctr3 - 1, 1))
-						{	//If the two notes don't match (including lengths and flags)
-							eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-							return 1;	//Return difference found
-						}
-						break;
-					}
+					break;
 				}
 			}
-			else
-			{	//Comparing to the next difficulty, parse notes forwards
-				for(ctr3 = ctr2 + 1; ctr3 < eof_get_track_size(sp, track); ctr3++)
-				{	//For each remaining note in the track
-					thispos2 = eof_get_note_pos(sp, track, ctr3);	//Get this note's position
-					thisdiff = eof_get_note_type(sp, track, ctr3);	//Get this note's difficulty
-					if(thispos2 > thispos)
-					{	//If this note and all subsequent ones are after the one being examined in the outer loop
-						break;
+		}
+		else
+		{	//Comparing to the next difficulty, parse notes forwards
+			for(ctr3 = ctr2 + 1; ctr3 < eof_get_track_size(sp, track); ctr3++)
+			{	//For each remaining note in the track
+				thispos2 = eof_get_note_pos(sp, track, ctr3);	//Get this note's position
+				thisdiff = eof_get_note_type(sp, track, ctr3);	//Get this note's difficulty
+				if(thispos2 > thispos)
+				{	//If this note and all subsequent ones are after the one being examined in the outer loop
+					break;
+				}
+				if((thispos == thispos2) && (thisdiff == comparediff))
+				{	//If this note is at the same position and one difficulty lower than the one being examined in the outer loop
+					note_found = 1;	//Track that a note at the same position was found in the previous difficulty
+					if(eof_note_compare(sp, track, ctr2, track, ctr3 - 1, 1))
+					{	//If the two notes don't match (including lengths and flags)
+						eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+						return 1;	//Return difference found
 					}
-					if((thispos == thispos2) && (thisdiff == comparediff))
-					{	//If this note is at the same position and one difficulty lower than the one being examined in the outer loop
-						note_found = 1;	//Track that a note at the same position was found in the previous difficulty
-						if(eof_note_compare(sp, track, ctr2, track, ctr3 - 1, 1))
-						{	//If the two notes don't match (including lengths and flags)
-							eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-							return 1;	//Return difference found
-						}
-						break;
-					}
+					break;
 				}
 			}
-			if(!note_found)
-			{	//If this note has no note at the same position in the previous difficulty
-				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-				return 1;	//Return difference found
-			}
-		}//If this note is in the difficulty being examined
+		}
+		if(!note_found)
+		{	//If this note has no note at the same position in the previous difficulty
+			eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+			return 1;	//Return difference found
+		}
 	}//For each note in the track
 
 	if(!populated)
@@ -4146,60 +4133,60 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 
 		//Otherwise check its difficulty
 		thisdiff = eof_get_note_type(sp, track, ctr2);	//Get this note's difficulty
-		if(thisdiff == comparediff)
-		{	//If this note is in the difficulty being compared
-			//Compare this note to the one at the same position in the examined difficulty, if there is one
-			note_found = 0;	//This condition will be set if this note is found in the examined difficulty
-			if(compareto < 0)
-			{	//If comparing the comparing difficulty with the next, parse notes forwards
-				for(ctr3 = ctr2 + 1; ctr3 < eof_get_track_size(sp, track); ctr3++)
-				{	//For each remaining note in the track
-					thispos2 = eof_get_note_pos(sp, track, ctr3);	//Get this note's position
-					thisdiff = eof_get_note_type(sp, track, ctr3);	//Get this note's difficulty
-					if(thispos2 > thispos)
-					{	//If this note and all subsequent ones are after the one being examined in the outer loop
-						break;
+		if(thisdiff != comparediff)
+			continue;	//If this note is not in the difficulty being compared, skip it
+
+		//Otherwise compare this note to the one at the same position in the examined difficulty, if there is one
+		note_found = 0;	//This condition will be set if this note is found in the examined difficulty
+		if(compareto < 0)
+		{	//If comparing the comparing difficulty with the next, parse notes forwards
+			for(ctr3 = ctr2 + 1; ctr3 < eof_get_track_size(sp, track); ctr3++)
+			{	//For each remaining note in the track
+				thispos2 = eof_get_note_pos(sp, track, ctr3);	//Get this note's position
+				thisdiff = eof_get_note_type(sp, track, ctr3);	//Get this note's difficulty
+				if(thispos2 > thispos)
+				{	//If this note and all subsequent ones are after the one being examined in the outer loop
+					break;
+				}
+				if((thispos == thispos2) && (thisdiff == diff))
+				{	//If this note is in the specified difficulty and at the same position as the one being examined in the outer loop
+					note_found = 1;	//Track that a note at the same position was found in the previous difficulty
+					if(eof_note_compare(sp, track, ctr2, track, ctr3 - 1, 1))
+					{	//If the two notes don't match (including lengths and flags)
+						eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+						return 1;	//Return difference found
 					}
-					if((thispos == thispos2) && (thisdiff == diff))
-					{	//If this note is in the specified difficulty and at the same position as the one being examined in the outer loop
-						note_found = 1;	//Track that a note at the same position was found in the previous difficulty
-						if(eof_note_compare(sp, track, ctr2, track, ctr3 - 1, 1))
-						{	//If the two notes don't match (including lengths and flags)
-							eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-							return 1;	//Return difference found
-						}
-						break;
-					}
+					break;
 				}
 			}
-			else
-			{	//Comparing the comparing difficulty with the previous, parse notes backwards
-				for(ctr3 = ctr2; ctr3 > 0; ctr3--)
-				{	//For each previous note in the track, for performance reasons going backward from the one being examined in the outer loop (which has a higher note number when sorted)
-					thispos2 = eof_get_note_pos(sp, track, ctr3 - 1);	//Get this note's position
-					thisdiff = eof_get_note_type(sp, track, ctr3 - 1);	//Get this note's difficulty
-					if(thispos2 < thispos)
-					{	//If this note and all previous ones are before the one being examined in the outer loop
-						break;
+		}
+		else
+		{	//Comparing the comparing difficulty with the previous, parse notes backwards
+			for(ctr3 = ctr2; ctr3 > 0; ctr3--)
+			{	//For each previous note in the track, for performance reasons going backward from the one being examined in the outer loop (which has a higher note number when sorted)
+				thispos2 = eof_get_note_pos(sp, track, ctr3 - 1);	//Get this note's position
+				thisdiff = eof_get_note_type(sp, track, ctr3 - 1);	//Get this note's difficulty
+				if(thispos2 < thispos)
+				{	//If this note and all previous ones are before the one being examined in the outer loop
+					break;
+				}
+				if((thispos == thispos2) && (thisdiff == diff))
+				{	//If this note is in the specified difficulty and at the same position as the one being examined in the outer loop
+					note_found = 1;	//Track that a note at the same position was found in the previous difficulty
+					if(eof_note_compare(sp, track, ctr2, track, ctr3 - 1, 1))
+					{	//If the two notes don't match (including lengths and flags)
+						eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+						return 1;	//Return difference found
 					}
-					if((thispos == thispos2) && (thisdiff == diff))
-					{	//If this note is in the specified difficulty and at the same position as the one being examined in the outer loop
-						note_found = 1;	//Track that a note at the same position was found in the previous difficulty
-						if(eof_note_compare(sp, track, ctr2, track, ctr3 - 1, 1))
-						{	//If the two notes don't match (including lengths and flags)
-							eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-							return 1;	//Return difference found
-						}
-						break;
-					}
+					break;
 				}
 			}
-			if(!note_found)
-			{	//If this note has no note at the same position in the previous difficulty
-				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-				return 1;	//Return difference found
-			}
-		}//If this note is in the difficulty being compared
+		}
+		if(!note_found)
+		{	//If this note has no note at the same position in the previous difficulty
+			eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+			return 1;	//Return difference found
+		}
 	}//For each note in the track
 	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 
@@ -4271,49 +4258,49 @@ int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track)
 	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
 	for(ctr = 0; ctr < sp->beats; ctr++)
 	{	//For each beat
+		unsigned char original_eof_2d_render_top_option;
+
 		if(sp->beat[ctr]->contained_rs_section_event < 0)
 			continue;	//If this beat does not contain an RS section, skip it
+		if(sp->beat[ctr]->contained_section_event >= 0)
+			continue;	//If this beat contains an RS phrase, skip it
 
-		if(sp->beat[ctr]->contained_section_event < 0)
-		{	//But it doesn't contain a RS phrase
-			unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+		original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+		eof_selected_beat = ctr;					//Change the selected beat
+		if(eof_2d_render_top_option != 9)
+		{	//If the piano roll isn't already displaying both RS sections and phrases
+			eof_2d_render_top_option = 8;					//Change the user preference to render RS sections at the top of the piano roll
+		}
+		eof_seek_and_render_position(track, eof_note_type, sp->beat[ctr]->pos);	//Render the track so the user can see where the correction needs to be made, along with the RS section in question
+		eof_clear_input();
+		if(!user_prompted && alert("At least one Rocksmith section doesn't have a Rocksmith phrase at the same position.", "This can cause the chart's sections to work incorrectly", "Would you like to place Rocksmith phrases to correct this?", "&Yes", "&No", 'y', 'n') != 1)
+		{	//If the user hasn't already answered this prompt, and doesn't opt to correct the issue
+			eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+			return 2;	//Return user cancellation
+		}
+		eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+		user_prompted = 1;
 
-			eof_selected_beat = ctr;					//Change the selected beat
-			if(eof_2d_render_top_option != 9)
-			{	//If the piano roll isn't already displaying both RS sections and phrases
-				eof_2d_render_top_option = 8;					//Change the user preference to render RS sections at the top of the piano roll
-			}
-			eof_seek_and_render_position(track, eof_note_type, sp->beat[ctr]->pos);	//Render the track so the user can see where the correction needs to be made, along with the RS section in question
-			eof_clear_input();
-			if(!user_prompted && alert("At least one Rocksmith section doesn't have a Rocksmith phrase at the same position.", "This can cause the chart's sections to work incorrectly", "Would you like to place Rocksmith phrases to correct this?", "&Yes", "&No", 'y', 'n') != 1)
-			{	//If the user hasn't already answered this prompt, and doesn't opt to correct the issue
-				eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+		while(1)
+		{
+			old_text_events = sp->text_events;				//Remember how many text events there were before launching dialog
+			(void) eof_rocksmith_phrase_dialog_add();			//Launch dialog for user to add a Rocksmith phrase
+			if(old_text_events == sp->text_events)
+			{	//If the number of text events defined in the chart didn't change, the user canceled
 				return 2;	//Return user cancellation
 			}
-			eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-			user_prompted = 1;
-
-			while(1)
-			{
-				old_text_events = sp->text_events;				//Remember how many text events there were before launching dialog
-				(void) eof_rocksmith_phrase_dialog_add();			//Launch dialog for user to add a Rocksmith phrase
-				if(old_text_events == sp->text_events)
-				{	//If the number of text events defined in the chart didn't change, the user canceled
+			eof_process_beat_statistics(sp, track);	//Rebuild beat statistics to check if user added a Rocksmith phrase
+			if(sp->beat[ctr]->contained_section_event < 0)
+			{	//If user added a text event, but it wasn't a Rocksmith phrase
+				eof_clear_input();
+				if(alert("You didn't add a Rocksmith phrase.", NULL, "Do you want to continue adding RS phrases for RS sections that are missing them?", "&Yes", "&No", 'y', 'n') != 1)
+				{	//If the user doesn't opt to finish correcting the issue
 					return 2;	//Return user cancellation
 				}
-				eof_process_beat_statistics(sp, track);	//Rebuild beat statistics to check if user added a Rocksmith phrase
-				if(sp->beat[ctr]->contained_section_event < 0)
-				{	//If user added a text event, but it wasn't a Rocksmith phrase
-					eof_clear_input();
-					if(alert("You didn't add a Rocksmith phrase.", NULL, "Do you want to continue adding RS phrases for RS sections that are missing them?", "&Yes", "&No", 'y', 'n') != 1)
-					{	//If the user doesn't opt to finish correcting the issue
-						return 2;	//Return user cancellation
-					}
-				}
-				else
-				{	//User added the missing RS phrase
-					break;
-				}
+			}
+			else
+			{	//User added the missing RS phrase
+				break;
 			}
 		}
 	}
@@ -4906,73 +4893,72 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 			}
 			if((tp->technote[ctr]->type != tp->pgnote[notenum]->type) || !(bitmask & tp->technote[ctr]->note))
 				continue;	//If the tech note isn't in the same difficulty as the specified note or it doesn't use the same string, skip it
+			if((tp->technote[ctr]->pos < notepos) || (tp->technote[ctr]->pos > notepos + tp->note[notenum]->length))
+				continue;	//If this tech note does not overlap with the specified note, skip it
 
-			if((tp->technote[ctr]->pos >= notepos) && (tp->technote[ctr]->pos <= notepos + tp->note[notenum]->length))
-			{	//If this tech note overlaps with the specified note
-				thistechflags = tp->technote[ctr]->flags;
-				techflags |= thistechflags;
-				techeflags |= tp->technote[ctr]->eflags;
-				thistechbends = 0;	//Reset this value
+			thistechflags = tp->technote[ctr]->flags;
+			techflags |= thistechflags;
+			techeflags |= tp->technote[ctr]->eflags;
+			thistechbends = 0;	//Reset this value
 
-				//Track the slide to position of the last tech note affecting the specified note
-				if((thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) == 0)
-				{	//If this tech note doesn't have definitions for bend strength or the ending fret for slides
-					if(thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
-					{	//If this note bends
-						thistechbends = 1;	//Assume a 1 half step bend
+			//Track the slide to position of the last tech note affecting the specified note
+			if((thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) == 0)
+			{	//If this tech note doesn't have definitions for bend strength or the ending fret for slides
+				if(thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+				{	//If this note bends
+					thistechbends = 1;	//Assume a 1 half step bend
+				}
+				if(thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+				{	//If this tech note has slide up technique
+					techslideto = fret + 1;		//Assume a 1 fret slide until logic is added for the author to add this information
+					techslideto += tp->capo;	//Apply the capo position, so the slide ending is on the correct fret in-game
+				}
+				else if(thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+				{	//If this tech note has slide down technique
+					techslideto = fret - 1;		//Assume a 1 fret slide until logic is added for the author to add this information
+					techslideto += tp->capo;	//Apply the capo position, so the slide ending is on the correct fret in-game
+				}
+			}
+			else
+			{	//This tech note defines the bend strength and ending fret for slides
+				if(thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+				{	//If this note bends
+					if(tp->technote[ctr]->bendstrength & 0x80)
+					{	//If this bend strength is defined in quarter steps
+						thistechbends = ((tp->technote[ctr]->bendstrength & 0x7F) + 1) / 2;	//Obtain the defined bend strength in quarter steps (mask out the MSB), add 1 and divide by 2 to round up to the nearest number of half steps
 					}
-					if(thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-					{	//If this tech note has slide up technique
-						techslideto = fret + 1;		//Assume a 1 fret slide until logic is added for the author to add this information
-						techslideto += tp->capo;	//Apply the capo position, so the slide ending is on the correct fret in-game
-					}
-					else if(thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
-					{	//If this tech note has slide down technique
-						techslideto = fret - 1;		//Assume a 1 fret slide until logic is added for the author to add this information
-						techslideto += tp->capo;	//Apply the capo position, so the slide ending is on the correct fret in-game
+					else
+					{	//The bend strength is defined in half steps
+						thistechbends = tp->technote[ctr]->bendstrength;	//Obtain the defined bend strength in half steps
 					}
 				}
-				else
-				{	//This tech note defines the bend strength and ending fret for slides
-					if(thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
-					{	//If this note bends
-						if(tp->technote[ctr]->bendstrength & 0x80)
-						{	//If this bend strength is defined in quarter steps
-							thistechbends = ((tp->technote[ctr]->bendstrength & 0x7F) + 1) / 2;	//Obtain the defined bend strength in quarter steps (mask out the MSB), add 1 and divide by 2 to round up to the nearest number of half steps
-						}
-						else
-						{	//The bend strength is defined in half steps
-							thistechbends = tp->technote[ctr]->bendstrength;	//Obtain the defined bend strength in half steps
-						}
-					}
-					if((thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
-					{	//If this tech note slides
-						lowestfret = fret;	//This individual string's note will slide regardless of what the chord's lowest fretted string is
-						if(lowestfret != tp->technote[ctr]->slideend)
-						{	//If the tech note's slide doesn't end at the position the lowest fretted string in the tech note is already at
-							slidediff = tp->technote[ctr]->slideend - lowestfret;	//Determine how many frets this slide travels
-							techslideto = fret + slidediff + tp->capo;	//Get the correct ending fret for this string's slide, applying the capo position
-						}
+				if((thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+				{	//If this tech note slides
+					lowestfret = fret;	//This individual string's note will slide regardless of what the chord's lowest fretted string is
+					if(lowestfret != tp->technote[ctr]->slideend)
+					{	//If the tech note's slide doesn't end at the position the lowest fretted string in the tech note is already at
+						slidediff = tp->technote[ctr]->slideend - lowestfret;	//Determine how many frets this slide travels
+						techslideto = fret + slidediff + tp->capo;	//Get the correct ending fret for this string's slide, applying the capo position
 					}
 				}
-				if((thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) && tp->technote[ctr]->unpitchend)
-				{	//If this note has an unpitched slide and the user has defined the ending fret of the slide
-					if(lowestfret != tp->technote[ctr]->unpitchend)
-					{	//Don't allow the unpitched slide if it slides to the same fret this note/chord is already at
-						unpitchedslidediff = tp->technote[ctr]->unpitchend - lowestfret;	//Determine how many frets this slide travels
-						techunpitchedslideto = fret + unpitchedslidediff + tp->capo;	//Get the correct ending fret for this string's slide, applying the capo position
-					}
+			}
+			if((thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) && tp->technote[ctr]->unpitchend)
+			{	//If this note has an unpitched slide and the user has defined the ending fret of the slide
+				if(lowestfret != tp->technote[ctr]->unpitchend)
+				{	//Don't allow the unpitched slide if it slides to the same fret this note/chord is already at
+					unpitchedslidediff = tp->technote[ctr]->unpitchend - lowestfret;	//Determine how many frets this slide travels
+					techunpitchedslideto = fret + unpitchedslidediff + tp->capo;	//Get the correct ending fret for this string's slide, applying the capo position
 				}
-				if((techeflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP) && !has_stop)
-				{	//If this tech note has stop status, and is the first such tech note found so far
-					stop_tech_note_position = tp->technote[ctr]->pos;	//Record its position
-					has_stop = 1;	//Track that a stop tech note has been found, only the first one on a note will take effect
-				}
-				if(thistechbends > techbends)
-				{	//If this tech note's bend was the strongest found for this note so far
-					techbends = thistechbends;	//Track the strongest tech note bend (in halfsteps)
-				}
-			}//If this tech note overlaps with the specified note
+			}
+			if((techeflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP) && !has_stop)
+			{	//If this tech note has stop status, and is the first such tech note found so far
+				stop_tech_note_position = tp->technote[ctr]->pos;	//Record its position
+				has_stop = 1;	//Track that a stop tech note has been found, only the first one on a note will take effect
+			}
+			if(thistechbends > techbends)
+			{	//If this tech note's bend was the strongest found for this note so far
+				techbends = thistechbends;	//Track the strongest tech note bend (in halfsteps)
+			}
 		}//For all tech notes, starting with the first one that applies to this note
 	}//If tech notes are to be taken into account and the specified string of the note has at least one tech note applied to it
 
@@ -5361,23 +5347,22 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 				}
 				if((tp->technote[ctr]->type != tp->pgnote[notenum]->type) || !(bitmask & tp->technote[ctr]->note))
 					continue;	//If the tech note isn't in the same difficulty as the pro guitar single note being exported or if it doesn't use the same string, skip it
+				if((tp->technote[ctr]->pos < notepos) || (tp->technote[ctr]->pos > notepos + notelen))
+					continue;	//If this tech note does not overlap with the specified pro guitar regular note, skip it
 
-				if((tp->technote[ctr]->pos >= notepos) && (tp->technote[ctr]->pos <= notepos + notelen))
-				{	//If this tech note overlaps with the specified pro guitar regular note
-					flags = tp->technote[ctr]->flags;
-					if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
-					{	//If the tech note is a bend and has a bend strength defined
-						if(tp->technote[ctr]->bendstrength & 0x80)
-						{	//If this bend strength is defined in quarter steps
-							bendstrength_q = tp->technote[ctr]->bendstrength & 0x7F;	//Obtain the defined bend strength in quarter steps (mask out the MSB)
-						}
-						else
-						{	//The bend strength is defined in half steps
-							bendstrength_q = tp->technote[ctr]->bendstrength * 2;		//Obtain the defined bend strength in quarter steps
-						}
-						(void) snprintf(buffer, sizeof(buffer) - 1, "            %s<bendValue time=\"%.3f\" step=\"%.3f\"/>\n", indentlevel, ((double)tp->technote[ctr]->pos / 1000.0), (double)bendstrength_q / 2.0);	//Write the bend point at the specified position within the note
-						(void) pack_fputs(buffer, fp);
+				flags = tp->technote[ctr]->flags;
+				if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
+				{	//If the tech note is a bend and has a bend strength defined
+					if(tp->technote[ctr]->bendstrength & 0x80)
+					{	//If this bend strength is defined in quarter steps
+						bendstrength_q = tp->technote[ctr]->bendstrength & 0x7F;	//Obtain the defined bend strength in quarter steps (mask out the MSB)
 					}
+					else
+					{	//The bend strength is defined in half steps
+						bendstrength_q = tp->technote[ctr]->bendstrength * 2;		//Obtain the defined bend strength in quarter steps
+					}
+					(void) snprintf(buffer, sizeof(buffer) - 1, "            %s<bendValue time=\"%.3f\" step=\"%.3f\"/>\n", indentlevel, ((double)tp->technote[ctr]->pos / 1000.0), (double)bendstrength_q / 2.0);	//Write the bend point at the specified position within the note
+					(void) pack_fputs(buffer, fp);
 				}
 			}
 		}

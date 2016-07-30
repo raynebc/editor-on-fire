@@ -755,21 +755,21 @@ EOF_SONG * eof_import_midi(const char * fn)
 										}
 									}
 								}
-								if(eof_import_events[i]->type == 0)
-								{	//If the track name didn't match any of the Guitar Hero animation track names either
-									if(ustrstr(text,"PART") || (ustrstr(text,"HARM") == text))
-									{	//If this is a track that contains the word "PART" in the name (or begins with "HARM")
-										eof_clear_input();
-										if(alert("Unsupported track:", text, "Import raw data?", "&Yes", "&No", 'y', 'n') == 1)
-										{	//If the user opts to import the raw track data
-											eof_MIDI_add_track(sp, eof_get_raw_MIDI_data(eof_work_midi, track[i], 0));	//Add this to the linked list of raw MIDI track data
-										}
-										eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
+								if(eof_import_events[i]->type != 0)
+									break;	//If the track name has been matched, skip the below processing
+
+								if(ustrstr(text,"PART") || (ustrstr(text,"HARM") == text))
+								{	//If this is a track that contains the word "PART" in the name (or begins with "HARM")
+									eof_clear_input();
+									if(alert("Unsupported track:", text, "Import raw data?", "&Yes", "&No", 'y', 'n') == 1)
+									{	//If the user opts to import the raw track data
+										eof_MIDI_add_track(sp, eof_get_raw_MIDI_data(eof_work_midi, track[i], 0));	//Add this to the linked list of raw MIDI track data
 									}
-									else if(!ustricmp(text, "EVENTS"))
-									{	//This track is the EVENTS track
-										is_event_track = 1;	//Store any encountered text events into the global events array
-									}
+									eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
+								}
+								else if(!ustricmp(text, "EVENTS"))
+								{	//This track is the EVENTS track
+									is_event_track = 1;	//Store any encountered text events into the global events array
 								}
 								break;
 							}

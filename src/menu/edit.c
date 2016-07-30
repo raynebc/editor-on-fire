@@ -440,6 +440,8 @@ void eof_prepare_edit_menu(void)
 				eof_edit_speed_menu[2].flags = D_SELECTED;
 				break;
 			}
+			default:
+			break;
 		}
 
 		if(eof_selected_track == EOF_TRACK_DANCE)
@@ -563,6 +565,8 @@ void eof_prepare_edit_menu(void)
 				eof_edit_snap_menu[11].flags = D_SELECTED;
 				break;
 			}
+			default:
+			break;
 		}
 		if(eof_render_grid_lines)
 		{
@@ -975,6 +979,10 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 				case EOF_RS_POPUP_MESSAGE:
 				case EOF_RS_TONE_CHANGE:
 					skip = 1;	//These section types are not modified by the auto adjust logic
+				break;
+
+				default:
+				break;
 			}
 
 			if(!skip && eof_lookup_track_section_type(eof_song, j, sectiontype, &sectioncount, &phrase) && phrase)
@@ -1205,6 +1213,10 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 				case EOF_RS_POPUP_MESSAGE:
 				case EOF_RS_TONE_CHANGE:
 					skip = 1;	//These section types are not modified by the auto adjust logic
+				break;
+
+				default:
+				break;
 			}
 
 			if(!skip && eof_lookup_track_section_type(eof_song, j, sectiontype, &sectioncount, &phrase) && phrase)
