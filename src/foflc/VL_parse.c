@@ -279,24 +279,24 @@ int VL_PreLoad(FILE *inf,char validate)
 			exit_wrapper(12);
 		}
 
-		if(se.lyric_number!=0xFFFF && se.start_char!=0xFFFF && se.start_time!=0xFFFFFFFF)
-		{	//This is a valid sync entry
-		//Allocate link
-			ptr2=malloc_err(sizeof(struct VL_Sync_entry));
+		if(se.lyric_number==0xFFFF || se.start_char==0xFFFF || se.start_time==0xFFFFFFFF)
+			continue;	//If this is not a valid sync entry, skip it
 
-		//Build link and insert into list
-			memcpy(ptr2,&se,sizeof(struct VL_Sync_entry));	//copy structure into newly allocated link
-			if(VL.Syncs == NULL)	//This is the first sync piece read from the input file
-				VL.Syncs=ptr2;
-			else					//The end of the list points forward to this new link
-			{
-				assert_wrapper(cursync != NULL);
-				cursync->next=ptr2;
-			}
+	//Allocate link
+		ptr2=malloc_err(sizeof(struct VL_Sync_entry));
 
-			cursync=ptr2;		//This link is now at the end of the list
-			VL.numsyncs++;		//one more sync entry has been parsed
+	//Build link and insert into list
+		memcpy(ptr2,&se,sizeof(struct VL_Sync_entry));	//copy structure into newly allocated link
+		if(VL.Syncs == NULL)	//This is the first sync piece read from the input file
+			VL.Syncs=ptr2;
+		else					//The end of the list points forward to this new link
+		{
+			assert_wrapper(cursync != NULL);
+			cursync->next=ptr2;
 		}
+
+		cursync=ptr2;		//This link is now at the end of the list
+		VL.numsyncs++;		//one more sync entry has been parsed
 	}
 
 	if(Lyrics.verbose)	(void) puts("VL_PreLoad completed");

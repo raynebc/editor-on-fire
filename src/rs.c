@@ -481,22 +481,22 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		{	//If this slide's end position is not defined
 			slideend = eof_get_highest_fret_value(sp, track, ctr) + 1;	//Assume a 1 fret slide
 		}
-		if(slideend >= 22)
-		{	//If the slide goes to or above fret 22
-			if((*user_warned & 8) == 0)
-			{	//If the user wasn't alerted about this issue yet
-				eof_seek_and_render_position(track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  At least one note in track \"%s\" slides to or above fret 22.", sp->track[track]->name);
-				if(alert(eof_log_string, "This will cause Rocksmith 1 to crash.", "Cancel its RS1 export and highlight offending notes?", "&Yes", "&No", 'y', 'n') == 1)
-				{	//If the user opts to cancel the save after the highlighting is performed
-					highlight_bad_slides = 1;
-				}
-				*user_warned |= 8;
+		if(slideend < 22)
+			continue;	//If the slide does not go at or above fret 22, skip it
+
+		if((*user_warned & 8) == 0)
+		{	//If the user wasn't alerted about this issue yet
+			eof_seek_and_render_position(track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  At least one note in track \"%s\" slides to or above fret 22.", sp->track[track]->name);
+			if(alert(eof_log_string, "This will cause Rocksmith 1 to crash.", "Cancel its RS1 export and highlight offending notes?", "&Yes", "&No", 'y', 'n') == 1)
+			{	//If the user opts to cancel the save after the highlighting is performed
+				highlight_bad_slides = 1;
 			}
-			if(highlight_bad_slides)
-			{	//If the user chose to highlight such slide notes
-				tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;
-			}
+			*user_warned |= 8;
+		}
+		if(highlight_bad_slides)
+		{	//If the user chose to highlight such slide notes
+			tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;
 		}
 	}
 	if(highlight_bad_slides)
@@ -1933,43 +1933,43 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				break;
 			}
 		}
-		if(linked)
-		{	//If the previous note has linkNext status applied to any string
-			tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as single notes
-			for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
-			{	//For each of the 6 supported strings
-				if(!(tp->note[ctr]->note & bitmask) || (tp->note[ctr]->ghost & bitmask))
-					continue;	//If this string is not used or is ghosted, skip it
+		if(!linked)
+			continue;	//If the previous note does not have linknext status applied to any string, skip this note
 
-				(void) eof_get_rs_techniques(sp, track, ctr, ctr3, &tech, 2, 1);		//Get the end position of any pitched/unpitched slide this chord's gem has
-				new_note = eof_track_add_create_note(sp, track, bitmask, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type, NULL);	//Initialize a new single note at this position
-				if(new_note)
-				{	//If the new note was created
-					new_note->flags = tp->note[ctr]->flags;					//Clone the flags
-					new_note->eflags = tp->note[ctr]->eflags;				//Clone the extended flags
-					new_note->tflags |= EOF_NOTE_TFLAG_TEMP;				//Mark the note as temporary
-					new_note->bendstrength = tp->note[ctr]->bendstrength;	//Copy the bend strength
-					new_note->frets[ctr3] = tp->note[ctr]->frets[ctr3];		//And this string's fret value
-					if(tp->note[ctr]->slideend && (tech.slideto >= 0))
-					{	//If this note has slide technique and a valid slide end position was found
-						new_note->slideend = tech.slideto - tp->capo;		//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
-					}
-					if(tp->note[ctr]->unpitchend && (tech.unpitchedslideto >= 0))
-					{	//If this note has unpitched slide technique and a valid unpitched slide end position was found
-						new_note->unpitchend = tech.unpitchedslideto - tp->capo;	//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
-					}
+		tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as single notes
+		for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+		{	//For each of the 6 supported strings
+			if(!(tp->note[ctr]->note & bitmask) || (tp->note[ctr]->ghost & bitmask))
+				continue;	//If this string is not used or is ghosted, skip it
+
+			(void) eof_get_rs_techniques(sp, track, ctr, ctr3, &tech, 2, 1);		//Get the end position of any pitched/unpitched slide this chord's gem has
+			new_note = eof_track_add_create_note(sp, track, bitmask, tp->note[ctr]->pos, tp->note[ctr]->length, tp->note[ctr]->type, NULL);	//Initialize a new single note at this position
+			if(new_note)
+			{	//If the new note was created
+				new_note->flags = tp->note[ctr]->flags;					//Clone the flags
+				new_note->eflags = tp->note[ctr]->eflags;				//Clone the extended flags
+				new_note->tflags |= EOF_NOTE_TFLAG_TEMP;				//Mark the note as temporary
+				new_note->bendstrength = tp->note[ctr]->bendstrength;	//Copy the bend strength
+				new_note->frets[ctr3] = tp->note[ctr]->frets[ctr3];		//And this string's fret value
+				if(tp->note[ctr]->slideend && (tech.slideto >= 0))
+				{	//If this note has slide technique and a valid slide end position was found
+					new_note->slideend = tech.slideto - tp->capo;		//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
 				}
-				else
-				{
-					allegro_message("Error:  Couldn't expand linked chords into single notes.  Aborting Rocksmith 2 export.");
-					eof_log("Error:  Couldn't expand linked chords into single notes.  Aborting Rocksmith 2 export.", 1);
-					eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
-					eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-					(void) pack_fclose(fp);
-					return 0;	//Return error
+				if(tp->note[ctr]->unpitchend && (tech.unpitchedslideto >= 0))
+				{	//If this note has unpitched slide technique and a valid unpitched slide end position was found
+					new_note->unpitchend = tech.unpitchedslideto - tp->capo;	//Apply the correct end position for this gem (removing the capo position which will be reapplied later if in use)
 				}
-			}//For each of the 6 supported strings
-		}//If the previous note has linkNext status applied to any string
+			}
+			else
+			{
+				allegro_message("Error:  Couldn't expand linked chords into single notes.  Aborting Rocksmith 2 export.");
+				eof_log("Error:  Couldn't expand linked chords into single notes.  Aborting Rocksmith 2 export.", 1);
+				eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
+				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+				(void) pack_fclose(fp);
+				return 0;	//Return error
+			}
+		}//For each of the 6 supported strings
 	}//For each note in the active pro guitar track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 

@@ -609,26 +609,27 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 	//Run another pass to check crazy notes overlapping with gems on their same lanes more than 1 note ahead
 	for(i = 0; i < tp->notes; i++)
 	{	//For each note
-		if(tp->note[i]->flags & EOF_NOTE_FLAG_CRAZY)
-		{	//If this note is crazy, find the next gem that occupies any of the same lanes
-			next = i;
-			while(1)
-			{
-				next = eof_fixup_next_legacy_note(tp, next);
-				if(next >= 0)
-				{	//If there's a note in this difficulty after this note
-					if(tp->note[i]->note & tp->note[next]->note)
-					{	//And it uses at least one of the same lanes as the crazy note being checked
-						if(tp->note[i]->pos + tp->note[i]->length >= tp->note[next]->pos - 1)
-						{	//If it does not end at least 1ms before the next note starts
-							tp->note[i]->length = tp->note[next]->pos - tp->note[i]->pos - 1;	//Truncate the crazy note so it does not overlap the next gem on its lane(s)
-						}
-						break;
+		if(!(tp->note[i]->flags & EOF_NOTE_FLAG_CRAZY))
+			continue;	//If this note is not marked as crazy, skip it
+
+		//Otherwise find the next gem that occupies any of the same lanes
+		next = i;
+		while(1)
+		{
+			next = eof_fixup_next_legacy_note(tp, next);
+			if(next >= 0)
+			{	//If there's a note in this difficulty after this note
+				if(tp->note[i]->note & tp->note[next]->note)
+				{	//And it uses at least one of the same lanes as the crazy note being checked
+					if(tp->note[i]->pos + tp->note[i]->length >= tp->note[next]->pos - 1)
+					{	//If it does not end at least 1ms before the next note starts
+						tp->note[i]->length = tp->note[next]->pos - tp->note[i]->pos - 1;	//Truncate the crazy note so it does not overlap the next gem on its lane(s)
 					}
-				}
-				else
 					break;
+				}
 			}
+			else
+				break;
 		}
 	}
 
@@ -1039,82 +1040,84 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 
  	eof_log("eof_detect_difficulties() entered", 2);
 
-	if(sp && track && (track < sp->tracks))
-	{	//If the specified track is valid
-		memset(eof_track_diff_populated_status, 0, sizeof(eof_track_diff_populated_status));
-		memset(eof_track_diff_highlighted_status, 0, sizeof(eof_track_diff_highlighted_status));
-		memset(eof_track_diff_highlighted_tech_note_status, 0, sizeof(eof_track_diff_highlighted_tech_note_status));
-		eof_note_type_name[0][0] = ' ';
-		eof_note_type_name[1][0] = ' ';
-		eof_note_type_name[2][0] = ' ';
-		eof_note_type_name[3][0] = ' ';
-		eof_note_type_name[4][0] = ' ';
-		eof_vocal_tab_name[0][0] = ' ';
-		eof_dance_tab_name[0][0] = ' ';
-		eof_dance_tab_name[1][0] = ' ';
-		eof_dance_tab_name[2][0] = ' ';
-		eof_dance_tab_name[3][0] = ' ';
-		eof_dance_tab_name[4][0] = ' ';
+ 	if(!sp || !track || (track >= sp->tracks))
+		return 0;	//Invalid parameters
+	if(!eof_get_track_size(sp, track))
+		return 0;	//Empty track
 
-		for(i = 0; i < eof_get_track_size(sp, track); i++)
+	memset(eof_track_diff_populated_status, 0, sizeof(eof_track_diff_populated_status));
+	memset(eof_track_diff_highlighted_status, 0, sizeof(eof_track_diff_highlighted_status));
+	memset(eof_track_diff_highlighted_tech_note_status, 0, sizeof(eof_track_diff_highlighted_tech_note_status));
+	eof_note_type_name[0][0] = ' ';
+	eof_note_type_name[1][0] = ' ';
+	eof_note_type_name[2][0] = ' ';
+	eof_note_type_name[3][0] = ' ';
+	eof_note_type_name[4][0] = ' ';
+	eof_vocal_tab_name[0][0] = ' ';
+	eof_dance_tab_name[0][0] = ' ';
+	eof_dance_tab_name[1][0] = ' ';
+	eof_dance_tab_name[2][0] = ' ';
+	eof_dance_tab_name[3][0] = ' ';
+	eof_dance_tab_name[4][0] = ' ';
+
+	for(i = 0; i < eof_get_track_size(sp, track); i++)
+	{
+		note_type = eof_get_note_type(sp, track, i);
+		if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
 		{
-			note_type = eof_get_note_type(sp, track, i);
-			if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+			if(sp->vocal_track[sp->track[track]->tracknum]->lyrics)
 			{
-				if(sp->vocal_track[sp->track[track]->tracknum]->lyrics)
-				{
-					eof_vocal_tab_name[0][0] = '*';
-					eof_track_diff_populated_status[0] = 1;
-				}
-			}
-			else
-			{
-				eof_track_diff_populated_status[note_type] = 1;
-				if(note_type >= numdiffs)
-				{	//If this note's difficulty is the highest encountered in the track so far
-					numdiffs = note_type + 1;
-				}
-				if(note_type < EOF_MAX_DIFFICULTIES)
-				{	//If this note has a valid type (difficulty) in the traditional 5 difficulty system
-					if(track == EOF_TRACK_DANCE)
-					{	//If this is the dance track, update the dance track tabs
-						eof_dance_tab_name[note_type][0] = '*';
-					}
-					else
-					{	//Otherwise update the legacy track tabs
-						eof_note_type_name[note_type][0] = '*';
-					}
-				}
-			}
-			if(eof_note_is_highlighted(sp, track, i))
-			{	//If the note/lyric has highlighting
-				eof_track_diff_highlighted_status[note_type] = 1;
+				eof_vocal_tab_name[0][0] = '*';
+				eof_track_diff_populated_status[0] = 1;
 			}
 		}
-
-		if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-		{	//If a pro guitar track is being processed
-			EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track]->tracknum];
-
-			if(tp->note == tp->technote)
-			{	//If tech view is in effect, the technotes counter is not yet up to date after a deletion operation
-				tp->technotes = tp->notes;	//Update it
+		else
+		{
+			eof_track_diff_populated_status[note_type] = 1;
+			if(note_type >= numdiffs)
+			{	//If this note's difficulty is the highest encountered in the track so far
+				numdiffs = note_type + 1;
 			}
-			else
-			{	//Otherwise if tech view is not in effect, the pgnotes counter is not yet up to date after a deletion operation
-				tp->pgnotes = tp->notes;	//Update it
-			}
-			memset(eof_track_diff_populated_tech_note_status, 0, sizeof(eof_track_diff_populated_tech_note_status));
-			for(i = 0; i < tp->technotes; i++)
-			{
-				eof_track_diff_populated_tech_note_status[tp->technote[i]->type] = 1;
-				if((tp->technote[i]->flags & EOF_NOTE_FLAG_HIGHLIGHT) || (tp->technote[i]->tflags & EOF_NOTE_TFLAG_HIGHLIGHT))
-				{	//If the tech note has highlighting
-					eof_track_diff_highlighted_tech_note_status[tp->technote[i]->type] = 1;
+			if(note_type < EOF_MAX_DIFFICULTIES)
+			{	//If this note has a valid type (difficulty) in the traditional 5 difficulty system
+				if(track == EOF_TRACK_DANCE)
+				{	//If this is the dance track, update the dance track tabs
+					eof_dance_tab_name[note_type][0] = '*';
+				}
+				else
+				{	//Otherwise update the legacy track tabs
+					eof_note_type_name[note_type][0] = '*';
 				}
 			}
 		}
-	}//If the specified track is valid
+		if(eof_note_is_highlighted(sp, track, i))
+		{	//If the note/lyric has highlighting
+			eof_track_diff_highlighted_status[note_type] = 1;
+		}
+	}
+
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If a pro guitar track is being processed
+		EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+
+		if(tp->note == tp->technote)
+		{	//If tech view is in effect, the technotes counter is not yet up to date after a deletion operation
+			tp->technotes = tp->notes;	//Update it
+		}
+		else
+		{	//Otherwise if tech view is not in effect, the pgnotes counter is not yet up to date after a deletion operation
+			tp->pgnotes = tp->notes;	//Update it
+		}
+		memset(eof_track_diff_populated_tech_note_status, 0, sizeof(eof_track_diff_populated_tech_note_status));
+		for(i = 0; i < tp->technotes; i++)
+		{
+			eof_track_diff_populated_tech_note_status[tp->technote[i]->type] = 1;
+			if((tp->technote[i]->flags & EOF_NOTE_FLAG_HIGHLIGHT) || (tp->technote[i]->tflags & EOF_NOTE_TFLAG_HIGHLIGHT))
+			{	//If the tech note has highlighting
+				eof_track_diff_highlighted_tech_note_status[tp->technote[i]->type] = 1;
+			}
+		}
+	}
 
 	return numdiffs;
 }
@@ -1378,127 +1381,128 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 
 	if((sp == NULL) || (trackdetails == NULL))
 		return 0;	//Return error
+	if(sp->tracks >= EOF_TRACKS_MAX)
+		return 0;	//If EOF can't add another track, return error
 
-	if(sp->tracks < EOF_TRACKS_MAX)
-	{	//For each native track
-		ptr3 = malloc(sizeof(EOF_TRACK_ENTRY));
-		if(ptr3 == NULL)
-			return 0;	//Return error
 
-		//Insert new track structure in the appropriate track type array
-		switch(trackdetails->track_format)
-		{
-			case EOF_LEGACY_TRACK_FORMAT:
-				count = sp->legacy_tracks;
-				ptr = malloc(sizeof(EOF_LEGACY_TRACK));
-				if(ptr == NULL)
-				{
-					free(ptr3);
-					return 0;	//Return error
-				}
-				ptr->notes = 0;
-				ptr->solos = 0;
-				ptr->star_power_paths = 0;
-				ptr->trills = 0;
-				ptr->tremolos = 0;
-				ptr->sliders = 0;
-				if(trackdetails->flags & EOF_TRACK_FLAG_SIX_LANES)
-				{	//Open strum and fifth drum lane are tracked as a sixth lane
-					ptr->numlanes = 6;
-				}
-				else if(trackdetails->track_type == EOF_TRACK_DANCE)
-				{	//For now, the dance track is 4 lanes
-					ptr->numlanes = 4;
-				}
-				else
-				{	//Otherwise, all legacy tracks will be 5 lanes by default
-					ptr->numlanes = 5;
-				}
-				ptr->parent = ptr3;
-				sp->legacy_track[sp->legacy_tracks] = ptr;
-				sp->legacy_tracks++;
-			break;
-			case EOF_VOCAL_TRACK_FORMAT:
-				count = sp->vocal_tracks;
-				ptr2 = malloc(sizeof(EOF_VOCAL_TRACK));
-				if(ptr2 == NULL)
-				{
-					free(ptr3);
-					return 0;	//Return error
-				}
-				ptr2->lyrics = 0;
-				ptr2->lines = 0;
-				ptr2->parent = ptr3;
-				sp->vocal_track[sp->vocal_tracks] = ptr2;
-				sp->vocal_tracks++;
-			break;
-			case EOF_PRO_KEYS_TRACK_FORMAT:
-			break;
-			case EOF_PRO_GUITAR_TRACK_FORMAT:
-				count = sp->pro_guitar_tracks;
-				ptr4 = malloc(sizeof(EOF_PRO_GUITAR_TRACK));
-				if(ptr4 == NULL)
-				{
-					free(ptr3);
-					return 0;	//Return error
-				}
-				memset(ptr4, 0, sizeof(EOF_PRO_GUITAR_TRACK));	//Initialize memory block to 0 to avoid crashes when not explicitly setting counters that were newly added to the pro guitar structure
-				if((trackdetails->track_type == EOF_TRACK_PRO_BASS_22) || (trackdetails->track_type == EOF_TRACK_PRO_GUITAR_22))
-				{	//If this is a 22 fret track
-					ptr4->numfrets = 22;	//Set 22 as the default max fret (ie. Squier guitar)
-				}
-				else
-				{	//Otherwise assume a default max fret of 17 (ie. Mustang controller)
-					ptr4->numfrets = 17;
-				}
-				if((trackdetails->track_type == EOF_TRACK_PRO_BASS) || (trackdetails->track_type == EOF_TRACK_PRO_BASS_22))
-				{
-					ptr4->numstrings = 4;	//By default, set a pro bass track to 4 strings
-					ptr4->arrangement = 4;	//And the arrangement type is "Bass"
-				}
-				else
-				{
-					ptr4->numstrings = 6;	//Otherwise, assume a 6 string guitar
-				}
-				if(ptr4->numstrings > EOF_TUNING_LENGTH)	//Ensure that the tuning array is large enough
-				{
-					free(ptr3);
-					free(ptr4);
-					return 0;	//Return error
-				}
-				ptr4->defaulttone[0] = '\0';	//Ensure this string is emptied
-				ptr4->parent = ptr3;
-				ptr4->note = ptr4->pgnote;		//Put the regular pro guitar note array into effect
-				ptr4->ignore_tuning = 1;		//By default, chord lookups will ignore the tuning and capo and assume standard tuning
-				sp->pro_guitar_track[sp->pro_guitar_tracks] = ptr4;
-				sp->pro_guitar_tracks++;
-			break;
-			case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:	//Variable Lane Legacy (not implemented yet)
-			break;
-			default:
-				eof_log("\tError:  Invalid track format", 1);
+	ptr3 = malloc(sizeof(EOF_TRACK_ENTRY));
+	if(ptr3 == NULL)
+		return 0;	//Return error
+
+	//Insert new track structure in the appropriate track type array
+	switch(trackdetails->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			count = sp->legacy_tracks;
+			ptr = malloc(sizeof(EOF_LEGACY_TRACK));
+			if(ptr == NULL)
+			{
 				free(ptr3);
-			return 0;	//Return error
-		}
+				return 0;	//Return error
+			}
+			ptr->notes = 0;
+			ptr->solos = 0;
+			ptr->star_power_paths = 0;
+			ptr->trills = 0;
+			ptr->tremolos = 0;
+			ptr->sliders = 0;
+			if(trackdetails->flags & EOF_TRACK_FLAG_SIX_LANES)
+			{	//Open strum and fifth drum lane are tracked as a sixth lane
+				ptr->numlanes = 6;
+			}
+			else if(trackdetails->track_type == EOF_TRACK_DANCE)
+			{	//For now, the dance track is 4 lanes
+				ptr->numlanes = 4;
+			}
+			else
+			{	//Otherwise, all legacy tracks will be 5 lanes by default
+				ptr->numlanes = 5;
+			}
+			ptr->parent = ptr3;
+			sp->legacy_track[sp->legacy_tracks] = ptr;
+			sp->legacy_tracks++;
+		break;
+		case EOF_VOCAL_TRACK_FORMAT:
+			count = sp->vocal_tracks;
+			ptr2 = malloc(sizeof(EOF_VOCAL_TRACK));
+			if(ptr2 == NULL)
+			{
+				free(ptr3);
+				return 0;	//Return error
+			}
+			ptr2->lyrics = 0;
+			ptr2->lines = 0;
+			ptr2->parent = ptr3;
+			sp->vocal_track[sp->vocal_tracks] = ptr2;
+			sp->vocal_tracks++;
+		break;
+		case EOF_PRO_KEYS_TRACK_FORMAT:
+		break;
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			count = sp->pro_guitar_tracks;
+			ptr4 = malloc(sizeof(EOF_PRO_GUITAR_TRACK));
+			if(ptr4 == NULL)
+			{
+				free(ptr3);
+				return 0;	//Return error
+			}
+			memset(ptr4, 0, sizeof(EOF_PRO_GUITAR_TRACK));	//Initialize memory block to 0 to avoid crashes when not explicitly setting counters that were newly added to the pro guitar structure
+			if((trackdetails->track_type == EOF_TRACK_PRO_BASS_22) || (trackdetails->track_type == EOF_TRACK_PRO_GUITAR_22))
+			{	//If this is a 22 fret track
+				ptr4->numfrets = 22;	//Set 22 as the default max fret (ie. Squier guitar)
+			}
+			else
+			{	//Otherwise assume a default max fret of 17 (ie. Mustang controller)
+				ptr4->numfrets = 17;
+			}
+			if((trackdetails->track_type == EOF_TRACK_PRO_BASS) || (trackdetails->track_type == EOF_TRACK_PRO_BASS_22))
+			{
+				ptr4->numstrings = 4;	//By default, set a pro bass track to 4 strings
+				ptr4->arrangement = 4;	//And the arrangement type is "Bass"
+			}
+			else
+			{
+				ptr4->numstrings = 6;	//Otherwise, assume a 6 string guitar
+			}
+			if(ptr4->numstrings > EOF_TUNING_LENGTH)	//Ensure that the tuning array is large enough
+			{
+				free(ptr3);
+				free(ptr4);
+				return 0;	//Return error
+			}
+			ptr4->defaulttone[0] = '\0';	//Ensure this string is emptied
+			ptr4->parent = ptr3;
+			ptr4->note = ptr4->pgnote;		//Put the regular pro guitar note array into effect
+			ptr4->ignore_tuning = 1;		//By default, chord lookups will ignore the tuning and capo and assume standard tuning
+			sp->pro_guitar_track[sp->pro_guitar_tracks] = ptr4;
+			sp->pro_guitar_tracks++;
+		break;
+		case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:	//Variable Lane Legacy (not implemented yet)
+		break;
+		default:
+			eof_log("\tError:  Invalid track format", 1);
+			free(ptr3);
+		return 0;	//Return error
+	}
 
-		//Insert new track structure in the main track array and copy details
-		ptr3->tracknum = count;
-		ptr3->track_format = trackdetails->track_format;
-		ptr3->track_behavior = trackdetails->track_behavior;
-		ptr3->track_type = trackdetails->track_type;
-		(void) ustrcpy(ptr3->name, trackdetails->name);
-		(void) ustrcpy(ptr3->altname, trackdetails->altname);
-		ptr3->difficulty = trackdetails->difficulty;
-		ptr3->numdiffs = 5;	//By default, all tracks are limited to the original 5 difficulties
-		ptr3->flags = trackdetails->flags;
-		if(sp->tracks == 0)
-		{	//If this is the first track being added, ensure that sp->track[0] is inserted
-			sp->track[0] = NULL;
-			sp->tracks++;
-		}
-		sp->track[sp->tracks] = ptr3;
+	//Insert new track structure in the main track array and copy details
+	ptr3->tracknum = count;
+	ptr3->track_format = trackdetails->track_format;
+	ptr3->track_behavior = trackdetails->track_behavior;
+	ptr3->track_type = trackdetails->track_type;
+	(void) ustrcpy(ptr3->name, trackdetails->name);
+	(void) ustrcpy(ptr3->altname, trackdetails->altname);
+	ptr3->difficulty = trackdetails->difficulty;
+	ptr3->numdiffs = 5;	//By default, all tracks are limited to the original 5 difficulties
+	ptr3->flags = trackdetails->flags;
+	if(sp->tracks == 0)
+	{	//If this is the first track being added, ensure that sp->track[0] is inserted
+		sp->track[0] = NULL;
 		sp->tracks++;
-	}//For each native track
+	}
+	sp->track[sp->tracks] = ptr3;
+	sp->tracks++;
+
 	return 1;	//Return success
 }
 
@@ -2513,26 +2517,26 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 			if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{
 				count = sp->pro_guitar_track[tracknum]->arpeggios;
-				if(count < EOF_MAX_PHRASES)
-				{	//If EOF can store the arpeggio section
-					sp->pro_guitar_track[tracknum]->arpeggio[count].start_pos = start;
-					sp->pro_guitar_track[tracknum]->arpeggio[count].end_pos = end;
-					sp->pro_guitar_track[tracknum]->arpeggio[count].flags = flags;	//Specifies whether the arpeggio exports as an arpeggio or a normal handshape
-					if(name == NULL)
-					{
-						sp->pro_guitar_track[tracknum]->arpeggio[count].name[0] = '\0';
-					}
-					else
-					{
-						(void) ustrcpy(sp->pro_guitar_track[tracknum]->arpeggio[count].name, name);
-					}
-					if((unsigned char)difficulty == 0xFF)
-					{	//Beta versions of EOF 1.8 (up to beta 15) stored arpeggios without a specified difficulty, re-assign them to Expert
-						difficulty = EOF_NOTE_AMAZING;
-					}
-					sp->pro_guitar_track[tracknum]->arpeggio[count].difficulty = difficulty;
-					sp->pro_guitar_track[tracknum]->arpeggios++;
+				if(count >= EOF_MAX_PHRASES)
+					return 1;	//If EOF can't store another arpeggio section, skip doing so
+
+				sp->pro_guitar_track[tracknum]->arpeggio[count].start_pos = start;
+				sp->pro_guitar_track[tracknum]->arpeggio[count].end_pos = end;
+				sp->pro_guitar_track[tracknum]->arpeggio[count].flags = flags;	//Specifies whether the arpeggio exports as an arpeggio or a normal handshape
+				if(name == NULL)
+				{
+					sp->pro_guitar_track[tracknum]->arpeggio[count].name[0] = '\0';
 				}
+				else
+				{
+					(void) ustrcpy(sp->pro_guitar_track[tracknum]->arpeggio[count].name, name);
+				}
+				if((unsigned char)difficulty == 0xFF)
+				{	//Beta versions of EOF 1.8 (up to beta 15) stored arpeggios without a specified difficulty, re-assign them to Expert
+					difficulty = EOF_NOTE_AMAZING;
+				}
+				sp->pro_guitar_track[tracknum]->arpeggio[count].difficulty = difficulty;
+				sp->pro_guitar_track[tracknum]->arpeggios++;
 				return 1;
 			}
 		break;
@@ -2599,22 +2603,22 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 			if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{
 				count = sp->pro_guitar_track[tracknum]->popupmessages;
-				if(count < EOF_MAX_PHRASES)
-				{	//If EOF can store the popup message
-					sp->pro_guitar_track[tracknum]->popupmessage[count].start_pos = start;
-					sp->pro_guitar_track[tracknum]->popupmessage[count].end_pos = end;
-					sp->pro_guitar_track[tracknum]->popupmessage[count].flags = flags;
-					sp->pro_guitar_track[tracknum]->popupmessage[count].difficulty = 0;
-					if(name == NULL)
-					{
-						sp->pro_guitar_track[tracknum]->popupmessage[count].name[0] = '\0';
-					}
-					else
-					{
-						(void) ustrcpy(sp->pro_guitar_track[tracknum]->popupmessage[count].name, name);
-					}
-					sp->pro_guitar_track[tracknum]->popupmessages++;
+				if(count >= EOF_MAX_PHRASES)
+					return 1;	//If EOF can't store another popup message, skip doing so
+
+				sp->pro_guitar_track[tracknum]->popupmessage[count].start_pos = start;
+				sp->pro_guitar_track[tracknum]->popupmessage[count].end_pos = end;
+				sp->pro_guitar_track[tracknum]->popupmessage[count].flags = flags;
+				sp->pro_guitar_track[tracknum]->popupmessage[count].difficulty = 0;
+				if(name == NULL)
+				{
+					sp->pro_guitar_track[tracknum]->popupmessage[count].name[0] = '\0';
 				}
+				else
+				{
+					(void) ustrcpy(sp->pro_guitar_track[tracknum]->popupmessage[count].name, name);
+				}
+				sp->pro_guitar_track[tracknum]->popupmessages++;
 				return 1;
 			}
 		break;
@@ -2622,25 +2626,25 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 			if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{
 				count = sp->pro_guitar_track[tracknum]->tonechanges;
-				if(count < EOF_MAX_PHRASES)
-				{	//If EOF can store the tone change
-					if(name && (name[0] != '\0'))
-					{	//If the tone name isn't NULL or empty, add the tone change to the project
-						sp->pro_guitar_track[tracknum]->tonechange[count].start_pos = start;
-						(void) ustrcpy(sp->pro_guitar_track[tracknum]->tonechange[count].name, name);
-						for(ctr = 0; ctr < (unsigned long)strlen(sp->pro_guitar_track[tracknum]->tonechange[count].name); ctr++)
-						{	//For each character in the name
-							if(sp->pro_guitar_track[tracknum]->tonechange[count].name[ctr] == ' ')
-							{	//If it's a space character
-								sp->pro_guitar_track[tracknum]->tonechange[count].name[ctr] = '_';	//Replace it with an underscore
-							}
+				if(count >= EOF_MAX_PHRASES)
+					return 1;	//If EOF can't store another tone change, skip doing so
+
+				if(name && (name[0] != '\0'))
+				{	//If the tone name isn't NULL or empty, add the tone change to the project
+					sp->pro_guitar_track[tracknum]->tonechange[count].start_pos = start;
+					(void) ustrcpy(sp->pro_guitar_track[tracknum]->tonechange[count].name, name);
+					for(ctr = 0; ctr < (unsigned long)strlen(sp->pro_guitar_track[tracknum]->tonechange[count].name); ctr++)
+					{	//For each character in the name
+						if(sp->pro_guitar_track[tracknum]->tonechange[count].name[ctr] == ' ')
+						{	//If it's a space character
+							sp->pro_guitar_track[tracknum]->tonechange[count].name[ctr] = '_';	//Replace it with an underscore
 						}
-						if(end)
-						{	//The project format uses this field as a boolean to identify if this is the default tone for the track
-							strncpy(sp->pro_guitar_track[tracknum]->defaulttone, sp->pro_guitar_track[tracknum]->tonechange[count].name, EOF_SECTION_NAME_LENGTH);
-						}
-						sp->pro_guitar_track[tracknum]->tonechanges++;
 					}
+					if(end)
+					{	//The project format uses this field as a boolean to identify if this is the default tone for the track
+						strncpy(sp->pro_guitar_track[tracknum]->defaulttone, sp->pro_guitar_track[tracknum]->tonechange[count].name, EOF_SECTION_NAME_LENGTH);
+					}
+					sp->pro_guitar_track[tracknum]->tonechanges++;
 				}
 				return 1;
 			}
@@ -3686,24 +3690,25 @@ int eof_lane_six_enabled(unsigned long track)
 
 EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_note(EOF_PRO_GUITAR_TRACK *tp)
 {
-	if(tp && (tp->notes < EOF_MAX_NOTES))
+	if(!tp || (tp->notes >= EOF_MAX_NOTES))
+		return NULL;	//Invalid parameters
+
+	tp->note[tp->notes] = malloc(sizeof(EOF_PRO_GUITAR_NOTE));
+	if(tp->note[tp->notes])
 	{
-		tp->note[tp->notes] = malloc(sizeof(EOF_PRO_GUITAR_NOTE));
-		if(tp->note[tp->notes])
-		{
-			memset(tp->note[tp->notes], 0, sizeof(EOF_PRO_GUITAR_NOTE));
-			tp->notes++;	//Update the generic note counter
-			if(tp->note == tp->technote)
-			{	//If tech view is in effect
-				tp->technotes++;	//Update the tech note counter
-			}
-			else
-			{
-				tp->pgnotes++;	//Update the normal note counter
-			}
-			return tp->note[tp->notes - 1];
+		memset(tp->note[tp->notes], 0, sizeof(EOF_PRO_GUITAR_NOTE));
+		tp->notes++;	//Update the generic note counter
+		if(tp->note == tp->technote)
+		{	//If tech view is in effect
+			tp->technotes++;	//Update the tech note counter
 		}
+		else
+		{
+			tp->pgnotes++;	//Update the normal note counter
+		}
+		return tp->note[tp->notes - 1];
 	}
+
 	return NULL;
 }
 
@@ -4315,107 +4320,107 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned char
 	}
 
 	new_note = eof_track_add_note(sp, track);
-	if(new_note != NULL)
+	if(!new_note)
+		return NULL;	//If the new note wasn't added, return error
+
+	if(length < 1)
 	{
-		if(length < 1)
-		{
-			length = 1;	//1 is the minimum length of any note/lyric
-		}
-		switch(sp->track[track]->track_format)
-		{
-			case EOF_LEGACY_TRACK_FORMAT:
-				if(eof_count_track_lanes(sp, track) <= 5)
-				{	//If the track storing the new note does not have six lanes
-					if(track != EOF_TRACK_BASS)
-					{	//And the new note isn't using the bass track's open strum lane
-						note &= ~32;	//Clear lane 6
-					}
+		length = 1;	//1 is the minimum length of any note/lyric
+	}
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(eof_count_track_lanes(sp, track) <= 5)
+			{	//If the track storing the new note does not have six lanes
+				if(track != EOF_TRACK_BASS)
+				{	//And the new note isn't using the bass track's open strum lane
+					note &= ~32;	//Clear lane 6
 				}
-				ptr = (EOF_NOTE *)new_note;
-				ptr->type = type;
-				ptr->note = note;
-				ptr->midi_pos = 0;	//Not implemented yet
-				ptr->midi_length = 0;	//Not implemented yet
-				ptr->pos = pos;
-				ptr->length = length;
-				ptr->flags = 0;
-				ptr->tflags = 0;
-				if(text != NULL)
-				{
-					(void) ustrcpy(ptr->name, text);
-				}
-				else
-				{
-					ptr->name[0] = '\0';	//Empty the string
-				}
-				if(sp->track[track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR)
-				{	//In a keys track, all lanes are forced to be "crazy" and be allowed to overlap other lanes
-					ptr->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
-				}
-			return ptr;
+			}
+			ptr = (EOF_NOTE *)new_note;
+			ptr->type = type;
+			ptr->note = note;
+			ptr->midi_pos = 0;	//Not implemented yet
+			ptr->midi_length = 0;	//Not implemented yet
+			ptr->pos = pos;
+			ptr->length = length;
+			ptr->flags = 0;
+			ptr->tflags = 0;
+			if(text != NULL)
+			{
+				(void) ustrcpy(ptr->name, text);
+			}
+			else
+			{
+				ptr->name[0] = '\0';	//Empty the string
+			}
+			if(sp->track[track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR)
+			{	//In a keys track, all lanes are forced to be "crazy" and be allowed to overlap other lanes
+				ptr->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
+			}
+		return ptr;
 
-			case EOF_VOCAL_TRACK_FORMAT:
-				ptr2 = (EOF_LYRIC *)new_note;
-				ptr2->type = type;
-				ptr2->note = note;
-				if(text != NULL)
-				{
-					(void) ustrcpy(ptr2->text, text);
-				}
-				else
-				{
-					ptr2->text[0] = '\0';	//Empty the string
-				}
-				ptr2->midi_pos = 0;	//Not implemented yet
-				ptr2->midi_length = 0;	//Not implemented yet
-				ptr2->pos = pos;
-				ptr2->length = length;
-				ptr2->flags = 0;
-				ptr2->tflags = 0;
-			return ptr2;
+		case EOF_VOCAL_TRACK_FORMAT:
+			ptr2 = (EOF_LYRIC *)new_note;
+			ptr2->type = type;
+			ptr2->note = note;
+			if(text != NULL)
+			{
+				(void) ustrcpy(ptr2->text, text);
+			}
+			else
+			{
+				ptr2->text[0] = '\0';	//Empty the string
+			}
+			ptr2->midi_pos = 0;	//Not implemented yet
+			ptr2->midi_length = 0;	//Not implemented yet
+			ptr2->pos = pos;
+			ptr2->length = length;
+			ptr2->flags = 0;
+			ptr2->tflags = 0;
+		return ptr2;
 
-			case EOF_PRO_GUITAR_TRACK_FORMAT:
-				ptr3 = (EOF_PRO_GUITAR_NOTE *)new_note;
-				if(text != NULL)
-				{
-					(void) ustrcpy(ptr3->name, text);
-				}
-				else
-				{
-					ptr3->name[0] = '\0';	//Empty the string
-				}
-				ptr3->type = type;
-				ptr3->note = note;
-				ptr3->ghost = 0;
-				memset(ptr3->frets, 0, 8);	//Initialize all frets to open
-				memset(ptr3->finger, 0, 8);	//Initialize all fingers to undefined
-				ptr3->midi_pos = 0;			//Not implemented yet
-				ptr3->midi_length = 0;		//Not implemented yet
-				ptr3->pos = pos;
-				if(eof_menu_track_get_tech_view_state(sp, track))
-				{	//If tech view is in effect
-					length = 1;	//A maximum length of 1ms for tech notes should be enforced
-				}
-				ptr3->length = length;
-				ptr3->flags = 0;
-				ptr3->eflags = 0;
-				ptr3->tflags = 0;
-				ptr3->bendstrength = 0;
-				ptr3->slideend = 0;
-				ptr3->unpitchend = 0;
-				if(eof_legacy_view)
-				{	//If legacy view is in effect, initialize the legacy bitmask to whichever lanes (1-5) created the note
-					ptr3->legacymask = note & 31;
-				}
-				else
-				{	//Otherwise initialize the legacy bitmask to zero
-					ptr3->legacymask = 0;
-				}
-			return ptr3;
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			ptr3 = (EOF_PRO_GUITAR_NOTE *)new_note;
+			if(text != NULL)
+			{
+				(void) ustrcpy(ptr3->name, text);
+			}
+			else
+			{
+				ptr3->name[0] = '\0';	//Empty the string
+			}
+			ptr3->type = type;
+			ptr3->note = note;
+			ptr3->ghost = 0;
+			memset(ptr3->frets, 0, 8);	//Initialize all frets to open
+			memset(ptr3->finger, 0, 8);	//Initialize all fingers to undefined
+			ptr3->midi_pos = 0;			//Not implemented yet
+			ptr3->midi_length = 0;		//Not implemented yet
+			ptr3->pos = pos;
+			if(eof_menu_track_get_tech_view_state(sp, track))
+			{	//If tech view is in effect
+				length = 1;	//A maximum length of 1ms for tech notes should be enforced
+			}
+			ptr3->length = length;
+			ptr3->flags = 0;
+			ptr3->eflags = 0;
+			ptr3->tflags = 0;
+			ptr3->bendstrength = 0;
+			ptr3->slideend = 0;
+			ptr3->unpitchend = 0;
+			if(eof_legacy_view)
+			{	//If legacy view is in effect, initialize the legacy bitmask to whichever lanes (1-5) created the note
+				ptr3->legacymask = note & 31;
+			}
+			else
+			{	//Otherwise initialize the legacy bitmask to zero
+				ptr3->legacymask = 0;
+			}
+		return ptr3;
 
-			default:
-			break;
-		}
+		default:
+		break;
 	}
 
 	return NULL;	//Return error
@@ -5271,26 +5276,27 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 			for(ctr = 0, allmuted = 1, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
 			{	//For each of the 6 usable strings
 				fretvalue = tp->note[i-1]->frets[ctr];
-				if(fretvalue != 0xFF)
-				{	//Track whether the all used strings in this note/chord are muted
-					if(tp->note[i-1]->note & bitmask)
-					{	//If this string is used in the note
-						if(!(fretvalue & 0x80))
-						{	//If the note isn't marked as muted
-							allmuted = 0;
-						}
+				if(fretvalue == 0xFF)
+					continue;	//If this note isn't entirely string muted, skip checking for this string
+
+				//Otherwise track whether the all used strings in this note/chord are muted
+				if(tp->note[i-1]->note & bitmask)
+				{	//If this string is used in the note
+					if(!(fretvalue & 0x80))
+					{	//If the note isn't marked as muted
+						allmuted = 0;
 					}
-					else
-					{	//If this string is not used in the note
-						if(tp->note[i-1]->finger[ctr])
-						{	//But the fingering is defined
-							memset(tp->note[i-1]->finger, 0, 8);	//Initialize all fingers to undefined
-						}
+				}
+				else
+				{	//If this string is not used in the note
+					if(tp->note[i-1]->finger[ctr])
+					{	//But the fingering is defined
+						memset(tp->note[i-1]->finger, 0, 8);	//Initialize all fingers to undefined
 					}
-					if((fretvalue & 0x7F) > tp->numfrets)
-					{	//If this fret value is invalid
-						tp->note[i-1]->frets[ctr] = 0;	//Revert to default fret value of 0
-					}
+				}
+				if((fretvalue & 0x7F) > tp->numfrets)
+				{	//If this fret value is invalid
+					tp->note[i-1]->frets[ctr] = 0;	//Revert to default fret value of 0
 				}
 			}
 
@@ -5344,41 +5350,42 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 	//Run another pass to check crazy notes overlapping with gems on their same lanes more than 1 note ahead
 	for(i = 0; i < tp->notes; i++)
 	{	//For each note
-		if(tp->note[i]->flags & EOF_NOTE_FLAG_CRAZY)
-		{	//If this note is crazy, find the next gem that occupies any of the same lanes
-			has_link_next = 0;	//Reset this status
-			for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
-			{	//For each of the 6 supported strings
-				if(tp->note[i]->note & bitmask)
-				{	//If this string is used
-					(void) eof_get_rs_techniques(sp, track, i, ctr, &ptr, 2, 1);	//Get the statuses in effect for this string, checking all applicable tech notes
-					if(ptr.linknext)
-					{	//If this string used linkNext status
-						has_link_next = 1;
-						break;	//The other strings don't need to be checked
-					}
+		if(!(tp->note[i]->flags & EOF_NOTE_FLAG_CRAZY))
+			continue;	//If this note is not marked as crazy, skip it
+
+		//Otherwise find the next gem that occupies any of the same lanes
+		has_link_next = 0;	//Reset this status
+		for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+		{	//For each of the 6 supported strings
+			if(tp->note[i]->note & bitmask)
+			{	//If this string is used
+				(void) eof_get_rs_techniques(sp, track, i, ctr, &ptr, 2, 1);	//Get the statuses in effect for this string, checking all applicable tech notes
+				if(ptr.linknext)
+				{	//If this string used linkNext status
+					has_link_next = 1;
+					break;	//The other strings don't need to be checked
 				}
 			}
-			if(!has_link_next)
-			{	//Only enforce a 1ms minimum gap between this note and the next if this note doesn't have linkNext status
-				next = i;
-				while(1)
-				{
-					next = eof_fixup_next_pro_guitar_note(tp, next);
-					if(next >= 0)
-					{	//If there's a note in this difficulty after this note
-						if(tp->note[i]->note & tp->note[next]->note)
-						{	//And it uses at least one of the same lanes as the crazy note being checked
-							if(tp->note[i]->pos + tp->note[i]->length >= tp->note[next]->pos - 1)
-							{	//If it does not end at least 1ms before the next note starts
-								tp->note[i]->length = tp->note[next]->pos - tp->note[i]->pos - 1;	//Truncate the crazy note so it does not overlap the next gem on its lane(s)
-							}
-							break;
+		}
+		if(!has_link_next)
+		{	//Only enforce a 1ms minimum gap between this note and the next if this note doesn't have linkNext status
+			next = i;
+			while(1)
+			{
+				next = eof_fixup_next_pro_guitar_note(tp, next);
+				if(next >= 0)
+				{	//If there's a note in this difficulty after this note
+					if(tp->note[i]->note & tp->note[next]->note)
+					{	//And it uses at least one of the same lanes as the crazy note being checked
+						if(tp->note[i]->pos + tp->note[i]->length >= tp->note[next]->pos - 1)
+						{	//If it does not end at least 1ms before the next note starts
+							tp->note[i]->length = tp->note[next]->pos - tp->note[i]->pos - 1;	//Truncate the crazy note so it does not overlap the next gem on its lane(s)
 						}
-					}
-					else
 						break;
+					}
 				}
+				else
+					break;
 			}
 		}
 	}
@@ -5431,54 +5438,54 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 		{	//For each arpeggio phrase in the track (outer for loop)
 			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
 			{	//For each note in the track (inner for loop)
-				if((tp->note[ctr2]->pos >= tp->arpeggio[ctr].start_pos) && (tp->note[ctr2]->pos <= tp->arpeggio[ctr].start_pos + 10) && (tp->note[ctr2]->type == tp->arpeggio[ctr].difficulty))
-				{	//If this note's start position is at or up to 10ms after the start of an arpeggio phrase in this track difficulty
-					unsigned char frets[6];	//Will be used to build a new fret array
-					unsigned char note;		//Will be used to build a new note bitmask
-					unsigned char ghost;	//Will be used to build a new ghost bitmask
+				unsigned char frets[6];	//Will be used to build a new fret array
+				unsigned char note;		//Will be used to build a new note bitmask
+				unsigned char ghost;	//Will be used to build a new ghost bitmask
 
-					memcpy(frets, tp->note[ctr2]->frets, 6);	//Duplicate the original note's fret array
-					note = tp->note[ctr2]->note;
-					ghost = tp->note[ctr2]->ghost;
-					nextnote = ctr2;
-					while(1)
-					{
-						nextnote = eof_track_fixup_next_note(sp, track, nextnote);	//Iterate to the next note in this track difficulty
-						if((nextnote >= 0) && (tp->note[nextnote]->pos <= tp->arpeggio[ctr].end_pos))
-						{	//If there is another note and it is in the same arpeggio phrase
-							for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
-							{	//For each of the 6 supported strings
-								if((tp->note[nextnote]->note & bitmask) && !(note & bitmask))
-								{	//If the note uses a string that isn't yet defined as used in the arpeggio's base note
-									note |= bitmask;	//Mark the string as used
-									ghost |= bitmask;	//Mark it as ghosted
-									frets[ctr3] = tp->note[nextnote]->frets[ctr3];	//Copy the gem's fret value
-								}
+				if((tp->note[ctr2]->pos < tp->arpeggio[ctr].start_pos) || (tp->note[ctr2]->pos > tp->arpeggio[ctr].start_pos + 10) || (tp->note[ctr2]->type != tp->arpeggio[ctr].difficulty))
+					continue;	//If this note's start position is not within 10ms of the start of an arpeggio phrase or is not in this track difficulty, skip it
+
+				memcpy(frets, tp->note[ctr2]->frets, 6);	//Duplicate the original note's fret array
+				note = tp->note[ctr2]->note;
+				ghost = tp->note[ctr2]->ghost;
+				nextnote = ctr2;
+				while(1)
+				{
+					nextnote = eof_track_fixup_next_note(sp, track, nextnote);	//Iterate to the next note in this track difficulty
+					if((nextnote >= 0) && (tp->note[nextnote]->pos <= tp->arpeggio[ctr].end_pos))
+					{	//If there is another note and it is in the same arpeggio phrase
+						for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+						{	//For each of the 6 supported strings
+							if((tp->note[nextnote]->note & bitmask) && !(note & bitmask))
+							{	//If the note uses a string that isn't yet defined as used in the arpeggio's base note
+								note |= bitmask;	//Mark the string as used
+								ghost |= bitmask;	//Mark it as ghosted
+								frets[ctr3] = tp->note[nextnote]->frets[ctr3];	//Copy the gem's fret value
 							}
 						}
-						else
-						{	//The next note (if any) is not in the arpeggio phrase
-							break;	//Break from while loop
-						}
 					}
-					if(eof_write_rs2_files && (eof_note_count_colors_bitmask(note) == 1))
-					{	//If RS2 export is enabled, and the base note for the arpeggio only has one gem in it, add another gem to force it to become a chord (required for RS2 export)
-						if(note == 1)
-						{	//If that base note is on low E
-							note |= 2;	//Add a gem on the next string up
-							ghost |= 2;	//And ghost it
-						}
-						else
-						{
-							note |= 1;	//Otherwise add a gem on low E
-							ghost |= 1;	//And ghost it
-						}
+					else
+					{	//The next note (if any) is not in the arpeggio phrase
+						break;	//Break from while loop
 					}
-					memcpy(tp->note[ctr2]->frets, frets, 6);	//Apply changes (if any) to the note at the base of the arpeggio phrase
-					tp->note[ctr2]->note = note;
-					tp->note[ctr2]->ghost = ghost;
-					break;	//Exit the inner for loop (no other notes in this track will be within the arpeggio phrase that was just parsed)
-				}//If this note's start position is within 10ms of an arpeggio phrase in this track difficulty
+				}
+				if(eof_write_rs2_files && (eof_note_count_colors_bitmask(note) == 1))
+				{	//If RS2 export is enabled, and the base note for the arpeggio only has one gem in it, add another gem to force it to become a chord (required for RS2 export)
+					if(note == 1)
+					{	//If that base note is on low E
+						note |= 2;	//Add a gem on the next string up
+						ghost |= 2;	//And ghost it
+					}
+					else
+					{
+						note |= 1;	//Otherwise add a gem on low E
+						ghost |= 1;	//And ghost it
+					}
+				}
+				memcpy(tp->note[ctr2]->frets, frets, 6);	//Apply changes (if any) to the note at the base of the arpeggio phrase
+				tp->note[ctr2]->note = note;
+				tp->note[ctr2]->ghost = ghost;
+				break;	//Exit the inner for loop (no other notes in this track will be within the arpeggio phrase that was just parsed)
 			}//For each note in the track (inner for loop)
 		}//For each arpeggio phrase in the track (outer for loop)
 
@@ -5697,19 +5704,19 @@ void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track, int option)
 	for(i = 0; i < eof_get_track_size(sp, track); i++)
 	{	//For each note in the track
 		next = eof_track_fixup_next_note(sp, track, i);
-		if(next >= 0)
-		{
-			pos1 = eof_get_note_pos(sp, track, i);
-			pos2 = eof_get_note_pos(sp, track, next);
-			if(pos1 + eof_get_note_length(sp, track, i) > pos2 + 1)
-			{	//If the note overlaps the next note by over one millisecond (to allow for rounding errors)
-				if((eof_get_note_note(sp, track, i) & eof_get_note_note(sp, track, next)) == 0)
-				{	//If the two notes have no lanes in common
-					if(!option || (pos1 != pos2))
-					{	//If the calling function doesn't care if different notes starting at the same timestamp are given crazy status,
-						//or if the notes don't start at the same timestamp
-						eof_set_note_flags(sp, track, i, eof_get_note_flags(sp, track, i) | EOF_NOTE_FLAG_CRAZY);
-					}
+		if(next < 0)
+			continue;	//If there is no next note, skip this note
+
+		pos1 = eof_get_note_pos(sp, track, i);
+		pos2 = eof_get_note_pos(sp, track, next);
+		if(pos1 + eof_get_note_length(sp, track, i) > pos2 + 1)
+		{	//If the note overlaps the next note by over one millisecond (to allow for rounding errors)
+			if((eof_get_note_note(sp, track, i) & eof_get_note_note(sp, track, next)) == 0)
+			{	//If the two notes have no lanes in common
+				if(!option || (pos1 != pos2))
+				{	//If the calling function doesn't care if different notes starting at the same timestamp are given crazy status,
+					//or if the notes don't start at the same timestamp
+					eof_set_note_flags(sp, track, i, eof_get_note_flags(sp, track, i) | EOF_NOTE_FLAG_CRAZY);
 				}
 			}
 		}
@@ -6555,44 +6562,44 @@ void eof_set_pro_guitar_fret_number(char function, unsigned long fretvalue)
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
 	{	//For each note in the active pro guitar track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (eof_song->pro_guitar_track[tracknum]->note[ctr]->type == eof_note_type))
-		{	//If the note is selected and is in the active difficulty
-			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask<<=1)
-			{	//For each of the 6 usable strings
-				if((eof_song->pro_guitar_track[tracknum]->note[ctr]->note & bitmask) && (eof_pro_guitar_fret_bitmask & bitmask))
-				{	//If this string is in use, and this string is enabled for fret shortcut manipulation
-					oldfretvalue = eof_song->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2];
-					newfretvalue = oldfretvalue;
-					switch(function)
-					{
-						case 0:	//Set fret value
-							newfretvalue = fretvalue;
-						break;
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[ctr] || (eof_song->pro_guitar_track[tracknum]->note[ctr]->type != eof_note_type))
+			continue;	//If the note is not selected, skip it
 
-						case 1:	//Increment fret value
-							if(oldfretvalue != 0xFF)	//Don't increment a muted note
-								newfretvalue++;
-						break;
+		for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask<<=1)
+		{	//For each of the 6 usable strings
+			if(!(eof_song->pro_guitar_track[tracknum]->note[ctr]->note & bitmask) || !(eof_pro_guitar_fret_bitmask & bitmask))
+				continue;	//If this string is not in use or it is not enabled for fret shortcut manipulation, skip it
 
-						case 2:	//Decrement fret value
-							if(oldfretvalue > 0)	//Don't decrement an open note
-								newfretvalue--;
-						break;
+			oldfretvalue = eof_song->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2];
+			newfretvalue = oldfretvalue;
+			switch(function)
+			{
+				case 0:	//Set fret value
+					newfretvalue = fretvalue;
+				break;
 
-						default:
-						break;
-					}
-					if((newfretvalue <= eof_song->pro_guitar_track[tracknum]->numfrets) || (newfretvalue == 0xFF))
-					{	//Only set the fret value if it is valid
-						if(!undo_made && (newfretvalue != oldfretvalue))
-						{	//Make an undo state before making the first change
-							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-							undo_made = 1;
-						}
-						eof_song->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2] = newfretvalue;	//Update the string's fret value
-						memset(eof_song->pro_guitar_track[tracknum]->note[ctr]->finger, 0, 8);			//Initialize all fingers to undefined
-					}
+				case 1:	//Increment fret value
+					if(oldfretvalue != 0xFF)	//Don't increment a muted note
+						newfretvalue++;
+				break;
+
+				case 2:	//Decrement fret value
+					if(oldfretvalue > 0)	//Don't decrement an open note
+						newfretvalue--;
+				break;
+
+				default:
+				break;
+			}
+			if((newfretvalue <= eof_song->pro_guitar_track[tracknum]->numfrets) || (newfretvalue == 0xFF))
+			{	//Only set the fret value if it is valid
+				if(!undo_made && (newfretvalue != oldfretvalue))
+				{	//Make an undo state before making the first change
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
 				}
+				eof_song->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2] = newfretvalue;	//Update the string's fret value
+				memset(eof_song->pro_guitar_track[tracknum]->note[ctr]->finger, 0, 8);			//Initialize all fingers to undefined
 			}
 		}
 	}
@@ -6684,21 +6691,21 @@ void *eof_copy_note(EOF_SONG *ssp, unsigned long sourcetrack, unsigned long sour
 	}
 
 	result = eof_track_add_create_note(dsp, desttrack, note, pos, length, type, text);
-	if(result)
-	{	//If the note was successfully created
-		newnotenum = eof_get_track_size(dsp, desttrack) - 1;		//The index of the new note
-		eof_set_note_flags(dsp, desttrack, newnotenum, flags);	//Copy the source note's flags to the newly created note
-		if((ssp->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (dsp->track[desttrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-		{	//If the note was copied from a pro guitar track and pasted to a pro guitar track
-			memcpy(dsp->pro_guitar_track[desttracknum]->note[newnotenum]->frets, ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->frets, 6);		//Copy the six usable string fret values from the source note to the newly created note
-			memcpy(dsp->pro_guitar_track[desttracknum]->note[newnotenum]->finger, ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->finger, 6);	//Copy the six usable finger values from the source note to the newly created note
-			dsp->pro_guitar_track[desttracknum]->note[newnotenum]->ghost = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->ghost;				//Copy the ghost bitmask
-			dsp->pro_guitar_track[desttracknum]->note[newnotenum]->legacymask = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask;		//Copy the legacy bitmask
-			dsp->pro_guitar_track[desttracknum]->note[newnotenum]->bendstrength = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->bendstrength;	//Copy the bend strength
-			dsp->pro_guitar_track[desttracknum]->note[newnotenum]->slideend = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->slideend;			//Copy the slide end position
-			dsp->pro_guitar_track[desttracknum]->note[newnotenum]->unpitchend = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->unpitchend;		//Copy the unpitched slide end position
-			dsp->pro_guitar_track[desttracknum]->note[newnotenum]->eflags = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->eflags;				//Copy the extended flags
-		}
+	if(!result)
+		return NULL;	//If the note was not successfully created, return error
+
+	newnotenum = eof_get_track_size(dsp, desttrack) - 1;		//The index of the new note
+	eof_set_note_flags(dsp, desttrack, newnotenum, flags);	//Copy the source note's flags to the newly created note
+	if((ssp->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (dsp->track[desttrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+	{	//If the note was copied from a pro guitar track and pasted to a pro guitar track
+		memcpy(dsp->pro_guitar_track[desttracknum]->note[newnotenum]->frets, ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->frets, 6);		//Copy the six usable string fret values from the source note to the newly created note
+		memcpy(dsp->pro_guitar_track[desttracknum]->note[newnotenum]->finger, ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->finger, 6);		//Copy the six usable finger values from the source note to the newly created note
+		dsp->pro_guitar_track[desttracknum]->note[newnotenum]->ghost = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->ghost;					//Copy the ghost bitmask
+		dsp->pro_guitar_track[desttracknum]->note[newnotenum]->legacymask = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask;		//Copy the legacy bitmask
+		dsp->pro_guitar_track[desttracknum]->note[newnotenum]->bendstrength = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->bendstrength;	//Copy the bend strength
+		dsp->pro_guitar_track[desttracknum]->note[newnotenum]->slideend = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->slideend;			//Copy the slide end position
+		dsp->pro_guitar_track[desttracknum]->note[newnotenum]->unpitchend = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->unpitchend;		//Copy the unpitched slide end position
+		dsp->pro_guitar_track[desttracknum]->note[newnotenum]->eflags = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->eflags;				//Copy the extended flags
 	}
 
 	return result;
@@ -6997,26 +7004,71 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 		notepos = eof_get_note_pos(sp, track, i);
 		notelength = eof_get_note_length(sp, track, i);
 
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(sp, eof_selected_track, i) == eof_note_type))
-		{	//If the note is selected and in the active instrument difficulty
-			next_note = eof_track_fixup_next_note(sp, track, i);	//Get the index of the next note in the active instrument difficulty
-			if(amount)
-			{	//If adjusted the note length by the specified number of ms
-				if(dir < 0)
-				{	//If the note length is to be decreased
-					if(notelength < 2)
-					{	//If the note cannot have its length decreased
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(sp, eof_selected_track, i) != eof_note_type))
+			continue;	//If the note is not selected, skip it
+
+		next_note = eof_track_fixup_next_note(sp, track, i);	//Get the index of the next note in the active instrument difficulty
+		if(amount)
+		{	//If adjusted the note length by the specified number of ms
+			if(dir < 0)
+			{	//If the note length is to be decreased
+				if(notelength < 2)
+				{	//If the note cannot have its length decreased
+					continue;	//Skip adjusting this note
+				}
+				if(!undo_made)
+				{	//Ensure an undo state was made before decreasing the length
+					eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
+					undo_made = 1;
+				}
+				eof_set_note_length(sp, eof_selected_track, i, notelength - adjustment);
+			}
+			else
+			{	//If the note length is to be increased
+				if(next_note > 0)
+				{	//Check if the increase would be canceled due to being unable to overlap the next note
+					if((notepos + notelength + eof_min_note_distance >= eof_get_note_pos(sp, track, next_note)) && !(eof_get_note_flags(sp, track, i) & EOF_NOTE_FLAG_CRAZY))
+					{	//If this note cannot increase its length because it would overlap the next (taking the minimum note distance into account) and the note isn't "crazy"
 						continue;	//Skip adjusting this note
 					}
-					if(!undo_made)
-					{	//Ensure an undo state was made before decreasing the length
-						eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
-						undo_made = 1;
-					}
-					eof_set_note_length(sp, eof_selected_track, i, notelength - adjustment);
+				}
+				if(!undo_made)
+				{	//Ensure an undo state was made before increasing the length
+					eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
+					undo_made = 1;
+				}
+				eof_set_note_length(sp, eof_selected_track, i, notelength + adjustment);
+			}
+		}
+		else
+		{	//If adjusting by the current grid snap value
+			unsigned long targetpos = notepos + notelength;		//The position from which the end of the note's tail will reposition
+			unsigned long beat = eof_get_beat(sp, targetpos);	//Get the beat in which the tail currently ends
+			unsigned long newtailendpos = targetpos;
+
+			if(eof_beat_num_valid(sp, beat) && (beat > 0) && (beat < sp->beats))
+			{	//If the beat containing the tail's current end position was located, add a redundant bounds check to avoid a false positive with Coverity
+				if((dir < 0) && (targetpos == sp->beat[beat]->pos))
+				{	//If the note is being shortened by a grid snap and the tail's current end position is found to be at the start of a beat
+					targetpos--;	//Consider the tail's current position to end in the previous beat so that the grid snap logic will find it a grid snap position in that beat
+				}
+			}
+			eof_snap_logic(&eof_tail_snap, targetpos);	//Find grid snap positions before and after the tail's current ending position
+			if(dir < 0)
+			{	//If the tail is being shortened by one grid snap
+				if(eof_tail_snap.previous_snap > notepos)
+				{	//Only allow the tail to shorten to end at the previous grid snap if it will still end after the note begins
+					newtailendpos = eof_tail_snap.previous_snap;
 				}
 				else
-				{	//If the note length is to be increased
+				{	//Otherwise enforce the minimum length of 1ms
+					newtailendpos = notepos + 1;
+				}
+			}
+			else
+			{	//If the tail is being lengthened by one grid snap
+				if(eof_tail_snap.next_snap > notepos + notelength)
+				{	//If the next grid snap position was able to be determined
 					if(next_note > 0)
 					{	//Check if the increase would be canceled due to being unable to overlap the next note
 						if((notepos + notelength + eof_min_note_distance >= eof_get_note_pos(sp, track, next_note)) && !(eof_get_note_flags(sp, track, i) & EOF_NOTE_FLAG_CRAZY))
@@ -7024,87 +7076,42 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 							continue;	//Skip adjusting this note
 						}
 					}
-					if(!undo_made)
-					{	//Ensure an undo state was made before increasing the length
-						eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
-						undo_made = 1;
-					}
-					eof_set_note_length(sp, eof_selected_track, i, notelength + adjustment);
+					newtailendpos = eof_tail_snap.next_snap;
 				}
 			}
-			else
-			{	//If adjusting by the current grid snap value
-				unsigned long targetpos = notepos + notelength;		//The position from which the end of the note's tail will reposition
-				unsigned long beat = eof_get_beat(sp, targetpos);	//Get the beat in which the tail currently ends
-				unsigned long newtailendpos = targetpos;
-
-				if(eof_beat_num_valid(sp, beat) && (beat > 0) && (beat < sp->beats))
-				{	//If the beat containing the tail's current end position was located, add a redundant bounds check to avoid a false positive with Coverity
-					if((dir < 0) && (targetpos == sp->beat[beat]->pos))
-					{	//If the note is being shortened by a grid snap and the tail's current end position is found to be at the start of a beat
-						targetpos--;	//Consider the tail's current position to end in the previous beat so that the grid snap logic will find it a grid snap position in that beat
-					}
+			if(newtailendpos != notepos + notelength)
+			{	//If the note length is actually changing
+				if(!undo_made)
+				{	//Ensure an undo state was made before increasing the length
+					eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
+					undo_made = 1;
 				}
-				eof_snap_logic(&eof_tail_snap, targetpos);	//Find grid snap positions before and after the tail's current ending position
-				if(dir < 0)
-				{	//If the tail is being shortened by one grid snap
-					if(eof_tail_snap.previous_snap > notepos)
-					{	//Only allow the tail to shorten to end at the previous grid snap if it will still end after the note begins
-						newtailendpos = eof_tail_snap.previous_snap;
-					}
-					else
-					{	//Otherwise enforce the minimum length of 1ms
-						newtailendpos = notepos + 1;
-					}
-				}
-				else
-				{	//If the tail is being lengthened by one grid snap
-					if(eof_tail_snap.next_snap > notepos + notelength)
-					{	//If the next grid snap position was able to be determined
-						if(next_note > 0)
-						{	//Check if the increase would be canceled due to being unable to overlap the next note
-							if((notepos + notelength + eof_min_note_distance >= eof_get_note_pos(sp, track, next_note)) && !(eof_get_note_flags(sp, track, i) & EOF_NOTE_FLAG_CRAZY))
-							{	//If this note cannot increase its length because it would overlap the next (taking the minimum note distance into account) and the note isn't "crazy"
-								continue;	//Skip adjusting this note
-							}
-						}
-						newtailendpos = eof_tail_snap.next_snap;
-					}
-				}
-				if(newtailendpos != notepos + notelength)
-				{	//If the note length is actually changing
-					if(!undo_made)
-					{	//Ensure an undo state was made before increasing the length
-						eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
-						undo_made = 1;
-					}
-					eof_note_set_tail_pos(sp, eof_selected_track, i, newtailendpos);
-				}
-				newnotelength = eof_get_note_length(sp, eof_selected_track, i);
-				if(newnotelength > 1)
-				{	//If the note's length, after the adjustment, is over 1
-					eof_snap_logic(&eof_tail_snap, notepos + newnotelength);
-					eof_note_set_tail_pos(sp, eof_selected_track, i, eof_tail_snap.pos);	//Clean up the grid snap increase/decrease by re-snapping the tail
-
-					newnotelength2 = eof_get_note_length(sp, eof_selected_track, i);
-					if((dir > 0) && (notelength == newnotelength2))
-					{	//Special case:  If the grid snap length increase was nullified by the snap logic, force the tail to increase one snap interval higher
-						double difference = eof_tail_snap.grid_pos[1] - eof_tail_snap.grid_pos[0];	//This is the length of one grid snap in the target beat
-
-						eof_note_set_tail_pos(sp, eof_selected_track, i, notepos + notelength + difference + 0.5);	//Resnap the tail one grid snap higher
-					}
-					else if((dir < 0) && (notelength == newnotelength2))
-					{	//Special case:  If a grid snap decrease did not shorten the note (ie. it began on a grid snap position)
-						eof_snap_logic(&eof_tail_snap, notepos + notelength - 1);	//Find grid snap positions in the previous grid snap
-						eof_note_set_tail_pos(sp, eof_selected_track, i, eof_tail_snap.previous_snap);
-					}
-				}
-			}//If adjusting by the current grid snap value
-			if(eof_get_note_length(sp, track, i) <= 0)
-			{	//If the note's length became less than 1 for any reason
-				eof_set_note_length(sp, track, i, 1);	//Set it to 1ms
+				eof_note_set_tail_pos(sp, eof_selected_track, i, newtailendpos);
 			}
-		}//If the note is selected and in the active instrument difficulty
+			newnotelength = eof_get_note_length(sp, eof_selected_track, i);
+			if(newnotelength > 1)
+			{	//If the note's length, after the adjustment, is over 1
+				eof_snap_logic(&eof_tail_snap, notepos + newnotelength);
+				eof_note_set_tail_pos(sp, eof_selected_track, i, eof_tail_snap.pos);	//Clean up the grid snap increase/decrease by re-snapping the tail
+
+				newnotelength2 = eof_get_note_length(sp, eof_selected_track, i);
+				if((dir > 0) && (notelength == newnotelength2))
+				{	//Special case:  If the grid snap length increase was nullified by the snap logic, force the tail to increase one snap interval higher
+					double difference = eof_tail_snap.grid_pos[1] - eof_tail_snap.grid_pos[0];	//This is the length of one grid snap in the target beat
+
+					eof_note_set_tail_pos(sp, eof_selected_track, i, notepos + notelength + difference + 0.5);	//Resnap the tail one grid snap higher
+				}
+				else if((dir < 0) && (notelength == newnotelength2))
+				{	//Special case:  If a grid snap decrease did not shorten the note (ie. it began on a grid snap position)
+					eof_snap_logic(&eof_tail_snap, notepos + notelength - 1);	//Find grid snap positions in the previous grid snap
+					eof_note_set_tail_pos(sp, eof_selected_track, i, eof_tail_snap.previous_snap);
+				}
+			}
+		}//If adjusting by the current grid snap value
+		if(eof_get_note_length(sp, track, i) <= 0)
+		{	//If the note's length became less than 1 for any reason
+			eof_set_note_length(sp, track, i, 1);	//Set it to 1ms
+		}
 	}//For each note in the track
 	eof_track_fixup_notes(sp, eof_selected_track, 1);
 	if(note_selection_updated)
@@ -7317,26 +7324,26 @@ char eof_search_for_note_near(EOF_SONG *sp, unsigned long track, unsigned long t
 
 	for(i = 0; i < eof_get_track_size(sp, track); i++)
 	{	//For each note in the specified track
-		if(eof_get_note_type(sp, track, i) == type)
-		{	//If this note is in the specified difficulty
-			notepos = eof_get_note_pos(sp, track, i);
-			if((notepos < targetpos) && (targetpos - notepos <= delta))
-			{	//If this note is before the target but in range
-				if(!matchfound || (targetpos - notepos < distance))
-				{	//If this note is the first match or is closer than the previous match
-					distance = targetpos - notepos;
-					*match = i;
-					matchfound = 1;
-				}
+		if(eof_get_note_type(sp, track, i) != type)
+			continue;	//If this note is not in the specified difficulty, skip it
+
+		notepos = eof_get_note_pos(sp, track, i);
+		if((notepos < targetpos) && (targetpos - notepos <= delta))
+		{	//If this note is before the target but in range
+			if(!matchfound || (targetpos - notepos < distance))
+			{	//If this note is the first match or is closer than the previous match
+				distance = targetpos - notepos;
+				*match = i;
+				matchfound = 1;
 			}
-			else if(notepos - targetpos <= delta)
-			{	//If this note is after the target but in range
-				if(!matchfound || (notepos - targetpos < distance))
-				{	//If this note is the first match or is closer than the previous match
-					distance = notepos - targetpos;
-					*match = i;
-					matchfound = 1;
-				}
+		}
+		else if(notepos - targetpos <= delta)
+		{	//If this note is after the target but in range
+			if(!matchfound || (notepos - targetpos < distance))
+			{	//If this note is the first match or is closer than the previous match
+				distance = notepos - targetpos;
+				*match = i;
+				matchfound = 1;
 			}
 		}
 	}
@@ -7791,36 +7798,36 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 	ctr = 0;
 	while(ctr < notecount)
 	{	//For each pre-existing note in the source track
-		if(eof_get_note_type(sp, srctrack, ctr) <= srcdiff)
-		{	//If this note is at or below the source difficulty
-			targetnote = ctr;	//Track which note is to be copied to the source difficulty
-			targetpos = eof_get_note_pos(sp, srctrack, ctr);	//Track this note's position
-			targetlength = eof_get_note_length(sp, srctrack, ctr);	//This this note's length
-			for(; ctr < notecount; ctr++)
-			{	//For each of the remaining pre-existing notes in the track
-				if(eof_get_note_pos(sp, srctrack, ctr) <= targetpos + threshold)
-				{	//If this note is within the threshold of the note to be copied to the source difficulty
-					targetnote = ctr;	//This note is higher in difficulty and is a more suitable note to copy to the destination difficulty
-					targetlength = eof_get_note_length(sp, srctrack, ctr);
-				}
-				else
-				{	//This note is too far away, consider it a different note
-					break;
-				}
+		if(eof_get_note_type(sp, srctrack, ctr) > srcdiff)
+			continue;	//If this note is above the source difficulty, skip it
+
+		targetnote = ctr;	//Track which note is to be copied to the source difficulty
+		targetpos = eof_get_note_pos(sp, srctrack, ctr);	//Track this note's position
+		targetlength = eof_get_note_length(sp, srctrack, ctr);	//This this note's length
+		for(; ctr < notecount; ctr++)
+		{	//For each of the remaining pre-existing notes in the track
+			if(eof_get_note_pos(sp, srctrack, ctr) <= targetpos + threshold)
+			{	//If this note is within the threshold of the note to be copied to the source difficulty
+				targetnote = ctr;	//This note is higher in difficulty and is a more suitable note to copy to the destination difficulty
+				targetlength = eof_get_note_length(sp, srctrack, ctr);
 			}
-			if((eof_get_note_type(sp, srctrack, targetnote) != destdiff) || (srctrack != desttrack))
-			{	//If the candidate note to be copied to the destination difficulty isn't already the note in the destination difficulty
-				if(!undo_made)
-				{	//If an undo state hasn't been made yet
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					undo_made = 1;
-				}
-				(void) eof_copy_note_simple(sp, srctrack, targetnote, desttrack, targetpos, targetlength, destdiff);	//Copy the note to the destination track difficulty
-				if(eof_get_note_flags(sp, srctrack, targetnote) & EOF_NOTE_FLAG_IS_TREMOLO)
-				{	//If the copied note has tremolo status
-					targetpos = eof_get_note_pos(sp, srctrack, targetnote);
-					(void) eof_track_add_section(sp, desttrack, EOF_TREMOLO_SECTION, destdiff, targetpos, targetpos + targetlength, 0, NULL);	//Add a tremolo phrase in the destination track difficulty
-				}
+			else
+			{	//This note is too far away, consider it a different note
+				break;
+			}
+		}
+		if((eof_get_note_type(sp, srctrack, targetnote) != destdiff) || (srctrack != desttrack))
+		{	//If the candidate note to be copied to the destination difficulty isn't already the note in the destination difficulty
+			if(!undo_made)
+			{	//If an undo state hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				undo_made = 1;
+			}
+			(void) eof_copy_note_simple(sp, srctrack, targetnote, desttrack, targetpos, targetlength, destdiff);	//Copy the note to the destination track difficulty
+			if(eof_get_note_flags(sp, srctrack, targetnote) & EOF_NOTE_FLAG_IS_TREMOLO)
+			{	//If the copied note has tremolo status
+				targetpos = eof_get_note_pos(sp, srctrack, targetnote);
+				(void) eof_track_add_section(sp, desttrack, EOF_TREMOLO_SECTION, destdiff, targetpos, targetpos + targetlength, 0, NULL);	//Add a tremolo phrase in the destination track difficulty
 			}
 		}
 	}
@@ -7838,23 +7845,23 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 		phrasecount = tp->handpositions;
 		for(ctr = 0; ctr < phrasecount; ctr++)
 		{	//For each pre-existing fret hand position in the source track
-			if(tp->handposition[ctr].difficulty <= srcdiff)
-			{	//If this hand position is at or below the target difficulty
-				if(!undo_made)
-				{	//If an undo state hasn't been made yet
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					undo_made = 1;
-				}
-				ptr = eof_pro_guitar_track_find_effective_fret_hand_position_definition(dtp, destdiff, tp->handposition[ctr].start_pos, NULL, NULL, 1);
-				if(ptr)
-				{	//If there is already a fret hand position at this position in the destination track difficulty
-					ptr->end_pos = dtp->handposition[ctr].end_pos;	//Update the existing fret hand position entry (end_pos is the fret number)
-				}
-				else
-				{	//Otherwise add the fret hand to the destination track difficulty by copying it from the source track
-					(void) eof_track_add_section(sp, desttrack, EOF_FRET_HAND_POS_SECTION, destdiff, tp->handposition[ctr].start_pos, tp->handposition[ctr].end_pos, 0, NULL);
-					eof_pro_guitar_track_sort_fret_hand_positions(dtp);	//Sort the positions
-				}
+			if(tp->handposition[ctr].difficulty > srcdiff)
+				continue;	//If this hand position is above the target difficulty, skip it
+
+			if(!undo_made)
+			{	//If an undo state hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				undo_made = 1;
+			}
+			ptr = eof_pro_guitar_track_find_effective_fret_hand_position_definition(dtp, destdiff, tp->handposition[ctr].start_pos, NULL, NULL, 1);
+			if(ptr)
+			{	//If there is already a fret hand position at this position in the destination track difficulty
+				ptr->end_pos = dtp->handposition[ctr].end_pos;	//Update the existing fret hand position entry (end_pos is the fret number)
+			}
+			else
+			{	//Otherwise add the fret hand to the destination track difficulty by copying it from the source track
+				(void) eof_track_add_section(sp, desttrack, EOF_FRET_HAND_POS_SECTION, destdiff, tp->handposition[ctr].start_pos, tp->handposition[ctr].end_pos, 0, NULL);
+				eof_pro_guitar_track_sort_fret_hand_positions(dtp);	//Sort the positions
 			}
 		}
 		//Remove consecutive hand positions using the same fret number
@@ -7881,41 +7888,42 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 		phrasecount = tp->arpeggios;
 		for(ctr = 0; ctr < phrasecount; ctr++)
 		{	//For each pre-existing arpeggio in the source track
-			if(tp->arpeggio[ctr].difficulty <= srcdiff)
-			{	//If this arpeggio is at or below the target difficulty, determine if this arpeggio overlaps with one already added to the destination track difficulty
-				ptr = NULL;
-				for(ctr2 = 0; ctr2 < dtp->arpeggios; ctr2++)
-				{	//For each arpeggio in the destination track
-					if(dtp->arpeggio[ctr].difficulty == destdiff)
-					{	//If the arpeggio is in the destination track difficulty
-						if((tp->arpeggio[ctr].start_pos <= dtp->arpeggio[ctr].end_pos) && (tp->arpeggio[ctr].end_pos >= dtp->arpeggio[ctr].start_pos))
-						{	//If the arpeggio section in the source track and the destination track difficulty overlap
-							ptr = &dtp->arpeggio[ctr];	//Store this arpeggio's address
-							break;
-						}
+			if(tp->arpeggio[ctr].difficulty > srcdiff)
+				continue;	//If this arpeggio is above the target difficulty, skip it
+
+			//Otherwise determine if this arpeggio overlaps with one already added to the destination track difficulty
+			ptr = NULL;
+			for(ctr2 = 0; ctr2 < dtp->arpeggios; ctr2++)
+			{	//For each arpeggio in the destination track
+				if(dtp->arpeggio[ctr].difficulty == destdiff)
+				{	//If the arpeggio is in the destination track difficulty
+					if((tp->arpeggio[ctr].start_pos <= dtp->arpeggio[ctr].end_pos) && (tp->arpeggio[ctr].end_pos >= dtp->arpeggio[ctr].start_pos))
+					{	//If the arpeggio section in the source track and the destination track difficulty overlap
+						ptr = &dtp->arpeggio[ctr];	//Store this arpeggio's address
+						break;
 					}
 				}
-				if(!undo_made)
-				{	//If an undo state hasn't been made yet
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					undo_made = 1;
+			}
+			if(!undo_made)
+			{	//If an undo state hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				undo_made = 1;
+			}
+			if(ptr)
+			{	//If there is already an arpeggio at this position in the destination track difficulty
+				if(tp->arpeggio[ctr].start_pos < ptr->start_pos)
+				{	//Update the starting position to the earlier of the arpeggios
+					ptr->start_pos = tp->arpeggio[ctr].start_pos;
 				}
-				if(ptr)
-				{	//If there is already an arpeggio at this position in the destination track difficulty
-					if(tp->arpeggio[ctr].start_pos < ptr->start_pos)
-					{	//Update the starting position to the earlier of the arpeggios
-						ptr->start_pos = tp->arpeggio[ctr].start_pos;
-					}
-					if(tp->arpeggio[ctr].end_pos > ptr->end_pos)
-					{	//Update the ending position to the later of the arpeggios
-						ptr->end_pos = tp->arpeggio[ctr].end_pos;
-					}
+				if(tp->arpeggio[ctr].end_pos > ptr->end_pos)
+				{	//Update the ending position to the later of the arpeggios
+					ptr->end_pos = tp->arpeggio[ctr].end_pos;
 				}
-				else
-				{	//Otherwise add the arpeggio to the destination track difficulty by copying it from the source track
-					(void) eof_track_add_section(sp, desttrack, EOF_ARPEGGIO_SECTION, destdiff, tp->arpeggio[ctr].start_pos, tp->arpeggio[ctr].end_pos, 0, NULL);
-					tp->arpeggio[tp->arpeggios - 1].flags = tp->arpeggio[ctr].flags;	//Copy the arpeggio flags in case it was a handshape that was copied
-				}
+			}
+			else
+			{	//Otherwise add the arpeggio to the destination track difficulty by copying it from the source track
+				(void) eof_track_add_section(sp, desttrack, EOF_ARPEGGIO_SECTION, destdiff, tp->arpeggio[ctr].start_pos, tp->arpeggio[ctr].end_pos, 0, NULL);
+				tp->arpeggio[tp->arpeggios - 1].flags = tp->arpeggio[ctr].flags;	//Copy the arpeggio flags in case it was a handshape that was copied
 			}
 		}//For each pre-existing arpeggio in the source track
 		eof_track_fixup_notes(sp, desttrack, 1);	//Run cleanup logic to create base chords for arpeggio/handshape phrases if applicable
@@ -7990,35 +7998,35 @@ void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsign
 			}
 
 			//Update notes
-			if((notetype >= diff) && (notepos >= startpos) && (notepos <= endpos))
-			{	//If the note meets the criteria to be altered
-				if(!*undo_made)
-				{	//If an undo state hasn't been made yet
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					*undo_made = 1;
-				}
-				if(notetype == diff)
-				{	//If this note is in the target difficulty
-					if(function < 0)
-					{	//If the delete level function is being performed, this note will be deleted
-						eof_track_delete_note(sp, track, ctr - 1);
-					}
-					else
-					{	//The add level function is being performed, this note will be duplicated into the next higher difficulty instead of just having its difficulty incremented
-						long length = eof_get_note_length(sp, track, ctr - 1);
-						(void) eof_copy_note_simple(sp, track, ctr - 1, track, notepos, length, diff + 1);
-					}
+			if((notetype < diff) || (notepos < startpos) || (notepos > endpos))
+				continue;	//If the note does not meet the criteria to be altered, skip the logic below
+
+			if(!*undo_made)
+			{	//If an undo state hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				*undo_made = 1;
+			}
+			if(notetype == diff)
+			{	//If this note is in the target difficulty
+				if(function < 0)
+				{	//If the delete level function is being performed, this note will be deleted
+					eof_track_delete_note(sp, track, ctr - 1);
 				}
 				else
-				{	//This note is in a higher difficulty (the outer if statement filters out notes in lower difficulties)
-					if(function < 0)
-					{	//If the delete level function is being performed, this note will have its difficulty decremented
-						eof_set_note_type(sp, track, ctr - 1, notetype - 1);	//Decrement the note's difficulty
-					}
-					else
-					{	//The add level function is being performed, this note will have its difficulty incremented
-						eof_set_note_type(sp, track, ctr - 1, notetype + 1);	//Increment the note's difficulty
-					}
+				{	//The add level function is being performed, this note will be duplicated into the next higher difficulty instead of just having its difficulty incremented
+					long length = eof_get_note_length(sp, track, ctr - 1);
+					(void) eof_copy_note_simple(sp, track, ctr - 1, track, notepos, length, diff + 1);
+				}
+			}
+			else
+			{	//This note is in a higher difficulty (the outer if statement filters out notes in lower difficulties)
+				if(function < 0)
+				{	//If the delete level function is being performed, this note will have its difficulty decremented
+					eof_set_note_type(sp, track, ctr - 1, notetype - 1);	//Decrement the note's difficulty
+				}
+				else
+				{	//The add level function is being performed, this note will have its difficulty incremented
+					eof_set_note_type(sp, track, ctr - 1, notetype + 1);	//Increment the note's difficulty
 				}
 			}
 		}//For each note in the track (in reverse order)
@@ -8032,32 +8040,32 @@ void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsign
 		for(ctr = eof_get_num_arpeggios(sp, track); ctr > 0; ctr--)
 		{	//For each arpeggio section in the track (in reverse order)
 			ptr = &tp->arpeggio[ctr - 1];	//Simplify
-			if((ptr->difficulty >= diff) && (ptr->start_pos <= endpos) && (ptr->end_pos >= startpos))
-			{	//If this arpeggio overlaps at all with the phrase being manipulated and is in a difficulty level that this function affects
-				if(ptr->difficulty == diff)
-				{	//If this arpeggio is in the active difficulty
-					if(function < 0)
-					{	//If the delete level function is being performed, this arpeggio will be deleted
-						eof_track_delete_arpeggio(sp, track, ctr - 1);
-					}
-					else
-					{	//The add level function is being performed, this arpeggio will be duplicated into the next higher difficulty instead of just having its difficulty incremented
-						EOF_PHRASE_SECTION *newptr;
-						(void) eof_track_add_section(sp, track, EOF_ARPEGGIO_SECTION, diff + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
-						newptr = &tp->arpeggio[tp->arpeggios - 1];	//Pointer to the new arpeggio phrase
-						newptr->flags = ptr->flags;	//Copy the arpeggio flags in case it was a handshape that was copied
-					}
+			if((ptr->difficulty < diff) || (ptr->start_pos > endpos) || (ptr->end_pos < startpos))
+				continue;	//If this arpeggio is not in a difficulty that this function affects or if it does not overlap with the phrase being manipulated, skip it
+
+			if(ptr->difficulty == diff)
+			{	//If this arpeggio is in the active difficulty
+				if(function < 0)
+				{	//If the delete level function is being performed, this arpeggio will be deleted
+					eof_track_delete_arpeggio(sp, track, ctr - 1);
 				}
 				else
-				{
-					if(function < 0)
-					{	//If the delete level function is being performed, this arpeggio will have its difficulty decremented
-						ptr->difficulty--;	//Decrement the arpeggio's difficulty
-					}
-					else
-					{	//The add level function is being performed, this arpeggio will have its difficulty incremented
-						ptr->difficulty++;	//Increment the arpeggio's difficulty
-					}
+				{	//The add level function is being performed, this arpeggio will be duplicated into the next higher difficulty instead of just having its difficulty incremented
+					EOF_PHRASE_SECTION *newptr;
+					(void) eof_track_add_section(sp, track, EOF_ARPEGGIO_SECTION, diff + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
+					newptr = &tp->arpeggio[tp->arpeggios - 1];	//Pointer to the new arpeggio phrase
+					newptr->flags = ptr->flags;	//Copy the arpeggio flags in case it was a handshape that was copied
+				}
+			}
+			else
+			{
+				if(function < 0)
+				{	//If the delete level function is being performed, this arpeggio will have its difficulty decremented
+					ptr->difficulty--;	//Decrement the arpeggio's difficulty
+				}
+				else
+				{	//The add level function is being performed, this arpeggio will have its difficulty incremented
+					ptr->difficulty++;	//Increment the arpeggio's difficulty
 				}
 			}
 		}
@@ -8066,29 +8074,29 @@ void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsign
 		for(ctr = tp->handpositions; ctr > 0; ctr--)
 		{	//For each fret hand position in the track (in reverse order)
 			ptr = &tp->handposition[ctr - 1];	//Simplify
-			if((ptr->difficulty >= diff) && (ptr->start_pos >= startpos) && (ptr->start_pos <= endpos))
-			{	//If this fret hand position is within the phrase being manipulated and is in a difficulty level that this function affects
-				if(ptr->difficulty == diff)
-				{	//If this fret hand position is in the active difficulty, it will be duplicated into the next higher difficulty instead of just having its difficulty incremented
-					if(function < 0)
-					{	//If the delete level function is being performed, this fret hand position will be deleted
-						eof_pro_guitar_track_delete_hand_position(tp, ctr - 1);
-					}
-					else
-					{	//The add level function is being performed, this fret hand position will be duplicated into the next higher difficulty instead of just having its difficulty incremented
-						(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, diff + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
-					}
+			if((ptr->difficulty < diff) || (ptr->start_pos < startpos) || (ptr->start_pos > endpos))
+				continue;	//If this fret hand position is not in a difficulty level that this function effects or if it is not within the phrase being manipulated, skip it
+
+			if(ptr->difficulty == diff)
+			{	//If this fret hand position is in the active difficulty, it will be duplicated into the next higher difficulty instead of just having its difficulty incremented
+				if(function < 0)
+				{	//If the delete level function is being performed, this fret hand position will be deleted
+					eof_pro_guitar_track_delete_hand_position(tp, ctr - 1);
 				}
 				else
-				{
-					if(function < 0)
-					{	//If the delete level function is being performed, this fret hand position will have its difficulty decremented
-						ptr->difficulty--;	//Decrement the fret hand position's difficulty
-					}
-					else
-					{	//The add level function is being performed, this fret hand position will have its difficulty incremented
-						ptr->difficulty++;	//Increment the fret hand position's difficulty
-					}
+				{	//The add level function is being performed, this fret hand position will be duplicated into the next higher difficulty instead of just having its difficulty incremented
+					(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, diff + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
+				}
+			}
+			else
+			{
+				if(function < 0)
+				{	//If the delete level function is being performed, this fret hand position will have its difficulty decremented
+					ptr->difficulty--;	//Decrement the fret hand position's difficulty
+				}
+				else
+				{	//The add level function is being performed, this fret hand position will have its difficulty incremented
+					ptr->difficulty++;	//Increment the fret hand position's difficulty
 				}
 			}
 		}
@@ -8098,33 +8106,33 @@ void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsign
 		for(ctr = eof_get_num_tremolos(sp, track); ctr > 0; ctr--)
 		{	//For each tremolo section in the track (in reverse order)
 			ptr = &tp->tremolo[ctr - 1];	//Simplify
-			if((ptr->difficulty >= diff) && (ptr->start_pos <= endpos) && (ptr->end_pos >= startpos))
-			{	//If this tremolo overlaps at all with the phrase being manipulated and is in a difficulty level that this function affects
-				if(ptr->difficulty == 0xFF)
-				{	//If this tremolo is not difficulty specific
-					continue;	//Don't manipulate it in this function
-				}
-				if(ptr->difficulty == diff)
-				{	//If this tremolo is in the active difficulty
-					if(function < 0)
-					{	//If the delete level function is being performed, this tremolo will be deleted
-						eof_track_delete_tremolo(sp, track, ctr - 1);
-					}
-					else
-					{	//The add level function is being performed, this tremolo will be duplicated into the next higher difficulty instead of just having its difficulty incremented
-						(void) eof_track_add_section(sp, track, EOF_TREMOLO_SECTION, diff + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
-					}
+			if((ptr->difficulty < diff) || (ptr->start_pos > endpos) || (ptr->end_pos < startpos))
+				continue;	//If this tremolo is not in a difficulty level that this function affects or it does not overlap with the phrase being manipulated, skip it
+
+			if(ptr->difficulty == 0xFF)
+			{	//If this tremolo is not difficulty specific
+				continue;	//Don't manipulate it in this function
+			}
+			if(ptr->difficulty == diff)
+			{	//If this tremolo is in the active difficulty
+				if(function < 0)
+				{	//If the delete level function is being performed, this tremolo will be deleted
+					eof_track_delete_tremolo(sp, track, ctr - 1);
 				}
 				else
-				{
-					if(function < 0)
-					{	//If the delete level function is being performed, this tremolo will have its difficulty decremented
-						ptr->difficulty--;	//Decrement the tremolo's difficulty
-					}
-					else
-					{	//The add level function is being performed, this tremolo will have its difficulty incremented
-						ptr->difficulty++;	//Increment the tremolo's difficulty
-					}
+				{	//The add level function is being performed, this tremolo will be duplicated into the next higher difficulty instead of just having its difficulty incremented
+					(void) eof_track_add_section(sp, track, EOF_TREMOLO_SECTION, diff + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
+				}
+			}
+			else
+			{
+				if(function < 0)
+				{	//If the delete level function is being performed, this tremolo will have its difficulty decremented
+					ptr->difficulty--;	//Decrement the tremolo's difficulty
+				}
+				else
+				{	//The add level function is being performed, this tremolo will have its difficulty incremented
+					ptr->difficulty++;	//Increment the tremolo's difficulty
 				}
 			}
 		}
@@ -8145,30 +8153,31 @@ void eof_unflatten_difficulties(EOF_SONG *sp, unsigned long track)
 
 	for(beatctr = 0; beatctr < sp->beats; beatctr++)
 	{	//For each beat in the project
-		if((sp->beat[beatctr]->contained_section_event >= 0) || ((beatctr + 1 >= sp->beats) && started))
-		{	//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
-			if(started)
-			{	//If the first phrase marker has been encountered, this beat marks the end of a phrase
-				endpos = sp->beat[beatctr]->pos - 1;	//Track this as the end position of the phrase
+		if((sp->beat[beatctr]->contained_section_event < 0) && ((beatctr + 1 < sp->beats) || !started))
+			continue;	//If this beat has no section event (RS phrase) and either this isn't the last beat or no phrase is in progress, skip it
 
-				//Remove the higher of two difficulties' identical phrases
-				for(diffctr = 255; diffctr > 0; diffctr--)
-				{	//For each difficulty, in reverse order
-					if(eof_track_diff_populated_status[diffctr])
-					{	//If this difficulty is populated
-						if(!eof_compare_time_range_with_previous_or_next_difficulty(sp, track, startpos, endpos, diffctr, -1))
-						{	//If the notes of this phrase are the same between this difficulty and the previous
-							eof_track_add_or_remove_track_difficulty_content_range(sp, track, diffctr, startpos, endpos, -1, prompt, &undo_made);	//Level down the content of this time range of the track difficulty
-							prompt = 3;	//Ensure that subsequent calls to the above function don't check note alignment for this phrase
-						}
+		//Otherwise it marks the end of any current phrase and the potential start of another
+		if(started)
+		{	//If the first phrase marker has been encountered, this beat marks the end of a phrase
+			endpos = sp->beat[beatctr]->pos - 1;	//Track this as the end position of the phrase
+
+			//Remove the higher of two difficulties' identical phrases
+			for(diffctr = 255; diffctr > 0; diffctr--)
+			{	//For each difficulty, in reverse order
+				if(eof_track_diff_populated_status[diffctr])
+				{	//If this difficulty is populated
+					if(!eof_compare_time_range_with_previous_or_next_difficulty(sp, track, startpos, endpos, diffctr, -1))
+					{	//If the notes of this phrase are the same between this difficulty and the previous
+						eof_track_add_or_remove_track_difficulty_content_range(sp, track, diffctr, startpos, endpos, -1, prompt, &undo_made);	//Level down the content of this time range of the track difficulty
+						prompt = 3;	//Ensure that subsequent calls to the above function don't check note alignment for this phrase
 					}
 				}
-			}//If the first phrase marker has been encountered, this beat marks the end of a phrase
+			}
+		}//If the first phrase marker has been encountered, this beat marks the end of a phrase
 
-			started = 1;	//Track that a phrase has been encountered
-			prompt = 0;		//The next call to eof_track_add_or_remove_track_difficulty_content_range() will check note alignment for the beginning of this phrase
-			startpos = eof_song->beat[beatctr]->pos;	//Track the starting position of the phrase
-		}//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
+		started = 1;	//Track that a phrase has been encountered
+		prompt = 0;		//The next call to eof_track_add_or_remove_track_difficulty_content_range() will check note alignment for the beginning of this phrase
+		startpos = eof_song->beat[beatctr]->pos;	//Track the starting position of the phrase
 	}//For each beat in the project
 
 	sp->track[track]->numdiffs = eof_detect_difficulties(sp, track);	//Rebuild the eof_track_diff_populated_status[] array, and update the track's difficulty count
@@ -8521,26 +8530,26 @@ char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned
 		{	//If this regular note (and all those that follow) are after this tech note's position
 			break;		//Break from loop
 		}
-		if((tp->technote[technote]->type == np->type) && (mask & np->note))
-		{	//If the pro guitar note is in the same difficulty as the tech note and uses any of the specified strings
-			if(np->pos == techpos)
-			{	//If this regular note is at the same timestamp as the tech note
-				if(note_num)
-				{	//If the calling function passed a non NULL pointer
-					*note_num = ctr;	//Pass the overlapping note number by reference
-				}
-				eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Re-enable tech view if applicable
-				return 1;	//Return overlap found at start of note
+		if((tp->technote[technote]->type != np->type) || !(mask & np->note))
+			continue;	//If the pro guitar note is not in the same difficulty as the tech note or if it doesn't use any of the specified strings, skip it
+
+		if(np->pos == techpos)
+		{	//If this regular note is at the same timestamp as the tech note
+			if(note_num)
+			{	//If the calling function passed a non NULL pointer
+				*note_num = ctr;	//Pass the overlapping note number by reference
 			}
-			if((techpos >= np->pos) && (techpos <= np->pos + notelen))
-			{	//If the tech note overlaps this regular note
-				if(note_num)
-				{	//If the calling function passed a non NULL pointer
-					*note_num = ctr;	//Pass the overlapping note number by reference
-				}
-				eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Re-enable tech view if applicable
-				return 2;	//Return overlap found within a note
+			eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Re-enable tech view if applicable
+			return 1;	//Return overlap found at start of note
+		}
+		if((techpos >= np->pos) && (techpos <= np->pos + notelen))
+		{	//If the tech note overlaps this regular note
+			if(note_num)
+			{	//If the calling function passed a non NULL pointer
+				*note_num = ctr;	//Pass the overlapping note number by reference
 			}
+			eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Re-enable tech view if applicable
+			return 2;	//Return overlap found within a note
 		}
 	}
 
@@ -8633,37 +8642,37 @@ EOF_SONG *eof_clone_chart_time_range(EOF_SONG *sp, unsigned long start, unsigned
 	//Clone beat map
 	for(ctr = 0; ctr < sp->beats; ctr++)
 	{	//For each beat in the source chart
-		if((sp->beat[ctr]->pos >= start) && (sp->beat[ctr]->pos <= end))
-		{	//If the beat is in the time range being cloned
-			if(firstbeat)
-			{	//If this is the first beat being cloned
-				beatoffset = ctr;	//Track that this corresponds to the first beat in the destination project
+		if((sp->beat[ctr]->pos < start) || (sp->beat[ctr]->pos > end))
+			continue;	//If the beat is not in the time range being cloned, skip it
 
-				if(sp->beat[ctr]->pos != start)
-				{	//If it is not at the beginning of the time range, an additional beat will be inserted to account for this
-					if(!eof_song_add_beat(csp))
-					{	//If a beat couldn't be added to the destination project
-						eof_destroy_song(csp);
-						return NULL;
-					}
-					csp->beat[0]->pos = start;	//Initialize the first beat to match the start of the export time range
-					csp->beat[0]->fpos = start;
-					beatoffset--;			//Update the offset to reflect that the offset for text events is one beat further into the project
+		if(firstbeat)
+		{	//If this is the first beat being cloned
+			beatoffset = ctr;	//Track that this corresponds to the first beat in the destination project
+
+			if(sp->beat[ctr]->pos != start)
+			{	//If it is not at the beginning of the time range, an additional beat will be inserted to account for this
+				if(!eof_song_add_beat(csp))
+				{	//If a beat couldn't be added to the destination project
+					eof_destroy_song(csp);
+					return NULL;
 				}
+				csp->beat[0]->pos = start;	//Initialize the first beat to match the start of the export time range
+				csp->beat[0]->fpos = start;
+				beatoffset--;			//Update the offset to reflect that the offset for text events is one beat further into the project
 			}
-
-			//Clone the beat into the destination project
-			if(!eof_song_add_beat(csp))
-			{	//If a beat couldn't be added to the destination project
-				eof_destroy_song(csp);
-				return NULL;
-			}
-			memcpy(csp->beat[csp->beats - 1], sp->beat[ctr], sizeof(EOF_BEAT_MARKER));
-			csp->beat[csp->beats - 1]->fpos -= start;	//Offset the position of the new beat
-			csp->beat[csp->beats - 1]->pos -= start;
-
-			firstbeat = 0;
 		}
+
+		//Clone the beat into the destination project
+		if(!eof_song_add_beat(csp))
+		{	//If a beat couldn't be added to the destination project
+			eof_destroy_song(csp);
+			return NULL;
+		}
+		memcpy(csp->beat[csp->beats - 1], sp->beat[ctr], sizeof(EOF_BEAT_MARKER));
+		csp->beat[csp->beats - 1]->fpos -= start;	//Offset the position of the new beat
+		csp->beat[csp->beats - 1]->pos -= start;
+
+		firstbeat = 0;
 	}
 
 	//Clone text events

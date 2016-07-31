@@ -1353,6 +1353,8 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	for(ctr=0,mask=1; ctr < eof_count_track_lanes(eof_song, track); ctr++,mask=mask<<1)
 	{	//For each of the lanes in this track
 		unsigned long nextnotenum;
+		long npos2, rz2;
+		unsigned long notepos2, nextnotenote, ctr2, mask2;		//Used for slide note rendering
 
 		assert(ctr < EOF_MAX_FRETS);	//Put an assertion here to resolve a false positive with Coverity
 		if(!(notenote & mask))
@@ -1465,36 +1467,34 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 			continue;	//If there isn't another note in this difficulty, don't render a slider phrase for a single note
 
 		nextnotenum = eof_track_fixup_next_note(eof_song, track, notenum);
-		if(eof_get_note_flags(eof_song, track, nextnotenum) & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
-		{	//If that next note is also a slider note, draw a dark purple line between this note and the next
-			long npos2, rz2;
-			unsigned long notepos2, nextnotenote, ctr2, mask2;		//Used for slide note rendering
+		if(!(eof_get_note_flags(eof_song, track, nextnotenum) & EOF_GUITAR_NOTE_FLAG_IS_SLIDER))
+			continue;	//If that next note is not also a slider note, skip the logic to render the slider phrase
 
-			nextnotenote = eof_get_note_note(eof_song, track, nextnotenum);
-			for(ctr2=0,mask2=1; ctr2 < eof_count_track_lanes(eof_song, track); ctr2++,mask2=mask2<<1)
-			{
-				if(nextnotenote & mask2)
-				{	//If this lane is populated for the next note
-					break;
-				}
+		//Otherwise draw a dark purple line between this note and the next
+		nextnotenote = eof_get_note_note(eof_song, track, nextnotenum);
+		for(ctr2=0,mask2=1; ctr2 < eof_count_track_lanes(eof_song, track); ctr2++,mask2=mask2<<1)
+		{
+			if(nextnotenote & mask2)
+			{	//If this lane is populated for the next note
+				break;
 			}
-
-			notepos2 = eof_get_note_pos(eof_song, track, nextnotenum);	//Find the position of the next note
-			npos2 = (long)(notepos2 + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
-			rz2 = npos2 < -100 ? -100 : npos2 + 10;
-
-			//Define the slide rectangle coordinates in clockwise order
-			point[0] = ocd3d_project_x(xchart[ctr], rz);	//X1 (X coordinate of the front end of the slide): The X position of this note
-			point[1] = ocd3d_project_y(200, rz);			//Y1 (Y coordinate of the front end of the slide): The Y position of this note
-			point[2] = ocd3d_project_x(xchart[ctr2], rz2);	//X2 (X coordinate of the back end of the slide): The X position of the next note
-			point[3] = ocd3d_project_y(200, rz2);			//Y2 (Y coordinate of the back end of the slide): The Y position of the next note
-
-			point[4] = point[2] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X3 (the specified number of pixels right of X2)
-			point[5] = point[3];							//Y3 (Y coordinate of the back end of the slide)
-			point[6] = point[0] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X4 (the specified number of pixels right of X1)
-			point[7] = point[1];							//Y4 (Y coordinate of the front end of the slide)
-			polygon(eof_window_3d->screen, 4, point, eof_color_dark_purple);	//Render the 4 point polygon in dark purple
 		}
+
+		notepos2 = eof_get_note_pos(eof_song, track, nextnotenum);	//Find the position of the next note
+		npos2 = (long)(notepos2 + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
+		rz2 = npos2 < -100 ? -100 : npos2 + 10;
+
+		//Define the slide rectangle coordinates in clockwise order
+		point[0] = ocd3d_project_x(xchart[ctr], rz);	//X1 (X coordinate of the front end of the slide): The X position of this note
+		point[1] = ocd3d_project_y(200, rz);			//Y1 (Y coordinate of the front end of the slide): The Y position of this note
+		point[2] = ocd3d_project_x(xchart[ctr2], rz2);	//X2 (X coordinate of the back end of the slide): The X position of the next note
+		point[3] = ocd3d_project_y(200, rz2);			//Y2 (Y coordinate of the back end of the slide): The Y position of the next note
+
+		point[4] = point[2] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X3 (the specified number of pixels right of X2)
+		point[5] = point[3];							//Y3 (Y coordinate of the back end of the slide)
+		point[6] = point[0] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X4 (the specified number of pixels right of X1)
+		point[7] = point[1];							//Y4 (Y coordinate of the front end of the slide)
+		polygon(eof_window_3d->screen, 4, point, eof_color_dark_purple);	//Render the 4 point polygon in dark purple
 	}//For each of the lanes in this track
 	return 0;
 }
