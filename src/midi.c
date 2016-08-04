@@ -3376,7 +3376,7 @@ int eof_apply_ts(unsigned num, unsigned den, unsigned long beatnum, EOF_SONG *sp
 
 	if((sp == NULL) || (beatnum >= sp->beats))
 		return 0;	//Invalid parameters
-	if((num <= 0) || (num > 256) || ((den != 1) && (den != 2) && (den != 4) && (den != 8) && (den != 16) && (den != 32) && (den != 64) && (den != 128) && (den != 256)))
+	if((num == 0) || (num > 256) || ((den != 1) && (den != 2) && (den != 4) && (den != 8) && (den != 16) && (den != 32) && (den != 64) && (den != 128) && (den != 256)))
 		return 0;	//If a valid time signature wasn't specified, return error
 
 	//Clear the beat's status except for its anchor, event and key signature flags

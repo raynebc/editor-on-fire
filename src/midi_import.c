@@ -2757,7 +2757,7 @@ set_window_title(debugtext);
 						{	//Check for each note that has been imported
 							unsigned long newflags;
 
-							if((eof_get_note_type(sp, picked_track, k - 1) != strumdiff) | (eof_get_note_pos(sp, picked_track, k - 1) < strumpos[strumdiff]) || (eof_get_note_pos(sp, picked_track, k - 1) > event_realtime))
+							if((eof_get_note_type(sp, picked_track, k - 1) != strumdiff) || (eof_get_note_pos(sp, picked_track, k - 1) < strumpos[strumdiff]) || (eof_get_note_pos(sp, picked_track, k - 1) > event_realtime))
 								continue;	//If the note isn't in the same difficulty as the strum direction marker, or its timestamp falls outside the start and stop time of the marker, skip this note
 
 							newflags = eof_get_note_flags(sp, picked_track, k - 1);

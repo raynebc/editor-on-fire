@@ -721,31 +721,30 @@ int eof_menu_beat_ts_convert(void)
 
 	if(!eof_song->tags->accurate_ts)
 		return 1;	//Don't allow this function to run if the accurate TS chart option is not enabled
+	if(!eof_menu_beat_ts_custom_dialog(0))
+		return 1;	//If a valid time signature was not chosen and applied, return immediately
 
-	if(eof_menu_beat_ts_custom_dialog(0))
-	{	//If a valid time signature was chosen and applied
-		(void) eof_get_ts(eof_song, &num, &den, eof_selected_beat);	//Obtain the new TS
-		for(ctr = eof_selected_beat; ctr + 1 < eof_song->beats;)
-		{	//For each beat that has a beat that follows it, starting with the selected one
-			eof_song->beat[ctr]->ppqn = 1000 * (eof_song->beat[ctr + 1]->pos - eof_song->beat[ctr]->pos);	//Calculate the tempo of the beat by getting its length (this is the formula "beat_length = 60000 / BPM" rewritten to solve for ppqn)
-			if(den != 4)
-			{	//If the time signature needs to be taken into account
-				eof_song->beat[ctr]->ppqn *= (double)den / 4.0;	//Adjust for it
-			}
-			ctr++;	//Iterate to next beat
-			if(eof_get_ts(eof_song, &num, &den, ctr) == 1)
-			{	//If the next beat has a time signature change
-				eof_song->beat[ctr]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Anchor it to be safe
-				break;
-			}
+	(void) eof_get_ts(eof_song, &num, &den, eof_selected_beat);	//Obtain the new TS
+	for(ctr = eof_selected_beat; ctr + 1 < eof_song->beats;)
+	{	//For each beat that has a beat that follows it, starting with the selected one
+		eof_song->beat[ctr]->ppqn = 1000 * (eof_song->beat[ctr + 1]->pos - eof_song->beat[ctr]->pos);	//Calculate the tempo of the beat by getting its length (this is the formula "beat_length = 60000 / BPM" rewritten to solve for ppqn)
+		if(den != 4)
+		{	//If the time signature needs to be taken into account
+			eof_song->beat[ctr]->ppqn *= (double)den / 4.0;	//Adjust for it
 		}
-		if(eof_selected_beat > 0)
-		{	//If a beat other than the first one is selected, determine if it now needs to be anchored
-			(void) eof_get_effective_ts(eof_song, NULL, &prevden, eof_selected_beat - 1);	//Determine what TS is in effect at the previous beat
-			if((prevden != den) || (eof_song->beat[eof_selected_beat]->ppqn != eof_song->beat[eof_selected_beat - 1]->ppqn))
-			{	//If the time signature denominator or the tempo is different from the previous beat
-				eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Set the anchor flag
-			}
+		ctr++;	//Iterate to next beat
+		if(eof_get_ts(eof_song, &num, &den, ctr) == 1)
+		{	//If the next beat has a time signature change
+			eof_song->beat[ctr]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Anchor it to be safe
+			break;
+		}
+	}
+	if(eof_selected_beat > 0)
+	{	//If a beat other than the first one is selected, determine if it now needs to be anchored
+		(void) eof_get_effective_ts(eof_song, NULL, &prevden, eof_selected_beat - 1);	//Determine what TS is in effect at the previous beat
+		if((prevden != den) || (eof_song->beat[eof_selected_beat]->ppqn != eof_song->beat[eof_selected_beat - 1]->ppqn))
+		{	//If the time signature denominator or the tempo is different from the previous beat
+			eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Set the anchor flag
 		}
 	}
 
@@ -834,29 +833,30 @@ int eof_menu_beat_push_offset_back(char *undo_made)
 		return 0;	//Error condition
 
 	backamount = eof_song->beat[1]->pos - eof_song->beat[0]->pos;
-	if(eof_song->beat[0]->pos >= backamount)
-	{
-		if(*undo_made == 0)
-		{	//If an undo state needs to be made
-			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			*undo_made = 1;
-		}
-		if(eof_song_resize_beats(eof_song, eof_song->beats + 1))
-		{	//If the beats array was successfully resized
-			for(i = eof_song->beats - 1; i > 0; i--)
-			{
-				memcpy(eof_song->beat[i], eof_song->beat[i - 1], sizeof(EOF_BEAT_MARKER));
-			}
-			eof_song->beat[0]->pos = eof_song->beat[1]->pos - backamount;
-			eof_song->beat[0]->fpos = eof_song->beat[0]->pos;
-			eof_song->beat[1]->flags = 0;
-			eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
-			eof_move_text_events(eof_song, 0, 1, 1);
-			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
-		}
-		else
-			return 0;	//Return failure
+	if(eof_song->beat[0]->pos < backamount)
+		return 1;	//If the first beat isn't at least one beat length away from 0ms, don't change anything
+
+	if(*undo_made == 0)
+	{	//If an undo state needs to be made
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		*undo_made = 1;
 	}
+	if(eof_song_resize_beats(eof_song, eof_song->beats + 1))
+	{	//If the beats array was successfully resized
+		for(i = eof_song->beats - 1; i > 0; i--)
+		{
+			memcpy(eof_song->beat[i], eof_song->beat[i - 1], sizeof(EOF_BEAT_MARKER));
+		}
+		eof_song->beat[0]->pos = eof_song->beat[1]->pos - backamount;
+		eof_song->beat[0]->fpos = eof_song->beat[0]->pos;
+		eof_song->beat[1]->flags = 0;
+		eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
+		eof_move_text_events(eof_song, 0, 1, 1);
+		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+	}
+	else
+		return 0;	//Return failure
+
 	return 1;	//Return success
 }
 
@@ -893,6 +893,9 @@ int eof_menu_beat_reset_offset(void)
 	double newbpm;
 	char undo_made = 0;
 
+	if(eof_song->beat[0]->pos == 0)
+		return 1;	//If the MIDI delay is already zero, return without changing anything
+
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 	{
 		eof_clear_input();
@@ -921,33 +924,31 @@ int eof_menu_beat_reset_offset(void)
 		}
 	}
 
-	if(eof_song->beat[0]->pos > 0)
-	{	//Only allow this function to run if the current MIDI delay is above zero
-		if(!undo_made)
-		{	//If an undo state hasn't been made yet
-			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		}
-		if(eof_song_resize_beats(eof_song, eof_song->beats + 1))
-		{	//If the beats array was successfully resized
-			for(i = eof_song->beats - 1; i > 0; i--)
-			{
-				memcpy(eof_song->beat[i], eof_song->beat[i - 1], sizeof(EOF_BEAT_MARKER));
-			}
-			eof_song->beat[0]->pos = eof_song->beat[0]->fpos = 0;
-			eof_song->beat[0]->flags = eof_song->beat[1]->flags;	//Copy the flags (ie. Time Signature) of the original first beat marker
-			eof_song->tags->ogg[eof_selected_ogg].midi_offset = 0;
-			newbpm = 60000.0 / eof_song->beat[1]->pos;	//60000ms / length of new beat (the MIDI delay) = Tempo
-			eof_song->beat[0]->ppqn = 60000000.0 / newbpm;	//60000000usec_per_minute / tempo = PPQN
-			eof_move_text_events(eof_song, 0, 1, 1);
-			if(eof_song->beat[1]->ppqn != eof_song->beat[0]->ppqn)
-			{	//If this operation caused the first and second beat markers to have different tempos,
-				eof_song->beat[1]->flags = EOF_BEAT_FLAG_ANCHOR;		//Set the second beat marker's anchor flag
-			}
-			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
-		}
-		else
-			return 0;	//Return failure
+	if(!undo_made)
+	{	//If an undo state hasn't been made yet
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	}
+	if(eof_song_resize_beats(eof_song, eof_song->beats + 1))
+	{	//If the beats array was successfully resized
+		for(i = eof_song->beats - 1; i > 0; i--)
+		{
+			memcpy(eof_song->beat[i], eof_song->beat[i - 1], sizeof(EOF_BEAT_MARKER));
+		}
+		eof_song->beat[0]->pos = eof_song->beat[0]->fpos = 0;
+		eof_song->beat[0]->flags = eof_song->beat[1]->flags;	//Copy the flags (ie. Time Signature) of the original first beat marker
+		eof_song->tags->ogg[eof_selected_ogg].midi_offset = 0;
+		newbpm = 60000.0 / eof_song->beat[1]->pos;	//60000ms / length of new beat (the MIDI delay) = Tempo
+		eof_song->beat[0]->ppqn = 60000000.0 / newbpm;	//60000000usec_per_minute / tempo = PPQN
+		eof_move_text_events(eof_song, 0, 1, 1);
+		if(eof_song->beat[1]->ppqn != eof_song->beat[0]->ppqn)
+		{	//If this operation caused the first and second beat markers to have different tempos,
+			eof_song->beat[1]->flags = EOF_BEAT_FLAG_ANCHOR;		//Set the second beat marker's anchor flag
+		}
+		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+	}
+	else
+		return 0;	//Return failure
+
 	return 1;	//Return success
 }
 
@@ -1458,47 +1459,46 @@ char * eof_events_list(int index, int * size)
 
 	for(i = 0; i < eof_song->text_events; i++)
 	{
-		if(eof_song->text_event[i]->beat == eof_selected_beat)
-		{
-			if(ecount < EOF_MAX_TEXT_EVENTS)
-			{
-				if((eof_song->text_event[i]->track != 0) || (eof_song->text_event[i]->flags != 0))
-				{	//If this event is track specific or has any flags set
-					if((eof_song->text_event[i]->track != 0) && (eof_song->text_event[i]->track < eof_song->tracks))
-					{	//If this is a track specific event
-						(void) snprintf(trackname, sizeof(trackname) - 1, "%s", eof_song->track[eof_song->text_event[i]->track]->name);
-						if(eof_song->text_event[i]->flags != 0)
-						{	//If the event has any other flags set
-							(void) strncat(trackname, ", ", sizeof(trackname) - strlen(trackname) - 1);	//Append a comma
-						}
-					}
-					else
-					{
-						trackname[0] = '\0';	//Empty the string
-					}
-					(void) snprintf(eventflags, sizeof(eventflags) - 1, "(%s", trackname);	//Start building the full flags string
-					if(eof_song->text_event[i]->flags & EOF_EVENT_FLAG_RS_PHRASE)
-					{	//If the event is an RS phrase
-						(void) strncat(eventflags, "P", sizeof(trackname) - strlen(trackname) - 1);	//Append a P
-					}
-					if(eof_song->text_event[i]->flags & EOF_EVENT_FLAG_RS_SECTION)
-					{
-						(void) strncat(eventflags, "S", sizeof(trackname) - strlen(trackname) - 1);	//Append an S
-					}
-					if(eof_song->text_event[i]->flags & EOF_EVENT_FLAG_RS_EVENT)
-					{
-						(void) strncat(eventflags, "E", sizeof(trackname) - strlen(trackname) - 1);	//Append an E
-					}
-					(void) strncat(eventflags, ") ", sizeof(trackname) - strlen(trackname) - 1);
+		if(eof_song->text_event[i]->beat != eof_selected_beat)
+			continue;	//If this text event isn't on the selected beat, skip it
+		if(ecount >= EOF_MAX_TEXT_EVENTS)
+			continue;	//If an invalid number of events have been counted, skip counting any more
+
+		if((eof_song->text_event[i]->track != 0) || (eof_song->text_event[i]->flags != 0))
+		{	//If this event is track specific or has any flags set
+			if((eof_song->text_event[i]->track != 0) && (eof_song->text_event[i]->track < eof_song->tracks))
+			{	//If this is a track specific event
+				(void) snprintf(trackname, sizeof(trackname) - 1, "%s", eof_song->track[eof_song->text_event[i]->track]->name);
+				if(eof_song->text_event[i]->flags != 0)
+				{	//If the event has any other flags set
+					(void) strncat(trackname, ", ", sizeof(trackname) - strlen(trackname) - 1);	//Append a comma
 				}
-				else
-				{
-					eventflags[0] = '\0';	//Empty the string
-				}
-				(void) snprintf(eof_event_list_text[ecount], sizeof(eof_event_list_text[ecount]) - 1, "%s%s", eventflags, eof_song->text_event[i]->text);
-				ecount++;
 			}
+			else
+			{
+				trackname[0] = '\0';	//Empty the string
+			}
+			(void) snprintf(eventflags, sizeof(eventflags) - 1, "(%s", trackname);	//Start building the full flags string
+			if(eof_song->text_event[i]->flags & EOF_EVENT_FLAG_RS_PHRASE)
+			{	//If the event is an RS phrase
+				(void) strncat(eventflags, "P", sizeof(trackname) - strlen(trackname) - 1);	//Append a P
+			}
+			if(eof_song->text_event[i]->flags & EOF_EVENT_FLAG_RS_SECTION)
+			{
+				(void) strncat(eventflags, "S", sizeof(trackname) - strlen(trackname) - 1);	//Append an S
+			}
+			if(eof_song->text_event[i]->flags & EOF_EVENT_FLAG_RS_EVENT)
+			{
+				(void) strncat(eventflags, "E", sizeof(trackname) - strlen(trackname) - 1);	//Append an E
+			}
+			(void) strncat(eventflags, ") ", sizeof(trackname) - strlen(trackname) - 1);
 		}
+		else
+		{
+			eventflags[0] = '\0';	//Empty the string
+		}
+		(void) snprintf(eof_event_list_text[ecount], sizeof(eof_event_list_text[ecount]) - 1, "%s%s", eventflags, eof_song->text_event[i]->text);
+		ecount++;
 	}
 	switch(index)
 	{
@@ -1703,29 +1703,29 @@ int eof_menu_beat_add_section(void)
 	//Process user input
 	eof_color_dialog(eof_section_add_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_section_add_dialog);
-	if(eof_popup_dialog(eof_section_add_dialog, 2) == 3)
-	{	//User clicked OK
-		if(strchr(eof_etext, '[') || strchr(eof_etext, ']'))
-		{
-			allegro_message("Section names cannot include opening or closing brackets [ ]");
-			return D_O_K;
-		}
-		(void) snprintf(text, sizeof(text) - 1, "[section %s]", eof_etext);	//Format the section string
-		if(!ep || strcmp(ep->text, text))
-		{	//If there wasn't already a section event on this beat, or if the user altered its name
-			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		}
-		if(!ep)
-		{	//If there wasn't already a section event on this beat, add one now
-			(void) eof_song_add_text_event(eof_song, eof_selected_beat, text, 0, 0, 0);	//Add it as a global text event
-			eof_sort_events(eof_song);
-		}
-		else
-		{	//Otherwise edit the existing event
-			(void) strncpy(ep->text, text, sizeof(text) - 1);
-		}
-		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+	if(eof_popup_dialog(eof_section_add_dialog, 2) != 3)
+		return D_O_K;	//If the user didn't click OK, return immediately
+
+	if(strchr(eof_etext, '[') || strchr(eof_etext, ']'))
+	{
+		allegro_message("Section names cannot include opening or closing brackets [ ]");
+		return D_O_K;
 	}
+	(void) snprintf(text, sizeof(text) - 1, "[section %s]", eof_etext);	//Format the section string
+	if(!ep || strcmp(ep->text, text))
+	{	//If there wasn't already a section event on this beat, or if the user altered its name
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	}
+	if(!ep)
+	{	//If there wasn't already a section event on this beat, add one now
+		(void) eof_song_add_text_event(eof_song, eof_selected_beat, text, 0, 0, 0);	//Add it as a global text event
+		eof_sort_events(eof_song);
+	}
+	else
+	{	//Otherwise edit the existing event
+		(void) strncpy(ep->text, text, sizeof(text) - 1);
+	}
+	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 
 	return D_O_K;
 }
@@ -1760,21 +1760,21 @@ int eof_events_dialog_edit(DIALOG * d)
 	/* find the event */
 	for(i = 0; i < eof_song->text_events; i++)
 	{
-		if(eof_song->text_event[i]->beat == eof_selected_beat)
-		{
-			/* if we've reached the item that is selected, edit it */
-			if(eof_events_dialog[1].d1 == ecount)
-			{
-				event = i;
-				found = 1;
-				break;
-			}
+		if(eof_song->text_event[i]->beat != eof_selected_beat)
+			continue;	//If this beat isn't the selected beat, skip it
 
-			/* go to next event */
-			else
-			{
-				ecount++;
-			}
+		/* if we've reached the item that is selected, edit it */
+		if(eof_events_dialog[1].d1 == ecount)
+		{
+			event = i;
+			found = 1;
+			break;
+		}
+
+		/* go to next event */
+		else
+		{
+			ecount++;
 		}
 	}
 	if(found && (event < eof_song->text_events))
@@ -1945,29 +1945,29 @@ int eof_events_dialog_delete(DIALOG * d)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = 0; i < eof_song->text_events; i++)
 	{
-		if(eof_song->text_event[i]->beat == eof_selected_beat)
+		if(eof_song->text_event[i]->beat != eof_selected_beat)
+			continue;	//If this beat isn't the selected beat, skip it
+
+		/* if we've reached the item that is selected, delete it */
+		if(eof_events_dialog[1].d1 == ecount)
 		{
-			/* if we've reached the item that is selected, delete it */
-			if(eof_events_dialog[1].d1 == ecount)
+			/* remove the text event and exit */
+			eof_song_delete_text_event(eof_song, i);
+			eof_sort_events(eof_song);
+
+			/* remove flag if no more events tied to this beat */
+			c = eof_events_dialog_delete_events_count();
+			if(((unsigned long)eof_events_dialog[1].d1 >= c) && (c > 0))
 			{
-				/* remove the text event and exit */
-				eof_song_delete_text_event(eof_song, i);
-				eof_sort_events(eof_song);
-
-				/* remove flag if no more events tied to this beat */
-				c = eof_events_dialog_delete_events_count();
-				if(((unsigned long)eof_events_dialog[1].d1 >= c) && (c > 0))
-				{
-					eof_events_dialog[1].d1--;
-				}
-				(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &junk);
-				eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
-				return D_REDRAW;
+				eof_events_dialog[1].d1--;
 			}
-
-			/* go to next event */
-			ecount++;
+			(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &junk);
+			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+			return D_REDRAW;
 		}
+
+		/* go to next event */
+		ecount++;
 	}
 	return D_O_K;
 }
@@ -2079,33 +2079,35 @@ int eof_menu_beat_trainer_event(void)
 		relevant_track = EOF_TRACK_PRO_BASS;
 	}
 	eof_rebuild_trainer_strings();
-	if(eof_popup_dialog(eof_place_trainer_dialog, 2) == 9)
-	{	//If user clicked OK button
-		if(eof_place_trainer_dialog[4].flags == D_SELECTED)
-		{	//User selected the begin song trainer string
-			selected_string = eof_etext2;
-		}
-		else if(eof_place_trainer_dialog[6].flags == D_SELECTED)
-		{	//User selected the norm song trainer string
-			selected_string = eof_etext3;
-		}
-		else
-		{	//User selected the end song trainer string
-			selected_string = eof_etext4;
-		}
 
-		if(eof_song_contains_event(eof_song, selected_string, relevant_track, 0xFFFF, 1))
-		{	//If this training event is already defined in the active track
-			eof_clear_input();
-			if(alert(NULL, "Warning:  This text event already exists in this track.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
-			{	//If the user does not opt to place the duplicate text event
-				return 0;
-			}
-		}
-		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		(void) eof_song_add_text_event(eof_song, eof_selected_beat, selected_string, relevant_track, 0, 0);	//Add the chosen text event to the selected beat
-		eof_sort_events(eof_song);
+	if(eof_popup_dialog(eof_place_trainer_dialog, 2) != 9)
+		return 1;	//If the user didn't click OK, return immediately
+
+	if(eof_place_trainer_dialog[4].flags == D_SELECTED)
+	{	//User selected the begin song trainer string
+		selected_string = eof_etext2;
 	}
+	else if(eof_place_trainer_dialog[6].flags == D_SELECTED)
+	{	//User selected the norm song trainer string
+		selected_string = eof_etext3;
+	}
+	else
+	{	//User selected the end song trainer string
+		selected_string = eof_etext4;
+	}
+
+	if(eof_song_contains_event(eof_song, selected_string, relevant_track, 0xFFFF, 1))
+	{	//If this training event is already defined in the active track
+		eof_clear_input();
+		if(alert(NULL, "Warning:  This text event already exists in this track.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+		{	//If the user does not opt to place the duplicate text event
+			return 0;
+		}
+	}
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	(void) eof_song_add_text_event(eof_song, eof_selected_beat, selected_string, relevant_track, 0, 0);	//Add the chosen text event to the selected beat
+	eof_sort_events(eof_song);
+
 	return 1;
 }
 
@@ -2120,68 +2122,65 @@ int eof_edit_trainer_proc(int msg, DIALOG *d, int c)
 
 	if(!d)	//If this pointer is NULL for any reason
 		return d_agup_edit_proc(msg, d, c);	//Allow the input character to be returned
+	if((msg != MSG_CHAR) && (msg != MSG_UCHAR))
+		return d_agup_edit_proc(msg, d, c);	//If this isn't a character input message, allow the input character to be returned
 
-	if((msg == MSG_CHAR) || (msg == MSG_UCHAR))
-	{	//ASCII is not handled until the MSG_UCHAR event is sent
-		for(i = 0; i < 8; i++)
-		{	//See if any default accepted input characters were given
-			if((msg == MSG_UCHAR) && (c2 == 27))
-			{	//If the Escape ASCII character was trapped
-				return d_agup_edit_proc(msg, d, c2);	//Immediately allow the input character to be returned (so the user can escape to cancel the dialog)
-			}
-			if((msg == MSG_CHAR) && ((c2 >> 8 == KEY_BACKSPACE) || (c2 >> 8 == KEY_DEL)))
-			{	//If the backspace or delete keys are trapped
-				match = 1;	//Ensure the full function runs, so that the strings are rebuilt
-				break;
-			}
-			if(c2 >> 8 == key_list[i])			//If the input is permanently allowed
-			{
-				return d_agup_edit_proc(msg, d, c);	//Immediately allow the input character to be returned
-			}
+	for(i = 0; i < 8; i++)
+	{	//See if any default accepted input characters were given
+		if((msg == MSG_UCHAR) && (c2 == 27))
+		{	//If the Escape ASCII character was trapped
+			return d_agup_edit_proc(msg, d, c2);	//Immediately allow the input character to be returned (so the user can escape to cancel the dialog)
 		}
-
-		/* see if key is an allowed key */
-		if(!match)
+		if((msg == MSG_CHAR) && ((c2 >> 8 == KEY_BACKSPACE) || (c2 >> 8 == KEY_DEL)))
+		{	//If the backspace or delete keys are trapped
+			match = 1;	//Ensure the full function runs, so that the strings are rebuilt
+			break;
+		}
+		if(c2 >> 8 == key_list[i])			//If the input is permanently allowed
 		{
-			string = (char *)(d->dp2);
-			if(string == NULL)	//If the accepted characters list is NULL for some reason
-				match = 1;	//Implicitly accept the input character instead of allowing a crash
-			else
+			return d_agup_edit_proc(msg, d, c);	//Immediately allow the input character to be returned
+		}
+	}
+
+	/* see if key is an allowed key */
+	if(!match)
+	{
+		string = (char *)(d->dp2);
+		if(string == NULL)	//If the accepted characters list is NULL for some reason
+			match = 1;	//Implicitly accept the input character instead of allowing a crash
+		else
+		{
+			for(i = 0; string[i] != '\0'; i++)	//Search all characters of the accepted characters list
 			{
-				for(i = 0; string[i] != '\0'; i++)	//Search all characters of the accepted characters list
+				if(string[i] == (c & 0xff))
 				{
-					if(string[i] == (c & 0xff))
-					{
-						match = 1;
-						break;
-					}
+					match = 1;
+					break;
 				}
 			}
 		}
-
-		if(!match)			//If there was no match
-			return D_USED_CHAR;	//Drop the character
-
-		retval = d_agup_edit_proc(msg, d, c);	//Allow the input character to be processed
-		if(!eof_song || (eof_selected_track >= eof_song->tracks))
-			return retval;	//Return without redrawing string tunings if there is an error
-
-		//Update various dialog objects
-		eof_rebuild_trainer_strings();
-
-		if(eof_trainer_string[0] == '\0')
-		{	//If the trainer number field is empty
-			eof_place_trainer_dialog[9].flags = D_DISABLED;	//Disable the OK button
-		}
-		else
-		{
-			eof_place_trainer_dialog[9].flags = D_EXIT;	//Enable the OK button and allow it to close the dialog menu
-		}
-
-		return D_REDRAW;	//Have Allegro redraw the entire dialog menu, because it won't update the radio button strings as needed otherwise
 	}
 
-	return d_agup_edit_proc(msg, d, c);	//Allow the input character to be returned
+	if(!match)			//If there was no match
+		return D_USED_CHAR;	//Drop the character
+
+	retval = d_agup_edit_proc(msg, d, c);	//Allow the input character to be processed
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return retval;	//Return without redrawing string tunings if there is an error
+
+	//Update various dialog objects
+	eof_rebuild_trainer_strings();
+
+	if(eof_trainer_string[0] == '\0')
+	{	//If the trainer number field is empty
+		eof_place_trainer_dialog[9].flags = D_DISABLED;	//Disable the OK button
+	}
+	else
+	{
+		eof_place_trainer_dialog[9].flags = D_EXIT;	//Enable the OK button and allow it to close the dialog menu
+	}
+
+	return D_REDRAW;	//Have Allegro redraw the entire dialog menu, because it won't update the radio button strings as needed otherwise
 }
 
 int eof_all_events_radio_proc(int msg, DIALOG *d, int c)
@@ -2190,24 +2189,25 @@ int eof_all_events_radio_proc(int msg, DIALOG *d, int c)
 	uintptr_t selected_option;
 	int junk;
 
-	if(msg == MSG_CLICK)
-	{
-		if(!d)	//If this pointer is NULL for any reason
-			return d_agup_radio_proc(msg, d, c);	//Allow the input to be processed
+	if(msg != MSG_CLICK)
+		return d_agup_radio_proc(msg, d, c);	//If this isn't a click message, allow the input to be processed
 
-		selected_option = (uintptr_t)d->dp2;	//Find out which radio button was clicked on
 
-		if(selected_option != previous_option)
-		{	//If the event display filter changed, have the event list redrawn
-			eof_all_events_dialog[5].flags = eof_all_events_dialog[6].flags = eof_all_events_dialog[7].flags = eof_all_events_dialog[8].flags = eof_all_events_dialog[9].flags = 0;	//Clear all radio buttons
-			eof_all_events_dialog[selected_option].flags = D_SELECTED;			//Re-select the radio button that was just clicked on
-			eof_all_events_dialog[1].d2 = 0;									//Select first list item, since if it's too high, it will prevent the newly-selected filtered list from displaying
-			previous_option = selected_option;
-			(void) d_agup_radio_proc(msg, d, c);	//Allow the input to be processed
-			(void) dialog_message(eof_all_events_dialog, MSG_START, 0, &junk);	//Re-initialize the dialog
-			(void) dialog_message(eof_all_events_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
-			return D_REDRAW;
-		}
+	if(!d)	//If this pointer is NULL for any reason
+		return d_agup_radio_proc(msg, d, c);	//Allow the input to be processed
+
+	selected_option = (uintptr_t)d->dp2;	//Find out which radio button was clicked on
+
+	if(selected_option != previous_option)
+	{	//If the event display filter changed, have the event list redrawn
+		eof_all_events_dialog[5].flags = eof_all_events_dialog[6].flags = eof_all_events_dialog[7].flags = eof_all_events_dialog[8].flags = eof_all_events_dialog[9].flags = 0;	//Clear all radio buttons
+		eof_all_events_dialog[selected_option].flags = D_SELECTED;			//Re-select the radio button that was just clicked on
+		eof_all_events_dialog[1].d2 = 0;									//Select first list item, since if it's too high, it will prevent the newly-selected filtered list from displaying
+		previous_option = selected_option;
+		(void) d_agup_radio_proc(msg, d, c);	//Allow the input to be processed
+		(void) dialog_message(eof_all_events_dialog, MSG_START, 0, &junk);	//Re-initialize the dialog
+		(void) dialog_message(eof_all_events_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
+		return D_REDRAW;
 	}
 
 	return d_agup_radio_proc(msg, d, c);	//Allow the input to be processed
@@ -2776,40 +2776,39 @@ int eof_menu_beat_copy_events(void)
 	{
 		for(ctr2 = 0; ctr2 < eof_song->text_events; ctr2++)
 		{	//For each text event in the project
-			if(eof_song->text_event[ctr2]->beat == eof_selected_beat)
-			{	//If the text event is assigned to this beat
-				if(!eof_song->text_event[ctr2]->track || (eof_song->text_event[ctr2]->track == eof_selected_track))
-				{	//If the text event has no associated track or is specific to the active track
-					if(!ctr)
-					{	//On the first pass, count the events that will be copied
-						count++;
-					}
-					else
-					{	//On the second pass, write the events to the clipboard file
-						(void) eof_save_song_string_pf(eof_song->text_event[ctr2]->text, fp);	//Write the event's name
-						(void) pack_iputl(eof_song->text_event[ctr2]->track, fp);				//Write the event's track
-						(void) pack_iputl(eof_song->text_event[ctr2]->flags, fp);				//Write the event's flags
-					}
-				}
-			}
-		}
-		if(!ctr)
-		{	//At the end of the first pass, open the clipboard file
-			if(eof_validate_temp_folder())
-			{	//Ensure the correct working directory and presence of the temporary folder
-				eof_log("\tCould not validate working directory and temp folder", 1);
-				return 1;
-			}
+			if(eof_song->text_event[ctr2]->beat != eof_selected_beat)
+				continue;	//If the text event is not assigned to this beat, skip it
+			if(eof_song->text_event[ctr2]->track && (eof_song->text_event[ctr2]->track != eof_selected_track))
+				continue;	//If the text event is assigned to a specific track but it is not the active track, skip it
 
-			(void) snprintf(eof_events_clipboard_path, sizeof(eof_events_clipboard_path) - 1, "%seof.events.clipboard", eof_temp_path_s);
-			fp = pack_fopen(eof_events_clipboard_path, "w");
-			if(!fp)
-			{
-				allegro_message("Clipboard error!");
-				return 1;
+			if(!ctr)
+			{	//On the first pass, count the events that will be copied
+				count++;
 			}
-			(void) pack_iputl(count, fp);	//Write the number of events this clipboard file will contain
+			else
+			{	//On the second pass, write the events to the clipboard file
+				(void) eof_save_song_string_pf(eof_song->text_event[ctr2]->text, fp);	//Write the event's name
+				(void) pack_iputl(eof_song->text_event[ctr2]->track, fp);				//Write the event's track
+				(void) pack_iputl(eof_song->text_event[ctr2]->flags, fp);				//Write the event's flags
+			}
 		}
+		if(ctr)
+			continue;	//If this isn't the first pass, skip opening the clipboard file below
+
+		if(eof_validate_temp_folder())
+		{	//Ensure the correct working directory and presence of the temporary folder
+			eof_log("\tCould not validate working directory and temp folder", 1);
+			return 1;
+		}
+
+		(void) snprintf(eof_events_clipboard_path, sizeof(eof_events_clipboard_path) - 1, "%seof.events.clipboard", eof_temp_path_s);
+		fp = pack_fopen(eof_events_clipboard_path, "w");
+		if(!fp)
+		{
+			allegro_message("Clipboard error!");
+			return 1;
+		}
+		(void) pack_iputl(count, fp);	//Write the number of events this clipboard file will contain
 	}
 	(void) pack_fclose(fp);
 
@@ -2872,57 +2871,57 @@ int eof_events_dialog_move(char direction)
 	/* find the relevant event indexes */
 	for(i = 0; i < eof_song->text_events; i++)
 	{	//For each text event
-		if(eof_song->text_event[i]->beat == eof_selected_beat)
-		{	//If the text event is applied to the selected beat
-			if((unsigned long)eof_events_dialog[1].d1 == ecount)
-			{	//If the text event is the one selected in the Events dialog
-				selected = i;
-			}
-			else
-			{	//The text event is one of the non selected events in the dialog
-				if(selected == -1)
-				{	//If the selected one hasn't been reached yet
-					previous = i;	//It's one of the previous entries
-				}
-				else
-				{	//Otherwise it's the one immediately after it
-					next = i;
-					break;	//Stop parsing, since the selected entry has been found, and any previous and next event has been identified
-				}
-			}
-			ecount++;	//Count the number of events at the selected beat that have been reached
-		}
-	}
+		if(eof_song->text_event[i]->beat != eof_selected_beat)
+			continue;	//If the text event is not applied to the selected beat, skip it
 
-	if(selected >= 0)
-	{	//If the selected event was found
-		if(direction < 0)
-		{	//If the selected event is being moved up in the list of events at the selected beat
-			if(previous >= 0)
-			{	//If there was an event listed before the selected event
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				ptr = eof_song->text_event[previous];	//Store this pointer
-				eof_song->text_event[previous] = eof_song->text_event[selected];	//Swap the selected event with the one before it
-				eof_song->text_event[selected] = ptr;
-				eof_events_dialog[1].d1--;	//Move the selected index to compensate
-				eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current, since event order matters for Rocksmith phrases and sections
-				eof_render();
-				(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &junk);
-			}
+		if((unsigned long)eof_events_dialog[1].d1 == ecount)
+		{	//If the text event is the one selected in the Events dialog
+			selected = i;
 		}
 		else
-		{	//Otherwise move it down in the list
-			if(next >= 0)
-			{	//If there was an event listed after the selected event
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				ptr = eof_song->text_event[next];	//Store this pointer
-				eof_song->text_event[next] = eof_song->text_event[selected];	//Swap the selected event with the one after it
-				eof_song->text_event[selected] = ptr;
-				eof_events_dialog[1].d1++;	//Move the selected index to compensate
-				eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current, since event order matters for Rocksmith phrases and sections
-				eof_render();
-				(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &junk);
+		{	//The text event is one of the non selected events in the dialog
+			if(selected == -1)
+			{	//If the selected one hasn't been reached yet
+				previous = i;	//It's one of the previous entries
 			}
+			else
+			{	//Otherwise it's the one immediately after it
+				next = i;
+				break;	//Stop parsing, since the selected entry has been found, and any previous and next event has been identified
+			}
+		}
+		ecount++;	//Count the number of events at the selected beat that have been reached
+	}
+
+	if(selected < 0)
+		return D_O_K;	//If the selected event was not found, return immediately
+
+	if(direction < 0)
+	{	//If the selected event is being moved up in the list of events at the selected beat
+		if(previous >= 0)
+		{	//If there was an event listed before the selected event
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			ptr = eof_song->text_event[previous];	//Store this pointer
+			eof_song->text_event[previous] = eof_song->text_event[selected];	//Swap the selected event with the one before it
+			eof_song->text_event[selected] = ptr;
+			eof_events_dialog[1].d1--;	//Move the selected index to compensate
+			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current, since event order matters for Rocksmith phrases and sections
+			eof_render();
+			(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &junk);
+		}
+	}
+	else
+	{	//Otherwise move it down in the list
+		if(next >= 0)
+		{	//If there was an event listed after the selected event
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			ptr = eof_song->text_event[next];	//Store this pointer
+			eof_song->text_event[next] = eof_song->text_event[selected];	//Swap the selected event with the one after it
+			eof_song->text_event[selected] = ptr;
+			eof_events_dialog[1].d1++;	//Move the selected index to compensate
+			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current, since event order matters for Rocksmith phrases and sections
+			eof_render();
+			(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &junk);
 		}
 	}
 
@@ -2961,22 +2960,22 @@ int eof_menu_beat_estimate_bpm(void)
 	result = eof_estimate_bpm(eof_music_track);
 	eof_fix_window_title();
 	allegro_message("Estimated tempo is %fBPM", result);
-	if(!eof_song->tags->tempo_map_locked && alert(NULL, "Would you like to apply this tempo to the first beat?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-	{	//If the tempo map is not locked and the user opts to apply the estimated tempo
-		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		ppqn = 60000000.0 / result;
-		eof_song->beat[0]->ppqn = ppqn;	//Apply the tempo to the first beat
-		for(ctr = 1; ctr < eof_song->beats; ctr++)
-		{	//For the remaining beats in the project
-			if(eof_song->beat[ctr]->flags & EOF_BEAT_FLAG_ANCHOR)
-			{	//If this beat is an anchor
-				break;	//Stop updating beat tempos
-			}
-			eof_song->beat[ctr]->ppqn = ppqn;	//Apply the new tempo
+	if(eof_song->tags->tempo_map_locked || (alert(NULL, "Would you like to apply this tempo to the first beat?", NULL, "&Yes", "&No", 'y', 'n') != 1))
+		return D_O_K;	//If the tempo map is locked or the user does not opt to apply the estimated tempo, return immediately
+
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	ppqn = 60000000.0 / result;
+	eof_song->beat[0]->ppqn = ppqn;	//Apply the tempo to the first beat
+	for(ctr = 1; ctr < eof_song->beats; ctr++)
+	{	//For the remaining beats in the project
+		if(eof_song->beat[ctr]->flags & EOF_BEAT_FLAG_ANCHOR)
+		{	//If this beat is an anchor
+			break;	//Stop updating beat tempos
 		}
-		eof_calculate_beats(eof_song);
-		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+		eof_song->beat[ctr]->ppqn = ppqn;	//Apply the new tempo
 	}
+	eof_calculate_beats(eof_song);
+	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 
 	return D_O_K;
 }
