@@ -480,68 +480,67 @@ int eof_edit_tuning_proc(int msg, DIALOG *d, int c)
 	if(!d)	//If this pointer is NULL for any reason
 		return d_agup_edit_proc(msg, d, c);	//Allow the input character to be returned
 
-	if((msg == MSG_CHAR) || (msg == MSG_UCHAR))
-	{	//ASCII is not handled until the MSG_UCHAR event is sent
-		for(i = 0; i < 8; i++)
-		{	//Check each of the pre-defined allowable keys
-			if((msg == MSG_UCHAR) && (c2 == 27))
-			{	//If the Escape ASCII character was trapped
-				return d_agup_edit_proc(msg, d, c2);	//Immediately allow the input character to be returned (so the user can escape to cancel the dialog)
-			}
-			if((msg == MSG_CHAR) && ((c2 >> 8 == KEY_BACKSPACE) || (c2 >> 8 == KEY_DEL)))
-			{	//If the backspace or delete keys are trapped
-				match = 1;	//Ensure the full function runs, so that the strings are rebuilt
-				break;
-			}
-			if(c2 >> 8 == key_list[i])			//If the input is permanently allowed
-			{
-				return d_agup_edit_proc(msg, d, c);	//Immediately allow the input character to be returned
-			}
-		}
+	if((msg != MSG_CHAR) && (msg != MSG_UCHAR))
+		return d_agup_edit_proc(msg, d, c);		//If this isn't a character input message, allow the input character to be returned
 
-		/* see if key is an allowed key */
-		if(!match)
+	for(i = 0; i < 8; i++)
+	{	//Check each of the pre-defined allowable keys
+		if((msg == MSG_UCHAR) && (c2 == 27))
+		{	//If the Escape ASCII character was trapped
+			return d_agup_edit_proc(msg, d, c2);	//Immediately allow the input character to be returned (so the user can escape to cancel the dialog)
+		}
+		if((msg == MSG_CHAR) && ((c2 >> 8 == KEY_BACKSPACE) || (c2 >> 8 == KEY_DEL)))
+		{	//If the backspace or delete keys are trapped
+			match = 1;	//Ensure the full function runs, so that the strings are rebuilt
+			break;
+		}
+		if(c2 >> 8 == key_list[i])			//If the input is permanently allowed
 		{
-			string = (char *)(d->dp2);
-			if(string == NULL)	//If the accepted characters list is NULL for some reason
-				match = 1;	//Implicitly accept the input character instead of allowing a crash
-			else
+			return d_agup_edit_proc(msg, d, c);	//Immediately allow the input character to be returned
+		}
+	}
+
+	/* see if key is an allowed key */
+	if(!match)
+	{
+		string = (char *)(d->dp2);
+		if(string == NULL)	//If the accepted characters list is NULL for some reason
+			match = 1;	//Implicitly accept the input character instead of allowing a crash
+		else
+		{
+			for(i = 0; string[i] != '\0'; i++)	//Search all characters of the accepted characters list
 			{
-				for(i = 0; string[i] != '\0'; i++)	//Search all characters of the accepted characters list
+				if(string[i] == (c & 0xff))
 				{
-					if(string[i] == (c & 0xff))
-					{
-						match = 1;
-						break;
-					}
+					match = 1;
+					break;
 				}
 			}
 		}
-
-		if(!match)			//If there was no match
-			return D_USED_CHAR;	//Drop the character
-
-		retval = d_agup_edit_proc(msg, d, c);	//Allow the input character to be returned
-		if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
-			return retval;	//Return without redrawing string tunings if there is an error
-
-		//Build an integer type tuning array from the current input
-		for(i = 0; i < EOF_TUNING_LENGTH; i++)
-		{
-			tuning[i] = atol(eof_fret_strings[i]) % 12;	//Convert the text input to integer value
-		}
-		eof_rebuild_tuning_strings(tuning);
-		(void) object_message(&eof_pro_guitar_tuning_dialog[2], MSG_DRAW, 0);	//Have Allegro redraw the tuning name
-		(void) object_message(&eof_pro_guitar_tuning_dialog[6], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
-		(void) object_message(&eof_pro_guitar_tuning_dialog[9], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
-		(void) object_message(&eof_pro_guitar_tuning_dialog[12], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
-		(void) object_message(&eof_pro_guitar_tuning_dialog[15], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
-		(void) object_message(&eof_pro_guitar_tuning_dialog[18], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
-		(void) object_message(&eof_pro_guitar_tuning_dialog[21], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
-		return retval;
 	}
 
-	return d_agup_edit_proc(msg, d, c);	//Allow the input character to be returned
+	if(!match)			//If there was no match
+		return D_USED_CHAR;	//Drop the character
+
+	retval = d_agup_edit_proc(msg, d, c);	//Allow the input character to be returned
+	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return retval;	//Return without redrawing string tunings if there is an error
+
+	//Build an integer type tuning array from the current input
+	for(i = 0; i < EOF_TUNING_LENGTH; i++)
+	{
+		tuning[i] = atol(eof_fret_strings[i]) % 12;	//Convert the text input to integer value
+	}
+	eof_rebuild_tuning_strings(tuning);
+	(void) object_message(&eof_pro_guitar_tuning_dialog[2], MSG_DRAW, 0);	//Have Allegro redraw the tuning name
+	(void) object_message(&eof_pro_guitar_tuning_dialog[6], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
+	(void) object_message(&eof_pro_guitar_tuning_dialog[9], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
+	(void) object_message(&eof_pro_guitar_tuning_dialog[12], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
+	(void) object_message(&eof_pro_guitar_tuning_dialog[15], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
+	(void) object_message(&eof_pro_guitar_tuning_dialog[18], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
+	(void) object_message(&eof_pro_guitar_tuning_dialog[21], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
+
+	return retval;
 }
 
 DIALOG eof_pro_guitar_tuning_dialog[] =
@@ -710,169 +709,168 @@ int eof_track_transpose_tuning(EOF_PRO_GUITAR_TRACK* tp, char *tuningdiff)
 					for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
 					{	//For each of the 6 supported strings
 						val = tuningdiff[ctr3];	//Simplify
-						if(tuningdiff[ctr3])
-						{	//If this string's tuning is being changed
-							diffmask |= bitmask;	//Build a bitmask defining which strings are being transposed
-							if(tp->note[ctr]->note & bitmask)
-							{	//If this note uses this string
-								if(!prompt)
-								{	//If the user hasn't been prompted yet
-									if(alert("This track contains notes that would be affected by the tuning change.", "Would you like to transpose the notes to keep the same pitches where possible?", NULL, "&Yes", "&No", 'y', 'n') != 1)
-									{	//If the user doesn't opt to transpose the track
-										eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Re-enable the original note set in use
-										return 1;
-									}
-									prompt = 1;
+						if(!tuningdiff[ctr3])
+							continue;	//If this string's tuning was not changed, skip it
+						if(!(tp->note[ctr]->note & bitmask))
+							continue;	//If this string isn't used by this note, skip it
+
+						diffmask |= bitmask;	//Build a bitmask defining which strings are being transposed
+						if(!prompt)
+						{	//If the user hasn't been prompted yet
+							if(alert("This track contains notes that would be affected by the tuning change.", "Would you like to transpose the notes to keep the same pitches where possible?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+							{	//If the user doesn't opt to transpose the track
+								eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Re-enable the original note set in use
+								return 1;
+							}
+							prompt = 1;
+						}
+						if(tuningdiff[ctr3] < 0)
+						{	//If the tuning for this string is being lowered, existing notes need to be moved up the fretboard
+							if(!ctr2)
+							{	//First pass of the note, just validate the tranpsose
+								if((tp->note[ctr]->frets[ctr3] & 0x7F) - val > tp->numfrets)
+								{	//If the note's fret value (masking out the muting flag) can't be raised an equivalent number of frets
+									skiptranspose = 1;	//Track that the note will be highlighted instead
 								}
-								if(tuningdiff[ctr3] < 0)
-								{	//If the tuning for this string is being lowered, existing notes need to be moved up the fretboard
-									if(!ctr2)
-									{	//First pass of the note, just validate the tranpsose
-										if((tp->note[ctr]->frets[ctr3] & 0x7F) - val > tp->numfrets)
-										{	//If the note's fret value (masking out the muting flag) can't be raised an equivalent number of frets
-											skiptranspose = 1;	//Track that the note will be highlighted instead
-										}
-									}
-									else
-									{	//Second pass of the note
-										if(!skiptranspose)
-										{	//If the note is to be transposed automatically
-											tp->note[ctr]->frets[ctr3] -= val;
-										}
-										else if(skiptranspose & 1)
-										{	//Otherwise highlight it and warn about the note fret value
-											tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight it with the permanent flag
-											if(!(warning & 1))
-											{	//If the user hasn't been warned about this problem yet
-												eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
-												allegro_message("Warning:  At least one note will have to be manually transposed to another string or octave.\nThese notes will be highlighted.");
-												warning |= 1;
-											}
-											break;	//Skip checking the rest of the strings
-										}
-									}
+							}
+							else
+							{	//Second pass of the note
+								if(!skiptranspose)
+								{	//If the note is to be transposed automatically
+									tp->note[ctr]->frets[ctr3] -= val;
 								}
-								else
-								{	//The tuning for this string is being raised, existing notes need to be moved down the fretboard
-									if(!ctr2)
-									{	//First pass of the note, just validate the tranpsose
-										if((tp->note[ctr]->frets[ctr3] & 0x7f) < val)
-										{	//If the note's fret value (masking out the muting flag) can't be lowered an equivalent number of frets
-											skiptranspose = 1;	//Track that the note will be highlighted instead
-										}
+								else if(skiptranspose & 1)
+								{	//Otherwise highlight it and warn about the note fret value
+									tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight it with the permanent flag
+									if(!(warning & 1))
+									{	//If the user hasn't been warned about this problem yet
+										eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
+										allegro_message("Warning:  At least one note will have to be manually transposed to another string or octave.\nThese notes will be highlighted.");
+										warning |= 1;
 									}
-									else
-									{	//Second pass of the note
-										if(!skiptranspose)
-										{	//If the note is to be transposed automatically
-											tp->note[ctr]->frets[ctr3] -= val;
-										}
-										else if(skiptranspose & 1)
-										{	//Otherwise highlight it and warn about the note fret value
-											tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight it with the permanent flag
-											if(!(warning & 1))
-											{	//If the user hasn't been warned about this problem yet
-												eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
-												allegro_message("Warning:  At least one note will have to be manually transposed to another string or octave.\nThese notes will be highlighted.");
-												warning |= 1;
-											}
-											break;	//Skip checking the rest of the strings
-										}
-									}
+									break;	//Skip checking the rest of the strings
 								}
-							}//If this note uses this string
-						}//If this string's tuning is being changed
+							}
+						}
+						else
+						{	//The tuning for this string is being raised, existing notes need to be moved down the fretboard
+							if(!ctr2)
+							{	//First pass of the note, just validate the tranpsose
+								if((tp->note[ctr]->frets[ctr3] & 0x7f) < val)
+								{	//If the note's fret value (masking out the muting flag) can't be lowered an equivalent number of frets
+									skiptranspose = 1;	//Track that the note will be highlighted instead
+								}
+							}
+							else
+							{	//Second pass of the note
+								if(!skiptranspose)
+								{	//If the note is to be transposed automatically
+									tp->note[ctr]->frets[ctr3] -= val;
+								}
+								else if(skiptranspose & 1)
+								{	//Otherwise highlight it and warn about the note fret value
+									tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight it with the permanent flag
+									if(!(warning & 1))
+									{	//If the user hasn't been warned about this problem yet
+										eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
+										allegro_message("Warning:  At least one note will have to be manually transposed to another string or octave.\nThese notes will be highlighted.");
+										warning |= 1;
+									}
+									break;	//Skip checking the rest of the strings
+								}
+							}
+						}
 					}//For each of the 6 supported strings
 				}//Only check fret values for normal notes, because tech notes do not have any
 
 				//Check slide end positions
-				if((tp->note[ctr]->slideend || tp->note[ctr]->unpitchend) && (tp->note[ctr]->note & diffmask))
-				{	//If this note slides and is altered by the transpose
-					//Determine whether the transpose would affect some but not all of the strings in a note, and set val to the number of halfsteps the transposition is
-					for(ctr3 = 0, bitmask = 1, first = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
-					{	//For each of the 6 supported strings
-						if(tp->note[ctr]->note & bitmask)
-						{	//If this note uses this string
-							if(!first)
-							{	//If this isn't the first string being examined in this note
-								if(val != tuningdiff[ctr3])
-								{	//If this string is being transposed a different amount than the previous string
-									skiptranspose = 2;	//Cancel transposing this chord's end slide position because the author will need to manually define it
-									break;				//Stop checking this chord's other strings
-								}
+				if((!tp->note[ctr]->slideend && !tp->note[ctr]->unpitchend) || !(tp->note[ctr]->note & diffmask))
+					continue;	//If this note does not slide or is not altered by the tranpose, skip the remainder of the for loop
+
+				//Determine whether the transpose would affect some but not all of the strings in a note, and set val to the number of halfsteps the transposition is
+				for(ctr3 = 0, bitmask = 1, first = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+				{	//For each of the 6 supported strings
+					if(tp->note[ctr]->note & bitmask)
+					{	//If this note uses this string
+						if(!first)
+						{	//If this isn't the first string being examined in this note
+							if(val != tuningdiff[ctr3])
+							{	//If this string is being transposed a different amount than the previous string
+								skiptranspose = 2;	//Cancel transposing this chord's end slide position because the author will need to manually define it
+								break;				//Stop checking this chord's other strings
 							}
-							val = tuningdiff[ctr3];
-							first = 0;
 						}
+						val = tuningdiff[ctr3];
+						first = 0;
 					}
-					if(!ctr2)
-					{	//First pass of the note, validate whether the slide end position can be transposed automatically
-						if(!first && !skiptranspose)
-						{	//If the note uses at least one string that is being transposed and transposing the note hasn't already been ruled out (ie. any used strings transpose different amounts)
-							if(val < 0)
-							{	//If the tuning for this string is being lowered, the slide end position needs to be moved up the fretboard
-								if(tp->note[ctr]->slideend && (tp->note[ctr]->slideend - val > tp->numfrets))
-								{	//If the note's slide end position can't be raised an equivalent number of frets
-									skiptranspose = 4;	//Track that the note will be highlighted instead
-								}
-								if(tp->note[ctr]->unpitchend && (tp->note[ctr]->unpitchend - val > tp->numfrets))
-								{	//If the note's unpitched slide end position can't be raised an equivalent number of frets
-									skiptranspose = 4;	//Track that the note will be highlighted instead
-								}
+				}
+				if(!ctr2)
+				{	//First pass of the note, validate whether the slide end position can be transposed automatically
+					if(!first && !skiptranspose)
+					{	//If the note uses at least one string that is being transposed and transposing the note hasn't already been ruled out (ie. any used strings transpose different amounts)
+						if(val < 0)
+						{	//If the tuning for this string is being lowered, the slide end position needs to be moved up the fretboard
+							if(tp->note[ctr]->slideend && (tp->note[ctr]->slideend - val > tp->numfrets))
+							{	//If the note's slide end position can't be raised an equivalent number of frets
+								skiptranspose = 4;	//Track that the note will be highlighted instead
+							}
+							if(tp->note[ctr]->unpitchend && (tp->note[ctr]->unpitchend - val > tp->numfrets))
+							{	//If the note's unpitched slide end position can't be raised an equivalent number of frets
+								skiptranspose = 4;	//Track that the note will be highlighted instead
+							}
+						}
+						else
+						{	//The tuning for this string is being raised, the slide end position needs to be moved down the fretboard
+							if(eof_pro_guitar_note_lowest_fret(tp, ctr) == val)
+							{	//If the transpose would cause the start fret of any fretted string in the note to be 0
+								skiptranspose = 8;	//Track that the note will be highlighted instead
 							}
 							else
-							{	//The tuning for this string is being raised, the slide end position needs to be moved down the fretboard
-								if(eof_pro_guitar_note_lowest_fret(tp, ctr) == val)
-								{	//If the transpose would cause the start fret of any fretted string in the note to be 0
-									skiptranspose = 8;	//Track that the note will be highlighted instead
+							{
+								if(tp->note[ctr]->slideend && (tp->note[ctr]->slideend <= val))
+								{	//If the note's slide end position can't be lowered an equivalent number of frets and still be greater than 0 (not a valid end of slide position)
+									skiptranspose = 4;	//Track that the note will be highlighted instead
 								}
-								else
-								{
-									if(tp->note[ctr]->slideend && (tp->note[ctr]->slideend <= val))
-									{	//If the note's slide end position can't be lowered an equivalent number of frets and still be greater than 0 (not a valid end of slide position)
-										skiptranspose = 4;	//Track that the note will be highlighted instead
-									}
-									if(tp->note[ctr]->unpitchend && (tp->note[ctr]->unpitchend <= val))
-									{	//If the note's unpitched slide end position can't be lowered an equivalent number of frets and still be greater than 0 (not a valid end of slide position)
-										skiptranspose = 4;	//Track that the note will be highlighted instead
-									}
+								if(tp->note[ctr]->unpitchend && (tp->note[ctr]->unpitchend <= val))
+								{	//If the note's unpitched slide end position can't be lowered an equivalent number of frets and still be greater than 0 (not a valid end of slide position)
+									skiptranspose = 4;	//Track that the note will be highlighted instead
 								}
 							}
 						}
 					}
-					else
-					{	//Second pass of the note, alter the slide end position if applicable
-						if(!skiptranspose)
-						{	//This end of slide position is to be transposed automatically
-							if(tp->note[ctr]->slideend)
-								tp->note[ctr]->slideend -= val;
-							if(tp->note[ctr]->unpitchend)
-								tp->note[ctr]->unpitchend -= val;
+				}
+				else
+				{	//Second pass of the note, alter the slide end position if applicable
+					if(!skiptranspose)
+					{	//This end of slide position is to be transposed automatically
+						if(tp->note[ctr]->slideend)
+							tp->note[ctr]->slideend -= val;
+						if(tp->note[ctr]->unpitchend)
+							tp->note[ctr]->unpitchend -= val;
+					}
+					else if(skiptranspose & (2 | 4 | 8))
+					{	//Otherwise highlight it and warn about the slide
+						tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight it with the permanent flag
+						if((skiptranspose & 2) && !(warning & 2))
+						{	//If the user hasn't been warned about this problem yet
+							eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
+							allegro_message("Warning:  At least one sliding chord will have to be manually transposed due to only some of its strings being affected.\nThese notes will be highlighted.");
+							warning |= 2;
 						}
-						else if(skiptranspose & (2 | 4 | 8))
-						{	//Otherwise highlight it and warn about the slide
-							tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight it with the permanent flag
-							if((skiptranspose & 2) && !(warning & 2))
-							{	//If the user hasn't been warned about this problem yet
-								eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
-								allegro_message("Warning:  At least one sliding chord will have to be manually transposed due to only some of its strings being affected.\nThese notes will be highlighted.");
-								warning |= 2;
-							}
-							if((skiptranspose & 4) && !(warning & 4))
-							{	//If the user hasn't been warned about this problem yet
-								eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
-								allegro_message("Warning:  At least one sliding chord will have to be manually transposed due to its end of slide position.\nThese notes will be highlighted.");
-								warning |= 4;
-							}
-							if((skiptranspose & 8) && !(warning & 8))
-							{	//If the user hasn't been warned about this problem yet
-								eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
-								allegro_message("Warning:  At least one sliding chord will have to be manually transposed due to its start of slide position.\nThese notes will be highlighted.");
-								warning |= 8;
-							}
+						if((skiptranspose & 4) && !(warning & 4))
+						{	//If the user hasn't been warned about this problem yet
+							eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
+							allegro_message("Warning:  At least one sliding chord will have to be manually transposed due to its end of slide position.\nThese notes will be highlighted.");
+							warning |= 4;
+						}
+						if((skiptranspose & 8) && !(warning & 8))
+						{	//If the user hasn't been warned about this problem yet
+							eof_seek_and_render_position(eof_selected_track, tp->note[ctr]->type, tp->note[ctr]->pos);	//Show the offending note
+							allegro_message("Warning:  At least one sliding chord will have to be manually transposed due to its start of slide position.\nThese notes will be highlighted.");
+							warning |= 8;
 						}
 					}
-				}//If this note slides
+				}
 			}//On the first pass, validate whether the note can be transposed automatically, on second pass, alter the note
 		}//For each note in the track
 	}//For each the normal and the tech note set
@@ -955,76 +953,76 @@ int eof_track_set_num_frets_strings(void)
 	eof_render();
 	eof_color_dialog(eof_note_set_num_frets_strings_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_note_set_num_frets_strings_dialog);
-	if(eof_popup_dialog(eof_note_set_num_frets_strings_dialog, 2) == 7)
-	{	//If the user clicked OK
-		//Update max fret number
-		newnumfrets = atol(eof_etext2);
-		if(newnumfrets && (newnumfrets != eof_song->pro_guitar_track[tracknum]->numfrets))
-		{	//If the specified number of frets was changed
-			highestfret = eof_get_highest_fret(eof_song, eof_selected_track, 0);	//Get the highest used fret value in this track
-			if(highestfret > newnumfrets)
-			{	//If any notes in this track use fret values that would exceed the new fret limit
-				char message[120] = {0};
-				(void) snprintf(message, sizeof(message) - 1, "Warning:  This track uses frets as high as %lu, exceeding the proposed limit.", highestfret);
-				eof_clear_input();
-				retval = alert3(NULL, message, "Continue?", "&Yes", "&No", "Highlight conflicts", 'y', 'n', 0);
-				if(retval != 1)
-				{	//If user does not opt to continue after being alerted of this fret limit issue
-					if(retval == 3)
-					{	//If the user opted to highlight the notes that conflict with the new fret count
-						eof_hightlight_all_notes_above_fret_number(eof_song, eof_selected_track, newnumfrets);
-					}
-					return 1;
+	if(eof_popup_dialog(eof_note_set_num_frets_strings_dialog, 2) != 7)
+		return 1;	//If the user did not click OK, return immediately
+
+	//Update max fret number
+	newnumfrets = atol(eof_etext2);
+	if(newnumfrets && (newnumfrets != eof_song->pro_guitar_track[tracknum]->numfrets))
+	{	//If the specified number of frets was changed
+		highestfret = eof_get_highest_fret(eof_song, eof_selected_track, 0);	//Get the highest used fret value in this track
+		if(highestfret > newnumfrets)
+		{	//If any notes in this track use fret values that would exceed the new fret limit
+			char message[120] = {0};
+			(void) snprintf(message, sizeof(message) - 1, "Warning:  This track uses frets as high as %lu, exceeding the proposed limit.", highestfret);
+			eof_clear_input();
+			retval = alert3(NULL, message, "Continue?", "&Yes", "&No", "Highlight conflicts", 'y', 'n', 0);
+			if(retval != 1)
+			{	//If user does not opt to continue after being alerted of this fret limit issue
+				if(retval == 3)
+				{	//If the user opted to highlight the notes that conflict with the new fret count
+					eof_hightlight_all_notes_above_fret_number(eof_song, eof_selected_track, newnumfrets);
 				}
+				return 1;
 			}
+		}
+		if(!undo_made)
+		{
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			undo_made = 1;
+		}
+		eof_song->pro_guitar_track[tracknum]->numfrets = newnumfrets;
+	}
+	//Update number of strings
+	newnumstrings = eof_song->pro_guitar_track[tracknum]->numstrings;
+	if(eof_note_set_num_frets_strings_dialog[4].flags == D_SELECTED)
+	{
+		newnumstrings = 4;
+	}
+	else if(eof_note_set_num_frets_strings_dialog[5].flags == D_SELECTED)
+	{
+		newnumstrings = 5;
+	}
+	else if(eof_note_set_num_frets_strings_dialog[6].flags == D_SELECTED)
+	{
+		newnumstrings = 6;
+	}
+	if(newnumstrings != eof_song->pro_guitar_track[tracknum]->numstrings)
+	{	//If the specified number of strings was changed
+		if(eof_detect_string_gem_conflicts(eof_song->pro_guitar_track[tracknum], newnumstrings))
+		{
+			eof_clear_input();
+			if(alert(NULL, "Warning:  Changing the # of strings will cause one or more gems to be deleted.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+			{	//If user opts to cancel
+				cancel = 1;
+			}
+		}
+
+		if(!cancel)
+		{
 			if(!undo_made)
 			{
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				undo_made = 1;
 			}
-			eof_song->pro_guitar_track[tracknum]->numfrets = newnumfrets;
+			eof_song->pro_guitar_track[tracknum]->numstrings = newnumstrings;
+			eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
 		}
-		//Update number of strings
-		newnumstrings = eof_song->pro_guitar_track[tracknum]->numstrings;
-		if(eof_note_set_num_frets_strings_dialog[4].flags == D_SELECTED)
-		{
-			newnumstrings = 4;
-		}
-		else if(eof_note_set_num_frets_strings_dialog[5].flags == D_SELECTED)
-		{
-			newnumstrings = 5;
-		}
-		else if(eof_note_set_num_frets_strings_dialog[6].flags == D_SELECTED)
-		{
-			newnumstrings = 6;
-		}
-		if(newnumstrings != eof_song->pro_guitar_track[tracknum]->numstrings)
-		{	//If the specified number of strings was changed
-			if(eof_detect_string_gem_conflicts(eof_song->pro_guitar_track[tracknum], newnumstrings))
-			{
-				eof_clear_input();
-				if(alert(NULL, "Warning:  Changing the # of strings will cause one or more gems to be deleted.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
-				{	//If user opts to cancel
-					cancel = 1;
-				}
-			}
-
-			if(!cancel)
-			{
-				if(!undo_made)
-				{
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					undo_made = 1;
-				}
-				eof_song->pro_guitar_track[tracknum]->numstrings = newnumstrings;
-				eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
-			}
-		}
-		//Perform cleanup
-		if(undo_made)
-		{
-			eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fix fret/string conflicts
-		}
+	}
+	//Perform cleanup
+	if(undo_made)
+	{
+		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fix fret/string conflicts
 	}
 
 	return 1;
@@ -1058,27 +1056,28 @@ int eof_track_pro_guitar_set_capo_position(void)
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	tp = eof_song->pro_guitar_track[tracknum];
 	(void) snprintf(eof_etext, 3, "%u", tp->capo);
-	if(eof_popup_dialog(eof_track_pro_guitar_set_capo_position_dialog, 2) == 3)
-	{	//User clicked OK
-		if(eof_etext[0] != '\0')
-		{	//If the user provided a number
-			position = atol(eof_etext);
-		}
-		else
-		{	//User left the field empty
-			position = 0;
-		}
-		if(position > eof_song->pro_guitar_track[tracknum]->numfrets)
-		{	//If the given capo position is higher than this track's supported number of frets
-			allegro_message("You cannot specify a capo position that is higher than this track's number of frets (%u).", eof_song->pro_guitar_track[tracknum]->numfrets);
-		}
-		else if(position != tp->capo)
-		{	//If the user gave a valid position and it is different from the capo position that was already in use
-			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			tp->capo = position;
-		}
-		eof_chord_lookup_note = 0;	//Reset the cached chord lookup count
+	if(eof_popup_dialog(eof_track_pro_guitar_set_capo_position_dialog, 2) != 3)
+		return 0;	//If the user did not click OK, return immediately
+
+	if(eof_etext[0] != '\0')
+	{	//If the user provided a number
+		position = atol(eof_etext);
 	}
+	else
+	{	//User left the field empty
+		position = 0;
+	}
+	if(position > eof_song->pro_guitar_track[tracknum]->numfrets)
+	{	//If the given capo position is higher than this track's supported number of frets
+		allegro_message("You cannot specify a capo position that is higher than this track's number of frets (%u).", eof_song->pro_guitar_track[tracknum]->numfrets);
+	}
+	else if(position != tp->capo)
+	{	//If the user gave a valid position and it is different from the capo position that was already in use
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		tp->capo = position;
+	}
+	eof_chord_lookup_note = 0;	//Reset the cached chord lookup count
+
 	return 0;
 }
 
@@ -1138,67 +1137,68 @@ int eof_track_pro_guitar_set_fret_hand_position(void)
 		eof_track_pro_guitar_set_fret_hand_position_dialog[0].dp = eof_track_pro_guitar_set_fret_hand_position_dialog_string1;	//Update the dialog window title to reflect that a new hand position is being added
 		eof_etext[0] = '\0';	//Empty this string
 	}
-	if(eof_popup_dialog(eof_track_pro_guitar_set_fret_hand_position_dialog, 2) == 3)
-	{	//User clicked OK
-		if(eof_etext[0] != '\0')
-		{	//If the user provided a number
-			position = atol(eof_etext);
-			if(position > tp->numfrets)
-			{	//If the given fret position is higher than this track's supported number of frets
-				allegro_message("You cannot specify a fret hand position that is higher than this track's number of frets (%u).", tp->numfrets);
-				return 1;
-			}
-			else if(position + tp->capo > limit)
-			{	//If the fret hand position (taking the capo into account) is higher than fret 19
-				if(eof_write_rs_files || eof_write_rb_files)
-				{	//Fret 22 is the highest supported fret in both Rock Band and Rocksmith 1
-					if(tp->capo)
-					{	//If there is a capo in use
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "You cannot specify a fret hand position higher than %u when a capo is at fret %u (it will cause Rocksmith 1 to crash).", 19U - tp->capo, tp->capo);
-						allegro_message("%s", eof_log_string);
-					}
-					else
-					{
-						allegro_message("You cannot specify a fret hand position higher than 19 (it will cause Rocksmith 1 to crash).");
-					}
-					return 1;
-				}
-				//If this line is reached, it's because the limit was exceeded and it wasn't that of Rocksmith 1 or Rock Band (is Rocksmith 2's limit)
-				if(eof_write_rs2_files)
-				{	//Fret 24 is the highest supported fret in Rocksmith 2
-					allegro_message("You cannot specify a fret hand position higher than 21 (it will cause Rocksmith 2 to crash).");
-					return 1;
-				}
-			}
-			else if(!position)
-			{	//If the user gave a fret position of 0
-				allegro_message("You cannot specify a fret hand position of 0.");
-				return 1;
-			}
-			else
-			{	//If the user gave a valid position
-				if(ptr)
-				{	//If an existing fret hand position was being edited
-					if(ptr->end_pos != position)
-					{	//And it defines a different fret hand position than the user just gave
-						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-						ptr->end_pos = position;	//Update the existing fret hand position entry
-					}
-					return 0;
-				}
+	if(eof_popup_dialog(eof_track_pro_guitar_set_fret_hand_position_dialog, 2) != 3)
+		return 0;	//If the user did not click OK, return immediately
 
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				(void) eof_track_add_section(eof_song, eof_selected_track, EOF_FRET_HAND_POS_SECTION, eof_note_type, eof_music_pos - eof_av_delay, position, 0, NULL);
-				eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions, since they must be in order for displaying to the user
+	if(eof_etext[0] != '\0')
+	{	//If the user provided a number
+		position = atol(eof_etext);
+		if(position > tp->numfrets)
+		{	//If the given fret position is higher than this track's supported number of frets
+			allegro_message("You cannot specify a fret hand position that is higher than this track's number of frets (%u).", tp->numfrets);
+			return 1;
+		}
+		else if(position + tp->capo > limit)
+		{	//If the fret hand position (taking the capo into account) is higher than fret 19
+			if(eof_write_rs_files || eof_write_rb_files)
+			{	//Fret 22 is the highest supported fret in both Rock Band and Rocksmith 1
+				if(tp->capo)
+				{	//If there is a capo in use
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "You cannot specify a fret hand position higher than %u when a capo is at fret %u (it will cause Rocksmith 1 to crash).", 19U - tp->capo, tp->capo);
+					allegro_message("%s", eof_log_string);
+				}
+				else
+				{
+					allegro_message("You cannot specify a fret hand position higher than 19 (it will cause Rocksmith 1 to crash).");
+				}
+				return 1;
 			}
-		}//If the user provided a number
-		else if(ptr)
-		{	//If the user left the input box empty and was editing an existing hand position
+			//If this line is reached, it's because the limit was exceeded and it wasn't that of Rocksmith 1 or Rock Band (is Rocksmith 2's limit)
+			if(eof_write_rs2_files)
+			{	//Fret 24 is the highest supported fret in Rocksmith 2
+				allegro_message("You cannot specify a fret hand position higher than 21 (it will cause Rocksmith 2 to crash).");
+				return 1;
+			}
+		}
+		else if(!position)
+		{	//If the user gave a fret position of 0
+			allegro_message("You cannot specify a fret hand position of 0.");
+			return 1;
+		}
+		else
+		{	//If the user gave a valid position
+			if(ptr)
+			{	//If an existing fret hand position was being edited
+				if(ptr->end_pos != position)
+				{	//And it defines a different fret hand position than the user just gave
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					ptr->end_pos = position;	//Update the existing fret hand position entry
+				}
+				return 0;
+			}
+
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			eof_pro_guitar_track_delete_hand_position(tp, index);	//Delete the existing fret hand position
+			(void) eof_track_add_section(eof_song, eof_selected_track, EOF_FRET_HAND_POS_SECTION, eof_note_type, eof_music_pos - eof_av_delay, position, 0, NULL);
 			eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions, since they must be in order for displaying to the user
 		}
+	}//If the user provided a number
+	else if(ptr)
+	{	//If the user left the input box empty and was editing an existing hand position
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		eof_pro_guitar_track_delete_hand_position(tp, index);	//Delete the existing fret hand position
+		eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions, since they must be in order for displaying to the user
 	}
+
 	return 0;
 }
 
@@ -1223,40 +1223,40 @@ int eof_fret_hand_position_delete(DIALOG * d)
 	}
 	for(i = 0; i < eof_song->pro_guitar_track[tracknum]->handpositions; i++)
 	{	//For each fret hand position
-		if(eof_song->pro_guitar_track[tracknum]->handposition[i].difficulty == eof_note_type)
-		{	//If the fret hand position is in the active difficulty
-			/* if we've reached the item that is selected, delete it */
-			if((unsigned long)eof_fret_hand_position_list_dialog[1].d1 == ecount)
-			{
-				if(!eof_fret_hand_position_list_dialog_undo_made)
-				{	//If an undo state hasn't been made yet since launching this dialog
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					eof_fret_hand_position_list_dialog_undo_made = 1;
-				}
+		if(eof_song->pro_guitar_track[tracknum]->handposition[i].difficulty != eof_note_type)
+			continue;	//If this fret hand position is not in the active difficulty, skip it
 
-				/* remove the hand position, update the selection in the list box and exit */
-				eof_pro_guitar_track_delete_hand_position(eof_song->pro_guitar_track[tracknum], i);
-				eof_pro_guitar_track_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Re-sort the remaining hand positions
-				eof_beat_stats_cached = 0;	//Have the beat statistics rebuilt
-				for(i = 0, ecount = 0; i < eof_song->pro_guitar_track[tracknum]->handpositions; i++)
-				{	//For each remaining fret hand position
-					if(eof_song->pro_guitar_track[tracknum]->handposition[i].difficulty == eof_note_type)
-					{	//If the fret hand position is in the active difficulty
-						ecount++;
-					}
-				}
-				if(((unsigned long)eof_fret_hand_position_list_dialog[1].d1 >= ecount) && (ecount > 0))
-				{	//If the last list item was deleted and others remain
-					eof_fret_hand_position_list_dialog[1].d1--;	//Select the one before the one that was deleted, or the last event, whichever one remains
-				}
-				(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_START, 0, &junk);	//Re-initialize the dialog
-				(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
-				return D_REDRAW;
+		/* if we've reached the item that is selected, delete it */
+		if((unsigned long)eof_fret_hand_position_list_dialog[1].d1 == ecount)
+		{
+			if(!eof_fret_hand_position_list_dialog_undo_made)
+			{	//If an undo state hasn't been made yet since launching this dialog
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				eof_fret_hand_position_list_dialog_undo_made = 1;
 			}
 
-			/* go to next event */
-			ecount++;
+			/* remove the hand position, update the selection in the list box and exit */
+			eof_pro_guitar_track_delete_hand_position(eof_song->pro_guitar_track[tracknum], i);
+			eof_pro_guitar_track_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Re-sort the remaining hand positions
+			eof_beat_stats_cached = 0;	//Have the beat statistics rebuilt
+			for(i = 0, ecount = 0; i < eof_song->pro_guitar_track[tracknum]->handpositions; i++)
+			{	//For each remaining fret hand position
+				if(eof_song->pro_guitar_track[tracknum]->handposition[i].difficulty == eof_note_type)
+				{	//If the fret hand position is in the active difficulty
+					ecount++;
+				}
+			}
+			if(((unsigned long)eof_fret_hand_position_list_dialog[1].d1 >= ecount) && (ecount > 0))
+			{	//If the last list item was deleted and others remain
+				eof_fret_hand_position_list_dialog[1].d1--;	//Select the one before the one that was deleted, or the last event, whichever one remains
+			}
+			(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_START, 0, &junk);	//Re-initialize the dialog
+			(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
+			return D_REDRAW;
 		}
+
+		/* go to next event */
+		ecount++;
 	}
 	return D_O_K;
 }
@@ -1721,29 +1721,29 @@ int eof_track_rs_popup_messages_delete(DIALOG * d)
 
 	for(ctr = 0; ctr < tp->popupmessages; ctr++)
 	{	//For each popup message
-		if(ctr == (unsigned long)eof_rs_popup_messages_dialog[1].d1)
-		{	//If this is the popup message selected from the list
-			if(!eof_rs_popup_messages_dialog_undo_made)
-			{	//If an undo state hasn't been made yet since launching this dialog
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				eof_rs_popup_messages_dialog_undo_made = 1;
-			}
+		if(ctr != (unsigned long)eof_rs_popup_messages_dialog[1].d1)
+			continue;	//If this isn't the selected popup message, skip it
 
-			//Release strings
-			for(ctr2 = 0; ctr2 < tp->popupmessages; ctr2++)
-			{	//Free previously allocated strings
-				free(eof_track_rs_popup_messages_list_strings[ctr2]);
-			}
-			free(eof_track_rs_popup_messages_list_strings);
-			eof_track_rs_popup_messages_list_strings = NULL;
+		if(!eof_rs_popup_messages_dialog_undo_made)
+		{	//If an undo state hasn't been made yet since launching this dialog
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			eof_rs_popup_messages_dialog_undo_made = 1;
+		}
 
-			/* remove the popup message, update the selection in the list box and exit */
-			eof_track_pro_guitar_delete_popup_message(tp, ctr);
-			eof_track_pro_guitar_sort_popup_messages(tp);	//Re-sort the remaining popup messages
-			if(((unsigned long)eof_rs_popup_messages_dialog[1].d1 >= tp->popupmessages) && (tp->popupmessages > 0))
-			{	//If the last list item was deleted and others remain
-				eof_rs_popup_messages_dialog[1].d1--;	//Select the one before the one that was deleted, or the last message, whichever one remains
-			}
+		//Release strings
+		for(ctr2 = 0; ctr2 < tp->popupmessages; ctr2++)
+		{	//Free previously allocated strings
+			free(eof_track_rs_popup_messages_list_strings[ctr2]);
+		}
+		free(eof_track_rs_popup_messages_list_strings);
+		eof_track_rs_popup_messages_list_strings = NULL;
+
+		/* remove the popup message, update the selection in the list box and exit */
+		eof_track_pro_guitar_delete_popup_message(tp, ctr);
+		eof_track_pro_guitar_sort_popup_messages(tp);	//Re-sort the remaining popup messages
+		if(((unsigned long)eof_rs_popup_messages_dialog[1].d1 >= tp->popupmessages) && (tp->popupmessages > 0))
+		{	//If the last list item was deleted and others remain
+			eof_rs_popup_messages_dialog[1].d1--;	//Select the one before the one that was deleted, or the last message, whichever one remains
 		}
 	}
 
@@ -2411,33 +2411,34 @@ void eof_rebuild_manage_rs_phrases_strings(void)
 	}
 	for(ctr = 0, index = 0; ctr < eof_song->beats; ctr++)
 	{	//For each beat in the chart
-		if((eof_song->beat[ctr]->contained_section_event >= 0) || ((ctr + 1 >= eof_song->beats) && started))
-		{	//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
-			if(currentphrase)
-			{	//If another phrase has been read
-				started = 0;
-				endpos = eof_song->beat[ctr]->pos - 1;	//Track this as the end position of the previous phrase marker
-				maxdiff = eof_find_fully_leveled_rs_difficulty_in_time_range(eof_song, eof_selected_track, startpos, endpos, 1);	//Find the maxdifficulty value for this phrase instance, converted to relative numbering
-				stringlen = (size_t)snprintf(NULL, 0, "%s : maxDifficulty = %u", currentphrase, maxdiff) + 1;	//Find the number of characters needed to snprintf this string
-				eof_track_manage_rs_phrases_strings[index] = malloc(stringlen + 1);	//Allocate memory to build the string
-				if(!eof_track_manage_rs_phrases_strings[index])
-				{
-					allegro_message("Error allocating memory");
-					for(ctr = 0; ctr < index; ctr++)
-					{	//Free previously allocated strings
-						free(eof_track_manage_rs_phrases_strings[ctr]);
-					}
-					free(eof_track_manage_rs_phrases_strings);
-					eof_track_manage_rs_phrases_strings = NULL;
-					return;
+		if((eof_song->beat[ctr]->contained_section_event < 0) && ((ctr + 1 < eof_song->beats) || !started))
+			continue;	//If this beat has no section event (RS phrase) and no phrase is in progress or this isn't the last beat, skip it
+
+		//Otherwise it marks the end of any current phrase and the potential start of another
+		if(currentphrase)
+		{	//If another phrase has been read
+			started = 0;
+			endpos = eof_song->beat[ctr]->pos - 1;	//Track this as the end position of the previous phrase marker
+			maxdiff = eof_find_fully_leveled_rs_difficulty_in_time_range(eof_song, eof_selected_track, startpos, endpos, 1);	//Find the maxdifficulty value for this phrase instance, converted to relative numbering
+			stringlen = (size_t)snprintf(NULL, 0, "%s : maxDifficulty = %u", currentphrase, maxdiff) + 1;	//Find the number of characters needed to snprintf this string
+			eof_track_manage_rs_phrases_strings[index] = malloc(stringlen + 1);	//Allocate memory to build the string
+			if(!eof_track_manage_rs_phrases_strings[index])
+			{
+				allegro_message("Error allocating memory");
+				for(ctr = 0; ctr < index; ctr++)
+				{	//Free previously allocated strings
+					free(eof_track_manage_rs_phrases_strings[ctr]);
 				}
-				(void) snprintf(eof_track_manage_rs_phrases_strings[index], stringlen, "%s : maxDifficulty = %u", currentphrase, maxdiff);
-				index++;
+				free(eof_track_manage_rs_phrases_strings);
+				eof_track_manage_rs_phrases_strings = NULL;
+				return;
 			}
-			started = 1;
-			startpos = eof_song->beat[ctr]->pos;	//Track the starting position of the phrase
-			currentphrase = eof_song->text_event[eof_song->beat[ctr]->contained_section_event]->text;	//Track which phrase is being examined
+			(void) snprintf(eof_track_manage_rs_phrases_strings[index], stringlen, "%s : maxDifficulty = %u", currentphrase, maxdiff);
+			index++;
 		}
+		started = 1;
+		startpos = eof_song->beat[ctr]->pos;	//Track the starting position of the phrase
+		currentphrase = eof_song->text_event[eof_song->beat[ctr]->contained_section_event]->text;	//Track which phrase is being examined
 	}
 	eof_track_manage_rs_phrases_strings_size = index;
 }
@@ -2582,34 +2583,35 @@ int eof_track_manage_rs_phrases_add_or_remove_level(int function)
 	startpos = endpos = 0;	//Reset these to indicate that a phrase is being looked for
 	for(; ctr < eof_song->beats; ctr++)
 	{	//For each beat in the chart (starting from the one ctr is referring to)
-		if((eof_song->beat[ctr]->contained_section_event >= 0) || ((ctr + 1 >= eof_song->beats) && started))
-		{	//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
-			if(started)
-			{	//If this beat marks the end of a phrase instance that needs to be modified
-				started = 0;
-				endpos = eof_song->beat[ctr]->pos - 1;	//Track this as the end position of the previous phrase marker
+		if((eof_song->beat[ctr]->contained_section_event < 0) && ((ctr + 1 < eof_song->beats) || !started))
+			continue;	//If this beat has no section event (RS phrase) and no phrase is in progress or this isn't the last beat, skip it
 
-				(void) eof_enforce_rs_phrase_begin_with_fret_hand_position(eof_song, eof_selected_track, eof_note_type, startpos, endpos, &undo_made, 0);
-					//Ensure there is a fret hand position defined in this phrase at or before its first note
-				eof_track_add_or_remove_track_difficulty_content_range(eof_song, eof_selected_track, eof_note_type, startpos, endpos, function, 0, &undo_made);
-					//Level up/down the content of this time range of the track difficulty
+		//Otherwise it marks the end of any current phrase and the potential start of another
+		if(started)
+		{	//If this beat marks the end of a phrase instance that needs to be modified
+			started = 0;
+			endpos = eof_song->beat[ctr]->pos - 1;	//Track this as the end position of the previous phrase marker
 
-				if(!instancectr)
-				{	//If only the selected phrase instance was to be modified
-					break;	//Exit loop
-				}
-				startpos = endpos = 0;	//Reset these to indicate that a phrase is being looked for
-			}//If this beat marks the end of a phrase instance that needs to be modified
+			(void) eof_enforce_rs_phrase_begin_with_fret_hand_position(eof_song, eof_selected_track, eof_note_type, startpos, endpos, &undo_made, 0);
+				//Ensure there is a fret hand position defined in this phrase at or before its first note
+			eof_track_add_or_remove_track_difficulty_content_range(eof_song, eof_selected_track, eof_note_type, startpos, endpos, function, 0, &undo_made);
+				//Level up/down the content of this time range of the track difficulty
 
-			if(eof_song->beat[ctr]->contained_section_event >= 0)
-			{	//If this beat has a phrase assigned to it
-				if(!ustrcmp(eof_song->text_event[eof_song->beat[ctr]->contained_section_event]->text, phrasename))
-				{	//If the phrase matched the one that was selected to be leveled up
-					started = 1;
-					startpos = eof_song->beat[ctr]->pos;	//Track the starting position of the phrase
-				}
+			if(!instancectr)
+			{	//If only the selected phrase instance was to be modified
+				break;	//Exit loop
 			}
-		}//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
+			startpos = endpos = 0;	//Reset these to indicate that a phrase is being looked for
+		}//If this beat marks the end of a phrase instance that needs to be modified
+
+		if(eof_song->beat[ctr]->contained_section_event >= 0)
+		{	//If this beat has a phrase assigned to it
+			if(!ustrcmp(eof_song->text_event[eof_song->beat[ctr]->contained_section_event]->text, phrasename))
+			{	//If the phrase matched the one that was selected to be leveled up
+				started = 1;
+				startpos = eof_song->beat[ctr]->pos;	//Track the starting position of the phrase
+			}
+		}
 	}//For each beat in the chart (starting from the one ctr is referring to)
 
 	if(!undo_made)
@@ -2889,23 +2891,24 @@ int eof_track_rs_tone_change_add(void)
 	//Find the tone change at the current seek position, if any
 	for(ctr = 0; ctr < tp->tonechanges; ctr++)
 	{	//For each tone change in the track
-		if(tp->tonechange[ctr].start_pos == eof_music_pos - eof_av_delay)
-		{	//If the tone change is at the current seek position, edit it instead of adding a new tone change
-			eof_color_dialog(eof_track_rs_tone_change_add_dialog, gui_fg_color, gui_bg_color);
-			centre_dialog(eof_track_rs_tone_change_add_dialog);
-			(void) ustrcpy(eof_etext, tp->tonechange[ctr].name);
-			eof_clear_input();
-			if(eof_popup_dialog(eof_track_rs_tone_change_add_dialog, 2) == 3)
-			{	//User clicked OK
-				if(eof_etext[0] != '\0')
-				{	//If a tone key name is specified
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					(void) ustrcpy(tp->tonechange[ctr].name, eof_etext);	//Update the tone name string
-					tp->tonechange[ctr].name[EOF_SECTION_NAME_LENGTH] = '\0';	//Guarantee NULL termination
-				}
+		if(tp->tonechange[ctr].start_pos != eof_music_pos - eof_av_delay)
+			continue;	//If this tone change is not at the current seek position, skip it
+
+		//Otherwise edit it instead of adding a new tone change
+		eof_color_dialog(eof_track_rs_tone_change_add_dialog, gui_fg_color, gui_bg_color);
+		centre_dialog(eof_track_rs_tone_change_add_dialog);
+		(void) ustrcpy(eof_etext, tp->tonechange[ctr].name);
+		eof_clear_input();
+		if(eof_popup_dialog(eof_track_rs_tone_change_add_dialog, 2) == 3)
+		{	//User clicked OK
+			if(eof_etext[0] != '\0')
+			{	//If a tone key name is specified
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				(void) ustrcpy(tp->tonechange[ctr].name, eof_etext);	//Update the tone name string
+				tp->tonechange[ctr].name[EOF_SECTION_NAME_LENGTH] = '\0';	//Guarantee NULL termination
 			}
-			return 1;
 		}
+		return 1;
 	}
 
 	eof_color_dialog(eof_track_rs_tone_change_add_dialog, gui_fg_color, gui_bg_color);
@@ -3119,29 +3122,29 @@ int eof_track_rs_tone_changes_delete(DIALOG * d)
 
 	for(ctr = 0; ctr < tp->tonechanges; ctr++)
 	{	//For each tone change
-		if(ctr == (unsigned long)eof_track_rs_tone_changes_dialog[1].d1)
-		{	//If this is the tone change selected from the list
-			if(!eof_track_rs_tone_changes_dialog_undo_made)
-			{	//If an undo state hasn't been made yet since launching this dialog
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				eof_track_rs_tone_changes_dialog_undo_made = 1;
-			}
+		if(ctr != (unsigned long)eof_track_rs_tone_changes_dialog[1].d1)
+			continue;	//If this is not the selected tone change, skip it
 
-			//Release strings
-			for(ctr2 = 0; ctr2 < tp->tonechanges; ctr2++)
-			{	//Free previously allocated strings
-				free(eof_track_rs_tone_changes_list_strings[ctr2]);
-			}
-			free(eof_track_rs_tone_changes_list_strings);
-			eof_track_rs_tone_changes_list_strings = NULL;
+		if(!eof_track_rs_tone_changes_dialog_undo_made)
+		{	//If an undo state hasn't been made yet since launching this dialog
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			eof_track_rs_tone_changes_dialog_undo_made = 1;
+		}
 
-			/* remove the tone change, update the selection in the list box and exit */
-			eof_track_pro_guitar_delete_tone_change(tp, ctr);
-			eof_track_pro_guitar_sort_tone_changes(tp);	//Re-sort the remaining tone changes
-			if(((unsigned long)eof_track_rs_tone_changes_dialog[1].d1 >= tp->tonechanges) && (tp->tonechanges > 0))
-			{	//If the last list item was deleted and others remain
-				eof_track_rs_tone_changes_dialog[1].d1--;	//Select the one before the one that was deleted, or the last message, whichever one remains
-			}
+		//Release strings
+		for(ctr2 = 0; ctr2 < tp->tonechanges; ctr2++)
+		{	//Free previously allocated strings
+			free(eof_track_rs_tone_changes_list_strings[ctr2]);
+		}
+		free(eof_track_rs_tone_changes_list_strings);
+		eof_track_rs_tone_changes_list_strings = NULL;
+
+		/* remove the tone change, update the selection in the list box and exit */
+		eof_track_pro_guitar_delete_tone_change(tp, ctr);
+		eof_track_pro_guitar_sort_tone_changes(tp);	//Re-sort the remaining tone changes
+		if(((unsigned long)eof_track_rs_tone_changes_dialog[1].d1 >= tp->tonechanges) && (tp->tonechanges > 0))
+		{	//If the last list item was deleted and others remain
+			eof_track_rs_tone_changes_dialog[1].d1--;	//Select the one before the one that was deleted, or the last message, whichever one remains
 		}
 	}
 
@@ -3366,36 +3369,37 @@ void eof_track_rebuild_rs_tone_names_list_strings(unsigned long track, char allo
 				}
 			}
 		}
-		if(unique)
-		{	//If this is the first tone change of this name encountered for the track, copy it into a list
-			stringlen = strlen(tp->tonechange[ctr].name) + 1;	//Unless this tone name is found to be the default, the string will just be the tone's name
-			suffix = blank;
-			if(!strcmp(tp->tonechange[ctr].name, tp->defaulttone))
-			{	//If this tone is the track's default tone
-				defaultfound = 1;	//Track that at least one tone change still uses the default tone
-				if(allowsuffix)
-				{	//If the calling function is allowing the default tone suffix to be appended to the string
-					suffix = def;	//Append the suffix denoting the default tone
-					stringlen += strlen(def);
-				}
+		if(!unique)
+			continue;	//If this isn't the first tone change of this name encountered for the track, skip it
+
+		//Otherwise copy it into a list
+		stringlen = strlen(tp->tonechange[ctr].name) + 1;	//Unless this tone name is found to be the default, the string will just be the tone's name
+		suffix = blank;
+		if(!strcmp(tp->tonechange[ctr].name, tp->defaulttone))
+		{	//If this tone is the track's default tone
+			defaultfound = 1;	//Track that at least one tone change still uses the default tone
+			if(allowsuffix)
+			{	//If the calling function is allowing the default tone suffix to be appended to the string
+				suffix = def;	//Append the suffix denoting the default tone
+				stringlen += strlen(def);
 			}
-			eof_track_rs_tone_names_list_strings[index] = malloc(stringlen);
-			if(!eof_track_rs_tone_names_list_strings[index])
-			{
-				allegro_message("Error allocating memory");
-				while(index > 0)
-				{	//Free previously allocated strings
-					free(eof_track_rs_tone_names_list_strings[index - 1]);
-					index--;
-				}
-				free(eof_track_rs_tone_names_list_strings);
-				eof_track_rs_tone_names_list_strings = NULL;
-				eof_track_rs_tone_names_list_strings_num = 0;
-				return;
-			}
-			(void) snprintf(eof_track_rs_tone_names_list_strings[index], stringlen, "%s%s", tp->tonechange[ctr].name, suffix);
-			index++;
 		}
+		eof_track_rs_tone_names_list_strings[index] = malloc(stringlen);
+		if(!eof_track_rs_tone_names_list_strings[index])
+		{
+			allegro_message("Error allocating memory");
+			while(index > 0)
+			{	//Free previously allocated strings
+				free(eof_track_rs_tone_names_list_strings[index - 1]);
+				index--;
+			}
+			free(eof_track_rs_tone_names_list_strings);
+			eof_track_rs_tone_names_list_strings = NULL;
+			eof_track_rs_tone_names_list_strings_num = 0;
+			return;
+		}
+		(void) snprintf(eof_track_rs_tone_names_list_strings[index], stringlen, "%s%s", tp->tonechange[ctr].name, suffix);
+		index++;
 	}
 	if(!defaultfound)
 	{	//If no tone changes in the arrangement use the default tone anymore (ie. all the ones that did were deleted)

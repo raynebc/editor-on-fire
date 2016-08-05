@@ -665,101 +665,101 @@ int eof_menu_file_load_ogg(void)
 
 	returnedfn = ncd_file_select(0, eof_last_ogg_path, "Select OGG File", eof_filter_ogg_files);
 	eof_clear_input();
-	if(returnedfn)
-	{	//If the user selected an OGG file
-		eof_delete_rocksmith_wav();		//Delete the Rocksmith WAV file since loading different audio will require a new WAV file to be written
+	if(!returnedfn)
+		return 1;	//If the user did not select a file, return immediately
 
-		/* make sure selected file is in the same path as the current chart */
-		(void) replace_filename(checkfn, returnedfn, "", 1024);
-		(void) replace_filename(checkfn2, eof_song_path, "", 1024);
-		if(ustricmp(checkfn, checkfn2))
+	eof_delete_rocksmith_wav();		//Delete the Rocksmith WAV file since loading different audio will require a new WAV file to be written
+
+	/* make sure selected file is in the same path as the current chart */
+	(void) replace_filename(checkfn, returnedfn, "", 1024);
+	(void) replace_filename(checkfn2, eof_song_path, "", 1024);
+	if(ustricmp(checkfn, checkfn2))
+	{
+		allegro_message("OGGs can only be loaded from the current song folder!\n");
+		return 1;
+	}
+
+	/* failed to load new OGG so reload old one */
+	if(!eof_load_ogg(returnedfn, 0))
+	{	//If eof_load_ogg() failed, eof_loaded_ogg_name contains the name of the file that was loaded before
+		returnedfn = eof_loaded_ogg_name;
+		if(!eof_load_ogg(eof_loaded_ogg_name, 0))
 		{
-			allegro_message("OGGs can only be loaded from the current song folder!\n");
+			eof_show_mouse(NULL);
+			eof_cursor_visible = 1;
+			eof_pen_visible = 1;
+			(void) append_filename(eof_temp_filename, eof_song_path, "notes.lostoggbackup.eof", 1024);
+			allegro_message("%s", eof_temp_filename);
+			if(!eof_save_song(eof_song, eof_temp_filename))
+			{
+				allegro_message("Couldn't save backup!");
+			}
+			if(eof_song)
+			{
+				eof_destroy_song(eof_song);
+				eof_song = NULL;
+				eof_song_loaded = 0;
+			}
 			return 1;
 		}
-
-		/* failed to load new OGG so reload old one */
-		if(!eof_load_ogg(returnedfn, 0))
-		{	//If eof_load_ogg() failed, eof_loaded_ogg_name contains the name of the file that was loaded before
-			returnedfn = eof_loaded_ogg_name;
-			if(!eof_load_ogg(eof_loaded_ogg_name, 0))
-			{
-				eof_show_mouse(NULL);
-				eof_cursor_visible = 1;
-				eof_pen_visible = 1;
-				(void) append_filename(eof_temp_filename, eof_song_path, "notes.lostoggbackup.eof", 1024);
-				allegro_message("%s", eof_temp_filename);
-				if(!eof_save_song(eof_song, eof_temp_filename))
-				{
-					allegro_message("Couldn't save backup!");
-				}
-				if(eof_song)
-				{
-					eof_destroy_song(eof_song);
-					eof_song = NULL;
-					eof_song_loaded = 0;
-				}
-				return 1;
-			}
-		}
-
-		/* see if this OGG is already associated with the current project */
-		fn = get_filename(returnedfn);
-		for(i = 0; i < eof_song->tags->oggs; i++)
-		{
-			if(!ustricmp(fn, eof_song->tags->ogg[i].filename))
-			{
-				/* adjust MIDI offset if it is different */
-				if(eof_selected_ogg != i)
-				{
-					if(eof_song->tags->ogg[i].midi_offset != eof_song->tags->ogg[eof_selected_ogg].midi_offset)
-					{
-						for(j = 0; j < eof_song->beats; j++)
-						{
-							eof_song->beat[j]->pos += eof_song->tags->ogg[i].midi_offset - eof_song->tags->ogg[eof_selected_ogg].midi_offset;
-						}
-						(void) eof_adjust_notes(eof_song->tags->ogg[i].midi_offset - eof_song->tags->ogg[eof_selected_ogg].midi_offset);
-					}
-				}
-				eof_selected_ogg = i;
-				break;
-			}
-		}
-		eof_fixup_notes(eof_song);
-		if(i == eof_song->tags->oggs)
-		{
-			if(eof_song->tags->oggs < 8)
-			{	//Create a new OGG profile
-				(void) ustrcpy(eof_song->tags->ogg[eof_song->tags->oggs].filename, fn);
-				eof_song->tags->ogg[eof_song->tags->oggs].description[0] = '\0';
-				eof_song->tags->ogg[eof_song->tags->oggs].midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
-				eof_song->tags->ogg[eof_song->tags->oggs].modified = 0;
-				eof_selected_ogg = eof_song->tags->oggs;
-				eof_song->tags->oggs++;
-			}
-			else
-			{	//Replace the last OGG profile
-				(void) ustrcpy(eof_song->tags->ogg[eof_song->tags->oggs - 1].filename, fn);
-				eof_song->tags->ogg[eof_song->tags->oggs - 1].description[0] = '\0';
-				eof_song->tags->ogg[eof_song->tags->oggs - 1].midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
-				eof_song->tags->ogg[eof_song->tags->oggs - 1].modified = 0;
-				eof_selected_ogg = eof_song->tags->oggs - 1;
-			}
-		}
-
-		new_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
-		if(new_length > eof_chart_length)
-		{
-			eof_chart_length = new_length;
-			eof_calculate_beats(eof_song);
-		}
-		if(eof_music_pos > eof_music_length)
-		{
-			(void) eof_menu_song_seek_end();
-		}
-		eof_music_seek(eof_music_pos - eof_av_delay);
-		(void) replace_filename(eof_last_ogg_path, returnedfn, "", 1024);
 	}
+
+	/* see if this OGG is already associated with the current project */
+	fn = get_filename(returnedfn);
+	for(i = 0; i < eof_song->tags->oggs; i++)
+	{
+		if(ustricmp(fn, eof_song->tags->ogg[i].filename))
+			continue;	//If this OGG profile doesn't involve the user selected filename, skip it
+
+		/* adjust MIDI offset if it is different */
+		if(eof_selected_ogg != i)
+		{
+			if(eof_song->tags->ogg[i].midi_offset != eof_song->tags->ogg[eof_selected_ogg].midi_offset)
+			{
+				for(j = 0; j < eof_song->beats; j++)
+				{
+					eof_song->beat[j]->pos += eof_song->tags->ogg[i].midi_offset - eof_song->tags->ogg[eof_selected_ogg].midi_offset;
+				}
+				(void) eof_adjust_notes(eof_song->tags->ogg[i].midi_offset - eof_song->tags->ogg[eof_selected_ogg].midi_offset);
+			}
+		}
+		eof_selected_ogg = i;
+		break;
+	}
+	eof_fixup_notes(eof_song);
+	if(i == eof_song->tags->oggs)
+	{
+		if(eof_song->tags->oggs < 8)
+		{	//Create a new OGG profile
+			(void) ustrcpy(eof_song->tags->ogg[eof_song->tags->oggs].filename, fn);
+			eof_song->tags->ogg[eof_song->tags->oggs].description[0] = '\0';
+			eof_song->tags->ogg[eof_song->tags->oggs].midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
+			eof_song->tags->ogg[eof_song->tags->oggs].modified = 0;
+			eof_selected_ogg = eof_song->tags->oggs;
+			eof_song->tags->oggs++;
+		}
+		else
+		{	//Replace the last OGG profile
+			(void) ustrcpy(eof_song->tags->ogg[eof_song->tags->oggs - 1].filename, fn);
+			eof_song->tags->ogg[eof_song->tags->oggs - 1].description[0] = '\0';
+			eof_song->tags->ogg[eof_song->tags->oggs - 1].midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
+			eof_song->tags->ogg[eof_song->tags->oggs - 1].modified = 0;
+			eof_selected_ogg = eof_song->tags->oggs - 1;
+		}
+	}
+
+	new_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
+	if(new_length > eof_chart_length)
+	{
+		eof_chart_length = new_length;
+		eof_calculate_beats(eof_song);
+	}
+	if(eof_music_pos > eof_music_length)
+	{
+		(void) eof_menu_song_seek_end();
+	}
+	eof_music_seek(eof_music_pos - eof_av_delay);
+	(void) replace_filename(eof_last_ogg_path, returnedfn, "", 1024);
 
 	return 1;
 }
@@ -2654,22 +2654,22 @@ int eof_save_helper_checks(void)
 	/* check 5 lane guitar note lengths */
 	for(ctr = 1; !note_length_warned && eof_min_note_length && (ctr < eof_song->tracks); ctr++)
 	{	//For each track (only check if the user defined a minimum length, and only if the user didn't already decline to cancel when an offending note was found)
-		if((eof_song->track[ctr]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[ctr]->track_format == EOF_LEGACY_TRACK_FORMAT))
-		{	//If this is a 5 lane guitar track
-			for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, ctr); ctr2++)
-			{	//For each note in the track
-				if(eof_get_note_length(eof_song, ctr, ctr2) < eof_min_note_length)
-				{	//If this note's length is shorter than the minimum length
-					eof_clear_input();
-					if(alert("Warning:  At least one note was truncated shorter", "than your defined minimum length.", "Cancel save and seek to the first such note?", "&Yes", "&No", 'y', 'n') == 1)
-					{	//If the user opted to seek to the first offending note (only prompt once per call)
-						eof_seek_and_render_position(ctr, eof_get_note_type(eof_song, ctr, ctr2), eof_get_note_pos(eof_song, ctr, ctr2));
-						return 1;	//Return cancellation
-					}
-					note_length_warned = 1;
-					break;	//Stop checking after the first offending note is found
-				}
+		if((eof_song->track[ctr]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[ctr]->track_format != EOF_LEGACY_TRACK_FORMAT))
+			continue;	//If this isn't a 5 lane guitar track, skip it
+
+		for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, ctr); ctr2++)
+		{	//For each note in the track
+			if(eof_get_note_length(eof_song, ctr, ctr2) >= eof_min_note_length)
+				continue;	//If this note's length is not shorter than the minimum length, skip it
+
+			eof_clear_input();
+			if(alert("Warning:  At least one note was truncated shorter", "than your defined minimum length.", "Cancel save and seek to the first such note?", "&Yes", "&No", 'y', 'n') == 1)
+			{	//If the user opted to seek to the first offending note (only prompt once per call)
+				eof_seek_and_render_position(ctr, eof_get_note_type(eof_song, ctr, ctr2), eof_get_note_pos(eof_song, ctr, ctr2));
+				return 1;	//Return cancellation
 			}
+			note_length_warned = 1;
+			break;	//Stop checking after the first offending note is found
 		}
 	}
 
@@ -2681,23 +2681,22 @@ int eof_save_helper_checks(void)
 		{	//For each note in the track
 			long next = eof_track_fixup_next_note(eof_song, ctr, ctr2);	//Get the next note, if it exists
 			long maxlength = eof_get_note_max_length(eof_song, ctr, ctr2, 1);	//Get the maximum length of this note
-			if(next > 0)
-			{	//If there was a next note
-				if(eof_get_note_length(eof_song, ctr, ctr2) > maxlength)
-				{	//And this note is longer than its maximum length
-					if(eof_get_note_pos(eof_song, ctr, next) - eof_get_note_pos(eof_song, ctr, ctr2) < eof_min_note_distance)
-					{	//If the notes are too close to enforce the minimum note distance
-						eof_clear_input();
-						if(alert("Warning:  At least one note is too close to another", "to enforce the minimum note distance.", "Cancel save and seek to the first such note?", "&Yes", "&No", 'y', 'n') == 1)
-						{	//If the user opted to seek to the first offending note (only prompt once per call)
-							eof_seek_and_render_position(ctr, eof_get_note_type(eof_song, ctr, ctr2), eof_get_note_pos(eof_song, ctr, ctr2));
-							return 1;	//Return cancellation
-						}
-						note_distance_warned = 1;
-						break;	//Stop checking after the first offending note is found
-					}
-				}
+
+			if(next <= 0)
+				continue;	//If this note doesn't have a note that follows, skip it
+			if(eof_get_note_length(eof_song, ctr, ctr2) <= maxlength)
+				continue;	//If this note is not longer than its maximum length, skip it
+			if(eof_get_note_pos(eof_song, ctr, next) - eof_get_note_pos(eof_song, ctr, ctr2) >= eof_min_note_distance)
+				continue;	//If this note and the next are placed too closely to allow enforcing the minimum note distance, skip it
+
+			eof_clear_input();
+			if(alert("Warning:  At least one note is too close to another", "to enforce the minimum note distance.", "Cancel save and seek to the first such note?", "&Yes", "&No", 'y', 'n') == 1)
+			{	//If the user opted to seek to the first offending note (only prompt once per call)
+				eof_seek_and_render_position(ctr, eof_get_note_type(eof_song, ctr, ctr2), eof_get_note_pos(eof_song, ctr, ctr2));
+				return 1;	//Return cancellation
 			}
+			note_distance_warned = 1;
+			break;	//Stop checking after the first offending note is found
 		}
 	}
 
@@ -2706,30 +2705,30 @@ int eof_save_helper_checks(void)
 	eof_process_beat_statistics(eof_song, eof_selected_track);
 	for(ctr = 1; ctr < eof_song->beats; ctr++)
 	{	//For each beat after the first
-		if(eof_song->beat[ctr]->contains_ts_change)
-		{	//If this beat has a time signature change
-			if(eof_song->beat[ctr - 1]->has_ts && (eof_song->beat[ctr - 1]->beat_within_measure != eof_song->beat[ctr - 1]->num_beats_in_measure - 1))
-			{	//If the previous beat has a time signature in effect, but it wasn't the last beat in its measure (the beat_within_measure stat is numbered starting with 0)
-				suggested = eof_song->beat[ctr - 1]->beat_within_measure + 1;	//Track the last beat number in the measure and account for the zero numbering
-				for(ctr = ctr - 1; ctr > 0; ctr--)
-				{	//For each of the previous beats
-					if(eof_song->beat[ctr]->beat_within_measure == 0)
-					{	//If this is the first beat in the affected measure
-						break;
-					}
-				}
-				(void) snprintf(newfolderpath, sizeof(newfolderpath) - 1, "(Suggested T/S is %d/%u).  Cancel save?", suggested, eof_song->beat[ctr]->beat_unit);	//Determine a suitable time signature to suggest
-				eof_selected_beat = ctr;	//Select the affected beat marker
-				eof_beat_stats_cached = 0;
-				eof_seek_and_render_position(eof_selected_track, eof_note_type, eof_song->beat[ctr]->pos);	//seek to the beat in question and render
-				eof_clear_input();
-				if(alert("At least one measure is interrupted by a time signature.", "This can cause problems in some rhythm games.", newfolderpath, "&Yes", "&No", 'y', 'n') == 1)
-				{	//If the user opts to correct the issue
-					return 1;	//Return cancellation
-				}
+		if(!eof_song->beat[ctr]->contains_ts_change)
+			continue;	//If this beat does not have a time signature change, skip it
+
+		if(!eof_song->beat[ctr - 1]->has_ts || (eof_song->beat[ctr - 1]->beat_within_measure == eof_song->beat[ctr - 1]->num_beats_in_measure - 1))
+			continue;	//If the previous beat does not have a time signature, or if it was the last beat in its measure (the beat_within_measure stat is numbered starting with 0), skip it
+
+		suggested = eof_song->beat[ctr - 1]->beat_within_measure + 1;	//Track the last beat number in the measure and account for the zero numbering
+		for(ctr = ctr - 1; ctr > 0; ctr--)
+		{	//For each of the previous beats
+			if(eof_song->beat[ctr]->beat_within_measure == 0)
+			{	//If this is the first beat in the affected measure
 				break;
 			}
 		}
+		(void) snprintf(newfolderpath, sizeof(newfolderpath) - 1, "(Suggested T/S is %d/%u).  Cancel save?", suggested, eof_song->beat[ctr]->beat_unit);	//Determine a suitable time signature to suggest
+		eof_selected_beat = ctr;	//Select the affected beat marker
+		eof_beat_stats_cached = 0;
+		eof_seek_and_render_position(eof_selected_track, eof_note_type, eof_song->beat[ctr]->pos);	//seek to the beat in question and render
+		eof_clear_input();
+		if(alert("At least one measure is interrupted by a time signature.", "This can cause problems in some rhythm games.", newfolderpath, "&Yes", "&No", 'y', 'n') == 1)
+		{	//If the user opts to correct the issue
+			return 1;	//Return cancellation
+		}
+		break;
 	}
 
 
@@ -2768,18 +2767,35 @@ int eof_save_helper_checks(void)
 	if(eof_write_rs2_files)
 	{	//If the user wants to save Rocksmith 2 files
 		char warning1 = 0, warning2 = 0, warning3 = 0;
+
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track
-			if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{	//If this is a pro guitar/bass track
-				tracknum = eof_song->track[ctr]->tracknum;
-				tp = eof_song->pro_guitar_track[tracknum];
-				//Build and count the size of the list of unique tone names used, and empty the default tone string if it is not valid
-				eof_track_rebuild_rs_tone_names_list_strings(ctr, 1);
-				if(eof_track_rs_tone_names_list_strings_num == 1)
-				{	//If only one tone name is used
+			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				continue;	//If this is not a pro guitar/bass track, skip it
+
+			tracknum = eof_song->track[ctr]->tracknum;
+			tp = eof_song->pro_guitar_track[tracknum];
+			//Build and count the size of the list of unique tone names used, and empty the default tone string if it is not valid
+			eof_track_rebuild_rs_tone_names_list_strings(ctr, 1);
+			if(eof_track_rs_tone_names_list_strings_num == 1)
+			{	//If only one tone name is used
+				eof_clear_input();
+				if(!warning3 && alert("Warning:  At least one track uses only one tone name.  You must use at least", "two different tone names and set one as default for them to work in Rocksmith 2014.", "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
+				{
+					eof_track_destroy_rs_tone_names_list_strings();
+					(void) eof_menu_track_selected_track_number(ctr, 1);	//Set the active instrument track
+					eof_render();
+					(void) eof_track_rs_tone_names();	//Call up the tone names dialog
+					return 1;	//Return cancellation
+				}
+				warning3 = 1;
+			}
+			else if(eof_track_rs_tone_names_list_strings_num > 1)
+			{	//If at least 2 unique tone names are used
+				if((tp->defaulttone[0] == '\0') && !warning1)
+				{	//If the default tone is not set, and the user wasn't warned about this yet
 					eof_clear_input();
-					if(!warning3 && alert("Warning:  At least one track uses only one tone name.  You must use at least", "two different tone names and set one as default for them to work in Rocksmith 2014.", "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
+					if(!warning1 && alert("Warning:  At least one track with tone changes has no default tone set.", NULL, "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
 					{
 						eof_track_destroy_rs_tone_names_list_strings();
 						(void) eof_menu_track_selected_track_number(ctr, 1);	//Set the active instrument track
@@ -2787,38 +2803,22 @@ int eof_save_helper_checks(void)
 						(void) eof_track_rs_tone_names();	//Call up the tone names dialog
 						return 1;	//Return cancellation
 					}
-					warning3 = 1;
+					warning1 = 1;
 				}
-				else if(eof_track_rs_tone_names_list_strings_num > 1)
-				{	//If at least 2 unique tone names are used
-					if((tp->defaulttone[0] == '\0') && !warning1)
-					{	//If the default tone is not set, and the user wasn't warned about this yet
-						eof_clear_input();
-						if(!warning1 && alert("Warning:  At least one track with tone changes has no default tone set.", NULL, "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
-						{
-							eof_track_destroy_rs_tone_names_list_strings();
-							(void) eof_menu_track_selected_track_number(ctr, 1);	//Set the active instrument track
-							eof_render();
-							(void) eof_track_rs_tone_names();	//Call up the tone names dialog
-							return 1;	//Return cancellation
-						}
-						warning1 = 1;
+				if((eof_track_rs_tone_names_list_strings_num > 4) && !warning2)
+				{	//If there are more than 4 unique tone names used, and the user wasn't warned about this yet
+					if(!warning2 && alert("Warning:  At least one arrangement uses more than 4 different tones.", "Rocksmith doesn't support more than 4 so EOF will only export changes for 4 tone names.", "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
+					{
+						eof_track_destroy_rs_tone_names_list_strings();
+						(void) eof_menu_track_selected_track_number(ctr, 1);	//Set the active instrument track
+						eof_render();
+						(void) eof_track_rs_tone_names();	//Call up the tone names dialog
+						return 1;	//Return cancellation
 					}
-					if((eof_track_rs_tone_names_list_strings_num > 4) && !warning2)
-					{	//If there are more than 4 unique tone names used, and the user wasn't warned about this yet
-						if(!warning2 && alert("Warning:  At least one arrangement uses more than 4 different tones.", "Rocksmith doesn't support more than 4 so EOF will only export changes for 4 tone names.", "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
-						{
-							eof_track_destroy_rs_tone_names_list_strings();
-							(void) eof_menu_track_selected_track_number(ctr, 1);	//Set the active instrument track
-							eof_render();
-							(void) eof_track_rs_tone_names();	//Call up the tone names dialog
-							return 1;	//Return cancellation
-						}
-						warning2 = 1;
-					}
+					warning2 = 1;
 				}
-				eof_track_destroy_rs_tone_names_list_strings();
 			}
+			eof_track_destroy_rs_tone_names_list_strings();
 		}
 	}
 
@@ -2826,43 +2826,43 @@ int eof_save_helper_checks(void)
 	/* check if any arpeggio phrases only have one note in them (handshapes do not trigger this warning) */
 	for(ctr = 1; (ctr < eof_song->tracks) && !arpeggio_warned; ctr++)
 	{	//For each track, or until the user is warned about an offending arpeggio
-		if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-		{	//If this is a pro guitar/bass track
-			unsigned long notectr;
-			char restore_tech_view = 0;
+		unsigned long notectr;
+		char restore_tech_view = 0;
 
-			tracknum = eof_song->track[ctr]->tracknum;
-			tp = eof_song->pro_guitar_track[tracknum];
-			restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
-			eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Activate the normal note set
+		if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			continue;	//If this is not a pro guitar/bass track, skip it
 
-			for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
-			{	//For each arpeggio/handshape phrase in the track
-				if(!(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE))
-				{	//If this is an arpeggio phrase and NOT a handshape phrase
-					notectr = 0;
-					for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
-					{	//For each note in the track
-						if((tp->note[ctr3]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr3]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr3]->type == tp->arpeggio[ctr2].difficulty))
-						{	//If the note is within the arpeggio phrase
-							notectr++;	//Increment counter
-						}
-					}
-					if(notectr < 2)
-					{
-						eof_clear_input();
-						eof_seek_and_render_position(ctr, tp->arpeggio[ctr2].difficulty, tp->arpeggio[ctr2].start_pos);
-						if(alert("Warning:  At least one arpeggio phrase doesn't contain at least two notes.", "You should remove the arpeggio phrase or add additional notes into it.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-						{	//If the user opts to cancel
-							return 1;	//Return cancellation
-						}
-						arpeggio_warned = 1;	//Set a condition to exit outer for loop
-						break;	//Break from inner for loop
-					}
+		tracknum = eof_song->track[ctr]->tracknum;
+		tp = eof_song->pro_guitar_track[tracknum];
+		restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
+		eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Activate the normal note set
+
+		for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
+		{	//For each arpeggio/handshape phrase in the track
+			if(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE)
+				continue;	//If this is a handshape phrase instead of a normal arpeggio phrase, skip it
+
+			notectr = 0;
+			for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
+			{	//For each note in the track
+				if((tp->note[ctr3]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr3]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr3]->type == tp->arpeggio[ctr2].difficulty))
+				{	//If the note is within the arpeggio phrase
+					notectr++;	//Increment counter
 				}
-			}//For each arpeggio phrase in the track
-			eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Activate whichever note set was active for the track
-		}//If this is a pro guitar/bass track
+			}
+			if(notectr < 2)
+			{
+				eof_clear_input();
+				eof_seek_and_render_position(ctr, tp->arpeggio[ctr2].difficulty, tp->arpeggio[ctr2].start_pos);
+				if(alert("Warning:  At least one arpeggio phrase doesn't contain at least two notes.", "You should remove the arpeggio phrase or add additional notes into it.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+				{	//If the user opts to cancel
+					return 1;	//Return cancellation
+				}
+				arpeggio_warned = 1;	//Set a condition to exit outer for loop
+				break;	//Break from inner for loop
+			}
+		}//For each arpeggio phrase in the track
+		eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Activate whichever note set was active for the track
 	}//For each track, or until the user is warned about an offending arpeggio
 
 
@@ -2871,91 +2871,91 @@ int eof_save_helper_checks(void)
 	{	//If the user wants to save Rocksmith or Bandfuse capable files
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track
-			if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{	//If this is a pro guitar/bass track
-				unsigned long flags, noteset;
-				char restore_tech_view = 0;
+			unsigned long flags, noteset;
+			char restore_tech_view = 0;
 
-				tracknum = eof_song->track[ctr]->tracknum;
-				tp = eof_song->pro_guitar_track[tracknum];
-				restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
-				for(noteset = 0; noteset < 2; noteset++)
-				{	//For each note set
-					eof_menu_pro_guitar_track_set_tech_view_state(tp, noteset);	//Activate the appropriate note set
-					for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
-					{	//For each note in the track
-						flags = tp->note[ctr2]->flags;
-						if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
-						{	//If the note contains no bend strength or slide end position
-							if(((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)) && !slide_warned)
-							{	//If the note has slide technique and is missing the end position, and the user hasn't been warned about this yet
-								eof_clear_input();
-								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
-								if(alert("Warning:  At least one slide note doesn't define its ending position.", "Unless you define this information they will export as 1 fret slides.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-								{	//If the user opts to cancel
-									return 1;	//Return cancellation
-								}
-								slide_warned = 1;
+			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				continue;	//If this is not a pro guitar/bass track, skip it
+
+			tracknum = eof_song->track[ctr]->tracknum;
+			tp = eof_song->pro_guitar_track[tracknum];
+			restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
+			for(noteset = 0; noteset < 2; noteset++)
+			{	//For each note set
+				eof_menu_pro_guitar_track_set_tech_view_state(tp, noteset);	//Activate the appropriate note set
+				for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+				{	//For each note in the track
+					flags = tp->note[ctr2]->flags;
+					if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
+					{	//If the note contains no bend strength or slide end position
+						if(((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)) && !slide_warned)
+						{	//If the note has slide technique and is missing the end position, and the user hasn't been warned about this yet
+							eof_clear_input();
+							eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
+							if(alert("Warning:  At least one slide note doesn't define its ending position.", "Unless you define this information they will export as 1 fret slides.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+							{	//If the user opts to cancel
+								return 1;	//Return cancellation
 							}
-							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND && !bend_warned)
-							{	//If the note has bend technique and is missing the bend strength, and the user hasn't been warned about this yet
-								eof_clear_input();
-								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
-								if(alert("Warning:  At least one bend note doesn't define its bend strength.", "Unless you define this information they will export as bending 1 half step.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-								{	//If the user opts to cancel
-									return 1;	//Return cancellation
-								}
-								bend_warned = 1;
-							}
+							slide_warned = 1;
 						}
-
-						if(!slide_error && !noteset)
-						{	//If the user hasn't been warned about any slide related errors yet, and this is the normal note set
-							unsigned char lowestfret = eof_pro_guitar_note_lowest_fret(tp, ctr2);	//Determine the note's lowest used fret value
-
-							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
-							{	//If the note has pitched slide end position data
-								if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-								{	//If the note slides up
-									if(tp->note[ctr2]->slideend <= lowestfret)
-									{	//The slide doesn't go higher than the current note
-										slide_error = 1;
-									}
-								}
-								if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
-								{	//If the note slides down
-									if(tp->note[ctr2]->slideend >= lowestfret)
-									{	//The slide doesn't go lower than the current note
-										slide_error = 1;
-									}
-								}
+						if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND && !bend_warned)
+						{	//If the note has bend technique and is missing the bend strength, and the user hasn't been warned about this yet
+							eof_clear_input();
+							eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
+							if(alert("Warning:  At least one bend note doesn't define its bend strength.", "Unless you define this information they will export as bending 1 half step.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+							{	//If the user opts to cancel
+								return 1;	//Return cancellation
 							}
-							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
-							{	//If the note has an unpitched slide
-								if(tp->note[ctr2]->unpitchend == lowestfret)
-								{	//The slide doesn't move from the current note
+							bend_warned = 1;
+						}
+					}
+
+					if(!slide_error && !noteset)
+					{	//If the user hasn't been warned about any slide related errors yet, and this is the normal note set
+						unsigned char lowestfret = eof_pro_guitar_note_lowest_fret(tp, ctr2);	//Determine the note's lowest used fret value
+
+						if(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
+						{	//If the note has pitched slide end position data
+							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+							{	//If the note slides up
+								if(tp->note[ctr2]->slideend <= lowestfret)
+								{	//The slide doesn't go higher than the current note
 									slide_error = 1;
 								}
 							}
-							if(slide_error)
-							{	//If one of the above checks failed
-								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
-								if(alert("Warning:  At least one slide note has an error in its end position.", "Unless corrected, it will not export to XML as a slide.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-								{	//If the user opts to cancel
-									return 1;	//Return cancellation
+							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+							{	//If the note slides down
+								if(tp->note[ctr2]->slideend >= lowestfret)
+								{	//The slide doesn't go lower than the current note
+									slide_error = 1;
 								}
 							}
 						}
-						if(slide_warned && bend_warned && slide_error)
-							break;	//Exit for loop if all warnings/errors were issued and declined by the user
-					}//For each note in the track
+						if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+						{	//If the note has an unpitched slide
+							if(tp->note[ctr2]->unpitchend == lowestfret)
+							{	//The slide doesn't move from the current note
+								slide_error = 1;
+							}
+						}
+						if(slide_error)
+						{	//If one of the above checks failed
+							eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
+							if(alert("Warning:  At least one slide note has an error in its end position.", "Unless corrected, it will not export to XML as a slide.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+							{	//If the user opts to cancel
+								return 1;	//Return cancellation
+							}
+						}
+					}
 					if(slide_warned && bend_warned && slide_error)
 						break;	//Exit for loop if all warnings/errors were issued and declined by the user
-				}//For each note set
-				eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Restore the note set that was in use for the track
+				}//For each note in the track
 				if(slide_warned && bend_warned && slide_error)
 					break;	//Exit for loop if all warnings/errors were issued and declined by the user
-			}//If this is a pro guitar/bass track
+			}//For each note set
+			eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Restore the note set that was in use for the track
+			if(slide_warned && bend_warned && slide_error)
+				break;	//Exit for loop if all warnings/errors were issued and declined by the user
 		}//For each track
 	}//If the user wants to save Rocksmith capable files
 
@@ -2971,40 +2971,38 @@ int eof_save_helper_checks(void)
 			target = 2;
 		for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
 		{	//For each track (until the user is warned about any offending chord names)
-			if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{	//If this is a pro guitar/bass track
-				char restore_tech_view = 0;
+			char restore_tech_view = 0;
 
-				tracknum = eof_song->track[ctr]->tracknum;
-				tp = eof_song->pro_guitar_track[tracknum];
-				restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
-				eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Activate the normal note set
-				for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
-				{	//For each note in the track
-					if(eof_note_count_rs_lanes(eof_song, ctr, ctr2, target) > 1)
-					{	//If the note will export as a chord to one or both user-configured target versions of Rocksmith
-						name = eof_get_note_name(eof_song, ctr, ctr2);	//Get pointer to the chord's name
-						if(name)
-						{	//If the name was retrievable
-							if(rs_filter_string(name, 1))
-							{	//If the name contains any invalid characters (forward slash is allowed for denoting slash chords)
-								eof_2d_render_top_option = 5;					//Change the user preference to render note names at the top of the piano roll
-								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Render the track so the user can see where the correction needs to be made
-								eof_clear_input();
-								if(!user_prompted && alert("At least one chord has an unaccepted character: ( } ,  \\  : { \" )", "This can cause Rocksmith to crash or hang and will be removed.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-								{	//If the user hasn't already answered this prompt, and opts to correct the issue
-									eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-									return 1;	//Return cancellation
-								}
-								eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-								user_prompted = 1;	//Set the condition to exit outer for loop
-								break;	//Break from inner for loop
-							}
-						}
-					}
-				}//For each note in the track
-				eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Restore the note set that was in use for the track
-			}//If this is a pro guitar/bass track
+			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				continue;	//If this is not a pro guitar/bass track, skip it
+
+			tracknum = eof_song->track[ctr]->tracknum;
+			tp = eof_song->pro_guitar_track[tracknum];
+			restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
+			eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Activate the normal note set
+			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+			{	//For each note in the track
+				if(eof_note_count_rs_lanes(eof_song, ctr, ctr2, target) <= 1)
+					continue;	//If the note will not export as a chord, skip it
+				name = eof_get_note_name(eof_song, ctr, ctr2);	//Get pointer to the chord's name
+				if(!name)
+					continue;	//If this note's name was not retrievable, skip it
+				if(!rs_filter_string(name, 1))
+					continue;	//If this note's name doesn't include any invalid characters (forward slash is allowed for denoting slash chords), skip it
+
+				eof_2d_render_top_option = 5;					//Change the user preference to render note names at the top of the piano roll
+				eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Render the track so the user can see where the correction needs to be made
+				eof_clear_input();
+				if(!user_prompted && alert("At least one chord has an unaccepted character: ( } ,  \\  : { \" )", "This can cause Rocksmith to crash or hang and will be removed.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+				{	//If the user hasn't already answered this prompt, and opts to correct the issue
+					eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+					return 1;	//Return cancellation
+				}
+				eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+				user_prompted = 1;	//Set the condition to exit outer for loop
+				break;	//Break from inner for loop
+			}//For each note in the track
+			eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Restore the note set that was in use for the track
 		}//For each track (until the user is warned about any offending chord names)
 	}//If the user wants to save Rocksmith capable files
 
@@ -3019,41 +3017,42 @@ int eof_save_helper_checks(void)
 
 			for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
 			{	//For each track (until the user is warned about any offending handshape phrases)
-				if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-				{	//If this is a pro guitar/bass track
-					tracknum = eof_song->track[ctr]->tracknum;
-					tp = eof_song->pro_guitar_track[tracknum];
-					eof_pro_guitar_track_sort_arpeggios(tp);
-					for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
-					{	//For each arpeggio/handshape
-						unsigned long start, end;
+				if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+					continue;	//If this is not a pro guitar/bass track, skip it
 
-						start = eof_get_beat(eof_song, tp->arpeggio[ctr2].start_pos);
-						end = eof_get_beat(eof_song, tp->arpeggio[ctr2].end_pos);
-						if(eof_beat_num_valid(eof_song, start) && eof_beat_num_valid(eof_song, end) && (end >= start))
-						{	//If the effective beat numbers for the start and end position of the arpeggio/handshape were identified
-							for(ctr3 = start + 1; !user_prompted && (ctr3 <= end); ctr3++)
-							{	//For each beat between them, after the first (which will always be at/before the beginning of the arpeggio, when the condition being checked can only happen to a beat AFTER the start of the arpeggio)
-								if(eof_song->beat[ctr3]->contained_section_event >= 0)
-								{	//If this beat has an RS phrase defined, it marks a phrase change
-									eof_2d_render_top_option = 9;					//Change the user preference to render RS phrases and sections at the top of the piano roll
-									if(tp->arpeggio[ctr2].difficulty != 0xFF)
-									{	//If this is a difficulty specific arpeggio
-										eof_note_type = tp->arpeggio[ctr2].difficulty;	//Change to the relevant difficulty
-									}
-									eof_seek_and_render_position(ctr, eof_note_type, tp->arpeggio[ctr2].start_pos);	//Render the track so the user can see where the correction needs to be made
-									eof_clear_input();
-									if(!user_prompted && alert("At least one arpeggio/handshape crosses over into another RS phrase", "This can behave strangely in Rocksmith if the chart has dynamic difficulty.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-									{	//If the user hasn't already answered this prompt, and opts to correct the issue
-										eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-										return 1;	//Return cancellation
-									}
-									eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-									user_prompted = 1;	//Set the condition to exit outer for loops
-									break;	//Break from inner for loop
-								}
-							}
+				tracknum = eof_song->track[ctr]->tracknum;
+				tp = eof_song->pro_guitar_track[tracknum];
+				eof_pro_guitar_track_sort_arpeggios(tp);
+				for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
+				{	//For each arpeggio/handshape
+					unsigned long start, end;
+
+					start = eof_get_beat(eof_song, tp->arpeggio[ctr2].start_pos);
+					end = eof_get_beat(eof_song, tp->arpeggio[ctr2].end_pos);
+					if(!eof_beat_num_valid(eof_song, start) || !eof_beat_num_valid(eof_song, end) || (end < start))
+						continue;	//If the effective beat numbers for the start and end position of the arpeggio/handshape were not properly identified, skip it
+
+					for(ctr3 = start + 1; !user_prompted && (ctr3 <= end); ctr3++)
+					{	//For each beat between them, after the first (which will always be at/before the beginning of the arpeggio, when the condition being checked can only happen to a beat AFTER the start of the arpeggio)
+						if(eof_song->beat[ctr3]->contained_section_event < 0)
+							continue;	//If this beat does not have an RS phrase defined, skip it
+
+						//Otherwise it marks a phrase change
+						eof_2d_render_top_option = 9;					//Change the user preference to render RS phrases and sections at the top of the piano roll
+						if(tp->arpeggio[ctr2].difficulty != 0xFF)
+						{	//If this is a difficulty specific arpeggio
+							eof_note_type = tp->arpeggio[ctr2].difficulty;	//Change to the relevant difficulty
 						}
+						eof_seek_and_render_position(ctr, eof_note_type, tp->arpeggio[ctr2].start_pos);	//Render the track so the user can see where the correction needs to be made
+						eof_clear_input();
+						if(!user_prompted && alert("At least one arpeggio/handshape crosses over into another RS phrase", "This can behave strangely in Rocksmith if the chart has dynamic difficulty.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+						{	//If the user hasn't already answered this prompt, and opts to correct the issue
+							eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+							return 1;	//Return cancellation
+						}
+						eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+						user_prompted = 1;	//Set the condition to exit outer for loops
+						break;	//Break from inner for loop
 					}
 				}
 			}
@@ -3069,133 +3068,133 @@ int eof_save_helper_checks(void)
 
 		for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
 		{	//For each track (until the user is warned about any offending handshape phrases)
-			if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{	//If this is a pro guitar/bass track
-				tracknum = eof_song->track[ctr]->tracknum;
-				tp = eof_song->pro_guitar_track[tracknum];
-				restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
-				for(ctr2 = 0; !user_prompted && (ctr2 < 2); ctr2++)
-				{	//For each note set
-					eof_menu_pro_guitar_track_set_tech_view_state(tp, ctr2);	//Activate the appropriate note set
-					for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
-					{	//For each note in the note set
-						unsigned long flags = tp->note[ctr3]->flags;
+			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				continue;	//If this is not a pro guitar/bass track, skip it
 
-						if((flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
-						{	//If the note contains a bend strength
-							unsigned char strength = tp->note[ctr3]->bendstrength;
-							if(!(strength & 0x80))
-							{	//If the MSB of this value isn't set, it is defined in half steps
-								strength = (strength & 0x7F) * 2;	//Convert to quarter steps
-							}
-							else
-							{
-								strength = strength & 0x7F;	//Mask out the MSB
-							}
-							if(strength > 6)
-							{	//If the bend strength is greater than 3 half steps (6 quarter steps)
-								eof_seek_and_render_position(ctr, tp->note[ctr3]->type, tp->note[ctr3]->pos);	//Render the track so the user can see where the correction needs to be made
-								eof_clear_input();
-								if(!user_prompted && alert("At least one bend note has a strength higher than 3 half steps.", "3 half steps is the strongest bend that Rocksmith supports.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-								{	//If the user hasn't already answered this prompt, and opts to correct the issue
-									return 1;	//Return cancellation
-								}
-								user_prompted = 1;	//Set the condition to exit outer for loops
-								break;	//Break from inner for loop
-							}
+			tracknum = eof_song->track[ctr]->tracknum;
+			tp = eof_song->pro_guitar_track[tracknum];
+			restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
+			for(ctr2 = 0; !user_prompted && (ctr2 < 2); ctr2++)
+			{	//For each note set
+				eof_menu_pro_guitar_track_set_tech_view_state(tp, ctr2);	//Activate the appropriate note set
+				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
+				{	//For each note in the note set
+					unsigned long flags = tp->note[ctr3]->flags;
+					unsigned char strength;
+
+					if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) || !(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
+						continue;	//If the note does not contain a bend strength, skip it
+
+					strength = tp->note[ctr3]->bendstrength;
+					if(!(strength & 0x80))
+					{	//If the MSB of this value isn't set, it is defined in half steps
+						strength = (strength & 0x7F) * 2;	//Convert to quarter steps
+					}
+					else
+					{
+						strength = strength & 0x7F;	//Mask out the MSB
+					}
+					if(strength > 6)
+					{	//If the bend strength is greater than 3 half steps (6 quarter steps)
+						eof_seek_and_render_position(ctr, tp->note[ctr3]->type, tp->note[ctr3]->pos);	//Render the track so the user can see where the correction needs to be made
+						eof_clear_input();
+						if(!user_prompted && alert("At least one bend note has a strength higher than 3 half steps.", "3 half steps is the strongest bend that Rocksmith supports.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+						{	//If the user hasn't already answered this prompt, and opts to correct the issue
+							return 1;	//Return cancellation
 						}
+						user_prompted = 1;	//Set the condition to exit outer for loops
+						break;	//Break from inner for loop
 					}
 				}
-				eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Restore the note set that was in use for the track
 			}
+			eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Restore the note set that was in use for the track
 		}
 	}
 
 
 	/* check for any notes that extend into a different RS phrase or section */
-	if(!eof_song->tags->rs_export_suppress_dd_warnings)
-	{	//If dynamic difficulty warnings haven't been suppressed for this chart
-		if(eof_write_rs_files || eof_write_rs2_files)
-		{	//If the user wants to save Rocksmith capable files
-			char user_prompted = 0;
-			unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+	if(eof_song->tags->rs_export_suppress_dd_warnings)
+		return 0;	//If dynamic difficulty warnings have been suppressed for this chart, skip the remainder of this function's logic which performs that check
 
-			for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
-			{	//For each track (until the user is warned about any offending notes)
-				if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-				{	//If this is a pro guitar/bass track
-					EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-					unsigned long bitmask;
-					char restore_tech_view = 0;
-					unsigned long start, stop;
+	if(eof_write_rs_files || eof_write_rs2_files)
+	{	//If the user wants to save Rocksmith capable files
+		char user_prompted = 0;
+		unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
 
-					eof_process_beat_statistics(eof_song, ctr);	//Rebuild beat statistics from the perspective of this track
-					tracknum = eof_song->track[ctr]->tracknum;
-					tp = eof_song->pro_guitar_track[tracknum];
-					restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
-					eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Activate the normal note set
+		for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
+		{	//For each track (until the user is warned about any offending notes)
+			EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+			unsigned long bitmask;
+			char restore_tech_view = 0;
+			unsigned long start, stop;
+			int sectionchange = 0, phrasechange = 0;
 
-					for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
-					{	//For each note in the track
-						unsigned long startbeat, stopbeat;
+			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				continue;	//If this is not a pro guitar/bass track, skip it
 
-						start = tp->note[ctr2]->pos;			//Record its start and stop position
-						stop = start + tp->note[ctr2]->length;
+			eof_process_beat_statistics(eof_song, ctr);	//Rebuild beat statistics from the perspective of this track
+			tracknum = eof_song->track[ctr]->tracknum;
+			tp = eof_song->pro_guitar_track[tracknum];
+			restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
+			eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Activate the normal note set
 
-						for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
-						{	//For each of the 6 usable strings
-							if(tp->note[ctr2]->note & bitmask)
-							{	//If the note uses this string
-								(void) eof_get_rs_techniques(eof_song, ctr, ctr2, ctr3, &tech, 2, 1);	//Check to see if the gem on this string has linknext status applied
-								if(tech.linknext)
-								{	//If it does
-									long nextnote = eof_fixup_next_pro_guitar_note(tp, ctr2);	//Look for another note that follows in this track difficulty
+			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+			{	//For each note in the track
+				unsigned long startbeat, stopbeat;
 
-									if(nextnote > 0)
-									{	//If a next note is identified
-										stop = tp->note[nextnote]->pos + tp->note[nextnote]->length;	//Its ending is the effective end position to consider
-									}
-								}
-							}
-						}
+				start = tp->note[ctr2]->pos;			//Record its start and stop position
+				stop = start + tp->note[ctr2]->length;
 
-						startbeat = eof_get_beat(eof_song, start);	//Find the beat in which this note starts
-						stopbeat = eof_get_beat(eof_song, stop);	//And the beat in which it ends
-						if(eof_beat_num_valid(eof_song, stopbeat) && (stop == eof_song->beat[stopbeat]->pos) && (stopbeat > startbeat))
-						{	//If the note extends up to and ends on the beat
-							stopbeat--;	//Interpret it as ending at the previous beat instead of surpassing it
-						}
-						if(eof_beat_num_valid(eof_song, startbeat) && eof_beat_num_valid(eof_song, stopbeat) && (startbeat != stopbeat))
-						{	//If each of those beats was successfully identified and they are different beats
-							int sectionchange = 0, phrasechange = 0;
+				for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+				{	//For each of the 6 usable strings
+					if(tp->note[ctr2]->note & bitmask)
+					{	//If the note uses this string
+						(void) eof_get_rs_techniques(eof_song, ctr, ctr2, ctr3, &tech, 2, 1);	//Check to see if the gem on this string has linknext status applied
+						if(tech.linknext)
+						{	//If it does
+							long nextnote = eof_fixup_next_pro_guitar_note(tp, ctr2);	//Look for another note that follows in this track difficulty
 
-							for(ctr3 = startbeat + 1; (ctr3 <= stopbeat) && (ctr3 < eof_song->beats); ctr3++)
-							{	//For each beat after the start beat up to and including the stop beat
-								if(eof_song->beat[ctr3]->contained_rs_section_event >= 0)
-									sectionchange = 1;	//This beat indicates a section change
-								if(eof_song->beat[ctr3]->contained_section_event >= 0)
-									phrasechange = 1;	//This beat indicates a phrase change
-							}
-							if(sectionchange || phrasechange)
-							{	//If the section or phrase changes during the course of the note
-								eof_2d_render_top_option = 9;					//Change the user preference to render RS phrases and sections at the top of the piano roll
-								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Render the track so the user can see where the correction needs to be made
-								eof_clear_input();
-								if(!user_prompted && alert("At least one note crosses an RS phrase or section boundary.", "This can behave strangely in Rocksmith if the chart has dynamic difficulty.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-								{	//If the user hasn't already answered this prompt, and opts to correct the issue
-									return 1;	//Return cancellation
-								}
-								eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-								user_prompted = 1;	//Set the condition to exit outer for loop
-								break;	//Break from inner for loop
+							if(nextnote > 0)
+							{	//If a next note is identified
+								stop = tp->note[nextnote]->pos + tp->note[nextnote]->length;	//Its ending is the effective end position to consider
 							}
 						}
 					}
-					eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Activate whichever note set was active for the track
-				}//If this is a pro guitar/bass track
-			}//For each track (until the user is warned about any offending notes)
-		}//If the user wants to save Rocksmith capable files
-	}//If dynamic difficulty warnings haven't been suppressed for this chart
+				}
+
+				startbeat = eof_get_beat(eof_song, start);	//Find the beat in which this note starts
+				stopbeat = eof_get_beat(eof_song, stop);	//And the beat in which it ends
+				if(eof_beat_num_valid(eof_song, stopbeat) && (stop == eof_song->beat[stopbeat]->pos) && (stopbeat > startbeat))
+				{	//If the note extends up to and ends on the beat
+					stopbeat--;	//Interpret it as ending at the previous beat instead of surpassing it
+				}
+				if(!eof_beat_num_valid(eof_song, startbeat) || !eof_beat_num_valid(eof_song, stopbeat) || (startbeat == stopbeat))
+					continue;	//If either of those beats weren't successfully identified or they are the same beat, skip the logic below
+
+				for(ctr3 = startbeat + 1; (ctr3 <= stopbeat) && (ctr3 < eof_song->beats); ctr3++)
+				{	//For each beat after the start beat up to and including the stop beat
+					if(eof_song->beat[ctr3]->contained_rs_section_event >= 0)
+						sectionchange = 1;	//This beat indicates a section change
+					if(eof_song->beat[ctr3]->contained_section_event >= 0)
+						phrasechange = 1;	//This beat indicates a phrase change
+				}
+				if(sectionchange || phrasechange)
+				{	//If the section or phrase changes during the course of the note
+					eof_2d_render_top_option = 9;					//Change the user preference to render RS phrases and sections at the top of the piano roll
+					eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Render the track so the user can see where the correction needs to be made
+					eof_clear_input();
+					if(!user_prompted && alert("At least one note crosses an RS phrase or section boundary.", "This can behave strangely in Rocksmith if the chart has dynamic difficulty.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+					{	//If the user hasn't already answered this prompt, and opts to correct the issue
+						return 1;	//Return cancellation
+					}
+					eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+					user_prompted = 1;	//Set the condition to exit outer for loop
+					break;	//Break from inner for loop
+				}
+			}
+			eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Activate whichever note set was active for the track
+		}//For each track (until the user is warned about any offending notes)
+	}//If the user wants to save Rocksmith capable files
 
 	return 0;
 }
@@ -3835,100 +3834,102 @@ int eof_gp_import_drum_track(DIALOG * d, int importvoice, int function)
 	eof_pro_guitar_track_sort_notes(eof_parsed_gp_file->track[selected]);
 	for(ctr = 0; ctr < eof_parsed_gp_file->track[selected]->notes; ctr++)
 	{	//For each note in the GP track
-		if(importvoice & (eof_parsed_gp_file->track[selected]->note[ctr]->type + 1))
-		{	//If this voice is to be imported
-			EOF_PRO_GUITAR_NOTE *gnp = eof_parsed_gp_file->track[selected]->note[ctr];
+		EOF_PRO_GUITAR_NOTE *gnp;
 
-			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
-			{	//For each of the 6 usable strings
-				if(gnp->note & bitmask)
-				{	//If this string has a gem on it
-					EOF_NOTE *np;
-					unsigned char note = 0;
-					unsigned long flags = 0, psflags = 0;
-					unsigned char fret = gnp->frets[ctr2] & 0x7F;
+		if(!(importvoice & (eof_parsed_gp_file->track[selected]->note[ctr]->type + 1)))
+			continue;	//If this voice was not chosen for import, skip it
 
-					switch(fret)
-					{
-						case 35:	//Bass drum
-						case 36:
-							note = 1;
-						break;
+		gnp = eof_parsed_gp_file->track[selected]->note[ctr];
+		for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+		{	//For each of the 6 usable strings
+			EOF_NOTE *np;
+			unsigned char note = 0;
+			unsigned long flags = 0, psflags = 0;
+			unsigned char fret;
 
-						case 37:	//Snare
-						case 38:
-							note = 2;
-							if(fret == 37)
-								psflags |= EOF_DRUM_NOTE_FLAG_R_RIMSHOT;
-						break;
+			if(!(gnp->note & bitmask))
+				continue;	//If this string does not have a gem, skip it
 
-						case 47:	//Yellow tom
-							note = 4;
-						break;
+			fret = gnp->frets[ctr2] & 0x7F;
+			switch(fret)
+			{
+				case 35:	//Bass drum
+				case 36:
+					note = 1;
+				break;
 
-						case 42:	//Yellow cymbal
-						case 44:
-						case 46:
-						case 54:
-							note = 4;
-							flags |= EOF_DRUM_NOTE_FLAG_Y_CYMBAL;
-							if(fret == 44)
-								psflags |= EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;
-							else if(fret == 46)
-								psflags |= EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;
-						break;
+				case 37:	//Snare
+				case 38:
+					note = 2;
+					if(fret == 37)
+						psflags |= EOF_DRUM_NOTE_FLAG_R_RIMSHOT;
+				break;
 
-						case 45:	//Blue tom
-							note = 8;
-						break;
+				case 47:	//Yellow tom
+					note = 4;
+				break;
 
-						case 51:	//Blue cymbal
-						case 53:
-						case 56:
-						case 59:
-							note = 8;
-							flags |= EOF_DRUM_NOTE_FLAG_B_CYMBAL;
-						break;
+				case 42:	//Yellow cymbal
+				case 44:
+				case 46:
+				case 54:
+					note = 4;
+					flags |= EOF_DRUM_NOTE_FLAG_Y_CYMBAL;
+					if(fret == 44)
+						psflags |= EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;
+					else if(fret == 46)
+						psflags |= EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;
+				break;
 
-						case 41:	//Green tom
-						case 43:
-							note = 16;
-						break;
+				case 45:	//Blue tom
+					note = 8;
+				break;
 
-						case 49:	//Green cymbal
-						case 52:
-						case 55:
-						case 57:
-							note = 16;
-							flags |= EOF_DRUM_NOTE_FLAG_G_CYMBAL;
-						break;
+				case 51:	//Blue cymbal
+				case 53:
+				case 56:
+				case 59:
+					note = 8;
+					flags |= EOF_DRUM_NOTE_FLAG_B_CYMBAL;
+				break;
 
-						default:
-						break;
-					}
-					if(function & 1)
-					{	//Import into normal drum track
-						np = eof_track_add_create_note(eof_song, EOF_TRACK_DRUM, note, gnp->pos, 1, EOF_NOTE_AMAZING, NULL);
-						if(!np)
-						{	//If the memory couldn't be allocated
-							allegro_message("Error allocating memory.  Aborting");
-							eof_log("\t\tImport failed", 1);
-							return 0;
-						}
-						np->flags = flags;
-					}
-					if(function & 2)
-					{	//Import into Phase Shift drum track
-						np = eof_track_add_create_note(eof_song, EOF_TRACK_DRUM_PS, note, gnp->pos, 1, EOF_NOTE_AMAZING, NULL);
-						if(!np)
-						{	//If the memory couldn't be allocated
-							allegro_message("Error allocating memory.  Aborting");
-							eof_log("\t\tImport failed", 1);
-							return 0;
-						}
-						np->flags = flags | psflags;
-					}
+				case 41:	//Green tom
+				case 43:
+					note = 16;
+				break;
+
+				case 49:	//Green cymbal
+				case 52:
+				case 55:
+				case 57:
+					note = 16;
+					flags |= EOF_DRUM_NOTE_FLAG_G_CYMBAL;
+				break;
+
+				default:
+				break;
+			}
+			if(function & 1)
+			{	//Import into normal drum track
+				np = eof_track_add_create_note(eof_song, EOF_TRACK_DRUM, note, gnp->pos, 1, EOF_NOTE_AMAZING, NULL);
+				if(!np)
+				{	//If the memory couldn't be allocated
+					allegro_message("Error allocating memory.  Aborting");
+					eof_log("\t\tImport failed", 1);
+					return 0;
 				}
+				np->flags = flags;
+			}
+			if(function & 2)
+			{	//Import into Phase Shift drum track
+				np = eof_track_add_create_note(eof_song, EOF_TRACK_DRUM_PS, note, gnp->pos, 1, EOF_NOTE_AMAZING, NULL);
+				if(!np)
+				{	//If the memory couldn't be allocated
+					allegro_message("Error allocating memory.  Aborting");
+					eof_log("\t\tImport failed", 1);
+					return 0;
+				}
+				np->flags = flags | psflags;
 			}
 		}
 	}
@@ -4101,25 +4102,25 @@ int eof_gp_import_guitar_track(DIALOG * d, int importvoice)
 		{	//For each of the 6 supported strings
 			int new_tuning;
 			int default_tuning = eof_lookup_default_string_tuning_absolute(eof_song->pro_guitar_track[tracknum], eof_selected_track, ctr);	//Get the default absolute tuning for this string
-			if(default_tuning >= 0)
-			{	//If the default tuning was found
-				new_tuning = eof_parsed_gp_file->track[selected]->tuning[ctr] - default_tuning;	//Convert the tuning to relative
-				new_tuning %= 12;	//Ensure the stored value is bounded to [-11,11]
-				if(!tuning_prompted && still_populated && (new_tuning != eof_song->pro_guitar_track[tracknum]->tuning[ctr]))
-				{	//If applying the imported track's tuning would alter the tuning for other notes that are already in the track, prompt the user
-					if(alert("Warning:  The imported track's tuning is different than the track's current tuning.", "Applying the tuning will affect the existing notes in the track.", "Apply the imported track's tuning?", "&Yes", "&No", 'y', 'n') == 1)
-					{	//If the user opts to set the imported track's tuning even though the active track still has notes in it
-						tuning_prompted = 1;	//Note that the user answered yes
-					}
-					else
-					{
-						tuning_prompted = 2;	//Note that the user answered no
-					}
+			if(default_tuning < 0)
+				continue;	//If the default tuning was not found, skip the string
+
+			new_tuning = eof_parsed_gp_file->track[selected]->tuning[ctr] - default_tuning;	//Convert the tuning to relative
+			new_tuning %= 12;	//Ensure the stored value is bounded to [-11,11]
+			if(!tuning_prompted && still_populated && (new_tuning != eof_song->pro_guitar_track[tracknum]->tuning[ctr]))
+			{	//If applying the imported track's tuning would alter the tuning for other notes that are already in the track, prompt the user
+				if(alert("Warning:  The imported track's tuning is different than the track's current tuning.", "Applying the tuning will affect the existing notes in the track.", "Apply the imported track's tuning?", "&Yes", "&No", 'y', 'n') == 1)
+				{	//If the user opts to set the imported track's tuning even though the active track still has notes in it
+					tuning_prompted = 1;	//Note that the user answered yes
 				}
-				if(tuning_prompted != 2)
-				{	//If the user didn't decline to apply the imported track's tuning
-					eof_song->pro_guitar_track[tracknum]->tuning[ctr] = new_tuning;	//Apply the tuning to this string
+				else
+				{
+					tuning_prompted = 2;	//Note that the user answered no
 				}
+			}
+			if(tuning_prompted != 2)
+			{	//If the user didn't decline to apply the imported track's tuning
+				eof_song->pro_guitar_track[tracknum]->tuning[ctr] = new_tuning;	//Apply the tuning to this string
 			}
 		}
 		eof_song->pro_guitar_track[tracknum]->capo = eof_parsed_gp_file->track[selected]->capo;	//Apply the capo position
@@ -4168,22 +4169,22 @@ int eof_gp_import_track(DIALOG * d)
 				importvoice = 3;
 			}
 		}
-		if(importvoice == 3)
-		{	//If the user has opted to import both voices
-			if(ctr > 0)
-			{	//If there was a previous note
-				EOF_PRO_GUITAR_NOTE *np = eof_parsed_gp_file->track[selected]->note[ctr];	//Simplify
-				EOF_PRO_GUITAR_NOTE *pnp = eof_parsed_gp_file->track[selected]->note[ctr - 1];
-				if(np->pos == pnp->pos)
-				{	//If it starts at the same time stamp, ensure both notes have the same length so that eof_track_find_crazy_notes() works as intended
-					if(np->length > pnp->length)
-					{	//This note is longer
-						pnp->length = np->length;
-					}
-					else
-					{	//The other note is longer or of equal length
-						np->length = pnp->length;
-					}
+		if(importvoice != 3)
+			continue;	//If the user has not opted to import both voices, skip the logic below
+
+		if(ctr > 0)
+		{	//If there was a previous note
+			EOF_PRO_GUITAR_NOTE *np = eof_parsed_gp_file->track[selected]->note[ctr];	//Simplify
+			EOF_PRO_GUITAR_NOTE *pnp = eof_parsed_gp_file->track[selected]->note[ctr - 1];
+			if(np->pos == pnp->pos)
+			{	//If it starts at the same time stamp, ensure both notes have the same length so that eof_track_find_crazy_notes() works as intended
+				if(np->length > pnp->length)
+				{	//This note is longer
+					pnp->length = np->length;
+				}
+				else
+				{	//The other note is longer or of equal length
+					np->length = pnp->length;
 				}
 			}
 		}
@@ -4221,102 +4222,102 @@ int eof_gp_import_common(const char *fn)
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Return failure
-	if(fn)
-	{	//If the file name is specified
-		eof_parsed_gp_file = eof_load_gp(fn, &gp_import_undo_made);	//Parse the GP file, make an undo state if time signatures are imported
+	if(!fn)
+		return 1;	//If no file name is specified, return failure
 
-		if(eof_parsed_gp_file)
-		{	//The file was successfully parsed, allow the user to import a track into the active project
-			eof_clear_input();
-			eof_cursor_visible = 0;
-			eof_render();
+	eof_parsed_gp_file = eof_load_gp(fn, &gp_import_undo_made);	//Parse the GP file, make an undo state if time signatures are imported
+
+	if(eof_parsed_gp_file)
+	{	//The file was successfully parsed, allow the user to import a track into the active project
+		eof_clear_input();
+		eof_cursor_visible = 0;
+		eof_render();
 
 //If the GP file contained section markers, offer to import them now
-			if(eof_parsed_gp_file->text_events)
-			{	//If there were text events imported
-				eof_clear_input();
-				if(alert(NULL, "Import Guitar Pro file's section markers/beat text as Rocksmith phrases/sections?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-				{	//If the user opts to import RS phrases and sections from GP files
-					if(!gp_import_undo_made)
-					{	//If an undo state hasn't been made yet
-						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-						gp_import_undo_made = 1;
-					}
-					for(ctr = 0; ctr < eof_parsed_gp_file->text_events; ctr++)
-					{	//For each of the text events
-						(void) eof_song_add_text_event(eof_song, eof_parsed_gp_file->text_event[ctr]->beat, eof_parsed_gp_file->text_event[ctr]->text, 0, eof_parsed_gp_file->text_event[ctr]->flags, 0);	//Add the event to the active project
-					}
+		if(eof_parsed_gp_file->text_events)
+		{	//If there were text events imported
+			eof_clear_input();
+			if(alert(NULL, "Import Guitar Pro file's section markers/beat text as Rocksmith phrases/sections?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+			{	//If the user opts to import RS phrases and sections from GP files
+				if(!gp_import_undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					gp_import_undo_made = 1;
 				}
 				for(ctr = 0; ctr < eof_parsed_gp_file->text_events; ctr++)
-				{	//For each text event parsed from the Guitar Pro file
-					free(eof_parsed_gp_file->text_event[ctr]);	//Free the event
+				{	//For each of the text events
+					(void) eof_song_add_text_event(eof_song, eof_parsed_gp_file->text_event[ctr]->beat, eof_parsed_gp_file->text_event[ctr]->text, 0, eof_parsed_gp_file->text_event[ctr]->flags, 0);	//Add the event to the active project
 				}
-				eof_parsed_gp_file->text_events = 0;
-				eof_sort_events(eof_song);
 			}
+			for(ctr = 0; ctr < eof_parsed_gp_file->text_events; ctr++)
+			{	//For each text event parsed from the Guitar Pro file
+				free(eof_parsed_gp_file->text_event[ctr]);	//Free the event
+			}
+			eof_parsed_gp_file->text_events = 0;
+			eof_sort_events(eof_song);
+		}
 
-			eof_color_dialog(eof_gp_import_dialog, gui_fg_color, gui_bg_color);
-			centre_dialog(eof_gp_import_dialog);
-			(void) eof_popup_dialog(eof_gp_import_dialog, 0);	//Launch the dialog to allow the user to import a track
-			eof_cursor_visible = 1;
-			eof_pen_visible = 1;
-			eof_show_mouse(NULL);
+		eof_color_dialog(eof_gp_import_dialog, gui_fg_color, gui_bg_color);
+		centre_dialog(eof_gp_import_dialog);
+		(void) eof_popup_dialog(eof_gp_import_dialog, 0);	//Launch the dialog to allow the user to import a track
+		eof_cursor_visible = 1;
+		eof_pen_visible = 1;
+		eof_show_mouse(NULL);
 
 //Release the Guitar Pro structure's memory
-			for(ctr = 0; ctr < eof_parsed_gp_file->numtracks; ctr++)
-			{	//For each track parsed from the Guitar Pro file
-				free(eof_parsed_gp_file->names[ctr]);	//Free the track name string
-				for(ctr2 = 0; ctr2 < eof_parsed_gp_file->track[ctr]->notes; ctr2++)
-				{	//For each note in the track
-					free(eof_parsed_gp_file->track[ctr]->note[ctr2]);	//Free its memory
-				}
-				for(ctr2 = 0; ctr2 < eof_parsed_gp_file->track[ctr]->technotes; ctr2++)
-				{	//For each tech note in the track
-					free(eof_parsed_gp_file->track[ctr]->technote[ctr2]);	//Free its memory
-				}
-				free(eof_parsed_gp_file->track[ctr]);	//Free the pro guitar track
+		for(ctr = 0; ctr < eof_parsed_gp_file->numtracks; ctr++)
+		{	//For each track parsed from the Guitar Pro file
+			free(eof_parsed_gp_file->names[ctr]);	//Free the track name string
+			for(ctr2 = 0; ctr2 < eof_parsed_gp_file->track[ctr]->notes; ctr2++)
+			{	//For each note in the track
+				free(eof_parsed_gp_file->track[ctr]->note[ctr2]);	//Free its memory
 			}
-			free(eof_parsed_gp_file->names);
-			free(eof_parsed_gp_file->track);
-			free(eof_parsed_gp_file->instrument_types);
-			free(eof_parsed_gp_file);
+			for(ctr2 = 0; ctr2 < eof_parsed_gp_file->track[ctr]->technotes; ctr2++)
+			{	//For each tech note in the track
+				free(eof_parsed_gp_file->track[ctr]->technote[ctr2]);	//Free its memory
+			}
+			free(eof_parsed_gp_file->track[ctr]);	//Free the pro guitar track
+		}
+		free(eof_parsed_gp_file->names);
+		free(eof_parsed_gp_file->track);
+		free(eof_parsed_gp_file->instrument_types);
+		free(eof_parsed_gp_file);
 
-			(void) replace_filename(eof_last_gp_path, fn, "", 1024);	//Set the last loaded GP file path
+		(void) replace_filename(eof_last_gp_path, fn, "", 1024);	//Set the last loaded GP file path
 
-			if(!(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS))
-			{	//If the track's difficulty limit is in place
-				for(ctr2 = 0; ctr2 < eof_get_num_tremolos(eof_song, eof_selected_track); ctr2++)
-				{	//For each tremolo phrase in the track
-					EOF_PHRASE_SECTION *ptr = eof_get_tremolo(eof_song, eof_selected_track, ctr2);
-					if(ptr)
-					{	//If the tremolo was successfully found
-						if(ptr->difficulty == eof_note_type)
-						{	//If the tremolo phrase is specific to the active track, it was newly imported
-							if(alert(NULL, "Remove the track difficulty limit to show imported tremolo phrases?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-							{	//If the user opts to remove the track difficulty limit
-								(void) eof_track_rocksmith_toggle_difficulty_limit();
-							}
-							break;
+		if(!(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS))
+		{	//If the track's difficulty limit is in place
+			for(ctr2 = 0; ctr2 < eof_get_num_tremolos(eof_song, eof_selected_track); ctr2++)
+			{	//For each tremolo phrase in the track
+				EOF_PHRASE_SECTION *ptr = eof_get_tremolo(eof_song, eof_selected_track, ctr2);
+				if(ptr)
+				{	//If the tremolo was successfully found
+					if(ptr->difficulty == eof_note_type)
+					{	//If the tremolo phrase is specific to the active track, it was newly imported
+						if(alert(NULL, "Remove the track difficulty limit to show imported tremolo phrases?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+						{	//If the user opts to remove the track difficulty limit
+							(void) eof_track_rocksmith_toggle_difficulty_limit();
 						}
+						break;
 					}
 				}
 			}
-		}//The file was successfully parsed...
-		else
-		{
-			allegro_message("Failure.  Check log for details.");
-			return 1;	//Return failure
 		}
+	}//The file was successfully parsed...
+	else
+	{
+		allegro_message("Failure.  Check log for details.");
+		return 1;	//Return failure
+	}
 
-		eof_log("Cleaning up beats", 1);
-		eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
-		eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
-		eof_log("Cleaning up imported notes", 1);
-		eof_track_find_crazy_notes(eof_song, eof_selected_track, 1);	//Mark notes that overlap others as crazy, if they don't begin at the same timestamp (ie. should become a normal chord)
-		eof_track_fixup_notes(eof_song, eof_selected_track, 1);			//Run fixup logic to clean up the track
-		eof_track_fixup_notes(eof_song, eof_selected_track, 1);			//Run fixup logic again to ensure that notes that were combined into chords (on the previous call) during a multi-voice import truncate as appropriate
-		(void) eof_menu_track_selected_track_number(eof_selected_track, 1);	//Re-select the active track to allow for a change in string count
-	}//If the file name is specified
+	eof_log("Cleaning up beats", 1);
+	eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
+	eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
+	eof_log("Cleaning up imported notes", 1);
+	eof_track_find_crazy_notes(eof_song, eof_selected_track, 1);	//Mark notes that overlap others as crazy, if they don't begin at the same timestamp (ie. should become a normal chord)
+	eof_track_fixup_notes(eof_song, eof_selected_track, 1);			//Run fixup logic to clean up the track
+	eof_track_fixup_notes(eof_song, eof_selected_track, 1);			//Run fixup logic again to ensure that notes that were combined into chords (on the previous call) during a multi-voice import truncate as appropriate
+	(void) eof_menu_track_selected_track_number(eof_selected_track, 1);	//Re-select the active track to allow for a change in string count
 
 	return 0;	//Return success
 }
@@ -4708,210 +4709,210 @@ int eof_menu_file_sonic_visualiser_import(void)
 	}
 	returnedfn = ncd_file_select(0, initial, "Import Sonic Visualiser", eof_filter_sonic_visualiser_files);
 	eof_clear_input();
-	if(returnedfn)
-	{	//If the user selected a file
-		inf = pack_fopen(returnedfn, "rt");	//Open file in text mode
-		if(!inf)
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError loading:  Cannot open input SVL file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+	if(!returnedfn)
+		return 1;	//If the user did not select a file, return immediately
+
+	inf = pack_fopen(returnedfn, "rt");	//Open file in text mode
+	if(!inf)
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError loading:  Cannot open input SVL file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		eof_log(eof_log_string, 1);
+		return 1;
+	}
+
+	//Allocate memory buffers large enough to hold any line in this file
+	maxlinelength = (size_t)FindLongestLineLength_ALLEGRO(returnedfn, 0);
+	if(!maxlinelength)
+	{
+		eof_log("\tError finding the largest line in the file.  Aborting", 1);
+		(void) pack_fclose(inf);
+		return 1;
+	}
+	buffer = (char *)malloc(maxlinelength);
+	if(!buffer)
+	{
+		eof_log("\tError allocating memory.  Aborting", 1);
+		(void) pack_fclose(inf);
+		return 1;
+	}
+
+	//Read first line of text, capping it to prevent buffer overflow
+	if(!pack_fgets(buffer, (int)maxlinelength, inf))
+	{	//I/O error
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSonic Visualiser import failed on line #%lu:  Unable to read from file:  \"%s\"", linectr, strerror(errno));
+		eof_log(eof_log_string, 1);
+		error = 1;
+	}
+
+	//Parse the contents of the file
+	while(!error && !done && !pack_feof(inf))
+	{	//Until there was an error reading from the file or end of file is reached
+		#ifdef RS_IMPORT_DEBUG
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tProcessing line #%lu", linectr);
 			eof_log(eof_log_string, 1);
-			return 1;
+		#endif
+
+		//Separate the line into the opening XML tag (buffer) and the content between the opening and closing tag (buffer2)
+		ptr = strcasestr_spec(buffer, ">");
+		if(!ptr)
+		{	//This line had no XML, skip it
+			(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text, so the EOF condition can be checked
+			linectr++;
+			continue;
 		}
 
-		//Allocate memory buffers large enough to hold any line in this file
-		maxlinelength = (size_t)FindLongestLineLength_ALLEGRO(returnedfn, 0);
-		if(!maxlinelength)
-		{
-			eof_log("\tError finding the largest line in the file.  Aborting", 1);
-			(void) pack_fclose(inf);
-			return 1;
-		}
-		buffer = (char *)malloc(maxlinelength);
-		if(!buffer)
-		{
-			eof_log("\tError allocating memory.  Aborting", 1);
-			(void) pack_fclose(inf);
-			return 1;
-		}
-
-		//Read first line of text, capping it to prevent buffer overflow
-		if(!pack_fgets(buffer, (int)maxlinelength, inf))
-		{	//I/O error
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSonic Visualiser import failed on line #%lu:  Unable to read from file:  \"%s\"", linectr, strerror(errno));
-			eof_log(eof_log_string, 1);
-			error = 1;
-		}
-
-		//Parse the contents of the file
-		while(!error && !done && !pack_feof(inf))
-		{	//Until there was an error reading from the file or end of file is reached
-			#ifdef RS_IMPORT_DEBUG
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tProcessing line #%lu", linectr);
-				eof_log(eof_log_string, 1);
-			#endif
-
-			//Separate the line into the opening XML tag (buffer) and the content between the opening and closing tag (buffer2)
-			ptr = strcasestr_spec(buffer, ">");
-			if(!ptr)
-			{	//This line had no XML, skip it
-				(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text, so the EOF condition can be checked
-				linectr++;
-				continue;
+		if(strcasestr_spec(buffer, "<model"))
+		{	//If this is a model tag
+			if(parse_xml_attribute_number("sampleRate", buffer, &samplerate) != 1)
+			{	//If the sample rate couldn't be read
+				eof_log("\tError reading sample rate.  Aborting", 1);
+				error = 1;
+				break;
 			}
-
-			if(strcasestr_spec(buffer, "<model"))
-			{	//If this is a model tag
-				if(parse_xml_attribute_number("sampleRate", buffer, &samplerate) != 1)
-				{	//If the sample rate couldn't be read
-					eof_log("\tError reading sample rate.  Aborting", 1);
-					error = 1;
-					break;
-				}
+		}
+		else if(strcasestr_spec(buffer, "<point"))
+		{	//If this is a point tag
+			skipline = 0;
+			if(!samplerate)
+			{	//If the sample rate hadn't been read yet
+				eof_log("\tError:  Sample rate not defined.  Aborting", 1);
+				error = 1;
+				break;
 			}
-			else if(strcasestr_spec(buffer, "<point"))
-			{	//If this is a point tag
-				skipline = 0;
-				if(!samplerate)
-				{	//If the sample rate hadn't been read yet
-					eof_log("\tError:  Sample rate not defined.  Aborting", 1);
-					error = 1;
-					break;
-				}
-				if(parse_xml_attribute_number("frame", buffer, &frame) != 1)
-				{	//If the frame number couldn't be read
-					eof_log("\tError reading frame number.  Aborting", 1);
-					error = 1;
-					break;
-				}
-				frametime = (double)frame / ((double)samplerate / 1000.0);	//Convert point timing to realtime in milliseconds
+			if(parse_xml_attribute_number("frame", buffer, &frame) != 1)
+			{	//If the frame number couldn't be read
+				eof_log("\tError reading frame number.  Aborting", 1);
+				error = 1;
+				break;
+			}
+			frametime = (double)frame / ((double)samplerate / 1000.0);	//Convert point timing to realtime in milliseconds
 
-				//Read either the value or label attribute (prefer the value attribute as it is higher precision), convert to floating point and determine the beat length
-				if(parse_xml_attribute_text(tempo_s, sizeof(tempo_s), "value", buffer) != 1)
-				{	//If the tempo value isn't defined (only available when the tempo estimation function is used in Sonic Visualiser instead of the beat estimation function)
-					if(parse_xml_attribute_text(tempo_s, sizeof(tempo_s), "label", buffer) != 1)
-					{	//If the tempo label isn't defined either
-						eof_log("\tError:  Tempo not defined.  Aborting", 1);
-						error = 1;
-						break;
-					}
-					if(!strcasestr_spec(tempo_s, "BPM"))
-					{	//If this isn't a tempo definition
-						tempo_s[0] = '\0';	//Empty the string
-					}
-					else
-					{
-						for(ctr = 0; ctr < (unsigned long)strlen(tempo_s) && (tempo_s[ctr] != '\0'); ctr++)
-						{	//For each character in the label string
-							if(!isdigit(tempo_s[ctr]) && (tempo_s[ctr] != '.'))
-							{	//If this character isn't a number or decimal point
-								tempo_s[ctr] = '\0';	//Truncate string
-								break;
-							}
-						}
-					}
+			//Read either the value or label attribute (prefer the value attribute as it is higher precision), convert to floating point and determine the beat length
+			if(parse_xml_attribute_text(tempo_s, sizeof(tempo_s), "value", buffer) != 1)
+			{	//If the tempo value isn't defined (only available when the tempo estimation function is used in Sonic Visualiser instead of the beat estimation function)
+				if(parse_xml_attribute_text(tempo_s, sizeof(tempo_s), "label", buffer) != 1)
+				{	//If the tempo label isn't defined either
+					eof_log("\tError:  Tempo not defined.  Aborting", 1);
+					error = 1;
+					break;
 				}
-				if(tempo_s[0] == '\0')
-				{	//If the tempo string is empty (the last point tag in a beat estimation defines an empty tag attribute), keep the last beat length in effect
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tFrame = %ld\ttime = %fms", frame, frametime);
-					eof_log(eof_log_string, 1);
-					skipline = 1;
+				if(!strcasestr_spec(tempo_s, "BPM"))
+				{	//If this isn't a tempo definition
+					tempo_s[0] = '\0';	//Empty the string
 				}
 				else
-				{	//Otherwise convert the string to floating point
-					tempo_f = atof(tempo_s);
-					beatlen = 60000.0 / tempo_f;	//Get the length (in milliseconds) of one beat using this tempo (for now, don't take time signature into consideration because I don't believe Sonic Visualizer does)
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tFrame = %ld\ttime = %fms\ttempo = %.3fBPM\tbeat length = %f", frame, frametime, tempo_f, beatlen);
-					eof_log(eof_log_string, 1);
-				}
-
-				if(!skipline)
-				{	//If this line contained valid tempo data
-					pointctr++;
-
-					//Apply the beat timing
-					if(!undo_made)
-					{	//If an undo hasn't been made
-						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-						undo_made = 1;
-					}
-					if(pointctr > 1)
-					{	//If this isn't the first point tag, apply timings for all beats between this point tag and the previous (if any)
-						while(timectr + lastbeatlen + 1 < frametime)
-						{	//While another beat fits before this frame's timestamp with at least an extra millisecond of room
-							if(beatctr >= eof_song->beats)
-							{	//If another beat needs to be added to the project
-								if(!eof_song_append_beats(eof_song, 1))
-								{	//If a beat couldn't be added
-									eof_log("\tError allocating memory to add a beat.  Aborting", 1);
-									error = 1;
-									break;
-								}
-							}
-							timectr += lastbeatlen;	//Advance the time counter by one beat length
-							eof_song->beat[beatctr]->fpos = timectr;
-							eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;
-							beatctr++;
-						}
-						if(error)
-						{	//If an error was reached
-							break;	//Exit outer loop
-						}
-					}
-					else
-					{	//This is the first point tag, update the chart's MIDI delay
-						eof_song->tags->ogg[eof_selected_ogg].midi_offset = frametime + 0.5;
-					}
-					if(beatctr >= eof_song->beats)
-					{	//If another beat needs to be added to the project
-						if(!eof_song_append_beats(eof_song, 1))
-						{	//If a beat couldn't be added
-							eof_log("\tError allocating memory to add a beat.  Aborting", 1);
-							error = 1;
+				{
+					for(ctr = 0; ctr < (unsigned long)strlen(tempo_s) && (tempo_s[ctr] != '\0'); ctr++)
+					{	//For each character in the label string
+						if(!isdigit(tempo_s[ctr]) && (tempo_s[ctr] != '.'))
+						{	//If this character isn't a number or decimal point
+							tempo_s[ctr] = '\0';	//Truncate string
 							break;
 						}
 					}
-					eof_song->beat[beatctr]->fpos = frametime;
-					eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;
-					beatctr++;
-					timectr = frametime;	//Track the position of the last processed beat
-					lastbeatlen = beatlen;	//Track the beat length of the last processed point tag
 				}
-			}//If this is a point tag
-			else if(strcasestr_spec(buffer, "</dataset>"))
-			{	//If this is the end of the dataset tag containing the point tags
-				done = 1;
+			}
+			if(tempo_s[0] == '\0')
+			{	//If the tempo string is empty (the last point tag in a beat estimation defines an empty tag attribute), keep the last beat length in effect
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tFrame = %ld\ttime = %fms", frame, frametime);
+				eof_log(eof_log_string, 1);
+				skipline = 1;
+			}
+			else
+			{	//Otherwise convert the string to floating point
+				tempo_f = atof(tempo_s);
+				beatlen = 60000.0 / tempo_f;	//Get the length (in milliseconds) of one beat using this tempo (for now, don't take time signature into consideration because I don't believe Sonic Visualizer does)
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tFrame = %ld\ttime = %fms\ttempo = %.3fBPM\tbeat length = %f", frame, frametime, tempo_f, beatlen);
+				eof_log(eof_log_string, 1);
 			}
 
-			(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-			linectr++;	//Increment line counter
-		}//Until there was an error reading from the file or end of file is reached
+			if(!skipline)
+			{	//If this line contained valid tempo data
+				pointctr++;
 
-		if(error)
-		{
-			if(undo_made)
-			{	//If an undo state was made
-				(void) eof_undo_apply();	//Load it
-			}
-			allegro_message("Sonic Visualiser import failed, see log for details.");
-		}
-		else
-		{
-			while((beatctr > 0) && (beatctr < eof_song->beats))
-			{	//While there are beats whose timings weren't covered by the imported file
-				eof_song->beat[beatctr]->fpos = eof_song->beat[beatctr - 1]->fpos + beatlen;	//Apply the beat length defined by the last point frame
+				//Apply the beat timing
+				if(!undo_made)
+				{	//If an undo hasn't been made
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				if(pointctr > 1)
+				{	//If this isn't the first point tag, apply timings for all beats between this point tag and the previous (if any)
+					while(timectr + lastbeatlen + 1 < frametime)
+					{	//While another beat fits before this frame's timestamp with at least an extra millisecond of room
+						if(beatctr >= eof_song->beats)
+						{	//If another beat needs to be added to the project
+							if(!eof_song_append_beats(eof_song, 1))
+							{	//If a beat couldn't be added
+								eof_log("\tError allocating memory to add a beat.  Aborting", 1);
+								error = 1;
+								break;
+							}
+						}
+						timectr += lastbeatlen;	//Advance the time counter by one beat length
+						eof_song->beat[beatctr]->fpos = timectr;
+						eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;
+						beatctr++;
+					}
+					if(error)
+					{	//If an error was reached
+						break;	//Exit outer loop
+					}
+				}
+				else
+				{	//This is the first point tag, update the chart's MIDI delay
+					eof_song->tags->ogg[eof_selected_ogg].midi_offset = frametime + 0.5;
+				}
+				if(beatctr >= eof_song->beats)
+				{	//If another beat needs to be added to the project
+					if(!eof_song_append_beats(eof_song, 1))
+					{	//If a beat couldn't be added
+						eof_log("\tError allocating memory to add a beat.  Aborting", 1);
+						error = 1;
+						break;
+					}
+				}
+				eof_song->beat[beatctr]->fpos = frametime;
 				eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;
 				beatctr++;
+				timectr = frametime;	//Track the position of the last processed beat
+				lastbeatlen = beatlen;	//Track the beat length of the last processed point tag
 			}
+		}//If this is a point tag
+		else if(strcasestr_spec(buffer, "</dataset>"))
+		{	//If this is the end of the dataset tag containing the point tags
+			done = 1;
 		}
 
-		//Cleanup
-		eof_calculate_tempo_map(eof_song);	//Determine all tempo changes based on the beats' timestamps
-		eof_truncate_chart(eof_song);		//Remove excess beat markers and update the eof_chart_length variable
-		(void) replace_filename(eof_last_sonic_visualiser_path, returnedfn, "", 1024);	//Set the last loaded Sonic Visualiser file path
-		free(buffer);
-		(void) pack_fclose(inf);
-		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
-	}//If the user selected a file
+		(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
+		linectr++;	//Increment line counter
+	}//Until there was an error reading from the file or end of file is reached
+
+	if(error)
+	{
+		if(undo_made)
+		{	//If an undo state was made
+			(void) eof_undo_apply();	//Load it
+		}
+		allegro_message("Sonic Visualiser import failed, see log for details.");
+	}
+	else
+	{
+		while((beatctr > 0) && (beatctr < eof_song->beats))
+		{	//While there are beats whose timings weren't covered by the imported file
+			eof_song->beat[beatctr]->fpos = eof_song->beat[beatctr - 1]->fpos + beatlen;	//Apply the beat length defined by the last point frame
+			eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;
+			beatctr++;
+		}
+	}
+
+	//Cleanup
+	eof_calculate_tempo_map(eof_song);	//Determine all tempo changes based on the beats' timestamps
+	eof_truncate_chart(eof_song);		//Remove excess beat markers and update the eof_chart_length variable
+	(void) replace_filename(eof_last_sonic_visualiser_path, returnedfn, "", 1024);	//Set the last loaded Sonic Visualiser file path
+	free(buffer);
+	(void) pack_fclose(inf);
+	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 
 	return 1;
 }
