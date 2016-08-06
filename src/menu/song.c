@@ -700,26 +700,28 @@ void eof_prepare_song_menu(void)
 int eof_menu_song_seek_start(void)
 {
 	char wasplaying = 0;
-	if(!eof_music_catalog_playback)
+
+	if(eof_music_catalog_playback)
+		return 1;	//If the catalog is playing, return immediately
+
+	if(!eof_music_paused)	//If the chart is already playing
 	{
-		if(!eof_music_paused)	//If the chart is already playing
-		{
-			eof_music_play(0);	//stop it
-			wasplaying = 1;
-		}
-		if(eof_input_mode == EOF_INPUT_FEEDBACK)
-		{	//If the feedback input method is in effect
-			eof_set_seek_position(eof_song->beat[0]->pos + eof_av_delay);	//Seek to the first beat marker, because the Feedback seek controls aren't designed to work if the seek position is earlier than this
-		}
-		else
-		{
-			eof_set_seek_position(eof_av_delay);	//Seek to beginning of piano roll (adjusted for AV delay)
-		}
-		if(wasplaying)
-		{	//If the playback was stopped to rewind the seek position
-			eof_music_play(1);	//Resume playing using whatever playback rate was previously in use
-		}
+		eof_music_play(0);	//stop it
+		wasplaying = 1;
 	}
+	if(eof_input_mode == EOF_INPUT_FEEDBACK)
+	{	//If the feedback input method is in effect
+		eof_set_seek_position(eof_song->beat[0]->pos + eof_av_delay);	//Seek to the first beat marker, because the Feedback seek controls aren't designed to work if the seek position is earlier than this
+	}
+	else
+	{
+		eof_set_seek_position(eof_av_delay);	//Seek to beginning of piano roll (adjusted for AV delay)
+	}
+	if(wasplaying)
+	{	//If the playback was stopped to rewind the seek position
+		eof_music_play(1);	//Resume playing using whatever playback rate was previously in use
+	}
+
 	return 1;
 }
 
@@ -1535,29 +1537,29 @@ int eof_menu_catalog_add(void)
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-		{	//If this note is selected
-			if(first)
-			{	//If this was the first selected note found
-				first_pos = eof_get_note_pos(eof_song, eof_selected_track, i);
-				first = 0;
-			}
-			if(eof_get_note_length(eof_song, eof_selected_track, i) < 100)
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
+			continue;	//If this note is not selected, skip it
+
+		if(first)
+		{	//If this was the first selected note found
+			first_pos = eof_get_note_pos(eof_song, eof_selected_track, i);
+			first = 0;
+		}
+		if(eof_get_note_length(eof_song, eof_selected_track, i) < 100)
+		{
+			last_pos = eof_get_note_pos(eof_song, eof_selected_track, i) + 100;
+			next = eof_track_fixup_next_note(eof_song, eof_selected_track, i);
+			if(next >= 0)
 			{
-				last_pos = eof_get_note_pos(eof_song, eof_selected_track, i) + 100;
-				next = eof_track_fixup_next_note(eof_song, eof_selected_track, i);
-				if(next >= 0)
+				if(last_pos >= eof_get_note_pos(eof_song, eof_selected_track, next))
 				{
-					if(last_pos >= eof_get_note_pos(eof_song, eof_selected_track, next))
-					{
-						last_pos = eof_get_note_pos(eof_song, eof_selected_track, next) - 1;
-					}
+					last_pos = eof_get_note_pos(eof_song, eof_selected_track, next) - 1;
 				}
 			}
-			else
-			{
-				last_pos = eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i);
-			}
+		}
+		else
+		{
+			last_pos = eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i);
 		}
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -1576,24 +1578,25 @@ int eof_menu_catalog_delete(void)
 {
 	unsigned long i;
 
-	if(eof_song->catalog->entries > 0)
+	if(eof_song->catalog->entries == 0)
+		return 1;	//If there are no catalog entries, return immediately
+
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	for(i = eof_selected_catalog_entry; i < eof_song->catalog->entries - 1; i++)
 	{
-		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		for(i = eof_selected_catalog_entry; i < eof_song->catalog->entries - 1; i++)
-		{
-			memcpy(&eof_song->catalog->entry[i], &eof_song->catalog->entry[i + 1], sizeof(EOF_CATALOG_ENTRY));
-		}
-		eof_song->catalog->entries--;
-		if((eof_selected_catalog_entry >= eof_song->catalog->entries) && (eof_selected_catalog_entry > 0))
-		{
-			eof_selected_catalog_entry--;
-		}
-		eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
-		if(eof_song->catalog->entries == 0)
-		{
-			eof_catalog_menu[0].flags = 0;
-		}
+		memcpy(&eof_song->catalog->entry[i], &eof_song->catalog->entry[i + 1], sizeof(EOF_CATALOG_ENTRY));
 	}
+	eof_song->catalog->entries--;
+	if((eof_selected_catalog_entry >= eof_song->catalog->entries) && (eof_selected_catalog_entry > 0))
+	{
+		eof_selected_catalog_entry--;
+	}
+	eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
+	if(eof_song->catalog->entries == 0)
+	{
+		eof_catalog_menu[0].flags = 0;
+	}
+
 	return 1;
 }
 
@@ -2616,22 +2619,22 @@ int eof_menu_song_seek_previous_anchor(void)
 		return 1;
 
 	b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
-	if(eof_beat_num_valid(eof_song, b))
-	{	//If the beat containing the seek position was identified
-		if((eof_song->beat[b]->pos < eof_music_pos - eof_av_delay) && (eof_song->beat[b]->flags & EOF_BEAT_FLAG_ANCHOR))
-		{	//If the seek position is within (but not at the start of) a beat that is an anchor
-			eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);	//Seek to that beat
-		}
-		else
-		{
-			while(b > 0)
-			{	//While there's a previous beat
-				b--;	//Iterate to that beat
-				if(eof_song->beat[b]->flags & EOF_BEAT_FLAG_ANCHOR)
-				{	//If this beat is an anchor
-					eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);	//Seek to that beat
-					break;	//Break from loop
-				}
+	if(!eof_beat_num_valid(eof_song, b))
+		return 1;	//If the beta containing the seek position was not identified, return immediately
+
+	if((eof_song->beat[b]->pos < eof_music_pos - eof_av_delay) && (eof_song->beat[b]->flags & EOF_BEAT_FLAG_ANCHOR))
+	{	//If the seek position is within (but not at the start of) a beat that is an anchor
+		eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);	//Seek to that beat
+	}
+	else
+	{
+		while(b > 0)
+		{	//While there's a previous beat
+			b--;	//Iterate to that beat
+			if(eof_song->beat[b]->flags & EOF_BEAT_FLAG_ANCHOR)
+			{	//If this beat is an anchor
+				eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);	//Seek to that beat
+				break;	//Break from loop
 			}
 		}
 	}
@@ -3087,29 +3090,29 @@ int eof_raw_midi_track_import(DIALOG * d)
 	}
 
 //Remove the selected track from the linked list, add it to the project and redraw eof_raw_midi_add_track_dialog
-	if(!canceled && selected)
-	{
-		if(!eof_raw_midi_track_undo_made)
-		{	//If any undo state wasn't already made
-			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			eof_raw_midi_track_undo_made = 1;
-		}
-		if(prev)
-		{	//If there was a link before the one that was imported into the project
-			prev->next = selected->next;	//It points forward to what this link points forward to
-		}
-		else
-		{	//Otherwise the next link becomes the new head of the list
-			if(eof_MIDI_track_list_to_enumerate == eof_parsed_MIDI)
-			{	//If the calling dialog was enumerating the list of tracks parsed in the MIDI
-				eof_MIDI_track_list_to_enumerate = selected->next;	//Update the list to reflect the new head
-			}
-			eof_parsed_MIDI = selected->next;
-		}
-		selected->next = NULL;
-		eof_MIDI_add_track(eof_song, selected);
-		(void) dialog_message(eof_raw_midi_add_track_dialog, MSG_DRAW, 0, &junk);	//Redraw the dialog since the list's contents have changed
+	if(canceled || !selected)
+		return D_O_K;	//If the user canceled or didn't select a track, return immediately
+
+	if(!eof_raw_midi_track_undo_made)
+	{	//If any undo state wasn't already made
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		eof_raw_midi_track_undo_made = 1;
 	}
+	if(prev)
+	{	//If there was a link before the one that was imported into the project
+		prev->next = selected->next;	//It points forward to what this link points forward to
+	}
+	else
+	{	//Otherwise the next link becomes the new head of the list
+		if(eof_MIDI_track_list_to_enumerate == eof_parsed_MIDI)
+		{	//If the calling dialog was enumerating the list of tracks parsed in the MIDI
+			eof_MIDI_track_list_to_enumerate = selected->next;	//Update the list to reflect the new head
+		}
+		eof_parsed_MIDI = selected->next;
+	}
+	selected->next = NULL;
+	eof_MIDI_add_track(eof_song, selected);
+	(void) dialog_message(eof_raw_midi_add_track_dialog, MSG_DRAW, 0, &junk);	//Redraw the dialog since the list's contents have changed
 
 	return D_O_K;
 }
@@ -3177,31 +3180,31 @@ int eof_raw_midi_dialog_add(DIALOG * d)
 		eof_parsed_MIDI = NULL;
 		for(ctr = 0; ctr < MIDI_TRACKS; ctr++)
 		{
-			if(eof_work_midi->track[ctr].data)
-			{	//For each populated track in the buffered MIDI
-				ptr = eof_get_raw_MIDI_data(eof_work_midi, ctr, delay);
-				if(!ptr)
-				{	//If the track was not read
-					allegro_message("Error parsing MIDI track");
-					(void) dialog_message(eof_raw_midi_tracks_dialog, MSG_DRAW, 0, &junk);	//Redraw the Manage raw MIDI tracks dialog
-					return 0;
+			if(!eof_work_midi->track[ctr].data)
+				continue;	//If this buffered MIDI track is not populated, skip it
+
+			ptr = eof_get_raw_MIDI_data(eof_work_midi, ctr, delay);
+			if(!ptr)
+			{	//If the track was not read
+				allegro_message("Error parsing MIDI track");
+				(void) dialog_message(eof_raw_midi_tracks_dialog, MSG_DRAW, 0, &junk);	//Redraw the Manage raw MIDI tracks dialog
+				return 0;
+			}
+			if(!ptr->trackname)
+			{	//If the track has no name
+				eof_MIDI_empty_track_list(ptr);	//Delete it
+			}
+			else
+			{	//Add the track to the list
+				if(eof_parsed_MIDI == NULL)
+				{	//If the list is empty
+					eof_parsed_MIDI = ptr;	//The new link is now the first link in the list
 				}
-				if(!ptr->trackname)
-				{	//If the track has no name
-					eof_MIDI_empty_track_list(ptr);	//Delete it
+				else if(tail != NULL)
+				{	//If there is already a link at the end of the list
+					tail->next = ptr;	//Point it forward to the new link
 				}
-				else
-				{	//Add the track to the list
-					if(eof_parsed_MIDI == NULL)
-					{	//If the list is empty
-						eof_parsed_MIDI = ptr;	//The new link is now the first link in the list
-					}
-					else if(tail != NULL)
-					{	//If there is already a link at the end of the list
-						tail->next = ptr;	//Point it forward to the new link
-					}
-					tail = ptr;	//The new link is the new tail of the list
-				}
+				tail = ptr;	//The new link is the new tail of the list
 			}
 		}
 
@@ -3363,27 +3366,27 @@ int eof_find_note_sequence(EOF_SONG *sp, unsigned long target_track, unsigned lo
 	//Find the first input note before/after the starting timestamp, depending on the search direction
 	for(input_note = 0; input_note < eof_get_track_size(sp, input_track); input_note++)
 	{	//For each note in the input track
-		if(eof_get_note_type(sp, input_track, input_note) == input_diff)
-		{	//If the note is in the target difficulty
-			if(direction < 0)
-			{	//If searching for the previous match
-				if(eof_get_note_pos(sp, input_track, input_note) < start_pos)
-				{	//And this note is before the starting timestamp
-					next_note = eof_track_fixup_next_note(sp, input_track, input_note);
-					if((next_note < 0) || (eof_get_note_pos(sp, input_track, next_note) >= start_pos))
-					{	//And there is no next note, or the next note is at or after the starting timestamp, this is the first note before the timestamp
-						start_found = 1;
-						break;
-					}
-				}
-			}
-			else
-			{	//If searching for the next match
-				if(eof_get_note_pos(sp, input_track, input_note) > start_pos)
-				{	//And this is the first note after the starting timestamp
+		if(eof_get_note_type(sp, input_track, input_note) != input_diff)
+			continue;	//If the note is not in the target difficulty, skip it
+
+		if(direction < 0)
+		{	//If searching for the previous match
+			if(eof_get_note_pos(sp, input_track, input_note) < start_pos)
+			{	//And this note is before the starting timestamp
+				next_note = eof_track_fixup_next_note(sp, input_track, input_note);
+				if((next_note < 0) || (eof_get_note_pos(sp, input_track, next_note) >= start_pos))
+				{	//And there is no next note, or the next note is at or after the starting timestamp, this is the first note before the timestamp
 					start_found = 1;
 					break;
 				}
+			}
+		}
+		else
+		{	//If searching for the next match
+			if(eof_get_note_pos(sp, input_track, input_note) > start_pos)
+			{	//And this is the first note after the starting timestamp
+				start_found = 1;
+				break;
 			}
 		}
 	}
@@ -3656,35 +3659,115 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 
 	for(ctr = 1; ctr < eof_song->tracks; ctr++)
 	{	//For each track in the project
-		if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-		{	//If this is a pro guitar/bass track
-			tracknum = eof_song->track[ctr]->tracknum;
-			tp = eof_song->pro_guitar_track[tracknum];
-			unset_warning = 0;
+		if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			continue;	//If this is not a pro guitar/bass track, skip it
 
-			restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, ctr);
-			eof_menu_track_set_tech_view_state(eof_song, ctr, 0);	//Disable tech view if applicable
+		tracknum = eof_song->track[ctr]->tracknum;
+		tp = eof_song->pro_guitar_track[tracknum];
+		unset_warning = 0;
 
-			//Check to ensure that defined fret hand positions don't conflict with defined notes
-			if(tp->handpositions)
-			{	//If this track has any manually defined fret hand positions
-				for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
-				{	//For each note in the track
-					position = eof_pro_guitar_track_find_effective_fret_hand_position(tp, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Get the fret hand position in effect
-					lowest = eof_pro_guitar_note_lowest_fret(tp, ctr2);		//Determine the lowest fret value in the note
-					highest = eof_pro_guitar_note_highest_fret(tp, ctr2);	//And the highest fret value
-					if(!position)
-					{	//If no fret hand position is in effect yet
-						if(!unset_warning)
-						{	//If the user hasn't been warned about this issue yet
-							if(report)
-							{	//If the calling function wanted to prompt the user about each issue found
-								unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+		restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, ctr);
+		eof_menu_track_set_tech_view_state(eof_song, ctr, 0);	//Disable tech view if applicable
 
-								eof_2d_render_top_option = 7;			//Display fret hand positions at the top of the piano roll
-								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
+		//Check to ensure that defined fret hand positions don't conflict with defined notes
+		if(tp->handpositions)
+		{	//If this track has any manually defined fret hand positions
+			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+			{	//For each note in the track
+				position = eof_pro_guitar_track_find_effective_fret_hand_position(tp, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Get the fret hand position in effect
+				lowest = eof_pro_guitar_note_lowest_fret(tp, ctr2);		//Determine the lowest fret value in the note
+				highest = eof_pro_guitar_note_highest_fret(tp, ctr2);	//And the highest fret value
+				if(!position)
+				{	//If no fret hand position is in effect yet
+					if(!unset_warning)
+					{	//If the user hasn't been warned about this issue yet
+						if(report)
+						{	//If the calling function wanted to prompt the user about each issue found
+							unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
 
-								if(alert("Warning:  A fret hand position was not defined at/before the first note in this track difficulty.", "You should correct this by setting the fret hand position at or before this note,", "or by deleting/regenerating the fret hand positions.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
+							eof_2d_render_top_option = 7;			//Display fret hand positions at the top of the piano roll
+							eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
+
+							if(alert("Warning:  A fret hand position was not defined at/before the first note in this track difficulty.", "You should correct this by setting the fret hand position at or before this note,", "or by deleting/regenerating the fret hand positions.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
+							{	//If the user does not opt to continue looking for errors
+								eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
+								(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
+								eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+								eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
+								return 1;	//Return user cancellation
+							}
+							eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+						}
+						unset_warning = 1;
+						problem_found = 1;
+					}
+				}
+				else if(position + tp->capo > limit)
+				{	//If an invalid fret hand position is in effect
+					if(!report)
+					{	//If the calling function wanted to just check for presence of errors
+						problem_found = 1;
+					}
+					else if(!(ignorewarning & 1))
+					{	//If the calling function wanted to prompt the user about each issue found, and this warning message hasn't been suppressed
+						unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+						char triggered = 0;
+
+						eof_2d_render_top_option = 7;			//Display fret hand positions at the top of the piano roll
+						eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
+
+						if(eof_write_rs_files)
+						{	//If Rocksmith 1 files are to be exported
+							ret = alert3("Warning (RS1):  Fret hand positions higher than 19 (considering any capo in use) are invalid.", "You should change this to a lower number or delete/regenerate the fret hand positions.", "Continue?", "&Yes", "&No", "&Ignore", 'y', 'n', 'i');
+							problem_found = 1;
+							triggered = 1;
+						}
+						else if(eof_write_rs2_files)
+						{	//If Rocksmith 2 files are to be exported
+							if(position + tp->capo > 21)
+							{	//If the effective position is above fret 21
+								ret = alert3("Warning (RS2):  Fret hand positions higher than 21 (considering any capo in use) are invalid.", "You should change this to a lower number or delete/regenerate the fret hand positions.", "Continue?", "&Yes", "&No", "&Ignore", 'y', 'n', 'i');
+								problem_found = 1;
+								triggered = 1;
+							}
+						}
+						if(triggered)
+						{	//If the prompt was triggered
+							if(ret == 2)
+							{	//If the user does not opt to continue looking for errors
+								eof_process_beat_statistics(eof_song, eof_selected_track);		//Cache section name information into the beat structures (from the perspective of the active track)
+								(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
+								eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+								eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
+								return 1;	//Return user cancellation
+							}
+							if(ret == 3)
+							{	//If the user chose to ignore instances of this issue
+								ignorewarning |= 1;
+							}
+							eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+						}
+					}
+				}
+				else
+				{	//A valid fret hand position is in effect, run other checks
+					if((lowest != 0) && ((eof_write_rs_files && (highest > position + 3)) || (lowest < position)))
+					{	//If the note is not open, and its fret value goes outside of the highlighted fret range based on the current fret hand position in place (too far above current FHP is only an error in Rocksmith 1)
+						unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+
+						if(report)
+						{	//If the calling function wanted to prompt the user about each issue found
+							eof_2d_render_top_option = 7;			//Display fret hand positions at the top of the piano roll
+							eof_selection.current = ctr2;			//Select the note in question
+							eof_selection.track = ctr;
+							eof_selection.multi[ctr2] = 1;
+							eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
+						}
+						if(highest - lowest + 1 > 4)
+						{	//If this note is a chord, and its fret range is too large to fit into Rocksmith's chord box
+							if(!width_warning && report)
+							{	//If the user wasn't warned about this yet, and this validation function was manually invoked through the menu
+								if(alert("Warning (RS1):  At least one chord is too wide to fit into a chord box.", "It may be a good idea to change its fretting.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 								{	//If the user does not opt to continue looking for errors
 									eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
 									(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
@@ -3693,45 +3776,75 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 									return 1;	//Return user cancellation
 								}
 								eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-							}
-							unset_warning = 1;
-							problem_found = 1;
-						}
-					}
-					else if(position + tp->capo > limit)
-					{	//If an invalid fret hand position is in effect
-						if(!report)
-						{	//If the calling function wanted to just check for presence of errors
-							problem_found = 1;
-						}
-						else if(!(ignorewarning & 1))
-						{	//If the calling function wanted to prompt the user about each issue found, and this warning message hasn't been suppressed
-							unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
-							char triggered = 0;
-
-							eof_2d_render_top_option = 7;			//Display fret hand positions at the top of the piano roll
-							eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
-
-							if(eof_write_rs_files)
-							{	//If Rocksmith 1 files are to be exported
-								ret = alert3("Warning (RS1):  Fret hand positions higher than 19 (considering any capo in use) are invalid.", "You should change this to a lower number or delete/regenerate the fret hand positions.", "Continue?", "&Yes", "&No", "&Ignore", 'y', 'n', 'i');
 								problem_found = 1;
-								triggered = 1;
 							}
-							else if(eof_write_rs2_files)
-							{	//If Rocksmith 2 files are to be exported
-								if(position + tp->capo > 21)
-								{	//If the effective position is above fret 21
-									ret = alert3("Warning (RS2):  Fret hand positions higher than 21 (considering any capo in use) are invalid.", "You should change this to a lower number or delete/regenerate the fret hand positions.", "Continue?", "&Yes", "&No", "&Ignore", 'y', 'n', 'i');
-									problem_found = 1;
-									triggered = 1;
+							width_warning = 1;
+						}
+						if(report)
+						{	//If the calling function wanted to prompt the user about each issue found
+							char *warning = NULL;
+							char warning1[] = "Warning:  This note is lower than the highlighted range of the fretboard.";
+							char warning2[] = "Warning (RS1):  This note is higher than the highlighted range of the fretboard.";
+
+							if(lowest < position)
+							{	//If there is a fretted note lower than the fret hand position
+								if(!(ignorewarning & 2))
+								{	//If this warning message hasn't been suppressed
+									warning = warning1;	//Select the appropriate warning message
 								}
 							}
-							if(triggered)
-							{	//If the prompt was triggered
+							else if(eof_write_rs_files)
+							{	//There is a fretted note more than 3 frets higher than the fret hand position and Rocksmith 1 files are to be exported
+								if(!(ignorewarning & 4))
+								{	//If this warning message hasn't been suppressed
+									warning = warning2;	//Select the appropriate warning message
+								}
+							}
+							if(warning)
+							{	//If a warning is being displayed instead of suppressed
+								ret = alert3(warning, "You should correct this by setting the fret hand position at or before this note,", "or by deleting/regenerating the fret hand positions.  Continue?", "&Yes", "&No", "&Ignore", 'y', 'n', 'i');
 								if(ret == 2)
 								{	//If the user does not opt to continue looking for errors
-									eof_process_beat_statistics(eof_song, eof_selected_track);		//Cache section name information into the beat structures (from the perspective of the active track)
+									eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
+									(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
+									eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
+									return 1;	//Return user cancellation
+								}
+								if(ret == 3)
+								{	//If the user chose to ignore instances of this issue
+									if(warning == warning1)
+									{
+										ignorewarning |= 2;
+									}
+									else
+									{
+										ignorewarning |= 4;
+									}
+								}
+							}
+						}//If the calling function wanted to prompt the user about each issue found
+						problem_found = 1;
+					}//If the note is not open, and its fret value goes outside of the highlighted fret range based on the current fret hand position in place
+					else
+					{	//The note stays within the highlighted fret range
+						for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+						{	//For each of the 6 usable strings
+							if(!(tp->note[ctr2]->note & bitmask) || (tp->note[ctr2]->finger[ctr3] != 1) || ((tp->note[ctr2]->frets[ctr3] & 0x7F) == position))
+								continue;	//If this string isn't defined as being fretted by the index finger, or the fret hand position in effect is already at that note's fret, skip it
+
+							if(report && !(ignorewarning & 8))
+							{	//If the calling function wanted to prompt the user about each issue found, and this warning message hasn't been suppressed
+								unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+
+								eof_2d_render_top_option = 7;			//Display fret hand positions at the top of the piano roll
+								eof_selection.current = ctr2;			//Select the note in question
+								eof_selection.track = ctr;
+								eof_selection.multi[ctr2] = 1;
+								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
+								ret = alert3("Warning:  This note is specified as using the index finger,", "but the fret hand position is on a different fret.", "It's recommended to change the fret hand position to match.  Continue?", "&Yes", "&No", "&Ignore", 'y', 'n', 'i');
+								if(ret == 2)
+								{	//If the user does not opt to continue looking for errors
+									eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
 									(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
 									eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
 									eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
@@ -3739,192 +3852,82 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 								}
 								if(ret == 3)
 								{	//If the user chose to ignore instances of this issue
-									ignorewarning |= 1;
+									ignorewarning |= 8;
 								}
 								eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
 							}
+							problem_found = 1;
+							break;
 						}
 					}
-					else
-					{	//A valid fret hand position is in effect, run other checks
-						if((lowest != 0) && ((eof_write_rs_files && (highest > position + 3)) || (lowest < position)))
-						{	//If the note is not open, and its fret value goes outside of the highlighted fret range based on the current fret hand position in place (too far above current FHP is only an error in Rocksmith 1)
-							unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+				}//A fret hand position is in effect
+				eof_selection.multi[ctr2] = 0;	//Deselect the note
+			}//For each note in the track
 
+			//Check to ensure that each difficulty of an RS phrase defines a fret hand position
+			phrase_warning = 0;
+			eof_process_beat_statistics(eof_song, ctr);	//Cache section name information into the beat structures (from the perspective of the specified track)
+			(void) eof_detect_difficulties(eof_song, ctr);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for this track
+			for(ctr2 = 0; ctr2 < eof_song->beats; ctr2++)
+			{	//For each beat in the project
+				if((eof_song->beat[ctr2]->contained_section_event >= 0) || ((ctr2 + 1 >= eof_song->beats) && started))
+				{	//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
+					if(!started)
+						continue;	//If the first phrase marker has not been encountered, skip the logic below
+
+					//Otherwise this beat marks the end of a phrase
+					endpos = eof_song->beat[ctr2]->pos - 1;	//Track this as the end position of the phrase
+					for(ctr3 = 0; ctr3 < 256; ctr3++)
+					{	//For each of the 255 possible difficulties
+						if(!eof_track_diff_populated_status[ctr3])
+							continue;	//If this difficulty is not populated, skip it
+						if(!eof_time_range_is_populated(eof_song, ctr, startpos, endpos, ctr3))
+							continue;	//If there isn't at least one note in this RS phrase in this difficulty, skip it
+
+						if(!phrase_warning && !eof_enforce_rs_phrase_begin_with_fret_hand_position(eof_song, ctr, ctr3, startpos, endpos, undo_made, 1))
+						{	//If the user hasn't been warned about this issue yet for this track, check to see if a fret hand position was NOT defined at or before the first note in the phrase
 							if(report)
 							{	//If the calling function wanted to prompt the user about each issue found
+								unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+
 								eof_2d_render_top_option = 7;			//Display fret hand positions at the top of the piano roll
-								eof_selection.current = ctr2;			//Select the note in question
-								eof_selection.track = ctr;
-								eof_selection.multi[ctr2] = 1;
-								eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
-							}
-							if(highest - lowest + 1 > 4)
-							{	//If this note is a chord, and its fret range is too large to fit into Rocksmith's chord box
-								if(!width_warning && report)
-								{	//If the user wasn't warned about this yet, and this validation function was manually invoked through the menu
-									if(alert("Warning (RS1):  At least one chord is too wide to fit into a chord box.", "It may be a good idea to change its fretting.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
-									{	//If the user does not opt to continue looking for errors
-										eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
-										(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
-										eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-										eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
-										return 1;	//Return user cancellation
-									}
+								eof_selected_beat = ctr2;				//Change the selected beat
+								eof_seek_and_render_position(ctr, ctr3, eof_song->beat[ctr2]->pos);
+								eof_clear_input();
+								phrase_warning = alert3("The fret hand position is not redefined at each difficulty of each phrase.", "This can prevent the positions from working in dynamic difficulty charts.", "Correct this issue?", "&Yes", "&No", "Cancel", 'y', 'n', 0);
+								if(phrase_warning == 3)
+								{	//If the user does not opt to continue looking for errors
+									eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
+									(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
 									eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-									problem_found = 1;
+									eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
+									return 1;	//Return user cancellation
 								}
-								width_warning = 1;
-							}
-							if(report)
-							{	//If the calling function wanted to prompt the user about each issue found
-								char *warning = NULL;
-								char warning1[] = "Warning:  This note is lower than the highlighted range of the fretboard.";
-								char warning2[] = "Warning (RS1):  This note is higher than the highlighted range of the fretboard.";
-
-								if(lowest < position)
-								{	//If there is a fretted note lower than the fret hand position
-									if(!(ignorewarning & 2))
-									{	//If this warning message hasn't been suppressed
-										warning = warning1;	//Select the appropriate warning message
-									}
-								}
-								else if(eof_write_rs_files)
-								{	//There is a fretted note more than 3 frets higher than the fret hand position and Rocksmith 1 files are to be exported
-									if(!(ignorewarning & 4))
-									{	//If this warning message hasn't been suppressed
-										warning = warning2;	//Select the appropriate warning message
-									}
-								}
-								if(warning)
-								{	//If a warning is being displayed instead of suppressed
-									ret = alert3(warning, "You should correct this by setting the fret hand position at or before this note,", "or by deleting/regenerating the fret hand positions.  Continue?", "&Yes", "&No", "&Ignore", 'y', 'n', 'i');
-									if(ret == 2)
-									{	//If the user does not opt to continue looking for errors
-										eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
-										(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
-										eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
-										return 1;	//Return user cancellation
-									}
-									if(ret == 3)
-									{	//If the user chose to ignore instances of this issue
-										if(warning == warning1)
-										{
-											ignorewarning |= 2;
-										}
-										else
-										{
-											ignorewarning |= 4;
-										}
-									}
-								}
-							}//If the calling function wanted to prompt the user about each issue found
-							problem_found = 1;
-						}//If the note is not open, and its fret value goes outside of the highlighted fret range based on the current fret hand position in place
-						else
-						{	//The note stays within the highlighted fret range
-							for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
-							{	//For each of the 6 usable strings
-								if((tp->note[ctr2]->note & bitmask) && (tp->note[ctr2]->finger[ctr3] == 1) && ((tp->note[ctr2]->frets[ctr3] & 0x7F) != position))
-								{	//If this string is defined as being fretted by the index finger, but at a different fret than the fret hand position in effect
-									if(report && !(ignorewarning & 8))
-									{	//If the calling function wanted to prompt the user about each issue found, and this warning message hasn't been suppressed
-										unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
-
-										eof_2d_render_top_option = 7;			//Display fret hand positions at the top of the piano roll
-										eof_selection.current = ctr2;			//Select the note in question
-										eof_selection.track = ctr;
-										eof_selection.multi[ctr2] = 1;
-										eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
-										ret = alert3("Warning:  This note is specified as using the index finger,", "but the fret hand position is on a different fret.", "It's recommended to change the fret hand position to match.  Continue?", "&Yes", "&No", "&Ignore", 'y', 'n', 'i');
-										if(ret == 2)
-										{	//If the user does not opt to continue looking for errors
-											eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
-											(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
-											eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-											eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
-											return 1;	//Return user cancellation
-										}
-										if(ret == 3)
-										{	//If the user chose to ignore instances of this issue
-											ignorewarning |= 8;
-										}
-										eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-									}
-									problem_found = 1;
+								eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+								if(phrase_warning == 2)
+								{	//If the user declined to fix this issue
 									break;
 								}
 							}
+							problem_found = 1;
 						}
-					}//A fret hand position is in effect
-					eof_selection.multi[ctr2] = 0;	//Deselect the note
-				}//For each note in the track
-
-				//Check to ensure that each difficulty of an RS phrase defines a fret hand position
-				phrase_warning = 0;
-				eof_process_beat_statistics(eof_song, ctr);	//Cache section name information into the beat structures (from the perspective of the specified track)
-				(void) eof_detect_difficulties(eof_song, ctr);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for this track
-				for(ctr2 = 0; ctr2 < eof_song->beats; ctr2++)
-				{	//For each beat in the project
-					if((eof_song->beat[ctr2]->contained_section_event >= 0) || ((ctr2 + 1 >= eof_song->beats) && started))
-					{	//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
-						if(started)
-						{	//If the first phrase marker has been encountered, this beat marks the end of a phrase
-							endpos = eof_song->beat[ctr2]->pos - 1;	//Track this as the end position of the phrase
-							for(ctr3 = 0; ctr3 < 256; ctr3++)
-							{	//For each of the 255 possible difficulties
-								if(eof_track_diff_populated_status[ctr3])
-								{	//If this difficulty is populated
-									if(eof_time_range_is_populated(eof_song, ctr, startpos, endpos, ctr3))
-									{	//And there's at least one note in this RS phrase in this difficulty
-										if(!phrase_warning && !eof_enforce_rs_phrase_begin_with_fret_hand_position(eof_song, ctr, ctr3, startpos, endpos, undo_made, 1))
-										{	//If the user hasn't been warned about this issue yet for this track, check to see if a fret hand position was NOT defined at or before the first note in the phrase
-											if(report)
-											{	//If the calling function wanted to prompt the user about each issue found
-												unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
-
-												eof_2d_render_top_option = 7;			//Display fret hand positions at the top of the piano roll
-												eof_selected_beat = ctr2;				//Change the selected beat
-												eof_seek_and_render_position(ctr, ctr3, eof_song->beat[ctr2]->pos);
-												eof_clear_input();
-												phrase_warning = alert3("The fret hand position is not redefined at each difficulty of each phrase.", "This can prevent the positions from working in dynamic difficulty charts.", "Correct this issue?", "&Yes", "&No", "Cancel", 'y', 'n', 0);
-												if(phrase_warning == 3)
-												{	//If the user does not opt to continue looking for errors
-													eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
-													(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
-													eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-													eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
-													return 1;	//Return user cancellation
-												}
-												eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-												if(phrase_warning == 2)
-												{	//If the user declined to fix this issue
-													break;
-												}
-											}
-											problem_found = 1;
-										}
-										if(report && (phrase_warning == 1))
-										{	//If the user opted to correct this issue, ensure each difficulty of each phrase defines a fret hand position
-											(void) eof_enforce_rs_phrase_begin_with_fret_hand_position(eof_song, ctr, ctr3, startpos, endpos, undo_made, 0);	//Add a fret hand position to this phrase if one is not defined already
-										}
-									}
-								}
-							}
-						}//If the first phrase marker has been encountered, this beat marks the end of a phrase
-						if(phrase_warning == 2)
-						{	//If the user declined to fix this issue
-							break;
+						if(report && (phrase_warning == 1))
+						{	//If the user opted to correct this issue, ensure each difficulty of each phrase defines a fret hand position
+							(void) eof_enforce_rs_phrase_begin_with_fret_hand_position(eof_song, ctr, ctr3, startpos, endpos, undo_made, 0);	//Add a fret hand position to this phrase if one is not defined already
 						}
+					}
+				}//If the first phrase marker has been encountered, this beat marks the end of a phrase
+				if(phrase_warning == 2)
+				{	//If the user declined to fix this issue
+					break;
+				}
 
-						started = 1;	//Track that a phrase has been encountered
-						startpos = eof_song->beat[ctr2]->pos;	//Track the starting position of the phrase
-					}//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
-				}//For each beat in the project
-			}//If this track has any manually defined fret hand positions
+				started = 1;	//Track that a phrase has been encountered
+				startpos = eof_song->beat[ctr2]->pos;	//Track the starting position of the phrase
+			}//For each beat in the project
+		}//If this track has any manually defined fret hand positions
 
-			eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
-		}//If this is a pro guitar/bass track
+		eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 	}//For each track in the project
 
 	if(report && !problem_found)
