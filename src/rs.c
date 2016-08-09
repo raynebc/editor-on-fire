@@ -977,7 +977,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	{	//If at least one popup message or tone change is to be written
 		unsigned long count, controlctr = 0;
 		size_t stringlen;
-		EOF_RS_CONTROL *controls = NULL;
+		EOF_RS_CONTROL *controls;
 
 		//Allocate memory for a list of control events
 		eof_track_pro_guitar_sort_tone_changes(tp);	//Re-sort the tone changes

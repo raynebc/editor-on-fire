@@ -5017,37 +5017,37 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 			{	//If any fingering fields are defined, they have to be valid
 				for(i = 0; i < 6; i++)
 				{	//For each of the supported strings
-					if(eof_pro_guitar_note_frets_dialog[27 - i].flags != D_SELECTED)
-					{	//If the mute box isn't checked
-						if(eof_fret_strings[i][0] != '\0')
-						{	//If this string has a fret value
-							if(atol(eof_fret_strings[i]) != 0)
-							{	//If the value doesn't indicate that it is played open or muted
-								if(eof_finger_strings[i][0] == '\0')
-								{	//If no finger value is given
-									allegro_message("If any fingering is specified, it must be done for all fretted strings.\nCorrect or erase the finger numbers before clicking OK.");
-									retry = 1;	//Flag that the user must enter valid finger information
-									break;
-								}
-							}
-							else
-							{	//The string is played open or muted
-								if(((eof_finger_strings[i][0] != '\0') && (toupper(eof_finger_strings[i][0]) != 'X')) && (eof_pro_guitar_note_frets_dialog[27 - i].flags != D_SELECTED))
-								{	//If the inputs don't indicate muting
-									allegro_message("If any fingering is specified, it must be done for all fretted strings.\nCorrect or erase the finger numbers before clicking OK.");
-									retry = 1;
-									break;
-								}
+					if(eof_pro_guitar_note_frets_dialog[27 - i].flags == D_SELECTED)
+						continue;	//If the string's mute box is checked, skip it
+
+					if(eof_fret_strings[i][0] != '\0')
+					{	//If this string has a fret value
+						if(atol(eof_fret_strings[i]) != 0)
+						{	//If the value doesn't indicate that it is played open or muted
+							if(eof_finger_strings[i][0] == '\0')
+							{	//If no finger value is given
+								allegro_message("If any fingering is specified, it must be done for all fretted strings.\nCorrect or erase the finger numbers before clicking OK.");
+								retry = 1;	//Flag that the user must enter valid finger information
+								break;
 							}
 						}
 						else
-						{	//There is no fret value defined
-							if(eof_finger_strings[i][0] != '\0')
-							{	//If there is a fingering defined
-								allegro_message("If any fingering is specified, it must be done only for the fretted strings.\nCorrect or erase the finger numbers before clicking OK.");
+						{	//The string is played open or muted
+							if(((eof_finger_strings[i][0] != '\0') && (toupper(eof_finger_strings[i][0]) != 'X')) && (eof_pro_guitar_note_frets_dialog[27 - i].flags != D_SELECTED))
+							{	//If the inputs don't indicate muting
+								allegro_message("If any fingering is specified, it must be done for all fretted strings.\nCorrect or erase the finger numbers before clicking OK.");
 								retry = 1;
 								break;
 							}
+						}
+					}
+					else
+					{	//There is no fret value defined
+						if(eof_finger_strings[i][0] != '\0')
+						{	//If there is a fingering defined
+							allegro_message("If any fingering is specified, it must be done only for the fretted strings.\nCorrect or erase the finger numbers before clicking OK.");
+							retry = 1;
+							break;
 						}
 					}
 				}//For each of the supported strings
@@ -5082,135 +5082,135 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 				}
 				for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 				{	//For each note in the track
-					if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-					{	//If the note is in the active instrument difficulty and is selected
-						for(ctr = 0, allmuted = 1; ctr < 6; ctr++)
-						{	//For each of the 6 supported strings
-							if((eof_fret_strings[ctr][0] != '\0') || (eof_pro_guitar_note_frets_dialog[27 - ctr].flags == D_SELECTED))
-							{	//If this string isn't empty or is marked as muted
-								fretvalue = fingervalue = 0;
-								if(eof_finger_strings[ctr][0] != '\0')
-								{	//If there is a finger value specified for this string
-									if(toupper(eof_finger_strings[ctr][0]) == 'X')
-									{	//If the character is an X, it defines that the string is muted
-										fretvalue |= 0x80;	//Set the fret value's MSB, leave the finger value at 0 (undefined)
-									}
-									else
-									{	//Otherwise it defines the fingering for the string
-										if((eof_finger_strings[ctr][0] == 't') || (eof_finger_strings[ctr][0] == 'T'))
-										{	//If the user used the letter T
-											eof_finger_strings[ctr][0] = '0';	//Convert to the numeric Rocksmith notation for the thumb
-										}
-										fingervalue = eof_finger_strings[ctr][0] - '0';	//Convert the ASCII numerical character to decimal
-										if(fingervalue == 0)
-										{	//User defined use of the thumb
-											fingervalue = 5;	//Translate into EOF's notation for the thumb
-										}
-									}
-								}
-								if(eof_pro_guitar_note_frets_dialog[27 - ctr].flags == D_SELECTED)
-								{	//If the mute box is checked
-									fretvalue |= 0x80;	//Set the fret value's MSB
-									if(eof_fret_strings[ctr][0] == '\0')
-									{	//Unless the fret value is undefined
-										fretvalue = 0xFF;	//In which case this is a muted note with no specified fret value
-									}
-								}
-								bitmask |= (1 << ctr);	//Set the appropriate bit for this lane
-								for(ctr2 = 0;eof_fret_strings[ctr][ctr2] != '\0';ctr2++)
-								{	//For each character in the fret string
-									if(toupper(eof_fret_strings[ctr][ctr2]) == 'X')
-									{	//If the character is an X
-										fretvalue = 0xFF;	//Consider this string muted
-										break;
-									}
-								}
-								if(fretvalue != 0xFF)
-								{	//If the fret string didn't contain an X, convert it to an integer value
-									fretvalue += atol(eof_fret_strings[ctr]);	//Add the converted number so that string muting can be retained
-									if((fretvalue < 0) || (fretvalue > 255))
-									{	//If the conversion to number failed or specifies a fret EOF cannot store as an 8 bit number
-										fretvalue = 0xFF;
-									}
-									else if((fretvalue & 0x7F) > highfretvalue)
-									{	//If the fret value (masking out the mute bit) is higher than the fret value being tracked
-										highfretvalue = fretvalue & 0x7F;	//Track the new highest fret value
-									}
-								}
-								if(fretvalue == 0xFF)
-								{	//If this string is muted
-									fingervalue = 0;	//It doesn't have a fingering
-								}
-								if(fretvalue != tp->note[i]->frets[ctr])
-								{	//If this fret value changed
-									if(!*undo_made)
-									{	//If an undo state hasn't been made yet
-										eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-										*undo_made = 1;
-									}
-									tp->note[i]->frets[ctr] = fretvalue;
-								}
-								if(fingervalue != tp->note[i]->finger[ctr])
-								{	//If the finger value changed
-									if(!*undo_made)
-									{	//If an undo state hasn't been made yet
-										eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-										*undo_made = 1;
-									}
-									tp->note[i]->finger[ctr] = fingervalue;
-								}
-								if((fretvalue != 0xFF) && ((fretvalue & 0x80) == 0))
-								{	//Track whether all of the used strings in this note/chord are muted
-									allmuted = 0;
-								}
-							}
-							else
-							{	//Clear the fret value and return the fret back to its default of 0 (open)
-								bitmask &= ~(1 << ctr);	//Clear the appropriate bit for this lane
-								if(tp->note[i]->frets[ctr] != 0)
-								{	//If this fret value changed
-									if(!*undo_made)
-									{	//If an undo state hasn't been made yet
-										eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-										*undo_made = 1;
-									}
-									tp->note[i]->frets[ctr] = 0;
-									tp->note[i]->finger[ctr] = 0;
-								}
-							}
-						}//For each of the 6 supported strings
-						if(bitmask == 0)
-						{	//If edits results in selected notes having no played strings
-							(void) eof_menu_note_delete();		//All selected notes must be deleted
-							eof_show_mouse(NULL);
-							eof_cursor_visible = 1;
-							eof_pen_visible = 1;
-							return 1;					//Return OK selected
-						}
+					if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
+						continue;	//If the note isn't selected, skip it
 
-			//Save the updated note bitmask
-						if(tp->note[i]->note != bitmask)
-						{	//If the note bitmask changed
-							if(!*undo_made)
-							{	//If an undo state hasn't been made yet
-								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-								*undo_made = 1;
+					for(ctr = 0, allmuted = 1; ctr < 6; ctr++)
+					{	//For each of the 6 supported strings
+						if((eof_fret_strings[ctr][0] != '\0') || (eof_pro_guitar_note_frets_dialog[27 - ctr].flags == D_SELECTED))
+						{	//If this string isn't empty or is marked as muted
+							fretvalue = fingervalue = 0;
+							if(eof_finger_strings[ctr][0] != '\0')
+							{	//If there is a finger value specified for this string
+								if(toupper(eof_finger_strings[ctr][0]) == 'X')
+								{	//If the character is an X, it defines that the string is muted
+									fretvalue |= 0x80;	//Set the fret value's MSB, leave the finger value at 0 (undefined)
+								}
+								else
+								{	//Otherwise it defines the fingering for the string
+									if((eof_finger_strings[ctr][0] == 't') || (eof_finger_strings[ctr][0] == 'T'))
+									{	//If the user used the letter T
+										eof_finger_strings[ctr][0] = '0';	//Convert to the numeric Rocksmith notation for the thumb
+									}
+									fingervalue = eof_finger_strings[ctr][0] - '0';	//Convert the ASCII numerical character to decimal
+									if(fingervalue == 0)
+									{	//User defined use of the thumb
+										fingervalue = 5;	//Translate into EOF's notation for the thumb
+									}
+								}
 							}
-							tp->note[i]->note = bitmask;
+							if(eof_pro_guitar_note_frets_dialog[27 - ctr].flags == D_SELECTED)
+							{	//If the mute box is checked
+								fretvalue |= 0x80;	//Set the fret value's MSB
+								if(eof_fret_strings[ctr][0] == '\0')
+								{	//Unless the fret value is undefined
+									fretvalue = 0xFF;	//In which case this is a muted note with no specified fret value
+								}
+							}
+							bitmask |= (1 << ctr);	//Set the appropriate bit for this lane
+							for(ctr2 = 0;eof_fret_strings[ctr][ctr2] != '\0';ctr2++)
+							{	//For each character in the fret string
+								if(toupper(eof_fret_strings[ctr][ctr2]) == 'X')
+								{	//If the character is an X
+									fretvalue = 0xFF;	//Consider this string muted
+									break;
+								}
+							}
+							if(fretvalue != 0xFF)
+							{	//If the fret string didn't contain an X, convert it to an integer value
+								fretvalue += atol(eof_fret_strings[ctr]);	//Add the converted number so that string muting can be retained
+								if((fretvalue < 0) || (fretvalue > 255))
+								{	//If the conversion to number failed or specifies a fret EOF cannot store as an 8 bit number
+									fretvalue = 0xFF;
+								}
+								else if((fretvalue & 0x7F) > highfretvalue)
+								{	//If the fret value (masking out the mute bit) is higher than the fret value being tracked
+									highfretvalue = fretvalue & 0x7F;	//Track the new highest fret value
+								}
+							}
+							if(fretvalue == 0xFF)
+							{	//If this string is muted
+								fingervalue = 0;	//It doesn't have a fingering
+							}
+							if(fretvalue != tp->note[i]->frets[ctr])
+							{	//If this fret value changed
+								if(!*undo_made)
+								{	//If an undo state hasn't been made yet
+									eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+									*undo_made = 1;
+								}
+								tp->note[i]->frets[ctr] = fretvalue;
+							}
+							if(fingervalue != tp->note[i]->finger[ctr])
+							{	//If the finger value changed
+								if(!*undo_made)
+								{	//If an undo state hasn't been made yet
+									eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+									*undo_made = 1;
+								}
+								tp->note[i]->finger[ctr] = fingervalue;
+							}
+							if((fretvalue != 0xFF) && ((fretvalue & 0x80) == 0))
+							{	//Track whether all of the used strings in this note/chord are muted
+								allmuted = 0;
+							}
 						}
+						else
+						{	//Clear the fret value and return the fret back to its default of 0 (open)
+							bitmask &= ~(1 << ctr);	//Clear the appropriate bit for this lane
+							if(tp->note[i]->frets[ctr] != 0)
+							{	//If this fret value changed
+								if(!*undo_made)
+								{	//If an undo state hasn't been made yet
+									eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+									*undo_made = 1;
+								}
+								tp->note[i]->frets[ctr] = 0;
+								tp->note[i]->finger[ctr] = 0;
+							}
+						}
+					}//For each of the 6 supported strings
+					if(bitmask == 0)
+					{	//If edits results in selected notes having no played strings
+						(void) eof_menu_note_delete();		//All selected notes must be deleted
+						eof_show_mouse(NULL);
+						eof_cursor_visible = 1;
+						eof_pen_visible = 1;
+						return 1;					//Return OK selected
+					}
 
-			//Update the flags to reflect string muting
-						flags = tp->note[i]->flags;
-						if(!allmuted)
-						{	//If any used strings in this note/chord weren't string muted
-							flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE);	//Clear the string mute flag
+		//Save the updated note bitmask
+					if(tp->note[i]->note != bitmask)
+					{	//If the note bitmask changed
+						if(!*undo_made)
+						{	//If an undo state hasn't been made yet
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+							*undo_made = 1;
 						}
-						else if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
-						{	//If all strings are muted and the user didn't specify a palm mute
-							flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;		//Set the string mute flag
-						}
-						tp->note[i]->flags = flags;
-					}//If the note is in the active instrument difficulty and is selected
+						tp->note[i]->note = bitmask;
+					}
+
+		//Update the flags to reflect string muting
+					flags = tp->note[i]->flags;
+					if(!allmuted)
+					{	//If any used strings in this note/chord weren't string muted
+						flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE);	//Clear the string mute flag
+					}
+					else if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
+					{	//If all strings are muted and the user didn't specify a palm mute
+						flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;		//Set the string mute flag
+					}
+					tp->note[i]->flags = flags;
 				}//For each note in the track
 
 				//Offer to update the fingering for all notes in the track matching the selected note (which all selected notes now match because they were altered if they didn't)
@@ -5316,74 +5316,73 @@ int eof_correct_chord_fingerings_option(char report, char *undo_made)
 	memset(&eof_selection, 0, sizeof(EOF_SELECTION_DATA));	//Clear the note selection
 	for(ctr = 1; ctr < eof_song->tracks; ctr++)
 	{	//For each track (skipping the global track, 0)
-		if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-		{	//If this is a pro guitar track
-			restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, ctr);
-			eof_menu_track_set_tech_view_state(eof_song, ctr, 0); //Disable tech view if applicable
-			tracknum = eof_song->track[ctr]->tracknum;
-			tp = eof_song->pro_guitar_track[tracknum];
-			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
-			{	//For each note in this track
-				if((eof_note_count_colors(eof_song, ctr, ctr2) > 1) && !eof_is_string_muted(eof_song, ctr, ctr2))
-				{	//If this note is a chord that isn't completely string muted
-					if(eof_pro_guitar_note_fingering_valid(tp, ctr2, 0) != 1)
-					{	//If the fingering for this chord isn't valid or is undefined
-						if(!user_prompted)
-						{	//If the user hasn't been prompted whether to update the fingering (or if the prompt hasn't been suppressed)
-							eof_clear_input();
-							if(alert("One or more chords don't have correct finger information", "Update them now?", NULL, "&Yes", "&No", 'y', 'n') != 1)
-							{	//If the user does not opt to update the fingering
-								eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, restore_tech_view); //Re-enable tech view if applicable
-								return 0;
-							}
-							user_prompted = 1;
-						}
-						result = 0;
-						if(auto_complete != 2)
-						{	//As long as the user didn't decline to use the chord shape definitions
-							result = eof_lookup_chord_shape(tp->note[ctr2], &shapenum, 0);	//Look for a match in the chord shape definitions
-						}
-						if(!auto_complete && result)
-						{	//If the user hasn't been prompted whether to use the chord definitions yet, and the chord's fingering CAN be automatically applied
-							if(alert(NULL, "Automatically apply fingerings for known chord shapes?", NULL, "&Yes", "&No", 'y', 'n') != 1)
-							{	//If the user declines using the chord shape definitions
-								auto_complete = 2;	//Remember a no answer
-							}
-							else
-							{
-								auto_complete = 1;	//Otherwise remember a yes answer
-							}
-						}
+		if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			continue;	//If this isn't a pro guitar track, skip it
 
-						if((auto_complete == 1) && result)
-						{	//If this chord's fingering is to be applied automatically
-							if(!*undo_made)
-							{	//If an undo state hasn't been made yet
-								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-								*undo_made = 1;
-							}
-							eof_apply_chord_shape_definition(tp->note[ctr2], shapenum);	//Apply the matching chord shape definition's fingering
-						}
-						else
-						{	//If this chord's fingering is to be applied manually
-							eof_selection.current = ctr2;	//Select this note
-							eof_selection.track = ctr;		//Select this track
-							eof_selection.multi[ctr2] = 1;	//Select this note in the selection array
-							eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Show the offending note
-							cancelled = !eof_menu_note_edit_pro_guitar_note_frets_fingers(1, undo_made);	//Open the edit fret/finger dialog where only the necessary finger fields can be altered
-							eof_selection.multi[ctr2] = 0;	//Unselect this note
-							eof_selection.current = EOF_MAX_NOTES - 1;
-							if(cancelled)
-							{	//If the user canceled updating the chord fingering
-								eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, restore_tech_view); //Re-enable tech view if applicable
-								return 0;
-							}
-						}//If this chord's fingering is to be applied manually
-					}//If the fingering for this chord isn't valid or is undefined
-				}//If this note is a chord that isn't completely string muted
-			}//For each note in this track
-			eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view); //Re-enable tech view if applicable
-		}//If this is a pro guitar track
+		restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, ctr);
+		eof_menu_track_set_tech_view_state(eof_song, ctr, 0); //Disable tech view if applicable
+		tracknum = eof_song->track[ctr]->tracknum;
+		tp = eof_song->pro_guitar_track[tracknum];
+		for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+		{	//For each note in this track
+			if((eof_note_count_colors(eof_song, ctr, ctr2) <= 1) || eof_is_string_muted(eof_song, ctr, ctr2))
+				continue;	//If this note isn't a chord or is completely string muted, skip it
+			if(eof_pro_guitar_note_fingering_valid(tp, ctr2, 0) == 1)
+				continue;	//If the fingering for this chord is defined and valid, skip it
+
+			if(!user_prompted)
+			{	//If the user hasn't been prompted whether to update the fingering (or if the prompt hasn't been suppressed)
+				eof_clear_input();
+				if(alert("One or more chords don't have correct finger information", "Update them now?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+				{	//If the user does not opt to update the fingering
+					eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, restore_tech_view); //Re-enable tech view if applicable
+					return 0;
+				}
+				user_prompted = 1;
+			}
+			result = 0;
+			if(auto_complete != 2)
+			{	//As long as the user didn't decline to use the chord shape definitions
+				result = eof_lookup_chord_shape(tp->note[ctr2], &shapenum, 0);	//Look for a match in the chord shape definitions
+			}
+			if(!auto_complete && result)
+			{	//If the user hasn't been prompted whether to use the chord definitions yet, and the chord's fingering CAN be automatically applied
+				if(alert(NULL, "Automatically apply fingerings for known chord shapes?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+				{	//If the user declines using the chord shape definitions
+					auto_complete = 2;	//Remember a no answer
+				}
+				else
+				{
+					auto_complete = 1;	//Otherwise remember a yes answer
+				}
+			}
+
+			if((auto_complete == 1) && result)
+			{	//If this chord's fingering is to be applied automatically
+				if(!*undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					*undo_made = 1;
+				}
+				eof_apply_chord_shape_definition(tp->note[ctr2], shapenum);	//Apply the matching chord shape definition's fingering
+			}
+			else
+			{	//If this chord's fingering is to be applied manually
+				eof_selection.current = ctr2;	//Select this note
+				eof_selection.track = ctr;		//Select this track
+				eof_selection.multi[ctr2] = 1;	//Select this note in the selection array
+				eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Show the offending note
+				cancelled = !eof_menu_note_edit_pro_guitar_note_frets_fingers(1, undo_made);	//Open the edit fret/finger dialog where only the necessary finger fields can be altered
+				eof_selection.multi[ctr2] = 0;	//Unselect this note
+				eof_selection.current = EOF_MAX_NOTES - 1;
+				if(cancelled)
+				{	//If the user canceled updating the chord fingering
+					eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, restore_tech_view); //Re-enable tech view if applicable
+					return 0;
+				}
+			}//If this chord's fingering is to be applied manually
+		}//For each note in this track
+		eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view); //Re-enable tech view if applicable
 	}//For each track (skipping the global track, 0)
 	if(report && !(*undo_made))
 	{	//If no alterations were necessary and the calling function wanted this reported
@@ -5405,28 +5404,28 @@ int eof_menu_note_toggle_tapping(void)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-		{	//If this note is in the currently active track and is selected
-			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			flags ^= EOF_PRO_GUITAR_NOTE_FLAG_TAP;	//Toggle the tap flag
-			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
-			{	//If tapping was just enabled
-				flags |= EOF_NOTE_FLAG_F_HOPO;				//Set the legacy HOPO on flag (no strum required for this note)
-				flags &= ~EOF_NOTE_FLAG_NO_HOPO;			//Clear the HOPO off flag
-				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;		//Clear the hammer on flag
-				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;		//Clear the pull off flag
-			}
-			else
-			{	//If tapping was just disabled
-				flags &= ~EOF_NOTE_FLAG_F_HOPO;		//Clear the legacy HOPO on flag
-			}
-			if(!u)
-			{	//Make a back up before changing the first note
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				u = 1;
-			}
-			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+			continue;	//IF this note isn't selected, skip it
+
+		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+		flags ^= EOF_PRO_GUITAR_NOTE_FLAG_TAP;	//Toggle the tap flag
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+		{	//If tapping was just enabled
+			flags |= EOF_NOTE_FLAG_F_HOPO;				//Set the legacy HOPO on flag (no strum required for this note)
+			flags &= ~EOF_NOTE_FLAG_NO_HOPO;			//Clear the HOPO off flag
+			flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;		//Clear the hammer on flag
+			flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;		//Clear the pull off flag
 		}
+		else
+		{	//If tapping was just disabled
+			flags &= ~EOF_NOTE_FLAG_F_HOPO;		//Clear the legacy HOPO on flag
+		}
+		if(!u)
+		{	//Make a back up before changing the first note
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			u = 1;
+		}
+		eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 	}
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note
@@ -5488,31 +5487,31 @@ int eof_menu_note_toggle_bend(void)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-		{	//If this note is in the currently active track and is selected
-			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			flags ^= EOF_PRO_GUITAR_NOTE_FLAG_BEND;	//Toggle the bend flag
-			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
-			{	//If bend status was just enabled
-				bends_present = 1;
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+			continue;	//If this note isn't selected, skip it
+
+		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+		flags ^= EOF_PRO_GUITAR_NOTE_FLAG_BEND;	//Toggle the bend flag
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+		{	//If bend status was just enabled
+			bends_present = 1;
+		}
+		else
+		{
+			if(!(((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)) && eof_song->pro_guitar_track[tracknum]->note[i]->slideend))
+			{	//If this is NOT also a slide note with a defined end of slide position
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag
 			}
-			else
-			{
-				if(!(((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)) && eof_song->pro_guitar_track[tracknum]->note[i]->slideend))
-				{	//If this is NOT also a slide note with a defined end of slide position
-					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag
-				}
-			}
-			if(!u)
-			{	//Make a back up before changing the first note
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				u = 1;
-			}
-			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
-			if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
-			{	//If this is not a bend anymore
-				eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength = 0;	//Reset the strength of the bend
-			}
+		}
+		if(!u)
+		{	//Make a back up before changing the first note
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			u = 1;
+		}
+		eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
+		{	//If this is not a bend anymore
+			eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength = 0;	//Reset the strength of the bend
 		}
 	}
 	if((eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files) && bends_present)
@@ -5589,34 +5588,34 @@ int eof_menu_note_toggle_slide_up(void)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-		{	//If this note is in the currently active track and is selected
-			slide_change = 0;
-			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			flags ^= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;			//Toggle the slide up flag
-			flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Clear the slide down flag
-			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-			{	//If the note now slides up
-				slides_present = 1;	//Track that at least one selected note is an up slide
-				slide_change = 1;	//Track that this note became an upward slide
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+			continue;	//If this note isn't selected, skip it
+
+		slide_change = 0;
+		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+		flags ^= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;			//Toggle the slide up flag
+		flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Clear the slide down flag
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+		{	//If the note now slides up
+			slides_present = 1;	//Track that at least one selected note is an up slide
+			slide_change = 1;	//Track that this note became an upward slide
+		}
+		else
+		{	//If the note doesn't slide, clear the slide end fret status
+			if(!((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength))
+			{	//If this is NOT also a bend note with a defined bend strength
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag
 			}
-			else
-			{	//If the note doesn't slide, clear the slide end fret status
-				if(!((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength))
-				{	//If this is NOT also a bend note with a defined bend strength
-					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag
-				}
-			}
-			if(!u)
-			{	//Make a back up before changing the first note
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				u = 1;
-			}
-			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
-			if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || slide_change)
-			{	//If this is not a slide note anymore, or it it just became an upward slide (ie. if it was a downward slide it may a now invalid end position)
-				eof_song->pro_guitar_track[tracknum]->note[i]->slideend = 0;	//Reset the ending fret number of the slide
-			}
+		}
+		if(!u)
+		{	//Make a back up before changing the first note
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			u = 1;
+		}
+		eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || slide_change)
+		{	//If this is not a slide note anymore, or it it just became an upward slide (ie. if it was a downward slide it may a now invalid end position)
+			eof_song->pro_guitar_track[tracknum]->note[i]->slideend = 0;	//Reset the ending fret number of the slide
 		}
 	}
 	if((eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files) && slides_present)
@@ -5648,34 +5647,34 @@ int eof_menu_note_toggle_slide_down(void)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-		{	//If this note is in the currently active track and is selected
-			slide_change = 0;
-			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			flags ^= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;		//Toggle the slide down flag
-			flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);		//Clear the slide down flag
-			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
-			{	//If the note now slides down
-				slides_present = 1;	//Track that at least one selected note is a down slide
-				slide_change = 1;	//Track that this note became a downward slide
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+			continue;	//If this note isn't selected, skip it
+
+		slide_change = 0;
+		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+		flags ^= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;		//Toggle the slide down flag
+		flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);		//Clear the slide down flag
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+		{	//If the note now slides down
+			slides_present = 1;	//Track that at least one selected note is a down slide
+			slide_change = 1;	//Track that this note became a downward slide
+		}
+		else
+		{	//If the note doesn't slide, clear the slide end fret status
+			if(!((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength))
+			{	//If this is NOT also a bend note with a defined bend strength
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag
 			}
-			else
-			{	//If the note doesn't slide, clear the slide end fret status
-				if(!((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength))
-				{	//If this is NOT also a bend note with a defined bend strength
-					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag
-				}
-			}
-			if(!u)
-			{	//Make a back up before changing the first note
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				u = 1;
-			}
-			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
-			if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || slide_change)
-			{	//If this is not a slide note anymore, or it it just became a downward slide (ie. if it was an upward slide it may a now invalid end position)
-				eof_song->pro_guitar_track[tracknum]->note[i]->slideend = 0;	//Reset the ending fret number of the slide
-			}
+		}
+		if(!u)
+		{	//Make a back up before changing the first note
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			u = 1;
+		}
+		eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || slide_change)
+		{	//If this is not a slide note anymore, or it it just became a downward slide (ie. if it was an upward slide it may a now invalid end position)
+			eof_song->pro_guitar_track[tracknum]->note[i]->slideend = 0;	//Reset the ending fret number of the slide
 		}
 	}
 	if((eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files) && slides_present)
@@ -5705,24 +5704,24 @@ int eof_menu_note_remove_slide(void)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-		{	//If this note is in the currently active track and is selected
-			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			oldflags = flags;							//Save an extra copy of the original flags
-			flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);		//Clear the slide up flag
-			flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Clear the slide down flag
-			if(!((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength))
-			{	//If this is NOT also a bend note with a defined bend strength
-				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;		//Clear this flag
-			}
-			if(!u && (oldflags != flags))
-			{	//Make a back up before changing the first note
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				u = 1;
-			}
-			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
-			eof_song->pro_guitar_track[tracknum]->note[i]->slideend = 0;	//Reset the ending fret number of the slide
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+			continue;	//If this note isn't selected, skip it
+
+		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+		oldflags = flags;							//Save an extra copy of the original flags
+		flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);		//Clear the slide up flag
+		flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Clear the slide down flag
+		if(!((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength))
+		{	//If this is NOT also a bend note with a defined bend strength
+			flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;		//Clear this flag
 		}
+		if(!u && (oldflags != flags))
+		{	//Make a back up before changing the first note
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			u = 1;
+		}
+		eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		eof_song->pro_guitar_track[tracknum]->note[i]->slideend = 0;	//Reset the ending fret number of the slide
 	}
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note
@@ -5745,29 +5744,29 @@ int eof_menu_note_reverse_slide(void)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-		{	//If this note is in the currently active track and is selected
-			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			oldflags = flags;
-			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-			{	//If the note currently slides up
-				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;		//Clear the slide up flag
-				flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;		//Set the slide down flag
-				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;	//Ensure the reverse slide flag is clear
-			}
-			else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
-			{	//If the note currently slides down
-				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;		//Clear the slide down flag
-				flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;		//Set the slide up flag
-				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;	//Ensure the reverse slide flag is clear
-			}
-			if(!u && (oldflags != flags))
-			{	//Make a back up before changing the first note
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				u = 1;
-			}
-			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+			continue;	//If this note isn't selected, skip it
+
+		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+		oldflags = flags;
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+		{	//If the note currently slides up
+			flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;		//Clear the slide up flag
+			flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;		//Set the slide down flag
+			flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;	//Ensure the reverse slide flag is clear
 		}
+		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+		{	//If the note currently slides down
+			flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;		//Clear the slide down flag
+			flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;		//Set the slide up flag
+			flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;	//Ensure the reverse slide flag is clear
+		}
+		if(!u && (oldflags != flags))
+		{	//Make a back up before changing the first note
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			u = 1;
+		}
+		eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 	}
 	eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes to adjust the slide note's length as appropriate
 	if(note_selection_updated)
@@ -5793,63 +5792,61 @@ int eof_menu_note_convert_slide_to_unpitched(void)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr])
-		{	//If this note is in the currently active track and is selected
-			flags = tp->note[ctr]->flags;
-			if((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
-			{	//If this note has a pitched slide
-				if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))
-				{	//If this note does NOT also have an unpitched slide
-					if(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
-					{	//If the end of slide position was defined
-						if(!u)
-						{	//Make a back up before changing the first note
-							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-							u = 1;
-						}
-						tp->note[ctr]->unpitchend = tp->note[ctr]->slideend;	//Transfer the end of slide position to the end of unpitched slide position
-						tp->note[ctr]->slideend = 0;
-						if(!((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && tp->note[ctr]->bendstrength))
-						{	//If this is NOT also a bend note with a defined bend strength
-							flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION);	//Clear the RS notation flag to signify that neither an end of (pitched) slide position nor a bend strength are defined
-						}
-					}
-					else
-					{
-						unsigned char lowestfret = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Determine the lowest used fret value for the note
-						if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-						{	//If the note was an upward slide
-							if(lowestfret + 1 > tp->numfrets)
-							{	//If a valid end of upward slide position cannot be defined for this note
-								skipped++;
-								tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight the offending note
-								continue;	//Skip it
-							}
-							tp->note[ctr]->unpitchend = lowestfret + 1;	//Define an upward slide of one fret
-						}
-						else
-						{	//The note was a downward slide
-							if(lowestfret < 2)
-							{	//If a valid end of downward slide position cannot be defined for this note
-								skipped++;
-								tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight the offending note
-								continue;	//Skip it
-							}
-							tp->note[ctr]->unpitchend = lowestfret - 1;	//Define a downward slide of one fret
-						}
-					}
-					if(!u)
-					{	//Make a back up before changing the first note
-						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-						u = 1;
-					}
-					flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);		//Clear the slide up flag
-					flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Clear the slide down flag
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;	//Set the unpitched slide flag
-					tp->note[ctr]->flags = flags;
-				}
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[ctr])
+			continue;	//If this note isn't selected, skip it
+		flags = tp->note[ctr]->flags;
+		if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+			continue;	//If this note does not have a pitched slide, skip it
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+			continue;	//If this note also has an unpitched slide, skip it
+
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
+		{	//If the end of slide position was defined
+			if(!u)
+			{	//Make a back up before changing the first note
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				u = 1;
+			}
+			tp->note[ctr]->unpitchend = tp->note[ctr]->slideend;	//Transfer the end of slide position to the end of unpitched slide position
+			tp->note[ctr]->slideend = 0;
+			if(!((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && tp->note[ctr]->bendstrength))
+			{	//If this is NOT also a bend note with a defined bend strength
+				flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION);	//Clear the RS notation flag to signify that neither an end of (pitched) slide position nor a bend strength are defined
 			}
 		}
+		else
+		{
+			unsigned char lowestfret = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Determine the lowest used fret value for the note
+			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+			{	//If the note was an upward slide
+				if(lowestfret + 1 > tp->numfrets)
+				{	//If a valid end of upward slide position cannot be defined for this note
+					skipped++;
+					tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight the offending note
+					continue;	//Skip it
+				}
+				tp->note[ctr]->unpitchend = lowestfret + 1;	//Define an upward slide of one fret
+			}
+			else
+			{	//The note was a downward slide
+				if(lowestfret < 2)
+				{	//If a valid end of downward slide position cannot be defined for this note
+					skipped++;
+					tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight the offending note
+					continue;	//Skip it
+				}
+				tp->note[ctr]->unpitchend = lowestfret - 1;	//Define a downward slide of one fret
+			}
+		}
+		if(!u)
+		{	//Make a back up before changing the first note
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			u = 1;
+		}
+		flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);		//Clear the slide up flag
+		flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Clear the slide down flag
+		flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;	//Set the unpitched slide flag
+		tp->note[ctr]->flags = flags;
 	}
 	if(skipped)
 	{	//If at least one slide note was skipped
@@ -5878,42 +5875,40 @@ int eof_menu_note_convert_slide_to_pitched(void)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr])
-		{	//If this note is in the currently active track and is selected
-			flags = tp->note[ctr]->flags;
-			if((flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) && tp->note[ctr]->unpitchend)
-			{	//If this note has an unpitched slide and the end of unpitched slide position is defined
-				if(!((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)))
-				{	//If this note does NOT also have a pitched slide
-					unsigned char lowestfret = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Determine the lowest used fret value for the note
+		unsigned char lowestfret;
 
-					flags = tp->note[ctr]->flags;
-					if(tp->note[ctr]->unpitchend > lowestfret)
-					{	//If this slide is upward
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
-					}
-					else if(tp->note[ctr]->unpitchend < lowestfret)
-					{	//If this slide is downward
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
-					}
-					else
-					{	//Invalid slide
-						continue;	//Skip it
-					}
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;			//Set this flag to indicate that the end of slide position is defined
-					flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE);		//Clear the unpitched slide flag
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[ctr])
+			continue;	//If this note isn't selected, skip it
+		flags = tp->note[ctr]->flags;
+		if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) || !tp->note[ctr]->unpitchend)
+			continue;	//If this note doesn't have an  unpitched slide or its unpitched slide end position is not defined, skip it
+		if((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+			continue;	//If this note has a pitched slide, skip it
 
-					if(!u)
-					{	//Make a back up before changing the first note
-						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-						u = 1;
-					}
-					tp->note[ctr]->slideend = tp->note[ctr]->unpitchend;			//Transfer the unpitched end of slide position to the pitched end of slide position
-					tp->note[ctr]->unpitchend = 0;
-					tp->note[ctr]->flags = flags;
-				}
-			}
+		lowestfret = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Determine the lowest used fret value for the note
+		if(tp->note[ctr]->unpitchend > lowestfret)
+		{	//If this slide is upward
+			flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
 		}
+		else if(tp->note[ctr]->unpitchend < lowestfret)
+		{	//If this slide is downward
+			flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+		}
+		else
+		{	//Invalid slide
+			continue;	//Skip it
+		}
+		flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;			//Set this flag to indicate that the end of slide position is defined
+		flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE);		//Clear the unpitched slide flag
+
+		if(!u)
+		{	//Make a back up before changing the first note
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			u = 1;
+		}
+		tp->note[ctr]->slideend = tp->note[ctr]->unpitchend;			//Transfer the unpitched end of slide position to the pitched end of slide position
+		tp->note[ctr]->unpitchend = 0;
+		tp->note[ctr]->flags = flags;
 	}
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note
@@ -6089,29 +6084,25 @@ int eof_menu_arpeggio_unmark_logic(int handshape)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-		{	//If the note is selected and is in the active track difficulty
-			for(j = 0; j < tp->arpeggios; j++)
-			{	//For each arpeggio section in the track
-				if((eof_get_note_pos(eof_song, eof_selected_track, i) >= tp->arpeggio[j].start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= tp->arpeggio[j].end_pos) && (tp->arpeggio[j].difficulty == eof_note_type))
-				{	//If the note is encompassed within this arpeggio section, and the arpeggio section exists in the active difficulty
-					if(handshape && !(tp->arpeggio[j].flags & EOF_RS_ARP_HANDSHAPE))
-					{	//If only handshape phrases were to be removed, but this is an arpeggio phrase
-						continue;	//Skip this phrase
-					}
-					if(!handshape && (tp->arpeggio[j].flags & EOF_RS_ARP_HANDSHAPE))
-					{	//If only arpeggio phrases were to be removed, but this is a handshape phrase
-						continue;	//Skip this phrase
-					}
-					if(!undo_made)
-					{	//If an undo hasn't been made yet
-						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-						undo_made = 1;
-					}
-					eof_pro_guitar_track_delete_arpeggio(tp, j);	//Delete the arpeggio section
-					break;
-				}
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
+			continue;	//If this note isn't selected, skip it
+
+		for(j = 0; j < tp->arpeggios; j++)
+		{	//For each arpeggio section in the track
+			if((eof_get_note_pos(eof_song, eof_selected_track, i) < tp->arpeggio[j].start_pos) || (eof_get_note_pos(eof_song, eof_selected_track, i) > tp->arpeggio[j].end_pos) || (tp->arpeggio[j].difficulty != eof_note_type))
+				continue;	//If the note is not encompassed within this arpeggio section, or the arpeggio section doesn't exists in the active difficulty, skip it
+			if(handshape && !(tp->arpeggio[j].flags & EOF_RS_ARP_HANDSHAPE))
+				continue;	//If only handshape phrases were to be removed, but this is an arpeggio phrase, skip this phrase
+			if(!handshape && (tp->arpeggio[j].flags & EOF_RS_ARP_HANDSHAPE))
+				continue;	//If only arpeggio phrases were to be removed, but this is a handshape phrase, skip this phrase
+
+			if(!undo_made)
+			{	//If an undo hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				undo_made = 1;
 			}
+			eof_pro_guitar_track_delete_arpeggio(tp, j);	//Delete the arpeggio section
+			break;
 		}
 	}
 	if(note_selection_updated)
@@ -6397,27 +6388,27 @@ int eof_menu_tremolo_unmark(void)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-		{	//If the note is selected and is in the active track difficulty
-			for(j = 0; j < eof_get_num_tremolos(eof_song, eof_selected_track); j++)
-			{	//For each tremolo section in the track
-				sectionptr = eof_get_tremolo(eof_song, eof_selected_track, j);
-				if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
-				{	//If the track's difficulty limit has been removed
-					if(sectionptr->difficulty != eof_note_type)	//And the tremolo section does not apply to the active track difficulty
-						continue;
-				}
-				else
-				{
-					if(sectionptr->difficulty != 0xFF)	//Otherwise if the tremolo section does not apply to all track difficulties
-						continue;
-				}
-				if((eof_get_note_pos(eof_song, eof_selected_track, i) >= sectionptr->start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= sectionptr->end_pos))
-				{	//If the note is encompassed within this tremolo section
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					eof_track_delete_tremolo(eof_song, eof_selected_track, j);	//Delete the tremolo section
-					break;
-				}
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
+			continue;	//If this note isn't selected, skip it
+
+		for(j = 0; j < eof_get_num_tremolos(eof_song, eof_selected_track); j++)
+		{	//For each tremolo section in the track
+			sectionptr = eof_get_tremolo(eof_song, eof_selected_track, j);
+			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+			{	//If the track's difficulty limit has been removed
+				if(sectionptr->difficulty != eof_note_type)	//And the tremolo section does not apply to the active track difficulty
+					continue;
+			}
+			else
+			{
+				if(sectionptr->difficulty != 0xFF)	//Otherwise if the tremolo section does not apply to all track difficulties
+					continue;
+			}
+			if((eof_get_note_pos(eof_song, eof_selected_track, i) >= sectionptr->start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= sectionptr->end_pos))
+			{	//If the note is encompassed within this tremolo section
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				eof_track_delete_tremolo(eof_song, eof_selected_track, j);	//Delete the tremolo section
+				break;
 			}
 		}
 	}
@@ -6606,26 +6597,26 @@ int eof_menu_note_edit_name(void)
 			}
 			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 			{	//For each note in the track
-				if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-				{	//If the note is in the active instrument difficulty and is selected
-					notename = eof_get_note_name(eof_song, eof_selected_track, i);	//Get the note's name
-					if(notename)
-					{	//As long as there wasn't an error accessing the note name
-						if(auto_apply)
-						{	//If applying automatically detected names, get the name of this note
-							eof_etext[0] = '\0';	//Empty the string, so that it won't assign a name unless it is detected
-							(void) eof_build_note_name(eof_song, eof_selected_track, i, eof_etext);	//Detect the name of this chord
-						}
-						if(ustricmp(notename, eof_etext))
-						{	//If the updated string (eof_etext) is different from the note's existing name
-							if(!undo_made)
-							{
-								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-								undo_made = 1;
-							}
-							eof_set_note_name(eof_song, eof_selected_track, i, eof_etext);	//Update the note's name
-						}
+				if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
+					continue;	//If this note isn't selected, skip it
+
+				notename = eof_get_note_name(eof_song, eof_selected_track, i);	//Get the note's name
+				if(!notename)
+					continue;	//If the note's name couldn't be accessed, skip it
+
+				if(auto_apply)
+				{	//If applying automatically detected names, get the name of this note
+					eof_etext[0] = '\0';	//Empty the string, so that it won't assign a name unless it is detected
+					(void) eof_build_note_name(eof_song, eof_selected_track, i, eof_etext);	//Detect the name of this chord
+				}
+				if(ustricmp(notename, eof_etext))
+				{	//If the updated string (eof_etext) is different from the note's existing name
+					if(!undo_made)
+					{
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						undo_made = 1;
 					}
+					eof_set_note_name(eof_song, eof_selected_track, i, eof_etext);	//Update the note's name
 				}
 			}
 		}
@@ -6654,26 +6645,26 @@ int eof_pro_guitar_toggle_strum_up(void)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-		{	//If this note is in the currently active track and is selected
-			if(!undo_made)
-			{	//If an undo state hasn't been made yet
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
-				undo_made = 1;
-			}
-			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
-			{	//If the note was already set to strum up, set it to strum either
-				flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM);		//Clear the strum up flag
-			}
-			else
-			{	//Otherwise, set it to strum up
-				flags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;		//Set the strum up flag
-			}
-			flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM);	//Clear the strum down flag
-			flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM);		//Clear the strum mid flag
-			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+			continue;	//If this note isn't selected, skip it
+
+		if(!undo_made)
+		{	//If an undo state hasn't been made yet
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+			undo_made = 1;
 		}
+		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
+		{	//If the note was already set to strum up, set it to strum either
+			flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM);		//Clear the strum up flag
+		}
+		else
+		{	//Otherwise, set it to strum up
+			flags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;		//Set the strum up flag
+		}
+		flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM);	//Clear the strum down flag
+		flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM);		//Clear the strum mid flag
+		eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 	}
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note
@@ -6696,26 +6687,26 @@ int eof_pro_guitar_toggle_strum_down(void)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-		{	//If this note is in the currently active track and is selected
-			if(!undo_made)
-			{	//If an undo state hasn't been made yet
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
-				undo_made = 1;
-			}
-			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM)
-			{	//If the note was already set to strum down, set it to strum either
-				flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM);	//Clear the strum down flag
-			}
-			else
-			{	//Otherwise, set it to strum down
-				flags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;		//Set the strum down flag
-			}
-			flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM);		//Clear the strum up flag
-			flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM);		//Clear the strum mid flag
-			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+			continue;	//If the note isn't selected skip it
+
+		if(!undo_made)
+		{	//If an undo state hasn't been made yet
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+			undo_made = 1;
 		}
+		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM)
+		{	//If the note was already set to strum down, set it to strum either
+			flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM);	//Clear the strum down flag
+		}
+		else
+		{	//Otherwise, set it to strum down
+			flags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;		//Set the strum down flag
+		}
+		flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM);		//Clear the strum up flag
+		flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM);		//Clear the strum mid flag
+		eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 	}
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note

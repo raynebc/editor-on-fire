@@ -1801,7 +1801,7 @@ static long get_ogg_length(const char * fn)
 {
 	ALOGG_OGG * ogg;
 	unsigned long length = 0;
-	void * oggbuffer = NULL;
+	void * oggbuffer;
 
 	oggbuffer = eof_buffer_file(fn, 0);	//Decode the OGG from buffer instead of from file because the latter cannot support special characters in the file path due to limitations with fopen()
 	if(!oggbuffer)

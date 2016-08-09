@@ -380,6 +380,8 @@ int eof_menu_file_new_supplement(char *directory, char *filename, char check)
 	}
 	if(check & 4)
 	{	//If checking for the presence of [filename].ogg and [filename].eof
+		if(!filename)	//If a filename was not specified
+			return 0;	//Invalid parameters
 		(void) replace_filename(eof_temp_filename, directory, filename, 1024);
 		(void) replace_extension(eof_temp_filename, eof_temp_filename, "ogg", 1024);
 		if(exists(eof_temp_filename))

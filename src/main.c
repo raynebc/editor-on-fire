@@ -1090,7 +1090,7 @@ int eof_note_is_hopo(unsigned long cnote)
 	}
 	bpm = 60000000.0 / (double)eof_song->beat[beat]->ppqn;
 	scale = 120.0 / bpm;
-	if(cnote <= 0)
+	if(cnote == 0)
 		return 0;	//If the specified note isn't at least the second note in the track, it can't be a HOPO
 
 	pnote = eof_get_previous_note(cnote);
