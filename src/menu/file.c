@@ -3793,7 +3793,7 @@ DIALOG eof_gp_import_dialog[] =
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
-int eof_gp_import_drum_track(DIALOG * d, int importvoice, int function)
+int eof_gp_import_drum_track(int importvoice, int function)
 {
 	unsigned long populated = 0, populated2 = 0, bitmask, ctr, ctr2, selected;
 
@@ -3941,7 +3941,7 @@ int eof_gp_import_drum_track(DIALOG * d, int importvoice, int function)
 	return D_CLOSE;
 }
 
-int eof_gp_import_guitar_track(DIALOG * d, int importvoice)
+int eof_gp_import_guitar_track(int importvoice)
 {
 	unsigned long ctr, ctr2, selected;
 	char exists, tuning_prompted = 0, is_bass = 0;
@@ -4147,6 +4147,8 @@ int eof_gp_import_track(DIALOG * d)
 	//Parse the track to see which voices were populated, and if more than one is, prompt user which voice(s) to import
 	for(ctr = 0; ctr < eof_parsed_gp_file->track[selected]->notes; ctr++)
 	{	//For each note in the GP track
+		EOF_PRO_GUITAR_NOTE *np, *pnp;
+
 		if(eof_parsed_gp_file->track[selected]->note[ctr]->type == 0)
 		{	//This is a note in the lead voice
 			voicespresent |= 1;
@@ -4173,21 +4175,20 @@ int eof_gp_import_track(DIALOG * d)
 		}
 		if(importvoice != 3)
 			continue;	//If the user has not opted to import both voices, skip the logic below
+		if(ctr == 0)
+			continue;	//If there was not a previous note, skip the logic below
 
-		if(ctr > 0)
-		{	//If there was a previous note
-			EOF_PRO_GUITAR_NOTE *np = eof_parsed_gp_file->track[selected]->note[ctr];	//Simplify
-			EOF_PRO_GUITAR_NOTE *pnp = eof_parsed_gp_file->track[selected]->note[ctr - 1];
-			if(np->pos == pnp->pos)
-			{	//If it starts at the same time stamp, ensure both notes have the same length so that eof_track_find_crazy_notes() works as intended
-				if(np->length > pnp->length)
-				{	//This note is longer
-					pnp->length = np->length;
-				}
-				else
-				{	//The other note is longer or of equal length
-					np->length = pnp->length;
-				}
+		np = eof_parsed_gp_file->track[selected]->note[ctr];	//Simplify
+		pnp = eof_parsed_gp_file->track[selected]->note[ctr - 1];
+		if(np->pos == pnp->pos)
+		{	//If it starts at the same time stamp, ensure both notes have the same length so that eof_track_find_crazy_notes() works as intended
+			if(np->length > pnp->length)
+			{	//This note is longer
+				pnp->length = np->length;
+			}
+			else
+			{	//The other note is longer or of equal length
+				np->length = pnp->length;
 			}
 		}
 	}
@@ -4210,11 +4211,11 @@ int eof_gp_import_track(DIALOG * d)
 		{	//If the user opts to import this drum track as a drum track
 			int ret = alert3(NULL, "Import into which drum track(s)?", NULL, "&Normal", "&Phase Shift", "&Both", 'n', 'p', 'b');
 
-			return eof_gp_import_drum_track(d, importvoice, ret);
+			return eof_gp_import_drum_track(importvoice, ret);
 		}
 	}
 
-	return eof_gp_import_guitar_track(d, importvoice);	//Import into the active pro guitar track
+	return eof_gp_import_guitar_track(importvoice);	//Import into the active pro guitar track
 }
 
 char gp_import_undo_made;

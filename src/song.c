@@ -1037,6 +1037,7 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 {
 	unsigned long i;
 	unsigned char numdiffs = 5, note_type;
+	EOF_PRO_GUITAR_TRACK *tp;
 
  	eof_log("eof_detect_difficulties() entered", 2);
 
@@ -1096,26 +1097,25 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 		}
 	}
 
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-	{	//If a pro guitar track is being processed
-		EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return numdiffs;	//If this isn't a pro guitar track, skip the logic below pertaining to tech notes
 
-		if(tp->note == tp->technote)
-		{	//If tech view is in effect, the technotes counter is not yet up to date after a deletion operation
-			tp->technotes = tp->notes;	//Update it
-		}
-		else
-		{	//Otherwise if tech view is not in effect, the pgnotes counter is not yet up to date after a deletion operation
-			tp->pgnotes = tp->notes;	//Update it
-		}
-		memset(eof_track_diff_populated_tech_note_status, 0, sizeof(eof_track_diff_populated_tech_note_status));
-		for(i = 0; i < tp->technotes; i++)
-		{
-			eof_track_diff_populated_tech_note_status[tp->technote[i]->type] = 1;
-			if((tp->technote[i]->flags & EOF_NOTE_FLAG_HIGHLIGHT) || (tp->technote[i]->tflags & EOF_NOTE_TFLAG_HIGHLIGHT))
-			{	//If the tech note has highlighting
-				eof_track_diff_highlighted_tech_note_status[tp->technote[i]->type] = 1;
-			}
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+	if(tp->note == tp->technote)
+	{	//If tech view is in effect, the technotes counter is not yet up to date after a deletion operation
+		tp->technotes = tp->notes;	//Update it
+	}
+	else
+	{	//Otherwise if tech view is not in effect, the pgnotes counter is not yet up to date after a deletion operation
+		tp->pgnotes = tp->notes;	//Update it
+	}
+	memset(eof_track_diff_populated_tech_note_status, 0, sizeof(eof_track_diff_populated_tech_note_status));
+	for(i = 0; i < tp->technotes; i++)
+	{
+		eof_track_diff_populated_tech_note_status[tp->technote[i]->type] = 1;
+		if((tp->technote[i]->flags & EOF_NOTE_FLAG_HIGHLIGHT) || (tp->technote[i]->tflags & EOF_NOTE_TFLAG_HIGHLIGHT))
+		{	//If the tech note has highlighting
+			eof_track_diff_highlighted_tech_note_status[tp->technote[i]->type] = 1;
 		}
 	}
 
@@ -2628,24 +2628,25 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				count = sp->pro_guitar_track[tracknum]->tonechanges;
 				if(count >= EOF_MAX_PHRASES)
 					return 1;	//If EOF can't store another tone change, skip doing so
+				if(!name || (name[0] == '\0'))
+					return 1;	//If the tone name is NULL or empty, return immediately
 
-				if(name && (name[0] != '\0'))
-				{	//If the tone name isn't NULL or empty, add the tone change to the project
-					sp->pro_guitar_track[tracknum]->tonechange[count].start_pos = start;
-					(void) ustrcpy(sp->pro_guitar_track[tracknum]->tonechange[count].name, name);
-					for(ctr = 0; ctr < (unsigned long)strlen(sp->pro_guitar_track[tracknum]->tonechange[count].name); ctr++)
-					{	//For each character in the name
-						if(sp->pro_guitar_track[tracknum]->tonechange[count].name[ctr] == ' ')
-						{	//If it's a space character
-							sp->pro_guitar_track[tracknum]->tonechange[count].name[ctr] = '_';	//Replace it with an underscore
-						}
+				//Otherwise add the tone change to the project
+				sp->pro_guitar_track[tracknum]->tonechange[count].start_pos = start;
+				(void) ustrcpy(sp->pro_guitar_track[tracknum]->tonechange[count].name, name);
+				for(ctr = 0; ctr < (unsigned long)strlen(sp->pro_guitar_track[tracknum]->tonechange[count].name); ctr++)
+				{	//For each character in the name
+					if(sp->pro_guitar_track[tracknum]->tonechange[count].name[ctr] == ' ')
+					{	//If it's a space character
+						sp->pro_guitar_track[tracknum]->tonechange[count].name[ctr] = '_';	//Replace it with an underscore
 					}
-					if(end)
-					{	//The project format uses this field as a boolean to identify if this is the default tone for the track
-						strncpy(sp->pro_guitar_track[tracknum]->defaulttone, sp->pro_guitar_track[tracknum]->tonechange[count].name, EOF_SECTION_NAME_LENGTH);
-					}
-					sp->pro_guitar_track[tracknum]->tonechanges++;
 				}
+				if(end)
+				{	//The project format uses this field as a boolean to identify if this is the default tone for the track
+					strncpy(sp->pro_guitar_track[tracknum]->defaulttone, sp->pro_guitar_track[tracknum]->tonechange[count].name, EOF_SECTION_NAME_LENGTH);
+				}
+				sp->pro_guitar_track[tracknum]->tonechanges++;
+
 				return 1;
 			}
 		break;
@@ -5367,26 +5368,26 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 				}
 			}
 		}
-		if(!has_link_next)
-		{	//Only enforce a 1ms minimum gap between this note and the next if this note doesn't have linkNext status
-			next = i;
-			while(1)
-			{
-				next = eof_fixup_next_pro_guitar_note(tp, next);
-				if(next >= 0)
-				{	//If there's a note in this difficulty after this note
-					if(tp->note[i]->note & tp->note[next]->note)
-					{	//And it uses at least one of the same lanes as the crazy note being checked
-						if(tp->note[i]->pos + tp->note[i]->length >= tp->note[next]->pos - 1)
-						{	//If it does not end at least 1ms before the next note starts
-							tp->note[i]->length = tp->note[next]->pos - tp->note[i]->pos - 1;	//Truncate the crazy note so it does not overlap the next gem on its lane(s)
-						}
-						break;
+		if(has_link_next)
+			continue;	//If this note has linknext status, skip the logic below to enforce a minimum gap between notes
+
+		next = i;
+		while(1)
+		{
+			next = eof_fixup_next_pro_guitar_note(tp, next);
+			if(next >= 0)
+			{	//If there's a note in this difficulty after this note
+				if(tp->note[i]->note & tp->note[next]->note)
+				{	//And it uses at least one of the same lanes as the crazy note being checked
+					if(tp->note[i]->pos + tp->note[i]->length >= tp->note[next]->pos - 1)
+					{	//If it does not end at least 1ms before the next note starts
+						tp->note[i]->length = tp->note[next]->pos - tp->note[i]->pos - 1;	//Truncate the crazy note so it does not overlap the next gem on its lane(s)
 					}
-				}
-				else
 					break;
+				}
 			}
+			else
+				break;
 		}
 	}
 

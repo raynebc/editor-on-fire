@@ -1216,43 +1216,43 @@ int eof_menu_note_transpose_up(void)
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 			{	//For each note in the active track
-				if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-				{	//If the note is in the same track as the selected notes, is selected and is the same difficulty as the selected notes
-					if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-					{	//If legacy view is in effect, get the note's legacy bitmask
-						note = eof_song->pro_guitar_track[tracknum]->note[i]->legacymask;
+				if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
+					continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
+
+				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				{	//If legacy view is in effect, get the note's legacy bitmask
+					note = eof_song->pro_guitar_track[tracknum]->note[i]->legacymask;
+				}
+				else
+				{	//Otherwise get the note's normal bitmask
+					note = eof_get_note_note(eof_song, eof_selected_track, i);
+				}
+				note = (note << 1) & max;
+				if(eof_open_strum_enabled(eof_selected_track) && (note & 32))
+				{	//If open strum is enabled, and this transpose operation resulted in a bass guitar gem in lane 6
+					flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+					eof_set_note_note(eof_song, eof_selected_track, i, 32);		//Clear all lanes except lane 6
+					note = 32;													//Ensure remainder of this function's logic sees this change
+					flags &= ~(EOF_NOTE_FLAG_CRAZY);	//Clear the crazy flag, which is invalid for open strum notes
+					flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO flags, which are invalid for open strum notes
+					flags &= ~(EOF_NOTE_FLAG_NO_HOPO);
+					eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+				}
+				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				{	//If legacy view is in effect, set the note's legacy bitmask
+					eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = note;
+				}
+				else
+				{	//Otherwise set the note's normal bitmask
+					eof_set_note_note(eof_song, eof_selected_track, i, note);
+				}
+				if(!eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				{	//If a pro guitar note was tranposed, move the fret values accordingly (only if legacy view isn't in effect)
+					for(j = 7; j > 0; j--)
+					{	//For the upper 7 frets
+						eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j-1];	//Cycle fret values up from lower lane
 					}
-					else
-					{	//Otherwise get the note's normal bitmask
-						note = eof_get_note_note(eof_song, eof_selected_track, i);
-					}
-					note = (note << 1) & max;
-					if(eof_open_strum_enabled(eof_selected_track) && (note & 32))
-					{	//If open strum is enabled, and this transpose operation resulted in a bass guitar gem in lane 6
-						flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-						eof_set_note_note(eof_song, eof_selected_track, i, 32);		//Clear all lanes except lane 6
-						note = 32;													//Ensure remainder of this function's logic sees this change
-						flags &= ~(EOF_NOTE_FLAG_CRAZY);	//Clear the crazy flag, which is invalid for open strum notes
-						flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO flags, which are invalid for open strum notes
-						flags &= ~(EOF_NOTE_FLAG_NO_HOPO);
-						eof_set_note_flags(eof_song, eof_selected_track, i, flags);
-					}
-					if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-					{	//If legacy view is in effect, set the note's legacy bitmask
-						eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = note;
-					}
-					else
-					{	//Otherwise set the note's normal bitmask
-						eof_set_note_note(eof_song, eof_selected_track, i, note);
-					}
-					if(!eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-					{	//If a pro guitar note was tranposed, move the fret values accordingly (only if legacy view isn't in effect)
-						for(j = 7; j > 0; j--)
-						{	//For the upper 7 frets
-							eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j-1];	//Cycle fret values up from lower lane
-						}
-						eof_song->pro_guitar_track[tracknum]->note[i]->frets[0] = 0xFF;	//Re-initialize lane 1 to the default of (muted)
-					}
+					eof_song->pro_guitar_track[tracknum]->note[i]->frets[0] = 0xFF;	//Re-initialize lane 1 to the default of (muted)
 				}
 			}
 		}
@@ -1292,33 +1292,33 @@ int eof_menu_note_transpose_down(void)
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 			{	//For each note in the active track
-				if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-				{	//If the note is in the same track as the selected notes, is selected and is the same difficulty as the selected notes
-					if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-					{	//If legacy view is in effect, get the note's legacy bitmask
-						note = eof_song->pro_guitar_track[tracknum]->note[i]->legacymask;
+				if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
+					continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
+
+				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				{	//If legacy view is in effect, get the note's legacy bitmask
+					note = eof_song->pro_guitar_track[tracknum]->note[i]->legacymask;
+				}
+				else
+				{	//Otherwise get the note's normal bitmask
+					note = eof_get_note_note(eof_song, eof_selected_track, i);
+				}
+				note = (note >> 1) & 63;
+				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				{	//If legacy view is in effect, set the note's legacy bitmask
+					eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = note;
+				}
+				else
+				{	//Otherwise set the note's normal bitmask
+					eof_set_note_note(eof_song, eof_selected_track, i, note);
+				}
+				if(!eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				{	//If a pro guitar note was tranposed, move the fret values accordingly (only if legacy view isn't in effect)
+					for(j = 0; j < 7; j++)
+					{	//For the 7 supported lower frets
+						eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j+1];	//Cycle fret values down from upper lane
 					}
-					else
-					{	//Otherwise get the note's normal bitmask
-						note = eof_get_note_note(eof_song, eof_selected_track, i);
-					}
-					note = (note >> 1) & 63;
-					if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-					{	//If legacy view is in effect, set the note's legacy bitmask
-						eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = note;
-					}
-					else
-					{	//Otherwise set the note's normal bitmask
-						eof_set_note_note(eof_song, eof_selected_track, i, note);
-					}
-					if(!eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-					{	//If a pro guitar note was tranposed, move the fret values accordingly (only if legacy view isn't in effect)
-						for(j = 0; j < 7; j++)
-						{	//For the 7 supported lower frets
-							eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j+1];	//Cycle fret values down from upper lane
-						}
-						eof_song->pro_guitar_track[tracknum]->note[i]->frets[7] = 0xFF;	//Re-initialize lane 15 to the default of (muted)
-					}
+					eof_song->pro_guitar_track[tracknum]->note[i]->frets[7] = 0xFF;	//Re-initialize lane 15 to the default of (muted)
 				}
 			}
 		}
@@ -1409,55 +1409,55 @@ int eof_menu_note_resnap(void)
 	oldnotes = eof_get_track_size(eof_song, eof_selected_track);
 	for(i = 0; i < oldnotes; i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-		{	//If the note is selected and in the active track
-			/* snap the note itself */
-			notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
-			eof_snap_logic(&eof_tail_snap, notepos);
-			if(!user_warned)
-			{	//If the user hasn't been warned about resnapped notes overlapping and combining
-				for(x = 0; x < oldnotes; x++)
-				{	//For each note in the active track
-					if((eof_get_note_type(eof_song, eof_selected_track, x) == eof_note_type) && (eof_tail_snap.pos == eof_get_note_pos(eof_song, eof_selected_track, x)) && (x != i))
-					{	//If this note is in the active difficulty at same position as where the resnapped note will be moved (and the note isn't being compared to itself)
-						char note1ghosted = 0, note2ghosted = 0;
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
+			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
 
-						if(eof_get_note_note(eof_song, eof_selected_track, i) == eof_get_note_ghost(eof_song, eof_selected_track, i))
-						{	//If the note from the outer for loop is fully ghosted
-							note1ghosted = 1;
-						}
-						if(eof_get_note_note(eof_song, eof_selected_track, x) == eof_get_note_ghost(eof_song, eof_selected_track, x))
-						{	//If the note from the inner for loop is fully ghosted
-							note2ghosted = 1;
-						}
+		/* snap the note itself */
+		notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
+		eof_snap_logic(&eof_tail_snap, notepos);
+		if(!user_warned)
+		{	//If the user hasn't been warned about resnapped notes overlapping and combining
+			for(x = 0; x < oldnotes; x++)
+			{	//For each note in the active track
+				char note1ghosted = 0, note2ghosted = 0;
 
-						if(!note1ghosted && !note2ghosted)
-						{	//As long as neither note being merged is fully ghosted, warn the user
-							eof_seek_and_render_position(eof_selected_track, eof_note_type, notepos);
-							if(alert("Warning: One or more notes/lyrics will snap to the same position", "and will be automatically combined.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
-							{	//If user opts opts to cancel the operation
-								cancel = 1;
-							}
-							user_warned = 1;
-							break;
-						}
+				if((eof_get_note_type(eof_song, eof_selected_track, x) != eof_note_type) || (eof_tail_snap.pos != eof_get_note_pos(eof_song, eof_selected_track, x)) || (x == i))
+					continue;	//If this note is not in the active track difficulty or isn't at the same position as where the resnapped note will be moved or the note is being compared to itself, skip it
+
+				if(eof_get_note_note(eof_song, eof_selected_track, i) == eof_get_note_ghost(eof_song, eof_selected_track, i))
+				{	//If the note from the outer for loop is fully ghosted
+					note1ghosted = 1;
+				}
+				if(eof_get_note_note(eof_song, eof_selected_track, x) == eof_get_note_ghost(eof_song, eof_selected_track, x))
+				{	//If the note from the inner for loop is fully ghosted
+					note2ghosted = 1;
+				}
+
+				if(!note1ghosted && !note2ghosted)
+				{	//As long as neither note being merged is fully ghosted, warn the user
+					eof_seek_and_render_position(eof_selected_track, eof_note_type, notepos);
+					if(alert("Warning: One or more notes/lyrics will snap to the same position", "and will be automatically combined.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+					{	//If user opts opts to cancel the operation
+						cancel = 1;
 					}
+					user_warned = 1;
+					break;
 				}
 			}
-			if(cancel)
-			{	//If the user canceled
-				break;
-			}
-			eof_set_note_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
+		}
+		if(cancel)
+		{	//If the user canceled
+			break;
+		}
+		eof_set_note_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
 
-			/* snap the tail */
+		/* snap the tail */
+		eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i));
+		eof_snap_length_logic(&eof_tail_snap);
+		if(eof_get_note_length(eof_song, eof_selected_track, i) > 1)
+		{
 			eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i));
-			eof_snap_length_logic(&eof_tail_snap);
-			if(eof_get_note_length(eof_song, eof_selected_track, i) > 1)
-			{
-				eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i));
-				eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
-			}
+			eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
 		}
 	}
 	eof_track_sort_notes(eof_song, eof_selected_track);
@@ -1485,23 +1485,24 @@ int eof_menu_note_delete(void)
 			d++;
 		}
 	}
-	if(d)
-	{	//If there's at least one selected note in the active track difficulty
-		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-		for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
-		{	//For each note (in reverse order)
-			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
-			{
-				eof_track_delete_note(eof_song, eof_selected_track, i - 1);
-				eof_selection.multi[i - 1] = 0;
-			}
+	if(!d)
+		return 1;	//If there isn't at least one selected note in the active track difficulty, return immediately
+
+	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
+	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
+	{	//For each note (in reverse order)
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
+		{
+			eof_track_delete_note(eof_song, eof_selected_track, i - 1);
+			eof_selection.multi[i - 1] = 0;
 		}
-		(void) eof_menu_edit_deselect_all();	//Clear selection data
-		eof_track_fixup_notes(eof_song, eof_selected_track, 0);
-		eof_reset_lyric_preview_lines();
-		(void) eof_detect_difficulties(eof_song, eof_selected_track);
-		eof_determine_phrase_status(eof_song, eof_selected_track);
 	}
+	(void) eof_menu_edit_deselect_all();	//Clear selection data
+	eof_track_fixup_notes(eof_song, eof_selected_track, 0);
+	eof_reset_lyric_preview_lines();
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);
+	eof_determine_phrase_status(eof_song, eof_selected_track);
+
 	return 1;
 }
 
@@ -1540,35 +1541,35 @@ int eof_menu_note_toggle_green(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
 	{	//For each note in the active track, in reverse order
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
-		{
-			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-			{	//If legacy view is in effect, alter the note's legacy bitmask
-				eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 1;
-				if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
-				{	//If all gems in the note have been toggled off
-					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
-				}
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
+			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
+
+		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If legacy view is in effect, alter the note's legacy bitmask
+			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 1;
+			if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
+			{	//If all gems in the note have been toggled off
+				eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
 			}
-			else
-			{	//Otherwise alter the note's normal bitmask
-				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
-				note ^= 1;	//Toggle off lane 1
-				if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-				{	//If green drum is being toggled on/off
-					flags = eof_get_note_flags(eof_song, eof_selected_track, i - 1);
-					flags &= (~EOF_DRUM_NOTE_FLAG_DBASS);		//Clear the Expert+ status if it is set
-					eof_set_note_flags(eof_song, eof_selected_track, i - 1, flags);
-				}
-				else if(eof_selected_track == EOF_TRACK_BASS)
-				{	//When a lane 1 bass note is added, open bass must be forced clear, because they use conflicting MIDI notation
-					note &= ~(32);	//Clear the bit for lane 6 (open bass)
-				}
-				eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
-				if(!note)
-				{	//If all gems in the note have been toggled off
-					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
-				}
+		}
+		else
+		{	//Otherwise alter the note's normal bitmask
+			note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
+			note ^= 1;	//Toggle off lane 1
+			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+			{	//If green drum is being toggled on/off
+				flags = eof_get_note_flags(eof_song, eof_selected_track, i - 1);
+				flags &= (~EOF_DRUM_NOTE_FLAG_DBASS);		//Clear the Expert+ status if it is set
+				eof_set_note_flags(eof_song, eof_selected_track, i - 1, flags);
+			}
+			else if(eof_selected_track == EOF_TRACK_BASS)
+			{	//When a lane 1 bass note is added, open bass must be forced clear, because they use conflicting MIDI notation
+				note &= ~(32);	//Clear the bit for lane 6 (open bass)
+			}
+			eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+			if(!note)
+			{	//If all gems in the note have been toggled off
+				eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
 			}
 		}
 	}
@@ -1594,25 +1595,25 @@ int eof_menu_note_toggle_red(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
 	{	//For each note in the active track, in reverse order
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
-		{
-			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-			{	//If legacy view is in effect, alter the note's legacy bitmask
-				eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 2;
-				if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
-				{	//If all gems in the note have been toggled off
-					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
-				}
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
+			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
+
+		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If legacy view is in effect, alter the note's legacy bitmask
+			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 2;
+			if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
+			{	//If all gems in the note have been toggled off
+				eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
 			}
-			else
-			{	//Otherwise alter the note's normal bitmask
-				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
-				note ^= 2;	//Toggle off lane 2
-				eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
-				if(!note)
-				{	//If all gems in the note have been toggled off
-					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
-				}
+		}
+		else
+		{	//Otherwise alter the note's normal bitmask
+			note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
+			note ^= 2;	//Toggle off lane 2
+			eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+			if(!note)
+			{	//If all gems in the note have been toggled off
+				eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
 			}
 		}
 	}
@@ -1639,34 +1640,34 @@ int eof_menu_note_toggle_yellow(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
 	{	//For each note in the active track, in reverse order
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
-		{	//If this note is in the currently active track, is selected and is in the active difficulty
-			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-			{	//If legacy view is in effect, alter the note's legacy bitmask
-				eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 4;
-				if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
-				{	//If all gems in the note have been toggled off
-					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
-				}
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
+			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
+
+		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If legacy view is in effect, alter the note's legacy bitmask
+			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 4;
+			if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
+			{	//If all gems in the note have been toggled off
+				eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
 			}
-			else
-			{	//Otherwise alter the note's normal bitmask
-				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
-				note ^= 4;	//Toggle off lane 3
-				eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
-				if(!note)
-				{	//If all gems in the note have been toggled off
-					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
-				}
-				if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-				{	//If yellow drum is being toggled on/off
-					flags = eof_get_note_flags(eof_song, eof_selected_track, i - 1);
-					flags &= (~EOF_DRUM_NOTE_FLAG_Y_CYMBAL);	//Clear the Pro yellow cymbal status if it is set
-					eof_set_note_flags(eof_song, eof_selected_track, i - 1, flags);
-					if(eof_mark_drums_as_cymbal && (note & 4))
-					{	//If user specified to mark new notes as cymbals, and this note was toggled on
-						eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum], i - 1, EOF_DRUM_NOTE_FLAG_Y_CYMBAL, 1, 0);	//Set the yellow cymbal flag on all drum notes at this position
-					}
+		}
+		else
+		{	//Otherwise alter the note's normal bitmask
+			note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
+			note ^= 4;	//Toggle off lane 3
+			eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+			if(!note)
+			{	//If all gems in the note have been toggled off
+				eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
+			}
+			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+			{	//If yellow drum is being toggled on/off
+				flags = eof_get_note_flags(eof_song, eof_selected_track, i - 1);
+				flags &= (~EOF_DRUM_NOTE_FLAG_Y_CYMBAL);	//Clear the Pro yellow cymbal status if it is set
+				eof_set_note_flags(eof_song, eof_selected_track, i - 1, flags);
+				if(eof_mark_drums_as_cymbal && (note & 4))
+				{	//If user specified to mark new notes as cymbals, and this note was toggled on
+					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum], i - 1, EOF_DRUM_NOTE_FLAG_Y_CYMBAL, 1, 0);	//Set the yellow cymbal flag on all drum notes at this position
 				}
 			}
 		}
@@ -1694,34 +1695,34 @@ int eof_menu_note_toggle_blue(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
 	{	//For each note in the active track, in reverse order
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
-		{	//If this note is in the currently active track, is selected and is in the active difficulty
-			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-			{	//If legacy view is in effect, alter the note's legacy bitmask
-				eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 8;
-				if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
-				{	//If all gems in the note have been toggled off
-					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
-				}
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
+			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
+
+		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If legacy view is in effect, alter the note's legacy bitmask
+			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 8;
+			if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
+			{	//If all gems in the note have been toggled off
+				eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
 			}
-			else
-			{	//Otherwise alter the note's normal bitmask
-				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
-				note ^= 8;	//Toggle off lane 4
-				eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
-				if(!note)
-				{	//If all gems in the note have been toggled off
-					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
-				}
-				if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-				{	//If blue drum is being toggled on/off
-					flags = eof_get_note_flags(eof_song, eof_selected_track, i - 1);
-					flags &= (~EOF_DRUM_NOTE_FLAG_B_CYMBAL);	//Clear the Pro blue cymbal status if it is set
-					eof_set_note_flags(eof_song, eof_selected_track, i - 1, flags);
-					if(eof_mark_drums_as_cymbal && (note & 8))
-					{	//If user specified to mark new notes as cymbals, and this note was toggled on
-						eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum], i - 1, EOF_DRUM_NOTE_FLAG_B_CYMBAL, 1, 0);	//Set the blue cymbal flag on all drum notes at this position
-					}
+		}
+		else
+		{	//Otherwise alter the note's normal bitmask
+			note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
+			note ^= 8;	//Toggle off lane 4
+			eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+			if(!note)
+			{	//If all gems in the note have been toggled off
+				eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
+			}
+			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+			{	//If blue drum is being toggled on/off
+				flags = eof_get_note_flags(eof_song, eof_selected_track, i - 1);
+				flags &= (~EOF_DRUM_NOTE_FLAG_B_CYMBAL);	//Clear the Pro blue cymbal status if it is set
+				eof_set_note_flags(eof_song, eof_selected_track, i - 1, flags);
+				if(eof_mark_drums_as_cymbal && (note & 8))
+				{	//If user specified to mark new notes as cymbals, and this note was toggled on
+					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum], i - 1, EOF_DRUM_NOTE_FLAG_B_CYMBAL, 1, 0);	//Set the blue cymbal flag on all drum notes at this position
 				}
 			}
 		}
@@ -1749,34 +1750,34 @@ int eof_menu_note_toggle_purple(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
 	{	//For each note in the active track, in reverse order
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
-		{	//If this note is in the currently active track, is selected and is in the active difficulty
-			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-			{	//If legacy view is in effect, alter the note's legacy bitmask
-				eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 16;
-				if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
-				{	//If all gems in the note have been toggled off
-					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
-				}
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
+			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
+
+		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If legacy view is in effect, alter the note's legacy bitmask
+			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 16;
+			if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
+			{	//If all gems in the note have been toggled off
+				eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
 			}
-			else
-			{	//Otherwise alter the note's normal bitmask
-				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
-				note ^= 16;	//Toggle off lane 5
-				eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
-				if(!note)
-				{	//If all gems in the note have been toggled off
-					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
-				}
-				if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-				{	//If green drum is being toggled on/off
-					flags = eof_get_note_flags(eof_song, eof_selected_track, i - 1);
-					flags &= (~EOF_DRUM_NOTE_FLAG_G_CYMBAL);	//Clear the Pro green cymbal status if it is set
-					eof_set_note_flags(eof_song, eof_selected_track, i - 1, flags);
-					if(eof_mark_drums_as_cymbal && (note & 16))
-					{	//If user specified to mark new notes as cymbals, and this note was toggled on
-						eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum], i - 1, EOF_DRUM_NOTE_FLAG_G_CYMBAL, 1, 0);	//Set the green cymbal flag on all drum notes at this position
-					}
+		}
+		else
+		{	//Otherwise alter the note's normal bitmask
+			note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
+			note ^= 16;	//Toggle off lane 5
+			eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+			if(!note)
+			{	//If all gems in the note have been toggled off
+				eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
+			}
+			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+			{	//If green drum is being toggled on/off
+				flags = eof_get_note_flags(eof_song, eof_selected_track, i - 1);
+				flags &= (~EOF_DRUM_NOTE_FLAG_G_CYMBAL);	//Clear the Pro green cymbal status if it is set
+				eof_set_note_flags(eof_song, eof_selected_track, i - 1, flags);
+				if(eof_mark_drums_as_cymbal && (note & 16))
+				{	//If user specified to mark new notes as cymbals, and this note was toggled on
+					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum], i - 1, EOF_DRUM_NOTE_FLAG_G_CYMBAL, 1, 0);	//Set the green cymbal flag on all drum notes at this position
 				}
 			}
 		}
@@ -1807,36 +1808,36 @@ int eof_menu_note_toggle_orange(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
 	{	//For each note in the active track, in reverse order
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
+			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
+
+		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If legacy view is in effect, alter the note's legacy bitmask
+			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 32;
+			if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
+			{	//If all gems in the note have been toggled off
+				eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
+			}
+		}
+		else
 		{
-			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-			{	//If legacy view is in effect, alter the note's legacy bitmask
-				eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 32;
-				if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
-				{	//If all gems in the note have been toggled off
-					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
-				}
+			if(eof_selected_track == EOF_TRACK_BASS)
+			{	//When an open bass note is added, all other lanes must be forced clear, because they use conflicting MIDI notation
+				flags = eof_get_note_flags(eof_song, eof_selected_track, i - 1);
+				eof_set_note_note(eof_song, eof_selected_track, i - 1, 32);	//Clear all lanes except lane 6
+				flags &= ~(EOF_NOTE_FLAG_CRAZY);		//Clear the crazy flag, which is invalid for open strum notes
+				flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO flags, which are invalid for open strum notes
+				flags &= ~(EOF_NOTE_FLAG_NO_HOPO);
+				eof_set_note_flags(eof_song, eof_selected_track, i - 1, flags);
 			}
 			else
-			{
-				if(eof_selected_track == EOF_TRACK_BASS)
-				{	//When an open bass note is added, all other lanes must be forced clear, because they use conflicting MIDI notation
-					flags = eof_get_note_flags(eof_song, eof_selected_track, i - 1);
-					eof_set_note_note(eof_song, eof_selected_track, i - 1, 32);	//Clear all lanes except lane 6
-					flags &= ~(EOF_NOTE_FLAG_CRAZY);		//Clear the crazy flag, which is invalid for open strum notes
-					flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO flags, which are invalid for open strum notes
-					flags &= ~(EOF_NOTE_FLAG_NO_HOPO);
-					eof_set_note_flags(eof_song, eof_selected_track, i - 1, flags);
-				}
-				else
-				{	//Otherwise alter the note's normal bitmask
-					note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
-					note ^= 32;	//Toggle off lane 6
-					eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
-					if(!note)
-					{	//If all gems in the note have been toggled off
-						eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
-					}
+			{	//Otherwise alter the note's normal bitmask
+				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
+				note ^= 32;	//Toggle off lane 6
+				eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+				if(!note)
+				{	//If all gems in the note have been toggled off
+					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
 				}
 			}
 		}
@@ -1862,37 +1863,37 @@ int eof_menu_note_clear_green(void)
 	}
 	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
 	{	//For each note in the active track, in reverse order
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
-		{	//If the note is in the active track, is selected and is in the active difficulty
-			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-			{	//If legacy view is in effect, check the note's legacy bitmask
-				note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
-			}
-			else
-			{	//Otherwise check the note's normal bitmask
-				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
-			}
-			if(note & 1)
-			{	//If this note has a green gem
-				if(!u)
-				{	//Make a back up before changing the first note
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					u = 1;
-				}
-				note &= ~1;	//Clear the 1st lane gem
-				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-				{	//If legacy view is in effect, alter the note's legacy bitmask
-					eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
-				}
-				else
-				{	//Otherwise alter the note's normal bitmask
-					eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
-				}
-				if(!note)
-				{	//If all gems in the note have been toggled off
-					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
-				}
-			}
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
+			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
+
+		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If legacy view is in effect, check the note's legacy bitmask
+			note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
+		}
+		else
+		{	//Otherwise check the note's normal bitmask
+			note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
+		}
+		if(!(note & 1))
+			continue;	//If this note doesn't have a green gem, skip it
+
+		if(!u)
+		{	//Make a back up before changing the first note
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			u = 1;
+		}
+		note &= ~1;	//Clear the 1st lane gem
+		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If legacy view is in effect, alter the note's legacy bitmask
+			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
+		}
+		else
+		{	//Otherwise alter the note's normal bitmask
+			eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+		}
+		if(!note)
+		{	//If all gems in the note have been toggled off
+			eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
 		}
 	}
 	if(u)
@@ -1919,37 +1920,37 @@ int eof_menu_note_clear_red(void)
 	}
 	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
 	{	//For each note in the active track, in reverse order
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
-		{	//If the note is in the active track, is selected and is in the active difficulty
-			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-			{	//If legacy view is in effect, check the note's legacy bitmask
-				note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
-			}
-			else
-			{	//Otherwise check the note's normal bitmask
-				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
-			}
-			if(note & 2)
-			{	//If this note has a red gem
-				if(!u)
-				{	//Make a back up before changing the first note
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					u = 1;
-				}
-				note &= ~2;	//Clear the 2nd lane gem
-				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-				{	//If legacy view is in effect, alter the note's legacy bitmask
-					eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
-				}
-				else
-				{	//Otherwise alter the note's normal bitmask
-					eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
-				}
-				if(!note)
-				{	//If all gems in the note have been toggled off
-					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
-				}
-			}
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
+			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
+
+		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If legacy view is in effect, check the note's legacy bitmask
+			note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
+		}
+		else
+		{	//Otherwise check the note's normal bitmask
+			note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
+		}
+		if(!(note & 2))
+			continue;	//If this note doesn't have a red gem, skip it
+
+		if(!u)
+		{	//Make a back up before changing the first note
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			u = 1;
+		}
+		note &= ~2;	//Clear the 2nd lane gem
+		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If legacy view is in effect, alter the note's legacy bitmask
+			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
+		}
+		else
+		{	//Otherwise alter the note's normal bitmask
+			eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+		}
+		if(!note)
+		{	//If all gems in the note have been toggled off
+			eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
 		}
 	}
 	if(u)
@@ -1976,37 +1977,37 @@ int eof_menu_note_clear_yellow(void)
 	}
 	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
 	{	//For each note in the active track, in reverse order
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
-		{	//If the note is in the active track, is selected and is in the active difficulty
-			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-			{	//If legacy view is in effect, check the note's legacy bitmask
-				note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
-			}
-			else
-			{	//Otherwise check the note's normal bitmask
-				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
-			}
-			if(note & 4)
-			{	//If this note has a yellow gem
-				if(!u)
-				{	//Make a back up before changing the first note
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					u = 1;
-				}
-				note &= ~4;	//Clear the 3rd lane gem
-				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-				{	//If legacy view is in effect, alter the note's legacy bitmask
-					eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
-				}
-				else
-				{	//Otherwise alter the note's normal bitmask
-					eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
-				}
-				if(!note)
-				{	//If all gems in the note have been toggled off
-					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
-				}
-			}
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
+			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
+
+		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If legacy view is in effect, check the note's legacy bitmask
+			note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
+		}
+		else
+		{	//Otherwise check the note's normal bitmask
+			note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
+		}
+		if(!(note & 4))
+			continue;	//If this note doesn't have a yellow gem, skip it
+
+		if(!u)
+		{	//Make a back up before changing the first note
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			u = 1;
+		}
+		note &= ~4;	//Clear the 3rd lane gem
+		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If legacy view is in effect, alter the note's legacy bitmask
+			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
+		}
+		else
+		{	//Otherwise alter the note's normal bitmask
+			eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+		}
+		if(!note)
+		{	//If all gems in the note have been toggled off
+			eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
 		}
 	}
 	if(u)
@@ -2033,37 +2034,37 @@ int eof_menu_note_clear_blue(void)
 	}
 	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
 	{	//For each note in the active track, in reverse order
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
-		{	//If the note is in the active track, is selected and is in the active difficulty
-			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-			{	//If legacy view is in effect, check the note's legacy bitmask
-				note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
-			}
-			else
-			{	//Otherwise check the note's normal bitmask
-				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
-			}
-			if(note & 8)
-			{	//If this note has a blue gem
-				if(!u)
-				{	//Make a back up before changing the first note
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					u = 1;
-				}
-				note &= ~8;	//Clear the 4th lane gem
-				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-				{	//If legacy view is in effect, alter the note's legacy bitmask
-					eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
-				}
-				else
-				{	//Otherwise alter the note's normal bitmask
-					eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
-				}
-				if(!note)
-				{	//If all gems in the note have been toggled off
-					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
-				}
-			}
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
+			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
+
+		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If legacy view is in effect, check the note's legacy bitmask
+			note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
+		}
+		else
+		{	//Otherwise check the note's normal bitmask
+			note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
+		}
+		if(!(note & 8))
+			continue;	//If this note doesn't have a blue gem, skip it
+
+		if(!u)
+		{	//Make a back up before changing the first note
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			u = 1;
+		}
+		note &= ~8;	//Clear the 4th lane gem
+		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If legacy view is in effect, alter the note's legacy bitmask
+			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
+		}
+		else
+		{	//Otherwise alter the note's normal bitmask
+			eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+		}
+		if(!note)
+		{	//If all gems in the note have been toggled off
+			eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
 		}
 	}
 	if(u)
@@ -2090,37 +2091,37 @@ int eof_menu_note_clear_purple(void)
 	}
 	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
 	{	//For each note in the active track, in reverse order
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
-		{	//If the note is in the active track, is selected and is in the active difficulty
-			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-			{	//If legacy view is in effect, check the note's legacy bitmask
-				note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
-			}
-			else
-			{	//Otherwise check the note's normal bitmask
-				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
-			}
-			if(note & 16)
-			{	//If this note has a purple gem
-				if(!u)
-				{	//Make a back up before changing the first note
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					u = 1;
-				}
-				note &= ~16;	//Clear the 5th lane gem
-				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-				{	//If legacy view is in effect, alter the note's legacy bitmask
-					eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
-				}
-				else
-				{	//Otherwise alter the note's normal bitmask
-					eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
-				}
-				if(!note)
-				{	//If all gems in the note have been toggled off
-					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
-				}
-			}
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
+			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
+
+		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If legacy view is in effect, check the note's legacy bitmask
+			note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
+		}
+		else
+		{	//Otherwise check the note's normal bitmask
+			note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
+		}
+		if(!(note & 16))
+			continue;	//If this note doesn't have a purple gem, skip it
+
+		if(!u)
+		{	//Make a back up before changing the first note
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			u = 1;
+		}
+		note &= ~16;	//Clear the 5th lane gem
+		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If legacy view is in effect, alter the note's legacy bitmask
+			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
+		}
+		else
+		{	//Otherwise alter the note's normal bitmask
+			eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+		}
+		if(!note)
+		{	//If all gems in the note have been toggled off
+			eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
 		}
 	}
 	if(u)
@@ -2153,37 +2154,37 @@ int eof_menu_note_clear_orange(void)
 
 	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
 	{	//For each note in the active track, in reverse order
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
-		{	//If the note is in the active track, is selected and is in the active difficulty
-			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-			{	//If legacy view is in effect, check the note's legacy bitmask
-				note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
-			}
-			else
-			{	//Otherwise check the note's normal bitmask
-				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
-			}
-			if(note & 32)
-			{	//If this note has an orange gem
-				if(!u)
-				{	//Make a back up before changing the first note
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					u = 1;
-				}
-				note &= ~32;	//Clear the 6th lane gem
-				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-				{	//If legacy view is in effect, alter the note's legacy bitmask
-					eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
-				}
-				else
-				{	//Otherwise alter the note's normal bitmask
-					eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
-				}
-				if(!note)
-				{	//If all gems in the note have been toggled off
-					eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
-				}
-			}
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
+			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
+
+		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If legacy view is in effect, check the note's legacy bitmask
+			note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
+		}
+		else
+		{	//Otherwise check the note's normal bitmask
+			note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
+		}
+		if(!(note & 32))
+			continue;	//If this note does not have an orange gem, skip it
+
+		if(!u)
+		{	//Make a back up before changing the first note
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			u = 1;
+		}
+		note &= ~32;	//Clear the 6th lane gem
+		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If legacy view is in effect, alter the note's legacy bitmask
+			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
+		}
+		else
+		{	//Otherwise alter the note's normal bitmask
+			eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
+		}
+		if(!note)
+		{	//If all gems in the note have been toggled off
+			eof_menu_note_cycle_selection_back(i - 1);	//Update the note selection
 		}
 	}
 	if(u)
@@ -2353,24 +2354,23 @@ int eof_menu_note_toggle_crazy(void)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-		{	//If the note is in the active instrument difficulty and is selected
-			if(!((eof_selected_track == EOF_TRACK_BASS) && (eof_get_note_note(eof_song, eof_selected_track, i) & 32)))
-			{	//If the note is not an open bass strum note (lane 6)
-				if(!u)
-				{
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					u = 1;
-				}
-				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-				if(flags & EOF_NOTE_FLAG_CRAZY)
-				{	//If this note has crazy status
-					crazycount1++;	//Track the number of notes that this function modified
-				}
-				flags ^= EOF_NOTE_FLAG_CRAZY;
-				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
-			}
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
+			continue;	//If the note isn't selected or in the active track difficulty, skip it
+		if((eof_selected_track == EOF_TRACK_BASS) && (eof_get_note_note(eof_song, eof_selected_track, i) & 32))
+			continue;	//If the note is an open bass strum note, skip it
+
+		if(!u)
+		{
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			u = 1;
 		}
+		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+		if(flags & EOF_NOTE_FLAG_CRAZY)
+		{	//If this note has crazy status
+			crazycount1++;	//Track the number of notes that this function modified
+		}
+		flags ^= EOF_NOTE_FLAG_CRAZY;
+		eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 	}
 	//There are many circumstances where crazy status may be enforced for a note that would effectively undo this operation
 	//Run fixup function and compare the number of selected notes that still have crazy status with those that did at the beginning of the function
@@ -2540,31 +2540,30 @@ int eof_menu_note_toggle_rb3_cymbal_green_logic(int function)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-		{	//If this note is in the currently active track and is selected
-			if(eof_get_note_note(eof_song, eof_selected_track, i) & 16)
-			{	//If this drum note is purple (represents a green drum in Rock Band)
-				if(!function)
-				{	//Toggle green cymbal status
-					if(!u)
-					{	//Make a back up before changing the first note
-						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-						u = 1;
-					}
-					eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_G_CYMBAL,2,0);	//Toggle the green cymbal flag on all drum notes at this position in all difficulties
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+			continue;	//If this note isn't selected, skip it
+		if(!(eof_get_note_note(eof_song, eof_selected_track, i) & 16))
+			continue;	//If this drum note contains no purple gem (represents a green drum in Rock Band), skip it
+
+		if(!function)
+		{	//Toggle green cymbal status
+			if(!u)
+			{	//Make a back up before changing the first note
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				u = 1;
+			}
+			eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_G_CYMBAL,2,0);	//Toggle the green cymbal flag on all drum notes at this position in all difficulties
+		}
+		else
+		{	//Toggle green tom/cymbal combo status
+			if(tp->note[i]->flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL)
+			{	//If this note is already a cymbal
+				if(!u)
+				{	//Make a back up before changing the first note
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					u = 1;
 				}
-				else
-				{	//Toggle green tom/cymbal combo status
-					if(tp->note[i]->flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL)
-					{	//If this note is already a cymbal
-						if(!u)
-						{	//Make a back up before changing the first note
-							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-							u = 1;
-						}
-						tp->note[i]->flags ^= EOF_DRUM_NOTE_FLAG_G_COMBO;						//Toggle the green tom/cymbal combo flag on this note only
-					}
-				}
+				tp->note[i]->flags ^= EOF_DRUM_NOTE_FLAG_G_COMBO;						//Toggle the green tom/cymbal combo flag on this note only
 			}
 		}
 	}
@@ -2607,31 +2606,30 @@ int eof_menu_note_toggle_rb3_cymbal_yellow_logic(int function)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-		{	//If this note is in the currently active track and is selected
-			if(eof_get_note_note(eof_song, eof_selected_track, i) & 4)
-			{	//If this drum note is yellow
-				if(!function)
-				{	//Toggle yellow cymbal status
-					if(!u)
-					{	//Make a back up before changing the first note
-						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-						u = 1;
-					}
-					eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_Y_CYMBAL,2,0);	//Toggle the yellow cymbal flag on all drum notes at this position
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+			continue;	//If this note isn't selected, skip it
+		if(!(eof_get_note_note(eof_song, eof_selected_track, i) & 4))
+			continue;	//If this drum note has no yellow gem, skip it
+
+		if(!function)
+		{	//Toggle yellow cymbal status
+			if(!u)
+			{	//Make a back up before changing the first note
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				u = 1;
+			}
+			eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_Y_CYMBAL,2,0);	//Toggle the yellow cymbal flag on all drum notes at this position
+		}
+		else
+		{	//Toggle yellow tom/cymbal combo status
+			if(tp->note[i]->flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL)
+			{	//If this note is already a cymbal
+				if(!u)
+				{	//Make a back up before changing the first note
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					u = 1;
 				}
-				else
-				{	//Toggle yellow tom/cymbal combo status
-					if(tp->note[i]->flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL)
-					{	//If this note is already a cymbal
-						if(!u)
-						{	//Make a back up before changing the first note
-							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-							u = 1;
-						}
-						tp->note[i]->flags ^= EOF_DRUM_NOTE_FLAG_Y_COMBO;					//Toggle the yellow tom/cymbal combo flag on this note only
-					}
-				}
+				tp->note[i]->flags ^= EOF_DRUM_NOTE_FLAG_Y_COMBO;					//Toggle the yellow tom/cymbal combo flag on this note only
 			}
 		}
 	}
@@ -2674,31 +2672,30 @@ int eof_menu_note_toggle_rb3_cymbal_blue_logic(int function)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-		{	//If this note is in the currently active track and is selected
-			if(eof_get_note_note(eof_song, eof_selected_track, i) & 8)
-			{	//If this drum note is blue
-				if(!function)
-				{	//Toggle blue cymbal status
-					if(!u)
-					{	//Make a back up before changing the first note
-						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-						u = 1;
-					}
-					eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_B_CYMBAL,2,0);	//Toggle the blue cymbal flag on all drum notes at this position
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+			continue;	//If this note isn't selected, skip it
+		if(!(eof_get_note_note(eof_song, eof_selected_track, i) & 8))
+			continue;	//If this drum note has no blue gem, skip it
+
+		if(!function)
+		{	//Toggle blue cymbal status
+			if(!u)
+			{	//Make a back up before changing the first note
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				u = 1;
+			}
+			eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_B_CYMBAL,2,0);	//Toggle the blue cymbal flag on all drum notes at this position
+		}
+		else
+		{	//Toggle blue tom/cymbal combo status
+			if(tp->note[i]->flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL)
+			{	//If this note is already a cymbal
+				if(!u)
+				{	//Make a back up before changing the first note
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					u = 1;
 				}
-				else
-				{	//Toggle blue tom/cymbal combo status
-					if(tp->note[i]->flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL)
-					{	//If this note is already a cymbal
-						if(!u)
-						{	//Make a back up before changing the first note
-							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-							u = 1;
-						}
-						tp->note[i]->flags ^= EOF_DRUM_NOTE_FLAG_B_COMBO;					//Toggle the blue tom/cymbal combo flag on this note only
-					}
-				}
+				tp->note[i]->flags ^= EOF_DRUM_NOTE_FLAG_B_COMBO;					//Toggle the blue tom/cymbal combo flag on this note only
 			}
 		}
 	}
@@ -2738,30 +2735,30 @@ int eof_menu_note_remove_cymbal(void)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-		{	//If this note is in the currently active track and is selected
-			note = eof_get_note_note(eof_song, eof_selected_track, i);
-			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			if(	((note & 4) && (flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL)) ||
-				((note & 8) && (flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL)) ||
-				((note & 16) && (flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL)))
-			{	//If this note has a cymbal notation
-				if(!undo_made)
-				{	//Make a back up before changing the first note
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					undo_made = 1;
-				}
-				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_CYMBAL,0,0);	//Clear the yellow cymbal flag on all drum notes at this position
-				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_B_CYMBAL,0,0);	//Clear the blue cymbal flag on all drum notes at this position
-				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_G_CYMBAL,0,0);	//Clear the green cymbal flag on all drum notes at this position
-				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN,0,0);	//Clear the open hi hat cymbal flag on all drum notes at this position
-				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL,0,0);	//Clear the pedal hi hat cymbal flag on all drum notes at this position
-				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_SIZZLE,0,0);		//Clear the sizzle hi hat cymbal flag on all drum notes at this position
-				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_COMBO,0,0);		//Clear the yellow tom/cymbal combo flag on all drum notes at this position
-				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_B_COMBO,0,0);		//Clear the blue tom/cymbal combo flag on all drum notes at this position
-				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_G_COMBO,0,0);		//Clear the green tom/cymbal combo flag on all drum notes at this position
-			}
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+			continue;	//If this note isn't selected, skip it
+
+		note = eof_get_note_note(eof_song, eof_selected_track, i);
+		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+		if(	!((note & 4) && (flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL)) &&
+			!((note & 8) && (flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL)) &&
+			!((note & 16) && (flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL)))
+			continue;	//If this note doesn't have cymbal notation, skip it
+
+		if(!undo_made)
+		{	//Make a back up before changing the first note
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			undo_made = 1;
 		}
+		eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_CYMBAL,0,0);	//Clear the yellow cymbal flag on all drum notes at this position
+		eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_B_CYMBAL,0,0);	//Clear the blue cymbal flag on all drum notes at this position
+		eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_G_CYMBAL,0,0);	//Clear the green cymbal flag on all drum notes at this position
+		eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN,0,0);	//Clear the open hi hat cymbal flag on all drum notes at this position
+		eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL,0,0);	//Clear the pedal hi hat cymbal flag on all drum notes at this position
+		eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_SIZZLE,0,0);		//Clear the sizzle hi hat cymbal flag on all drum notes at this position
+		eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_COMBO,0,0);		//Clear the yellow tom/cymbal combo flag on all drum notes at this position
+		eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_B_COMBO,0,0);		//Clear the blue tom/cymbal combo flag on all drum notes at this position
+		eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_G_COMBO,0,0);		//Clear the green tom/cymbal combo flag on all drum notes at this position
 	}
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note
@@ -3246,25 +3243,25 @@ int eof_menu_hopo_auto(void)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-		{	//If the note is selected
-			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			oldflags = flags;					//Save another copy of the original flags
-			flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO on flag
-			flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Clear the HOPO off flag
-			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{	//If this is a pro guitar note, ensure that various statuses are cleared (they would be invalid if this note was a HO/PO)
-				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Clear the hammer on flag
-				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
-				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
-			}
-			if(!undo_made && (flags != oldflags))
-			{	//If an undo state hasn't been made yet
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
-				undo_made = 1;
-			}
-			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+			continue;	//If the note isn't selected, skip it
+
+		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+		oldflags = flags;					//Save another copy of the original flags
+		flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO on flag
+		flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Clear the HOPO off flag
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If this is a pro guitar note, ensure that various statuses are cleared (they would be invalid if this note was a HO/PO)
+			flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Clear the hammer on flag
+			flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
+			flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
 		}
+		if(!undo_made && (flags != oldflags))
+		{	//If an undo state hasn't been made yet
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+			undo_made = 1;
+		}
+		eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 	}
 	eof_determine_phrase_status(eof_song, eof_selected_track);
 	if(note_selection_updated)
@@ -3291,48 +3288,48 @@ int eof_menu_hopo_cycle(void)
 	{
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the active track
-			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-			{	//If the note is selected
-				if(!undo_made)
-				{	//If an undo state hasn't been made yet
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
-					undo_made = 1;
-				}
-				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-				if(flags & EOF_NOTE_FLAG_F_HOPO)
-				{	//If the note was a forced on HOPO, make it a forced off HOPO
-					flags &= ~EOF_NOTE_FLAG_F_HOPO;	//Turn off forced on hopo
-					flags |= EOF_NOTE_FLAG_NO_HOPO;	//Turn on forced off hopo
-					if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-					{	//If this is a pro guitar note, ensure that Hammer on, Pull of and Tap statuses are cleared
-						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Clear the hammer on flag
-						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
-						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
-					}
-				}
-				else if(flags & EOF_NOTE_FLAG_NO_HOPO)
-				{	//If the note was a forced off HOPO, make it an auto HOPO
-					flags &= ~EOF_NOTE_FLAG_F_HOPO;		//Clear the forced on hopo flag
-					flags &= ~EOF_NOTE_FLAG_NO_HOPO;	//Clear the forced off hopo flag
-					if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-					{	//If this is a pro guitar note, ensure that Hammer on, Pull of and Tap statuses are cleared
-						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Clear the hammer on flag
-						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
-						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
-					}
-				}
-				else
-				{	//If the note was an auto HOPO, make it a forced on HOPO
-					flags |= EOF_NOTE_FLAG_F_HOPO;	//Turn on forced on hopo
-					if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-					{	//If this is a pro guitar note
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Set the hammer on flag (default HOPO type)
-						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
-						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
-					}
-				}
-				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+			if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+				continue;	//If the note isn't selected, skip it
+
+			if(!undo_made)
+			{	//If an undo state hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+				undo_made = 1;
 			}
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			if(flags & EOF_NOTE_FLAG_F_HOPO)
+			{	//If the note was a forced on HOPO, make it a forced off HOPO
+				flags &= ~EOF_NOTE_FLAG_F_HOPO;	//Turn off forced on hopo
+				flags |= EOF_NOTE_FLAG_NO_HOPO;	//Turn on forced off hopo
+				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//If this is a pro guitar note, ensure that Hammer on, Pull of and Tap statuses are cleared
+					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Clear the hammer on flag
+					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
+					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
+				}
+			}
+			else if(flags & EOF_NOTE_FLAG_NO_HOPO)
+			{	//If the note was a forced off HOPO, make it an auto HOPO
+				flags &= ~EOF_NOTE_FLAG_F_HOPO;		//Clear the forced on hopo flag
+				flags &= ~EOF_NOTE_FLAG_NO_HOPO;	//Clear the forced off hopo flag
+				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//If this is a pro guitar note, ensure that Hammer on, Pull of and Tap statuses are cleared
+					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Clear the hammer on flag
+					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
+					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
+				}
+			}
+			else
+			{	//If the note was an auto HOPO, make it a forced on HOPO
+				flags |= EOF_NOTE_FLAG_F_HOPO;	//Turn on forced on hopo
+				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//If this is a pro guitar note
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Set the hammer on flag (default HOPO type)
+					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
+					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
+				}
+			}
+			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 		}
 		eof_determine_phrase_status(eof_song, eof_selected_track);
 	}
@@ -3357,28 +3354,27 @@ int eof_menu_hopo_force_on(void)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-		{
-			if(!((eof_selected_track == EOF_TRACK_BASS) && (eof_get_note_note(eof_song, eof_selected_track, i) & 32)))
-			{	//If the note is not an open bass strum note
-				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-				oldflags = flags;					//Save another copy of the original flags
-				flags |= EOF_NOTE_FLAG_F_HOPO;		//Set the HOPO on flag
-				flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Clear the HOPO off flag
-				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-				{	//If this is a pro guitar note
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Set the hammer on flag (default HOPO type)
-					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
-					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
-				}
-				if(!undo_made && (flags != oldflags))
-				{	//If an undo state hasn't been made yet
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
-					undo_made = 1;
-				}
-				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
-			}
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+			continue;	//If the note isn't selected, skip it
+		if((eof_selected_track == EOF_TRACK_BASS) && (eof_get_note_note(eof_song, eof_selected_track, i) & 32))
+			continue;	//If the note is an open bass strum note, skip it
+
+		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+		oldflags = flags;					//Save another copy of the original flags
+		flags |= EOF_NOTE_FLAG_F_HOPO;		//Set the HOPO on flag
+		flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Clear the HOPO off flag
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If this is a pro guitar note
+			flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Set the hammer on flag (default HOPO type)
+			flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
+			flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
 		}
+		if(!undo_made && (flags != oldflags))
+		{	//If an undo state hasn't been made yet
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+			undo_made = 1;
+		}
+		eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 	}
 	eof_determine_phrase_status(eof_song, eof_selected_track);
 	if(note_selection_updated)
@@ -3402,25 +3398,25 @@ int eof_menu_hopo_force_off(void)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-		{
-			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			oldflags = flags;					//Save another copy of the original flags
-			flags |= EOF_NOTE_FLAG_NO_HOPO;		//Set the HOPO off flag
-			flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO on flag
-			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{	//If this is a pro guitar note, ensure that Hammer on, Pull off, Tap and bend statuses are cleared
-				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Clear the hammer on flag
-				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
-				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
-			}
-			if(!undo_made && (flags != oldflags))
-			{	//If an undo state hasn't been made yet
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
-				undo_made = 1;
-			}
-			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+			continue;	//If this note isn't selected, skip it
+
+		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+		oldflags = flags;					//Save another copy of the original flags
+		flags |= EOF_NOTE_FLAG_NO_HOPO;		//Set the HOPO off flag
+		flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO on flag
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If this is a pro guitar note, ensure that Hammer on, Pull off, Tap and bend statuses are cleared
+			flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Clear the hammer on flag
+			flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
+			flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
 		}
+		if(!undo_made && (flags != oldflags))
+		{	//If an undo state hasn't been made yet
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+			undo_made = 1;
+		}
+		eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 	}
 	eof_determine_phrase_status(eof_song, eof_selected_track);
 	if(note_selection_updated)
@@ -3442,25 +3438,25 @@ int eof_menu_note_toggle_flag(unsigned char function, unsigned char track_format
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-		{	//If this note is selected and is in the active difficulty
-			if(!undo_made)
-			{	//Make a back up before changing the first note
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				undo_made = 1;
-			}
-			if(!function)
-			{	//Alter the note's normal flags
-				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-				flags ^= bitmask;	//Toggle the specified bits
-				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
-			}
-			else
-			{	//Alter the note's extended flags
-				flags = eof_get_note_eflags(eof_song, eof_selected_track, i);
-				flags ^= bitmask;	//Toggle the specified bits
-				eof_set_note_eflags(eof_song, eof_selected_track, i, flags);
-			}
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
+			continue;	//If this note isn't selected, skip it
+
+		if(!undo_made)
+		{	//Make a back up before changing the first note
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			undo_made = 1;
+		}
+		if(!function)
+		{	//Alter the note's normal flags
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			flags ^= bitmask;	//Toggle the specified bits
+			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		}
+		else
+		{	//Alter the note's extended flags
+			flags = eof_get_note_eflags(eof_song, eof_selected_track, i);
+			flags ^= bitmask;	//Toggle the specified bits
+			eof_set_note_eflags(eof_song, eof_selected_track, i, flags);
 		}
 	}
 	if(note_selection_updated)
@@ -3482,34 +3478,35 @@ int eof_menu_note_clear_flag(unsigned char function, unsigned char track_format,
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-		{	//If this note is selected and is in the active difficulty
-			if(!function)
-			{	//Alter the note's normal flags
-				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			}
-			else
-			{	//Alter the note's extended flags
-				flags = eof_get_note_eflags(eof_song, eof_selected_track, i);
-			}
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
+			continue;	//If this note isn't selected, skip it
 
-			if(flags & bitmask)
-			{	//If this note has the flag set and it needs to be cleared
-				if(!undo_made)
-				{	//Make a back up before changing the first note
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					undo_made = 1;
-				}
-				flags &= ~bitmask;	//Clear the specified bits
-				if(!function)
-				{	//Alter the note's normal flags
-					eof_set_note_flags(eof_song, eof_selected_track, i, flags);
-				}
-				else
-				{	//Alter the note's extended flags
-					eof_set_note_eflags(eof_song, eof_selected_track, i, flags);
-				}
-			}
+		if(!function)
+		{	//Alter the note's normal flags
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+		}
+		else
+		{	//Alter the note's extended flags
+			flags = eof_get_note_eflags(eof_song, eof_selected_track, i);
+		}
+
+		if(!(flags & bitmask))
+			continue;	//If this note doesn't have the flag set, skip it
+
+		//Otherwise it needs to be cleared
+		if(!undo_made)
+		{	//Make a back up before changing the first note
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			undo_made = 1;
+		}
+		flags &= ~bitmask;	//Clear the specified bits
+		if(!function)
+		{	//Alter the note's normal flags
+			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		}
+		else
+		{	//Alter the note's extended flags
+			eof_set_note_eflags(eof_song, eof_selected_track, i, flags);
 		}
 	}
 	if(note_selection_updated)
@@ -3587,28 +3584,28 @@ int eof_transpose_possible(int dir)
 			tracknum = eof_song->track[eof_selected_track]->tracknum;
 			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 			{	//For each note in the active track
-				if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-				{	//If the note is selected and in the active instrument difficulty
-					if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-					{	//If legacy view is in effect, get the note's legacy bitmask
-						note = eof_song->pro_guitar_track[tracknum]->note[i]->legacymask;
-					}
-					else
-					{	//Otherwise get the note's normal bitmask
-						note = eof_get_note_note(eof_song, eof_selected_track, i);
-					}
-					if(note == 0)
-					{	//Special case: In legacy view, a note's legacy bitmask is undefined
-						retval = 0;	//Disallow tranposing for this selection of notes
-					}
-					else if((note & 1) && (dir > 0))
-					{
-						retval = 0;
-					}
-					else if((note & max) && (dir < 0))
-					{
-						retval = 0;
-					}
+				if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
+					continue;	//If the note isn't selected or in the active track difficulty, skip it
+
+				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				{	//If legacy view is in effect, get the note's legacy bitmask
+					note = eof_song->pro_guitar_track[tracknum]->note[i]->legacymask;
+				}
+				else
+				{	//Otherwise get the note's normal bitmask
+					note = eof_get_note_note(eof_song, eof_selected_track, i);
+				}
+				if(note == 0)
+				{	//Special case: In legacy view, a note's legacy bitmask is undefined
+					retval = 0;	//Disallow tranposing for this selection of notes
+				}
+				else if((note & 1) && (dir > 0))
+				{
+					retval = 0;
+				}
+				else if((note & max) && (dir < 0))
+				{
+					retval = 0;
 				}
 			}
 		}
@@ -4295,295 +4292,295 @@ int eof_menu_note_edit_pro_guitar_note(void)
 
 			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 			{	//For each note in the track
-				if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-				{	//If the note is in the active instrument difficulty and is selected
-	//Save the updated note name  (listed from top to bottom as string 1 through string 6)
-					if(ustrcmp(eof_note_edit_name, tp->note[i]->name))
-					{	//If the name was changed
-						if(!undo_made)
-						{
-							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-							undo_made = 1;
-						}
-						memcpy(tp->note[i]->name, eof_note_edit_name, sizeof(eof_note_edit_name));
-					}
+				if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
+					continue;	//If the note isn't selected or in the active track difficulty, skip it
 
-					for(ctr = 0, allmuted = 1; ctr < 6; ctr++)
-					{	//For each of the 6 supported strings
-						if((eof_fret_strings[ctr][0] != '\0') || (eof_pro_guitar_note_dialog[35 - ctr].flags == D_SELECTED))
-						{	//If this string isn't empty, or the string's mute checkbox is set, apply the fret value
-							fretvalue = 0;
-							bitmask |= (1 << ctr);	//Set the appropriate bit for this lane
-							for(ctr2 = 0;eof_fret_strings[ctr][ctr2] != '\0';ctr2++)
-							{	//For each character in the fret string
-								if(toupper(eof_fret_strings[ctr][ctr2]) == 'X')
-								{	//If the character is an X
-									fretvalue = 0xFF;	//Consider this string muted
-									break;
-								}
-							}
-							if(!fretvalue)
-							{	//If the string didn't contain an X, convert it to an integer value
-								fretvalue = atol(eof_fret_strings[ctr]);
-								if((fretvalue < 0) || (fretvalue > 255))
-								{	//If the conversion to number failed or specifies a fret EOF cannot store as an 8 bit number
-									fretvalue = 0xFF;
-								}
-								else if(fretvalue > highfretvalue)
-								{
-									highfretvalue = fretvalue;	//Track the highest user-defined fret value
-								}
-							}
-							if((eof_pro_guitar_note_dialog[35 - ctr].flags == D_SELECTED) || (eof_pro_guitar_note_dialog[47].flags == D_SELECTED))
-							{	//If this string's muted checkbox is checked, or the string mute radio button is selected
-								if(eof_fret_strings[ctr][0] == '\0')
-								{	//If the fret string is empty
-									fretvalue = 0xFF;	//Mark it as muted with no fret specified
-								}
-								else
-								{	//Otherwise just ensure the MSB bit (muted status) is checked
-									fretvalue |= 0x80;
-								}
-							}
-							if(eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
-							{	//If tech view is in effect, ignore the user specified fret value except for the MSB (mute status)
-								fretvalue &= 0x80;
-							}
-							if(fretvalue != tp->note[i]->frets[ctr])
-							{	//If this fret value (or the string's muting) changed
-								if(!undo_made)
-								{	//If an undo state hasn't been made yet
-									eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-									undo_made = 1;
-								}
-								tp->note[i]->frets[ctr] = fretvalue;
-								if((fretvalue & 0x7F) != (tp->note[i]->frets[ctr] & 0x7F))
-								{	//If this fret value (ignoring the MSB indicating string muting) changed
-									memset(tp->note[i]->finger, 0, 8);	//Initialize all fingers to undefined
-								}
-							}
-							if((fretvalue != 0xFF) && ((fretvalue & 0x80) == 0))
-							{	//Track whether all of the used strings in this note/chord are string muted
-								allmuted = 0;
-							}
-						}
-						else
-						{	//Clear the fret value and return the fret back to its default of 0 (open)
-							bitmask &= ~(1 << ctr);	//Clear the appropriate bit for this lane
-							if(tp->note[i]->frets[ctr] != 0)
-							{	//If this fret value changed
-								if(!undo_made)
-								{	//If an undo state hasn't been made yet
-									eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-									undo_made = 1;
-								}
-								tp->note[i]->frets[ctr] = 0;
-							}
-						}
-					}//For each of the 6 supported strings
-					if(bitmask == 0)
-					{	//If edits results in selected notes having no played strings
-						(void) eof_menu_note_delete();		//All selected notes must be deleted
-						eof_show_mouse(NULL);
-						eof_cursor_visible = 1;
-						eof_pen_visible = 1;
-						return 1;					//Return from function
+				//Save the updated note name  (listed from top to bottom as string 1 through string 6)
+				if(ustrcmp(eof_note_edit_name, tp->note[i]->name))
+				{	//If the name was changed
+					if(!undo_made)
+					{
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						undo_made = 1;
 					}
-	//Save the updated note bitmask
-					if(tp->note[i]->note != bitmask)
-					{	//If the note bitmask changed
-						if(!undo_made)
-						{	//If an undo state hasn't been made yet
-							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-							undo_made = 1;
-						}
-						tp->note[i]->note = bitmask;
-					}
+					memcpy(tp->note[i]->name, eof_note_edit_name, sizeof(eof_note_edit_name));
+				}
 
-	//Save the updated legacy note bitmask
-					legacymask = 0;
-					if(eof_pro_guitar_note_dialog[17].flags == D_SELECTED)
-						legacymask |= 16;
-					if(eof_pro_guitar_note_dialog[18].flags == D_SELECTED)
-						legacymask |= 8;
-					if(eof_pro_guitar_note_dialog[19].flags == D_SELECTED)
-						legacymask |= 4;
-					if(eof_pro_guitar_note_dialog[20].flags == D_SELECTED)
-						legacymask |= 2;
-					if(eof_pro_guitar_note_dialog[21].flags == D_SELECTED)
-						legacymask |= 1;
-					if(legacymask != tp->note[i]->legacymask)
-					{	//If the legacy bitmask changed
-						if(!undo_made)
-						{	//If an undo state hasn't been made yet
+				for(ctr = 0, allmuted = 1; ctr < 6; ctr++)
+				{	//For each of the 6 supported strings
+					if((eof_fret_strings[ctr][0] != '\0') || (eof_pro_guitar_note_dialog[35 - ctr].flags == D_SELECTED))
+					{	//If this string isn't empty, or the string's mute checkbox is set, apply the fret value
+						fretvalue = 0;
+						bitmask |= (1 << ctr);	//Set the appropriate bit for this lane
+						for(ctr2 = 0;eof_fret_strings[ctr][ctr2] != '\0';ctr2++)
+						{	//For each character in the fret string
+							if(toupper(eof_fret_strings[ctr][ctr2]) == 'X')
+							{	//If the character is an X
+								fretvalue = 0xFF;	//Consider this string muted
+								break;
+							}
+						}
+						if(!fretvalue)
+						{	//If the string didn't contain an X, convert it to an integer value
+							fretvalue = atol(eof_fret_strings[ctr]);
+							if((fretvalue < 0) || (fretvalue > 255))
+							{	//If the conversion to number failed or specifies a fret EOF cannot store as an 8 bit number
+								fretvalue = 0xFF;
+							}
+							else if(fretvalue > highfretvalue)
+							{
+								highfretvalue = fretvalue;	//Track the highest user-defined fret value
+							}
+						}
+						if((eof_pro_guitar_note_dialog[35 - ctr].flags == D_SELECTED) || (eof_pro_guitar_note_dialog[47].flags == D_SELECTED))
+						{	//If this string's muted checkbox is checked, or the string mute radio button is selected
+							if(eof_fret_strings[ctr][0] == '\0')
+							{	//If the fret string is empty
+								fretvalue = 0xFF;	//Mark it as muted with no fret specified
+							}
+							else
+							{	//Otherwise just ensure the MSB bit (muted status) is checked
+								fretvalue |= 0x80;
+							}
+						}
+						if(eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
+						{	//If tech view is in effect, ignore the user specified fret value except for the MSB (mute status)
+							fretvalue &= 0x80;
+						}
+						if(fretvalue != tp->note[i]->frets[ctr])
+						{	//If this fret value (or the string's muting) changed
+							if(!undo_made)
+							{	//If an undo state hasn't been made yet
 								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-							undo_made = 1;
+								undo_made = 1;
+							}
+							tp->note[i]->frets[ctr] = fretvalue;
+							if((fretvalue & 0x7F) != (tp->note[i]->frets[ctr] & 0x7F))
+							{	//If this fret value (ignoring the MSB indicating string muting) changed
+								memset(tp->note[i]->finger, 0, 8);	//Initialize all fingers to undefined
+							}
 						}
-						tp->note[i]->legacymask = legacymask;
+						if((fretvalue != 0xFF) && ((fretvalue & 0x80) == 0))
+						{	//Track whether all of the used strings in this note/chord are string muted
+							allmuted = 0;
+						}
 					}
+					else
+					{	//Clear the fret value and return the fret back to its default of 0 (open)
+						bitmask &= ~(1 << ctr);	//Clear the appropriate bit for this lane
+						if(tp->note[i]->frets[ctr] != 0)
+						{	//If this fret value changed
+							if(!undo_made)
+							{	//If an undo state hasn't been made yet
+								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+								undo_made = 1;
+							}
+							tp->note[i]->frets[ctr] = 0;
+						}
+					}
+				}//For each of the 6 supported strings
+				if(bitmask == 0)
+				{	//If edits results in selected notes having no played strings
+					(void) eof_menu_note_delete();		//All selected notes must be deleted
+					eof_show_mouse(NULL);
+					eof_cursor_visible = 1;
+					eof_pen_visible = 1;
+					return 1;					//Return from function
+				}
+//Save the updated note bitmask
+				if(tp->note[i]->note != bitmask)
+				{	//If the note bitmask changed
+					if(!undo_made)
+					{	//If an undo state hasn't been made yet
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						undo_made = 1;
+					}
+					tp->note[i]->note = bitmask;
+				}
 
-	//Save the updated ghost bitmask
-					ghostmask = 0;
-					if(eof_pro_guitar_note_dialog[23].flags == D_SELECTED)
-						ghostmask |= 32;
-					if(eof_pro_guitar_note_dialog[24].flags == D_SELECTED)
-						ghostmask |= 16;
-					if(eof_pro_guitar_note_dialog[25].flags == D_SELECTED)
-						ghostmask |= 8;
-					if(eof_pro_guitar_note_dialog[26].flags == D_SELECTED)
-						ghostmask |= 4;
-					if(eof_pro_guitar_note_dialog[27].flags == D_SELECTED)
-						ghostmask |= 2;
-					if(eof_pro_guitar_note_dialog[28].flags == D_SELECTED)
-							ghostmask |= 1;
-					ghostmask &= bitmask;	//Clear all lanes that are specified by the note bitmask as being used
-					if(ghostmask != tp->note[i]->ghost)
-					{	//If the ghost mask changed
-						if(!undo_made)
-						{	//If an undo state hasn't been made yet
+//Save the updated legacy note bitmask
+				legacymask = 0;
+				if(eof_pro_guitar_note_dialog[17].flags == D_SELECTED)
+					legacymask |= 16;
+				if(eof_pro_guitar_note_dialog[18].flags == D_SELECTED)
+					legacymask |= 8;
+				if(eof_pro_guitar_note_dialog[19].flags == D_SELECTED)
+					legacymask |= 4;
+				if(eof_pro_guitar_note_dialog[20].flags == D_SELECTED)
+					legacymask |= 2;
+				if(eof_pro_guitar_note_dialog[21].flags == D_SELECTED)
+					legacymask |= 1;
+				if(legacymask != tp->note[i]->legacymask)
+				{	//If the legacy bitmask changed
+					if(!undo_made)
+					{	//If an undo state hasn't been made yet
 							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-							undo_made = 1;
-						}
-						tp->note[i]->ghost = ghostmask;
+						undo_made = 1;
 					}
+					tp->note[i]->legacymask = legacymask;
+				}
 
-	//Save the updated note flag bitmask
-					flags = flags & (EOF_NOTE_FLAG_HOPO | EOF_NOTE_FLAG_SP);	//Clear the flags variable, except retain the note's existing SP and HOPO flag statuses
-					eflags = 0;													//Clear the extended flags variable
-					if(eof_pro_guitar_note_dialog[40].flags == D_SELECTED)
-					{	//HO is selected
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Set the hammer on flag
-						flags |= EOF_NOTE_FLAG_F_HOPO;					//Set the legacy HOPO flag
+//Save the updated ghost bitmask
+				ghostmask = 0;
+				if(eof_pro_guitar_note_dialog[23].flags == D_SELECTED)
+					ghostmask |= 32;
+				if(eof_pro_guitar_note_dialog[24].flags == D_SELECTED)
+					ghostmask |= 16;
+				if(eof_pro_guitar_note_dialog[25].flags == D_SELECTED)
+					ghostmask |= 8;
+				if(eof_pro_guitar_note_dialog[26].flags == D_SELECTED)
+					ghostmask |= 4;
+				if(eof_pro_guitar_note_dialog[27].flags == D_SELECTED)
+					ghostmask |= 2;
+				if(eof_pro_guitar_note_dialog[28].flags == D_SELECTED)
+						ghostmask |= 1;
+				ghostmask &= bitmask;	//Clear all lanes that are specified by the note bitmask as being used
+				if(ghostmask != tp->note[i]->ghost)
+				{	//If the ghost mask changed
+					if(!undo_made)
+					{	//If an undo state hasn't been made yet
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						undo_made = 1;
 					}
-					else if(eof_pro_guitar_note_dialog[41].flags == D_SELECTED)
-					{	//PO is selected
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Set the pull off flag
-						flags |= EOF_NOTE_FLAG_F_HOPO;					//Set the legacy HOPO flag
-					}
-					else if(eof_pro_guitar_note_dialog[42].flags == D_SELECTED)
-					{	//Tap is selected
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Set the tap flag
-						flags |= EOF_NOTE_FLAG_F_HOPO;					//Set the legacy HOPO flag
-					}
-					if(eof_pro_guitar_note_dialog[44].flags == D_SELECTED)
-					{	//Slide Up is selected
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
-						if(eof_pro_guitar_note_dialog[37].flags == D_SELECTED)	//Reverse slide is selected
-							flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;
-					}
-					else if(eof_pro_guitar_note_dialog[45].flags == D_SELECTED)
-					{	//Slide Down is selected
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
-						if(eof_pro_guitar_note_dialog[37].flags == D_SELECTED)	//Reverse slide is selected
-							flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;
-					}
-					if(eof_pro_guitar_note_dialog[47].flags == D_SELECTED)
-					{	//Mute String is selected
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;
-					}
-					else if(eof_pro_guitar_note_dialog[48].flags == D_SELECTED)
-					{	//Mute Palm is selected
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
-					}
-					if(eof_pro_guitar_note_dialog[50].flags == D_SELECTED)
-					{	//Strum Up is selected
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;
-					}
-					else if(eof_pro_guitar_note_dialog[51].flags == D_SELECTED)
-					{	//Strum Mid is selected
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM;
-					}
-					else if(eof_pro_guitar_note_dialog[52].flags == D_SELECTED)
-					{	//Strum Down is selected
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;
-					}
-					if(eof_pro_guitar_note_dialog[60].flags == D_SELECTED)
-					{	//Pop is selected
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_POP;
-					}
-					else if(eof_pro_guitar_note_dialog[61].flags == D_SELECTED)
-					{	//Slap is selected
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLAP;
-					}
-					if(eof_pro_guitar_note_dialog[63].flags == D_SELECTED)
-					{	//Accent is selected
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;
-					}
-					if(eof_pro_guitar_note_dialog[64].flags == D_SELECTED)
-					{	//Pinch Harmonic is selected
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC;
-					}
-					if(eof_pro_guitar_note_dialog[65].flags == D_SELECTED)
-					{	//Vibrato is selected
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
-					}
-					if(eof_pro_guitar_note_dialog[66].flags == D_SELECTED)
-					{	//Harmonic is selected
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
-					}
-					if(eof_pro_guitar_note_dialog[67].flags == D_SELECTED)
-					{	//Bend is selected
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
-					}
-					if(eof_pro_guitar_note_dialog[68].flags == D_SELECTED)
-					{	//Linknext is selected
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;
-					}
-					if(eof_pro_guitar_note_dialog[69].flags == D_SELECTED)
-					{	//Ignore is selected
-						eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE;
-					}
-					if(eof_pro_guitar_note_dialog[70].flags == D_SELECTED)
-					{	//Sustain is selected
-						eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN;
-					}
-					if(eof_pro_guitar_note_dialog[71].flags == D_SELECTED)
-					{	//Stop is selected
-						eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_STOP;
-					}
-					if(eof_pro_guitar_note_dialog[72].flags == D_SELECTED)
-					{	//Ghost HS is selected
-						eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS;
-					}
-					if(eof_pro_guitar_note_dialog[73].flags == D_SELECTED)
-					{	//High Density is selected
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_HD;
-					}
-					if(eof_pro_guitar_note_dialog[74].flags == D_SELECTED)
-					{	//Split is selected
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;
-					}
-					if(eof_pro_guitar_note_dialog[75].flags == D_SELECTED)
-					{	//Chordify is selected
-						eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY;
-					}
+					tp->note[i]->ghost = ghostmask;
+				}
 
-					if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
-					{	//If this is a slide or bend note, retain the note's original RS notation flag so any existing bend strengths or slide positions are kept
-						flags |= (tp->note[i]->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION);
-					}
+//Save the updated note flag bitmask
+				flags = flags & (EOF_NOTE_FLAG_HOPO | EOF_NOTE_FLAG_SP);	//Clear the flags variable, except retain the note's existing SP and HOPO flag statuses
+				eflags = 0;													//Clear the extended flags variable
+				if(eof_pro_guitar_note_dialog[40].flags == D_SELECTED)
+				{	//HO is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Set the hammer on flag
+					flags |= EOF_NOTE_FLAG_F_HOPO;					//Set the legacy HOPO flag
+				}
+				else if(eof_pro_guitar_note_dialog[41].flags == D_SELECTED)
+				{	//PO is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Set the pull off flag
+					flags |= EOF_NOTE_FLAG_F_HOPO;					//Set the legacy HOPO flag
+				}
+				else if(eof_pro_guitar_note_dialog[42].flags == D_SELECTED)
+				{	//Tap is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Set the tap flag
+					flags |= EOF_NOTE_FLAG_F_HOPO;					//Set the legacy HOPO flag
+				}
+				if(eof_pro_guitar_note_dialog[44].flags == D_SELECTED)
+				{	//Slide Up is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+					if(eof_pro_guitar_note_dialog[37].flags == D_SELECTED)	//Reverse slide is selected
+						flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;
+				}
+				else if(eof_pro_guitar_note_dialog[45].flags == D_SELECTED)
+				{	//Slide Down is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+					if(eof_pro_guitar_note_dialog[37].flags == D_SELECTED)	//Reverse slide is selected
+						flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;
+				}
+				if(eof_pro_guitar_note_dialog[47].flags == D_SELECTED)
+				{	//Mute String is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;
+				}
+				else if(eof_pro_guitar_note_dialog[48].flags == D_SELECTED)
+				{	//Mute Palm is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
+				}
+				if(eof_pro_guitar_note_dialog[50].flags == D_SELECTED)
+				{	//Strum Up is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;
+				}
+				else if(eof_pro_guitar_note_dialog[51].flags == D_SELECTED)
+				{	//Strum Mid is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM;
+				}
+				else if(eof_pro_guitar_note_dialog[52].flags == D_SELECTED)
+				{	//Strum Down is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;
+				}
+				if(eof_pro_guitar_note_dialog[60].flags == D_SELECTED)
+				{	//Pop is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_POP;
+				}
+				else if(eof_pro_guitar_note_dialog[61].flags == D_SELECTED)
+				{	//Slap is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLAP;
+				}
+				if(eof_pro_guitar_note_dialog[63].flags == D_SELECTED)
+				{	//Accent is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;
+				}
+				if(eof_pro_guitar_note_dialog[64].flags == D_SELECTED)
+				{	//Pinch Harmonic is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC;
+				}
+				if(eof_pro_guitar_note_dialog[65].flags == D_SELECTED)
+				{	//Vibrato is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
+				}
+				if(eof_pro_guitar_note_dialog[66].flags == D_SELECTED)
+				{	//Harmonic is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
+				}
+				if(eof_pro_guitar_note_dialog[67].flags == D_SELECTED)
+				{	//Bend is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+				}
+				if(eof_pro_guitar_note_dialog[68].flags == D_SELECTED)
+				{	//Linknext is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;
+				}
+				if(eof_pro_guitar_note_dialog[69].flags == D_SELECTED)
+				{	//Ignore is selected
+					eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE;
+				}
+				if(eof_pro_guitar_note_dialog[70].flags == D_SELECTED)
+				{	//Sustain is selected
+					eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN;
+				}
+				if(eof_pro_guitar_note_dialog[71].flags == D_SELECTED)
+				{	//Stop is selected
+					eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_STOP;
+				}
+				if(eof_pro_guitar_note_dialog[72].flags == D_SELECTED)
+				{	//Ghost HS is selected
+					eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS;
+				}
+				if(eof_pro_guitar_note_dialog[73].flags == D_SELECTED)
+				{	//High Density is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_HD;
+				}
+				if(eof_pro_guitar_note_dialog[74].flags == D_SELECTED)
+				{	//Split is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;
+				}
+				if(eof_pro_guitar_note_dialog[75].flags == D_SELECTED)
+				{	//Chordify is selected
+					eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY;
+				}
 
-					if(!allmuted)
-					{	//If any used strings in this note/chord weren't string muted
-						flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE);	//Clear the string mute flag
+				if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+				{	//If this is a slide or bend note, retain the note's original RS notation flag so any existing bend strengths or slide positions are kept
+					flags |= (tp->note[i]->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION);
+				}
+
+				if(!allmuted)
+				{	//If any used strings in this note/chord weren't string muted
+					flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE);	//Clear the string mute flag
+				}
+				else if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
+				{	//If all strings are muted and the user didn't specify a palm mute
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;		//Set the string mute flag
+				}
+				flags |= (tp->note[i]->flags & EOF_NOTE_FLAG_CRAZY);	//Retain the note's original crazy status
+				flags |= (tp->note[i]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE);	//Retain the note's original unpitched slide status
+				if((flags != tp->note[i]->flags) || (eflags != tp->note[i]->eflags))
+				{	//If the flags changed
+					if(!undo_made)
+					{	//If an undo state hasn't been made yet
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						undo_made = 1;
 					}
-					else if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
-					{	//If all strings are muted and the user didn't specify a palm mute
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;		//Set the string mute flag
-					}
-					flags |= (tp->note[i]->flags & EOF_NOTE_FLAG_CRAZY);	//Retain the note's original crazy status
-					flags |= (tp->note[i]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE);	//Retain the note's original unpitched slide status
-					if((flags != tp->note[i]->flags) || (eflags != tp->note[i]->eflags))
-					{	//If the flags changed
-						if(!undo_made)
-						{	//If an undo state hasn't been made yet
-							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-							undo_made = 1;
-						}
-						tp->note[i]->flags = flags;
-						tp->note[i]->eflags = eflags;
-					}
-				}//If the note is in the active instrument difficulty and is selected
+					tp->note[i]->flags = flags;
+					tp->note[i]->eflags = eflags;
+				}
 			}//For each note in the track
 
 	//Prompt whether matching notes need to have their name updated
@@ -4591,26 +4588,26 @@ int eof_menu_note_edit_pro_guitar_note(void)
 			{	//If the user entered a name
 				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 				{	//For each note in the active track
-					if((eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr) == 0) && ustrcmp(eof_note_edit_name, eof_get_note_name(eof_song, eof_selected_track, ctr)))
-					{	//If this note matches the one that was edited but the name is different
-						eof_clear_input();
-						if(alert(NULL, "Update other matching notes in this track to have the same name?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-						{	//If the user opts to use the updated note name on matching notes in this track
-							for(; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
-							{	//For each note in the active track, starting from the one that just matched the comparison
-								if((eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr) == 0) && (eof_selection.current != ctr))
-								{	//If this note matches the note that was edited, and we're not comparing the note to itself, copy the edited note's name to this note
-									if(!undo_made)
-									{	//If an undo state hasn't been made yet
-										eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-										undo_made = 1;
-									}
-									(void) ustrcpy(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_note_edit_name);
+					if((eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr) != 0) || !ustrcmp(eof_note_edit_name, eof_get_note_name(eof_song, eof_selected_track, ctr)))
+						continue;	//If this note doesn't match the one that was edited, or if the name is already the same, skip it
+
+					eof_clear_input();
+					if(alert(NULL, "Update other matching notes in this track to have the same name?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+					{	//If the user opts to use the updated note name on matching notes in this track
+						for(; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+						{	//For each note in the active track, starting from the one that just matched the comparison
+							if((eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr) == 0) && (eof_selection.current != ctr))
+							{	//If this note matches the note that was edited, and we're not comparing the note to itself, copy the edited note's name to this note
+								if(!undo_made)
+								{	//If an undo state hasn't been made yet
+									eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+									undo_made = 1;
 								}
+								(void) ustrcpy(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_note_edit_name);
 							}
 						}
-						break;	//Break from loop
 					}
+					break;	//Break from loop
 				}//For each note in the active track
 			}//If the user entered a name
 
@@ -4620,59 +4617,58 @@ int eof_menu_note_edit_pro_guitar_note(void)
 				memset(declined_list, 0, sizeof(declined_list));	//Clear the declined list
 				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 				{	//For each note in the active track
-					if((ctr != eof_selection.current) && (eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr) == 0))
-					{	//If this note isn't the one that was just edited, but it matches it
-						newname = eof_get_note_name(eof_song, eof_selected_track, ctr);
-						if(newname && (newname[0] != '\0'))
-						{	//If this note has a name
-							previously_refused = 0;
-							for(ctr2 = 0; ctr2 < ctr; ctr2++)
-							{	//For each previous note that was checked
-								if(declined_list[ctr2] && !ustrcmp(newname, eof_get_note_name(eof_song, eof_selected_track, ctr2)))
-								{	//If this note name matches one the user previously rejected to assign to the edited note
-									declined_list[ctr] = 1;	//Automatically decline this instance of the same name
-									previously_refused = 1;
-									break;
+					if((ctr == eof_selection.current) || (eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr) != 0))
+						continue;	//If this note is the one that was just edited, or if it doesn't match the latter, skip it
+					newname = eof_get_note_name(eof_song, eof_selected_track, ctr);
+					if(!newname || (newname[0] == '\0'))
+						continue;	//If this note doesn't have a name, skip it
+
+					previously_refused = 0;
+					for(ctr2 = 0; ctr2 < ctr; ctr2++)
+					{	//For each previous note that was checked
+						if(declined_list[ctr2] && !ustrcmp(newname, eof_get_note_name(eof_song, eof_selected_track, ctr2)))
+						{	//If this note name matches one the user previously rejected to assign to the edited note
+							declined_list[ctr] = 1;	//Automatically decline this instance of the same name
+							previously_refused = 1;
+							break;
+						}
+					}
+					if(previously_refused)
+						continue;	//If this name is one the user already refused, skip it
+
+					if(eof_get_pro_guitar_note_fret_string(tp, eof_selection.current, pro_guitar_string))
+					{	//If the note's frets can be represented in string format, specify it in the prompt
+						(void) snprintf(autoprompt, sizeof(autoprompt) - 1, "Set the name of selected notes (%s) to \"%s\"?",pro_guitar_string, newname);
+					}
+					else
+					{	//Otherwise use a generic prompt
+						(void) snprintf(autoprompt, sizeof(autoprompt) - 1, "Set selected notes' name to \"%s\"?",newname);
+					}
+					eof_clear_input();
+					if(alert(NULL, autoprompt, NULL, "&Yes", "&No", 'y', 'n') == 1)
+					{	//If the user opts to assign this note's name to the selected notes
+						for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, eof_selected_track); ctr2++)
+						{	//For each note in the track
+							if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr2] && (eof_get_note_type(eof_song, eof_selected_track, ctr2) == eof_note_type))
+							{	//If the note is in the active instrument difficulty and is selected
+								tempptr = eof_get_note_name(eof_song, eof_selected_track, ctr2);	//Get the name of the note
+								if(tempptr && ustricmp(tempptr, newname))
+								{	//If the note's name doesn't match the one the user selected from the prompt
+									if(!undo_made)
+									{
+										eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+										undo_made = 1;
+									}
+									(void) ustrcpy(tempptr, newname);	//Update the note's name to the user selection
 								}
 							}
-							if(!previously_refused)
-							{	//If this name isn't one the user already refused
-								if(eof_get_pro_guitar_note_fret_string(tp, eof_selection.current, pro_guitar_string))
-								{	//If the note's frets can be represented in string format, specify it in the prompt
-									(void) snprintf(autoprompt, sizeof(autoprompt) - 1, "Set the name of selected notes (%s) to \"%s\"?",pro_guitar_string, newname);
-								}
-								else
-								{	//Otherwise use a generic prompt
-									(void) snprintf(autoprompt, sizeof(autoprompt) - 1, "Set selected notes' name to \"%s\"?",newname);
-								}
-								eof_clear_input();
-								if(alert(NULL, autoprompt, NULL, "&Yes", "&No", 'y', 'n') == 1)
-								{	//If the user opts to assign this note's name to the selected notes
-									for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, eof_selected_track); ctr2++)
-									{	//For each note in the track
-										if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr2] && (eof_get_note_type(eof_song, eof_selected_track, ctr2) == eof_note_type))
-										{	//If the note is in the active instrument difficulty and is selected
-											tempptr = eof_get_note_name(eof_song, eof_selected_track, ctr2);	//Get the name of the note
-											if(tempptr && ustricmp(tempptr, newname))
-											{	//If the note's name doesn't match the one the user selected from the prompt
-												if(!undo_made)
-												{
-													eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-													undo_made = 1;
-												}
-												(void) ustrcpy(tempptr, newname);	//Update the note's name to the user selection
-											}
-										}
-									}
-									break;	//Break from "For each note in the active track" loop
-								}
-								else
-								{	//Otherwise mark this note's name as refused
-									declined_list[ctr] = 1;	//Mark this note's name as having been declined
-								}
-							}//If this name isn't one the user already refused
-						}//If this note has a name
-					}//If this note isn't the one that was just edited, but it matches it
+						}
+						break;	//Break from "For each note in the active track" loop
+					}
+					else
+					{	//Otherwise mark this note's name as refused
+						declined_list[ctr] = 1;	//Mark this note's name as having been declined
+					}
 				}//For each note in the active track
 			}//The user did not enter a name
 
@@ -4681,29 +4677,28 @@ int eof_menu_note_edit_pro_guitar_note(void)
 			{	//If the user entered a legacy bitmask
 				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 				{	//For each note in the active track
-					if((ctr != eof_selection.current) && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type) && (eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr) == 0))
-					{	//If this note isn't the one that was just edited, but it matches it and is in the active track difficulty
-						if(legacymask != tp->note[ctr]->legacymask)
-						{	//If the two notes have different legacy bitmasks
-							eof_clear_input();
-							if(alert(NULL, "Update other matching notes in this track difficulty to have the same legacy bitmask?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-							{	//If the user opts to use the updated note legacy bitmask on matching notes in this track difficulty
-								for(; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
-								{	//For each note in the active track, starting from the one that just matched the comparison
-									if((ctr != eof_selection.current) && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type) && (eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr) == 0))
-									{	//If this note isn't the one that was just edited, but it matches it and is in the active track difficulty, copy the edited note's legacy bitmask to this note
-										if(!undo_made)
-										{	//If an undo state hasn't been made yet
-											eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-											undo_made = 1;
-										}
-										tp->note[ctr]->legacymask = legacymask;
-									}
+					if((ctr == eof_selection.current) || (eof_get_note_type(eof_song, eof_selected_track, ctr) != eof_note_type) || (eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr) != 0))
+						continue;	//If this note is the one that was just edited, or if it isn't in the active track difficulty, or it doesn't match the note that was just edited, skip it
+					if(legacymask == tp->note[ctr]->legacymask)
+						continue;	//If the two notes have the same legacy bitmask, skip it
+
+					eof_clear_input();
+					if(alert(NULL, "Update other matching notes in this track difficulty to have the same legacy bitmask?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+					{	//If the user opts to use the updated note legacy bitmask on matching notes in this track difficulty
+						for(; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+						{	//For each note in the active track, starting from the one that just matched the comparison
+							if((ctr != eof_selection.current) && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type) && (eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr) == 0))
+							{	//If this note isn't the one that was just edited, but it matches it and is in the active track difficulty, copy the edited note's legacy bitmask to this note
+								if(!undo_made)
+								{	//If an undo state hasn't been made yet
+									eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+									undo_made = 1;
 								}
+								tp->note[ctr]->legacymask = legacymask;
 							}
-							break;	//Break from loop
 						}
 					}
+					break;	//Break from loop
 				}//For each note in the active track
 			}//If the user entered a legacy bitmask
 
@@ -4713,66 +4708,66 @@ int eof_menu_note_edit_pro_guitar_note(void)
 				memset(declined_list, 0, sizeof(declined_list));	//Clear the declined list
 				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 				{	//For each note in the active track
-					if((ctr != eof_selection.current) && (eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr) == 0))
-					{	//If this note isn't the one that was just edited, but it matches it
-						legacymask = tp->note[ctr]->legacymask;
-						if(legacymask)
-						{	//If this note has a legacy bitmask
-							previously_refused = 0;
-							for(ctr2 = 0; ctr2 < ctr; ctr2++)
-							{	//For each previous note that was checked
-								if(declined_list[ctr2] && (legacymask == tp->note[ctr2]->legacymask))
-								{	//If this note's legacy mask matches one the user previously rejected to assign to the edited note
-									declined_list[ctr] = 1;	//Automatically decline this instance of the same legacy bitmask
-									previously_refused = 1;
-									break;
+					if((ctr == eof_selection.current) || (eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr) != 0))
+						continue;	//If this note is the one that was just edited, or it doesn't match the latter, skip it
+
+					legacymask = tp->note[ctr]->legacymask;
+					if(!legacymask)
+						continue;	//If this note doesn't have a legacy bitmask, skip it
+
+					previously_refused = 0;
+					for(ctr2 = 0; ctr2 < ctr; ctr2++)
+					{	//For each previous note that was checked
+						if(declined_list[ctr2] && (legacymask == tp->note[ctr2]->legacymask))
+						{	//If this note's legacy mask matches one the user previously rejected to assign to the edited note
+							declined_list[ctr] = 1;	//Automatically decline this instance of the same legacy bitmask
+							previously_refused = 1;
+							break;
+						}
+					}
+					if(previously_refused)
+						continue;	//If this legacy bitmask was one the user already refused, skip it
+
+					for(ctr2 = 0, bitmask = 1, index = 0; ctr2 < 5; ctr2++, bitmask<<=1)
+					{	//For each of the legacy bitmasks 5 usable bits
+						if(legacymask & bitmask)
+						{	//If this bit is set, append the fret number to the autobitmask string
+							autobitmask[index++] = '1' + ctr2;
+						}
+						autobitmask[index] = '\0';	//Ensure the string is terminated
+					}
+					if(eof_get_pro_guitar_note_fret_string(tp, eof_selection.current, pro_guitar_string))
+					{	//If the note's frets can be represented in string format, specify it in the prompt
+						(void) snprintf(autoprompt, sizeof(autoprompt) - 1, "Set the legacy bitmask of selected notes (%s) to \"%s\"?",pro_guitar_string, autobitmask);
+					}
+					else
+					{	//Otherwise use a generic prompt
+						(void) snprintf(autoprompt, sizeof(autoprompt) - 1, "Set selected notes' legacy bitmask to \"%s\"?",autobitmask);
+					}
+					eof_clear_input();
+					if(alert(NULL, autoprompt, NULL, "&Yes", "&No", 'y', 'n') == 1)
+					{	//If the user opts to assign this note's legacy bitmask to the edited note
+						for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, eof_selected_track); ctr2++)
+						{	//For each note in the track
+							if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr2] && (eof_get_note_type(eof_song, eof_selected_track, ctr2) == eof_note_type))
+							{	//If the note is in the active instrument difficulty and is selected
+								if(legacymask != tp->note[ctr2]->legacymask)
+								{	//If the note's legacy mask doesn't match the one the user selected from the prompt
+									if(!undo_made)
+									{
+										eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+										undo_made = 1;
+									}
+									tp->note[ctr2]->legacymask = legacymask;	//Update the note's legacy mask to the user selection
 								}
 							}
-							if(!previously_refused)
-							{	//If this legacy bitmask isn't one the user already refused
-								for(ctr2 = 0, bitmask = 1, index = 0; ctr2 < 5; ctr2++, bitmask<<=1)
-								{	//For each of the legacy bitmasks 5 usable bits
-									if(legacymask & bitmask)
-									{	//If this bit is set, append the fret number to the autobitmask string
-										autobitmask[index++] = '1' + ctr2;
-									}
-									autobitmask[index] = '\0';	//Ensure the string is terminated
-								}
-								if(eof_get_pro_guitar_note_fret_string(tp, eof_selection.current, pro_guitar_string))
-								{	//If the note's frets can be represented in string format, specify it in the prompt
-									(void) snprintf(autoprompt, sizeof(autoprompt) - 1, "Set the legacy bitmask of selected notes (%s) to \"%s\"?",pro_guitar_string, autobitmask);
-								}
-								else
-								{	//Otherwise use a generic prompt
-									(void) snprintf(autoprompt, sizeof(autoprompt) - 1, "Set selected notes' legacy bitmask to \"%s\"?",autobitmask);
-								}
-								eof_clear_input();
-								if(alert(NULL, autoprompt, NULL, "&Yes", "&No", 'y', 'n') == 1)
-								{	//If the user opts to assign this note's legacy bitmask to the edited note
-									for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, eof_selected_track); ctr2++)
-									{	//For each note in the track
-										if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr2] && (eof_get_note_type(eof_song, eof_selected_track, ctr2) == eof_note_type))
-										{	//If the note is in the active instrument difficulty and is selected
-											if(legacymask != tp->note[ctr2]->legacymask)
-											{	//If the note's legacy mask doesn't match the one the user selected from the prompt
-												if(!undo_made)
-												{
-													eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-													undo_made = 1;
-												}
-												tp->note[ctr2]->legacymask = legacymask;	//Update the note's legacy mask to the user selection
-											}
-										}
-									}
-									break;	//Break from "For each note in the active track" loop
-								}
-								else
-								{	//Otherwise mark this note's name as refused
-									declined_list[ctr] = 1;	//Mark this note's name as having been declined
-								}
-							}
-						}//If this note has a legacy bitmask
-					}//If this note isn't the one that was just edited, but it matches it
+						}
+						break;	//Break from "For each note in the active track" loop
+					}
+					else
+					{	//Otherwise mark this note's name as refused
+						declined_list[ctr] = 1;	//Mark this note's name as having been declined
+					}
 				}//For each note in the active track
 			}//The user did not enter a legacy bitmask
 			if(retval == 56)
@@ -5083,7 +5078,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 				for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 				{	//For each note in the track
 					if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
-						continue;	//If the note isn't selected, skip it
+						continue;	//If the note isn't selected or in the active track difficulty, skip it
 
 					for(ctr = 0, allmuted = 1; ctr < 6; ctr++)
 					{	//For each of the 6 supported strings
@@ -8207,64 +8202,64 @@ int eof_pro_guitar_note_slide_end_fret(char undo)
 
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track) && !error; i++)
 		{	//For each note in the active track, unless an error was encountered above
+			unsigned char lowestfret;
+
 			if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
 				continue;	//If the note isn't selected, skip it
-
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			if((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
-			{	//If this note is a slide
-				unsigned char lowestfret = eof_pro_guitar_note_lowest_fret(eof_song->pro_guitar_track[tracknum], i);	//Determine the lowest used fret value
+			if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+				continue;	//If this note isn't a slide, skip it
 
-				if(lowestfret && newend)
-				{	//If a fret value was used, and an ending fret was defined, validate the slide ending fret
-					if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-					{	//If this note is an upward slide, the ending fret must be higher than the note's lowest fret
-						if(newend <= lowestfret)
-						{
-							eof_cursor_visible = 1;
-							eof_pen_visible = 1;
-							eof_show_mouse(NULL);
-							allegro_message("Error:  The fret number specified must be higher than the lowest fret on upward slide notes");
-							break;	//Stop processing selected notes
-						}
-					}
-					else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
-					{	//If this note is a downward slide, the ending fret must be lower than the note's lowest fret
-						if(newend >= lowestfret)
-						{
-							eof_cursor_visible = 1;
-							eof_pen_visible = 1;
-							eof_show_mouse(NULL);
-							allegro_message("Error:  The fret number specified must be lower than the lowest fret on downward slide notes");
-							break;	//Stop processing selected notes
-						}
+			lowestfret = eof_pro_guitar_note_lowest_fret(eof_song->pro_guitar_track[tracknum], i);	//Determine the lowest used fret value
+			if(lowestfret && newend)
+			{	//If a fret value was used, and an ending fret was defined, validate the slide ending fret
+				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+				{	//If this note is an upward slide, the ending fret must be higher than the note's lowest fret
+					if(newend <= lowestfret)
+					{
+						eof_cursor_visible = 1;
+						eof_pen_visible = 1;
+						eof_show_mouse(NULL);
+						allegro_message("Error:  The fret number specified must be higher than the lowest fret on upward slide notes");
+						break;	//Stop processing selected notes
 					}
 				}
-				if(!eof_song->pro_guitar_track[tracknum]->note[i]->slideend || (newend != eof_song->pro_guitar_track[tracknum]->note[i]->slideend))
-				{	//If the slide end position wasn't already defined, or the specified end position is different than what the note already had
-					if(undo && !undo_made)
-					{	//Make a back up before changing the first note (but only if the calling function specified to create an undo state)
-						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-						undo_made = 1;
-					}
-					eof_song->pro_guitar_track[tracknum]->note[i]->slideend = newend;
-					if(newend)
-					{	//If the ending fret is nonzero, it is now defined
-						eof_song->pro_guitar_track[tracknum]->note[i]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Set this flag to indicate that the slide's ending fret is defined
-					}
-					else
-					{	//Otherwise it is now undefined
-						if(!((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength))
-						{	//If this is NOT also a bend note with a defined bend strength
-							eof_song->pro_guitar_track[tracknum]->note[i]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag to indicate that the slide's ending fret is undefined and the note also has no bend strength
-						}
+				else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+				{	//If this note is a downward slide, the ending fret must be lower than the note's lowest fret
+					if(newend >= lowestfret)
+					{
+						eof_cursor_visible = 1;
+						eof_pen_visible = 1;
+						eof_show_mouse(NULL);
+						allegro_message("Error:  The fret number specified must be lower than the lowest fret on downward slide notes");
+						break;	//Stop processing selected notes
 					}
 				}
-				else if(newend)
-				{	//Or as long as a valid end of slide position was otherwise provided
-					allegro_message("Error:  The fret number specified must be different from the selected note's lowest used fret");
+			}
+			if(!eof_song->pro_guitar_track[tracknum]->note[i]->slideend || (newend != eof_song->pro_guitar_track[tracknum]->note[i]->slideend))
+			{	//If the slide end position wasn't already defined, or the specified end position is different than what the note already had
+				if(undo && !undo_made)
+				{	//Make a back up before changing the first note (but only if the calling function specified to create an undo state)
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
 				}
-			}//If this note is a slide
+				eof_song->pro_guitar_track[tracknum]->note[i]->slideend = newend;
+				if(newend)
+				{	//If the ending fret is nonzero, it is now defined
+					eof_song->pro_guitar_track[tracknum]->note[i]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Set this flag to indicate that the slide's ending fret is defined
+				}
+				else
+				{	//Otherwise it is now undefined
+					if(!((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength))
+					{	//If this is NOT also a bend note with a defined bend strength
+						eof_song->pro_guitar_track[tracknum]->note[i]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag to indicate that the slide's ending fret is undefined and the note also has no bend strength
+					}
+				}
+			}
+			else if(newend)
+			{	//Or as long as a valid end of slide position was otherwise provided
+				allegro_message("Error:  The fret number specified must be different from the selected note's lowest used fret");
+			}
 		}//For each note in the active track
 	}//User clicked OK
 
@@ -8532,30 +8527,30 @@ int eof_pro_guitar_note_bend_strength(char undo)
 				continue;	//If the note isn't selected, skip it
 
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
-			{	//If this note is a bend
-				if((newstrength != eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength) ||
-				   ((tp->note == tp->technote) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)))
-				{	//If the bend strength is different than what the note already has, or if this is a tech note that didn't already have a bend strength defined (necessary check to allow a value of 0 to set the RS notation flag)
-					if(undo && !undo_made)
-					{	//Make a back up before changing the first note (but only if the calling function specified to create an undo state)
-						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-						undo_made = 1;
-					}
-					eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength = newstrength;
-					if(newstrength || (tp->note == tp->technote))
-					{	//If the bend strength is nonzero, or it is zero and tech view is in effect, the bend strength is now defined
-						eof_song->pro_guitar_track[tracknum]->note[i]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Set this flag to indicate that the bend's strength is defined
-					}
-					else
-					{	//Otherwise it is now undefined
-						if(!(((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)) && eof_song->pro_guitar_track[tracknum]->note[i]->slideend))
-						{	//If this is NOT also a slide note with a defined end of slide position
-							eof_song->pro_guitar_track[tracknum]->note[i]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag to indicate that the bend's strength is undefined and the note also has no end of slide position
-						}
-					}
+			if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
+				continue;	//If this note isn't a bend, skip it
+
+			if((newstrength == eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength) &&
+			   ((tp->note != tp->technote) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)))
+			   continue;	//If the bend strength isn't different than what it already had, and this isn't a tech note or is a tech note that didn't have a bend strength defined (necessary check to allow a value of 0 to set the RS notation flag), skip it
+
+			if(undo && !undo_made)
+			{	//Make a back up before changing the first note (but only if the calling function specified to create an undo state)
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				undo_made = 1;
+			}
+			eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength = newstrength;
+			if(newstrength || (tp->note == tp->technote))
+			{	//If the bend strength is nonzero, or it is zero and tech view is in effect, the bend strength is now defined
+				eof_song->pro_guitar_track[tracknum]->note[i]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Set this flag to indicate that the bend's strength is defined
+			}
+			else
+			{	//Otherwise it is now undefined
+				if(!(((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)) && eof_song->pro_guitar_track[tracknum]->note[i]->slideend))
+				{	//If this is NOT also a slide note with a defined end of slide position
+					eof_song->pro_guitar_track[tracknum]->note[i]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag to indicate that the bend's strength is undefined and the note also has no end of slide position
 				}
-			}//If this note is a bend
+			}
 		}//For each note in the active track
 	}//User clicked OK
 
@@ -8844,22 +8839,22 @@ int eof_rocksmith_convert_mute_to_palm_mute_single_note(void)
 				tp->note[i]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;	//Clear the string mute status
 				tp->note[i]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;		//Set the palm mute status
 			}
-			if(tp->note[i]->flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
-			{	//If the note was already a palm mute or was just marked as one
-				if(first_string)
-				{	//If this isn't the first string in the note that had a gem
-					if(!undo_made)
-					{	//If an undo state hasn't been made yet
-						eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
-						undo_made = 1;
-					}
-					tp->note[i]->note &= ~bitmask;	//Erase the gem
-					tp->note[i]->ghost &= ~bitmask;	//Erase the ghost flag for this gem
-					tp->note[i]->frets[ctr] = 0;	//Clear the fret number for this string
-					tp->note[i]->finger[ctr] = 0;	//Clear the fingering for this string
+			if(!(tp->note[i]->flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
+				continue;	//If the note wasn't already a palm mute or marked as one, skip it
+
+			if(first_string)
+			{	//If this isn't the first string in the note that had a gem
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+					undo_made = 1;
 				}
-				first_string = 1;
+				tp->note[i]->note &= ~bitmask;	//Erase the gem
+				tp->note[i]->ghost &= ~bitmask;	//Erase the ghost flag for this gem
+				tp->note[i]->frets[ctr] = 0;	//Clear the fret number for this string
+				tp->note[i]->finger[ctr] = 0;	//Clear the fingering for this string
 			}
+			first_string = 1;
 		}
 	}
 	if(note_selection_updated)

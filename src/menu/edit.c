@@ -1174,24 +1174,24 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 				notelength = eof_put_porpos(temp_note.endbeat - first_beat[j] + this_tech_beat[j], temp_note.porendpos, 0.0) - notepos;
 				new_note = eof_track_add_create_note(eof_song, j, temp_note.note, notepos, notelength, temp_note.type, temp_note.name);
 
-				if(new_note)
-				{	//If the note was successfully created
-					notenum = eof_get_track_size(eof_song, j) - 1;	//Get the index of the note that was just created
-					eof_set_note_flags(eof_song, j, notenum, temp_note.flags);	//Set the last created note's flags
+				if(!new_note)
+					continue;	//If the note was not successfully created, skip the logic below
 
-					if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-					{	//If this is a pro guitar track
-						EOF_PRO_GUITAR_NOTE *np = eof_song->pro_guitar_track[eof_song->track[j]->tracknum]->note[notenum];	//Simplify
+				notenum = eof_get_track_size(eof_song, j) - 1;	//Get the index of the note that was just created
+				eof_set_note_flags(eof_song, j, notenum, temp_note.flags);	//Set the last created note's flags
 
-						np->legacymask = temp_note.legacymask;							//Copy the legacy bitmask to the last created pro guitar note
-						memcpy(np->frets, temp_note.frets, sizeof(temp_note.frets));	//Copy the fret array to the last created pro guitar note
-						memcpy(np->finger, temp_note.finger, sizeof(temp_note.finger));	//Copy the finger array to the last created pro guitar note
-						np->ghost = temp_note.ghost;									//Copy the ghost bitmask to the last created pro guitar note
-						np->bendstrength = temp_note.bendstrength;						//Copy the bend height to the last created pro guitar note
-						np->slideend = temp_note.slideend;								//Copy the slide end position to the last created pro guitar note
-						np->unpitchend = temp_note.unpitchend;							//Copy the slide end position to the last created pro guitar note
-						np->eflags = temp_note.eflags;									//Copy the extended track flags
-					}
+				if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//If this is a pro guitar track
+					EOF_PRO_GUITAR_NOTE *np = eof_song->pro_guitar_track[eof_song->track[j]->tracknum]->note[notenum];	//Simplify
+
+					np->legacymask = temp_note.legacymask;							//Copy the legacy bitmask to the last created pro guitar note
+					memcpy(np->frets, temp_note.frets, sizeof(temp_note.frets));	//Copy the fret array to the last created pro guitar note
+					memcpy(np->finger, temp_note.finger, sizeof(temp_note.finger));	//Copy the finger array to the last created pro guitar note
+					np->ghost = temp_note.ghost;									//Copy the ghost bitmask to the last created pro guitar note
+					np->bendstrength = temp_note.bendstrength;						//Copy the bend height to the last created pro guitar note
+					np->slideend = temp_note.slideend;								//Copy the slide end position to the last created pro guitar note
+					np->unpitchend = temp_note.unpitchend;							//Copy the slide end position to the last created pro guitar note
+					np->eflags = temp_note.eflags;									//Copy the extended track flags
 				}
 			}
 			eof_track_sort_notes(eof_song, j);
@@ -1312,7 +1312,7 @@ int eof_menu_edit_copy(void)
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type) || (eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
-			continue;	//If the note isn't selected, skip it
+			continue;	//If the note isn't selected or in the active track difficulty, skip it
 
 		/* check for accidentally moved note */
 		if(!note_check)
@@ -1580,26 +1580,26 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			np->legacymask = legacymask;
 		}
 
-		//Paste arpeggio/handshape phrasing if copying from a pro guitar track
-		if(eof_song->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-		{
-			if(temp_note.arpeggnum != lastarpeggnum)
-			{	//If this pasted note's source arpeggio is different from that of the previous pasted note
-				if(lastarpeggnum != 0xFFFFFFFF)
-				{	//If the previous pasted note's source note was in an arpeggio/handshape
-					if(lastarpeggnum < eof_song->pro_guitar_track[srctracknum]->arpeggios)
-					{	//Bounds check
-						(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, arpeggstart, arpeggend, eof_song->pro_guitar_track[srctracknum]->arpeggio[lastarpeggnum].flags, NULL);
-					}
+		if(eof_song->track[sourcetrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			continue;	//If this isn't a pro guitar track, skip the logic below
+
+		//Otherwise paste arpeggio/handshape phrasing
+		if(temp_note.arpeggnum != lastarpeggnum)
+		{	//If this pasted note's source arpeggio is different from that of the previous pasted note
+			if(lastarpeggnum != 0xFFFFFFFF)
+			{	//If the previous pasted note's source note was in an arpeggio/handshape
+				if(lastarpeggnum < eof_song->pro_guitar_track[srctracknum]->arpeggios)
+				{	//Bounds check
+					(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, arpeggstart, arpeggend, eof_song->pro_guitar_track[srctracknum]->arpeggio[lastarpeggnum].flags, NULL);
 				}
-				arpeggstart = np->pos;	//Track start of new arpeggio
 			}
-			if(temp_note.arpeggnum != 0xFFFFFFFF)
-			{	//If this pasted note's source note is in an arpeggio/handshape
-				arpeggend = np->pos + np->length;	//Track end position of arpeggio
-			}
-			lastarpeggnum = temp_note.arpeggnum;
+			arpeggstart = np->pos;	//Track start of new arpeggio
 		}
+		if(temp_note.arpeggnum != 0xFFFFFFFF)
+		{	//If this pasted note's source note is in an arpeggio/handshape
+			arpeggend = np->pos + np->length;	//Track end position of arpeggio
+		}
+		lastarpeggnum = temp_note.arpeggnum;
 	}//For each note in the clipboard file
 	if((eof_song->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 	{	//If copying from a pro guitar track and pasting into a pro guitar track
@@ -2334,8 +2334,8 @@ int eof_menu_edit_select_like_function(char thorough)
 	//Make a list of all the unique selected notes
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if(!eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
-			continue;	//If the note isn't selected, skip it
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
+			continue;	//If the note isn't selected or in the active track difficulty, skip it
 
 		for(j = 0; j < ntypes; j++)
 		{	//For each unique note number in the ntype array
@@ -2446,38 +2446,37 @@ int eof_menu_edit_select_by_note_length_logic(int (*check)(long, long), int func
 
 	if(eof_popup_dialog(eof_menu_edit_select_by_note_length_dialog, 2) != 3)
 		return 1;	//If the user did not click OK, return immediately
+	if(eof_etext2[0] == '\0')
+		return 1;	//If the user did not enter a threshold, return immediately
 
-	if(eof_etext2[0] != '\0')
-	{	//If the user entered a threshold
-		threshold = atol(eof_etext2);
-		if(threshold > 0)
-		{	//If the specified value is valid
-			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-			{	//For each note in the active track
-				if((eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type) || !(check(eof_get_note_length(eof_song, eof_selected_track, i), threshold)))
-					continue;	//If the note isn't in the active difficulty or doesn't match the conditions the user specified, skip it
+	threshold = atol(eof_etext2);
+	if(threshold <= 0)
+		return 1;	//If the specified value is not valid, return immediately
 
-				if(!function)
-				{	//Perform deselection
-					eof_selection.multi[i] = 0;
-				}
-				else
-				{	//Perform selection
-					if(eof_selection.track != eof_selected_track)
-					{	//If no notes in the current track are currently selected
-						(void) eof_menu_edit_deselect_all();		//Clear the selection variables if necessary
-						eof_selection.track = eof_selected_track;
-					}
-					eof_selection.multi[i] = 1;
-				}
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type) || !(check(eof_get_note_length(eof_song, eof_selected_track, i), threshold)))
+			continue;	//If the note isn't in the active difficulty or doesn't match the conditions the user specified, skip it
+
+		if(!function)
+		{	//Perform deselection
+			eof_selection.multi[i] = 0;
+		}
+		else
+		{	//Perform selection
+			if(eof_selection.track != eof_selected_track)
+			{	//If no notes in the current track are currently selected
+				(void) eof_menu_edit_deselect_all();		//Clear the selection variables if necessary
+				eof_selection.track = eof_selected_track;
 			}
-			if(eof_selection.current != EOF_MAX_NOTES - 1)
-			{	//If there was a last selected note
-				if(eof_selection.multi[eof_selection.current] == 0)
-				{	//And it's not selected anymore
-					eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note
-				}
-			}
+			eof_selection.multi[i] = 1;
+		}
+	}
+	if(eof_selection.current != EOF_MAX_NOTES - 1)
+	{	//If there was a last selected note
+		if(eof_selection.multi[eof_selection.current] == 0)
+		{	//And it's not selected anymore
+			eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note
 		}
 	}
 
@@ -3224,22 +3223,22 @@ int eof_menu_edit_paste_from_catalog(void)
 
 	for(i = 0; i < eof_get_track_size(eof_song, sourcetrack); i++)
 	{	//For each note in the active catalog entry's track
-		if((eof_get_note_type(eof_song, sourcetrack, i) == entry->type) && (eof_get_note_pos(eof_song, sourcetrack, i) >= entry->start_pos) && (eof_get_note_pos(eof_song, sourcetrack, i) + eof_get_note_length(eof_song, sourcetrack, i) <= entry->end_pos))
-		{
-			note_count++;
-			currentfret = eof_get_highest_fret_value(eof_song, sourcetrack, i);	//Get the highest used fret value in this note if applicable
-			if(currentfret > highestfret)
-			{	//Track the highest used fret value
-				highestfret = currentfret;
-			}
-			for(j = 1, bitmask = 1; j < 9; j++, bitmask<<=1)
-			{	//For each of the 8 bits in the bitmask
-				if(bitmask & eof_get_note_note(eof_song, sourcetrack, i))
-				{	//If this bit is in use
-					if(j > highestlane)
-					{	//If this lane is higher than the previously tracked highest lane
-						highestlane = j;
-					}
+		if((eof_get_note_type(eof_song, sourcetrack, i) != entry->type) || (eof_get_note_pos(eof_song, sourcetrack, i) < entry->start_pos) || (eof_get_note_pos(eof_song, sourcetrack, i) + eof_get_note_length(eof_song, sourcetrack, i) > entry->end_pos))
+			continue;	//If the note isn't in the scope of the current catalog entry, skip it
+
+		note_count++;
+		currentfret = eof_get_highest_fret_value(eof_song, sourcetrack, i);	//Get the highest used fret value in this note if applicable
+		if(currentfret > highestfret)
+		{	//Track the highest used fret value
+			highestfret = currentfret;
+		}
+		for(j = 1, bitmask = 1; j < 9; j++, bitmask<<=1)
+		{	//For each of the 8 bits in the bitmask
+			if(bitmask & eof_get_note_note(eof_song, sourcetrack, i))
+			{	//If this bit is in use
+				if(j > highestlane)
+				{	//If this lane is higher than the previously tracked highest lane
+					highestlane = j;
 				}
 			}
 		}

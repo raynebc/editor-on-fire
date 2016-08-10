@@ -25,10 +25,10 @@ extern DIALOG eof_gp_import_dialog[];	//The dialog used to display the tracks im
 int eof_gp_import_track(DIALOG * d);
 	//The function performed when the user selects and imports a track from the above dialog
 	//If the gp_import_undo_made global variable is zero, an undo state is made and this variable is set to 1
-int eof_gp_import_guitar_track(DIALOG * d, int importvoice);
+int eof_gp_import_guitar_track(int importvoice);
 	//Used if the selected track is being imported as a guitar pro track (even if the GP track is a drum track)
 	//importvoice specifies which voices are imported (1 = Lead, 2 = Bass, 3 = both)
-int eof_gp_import_drum_track(DIALOG * d, int importvoice, int function);
+int eof_gp_import_drum_track(int importvoice, int function);
 	//Used if the selected track is being imported as a drum track
 	//importvoice specifies which voices are imported (1 = Lead, 2 = Bass, 3 = both)
 	//function specifies the destination track (1 = normal drums, 2 = Phase Shift drums, 3 = both)

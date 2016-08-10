@@ -126,7 +126,8 @@ static int save_wav_fp(SAMPLE * sp, PACKFILE * fp)
 	}
 	else
 	{
-		TRACE("Unknown audio depth (%lu) when saving wav ALLEGRO_FILE.\n", (unsigned long) bits);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Unknown audio depth (%lu) when saving wav ALLEGRO_FILE.", (unsigned long) bits);
+		eof_log(eof_log_string, 1);
 		return 0;
 	}
 
