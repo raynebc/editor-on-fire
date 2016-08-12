@@ -1737,13 +1737,16 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 											break;	//Break from inner loop
 										}
 										if(fret - tp->capo > 19)
-										{	//If the anchor is higher than RS1 and RB3 support (taking the capo into account), log it and warn the user
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tHigh anchor (fret %ld) at position %ld on line #%lu", fret - tp->capo, time, linectr);
-											eof_log(eof_log_string, 1);
-											if(!(warning & 1))
-											{	//If the user wasn't warned about this error yet
-												allegro_message("Warning:  This arrangement contains at least one fret hand position higher than fret 19.\nOffending positions won't work in Rocksmith 1 or RB3.");
-												warning |= 1;
+										{	//If the anchor is higher than RS1 and RB3 support (taking the capo into account)
+											if(eof_write_rs_files || eof_write_rb_files)
+											{	//If either of those exports is enabled, log it and warn the user
+												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tHigh anchor (fret %ld) at position %ld on line #%lu", fret - tp->capo, time, linectr);
+												eof_log(eof_log_string, 1);
+												if(!(warning & 1))
+												{	//If the user wasn't warned about this error yet
+													allegro_message("Warning:  This arrangement contains at least one fret hand position higher than fret 19.\nOffending positions won't work in Rocksmith 1 or RB3.");
+													warning |= 1;
+												}
 											}
 										}
  										if(fret - tp->capo > 21)

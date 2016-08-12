@@ -200,6 +200,8 @@ Custom track data block definitions
 		{
 			1 byte: The accent note bitmask for the legacy note
 		}
+	Custom data block ID 9:  Track difficulty count (currently only written for pro guitar track with a difficulty count higher than 5)
+		1 byte:		Number of difficulties in the track (either with or without notes)
 
 =========================================		
 }

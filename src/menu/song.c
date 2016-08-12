@@ -3570,7 +3570,7 @@ int eof_menu_song_swap_piano_rolls(void)
 {
 	int temp_track, temp_type, temp_pos;
 
-	if(eof_note_type2 > EOF_MAX_DIFFICULTIES)
+	if(eof_note_type2 > 255)
 	{	//If the difficulty hasn't been initialized
 		eof_note_type2 = eof_note_type;
 	}

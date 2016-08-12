@@ -5305,7 +5305,7 @@ void eof_render_editor_window_2(void)
 	{	//If the secondary piano roll is to be displayed
 		char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
 
-		if(eof_note_type2 > EOF_MAX_DIFFICULTIES)
+		if(eof_note_type2 > 255)
 		{	//If the difficulty hasn't been initialized
 			eof_note_type2 = eof_note_type;
 		}

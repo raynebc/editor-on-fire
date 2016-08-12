@@ -1035,7 +1035,7 @@ void eof_sort_notes(EOF_SONG *sp)
 
 unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 {
-	unsigned long i;
+	unsigned long i, tracksize;
 	unsigned char numdiffs = 5, note_type;
 	EOF_PRO_GUITAR_TRACK *tp;
 
@@ -1043,8 +1043,6 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 
  	if(!sp || !track || (track >= sp->tracks))
 		return 0;	//Invalid parameters
-	if(!eof_get_track_size(sp, track))
-		return 0;	//Empty track
 
 	memset(eof_track_diff_populated_status, 0, sizeof(eof_track_diff_populated_status));
 	memset(eof_track_diff_highlighted_status, 0, sizeof(eof_track_diff_highlighted_status));
@@ -1061,7 +1059,10 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 	eof_dance_tab_name[3][0] = ' ';
 	eof_dance_tab_name[4][0] = ' ';
 
-	for(i = 0; i < eof_get_track_size(sp, track); i++)
+	tracksize = eof_get_track_size(sp, track);
+	if(!tracksize)
+		return 0;	//Empty track
+	for(i = 0; i < tracksize; i++)
 	{
 		note_type = eof_get_note_type(sp, track, i);
 		if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
@@ -2212,6 +2213,10 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 							}
 							memset(tp->technote[ctr], 0, sizeof(EOF_PRO_GUITAR_NOTE));
 							eof_read_pro_guitar_note(tp->technote[ctr], fp);	//Read the tech note
+							if(tp->technote[ctr]->type >= tp->parent->numdiffs)
+							{	//If this tech note's difficulty is the highest encountered in the track so far
+								tp->parent->numdiffs = tp->technote[ctr]->type + 1;	//Track it
+							}
 						}
 					}
 				break;
@@ -2229,6 +2234,20 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 						{	//For each note in this track
 							sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->accent = pack_getc(fp);		//Read note accent bitmask
 						}
+					}
+				break;
+
+				case 9:		//Track difficulty count
+					if(custom_data_size != 5)
+					{	//This data block is expected to be 5 bytes long
+						allegro_message("Error:  Invalid custom data block size (track difficulty count).  Aborting");
+						eof_log("Error:  Invalid custom data block size (track difficulty count).  Aborting", 1);
+						return 0;
+					}
+					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+					{	//Ensure this logic only runs for a pro guitar track
+						tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
+						tp->parent->numdiffs = pack_getc(fp);	//Read the difficulty count
 					}
 				break;
 
@@ -2741,7 +2760,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	unsigned long count, ctr, ctr2, tracknum = 0;
 	unsigned long track_count,track_ctr,bookmark_count,track_custom_block_count,bitmask,fingerdefinitions;
 	char has_raw_midi_data, has_fp_beat_timings = 1, has_start_end_points;
-	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes,has_accent;
+	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes,has_accent,has_diff_count;
 
 	#define EOFNUMINISTRINGTYPES 9
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
@@ -3451,7 +3470,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		}//Write other tracks
 
 		//Write custom track data blocks
-		fingerdefinitions = has_fingerdefinitions = has_arrangement = ignore_tuning = has_capo = has_tech_notes = has_accent = 0;
+		fingerdefinitions = has_fingerdefinitions = has_arrangement = ignore_tuning = has_capo = has_tech_notes = has_accent = has_diff_count = 0;
 		if(track_ctr && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 		{	//If this is a pro guitar track
 			//Count the number of notes with finger definitions
@@ -3479,6 +3498,10 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			{	//If this track has any tech notes defined
 				has_tech_notes = 1;
 			}
+			if(tp->parent->numdiffs > 5)
+			{	//If this track has more than the default 5 difficulties
+				has_diff_count = 1;
+			}
 		}//If this is a pro guitar track
 		if(track_ctr && (sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT))
 		{	//If this is a legacy track
@@ -3492,7 +3515,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				}
 			}
 		}
-		track_custom_block_count = has_fingerdefinitions + has_arrangement + ignore_tuning + has_capo + has_tech_notes + has_accent;
+		track_custom_block_count = has_fingerdefinitions + has_arrangement + ignore_tuning + has_capo + has_tech_notes + has_accent + has_diff_count;
 		if(track_custom_block_count)
 		{	//If writing data in a custom data block
 			(void) pack_iputl(track_custom_block_count, fp);		//Write the number of custom data blocks
@@ -3572,6 +3595,12 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 						(void) delete_file(tempfilename);	//And delete it
 					}
 				}//Write tech notes
+				if(has_diff_count)
+				{	//Write difficulty count
+					(void) pack_iputl(5, fp);		//Write the number of bytes this block will contain (1 byte difficulty count and a 4 byte block ID)
+					(void) pack_iputl(9, fp);		//Write the difficulty count custom data block ID
+					(void) pack_putc(tp->parent->numdiffs, fp);	//Write the track's difficulty count
+				}
 			}//If this is a pro guitar track
 			if(track_ctr && (sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT))
 			{	//If this is a legacy track
