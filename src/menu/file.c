@@ -2593,7 +2593,7 @@ int eof_save_helper_checks(void)
 	int suggested = 0;
 	char oggfn[1024] = {0};
 	char newfolderpath[1024] = {0};
-	char note_length_warned = 0, note_distance_warned = 0, arpeggio_warned = 0, slide_warned = 0, bend_warned = 0, slide_error = 0;
+	char note_length_warned = 0, note_distance_warned = 0, arpeggio_warned = 0, slide_warned = 0, bend_warned = 0, slide_error = 0, note_skew_warned = 0;
 
 	/* check if there are any notes beyond the chart audio */
 	notes_after_chart_audio = eof_check_if_notes_exist_beyond_audio_end(eof_song);
@@ -3113,6 +3113,89 @@ int eof_save_helper_checks(void)
 		}
 	}
 
+	/* check for notes that are out of alignment between difficulties */
+	for(ctr = 1; (note_skew_warned != 1) && (ctr < eof_song->tracks); ctr++)
+	{	//For each track (or until the user declines the warning about an offending note)
+		for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, ctr); ctr2++)
+		{	//For each note in the track
+			char match = 0;	//Set to nonzero if a note in a higher difficulty is found to be at this note's exact position
+			char unmatch = 0;	//Set to nonzero if a note in a higher difficulty is found to be within this note's exact position, but not at the exact position itself
+			unsigned long notepos = eof_get_note_pos(eof_song, ctr, ctr2), notepos2 = 0;
+			int note1snapped, note2snapped;
+			unsigned long offender = 0;
+			char *warning1 = "Warning: At least one note is out of sync with a note in another difficulty.";
+			char *warning2 = "Warning: At least one note is out of sync with a grid snapped note.";
+			char *warning = warning1;
+
+			note1snapped = eof_is_any_grid_snap_position(notepos, NULL, NULL, NULL);	//Check if the outer loop's note is grid snapped
+			for(ctr3 = 0; ctr3 < eof_get_track_size(eof_song, ctr); ctr3++)
+			{	//For each note in the track
+				notepos2 = eof_get_note_pos(eof_song, ctr, ctr3);
+
+				if(notepos2 + 3 < notepos)
+					continue;	//If this note is more than 3ms earlier, skip it
+				if(notepos2 > notepos + 3)
+					break;		//If this note is more than 3ms later, stop comparing notes to the one in the outer loop
+				if(ctr2 == ctr3)
+					continue;	//Don't compare the note with itself
+				if(eof_get_note_type(eof_song, ctr, ctr2) >= eof_get_note_type(eof_song, ctr, ctr3))
+					continue;	//Don't compare the note with others in the same or lower difficulties
+
+				if(notepos == notepos2)
+					match = 1;	//If a note was found at the same exact position, track this
+				else
+					unmatch = 1;	//Otherwise it was a note within 3ms, track this
+
+				note2snapped = eof_is_any_grid_snap_position(notepos2, NULL, NULL, NULL);	//Check if the inner loop's note is grid snapped
+				if(note1snapped != note2snapped)
+					break;	//If one note is snapped and the other isn't, the snapped note is considered correct
+			}
+
+			if(note1snapped != note2snapped)
+			{	//If one note is snapped and the other isn't, consider the non snapped note the offender
+				if(!note1snapped)
+					offender = ctr2;	//The outer loop's note is not snapped
+				else
+					offender = ctr3;	//The inner loop's note is not snapped
+
+				warning = warning2;
+			}
+			else
+			{	//Otherwise consider the outer loop's note to be the offender
+				offender = ctr2;
+				warning = warning1;
+			}
+			if(!match && unmatch)
+			{	//If no notes in other difficulties were at a matching position, but there was at least one within 3ms, the notes likely need to be synchronized
+				if(!note_skew_warned)
+				{	//If the user was not prompted yet
+					int ret;
+
+					ret = alert3(warning, NULL, "Cancel and seek to first offending note?", "Yes", "No", "Highlight all and cancel", 0, 0, 0);
+					if(ret == 2)
+					{	//User declined
+						note_skew_warned = 1;	//Set a condition to exit the outer for loop
+						break;
+					}
+
+					eof_seek_and_render_position(ctr, eof_get_note_type(eof_song, ctr, offender), eof_get_note_pos(eof_song, ctr, offender));	//Seek to the first offending note
+					if(ret == 1)
+					{	//If the user opted to cancel the save
+						return 1;	//Return cancellation
+					}
+
+					note_skew_warned = 3;
+				}
+				if(note_skew_warned == 3)
+				{	//User opted to highlight all offending notes
+					unsigned long flags = eof_get_note_flags(eof_song, ctr, offender);
+					eof_set_note_flags(eof_song, ctr, offender, flags | EOF_NOTE_FLAG_HIGHLIGHT);
+				}
+			}
+		}
+	}
+	if(note_skew_warned == 3)
+		return 1;	//If the user opted to cancel after highlighting offending notes, return cancellation
 
 	/* check for any notes that extend into a different RS phrase or section */
 	if(eof_song->tags->rs_export_suppress_dd_warnings)
