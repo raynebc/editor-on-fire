@@ -140,9 +140,9 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 {
 //	eof_log("eof_snap_logic() entered");
 
-	int least = -1;
+	unsigned long least = ULONG_MAX;	//Initialize to an invalid value
 	unsigned long i;
-	int interval = 1;
+	unsigned interval = 1;
 	char measure_snap = 0;	//Unless a custom per-measure grid snap is defined, all grid snaps are per beat
 	double snaplength, least_amount;
 
@@ -350,8 +350,8 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 					least_amount = sp->grid_distance[i];
 				}
 			}
-			if(least >= 0)
-			{
+			if(least < EOF_MAX_GRID_SNAP_INTERVALS)
+			{	//If a valid grid snap position was found
 				sp->pos = sp->grid_pos[least] + 0.5;	//Round to nearest ms
 			}
 		}//If performing snap by measure logic
@@ -396,8 +396,8 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 					least_amount = sp->grid_distance[i];
 				}
 			}
-			if(least >= 0)
-			{
+			if(least < EOF_MAX_GRID_SNAP_INTERVALS)
+			{	//If a valid grid snap position was found
 				sp->pos = sp->grid_pos[least] + 0.5;	//Round to nearest ms
 			}
 		}//If performing snap by beat logic

@@ -3128,6 +3128,7 @@ int eof_save_helper_checks(void)
 			char *warning = warning1;
 
 			note1snapped = eof_is_any_grid_snap_position(notepos, NULL, NULL, NULL);	//Check if the outer loop's note is grid snapped
+			note2snapped = note1snapped;
 			for(ctr3 = 0; ctr3 < eof_get_track_size(eof_song, ctr); ctr3++)
 			{	//For each note in the track
 				notepos2 = eof_get_note_pos(eof_song, ctr, ctr3);
@@ -3165,32 +3166,33 @@ int eof_save_helper_checks(void)
 				offender = ctr2;
 				warning = warning1;
 			}
-			if(!match && unmatch)
-			{	//If no notes in other difficulties were at a matching position, but there was at least one within 3ms, the notes likely need to be synchronized
-				if(!note_skew_warned)
-				{	//If the user was not prompted yet
-					int ret;
+			if(match || !unmatch)
+				continue;	//If any notes in other difficulties were at a matching position, or if there weren't any 1-3ms away, skip this note
 
-					ret = alert3(warning, NULL, "Cancel and seek to first offending note?", "Yes", "No", "Highlight all and cancel", 0, 0, 0);
-					if(ret == 2)
-					{	//User declined
-						note_skew_warned = 1;	//Set a condition to exit the outer for loop
-						break;
-					}
+			//Otherwise the notes likely need to be synchronized
+			if(!note_skew_warned)
+			{	//If the user was not prompted yet
+				int ret;
 
-					eof_seek_and_render_position(ctr, eof_get_note_type(eof_song, ctr, offender), eof_get_note_pos(eof_song, ctr, offender));	//Seek to the first offending note
-					if(ret == 1)
-					{	//If the user opted to cancel the save
-						return 1;	//Return cancellation
-					}
-
-					note_skew_warned = 3;
+				ret = alert3(warning, NULL, "Cancel and seek to first offending note?", "Yes", "No", "Highlight all and cancel", 0, 0, 0);
+				if(ret == 2)
+				{	//User declined
+					note_skew_warned = 1;	//Set a condition to exit the outer for loop
+					break;
 				}
-				if(note_skew_warned == 3)
-				{	//User opted to highlight all offending notes
-					unsigned long flags = eof_get_note_flags(eof_song, ctr, offender);
-					eof_set_note_flags(eof_song, ctr, offender, flags | EOF_NOTE_FLAG_HIGHLIGHT);
+
+				eof_seek_and_render_position(ctr, eof_get_note_type(eof_song, ctr, offender), eof_get_note_pos(eof_song, ctr, offender));	//Seek to the first offending note
+				if(ret == 1)
+				{	//If the user opted to cancel the save
+					return 1;	//Return cancellation
 				}
+
+				note_skew_warned = 3;
+			}
+			if(note_skew_warned == 3)
+			{	//User opted to highlight all offending notes
+				unsigned long flags = eof_get_note_flags(eof_song, ctr, offender);
+				eof_set_note_flags(eof_song, ctr, offender, flags | EOF_NOTE_FLAG_HIGHLIGHT);
 			}
 		}
 	}
@@ -4258,9 +4260,8 @@ int eof_gp_import_track(DIALOG * d)
 		}
 		if(importvoice != 3)
 			continue;	//If the user has not opted to import both voices, skip the logic below
-		if(ctr == 0)
-			continue;	//If there was not a previous note, skip the logic below
 
+		//In order for importvoice to be 3, at least two notes will have been parsed so ctr is guaranteed to be greater than 0
 		np = eof_parsed_gp_file->track[selected]->note[ctr];	//Simplify
 		pnp = eof_parsed_gp_file->track[selected]->note[ctr - 1];
 		if(np->pos == pnp->pos)

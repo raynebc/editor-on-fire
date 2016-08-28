@@ -4796,6 +4796,7 @@ void eof_start_logging(void)
 	if((eof_log_fp == NULL) && enable_logging)
 	{	//If logging isn't alredy running, and logging isn't disabled
 		srand(time(NULL));	//Seed the random number generator with the current time
+		// coverity[dont_call]
 		eof_log_id = ((unsigned int) rand()) % 1000;	//Create a 3 digit random number to represent this EOF instance
 		get_executable_name(log_filename, 1024);	//Get the path of the EOF binary that is running
 		(void) replace_filename(log_filename, log_filename, "eof_log.txt", 1024);
@@ -4806,6 +4807,12 @@ void eof_start_logging(void)
 		{
 			allegro_message("Error opening log file for writing");
 		}
+		#ifdef ALLEGRO_WINDOWS
+		if(strcasestr_spec(log_filename, "program files") || strcasestr_spec(log_filename, "VirtualStore"))
+		{
+			allegro_message("Warning:  Running EOF from within a \"Program files\" folder in Windows Vista or newer can cause problems.  Moving the EOF program folder elsewhere is recommended.\"");
+		}
+		#endif
 	}
 }
 
