@@ -82,6 +82,7 @@ MENU eof_file_menu[] =
 	{"Load &OGG", eof_menu_file_load_ogg, NULL, D_DISABLED, NULL},
 	{"&Import", NULL, eof_file_import_menu, 0, NULL},
 	{"&Export time range", eof_menu_file_export_time_range, NULL, D_DISABLED, NULL},
+	{"Export &Guitar pro", eof_menu_file_export_guitar_pro, NULL, D_DISABLED, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Settings\tF10", eof_menu_file_settings, NULL, 0, NULL},
 	{"&Preferences", NULL, eof_file_menu_preferences, 0, NULL},
@@ -90,6 +91,7 @@ MENU eof_file_menu[] =
 	{"Song Folder", eof_menu_file_song_folder, NULL, 0, NULL},
 	{"Link to FOF", eof_menu_file_link_fof, NULL, EOF_LINUX_DISABLE, NULL},
 	{"Link to Phase Shift", eof_menu_file_link_ps, NULL, EOF_LINUX_DISABLE, NULL},
+	{"Link to RocksmithToTab", eof_menu_file_link_rs_to_tab, NULL, EOF_LINUX_DISABLE, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"E&xit\tEsc", eof_menu_file_exit, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
@@ -170,10 +172,10 @@ DIALOG eof_preferences_dialog[] =
 DIALOG eof_import_export_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  482, 208, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
-	{ d_agup_button_proc,12,  216, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-	{ d_agup_button_proc,86,  216, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-	{ d_agup_button_proc,160, 216, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+	{ d_agup_window_proc,0,   48,  482, 223, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
+	{ d_agup_button_proc,12,  230, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_button_proc,86,  230, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+	{ d_agup_button_proc,160, 230, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
 	{ d_agup_check_proc, 16,  75,  208, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rock Band files",NULL, NULL },
 	{ d_agup_check_proc, 248, 75,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate musical MIDI file",NULL, NULL },
 	{ d_agup_check_proc, 16,  90,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 1 files",NULL, NULL },
@@ -191,6 +193,7 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 180, 210, 16,  2,   23,  0,    0,      1,   0,   "Import dialogs recall last path",NULL, NULL },
 	{ d_agup_check_proc, 16,  195, 124, 16,  2,   23,  0,    0,      1,   0,   "Import/Export TS",NULL, NULL },
 	{ d_agup_check_proc, 248, 195, 214, 16,  2,   23,  0,    0,      1,   0,   "dB import skips 5nc conversion",NULL, NULL },
+	{ d_agup_check_proc, 16,  210, 214, 16,  2,   23,  0,    0,      1,   0,   "Warn about missing bass FHPs",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -298,6 +301,11 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[4].flags = 0; // Quick save
 		eof_file_menu[5].flags = 0; // Load OGG
 		eof_file_menu[7].flags = 0;	// Export time range
+		#ifdef ALLEGRO_WINDOWS
+			eof_file_menu[8].flags = 0;	// Export guitar pro
+		#else
+			eof_file_menu[8].flags = D_DISABLED;	// Export guitar pro
+		#endif
 		eof_file_import_menu[0].flags = 0; // Import>Sonic Visualiser
 		eof_file_import_menu[4].flags = 0; // Import>Lyric
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -319,6 +327,7 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[4].flags = D_DISABLED; // Quick save
 		eof_file_menu[5].flags = D_DISABLED; // Load OGG
 		eof_file_menu[7].flags = D_DISABLED; // Export time range
+		eof_file_menu[8].flags = D_DISABLED;	// Export guitar pro
 		eof_file_import_menu[0].flags = D_DISABLED; // Import>Sonic Visualiser
 		eof_file_import_menu[4].flags = D_DISABLED; // Import>Lyric
 		eof_file_display_menu[4].flags = D_DISABLED;	//Benchmark image sequence
@@ -1369,6 +1378,7 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[18].flags = eof_imports_recall_last_path ? D_SELECTED : 0;			//Import dialogs recall last path
 	eof_import_export_preferences_dialog[19].flags = eof_use_ts ? D_SELECTED : 0;							//Import/Export TS
 	eof_import_export_preferences_dialog[20].flags = eof_db_import_suppress_5nc_conversion ? D_SELECTED : 0;//dB import skips 5nc conversion
+	eof_import_export_preferences_dialog[21].flags = eof_warn_missing_bass_fhps ? D_SELECTED : 0;			//Warn about missing bass FHPs
 
 	do
 	{	//Run the dialog
@@ -1392,6 +1402,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_imports_recall_last_path = (eof_import_export_preferences_dialog[18].flags == D_SELECTED ? 1 : 0);
 			eof_use_ts = (eof_import_export_preferences_dialog[19].flags == D_SELECTED ? 1 : 0);
 			eof_db_import_suppress_5nc_conversion = (eof_import_export_preferences_dialog[20].flags == D_SELECTED ? 1 : 0);
+			eof_warn_missing_bass_fhps = (eof_import_export_preferences_dialog[21].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1412,6 +1423,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[18].flags = 0;				//Import dialogs recall last path
 			eof_import_export_preferences_dialog[19].flags = D_SELECTED;	//Import/Export TS
 			eof_import_export_preferences_dialog[20].flags = 0;				//dB import skips 5nc conversion
+			eof_import_export_preferences_dialog[20].flags = D_SELECTED;	//Warn about missing bass FHPs
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -1544,10 +1556,11 @@ int eof_menu_file_song_folder(void)
 	return 1;
 }
 
-int eof_menu_file_link(char application)
+int eof_menu_file_link(unsigned char application)
 {
 	char *fofdisplayname = "FoF";
 	char *psdisplayname = "Phase Shift";
+	char *rstotabdisplayname = "RocksmithToTab";
 	char titlebartext[100] = {0};
 	char *appdisplayname = NULL;
 	char * returnfolder = NULL;
@@ -1563,35 +1576,46 @@ int eof_menu_file_link(char application)
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
-	if(application == 1)
+	if(application == 0)
 	{	//User is linking to FoF
 		appdisplayname = fofdisplayname;
 	}
-	else
+	else if(application == 1)
 	{	//User is linking to Phase Shift
 		appdisplayname = psdisplayname;
+	}
+	else
+	{	//User is linking to RocksmithToTab
+		appdisplayname = rstotabdisplayname;
 	}
 	(void) snprintf(titlebartext, sizeof(titlebartext) - 1, "Locate %s Executable", appdisplayname);
 	returnedfn = ncd_file_select(0, NULL, titlebartext, eof_filter_exe_files);
 	eof_clear_input();
 	if(returnedfn)
 	{
-		(void) snprintf(titlebartext, sizeof(titlebartext) - 1, "Locate %s Songs Folder", appdisplayname);
-		returnfolder = ncd_folder_select(titlebartext);
-		if(returnfolder)
-		{
-			if(application == 1)
-			{	//User is linking to FoF
-				(void) ustrcpy(eof_fof_executable_name, get_filename(returnedfn));
-				(void) ustrcpy(eof_fof_executable_path, returnedfn);
-				(void) ustrcpy(eof_fof_songs_path, returnfolder);
+		if(application < 2)
+		{	//If linking to either FoF or Phase Shift
+			(void) snprintf(titlebartext, sizeof(titlebartext) - 1, "Locate %s Songs Folder", appdisplayname);
+			returnfolder = ncd_folder_select(titlebartext);
+			if(returnfolder)
+			{
+				if(application == 0)
+				{	//User is linking to FoF
+					(void) ustrcpy(eof_fof_executable_name, get_filename(returnedfn));
+					(void) ustrcpy(eof_fof_executable_path, returnedfn);
+					(void) ustrcpy(eof_fof_songs_path, returnfolder);
+				}
+				else if(application == 1)
+				{	//User is linking to Phase Shift
+					(void) ustrcpy(eof_ps_executable_name, get_filename(returnedfn));
+					(void) ustrcpy(eof_ps_executable_path, returnedfn);
+					(void) ustrcpy(eof_ps_songs_path, returnfolder);
+				}
 			}
-			else
-			{	//User is linking to Phase Shift
-				(void) ustrcpy(eof_ps_executable_name, get_filename(returnedfn));
-				(void) ustrcpy(eof_ps_executable_path, returnedfn);
-				(void) ustrcpy(eof_ps_songs_path, returnfolder);
-			}
+		}
+		else
+		{	//If linking to RocksmithToTab
+			(void) ustrcpy(eof_rs_to_tab_executable_path, returnedfn);
 		}
 	}
 	eof_show_mouse(NULL);
@@ -1602,12 +1626,17 @@ int eof_menu_file_link(char application)
 
 int eof_menu_file_link_fof(void)
 {
-	return eof_menu_file_link(1);	//Link to FoF
+	return eof_menu_file_link(0);	//Link to FoF
 }
 
 int eof_menu_file_link_ps(void)
 {
-	return eof_menu_file_link(2);	//Link to Phase Shift
+	return eof_menu_file_link(1);	//Link to Phase Shift
+}
+
+int eof_menu_file_link_rs_to_tab(void)
+{
+	return eof_menu_file_link(2);	//Link to RocksmithToTab
 }
 
 int eof_menu_file_exit(void)
@@ -5156,5 +5185,70 @@ int eof_menu_file_export_time_range(void)
 	}
 
 	eof_destroy_song(csp);
+	return 1;
+}
+
+int eof_menu_file_export_guitar_pro(void)
+{
+	int retval;
+	char temppath1[1024] = {0};
+	char temppath2[1024] = {0};
+	char temppath3[1024] = {0};
+	char temppath4[1024] = {0};
+	char tempstr[1024] = {0};
+	char tempstr2[1024] = {0};
+	char syscommand[1024] = {0};
+	unsigned short user_warned = 0xFFFF;	//Mark all warnings as already having been given so the RS exports are silent
+
+	//Ensure RocksmithToTab is linked
+	if(!exists(eof_rs_to_tab_executable_path))
+	{	//If the path to RocksmithToTab is not defined or otherwise doesn't refer to a valid file
+		retval = alert3("RocksmithToTab is not properly linked", "First download and extract the program", "Then use \"File>Link to RocksmithToTab\" to browse to the program", "OK", "Download", "Link", 0, 0, 0);
+		if(retval == 2)
+		{	//If the user opted to download the program
+			(void) eof_system("start https://sourceforge.net/projects/rocksmithtotab/");
+		}
+		else if(retval == 3)
+		{	//If the user opted to link the program
+			return eof_menu_file_link_rs_to_tab();
+		}
+		return 1;
+	}
+
+	//Create temporary XML files
+	strncpy(temppath1, eof_temp_path_s, sizeof(temppath1) - 1);
+	strncpy(temppath2, eof_temp_path_s, sizeof(temppath1) - 1);
+	strncpy(temppath3, eof_temp_path_s, sizeof(temppath1) - 1);
+	strncpy(temppath4, eof_temp_path_s, sizeof(temppath1) - 1);
+	if(eof_export_rocksmith_2_track(eof_song, temppath1, EOF_TRACK_PRO_BASS, &user_warned) != 1)
+		temppath1[0] = '\0';	//This arrangement failed to export
+	if(eof_export_rocksmith_2_track(eof_song, temppath2, EOF_TRACK_PRO_BASS_22, &user_warned) != 1)
+		temppath2[0] = '\0';	//This arrangement failed to export
+	if(eof_export_rocksmith_2_track(eof_song, temppath3, EOF_TRACK_PRO_GUITAR, &user_warned) != 1)
+		temppath3[0] = '\0';	//This arrangement failed to export
+	if(eof_export_rocksmith_2_track(eof_song, temppath4, EOF_TRACK_PRO_GUITAR_22, &user_warned) != 1)
+		temppath4[0] = '\0';	//This arrangement failed to export
+
+	//Call program
+	(void) ustrcpy(syscommand, eof_rs_to_tab_executable_path);
+	(void) ustrcpy(tempstr2, eof_song_path);
+	if(ustrlen(tempstr2))
+	{	//As long as a valid project path was obtained
+		if(ugetat(tempstr2, ustrlen(tempstr2) - 1) == '\\')
+		{	//If the path ends in a folder separator
+			uremove(tempstr2, -1);	//Remove the last character in the string, as RocksmithToTab will crash if the output directory path ends in a separator
+		}
+	}
+	(void) uszprintf(tempstr, (int) sizeof(tempstr) - 1, " --xml \"%s\" \"%s\" \"%s\" \"%s\" -o \"%s\"", temppath1, temppath2, temppath3, temppath4, tempstr2);
+	(void) ustrcat(syscommand, tempstr);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCalling RocksmithToTab as follows:  %s", syscommand);
+	eof_log(eof_log_string, 1);
+	(void) eof_system(syscommand);
+
+	//Cleanup
+	(void) delete_file(temppath1);
+	(void) delete_file(temppath2);
+	(void) delete_file(temppath3);
+	(void) delete_file(temppath4);
 	return 1;
 }

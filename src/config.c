@@ -194,6 +194,7 @@ void eof_load_config(char * fn)
 	eof_db_import_drop_mid_beat_tempos = get_config_int("preferences", "eof_db_import_drop_mid_beat_tempos", 0);
 	eof_db_import_suppress_5nc_conversion = get_config_int("preferences", "eof_db_import_suppress_5nc_conversion", 0);
 	eof_dont_auto_name_double_stops = get_config_int("preferences", "eof_dont_auto_name_double_stops", 0);
+	eof_warn_missing_bass_fhps = get_config_int("preferences", "eof_warn_missing_bass_fhps", 1);
 
 	/* read display settings */
 	eof_screen_layout.mode = get_config_int("display", "display_mode", 0);
@@ -212,6 +213,7 @@ void eof_load_config(char * fn)
 	(void) ustrcpy(eof_fof_songs_path, get_config_string("paths", "fof_songs_path", ""));
 	(void) ustrcpy(eof_ps_executable_path, get_config_string("paths", "ps_path", ""));
 	(void) ustrcpy(eof_ps_executable_name, get_filename(eof_ps_executable_path));
+	(void) ustrcpy(eof_rs_to_tab_executable_path, get_config_string("paths", "rs_to_tab_path", ""));
 	(void) ustrcpy(eof_ps_songs_path, get_config_string("paths", "ps_songs_path", ""));
 	(void) ustrcpy(eof_songs_path, get_config_string("paths", "songs_path", ""));
 	(void) ustrcpy(eof_last_eof_path, get_config_string("paths", "eof_path", ""));
@@ -362,6 +364,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_db_import_drop_mid_beat_tempos", eof_db_import_drop_mid_beat_tempos);
 	set_config_int("preferences", "eof_db_import_suppress_5nc_conversion", eof_db_import_suppress_5nc_conversion);
 	set_config_int("preferences", "eof_dont_auto_name_double_stops", eof_dont_auto_name_double_stops);
+	set_config_int("preferences", "eof_warn_missing_bass_fhps", eof_warn_missing_bass_fhps);
 
 	/* write display settings */
 	set_config_int("display", "display_mode", eof_screen_layout.mode);
@@ -375,6 +378,7 @@ void eof_save_config(char * fn)
 	set_config_string("paths", "fof_songs_path", eof_fof_songs_path);
 	set_config_string("paths", "ps_path", eof_ps_executable_path);
 	set_config_string("paths", "ps_songs_path", eof_ps_songs_path);
+	set_config_string("paths", "rs_to_tab_path", eof_rs_to_tab_executable_path);
 	set_config_string("paths", "songs_path", eof_songs_path);
 	set_config_string("paths", "eof_path", eof_last_eof_path);
 	set_config_string("paths", "ogg_path", eof_last_ogg_path);

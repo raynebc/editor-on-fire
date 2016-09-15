@@ -172,10 +172,13 @@ int eof_export_bandfuse(EOF_SONG * sp, char * fn, unsigned short *user_warned)
 				}
 				if(!anchorcount)
 				{	//If there are no anchors in this track difficulty, automatically generate them
-					if((*user_warned & 1) == 0)
-					{	//If the user wasn't alerted that one or more track difficulties have no fret hand positions defined
-						allegro_message("Warning:  At least one track difficulty has no fret hand positions defined.  They will be created automatically.");
-						*user_warned |= 1;
+					if((tp->arrangement != 4) || eof_warn_missing_bass_fhps)
+					{	//Don't warn about missing FHPs in bass arrangements if user disabled that preference
+						if((*user_warned & 1) == 0)
+						{	//If the user wasn't alerted that one or more track difficulties have no fret hand positions defined
+							allegro_message("Warning:  At least one track difficulty has no fret hand positions defined.  They will be created automatically.");
+							*user_warned |= 1;
+						}
 					}
 					eof_fret_hand_position_list_dialog_undo_made = 1;	//Ensure no undo state is written during export
 					eof_generate_efficient_hand_positions(sp, ctr, ctr2, 0, 0);	//Generate the fret hand positions for the track difficulty being currently written (use a static fret range tolerance of 4 for all frets)

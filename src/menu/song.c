@@ -1251,7 +1251,7 @@ int eof_menu_song_test(char application)
 	(void) snprintf(temppath2, sizeof(temppath2) - 1, "%sEOFTemp\\guitar.ogg", songs_path);
 	(void) eof_copy_file(syscommand, temppath2);
 
-	/* switch to EOF's program folder */
+	/* switch to the applicable rhythm game's program folder */
 	(void) replace_filename(temppath, executablepath, "", 1024);
 	if(eof_chdir(temppath))
 	{
@@ -3872,58 +3872,57 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 			{	//For each beat in the project
 				if((eof_song->beat[ctr2]->contained_section_event >= 0) || ((ctr2 + 1 >= eof_song->beats) && started))
 				{	//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
-					if(!started)
-						continue;	//If the first phrase marker has not been encountered, skip the logic below
+					if(started)
+					{	//If the first phrase marker has been encountered, this beat marks the end of a phrase
+						endpos = eof_song->beat[ctr2]->pos - 1;	//Track this as the end position of the phrase
+						for(ctr3 = 0; ctr3 < 256; ctr3++)
+						{	//For each of the 255 possible difficulties
+							if(!eof_track_diff_populated_status[ctr3])
+								continue;	//If this difficulty is not populated, skip it
+							if(!eof_time_range_is_populated(eof_song, ctr, startpos, endpos, ctr3))
+								continue;	//If there isn't at least one note in this RS phrase in this difficulty, skip it
 
-					//Otherwise this beat marks the end of a phrase
-					endpos = eof_song->beat[ctr2]->pos - 1;	//Track this as the end position of the phrase
-					for(ctr3 = 0; ctr3 < 256; ctr3++)
-					{	//For each of the 255 possible difficulties
-						if(!eof_track_diff_populated_status[ctr3])
-							continue;	//If this difficulty is not populated, skip it
-						if(!eof_time_range_is_populated(eof_song, ctr, startpos, endpos, ctr3))
-							continue;	//If there isn't at least one note in this RS phrase in this difficulty, skip it
+							if(!phrase_warning && !eof_enforce_rs_phrase_begin_with_fret_hand_position(eof_song, ctr, ctr3, startpos, endpos, undo_made, 1))
+							{	//If the user hasn't been warned about this issue yet for this track, check to see if a fret hand position was NOT defined at or before the first note in the phrase
+								problem_found = 1;
+								if(report)
+								{	//If the calling function wanted to prompt the user about each issue found
+									unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
 
-						if(!phrase_warning && !eof_enforce_rs_phrase_begin_with_fret_hand_position(eof_song, ctr, ctr3, startpos, endpos, undo_made, 1))
-						{	//If the user hasn't been warned about this issue yet for this track, check to see if a fret hand position was NOT defined at or before the first note in the phrase
-							if(report)
-							{	//If the calling function wanted to prompt the user about each issue found
-								unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
-
-								eof_2d_render_top_option = 7;			//Display fret hand positions at the top of the piano roll
-								eof_selected_beat = ctr2;				//Change the selected beat
-								eof_seek_and_render_position(ctr, ctr3, eof_song->beat[ctr2]->pos);
-								eof_clear_input();
-								phrase_warning = alert3("The fret hand position is not redefined at each difficulty of each phrase.", "This can prevent the positions from working in dynamic difficulty charts.", "Correct this issue?", "&Yes", "&No", "Cancel", 'y', 'n', 0);
-								if(phrase_warning == 3)
-								{	//If the user does not opt to continue looking for errors
-									eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
-									(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
+									eof_2d_render_top_option = 7;			//Display fret hand positions at the top of the piano roll
+									eof_selected_beat = ctr2;				//Change the selected beat
+									eof_seek_and_render_position(ctr, ctr3, startpos);
+									eof_clear_input();
+									phrase_warning = alert3("The fret hand position is not redefined at each difficulty of each phrase.", "This can prevent the positions from working in dynamic difficulty charts.", "Correct this issue?", "&Yes", "&No", "Cancel", 'y', 'n', 0);
+									if(phrase_warning == 3)
+									{	//If the user does not opt to continue looking for errors
+										eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
+										(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for the active track
+										eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+										eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
+										return 1;	//Return user cancellation
+									}
 									eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-									eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
-									return 1;	//Return user cancellation
-								}
-								eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-								if(phrase_warning == 2)
-								{	//If the user declined to fix this issue
-									break;
+									if(phrase_warning == 2)
+									{	//If the user declined to fix this issue
+										break;
+									}
 								}
 							}
-							problem_found = 1;
-						}
-						if(report && (phrase_warning == 1))
-						{	//If the user opted to correct this issue, ensure each difficulty of each phrase defines a fret hand position
-							(void) eof_enforce_rs_phrase_begin_with_fret_hand_position(eof_song, ctr, ctr3, startpos, endpos, undo_made, 0);	//Add a fret hand position to this phrase if one is not defined already
-						}
+							if(report && (phrase_warning == 1))
+							{	//If the user opted to correct this issue, ensure each difficulty of each phrase defines a fret hand position
+								(void) eof_enforce_rs_phrase_begin_with_fret_hand_position(eof_song, ctr, ctr3, startpos, endpos, undo_made, 0);	//Add a fret hand position to this phrase if one is not defined already
+							}
+						}//For each of the 255 possible difficulties
+					}//If the first phrase marker has been encountered, this beat marks the end of a phrase
+					if(phrase_warning == 2)
+					{	//If the user declined to fix this issue
+						break;
 					}
-				}//If the first phrase marker has been encountered, this beat marks the end of a phrase
-				if(phrase_warning == 2)
-				{	//If the user declined to fix this issue
-					break;
-				}
 
-				started = 1;	//Track that a phrase has been encountered
-				startpos = eof_song->beat[ctr2]->pos;	//Track the starting position of the phrase
+					started = 1;	//Track that a phrase has been encountered
+					startpos = eof_song->beat[ctr2]->pos;	//Track the starting position of the phrase
+				}//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
 			}//For each beat in the project
 		}//If this track has any manually defined fret hand positions
 

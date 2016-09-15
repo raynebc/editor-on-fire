@@ -50,6 +50,7 @@ int eof_menu_file_feedback_import(void);	//Prompt for a .chart file and import i
 int eof_menu_file_save_as(void);
 int eof_menu_file_load_ogg(void);
 int eof_menu_file_export_time_range(void);	//Exports a set time range of the project to a new project file
+int eof_menu_file_export_guitar_pro(void);	//Calls the third party RocksmithToTab program to create a GP5 file of the project's guitar/bass arrangements
 int eof_menu_file_midi_import(void);
 int eof_menu_file_settings(void);
 int eof_menu_file_preferences(void);
@@ -59,9 +60,14 @@ int eof_set_display_width(void);			//Overrides the current program window width 
 int eof_redraw_display(void);				//Rebuilds the program window with the current window size
 int eof_menu_file_controllers(void);
 int eof_menu_file_song_folder(void);
-int eof_menu_file_link(char application);	//Prompts the user for an executable and song path, if application is 1, they are stored as a link to FoF, otherwise as a link to Phase Shift
+int eof_menu_file_link(unsigned char application);
+	//Prompts the user for an executable and song path
+	//If application is 0, they are stored as a link to FoF
+	//If application is 1, they are stored as a link to Phase Shift
+	//Otherwise only an executable path is asked for, and it is stored as a link to RocksmithToTab
 int eof_menu_file_link_fof(void);			//Calls eof_menu_file_link() to link to FoF
 int eof_menu_file_link_ps(void);			//Calls eof_menu_file_link() to link to Phase Shift
+int eof_menu_file_link_rs_to_tab(void);		//Calls eof_menu_file_link() to link to RocksmithToTab
 int eof_menu_file_exit(void);
 int eof_menu_file_gh_import(void);	//Prompt for a Guitar Hero chart file and import it
 

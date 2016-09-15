@@ -744,7 +744,6 @@ void eof_midi_play_note_ex(int note, unsigned char channel, unsigned char patch)
 	unsigned char NOTE_OFF_DATA[3] = {0x80, 0x0, 127};	//Data sequence for a Note Off, channel 1, Note 0
 	static unsigned char lastnote[16] = {0};			//Remembers the last note that was played on each channel, so it can be turned off
 	static unsigned char lastnotedefined[16] = {0};
-	static unsigned char patches[16] = {0};	//The last instrument number played on each of the 16 usable channels, is set to nonzero after the instrument is set
 
 	if(midi_driver == NULL)
 	{	//Ensure Allegro's MIDI driver is loaded
@@ -757,12 +756,10 @@ void eof_midi_play_note_ex(int note, unsigned char channel, unsigned char patch)
 	SET_PATCH_DATA[0] = 0xC0 | channel;
 	NOTE_ON_DATA[0] = 0x90 | channel;
 	NOTE_OFF_DATA[0] = 0x80 | channel;
-	if(patch != patches[channel])
-	{	//If the instrument number needs to be changed for this channel
-		SET_PATCH_DATA[1] = patch;	//Alter the data sequence to the appropriate channel number
-		midi_out(SET_PATCH_DATA, 2);
-		patches[channel] = patch;	//Track which instrument patch this channel is using
-	}
+
+	//Manually reset the instrument voice in effect to avoid the possibility of playing with the wrong voice if multiple EOF instances are in use
+	SET_PATCH_DATA[1] = patch;	//Alter the data sequence to the appropriate channel number
+	midi_out(SET_PATCH_DATA, 2);
 
 	if(note < EOF_MAX_VOCAL_TONES)
 	{
