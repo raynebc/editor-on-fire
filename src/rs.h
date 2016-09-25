@@ -164,9 +164,12 @@ int eof_note_can_be_played_within_fret_tolerance(EOF_PRO_GUITAR_TRACK *tp, unsig
 	//If the specified note only contains open strings, the next note with fretted strings is checked instead.  This to allow the camera in Rocksmith time to position between anchors while open strings are played.
 void eof_build_fret_range_tolerances(EOF_PRO_GUITAR_TRACK *tp, unsigned char difficulty, char dynamic);
 	//Re-allocate and build the array referenced by eof_fret_range_tolerances, optionally examining the specified track difficulty's notes to determine range for each fret
-	//If dynamic is zero (should be used when generating hand positions for Rocksmith), the range tolerance for all frets is set to 4, otherwise they are defined as follows:
-	//For each note examined, the range of frets used is considered to be playable and the range for the note's lowest used fret position is updated accordingly
-	//If any particular fret is not used as the lowest fret for any chords, the fret range is defaulted to 4
+	//If dynamic is zero (should be used when generating hand positions for Rocksmith or Bandfuse), the range tolerance is defined as follows:
+	//  The default for all frets is set to 4
+	//  If the eof_4_fret_range, eof_5_fret_range or eof_6_fret_range preferences have been defined, the fret ranges are changed accordingly
+	//If dynamic is nonzero, they are defined as follows:
+	//  For each note examined, the range of frets used is considered to be playable and the range for the note's lowest used fret position is updated accordingly
+	//  If any particular fret is not used as the lowest fret for any chords, the fret range is defaulted to 4
 void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long track, char difficulty, char warnuser, char dynamic, unsigned long startnote, unsigned long stopnote, char function);
 	//Uses eof_note_can_be_played_within_fret_tolerance() and eof_build_fret_range_tolerances() to build an efficient set of fret hand positions for the specified track difficulty
 	//If startnote and stopnote are not equal, fret hand positions are only generated for that range of notes, replacing any positions that exist in that time range

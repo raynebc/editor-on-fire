@@ -271,6 +271,9 @@ void eof_load_config(char * fn)
 		eof_note_names = eof_note_names_flat;
 		eof_slash_note_names = eof_slash_note_names_flat;
 	}
+	eof_4_fret_range = get_config_int("other", "eof_4_fret_range", 1);
+	eof_5_fret_range = get_config_int("other", "eof_5_fret_range", 0);
+	eof_6_fret_range = get_config_int("other", "eof_6_fret_range", 0);
 }
 
 void eof_save_config(char * fn)
@@ -409,4 +412,7 @@ void eof_save_config(char * fn)
 
 	/* write other settings */
 	set_config_int("other", "eof_display_flats", eof_display_flats);
+	set_config_int("other", "eof_4_fret_range", eof_4_fret_range);
+	set_config_int("other", "eof_5_fret_range", eof_5_fret_range);
+	set_config_int("other", "eof_6_fret_range", eof_6_fret_range);
 }

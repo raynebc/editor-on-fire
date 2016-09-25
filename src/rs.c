@@ -1338,7 +1338,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				}
 			}
 			eof_fret_hand_position_list_dialog_undo_made = 1;	//Ensure no undo state is written during export
-			eof_generate_efficient_hand_positions(sp, track, ctr, 0, 0);	//Generate the fret hand positions for the track difficulty being currently written (use a static fret range tolerance of 4 for all frets)
+			eof_generate_efficient_hand_positions(sp, track, ctr, 0, 0);	//Generate the fret hand positions for the track difficulty being currently written
 			anchorsgenerated = 1;
 		}
 		for(ctr3 = 0, anchorcount = 0; ctr3 < tp->handpositions; ctr3++)	//Re-count the hand positions
@@ -2881,7 +2881,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				}
 			}
 			eof_fret_hand_position_list_dialog_undo_made = 1;	//Ensure no undo state is written during export
-			eof_generate_efficient_hand_positions(sp, track, ctr, 0, 0);	//Generate the fret hand positions for the track difficulty being currently written (use a static fret range tolerance of 4 for all frets)
+			eof_generate_efficient_hand_positions(sp, track, ctr, 0, 0);	//Generate the fret hand positions for the track difficulty being currently written
 			anchorsgenerated = 1;
 		}
 		for(ctr3 = 0, anchorcount = 0; ctr3 < tp->handpositions; ctr3++)	//Re-count the hand positions
@@ -3679,7 +3679,7 @@ int eof_generate_hand_positions_current_track_difficulty(void)
 		return 0;	//Invalid parameters
 
 	eof_fret_hand_position_list_dialog_undo_made = 0;	//Reset this condition
-	eof_generate_efficient_hand_positions(eof_song, eof_selected_track, eof_note_type, 1, 0);	//Warn the user if existing hand positions will be deleted (use a static fret range tolerance of 4 for all frets, since it's assumed the author is charting for Rocksmith if they use this function)
+	eof_generate_efficient_hand_positions(eof_song, eof_selected_track, eof_note_type, 1, 0);	//Warn the user if existing hand positions will be deleted
 
 	(void) eof_pro_guitar_track_find_effective_fret_hand_position_definition(eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum], eof_note_type, eof_music_pos - eof_av_delay, NULL, &diffindex, 0);
 		//Obtain the fret hand position change now in effect at the current seek position
@@ -3801,7 +3801,28 @@ void eof_build_fret_range_tolerances(EOF_PRO_GUITAR_TRACK *tp, unsigned char dif
 	memset(eof_fret_range_tolerances, 4, (size_t)tp->numfrets + 1);	//Set a default range of 4 frets for the entire guitar neck
 
 	if(!dynamic)
-	{	//If the tolerances aren't being built from the specified track, return with all tolerances initialized to 4
+	{	//If the tolerances aren't being built from the specified track, apply user defined fret ranges if applicable, and return
+		if(eof_4_fret_range > 0)
+		{	//If the player range of 4 frets is validly defined
+			for(ctr = 0; eof_4_fret_range + ctr < tp->numfrets; ctr++)
+			{	//For each fret that this range applies to
+				eof_fret_range_tolerances[eof_4_fret_range + ctr] = 4;	//Apply a range of 4 frets
+			}
+		}
+		if((eof_5_fret_range > 0) && (eof_5_fret_range > eof_4_fret_range))
+		{	//If the player range of 5 frets is validly defined
+			for(ctr = 0; eof_5_fret_range + ctr < tp->numfrets; ctr++)
+			{	//For each fret that this range applies to
+				eof_fret_range_tolerances[eof_5_fret_range + ctr] = 5;	//Apply a range of 5 frets
+			}
+		}
+		if((eof_6_fret_range > 0) && (eof_6_fret_range > eof_5_fret_range))
+		{	//If the player range of 6 frets is validly defined
+			for(ctr = 0; eof_6_fret_range + ctr < tp->numfrets; ctr++)
+			{	//For each fret that this range applies to
+				eof_fret_range_tolerances[eof_6_fret_range + ctr] = 6;	//Apply a range of 6 frets
+			}
+		}
 		return;
 	}
 

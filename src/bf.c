@@ -181,7 +181,7 @@ int eof_export_bandfuse(EOF_SONG * sp, char * fn, unsigned short *user_warned)
 						}
 					}
 					eof_fret_hand_position_list_dialog_undo_made = 1;	//Ensure no undo state is written during export
-					eof_generate_efficient_hand_positions(sp, ctr, ctr2, 0, 0);	//Generate the fret hand positions for the track difficulty being currently written (use a static fret range tolerance of 4 for all frets)
+					eof_generate_efficient_hand_positions(sp, ctr, ctr2, 0, 0);	//Generate the fret hand positions for the track difficulty being currently written
 					anchorsgenerated = 1;
 				}
 				for(ctr3 = 0, anchorcount = 0; ctr3 < tp->handpositions; ctr3++)	//Re-count the hand positions
