@@ -1440,6 +1440,9 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 		case EOF_PRO_KEYS_TRACK_FORMAT:
 		break;
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
+		{
+			unsigned maxfrets1 = 24, maxfrets2 = 24;	//Rocksmith 2 supports 24 frets per arrangement
+
 			count = sp->pro_guitar_tracks;
 			ptr4 = malloc(sizeof(EOF_PRO_GUITAR_TRACK));
 			if(ptr4 == NULL)
@@ -1448,13 +1451,23 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 				return 0;	//Return error
 			}
 			memset(ptr4, 0, sizeof(EOF_PRO_GUITAR_TRACK));	//Initialize memory block to 0 to avoid crashes when not explicitly setting counters that were newly added to the pro guitar structure
+			if(eof_write_rs_files)
+			{	//If RS1 export is enabled
+				maxfrets1 = 22;	//RS1 only support 22 frets
+				maxfrets2 = 22;
+			}
+			if(eof_write_fof_files || eof_write_rb_files)
+			{	//If FoF or Rock Band exports are enabled
+				maxfrets1 = 22;	//They only support 22 frets in the 22 fret track (ie. for Squier guitar controller)
+				maxfrets2 = 17;	//And 17 frets in the 17 fret track (ie. for Mustang guitar controller)
+			}
 			if((trackdetails->track_type == EOF_TRACK_PRO_BASS_22) || (trackdetails->track_type == EOF_TRACK_PRO_GUITAR_22))
 			{	//If this is a 22 fret track
-				ptr4->numfrets = 22;	//Set 22 as the default max fret (ie. Squier guitar)
+				ptr4->numfrets = maxfrets1;
 			}
 			else
 			{	//Otherwise assume a default max fret of 17 (ie. Mustang controller)
-				ptr4->numfrets = 17;
+				ptr4->numfrets = maxfrets2;
 			}
 			if((trackdetails->track_type == EOF_TRACK_PRO_BASS) || (trackdetails->track_type == EOF_TRACK_PRO_BASS_22))
 			{
@@ -1477,6 +1490,7 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 			ptr4->ignore_tuning = 1;		//By default, chord lookups will ignore the tuning and capo and assume standard tuning
 			sp->pro_guitar_track[sp->pro_guitar_tracks] = ptr4;
 			sp->pro_guitar_tracks++;
+		}
 		break;
 		case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:	//Variable Lane Legacy (not implemented yet)
 		break;

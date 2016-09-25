@@ -138,7 +138,7 @@ void eof_load_config(char * fn)
 	eof_write_rb_files = get_config_int("preferences", "eof_write_rb_files", 0);
 	eof_write_music_midi = get_config_int("preferences", "eof_write_music_midi", 0);
 	eof_write_rs_files = get_config_int("preferences", "eof_write_rs_files", 0);
-	eof_write_rs2_files = get_config_int("preferences", "eof_write_rs2_files", 0);
+	eof_write_rs2_files = get_config_int("preferences", "eof_write_rs2_files", 1);
 	eof_write_bf_files = get_config_int("preferences", "eof_write_bf_files", 0);
 	eof_inverted_chords_slash = get_config_int("preferences", "eof_inverted_chords_slash", 0);
 	eof_click_changes_dialog_focus = get_config_int("preferences", "eof_click_changes_dialog_focus", 1);

@@ -1409,7 +1409,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[4].flags = 0;				//Save separate Rock Band files
 			eof_import_export_preferences_dialog[5].flags = 0;				//Save separate musical MIDI file
 			eof_import_export_preferences_dialog[6].flags = 0;				//Save separate Rocksmith 1 files
-			eof_import_export_preferences_dialog[7].flags = 0;				//Save separate Rocksmith 2 files
+			eof_import_export_preferences_dialog[7].flags = D_SELECTED;		//Save separate Rocksmith 2 files
 			eof_import_export_preferences_dialog[8].flags = 0;				//Save separate Bandfuse files
 			eof_import_export_preferences_dialog[9].flags = D_SELECTED;		//Save FoF/GH/Phase Shift files
 			eof_import_export_preferences_dialog[10].flags = 0;				//GP import beat text as sections, markers as phrases
@@ -2645,8 +2645,8 @@ int eof_save_helper_checks(void)
 		eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
 
 		/* pre-parse the lyrics to determine if any of them are not contained within a lyric phrase */
-		if(eof_song->tags->lyrics && eof_write_fof_files)
-		{	//If user enabled the Lyrics checkbox in song properties and wants to export FoF related files
+		if(eof_song->tags->lyrics)
+		{	//If user enabled the Lyrics checkbox in song properties
 			for(ctr = 0; ctr < eof_song->vocal_track[0]->lyrics; ctr++)
 			{	//For each lyric
 				if((eof_song->vocal_track[0]->lyric[ctr]->note != EOF_LYRIC_PERCUSSION) && (eof_find_lyric_line(ctr) == NULL))
@@ -2655,7 +2655,8 @@ int eof_save_helper_checks(void)
 					eof_pen_visible = 0;
 					eof_show_mouse(screen);
 					eof_clear_input();
-					if(alert("Warning: One or more lyrics aren't within lyric phrases.", "These lyrics won't export to FoF script format.", "Continue?", "&Yes", "&No", 'y', 'n') == 2)
+					eof_seek_and_render_position(EOF_TRACK_VOCALS, eof_get_note_type(eof_song, EOF_TRACK_VOCALS, ctr), eof_get_note_pos(eof_song, EOF_TRACK_VOCALS, ctr));
+					if(alert("Warning: One or more lyrics aren't within lyric phrases.", "These lyrics won't export to FoF script or simple text formats.", "Continue?", "&Yes", "&No", 'y', 'n') == 2)
 					{	//If user opts to cancel the save
 						eof_show_mouse(NULL);
 						eof_cursor_visible = 1;

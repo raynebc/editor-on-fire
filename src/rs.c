@@ -3096,7 +3096,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					}
 
 					//Write this hand shape
-					(void) snprintf(buffer, sizeof(buffer) - 1, "        <handShape chordId=\"%lu\" endTime=\"%.3f\" startTime=\"%.3f\"/>\n", chordid, (double)handshapeend / 1000.0, (double)handshapestart / 1000.0);
+					(void) snprintf(buffer, sizeof(buffer) - 1, "        <handShape chordId=\"%lu\" startTime=\"%.3f\" endTime=\"%.3f\"/>\n", chordid, (double)handshapestart / 1000.0, (double)handshapeend / 1000.0);
 					(void) pack_fputs(buffer, fp);
 				}
 			}//For each note in the track
@@ -5318,7 +5318,7 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 	}
 
 	//Write the note/chordNote tag
-	(void) snprintf(buffer, sizeof(buffer) - 1, "        %s<%s time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" bend=\"%d\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"%d\" leftHand=\"%ld\" mute=\"%d\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\" harmonicPinch=\"%d\" pickDirection=\"0\" rightHand=\"-1\" slideUnpitchTo=\"%ld\" tap=\"%d\" vibrato=\"%d\"%s>\n", indentlevel, tagstring, (double)notepos / 1000.0, tech.linknext, tech.accent, tech.bend, fret, tech.hammeron, tech.harmonic, tech.hopo, tech.ignore, fingernum, tech.stringmute, tech.palmmute, tech.pop, tech.pulloff, tech.slap, tech.slideto, stringnum, (double)tech.length / 1000.0, tech.tremolo, tech.pinchharmonic, tech.unpitchedslideto, tech.tap, tech.vibrato, tagend);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "        %s<%s time=\"%.3f\" string=\"%lu\" fret=\"%lu\" sustain=\"%.3f\" linkNext=\"%d\" ignore=\"%d\" slideTo=\"%ld\" slideUnpitchTo=\"%ld\" bend=\"%d\" hopo=\"%d\" hammerOn=\"%d\" pullOff=\"%d\" tap=\"%d\" mute=\"%d\" palmMute=\"%d\" harmonic=\"%d\" harmonicPinch=\"%d\" accent=\"%d\" leftHand=\"%ld\" pluck=\"%d\" slap=\"%d\" tremolo=\"%d\" vibrato=\"%d\" pickDirection=\"0\" rightHand=\"-1\"%s>\n", indentlevel, tagstring, (double)notepos / 1000.0, stringnum, fret, (double)tech.length / 1000.0, tech.linknext, tech.ignore, tech.slideto, tech.unpitchedslideto, tech.bend, tech.hopo, tech.hammeron, tech.pulloff, tech.tap, tech.stringmute, tech.palmmute, tech.harmonic, tech.pinchharmonic, tech.accent, fingernum, tech.pop, tech.slap, tech.tremolo, tech.vibrato, tagend);
 	(void) pack_fputs(buffer, fp);
 	if(tech.bend)
 	{	//If the note is a bend, write the bendValues subtag and close the note tag
