@@ -1231,6 +1231,7 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 	unsigned long dword = 0, ctr, ctr2, numbeats = 0, numsigs = 0, lastfretbar = 0, lastsig = 0;
 	unsigned char tsnum = 0, tsden = 0;
 	char forcestrum = 0;
+	char ts_warned = 0;
 
 //Load the GH file into memory
 	fb = eof_filebuffer_load(fn);
@@ -1415,7 +1416,12 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 				}
 				else if(dword < sp->beat[ctr2]->pos)
 				{	//Otherwise if this time signature's position has been surpassed by a beat
-					allegro_message("Error:  Mid beat time signature detected.  Skipping");
+					if(!ts_warned)
+					{	//If the user hasn't been warned about this yet
+						allegro_message("Warning:  Mid beat time signature detected.  Skipping");
+						ts_warned = 1;
+					}
+					eof_log("\t\tWarning:  Mid beat time signature detected.  Skipping", 1);
 					break;
 				}
 			}
@@ -1645,9 +1651,9 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 	eof_log(eof_log_string, 1);
 #endif
 	arraysize = eof_gh_process_section_header(fb, buffer, &arrayptr, qbindex);	//Parse the location of the 1D arrays of section data
-	assert(arrayptr != NULL);	//Unneeded assertion to resolve a false positive in Splint
 	for(ctr = 0; ctr < arraysize; ctr++)
 	{	//For each 1D array of note data
+		assert(arrayptr != NULL);	//Unneeded assertion to resolve a false positive in Splint
 		numnotes = eof_gh_read_array_header(fb, arrayptr[ctr], qbindex);	//Process the array header (get size and seek to first data value)
 		if(numnotes % 2)
 		{	//The value in numnotes is the number of dwords used to define this note array (each note should be 2 dwords in size)
@@ -2263,6 +2269,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 	unsigned char byte = 0;
 	unsigned long index, ctr, ctr2, ctr3, arraysize, *arrayptr = NULL, numbeats, numsigs, tsnum = 0, tsden = 0, dword = 0, lastfretbar = 0, lastsig = 0;
 	unsigned long qbindex;	//Will store the file index of the QB header
+	char ts_warned = 0;
 
 	eof_log("Attempting to import QB format Guitar Hero chart", 1);
 	eof_log("eof_import_gh_qb() entered", 1);
@@ -2496,7 +2503,12 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 					}
 					else if(dword < sp->beat[ctr3]->pos)
 					{	//Otherwise if this time signature's position has been surpassed by a beat
-						allegro_message("Error:  Mid beat time signature detected.  Skipping");
+						if(!ts_warned)
+						{	//If the user hasn't been warned about this yet
+							allegro_message("Warning:  Mid beat time signature detected.  Skipping");
+							ts_warned = 1;
+						}
+						eof_log("\t\tWarning:  Mid beat time signature detected.  Skipping", 1);
 					}
 				}
 

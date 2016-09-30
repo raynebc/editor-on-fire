@@ -5215,7 +5215,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 					{	//For each note in the track
 						if((ctr != eof_selection.current) && !eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr))
 						{	//If this note isn't the one that was just edited, but it matches
-							if(eof_pro_guitar_note_fingering_valid(tp, ctr, 0) != 1)
+							if(eof_pro_guitar_note_fingering_valid(tp, ctr, 1) != 1)
 							{	//If the fingering for the note is not fully defined
 								offerupdatefingering = 1;	//Note that the user should be prompted whether to update the fingering array of all matching notes
 								break;
@@ -5229,14 +5229,17 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 						{	//For each note in the track
 							if((ctr != eof_selection.current) && !eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr))
 							{	//If this note isn't the one that was just edited, but it matches
-								if(eof_pro_guitar_note_fingering_valid(tp, ctr, 0) != 1)
+								if(eof_pro_guitar_note_fingering_valid(tp, ctr, 1) != 1)
 								{	//If the fingering for the note is not fully defined
 									if(!*undo_made)
 									{	//If an undo state hasn't been made yet
 										eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 										*undo_made = 1;
 									}
-									memcpy(tp->note[ctr]->finger, np->finger, 8);	//Copy the finger array
+									for(ctr2 = 0; ctr2 < 6; ctr2++)
+									{	//For each of the 6 usable strings
+										tp->note[ctr]->finger[ctr2] = (tp->note[ctr]->finger[ctr2] & 0x80) + (np->finger[ctr2] & 0x7F);	//Overwrite the finger number, but keep the original mute status intact
+									}
 								}
 							}
 						}

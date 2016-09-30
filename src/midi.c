@@ -587,7 +587,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			prodrums = eof_track_has_cymbals(sp, j);
 
 			//Create accent note text events as needed for the GHWT MIDI variant
-			if(format)
+			if(format == 1)
 			{	//If writing the GHWT variant MIDI
 				for(i = 0; i < eof_get_track_size(sp, j); i++)
 				{	//For each note in the track
@@ -708,7 +708,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{	//If this is a non drum track with a sixth lane enabled
 					if(note & 32)
 					{	//If this note has a gem on lane 6 (open strum)
-						if(format)
+						if(format == 1)
 						{	//If writing the GHWT MIDI variant
 							note = 31;	//Convert it to a 5 lane chord
 						}
@@ -902,7 +902,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				/* write fifth lane drum note, if the feature was enabled during save */
 				if(eof_five_lane_drums_enabled() && (sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (note & 32))
 				{	//If this is a lane 6 gem (referred to as lane 5 for drums, seeing as bass drum doesn't use a lane)
-					if(format)
+					if(format == 1)
 					{	//If writing the GHWT MIDI variant
 						long pad = EOF_DEFAULT_TIME_DIVISION / 16;	//To make this notation more visible in Feedback, pad to a minimum length of 1/64 (in #/4 meter) if possible
 						if(deltalength < pad)
@@ -928,7 +928,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				/* write forced HOPO */
 				if(noteflags & EOF_NOTE_FLAG_F_HOPO)
 				{
-					if(format)
+					if(format == 1)
 					{	//If writing the GHWT MIDI variant
 ///The correct notes for GHWT forced HOPOs are not confirmed
 ///						long pad = EOF_DEFAULT_TIME_DIVISION / 16;	//To make this notation more visible in Feedback, pad to a minimum length of 1/64 (in #/4 meter) if possible
@@ -943,8 +943,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 9, vel, 0);
 */
 					}
-					else
-					{	//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
+					else if(format == 2)
+					{	//If writing the GH3 MIDI variant
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 5, vel, 0);
+						eof_add_midi_event(deltapos, 0x80, midi_note_offset + 5, vel, 0);
+					}
+					else if(!format)
+					{	//If writing the standard MIDI
+						//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
 						if(deltapos > 0)
 						{	//Don't allow a number underflow
 							eof_add_midi_event(deltapos - 1, 0x80, midi_note_offset + 6, vel, 0);	//Place a HOPO off end marker 1 delta before this just in case a HOPO off phrase is in effect (the overlap logic will filter this if it isn't necessary)
@@ -957,7 +963,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				/* write forced non-HOPO */
 				else if(noteflags & EOF_NOTE_FLAG_NO_HOPO)
 				{
-					if(format)
+					if(format == 1)
 					{	//If writing the GHWT MIDI variant
 						long pad = EOF_DEFAULT_TIME_DIVISION / 16;	//To make this notation more visible in Feedback, pad to a minimum length of 1/64 (in #/4 meter) if possible
 						if(deltalength < pad)
@@ -994,7 +1000,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 					deltalength = 1;
 				}
-				if(format)
+				if(format == 1)
 				{	//If writing the GHWT MIDI variant
 					marker = 106;	//Use this marker instead
 				}
@@ -1003,8 +1009,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			}
 
 			/* fill in solos */
-			if(!format)
-			{	//If NOT writing the GHWT MIDI variant
+			if(format != 1)
+			{	//If not writing the GHWT format MIDI
 				for(i = 0; i < eof_get_num_solos(sp, j); i++)
 				{	//For each solo in the track
 					sectionptr = eof_get_solo(sp, j, i);
@@ -1066,7 +1072,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					phase_shift_sysex_phrase[4] = 0xFF;	//Store the difficulty ID (0xFF = all difficulties)
 					phase_shift_sysex_phrase[5] = 4;	//Store the phrase ID (4 = slider)
 					phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-					if(format)
+					if(format == 1)
 					{	//If writing the GHWT MIDI variant
 						eof_add_midi_event(deltapos, 0x90, 103, vel, 0);	//Use note 103 to mark the slider
 						eof_add_midi_event(deltapos + deltalength, 0x80, 103, vel, 0);

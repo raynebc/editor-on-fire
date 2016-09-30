@@ -63,14 +63,16 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	//If featurerestriction is 1, only RBN2 features are written to MIDI
 	//If featurerestriction is 2, only pro guitar upgrade features are written to MIDI
 	//If featurerestriction is 3, both RBN2 features and pro guitar features are written to MIDI.  The C3 release of Magma supports pro guitar/bass.
-	//If format is nonzero, a variation of the MIDI is exported that is meant to be converted to .chart format and used to create GHWT customs:
+	//If fixvoxpitches is nonzero, any lyric that has a pitch of 0 (undefined) will be written with a generic pitch and a freestyle # marker
+	//If fixvoxphrases is nonzero, any lyric that is not within a lyric phrase will have a phrase written to contain it
+	//If format is 1, a variation of the normal MIDI is exported that is meant to be converted to .chart format and used to create GHWT customs:
 	//	*Star power markers are written with MIDI note 106
 	//	*Lane 6 drum notes (where lane 1 is the bass drum) that aren't cymbals are written with MIDI note 105
 	//	*Open notes are written as 5 lane notes
 	//	*Slider note markers are written with MIDI note 103 and solo phrases are suppressed
 	///	*Accent drum notes are exported with track-specific text events defining accented lane numbers (numbered beginning with 1 instead of 0)
-	//If fixvoxpitches is nonzero, any lyric that has a pitch of 0 (undefined) will be written with a generic pitch and a freestyle # marker
-	//If fixvoxphrases is nonzero, any lyric that is not within a lyric phrase will have a phrase written to contain it
+	//If format is 2, a variation of the normal MIDI is exported where the forced HOPO marker (5 higher than the MIDI note for lane 1)
+	//  is written with a length of 0 delta ticks.  All other features are exported identically to the normal MIDI
 
 unsigned char eof_get_midi_pitches(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char *pitches);
 	//Returns a bitmask defining which elements in the pitches array are populated to define the pitches used by the specified note/lyric

@@ -3487,6 +3487,10 @@ int eof_save_helper(char *destfilename, char silent)
 		/* Save GHWT MIDI variant */
 		(void) append_filename(eof_temp_filename, newfolderpath, "notes_ghwt.mid", (int) sizeof(eof_temp_filename));
 		(void) eof_export_midi(eof_song, eof_temp_filename, 0, fixvoxpitches, fixvoxphrases, 1);
+
+		/* Save GH3 MIDI variant */
+		(void) append_filename(eof_temp_filename, newfolderpath, "notes_gh3.mid", (int) sizeof(eof_temp_filename));
+		(void) eof_export_midi(eof_song, eof_temp_filename, 0, fixvoxpitches, fixvoxphrases, 2);
 	}
 
 	if(eof_write_rb_files)
