@@ -233,8 +233,20 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 				interval = 12;
 				break;
 			}
+			case EOF_SNAP_SIXTY_FORTH:
+			{
+				interval = 16;
+				break;
+			}
+			case EOF_SNAP_NINTY_SIXTH:
+			{
+				interval = 24;
+				break;
+			}
 			case EOF_SNAP_CUSTOM:
 			{
+				if(eof_snap_interval >= EOF_MAX_GRID_SNAP_INTERVALS)		//Bounds check
+					eof_snap_interval = EOF_MAX_GRID_SNAP_INTERVALS - 1;
 				interval = eof_snap_interval;
 				if(eof_custom_snap_measure)
 					measure_snap = 1;
@@ -475,6 +487,16 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 				interval = 12;
 				break;
 			}
+			case EOF_SNAP_SIXTY_FORTH:
+			{
+				interval = 16;
+				break;
+			}
+			case EOF_SNAP_NINTY_SIXTH:
+			{
+				interval = 24;
+				break;
+			}
 			case EOF_SNAP_CUSTOM:
 			{
 				interval = eof_snap_interval;
@@ -597,7 +619,7 @@ int eof_is_any_grid_snap_position(unsigned long pos, int *beat, char *gridsnapva
 {
 	EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
 	unsigned long beatnum;
-	int retval = 0, ctr, lastsnap = 8;
+	int retval = 0, ctr, lastsnap = EOF_SNAP_CUSTOM;
 	char temp_mode = eof_snap_mode;	//Store the grid snap setting in use
 	char foundgridsnapvalue = 0, foundgridsnapnum = 0;
 	int foundbeat = -1;
@@ -613,7 +635,7 @@ int eof_is_any_grid_snap_position(unsigned long pos, int *beat, char *gridsnapva
 		return 0;
 
 	if(temp_mode != EOF_SNAP_CUSTOM)
-		lastsnap = 7;	//If no custom grid snap is in effect, it won't be checked in the loop below
+		lastsnap = EOF_SNAP_CUSTOM - 1;	//If no custom grid snap is in effect, it won't be checked in the loop below
 
 	for(ctr = 1; ctr <= lastsnap; ctr++)
 	{	//For each of the applicable grid snap settings
@@ -1165,7 +1187,7 @@ if(eof_key_code == KEY_PAUSE)
 			eof_snap_mode--;
 			if(eof_snap_mode < 0)
 			{
-				eof_snap_mode = EOF_SNAP_FORTY_EIGHTH;
+				eof_snap_mode = EOF_SNAP_NINTY_SIXTH;
 			}
 			key[KEY_LEFT] = 0;
 		}
@@ -1197,7 +1219,7 @@ if(eof_key_code == KEY_PAUSE)
 			stop_sample(eof_sound_grid_snap);
 			(void) play_sample(eof_sound_grid_snap, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
 			eof_snap_mode++;
-			if(eof_snap_mode > EOF_SNAP_FORTY_EIGHTH)
+			if(eof_snap_mode > EOF_SNAP_NINTY_SIXTH)
 			{
 				eof_snap_mode = 0;
 			}
@@ -1560,7 +1582,7 @@ if(eof_key_code == KEY_PAUSE)
 		eof_snap_mode--;
 		if(eof_snap_mode < 0)
 		{
-			eof_snap_mode = EOF_SNAP_FORTY_EIGHTH;
+			eof_snap_mode = EOF_SNAP_NINTY_SIXTH;
 		}
 		eof_fixup_notes(eof_song);	//Run the fixup logic for all tracks, so that if the "Highlight non grid snapped notes" feature is in use, the highlighting can discontinue taking the custom grid snap into account
 		eof_use_key();
@@ -1575,7 +1597,7 @@ if(eof_key_code == KEY_PAUSE)
 			(void) play_sample(eof_sound_grid_snap, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
 		}
 		eof_snap_mode++;
-		if(eof_snap_mode > EOF_SNAP_FORTY_EIGHTH)
+		if(eof_snap_mode > EOF_SNAP_NINTY_SIXTH)
 		{
 			eof_snap_mode = 0;
 		}

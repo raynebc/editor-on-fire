@@ -34,7 +34,9 @@
 #define EOF_SNAP_TWENTY_FOURTH 5
 #define EOF_SNAP_THIRTY_SECOND 6
 #define EOF_SNAP_FORTY_EIGHTH  7
-#define EOF_SNAP_CUSTOM        8
+#define EOF_SNAP_SIXTY_FORTH   8
+#define EOF_SNAP_NINTY_SIXTH   9
+#define EOF_SNAP_CUSTOM        10
 
 #define EOF_HOPO_RF            0
 #define EOF_HOPO_FOF           1

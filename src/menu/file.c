@@ -1423,7 +1423,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[18].flags = 0;				//Import dialogs recall last path
 			eof_import_export_preferences_dialog[19].flags = D_SELECTED;	//Import/Export TS
 			eof_import_export_preferences_dialog[20].flags = 0;				//dB import skips 5nc conversion
-			eof_import_export_preferences_dialog[20].flags = D_SELECTED;	//Warn about missing bass FHPs
+			eof_import_export_preferences_dialog[21].flags = D_SELECTED;	//Warn about missing bass FHPs
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);

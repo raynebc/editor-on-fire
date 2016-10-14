@@ -47,10 +47,12 @@ MENU eof_edit_snap_menu[] =
 	{"1/8", eof_menu_edit_snap_eighth, NULL, 0, NULL},
 	{"1/16", eof_menu_edit_snap_sixteenth, NULL, 0, NULL},
 	{"1/32", eof_menu_edit_snap_thirty_second, NULL, 0, NULL},
+	{"1/64", eof_menu_edit_snap_sixty_forth, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"1/12", eof_menu_edit_snap_twelfth, NULL, 0, NULL},
 	{"1/24", eof_menu_edit_snap_twenty_fourth, NULL, 0, NULL},
 	{"1/48", eof_menu_edit_snap_forty_eighth, NULL, 0, NULL},
+	{"1/96", eof_menu_edit_snap_ninty_sixth, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Custom", eof_menu_edit_snap_custom, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
@@ -514,7 +516,7 @@ void eof_prepare_edit_menu(void)
 		}
 
 		/* selection */
-		for(i = 0; i < 14; i++)
+		for(i = 0; i < 16; i++)
 		{
 			eof_edit_snap_menu[i].flags = 0;
 		}
@@ -540,29 +542,39 @@ void eof_prepare_edit_menu(void)
 				eof_edit_snap_menu[3].flags = D_SELECTED;
 				break;
 			}
-			case EOF_SNAP_TWELFTH:
+			case EOF_SNAP_SIXTY_FORTH:
 			{
-				eof_edit_snap_menu[5].flags = D_SELECTED;
+				eof_edit_snap_menu[4].flags = D_SELECTED;
 				break;
 			}
-			case EOF_SNAP_TWENTY_FOURTH:
+			case EOF_SNAP_TWELFTH:
 			{
 				eof_edit_snap_menu[6].flags = D_SELECTED;
 				break;
 			}
-			case EOF_SNAP_FORTY_EIGHTH:
+			case EOF_SNAP_TWENTY_FOURTH:
 			{
 				eof_edit_snap_menu[7].flags = D_SELECTED;
 				break;
 			}
-			case EOF_SNAP_CUSTOM:
+			case EOF_SNAP_FORTY_EIGHTH:
+			{
+				eof_edit_snap_menu[8].flags = D_SELECTED;
+				break;
+			}
+			case EOF_SNAP_NINTY_SIXTH:
 			{
 				eof_edit_snap_menu[9].flags = D_SELECTED;
 				break;
 			}
-			case EOF_SNAP_OFF:
+			case EOF_SNAP_CUSTOM:
 			{
 				eof_edit_snap_menu[11].flags = D_SELECTED;
+				break;
+			}
+			case EOF_SNAP_OFF:
+			{
+				eof_edit_snap_menu[13].flags = D_SELECTED;
 				break;
 			}
 			default:
@@ -570,7 +582,7 @@ void eof_prepare_edit_menu(void)
 		}
 		if(eof_render_grid_lines)
 		{
-			eof_edit_snap_menu[13].flags = D_SELECTED;
+			eof_edit_snap_menu[15].flags = D_SELECTED;
 		}
 
 		/* MIDI tones */
@@ -1688,6 +1700,18 @@ int eof_menu_edit_snap_forty_eighth(void)
 	return 1;
 }
 
+int eof_menu_edit_snap_sixty_forth(void)
+{
+	eof_snap_mode = EOF_SNAP_SIXTY_FORTH;
+	return 1;
+}
+
+int eof_menu_edit_snap_ninty_sixth(void)
+{
+	eof_snap_mode = EOF_SNAP_NINTY_SIXTH;
+	return 1;
+}
+
 int eof_menu_edit_snap_custom(void)
 {
 	int last_interval = eof_snap_interval;
@@ -1721,9 +1745,9 @@ int eof_menu_edit_snap_custom(void)
 
 		if((eof_snap_interval >= EOF_MAX_GRID_SNAP_INTERVALS) || (eof_snap_interval < 1))
 		{
-			eof_render();
 			eof_snap_interval = last_interval;
-			allegro_message("Invalid snap setting, must be between 1 and %d",EOF_MAX_GRID_SNAP_INTERVALS-1);
+			eof_render();
+			allegro_message("Invalid snap setting, must be between 1 and %d", EOF_MAX_GRID_SNAP_INTERVALS - 1);
 		}
 		else
 		{

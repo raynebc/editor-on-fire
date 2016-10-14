@@ -134,6 +134,8 @@ int eof_menu_edit_snap_off(void);
 int eof_menu_edit_snap_twelfth(void);
 int eof_menu_edit_snap_twenty_fourth(void);
 int eof_menu_edit_snap_forty_eighth(void);
+int eof_menu_edit_snap_sixty_forth(void);
+int eof_menu_edit_snap_ninty_sixth(void);
 int eof_menu_edit_snap_custom(void);
 int eof_menu_edit_toggle_grid_lines(void);
 
