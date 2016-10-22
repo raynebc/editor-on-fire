@@ -457,7 +457,7 @@ MENU eof_note_menu[] =
 	{"&Lyrics", NULL, eof_note_lyrics_menu, 0, NULL},
 	{"Re&Flect", NULL, eof_note_reflect_menu, 0, NULL},
 	{"Remove statuses", eof_menu_remove_statuses, NULL, 0, NULL},
-	{"Simplify chords", eof_menu_note_simplify_chords, NULL, 0, NULL},
+	{"Simplif&Y chords", eof_menu_note_simplify_chords, NULL, 0, NULL},
 	{"&Move grid snap", NULL, eof_note_move_grid_snap_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -3120,7 +3120,7 @@ int eof_menu_lyric_line_mark(void)
 			eof_vocal_track_delete_line(eof_song->vocal_track[tracknum], j-1);
 		}
 	}
-	(void) eof_vocal_track_add_line(eof_song->vocal_track[tracknum], sel_start, sel_end);
+	(void) eof_vocal_track_add_line(eof_song->vocal_track[tracknum], sel_start, sel_end, 0xFF);
 
 	if(eof_song->vocal_track[tracknum]->lines > 0)
 		eof_song->vocal_track[tracknum]->line[eof_song->vocal_track[tracknum]->lines-1].flags = originalflags;	//Restore the line's flags
@@ -8695,7 +8695,7 @@ int eof_note_menu_read_gp_lyric_texts(void)
 						tp->lines = 0;	//Erase any existing lyric lines in the track
 						firstlinephrasecreated = 1;
 					}
-					(void) eof_vocal_track_add_line(tp, linestart, lastlyricend);	//Add a line phrase
+					(void) eof_vocal_track_add_line(tp, linestart, lastlyricend, 0xFF);	//Add a line phrase
 					if(ctr + 1 < tp->lyrics)
 					{	//If there's at least one more lyric
 						linestart = tp->lyric[ctr + 1]->pos;	//Track its start position
@@ -8755,7 +8755,7 @@ int eof_note_menu_read_gp_lyric_texts(void)
 
 	if(lastlyricend)
 	{	//If there was a lyric line in progress
-		(void) eof_vocal_track_add_line(tp, linestart, lastlyricend);	//Add a line phrase
+		(void) eof_vocal_track_add_line(tp, linestart, lastlyricend, 0xFF);	//Add a line phrase
 	}
 
 	(void) pack_fclose(fp);
@@ -9205,10 +9205,9 @@ int eof_menu_note_move_tech_note_to_previous_note_pos(void)
 	return 1;
 }
 
-int eof_menu_note_move_by_grid_snap(int dir)
+int eof_menu_note_move_by_grid_snap(int dir, char *undo_made)
 {
 	unsigned long target = 0, current, i;
-	char undo_made = 0;
 
 	if(eof_count_selected_notes(NULL) == 0)
 	{
@@ -9237,10 +9236,10 @@ int eof_menu_note_move_by_grid_snap(int dir)
 			{	//If there is no previous/next grid snap position that can be determined
 				break;	//Abort the rest of the operation
 			}
-			if(!undo_made)
-			{	//Only create the undo state before moving the first note
+			if(undo_made && (*undo_made == 0))
+			{	//If an undo state needs to be made
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				undo_made = 1;
+				*undo_made = 1;
 			}
 			eof_set_note_pos(eof_song, eof_selected_track, i, target);
 		}
@@ -9251,10 +9250,14 @@ int eof_menu_note_move_by_grid_snap(int dir)
 
 int eof_menu_note_move_back_grid_snap(void)
 {
-	return eof_menu_note_move_by_grid_snap(-1);
+	char undo_made = 0;
+
+	return eof_menu_note_move_by_grid_snap(-1, &undo_made);
 }
 
 int eof_menu_note_move_forward_grid_snap(void)
 {
-	return eof_menu_note_move_by_grid_snap(1);
+	char undo_made = 0;
+
+	return eof_menu_note_move_by_grid_snap(1, &undo_made);
 }

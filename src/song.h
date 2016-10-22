@@ -124,6 +124,7 @@
 #define EOF_BEAT_FLAG_CUSTOM_TS   64	//If this is nonzero, indicates that the first and second most significant bytes of the beat's flags store the TS numerator and denominator, respectively
 #define EOF_BEAT_FLAG_KEY_SIG    128
 #define EOF_BEAT_FLAG_MIDBEAT    256	//If this is nonzero, indicates that a beat was inserted to accommodate a mid-beat tempo change (during Feedback import)
+#define EOF_BEAT_FLAG_START_2_4  512
 #define EOF_BEAT_FLAG_EXTENDED 32768	//Reserve the highest unused bit to allow for another beat flag to be conditionally present
 
 //The following flags pertain to phrases
@@ -245,7 +246,7 @@ typedef struct
 #define EOF_PRO_KEYS_TRACK_BEHAVIOR		6
 #define EOF_DANCE_TRACK_BEHAVIOR        7
 
-//Track types
+//Track numbers
 #define EOF_TRACKS_MIN			1
 #define EOF_TRACK_GUITAR		1
 #define EOF_TRACK_BASS			2
@@ -733,7 +734,9 @@ long eof_fixup_previous_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//Retu
 long eof_fixup_next_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//Returns the next lyric, or -1 if there is none
 void eof_vocal_track_fixup_lyrics(EOF_SONG *sp, unsigned long track, int sel);	//Performs cleanup of the specified lyric track (based on the currently loaded audio and chart).  If sel is zero, the currently selected note is deselected automatically.
 int eof_vocal_track_add_star_power(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Marks all lyric phrases within the specified time span for overdrive.  Returns nonzero on success
-int eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a lyric phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
+int eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos, unsigned char difficulty);
+	//Adds a lyric phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
+	//The difficulty level at this time is typically going to just be 0xFF to indicate it applies to the entire track
 void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, unsigned long index);	//Deletes the specified lyric phrase and moves all phrases that follow back in the array one position
 
 EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_note(EOF_PRO_GUITAR_TRACK *tp);
@@ -990,6 +993,13 @@ int eof_note_is_not_highlighted(EOF_SONG *sp, unsigned long track, unsigned long
 int eof_length_is_shorter_than(long length, long threshold);	//Returns nonzero if the length parameter is shorter than the threshold parameter
 int eof_length_is_longer_than(long length, long threshold);		//Returns nonzero if the length parameter is longer than the threshold parameter
 int eof_length_is_equal_to(long length, long threshold);		//Returns nonzero if both parameters are equal
+
+void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char *undo_made);
+	//Examines all sections in the specified track, and for those which have notes that are all selected, their positions are moved
+	//If dir is negative, applicable sections are moved the specified offset number of ms earlier
+	// otherwise applicable sections are moved the specified offset number of ms later
+	//If offset is zero, applicable sections are moved in one grid snap in the specified direction instead of by a specific number of ms
+	//If undo_made is not NULL and references a value of 0, an undo state is made prior to the first section being moved, and *undo_made is set to nonzero
 
 static inline int eof_beat_num_valid(EOF_SONG *sp, unsigned long beatnum)
 {

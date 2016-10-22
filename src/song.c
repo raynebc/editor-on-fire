@@ -974,7 +974,7 @@ int eof_vocal_track_add_star_power(EOF_VOCAL_TRACK * tp, unsigned long start_pos
 	return 0;	//Return error
 }
 
-int eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
+int eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos, unsigned char difficulty)
 {
 	if(tp && (tp->lines < EOF_MAX_LYRIC_LINES))
 	{	//If the maximum number of lyric phrases hasn't already been defined
@@ -982,6 +982,7 @@ int eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsi
 		tp->line[tp->lines].end_pos = end_pos;
 		tp->line[tp->lines].flags = 0;	//Ensure that a blank flag status is initialized
 		tp->line[tp->lines].name[0] = '\0';
+		tp->line[tp->lines].difficulty = difficulty;
 		tp->lines++;
 		return 1;	//Return success
 	}
@@ -2523,7 +2524,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 		case EOF_LYRIC_PHRASE_SECTION:	//Lyric Phrase section
 			if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
 			{	//Lyric phrases are only valid for vocal tracks
-				return eof_vocal_track_add_line(sp->vocal_track[tracknum], start, end);
+				return eof_vocal_track_add_line(sp->vocal_track[tracknum], start, end, difficulty);
 			}
 		return 0;	//Return error
 
@@ -8927,4 +8928,99 @@ int eof_length_is_equal_to(long length, long threshold)
 		return 1;
 
 	return 0;
+}
+
+void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char *undo_made)
+{
+	unsigned long sectiontype, sectioncount, ctr, ctr2, notepos;
+	EOF_PHRASE_SECTION *sections = NULL;
+	int applicable, missing;
+
+	if(!sp || (track >= sp->tracks) || !sp->beats)
+		return;	//Invalid parameters
+	if(eof_selection.track != track)
+		return;	//No notes in the specified track are selected
+
+	for(sectiontype = 1; sectiontype <= EOF_NUM_SECTION_TYPES; sectiontype++)
+	{	//For each type of section that exists
+		if(!eof_lookup_track_section_type(sp, track, sectiontype, &sectioncount, &sections) || !sections)
+			continue;	//If this track doesn't have any of this type of section, skip it
+
+		for(ctr = 0; ctr < sectioncount; ctr++)
+		{	//For each instance of this section type in the track
+			applicable = missing = 0;	//Reset these statuses
+			for(ctr2 = 0; ctr2 < eof_get_track_size(sp, track); ctr2++)
+			{	//For each note in the track
+				notepos = eof_get_note_pos(sp, track, ctr2);
+
+				//Check if the note is within the section's scope
+				if(notepos > sections[ctr].end_pos)
+					break;	//If this note and all subsequent ones occur after the section ends, stop looking for notes in this section
+				if(notepos < sections[ctr].start_pos)
+					continue;	//If this note occurs before the section begins, skip it
+				if((sections[ctr].difficulty != 0xFF) && (sections[ctr].difficulty != eof_get_note_type(sp, track, ctr2)))
+					continue;	//If this note isn't in the section's effective difficulty, skip it
+
+				//At this point, the note has been determined to be within the section's scope
+				if(eof_selection.multi[ctr2])
+				{	//If the note is selected
+					applicable = 1;
+				}
+				else
+				{	//The note is not selected
+					missing = 1;
+					break;	//This condition disqualifies the section from being offset, stop looking for notes in this section
+				}
+			}
+
+			if(!applicable || missing)
+				continue;	//If this section had no notes within it, or it had any that weren't selected, skip it
+
+			if(offset)
+			{	//If moving by a fixed amount of ms
+				if(dir < 0)
+				{	//If making sections earlier
+					if(sections[ctr].start_pos < offset + sp->beat[0]->pos)
+						continue;	//If this movement would place the section's start position before the first beat marker, skip it
+
+					if(undo_made && (*undo_made == 0))
+					{	//If an undo state needs to be made
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						*undo_made = 1;
+					}
+					sections[ctr].start_pos -= offset;
+					sections[ctr].end_pos -= offset;
+				}
+				else
+				{	//If making sections later
+					if(undo_made && (*undo_made == 0))
+					{	//If an undo state needs to be made
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						*undo_made = 1;
+					}
+
+					sections[ctr].start_pos += offset;
+					sections[ctr].end_pos += offset;
+				}
+			}
+			else
+			{	//If moving by one grid snap
+				unsigned long newstart, newend;
+				if(eof_find_grid_snap(sections[ctr].start_pos, dir, &newstart))
+				{	//If the appropriate grid snap before/after the section's current start position was found
+					if(eof_find_grid_snap(sections[ctr].end_pos, dir, &newend))
+					{	//If the appropriate grid snap before/after the section's current end position was found
+						if(undo_made && (*undo_made == 0))
+						{	//If an undo state needs to be made
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+							*undo_made = 1;
+						}
+
+						sections[ctr].start_pos = newstart;	//Move the section
+						sections[ctr].end_pos = newend;
+					}
+				}
+			}
+		}
+	}
 }

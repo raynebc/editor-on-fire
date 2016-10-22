@@ -95,7 +95,7 @@ void eof_get_snap_ts(EOF_SNAP_DATA * sp, unsigned long beat)
 	}
 	for(i = beat + 1; i > 0; i--)
 	{	//For each beat at and before the specified beat, in reverse order
-		if(eof_song->beat[i - 1]->flags & (EOF_BEAT_FLAG_START_3_4 | EOF_BEAT_FLAG_START_4_4 | EOF_BEAT_FLAG_START_5_4 | EOF_BEAT_FLAG_START_6_4 | EOF_BEAT_FLAG_CUSTOM_TS))
+		if(eof_song->beat[i - 1]->flags & (EOF_BEAT_FLAG_START_2_4 | EOF_BEAT_FLAG_START_3_4 | EOF_BEAT_FLAG_START_4_4 | EOF_BEAT_FLAG_START_5_4 | EOF_BEAT_FLAG_START_6_4 | EOF_BEAT_FLAG_CUSTOM_TS))
 		{
 			tsbeat = i - 1;
 			break;
@@ -107,22 +107,27 @@ void eof_get_snap_ts(EOF_SNAP_DATA * sp, unsigned long beat)
 	sp->denominator = 4;
 
 	/* all TS presets have a denominator of 4 */
-	if(eof_song->beat[tsbeat]->flags & EOF_BEAT_FLAG_START_3_4)
+	if(eof_song->beat[tsbeat]->flags & EOF_BEAT_FLAG_START_2_4)
+	{
+		sp->numerator = 2;
+		sp->denominator = 4;
+	}
+	else if(eof_song->beat[tsbeat]->flags & EOF_BEAT_FLAG_START_3_4)
 	{
 		sp->numerator = 3;
 		sp->denominator = 4;
 	}
-	if(eof_song->beat[tsbeat]->flags & EOF_BEAT_FLAG_START_4_4)
+	else if(eof_song->beat[tsbeat]->flags & EOF_BEAT_FLAG_START_4_4)
 	{
 		sp->numerator = 4;
 		sp->denominator = 4;
 	}
-	if(eof_song->beat[tsbeat]->flags & EOF_BEAT_FLAG_START_5_4)
+	else if(eof_song->beat[tsbeat]->flags & EOF_BEAT_FLAG_START_5_4)
 	{
 		sp->numerator = 5;
 		sp->denominator = 4;
 	}
-	if(eof_song->beat[tsbeat]->flags & EOF_BEAT_FLAG_START_6_4)
+	else if(eof_song->beat[tsbeat]->flags & EOF_BEAT_FLAG_START_6_4)
 	{
 		sp->numerator = 6;
 		sp->denominator = 4;
@@ -267,7 +272,13 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			sp->measure_beat = 0;
 			for(i = sp->beat + 1; i > 0; i--)
 			{	//For each beat at and before the specified beat, in reverse order
-				if(eof_song->beat[i - 1]->flags & EOF_BEAT_FLAG_START_3_4)
+				if(eof_song->beat[i - 1]->flags & EOF_BEAT_FLAG_START_2_4)
+				{
+					ts = 2;
+					sp->measure_beat = i - 1;
+					break;
+				}
+				else if(eof_song->beat[i - 1]->flags & EOF_BEAT_FLAG_START_3_4)
 				{
 					ts = 3;
 					sp->measure_beat = i - 1;
@@ -2216,7 +2227,11 @@ if(eof_key_code == KEY_PAUSE)
 			}
 			else
 			{	//If CTRL is held but SHIFT is not
-				(void) eof_menu_note_move_by_grid_snap(-1);
+				char undo_made = 0;
+
+				if(eof_vocals_selected)
+					eof_auto_adjust_sections(eof_song, EOF_TRACK_VOCALS, 0, -1, &undo_made);	//Move lyric sections accordingly by one grid snap
+				(void) eof_menu_note_move_by_grid_snap(-1, &undo_made);
 				if(eof_song->tags->highlight_unsnapped_notes)
 				{	//If the user has enabled the dynamic highlighting of non grid snapped notes
 					eof_track_remove_highlighting(eof_song, eof_selected_track, 1);	//Remove existing temporary highlighting from the track
@@ -2256,7 +2271,11 @@ if(eof_key_code == KEY_PAUSE)
 			}
 			else
 			{	//If CTRL is held but SHIFT is not
-				(void) eof_menu_note_move_by_grid_snap(1);
+				char undo_made = 0;
+
+				if(eof_vocals_selected)
+					eof_auto_adjust_sections(eof_song, EOF_TRACK_VOCALS, 0, 1, &undo_made);	//Move lyric sections accordingly by one grid snap
+				(void) eof_menu_note_move_by_grid_snap(1, &undo_made);
 				if(eof_song->tags->highlight_unsnapped_notes)
 				{	//If the user has enabled the dynamic highlighting of non grid snapped notes
 					eof_track_remove_highlighting(eof_song, eof_selected_track, 1);	//Remove existing temporary highlighting from the track
@@ -4716,6 +4735,8 @@ void eof_vocal_editor_logic(void)
 							move_offset = eof_mickeys_x * eof_zoom;
 						}
 					}
+					if(move_offset)
+						eof_auto_adjust_sections(eof_song, EOF_TRACK_VOCALS, move_offset, move_direction, &undo_made);	//Move lyric sections accordingly
 					for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 					{	//For each lyric in the track
 						notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
@@ -5070,6 +5091,11 @@ int eof_get_ts_text(unsigned long beat, char * buffer)
 	if(eof_song->beat[beat]->flags & EOF_BEAT_FLAG_START_4_4)
 	{
 		(void) ustrcpy(buffer, "4/4");
+		ret = 1;
+	}
+	else if(eof_song->beat[beat]->flags & EOF_BEAT_FLAG_START_2_4)
+	{
+		(void) ustrcpy(buffer, "2/4");
 		ret = 1;
 	}
 	else if(eof_song->beat[beat]->flags & EOF_BEAT_FLAG_START_3_4)

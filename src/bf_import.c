@@ -648,7 +648,7 @@ EOF_SONG *eof_load_bf(char * fn)
 						endms = end + 0.5;		//Round to nearest millisecond
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLyric line #%lu start = %lums, end = %lums", ctr, startms, endms);
 						eof_log(eof_log_string, 1);
-						(void) eof_vocal_track_add_line(sp->vocal_track[0], startms, endms);	//Add the lyric line
+						(void) eof_vocal_track_add_line(sp->vocal_track[0], startms, endms, 0xFF);	//Add the lyric line
 					}
 				}
 				else if((entryid == 11) && (entrysize == 64))

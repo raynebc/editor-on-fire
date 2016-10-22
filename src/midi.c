@@ -3319,6 +3319,11 @@ int eof_get_ts(EOF_SONG *sp, unsigned *num, unsigned *den, unsigned long beatnum
 		numerator = 4;
 		denominator = 4;
 	}
+	else if(sp->beat[beatnum]->flags & EOF_BEAT_FLAG_START_2_4)
+	{
+		numerator = 2;
+		denominator = 4;
+	}
 	else if(sp->beat[beatnum]->flags & EOF_BEAT_FLAG_START_3_4)
 	{
 		numerator = 3;
@@ -3390,7 +3395,11 @@ int eof_apply_ts(unsigned num, unsigned den, unsigned long beatnum, EOF_SONG *sp
 	flags |= sp->beat[beatnum]->flags & EOF_BEAT_FLAG_EVENTS;
 	flags |= sp->beat[beatnum]->flags & EOF_BEAT_FLAG_KEY_SIG;
 
-	if((num == 3) && (den == 4))
+	if((num == 2) && (den == 4))
+	{
+		flags = flags | EOF_BEAT_FLAG_START_2_4;
+	}
+	else if((num == 3) && (den == 4))
 	{
 		flags = flags | EOF_BEAT_FLAG_START_3_4;
 	}

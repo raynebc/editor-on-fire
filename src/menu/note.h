@@ -340,8 +340,9 @@ int eof_menu_note_reflect_both(void);
 int eof_menu_note_move_tech_note_to_previous_note_pos(void);
 	//Moves each selected tech notes to the start position of the regular notes before it, if any
 
-int eof_menu_note_move_by_grid_snap(int dir);
+int eof_menu_note_move_by_grid_snap(int dir, char *undo_made);
 	//Moves each selected note forward (if dir is >= 0) or backward (if dir < 0) by one grid snap if possible
+	//If undo_made is not NULL and references a value of 0, an undo state is made prior to the first note being moved, and *undo_made is set to nonzero
 int eof_menu_note_move_back_grid_snap(void);
 	//Calls eof_menu_note_move_by_grid_snap() with the option to move notes backward one grid snap
 int eof_menu_note_move_forward_grid_snap(void);

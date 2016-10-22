@@ -1127,7 +1127,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLyric phrase at %lu ms", phrasestart);
 	eof_log(eof_log_string, 1);
 #endif
-		(void) eof_vocal_track_add_line(tp, phrasestart, phrasestart);	//Add the phrase with a temporary end position
+		(void) eof_vocal_track_add_line(tp, phrasestart, phrasestart, 0xFF);	//Add the phrase with a temporary end position
 	}
 	eof_process_gh_lyric_phrases(sp);	//Create proper end positions for each lyric phrase
 
@@ -2238,7 +2238,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLyric phrase at %lu ms", phrasestart);
 			eof_log(eof_log_string, 1);
 #endif
-			(void) eof_vocal_track_add_line(tp, phrasestart, phrasestart);	//Add the phrase with a temporary end position
+			(void) eof_vocal_track_add_line(tp, phrasestart, phrasestart, 0xFF);	//Add the phrase with a temporary end position
 		}
 	}
 	eof_process_gh_lyric_phrases(sp);	//Create proper end positions for each lyric phrase

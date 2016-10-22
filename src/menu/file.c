@@ -574,6 +574,29 @@ int eof_menu_file_load(void)
 			eof_selected_ogg = 0;
 		}
 
+		/* correct lyric line difficulties if necessary */
+		if(eof_song->vocal_track[0]->lines)
+		{	//If there are any lyric lines
+			int multiple_diffs = 0;	//Set to nonzero if any lyrics outside difficulty 0 are encountered
+			unsigned long ctr;
+
+			for(ctr = 0; ctr < eof_get_track_size(eof_song, EOF_TRACK_VOCALS); ctr++)
+			{
+				if(eof_get_note_type(eof_song, EOF_TRACK_VOCALS, ctr) != 0)
+				{
+					multiple_diffs = 1;
+					break;
+				}
+			}
+			if(!multiple_diffs)
+			{	//If all defined lyrics were in difficulty 0
+				for(ctr = 0; ctr < eof_song->vocal_track[0]->lines; ctr++)
+				{	//For each lyric line
+					eof_song->vocal_track[0]->line[ctr].difficulty = 0xFF;	//Initialize the line's difficulty to 0xFF (all difficulties)
+				}
+			}
+		}
+
 		eof_song_loaded = 1;
 		eof_chart_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
 		eof_init_after_load(0);
@@ -2649,22 +2672,22 @@ int eof_save_helper_checks(void)
 		{	//If user enabled the Lyrics checkbox in song properties
 			for(ctr = 0; ctr < eof_song->vocal_track[0]->lyrics; ctr++)
 			{	//For each lyric
-				if((eof_song->vocal_track[0]->lyric[ctr]->note != EOF_LYRIC_PERCUSSION) && (eof_find_lyric_line(ctr) == NULL))
-				{	//If any of the non vocal percussion lyrics are not within a line
-					eof_cursor_visible = 0;
-					eof_pen_visible = 0;
-					eof_show_mouse(screen);
-					eof_clear_input();
-					eof_seek_and_render_position(EOF_TRACK_VOCALS, eof_get_note_type(eof_song, EOF_TRACK_VOCALS, ctr), eof_get_note_pos(eof_song, EOF_TRACK_VOCALS, ctr));
-					if(alert("Warning: One or more lyrics aren't within lyric phrases.", "These lyrics won't export to FoF script or simple text formats.", "Continue?", "&Yes", "&No", 'y', 'n') == 2)
-					{	//If user opts to cancel the save
-						eof_show_mouse(NULL);
-						eof_cursor_visible = 1;
-						eof_pen_visible = 1;
-						return 1;	//Return cancellation
-					}
-					break;
+				if((eof_song->vocal_track[0]->lyric[ctr]->note == EOF_LYRIC_PERCUSSION) || (eof_find_lyric_line(ctr) != NULL))
+					continue;	//If this lyric is vocal percussion or is within a line, skip it
+
+				eof_cursor_visible = 0;
+				eof_pen_visible = 0;
+				eof_show_mouse(screen);
+				eof_clear_input();
+				eof_seek_and_render_position(EOF_TRACK_VOCALS, eof_get_note_type(eof_song, EOF_TRACK_VOCALS, ctr), eof_get_note_pos(eof_song, EOF_TRACK_VOCALS, ctr));
+				if(alert("Warning: One or more lyrics aren't within lyric phrases.", "These lyrics won't export to FoF script or simple text formats.", "Continue?", "&Yes", "&No", 'y', 'n') == 2)
+				{	//If user opts to cancel the save
+					eof_show_mouse(NULL);
+					eof_cursor_visible = 1;
+					eof_pen_visible = 1;
+					return 1;	//Return cancellation
 				}
+				break;
 			}
 		}//If user enabled the Lyrics checkbox in song properties
 		for(ctr = 0; ctr < eof_song->vocal_track[0]->lyrics; ctr++)

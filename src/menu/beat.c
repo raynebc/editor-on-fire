@@ -27,6 +27,7 @@ char eof_ks_menu_off_text[32] = {0};
 MENU eof_beat_time_signature_menu[] =
 {
 	{"&4/4", eof_menu_beat_ts_4_4, NULL, 0, NULL},
+	{"&2/4", eof_menu_beat_ts_2_4, NULL, 0, NULL},
 	{"&3/4", eof_menu_beat_ts_3_4, NULL, 0, NULL},
 	{"&5/4", eof_menu_beat_ts_5_4, NULL, 0, NULL},
 	{"&6/4", eof_menu_beat_ts_6_4, NULL, 0, NULL},
@@ -281,12 +282,13 @@ void eof_prepare_beat_menu(void)
 
 		//Ditto for time signature sub menu items
 		eof_beat_time_signature_menu[0].flags = 0;	//4/4
-		eof_beat_time_signature_menu[1].flags = 0;	//3/4
-		eof_beat_time_signature_menu[2].flags = 0;	//5/4
-		eof_beat_time_signature_menu[3].flags = 0;	//6/4
-		eof_beat_time_signature_menu[4].flags = 0;	//Custom
-		eof_beat_time_signature_menu[5].flags = 0;	//Off
-		eof_beat_time_signature_menu[6].flags = 0;	//Clear all
+		eof_beat_time_signature_menu[1].flags = 0;	//2/4
+		eof_beat_time_signature_menu[2].flags = 0;	//3/4
+		eof_beat_time_signature_menu[3].flags = 0;	//5/4
+		eof_beat_time_signature_menu[4].flags = 0;	//6/4
+		eof_beat_time_signature_menu[5].flags = 0;	//Custom
+		eof_beat_time_signature_menu[6].flags = 0;	//Off
+		eof_beat_time_signature_menu[7].flags = 0;	//Clear all
 
 //Beat>Add and Delete validation
 		if(!eof_beat_num_valid(eof_song, eof_find_next_anchor(eof_song, eof_selected_beat)))
@@ -397,33 +399,33 @@ void eof_prepare_beat_menu(void)
 			eof_beat_menu[21].flags = D_DISABLED;
 		}
 //Re-flag the active Time Signature for the selected beat
-		for(i = 0; i < 6; i++)
-		{
-			eof_beat_time_signature_menu[i].flags = 0;
-		}
 		if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_START_4_4)
 		{
 			eof_beat_time_signature_menu[0].flags = D_SELECTED;
 		}
-		else if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_START_3_4)
+		else if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_START_2_4)
 		{
 			eof_beat_time_signature_menu[1].flags = D_SELECTED;
 		}
-		else if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_START_5_4)
+		else if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_START_3_4)
 		{
 			eof_beat_time_signature_menu[2].flags = D_SELECTED;
 		}
-		else if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_START_6_4)
+		else if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_START_5_4)
 		{
 			eof_beat_time_signature_menu[3].flags = D_SELECTED;
 		}
-		else if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
+		else if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_START_6_4)
 		{
 			eof_beat_time_signature_menu[4].flags = D_SELECTED;
 		}
-		else
+		else if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
 		{
 			eof_beat_time_signature_menu[5].flags = D_SELECTED;
+		}
+		else
+		{
+			eof_beat_time_signature_menu[6].flags = D_SELECTED;
 		}
 //If any beat before the selected beat has a defined Time Signature, change the menu's "Off" option to "No Change"
 		for(i = 0; i < eof_selected_beat; i++)
@@ -500,21 +502,22 @@ void eof_prepare_beat_menu(void)
 
 			//Also disable time signature functions that can change beat positions
 			eof_beat_time_signature_menu[0].flags = D_DISABLED;	//4/4
-			eof_beat_time_signature_menu[1].flags = D_DISABLED;	//3/4
-			eof_beat_time_signature_menu[2].flags = D_DISABLED;	//5/4
-			eof_beat_time_signature_menu[3].flags = D_DISABLED;	//6/4
-			eof_beat_time_signature_menu[4].flags = D_DISABLED;	//Custom
-			eof_beat_time_signature_menu[5].flags = D_DISABLED;	//Off
-			eof_beat_time_signature_menu[6].flags = D_DISABLED;	//Clear all
+			eof_beat_time_signature_menu[1].flags = D_DISABLED;	//2/4
+			eof_beat_time_signature_menu[2].flags = D_DISABLED;	//3/4
+			eof_beat_time_signature_menu[3].flags = D_DISABLED;	//5/4
+			eof_beat_time_signature_menu[4].flags = D_DISABLED;	//6/4
+			eof_beat_time_signature_menu[5].flags = D_DISABLED;	//Custom
+			eof_beat_time_signature_menu[6].flags = D_DISABLED;	//Off
+			eof_beat_time_signature_menu[7].flags = D_DISABLED;	//Clear all
 		}
 
 		if(eof_song->tags->accurate_ts)
 		{	//If the chart's accurate TS option is enabled
-			eof_beat_time_signature_menu[7].flags = 0;	//Enable the TS Convert function
+			eof_beat_time_signature_menu[8].flags = 0;	//Enable the TS Convert function
 		}
 		else
 		{	//Otherwise disable it
-			eof_beat_time_signature_menu[7].flags = D_DISABLED;
+			eof_beat_time_signature_menu[8].flags = D_DISABLED;
 		}
 	}//If a song is loaded
 }
@@ -603,7 +606,16 @@ int eof_menu_beat_bpm_change(void)
 
 int eof_menu_beat_ts_4_4(void)
 {
-	(void) eof_apply_ts(4,4,eof_selected_beat,eof_song,1);
+	(void) eof_apply_ts(4, 4, eof_selected_beat,eof_song, 1);
+	eof_calculate_beats(eof_song);
+	eof_truncate_chart(eof_song);
+	eof_select_beat(eof_selected_beat);
+	return 1;
+}
+
+int eof_menu_beat_ts_2_4(void)
+{
+	(void) eof_apply_ts(2, 4, eof_selected_beat,eof_song, 1);
 	eof_calculate_beats(eof_song);
 	eof_truncate_chart(eof_song);
 	eof_select_beat(eof_selected_beat);
@@ -612,7 +624,7 @@ int eof_menu_beat_ts_4_4(void)
 
 int eof_menu_beat_ts_3_4(void)
 {
-	(void) eof_apply_ts(3,4,eof_selected_beat,eof_song,1);
+	(void) eof_apply_ts(3, 4, eof_selected_beat,eof_song, 1);
 	eof_calculate_beats(eof_song);
 	eof_truncate_chart(eof_song);
 	eof_select_beat(eof_selected_beat);
@@ -621,7 +633,7 @@ int eof_menu_beat_ts_3_4(void)
 
 int eof_menu_beat_ts_5_4(void)
 {
-	(void) eof_apply_ts(5,4,eof_selected_beat,eof_song,1);
+	(void) eof_apply_ts(5, 4, eof_selected_beat,eof_song, 1);
 	eof_calculate_beats(eof_song);
 	eof_truncate_chart(eof_song);
 	eof_select_beat(eof_selected_beat);
@@ -630,7 +642,7 @@ int eof_menu_beat_ts_5_4(void)
 
 int eof_menu_beat_ts_6_4(void)
 {
-	(void) eof_apply_ts(6,4,eof_selected_beat,eof_song,1);
+	(void) eof_apply_ts(6, 4, eof_selected_beat,eof_song, 1);
 	eof_calculate_beats(eof_song);
 	eof_truncate_chart(eof_song);
 	eof_select_beat(eof_selected_beat);
@@ -757,6 +769,7 @@ int eof_menu_beat_ts_off(void)
 	unsigned long flags = eof_song->beat[eof_selected_beat]->flags;
 
 	flags &= ~EOF_BEAT_FLAG_START_4_4;	//Clear this TS flag
+	flags &= ~EOF_BEAT_FLAG_START_2_4;	//Clear this TS flag
 	flags &= ~EOF_BEAT_FLAG_START_3_4;	//Clear this TS flag
 	flags &= ~EOF_BEAT_FLAG_START_5_4;	//Clear this TS flag
 	flags &= ~EOF_BEAT_FLAG_START_6_4;	//Clear this TS flag
@@ -1201,6 +1214,7 @@ int eof_menu_beat_remove_ts(void)
 			{
 				flags = eof_song->beat[i]->flags;
 				flags &= ~EOF_BEAT_FLAG_START_4_4;	//Clear this TS flag
+				flags &= ~EOF_BEAT_FLAG_START_2_4;	//Clear this TS flag
 				flags &= ~EOF_BEAT_FLAG_START_3_4;	//Clear this TS flag
 				flags &= ~EOF_BEAT_FLAG_START_5_4;	//Clear this TS flag
 				flags &= ~EOF_BEAT_FLAG_START_6_4;	//Clear this TS flag
