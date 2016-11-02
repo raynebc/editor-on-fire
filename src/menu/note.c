@@ -620,8 +620,8 @@ void eof_prepare_note_menu(void)
 		{	//ONE OR MORE NOTES/LYRICS SELECTED
 			/* star power mark */
 			sectionptr = eof_get_star_power_path(eof_song, eof_selected_track, spp);
-			if((sectionptr != NULL) && (spstart == sectionptr->start_pos) && (spend == sectionptr->end_pos))
-			{
+			if((sectionptr != NULL) && insp && (spstart == sectionptr->start_pos) && (spend == sectionptr->end_pos))
+			{	//If the selected notes already match an existing star power phrase exactly
 				eof_star_power_menu[0].flags = D_DISABLED;	//Note>Star Power>Mark/Remark
 			}
 			else
@@ -631,8 +631,8 @@ void eof_prepare_note_menu(void)
 
 			/* solo mark */
 			sectionptr = eof_get_solo(eof_song, eof_selected_track, ssp);
-			if((sectionptr != NULL) && (ssstart == sectionptr->start_pos) && (ssend == sectionptr->end_pos))
-			{
+			if((sectionptr != NULL) && insolo && (ssstart == sectionptr->start_pos) && (ssend == sectionptr->end_pos))
+			{	//If the selected notes already match an existing solo phrase exactly
 				eof_solo_menu[0].flags = D_DISABLED;		//Note>Solos>Mark/Remark
 			}
 			else
@@ -641,8 +641,8 @@ void eof_prepare_note_menu(void)
 			}
 
 			/* lyric line mark */
-			if((llstart == eof_song->vocal_track[0]->line[llp].start_pos) && (llend == eof_song->vocal_track[0]->line[llp].end_pos))
-			{
+			if(inll && (llstart == eof_song->vocal_track[0]->line[llp].start_pos) && (llend == eof_song->vocal_track[0]->line[llp].end_pos))
+			{	//If the selected notes already match an existing lyric line exactly
 				eof_lyric_line_menu[0].flags = D_DISABLED;	//Note>Lyrics>Lyric Lines>Mark/Remark
 			}
 			else
@@ -1397,6 +1397,7 @@ int eof_menu_note_resnap(void)
 {
 	unsigned long i, x, notepos;
 	unsigned long oldnotes;
+	char undo_made = 0;
 	int note_selection_updated, user_warned = 0, cancel = 0;
 
 	if(eof_snap_mode == EOF_SNAP_OFF)
@@ -1407,6 +1408,8 @@ int eof_menu_note_resnap(void)
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	oldnotes = eof_get_track_size(eof_song, eof_selected_track);
+	undo_made = 1;
+	eof_auto_adjust_sections(eof_song, eof_selected_track, 0, 0, &undo_made);	//Move sections to nearest grid snap
 	for(i = 0; i < oldnotes; i++)
 	{	//For each note in the active track
 		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
@@ -3653,6 +3656,9 @@ int eof_new_lyric_dialog(void)
 		eof_track_fixup_notes(eof_song, eof_selected_track, 0);
 		(void) eof_detect_difficulties(eof_song, eof_selected_track);
 		eof_reset_lyric_preview_lines();
+
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAdded lyric:  %s", (eof_pen_lyric.note == EOF_LYRIC_PERCUSSION) ? "(percussion)" : eof_etext);
+		eof_log(eof_log_string, 1);
 	}
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -6322,7 +6328,7 @@ int eof_menu_slider_mark(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(!existingphrase)
 	{	//If the selected notes are not within an existing slider phrase, create one
-		(void) eof_track_add_section(eof_song, eof_selected_track, EOF_SLIDER_SECTION, 0, sel_start, sel_end, 0, NULL);
+		(void) eof_track_add_section(eof_song, eof_selected_track, EOF_SLIDER_SECTION, 0xFF, sel_start, sel_end, 0, NULL);
 	}
 	else
 	{	//Otherwise edit the existing phrase

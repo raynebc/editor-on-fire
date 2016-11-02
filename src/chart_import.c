@@ -681,7 +681,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 					ctr2++;		//Otherwise include this note in the slider note phrase
 				}
 				end = eof_get_note_pos(sp, ctr, ctr2) + eof_get_note_length(sp, ctr, ctr2);	//Track the end position of this run of slider notes
-				(void) eof_track_add_section(sp, ctr, EOF_SLIDER_SECTION, 0, start, end, 0, NULL);	//Add the slider phrase
+				(void) eof_track_add_section(sp, ctr, EOF_SLIDER_SECTION, 0xFF, start, end, 0, NULL);	//Add the slider phrase
 			}
 		}
 	}

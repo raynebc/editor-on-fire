@@ -58,7 +58,8 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp);
 	//Calculates the grid snap interval length for sp->beat
 int eof_find_grid_snap(unsigned long pos, int dir, unsigned long *result);
 	//Finds the next or previous gridsnap relative to the specified position
-	//If dir is >= 0, finds the timestamp of the next grid snap position
+	//If dir is > 0, finds the timestamp of the next grid snap position
+	//If dir is 0, finds the timestamp of the nearest grid snap (ie. resnap) position
 	//If dir is < 0, finds the timestamp of the previous grid snap position
 	//Upon success, the resulting timestamp is returning through result and nonzero is returned
 	//Returns zero on error or if the requested grid snap position does not exist

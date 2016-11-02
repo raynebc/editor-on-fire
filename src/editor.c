@@ -578,7 +578,7 @@ int eof_find_grid_snap(unsigned long pos, int dir, unsigned long *result)
 			beat--;	//If the specified position is on a beat marker, the previous grid snap is in the previous beat
 	}
 	else
-	{	//If looking for the next grid snap
+	{	//If looking for the nearest/next grid snap
 		if(pos >= eof_song->beat[eof_song->beats - 1]->pos)
 			return 0;	//There are no seek positions after the last beat marker
 	}
@@ -597,9 +597,14 @@ int eof_find_grid_snap(unsigned long pos, int dir, unsigned long *result)
 			*result = eof_tail_snap.pos;					//The result is the closest grid snap that is one snap length earlier than the specified position
 		}
 	}
+	else if(dir == 0)
+	{	//If looking for the nearest grid snap
+		eof_snap_logic(&eof_tail_snap, pos);
+		*result = eof_tail_snap.pos;						//The result is the nearest grid snap position
+	}
 	else
 	{	//If looking for the next grid snap
-		eof_snap_logic(&eof_tail_snap, pos);					//Find the grid snapped position of the new seek position
+		eof_snap_logic(&eof_tail_snap, pos);				//Find the grid snapped position of the new seek position
 		*result = eof_tail_snap.next_snap;					//The result is the next grid snap position
 	}
 
@@ -2229,8 +2234,7 @@ if(eof_key_code == KEY_PAUSE)
 			{	//If CTRL is held but SHIFT is not
 				char undo_made = 0;
 
-				if(eof_vocals_selected)
-					eof_auto_adjust_sections(eof_song, EOF_TRACK_VOCALS, 0, -1, &undo_made);	//Move lyric sections accordingly by one grid snap
+				eof_auto_adjust_sections(eof_song, eof_selected_track, 0, -1, &undo_made);	//Move sections accordingly by one grid snap
 				(void) eof_menu_note_move_by_grid_snap(-1, &undo_made);
 				if(eof_song->tags->highlight_unsnapped_notes)
 				{	//If the user has enabled the dynamic highlighting of non grid snapped notes
@@ -2273,8 +2277,7 @@ if(eof_key_code == KEY_PAUSE)
 			{	//If CTRL is held but SHIFT is not
 				char undo_made = 0;
 
-				if(eof_vocals_selected)
-					eof_auto_adjust_sections(eof_song, EOF_TRACK_VOCALS, 0, 1, &undo_made);	//Move lyric sections accordingly by one grid snap
+				eof_auto_adjust_sections(eof_song, eof_selected_track, 0, 1, &undo_made);	//Move sections accordingly by one grid snap
 				(void) eof_menu_note_move_by_grid_snap(1, &undo_made);
 				if(eof_song->tags->highlight_unsnapped_notes)
 				{	//If the user has enabled the dynamic highlighting of non grid snapped notes
@@ -3946,6 +3949,8 @@ void eof_editor_logic(void)
 							move_offset = eof_mickeys_x * eof_zoom;
 						}
 					}
+					if(move_offset)
+						eof_auto_adjust_sections(eof_song, eof_selected_track, move_offset, move_direction, &undo_made);	//Move sections accordingly
 					for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 					{	//For each note in the active track
 						if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])

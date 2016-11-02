@@ -724,6 +724,7 @@ int eof_legacy_track_add_star_power(EOF_LEGACY_TRACK * tp, unsigned long start_p
 		tp->star_power_path[tp->star_power_paths].start_pos = start_pos;
 		tp->star_power_path[tp->star_power_paths].end_pos = end_pos;
 		tp->star_power_path[tp->star_power_paths].flags = 0;
+		tp->star_power_path[tp->star_power_paths].difficulty = 0xFF;
 		tp->star_power_path[tp->star_power_paths].name[0] = '\0';
 		tp->star_power_paths++;
 		return 1;	//Return success
@@ -753,6 +754,7 @@ int eof_legacy_track_add_solo(EOF_LEGACY_TRACK * tp, unsigned long start_pos, un
 		tp->solo[tp->solos].start_pos = start_pos;
 		tp->solo[tp->solos].end_pos = end_pos;
 		tp->solo[tp->solos].flags = 0;
+		tp->solo[tp->solos].difficulty = 0xFF;
 		tp->solo[tp->solos].name[0] = '\0';
 		tp->solos++;
 		return 1;	//Return success
@@ -2593,6 +2595,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				{	//If EOF can store the slider section
 					sp->legacy_track[tracknum]->slider[count].start_pos = start;
 					sp->legacy_track[tracknum]->slider[count].end_pos = end;
+					sp->legacy_track[tracknum]->slider[count].difficulty = difficulty;
 					sp->legacy_track[tracknum]->slider[count].flags = 0;
 					if(name == NULL)
 					{
@@ -5981,6 +5984,7 @@ int eof_pro_guitar_track_add_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned long
 		tp->star_power_path[tp->star_power_paths].start_pos = start_pos;
 		tp->star_power_path[tp->star_power_paths].end_pos = end_pos;
 		tp->star_power_path[tp->star_power_paths].flags = 0;
+		tp->star_power_path[tp->star_power_paths].difficulty = 0xFF;
 		tp->star_power_path[tp->star_power_paths].name[0] = '\0';
 		tp->star_power_paths++;
 		return 1;	//Return success
@@ -6067,6 +6071,7 @@ int eof_pro_guitar_track_add_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long start
 		tp->solo[tp->solos].start_pos = start_pos;
 		tp->solo[tp->solos].end_pos = end_pos;
 		tp->solo[tp->solos].flags = 0;
+		tp->solo[tp->solos].difficulty = 0xFF;
 		tp->solo[tp->solos].name[0] = '\0';
 		tp->solos++;
 		return 1;	//Return success
@@ -6351,6 +6356,7 @@ int eof_legacy_track_add_trill(EOF_LEGACY_TRACK * tp, unsigned long start_pos, u
 		tp->trill[tp->trills].start_pos = start_pos;
 		tp->trill[tp->trills].end_pos = end_pos;
 		tp->trill[tp->trills].flags = 0;
+		tp->trill[tp->trills].difficulty = 0xFF;
 		tp->trill[tp->trills].name[0] = '\0';
 		tp->trills++;
 		return 1;	//Return success
@@ -6365,6 +6371,7 @@ int eof_pro_guitar_track_add_trill(EOF_PRO_GUITAR_TRACK * tp, unsigned long star
 		tp->trill[tp->trills].start_pos = start_pos;
 		tp->trill[tp->trills].end_pos = end_pos;
 		tp->trill[tp->trills].flags = 0;
+		tp->trill[tp->trills].difficulty = 0xFF;
 		tp->trill[tp->trills].name[0] = '\0';
 		tp->trills++;
 		return 1;	//Return success
@@ -8936,6 +8943,8 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 	EOF_PHRASE_SECTION *sections = NULL;
 	int applicable, missing;
 
+	if(!eof_section_auto_adjust)
+		return;	//User has not enabled this feature
 	if(!sp || (track >= sp->tracks) || !sp->beats)
 		return;	//Invalid parameters
 	if(eof_selection.track != track)
@@ -8946,6 +8955,22 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 		if(!eof_lookup_track_section_type(sp, track, sectiontype, &sectioncount, &sections) || !sections)
 			continue;	//If this track doesn't have any of this type of section, skip it
 
+		//Skip the section types that are unused or otherwise not altered by this function
+		switch(sectiontype)
+		{
+			case EOF_BOOKMARK_SECTION:
+			case EOF_FRET_CATALOG_SECTION:
+			case EOF_YELLOW_CYMBAL_SECTION:
+			case EOF_BLUE_CYMBAL_SECTION:
+			case EOF_GREEN_CYMBAL_SECTION:
+			case EOF_TRAINER_SECTION:
+			case EOF_CUSTOM_MIDI_NOTE_SECTION:
+			case EOF_PREVIEW_SECTION:
+			case EOF_RS_POPUP_MESSAGE:
+			case EOF_RS_TONE_CHANGE:
+			continue;
+		}
+
 		for(ctr = 0; ctr < sectioncount; ctr++)
 		{	//For each instance of this section type in the track
 			applicable = missing = 0;	//Reset these statuses
@@ -8954,8 +8979,16 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 				notepos = eof_get_note_pos(sp, track, ctr2);
 
 				//Check if the note is within the section's scope
-				if(notepos > sections[ctr].end_pos)
-					break;	//If this note and all subsequent ones occur after the section ends, stop looking for notes in this section
+				if(sectiontype != EOF_FRET_HAND_POS_SECTION)
+				{	//Fret hand positions don't define an end position
+					if(notepos > sections[ctr].end_pos)
+						break;	//If this note and all subsequent ones occur after the section ends, stop looking for notes in this section
+				}
+				else
+				{
+					if(notepos > sections[ctr].start_pos)
+						break;	//If this note and all subsequent notes occur after the fret hand position, stop looking for notes in this section
+				}
 				if(notepos < sections[ctr].start_pos)
 					continue;	//If this note occurs before the section begins, skip it
 				if((sections[ctr].difficulty != 0xFF) && (sections[ctr].difficulty != eof_get_note_type(sp, track, ctr2)))
@@ -8989,7 +9022,10 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 						*undo_made = 1;
 					}
 					sections[ctr].start_pos -= offset;
-					sections[ctr].end_pos -= offset;
+					if(sectiontype != EOF_FRET_HAND_POS_SECTION)
+					{	//Fret hand positions don't define an end position
+						sections[ctr].end_pos -= offset;
+					}
 				}
 				else
 				{	//If making sections later
@@ -9000,16 +9036,19 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 					}
 
 					sections[ctr].start_pos += offset;
-					sections[ctr].end_pos += offset;
+					if(sectiontype != EOF_FRET_HAND_POS_SECTION)
+					{	//Fret hand positions don't define an end position
+						sections[ctr].end_pos += offset;
+					}
 				}
 			}
 			else
-			{	//If moving by one grid snap
+			{	//If moving by grid snap
 				unsigned long newstart, newend;
 				if(eof_find_grid_snap(sections[ctr].start_pos, dir, &newstart))
-				{	//If the appropriate grid snap before/after the section's current start position was found
-					if(eof_find_grid_snap(sections[ctr].end_pos, dir, &newend))
-					{	//If the appropriate grid snap before/after the section's current end position was found
+				{	//If the appropriate grid snap before/nearest/after the section's current start position was found
+					if((sectiontype == EOF_FRET_HAND_POS_SECTION) || eof_find_grid_snap(sections[ctr].end_pos, dir, &newend))
+					{	//If there is no applicable end position, or the appropriate grid snap before/after the section's current end position was found
 						if(undo_made && (*undo_made == 0))
 						{	//If an undo state needs to be made
 							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -9017,7 +9056,10 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 						}
 
 						sections[ctr].start_pos = newstart;	//Move the section
-						sections[ctr].end_pos = newend;
+						if(sectiontype != EOF_FRET_HAND_POS_SECTION)
+						{	//Fret hand positions don't define an end position
+							sections[ctr].end_pos = newend;
+						}
 					}
 				}
 			}

@@ -255,6 +255,10 @@ Vocal Track Editing:
     
         Shift the piano roll directly to a specific octave.
 
+    Backspace:
+
+        Add a percussion note.
+
 
 Miscellaneous Controls:
 

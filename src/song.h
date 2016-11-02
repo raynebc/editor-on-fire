@@ -273,9 +273,9 @@ typedef struct
 #define EOF_GREEN_CYMBAL_SECTION        8	//Unused
 #define EOF_TRILL_SECTION				9
 #define EOF_ARPEGGIO_SECTION			10
-#define EOF_TRAINER_SECTION				11
+#define EOF_TRAINER_SECTION				11	//Unused
 #define EOF_CUSTOM_MIDI_NOTE_SECTION	12	//Unused
-#define EOF_PREVIEW_SECTION				13
+#define EOF_PREVIEW_SECTION				13	//Unused
 #define EOF_TREMOLO_SECTION				14
 #define EOF_SLIDER_SECTION				15
 #define EOF_FRET_HAND_POS_SECTION       16
@@ -996,9 +996,11 @@ int eof_length_is_equal_to(long length, long threshold);		//Returns nonzero if b
 
 void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char *undo_made);
 	//Examines all sections in the specified track, and for those which have notes that are all selected, their positions are moved
+	//Returns with no changes made if the "Auto-Adjust sections/FHPs" preference is not enabled
 	//If dir is negative, applicable sections are moved the specified offset number of ms earlier
 	// otherwise applicable sections are moved the specified offset number of ms later
 	//If offset is zero, applicable sections are moved in one grid snap in the specified direction instead of by a specific number of ms
+	//If both offset AND dir are zero, applicable sections are re-snapped to the nearest grid snap positions
 	//If undo_made is not NULL and references a value of 0, an undo state is made prior to the first section being moved, and *undo_made is set to nonzero
 
 static inline int eof_beat_num_valid(EOF_SONG *sp, unsigned long beatnum)

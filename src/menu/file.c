@@ -166,6 +166,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 16,  218, 340, 16,  2,   23,  0,    0,      1,   0,   "Apply crazy to repeated chords separated by a rest",NULL, NULL },
 	{ d_agup_check_proc, 248, 330, 224, 16,  2,   23,  0,    0,      1,   0,   "Offer to auto complete fingering",NULL, NULL },
 	{ d_agup_check_proc, 248, 346, 206, 16,  2,   23,  0,    0,      1,   0,   "Don't auto-name double stops",NULL, NULL },
+	{ d_agup_check_proc, 248, 362, 184, 16,  2,   23,  0,    0,      1,   0,   "Auto-Adjust sections/FHPs",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1175,35 +1176,36 @@ int eof_menu_file_preferences(void)
 	//Use the currently configured settings to populate the dialog selections
 	eof_preferences_dialog[5].flags = eof_preferences_dialog[6].flags = eof_preferences_dialog[7].flags = eof_preferences_dialog[8].flags = eof_preferences_dialog[9].flags = 0;	//Options for what to display at top of 2D panel
 	eof_preferences_dialog[eof_2d_render_top_option].flags = D_SELECTED;
-	eof_preferences_dialog[10].flags = eof_inverted_notes ? D_SELECTED : 0;				//Inverted notes
-	eof_preferences_dialog[11].flags = eof_lefty_mode ? D_SELECTED : 0;					//Lefty mode
-	eof_preferences_dialog[12].flags = eof_note_auto_adjust ? D_SELECTED : 0;			//Note auto adjust
+	eof_preferences_dialog[10].flags = eof_inverted_notes ? D_SELECTED : 0;					//Inverted notes
+	eof_preferences_dialog[11].flags = eof_lefty_mode ? D_SELECTED : 0;						//Lefty mode
+	eof_preferences_dialog[12].flags = eof_note_auto_adjust ? D_SELECTED : 0;				//Note auto adjust
 	eof_preferences_dialog[13].flags = enable_logging ? D_SELECTED : 0;						//Enable logging
-	eof_preferences_dialog[14].flags = eof_hide_drum_tails ? D_SELECTED : 0;			//Hide drum note tails
-	eof_preferences_dialog[15].flags = eof_hide_note_names ? D_SELECTED : 0;			//Hide note names
-	eof_preferences_dialog[16].flags = eof_disable_sound_processing ? D_SELECTED : 0;	//Disable sound effects
-	eof_preferences_dialog[17].flags = eof_disable_3d_rendering ? D_SELECTED : 0;		//Disable 3D rendering
-	eof_preferences_dialog[18].flags = eof_disable_2d_rendering ? D_SELECTED : 0;		//Disable 2D rendering
-	eof_preferences_dialog[19].flags = eof_disable_info_panel ? D_SELECTED : 0;			//Disable info panel
-	eof_preferences_dialog[20].flags = eof_paste_erase_overlap ? D_SELECTED : 0;		//Paste erases overlap
+	eof_preferences_dialog[14].flags = eof_hide_drum_tails ? D_SELECTED : 0;				//Hide drum note tails
+	eof_preferences_dialog[15].flags = eof_hide_note_names ? D_SELECTED : 0;				//Hide note names
+	eof_preferences_dialog[16].flags = eof_disable_sound_processing ? D_SELECTED : 0;		//Disable sound effects
+	eof_preferences_dialog[17].flags = eof_disable_3d_rendering ? D_SELECTED : 0;			//Disable 3D rendering
+	eof_preferences_dialog[18].flags = eof_disable_2d_rendering ? D_SELECTED : 0;			//Disable 2D rendering
+	eof_preferences_dialog[19].flags = eof_disable_info_panel ? D_SELECTED : 0;				//Disable info panel
+	eof_preferences_dialog[20].flags = eof_paste_erase_overlap ? D_SELECTED : 0;			//Paste erases overlap
 	eof_preferences_dialog[21].flags = eof_note_tails_clickable ? D_SELECTED : 0;			//Make note tails clickable
 	eof_preferences_dialog[22].flags = eof_drum_modifiers_affect_all_difficulties ? D_SELECTED : 0;	//Drum modifiers affect all diff's
-	eof_preferences_dialog[27].flags = eof_render_bass_drum_in_lane ? D_SELECTED : 0;	//3D render bass drum in a lane
-	eof_preferences_dialog[28].flags = eof_fb_seek_controls ? D_SELECTED : 0;			//dB style seek controls
-	eof_preferences_dialog[30].d1 = eof_input_mode;										//Input method
-	original_input_mode = eof_input_mode;												//Store this value
-	eof_preferences_dialog[32].d1 = eof_color_set;										//Color set
+	eof_preferences_dialog[27].flags = eof_render_bass_drum_in_lane ? D_SELECTED : 0;		//3D render bass drum in a lane
+	eof_preferences_dialog[28].flags = eof_fb_seek_controls ? D_SELECTED : 0;				//dB style seek controls
+	eof_preferences_dialog[30].d1 = eof_input_mode;											//Input method
+	original_input_mode = eof_input_mode;													//Store this value
+	eof_preferences_dialog[32].d1 = eof_color_set;											//Color set
 	eof_preferences_dialog[33].flags = eof_new_note_length_1ms ? D_SELECTED : 0;			//New notes are made 1ms long
 	eof_preferences_dialog[34].flags = eof_render_3d_rs_chords ? D_SELECTED : 0;			//3D render Rocksmith style chords
 	eof_preferences_dialog[35].flags = eof_rewind_at_end ? D_SELECTED : 0;					//Rewind when playback is at end
 	eof_preferences_dialog[36].flags = eof_display_seek_pos_in_seconds ? D_SELECTED : 0;	//Display seek pos. in seconds
-	eof_preferences_dialog[37].flags = eof_add_new_notes_to_selection ? D_SELECTED : 0;	//Add new notes to selection
+	eof_preferences_dialog[37].flags = eof_add_new_notes_to_selection ? D_SELECTED : 0;		//Add new notes to selection
 	eof_preferences_dialog[38].flags = eof_inverted_chords_slash ? D_SELECTED : 0;			//Treat inverted chords as slash
 	eof_preferences_dialog[39].flags = eof_click_changes_dialog_focus ? D_SELECTED : 0;		//Click to change dialog focus
 	eof_preferences_dialog[40].flags = eof_stop_playback_leave_focus ? D_SELECTED : 0;		//EOF leaving focus stops playback
 	eof_preferences_dialog[43].flags = eof_enforce_chord_density ? D_SELECTED : 0;			//Apply crazy to repeated chords separated by a rest
 	eof_preferences_dialog[44].flags = eof_auto_complete_fingering ? D_SELECTED : 0;		//Offer to auto complete fingering
 	eof_preferences_dialog[45].flags = eof_dont_auto_name_double_stops ? D_SELECTED : 0;	//Don't auto-name double stops
+	eof_preferences_dialog[46].flags = eof_section_auto_adjust ? D_SELECTED : 0;			//Auto-Adjust sections/FHPs
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1314,6 +1316,7 @@ int eof_menu_file_preferences(void)
 			eof_enforce_chord_density = (eof_preferences_dialog[43].flags == D_SELECTED ? 1 : 0);
 			eof_auto_complete_fingering = (eof_preferences_dialog[44].flags == D_SELECTED ? 1 : 0);
 			eof_dont_auto_name_double_stops = (eof_preferences_dialog[45].flags == D_SELECTED ? 1 : 0);
+			eof_section_auto_adjust = (eof_preferences_dialog[46].flags == D_SELECTED ? 1 : 0);
 			eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case eof_inverted_notes was changed
 			eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case eof_lefty_mode was changed
 		}//If the user clicked OK
@@ -1353,6 +1356,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[43].flags = 0;					//Apply crazy to repeated chords separated by a rest
 			eof_preferences_dialog[44].flags = D_SELECTED;			//Offer to auto complete fingering
 			eof_preferences_dialog[45].flags = 0;					//Don't auto-name double stops
+			eof_preferences_dialog[46].flags = 1;					//Auto-Adjust sections/FHPs
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
