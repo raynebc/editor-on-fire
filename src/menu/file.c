@@ -3256,10 +3256,11 @@ int eof_save_helper_checks(void)
 	if(note_skew_warned == 3)
 		return 1;	//If the user opted to cancel after highlighting offending notes, return cancellation
 
-	/* check for any notes that extend into a different RS phrase or section */
+	///Dynamic difficulty related checks below
 	if(eof_song->tags->rs_export_suppress_dd_warnings)
 		return 0;	//If dynamic difficulty warnings have been suppressed for this chart, skip the remainder of this function's logic which performs that check
 
+	/* check for any notes that extend into a different RS phrase or section */
 	if(eof_write_rs_files || eof_write_rs2_files)
 	{	//If the user wants to save Rocksmith capable files
 		char user_prompted = 0;

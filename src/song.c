@@ -4638,7 +4638,7 @@ void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, un
 {
 // 	eof_log("eof_set_note_note() entered");
 
-	unsigned long tracknum;
+	unsigned long tracknum, bitmask, ctr;
 
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
@@ -4666,6 +4666,13 @@ void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, un
 			{
 				sp->pro_guitar_track[tracknum]->note[note]->note = value;
 				memset(sp->pro_guitar_track[tracknum]->note[note]->finger, 0, 8);	//Initialize all fingers to undefined
+				for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+				{	//For each of the 6 usable strings
+					if((value & bitmask) == 0)
+					{	//If this string is was not or is no longer in use
+						sp->pro_guitar_track[tracknum]->note[note]->frets[ctr] = 0;	//Clear its fret value
+					}
+				}
 			}
 		break;
 

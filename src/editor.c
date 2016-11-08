@@ -3047,14 +3047,36 @@ if(eof_key_code == KEY_PAUSE)
 #ifdef ALLEGRO_WINDOWS
 			if(eof_key_code == KEY_F5)
 			{
-				if(!KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
-				{	//If SHIFT is held but CTRL is not
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					(void) eof_redraw_display();
-					eof_use_key();
-				}
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				(void) eof_redraw_display();
+				eof_use_key();
 			}
 #endif
+
+			if(eof_key_code == KEY_F11)
+			{	//Cycle the "Top of 2D pane shows" preference
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				if(eof_2d_render_top_option == 5)
+				{	//If chord names are being displayed
+					eof_2d_render_top_option = 7;	//Change it to hand positions
+				}
+				else if(eof_2d_render_top_option == 7)
+				{	//If hand positions are being displayed
+					eof_2d_render_top_option = 9;	//Change it to RS sections + phrases
+				}
+				else
+				{	//Either the last preference in the sequence is being displayed, or none of them are
+					//Reset the sequence by setting the first applicable preference option
+					if(eof_top_of_2d_pane_cycle_count_2)
+					{	//If user wants to skip displaying chord names via this shortcut
+						eof_2d_render_top_option = 7;	//Change it to hand positions
+					}
+					else
+					{
+						eof_2d_render_top_option = 5;	//Change it to chord names
+					}
+				}
+			}
 		}//If SHIFT is held down and CTRL is not
 
 		if(!KEY_EITHER_CTRL && ((eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK)))

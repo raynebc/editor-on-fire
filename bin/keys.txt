@@ -305,5 +305,9 @@ Miscellaneous Controls:
 
         Cycle to the next/previous track of the same type (ie. "pro guitar/bass").
 
+    SHIFT + F11
+
+        Cycle through the "Names", "Hand pos" and "RS sections + phrases" top of 2D pane shows preference.  If the eof_top_of_2d_pane_cycle_count_2 item is manually set to 1 in eof.cfg while EOF isn't running, the names option is skipped by this shortcut.
+
 
 EOF provides many useful functions which can be accessed through various menus and dialogs. Shortcuts keys are provided to access some of the more frequently used functions. This screen is not an exhaustive list of keyboard shortcuts. All menu functions with shortcuts will display that shortcut next to the name of the function in the menu.
