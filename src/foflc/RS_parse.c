@@ -143,6 +143,8 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 	input_length = strlen(input);
 	for(ctr = 0; ctr < input_length; ctr++)
 	{	//For each character of the input string
+		if(!isprint(input[ctr]))
+			continue;	//If this isn't a printable character, omit it
 		if(rs_filter && rs_filter_char(input[ctr], rs_filter))
 			continue;	//If filtering out characters for Rocksmith, omit affected characters
 

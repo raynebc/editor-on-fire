@@ -614,7 +614,9 @@ unsigned char eof_get_note_eflags(EOF_SONG *sp, unsigned long track, unsigned lo
 void eof_set_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char eflags);	//Sets the extended flags of the specified pro guitar note
 unsigned char eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the note bitflag of the specified track's note/lyric, or 0 on error
 unsigned char eof_get_note_ghost(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the ghost bitflag of the specified pro guitar track's note/lyric, or 0 on error or if the specified track isn't a pro guitar track
-void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the note value of the specified track's note/lyric
+void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);
+	//Sets the note value of the specified track's note/lyric
+	//If the specified note is a pro guitar note, any unused strings have their corresponding fret values reset to 0
 unsigned char eof_get_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the note bitflag of the specified track's note, or 0 on error
 void eof_set_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the accent bitmask value of the specified track's note
 char *eof_get_note_name(EOF_SONG *sp, unsigned long track, unsigned long note);				//Returns a pointer to the note's statically allocated name array, or a lyric's text array, or NULL on error

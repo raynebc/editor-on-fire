@@ -946,7 +946,7 @@ int eof_menu_file_lyrics_import(void)
 	if(returnedfn)
 	{	//If the user selected a file
 		if(eof_string_has_non_ascii(returnedfn))
-		{	//If the string has any non ASCIi characters
+		{	//If the string has any non ASCII characters
 			eof_log("\t\tUnicode or extended ASCII file path detected.  Creating temporarily copy to use for import.", 1);
 			tempfile = 1;	//Track that EOF will create a temporary file to pass to FoFLC, since FoFLC uses standard C file I/O and cannot open file paths that aren't normal ASCII
 			(void) eof_copy_file(returnedfn, templyricfile);	//Copy this to a temporary file containing normal ASCII characters
@@ -2454,9 +2454,13 @@ int eof_new_chart(char * filename)
 			if(ID3FrameProcessor(&tag))		//If ID3v2 frames are found
 			{
 				(void) GrabID3TextFrame(&tag,"TPE1",eof_etext,(unsigned long)(sizeof(eof_etext)/sizeof(char)));		//Store the Artist info in eof_etext[]
+				eof_sanitize_string(eof_etext);		//Filter out unprintable and extended ASCII
 				(void) GrabID3TextFrame(&tag,"TIT2",eof_etext2,(unsigned long)(sizeof(eof_etext2)/sizeof(char)));	//Store the Title info in eof_etext2[]
+				eof_sanitize_string(eof_etext2);	//Filter out unprintable and extended ASCII
 				(void) GrabID3TextFrame(&tag,"TYER",year,(unsigned long)(sizeof(year)/sizeof(char)));				//Store the Year info in year[]
+				eof_sanitize_string(year);			//Filter out unprintable and extended ASCII
 				(void) GrabID3TextFrame(&tag,"TALB",album,(unsigned long)(sizeof(album)/sizeof(char)));				//Store the Album info in album[]
+				eof_sanitize_string(album);			//Filter out unprintable and extended ASCII
 			}
 
 			//If any of the information was not found in the ID3v2 tag, check for it from an ID3v1 tag

@@ -22,6 +22,7 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 	//is truncated to be warnsize number of characters.  If warnsize is zero, no check or truncation is performed.
 	//If size is zero, the function returns without doing anything.  Otherwise the buffer is guaranteed to be NULL terminated
 	//If warnsize is larger than size, the function returns without doing anything.
+	//Any non-printable characters are removed
 	//If rs_filter is nonzero, the following characters are not copied to the buffer:  ( } ,  \  : { " ), and all non ASCII characters are likewise removed
 	//If rs_filter is greater than 1, the forward slash character is also not copied to the buffer
 

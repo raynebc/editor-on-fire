@@ -18,6 +18,7 @@ void eof_free_ucode_table(void);
 int eof_convert_extended_ascii(char * buffer, int size);
 
 int eof_string_has_non_ascii(char *str);	//Returns nonzero if any characters in the string have non ASCII characters (any character valued over 127)
+void eof_sanitize_string(char *str);		//Replaces any non-printable or non ASCII (characters numbered higher than 127) characters with spaces
 
 int eof_is_illegal_filename_character(char c);	//Returns nonzero if the specified character is not legal for use in a filename in Windows
 

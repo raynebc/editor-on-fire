@@ -1238,14 +1238,7 @@ int eof_menu_note_transpose_up(void)
 					flags &= ~(EOF_NOTE_FLAG_NO_HOPO);
 					eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 				}
-				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-				{	//If legacy view is in effect, set the note's legacy bitmask
-					eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = note;
-				}
-				else
-				{	//Otherwise set the note's normal bitmask
-					eof_set_note_note(eof_song, eof_selected_track, i, note);
-				}
+				///Update fret values first, because eof_set_note_note() will clear fret values for unused strings
 				if(!eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 				{	//If a pro guitar note was tranposed, move the fret values accordingly (only if legacy view isn't in effect)
 					for(j = 7; j > 0; j--)
@@ -1253,6 +1246,14 @@ int eof_menu_note_transpose_up(void)
 						eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j-1];	//Cycle fret values up from lower lane
 					}
 					eof_song->pro_guitar_track[tracknum]->note[i]->frets[0] = 0xFF;	//Re-initialize lane 1 to the default of (muted)
+				}
+				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				{	//If legacy view is in effect, set the note's legacy bitmask
+					eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = note;
+				}
+				else
+				{	//Otherwise set the note's normal bitmask
+					eof_set_note_note(eof_song, eof_selected_track, i, note);
 				}
 			}
 		}
@@ -1304,14 +1305,7 @@ int eof_menu_note_transpose_down(void)
 					note = eof_get_note_note(eof_song, eof_selected_track, i);
 				}
 				note = (note >> 1) & 63;
-				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-				{	//If legacy view is in effect, set the note's legacy bitmask
-					eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = note;
-				}
-				else
-				{	//Otherwise set the note's normal bitmask
-					eof_set_note_note(eof_song, eof_selected_track, i, note);
-				}
+				///Update fret values first, because eof_set_note_note() will clear fret values for unused strings
 				if(!eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 				{	//If a pro guitar note was tranposed, move the fret values accordingly (only if legacy view isn't in effect)
 					for(j = 0; j < 7; j++)
@@ -1319,6 +1313,14 @@ int eof_menu_note_transpose_down(void)
 						eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j+1];	//Cycle fret values down from upper lane
 					}
 					eof_song->pro_guitar_track[tracknum]->note[i]->frets[7] = 0xFF;	//Re-initialize lane 15 to the default of (muted)
+				}
+				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				{	//If legacy view is in effect, set the note's legacy bitmask
+					eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = note;
+				}
+				else
+				{	//Otherwise set the note's normal bitmask
+					eof_set_note_note(eof_song, eof_selected_track, i, note);
 				}
 			}
 		}

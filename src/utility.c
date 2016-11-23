@@ -1,4 +1,5 @@
 #include <allegro.h>
+#include <ctype.h>
 #include <sys/stat.h>
 #include "utility.h"
 #include "main.h"	//For logging
@@ -280,6 +281,25 @@ int eof_string_has_non_ascii(char *str)
 		}
 	}
 	return 0;
+}
+
+void eof_sanitize_string(char *str)
+{
+	unsigned char ch;
+	unsigned long index = 0;
+
+	if(!str)
+		return;
+
+	while(str[index] != '\0')
+	{	//Until the end of the string is reached
+		ch = str[index];
+		if((ch > 127) || !isprint(ch))
+		{	//If this character is deemed invalid
+			str[index] = ' ';	//Replace with a space
+		}
+		index++;
+	}
 }
 
 int eof_is_illegal_filename_character(char c)
