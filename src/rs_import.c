@@ -385,18 +385,52 @@ char eof_rs_import_process_chordnotes(EOF_PRO_GUITAR_TRACK *tp, EOF_PRO_GUITAR_N
 	if(!error)
 	{	//If the chordnote lengths were processed
 		//Examine chordnote flaqs to determine which statuses are used in all of the chord's chordnotes
+		long slideamount = 0;	//The number of frets the first chordnote slides (pitched)
+		long uslideamount = 0;	//The number of frets the first chordnote slides (unpitched)
+
 		cflags = chordnote[0]->flags;	//Initialize these variables with the first chordnote's flags
 		ceflags = chordnote[0]->eflags;
+		if((cflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (cflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+		{	//If the first chord note slides (pitched)
+			slideamount = chordnote[0]->slideend - eof_pro_guitar_note_lowest_fret_np(chordnote[0]);
+		}
+		if(cflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+		{	//If the first chord note slides (unpitched)
+			uslideamount = chordnote[0]->unpitchend - eof_pro_guitar_note_lowest_fret_np(chordnote[0]);
+		}
 		for(ctr = 1; ctr < chordnotectr; ctr++)
 		{	//For each of the chordnotes after the first
 			cflags &= chordnote[ctr]->flags;	//Clear any flags that this chordnote doesn't also have from the common flags variable
 			ceflags &= chordnote[ctr]->eflags;
+			if((chordnote[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (chordnote[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+			{	//If this chordnote slides (pitched)
+				if(slideamount != chordnote[ctr]->slideend - eof_pro_guitar_note_lowest_fret_np(chordnote[ctr]))
+				{	//If this chordnote slides a different amount than the first chordnote
+					cflags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;		//They don't have a slide in common
+					cflags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+				}
+			}
+			if(chordnote[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+			{	//If this chordnote slides (unpitched)
+				if(uslideamount != chordnote[ctr]->unpitchend - eof_pro_guitar_note_lowest_fret_np(chordnote[ctr]))
+				{	//If this chordnote unpitched slides a different amount than the first chordnote
+					cflags &= ~EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;	//They don't have an unpitched slide in common
+				}
+			}
 		}
 
 		//Move any flags that all chordnotes had in common from the chordnote flags to the chord itself
 		// and transfer leftover statuses to tech notes already applied to the chord where possible
 		np->flags |= cflags;
 		np->eflags |= ceflags;
+		if(slideamount)
+		{	//If an end of slide position is being transferred
+			np->slideend = eof_pro_guitar_note_lowest_fret_np(np) + slideamount;
+		}
+		if(uslideamount)
+		{	//If an end of unpitched slide position is being transferred
+			np->unpitchend = eof_pro_guitar_note_lowest_fret_np(np) + uslideamount;
+		}
 		eof_pro_guitar_track_sort_tech_notes(tp);	//Ensure tech notes are in order
 		for(ctr = 0; ctr < chordnotectr; ctr++)
 		{	//For each chordnote that was parsed
@@ -582,6 +616,12 @@ char eof_rs_import_process_chordnotes(EOF_PRO_GUITAR_TRACK *tp, EOF_PRO_GUITAR_N
 						tnp->note = 1 << ctr;
 						tnp->flags = chordnote[ctr]->flags;
 						tnp->eflags = chordnote[ctr]->eflags;
+						tnp->slideend = chordnote[ctr]->slideend;
+						tnp->unpitchend = chordnote[ctr]->unpitchend;
+						if(tnp->slideend || tnp->unpitchend)
+						{	//If an end of slide position was applied
+							tnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Re-apply the Rocksmith notation flag to indicate that the end of slide is defined
+						}
 						solutionval++;
 
 						///DEBUG

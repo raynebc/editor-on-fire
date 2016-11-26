@@ -84,9 +84,11 @@ char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, 
 	//Returns 0 on error or if the note has no manually assigned or detected name
 	//Returns 1 if the name was manually assigned
 	//Returns 2 if the name was detected
-unsigned char eof_pro_guitar_note_lowest_fret(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);
-	//Returns the lowest fret number used in the specified note.
+unsigned char eof_pro_guitar_note_lowest_fret_np(EOF_PRO_GUITAR_NOTE *np);
+	//Returns the lowest fret number used in the specified note
 	//If all strings are played open or are string muted with no fret specified, 0 is returned
+unsigned char eof_pro_guitar_note_lowest_fret(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);
+	//Same as eof_pro_guitar_note_lowest_fret_np() but with a track pointer and note index as parameters
 unsigned char eof_pro_guitar_note_highest_fret(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);
 	//Returns the highest fret number used in the specified note.
 	//If all strings are played open or are string muted with no fret specified, 0 is returned

@@ -2011,21 +2011,21 @@ int eof_pro_guitar_note_compare_fingerings(EOF_PRO_GUITAR_NOTE *np1, EOF_PRO_GUI
 	return 0;	//Return equal
 }
 
-unsigned char eof_pro_guitar_note_lowest_fret(EOF_PRO_GUITAR_TRACK *tp, unsigned long note)
+unsigned char eof_pro_guitar_note_lowest_fret_np(EOF_PRO_GUITAR_NOTE *np)
 {
 	unsigned long ctr, bitmask;
 	unsigned char fret = 0xFF;
 
-	if(!tp || (note >= tp->notes))
+	if(!np)
 		return 0;
 
-	for(ctr = 0, bitmask = 1; ctr < tp->numstrings; ctr++, bitmask <<= 1)
-	{	//For each string this track supports
-		if((tp->note[note]->note & bitmask) && (tp->note[note]->frets[ctr] & 0x7F) && (tp->note[note]->frets[ctr] != 0xFF))
+	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+	{	//For each of the 6 supported strings
+		if((np->note & bitmask) && (np->frets[ctr] & 0x7F) && (np->frets[ctr] != 0xFF))
 		{	//If this string is used, isn't played open (masking out the mute bit) and isn't played muted with no fret specified
-			if((tp->note[note]->frets[ctr] & 0x7F) < fret)
+			if((np->frets[ctr] & 0x7F) < fret)
 			{	//If this string has a lower fret value than the one being stored
-				fret = tp->note[note]->frets[ctr] & 0x7F;
+				fret = np->frets[ctr] & 0x7F;
 			}
 		}
 	}
@@ -2034,6 +2034,14 @@ unsigned char eof_pro_guitar_note_lowest_fret(EOF_PRO_GUITAR_TRACK *tp, unsigned
 		return 0;
 	}
 	return fret;
+}
+
+unsigned char eof_pro_guitar_note_lowest_fret(EOF_PRO_GUITAR_TRACK *tp, unsigned long note)
+{
+	if(!tp || (note >= tp->notes))
+		return 0;
+
+	return eof_pro_guitar_note_lowest_fret_np(tp->note[note]);
 }
 
 unsigned char eof_pro_guitar_note_highest_fret(EOF_PRO_GUITAR_TRACK *tp, unsigned long note)
