@@ -71,7 +71,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	//	*Open notes are written as 5 lane notes
 	//	*Slider note markers are written with MIDI note 103 and solo phrases are suppressed
 	///	*Accent drum notes are exported with track-specific text events defining accented lane numbers (numbered beginning with 1 instead of 0)
-	//If format is 2, a variation of the normal MIDI is exported where the forced HOPO marker (5 higher than the MIDI note for lane 1)
+	//If format is 2, a GH3 variation of the normal MIDI is exported where the forced HOPO marker (5 higher than the MIDI note for lane 1)
 	//  is written with a length of 0 delta ticks.  All other features are exported identically to the normal MIDI
 
 unsigned char eof_get_midi_pitches(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char *pitches);

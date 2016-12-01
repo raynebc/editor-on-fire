@@ -87,8 +87,10 @@
 		//If import_ts is nonzero, the active project's time signatures are updated to reflect those of the unwrapped transcription
 		//If beats_only is nonzero, no notes or text events are unwrapped, but beats and time signatures are (ie. to unwrap the measures before applying beat timings in GPA import)
 		//Returns nonzero on error
-	char eof_copy_notes_in_beat_range(EOF_PRO_GUITAR_TRACK *source, unsigned long startbeat, unsigned long numbeats, EOF_PRO_GUITAR_TRACK *dest, unsigned long destbeat);
+	char eof_copy_notes_in_beat_range(EOF_SONG *ssp, EOF_PRO_GUITAR_TRACK *source, unsigned long startbeat, unsigned long numbeats, EOF_SONG *dsp, EOF_PRO_GUITAR_TRACK *dest, unsigned long destbeat);
 		//Copies the notes within the specified range of beats in the source track to the same number of beats starting at the specified beat in the destination track
+		//Since the application of time signatures can alter the beat map (and thus beat timing), the beat array from *sp is used as the source beat map
+		// and that from *dp is used as the destination beat map
 		//Returns zero on error
 	int eof_get_next_gpa_sync_point(char **buffer, struct eof_gpa_sync_point *ptr);
 		//Reads the next GPA sync point into the referenced structure, advancing *buffer to point to the character after the timestamp read (is '#' between timestamps or '<' after the last timestamp)

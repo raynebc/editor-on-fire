@@ -2731,7 +2731,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		unsigned long firstsyncpointbeat = 0;	//This will track the first beat to have its position set by a sync point
 
 		eof_log("Unwrapping beats", 1);
-		(void) eof_unwrap_gp_track(gp, 0, 1, 0);	//Unwrap all measures in the GP file, applying time signatures where appropriate.  No notes are imported yet, but allow text events to be unwrapped
+		(void) eof_unwrap_gp_track(gp, 0, 1, 1);	//Unwrap all measures in the GP file, applying time signatures where appropriate.  No notes are imported yet, but allow text events to be unwrapped
 		eof_process_beat_statistics(eof_song, eof_selected_track);		//Find the measure numbering for all beats
 
 		//Build a temporary tsarray[], since GPA import needs one reflecting unwrapped measures, and the GP import that follows needs one reflecting the original wrapped measures
@@ -4962,6 +4962,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 	unsigned int curr_repeat = 0;
 	char in_alt_ending;
 	unsigned char curnum = 4, curden = 4;	//Tracks the time signature of the most recently unwrapped measure
+	EOF_SONG *dsp = NULL;		//A new working song structure needs to be created because unwrapping time signature changes would corrupt the wrapped beat map and note timings
 
 	eof_log("eof_unwrap_gp_track() entered", 1);
 
@@ -4969,6 +4970,14 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 	{
 		eof_log("\tInvalid parameters", 1);
 		return 1;	//Invalid parameters
+	}
+
+	//Create and initialize a working song structure to store the unwrapped beat map
+	dsp = eof_create_song();
+	if(!dsp)
+	{
+		eof_log("\tFailed to create destination song structure", 1);
+		return 2;	//Return failure
 	}
 
 	gp->coda_activated = gp->double_coda_activated = gp->fine_activated = 0;	//Reset these statuses
@@ -4994,6 +5003,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 	if(!has_repeats && !has_symbols)
 	{	//If this GP file has no repeats and no branching
 		eof_log("\tNo repeats or navigational symbols detected", 1);
+		eof_destroy_song(dsp);	//Destroy working project
 		return 0;	//Return without altering the gp structure
 	}
 
@@ -5002,6 +5012,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 	if(!working_num_of_repeats)
 	{	//Error allocating memory
 		eof_log("\tError allocating memory to unwrap GP track (1)", 1);
+		eof_destroy_song(dsp);	//Destroy working project
 		return 1;
 	}
 	memset(working_num_of_repeats, 0, sizeof(unsigned char) * gp->measures);	//Fill with 0s to satisfy Splint
@@ -5019,6 +5030,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 	{
 		eof_log("\tError allocating memory to unwrap GP track (2)", 1);
 		free(working_num_of_repeats);
+		eof_destroy_song(dsp);	//Destroy working project
 		return 2;
 	}
 	memset(tp, 0, sizeof(EOF_PRO_GUITAR_TRACK));	//Initialize memory block to 0 to avoid crashes when not explicitly setting counters that were newly added to the pro guitar structure
@@ -5035,6 +5047,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 		eof_log("\tError allocating memory to unwrap GP track (3)", 1);
 		free(tp);
 		free(working_num_of_repeats);
+		eof_destroy_song(dsp);	//Destroy working project
 		return 3;
 	}
 	memset(measuremap, 0, sizeof(unsigned long) * gp->measures);	//Initialize this memory to 0
@@ -5051,6 +5064,23 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 		{	//For each beat in the project, clear all beat flags except those that aren't TS related
 			eof_song->beat[ctr]->flags &= (EOF_BEAT_FLAG_ANCHOR | EOF_BEAT_FLAG_EVENTS | EOF_BEAT_FLAG_KEY_SIG);	//Keep these flags as-is
 		}
+	}
+
+	//Clone the active project's beat map
+	for(ctr = 0; ctr < eof_song->beats; ctr++)
+	{	//For each beat in the active project
+		if(ctr >= dsp->beats)
+		{	//If the working project doesn't have enough beats
+			if(!eof_song_add_beat(dsp))
+			{	//If another beat couldn't be added
+				eof_log("\tError allocating memory to unwrap GP track (4)", 1);
+				free(tp);
+				free(working_num_of_repeats);
+				eof_destroy_song(dsp);	//Destroy working project
+				return 4;
+			}
+		}
+		memcpy(dsp->beat[ctr], eof_song->beat[ctr], sizeof(EOF_BEAT_MARKER));
 	}
 
 	//If track 0 is being unwrapped, this function call will have the text events unwrapped
@@ -5095,19 +5125,19 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 		}
 		if(!gp->measure[currentmeasure].alt_endings || in_alt_ending)
 		{	//If this measure isn't part of an alternate ending, or if it is an alternate ending and the repeat count applies to it
-			//Ensure the active project has enough beats to hold the next unwrapped measure
-			if(eof_song->beats < beatctr + gp->measure[currentmeasure].num + 2)
+			//Ensure the working project has enough beats to hold the next unwrapped measure
+			if(dsp->beats < beatctr + gp->measure[currentmeasure].num + 2)
 			{
 #ifdef GP_IMPORT_DEBUG
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUnwrapping measure #%lu requires %lu beats, but project only has %lu beats.  Appending %lu beats to the project to allow for this measure and two beats of padding.", currentmeasure + 1, beatctr + gp->measure[currentmeasure].num, eof_song->beats, beatctr + gp->measure[currentmeasure].num + 2 - eof_song->beats);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUnwrapping measure #%lu requires %lu beats, but project only has %lu beats.  Appending %lu beats to the project to allow for this measure and two beats of padding.", currentmeasure + 1, beatctr + gp->measure[currentmeasure].num, dsp->beats, beatctr + gp->measure[currentmeasure].num + 2 - dsp->beats);
 				eof_log(eof_log_string, 1);
 #endif
 			}
-			while(eof_song->beats < beatctr + gp->measure[currentmeasure].num + 2)
-			{	//Until the loaded project has enough beats to contain the unwrapped measure, and two extra to allow room for processing beat lengths later
-				if(!eof_song_append_beats(eof_song, 1))
+			while(dsp->beats < beatctr + gp->measure[currentmeasure].num + 2)
+			{	//Until the working project has enough beats to contain the unwrapped measure, and two extra to allow room for processing beat lengths later
+				if(!eof_song_append_beats(dsp, 1))
 				{
-					eof_log("\tError allocating memory to unwrap GP track (4)", 1);
+					eof_log("\tError allocating memory to unwrap GP track (5)", 1);
 					free(measuremap);
 					free(tp);
 					free(working_num_of_repeats);
@@ -5115,19 +5145,33 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 					{	//For each unwrapped text event
 						free(newevent[ctr]);	//Free it
 					}
-					return 4;
+					eof_destroy_song(dsp);	//Destroy working project
+					return 5;
 				}
 			}
-			eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
+
+			//Update the time signature if necessary
+			if(import_ts)
+			{
+				if(!beatctr || (gp->measure[currentmeasure].num != curnum) || (gp->measure[currentmeasure].den != curden))
+				{	//If this is the first beat being unwrapped or this measure's time signature is different from that of the previously unwrapped measure
+					curnum = gp->measure[currentmeasure].num;
+					curden = gp->measure[currentmeasure].den;
+					(void) eof_apply_ts(curnum, curden, beatctr, dsp, 0);	//Apply the change to the working project
+					eof_calculate_beats(dsp);
+				}
+			}
 
 			//Copy the contents in this measure to the new pro guitar track
 			if(!beats_only)
 			{	//If the track content besides just the beats and time signatures is being unwrapped
+				unsigned long oldnotecount;
 #ifdef GP_IMPORT_DEBUG
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUnwrapping %u beats from measure #%lu (starts at beat %lu) from original track to beat %lu in new track", gp->measure[currentmeasure].num, currentmeasure + 1, measuremap[currentmeasure], beatctr);
 				eof_log(eof_log_string, 1);
 #endif
-				if(!eof_copy_notes_in_beat_range(gp->track[track], measuremap[currentmeasure], gp->measure[currentmeasure].num, tp, beatctr))
+				oldnotecount = tp->notes;
+				if(!eof_copy_notes_in_beat_range(eof_song, gp->track[track], measuremap[currentmeasure], gp->measure[currentmeasure].num, dsp, tp, beatctr))
 				{	//If there was an error unwrapping the repeat into the new pro guitar track
 					eof_log("\tError unwrapping beats (normal notes)", 1);
 					free(measuremap);
@@ -5141,11 +5185,18 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 					{	//For each unwrapped text event
 						free(newevent[ctr]);	//Free it
 					}
-					return 5;
+					eof_destroy_song(dsp);	//Destroy working project
+					return 6;
+				}
+				if(tp->notes > oldnotecount)
+				{	//If notes were unwrapped
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu notes unwrapped", tp->notes - oldnotecount);
+					eof_log(eof_log_string, 1);
 				}
 				eof_menu_pro_guitar_track_set_tech_view_state(gp->track[track], 1);	//Enable tech view for source track
 				eof_menu_pro_guitar_track_set_tech_view_state(tp, 1);				//Enable tech view for destination track
-				if(!eof_copy_notes_in_beat_range(gp->track[track], measuremap[currentmeasure], gp->measure[currentmeasure].num, tp, beatctr))
+				oldnotecount = tp->notes;
+				if(!eof_copy_notes_in_beat_range(eof_song, gp->track[track], measuremap[currentmeasure], gp->measure[currentmeasure].num, dsp, tp, beatctr))
 				{	//If there was an error unwrapping tech notes within the repeat into the new pro guitar track
 					eof_log("\tError unwrapping beats (tech notes)", 1);
 					free(measuremap);
@@ -5160,21 +5211,16 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 						free(newevent[ctr]);	//Free it
 					}
 					eof_menu_pro_guitar_track_set_tech_view_state(gp->track[track], 0);	//Disable tech view for source track
-					return 6;
+					eof_destroy_song(dsp);	//Destroy working project
+					return 7;
+				}
+				if(tp->notes > oldnotecount)
+				{	//If notes were unwrapped
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu tech notes unwrapped", tp->notes - oldnotecount);
+					eof_log(eof_log_string, 1);
 				}
 				eof_menu_pro_guitar_track_set_tech_view_state(gp->track[track], 0);	//Disable tech view for source track
 				eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);				//disable tech view for destination track
-			}
-
-			//Update the time signature if necessary
-			if(import_ts)
-			{
-				if(!currentmeasure || (gp->measure[currentmeasure].num != curnum) || (gp->measure[currentmeasure].den != curden))
-				{	//If this is the first measure or this measure's time signature is different from that of the previously unwrapped measure
-					curnum = gp->measure[currentmeasure].num;
-					curden = gp->measure[currentmeasure].den;
-					(void) eof_apply_ts(curnum, curden, beatctr, eof_song, 0);	//Apply the change to the active project
-				}
 			}
 
 			//If this measure has a text event, and text events are being unwrapped, copy it to the new text event array
@@ -5203,7 +5249,8 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 						{	//For each unwrapped text event
 							free(newevent[ctr]);	//Free it
 						}
-						return 7;
+						eof_destroy_song(dsp);	//Destroy working project
+						return 8;
 					}
 					memcpy(newevent[newevents], gp->text_event[ctr], sizeof(EOF_TEXT_EVENT));	//Copy the text event
 					newevent[newevents]->beat = beatctr;	//Correct the beat number
@@ -5404,7 +5451,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 					{	//If this is the first measure or this measure's time signature is different from that of the previous measure
 						curnum = gp->measure[currentmeasure].num;
 						curden = gp->measure[currentmeasure].den;
-						(void) eof_apply_ts(curnum, curden, beatctr, eof_song, 0);	//Apply the change to the active project
+						(void) eof_apply_ts(curnum, curden, beatctr, dsp, 0);	//Apply the change to the working project
 					}
 				}
 				if(gp->measure[currentmeasure].num_of_repeats)
@@ -5433,6 +5480,24 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 	free(gp->track[track]);	//Free the pro guitar track
 	gp->track[track] = tp;	//Insert the new pro guitar track into the array
 
+	//Replace the active project's beat map with that of the working project
+	for(ctr = 0; ctr < dsp->beats; ctr++)
+	{	//For each beat in the working project
+		if(ctr >= eof_song->beats)
+		{	//If the active project doesn't have enough beats
+			if(!eof_song_add_beat(eof_song))
+			{	//If another beat couldn't be added
+				eof_log("\tError allocating memory to unwrap GP track (9)", 1);
+				free(tp);
+				free(working_num_of_repeats);
+				eof_destroy_song(dsp);	//Destroy working project
+				return 9;
+			}
+		}
+		memcpy(eof_song->beat[ctr], dsp->beat[ctr], sizeof(EOF_BEAT_MARKER));
+	}
+	eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
+
 	//Cleanup
 	free(measuremap);
 	free(working_num_of_repeats);
@@ -5445,21 +5510,24 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 		memcpy(gp->text_event, newevent, sizeof(newevent));	//Clone the unwrapped text event array
 		gp->text_events = newevents;	//Update the events counter
 	}
+	eof_destroy_song(dsp);	//Destroy working project
 
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGP track successfully unwrapped (%lu notes in total)", gp->track[track]->notes);
+	eof_log(eof_log_string, 1);
 	eof_log("\tGP track successfully unwrapped", 1);
 	return 0;
 }
 
-char eof_copy_notes_in_beat_range(EOF_PRO_GUITAR_TRACK *source, unsigned long startbeat, unsigned long numbeats, EOF_PRO_GUITAR_TRACK *dest, unsigned long destbeat)
+char eof_copy_notes_in_beat_range(EOF_SONG *ssp, EOF_PRO_GUITAR_TRACK *source, unsigned long startbeat, unsigned long numbeats, EOF_SONG *dsp, EOF_PRO_GUITAR_TRACK *dest, unsigned long destbeat)
 {
 	unsigned long ctr;
 	unsigned long beatnum, endbeatnum;
 	long newpos, newend;
 	double notepos, noteendpos;
 
-	eof_log("eof_copy_notes_in_beat_range() entered", 1);
+	eof_log("eof_copy_notes_in_beat_range() entered", 2);
 
-	if(!source || !dest || (startbeat + numbeats >= eof_song->beats) || (destbeat + numbeats >= eof_song->beats))
+	if(!ssp || !ssp->beat || !source || !dsp || !dsp->beat || !dest || (startbeat + numbeats >= ssp->beats) || (destbeat + numbeats >= dsp->beats))
 	{
 		eof_log("\tInvalid parameters", 1);
 		return 0;	//Return error
@@ -5467,35 +5535,37 @@ char eof_copy_notes_in_beat_range(EOF_PRO_GUITAR_TRACK *source, unsigned long st
 
 	for(ctr = 0; ctr < source->notes; ctr++)
 	{	//For each note in the source track
-		if((source->note[ctr]->pos < eof_song->beat[startbeat]->pos) || (source->note[ctr]->pos >= eof_song->beat[startbeat + numbeats]->pos))
+		if(source->note[ctr]->pos >= ssp->beat[startbeat + numbeats]->pos)
+			break;		//If this note (and all remaining notes) are after the target range of beats, exit loop
+		if(source->note[ctr]->pos < ssp->beat[startbeat]->pos)
 			continue;	//If this note is before or after the target range of beats, skip it
 
-		beatnum = eof_get_beat(eof_song, source->note[ctr]->pos);					//Find which beat this note is within
-		endbeatnum = eof_get_beat(eof_song, source->note[ctr]->pos + source->note[ctr]->length);	//Find which beat this note ends within
-		if(!eof_beat_num_valid(eof_song, beatnum) || !eof_beat_num_valid(eof_song, endbeatnum))
+		beatnum = eof_get_beat(ssp, source->note[ctr]->pos);					//Find which beat this note is within
+		endbeatnum = eof_get_beat(ssp, source->note[ctr]->pos + source->note[ctr]->length);	//Find which beat this note ends within
+		if(!eof_beat_num_valid(ssp, beatnum) || !eof_beat_num_valid(ssp, endbeatnum))
 			continue;	//If the beat positions were not found, skip this note
 
-		if(eof_song->beats < destbeat + endbeatnum - startbeat + 2)
+		if(dsp->beats < destbeat + endbeatnum - startbeat + 2)
 		{
 #ifdef GP_IMPORT_DEBUG
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tUnwrapping note #%lu requires %lu beats, but project only has %lu beats.  Appending %lu beats to the project to allow for this note and 2 bytes of padding.", ctr, destbeat + endbeatnum - startbeat, eof_song->beats, destbeat + endbeatnum - startbeat + 2 - eof_song->beats);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tUnwrapping note #%lu requires %lu beats, but project only has %lu beats.  Appending %lu beats to the project to allow for this note and 2 bytes of padding.", ctr, destbeat + endbeatnum - startbeat, dsp->beats, destbeat + endbeatnum - startbeat + 2 - dsp->beats);
 			eof_log(eof_log_string, 1);
 #endif
-			while(eof_song->beats < destbeat + endbeatnum - startbeat + 2)
-			{	//Until the loaded project has enough beats to contain the unwrapped note, and two extra to allow room for processing beat lengths later
-				if(!eof_song_append_beats(eof_song, 1))
+			while(dsp->beats < destbeat + endbeatnum - startbeat + 2)
+			{	//Until the destination project has enough beats to contain the unwrapped note, and two extra to allow room for processing beat lengths later
+				if(!eof_song_append_beats(dsp, 1))
 				{
 					eof_log("\tError allocating memory to unwrap GP track (6)", 1);
 					return 0;	//Return error
 				}
 			}
-			eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
+			eof_chart_length = dsp->beat[dsp->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
 		}
 
-		notepos = eof_get_porpos(source->note[ctr]->pos);									//Get the note's position as a percentage within its beat
-		noteendpos = eof_get_porpos(source->note[ctr]->pos + source->note[ctr]->length);	//Get the note end's end position as a percentage within its beat
-		newpos = eof_put_porpos(destbeat + beatnum - startbeat, notepos, 0.0);				//Get the position for the copied note
-		newend = eof_put_porpos(destbeat + endbeatnum - startbeat, noteendpos, 0.0);		//Get the end position for the copied note
+		notepos = eof_get_porpos_sp(ssp, source->note[ctr]->pos);								//Get the note's position as a percentage within its beat
+		noteendpos = eof_get_porpos_sp(ssp, source->note[ctr]->pos + source->note[ctr]->length);	//Get the note end's end position as a percentage within its beat
+		newpos = eof_put_porpos_sp(dsp, destbeat + beatnum - startbeat, notepos, 0.0);			//Get the position for the copied note
+		newend = eof_put_porpos_sp(dsp, destbeat + endbeatnum - startbeat, noteendpos, 0.0);		//Get the end position for the copied note
 		if((newpos < 0) || (newend < 0))
 		{	//If the positioning for the copied note couldn't be determined
 			eof_log("\tError finding position for unwrapped note", 1);

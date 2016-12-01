@@ -413,6 +413,11 @@ void eof_show_mouse(BITMAP * bp)
 
 double eof_get_porpos(unsigned long pos)
 {
+	return eof_get_porpos_sp(eof_song, pos);
+}
+
+double eof_get_porpos_sp(EOF_SONG *sp, unsigned long pos)
+{
 	double porpos = 0.0;
 	unsigned long beat;
 	int blength;
@@ -420,33 +425,41 @@ double eof_get_porpos(unsigned long pos)
 
 	eof_log("eof_get_porpos() entered", 2);
 
-	if(!eof_song || (eof_song->beats < 2))
+	if(!sp || (sp->beats < 2))
 		return 0.0;	//Invalid parameters
 
-	beat = eof_get_beat(eof_song, pos);
-	if(!eof_beat_num_valid(eof_song, beat))
+	beat = eof_get_beat(sp, pos);
+	if(!eof_beat_num_valid(sp, beat))
 	{	//If eof_get_beat() returned error
-		beat = eof_song->beats - 1;	//Assume the note position is relative to the last beat marker
+		beat = sp->beats - 1;	//Assume the note position is relative to the last beat marker
 	}
-	if(beat < eof_song->beats - 1)
+	if(beat < sp->beats - 1)
 	{
-		blength = eof_song->beat[beat + 1]->pos - eof_song->beat[beat]->pos;
+		blength = sp->beat[beat + 1]->pos - sp->beat[beat]->pos;
 	}
 	else
 	{
-		blength = eof_song->beat[eof_song->beats - 1]->pos - eof_song->beat[eof_song->beats - 2]->pos;
+		blength = sp->beat[sp->beats - 1]->pos - sp->beat[sp->beats - 2]->pos;
 	}
-	rpos = pos - eof_song->beat[beat]->pos;
+	rpos = pos - sp->beat[beat]->pos;
 	porpos = ((double)rpos / (double)blength) * 100.0;
 	return porpos;
 }
 
 long eof_put_porpos(unsigned long beat, double porpos, double offset)
 {
+	return eof_put_porpos_sp(eof_song, beat, porpos, offset);
+}
+
+long eof_put_porpos_sp(EOF_SONG *sp, unsigned long beat, double porpos, double offset)
+{
 	double fporpos = porpos + offset;
 	unsigned long cbeat = beat;
 
 	eof_log("eof_put_porpos() entered", 2);
+
+	if(!sp)
+		return -1;	//Invalid parameters
 
 	if(fporpos <= -1.0)
 	{
@@ -460,7 +473,7 @@ long eof_put_porpos(unsigned long beat, double porpos, double offset)
 			}
 			cbeat--;
 		}
-		return ((eof_song->beat[cbeat]->fpos + (eof_get_beat_length(eof_song, cbeat) * fporpos) / 100.0) + 0.5);	//Round up to nearest millisecond
+		return ((sp->beat[cbeat]->fpos + (eof_get_beat_length(sp, cbeat) * fporpos) / 100.0) + 0.5);	//Round up to nearest millisecond
 	}
 	else if(fporpos >= 100.0)
 	{
@@ -470,17 +483,17 @@ long eof_put_porpos(unsigned long beat, double porpos, double offset)
 			fporpos -= 100.0;
 			cbeat++;
 		}
-		if(cbeat < eof_song->beats)
+		if(cbeat < sp->beats)
 		{
-			return ((eof_song->beat[cbeat]->fpos + (eof_get_beat_length(eof_song, cbeat) * fporpos) / 100.0) + 0.5);	//Round up to nearest millisecond
+			return ((sp->beat[cbeat]->fpos + (eof_get_beat_length(sp, cbeat) * fporpos) / 100.0) + 0.5);	//Round up to nearest millisecond
 		}
 		return -1;
 	}
 //	allegro_message("c - %f", fporpos);	//Debug
 
-	if(cbeat < eof_song->beats)
+	if(cbeat < sp->beats)
 	{	//If cbeat is valid
-		return ((eof_song->beat[cbeat]->fpos + (eof_get_beat_length(eof_song, cbeat) * fporpos) / 100.0) + 0.5);	//Round up to nearest millisecond
+		return ((sp->beat[cbeat]->fpos + (eof_get_beat_length(sp, cbeat) * fporpos) / 100.0) + 0.5);	//Round up to nearest millisecond
 	}
 	return -1;	//Error
 }

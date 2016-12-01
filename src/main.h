@@ -10,7 +10,7 @@
 #include "editor.h"
 
 #define EOF_VERSION_STRING "EOF v1.8RC11"
-#define EOF_COPYRIGHT_STRING "(c)2008-2010 T^3 Software."
+#define EOF_COPYRIGHT_STRING "(c)2008-2016 T^3 Software."
 
 #define KEY_EITHER_ALT (key[KEY_ALT] || key[KEY_ALTGR])
 #ifdef ALLEGRO_MACOSX
@@ -531,10 +531,12 @@ extern int eof_key_code;
 extern int eof_key_shifts;
 
 void eof_show_mouse(BITMAP * bp);	//Shows the software mouse if it is being used
-double eof_get_porpos(unsigned long pos);	//Returns the timestamp's position within a beat (percentage)
-long eof_put_porpos(unsigned long beat, double porpos, double offset);
+double eof_get_porpos_sp(EOF_SONG *sp, unsigned long pos);	//Returns the timestamp's position within a beat (percentage)
+double eof_get_porpos(unsigned long pos);	//Calls eof_get_porpos_sp() against eof_song
+long eof_put_porpos_sp(EOF_SONG *sp, unsigned long beat, double porpos, double offset);
 	//Returns the timestamp of the specified position within a beat, or -1 on error
 	//porpos can be a positive or negative value larger in magnitude than 100.0
+long eof_put_porpos(unsigned long beat, double porpos, double offset);	//Calls eof_put_porpos_sp() against eof_song
 void eof_reset_lyric_preview_lines(void);	//Resets the preview line variables to 0
 void eof_find_lyric_preview_lines(void);	//Sets the first and second preview line variables
 void eof_emergency_stop_music(void);	//Stops audio playback
