@@ -44,6 +44,7 @@ EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1] =
 	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_BASS_22, 0, "PART REAL_BASS_22", "", 0xFF, 5, 0},
 	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR_22, 0, "PART REAL_GUITAR_22", "", 0xFF, 5, 0},
 	{EOF_LEGACY_TRACK_FORMAT, EOF_DRUM_TRACK_BEHAVIOR, EOF_TRACK_DRUM_PS, 0, "PART REAL_DRUMS_PS", "", 0xFF, 5, 0},
+	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR_B, 0, "PART REAL_GUITAR_BONUS", "", 0xFF, 5, 0},
 
 	//This pro format is not supported yet, but the entry describes the track's details
 	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS", "", 0xFF, 5, 0}
@@ -370,6 +371,15 @@ EOF_SONG * eof_load_song(const char * fn)
 		if(EOF_TRACK_DRUM_PS >= sp->tracks)
 		{	//If the chart loaded does not contain a Phase Shift drum track (a 1.8beta revision chart)
 			if(eof_song_add_track(sp,&eof_default_tracks[EOF_TRACK_DRUM_PS]) == 0)	//Add a blank Phase Shift drum track
+			{	//If the track failed to be added
+				eof_destroy_song(sp);	//Destroy the song and return on error
+				(void) pack_fclose(fp);
+				return NULL;
+			}
+		}
+		if(EOF_TRACK_PRO_GUITAR_B >= sp->tracks)
+		{	//If the chart loaded does not contain a bonus pro guitar track (a pre 1.8RC12 chart)
+			if(eof_song_add_track(sp,&eof_default_tracks[EOF_TRACK_PRO_GUITAR_B]) == 0)	//Add a blank bonus pro guitar track
 			{	//If the track failed to be added
 				eof_destroy_song(sp);	//Destroy the song and return on error
 				(void) pack_fclose(fp);
@@ -1063,8 +1073,7 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 	eof_dance_tab_name[4][0] = ' ';
 
 	tracksize = eof_get_track_size(sp, track);
-	if(!tracksize)
-		return 0;	//Empty track
+
 	for(i = 0; i < tracksize; i++)
 	{
 		note_type = eof_get_note_type(sp, track, i);
@@ -1464,8 +1473,8 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 				maxfrets1 = 22;	//They only support 22 frets in the 22 fret track (ie. for Squier guitar controller)
 				maxfrets2 = 17;	//And 17 frets in the 17 fret track (ie. for Mustang guitar controller)
 			}
-			if((trackdetails->track_type == EOF_TRACK_PRO_BASS_22) || (trackdetails->track_type == EOF_TRACK_PRO_GUITAR_22))
-			{	//If this is a 22 fret track
+			if((trackdetails->track_type == EOF_TRACK_PRO_BASS_22) || (trackdetails->track_type == EOF_TRACK_PRO_GUITAR_22) || (trackdetails->track_type == EOF_TRACK_PRO_GUITAR_B))
+			{	//If this is a track supporting more than 17 frets
 				ptr4->numfrets = maxfrets1;
 			}
 			else
@@ -1971,7 +1980,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		temp.difficulty = pack_getc(fp);		//Read the track difficulty level
 		temp.flags = pack_igetl(fp);			//Read the track flags
 		(void) pack_igetw(fp);					//Read the track compliance flags (not supported yet)
-		temp.tracknum=0;						//Ignored, it will be set in eof_song_add_track()
+		temp.tracknum = 0;						//Ignored, it will be set in eof_song_add_track()
 		if(temp.flags & EOF_TRACK_FLAG_ALT_NAME)
 		{	//If this track has an alternate name
 			(void) eof_load_song_string_pf(temp.altname,fp,sizeof(temp.altname));	//Read the alternate track name
@@ -2779,6 +2788,8 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	unsigned long track_count,track_ctr,bookmark_count,track_custom_block_count,bitmask,fingerdefinitions;
 	char has_raw_midi_data, has_fp_beat_timings = 1, has_start_end_points;
 	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes,has_accent,has_diff_count;
+	char omit_bonus = 0;	//Set to nonzero if the bonus pro guitar track is empty and will be omitted from the exported project file
+							//This is to maintain as much backwards compatibility with older releases of EOF 1.8 as possible, since they would crash when trying to open a file with the bonus track
 
 	#define EOFNUMINISTRINGTYPES 9
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
@@ -3100,13 +3111,21 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	}
 	//Determine how many tracks need to be written
 	track_count = sp->tracks;
+	if((sp->tracks > EOF_TRACK_PRO_GUITAR_B) && !eof_get_track_size(sp, EOF_TRACK_PRO_GUITAR_B) && !eof_get_track_tech_note_size(sp, EOF_TRACK_PRO_GUITAR_B))
+	{	//If the project has a bonus pro guitar track, but it has no notes or tech notes
+		omit_bonus = 1;	//That track will not be written to the project file
+	}
 	if((track_count == 0) && (bookmark_count || sp->catalog->entries))
 	{	//Ensure that a global track is written if necessary to accommodate bookmarks and catalog entries
 		track_count = 1;
 	}
-	(void) pack_iputl(track_count, fp);	//Write the number of tracks
+	(void) pack_iputl(track_count - omit_bonus, fp);	//Write the number of tracks, minus the bonus track if applicable
 	for(track_ctr=0; track_ctr < track_count; track_ctr++)
 	{	//For each track in the project
+		if(omit_bonus && (track_ctr == EOF_TRACK_PRO_GUITAR_B))
+		{	//If this is the bonus pro guitar track, and the track is to be omitted from the project file
+			continue;	//Skip to the next track
+		}
 		restore_tech_view = 0;	//Reset this condition
 		if(sp->track[track_ctr] != NULL)
 		{	//Skip NULL tracks, such as track 0

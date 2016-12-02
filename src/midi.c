@@ -519,7 +519,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	{	//For each track in the project
 		if(eof_get_track_size(sp, j) == 0)	//If this track has no notes
 			continue;	//Skip the track
-
+		if(j == EOF_TRACK_PRO_GUITAR_B)		//If this is the bonus pro guitar track
+			continue;	//Skip the track
 		if(eof_track_overridden_by_stored_MIDI_track(sp, j))	//If this track is overridden by a stored MIDI track
 			continue;	//Skip the track
 

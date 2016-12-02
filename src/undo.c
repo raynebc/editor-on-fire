@@ -190,7 +190,7 @@ int eof_undo_apply(void)
 		return 0;
 	}
 
-	//Determine whether each pro guitar track was in tech view
+	//Determine whether each pro guitar tracks were in tech view
 	for(ctr = 0; ctr < EOF_PRO_GUITAR_TRACKS_MAX; ctr++)
 	{	//For each pro guitar track in the project
 		tp = eof_song->pro_guitar_track[ctr];

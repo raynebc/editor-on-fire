@@ -159,7 +159,7 @@ int eof_lookup_default_string_tuning(EOF_PRO_GUITAR_TRACK *tp, unsigned long tra
 		return -1;	//Invalid track pointer
 	if(stringnum >= tp->numstrings)
 		return -1;	//Invalid string number
-	if((track != EOF_TRACK_PRO_BASS) && (track != EOF_TRACK_PRO_BASS_22) && (track != EOF_TRACK_PRO_GUITAR) && (track != EOF_TRACK_PRO_GUITAR_22))
+	if((track != EOF_TRACK_PRO_BASS) && (track != EOF_TRACK_PRO_BASS_22) && (track != EOF_TRACK_PRO_GUITAR) && (track != EOF_TRACK_PRO_GUITAR_22) && (track != EOF_TRACK_PRO_GUITAR_B))
 	{	//If the track is not one of EOF's pro guitar or bass tracks
 		return -1;	//Invalid track number
 	}
@@ -636,7 +636,7 @@ int eof_track_is_bass_arrangement(EOF_PRO_GUITAR_TRACK *tp, unsigned long track)
 	{	//If the native track type is bass
 		is_bass = 1;
 	}
-	else if((track != EOF_TRACK_PRO_GUITAR) && (track != EOF_TRACK_PRO_GUITAR_22))
+	else if((track != EOF_TRACK_PRO_GUITAR) && (track != EOF_TRACK_PRO_GUITAR_22) && (track != EOF_TRACK_PRO_GUITAR_B))
 	{	//If the track is not one of EOF's pro guitar or bass tracks
 		return 0;	//Invalid track number
 	}

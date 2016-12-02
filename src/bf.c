@@ -116,6 +116,8 @@ int eof_export_bandfuse(EOF_SONG * sp, char * fn, unsigned short *user_warned)
 	{	//For each track
 		if(sp->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 			continue;	//If this isn't a pro guitar/bass track, skip it
+		if(ctr == EOF_TRACK_PRO_GUITAR_B)
+			continue;	//If this is the bonus Rocksmith arrangement, skip it
 
 		tp = sp->pro_guitar_track[sp->track[ctr]->tracknum];
 		restore_tech_view = eof_menu_track_get_tech_view_state(sp, ctr);

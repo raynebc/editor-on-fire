@@ -102,6 +102,7 @@ MENU eof_track_selected_menu[EOF_TRACKS_MAX] =
 	{eof_track_selected_menu_text[10], eof_menu_track_selected_11, NULL, 0, NULL},
 	{eof_track_selected_menu_text[11], eof_menu_track_selected_12, NULL, 0, NULL},
 	{eof_track_selected_menu_text[12], eof_menu_track_selected_13, NULL, 0, NULL},
+	{eof_track_selected_menu_text[13], eof_menu_track_selected_14, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -1386,6 +1387,11 @@ int eof_menu_track_selected_12(void)
 int eof_menu_track_selected_13(void)
 {
 	return eof_menu_track_selected_track_number(13, 1);
+}
+
+int eof_menu_track_selected_14(void)
+{
+	return eof_menu_track_selected_track_number(14, 1);
 }
 
 int eof_menu_track_selected_track_number(unsigned long tracknum, int updatetitle)

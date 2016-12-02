@@ -3581,6 +3581,7 @@ int eof_save_helper(char *destfilename, char silent)
 			(void) eof_export_rocksmith_1_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS_22, &user_warned);
 			(void) eof_export_rocksmith_1_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR, &user_warned);
 			(void) eof_export_rocksmith_1_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_22, &user_warned);
+			(void) eof_export_rocksmith_1_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_B, &user_warned);
 		}
 		if(eof_write_rs2_files)
 		{	//If the user wants to save Rocksmith 2 files
@@ -3588,6 +3589,7 @@ int eof_save_helper(char *destfilename, char silent)
 			(void) eof_export_rocksmith_2_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS_22, &user_warned);
 			(void) eof_export_rocksmith_2_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR, &user_warned);
 			(void) eof_export_rocksmith_2_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_22, &user_warned);
+			(void) eof_export_rocksmith_2_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_B, &user_warned);
 		}
 		if(eof_song->vocal_track[0]->lyrics)
 		{	//If there are lyrics, export them in Rocksmith format as well

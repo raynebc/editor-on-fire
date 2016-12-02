@@ -5353,13 +5353,14 @@ void eof_hidden_mouse_callback(int flags)
 DIALOG eof_import_to_track_dialog[] =
 {
 	/* (proc)             (x)  (y)  (w)  (h) (fg) (bg) (key) (flags)     (d1) (d2)  (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc, 0,   48, 480, 175,   2,   23,  0,    0,        0,   0,  "Import track",        NULL, NULL },
-	{ d_agup_text_proc,   16,  75,  48,  15,   2,   23,  0,    0,        0,   0,  eof_etext,             NULL, NULL },
-	{ d_agup_radio_proc,  16, 105, 136,  15,   2,   23,  0,    0,        1,   0,  "PART REAL_BASS",      NULL, NULL },
-	{ d_agup_radio_proc,  16, 120, 152,  15,   2,   23,  0,   D_SELECTED,1,   0,  "PART REAL_GUITAR",    NULL, NULL },
-	{ d_agup_radio_proc,  16, 135, 156,  15,   2,   23,  0,    0,        1,   0,  "PART REAL_BASS_22",   NULL, NULL },
-	{ d_agup_radio_proc,  16, 150, 172 , 15,   2,   23,  0,    0,        1,   0,  "PART REAL_GUITAR_22", NULL, NULL },
-	{ d_agup_button_proc, 100,180,  68,  28,   2,   23, '\r', D_EXIT,    0,   0,  "OK",                  NULL, NULL },
+	{ d_agup_window_proc, 0,   48, 480, 190,   2,   23,  0,    0,        0,   0,  "Import track",           NULL, NULL },
+	{ d_agup_text_proc,   16,  75,  48,  15,   2,   23,  0,    0,        0,   0,  eof_etext,                NULL, NULL },
+	{ d_agup_radio_proc,  16, 105, 136,  15,   2,   23,  0,    0,        1,   0,  "PART REAL_BASS",         NULL, NULL },
+	{ d_agup_radio_proc,  16, 120, 152,  15,   2,   23,  0,   D_SELECTED,1,   0,  "PART REAL_GUITAR",       NULL, NULL },
+	{ d_agup_radio_proc,  16, 135, 156,  15,   2,   23,  0,    0,        1,   0,  "PART REAL_BASS_22",      NULL, NULL },
+	{ d_agup_radio_proc,  16, 150, 172 , 15,   2,   23,  0,    0,        1,   0,  "PART REAL_GUITAR_22",    NULL, NULL },
+	{ d_agup_radio_proc,  16, 165, 202 , 15,   2,   23,  0,    0,        1,   0,  "PART REAL_GUITAR_BONUS", NULL, NULL },
+	{ d_agup_button_proc, 100,195,  68,  28,   2,   23, '\r', D_EXIT,    0,   0,  "OK",                     NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -5389,6 +5390,10 @@ EOF_SONG *eof_create_new_project_select_pro_guitar(void)
 	else if(eof_import_to_track_dialog[5].flags == D_SELECTED)
 	{
 		user_selection = EOF_TRACK_PRO_GUITAR_22;
+	}
+	else if(eof_import_to_track_dialog[6].flags == D_SELECTED)
+	{
+		user_selection = EOF_TRACK_PRO_GUITAR_B;
 	}
 
 	if(eof_song)

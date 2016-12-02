@@ -261,7 +261,8 @@ typedef struct
 #define EOF_TRACK_PRO_BASS_22	11
 #define EOF_TRACK_PRO_GUITAR_22	12
 #define EOF_TRACK_DRUM_PS		13
-#define EOF_TRACK_PRO_KEYS		14
+#define EOF_TRACK_PRO_GUITAR_B	14
+#define EOF_TRACK_PRO_KEYS		15
 
 #define EOF_SOLO_SECTION				1
 #define EOF_SP_SECTION					2
@@ -350,7 +351,7 @@ typedef struct
 
 } EOF_VOCAL_TRACK;
 
-#define EOF_PRO_GUITAR_TRACKS_MAX	4
+#define EOF_PRO_GUITAR_TRACKS_MAX	5
 #define EOF_TUNING_LENGTH 6	//For now, the tuning array will only track 6 strings
 #define EOF_NUM_DEFINED_CHORDS 37
 

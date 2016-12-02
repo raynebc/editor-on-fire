@@ -388,8 +388,8 @@ void eof_prepare_beat_menu(void)
 			eof_beat_events_menu[2].flags = D_DISABLED;
 		}
 
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-		{	//If a pro guitar/bass track is active
+		if((eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_selected_track != EOF_TRACK_PRO_GUITAR_B))
+		{	//If a pro guitar/bass track is active, and it's not the bonus pro guitar track (as it's not compatible with RB3)
 			eof_beat_menu[20].flags = 0;	//Beat>Rocksmith>
 			eof_beat_menu[21].flags = 0;	//Place Trainer Event
 		}
@@ -2016,6 +2016,8 @@ void eof_rebuild_trainer_strings(void)
 
 	if(!eof_song)
 		return;	//Return without rebuilding string tunings if there is an error
+	if(eof_selected_track == EOF_TRACK_PRO_GUITAR_B)
+		return;	//The bonus pro guitar track is not compatible with RB3
 
 	if(eof_selected_track == EOF_TRACK_PRO_GUITAR_22)
 	{	//Ensure that training events get written to the 17 fret version track
@@ -2070,6 +2072,9 @@ int eof_menu_beat_trainer_event(void)
 {
 	int relevant_track = eof_selected_track;	//In RB3, pro guitar/bass training events are only stored in the 17 fret track
 	char *selected_string = NULL;
+
+	if(eof_selected_track == EOF_TRACK_PRO_GUITAR_B)
+		return 1;	//The bonus pro guitar track is not compatible with RB3
 
 	eof_color_dialog(eof_place_trainer_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_place_trainer_dialog);
