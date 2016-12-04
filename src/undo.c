@@ -43,11 +43,13 @@ int eof_undo_load_state(const char * fn)
 	}
 	if(pack_fread(rheader, 16, fp) != 16)
 	{
+		(void) pack_fclose(fp);
 		return 0;	//Return error if 16 bytes cannot be read
 	}
 	sp = eof_create_song();		//Initialize an empty chart
 	if(sp == NULL)
 	{
+		(void) pack_fclose(fp);
 		return 0;
 	}
 	sp->tags->accurate_ts = 0;	//For existing projects, this setting must be manually enabled in order to prevent unwanted alteration to beat timings
@@ -58,7 +60,19 @@ int eof_undo_load_state(const char * fn)
 		allegro_message("Failed to perform undo");
 		(void) pack_fclose(rfp);	//Close this recovery file handle so that it will be deleted by the following call to eof_destroy_song()
 		eof_destroy_song(sp);
+		(void) pack_fclose(fp);
 		return 0;	//Return failure
+	}
+	(void) pack_fclose(fp);
+	if(EOF_TRACK_PRO_GUITAR_B >= sp->tracks)
+	{	//If the chart loaded does not contain a bonus pro guitar track (a pre 1.8RC12 chart or a post 1.8RC12 chart with an empty bonus track during save)
+		if(eof_song_add_track(sp, &eof_default_tracks[EOF_TRACK_PRO_GUITAR_B]) == 0)	//Add a blank bonus pro guitar track
+		{	//If the track failed to be added
+			allegro_message("Failed to perform undo");
+			(void) pack_fclose(rfp);	//Close this recovery file handle so that it will be deleted by the following call to eof_destroy_song()
+			eof_destroy_song(sp);
+			return 0;	//Return failure
+		}
 	}
 	if(eof_song)
 	{
@@ -66,11 +80,10 @@ int eof_undo_load_state(const char * fn)
 		eof_destroy_song(eof_song);	//Destroy the chart that is open
 		eof_undo_in_progress = 0;
 	}
-	(void) pack_fclose(rfp);
+	(void) pack_fclose(rfp);	//Calls to eof_destroy_song() are finished, the recovery file handle can be released now
 	eof_song = sp;	//Replacing it with the loaded undo state
 	eof_silence_loaded = old_eof_silence_loaded;	//Restore the status of whether chart audio is loaded
 
-	(void) pack_fclose(fp);
 	return 1;
 }
 

@@ -4828,7 +4828,7 @@ void eof_start_logging(void)
 			allegro_message("Error opening log file for writing");
 		}
 		#ifdef ALLEGRO_WINDOWS
-		if(strcasestr_spec(log_filename, "program files") || strcasestr_spec(log_filename, "VirtualStore"))
+		if(strcasestr_spec(log_filename, "c:\\program files") || strcasestr_spec(log_filename, "VirtualStore"))
 		{
 			allegro_message("Warning:  Running EOF from within a \"Program files\" folder in Windows Vista or newer can cause problems.  Moving the EOF program folder elsewhere is recommended.\"");
 		}
