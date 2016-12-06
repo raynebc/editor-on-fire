@@ -243,6 +243,7 @@ int eof_menu_copy_solos_track_10(void);
 int eof_menu_copy_solos_track_11(void);
 int eof_menu_copy_solos_track_12(void);
 int eof_menu_copy_solos_track_13(void);
+int eof_menu_copy_solos_track_14(void);
 int eof_menu_copy_solos_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack);
 	//Copies the solo phrases from the specified source track to the destination track
 
@@ -259,6 +260,7 @@ int eof_menu_copy_sp_track_10(void);
 int eof_menu_copy_sp_track_11(void);
 int eof_menu_copy_sp_track_12(void);
 int eof_menu_copy_sp_track_13(void);
+int eof_menu_copy_sp_track_14(void);
 int eof_menu_copy_sp_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack);
 	//Copies the star power phrases from the specified source track to the destination track
 
@@ -275,6 +277,7 @@ int eof_menu_copy_arpeggio_track_10(void);
 int eof_menu_copy_arpeggio_track_11(void);
 int eof_menu_copy_arpeggio_track_12(void);
 int eof_menu_copy_arpeggio_track_13(void);
+int eof_menu_copy_arpeggio_track_14(void);
 int eof_menu_copy_arpeggio_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack);
 	//Copies the arpeggio phrases from the specified source track to the destination track
 
@@ -291,6 +294,7 @@ int eof_menu_copy_trill_track_10(void);
 int eof_menu_copy_trill_track_11(void);
 int eof_menu_copy_trill_track_12(void);
 int eof_menu_copy_trill_track_13(void);
+int eof_menu_copy_trill_track_14(void);
 int eof_menu_copy_trill_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack);
 	//Copies the trill phrases from the specified source track to the destination track
 
@@ -307,6 +311,7 @@ int eof_menu_copy_tremolo_track_10(void);
 int eof_menu_copy_tremolo_track_11(void);
 int eof_menu_copy_tremolo_track_12(void);
 int eof_menu_copy_tremolo_track_13(void);
+int eof_menu_copy_tremolo_track_14(void);
 int eof_menu_copy_tremolo_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack);
 	//Copies the tremolo phrases from the specified source track to the destination track
 

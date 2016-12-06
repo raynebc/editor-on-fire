@@ -46,6 +46,7 @@ MENU eof_menu_solo_copy_menu[EOF_TRACKS_MAX] =
 	{eof_menu_solo_copy_menu_text[10], eof_menu_copy_solos_track_11, NULL, 0, NULL},
 	{eof_menu_solo_copy_menu_text[11], eof_menu_copy_solos_track_12, NULL, 0, NULL},
 	{eof_menu_solo_copy_menu_text[12], eof_menu_copy_solos_track_13, NULL, 0, NULL},
+	{eof_menu_solo_copy_menu_text[13], eof_menu_copy_solos_track_14, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -74,6 +75,7 @@ MENU eof_menu_sp_copy_menu[EOF_TRACKS_MAX] =
 	{eof_menu_sp_copy_menu_text[10], eof_menu_copy_sp_track_11, NULL, 0, NULL},
 	{eof_menu_sp_copy_menu_text[11], eof_menu_copy_sp_track_12, NULL, 0, NULL},
 	{eof_menu_sp_copy_menu_text[12], eof_menu_copy_sp_track_13, NULL, 0, NULL},
+	{eof_menu_sp_copy_menu_text[13], eof_menu_copy_sp_track_14, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -119,6 +121,7 @@ MENU eof_menu_arpeggio_copy_menu[EOF_TRACKS_MAX] =
 	{eof_menu_arpeggio_copy_menu_text[10], eof_menu_copy_arpeggio_track_11, NULL, 0, NULL},
 	{eof_menu_arpeggio_copy_menu_text[11], eof_menu_copy_arpeggio_track_12, NULL, 0, NULL},
 	{eof_menu_arpeggio_copy_menu_text[12], eof_menu_copy_arpeggio_track_13, NULL, 0, NULL},
+	{eof_menu_arpeggio_copy_menu_text[13], eof_menu_copy_arpeggio_track_14, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -176,6 +179,7 @@ MENU eof_menu_trill_copy_menu[EOF_TRACKS_MAX] =
 	{eof_menu_trill_copy_menu_text[10], eof_menu_copy_trill_track_11, NULL, 0, NULL},
 	{eof_menu_trill_copy_menu_text[11], eof_menu_copy_trill_track_12, NULL, 0, NULL},
 	{eof_menu_trill_copy_menu_text[12], eof_menu_copy_trill_track_13, NULL, 0, NULL},
+	{eof_menu_trill_copy_menu_text[13], eof_menu_copy_trill_track_14, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -204,6 +208,7 @@ MENU eof_menu_tremolo_copy_menu[EOF_TRACKS_MAX] =
 	{eof_menu_tremolo_copy_menu_text[10], eof_menu_copy_tremolo_track_11, NULL, 0, NULL},
 	{eof_menu_tremolo_copy_menu_text[11], eof_menu_copy_tremolo_track_12, NULL, 0, NULL},
 	{eof_menu_tremolo_copy_menu_text[12], eof_menu_copy_tremolo_track_13, NULL, 0, NULL},
+	{eof_menu_tremolo_copy_menu_text[13], eof_menu_copy_tremolo_track_14, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -6865,6 +6870,11 @@ int eof_menu_copy_solos_track_13(void)
 	return eof_menu_copy_solos_track_number(eof_song, 13, eof_selected_track);
 }
 
+int eof_menu_copy_solos_track_14(void)
+{
+	return eof_menu_copy_solos_track_number(eof_song, 14, eof_selected_track);
+}
+
 int eof_menu_copy_solos_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
 {
 	unsigned long ctr;
@@ -6964,6 +6974,11 @@ int eof_menu_copy_sp_track_12(void)
 int eof_menu_copy_sp_track_13(void)
 {
 	return eof_menu_copy_sp_track_number(eof_song, 13, eof_selected_track);
+}
+
+int eof_menu_copy_sp_track_14(void)
+{
+	return eof_menu_copy_sp_track_number(eof_song, 14, eof_selected_track);
 }
 
 int eof_menu_copy_sp_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
@@ -7067,6 +7082,11 @@ int eof_menu_copy_arpeggio_track_13(void)
 	return eof_menu_copy_arpeggio_track_number(eof_song, 13, eof_selected_track);
 }
 
+int eof_menu_copy_arpeggio_track_14(void)
+{
+	return eof_menu_copy_arpeggio_track_number(eof_song, 14, eof_selected_track);
+}
+
 int eof_menu_copy_arpeggio_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
 {
 	unsigned long ctr;
@@ -7168,6 +7188,11 @@ int eof_menu_copy_trill_track_13(void)
 	return eof_menu_copy_trill_track_number(eof_song, 13, eof_selected_track);
 }
 
+int eof_menu_copy_trill_track_14(void)
+{
+	return eof_menu_copy_trill_track_number(eof_song, 14, eof_selected_track);
+}
+
 int eof_menu_copy_trill_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
 {
 	unsigned long ctr;
@@ -7267,6 +7292,11 @@ int eof_menu_copy_tremolo_track_12(void)
 int eof_menu_copy_tremolo_track_13(void)
 {
 	return eof_menu_copy_tremolo_track_number(eof_song, 13, eof_selected_track);
+}
+
+int eof_menu_copy_tremolo_track_14(void)
+{
+	return eof_menu_copy_tremolo_track_number(eof_song, 14, eof_selected_track);
 }
 
 int eof_menu_copy_tremolo_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)

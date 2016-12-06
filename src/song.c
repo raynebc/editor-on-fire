@@ -3127,6 +3127,8 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			continue;	//Skip to the next track
 		}
 		restore_tech_view = 0;	//Reset this condition
+		if(track_ctr >= EOF_TRACKS_MAX)
+			break;		//Redundant bounds check to satisfy a false positive with Coverity
 		if(sp->track[track_ctr] != NULL)
 		{	//Skip NULL tracks, such as track 0
 			(void) eof_save_song_string_pf(sp->track[track_ctr]->name, fp);	//Write track name string

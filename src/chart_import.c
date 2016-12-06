@@ -708,6 +708,25 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 	}
 
+	/* check if unofficial open strum notation ("N 7 #" lane 8 note) was found */
+	for(ctr = 1; ctr < sp->tracks; ctr++)
+	{	//For each track
+		if(sp->track[ctr]->track_format != EOF_LEGACY_TRACK_FORMAT)
+		{	//If this isn't a legacy track
+			continue;	//Skip it
+		}
+		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
+		{	//For each note in the track
+			if(eof_get_note_note(sp, ctr, ctr2) == 128)
+			{	//If this note is a lane 8 single note, convert it to a lane 6 gem
+				tracknum = sp->track[ctr]->tracknum;
+				sp->track[ctr]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
+				sp->legacy_track[tracknum]->numlanes = 6;	//Set this track to have 6 lanes instead of 5
+				eof_set_note_note(sp, ctr, ctr2, 32);
+			}
+		}
+	}
+
 	/* mark anything that wasn't specifically made into a forced HOPO note as a forced strum */
 	for(ctr = 1; ctr < sp->tracks; ctr++)
 	{	//For each track
@@ -1372,6 +1391,10 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 					{	//If the E is followed by an asterisk
 						notetype=2;	//This is a toggle HOPO marker
 					}
+					else if(strstr(&substring[index + 1], "O"))
+					{	//If the E is followed by the letter O
+						notetype=3;	//This is an open strum marker
+					}
 					else
 					{
 						(void) pack_fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
@@ -1398,6 +1421,12 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 			{	//If this is a toggle HOPO marker, treat it as a note authored as "N 5 0"
 				notetype=0;
 				B=5;
+				C=0;
+			}
+			else if(notetype == 3)
+			{	//if this is an open strum marker, treat it as a note authored as "N 7 0"
+				notetype=0;
+				B=7;
 				C=0;
 			}
 			else

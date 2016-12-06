@@ -5076,6 +5076,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 				eof_log("\tError allocating memory to unwrap GP track (4)", 1);
 				free(tp);
 				free(working_num_of_repeats);
+				free(measuremap);
 				eof_destroy_song(dsp);	//Destroy working project
 				return 4;
 			}
@@ -5490,6 +5491,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 				eof_log("\tError allocating memory to unwrap GP track (9)", 1);
 				free(tp);
 				free(working_num_of_repeats);
+				free(measuremap);
 				eof_destroy_song(dsp);	//Destroy working project
 				return 9;
 			}
@@ -5527,7 +5529,7 @@ char eof_copy_notes_in_beat_range(EOF_SONG *ssp, EOF_PRO_GUITAR_TRACK *source, u
 
 	eof_log("eof_copy_notes_in_beat_range() entered", 2);
 
-	if(!ssp || !ssp->beat || !source || !dsp || !dsp->beat || !dest || (startbeat + numbeats >= ssp->beats) || (destbeat + numbeats >= dsp->beats))
+	if(!ssp || !source || !dsp || !dest || (startbeat + numbeats >= ssp->beats) || (destbeat + numbeats >= dsp->beats))
 	{
 		eof_log("\tInvalid parameters", 1);
 		return 0;	//Return error

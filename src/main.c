@@ -4812,6 +4812,7 @@ unsigned int eof_log_id = 0;
 void eof_start_logging(void)
 {
 	char log_filename[1024] = {0};
+	char *systemdrive = NULL, programfilespath[30] = "";	//Used to obtain the x86 and x64 Program Files folders via environment variables
 
 	if((eof_log_fp == NULL) && enable_logging)
 	{	//If logging isn't alredy running, and logging isn't disabled
@@ -4828,8 +4829,19 @@ void eof_start_logging(void)
 			allegro_message("Error opening log file for writing");
 		}
 		#ifdef ALLEGRO_WINDOWS
-		if(strcasestr_spec(log_filename, "c:\\program files") || strcasestr_spec(log_filename, "VirtualStore"))
+		systemdrive = getenv("SystemDrive");
+		if(systemdrive)
+		{	//If the SystemDrive environment variable was read, construct the expected path to the program files folder
+			// (the environment variable can't be relied on for this because the 32 and 64 bit variables will return only
+			//  the 32 bit path when the running executable is 32 bit)
+			(void) snprintf(programfilespath, sizeof(programfilespath) - 1, "%s\\Program Files", systemdrive);
+		}
+		if(strcasestr_spec(log_filename, "VirtualStore") || (systemdrive && strcasestr_spec(log_filename, programfilespath)))
 		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tDetected program files path:  %s", programfilespath);
+			eof_log(eof_log_string, 1);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tOutput log path:  %s", log_filename);
+			eof_log(eof_log_string, 1);
 			allegro_message("Warning:  Running EOF from within a \"Program files\" folder in Windows Vista or newer can cause problems.  Moving the EOF program folder elsewhere is recommended.\"");
 		}
 		#endif

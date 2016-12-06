@@ -114,6 +114,8 @@ int eof_export_bandfuse(EOF_SONG * sp, char * fn, unsigned short *user_warned)
 
 	for(ctr = 1; ctr < sp->tracks; ctr++)
 	{	//For each track
+		if(ctr >= EOF_TRACKS_MAX)
+			break;		//Redundant bounds check to satisfy a false positive with Coverity
 		if(sp->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 			continue;	//If this isn't a pro guitar/bass track, skip it
 		if(ctr == EOF_TRACK_PRO_GUITAR_B)
