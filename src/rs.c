@@ -2246,13 +2246,13 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the active pro guitar track
 		char failed = 0;
+		EOF_PRO_GUITAR_NOTE *new_note2;
 
 		if((eof_note_count_rs_lanes(sp, track, ctr, 4) <= 1) || (tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE))
 			continue;	//If this note does not contain multiple gems or is ignored, skip it
 		if(!eof_is_partially_ghosted(sp, track, ctr))
 			continue;	//If this note is not partially ghosted, skip it
 
-		EOF_PRO_GUITAR_NOTE *new_note2;
 		for(ctr2 = 0, match = 0; ctr2 < tp->arpeggios; ctr2++)
 		{	//For each arpeggio section in the track
 			if((tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))

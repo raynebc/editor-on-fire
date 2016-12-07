@@ -870,9 +870,14 @@ int eof_write_image_sequence(void);
 int eof_benchmark_image_sequence(void);
 	//Calls eof_create_image_sequence() with the option to benchmark only
 
-int eof_get_pro_guitar_note_fret_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, char *pro_guitar_string);
-	//Writes a string representation of the specified pro guitar/bass note from lowest to highest gauge string into pro_guitar_string[] which must be at least
+int eof_get_pro_guitar_note_fret_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, char *fret_string);
+	//Writes a string representation of the specified pro guitar/bass note from lowest to highest gauge string into fret_string[], which must be at least
 	//3 * # of strings number of bytes long in order to store the maximum length string
+	//Returns 0 on error or 1 on success
+int eof_get_pro_guitar_note_finger_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, char *finger_string);
+	//Writes a string representation of the specified pro guitar/bass note's fingering into finger_string[], which must be at least
+	//3 * # of strings number of bytes long in order to store the maximum length string
+	//Padding is added as necessary so that the fingering aligns right with the fret string's contents, taking double digit fret numbers into account
 	//Returns 0 on error or 1 on success
 int eof_five_lane_drums_enabled(void);
 	//A simple function returning nonzero if PART DRUM has the fifth lane enabled
@@ -1006,6 +1011,7 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 	//If both offset AND dir are zero, applicable sections are re-snapped to the nearest grid snap positions
 	//If undo_made is not NULL and references a value of 0, an undo state is made prior to the first section being moved, and *undo_made is set to nonzero
 
+/*@unused@ Avoid complaints from Splint*/
 static inline int eof_beat_num_valid(EOF_SONG *sp, unsigned long beatnum)
 {
 	return (sp && (beatnum < sp->beats));

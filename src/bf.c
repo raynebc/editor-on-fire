@@ -204,9 +204,6 @@ int eof_export_bandfuse(EOF_SONG * sp, char * fn, unsigned short *user_warned)
 
 					for(ctr4 = 0, bitmask = 1; ctr4 < tp->numstrings; ctr4++, bitmask <<= 1)
 					{	//For each string in this track
-						if(!(tp->note[ctr3]->note & bitmask) || (tp->note[ctr3]->ghost & bitmask))
-							continue;	//If this string does not have a gem, or if it has one that is ghosted, skip it
-
 						EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 						unsigned long notepos;
 						unsigned long fret, finger;				//The fret and finger numbers used to play the gem on this string
@@ -215,6 +212,9 @@ int eof_export_bandfuse(EOF_SONG * sp, char * fn, unsigned short *user_warned)
 						long next;
 						unsigned long stringnum;				//The converted string number (ie. low E string is string 6)
 						char *sustainpadding;
+
+						if(!(tp->note[ctr3]->note & bitmask) || (tp->note[ctr3]->ghost & bitmask))
+							continue;	//If this string does not have a gem, or if it has one that is ghosted, skip it
 
 						trill_start = trill_stop = tp->note[ctr3]->pos;	//Initialize variables in order to track if the trill phrase can't be properly found
 						if(tp->note[ctr3]->flags & EOF_NOTE_FLAG_IS_TRILL)

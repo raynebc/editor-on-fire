@@ -5275,7 +5275,7 @@ int eof_menu_file_export_guitar_pro(void)
 	{	//As long as a valid project path was obtained
 		if(ugetat(tempstr2, ustrlen(tempstr2) - 1) == '\\')
 		{	//If the path ends in a folder separator
-			uremove(tempstr2, -1);	//Remove the last character in the string, as RocksmithToTab will crash if the output directory path ends in a separator
+			(void) uremove(tempstr2, -1);	//Remove the last character in the string, as RocksmithToTab will crash if the output directory path ends in a separator
 		}
 	}
 	(void) uszprintf(tempstr, (int) sizeof(tempstr) - 1, " --xml \"%s\" \"%s\" \"%s\" \"%s\" -o \"%s\"", temppath1, temppath2, temppath3, temppath4, tempstr2);

@@ -2600,23 +2600,22 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 			if((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT))
 			{	//Only legacy guitar tracks are able to use this type of section
 				count = sp->legacy_track[tracknum]->sliders;
-				if(count < EOF_MAX_PHRASES)
-				{	//If EOF can store the slider section
-					sp->legacy_track[tracknum]->slider[count].start_pos = start;
-					sp->legacy_track[tracknum]->slider[count].end_pos = end;
-					sp->legacy_track[tracknum]->slider[count].difficulty = difficulty;
-					sp->legacy_track[tracknum]->slider[count].flags = 0;
-					if(name == NULL)
-					{
-						sp->legacy_track[tracknum]->slider[count].name[0] = '\0';
-					}
-					else
-					{
-						(void) ustrcpy(sp->legacy_track[tracknum]->slider[count].name, name);
-					}
-					sp->legacy_track[tracknum]->sliders++;
+				if(count >= EOF_MAX_PHRASES)	//If EOF cannot store another slider section
+					return 1;
+
+				sp->legacy_track[tracknum]->slider[count].start_pos = start;
+				sp->legacy_track[tracknum]->slider[count].end_pos = end;
+				sp->legacy_track[tracknum]->slider[count].difficulty = difficulty;
+				sp->legacy_track[tracknum]->slider[count].flags = 0;
+				if(name == NULL)
+				{
+					sp->legacy_track[tracknum]->slider[count].name[0] = '\0';
 				}
-				return 1;
+				else
+				{
+					(void) ustrcpy(sp->legacy_track[tracknum]->slider[count].name, name);
+				}
+				sp->legacy_track[tracknum]->sliders++;
 			}
 		break;
 		case EOF_FRET_HAND_POS_SECTION:	//Fret hand position
@@ -2803,7 +2802,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		//Store the pointers to each of the 5 number type INI settings (number 0 is reserved) to simplify the loading code
 	char unshare_drum_phrasing;
 
-	EOF_PRO_GUITAR_TRACK *tp = NULL;
+	EOF_PRO_GUITAR_TRACK *tp;
 	char restore_tech_view;		//If tech view is in effect for a pro guitar track, it is temporarily disabled until after the track's notes have been written
 
  	eof_log("eof_save_song() entered", 1);
@@ -3127,6 +3126,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			continue;	//Skip to the next track
 		}
 		restore_tech_view = 0;	//Reset this condition
+		tp = NULL;
 		if(track_ctr >= EOF_TRACKS_MAX)
 			break;		//Redundant bounds check to satisfy a false positive with Coverity
 		if(sp->track[track_ctr] != NULL)
@@ -3660,7 +3660,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			(void) pack_iputl(4, fp);
 			(void) pack_iputl(0xFFFFFFFF, fp);	//Write the debug custom data block ID
 		}
-		if(tp && restore_tech_view)
+		if(restore_tech_view)
 		{	//If tech view needs to be re-enabled for the track that was just written
 			eof_menu_pro_guitar_track_enable_tech_view(tp);
 		}
@@ -7312,11 +7312,11 @@ int eof_detect_string_gem_conflicts(EOF_PRO_GUITAR_TRACK *tp, unsigned long newn
 	return 0;	//Return no conflict
 }
 
-int eof_get_pro_guitar_note_fret_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, char *pro_guitar_string)
+int eof_get_pro_guitar_note_fret_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, char *fret_string)
 {
 	unsigned long i, bitmask, index, fretvalue;
 
-	if(!tp || (note >= tp->notes) || !pro_guitar_string)
+	if(!tp || (note >= tp->notes) || !fret_string)
 	{	//If there was an invalid parameter
 		return 0;	//Return error
 	}
@@ -7325,30 +7325,79 @@ int eof_get_pro_guitar_note_fret_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 	{	//For each of the track's usable strings
 		if(index != 0)
 		{	//If another fret value was already written to this string
-			pro_guitar_string[index++] = ' ';	//Insert a space
+			fret_string[index++] = ' ';	//Insert a space
 		}
 		if(tp->note[note]->note & bitmask)
 		{	//If the string is populated for the selected pro guitar note
 			fretvalue = tp->note[note]->frets[i];
 			if(fretvalue & 0x80)
 			{	//If this string is muted (MSB set)
-				pro_guitar_string[index++] = 'X';	//Write a capital x to indicate muted string
+				fret_string[index++] = 'X';	//Write a capital x to indicate muted string
 			}
 			else
 			{
 				if(fretvalue > 9)
 				{	//If the fret value uses two digits instead of one
-					pro_guitar_string[index++] = '0' + (fretvalue / 10);	//Write the tens digit
+					fret_string[index++] = '0' + (fretvalue / 10);	//Write the tens digit
 				}
-				pro_guitar_string[index++] = '0' + (fretvalue % 10);	//Write the ones digit
+				fret_string[index++] = '0' + (fretvalue % 10);	//Write the ones digit
 			}
 		}
 		else
 		{
-			pro_guitar_string[index++] = '_';	//Write an underscore to indicate string not played
+			fret_string[index++] = '_';	//Write an underscore to indicate string not played
 		}
 	}
-	pro_guitar_string[index] = '\0';	//Terminate the string
+	fret_string[index] = '\0';	//Terminate the string
+
+	return 1;	//Return success
+}
+
+int eof_get_pro_guitar_note_finger_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, char *finger_string)
+{
+	unsigned long i, bitmask, index, fretvalue, fingervalue;
+
+	if(!tp || (note >= tp->notes) || !finger_string)
+	{	//If there was an invalid parameter
+		return 0;	//Return error
+	}
+
+	for(i = 0, bitmask = 1, index = 0; i < tp->numstrings; i++, bitmask<<=1)
+	{	//For each of the track's usable strings
+		if(index != 0)
+		{	//If another fret value was already written to this string
+			finger_string[index++] = ' ';	//Insert a space as padding for the previous number
+		}
+		if(tp->note[note]->note & bitmask)
+		{	//If the string is populated for the selected pro guitar note
+			fretvalue = tp->note[note]->frets[i];
+			fingervalue = tp->note[note]->finger[i];
+			if(!(fretvalue & 0x80) && ((fretvalue & 0x7F) >= 10))
+			{	//If this string is not muted and uses a fret number that takes two digits to render
+				finger_string[index++] = ' ';	//Insert another space
+			}
+			if(fingervalue == 0)
+			{	//If this string's fingering is undefined
+				finger_string[index++] = '_';	//Write an underscore to indicate string not played
+			}
+			else
+			{
+				if(fingervalue < 5)
+				{
+					finger_string[index++] = '0' + fingervalue;
+				}
+				else
+				{	//If this string's fingering defines use of the thumb or is higher than expected
+					finger_string[index++] = 'T';
+				}
+			}
+		}
+		else
+		{
+			finger_string[index++] = '_';	//Write an underscore to indicate string not played
+		}
+	}
+	finger_string[index] = '\0';	//Terminate the string
 
 	return 1;	//Return success
 }
@@ -8967,7 +9016,7 @@ int eof_length_is_equal_to(long length, long threshold)
 
 void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char *undo_made)
 {
-	unsigned long sectiontype, sectioncount, ctr, ctr2, notepos;
+	unsigned long sectiontype, sectioncount = 0, ctr, ctr2, notepos;
 	EOF_PHRASE_SECTION *sections = NULL;
 	int applicable, missing;
 
@@ -8997,6 +9046,9 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 			case EOF_RS_POPUP_MESSAGE:
 			case EOF_RS_TONE_CHANGE:
 			continue;
+
+			default:
+			break;		//Redundant default case to satisfy Oclint
 		}
 
 		for(ctr = 0; ctr < sectioncount; ctr++)
@@ -9072,7 +9124,7 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 			}
 			else
 			{	//If moving by grid snap
-				unsigned long newstart, newend;
+				unsigned long newstart = 0, newend = 0;
 				if(eof_find_grid_snap(sections[ctr].start_pos, dir, &newstart))
 				{	//If the appropriate grid snap before/nearest/after the section's current start position was found
 					if((sectiontype == EOF_FRET_HAND_POS_SECTION) || eof_find_grid_snap(sections[ctr].end_pos, dir, &newend))

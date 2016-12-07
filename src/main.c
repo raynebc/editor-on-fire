@@ -2508,7 +2508,7 @@ void eof_render_note_window(void)
 	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
 	char temp[1024] = {0};
 	unsigned long notepos;
-	char pro_guitar_string[30] = {0}, grid_snap_string[30] = {0};
+	char fret_string[30] = {0}, grid_snap_string[30] = {0};
 	char difficulty1[20] = {0}, difficulty2[50] = {0}, difficulty3[50] = {0};
 	int scale, chord, isslash, bassnote;	//Used when looking up the chord name (if the last selected note is not already named)
 
@@ -2767,7 +2767,7 @@ void eof_render_note_window(void)
 		}
 		else
 		{
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Measure = (Time Sig. not defined)");
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Measure = (TS undefined)");
 		}
 		ypos += 12;
 
@@ -2826,14 +2826,19 @@ void eof_render_note_window(void)
 			tracknum = eof_song->track[eof_selected_track]->tracknum;
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//Display information specific to pro guitar tracks
-				if((eof_selection.current < eof_song->pro_guitar_track[tracknum]->notes) && (eof_selection.track == eof_selected_track))
-				{	//If a note in the active track is selected, display a line with its fretting information
+				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+				unsigned char position = eof_pro_guitar_track_find_effective_fret_hand_position(tp, eof_note_type, eof_music_pos - eof_av_delay);	//Find if there's a fret hand position in effect
+
+				if((eof_selection.current < tp->notes) && (eof_selection.track == eof_selected_track))
+				{	//If a note in the active track is selected, display line with its fretting and fingering information
+					char finger_string[30] = {0};
+
 					ypos += 12;
-					if(eof_get_pro_guitar_note_fret_string(eof_song->pro_guitar_track[tracknum], eof_selection.current, pro_guitar_string))
+					if(eof_get_pro_guitar_note_fret_string(tp, eof_selection.current, fret_string))
 					{	//If the note's frets can be represented in string format
-						if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name[0] != '\0')
+						if(tp->note[eof_selection.current]->name[0] != '\0')
 						{	//If this note was manually given a name, display it in addition to the fretting
-							textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: %s", pro_guitar_string, eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name);
+							textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s : %s", fret_string, tp->note[eof_selection.current]->name);
 							eof_enable_chord_cache = 0;	//When a manually-named note is selected, reset this variable so that previous/next chord name cannot be used
 						}
 						else
@@ -2841,10 +2846,10 @@ void eof_render_note_window(void)
 							unsigned long matchcount;
 							char chord_match_string[30] = {0};
 
-							matchcount = eof_count_chord_lookup_matches(eof_song->pro_guitar_track[tracknum], eof_selected_track, eof_selection.current);
+							matchcount = eof_count_chord_lookup_matches(tp, eof_selected_track, eof_selection.current);
 							if(matchcount)
 							{	//If there's at least one chord lookup match, obtain the user's selected match
-								eof_lookup_chord(eof_song->pro_guitar_track[tracknum], eof_selected_track, eof_selection.current, &scale, &chord, &isslash, &bassnote, eof_selected_chord_lookup, 1);	//Run a cache-able lookup
+								eof_lookup_chord(tp, eof_selected_track, eof_selection.current, &scale, &chord, &isslash, &bassnote, eof_selected_chord_lookup, 1);	//Run a cache-able lookup
 								scale %= 12;	//Ensure this is a value from 0 to 11
 								bassnote %= 12;
 								if(matchcount > 1)
@@ -2853,25 +2858,42 @@ void eof_render_note_window(void)
 								}
 								if(!isslash)
 								{	//If it's a normal chord
-									textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: [%s%s]%s", pro_guitar_string, eof_note_names[scale], eof_chord_names[chord].chordname, chord_match_string);
+									textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s : [%s%s]%s", fret_string, eof_note_names[scale], eof_chord_names[chord].chordname, chord_match_string);
 								}
 								else
 								{	//If it's a slash chord
-									textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: [%s%s%s]%s", pro_guitar_string, eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote], chord_match_string);
+									textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s : [%s%s%s]%s", fret_string, eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote], chord_match_string);
 								}
 							}
 							else
 							{	//Otherwise just display the fretting
-								textout_ex(eof_window_note->screen, font, pro_guitar_string, 2, ypos, eof_color_white, -1);
-								eof_chord_lookup_note = eof_get_pro_guitar_note_note(eof_song->pro_guitar_track[tracknum], eof_selection.current);		//Cache the failed, looked up note's details
-								memcpy(eof_chord_lookup_frets, eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets, 6);
+								textout_ex(eof_window_note->screen, font, fret_string, 2, ypos, eof_color_white, -1);
+								eof_chord_lookup_note = eof_get_pro_guitar_note_note(tp, eof_selection.current);		//Cache the failed, looked up note's details
+								memcpy(eof_chord_lookup_frets, tp->note[eof_selection.current]->frets, 6);
 								eof_cached_chord_lookup_retval = 0;	//Cache a failed lookup result
 							}
 						}
 					}
 					ypos += 2;	//Lower the virtual "cursor" because underscores for the fretting string are rendered low enough to touch text 12 pixels below the y position of the glyph
+
+					if(eof_get_pro_guitar_note_finger_string(tp, eof_selection.current, finger_string))
+					{	//If the note's fingering can be represented in string format
+						ypos += 12;
+						textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s : (fingering)", finger_string);
+						ypos += 2;	//Lower the virtual "cursor" because underscores for the fretting string are rendered low enough to touch text 12 pixels below the y position of the glyph
+					}
 				}//If a note in the active track is selected, display a line with its fretting information
-			}
+
+				ypos += 12;
+				if(position)
+				{	//If a fret hand position is in effect
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Effective FHP : %u", position);
+				}
+				else
+				{
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Effective FHP : None");
+				}
+			}//Display information specific to pro guitar tracks
 			ypos += 12;
 
 			if(eof_hover_note >= 0)
@@ -2959,9 +2981,6 @@ void eof_render_note_window(void)
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//Display information specific to pro guitar tracks
-			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
-			unsigned char position = eof_pro_guitar_track_find_effective_fret_hand_position(tp, eof_note_type, eof_music_pos - eof_av_delay);	//Find if there's a fret hand position in effect
-
 			ypos += 12;
 			if(!eof_pro_guitar_fret_bitmask || (eof_pro_guitar_fret_bitmask == 63))
 			{	//If the fret shortcut bitmask is set to no strings or all 6 strings
@@ -2975,31 +2994,21 @@ void eof_render_note_window(void)
 					{	//If the bitmask applies to this string
 						if(index != 0)
 						{	//If another string number was already written to this string
-							pro_guitar_string[index++] = ',';	//Insert a comma
-							pro_guitar_string[index++] = ' ';	//And a space
+							fret_string[index++] = ',';	//Insert a comma
+							fret_string[index++] = ' ';	//And a space
 						}
-						pro_guitar_string[index++] = '7' - i;	//'0' + # is converts a number of value # to a text character representation
+						fret_string[index++] = '7' - i;	//'0' + # is converts a number of value # to a text character representation
 					}
 				}
-				pro_guitar_string[index] = '\0';	//Terminate the string
-				if(pro_guitar_string[1] != '\0')
+				fret_string[index] = '\0';	//Terminate the string
+				if(fret_string[1] != '\0')
 				{	//If there are at least two strings denoted
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Fret value shortcuts apply to strings %s", pro_guitar_string);
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Fret value shortcuts apply to strings %s", fret_string);
 				}
 				else
 				{	//There's only one string denoted, use a shortcut to just display the one character
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Fret value shortcuts apply to string %c", pro_guitar_string[0]);
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Fret value shortcuts apply to string %c", fret_string[0]);
 				}
-			}
-			ypos += 12;
-
-			if(position)
-			{	//If a fret hand position is in effect
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Effective fret hand position:  %u", position);
-			}
-			else
-			{
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Effective fret hand position:  None");
 			}
 		}//Display information specific to pro guitar tracks
 
@@ -4812,7 +4821,6 @@ unsigned int eof_log_id = 0;
 void eof_start_logging(void)
 {
 	char log_filename[1024] = {0};
-	char *systemdrive = NULL, programfilespath[30] = "";	//Used to obtain the x86 and x64 Program Files folders via environment variables
 
 	if((eof_log_fp == NULL) && enable_logging)
 	{	//If logging isn't alredy running, and logging isn't disabled
@@ -4829,20 +4837,23 @@ void eof_start_logging(void)
 			allegro_message("Error opening log file for writing");
 		}
 		#ifdef ALLEGRO_WINDOWS
-		systemdrive = getenv("SystemDrive");
-		if(systemdrive)
-		{	//If the SystemDrive environment variable was read, construct the expected path to the program files folder
-			// (the environment variable can't be relied on for this because the 32 and 64 bit variables will return only
-			//  the 32 bit path when the running executable is 32 bit)
-			(void) snprintf(programfilespath, sizeof(programfilespath) - 1, "%s\\Program Files", systemdrive);
-		}
-		if(strcasestr_spec(log_filename, "VirtualStore") || (systemdrive && strcasestr_spec(log_filename, programfilespath)))
 		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tDetected program files path:  %s", programfilespath);
-			eof_log(eof_log_string, 1);
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tOutput log path:  %s", log_filename);
-			eof_log(eof_log_string, 1);
-			allegro_message("Warning:  Running EOF from within a \"Program files\" folder in Windows Vista or newer can cause problems.  Moving the EOF program folder elsewhere is recommended.\"");
+			char *systemdrive = NULL, programfilespath[30] = "";	//Used to obtain the x86 and x64 Program Files folders via environment variables
+			systemdrive = getenv("SystemDrive");
+			if(systemdrive)
+			{	//If the SystemDrive environment variable was read, construct the expected path to the program files folder
+				// (the environment variable can't be relied on for this because the 32 and 64 bit variables will return only
+				//  the 32 bit path when the running executable is 32 bit)
+				(void) snprintf(programfilespath, sizeof(programfilespath) - 1, "%s\\Program Files", systemdrive);
+			}
+			if(strcasestr_spec(log_filename, "VirtualStore") || (systemdrive && strcasestr_spec(log_filename, programfilespath)))
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tDetected program files path:  %s", programfilespath);
+				eof_log(eof_log_string, 1);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tOutput log path:  %s", log_filename);
+				eof_log(eof_log_string, 1);
+				allegro_message("Warning:  Running EOF from within a \"Program files\" folder in Windows Vista or newer can cause problems.  Moving the EOF program folder elsewhere is recommended.\"");
+			}
 		}
 		#endif
 	}

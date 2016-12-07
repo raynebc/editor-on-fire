@@ -1407,8 +1407,6 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 		//Render pro guitar note slide if applicable
 		if((track != 0) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)))
 		{	//If rendering an existing pro guitar track that slides up or down or is an unpitched slide
-			long npos2, rz2;
-			unsigned long notepos2;		//Used for slide note rendering
 			unsigned long halflanewidth = (56.0 * (4.0 / (numlanes-1))) / 2;
 			int slidecolor = eof_color_dark_purple;	//By default, pro guitar slides are drawn in purple
 			char up = 0;		//Will be assumed to be a down slide by default

@@ -46,6 +46,26 @@ MENU eof_menu_thin_diff_menu[EOF_TRACKS_MAX] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+char eof_menu_track_clone_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
+MENU eof_menu_track_clone_menu[EOF_TRACKS_MAX] =
+{
+	{eof_menu_track_clone_menu_text[0], eof_menu_track_clone_track_1, NULL, D_SELECTED, NULL},
+	{eof_menu_track_clone_menu_text[1], eof_menu_track_clone_track_2, NULL, 0, NULL},
+	{eof_menu_track_clone_menu_text[2], eof_menu_track_clone_track_3, NULL, 0, NULL},
+	{eof_menu_track_clone_menu_text[3], eof_menu_track_clone_track_4, NULL, 0, NULL},
+	{eof_menu_track_clone_menu_text[4], eof_menu_track_clone_track_5, NULL, 0, NULL},
+	{eof_menu_track_clone_menu_text[5], eof_menu_track_clone_track_6, NULL, 0, NULL},
+	{eof_menu_track_clone_menu_text[6], eof_menu_track_clone_track_7, NULL, D_DISABLED, NULL},
+	{eof_menu_track_clone_menu_text[7], eof_menu_track_clone_track_8, NULL, 0, NULL},
+	{eof_menu_track_clone_menu_text[8], eof_menu_track_clone_track_9, NULL, 0, NULL},
+	{eof_menu_track_clone_menu_text[9], eof_menu_track_clone_track_10, NULL, 0, NULL},
+	{eof_menu_track_clone_menu_text[10], eof_menu_track_clone_track_11, NULL, 0, NULL},
+	{eof_menu_track_clone_menu_text[11], eof_menu_track_clone_track_12, NULL, 0, NULL},
+	{eof_menu_track_clone_menu_text[12], eof_menu_track_clone_track_13, NULL, 0, NULL},
+	{eof_menu_track_clone_menu_text[13], eof_menu_track_clone_track_14, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_track_menu[] =
 {
 	{"Pro &Guitar", NULL, eof_track_proguitar_menu, 0, NULL},
@@ -59,6 +79,7 @@ MENU eof_track_menu[] =
 	{"Erase highlighting", eof_menu_track_remove_highlighting, NULL, 0, NULL},
 	{"&Thin diff. to match", NULL, eof_menu_thin_diff_menu, 0, NULL},
 	{"Delete active difficulty", eof_track_delete_difficulty, NULL, 0, NULL},
+	{"&Clone from", NULL, eof_menu_track_clone_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -212,6 +233,30 @@ void eof_prepare_track_menu(void)
 					break;
 				}
 			}
+		}
+
+		/* Clone from */
+		for(i = 0; i < EOF_TRACKS_MAX - 1; i++)
+		{	//For each track supported by EOF
+			eof_menu_track_clone_menu[i].flags = D_DISABLED;
+			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
+			{	//If the track exists, copy its name into the string used by the track menu
+				(void) ustrcpy(eof_menu_track_clone_menu_text[i], eof_song->track[i + 1]->name);
+					//Copy the track name to the menu string
+			}
+			else
+			{	//Write a blank string for the track name
+				(void) ustrcpy(eof_menu_track_clone_menu_text[i],"");
+			}
+
+			if(i + 1 == EOF_TRACK_VOCALS)
+				continue;	//This function cannot be used with the vocal track since there isn't a second such track
+			if(i + 1 == eof_selected_track)
+				continue;	//This function cannot clone the active track from itself
+			if(eof_song->track[eof_selected_track]->track_format != eof_song->track[i + 1]->track_format)
+				continue;	//This function can only be used to clone a track of the same format as the active track
+
+			eof_menu_track_clone_menu[i].flags = 0;	//Enable the track from the submenu
 		}
 	}//If a chart is loaded
 }
@@ -3656,6 +3701,161 @@ int eof_menu_track_copy_popups_track_number(EOF_SONG *sp, unsigned long sourcetr
 	}
 
 	return 1;	//Return completion
+}
+
+int eof_menu_track_clone_track_1(void)
+{
+	return eof_menu_track_clone_track_number(eof_song, 1, eof_selected_track);
+}
+
+int eof_menu_track_clone_track_2(void)
+{
+	return eof_menu_track_clone_track_number(eof_song, 2, eof_selected_track);
+}
+
+int eof_menu_track_clone_track_3(void)
+{
+	return eof_menu_track_clone_track_number(eof_song, 3, eof_selected_track);
+}
+
+int eof_menu_track_clone_track_4(void)
+{
+	return eof_menu_track_clone_track_number(eof_song, 4, eof_selected_track);
+}
+
+int eof_menu_track_clone_track_5(void)
+{
+	return eof_menu_track_clone_track_number(eof_song, 5, eof_selected_track);
+}
+
+int eof_menu_track_clone_track_6(void)
+{
+	return 1;	//This function is not valid for the vocal track
+}
+
+int eof_menu_track_clone_track_7(void)
+{
+	return eof_menu_track_clone_track_number(eof_song, 7, eof_selected_track);
+}
+
+int eof_menu_track_clone_track_8(void)
+{
+	return eof_menu_track_clone_track_number(eof_song, 8, eof_selected_track);
+}
+
+int eof_menu_track_clone_track_9(void)
+{
+	return eof_menu_track_clone_track_number(eof_song, 9, eof_selected_track);
+}
+
+int eof_menu_track_clone_track_10(void)
+{
+	return eof_menu_track_clone_track_number(eof_song, 10, eof_selected_track);
+}
+
+int eof_menu_track_clone_track_11(void)
+{
+	return eof_menu_track_clone_track_number(eof_song, 11, eof_selected_track);
+}
+
+int eof_menu_track_clone_track_12(void)
+{
+	return eof_menu_track_clone_track_number(eof_song, 12, eof_selected_track);
+}
+
+int eof_menu_track_clone_track_13(void)
+{
+	return eof_menu_track_clone_track_number(eof_song, 13, eof_selected_track);
+}
+
+int eof_menu_track_clone_track_14(void)
+{
+	return eof_menu_track_clone_track_number(eof_song, 14, eof_selected_track);
+}
+
+int eof_menu_track_clone_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
+{
+	unsigned long stracknum, dtracknum, noteset, notesetcount = 1, ctr;
+	EOF_TRACK_ENTRY *parent;
+	EOF_PRO_GUITAR_NOTE **setptr;
+	int populated = 1;	//Set to nonzero if the destination track is found to contain no notes
+	char s_restore_tech_view = 0, d_restore_tech_view = 0;	//Store the original tech view states of the source/destination tracks if applicable
+
+	if(!sp || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcetrack == desttrack))
+		return 0;	//Invalid parameters
+	if(sp->track[sourcetrack]->track_format != sp->track[desttrack]->track_format)
+		return 0;	//Invalid parameters
+
+	//Warn if the destination track is populated
+	eof_clear_input();
+	if(!eof_get_track_size(sp, desttrack))
+	{	//If the destination track isn't populated by the current note set (either normal or tech notes)
+		(void) eof_menu_track_toggle_tech_view_state(sp, desttrack);	//Change the note set if applicable
+		if(!eof_get_track_size(sp, desttrack))
+		{	//If this track isn't populated by either normal or tech notes
+			populated = 0;
+		}
+		(void) (void) eof_menu_track_toggle_tech_view_state(sp, desttrack);	//Change the note set back if applicable
+	}
+	if(populated && alert(NULL, "This operation will replace this track's contents.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+	{	//If user does not opt to replace the track
+		return 1;	//Cancel
+	}
+
+	//Erase the destination track
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	eof_erase_track(sp, desttrack);
+
+	//Clone the source track
+	sp->track[desttrack]->difficulty = sp->track[sourcetrack]->difficulty;
+	sp->track[desttrack]->numdiffs = sp->track[sourcetrack]->numdiffs;
+	sp->track[desttrack]->flags = sp->track[sourcetrack]->flags;
+	stracknum = sp->track[sourcetrack]->tracknum;
+	dtracknum = sp->track[desttrack]->tracknum;
+	switch(sp->track[sourcetrack]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			parent = sp->legacy_track[dtracknum]->parent;	//Back up this pointer
+			memcpy(sp->legacy_track[dtracknum], sp->legacy_track[stracknum], sizeof(EOF_LEGACY_TRACK));
+			sp->legacy_track[dtracknum]->parent = parent;	//Restore this pointer
+			sp->legacy_track[dtracknum]->notes = 0;			//Clear the note count
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			parent = sp->pro_guitar_track[dtracknum]->parent;	//Back up these pointers
+			setptr = sp->pro_guitar_track[dtracknum]->note;
+			s_restore_tech_view = eof_menu_track_get_tech_view_state(sp, sourcetrack);	//Track which note set each track was in
+			d_restore_tech_view = eof_menu_track_get_tech_view_state(sp, desttrack);
+			memcpy(sp->pro_guitar_track[dtracknum], sp->pro_guitar_track[stracknum], sizeof(EOF_PRO_GUITAR_TRACK));
+			sp->pro_guitar_track[dtracknum]->parent = parent;	//Restore these pointers
+			sp->pro_guitar_track[dtracknum]->note = setptr;
+			sp->pro_guitar_track[dtracknum]->notes = sp->pro_guitar_track[dtracknum]->pgnotes = sp->pro_guitar_track[dtracknum]->technotes = 0;	//Clear the note counts
+			notesetcount = 2;	//Pro guitar tracks have the normal notes AND tech notes that need to be cloned
+		break;
+	}
+	for(noteset = 0; noteset < notesetcount; noteset++)
+	{	//For each note set in the source track
+		eof_menu_track_set_tech_view_state(sp, sourcetrack, noteset);
+		eof_menu_track_set_tech_view_state(sp, desttrack, noteset);	//Activate the appropriate note set
+		for(ctr = 0; ctr < eof_get_track_size(sp, sourcetrack); ctr++)
+		{	//For each note in the source track
+			unsigned long pos;
+			long length;
+			unsigned type;
+
+			//Clone the note into the destination track
+			pos = eof_get_note_pos(sp, sourcetrack, ctr);
+			length = eof_get_note_length(sp, sourcetrack, ctr);
+			type = eof_get_note_type(sp, sourcetrack, ctr);
+			(void) eof_copy_note_simple(sp, sourcetrack, ctr, desttrack, pos, length, type);
+		}
+	}
+	eof_menu_track_set_tech_view_state(sp, sourcetrack, s_restore_tech_view);	//Re-enable tech view if applicable
+	eof_menu_track_set_tech_view_state(sp, desttrack, d_restore_tech_view);
+	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+
+	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
+	return 1;
 }
 
 int eof_menu_thin_notes_track_1(void)

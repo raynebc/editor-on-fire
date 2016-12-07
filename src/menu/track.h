@@ -180,6 +180,23 @@ int eof_menu_track_copy_popups_track_14(void);
 int eof_menu_track_copy_popups_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack);
 	//Copies the popup messages from the specified source track to the destination track
 
+int eof_menu_track_clone_track_1(void);
+int eof_menu_track_clone_track_2(void);
+int eof_menu_track_clone_track_3(void);
+int eof_menu_track_clone_track_4(void);
+int eof_menu_track_clone_track_5(void);
+int eof_menu_track_clone_track_6(void);
+int eof_menu_track_clone_track_7(void);
+int eof_menu_track_clone_track_8(void);
+int eof_menu_track_clone_track_9(void);
+int eof_menu_track_clone_track_10(void);
+int eof_menu_track_clone_track_11(void);
+int eof_menu_track_clone_track_12(void);
+int eof_menu_track_clone_track_13(void);
+int eof_menu_track_clone_track_14(void);
+int eof_menu_track_clone_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack);
+	//Replaces the contents of the destination track with a copy of all content from the source track
+
 int eof_menu_thin_notes_track_1(void);
 int eof_menu_thin_notes_track_2(void);
 int eof_menu_thin_notes_track_3(void);
