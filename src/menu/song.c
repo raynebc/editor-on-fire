@@ -4205,7 +4205,7 @@ int eof_menu_song_highlight_arpeggios(void)
 
 void eof_song_highlight_arpeggios(EOF_SONG *sp, unsigned long track)
 {
-	unsigned long ctr, ctr2, tracknum, loopcount = 2;
+	unsigned long ctr, ctr2, ctr3, tracknum, loopcount = 2;
 	EOF_PRO_GUITAR_TRACK *tp;
 
 	if(!sp || (track >= sp->tracks) || !track)
@@ -4215,13 +4215,15 @@ void eof_song_highlight_arpeggios(EOF_SONG *sp, unsigned long track)
 
 	tracknum = sp->track[track]->tracknum;
 	tp = sp->pro_guitar_track[tracknum];
+	if(!tp->arpeggios)
+		return;	//Do not proceed further if there aren't even any arpeggios
 	for(ctr2 = 0; ctr2 < loopcount; ctr2++)
 	{	//For each note set in the specified track
 		for(ctr = 0; ctr < tp->notes; ctr++)
 		{	//For each note in the active pro guitar track
-			for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
+			for(ctr3 = 0; ctr3 < tp->arpeggios; ctr3++)
 			{	//For each arpeggio section in the track
-				if((tp->note[ctr]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr2].difficulty))
+				if((tp->note[ctr]->pos >= tp->arpeggio[ctr3].start_pos) && (tp->note[ctr]->pos <= tp->arpeggio[ctr3].end_pos) && (tp->note[ctr]->type == tp->arpeggio[ctr3].difficulty))
 				{	//If the note is within the arpeggio phrase
 					tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_HIGHLIGHT;	//Highlight it with the temporary flag
 				}

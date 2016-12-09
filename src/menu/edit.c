@@ -357,31 +357,31 @@ void eof_prepare_edit_menu(void)
 			eof_edit_menu[5].flags = D_DISABLED;
 		}
 
-		/* select all, selection */
+		/* select all, selection>select */
 		if(eof_vocals_selected)
 		{
 			if(eof_song->vocal_track[tracknum]->lyrics > 0)
 			{
+				eof_edit_selection_menu[0].flags = 0;
 				eof_edit_selection_menu[1].flags = 0;
-				eof_edit_menu[22].flags = 0;
 			}
 			else
 			{
+				eof_edit_selection_menu[0].flags = D_DISABLED;
 				eof_edit_selection_menu[1].flags = D_DISABLED;
-				eof_edit_menu[22].flags = D_DISABLED;
 			}
 		}
 		else
 		{
 			if(eof_track_diff_populated_status[eof_note_type])
 			{	//If the active track has one or more notes
+				eof_edit_selection_menu[0].flags = 0;
 				eof_edit_selection_menu[1].flags = 0;
-				eof_edit_menu[22].flags = 0;
 			}
 			else
 			{
+				eof_edit_selection_menu[0].flags = D_DISABLED;
 				eof_edit_selection_menu[1].flags = D_DISABLED;
-				eof_edit_menu[22].flags = D_DISABLED;
 			}
 		}
 

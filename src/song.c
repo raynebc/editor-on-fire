@@ -3510,7 +3510,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 
 		//Write custom track data blocks
 		fingerdefinitions = has_fingerdefinitions = has_arrangement = ignore_tuning = has_capo = has_tech_notes = has_accent = has_diff_count = 0;
-		if(track_ctr && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if(track_ctr && tp && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 		{	//If this is a pro guitar track
 			//Count the number of notes with finger definitions
 			for(ctr = 0; ctr < tp->notes; ctr++)
@@ -7398,6 +7398,54 @@ int eof_get_pro_guitar_note_finger_string(EOF_PRO_GUITAR_TRACK *tp, unsigned lon
 		}
 	}
 	finger_string[index] = '\0';	//Terminate the string
+
+	return 1;	//Return success
+}
+
+int eof_get_pro_guitar_note_tone_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, char *tone_string)
+{
+	unsigned long i, bitmask, index, fretvalue;
+	int notename;
+
+	if(!tp || (note >= tp->notes) || !tone_string)
+	{	//If there was an invalid parameter
+		return 0;	//Return error
+	}
+
+	for(i = 0, bitmask = 1, index = 0; i < tp->numstrings; i++, bitmask<<=1)
+	{	//For each of the track's usable strings
+		notename = -1;
+		if(index != 0)
+		{	//If another fret value was already written to this string
+			tone_string[index++] = ' ';	//Insert a space as padding for the previous number
+		}
+		if(tp->note[note]->note & bitmask)
+		{	//If the string is populated for the selected pro guitar note
+			fretvalue = tp->note[note]->frets[i];
+			if(!(fretvalue & 0x80))
+			{	//If this string is not muted
+				notename = eof_lookup_played_note(tp, tp->parent->track_type, i, (fretvalue & 0x7F));	//Determine what note is played (masking out the muting bit)
+			}
+			notename %= 12;		//Bounds enforcement
+			if(notename < 0)
+			{	//If the note being played couldn't be determined
+				tone_string[index++] = '_';
+			}
+			else
+			{
+				tone_string[index++] = eof_note_names[notename][0];
+				if(eof_note_names[notename][1] != '\0')
+				{	//If this note includes a sharp or flat character
+					tone_string[index++] = eof_note_names[notename][1];
+				}
+			}
+		}
+		else
+		{
+			tone_string[index++] = '_';	//Write an underscore to indicate string not played
+		}
+	}
+	tone_string[index] = '\0';	//Terminate the string
 
 	return 1;	//Return success
 }

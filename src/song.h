@@ -879,6 +879,11 @@ int eof_get_pro_guitar_note_finger_string(EOF_PRO_GUITAR_TRACK *tp, unsigned lon
 	//3 * # of strings number of bytes long in order to store the maximum length string
 	//Padding is added as necessary so that the fingering aligns right with the fret string's contents, taking double digit fret numbers into account
 	//Returns 0 on error or 1 on success
+int eof_get_pro_guitar_note_tone_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, char *tone_string);
+	//Writes a string representation of the specified pro guitar/bass note's played tones into finger_string[], which must be at least
+	//3 * # of strings number of bytes long in order to store the maximum length string
+	//Returns 0 on error or 1 on success
+
 int eof_five_lane_drums_enabled(void);
 	//A simple function returning nonzero if PART DRUM has the fifth lane enabled
 

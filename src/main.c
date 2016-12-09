@@ -2832,6 +2832,7 @@ void eof_render_note_window(void)
 				if((eof_selection.current < tp->notes) && (eof_selection.track == eof_selected_track))
 				{	//If a note in the active track is selected, display line with its fretting and fingering information
 					char finger_string[30] = {0};
+					char tone_string[30] = {0};
 
 					ypos += 12;
 					if(eof_get_pro_guitar_note_fret_string(tp, eof_selection.current, fret_string))
@@ -2878,9 +2879,12 @@ void eof_render_note_window(void)
 
 					if(eof_get_pro_guitar_note_finger_string(tp, eof_selection.current, finger_string))
 					{	//If the note's fingering can be represented in string format
-						ypos += 12;
-						textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s : (fingering)", finger_string);
-						ypos += 2;	//Lower the virtual "cursor" because underscores for the fretting string are rendered low enough to touch text 12 pixels below the y position of the glyph
+						if(eof_get_pro_guitar_note_tone_string(tp, eof_selection.current, tone_string))
+						{	//If the note's tones can be represented in string format
+							ypos += 12;
+							textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s (fingering) : %s", finger_string, tone_string);
+							ypos += 2;	//Lower the virtual "cursor" because underscores for the fretting string are rendered low enough to touch text 12 pixels below the y position of the glyph
+						}
 					}
 				}//If a note in the active track is selected, display a line with its fretting information
 
