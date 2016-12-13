@@ -167,6 +167,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 330, 224, 16,  2,   23,  0,    0,      1,   0,   "Offer to auto complete fingering",NULL, NULL },
 	{ d_agup_check_proc, 248, 346, 206, 16,  2,   23,  0,    0,      1,   0,   "Don't auto-name double stops",NULL, NULL },
 	{ d_agup_check_proc, 248, 362, 184, 16,  2,   23,  0,    0,      1,   0,   "Auto-Adjust sections/FHPs",NULL, NULL },
+	{ d_agup_check_proc, 248, 378, 168, 16,  2,   23,  0,    0,      1,   0,   "Auto-Adjust tech notes",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1206,6 +1207,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[44].flags = eof_auto_complete_fingering ? D_SELECTED : 0;		//Offer to auto complete fingering
 	eof_preferences_dialog[45].flags = eof_dont_auto_name_double_stops ? D_SELECTED : 0;	//Don't auto-name double stops
 	eof_preferences_dialog[46].flags = eof_section_auto_adjust ? D_SELECTED : 0;			//Auto-Adjust sections/FHPs
+	eof_preferences_dialog[47].flags = eof_technote_auto_adjust ? D_SELECTED : 0;			//Auto-Adjust tech notes
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1317,6 +1319,7 @@ int eof_menu_file_preferences(void)
 			eof_auto_complete_fingering = (eof_preferences_dialog[44].flags == D_SELECTED ? 1 : 0);
 			eof_dont_auto_name_double_stops = (eof_preferences_dialog[45].flags == D_SELECTED ? 1 : 0);
 			eof_section_auto_adjust = (eof_preferences_dialog[46].flags == D_SELECTED ? 1 : 0);
+			eof_technote_auto_adjust = (eof_preferences_dialog[47].flags == D_SELECTED ? 1 : 0);
 			eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case eof_inverted_notes was changed
 			eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case eof_lefty_mode was changed
 		}//If the user clicked OK
@@ -1357,6 +1360,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[44].flags = D_SELECTED;			//Offer to auto complete fingering
 			eof_preferences_dialog[45].flags = 0;					//Don't auto-name double stops
 			eof_preferences_dialog[46].flags = 1;					//Auto-Adjust sections/FHPs
+			eof_preferences_dialog[47].flags = 1;					//Auto-Adjust tech notes
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -5234,6 +5238,7 @@ int eof_menu_file_export_guitar_pro(void)
 	char temppath2[1024] = {0};
 	char temppath3[1024] = {0};
 	char temppath4[1024] = {0};
+	char temppath5[1024] = {0};
 	char tempstr[1024] = {0};
 	char tempstr2[1024] = {0};
 	char syscommand[1024] = {0};
@@ -5256,9 +5261,10 @@ int eof_menu_file_export_guitar_pro(void)
 
 	//Create temporary XML files
 	strncpy(temppath1, eof_temp_path_s, sizeof(temppath1) - 1);
-	strncpy(temppath2, eof_temp_path_s, sizeof(temppath1) - 1);
-	strncpy(temppath3, eof_temp_path_s, sizeof(temppath1) - 1);
-	strncpy(temppath4, eof_temp_path_s, sizeof(temppath1) - 1);
+	strncpy(temppath2, eof_temp_path_s, sizeof(temppath2) - 1);
+	strncpy(temppath3, eof_temp_path_s, sizeof(temppath3) - 1);
+	strncpy(temppath4, eof_temp_path_s, sizeof(temppath4) - 1);
+	strncpy(temppath5, eof_temp_path_s, sizeof(temppath5) - 1);
 	if(eof_export_rocksmith_2_track(eof_song, temppath1, EOF_TRACK_PRO_BASS, &user_warned) != 1)
 		temppath1[0] = '\0';	//This arrangement failed to export
 	if(eof_export_rocksmith_2_track(eof_song, temppath2, EOF_TRACK_PRO_BASS_22, &user_warned) != 1)
@@ -5266,6 +5272,8 @@ int eof_menu_file_export_guitar_pro(void)
 	if(eof_export_rocksmith_2_track(eof_song, temppath3, EOF_TRACK_PRO_GUITAR, &user_warned) != 1)
 		temppath3[0] = '\0';	//This arrangement failed to export
 	if(eof_export_rocksmith_2_track(eof_song, temppath4, EOF_TRACK_PRO_GUITAR_22, &user_warned) != 1)
+		temppath4[0] = '\0';	//This arrangement failed to export
+	if(eof_export_rocksmith_2_track(eof_song, temppath5, EOF_TRACK_PRO_GUITAR_B, &user_warned) != 1)
 		temppath4[0] = '\0';	//This arrangement failed to export
 
 	//Call program
@@ -5278,7 +5286,7 @@ int eof_menu_file_export_guitar_pro(void)
 			(void) uremove(tempstr2, -1);	//Remove the last character in the string, as RocksmithToTab will crash if the output directory path ends in a separator
 		}
 	}
-	(void) uszprintf(tempstr, (int) sizeof(tempstr) - 1, " --xml \"%s\" \"%s\" \"%s\" \"%s\" -o \"%s\"", temppath1, temppath2, temppath3, temppath4, tempstr2);
+	(void) uszprintf(tempstr, (int) sizeof(tempstr) - 1, " --xml \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" -o \"%s\"", temppath1, temppath2, temppath3, temppath4, temppath5, tempstr2);
 	(void) ustrcat(syscommand, tempstr);
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCalling RocksmithToTab as follows:  %s", syscommand);
 	eof_log(eof_log_string, 1);

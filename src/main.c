@@ -157,6 +157,7 @@ int         eof_note_tails_clickable = 0;		//If nonzero, when the mouse hovers o
 int         eof_auto_complete_fingering = 1;	//If nonzero, offer to apply specified chord fingering to matching notes in the track
 int         eof_dont_auto_name_double_stops = 0;	//If nonzero, the chord detection logic will not name chords that have only two pitches (unique or otherwise)
 int         eof_section_auto_adjust = 1;		//If nonzero, section and FHP positions are updated when all their contained notes are simultaneously moved
+int         eof_technote_auto_adjust = 1;		//If nonzero, tech note positions are updated when all their applicable normal notes are simultaneously moved
 int         eof_top_of_2d_pane_cycle_count_2 = 0;	//If nonzero, the SHIFT+F11 shortcut cycles between just hand positions and RS sections+phrases instead of also including chord names
 int         eof_rbn_export_slider_hopo = 0;		//If nonzero, notes in slider phrases will be exported to RBN MIDI as forced HOPO notes
 int         eof_db_import_drop_mid_beat_tempos = 0;	//If nonzero, any beats inserted due to mid beat tempo changes during Feedback import are deleted after the import
@@ -2881,6 +2882,10 @@ void eof_render_note_window(void)
 					{	//If the note's fingering can be represented in string format
 						if(eof_get_pro_guitar_note_tone_string(tp, eof_selection.current, tone_string))
 						{	//If the note's tones can be represented in string format
+							if(eof_menu_pro_guitar_track_get_tech_view_state(tp))
+							{	//If tech view is in effect
+								tone_string[0] = '\0';	//Empty the tone string, as tech note gems do not have a defined pitch
+							}
 							ypos += 12;
 							textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s (fingering) : %s", finger_string, tone_string);
 							ypos += 2;	//Lower the virtual "cursor" because underscores for the fretting string are rendered low enough to touch text 12 pixels below the y position of the glyph

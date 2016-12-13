@@ -2234,7 +2234,8 @@ if(eof_key_code == KEY_PAUSE)
 			{	//If CTRL is held but SHIFT is not
 				char undo_made = 0;
 
-				eof_auto_adjust_sections(eof_song, eof_selected_track, 0, -1, &undo_made);	//Move sections accordingly by one grid snap
+				eof_auto_adjust_sections(eof_song, eof_selected_track, 0, -1, &undo_made);		//Move sections accordingly by one grid snap
+				eof_auto_adjust_tech_notes(eof_song, eof_selected_track, 0, -1, &undo_made);	//Move tech notes accordingly by one grid snap
 				(void) eof_menu_note_move_by_grid_snap(-1, &undo_made);
 				if(eof_song->tags->highlight_unsnapped_notes)
 				{	//If the user has enabled the dynamic highlighting of non grid snapped notes
@@ -2278,6 +2279,7 @@ if(eof_key_code == KEY_PAUSE)
 				char undo_made = 0;
 
 				eof_auto_adjust_sections(eof_song, eof_selected_track, 0, 1, &undo_made);	//Move sections accordingly by one grid snap
+				eof_auto_adjust_tech_notes(eof_song, eof_selected_track, 0, 1, &undo_made);	//Move tech notes accordingly by one grid snap
 				(void) eof_menu_note_move_by_grid_snap(1, &undo_made);
 				if(eof_song->tags->highlight_unsnapped_notes)
 				{	//If the user has enabled the dynamic highlighting of non grid snapped notes
@@ -3972,7 +3974,10 @@ void eof_editor_logic(void)
 						}
 					}
 					if(move_offset)
+					{
 						eof_auto_adjust_sections(eof_song, eof_selected_track, move_offset, move_direction, &undo_made);	//Move sections accordingly
+						eof_auto_adjust_tech_notes(eof_song, eof_selected_track, move_offset, move_direction, &undo_made);	//Move tech notes accordingly
+					}
 					for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 					{	//For each note in the active track
 						if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])

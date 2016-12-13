@@ -195,6 +195,7 @@ void eof_load_config(char * fn)
 	eof_db_import_suppress_5nc_conversion = get_config_int("preferences", "eof_db_import_suppress_5nc_conversion", 0);
 	eof_dont_auto_name_double_stops = get_config_int("preferences", "eof_dont_auto_name_double_stops", 0);
 	eof_section_auto_adjust = get_config_int("preferences", "eof_section_auto_adjust", 1);
+	eof_technote_auto_adjust = get_config_int("preferences", "eof_technote_auto_adjust", 1);
 	eof_top_of_2d_pane_cycle_count_2 = get_config_int("preferences", "eof_top_of_2d_pane_cycle_count_2", 0);
 	eof_warn_missing_bass_fhps = get_config_int("preferences", "eof_warn_missing_bass_fhps", 1);
 
@@ -370,6 +371,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_db_import_suppress_5nc_conversion", eof_db_import_suppress_5nc_conversion);
 	set_config_int("preferences", "eof_dont_auto_name_double_stops", eof_dont_auto_name_double_stops);
 	set_config_int("preferences", "eof_section_auto_adjust", eof_section_auto_adjust);
+	set_config_int("preferences", "eof_technote_auto_adjust", eof_technote_auto_adjust);
 	set_config_int("preferences", "eof_top_of_2d_pane_cycle_count_2", eof_top_of_2d_pane_cycle_count_2);
 	set_config_int("preferences", "eof_warn_missing_bass_fhps", eof_warn_missing_bass_fhps);
 

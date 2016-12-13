@@ -1417,6 +1417,7 @@ int eof_menu_note_resnap(void)
 	oldnotes = eof_get_track_size(eof_song, eof_selected_track);
 	undo_made = 1;
 	eof_auto_adjust_sections(eof_song, eof_selected_track, 0, 0, &undo_made);	//Move sections to nearest grid snap
+	eof_auto_adjust_tech_notes(eof_song, eof_selected_track, 0, 0, &undo_made);	//Move tech notes to nearest grid snap
 	for(i = 0; i < oldnotes; i++)
 	{	//For each note in the active track
 		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))

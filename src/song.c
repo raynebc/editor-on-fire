@@ -9074,6 +9074,8 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 		return;	//Invalid parameters
 	if(eof_selection.track != track)
 		return;	//No notes in the specified track are selected
+	if(eof_menu_track_get_tech_view_state(sp, track))
+		return;	//This logic should not run in tech view
 
 	for(sectiontype = 1; sectiontype <= EOF_NUM_SECTION_TYPES; sectiontype++)
 	{	//For each type of section that exists
@@ -9190,6 +9192,95 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 						}
 					}
 				}
+			}
+		}
+	}
+}
+
+void eof_auto_adjust_tech_notes(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char *undo_made)
+{
+	unsigned long ctr, note_num = 0, stringnum, bitmask;
+	int applicable, missing;
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if(!eof_technote_auto_adjust)
+		return;	//User has not enabled this feature
+	if(!sp || (track >= sp->tracks) || !sp->beats || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return;	//Invalid parameters
+	if(eof_selection.track != track)
+		return;	//No notes in the specified track are selected
+	if(eof_menu_track_get_tech_view_state(sp, track))
+		return;	//This logic should not run in tech view
+
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+	for(ctr = 0; ctr < tp->technotes; ctr++)
+	{	//For each tech note in the track
+		applicable = missing = 0;	//Reset these statuses
+		if(tp->technote[ctr]->type != eof_note_type)	//If this tech note isn't in the active track difficulty
+			continue;	//Skip it
+		for(stringnum = 0, bitmask = 1; stringnum < 6; stringnum++, bitmask <<= 1)
+		{	//For each of the 6 usable strings
+			if(!(tp->technote[ctr]->note & bitmask))	//If the technote doesn't have a gem on this string
+				continue;	//Skip it
+			if(eof_pro_guitar_tech_note_overlaps_a_note(tp, ctr, bitmask, &note_num))
+			{	//If this gem of the tech note overlaps any normal note
+				if(eof_selection.multi[note_num])
+				{	//If that overlapped normal note is selected
+					applicable = 1;
+				}
+				else
+				{
+					missing = 1;
+					break;	//This condition disqualifies the section from being offset, stop looking for notes overlapped by this tech note
+				}
+			}
+			else
+			{	//This gem doesn't apply to any note
+				missing = 1;
+				break;	//This condition disqualifies the section from being offset, stop looking for notes overlapped by this tech note
+			}
+		}
+
+		if(!applicable || missing)
+			continue;	//If this tech note had any gems that aren't applied to selected notes, skip it
+
+		if(offset)
+		{	//If moving by a fixed amount of ms
+			if(dir < 0)
+			{	//If making sections earlier
+				if(tp->technote[ctr]->pos < offset + sp->beat[0]->pos)
+					continue;	//If this movement would place the section's start position before the first beat marker, skip it
+
+				if(undo_made && (*undo_made == 0))
+				{	//If an undo state needs to be made
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					*undo_made = 1;
+				}
+				tp->technote[ctr]->pos -= offset;
+			}
+			else
+			{	//If making sections later
+				if(undo_made && (*undo_made == 0))
+				{	//If an undo state needs to be made
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					*undo_made = 1;
+				}
+
+				tp->technote[ctr]->pos += offset;
+			}
+		}
+		else
+		{	//If moving by grid snap
+			unsigned long newstart = 0;
+			if(eof_find_grid_snap(tp->technote[ctr]->pos, dir, &newstart))
+			{	//If the appropriate grid snap before/nearest/after the tech note's current position was found
+				if(undo_made && (*undo_made == 0))
+				{	//If an undo state needs to be made
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					*undo_made = 1;
+				}
+
+				tp->technote[ctr]->pos = newstart;	//Move the tech note
 			}
 		}
 	}

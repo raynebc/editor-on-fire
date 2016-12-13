@@ -979,7 +979,6 @@ unsigned long eof_pro_guitar_note_bitmask_has_bend_tech_note(EOF_PRO_GUITAR_TRAC
 	//If technote_num is not NULL, the index number of the first relevant bend tech note is returned through it
 char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long technote, unsigned long mask, unsigned long *note_num);
 	//Looks for the last regular pro guitar note that is overlapped by the specified tech note and mask
-	//Notes are iterated in reverse order because a note can end at the start position of the next note due to linknext status
 	//If the tech note is found to be at the start position of any overlapping notes, 1 is returned
 	//If the tech note is found to overlap at least one note, 2 is returned
 	// If note_num is not NULL, the matching regular note number is returned through it
@@ -1010,6 +1009,16 @@ int eof_length_is_equal_to(long length, long threshold);		//Returns nonzero if b
 void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char *undo_made);
 	//Examines all sections in the specified track, and for those which have notes that are all selected, their positions are moved
 	//Returns with no changes made if the "Auto-Adjust sections/FHPs" preference is not enabled
+	//If dir is negative, applicable sections are moved the specified offset number of ms earlier
+	// otherwise applicable sections are moved the specified offset number of ms later
+	//If offset is zero, applicable sections are moved in one grid snap in the specified direction instead of by a specific number of ms
+	//If both offset AND dir are zero, applicable sections are re-snapped to the nearest grid snap positions
+	//If undo_made is not NULL and references a value of 0, an undo state is made prior to the first section being moved, and *undo_made is set to nonzero
+
+void eof_auto_adjust_tech_notes(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char *undo_made);
+	//Examines all tech notes in the specified pro guitar track, and for those that are fully applied to notes that are selected, their positions are moved
+	//All gems in a tech note must be applied to selected note(s) in order to be moved this way
+	//Returns with no changes if the "Auto-Adjust tech notes" preference is not enabled
 	//If dir is negative, applicable sections are moved the specified offset number of ms earlier
 	// otherwise applicable sections are moved the specified offset number of ms later
 	//If offset is zero, applicable sections are moved in one grid snap in the specified direction instead of by a specific number of ms
