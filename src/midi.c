@@ -3064,8 +3064,21 @@ unsigned long eof_ConvertToDeltaTime(double realtime, struct Tempo_change *ancho
 	unsigned long delta = 0;
 	double reltime = 0.0;
 	unsigned long ctr = 0;
+	char gridsnapvalue = 0;					//Used to map grid snap positions to delta times
+	unsigned char gridsnapnum = 0;			//""
+	int beat = 0;							//""
 
 	assert_wrapper(temp != NULL);	//Ensure the tempomap is populated
+
+	if(eof_is_any_grid_snap_position(realtime, &beat, &gridsnapvalue, &gridsnapnum))
+	{	//If the timestamp being converted is a grid snap position
+		unsigned long gridpos = 0;
+
+		if(eof_ConvertGridSnapToDeltaTime(beat, gridsnapvalue, gridsnapnum, &gridpos))
+		{	//If the grid snap timing was converted
+			return gridpos;
+		}
+	}
 
 //Find the last time signature change at or before the specified real time value
 	if((tslist != NULL) && (tslist->changes > 0))
@@ -3115,6 +3128,71 @@ unsigned long eof_ConvertToDeltaTime(double realtime, struct Tempo_change *ancho
 	}
 
 	return delta;
+}
+
+int eof_ConvertGridSnapToDeltaTime(unsigned long beat, char gridsnapvalue, unsigned char gridsnapnum, unsigned long *gridpos)
+{
+	unsigned long interval = 1;
+
+	if(!eof_song || (beat >= eof_song->beats) || !gridpos)
+		return 0;	//Invalid parameters
+	if(!gridsnapvalue)
+		return 0;	//The parameters do not define a valid grid snap position
+	if(gridsnapvalue >= EOF_SNAP_CUSTOM)
+		return 0;	//Custom grid snap sizes are not supported by this function
+
+	switch(gridsnapvalue)
+	{
+		case EOF_SNAP_QUARTER:
+		{
+			interval = 1;
+			break;
+		}
+		case EOF_SNAP_EIGHTH:
+		{
+			interval = 2;
+			break;
+		}
+		case EOF_SNAP_TWELFTH:
+		{
+			interval = 3;
+			break;
+		}
+		case EOF_SNAP_SIXTEENTH:
+		{
+			interval = 4;
+			break;
+		}
+		case EOF_SNAP_TWENTY_FOURTH:
+		{
+			interval = 6;
+			break;
+		}
+		case EOF_SNAP_THIRTY_SECOND:
+		{
+			interval = 8;
+			break;
+		}
+		case EOF_SNAP_FORTY_EIGHTH:
+		{
+			interval = 12;
+			break;
+		}
+		case EOF_SNAP_SIXTY_FORTH:
+		{
+			interval = 16;
+			break;
+		}
+		case EOF_SNAP_NINTY_SIXTH:
+		{
+			interval = 24;
+			break;
+		}
+	}
+
+	*gridpos = (beat * EOF_DEFAULT_TIME_DIVISION) + (gridsnapnum * EOF_DEFAULT_TIME_DIVISION / interval);
+
+	return 1;
 }
 
 int eof_extract_rba_midi(const char * source, const char * dest)

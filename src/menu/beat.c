@@ -388,10 +388,17 @@ void eof_prepare_beat_menu(void)
 			eof_beat_events_menu[2].flags = D_DISABLED;
 		}
 
-		if((eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_selected_track != EOF_TRACK_PRO_GUITAR_B))
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar/bass track is active, and it's not the bonus pro guitar track (as it's not compatible with RB3)
 			eof_beat_menu[20].flags = 0;	//Beat>Rocksmith>
-			eof_beat_menu[21].flags = 0;	//Place Trainer Event
+			if(eof_selected_track == EOF_TRACK_PRO_GUITAR_B)
+			{	//The trainer event system is not compatible with the bonus track
+				eof_beat_menu[21].flags = D_DISABLED;
+			}
+			else
+			{
+				eof_beat_menu[21].flags = 0;	//Place Trainer Event
+			}
 		}
 		else
 		{

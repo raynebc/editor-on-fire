@@ -27,6 +27,7 @@
 #include "../song.h"
 #include "../bf_import.h"
 #include "../bf.h"
+#include "../main.h"	//For eof_import_to_track_dialog[] declaration
 #include "beat.h"	//For eof_menu_beat_reset_offset()
 #include "edit.h"	//For eof_menu_edit_undo()
 #include "file.h"
@@ -3087,6 +3088,7 @@ int eof_save_helper_checks(void)
 				if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 					continue;	//If this is not a pro guitar/bass track, skip it
 
+				eof_process_beat_statistics(eof_song, ctr);	//Rebuild beat stats from this track's perspective
 				tracknum = eof_song->track[ctr]->tracknum;
 				tp = eof_song->pro_guitar_track[tracknum];
 				eof_pro_guitar_track_sort_arpeggios(tp);
@@ -4800,6 +4802,11 @@ int eof_command_line_rs_import(char *fn)
 
 	//Create a new project and have user select a target pro guitar/bass track
 	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "Import Rocksmith arrangement to:");
+	if(strcasestr_spec(fn, "_bass_"))
+	{	//If the name of the specified XML file implies bass guitar
+		eof_import_to_track_dialog[3].flags = 0;			//Deselect PART REAL_GUITAR as the default destination track for the import
+		eof_import_to_track_dialog[2].flags = D_SELECTED;	//Select PART REAL_BASS instead
+	}
 	if(!eof_create_new_project_select_pro_guitar())
 		return 2;	//New project couldn't be created
 

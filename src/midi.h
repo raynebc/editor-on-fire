@@ -105,6 +105,10 @@ unsigned long eof_ConvertToDeltaTime(double realtime, struct Tempo_change *ancho
 	//Parses a linked list of anchors and returns the delta time of the specified realtime
 	//tslist is allowed to be NULL, but anchorlist must contain at least one tempo change
 	//If snaptobeat is nonzero, the converted delta time is allowed to be adjusted +/- 1 delta to line up with a beat marker (use for start times, but not lengths or end times)
+int eof_ConvertGridSnapToDeltaTime(unsigned long beat, char gridsnapvalue, unsigned char gridsnapnum, unsigned long *gridpos);
+	//Determines the delta time of the specified grid snap, which must be a built in grid snap size instead of a custom one
+	//Depends on eof_chart_length being large enough to reflect the last beat time stamp
+	//If it exists, it is returned through gridpos and nonzero is returned
 
 int eof_extract_rba_midi(const char * source, const char * dest);
 	//Extracts the MIDI file embedded in the source RBA file and writes it to a regular MIDI file called dest

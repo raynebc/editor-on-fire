@@ -531,6 +531,8 @@ extern int eof_key_uchar;
 extern int eof_key_code;
 extern int eof_key_shifts;
 
+extern DIALOG eof_import_to_track_dialog[];
+
 void eof_show_mouse(BITMAP * bp);	//Shows the software mouse if it is being used
 double eof_get_porpos_sp(EOF_SONG *sp, unsigned long pos);	//Returns the timestamp's position within a beat (percentage)
 double eof_get_porpos(unsigned long pos);	//Calls eof_get_porpos_sp() against eof_song
