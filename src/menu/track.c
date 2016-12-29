@@ -3832,6 +3832,9 @@ int eof_menu_track_clone_track_number(EOF_SONG *sp, unsigned long sourcetrack, u
 			sp->pro_guitar_track[dtracknum]->notes = sp->pro_guitar_track[dtracknum]->pgnotes = sp->pro_guitar_track[dtracknum]->technotes = 0;	//Clear the note counts
 			notesetcount = 2;	//Pro guitar tracks have the normal notes AND tech notes that need to be cloned
 		break;
+
+		default:
+		return 1;	//Unexpected track format
 	}
 	for(noteset = 0; noteset < notesetcount; noteset++)
 	{	//For each note set in the source track

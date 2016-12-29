@@ -102,13 +102,16 @@ void eof_destroy_tempo_list(struct Tempo_change *ptr);
 
 unsigned long eof_ConvertToDeltaTime(double realtime, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision, char snaptobeat);
 	//An adaptation of the ConvertToDeltaTime() function from the FoFLC source
+	//The specified real time position is checked against grid snap positions and a quantized delta time is returned when possible
+	//This logic expects that eof_calculate_beat_delta_positions() was called by the calling MIDI export function to initialize the chart's beat delta timings
+	//Otherwise, the timing is converted formulaically and can be vulnerable to floating point math/rounding errors
 	//Parses a linked list of anchors and returns the delta time of the specified realtime
 	//tslist is allowed to be NULL, but anchorlist must contain at least one tempo change
 	//If snaptobeat is nonzero, the converted delta time is allowed to be adjusted +/- 1 delta to line up with a beat marker (use for start times, but not lengths or end times)
-int eof_ConvertGridSnapToDeltaTime(unsigned long beat, char gridsnapvalue, unsigned char gridsnapnum, unsigned long *gridpos);
-	//Determines the delta time of the specified grid snap, which must be a built in grid snap size instead of a custom one
-	//Depends on eof_chart_length being large enough to reflect the last beat time stamp
-	//If it exists, it is returned through gridpos and nonzero is returned
+int eof_calculate_beat_delta_positions(EOF_SONG *sp);
+	//Updates the midi_pos variable of each beat in the specified chart to reflect that beat's delta tick position
+	//Time signatures in the beat map are taken into account, where a beat is considered to be (EOF_DEFAULT_TIME_DIVISION * 4 / TS_DENOMINATOR) delta ticks in length
+	//Returns zero on error
 
 int eof_extract_rba_midi(const char * source, const char * dest);
 	//Extracts the MIDI file embedded in the source RBA file and writes it to a regular MIDI file called dest

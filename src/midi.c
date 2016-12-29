@@ -427,6 +427,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		return 0;	//Return failure
 	}
 
+	if(!eof_calculate_beat_delta_positions(sp))
+	{	//Calculate the delta position of each beat in the chart
+		eof_log("\tCould not build beat delta positions", 1);
+		return 0;	//Return failure
+	}
+
 	//Build tempo and TS lists
 	if(!eof_build_tempo_and_ts_lists(sp, &anchorlist, &tslist, &timedivision))
 	{
@@ -2527,6 +2533,12 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 		return 0;	//Return failure
 	}
 
+	if(!eof_calculate_beat_delta_positions(sp))
+	{	//Calculate the delta position of each beat in the chart
+		eof_log("\tCould not build beat delta positions", 1);
+		return 0;	//Return failure
+	}
+
 	//Build tempo and TS lists
 	if(!eof_build_tempo_and_ts_lists(sp, &anchorlist, &tslist, &timedivision))
 	{
@@ -3059,24 +3071,51 @@ unsigned long eof_ConvertToDeltaTime(double realtime, struct Tempo_change *ancho
 //	eof_log("eof_ConvertToDeltaTime() entered");
 
 	struct Tempo_change *temp = anchorlist;	//Stores the closest tempo change before the specified realtime
-	double tstime = 0.0;						//Stores the realtime position of the closest TS change before the specified realtime
+	double tstime = 0.0;					//Stores the realtime position of the closest TS change before the specified realtime
 	unsigned long tsdelta = 0;				//Stores the delta time position of the closest TS change before the specified realtime
 	unsigned long delta = 0;
 	double reltime = 0.0;
-	unsigned long ctr = 0;
-	char gridsnapvalue = 0;					//Used to map grid snap positions to delta times
-	unsigned char gridsnapnum = 0;			//""
-	int beat = 0;							//""
+	unsigned long ctr;
+	unsigned long realtimeint = realtime;	//The integer representation of the target timestamp is used in the grid snap matching logic
+	unsigned long beatnum, gridsnapnum, interval;
 
 	assert_wrapper(temp != NULL);	//Ensure the tempomap is populated
 
-	if(eof_is_any_grid_snap_position(realtime, &beat, &gridsnapvalue, &gridsnapnum))
-	{	//If the timestamp being converted is a grid snap position
-		unsigned long gridpos = 0;
+	//Determine if a clean delta value can be obtained with integer math, depending on whether the specified timestamp falls within
+	//a 1/# beat interval where the beat's delta length is divisible by #
+	beatnum = eof_get_beat(eof_song, realtime);
+	if(beatnum < ULONG_MAX)
+	{	//If the beat containing this timestamp was identified
+		double beatlength = eof_calc_beat_length(eof_song, beatnum);
+		if(beatlength >= 1.0)
+		{	//If a suitable beat length was obtained
+			unsigned num = 4, den = 4;
 
-		if(eof_ConvertGridSnapToDeltaTime(beat, gridsnapvalue, gridsnapnum, &gridpos))
-		{	//If the grid snap timing was converted
-			return gridpos;
+			if(eof_get_effective_ts(eof_song, &num, &den, beatnum) == 1)
+			{	//If the time signature of the target position's beat was obtained
+				unsigned long beatlegth_delta = EOF_DEFAULT_TIME_DIVISION * 4 / den;	//One beat is considered to be (EOF_DEFAULT_TIME_DIVISION * 4 / TS_DENOMINATOR) delta ticks in length
+				unsigned long beat_deltapos = eof_song->beat[beatnum]->midi_pos;
+
+				if(beat_deltapos < ULONG_MAX)
+				{	//If the delta time of the target position's beat was found
+					for(interval = 2; interval < EOF_MAX_GRID_SNAP_INTERVALS; interval++)
+					{	//Check all of the possible supported grid snap intervals
+						double snaplength;
+
+						if(beatlegth_delta % interval != 0)
+							continue;	//If the beat's delta length isn't divisible by this interval, skip it
+
+						snaplength = beatlength / (double) interval;	//Determine the real time length of one such grid snap interval
+						for(gridsnapnum = 0; gridsnapnum < interval; gridsnapnum++)
+						{	//For each instance of that grid snap
+							if(realtimeint == (unsigned long)((eof_song->beat[beatnum]->fpos + (double)gridsnapnum * snaplength) + 0.5))
+							{	//If the target timestamp matches this grid snap position
+								return beat_deltapos + (gridsnapnum * beatlegth_delta / interval);
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -3130,67 +3169,25 @@ unsigned long eof_ConvertToDeltaTime(double realtime, struct Tempo_change *ancho
 	return delta;
 }
 
-int eof_ConvertGridSnapToDeltaTime(unsigned long beat, char gridsnapvalue, unsigned char gridsnapnum, unsigned long *gridpos)
+int eof_calculate_beat_delta_positions(EOF_SONG *sp)
 {
-	unsigned long interval = 1;
+	unsigned long ctr, counter = 0;
+	unsigned num = 4, den = 4;
 
-	if(!eof_song || (beat >= eof_song->beats) || !gridpos)
+	if(!sp)
 		return 0;	//Invalid parameters
-	if(!gridsnapvalue)
-		return 0;	//The parameters do not define a valid grid snap position
-	if(gridsnapvalue >= EOF_SNAP_CUSTOM)
-		return 0;	//Custom grid snap sizes are not supported by this function
 
-	switch(gridsnapvalue)
-	{
-		case EOF_SNAP_QUARTER:
-		{
-			interval = 1;
-			break;
+	for(ctr = 0; ctr < sp->beats; ctr++)
+	{	//For every beat in the chart
+		sp->beat[ctr]->midi_pos = counter;	//The current delta tick counter represents this beat's delta position
+
+		if(eof_get_ts(sp, &num, &den, ctr) == -1)
+		{	//If the beat's time signature could not be read
+			return 0;	//Error
 		}
-		case EOF_SNAP_EIGHTH:
-		{
-			interval = 2;
-			break;
-		}
-		case EOF_SNAP_TWELFTH:
-		{
-			interval = 3;
-			break;
-		}
-		case EOF_SNAP_SIXTEENTH:
-		{
-			interval = 4;
-			break;
-		}
-		case EOF_SNAP_TWENTY_FOURTH:
-		{
-			interval = 6;
-			break;
-		}
-		case EOF_SNAP_THIRTY_SECOND:
-		{
-			interval = 8;
-			break;
-		}
-		case EOF_SNAP_FORTY_EIGHTH:
-		{
-			interval = 12;
-			break;
-		}
-		case EOF_SNAP_SIXTY_FORTH:
-		{
-			interval = 16;
-			break;
-		}
-		case EOF_SNAP_NINTY_SIXTH:
-		{
-			interval = 24;
-			break;
-		}
+
+		counter += (EOF_DEFAULT_TIME_DIVISION * 4) / den;	//Add this beat's length (in delta ticks) to the counter
 	}
-
-	*gridpos = (beat * EOF_DEFAULT_TIME_DIVISION) + (gridsnapnum * EOF_DEFAULT_TIME_DIVISION / interval);
 
 	return 1;
 }
