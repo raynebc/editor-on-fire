@@ -3084,7 +3084,7 @@ unsigned long eof_ConvertToDeltaTime(double realtime, struct Tempo_change *ancho
 	//Determine if a clean delta value can be obtained with integer math, depending on whether the specified timestamp falls within
 	//a 1/# beat interval where the beat's delta length is divisible by #
 	beatnum = eof_get_beat(eof_song, realtime);
-	if(beatnum < ULONG_MAX)
+	if(beatnum < eof_song->beats)
 	{	//If the beat containing this timestamp was identified
 		double beatlength = eof_calc_beat_length(eof_song, beatnum);
 		if(beatlength >= 1.0)
@@ -3912,7 +3912,7 @@ int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistp
 					anchorlist = temp;	//Update list pointer
 				}
 				ppqn = (dataptr[eventindex]<<16) | (dataptr[eventindex+1]<<8) | dataptr[eventindex+2];	//Read the 3 byte big endian value
-				eventindex += 3;
+///				eventindex += 3;	//This updated value for eventindex is not used
 				lastppqn = ppqn;	//Remember this value
 				temp = eof_add_to_tempo_list(eventptr->deltatime, eventptr->realtime + sp->beat[0]->fpos, 60000000.0/lastppqn, anchorlist);	//Store the tempo change, taking the MIDI delay into account
 				if(temp == NULL)
@@ -3927,7 +3927,7 @@ int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistp
 			{	//Time signature change
 				num = dataptr[eventindex];	//Read the numerator
 				den = dataptr[eventindex+1];	//Read the value to which the power of 2 must be raised to define the denominator
-				eventindex += 2;
+///				eventindex += 2;	//This updated value for eventindex is not used
 				if(den <= 7)
 				{	//For now, don't support a time signature denominator larger than 128
 					for(ctr = 0, realden = 1; ctr < den; ctr++)
@@ -3944,8 +3944,8 @@ int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistp
 					tsstored = 1;
 				}
 			}
-		}
-	}
+		}//For each event in the stored track
+	}//If building the tempo and TS lists from the stored tempo map
 
 	*anchorlistptr = anchorlist;	//Return the tempo list through the pointer
 	*tslistptr = tslist;		//Return the TS list through the pointer

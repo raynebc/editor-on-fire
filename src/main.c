@@ -4847,7 +4847,7 @@ void eof_start_logging(void)
 		}
 		#ifdef ALLEGRO_WINDOWS
 		{
-			char *systemdrive = NULL, programfilespath[30] = "";	//Used to obtain the x86 and x64 Program Files folders via environment variables
+			char *systemdrive, programfilespath[30] = "";	//Used to obtain the x86 and x64 Program Files folders via environment variables
 			systemdrive = getenv("SystemDrive");
 			if(systemdrive)
 			{	//If the SystemDrive environment variable was read, construct the expected path to the program files folder

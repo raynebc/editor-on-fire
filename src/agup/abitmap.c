@@ -703,7 +703,8 @@ d_abitmap_list_proc (int msg, DIALOG *d, int c)
                     usetat (s, len, 0);
                 }
                 textout_ex (bmp, font, s, x, y, fg, -1);
-                x += text_length (font, s);
+///As reported by Coverity, this value is not used, so there's no point in calculating it
+///                x += text_length (font, s);
 
             }
         }

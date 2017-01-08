@@ -277,6 +277,16 @@ void eof_load_config(char * fn)
 	eof_4_fret_range = get_config_int("other", "eof_4_fret_range", 1);
 	eof_5_fret_range = get_config_int("other", "eof_5_fret_range", 0);
 	eof_6_fret_range = get_config_int("other", "eof_6_fret_range", 0);
+
+	//Convert MIDI tones to zero numbering
+	if(eof_midi_synth_instrument_guitar > 0)
+		eof_midi_synth_instrument_guitar--;
+	if(eof_midi_synth_instrument_guitar_muted > 0)
+		eof_midi_synth_instrument_guitar_muted--;
+	if(eof_midi_synth_instrument_guitar_harm > 0)
+		eof_midi_synth_instrument_guitar_harm--;
+	if(eof_midi_synth_instrument_bass > 0)
+		eof_midi_synth_instrument_bass--;
 }
 
 void eof_save_config(char * fn)

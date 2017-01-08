@@ -5281,7 +5281,7 @@ int eof_menu_file_export_guitar_pro(void)
 	if(eof_export_rocksmith_2_track(eof_song, temppath4, EOF_TRACK_PRO_GUITAR_22, &user_warned) != 1)
 		temppath4[0] = '\0';	//This arrangement failed to export
 	if(eof_export_rocksmith_2_track(eof_song, temppath5, EOF_TRACK_PRO_GUITAR_B, &user_warned) != 1)
-		temppath4[0] = '\0';	//This arrangement failed to export
+		temppath5[0] = '\0';	//This arrangement failed to export
 
 	//Call program
 	(void) ustrcpy(syscommand, eof_rs_to_tab_executable_path);
