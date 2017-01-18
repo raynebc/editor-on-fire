@@ -17,7 +17,21 @@ extern char eof_fret_hand_position_list_dialog_title_string[30];	//This will be 
 extern char **eof_track_rs_tone_names_list_strings;				//A list of unique tone names that is build with eof_track_rebuild_rs_tone_names_list_strings()
 extern unsigned long eof_track_rs_tone_names_list_strings_num;	//Indicates the number of entries in the above array
 
-int eof_track_difficulty_dialog(void);	//Allow the active track's difficulty to be set to a value from 0 through 6
+int eof_menu_track_set_difficulty_0(void);
+int eof_menu_track_set_difficulty_1(void);
+int eof_menu_track_set_difficulty_2(void);
+int eof_menu_track_set_difficulty_3(void);
+int eof_menu_track_set_difficulty_4(void);
+int eof_menu_track_set_difficulty_5(void);
+int eof_menu_track_set_difficulty_6(void);
+int eof_menu_track_set_difficulty_none(void);
+int eof_menu_track_set_difficulty(unsigned difficulty);
+	//Sets the difficulty level of the active track to a specific number or to an undefined state
+	//Any secondary (pro drum, harmony) difficulty level for the active track is also set to the specified number
+int eof_track_difficulty_dialog(void);
+	//Allow the active track's difficulty to be set to a value from 0 through 6
+	//In the case of drum tracks, the regular and pro drum difficulties are individually definable
+	//In the case of vocal tracks, the regular and harmony difficulties are individually definable
 int eof_track_rocksmith_toggle_difficulty_limit(void);
 	//Toggles the 5 difficulty limit on/off.  If difficulties >= 4 are populated, appropriate warnings are given to the user regarding Rock Band vs. Rocksmith standards compatibility
 int eof_track_rocksmith_insert_difficulty(void);

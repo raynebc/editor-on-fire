@@ -5159,7 +5159,6 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 					curnum = gp->measure[currentmeasure].num;
 					curden = gp->measure[currentmeasure].den;
 					(void) eof_apply_ts(curnum, curden, beatctr, dsp, 0);	//Apply the change to the working project
-					eof_calculate_beats(dsp);
 				}
 			}
 

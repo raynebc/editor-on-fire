@@ -135,6 +135,11 @@ void eof_calculate_beats(EOF_SONG * sp)
 			sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos +0.5;	//Round up
 			curpos += beat_length;
 		}
+		else
+		{
+			eof_log("\teof_calculate_beats() failed", 1);
+			return;
+		}
 	}
 	if(eof_chart_length < sp->beat[sp->beats - 1]->pos)
 	{	//If the chart length needs to be updated to reflect the beat map making the chart longer

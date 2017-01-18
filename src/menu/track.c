@@ -66,12 +66,26 @@ MENU eof_menu_track_clone_menu[EOF_TRACKS_MAX] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_track_menu_set_difficulty[] =
+{
+	{"&0", eof_menu_track_set_difficulty_0, NULL, 0, NULL},
+	{"&1", eof_menu_track_set_difficulty_1, NULL, 0, NULL},
+	{"&2", eof_menu_track_set_difficulty_2, NULL, 0, NULL},
+	{"&3", eof_menu_track_set_difficulty_3, NULL, 0, NULL},
+	{"&4", eof_menu_track_set_difficulty_4, NULL, 0, NULL},
+	{"&5", eof_menu_track_set_difficulty_5, NULL, 0, NULL},
+	{"&6", eof_menu_track_set_difficulty_6, NULL, 0, NULL},
+	{"&Undefined", eof_menu_track_set_difficulty_none, NULL, 0, NULL},
+	{"&Manually set", eof_track_difficulty_dialog, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_track_menu[] =
 {
 	{"Pro &Guitar", NULL, eof_track_proguitar_menu, 0, NULL},
 	{"&Rocksmith", NULL, eof_track_rocksmith_menu, 0, NULL},
 	{"&Phase Shift", NULL, eof_track_phaseshift_menu, 0, NULL},
-	{"Set &Difficulty", eof_track_difficulty_dialog, NULL, 0, NULL},
+	{"Set &Difficulty", NULL, eof_track_menu_set_difficulty, 0, NULL},
 	{"Re&name", eof_track_rename, NULL, 0, NULL},
 	{"Disable expert+ bass drum", eof_menu_track_disable_double_bass_drums, NULL, 0, NULL},
 	{"Erase track", eof_track_erase_track, NULL, 0, NULL},
@@ -292,6 +306,92 @@ DIALOG eof_track_difficulty_menu_normal[] =
 {
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
+
+int eof_menu_track_set_difficulty_0(void)
+{
+	return eof_menu_track_set_difficulty(0);
+}
+
+int eof_menu_track_set_difficulty_1(void)
+{
+	return eof_menu_track_set_difficulty(1);
+}
+
+int eof_menu_track_set_difficulty_2(void)
+{
+	return eof_menu_track_set_difficulty(2);
+}
+
+int eof_menu_track_set_difficulty_3(void)
+{
+	return eof_menu_track_set_difficulty(3);
+}
+
+int eof_menu_track_set_difficulty_4(void)
+{
+	return eof_menu_track_set_difficulty(4);
+}
+
+int eof_menu_track_set_difficulty_5(void)
+{
+	return eof_menu_track_set_difficulty(5);
+}
+
+int eof_menu_track_set_difficulty_6(void)
+{
+	return eof_menu_track_set_difficulty(6);
+}
+
+int eof_menu_track_set_difficulty_none(void)
+{
+	return eof_menu_track_set_difficulty(0xFF);
+}
+
+int eof_menu_track_set_difficulty(unsigned difficulty)
+{
+	int undo_made = 0;
+	unsigned olddiff;
+
+	if(!eof_song || !eof_song_loaded || !eof_selected_track || (eof_selected_track >= eof_song->tracks))
+		return 1;
+
+	if(difficulty != eof_song->track[eof_selected_track]->difficulty)
+	{
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		eof_song->track[eof_selected_track]->difficulty = difficulty;
+		undo_made = 1;
+	}
+
+	//Drum tracks also define a pro drum difficulty and vocal tracks also efine a harmony difficulty
+	//Set those values if applicable
+	if(eof_selected_track == EOF_TRACK_DRUM)
+	{
+		olddiff = (eof_song->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24;		//Mask out the low nibble of the high order byte of the drum track's flags (pro drum difficulty)
+		if(difficulty != olddiff)
+		{
+			if(!undo_made)
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+
+			eof_song->track[EOF_TRACK_DRUM]->flags &= ~(0xFF << 24);	//Clear the drum track's flag's most significant byte
+			eof_song->track[EOF_TRACK_DRUM]->flags |= (difficulty << 24);	//Store the pro drum difficulty in the drum track's flag's most significant byte
+			eof_song->track[EOF_TRACK_DRUM]->flags |= 0xF0 << 24;		//Set the top nibble to 0xF for backwards compatibility from when this stored the PS drum track difficulty
+		}
+	}
+	else if(eof_selected_track == EOF_TRACK_VOCALS)
+	{
+		olddiff = (eof_song->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24;	//Mask out the low nibble of the high order byte of the vocal track's flags (harmony difficulty)
+		if(difficulty != olddiff)
+		{
+			if(!undo_made)
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+
+			eof_song->track[EOF_TRACK_VOCALS]->flags &= ~(0xFF << 24);	//Clear the vocal track's flag's most significant byte
+			eof_song->track[EOF_TRACK_VOCALS]->flags |= (difficulty << 24);	//Store the harmony difficulty in the vocal track's flag's most significant byte
+		}
+	}
+
+	return 1;
+}
 
 int eof_track_difficulty_dialog(void)
 {
