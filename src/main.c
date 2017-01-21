@@ -331,9 +331,6 @@ int eof_color_dark_silver;
 int eof_color_cyan;
 int eof_color_dark_cyan;
 int eof_info_color;
-int eof_color_waveform_trough;
-int eof_color_waveform_peak;
-int eof_color_waveform_rms;
 
 int eof_color_set = EOF_COLORS_DEFAULT;
 eof_color eof_colors[6];	//Contain the color definitions for each lane
@@ -401,6 +398,15 @@ int eof_key_shifts = 0;
 ///DEBUG
 int eof_last_key_char = 0;
 int eof_last_key_code = 0;
+
+/* waveform graph settings */
+int eof_color_waveform_trough;
+int eof_color_waveform_peak;
+int eof_color_waveform_rms;
+char eof_waveform_renderlocation = 0;		//Specifies where and how high the graph will render (0 = fretboard area, 1 = editor window)
+char eof_waveform_renderleftchannel = 1;	//Specifies whether the left channel's graph should render
+char eof_waveform_renderrightchannel = 0;	//Specifies whether the right channel's graph should render
+
 
 void eof_show_mouse(BITMAP * bp)
 {
@@ -2878,14 +2884,20 @@ void eof_render_note_window(void)
 					}
 					ypos += 2;	//Lower the virtual "cursor" because underscores for the fretting string are rendered low enough to touch text 12 pixels below the y position of the glyph
 
-					if(eof_get_pro_guitar_note_finger_string(tp, eof_selection.current, finger_string))
-					{	//If the note's fingering can be represented in string format
-						if(eof_get_pro_guitar_note_tone_string(tp, eof_selection.current, tone_string))
-						{	//If the note's tones can be represented in string format
-							if(eof_menu_pro_guitar_track_get_tech_view_state(tp))
-							{	//If tech view is in effect
-								tone_string[0] = '\0';	//Empty the tone string, as tech note gems do not have a defined pitch
-							}
+					if(eof_get_pro_guitar_note_tone_string(tp, eof_selection.current, tone_string))
+					{	//If the note's tones can be represented in string format
+						if(eof_menu_pro_guitar_track_get_tech_view_state(tp))
+						{	//If tech view is in effect
+							tone_string[0] = '\0';	//Empty the tone string, as tech note gems do not have a defined pitch
+						}
+						if(eof_get_note_eflags(eof_song, eof_selected_track, eof_selection.current) & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
+						{	//If this note has fingerless status
+							ypos += 12;
+							textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "(no fingering) : %s", tone_string);
+							ypos += 2;	//Lower the virtual "cursor" because underscores for the fretting string are rendered low enough to touch text 12 pixels below the y position of the glyph
+						}
+						else if(eof_get_pro_guitar_note_finger_string(tp, eof_selection.current, finger_string))
+						{	//If the note's fingering can be represented in string format
 							ypos += 12;
 							textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s (fingering) : %s", finger_string, tone_string);
 							ypos += 2;	//Lower the virtual "cursor" because underscores for the fretting string are rendered low enough to touch text 12 pixels below the y position of the glyph

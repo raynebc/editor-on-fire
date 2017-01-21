@@ -259,6 +259,11 @@ void eof_load_config(char * fn)
 	eof_color_waveform_peak = get_config_hex("colors", "eof_color_waveform_peak", 0x00BE00);		//The RGB equivalent of makecol(0, 190, 0)
 	eof_color_waveform_rms = get_config_hex("colors", "eof_color_waveform_rms", 0xBE0000);			//The RGB equivalent of makecol(190, 0, 0)
 
+	/* read waveform settings */
+	eof_waveform_renderlocation = get_config_int("waveform", "eof_waveform_renderlocation", 0);
+	eof_waveform_renderleftchannel = get_config_int("waveform", "eof_waveform_renderleftchannel", 1);
+	eof_waveform_renderrightchannel = get_config_int("waveform", "eof_waveform_renderrightchannel", 0);
+
 	if(exists(fn))
 	{	//Only try to load the controller buttons if the config file exists, otherwise the defaults will be erased
 		eof_controller_load_config(&eof_guitar, "guitar");
@@ -422,6 +427,11 @@ void eof_save_config(char * fn)
 	set_config_hex("colors", "eof_color_waveform_trough", eof_color_waveform_trough);
 	set_config_hex("colors", "eof_color_waveform_peak", eof_color_waveform_peak);
 	set_config_hex("colors", "eof_color_waveform_rms", eof_color_waveform_rms);
+
+	/* write waveform graph settings */
+	set_config_int("waveform", "eof_waveform_renderlocation", eof_waveform_renderlocation);
+	set_config_int("waveform", "eof_waveform_renderleftchannel", eof_waveform_renderleftchannel);
+	set_config_int("waveform", "eof_waveform_renderrightchannel", eof_waveform_renderrightchannel);
 
 	eof_controller_save_config(&eof_guitar, "guitar");
 	eof_controller_save_config(&eof_drums, "drums");

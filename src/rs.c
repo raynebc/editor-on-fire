@@ -222,6 +222,8 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 						continue;	//If this note is ignored and if it was not created due to ghost handshape status, skip it
 					if(strcmp(tp->note[ctr]->name, tp->note[ctr2]->name))
 						continue;	//If both notes do not have the same name, skip it
+					if(eof_note_exports_without_fingering(tp, ctr) != eof_note_exports_without_fingering(tp, ctr2))
+						continue;	//If one chord will export with fingering and the other without fingering, skip it
 
 					if(!(target & 2))
 					{	//If the target is Rocksmith 1
@@ -884,7 +886,12 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			effective_fingering = tp->note[chordlist[ctr]]->finger;	//By default, use the chord list entry's finger array
 			memcpy(temp.frets, tp->note[chordlist[ctr]]->frets, 6);	//Clone the fretting of the chord into the temporary note
 			temp.note = tp->note[chordlist[ctr]]->note;				//Clone the note mask
-			if(eof_pro_guitar_note_fingering_valid(tp, chordlist[ctr], 0) != 1)
+			if(eof_note_exports_without_fingering(tp, chordlist[ctr]))
+			{	//If the chord will export without fingering (has fingerless status or the fingering is incomplete/undefined and there's no applicable chord shape)
+				memset(temp.finger, 0, sizeof(temp.finger));	//Override the fingering to all undefined
+				effective_fingering = temp.finger;
+			}
+			else if(eof_pro_guitar_note_fingering_valid(tp, chordlist[ctr], 0) != 1)
 			{	//If the fingering for the note is not fully defined
 				if(eof_lookup_chord_shape(tp->note[chordlist[ctr]], &shapenum, 0))
 				{	//If a fingering for the chord can be found in the chord shape definitions
@@ -1274,10 +1281,13 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					{	//If this note matches a chord list entry
 						if(!eof_pro_guitar_note_compare_fingerings(tp->note[ctr3], tp->note[chordlist[ctr4]]))
 						{	//If this note has identical fingering to chord list entry
-							if(!strcmp(tp->note[ctr3]->name, tp->note[chordlist[ctr4]]->name))
-							{	//If the chord names match
-								chordid = ctr4;	//Store the chord list entry number
-								break;
+							if(eof_note_exports_without_fingering(tp, ctr3) == eof_note_exports_without_fingering(tp, chordlist[ctr4]))
+							{	//If this note and the chord list entry either both export with fingering or both export without fingering
+								if(!strcmp(tp->note[ctr3]->name, tp->note[chordlist[ctr4]]->name))
+								{	//If the chord names match
+									chordid = ctr4;	//Store the chord list entry number
+									break;
+								}
 							}
 						}
 					}
@@ -2367,7 +2377,12 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			effective_fingering = tp->note[chordlist[ctr]]->finger;	//By default, use the chord list entry's finger array
 			memcpy(temp.frets, tp->note[chordlist[ctr]]->frets, 6);	//Clone the fretting of the chord into the temporary note
 			temp.note = tp->note[chordlist[ctr]]->note;				//Clone the note mask
-			if(eof_pro_guitar_note_fingering_valid(tp, chordlist[ctr], 0) != 1)
+			if(eof_note_exports_without_fingering(tp, chordlist[ctr]))
+			{	//If the chord will export without fingering (has fingerless status or the fingering is incomplete/undefined and there's no applicable chord shape)
+				memset(temp.finger, 0, sizeof(temp.finger));	//Override the fingering to all undefined
+				effective_fingering = temp.finger;
+			}
+			else if(eof_pro_guitar_note_fingering_valid(tp, chordlist[ctr], 0) != 1)
 			{	//If the fingering for the note is not fully defined
 				if(eof_lookup_chord_shape(tp->note[chordlist[ctr]], &shapenum, 0))
 				{	//If a fingering for the chord can be found in the chord shape definitions
@@ -2757,10 +2772,13 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					{	//If this note matches a chord list entry
 						if(!eof_pro_guitar_note_compare_fingerings(tp->note[ctr3], tp->note[chordlist[ctr4]]))
 						{	//If this note has identical fingering to chord list entry
-							if(!strcmp(tp->note[ctr3]->name, tp->note[chordlist[ctr4]]->name))
-							{	//If the chord names match
-								chordid = ctr4;	//Store the chord list entry number
-								break;
+							if(eof_note_exports_without_fingering(tp, ctr3) == eof_note_exports_without_fingering(tp, chordlist[ctr4]))
+							{	//If this note and the chord list entry either both export with fingering or both export without fingering
+								if(!strcmp(tp->note[ctr3]->name, tp->note[chordlist[ctr4]]->name))
+								{	//If the chord names match
+									chordid = ctr4;	//Store the chord list entry number
+									break;
+								}
 							}
 						}
 					}
@@ -3145,6 +3163,8 @@ void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_ma
 
 	for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
 	{	//For each note in the track (outer loop)
+		if(tp->note[ctr2]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
+			continue;	//If this note is designated as having no fingering, skip it
 		retval = eof_pro_guitar_note_fingering_valid(tp, ctr2, 0);
 		if(retval == 1)
 		{	//If the note's fingering was complete
@@ -3155,6 +3175,8 @@ void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_ma
 				{	//For each note in the track (inner loop)
 					if((ctr2 == ctr3) || (eof_pro_guitar_note_compare(tp, ctr2, tp, ctr3, 0) != 0))
 						continue;	//If this note is being compared to itself or it does not match the note being examined in the outer loop, skip it
+					if(tp->note[ctr3]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
+						continue;	//If this note is designated as having no fingering, skip it
 
 					if(eof_pro_guitar_note_fingering_valid(tp, ctr3, 0) != 1)
 					{	//If the fingering of the inner loop's note is invalid/undefined
@@ -3391,8 +3413,8 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 		}
 
 		//Determine if this note is a chord that uses the index finger, which will trigger a fret hand position change (if this chord's fingering is incomplete, perform a chord shape lookup)
-		if(!force_change)
-		{	//If a fret hand change wasn't already determined necessary
+		if(!force_change && !(tp->note[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS))
+		{	//If a fret hand change wasn't already determined necessary and this note isn't designated as having no fingering
 			np = tp->note[ctr];	//Unless the chord's fingering is incomplete, the note's current fingering will be used to determine whether the index finger triggers a position change
 			if((eof_note_count_colors(eof_song, track, ctr) > 1) && !eof_is_string_muted(eof_song, track, ctr))
 			{	//If this note is a chord that isn't completely string muted
@@ -4666,7 +4688,7 @@ void eof_apply_chord_shape_definition(EOF_PRO_GUITAR_NOTE *np, unsigned long sha
 	if(transpose >= 6)
 		return;	//Error
 
-	//Apply the chord shape's fingering, transosing the definition by the number of strings found necessary in the prior loop
+	//Apply the chord shape's fingering, transposing the definition by the number of strings found necessary in the prior loop
 	for(ctr = 0; ctr + transpose < 6; ctr++)
 	{	//For the remainder of the 6 strings after any needed transposing is accounted for
 		np->finger[ctr + transpose] = eof_chord_shape[shapenum].finger[ctr];	//Apply the defined fingering
@@ -5314,8 +5336,8 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 	}
 
 	//Determine the fingering to be exported for this note/chordNote
-	if(finger && finger[stringnum])
-	{	//If a chordNote is being exported, and the chordNote's string is fretted
+	if(finger && finger[stringnum] && !(tp->note[notenum]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS))
+	{	//If a chordNote is being exported, and the chordNote's string is fretted, and the chord does not have fingerless status
 		fingernum = finger[stringnum];
 		if(fingernum == 5)
 		{	//If this fingering specifies the thumb
@@ -5323,7 +5345,7 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 		}
 	}
 	else
-	{	//This string is played open
+	{	//This string is played open or with undefined fingering
 		fingernum = -1;
 	}
 
@@ -5688,4 +5710,23 @@ int eof_rs_combine_linknext_logic(EOF_SONG * sp, unsigned long track, unsigned l
 	}
 
 	return retval;
+}
+
+int eof_note_exports_without_fingering(EOF_PRO_GUITAR_TRACK *tp, unsigned long note)
+{
+	if(!tp || (note >= tp->notes))
+		return 0;	//Invalid parameters
+
+	if(tp->note[note]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
+		return 1;	//Note has fingerless status
+
+	if(eof_pro_guitar_note_fingering_valid(tp, note, 0) != 1)
+	{	//If the note's fingering is not properly defined
+		if(!eof_lookup_chord_shape(tp->note[note], NULL, 0))
+		{	//If a fingering for the note CANNOT be found in the chord shape definitions
+			return 1;	//Note would export without complete fingering
+		}
+	}
+
+	return 0;
 }

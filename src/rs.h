@@ -307,4 +307,10 @@ int eof_rs_combine_linknext_logic(EOF_SONG * sp, unsigned long track, unsigned l
 	//Returns nonzero if the specified gem will have its linknext status overridden to be off during RS2 export,
 	// as the combination of adjacent notes can end either when linknext status stops or techniques become dislike between adjacent notes
 
+int eof_note_exports_without_fingering(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);
+	//Returns nonzero if the specified note will export with no fingering, due to either of the following conditions:
+	//	1.  Having fingerless status
+	//	2.  Having no undefined/incomplete fingering and having no matching chord shape definition
+	//This function does not restrict usage to notes with multiple gems
+
 #endif

@@ -11,9 +11,6 @@
 
 struct wavestruct *eof_waveform = NULL;	//Stores the waveform data
 char eof_display_waveform = 0;			//Specifies whether the waveform display is enabled
-char eof_waveform_renderlocation = 0;		//Specifies where and how high the graph will render (0 = fretboard area, 1 = editor window)
-char eof_waveform_renderleftchannel = 1;	//Specifies whether the left channel's graph should render
-char eof_waveform_renderrightchannel = 0;	//Specifies whether the right channel's graph should render
 
 int eof_waveform_slice_mean(struct waveformslice *left, struct waveformslice *right, struct wavestruct *waveform, unsigned long slicestart, unsigned long num)
 {
