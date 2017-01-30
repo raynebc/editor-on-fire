@@ -1592,7 +1592,7 @@ int eof_menu_file_link(unsigned char application)
 {
 	char *fofdisplayname = "FoF";
 	char *psdisplayname = "Phase Shift";
-	char *rstotabdisplayname = "RocksmithToTab";
+	char *rstotabdisplayname = "RocksmithToTab.exe";
 	char titlebartext[100] = {0};
 	char *appdisplayname = NULL;
 	char * returnfolder = NULL;
@@ -1648,6 +1648,10 @@ int eof_menu_file_link(unsigned char application)
 		else
 		{	//If linking to RocksmithToTab
 			(void) ustrcpy(eof_rs_to_tab_executable_path, returnedfn);
+			if(strcasestr_spec(returnedfn, "RocksmithToTabGUI.exe"))
+			{	//If the selected file name indicates that the user picked the GUI program
+				allegro_message("It appears you picked the GUI version of RocksmithToTab instead of the command line one (RocksmithToTab.exe).  Consider re-linking to the correct program if problems are encountered.");
+			}
 		}
 	}
 	eof_show_mouse(NULL);
