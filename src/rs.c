@@ -4301,7 +4301,7 @@ int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track)
 
 	if(!sp || (track >= sp->tracks))
 		return 1;	//Invalid parameters
-	if(!eof_get_track_size(sp, track))
+	if(!eof_get_track_size_all(sp, track))
 		return 0;	//Empty track
 
 	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)

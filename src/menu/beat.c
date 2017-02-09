@@ -1140,7 +1140,7 @@ int eof_menu_beat_reset_bpm(void)
 
 	for(i = 1; i < eof_song->tracks; i++)
 	{	//For each track
-		if(eof_get_track_size(eof_song, i) || eof_get_track_tech_note_size(eof_song, i))
+		if(eof_get_track_size_all(eof_song, i))
 		{	//If the track is populated with normal notes or tech notes
 			eof_clear_input();
 			if(alert(NULL, "Adjust notes?", NULL, "&Yes", "&No", 'y', 'n') == 1)

@@ -102,7 +102,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		if(eof_difficulty_ini_tags[i][0] == '\0')
 			continue;	//If this track does not have a defined difficulty tag
 
-		if(!eof_get_track_size(sp, i))
+		if(!eof_get_track_size_normal(sp, i))
 		{	//If this track is empty
 			(void) snprintf(buffer, sizeof(buffer) - 1, "\r\n%s = -1", eof_difficulty_ini_tags[i]);	//Write an "empty track" difficulty tag
 			(void) ustrcat(ini_string, buffer);
@@ -250,7 +250,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	}
 
 	/* write tuning tags */
-	if(eof_get_track_size(sp, EOF_TRACK_PRO_GUITAR))
+	if(eof_get_track_size_normal(sp, EOF_TRACK_PRO_GUITAR))
 	{	//If the 17 fret pro guitar track is populated
 		(void) ustrcat(ini_string, "\r\n");
 		tracknum = sp->track[EOF_TRACK_PRO_GUITAR]->tracknum;
@@ -267,7 +267,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 			(void) ustrcat(ini_string, buffer);
 		}
 	}
-	if(eof_get_track_size(sp, EOF_TRACK_PRO_GUITAR_22))
+	if(eof_get_track_size_normal(sp, EOF_TRACK_PRO_GUITAR_22))
 	{	//If the 22 fret pro guitar track is populated
 		(void) ustrcat(ini_string, "\r\n");
 		tracknum = sp->track[EOF_TRACK_PRO_GUITAR_22]->tracknum;
@@ -284,7 +284,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 			(void) ustrcat(ini_string, buffer);
 		}
 	}
-	if(eof_get_track_size(sp, EOF_TRACK_PRO_BASS))
+	if(eof_get_track_size_normal(sp, EOF_TRACK_PRO_BASS))
 	{	//If the 17 fret pro bass track is populated
 		(void) ustrcat(ini_string, "\r\n");
 		tracknum = sp->track[EOF_TRACK_PRO_BASS]->tracknum;
@@ -301,7 +301,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 			(void) ustrcat(ini_string, buffer);
 		}
 	}
-	if(eof_get_track_size(sp, EOF_TRACK_PRO_BASS_22))
+	if(eof_get_track_size_normal(sp, EOF_TRACK_PRO_BASS_22))
 	{	//If the 22 fret pro bass track is populated
 		(void) ustrcat(ini_string, "\r\n");
 		tracknum = sp->track[EOF_TRACK_PRO_BASS_22]->tracknum;
@@ -390,7 +390,7 @@ int eof_save_upgrades_dta(EOF_SONG * sp, char * fn)
 	(void) pack_fputs("   (song_id ###)\n", fp);
 	(void) pack_fputs("   (rank\n", fp);
 
-	if(eof_get_track_size(sp, EOF_TRACK_PRO_GUITAR))
+	if(eof_get_track_size_normal(sp, EOF_TRACK_PRO_GUITAR))
 	{	//If the pro guitar track is populated
 		if(sp->track[EOF_TRACK_PRO_GUITAR]->difficulty != 0xFF)
 		{	//If the track's difficulty is defined
@@ -415,7 +415,7 @@ int eof_save_upgrades_dta(EOF_SONG * sp, char * fn)
 		(void) pack_fputs("      (real_guitar 0)\n", fp);
 	}
 
-	if(eof_get_track_size(sp, EOF_TRACK_PRO_BASS))
+	if(eof_get_track_size_normal(sp, EOF_TRACK_PRO_BASS))
 	{	//If the pro bass track is populated
 		if(sp->track[EOF_TRACK_PRO_BASS]->difficulty != 0xFF)
 		{	//If the track's difficulty is defined

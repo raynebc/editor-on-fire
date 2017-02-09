@@ -523,7 +523,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	//Write tracks
 	for(j = 1; j < sp->tracks; j++)
 	{	//For each track in the project
-		if(eof_get_track_size(sp, j) == 0)	//If this track has no notes
+		char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct notes are exported
+
+		if(eof_get_track_size_normal(sp, j) == 0)	//If this track has no notes
 			continue;	//Skip the track
 		if(j == EOF_TRACK_PRO_GUITAR_B)		//If this is the bonus pro guitar track
 			continue;	//Skip the track
@@ -561,6 +563,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		{	//For other tracks, the generic velocity is 100
 			vel = 100;
 		}
+
+		restore_tech_view = eof_menu_track_get_tech_view_state(sp, j);
+		eof_menu_track_set_tech_view_state(sp, j, 0);	//Disable tech view if applicable
 
 		notetrackspopulated[j] = 1;	//Remember that this track is populated
 		eof_clear_midi_events();
@@ -2135,6 +2140,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			(void) pack_putc(0x00, fp);
 			(void) pack_fclose(fp);
 		}//If this is a pro guitar track
+
+		eof_menu_track_set_tech_view_state(sp, j, restore_tech_view);	//Re-enable tech view if applicable
 	}//For each track in the project
 	eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
 
@@ -2578,8 +2585,9 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 		for(j = 1; j < sp->tracks; j++)
 		{	//For each track in the project
 			int lastevent = 0;	//Track the last event written so running status can be utilized
+			char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct notes are exported
 
-			if(eof_get_track_size(sp, j) == 0)	//If this track has no notes
+			if(eof_get_track_size_normal(sp, j) == 0)	//If this track has no notes (in the normal note set)
 				continue;	//Skip the track
 
 			if((sp->track[j]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (sp->track[j]->track_format != EOF_VOCAL_TRACK_FORMAT))	//If this isn't a vocal or pro guitar track
@@ -2593,6 +2601,9 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 
 			eof_clear_midi_events();
 			memset(eof_midi_note_status,0,sizeof(eof_midi_note_status));	//Clear note status array
+
+			restore_tech_view = eof_menu_track_get_tech_view_state(sp, j);
+			eof_menu_track_set_tech_view_state(sp, j, 0);	//Disable tech view if applicable
 
 			//Write track specific text events
 			for(i = 0; i < sp->text_events; i++)
@@ -2859,6 +2870,8 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 
 			trackcounter++;	//Count this track towards the number of tracks to write to the completed MIDI
 			channel++;	//For Synthesia format MIDIs, the next track to export will use a different MIDI channel for the note on/off events
+
+			eof_menu_track_set_tech_view_state(sp, j, restore_tech_view);	//Re-enable tech view if applicable
 		}//For each track in the project
 	}//Parse each track twice
 

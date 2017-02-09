@@ -122,9 +122,9 @@ int eof_parse_chord_template(char *name, size_t size, char *finger, char *frets,
 	return 0;	//Return success
 }
 
-EOF_PRO_GUITAR_NOTE *eof_rs_import_note_tag_data(char *buffer, int function, EOF_PRO_GUITAR_TRACK *tp, unsigned long linectr)
+EOF_PRO_GUITAR_NOTE *eof_rs_import_note_tag_data(char *buffer, int function, EOF_PRO_GUITAR_TRACK *tp, unsigned long linectr, unsigned char curdiff)
 {
-	long curdiff = 0, time = 0, step = 0;
+	long time = 0, step = 0;
 	long bend = 0, fret = 0, hammeron = 0, harmonic = 0, palmmute = 0, pulloff = 0, string = 0, sustain = 0, tremolo = 0, linknext = 0, accent = 0, ignore = 0, mute = 0, pinchharmonic = 0, tap = 0, vibrato = 0;
 	long pluck = -1, slap = -1, slideto = -1, slideunpitchto = -1;
 	unsigned long flags = 0;
@@ -442,7 +442,7 @@ char eof_rs_import_process_chordnotes(EOF_PRO_GUITAR_TRACK *tp, EOF_PRO_GUITAR_N
 				unsigned long tnnum = 0;
 
 				if(eof_pro_guitar_note_bitmask_has_tech_note(tp, tp->notes - 1, chordnote[ctr]->note, &tnnum))
-				{	//If the chord being parsed already has a technote on this string due to having added bend of stop tech notes
+				{	//If the chord being parsed already has a technote on this string due to having added bend or stop tech notes
 					tp->technote[tnnum]->flags |= chordnote[ctr]->flags;	//Transfer the flags to it instead of creating another tech note
 					tp->technote[tnnum]->eflags |= chordnote[ctr]->eflags;
 					chordnote[ctr]->flags = chordnote[ctr]->eflags = 0;
@@ -1529,7 +1529,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 								ptr = strcasestr_spec(buffer, "<note ");
 								if(ptr)
 								{	//If this is a note tag
-									np = eof_rs_import_note_tag_data(buffer, 1, tp, linectr);	//Parse the note tag and add the note to the track
+									np = eof_rs_import_note_tag_data(buffer, 1, tp, linectr, curdiff);	//Parse the note tag and add the note to the track
 									if(!np)
 									{	//If there was an error doing so
 										error = 1;
@@ -1556,7 +1556,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 								ptr = strcasestr_spec(buffer, "<bendValue ");
 								if(ptr)
 								{	//If this is a bendValue tag
-									if(!eof_rs_import_note_tag_data(buffer, 1, tp, linectr))
+									if(!eof_rs_import_note_tag_data(buffer, 1, tp, linectr, curdiff))
 									{	//If there was an error parsing the bendvalue tag and adding a technote as appropriate
 										error = 1;
 										break;	//Break from inner loop
@@ -1693,7 +1693,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 										error = 1;
 										break;	//Break from inner loop
 									}
-									cnp = eof_rs_import_note_tag_data(buffer, 0, tp, linectr);	//Parse the note tag and store the note data in the chordnote array
+									cnp = eof_rs_import_note_tag_data(buffer, 0, tp, linectr, curdiff);	//Parse the note tag and store the note data in the chordnote array
 									if(!cnp)
 									{	//If there was an error doing so
 										error = 1;
@@ -1711,7 +1711,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 								ptr = strcasestr_spec(buffer, "<bendValue ");
 								if(ptr)
 								{	//If this is a bendValue tag
-									if(!eof_rs_import_note_tag_data(buffer, 1, tp, linectr))
+									if(!eof_rs_import_note_tag_data(buffer, 1, tp, linectr, curdiff))
 									{	//If there was an error parsing the bendvalue tag and adding a technote as appropriate
 										error = 1;
 										break;	//Break from inner loop
@@ -2048,7 +2048,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 
 		//Apply strum directions
 		eof_clear_input();
-		if(strum_dir && (alert("At least one chord was marked as strum up.", "Would you like to to mark all non strum-up chords as strum down?", NULL, "&Yes", "&No", 'y', 'n') == 1))
+		if(strum_dir && (alert("At least one chord was marked as strum up.", "Would you like to mark all non strum-up chords as strum down?", NULL, "&Yes", "&No", 'y', 'n') == 1))
 		{	//If there were any up strum chords, and user opts to mark all others as down strum chords
 			unsigned long bitmask, count;
 

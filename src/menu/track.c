@@ -2971,15 +2971,9 @@ int eof_track_erase_track(void)
 		return 0;	//Error
 
 	eof_clear_input();
-	if(!eof_get_track_size(eof_song, eof_selected_track))
-	{	//If this track isn't populated by the current note set (either normal or tech notes)
-		(void) eof_menu_track_toggle_tech_view();	//Change the note set if applicable
-		if(!eof_get_track_size(eof_song, eof_selected_track))
-		{	//If this track isn't populated by either normal or tech notes
-			(void) eof_menu_track_toggle_tech_view();	//Change the note set back if applicable
-			return 1;
-		}
-		(void) eof_menu_track_toggle_tech_view();	//Change the note set back if applicable
+	if(!eof_get_track_size_all(eof_song, eof_selected_track))
+	{	//If this track isn't populated in either note set (either normal or tech notes)
+		return 1;
 	}
 
 	eof_clear_input();
@@ -3888,14 +3882,9 @@ int eof_menu_track_clone_track_number(EOF_SONG *sp, unsigned long sourcetrack, u
 
 	//Warn if the destination track is populated
 	eof_clear_input();
-	if(!eof_get_track_size(sp, desttrack))
-	{	//If the destination track isn't populated by the current note set (either normal or tech notes)
-		(void) eof_menu_track_toggle_tech_view_state(sp, desttrack);	//Change the note set if applicable
-		if(!eof_get_track_size(sp, desttrack))
-		{	//If this track isn't populated by either normal or tech notes
-			populated = 0;
-		}
-		(void) (void) eof_menu_track_toggle_tech_view_state(sp, desttrack);	//Change the note set back if applicable
+	if(!eof_get_track_size_all(sp, desttrack))
+	{	//If the destination track isn't populated in either note set (either normal or tech notes)
+		populated = 0;
 	}
 	if(populated && alert(NULL, "This operation will replace this track's contents.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 	{	//If user does not opt to replace the track

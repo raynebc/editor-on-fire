@@ -578,8 +578,10 @@ EOF_SONG * eof_load_song(const char * fn);	//Loads the specified EOF file, valid
 int eof_save_song(EOF_SONG * sp, const char * fn);	//Saves the song to file.  Returns zero on error
 EOF_SONG *eof_clone_chart_time_range(EOF_SONG *sp, unsigned long start, unsigned long end);	//Builds a new song structure containing the specified time range of content in the active project, or NULL on error
 
-unsigned long eof_get_track_size(EOF_SONG *sp, unsigned long track);						//Returns the number of notes/lyrics in the specified track, or 0 on error
+unsigned long eof_get_track_size(EOF_SONG *sp, unsigned long track);						//Returns the number of notes/lyrics in the specified track (or just that of its active note set if a pro guitar track is specified), or 0 on error
 unsigned long eof_get_track_tech_note_size(EOF_SONG *sp, unsigned long track);				//Returns the number of tech notes in the specified pro guitar track, or 0 on error
+unsigned long eof_get_track_size_all(EOF_SONG *sp, unsigned long track);					//For pro guitar tracks, returns the sum of the note count of both the active and tech note sets, otherwise returns the result of eof_get_track_size()
+unsigned long eof_get_track_size_normal(EOF_SONG *sp, unsigned long track);					//For pro guitar tracks, returns the note count of the normal note set only, otherwise returns the result of eof_get_track_size()
 unsigned long eof_get_chart_size(EOF_SONG *sp);												//Returns the number of notes/lyrics in the chart, or 0 on error
 unsigned long eof_get_used_lanes(unsigned long track, unsigned long startpos, unsigned long endpos, char type);
 	//Returns a bitmask representing all lanes used within the specified track difficulty during the specified time span

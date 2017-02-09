@@ -3110,7 +3110,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	}
 	//Determine how many tracks need to be written
 	track_count = sp->tracks;
-	if((sp->tracks > EOF_TRACK_PRO_GUITAR_B) && !eof_get_track_size(sp, EOF_TRACK_PRO_GUITAR_B) && !eof_get_track_tech_note_size(sp, EOF_TRACK_PRO_GUITAR_B))
+	if((sp->tracks > EOF_TRACK_PRO_GUITAR_B) && !eof_get_track_size_all(sp, EOF_TRACK_PRO_GUITAR_B))
 	{	//If the project has a bonus pro guitar track, but it has no notes or tech notes
 		omit_bonus = 1;	//That track will not be written to the project file
 	}
@@ -3843,6 +3843,38 @@ unsigned long eof_get_track_size(EOF_SONG *sp, unsigned long track)
 	}
 
 	return 0;
+}
+
+unsigned long eof_get_track_size_all(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks) || (sp->track[track] == NULL))
+		return 0;
+	tracknum = sp->track[track]->tracknum;
+
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If this is a pro guitar track
+		return sp->pro_guitar_track[tracknum]->pgnotes + sp->pro_guitar_track[tracknum]->technotes;	//Return the sum of both note sets
+	}
+
+	return eof_get_track_size(sp, track);	//Otherwise defer to the normal track size function
+}
+
+unsigned long eof_get_track_size_normal(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks) || (sp->track[track] == NULL))
+		return 0;
+	tracknum = sp->track[track]->tracknum;
+
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If this is a pro guitar track
+		return sp->pro_guitar_track[tracknum]->pgnotes;	//Return the normal note set count only
+	}
+
+	return eof_get_track_size(sp, track);	//Otherwise defer to the normal track size function
 }
 
 unsigned long eof_get_track_tech_note_size(EOF_SONG *sp, unsigned long track)

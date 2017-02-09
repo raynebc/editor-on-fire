@@ -3539,8 +3539,8 @@ int eof_save_helper(char *destfilename, char silent)
 	{	//If the user opted to also save RBN2 and RB3 pro guitar upgrade compliant MIDIs
 		(void) append_filename(eof_temp_filename, newfolderpath, "notes_rbn.mid", (int) sizeof(eof_temp_filename));
 		(void) eof_export_midi(eof_song, eof_temp_filename, 1, fixvoxpitches, fixvoxphrases, 0);	//Write a RBN2 compliant MIDI
-		if(eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS) || eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS_22) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR_22))
-		{	//If any of the pro guitar tracks are populated
+		if(eof_get_track_size_normal(eof_song, EOF_TRACK_PRO_BASS) || eof_get_track_size_normal(eof_song, EOF_TRACK_PRO_BASS_22) || eof_get_track_size_normal(eof_song, EOF_TRACK_PRO_GUITAR) || eof_get_track_size_normal(eof_song, EOF_TRACK_PRO_GUITAR_22))
+		{	//If any of the pro guitar tracks' normal note sets are populated
 			//Write the pro guitar upgrade MIDI
 			(void) append_filename(eof_temp_filename, newfolderpath, "notes_pro.mid", (int) sizeof(eof_temp_filename));
 			(void) eof_export_midi(eof_song, eof_temp_filename, 2, fixvoxpitches, fixvoxphrases, 0);	//Write a RB3 pro guitar upgrade compliant MIDI
@@ -4125,8 +4125,8 @@ int eof_gp_import_guitar_track(int importvoice)
 		eof_clear_input();
 		if(eof_gp_import_replaces_track)
 		{	//If the user preference to replace the entire active track with the imported track is enabled
-			if(eof_get_track_size(eof_song, eof_selected_track) && alert("This track already has notes", "Importing this GP track will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
-			{	//If the active track is already populated and the user doesn't opt to overwrite it
+			if(eof_get_track_size_all(eof_song, eof_selected_track) && alert("This track already has notes", "Importing this GP track will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+			{	//If the active track is already populated (with normal or tech notes) and the user doesn't opt to overwrite it
 				eof_log("\t\tImport canceled", 1);
 				return 0;
 			}
@@ -4152,7 +4152,7 @@ int eof_gp_import_guitar_track(int importvoice)
 		{
 			eof_erase_track_difficulty(eof_song, eof_selected_track, eof_note_type);	//Otherwise erase the active track difficulty
 		}
-		if(eof_get_track_size(eof_song, eof_selected_track))
+		if(eof_get_track_size_all(eof_song, eof_selected_track))
 		{	//If the track still has notes in it after the removal of the track or track difficulty's notes
 				still_populated = 1;
 		}
@@ -4749,8 +4749,8 @@ int eof_menu_file_rs_import(void)
 			return 1;	//Don't do anything unless the active track is a pro guitar/bass track
 
 		eof_clear_input();
-		if(eof_get_track_size(eof_song, eof_selected_track) && alert("This track already has notes", "Importing this Rocksmith track will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
-		{	//If the active track is already populated and the user doesn't opt to overwrite it
+		if(eof_get_track_size_all(eof_song, eof_selected_track) && alert("This track already has notes", "Importing this Rocksmith track will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+		{	//If the active track is already populated (by either normal or tech notes) and the user doesn't opt to overwrite it
 			return 0;
 		}
 	}

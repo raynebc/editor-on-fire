@@ -584,7 +584,7 @@ void eof_prepare_song_menu(void)
 		/* track */
 		for(i = 0; i < EOF_TRACKS_MAX - 1; i++)
 		{	//Access this array reflecting track numbering starting from 0 instead of 1
-			if(eof_get_track_size(eof_song, i + 1) || eof_get_track_tech_note_size(eof_song, i + 1))
+			if(eof_get_track_size_all(eof_song, i + 1))
 			{	//If the track exists and is populated with normal notes or tech notes, draw the track populated indicator
 				eof_track_selected_menu[i].text[0] = '*';
 			}
