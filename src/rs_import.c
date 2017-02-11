@@ -18,7 +18,7 @@
 #define EOF_RS_EVENT_IMPORT_LIMIT 200
 #define EOF_RS_CHORD_TEMPLATE_IMPORT_LIMIT 400
 
-int eof_parse_chord_template(char *name, size_t size, char *finger, char *frets, unsigned char *note, unsigned char *numstrings, unsigned char *isarp, unsigned long linectr, char *input)
+int eof_parse_chord_template(char *name, size_t size, char *finger, char *frets, unsigned char *note, unsigned char *isarp, unsigned long linectr, char *input)
 {
 	unsigned long ctr, bitmask;
 	long output = 0;
@@ -26,7 +26,7 @@ int eof_parse_chord_template(char *name, size_t size, char *finger, char *frets,
 	unsigned char arpfound = 0;
 
 	if(!name || !size || !finger || !frets || !note || !input)
-	{	//Note:  numstrings and isarp are allowed to be NULL
+	{	//Note:  isarp is allowed to be NULL
 		eof_log("Invalid parameters sent to eof_parse_chord_template()", 1);
 		return 1;	//Return error
 	}
@@ -52,35 +52,37 @@ int eof_parse_chord_template(char *name, size_t size, char *finger, char *frets,
 		return 2;	//Return error
 	}
 
-	//Read chord fingering
-	success_count = 0;
-	success_count += parse_xml_attribute_number("finger0", input, &output);	//Read the fingering for string 0
-	finger[0] = output;	//Store the tuning
-	success_count += parse_xml_attribute_number("finger1", input, &output);	//Read the fingering for string 1
-	finger[1] = output;	//Store the tuning
-	success_count += parse_xml_attribute_number("finger2", input, &output);	//Read the fingering for string 2
-	finger[2] = output;	//Store the tuning
-	success_count += parse_xml_attribute_number("finger3", input, &output);	//Read the fingering for string 3
-	finger[3] = output;	//Store the tuning
-	success_count += parse_xml_attribute_number("finger4", input, &output);	//Read the fingering for string 4
-	finger[4] = output;	//Store the tuning
-	success_count += parse_xml_attribute_number("finger5", input, &output);	//Read the fingering for string 5
-	finger[5] = output;	//Store the tuning
-	if(success_count < 4)
-	{	//Rocksmith doesn't support arrangements using less than 4 strings
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading chord fingering on line #%lu.  Aborting", linectr);
-		eof_log(eof_log_string, 1);
-		return 3;	//Return error
-	}
-	if((success_count == 4) && !parse_xml_attribute_number("finger4", input, &output) && !parse_xml_attribute_number("finger5", input, &output))
-	{	//If only four string fingerings were read, this must be a 4 string bass arrangement
-		if(numstrings)
-		{	//If the calling function wanted to track the number of strings read from the templates
-			*numstrings = 4;	//Update the string count
-		}
-	}
+	//Read chord fingerings, if any are present
+	output = -1;		//If the attribute is not parsed it will be considered unused
+	(void) parse_xml_attribute_number("finger0", input, &output);	//Read the fingering for string 0
+	finger[0] = output;	//Store the fingering
+
+	output = -1;		//If the attribute is not parsed it will be considered unused
+	(void) parse_xml_attribute_number("finger1", input, &output);	//Read the fingering for string 1
+	finger[1] = output;	//Store the fingering
+
+	output = -1;		//If the attribute is not parsed it will be considered unused
+	(void) parse_xml_attribute_number("finger2", input, &output);	//Read the fingering for string 2
+	finger[2] = output;	//Store the fingering
+
+	output = -1;		//If the attribute is not parsed it will be considered unused
+	(void) parse_xml_attribute_number("finger3", input, &output);	//Read the fingering for string 3
+	finger[3] = output;	//Store the fingering
+
+	output = -1;		//If the attribute is not parsed it will be considered unused
+	(void) parse_xml_attribute_number("finger4", input, &output);	//Read the fingering for string 4
+	finger[4] = output;	//Store the fingering
+
+	output = -1;		//If the attribute is not parsed it will be considered unused
+	(void) parse_xml_attribute_number("finger5", input, &output);	//Read the fingering for string 5
+	finger[5] = output;	//Store the fingering
+
 	for(ctr = 0; ctr < 6; ctr++)
 	{	//For each of the 6 supported strings
+		if(finger[ctr] == 0)
+		{	//If the fingering was given as zero, it is the thumb
+			finger[ctr] = 5;	//Convert to EOF's notation for thumb
+		}
 		if(finger[ctr] < 0)
 		{	//If the fingering was given as a negative number, it is unused
 			finger[ctr] = 0;	//Convert to EOF's notation for an unused/undefined finger
@@ -89,20 +91,32 @@ int eof_parse_chord_template(char *name, size_t size, char *finger, char *frets,
 
 	//Read chord fretting
 	success_count = 0;
+	output = -1;		//If the attribute is not parsed it will be considered unused
 	success_count += parse_xml_attribute_number("fret0", input, &output);	//Read the fretting for string 0
-	frets[0] = output;	//Store the tuning
+	frets[0] = output;	//Store the fretting
+
+	output = -1;		//If the attribute is not parsed it will be considered unused
 	success_count += parse_xml_attribute_number("fret1", input, &output);	//Read the fretting for string 1
-	frets[1] = output;	//Store the tuning
+	frets[1] = output;	//Store the fretting
+
+	output = -1;		//If the attribute is not parsed it will be considered unused
 	success_count += parse_xml_attribute_number("fret2", input, &output);	//Read the fretting for string 2
-	frets[2] = output;	//Store the tuning
+	frets[2] = output;	//Store the fretting
+
+	output = -1;		//If the attribute is not parsed it will be considered unused
 	success_count += parse_xml_attribute_number("fret3", input, &output);	//Read the fretting for string 3
-	frets[3] = output;	//Store the tuning
+	frets[3] = output;	//Store the fretting
+
+	output = -1;		//If the attribute is not parsed it will be considered unused
 	success_count += parse_xml_attribute_number("fret4", input, &output);	//Read the fretting for string 4
-	frets[4] = output;	//Store the tuning
+	frets[4] = output;	//Store the fretting
+
+	output = -1;		//If the attribute is not parsed it will be considered unused
 	success_count += parse_xml_attribute_number("fret5", input, &output);	//Read the fretting for string 5
-	frets[5] = output;	//Store the tuning
-	if(success_count < 4)
-	{	//Rocksmith doesn't support arrangements using less than 4 strings
+	frets[5] = output;	//Store the fretting
+
+	if(success_count < 1)
+	{	//If not even one fret value was defined for this chord
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading chord fretting on line #%lu.  Aborting", linectr);
 		eof_log(eof_log_string, 1);
 		return 4;	//Return error
@@ -167,9 +181,7 @@ EOF_PRO_GUITAR_NOTE *eof_rs_import_note_tag_data(char *buffer, int function, EOF
 		(void) parse_xml_attribute_number("string", buffer, &string);
 		if(!parse_xml_rs_timestamp("sustain", buffer, &sustain))
 		{	//If the timestamp was not readable
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading sustain time on line #%lu.  Aborting", linectr);
-			eof_log(eof_log_string, 1);
-			return NULL;
+			sustain = 0;	//Assume no sustain is used
 		}
 		(void) parse_xml_attribute_number("tremolo", buffer, &tremolo);
 
@@ -278,9 +290,7 @@ EOF_PRO_GUITAR_NOTE *eof_rs_import_note_tag_data(char *buffer, int function, EOF
 	}
 	if(!parse_xml_rs_timestamp("step", buffer, &step))
 	{	//If the bend strength was not readable
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading bend strength on line #%lu.  Aborting", linectr);
-		eof_log(eof_log_string, 1);
-		return NULL;
+		step = 0;	//A strength of 0 is assumed
 	}
 	tnp = eof_pro_guitar_track_add_tech_note(tp);
 	if(!tnp)
@@ -1037,6 +1047,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 			char finger[8] = {0};
 			char frets[8] = {0};
 			unsigned char note = 0, isarp = 0;
+			char four_string = 1;	//Set to nonzero if string 5 or 6 is used by any chords
 
 			#ifdef RS_IMPORT_DEBUG
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tProcessing <chordTemplates> tag on line #%lu", linectr);
@@ -1049,16 +1060,24 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 			{	//Until there was an error reading from the file or end of file is reached
 				if(strcasestr_spec(buffer, "</chordTemplates"))
 				{	//If this is the end of the chordTemplates tag
+					if(four_string)
+					{	//If all chords parsed used 4 or fewer strings
+						tp->numstrings = 4;
+					}
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu chord templates loaded", chordlist_count);
 					eof_log(eof_log_string, 1);
 					break;	//Break from loop
 				}
 				if(chordlist_count < EOF_RS_CHORD_TEMPLATE_IMPORT_LIMIT)
 				{	//If another chord can be stored
-					if(eof_parse_chord_template(tag, sizeof(tag), finger, frets, &note, &(tp->numstrings), &isarp, linectr, buffer))
+					if(eof_parse_chord_template(tag, sizeof(tag), finger, frets, &note, &isarp, linectr, buffer))
 					{	//If there was an error reading the chord template
 						error = 1;
 						break;
+					}
+					if(note & 48)
+					{	//If a fifth or sixth string is used by this chord
+						four_string = 0;
 					}
 					//Track the highest used fret number
 					for(ctr = 0; ctr < 6; ctr++)

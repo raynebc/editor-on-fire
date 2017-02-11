@@ -37,7 +37,7 @@ int parse_xml_attribute_text(char *buffer, size_t size, char *target, char *inpu
 
 int parse_xml_attribute_number(char *target, char *input, long *output);
 	//Parses and returns the numerical value of the specified target attribute from the specified input string
-	//The numerical value is returned through *output
+	//If a number is parsed, it is returned through *output, otherwise *output remains unchanged
 	//Returns 1 on success
 
 int parse_xml_rs_timestamp(char *target, char *input, long *output);
