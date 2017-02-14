@@ -197,6 +197,7 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 16,  195, 124, 16,  2,   23,  0,    0,      1,   0,   "Import/Export TS",NULL, NULL },
 	{ d_agup_check_proc, 248, 195, 214, 16,  2,   23,  0,    0,      1,   0,   "dB import skips 5nc conversion",NULL, NULL },
 	{ d_agup_check_proc, 16,  210, 214, 16,  2,   23,  0,    0,      1,   0,   "Warn about missing bass FHPs",NULL, NULL },
+	{ d_agup_check_proc, 248, 210, 202, 16,  2,   23,  0,    0,      1,   0,   "Abridged Rocksmith 2 export",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1411,6 +1412,7 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[19].flags = eof_use_ts ? D_SELECTED : 0;							//Import/Export TS
 	eof_import_export_preferences_dialog[20].flags = eof_db_import_suppress_5nc_conversion ? D_SELECTED : 0;//dB import skips 5nc conversion
 	eof_import_export_preferences_dialog[21].flags = eof_warn_missing_bass_fhps ? D_SELECTED : 0;			//Warn about missing bass FHPs
+	eof_import_export_preferences_dialog[22].flags = eof_abridged_rs2_export ? D_SELECTED : 0;				//Abridged Rocksmith 2 export
 
 	do
 	{	//Run the dialog
@@ -1435,6 +1437,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_use_ts = (eof_import_export_preferences_dialog[19].flags == D_SELECTED ? 1 : 0);
 			eof_db_import_suppress_5nc_conversion = (eof_import_export_preferences_dialog[20].flags == D_SELECTED ? 1 : 0);
 			eof_warn_missing_bass_fhps = (eof_import_export_preferences_dialog[21].flags == D_SELECTED ? 1 : 0);
+			eof_abridged_rs2_export = (eof_import_export_preferences_dialog[22].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1456,6 +1459,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[19].flags = D_SELECTED;	//Import/Export TS
 			eof_import_export_preferences_dialog[20].flags = 0;				//dB import skips 5nc conversion
 			eof_import_export_preferences_dialog[21].flags = D_SELECTED;	//Warn about missing bass FHPs
+			eof_import_export_preferences_dialog[22].flags = 0;				//Abridged Rocksmith 2 export
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);

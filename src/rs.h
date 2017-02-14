@@ -313,4 +313,9 @@ int eof_note_exports_without_fingering(EOF_PRO_GUITAR_TRACK *tp, unsigned long n
 	//	2.  Having no undefined/incomplete fingering and having no matching chord shape definition
 	//This function does not restrict usage to notes with multiple gems
 
+void eof_conditionally_append_xml_long(char *buffer, size_t buffsize, char *name, long value, long defaultval);
+void eof_conditionally_append_xml_float(char *buffer, size_t buffsize, char *name, double value, double defaultval);
+	//Appends text to buffer in the format of "[name] = [value] " (with a trailing space) depending on whether abridged RS2 export is enabled
+	// If it is, the attribute and value are not appended unless the specified value and default value are different
+
 #endif

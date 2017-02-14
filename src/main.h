@@ -313,6 +313,7 @@ extern int         eof_write_rb_files;
 extern int         eof_write_music_midi;
 extern int         eof_write_rs_files;
 extern int         eof_write_rs2_files;
+extern int         eof_abridged_rs2_export;
 extern int         eof_write_bf_files;
 extern int         eof_add_new_notes_to_selection;
 extern int         eof_drum_modifiers_affect_all_difficulties;

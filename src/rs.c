@@ -2334,37 +2334,13 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}
 	else
 	{	//There were chords
-		long fret0 = 0, fret1 = 0, fret2 = 0, fret3 = 0, fret4 = 0, fret5 = 0;	//Will store the fret number played on each string (-1 means the string is not played)
-		long *fret[6];
-		char *fingerunused = "-1";
-		char *finger0 = NULL, *finger1 = NULL, *finger2 = NULL, *finger3 = NULL, *finger4 = NULL, *finger5 = NULL;	//Each will be set to either fingerunknown or fingerunused
-		char **finger[6];
-		char finger0def[2] = "0", finger1def[2] = "1", finger2def[2] = "2", finger3def[2] = "3", finger4def[2] = "4", finger5def[2] = "5";	//Static strings for building manually-defined finger information
-		char *fingerdef[6];
+		long fret[6] = {0};		//Will store the fret number played on each string (-1 means the string is not played)
+		long finger[6] = {0};	//Will store the finger number used to play each string (-1 means unused/undefined)
 		unsigned long shapenum = 0;
 		EOF_PRO_GUITAR_NOTE temp = {{0}, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};	//Will have a matching chord shape definition's fingering applied to
 		unsigned char *effective_fingering;	//Will point to either a note's own finger array or one of that of the temp pro guitar note structure above
 		char arp[] = "-arp", no_arp[] = "";	//The suffix applied to the chord template's display name, depending on whether the template is for an arpeggio
 		char *suffix;	//Will point to either arp[] or no_arp[]
-
-		fret[0] = &fret0;	//Allow the fret numbers to be accessed via array
-		fret[1] = &fret1;
-		fret[2] = &fret2;
-		fret[3] = &fret3;
-		fret[4] = &fret4;
-		fret[5] = &fret5;
-		finger[0] = &finger0;	//Allow the finger strings to be accessed via array
-		finger[1] = &finger1;
-		finger[2] = &finger2;
-		finger[3] = &finger3;
-		finger[4] = &finger4;
-		finger[5] = &finger5;
-		fingerdef[0] = finger0def;	//Allow the fingerdef strings to be accessed via array
-		fingerdef[1] = finger1def;
-		fingerdef[2] = finger2def;
-		fingerdef[3] = finger3def;
-		fingerdef[4] = finger4def;
-		fingerdef[5] = finger5def;
 
 		(void) snprintf(buffer, sizeof(buffer) - 1, "  <chordTemplates count=\"%lu\">\n", chordlistsize);
 		(void) pack_fputs(buffer, fp);
@@ -2397,36 +2373,33 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				{	//If the chord list entry uses this string (verifying that the string number is supported by the track)
 					if(tp->note[chordlist[ctr]]->frets[ctr2] == 0xFF)
 					{	//If this is a string mute with no defined fret number
-						*(fret[ctr2]) = 0;	//Assume muted open note
+						fret[ctr2] = 0;	//Assume muted open note
 					}
 					else
 					{	//Otherwise use the defined fret number
-						*(fret[ctr2]) = tp->note[chordlist[ctr]]->frets[ctr2] & 0x7F;	//Retrieve the fret played on this string (masking out the muting bit)
+						fret[ctr2] = tp->note[chordlist[ctr]]->frets[ctr2] & 0x7F;	//Retrieve the fret played on this string (masking out the muting bit)
 					}
-					if(*(fret[ctr2]))
+					if(fret[ctr2])
 					{	//If this string isn't played open
-						*(fret[ctr2]) += tp->capo;	//Apply the capo position
+						fret[ctr2] += tp->capo;	//Apply the capo position
 					}
 					if(effective_fingering[ctr2])
 					{	//If the fingering for this string is defined
-						char *str = fingerdef[ctr2];	//Simplify logic below
-						str[0] = '0' + effective_fingering[ctr2];	//Convert decimal to ASCII
-						str[1] = '\0';	//Truncate string
-						if(str[0] == '5')
+						finger[ctr2] = effective_fingering[ctr2];
+						if(finger[ctr2] == 5)
 						{	//If this fingering specifies the thumb
-							str[0] = '0';	//Convert from EOF's numbering (5 = thumb) to Rocksmith's numbering (0 = thumb)
+							finger[ctr2] = 0;	//Convert from EOF's numbering (5 = thumb) to Rocksmith's numbering (0 = thumb)
 						}
-						*(finger[ctr2]) = str;
 					}
 					else
 					{	//The fingering is not defined, regardless of whether the string is open or fretted
-						*(finger[ctr2]) = fingerunused;		//Write a -1, this will allow the XML to compile even if the chord's fingering is incomplete/undefined
+						finger[ctr2] = -1;		//Write a -1, this will allow the XML to compile even if the chord's fingering is incomplete/undefined
 					}
 				}
 				else
 				{	//The chord list entry does not use this string
-					*(fret[ctr2]) = -1;
-					*(finger[ctr2]) = fingerunused;
+					fret[ctr2] = -1;
+					finger[ctr2] = -1;
 				}
 			}
 
@@ -2446,7 +2419,20 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				suffix = no_arp;	//This chord template is not for an arpeggio chord, apply no suffix
 			}
 			expand_xml_text(buffer2, sizeof(buffer2) - 1, notename, 32 - 4, 1);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field (reserve 4 characters for the "-arp" suffix).  Filter out characters suspected of causing the game to crash (allow forward slash).
-			(void) snprintf(buffer, sizeof(buffer) - 1, "    <chordTemplate chordName=\"%s\" displayName=\"%s%s\" finger0=\"%s\" finger1=\"%s\" finger2=\"%s\" finger3=\"%s\" finger4=\"%s\" finger5=\"%s\" fret0=\"%ld\" fret1=\"%ld\" fret2=\"%ld\" fret3=\"%ld\" fret4=\"%ld\" fret5=\"%ld\"/>\n", buffer2, buffer2, suffix, finger0, finger1, finger2, finger3, finger4, finger5, fret0, fret1, fret2, fret3, fret4, fret5);
+			(void) snprintf(buffer, sizeof(buffer) - 1, "    <chordTemplate chordName=\"%s\" displayName=\"%s%s\" ",  buffer2, buffer2, suffix);
+			eof_conditionally_append_xml_long(buffer, sizeof(buffer), "finger0", finger[0], -1);
+			eof_conditionally_append_xml_long(buffer, sizeof(buffer), "finger1", finger[1], -1);
+			eof_conditionally_append_xml_long(buffer, sizeof(buffer), "finger2", finger[2], -1);
+			eof_conditionally_append_xml_long(buffer, sizeof(buffer), "finger3", finger[3], -1);
+			eof_conditionally_append_xml_long(buffer, sizeof(buffer), "finger4", finger[4], -1);
+			eof_conditionally_append_xml_long(buffer, sizeof(buffer), "finger5", finger[5], -1);
+			eof_conditionally_append_xml_long(buffer, sizeof(buffer), "fret0", fret[0], -1);
+			eof_conditionally_append_xml_long(buffer, sizeof(buffer), "fret1", fret[1], -1);
+			eof_conditionally_append_xml_long(buffer, sizeof(buffer), "fret2", fret[2], -1);
+			eof_conditionally_append_xml_long(buffer, sizeof(buffer), "fret3", fret[3], -1);
+			eof_conditionally_append_xml_long(buffer, sizeof(buffer), "fret4", fret[4], -1);
+			eof_conditionally_append_xml_long(buffer, sizeof(buffer), "fret5", fret[5], -1);
+			(void) strncat(buffer, "/>\n", sizeof(buffer) - 1);	//Append the tag ending
 			(void) pack_fputs(buffer, fp);
 		}//For each of the entries in the unique chord list
 		(void) pack_fputs("  </chordTemplates>\n", fp);
@@ -2473,7 +2459,9 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		{	//Otherwise the measure is displayed as -1 to indicate no change from the previous beat's measure number
 			displayedmeasure = -1;
 		}
-		(void) snprintf(buffer, sizeof(buffer) - 1, "    <ebeat time=\"%.3f\" measure=\"%ld\"/>\n", sp->beat[ctr]->fpos / 1000.0, displayedmeasure);
+		(void) snprintf(buffer, sizeof(buffer) - 1, "    <ebeat time=\"%.3f\" ", sp->beat[ctr]->fpos / 1000.0);
+		eof_conditionally_append_xml_long(buffer, sizeof(buffer), "measure", displayedmeasure, -1);
+		(void) strncat(buffer, "/>\n", sizeof(buffer) - 1);	//Append the tag ending
 		(void) pack_fputs(buffer, fp);
 		beatcounter++;
 		if(beatcounter >= beatspermeasure)
@@ -2842,7 +2830,22 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				{	//If this chord has chordify status and one of its individual notes has pre-bend status
 					highdensity = 1;	//Export the chord as high density to ensure proper display of the bend notes
 				}
-				(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" linkNext=\"%d\" accent=\"%d\" chordId=\"%lu\" fretHandMute=\"%d\" highDensity=\"%d\" ignore=\"%d\" palmMute=\"%d\" hopo=\"%d\" strum=\"%s\"%s\n", (double)notepos / 1000.0, tech.linknext, tech.accent, chordid, tech.stringmute, highdensity, tech.ignore, tech.palmmute, tech.hopo, direction, chordtagend);
+				(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" chordId=\"%lu\" ", (double)notepos / 1000.0, chordid);
+				eof_conditionally_append_xml_long(buffer, sizeof(buffer), "linkNext", tech.linknext, 0);
+				eof_conditionally_append_xml_long(buffer, sizeof(buffer), "accent", tech.accent, 0);
+				eof_conditionally_append_xml_long(buffer, sizeof(buffer), "fretHandMute", tech.stringmute, 0);
+				eof_conditionally_append_xml_long(buffer, sizeof(buffer), "highDensity", highdensity, 0);
+				eof_conditionally_append_xml_long(buffer, sizeof(buffer), "ignore", tech.ignore, 0);
+				eof_conditionally_append_xml_long(buffer, sizeof(buffer), "palmMute", tech.palmmute, 0);
+				eof_conditionally_append_xml_long(buffer, sizeof(buffer), "hopo", tech.hopo, 0);
+				if(!eof_abridged_rs2_export || (direction != downstrum))
+				{	//If abridged RS2 export is not in effect, or if the strum direction is up instead of down
+					(void) strncat(buffer, "strum=\"", sizeof(buffer) - 1);	//Write the strum direction
+					(void) strncat(buffer, direction, sizeof(buffer) - 1);
+					(void) strncat(buffer, "\" ", sizeof(buffer) - 1);
+				}
+				(void) strncat(buffer, chordtagend, sizeof(buffer) - 1);	//Append the tag ending
+				(void) strncat(buffer, "\n", sizeof(buffer) - 1);
 				(void) pack_fputs(buffer, fp);
 
 				//Write chordnote tags if appropriate
@@ -5363,8 +5366,33 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 	}
 
 	//Write the note/chordNote tag
-	(void) snprintf(buffer, sizeof(buffer) - 1, "        %s<%s time=\"%.3f\" string=\"%lu\" fret=\"%lu\" sustain=\"%.3f\" linkNext=\"%d\" ignore=\"%d\" slideTo=\"%ld\" slideUnpitchTo=\"%ld\" bend=\"%d\" hopo=\"%d\" hammerOn=\"%d\" pullOff=\"%d\" tap=\"%d\" mute=\"%d\" palmMute=\"%d\" harmonic=\"%d\" harmonicPinch=\"%d\" accent=\"%d\" leftHand=\"%ld\" pluck=\"%d\" slap=\"%d\" tremolo=\"%d\" vibrato=\"%d\" pickDirection=\"0\" rightHand=\"-1\"%s>\n", indentlevel, tagstring, (double)notepos / 1000.0, stringnum, fret, (double)tech.length / 1000.0, tech.linknext, tech.ignore, tech.slideto, tech.unpitchedslideto, tech.bend, tech.hopo, tech.hammeron, tech.pulloff, tech.tap, tech.stringmute, tech.palmmute, tech.harmonic, tech.pinchharmonic, tech.accent, fingernum, tech.pop, tech.slap, tech.tremolo, tech.vibrato, tagend);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "        %s<%s time=\"%.3f\" string=\"%lu\" fret=\"%lu\" ", indentlevel, tagstring, (double)notepos / 1000.0, stringnum, fret);
+	eof_conditionally_append_xml_float(buffer, sizeof(buffer), "sustain", (double)tech.length / 1000.0, 0.0);
+	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "linkNext", tech.linknext, 0);
+	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "ignore", tech.ignore, 0);
+	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "slideTo", tech.slideto, -1);
+	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "slideUnpitchTo", tech.unpitchedslideto, -1);
+	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "bend", tech.bend, 0);
+	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "hopo", tech.hopo, 0);
+	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "hammerOn", tech.hammeron, 0);
+	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "pullOff", tech.pulloff, 0);
+	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "tap", tech.tap, 0);
+	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "mute", tech.stringmute, 0);
+	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "palmMute", tech.palmmute, 0);
+	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "harmonic", tech.harmonic, 0);
+	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "harmonicPinch", tech.pinchharmonic, 0);
+	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "accent", tech.accent, 0);
+	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "leftHand", fingernum, -1);
+	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "pluck", tech.pop, -1);
+	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "slap", tech.slap, -1);
+	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "tremolo", tech.tremolo, 0);
+	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "vibrato", tech.vibrato, 0);
+	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "pickDirection", 0, 0);
+	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "rightHand", -1, -1);
+	(void) strncat(buffer, tagend, sizeof(buffer) - 1);	//Append the tag ending
+	(void) strncat(buffer, ">\n", sizeof(buffer) - 1);
 	(void) pack_fputs(buffer, fp);
+
 	if(tech.bend)
 	{	//If the note is a bend, write the bendValues subtag and close the note tag
 		unsigned long bendpoints, firstbend = 0, bendstrength_q;	//Used to parse any bend tech notes that may affect the exported note
@@ -5372,10 +5400,12 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 
 		bendpoints = eof_pro_guitar_note_bitmask_has_bend_tech_note(tp, notenum, bitmask, &firstbend);	//Count how many bend tech notes overlap this note on the specified string
 		if(!bendpoints)
-		{	//If there are none
+		{	//If there are none, write a bend point 1/3 into the note
 			(void) snprintf(buffer, sizeof(buffer) - 1, "          %s<bendValues count=\"1\">\n", indentlevel);
 			(void) pack_fputs(buffer, fp);
-			(void) snprintf(buffer, sizeof(buffer) - 1, "            %s<bendValue time=\"%.3f\" step=\"%.3f\"/>\n", indentlevel, (((double)notepos + ((double)tech.length / 3.0)) / 1000.0), (double)tech.bendstrength_q / 2.0);	//Write a bend point 1/3 into the note
+			(void) snprintf(buffer, sizeof(buffer) - 1, "            %s<bendValue time=\"%.3f\" ", indentlevel, (((double)notepos + ((double)tech.length / 3.0)) / 1000.0));
+			eof_conditionally_append_xml_float(buffer, sizeof(buffer), "step", (double)tech.bendstrength_q / 2.0, 0.0);
+			(void) strncat(buffer, "/>\n", sizeof(buffer) - 1);	//Append the tag ending
 			(void) pack_fputs(buffer, fp);
 		}
 		else
@@ -5403,7 +5433,7 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 
 				flags = tp->technote[ctr]->flags;
 				if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
-				{	//If the tech note is a bend and has a bend strength defined
+				{	//If the tech note is a bend and has a bend strength defined, write the bend point at the specified position within the note
 					if(tp->technote[ctr]->bendstrength & 0x80)
 					{	//If this bend strength is defined in quarter steps
 						bendstrength_q = tp->technote[ctr]->bendstrength & 0x7F;	//Obtain the defined bend strength in quarter steps (mask out the MSB)
@@ -5412,7 +5442,9 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 					{	//The bend strength is defined in half steps
 						bendstrength_q = tp->technote[ctr]->bendstrength * 2;		//Obtain the defined bend strength in quarter steps
 					}
-					(void) snprintf(buffer, sizeof(buffer) - 1, "            %s<bendValue time=\"%.3f\" step=\"%.3f\"/>\n", indentlevel, ((double)tp->technote[ctr]->pos / 1000.0), (double)bendstrength_q / 2.0);	//Write the bend point at the specified position within the note
+					(void) snprintf(buffer, sizeof(buffer) - 1, "            %s<bendValue time=\"%.3f\" ", indentlevel, ((double)tp->technote[ctr]->pos / 1000.0));	//Write the bend point at the specified position within the note
+					eof_conditionally_append_xml_float(buffer, sizeof(buffer), "step", (double)bendstrength_q / 2.0, 0.0);
+					(void) strncat(buffer, "/>\n", sizeof(buffer) - 1);	//Append the tag ending
 					(void) pack_fputs(buffer, fp);
 				}
 			}
@@ -5731,4 +5763,36 @@ int eof_note_exports_without_fingering(EOF_PRO_GUITAR_TRACK *tp, unsigned long n
 	}
 
 	return 0;
+}
+
+void eof_conditionally_append_xml_long(char *buffer, size_t buffsize, char *name, long value, long defaultval)
+{
+	char buffer2[101] = {0};
+
+	if(!buffer || !name)
+		return;	//Invalid parameters
+
+	if(eof_abridged_rs2_export && (value == defaultval))	//If abridged RS2 export is in effect and this attribute is the default value
+		return;						//Return without writing it to the buffer
+
+	if(snprintf(buffer2, sizeof(buffer2) - 1, "%s=\"%ld\" ", name, value) < 0)	//If the string to be appended could not be written
+		return;
+
+	(void) strncat(buffer, buffer2, buffsize - 1);	//Append the string
+}
+
+void eof_conditionally_append_xml_float(char *buffer, size_t buffsize, char *name, double value, double defaultval)
+{
+	char buffer2[101] = {0};
+
+	if(!buffer || !name)
+		return;	//Invalid parameters
+
+	if(eof_abridged_rs2_export && (value == defaultval))	//If abridged RS2 export is in effect and this attribute is the default value
+		return;						//Return without writing it to the buffer
+
+	if(snprintf(buffer2, sizeof(buffer2) - 1, "%s=\"%.3f\" ", name, value) < 0)	//If the string to be appended could not be written
+		return;
+
+	(void) strncat(buffer, buffer2, buffsize - 1);	//Append the string
 }

@@ -680,6 +680,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 	char strum_dir = 0;					//Tracks whether any chords were marked as up strums
 	unsigned long ctr, ctr2, ctr3;
 	long output = 0;
+	char four_string = 1;	//Set to nonzero if string 5 or 6 is used by any chords or notes
 
 	if(!eof_song || !eof_song_loaded)
 		return NULL;	//For now, don't do anything unless a project is active
@@ -1047,7 +1048,6 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 			char finger[8] = {0};
 			char frets[8] = {0};
 			unsigned char note = 0, isarp = 0;
-			char four_string = 1;	//Set to nonzero if string 5 or 6 is used by any chords
 
 			#ifdef RS_IMPORT_DEBUG
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tProcessing <chordTemplates> tag on line #%lu", linectr);
@@ -1060,10 +1060,6 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 			{	//Until there was an error reading from the file or end of file is reached
 				if(strcasestr_spec(buffer, "</chordTemplates"))
 				{	//If this is the end of the chordTemplates tag
-					if(four_string)
-					{	//If all chords parsed used 4 or fewer strings
-						tp->numstrings = 4;
-					}
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu chord templates loaded", chordlist_count);
 					eof_log(eof_log_string, 1);
 					break;	//Break from loop
@@ -1562,6 +1558,10 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 											np->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;
 										}
 									}
+									if(np->note & 48)
+									{	//If a fifth or sixth string is used by this chord
+										four_string = 0;
+									}
 									npp = np;	//Remember the last imported single note
 									note_count++;
 									tagctr++;
@@ -1657,10 +1657,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 										}
 										if(!parse_xml_attribute_text(tag, sizeof(tag), "strum", buffer))
 										{	//If the strum direction could not be read
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading strum direction on line #%lu.  Aborting", linectr);
-											eof_log(eof_log_string, 1);
-											error = 1;
-											break;	//Break from inner loop
+											(void) strncpy(tag, "down", sizeof(tag));	//Assume down strum
 										}
 										mute = highdensity = palmmute = 0;
 										(void) parse_xml_attribute_number("fretHandMute", buffer, &mute);
@@ -2110,6 +2107,13 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 				}
 			}
 		}
+
+		//Adjust string count
+		if((tp->arrangement == 4) && four_string)
+		{	//If the XML defined the arrangement as a bass arrangement and all chords and notes were limited to the 4 lower strings
+			tp->numstrings = 4;
+		}
+
 	}//If import succeeded
 
 	//Cleanup
