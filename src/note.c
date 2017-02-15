@@ -1806,6 +1806,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		{
 			buffer[index++] = 'C';
 		}
+		if(np->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
+		{
+			buffer[index++] = 'F';
+		}
 	}//Check pro guitar statuses
 	else if((track == EOF_TRACK_DRUM) || (track == EOF_TRACK_DRUM_PS))
 	{	//Check drum statuses

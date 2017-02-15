@@ -363,28 +363,42 @@ MENU eof_note_proguitar_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_note_rocksmith_toggle_menu[] =
+{
+	{"&Pop\t" CTRL_NAME "+Shift+P", eof_menu_note_toggle_pop, NULL, 0, NULL},
+	{"&Slap\t" CTRL_NAME "+Shift+S", eof_menu_note_toggle_slap, NULL, 0, NULL},
+	{"&Accent\t" CTRL_NAME "+Shift+A", eof_menu_note_toggle_accent, NULL, 0, NULL},
+	{"Pinch &Harmonic\tShift+H", eof_menu_note_toggle_pinch_harmonic, NULL, 0, NULL},
+	{"Force sus&Tain", eof_menu_note_toggle_rs_sustain, NULL, 0, NULL},
+	{"&Ignore\t" CTRL_NAME "+Shift+I", eof_menu_note_toggle_rs_ignore, NULL, 0, NULL},
+	{"&Linknext\tShift+N", eof_menu_note_toggle_linknext, NULL, 0, NULL},
+	{"&Fingerless", eof_menu_note_toggle_rs_fingerless, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_rocksmith_remove_menu[] =
+{
+	{"&Pop", eof_menu_note_remove_pop, NULL, 0, NULL},
+	{"&Slap", eof_menu_note_remove_slap, NULL, 0, NULL},
+	{"&Accent", eof_menu_note_remove_accent, NULL, 0, NULL},
+	{"Pinch &Harmonic", eof_menu_note_remove_pinch_harmonic, NULL, 0, NULL},
+	{"Force sus&Tain", eof_menu_note_remove_rs_sustain, NULL, 0, NULL},
+	{"&Ignore", eof_menu_note_remove_rs_ignore, NULL, 0, NULL},
+	{"&Linknext", eof_menu_note_remove_linknext, NULL, 0, NULL},
+	{"&Fingerless", eof_menu_note_remove_rs_fingerless, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_note_rocksmith_menu[] =
 {
-	{"Han&Dshape", NULL, eof_handshape_menu, 0, NULL},
-	{"Edit &Frets/Fingering\tF", eof_menu_note_edit_pro_guitar_note_frets_fingers_menu, NULL, 0, NULL},
+	{"&Handshape", NULL, eof_handshape_menu, 0, NULL},
+	{"&Toggle", NULL, eof_note_rocksmith_toggle_menu, 0, NULL},
+	{"&Remove", NULL, eof_note_rocksmith_remove_menu, 0, NULL},
+	{"Edit frets/fingering\tF", eof_menu_note_edit_pro_guitar_note_frets_fingers_menu, NULL, 0, NULL},
 	{"Clear fingering", eof_menu_pro_guitar_remove_fingering, NULL, 0, NULL},
-	{"Toggle pop\t" CTRL_NAME "+Shift+P", eof_menu_note_toggle_pop, NULL, 0, NULL},
-	{"Remove &Pop", eof_menu_note_remove_pop, NULL, 0, NULL},
-	{"Toggle slap\t" CTRL_NAME "+Shift+S", eof_menu_note_toggle_slap, NULL, 0, NULL},
-	{"Remove &Slap", eof_menu_note_remove_slap, NULL, 0, NULL},
-	{"Toggle accent\t" CTRL_NAME "+Shift+A", eof_menu_note_toggle_accent, NULL, 0, NULL},
-	{"Remove &Accent", eof_menu_note_remove_accent, NULL, 0, NULL},
-	{"Toggle pinch harmonic\tShift+H", eof_menu_note_toggle_pinch_harmonic, NULL, 0, NULL},
-	{"Remove pinch &Harmonic", eof_menu_note_remove_pinch_harmonic, NULL, 0, NULL},
 	{"Define unpitched slide\t" CTRL_NAME "+U", eof_pro_guitar_note_define_unpitched_slide, NULL, 0, NULL},
 	{"Remove &Unpitched slide", eof_menu_note_remove_unpitched_slide, NULL, 0, NULL},
 	{"Mute->Single note P.M.", eof_rocksmith_convert_mute_to_palm_mute_single_note, NULL, 0, NULL},
-	{"Toggle force sustain", eof_menu_note_toggle_rs_sustain, NULL, 0, NULL},
-	{"Remove force sustain", eof_menu_note_remove_rs_sustain, NULL, 0, NULL},
-	{"Toggle ignore\t" CTRL_NAME "+Shift+I", eof_menu_note_toggle_rs_ignore, NULL, 0, NULL},
-	{"Remove &Ignore", eof_menu_note_remove_rs_ignore, NULL, 0, NULL},
-	{"Toggle linknext\tShift+N", eof_menu_note_toggle_linknext, NULL, 0, NULL},
-	{"Remove &Linknext", eof_menu_note_remove_linknext, NULL, 0, NULL},
 	{"&Move t.n. to prev note", eof_menu_note_move_tech_note_to_previous_note_pos, NULL, 0, NULL},
 	{"&Generate FHPs", eof_generate_efficient_hand_positions_for_selected_notes, NULL, 0, NULL},
 	{"Remove FHPs", eof_delete_hand_positions_for_selected_notes, NULL, 0, NULL},
@@ -1007,13 +1021,20 @@ void eof_prepare_note_menu(void)
 				eof_note_menu[18].flags = 0;			//Note>Rocksmith> submenu
 				if(tp->note == tp->technote)
 				{	//If tech view is in effect
-					eof_note_rocksmith_menu[20].flags = 0;	//Note>Rocksmith>Move to prev note
-					eof_note_rocksmith_menu[21].flags = D_DISABLED;	//Note>Rocksmith>Generate FHPs
+					eof_note_rocksmith_menu[8].flags = 0;			//Note>Rocksmith>Move tech note to prev note
+					eof_note_rocksmith_menu[9].flags = D_DISABLED;	//Note>Rocksmith>Generate FHPs
 				}
 				else
 				{
-					eof_note_rocksmith_menu[20].flags = D_DISABLED;
-					eof_note_rocksmith_menu[21].flags = 0;
+					eof_note_rocksmith_menu[8].flags = D_DISABLED;
+					if(vselected > 1)
+					{	//If multiple notes are selected
+						eof_note_rocksmith_menu[9].flags = 0;		//Note>Rocksmith>Generate FHPs
+					}
+					else
+					{	//Only one note is selected
+						eof_note_rocksmith_menu[9].flags = D_DISABLED;
+					}
 				}
 
 				/* Arpeggio>Erase all */
@@ -8172,6 +8193,16 @@ int eof_menu_note_toggle_linknext(void)
 	int retval = eof_menu_note_toggle_flag(0, EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT);
 	eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 	return retval;
+}
+
+int eof_menu_note_remove_rs_fingerless(void)
+{
+	return eof_menu_note_clear_flag(1, EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS);
+}
+
+int eof_menu_note_toggle_rs_fingerless(void)
+{
+	return eof_menu_note_toggle_flag(1, EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS);
 }
 
 int eof_menu_note_highlight_on(void)

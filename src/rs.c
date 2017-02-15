@@ -5622,7 +5622,11 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 
 		//Write the phrase definition using the highest difficulty found among all instances of the phrase
 		expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[sectionlist[ctr]]->text, 32, 2);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Filter out characters suspected of causing the game to crash (do not allow forward slash).
-		(void) snprintf(buffer, sizeof(buffer) - 1, "    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"%u\" name=\"%s\" solo=\"0\"/>\n", ongoingmaxdiff, buffer2);
+		(void) snprintf(buffer, sizeof(buffer) - 1, "    <phrase name=\"%s\" maxDifficulty=\"%u\" ", buffer2, ongoingmaxdiff);
+		eof_conditionally_append_xml_long(buffer, sizeof(buffer), "disparity", 0, 0);
+		eof_conditionally_append_xml_long(buffer, sizeof(buffer), "ignore", 0, 0);
+		eof_conditionally_append_xml_long(buffer, sizeof(buffer), "solo", 0, 0);
+		(void) strncat(buffer, "/>\n", sizeof(buffer) - 1);	//Append the tag ending
 		(void) pack_fputs(buffer, fp);
 	}//For each of the entries in the unique section (RS phrase) list
 	(void) pack_fputs("  </phrases>\n", fp);
