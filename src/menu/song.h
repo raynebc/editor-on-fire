@@ -195,4 +195,13 @@ int eof_menu_song_highlight_arpeggios(void);	//Enables highlighting for all note
 void eof_song_highlight_arpeggios(EOF_SONG *sp, unsigned long track);
 	//Performs highlighting for all notes in the specified track that are within arpeggio phrases
 
+unsigned long eof_menu_song_compare_difficulties(unsigned track1, unsigned diff1, unsigned track2, unsigned diff2);
+	//Compares the first track difficulty against the second, provided that they are different track difficulties of the same format
+	//Any normal notes in the first track difficulty that are missing or different from the second track difficulty are highlighted
+	//Tech notes are processed in a way so that they are only considered a non match if they apply a technique on any gem of a note
+	// that isn't applied to the same gem of a comparable note in the other track difficulty
+	//Returns the number of differences that are identified, equivalent to the number of notes or tech notes that are highlighted
+	//Returns 0 on error
+int eof_menu_song_compare_piano_rolls(void);	//Calls eof_menu_song_compare_difficulties(), highlighting the secondary piano roll's differences
+
 #endif

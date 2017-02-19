@@ -985,6 +985,11 @@ char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned
 	//If the tech note is found to be at the start position of any overlapping notes, 1 is returned
 	//If the tech note is found to overlap at least one note, 2 is returned
 	// If note_num is not NULL, the matching regular note number is returned through it
+unsigned long eof_pro_guitar_lookup_combined_tech_flags(EOF_PRO_GUITAR_TRACK *tp, unsigned long pgnote, unsigned long mask, unsigned long *flags, unsigned long *eflags);
+	//Parses the specified track's tech notes, returning the number of tech notes that were found to overlap the specified note and use the specified note mask
+	//The combination of all techniques applied to the specified gems of the specified normal note are returned through *flags and *eflags
+	//*flags and *eflags are reset to 0 in the event no applicable tech notes are found
+	//Returns 0 on error
 
 void eof_pro_guitar_track_enforce_chord_density(EOF_PRO_GUITAR_TRACK *tp);
 	//If the "Apply crazy to repeated chords separated by a rest" preference is enabled,

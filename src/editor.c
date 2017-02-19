@@ -6203,9 +6203,23 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 					has_tech = 1;
 				}
 			}
-			if((eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) && (i != numtabs - 1) && eof_track_diff_highlighted_status[diffnum])
-			{	//If this tab isn't being displayed as ">>" and any notes in this difficulty have highlighting
-				bgcol = eof_color_yellow;	//Render a yellow background behind the difficulty name
+			if(eof_track_diff_highlighted_status[diffnum])
+			{	//If this difficulty has highlighting
+				if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+				{	//If the difficulty limit is removed
+					if(i != numtabs - 1)
+					{	//If this tab isn't being displayed as ">>"
+						bgcol = eof_color_yellow;	//Render a yellow background behind the difficulty name
+					}
+					else
+					{
+						bgcol = -1;	//Otherwise use a transparent background
+					}
+				}
+				else
+				{
+					bgcol = eof_color_yellow;	//Render a yellow background behind the difficulty name
+				}
 			}
 			else
 			{

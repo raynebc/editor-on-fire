@@ -5258,6 +5258,7 @@ int eof_menu_file_export_guitar_pro(void)
 	char tempstr2[1024] = {0};
 	char syscommand[1024] = {0};
 	unsigned short user_warned = 0xFFFF;	//Mark all warnings as already having been given so the RS exports are silent
+	int original_eof_abridged_rs2_export;
 
 	//Ensure RocksmithToTab is linked
 	if(!exists(eof_rs_to_tab_executable_path))
@@ -5275,6 +5276,8 @@ int eof_menu_file_export_guitar_pro(void)
 	}
 
 	//Create temporary XML files
+	original_eof_abridged_rs2_export = eof_abridged_rs2_export;	//Back up the original setting of this user preference
+	eof_abridged_rs2_export = 0;	//Force unabridged RS2 export, as RocksmithToTab doesn't current support that XML variation
 	strncpy(temppath1, eof_temp_path_s, sizeof(temppath1) - 1);
 	strncpy(temppath2, eof_temp_path_s, sizeof(temppath2) - 1);
 	strncpy(temppath3, eof_temp_path_s, sizeof(temppath3) - 1);
@@ -5290,6 +5293,7 @@ int eof_menu_file_export_guitar_pro(void)
 		temppath4[0] = '\0';	//This arrangement failed to export
 	if(eof_export_rocksmith_2_track(eof_song, temppath5, EOF_TRACK_PRO_GUITAR_B, &user_warned) != 1)
 		temppath5[0] = '\0';	//This arrangement failed to export
+	eof_abridged_rs2_export = original_eof_abridged_rs2_export;	//Restore this user preference
 
 	//Call program
 	(void) ustrcpy(syscommand, eof_rs_to_tab_executable_path);

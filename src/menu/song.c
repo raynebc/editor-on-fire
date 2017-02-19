@@ -162,6 +162,7 @@ MENU eof_song_piano_roll_menu[] =
 	{"&Display\tShift+Enter", eof_menu_song_toggle_second_piano_roll, NULL, 0, NULL},
 	{"S&wap with main piano roll\t" CTRL_NAME "+Enter", eof_menu_song_swap_piano_rolls, NULL, 0, NULL},
 	{"&Sync with main piano roll", eof_menu_song_toggle_piano_roll_sync, NULL, 0, NULL},
+	{"&Compare", eof_menu_song_compare_piano_rolls, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -694,6 +695,24 @@ void eof_prepare_song_menu(void)
 		else
 		{
 			eof_song_rocksmith_menu[4].flags = 0;
+		}
+
+		/* Second piano roll>Compare */
+		if(!eof_display_second_piano_roll)
+		{	//If the secondary piano roll isn't displayed
+			eof_song_piano_roll_menu[3].flags = D_DISABLED;
+		}
+		else if((eof_selected_track == eof_selected_track2) && (eof_note_type == eof_note_type2))
+		{	//If both piano rolls are displaying the same track difficulty
+			eof_song_piano_roll_menu[3].flags = D_DISABLED;
+		}
+		else if(eof_song->track[eof_selected_track]->track_format != eof_song->track[eof_selected_track2]->track_format)
+		{	//If each piano roll is displaying a different format of track
+			eof_song_piano_roll_menu[3].flags = D_DISABLED;
+		}
+		else
+		{
+			eof_song_piano_roll_menu[3].flags = 0;
 		}
 	}//If a chart is loaded
 }
@@ -4231,4 +4250,169 @@ void eof_song_highlight_arpeggios(EOF_SONG *sp, unsigned long track)
 		}
 		eof_menu_track_toggle_tech_view_state(sp, track);	//Toggle to the other note set as applicable
 	}
+}
+
+unsigned long eof_menu_song_compare_difficulties(unsigned track1, unsigned diff1, unsigned track2, unsigned diff2)
+{
+	unsigned long ctr, ctr2;
+	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
+	char restore_tech_view2 = 0;
+	unsigned long diffcount = 0;
+
+	if(!eof_song || (track1 >= eof_song->tracks) || (track2 >= eof_song->tracks))
+		return 0;	//Invalid parameters
+	if(!eof_display_second_piano_roll)	//If the secondary piano roll isn't displayed
+		return 0;
+	if((track1 == track2) && (diff1 == diff2))
+		return 0;			//Don't compare a track difficulty against itself
+	if(eof_song->track[track1]->track_format != eof_song->track[track2]->track_format)
+		return 0;			//Don't compare tracks of different types
+
+	//Compare normal notes
+	restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, track1);
+	restore_tech_view2 = eof_menu_track_get_tech_view_state(eof_song, track2);
+	eof_menu_track_set_tech_view_state(eof_song, track1, 0);	//Disable tech view if applicable
+	eof_menu_track_set_tech_view_state(eof_song, track2, 0);
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, track1); ctr++)
+	{	//For each note in the first track
+		unsigned long pos1, pos2;
+		int match = 0;
+
+		if(eof_get_note_type(eof_song, track1, ctr) != diff1)	//If this note isn't in the first track difficulty
+			continue;	//Skip it
+
+		pos1 = eof_get_note_pos(eof_song, track1, ctr);
+		for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, track2); ctr2++)
+		{	//For each note in the second track
+			if(eof_get_note_type(eof_song, track2, ctr2) != diff2)	//If this note isn't in the second track difficulty
+				continue;	//Skip it
+
+			pos2 = eof_get_note_pos(eof_song, track2, ctr2);
+			if(pos2 > pos1)	//If this and all other notes in the second track are after the note from the first track
+				break;	//Exit inner loop
+			if(pos1 != pos2)
+				continue;	//If this note isn't in the same position as the one from the first track, skip it
+
+			if(eof_note_compare(eof_song, track1, ctr, track2, ctr2, 1) == 0)
+			{	//If the notes match a thorough comparison
+				match = 1;
+				break;	//Exit inner loop
+			}
+		}
+
+		if(!match)
+		{	//If a match wasn't determined
+			eof_set_note_flags(eof_song, track1, ctr, EOF_NOTE_FLAG_HIGHLIGHT);	//Highlight the note in the first track
+			diffcount++;
+		}
+	}
+
+	//Compare tech notes if applicable
+	if(eof_song->track[track1]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If pro guitar tracks are being compared
+		EOF_PRO_GUITAR_TRACK *tp1, *tp2;
+		unsigned long technotepos, notepos, techflags, techeflags, ctr3;
+
+		tp1 = eof_song->pro_guitar_track[eof_song->track[track1]->tracknum];
+		tp2 = eof_song->pro_guitar_track[eof_song->track[track2]->tracknum];
+		for(ctr = 0; ctr < tp1->technotes; ctr++)
+		{	//For each tech note in the first track, find any normal note that overlaps its affected timestamp in the comparison track difficulty
+			int match = 0;
+			unsigned long flags = 0, eflags = 0;
+
+			if(tp1->technote[ctr]->type != diff1)	//If this tech note isn't in the designated comparison difficulty
+				continue;	//Skip it
+
+			technotepos = tp1->technote[ctr]->pos;
+			techflags = tp1->technote[ctr]->flags;
+			techeflags = tp1->technote[ctr]->eflags;
+			for(ctr2 = 0; ctr2 < tp2->pgnotes; ctr2++)
+			{	//For each normal note in the second track
+				notepos = tp2->pgnote[ctr2]->pos;
+				if(notepos > technotepos)	//If this note and all that follow are beyond the tech note's position
+					break;	//Stop checking for normal notes that overlap the tech note's position
+				if(tp2->pgnote[ctr2]->type != diff2)	//If this normal note isn't in the designated comparison difficulty
+					continue;	//Skip it
+				if(technotepos >= notepos + tp2->pgnote[ctr2]->length)	//If this normal note's timing isn't overlapped by this tech note
+					continue;	//Skip it
+
+				//Determine the entire set of flags and extended flags applied to the matching gems in the normal note
+				(void) eof_pro_guitar_lookup_combined_tech_flags(tp2, ctr2, tp1->technote[ctr]->note, &flags, &eflags);	//Find flags applied by tech notes
+				flags |= tp2->pgnote[ctr2]->flags;	//Add the flags applied directly to the normal note
+				eflags |= tp2->pgnote[ctr2]->eflags;
+				if((flags & techflags) != techflags)	//If the normal note doesn't have all flags that the tech note applies
+					break;	//This normal note fails match, stop processing it
+				if((eflags & techeflags) != techeflags)	//If the normal note doesn't have all extended flags that the tech note applies
+					break;	//This normal note fails match, stop processing it
+
+				//Compare timing specific techniques if applicable
+				if((techflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (techeflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP))
+				{	//If the tech note applies bend or stop status, a tech note at a matching timestamp applying the same is required in the comparison track difficulty
+					for(ctr3 = 0; ctr3 < tp2->technotes; ctr3++)
+					{	//For each tech note in the second track
+						if(tp2->technote[ctr3]->pos > technotepos)	//If this tech note and all that follow are beyond the target timestamp
+							break;	//Stop checking for matching tech notes
+						if(tp2->technote[ctr3]->type != diff2)		//If this tech note isn't in the designated comparison difficulty
+							continue;	//Skip it
+						if(tp2->technote[ctr3]->pos < technotepos)	//If this tech note is before the target timestamp
+							continue;	//Skip it
+						if(techflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+						{	//If the tech note needs to apply bend status
+							if(!(tp2->technote[ctr3]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
+							{	//And it does not
+								break;	//This tech note fails match, stop processing it
+							}
+						}
+						if(techeflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP)
+						{	//If the tech note needs to apply stop status
+							if(!(tp2->technote[ctr3]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP))
+							{	//And it does not
+								break;	//This tech note fails match, stop processing it
+							}
+						}
+						match = 1;	//The tech note's technique was matched against the note at the comparable timestamp in comparison track
+					}
+				}
+				else
+				{
+					match = 1;	//The tech note's technique was matched against the note at the comparable timestamp in comparison track
+				}
+				break;
+			}
+
+			if(!match)
+			{	//If a match wasn't determined
+				tp1->technote[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight the tech note in the first track
+				diffcount++;
+			}
+		}
+	}
+
+	eof_menu_track_set_tech_view_state(eof_song, track1, restore_tech_view);	//Re-enable tech view if applicable
+	eof_menu_track_set_tech_view_state(eof_song, track2, restore_tech_view2);
+	return diffcount;
+}
+
+int eof_menu_song_compare_piano_rolls(void)
+{
+	unsigned long diffcount;
+	char *plural = "s";
+	char *singular = "";
+	char *plurality = plural;
+
+	if(!eof_display_second_piano_roll)	//If the secondary piano roll isn't displayed
+		return 1;
+	if((eof_selected_track == eof_selected_track2) && (eof_note_type == eof_note_type2))
+		return 1;			//Don't compare a track difficulty against itself
+	if(eof_song->track[eof_selected_track]->track_format != eof_song->track[eof_selected_track2]->track_format)
+		return 1;			//Don't compare tracks of different types
+
+	//Compare the secondary piano roll against the first and highlight the secondary track's differences
+	diffcount = eof_menu_song_compare_difficulties(eof_selected_track2, eof_note_type2, eof_selected_track, eof_note_type);
+
+	if(diffcount == 1)
+		plurality = singular;
+	allegro_message("%lu difference%s found.", diffcount, plurality);
+
+	return 1;
 }

@@ -64,6 +64,7 @@ int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, un
 	//2. The track is a vocal format track and both lyrics have the same pitch
 	//3. The track is a pro guitar format track and both notes have the same bitmask (legacy bitmasks are not compared) and active frets have matching values
 	//If the thorough parameter is nonzero, the notes' flags must also be identical, and their lengths must be within 3ms of each other for them to match
+	// *The highlight status is not required to match
 	//If the notes do not match, or are from differently formatted tracks, 1 is returned
 	//If the thorough parameter is nonzero, string mute status is also compared if the notes are pro guitar notes
 	//-1 is returned on error

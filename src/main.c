@@ -3757,6 +3757,12 @@ int eof_load_data(void)
 
 	eof_log("eof_load_data() entered", 1);
 
+	if(!exists("eof.dat"))
+	{
+		allegro_message("DAT file missing.  If using a hotfix, make sure you extract the appropriate EOF release candidate first and then extract the hotfix on top of it (replacing with files in the hotfix).");
+		return 0;
+	}
+
 	eof_image[EOF_IMAGE_TAB0] = load_pcx("eof.dat#tab0.pcx", eof_palette);
 	eof_image[EOF_IMAGE_TAB1] = load_pcx("eof.dat#tab1.pcx", NULL);
 	eof_image[EOF_IMAGE_TAB2] = load_pcx("eof.dat#tab2.pcx", NULL);
@@ -3911,12 +3917,21 @@ void eof_destroy_data(void)
 			eof_image[i] = NULL;
 		}
 	}
-	destroy_font(eof_font);
-	eof_font = NULL;
-	destroy_font(eof_mono_font);
-	eof_mono_font = NULL;
-	destroy_font(eof_symbol_font);
-	eof_symbol_font = NULL;
+	if(eof_font)
+	{	//If the main font was loaded
+		destroy_font(eof_font);
+		eof_font = NULL;
+	}
+	if(eof_mono_font)
+	{	//If the monospace font was loaded
+		destroy_font(eof_mono_font);
+		eof_mono_font = NULL;
+	}
+	if(eof_symbol_font)
+	{	//If the symbol font was loaded
+		destroy_font(eof_symbol_font);
+		eof_symbol_font = NULL;
+	}
 }
 
 int eof_initialize(int argc, char * argv[])

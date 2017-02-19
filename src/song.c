@@ -8766,6 +8766,37 @@ char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned
 	return 0;	//No overlap note found
 }
 
+unsigned long eof_pro_guitar_lookup_combined_tech_flags(EOF_PRO_GUITAR_TRACK *tp, unsigned long pgnote, unsigned long mask, unsigned long *flags, unsigned long *eflags)
+{
+	unsigned long ctr, technotepos, notepos, count = 0;
+
+	if(!tp || (pgnote >= tp->pgnotes) || !mask || !flags || !eflags)
+		return 0;	//Invalid parameters
+
+	notepos = tp->pgnote[pgnote]->pos;
+	*flags = 0;
+	*eflags = 0;
+	for(ctr = 0; ctr < tp->technotes; ctr++)
+	{	//For all tech notes in the track
+		technotepos = tp->technote[ctr]->pos;
+		if(technotepos > notepos + tp->pgnote[pgnote]->length)	//If this technote and all that follow are beyond the end of the specified note
+			break;	//Stop checking tech notes
+		if(tp->technote[ctr]->type != tp->pgnote[pgnote]->type)	//If this technote isn't in the same difficulty as the specified note
+			continue;	//Skip it
+		if(technotepos < notepos)	//If this tech note doesn't overlap the specified note
+			continue;	//Skip it
+
+		if(tp->technote[ctr]->note & tp->pgnote[pgnote]->note & mask)
+		{	//If both the normal and tech note have a gem on the specified lane
+			count++;
+			*flags |= tp->technote[ctr]->flags;
+			*eflags |= tp->technote[ctr]->eflags;
+		}
+	}
+
+	return count;
+}
+
 void eof_pro_guitar_track_enforce_chord_density(EOF_PRO_GUITAR_TRACK *tp)
 {
 	unsigned long ctr, threshold = 2;
