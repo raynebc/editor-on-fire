@@ -195,13 +195,26 @@ int eof_menu_song_highlight_arpeggios(void);	//Enables highlighting for all note
 void eof_song_highlight_arpeggios(EOF_SONG *sp, unsigned long track);
 	//Performs highlighting for all notes in the specified track that are within arpeggio phrases
 
-unsigned long eof_menu_song_compare_difficulties(unsigned track1, unsigned diff1, unsigned track2, unsigned diff2);
+unsigned long eof_menu_song_compare_difficulties(unsigned long track1, unsigned diff1, unsigned long track2, unsigned diff2, int function);
 	//Compares the first track difficulty against the second, provided that they are different track difficulties of the same format
 	//Any normal notes in the first track difficulty that are missing or different from the second track difficulty are highlighted
 	//Tech notes are processed in a way so that they are only considered a non match if they apply a technique on any gem of a note
 	// that isn't applied to the same gem of a comparable note in the other track difficulty
 	//Returns the number of differences that are identified, equivalent to the number of notes or tech notes that are highlighted
+	//If function is nonzero, notes that exist at the same timstamp in each of the track difficulties but otherwise differ
+	// do not cause the difference count to increase, allowing them to not be double-counted when this function is used afterward
+	// to compare the tracks in the opposite direction
 	//Returns 0 on error
-int eof_menu_song_compare_piano_rolls(void);	//Calls eof_menu_song_compare_difficulties(), highlighting the secondary piano roll's differences
+int eof_menu_song_compare_piano_rolls(int function);
+	//Calls eof_menu_song_compare_difficulties(), highlighting and counting differences between first primary and secondary piano rolls:
+	//If function is zero, the secondary piano roll is compared against the primary piano roll
+	//If function is nonzero, the secondary roll is compared against the primary, and then the primary is compared against the seconday
+	// and the combined count of differences is displayed, avoiding double counting in the event that dislike notes are at matching timestamps
+	// between the two track difficulties
+int eof_menu_song_singly_compare_piano_rolls(void);
+	//Calls eof_menu_song_compare_piano_rolls() comparing the secondary piano roll against the primary piano roll
+int eof_menu_song_doubly_compare_piano_rolls(void);
+	//Calls eof_menu_song_compare_piano_rolls() comparing the secondary piano roll against the primary piano roll
+	// and then vice-versa
 
 #endif

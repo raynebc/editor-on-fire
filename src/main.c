@@ -130,7 +130,8 @@ int         eof_write_rb_files = 0;				//If nonzero, extra files are written dur
 int         eof_write_music_midi = 0;			//If nonzero, an extra MIDI file is written during save that contains normal MIDI pitches and can be used for other MIDI based games like Songs2See and Synthesia
 int         eof_write_rs_files = 0;				//If nonzero, extra files are written during save that are used for authoring Rocksmith customs
 int         eof_write_rs2_files = 0;			//If nonzero, extra files are written during save that are used for authoring Rocksmith 2014 customs
-int         eof_abridged_rs2_export = 0;		//If nonzero, default XML attributes are omitted from RS2 export
+int         eof_abridged_rs2_export = 1;		//If nonzero, default XML attributes are omitted from RS2 export
+int         eof_abridged_rs2_export_warning_suppressed = 0;	//Set to nonzero if the user has suppressed the warning that abridged RS2 files require a version of the toolkit >= 2.8.1.0
 int         eof_write_bf_files = 0;				//If nonzero, an extra XML file is written during save that is used for authoring Bandfuse customs
 int         eof_add_new_notes_to_selection = 0;	//If nonzero, newly added gems cause notes to be added to the selection instead of the selection being cleared first
 int         eof_drum_modifiers_affect_all_difficulties = 1;	//If nonzero, a drum modifier (ie. open/pedal hi hat or rim shot apply to any notes at the same position in non active difficulties)
@@ -4502,6 +4503,15 @@ int eof_initialize(int argc, char * argv[])
 		if(recovered)
 		{	//If a project was recovered
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
+		}
+	}
+
+	//Warn about toolkit support for abridged RS2 files
+	if(eof_abridged_rs2_export && !eof_abridged_rs2_export_warning_suppressed)
+	{	//If abridged RS2 export is enabled and this warning hasn't been permanently dismissed
+		if(alert3("Warning:  The abridged RS2 file export preference is enabled.", "These XML files are only supported in Rocksmith Custom Song Toolkit 2.8.1.0 or newer.", "Ensure you have a new enough toolkit or disable this option in File>Preferences>Import/Export", "&OK", "Don't warn again", "&OK", 'O', 0, 'O') == 2)
+		{	//If the user opts to permanent suppress this warning
+			eof_abridged_rs2_export_warning_suppressed = 1;
 		}
 	}
 

@@ -1572,7 +1572,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 	restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
 	eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view if applicable
-	if(eof_get_highest_fret(sp, track, 0) > 24)
+	if(eof_get_highest_fret(sp, track, 0) + tp->capo > 24)
 	{	//If the track being exported uses any frets higher than 24
 		if((*user_warned & 256) == 0)
 		{	//If the user wasn't alerted about this issue yet
@@ -1580,7 +1580,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  At least one track (\"%s\") uses a fret higher than 24.", sp->track[track]->name);
 			if(alert(eof_log_string, "These won't display correctly in Rocksmith 2.", "Cancel its RS2 export and highlight offending notes?", "&Yes", "&No", 'y', 'n') == 1)
 			{	//If the user opts to cancel the save
-				eof_hightlight_all_notes_above_fret_number(sp, track, 24);
+				eof_hightlight_all_notes_above_fret_number(sp, track, 24 - tp->capo);
 				return 2;	//Return user cancellation
 			}
 		}

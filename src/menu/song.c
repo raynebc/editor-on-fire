@@ -162,7 +162,8 @@ MENU eof_song_piano_roll_menu[] =
 	{"&Display\tShift+Enter", eof_menu_song_toggle_second_piano_roll, NULL, 0, NULL},
 	{"S&wap with main piano roll\t" CTRL_NAME "+Enter", eof_menu_song_swap_piano_rolls, NULL, 0, NULL},
 	{"&Sync with main piano roll", eof_menu_song_toggle_piano_roll_sync, NULL, 0, NULL},
-	{"&Compare", eof_menu_song_compare_piano_rolls, NULL, 0, NULL},
+	{"&Compare", eof_menu_song_doubly_compare_piano_rolls, NULL, 0, NULL},
+	{"&One way compare", eof_menu_song_singly_compare_piano_rolls, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -4252,7 +4253,7 @@ void eof_song_highlight_arpeggios(EOF_SONG *sp, unsigned long track)
 	}
 }
 
-unsigned long eof_menu_song_compare_difficulties(unsigned track1, unsigned diff1, unsigned track2, unsigned diff2)
+unsigned long eof_menu_song_compare_difficulties(unsigned long track1, unsigned diff1, unsigned long track2, unsigned diff2, int function)
 {
 	unsigned long ctr, ctr2;
 	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
@@ -4276,7 +4277,7 @@ unsigned long eof_menu_song_compare_difficulties(unsigned track1, unsigned diff1
 	for(ctr = 0; ctr < eof_get_track_size(eof_song, track1); ctr++)
 	{	//For each note in the first track
 		unsigned long pos1, pos2;
-		int match = 0;
+		int match = 0, timematch = 0;
 
 		if(eof_get_note_type(eof_song, track1, ctr) != diff1)	//If this note isn't in the first track difficulty
 			continue;	//Skip it
@@ -4293,8 +4294,18 @@ unsigned long eof_menu_song_compare_difficulties(unsigned track1, unsigned diff1
 			if(pos1 != pos2)
 				continue;	//If this note isn't in the same position as the one from the first track, skip it
 
+			timematch = 1;	//Note that there was a note at the same timestamp in both track difficulties
 			if(eof_note_compare(eof_song, track1, ctr, track2, ctr2, 1) == 0)
 			{	//If the notes match a thorough comparison
+				if(eof_song->track[track1]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//If pro guitar tracks are being compared
+					EOF_PRO_GUITAR_NOTE *np1 = eof_song->pro_guitar_track[eof_song->track[track1]->tracknum]->note[ctr];
+					EOF_PRO_GUITAR_NOTE *np2 = eof_song->pro_guitar_track[eof_song->track[track2]->tracknum]->note[ctr2];
+					if(eof_pro_guitar_note_compare_fingerings(np1, np2))
+					{	//If the fingerings of these chords do not match
+						break;	//The match failed
+					}
+				}
 				match = 1;
 				break;	//Exit inner loop
 			}
@@ -4303,7 +4314,10 @@ unsigned long eof_menu_song_compare_difficulties(unsigned track1, unsigned diff1
 		if(!match)
 		{	//If a match wasn't determined
 			eof_set_note_flags(eof_song, track1, ctr, EOF_NOTE_FLAG_HIGHLIGHT);	//Highlight the note in the first track
-			diffcount++;
+			if(!timematch || !function)
+			{	//If the note in the first track difficulty was in a unique position, or the calling function is allowing counting for dislike notes at the same timestamp in each of the track difficulties
+				diffcount++;
+			}
 		}
 	}
 
@@ -4393,7 +4407,7 @@ unsigned long eof_menu_song_compare_difficulties(unsigned track1, unsigned diff1
 	return diffcount;
 }
 
-int eof_menu_song_compare_piano_rolls(void)
+int eof_menu_song_compare_piano_rolls(int function)
 {
 	unsigned long diffcount;
 	char *plural = "s";
@@ -4408,11 +4422,27 @@ int eof_menu_song_compare_piano_rolls(void)
 		return 1;			//Don't compare tracks of different types
 
 	//Compare the secondary piano roll against the first and highlight the secondary track's differences
-	diffcount = eof_menu_song_compare_difficulties(eof_selected_track2, eof_note_type2, eof_selected_track, eof_note_type);
+	diffcount = eof_menu_song_compare_difficulties(eof_selected_track2, eof_note_type2, eof_selected_track, eof_note_type, 0);
+
+	//Compare the primary piano roll against the secondary piano roll
+	if(function)
+	{	//But only if the calling function specified to do so
+		diffcount += eof_menu_song_compare_difficulties(eof_selected_track, eof_note_type, eof_selected_track2, eof_note_type2, 1);
+	}
 
 	if(diffcount == 1)
 		plurality = singular;
 	allegro_message("%lu difference%s found.", diffcount, plurality);
 
 	return 1;
+}
+
+int eof_menu_song_singly_compare_piano_rolls(void)
+{
+	return eof_menu_song_compare_piano_rolls(0);
+}
+
+int eof_menu_song_doubly_compare_piano_rolls(void)
+{
+	return eof_menu_song_compare_piano_rolls(1);
 }

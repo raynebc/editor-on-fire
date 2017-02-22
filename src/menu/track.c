@@ -90,7 +90,7 @@ MENU eof_track_menu[] =
 	{"Disable expert+ bass drum", eof_menu_track_disable_double_bass_drums, NULL, 0, NULL},
 	{"Erase track", eof_track_erase_track, NULL, 0, NULL},
 	{"Erase track difficulty", eof_track_erase_track_difficulty, NULL, 0, NULL},
-	{"Erase highlighting", eof_menu_track_remove_highlighting, NULL, 0, NULL},
+	{"Erase &Highlighting", eof_menu_track_remove_highlighting, NULL, 0, NULL},
 	{"&Thin diff. to match", NULL, eof_menu_thin_diff_menu, 0, NULL},
 	{"Delete active difficulty", eof_track_delete_difficulty, NULL, 0, NULL},
 	{"&Clone from", NULL, eof_menu_track_clone_menu, 0, NULL},
