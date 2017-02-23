@@ -22,4 +22,6 @@ void eof_sanitize_string(char *str);		//Replaces any non-printable or non ASCII 
 
 int eof_is_illegal_filename_character(char c);	//Returns nonzero if the specified character is not legal for use in a filename in Windows
 
+int eof_remake_color(int hexrgb);	//Accepts a color in hexadecimal RGB format and returns the result of makecol() passed each relevant byte
+
 #endif

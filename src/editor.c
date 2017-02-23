@@ -5243,8 +5243,8 @@ void eof_render_editor_window(EOF_WINDOW *window, unsigned char windownum)
 	else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If the track being rendered is a pro guitar track
 		tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
-		if((tp->note == tp->technote) && (windownum == 1))
-		{	//If tech view is in effect for the active track and the primary piano roll is being drawn
+		if(tp->note == tp->technote)
+		{	//If tech view is in effect for the active track
 			render_tech_notes = 1;	//Track that the regular notes will be rendered and then the tech notes will render on top of them
 		}
 	}
@@ -5383,8 +5383,6 @@ void eof_render_editor_window_2(void)
 
 	if(eof_display_second_piano_roll)
 	{	//If the secondary piano roll is to be displayed
-		char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
-
 		if(eof_note_type2 > 255)
 		{	//If the difficulty hasn't been initialized
 			eof_note_type2 = eof_note_type;
@@ -5397,9 +5395,6 @@ void eof_render_editor_window_2(void)
 		{	//If the position hasn't been initialized
 			eof_music_pos2 = eof_music_pos;
 		}
-
-		restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track2);
-		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track2, 0);	//Disable tech view for the second piano roll's track if applicable
 
 		temp_type = eof_note_type;					//Remember the active difficulty
 		temp_track = eof_selected_track;			//Remember the active track number
@@ -5423,7 +5418,6 @@ void eof_render_editor_window_2(void)
 		eof_selection.current = temp_selected;						//Restore the selected note
 		eof_hover_note = temp_hover;								//Restore the hover note
 		eof_process_beat_statistics(eof_song, eof_selected_track);	//Rebuild the beat stats to reflect the primary piano roll so edit operations work as expected
-		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track2, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
 	}//If the secondary piano roll is to be displayed
 }
 
@@ -5684,7 +5678,12 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		{	//If the notes ends at or right of the left edge of the screen
 			if(markerpos <= window->screen->w)
 			{	//If the marker starts at or left of the right edge of the screen (is visible)
-				rectfill(window->screen, markerpos, EOF_EDITOR_RENDER_OFFSET + 25, markerpos + markerlength, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_yellow);
+				int color = eof_color_highlight1;
+				if(!(eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_NOTE_FLAG_HIGHLIGHT))
+				{	//If this note does not have static highlighting
+					color = eof_color_highlight2;	//Used the defined dynamic highlighting color (cyan by default)
+				}
+				rectfill(window->screen, markerpos, EOF_EDITOR_RENDER_OFFSET + 25, markerpos + markerlength, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, color);
 			}
 			else
 			{	//Otherwise this and all remaining highlighted notes are not visible
@@ -6260,6 +6259,10 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 		char temp[101] = {0};
 		temp[0] = '\0';	//Empty the string
 		eof_cat_track_difficulty_string(temp);	//Fill the string with the name and number of the track difficulty being rendered
+		if(eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
+		{	//If tech view is active in the secondary piano roll
+			strncat(temp, "(Tech view)", 100);
+		}
 		if(eof_track_diff_highlighted_status[eof_note_type2])
 		{	//If any notes in the secondary piano roll's active tab have highlighting
 			bgcol = eof_color_yellow;	//Render a yellow background behind the difficulty name

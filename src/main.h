@@ -471,12 +471,20 @@ extern int eof_color_cyan;
 extern int eof_color_dark_cyan;
 extern int eof_info_color;
 
+extern int eof_color_waveform_trough_raw;
+extern int eof_color_waveform_peak_raw;
+extern int eof_color_waveform_rms_raw;
 extern int eof_color_waveform_trough;
 extern int eof_color_waveform_peak;
 extern int eof_color_waveform_rms;
 extern char eof_waveform_renderlocation;
 extern char eof_waveform_renderleftchannel;
 extern char eof_waveform_renderrightchannel;
+
+extern int eof_color_highlight1_raw;
+extern int eof_color_highlight2_raw;
+extern int eof_color_highlight1;
+extern int eof_color_highlight2;
 
 extern char eof_string_lane_1[4];
 extern char eof_string_lane_2[4];

@@ -257,14 +257,18 @@ void eof_load_config(char * fn)
 	}
 
 	/* read waveform graph colors */
-	eof_color_waveform_trough = get_config_hex("colors", "eof_color_waveform_trough", 0x007C00);	//The RGB equivalent of makecol(0, 124, 0)
-	eof_color_waveform_peak = get_config_hex("colors", "eof_color_waveform_peak", 0x00BE00);		//The RGB equivalent of makecol(0, 190, 0)
-	eof_color_waveform_rms = get_config_hex("colors", "eof_color_waveform_rms", 0xBE0000);			//The RGB equivalent of makecol(190, 0, 0)
+	eof_color_waveform_trough_raw = get_config_hex("colors", "eof_color_waveform_trough", 0x007C00);	//The RGB equivalent of makecol(0, 124, 0)
+	eof_color_waveform_peak_raw = get_config_hex("colors", "eof_color_waveform_peak", 0x00BE00);		//The RGB equivalent of makecol(0, 190, 0)
+	eof_color_waveform_rms_raw = get_config_hex("colors", "eof_color_waveform_rms", 0xBE0000);			//The RGB equivalent of makecol(190, 0, 0)
 
 	/* read waveform settings */
 	eof_waveform_renderlocation = get_config_int("waveform", "eof_waveform_renderlocation", 0);
 	eof_waveform_renderleftchannel = get_config_int("waveform", "eof_waveform_renderleftchannel", 1);
 	eof_waveform_renderrightchannel = get_config_int("waveform", "eof_waveform_renderrightchannel", 0);
+
+	/* read highlight colors */
+	eof_color_highlight1_raw = get_config_hex("colors", "eof_color_highlight1", 0xFFFF00UL);	//The RGB equivalent of makecol(255, 255, 0), AKA yellow
+	eof_color_highlight2_raw = get_config_hex("colors", "eof_color_highlight2", 0x00FFFFUL);	//The RGB equivalent of makecol(0, 255, 255), AKA cyan
 
 	if(exists(fn))
 	{	//Only try to load the controller buttons if the config file exists, otherwise the defaults will be erased
@@ -427,15 +431,19 @@ void eof_save_config(char * fn)
 	set_config_int("editor", "preview_speed", eof_zoom_3d);
 	set_config_int("editor", "hopo_view", eof_hopo_view);
 
-	/* write waveform graph colors */
-	set_config_hex("colors", "eof_color_waveform_trough", eof_color_waveform_trough);
-	set_config_hex("colors", "eof_color_waveform_peak", eof_color_waveform_peak);
-	set_config_hex("colors", "eof_color_waveform_rms", eof_color_waveform_rms);
+	/* write waveform graph colors (raw format to avoid color corruption on subsequent launches of EOF) */
+	set_config_hex("colors", "eof_color_waveform_trough", eof_color_waveform_trough_raw);
+	set_config_hex("colors", "eof_color_waveform_peak", eof_color_waveform_peak_raw);
+	set_config_hex("colors", "eof_color_waveform_rms", eof_color_waveform_rms_raw);
 
 	/* write waveform graph settings */
 	set_config_int("waveform", "eof_waveform_renderlocation", eof_waveform_renderlocation);
 	set_config_int("waveform", "eof_waveform_renderleftchannel", eof_waveform_renderleftchannel);
 	set_config_int("waveform", "eof_waveform_renderrightchannel", eof_waveform_renderrightchannel);
+
+	/* write highlight colors (raw format to avoid color corruption on subsequent launches of EOF) */
+	set_config_hex("colors", "eof_color_highlight1", eof_color_highlight1_raw);
+	set_config_hex("colors", "eof_color_highlight2", eof_color_highlight2_raw);
 
 	eof_controller_save_config(&eof_guitar, "guitar");
 	eof_controller_save_config(&eof_drums, "drums");

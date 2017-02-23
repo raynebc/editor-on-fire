@@ -29,7 +29,7 @@
 #define EOF_NOTE_FLAG_CRAZY      4	//This flag will represent overlap allowed for guitar/dance/keys tracks, and will force pro guitar/bass chords to display with a chord box
 #define EOF_NOTE_FLAG_F_HOPO     8
 #define EOF_NOTE_FLAG_NO_HOPO    16
-#define EOF_NOTE_FLAG_HIGHLIGHT  1073741824	//This flag will represent a note that is highlighted in the editor window (permanently, until manually cleared)
+#define EOF_NOTE_FLAG_HIGHLIGHT  1073741824	//This flag will represent a note that is highlighted (in yellow, by default) in the editor window (permanently, until manually cleared)
 #define EOF_NOTE_FLAG_EXTENDED 2147483648UL	//The MSB will be set if an additional flag variable is present for the note in the project file
 											//This flag will only be used during project save/load to determine whether another flags variable is written/read
 
@@ -96,7 +96,7 @@
 #define EOF_NOTE_TFLAG_COMBINE    256	//This flag will represent a note that was marked as ignored because its sustain is to be combined with that of a chordnote during RS2 export
 #define EOF_NOTE_TFLAG_NO_LN      512	//This flag will indicate that the linknext status of the affected note is to be interpreted to be not set, due to how chordnotes and linked single notes can be combined, during RS2 export
 #define EOF_NOTE_TFLAG_CCHANGE   1024	//This flag will indicate that a note is a chord change from RS import's perspective (for determining manually defined handshape phrases)
-#define EOF_NOTE_TFLAG_HIGHLIGHT 2048	//This flag will represent a note that is highlighted in the editor window (non permanent, such as for toggleable highlighting options)
+#define EOF_NOTE_TFLAG_HIGHLIGHT 2048	//This flag will represent a note that is highlighted (in cyan by default, instead of the yellow used for static highlighting) in the editor window (non permanent, such as for toggleable highlighting options)
 #define EOF_NOTE_TFLAG_MINLENGTH 4096	//This flag will indicate that a temporary ignored note added for the chordnote mechanism needs to RS2 export with a minimum length of 1ms
 #define EOF_NOTE_TFLAG_LN        8192	//This flag will indicate that the affected chord has chordify status and the chord tag should RS2 export with the linknext tag overridden to be enabled, which will cause the chord to link to the temporary single notes written for the chord
 #define EOF_NOTE_TFLAG_HD       16384	//This flag will indicate that the affected chord should export with high density regardless of the value of the regular high density flag

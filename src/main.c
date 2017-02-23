@@ -131,7 +131,7 @@ int         eof_write_music_midi = 0;			//If nonzero, an extra MIDI file is writ
 int         eof_write_rs_files = 0;				//If nonzero, extra files are written during save that are used for authoring Rocksmith customs
 int         eof_write_rs2_files = 0;			//If nonzero, extra files are written during save that are used for authoring Rocksmith 2014 customs
 int         eof_abridged_rs2_export = 1;		//If nonzero, default XML attributes are omitted from RS2 export
-int         eof_abridged_rs2_export_warning_suppressed = 0;	//Set to nonzero if the user has suppressed the warning that abridged RS2 files require a version of the toolkit >= 2.8.1.0
+int         eof_abridged_rs2_export_warning_suppressed = 0;	//Set to nonzero if the user has suppressed the warning that abridged RS2 files require a version of the toolkit >= 2.8.2.0
 int         eof_write_bf_files = 0;				//If nonzero, an extra XML file is written during save that is used for authoring Bandfuse customs
 int         eof_add_new_notes_to_selection = 0;	//If nonzero, newly added gems cause notes to be added to the selection instead of the selection being cleared first
 int         eof_drum_modifiers_affect_all_difficulties = 1;	//If nonzero, a drum modifier (ie. open/pedal hi hat or rim shot apply to any notes at the same position in non active difficulties)
@@ -402,13 +402,21 @@ int eof_last_key_char = 0;
 int eof_last_key_code = 0;
 
 /* waveform graph settings */
-int eof_color_waveform_trough;
+int eof_color_waveform_trough_raw;			//The raw hex formatted RRGGBB colors that need to be converted
+int eof_color_waveform_peak_raw;
+int eof_color_waveform_rms_raw;
+int eof_color_waveform_trough;				//The colors build by makecol()
 int eof_color_waveform_peak;
 int eof_color_waveform_rms;
 char eof_waveform_renderlocation = 0;		//Specifies where and how high the graph will render (0 = fretboard area, 1 = editor window)
 char eof_waveform_renderleftchannel = 1;	//Specifies whether the left channel's graph should render
 char eof_waveform_renderrightchannel = 0;	//Specifies whether the right channel's graph should render
 
+/* highlight color settings */
+int eof_color_highlight1_raw;	//The raw hex formatted RRGGBB colors that need to be converted
+int eof_color_highlight2_raw;
+int eof_color_highlight1;		//The color used for static highlighting
+int eof_color_highlight2;		//The color used for dynamic highlighting
 
 void eof_show_mouse(BITMAP * bp)
 {
@@ -3895,6 +3903,14 @@ int eof_load_data(void)
 	eof_color_cyan = makecol(0, 255, 255);
 	eof_color_dark_cyan = makecol(0, 160, 160);
 
+	//Recreate the colors read from the config file to ensure they are in the correct color system
+	//The original RRGGBB hex values need to be retained to write to config file upon exit
+	eof_color_waveform_trough = eof_remake_color(eof_color_waveform_trough_raw);
+	eof_color_waveform_peak = eof_remake_color(eof_color_waveform_peak_raw);
+	eof_color_waveform_rms = eof_remake_color(eof_color_waveform_rms_raw);
+	eof_color_highlight1 = eof_remake_color(eof_color_highlight1_raw);
+	eof_color_highlight2 = eof_remake_color(eof_color_highlight2_raw);
+
 	gui_fg_color = agup_fg_color;
 	gui_bg_color = agup_bg_color;
 	gui_mg_color = agup_mg_color;
@@ -4509,7 +4525,7 @@ int eof_initialize(int argc, char * argv[])
 	//Warn about toolkit support for abridged RS2 files
 	if(eof_abridged_rs2_export && !eof_abridged_rs2_export_warning_suppressed)
 	{	//If abridged RS2 export is enabled and this warning hasn't been permanently dismissed
-		if(alert3("Warning:  The abridged RS2 file export preference is enabled.", "These XML files are only supported in Rocksmith Custom Song Toolkit 2.8.1.0 or newer.", "Ensure you have a new enough toolkit or disable this option in File>Preferences>Import/Export", "&OK", "Don't warn again", "&OK", 'O', 0, 'O') == 2)
+		if(alert3("Warning:  The abridged RS2 file export preference is enabled.", "These XML files are only supported in Rocksmith Custom Song Toolkit 2.8.2.0 or newer.", "Ensure you have a new enough toolkit or disable this option in File>Preferences>Import/Export", "&OK", "Don't warn again", "&OK", 'O', 0, 'O') == 2)
 		{	//If the user opts to permanent suppress this warning
 			eof_abridged_rs2_export_warning_suppressed = 1;
 		}

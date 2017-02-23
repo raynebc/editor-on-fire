@@ -323,3 +323,14 @@ int eof_is_illegal_filename_character(char c)
 
 	return 0;	//Valid for use in a filename
 }
+
+int eof_remake_color(int hexrgb)
+{
+	int r, g, b;
+
+	r = (hexrgb >> 16) & 0xFF;
+	g = (hexrgb >> 8) & 0xFF;
+	b = hexrgb & 0xFF;
+
+	return makecol(r, g, b);
+}
