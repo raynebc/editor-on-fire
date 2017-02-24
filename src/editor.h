@@ -67,12 +67,13 @@ unsigned long eof_next_grid_snap(unsigned long pos);
 	//Returns the timestamp of the next grid snap position, or 0 on error
 int eof_is_grid_snap_position(unsigned long pos);
 	//Returns nonzero if the specified timestamp is a grid snap position based on the current grid snap setting
-int eof_is_any_grid_snap_position(unsigned long pos, int *beat, char *gridsnapvalue, unsigned char *gridsnapnum);
+int eof_is_any_grid_snap_position(unsigned long pos, long *beat, char *gridsnapvalue, unsigned char *gridsnapnum, unsigned long *closestgridpos);
 	//Returns nonzero if the specified timestamp is a grid snap position for ANY built in grid snap setting
 	//If a custom grid snap setting is in effect, its position is also compared
 	//If beat is not NULL, the beat number the grid snap position is in is returned through it, or -1 if the specified position is invalid
 	//If gridsnapvalue is not NULL, the grid snap setting of the matching position is returned through it, or 0 is if no match is found
 	//If gridsnapnum is not NULL, the grid snap position number of the matching position is returned through it
+	//If closestgridpos is not NULL, the timestamp of the grid snap position that is closest to the specified timestamp is returned through it
 int eof_find_grid_snap_position(unsigned long beat, char gridsnapvalue, unsigned char gridsnapnum, unsigned long *gridpos);
 	//Determines the real time position of the specified grid snap
 	//Depends on eof_chart_length being large enough to reflect the last beat time stamp

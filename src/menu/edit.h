@@ -13,6 +13,7 @@ extern MENU eof_edit_menu[];
 extern MENU eof_edit_claps_menu[];
 
 extern DIALOG eof_custom_snap_dialog[];
+extern DIALOG eof_menu_edit_select_by_note_length_dialog[];
 
 void eof_prepare_edit_menu(void);		//Enable/disable Edit menu items prior to drawing the menu
 

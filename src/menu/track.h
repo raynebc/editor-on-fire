@@ -239,4 +239,9 @@ void eof_menu_track_set_tech_view_state(EOF_SONG *sp, unsigned long track, char 
 void eof_menu_track_toggle_tech_view_state(EOF_SONG *sp, unsigned long track);	//Toggles the tech view status for the specified pro guitar track
 void eof_menu_pro_guitar_track_update_note_counter(EOF_PRO_GUITAR_TRACK *tp);	//Uses the value of tp->notes to update tp->pgnotes if tech view is NOT in effect, or tp->technotes if tech view is in effect
 
+int eof_menu_track_repair_grid_snap(void);
+	//Prompts the user for a threshold distance and moves all unsnapped notes in the active track to their nearest grid snap position of any grid size
+	// if that grid snap position is within the threshold distance of the note's current timestamp
+	//If the auto-adjust tech notes preference is enabled, tech notes are moved the same number of milliseconds as the notes they apply to
+
 #endif

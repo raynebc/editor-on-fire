@@ -2464,7 +2464,7 @@ int eof_menu_edit_select_by_note_length_logic(int (*check)(long, long), int func
 	if(!function && (eof_selection.track != eof_selected_track))
 		return 1;	//No notes in the active track are selected so none can become deselected
 
-	eof_etext2[0] = '\0';	//Empty the string
+	eof_etext2[0] = '\0';	//Empty the dialog's input string
 	eof_color_dialog(eof_menu_edit_select_by_note_length_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_menu_edit_select_by_note_length_dialog);
 
@@ -3714,12 +3714,12 @@ void eof_write_clipboard_position_snap_data(PACKFILE *fp, unsigned long pos)
 {
 	char gridsnapvalue = 0;
 	unsigned char gridsnapnum = 0;
-	int beat = 0;
+	long beat = 0;
 
 	if(!fp)
 		return;	//Invalid parameters
 
-	(void) eof_is_any_grid_snap_position(pos, &beat, &gridsnapvalue, &gridsnapnum);	//Determine grid snap position, if any, of the specified position
+	(void) eof_is_any_grid_snap_position(pos, &beat, &gridsnapvalue, &gridsnapnum, NULL);	//Determine grid snap position, if any, of the specified position
 	(void) pack_iputl(beat, fp);			//Write the beat number
 	(void) pack_putc(gridsnapvalue, fp);	//Write the grid snap setting
 	(void) pack_putc(gridsnapnum, fp);		//Write the grid snap number

@@ -3202,7 +3202,7 @@ int eof_save_helper_checks(void)
 			char *warning2 = "Warning: At least one note is out of sync with a grid snapped note.";
 			char *warning = warning1;
 
-			note1snapped = eof_is_any_grid_snap_position(notepos, NULL, NULL, NULL);	//Check if the outer loop's note is grid snapped
+			note1snapped = eof_is_any_grid_snap_position(notepos, NULL, NULL, NULL, NULL);	//Check if the outer loop's note is grid snapped
 			note2snapped = note1snapped;
 			for(ctr3 = 0; ctr3 < eof_get_track_size(eof_song, ctr); ctr3++)
 			{	//For each note in the track
@@ -3222,7 +3222,7 @@ int eof_save_helper_checks(void)
 				else
 					unmatch = 1;	//Otherwise it was a note within 3ms, track this
 
-				note2snapped = eof_is_any_grid_snap_position(notepos2, NULL, NULL, NULL);	//Check if the inner loop's note is grid snapped
+				note2snapped = eof_is_any_grid_snap_position(notepos2, NULL, NULL, NULL, NULL);	//Check if the inner loop's note is grid snapped
 				if(note1snapped != note2snapped)
 					break;	//If one note is snapped and the other isn't, the snapped note is considered correct
 			}

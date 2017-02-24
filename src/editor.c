@@ -631,13 +631,14 @@ int eof_is_grid_snap_position(unsigned long pos)
 	return (temp.pos == pos);
 }
 
-int eof_is_any_grid_snap_position(unsigned long pos, int *beat, char *gridsnapvalue, unsigned char *gridsnapnum)
+int eof_is_any_grid_snap_position(unsigned long pos, long *beat, char *gridsnapvalue, unsigned char *gridsnapnum, unsigned long *closestgridpos)
 {
 	EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
 	unsigned long beatnum;
 	int retval = 0, ctr, lastsnap = EOF_SNAP_CUSTOM;
 	char temp_mode = eof_snap_mode;	//Store the grid snap setting in use
 	char foundgridsnapvalue = 0, foundgridsnapnum = 0;
+	unsigned long closestpos = 0, closestdiff = 0, diff;
 	int foundbeat = -1;
 
 	if(!eof_song)
@@ -657,6 +658,20 @@ int eof_is_any_grid_snap_position(unsigned long pos, int *beat, char *gridsnapva
 	{	//For each of the applicable grid snap settings
 		eof_snap_mode = ctr;			//Put this grid snap setting into effect
 		eof_snap_logic(&temp, pos);		//Find the next grid snap position that occurs after the specified position
+		if(ctr == 1)
+		{	//If this is the first grid snap examined
+			closestpos = temp.pos;	//Track this as the grid snap position closest to the target position so far
+			closestdiff = (temp.pos > pos) ? temp.pos - pos : pos - temp.pos;	//Get the distance between the target position and this grid snap
+		}
+		else
+		{
+			diff = (temp.pos > pos) ? temp.pos - pos : pos - temp.pos;	//Get the distance between the target position and this grid snap
+			if(diff < closestdiff)
+			{	//If this grid snap position is closer to the target than any examined so far
+				closestpos = temp.pos;	//Track it as the closest
+				closestdiff = diff;
+			}
+		}
 		if(temp.pos != pos)
 			continue;	//If the nearest grid snap position isn't the position specified by the calling function, skip this grid snap setting
 
@@ -684,6 +699,8 @@ int eof_is_any_grid_snap_position(unsigned long pos, int *beat, char *gridsnapva
 		*gridsnapvalue = foundgridsnapvalue;
 	if(beat)
 		*beat = foundbeat;
+	if(closestgridpos)
+		*closestgridpos = closestpos;
 	eof_snap_mode = temp_mode;	//Restore the grid snap value that was in effect
 	return retval;
 }
@@ -4008,9 +4025,13 @@ void eof_editor_logic(void)
 						}
 						if(!undo_made)
 						{	//Only create the undo state before moving the first note
-							eof_notes_moved = 1;
 							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 							undo_made = 1;
+						}
+
+						if(undo_made)
+						{	//If an undo state has been created by this point
+							eof_notes_moved = 1;	//Ensure note cleanup occurs
 						}
 						eof_move_note_pos(eof_song, eof_selected_track, i, move_offset, move_direction);
 						notepos = eof_get_note_pos(eof_song, eof_selected_track, i);	//Get the updated note position

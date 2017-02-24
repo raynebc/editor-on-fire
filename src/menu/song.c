@@ -4189,7 +4189,7 @@ void eof_song_highlight_non_grid_snapped_notes(EOF_SONG *sp, unsigned long track
 			}
 			else
 			{	//Otherwise do it the hard way
-				thisisgridsnapped = eof_is_any_grid_snap_position(thispos, NULL, NULL, NULL);
+				thisisgridsnapped = eof_is_any_grid_snap_position(thispos, NULL, NULL, NULL, NULL);
 			}
 			if(!thisisgridsnapped)
 			{	//If this note position does not match that of any grid snap
@@ -4313,7 +4313,9 @@ unsigned long eof_menu_song_compare_difficulties(unsigned long track1, unsigned 
 
 		if(!match)
 		{	//If a match wasn't determined
-			eof_set_note_flags(eof_song, track1, ctr, EOF_NOTE_FLAG_HIGHLIGHT);	//Highlight the note in the first track
+			unsigned long flags = eof_get_note_flags(eof_song, track1, ctr);
+
+			eof_set_note_flags(eof_song, track1, ctr, flags | EOF_NOTE_FLAG_HIGHLIGHT);	//Highlight the note in the first track
 			if(!timematch || !function)
 			{	//If the note in the first track difficulty was in a unique position, or the calling function is allowing counting for dislike notes at the same timestamp in each of the track difficulties
 				diffcount++;

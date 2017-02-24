@@ -94,6 +94,7 @@ MENU eof_track_menu[] =
 	{"&Thin diff. to match", NULL, eof_menu_thin_diff_menu, 0, NULL},
 	{"Delete active difficulty", eof_track_delete_difficulty, NULL, 0, NULL},
 	{"&Clone from", NULL, eof_menu_track_clone_menu, 0, NULL},
+	{"Repair grid &Snap", eof_menu_track_repair_grid_snap, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -4213,4 +4214,75 @@ void eof_menu_pro_guitar_track_update_note_counter(EOF_PRO_GUITAR_TRACK *tp)
 	{
 		tp->pgnotes = tp->notes;	//Otherwise update the normal note counter
 	}
+}
+
+int eof_menu_track_repair_grid_snap(void)
+{
+	unsigned long ctr, closestpos = 0;
+	long threshold;
+	char undo_made = 0;
+
+	//Prompt user for a threshold distance
+	snprintf(eof_etext, sizeof(eof_etext) - 1, "Resnap notes to closest grid snap position of any size that is within");
+	eof_etext2[0] = '\0';	//Empty the dialog's input string
+	eof_color_dialog(eof_menu_edit_select_by_note_length_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_menu_edit_select_by_note_length_dialog);
+
+	if(eof_popup_dialog(eof_menu_edit_select_by_note_length_dialog, 2) != 3)
+		return 1;	//If the user did not click OK, return immediately
+	if(eof_etext2[0] == '\0')
+		return 1;	//If the user did not enter a threshold, return immediately
+
+	threshold = atol(eof_etext2);
+	if(threshold <= 0)
+		return 1;	//If the specified value is not valid, return immediately
+
+
+	//Process notes
+	(void) eof_menu_edit_deselect_all();		//Clear the selection variables if necessary
+	eof_selection.track = eof_selected_track;
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+	{	//For each note in the active track
+		unsigned long notepos;
+
+		eof_selection.multi[ctr] = 1;		//Update the selection array to indicate this note is selected, for use with the tech note auto adjust logic
+		notepos = eof_get_note_pos(eof_song, eof_selected_track, ctr);
+
+		if(!eof_is_any_grid_snap_position(notepos, NULL, NULL, NULL, &closestpos))
+		{	//If this note is not grid snapped
+			char direction;
+			unsigned long offset;
+
+			if(closestpos < notepos)
+			{	//If the closest grid snap is earlier than the note
+				direction = -1;
+				offset = notepos - closestpos;
+			}
+			else
+			{	//The closest grid snap is later than the note
+				direction = 1;
+				offset = closestpos - notepos;
+			}
+
+			if(offset <= threshold)
+			{	//If the note is within the specified threshold distance from the closest grid snap
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+
+				eof_auto_adjust_tech_notes(eof_song, eof_selected_track, offset, direction, &undo_made);	//Move this note's tech notes accordingly
+				eof_set_note_pos(eof_song, eof_selected_track, ctr, closestpos);
+			}
+		}
+
+		eof_selection.multi[ctr] = 0;		//Deselect this note
+	}
+
+	if(undo_made)
+	{	//If any notes were moved
+		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Update highlighting
+	}
+	return 1;
 }
