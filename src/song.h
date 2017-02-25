@@ -1023,7 +1023,7 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 	//If both offset AND dir are zero, applicable sections are re-snapped to the nearest grid snap positions
 	//If undo_made is not NULL and references a value of 0, an undo state is made prior to the first section being moved, and *undo_made is set to nonzero
 
-void eof_auto_adjust_tech_notes(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char *undo_made);
+unsigned long eof_auto_adjust_tech_notes(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char *undo_made);
 	//Examines all tech notes in the specified pro guitar track, and for those that are fully applied to notes that are selected, their positions are moved
 	//All gems in a tech note must be applied to selected note(s) in order to be moved this way
 	//Returns with no changes if the "Auto-Adjust tech notes" preference is not enabled
@@ -1032,6 +1032,7 @@ void eof_auto_adjust_tech_notes(EOF_SONG *sp, unsigned long track, unsigned long
 	//If offset is zero, applicable sections are moved in one grid snap in the specified direction instead of by a specific number of ms
 	//If both offset AND dir are zero, applicable sections are re-snapped to the nearest grid snap positions
 	//If undo_made is not NULL and references a value of 0, an undo state is made prior to the first section being moved, and *undo_made is set to nonzero
+	//Returns the number of tech notes that were moved, or 0 if none were or upon error
 
 /*@unused@ Avoid complaints from Splint*/
 static inline int eof_beat_num_valid(EOF_SONG *sp, unsigned long beatnum)

@@ -562,6 +562,7 @@ unsigned long eof_next_grid_snap(unsigned long pos)
 int eof_find_grid_snap(unsigned long pos, int dir, unsigned long *result)
 {
 	unsigned long beat;
+	char prevbeat = 0;	//Set to nonzero if the seek position was on a beat marker and will seek into the previous beat
 
 	if(!eof_song || !result || (eof_snap_mode == EOF_SNAP_OFF))
 		return 0;
@@ -575,7 +576,10 @@ int eof_find_grid_snap(unsigned long pos, int dir, unsigned long *result)
 		if(pos <= eof_song->beat[0]->pos)
 			return 0;	//There are no seek positions before the first beat marker
 		if(pos == eof_song->beat[beat]->pos)
+		{
+			prevbeat = 1;
 			beat--;	//If the specified position is on a beat marker, the previous grid snap is in the previous beat
+		}
 	}
 	else
 	{	//If looking for the nearest/next grid snap
@@ -585,16 +589,24 @@ int eof_find_grid_snap(unsigned long pos, int dir, unsigned long *result)
 
 	if(dir < 0)
 	{	//If looking for the previous grid snap
-		eof_snap_logic(&eof_tail_snap, eof_song->beat[beat]->pos);	//Find beat/measure length
-		eof_snap_length_logic(&eof_tail_snap);	//Find length of one grid snap in the target beat
-		if(eof_tail_snap.length > pos)
-		{	//Special case:  Specified position is less than one grid snap from the beginning of the chart
-			*result = eof_song->beat[0]->pos;	//The result is the first beat marker
+		if(prevbeat)
+		{	//If seeking backward into the previous beat
+			eof_snap_logic(&eof_tail_snap, eof_song->beat[beat]->pos);	//Find beat/measure length
+			eof_snap_length_logic(&eof_tail_snap);	//Find length of one grid snap in the target beat
+			eof_snap_logic(&eof_tail_snap, pos - eof_tail_snap.length);	//Find the grid snapped position of the new seek position
+			if(eof_tail_snap.length > pos)
+			{	//Special case:  Specified position is less than one grid snap from the beginning of the chart
+				*result = eof_song->beat[0]->pos;	//The result is the first beat marker
+			}
+			else
+			{
+				*result = eof_tail_snap.pos;		//The result is the closest grid snap that is one snap length earlier than the specified position
+			}
 		}
 		else
-		{
-			eof_snap_logic(&eof_tail_snap, pos - eof_tail_snap.length);	//Find the grid snapped position of the new seek position
-			*result = eof_tail_snap.pos;					//The result is the closest grid snap that is one snap length earlier than the specified position
+		{	//Otherwise the grid snap logic found a suitable grid snap position within the current beat
+			eof_snap_logic(&eof_tail_snap, pos);	//Find beat/measure length
+			*result = eof_tail_snap.previous_snap;
 		}
 	}
 	else if(dir == 0)
@@ -2252,7 +2264,7 @@ if(eof_key_code == KEY_PAUSE)
 				char undo_made = 0;
 
 				eof_auto_adjust_sections(eof_song, eof_selected_track, 0, -1, &undo_made);		//Move sections accordingly by one grid snap
-				eof_auto_adjust_tech_notes(eof_song, eof_selected_track, 0, -1, &undo_made);	//Move tech notes accordingly by one grid snap
+				(void) eof_auto_adjust_tech_notes(eof_song, eof_selected_track, 0, -1, &undo_made);	//Move tech notes accordingly by one grid snap
 				(void) eof_menu_note_move_by_grid_snap(-1, &undo_made);
 				if(eof_song->tags->highlight_unsnapped_notes)
 				{	//If the user has enabled the dynamic highlighting of non grid snapped notes
@@ -2296,7 +2308,7 @@ if(eof_key_code == KEY_PAUSE)
 				char undo_made = 0;
 
 				eof_auto_adjust_sections(eof_song, eof_selected_track, 0, 1, &undo_made);	//Move sections accordingly by one grid snap
-				eof_auto_adjust_tech_notes(eof_song, eof_selected_track, 0, 1, &undo_made);	//Move tech notes accordingly by one grid snap
+				(void) eof_auto_adjust_tech_notes(eof_song, eof_selected_track, 0, 1, &undo_made);	//Move tech notes accordingly by one grid snap
 				(void) eof_menu_note_move_by_grid_snap(1, &undo_made);
 				if(eof_song->tags->highlight_unsnapped_notes)
 				{	//If the user has enabled the dynamic highlighting of non grid snapped notes
@@ -3993,7 +4005,7 @@ void eof_editor_logic(void)
 					if(move_offset)
 					{
 						eof_auto_adjust_sections(eof_song, eof_selected_track, move_offset, move_direction, &undo_made);	//Move sections accordingly
-						eof_auto_adjust_tech_notes(eof_song, eof_selected_track, move_offset, move_direction, &undo_made);	//Move tech notes accordingly
+						(void) eof_auto_adjust_tech_notes(eof_song, eof_selected_track, move_offset, move_direction, &undo_made);	//Move tech notes accordingly
 					}
 					for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 					{	//For each note in the active track

@@ -9260,20 +9260,20 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 	}
 }
 
-void eof_auto_adjust_tech_notes(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char *undo_made)
+unsigned long eof_auto_adjust_tech_notes(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char *undo_made)
 {
-	unsigned long ctr, note_num = 0, stringnum, bitmask;
+	unsigned long ctr, note_num = 0, stringnum, bitmask, count = 0;
 	int applicable, missing;
 	EOF_PRO_GUITAR_TRACK *tp;
 
 	if(!eof_technote_auto_adjust)
-		return;	//User has not enabled this feature
+		return 0;	//User has not enabled this feature
 	if(!sp || (track >= sp->tracks) || !sp->beats || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
-		return;	//Invalid parameters
+		return 0;	//Invalid parameters
 	if(eof_selection.track != track)
-		return;	//No notes in the specified track are selected
+		return 0;	//No notes in the specified track are selected
 	if(eof_menu_track_get_tech_view_state(sp, track))
-		return;	//This logic should not run in tech view
+		return 0;	//This logic should not run in tech view
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 	for(ctr = 0; ctr < tp->technotes; ctr++)
@@ -9346,5 +9346,9 @@ void eof_auto_adjust_tech_notes(EOF_SONG *sp, unsigned long track, unsigned long
 				tp->technote[ctr]->pos = newstart;	//Move the tech note
 			}
 		}
-	}
+
+		count++;	//Track how many tech notes were moved
+	}//For each tech note in the track
+
+	return count;
 }

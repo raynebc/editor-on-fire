@@ -4218,7 +4218,7 @@ void eof_menu_pro_guitar_track_update_note_counter(EOF_PRO_GUITAR_TRACK *tp)
 
 int eof_menu_track_repair_grid_snap(void)
 {
-	unsigned long ctr, closestpos = 0;
+	unsigned long ctr, closestpos = 0, count = 0, tncount = 0;
 	long threshold;
 	char undo_made = 0;
 
@@ -4272,8 +4272,9 @@ int eof_menu_track_repair_grid_snap(void)
 					undo_made = 1;
 				}
 
-				eof_auto_adjust_tech_notes(eof_song, eof_selected_track, offset, direction, &undo_made);	//Move this note's tech notes accordingly
+				tncount += eof_auto_adjust_tech_notes(eof_song, eof_selected_track, offset, direction, &undo_made);	//Move this note's tech notes accordingly
 				eof_set_note_pos(eof_song, eof_selected_track, ctr, closestpos);
+				count++;
 			}
 		}
 
@@ -4282,7 +4283,19 @@ int eof_menu_track_repair_grid_snap(void)
 
 	if(undo_made)
 	{	//If any notes were moved
+		char *plural = "s";
+		char *singular = "";
+		char *countplurality = plural;
+		char *tncountplurality = plural;
+
+		if(count == 1)
+			countplurality = singular;
+		if(tncount == 1)
+			tncountplurality = singular;
+
 		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Update highlighting
+		allegro_message("%lu note%s and %lu tech note%s were moved.", count, countplurality, tncount, tncountplurality);
 	}
+
 	return 1;
 }
