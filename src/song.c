@@ -5452,6 +5452,12 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 
 			/* ensure that a note doesn't specify that an unused string is ghosted */
 			tp->note[i-1]->ghost &= tp->note[i-1]->note;	//Clear all lanes that are specified by the note bitmask as being used
+
+			/* Ensure EOF_NOTE_FLAG_F_HOPO flag is set as appropriate */
+			if(tp->note[i-1]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_HO | EOF_PRO_GUITAR_NOTE_FLAG_PO))
+			{	//If the note is a hammer on or pull off
+				tp->note[i-1]->flags |= EOF_NOTE_FLAG_F_HOPO;	//Force this flag on
+			}
 		}//If the note is valid, perform other cleanup
 	}//For each note in the track
 

@@ -1887,7 +1887,7 @@ int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, un
 {
 	unsigned long tracknum, tracknum2;
 	unsigned long note1note, note2note;
-	unsigned long flags, flags2;
+	unsigned long flags, flags2, eflags, eflags2;
 	long length, length2;
 
 	//Validate parameters
@@ -1908,8 +1908,14 @@ int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, un
 		flags2 = eof_get_note_flags(sp, track2, note2);
 		flags &= ~EOF_NOTE_FLAG_HIGHLIGHT;	//Do not compare highlight status
 		flags2 &= ~EOF_NOTE_FLAG_HIGHLIGHT;
+		eflags = eof_get_note_eflags(sp, track1, note1);
+		eflags2 = eof_get_note_eflags(sp, track2, note2);
 		if(flags != flags2)
 		{	//If the flags don't match
+			return 1;	//Return not equal
+		}
+		if(eflags != eflags2)
+		{	//If the extended flags don't match
 			return 1;	//Return not equal
 		}
 		length = eof_get_note_length(sp, track1, note1);
@@ -1965,7 +1971,9 @@ int eof_note_compare_simple(EOF_SONG *sp, unsigned long track, unsigned long not
 
 int eof_pro_guitar_note_compare(EOF_PRO_GUITAR_TRACK *tp1, unsigned long note1, EOF_PRO_GUITAR_TRACK *tp2, unsigned long note2, char thorough)
 {
-	unsigned long ctr, bitmask, note;
+	unsigned long ctr, bitmask, note, flags1, flags2;
+	unsigned long bendflags = EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION | EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+	unsigned long slideflags = EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
 
 	if(!tp1 || !tp2 || (note1 >= tp1->notes) || (note2 >= tp2->notes))
 		return -1;	//Invalid parameters
@@ -1973,6 +1981,34 @@ int eof_pro_guitar_note_compare(EOF_PRO_GUITAR_TRACK *tp1, unsigned long note1, 
 	note = tp1->note[note1]->note;	//Cache this for easier access
 	if(note != tp2->note[note2]->note)
 		return 1;	//The note bitmasks don't match
+	if((thorough > 1) && (tp1->note[note1]->ghost != tp2->note[note2]->ghost))	//If the ghost masks are to be compared, but they don't match
+		return 1;	//The ghost masks don't match
+	if(thorough > 2)
+	{	//If bends and slides are to be compared
+		flags1 = tp1->note[note1]->flags;
+		flags2 = tp2->note[note2]->flags;
+		if((flags1 & bendflags) != (flags2 & bendflags))	//If one note bends and has a defined bend strength and the other doesn't
+			return 1;	//The bend statuses don't match
+		if(flags1 & bendflags)
+		{	//If both notes bend and have a defined bend strength
+			if(tp1->note[note1]->bendstrength != tp2->note[note2]->bendstrength)
+				return 1;	//The bend strengths don't match
+		}
+		if((flags1 & slideflags) != (flags2 & slideflags))	//If one note slides and has a defined end position and the other doesn't
+			return 1;	//The slide statuses don't match
+		if(flags1 & slideflags)
+		{	//If both notes slide and have a defined end of slide position
+			if(tp1->note[note1]->slideend != tp2->note[note2]->slideend)
+				return 1;	//The slide end positions don't match
+		}
+		if((flags1 & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) != (flags2 & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))	//If one note unpitched slides and the other doesn't
+			return 1;	//The unpitched slide statuses don't match
+		if(flags1 & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+		{	//If both notes have an unpitched slide
+			if(tp1->note[note1]->unpitchend != tp2->note[note2]->unpitchend)
+				return 1;	//The unpitched slide end positions don't match
+		}
+	}
 
 	for(ctr = 0, bitmask = 1; ctr < 6; ctr ++, bitmask <<= 1)
 	{	//For each of the 6 supported strings

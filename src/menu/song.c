@@ -4295,7 +4295,7 @@ unsigned long eof_menu_song_compare_difficulties(unsigned long track1, unsigned 
 				continue;	//If this note isn't in the same position as the one from the first track, skip it
 
 			timematch = 1;	//Note that there was a note at the same timestamp in both track difficulties
-			if(eof_note_compare(eof_song, track1, ctr, track2, ctr2, 1) == 0)
+			if(eof_note_compare(eof_song, track1, ctr, track2, ctr2, 3) == 0)
 			{	//If the notes match a thorough comparison
 				if(eof_song->track[track1]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 				{	//If pro guitar tracks are being compared
