@@ -4972,14 +4972,6 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 		return 1;	//Invalid parameters
 	}
 
-	//Create and initialize a working song structure to store the unwrapped beat map
-	dsp = eof_create_song();
-	if(!dsp)
-	{
-		eof_log("\tFailed to create destination song structure", 1);
-		return 2;	//Return failure
-	}
-
 	gp->coda_activated = gp->double_coda_activated = gp->fine_activated = 0;	//Reset these statuses
 
 	//First parse the measures[] array to determine if any end of repeats are present
@@ -5003,8 +4995,15 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 	if(!has_repeats && !has_symbols)
 	{	//If this GP file has no repeats and no branching
 		eof_log("\tNo repeats or navigational symbols detected", 1);
-		eof_destroy_song(dsp);	//Destroy working project
 		return 0;	//Return without altering the gp structure
+	}
+
+	//Create and initialize a working song structure to store the unwrapped beat map
+	dsp = eof_create_song();
+	if(!dsp)
+	{
+		eof_log("\tFailed to create destination song structure", 1);
+		return 2;	//Return failure
 	}
 
 	//Create a working copy of the array tracking the number of repeats left for each measure

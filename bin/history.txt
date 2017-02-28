@@ -3,6 +3,75 @@ EOF Version History
 
 1.8:
 
+Added a "Track>Clone from" function allowing the active track's
+content to be replaced with a copy of another track of the same
+format.
+
+Added a fifth pro guitar track "PART REAL_GUITAR_BONUS", allowing
+one EOF project to contain all five arrangements that Rocksmith
+2014 Remastered can support for a song.
+
+Added an "Auto-Adjust sections/FHPs" preference that will
+appropriately move certain types of sections (lyric lines, solo,
+star power, trill, tremolo, arpeggio, handshape, slider) if all
+notes in them (among all relevant difficulties) are moved.  If a
+fret hand position is defined at the same timestamp as a note
+that is moved, the position moves with it.
+
+Increased the maximum custom grid snap size to 96 and added 1/64
+and 1/96 built-in grid snap sizes.
+
+Changed the "Save separate Rocksmith 2 files" preference to be
+enabled by default.
+
+Added "Link to RocksmithToTab" and "Export guitar pro" functions
+to the file menu, allowing the command line RocksmithToTab utility
+to be used to create a GP5 file of the active project.
+
+Improved GP import so that if the selected track is a percussion
+track, EOF offers to import it into one or both drum tracks.
+
+Improved GP import so that if the chosen track has notes in both
+voices, EOF asks which of the voices to import.
+
+Added various functions to select/deselect notes and moved them
+into their own submenus.
+
+Updated the makefiles to perform link time optimization, providing
+general performance improvements throughout the program.
+
+Updated to FFTW 3.3.5, increasing the performance of the time
+stretch and spectrogram features.
+
+Added a "File>Export time range" feature that allows a user-defined
+portion of the active project to be saved as a new project file,
+with corresponding audio.
+
+Organized import functions into a File>Import menu.
+
+Added "Set start point" and "Set end point" functions to the edit
+menu that allows a portion of the chart to be defined for the
+"Create preview audio" and "Export time range" functions.
+
+Added functions in Song>Seek to move to the position (if any) of
+the next or previous highlighted note in the active track
+difficulty, and have assigned the SHIFT+Y and CTRL+SHIFT+Y
+shortcuts to them, respectively.
+
+Improved the display of difficulty tabs so that the presence of
+highlighted content in a tab causes its name/number to be
+highlighted in yellow.
+
+Improved MIDI import to recognize the "T1 GEMS" track as the
+guitar track in Guitar Hero 1 MIDIs.
+
+Added a new "chordify" RS2 authoring mechanism, to improve the
+ability to author a chord where some strings have a different
+length of sustain than others.
+
+Added functions to the Note>Pro guitar>Slide menu to convert from
+a pitched slide to an unpitched slide and vice-versa.
+
 Improved "Song>Create preview audio" to store the start and end
 times of the preview as INI tags (preview_start_time and
 preview_end_time) in the project.  Phase Shift currently supports
@@ -76,6 +145,8 @@ beats that were added to compensate for mid-beat tempo changes during
 Feedback import of charts with unusual beat mapping.
 *Added handling for the unofficial "E *" toggle HOPO notation.
 *Added logic to convert 5 lane chords to open strum notes.
+*Added handling for the unofficial "N 7 #" and "E O" open note
+notations.
 
 Updated the save function to write a simplified lyrics file
 (lyrics.txt) if the Lyrics option in Song>Properties is checked.

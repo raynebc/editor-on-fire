@@ -193,7 +193,8 @@ Note and Beat Editing:
 
         Delete selected notes.
 
-        Hold both Ctrl and Shift while deleting to perform the "Note>Delete>Delete w/ lower diffs" function.
+        Hold both Ctrl and Shift while deleting to perform the "Note>Delete>Delete w/ lower diffs"
+        function.
 
     Tab:
 
@@ -207,17 +208,23 @@ Note and Beat Editing:
 
     Ctrl+Shift+~ , Ctrl+Shift+#, Ctrl+Shift+Fn #:
 
-        Changes the active difficulty to 0 (Ctrl+Shift+~), 1 through 10 (Ctrl+Shift+1 through 0), or 11 through 22 (Ctrl+Shift+F1 through F12). Difficulty levels higher than 4 are used to author tracks for Rocksmith.
+        Changes the active difficulty to 0 (Ctrl+Shift+~), 1 through 10 (Ctrl+Shift+1 through 0),
+        or 11 through 22 (Ctrl+Shift+F1 through F12). Difficulty levels higher than 4 are used to
+        author tracks for Rocksmith.
 
 
     Ctrl+~ , Ctrl+#, Ctrl+Fn #, Ctrl+X:
 
-        Changes the fret number for all gems of all selected notes to 0 (Ctrl+~), 1 through 10 (Ctrl+1 through 0), or 11 through 22 (Ctrl+F1 through F12), or X (Ctrl+X, to denote string mutes).  These shortcuts are used for authoring real guitar transcriptions for Rock Band 3, Phase Shift and Rocksmith.
+        Changes the fret number for all gems of all selected notes to 0 (Ctrl+~), 1 through 10
+        (Ctrl+1 through 0), or 11 through 22 (Ctrl+F1 through F12), or X (Ctrl+X, to denote string
+        mutes).  These shortcuts are used for authoring real guitar transcriptions for Rock Band 3,
+        Phase Shift and Rocksmith.
 
 
     Ctrl+G:
 
-        Enables ghost status for all gems of all selected notes.  This note mechanic is used for authoring real guitar transcriptions for Rock Band 3 and Phase Shift.
+        Enables ghost status for all gems of all selected notes.  This note mechanic is used for
+        authoring real guitar transcriptions for Rock Band 3 and Phase Shift.
 
 
     Comma/Period:
@@ -307,7 +314,9 @@ Miscellaneous Controls:
 
     SHIFT + F11
 
-        Cycle through the "Names", "Hand pos" and "RS sections + phrases" top of 2D pane shows preference.  If the eof_top_of_2d_pane_cycle_count_2 item is manually set to 1 in eof.cfg while EOF isn't running, the names option is skipped by this shortcut.
+        Cycle through the "Names", "Hand pos" and "RS sections + phrases" top of 2D pane
+        shows preference.  If the eof_top_of_2d_pane_cycle_count_2 item is manually set
+        to 1 in eof.cfg while EOF isn't running, the names option is skipped by this shortcut.
 
 
 EOF provides many useful functions which can be accessed through various menus and dialogs. Shortcuts keys are provided to access some of the more frequently used functions. This screen is not an exhaustive list of keyboard shortcuts. All menu functions with shortcuts will display that shortcut next to the name of the function in the menu.

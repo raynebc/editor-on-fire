@@ -297,8 +297,11 @@ void eof_destroy_song(EOF_SONG * sp)
 		(void) snprintf(eof_recover_path, sizeof(eof_recover_path) - 1, "%seof.recover", eof_temp_path_s);
 		(void) delete_file(eof_recover_path);	//Delete it when the active project is cleanly closed
 	}
+	if(sp == eof_song)
+	{	//If the active project is being destroyed
+		eof_silence_loaded = 0;	//Reset this condition so that if another project is being loaded, its playback will be allowed to work if audio is present
+	}
 	free(sp);
-	eof_silence_loaded = 0;	//When the chart is destroyed, reset this condition so that if another project is being loaded, its playback will be allowed to work if audio is present
 //	eof_log_level |= 2;	//Enable verbose logging
 }
 
@@ -5452,12 +5455,6 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 
 			/* ensure that a note doesn't specify that an unused string is ghosted */
 			tp->note[i-1]->ghost &= tp->note[i-1]->note;	//Clear all lanes that are specified by the note bitmask as being used
-
-			/* Ensure EOF_NOTE_FLAG_F_HOPO flag is set as appropriate */
-			if(tp->note[i-1]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_HO | EOF_PRO_GUITAR_NOTE_FLAG_PO))
-			{	//If the note is a hammer on or pull off
-				tp->note[i-1]->flags |= EOF_NOTE_FLAG_F_HOPO;	//Force this flag on
-			}
 		}//If the note is valid, perform other cleanup
 	}//For each note in the track
 
@@ -5515,6 +5512,22 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 					tp->note[ctr]->flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_HO);	//Clear the hammer on flag, which RB3 charts set needlessly
 				}
 			}
+		}
+	}
+
+	/* Ensure EOF_NOTE_FLAG_F_HOPO flag is set appropriately for all notes and tech notes */
+	for(i = 0; i < tp->pgnotes; i++)
+	{	//For each normal note
+		if(tp->pgnote[i]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_HO | EOF_PRO_GUITAR_NOTE_FLAG_PO))
+		{	//If the note is a hammer on or pull off
+			tp->pgnote[i]->flags |= EOF_NOTE_FLAG_F_HOPO;	//Force this flag on
+		}
+	}
+	for(i = 0; i < tp->technotes; i++)
+	{	//For each normal note
+		if(tp->technote[i]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_HO | EOF_PRO_GUITAR_NOTE_FLAG_PO))
+		{	//If the note is a hammer on or pull off
+			tp->technote[i]->flags |= EOF_NOTE_FLAG_F_HOPO;	//Force this flag on
 		}
 	}
 
