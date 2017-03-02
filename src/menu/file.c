@@ -130,7 +130,8 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_radio_proc, 224, 186, 72,  16,  2,   23,  0,    0,      1,   0,   "Sections",            NULL, NULL },
 	{ d_agup_radio_proc, 301, 186, 78,  16,  2,   23,  0,    0,      1,   0,   "Hand pos",            NULL, NULL },
 	{ d_agup_radio_proc, 384, 186, 92,  16,  2,   23,  0,    0,      1,   0,   "RS sections",         NULL, NULL },
-	{ d_agup_radio_proc, 161, 202, 150, 16,  2,   23,  0,    0,      1,   0,   "RS sections+Phrases",         NULL, NULL },
+	{ d_agup_radio_proc, 161, 202, 143, 16,  2,   23,  0,    0,      1,   0,   "RS sections+Phrases", NULL, NULL },
+	{ d_agup_radio_proc, 301, 202,  60, 16,  2,   23,  0,    0,      1,   0,   "Tones",               NULL, NULL },
 	{ d_agup_check_proc, 16,  75,  110, 16,  2,   23,  0,    0,      1,   0,   "Inverted Notes",      NULL, NULL },
 	{ d_agup_check_proc, 150, 75,  92 , 16,  2,   23,  0,    0,      1,   0,   "Lefty Mode",          NULL, NULL },
 	{ d_agup_check_proc, 306, 75,  128, 16,  2,   23,  0,    0,      1,   0,   "Note Auto-Adjust",    NULL, NULL },
@@ -1177,39 +1178,39 @@ int eof_menu_file_preferences(void)
 	eof_color_dialog(eof_preferences_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_preferences_dialog);
 	//Use the currently configured settings to populate the dialog selections
-	eof_preferences_dialog[5].flags = eof_preferences_dialog[6].flags = eof_preferences_dialog[7].flags = eof_preferences_dialog[8].flags = eof_preferences_dialog[9].flags = 0;	//Options for what to display at top of 2D panel
+	eof_preferences_dialog[5].flags = eof_preferences_dialog[6].flags = eof_preferences_dialog[7].flags = eof_preferences_dialog[8].flags = eof_preferences_dialog[9].flags = eof_preferences_dialog[10].flags = 0;	//Options for what to display at top of 2D panel
 	eof_preferences_dialog[eof_2d_render_top_option].flags = D_SELECTED;
-	eof_preferences_dialog[10].flags = eof_inverted_notes ? D_SELECTED : 0;					//Inverted notes
-	eof_preferences_dialog[11].flags = eof_lefty_mode ? D_SELECTED : 0;						//Lefty mode
-	eof_preferences_dialog[12].flags = eof_note_auto_adjust ? D_SELECTED : 0;				//Note auto adjust
-	eof_preferences_dialog[13].flags = enable_logging ? D_SELECTED : 0;						//Enable logging
-	eof_preferences_dialog[14].flags = eof_hide_drum_tails ? D_SELECTED : 0;				//Hide drum note tails
-	eof_preferences_dialog[15].flags = eof_hide_note_names ? D_SELECTED : 0;				//Hide note names
-	eof_preferences_dialog[16].flags = eof_disable_sound_processing ? D_SELECTED : 0;		//Disable sound effects
-	eof_preferences_dialog[17].flags = eof_disable_3d_rendering ? D_SELECTED : 0;			//Disable 3D rendering
-	eof_preferences_dialog[18].flags = eof_disable_2d_rendering ? D_SELECTED : 0;			//Disable 2D rendering
-	eof_preferences_dialog[19].flags = eof_disable_info_panel ? D_SELECTED : 0;				//Disable info panel
-	eof_preferences_dialog[20].flags = eof_paste_erase_overlap ? D_SELECTED : 0;			//Paste erases overlap
-	eof_preferences_dialog[21].flags = eof_note_tails_clickable ? D_SELECTED : 0;			//Make note tails clickable
-	eof_preferences_dialog[22].flags = eof_drum_modifiers_affect_all_difficulties ? D_SELECTED : 0;	//Drum modifiers affect all diff's
-	eof_preferences_dialog[27].flags = eof_render_bass_drum_in_lane ? D_SELECTED : 0;		//3D render bass drum in a lane
-	eof_preferences_dialog[28].flags = eof_fb_seek_controls ? D_SELECTED : 0;				//dB style seek controls
-	eof_preferences_dialog[30].d1 = eof_input_mode;											//Input method
+	eof_preferences_dialog[11].flags = eof_inverted_notes ? D_SELECTED : 0;					//Inverted notes
+	eof_preferences_dialog[12].flags = eof_lefty_mode ? D_SELECTED : 0;						//Lefty mode
+	eof_preferences_dialog[13].flags = eof_note_auto_adjust ? D_SELECTED : 0;				//Note auto adjust
+	eof_preferences_dialog[14].flags = enable_logging ? D_SELECTED : 0;						//Enable logging
+	eof_preferences_dialog[15].flags = eof_hide_drum_tails ? D_SELECTED : 0;				//Hide drum note tails
+	eof_preferences_dialog[16].flags = eof_hide_note_names ? D_SELECTED : 0;				//Hide note names
+	eof_preferences_dialog[17].flags = eof_disable_sound_processing ? D_SELECTED : 0;		//Disable sound effects
+	eof_preferences_dialog[18].flags = eof_disable_3d_rendering ? D_SELECTED : 0;			//Disable 3D rendering
+	eof_preferences_dialog[19].flags = eof_disable_2d_rendering ? D_SELECTED : 0;			//Disable 2D rendering
+	eof_preferences_dialog[20].flags = eof_disable_info_panel ? D_SELECTED : 0;				//Disable info panel
+	eof_preferences_dialog[21].flags = eof_paste_erase_overlap ? D_SELECTED : 0;			//Paste erases overlap
+	eof_preferences_dialog[22].flags = eof_note_tails_clickable ? D_SELECTED : 0;			//Make note tails clickable
+	eof_preferences_dialog[23].flags = eof_drum_modifiers_affect_all_difficulties ? D_SELECTED : 0;	//Drum modifiers affect all diff's
+	eof_preferences_dialog[28].flags = eof_render_bass_drum_in_lane ? D_SELECTED : 0;		//3D render bass drum in a lane
+	eof_preferences_dialog[29].flags = eof_fb_seek_controls ? D_SELECTED : 0;				//dB style seek controls
+	eof_preferences_dialog[31].d1 = eof_input_mode;											//Input method
 	original_input_mode = eof_input_mode;													//Store this value
-	eof_preferences_dialog[32].d1 = eof_color_set;											//Color set
-	eof_preferences_dialog[33].flags = eof_new_note_length_1ms ? D_SELECTED : 0;			//New notes are made 1ms long
-	eof_preferences_dialog[34].flags = eof_render_3d_rs_chords ? D_SELECTED : 0;			//3D render Rocksmith style chords
-	eof_preferences_dialog[35].flags = eof_rewind_at_end ? D_SELECTED : 0;					//Rewind when playback is at end
-	eof_preferences_dialog[36].flags = eof_display_seek_pos_in_seconds ? D_SELECTED : 0;	//Display seek pos. in seconds
-	eof_preferences_dialog[37].flags = eof_add_new_notes_to_selection ? D_SELECTED : 0;		//Add new notes to selection
-	eof_preferences_dialog[38].flags = eof_inverted_chords_slash ? D_SELECTED : 0;			//Treat inverted chords as slash
-	eof_preferences_dialog[39].flags = eof_click_changes_dialog_focus ? D_SELECTED : 0;		//Click to change dialog focus
-	eof_preferences_dialog[40].flags = eof_stop_playback_leave_focus ? D_SELECTED : 0;		//EOF leaving focus stops playback
-	eof_preferences_dialog[43].flags = eof_enforce_chord_density ? D_SELECTED : 0;			//Apply crazy to repeated chords separated by a rest
-	eof_preferences_dialog[44].flags = eof_auto_complete_fingering ? D_SELECTED : 0;		//Offer to auto complete fingering
-	eof_preferences_dialog[45].flags = eof_dont_auto_name_double_stops ? D_SELECTED : 0;	//Don't auto-name double stops
-	eof_preferences_dialog[46].flags = eof_section_auto_adjust ? D_SELECTED : 0;			//Auto-Adjust sections/FHPs
-	eof_preferences_dialog[47].flags = eof_technote_auto_adjust ? D_SELECTED : 0;			//Auto-Adjust tech notes
+	eof_preferences_dialog[33].d1 = eof_color_set;											//Color set
+	eof_preferences_dialog[34].flags = eof_new_note_length_1ms ? D_SELECTED : 0;			//New notes are made 1ms long
+	eof_preferences_dialog[35].flags = eof_render_3d_rs_chords ? D_SELECTED : 0;			//3D render Rocksmith style chords
+	eof_preferences_dialog[36].flags = eof_rewind_at_end ? D_SELECTED : 0;					//Rewind when playback is at end
+	eof_preferences_dialog[37].flags = eof_display_seek_pos_in_seconds ? D_SELECTED : 0;	//Display seek pos. in seconds
+	eof_preferences_dialog[38].flags = eof_add_new_notes_to_selection ? D_SELECTED : 0;		//Add new notes to selection
+	eof_preferences_dialog[39].flags = eof_inverted_chords_slash ? D_SELECTED : 0;			//Treat inverted chords as slash
+	eof_preferences_dialog[40].flags = eof_click_changes_dialog_focus ? D_SELECTED : 0;		//Click to change dialog focus
+	eof_preferences_dialog[41].flags = eof_stop_playback_leave_focus ? D_SELECTED : 0;		//EOF leaving focus stops playback
+	eof_preferences_dialog[44].flags = eof_enforce_chord_density ? D_SELECTED : 0;			//Apply crazy to repeated chords separated by a rest
+	eof_preferences_dialog[45].flags = eof_auto_complete_fingering ? D_SELECTED : 0;		//Offer to auto complete fingering
+	eof_preferences_dialog[46].flags = eof_dont_auto_name_double_stops ? D_SELECTED : 0;	//Don't auto-name double stops
+	eof_preferences_dialog[47].flags = eof_section_auto_adjust ? D_SELECTED : 0;			//Auto-Adjust sections/FHPs
+	eof_preferences_dialog[48].flags = eof_technote_auto_adjust ? D_SELECTED : 0;			//Auto-Adjust tech notes
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1253,19 +1254,23 @@ int eof_menu_file_preferences(void)
 			{	//User opted to display both Rocksmith sections and Rocksmith phrases at top of 2D panel
 				eof_2d_render_top_option = 9;
 			}
-			eof_inverted_notes = (eof_preferences_dialog[10].flags == D_SELECTED ? 1 : 0);
-			eof_lefty_mode = (eof_preferences_dialog[11].flags == D_SELECTED ? 1 : 0);
-			eof_note_auto_adjust = (eof_preferences_dialog[12].flags == D_SELECTED ? 1 : 0);
-			enable_logging = (eof_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
-			eof_hide_drum_tails = (eof_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
-			eof_hide_note_names = (eof_preferences_dialog[15].flags == D_SELECTED ? 1 : 0);
-			eof_disable_sound_processing = (eof_preferences_dialog[16].flags == D_SELECTED ? 1 : 0);
-			eof_disable_3d_rendering = (eof_preferences_dialog[17].flags == D_SELECTED ? 1 : 0);
-			eof_disable_2d_rendering = (eof_preferences_dialog[18].flags == D_SELECTED ? 1 : 0);
-			eof_disable_info_panel = (eof_preferences_dialog[19].flags == D_SELECTED ? 1 : 0);
-			eof_paste_erase_overlap = (eof_preferences_dialog[20].flags == D_SELECTED ? 1 : 0);
-			eof_note_tails_clickable = (eof_preferences_dialog[21].flags == D_SELECTED ? 1 : 0);
-			eof_drum_modifiers_affect_all_difficulties = (eof_preferences_dialog[22].flags == D_SELECTED ? 1 : 0);
+			else if(eof_preferences_dialog[10].flags == D_SELECTED)
+			{	//User opted to display tone changes at top of 2D panel
+				eof_2d_render_top_option = 10;
+			}
+			eof_inverted_notes = (eof_preferences_dialog[11].flags == D_SELECTED ? 1 : 0);
+			eof_lefty_mode = (eof_preferences_dialog[12].flags == D_SELECTED ? 1 : 0);
+			eof_note_auto_adjust = (eof_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
+			enable_logging = (eof_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
+			eof_hide_drum_tails = (eof_preferences_dialog[15].flags == D_SELECTED ? 1 : 0);
+			eof_hide_note_names = (eof_preferences_dialog[16].flags == D_SELECTED ? 1 : 0);
+			eof_disable_sound_processing = (eof_preferences_dialog[17].flags == D_SELECTED ? 1 : 0);
+			eof_disable_3d_rendering = (eof_preferences_dialog[18].flags == D_SELECTED ? 1 : 0);
+			eof_disable_2d_rendering = (eof_preferences_dialog[19].flags == D_SELECTED ? 1 : 0);
+			eof_disable_info_panel = (eof_preferences_dialog[20].flags == D_SELECTED ? 1 : 0);
+			eof_paste_erase_overlap = (eof_preferences_dialog[21].flags == D_SELECTED ? 1 : 0);
+			eof_note_tails_clickable = (eof_preferences_dialog[22].flags == D_SELECTED ? 1 : 0);
+			eof_drum_modifiers_affect_all_difficulties = (eof_preferences_dialog[23].flags == D_SELECTED ? 1 : 0);
 			if(eof_etext[0] != '\0')
 			{	//If the minimum note length field is populated
 				eof_min_note_length = atol(eof_etext);
@@ -1286,18 +1291,18 @@ int eof_menu_file_preferences(void)
 			{
 				eof_min_note_distance = 3;
 			}
-			eof_render_bass_drum_in_lane = (eof_preferences_dialog[27].flags == D_SELECTED ? 1 : 0);
-			eof_fb_seek_controls = (eof_preferences_dialog[28].flags == D_SELECTED ? 1 : 0);
-			eof_input_mode = eof_preferences_dialog[30].d1;
-			eof_color_set = eof_preferences_dialog[32].d1;
-			eof_new_note_length_1ms = (eof_preferences_dialog[33].flags == D_SELECTED ? 1 : 0);
-			eof_render_3d_rs_chords = (eof_preferences_dialog[34].flags == D_SELECTED ? 1 : 0);
-			eof_rewind_at_end = (eof_preferences_dialog[35].flags == D_SELECTED ? 1 : 0);
-			eof_display_seek_pos_in_seconds = (eof_preferences_dialog[36].flags == D_SELECTED ? 1 : 0);
-			eof_add_new_notes_to_selection = (eof_preferences_dialog[37].flags == D_SELECTED ? 1 : 0);
-			eof_inverted_chords_slash = (eof_preferences_dialog[38].flags == D_SELECTED ? 1 : 0);
-			eof_click_changes_dialog_focus = (eof_preferences_dialog[39].flags == D_SELECTED ? 1 : 0);
-			eof_stop_playback_leave_focus = (eof_preferences_dialog[40].flags == D_SELECTED ? 1 : 0);
+			eof_render_bass_drum_in_lane = (eof_preferences_dialog[28].flags == D_SELECTED ? 1 : 0);
+			eof_fb_seek_controls = (eof_preferences_dialog[29].flags == D_SELECTED ? 1 : 0);
+			eof_input_mode = eof_preferences_dialog[31].d1;
+			eof_color_set = eof_preferences_dialog[33].d1;
+			eof_new_note_length_1ms = (eof_preferences_dialog[34].flags == D_SELECTED ? 1 : 0);
+			eof_render_3d_rs_chords = (eof_preferences_dialog[35].flags == D_SELECTED ? 1 : 0);
+			eof_rewind_at_end = (eof_preferences_dialog[36].flags == D_SELECTED ? 1 : 0);
+			eof_display_seek_pos_in_seconds = (eof_preferences_dialog[37].flags == D_SELECTED ? 1 : 0);
+			eof_add_new_notes_to_selection = (eof_preferences_dialog[38].flags == D_SELECTED ? 1 : 0);
+			eof_inverted_chords_slash = (eof_preferences_dialog[39].flags == D_SELECTED ? 1 : 0);
+			eof_click_changes_dialog_focus = (eof_preferences_dialog[40].flags == D_SELECTED ? 1 : 0);
+			eof_stop_playback_leave_focus = (eof_preferences_dialog[41].flags == D_SELECTED ? 1 : 0);
 			if(eof_etext3[0] != '\0')
 			{	//If the chord density threshold field is populated
 				eof_chord_density_threshold = atol(eof_etext3);
@@ -1317,52 +1322,52 @@ int eof_menu_file_preferences(void)
 					allegro_message("Warning:  Configuring the minimum note distance to be longer than the chord density\nthreshold will eliminate chord repeat lines for all chords that aren't close enough to\neach others' start positions.");
 				}
 			}
-			eof_enforce_chord_density = (eof_preferences_dialog[43].flags == D_SELECTED ? 1 : 0);
-			eof_auto_complete_fingering = (eof_preferences_dialog[44].flags == D_SELECTED ? 1 : 0);
-			eof_dont_auto_name_double_stops = (eof_preferences_dialog[45].flags == D_SELECTED ? 1 : 0);
-			eof_section_auto_adjust = (eof_preferences_dialog[46].flags == D_SELECTED ? 1 : 0);
-			eof_technote_auto_adjust = (eof_preferences_dialog[47].flags == D_SELECTED ? 1 : 0);
+			eof_enforce_chord_density = (eof_preferences_dialog[44].flags == D_SELECTED ? 1 : 0);
+			eof_auto_complete_fingering = (eof_preferences_dialog[45].flags == D_SELECTED ? 1 : 0);
+			eof_dont_auto_name_double_stops = (eof_preferences_dialog[46].flags == D_SELECTED ? 1 : 0);
+			eof_section_auto_adjust = (eof_preferences_dialog[47].flags == D_SELECTED ? 1 : 0);
+			eof_technote_auto_adjust = (eof_preferences_dialog[48].flags == D_SELECTED ? 1 : 0);
 			eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case eof_inverted_notes was changed
 			eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case eof_lefty_mode was changed
 		}//If the user clicked OK
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
 			eof_preferences_dialog[5].flags = D_SELECTED;			//Display note names at top of 2D panel
-			eof_preferences_dialog[6].flags = eof_preferences_dialog[7].flags = eof_preferences_dialog[8].flags = eof_preferences_dialog[9].flags = 0;	//Display sections/fret hand positions at top of 2D panel
-			eof_preferences_dialog[10].flags = 0;					//Inverted notes
-			eof_preferences_dialog[11].flags = 0;					//Lefty mode
-			eof_preferences_dialog[12].flags = D_SELECTED;			//Note auto adjust
-			eof_preferences_dialog[13].flags = D_SELECTED;			//Enable logging
-			eof_preferences_dialog[14].flags = 0;					//Hide drum note tails
-			eof_preferences_dialog[15].flags = 0;					//Hide note names
-			eof_preferences_dialog[16].flags = 0;					//Disable sound effects
-			eof_preferences_dialog[17].flags = 0;					//Disable 3D rendering
-			eof_preferences_dialog[18].flags = 0;					//Disable 2D rendering
-			eof_preferences_dialog[19].flags = 0;					//Disable info panel
-			eof_preferences_dialog[20].flags = 0;					//Paste erases overlap
-			eof_preferences_dialog[21].flags = 0;					//Make note tails clickable
-			eof_preferences_dialog[22].flags = D_SELECTED;			//Drum modifiers affect all diff's
+			eof_preferences_dialog[6].flags = eof_preferences_dialog[7].flags = eof_preferences_dialog[8].flags = eof_preferences_dialog[9].flags = eof_preferences_dialog[10].flags = 0;
+			eof_preferences_dialog[11].flags = 0;					//Inverted notes
+			eof_preferences_dialog[12].flags = 0;					//Lefty mode
+			eof_preferences_dialog[13].flags = D_SELECTED;			//Note auto adjust
+			eof_preferences_dialog[14].flags = D_SELECTED;			//Enable logging
+			eof_preferences_dialog[15].flags = 0;					//Hide drum note tails
+			eof_preferences_dialog[16].flags = 0;					//Hide note names
+			eof_preferences_dialog[17].flags = 0;					//Disable sound effects
+			eof_preferences_dialog[18].flags = 0;					//Disable 3D rendering
+			eof_preferences_dialog[19].flags = 0;					//Disable 2D rendering
+			eof_preferences_dialog[20].flags = 0;					//Disable info panel
+			eof_preferences_dialog[21].flags = 0;					//Paste erases overlap
+			eof_preferences_dialog[22].flags = 0;					//Make note tails clickable
+			eof_preferences_dialog[23].flags = D_SELECTED;			//Drum modifiers affect all diff's
 			eof_etext2[0] = '3';									//Min. note distance
 			eof_etext2[1] = '\0';
 			eof_etext[0] = '\0';									//Min. note length
-			eof_preferences_dialog[27].flags = 0;					//3D render bass drum in a lane
-			eof_preferences_dialog[28].flags = 0;					//dB style seek controls
-			eof_preferences_dialog[30].d1 = EOF_INPUT_PIANO_ROLL;	//Input method
-			eof_preferences_dialog[32].d1 = EOF_COLORS_DEFAULT;		//Color set
-			eof_preferences_dialog[33].flags = 0;					//New notes are made 1ms long
-			eof_preferences_dialog[34].flags = 0;					//3D render Rocksmith style chords
-			eof_preferences_dialog[35].flags = D_SELECTED;			//Rewind when playback is at end
-			eof_preferences_dialog[36].flags = 0;					//Display seek pos. in seconds
-			eof_preferences_dialog[37].flags = 0;					//Add new notes to selection
-			eof_preferences_dialog[38].flags = 0;					//Treat inverted chords as slash
-			eof_preferences_dialog[39].flags = D_SELECTED;			//Click to change dialog focus
-			eof_preferences_dialog[40].flags = 1;					//EOF leaving focus stops playback
+			eof_preferences_dialog[28].flags = 0;					//3D render bass drum in a lane
+			eof_preferences_dialog[29].flags = 0;					//dB style seek controls
+			eof_preferences_dialog[31].d1 = EOF_INPUT_PIANO_ROLL;	//Input method
+			eof_preferences_dialog[33].d1 = EOF_COLORS_DEFAULT;		//Color set
+			eof_preferences_dialog[34].flags = 0;					//New notes are made 1ms long
+			eof_preferences_dialog[35].flags = 0;					//3D render Rocksmith style chords
+			eof_preferences_dialog[36].flags = D_SELECTED;			//Rewind when playback is at end
+			eof_preferences_dialog[37].flags = 0;					//Display seek pos. in seconds
+			eof_preferences_dialog[38].flags = 0;					//Add new notes to selection
+			eof_preferences_dialog[39].flags = 0;					//Treat inverted chords as slash
+			eof_preferences_dialog[40].flags = D_SELECTED;			//Click to change dialog focus
+			eof_preferences_dialog[41].flags = 1;					//EOF leaving focus stops playback
 			(void) snprintf(eof_etext3, sizeof(eof_etext3) - 1, "10000");	//Chord density threshold
-			eof_preferences_dialog[43].flags = 0;					//Apply crazy to repeated chords separated by a rest
-			eof_preferences_dialog[44].flags = D_SELECTED;			//Offer to auto complete fingering
-			eof_preferences_dialog[45].flags = 0;					//Don't auto-name double stops
-			eof_preferences_dialog[46].flags = 1;					//Auto-Adjust sections/FHPs
-			eof_preferences_dialog[47].flags = 1;					//Auto-Adjust tech notes
+			eof_preferences_dialog[44].flags = 0;					//Apply crazy to repeated chords separated by a rest
+			eof_preferences_dialog[45].flags = D_SELECTED;			//Offer to auto complete fingering
+			eof_preferences_dialog[46].flags = 0;					//Don't auto-name double stops
+			eof_preferences_dialog[47].flags = 1;					//Auto-Adjust sections/FHPs
+			eof_preferences_dialog[48].flags = 1;					//Auto-Adjust tech notes
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);

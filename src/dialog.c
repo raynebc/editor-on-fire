@@ -65,9 +65,30 @@ char eof_ctext[13][1024] = {{0}};
 static int eof_keyboard_shortcut = 0;
 int eof_close_menu = 0;
 
+char eof_menu_track_names[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
+	//A list of the names of each track, built by eof_prepare_menus()
+
 void eof_prepare_menus(void)
 {
+	unsigned long i;
+
 	eof_log("eof_prepare_menus() entered", 2);
+
+	if(eof_song && eof_song_loaded)
+	{	//If a chart is loaded
+		for(i = 0; i < EOF_TRACKS_MAX - 1; i++)
+		{	//For each track supported by EOF
+			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
+			{	//If the track exists, copy its name into the track name string representing this track
+				(void) ustrcpy(eof_menu_track_names[i], eof_song->track[i + 1]->name);
+					//Copy the track name to the menu string
+			}
+			else
+			{	//Write a blank string for the track name
+				(void) ustrcpy(eof_menu_track_names[i],"");
+			}
+		}
+	}
 
 	eof_prepare_main_menu();
 	eof_prepare_beat_menu();
@@ -231,4 +252,9 @@ int eof_popup_dialog(DIALOG * dp, int n)
 	eof_keyboard_shortcut = 0;
 
 	return ret;
+}
+
+int eof_unused_menu_function(void)
+{
+	return 1;
 }

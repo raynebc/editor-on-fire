@@ -4378,11 +4378,19 @@ unsigned long eof_menu_song_compare_difficulties(unsigned long track1, unsigned 
 							{	//And it does not
 								break;	//This tech note fails match, stop processing it
 							}
+							if(tp1->technote[ctr]->note != tp2->technote[ctr3]->note)
+							{	//If the tech notes at this position doesn't apply bend status to the same strings in each track
+								break;	//This tech note fails match, stop processing it
+							}
 						}
 						if(techeflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP)
 						{	//If the tech note needs to apply stop status
 							if(!(tp2->technote[ctr3]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP))
 							{	//And it does not
+								break;	//This tech note fails match, stop processing it
+							}
+							if(tp1->technote[ctr]->note != tp2->technote[ctr3]->note)
+							{	//If the tech notes at this position doesn't apply stop status to the same strings in each track
 								break;	//This tech note fails match, stop processing it
 							}
 						}

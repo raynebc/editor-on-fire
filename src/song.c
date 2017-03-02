@@ -6898,6 +6898,22 @@ unsigned long eof_get_num_popup_messages(EOF_SONG *sp, unsigned long track)
 	return 0;	//Return error
 }
 
+unsigned long eof_get_num_tone_changes(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{
+		return sp->pro_guitar_track[tracknum]->tonechanges;
+	}
+
+	return 0;	//Return error
+}
+
 unsigned long eof_get_num_fret_hand_positions(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum;
@@ -7583,7 +7599,7 @@ int eof_thin_notes_to_match_target_difficulty(EOF_SONG *sp, unsigned long source
 {
 	unsigned long i, match;
 
-	if((sp == NULL) || (sourcetrack >= sp->tracks) || (targettrack >= sp->tracks))
+	if((sp == NULL) || (sourcetrack >= sp->tracks) || (targettrack >= sp->tracks) || (sourcetrack == targettrack))
 		return 0;
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);

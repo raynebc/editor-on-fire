@@ -3096,15 +3096,21 @@ if(eof_key_code == KEY_PAUSE)
 					eof_2d_render_top_option = 9;	//Change it to RS sections + phrases
 				}
 				else
-				{	//Either the last preference in the sequence is being displayed, or none of them are
-					//Reset the sequence by setting the first applicable preference option
+				{
 					if(eof_top_of_2d_pane_cycle_count_2)
-					{	//If user wants to skip displaying chord names via this shortcut
+					{	//If user wants to skip displaying chord names or tone names via this shortcut
 						eof_2d_render_top_option = 7;	//Change it to hand positions
 					}
 					else
 					{
-						eof_2d_render_top_option = 5;	//Change it to chord names
+						if(eof_2d_render_top_option == 9)
+						{	//If RS sections + phrases are being displayed
+							eof_2d_render_top_option = 10;	//Change it to tone changes
+						}
+						else if(eof_2d_render_top_option == 10)
+						{	//If tone changes are being displayed
+							eof_2d_render_top_option = 5;	//Change it to chord names
+						}
 					}
 				}
 			}
@@ -6062,7 +6068,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		}
 	}
 
-	/* draw fret hand positions */
+	/* draw fret hand positions if applicable */
 	if((eof_2d_render_top_option == 7) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 	{	//If the user opted to render fret hand positions at the top of the 2D panel, and this is a pro guitar track
 		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -6081,6 +6087,26 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 					vline(window->screen, xcoord, 25 + 5 + 14, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_red);
 					textprintf_centre_ex(window->screen, eof_font, xcoord , 25 + 5, eof_color_red, eof_color_black, "%lu", tp->handposition[i].end_pos);	//Display it
 				}
+			}
+		}
+	}
+
+	/* draw tone changes if applicable */
+	if((eof_2d_render_top_option == 10) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+	{	//If the user opted to render tone changes at the top of the 2D panel, and this is a pro guitar track
+		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+		EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+		for(i = 0; i < tp->tonechanges; i++)
+		{	//For each tone change in the track
+			xcoord = lpos + tp->tonechange[i].start_pos / eof_zoom;
+			if(xcoord >= window->screen->w)
+			{	//If this tone change would render further right than the right edge of the screen
+				break;	//Skip rendering this and all other tone changes, which would continue to render off screen
+			}
+			if(xcoord >= -25)
+			{	//If the tone change renders close enough to or after the left edge of the screen, consider it visible
+				vline(window->screen, xcoord, 25 + 5 + 14, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_red);
+				textprintf_centre_ex(window->screen, eof_font, xcoord , 25 + 5, eof_color_red, eof_color_black, "%s", tp->tonechange[i].name);	//Display it
 			}
 		}
 	}

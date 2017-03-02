@@ -160,7 +160,7 @@ int         eof_auto_complete_fingering = 1;	//If nonzero, offer to apply specif
 int         eof_dont_auto_name_double_stops = 0;	//If nonzero, the chord detection logic will not name chords that have only two pitches (unique or otherwise)
 int         eof_section_auto_adjust = 1;		//If nonzero, section and FHP positions are updated when all their contained notes are simultaneously moved
 int         eof_technote_auto_adjust = 1;		//If nonzero, tech note positions are updated when all their applicable normal notes are simultaneously moved
-int         eof_top_of_2d_pane_cycle_count_2 = 0;	//If nonzero, the SHIFT+F11 shortcut cycles between just hand positions and RS sections+phrases instead of also including chord names
+int         eof_top_of_2d_pane_cycle_count_2 = 0;	//If nonzero, the SHIFT+F11 shortcut cycles between just hand positions and RS sections+phrases instead of also including chord names and tone changes
 int         eof_rbn_export_slider_hopo = 0;		//If nonzero, notes in slider phrases will be exported to RBN MIDI as forced HOPO notes
 int         eof_db_import_drop_mid_beat_tempos = 0;	//If nonzero, any beats inserted due to mid beat tempo changes during Feedback import are deleted after the import
 int         eof_db_import_suppress_5nc_conversion = 0;	//If nonzero, five note chords are not converted to open notes during Feedback import
@@ -2840,11 +2840,15 @@ void eof_render_note_window(void)
 				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Note = None");
 			}
 
+			//Display some pro guitar note specific items like fretting, chord naming, fingering, note pitches included, fret hand position, tone name
 			tracknum = eof_song->track[eof_selected_track]->tracknum;
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//Display information specific to pro guitar tracks
 				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
-				unsigned char position = eof_pro_guitar_track_find_effective_fret_hand_position(tp, eof_note_type, eof_music_pos - eof_av_delay);	//Find if there's a fret hand position in effect
+				unsigned char position;
+				char fhpstring[25] = {0};
+				unsigned long tone;
+				char tonestring[EOF_SECTION_NAME_LENGTH + 11] = {0};
 
 				if((eof_selection.current < tp->notes) && (eof_selection.track == eof_selected_track))
 				{	//If a note in the active track is selected, display line with its fretting and fingering information
@@ -2916,14 +2920,32 @@ void eof_render_note_window(void)
 				}//If a note in the active track is selected, display a line with its fretting information
 
 				ypos += 12;
+				position = eof_pro_guitar_track_find_effective_fret_hand_position(tp, eof_note_type, eof_music_pos - eof_av_delay);	//Find if there's a fret hand position in effect
 				if(position)
 				{	//If a fret hand position is in effect
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Effective FHP : %u", position);
+					snprintf(fhpstring, sizeof(fhpstring) - 1, "Effective FHP : %u : ", position);
 				}
 				else
 				{
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Effective FHP : None");
+					snprintf(fhpstring, sizeof(fhpstring) - 1, "Effective FHP : None : ");
 				}
+				tone = eof_pro_guitar_track_find_effective_tone(tp, eof_music_pos - eof_av_delay);	//Find if there's a tone change in effect
+				if(tone < EOF_MAX_PHRASES)
+				{	//If a tone change is in effect
+					snprintf(tonestring, sizeof(tonestring) - 1, "Tone : %s", tp->tonechange[tone].name);
+				}
+				else
+				{
+					if(tp->defaulttone[0] != '\0')
+					{	//If a default tone is defined for the track
+						snprintf(tonestring, sizeof(tonestring) - 1, "Tone : (%s)", tp->defaulttone);
+					}
+					else
+					{
+						snprintf(tonestring, sizeof(tonestring) - 1, "Tone : (None)");
+					}
+				}
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s%s", fhpstring, tonestring);
 			}//Display information specific to pro guitar tracks
 			ypos += 12;
 

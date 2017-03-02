@@ -26,43 +26,41 @@ MENU eof_track_phaseshift_menu[] =
 };
 
 
-char eof_menu_thin_diff_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
 MENU eof_menu_thin_diff_menu[EOF_TRACKS_MAX] =
 {
-	{eof_menu_thin_diff_menu_text[0], eof_menu_thin_notes_track_1, NULL, D_SELECTED, NULL},
-	{eof_menu_thin_diff_menu_text[1], eof_menu_thin_notes_track_2, NULL, 0, NULL},
-	{eof_menu_thin_diff_menu_text[2], eof_menu_thin_notes_track_3, NULL, 0, NULL},
-	{eof_menu_thin_diff_menu_text[3], eof_menu_thin_notes_track_4, NULL, 0, NULL},
-	{eof_menu_thin_diff_menu_text[4], eof_menu_thin_notes_track_5, NULL, 0, NULL},
-	{eof_menu_thin_diff_menu_text[5], eof_menu_thin_notes_track_6, NULL, 0, NULL},
-	{eof_menu_thin_diff_menu_text[6], eof_menu_thin_notes_track_7, NULL, 0, NULL},
-	{eof_menu_thin_diff_menu_text[7], eof_menu_thin_notes_track_8, NULL, 0, NULL},
-	{eof_menu_thin_diff_menu_text[8], eof_menu_thin_notes_track_9, NULL, 0, NULL},
-	{eof_menu_thin_diff_menu_text[9], eof_menu_thin_notes_track_10, NULL, 0, NULL},
-	{eof_menu_thin_diff_menu_text[10], eof_menu_thin_notes_track_11, NULL, 0, NULL},
-	{eof_menu_thin_diff_menu_text[11], eof_menu_thin_notes_track_12, NULL, 0, NULL},
-	{eof_menu_thin_diff_menu_text[12], eof_menu_thin_notes_track_13, NULL, 0, NULL},
-	{eof_menu_thin_diff_menu_text[13], eof_menu_thin_notes_track_14, NULL, 0, NULL},
+	{eof_menu_track_names[0], eof_menu_thin_notes_track_1, NULL, D_SELECTED, NULL},
+	{eof_menu_track_names[1], eof_menu_thin_notes_track_2, NULL, 0, NULL},
+	{eof_menu_track_names[2], eof_menu_thin_notes_track_3, NULL, 0, NULL},
+	{eof_menu_track_names[3], eof_menu_thin_notes_track_4, NULL, 0, NULL},
+	{eof_menu_track_names[4], eof_menu_thin_notes_track_5, NULL, 0, NULL},
+	{eof_menu_track_names[5], eof_menu_thin_notes_track_6, NULL, 0, NULL},
+	{eof_menu_track_names[6], eof_menu_thin_notes_track_7, NULL, 0, NULL},
+	{eof_menu_track_names[7], eof_menu_thin_notes_track_8, NULL, 0, NULL},
+	{eof_menu_track_names[8], eof_menu_thin_notes_track_9, NULL, 0, NULL},
+	{eof_menu_track_names[9], eof_menu_thin_notes_track_10, NULL, 0, NULL},
+	{eof_menu_track_names[10], eof_menu_thin_notes_track_11, NULL, 0, NULL},
+	{eof_menu_track_names[11], eof_menu_thin_notes_track_12, NULL, 0, NULL},
+	{eof_menu_track_names[12], eof_menu_thin_notes_track_13, NULL, 0, NULL},
+	{eof_menu_track_names[13], eof_menu_thin_notes_track_14, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
-char eof_menu_track_clone_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
 MENU eof_menu_track_clone_menu[EOF_TRACKS_MAX] =
 {
-	{eof_menu_track_clone_menu_text[0], eof_menu_track_clone_track_1, NULL, D_SELECTED, NULL},
-	{eof_menu_track_clone_menu_text[1], eof_menu_track_clone_track_2, NULL, 0, NULL},
-	{eof_menu_track_clone_menu_text[2], eof_menu_track_clone_track_3, NULL, 0, NULL},
-	{eof_menu_track_clone_menu_text[3], eof_menu_track_clone_track_4, NULL, 0, NULL},
-	{eof_menu_track_clone_menu_text[4], eof_menu_track_clone_track_5, NULL, 0, NULL},
-	{eof_menu_track_clone_menu_text[5], eof_menu_track_clone_track_6, NULL, 0, NULL},
-	{eof_menu_track_clone_menu_text[6], eof_menu_track_clone_track_7, NULL, D_DISABLED, NULL},
-	{eof_menu_track_clone_menu_text[7], eof_menu_track_clone_track_8, NULL, 0, NULL},
-	{eof_menu_track_clone_menu_text[8], eof_menu_track_clone_track_9, NULL, 0, NULL},
-	{eof_menu_track_clone_menu_text[9], eof_menu_track_clone_track_10, NULL, 0, NULL},
-	{eof_menu_track_clone_menu_text[10], eof_menu_track_clone_track_11, NULL, 0, NULL},
-	{eof_menu_track_clone_menu_text[11], eof_menu_track_clone_track_12, NULL, 0, NULL},
-	{eof_menu_track_clone_menu_text[12], eof_menu_track_clone_track_13, NULL, 0, NULL},
-	{eof_menu_track_clone_menu_text[13], eof_menu_track_clone_track_14, NULL, 0, NULL},
+	{eof_menu_track_names[0], eof_menu_track_clone_track_1, NULL, D_SELECTED, NULL},
+	{eof_menu_track_names[1], eof_menu_track_clone_track_2, NULL, 0, NULL},
+	{eof_menu_track_names[2], eof_menu_track_clone_track_3, NULL, 0, NULL},
+	{eof_menu_track_names[3], eof_menu_track_clone_track_4, NULL, 0, NULL},
+	{eof_menu_track_names[4], eof_menu_track_clone_track_5, NULL, 0, NULL},
+	{eof_menu_track_names[5], eof_menu_track_clone_track_6, NULL, 0, NULL},
+	{eof_menu_track_names[6], eof_menu_track_clone_track_7, NULL, D_DISABLED, NULL},
+	{eof_menu_track_names[7], eof_menu_track_clone_track_8, NULL, 0, NULL},
+	{eof_menu_track_names[8], eof_menu_track_clone_track_9, NULL, 0, NULL},
+	{eof_menu_track_names[9], eof_menu_track_clone_track_10, NULL, 0, NULL},
+	{eof_menu_track_names[10], eof_menu_track_clone_track_11, NULL, 0, NULL},
+	{eof_menu_track_names[11], eof_menu_track_clone_track_12, NULL, 0, NULL},
+	{eof_menu_track_names[12], eof_menu_track_clone_track_13, NULL, 0, NULL},
+	{eof_menu_track_names[13], eof_menu_track_clone_track_14, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -212,18 +210,21 @@ void eof_prepare_track_menu(void)
 		for(i = 0; i < EOF_TRACKS_MAX; i++)
 		{	//For each track supported by EOF
 			eof_menu_track_rocksmith_popup_copy_menu[i].flags = 0;
-			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
-			{	//If the track exists, copy its name into the string used by the track menu
-				(void) ustrcpy(eof_menu_track_rocksmith_popup_copy_menu_text[i], eof_song->track[i + 1]->name);
-					//Copy the track name to the menu string
-			}
-			else
-			{	//Write a blank string for the track name
-				(void) ustrcpy(eof_menu_track_rocksmith_popup_copy_menu_text[i],"");
-			}
+
 			if(!eof_get_num_popup_messages(eof_song, i + 1) || (i + 1 == eof_selected_track))
 			{	//If the track has no popup messages or is the active track
 				eof_menu_track_rocksmith_popup_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
+			}
+		}
+
+		/* tone changes copy from */
+		for(i = 0; i < EOF_TRACKS_MAX; i++)
+		{	//For each track supported by EOF
+			eof_menu_track_rocksmith_tone_change_copy_menu[i].flags = 0;
+
+			if(!eof_get_num_tone_changes(eof_song, i + 1) || (i + 1 == eof_selected_track))
+			{	//If the track has no popup messages or is the active track
+				eof_menu_track_rocksmith_tone_change_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
 			}
 		}
 
@@ -231,21 +232,16 @@ void eof_prepare_track_menu(void)
 		for(i = 0; i < EOF_TRACKS_MAX; i++)
 		{	//For each track supported by EOF
 			eof_menu_thin_diff_menu[i].flags = D_DISABLED;
-			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
-			{	//If the track exists, copy its name into the string used by the track menu
-				(void) ustrcpy(eof_menu_thin_diff_menu_text[i], eof_song->track[i + 1]->name);
-					//Copy the track name to the menu string
-			}
-			else
-			{	//Write a blank string for the track name
-				(void) ustrcpy(eof_menu_thin_diff_menu_text[i],"");
-			}
-			for(j = 0; j < eof_get_track_size(eof_song, i + 1); j++)
-			{	//For each note in the track
-				if(eof_get_note_type(eof_song,i + 1, j) == eof_note_type)
-				{	//If the note is in the active track's difficulty
-					eof_menu_thin_diff_menu[i].flags = 0;	//Enable the track from the submenu
-					break;
+
+			if(i + 1 != eof_selected_track)
+			{	//If the track isn't the active track
+				for(j = 0; j < eof_get_track_size(eof_song, i + 1); j++)
+				{	//For each note in the track
+					if(eof_get_note_type(eof_song, i + 1, j) == eof_note_type)
+					{	//If the note is in the active track's difficulty
+						eof_menu_thin_diff_menu[i].flags = 0;	//Enable the track from the submenu
+						break;
+					}
 				}
 			}
 		}
@@ -254,15 +250,6 @@ void eof_prepare_track_menu(void)
 		for(i = 0; i < EOF_TRACKS_MAX - 1; i++)
 		{	//For each track supported by EOF
 			eof_menu_track_clone_menu[i].flags = D_DISABLED;
-			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
-			{	//If the track exists, copy its name into the string used by the track menu
-				(void) ustrcpy(eof_menu_track_clone_menu_text[i], eof_song->track[i + 1]->name);
-					//Copy the track name to the menu string
-			}
-			else
-			{	//Write a blank string for the track name
-				(void) ustrcpy(eof_menu_track_clone_menu_text[i],"");
-			}
 
 			if(i + 1 == EOF_TRACK_VOCALS)
 				continue;	//This function cannot be used with the vocal track since there isn't a second such track
@@ -2047,31 +2034,50 @@ MENU eof_track_proguitar_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_menu_track_rocksmith_tone_change_copy_menu[EOF_TRACKS_MAX] =
+{
+	{eof_menu_track_names[0], eof_unused_menu_function, NULL, D_SELECTED, NULL},
+	{eof_menu_track_names[1], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[2], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[3], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[4], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[5], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[6], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[7], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[8], eof_menu_track_copy_tone_changes_track_9, NULL, 0, NULL},
+	{eof_menu_track_names[9], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[10], eof_menu_track_copy_tone_changes_track_11, NULL, 0, NULL},
+	{eof_menu_track_names[11], eof_menu_track_copy_tone_changes_track_12, NULL, 0, NULL},
+	{eof_menu_track_names[12], eof_menu_track_copy_tone_changes_track_13, NULL, 0, NULL},
+	{eof_menu_track_names[13], eof_menu_track_copy_tone_changes_track_14, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_track_rocksmith_tone_change_menu[] =
 {
 	{"&Add\t" CTRL_NAME "+Shift+T", eof_track_rs_tone_change_add, NULL, 0, NULL},
 	{"&List", eof_track_rs_tone_changes, NULL, 0, NULL},
 	{"&Names", eof_track_rs_tone_names, NULL, 0, NULL},
+	{"&Copy From", NULL, eof_menu_track_rocksmith_tone_change_copy_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
-char eof_menu_track_rocksmith_popup_copy_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
 MENU eof_menu_track_rocksmith_popup_copy_menu[EOF_TRACKS_MAX] =
 {
-	{eof_menu_track_rocksmith_popup_copy_menu_text[0], eof_menu_track_copy_popups_track_1, NULL, D_SELECTED, NULL},
-	{eof_menu_track_rocksmith_popup_copy_menu_text[1], eof_menu_track_copy_popups_track_2, NULL, 0, NULL},
-	{eof_menu_track_rocksmith_popup_copy_menu_text[2], eof_menu_track_copy_popups_track_3, NULL, 0, NULL},
-	{eof_menu_track_rocksmith_popup_copy_menu_text[3], eof_menu_track_copy_popups_track_4, NULL, 0, NULL},
-	{eof_menu_track_rocksmith_popup_copy_menu_text[4], eof_menu_track_copy_popups_track_5, NULL, 0, NULL},
-	{eof_menu_track_rocksmith_popup_copy_menu_text[5], eof_menu_track_copy_popups_track_6, NULL, 0, NULL},
-	{eof_menu_track_rocksmith_popup_copy_menu_text[6], eof_menu_track_copy_popups_track_7, NULL, 0, NULL},
-	{eof_menu_track_rocksmith_popup_copy_menu_text[7], eof_menu_track_copy_popups_track_8, NULL, 0, NULL},
-	{eof_menu_track_rocksmith_popup_copy_menu_text[8], eof_menu_track_copy_popups_track_9, NULL, 0, NULL},
-	{eof_menu_track_rocksmith_popup_copy_menu_text[9], eof_menu_track_copy_popups_track_10, NULL, 0, NULL},
-	{eof_menu_track_rocksmith_popup_copy_menu_text[10], eof_menu_track_copy_popups_track_11, NULL, 0, NULL},
-	{eof_menu_track_rocksmith_popup_copy_menu_text[11], eof_menu_track_copy_popups_track_12, NULL, 0, NULL},
-	{eof_menu_track_rocksmith_popup_copy_menu_text[12], eof_menu_track_copy_popups_track_13, NULL, 0, NULL},
-	{eof_menu_track_rocksmith_popup_copy_menu_text[13], eof_menu_track_copy_popups_track_14, NULL, 0, NULL},
+	{eof_menu_track_names[0], eof_unused_menu_function, NULL, D_SELECTED, NULL},
+	{eof_menu_track_names[1], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[2], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[3], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[4], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[5], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[6], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[7], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[8], eof_menu_track_copy_popups_track_9, NULL, 0, NULL},
+	{eof_menu_track_names[9], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[10], eof_menu_track_copy_popups_track_11, NULL, 0, NULL},
+	{eof_menu_track_names[11], eof_menu_track_copy_popups_track_12, NULL, 0, NULL},
+	{eof_menu_track_names[12], eof_menu_track_copy_popups_track_13, NULL, 0, NULL},
+	{eof_menu_track_names[13], eof_menu_track_copy_popups_track_14, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -3085,9 +3091,10 @@ DIALOG eof_track_rs_tone_changes_dialog[] =
 	{ d_agup_list_proc,  12,  84,  300, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_track_rs_tone_changes_list,NULL, NULL },
 	{ d_agup_push_proc,  320, 84,  68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, (void *)eof_track_rs_tone_changes_delete },
 	{ d_agup_push_proc,  320, 124, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete all",   NULL, (void *)eof_track_rs_tone_changes_delete_all },
-	{ d_agup_push_proc,  320, 164, 68,  28,  2,   23,  's',  D_EXIT, 0,   0,   "&Seek to",     NULL, (void *)eof_track_rs_tone_changes_seek },
-	{ d_agup_push_proc,  320, 204, 68,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",        NULL, (void *)eof_track_rs_tone_changes_edit },
-	{ d_agup_button_proc,12,  245, 90,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
+	{ d_agup_button_proc,320, 164, 68,  28,  2,   23,  'n',  D_EXIT, 0,   0,   "&Names",       NULL, NULL },
+	{ d_agup_push_proc,  320, 204, 68,  28,  2,   23,  's',  D_EXIT, 0,   0,   "&Seek to",     NULL, (void *)eof_track_rs_tone_changes_seek },
+	{ d_agup_push_proc,  320, 244, 68,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",        NULL, (void *)eof_track_rs_tone_changes_edit },
+	{ d_agup_button_proc,12,  244, 90,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -3184,6 +3191,7 @@ int eof_track_rs_tone_changes(void)
 {
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned long tracknum, ctr, tonechange = 0;
+	int retval;
 
 	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return 1;	//Do not allow this function to run if a pro guitar track isn't active
@@ -3204,7 +3212,7 @@ int eof_track_rs_tone_changes(void)
 	eof_track_rs_tone_changes_dialog_undo_made = 0;	//Reset this condition
 	eof_color_dialog(eof_track_rs_tone_changes_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_track_rs_tone_changes_dialog);
-	(void) eof_popup_dialog(eof_track_rs_tone_changes_dialog, 1);
+	retval = eof_popup_dialog(eof_track_rs_tone_changes_dialog, 1);
 
 	//Cleanup
 	for(ctr = 0; ctr < tp->tonechanges; ctr++)
@@ -3213,6 +3221,12 @@ int eof_track_rs_tone_changes(void)
 	}
 	free(eof_track_rs_tone_changes_list_strings);
 	eof_track_rs_tone_changes_list_strings = NULL;
+
+	//Switch to tone name dialog if necessary
+	if(retval == 4)
+	{	//If the user clicked the Names button
+		return eof_track_rs_tone_names();	//Call the Rocksmith Tone Names dialog
+	}
 
 	return 1;
 }
@@ -3290,8 +3304,8 @@ int eof_track_rs_tone_changes_delete(DIALOG * d)
 		}
 	}
 
-	//Rebuild the strings for the dialog menu
-	eof_track_rebuild_rs_tone_changes_list_strings();
+	eof_render();	//Redraw screen
+	eof_track_rebuild_rs_tone_changes_list_strings();	//Rebuild the strings for the dialog menu
 
 	return D_REDRAW;	//Have Allegro redraw the dialog
 }
@@ -3348,6 +3362,8 @@ int eof_track_rs_tone_changes_edit(DIALOG * d)
 	free(eof_track_rs_tone_changes_list_strings);
 	eof_track_rs_tone_changes_list_strings = NULL;
 
+	eof_render();	//Redraw screen
+
 	//Rebuild the strings for the dialog menu
 	eof_track_rebuild_rs_tone_changes_list_strings();
 
@@ -3384,6 +3400,7 @@ int eof_track_rs_tone_changes_delete_all(DIALOG * d)
 	}
 	tp->defaulttone[0] = '\0';	//Truncate the default tone string since no tone changes exist anymore
 
+	eof_render();	//Redraw screen
 	(void) dialog_message(eof_track_rs_tone_changes_dialog, MSG_START, 0, &junk);	//Re-initialize the dialog
 	(void) dialog_message(eof_track_rs_tone_changes_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
 	return D_REDRAW;
@@ -3429,6 +3446,7 @@ DIALOG eof_track_rs_tone_names_dialog[] =
 	{ d_agup_list_proc,  12,  84,  300, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_track_rs_tone_names_list,NULL, NULL },
 	{ d_agup_push_proc,  320, 84,  68,  28,  2,   23,  'd',  D_EXIT, 0,   0,   "&Default",     NULL, (void *)eof_track_rs_tone_names_default },
 	{ d_agup_push_proc,  320, 124, 68,  28,  2,   23,  'r',  D_EXIT, 0,   0,   "&Rename",      NULL, (void *)eof_track_rs_tone_names_rename },
+	{ d_agup_button_proc,320, 165, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "&List",        NULL, NULL },
 	{ d_agup_button_proc,12,  245, 90,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
@@ -3566,6 +3584,7 @@ int eof_track_rs_tone_names(void)
 {
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned long tracknum;
+	int retval;
 
 	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return 1;	//Do not allow this function to run if a pro guitar track isn't active
@@ -3582,10 +3601,16 @@ int eof_track_rs_tone_names(void)
 	eof_track_rs_tone_names_dialog_undo_made = 0;	//Reset this condition
 	eof_color_dialog(eof_track_rs_tone_names_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_track_rs_tone_names_dialog);
-	(void) eof_popup_dialog(eof_track_rs_tone_names_dialog, 1);
+	retval = eof_popup_dialog(eof_track_rs_tone_names_dialog, 1);
 
 	//Cleanup
 	eof_track_destroy_rs_tone_names_list_strings();
+
+	//Switch to tone list dialog if necessary
+	if(retval == 4)
+	{	//If the user clicked the List button
+		return eof_track_rs_tone_changes();	//Call the Rocksmith Tone Changes dialog
+	}
 
 	return 1;
 }
@@ -3688,6 +3713,8 @@ int eof_track_rs_tone_names_rename(DIALOG * d)
 		}
 	}
 
+	eof_render();	//Redraw screen
+
 	//Release the tone name strings showing the (D) suffix for the default tone
 	eof_track_destroy_rs_tone_names_list_strings();
 	eof_track_rebuild_rs_tone_names_list_strings(eof_selected_track, 1);
@@ -3695,54 +3722,62 @@ int eof_track_rs_tone_names_rename(DIALOG * d)
 	return D_REDRAW;	//Have Allegro redraw the dialog
 }
 
-int eof_menu_track_copy_popups_track_1(void)
+int eof_menu_track_copy_tone_changes_track_9(void)
 {
-	return eof_menu_track_copy_popups_track_number(eof_song, 1, eof_selected_track);
+	return eof_menu_track_copy_tone_changes_track_number(eof_song, 9, eof_selected_track);
 }
 
-int eof_menu_track_copy_popups_track_2(void)
+int eof_menu_track_copy_tone_changes_track_11(void)
 {
-	return eof_menu_track_copy_popups_track_number(eof_song, 2, eof_selected_track);
+	return eof_menu_track_copy_tone_changes_track_number(eof_song, 11, eof_selected_track);
 }
 
-int eof_menu_track_copy_popups_track_3(void)
+int eof_menu_track_copy_tone_changes_track_12(void)
 {
-	return eof_menu_track_copy_popups_track_number(eof_song, 3, eof_selected_track);
+	return eof_menu_track_copy_tone_changes_track_number(eof_song, 12, eof_selected_track);
 }
 
-int eof_menu_track_copy_popups_track_4(void)
+int eof_menu_track_copy_tone_changes_track_13(void)
 {
-	return eof_menu_track_copy_popups_track_number(eof_song, 4, eof_selected_track);
+	return eof_menu_track_copy_tone_changes_track_number(eof_song, 13, eof_selected_track);
 }
 
-int eof_menu_track_copy_popups_track_5(void)
+int eof_menu_track_copy_tone_changes_track_14(void)
 {
-	return eof_menu_track_copy_popups_track_number(eof_song, 5, eof_selected_track);
+	return eof_menu_track_copy_tone_changes_track_number(eof_song, 14, eof_selected_track);
 }
 
-int eof_menu_track_copy_popups_track_6(void)
+int eof_menu_track_copy_tone_changes_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
 {
-	return eof_menu_track_copy_popups_track_number(eof_song, 6, eof_selected_track);
-}
+	EOF_PRO_GUITAR_TRACK *stp, *dtp;
 
-int eof_menu_track_copy_popups_track_7(void)
-{
-	return eof_menu_track_copy_popups_track_number(eof_song, 7, eof_selected_track);
-}
+	if(!sp || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcetrack == desttrack))
+		return 0;	//Invalid parameters
+	if((sp->track[sourcetrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || (sp->track[desttrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return 0;	//Invalid parameters
 
-int eof_menu_track_copy_popups_track_8(void)
-{
-	return eof_menu_track_copy_popups_track_number(eof_song, 8, eof_selected_track);
+	stp = sp->pro_guitar_track[sp->track[sourcetrack]->tracknum];
+	dtp = sp->pro_guitar_track[sp->track[desttrack]->tracknum];
+	if(dtp->tonechanges)
+	{	//If there are already tone changes in the destination track
+		eof_clear_input();
+		if(alert(NULL, "Warning:  Existing tone changes in this track will be lost.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+		{	//If the user does not opt to continue
+			return 0;
+		}
+	}
+
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	dtp->tonechanges = stp->tonechanges;
+	memcpy(dtp->tonechange, stp->tonechange, sizeof(stp->tonechange));
+	memcpy(dtp->defaulttone, stp->defaulttone, sizeof(stp->defaulttone));
+
+	return 1;	//Return completion
 }
 
 int eof_menu_track_copy_popups_track_9(void)
 {
 	return eof_menu_track_copy_popups_track_number(eof_song, 9, eof_selected_track);
-}
-
-int eof_menu_track_copy_popups_track_10(void)
-{
-	return eof_menu_track_copy_popups_track_number(eof_song, 10, eof_selected_track);
 }
 
 int eof_menu_track_copy_popups_track_11(void)
@@ -3779,7 +3814,7 @@ int eof_menu_track_copy_popups_track_number(EOF_SONG *sp, unsigned long sourcetr
 	stp = sp->pro_guitar_track[sp->track[sourcetrack]->tracknum];
 	dtp = sp->pro_guitar_track[sp->track[desttrack]->tracknum];
 	if(dtp->popupmessages)
-	{	//If there are already hand positions in the destination track
+	{	//If there are already popup messages in the destination track
 		eof_clear_input();
 		if(alert(NULL, "Warning:  Existing popup messages in this track will be lost.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user does not opt to continue
@@ -4285,16 +4320,36 @@ int eof_menu_track_repair_grid_snap(void)
 	{	//If any notes were moved
 		char *plural = "s";
 		char *singular = "";
+		char *verbplural = "were";
+		char *verbsingular = "was";
 		char *countplurality = plural;
 		char *tncountplurality = plural;
+		char *verbplurality = verbplural;
 
 		if(count == 1)
+		{
 			countplurality = singular;
+			verbplurality = verbsingular;
+		}
 		if(tncount == 1)
 			tncountplurality = singular;
 
 		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Update highlighting
-		allegro_message("%lu note%s and %lu tech note%s were moved.", count, countplurality, tncount, tncountplurality);
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If a pro guitar track is active
+			if(eof_technote_auto_adjust)
+			{	//If the "Auto-adjust tech notes" preference is enabled
+				allegro_message("%lu note%s and %lu tech note%s were moved.", count, countplurality, tncount, tncountplurality);
+			}
+			else
+			{
+				allegro_message("%lu note%s %s moved.  Auto-adjustment of tech notes (in File>Preferences>Preferences) is not currently enabled.", count, countplurality, verbplurality);
+			}
+		}
+		else
+		{
+			allegro_message("%lu note%s %s moved.", count, countplurality, verbplurality);
+		}
 	}
 
 	return 1;

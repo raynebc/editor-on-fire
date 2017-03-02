@@ -2,6 +2,7 @@
 #define EOF_DIALOG_H
 
 #include <allegro.h>
+#include "song.h"
 
 #ifdef ALLEGRO_WINDOWS
 	#define EOF_LINUX_DISABLE 0
@@ -19,6 +20,7 @@ extern char eof_etext7[1024];
 extern char eof_etext8[1024];
 extern char *eof_help_text;
 extern char eof_ctext[13][1024];
+extern char eof_menu_track_names[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE];
 
 extern int eof_close_menu;	//Set to nonzero to signal to eof_popup_dialog() that the menus should be closed
 
@@ -36,5 +38,7 @@ int eof_popup_dialog(DIALOG * dp, int n);
 	//Opens the dialog menu, giving focus to object #n and returns the activated item number
 	//If the user cancels with the escape key, the return value may indicate whatever dialog item had focus as of when escape was pressed
 void eof_color_dialog(DIALOG * dp, int fg, int bg);	//Applies the global foreground and background colors to the dialog
+
+int eof_unused_menu_function(void);	//A function that can be put into a dialog menu when the function will not be used (ie. copy from submenus that are pro guitar specific)
 
 #endif

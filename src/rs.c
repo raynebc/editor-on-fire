@@ -3944,6 +3944,29 @@ EOF_PHRASE_SECTION *eof_pro_guitar_track_find_effective_fret_hand_position_defin
 	return ptr;	//Return any hand position address that has been found
 }
 
+unsigned long eof_pro_guitar_track_find_effective_tone(EOF_PRO_GUITAR_TRACK *tp, unsigned long position)
+{
+	unsigned long ctr;
+	unsigned long effective = EOF_MAX_PHRASES;
+
+	if(!tp)
+		return EOF_MAX_PHRASES;	//Return error
+
+	for(ctr = 0; ctr < tp->tonechanges; ctr++)
+	{	//For each tone change in the track
+		if(tp->tonechange[ctr].start_pos <= position)
+		{	//If the tone change is at or before the specified timestamp
+			effective = ctr;	//Track its index
+		}
+		else
+		{	//This tone change is beyond the specified timestamp
+			return effective;	//Return the last tone change that was found (if any)
+		}
+	}
+
+	return effective;	//Return the last hand position definition that was found (if any)
+}
+
 char *eof_rs_section_text_valid(char *string)
 {
 	unsigned long ctr;

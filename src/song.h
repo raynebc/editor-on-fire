@@ -677,6 +677,7 @@ unsigned long eof_get_num_arpeggios(EOF_SONG *sp, unsigned long track);		//Retur
 EOF_PHRASE_SECTION *eof_get_arpeggio(EOF_SONG *sp, unsigned long track, unsigned long index);	//Returns a pointer to the specified arpeggio phrase, or NULL on error
 void eof_set_num_arpeggios(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of arpeggio phrases in the specified track
 unsigned long eof_get_num_popup_messages(EOF_SONG *sp, unsigned long track);			//Returns the number of popup messages in the specified track, or 0 on error
+unsigned long eof_get_num_tone_changes(EOF_SONG *sp, unsigned long track);				//Returns the number of tone changes in the specified track, or 0 on error
 unsigned long eof_get_num_fret_hand_positions(EOF_SONG *sp, unsigned long track);		//Returns the number of fret hand positions in the specified track, or 0 on error
 EOF_PHRASE_SECTION *eof_get_fret_hand_position(EOF_SONG *sp, unsigned long track, unsigned long index);	//Returns a pointer to the specified fret hand position, or NULL on error
 void eof_set_num_fret_hand_positions(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of fret hand positions in the specified track

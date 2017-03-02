@@ -147,7 +147,7 @@ void eof_load_config(char * fn)
 	eof_stop_playback_leave_focus = get_config_int("preferences", "eof_stop_playback_leave_focus", 1);
 	enable_logging = get_config_int("preferences", "enable_logging", 1);
 	eof_2d_render_top_option = get_config_int("preferences", "eof_2d_render_top_option", 5);
-	if((eof_2d_render_top_option < 5) || (eof_2d_render_top_option > 9))
+	if((eof_2d_render_top_option < 5) || (eof_2d_render_top_option > 10))
 	{	//If eof_2d_render_top_option is invalid
 		eof_2d_render_top_option = 5;	//Reset to default of displaying note names
 	}

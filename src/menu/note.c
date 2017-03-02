@@ -30,23 +30,22 @@ char eof_slider_menu_mark_text[32] = "&Mark";
 char eof_trill_menu_text[32] = "Tr&Ill";
 char eof_tremolo_menu_text[32] = "Tre&Molo";
 
-char eof_menu_solo_copy_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
 MENU eof_menu_solo_copy_menu[EOF_TRACKS_MAX] =
 {
-	{eof_menu_solo_copy_menu_text[0], eof_menu_copy_solos_track_1, NULL, D_SELECTED, NULL},
-	{eof_menu_solo_copy_menu_text[1], eof_menu_copy_solos_track_2, NULL, 0, NULL},
-	{eof_menu_solo_copy_menu_text[2], eof_menu_copy_solos_track_3, NULL, 0, NULL},
-	{eof_menu_solo_copy_menu_text[3], eof_menu_copy_solos_track_4, NULL, 0, NULL},
-	{eof_menu_solo_copy_menu_text[4], eof_menu_copy_solos_track_5, NULL, 0, NULL},
-	{eof_menu_solo_copy_menu_text[5], eof_menu_copy_solos_track_6, NULL, 0, NULL},
-	{eof_menu_solo_copy_menu_text[6], eof_menu_copy_solos_track_7, NULL, 0, NULL},
-	{eof_menu_solo_copy_menu_text[7], eof_menu_copy_solos_track_8, NULL, 0, NULL},
-	{eof_menu_solo_copy_menu_text[8], eof_menu_copy_solos_track_9, NULL, 0, NULL},
-	{eof_menu_solo_copy_menu_text[9], eof_menu_copy_solos_track_10, NULL, 0, NULL},
-	{eof_menu_solo_copy_menu_text[10], eof_menu_copy_solos_track_11, NULL, 0, NULL},
-	{eof_menu_solo_copy_menu_text[11], eof_menu_copy_solos_track_12, NULL, 0, NULL},
-	{eof_menu_solo_copy_menu_text[12], eof_menu_copy_solos_track_13, NULL, 0, NULL},
-	{eof_menu_solo_copy_menu_text[13], eof_menu_copy_solos_track_14, NULL, 0, NULL},
+	{eof_menu_track_names[0], eof_menu_copy_solos_track_1, NULL, D_SELECTED, NULL},
+	{eof_menu_track_names[1], eof_menu_copy_solos_track_2, NULL, 0, NULL},
+	{eof_menu_track_names[2], eof_menu_copy_solos_track_3, NULL, 0, NULL},
+	{eof_menu_track_names[3], eof_menu_copy_solos_track_4, NULL, 0, NULL},
+	{eof_menu_track_names[4], eof_menu_copy_solos_track_5, NULL, 0, NULL},
+	{eof_menu_track_names[5], eof_menu_copy_solos_track_6, NULL, 0, NULL},
+	{eof_menu_track_names[6], eof_menu_copy_solos_track_7, NULL, 0, NULL},
+	{eof_menu_track_names[7], eof_menu_copy_solos_track_8, NULL, 0, NULL},
+	{eof_menu_track_names[8], eof_menu_copy_solos_track_9, NULL, 0, NULL},
+	{eof_menu_track_names[9], eof_menu_copy_solos_track_10, NULL, 0, NULL},
+	{eof_menu_track_names[10], eof_menu_copy_solos_track_11, NULL, 0, NULL},
+	{eof_menu_track_names[11], eof_menu_copy_solos_track_12, NULL, 0, NULL},
+	{eof_menu_track_names[12], eof_menu_copy_solos_track_13, NULL, 0, NULL},
+	{eof_menu_track_names[13], eof_menu_copy_solos_track_14, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -59,23 +58,22 @@ MENU eof_solo_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
-char eof_menu_sp_copy_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
 MENU eof_menu_sp_copy_menu[EOF_TRACKS_MAX] =
 {
-	{eof_menu_sp_copy_menu_text[0], eof_menu_copy_sp_track_1, NULL, D_SELECTED, NULL},
-	{eof_menu_sp_copy_menu_text[1], eof_menu_copy_sp_track_2, NULL, 0, NULL},
-	{eof_menu_sp_copy_menu_text[2], eof_menu_copy_sp_track_3, NULL, 0, NULL},
-	{eof_menu_sp_copy_menu_text[3], eof_menu_copy_sp_track_4, NULL, 0, NULL},
-	{eof_menu_sp_copy_menu_text[4], eof_menu_copy_sp_track_5, NULL, 0, NULL},
-	{eof_menu_sp_copy_menu_text[5], eof_menu_copy_sp_track_6, NULL, 0, NULL},
-	{eof_menu_sp_copy_menu_text[6], eof_menu_copy_sp_track_7, NULL, 0, NULL},
-	{eof_menu_sp_copy_menu_text[7], eof_menu_copy_sp_track_8, NULL, 0, NULL},
-	{eof_menu_sp_copy_menu_text[8], eof_menu_copy_sp_track_9, NULL, 0, NULL},
-	{eof_menu_sp_copy_menu_text[9], eof_menu_copy_sp_track_10, NULL, 0, NULL},
-	{eof_menu_sp_copy_menu_text[10], eof_menu_copy_sp_track_11, NULL, 0, NULL},
-	{eof_menu_sp_copy_menu_text[11], eof_menu_copy_sp_track_12, NULL, 0, NULL},
-	{eof_menu_sp_copy_menu_text[12], eof_menu_copy_sp_track_13, NULL, 0, NULL},
-	{eof_menu_sp_copy_menu_text[13], eof_menu_copy_sp_track_14, NULL, 0, NULL},
+	{eof_menu_track_names[0], eof_menu_copy_sp_track_1, NULL, D_SELECTED, NULL},
+	{eof_menu_track_names[1], eof_menu_copy_sp_track_2, NULL, 0, NULL},
+	{eof_menu_track_names[2], eof_menu_copy_sp_track_3, NULL, 0, NULL},
+	{eof_menu_track_names[3], eof_menu_copy_sp_track_4, NULL, 0, NULL},
+	{eof_menu_track_names[4], eof_menu_copy_sp_track_5, NULL, 0, NULL},
+	{eof_menu_track_names[5], eof_menu_copy_sp_track_6, NULL, 0, NULL},
+	{eof_menu_track_names[6], eof_menu_copy_sp_track_7, NULL, 0, NULL},
+	{eof_menu_track_names[7], eof_menu_copy_sp_track_8, NULL, 0, NULL},
+	{eof_menu_track_names[8], eof_menu_copy_sp_track_9, NULL, 0, NULL},
+	{eof_menu_track_names[9], eof_menu_copy_sp_track_10, NULL, 0, NULL},
+	{eof_menu_track_names[10], eof_menu_copy_sp_track_11, NULL, 0, NULL},
+	{eof_menu_track_names[11], eof_menu_copy_sp_track_12, NULL, 0, NULL},
+	{eof_menu_track_names[12], eof_menu_copy_sp_track_13, NULL, 0, NULL},
+	{eof_menu_track_names[13], eof_menu_copy_sp_track_14, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -105,23 +103,22 @@ MENU eof_lyric_line_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
-char eof_menu_arpeggio_copy_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
 MENU eof_menu_arpeggio_copy_menu[EOF_TRACKS_MAX] =
 {
-	{eof_menu_arpeggio_copy_menu_text[0], eof_menu_copy_arpeggio_track_1, NULL, D_SELECTED, NULL},
-	{eof_menu_arpeggio_copy_menu_text[1], eof_menu_copy_arpeggio_track_2, NULL, 0, NULL},
-	{eof_menu_arpeggio_copy_menu_text[2], eof_menu_copy_arpeggio_track_3, NULL, 0, NULL},
-	{eof_menu_arpeggio_copy_menu_text[3], eof_menu_copy_arpeggio_track_4, NULL, 0, NULL},
-	{eof_menu_arpeggio_copy_menu_text[4], eof_menu_copy_arpeggio_track_5, NULL, 0, NULL},
-	{eof_menu_arpeggio_copy_menu_text[5], eof_menu_copy_arpeggio_track_6, NULL, 0, NULL},
-	{eof_menu_arpeggio_copy_menu_text[6], eof_menu_copy_arpeggio_track_7, NULL, 0, NULL},
-	{eof_menu_arpeggio_copy_menu_text[7], eof_menu_copy_arpeggio_track_8, NULL, 0, NULL},
-	{eof_menu_arpeggio_copy_menu_text[8], eof_menu_copy_arpeggio_track_9, NULL, 0, NULL},
-	{eof_menu_arpeggio_copy_menu_text[9], eof_menu_copy_arpeggio_track_10, NULL, 0, NULL},
-	{eof_menu_arpeggio_copy_menu_text[10], eof_menu_copy_arpeggio_track_11, NULL, 0, NULL},
-	{eof_menu_arpeggio_copy_menu_text[11], eof_menu_copy_arpeggio_track_12, NULL, 0, NULL},
-	{eof_menu_arpeggio_copy_menu_text[12], eof_menu_copy_arpeggio_track_13, NULL, 0, NULL},
-	{eof_menu_arpeggio_copy_menu_text[13], eof_menu_copy_arpeggio_track_14, NULL, 0, NULL},
+	{eof_menu_track_names[0], eof_menu_copy_arpeggio_track_1, NULL, D_SELECTED, NULL},
+	{eof_menu_track_names[1], eof_menu_copy_arpeggio_track_2, NULL, 0, NULL},
+	{eof_menu_track_names[2], eof_menu_copy_arpeggio_track_3, NULL, 0, NULL},
+	{eof_menu_track_names[3], eof_menu_copy_arpeggio_track_4, NULL, 0, NULL},
+	{eof_menu_track_names[4], eof_menu_copy_arpeggio_track_5, NULL, 0, NULL},
+	{eof_menu_track_names[5], eof_menu_copy_arpeggio_track_6, NULL, 0, NULL},
+	{eof_menu_track_names[6], eof_menu_copy_arpeggio_track_7, NULL, 0, NULL},
+	{eof_menu_track_names[7], eof_menu_copy_arpeggio_track_8, NULL, 0, NULL},
+	{eof_menu_track_names[8], eof_menu_copy_arpeggio_track_9, NULL, 0, NULL},
+	{eof_menu_track_names[9], eof_menu_copy_arpeggio_track_10, NULL, 0, NULL},
+	{eof_menu_track_names[10], eof_menu_copy_arpeggio_track_11, NULL, 0, NULL},
+	{eof_menu_track_names[11], eof_menu_copy_arpeggio_track_12, NULL, 0, NULL},
+	{eof_menu_track_names[12], eof_menu_copy_arpeggio_track_13, NULL, 0, NULL},
+	{eof_menu_track_names[13], eof_menu_copy_arpeggio_track_14, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -163,23 +160,22 @@ MENU eof_pro_guitar_strum_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
-char eof_menu_trill_copy_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
 MENU eof_menu_trill_copy_menu[EOF_TRACKS_MAX] =
 {
-	{eof_menu_trill_copy_menu_text[0], eof_menu_copy_trill_track_1, NULL, D_SELECTED, NULL},
-	{eof_menu_trill_copy_menu_text[1], eof_menu_copy_trill_track_2, NULL, 0, NULL},
-	{eof_menu_trill_copy_menu_text[2], eof_menu_copy_trill_track_3, NULL, 0, NULL},
-	{eof_menu_trill_copy_menu_text[3], eof_menu_copy_trill_track_4, NULL, 0, NULL},
-	{eof_menu_trill_copy_menu_text[4], eof_menu_copy_trill_track_5, NULL, 0, NULL},
-	{eof_menu_trill_copy_menu_text[5], eof_menu_copy_trill_track_6, NULL, 0, NULL},
-	{eof_menu_trill_copy_menu_text[6], eof_menu_copy_trill_track_7, NULL, 0, NULL},
-	{eof_menu_trill_copy_menu_text[7], eof_menu_copy_trill_track_8, NULL, 0, NULL},
-	{eof_menu_trill_copy_menu_text[8], eof_menu_copy_trill_track_9, NULL, 0, NULL},
-	{eof_menu_trill_copy_menu_text[9], eof_menu_copy_trill_track_10, NULL, 0, NULL},
-	{eof_menu_trill_copy_menu_text[10], eof_menu_copy_trill_track_11, NULL, 0, NULL},
-	{eof_menu_trill_copy_menu_text[11], eof_menu_copy_trill_track_12, NULL, 0, NULL},
-	{eof_menu_trill_copy_menu_text[12], eof_menu_copy_trill_track_13, NULL, 0, NULL},
-	{eof_menu_trill_copy_menu_text[13], eof_menu_copy_trill_track_14, NULL, 0, NULL},
+	{eof_menu_track_names[0], eof_menu_copy_trill_track_1, NULL, D_SELECTED, NULL},
+	{eof_menu_track_names[1], eof_menu_copy_trill_track_2, NULL, 0, NULL},
+	{eof_menu_track_names[2], eof_menu_copy_trill_track_3, NULL, 0, NULL},
+	{eof_menu_track_names[3], eof_menu_copy_trill_track_4, NULL, 0, NULL},
+	{eof_menu_track_names[4], eof_menu_copy_trill_track_5, NULL, 0, NULL},
+	{eof_menu_track_names[5], eof_menu_copy_trill_track_6, NULL, 0, NULL},
+	{eof_menu_track_names[6], eof_menu_copy_trill_track_7, NULL, 0, NULL},
+	{eof_menu_track_names[7], eof_menu_copy_trill_track_8, NULL, 0, NULL},
+	{eof_menu_track_names[8], eof_menu_copy_trill_track_9, NULL, 0, NULL},
+	{eof_menu_track_names[9], eof_menu_copy_trill_track_10, NULL, 0, NULL},
+	{eof_menu_track_names[10], eof_menu_copy_trill_track_11, NULL, 0, NULL},
+	{eof_menu_track_names[11], eof_menu_copy_trill_track_12, NULL, 0, NULL},
+	{eof_menu_track_names[12], eof_menu_copy_trill_track_13, NULL, 0, NULL},
+	{eof_menu_track_names[13], eof_menu_copy_trill_track_14, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -192,23 +188,22 @@ MENU eof_trill_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
-char eof_menu_tremolo_copy_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
 MENU eof_menu_tremolo_copy_menu[EOF_TRACKS_MAX] =
 {
-	{eof_menu_tremolo_copy_menu_text[0], eof_menu_copy_tremolo_track_1, NULL, D_SELECTED, NULL},
-	{eof_menu_tremolo_copy_menu_text[1], eof_menu_copy_tremolo_track_2, NULL, 0, NULL},
-	{eof_menu_tremolo_copy_menu_text[2], eof_menu_copy_tremolo_track_3, NULL, 0, NULL},
-	{eof_menu_tremolo_copy_menu_text[3], eof_menu_copy_tremolo_track_4, NULL, 0, NULL},
-	{eof_menu_tremolo_copy_menu_text[4], eof_menu_copy_tremolo_track_5, NULL, 0, NULL},
-	{eof_menu_tremolo_copy_menu_text[5], eof_menu_copy_tremolo_track_6, NULL, 0, NULL},
-	{eof_menu_tremolo_copy_menu_text[6], eof_menu_copy_tremolo_track_7, NULL, 0, NULL},
-	{eof_menu_tremolo_copy_menu_text[7], eof_menu_copy_tremolo_track_8, NULL, 0, NULL},
-	{eof_menu_tremolo_copy_menu_text[8], eof_menu_copy_tremolo_track_9, NULL, 0, NULL},
-	{eof_menu_tremolo_copy_menu_text[9], eof_menu_copy_tremolo_track_10, NULL, 0, NULL},
-	{eof_menu_tremolo_copy_menu_text[10], eof_menu_copy_tremolo_track_11, NULL, 0, NULL},
-	{eof_menu_tremolo_copy_menu_text[11], eof_menu_copy_tremolo_track_12, NULL, 0, NULL},
-	{eof_menu_tremolo_copy_menu_text[12], eof_menu_copy_tremolo_track_13, NULL, 0, NULL},
-	{eof_menu_tremolo_copy_menu_text[13], eof_menu_copy_tremolo_track_14, NULL, 0, NULL},
+	{eof_menu_track_names[0], eof_menu_copy_tremolo_track_1, NULL, D_SELECTED, NULL},
+	{eof_menu_track_names[1], eof_menu_copy_tremolo_track_2, NULL, 0, NULL},
+	{eof_menu_track_names[2], eof_menu_copy_tremolo_track_3, NULL, 0, NULL},
+	{eof_menu_track_names[3], eof_menu_copy_tremolo_track_4, NULL, 0, NULL},
+	{eof_menu_track_names[4], eof_menu_copy_tremolo_track_5, NULL, 0, NULL},
+	{eof_menu_track_names[5], eof_menu_copy_tremolo_track_6, NULL, 0, NULL},
+	{eof_menu_track_names[6], eof_menu_copy_tremolo_track_7, NULL, 0, NULL},
+	{eof_menu_track_names[7], eof_menu_copy_tremolo_track_8, NULL, 0, NULL},
+	{eof_menu_track_names[8], eof_menu_copy_tremolo_track_9, NULL, 0, NULL},
+	{eof_menu_track_names[9], eof_menu_copy_tremolo_track_10, NULL, 0, NULL},
+	{eof_menu_track_names[10], eof_menu_copy_tremolo_track_11, NULL, 0, NULL},
+	{eof_menu_track_names[11], eof_menu_copy_tremolo_track_12, NULL, 0, NULL},
+	{eof_menu_track_names[12], eof_menu_copy_tremolo_track_13, NULL, 0, NULL},
+	{eof_menu_track_names[13], eof_menu_copy_tremolo_track_14, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -712,15 +707,7 @@ void eof_prepare_note_menu(void)
 		for(i = 0; i < EOF_TRACKS_MAX; i++)
 		{	//For each track supported by EOF
 			eof_menu_sp_copy_menu[i].flags = 0;
-			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
-			{	//If the track exists, copy its name into the string used by the track menu
-				(void) ustrcpy(eof_menu_sp_copy_menu_text[i], eof_song->track[i + 1]->name);
-					//Copy the track name to the menu string
-			}
-			else
-			{	//Write a blank string for the track name
-				(void) ustrcpy(eof_menu_sp_copy_menu_text[i],"");
-			}
+
 			if(!eof_get_num_star_power_paths(eof_song, i + 1) || (i + 1 == eof_selected_track))
 			{	//If the track has no star power phrases or is the active track
 				eof_menu_sp_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
@@ -743,15 +730,7 @@ void eof_prepare_note_menu(void)
 		for(i = 0; i < EOF_TRACKS_MAX; i++)
 		{	//For each track supported by EOF
 			eof_menu_solo_copy_menu[i].flags = 0;
-			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
-			{	//If the track exists, copy its name into the string used by the track menu
-				(void) ustrcpy(eof_menu_solo_copy_menu_text[i], eof_song->track[i + 1]->name);
-					//Copy the track name to the menu string
-			}
-			else
-			{	//Write a blank string for the track name
-				(void) ustrcpy(eof_menu_solo_copy_menu_text[i],"");
-			}
+
 			if(!eof_get_num_solos(eof_song, i + 1) || (i + 1 == eof_selected_track))
 			{	//If the track has no solos or is the active track
 				eof_menu_solo_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
@@ -800,15 +779,7 @@ void eof_prepare_note_menu(void)
 		for(i = 0; i < EOF_TRACKS_MAX; i++)
 		{	//For each track supported by EOF
 			eof_menu_arpeggio_copy_menu[i].flags = 0;
-			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
-			{	//If the track exists, copy its name into the string used by the track menu
-				(void) ustrcpy(eof_menu_arpeggio_copy_menu_text[i], eof_song->track[i + 1]->name);
-					//Copy the track name to the menu string
-			}
-			else
-			{	//Write a blank string for the track name
-				(void) ustrcpy(eof_menu_arpeggio_copy_menu_text[i],"");
-			}
+
 			if((i + 1 < EOF_TRACKS_MAX) && (!eof_get_num_arpeggios(eof_song, i + 1) || (i + 1 == eof_selected_track) || (eof_song->track[i + 1]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)))
 			{	//If the track has no arpeggios, is the active track or is not a pro guitar/bass track
 				eof_menu_arpeggio_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
@@ -1075,15 +1046,7 @@ void eof_prepare_note_menu(void)
 			for(i = 0; i < EOF_TRACKS_MAX; i++)
 			{	//For each track supported by EOF
 				eof_menu_trill_copy_menu[i].flags = 0;
-				if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
-				{	//If the track exists, copy its name into the string used by the track menu
-					(void) ustrcpy(eof_menu_trill_copy_menu_text[i], eof_song->track[i + 1]->name);
-						//Copy the track name to the menu string
-				}
-				else
-				{	//Otherwise write a blank string for the track name
-					(void) ustrcpy(eof_menu_trill_copy_menu_text[i],"");
-				}
+
 				if(!eof_get_num_trills(eof_song, i + 1) || (i + 1 == eof_selected_track))
 				{	//If the track has no trill phrases or is the active track
 					eof_menu_trill_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
@@ -1106,15 +1069,7 @@ void eof_prepare_note_menu(void)
 			for(i = 0; i < EOF_TRACKS_MAX; i++)
 			{	//For each track supported by EOF
 				eof_menu_tremolo_copy_menu[i].flags = 0;
-				if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
-				{	//If the track exists, copy its name into the string used by the track menu
-					(void) ustrcpy(eof_menu_tremolo_copy_menu_text[i], eof_song->track[i + 1]->name);
-						//Copy the track name to the menu string
-				}
-				else
-				{	//Otherwise write a blank string for the track name
-					(void) ustrcpy(eof_menu_tremolo_copy_menu_text[i],"");
-				}
+
 				if(!eof_get_num_tremolos(eof_song, i + 1) || (i + 1 == eof_selected_track))
 				{	//If the track has no tremolo phrases or is the active track
 					eof_menu_tremolo_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu

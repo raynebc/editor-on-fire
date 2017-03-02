@@ -199,7 +199,9 @@ unsigned long eof_menu_song_compare_difficulties(unsigned long track1, unsigned 
 	//Compares the first track difficulty against the second, provided that they are different track difficulties of the same format
 	//Any normal notes in the first track difficulty that are missing or different from the second track difficulty are highlighted
 	//Tech notes are processed in a way so that they are only considered a non match if they apply a technique on any gem of a note
-	// that isn't applied to the same gem of a comparable note in the other track difficulty
+	// that isn't applied to the same gem of a comparable note in the other track difficulty.  Bend and stop tech notes are timing
+	// specific though and are required to have a comparable technote with matching timestamp and note mask in both tracks in order
+	// to match.
 	//Returns the number of differences that are identified, equivalent to the number of notes or tech notes that are highlighted
 	//If function is nonzero, notes that exist at the same timstamp in each of the track difficulties but otherwise differ
 	// do not cause the difference count to increase, allowing them to not be double-counted when this function is used afterward

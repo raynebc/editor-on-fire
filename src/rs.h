@@ -200,6 +200,10 @@ int eof_time_range_is_populated(EOF_SONG *sp, unsigned long track, unsigned long
 	//Returns nonzero if there are any notes in the specified track difficulty within the specified time range
 	//Returns zero if that range contains no notes or upon error
 
+unsigned long eof_pro_guitar_track_find_effective_tone(EOF_PRO_GUITAR_TRACK *tp, unsigned long position);
+	//Returns the index number of the tone change in effect at the specified timestamp for the specified track
+	//Returns EOF_MAX_PHRASES if there is no applicable tone or upon error
+
 char *eof_rs_section_text_valid(char *string);
 	//Compares the given string against the string entries in eof_rs_predefined_sections[]
 	//If the string matches the native or display name of an entry, a pointer to the native name is returned (to be stored as a text event), otherwise NULL is returned
