@@ -313,10 +313,10 @@ void eof_save_config(char * fn)
 	/* write configuration */
 	set_config_int("config", "av_delay", eof_av_delay);
 	set_config_int("config", "eof_midi_tone_delay", eof_midi_tone_delay);
-	set_config_int("config", "eof_midi_synth_instrument_guitar", eof_midi_synth_instrument_guitar);
-	set_config_int("config", "eof_midi_synth_instrument_guitar_muted", eof_midi_synth_instrument_guitar_muted);
-	set_config_int("config", "eof_midi_synth_instrument_guitar_harm", eof_midi_synth_instrument_guitar_harm);
-	set_config_int("config", "eof_midi_synth_instrument_bass", eof_midi_synth_instrument_bass);
+	set_config_int("config", "eof_midi_synth_instrument_guitar", eof_midi_synth_instrument_guitar + 1);	//Add one to convert back to conventional numbering
+	set_config_int("config", "eof_midi_synth_instrument_guitar_muted", eof_midi_synth_instrument_guitar_muted + 1);
+	set_config_int("config", "eof_midi_synth_instrument_guitar_harm", eof_midi_synth_instrument_guitar_harm + 1);
+	set_config_int("config", "eof_midi_synth_instrument_bass", eof_midi_synth_instrument_bass + 1);
 	set_config_int("config", "buffer_size", eof_buffer_size);
 	set_config_int("config", "smooth_playback", eof_smooth_pos);
 	set_config_int("config", "disable_windows_fs", eof_disable_windows);

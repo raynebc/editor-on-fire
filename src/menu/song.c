@@ -4329,8 +4329,11 @@ unsigned long eof_menu_song_compare_difficulties(unsigned long track1, unsigned 
 		EOF_PRO_GUITAR_TRACK *tp1, *tp2;
 		unsigned long technotepos, notepos, techflags, techeflags, ctr3;
 
+		eof_menu_track_set_tech_view_state(eof_song, track1, 1);	//Enable tech view
+		eof_menu_track_set_tech_view_state(eof_song, track2, 1);
 		tp1 = eof_song->pro_guitar_track[eof_song->track[track1]->tracknum];
 		tp2 = eof_song->pro_guitar_track[eof_song->track[track2]->tracknum];
+
 		for(ctr = 0; ctr < tp1->technotes; ctr++)
 		{	//For each tech note in the first track, find any normal note that overlaps its affected timestamp in the comparison track difficulty
 			int match = 0;
@@ -4339,69 +4342,89 @@ unsigned long eof_menu_song_compare_difficulties(unsigned long track1, unsigned 
 			if(tp1->technote[ctr]->type != diff1)	//If this tech note isn't in the designated comparison difficulty
 				continue;	//Skip it
 
-			technotepos = tp1->technote[ctr]->pos;
-			techflags = tp1->technote[ctr]->flags;
-			techeflags = tp1->technote[ctr]->eflags;
-			for(ctr2 = 0; ctr2 < tp2->pgnotes; ctr2++)
-			{	//For each normal note in the second track
-				notepos = tp2->pgnote[ctr2]->pos;
-				if(notepos > technotepos)	//If this note and all that follow are beyond the tech note's position
-					break;	//Stop checking for normal notes that overlap the tech note's position
-				if(tp2->pgnote[ctr2]->type != diff2)	//If this normal note isn't in the designated comparison difficulty
+			//Look for a matching tech note in the comparison track
+			for(ctr2 = 0; ctr2 < tp2->technotes; ctr2++)
+			{	//For each tech note in the second track
+				if(tp2->technote[ctr2]->pos > tp1->technote[ctr]->pos)	//If this tech note and all that follow are beyond the comparison tech note's position
+					break;	//Stop checking for matching for matching tech notes
+				if(tp2->technote[ctr2]->pos < tp1->technote[ctr]->pos)	//If this tech note is before the comparison tech note's position
 					continue;	//Skip it
-				if(technotepos >= notepos + tp2->pgnote[ctr2]->length)	//If this normal note's timing isn't overlapped by this tech note
+				if(tp2->technote[ctr]->type != diff2)	//If this tech note isn't in the designated comparison difficulty
 					continue;	//Skip it
+				if(eof_note_compare(eof_song, track1, ctr, track2, ctr2, 3) == 0)
+				{	//If the tech notes match
+					match = 1;
+					break;
+				}
+			}
 
-				//Determine the entire set of flags and extended flags applied to the matching gems in the normal note
-				(void) eof_pro_guitar_lookup_combined_tech_flags(tp2, ctr2, tp1->technote[ctr]->note, &flags, &eflags);	//Find flags applied by tech notes
-				flags |= tp2->pgnote[ctr2]->flags;	//Add the flags applied directly to the normal note
-				eflags |= tp2->pgnote[ctr2]->eflags;
-				if((flags & techflags) != techflags)	//If the normal note doesn't have all flags that the tech note applies
-					break;	//This normal note fails match, stop processing it
-				if((eflags & techeflags) != techeflags)	//If the normal note doesn't have all extended flags that the tech note applies
-					break;	//This normal note fails match, stop processing it
+			//Look for matching techniques on a normal note in the comparison track
+			if(!match)
+			{	//If the above check didn't find a match
+				technotepos = tp1->technote[ctr]->pos;
+				techflags = tp1->technote[ctr]->flags;
+				techeflags = tp1->technote[ctr]->eflags;
+				for(ctr2 = 0; ctr2 < tp2->pgnotes; ctr2++)
+				{	//For each normal note in the second track
+					notepos = tp2->pgnote[ctr2]->pos;
+					if(notepos > technotepos)	//If this note and all that follow are beyond the tech note's position
+						break;	//Stop checking for normal notes that overlap the tech note's position
+					if(tp2->pgnote[ctr2]->type != diff2)	//If this normal note isn't in the designated comparison difficulty
+						continue;	//Skip it
+					if(technotepos >= notepos + tp2->pgnote[ctr2]->length)	//If this normal note's timing isn't overlapped by this tech note
+						continue;	//Skip it
 
-				//Compare timing specific techniques if applicable
-				if((techflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (techeflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP))
-				{	//If the tech note applies bend or stop status, a tech note at a matching timestamp applying the same is required in the comparison track difficulty
-					for(ctr3 = 0; ctr3 < tp2->technotes; ctr3++)
-					{	//For each tech note in the second track
-						if(tp2->technote[ctr3]->pos > technotepos)	//If this tech note and all that follow are beyond the target timestamp
-							break;	//Stop checking for matching tech notes
-						if(tp2->technote[ctr3]->type != diff2)		//If this tech note isn't in the designated comparison difficulty
-							continue;	//Skip it
-						if(tp2->technote[ctr3]->pos < technotepos)	//If this tech note is before the target timestamp
-							continue;	//Skip it
-						if(techflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
-						{	//If the tech note needs to apply bend status
-							if(!(tp2->technote[ctr3]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
-							{	//And it does not
-								break;	//This tech note fails match, stop processing it
+					//Determine the entire set of flags and extended flags applied to the matching gems in the normal note
+					(void) eof_pro_guitar_lookup_combined_tech_flags(tp2, ctr2, tp1->technote[ctr]->note, &flags, &eflags);	//Find flags applied by tech notes
+					flags |= tp2->pgnote[ctr2]->flags;	//Add the flags applied directly to the normal note
+					eflags |= tp2->pgnote[ctr2]->eflags;
+					if((flags & techflags) != techflags)	//If the normal note doesn't have all flags that the tech note applies
+						break;	//This normal note fails match, stop processing it
+					if((eflags & techeflags) != techeflags)	//If the normal note doesn't have all extended flags that the tech note applies
+						break;	//This normal note fails match, stop processing it
+
+					//Compare timing specific techniques if applicable
+					if((techflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (techeflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP))
+					{	//If the tech note applies bend or stop status, a tech note at a matching timestamp applying the same is required in the comparison track difficulty
+						for(ctr3 = 0; ctr3 < tp2->technotes; ctr3++)
+						{	//For each tech note in the second track
+							if(tp2->technote[ctr3]->pos > technotepos)	//If this tech note and all that follow are beyond the target timestamp
+								break;	//Stop checking for matching tech notes
+							if(tp2->technote[ctr3]->type != diff2)		//If this tech note isn't in the designated comparison difficulty
+								continue;	//Skip it
+							if(tp2->technote[ctr3]->pos < technotepos)	//If this tech note is before the target timestamp
+								continue;	//Skip it
+							if(techflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+							{	//If the tech note needs to apply bend status
+								if(!(tp2->technote[ctr3]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
+								{	//And it does not
+									break;	//This tech note fails match, stop processing it
+								}
+								if(tp1->technote[ctr]->note != tp2->technote[ctr3]->note)
+								{	//If the tech notes at this position doesn't apply bend status to the same strings in each track
+									break;	//This tech note fails match, stop processing it
+								}
 							}
-							if(tp1->technote[ctr]->note != tp2->technote[ctr3]->note)
-							{	//If the tech notes at this position doesn't apply bend status to the same strings in each track
-								break;	//This tech note fails match, stop processing it
+							if(techeflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP)
+							{	//If the tech note needs to apply stop status
+								if(!(tp2->technote[ctr3]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP))
+								{	//And it does not
+									break;	//This tech note fails match, stop processing it
+								}
+								if(tp1->technote[ctr]->note != tp2->technote[ctr3]->note)
+								{	//If the tech notes at this position doesn't apply stop status to the same strings in each track
+									break;	//This tech note fails match, stop processing it
+								}
 							}
+							match = 1;	//The tech note's technique was matched against the note at the comparable timestamp in comparison track
 						}
-						if(techeflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP)
-						{	//If the tech note needs to apply stop status
-							if(!(tp2->technote[ctr3]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP))
-							{	//And it does not
-								break;	//This tech note fails match, stop processing it
-							}
-							if(tp1->technote[ctr]->note != tp2->technote[ctr3]->note)
-							{	//If the tech notes at this position doesn't apply stop status to the same strings in each track
-								break;	//This tech note fails match, stop processing it
-							}
-						}
+					}
+					else
+					{
 						match = 1;	//The tech note's technique was matched against the note at the comparable timestamp in comparison track
 					}
+					break;
 				}
-				else
-				{
-					match = 1;	//The tech note's technique was matched against the note at the comparable timestamp in comparison track
-				}
-				break;
 			}
 
 			if(!match)

@@ -189,7 +189,7 @@ EOF_PRO_GUITAR_NOTE *eof_rs_import_note_tag_data(char *buffer, int function, EOF
 		(void) parse_xml_attribute_number("linkNext", buffer, &linknext);
 		(void) parse_xml_attribute_number("accent", buffer, &accent);
 		(void) parse_xml_attribute_number("ignore", buffer, &ignore);
-		(void) parse_xml_attribute_number("mute", buffer, &mute);
+		(void) parse_xml_attribute_number(" mute", buffer, &mute);	//Include the leading space to avoid reading the value of the "PalmMute" attribute, which contains this substring at the end of the attribute name
 		(void) parse_xml_attribute_number("harmonicPinch", buffer, &pinchharmonic);
 		(void) parse_xml_attribute_number("slideUnpitchTo", buffer, &slideunpitchto);
 		if(slideunpitchto >= tp->capo)

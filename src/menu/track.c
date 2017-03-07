@@ -45,7 +45,7 @@ MENU eof_menu_thin_diff_menu[EOF_TRACKS_MAX] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
-MENU eof_menu_track_clone_menu[EOF_TRACKS_MAX] =
+MENU eof_menu_track_clone_from_menu[EOF_TRACKS_MAX] =
 {
 	{eof_menu_track_names[0], eof_menu_track_clone_track_1, NULL, D_SELECTED, NULL},
 	{eof_menu_track_names[1], eof_menu_track_clone_track_2, NULL, 0, NULL},
@@ -78,6 +78,14 @@ MENU eof_track_menu_set_difficulty[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_track_clone_menu[] =
+{
+	{"From &Track", NULL, eof_menu_track_clone_from_menu, 0, NULL},
+	{"To &Clipboard", eof_menu_track_clone_track_to_clipboard, NULL, 0, NULL},
+	{"&From clipboard", eof_menu_track_clone_track_from_clipboard, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_track_menu[] =
 {
 	{"Pro &Guitar", NULL, eof_track_proguitar_menu, 0, NULL},
@@ -91,8 +99,8 @@ MENU eof_track_menu[] =
 	{"Erase &Highlighting", eof_menu_track_remove_highlighting, NULL, 0, NULL},
 	{"&Thin diff. to match", NULL, eof_menu_thin_diff_menu, 0, NULL},
 	{"Delete active difficulty", eof_track_delete_difficulty, NULL, 0, NULL},
-	{"&Clone from", NULL, eof_menu_track_clone_menu, 0, NULL},
 	{"Repair grid &Snap", eof_menu_track_repair_grid_snap, NULL, 0, NULL},
+	{"&Clone", NULL, eof_track_clone_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -109,6 +117,7 @@ MENU eof_track_rocksmith_arrangement_menu[] =
 void eof_prepare_track_menu(void)
 {
 	unsigned long i, j, tracknum;
+	char clipboard_path[50];
 
 	if(eof_song && eof_song_loaded)
 	{//If a chart is loaded
@@ -246,10 +255,10 @@ void eof_prepare_track_menu(void)
 			}
 		}
 
-		/* Clone from */
+		/* Clone from track */
 		for(i = 0; i < EOF_TRACKS_MAX - 1; i++)
 		{	//For each track supported by EOF
-			eof_menu_track_clone_menu[i].flags = D_DISABLED;
+			eof_menu_track_clone_from_menu[i].flags = D_DISABLED;
 
 			if(i + 1 == EOF_TRACK_VOCALS)
 				continue;	//This function cannot be used with the vocal track since there isn't a second such track
@@ -258,7 +267,18 @@ void eof_prepare_track_menu(void)
 			if(eof_song->track[eof_selected_track]->track_format != eof_song->track[i + 1]->track_format)
 				continue;	//This function can only be used to clone a track of the same format as the active track
 
-			eof_menu_track_clone_menu[i].flags = 0;	//Enable the track from the submenu
+			eof_menu_track_clone_from_menu[i].flags = 0;	//Enable the track from the submenu
+		}
+
+		/* Clone from clipboard */
+		(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.clone.clipboard", eof_temp_path_s);
+		if(exists(clipboard_path))
+		{	//If the clone clipboard file was found
+			eof_track_clone_menu[2].flags = 0;	//Track>Clone>From clipboard
+		}
+		else
+		{
+			eof_track_clone_menu[2].flags = D_DISABLED;
 		}
 	}//If a chart is loaded
 }
@@ -3089,7 +3109,7 @@ DIALOG eof_track_rs_tone_changes_dialog[] =
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
 	{ d_agup_window_proc,0,   48,  400, 237, 2,   23,  0,    0,      0,   0,   eof_track_rs_tone_changes_dialog_string,NULL, NULL },
 	{ d_agup_list_proc,  12,  84,  300, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_track_rs_tone_changes_list,NULL, NULL },
-	{ d_agup_push_proc,  320, 84,  68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, (void *)eof_track_rs_tone_changes_delete },
+	{ d_agup_push_proc,  320, 84,  68,  28,  2,   23,  'd',  D_EXIT, 0,   0,   "&Delete",      NULL, (void *)eof_track_rs_tone_changes_delete },
 	{ d_agup_push_proc,  320, 124, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete all",   NULL, (void *)eof_track_rs_tone_changes_delete_all },
 	{ d_agup_button_proc,320, 164, 68,  28,  2,   23,  'n',  D_EXIT, 0,   0,   "&Names",       NULL, NULL },
 	{ d_agup_push_proc,  320, 204, 68,  28,  2,   23,  's',  D_EXIT, 0,   0,   "&Seek to",     NULL, (void *)eof_track_rs_tone_changes_seek },
@@ -3983,6 +4003,7 @@ int eof_menu_track_clone_track_number(EOF_SONG *sp, unsigned long sourcetrack, u
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 
 	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
+	eof_detect_difficulties(sp, eof_selected_track);
 	return 1;
 }
 
@@ -4353,4 +4374,470 @@ int eof_menu_track_repair_grid_snap(void)
 	}
 
 	return 1;
+}
+
+int eof_menu_track_clone_track_to_clipboard(void)
+{
+	unsigned notesetcount = 1;
+	char restore_tech_view = 0, noteset;
+	char content_found = 0;	//Set to nonzero as long as at least one note/section was written to file
+	unsigned long ctr, ctr2, sectiontype, first_pos = 0, tracknum;
+	PACKFILE *fp;
+	char clipboard_path[50];
+	unsigned long notes = 0, technotes = 0, sections = 0, events = 0;
+
+	eof_log("eof_menu_track_clone_track_to_clipboard() entered", 1);
+
+	if(!eof_song)
+		return 1;	//No chart open
+
+	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{
+		notesetcount = 2;
+		restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track);
+	}
+
+	//Create clipboard file
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		return 2;	//Temp folder error
+	}
+	(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.clone.clipboard", eof_temp_path_s);
+	fp = pack_fopen(clipboard_path, "w");
+	if(!fp)
+	{
+		allegro_message("Clipboard error!");
+		return 3;	//Clipboard write error
+	}
+	eof_log("\tCloning to clipboard", 1);
+
+	//Write various track details
+	(void) pack_putc(eof_selected_track, fp);	//Write the source track number
+	(void) pack_putc(eof_song->track[eof_selected_track]->difficulty, fp);	//Write the difficulty rating
+	(void) pack_putc(eof_song->track[eof_selected_track]->numdiffs, fp);	//Write the difficulty count
+	(void) pack_iputl(eof_song->track[eof_selected_track]->flags, fp);		//Write the track flags
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//Write pro guitar track specific data
+		EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+		(void) pack_putc(tp->numstrings, fp);			//Write the string count
+		(void) pack_putc(tp->numfrets, fp);				//Write the fret count
+		(void) pack_putc(tp->arrangement, fp);			//Write the arrangement type
+		(void) pack_putc(tp->ignore_tuning, fp);		//Write the ignore tuning boolean setting
+		(void) pack_putc(tp->capo, fp);					//Write the capo placement
+		for(ctr = 0; ctr < EOF_TUNING_LENGTH; ctr++)
+			(void) pack_putc(tp->tuning[ctr], fp);		//Write the tuning of each string
+		eof_save_song_string_pf(tp->defaulttone, fp);	//Write the default tone name
+	}
+	else if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+		(void) pack_putc(eof_song->legacy_track[tracknum]->numlanes, fp);	//Write the track lane count
+
+	//Process notes
+	for(noteset = 0; noteset < notesetcount; noteset++)
+	{	//For each note set in the source track
+		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, noteset);	//Activate the note set being examined
+		(void) pack_iputl(eof_get_track_size(eof_song, eof_selected_track), fp);	//Store the number of notes that will be stored to clipboard
+
+		if(eof_get_track_size(eof_song, eof_selected_track))
+		{	//If at least one note is being written for this note set
+			first_pos = eof_get_note_pos(eof_song, eof_selected_track, 0);
+			content_found = 1;
+
+			for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+			{	//For each note in the source track
+				eof_write_clipboard_note(fp, eof_song, eof_selected_track, ctr, first_pos);				//Write the note data
+				eof_write_clipboard_position_snap_data(fp, eof_get_note_pos(eof_song, eof_selected_track, ctr));	//Write the grid snap position data for this note's position
+				if(noteset == 0)
+					notes++;		//Track how many normal notes are cloned to the clipboard
+				else
+					technotes++;	//Track how many tech notes are cloned to the clipboard
+			}
+		}
+	}
+
+	//Process sections
+	for(sectiontype = 1; sectiontype <= EOF_NUM_SECTION_TYPES; sectiontype++)
+	{	//For each type of section that exists
+		unsigned long sectionnum, sectioncount = 0;
+		EOF_PHRASE_SECTION *phrase = NULL;
+		double tfloat;
+		int skip = 0;
+
+		switch(sectiontype)
+		{
+			case EOF_BOOKMARK_SECTION:
+			case EOF_FRET_CATALOG_SECTION:
+			case EOF_PREVIEW_SECTION:
+				skip = 1;	//These section types are not recorded by the track clipboard functions
+			break;
+
+			default:
+			break;
+		}
+
+		if(!skip)
+		{	//If this type of section isn't ignored by this function
+			if(!eof_lookup_track_section_type(eof_song, eof_selected_track, sectiontype, &sectioncount, &phrase) || !phrase)
+			{	//If there was an error looking up how many of this section type are present in the active track
+				sectioncount = 0;	//Ensure this is zero
+			}
+		}
+		(void) pack_iputl(sectioncount, fp);	//Write the number of instances of this section type
+
+		for(sectionnum = 0; sectionnum < sectioncount; sectionnum++)
+		{	//For each instance of this type of section in the track
+			content_found = 1;
+			(void) pack_iputl(eof_get_beat(eof_song, phrase[sectionnum].start_pos), fp);	//Write the beat number in which this section starts
+			tfloat = eof_get_porpos(phrase[sectionnum].start_pos);
+			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);				//Write the percentage into the beat at which this section starts
+
+			if(sectiontype == EOF_FRET_HAND_POS_SECTION)
+			{	//Fret hand positions store the fret number as the end position
+				(void) pack_iputl(phrase[sectionnum].end_pos, fp);
+			}
+			else
+			{	//Other sections have an end position variable to adjust
+				(void) pack_iputl(eof_get_beat(eof_song, phrase[sectionnum].end_pos), fp);	//Write the beat number in which this section ends
+				tfloat = eof_get_porpos(phrase[sectionnum].end_pos);
+				(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);				//Write the percentage into the beat at which this section ends
+			}
+
+			(void) pack_putc(phrase[sectionnum].difficulty, fp);	//Write section difficulty
+			eof_save_song_string_pf(phrase[sectionnum].name, fp);	//Write section name
+			(void) pack_putc(phrase[sectionnum].flags, fp);			//Write section flags
+
+			sections++;		//Track how many sections are cloned to the clipboard
+		}
+	}//For each type of section that exists
+
+	//Process events
+	for(ctr = 0; ctr < 2; ctr++)
+	{
+		if(ctr)
+		{	//On second pass
+			(void) pack_iputl(events, fp);	//Write the number of events specific to this track
+		}
+		for(ctr2 = 0; ctr2 < eof_song->text_events; ctr2++)
+		{	//For each event in the track
+			if(eof_song->text_event[ctr2]->track == eof_selected_track)
+			{	//If this text event is specific to this track
+				if(!ctr)
+				{	//On first pass, count the events
+					events++;
+				}
+				else
+				{	//On second pass, write the events to the clipboard
+					eof_save_song_string_pf(eof_song->text_event[ctr2]->text, fp);	//Write event text
+					(void) pack_iputl(eof_song->text_event[ctr2]->beat, fp);			//Write event's assigned beat number
+					(void) pack_putc(eof_song->text_event[ctr2]->flags, fp);			//Write event flags
+				}
+			}
+		}
+	}
+
+	//Cleanup
+	(void) pack_fclose(fp);
+	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, restore_tech_view);	//Re-enable tech view if applicable
+
+	if(!content_found)
+	{
+		allegro_message("There was no content found in the track.");
+		(void) delete_file(clipboard_path);
+	}
+
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tClone to clipboard succeeded.  Recorded %lu notes, %lu tech notes, %lu sections and %lu events.", notes, technotes, sections, events);
+	eof_log(eof_log_string, 1);
+	return 0;	//Success
+}
+
+int eof_menu_track_clone_track_from_clipboard(void)
+{
+	PACKFILE *fp;
+	char clipboard_path[50];
+	char source_vocal = 0, dest_vocal = 0;
+	unsigned char sourcetrack, difficulty = 0xFF, numdiffs = 5, lanecount = 0, numfrets = 17, arrangement = 0, ignore_tuning = 0, capo = 0;
+	unsigned long ctr, flags, notecount, sectiontype, eventcount;
+	char tuning[EOF_TUNING_LENGTH] = {0};
+	char defaulttone[EOF_SECTION_NAME_LENGTH + 1] = {0};
+	EOF_PRO_GUITAR_TRACK *tp = NULL;
+	char s_track_format, d_track_format;
+	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0};
+	unsigned char notesetcount = 1, noteset;
+	EOF_PRO_GUITAR_NOTE *np;
+	unsigned long beats = 0, notes = 0, technotes = 0, sections = 0, events = 0;
+
+	//Grid snap variables used to automatically re-snap auto-adjusted timestamps
+	int beat = 0;
+	char gridsnapvalue = 0;
+	unsigned char gridsnapnum = 0;
+	unsigned long gridpos = 0;
+
+	eof_log("eof_menu_track_clone_track_from_clipboard() entered", 1);
+
+	if(!eof_song)
+		return 1;	//No chart open
+
+	//Open and validate clipboard file
+	(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.clone.clipboard", eof_temp_path_s);
+	fp = pack_fopen(clipboard_path, "r");
+	if(!fp)
+	{
+		allegro_message("Cannot access clipboard.");
+		return 2;	//Clipboard read error
+	}
+	sourcetrack = pack_getc(fp);		//Read the source track of the clipboard data
+	if(sourcetrack >= eof_song->tracks)
+	{
+		(void) pack_fclose(fp);
+		return 3;	//Invalid track number
+	}
+	s_track_format = eof_song->track[sourcetrack]->track_format;
+	d_track_format = eof_song->track[eof_selected_track]->track_format;
+	if(s_track_format == EOF_VOCAL_TRACK_FORMAT)
+		source_vocal = 1;
+	if(d_track_format == EOF_VOCAL_TRACK_FORMAT)
+		dest_vocal = 1;
+	else if(d_track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
+	if(source_vocal != dest_vocal)
+	{
+		allegro_message("Cannot clone between vocal and non vocal tracks");
+		(void) pack_fclose(fp);
+		return 4;	//Invalid clone operation
+	}
+
+	eof_log("\tCloning from clipboard", 1);
+
+	//Prompt user
+	if(eof_get_track_size_all(eof_song, eof_selected_track) && alert("This track already has notes", "Cloning from the clipboard will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+	{	//If the active track is already populated (with normal or tech notes) and the user doesn't opt to overwrite it
+		return 5;	//User cancellation
+	}
+
+	//Read various track details
+	difficulty = pack_getc(fp);
+	numdiffs = pack_getc(fp);
+	flags = pack_igetl(fp);
+	if(s_track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//Read pro guitar track specific data
+		lanecount = pack_getc(fp);
+		numfrets = pack_getc(fp);
+		arrangement = pack_getc(fp);
+		ignore_tuning = pack_getc(fp);
+		capo = pack_getc(fp);
+		for(ctr = 0; ctr < EOF_TUNING_LENGTH; ctr++)
+			tuning[ctr] = pack_getc(fp);
+		(void) eof_load_song_string_pf(defaulttone, fp, sizeof(defaulttone));
+		notesetcount = 2;
+	}
+	else if(s_track_format == EOF_LEGACY_TRACK_FORMAT)
+	{
+		lanecount = pack_getc(fp);
+	}
+
+	//Update various track details
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	eof_erase_track(eof_song, eof_selected_track);
+	eof_song->track[eof_selected_track]->difficulty = difficulty;
+	eof_song->track[eof_selected_track]->numdiffs = numdiffs;
+	eof_song->track[eof_selected_track]->flags = flags;
+	if(d_track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If cloning to a pro guitar track
+		tp->numstrings = lanecount;
+
+		if(s_track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//And the source track was a pro guitar track
+			tp->numfrets = numfrets;
+			tp->arrangement = arrangement;
+			tp->ignore_tuning = ignore_tuning;
+			tp->capo = capo;
+			for(ctr = 0; ctr < EOF_TUNING_LENGTH; ctr++)
+				tp->tuning[ctr] = tuning[ctr];
+			memcpy(tp->defaulttone, defaulttone, sizeof(defaulttone));
+		}
+	}
+	else if(d_track_format == EOF_LEGACY_TRACK_FORMAT)
+	{	//If cloning to a legacy track
+		eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->numlanes = lanecount;
+	}
+
+	//Process notes
+	for(noteset = 0; noteset < notesetcount; noteset++)
+	{	//For each note set in the clipboard file
+		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, noteset);	//Activate the note set being examined
+		notecount = pack_igetl(fp);
+
+		for(ctr = 0; ctr < notecount; ctr++)
+		{	//For each note for this note set in the clipboard file
+			eof_read_clipboard_note(fp, &temp_note, EOF_NAME_LENGTH + 1);	//Read the note
+			eof_read_clipboard_position_snap_data(fp, &beat, &gridsnapvalue, &gridsnapnum);	//Read its grid snap data
+
+			//Add enough beats to encompass the note if necessary
+			while(eof_song->beats <= temp_note.endbeat + 1)
+			{	//Until there are enough beats to accommodate the end position of this note
+				if(!eof_song_append_beats(eof_song, 1))
+				{	//If there was an error adding a beat
+					eof_log("\tError adding beat.  Aborting", 1);
+					eof_erase_track(eof_song, eof_selected_track);
+					return 6;
+				}
+				eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
+				beats++;					//Track how many beats were appended to the project
+			}
+
+			//Make adjustments to the note and flag bitmasks if necessary
+			if((d_track_format == EOF_LEGACY_TRACK_FORMAT) && (temp_note.legacymask != 0))
+			{	//If the cloned note indicated that the legacy bitmask this overrides the original bitmask (cloning a pro guitar into a legacy track)
+				temp_note.note = temp_note.legacymask;
+			}
+			eof_sanitize_note_flags(&temp_note.flags, sourcetrack, eof_selected_track);	//Ensure the note flags are validated for the track being cloned into
+
+			//Update the note position and length
+			temp_note.pos = eof_put_porpos(temp_note.beat, temp_note.porpos, 0.0);
+			temp_note.length = eof_put_porpos(temp_note.endbeat, temp_note.porendpos, 0.0) - temp_note.pos;
+			if(temp_note.length <= 0)
+				temp_note.length = 1;
+			if(eof_find_grid_snap_position(beat, gridsnapvalue, gridsnapnum, &gridpos))
+			{	//If the destination grid snap position can be calculated
+				temp_note.pos = gridpos;	//Update the adjusted position for the note
+			}
+
+			//Create the note
+			np = eof_track_add_create_note(eof_song, eof_selected_track, temp_note.note, temp_note.pos, temp_note.length, temp_note.type, temp_note.name);
+			if(!np)
+			{	//If the note was not created
+				eof_log("\tError adding note.  Aborting", 1);
+				eof_erase_track(eof_song, eof_selected_track);
+				return 7;
+			}
+			eof_set_note_flags(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.flags);
+			eof_set_note_accent(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.accent);
+			if(d_track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				continue;	//If the track isn't being cloned into a pro guitar track, skip the logic below
+
+			//Update pro guitar content if applicable
+			np->legacymask = temp_note.legacymask;							//Copy the legacy bitmask to the last created pro guitar note
+			memcpy(np->frets, temp_note.frets, sizeof(temp_note.frets));	//Copy the fret array to the last created pro guitar note
+			memcpy(np->finger, temp_note.finger, sizeof(temp_note.finger));	//Copy the finger array to the last created pro guitar note
+			np->ghost = temp_note.ghost;									//Copy the ghost bitmask to the last created pro guitar note
+			np->bendstrength = temp_note.bendstrength;						//Copy the bend height to the last created pro guitar note
+			np->slideend = temp_note.slideend;								//Copy the slide end position to the last created pro guitar note
+			np->unpitchend = temp_note.unpitchend;							//Copy the slide end position to the last created pro guitar note
+			np->eflags = temp_note.eflags;									//Copy the extended track flags
+
+			if(noteset == 0)
+				notes++;		//Track how many normal notes are cloned from the clipboard
+			else
+				technotes++;	//Track how many tech notes are cloned from the clipboard
+		}//For each note for this note set in the clipboard file
+	}//For each note set in the clipboard file
+	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0);	//Disable tech view for the active track
+	eof_track_fixup_notes(eof_song, eof_selected_track, 0);
+
+	//Process sections
+	for(sectiontype = 1; sectiontype <= EOF_NUM_SECTION_TYPES; sectiontype++)
+	{	//For each type of section that exists
+		unsigned long sectionnum, sectioncount, junk = 0, start, end;
+		EOF_PHRASE_SECTION *phrase = NULL;
+		char name[EOF_SECTION_NAME_LENGTH + 1];
+		unsigned char sectiondiff, sectionflags;
+		double pos = 0.0;
+		long beat;
+
+		sectioncount = pack_igetl(fp);	//Read the number of instances of this section type
+		eof_lookup_track_section_type(eof_song, eof_selected_track, sectiontype, &junk, &phrase);
+		if(!sectioncount || !phrase)
+		{	//If there are no instances of this type of section on the clipboard, or the appropriate section array couldn't be
+			continue;	//Skip it
+		}
+
+		for(sectionnum = 0; sectionnum < sectioncount; sectionnum++)
+		{	//For each instance of this type of section in the track
+			beat = pack_igetl(fp);	//Read the beat number in which this section starts
+			(void) pack_fread(&pos, (long)sizeof(double), fp);	//Read the percentage into the beat at which this section starts
+			start = eof_put_porpos(beat, pos, 0.0);
+
+			if(sectiontype == EOF_FRET_HAND_POS_SECTION)
+			{	//Fret hand positions store the fret number as the end position
+				end = pack_igetl(fp);
+			}
+			else
+			{	//Other sections have an end position variable to adjust
+				beat = pack_igetl(fp);	//Read the beat number in which this section ends
+				(void) pack_fread(&pos, (long)sizeof(double), fp);	//Read the percentage into the beat at which this section ends
+				end = eof_put_porpos(beat, pos, 0.0);
+			}
+
+			sectiondiff = pack_getc(fp);	//Read section difficulty
+			(void) eof_load_song_string_pf(name, fp, sizeof(name));	//Read section name
+			sectionflags = pack_getc(fp);	//Read section flags
+
+			//Add enough beats to encompass the section if necessary
+			while(eof_song->beats <= beat + 1)
+			{	//Until there are enough beats to accommodate the end position of this section
+				if(!eof_song_append_beats(eof_song, 1))
+				{	//If there was an error adding a beat
+					eof_log("\tError adding beat.  Aborting", 1);
+					eof_erase_track(eof_song, eof_selected_track);
+					return 7;
+				}
+				eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
+				beats++;					//Track how many beats were appended to the project
+			}
+
+			if(!eof_track_add_section(eof_song, eof_selected_track, sectiontype, sectiondiff, start, end, sectionflags, name))
+			{	//If the section couldn't be added
+				eof_log("\tError adding section.  Aborting", 1);
+				eof_erase_track(eof_song, eof_selected_track);
+				return 8;
+			}
+			sections++;		//Track how many sections are cloned from the clipboard
+		}
+	}//For each type of section that exists
+
+	//Process events
+	eventcount = pack_igetl(fp);	//Read the number of events
+	for(ctr = 0; ctr < eventcount; ctr++)
+	{	//For each event in the clipboard file
+		char text[EOF_TEXT_EVENT_LENGTH + 1];
+		unsigned long beatnum;
+		unsigned char eventflags;
+
+		(void) eof_load_song_string_pf(text, fp, sizeof(text));	//Read event text
+		beatnum = pack_igetl(fp);								//Read event's assigned beat number
+		eventflags = pack_getc(fp);								//Read event flags
+
+		//Add enough beats to encompass the event if necessary
+		while(eof_song->beats <= beatnum + 1)
+		{	//Until there are enough beats to accommodate the beat number this event is assigned to
+			if(!eof_song_append_beats(eof_song, 1))
+			{	//If there was an error adding a beat
+				eof_log("\tError adding beat.  Aborting", 1);
+				eof_erase_track(eof_song, eof_selected_track);
+				return 9;
+			}
+			eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
+			beats++;					//Track how many beats were appended to the project
+		}
+
+		if(!eof_song_add_text_event(eof_song, beatnum, text, eof_selected_track, eventflags, 0))
+		{	//If the event couldn't be added
+			eof_log("\tError adding event.  Aborting", 1);
+			eof_erase_track(eof_song, eof_selected_track);
+			return 10;
+		}
+		events++;
+	}
+
+	//Cleanup
+	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+	eof_detect_difficulties(eof_song, eof_selected_track);	//Update note/technote populated identifiers
+	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
+	(void) pack_fclose(fp);
+
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tClone from clipboard succeeded.  Added %lu beats.  Cloned %lu notes, %lu tech notes, %lu sections and %lu events.", beats, notes, technotes, sections, events);
+	eof_log(eof_log_string, 1);
+	eof_render();
+	return 0;	//Success
 }

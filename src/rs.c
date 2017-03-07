@@ -4782,70 +4782,99 @@ void eof_load_chord_shape_definitions(char *fn)
 			//Load chord shape definition
 			if(strcasestr_spec(buffer, "<chordTemplate"))
 			{	//If this line contains a chord template tag (which defines a chord shape)
+				char invalid = 0;	//Set to nonzero if the chord definition doesn't define a fingering for each used string, and leave the fingering undefined for all other strings
+
 				if(eof_parse_chord_template(name, sizeof(name), finger, frets, &note, NULL, linectr, buffer))
 				{	//If there was an error reading the chord template
 					error = 1;
 				}
-
-				if(eof_note_count_colors_bitmask(note) < 2)
-				{	//If not at least two strings are used in the definition
-					eof_log("\t\tSkipping non chord definition", 2);
-				}
 				else
-				{	//The chord shape is valid
-					//Move the shape so that it begins on fret 1 and its lowest fretted string is lane 1
-					for(ctr = 0, bitmask = 1, lowestfret = 0; ctr < 6; ctr++, bitmask <<= 1)
+				{	//The chord template was read
+					//Validate the chord definition
+					for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
 					{	//For each of the 6 supported strings
 						if(note & bitmask)
 						{	//If this string is used
-							if(frets[ctr] == 0)
-							{	//If this string is played open
-								note &= ~bitmask;	//Clear this string from the note mask
-							}
-							else if(!lowestfret || (frets[ctr] < lowestfret))
-							{
-								lowestfret = frets[ctr];	//Track the lowest fret value in the note
-							}
+							if(frets[ctr] != 0)			//If this string isn't played open
+								if(finger[ctr] == 0)	//If this string has no fingering defined
+									invalid = 1;		//This definition is invalid
+
+							if(frets[ctr] == 0)			//If this string is played open
+								if(finger[ctr] != 0)	//If this string has a fingering defined
+									invalid = 1;		//This definition is invalid
 						}
-					}
-					for(ctr = 0; ctr < 6; ctr++)
-					{	//For each of the 6 supported strings
-						if(frets[ctr] >= lowestfret)
-						{
-							frets[ctr] -= (lowestfret - 1);	//Transpose any fretted strings to the first fret
+						else
+						{	//This string is unused
+							if(finger[ctr] != 0)		//If this string has a fingering defined
+								invalid = 1;			//This definition is invalid
 						}
-					}
-					while((note & 1) == 0)
-					{	//Until the shape has been moved to occupy the lowest string
-						for(ctr = 0; ctr < 5; ctr++)
-						{	//For each of the first 5 supported strings
-							frets[ctr] = frets[ctr + 1];	//Transpose the fretted note down one string
-							finger[ctr] = finger[ctr + 1];	//Transpose the finger definition for the string
-						}
-						frets[5] = 0;
-						finger[5] = 0;
-						note >>= 1;	//Transpose the note mask
 					}
 
-					//Add to list
-					length = strlen(name);
-					eof_chord_shape[num_eof_chord_shapes].name = malloc(length + 1);	//Allocate memory to store the shape name
-					if(!eof_chord_shape[num_eof_chord_shapes].name)
+					if(invalid)
 					{
-						eof_log("\tError allocating memory.  Aborting", 1);
-						error = 1;
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSkipping invalid chord definition on line #%lu", linectr);
+						eof_log(eof_log_string, 1);
+					}
+					else if(eof_note_count_colors_bitmask(note) < 2)
+					{	//If not at least two strings are used in the definition
+						eof_log("\t\tSkipping non chord definition", 2);
 					}
 					else
-					{	//Memory was allocated
-						memset(eof_chord_shape[num_eof_chord_shapes].name, 0, length + 1);	//Initialize memory block to 0
-						strncpy(eof_chord_shape[num_eof_chord_shapes].name, name, strlen(name) + 1);
-						memcpy(eof_chord_shape[num_eof_chord_shapes].finger, finger, 8);	//Store the finger array
-						memcpy(eof_chord_shape[num_eof_chord_shapes].frets, frets, 8);		//Store the fret array
-						eof_chord_shape[num_eof_chord_shapes].note = note;			//Store the note mask
-						num_eof_chord_shapes++;
-						eof_log("\t\tChord shape definition loaded", 2);
-					}
-				}//The chord shape is valid
+					{	//The chord shape is valid
+						//Move the shape so that it begins on fret 1 and its lowest fretted string is lane 1
+						for(ctr = 0, bitmask = 1, lowestfret = 0; ctr < 6; ctr++, bitmask <<= 1)
+						{	//For each of the 6 supported strings
+							if(note & bitmask)
+							{	//If this string is used
+								if(frets[ctr] == 0)
+								{	//If this string is played open
+									note &= ~bitmask;	//Clear this string from the note mask
+								}
+								else if(!lowestfret || (frets[ctr] < lowestfret))
+								{
+									lowestfret = frets[ctr];	//Track the lowest fret value in the note
+								}
+							}
+						}
+						for(ctr = 0; ctr < 6; ctr++)
+						{	//For each of the 6 supported strings
+							if(frets[ctr] >= lowestfret)
+							{
+								frets[ctr] -= (lowestfret - 1);	//Transpose any fretted strings to the first fret
+							}
+						}
+						while((note & 1) == 0)
+						{	//Until the shape has been moved to occupy the lowest string
+							for(ctr = 0; ctr < 5; ctr++)
+							{	//For each of the first 5 supported strings
+								frets[ctr] = frets[ctr + 1];	//Transpose the fretted note down one string
+								finger[ctr] = finger[ctr + 1];	//Transpose the finger definition for the string
+							}
+							frets[5] = 0;
+							finger[5] = 0;
+							note >>= 1;	//Transpose the note mask
+						}
+
+						//Add to list
+						length = strlen(name);
+						eof_chord_shape[num_eof_chord_shapes].name = malloc(length + 1);	//Allocate memory to store the shape name
+						if(!eof_chord_shape[num_eof_chord_shapes].name)
+						{
+							eof_log("\tError allocating memory.  Aborting", 1);
+							error = 1;
+						}
+						else
+						{	//Memory was allocated
+							memset(eof_chord_shape[num_eof_chord_shapes].name, 0, length + 1);	//Initialize memory block to 0
+							strncpy(eof_chord_shape[num_eof_chord_shapes].name, name, strlen(name) + 1);
+							memcpy(eof_chord_shape[num_eof_chord_shapes].finger, finger, 8);	//Store the finger array
+							memcpy(eof_chord_shape[num_eof_chord_shapes].frets, frets, 8);		//Store the fret array
+							eof_chord_shape[num_eof_chord_shapes].note = note;			//Store the note mask
+							num_eof_chord_shapes++;
+							eof_log("\t\tChord shape definition loaded", 2);
+						}
+					}//The chord shape is valid
+				}//The chord template was read
 			}//If this line contains a chord template tag (which defines a chord shape)
 		}//If another chord shape definition can be stored
 		else

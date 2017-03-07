@@ -243,4 +243,11 @@ int eof_menu_track_repair_grid_snap(void);
 	// if that grid snap position is within the threshold distance of the note's current timestamp
 	//If the auto-adjust tech notes preference is enabled, tech notes are moved the same number of milliseconds as the notes they apply to
 
+int eof_menu_track_clone_track_to_clipboard(void);
+	//Creates an "eof.clone.clipboard" file containing all content in the active track
+	//Returns zero on success
+int eof_menu_track_clone_track_from_clipboard(void);
+	//Adds the content defined in "eof.clone.clipboard" into the active track, if compatible (cannot clone a legacy/pro guitar track into PART VOCALS or vice-versa)
+	//Returns zero on success
+
 #endif
