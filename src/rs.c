@@ -2840,12 +2840,12 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				eof_conditionally_append_xml_long(buffer, sizeof(buffer), "hopo", tech.hopo, 0);
 				if(!eof_abridged_rs2_export || (direction != downstrum))
 				{	//If abridged RS2 export is not in effect, or if the strum direction is up instead of down
-					(void) strncat(buffer, "strum=\"", sizeof(buffer) - 1);	//Write the strum direction
-					(void) strncat(buffer, direction, sizeof(buffer) - 1);
-					(void) strncat(buffer, "\" ", sizeof(buffer) - 1);
+					(void) strncat(buffer, "strum=\"", sizeof(buffer) - strlen(buffer) - 1);	//Write the strum direction
+					(void) strncat(buffer, direction, sizeof(buffer) - strlen(buffer)  - 1);
+					(void) strncat(buffer, "\" ", sizeof(buffer) - strlen(buffer) - 1);
 				}
-				(void) strncat(buffer, chordtagend, sizeof(buffer) - 1);	//Append the tag ending
-				(void) strncat(buffer, "\n", sizeof(buffer) - 1);
+				(void) strncat(buffer, chordtagend, sizeof(buffer) - strlen(buffer) - 1);	//Append the tag ending
+				(void) strncat(buffer, "\n", sizeof(buffer) - strlen(buffer) - 1);
 				(void) pack_fputs(buffer, fp);
 
 				//Write chordnote tags if appropriate

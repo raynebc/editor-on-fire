@@ -144,17 +144,17 @@ char eof_all_events_dialog_string[20] = {0};	//The title string for the All Even
 DIALOG eof_all_events_dialog[] =
 {
 	/* (proc)                    (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,         0,   48,  500, 282, 2,   23,  0,    0,      0,   0,   eof_all_events_dialog_string, NULL, NULL },
+	{ d_agup_window_proc,         0,   48,  500, 266, 2,   23,  0,    0,      0,   0,   eof_all_events_dialog_string, NULL, NULL },
 	{ d_agup_list_proc,           12,  84,  475, 140, 2,   23,  0,    0,      0,   0,   (void *)eof_events_list_all,  NULL, NULL },
 	{ d_agup_button_proc,         12,  275, 70,  28,  2,   23,  'f',  D_EXIT, 0,   0,   "&Find",                NULL, NULL },
 	{ d_agup_button_proc,         95,  275, 70,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",                 NULL, NULL },
 	{ d_agup_button_proc,         182, 275, 150, 28,  2,   23,  0,    D_EXIT, 0,   0,   "Copy to selected beat",NULL, NULL },
-	{ eof_all_events_radio_proc,  340, 243, 85,  15,  2,   23,  0, D_SELECTED,0,   0,   "All Events",           (void *)5,    NULL },	//Use dp2 to store the object number, for use in eof_all_events_radio_proc()
-	{ eof_all_events_radio_proc,  340, 259, 142, 15,  2,   23,  0,    0,      0,   0,   "This Track's Events",  (void *)6,    NULL },
-	{ eof_all_events_radio_proc,  340, 275, 152, 15,  2,   23,  0,    0,      0,   0,   "Sections (RS phrases)",(void *)7,    NULL },
-	{ eof_all_events_radio_proc,  340, 291, 152, 15,  2,   23,  0,    0,      0,   0,   "RS sections",          (void *)8,    NULL },
-	{ eof_all_events_radio_proc,  340, 307, 152, 15,  2,   23,  0,    0,      0,   0,   "RS events",            (void *)9,    NULL },
-	{ d_agup_text_proc,           12,  228, 64,  8,   2,   23,  0,    0,      0,   0,   ""      ,                NULL, NULL },
+	{ eof_all_events_check_proc,  182, 259, 142, 15,  2,   23,  0,    0,      0,   0,   "This Track's Events",  (void *)5,    NULL },
+	{ eof_all_events_radio_proc,  340, 243, 85,  15,  2,   23,  0, D_SELECTED,0,   0,   "All Events",           (void *)6,    NULL },	//Use dp2 to store the object number, for use in eof_all_events_radio_proc()
+	{ eof_all_events_radio_proc,  340, 259, 152, 15,  2,   23,  0,    0,      0,   0,   "Sections (RS phrases)",(void *)7,    NULL },
+	{ eof_all_events_radio_proc,  340, 275, 152, 15,  2,   23,  0,    0,      0,   0,   "RS sections",          (void *)8,    NULL },
+	{ eof_all_events_radio_proc,  340, 291, 152, 15,  2,   23,  0,    0,      0,   0,   "RS events",            (void *)9,    NULL },
+	{ d_agup_text_proc,           12,  228, 64,  8,   2,   23,  0,    0,      0,   0,   ""      ,                NULL, NULL },	//Used to display "A stored MIDI track will override chart-wide text events" warning if applicable
 	{ d_agup_button_proc,         12,  243, 70,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",                 NULL, NULL },
 	{ d_agup_button_proc,         95,  243, 70,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete",                NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
@@ -1298,7 +1298,7 @@ int eof_menu_beat_calculate_bpm(void)
 
 int eof_menu_beat_all_events(void)
 {
-	unsigned long track, realindex, flags;
+	unsigned long track, realindex, flags, ctr, count;
 	int retval;
 	char undo_made = 0;
 
@@ -1306,7 +1306,21 @@ int eof_menu_beat_all_events(void)
 	eof_render();
 	eof_color_dialog(eof_all_events_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_all_events_dialog);
+
+	//Pre-select the last non-filtered event that is at/before the seek position
 	eof_all_events_dialog[1].d1 = 0;
+	for(ctr = 0, count = 0; ctr < eof_song->text_events; ctr++)
+	{	//For each text event in the project
+		if(eof_song->beat[eof_song->text_event[ctr]->beat]->pos > eof_music_pos - eof_av_delay)
+			break;	//If this text event and all subsequent ones occur after the seek position, stop processing text events
+
+		if(eof_event_is_not_filtered_from_listing(ctr))
+		{	//If this text event is to be displayed with the current filter settings
+			eof_all_events_dialog[1].d1 = count;
+			count++;
+		}
+	}
+
 	if(eof_events_overridden_by_stored_MIDI_track(eof_song))
 	{	//If there is a stored events track
 		eof_all_events_dialog[10].dp = stored_event_track_notice;	//Add a warning to the dialog
@@ -1550,6 +1564,49 @@ char * eof_events_list(int index, int * size)
 	return NULL;
 }
 
+int eof_event_is_not_filtered_from_listing(unsigned long index)
+{
+	if(!eof_song || (index >= eof_song->text_events))
+		return 0;	//Invalid parameter
+
+	if(eof_all_events_dialog[5].flags & D_SELECTED)
+	{	//"This track's events filter
+		if(eof_song->text_event[index]->track != eof_selected_track)
+		{	//If the event is not specific to the currently active track
+			return 0;	//Event is filtered
+		}
+	}
+
+	if(eof_all_events_dialog[6].flags & D_SELECTED)
+	{	//"All events" filter
+		return 1;	//Event is not filtered
+	}
+
+	if(eof_all_events_dialog[7].flags & D_SELECTED)
+	{	//Display section events
+		if(eof_is_section_marker(eof_song->text_event[index], 0))
+		{	//If the text event's string or flags indicate a section marker (regardless of the event's associated track
+			return 1;	//Event is not filtered
+		}
+	}
+	else if(eof_all_events_dialog[8].flags & D_SELECTED)
+	{	//Display Rocksmith sections
+		if(eof_song->text_event[index]->flags & EOF_EVENT_FLAG_RS_SECTION)
+		{	//If the event is marked as a Rocksmith section
+			return 1;	//Event is not filtered
+		}
+	}
+	else
+	{	//Display Rocksmith events
+		if(eof_song->text_event[index]->flags & EOF_EVENT_FLAG_RS_EVENT)
+		{	//If the event is marked as a Rocksmith event
+			return 1;	//Event is not filtered
+		}
+	}
+
+	return 0;	//Event is filtered
+}
+
 char * eof_events_list_all(int index, int * size)
 {
 	char trackname[26] = {0};
@@ -1558,52 +1615,16 @@ char * eof_events_list_all(int index, int * size)
 
 	if(index < 0)
 	{	//Signal to return the list count
-		if(eof_all_events_dialog[5].flags & D_SELECTED)
-		{	//Display all events
-			count = eof_song->text_events;
-		}
-		else if(eof_all_events_dialog[6].flags & D_SELECTED)
-		{	//Display this track's events
-			for(x = 0; x < eof_song->text_events; x++)
-			{	//For each event
-				if(eof_song->text_event[x]->track == eof_selected_track)
-				{	//If the event is specific to the currently active track
-					count++;
-				}
-			}
-		}
-		else if(eof_all_events_dialog[7].flags & D_SELECTED)
-		{	//Display section events
-			for(x = 0; x < eof_song->text_events; x++)
-			{	//For each event
-				if(eof_is_section_marker(eof_song->text_event[x], 0))
-				{	//If the text event's string or flags indicate a section marker (regardless of the event's associated track
-					count++;
-				}
-			}
-		}
-		else if(eof_all_events_dialog[8].flags & D_SELECTED)
-		{	//Display Rocksmith sections
-			for(x = 0; x < eof_song->text_events; x++)
-			{	//For each event
-				if(eof_song->text_event[x]->flags & EOF_EVENT_FLAG_RS_SECTION)
-				{	//If the event is marked as a Rocksmith section
-					count++;
-				}
-			}
-		}
-		else
-		{	//Display Rocksmith events
-			for(x = 0; x < eof_song->text_events; x++)
-			{	//For each event
-				if(eof_song->text_event[x]->flags & EOF_EVENT_FLAG_RS_EVENT)
-				{	//If the event is marked as a Rocksmith event
-					count++;
-				}
-			}
-		}
 		if(!size)
 			return NULL;
+
+		for(x = 0; x < eof_song->text_events; x++)
+		{	//For each event
+			if(eof_event_is_not_filtered_from_listing(x))
+			{	//If this text event is to be displayed with the current filter settings
+				count++;
+			}
+		}
 
 		*size = count;
 		(void) snprintf(eof_all_events_dialog_string, sizeof(eof_all_events_dialog_string) - 1, "All Events (%lu)", count);
@@ -2211,13 +2232,12 @@ int eof_edit_trainer_proc(int msg, DIALOG *d, int c)
 
 int eof_all_events_radio_proc(int msg, DIALOG *d, int c)
 {
-	static uintptr_t previous_option = 5;	//By default, eof_all_events_dialog[5] (all events) is selected
+	static uintptr_t previous_option = 6;	//By default, eof_all_events_dialog[6] (all events) is selected
 	uintptr_t selected_option;
 	int junk;
 
 	if(msg != MSG_CLICK)
 		return d_agup_radio_proc(msg, d, c);	//If this isn't a click message, allow the input to be processed
-
 
 	if(!d)	//If this pointer is NULL for any reason
 		return d_agup_radio_proc(msg, d, c);	//Allow the input to be processed
@@ -2226,7 +2246,7 @@ int eof_all_events_radio_proc(int msg, DIALOG *d, int c)
 
 	if(selected_option != previous_option)
 	{	//If the event display filter changed, have the event list redrawn
-		eof_all_events_dialog[5].flags = eof_all_events_dialog[6].flags = eof_all_events_dialog[7].flags = eof_all_events_dialog[8].flags = eof_all_events_dialog[9].flags = 0;	//Clear all radio buttons
+		eof_all_events_dialog[6].flags = eof_all_events_dialog[7].flags = eof_all_events_dialog[8].flags = eof_all_events_dialog[9].flags = 0;	//Clear all radio buttons
 		eof_all_events_dialog[selected_option].flags = D_SELECTED;			//Re-select the radio button that was just clicked on
 		eof_all_events_dialog[1].d2 = 0;									//Select first list item, since if it's too high, it will prevent the newly-selected filtered list from displaying
 		previous_option = selected_option;
@@ -2239,70 +2259,37 @@ int eof_all_events_radio_proc(int msg, DIALOG *d, int c)
 	return d_agup_radio_proc(msg, d, c);	//Allow the input to be processed
 }
 
+int eof_all_events_check_proc(int msg, DIALOG *d, int c)
+{
+	int junk;
+
+	if(msg != MSG_CLICK)
+		return d_agup_check_proc(msg, d, c);	//If this isn't a click message, allow the input to be processed
+
+	eof_all_events_dialog[1].d2 = 0;		//Select first list item, since if it's too high, it will prevent the newly-selected filtered list from displaying
+	(void) d_agup_check_proc(msg, d, c);	//Allow the input to be processed
+	(void) dialog_message(eof_all_events_dialog, MSG_START, 0, &junk);	//Re-initialize the dialog
+	(void) dialog_message(eof_all_events_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
+	return D_REDRAW;
+}
+
 unsigned long eof_retrieve_text_event(unsigned long index)
 {
-	unsigned long x, count = 0;
-	if(eof_all_events_dialog[5].flags & D_SELECTED)
-	{	//Display all events
-		return index;
-	}
-	else if(eof_all_events_dialog[6].flags & D_SELECTED)
-	{	//Display this track's events
-		for(x = 0; x < eof_song->text_events; x++)
-		{	//For each event
-			if(eof_song->text_event[x]->track == eof_selected_track)
-			{	//If the event is specific to the currently active track
-				if(count == index)
-				{	//If the requested event was found
-					return x;
-				}
-				count++;
+	unsigned long ctr, count;
+
+	for(ctr = 0, count = 0; ctr < eof_song->text_events; ctr++)
+	{	//For each text event in the active project
+		if(eof_event_is_not_filtered_from_listing(ctr))
+		{	//If this text event is to be displayed with the current filter settings
+			if(count == index)
+			{	//If the requested entry has been found
+				return ctr;
 			}
+			count++;
 		}
 	}
-	else if(eof_all_events_dialog[7].flags & D_SELECTED)
-	{	//Display section events
-		for(x = 0; x < eof_song->text_events; x++)
-		{	//For each event
-			if(eof_is_section_marker(eof_song->text_event[x], 0))
-			{	//If the text event's string or flags indicate a section marker (regardless of the event's associated track)
-				if(count == index)
-				{	//If the requested event was found
-					return x;
-				}
-				count++;
-			}
-		}
-	}
-	else if(eof_all_events_dialog[8].flags & D_SELECTED)
-	{	//Display Rocksmith sections
-		for(x = 0; x < eof_song->text_events; x++)
-		{	//For each event
-			if(eof_song->text_event[x]->flags & EOF_EVENT_FLAG_RS_SECTION)
-			{	//If the event is marked as a Rocksmith section
-				if(count == index)
-				{	//If the requested event was found
-					return x;
-				}
-				count++;
-			}
-		}
-	}
-	else
-	{	//Display Rocksmith events
-		for(x = 0; x < eof_song->text_events; x++)
-		{	//For each event
-			if(eof_song->text_event[x]->flags & EOF_EVENT_FLAG_RS_EVENT)
-			{	//If the event is marked as a Rocksmith section
-				if(count == index)
-				{	//If the requested event was found
-					return x;
-				}
-				count++;
-			}
-		}
-	}
-	return 0;	//If for some reason the requested event was not retrievable, return 0
+
+	return 0;	//The requested entry was not retrievable
 }
 
 int eof_menu_beat_double_tempo(void)

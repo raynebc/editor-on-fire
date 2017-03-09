@@ -77,9 +77,6 @@ int eof_menu_beat_trainer_event(void);
 int eof_edit_trainer_proc(int msg, DIALOG *d, int c);	//This is a modification of eof_verified_edit_proc() allowing the trainer strings to be redrawn when the input field is altered
 int eof_menu_beat_add_section(void);
 
-int eof_all_events_radio_proc(int msg, DIALOG *d, int c);	//A radio button procedure that checks to see if the filter in the "All Events" dialog was changed.  If it was, it has Allegro redraw the list of events
-unsigned long eof_retrieve_text_event(unsigned long index);	//Returns the actual event number of the specified filtered event number (for use with the "All Events" dialog)
-
 int eof_menu_beat_double_tempo(void);		//Performs eof_double_tempo() on the currently selected beat
 int eof_menu_beat_halve_tempo(void);		//Performs eof_halve_tempo() on the currently selected beat
 int eof_menu_beat_double_tempo_all(void);	//Performs eof_double_tempo() on all beats
@@ -122,6 +119,18 @@ char * eof_rs_section_add_list(int index, int * size);
 char * eof_rs_event_add_list(int index, int * size);
 	//List box function for eof_rocksmith_event_dialog_add()
 char * eof_events_list(int index, int * size);		//Dialog logic to display the chart's text events in the "Events" list box
+
+int eof_all_events_radio_proc(int msg, DIALOG *d, int c);
+	//A radio button procedure that checks to see if the filter in the "All Events" dialog was changed.
+	//If it was, it has Allegro redraw the list of events
+int eof_all_events_check_proc(int msg, DIALOG *d, int c);
+	//A checkbox procedure that checks to see if the "This track only" filter in the "All Events" dialog was changed.
+	//If it was, it has Allegro redraw the list of events
+unsigned long eof_retrieve_text_event(unsigned long index);
+	//Returns the actual event number of the specified filtered event number (for use with the "All Events" dialog)
+int eof_event_is_not_filtered_from_listing(unsigned long index);
+	//Returns nonzero if the specified event is visible from the perspective of the "All Events" dialog's filters
+	//Returns zero on error
 char * eof_events_list_all(int index, int * size);	//Dialog logic to display the chart's text events in the "All Events" list box
 
 int eof_menu_beat_copy_rs_events(void);

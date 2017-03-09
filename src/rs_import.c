@@ -1657,7 +1657,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 										}
 										if(!parse_xml_attribute_text(tag, sizeof(tag), "strum", buffer))
 										{	//If the strum direction could not be read
-											(void) strncpy(tag, "down", sizeof(tag));	//Assume down strum
+											(void) strncpy(tag, "down", sizeof(tag) - 1);	//Assume down strum
 										}
 										mute = highdensity = palmmute = 0;
 										(void) parse_xml_attribute_number("fretHandMute", buffer, &mute);

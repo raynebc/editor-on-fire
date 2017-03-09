@@ -4002,8 +4002,19 @@ int eof_menu_track_clone_track_number(EOF_SONG *sp, unsigned long sourcetrack, u
 	eof_menu_track_set_tech_view_state(sp, desttrack, d_restore_tech_view);
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 
+	//Clone the source track's events
+	for(ctr = 0; ctr < sp->text_events; ctr++)
+	{	//For each event in the project
+		if(sp->text_event[ctr]->track == sourcetrack)
+		{	//If the event is specific to the source track, copy it to the destination track
+			(void) eof_song_add_text_event(sp, sp->text_event[ctr]->beat, sp->text_event[ctr]->text, desttrack, sp->text_event[ctr]->flags, 0);
+		}
+	}
+
+	eof_sort_events(eof_song);
 	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
 	eof_detect_difficulties(sp, eof_selected_track);
+
 	return 1;
 }
 
@@ -4673,6 +4684,9 @@ int eof_menu_track_clone_track_from_clipboard(void)
 			eof_read_clipboard_note(fp, &temp_note, EOF_NAME_LENGTH + 1);	//Read the note
 			eof_read_clipboard_position_snap_data(fp, &beat, &gridsnapvalue, &gridsnapnum);	//Read its grid snap data
 
+			if((noteset > 0) && (d_track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+				continue;	//Don't add tech notes to a legacy track
+
 			//Add enough beats to encompass the note if necessary
 			while(eof_song->beats <= temp_note.endbeat + 1)
 			{	//Until there are enough beats to accommodate the end position of this note
@@ -4713,6 +4727,11 @@ int eof_menu_track_clone_track_from_clipboard(void)
 			}
 			eof_set_note_flags(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.flags);
 			eof_set_note_accent(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.accent);
+
+			if(noteset == 0)
+				notes++;		//Track how many normal notes are cloned from the clipboard
+			else
+				technotes++;	//Track how many tech notes are cloned from the clipboard
 			if(d_track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 				continue;	//If the track isn't being cloned into a pro guitar track, skip the logic below
 
@@ -4725,11 +4744,6 @@ int eof_menu_track_clone_track_from_clipboard(void)
 			np->slideend = temp_note.slideend;								//Copy the slide end position to the last created pro guitar note
 			np->unpitchend = temp_note.unpitchend;							//Copy the slide end position to the last created pro guitar note
 			np->eflags = temp_note.eflags;									//Copy the extended track flags
-
-			if(noteset == 0)
-				notes++;		//Track how many normal notes are cloned from the clipboard
-			else
-				technotes++;	//Track how many tech notes are cloned from the clipboard
 		}//For each note for this note set in the clipboard file
 	}//For each note set in the clipboard file
 	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0);	//Disable tech view for the active track
@@ -4746,12 +4760,6 @@ int eof_menu_track_clone_track_from_clipboard(void)
 		long beat;
 
 		sectioncount = pack_igetl(fp);	//Read the number of instances of this section type
-		eof_lookup_track_section_type(eof_song, eof_selected_track, sectiontype, &junk, &phrase);
-		if(!sectioncount || !phrase)
-		{	//If there are no instances of this type of section on the clipboard, or the appropriate section array couldn't be
-			continue;	//Skip it
-		}
-
 		for(sectionnum = 0; sectionnum < sectioncount; sectionnum++)
 		{	//For each instance of this type of section in the track
 			beat = pack_igetl(fp);	//Read the beat number in which this section starts
@@ -4772,6 +4780,12 @@ int eof_menu_track_clone_track_from_clipboard(void)
 			sectiondiff = pack_getc(fp);	//Read section difficulty
 			(void) eof_load_song_string_pf(name, fp, sizeof(name));	//Read section name
 			sectionflags = pack_getc(fp);	//Read section flags
+
+			eof_lookup_track_section_type(eof_song, eof_selected_track, sectiontype, &junk, &phrase);
+			if(!phrase)
+			{	//If this section type isn't compatible with the destination track
+				continue;	//Don't add it
+			}
 
 			//Add enough beats to encompass the section if necessary
 			while(eof_song->beats <= beat + 1)
@@ -4834,6 +4848,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	eof_detect_difficulties(eof_song, eof_selected_track);	//Update note/technote populated identifiers
 	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
+	eof_sort_events(eof_song);
 	(void) pack_fclose(fp);
 
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tClone from clipboard succeeded.  Added %lu beats.  Cloned %lu notes, %lu tech notes, %lu sections and %lu events.", beats, notes, technotes, sections, events);
