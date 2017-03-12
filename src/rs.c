@@ -895,7 +895,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			{	//If the fingering for the note is not fully defined
 				if(eof_lookup_chord_shape(tp->note[chordlist[ctr]], &shapenum, 0))
 				{	//If a fingering for the chord can be found in the chord shape definitions
-					eof_apply_chord_shape_definition(&temp, shapenum);	//Apply the matching chord shape definition's fingering
+					eof_apply_chord_shape_definition(&temp, shapenum, 0);	//Apply the matching chord shape definition's fingering
 					effective_fingering = temp.finger;	//Use the matching chord shape definition's finger definitions
 				}
 			}
@@ -2358,11 +2358,11 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				memset(temp.finger, 0, sizeof(temp.finger));	//Override the fingering to all undefined
 				effective_fingering = temp.finger;
 			}
-			else if(eof_pro_guitar_note_fingering_valid(tp, chordlist[ctr], 0) != 1)
-			{	//If the fingering for the note is not fully defined
-				if(eof_lookup_chord_shape(tp->note[chordlist[ctr]], &shapenum, 0))
+			else if(eof_pro_guitar_note_fingering_valid(tp, chordlist[ctr], eof_fingering_checks_include_mutes) != 1)
+			{	//If the fingering for the note is not fully defined (taking muted strings into account if the user opted to do so)
+				if(eof_lookup_chord_shape(tp->note[chordlist[ctr]], &shapenum, eof_fingering_checks_include_mutes))
 				{	//If a fingering for the chord can be found in the chord shape definitions
-					eof_apply_chord_shape_definition(&temp, shapenum);	//Apply the matching chord shape definition's fingering
+					eof_apply_chord_shape_definition(&temp, shapenum, eof_fingering_checks_include_mutes);	//Apply the matching chord shape definition's fingering
 					effective_fingering = temp.finger;	//Use the matching chord shape definition's finger definitions
 				}
 			}
@@ -3155,9 +3155,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	return 1;	//Return success
 }
 
-void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_made)
+void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_made, char scope)
 {
-	unsigned long ctr2, ctr3;
+	unsigned long ctr2, ctr3, trackctr;
+	EOF_PRO_GUITAR_TRACK *tp2;
 	unsigned char *array;	//Points to the finger array being replicated to matching notes
 	int retval;
 
@@ -3168,33 +3169,45 @@ void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_ma
 	{	//For each note in the track (outer loop)
 		if(tp->note[ctr2]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
 			continue;	//If this note is designated as having no fingering, skip it
-		retval = eof_pro_guitar_note_fingering_valid(tp, ctr2, 0);
+		retval = eof_pro_guitar_note_fingering_valid(tp, ctr2, eof_fingering_checks_include_mutes);
 		if(retval == 1)
-		{	//If the note's fingering was complete
+		{	//If the note's fingering was complete (taking muted strings into account if the user opted to do so)
 			if(eof_note_count_colors_bitmask(tp->note[ctr2]->note) > 1)
 			{	//If this note is a chord
+				//Look for matching chords in other tracks that are missing fingering, and apply this chord's fingering to them
 				array = tp->note[ctr2]->finger;
-				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
-				{	//For each note in the track (inner loop)
-					if((ctr2 == ctr3) || (eof_pro_guitar_note_compare(tp, ctr2, tp, ctr3, 0) != 0))
-						continue;	//If this note is being compared to itself or it does not match the note being examined in the outer loop, skip it
-					if(tp->note[ctr3]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
-						continue;	//If this note is designated as having no fingering, skip it
+				for(trackctr = 1; trackctr < eof_song->tracks; trackctr++)
+				{	//For each track in the project
+					if(eof_song->track[trackctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)	//If this isn't a pro guitar track
+						continue;	//Skip it
+					tp2 = eof_song->pro_guitar_track[eof_song->track[trackctr]->tracknum];
+					if(!scope && (tp != tp2))	//If this track is outside of the scope defined by the calling function
+						continue;	//Skip it
 
-					if(eof_pro_guitar_note_fingering_valid(tp, ctr3, 0) != 1)
-					{	//If the fingering of the inner loop's note is invalid/undefined
-						if(undo_made && !(*undo_made))
-						{	//If an undo hasn't been made yet
-							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-							*undo_made = 1;
+					for(ctr3 = 0; ctr3 < tp2->notes; ctr3++)
+					{	//For each note in the track (inner loop)
+						if((tp == tp2) && (ctr2 == ctr3))
+							continue;	//If this note is being compared to itself, skip it
+						if(eof_pro_guitar_note_compare(tp, ctr2, tp2, ctr3, 0) != 0)
+							continue;	//If this note does not match the note being examined in the outer loop, skip it
+						if(tp2->note[ctr3]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
+							continue;	//If this note is designated as having no fingering, skip it
+
+						if(eof_pro_guitar_note_fingering_valid(tp2, ctr3, eof_fingering_checks_include_mutes) != 1)
+						{	//If the fingering of the inner loop's note is invalid/undefined (taking muted strings into account if the user opted to do so)
+							if(undo_made && !(*undo_made))
+							{	//If an undo hasn't been made yet
+								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+								*undo_made = 1;
+							}
+							memcpy(tp2->note[ctr3]->finger, array, 8);	//Overwrite it with the current finger array
 						}
-						memcpy(tp->note[ctr3]->finger, array, 8);	//Overwrite it with the current finger array
-					}
-					else
-					{	//The inner loop's note has a valid fingering array defined
-						array = tp->note[ctr3]->finger;	//Use this finger array for remaining matching notes in the track
-					}
-				}//For each note in the track (inner loop)
+						else
+						{	//The inner loop's note has a valid fingering array defined
+							array = tp2->note[ctr3]->finger;	//Use this finger array for remaining matching notes in the track
+						}
+					}//For each note in the track (inner loop)
+				}
 			}
 		}
 		else if(retval == 0)
@@ -3276,7 +3289,7 @@ void eof_song_fix_fingerings(EOF_SONG *sp, char *undo_made)
 		{	//If this is a pro guitar track
 			restore_tech_view = eof_menu_track_get_tech_view_state(sp, ctr);
 			eof_menu_track_set_tech_view_state(sp, ctr, 0); //Disable tech view if applicable
-			eof_pro_guitar_track_fix_fingerings(sp->pro_guitar_track[sp->track[ctr]->tracknum], undo_made);	//Correct and complete note fingering where possible, performing an undo state before making changes
+			eof_pro_guitar_track_fix_fingerings(sp->pro_guitar_track[sp->track[ctr]->tracknum], undo_made, 1);	//Correct and complete note fingering chart-wide where possible, performing an undo state before making changes
 			eof_menu_track_set_tech_view_state(sp, ctr, restore_tech_view); //Re-enable tech view if applicable
 		}
 	}
@@ -3427,7 +3440,7 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 					{	//If a fingering for the chord can be found in the chord shape definitions
 						memcpy(temp.frets, np->frets, 6);	//Clone the fretting of the original note into the temporary note
 						temp.note = np->note;				//Clone the note mask
-						eof_apply_chord_shape_definition(&temp, shapenum);	//Apply the matching chord shape definition's fingering to the temporary note
+						eof_apply_chord_shape_definition(&temp, shapenum, 0);	//Apply the matching chord shape definition's fingering to the temporary note
 						np = &temp;	//Check the temporary note for use of the index finger, instead of the original note
 					}
 				}
@@ -4601,11 +4614,12 @@ int eof_enforce_rs_phrase_begin_with_fret_hand_position(EOF_SONG *sp, unsigned l
 	return found;
 }
 
-int eof_lookup_chord_shape(EOF_PRO_GUITAR_NOTE *np, unsigned long *shapenum, unsigned long skipctr)
+int eof_lookup_chord_shape(EOF_PRO_GUITAR_NOTE *np, unsigned long *shapenum, char count_mutes)
 {
 	unsigned long ctr, ctr2, bitmask;
 	EOF_PRO_GUITAR_NOTE template;
 	unsigned char lowest = 0;	//Tracks the lowest fret value in the note
+	unsigned char fret;
 	char nonmatch;
 
 	if(!np)
@@ -4618,16 +4632,22 @@ int eof_lookup_chord_shape(EOF_PRO_GUITAR_NOTE *np, unsigned long *shapenum, uns
 	{	//For each of the 6 supported strings
 		if(template.note & bitmask)
 		{	//If this string is used
-			if((template.frets[ctr] == 0) || (template.frets[ctr] & 0x80))
-			{	//If this string is played open or muted
+			fret = template.frets[ctr];
+			if(count_mutes)
+			{	//If muted strings are to be considered in the shape being looked up
+				fret = fret & 0x7F;	//Mask out the muting bit to allow any defined fret value to be retained for checking below
+				template.frets[ctr] = fret;	//Update the template note
+			}
+			if((fret == 0) || (fret & 0x80))
+			{	//If this string is played open or muted (and muted notes are being ignored)
 				template.note &= ~bitmask;	//Clear this string on the template note
 			}
 			else
 			{	//Otherwise the string is fretted
 				ctr2++;	//Count how many strings are fretted
-				if(!lowest || (template.frets[ctr] < lowest))
+				if(!lowest || (fret < lowest))
 				{
-					lowest = template.frets[ctr];	//Track the lowest fret value in the note
+					lowest = fret;	//Track the lowest fret value in the note
 				}
 			}
 		}
@@ -4676,24 +4696,21 @@ int eof_lookup_chord_shape(EOF_PRO_GUITAR_NOTE *np, unsigned long *shapenum, uns
 		}
 		if(!nonmatch)
 		{	//If the note matches the chord shape definition
-			if(!skipctr)
-			{	//If no more matches were to be skipped before returning the match
-				if(shapenum)
-				{	//If calling function wanted to receive the matching definition number
-					*shapenum = ctr;
-				}
-				return 1;	//Return match found
+			if(shapenum)
+			{	//If calling function wanted to receive the matching definition number
+				*shapenum = ctr;
 			}
-			skipctr--;
+			return 1;	//Return match found
 		}
 	}//For each chord shape definition
 
 	return 0;	//No chord shape match found
 }
 
-void eof_apply_chord_shape_definition(EOF_PRO_GUITAR_NOTE *np, unsigned long shapenum)
+void eof_apply_chord_shape_definition(EOF_PRO_GUITAR_NOTE *np, unsigned long shapenum, char count_mutes)
 {
 	unsigned long ctr, transpose, bitmask;
+	unsigned char fret;
 
 	if(!np || (shapenum >= num_eof_chord_shapes))
 		return;	//Invalid parameters
@@ -4705,8 +4722,13 @@ void eof_apply_chord_shape_definition(EOF_PRO_GUITAR_NOTE *np, unsigned long sha
 		np->finger[transpose] = 0;	//Erase any existing fingering for this string
 		if(np->note & bitmask)
 		{	//If this string is used
-			if((np->frets[transpose] != 0) && !(np->frets[transpose] & 0x80))
-			{	//If this string is not played open or muted
+			fret = np->frets[transpose];
+			if(count_mutes)
+			{	//If string muted strings are not being ignored by this function
+				fret = fret & 0x7F;	//Mask out the muting bit to allow any defined fret value to be examined below
+			}
+			if((fret != 0) && !(fret & 0x80))
+			{	//If this string is not played open or muted (unless muted notes are allowed)
 				break;	//This string has the lowest fretted note
 			}
 		}
@@ -5810,9 +5832,9 @@ int eof_note_exports_without_fingering(EOF_PRO_GUITAR_TRACK *tp, unsigned long n
 	if(tp->note[note]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
 		return 1;	//Note has fingerless status
 
-	if(eof_pro_guitar_note_fingering_valid(tp, note, 0) != 1)
+	if(eof_pro_guitar_note_fingering_valid(tp, note, eof_fingering_checks_include_mutes) != 1)
 	{	//If the note's fingering is not properly defined
-		if(!eof_lookup_chord_shape(tp->note[note], NULL, 0))
+		if(!eof_lookup_chord_shape(tp->note[note], NULL, eof_fingering_checks_include_mutes))
 		{	//If a fingering for the note CANNOT be found in the chord shape definitions
 			return 1;	//Note would export without complete fingering
 		}

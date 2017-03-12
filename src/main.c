@@ -168,6 +168,7 @@ int         eof_warn_missing_bass_fhps = 1;		//If nonzero, the Rocksmith export 
 int         eof_4_fret_range = 1;				//Defines the lowest fret number at which the fret hand has a range of 4 frets, for fret hand position generation (the default value of 1 indicates this range for the entire fretboard)
 int         eof_5_fret_range = 0;				//Defines the lowest fret number at which the fret hand has a range of 5 frets, for fret hand position generation (the default value of 0 indicates this range is undefined)
 int         eof_6_fret_range = 0;				//Defines the lowest fret number at which the fret hand has a range of 6 frets, for fret hand position generation (the default value of 0 indicates this range is undefined)
+int         eof_fingering_checks_include_mutes = 0;	//If nonzero, various functions that validate/complete chord fingerings will not dismiss strings with string mute status
 int         eof_smooth_pos = 1;
 int         eof_input_mode = EOF_INPUT_PIANO_ROLL;
 int         eof_windowed = 1;

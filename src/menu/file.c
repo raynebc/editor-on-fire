@@ -170,6 +170,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 346, 206, 16,  2,   23,  0,    0,      1,   0,   "Don't auto-name double stops",NULL, NULL },
 	{ d_agup_check_proc, 248, 362, 184, 16,  2,   23,  0,    0,      1,   0,   "Auto-Adjust sections/FHPs",NULL, NULL },
 	{ d_agup_check_proc, 248, 378, 168, 16,  2,   23,  0,    0,      1,   0,   "Auto-Adjust tech notes",NULL, NULL },
+	{ d_agup_check_proc, 248, 394, 216, 16,  2,   23,  0,    0,      1,   0,   "Fingering checks include mutes",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1211,6 +1212,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[46].flags = eof_dont_auto_name_double_stops ? D_SELECTED : 0;	//Don't auto-name double stops
 	eof_preferences_dialog[47].flags = eof_section_auto_adjust ? D_SELECTED : 0;			//Auto-Adjust sections/FHPs
 	eof_preferences_dialog[48].flags = eof_technote_auto_adjust ? D_SELECTED : 0;			//Auto-Adjust tech notes
+	eof_preferences_dialog[49].flags = eof_fingering_checks_include_mutes ? D_SELECTED : 0;	//Fingering checks include mutes
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1327,6 +1329,7 @@ int eof_menu_file_preferences(void)
 			eof_dont_auto_name_double_stops = (eof_preferences_dialog[46].flags == D_SELECTED ? 1 : 0);
 			eof_section_auto_adjust = (eof_preferences_dialog[47].flags == D_SELECTED ? 1 : 0);
 			eof_technote_auto_adjust = (eof_preferences_dialog[48].flags == D_SELECTED ? 1 : 0);
+			eof_fingering_checks_include_mutes = (eof_preferences_dialog[49].flags == D_SELECTED ? 1 : 0);
 			eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case eof_inverted_notes was changed
 			eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case eof_lefty_mode was changed
 		}//If the user clicked OK
@@ -1368,6 +1371,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[46].flags = 0;					//Don't auto-name double stops
 			eof_preferences_dialog[47].flags = 1;					//Auto-Adjust sections/FHPs
 			eof_preferences_dialog[48].flags = 1;					//Auto-Adjust tech notes
+			eof_preferences_dialog[49].flags = 0;					//Fingering checks include mutes
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);

@@ -351,6 +351,7 @@ extern int         eof_warn_missing_bass_fhps;
 extern int         eof_4_fret_range;
 extern int         eof_5_fret_range;
 extern int         eof_6_fret_range;
+extern int         eof_fingering_checks_include_mutes;
 extern int         eof_smooth_pos;
 extern int         eof_windowed;
 extern int         eof_anchor_all_beats;

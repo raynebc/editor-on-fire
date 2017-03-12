@@ -130,24 +130,26 @@ void eof_rs_export_cleanup(EOF_SONG * sp, unsigned long track);
 	//Cleanup that should be performed before either RS export function returns
 	//This function removes the ignore and arpeggio statuses from the specified track's notes and deletes temporary notes that had been added
 
-void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_made);
+void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_made, char scope);
 	//Checks all notes in the track and duplicates finger arrays of chords with complete finger definitions to matching chords without complete finger definitions
+	//If scope is nonzero, the chords' fingerings are allowed to be applied to other tracks in the project
 	//If any note has invalid fingering, it is cleared and will be allowed to be set by a valid fingering from a matching note
 	//Single notes do not have their fingerings populated by this function, but if the fingering is invalid it is still cleared
 	//If *undo_made is zero, this function will create an undo state before modifying the chart and will set the referenced variable to nonzero
 int eof_pro_guitar_note_fingering_valid(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, char count_mutes);
 	//Returns 0 if the fingering is invalid for the specified note (partially defined, or a finger specified for a string that is played open)
 	//Returns 1 if the fingering is fully defined for the specified note for fretted strings
-	//	If count_mutes is nonzero, then muted strings are inspected for fingering, otherwise they aren't
+	//If count_mutes is nonzero, then muted strings are inspected for fingering, otherwise they aren't
 	//Returns 2 if the fingering is undefined for the specified note
 void eof_song_fix_fingerings(EOF_SONG *sp, char *undo_made);
 	//Runs eof_pro_guitar_track_fix_fingerings() on all pro guitar tracks in the specified chart
 	//If *undo_made is zero, this function will create an undo state before modifying the chart and will set the referenced variable to nonzero
-int eof_lookup_chord_shape(EOF_PRO_GUITAR_NOTE *np, unsigned long *shapenum, unsigned long skipctr);
+int eof_lookup_chord_shape(EOF_PRO_GUITAR_NOTE *np, unsigned long *shapenum, char count_mutes);
 	//Examines the specified note and returns nonzero if a matching chord shape definition is found, in which case the shape number is returned through shapenum if it is not NULL
-	//If skipctr is nonzero, then the first [skipctr] number of matches are ignored during the lookup process, allowing additional definition matches to be found
-void eof_apply_chord_shape_definition(EOF_PRO_GUITAR_NOTE *np, unsigned long shapenum);
+	//If count_mutes is nonzero, then muted strings are included in the shape, otherwise they are ignored
+void eof_apply_chord_shape_definition(EOF_PRO_GUITAR_NOTE *np, unsigned long shapenum, char count_mutes);
 	//Applies the specified chord shape to the specified note, transposing the shape definition to suit the lowest fretted string of the specified note
+	//If count_mutes is nonzero, then muted strings are included in the shape, otherwise they are ignored
 void eof_load_chord_shape_definitions(char *fn);
 	//Reads chord templates from the specified file and stores them into the eof_chord_shape[] array
 void eof_destroy_shape_definitions(void);
@@ -314,7 +316,8 @@ int eof_rs_combine_linknext_logic(EOF_SONG * sp, unsigned long track, unsigned l
 int eof_note_exports_without_fingering(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);
 	//Returns nonzero if the specified note will export with no fingering, due to either of the following conditions:
 	//	1.  Having fingerless status
-	//	2.  Having no undefined/incomplete fingering and having no matching chord shape definition
+	//	2.  Having undefined/incomplete fingering and having no matching chord shape definition
+	//If eof_fingering_checks_include_mutes is nonzero, muted strings are taken into account
 	//This function does not restrict usage to notes with multiple gems
 
 void eof_conditionally_append_xml_long(char *buffer, size_t buffsize, char *name, long value, long defaultval);

@@ -385,6 +385,18 @@ void eof_prepare_edit_menu(void)
 			}
 		}
 
+		/* selection>select>toms and ...cymbals */
+		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//If a drum track is active
+			eof_edit_selection_select_menu[2].flags = 0;	//select>Toms
+			eof_edit_selection_select_menu[3].flags = 0;	//select>Cymbals
+		}
+		else
+		{
+			eof_edit_selection_select_menu[2].flags = D_DISABLED;
+			eof_edit_selection_select_menu[3].flags = D_DISABLED;
+		}
+
 		/* zoom */
 		for(i = 0; i < EOF_NUM_ZOOM_LEVELS; i++)
 		{

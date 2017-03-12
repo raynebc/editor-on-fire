@@ -4883,7 +4883,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers_menu(void)
 int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_made)
 {
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	unsigned long ctr, ctr2, stringcount, i;
+	unsigned long ctr, ctr2, trackctr, stringcount, i;
 	long fretvalue, fingervalue, highfretvalue;
 	unsigned long bitmask = 0;		//Used to build the updated pro guitar note bitmask
 	char allmuted;					//Used to track whether all used strings are string muted
@@ -4891,7 +4891,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 	int retval;
 	int note_selection_updated;
 	static char dont_ask = 0;	//Is set to nonzero if the user opts to suppress the prompt regarding modifying multiple selected notes
-	EOF_PRO_GUITAR_TRACK *tp;
+	EOF_PRO_GUITAR_TRACK *tp, *tp2;
 	EOF_PRO_GUITAR_NOTE *np;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -5227,38 +5227,55 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 				//Offer to update the fingering for all notes in the track matching the selected note (which all selected notes now match because they were altered if they didn't)
 				if(fingeringdefined && eof_auto_complete_fingering && !(tp->note[eof_selection.current]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS))
 				{	//If the fingering is defined, and the user didn't disable this auto-completion feature, and the selected note isn't designated as having no fingering
-					for(ctr = 0; ctr < tp->notes; ctr++)
-					{	//For each note in the track
-						if((ctr != eof_selection.current) && !eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr))
-						{	//If this note isn't the one that was just edited, but it matches
-							if(eof_pro_guitar_note_fingering_valid(tp, ctr, 1) != 1)
-							{	//If the fingering for the note is not fully defined
-								offerupdatefingering = 1;	//Note that the user should be prompted whether to update the fingering array of all matching notes
-								break;
-							}
+					for(trackctr = 1; trackctr < eof_song->tracks; trackctr++)
+					{	//For each track in the project
+						if(eof_song->track[trackctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)	//If this isn't a pro guitar track
+							continue;	//Skip it
+
+						tp2 = eof_song->pro_guitar_track[eof_song->track[trackctr]->tracknum];
+						for(ctr = 0; ctr < tp2->notes; ctr++)
+						{	//For each note in the track
+							if((trackctr == eof_selected_track) && (ctr == eof_selection.current))	//If this is the selected note that was just edited
+								continue;	//Skip it
+							if(eof_note_compare(eof_song, eof_selected_track, eof_selection.current, trackctr, ctr, 0))	//If this note doesn't match the one that was just edited
+								continue;	//Skip it
+							if(eof_pro_guitar_note_fingering_valid(tp2, ctr, 1) == 1)	//If this note's fingering is already fully defined
+								continue;	//Skip it
+							if(tp2->note[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
+								continue;	//If this note is designated as having no fingering, skip it
+
+							offerupdatefingering = 1;	//Note that the user should be prompted whether to update the fingering array of all matching notes
+							break;
 						}
 					}
 					eof_clear_input();
 					if(function || (offerupdatefingering && (alert(NULL, "Update all instances of this note to use this fingering?", NULL, "&Yes", "&No", 'y', 'n') == 1)))
 					{	//If the user opts to update the fingering array of all matching notes (or if the calling function wanted all instances to be updated automatically)
-						for(ctr = 0; ctr < tp->notes; ctr++)
-						{	//For each note in the track
-							if(tp->note[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
-								continue;	//If this note is designated as having no fingering, skip it
+						for(trackctr = 1; trackctr < eof_song->tracks; trackctr++)
+						{	//For each track in the project
+							if(eof_song->track[trackctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)	//If this isn't a pro guitar track
+								continue;	//Skip it
 
-							if((ctr != eof_selection.current) && !eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr))
-							{	//If this note isn't the one that was just edited, but it matches
-								if(eof_pro_guitar_note_fingering_valid(tp, ctr, 1) != 1)
-								{	//If the fingering for the note is not fully defined
-									if(!*undo_made)
-									{	//If an undo state hasn't been made yet
-										eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-										*undo_made = 1;
-									}
-									for(ctr2 = 0; ctr2 < 6; ctr2++)
-									{	//For each of the 6 usable strings
-										tp->note[ctr]->finger[ctr2] = (tp->note[ctr]->finger[ctr2] & 0x80) + (np->finger[ctr2] & 0x7F);	//Overwrite the finger number, but keep the original mute status intact
-									}
+							tp2 = eof_song->pro_guitar_track[eof_song->track[trackctr]->tracknum];
+							for(ctr = 0; ctr < tp2->notes; ctr++)
+							{	//For each note in the track
+								if((trackctr == eof_selected_track) && (ctr == eof_selection.current))	//If this is the selected note that was just edited
+									continue;	//Skip it
+								if(eof_note_compare(eof_song, eof_selected_track, eof_selection.current, trackctr, ctr, 0))	//If this note doesn't match the one that was just edited
+									continue;	//Skip it
+								if(eof_pro_guitar_note_fingering_valid(tp2, ctr, 1) == 1)	//If this note's fingering is already fully defined
+									continue;	//Skip it
+								if(tp2->note[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
+									continue;	//If this note is designated as having no fingering, skip it
+
+								if(!*undo_made)
+								{	//If an undo state hasn't been made yet
+									eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+									*undo_made = 1;
+								}
+								for(ctr2 = 0; ctr2 < 6; ctr2++)
+								{	//For each of the 6 usable strings
+									tp2->note[ctr]->finger[ctr2] = (tp2->note[ctr]->finger[ctr2] & 0x80) + (np->finger[ctr2] & 0x7F);	//Overwrite the finger number, but keep the original mute status intact
 								}
 							}
 						}
@@ -5344,10 +5361,12 @@ int eof_correct_chord_fingerings_option(char report, char *undo_made)
 		{	//For each note in this track
 			if(tp->note[ctr2]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
 				continue;	//If this note is designated as having no fingering, skip it
-			if((eof_note_count_colors(eof_song, ctr, ctr2) <= 1) || eof_is_string_muted(eof_song, ctr, ctr2))
-				continue;	//If this note isn't a chord or is completely string muted, skip it
-			if(eof_pro_guitar_note_fingering_valid(tp, ctr2, 0) == 1)
-				continue;	//If the fingering for this chord is defined and valid, skip it
+			if(eof_note_count_colors(eof_song, ctr, ctr2) <= 1)
+				continue;	//If this note isn't a chord, skip it
+			if(!eof_fingering_checks_include_mutes && eof_is_string_muted(eof_song, ctr, ctr2))
+				continue;	//If the user hasn't opted to validate fingerings for muted strings, and this chord is completed string muted, skip it
+			if(eof_pro_guitar_note_fingering_valid(tp, ctr2, eof_fingering_checks_include_mutes) == 1)
+				continue;	//If the fingering for this chord is defined and valid (including for muted strings if user has enabled that preference), skip it
 
 			if(!user_prompted)
 			{	//If the user hasn't been prompted whether to update the fingering (or if the prompt hasn't been suppressed)
@@ -5362,7 +5381,7 @@ int eof_correct_chord_fingerings_option(char report, char *undo_made)
 			result = 0;
 			if(auto_complete != 2)
 			{	//As long as the user didn't decline to use the chord shape definitions
-				result = eof_lookup_chord_shape(tp->note[ctr2], &shapenum, 0);	//Look for a match in the chord shape definitions
+				result = eof_lookup_chord_shape(tp->note[ctr2], &shapenum, eof_fingering_checks_include_mutes);	//Look for a match in the chord shape definitions, taking muted strings into account if user opted to do so
 			}
 			if(!auto_complete && result)
 			{	//If the user hasn't been prompted whether to use the chord definitions yet, and the chord's fingering CAN be automatically applied
@@ -5383,7 +5402,7 @@ int eof_correct_chord_fingerings_option(char report, char *undo_made)
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					*undo_made = 1;
 				}
-				eof_apply_chord_shape_definition(tp->note[ctr2], shapenum);	//Apply the matching chord shape definition's fingering
+				eof_apply_chord_shape_definition(tp->note[ctr2], shapenum, eof_fingering_checks_include_mutes);	//Apply the matching chord shape definition's fingering, taking muted strings into account if user opted to do so
 			}
 			else
 			{	//If this chord's fingering is to be applied manually
