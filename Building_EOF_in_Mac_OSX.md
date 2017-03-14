@@ -62,9 +62,11 @@ sudo make install
 They should each install with no problems.
 
 For rubberband, you will need to edit its Makefile.osx makefile:
-In the CXXFLAGS line, change -DHAVE_VDSP to -DHAVE_FFTW3
+
 In the CXX line, remove -stdlib=libc++
+
 In the ARCHFLAGS line, change -mmacosx-version-min=10.7 to -mmacosx-version-min=10.5
+
 Save the changes and then go to the rubberband source file in a terminal.  Use the following commands to create a lib folder (to work around a bug in the makefile) and run the makefile with the target to specify just the static library:
 ```
 mkdir lib
@@ -81,7 +83,7 @@ Do note that Allegro 5 will not work, it has to be one of the 4.x releases.  Dow
 ```
 ls /SDKs/
 ```
-It should be something like MacOSX10.5.sdk, making the full path end up as /SDKs/MacOSX10.5.sdk (you will have to use this in a command below).  Go to the Allegro source folder in a terminal and run the following commands:
+It should be something like MacOSX10.5.sdk, making the full path end up as /SDKs/MacOSX10.5.sdk (you will have to use this in a command below, you can type the first half of it and press tab and if it automatically completes the name it means the folder path is there.  It's fine to leave the trailing forward slash on the end of the export command).  Go to the Allegro source folder in a terminal and run the following commands:
 ```
 mkdir build
 cd build
@@ -90,6 +92,7 @@ cmake .. -DCMAKE_OSX_SYSROOT=$SDK -DCMAKE_OSX_ARCHITECTURES=i386 -DCMAKE_OSX_DEP
 make
 sudo make install
 ```
+Some warnings during the make process are fine as long as the output indicates the final build target of afinfo completes.
 
 ## Build EOF ##
 Download the latest source code from https://github.com/raynebc/editor-on-fire .  You can use git tools if you like, or simply click the "Clone or download" button and pick the option to "Download ZIP" and then extract the source code.  You can then finally build EOF by opening a terminal to EOF's /src folder and running the makefile:
