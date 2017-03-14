@@ -100,3 +100,7 @@ Download the latest source code from https://github.com/raynebc/editor-on-fire .
 make -f makefile.macosx
 ```
 If the process succeeds, you should get the text "Application bundle created!" in the terminal.  If so, you're ready to run the program.  If not, please review/retry the above steps and contact us if you can't get them to work.
+
+## Optional MP3 support ##
+Oggenc and LAME have to be installed in order for EOF to have the ability to decode MP3 and encode OGG files, such as when supplying an MP3 file in the new chart wizard.  You can install them manually or with this package:
+http://www.t3-i.com/apps/eof/downloads/eof_utilities.pkg
