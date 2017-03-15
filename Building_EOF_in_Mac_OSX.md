@@ -10,8 +10,9 @@ An easy way to automate this is go to a terminal and use a command like "gcc" or
 ## Get source code for dependencies: ##
 This can be done manually or by installing the Homebrew package manager.
 
-To download the source code manually, get libogg, libvorbis, fftw and cmake from the following sites:
+To download the source code manually, get libogg, libvorbis and fftw from the following sites:
 http://xiph.org/downloads
+
 http://www.fftw.org/
 
 To use Homebrew, go to a terminal and install it with this command:
@@ -20,7 +21,7 @@ ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/
 ```
 Then get the source code for the dependencies with:
 ```
-brew fetch libogg libvorbis fftw cmake --build-from-source
+brew fetch libogg libvorbis fftw --build-from-source
 ```
 It will download the source packages to ~/Library/Caches/Homebrew.
 
@@ -34,7 +35,7 @@ Extract all source packages from their compressed formats.  The terminal command
 This involves browsing to https://developer.apple.com/download and creating a free Apple account.  After signing in, click "See more downloads" at the bottom of the page, enter **Xcode 3.1**, and download any of the 3.1 Developer Tools releases from 3.1 up to 3.1.4.  When the roughly 1GB download completes, double click on the downloaded DMG file to mount it in OS X.  An Xcode Tools window should appear.  In it, double click on the Packages folder, find the MacOSX10.5.pkg item and double click on it and install it.
 
 ## Install cmake ##
-Cmake can be manually built from source, but it's not necessary for EOF.  It's easier installed via DMG file or with Homebrew.  To download the DMG file, get it from there website:
+Cmake can be manually built from source, but it's not necessary for EOF.  It's easier installed via DMG file or with Homebrew.  To download the DMG file, get it from their website:
 http://www.cmake.org/
 To install via Homebrew, use the following command:
 ```
@@ -59,11 +60,19 @@ For each of the libogg, libvorbis and fftw source packages you downloaded earlie
 make
 sudo make install
 ```
-They should each install with no problems.
+For fftw, you will also need to build the single precision floating point library (fftw3f).  Do this by still having the terminal at fftw's source folder and using the following commands:
+```
+./configure --enable-float --enable-sse --enable-shared=no --enable-static=yes CFLAGS="-arch i386 -arch x86_64 -mmacosx-version-min=10.5"
+make
+sudo make install
+```
+All four builds should complete with no problems.
 
 For rubberband, you will need to edit its Makefile.osx makefile:
 
 In the CXX line, remove -stdlib=libc++
+
+In the CXXFLAGS line, change -DHAVE_VDSP to -DHAVE_FFTW3
 
 In the ARCHFLAGS line, change -mmacosx-version-min=10.7 to -mmacosx-version-min=10.5
 
