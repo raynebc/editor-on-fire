@@ -24,17 +24,23 @@ $(BUNDLE).app : ../bin/$(EXENAME)
 	@mkdir $(BUNDLE).app/Contents/Resources/eof/manual
 	@mkdir $(BUNDLE).app/Contents/Resources/eof/tutorial
 	@mkdir $(BUNDLE).app/Contents/Resources/eof/vocaltutorial
-	@cp ../bin/eof.dat $(BUNDLE).app/Contents/Resources/eof
-	@cp ../bin/percussion.dat $(BUNDLE).app/Contents/Resources/eof
-	@cp ../bin/tutorial.ogg $(BUNDLE).app/Contents/Resources/eof
-	@cp ../bin/keys.txt $(BUNDLE).app/Contents/Resources/eof
+	@mkdir $(BUNDLE).app/Contents/Resources/eof/proguitartutorial
 	@cp ../bin/check.wav $(BUNDLE).app/Contents/Resources/eof
-	@cp ../bin/readme.txt $(BUNDLE).app/Contents/Resources/eof
-	@cp ../bin/license.txt $(BUNDLE).app/Contents/Resources/eof
+	@cp ../bin/check.wav $(BUNDLE).app/Contents/Resources/eof
+	@cp ../bin/chordshapes.xml $(BUNDLE).app/Contents/Resources/eof
+	@cp ../bin/eof.dat $(BUNDLE).app/Contents/Resources/eof
+	@cp ../bin/GPL_license.txt $(BUNDLE).app/Contents/Resources/eof
 	@cp ../bin/history.txt $(BUNDLE).app/Contents/Resources/eof
+	@cp ../bin/keys.txt $(BUNDLE).app/Contents/Resources/eof
+	@cp ../bin/license.txt $(BUNDLE).app/Contents/Resources/eof
+	@cp ../bin/percussion.dat $(BUNDLE).app/Contents/Resources/eof
+	@cp ../bin/readme.txt $(BUNDLE).app/Contents/Resources/eof
+	@cp ../bin/second_of_silence.ogg $(BUNDLE).app/Contents/Resources/eof
+	@cp ../bin/tutorial.ogg $(BUNDLE).app/Contents/Resources/eof
 	@cp ../bin/AVDelay/*.* $(BUNDLE).app/Contents/Resources/eof/AVDelay
 	@cp "../bin/Example Song"/*.* "$(BUNDLE).app/Contents/Resources/eof/Example Song"
 	@cp ../bin/manual/*.* $(BUNDLE).app/Contents/Resources/eof/manual
+	@cp ../bin/proguitartutorial/*.* $(BUNDLE).app/Contents/Resources/eof/proguitartutorial
 	@cp ../bin/tutorial/*.* $(BUNDLE).app/Contents/Resources/eof/tutorial
 	@cp ../bin/vocaltutorial/*.* $(BUNDLE).app/Contents/Resources/eof/vocaltutorial
 	@cp ../Info.plist $(BUNDLE).app/Contents

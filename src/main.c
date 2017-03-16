@@ -5609,17 +5609,25 @@ int eof_validate_temp_folder(void)
 	char correct_wd[1024], cwd[1024];
 
 	//Determine the CWD and what it is supposed to be
-	get_executable_name(correct_wd, 1024);
-	(void) replace_filename(correct_wd, correct_wd, "", 1024);
 	if(!getcwd(cwd, 1024))
 	{	//Couldn't obtain current working directory
 		return 1;
 	}
 	put_backslash(cwd);	//Append a file separator if necessary
+	get_executable_name(correct_wd, 1024);
+	#ifdef ALLEGRO_MACOSX
+		(void) strncat(correct_wd, "/Contents/Resources/eof/", sizeof(correct_wd) - strlen(correct_wd) - 1);
+	#else
+		(void) replace_filename(correct_wd, correct_wd, "", 1024);
+	#endif
 
 	//Change CWD if necessary
 	if(stricmp(correct_wd, cwd))
 	{	//There's a discrepancy
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tDetected working directory:  %s", cwd);
+		eof_log(eof_log_string, 1);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tExpected working directory:  %s", correct_wd);
+		eof_log(eof_log_string, 1);
 		eof_log("Correcting current working directory", 1);
 		if(eof_chdir(correct_wd))
 		{
