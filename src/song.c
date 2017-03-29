@@ -3784,25 +3784,6 @@ EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_note(EOF_PRO_GUITAR_TRACK *tp)
 	return NULL;
 }
 
-EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_pgnote(EOF_PRO_GUITAR_TRACK *tp)
-{
-	if(tp && (tp->pgnotes < EOF_MAX_NOTES))
-	{
-		tp->pgnote[tp->pgnotes] = malloc(sizeof(EOF_PRO_GUITAR_NOTE));
-		if(tp->pgnote[tp->pgnotes])
-		{
-			memset(tp->pgnote[tp->pgnotes], 0, sizeof(EOF_PRO_GUITAR_NOTE));
-			tp->pgnotes++;
-			if(tp->note != tp->technote)
-			{	//If tech view is NOT in effect
-				tp->notes++;	//Update the generic note counter
-			}
-			return tp->pgnote[tp->pgnotes - 1];
-		}
-	}
-	return NULL;
-}
-
 EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_tech_note(EOF_PRO_GUITAR_TRACK *tp)
 {
 	if(tp && (tp->technotes < EOF_MAX_NOTES))
@@ -3878,32 +3859,6 @@ unsigned long eof_get_track_size_normal(EOF_SONG *sp, unsigned long track)
 	}
 
 	return eof_get_track_size(sp, track);	//Otherwise defer to the normal track size function
-}
-
-unsigned long eof_get_track_tech_note_size(EOF_SONG *sp, unsigned long track)
-{
-	unsigned long tracknum;
-
-	if((sp == NULL) || !track || (track >= sp->tracks) || (sp->track[track] == NULL))
-		return 0;
-	tracknum = sp->track[track]->tracknum;
-
-	switch(sp->track[track]->track_format)
-	{
-		case EOF_LEGACY_TRACK_FORMAT:
-		return 0;
-
-		case EOF_VOCAL_TRACK_FORMAT:
-		return 0;
-
-		case EOF_PRO_GUITAR_TRACK_FORMAT:
-		return sp->pro_guitar_track[tracknum]->technotes;
-
-		default:
-		break;
-	}
-
-	return 0;
 }
 
 unsigned long eof_get_chart_size(EOF_SONG *sp)
@@ -5072,22 +5027,6 @@ long eof_fixup_next_pro_guitar_technote(EOF_PRO_GUITAR_TRACK * tp, unsigned long
 		}
 	}
 	return -1;
-}
-
-long eof_fixup_next_pro_guitar_note_ptr(EOF_PRO_GUITAR_TRACK * tp, EOF_PRO_GUITAR_NOTE * np)
-{
-	unsigned long i;
-
-	if(!tp || !np)
-		return -1;	//Invalid parameters
-
-	for(i = 0; (i < tp->notes) && (tp->note[i] != np); i++);	//Find the referenced pro guitar note in the array
-	if(i >= tp->notes)
-	{	//The note wasn't found
-		return -1;
-	}
-
-	return eof_fixup_next_pro_guitar_note(tp, i);
 }
 
 long eof_track_fixup_first_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned char diff)
@@ -6914,57 +6853,6 @@ unsigned long eof_get_num_tone_changes(EOF_SONG *sp, unsigned long track)
 	return 0;	//Return error
 }
 
-unsigned long eof_get_num_fret_hand_positions(EOF_SONG *sp, unsigned long track)
-{
-	unsigned long tracknum;
-
-	if((sp == NULL) || !track || (track >= sp->tracks))
-		return 0;	//Return error
-	tracknum = sp->track[track]->tracknum;
-
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-	{
-		return sp->pro_guitar_track[tracknum]->handpositions;
-	}
-
-	return 0;	//Return error
-}
-
-EOF_PHRASE_SECTION *eof_get_fret_hand_position(EOF_SONG *sp, unsigned long track, unsigned long index)
-{
-	unsigned long tracknum;
-
-	if((sp == NULL) || !track || (track >= sp->tracks))
-		return NULL;	//Return error
-	tracknum = sp->track[track]->tracknum;
-
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-	{
-		if(index < EOF_MAX_PHRASES)
-		{
-			return &sp->pro_guitar_track[tracknum]->handposition[index];
-		}
-	}
-
-	return NULL;	//Return error
-}
-
-void eof_set_num_fret_hand_positions(EOF_SONG *sp, unsigned long track, unsigned long number)
-{
-	unsigned long tracknum;
-
- 	eof_log("eof_set_num_arpeggios() entered", 1);
-
-	if((sp == NULL) || !track || (track >= sp->tracks))
-		return;
-	tracknum = sp->track[track]->tracknum;
-
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-	{
-		sp->pro_guitar_track[tracknum]->handpositions = number;
-	}
-}
-
 int eof_create_image_sequence(char benchmark_only)
 {
 	unsigned long framectr = 0, refreshctr = 0, lastpollctr = 0;
@@ -7060,6 +6948,7 @@ int eof_create_image_sequence(char benchmark_only)
 	{	//If performing a benchmark, calculate and display the rendering performance
 		endtime = clock();	//Get the start time of the image sequence export
 		fps = (double)framectr / ((double)(endtime - starttime) / (double)CLOCKS_PER_SEC);	//Find the average FPS
+		set_window_title("Benchmarking image sequence: 100%");
 		(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "Average render rate was %.2fFPS",fps);
 		allegro_message("%s", windowtitle);
 		eof_log(windowtitle, 1);

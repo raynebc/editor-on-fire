@@ -559,7 +559,7 @@ void UStar_Load(FILE *inf)
 							//timing instead of absolute timing.  Relative timing causes the timestamp to reset to 0 at
 							//the beginning of each line of lyrics in the UltraStar file (reset at each linebreak)
 	unsigned long length=0;
-	unsigned char BOM[]={0xEF,0xBB,0xBF};
+	char BOM[]={0xEF,0xBB,0xBF};
 	int readerrordetected = 0;
 
 	assert_wrapper(inf != NULL);	//This must not be NULL

@@ -579,7 +579,6 @@ int eof_save_song(EOF_SONG * sp, const char * fn);	//Saves the song to file.  Re
 EOF_SONG *eof_clone_chart_time_range(EOF_SONG *sp, unsigned long start, unsigned long end);	//Builds a new song structure containing the specified time range of content in the active project, or NULL on error
 
 unsigned long eof_get_track_size(EOF_SONG *sp, unsigned long track);						//Returns the number of notes/lyrics in the specified track (or just that of its active note set if a pro guitar track is specified), or 0 on error
-unsigned long eof_get_track_tech_note_size(EOF_SONG *sp, unsigned long track);				//Returns the number of tech notes in the specified pro guitar track, or 0 on error
 unsigned long eof_get_track_size_all(EOF_SONG *sp, unsigned long track);					//For pro guitar tracks, returns the sum of the note count of both the active and tech note sets, otherwise returns the result of eof_get_track_size()
 unsigned long eof_get_track_size_normal(EOF_SONG *sp, unsigned long track);					//For pro guitar tracks, returns the note count of the normal note set only, otherwise returns the result of eof_get_track_size()
 unsigned long eof_get_chart_size(EOF_SONG *sp);												//Returns the number of notes/lyrics in the chart, or 0 on error
@@ -678,9 +677,6 @@ EOF_PHRASE_SECTION *eof_get_arpeggio(EOF_SONG *sp, unsigned long track, unsigned
 void eof_set_num_arpeggios(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of arpeggio phrases in the specified track
 unsigned long eof_get_num_popup_messages(EOF_SONG *sp, unsigned long track);			//Returns the number of popup messages in the specified track, or 0 on error
 unsigned long eof_get_num_tone_changes(EOF_SONG *sp, unsigned long track);				//Returns the number of tone changes in the specified track, or 0 on error
-unsigned long eof_get_num_fret_hand_positions(EOF_SONG *sp, unsigned long track);		//Returns the number of fret hand positions in the specified track, or 0 on error
-EOF_PHRASE_SECTION *eof_get_fret_hand_position(EOF_SONG *sp, unsigned long track, unsigned long index);	//Returns a pointer to the specified fret hand position, or NULL on error
-void eof_set_num_fret_hand_positions(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of fret hand positions in the specified track
 void eof_track_delete_trill(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified trill phrase and moves all phrases that follow back in the array one position
 void eof_track_delete_tremolo(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified tremolo phrase and moves all phrases that follow back in the array one position
 void eof_track_delete_arpeggio(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified arpeggio phrase and moves all phrases that follow back in the array one position
@@ -748,7 +744,6 @@ void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, unsigned long index);	//D
 
 EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_note(EOF_PRO_GUITAR_TRACK *tp);
 	//Allocates, initializes and stores a new EOF_PRO_GUITAR_NOTE structure into the note array of the active note set.  Returns the newly allocated structure or NULL upon error
-EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_pgnote(EOF_PRO_GUITAR_TRACK *tp);	//Allocates, initializes and stores a new EOF_PRO_GUITAR_NOTE structure into the normal note array.  Returns the newly allocated structure or NULL upon error
 EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_tech_note(EOF_PRO_GUITAR_TRACK *tp);	//Allocates, initializes and stores a new EOF_PRO_GUITAR_NOTE structure into the technote array.  Returns the newly allocated structure or NULL upon error
 void eof_pro_guitar_track_sort_notes(EOF_PRO_GUITAR_TRACK * tp);	//Performs a quicksort of the active note set, first by timestamp, second by difficulty, third by note mask
 void eof_pro_guitar_track_sort_tech_notes(EOF_PRO_GUITAR_TRACK * tp);	//Performs a quicksort of the specified track's tech notes, first by timestamp, second by difficulty, third by note mask
@@ -757,7 +752,6 @@ void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long n
 long eof_fixup_previous_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Returns the note one before the specified note number that is in the same difficulty, or -1 if there is none
 long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Returns the note one after the specified note number that is in the same difficulty, or -1 if there is none
 long eof_fixup_next_pro_guitar_technote(EOF_PRO_GUITAR_TRACK * tp, unsigned long tnote);	//Returns the tech note one after the specified tech note number that is in the same difficulty, or -1 if there is none
-long eof_fixup_next_pro_guitar_note_ptr(EOF_PRO_GUITAR_TRACK * tp, EOF_PRO_GUITAR_NOTE * np);	//Finds the referenced note pointer in the specified track's active note set and sends it to eof_fixup_next_pro_guitar_note(), returning the result
 long eof_track_fixup_first_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned char diff);	//Returns the first note/lyric in the specified track difficulty, or -1 if there is none
 void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel);
 	//Performs cleanup of the specified instrument track.  If sel is zero, the currently selected note is deselected automatically.

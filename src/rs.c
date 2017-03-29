@@ -2432,7 +2432,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			eof_conditionally_append_xml_long(buffer, sizeof(buffer), "fret3", fret[3], -1);
 			eof_conditionally_append_xml_long(buffer, sizeof(buffer), "fret4", fret[4], -1);
 			eof_conditionally_append_xml_long(buffer, sizeof(buffer), "fret5", fret[5], -1);
-			(void) strncat(buffer, "/>\n", sizeof(buffer) - 1);	//Append the tag ending
+			(void) strncat(buffer, "/>\n", sizeof(buffer) - strlen(buffer) - 1);	//Append the tag ending
 			(void) pack_fputs(buffer, fp);
 		}//For each of the entries in the unique chord list
 		(void) pack_fputs("  </chordTemplates>\n", fp);
@@ -2461,7 +2461,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}
 		(void) snprintf(buffer, sizeof(buffer) - 1, "    <ebeat time=\"%.3f\" ", sp->beat[ctr]->fpos / 1000.0);
 		eof_conditionally_append_xml_long(buffer, sizeof(buffer), "measure", displayedmeasure, -1);
-		(void) strncat(buffer, "/>\n", sizeof(buffer) - 1);	//Append the tag ending
+		(void) strncat(buffer, "/>\n", sizeof(buffer) - strlen(buffer) - 1);	//Append the tag ending
 		(void) pack_fputs(buffer, fp);
 		beatcounter++;
 		if(beatcounter >= beatspermeasure)
@@ -5463,8 +5463,8 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "vibrato", tech.vibrato, 0);
 	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "pickDirection", 0, 0);
 	eof_conditionally_append_xml_long(buffer, sizeof(buffer), "rightHand", -1, -1);
-	(void) strncat(buffer, tagend, sizeof(buffer) - 1);	//Append the tag ending
-	(void) strncat(buffer, ">\n", sizeof(buffer) - 1);
+	(void) strncat(buffer, tagend, sizeof(buffer) - strlen(buffer) - 1);	//Append the tag ending
+	(void) strncat(buffer, ">\n", sizeof(buffer) - strlen(buffer) - 1);
 	(void) pack_fputs(buffer, fp);
 
 	if(tech.bend)
@@ -5479,7 +5479,7 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 			(void) pack_fputs(buffer, fp);
 			(void) snprintf(buffer, sizeof(buffer) - 1, "            %s<bendValue time=\"%.3f\" ", indentlevel, (((double)notepos + ((double)tech.length / 3.0)) / 1000.0));
 			eof_conditionally_append_xml_float(buffer, sizeof(buffer), "step", (double)tech.bendstrength_q / 2.0, 0.0);
-			(void) strncat(buffer, "/>\n", sizeof(buffer) - 1);	//Append the tag ending
+			(void) strncat(buffer, "/>\n", sizeof(buffer) - strlen(buffer) - 1);	//Append the tag ending
 			(void) pack_fputs(buffer, fp);
 		}
 		else
@@ -5518,7 +5518,7 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 					}
 					(void) snprintf(buffer, sizeof(buffer) - 1, "            %s<bendValue time=\"%.3f\" ", indentlevel, ((double)tp->technote[ctr]->pos / 1000.0));	//Write the bend point at the specified position within the note
 					eof_conditionally_append_xml_float(buffer, sizeof(buffer), "step", (double)bendstrength_q / 2.0, 0.0);
-					(void) strncat(buffer, "/>\n", sizeof(buffer) - 1);	//Append the tag ending
+					(void) strncat(buffer, "/>\n", sizeof(buffer) - strlen(buffer) - 1);	//Append the tag ending
 					(void) pack_fputs(buffer, fp);
 				}
 			}
@@ -5700,7 +5700,7 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 		eof_conditionally_append_xml_long(buffer, sizeof(buffer), "disparity", 0, 0);
 		eof_conditionally_append_xml_long(buffer, sizeof(buffer), "ignore", 0, 0);
 		eof_conditionally_append_xml_long(buffer, sizeof(buffer), "solo", 0, 0);
-		(void) strncat(buffer, "/>\n", sizeof(buffer) - 1);	//Append the tag ending
+		(void) strncat(buffer, "/>\n", sizeof(buffer) - strlen(buffer) - 1);	//Append the tag ending
 		(void) pack_fputs(buffer, fp);
 	}//For each of the entries in the unique section (RS phrase) list
 	(void) pack_fputs("  </phrases>\n", fp);
@@ -5856,7 +5856,7 @@ void eof_conditionally_append_xml_long(char *buffer, size_t buffsize, char *name
 	if(snprintf(buffer2, sizeof(buffer2) - 1, "%s=\"%ld\" ", name, value) < 0)	//If the string to be appended could not be written
 		return;
 
-	(void) strncat(buffer, buffer2, buffsize - 1);	//Append the string
+	(void) strncat(buffer, buffer2, buffsize - strlen(buffer) - 1);	//Append the string
 }
 
 void eof_conditionally_append_xml_float(char *buffer, size_t buffsize, char *name, double value, double defaultval)
@@ -5872,5 +5872,5 @@ void eof_conditionally_append_xml_float(char *buffer, size_t buffsize, char *nam
 	if(snprintf(buffer2, sizeof(buffer2) - 1, "%s=\"%.3f\" ", name, value) < 0)	//If the string to be appended could not be written
 		return;
 
-	(void) strncat(buffer, buffer2, buffsize - 1);	//Append the string
+	(void) strncat(buffer, buffer2, buffsize - strlen(buffer) - 1);	//Append the string
 }

@@ -638,7 +638,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 	}
 
-	/* check if unofficial slider notation was found */
+	/* check if unofficial "N 6 #" slider notation was found */
 	for(ctr = 1; ctr < sp->tracks; ctr++)
 	{	//For each track
 		//Mark notes that have slider status
