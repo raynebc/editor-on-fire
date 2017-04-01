@@ -5260,7 +5260,7 @@ void eof_render_editor_notes(EOF_WINDOW *window)
 	}
 }
 
-void eof_render_editor_window(EOF_WINDOW *window, unsigned char windownum)
+void eof_render_editor_window(EOF_WINDOW *window)
 {
 //	eof_log("eof_render_editor_window() entered");
 	EOF_PRO_GUITAR_TRACK *tp = NULL;
@@ -5449,7 +5449,7 @@ void eof_render_editor_window_2(void)
 		}
 		(void) eof_menu_track_selected_track_number(eof_selected_track2, 0);	//Change to the track of the secondary piano roll, update coordinates, color set, etc.
 		eof_note_type = eof_note_type2;									//Set the secondary piano roll's difficulty
-		eof_render_editor_window(eof_window_editor2, 2);				//Render this track difficulty to the secondary piano roll screen
+		eof_render_editor_window(eof_window_editor2);					//Render this track difficulty to the secondary piano roll screen
 
 		(void) eof_menu_track_selected_track_number(temp_track, 0);	//Restore the active track number
 		eof_note_type = temp_type;									//Restore the active difficulty

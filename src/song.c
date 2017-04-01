@@ -5968,7 +5968,7 @@ int eof_track_add_star_power_path(EOF_SONG *sp, unsigned long track, unsigned lo
 {
 	unsigned long tracknum;
 
- 	eof_log("eof_track_add_star_power_path() entered", 1);
+ 	eof_log("eof_track_add_star_power_path() entered", 2);
 
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Return error

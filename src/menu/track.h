@@ -175,7 +175,7 @@ int eof_track_erase_track_difficulty(void);	//Allows the user to erase the activ
 
 int eof_menu_track_remove_highlighting(void);	//Removes highlighting from the notes in the active track
 
-MENU eof_menu_track_rocksmith_tone_change_copy_menu[EOF_TRACKS_MAX];
+extern MENU eof_menu_track_rocksmith_tone_change_copy_menu[EOF_TRACKS_MAX];
 int eof_menu_track_copy_tone_changes_track_9(void);
 int eof_menu_track_copy_tone_changes_track_11(void);
 int eof_menu_track_copy_tone_changes_track_12(void);
@@ -184,7 +184,7 @@ int eof_menu_track_copy_tone_changes_track_14(void);
 int eof_menu_track_copy_tone_changes_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack);
 	//Copies the tone changes from the specified source track to the destination track
 
-MENU eof_menu_track_rocksmith_popup_copy_menu[EOF_TRACKS_MAX];
+extern MENU eof_menu_track_rocksmith_popup_copy_menu[EOF_TRACKS_MAX];
 int eof_menu_track_copy_popups_track_9(void);
 int eof_menu_track_copy_popups_track_11(void);
 int eof_menu_track_copy_popups_track_12(void);

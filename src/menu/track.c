@@ -4013,7 +4013,7 @@ int eof_menu_track_clone_track_number(EOF_SONG *sp, unsigned long sourcetrack, u
 
 	eof_sort_events(eof_song);
 	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
-	eof_detect_difficulties(sp, eof_selected_track);
+	(void) eof_detect_difficulties(sp, eof_selected_track);
 
 	return 1;
 }
@@ -4290,7 +4290,7 @@ int eof_menu_track_repair_grid_snap(void)
 	char undo_made = 0;
 
 	//Prompt user for a threshold distance
-	snprintf(eof_etext, sizeof(eof_etext) - 1, "Resnap notes to closest grid snap position of any size that is within");
+	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "Resnap notes to closest grid snap position of any size that is within");
 	eof_etext2[0] = '\0';	//Empty the dialog's input string
 	eof_color_dialog(eof_menu_edit_select_by_note_length_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_menu_edit_select_by_note_length_dialog);
@@ -4439,7 +4439,7 @@ int eof_menu_track_clone_track_to_clipboard(void)
 		(void) pack_putc(tp->capo, fp);					//Write the capo placement
 		for(ctr = 0; ctr < EOF_TUNING_LENGTH; ctr++)
 			(void) pack_putc(tp->tuning[ctr], fp);		//Write the tuning of each string
-		eof_save_song_string_pf(tp->defaulttone, fp);	//Write the default tone name
+		(void) eof_save_song_string_pf(tp->defaulttone, fp);	//Write the default tone name
 	}
 	else if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
 		(void) pack_putc(eof_song->legacy_track[tracknum]->numlanes, fp);	//Write the track lane count
@@ -4514,9 +4514,9 @@ int eof_menu_track_clone_track_to_clipboard(void)
 				(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);				//Write the percentage into the beat at which this section ends
 			}
 
-			(void) pack_putc(phrase[sectionnum].difficulty, fp);	//Write section difficulty
-			eof_save_song_string_pf(phrase[sectionnum].name, fp);	//Write section name
-			(void) pack_putc(phrase[sectionnum].flags, fp);			//Write section flags
+			(void) pack_putc(phrase[sectionnum].difficulty, fp);			//Write section difficulty
+			(void) eof_save_song_string_pf(phrase[sectionnum].name, fp);	//Write section name
+			(void) pack_putc(phrase[sectionnum].flags, fp);					//Write section flags
 
 			sections++;		//Track how many sections are cloned to the clipboard
 		}
@@ -4539,9 +4539,9 @@ int eof_menu_track_clone_track_to_clipboard(void)
 				}
 				else
 				{	//On second pass, write the events to the clipboard
-					eof_save_song_string_pf(eof_song->text_event[ctr2]->text, fp);	//Write event text
-					(void) pack_iputl(eof_song->text_event[ctr2]->beat, fp);			//Write event's assigned beat number
-					(void) pack_putc(eof_song->text_event[ctr2]->flags, fp);			//Write event flags
+					(void)eof_save_song_string_pf(eof_song->text_event[ctr2]->text, fp);	//Write event text
+					(void) pack_iputl(eof_song->text_event[ctr2]->beat, fp);				//Write event's assigned beat number
+					(void) pack_putc(eof_song->text_event[ctr2]->flags, fp);				//Write event flags
 				}
 			}
 		}
@@ -4579,7 +4579,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 	unsigned long beats = 0, notes = 0, technotes = 0, sections = 0, events = 0;
 
 	//Grid snap variables used to automatically re-snap auto-adjusted timestamps
-	int beat = 0;
+	int gridsnapbeat = 0;
 	char gridsnapvalue = 0;
 	unsigned char gridsnapnum = 0;
 	unsigned long gridpos = 0;
@@ -4682,7 +4682,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 		for(ctr = 0; ctr < notecount; ctr++)
 		{	//For each note for this note set in the clipboard file
 			eof_read_clipboard_note(fp, &temp_note, EOF_NAME_LENGTH + 1);	//Read the note
-			eof_read_clipboard_position_snap_data(fp, &beat, &gridsnapvalue, &gridsnapnum);	//Read its grid snap data
+			eof_read_clipboard_position_snap_data(fp, &gridsnapbeat, &gridsnapvalue, &gridsnapnum);	//Read its grid snap data
 
 			if((noteset > 0) && (d_track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 				continue;	//Don't add tech notes to a legacy track
@@ -4712,7 +4712,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 			temp_note.length = eof_put_porpos(temp_note.endbeat, temp_note.porendpos, 0.0) - temp_note.pos;
 			if(temp_note.length <= 0)
 				temp_note.length = 1;
-			if(eof_find_grid_snap_position(beat, gridsnapvalue, gridsnapnum, &gridpos))
+			if(eof_find_grid_snap_position(gridsnapbeat, gridsnapvalue, gridsnapnum, &gridpos))
 			{	//If the destination grid snap position can be calculated
 				temp_note.pos = gridpos;	//Update the adjusted position for the note
 			}
@@ -4781,7 +4781,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 			(void) eof_load_song_string_pf(name, fp, sizeof(name));	//Read section name
 			sectionflags = pack_getc(fp);	//Read section flags
 
-			eof_lookup_track_section_type(eof_song, eof_selected_track, sectiontype, &junk, &phrase);
+			(void) eof_lookup_track_section_type(eof_song, eof_selected_track, sectiontype, &junk, &phrase);
 			if(!phrase)
 			{	//If this section type isn't compatible with the destination track
 				continue;	//Don't add it
@@ -4846,7 +4846,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 
 	//Cleanup
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
-	eof_detect_difficulties(eof_song, eof_selected_track);	//Update note/technote populated identifiers
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update note/technote populated identifiers
 	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
 	eof_sort_events(eof_song);
 	(void) pack_fclose(fp);

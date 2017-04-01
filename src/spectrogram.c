@@ -645,11 +645,16 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 	//Allocate memory for the buffer pointers
 	if((done != -1) && spectrogram)
 	{	//If there wasn't an error yet
+		clock_t starttime2 = 0, endtime2 = 0;
+
 		spectrogram->buffin=(double *) fftw_malloc(sizeof(double) * eof_spectrogram_windowsize*spectrogram->numbuff);
 		spectrogram->buffout=(double *) fftw_malloc(sizeof(double) * eof_spectrogram_windowsize*spectrogram->numbuff);
-		fftplan=fftw_plan_r2r_1d(eof_spectrogram_windowsize,spectrogram->buffin,spectrogram->buffout,FFTW_R2HC,FFTW_DESTROY_INPUT);
 
-		eof_log("\tPlan generated.", 1);
+		starttime2 = clock();
+		fftplan=fftw_plan_r2r_1d(eof_spectrogram_windowsize,spectrogram->buffin,spectrogram->buffout,FFTW_R2HC,FFTW_DESTROY_INPUT | FFTW_EXHAUSTIVE);
+		endtime2 = clock();
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tFFTW plan generated in %f seconds.", (double)(endtime2 - starttime2) / (double)CLOCKS_PER_SEC);
+		eof_log(eof_log_string, 1);
 
 		eof_log("\tGenerating slices...", 1);
 		while(!done)
@@ -677,7 +682,7 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 	}
 
 	endtime = clock();	//Get the start time of the spectrogram creation
-	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSpectrogram generated in %f seconds)", (double)(endtime - starttime) / (double)CLOCKS_PER_SEC);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSpectrogram generated in %f seconds", (double)(endtime - starttime) / (double)CLOCKS_PER_SEC);
 	eof_log(eof_log_string, 1);
 
 	return spectrogram;	//Return spectrogram data

@@ -1476,7 +1476,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			unsigned char last_written_hand_pos = 0;	//Tracks the last written hand position, so duplicate positions needn't be written to MIDI
 			EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[tracknum];
 			int lastevent = 0;	//Track the last event written so running status can be utilized
-			char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the tracks' notes are written to file
 
 			fret_hand_pos_written = 0;			//Reset these statuses
 			fret_hand_positions_generated = 0;
@@ -1523,9 +1522,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 				}
 			}
-
-			restore_tech_view = eof_menu_track_get_tech_view_state(sp, j);
-			eof_menu_track_set_tech_view_state(sp, j, 0);	//Disable tech view for the pro guitar track if applicable
 
 			/* fill in notes */
 			/* write the MTrk MIDI data to a temp file
@@ -1919,8 +1915,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					eof_add_midi_event(deltapos + deltalength, 0x80, scale, vel, 0);
 				}
 			}//For each note in the track
-
-			eof_menu_track_set_tech_view_state(sp, j, restore_tech_view);	//Re-enable tech view for the pro guitar track if applicable
 
 			/* fill in arpeggios */
 			for(i = 0; i < eof_get_num_arpeggios(sp, j); i++)

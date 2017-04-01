@@ -3686,7 +3686,7 @@ void eof_render(void)
 		{	//In full screen 3D view, don't render the note window yet, it will just be overwritten by the 3D window
 			eof_render_note_window();	//Otherwise render the note window first, so if the user didn't opt to display its full width, it won't draw over the 3D window
 		}
-		eof_render_editor_window(eof_window_editor, 1);	//Render the primary piano roll
+		eof_render_editor_window(eof_window_editor);	//Render the primary piano roll
 		eof_render_editor_window_2();	//Render the secondary piano roll if applicable
 		eof_render_3d_window();
 	}
@@ -4554,6 +4554,9 @@ int eof_initialize(int argc, char * argv[])
 		}
 	}
 
+	//Load FFTW wisdom from disk
+	(void) fftw_import_wisdom_from_filename("FFTW.wisdom");
+
 	return 1;
 }
 
@@ -4665,6 +4668,9 @@ void eof_exit(void)
 		(void) snprintf(eof_recover_on_path, sizeof(eof_recover_on_path) - 1, "%seof.recover.on", eof_temp_path_s);
 		(void) delete_file(eof_recover_on_path);
 	}
+
+	//Save FFTW wisdom to disk
+	(void) fftw_export_wisdom_to_filename("FFTW.wisdom");
 }
 
 void eof_all_midi_notes_off(void)

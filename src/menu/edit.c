@@ -1,4 +1,7 @@
 #include <allegro.h>
+#include <rubberband/rubberband-c.h>	//For rubberband benchmarking
+#include "../alogg/include/alogg.h"		//For rubberband benchmarking
+#include "vorbis/vorbisfile.h"			//For rubberband benchmarking
 #include "../agup/agup.h"
 #include "../undo.h"
 #include "../dialog.h"
@@ -15,6 +18,12 @@
 #ifdef USEMEMWATCH
 #include "../memwatch.h"
 #endif
+
+static float *eof_benchmark_rubberband_buffer[2];
+unsigned long eof_benchmark_rubberband_sample_count = 0;
+RubberBandState eof_benchmark_rubberband_state;
+int eof_benchmark_rubberband_cancel = 0;
+#define EOF_BENCHMARK_RUBBERBAND_BUFFSIZE 2048
 
 MENU eof_edit_paste_from_menu[] =
 {
@@ -108,6 +117,7 @@ MENU eof_edit_playback_menu[] =
 	{"&50%", eof_menu_edit_playback_50, NULL, 0, NULL},
 	{"&25%", eof_menu_edit_playback_25, NULL, 0, NULL},
 	{"&Custom", eof_menu_edit_playback_custom, NULL, 0, NULL},
+	{"Benchmark rubberband", eof_menu_edit_benchmark_rubberband, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -4133,5 +4143,123 @@ int eof_menu_edit_set_end_point(void)
 			eof_song->tags->start_point = temp;
 		}
 	}
+	return 1;
+}
+
+static void eof_benchmark_rubberband_callback(void *buffer, int nsamples, int stereo)
+{
+	int i;
+	unsigned short * buffer_sp = (unsigned short *)buffer;
+	static unsigned long progress = 0, samples_processed = 0;
+	unsigned new_progress;
+	char windowtitle[101];
+
+	//Stop processing if user cancels
+	if(key[KEY_ESC])
+		eof_benchmark_rubberband_cancel = 1;
+	if(eof_benchmark_rubberband_cancel)
+		return;
+
+	//Convert samples to signed floating point format
+	if(stereo)
+	{
+		int halfnsamples = nsamples / 2;
+		for(i = 0; i < halfnsamples; i++)
+		{
+			eof_benchmark_rubberband_buffer[0][i] = (float)((long)buffer_sp[i * 2] - 0x8000) / (float)0x8000;
+			eof_benchmark_rubberband_buffer[1][i] = (float)((long)buffer_sp[i * 2 + 1] - 0x8000) / (float)0x8000;
+		}
+	}
+	else
+	{
+		for(i = 0; i < nsamples; i++)
+		{
+			eof_benchmark_rubberband_buffer[0][i] = (float)((long)buffer_sp[i] - 0x8000) / (float)0x8000;
+		}
+	}
+
+	//Process with rubberband library
+	rubberband_process(eof_benchmark_rubberband_state, (const float **)eof_benchmark_rubberband_buffer, nsamples, 0);
+
+	while(rubberband_available(eof_benchmark_rubberband_state) >= EOF_BENCHMARK_RUBBERBAND_BUFFSIZE)
+	{
+		rubberband_retrieve(eof_benchmark_rubberband_state, eof_benchmark_rubberband_buffer, EOF_BENCHMARK_RUBBERBAND_BUFFSIZE);
+	}
+
+	//Report progress
+	samples_processed += nsamples;
+	new_progress = samples_processed * 100 / eof_benchmark_rubberband_sample_count;
+	if(new_progress > progress)
+	{	//At least 1% closer to completion since last window title update
+		snprintf(windowtitle, sizeof(windowtitle) - 1, "Benchmarking rubberband: %u%% - Press Esc to cancel", new_progress);
+		set_window_title(windowtitle);
+		progress = new_progress;
+	}
+}
+
+clock_t eof_bechmark_rubberband(ALOGG_OGG *ogg)
+{
+	clock_t start = 0, end = 0;
+	int isstereo;
+
+	if(!ogg)
+		return 0;	//Invalid parameter
+
+	isstereo = alogg_get_wave_is_stereo_ogg(ogg);
+	eof_benchmark_rubberband_state = rubberband_new(alogg_get_wave_freq_ogg(ogg), (isstereo ? 2 : 1), RubberBandOptionProcessRealTime |  RubberBandOptionThreadingNever, 2.0, 1.0);	//Process half speed playback
+	rubberband_set_max_process_size(eof_benchmark_rubberband_state, EOF_BENCHMARK_RUBBERBAND_BUFFSIZE);
+
+	eof_benchmark_rubberband_buffer[0] = malloc(sizeof(float) * EOF_BENCHMARK_RUBBERBAND_BUFFSIZE);
+	if(!eof_benchmark_rubberband_buffer[0])
+		return 0;	//Memory error
+
+	if(isstereo)
+	{
+		eof_benchmark_rubberband_buffer[1] = malloc(sizeof(float) * EOF_BENCHMARK_RUBBERBAND_BUFFSIZE);
+		if(!eof_benchmark_rubberband_buffer[1])
+		{
+			free(eof_benchmark_rubberband_buffer[0]);
+			return 0;	//Memory error
+		}
+	}
+
+	start = clock();
+	(void) alogg_process_ogg(ogg, eof_benchmark_rubberband_callback, EOF_BENCHMARK_RUBBERBAND_BUFFSIZE, 0.0, 0.0);
+	end = clock();
+	free(eof_benchmark_rubberband_buffer[0]);
+	if(isstereo)
+		free(eof_benchmark_rubberband_buffer[1]);
+
+	return end - start;
+}
+
+int eof_menu_edit_benchmark_rubberband(void)
+{
+	clock_t duration;
+	unsigned long channels;
+
+	if(!eof_music_track || eof_silence_loaded)
+		return 1;	//No audio loaded
+
+	eof_log("eof_menu_edit_benchmark_rubberband() entered", 1);
+	eof_benchmark_rubberband_cancel = 0;
+	channels = alogg_get_wave_is_stereo_ogg(eof_music_track) ? 2 : 1;
+	eof_benchmark_rubberband_sample_count = (double)alogg_get_length_msecs_ogg_ul(eof_music_track) * alogg_get_wave_freq_ogg(eof_music_track) * channels / 1000.0;
+	set_window_title("Benchmarking rubberband: 0% - Press Esc to cancel");
+	duration = eof_bechmark_rubberband(eof_music_track);
+	if(!eof_benchmark_rubberband_cancel)
+	{	//If the user didn't cancel the benchmark
+		set_window_title("Benchmarking complete");
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tBenchmarking complete in %.2f seconds:  ~%lu samples in %lu clocks (%f samples per clock)", (double)duration / CLOCKS_PER_SEC, eof_benchmark_rubberband_sample_count, duration, (double)eof_benchmark_rubberband_sample_count / duration);
+		eof_log(eof_log_string, 1);
+		allegro_message(eof_log_string);
+	}
+	else
+	{
+		eof_log("\tBenchmarking canceled.", 1);
+	}
+
+	eof_fix_window_title();
+
 	return 1;
 }

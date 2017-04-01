@@ -220,4 +220,6 @@ char * eof_menu_song_paste_from_difficulty_list(int index, int * size);
 int eof_menu_song_paste_from_difficulty(void);
 	//Allows the user to copy one difficulty's contents into the active track difficulty
 
+int eof_menu_edit_benchmark_rubberband(void);	//Times how long it takes to have rubberband process the current chart audio to half tempo
+
 #endif
