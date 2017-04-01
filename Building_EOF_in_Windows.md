@@ -120,7 +120,7 @@ cd /c/rubberband
 ```
 Run the configure script, specifying the path to your MinGW installation.  Since we didn't build FFTW or Vamp from source, you have to also specify the compiler and linker arguments on the command line.  If MinGW was installed to C:\mingw, that makes it:
 ```
-./configure --prefix=/c/mingw FFTW_CFLAGS="-I/c/mingw/include" FFTW_LIBS="-L/c/mingw/lib -lfftw3 -lm" Vamp_CFLAGS="-I/c/mingw/include" Vamp_LIBS="-L/c/mingw/lib -lvamp-sdk"
+./configure --prefix=/c/mingw FFTW_CFLAGS="-I/c/mingw/include" FFTW_LIBS="-L/c/mingw/lib -lfftw3 -lm" Vamp_CFLAGS="-I/c/mingw/include" Vamp_LIBS="-L/c/mingw/lib -lvamp-sdk" CFLAGS='-flto' CXXFLAGS='-flto' LDFLAGS='-flto'
 ```
 If everything worked, it will indicate that it got to the point where it was creating the makefile.  If it did, finish up with the make commands:
 ```
