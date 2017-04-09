@@ -4250,9 +4250,9 @@ int eof_menu_edit_benchmark_rubberband(void)
 	if(!eof_benchmark_rubberband_cancel)
 	{	//If the user didn't cancel the benchmark
 		set_window_title("Benchmarking complete");
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tBenchmarking complete in %.2f seconds:  ~%lu samples in %lu clocks (%f samples per clock)", (double)duration / CLOCKS_PER_SEC, eof_benchmark_rubberband_sample_count, duration, (double)eof_benchmark_rubberband_sample_count / duration);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tBenchmarking complete in %.2f seconds:  ~%lu samples in %lu clocks (%f samples per clock)", (double)duration / CLOCKS_PER_SEC, eof_benchmark_rubberband_sample_count, (unsigned long) duration, (double)eof_benchmark_rubberband_sample_count / duration);
 		eof_log(eof_log_string, 1);
-		allegro_message(eof_log_string);
+		allegro_message("%s", eof_log_string);
 	}
 	else
 	{

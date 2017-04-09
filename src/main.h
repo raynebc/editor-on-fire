@@ -315,6 +315,7 @@ extern int         eof_write_rs_files;
 extern int         eof_write_rs2_files;
 extern int         eof_abridged_rs2_export;
 extern int         eof_abridged_rs2_export_warning_suppressed;
+extern int         eof_rs2_export_extended_ascii_lyrics;
 extern int         eof_write_bf_files;
 extern int         eof_add_new_notes_to_selection;
 extern int         eof_drum_modifiers_affect_all_difficulties;

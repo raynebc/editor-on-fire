@@ -177,10 +177,10 @@ DIALOG eof_preferences_dialog[] =
 DIALOG eof_import_export_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  482, 223, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
-	{ d_agup_button_proc,12,  230, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-	{ d_agup_button_proc,86,  230, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-	{ d_agup_button_proc,160, 230, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+	{ d_agup_window_proc,0,   48,  482, 240, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
+	{ d_agup_button_proc,12,  245, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_button_proc,86,  245, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+	{ d_agup_button_proc,160, 245, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
 	{ d_agup_check_proc, 16,  75,  208, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rock Band files",NULL, NULL },
 	{ d_agup_check_proc, 248, 75,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate musical MIDI file",NULL, NULL },
 	{ d_agup_check_proc, 16,  90,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 1 files",NULL, NULL },
@@ -200,6 +200,7 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 195, 214, 16,  2,   23,  0,    0,      1,   0,   "dB import skips 5nc conversion",NULL, NULL },
 	{ d_agup_check_proc, 16,  210, 214, 16,  2,   23,  0,    0,      1,   0,   "Warn about missing bass FHPs",NULL, NULL },
 	{ d_agup_check_proc, 248, 210, 202, 16,  2,   23,  0,    0,      1,   0,   "Abridged Rocksmith 2 export",NULL, NULL },
+	{ d_agup_check_proc, 16,  225, 220, 16,  2,   23,  0,    0,      1,   0,   "Allow RS2 extended ASCII lyrics",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1422,6 +1423,7 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[20].flags = eof_db_import_suppress_5nc_conversion ? D_SELECTED : 0;//dB import skips 5nc conversion
 	eof_import_export_preferences_dialog[21].flags = eof_warn_missing_bass_fhps ? D_SELECTED : 0;			//Warn about missing bass FHPs
 	eof_import_export_preferences_dialog[22].flags = eof_abridged_rs2_export ? D_SELECTED : 0;				//Abridged Rocksmith 2 export
+	eof_import_export_preferences_dialog[23].flags = eof_rs2_export_extended_ascii_lyrics ? D_SELECTED : 0;	//Allow RS2 extended ASCII lyrics
 
 	do
 	{	//Run the dialog
@@ -1447,6 +1449,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_db_import_suppress_5nc_conversion = (eof_import_export_preferences_dialog[20].flags == D_SELECTED ? 1 : 0);
 			eof_warn_missing_bass_fhps = (eof_import_export_preferences_dialog[21].flags == D_SELECTED ? 1 : 0);
 			eof_abridged_rs2_export = (eof_import_export_preferences_dialog[22].flags == D_SELECTED ? 1 : 0);
+			eof_rs2_export_extended_ascii_lyrics = (eof_import_export_preferences_dialog[23].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1469,6 +1472,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[20].flags = 0;				//dB import skips 5nc conversion
 			eof_import_export_preferences_dialog[21].flags = D_SELECTED;	//Warn about missing bass FHPs
 			eof_import_export_preferences_dialog[22].flags = D_SELECTED;	//Abridged Rocksmith 2 export
+			eof_import_export_preferences_dialog[23].flags = D_SELECTED;	//Allow RS2 extended ASCII lyrics
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -2880,7 +2884,7 @@ int eof_save_helper_checks(void)
 				if((tp->defaulttone[0] == '\0') && !warning1)
 				{	//If the default tone is not set, and the user wasn't warned about this yet
 					eof_clear_input();
-					if(!warning1 && alert("Warning:  At least one track with tone changes has no default tone set.", NULL, "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
+					if(alert("Warning:  At least one track with tone changes has no default tone set.", NULL, "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
 					{
 						eof_track_destroy_rs_tone_names_list_strings();
 						(void) eof_menu_track_selected_track_number(ctr, 1);	//Set the active instrument track
@@ -2892,7 +2896,7 @@ int eof_save_helper_checks(void)
 				}
 				if((eof_track_rs_tone_names_list_strings_num > 4) && !warning2)
 				{	//If there are more than 4 unique tone names used, and the user wasn't warned about this yet
-					if(!warning2 && alert("Warning:  At least one arrangement uses more than 4 different tones.", "Rocksmith doesn't support more than 4 so EOF will only export changes for 4 tone names.", "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
+					if(alert("Warning:  At least one arrangement uses more than 4 different tones.", "Rocksmith doesn't support more than 4 so EOF will only export changes for 4 tone names.", "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
 					{
 						eof_track_destroy_rs_tone_names_list_strings();
 						(void) eof_menu_track_selected_track_number(ctr, 1);	//Set the active instrument track

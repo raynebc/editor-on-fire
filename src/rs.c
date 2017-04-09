@@ -3238,8 +3238,8 @@ int eof_pro_guitar_note_fingering_valid(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 		if((tp->note[note]->frets[ctr] & 0x80) && !count_mutes)
 			continue;	//If the string is muted and the calling function didn't want muted strings inspected, skip it
 
-		if(tp->note[note]->frets[ctr] != 0)
-		{	//If the string isn't being played open, it requires a fingering
+		if((tp->note[note]->frets[ctr] & 0x7F) != 0)
+		{	//If the string isn't being played open (mask out the muting bit), it requires a fingering
 			all_strings_open = 0;	//Track that the note used at least one fretted string
 			if(tp->note[note]->finger[ctr] != 0)
 			{	//If this string has a finger definition

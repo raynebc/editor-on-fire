@@ -270,7 +270,9 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 			if(curpiece->pitch == VOCALPERCUSSION)
 				(void) ustrcpy(temp->text, "");	//Copy an empty string for a vocal percussion note
 			else
-				(void) ustrcpy(temp->text,curpiece->lyric);
+			{	//ustrcpy() should be avoided for this purpose because it drops extended ASCII characters
+				(void) strcpy(temp->text, curpiece->lyric);
+			}
 
 			if((curpiece->next == NULL) && startfound)
 			{	//If this was the last lyric for this line, and at least one non vocal percussion note was found
@@ -509,7 +511,14 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp, char *outputfilename, char *string2, 
 
 		case RS2_FORMAT:	//Export as Rocksmith 2 XML
 			outf = fopen_err(Lyrics.outfilename,"wt");	//XML is a text format
-			Lyrics.rocksmithver = 2;
+			if(!eof_rs2_export_extended_ascii_lyrics)
+			{	//Normal lyric export
+				Lyrics.rocksmithver = 2;
+			}
+			else
+			{	//Lyric export allowing approved extended ASCII characters
+				Lyrics.rocksmithver = 3;
+			}
 			Export_RS(outf);
 		break;
 

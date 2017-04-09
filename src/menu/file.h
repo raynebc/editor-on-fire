@@ -93,7 +93,7 @@ void eof_lyric_import_prompt(int *selectedformat, char **selectedtrack);
 struct Lyric_Format *GetDetectionNumber(struct Lyric_Format *detectionlist, unsigned long number);
 	//Returns detection #number from the detection linked list, or NULL on error
 
-int eof_test_controller_conflict(EOF_CONTROLLER *ct, int start, int stop);
+int eof_test_controller_conflict(EOF_CONTROLLER *controller, int start, int stop);
 	//Tests for conflicts in the button[] array, from index #start to index #stop
 	//eof_guitar.button[0] and button[1] are used for guitar strum, button[2] through button[6] are used for the fret buttons
 	//eof_drums.button[0] is used for bass pedal, button[1] through button[4] are used for pads 1 through 4

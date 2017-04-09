@@ -38,7 +38,14 @@ void Export_RS(FILE *outf)
 	if(Lyrics.verbose)	printf("\nExporting Rocksmith XML lyrics to file \"%s\"\n",Lyrics.outfilename);
 
 //Write the beginning lines of the XML file
-	fputs_err("<?xml version='1.0' encoding='UTF-8'?>\n",outf);
+	if(Lyrics.rocksmithver != 3)
+	{	//The normal RS1 and RS2 lyrics are in UTF-8
+		fputs_err("<?xml version='1.0' encoding='UTF-8'?>\n",outf);
+	}
+	else
+	{	//The extended ASCII variant is in windows-1252
+		fputs_err("<?xml version='1.0' encoding='windows-1252'?>\n",outf);
+	}
 #ifdef EOF_BUILD	//In the EOF code base, put a comment line indicating the program version
 	fputs_err("<!-- " EOF_VERSION_STRING " -->\n", outf);	//Write EOF's version in an XML comment
 #endif
@@ -62,6 +69,10 @@ void Export_RS(FILE *outf)
 			if(Lyrics.rocksmithver == 2)
 			{	//If Rocksmith 2014 format is being exported, the maximum length per lyric is 48 characters
 				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 48, 2);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Filter out characters suspected of causing the game to crash.
+			}
+			if(Lyrics.rocksmithver == 3)
+			{	//If Rocksmith 2014 format is being exported, and the "Allow RS2 extended ASCII lyrics" preference is enabled, allow a larger range of characters
+				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 48, 3);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Filter out characters suspected of causing the game to crash.
 			}
 			else
 			{	//Otherwise the lyric limit is 32 characters
@@ -117,6 +128,118 @@ int rs_filter_char(char character, char rs_filter)
 	return 0;
 }
 
+int rs_lyric_filter_char_extended(char character)
+{
+	unsigned char code = (unsigned char)character;
+
+	if(code < 33)
+		return 1;	//Not allowed
+	if(code < 96)
+		return 0;	//ASCII characters 33 through 95 are allowed
+	if(code == 96)
+		return 1;	//Not allowed
+	if(code < 127)
+		return 0;	//ASCII characters 97 through 126 are allowed
+	if(code == 127)
+		return 1;	//Not allowed
+	if(code == 128)
+		return 0;	//ASCII character 128 is allowed
+	if(code < 132)
+		return 1;	//Not allowed
+	if(code < 134)
+		return 0;	//ASCII characters 132 and 133 are allowed
+	if(code < 138)
+		return 1;	//Not allowed
+	if(code == 138)
+		return 0;	//ASCII character 138 is allowed
+	if(code == 139)
+		return 1;	//Not allowed
+	if(code == 140)
+		return 0;	//ASCII character 140 is allowed
+	if(code < 145)
+		return 1;	//Not allowed
+	if(code < 147)
+		return 0;	//ASCII characters 145 and 146 are allowed
+	if(code < 153)
+		return 1;	//Not allowed
+	if(code < 155)
+		return 0;	//ASCII characters 153 and 154 are allowed
+	if(code == 155)
+		return 1;	//Not allowed
+	if(code == 156)
+		return 0;	//ASCII character 156 is allowed
+	if(code == 157)
+		return 1;	//Not allowed
+	if(code == 158)
+		return 0;	//ASCII character 158 is allowed
+	if(code < 161)
+		return 1;	//Not allowed
+    if(code < 163)
+		return 0;	//ASCII characters 161 and 162 are allowed
+	if(code < 165)
+		return 1;	//Not allowed
+	if(code < 169)
+		return 0;	//ASCII characters 165 through 168 are allowed
+	if(code == 169)
+		return 1;	//Not allowed
+	if(code < 172)
+		return 0;	//ASCII characters 170 and 171 are allowed
+	if(code < 176)
+		return 1;	//Not allowed
+	if(code == 176)
+		return 0;	//ASCII character 176 is allowed
+	if(code == 177)
+		return 1;	//Not allowed
+	if(code < 181)
+		return 0;	//ASCII characters 178 through 180 are allowed
+	if(code == 181)
+		return 1;	//Not allowed
+	if(code < 195)
+		return 0;	//ASCII characters 182 through 194 are allowed
+	if(code == 195)
+		return 1;	//Not allowed
+	if(code < 205)
+		return 0;	//ASCII characters 196 through 204 are allowed
+	if(code == 205)
+		return 1;	//Not allowed
+	if(code < 208)
+		return 0;	//ASCII characters 206 and 207 are allowed
+	if(code == 208)
+		return 1;	//Not allowed
+	if(code < 213)
+		return 0;	//ASCII characters 209 through 212 are allowed
+	if(code == 213)
+		return 1;	//Not allowed
+	if(code == 214)
+		return 0;	//ASCII character 214 is allowed
+	if(code == 215)
+		return 1;	//Not allowed
+	if(code < 221)
+		return 0;	//ASCII characters 216 through 220 are allowed
+	if(code == 221)
+		return 1;	//Not allowed
+	if(code < 227)
+		return 0;	//ASCII characters 222 through 226 are allowed
+	if(code == 227)
+		return 1;	//Not allowed
+	if(code < 240)
+		return 0;	//ASCII characters 228 through 239 are allowed
+	if(code == 240)
+		return 1;	//Not allowed
+	if(code < 245)
+		return 0;	//ASCII characters 241 through 244 are allowed
+	if(code == 245)
+		return 1;	//Not allowed
+	if(code == 246)
+		return 0;	//ASCII character 245 is allowed
+	if(code == 247)
+		return 1;	//Not allowed
+	if(code < 253)
+		return 0;	//ASCII characters 248 through 252 are allowed
+
+	return 1;	//Not allowed
+}
+
 int rs_filter_string(char *string, char rs_filter)
 {
 	unsigned long ctr;
@@ -143,10 +266,21 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 	input_length = strlen(input);
 	for(ctr = 0; ctr < input_length; ctr++)
 	{	//For each character of the input string
-		if(!isprint(input[ctr]))
-			continue;	//If this isn't a printable character, omit it
-		if(rs_filter && rs_filter_char(input[ctr], rs_filter))
-			continue;	//If filtering out characters for Rocksmith, omit affected characters
+		if((rs_filter != 3) && !isprint((unsigned char)input[ctr]))
+			continue;	//If extended ASCII isn't benig allowed and this isn't a printable character, omit it
+		if(rs_filter)
+		{
+			if(rs_filter < 3)
+			{	//Normal filtering
+				if(rs_filter_char(input[ctr], rs_filter))
+					continue;	//If filtering out characters for Rocksmith, omit affected characters
+			}
+			else if(rs_filter == 3)
+			{	//Filtering to allow extended ASCII
+				if(rs_lyric_filter_char_extended(input[ctr]))
+					continue;	//If filtering out characters for Rocksmith lyrics, omit affected characters
+			}
+		}
 
 		if(input[ctr] == '\"')
 		{	//Expand quotation mark character
@@ -483,7 +617,7 @@ void RS_Load(FILE *inf)
 						index++;
 					}
 				}
-				AddLyricPiece(lyric2, time , time + length, note, 0);	//Add lyric
+				AddLyricPiece(lyric2, time, time + length, note, 0);	//Add lyric
 				if(index)				//If a + character was filtered out of the lyric
 					EndLyricLine();		//End lyric line, as this is a line break mechanism in RS2014 formatted lyrics
 

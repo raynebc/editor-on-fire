@@ -132,6 +132,7 @@ int         eof_write_rs_files = 0;				//If nonzero, extra files are written dur
 int         eof_write_rs2_files = 0;			//If nonzero, extra files are written during save that are used for authoring Rocksmith 2014 customs
 int         eof_abridged_rs2_export = 1;		//If nonzero, default XML attributes are omitted from RS2 export
 int         eof_abridged_rs2_export_warning_suppressed = 0;	//Set to nonzero if the user has suppressed the warning that abridged RS2 files require a version of the toolkit >= 2.8.2.0
+int         eof_rs2_export_extended_ascii_lyrics = 0;	//If nonzero, a larger set of text characters are allowed to export to RS2 lyrics
 int         eof_write_bf_files = 0;				//If nonzero, an extra XML file is written during save that is used for authoring Bandfuse customs
 int         eof_add_new_notes_to_selection = 0;	//If nonzero, newly added gems cause notes to be added to the selection instead of the selection being cleared first
 int         eof_drum_modifiers_affect_all_difficulties = 1;	//If nonzero, a drum modifier (ie. open/pedal hi hat or rim shot apply to any notes at the same position in non active difficulties)

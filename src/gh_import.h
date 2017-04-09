@@ -72,7 +72,7 @@ int eof_filebuffer_find_checksum(filebuffer *fb, unsigned long checksum);
 	//Looks for the 4 byte checksum in the buffered file starting at the current position
 	//If the checksum is found, the position is set to the byte that follows it and zero is returned
 	//If the checksum is not found, the position is left unchanged and nonzero is returned
-int eof_gh_read_instrument_section_note(filebuffer *buffer, EOF_SONG *sp, gh_section *target, char forcestrum);
+int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *target, char forcestrum);
 	//Searches for the target instrument section in the buffered file (NOTE format GH file)
 	//If the section is not found, 0 is returned
 	//If an error is detected, -1 is returned

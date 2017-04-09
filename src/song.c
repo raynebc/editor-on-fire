@@ -6280,7 +6280,7 @@ EOF_PHRASE_SECTION *eof_get_slider(EOF_SONG *sp, unsigned long track, unsigned l
 	return NULL;	//Return error
 }
 
-void eof_track_delete_trill(EOF_SONG *sp, unsigned long track, unsigned long pathnum)
+void eof_track_delete_trill(EOF_SONG *sp, unsigned long track, unsigned long index)
 {
 	unsigned long tracknum;
 
@@ -6297,11 +6297,11 @@ void eof_track_delete_trill(EOF_SONG *sp, unsigned long track, unsigned long pat
 			{	//If the specified track is the Phase Shift drum track, it refers to the normal drum track phrasing by default
 				tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
 			}
-			eof_legacy_track_delete_trill(sp->legacy_track[tracknum], pathnum);
+			eof_legacy_track_delete_trill(sp->legacy_track[tracknum], index);
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			eof_pro_guitar_track_delete_trill(sp->pro_guitar_track[tracknum], pathnum);
+			eof_pro_guitar_track_delete_trill(sp->pro_guitar_track[tracknum], index);
 		break;
 
 		default:

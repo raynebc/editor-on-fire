@@ -12,8 +12,12 @@ int rs_filter_char(char character, char rs_filter);
 	//If rs_filter is greater than 1, the forward slash character is also not copied to the buffer
 	//These characters can cause Rocksmith to crash if they are present in various free-text fields like chord names, lyric text or phrase names
 	//Zero is returned if the character passed is not any of the offending characters
+int rs_lyric_filter_char_extended(char character);
+	//Similar to rs_filter_char(), but returns 0 for all ASCII and extended ASCII characters that have been found to work in Rocksmith 2014
+	//Nonzero is returned for all characters found to not display or otherwise not work
 int rs_filter_string(char *string, char rs_filter);
 	//Returns 1 if any character in the provided string is considered a filtered character by rs_filter_char()
+	//Currently only used to validate chord names for Rocksmith export
 	//Returns -1 on error
 void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsize, char rs_filter);
 	//Copies the input string into the specified buffer of the given size.  Any of the characters that XML requires to be escaped
@@ -23,8 +27,10 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 	//If size is zero, the function returns without doing anything.  Otherwise the buffer is guaranteed to be NULL terminated
 	//If warnsize is larger than size, the function returns without doing anything.
 	//Any non-printable characters are removed
-	//If rs_filter is nonzero, the following characters are not copied to the buffer:  ( } ,  \  : { " ), and all non ASCII characters are likewise removed
-	//If rs_filter is greater than 1, the forward slash character is also not copied to the buffer
+	//If rs_filter is equal to 3, rs_lyric_filter_char_extended() is used to determine if input lyric text is to be filtered
+	//Otherwise characters are filtered based on these rules:
+	// If rs_filter is nonzero, the following characters are not copied to the buffer:  ( } ,  \  : { " ), and all non ASCII characters are likewise removed
+	// If rs_filter is greater than 1, the forward slash character is also not copied to the buffer
 
 void shrink_xml_text(char *buffer, size_t size, char *input);
 	//Does the reverse of expand_xml_text(), converting each escape sequence into the appropriate individual character.

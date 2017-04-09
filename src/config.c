@@ -141,6 +141,7 @@ void eof_load_config(char * fn)
 	eof_write_rs2_files = get_config_int("preferences", "eof_write_rs2_files", 1);
 	eof_abridged_rs2_export = get_config_int("preferences", "eof_abridged_rs2_export", 1);
 	eof_abridged_rs2_export_warning_suppressed = get_config_int("preferences", "eof_abridged_rs2_export_warning_suppressed", 0);
+	eof_rs2_export_extended_ascii_lyrics = get_config_int("preferences", "eof_rs2_export_extended_ascii_lyrics", 0);
 	eof_write_bf_files = get_config_int("preferences", "eof_write_bf_files", 0);
 	eof_inverted_chords_slash = get_config_int("preferences", "eof_inverted_chords_slash", 0);
 	eof_click_changes_dialog_focus = get_config_int("preferences", "eof_click_changes_dialog_focus", 1);
@@ -359,6 +360,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_write_rs2_files", eof_write_rs2_files);
 	set_config_int("preferences", "eof_abridged_rs2_export", eof_abridged_rs2_export);
 	set_config_int("preferences", "eof_abridged_rs2_export_warning_suppressed", eof_abridged_rs2_export_warning_suppressed);
+	set_config_int("preferences", "eof_rs2_export_extended_ascii_lyrics", eof_rs2_export_extended_ascii_lyrics);
 	set_config_int("preferences", "eof_write_bf_files", eof_write_bf_files);
 	set_config_int("preferences", "eof_inverted_chords_slash", eof_inverted_chords_slash);
 	set_config_int("preferences", "eof_click_changes_dialog_focus", eof_click_changes_dialog_focus);
