@@ -1035,4 +1035,6 @@ static inline int eof_beat_num_valid(EOF_SONG *sp, unsigned long beatnum)
 	return (sp && (beatnum < sp->beats));
 }
 
+void eof_convert_all_lyrics_from_extended_ascii(EOF_VOCAL_TRACK *tp);	//Uses eof_convert_from_extended_ascii() to convert all lyrics in the specified chart
+
 #endif

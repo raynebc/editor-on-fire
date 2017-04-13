@@ -6,13 +6,13 @@ void Export_RS(FILE *outf);
 void RS_Load(FILE *inf);
 	//Perform all code necessary to load a Rocksmith format lyric file
 
-int rs_filter_char(char character, char rs_filter);
+int rs_filter_char(int character, char rs_filter);
 	//Returns nonzero if character is any of the following characters:  ( } ,  \  : { " )
 	//Returns nonzero if the character isn't an ASCII character (ie. greater than 127) or otherwise isn't a printable character
 	//If rs_filter is greater than 1, the forward slash character is also not copied to the buffer
 	//These characters can cause Rocksmith to crash if they are present in various free-text fields like chord names, lyric text or phrase names
 	//Zero is returned if the character passed is not any of the offending characters
-int rs_lyric_filter_char_extended(char character);
+int rs_lyric_filter_char_extended(int character);
 	//Similar to rs_filter_char(), but returns 0 for all ASCII and extended ASCII characters that have been found to work in Rocksmith 2014
 	//Nonzero is returned for all characters found to not display or otherwise not work
 int rs_filter_string(char *string, char rs_filter);

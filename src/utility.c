@@ -223,10 +223,46 @@ void eof_allocate_ucode_table(void)
 		eof_ucode_table = malloc(sizeof(unsigned short) * 256);
 		if(eof_ucode_table)
 		{
+			//Most of the extended ASCII characters map directly to the first 256 Unicode characters
 			for(i = 0; i < 256; i++)
 			{
 				eof_ucode_table[i] = i;
 			}
+
+			//However characters 128 - 159 have unique mappings
+			eof_ucode_table[128] = 0x20AC;	//Euro sign
+			eof_ucode_table[129] = 0x20;	//Unassigned, map to space character
+			eof_ucode_table[130] = 0x201A;	//Single Low-9 Quotation Mark
+			eof_ucode_table[131] = 0x192;	//Latin Small Letter F With Hook
+			eof_ucode_table[132] = 0x201E;	//Double Low-9 Quotation Mark
+			eof_ucode_table[133] = 0x2026;	//Horizontal Ellipsis
+			eof_ucode_table[134] = 0x2020;	//Dagger
+			eof_ucode_table[135] = 0x2021;	//Double Dagger
+			eof_ucode_table[136] = 0x2C6;	//Modifier Letter Circumflex Accent
+			eof_ucode_table[137] = 0x2030;	//Per Mille Sign
+			eof_ucode_table[138] = 0x160;	//Latin Capital Letter S With Caron
+			eof_ucode_table[139] = 0x2039;	//Single Left-Pointing Angle Quotation Mark
+			eof_ucode_table[140] = 0x152;	//Latin Capital Ligature OE
+			eof_ucode_table[141] = 0x20;	//Unassigned, map to space character
+			eof_ucode_table[142] = 0x17D;	//Latin Capital Letter Z With Caron
+			eof_ucode_table[143] = 0x20;	//Unassigned, map to space character
+			eof_ucode_table[144] = 0x20;	//Unassigned, map to space character
+			eof_ucode_table[145] = 0x2018;	//Left Single Quotation Mark
+			eof_ucode_table[146] = 0x2019;	//Right Single Quotation Mark
+			eof_ucode_table[147] = 0x201C;	//Left Double Quotation Mark
+			eof_ucode_table[148] = 0x201D;	//Right Double Quotation Mark
+			eof_ucode_table[149] = 0x2022;	//Bullet
+			eof_ucode_table[150] = 0x2013;	//En Dash
+			eof_ucode_table[151] = 0x2014;	//Em Dash
+			eof_ucode_table[152] = 0x2DC;	//Small Tilde
+			eof_ucode_table[153] = 0x2122;	//Trade Mark Sign
+			eof_ucode_table[154] = 0x161;	//Latin Small Letter S With Caron
+			eof_ucode_table[155] = 0x203A;	//Single Right-Pointing Angle Quotation Mark
+			eof_ucode_table[156] = 0x153;	//Latin Small Ligature OE
+			eof_ucode_table[157] = 0x20;	//Unassigned, map to space character
+			eof_ucode_table[158] = 0x17E;	//Latin Small Letter Z With Caron
+			eof_ucode_table[159] = 0x178;	//Latin Capital Letter Y With Diaeresis
+
 			set_ucodepage(eof_ucode_table, NULL);
 		}
 	}
@@ -242,7 +278,7 @@ void eof_free_ucode_table(void)
 }
 
 /* convert a string from 8-bit ASCII to the current format */
-int eof_convert_extended_ascii(char * buffer, int size)
+int eof_convert_from_extended_ascii(char * buffer, int size)
 {
 	char * workbuffer = NULL;
 
@@ -262,6 +298,47 @@ int eof_convert_extended_ascii(char * buffer, int size)
 	do_uconvert(workbuffer, U_ASCII_CP, buffer, U_CURRENT, size);
 	free(workbuffer);
 	return 1;
+}
+
+/* convert a string from the current format to 8-bit ASCII */
+int eof_convert_to_extended_ascii(char * buffer, int size)
+{
+	char * workbuffer = NULL;
+
+	if(!buffer)
+		return 0;	//Invalid parameters
+
+	if(!eof_ucode_table)
+	{
+		return 0;
+	}
+	workbuffer = malloc((size_t)size);
+	if(!workbuffer)
+	{
+		return 0;
+	}
+	memcpy(workbuffer, buffer, (size_t)size);
+	do_uconvert(workbuffer, U_CURRENT, buffer, U_ASCII_CP, size);
+	free(workbuffer);
+	return 1;
+}
+
+int eof_lookup_extended_ascii_code(int character)
+{
+	unsigned ctr;
+
+	if(!eof_ucode_table)
+	{
+		return 0;	//Error
+	}
+
+	for(ctr = 0; ctr < 256; ctr++)
+	{	//For each entry in eof_ucode_table[]
+		if(eof_ucode_table[ctr] == character)
+			return ctr;
+	}
+
+	return 0;	//No match
 }
 
 int eof_string_has_non_ascii(char *str)

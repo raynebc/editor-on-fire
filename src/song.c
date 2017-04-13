@@ -9276,3 +9276,26 @@ unsigned long eof_auto_adjust_tech_notes(EOF_SONG *sp, unsigned long track, unsi
 
 	return count;
 }
+
+void eof_convert_all_lyrics_from_extended_ascii(EOF_VOCAL_TRACK *tp)
+{
+	unsigned long ctr;
+	char buffer[(EOF_MAX_LYRIC_LENGTH + 1) * 4];	//Allow 4x memory for Unicode conversion
+
+	if(!tp)
+		return;	//Invalid parameters
+
+	eof_allocate_ucode_table();
+	for(ctr = 0; ctr < tp->lyrics; ctr++)
+	{	//For each lyric in the vocal track
+		strcpy(buffer, tp->lyric[ctr]->text);	//Copy the original string into the buffer
+		if(eof_convert_from_extended_ascii(buffer, (EOF_MAX_LYRIC_LENGTH + 1) * 4))
+		{	//If the string was able to be converted
+			if(ustrsizez(buffer) < EOF_MAX_LYRIC_LENGTH)
+			{	//If the converted string will fit
+				(void) ustrcpy(tp->lyric[ctr]->text, buffer);	//Store it as the new lyric text
+			}
+		}
+	}
+	eof_free_ucode_table();
+}

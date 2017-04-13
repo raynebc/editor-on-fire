@@ -116,6 +116,17 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//Rocksmith 2 supports arrangements using a capo, but it does not consider the capo to be the nut position, so the capo position still needs to be added
 	// to the fret values of all fretted notes
 
+void rs_utf8_expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsize, char rs_filter);
+	//Equivalent to expand_xml_text() except that the strings are treated as UTF-8
+	//The size variable pertains to the number of bytes the buffer is capable of storing
+	//The warnsize variable pertains to the number of characters that are allowed to export to XML for this string
+void eof_export_rocksmith_lyrics(EOF_SONG * sp, char * fn, int version);
+	//Writes the specified chart's lyrics to the specified filename
+	//The version parameter controls certain restrictions:
+	//  If version == 1, RS1 limits are enforced (each lyric can be up to 32 characters long after converting escape sequences as necessary)
+	//  If version == 2, RS2 limits are enforced (each lyric can be up to 48 characters long after converting escape sequences as necessary)
+	//  If version == 2 and eof_rs2_export_extended_ascii_lyrics is nonzero, various pre-tested extended ASCII characters are allowed to be written as UTF-8
+
 void eof_rs2_adjust_chordnote_sustain(EOF_PRO_GUITAR_TRACK *tp, unsigned long notenum, unsigned long stringnum, EOF_RS_TECHNIQUES *tech);
 	//Performs some logic used in RS2 export to set tech->length to 0 if the specified gem doesn't have any techniques requiring the sustain to be kept for export
 

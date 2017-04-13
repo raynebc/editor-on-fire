@@ -20,7 +20,6 @@
 #include "memwatch.h"
 #endif
 
-
 int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format, char *inputfilename, char *string2)
 {
 	char * returnedfn = NULL;	//Return string from dialog window
@@ -212,13 +211,14 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 	fclose_err(inf);	//Ensure this file gets closed
 	inf=NULL;
 
-	if(EOF_TRANSFER_FROM_LC(tp,&Lyrics) != 0)	//Pass the Lyrics global variable by reference
+	if(EOF_TRANSFER_FROM_LC(tp, &Lyrics) != 0)	//Pass the Lyrics global variable by reference
 	{
 		ReleaseMemory(1);	//Release memory allocated during lyric import
 		return 0;		//Return error (failed to import into EOF lyric structure)
 	}
 
 	ReleaseMemory(1);	//Release memory allocated during lyric import
+	eof_convert_all_lyrics_from_extended_ascii(tp);
 	return 1;	 		//Return finished EOF lyric structure
 }
 
@@ -271,7 +271,7 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 				(void) ustrcpy(temp->text, "");	//Copy an empty string for a vocal percussion note
 			else
 			{	//ustrcpy() should be avoided for this purpose because it drops extended ASCII characters
-				(void) strcpy(temp->text, curpiece->lyric);
+				(void) strncpy(temp->text, curpiece->lyric, sizeof(temp->text) - 1);
 			}
 
 			if((curpiece->next == NULL) && startfound)
@@ -303,6 +303,8 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp, char *outputfilename, char *string2, 
 	EOF_PHRASE_SECTION temp;	//Used to store the first lyric line in the project, which gets overridden with one covering all lyrics during RS1 export
 	unsigned long original_lines;
 	char *tempoutputfilename = "lyrics.temp";
+	char buffer[EOF_MAX_LYRIC_LENGTH + 1] = {0};
+	int exascii = 0;			//Set to nonzero if any extended ASCII characters are detected
 
 	eof_log("EOF_EXPORT_TO_LC() entered", 1);
 
@@ -347,6 +349,8 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp, char *outputfilename, char *string2, 
 		Lyrics.plain = 1;
 		Lyrics.grouping = 2;	//Enable line grouping for script.txt export
 	}
+
+	eof_allocate_ucode_table();
 
 //Import lyrics from EOF structure
 	lyrctr = 0;		//Begin indexing into lyrics from the very first
@@ -398,7 +402,13 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp, char *outputfilename, char *string2, 
 
 				if(!Lyrics.line_on)		//If a lyric line is not in progress
 					CreateLyricLine();	//Force one to be before adding the next lyric
-				AddLyricPiece((tp->lyric[lyrctr])->text, (tp->lyric[lyrctr])->pos, (tp->lyric[lyrctr])->pos+(tp->lyric[lyrctr])->length, pitch, 0);
+				strncpy(buffer, tp->lyric[lyrctr]->text, sizeof(buffer) - 1);
+				if(eof_string_has_non_ascii(buffer))
+				{	//If this string has any characters that can't be displayed as standard ASCII
+					exascii = 1;	//Note this
+				}
+				(void) eof_convert_to_extended_ascii(buffer, sizeof(buffer) - 1);	//Convert the lyric from UTF-8 back into extended ASCII encoding
+				AddLyricPiece(buffer, tp->lyric[lyrctr]->pos, tp->lyric[lyrctr]->pos + tp->lyric[lyrctr]->length, pitch, 0);
 					//Add the lyric to the Lyrics structure
 
 				if((Lyrics.lastpiece != NULL) && (Lyrics.lastpiece->lyric[strlen(Lyrics.lastpiece->lyric)-1] == '-'))	//If the piece that was just added ended in a hyphen
@@ -406,10 +416,11 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp, char *outputfilename, char *string2, 
 			}//If this lyric's text isn't an empty string
 
 			lyrctr++;	//Advance to next lyric
-		}
+		}//For each lyric
 
 		ForceEndLyricLine();	//End the current line of lyrics
-	}
+	}//For each line of lyrics in the EOF structure
+	eof_free_ucode_table();
 
 	if(Lyrics.piececount == 0)	//No lyrics imported
 	{
@@ -511,13 +522,13 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp, char *outputfilename, char *string2, 
 
 		case RS2_FORMAT:	//Export as Rocksmith 2 XML
 			outf = fopen_err(Lyrics.outfilename,"wt");	//XML is a text format
-			if(!eof_rs2_export_extended_ascii_lyrics)
-			{	//Normal lyric export
-				Lyrics.rocksmithver = 2;
+			if(eof_rs2_export_extended_ascii_lyrics && exascii)
+			{	//If the lyric export is to allow approved extended ASCII characters and at least one extended ASCII character was detected
+				Lyrics.rocksmithver = 3;
 			}
 			else
-			{	//Lyric export allowing approved extended ASCII characters
-				Lyrics.rocksmithver = 3;
+			{	//Otherwise perform normal RS2 lyric export
+				Lyrics.rocksmithver = 2;
 			}
 			Export_RS(outf);
 		break;

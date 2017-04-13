@@ -1,5 +1,6 @@
 #include <allegro.h>
 #include <assert.h>
+#include <ctype.h>
 #include <string.h>
 #include <time.h>
 #include "agup/agup.h"
@@ -3153,6 +3154,226 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 
 	return 1;	//Return success
+}
+
+void rs_utf8_expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsize, char rs_filter)
+{
+	unsigned long input_length, index = 0, ctr;
+	int exchar, uchar;
+
+	if(!buffer || !input || !size || (warnsize > size))
+		return;	//Invalid parameters
+
+	input_length = ustrlen(input);
+	for(ctr = 0; ctr < input_length; ctr++)
+	{	//For each character of the input string
+		uchar = ugetat(input, ctr);	//Store the Unicode value of this character
+		if((rs_filter != 3) && !isprint((unsigned char)input[ctr]))
+			continue;	//If extended ASCII isn't being allowed and this isn't a printable character, omit it
+		if(rs_filter)
+		{
+			if(rs_filter < 3)
+			{	//Normal filtering
+				if(rs_filter_char(uchar, rs_filter))
+					continue;	//If filtering out characters for Rocksmith, omit affected characters
+			}
+			else if(rs_filter == 3)
+			{	//Filtering to allow extended ASCII
+				exchar = eof_lookup_extended_ascii_code(uchar);	//This requires converting the UTF-8 character back to extended ASCII
+				if(exchar && rs_lyric_filter_char_extended(exchar))
+				{	//If the character could be converted, and it is one of the incompatible characters
+					continue;	//Omit it
+				}
+			}
+		}
+
+		if(uchar == '\"')
+		{	//Expand quotation mark character
+			if(index + 6 + 1 > warnsize)
+			{	//If there isn't enough buffer left to expand this character and terminate the string
+				usetat(buffer, index, '\0');	//Terminate the buffer
+				return;				//And return
+			}
+			usetat(buffer, index++, '&');
+			usetat(buffer, index++, 'q');
+			usetat(buffer, index++, 'u');
+			usetat(buffer, index++, 'o');
+			usetat(buffer, index++, 't');
+			usetat(buffer, index++, ';');
+		}
+		else if(uchar == '\'')
+		{	//Expand apostrophe
+			if(index + 6 + 1 > warnsize)
+			{	//If there isn't enough buffer left to expand this character and terminate the string
+				usetat(buffer, index, '\0');	//Terminate the buffer
+				return;				//And return
+			}
+			usetat(buffer, index++, '&');
+			usetat(buffer, index++, 'a');
+			usetat(buffer, index++, 'p');
+			usetat(buffer, index++, 'o');
+			usetat(buffer, index++, 's');
+			usetat(buffer, index++, ';');
+		}
+		else if(uchar == '<')
+		{	//Expand less than sign
+			if(index + 4 + 1 > warnsize)
+			{	//If there isn't enough buffer left to expand this character and terminate the string
+				usetat(buffer, index, '\0');	//Terminate the buffer
+				return;				//And return
+			}
+			usetat(buffer, index++, '&');
+			usetat(buffer, index++, 'l');
+			usetat(buffer, index++, 't');
+			usetat(buffer, index++, ';');
+		}
+		else if(uchar == '>')
+		{	//Expand greater than sign
+			if(index + 4 + 1 > warnsize)
+			{	//If there isn't enough buffer left to expand this character and terminate the string
+				usetat(buffer, index, '\0');	//Terminate the buffer
+				return;				//And return
+			}
+			usetat(buffer, index++, '&');
+			usetat(buffer, index++, 'g');
+			usetat(buffer, index++, 't');
+			usetat(buffer, index++, ';');
+		}
+		else if(uchar == '&')
+		{	//Expand ampersand
+			if(index + 5 + 1 > warnsize)
+			{	//If there isn't enough buffer left to expand this character and terminate the string
+				usetat(buffer, index, '\0');	//Terminate the buffer
+				return;				//And return
+			}
+			usetat(buffer, index++, '&');
+			usetat(buffer, index++, 'a');
+			usetat(buffer, index++, 'm');
+			usetat(buffer, index++, 'p');
+			usetat(buffer, index++, ';');
+		}
+		else
+		{	//Transfer character as-is
+			if(index + 1 + 1 > warnsize)
+			{	//If there isn't enough buffer left to copy this character and terminate the string
+				usetat(buffer, index, '\0');	//Terminate the buffer
+				return;				//And return
+			}
+			usetat(buffer, index++, uchar);
+		}
+	}//For each character of the input string
+	usetat(buffer, index++, '\0');	//Terminate the string
+
+	if(warnsize && (index > warnsize + 1))
+	{	//If there is a threshold length specified for the output string, and the expanded string exceeds it (accounting for the extra byte used by the string terminator)
+		allegro_message("Warning:  The string\n\"%s\"\nis longer than %lu characters.  It will need to be shortened or it will be truncated.", buffer, (unsigned long)warnsize);
+		usetat(buffer, warnsize, '\0');	//Truncate the string
+	}
+}
+
+void eof_export_rocksmith_lyrics(EOF_SONG * sp, char * fn, int version)
+{
+	PACKFILE *fp;
+	EOF_VOCAL_TRACK *tp;
+	unsigned long ctr, linenum, lyricnum, lyricend, linefound;
+	char buffer[600] = {0}, buffer2[260] = {0}, buffer3[260] = {0};
+	char *suffix, newline[]="+", nonewline[] = "";
+	unsigned index1, index2;
+	int uchar;
+
+	if(!sp || !fn || (EOF_TRACK_VOCALS >= sp->tracks))
+	{
+		eof_log("\tError saving:  Invalid parameters", 1);
+		return;	//Failure
+	}
+
+	eof_log("eof_export_rocksmith_lyrics() entered", 1);
+	fp = pack_fopen(fn, "w");
+	if(!fp)
+	{
+		eof_log("\tError saving:  Cannot open file for writing", 1);
+		return;	//Failure
+	}
+
+	pack_fputs("<?xml version='1.0' encoding='UTF-8'?>\n", fp);
+	pack_fputs("<!-- " EOF_VERSION_STRING " -->\n", fp);	//Write EOF's version in an XML comment
+	(void) snprintf(buffer, sizeof(buffer) - 1, "<vocals count=\"%lu\">\n", sp->vocal_track[0]->lyrics);
+	(void) pack_fputs(buffer, fp);
+
+	tp = sp->vocal_track[0];
+	for(ctr = 0; ctr < tp->lyrics; ctr++)
+	{	//For each lyric
+		//Convert escape sequences and filter out incompatible characters as necessary
+		if(version == 2)
+		{	//If Rocksmith 2014 format is being exported, the maximum length per lyric is 48 characters
+			if(!eof_rs2_export_extended_ascii_lyrics)
+			{	//If the "Allow RS2 extended ASCII lyrics" preference is not enabled
+				rs_utf8_expand_xml_text(buffer2, sizeof(buffer2) - 1, tp->lyric[ctr]->text, 48, 2);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Filter out characters suspected of causing the game to crash.
+			}
+			else
+			{	//Allow a tested set of extended ASCII to export
+				rs_utf8_expand_xml_text(buffer2, sizeof(buffer2) - 1, tp->lyric[ctr]->text, 48, 3);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  More selectively filter out characters suspected of causing the game to crash.
+			}
+		}
+		else
+		{	//Otherwise the lyric limit is 32 characters
+			rs_utf8_expand_xml_text(buffer2, sizeof(buffer2) - 1, tp->lyric[ctr]->text, 32, 2);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Filter out characters suspected of causing the game to crash.
+		}
+
+		//Filter out + characters, which are used as a newline mechanism in RS2
+		for(index1 = index2 = 0; index1 < ustrlen(buffer2); index1++)
+		{	//For each character in the expanded XML string
+			uchar = ugetat(buffer2, index1);
+///			if(uchar != '+')
+			{	//If it's not a plus character
+				usetat(buffer3, index2++, uchar);	//Copy it to another buffer
+			}
+		}
+		usetat(buffer3, index2, '\0');	//Terminate the new buffer
+
+		//Determine if this lyric is the last in any defined lyric line
+		for(linenum = 0, lyricend = 0, linefound = 0; linenum < tp->lines; linenum++)
+		{	//For each line in the vocal track
+			for(lyricnum = ctr; lyricnum < tp->lyrics; lyricnum++)
+			{	//For each lyric at/after the one from the outer for loop
+				if(tp->lyric[lyricnum]->pos > tp->line[linenum].end_pos)
+				{	//If this lyric and all subsequent ones are after the end of this lyric line
+					break;	//Stop processing this line
+				}
+				if(tp->lyric[lyricnum]->pos >= tp->line[linenum].start_pos)
+				{	//If this lyric is contained within the lyric line being checked
+					linefound = 1;
+					if(lyricnum == ctr)
+					{	//If this is the lyric being examined in the outer for loop
+						lyricend = 1;
+					}
+					else
+					{
+						if(lyricend)
+						{	//If a lyric after the one being examined in the outer for loop is also in the lyric line
+							lyricend = 0;	//The one in the outer for loop isn't the last lyric in the line
+							break;
+						}
+					}
+				}
+			}
+			if(linefound)	//If the line pertaining to the lyric being checked was processed
+				break;		//Stop checking lines
+		}
+		if(lyricend && (version > 1))
+		{	//This is the last lyric in its lyric line, and Rocksmith 2014 format is being exported
+			suffix = newline;	//Write a + after the lyric to indicate a line break
+		}
+		else
+			suffix = nonewline;
+
+		//Write the lyric
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <vocal time=\"%.3f\" note=\"%u\" length=\"%.3f\" lyric=\"%s%s\"/>\n", (double)tp->lyric[ctr]->pos / 1000.0, tp->lyric[ctr]->note, (double)tp->lyric[ctr]->length / 1000.0, buffer3, suffix);
+		(void) pack_fputs(buffer, fp);
+	}//For each lyric
+
+	pack_fputs("</vocals>", fp);
+	(void) pack_fclose(fp);
 }
 
 void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_made, char scope)

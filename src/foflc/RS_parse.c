@@ -35,7 +35,7 @@ void Export_RS(FILE *outf)
 	assert_wrapper(outf != NULL);	//This must not be NULL
 	assert_wrapper(Lyrics.piececount != 0);	//This function is not to be called with an empty Lyrics structure
 
-	if(Lyrics.verbose)	printf("\nExporting Rocksmith XML lyrics to file \"%s\"\n",Lyrics.outfilename);
+	if(Lyrics.verbose)	printf("\nFoFLC exporting Rocksmith XML lyrics to file \"%s\"\n",Lyrics.outfilename);
 
 //Write the beginning lines of the XML file
 	if(Lyrics.rocksmithver != 3)
@@ -116,7 +116,7 @@ void Export_RS(FILE *outf)
 	if(Lyrics.verbose)	printf("\nRocksmith XML export complete.  %lu lyrics written",Lyrics.piececount);
 }
 
-int rs_filter_char(char character, char rs_filter)
+int rs_filter_char(int character, char rs_filter)
 {
 	if((rs_filter > 1) && (character == '/'))
 		return 1;
@@ -128,9 +128,9 @@ int rs_filter_char(char character, char rs_filter)
 	return 0;
 }
 
-int rs_lyric_filter_char_extended(char character)
+int rs_lyric_filter_char_extended(int character)
 {
-	unsigned char code = (unsigned char)character;
+	unsigned int code = (unsigned int)character;
 
 	if(code < 33)
 		return 1;	//Not allowed
@@ -267,7 +267,7 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 	for(ctr = 0; ctr < input_length; ctr++)
 	{	//For each character of the input string
 		if((rs_filter != 3) && !isprint((unsigned char)input[ctr]))
-			continue;	//If extended ASCII isn't benig allowed and this isn't a printable character, omit it
+			continue;	//If extended ASCII isn't being allowed and this isn't a printable character, omit it
 		if(rs_filter)
 		{
 			if(rs_filter < 3)
@@ -277,7 +277,8 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 			}
 			else if(rs_filter == 3)
 			{	//Filtering to allow extended ASCII
-				if(rs_lyric_filter_char_extended(input[ctr]))
+				unsigned char uchar = (unsigned char)input[ctr];
+				if(rs_lyric_filter_char_extended(uchar))
 					continue;	//If filtering out characters for Rocksmith lyrics, omit affected characters
 			}
 		}

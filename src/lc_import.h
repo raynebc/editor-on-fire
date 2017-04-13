@@ -37,5 +37,4 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp);
 	//Load the contents of the Lyrics structure into an EOF lyric structure
 	//This is called from EOF_IMPORT_VIA_LC() after the lyrics have been imported
 
-
 #endif

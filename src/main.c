@@ -51,6 +51,7 @@
 #include "midi_data_import.h"	//For eof_track_overridden_by_stored_MIDI_track()
 #include "rs.h"	//for eof_pro_guitar_track_find_effective_fret_hand_position()
 #include "song.h"
+#include "utility.h"	//For eof_ucode_table[] declaration
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -82,9 +83,10 @@ NCDFS_FILTER_LIST * eof_filter_bf_files = NULL;
 
 PALETTE     eof_palette;
 BITMAP *    eof_image[EOF_MAX_IMAGES] = {NULL};
-FONT *      eof_font;
-FONT *      eof_mono_font;
-FONT *      eof_symbol_font;
+FONT *      eof_allegro_font = NULL;
+FONT *      eof_font = NULL;
+FONT *      eof_mono_font = NULL;
+FONT *      eof_symbol_font = NULL;
 int         eof_global_volume = 255;
 
 EOF_WINDOW * eof_window_editor = NULL;
@@ -2515,6 +2517,34 @@ char * eof_get_tone_name(int tone)
 	return eof_tone_name_buffer;
 }
 
+void eof_render_extended_ascii_fonts(void)
+{
+	unsigned ch;
+	char buffer[50];
+	int x = 2, ctr;
+
+	eof_allocate_ucode_table();
+	for(ch = 128, ctr = 0; ch < 256; ch++, ctr++)
+	{
+		if(ctr == 19)
+		{
+			x += 45;
+			ctr = 0;
+		}
+		sprintf(buffer, "%u:", ch);
+		buffer[4] = (unsigned char)ch;
+		buffer[5] = '\0';
+		eof_convert_from_extended_ascii(buffer, 200);
+
+		textprintf_ex(eof_window_note->screen, font, x, 12*ctr,  eof_color_white, eof_color_black, "%s", buffer);
+	//	textprintf_ex(eof_window_note->screen, eof_allegro_font, x, 12*ctr,  eof_color_white, eof_color_black, "%s", buffer);
+	//	textprintf_ex(eof_window_note->screen, eof_mono_font, x, 12*ctr,  eof_color_white, eof_color_black, "%s", buffer);
+	}
+	eof_free_ucode_table();
+
+	return;
+}
+
 void eof_render_note_window(void)
 {
 //	eof_log("eof_render_note_window() entered");
@@ -3871,6 +3901,7 @@ int eof_load_data(void)
 	eof_image[EOF_IMAGE_NOTE_BLACK] = load_pcx("eof.dat#note_black.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_BLACK_HIT] = load_pcx("eof.dat#note_black_hit.pcx", NULL);
 
+	//Load and process fonts
 	eof_font = load_bitmap_font("eof.dat#font_times_new_roman.pcx", NULL, NULL);
 	if(!eof_font)
 	{
@@ -3889,7 +3920,10 @@ int eof_load_data(void)
 		allegro_message("Could not load symbol font!");
 		return 0;
 	}
+	eof_add_extended_ascii_glyphs();	//Copy extended ASCII glyphs 128 - 159 to their Unicode equivalent code points
+
 	eof_image[EOF_IMAGE_LYRIC_SCRATCH] = create_bitmap(320, text_height(eof_font) - 1);
+	eof_allegro_font = font;	//Back up the pointer to Allegro's built-in font
 	font = eof_font;
 	set_palette(eof_palette);
 	set_mouse_sprite(NULL);
@@ -3988,6 +4022,7 @@ int eof_initialize(int argc, char * argv[])
 	{
 		return 0;
 	}
+
 	allegro_init();
 
 	set_window_title("EOF - No Song");
@@ -5663,6 +5698,40 @@ int eof_validate_temp_folder(void)
 	}
 
 	return 0;
+}
+
+void eof_add_extended_ascii_glyphs(void)
+{
+	int ctr;
+	FONT *glyph, *combined;
+
+	if(!eof_font || !font)
+		return;	//Invalid parameters
+
+	eof_allocate_ucode_table();	//Ensure the extended ASCII->Unicode translation table is built
+	if(!eof_ucode_table)
+		return;	//Error
+
+	for(ctr = 128; ctr < 160; ctr++)
+	{	//For each of the extended ASCII characters that don't map to Unicode contiguously with the others
+		if(eof_ucode_table[ctr] == 0x20)	//If this is an extended ASCII character with no Unicode equivalent
+			continue;						//Skip it
+
+		glyph = extract_font_range(eof_font, ctr, ctr);	//Extract this glyph into its own font
+		if(glyph)
+		{	//If the font was created successfully
+			if(!transpose_font(glyph, eof_ucode_table[ctr] - ctr))
+			{	//If the glyph was able to be remapped to the appropriate Unicode value
+				combined = merge_fonts(eof_font, glyph);	//Merge the transposed glyph with the main EOF font
+				if(combined)
+				{	//If that succeeded
+					destroy_font(eof_font);
+					eof_font = combined;	//The new combined font will replace the existing EOF font
+				}
+			}
+			destroy_font(glyph);	//Free the temporary font
+		}
+	}
 }
 
 END_OF_MAIN()

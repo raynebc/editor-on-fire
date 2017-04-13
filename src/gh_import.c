@@ -983,7 +983,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 			}
 
 			//successfully read, convert to unicode for storage */
-			(void) eof_convert_extended_ascii(lyricbuffer, (lyricsize + 2) * 4);
+			(void) eof_convert_from_extended_ascii(lyricbuffer, (lyricsize + 2) * 4);
 		}
 		else
 		{

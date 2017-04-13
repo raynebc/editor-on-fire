@@ -3657,17 +3657,45 @@ int eof_save_helper(char *destfilename, char silent)
 			//Export in RS2 format
 			if(eof_write_rs2_files)
 			{	//If the user wants to save Rocksmith 2 files
-				(void) snprintf(tempfilename2, sizeof(tempfilename2), "%s_RS2.xml", arrangement_name);	//Build the filename
-				(void) append_filename(eof_temp_filename, newfolderpath, tempfilename2, (int) sizeof(eof_temp_filename));	//Build the full file name
-				jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
-				if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
+				int exascii = 0;	//Set to nonzero if non ASCII characters are detected
+
+				for(ctr = 0; ctr < eof_song->vocal_track[0]->lyrics; ctr++)
+				{	//For each lyric
+					if(eof_string_has_non_ascii(eof_song->vocal_track[0]->lyric[ctr]->text))
+					{	//If the lyric has any characters of value higher than 127
+						exascii = 1;
+						break;
+					}
+				}
+
+				//Export the lyrics with FoFLC
+				if(eof_rs2_export_extended_ascii_lyrics && exascii)
+				{	//If extended ASCII output is enabled and such characters are present in the lyrics
+					(void) snprintf(tempfilename2, sizeof(tempfilename2), "%s_RS2_EXT.xml", arrangement_name);					//Export a Win-1252 encoded version with the "RS2_EXT" name suffix
+					(void) append_filename(eof_temp_filename, newfolderpath, tempfilename2, (int) sizeof(eof_temp_filename));	//Build the full file name
+				}
+				else
+				{
+					(void) snprintf(tempfilename2, sizeof(tempfilename2), "%s_RS2.xml", arrangement_name);						//Build the filename
+					(void) append_filename(eof_temp_filename, newfolderpath, tempfilename2, (int) sizeof(eof_temp_filename));	//Build the full file name
+				}
+				jumpcode = setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
+				if(jumpcode != 0) //if program control returned to the setjmp() call above returning any nonzero value
 				{	//Lyric export failed
 					(void) puts("Assert() handled sucessfully!");
 					allegro_message("Rocksmith lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in EOF's folder path,\nbecause EOF's lyric export doesn't support them.");
 				}
 				else
 				{
-					(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,RS2_FORMAT);	//Import lyrics into FLC lyrics structure and export to Rocksmith 2014 format
+					(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0], eof_temp_filename, NULL, RS2_FORMAT);	//Import lyrics into FLC lyrics structure and export to Rocksmith 2014 format
+				}
+
+				//Export a UTF-8 version of the lyrics if applicable
+				if(eof_rs2_export_extended_ascii_lyrics && exascii)
+				{	//If extended ASCII output is enabled and such characters were exported in Win-1252 format by FoFLC, export a UTF-8 version of the lyrics
+					(void) snprintf(tempfilename2, sizeof(tempfilename2), "%s_RS2.xml", arrangement_name);	//Build the filename
+					(void) append_filename(eof_temp_filename, newfolderpath, tempfilename2, (int) sizeof(eof_temp_filename));	//Build the full file name
+					eof_export_rocksmith_lyrics(eof_song, eof_temp_filename, 2);
 				}
 			}
 			eof_song->vocal_track[0]->lines = numlines;	//Restore the number of lyric lines present before lyric export was attempted

@@ -13,11 +13,17 @@ int eof_file_compare(char *file1, char *file2);	//Returns zero if the two files 
 
 int eof_check_string(char * tp);	//Returns nonzero if the string contains at least one non space ' ' character before it terminates
 
-void eof_allocate_ucode_table(void);
-void eof_free_ucode_table(void);
-int eof_convert_extended_ascii(char * buffer, int size);
+//Unicode font handling stuff
+extern unsigned short * eof_ucode_table;						//Stores Unicode mappings for the 256 extended ASCII characters, some of which are set to 0x20 for nonprintable characters
+void eof_allocate_ucode_table(void);							//Populates the contents of eof_ucode_table[]
+void eof_free_ucode_table(void);								//Frees eof_ucode_table[]
+int eof_convert_from_extended_ascii(char * buffer, int size);	//Convert a string from 8-bit ASCII to the current format
+int eof_convert_to_extended_ascii(char * buffer, int size);		//Convert a string from the current format to 8-bit ASCII
+int eof_lookup_extended_ascii_code(int character);
+	//Accepts an input UTF-8 character and returns the matching extended ASCII code from eof_ucode_table[] if it exists
+	//Returns 0 if there is no match or upon error
 
-int eof_string_has_non_ascii(char *str);	//Returns nonzero if any characters in the string have non ASCII characters (any character valued over 127)
+int eof_string_has_non_ascii(char *str);	//Returns nonzero if any characters in the UTF-8 encoded string have non ASCII characters (any character valued over 127)
 void eof_sanitize_string(char *str);		//Replaces any non-printable or non ASCII (characters numbered higher than 127) characters with spaces
 
 int eof_is_illegal_filename_character(char c);	//Returns nonzero if the specified character is not legal for use in a filename in Windows

@@ -505,6 +505,7 @@ extern char *eof_fret_string_numbers[6];
 
 extern PALETTE     eof_palette;
 extern BITMAP *    eof_image[EOF_MAX_IMAGES];
+extern FONT *      eof_allegro_font;
 extern FONT *      eof_font;
 extern FONT *      eof_mono_font;
 extern FONT *      eof_symbol_font;	//A font where the 0, 1, 2, 3 and 4 glyphs have been replaced with guitar tab notation characters
@@ -595,6 +596,7 @@ void eof_render_lyric_window(void);
 void eof_render_3d_window(void);
 	//Renders the 3D preview
 	//Calls eof_render_lyric_window() instead if a vocal track is to be rendered
+void eof_render_extended_ascii_fonts(void);	//A test function that prints prints each Unicode converted extended ASCII character to test that the eof_font has glyphs mapped appropriately
 void eof_render_note_window(void);
 int eof_load_data(void);	//Loads graphics and fonts from eof.dat
 void eof_destroy_data(void);	//Frees graphics and fonts from memory
@@ -681,5 +683,9 @@ int eof_identify_xml(char *fn);
 int eof_validate_temp_folder(void);
 	//Ensures that the current working directory is EOF's program folder and verifies that the temporary folder exists
 	//Returns nonzero on error
+
+void eof_add_extended_ascii_glyphs(void);
+	//Merges the glyphs for extended ASCII characters 128 through 159 into the UTF-8 code points of eof_font so that these characters will
+	//display properly when an extended ASCII string is converted to UTF-8
 
 #endif

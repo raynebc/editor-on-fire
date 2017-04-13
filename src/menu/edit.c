@@ -4247,8 +4247,8 @@ int eof_menu_edit_benchmark_rubberband(void)
 	eof_benchmark_rubberband_sample_count = (double)alogg_get_length_msecs_ogg_ul(eof_music_track) * alogg_get_wave_freq_ogg(eof_music_track) * channels / 1000.0;
 	set_window_title("Benchmarking rubberband: 0% - Press Esc to cancel");
 	duration = eof_bechmark_rubberband(eof_music_track);
-	if(!eof_benchmark_rubberband_cancel)
-	{	//If the user didn't cancel the benchmark
+	if(!eof_benchmark_rubberband_cancel && duration)
+	{	//If the user didn't cancel the benchmark and the benchmark didn't fail
 		set_window_title("Benchmarking complete");
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tBenchmarking complete in %.2f seconds:  ~%lu samples in %lu clocks (%f samples per clock)", (double)duration / CLOCKS_PER_SEC, eof_benchmark_rubberband_sample_count, (unsigned long) duration, (double)eof_benchmark_rubberband_sample_count / duration);
 		eof_log(eof_log_string, 1);
