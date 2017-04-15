@@ -733,7 +733,6 @@ DIALOG eof_pro_guitar_tuning_dialog[] =
 int eof_track_tuning(void)
 {
 	unsigned long ctr, tracknum, stringcount;
-	long newval;
 	char undo_made = 0, newtuning[6] = {0};
 	EOF_PRO_GUITAR_TRACK *tp;
 	int focus = 5;	//By default, start dialog focus in the tuning box for string 1 (top-most box for 6 string track)
@@ -781,38 +780,42 @@ int eof_track_tuning(void)
 
 	if(eof_popup_dialog(eof_pro_guitar_tuning_dialog, focus) == 22)
 	{	//If user clicked OK
+		long value;
+
 		//Validate and store the input
 		for(ctr = 0; ctr < tp->numstrings; ctr++)
 		{	//For each string in the track, ensure the user entered a tuning
+			value = atol(eof_fret_strings[ctr]);
+
 			if(eof_fret_strings[ctr][0] == '\0')
 			{	//Ensure the user entered a tuning
 				allegro_message("Error:  Each of the track's strings must have a defined tuning");
 				return 1;
 			}
-			if(!atol(eof_fret_strings[ctr]) && (eof_fret_strings[ctr][0] != '0'))
+			if(!value && (eof_fret_strings[ctr][0] != '0'))
 			{	//Ensure the tuning is valid (ie. not "-")
 				allegro_message("Error:  Invalid tuning value");
 				return 1;
 			}
-			if((atol(eof_fret_strings[ctr]) > 11) || (atol(eof_fret_strings[ctr]) < -11))
-			{	//Ensure the tuning is valid (ie. not "-")
+			if((value > 24) || (value < -24))
+			{	//Ensure the tuning is within range (allow up to two octaves above or below standard)
 				allegro_message("Error:  Invalid tuning value (must be between -11 and 11)");
 				return 1;
 			}
 		}
 		for(ctr = 0; ctr < 6; ctr++)
 		{	//For each of the 6 supported strings
+			value = atol(eof_fret_strings[ctr]);
 			if(ctr < tp->numstrings)
 			{	//If this string is used in the track, store the numerical value into the track's tuning array
-				if(!undo_made && (tp->tuning[ctr] != atol(eof_fret_strings[ctr]) % 12))
+				if(!undo_made && (tp->tuning[ctr] != value % 12))
 				{	//If a tuning was changed
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					undo_made = 1;
 					eof_chord_lookup_note = 0;	//Reset the cached chord lookup count
 				}
-				newval = atol(eof_fret_strings[ctr]) % 12;
-				newtuning[ctr] = newval - tp->tuning[ctr];	//Find this string's tuning change (in half steps)
-				tp->tuning[ctr] = newval;
+				newtuning[ctr] = value - tp->tuning[ctr];	//Find this string's tuning change (in half steps)
+				tp->tuning[ctr] = value;
 			}
 			else
 			{	//This string is not used in the track
@@ -4283,29 +4286,31 @@ void eof_menu_pro_guitar_track_update_note_counter(EOF_PRO_GUITAR_TRACK *tp)
 	}
 }
 
+DIALOG eof_menu_track_repair_grid_snap_dialog[] =
+{
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
+	{ d_agup_window_proc,    0,   0,   325, 148, 0,   0,   0,    0,      0,   0,   "Resnap notes to closest of any grid snap within", NULL, NULL },
+	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "This # of ms:",NULL, NULL },
+	{ eof_verified_edit_proc,12,  56,  90,  20,  0,   0,   0,    0,      7,   0,   eof_etext2, "0123456789",  NULL },
+	{ d_agup_text_proc,      12,  82,  60,  12,  0,   0,   0,    0,      0,   0,   eof_etext   ,NULL, NULL },
+	{ d_agup_button_proc,    12,  108, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",       NULL, NULL },
+	{ d_agup_button_proc,    110, 108, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",   NULL, NULL },
+	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,       NULL, NULL }
+};
+
 int eof_menu_track_repair_grid_snap(void)
 {
 	unsigned long ctr, closestpos = 0, count = 0, tncount = 0;
-	long threshold;
+	long threshold = 0;
 	char undo_made = 0;
+	unsigned long offset;
 
 	//Prompt user for a threshold distance
-	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "Resnap notes to closest grid snap position of any size that is within");
 	eof_etext2[0] = '\0';	//Empty the dialog's input string
-	eof_color_dialog(eof_menu_edit_select_by_note_length_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_menu_edit_select_by_note_length_dialog);
+	eof_color_dialog(eof_menu_track_repair_grid_snap_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_menu_track_repair_grid_snap_dialog);
 
-	if(eof_popup_dialog(eof_menu_edit_select_by_note_length_dialog, 2) != 3)
-		return 1;	//If the user did not click OK, return immediately
-	if(eof_etext2[0] == '\0')
-		return 1;	//If the user did not enter a threshold, return immediately
-
-	threshold = atol(eof_etext2);
-	if(threshold <= 0)
-		return 1;	//If the specified value is not valid, return immediately
-
-
-	//Process notes
+	//Find how far out of grid snap the track's notes are
 	(void) eof_menu_edit_deselect_all();		//Clear the selection variables if necessary
 	eof_selection.track = eof_selected_track;
 	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
@@ -4317,8 +4322,45 @@ int eof_menu_track_repair_grid_snap(void)
 
 		if(!eof_is_any_grid_snap_position(notepos, NULL, NULL, NULL, &closestpos))
 		{	//If this note is not grid snapped
+			if(closestpos < notepos)
+			{	//If the closest grid snap is earlier than the note
+				offset = notepos - closestpos;
+			}
+			else
+			{	//The closest grid snap is later than the note
+				offset = closestpos - notepos;
+			}
+
+			if(offset > threshold)
+			{	//If this is the most out of grid-snap note found so far
+				threshold = offset;
+			}
+		}
+
+		eof_selection.multi[ctr] = 0;		//Deselect this note
+	}
+
+	//Prompt the user
+	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "This track's notes are <= %ldms out of snap", threshold);
+	if(eof_popup_dialog(eof_menu_track_repair_grid_snap_dialog, 2) != 4)
+		return 1;	//If the user did not click OK, return immediately
+	if(eof_etext2[0] == '\0')
+		return 1;	//If the user did not enter a threshold, return immediately
+	threshold = atol(eof_etext2);
+	if(threshold <= 0)
+		return 1;	//If the specified value is not valid, return immediately
+
+	//Process notes
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+	{	//For each note in the active track
+		unsigned long notepos;
+
+		eof_selection.multi[ctr] = 1;		//Update the selection array to indicate this note is selected, for use with the tech note auto adjust logic
+		notepos = eof_get_note_pos(eof_song, eof_selected_track, ctr);
+
+		if(!eof_is_any_grid_snap_position(notepos, NULL, NULL, NULL, &closestpos))
+		{	//If this note is not grid snapped
 			char direction;
-			unsigned long offset;
 
 			if(closestpos < notepos)
 			{	//If the closest grid snap is earlier than the note

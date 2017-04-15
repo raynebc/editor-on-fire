@@ -2899,6 +2899,7 @@ void eof_render_note_window(void)
 						{
 							unsigned long matchcount;
 							char chord_match_string[30] = {0};
+							char chord_tuning_mode[20] = {0};
 
 							matchcount = eof_count_chord_lookup_matches(tp, eof_selected_track, eof_selection.current);
 							if(matchcount)
@@ -2908,15 +2909,19 @@ void eof_render_note_window(void)
 								bassnote %= 12;
 								if(matchcount > 1)
 								{	//If there's more than one match
-									(void) snprintf(chord_match_string, sizeof(chord_match_string) - 1, " (match %lu/%lu)", eof_selected_chord_lookup + 1, matchcount);
+									(void) snprintf(chord_match_string, sizeof(chord_match_string) - 1, "(match %lu/%lu)", eof_selected_chord_lookup + 1, matchcount);
+								}
+								if(tp->ignore_tuning)
+								{	//If this track's tuning is not being reflected in chord names
+									(void) snprintf(chord_tuning_mode, sizeof(chord_tuning_mode) - 1, "(Tuning ignored)");
 								}
 								if(!isslash)
 								{	//If it's a normal chord
-									textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s : [%s%s]%s", fret_string, eof_note_names[scale], eof_chord_names[chord].chordname, chord_match_string);
+									textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s : [%s%s] %s%s", fret_string, eof_note_names[scale], eof_chord_names[chord].chordname, chord_match_string, chord_tuning_mode);
 								}
 								else
 								{	//If it's a slash chord
-									textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s : [%s%s%s]%s", fret_string, eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote], chord_match_string);
+									textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s : [%s%s%s] %s%s", fret_string, eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote], chord_match_string, chord_tuning_mode);
 								}
 							}
 							else

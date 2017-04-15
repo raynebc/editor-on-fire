@@ -140,7 +140,8 @@ int eof_export_bandfuse(EOF_SONG * sp, char * fn, unsigned short *user_warned)
 				(void) snprintf(buffer, sizeof(buffer) - 1, "  <arrangement name=\"Bass %lu (%s)\">\n", guitartracknum, sp->track[ctr]->name);
 				(void) pack_fputs(buffer, fp);
 			}
-			(void) snprintf(buffer, sizeof(buffer) - 1, "    <tuning string0=\"%d\" string1=\"%d\" string2=\"%d\" string3=\"%d\" string4=\"%d\" string5=\"%d\" />\n", tp->tuning[0], tp->tuning[1], tp->tuning[2], tp->tuning[3], tp->tuning[4], tp->tuning[5]);
+			//Use modulus on the tuning values to disregard which octave the pitch is in since tunings of more than 11 steps are only allowed for RS2
+			(void) snprintf(buffer, sizeof(buffer) - 1, "    <tuning string0=\"%d\" string1=\"%d\" string2=\"%d\" string3=\"%d\" string4=\"%d\" string5=\"%d\" />\n", tp->tuning[0] % 12, tp->tuning[1] % 12, tp->tuning[2] % 12, tp->tuning[3] % 12, tp->tuning[4] % 12, tp->tuning[5] % 12);
 			(void) pack_fputs(buffer, fp);
 
 			(void) eof_detect_difficulties(sp, ctr);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for this track

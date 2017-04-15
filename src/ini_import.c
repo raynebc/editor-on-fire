@@ -577,8 +577,8 @@ int eof_compare_set_ini_pro_guitar_tuning(EOF_PRO_GUITAR_TRACK *tp, char *string
 		}
 		for(ctr2 = 0; ctr2 < ctr; ctr2++)
 		{	//For each string tuning parsed
-			if(tuning[ctr2] != tp->tuning[ctr2])
-			{	//If this tuning is different from what's already in the project
+			if(tuning[ctr2] != (tp->tuning[ctr2] % 12))
+			{	//If this tuning is different from what's already in the project (allow the pitch to be in another octave, since this is supported in RS2)
 				changes = 1;
 				break;
 			}

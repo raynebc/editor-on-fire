@@ -257,7 +257,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		(void) ustrcat(ini_string, "real_guitar_tuning =");	//Write the pro guitar tuning tag
 		for(i = 0; i < sp->pro_guitar_track[tracknum]->numstrings; i++)
 		{	//For each string used in the track
-			(void) snprintf(buffer, sizeof(buffer) - 1, " %d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
+			(void) snprintf(buffer, sizeof(buffer) - 1, " %d", sp->pro_guitar_track[tracknum]->tuning[i] % 12);	//Write the string's tuning value (signed integer), disregarding which octave the pitch is in since tunings of more than 11 steps are only allowed for RS2
 			(void) ustrcat(ini_string, buffer);	//Append the string's tuning value to the ongoing INI string
 		}
 		tuning_name = eof_lookup_tuning_name(sp, EOF_TRACK_PRO_GUITAR, sp->pro_guitar_track[tracknum]->tuning);	//Check to see if this track's tuning has a defined name
@@ -274,7 +274,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		(void) ustrcat(ini_string, "real_guitar_22_tuning =");	//Write the pro guitar tuning tag
 		for(i = 0; i < sp->pro_guitar_track[tracknum]->numstrings; i++)
 		{	//For each string used in the track
-			(void) snprintf(buffer, sizeof(buffer) - 1, " %d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
+			(void) snprintf(buffer, sizeof(buffer) - 1, " %d", sp->pro_guitar_track[tracknum]->tuning[i] % 12);	//Write the string's tuning value (signed integer), disregarding which octave the pitch is in since tunings of more than 11 steps are only allowed for RS2
 			(void) ustrcat(ini_string, buffer);	//Append the string's tuning value to the ongoing INI string
 		}
 		tuning_name = eof_lookup_tuning_name(sp, EOF_TRACK_PRO_GUITAR_22, sp->pro_guitar_track[tracknum]->tuning);	//Check to see if this track's tuning has a defined name
@@ -291,7 +291,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		(void) ustrcat(ini_string, "real_bass_tuning =");	//Write the pro bass tuning tag
 		for(i = 0; i < sp->pro_guitar_track[tracknum]->numstrings; i++)
 		{	//For each string used in the track
-			(void) snprintf(buffer, sizeof(buffer) - 1, " %d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
+			(void) snprintf(buffer, sizeof(buffer) - 1, " %d", sp->pro_guitar_track[tracknum]->tuning[i] % 12);	//Write the string's tuning value (signed integer), disregarding which octave the pitch is in since tunings of more than 11 steps are only allowed for RS2
 			(void) ustrcat(ini_string, buffer);	//Append the string's tuning value to the ongoing INI string
 		}
 		tuning_name = eof_lookup_tuning_name(sp, EOF_TRACK_PRO_BASS, sp->pro_guitar_track[tracknum]->tuning);	//Check to see if this track's tuning has a defined name
@@ -308,7 +308,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		(void) ustrcat(ini_string, "real_bass_22_tuning =");	//Write the pro bass tuning tag
 		for(i = 0; i < sp->pro_guitar_track[tracknum]->numstrings; i++)
 		{	//For each string used in the track
-			(void) snprintf(buffer, sizeof(buffer) - 1, " %d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
+			(void) snprintf(buffer, sizeof(buffer) - 1, " %d", sp->pro_guitar_track[tracknum]->tuning[i] % 12);	//Write the string's tuning value (signed integer), disregarding which octave the pitch is in since tunings of more than 11 steps are only allowed for RS2
 			(void) ustrcat(ini_string, buffer);	//Append the string's tuning value to the ongoing INI string
 		}
 		tuning_name = eof_lookup_tuning_name(sp, EOF_TRACK_PRO_BASS_22, sp->pro_guitar_track[tracknum]->tuning);	//Check to see if this track's tuning has a defined name
@@ -449,7 +449,7 @@ int eof_save_upgrades_dta(EOF_SONG * sp, char * fn)
 		{	//If this isn't the first past, append a space after the last tuning that was written
 			(void) ustrcat(buffer2, " ");
 		}
-		(void) snprintf(buffer3, sizeof(buffer3) - 1, "%d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
+		(void) snprintf(buffer3, sizeof(buffer3) - 1, "%d", sp->pro_guitar_track[tracknum]->tuning[i] % 12);	//Write the string's tuning value (signed integer), disregarding which octave the pitch is in since tunings of more than 11 steps are only allowed for RS2
 		(void) ustrcat(buffer2, buffer3);	//Append the string's tuning value to the ongoing tuning string
 	}
 	(void) snprintf(buffer, sizeof(buffer) - 1, "   (real_guitar_tuning (%s))\n", buffer2);	//Build the complete pro guitar tuning string line
@@ -463,7 +463,7 @@ int eof_save_upgrades_dta(EOF_SONG * sp, char * fn)
 		{	//If this isn't the first past, append a space after the last tuning that was written
 			(void) ustrcat(buffer2, " ");
 		}
-		(void) snprintf(buffer3, sizeof(buffer3) - 1, "%d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
+		(void) snprintf(buffer3, sizeof(buffer3) - 1, "%d", sp->pro_guitar_track[tracknum]->tuning[i] % 12);	//Write the string's tuning value (signed integer), disregarding which octave the pitch is in since tunings of more than 11 steps are only allowed for RS2
 		(void) ustrcat(buffer2, buffer3);	//Append the string's tuning value to the ongoing tuning string
 	}
 	(void) snprintf(buffer, sizeof(buffer) - 1, "   (real_bass_tuning (%s))\n", buffer2);	//Build the complete pro bass tuning string line
