@@ -3469,8 +3469,8 @@ DIALOG eof_track_rs_tone_names_dialog[] =
 	{ d_agup_list_proc,  12,  84,  300, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_track_rs_tone_names_list,NULL, NULL },
 	{ d_agup_push_proc,  320, 84,  68,  28,  2,   23,  'd',  D_EXIT, 0,   0,   "&Default",     NULL, (void *)eof_track_rs_tone_names_default },
 	{ d_agup_push_proc,  320, 124, 68,  28,  2,   23,  'r',  D_EXIT, 0,   0,   "&Rename",      NULL, (void *)eof_track_rs_tone_names_rename },
-	{ d_agup_button_proc,320, 165, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "&List",        NULL, NULL },
-	{ d_agup_button_proc,12,  245, 90,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
+	{ d_agup_button_proc,320, 164, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "&List",        NULL, NULL },
+	{ d_agup_button_proc,12,  244, 90,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 

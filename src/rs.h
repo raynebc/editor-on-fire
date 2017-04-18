@@ -40,7 +40,7 @@ typedef struct
 	unsigned long hastechnique;		//Nonzero if this note has any playable technique defined at all
 } EOF_RS_TECHNIQUES;
 
-#define EOF_NUM_RS_PREDEFINED_SECTIONS 30
+#define EOF_NUM_RS_PREDEFINED_SECTIONS 31
 extern EOF_RS_PREDEFINED_SECTION eof_rs_predefined_sections[EOF_NUM_RS_PREDEFINED_SECTIONS];
 
 #define EOF_NUM_RS_PREDEFINED_EVENTS 4

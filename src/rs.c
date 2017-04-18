@@ -59,7 +59,8 @@ EOF_RS_PREDEFINED_SECTION eof_rs_predefined_sections[EOF_NUM_RS_PREDEFINED_SECTI
 	{"modbridge", "Modulated Bridge"},
 	{"melody", "Melody"},
 	{"vamp", "Vamp"},
-	{"silence", "Silence"}
+	{"silence", "Silence"},
+	{"tapping", "Tapping"}
 };
 
 EOF_RS_PREDEFINED_SECTION eof_rs_predefined_events[EOF_NUM_RS_PREDEFINED_EVENTS] =
@@ -1117,7 +1118,15 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	{	//For each beat in the chart
 		if(sp->beat[ctr]->contained_rs_section_event >= 0)
 		{	//If this beat has a Rocksmith section
-			numsections++;	//Update Rocksmith section instance counter
+			int num = sp->beat[ctr]->contained_rs_section_event;
+			if((num < sp->text_events) && !ustrcmp(sp->text_event[num]->text, "tapping"))
+			{	//If this is the tapping RS section
+				 sp->beat[ctr]->contained_rs_section_event = -1;	//It is not a known supported RS section for RS1, omit it
+			}
+			else
+			{
+				numsections++;	//Update Rocksmith section instance counter
+			}
 		}
 	}
 	if(numsections)
@@ -5757,7 +5766,6 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 	unsigned long *sectionlist = NULL, sectionlistsize, ctr, ctr2, numsections, phraseid = 0;
 	char end_phrase_found = 0;	//Will track if there was a manually defined END phrase
 	char buffer[200] = {0}, buffer2[50] = {0};
-	unsigned long startbeat;	//This will indicate the first beat containing a note in the track
 	unsigned long endbeat;		//This will indicate the first beat after the exported track's last note
 
 	if(!sp || !fp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !user_warned || !sp->beats)
@@ -5765,12 +5773,7 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 
-	//Check if any RS phrases need to be added
-	startbeat = eof_get_beat(sp, tp->note[0]->pos);	//Find the beat containing the track's first note
-	if(!eof_beat_num_valid(sp, startbeat))
-	{	//If the beat couldn't be found
-		startbeat = 0;	//Set this to the first beat
-	}
+	//Check if an END phrase needs to be added
 	endbeat = eof_get_beat(sp, tp->note[tp->notes - 1]->pos + tp->note[tp->notes - 1]->length);	//Find the beat containing the end of the track's last note
 	if(!eof_beat_num_valid(sp, endbeat) || (endbeat + 1 >= sp->beats))
 	{	//If the beat couldn't be found, or the extreme last beat in the track has the last note
@@ -5837,16 +5840,6 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 	//Check if any RS sections need to be added
 	eof_sort_events(sp);	//Re-sort events
 	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
-	if(!eof_song_contains_event(sp, "intro", track, EOF_EVENT_FLAG_RS_SECTION, 1) && !eof_song_contains_event(sp, "intro", 0, EOF_EVENT_FLAG_RS_SECTION, 1))
-	{	//If the user did not define an intro RS section that applies to either the track being exported or all tracks
-		if((sp->beat[startbeat]->contained_rs_section_event >= 0) && ((*user_warned & 64) == 0))
-		{	//If there is already a RS section defined on the first beat containing a note, and the user wasn't warned of this problem yet
-			allegro_message("Warning:  There is no intro RS section, but the beat marker before the first note already has a section.\nYou should move that section because only one section per beat is exported.");
-			*user_warned |= 64;
-		}
-		eof_log("\t! Adding missing intro RS section", 1);
-		(void) eof_song_add_text_event(sp, startbeat, "intro", 0, EOF_EVENT_FLAG_RS_SECTION, 1);	//Add a temporary one
-	}
 	if(!eof_song_contains_event(sp, "noguitar", track, EOF_EVENT_FLAG_RS_SECTION, 1) && !eof_song_contains_event(sp, "noguitar", 0, EOF_EVENT_FLAG_RS_SECTION, 1))
 	{	//If the user did not define a noguitar RS section that applies to either the track being exported or all tracks
 		if((sp->beat[endbeat]->contained_rs_section_event >= 0) && ((*user_warned & 128) == 0))
