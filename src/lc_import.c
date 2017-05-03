@@ -524,7 +524,7 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp, char *outputfilename, char *string2, 
 			outf = fopen_err(Lyrics.outfilename,"wt");	//XML is a text format
 			if(eof_rs2_export_extended_ascii_lyrics && exascii)
 			{	//If the lyric export is to allow approved extended ASCII characters and at least one extended ASCII character was detected
-				Lyrics.rocksmithver = 3;
+				Lyrics.rocksmithver = 4;
 			}
 			else
 			{	//Otherwise perform normal RS2 lyric export

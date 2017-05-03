@@ -5737,6 +5737,7 @@ void eof_add_extended_ascii_glyphs(void)
 			destroy_font(glyph);	//Free the temporary font
 		}
 	}
+	eof_free_ucode_table();
 }
 
 END_OF_MAIN()

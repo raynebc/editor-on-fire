@@ -9,12 +9,19 @@ void RS_Load(FILE *inf);
 int rs_filter_char(int character, char rs_filter);
 	//Returns nonzero if character is any of the following characters:  ( } ,  \  : { " )
 	//Returns nonzero if the character isn't an ASCII character (ie. greater than 127) or otherwise isn't a printable character
-	//If rs_filter is greater than 1, the forward slash character is also not copied to the buffer
+	//If rs_filter is greater than 1, the forward slash character is also not allowed
 	//These characters can cause Rocksmith to crash if they are present in various free-text fields like chord names, lyric text or phrase names
 	//Zero is returned if the character passed is not any of the offending characters
 int rs_lyric_filter_char_extended(int character);
 	//Similar to rs_filter_char(), but returns 0 for all ASCII and extended ASCII characters that have been found to work in Rocksmith 2014
 	//Nonzero is returned for all characters found to not display or otherwise not work
+int rs_lyric_substitute_char_extended(int character, int function);
+	//Some extended ASCII characters aren't supported by Rocksmith for lyrics, and by default EOF doesn't export extended ASCII to RS lyrics
+	//In the case of latin characters with accent marks, they can be easily substituted for the non-accented version of the character as applicable
+	//The return value reflects the character chosen for substitution, or reflects the input value if no substitution was made
+	//The input and output characters are Win-1252 encoding (extended ASCII characters encoded as a single byte each)
+	//If function is 0, all accented ASCII characters have substitutions made
+	//If function is 1, only the unsupported characters (ie. 'A' with a tilde accent) have substitutions made (ie. 'A')
 int rs_filter_string(char *string, char rs_filter);
 	//Returns 1 if any character in the provided string is considered a filtered character by rs_filter_char()
 	//Currently only used to validate chord names for Rocksmith export
@@ -27,10 +34,10 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 	//If size is zero, the function returns without doing anything.  Otherwise the buffer is guaranteed to be NULL terminated
 	//If warnsize is larger than size, the function returns without doing anything.
 	//Any non-printable characters are removed
-	//If rs_filter is equal to 3, rs_lyric_filter_char_extended() is used to determine if input lyric text is to be filtered
-	//Otherwise characters are filtered based on these rules:
-	// If rs_filter is nonzero, the following characters are not copied to the buffer:  ( } ,  \  : { " ), and all non ASCII characters are likewise removed
-	// If rs_filter is greater than 1, the forward slash character is also not copied to the buffer
+	//If rs_filter is 1 or 2, the following characters are not copied to the buffer:  ( } ,  \  : { " ), and all non ASCII characters are likewise removed
+	//If rs_filter is 2, the forward slash character is also not copied to the buffer
+	//If rs_filter is 3, rs_lyric_filter_char_extended() is used to determine if input lyric text is to be filtered
+	//If rs_filter is 4, no characters are filtered
 
 void shrink_xml_text(char *buffer, size_t size, char *input);
 	//Does the reverse of expand_xml_text(), converting each escape sequence into the appropriate individual character.

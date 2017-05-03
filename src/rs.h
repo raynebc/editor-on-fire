@@ -116,7 +116,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//Rocksmith 2 supports arrangements using a capo, but it does not consider the capo to be the nut position, so the capo position still needs to be added
 	// to the fret values of all fretted notes
 
-void rs_utf8_expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsize, char rs_filter);
+void eof_rs_utf8_expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsize, char rs_filter);
 	//Equivalent to expand_xml_text() except that the strings are treated as UTF-8
 	//The size variable pertains to the number of bytes the buffer is capable of storing
 	//The warnsize variable pertains to the number of characters that are allowed to export to XML for this string

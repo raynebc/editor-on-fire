@@ -294,7 +294,7 @@ int eof_convert_from_extended_ascii(char * buffer, int size)
 	{
 		return 0;
 	}
-	memcpy(workbuffer, buffer, (size_t)size);
+	strncpy(workbuffer, buffer, (size_t)size - 1);
 	do_uconvert(workbuffer, U_ASCII_CP, buffer, U_CURRENT, size);
 	free(workbuffer);
 	return 1;

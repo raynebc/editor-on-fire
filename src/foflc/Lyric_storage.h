@@ -220,7 +220,8 @@ struct _LYRICSSTRUCT_{
 	unsigned char last_pitch;	//Used by various import functions to track pitch changes.  Reset to 0 by InitMIDI() and InitLyrics()
 	struct OmitID3frame *nosrctag;	//The linked list of ID3 frames to omit during ID3 export
 	char rocksmithver;			//If this has a value of 2, + characters are appended to the last lyric in each line, as this is Rocksmith 2014's line break mechanism
-								//If this has a value of 3, extended ASCII characters are allowed and the XML tag's encoding attribute reflects windows-1252 encoding
+								//If this has a value of 3, some extended ASCII characters are allowed and the XML tag's encoding attribute reflects windows-1252 encoding
+								//If this has a value of 4, all extended ASCII characters are allowed and the XML tag's encoding attribute reflects windows-1252 encoding
 
 //Filenames
 	char *outfilename;		//Stores the name of the output file

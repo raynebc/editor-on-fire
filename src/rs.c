@@ -3165,7 +3165,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	return 1;	//Return success
 }
 
-void rs_utf8_expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsize, char rs_filter)
+void eof_rs_utf8_expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsize, char rs_filter)
 {
 	unsigned long input_length, index = 0, ctr;
 	int exchar, uchar;
@@ -3309,6 +3309,7 @@ void eof_export_rocksmith_lyrics(EOF_SONG * sp, char * fn, int version)
 	(void) snprintf(buffer, sizeof(buffer) - 1, "<vocals count=\"%lu\">\n", sp->vocal_track[0]->lyrics);
 	(void) pack_fputs(buffer, fp);
 
+	eof_allocate_ucode_table();
 	tp = sp->vocal_track[0];
 	for(ctr = 0; ctr < tp->lyrics; ctr++)
 	{	//For each lyric
@@ -3317,16 +3318,16 @@ void eof_export_rocksmith_lyrics(EOF_SONG * sp, char * fn, int version)
 		{	//If Rocksmith 2014 format is being exported, the maximum length per lyric is 48 characters
 			if(!eof_rs2_export_extended_ascii_lyrics)
 			{	//If the "Allow RS2 extended ASCII lyrics" preference is not enabled
-				rs_utf8_expand_xml_text(buffer2, sizeof(buffer2) - 1, tp->lyric[ctr]->text, 48, 2);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Filter out characters suspected of causing the game to crash.
+				eof_rs_utf8_expand_xml_text(buffer2, sizeof(buffer2) - 1, tp->lyric[ctr]->text, 48, 2);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Filter out characters suspected of causing the game to crash.
 			}
 			else
 			{	//Allow a tested set of extended ASCII to export
-				rs_utf8_expand_xml_text(buffer2, sizeof(buffer2) - 1, tp->lyric[ctr]->text, 48, 3);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  More selectively filter out characters suspected of causing the game to crash.
+				eof_rs_utf8_expand_xml_text(buffer2, sizeof(buffer2) - 1, tp->lyric[ctr]->text, 48, 3);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  More selectively filter out characters suspected of causing the game to crash.
 			}
 		}
 		else
 		{	//Otherwise the lyric limit is 32 characters
-			rs_utf8_expand_xml_text(buffer2, sizeof(buffer2) - 1, tp->lyric[ctr]->text, 32, 2);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Filter out characters suspected of causing the game to crash.
+			eof_rs_utf8_expand_xml_text(buffer2, sizeof(buffer2) - 1, tp->lyric[ctr]->text, 32, 2);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Filter out characters suspected of causing the game to crash.
 		}
 
 		//Filter out + characters, which are used as a newline mechanism in RS2
@@ -3382,6 +3383,7 @@ void eof_export_rocksmith_lyrics(EOF_SONG * sp, char * fn, int version)
 	}//For each lyric
 
 	pack_fputs("</vocals>", fp);
+	eof_free_ucode_table();
 	(void) pack_fclose(fp);
 }
 

@@ -2724,17 +2724,20 @@ int eof_save_helper_checks(void)
 				break;
 			}
 		}//If user enabled the Lyrics checkbox in song properties
-		for(ctr = 0; ctr < eof_song->vocal_track[0]->lyrics; ctr++)
-		{	//For each lyric
-			if((eof_song->vocal_track[0]->lyric[ctr]->text[0] != '\0') && (eof_string_has_non_ascii(eof_song->vocal_track[0]->lyric[ctr]->text)))
-			{	//If any of the lyrics that contain text have non ASCII characters
-				eof_clear_input();
-				if(alert("Warning: One or more lyrics have non ASCII characters.", "These lyrics may not work correctly for some rhythm games.", "Cancel and seek to first offending lyric?", "&Yes", "&No", 'y', 'n') == 1)
-				{	//If user opts to cancel the save
-					eof_seek_and_render_position(EOF_TRACK_VOCALS, eof_get_note_type(eof_song, EOF_TRACK_VOCALS, ctr), eof_get_note_pos(eof_song, EOF_TRACK_VOCALS, ctr));
-					return 1;	//Return cancellation
+		if(!eof_rs2_export_extended_ascii_lyrics || eof_write_fof_files || eof_write_rb_files || eof_write_bf_files)
+		{	//If extended ASCII export isn't enabled, or if a non Rocksmith export is enabled
+			for(ctr = 0; ctr < eof_song->vocal_track[0]->lyrics; ctr++)
+			{	//For each lyric
+				if((eof_song->vocal_track[0]->lyric[ctr]->text[0] != '\0') && (eof_string_has_non_ascii(eof_song->vocal_track[0]->lyric[ctr]->text)))
+				{	//If any of the lyrics that contain text have non ASCII characters
+					eof_clear_input();
+					if(alert("Warning: One or more lyrics have non ASCII characters.", "These lyrics may not work correctly for some rhythm games.", "Cancel and seek to first offending lyric?", "&Yes", "&No", 'y', 'n') == 1)
+					{	//If user opts to cancel the save
+						eof_seek_and_render_position(EOF_TRACK_VOCALS, eof_get_note_type(eof_song, EOF_TRACK_VOCALS, ctr), eof_get_note_pos(eof_song, EOF_TRACK_VOCALS, ctr));
+						return 1;	//Return cancellation
+					}
+					break;
 				}
-				break;
 			}
 		}
 	}
@@ -4851,10 +4854,27 @@ int eof_command_line_rs_import(char *fn)
 
 	//Create a new project and have user select a target pro guitar/bass track
 	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "Import Rocksmith arrangement to:");
-	if(strcasestr_spec(fn, "_bass_"))
+	if(strcasestr_spec(fn, "_bonus"))
+	{	//If the name of the specified XML file implies it was originally a bonus track
+		eof_import_to_track_dialog[3].flags = 0;			//Deselect PART REAL_GUITAR as the default destination track for the import
+		eof_import_to_track_dialog[6].flags = D_SELECTED;	//Select PART REAL_GUITAR_BONUS instead
+	}
+	else if(strcasestr_spec(fn, "_bass"))
 	{	//If the name of the specified XML file implies bass guitar
 		eof_import_to_track_dialog[3].flags = 0;			//Deselect PART REAL_GUITAR as the default destination track for the import
-		eof_import_to_track_dialog[2].flags = D_SELECTED;	//Select PART REAL_BASS instead
+		if(strstr(fn, "_22"))
+		{	//If the name of the file implies it was originally a 22 fret track
+			eof_import_to_track_dialog[4].flags = D_SELECTED;	//Select PART REAL_BASS_22 instead
+		}
+		else
+		{
+			eof_import_to_track_dialog[2].flags = D_SELECTED;	//Select PART REAL_BASS instead
+		}
+	}
+	else if(strstr(fn, "_22"))
+	{	//If the name of the file implies it was originally a 22 fret track
+		eof_import_to_track_dialog[3].flags = 0;			//Deselect PART REAL_GUITAR as the default destination track for the import
+		eof_import_to_track_dialog[5].flags = D_SELECTED;	//Select PART REAL_GUITAR_22 instead
 	}
 	if(!eof_create_new_project_select_pro_guitar())
 		return 2;	//New project couldn't be created

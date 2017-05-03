@@ -38,12 +38,12 @@ void Export_RS(FILE *outf)
 	if(Lyrics.verbose)	printf("\nFoFLC exporting Rocksmith XML lyrics to file \"%s\"\n",Lyrics.outfilename);
 
 //Write the beginning lines of the XML file
-	if(Lyrics.rocksmithver != 3)
+	if(Lyrics.rocksmithver < 3)
 	{	//The normal RS1 and RS2 lyrics are in UTF-8
 		fputs_err("<?xml version='1.0' encoding='UTF-8'?>\n",outf);
 	}
 	else
-	{	//The extended ASCII variant is in windows-1252
+	{	//The extended ASCII variants are in windows-1252
 		fputs_err("<?xml version='1.0' encoding='windows-1252'?>\n",outf);
 	}
 #ifdef EOF_BUILD	//In the EOF code base, put a comment line indicating the program version
@@ -70,9 +70,13 @@ void Export_RS(FILE *outf)
 			{	//If Rocksmith 2014 format is being exported, the maximum length per lyric is 48 characters
 				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 48, 2);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Filter out characters suspected of causing the game to crash.
 			}
-			if(Lyrics.rocksmithver == 3)
-			{	//If Rocksmith 2014 format is being exported, and the "Allow RS2 extended ASCII lyrics" preference is enabled, allow a larger range of characters
+			else if(Lyrics.rocksmithver == 3)
+			{	//If Rocksmith 2014 format is being exported, and compatible extended ASCII characters are allowed
 				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 48, 3);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Filter out characters suspected of causing the game to crash.
+			}
+			else if (Lyrics.rocksmithver == 4)
+			{	//A Rocksmith 2014 style format that doesn't force lyric content to use compliant characters
+				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 48, 4);
 			}
 			else
 			{	//Otherwise the lyric limit is 32 characters
@@ -240,6 +244,128 @@ int rs_lyric_filter_char_extended(int character)
 	return 1;	//Not allowed
 }
 
+int rs_lyric_substitute_char_extended(int character, int function)
+{
+	unsigned int code = (unsigned int)character;
+
+	//Substitute for characters that Rocksmith doesn't allow for lyrics
+	if(code == 142)
+	{	//Capital Z with caron
+		code = 'Z';
+	}
+	else if(code == 159)
+	{	//Capital Y with umlaut
+		code = 'Y';
+	}
+	else if(code == 255)
+	{	//Lowercase y with umlaut
+		code = 'y';
+	}
+	else if(code == 195)
+	{	//Capital A with tilde
+		code = 'A';
+	}
+	else if(code == 227)
+	{	//Lowercase a with tilde
+		code = 'a';
+	}
+	else if(code == 205)
+	{	//Capital I with acute
+		code = 'I';
+	}
+	else if(code == 213)
+	{	//Capital O with tilde
+		code = 'O';
+	}
+	else if(code == 245)
+	{	//Lowercase o with tilde
+		code = 'o';
+	}
+	else if(code == 221)
+	{	//Capital Y with acute
+		code = 'Y';
+	}
+	else if(code == 253)
+	{	//Lowercase y with acute
+		code = 'y';
+	}
+
+	//Conditionally substitute for characters the author hasn't allowed (Allow RS2 extended ASCII lyrics)
+	if(!function)
+	{	//If the calling function is opting to substitute for ALL accented Latin characters
+		if((code == 192) || (code == 193) || (code == 194) || (code == 196) || (code == 197))
+		{	//Capital A with grave, acute, circumflex, umlaut or ring accent
+			code = 'A';
+		}
+		else if((code == 224) || (code == 225) || (code == 226) || (code == 228) || (code == 229))
+		{	//Lowercase a with grave, acute, circumflex, umlaut or ring accent
+			code = 'a';
+		}
+		else if(code == 199)
+		{	//Capital C with cedilla accent
+			code = 'C';
+		}
+		else if(code == 231)
+		{	//Lowercase c with cedilla accent
+			code = 'c';
+		}
+		else if((code == 200) || (code == 201) || (code == 202) || (code == 203))
+		{	//Capital E with grave, acute, circumflex or umlaut accent
+			code = 'E';
+		}
+		else if((code == 232) || (code == 233) || (code == 234) || (code == 235))
+		{	//Lowercase e with grave, acute, circumflex or umlaut accent
+			code = 'e';
+		}
+		else if((code == 204) || (code == 206) || (code == 207))
+		{	//Capital I with grave, circumflex or umlaut accent
+			code = 'I';
+		}
+		else if((code == 236) || (code == 237) || (code == 238) || (code == 239))
+		{	//Lowercase i with grave, acute, circumflex or umlaut accent
+			code = 'i';
+		}
+		else if(code == 209)
+		{	//Capital N with tilde
+			code = 'N';
+		}
+		else if(code == 241)
+		{	//Lowercase n with tilde
+			code = 'n';
+		}
+		else if((code == 210) || (code == 211) || (code == 212) || (code == 214) || (code == 216))
+		{	//Capital O with grave, acute, circumflex, umlaut or slash accent
+			code = 'O';
+		}
+		else if((code == 242) || (code == 243) || (code == 244) || (code == 246) || (code == 248))
+		{	//Lowercase o with grave, acute, circumflex, umlaut or slash accent
+			code = 'o';
+		}
+		else if((code == 217) || (code == 218) || (code == 219) || (code == 220))
+		{	//Capital U with grave, acute, circumflex or umlaut accent
+			code = 'U';
+		}
+		else if((code == 249) || (code == 250) || (code == 251) || (code == 252))
+		{	//Lowercase u with grave, acute, circumflex or umlaut accent
+			code = 'u';
+		}
+		else if(code == 138)
+		{	//Capital S with caron
+			code = 'S';
+		}
+		else if(code == 154)
+		{	//Lowercase s with caron
+			code = 's';
+		}
+		else if(code == 158)
+		{	//Lowercase z with caron
+			code = 'z';
+		}
+	}
+
+	return (int)code;
+}
+
 int rs_filter_string(char *string, char rs_filter)
 {
 	unsigned long ctr;
@@ -266,24 +392,31 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 	input_length = strlen(input);
 	for(ctr = 0; ctr < input_length; ctr++)
 	{	//For each character of the input string
-		if((rs_filter != 3) && !isprint((unsigned char)input[ctr]))
-			continue;	//If extended ASCII isn't being allowed and this isn't a printable character, omit it
+		int character = (unsigned char)input[ctr];
+
+		if((rs_filter < 3) && !isprint(character))
+			continue;	//If extended ASCII isn't being allowed and this isn't a printable character less than ASCII value 128, omit it
+
 		if(rs_filter)
 		{
 			if(rs_filter < 3)
-			{	//Normal filtering
-				if(rs_filter_char(input[ctr], rs_filter))
+			{	//Normal filtering (1 or 2)
+				character = rs_lyric_substitute_char_extended(character, 0);	//Substitute any accented Latin character for a non-accented version
+				if(rs_filter_char(character, rs_filter))
 					continue;	//If filtering out characters for Rocksmith, omit affected characters
 			}
 			else if(rs_filter == 3)
 			{	//Filtering to allow extended ASCII
-				unsigned char uchar = (unsigned char)input[ctr];
-				if(rs_lyric_filter_char_extended(uchar))
+				character = rs_lyric_substitute_char_extended(character, 1);	//Substitute only unsupported accented Latin characters for non-accented versions
+				if(rs_lyric_filter_char_extended(character))
 					continue;	//If filtering out characters for Rocksmith lyrics, omit affected characters
+			}
+			else if(rs_filter == 4)
+			{	//No filtering
 			}
 		}
 
-		if(input[ctr] == '\"')
+		if(character == '\"')
 		{	//Expand quotation mark character
 			if(index + 6 + 1 > warnsize)
 			{	//If there isn't enough buffer left to expand this character and terminate the string
@@ -297,7 +430,7 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 			buffer[index++] = 't';
 			buffer[index++] = ';';
 		}
-		else if(input[ctr] == '\'')
+		else if(character == '\'')
 		{	//Expand apostrophe
 			if(index + 6 + 1 > warnsize)
 			{	//If there isn't enough buffer left to expand this character and terminate the string
@@ -311,7 +444,7 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 			buffer[index++] = 's';
 			buffer[index++] = ';';
 		}
-		else if(input[ctr] == '<')
+		else if(character == '<')
 		{	//Expand less than sign
 			if(index + 4 + 1 > warnsize)
 			{	//If there isn't enough buffer left to expand this character and terminate the string
@@ -323,7 +456,7 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 			buffer[index++] = 't';
 			buffer[index++] = ';';
 		}
-		else if(input[ctr] == '>')
+		else if(character == '>')
 		{	//Expand greater than sign
 			if(index + 4 + 1 > warnsize)
 			{	//If there isn't enough buffer left to expand this character and terminate the string
@@ -335,7 +468,7 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 			buffer[index++] = 't';
 			buffer[index++] = ';';
 		}
-		else if(input[ctr] == '&')
+		else if(character == '&')
 		{	//Expand ampersand
 			if(index + 5 + 1 > warnsize)
 			{	//If there isn't enough buffer left to expand this character and terminate the string
@@ -355,7 +488,7 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 				buffer[index] = '\0';	//Terminate the buffer
 				return;			//And return
 			}
-			buffer[index++] = input[ctr];
+			buffer[index++] = character;
 		}
 	}//For each character of the input string
 	buffer[index++] = '\0';	//Terminate the string
