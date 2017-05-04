@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include "utility.h"
 #include "main.h"	//For logging
+#include "foflc/RS_parse.h"	//For rs_lyric_substitute_char_extended()
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -321,6 +322,25 @@ int eof_convert_to_extended_ascii(char * buffer, int size)
 	do_uconvert(workbuffer, U_CURRENT, buffer, U_ASCII_CP, size);
 	free(workbuffer);
 	return 1;
+}
+
+int rs_lyric_substitute_char_utf8(int character, int function)
+{
+	char string[6];
+
+	usetat(string, 0, character);	//Build a terminated string containing just the input character
+	usetat(string, 1, '\0');
+	if(eof_convert_to_extended_ascii(string, sizeof(string)))
+	{	//If the string was converted
+		int substitution = rs_lyric_substitute_char_extended((unsigned char)string[0], function);	//Check for a substitution of the given kind
+
+		if(substitution != string[0])
+		{	//If a suitable ASCII substitution was found
+			return substitution;
+		}
+	}
+
+	return character;	//Return the input character unchanged
 }
 
 int eof_lookup_extended_ascii_code(int character)

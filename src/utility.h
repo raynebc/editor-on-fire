@@ -22,6 +22,12 @@ int eof_convert_to_extended_ascii(char * buffer, int size);		//Convert a string 
 int eof_lookup_extended_ascii_code(int character);
 	//Accepts an input UTF-8 character and returns the matching extended ASCII code from eof_ucode_table[] if it exists
 	//Returns 0 if there is no match or upon error
+int rs_lyric_substitute_char_utf8(int character, int function);
+	//Converts the input UTF-8 character into extended ASCII and uses rs_lyric_substitute_char_extended() to search for an applicable normal ASCII substitution
+	//  for example, replacing an accented A character with a non-accented version.
+	//If function is 0, substitutions are sought for any accented Latin character
+	//If function is 1, substitutions are only sought for characters that Rocksmith doesn't support
+	//If no substitution is found, the input character is returned unchanged
 
 int eof_string_has_non_ascii(char *str);	//Returns nonzero if any characters in the UTF-8 encoded string have non ASCII characters (any character valued over 127)
 void eof_sanitize_string(char *str);		//Replaces any non-printable or non ASCII (characters numbered higher than 127) characters with spaces

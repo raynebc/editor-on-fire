@@ -120,8 +120,11 @@ void eof_rs_utf8_expand_xml_text(char *buffer, size_t size, const char *input, s
 	//Equivalent to expand_xml_text() except that the strings are treated as UTF-8
 	//The size variable pertains to the number of bytes the buffer is capable of storing
 	//The warnsize variable pertains to the number of characters that are allowed to export to XML for this string
+	//This function is exclusively used for writing lyrics so it calls rs_filter_char() with a nonzero islyric value
+	//If islyric is nonzero, these characters are not omitted from the expanded string:  ( } ,  \  : { " )
 void eof_export_rocksmith_lyrics(EOF_SONG * sp, char * fn, int version);
 	//Writes the specified chart's lyrics to the specified filename
+	//Currently this function is only called when extended ASCII export is enabled and there are such characters in the lyrics
 	//The version parameter controls certain restrictions:
 	//  If version == 1, RS1 limits are enforced (each lyric can be up to 32 characters long after converting escape sequences as necessary)
 	//  If version == 2, RS2 limits are enforced (each lyric can be up to 48 characters long after converting escape sequences as necessary)
