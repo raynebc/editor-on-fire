@@ -303,7 +303,7 @@ typedef struct
 	char altname[EOF_NAME_LENGTH + 1];	//Specifies the alternate name of the track (for RS export)
 	unsigned char difficulty;			//Specifies the difficulty level from 0-5 (standard 0-5 scale), or 6 for devil heads (extreme difficulty).  0xFF means the difficulty is undefined
 	unsigned char numdiffs;				//Specifies the number of difficulties usable in this track, including BRE (is set to 5 unless the track's EOF_TRACK_FLAG_UNLIMITED_DIFFS flag is set)
-	unsigned long flags;
+	unsigned long flags;				//Various flags.  In the case of the normal drum track and the vocal track, the low nibble of the most significant byte stores the difficulty level (or 0xF if undefined)
 } EOF_TRACK_ENTRY;
 
 #define EOF_LEGACY_TRACKS_MAX		8

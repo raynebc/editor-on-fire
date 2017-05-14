@@ -8836,6 +8836,16 @@ EOF_SONG *eof_clone_chart_time_range(EOF_SONG *sp, unsigned long start, unsigned
 		csp->beat[csp->beats - 1]->fpos -= start;	//Offset the position of the new beat
 		csp->beat[csp->beats - 1]->pos -= start;
 
+		if(firstbeat && !eof_get_ts(sp, NULL, NULL, ctr))
+		{	//If the first exported beat does not have a time signature defined on it
+			unsigned num = 4, den = 4;
+
+			if(eof_get_effective_ts(sp, &num, &den, ctr))
+			{	//If the time signature on that beat was obtained
+				(void) eof_apply_ts(num, den, 0, csp, 0);	//Apply it to the first exported beat
+			}
+		}
+
 		firstbeat = 0;
 	}
 
@@ -8856,17 +8866,41 @@ EOF_SONG *eof_clone_chart_time_range(EOF_SONG *sp, unsigned long start, unsigned
 	//Clone tracks
 	for(ctr = 1; ctr < sp->tracks; ctr++)
 	{	//For each track in the source chart
+		//Clone track data
+		memcpy(csp->track[ctr]->altname, sp->track[ctr]->altname, sizeof(sp->track[ctr]->altname));	//Copy user defined track name, if any
+		csp->track[ctr]->difficulty = sp->track[ctr]->difficulty;
+		csp->track[ctr]->numdiffs = sp->track[ctr]->numdiffs;
+		csp->track[ctr]->flags = sp->track[ctr]->flags;
+
 		if(sp->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If this is a pro guitar track
+			EOF_PRO_GUITAR_TRACK *tp, *ctp;
+
 			loopcount = 2;	//The second for loop will run a second time to process the tech note set
 			restore_tech_view = eof_menu_track_get_tech_view_state(sp, ctr);	//Track whether tech view was in effect
 			eof_menu_track_set_tech_view_state(sp, ctr, 0); //Disable tech view if applicable
+
+			//Clone pro guitar specific track data
+			tp = sp->pro_guitar_track[sp->track[ctr]->tracknum];
+			ctp = csp->pro_guitar_track[sp->track[ctr]->tracknum];
+			ctp->numfrets = tp->numfrets;
+			ctp->numstrings = tp->numstrings;
+			ctp->arrangement = tp->arrangement;
+			ctp->ignore_tuning = tp->ignore_tuning;
+			ctp->capo = tp->capo;
+			memcpy(ctp->tuning, tp->tuning, sizeof(ctp->tuning));
 		}
 		else
 		{
 			loopcount = 1;
+
+			if(sp->track[ctr]->track_format == EOF_LEGACY_TRACK_FORMAT)
+			{	//If this is a legacy track
+				csp->legacy_track[csp->track[ctr]->tracknum]->numlanes = sp->legacy_track[sp->track[ctr]->tracknum]->numlanes;	//Copy the lane count
+			}
 		}
 
+		//Clone notes
 		for(ctr2 = 0; ctr2 < loopcount; ctr2++)
 		{	//For each note set in the track
 			for(ctr3 = 0; ctr3 < eof_get_track_size(sp, ctr); ctr3++)
@@ -8888,6 +8922,7 @@ EOF_SONG *eof_clone_chart_time_range(EOF_SONG *sp, unsigned long start, unsigned
 		}
 		eof_menu_track_set_tech_view_state(sp, ctr, restore_tech_view); //Re-enable tech view if applicable
 
+		//Clone sections
 		for(ctr2 = 1; ctr2 <= EOF_NUM_SECTION_TYPES; ctr2++)
 		{	//For each type of section that exists
 			if(!eof_lookup_track_section_type(sp, ctr, ctr2, &sectioncount, &sections) || !sections)

@@ -2558,7 +2558,7 @@ void eof_render_note_window(void)
 	char temp[1024] = {0};
 	unsigned long notepos;
 	char fret_string[30] = {0}, grid_snap_string[30] = {0};
-	char difficulty1[20] = {0}, difficulty2[50] = {0}, difficulty3[50] = {0};
+	char difficulty1[20] = {0}, difficulty2[50] = {0};
 	int scale, chord, isslash, bassnote;	//Used when looking up the chord name (if the last selected note is not already named)
 
 	if(eof_disable_info_panel)	//If the user disabled the info panel's rendering
@@ -2753,7 +2753,6 @@ void eof_render_note_window(void)
 			(void) snprintf(difficulty1, sizeof(difficulty1) - 1, "(Undefined)");
 		}
 		difficulty2[0] = '\0';
-		difficulty3[0] = '\0';
 		if(eof_selected_track == EOF_TRACK_DRUM)
 		{	//Write the difficulty string to display for pro drums
 			if(((eof_song->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24) != 0x0F)
@@ -2775,14 +2774,12 @@ void eof_render_note_window(void)
 			{
 				(void) snprintf(difficulty2, sizeof(difficulty2) - 1, "(Harmony: Undefined)");
 			}
-			difficulty3[0] = '\0';	//Unused for vocals
 		}
 		else
 		{	//Otherwise truncate the extra difficulty strings
 			difficulty2[0] = '\0';
-			difficulty3[0] = '\0';
 		}
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Track difficulty: %s %s %s", difficulty1, difficulty2, difficulty3);
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Track difficulty: %s %s", difficulty1, difficulty2);
 		ypos += 12;
 
 		if(!eof_disable_sound_processing)

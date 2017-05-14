@@ -118,6 +118,7 @@ void eof_prepare_track_menu(void)
 {
 	unsigned long i, j, tracknum;
 	char clipboard_path[50];
+	unsigned diff1, diff2 = 0xFF, multidiff = 0;
 
 	if(eof_song && eof_song_loaded)
 	{//If a chart is loaded
@@ -280,6 +281,37 @@ void eof_prepare_track_menu(void)
 		{
 			eof_track_clone_menu[2].flags = D_DISABLED;
 		}
+
+		/* Set difficulty */
+		for(i = 0; i < 9; i++)
+		{	//For each submenu item
+			eof_track_menu_set_difficulty[i].flags = 0;	//Clear checkmark
+		}
+		diff1 = eof_song->track[eof_selected_track]->difficulty;
+		if(diff1 > 6)		//Bounds check
+			diff1 = 0xFF;
+		if((eof_selected_track == EOF_TRACK_DRUM) || (eof_selected_track == EOF_TRACK_VOCALS))
+		{	//These tracks have a secondary difficulty level
+			diff2 = (eof_song->track[eof_selected_track]->flags & 0x0F000000) >> 24;
+			if(diff2 > 6)		//Bounds check
+				diff2 = 0xFF;
+			multidiff = 1;
+		}
+		if(multidiff && (diff1 != diff2))
+		{	//If the track has two difficulty levels, but they are different values
+			eof_track_menu_set_difficulty[8].flags = D_SELECTED;	//Check the manually defined submenu item
+		}
+		else
+		{	//There is only one effective difficulty value
+			if(diff1 <= 6)
+			{	//If the difficulty level is defined
+				eof_track_menu_set_difficulty[diff1].flags = D_SELECTED;	//Check the numbered submenu item
+			}
+			else
+			{	//The difficulty level is undefined
+				eof_track_menu_set_difficulty[7].flags = D_SELECTED;	//Check the undefined submenu item
+			}
+		}
 	}//If a chart is loaded
 }
 
@@ -359,6 +391,7 @@ int eof_menu_track_set_difficulty(unsigned difficulty)
 {
 	int undo_made = 0;
 	unsigned olddiff;
+	unsigned diff2 = difficulty & 0xF;	//Secondary difficulties are only stored as a half byte, so undefined is 0xF instead of 0xFF
 
 	if(!eof_song || !eof_song_loaded || !eof_selected_track || (eof_selected_track >= eof_song->tracks))
 		return 1;
@@ -370,12 +403,12 @@ int eof_menu_track_set_difficulty(unsigned difficulty)
 		undo_made = 1;
 	}
 
-	//Drum tracks also define a pro drum difficulty and vocal tracks also efine a harmony difficulty
+	//Drum tracks also define a pro drum difficulty and vocal tracks also define a harmony difficulty
 	//Set those values if applicable
 	if(eof_selected_track == EOF_TRACK_DRUM)
 	{
 		olddiff = (eof_song->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24;		//Mask out the low nibble of the high order byte of the drum track's flags (pro drum difficulty)
-		if(difficulty != olddiff)
+		if(diff2 != olddiff)
 		{
 			if(!undo_made)
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -388,7 +421,7 @@ int eof_menu_track_set_difficulty(unsigned difficulty)
 	else if(eof_selected_track == EOF_TRACK_VOCALS)
 	{
 		olddiff = (eof_song->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24;	//Mask out the low nibble of the high order byte of the vocal track's flags (harmony difficulty)
-		if(difficulty != olddiff)
+		if(diff2 != olddiff)
 		{
 			if(!undo_made)
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
