@@ -3327,29 +3327,17 @@ void eof_export_rocksmith_lyrics(EOF_SONG * sp, char * fn, int version)
 		{	//If Rocksmith 2014 format is being exported, the maximum length per lyric is 48 characters
 			if(!eof_rs2_export_extended_ascii_lyrics)
 			{	//If the "Allow RS2 extended ASCII lyrics" preference is not enabled
-///				eof_rs_utf8_expand_xml_text(buffer2, sizeof(buffer2) - 1, tp->lyric[ctr]->text, 48, 2);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Filter out characters suspected of causing the game to crash.
 				eof_rs_utf8_expand_xml_text(buffer3, sizeof(buffer3) - 1, buffer2, 48, 2);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Filter out characters suspected of causing the game to crash.
 			}
 			else
 			{	//Allow a tested set of extended ASCII to export
-///				eof_rs_utf8_expand_xml_text(buffer2, sizeof(buffer2) - 1, tp->lyric[ctr]->text, 48, 3);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  More selectively filter out characters suspected of causing the game to crash.
 				eof_rs_utf8_expand_xml_text(buffer3, sizeof(buffer3) - 1, buffer2, 48, 3);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  More selectively filter out characters suspected of causing the game to crash.
 			}
 		}
 		else
 		{	//Otherwise the lyric limit is 32 characters
-///			eof_rs_utf8_expand_xml_text(buffer2, sizeof(buffer2) - 1, tp->lyric[ctr]->text, 32, 2);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Filter out characters suspected of causing the game to crash.
 			eof_rs_utf8_expand_xml_text(buffer3, sizeof(buffer3) - 1, buffer2, 32, 2);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Filter out characters suspected of causing the game to crash.
 		}
-
-///		//Replace accented characters not supported for Rocksmith lyrics with non-accented versions
-///		for(index1 = index2 = 0; index1 < ustrlen(buffer2); index1++)
-///		{	//For each character in the expanded XML string
-///			uchar = ugetat(buffer2, index1);
-///			uchar = rs_lyric_substitute_char_utf8(uchar, eof_rs2_export_extended_ascii_lyrics);
-///			usetat(buffer3, index2++, uchar);	//Copy it to another buffer
-///		}
-///		usetat(buffer3, index2, '\0');	//Terminate the new buffer
 
 		//Determine if this lyric is the last in any defined lyric line
 		for(linenum = 0, lyricend = 0, linefound = 0; linenum < tp->lines; linenum++)

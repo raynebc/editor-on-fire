@@ -6661,7 +6661,8 @@ void eof_editor_logic_common(void)
 								}
 								(void) eof_adjust_notes(eof_song->tags->ogg[eof_selected_ogg].midi_offset - eof_last_midi_offset);
 							}
-							eof_fixup_notes(eof_song);
+							eof_fixup_notes(eof_song);										//Update note highlighting
+							(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update tab highlighting
 						}
 					}
 				}
@@ -6676,6 +6677,8 @@ void eof_editor_logic_common(void)
 						(void) eof_menu_edit_cut_paste(eof_selected_beat, 0);
 						eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 					}
+					eof_fixup_notes(eof_song);										//Update note highlighting
+					(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update tab highlighting
 				}
 				eof_moving_anchor = 0;
 				eof_mouse_drug = 0;

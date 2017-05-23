@@ -1101,6 +1101,9 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		return 1;
 	}
 
+///Unclear why this function call would be needed
+///	eof_calculate_beats(eof_song);	//Call this before placing notes so that the auto re-snap logic can avoid any loss of grid snap due to beat position rounding errors
+
 	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 	for(j = 1; j < eof_song->tracks; j++)
 	{	//For each track
@@ -1275,7 +1278,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		eof_menu_track_set_tech_view_state(eof_song, j, restore_tech_view);	//Re-enable tech view if applicable
 	}//For each track
 	(void) pack_fclose(fp);
-	eof_calculate_beats(eof_song);
+///	eof_calculate_beats(eof_song);	//It's not clear why this is being called at all, this function isn't meant to change beat positions, just perform auto-adjust logic
 	eof_truncate_chart(eof_song);	//Add or remove beat markers as necessary and update the eof_chart_length variable
 	eof_fixup_notes(eof_song);
 	eof_determine_phrase_status(eof_song, eof_selected_track);

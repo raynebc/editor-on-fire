@@ -4,6 +4,7 @@
 #include "song.h"
 #include "foflc/Midi_parse.h"
 
+#define EOF_DEFAULT_TIME_DIVISION 480 // default time division used to convert midi_pos to msec_pos
 #define EOF_MAX_TS 500
 #define EOF_MAX_KS 100
 #define EOF_MAX_MIDI_EVENTS (65536 * 2)

@@ -843,7 +843,8 @@ int eof_menu_beat_delete(void)
 
 int eof_menu_beat_push_offset_back(char *undo_made)
 {
-	unsigned long i, backamount;
+	unsigned long i;
+	double backamount;
 
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 0;							//Return without making changes
@@ -852,8 +853,8 @@ int eof_menu_beat_push_offset_back(char *undo_made)
 	if(eof_song->beats < 2)
 		return 0;	//Error condition
 
-	backamount = eof_song->beat[1]->pos - eof_song->beat[0]->pos;
-	if(eof_song->beat[0]->pos < backamount)
+	backamount = eof_song->beat[1]->fpos - eof_song->beat[0]->fpos;
+	if(eof_song->beat[0]->fpos < backamount)
 		return 1;	//If the first beat isn't at least one beat length away from 0ms, don't change anything
 
 	if(*undo_made == 0)
@@ -867,8 +868,8 @@ int eof_menu_beat_push_offset_back(char *undo_made)
 		{
 			memcpy(eof_song->beat[i], eof_song->beat[i - 1], sizeof(EOF_BEAT_MARKER));
 		}
-		eof_song->beat[0]->pos = eof_song->beat[1]->pos - backamount;
-		eof_song->beat[0]->fpos = eof_song->beat[0]->pos;
+		eof_song->beat[0]->fpos = eof_song->beat[1]->fpos - backamount;
+		eof_song->beat[0]->pos = eof_song->beat[0]->fpos + 0.5;	//Round to nearest ms
 		eof_song->beat[1]->flags = 0;
 		eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
 		eof_move_text_events(eof_song, 0, 1, 1);

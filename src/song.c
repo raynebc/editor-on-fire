@@ -6,7 +6,7 @@
 #include "beat.h"
 #include "song.h"
 #include "legacy.h"
-#include "midi.h"	//For eof_get_ts()
+#include "midi.h"	//For eof_get_ts(), EOF_DEFAULT_TIME_DIVISION
 #include "midi_data_import.h"
 #include "mix.h"
 #include "rs.h"			//For eof_pro_guitar_track_find_effective_fret_hand_position_definition()
@@ -2857,7 +2857,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	/* write chart properties */
 	(void) pack_iputl(sp->tags->revision, fp);			//Write project revision number
 	(void) pack_putc(0, fp);							//Write timing format
-	(void) pack_iputl(EOF_DEFAULT_TIME_DIVISION, fp);	//Write time division (not supported yet)
+	(void) pack_iputl(EOF_DEFAULT_TIME_DIVISION, fp);	//Write time division (custom time division not supported yet)
 
 	/* write song properties */
 	//Count the number of INI strings to write (including custom strings)
@@ -3055,7 +3055,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			}
 			for(ctr = 0; ctr < sp->beats; ctr++)
 			{	//For each beat in the project
-				(void) snprintf(buffer, sizeof(buffer) - 1, "%f", sp->beat[ctr]->fpos);	//Create a string representation of this beat's timestamp
+				(void) snprintf(buffer, sizeof(buffer) - 1, "%.15f", sp->beat[ctr]->fpos);	//Create a string representation of this beat's timestamp
 				(void) eof_save_song_string_pf(buffer, tfp);		//Write timing string
 			}
 			(void) pack_fclose(tfp);	//Close temp file
@@ -3063,6 +3063,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		//Write the custom data block
 			filesize = (unsigned long)file_size_ex(beattimesfn);
 			(void) pack_iputl(filesize, fp);	//Write the size of this data block
+			(void) pack_iputl(2, fp);			//Write the data block ID (2 = Floating point beat timings)
 			tfp = pack_fopen(beattimesfn, "r");
 			if(!tfp)
 			{	//If the temp file couldn't be opened for writing

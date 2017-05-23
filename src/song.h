@@ -4,26 +4,27 @@
 #include <allegro.h>
 #include "alogg/include/alogg.h"
 
-#define EOF_OLD_MAX_NOTES     65536
-#define EOF_MAX_NOTES         32768
-#define EOF_MAX_LYRICS EOF_MAX_NOTES
-#define EOF_MAX_LYRIC_LINES    4096
-#define EOF_MAX_LYRIC_LENGTH    255
-#define EOF_MAX_CATALOG_ENTRIES 256
-#define EOF_MAX_INI_SETTINGS     64
-#define EOF_INI_LENGTH          512
-#define EOF_MAX_BOOKMARK_ENTRIES 10
+///Item limits
+#define EOF_MAX_TEXT_EVENTS       4096
+#define EOF_MAX_GRID_SNAP_INTERVALS 97
+#define EOF_NAME_LENGTH             30
+#define EOF_SECTION_NAME_LENGTH     50
+#define EOF_MAX_BEATS            32768
+#define EOF_MAX_PHRASES           1000
+#define EOF_MAX_OGGS                 8
+#define EOF_OLD_MAX_NOTES        65536
+#define EOF_MAX_NOTES            32768
+#define EOF_MAX_LYRICS   EOF_MAX_NOTES
+#define EOF_MAX_LYRIC_LINES       4096
+#define EOF_MAX_LYRIC_LENGTH       255
+#define EOF_MAX_CATALOG_ENTRIES    256
+#define EOF_MAX_INI_SETTINGS        64
+#define EOF_INI_LENGTH             512
+#define EOF_MAX_BOOKMARK_ENTRIES    10
 
-#define EOF_NOTE_SUPAEASY    0
-#define EOF_NOTE_EASY        1
-#define EOF_NOTE_MEDIUM      2
-#define EOF_NOTE_AMAZING     3
-#define EOF_NOTE_SPECIAL     4
-#define EOF_NOTE_CHALLENGE   4
-#define EOF_MAX_DIFFICULTIES 5
-	//Note: EOF_NOTE_SPECIAL references the same difficulty that the dance track uses for "Challenge" difficulty
 
-//The original 32 status flags are used up by some common and some track-specific statuses
+///Note flags
+//The original 32 status flags are all used up by some common and some track-specific statuses
 #define EOF_NOTE_FLAG_HOPO       1	//This flag will be set by eof_determine_phrase_status() if the note displays as a HOPO
 #define EOF_NOTE_FLAG_SP         2	//This flag will be set by eof_determine_phrase_status() if the note is in a star power section
 #define EOF_NOTE_FLAG_CRAZY      4	//This flag will represent overlap allowed for guitar/dance/keys tracks, and will force pro guitar/bass chords to display with a chord box
@@ -84,6 +85,8 @@
 #define EOF_NOTE_FLAG_IS_TRILL		            65536	//This flag will be set by eof_determine_phrase_status() if the note is in a trill section
 #define EOF_NOTE_FLAG_IS_TREMOLO		        131072	//This flag will be set by eof_determine_phrase_status() if the note is in a tremolo section
 
+
+///Temporary note flags
 //The following temporary flags are maintained internally and do not save to file (even during project save, clipboard, auto-adjust, etc.)
 #define EOF_NOTE_TFLAG_TEMP         1	//This flag will represent a temporary status, such as a note that was generated for temporary use that will be removed
 #define EOF_NOTE_TFLAG_IGNORE       2	//This flag will represent a note that is not exported to XML (such as a chord within an arpeggio that is converted into single notes)
@@ -101,6 +104,8 @@
 #define EOF_NOTE_TFLAG_LN        8192	//This flag will indicate that the affected chord has chordify status and the chord tag should RS2 export with the linknext tag overridden to be enabled, which will cause the chord to link to the temporary single notes written for the chord
 #define EOF_NOTE_TFLAG_HD       16384	//This flag will indicate that the affected chord should export with high density regardless of the value of the regular high density flag
 
+
+///Extended note flags
 //The following extended flags pertain to pro guitar notes
 #define EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE      1	//This flag specifies a note that will export to RS2 format with the "ignore" status set to nonzero, for special uses
 #define EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN     2	//This flag specifies a note that will export to RS2 format with its sustain even when it's a chord without techniques that normally require chordNote tags
@@ -111,11 +116,8 @@
 #define EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY   16	//This flag specifies a note with "chordify" status, affecting its export to RS2 XML as a chord tag with no chordnote subtags, and with ignored single notes if the chord uses sustain
 #define EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS 32	//This flag specifies that a chord has no defined fingering and will RS export reflecting as such
 
-#define EOF_MAX_BEATS   32768
-#define EOF_MAX_PHRASES  1000
-#define EOF_MAX_OGGS        8
 
-//The following flags pertain to beats
+///Beat flags
 #define EOF_BEAT_FLAG_ANCHOR       1
 #define EOF_BEAT_FLAG_EVENTS       2
 #define EOF_BEAT_FLAG_START_4_4    4
@@ -128,19 +130,12 @@
 #define EOF_BEAT_FLAG_START_2_4  512
 #define EOF_BEAT_FLAG_EXTENDED 32768	//Reserve the highest unused bit to allow for another beat flag to be conditionally present
 
-//The following flags pertain to phrases
+
+///Phrase flags
 #define EOF_LYRIC_LINE_FLAG_OVERDRIVE 1
 #define EOF_RS_ARP_HANDSHAPE          2	//A modifier for arpeggio sections that will cause the section to export to XML without "-arp" appended to the chord template name
 										//It will also not force notes within the phrase to have crazy status or for chords to split into single notes
 
-#define EOF_MAX_TEXT_EVENTS 4096
-
-#define EOF_DEFAULT_TIME_DIVISION 480 // default time division used to convert midi_pos to msec_pos
-
-#define EOF_MAX_GRID_SNAP_INTERVALS 97
-
-#define EOF_NAME_LENGTH 30
-#define EOF_SECTION_NAME_LENGTH 50
 
 typedef struct
 {
@@ -232,6 +227,8 @@ typedef struct
 
 } EOF_PHRASE_SECTION;
 
+
+///Track formats
 #define EOF_LEGACY_TRACK_FORMAT					1
 #define EOF_VOCAL_TRACK_FORMAT					2
 #define EOF_PRO_KEYS_TRACK_FORMAT				3
@@ -239,6 +236,8 @@ typedef struct
 #define EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT	5
 #define EOF_ANY_TRACK_FORMAT                  255
 
+
+///Track behaviors
 #define EOF_GUITAR_TRACK_BEHAVIOR		1
 #define EOF_DRUM_TRACK_BEHAVIOR			2
 #define EOF_VOCAL_TRACK_BEHAVIOR		3
@@ -247,7 +246,8 @@ typedef struct
 #define EOF_PRO_KEYS_TRACK_BEHAVIOR		6
 #define EOF_DANCE_TRACK_BEHAVIOR        7
 
-//Track numbers
+
+///Track numbers
 #define EOF_TRACKS_MIN			1
 #define EOF_TRACK_GUITAR		1
 #define EOF_TRACK_BASS			2
@@ -265,6 +265,8 @@ typedef struct
 #define EOF_TRACK_PRO_GUITAR_B	14
 #define EOF_TRACK_PRO_KEYS		15
 
+
+///Phrase numbers
 #define EOF_SOLO_SECTION				1
 #define EOF_SP_SECTION					2
 #define EOF_BOOKMARK_SECTION			3
@@ -285,12 +287,25 @@ typedef struct
 #define EOF_RS_TONE_CHANGE              18
 #define EOF_NUM_SECTION_TYPES           18
 
+
+///Track flags
 #define EOF_TRACK_FLAG_SIX_LANES		1
 	//Specifies if the track has open strumming enabled (legacy bass or guitar tracks) or a fifth drum lane enabled (PART DRUMS)
 #define EOF_TRACK_FLAG_ALT_NAME			2
 	//Specifies if the track has an alternate display name (for RS export.  MIDI export will still use the native name)
 #define EOF_TRACK_FLAG_UNLIMITED_DIFFS	4
 	//Specifies if the track is not limited to 4 difficulties and one more for the BRE difficulty.  Higher numbered difficulties will be exported to Rocksmith format
+
+
+///Difficulty numbers
+#define EOF_NOTE_SUPAEASY    0
+#define EOF_NOTE_EASY        1
+#define EOF_NOTE_MEDIUM      2
+#define EOF_NOTE_AMAZING     3
+#define EOF_NOTE_SPECIAL     4
+#define EOF_NOTE_CHALLENGE   4
+#define EOF_MAX_DIFFICULTIES 5
+	//Note: EOF_NOTE_SPECIAL references the same difficulty that the dance track uses for "Challenge" difficulty
 
 #define EOF_TRACK_NAME_SIZE		31
 typedef struct
