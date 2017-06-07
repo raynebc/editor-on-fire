@@ -250,4 +250,7 @@ int eof_menu_track_clone_track_from_clipboard(void);
 	//Adds the content defined in "eof.clone.clipboard" into the active track, if compatible (cannot clone a legacy/pro guitar track into PART VOCALS or vice-versa)
 	//Returns zero on success
 
+int eof_track_menu_enable_ghl_mode(void);
+	//Toggles the "Track>Enable GHL mode" flag for legacy guitar/bass tracks
+
 #endif

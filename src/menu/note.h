@@ -355,4 +355,7 @@ int eof_menu_note_move_back_grid_snap(void);
 int eof_menu_note_move_forward_grid_snap(void);
 	//Calls eof_menu_note_move_by_grid_snap() with the option to move notes forward one grid snap
 
+int eof_menu_note_convert_to_ghl_open(void);
+	//If a legacy guitar track is active and GHL mode is enabled, changes all selected notes to GHL open notes
+
 #endif

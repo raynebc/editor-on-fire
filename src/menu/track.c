@@ -101,6 +101,7 @@ MENU eof_track_menu[] =
 	{"Delete active difficulty", eof_track_delete_difficulty, NULL, 0, NULL},
 	{"Repair grid &Snap", eof_menu_track_repair_grid_snap, NULL, 0, NULL},
 	{"&Clone", NULL, eof_track_clone_menu, 0, NULL},
+	{"&Enable GHL mode", eof_track_menu_enable_ghl_mode, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -184,6 +185,24 @@ void eof_prepare_track_menu(void)
 		else
 		{
 			eof_track_phaseshift_menu[0].flags = 0;
+		}
+
+		/* enable GHL mode */
+		if(eof_track_is_legacy_guitar(eof_song, eof_selected_track))
+		{	//If the active track is a legacy guitar/bass track
+			if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
+			{	//If GHL mode is enabled for the active track
+				eof_track_phaseshift_menu[0].flags |= D_DISABLED;	//Prevent user from disabling the open strum option
+				eof_track_menu[13].flags = D_SELECTED;				//Track>Enable GHL mode
+			}
+			else
+			{
+				eof_track_menu[13].flags = 0;
+			}
+		}
+		else
+		{
+			eof_track_menu[13].flags = D_DISABLED;					//Track>Enable GHL mode
 		}
 
 		/* enable five lane drums */
@@ -4049,6 +4068,8 @@ int eof_menu_track_clone_track_number(EOF_SONG *sp, unsigned long sourcetrack, u
 
 	eof_sort_events(eof_song);
 	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
+	eof_set_3D_lane_positions(eof_selected_track);	//Update xchart[] to reflect a different number of lanes being represented in the 3D preview window
+	eof_set_color_set();
 	(void) eof_detect_difficulties(sp, eof_selected_track);
 
 	return 1;
@@ -4923,11 +4944,66 @@ int eof_menu_track_clone_track_from_clipboard(void)
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update note/technote populated identifiers
 	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
+	eof_set_3D_lane_positions(eof_selected_track);	//Update xchart[] to reflect a different number of lanes being represented in the 3D preview window
+	eof_set_color_set();
 	eof_sort_events(eof_song);
 	(void) pack_fclose(fp);
 
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tClone from clipboard succeeded.  Added %lu beats.  Cloned %lu notes, %lu tech notes, %lu sections and %lu events.", beats, notes, technotes, sections, events);
 	eof_log(eof_log_string, 1);
+	eof_render();
+	return 0;	//Success
+}
+
+int eof_track_menu_enable_ghl_mode(void)
+{
+	EOF_TRACK_ENTRY *ep;
+	unsigned long ctr;
+	int warning = 0;
+
+	if(!eof_song_loaded || !eof_song)
+		return 1;	//Do not allow this function to run if a chart is not loaded
+	if(!eof_track_is_legacy_guitar(eof_song, eof_selected_track))
+		return 1;	//Do not allow this function to run when a legacy guitar behavior track is not active
+
+	//Check if any authoring would be lost by disabling GHL mode and converting notes to non GHL
+	if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
+	{	//If the track is having GHL mode disabled
+		for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+		{	//For each note in the active track
+			unsigned long note = eof_get_note_note(eof_song, eof_selected_track, ctr);
+
+			if(!(eof_get_note_flags(eof_song, eof_selected_track, ctr) & EOF_GUITAR_NOTE_FLAG_GHL_OPEN) && (note & 32) && (note != 32))
+			{	//If this note contains a gem on lane 6 and isn't an open note (a lane 3 black gem) and contains a gem on another lane as well
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//The conversion of this note below will be lossy, make an undo state
+				break;
+			}
+		}
+	}
+
+	ep = eof_song->track[eof_selected_track];		//Simplify
+	ep->flags ^= EOF_TRACK_FLAG_GHL_MODE;			//Toggle this flag
+	if(ep->flags & EOF_TRACK_FLAG_GHL_MODE)
+	{	//If the GHL mode flag is now enabled
+		eof_song->legacy_track[ep->tracknum]->numlanes = 6;
+		ep->flags |= EOF_TRACK_FLAG_SIX_LANES;		//Set the open strum flag
+	}
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+	{	//For each note in the active track
+		if(eof_note_convert_ghl_authoring(eof_song, eof_selected_track, ctr))	//Convert lane 3 black GHL gem and open string notation accordingly
+		{	//If the conversion of a chord containing a lane 3 black gem caused a loss of original authoring
+			if(!warning)
+			{	//If the user wasn't already warned about this
+				allegro_message("Chords containing lane 3 black GHL gems can't be authored in a non GHL track");
+				warning = 1;
+			}
+		}
+	}
+
+	//Cleanup
+	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
+	eof_set_3D_lane_positions(eof_selected_track);	//Update xchart[] to reflect a different number of lanes being represented in the 3D preview window
+	eof_set_color_set();
 	eof_render();
 	return 0;	//Success
 }

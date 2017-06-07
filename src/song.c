@@ -646,17 +646,16 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		}
 	}
 
-	if(eof_open_strum_enabled(track))
-	{	//If open strumming is enabled, check to ensure that open bass doesn't conflict with other notes/statuses
-		for(i = 0; i < tp->notes; i++)
-		{	//For each note in the track
-			if(tp->note[i]->note & 32)
-			{	//If this note contains open bass (lane 6)
-				tp->note[i]->note = 32;							//Clear all lanes except lane 6
-				tp->note[i]->flags &= (~EOF_NOTE_FLAG_CRAZY);	//Clear the crazy status
-			}
+	//Check to ensure that open notes don't conflict with other notes/statuses
+	for(i = 0; i < tp->notes; i++)
+	{	//For each note in the track
+		if(eof_legacy_guitar_note_is_open(sp, track, i))
+		{	//If this is an open note
+			tp->note[i]->note = 32;							//Clear all lanes except lane 6
+			tp->note[i]->flags &= (~EOF_NOTE_FLAG_CRAZY);	//Clear the crazy status
 		}
 	}
+
 	if(!sel)
 	{
 		if(eof_selection.current < tp->notes)
@@ -7444,6 +7443,19 @@ int eof_track_is_legacy_guitar(EOF_SONG *sp, unsigned long track)
 
 	if((sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT) && (sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR))
 		return 1;
+
+	return 0;
+}
+
+int eof_track_is_ghl_mode(EOF_SONG *sp, unsigned long track)
+{
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;
+
+	if(eof_track_is_legacy_guitar(sp, track) && (sp->track[track]->flags & EOF_TRACK_FLAG_GHL_MODE))
+	{	//If this is a legacy guitar track that has the GHL mode flag enabled
+		return 1;
+	}
 
 	return 0;
 }

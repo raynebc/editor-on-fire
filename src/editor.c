@@ -3118,6 +3118,8 @@ if(eof_key_code == KEY_PAUSE)
 
 		if(!KEY_EITHER_CTRL && ((eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK)))
 		{	//If CTRL is not held down and the input method is rex mundi or Feedback
+			int ghl_open = 0;	//Set to nonzero if the 7 key is used to place an open note in a GHL track
+
 			eof_hover_piece = -1;
 			if((eof_input_mode == EOF_INPUT_FEEDBACK) || ((eof_scaled_mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (eof_scaled_mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET)))
 			{	//If the mouse is in the fretboard area (or Feedback input method is in use)
@@ -3158,9 +3160,15 @@ if(eof_key_code == KEY_PAUSE)
 						bitmask = 32;
 						eof_use_key();
 					}
+					else if((eof_key_char == '7') && eof_track_is_ghl_mode(eof_song, eof_selected_track))
+					{
+						bitmask = 32;	//Open notes will be written on lane 6
+						eof_use_key();
+						ghl_open = 1;
+					}
 
 					if(bitmask)
-					{	//If user has pressed any key from 1 through 6
+					{	//If user has pressed a valid key
 						int effective_hover_note = eof_hover_note;	//By default, the effective hover note is based on the mouse position
 
 						eof_selection.range_pos_1 = 0;
@@ -3168,10 +3176,30 @@ if(eof_key_code == KEY_PAUSE)
 						eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 						if(eof_input_mode == EOF_INPUT_FEEDBACK)
 						{	//If Feedback input mode is in effect, it is based on the seek position instead
-							effective_hover_note = eof_seek_hover_note;
+							effective_hover_note = eof_seek_hover_note;	//Interpret the note at the seek position as the hover note below
 						}
 						if(effective_hover_note >= 0)
-						{	//If the user edited an existing note (editing hover note not allowed in Feedback input mode)
+						{	//If the user is editing an existing note
+							if(ghl_open)
+							{	//If a GHL open note is being toggled on/off
+								if(!eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, eof_hover_note))
+								{	//As long as the user isn't trying to delete a GHL open note by toggling it off
+									eof_song->legacy_track[tracknum]->note[effective_hover_note]->note = 0;	//Clear all lanes, the open note will replace the old note
+									eof_song->legacy_track[tracknum]->note[effective_hover_note]->flags |= EOF_GUITAR_NOTE_FLAG_GHL_OPEN;	//Set the GHL open note flag
+								}
+							}
+							else if(eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, effective_hover_note))
+							{	//If an open note is being modified
+								if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
+								{	//If the active track is a GHL track, the new gem will replace the open note
+									eof_song->legacy_track[tracknum]->note[effective_hover_note]->flags &= ~EOF_GUITAR_NOTE_FLAG_GHL_OPEN;	//Clear the GHL open note flag
+									eof_song->legacy_track[tracknum]->note[effective_hover_note]->note = 0;	//Clear all lanes
+								}
+								else if(bitmask != 32)
+								{	//Otherwise as long as the user isn't trying to delete the non GHL open note by toggling it off
+									eof_song->legacy_track[tracknum]->note[effective_hover_note]->note = 0;	//Clear all lanes, the new gem will replace the open note
+								}
+							}
 							if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 							{	//If legacy view is in effect, alter the note's legacy bitmask
 								eof_song->pro_guitar_track[tracknum]->note[effective_hover_note]->legacymask ^= bitmask;
@@ -3248,6 +3276,10 @@ if(eof_key_code == KEY_PAUSE)
 							new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, targetpos, notelen, eof_note_type, NULL);
 							if(new_note)
 							{
+								if(ghl_open)
+								{	//If a GHL open note was placed
+									eof_song->legacy_track[tracknum]->note[eof_song->legacy_track[tracknum]->notes - 1]->flags |= EOF_GUITAR_NOTE_FLAG_GHL_OPEN;	//Set its GHL open note status
+								}
 								if(eof_mark_drums_as_cymbal)
 								{	//If the user opted to make all new drum notes cymbals automatically
 									eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
@@ -3745,6 +3777,40 @@ void eof_editor_logic(void)
 					}
 					eof_mclick_released = 0;
 				}
+				else if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
+				{	//If a GHL track is active
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+
+					if(eof_hover_note < 0)
+					{	//If no note is being hovered over, place a GHL open note
+						EOF_NOTE * new_note;
+						long notelen = eof_snap.length;	//The default length of the new note
+						if(eof_new_note_length_1ms)
+						{	//If the new note's length is being overridden as 1ms
+							notelen = 1;
+						}
+
+						new_note = eof_track_add_create_note(eof_song, eof_selected_track, 32, eof_pen_note.pos, notelen, eof_note_type, NULL);
+
+						if(new_note)
+						{	//If the note was created
+							new_note->flags |= EOF_GUITAR_NOTE_FLAG_GHL_OPEN;
+						}
+						eof_track_sort_notes(eof_song, eof_selected_track);
+					}
+					else if(eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, eof_hover_note))
+					{	//If the note is already an open note, delete it
+						eof_track_delete_note(eof_song, eof_selected_track, eof_hover_note);
+					}
+					else
+					{	//Otherwise convert the note to a GHL note
+						unsigned long flags;
+
+						eof_set_note_note(eof_song, eof_selected_track, eof_hover_note, 32);	//Change to a lane 6 gem
+						flags = eof_get_note_flags(eof_song, eof_selected_track, eof_hover_note) | EOF_GUITAR_NOTE_FLAG_GHL_OPEN;
+						eof_set_note_flags(eof_song, eof_selected_track, eof_hover_note, flags);	//Set the GHL open note flag
+					}
+				}
 			}
 			else
 			{	//If the middle mouse button is not held
@@ -4119,6 +4185,16 @@ void eof_editor_logic(void)
 							}
 							else
 							{	//Otherwise alter the note's normal bitmask and delete the note if necessary
+								if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
+								{	//If the active track is a GHL track, the new gem will replace the open note
+									eof_song->legacy_track[tracknum]->note[eof_hover_note]->flags &= ~EOF_GUITAR_NOTE_FLAG_GHL_OPEN;	//Clear the GHL open note flag
+									eof_song->legacy_track[tracknum]->note[eof_hover_note]->note = 0;	//Clear all lanes
+								}
+								else if(bitmask != 32)
+								{	//Otherwise as long as the user isn't trying to delete the non GHL open note by toggling it off
+									eof_song->legacy_track[tracknum]->note[eof_hover_note]->note = 0;	//Clear all lanes, the new gem will replace the open note
+								}
+
 								note = eof_get_note_note(eof_song, eof_selected_track, eof_hover_note);	//Examine the hover note...
 								note ^= bitmask;	//as it would look by toggling the pen note's gem
 								if(note == 0)

@@ -80,6 +80,7 @@
 
 //The following flags pertain to legacy guitar notes
 #define EOF_GUITAR_NOTE_FLAG_IS_SLIDER	512		//This flag will be set by eof_determine_phrase_status() if the note is in a slider section
+#define EOF_GUITAR_NOTE_FLAG_GHL_OPEN   1024	//This flag will represent an open note in a Guitar Hero Live style track
 
 //The following flags pertain to legacy and pro guitar notes
 #define EOF_NOTE_FLAG_IS_TRILL		            65536	//This flag will be set by eof_determine_phrase_status() if the note is in a trill section
@@ -295,6 +296,8 @@ typedef struct
 	//Specifies if the track has an alternate display name (for RS export.  MIDI export will still use the native name)
 #define EOF_TRACK_FLAG_UNLIMITED_DIFFS	4
 	//Specifies if the track is not limited to 4 difficulties and one more for the BRE difficulty.  Higher numbered difficulties will be exported to Rocksmith format
+#define EOF_TRACK_FLAG_GHL_MODE         8
+	//Specifies a legacy guitar behavior track as having Guitar Hero Live characteristics (6 lanes plus an additional open note status)
 
 
 ///Difficulty numbers
@@ -904,6 +907,8 @@ char eof_track_has_cymbals(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified track is a drum track that contains notes marked as cymbals
 int eof_track_is_legacy_guitar(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified track is a legacy guitar track
+int eof_track_is_ghl_mode(EOF_SONG *sp, unsigned long track);
+	//Returns nonzero if the specified track has GHL mode enabled
 
 char eof_search_for_note_near(EOF_SONG *sp, unsigned long track, unsigned long targetpos, unsigned long delta, char type, unsigned long *match);
 	//Looks for one or more notes within [delta] number of milliseconds of the specified position of the specified track difficulty

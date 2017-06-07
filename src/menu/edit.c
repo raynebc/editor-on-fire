@@ -1404,6 +1404,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	double newpasteoffset = 0.0;	//This will be used to allow new paste to paste notes starting at the seek position instead of the original in-beat positions
 	unsigned long lastarpeggnum = 0xFFFFFFFF, arpeggstart = 0, arpeggend = 0;	//Used to create arpeggio/handshape phrases
 	char clipboard_path[50];
+	int warning = 0;
 
 	if(eof_vocals_selected)
 	{	//The vocal track uses its own clipboard logic
@@ -1589,6 +1590,14 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			{
 				eof_set_note_flags(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.flags);
 				eof_set_note_accent(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.accent);
+				if(eof_note_convert_ghl_authoring(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1))
+				{	//If this paste had a lossy conversion from GHL to non GHL format
+					if(!warning)
+					{	//If the user wasn't already warned about this during this paste operation
+						allegro_message("Chords containing lane 3 black GHL gems can't be authored in a non GHL track");
+						warning = 1;
+					}
+				}
 				paste_pos[paste_count] = eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1);
 				paste_count++;
 			}
@@ -3557,6 +3566,7 @@ void eof_sanitize_note_flags(unsigned long *flags, unsigned long sourcetrack, un
 		((eof_song->track[desttrack]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[desttrack]->track_format != EOF_LEGACY_TRACK_FORMAT)))
 	{	//If copying from a legacy guitar track to a non legacy guitar track, erase conflicting flags
 		*flags &= ~EOF_GUITAR_NOTE_FLAG_IS_SLIDER;
+		*flags &= ~EOF_GUITAR_NOTE_FLAG_GHL_OPEN;
 	}
 
 	if((eof_song->track[sourcetrack]->track_behavior == EOF_DANCE_TRACK_BEHAVIOR) && (eof_song->track[desttrack]->track_behavior != EOF_DANCE_TRACK_BEHAVIOR))

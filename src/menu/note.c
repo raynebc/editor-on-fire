@@ -447,23 +447,30 @@ MENU eof_note_highlight_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_note_grid_snap_menu[] =
+{
+	{"&Resnap\t" CTRL_NAME "+Shift+R", eof_menu_note_resnap, NULL, 0, NULL},
+	{"&Move grid snap", NULL, eof_note_move_grid_snap_menu, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_note_menu[] =
 {
 	{"&Toggle", NULL, eof_note_toggle_menu, 0, NULL},
 	{"&Clear", NULL, eof_note_clear_menu, 0, NULL},
 	{"Tr&Anspose", NULL, eof_note_transpose_menu, 0, NULL},
 	{"&Highlight", NULL, eof_note_highlight_menu, 0, NULL},
-	{"Resnap\t" CTRL_NAME "+Shift+R", eof_menu_note_resnap, NULL, 0, NULL},
+	{"Gr&Id snap", NULL, eof_note_grid_snap_menu, 0, NULL},
 	{"&Solos", NULL, eof_solo_menu, 0, NULL},
 	{"Star &Power", NULL, eof_star_power_menu, 0, NULL},
 	{"Delete", NULL, eof_menu_delete, 0, NULL},
-	{"Edit &Name", eof_menu_note_edit_name, NULL, 0, NULL},
+	{"Edit na&Me", eof_menu_note_edit_name, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Cra&Zy", NULL, eof_note_crazy_menu, 0, NULL},
 	{"H&OPO", NULL, eof_legacy_hopo_menu, 0, NULL},
 	{eof_trill_menu_text, NULL, eof_trill_menu, 0, NULL},
 	{eof_tremolo_menu_text, NULL, eof_tremolo_menu, 0, NULL},
-	{"Sl&Ider", NULL, eof_slider_menu, 0, NULL},
+	{"Slid&Er", NULL, eof_slider_menu, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Drum", NULL, eof_note_drum_menu, 0, NULL},
 	{"Pro &Guitar", NULL, eof_note_proguitar_menu, 0, NULL},
@@ -472,7 +479,7 @@ MENU eof_note_menu[] =
 	{"Re&Flect", NULL, eof_note_reflect_menu, 0, NULL},
 	{"Remove statuses", eof_menu_remove_statuses, NULL, 0, NULL},
 	{"Simplif&Y chords", eof_menu_note_simplify_chords, NULL, 0, NULL},
-	{"&Move grid snap", NULL, eof_note_move_grid_snap_menu, 0, NULL},
+	{"Co&Nvert GHL open", eof_menu_note_convert_to_ghl_open, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -1157,6 +1164,16 @@ void eof_prepare_note_menu(void)
 		{	//If the only note modified was the seek hover note
 			eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
 			eof_selection.current = EOF_MAX_NOTES - 1;
+		}
+
+		/* Convert GHL open */
+		if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
+		{	//If a legacy guitar track is active and GHL mode is enabled
+			eof_note_menu[23].flags = 0;		//Note>Convert GHL open
+		}
+		else
+		{
+			eof_note_menu[23].flags = D_DISABLED;
 		}
 	}//if(eof_song && eof_song_loaded)
 }
@@ -9335,4 +9352,39 @@ int eof_menu_note_move_forward_grid_snap(void)
 	char undo_made = 0;
 
 	return eof_menu_note_move_by_grid_snap(1, &undo_made);
+}
+
+int eof_menu_note_convert_to_ghl_open(void)
+{
+	unsigned long i;
+	char undo_made = 0;
+	int note_selection_updated;
+
+	if(!eof_track_is_ghl_mode(eof_song, eof_selected_track))
+		return 1;	//Do not allow this function to run unless a legacy guitar track with GHL mode enabled is active
+
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If this note is selected and is in the active difficulty
+			if(!eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, i))
+			{	//If this note isn't already an open note
+				if(!undo_made)
+				{	//If an undo state needs to be made
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				eof_set_note_note(eof_song, eof_selected_track, i, 32);	//Change to a lane 6 gem
+				eof_set_note_flags(eof_song, eof_selected_track, i, eof_get_note_flags(eof_song, eof_selected_track, i) | EOF_GUITAR_NOTE_FLAG_GHL_OPEN);	//Set the GHL open note flag
+			}
+		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+
+	return 1;
 }

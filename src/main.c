@@ -340,7 +340,7 @@ int eof_info_color;
 
 int eof_color_set = EOF_COLORS_DEFAULT;
 eof_color eof_colors[6];	//Contain the color definitions for each lane
-eof_color eof_color_green_struct, eof_color_red_struct, eof_color_yellow_struct, eof_color_blue_struct, eof_color_orange_struct, eof_color_purple_struct, eof_color_black_struct;
+eof_color eof_color_green_struct, eof_color_red_struct, eof_color_yellow_struct, eof_color_blue_struct, eof_color_orange_struct, eof_color_purple_struct, eof_color_black_struct, eof_color_ghl_black_struct, eof_color_ghl_white_struct;
 eof_color eof_lane_1_struct, eof_lane_2_struct, eof_lane_3_struct, eof_lane_4_struct, eof_lane_5_struct, eof_lane_6_struct;
 	//Color data
 
@@ -3396,7 +3396,12 @@ void eof_render_3d_window(void)
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	lastlane = numlanes - 1;	//This variable begins lane numbering at 0 instead of 1
 	eof_set_3D_lane_positions(eof_selected_track);	//Update the xchart[] array
-	if(eof_track_is_legacy_guitar(eof_song, eof_selected_track))
+	if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
+	{	//Special case:  Guitar Hero Live style tracks display with 3 lanes
+		numlanes = 3;
+		lastlane = 2;
+	}
+	else if(eof_track_is_legacy_guitar(eof_song, eof_selected_track))
 	{	//Special case:  Legacy guitar tracks can use a sixth lane but their 3D representation still only draws 5 lanes
 		numlanes = 5;
 		lastlane = 4;	//Don't render trill/tremolo markers for the 6th lane (render for lanes 0 through 4)
@@ -3902,6 +3907,22 @@ int eof_load_data(void)
 	eof_image[EOF_IMAGE_TAB_BG] = load_pcx("eof.dat#tabbg.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_BLACK] = load_pcx("eof.dat#note_black.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_BLACK_HIT] = load_pcx("eof.dat#note_black_hit.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_BLACK] = load_pcx("eof.dat#note_ghl_black.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_HIT] = load_pcx("eof.dat#note_ghl_black_hit.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_HOPO] = load_pcx("eof.dat#note_ghl_black_hopo.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_HOPO_HIT] = load_pcx("eof.dat#note_ghl_black_hopo_hit.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_SP] = load_pcx("eof.dat#note_ghl_black_sp.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_SP_HIT] = load_pcx("eof.dat#note_ghl_black_sp_hit.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_SP_HOPO] = load_pcx("eof.dat#note_ghl_black_sp_hopo.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_SP_HOPO_HIT] = load_pcx("eof.dat#note_ghl_black_sp_hopo_hit.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_WHITE] = load_pcx("eof.dat#note_ghl_white.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_HIT] = load_pcx("eof.dat#note_ghl_white_hit.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_HOPO] = load_pcx("eof.dat#note_ghl_white_hopo.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_HOPO_HIT] = load_pcx("eof.dat#note_ghl_white_hopo_hit.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_SP] = load_pcx("eof.dat#note_ghl_white_sp.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_SP_HIT] = load_pcx("eof.dat#note_ghl_white_sp_hit.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO] = load_pcx("eof.dat#note_ghl_white_sp_hopo.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO_HIT] = load_pcx("eof.dat#note_ghl_white_sp_hopo_hit.pcx", NULL);
 
 	//Load and process fonts
 	eof_font = load_bitmap_font("eof.dat#font_times_new_roman.pcx", NULL, NULL);
@@ -3930,7 +3951,7 @@ int eof_load_data(void)
 	set_palette(eof_palette);
 	set_mouse_sprite(NULL);
 
-	for(i = 1; i <= EOF_IMAGE_NOTE_ORANGE_CYMBAL_HIT; i++)
+	for(i = 1; i < EOF_MAX_IMAGES; i++)
 	{
 		if(!eof_image[i])
 		{
@@ -4844,8 +4865,8 @@ void eof_set_3D_lane_positions(unsigned long track)
 {
 //	eof_log("eof_set_3D_lane_positions() entered");
 
-	static unsigned long numlanes = 0;	//This remembers the number of lanes handled by the previous call
-	unsigned long newnumlanes;			//This is the number of lanes in the specified track
+	static unsigned long numlanes = 0;		//This remembers the number of lanes handled by the previous call
+	unsigned long newnumlanes;				//This is the number of lanes in the specified track
 	unsigned long numlaneswidth = 5 - 1;	//By default, the lane width will be based on a 5 lane track
 	unsigned long ctr;
 	double lanewidth = 0.0;
@@ -4854,7 +4875,12 @@ void eof_set_3D_lane_positions(unsigned long track)
 		return;		//Return immediately
 
 	newnumlanes = eof_count_track_lanes(eof_song, track);	//This is the number of lanes in the specified track
-	if(eof_track_is_legacy_guitar(eof_song, track))
+	if(eof_track_is_ghl_mode(eof_song, track))
+	{	//Special case:  Guitar Hero Live style tracks display with 3 lanes
+		newnumlanes = 3;
+		numlaneswidth = 2;
+	}
+	else if(eof_track_is_legacy_guitar(eof_song, track))
 	{	//Special case:  Legacy guitar tracks can use a sixth lane but their 3D representation still only draws 5 lanes
 		newnumlanes = 5;
 	}
@@ -5228,6 +5254,7 @@ char eof_color_blue_name[] = "&Blue";
 char eof_color_orange_name[] = "&Orange";
 char eof_color_purple_name[] = "&Purple";
 char eof_color_black_name[] = "B&Lack";
+char eof_color_white_name[] = "&White";
 
 char eof_lane_1_name[] = "Lane &1";
 char eof_lane_2_name[] = "Lane &2";
@@ -5354,6 +5381,34 @@ void eof_init_colors(void)
 	eof_color_black_struct.arrow3d = EOF_IMAGE_NOTE_BLACK;
 	eof_color_black_struct.arrowhit3d = EOF_IMAGE_NOTE_BLACK_HIT;
 	eof_color_black_struct.colorname = eof_color_black_name;
+	//Init ghl black
+	eof_color_ghl_black_struct.color = makecol(51, 51, 51);
+	eof_color_ghl_black_struct.hit = makecol(67, 67, 67);
+	eof_color_ghl_black_struct.lightcolor = eof_color_silver;
+	eof_color_ghl_black_struct.border = eof_color_white;
+	eof_color_ghl_black_struct.note3d = EOF_IMAGE_NOTE_GHL_BLACK;
+	eof_color_ghl_black_struct.notehit3d = EOF_IMAGE_NOTE_GHL_BLACK_HIT;
+	eof_color_ghl_black_struct.hoponote3d = EOF_IMAGE_NOTE_GHL_BLACK_HOPO;
+	eof_color_ghl_black_struct.hoponotehit3d = EOF_IMAGE_NOTE_GHL_BLACK_HOPO_HIT;
+	eof_color_ghl_black_struct.cymbal3d = EOF_IMAGE_NOTE_GHL_BLACK;
+	eof_color_ghl_black_struct.cymbalhit3d = EOF_IMAGE_NOTE_GHL_BLACK_HIT;
+	eof_color_ghl_black_struct.arrow3d = EOF_IMAGE_NOTE_GHL_BLACK;
+	eof_color_ghl_black_struct.arrowhit3d = EOF_IMAGE_NOTE_GHL_BLACK_HIT;
+	eof_color_ghl_black_struct.colorname = eof_color_black_name;
+	//Init ghl white
+	eof_color_ghl_white_struct.color = eof_color_white;
+	eof_color_ghl_white_struct.hit = eof_color_light_gray;
+	eof_color_ghl_white_struct.lightcolor = eof_color_silver;
+	eof_color_ghl_white_struct.border = eof_color_blue;
+	eof_color_ghl_white_struct.note3d = EOF_IMAGE_NOTE_GHL_WHITE;
+	eof_color_ghl_white_struct.notehit3d = EOF_IMAGE_NOTE_GHL_WHITE_HIT;
+	eof_color_ghl_white_struct.hoponote3d = EOF_IMAGE_NOTE_GHL_WHITE_HOPO;
+	eof_color_ghl_white_struct.hoponotehit3d = EOF_IMAGE_NOTE_GHL_WHITE_HOPO_HIT;
+	eof_color_ghl_white_struct.cymbal3d = EOF_IMAGE_NOTE_GHL_WHITE;
+	eof_color_ghl_white_struct.cymbalhit3d = EOF_IMAGE_NOTE_GHL_WHITE_HIT;
+	eof_color_ghl_white_struct.arrow3d = EOF_IMAGE_NOTE_GHL_WHITE;
+	eof_color_ghl_white_struct.arrowhit3d = EOF_IMAGE_NOTE_GHL_WHITE_HIT;
+	eof_color_ghl_white_struct.colorname = eof_color_white_name;
 	//Init lane 1 (will be used to represent open fingering in Bandfuse color mode)
 	eof_lane_1_struct = eof_color_purple_struct;
 	eof_lane_1_struct.colorname = eof_lane_1_name;
@@ -5383,7 +5438,16 @@ void eof_set_color_set(void)
 	if(!eof_song)
 		return;
 
-	if(eof_color_set == EOF_COLORS_DEFAULT)
+	if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
+	{	//Guitar Hero Live only uses two gem colors
+		eof_colors[0] = eof_color_ghl_white_struct;
+		eof_colors[1] = eof_color_ghl_white_struct;
+		eof_colors[2] = eof_color_ghl_white_struct;
+		eof_colors[3] = eof_color_ghl_black_struct;
+		eof_colors[4] = eof_color_ghl_black_struct;
+		eof_colors[5] = eof_color_ghl_black_struct;
+	}
+	else if(eof_color_set == EOF_COLORS_DEFAULT)
 	{	//If user is using the original EOF color set
 		eof_colors[0] = eof_color_green_struct;
 		eof_colors[1] = eof_color_red_struct;

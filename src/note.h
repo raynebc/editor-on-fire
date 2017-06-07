@@ -109,4 +109,21 @@ void eof_build_tremolo_phrases(EOF_PRO_GUITAR_TRACK *tp, unsigned char diff);
 	//Diff refers to which difficulty of notes should be examined, or 0xFF to refer to all difficulties
 	//The created phrases apply to the corresponding difficulty as well (ie. Rocksmith authoring), or to all difficulties (ie. Rock Band authoring)
 
+int eof_note_convert_ghl_authoring(EOF_SONG *sp, unsigned long track, unsigned long note);
+	//Translates the specified note to suit whether the track it's in has GHL mode enabled
+	//If the track has GHL mode enabled:
+	//  1.  A 5-lane chord will be converted to a lane 6 gem
+	//  2.  A lane 6 single note will have EOF_GUITAR_NOTE_FLAG_GHL_OPEN status applied
+	//If the track has GHL mode disabled:
+	//  1.  A note with a lane 6 gem (lane 3 black GHL gem) will be converted to a 5 lane chord (lane 6 is exclusively used for open notes when GHL mode is not in effect)
+	//  2.  A note with EOF_GUITAR_NOTE_FLAG_GHL_OPEN status has that flag removed and is changed to a lane 6 single note
+	//Converting to non GHL mode has the potential to lose authoring if the note is a chord that contains a lane 3 black gem
+	//  If this is the case for the specified note, its highlighting flag is set and nonzero is returned
+	//Only alters notes that are in a legacy, guitar behavior track
+
+int eof_legacy_guitar_note_is_open(EOF_SONG *sp, unsigned long track, unsigned long note);
+	//If the specified note is in a legacy guitar/bass track, returns nonzero if either of these conditions are true:
+	//  1.  The note is in a GHL mode track and has EOF_GUITAR_NOTE_FLAG_GHL_OPEN status
+	//  2.  The note is in a non GHL mode track and is a single note on lane 6
+
 #endif
