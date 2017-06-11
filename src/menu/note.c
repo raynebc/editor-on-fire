@@ -1226,8 +1226,8 @@ int eof_menu_note_transpose_up(void)
 					note = eof_get_note_note(eof_song, eof_selected_track, i);
 				}
 				note = (note << 1) & max;
-				if(eof_open_strum_enabled(eof_selected_track) && (note & 32))
-				{	//If open strum is enabled, and this transpose operation resulted in a bass guitar gem in lane 6
+				if(!eof_track_is_ghl_mode(eof_song, eof_selected_track) && eof_open_strum_enabled(eof_selected_track) && (note & 32))
+				{	//If GHL mode is not enabled, open strum is enabled, and this transpose operation resulted in a gem in lane 6 (open strum)
 					flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 					eof_set_note_note(eof_song, eof_selected_track, i, 32);		//Clear all lanes except lane 6
 					note = 32;													//Ensure remainder of this function's logic sees this change

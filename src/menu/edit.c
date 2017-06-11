@@ -1343,6 +1343,7 @@ int eof_menu_edit_copy(void)
 		return 1;
 	}
 	(void) pack_iputl(eof_selected_track, fp);	//Store the source track number
+	(void) pack_putc(eof_track_is_ghl_mode(eof_song, eof_selected_track), fp);	//Store the GHL mode status
 	(void) pack_iputl(copy_notes, fp);			//Store the number of notes that will be stored to clipboard
 	(void) pack_iputl(first_beat, fp);			//Store the beat number of the first note that will be stored to clipboard
 
@@ -1405,6 +1406,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	unsigned long lastarpeggnum = 0xFFFFFFFF, arpeggstart = 0, arpeggend = 0;	//Used to create arpeggio/handshape phrases
 	char clipboard_path[50];
 	int warning = 0;
+	char isghl;	//Set to nonzero if the clipboard's source track had GHL mode enabled, which changes the interpretation of lane 6 gems
 
 	if(eof_vocals_selected)
 	{	//The vocal track uses its own clipboard logic
@@ -1425,6 +1427,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	}
 	sourcetrack = pack_igetl(fp);		//Read the source track of the clipboard data
 	srctracknum = eof_song->track[sourcetrack]->tracknum;
+	isghl = pack_getc(fp);				//Read the GHL mode status
 	copy_notes = pack_igetl(fp);		//Read the number of notes on the clipboard
 	first_beat = pack_igetl(fp);		//Read the original beat number of the first note that was copied
 	if(!copy_notes)
@@ -1501,6 +1504,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			return 1;
 		}
 		sourcetrack = pack_igetl(fp);		//Read the source track of the clipboard data
+		isghl = pack_getc(fp);				//Read the GHL mode status
 		copy_notes = pack_igetl(fp);		//Read the number of notes on the clipboard
 		first_beat = pack_igetl(fp);		//Read the original beat number of the first note that was copied
 	}
@@ -1590,12 +1594,15 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			{
 				eof_set_note_flags(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.flags);
 				eof_set_note_accent(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.accent);
-				if(eof_note_convert_ghl_authoring(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1))
-				{	//If this paste had a lossy conversion from GHL to non GHL format
-					if(!warning)
-					{	//If the user wasn't already warned about this during this paste operation
-						allegro_message("Chords containing lane 3 black GHL gems can't be authored in a non GHL track");
-						warning = 1;
+				if(isghl != eof_track_is_ghl_mode(eof_song, eof_selected_track))
+				{	//If the source and destination tracks for this paste didn't have matching GHL mode status, convert the note
+					if(eof_note_convert_ghl_authoring(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1))
+					{	//If this paste had a lossy conversion from GHL to non GHL format
+						if(!warning)
+						{	//If the user wasn't already warned about this during this paste operation
+							allegro_message("Chords containing lane 3 black GHL gems can't be authored in a non GHL track");
+							warning = 1;
+						}
 					}
 				}
 				paste_pos[paste_count] = eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1);

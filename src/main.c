@@ -3827,6 +3827,7 @@ int eof_load_data(void)
 
 	eof_log("eof_load_data() entered", 1);
 
+	eof_validate_temp_folder();	//Reset the working directory
 	if(!exists("eof.dat"))
 	{
 		allegro_message("DAT file missing.  If using a hotfix, make sure you extract the appropriate EOF release candidate first and then extract the hotfix on top of it (replacing with files in the hotfix).");
@@ -3923,6 +3924,14 @@ int eof_load_data(void)
 	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_SP_HIT] = load_pcx("eof.dat#note_ghl_white_sp_hit.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO] = load_pcx("eof.dat#note_ghl_white_sp_hopo.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO_HIT] = load_pcx("eof.dat#note_ghl_white_sp_hopo_hit.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_BARRE] = load_pcx("eof.dat#note_ghl_barre.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_HIT] = load_pcx("eof.dat#note_ghl_barre_hit.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_HOPO] = load_pcx("eof.dat#note_ghl_barre_hopo.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_HOPO_HIT] = load_pcx("eof.dat#note_ghl_barre_hopo_hit.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_SP] = load_pcx("eof.dat#note_ghl_barre_sp.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_SP_HIT] = load_pcx("eof.dat#note_ghl_barre_sp_hit.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_SP_HOPO] = load_pcx("eof.dat#note_ghl_barre_sp_hopo.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_SP_HOPO_HIT] = load_pcx("eof.dat#note_ghl_barre_sp_hopo_hit.pcx", NULL);
 
 	//Load and process fonts
 	eof_font = load_bitmap_font("eof.dat#font_times_new_roman.pcx", NULL, NULL);

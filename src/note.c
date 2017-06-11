@@ -1146,42 +1146,70 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 			if(eof_track_is_ghl_mode(eof_song, track))
 			{	//If rendering a Guitar Hero Live style track
-				lanenum = ctr % 3;	//Gems 1 through 3 use the same lanes as gems 4 through 6
+				lanenum = ctr % 3;	//Gems 1 through 3 use the same lanes as gems 4 through 6, open notes are rendered with the if(drawline) block above
 
-				if(ctr < 6)
-				{	//Non open notes
-					if(!(noteflags & EOF_NOTE_FLAG_HOPO))
-					{	//If this is not a HOPO note
-						half_image_width = EOF_GHL_HALF_3D_IMAGE_WIDTH;
-						image_height = EOF_GHL_3D_IMAGE_HEIGHT;
-					}
-					if(noteflags & EOF_NOTE_FLAG_SP)
-					{	//If this is a SP note
-						if(ctr < 3)
-						{	//The first three lanes are white notes
+				if(!(noteflags & EOF_NOTE_FLAG_HOPO))
+				{	//If this is not a HOPO note
+					half_image_width = EOF_GHL_HALF_3D_IMAGE_WIDTH;
+					image_height = EOF_GHL_3D_IMAGE_HEIGHT;
+				}
+				if(noteflags & EOF_NOTE_FLAG_SP)
+				{	//If this is a SP note
+					if(ctr < 3)
+					{	//The first three lanes are white notes
+						unsigned long barremask = mask | (mask << 3);	//This represents the note mask of the gem and a gem 3 lanes higher
+
+						if((notenote & barremask) == barremask)
+						{	//If this is to be rendered as a barre note
 							if(noteflags & EOF_NOTE_FLAG_HOPO)
 							{	//If this is a HOPO note
-								imagenum = p ? EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO_HIT : EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO;
+								imagenum = p ? EOF_IMAGE_NOTE_GHL_BARRE_SP_HOPO_HIT : EOF_IMAGE_NOTE_GHL_BARRE_SP_HOPO;
 							}
 							else
 							{	//This is not a HOPO note
-								imagenum = p ? EOF_IMAGE_NOTE_GHL_WHITE_SP_HIT : EOF_IMAGE_NOTE_GHL_WHITE_SP;
+								imagenum = p ? EOF_IMAGE_NOTE_GHL_BARRE_SP_HIT : EOF_IMAGE_NOTE_GHL_BARRE_SP;
 							}
+							notenote &= ~barremask;		//Prevent drawing another gem for the other gem in the barre, since the barre note graphic already represents both
+						}
+						else if(noteflags & EOF_NOTE_FLAG_HOPO)
+						{	//If this is a HOPO note
+							imagenum = p ? EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO_HIT : EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO;
 						}
 						else
-						{	//The next three lanes are black notes
-							if(noteflags & EOF_NOTE_FLAG_HOPO)
-							{	//If this is a HOPO note
-								imagenum = p ? EOF_IMAGE_NOTE_GHL_BLACK_SP_HOPO_HIT : EOF_IMAGE_NOTE_GHL_BLACK_SP_HOPO;
-							}
-							else
-							{	//This is not a HOPO note
-								imagenum = p ? EOF_IMAGE_NOTE_GHL_BLACK_SP_HIT : EOF_IMAGE_NOTE_GHL_BLACK_SP;
-							}
+						{	//This is not a HOPO note
+							imagenum = p ? EOF_IMAGE_NOTE_GHL_WHITE_SP_HIT : EOF_IMAGE_NOTE_GHL_WHITE_SP;
 						}
 					}
 					else
-					{	//This is not a SP note
+					{	//The next three lanes are black notes
+						if(noteflags & EOF_NOTE_FLAG_HOPO)
+						{	//If this is a HOPO note
+							imagenum = p ? EOF_IMAGE_NOTE_GHL_BLACK_SP_HOPO_HIT : EOF_IMAGE_NOTE_GHL_BLACK_SP_HOPO;
+						}
+						else
+						{	//This is not a HOPO note
+							imagenum = p ? EOF_IMAGE_NOTE_GHL_BLACK_SP_HIT : EOF_IMAGE_NOTE_GHL_BLACK_SP;
+						}
+					}
+				}
+				else
+				{	//This is not a SP note
+					unsigned long barremask = mask | (mask << 3);	//This represents the note mask of the gem and a gem 3 lanes higher
+
+					if((ctr < 3) && ((notenote & barremask) == barremask))
+					{	//If this is to be rendered as a barre note
+						if(noteflags & EOF_NOTE_FLAG_HOPO)
+						{	//If this is a HOPO note
+							imagenum = p ? EOF_IMAGE_NOTE_GHL_BARRE_HOPO_HIT : EOF_IMAGE_NOTE_GHL_BARRE_HOPO;
+						}
+						else
+						{	//This is not a HOPO note
+							imagenum = p ? EOF_IMAGE_NOTE_GHL_BARRE_HIT : EOF_IMAGE_NOTE_GHL_BARRE;
+						}
+						notenote &= ~barremask;		//Prevent drawing another gem for the other gem in the barre, since the barre note graphic already represents both
+					}
+					else
+					{	//Render a normal, non SP note
 						if(noteflags & EOF_NOTE_FLAG_HOPO)
 						{	//If this is a HOPO note
 							imagenum = p ? eof_colors[ctr].hoponotehit3d : eof_colors[ctr].hoponote3d;
@@ -1191,9 +1219,6 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 							imagenum = p ? eof_colors[ctr].notehit3d : eof_colors[ctr].note3d;
 						}
 					}
-				}
-				else
-				{	//Open notes
 				}
 			}
 			else if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
@@ -1469,6 +1494,16 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 			if(eof_track_is_ghl_mode(eof_song, track))
 			{	//Special case:  Guitar Hero Live style tracks display with 3 lanes
+				if(ctr < 3)
+				{	//If drawing a gem for one of the first three lanes
+					unsigned long barremask = mask | (mask << 3);	//This represents the note mask of the gem and a gem 3 lanes higher
+
+					if((notenote & barremask) == barremask)
+					{	//If this is to be rendered as a barre note
+						notenote &= ~barremask;		//Skip drawing a tail for the matching black GHL note, since the barre represents both the relevant black and white gems
+					}
+				}
+
 				lanenum = ctr % 3;	//Gems 1 through 3 use the same lanes as gems 4 through 6
 			}
 			else

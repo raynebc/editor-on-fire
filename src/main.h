@@ -59,7 +59,7 @@
 #define EOF_COLORS_RS          3
 #define EOF_COLORS_BF          4
 
-#define EOF_MAX_IMAGES 92
+#define EOF_MAX_IMAGES 100
 
 #define EOF_IMAGE_WAVE                        0	//This macro is currently unused
 #define EOF_IMAGE_TAB0                        1
@@ -153,6 +153,14 @@
 #define EOF_IMAGE_NOTE_GHL_WHITE_SP_HIT      89
 #define EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO     90
 #define EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO_HIT 91
+#define EOF_IMAGE_NOTE_GHL_BARRE             92
+#define EOF_IMAGE_NOTE_GHL_BARRE_HIT         93
+#define EOF_IMAGE_NOTE_GHL_BARRE_HOPO        94
+#define EOF_IMAGE_NOTE_GHL_BARRE_HOPO_HIT    95
+#define EOF_IMAGE_NOTE_GHL_BARRE_SP          96
+#define EOF_IMAGE_NOTE_GHL_BARRE_SP_HIT      97
+#define EOF_IMAGE_NOTE_GHL_BARRE_SP_HOPO     98
+#define EOF_IMAGE_NOTE_GHL_BARRE_SP_HOPO_HIT 99
 
 #define EOF_DISPLAY_640             0
 #define EOF_DISPLAY_800             1

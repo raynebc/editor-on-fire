@@ -875,7 +875,7 @@ EOF_SONG * eof_create_song_populated(void);
 	//Allocates, initializes and returns an EOF_SONG structure pre-populated with the default legacy, vocal and pro guitar tracks
 
 int eof_open_strum_enabled(unsigned long track);
-	//Returns nonzero if the specified non drum track has the open strum flag set
+	//Returns nonzero if the specified track is a legacy guitar/bass track and has the open strum flag set
 int eof_lane_six_enabled(unsigned long track);
 	//Returns nonzero if the specified track is a non drum legacy track with the open strum flag set, or if it's a pro guitar track with 6 strings
 int eof_create_image_sequence(char benchmark_only);
