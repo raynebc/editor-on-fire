@@ -523,7 +523,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	//Write tracks
 	for(j = 1; j < sp->tracks; j++)
 	{	//For each track in the project
-		char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct notes are exported
+		char restore_tech_view = 0;				//If tech view is in effect, it is temporarily disabled so that the correct notes are exported
+		char isghl = 0;							//Set to nonzero if the track is to be exported as a GHL track (non GHWT MIDI format, no export feature restrictions, track flag indicates GHL mode active)
+		char ghlname[EOF_NAME_LENGTH + 1 + 4];	//GHL tracks have a " GHL" suffix applied to their name during export
 
 		if(eof_get_track_size_normal(sp, j) == 0)	//If this track has no notes
 			continue;	//Skip the track
@@ -531,6 +533,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			continue;	//Skip the track
 		if(eof_track_overridden_by_stored_MIDI_track(sp, j))	//If this track is overridden by a stored MIDI track
 			continue;	//Skip the track
+		if(!featurerestriction && !format && eof_track_is_ghl_mode(sp, j))
+			isghl = 1;	//Note whether this track will export as a GHL track
 
 		if(featurerestriction == 1)
 		{	//If writing a RBN2 or C3 compliant MIDI
@@ -629,40 +633,35 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				length = eof_get_note_length(sp, j, i);		//Store the note length for easier use
 				type = eof_get_note_type(sp, j, i);			//Store the note type for easier use
 
-				if(j != EOF_TRACK_DANCE)
-				{	//All legacy style tracks besides the dance track use the same offsets
+				if(isghl)
+				{	//This is a GHL track
 					switch(type)
 					{
-						case EOF_NOTE_AMAZING:	//notes 96-100
+						case EOF_NOTE_AMAZING:	//Notes 94-102 (Lane 1 maps to 95)
 						{
-							midi_note_offset = 0x60;
+							midi_note_offset = 95;
 							break;
 						}
-						case EOF_NOTE_MEDIUM:	//notes 84-88
+						case EOF_NOTE_MEDIUM:	//Notes 82-90 (Lane 1 maps to 83)
 						{
-							midi_note_offset = 0x54;
+							midi_note_offset = 83;
 							break;
 						}
-						case EOF_NOTE_EASY:		//notes 72-76
+						case EOF_NOTE_EASY:		//Notes 70-78 (Lane 1 maps to 71)
 						{
-							midi_note_offset = 0x48;
+							midi_note_offset = 71;
 							break;
 						}
-						case EOF_NOTE_SUPAEASY:	//notes 60-64
+						case EOF_NOTE_SUPAEASY:	//Notes 58-66 (Lane 1 maps to 59)
 						{
-							midi_note_offset = 0x3C;
+							midi_note_offset = 59;
 							break;
 						}
-						case EOF_NOTE_SPECIAL:	//BRE/drum fill: notes 120-124
-						{
-							midi_note_offset = 120;
-							break;
-						}
-						default:
-						break;
+						default:	//Don't write BRE difficulty notes to GHL format MIDI
+						continue;
 					}
 				}
-				else
+				else if(j == EOF_TRACK_DANCE)
 				{	//This is the dance track
 					switch(type)
 					{
@@ -695,6 +694,39 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						break;
 					}
 				}
+				else
+				{	//All other legacy style tracks use the same offsets
+					switch(type)
+					{
+						case EOF_NOTE_AMAZING:	//notes 96-100
+						{
+							midi_note_offset = 0x60;
+							break;
+						}
+						case EOF_NOTE_MEDIUM:	//notes 84-88
+						{
+							midi_note_offset = 0x54;
+							break;
+						}
+						case EOF_NOTE_EASY:		//notes 72-76
+						{
+							midi_note_offset = 0x48;
+							break;
+						}
+						case EOF_NOTE_SUPAEASY:	//notes 60-64
+						{
+							midi_note_offset = 0x3C;
+							break;
+						}
+						case EOF_NOTE_SPECIAL:	//BRE/drum fill: notes 120-124
+						{
+							midi_note_offset = 120;
+							break;
+						}
+						default:
+						break;
+					}
+				}
 
 				deltapos = eof_ConvertToDeltaTime(notepos,anchorlist,tslist,timedivision,1);	//Store the tick position of the note
 				deltalength = eof_ConvertToDeltaTime(notepos + length,anchorlist,tslist,timedivision,0) - deltapos;	//Store the number of delta ticks representing the note's length
@@ -715,11 +747,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					deltalength = 1;
 				}
 
-				//Ensure open strum notes are prepared for export
-				if(eof_open_strum_enabled(j))
-				{	//If this is a non drum track with a sixth lane enabled
-					if(note & 32)
-					{	//If this note has a gem on lane 6 (open strum)
+				//Ensure open strum notes are prepared for export (for non GHL tracks)
+				if(eof_legacy_guitar_note_is_open(sp, j, i))
+				{	//If this is an open note
+					if(!isghl)
+					{	//If this is not exporting as a GHL mode track
 						if(format == 1)
 						{	//If writing the GHWT MIDI variant
 							note = 31;	//Convert it to a 5 lane chord
@@ -894,11 +926,23 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 				}
 
+				/* write lane 3 black GHL gem */
+				if(isghl && (note & 32) && !eof_legacy_guitar_note_is_open(sp, j, i))
+				{	//If this is a lane 6 gem (without the GHL open note status) and the track is exporting as a GHL track
+					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 5, vel, 0);
+					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 5, vel, 0);
+				}
+
 				/* write open strum note marker, if the feature was enabled during save */
-				if(eof_open_strum_enabled(j) && (note & 32))
+				if(eof_legacy_guitar_note_is_open(sp, j, i))
 				{	//If this is an open strum note
-					if(featurerestriction == 0)
-					{	//Only write this notation if not writing a Rock Band compliant MIDI
+					if(isghl)
+					{	//If this is a GHL mode track
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset - 1, vel, 0);				//Write as 1 note below lane 1
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset - 1, vel, 0);
+					}
+					else if(featurerestriction == 0)
+					{	//Otherwise only write this notation if not writing a Rock Band compliant MIDI
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 0, vel, 0);	//Write a gem for lane 1
 						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 0, vel, 0);
 						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
@@ -940,7 +984,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				/* write forced HOPO */
 				if(noteflags & EOF_NOTE_FLAG_F_HOPO)
 				{
-					if(format == 1)
+					if(isghl)
+					{	//If writing a GHL format track
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 6, vel, 0);
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 6, vel, 0);
+					}
+					else if(format == 1)
 					{	//If writing the GHWT MIDI variant
 ///The correct notes for GHWT forced HOPOs are not confirmed
 ///						long pad = EOF_DEFAULT_TIME_DIVISION / 16;	//To make this notation more visible in Feedback, pad to a minimum length of 1/64 (in #/4 meter) if possible
@@ -975,7 +1024,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				/* write forced non-HOPO */
 				else if(noteflags & EOF_NOTE_FLAG_NO_HOPO)
 				{
-					if(format == 1)
+					if(isghl)
+					{	//If writing a GHL format track
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 7, vel, 0);
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 7, vel, 0);
+					}
+					else if(format == 1)
 					{	//If writing the GHWT MIDI variant
 						long pad = EOF_DEFAULT_TIME_DIVISION / 16;	//To make this notation more visible in Feedback, pad to a minimum length of 1/64 (in #/4 meter) if possible
 						if(deltalength < pad)
@@ -1142,6 +1196,13 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			for(trackctr = 0; trackctr <= expertplus; trackctr++)
 			{	//This loop makes a second pass to write the expert+ drum MIDI if applicable
 				int lastevent = 0;	//Track the last event written so running status can be utilized
+				char *exportname = sp->track[j]->name;	//By default, the track's regular name is used for export
+
+				if(isghl)
+				{	//GHL tracks export with a " GHL" suffix
+					snprintf(ghlname, sizeof(ghlname) - 1, "%s GHL", exportname);
+					exportname = ghlname;
+				}
 
 				/* open the file */
 				if(trackctr == 0)	//Writing the normal temp file
@@ -1170,8 +1231,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				WriteVarLen(0, fp);
 				(void) pack_putc(0xFF, fp);
 				(void) pack_putc(0x03, fp);
-				WriteVarLen(ustrlen(sp->track[j]->name), fp);
-				(void) pack_fwrite(sp->track[j]->name, ustrlen(sp->track[j]->name), fp);
+				WriteVarLen(ustrlen(exportname), fp);
+				(void) pack_fwrite(exportname, ustrlen(exportname), fp);
 
 				/* add MIDI events */
 				lastdelta = 0;
