@@ -30,6 +30,8 @@ void set_default_config(void)
 	eof_guitar.button[5].key = KEY_F4;
 	eof_guitar.button[6].type = EOF_CONTROLLER_BUTTON_TYPE_KEY;
 	eof_guitar.button[6].key = KEY_F5;
+	eof_guitar.button[7].type = EOF_CONTROLLER_BUTTON_TYPE_KEY;
+	eof_guitar.button[7].key = KEY_F6;
 	eof_controller_read_button_names(&eof_guitar);
 	eof_guitar.delay = 0;
 

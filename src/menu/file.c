@@ -219,12 +219,12 @@ DIALOG eof_display_dialog[] =
 DIALOG eof_guitar_settings_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)              (dp2) (dp3) */
-	{ d_agup_window_proc,    4,   200, 336, 268, 2,   23,  0,    0,      0,   0,   "Guitar Settings",NULL, NULL },
+	{ d_agup_window_proc,    4,   200, 336, 284, 2,   23,  0,    0,      0,   0,   "Guitar Settings",NULL, NULL },
 	{ d_agup_text_proc,      16,  240, 64,  8,   2,   23,  0,    0,      0,   0,   "Delay (ms):",    NULL, NULL },
 	{ eof_verified_edit_proc,104, 236, 64,  20,  2,   23,  0,    0,      5,   0,   eof_etext,        "0123456789", NULL },
-	{ d_agup_list_proc,      13,  266, 315, 109, 2,   23,  0,    0,      0,   0,   (void *)eof_guitar_list, NULL, NULL },
-	{ d_agup_push_proc,      13,  386, 315, 28,  2,   23,  0,    D_EXIT, 0,   0,   "Redefine",       NULL, (void *)eof_guitar_controller_redefine },
-	{ d_agup_button_proc,    13,  426, 315, 28,  2,   23,  0,    D_EXIT, 0,   0,   "OK",             NULL, NULL },
+	{ d_agup_list_proc,      13,  266, 315, 125, 2,   23,  0,    0,      0,   0,   (void *)eof_guitar_list, NULL, NULL },
+	{ d_agup_push_proc,      13,  402, 315, 28,  2,   23,  0,    D_EXIT, 0,   0,   "Redefine",       NULL, (void *)eof_guitar_controller_redefine },
+	{ d_agup_button_proc,    13,  442, 315, 28,  2,   23,  0,    D_EXIT, 0,   0,   "OK",             NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1849,12 +1849,13 @@ char * eof_guitar_list(int index, int * size)
 	(void) snprintf(eof_ctext[4], sizeof(eof_ctext[4]) - 1, "Fret 3 (%s)", redefine_index == 4 ? "Press new key" : eof_guitar.button[4].name);
 	(void) snprintf(eof_ctext[5], sizeof(eof_ctext[5]) - 1, "Fret 4 (%s)", redefine_index == 5 ? "Press new key" : eof_guitar.button[5].name);
 	(void) snprintf(eof_ctext[6], sizeof(eof_ctext[6]) - 1, "Fret 5 (%s)", redefine_index == 6 ? "Press new key" : eof_guitar.button[6].name);
+	(void) snprintf(eof_ctext[7], sizeof(eof_ctext[7]) - 1, "Fret 6 (%s)", redefine_index == 7 ? "Press new key" : eof_guitar.button[7].name);
 	switch(index)
 	{
 		case -1:
 		{
 			if(size)
-				*size = 7;
+				*size = 8;
 			break;
 		}
 		case 0:
@@ -1884,6 +1885,10 @@ char * eof_guitar_list(int index, int * size)
 		case 6:
 		{
 			return eof_ctext[6];
+		}
+		case 7:
+		{
+			return eof_ctext[7];
 		}
 
 		default:
@@ -2026,7 +2031,7 @@ int eof_guitar_controller_redefine(DIALOG * d)
 
 	(void) dialog_message(eof_guitar_settings_dialog, MSG_DRAW, 0, &i);
 
-	if(eof_test_controller_conflict(&eof_guitar,0,6))
+	if(eof_test_controller_conflict(&eof_guitar,0,7))
 		(void) alert("Warning", NULL, "There is a key conflict for this controller", "OK", NULL, 0, KEY_ENTER);
 
 	return 0;

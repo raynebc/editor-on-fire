@@ -34,6 +34,7 @@ int         eof_held_2 = 0;
 int         eof_held_3 = 0;
 int         eof_held_4 = 0;
 int         eof_held_5 = 0;
+int         eof_held_6 = 0;
 int         eof_entering_note = 0;
 EOF_NOTE *  eof_entering_note_note = NULL;
 EOF_LYRIC *  eof_entering_note_lyric = NULL;
@@ -763,8 +764,11 @@ void eof_read_editor_keys(void)
 		eof_scaled_mouse_y = mouse_y / 2;
 	}
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	eof_read_controller(&eof_guitar);
-	eof_read_controller(&eof_drums);
+	if(!eof_music_paused)
+	{	//Only process controller input if chart is playing
+		eof_read_controller(&eof_guitar);
+		eof_read_controller(&eof_drums);
+	}
 
 ///DEBUG
 if(eof_key_code == KEY_PAUSE)
@@ -2009,6 +2013,17 @@ if(eof_key_code == KEY_PAUSE)
 			{
 				eof_held_5 = 0;
 			}
+			if(eof_count_track_lanes(eof_song, eof_selected_track) > 5)
+			{	//If a sixth lane is available in this track
+				if(eof_guitar.button[7].held)
+				{
+					eof_held_6++;
+				}
+				else
+				{
+					eof_held_6 = 0;
+				}
+			}
 			bitmask = 0;
 			if(eof_held_1 == 1)
 			{
@@ -2029,6 +2044,10 @@ if(eof_key_code == KEY_PAUSE)
 			else if(eof_held_5 == 1)
 			{
 				bitmask = 16;
+			}
+			else if(eof_held_6 == 1)
+			{
+				bitmask = 32;
 			}
 
 			if(bitmask)
@@ -2073,12 +2092,12 @@ if(eof_key_code == KEY_PAUSE)
 				eof_last_snote = eof_snote;
 				eof_snote = 0;
 
-				if(eof_guitar.button[2].held || eof_guitar.button[3].held || eof_guitar.button[4].held || eof_guitar.button[5].held || eof_guitar.button[6].held)
-				{
+				if(eof_guitar.button[2].held || eof_guitar.button[3].held || eof_guitar.button[4].held || eof_guitar.button[5].held || eof_guitar.button[6].held || eof_guitar.button[7].held)
+				{	//Fret button is pressed
 					eof_snote = 1;
 				}
 				if((eof_guitar.button[0].pressed || eof_guitar.button[1].pressed) && eof_snote)
-				{
+				{	//Strum button is pressed while a fret is held
 					if(eof_entering_note && eof_entering_note_lyric)
 					{
 						eof_entering_note_lyric->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_lyric->pos - 10;
@@ -2109,6 +2128,8 @@ if(eof_key_code == KEY_PAUSE)
 			}//if(eof_vocals_selected)
 			else
 			{	//If a non vocal track is selected
+				char is_open = 0;
+
 				eof_last_snote = eof_snote;
 				eof_snote = 0;
 
@@ -2132,9 +2153,20 @@ if(eof_key_code == KEY_PAUSE)
 				{
 					eof_snote |= 16;
 				}
+				if(eof_count_track_lanes(eof_song, eof_selected_track) > 5)
+				{	//If sixth lane is available in this track
+					if(eof_guitar.button[7].held)
+					{
+						eof_snote |= 32;
+					}
+				}
 				if(eof_open_strum_enabled(eof_selected_track) && !eof_snote && (eof_guitar.button[0].held || eof_guitar.button[1].held))
 				{	//If the strum is being held up/down with no frets, and open strumming is enabled
 					eof_snote = 32;	//The strum note is lane 6
+					if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
+					{	//If GHL mode is in effect, open notes are represented as lane 6 gems that have the GHL open status flag
+						is_open = 1;	//Track that this flag needs to be applied after note creation
+					}
 				}
 				if(eof_guitar.button[0].pressed || eof_guitar.button[1].pressed)
 				{	//If the user strummed
@@ -2148,17 +2180,23 @@ if(eof_key_code == KEY_PAUSE)
 						new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_snote, eof_music_pos - eof_av_delay - eof_guitar.delay, 1, eof_note_type, NULL);
 						if(new_note)
 						{
+							unsigned long notenum = eof_get_track_size(eof_song, eof_selected_track) - 1;	//The index of the new note
+
 							if(eof_mark_drums_as_cymbal)
 							{	//If the user opted to make all new drum notes cymbals automatically
-								eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+								eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,notenum);
 							}
 							if(eof_mark_drums_as_double_bass)
 							{	//If the user opted to make all new expert bass drum notes as double bass automatically
-								eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+								eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,notenum);
 							}
 							if(eof_mark_drums_as_hi_hat)
 							{	//If the user opted to make all new yellow drum notes as one of the specialized hi hat types automatically
-								eof_mark_new_note_as_special_hi_hat(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+								eof_mark_new_note_as_special_hi_hat(eof_song,eof_selected_track,notenum);
+							}
+							if(is_open)
+							{	//If the user open strummed while GHL mode is open, set the EOF_GUITAR_NOTE_FLAG_GHL_OPEN flag
+								eof_set_note_flags(eof_song, eof_selected_track, notenum, eof_get_note_flags(eof_song, eof_selected_track, notenum) | EOF_GUITAR_NOTE_FLAG_GHL_OPEN);
 							}
 							eof_entering_note_note = new_note;
 							eof_entering_note = 1;

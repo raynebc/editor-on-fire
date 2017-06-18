@@ -35,6 +35,7 @@ void eof_read_controller(EOF_CONTROLLER * cp)
 					{
 						cp->button[i].pressed = 0;
 					}
+					eof_key_code = eof_key_char = eof_key_uchar = 0;	//Clear the stored keyboard input variables to prevent guitar tap/strum input from activating other keyboard shortcuts
 				}
 				else
 				{

@@ -60,7 +60,7 @@ char eof_etext6[1024] = {0};
 char eof_etext7[1024] = {0};
 char eof_etext8[1024] = {0};
 char *eof_help_text = NULL;
-char eof_ctext[13][1024] = {{0}};
+char eof_ctext[8][1024] = {{0}};
 
 static int eof_keyboard_shortcut = 0;
 int eof_close_menu = 0;
