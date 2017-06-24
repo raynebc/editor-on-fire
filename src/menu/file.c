@@ -3295,6 +3295,48 @@ int eof_save_helper_checks(void)
 	if(note_skew_warned == 3)
 		return 1;	//If the user opted to cancel after highlighting offending notes, return cancellation
 
+
+	/* check for RS phrases and RS sections that have non alphanumeric characters in their name */
+	if(eof_write_rs_files || eof_write_rs2_files)
+	{	//If the user wants to save Rocksmith capable files
+		char warn = 0;
+		unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
+
+		for(ctr = 0; ctr < eof_song->beats; ctr++)
+		{	//For each beat in the chart
+			if(eof_song->beat[ctr]->contained_rs_section_event >= 0)
+			{	//If this beat has a Rocksmith section
+				if(eof_string_has_non_alphanumeric(eof_song->text_event[eof_song->beat[ctr]->contained_rs_section_event]->text))
+				{	//If this section name has non alphanumeric characters
+					warn = 1;
+				}
+			}
+			if(eof_song->beat[ctr]->contained_section_event >= 0)
+			{	//If this beat has a section event (RS phrase)
+				if(eof_string_has_non_alphanumeric(eof_song->text_event[eof_song->beat[ctr]->contained_section_event]->text))
+				{	//If this phrase name has non alphanumeric characters
+					warn = 1;
+				}
+			}
+
+			if(warn)
+			{
+				eof_2d_render_top_option = 9;					//Change the user preference to render RS phrases and sections at the top of the piano roll
+				eof_seek_and_render_position(ctr, eof_note_type, eof_song->beat[ctr]->pos);	//Render the track so the user can see where the correction needs to be made
+				eof_clear_input();
+
+				if(alert("At least one RS section/phrase has a non alphanumeric character in its name.", "Some characters may cause the game to malfunction.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+				{	//If the user opted to cancel the save
+					return 1;	//Return cancellation
+				}
+
+				eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
+				break;
+			}
+		}
+	}
+
+
 	///Dynamic difficulty related checks below
 	if(eof_song->tags->rs_export_suppress_dd_warnings)
 		return 0;	//If dynamic difficulty warnings have been suppressed for this chart, skip the remainder of this function's logic which performs that check

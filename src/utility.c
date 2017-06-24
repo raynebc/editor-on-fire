@@ -380,6 +380,25 @@ int eof_string_has_non_ascii(char *str)
 	return 0;
 }
 
+int eof_string_has_non_alphanumeric(char *str)
+{
+	unsigned long ctr, length;
+	int val;
+
+	if(!str)
+		return 0;
+
+	for(ctr = 0, length = ustrlen(str); ctr < length; ctr++)
+	{	//For each character of the string
+		val = ugetat(str, ctr);
+		if(!isalnum(val))
+		{	//If the character isn't an alphanumeric ASCII character
+			return 1;
+		}
+	}
+	return 0;
+}
+
 void eof_sanitize_string(char *str)
 {
 	unsigned char ch;

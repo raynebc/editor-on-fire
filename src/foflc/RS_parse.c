@@ -68,19 +68,19 @@ void Export_RS(FILE *outf)
 		{
 			if(Lyrics.rocksmithver == 2)
 			{	//If Rocksmith 2014 format is being exported, the maximum length per lyric is 48 characters
-				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 48, 2, 1);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Allow characters that are supported in lyrics but not other parts of the RS XML.
+				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 48, 2, 1, 0);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Allow characters that are supported in lyrics but not other parts of the RS XML.
 			}
 			else if(Lyrics.rocksmithver == 3)
 			{	//If Rocksmith 2014 format is being exported, and compatible extended ASCII characters are allowed
-				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 48, 3, 1);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Allow characters that are supported in lyrics but not other parts of the RS XML.
+				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 48, 3, 1, 0);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Allow characters that are supported in lyrics but not other parts of the RS XML.
 			}
 			else if (Lyrics.rocksmithver == 4)
 			{	//A Rocksmith 2014 style format that doesn't force lyric content to use compliant characters
-				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 48, 4, 1);
+				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 48, 4, 1, 0);
 			}
 			else
 			{	//Otherwise the lyric limit is 32 characters
-				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 32, 2, 1);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Allow characters that are supported in lyrics but not other parts of the RS XML.
+				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 32, 2, 1, 0);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Allow characters that are supported in lyrics but not other parts of the RS XML.
 			}
 			for(index1 = index2 = 0; (size_t)index1 < strlen(buffer2); index1++)
 			{	//For each character in the expanded XML string
@@ -120,13 +120,18 @@ void Export_RS(FILE *outf)
 	if(Lyrics.verbose)	printf("\nRocksmith XML export complete.  %lu lyrics written",Lyrics.piececount);
 }
 
-int rs_filter_char(int character, char rs_filter, int islyric)
+int rs_filter_char(int character, char rs_filter, int islyric, int isphrase_section)
 {
 	if((rs_filter > 1) && (character == '/'))
 		return 1;
 	if(!islyric)
 	{	//XML strings don't allow the following characters except for lyric text
 		if((character == '(') || (character == '}') || (character == ',') || (character == '\\') || (character == ':') || (character == '{') || (character == '"') || (character == ')'))
+			return 1;
+	}
+	if(isphrase_section)
+	{	//RS phrases/sections shouldn't have non alphanumeric characters
+		if(!isalnum(character))
 			return 1;
 	}
 	if(((unsigned) character > 127) || !isprint(character))
@@ -378,14 +383,14 @@ int rs_filter_string(char *string, char rs_filter)
 
 	for(ctr = 0; string[ctr] != '\0'; ctr++)
 	{	//For each character in the string until the terminator is reached
-		if(rs_filter_char(string[ctr], rs_filter, 0))	//If the character is rejected by the filter, not allowing the ASCII characters exclusively usable for lyrics
+		if(rs_filter_char(string[ctr], rs_filter, 0, 0))	//If the character is rejected by the filter, not allowing the ASCII characters exclusively usable for lyrics
 			return 1;
 	}
 
 	return 0;
 }
 
-void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsize, char rs_filter, int islyric)
+void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsize, char rs_filter, int islyric, int isphrase_section)
 {
 	size_t input_length, index = 0, ctr;
 
@@ -408,7 +413,7 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 		{
 			if(rs_filter < 3)
 			{	//Normal filtering (1 or 2)
-				if(rs_filter_char(character, rs_filter, islyric))
+				if(rs_filter_char(character, rs_filter, islyric, isphrase_section))
 					continue;	//If filtering out characters for Rocksmith, omit affected characters
 			}
 			else if(rs_filter == 3)

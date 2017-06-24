@@ -74,16 +74,16 @@ int eof_export_bandfuse(EOF_SONG * sp, char * fn, unsigned short *user_warned)
 	(void) pack_fputs("<?xml version='1.0' encoding='UTF-8'?>\n", fp);
 	(void) pack_fputs("<Bandfuse>\n", fp);
 	(void) pack_fputs("<!-- " EOF_VERSION_STRING " -->\n", fp);	//Write EOF's version in an XML comment
-	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->title, 64, 0, 0);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->title, 64, 0, 0, 0);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <title>%s</title>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
-	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->artist, 256, 0, 0);	//Replace any special characters in the artist song property with escape sequences if necessary
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->artist, 256, 0, 0, 0);	//Replace any special characters in the artist song property with escape sequences if necessary
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <artistName>%s</artistName>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
-	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->album, 256, 0, 0);	//Replace any special characters in the album song property with escape sequences if necessary
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->album, 256, 0, 0, 0);	//Replace any special characters in the album song property with escape sequences if necessary
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <albumName>%s</albumName>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
-	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->year, 32, 0, 0);	//Replace any special characters in the year song property with escape sequences if necessary
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->year, 32, 0, 0, 0);	//Replace any special characters in the year song property with escape sequences if necessary
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <albumYear>%s</albumYear>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
 

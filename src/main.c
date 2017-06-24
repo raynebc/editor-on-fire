@@ -3827,7 +3827,11 @@ int eof_load_data(void)
 
 	eof_log("eof_load_data() entered", 1);
 
-	eof_validate_temp_folder();	//Reset the working directory
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		return 0;
+	}
 	if(!exists("eof.dat"))
 	{
 		allegro_message("DAT file missing.  If using a hotfix, make sure you extract the appropriate EOF release candidate first and then extract the hotfix on top of it (replacing with files in the hotfix).");
