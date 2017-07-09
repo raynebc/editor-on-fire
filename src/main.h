@@ -377,6 +377,7 @@ extern int         eof_4_fret_range;
 extern int         eof_5_fret_range;
 extern int         eof_6_fret_range;
 extern int         eof_fingering_checks_include_mutes;
+extern int         eof_ghl_conversion_swaps_bw_gems;
 extern int         eof_smooth_pos;
 extern int         eof_windowed;
 extern int         eof_anchor_all_beats;

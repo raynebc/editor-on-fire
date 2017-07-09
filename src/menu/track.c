@@ -4994,7 +4994,7 @@ int eof_track_menu_enable_ghl_mode(void)
 		{	//If the conversion of a chord containing a lane 3 black gem caused a loss of original authoring
 			if(!warning)
 			{	//If the user wasn't already warned about this
-				allegro_message("Chords containing lane 3 black GHL gems can't be authored in a non GHL track");
+				allegro_message("Warning:  Chords containing lane 3 black GHL gems can't be authored in a non GHL track");
 				warning = 1;
 			}
 		}

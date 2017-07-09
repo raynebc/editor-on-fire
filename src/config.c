@@ -204,6 +204,7 @@ void eof_load_config(char * fn)
 	eof_top_of_2d_pane_cycle_count_2 = get_config_int("preferences", "eof_top_of_2d_pane_cycle_count_2", 0);
 	eof_warn_missing_bass_fhps = get_config_int("preferences", "eof_warn_missing_bass_fhps", 1);
 	eof_fingering_checks_include_mutes = get_config_int("preferences", "eof_fingering_checks_include_mutes", 0);
+	eof_ghl_conversion_swaps_bw_gems = get_config_int("preferences", "eof_ghl_conversion_swaps_bw_gems", 0);
 
 	/* read display settings */
 	eof_screen_layout.mode = get_config_int("display", "display_mode", 0);
@@ -403,6 +404,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_top_of_2d_pane_cycle_count_2", eof_top_of_2d_pane_cycle_count_2);
 	set_config_int("preferences", "eof_warn_missing_bass_fhps", eof_warn_missing_bass_fhps);
 	set_config_int("preferences", "eof_fingering_checks_include_mutes", eof_fingering_checks_include_mutes);
+	set_config_int("preferences", "eof_ghl_conversion_swaps_bw_gems", eof_ghl_conversion_swaps_bw_gems);
 
 	/* write display settings */
 	set_config_int("display", "display_mode", eof_screen_layout.mode);
