@@ -93,6 +93,9 @@ unsigned long eof_events_dialog_delete_events_count(void);
 void eof_rebuild_trainer_strings(void);
 	//Recreates the trainer section strings appropriate for the currently pro guitar/bass track into eof_etext2, eof_etext3 and eof_etext4
 
+int eof_events_add_check_proc(int msg, DIALOG *d, int c);
+	//A checkbox procedure that disables the "Rocksmith solo phrase" checkbox if the user has just unchecked the "Rocksmith phrase marker" checkbox
+	//If the user has just checked the "Rocksmith phrase marker" checkbox, the "Rocksmith solo phrase" checkbox becomes unchecked and enabled
 void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *undo_made);
 	//If ptr is NULL, then a blank event dialog is launched, allowing the user to add a new text event, and the flags parameter is handled as follows:
 	//	If (function & EOF_EVENT_FLAG_RS_PHRASE) is true, the "Rocksmith phrase marker" option is automatically checked, otherwise that checkbox is initialized to clear

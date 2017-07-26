@@ -4174,6 +4174,13 @@ static void eof_benchmark_rubberband_callback(void *buffer, int nsamples, int st
 	unsigned new_progress;
 	char windowtitle[101];
 
+	//If calling function passed a NULL pointer, it is a signal to reset the internal counters
+	if(!buffer)
+	{
+		progress = samples_processed = 0;
+		return;
+	}
+
 	//Stop processing if user cancels
 	if(key[KEY_ESC])
 		eof_benchmark_rubberband_cancel = 1;
@@ -4244,6 +4251,7 @@ clock_t eof_bechmark_rubberband(ALOGG_OGG *ogg)
 	}
 
 	start = clock();
+	eof_benchmark_rubberband_callback(NULL, 0, 0);	//Reset the callback's progress reporting counters
 	(void) alogg_process_ogg(ogg, eof_benchmark_rubberband_callback, EOF_BENCHMARK_RUBBERBAND_BUFFSIZE, 0.0, 0.0);
 	end = clock();
 	free(eof_benchmark_rubberband_buffer[0]);

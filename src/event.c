@@ -2,6 +2,7 @@
 #include "main.h"
 #include "beat.h"
 #include "event.h"
+#include "undo.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -234,4 +235,52 @@ int eof_is_section_marker(EOF_TEXT_EVENT *ep, unsigned long track)
 		}
 	}
 	return 0;
+}
+
+unsigned long eof_events_set_rs_solo_phrase_status(char *name, unsigned long track, int status, char *undo_made)
+{
+	unsigned long ctr, altered = 0;
+
+	if(!eof_song || !undo_made || !name || (track >= eof_song->tracks))
+		return 0;	//Invalid parameters
+
+	for(ctr = 0; ctr < eof_song->text_events; ctr++)
+	{	//For each event in the project
+		if(eof_song->text_event[ctr]->track != track)		//If this event isn't in the target scope
+			continue;					//Skip it
+		if(ustricmp(name, eof_song->text_event[ctr]->text))	//If the event doesn't have a matching (case-insensitive) name
+			continue;					//Skip it
+		if(!(eof_song->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_PHRASE))	//If this event isn't a Rocksmith phrase
+			continue;							//Skip it
+
+		if(status)
+		{	//If the RS solo phrase flag is to be set for all matching events
+			if(!(eof_song->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_SOLO_PHRASE))
+			{	//If this event doesn't have RS solo phrase status already
+				if(*undo_made == 0)
+				{	//If an undo state should be made
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					*undo_made = 1;
+				}
+				altered++;
+				eof_song->text_event[ctr]->flags |= EOF_EVENT_FLAG_RS_SOLO_PHRASE;	//Set the flag
+			}
+		}
+		else
+		{	//If the RS solo phrase flag is to be cleared for all matching events
+			if(eof_song->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_SOLO_PHRASE)
+			{	//If this event has the RS solo phrase status
+				if(*undo_made == 0)
+				{	//If an undo state should be made
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					*undo_made = 1;
+				}
+				altered++;
+				eof_song->text_event[ctr]->flags &= ~EOF_EVENT_FLAG_RS_SOLO_PHRASE;	//Clear the flag
+			}
+
+		}
+	}
+
+	return altered;
 }

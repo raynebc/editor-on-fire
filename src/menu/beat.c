@@ -165,16 +165,17 @@ char eof_events_add_dialog_string1[] = "Add event";
 char eof_events_add_dialog_string2[] = "Edit event";
 DIALOG eof_events_add_dialog[] =
 {
-	/* (proc)            (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-	{ d_agup_window_proc,0,  48,  314, 186, 2,   23,  0,    0,      0,   0,   eof_events_add_dialog_string1,  NULL, NULL },
-	{ d_agup_text_proc,  12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",       NULL, NULL },
-	{ d_agup_edit_proc,  48, 80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,     NULL, NULL },
-	{ d_agup_check_proc, 12, 110, 250, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string, NULL, NULL },
-	{ d_agup_check_proc, 12, 130, 174, 16,  0,   0,   0,    0,      1,   0,   "Rocksmith phrase marker", NULL, NULL },
-	{ d_agup_check_proc, 12, 150, 182, 16,  0,   0,   0,    0,      1,   0,   "Rocksmith section marker", NULL, NULL },
-	{ d_agup_check_proc, 12, 170, 182, 16,  0,   0,   0,    0,      1,   0,   "Rocksmith event marker", NULL, NULL },
-	{ d_agup_button_proc,67, 194, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
-	{ d_agup_button_proc,163,194, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",      NULL, NULL },
+	/* (proc)                    (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
+	{ d_agup_window_proc,        0,  48,  314, 206, 2,   23,  0,    0,      0,   0,   eof_events_add_dialog_string1,  NULL, NULL },
+	{ d_agup_text_proc,          12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",       NULL, NULL },
+	{ d_agup_edit_proc,          48, 80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,     NULL, NULL },
+	{ d_agup_check_proc,         12, 110, 250, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string, NULL, NULL },
+	{ eof_events_add_check_proc, 12, 130, 174, 16,  0,   0,   0,    0,      1,   0,   "Rocksmith phrase marker", NULL, NULL },
+	{ d_agup_check_proc,         12, 150, 166, 16,  0,   0,   0,    0,      1,   0,   "Rocksmith solo phrase", NULL, NULL },
+	{ d_agup_check_proc,         12, 170, 182, 16,  0,   0,   0,    0,      1,   0,   "Rocksmith section marker", NULL, NULL },
+	{ d_agup_check_proc,         12, 190, 182, 16,  0,   0,   0,    0,      1,   0,   "Rocksmith event marker", NULL, NULL },
+	{ d_agup_button_proc,        67, 214, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
+	{ d_agup_button_proc,        163,214, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",      NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1517,6 +1518,10 @@ char * eof_events_list(int index, int * size)
 			(void) snprintf(eventflags, sizeof(eventflags) - 1, "(%s", trackname);	//Start building the full flags string
 			if(eof_song->text_event[i]->flags & EOF_EVENT_FLAG_RS_PHRASE)
 			{	//If the event is an RS phrase
+				if(eof_song->text_event[i]->flags & EOF_EVENT_FLAG_RS_SOLO_PHRASE)
+				{	//If the event is an RS solo phrase
+					(void) strncat(eventflags, "So", sizeof(trackname) - strlen(trackname) - 1);	//Append So
+				}
 				(void) strncat(eventflags, "P", sizeof(trackname) - strlen(trackname) - 1);	//Append a P
 			}
 			if(eof_song->text_event[i]->flags & EOF_EVENT_FLAG_RS_SECTION)
@@ -1654,6 +1659,10 @@ char * eof_events_list_all(int index, int * size)
 			(void) snprintf(eventflags, sizeof(eventflags) - 1, " %s", trackname);	//Start building the full flags string
 			if(eof_song->text_event[realindex]->flags & EOF_EVENT_FLAG_RS_PHRASE)
 			{	//If the event is an RS phrase
+				if(eof_song->text_event[realindex]->flags & EOF_EVENT_FLAG_RS_SOLO_PHRASE)
+				{	//If the event is an RS solo phrase
+					(void) strncat(eventflags, "So", sizeof(trackname) - strlen(trackname) - 1);	//Append So
+				}
 				(void) strncat(eventflags, "P", sizeof(trackname) - strlen(trackname) - 1);	//Append a P
 			}
 			if(eof_song->text_event[realindex]->flags & EOF_EVENT_FLAG_RS_SECTION)
@@ -1829,6 +1838,33 @@ int eof_events_dialog_edit(DIALOG * d)
 	return D_O_K;
 }
 
+int eof_events_add_check_proc(int msg, DIALOG *d, int c)
+{
+	int junk;
+	int old_rs_phrase_state, new_rs_phrase_state;
+
+	if(msg != MSG_CLICK)
+		return d_agup_check_proc(msg, d, c);	//If this isn't a click message, allow the input to be processed
+
+	old_rs_phrase_state = eof_events_add_dialog[4].flags & D_SELECTED;	//Record this checkbox's status
+	(void) d_agup_check_proc(msg, d, c);	//Allow the input to be processed
+	new_rs_phrase_state = eof_events_add_dialog[4].flags & D_SELECTED;	//Record this checkbox's status
+	if(new_rs_phrase_state != old_rs_phrase_state)
+	{	//If the user changed the Rocksmith phrase marker checkbox
+		if(new_rs_phrase_state == D_SELECTED)
+		{	//If the checkbox has been checked
+			eof_events_add_dialog[5].flags = 0;	//Enable the RS solo phrase checkbox
+		}
+		else
+		{	//The checkbox has been cleared
+			eof_events_add_dialog[5].flags = D_DISABLED;	//Disable the RS solo phrase checkbox
+		}
+		(void) dialog_message(eof_events_add_dialog, MSG_START, 0, &junk);	//Re-initialize the dialog
+		(void) dialog_message(eof_events_add_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
+	}
+	return D_REDRAW;
+}
+
 void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *undo_made)
 {
 	EOF_TEXT_EVENT temp = {{0}, 0, 0, 0, 0, 0};
@@ -1869,33 +1905,42 @@ void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *
 	if(ptr->flags & EOF_EVENT_FLAG_RS_PHRASE)
 	{	//If the calling function wanted to automatically enable the "Rocksmith phrase marker" checkbox, or the event being edited already has this flag
 		eof_events_add_dialog[4].flags = D_SELECTED;
+		if(ptr->flags & EOF_EVENT_FLAG_RS_SOLO_PHRASE)
+		{	//If the calling function wanted to automatically enable the "Rocksmith solo phrase" checkbox, or the event being edited already has this flag
+			eof_events_add_dialog[5].flags = D_SELECTED;
+		}
+		else
+		{	//Otherwise clear the RS solo phrase checkbox
+			eof_events_add_dialog[5].flags = 0;
+		}
 	}
 	else
-	{	//Otherwise clear it
+	{	//Otherwise clear the RS phrase flags
 		eof_events_add_dialog[4].flags = 0;
+		eof_events_add_dialog[5].flags = D_DISABLED;
 	}
 	if(ptr->flags & EOF_EVENT_FLAG_RS_SECTION)
 	{	//If the calling function wanted to automatically enable the "Rocksmith section marker" checkbox, or the event being edited already has this flag
-		eof_events_add_dialog[5].flags = D_SELECTED;
-	}
-	else
-	{	//Otherwise clear it
-		eof_events_add_dialog[5].flags = 0;
-	}
-	if(ptr->flags & EOF_EVENT_FLAG_RS_EVENT)
-	{	//If the calling function wanted to automatically enable the "Rocksmith event marker" checkbox, or the event being edited already has this flag
 		eof_events_add_dialog[6].flags = D_SELECTED;
 	}
 	else
 	{	//Otherwise clear it
 		eof_events_add_dialog[6].flags = 0;
 	}
+	if(ptr->flags & EOF_EVENT_FLAG_RS_EVENT)
+	{	//If the calling function wanted to automatically enable the "Rocksmith event marker" checkbox, or the event being edited already has this flag
+		eof_events_add_dialog[7].flags = D_SELECTED;
+	}
+	else
+	{	//Otherwise clear it
+		eof_events_add_dialog[7].flags = 0;
+	}
 	(void) ustrcpy(eof_etext, ptr->text);
 
 	//Run and process the dialog results
 	eof_color_dialog(eof_events_add_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_events_add_dialog);
-	if(eof_popup_dialog(eof_events_add_dialog, 2) == 7)
+	if(eof_popup_dialog(eof_events_add_dialog, 2) == 8)
 	{	//User clicked OK
 		char *effective_text = eof_etext;	//By default, use the user-input string
 		char *rssectionname;
@@ -1903,8 +1948,12 @@ void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *
 		if(eof_events_add_dialog[4].flags & D_SELECTED)
 		{	//User opted to make this a Rocksmith phrase marker
 			newflags |= EOF_EVENT_FLAG_RS_PHRASE;
+			if(eof_events_add_dialog[5].flags & D_SELECTED)
+			{	//User opted to make this a Rocksmith solo phrase
+				newflags |= EOF_EVENT_FLAG_RS_SOLO_PHRASE;
+			}
 		}
-		if(eof_events_add_dialog[6].flags & D_SELECTED)
+		if(eof_events_add_dialog[7].flags & D_SELECTED)
 		{	//User opted to make this a Rocksmith event marker
 			if(!eof_rs_event_text_valid(eof_etext))
 			{	//If this isn't a valid Rocksmith event name
@@ -1912,7 +1961,7 @@ void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *
 			}
 			newflags |= EOF_EVENT_FLAG_RS_EVENT;
 		}
-		if(eof_events_add_dialog[5].flags & D_SELECTED)
+		if(eof_events_add_dialog[6].flags & D_SELECTED)
 		{	//User opted to make this a Rocksmith section marker
 			newflags |= EOF_EVENT_FLAG_RS_SECTION;
 			rssectionname = eof_rs_section_text_valid(eof_etext);	//Determine whether this is a valid Rocksmith section name
@@ -1955,7 +2004,17 @@ void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *
 			}
 			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 		}
-	}
+
+		if(newflags && EOF_EVENT_FLAG_RS_PHRASE)
+		{	//If the event that was created/edited is an RS phrase, set all matching RS phrases of matching name and scope to have the same RS solo status
+			int status = (newflags & EOF_EVENT_FLAG_RS_SOLO_PHRASE);
+
+			if(eof_events_set_rs_solo_phrase_status(eof_etext, newtrack, status, undo_made))
+			{	//If any such events were edited to match
+				allegro_message("All instances of a Rocksmith phrase use the same solo status.  One or more matching phrases in this event's scope had solo status %s to match.", (status ? "added" : "removed"));
+			}
+		}
+	}//User clicked OK
 }
 
 unsigned long eof_events_dialog_delete_events_count(void)
@@ -2835,6 +2894,7 @@ int eof_menu_beat_paste_events(void)
 	char text[256];
 	unsigned long ctr, num, flags, track;
 	char eof_events_clipboard_path[50];
+	char rs_warn = 0;
 
 	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_selected_beat >= eof_song->beats))
 		return 1;	//Error
@@ -2860,6 +2920,15 @@ int eof_menu_beat_paste_events(void)
 			flags = pack_igetl(fp);	//Read the flags
 			if(track)
 			{	//If the event is track specific, it will be apply to the active track
+				if((flags & EOF_EVENT_FLAG_RS_PHRASE) || (flags & EOF_EVENT_FLAG_RS_SECTION) || (flags & EOF_EVENT_FLAG_RS_EVENT))
+				{	//If the event is Rocksmith-specific
+					if((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && !rs_warn)
+					{	//If the destination track is not a pro guitar track, and the user hasn't been warned of this yet
+						allegro_message("Warning:  You cannot paste a track-specific Rocksmith event into a non pro guitar/bass track.");
+						rs_warn = 1;
+						continue;	//Skip pasting this event
+					}
+				}
 				track = eof_selected_track;
 			}
 			(void) eof_song_add_text_event(eof_song, eof_selected_beat, text, track, flags, 0);	//Add the event to the track

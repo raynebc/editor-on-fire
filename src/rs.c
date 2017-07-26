@@ -5881,6 +5881,7 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 		unsigned long startpos = 0, endpos = 0;		//Track the start and end position of the each instance of the phrase
 		unsigned char maxdiff, ongoingmaxdiff = 0;	//Track the highest fully leveled difficulty used among all phraseinstances
 		char started = 0;
+		long is_solo;
 
 		//Determine the highest maxdifficulty present among all instances of this phrase
 		assert(sectionlist != NULL);	//Unneeded check to resolve a false positive in Splint
@@ -5908,12 +5909,15 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 			currentphrase = sp->text_event[eof_song->beat[ctr2]->contained_section_event]->text;	//Track which phrase is being examined
 		}
 
+		//Determine if this phrase name is associated with solo phrasing (EOF will have set the RS solo phrase flag for all matching phrase instances)
+		is_solo = (sp->text_event[sectionlist[ctr]]->flags & EOF_EVENT_FLAG_RS_SOLO_PHRASE) ? 1 : 0;
+
 		//Write the phrase definition using the highest difficulty found among all instances of the phrase
 		expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[sectionlist[ctr]]->text, 32, 2, 0, 1);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Filter out characters suspected of causing the game to crash (do not allow forward slash).  Filter non alphanumeric characters
 		(void) snprintf(buffer, sizeof(buffer) - 1, "    <phrase name=\"%s\" maxDifficulty=\"%u\" ", buffer2, ongoingmaxdiff);
 		eof_conditionally_append_xml_long(buffer, sizeof(buffer), "disparity", 0, 0);
 		eof_conditionally_append_xml_long(buffer, sizeof(buffer), "ignore", 0, 0);
-		eof_conditionally_append_xml_long(buffer, sizeof(buffer), "solo", 0, 0);
+		eof_conditionally_append_xml_long(buffer, sizeof(buffer), "solo", is_solo, 0);
 		(void) strncat(buffer, "/>\n", sizeof(buffer) - strlen(buffer) - 1);	//Append the tag ending
 		(void) pack_fputs(buffer, fp);
 	}//For each of the entries in the unique section (RS phrase) list
