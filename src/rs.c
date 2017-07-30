@@ -67,8 +67,12 @@ EOF_RS_PREDEFINED_SECTION eof_rs_predefined_events[EOF_NUM_RS_PREDEFINED_EVENTS]
 {
 	{"B0", "High pitch tick (B0)"},
 	{"B1", "Low pitch tick (B1)"},
+	{"E0", "Crowd waving hands (E0)"},
 	{"E1", "Crowd happy (E1)"},
-	{"E3", "Crowd wild (E3)"}
+	{"E2", "Crowd very happy (E2)"},
+	{"E3", "Crowd applause (E3)"},
+	{"D3", "Crowd critique applause (D3)"},
+	{"E13", "End crowd applause (E13)"}
 };
 
 unsigned char *eof_fret_range_tolerances = NULL;	//A dynamically allocated array that defines the fretting hand's range for each fret on the guitar neck, numbered where fret 1's range is defined at eof_fret_range_tolerances[1]

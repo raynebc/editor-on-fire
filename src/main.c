@@ -4099,8 +4099,8 @@ int eof_initialize(int argc, char * argv[])
 		(void) replace_filename(temp_filename, temp_filename, "", 1024);
 		if(eof_chdir(temp_filename))
 		{
-			allegro_message("Could not load program data!\n%s", temp_filename);
-			return 1;
+			allegro_message("Could not load program data!\n%s\nMove EOF to a file path without any special (ie. accented) characters if applicable.", temp_filename);
+			return 0;
 		}
 	}
 
@@ -5004,7 +5004,7 @@ void eof_start_logging(void)
 
 		if(eof_log_fp == NULL)
 		{
-			allegro_message("Error opening log file for writing");
+			allegro_message("Error opening log file for writing.  Move EOF to a file path without any special (ie. accented) characters if applicable.");
 		}
 		#ifdef ALLEGRO_WINDOWS
 		{
@@ -5069,7 +5069,7 @@ void eof_log_notes(EOF_SONG *sp, unsigned long track)
 #ifdef ALLEGRO_WINDOWS
 	int eof_initialize_windows(void)
 	{
-		int i;
+		int i, retval;
 		wchar_t * cl = GetCommandLineW();
 
 		eof_windows_internal_argv = CommandLineToArgvW(cl, &eof_windows_argc);
@@ -5077,26 +5077,45 @@ void eof_log_notes(EOF_SONG *sp, unsigned long track)
 		for(i = 0; i < eof_windows_argc; i++)
 		{
 			eof_windows_argv[i] = malloc(1024 * sizeof(char));
+			if(eof_windows_argv[i] == NULL)
+			{	//If the allocation failed
+				while(i > 0)
+				{	//Free all the previously allocated argument strings
+					free(eof_windows_argv[i - 1]);
+					i--;
+				}
+				free(eof_windows_argv);
+				return 0;	//Return failure
+			}
 			memset(eof_windows_argv[i], 0, 1024);
 			(void) uconvert((char *)eof_windows_internal_argv[i], U_UNICODE, eof_windows_argv[i], U_UTF8, 4096);
 		}
-		return eof_initialize(eof_windows_argc, eof_windows_argv);
+		retval = eof_initialize(eof_windows_argc, eof_windows_argv);
+		if(!retval)
+		{	//EOF failed to initialize
+			for(i = 0; i < eof_windows_argc; i++)
+			{
+				free(eof_windows_argv[i]);
+			}
+			free(eof_windows_argv);
+		}
+		return retval;
 	}
 #endif
 
 int main(int argc, char * argv[])
 {
-	int updated = 0;
+	int updated = 0, init_failed = 0;
 
 	#ifdef ALLEGRO_WINDOWS
 		if(!eof_initialize_windows())
 		{
-			eof_quit = 1;
+			eof_quit = init_failed = 1;
 		}
 	#else
 		if(!eof_initialize(argc, argv))
 		{
-			eof_quit = 1;
+			eof_quit = init_failed = 1;
 		}
 	#endif
 
@@ -5211,7 +5230,10 @@ int main(int argc, char * argv[])
 			}
 		}//Chart is paused
 	}//While EOF isn't meant to quit
-	eof_exit();
+	if(!init_failed)
+	{	//If EOF was previously able to initialize
+		eof_exit();
+	}
 	return 0;
 }
 

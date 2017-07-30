@@ -251,11 +251,11 @@ DIALOG eof_rocksmith_section_dialog[] =
 DIALOG eof_rocksmith_event_dialog[] =
 {
 	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                     (dp2) (dp3) */
-	{ d_agup_window_proc, 0,   0,   286, 180, 2,   23,  0,    0,      0,   0,   "Add Rocksmith event", NULL, NULL },
-	{ d_agup_list_proc,   12,  35,  260, 70,  2,   23,  0,    0,      0,   0,   (void *)eof_rs_event_add_list, NULL, NULL },
-	{ d_agup_check_proc,  12,  112, 250, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string,  NULL, NULL },
-	{ d_agup_button_proc, 12,  140, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                    NULL, NULL },
-	{ d_agup_button_proc, 206, 140, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                NULL, NULL },
+	{ d_agup_window_proc, 0,   0,   286, 235, 2,   23,  0,    0,      0,   0,   "Add Rocksmith event", NULL, NULL },
+	{ d_agup_list_proc,   12,  35,  260, 125, 2,   23,  0,    0,      0,   0,   (void *)eof_rs_event_add_list, NULL, NULL },
+	{ d_agup_check_proc,  12,  167, 250, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string,  NULL, NULL },
+	{ d_agup_button_proc, 12,  195, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                    NULL, NULL },
+	{ d_agup_button_proc, 206, 195, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 

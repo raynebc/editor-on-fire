@@ -43,7 +43,7 @@ typedef struct
 #define EOF_NUM_RS_PREDEFINED_SECTIONS 31
 extern EOF_RS_PREDEFINED_SECTION eof_rs_predefined_sections[EOF_NUM_RS_PREDEFINED_SECTIONS];
 
-#define EOF_NUM_RS_PREDEFINED_EVENTS 4
+#define EOF_NUM_RS_PREDEFINED_EVENTS 8
 extern EOF_RS_PREDEFINED_SECTION eof_rs_predefined_events[EOF_NUM_RS_PREDEFINED_EVENTS];
 
 extern char *eof_rs_arrangement_names[5];
