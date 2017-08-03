@@ -89,7 +89,7 @@ void eof_gp_debug_log(FILE *inf, char *text)
 {
 	if(inf && text)
 	{	//If these are both not NULL
-		printf("0x%lX:\t%s", ftell(inf), text);
+		printf("0x%lX:\t%s", (unsigned long)ftell(inf), text);
 	}
 }
 #else

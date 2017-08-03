@@ -151,11 +151,11 @@ void eof_prepare_track_menu(void)
 
 			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 			{	//If the active track has already had the difficulty limit removed
-				eof_track_rocksmith_menu[5].flags = D_SELECTED;	//Track>Rocksmith>Remove difficulty limit
+				eof_track_rocksmith_menu[6].flags = D_SELECTED;	//Track>Rocksmith>Remove difficulty limit
 			}
 			else
 			{
-				eof_track_rocksmith_menu[5].flags = 0;
+				eof_track_rocksmith_menu[6].flags = 0;
 			}
 
 			//Update checkmarks on the arrangement type submenu
@@ -169,6 +169,15 @@ void eof_prepare_track_menu(void)
 				{	//Otherwise uncheck it
 					eof_track_rocksmith_arrangement_menu[i].flags = 0;
 				}
+			}
+
+			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_RS_BONUS_ARR)
+			{	//If the active track has the RS bonus arrangement flag
+				eof_track_rocksmith_menu[4].flags = D_SELECTED;	//Track>Rocksmith>Bonus arrangement
+			}
+			else
+			{
+				eof_track_rocksmith_menu[4].flags = 0;
 			}
 		}
 		else
@@ -2170,6 +2179,7 @@ MENU eof_track_rocksmith_menu[] =
 	{"Fret &Hand positions", NULL, eof_track_proguitar_fret_hand_menu, 0, NULL},
 	{"&Popup messages", NULL, eof_track_rocksmith_popup_menu, 0, NULL},
 	{"&Arrangement type", NULL, eof_track_rocksmith_arrangement_menu, 0, NULL},
+	{"&Bonus arrangement", eof_menu_track_rs_bonus_arrangement, NULL, 0, NULL},
 	{"&Tone change", NULL, eof_track_rocksmith_tone_change_menu, 0, NULL},
 	{"Remove difficulty limit", eof_track_rocksmith_toggle_difficulty_limit, NULL, 0, NULL},
 	{"Insert new difficulty", eof_track_rocksmith_insert_difficulty, NULL, 0, NULL},
@@ -5006,4 +5016,24 @@ int eof_track_menu_enable_ghl_mode(void)
 	eof_set_color_set();
 	eof_render();
 	return 0;	//Success
+}
+
+int eof_menu_track_rs_bonus_arrangement(void)
+{
+	if(!eof_song)
+		return 1;
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Only allow this function to run for pro guitar/bass tracks
+
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_RS_BONUS_ARR)
+	{	//If this track already has the RS bonus arrangement flag
+		eof_song->track[eof_selected_track]->flags &= ~EOF_TRACK_FLAG_RS_BONUS_ARR;	//Clear the flag
+	}
+	else
+	{
+		eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_RS_BONUS_ARR;	//Otherwise set the flag
+	}
+
+	return 1;
 }

@@ -295,9 +295,11 @@ typedef struct
 #define EOF_TRACK_FLAG_ALT_NAME			2
 	//Specifies if the track has an alternate display name (for RS export.  MIDI export will still use the native name)
 #define EOF_TRACK_FLAG_UNLIMITED_DIFFS	4
-	//Specifies if the track is not limited to 4 difficulties and one more for the BRE difficulty.  Higher numbered difficulties will be exported to Rocksmith format
+	//Specifies a pro guitar track as not being limited to 4 difficulties plus one more for the BRE difficulty.  Higher numbered difficulties will be exported to Rocksmith format
 #define EOF_TRACK_FLAG_GHL_MODE         8
 	//Specifies a legacy guitar behavior track as having Guitar Hero Live characteristics (6 lanes plus an additional open note status)
+#define EOF_TRACK_FLAG_RS_BONUS_ARR    16
+	//Specifies that a pro guitar track is to be presented in Rocksmith as a bonus arrangement
 
 
 ///Difficulty numbers

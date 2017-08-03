@@ -253,4 +253,7 @@ int eof_menu_track_clone_track_from_clipboard(void);
 int eof_track_menu_enable_ghl_mode(void);
 	//Toggles the "Track>Enable GHL mode" flag for legacy guitar/bass tracks
 
+int eof_menu_track_rs_bonus_arrangement(void);
+	//Toggle the Rocksmith bonus arrangement flag for the active pro guitar/bass track on/off
+
 #endif

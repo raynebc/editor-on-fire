@@ -3700,6 +3700,8 @@ EOF_SONG * eof_create_song_populated(void)
 				return NULL;
 			}
 		}
+///		sp->track[EOF_TRACK_PRO_GUITAR_B]->flags |= EOF_TRACK_FLAG_RS_BONUS_ARR;	//By default, the bonus pro guitar track has the Rocksmith bonus arrangement flag
+///This flag can't be retained in the initial project file that is created by the new chart wizard because empty bonus pro guitar tracks aren't written (for compatibility with older EOF builds)
 	}
 
 	return sp;

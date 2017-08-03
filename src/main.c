@@ -5688,7 +5688,6 @@ int eof_identify_xml(char *fn)
 	size_t maxlinelength;
 	int done = 0;
 	int retval = 0;
-	unsigned long linectr = 1;
 
 	if(!fn)
 		return 0;	//Return error
@@ -5719,7 +5718,7 @@ int eof_identify_xml(char *fn)
 	//Read first line of text, capping it to prevent buffer overflow
 	if(!pack_fgets(buffer, (int)maxlinelength, inf))
 	{	//I/O error
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "XML inspection failed on line #%lu:  Unable to read from file:  \"%s\"", linectr, strerror(errno));
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "XML inspection failed.  Unable to read from file:  \"%s\"", strerror(errno));
 		eof_log(eof_log_string, 1);
 		done = 1;
 	}
@@ -5739,7 +5738,6 @@ int eof_identify_xml(char *fn)
 		}
 
 		(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
-		linectr++;	//Increment line counter
 	}//Until there was an error reading from the file or end of file is reached
 
 	free(buffer);
