@@ -3173,7 +3173,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	return 1;	//Return success
 }
 
-void eof_rs_utf8_expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsize, char rs_filter)
+void eof_rs_utf8_expand_xml_text(char *buffer, size_t size, const char *input, unsigned long warnsize, char rs_filter)
 {
 	unsigned long input_length, index = 0, ctr;
 	int exchar, uchar;
@@ -3208,83 +3208,83 @@ void eof_rs_utf8_expand_xml_text(char *buffer, size_t size, const char *input, s
 		{	//Expand quotation mark character
 			if(index + 6 + 1 > warnsize)
 			{	//If there isn't enough buffer left to expand this character and terminate the string
-				usetat(buffer, index, '\0');	//Terminate the buffer
+				(void) usetat(buffer, index, '\0');	//Terminate the buffer
 				return;				//And return
 			}
-			usetat(buffer, index++, '&');
-			usetat(buffer, index++, 'q');
-			usetat(buffer, index++, 'u');
-			usetat(buffer, index++, 'o');
-			usetat(buffer, index++, 't');
-			usetat(buffer, index++, ';');
+			(void) usetat(buffer, index++, '&');
+			(void) usetat(buffer, index++, 'q');
+			(void) usetat(buffer, index++, 'u');
+			(void) usetat(buffer, index++, 'o');
+			(void) usetat(buffer, index++, 't');
+			(void) usetat(buffer, index++, ';');
 		}
 		else if(uchar == '\'')
 		{	//Expand apostrophe
 			if(index + 6 + 1 > warnsize)
 			{	//If there isn't enough buffer left to expand this character and terminate the string
-				usetat(buffer, index, '\0');	//Terminate the buffer
+				(void) usetat(buffer, index, '\0');	//Terminate the buffer
 				return;				//And return
 			}
-			usetat(buffer, index++, '&');
-			usetat(buffer, index++, 'a');
-			usetat(buffer, index++, 'p');
-			usetat(buffer, index++, 'o');
-			usetat(buffer, index++, 's');
-			usetat(buffer, index++, ';');
+			(void) usetat(buffer, index++, '&');
+			(void) usetat(buffer, index++, 'a');
+			(void) usetat(buffer, index++, 'p');
+			(void) usetat(buffer, index++, 'o');
+			(void) usetat(buffer, index++, 's');
+			(void) usetat(buffer, index++, ';');
 		}
 		else if(uchar == '<')
 		{	//Expand less than sign
 			if(index + 4 + 1 > warnsize)
 			{	//If there isn't enough buffer left to expand this character and terminate the string
-				usetat(buffer, index, '\0');	//Terminate the buffer
+				(void) usetat(buffer, index, '\0');	//Terminate the buffer
 				return;				//And return
 			}
-			usetat(buffer, index++, '&');
-			usetat(buffer, index++, 'l');
-			usetat(buffer, index++, 't');
-			usetat(buffer, index++, ';');
+			(void) usetat(buffer, index++, '&');
+			(void) usetat(buffer, index++, 'l');
+			(void) usetat(buffer, index++, 't');
+			(void) usetat(buffer, index++, ';');
 		}
 		else if(uchar == '>')
 		{	//Expand greater than sign
 			if(index + 4 + 1 > warnsize)
 			{	//If there isn't enough buffer left to expand this character and terminate the string
-				usetat(buffer, index, '\0');	//Terminate the buffer
+				(void) usetat(buffer, index, '\0');	//Terminate the buffer
 				return;				//And return
 			}
-			usetat(buffer, index++, '&');
-			usetat(buffer, index++, 'g');
-			usetat(buffer, index++, 't');
-			usetat(buffer, index++, ';');
+			(void) usetat(buffer, index++, '&');
+			(void) usetat(buffer, index++, 'g');
+			(void) usetat(buffer, index++, 't');
+			(void) usetat(buffer, index++, ';');
 		}
 		else if(uchar == '&')
 		{	//Expand ampersand
 			if(index + 5 + 1 > warnsize)
 			{	//If there isn't enough buffer left to expand this character and terminate the string
-				usetat(buffer, index, '\0');	//Terminate the buffer
+				(void) usetat(buffer, index, '\0');	//Terminate the buffer
 				return;				//And return
 			}
-			usetat(buffer, index++, '&');
-			usetat(buffer, index++, 'a');
-			usetat(buffer, index++, 'm');
-			usetat(buffer, index++, 'p');
-			usetat(buffer, index++, ';');
+			(void) usetat(buffer, index++, '&');
+			(void) usetat(buffer, index++, 'a');
+			(void) usetat(buffer, index++, 'm');
+			(void) usetat(buffer, index++, 'p');
+			(void) usetat(buffer, index++, ';');
 		}
 		else
 		{	//Transfer character as-is
 			if(index + 1 + 1 > warnsize)
 			{	//If there isn't enough buffer left to copy this character and terminate the string
-				usetat(buffer, index, '\0');	//Terminate the buffer
+				(void) usetat(buffer, index, '\0');	//Terminate the buffer
 				return;				//And return
 			}
-			usetat(buffer, index++, uchar);
+			(void) usetat(buffer, index++, uchar);
 		}
 	}//For each character of the input string
-	usetat(buffer, index++, '\0');	//Terminate the string
+	(void) usetat(buffer, index++, '\0');	//Terminate the string
 
 	if(warnsize && (index > warnsize + 1))
 	{	//If there is a threshold length specified for the output string, and the expanded string exceeds it (accounting for the extra byte used by the string terminator)
 		allegro_message("Warning:  The string\n\"%s\"\nis longer than %lu characters.  It will need to be shortened or it will be truncated.", buffer, (unsigned long)warnsize);
-		usetat(buffer, warnsize, '\0');	//Truncate the string
+		(void) usetat(buffer, warnsize, '\0');	//Truncate the string
 	}
 }
 
@@ -3312,8 +3312,8 @@ void eof_export_rocksmith_lyrics(EOF_SONG * sp, char * fn, int version)
 		return;	//Failure
 	}
 
-	pack_fputs("<?xml version='1.0' encoding='UTF-8'?>\n", fp);
-	pack_fputs("<!-- " EOF_VERSION_STRING " -->\n", fp);	//Write EOF's version in an XML comment
+	(void) pack_fputs("<?xml version='1.0' encoding='UTF-8'?>\n", fp);
+	(void) pack_fputs("<!-- " EOF_VERSION_STRING " -->\n", fp);	//Write EOF's version in an XML comment
 	(void) snprintf(buffer, sizeof(buffer) - 1, "<vocals count=\"%lu\">\n", sp->vocal_track[0]->lyrics);
 	(void) pack_fputs(buffer, fp);
 
@@ -3326,9 +3326,9 @@ void eof_export_rocksmith_lyrics(EOF_SONG * sp, char * fn, int version)
 		{	//For each character in the expanded XML string
 			uchar = ugetat(tp->lyric[ctr]->text, index1);
 			uchar = rs_lyric_substitute_char_utf8(uchar, eof_rs2_export_extended_ascii_lyrics);	//Substitute the character if necessary
-			usetat(buffer2, index2++, uchar);	//Copy it to another buffer
+			(void) usetat(buffer2, index2++, uchar);	//Copy it to another buffer
 		}
-		usetat(buffer2, index2, '\0');	//Terminate the new buffer
+		(void) usetat(buffer2, index2, '\0');	//Terminate the new buffer
 
 		//Convert escape sequences and filter out incompatible characters as necessary
 		if(version == 2)
@@ -3356,20 +3356,20 @@ void eof_export_rocksmith_lyrics(EOF_SONG * sp, char * fn, int version)
 				{	//If this lyric and all subsequent ones are after the end of this lyric line
 					break;	//Stop processing this line
 				}
-				if(tp->lyric[lyricnum]->pos >= tp->line[linenum].start_pos)
-				{	//If this lyric is contained within the lyric line being checked
-					linefound = 1;
-					if(lyricnum == ctr)
-					{	//If this is the lyric being examined in the outer for loop
-						lyricend = 1;
-					}
-					else
-					{
-						if(lyricend)
-						{	//If a lyric after the one being examined in the outer for loop is also in the lyric line
-							lyricend = 0;	//The one in the outer for loop isn't the last lyric in the line
-							break;
-						}
+				if(tp->lyric[lyricnum]->pos < tp->line[linenum].start_pos)
+					continue;	//If this lyric is not within the lyric line being checked, skip it
+
+				linefound = 1;
+				if(lyricnum == ctr)
+				{	//If this is the lyric being examined in the outer for loop
+					lyricend = 1;
+				}
+				else
+				{
+					if(lyricend)
+					{	//If a lyric after the one being examined in the outer for loop is also in the lyric line
+						lyricend = 0;	//The one in the outer for loop isn't the last lyric in the line
+						break;
 					}
 				}
 			}
@@ -3388,7 +3388,7 @@ void eof_export_rocksmith_lyrics(EOF_SONG * sp, char * fn, int version)
 		(void) pack_fputs(buffer, fp);
 	}//For each lyric
 
-	pack_fputs("</vocals>", fp);
+	(void) pack_fputs("</vocals>", fp);
 	eof_free_ucode_table();
 	(void) pack_fclose(fp);
 }
@@ -4868,25 +4868,25 @@ int eof_lookup_chord_shape(EOF_PRO_GUITAR_NOTE *np, unsigned long *shapenum, cha
 	template = *np;
 	for(ctr = 0, ctr2 = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
 	{	//For each of the 6 supported strings
-		if(template.note & bitmask)
-		{	//If this string is used
-			fret = template.frets[ctr];
-			if(count_mutes)
-			{	//If muted strings are to be considered in the shape being looked up
-				fret = fret & 0x7F;	//Mask out the muting bit to allow any defined fret value to be retained for checking below
-				template.frets[ctr] = fret;	//Update the template note
-			}
-			if((fret == 0) || (fret & 0x80))
-			{	//If this string is played open or muted (and muted notes are being ignored)
-				template.note &= ~bitmask;	//Clear this string on the template note
-			}
-			else
-			{	//Otherwise the string is fretted
-				ctr2++;	//Count how many strings are fretted
-				if(!lowest || (fret < lowest))
-				{
-					lowest = fret;	//Track the lowest fret value in the note
-				}
+		if(!(template.note & bitmask))
+			continue;	//If this string is not used, skip it
+
+		fret = template.frets[ctr];
+		if(count_mutes)
+		{	//If muted strings are to be considered in the shape being looked up
+			fret = fret & 0x7F;	//Mask out the muting bit to allow any defined fret value to be retained for checking below
+			template.frets[ctr] = fret;	//Update the template note
+		}
+		if((fret == 0) || (fret & 0x80))
+		{	//If this string is played open or muted (and muted notes are being ignored)
+			template.note &= ~bitmask;	//Clear this string on the template note
+		}
+		else
+		{	//Otherwise the string is fretted
+			ctr2++;	//Count how many strings are fretted
+			if(!lowest || (fret < lowest))
+			{
+				lowest = fret;	//Track the lowest fret value in the note
 			}
 		}
 	}

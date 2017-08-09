@@ -696,21 +696,21 @@ EOF_SONG * eof_import_midi(const char * fn)
 								eof_import_events[i]->type = 0;
 								for(j = 1; j < EOF_TRACKS_MAX + 4; j++)
 								{	//Compare the track name against the tracks in eof_midi_tracks[], including the GHL variants
-									if(!ustricmp(text, eof_midi_tracks[j].name))
-									{	//If this track name matches an expected name
-										eof_import_events[i]->type = eof_midi_tracks[j].track_type;
-										eof_import_events[i]->game = 0;	//Note that this is a FoF/RB/GH style MIDI
-										eof_import_events[i]->diff = eof_midi_tracks[j].difficulty;
-										eof_import_events[i]->tracknum = j;
-										if(eof_midi_tracks[j].track_type == EOF_TRACK_GUITAR)
-										{	//If this is the guitar track
-											rbg = 1;	//Note that the track has been found
-										}
-										if(ustrstr(text," GHL"))
-										{	//If this is a GHL track name
-											sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags = EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES;
-											sp->legacy_track[sp->track[(unsigned)eof_midi_tracks[j].track_type]->tracknum]->numlanes = 6;
-										}
+									if(ustricmp(text, eof_midi_tracks[j].name))
+										continue;	//If this name doesn't match that of the track, skip it
+
+									eof_import_events[i]->type = eof_midi_tracks[j].track_type;
+									eof_import_events[i]->game = 0;	//Note that this is a FoF/RB/GH style MIDI
+									eof_import_events[i]->diff = eof_midi_tracks[j].difficulty;
+									eof_import_events[i]->tracknum = j;
+									if(eof_midi_tracks[j].track_type == EOF_TRACK_GUITAR)
+									{	//If this is the guitar track
+										rbg = 1;	//Note that the track has been found
+									}
+									if(ustrstr(text," GHL"))
+									{	//If this is a GHL track name
+										sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags = EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES;
+										sp->legacy_track[sp->track[(unsigned)eof_midi_tracks[j].track_type]->tracknum]->numlanes = 6;
 									}
 								}
 								if(eof_import_events[i]->type != 0)

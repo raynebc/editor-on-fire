@@ -298,77 +298,77 @@ int rs_lyric_substitute_char_extended(int character, int function)
 		code = 'y';
 	}
 
-	//Conditionally substitute for characters the author hasn't allowed (Allow RS2 extended ASCII lyrics)
-	if(!function)
-	{	//If the calling function is opting to substitute for ALL accented Latin characters
-		if((code == 192) || (code == 193) || (code == 194) || (code == 196) || (code == 197))
-		{	//Capital A with grave, acute, circumflex, umlaut or ring accent
-			code = 'A';
-		}
-		else if((code == 224) || (code == 225) || (code == 226) || (code == 228) || (code == 229))
-		{	//Lowercase a with grave, acute, circumflex, umlaut or ring accent
-			code = 'a';
-		}
-		else if(code == 199)
-		{	//Capital C with cedilla accent
-			code = 'C';
-		}
-		else if(code == 231)
-		{	//Lowercase c with cedilla accent
-			code = 'c';
-		}
-		else if((code == 200) || (code == 201) || (code == 202) || (code == 203))
-		{	//Capital E with grave, acute, circumflex or umlaut accent
-			code = 'E';
-		}
-		else if((code == 232) || (code == 233) || (code == 234) || (code == 235))
-		{	//Lowercase e with grave, acute, circumflex or umlaut accent
-			code = 'e';
-		}
-		else if((code == 204) || (code == 206) || (code == 207))
-		{	//Capital I with grave, circumflex or umlaut accent
-			code = 'I';
-		}
-		else if((code == 236) || (code == 237) || (code == 238) || (code == 239))
-		{	//Lowercase i with grave, acute, circumflex or umlaut accent
-			code = 'i';
-		}
-		else if(code == 209)
-		{	//Capital N with tilde
-			code = 'N';
-		}
-		else if(code == 241)
-		{	//Lowercase n with tilde
-			code = 'n';
-		}
-		else if((code == 210) || (code == 211) || (code == 212) || (code == 214) || (code == 216))
-		{	//Capital O with grave, acute, circumflex, umlaut or slash accent
-			code = 'O';
-		}
-		else if((code == 242) || (code == 243) || (code == 244) || (code == 246) || (code == 248))
-		{	//Lowercase o with grave, acute, circumflex, umlaut or slash accent
-			code = 'o';
-		}
-		else if((code == 217) || (code == 218) || (code == 219) || (code == 220))
-		{	//Capital U with grave, acute, circumflex or umlaut accent
-			code = 'U';
-		}
-		else if((code == 249) || (code == 250) || (code == 251) || (code == 252))
-		{	//Lowercase u with grave, acute, circumflex or umlaut accent
-			code = 'u';
-		}
-		else if(code == 138)
-		{	//Capital S with caron
-			code = 'S';
-		}
-		else if(code == 154)
-		{	//Lowercase s with caron
-			code = 's';
-		}
-		else if(code == 158)
-		{	//Lowercase z with caron
-			code = 'z';
-		}
+	if(function)
+		return (int)code;	//If the calling function didn't opt to substitute for ALL accented Latin characters, skip the logic below
+
+	//Substitute for characters the author hasn't allowed ("Allow RS2 extended ASCII lyrics" preference not enabled)
+	if((code == 192) || (code == 193) || (code == 194) || (code == 196) || (code == 197))
+	{	//Capital A with grave, acute, circumflex, umlaut or ring accent
+		code = 'A';
+	}
+	else if((code == 224) || (code == 225) || (code == 226) || (code == 228) || (code == 229))
+	{	//Lowercase a with grave, acute, circumflex, umlaut or ring accent
+		code = 'a';
+	}
+	else if(code == 199)
+	{	//Capital C with cedilla accent
+		code = 'C';
+	}
+	else if(code == 231)
+	{	//Lowercase c with cedilla accent
+		code = 'c';
+	}
+	else if((code == 200) || (code == 201) || (code == 202) || (code == 203))
+	{	//Capital E with grave, acute, circumflex or umlaut accent
+		code = 'E';
+	}
+	else if((code == 232) || (code == 233) || (code == 234) || (code == 235))
+	{	//Lowercase e with grave, acute, circumflex or umlaut accent
+		code = 'e';
+	}
+	else if((code == 204) || (code == 206) || (code == 207))
+	{	//Capital I with grave, circumflex or umlaut accent
+		code = 'I';
+	}
+	else if((code == 236) || (code == 237) || (code == 238) || (code == 239))
+	{	//Lowercase i with grave, acute, circumflex or umlaut accent
+		code = 'i';
+	}
+	else if(code == 209)
+	{	//Capital N with tilde
+		code = 'N';
+	}
+	else if(code == 241)
+	{	//Lowercase n with tilde
+		code = 'n';
+	}
+	else if((code == 210) || (code == 211) || (code == 212) || (code == 214) || (code == 216))
+	{	//Capital O with grave, acute, circumflex, umlaut or slash accent
+		code = 'O';
+	}
+	else if((code == 242) || (code == 243) || (code == 244) || (code == 246) || (code == 248))
+	{	//Lowercase o with grave, acute, circumflex, umlaut or slash accent
+		code = 'o';
+	}
+	else if((code == 217) || (code == 218) || (code == 219) || (code == 220))
+	{	//Capital U with grave, acute, circumflex or umlaut accent
+		code = 'U';
+	}
+	else if((code == 249) || (code == 250) || (code == 251) || (code == 252))
+	{	//Lowercase u with grave, acute, circumflex or umlaut accent
+		code = 'u';
+	}
+	else if(code == 138)
+	{	//Capital S with caron
+		code = 'S';
+	}
+	else if(code == 154)
+	{	//Lowercase s with caron
+		code = 's';
+	}
+	else if(code == 158)
+	{	//Lowercase z with caron
+		code = 'z';
 	}
 
 	return (int)code;

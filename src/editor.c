@@ -3821,7 +3821,6 @@ void eof_editor_logic(void)
 
 					if(eof_hover_note < 0)
 					{	//If no note is being hovered over, place a GHL open note
-						EOF_NOTE * new_note;
 						long notelen = eof_snap.length;	//The default length of the new note
 						if(eof_new_note_length_1ms)
 						{	//If the new note's length is being overridden as 1ms
@@ -5819,9 +5818,10 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		}
 		if((eof_note_type != eof_get_note_type(eof_song, eof_selected_track, i)) || (notepos + notelength < start))
 			continue;	//If this note is not in the active difficulty or would render before the left edge of the piano roll, skip it
-
 		if(!eof_note_is_highlighted(eof_song, eof_selected_track, i))
 			continue;	//If this note is not flagged to be highlighted, skip it
+		if(notepos + notelength < start)
+			continue;	//If this note ends before the left edge of the screen (is not visible), skip it
 
 		//Otherwise render a yellow colored background
 		markerlength = notelength / eof_zoom;
@@ -5830,21 +5830,18 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			markerlength = eof_screen_layout.note_size;	//Make it longer
 		}
 		markerpos = lpos + (notepos / eof_zoom);
-		if(notepos + notelength >= start)
-		{	//If the notes ends at or right of the left edge of the screen
-			if(markerpos <= window->screen->w)
-			{	//If the marker starts at or left of the right edge of the screen (is visible)
-				int color = eof_color_highlight1;
-				if(!(eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_NOTE_FLAG_HIGHLIGHT))
-				{	//If this note does not have static highlighting
-					color = eof_color_highlight2;	//Used the defined dynamic highlighting color (cyan by default)
-				}
-				rectfill(window->screen, markerpos, EOF_EDITOR_RENDER_OFFSET + 25, markerpos + markerlength, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, color);
+		if(markerpos <= window->screen->w)
+		{	//If the marker starts at or left of the right edge of the screen (is visible)
+			int color = eof_color_highlight1;
+			if(!(eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_NOTE_FLAG_HIGHLIGHT))
+			{	//If this note does not have static highlighting
+				color = eof_color_highlight2;	//Used the defined dynamic highlighting color (cyan by default)
 			}
-			else
-			{	//Otherwise this and all remaining highlighted notes are not visible
-				break;	//Stop rendering them
-			}
+			rectfill(window->screen, markerpos, EOF_EDITOR_RENDER_OFFSET + 25, markerpos + markerlength, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, color);
+		}
+		else
+		{	//Otherwise this and all remaining highlighted notes are not visible
+			break;	//Stop rendering them
 		}
 	}
 

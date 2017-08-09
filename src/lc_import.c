@@ -407,7 +407,7 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp, char *outputfilename, char *string2, 
 				{	//If this string has any characters that can't be displayed as standard ASCII
 					exascii = 1;	//Note this
 				}
-				(void) eof_convert_to_extended_ascii(buffer, sizeof(buffer) - 1);	//Convert the lyric from UTF-8 back into extended ASCII encoding
+				(void) eof_convert_to_extended_ascii(buffer, (int)sizeof(buffer) - 1);	//Convert the lyric from UTF-8 back into extended ASCII encoding
 				AddLyricPiece(buffer, tp->lyric[lyrctr]->pos, tp->lyric[lyrctr]->pos + tp->lyric[lyrctr]->length, pitch, 0);
 					//Add the lyric to the Lyrics structure
 

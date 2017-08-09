@@ -208,11 +208,12 @@ DIALOG eof_bpm_change_dialog[] =
 DIALOG eof_anchor_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)         (dp2) (dp3) */
-	{ d_agup_shadow_box_proc,32,  68,  170, 80,  2,   23,  0,    0,      0,   0,   NULL,        NULL, NULL },
+	{ d_agup_shadow_box_proc,32,  68,  170, 100,  2,   23,  0,    0,      0,   0,   NULL,        NULL, NULL },
 	{ d_agup_text_proc,      56,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "Position:", NULL, NULL },
 	{ eof_verified_edit_proc,112, 80,  66,  20,  2,   23,  0,    0,      9,   0,   eof_etext2,  "0123456789:", NULL },
-	{ d_agup_button_proc,    42,  108, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",        NULL, NULL },
-	{ d_agup_button_proc,    120, 108, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",    NULL, NULL },
+	{ d_agup_check_proc,     56,  108, 128, 16,  2,   23,  0,    0,      1,   0,   "Adjust Notes", NULL, NULL },
+	{ d_agup_button_proc,    42,  128, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",        NULL, NULL },
+	{ d_agup_button_proc,    120, 128, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",    NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -978,18 +979,21 @@ int eof_menu_beat_anchor(void)
 {
 	int mm, ss, ms;
 	int oldmm, oldss, oldms;
-	unsigned long oldpos = eof_song->beat[eof_selected_beat]->pos;
+	unsigned long oldpos;
 	unsigned long newpos = 0;
 	int revert = 0;
 	char ttext[4] = {0};
 
+	if(!eof_song)
+		return 1;							//No project loaded
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
-
 	if(eof_selected_beat == 0)
-	{	//This function is not allowed on the first beat marker
-		return 1;
-	}
+		return 1;							//This function is not allowed on the first beat marker
+	if(eof_song->beats < 2)
+		return 1;							//This function expects the project to have at least two beats
+
+	oldpos = eof_song->beat[eof_selected_beat]->pos;
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_anchor_dialog, gui_fg_color, gui_bg_color);
@@ -998,8 +1002,8 @@ int eof_menu_beat_anchor(void)
 	oldss = (eof_song->beat[eof_selected_beat]->pos / 1000) % 60;
 	oldms = (eof_song->beat[eof_selected_beat]->pos) % 1000;
 	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%02d:%02d.%03d", oldmm, oldss, oldms);
-	if(eof_popup_dialog(eof_anchor_dialog, 2) == 3)
-	{
+	if(eof_popup_dialog(eof_anchor_dialog, 2) == 4)
+	{	//If the user clicked OK
 		ttext[0] = eof_etext2[0];
 		ttext[1] = eof_etext2[1];
 		mm = atoi(ttext);
@@ -1020,6 +1024,10 @@ int eof_menu_beat_anchor(void)
 			return 1;
 		}
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		if(eof_anchor_dialog[3].flags == D_SELECTED)
+		{	//If the "Adjust Notes" option was selected
+			(void) eof_menu_edit_cut(eof_selected_beat, 1);
+		}
 		newpos = (double)mm * 60.0 * 1000.0 + (double)ss * 1000.0 + (double)ms;
 		if(newpos > oldpos)
 		{
@@ -1029,8 +1037,8 @@ int eof_menu_beat_anchor(void)
 				eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos + 0.5;	//Round up to nearest ms
 				eof_mickeys_x = 1;
 				eof_recalculate_beats(eof_song, eof_selected_beat);
-				if(eof_song->beat[eof_selected_beat]->pos > eof_song->beat[eof_selected_beat + 1]->pos - 100)
-				{
+				if((eof_selected_beat < eof_song->beats - 1) && (eof_song->beat[eof_selected_beat]->pos > eof_song->beat[eof_selected_beat + 1]->pos - 100))
+				{	//If there is another beat, and the selected beat was moved to within 99ms of it, undo the operation
 					(void) eof_undo_apply();
 					revert = 1;
 					break;
@@ -1058,6 +1066,10 @@ int eof_menu_beat_anchor(void)
 			eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
 			eof_calculate_beats(eof_song);
 			eof_truncate_chart(eof_song);	//Update number of beats and the chart length as appropriate
+			if(eof_anchor_dialog[3].flags == D_SELECTED)
+			{	//If the "Adjust Notes" option was selected
+				(void) eof_menu_edit_cut_paste(eof_selected_beat, 1);
+			}
 		}
 	}
 	eof_cursor_visible = 1;

@@ -1200,7 +1200,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 				if(isghl)
 				{	//GHL tracks export with a " GHL" suffix
-					snprintf(ghlname, sizeof(ghlname) - 1, "%s GHL", exportname);
+					(void) snprintf(ghlname, sizeof(ghlname) - 1, "%s GHL", exportname);
 					exportname = ghlname;
 				}
 
