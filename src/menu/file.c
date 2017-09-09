@@ -3340,6 +3340,41 @@ int eof_save_helper_checks(void)
 		}
 	}
 
+	/* check for notes with more than 32 bend points, which will cause Rocksmith 2014 to crash */
+	if(eof_write_rs2_files)
+	{	//If the user wants to save Rocksmith 2014 capable files
+		char user_prompted = 0;
+
+		for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
+		{	//For each track (until the user is warned about any offending bend notes)
+			char restore_tech_view = 0;
+
+			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				continue;	//If this is not a pro guitar/bass track, skip it
+
+			tracknum = eof_song->track[ctr]->tracknum;
+			tp = eof_song->pro_guitar_track[tracknum];
+			restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
+			eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Activate the normal note set
+			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+			{	//For each note in the track
+				if(eof_pro_guitar_note_bitmask_has_bend_tech_note(tp, ctr2, 63, NULL) < 33)
+					continue;	//If this note has fewer than 33 bend tech notes, skip it
+
+				eof_menu_pro_guitar_track_set_tech_view_state(tp, 1);	//Activate the tech note set
+				eof_seek_and_render_position(ctr, tp->pgnote[ctr2]->type, tp->pgnote[ctr2]->pos);	//Render the track so the user can see where the correction needs to be made
+				eof_clear_input();
+				if(!user_prompted && alert("At least one note has 33 or more bend tech notes", "This can cause Rocksmith 2014 to crash.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+				{	//If the user hasn't already answered this prompt, and opts to correct the issue
+					return 1;	//Return cancellation
+				}
+				user_prompted = 1;	//Set the condition to exit outer for loop
+				break;	//Break from inner for loop
+			}//For each note in the track
+			eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Restore the note set that was in use for the track
+		}//For each track (until the user is warned about any offending bend notes)
+	}
+
 
 	///Dynamic difficulty related checks below
 	if(eof_song->tags->rs_export_suppress_dd_warnings)

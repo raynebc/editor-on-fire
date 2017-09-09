@@ -1634,7 +1634,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		}
 
 		if(eof_song->track[sourcetrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
-			continue;	//If this isn't a pro guitar track, skip the logic below
+			continue;	//If the source track isn't a pro guitar track, skip the logic below
 
 		//Otherwise paste arpeggio/handshape phrasing
 		if(temp_note.arpeggnum != lastarpeggnum)
