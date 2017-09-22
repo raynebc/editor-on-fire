@@ -2522,8 +2522,8 @@ int eof_legacy_guitar_note_is_open(EOF_SONG *sp, unsigned long track, unsigned l
 	}
 	else
 	{	//The specified note is in a non GHL track
-		if(eof_get_note_note(sp, track, note) == 32)
-			return 1;	//A single note on lane 6 is considered an open note
+		if(eof_get_note_note(sp, track, note) & 32)
+			return 1;	//A note containing a gem on lane 6 is considered an open note
 	}
 
 	return 0;

@@ -762,8 +762,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 							{	//If this note also has a gem on any lanes other than 6
 								note = 32;	//Clear all lanes except lane 6
 							}
-							noteflags &= ~EOF_NOTE_FLAG_F_HOPO;		//Omit HOPO related statuses on the open strum note as they are not supported by non GHWT rhythm games
-							noteflags &= ~EOF_NOTE_FLAG_NO_HOPO;
 						}
 					}
 				}
