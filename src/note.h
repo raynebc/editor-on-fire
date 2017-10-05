@@ -124,6 +124,6 @@ int eof_note_convert_ghl_authoring(EOF_SONG *sp, unsigned long track, unsigned l
 int eof_legacy_guitar_note_is_open(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//If the specified note is in a legacy guitar/bass track, returns nonzero if either of these conditions are true:
 	//  1.  The note is in a GHL mode track and has EOF_GUITAR_NOTE_FLAG_GHL_OPEN status
-	//  2.  The note is in a non GHL mode track and is a single note on lane 6
+	//  2.  The note is in a non GHL mode track and contains a gem on lane 6
 
 #endif

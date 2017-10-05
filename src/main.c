@@ -4658,7 +4658,7 @@ void eof_exit(void)
 			if(eof_undo_filename[i])
 			{
 				(void) delete_file(eof_undo_filename[i]);	//Delete the undo file
-				(void) snprintf(fn, sizeof(fn) - 1, "%s%s.ogg", eof_temp_path_s, eof_undo_filename[i]);	//Get the filename of any associated undo OGG
+				(void) snprintf(fn, sizeof(fn) - 1, "%s.ogg", eof_undo_filename[i]);	//Get the filename of any associated undo OGG
 				(void) delete_file(fn);	//And delete it if it exists
 			}
 		}

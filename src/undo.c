@@ -149,7 +149,9 @@ int eof_undo_add(int type)
 	}
 	if(type == EOF_UNDO_TYPE_SILENCE)
 	{
-		(void) snprintf(fn, sizeof(fn) - 1, "%s%s.ogg", eof_temp_path_s, eof_undo_filename[eof_undo_current_index]);
+		(void) snprintf(fn, sizeof(fn) - 1, "%s.ogg", eof_undo_filename[eof_undo_current_index]);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Backing up chart audio to file \"%s\"", fn);
+		eof_log(eof_log_string, 1);
 		(void) eof_copy_file(eof_loaded_ogg_name, fn);
 	}
 	eof_undo_last_type = type;
@@ -231,10 +233,16 @@ int eof_undo_apply(void)
 	if(eof_undo_type[eof_undo_current_index] == EOF_UNDO_TYPE_SILENCE)
 	{
 		(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo.ogg", eof_temp_path_s, eof_log_id);	//Include EOF's log ID in the redo name to almost guarantee it is uniquely named
-		(void) eof_copy_file(eof_loaded_ogg_name, fn);
-		(void) snprintf(fn, sizeof(fn) - 1, "%s%s.ogg", eof_temp_path_s, eof_undo_filename[eof_undo_current_index]);
-		(void) eof_copy_file(fn, eof_loaded_ogg_name);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Creating redo chart audio file \"%s\"", fn);
+		eof_log(eof_log_string, 1);
+		(void) eof_copy_file(eof_loaded_ogg_name, fn);	//Create redo OGG file
+
+		(void) snprintf(fn, sizeof(fn) - 1, "%s.ogg", eof_undo_filename[eof_undo_current_index]);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Restoring chart audio from file \"%s\"", fn);
+		eof_log(eof_log_string, 1);
+		(void) eof_copy_file(fn, eof_loaded_ogg_name);	//Load undo OGG file
 		(void) eof_load_ogg(eof_loaded_ogg_name, 0);
+
 		eof_delete_rocksmith_wav();		//Delete the Rocksmith WAV file since changing silence will require a new WAV file to be written
 		eof_fix_waveform_graph();
 		eof_fix_spectrogram();

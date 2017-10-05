@@ -3927,7 +3927,7 @@ void eof_restore_oggs_helper(void)
 				(void) snprintf(oggfn, sizeof(oggfn) - 1, "%s.lastsaved", coggfn);
 				if(exists(oggfn))
 				{
-					printf("restoring from .lastsaved\n");
+					eof_log("restoring from .lastsaved\n", 1);
 					(void) eof_copy_file(oggfn, coggfn);
 					(void) delete_file(oggfn);
 				}
@@ -3936,7 +3936,7 @@ void eof_restore_oggs_helper(void)
 					(void) snprintf(oggfn, sizeof(oggfn) - 1, "%s.backup", coggfn);
 					if(exists(oggfn))
 					{
-						printf("restoring from .backup\n");
+						eof_log("restoring from .backup\n", 1);
 						(void) eof_copy_file(oggfn, coggfn);
 					}
 				}
