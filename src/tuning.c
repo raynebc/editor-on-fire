@@ -20,7 +20,7 @@ char *eof_key_names_minor[15] = {"g#", "eb", "bb", "f", "c", "g", "d", "a", "e",
 char **eof_key_names = eof_key_names_major;
 char *eof_none_string = "None";
 
-char eof_tuning_name[EOF_NAME_LENGTH+1] = {"Unknown"};
+char eof_tuning_name[21] = {"Unknown"};
 char string_1_name[5] = {0};
 char string_2_name[5] = {0};
 char string_3_name[5] = {0};

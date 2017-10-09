@@ -633,7 +633,7 @@ int eof_track_rename(void)
 
 void eof_rebuild_tuning_strings(char *tuningarray)
 {
-	unsigned long tracknum, ctr;
+	unsigned long tracknum, ctr, numspaces;
 	int tuning, halfsteps;
 	char error;
 
@@ -679,36 +679,92 @@ void eof_rebuild_tuning_strings(char *tuningarray)
 
 	//Rebuild the tuning name string
 	strncpy(eof_tuning_name, eof_lookup_tuning_name(eof_song, eof_selected_track, tuningarray), sizeof(eof_tuning_name)-1);
-	strncat(eof_tuning_name, "        ", sizeof(eof_tuning_name) - 1 - strlen(eof_tuning_name));	//Pad the end of the string with several spaces
+	numspaces = sizeof(eof_tuning_name) - 1 - strlen(eof_tuning_name);	//Determine how many unused characters are in the tuning name array
+	for(ctr = 0; ctr < numspaces; ctr++)
+	{
+		strncat(eof_tuning_name, " ", sizeof(eof_tuning_name) - 1);		//Fill in the tuning name array with spaces so the old name is completely overwritten in the dialog
+	}
+}
+
+void eof_redraw_tuning_dialog(void)
+{
+	int i;
+	char tuning[EOF_TUNING_LENGTH] = {0};
+
+	//Build an integer type tuning array from the current input
+	for(i = 0; i < EOF_TUNING_LENGTH; i++)
+	{
+		tuning[i] = atol(eof_fret_strings[i]) % 12;	//Convert the text input to integer value
+	}
+	eof_rebuild_tuning_strings(tuning);
+	(void) object_message(&eof_pro_guitar_tuning_dialog[2], MSG_DRAW, 0);	//Have Allegro redraw the tuning name
+	(void) object_message(&eof_pro_guitar_tuning_dialog[6], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
+	(void) object_message(&eof_pro_guitar_tuning_dialog[9], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
+	(void) object_message(&eof_pro_guitar_tuning_dialog[12], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
+	(void) object_message(&eof_pro_guitar_tuning_dialog[15], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
+	(void) object_message(&eof_pro_guitar_tuning_dialog[18], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
+	(void) object_message(&eof_pro_guitar_tuning_dialog[21], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
 }
 
 int eof_edit_tuning_proc(int msg, DIALOG *d, int c)
 {
 	int i;
 	char * string = NULL;
-	unsigned key_list[32] = {KEY_BACKSPACE, KEY_DEL, KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_ESC, KEY_ENTER};
+	unsigned key_list[32] = {KEY_BACKSPACE, KEY_DEL, KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_ESC, KEY_ENTER, KEY_TAB};	//A list of scan codes to match against MSG_CHAR events
 	int match = 0;
 	int retval;
-	char tuning[EOF_TUNING_LENGTH] = {0};
+	char tuning, tuningchange = 0;
 	unsigned c2 = (unsigned)c;	//Force cast this to unsigned because Splint is incapable of avoiding a false positive detecting it as negative despite assertions proving otherwise
 
 	if(!d)	//If this pointer is NULL for any reason
 		return d_agup_edit_proc(msg, d, c);	//Allow the input character to be returned
 
 	if((msg != MSG_CHAR) && (msg != MSG_UCHAR))
-		return d_agup_edit_proc(msg, d, c);		//If this isn't a character input message, allow the input character to be returned
+	{	//If this isn't a character input message, allow the input character to be returned
+		return d_agup_edit_proc(msg, d, c);
+	}
 
-	for(i = 0; i < 8; i++)
-	{	//Check each of the pre-defined allowable keys
-		if((msg == MSG_UCHAR) && (c2 == 27))
+	//Check scan code input
+	if(msg == MSG_CHAR)
+	{
+		if((c2 >> 8 == KEY_BACKSPACE) || (c2 >> 8 == KEY_DEL))
+		{	//If the backspace or delete keys are trapped
+			match = 1;	//Ensure the full function runs, so that the strings are rebuilt
+		}
+		if(c2 >> 8 == KEY_DOWN)
+		{	//If the down key is trapped
+			tuningchange = -1;	//The tuning value for this field will be decremented
+		}
+		if(c2 >> 8 == KEY_UP)
+		{	//If the up key is trapped
+			tuningchange = 1;	//The tuning value for this field will be incremented
+		}
+		if(tuningchange)
+		{	//If the tuning value is to be incremented/decremented
+			string = (char *)d->dp;	//Obtain the string of whichever tuning field has focus
+			tuning = atol(string);	//Convert the text input to integer value
+			tuning = (tuning + tuningchange) % 12;	//Adjust the tuning value accordingly and constrain to a range of 0 through +- 11
+			(void) snprintf(string, sizeof(eof_string_lane_1) - 1, "%d", tuning);	//Repopulate this input field with the updated string
+			eof_redraw_tuning_dialog();
+			return D_REDRAWME;
+		}
+	}
+
+	//Check ASCII code input
+	if(msg == MSG_UCHAR)
+	{
+		if(c2 == 27)
 		{	//If the Escape ASCII character was trapped
 			return d_agup_edit_proc(msg, d, c2);	//Immediately allow the input character to be returned (so the user can escape to cancel the dialog)
 		}
-		if((msg == MSG_CHAR) && ((c2 >> 8 == KEY_BACKSPACE) || (c2 >> 8 == KEY_DEL)))
-		{	//If the backspace or delete keys are trapped
-			match = 1;	//Ensure the full function runs, so that the strings are rebuilt
-			break;
+		if(c2 == 9)
+		{	//If the Tab ASCII character was trapped
+			return d_agup_edit_proc(msg, d, c2);	//Immediately allow the input character to be returned (so the user can tab to the next input field)
 		}
+	}
+
+	for(i = 0; !match && (i < 9); i++)
+	{	//Check each of the pre-defined allowable keys, or unless above code preempts this checking
 		if(c2 >> 8 == key_list[i])			//If the input is permanently allowed
 		{
 			return d_agup_edit_proc(msg, d, c);	//Immediately allow the input character to be returned
@@ -741,20 +797,7 @@ int eof_edit_tuning_proc(int msg, DIALOG *d, int c)
 	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return retval;	//Return without redrawing string tunings if there is an error
 
-	//Build an integer type tuning array from the current input
-	for(i = 0; i < EOF_TUNING_LENGTH; i++)
-	{
-		tuning[i] = atol(eof_fret_strings[i]) % 12;	//Convert the text input to integer value
-	}
-	eof_rebuild_tuning_strings(tuning);
-	(void) object_message(&eof_pro_guitar_tuning_dialog[2], MSG_DRAW, 0);	//Have Allegro redraw the tuning name
-	(void) object_message(&eof_pro_guitar_tuning_dialog[6], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
-	(void) object_message(&eof_pro_guitar_tuning_dialog[9], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
-	(void) object_message(&eof_pro_guitar_tuning_dialog[12], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
-	(void) object_message(&eof_pro_guitar_tuning_dialog[15], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
-	(void) object_message(&eof_pro_guitar_tuning_dialog[18], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
-	(void) object_message(&eof_pro_guitar_tuning_dialog[21], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
-
+	eof_redraw_tuning_dialog();
 	return retval;
 }
 
@@ -763,7 +806,7 @@ DIALOG eof_pro_guitar_tuning_dialog[] =
 	/*	(proc)				(x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)       (d2) (dp)          		(dp2) (dp3) */
 	{d_agup_window_proc,	0,   48,  230, 272,0,   0,   0,    0,      0,         0,	"Edit guitar tuning",NULL, NULL },
 	{d_agup_text_proc,  	16,  80,  44,  8,  0,   0,   0,    0,      0,         0,	"Tuning:",      	NULL, NULL },
-	{d_agup_text_proc,		74,  80,  154, 8,  0,   0,   0,    0, EOF_NAME_LENGTH,0,	eof_tuning_name,    NULL, NULL },
+	{d_agup_text_proc,		74,  80,  154, 8,  0,   0,   0,    0,      21,        0,	eof_tuning_name,    NULL, NULL },
 
 	//Note:  In guitar theory, string 1 refers to high e
 	{d_agup_text_proc,      16,  108, 64,  12,  0,   0,   0,    0,      0,         0,   "Half steps above/below standard",NULL,NULL },

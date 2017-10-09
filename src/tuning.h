@@ -13,7 +13,7 @@ extern char *eof_key_names_major[15];
 extern char *eof_key_names_minor[15];
 extern char **eof_key_names;
 
-extern char eof_tuning_name[EOF_NAME_LENGTH+1];
+extern char eof_tuning_name[21];
 extern char string_1_name[5];
 extern char string_2_name[5];
 extern char string_3_name[5];

@@ -110,7 +110,7 @@ void Export_UStar(FILE *outf)
 						//the delay parameter in a FoF chart.  Since the UltraStar file will be
 						//using this delay, references to lyric timestamps will be negatively
 						//offset by this value.
-	char incomplete=0;	//Boolean:  Required UltraStar information needs to be entered into the
+//	char incomplete=0;	//Boolean:  Required UltraStar information needs to be entered into the
 						//			exported file
 	int errornumber=0;
 	unsigned char pitch_char='F';	//By default, freestyle will be assumed.  If Lyrics.pitch_tracking is nonzero, then appropriate styles will be set
@@ -187,7 +187,7 @@ void Export_UStar(FILE *outf)
 	if(Lyrics.Title == NULL)
 	{
 		temp=unknownstr;
-		incomplete=1;
+//		incomplete=1;
 	}
 	else
 		temp=Lyrics.Title;
@@ -198,7 +198,7 @@ void Export_UStar(FILE *outf)
 	if(Lyrics.Artist == NULL)
 	{
 		temp=unknownstr;
-		incomplete=1;
+//		incomplete=1;
 	}
 	else
 		temp=Lyrics.Artist;
@@ -207,7 +207,7 @@ void Export_UStar(FILE *outf)
 		errornumber=errno;
 
 	fputs_err("#MP3:\n",outf);
-	incomplete=1;	//There is no checking for MP3 yet
+//	incomplete=1;	//There is no checking for MP3 yet
 
 	if(Lyrics.relative)						//If relative UltraStar export was specified
 		fputs_err("#RELATIVE:yes\n",outf);	//Write the relative timing indicator
@@ -410,7 +410,7 @@ void Export_UStar(FILE *outf)
 
 	fputs_err("E\n",outf);
 
-	if(incomplete)
+//	if(incomplete)	//For now this condition is always true, so comment this condition out to satisfy cppcheck
 		(void) puts("\a! Needed information needs to be manually entered into the exported file");
 
 	if(Lyrics.verbose)	printf("\nUltraStar export complete.  %lu lyrics written",Lyrics.piececount);

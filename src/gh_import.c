@@ -253,7 +253,7 @@ unsigned long eof_crc32_reflect(unsigned long value, unsigned numbits)
 {
 	unsigned long retval = 0, bitmask = 1, reflected_bitmask, x;
 
-	reflected_bitmask = 1 << (numbits - 1);
+	reflected_bitmask = 1UL << (numbits - 1);
 	for(x = 0; x < numbits; x++, bitmask <<= 1, reflected_bitmask >>= 1)
 	{	//For each of the bits to reflect
 		if(value & bitmask)
