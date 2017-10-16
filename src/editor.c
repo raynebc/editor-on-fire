@@ -3218,27 +3218,30 @@ if(eof_key_code == KEY_PAUSE)
 						}
 						if(effective_hover_note >= 0)
 						{	//If the user is editing an existing note
-							if(bitmask == 32)
-							{	//If an open note (GHL mode or otherwise) is being toggled on/off
-								if(!eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, eof_hover_note))
-								{	//As long as the user isn't trying to delete a GHL open note by toggling it off
-									eof_song->legacy_track[tracknum]->note[effective_hover_note]->note = 0;	//Clear all lanes, the open note will replace the old note
-									if(ghl_open)
-									{	//If a GHL open note is being placed
-										eof_song->legacy_track[tracknum]->note[effective_hover_note]->flags |= EOF_GUITAR_NOTE_FLAG_GHL_OPEN;	//Set the GHL open note flag
+							if(eof_track_is_legacy_guitar(eof_song, eof_selected_track))
+							{	//If a legacy guitar track is being edited
+								if(bitmask == 32)
+								{	//If an open note (GHL mode or otherwise) is being toggled on/off
+									if(!eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, eof_hover_note))
+									{	//As long as the user isn't trying to delete a GHL open note by toggling it off
+										eof_song->legacy_track[tracknum]->note[effective_hover_note]->note = 0;	//Clear all lanes, the open note will replace the old note
+										if(ghl_open)
+										{	//If a GHL open note is being placed
+											eof_song->legacy_track[tracknum]->note[effective_hover_note]->flags |= EOF_GUITAR_NOTE_FLAG_GHL_OPEN;	//Set the GHL open note flag
+										}
 									}
 								}
-							}
-							else if(eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, effective_hover_note))
-							{	//If an open note is being modified
-								if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
-								{	//If the active track is a GHL track, the new gem will replace the open note
-									eof_song->legacy_track[tracknum]->note[effective_hover_note]->flags &= ~EOF_GUITAR_NOTE_FLAG_GHL_OPEN;	//Clear the GHL open note flag
-									eof_song->legacy_track[tracknum]->note[effective_hover_note]->note = 0;	//Clear all lanes
-								}
-								else if(bitmask != 32)
-								{	//Otherwise as long as the user isn't trying to delete the non GHL open note by toggling it off
-									eof_song->legacy_track[tracknum]->note[effective_hover_note]->note = 0;	//Clear all lanes, the new gem will replace the open note
+								else if(eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, effective_hover_note))
+								{	//If an open note is being modified
+									if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
+									{	//If the active track is a GHL track, the new gem will replace the open note
+										eof_song->legacy_track[tracknum]->note[effective_hover_note]->flags &= ~EOF_GUITAR_NOTE_FLAG_GHL_OPEN;	//Clear the GHL open note flag
+										eof_song->legacy_track[tracknum]->note[effective_hover_note]->note = 0;	//Clear all lanes
+									}
+									else if(bitmask != 32)
+									{	//Otherwise as long as the user isn't trying to delete the non GHL open note by toggling it off
+										eof_song->legacy_track[tracknum]->note[effective_hover_note]->note = 0;	//Clear all lanes, the new gem will replace the open note
+									}
 								}
 							}
 							if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
@@ -4225,16 +4228,19 @@ void eof_editor_logic(void)
 							}
 							else
 							{	//Otherwise alter the note's normal bitmask and delete the note if necessary
-								if(eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, eof_hover_note))
-								{	//If an open note is being modified
-									if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
-									{	//If the active track is a GHL track, the new gem will replace the open note
-										eof_song->legacy_track[tracknum]->note[eof_hover_note]->flags &= ~EOF_GUITAR_NOTE_FLAG_GHL_OPEN;	//Clear the GHL open note flag
-										eof_song->legacy_track[tracknum]->note[eof_hover_note]->note = 0;	//Clear all lanes
-									}
-									else if(bitmask != 32)
-									{	//Otherwise as long as the user isn't trying to delete the non GHL open note by toggling it off
-										eof_song->legacy_track[tracknum]->note[eof_hover_note]->note = 0;	//Clear all lanes, the new gem will replace the open note
+								if(eof_track_is_legacy_guitar(eof_song, eof_selected_track))
+								{	//If a legacy guitar track is being edited
+									if(eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, eof_hover_note))
+									{	//If an open note is being modified
+										if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
+										{	//If the active track is a GHL track, the new gem will replace the open note
+											eof_song->legacy_track[tracknum]->note[eof_hover_note]->flags &= ~EOF_GUITAR_NOTE_FLAG_GHL_OPEN;	//Clear the GHL open note flag
+											eof_song->legacy_track[tracknum]->note[eof_hover_note]->note = 0;	//Clear all lanes
+										}
+										else if(bitmask != 32)
+										{	//Otherwise as long as the user isn't trying to delete the non GHL open note by toggling it off
+											eof_song->legacy_track[tracknum]->note[eof_hover_note]->note = 0;	//Clear all lanes, the new gem will replace the open note
+										}
 									}
 								}
 

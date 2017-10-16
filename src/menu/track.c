@@ -801,10 +801,154 @@ int eof_edit_tuning_proc(int msg, DIALOG *d, int c)
 	return retval;
 }
 
+char * eof_tunings_list(int index, int * size)
+{
+	int ctr, tuning_count = 0;
+	EOF_PRO_GUITAR_TRACK *tp;
+	int bass_active_track = 0;	//Tracks whether the active track is determined to be a bass arrangement
+
+	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	{
+		if(index < 0)
+			*size = 0;	//Indicate no list entries
+
+		return NULL;	//Active track is not a pro guitar track
+	}
+
+	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
+	bass_active_track = eof_track_is_bass_arrangement(tp, eof_selected_track);	//Track whether the active track is a bass arrangement
+
+	switch(index)
+	{
+		case -1:
+		{	//Count the number of tunings applicable to the active track
+			if(size)
+			{
+				for(ctr = 0; ctr < EOF_NUM_TUNING_DEFINITIONS; ctr++)
+				{	//For each defined tuning
+					if(!eof_tuning_definition_is_applicable(bass_active_track, tp->numstrings, ctr))
+					{	//If the tuning definition doesn't apply to the active track
+						continue;	//Skip it
+					}
+
+					tuning_count++;
+				}
+				*size = tuning_count;
+			}
+			break;
+		}
+
+		default:
+			for(ctr = 0; ctr < EOF_NUM_TUNING_DEFINITIONS; ctr++)
+			{	//For each defined tuning
+				if(!eof_tuning_definition_is_applicable(bass_active_track, tp->numstrings, ctr))
+				{	//If the tuning definition doesn't apply to the active track
+					continue;	//Skip it
+				}
+
+				if(tuning_count == index)
+				{	//If this is the tuning definition whose string was requested
+					return eof_tuning_descriptive_names[ctr];
+				}
+
+				tuning_count++;	//The next match will be one index higher
+			}
+		break;
+	}
+
+	return NULL;
+}
+
+int eof_tuning_definition_is_applicable(char track_is_bass, unsigned char numstrings, unsigned definition_num)
+{
+	if(track_is_bass)
+	{	//If the active track is a bass arrangement
+		if(!eof_tuning_definitions[definition_num].is_bass)
+		{	//If the tuning doesn't reflect a bass arrangement
+			return 0;	//Not applicable
+		}
+	}
+	else
+	{	//The active track is a guitar arrangement
+		if(eof_tuning_definitions[definition_num].is_bass)
+		{	//If the tuning reflects a bass arrangement isntead
+			return 0;	//Not applicable
+		}
+	}
+	if(numstrings != eof_tuning_definitions[definition_num].numstrings)
+	{	//If the tuning does not reflect the active track's string count
+		return 0;	//Not applicable
+	}
+
+	return 1;	//This tuning definition applies to the track with the input criteria
+}
+
+DIALOG eof_tuning_preset_dialog[] =
+{
+	/* (proc)                 (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)              (dp2) (dp3) */
+	{ d_agup_shadow_box_proc, 4,   200, 340, 350, 2,   23,  0,    0,      0,   0,   NULL,             NULL, NULL },
+	{ d_agup_text_proc,       123, 208, 128, 8,   2,   23,  0,    0,      0,   0,   "Select tuning",   NULL, NULL },
+	{ d_agup_list_proc,       16,  228, 306, 276, 2,   23,  0,    0,      0,   0,   (void *)eof_tunings_list, NULL, NULL },
+	{ d_agup_button_proc,     16,  510, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",             NULL, NULL },
+	{ d_agup_button_proc,     164, 510, 138, 28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",         NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_tuning_preset(void)
+{
+	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	{	//Don't run this dialog unless a pro guitar track is active
+		return 1;
+	}
+
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_tuning_preset_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_tuning_preset_dialog);
+	if(eof_popup_dialog(eof_tuning_preset_dialog, 0) == 3)
+	{	//User clicked OK
+		EOF_PRO_GUITAR_TRACK *tp;
+		int bass_active_track;
+		unsigned ctr, stringnum, tuning_count = 0;
+
+		tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
+		bass_active_track = eof_track_is_bass_arrangement(tp, eof_selected_track);	//Track whether the active track is a bass arrangement
+
+		//Find the selected tuning definition
+		for(ctr = 0; ctr < EOF_NUM_TUNING_DEFINITIONS; ctr++)
+		{	//For each defined tuning
+			if(!eof_tuning_definition_is_applicable(bass_active_track, tp->numstrings, ctr))
+			{	//If the tuning definition doesn't apply to the active track
+				continue;	//Skip it
+			}
+
+			if(tuning_count == eof_tuning_preset_dialog[2].d1)
+			{	//If this is the tuning definition that was selected
+				for(stringnum = 0; stringnum < tp->numstrings; stringnum++)
+				{	//For each string
+					(void) snprintf(eof_fret_strings[stringnum], sizeof(eof_string_lane_1) - 1, "%d", eof_tuning_definitions[ctr].tuning[stringnum]);	//Apply the user selected tuning to the edit guitar tuning dialog
+				}
+				break;
+			}
+
+			tuning_count++;	//The next match will be one index higher
+		}
+	}
+	else
+	{
+		return 0;
+	}
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	return 1;
+}
+
 DIALOG eof_pro_guitar_tuning_dialog[] =
 {
 	/*	(proc)				(x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)       (d2) (dp)          		(dp2) (dp3) */
-	{d_agup_window_proc,	0,   48,  230, 272,0,   0,   0,    0,      0,         0,	"Edit guitar tuning",NULL, NULL },
+	{d_agup_window_proc,	0,   48,  252, 272,0,   0,   0,    0,      0,         0,	"Edit guitar tuning",NULL, NULL },
 	{d_agup_text_proc,  	16,  80,  44,  8,  0,   0,   0,    0,      0,         0,	"Tuning:",      	NULL, NULL },
 	{d_agup_text_proc,		74,  80,  154, 8,  0,   0,   0,    0,      21,        0,	eof_tuning_name,    NULL, NULL },
 
@@ -829,8 +973,9 @@ DIALOG eof_pro_guitar_tuning_dialog[] =
 	{eof_edit_tuning_proc,	74,  248, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string_lane_1,  "0123456789-",NULL },
 	{d_agup_text_proc,      110, 252, 28,  12,  0,   0,   0,    0,      0,         0,   string_1_name,NULL,          NULL },
 
-	{d_agup_button_proc,    20,  280, 68,  28, 0,   0,   '\r', D_EXIT, 0,         0,   "OK",         NULL,          NULL },
-	{d_agup_button_proc,    140, 280, 68,  28, 0,   0,   0,    D_EXIT, 0,         0,   "Cancel",     NULL,          NULL },
+	{d_agup_button_proc,    12,  280, 68,  28, 0,   0,   '\r', D_EXIT, 0,         0,   "OK",         NULL,          NULL },
+	{d_agup_button_proc,    92,  280, 68,  28, 0,   0,   0,    D_EXIT, 0,         0,   "Preset",     NULL,          NULL },
+	{d_agup_button_proc,    172, 280, 68,  28, 0,   0,   0,    D_EXIT, 0,         0,   "Cancel",     NULL,          NULL },
 	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -840,6 +985,8 @@ int eof_track_tuning(void)
 	char undo_made = 0, newtuning[6] = {0};
 	EOF_PRO_GUITAR_TRACK *tp;
 	int focus = 5;	//By default, start dialog focus in the tuning box for string 1 (top-most box for 6 string track)
+	int retval;
+	long value;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run unless the pro guitar track is active
@@ -864,8 +1011,8 @@ int eof_track_tuning(void)
 		if(ctr < stringcount)
 		{	//If this track uses this string, convert the tuning to its string representation
 			(void) snprintf(eof_fret_strings[ctr], sizeof(eof_string_lane_1) - 1, "%d", tp->tuning[ctr]);
-			eof_pro_guitar_tuning_dialog[19 - (3 * ctr)].flags = 0;		//Enable the input field's label
-			eof_pro_guitar_tuning_dialog[20 - (3 * ctr)].flags = 0;		//Enable the input field for the string
+			eof_pro_guitar_tuning_dialog[19 - (3 * ctr)].flags = 0;			//Enable the input field's label
+			eof_pro_guitar_tuning_dialog[20 - (3 * ctr)].flags = 0;			//Enable the input field for the string
 			eof_fret_string_numbers[ctr][7] = '0' + (stringcount - ctr);	//Correct the string number for this label
 		}
 		else
@@ -882,10 +1029,9 @@ int eof_track_tuning(void)
 	else if(stringcount == 4)
 		focus = 11;
 
-	if(eof_popup_dialog(eof_pro_guitar_tuning_dialog, focus) == 22)
+	retval = eof_popup_dialog(eof_pro_guitar_tuning_dialog, focus);
+	if(retval == 22)
 	{	//If user clicked OK
-		long value;
-
 		//Validate and store the input
 		for(ctr = 0; ctr < tp->numstrings; ctr++)
 		{	//For each string in the track, ensure the user entered a tuning
@@ -907,6 +1053,14 @@ int eof_track_tuning(void)
 				return 1;
 			}
 		}
+	}
+	if(retval == 23)
+	{	//If user opted to select a preset
+		(void) eof_tuning_preset();
+	}
+
+	if((retval == 22) || (retval == 23))
+	{	//If the user manually edited the tuning or selected a preset
 		for(ctr = 0; ctr < 6; ctr++)
 		{	//For each of the 6 supported strings
 			value = atol(eof_fret_strings[ctr]);
@@ -937,7 +1091,7 @@ int eof_track_tuning(void)
 			}
 		}
 		(void) eof_track_transpose_tuning(tp, newtuning);	//Offer to transpose any existing notes in the track to the new tuning
-	}//If user clicked OK
+	}//If the user manually edited the tuning or selected a preset
 
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;

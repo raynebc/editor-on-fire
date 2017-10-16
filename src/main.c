@@ -369,12 +369,12 @@ char ** eof_windows_argv;
 #endif
 
 /* fret/tuning editing arrays */
-char eof_string_lane_1[4] = {0};	//Use a fourth byte to guarantee proper truncation
-char eof_string_lane_2[4] = {0};
-char eof_string_lane_3[4] = {0};
-char eof_string_lane_4[4] = {0};
-char eof_string_lane_5[4] = {0};
-char eof_string_lane_6[4] = {0};
+char eof_string_lane_1[5] = {0};	//Use a fourth byte to guarantee proper truncation
+char eof_string_lane_2[5] = {0};
+char eof_string_lane_3[5] = {0};
+char eof_string_lane_4[5] = {0};
+char eof_string_lane_5[5] = {0};
+char eof_string_lane_6[5] = {0};
 char *eof_fret_strings[6] = {eof_string_lane_1, eof_string_lane_2, eof_string_lane_3, eof_string_lane_4, eof_string_lane_5, eof_string_lane_6};
 char eof_string_lane_1_number[] = "String 6:";
 char eof_string_lane_2_number[] = "String 5:";

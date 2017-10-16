@@ -43,44 +43,98 @@ int eof_enable_chord_cache = 0;
 
 EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS] =
 {
+ //Standard tunings
  {"Standard tuning", 1, 4, {0,0,0,0}},
  {"Standard tuning", 1, 5, {0,0,0,0,0}},
  {"Standard tuning", 1, 6, {0,0,0,0,0,0}},
+
  {"Standard tuning", 0, 6, {0,0,0,0,0,0}},
+
+ //Additional 4 string bass tunings
+ {"Eb tuning", 1, 4, {-1,-1,-1,-1}},
+ {"Eb drop Db tuning", 1, 4, {-3,-1,-1,-1}},
+ {"D tuning", 1, 4, {-2,-2,-2,-2}},
+ {"D drop C tuning", 1, 4, {-4,-2,-2,-2}},
+ {"C# tuning", 1, 4, {-3,-3,-3,-3}},
+ {"C# drop B tuning", 1, 4, {-5,-3,-3,-3}},
+ {"C tuning", 1, 4, {-4,-4,-4,-4}},
+ {"B tuning", 1, 4, {-5,-5,-5,-5}},
+ {"A# tuning", 1, 4, {-6,-6,-6,-6}},
+ {"A tuning", 1, 4, {-7,-7,-7,-7}},
+ {"G# tuning", 1, 4, {-8,-8,-8,-8}},
+ {"F# tuning", 1, 4, {-10,-10,-10,-10}},
+ {"F tuning", 1, 4, {-11,-11,-11,-11}},
+ {"Drop C tuning", 1, 4, {-4,0,0,0}},
+ {"Drop D tuning", 1, 4, {-2,0,0,0}},
+
+ //Additional 6 string guitar tunings
  {"Eb tuning", 0, 6, {-1,-1,-1,-1,-1,-1}},
  {"Eb tuning", 0, 5, {-1,-1,-1,-1,-1}},
  {"Eb tuning", 0, 4, {-1,-1,-1,-1}},
- {"Eb tuning", 1, 4, {-1,-1,-1,-1}},
  {"Eb drop Db tuning", 0, 6, {-3,-1,-1,-1,-1,-1}},
- {"Eb drop Db tuning", 1, 4, {-3,-1,-1,-1}},
- {"D tuning", 1, 4, {-2,-2,-2,-2}},
  {"D tuning", 0, 6, {-2,-2,-2,-2,-2,-2}},
  {"D drop C tuning", 0, 6, {-4,-2,-2,-2,-2,-2}},
- {"D drop C tuning", 1, 4, {-4,-2,-2,-2}},
- {"C# tuning", 1, 4, {-3,-3,-3,-3}},
  {"C# tuning", 0, 6, {-3,-3,-3,-3,-3,-3}},
- {"C# drop B tuning", 1, 4, {-5,-3,-3,-3}},
  {"C# drop B tuning", 0, 6, {-5,-3,-3,-3,-3,-3}},
- {"C tuning", 1, 4, {-4,-4,-4,-4}},
  {"C tuning", 0, 6, {-4,-4,-4,-4,-4,-4}},
- {"B tuning", 1, 4, {-5,-5,-5,-5}},
  {"B tuning", 0, 6, {-5,-5,-5,-5,-5,-5}},
- {"A# tuning", 1, 4, {-6,-6,-6,-6}},
  {"A# tuning", 0, 6, {-6,-6,-6,-6,-6,-6}},
- {"A tuning", 1, 4, {-7,-7,-7,-7}},
  {"A tuning", 0, 6, {-7,-7,-7,-7,-7,-7}},
- {"G# tuning", 1, 4, {-8,-8,-8,-8}},
  {"G# tuning", 0, 6, {-8,-8,-8,-8,-8,-8}},
  {"G tuning", 0, 6, {-9,-9,-9,-9,-9,-8}},
- {"F# tuning", 1, 4, {-10,-10,-10,-10}},
  {"F# tuning", 0, 6, {-10,-10,-10,-10,-10,-10}},
- {"F tuning", 1, 4, {-11,-11,-11,-11}},
  {"F tuning", 0, 6, {-11,-11,-11,-11,-11,-11}},
  {"Drop C tuning", 0, 6, {-4,0,0,0,0,0}},
- {"Drop C tuning", 1, 4, {-4,0,0,0}},
  {"Drop D tuning", 0, 6, {-2,0,0,0,0,0}},
- {"Drop D tuning", 1, 4, {-2,0,0,0}},
  {"Open G tuning", 0, 6, {-2,-2,0,0,0,-2}}
+};
+
+char *eof_tuning_descriptive_names[EOF_NUM_TUNING_DEFINITIONS] =
+{
+ //Standard tunings
+ "Standard tuning (0,0,0,0): EADG",
+ "Standard tuning (0,0,0,0,0): BEADG",
+ "Standard tuning (0,0,0,0,0,0): BEADGC",
+
+ "Standard tuning (0,0,0,0,0,0): EADGBE",
+
+ //Additional 4 string bass tunings
+ "Eb tuning (-1,-1,-1,-1): D#G#C#F#",
+ "Eb drop Db tuning (-3,-1,-1,-1): C#G#C#F#",
+ "D tuning (-2,-2,-2,-2): DGCF",
+ "D drop C tuning (-4,-2,-2,-2): CGCF",
+ "C# tuning (-3,-3,-3,-3): C#F#BE",
+ "C# drop B tuning (-5,-3,-3,-3): BF#BE",
+ "C tuning (-4,-4,-4,-4): CFA#D#",
+ "B tuning (-5,-5,-5,-5): BEAD",
+ "A# tuning (-6,-6,-6,-6): A#D#G#C#",
+ "A tuning (-7,-7,-7,-7): ADGC",
+ "G# tuning (-8,-8,-8,-8): G#C#F#B",
+ "F# tuning (-10,-10,-10,-10): F#BEA",
+ "F tuning (-11,-11,-11,-11): FA#D#G#",
+ "Drop C tuning (-4,0,0,0): CADG",
+ "Drop D tuning (-2,0,0,0): DADG",
+
+ //Additional 6 string guitar tunings
+ "Eb tuning (-1,-1,-1,-1,-1,-1): D#G#C#F#A#D#",
+ "Eb tuning (-1,-1,-1,-1,-1): EADGB",
+ "Eb tuning (-1,-1,-1,-1): EADG",
+ "Eb drop Db tuning (-3,-1,-1,-1,-1,-1): C#G#C#F#A#D#",
+ "D tuning (-2,-2,-2,-2,-2,-2): DGCFAD",
+ "D drop C tuning (-4,-2,-2,-2,-2,-2): CGCFAD",
+ "C# tuning (-3,-3,-3,-3,-3,-3): C#F#BEG#C#",
+ "C# drop B tuning (-5,-3,-3,-3,-3,-3): BF#BEG#C#",
+ "C tuning (-4,-4,-4,-4,-4,-4): CFA#D#GC",
+ "B tuning (-5,-5,-5,-5,-5,-5): BEADF#B",
+ "A# tuning (-6,-6,-6,-6,-6,-6): A#D#G#C#FA#",
+ "A tuning (-7,-7,-7,-7,-7,-7): ADGCEA",
+ "G# tuning (-8,-8,-8,-8,-8,-8): G#C#F#BD#G#",
+ "G tuning (-9,-9,-9,-9,-9,-8): GCFA#DG#",
+ "F# tuning (-10,-10,-10,-10,-10,-10): F#BEAC#F#",
+ "F tuning (-11,-11,-11,-11,-11,-11): FA#D#G#CF",
+ "Drop C tuning (-4,0,0,0,0,0): CADGBE",
+ "Drop D tuning (-2,0,0,0,0,0): DADGBE",
+ "Open G tuning (-2,-2,0,0,0,-2): DGDGBD"
 };
 
 EOF_CHORD_DEFINITION eof_chord_names[EOF_NUM_DEFINED_CHORDS] =
@@ -648,7 +702,7 @@ int eof_track_is_bass_arrangement(EOF_PRO_GUITAR_TRACK *tp, unsigned long track)
 		return 0;	//Invalid parameter
 
 	if((track == EOF_TRACK_PRO_BASS) || (track == EOF_TRACK_PRO_BASS_22))
-	{	//If the native track type is bass
+	{	//If the native track type is bass, bass tuning is assumed unless the arrangement type specifies otherwise
 		is_bass = 1;
 	}
 	else if((track != EOF_TRACK_PRO_GUITAR) && (track != EOF_TRACK_PRO_GUITAR_22) && (track != EOF_TRACK_PRO_GUITAR_B))
@@ -681,13 +735,13 @@ int eof_track_is_drop_tuned(EOF_PRO_GUITAR_TRACK *tp)
 	{	//If the lowest string is drop tuned
 		for(ctr = 1; ctr < tp->numstrings; ctr++)
 		{	//For each of the other strings in the track
-			if(tp->tuning[ctr] != 0)
-			{	//If the string isn't tuned to standard
+			if(tp->tuning[ctr] <= tp->tuning[0])
+			{	//If the string's tuning is dropped as much as or more than the lowest string
 				return 0;	//Not a drop tuning
 			}
 		}
 
-		return 1;	//All other strings were in standard tuning, this is a drop tuning
+		return 1;	//All other strings were dropped fewer half steps from standard tuning, this is a drop tuning
 	}
 
 	return 0;	//not a drop tuning

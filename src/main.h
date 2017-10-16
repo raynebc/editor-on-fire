@@ -513,12 +513,12 @@ extern int eof_color_highlight2_raw;
 extern int eof_color_highlight1;
 extern int eof_color_highlight2;
 
-extern char eof_string_lane_1[4];
-extern char eof_string_lane_2[4];
-extern char eof_string_lane_3[4];
-extern char eof_string_lane_4[4];
-extern char eof_string_lane_5[4];
-extern char eof_string_lane_6[4];
+extern char eof_string_lane_1[5];
+extern char eof_string_lane_2[5];
+extern char eof_string_lane_3[5];
+extern char eof_string_lane_4[5];
+extern char eof_string_lane_5[5];
+extern char eof_string_lane_6[5];
 extern char *eof_fret_strings[6];
 extern char eof_string_lane_1_number[];
 extern char eof_string_lane_2_number[];

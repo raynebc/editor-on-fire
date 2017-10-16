@@ -44,6 +44,7 @@ typedef struct
 
 #define EOF_NUM_TUNING_DEFINITIONS 38
 extern EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS];
+extern char *eof_tuning_descriptive_names[EOF_NUM_TUNING_DEFINITIONS];	//Strings describing each of the entries in the eof_tuning_definitions[] array, for use in selecting the tuning from a list of presets
 extern char eof_tuning_unknown[];
 
 typedef struct
@@ -107,6 +108,6 @@ int eof_track_is_bass_arrangement(EOF_PRO_GUITAR_TRACK *tp, unsigned long track)
 	//Returns nonzero if the track number reflects a bass track, or if the track's arrangement type is set to 4 (Bass)
 
 int eof_track_is_drop_tuned(EOF_PRO_GUITAR_TRACK *tp);
-	//Returns nonzero if the specified track's lowest string is tuned below standard and all other strings are tuned to standard
+	//Returns nonzero if the specified track's lowest string is tuned below standard more half steps than all other strings
 
 #endif

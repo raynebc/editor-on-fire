@@ -43,6 +43,12 @@ int eof_track_delete_difficulty(void);
 int eof_track_rename(void);				//Allows the user to define an alternate name for the active track
 
 int eof_track_tuning(void);				//Allows the active track's tuning to be defined
+int eof_tuning_definition_is_applicable(char track_is_bass, unsigned char numstrings, unsigned definition_num);
+	//Returns nonzero if the specified tuning definition applies to a track with the given criteria
+char * eof_tunings_list(int index, int * size);
+	//A list function to display all of the pre-defined tunings
+int eof_tuning_preset(void);
+	//Displays a dialog allowing the user to set one of the defined tuning definitions for the active track
 int eof_edit_tuning_proc(int msg, DIALOG *d, int c);
 	//This is a modification of eof_verified_edit_proc() allowing the note names and tuning name to be redrawn when a tuning field is altered
 int eof_track_set_num_frets_strings(void);
