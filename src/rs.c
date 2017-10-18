@@ -3178,7 +3178,7 @@ void eof_rs_utf8_expand_xml_text(char *buffer, size_t size, const char *input, u
 	unsigned long input_length, index = 0, ctr;
 	int exchar, uchar;
 
-	if(!buffer || !input || !size || (warnsize > size))
+	if(!buffer || !input || !size || (warnsize > (unsigned long)size))
 		return;	//Invalid parameters
 
 	input_length = ustrlen(input);

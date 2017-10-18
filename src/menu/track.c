@@ -679,7 +679,7 @@ void eof_rebuild_tuning_strings(char *tuningarray)
 
 	//Rebuild the tuning name string
 	strncpy(eof_tuning_name, eof_lookup_tuning_name(eof_song, eof_selected_track, tuningarray), sizeof(eof_tuning_name)-1);
-	numspaces = sizeof(eof_tuning_name) - 1 - strlen(eof_tuning_name);	//Determine how many unused characters are in the tuning name array
+	numspaces = (unsigned long) (sizeof(eof_tuning_name) - 1 - strlen(eof_tuning_name));	//Determine how many unused characters are in the tuning name array
 	for(ctr = 0; ctr < numspaces; ctr++)
 	{
 		strncat(eof_tuning_name, " ", sizeof(eof_tuning_name) - 1);		//Fill in the tuning name array with spaces so the old name is completely overwritten in the dialog
