@@ -369,7 +369,7 @@ char ** eof_windows_argv;
 #endif
 
 /* fret/tuning editing arrays */
-char eof_string_lane_1[5] = {0};	//Use a fourth byte to guarantee proper truncation
+char eof_string_lane_1[5] = {0};	//Use a fifth byte to guarantee proper truncation
 char eof_string_lane_2[5] = {0};
 char eof_string_lane_3[5] = {0};
 char eof_string_lane_4[5] = {0};

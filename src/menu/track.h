@@ -49,6 +49,7 @@ char * eof_tunings_list(int index, int * size);
 	//A list function to display all of the pre-defined tunings
 int eof_tuning_preset(void);
 	//Displays a dialog allowing the user to set one of the defined tuning definitions for the active track
+	//Returns nonzero if the dialog is canceled
 int eof_edit_tuning_proc(int msg, DIALOG *d, int c);
 	//This is a modification of eof_verified_edit_proc() allowing the note names and tuning name to be redrawn when a tuning field is altered
 int eof_track_set_num_frets_strings(void);

@@ -682,7 +682,7 @@ void eof_rebuild_tuning_strings(char *tuningarray)
 	numspaces = (unsigned long) (sizeof(eof_tuning_name) - 1 - strlen(eof_tuning_name));	//Determine how many unused characters are in the tuning name array
 	for(ctr = 0; ctr < numspaces; ctr++)
 	{
-		strncat(eof_tuning_name, " ", sizeof(eof_tuning_name) - 1);		//Fill in the tuning name array with spaces so the old name is completely overwritten in the dialog
+		(void) strncat(eof_tuning_name, " ", sizeof(eof_tuning_name) - strlen(eof_tuning_name) - 1);		//Fill in the tuning name array with spaces so the old name is completely overwritten in the dialog
 	}
 }
 
@@ -848,7 +848,7 @@ char * eof_tunings_list(int index, int * size)
 
 				if(tuning_count == index)
 				{	//If this is the tuning definition whose string was requested
-					return eof_tuning_descriptive_names[ctr];
+					return eof_tuning_definitions[ctr].descriptive_name;
 				}
 
 				tuning_count++;	//The next match will be one index higher
@@ -871,7 +871,7 @@ int eof_tuning_definition_is_applicable(char track_is_bass, unsigned char numstr
 	else
 	{	//The active track is a guitar arrangement
 		if(eof_tuning_definitions[definition_num].is_bass)
-		{	//If the tuning reflects a bass arrangement isntead
+		{	//If the tuning reflects a bass arrangement instead
 			return 0;	//Not applicable
 		}
 	}
@@ -898,7 +898,7 @@ int eof_tuning_preset(void)
 {
 	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 	{	//Don't run this dialog unless a pro guitar track is active
-		return 1;
+		return 1;	//Return cancellation
 	}
 
 	eof_cursor_visible = 0;
@@ -937,12 +937,13 @@ int eof_tuning_preset(void)
 	}
 	else
 	{
-		return 0;
+		return 1;	//Return cancellation
 	}
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
-	return 1;
+
+	return 0;	//Return success
 }
 
 DIALOG eof_pro_guitar_tuning_dialog[] =
@@ -985,7 +986,7 @@ int eof_track_tuning(void)
 	char undo_made = 0, newtuning[6] = {0};
 	EOF_PRO_GUITAR_TRACK *tp;
 	int focus = 5;	//By default, start dialog focus in the tuning box for string 1 (top-most box for 6 string track)
-	int retval;
+	int retval, cancelled = 0;
 	long value;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -1056,11 +1057,11 @@ int eof_track_tuning(void)
 	}
 	if(retval == 23)
 	{	//If user opted to select a preset
-		(void) eof_tuning_preset();
+		cancelled = eof_tuning_preset();
 	}
 
-	if((retval == 22) || (retval == 23))
-	{	//If the user manually edited the tuning or selected a preset
+	if(!cancelled && ((retval == 22) || (retval == 23)))
+	{	//If the user manually edited the tuning or selected a preset (and didn't cancel the dialog)
 		for(ctr = 0; ctr < 6; ctr++)
 		{	//For each of the 6 supported strings
 			value = atol(eof_fret_strings[ctr]);

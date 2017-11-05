@@ -37,6 +37,7 @@ extern int eof_enable_chord_cache;	//Will be set to nonzero when an un-named not
 typedef struct
 {
 	char *name;
+	char *descriptive_name;
 	char is_bass;				//Is nonzero if this is a bass guitar tuning
 	unsigned char numstrings;	//The number of strings defined for this tuning
 	char tuning[EOF_TUNING_LENGTH];
@@ -44,7 +45,6 @@ typedef struct
 
 #define EOF_NUM_TUNING_DEFINITIONS 38
 extern EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS];
-extern char *eof_tuning_descriptive_names[EOF_NUM_TUNING_DEFINITIONS];	//Strings describing each of the entries in the eof_tuning_definitions[] array, for use in selecting the tuning from a list of presets
 extern char eof_tuning_unknown[];
 
 typedef struct
