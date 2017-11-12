@@ -194,7 +194,7 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 16,  150, 226, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short chords",NULL, NULL },
 	{ d_agup_check_proc, 248, 150, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
 	{ d_agup_check_proc, 16,  165, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import replaces active track",NULL, NULL },
-	{ d_agup_check_proc, 248, 165, 226, 16,  2,   23,  0,    0,      1,   0,   "dB import drops mid beat tempos",NULL, NULL },
+	{ d_agup_check_proc, 248, 165, 226, 16,  2,   23,  0,    0,      1,   0,   "Imports drop mid beat tempos",NULL, NULL },
 	{ d_agup_check_proc, 16,  180, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import nat. harmonics only",NULL, NULL },
 	{ d_agup_check_proc, 248, 180, 210, 16,  2,   23,  0,    0,      1,   0,   "Import dialogs recall last path",NULL, NULL },
 	{ d_agup_check_proc, 16,  195, 124, 16,  2,   23,  0,    0,      1,   0,   "Import/Export TS",NULL, NULL },
@@ -1092,6 +1092,7 @@ int eof_menu_file_midi_import(void)
 			eof_song_loaded = 1;
 			eof_init_after_load(0);
 			eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
+			eof_song_enforce_mid_beat_tempo_change_removal();	//Remove mid beat tempo changes if applicable
 			(void) eof_detect_difficulties(eof_song, eof_selected_track);
 			(void) replace_filename(eof_last_midi_path, returnedfn, "", 1024);	//Set the last loaded MIDI file path
 		}
@@ -1420,7 +1421,7 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[13].flags = eof_gp_import_truncate_short_chords ? D_SELECTED : 0;	//GP import truncates short chords
 	eof_import_export_preferences_dialog[14].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
 	eof_import_export_preferences_dialog[15].flags = eof_gp_import_replaces_track ? D_SELECTED : 0;			//GP import replaces active track
-	eof_import_export_preferences_dialog[16].flags = eof_db_import_drop_mid_beat_tempos ? D_SELECTED : 0;	//dB import drops mid beat tempos
+	eof_import_export_preferences_dialog[16].flags = eof_imports_drop_mid_beat_tempos ? D_SELECTED : 0;		//Imports drop mid beat tempos
 	eof_import_export_preferences_dialog[17].flags = eof_gp_import_nat_harmonics_only ? D_SELECTED : 0;		//GP import nat. harmonics only
 	eof_import_export_preferences_dialog[18].flags = eof_imports_recall_last_path ? D_SELECTED : 0;			//Import dialogs recall last path
 	eof_import_export_preferences_dialog[19].flags = eof_use_ts ? D_SELECTED : 0;							//Import/Export TS
@@ -1446,7 +1447,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_gp_import_truncate_short_chords = (eof_import_export_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
 			eof_disable_rs_wav = (eof_import_export_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
 			eof_gp_import_replaces_track = (eof_import_export_preferences_dialog[15].flags == D_SELECTED ? 1 : 0);
-			eof_db_import_drop_mid_beat_tempos = (eof_import_export_preferences_dialog[16].flags == D_SELECTED ? 1 : 0);
+			eof_imports_drop_mid_beat_tempos = (eof_import_export_preferences_dialog[16].flags == D_SELECTED ? 1 : 0);
 			eof_gp_import_nat_harmonics_only = (eof_import_export_preferences_dialog[17].flags == D_SELECTED ? 1 : 0);
 			eof_imports_recall_last_path = (eof_import_export_preferences_dialog[18].flags == D_SELECTED ? 1 : 0);
 			eof_use_ts = (eof_import_export_preferences_dialog[19].flags == D_SELECTED ? 1 : 0);
@@ -1469,7 +1470,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[13].flags = D_SELECTED;	//GP import truncates short chords
 			eof_import_export_preferences_dialog[14].flags = 0;				//Don't write Rocksmith WAV file
 			eof_import_export_preferences_dialog[15].flags = D_SELECTED;	//GP import replaces active track
-			eof_import_export_preferences_dialog[16].flags = 0;				//dB import drops mid beat tempos
+			eof_import_export_preferences_dialog[16].flags = 0;				//Imports drop mid beat tempos
 			eof_import_export_preferences_dialog[17].flags = 0;				//GP import nat. harmonics only
 			eof_import_export_preferences_dialog[18].flags = 0;				//Import dialogs recall last path
 			eof_import_export_preferences_dialog[19].flags = D_SELECTED;	//Import/Export TS

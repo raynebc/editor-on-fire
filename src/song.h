@@ -1016,7 +1016,7 @@ void eof_pro_guitar_track_enforce_chord_density(EOF_PRO_GUITAR_TRACK *tp);
 	//larger) crazy status is applied so that the chords in question export as high density
 
 void eof_song_enforce_mid_beat_tempo_change_removal(void);
-	//If the "dB import drops mid beat tempos" preference is enabled, this function deletes beats that have the EOF_BEAT_FLAG_MIDBEAT flag
+	//If the "Imports drop mid beat tempos" preference is enabled, this function deletes beats that have the EOF_BEAT_FLAG_MIDBEAT flag
 	//Regardless of that preference's setting, the flag is removed from all beats in the project
 
 //Criterion checks for selection functions

@@ -297,7 +297,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			new_beat->ppqn = curppqn;
 			new_beat->midi_pos = chartpos;
 			if(chartpos % chart->resolution != 0)
-			{	//If this beat is not a multiple of the chart resolution, it was triggered by a mid-beat tempo change
+			{	//If this beat's position is not a multiple of the chart resolution, it was created due to a mid-beat tempo change
 				new_beat->flags |= EOF_BEAT_FLAG_MIDBEAT;	//Flag the beat as such so it can be removed after import if the user preference is to do so
 			}
 

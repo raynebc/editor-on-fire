@@ -919,7 +919,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 //#endif
 
 	while(deltapos <= last_delta_time)
-	{//Add new beats until enough have been added to encompass the last MIDI event
+	{	//Add new beats until enough have been added to encompass the last MIDI event
 
 #ifdef EOF_DEBUG_MIDI_IMPORT
 snprintf(debugtext, sizeof(debugtext) - 1,"Start delta %lu / %lu: Adding beat",deltapos,last_delta_time);
@@ -1023,7 +1023,12 @@ snprintf(debugtext, sizeof(debugtext) - 1,"Start delta %lu / %lu: Calculate mid 
 set_window_title(debugtext);
 #endif
 
-		midbeatchange = 0;
+		if(midbeatchange)
+		{	//If the previous loop iteration detected that this beat will be a mid beat tempo/TS change
+			sp->beat[sp->beats - 1]->flags |= EOF_BEAT_FLAG_MIDBEAT;	//Flag the beat as such so it can be removed after import if the user preference is to do so
+		}
+
+		midbeatchange = 0;	//Reset this condition
 		beatlength = (double)eof_work_midi->divisions / ((double)curden / 4.0);		//Determine the length of one full beat in delta ticks (time division is the number of ticks in a quarter note, scale by denominator/4 to account for current time signature)
 		nextanchor = deltafpos + beatlength + 0.5;	//By default, the delta position of the next beat will be the standard length of delta ticks
 		for(ctr = 0; ctr < eof_import_bpm_events->events; ctr++)

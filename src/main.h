@@ -370,7 +370,7 @@ extern int         eof_section_auto_adjust;
 extern int         eof_technote_auto_adjust;
 extern int         eof_top_of_2d_pane_cycle_count_2;
 extern int         eof_rbn_export_slider_hopo;
-extern int         eof_db_import_drop_mid_beat_tempos;
+extern int         eof_imports_drop_mid_beat_tempos;
 extern int         eof_db_import_suppress_5nc_conversion;
 extern int         eof_warn_missing_bass_fhps;
 extern int         eof_4_fret_range;

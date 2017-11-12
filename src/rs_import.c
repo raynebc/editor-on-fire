@@ -805,7 +805,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		}
 		else if(strcasestr_spec(buffer, "<vocals "))
 		{	//If this is the vocals tag
-			allegro_message("This is a lyric file, not a guitar or bass arrangement.\nUse File>Lyric Import to load this file.");
+			allegro_message("This is a lyric file, not a guitar or bass arrangement.\nUse File>Import>Lyric to load this file.");
 			eof_log("\tError:  This is a lyric file, not a guitar or bass arrangement.", 1);
 			free(buffer);
 			free(buffer2);

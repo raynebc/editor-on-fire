@@ -8788,7 +8788,7 @@ void eof_song_enforce_mid_beat_tempo_change_removal(void)
 		if(eof_song->beat[ctr - 1]->flags & EOF_BEAT_FLAG_MIDBEAT)
 		{	//If this beat was flagged as a mid-beat tempo change during an import
 			eof_song->beat[ctr - 1]->flags &= ~EOF_BEAT_FLAG_MIDBEAT;	//Clear the flag
-			if(eof_db_import_drop_mid_beat_tempos)
+			if(eof_imports_drop_mid_beat_tempos)
 			{	//If the user set the preference to delete such tempo changes
 				eof_menu_beat_delete_logic(ctr - 1);
 			}

@@ -124,6 +124,14 @@ int eof_menu_edit_deselect_all_shorter_than(void);	//Deselects all notes in the 
 int eof_menu_edit_deselect_all_longer_than(void);	//Deselects all notes in the active track difficulty that are longer than a user specified length
 int eof_menu_edit_deselect_all_of_length(void);		//Deselects all notes in the active track difficulty that are exactly of the user specified length
 
+int eof_menu_edit_select_note_within_threshhold_of_next_note_logic(int function);
+	//Prompts the user to enter a threshold time using eof_menu_edit_select_by_note_length_dialog[]
+	//Selects/deselects notes depending on whether they are within the given threshold distance of the note that follows
+	//If function is zero, matching notes are removed from the note selection, otherwise they are added to the note selection
+	//Returns 0 on error
+int eof_menu_edit_select_note_within_threshhold_of_next_note(void);	//Selects all notes in the active track difficulty that are within a threshold distance from the note they precede
+int eof_menu_edit_deselect_note_within_threshhold_of_next_note(void); //Deselects all notes in the active track difficulty that are within a threshold distance from the note they precede
+
 int eof_menu_edit_set_start_point(void);
 int eof_menu_edit_set_end_point(void);
 

@@ -160,6 +160,7 @@ MENU eof_edit_selection_select_menu[] =
 	{"&Highlighted", eof_menu_edit_select_highlighted_notes, NULL, 0, NULL},
 	{"Not h&Ighlighted", eof_menu_edit_select_non_highlighted_notes, NULL, 0, NULL},
 	{"One in &Every", eof_menu_edit_select_note_number_in_sequence, NULL, 0, NULL},
+	{"Neighbor &Proximity", eof_menu_edit_select_note_within_threshhold_of_next_note, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -179,6 +180,7 @@ MENU eof_edit_selection_deselect_menu[] =
 	{"&Highlighted", eof_menu_edit_deselect_highlighted_notes, NULL, 0, NULL},
 	{"Not h&Ighlighted", eof_menu_edit_deselect_non_highlighted_notes, NULL, 0, NULL},
 	{"One in &Every", eof_menu_edit_deselect_note_number_in_sequence, NULL, 0, NULL},
+	{"Neighbor &Proximity", eof_menu_edit_deselect_note_within_threshhold_of_next_note, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -2489,7 +2491,7 @@ int eof_menu_edit_select_rest(void)
 DIALOG eof_menu_edit_select_by_note_length_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   eof_etext, NULL, NULL },
+	{ d_agup_window_proc,    0,   0,   300, 132, 0,   0,   0,    0,      0,   0,   eof_etext, NULL, NULL },
 	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "This # of ms:",NULL, NULL },
 	{ eof_verified_edit_proc,12,  56,  90,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789",  NULL },
 	{ d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                         NULL, NULL },
@@ -2588,6 +2590,79 @@ int eof_menu_edit_deselect_all_of_length(void)
 	strncpy(eof_etext, "Deselect notes with a length of", sizeof(eof_etext) - 1);
 	eof_etext2[0] = '\0';	//Empty the input field
 	return eof_menu_edit_select_by_note_length_logic(eof_length_is_equal_to, 0);
+}
+
+int eof_menu_edit_select_note_within_threshhold_of_next_note_logic(int function)
+{
+	unsigned long i;
+	long threshold;
+
+	if(!function && (eof_selection.track != eof_selected_track))
+		return 1;	//No notes in the active track are selected so none can become deselected
+
+	eof_etext2[0] = '\0';	//Empty the dialog's input string
+	eof_color_dialog(eof_menu_edit_select_by_note_length_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_menu_edit_select_by_note_length_dialog);
+
+	if(eof_popup_dialog(eof_menu_edit_select_by_note_length_dialog, 2) != 3)
+		return 1;	//If the user did not click OK, return immediately
+	if(eof_etext2[0] == '\0')
+		return 1;	//If the user did not enter a threshold, return immediately
+
+	threshold = atol(eof_etext2);
+	if(threshold <= 0)
+		return 1;	//If the specified value is not valid, return immediately
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		long nextnote;
+
+		if(eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type)
+			continue;	//If the note isn't in the active difficulty, skip it
+		nextnote = eof_track_fixup_next_note(eof_song, eof_selected_track, i);	//Find the next note in the track difficulty
+		if(nextnote < 0)
+			break;		//If there is no note that follows this one, stop checking notes for this track difficulty
+		if(eof_get_note_pos(eof_song, eof_selected_track, nextnote) - eof_get_note_pos(eof_song, eof_selected_track, i) > threshold)
+			continue;	//If the next note's position exceeds the threshold proximity, skip this note
+
+		if(!function)
+		{	//Perform deselection
+			eof_selection.multi[i] = 0;
+		}
+		else
+		{	//Perform selection
+			if(eof_selection.track != eof_selected_track)
+			{	//If no notes in the current track are currently selected
+				(void) eof_menu_edit_deselect_all();		//Clear the selection variables if necessary
+				eof_selection.track = eof_selected_track;
+			}
+			eof_selection.multi[i] = 1;
+		}
+	}
+	if(eof_selection.current != EOF_MAX_NOTES - 1)
+	{	//If there was a last selected note
+		if(eof_selection.multi[eof_selection.current] == 0)
+		{	//And it's not selected anymore
+			eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note
+		}
+	}
+
+	return 1;
+}
+
+int eof_menu_edit_select_note_within_threshhold_of_next_note(void)
+{
+	strncpy(eof_etext, "Select all notes whose neighbors are within", sizeof(eof_etext) - 1);
+	eof_etext2[0] = '\0';	//Empty the input field
+	return eof_menu_edit_select_note_within_threshhold_of_next_note_logic(1);
+}
+
+int eof_menu_edit_deselect_note_within_threshhold_of_next_note(void)
+{
+
+	strncpy(eof_etext, "Deselect all notes whose neighbors are within", sizeof(eof_etext) - 1);
+	eof_etext2[0] = '\0';	//Empty the input field
+	return eof_menu_edit_select_note_within_threshhold_of_next_note_logic(0);
 }
 
 DIALOG eof_menu_edit_conditional_selection_dialog[] =
