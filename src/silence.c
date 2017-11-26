@@ -1,5 +1,7 @@
 #include <allegro.h>
+#include "menu/file.h"
 #include "menu/song.h"
+#include "dialog.h"
 #include "main.h"
 #include "silence.h"
 #include "utility.h"
@@ -390,7 +392,18 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 	(void) save_wav(wavfn, combined);
 	destroy_sample(combined);	//This is no longer needed
 	(void) replace_filename(soggfn, eof_song_path, "encode.ogg", 1024);
-	bitrate = alogg_get_bitrate_ogg(eof_music_track) / 1000;
+
+	//Obtain an appropriate bitrate
+	if(eof_ogg_settings())
+	{	//If the user selected an OGG encoding quality
+		bitrate = eof_ogg_list_bitrate(eof_ogg_setting);		//Use it for the conversion below
+	}
+	else
+	{	//Automatically pick a bitrate based on the current chart audio
+		eof_log("\tUsing current chart audio bitrate as the re-encode bitrate", 1);
+		bitrate = alogg_get_bitrate_ogg(eof_music_track) / 1000;
+	}
+
 	if(!bitrate)
 	{	//A user found that in an audio file with a really high sample rate (ie. 96KHz), alogg_get_bitrate_ogg() may return zero instead of an expected value
 		bitrate = 256;	//In case this happens, use a bitrate of 256Kbps, which should be good enough for a very high quality file
@@ -471,6 +484,7 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 	unsigned long samples;
 	int channels;
 	unsigned long ctr,index;
+	int bitrate;
 
  	eof_log("eof_add_silence_recode_mp3() entered", 1);
 
@@ -556,12 +570,26 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 	destroy_sample(combined);	//This is no longer needed
 
 	/* encode the audio */
-	printf("%s\n%s\n", eof_song_path, wavfn);
+	//Obtain an appropriate bitrate
+	if(eof_ogg_settings())
+	{	//If the user selected an OGG encoding quality
+		bitrate = eof_ogg_list_bitrate(eof_ogg_setting);		//Use it for the conversion below
+	}
+	else
+	{	//Automatically pick a bitrate based on the current chart audio
+		eof_log("\tUsing current chart audio bitrate as the re-encode bitrate", 1);
+		bitrate = alogg_get_bitrate_ogg(eof_music_track) / 1000;
+	}
+	if(!bitrate)
+	{	//A user found that in an audio file with a really high sample rate (ie. 96KHz), alogg_get_bitrate_ogg() may return zero instead of an expected value
+		bitrate = 256;	//In case this happens, use a bitrate of 256Kbps, which should be good enough for a very high quality file
+	}
+
 	(void) replace_filename(soggfn, eof_song_path, "encode.ogg", 1024);
 	#ifdef ALLEGRO_WINDOWS
-		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, bitrate, wavfn);
 	#else
-		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, bitrate, wavfn);
 	#endif
 
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCalling oggenc as follows:  %s", sys_command);

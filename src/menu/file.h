@@ -72,6 +72,7 @@ int eof_menu_file_exit(void);
 int eof_menu_file_gh_import(void);	//Prompt for a Guitar Hero chart file and import it
 
 char * eof_ogg_list(int index, int * size);
+int eof_ogg_list_bitrate(int index);			//Returns the integer value bitrate (in kbps) that corresponds to the index from the OGG quality selection dialog, or 320 on error
 char * eof_guitar_list(int index, int * size);
 char * eof_drum_list(int index, int * size);
 char * eof_display_list(int index, int * size);

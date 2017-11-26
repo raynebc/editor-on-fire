@@ -1712,6 +1712,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		//During GPA import, timings can be configured so that beats start at a negative position (before the start of the audio) if the first sync point is not at measure 1
 		//This counter is an offset indicating how many beats of content are being omitted from the imported track, so source beat #N is imported to beat #(N-skipbeatsourcectr) in the project
 	char importnote = 0;	//A boolean variable tracking whether each note is at or after 0ms and will import
+	unsigned slide_in_from_warned = 0;	//Tracks whether the user has been warned that slide in from above/below notes were encountered
 
 	eof_log("\tImporting Guitar Pro file", 1);
 	eof_log("eof_load_gp() entered", 1);
@@ -4236,22 +4237,26 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									if(byte == - 2)
 									{	//Slide in from above
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+										flags |= EOF_NOTE_FLAG_HIGHLIGHT;
 										if(!unpitchend || (frets[ctr4] < unpitchend))
 										{	//Track the lowest fret value for the slide end position
 											unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
 										}
 										frets[ctr4]++;				//Set the beginning of this slide one fret higher
+										slide_in_from_warned++;		//Track that such a slide in was encountered
 									}
 									else if(byte == -1)
 									{	//Slide in from below
 										if(frets[ctr4] > 1 )
 										{	//Don't allow this unless sliding into a fret higher than 1
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+											flags |= EOF_NOTE_FLAG_HIGHLIGHT;
 											if(!unpitchend || (frets[ctr4] < unpitchend))
 											{	//Track the lowest fret value for the slide end position
 												unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
 											}
 											frets[ctr4]--;				//Set the beginning of this slide one fret lower
+											slide_in_from_warned++;		//Track that such a slide in was encountered
 										}
 									}
 									else if(byte == 1)
@@ -4309,21 +4314,25 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										if(frets[ctr4] > 1 )
 										{	//Don't allow this unless sliding into a fret higher than 1
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+											flags |= EOF_NOTE_FLAG_HIGHLIGHT;
 											if(!unpitchend || (frets[ctr4] < unpitchend))
 											{	//Track the lowest fret value for the slide end position
 												unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
 											}
 											frets[ctr4]--;				//Set the beginning of this slide one fret lower
+											slide_in_from_warned++;		//Track that such a slide in was encountered
 										}
 									}
 									else if(byte & 32)
 									{	//This note slides in from above
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+										flags |= EOF_NOTE_FLAG_HIGHLIGHT;
 										if(!unpitchend || (frets[ctr4] < unpitchend))
 										{	//Track the lowest fret value for the slide end position
 											unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
 										}
 										frets[ctr4]++;				//Set the beginning of this slide one fret higher
+										slide_in_from_warned++;		//Track that such a slide in was encountered
 									}
 									else
 									{
@@ -4334,6 +4343,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
 									}
 								}//Version 5 or newer GP file
+								if(slide_in_from_warned == 1)
+								{	//If this is the first slide in from above/below technique encountered, warn user
+									allegro_message("Imported slide in from above/below notes will be highlighted, as Rocksmith does not directly support this technique.");
+								}
 							}//Slide
 							if(byte2 & 16)
 							{	//Harmonic

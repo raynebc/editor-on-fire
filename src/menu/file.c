@@ -1845,6 +1845,46 @@ char * eof_ogg_list(int index, int * size)
 	return NULL;
 }
 
+int eof_ogg_list_bitrate(int index)
+{
+	switch(index)
+	{
+		case 0:
+		{
+			return 80;
+		}
+		case 1:
+		{
+			return 96;
+		}
+		case 2:
+		{
+			return 128;
+		}
+		case 3:
+		{
+			return 160;
+		}
+		case 4:
+		{
+			return 192;
+		}
+		case 5:
+		{
+			return 256;
+		}
+		case 6:
+		{
+			return 320;
+		}
+
+		default:
+		break;
+	}
+
+	return 320;
+}
+
 char * eof_guitar_list(int index, int * size)
 {
 	(void) snprintf(eof_ctext[0], sizeof(eof_ctext[0]) - 1, "Strum 1 (%s)", redefine_index == 0 ? "Press new key" : eof_guitar.button[0].name);
