@@ -2592,6 +2592,18 @@ int eof_menu_edit_deselect_all_of_length(void)
 	return eof_menu_edit_select_by_note_length_logic(eof_length_is_equal_to, 0);
 }
 
+DIALOG eof_menu_edit_select_less_than_threshold_dialog[] =
+{
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
+	{ d_agup_window_proc,    0,   0,   350, 148, 0,   0,   0,    0,      0,   0,   eof_etext, NULL, NULL },
+	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "This # of ms:",NULL, NULL },
+	{ d_agup_text_proc,      12,  56,  60,  12,  0,   0,   0,    0,      0,   0,   "(specify 0 for one grid snap length)",NULL, NULL },
+	{ eof_verified_edit_proc,12,  76,  90,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789",  NULL },
+	{ d_agup_button_proc,    12,  108, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                         NULL, NULL },
+	{ d_agup_button_proc,    110, 108, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                     NULL, NULL },
+	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                         NULL, NULL }
+};
+
 int eof_menu_edit_select_note_within_threshhold_of_next_note_logic(int function)
 {
 	unsigned long i;
@@ -2600,30 +2612,61 @@ int eof_menu_edit_select_note_within_threshhold_of_next_note_logic(int function)
 	if(!function && (eof_selection.track != eof_selected_track))
 		return 1;	//No notes in the active track are selected so none can become deselected
 
+	if(eof_snap_mode == EOF_SNAP_OFF)
+	{	//If no grid snap is active
+		eof_menu_edit_select_less_than_threshold_dialog[2].flags = D_HIDDEN;	//Hide the text regarding selecting by grid snap
+	}
+	else
+	{
+		eof_menu_edit_select_less_than_threshold_dialog[2].flags = 0;			//Show the text regarding selecting by grid snap
+	}
 	eof_etext2[0] = '\0';	//Empty the dialog's input string
-	eof_color_dialog(eof_menu_edit_select_by_note_length_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_menu_edit_select_by_note_length_dialog);
+	eof_color_dialog(eof_menu_edit_select_less_than_threshold_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_menu_edit_select_less_than_threshold_dialog);
 
-	if(eof_popup_dialog(eof_menu_edit_select_by_note_length_dialog, 2) != 3)
+	if(eof_popup_dialog(eof_menu_edit_select_less_than_threshold_dialog, 3) != 4)
 		return 1;	//If the user did not click OK, return immediately
 	if(eof_etext2[0] == '\0')
 		return 1;	//If the user did not enter a threshold, return immediately
 
 	threshold = atol(eof_etext2);
-	if(threshold <= 0)
+	if(threshold < 0)
 		return 1;	//If the specified value is not valid, return immediately
+	if(!threshold && (eof_snap_mode == EOF_SNAP_OFF))
+	{	//If the user specified a threshold of one grid snap, but no grid snap length is active
+		allegro_message("Grid snap must be enabled in order to select/deselect notes less than one grid snap length away from their next neighbor.");
+		return 1;
+	}
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		long nextnote;
+		unsigned long notepos, nextpos;
 
 		if(eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type)
 			continue;	//If the note isn't in the active difficulty, skip it
 		nextnote = eof_track_fixup_next_note(eof_song, eof_selected_track, i);	//Find the next note in the track difficulty
 		if(nextnote < 0)
 			break;		//If there is no note that follows this one, stop checking notes for this track difficulty
-		if(eof_get_note_pos(eof_song, eof_selected_track, nextnote) - eof_get_note_pos(eof_song, eof_selected_track, i) > threshold)
-			continue;	//If the next note's position exceeds the threshold proximity, skip this note
+
+		notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
+		nextpos = eof_get_note_pos(eof_song, eof_selected_track, nextnote);
+		if(threshold)
+		{	//The threshold is a static number of milliseconds
+			if(nextpos - notepos >= threshold)
+				continue;	//If the next note's position exceeds the threshold proximity, skip this note
+		}
+		else
+		{	//The threshold is one grid snap length
+			EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
+
+			eof_snap_logic(&temp, notepos);	//Calculate grid snap data about the note's position
+			eof_snap_length_logic(&temp);
+            if(temp.length <= 0)
+				continue;	//If the grid snap length could not be determined, skip this note
+			if(notepos + temp.length <= nextpos)
+				continue;	//If the next note's position exceeds the threshold proximity, skip this note
+		}
 
 		if(!function)
 		{	//Perform deselection
@@ -2652,7 +2695,7 @@ int eof_menu_edit_select_note_within_threshhold_of_next_note_logic(int function)
 
 int eof_menu_edit_select_note_within_threshhold_of_next_note(void)
 {
-	strncpy(eof_etext, "Select all notes whose neighbors are within", sizeof(eof_etext) - 1);
+	strncpy(eof_etext, "Select all notes preceding their neighbor by less than", sizeof(eof_etext) - 1);
 	eof_etext2[0] = '\0';	//Empty the input field
 	return eof_menu_edit_select_note_within_threshhold_of_next_note_logic(1);
 }
@@ -2660,7 +2703,7 @@ int eof_menu_edit_select_note_within_threshhold_of_next_note(void)
 int eof_menu_edit_deselect_note_within_threshhold_of_next_note(void)
 {
 
-	strncpy(eof_etext, "Deselect all notes whose neighbors are within", sizeof(eof_etext) - 1);
+	strncpy(eof_etext, "Deselect all notes preceding their neighbor by less than", sizeof(eof_etext) - 1);
 	eof_etext2[0] = '\0';	//Empty the input field
 	return eof_menu_edit_select_note_within_threshhold_of_next_note_logic(0);
 }
