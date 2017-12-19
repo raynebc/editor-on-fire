@@ -749,13 +749,13 @@ void eof_prepare_note_menu(void)
 		{
 			eof_lyric_line_menu[1].flags = 0;	//Note>Lyrics>Lyric Lines>Remove
 			eof_lyric_line_menu[4].flags = 0; 	//Note>Lyrics>Lyric Lines>Toggle Overdrive
-			(void) ustrcpy(eof_lyric_line_menu_mark_text, "Re-&Mark\t" CTRL_NAME "+M");
+			(void) ustrcpy(eof_lyric_line_menu_mark_text, "Re-&Mark\t" CTRL_NAME "+M/X");
 		}
 		else
 		{
 			eof_lyric_line_menu[1].flags = D_DISABLED;
 			eof_lyric_line_menu[4].flags = D_DISABLED;
-			(void) ustrcpy(eof_lyric_line_menu_mark_text, "&Mark\t" CTRL_NAME "+M");
+			(void) ustrcpy(eof_lyric_line_menu_mark_text, "&Mark\t" CTRL_NAME "+M/X");
 		}
 
 		/* arpeggio mark/remark */

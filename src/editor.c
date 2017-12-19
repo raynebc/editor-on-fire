@@ -1695,6 +1695,12 @@ if(eof_key_code == KEY_PAUSE)
 		eof_use_key();
 	}
 
+	/* additional shortcut for mark/remark lyric phrase (CTRL+X in a vocal track) */
+	if(eof_vocals_selected && KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && (eof_key_char == 'x'))
+	{
+		(void) eof_menu_lyric_line_mark();
+	}
+
 	/* toggle claps (C) */
 	/* paste from catalog (SHIFT+C) */
 	/* copy events (CTRL+SHIFT+C)*/
