@@ -587,7 +587,7 @@ void eof_find_lyric_preview_lines(void);	//Sets the first and second preview lin
 void eof_emergency_stop_music(void);	//Stops audio playback
 void eof_fix_catalog_selection(void);	//Ensures that a valid catalog entry is active, if any
 unsigned long eof_count_selected_notes(unsigned long *total);
-	//Returns the number of notes selected in the active track difficulty
+	//Returns the number of notes selected in the active track difficulty, sets values in the eof_selection structure
 	//If total is not NULL, its value is incremented once for each note in the active difficulty, regardless of whether it's selected (to count the number of notes in the active difficulty)
 unsigned long eof_get_selected_note_range(unsigned long *sel_start, unsigned long *sel_end, char function);
 	//Returns the number of notes in the selected note range that are explicitly selected, allowing an easy way to check if more than one note is selected

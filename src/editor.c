@@ -3870,6 +3870,7 @@ void eof_editor_logic(void)
 			if(!eof_full_screen_3d && (mouse_b & 1) && eof_lclick_released)
 			{
 				int ignore_range = 0;
+				unsigned long selected_count = eof_count_selected_notes(NULL);	//Get count now so this function doesn't modify the eof_selection structure while it's being manipulated
 
 				eof_click_x = eof_scaled_mouse_x;
 				eof_click_y = eof_scaled_mouse_y;
@@ -3918,13 +3919,11 @@ void eof_editor_logic(void)
 						eof_selection.range_pos_1 = eof_selection.current_pos;
 						eof_selection.range_pos_2 = eof_selection.current_pos;
 					}
-					eof_pegged_note = eof_selection.current;
-					eof_peg_x = eof_get_note_pos(eof_song, eof_selected_track, eof_pegged_note);
 					if(!KEY_EITHER_CTRL)
-					{
+					{	//If CTRL is not held
 						/* Shift+Click selects range */
-						if(KEY_EITHER_SHIFT && !ignore_range)
-						{
+						if(KEY_EITHER_SHIFT && !ignore_range && selected_count)
+						{	//SHIFT+click logic requires a note to already be selected
 							eof_shift_used = 1;	//Track that the SHIFT key was used
 							if(eof_selection.range_pos_1 < eof_selection.range_pos_2)
 							{
@@ -3960,7 +3959,7 @@ void eof_editor_logic(void)
 							}
 						}
 						else
-						{
+						{	//Normal click replaces the selected note range with one note
 							if(!eof_selection.multi[eof_selection.current])
 							{
 								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
@@ -3986,7 +3985,7 @@ void eof_editor_logic(void)
 								eof_undo_last_type = EOF_UNDO_TYPE_NONE;
 							}
 						}
-					}
+					}//If CTRL is not held
 
 					/* Ctrl+Click adds to selected notes */
 					else
@@ -4678,6 +4677,7 @@ void eof_vocal_editor_logic(void)
 			if(!eof_full_screen_3d && (mouse_b & 1) && eof_lclick_released)
 			{
 				int ignore_range = 0;
+				unsigned long selected_count = eof_count_selected_notes(NULL);	//Get count now so this function doesn't modify the eof_selection structure while it's being manipulated
 
 				eof_click_x = eof_scaled_mouse_x;
 				eof_click_y = eof_scaled_mouse_y;
@@ -4733,10 +4733,10 @@ void eof_vocal_editor_logic(void)
 					eof_peg_x = lpos - eof_song->vocal_track[tracknum]->lyric[eof_pegged_note]->pos;
 					eof_last_pen_pos = rpos;
 					if(!KEY_EITHER_CTRL)
-					{
+					{	//If CTRL is not held
 						/* Shift+Click selects range */
-						if(KEY_EITHER_SHIFT && !ignore_range)
-						{
+						if(KEY_EITHER_SHIFT && !ignore_range && selected_count)
+						{	//SHIFT+click logic requires a note to already be selected
 							eof_shift_used = 1;	//Track that the SHIFT key was used
 							if(eof_selection.range_pos_1 < eof_selection.range_pos_2)
 							{
@@ -4798,7 +4798,7 @@ void eof_vocal_editor_logic(void)
 								eof_undo_last_type = EOF_UNDO_TYPE_NONE;
 							}
 						}
-					}
+					}//If CTRL is not held
 
 					/* Ctrl+Click adds to selected notes */
 					else
@@ -4903,8 +4903,8 @@ void eof_vocal_editor_logic(void)
 						eof_mickeys_x = eof_scaled_mouse_x - eof_click_x;
 					}
 				}
-				if((eof_mickeys_x != 0) && !eof_mouse_drug)
-				{
+				if((eof_mickeys_x != 0) && !eof_mouse_drug && (eof_hover_note >= 0))
+				{	//If a note was clicked and drug
 					eof_mouse_drug++;
 				}
 				if((eof_mouse_drug > 10) && (eof_selection.current != EOF_MAX_NOTES - 1))
