@@ -484,6 +484,7 @@ int eof_menu_file_new_wizard(void)
 {
 	char * returnedfn = NULL;
 
+	eof_log("eof_menu_file_new_wizard() entered", 1);
 	if(eof_menu_prompt_save_changes() == 3)
 	{	//If user canceled closing the current, modified chart
 		return 1;
@@ -2387,6 +2388,8 @@ int eof_audio_to_ogg(char *file, char *directory)
 
 	if(!ustricmp(get_extension(file), "mp3"))
 	{	//Convert from MP3
+		eof_log("\tConverting source MP3 file to OGG format", 1);
+
 		//If an MP3 is to be encoded to OGG, store a copy of the MP3 as "original.mp3"
 		if(ustricmp(syscommand,directory))
 		{	//If the user did not select a file named original.mp3 in the chart's folder, check to see if a such-named file will be overwritten
@@ -2430,6 +2433,8 @@ int eof_audio_to_ogg(char *file, char *directory)
 	}//Convert from MP3
 	else if(!ustricmp(get_extension(file), "wav"))
 	{	//Convert from WAV
+		eof_log("\tConverting source WAV file to OGG format", 1);
+
 		if(eof_ogg_settings())
 		{
 			put_backslash(directory);												//Ensure that the directory string ends in a folder separator
@@ -2447,6 +2452,8 @@ int eof_audio_to_ogg(char *file, char *directory)
 	}//Convert from WAV
 	else
 	{	//Copy as-is (assume OGG file)
+		eof_log("\tUsing source file in its original format (OGG assumed)", 1);
+
 		if(!eof_menu_file_new_supplement(directory, NULL, 1))
 		{	//If the user declined to overwrite an existing "guitar.ogg" file at the destination path
 			eof_cursor_visible = 1;
@@ -2569,6 +2576,8 @@ int eof_new_chart(char * filename)
 		return 1;	//Return failure
 	}
 
+	eof_log("\tSong information confirmed", 1);
+
 	if((ustrlen(eof_etext) > 0) && (ustrlen(eof_etext2) > 0))
 	{	//If both the artist and song name are provided, use both in the suggested folder name
 		(void) snprintf(eof_etext4, sizeof(eof_etext4) - 1, "%s - %s", eof_etext, eof_etext2);
@@ -2592,6 +2601,7 @@ int eof_new_chart(char * filename)
 	{	//If the user clicked OK
 		if(eof_file_new_windows_dialog[1].flags & D_SELECTED)
 		{	//Use Existing Folder
+			eof_log("\tUse existing folder selected", 1);
 			eof_render();
 			returnedfolder = ncd_folder_select("Select Folder for Song");
 			if(!returnedfolder)
@@ -2605,6 +2615,7 @@ int eof_new_chart(char * filename)
 		}
 		else if(eof_file_new_windows_dialog[2].flags & D_SELECTED)
 		{	//Use Source Audio's Folder
+			eof_log("\tUse source audio's folder selected", 1);
 			eof_render();
 			(void) replace_filename(eof_etext3, filename, "", 1024);
 		}
@@ -2625,6 +2636,7 @@ int eof_new_chart(char * filename)
 				}
 			}
 #endif
+			eof_log("\tCreate new folder selected", 1);
 			(void) ustrcpy(eof_etext3, eof_songs_path);
 			(void) ustrcat(eof_etext3, eof_etext4);
 		}

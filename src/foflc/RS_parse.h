@@ -28,7 +28,7 @@ int rs_filter_string(char *string, char rs_filter);
 	//Currently only used to validate chord names for Rocksmith export, so rs_filter_char() is invoked with a zero value for islyric
 	// and a zero value for isphrase_section
 	//Returns -1 on error
-void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsize, char rs_filter, int islyric, int isphrase_section);
+void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsize, char rs_filter, int islyric, int isphrase_section, char *exceptions);
 	//Copies the input string into the specified buffer of the given size.  Any of the characters that XML requires to be escaped
 	//are converted into the appropriate character sequence (ie. ' becomes &apos;).  If the expanded string's length is longer
 	//than the given warning value, the user is given a warning message that the string will need to be shortened and the string
@@ -42,6 +42,7 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 	//If rs_filter is 3, rs_lyric_filter_char_extended() is used to determine if input lyric text is to be filtered
 	//If rs_filter is 4, no characters are filtered
 	//If isphrase_section is nonzero, non alphanumeric characters are not copied to the buffer
+	//If exceptions is not NULL, all characters in the string are allowed even if the other criteria would have caused them to be filtered
 
 void shrink_xml_text(char *buffer, size_t size, char *input);
 	//Does the reverse of expand_xml_text(), converting each escape sequence into the appropriate individual character.

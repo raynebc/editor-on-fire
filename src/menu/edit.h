@@ -113,6 +113,7 @@ int eof_menu_edit_deselect_note_number_in_sequence(void);	//eof_menu_edit_select
 
 int eof_menu_edit_select_by_note_length_logic(int (*check)(long, long), int function);
 	//Prompts the user to enter a threshold time using eof_menu_edit_select_by_note_length_dialog[]
+	//A threshold of 0 is interpreted as one grid snap of the current grid snap length
 	//Passes notes in the active track difficulty to the specified function that compares the note length (first argument) with the threshold (second argument)
 	// and returns nonzero if the desired criterion is met
 	//If function is zero, matching notes are removed from the note selection, otherwise they are added to the note selection

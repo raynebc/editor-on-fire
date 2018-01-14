@@ -68,19 +68,19 @@ void Export_RS(FILE *outf)
 		{
 			if(Lyrics.rocksmithver == 2)
 			{	//If Rocksmith 2014 format is being exported, the maximum length per lyric is 48 characters
-				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 48, 2, 1, 0);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Allow characters that are supported in lyrics but not other parts of the RS XML.
+				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 48, 2, 1, 0, NULL);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Allow characters that are supported in lyrics but not other parts of the RS XML.
 			}
 			else if(Lyrics.rocksmithver == 3)
 			{	//If Rocksmith 2014 format is being exported, and compatible extended ASCII characters are allowed
-				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 48, 3, 1, 0);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Allow characters that are supported in lyrics but not other parts of the RS XML.
+				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 48, 3, 1, 0, NULL);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Allow characters that are supported in lyrics but not other parts of the RS XML.
 			}
 			else if (Lyrics.rocksmithver == 4)
 			{	//A Rocksmith 2014 style format that doesn't force lyric content to use compliant characters
-				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 48, 4, 1, 0);
+				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 48, 4, 1, 0, NULL);
 			}
 			else
 			{	//Otherwise the lyric limit is 32 characters
-				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 32, 2, 1, 0);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Allow characters that are supported in lyrics but not other parts of the RS XML.
+				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 32, 2, 1, 0, NULL);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Allow characters that are supported in lyrics but not other parts of the RS XML.
 			}
 			for(index1 = index2 = 0; (size_t)index1 < strlen(buffer2); index1++)
 			{	//For each character in the expanded XML string
@@ -390,7 +390,7 @@ int rs_filter_string(char *string, char rs_filter)
 	return 0;
 }
 
-void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsize, char rs_filter, int islyric, int isphrase_section)
+void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsize, char rs_filter, int islyric, int isphrase_section, char *exceptions)
 {
 	size_t input_length, index = 0, ctr;
 
@@ -401,29 +401,47 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 	for(ctr = 0; ctr < input_length; ctr++)
 	{	//For each character of the input string
 		int character = (unsigned char)input[ctr];
+		int exception_match = 0;
 
-		if(rs_filter < 3)
-		{	//For normal filtering, substitute accented Latin characters for non-accented characters before checking if the character is allowed
-			character = rs_lyric_substitute_char_extended(character, 0);
-			if(!isprint(character))
-				continue;	//If extended ASCII isn't being allowed and this isn't a printable character less than ASCII value 128, omit it
+///Process exceptions
+		if(exceptions)
+		{	//If an exceptions string was specified
+			unsigned long eindex = 0;
+			for(eindex = 0; exceptions[eindex] != '\0'; eindex++)
+			{	//For each character in the exceptions string
+				if(exceptions[eindex] == character)
+				{	//If the character being examined is in the exceptions
+					exception_match = 1;
+					break;
+				}
+			}
 		}
 
-		if(rs_filter)
-		{
+		if(!exception_match)
+		{	//If the character was not in the exceptions list, check if it should be filtered
 			if(rs_filter < 3)
-			{	//Normal filtering (1 or 2)
-				if(rs_filter_char(character, rs_filter, islyric, isphrase_section))
-					continue;	//If filtering out characters for Rocksmith, omit affected characters
+			{	//For normal filtering, substitute accented Latin characters for non-accented characters before checking if the character is allowed
+				character = rs_lyric_substitute_char_extended(character, 0);
+				if(!isprint(character))
+					continue;	//If extended ASCII isn't being allowed and this isn't a printable character less than ASCII value 128, omit it
 			}
-			else if(rs_filter == 3)
-			{	//Filtering to allow extended ASCII
-				character = rs_lyric_substitute_char_extended(character, 1);	//Substitute only unsupported accented Latin characters for non-accented versions
-				if(rs_lyric_filter_char_extended(character))
-					continue;	//If filtering out characters for Rocksmith lyrics, omit affected characters
-			}
-			else if(rs_filter == 4)
-			{	//No filtering
+
+			if(rs_filter)
+			{
+				if(rs_filter < 3)
+				{	//Normal filtering (1 or 2)
+					if(rs_filter_char(character, rs_filter, islyric, isphrase_section))
+						continue;	//If filtering out characters for Rocksmith, omit affected characters
+				}
+				else if(rs_filter == 3)
+				{	//Filtering to allow extended ASCII
+					character = rs_lyric_substitute_char_extended(character, 1);	//Substitute only unsupported accented Latin characters for non-accented versions
+					if(rs_lyric_filter_char_extended(character))
+						continue;	//If filtering out characters for Rocksmith lyrics, omit affected characters
+				}
+				else if(rs_filter == 4)
+				{	//No filtering
+				}
 			}
 		}
 

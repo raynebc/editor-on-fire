@@ -2491,11 +2491,12 @@ int eof_menu_edit_select_rest(void)
 DIALOG eof_menu_edit_select_by_note_length_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   300, 132, 0,   0,   0,    0,      0,   0,   eof_etext, NULL, NULL },
+	{ d_agup_window_proc,    0,   0,   300, 148, 0,   0,   0,    0,      0,   0,   eof_etext, NULL, NULL },
 	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "This # of ms:",NULL, NULL },
-	{ eof_verified_edit_proc,12,  56,  90,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789",  NULL },
-	{ d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                         NULL, NULL },
-	{ d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                     NULL, NULL },
+	{ d_agup_text_proc,      12,  56,  60,  12,  0,   0,   0,    0,      0,   0,   "(specify 0 for one grid snap length)",NULL, NULL },
+	{ eof_verified_edit_proc,12,  74,  90,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789",  NULL },
+	{ d_agup_button_proc,    12,  108, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                         NULL, NULL },
+	{ d_agup_button_proc,    110, 108, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                     NULL, NULL },
 	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                         NULL, NULL }
 };
 
@@ -2507,22 +2508,47 @@ int eof_menu_edit_select_by_note_length_logic(int (*check)(long, long), int func
 	if(!function && (eof_selection.track != eof_selected_track))
 		return 1;	//No notes in the active track are selected so none can become deselected
 
+	if(eof_snap_mode == EOF_SNAP_OFF)
+	{	//If no grid snap is active
+		eof_menu_edit_select_by_note_length_dialog[2].flags = D_HIDDEN;	//Hide the text regarding selecting by grid snap
+	}
+	else
+	{
+		eof_menu_edit_select_by_note_length_dialog[2].flags = 0;	//Show the text regarding selecting by grid snap
+	}
 	eof_etext2[0] = '\0';	//Empty the dialog's input string
 	eof_color_dialog(eof_menu_edit_select_by_note_length_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_menu_edit_select_by_note_length_dialog);
 
-	if(eof_popup_dialog(eof_menu_edit_select_by_note_length_dialog, 2) != 3)
+	if(eof_popup_dialog(eof_menu_edit_select_by_note_length_dialog, 3) != 4)
 		return 1;	//If the user did not click OK, return immediately
 	if(eof_etext2[0] == '\0')
 		return 1;	//If the user did not enter a threshold, return immediately
 
 	threshold = atol(eof_etext2);
-	if(threshold <= 0)
+	if(!threshold && (eof_snap_mode == EOF_SNAP_OFF))
+	{	//If the user specified a threshold of one grid snap, but no grid snap length is active
+		allegro_message("Grid snap must be enabled in order to select/deselect notes longer/shorter than one grid snap length.");
+		return 1;
+	}
+	if(threshold < 0)
 		return 1;	//If the specified value is not valid, return immediately
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type) || !(check(eof_get_note_length(eof_song, eof_selected_track, i), threshold)))
+		long effective_threshold = threshold;
+
+		if(!threshold)
+		{	//The threshold is one grid snap length
+			EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
+
+			eof_snap_logic(&temp, eof_get_note_pos(eof_song, eof_selected_track, i));	//Calculate grid snap data about the note's position
+			eof_snap_length_logic(&temp);
+       		if(temp.length <= 0)
+				continue;	//If the grid snap length could not be determined, skip this note
+			effective_threshold = temp.length;	//One grid snap is the length to compare against the note's length
+		}
+		if((eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type) || !(check(eof_get_note_length(eof_song, eof_selected_track, i), effective_threshold)))
 			continue;	//If the note isn't in the active difficulty or doesn't match the conditions the user specified, skip it
 
 		if(!function)

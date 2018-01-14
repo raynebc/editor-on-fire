@@ -40,7 +40,6 @@ General features:
    -Display PART GUITAR COOP as "PART GUITAR COOP (Lead)" to reflect that FoFiX offers the track as "Lead Guitar"
    -Reload feature (map to F5) that will reload the chart, prompting the user to confirm that changes should be discarded.  This is a more automated way of using F3 and browsing to the chart that is already open.
    -A visual cue for configuring the AV delay, maybe something along the lines of the 3d panel flashing with a contrast color when a metronome tick or a clap is sounding.  The 3d panel could remain filled for however many milliseconds the tick/clap is sounding.
-   -Support for other input audio formats that oggenc2 may already support, such as WAV
    -During MIDI import, if the imported MIDI contains just a single chord (or below a defined threshold number of notes) in any instrument difficulty, prompt the user if he/she wants to remove dummy notes from the chart (Feedback inserts notes so that each difficulty contains at least one note, for compatibility with playing the chart on a hacked Guitar Hero game).
    -A volume control that can amplify audio playback.  Some processing filters in Audacity leave audio very quiet so I have to crank the volume up a lot.
    -Have a MIDI edit (not import) mode that retains all original MIDI timings, allowing the user to add text events, instrumental notes, special notes, etc. with zero risk of affecting any note or beat positions.
@@ -50,7 +49,6 @@ General features:
 
 Extra chart features:
    -Ability to browse for, render and save the label PNG file with the rest of the chart files upon saving the chart
-   -Preview OGG support:  It may require more thought, but I believe it could be as easy as having the user set a start and end bookmark or a phrase, and you could mux the audio into a file called preview.ogg.  Since EOF doesn't technically support master audio tracks (different audio for each instrument track), muxing from guitar.ogg may be sufficient, although perhaps if EOF finds other audio tracks in the chart folder (drums.ogg, song.ogg, etc), it could offer to mix those tracks in as well
 
 General UI:
    -Option to increment a number in the backup save filename so that multiple backups can be kept as a kind of automatic version control.  To keep the file sizes down, you can have EOF compress the backup file (compresses as well as < .5% or original size).  A huge ambition could be making it so that the backups are kept in a single file that keeps a running record of all edits made between saves, providing some kind of human-readable description of each change and a mechanism to produce the chart as it was at any given edit.  This would require the original chart and a functional transaction log (like that of a database).
