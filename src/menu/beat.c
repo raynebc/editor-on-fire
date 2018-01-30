@@ -832,6 +832,8 @@ void eof_menu_beat_delete_logic(unsigned long beat)
 
 int eof_menu_beat_delete(void)
 {
+	if(!eof_song)
+		return 1;
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
 
@@ -848,6 +850,8 @@ int eof_menu_beat_push_offset_back(char *undo_made)
 	unsigned long i;
 	double backamount;
 
+	if(!eof_song)
+		return 1;
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 0;							//Return without making changes
 	if(!undo_made)
@@ -894,6 +898,8 @@ int eof_menu_beat_push_offset_up(void)
 {
 	unsigned long i;
 
+	if(!eof_song)
+		return 1;
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
 
@@ -916,6 +922,8 @@ int eof_menu_beat_reset_offset(void)
 	double newbpm;
 	char undo_made = 0;
 
+	if(!eof_song)
+		return 1;
 	if(eof_song->beat[0]->pos == 0)
 		return 1;	//If the MIDI delay is already zero, return without changing anything
 
@@ -1084,6 +1092,8 @@ int eof_menu_beat_toggle_anchor(void)
 	unsigned long ctr;
 	unsigned num = 4, den = 4, lastden = 4;
 
+	if(!eof_song)
+		return 1;
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
 	if(eof_selected_beat == 0)
@@ -1109,11 +1119,14 @@ int eof_menu_beat_toggle_anchor(void)
 
 int eof_menu_beat_delete_anchor(void)
 {
-	unsigned long cppqn = eof_song->beat[eof_selected_beat]->ppqn, i;
+	unsigned long cppqn, i;
 
+	if(!eof_song)
+		return 1;
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
 
+	cppqn = eof_song->beat[eof_selected_beat]->ppqn;
 	if((eof_selected_beat > 0) && eof_beat_is_anchor(eof_song, eof_selected_beat))
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -1263,13 +1276,16 @@ int eof_menu_beat_calculate_bpm(void)
 	int first = 1;
 	unsigned long curpos = 0;
 	unsigned long delta;
-	unsigned long cppqn = eof_song->beat[eof_selected_beat]->ppqn;
+	unsigned long cppqn;
 	double bpm = 0.0;
 	unsigned long bpm_count = 0;
 
+	if(!eof_song)
+		return 1;
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
 
+	cppqn = eof_song->beat[eof_selected_beat]->ppqn;
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
@@ -2090,6 +2106,8 @@ int eof_menu_beat_add(void)
 {
 	unsigned long i;
 
+	if(!eof_song)
+		return 1;
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
 
@@ -2366,6 +2384,8 @@ unsigned long eof_retrieve_text_event(unsigned long index)
 
 int eof_menu_beat_double_tempo(void)
 {
+	if(!eof_song)
+		return 1;
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
 
@@ -2375,6 +2395,8 @@ int eof_menu_beat_double_tempo(void)
 
 int eof_menu_beat_halve_tempo(void)
 {
+	if(!eof_song)
+		return 1;
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
 
@@ -2387,10 +2409,10 @@ int eof_menu_beat_double_tempo_all(void)
 	char undo_made = 0;
 	unsigned long i;
 
-	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
-		return 1;							//Return without making changes
 	if(!eof_song)
 		return 1;
+	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
+		return 1;							//Return without making changes
 
 	for(i = 0; i < eof_song->beats; i++)
 	{	//For each beat
@@ -2408,10 +2430,10 @@ int eof_menu_beat_halve_tempo_all(void)
 	char undo_made = 0;
 	unsigned long i;
 
-	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
-		return 1;							//Return without making changes
 	if(!eof_song)
 		return 1;
+	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
+		return 1;							//Return without making changes
 
 	for(i = 0; i < eof_song->beats; i++)
 	{	//For each beat
@@ -2432,12 +2454,11 @@ int eof_menu_beat_set_RBN_tempos(void)
 
 	eof_log("eof_move_text_events() entered", 1);
 
+	if(!eof_song)
+		return 1;
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
-	if(!eof_song)
-	{
-		return 1;
-	}
+
 	for(loop_ctr = 0; loop_ctr < 5; loop_ctr++)
 	{	//Only allow this loop to run 5 times in a row, to ensure it cannot run endlessly
 		changed = 0;	//Reset this condition

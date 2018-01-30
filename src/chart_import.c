@@ -135,6 +135,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	double solo_on = 0.0, solo_off = 0.0;
 	char solo_status = 0;	//0 = Off and awaiting a solo on marker, 1 = On and awaiting a solo off marker
 	unsigned long ctr, ctr2, ctr3, tracknum;
+	char importguitartypes = 1, importbasstypes = 1;	//Tracks whether 5 or 6 lane guitar and bass types are to be imported (default is 5 lane)
 
 	eof_log("\tImporting Feedback chart", 1);
 	eof_log("eof_import_chart() entered", 1);
@@ -334,10 +335,54 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 	eof_calculate_beats(sp);		//Set the beats' timestamps based on their tempo changes
 
+	/* check for the presence of both 5 and 6 lane guitar or bass tracks, prompt user which to import */
+	if(chart->guitartypes > 2)
+	{	//If the imported chart file has one or more each of 5 and 6 lane guitar tracks
+		eof_clear_input();
+		if(alert(NULL, "The imported file has both 5 and 6 lane guitar parts.  Import which parts??", NULL, "&5 lane", "&6 lane", '5', '6') == 2)
+		{	//If the user opts to import the 6 lane parts
+			eof_log("\t\tImporting 6 lane guitar and skipping 5 lane guitar", 1);
+			importguitartypes = 2;
+		}
+		else
+		{
+			eof_log("\t\tImporting 5 lane guitar and skipping 6 lane guitar", 1);
+		}
+	}
+	if(chart->basstypes > 2)
+	{	//If the imported chart file has one or more each of 5 and 6 lane bass tracks
+		eof_clear_input();
+		if(alert(NULL, "The imported file has both 5 and 6 lane bass parts.  Import which parts??", NULL, "&5 lane", "&6 lane", '5', '6') == 2)
+		{	//If the user opts to import the 6 lane parts
+			eof_log("\t\tImporting 6 lane bass and skipping 5 lane bass", 1);
+			importbasstypes = 2;
+		}
+		else
+		{
+			eof_log("\t\tImporting 5 lane bass and skipping 6 lane bass", 1);
+		}
+	}
+
 	/* fill in notes */
 	current_track = chart->tracks;
 	while(current_track)
 	{
+		if(current_track->isguitar && (current_track->isguitar != importguitartypes))
+		{	//If this is a guitar track, but not the type (5 or 6 lane) that the user opted to import
+			current_track = current_track->next;
+			lastchartpos = 0;	//Reset this value
+			eof_log("\t\tSkipping track difficulty as per selected 5/6 lane guitar import option", 1);
+			continue;	//Skip the track
+		}
+
+		if(current_track->isbass && (current_track->isbass != importbasstypes))
+		{	//If this is a bass track, but not the type (5 or 6 lane) that the user opted to import
+			current_track = current_track->next;
+			lastchartpos = 0;	//Reset this value
+			eof_log("\t\tSkipping track difficulty as per selected 5/6 lane bass import option", 1);
+			continue;	//Skip the track
+		}
+
 		/* convert track number to EOF numbering scheme */
 		switch(current_track->tracktype)
 		{
@@ -966,6 +1011,9 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 
 					//Initialize instrument link
 						curnote=NULL;			//Reset the conductor for the track's note list
+
+						chart->guitartypes |= curtrack->isguitar;	//Cumulatively track the presence of 5 and 6 lane guitar tracks
+						chart->basstypes |= curtrack->isbass;		//Ditto for 5 and 6 lane bass tracks
 					}
 				}
 			}
@@ -1615,6 +1663,138 @@ int Read_dB_string(char *source, char **str1, char **str2)
 	return 1;		//Return success
 }
 
+int eof_validate_db_track_diff_string(char *diffstring, struct dbTrack *chart)
+{
+	char *ptr;
+
+	if(!diffstring || !chart)
+		return 0;	//Invalid parameters
+
+	//Initialize chart variables
+	chart->tracktype = 0;	//Unless specified otherwise, this track will not import
+	chart->isguitar = chart->isdrums = chart->isbass = 0;
+
+	//Check for supported instrument difficulties
+	ptr = strcasestr_spec(diffstring,"Single]");
+	if(ptr && (ptr[0] == '\0'))
+	{	//If the string ends in "Single]"
+		chart->tracktype = 1;	//Track that this is a "Guitar" track
+		chart->isguitar = 1;
+		return 1;	//Return success
+	}
+
+	ptr = strcasestr_spec(diffstring,"SingleGuitar]");
+	if(ptr && (ptr[0] == '\0'))
+	{	//If the string ends in "SingleGuitar]"
+		chart->tracktype = 1;	//Track that this is a "Guitar" track
+		chart->isguitar = 1;
+		return 1;	//Return success
+	}
+
+	ptr = strcasestr_spec(diffstring,"DoubleGuitar]");
+	if(ptr && (ptr[0] == '\0'))
+	{	//If the string ends in "DoubleGuitar]"
+		chart->tracktype = 2;	//Track that this is a "Lead Guitar" track
+		chart->isguitar = 1;
+		return 1;	//Return success
+	}
+
+	ptr = strcasestr_spec(diffstring,"DoubleBass]");
+	if(ptr && (ptr[0] == '\0'))
+	{	//If the string ends in "DoubleBass]"
+		chart->tracktype = 3;	//Track that this is a "Bass" track
+		chart->isbass = 1;
+		return 1;	//Return success
+	}
+
+	ptr = strcasestr_spec(diffstring,"SingleRhythm]");
+	if(ptr && (ptr[0] == '\0'))
+	{	//If the string ends in "SingleRhythm]"
+		chart->tracktype = 3;	//Track that this is a "Bass" track
+		chart->isbass = 1;
+		return 1;	//Return success
+	}
+
+	ptr = strcasestr_spec(diffstring,"Drums]");
+	if(ptr && (ptr[0] == '\0'))
+	{	//If the string ends in "Drums]"
+		chart->tracktype = 4;	//Track that this is a "Drums" track
+		chart->isdrums = 1;
+		return 1;	//Return success
+	}
+
+	ptr = strcasestr_spec(diffstring,"DoubleDrums]");
+	if(ptr && (ptr[0] == '\0'))
+	{	//If the string ends in "DoubleDrums]"
+		chart->tracktype = 4;	//Doubledrums is an expert+ drum track
+		chart->isdrums = 2;	//This will be imported into the Phase Shift drum track instead of the normal drum track
+		return 1;	//Return success
+	}
+
+	ptr = strcasestr_spec(diffstring,"Vocals]");
+	if(ptr && (ptr[0] == '\0'))
+	{	//If the string ends in "Vocals]"
+		chart->tracktype = 5;	//Track that this is a "Vocals" track
+		chart->isdrums = 0;
+		return 1;	//Return success
+	}
+
+	ptr = strcasestr_spec(diffstring,"DoubleRhythm]");
+	if(ptr && (ptr[0] == '\0'))
+	{	//If the string ends in "DoubleRhythm]"
+		chart->tracktype = 6;	//Track that this is a "Rhythm" track
+		chart->isguitar = 1;
+		return 1;	//Return success
+	}
+
+	ptr = strcasestr_spec(diffstring,"Keyboard]");
+	if(ptr && (ptr[0] == '\0'))
+	{	//If the string ends in "Keyboard]"
+		chart->tracktype = 7;	//Track that this is a keyboard track
+		return 1;	//Return success
+	}
+
+	//Check for 6 lane tracks, authored by MoonScraper for use in Clone Hero
+	ptr = strcasestr_spec(diffstring,"GHLGuitar]");
+	if(ptr && (ptr[0] == '\0'))
+	{	//If the string ends in "Single]"
+		chart->tracktype = 1;	//Track that this is a "Guitar" track
+		chart->isguitar = 2;	//This signals that this is a 6 lane track
+		return 1;	//Return success
+	}
+
+	//Check for other instrument difficulties that are valid but not supported
+	ptr = strcasestr_spec(diffstring,"EnhancedGuitar]");
+	if(ptr && (ptr[0] == '\0'))
+	{	//If the string ends in "EnhancedGuitar]"
+		chart->isguitar = 1;	//EnhancedGuitar is a guitar track, but it won't be imported
+		return 1;	//Return success
+	}
+
+	ptr = strcasestr_spec(diffstring,"CoopLead]");
+	if(ptr && (ptr[0] == '\0'))
+	{	//If the string ends in "CoopLead]"
+		chart->isguitar = 1;	//CoopLead is a guitar track, but it won't be imported
+		return 1;	//Return success
+	}
+
+	ptr = strcasestr_spec(diffstring,"CoopBass]");
+	if(ptr && (ptr[0] == '\0'))
+	{	//If the string ends in "CoopBass]"
+		chart->isguitar = 1;	//CoopBass is a guitar track, but it won't be imported
+		return 1;	//Return success
+	}
+
+	ptr = strcasestr_spec(diffstring,"10KeyGuitar]");
+	if(ptr && (ptr[0] == '\0'))
+	{	//If the string ends in "10KeyGuitar]"
+		chart->isguitar = 1;	//10KeyGuitar is a guitar track, but it won't be imported
+		return 1;	//Return success
+	}
+
+	return 0;	//Return failure
+}
+
 struct dbTrack *Validate_dB_instrument(char *buffer)
 {
 	//Validates that buffer contains a valid dB instrument track name enclosed in brackets []
@@ -1627,12 +1807,10 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 	unsigned long index=0;	//Used to index into buffer
 	char *endbracket=NULL;	//The pointer to the end bracket
 	char *diffstring=NULL;	//Used to find the difficulty substring
-	char *inststring=NULL;	//Used to find the instrument substring
 	char *retstring=NULL;	//Used to create the instrument track string
 	struct dbTrack *chart=NULL;		//Used to create the structure that is returned
 	static struct dbTrack emptychart;	//Static structures have all members auto initialize to 0/NULL
-	char tracktype=0,difftype=0;	//Used to track the instrument type and difficulty of the track, based on the name
-	char isguitar=0,isdrums=0;		//Used to track secondary/tertiary guitar/drum tracks
+	char difftype=0;	//Used to track the difficulty of the track
 
 	eof_log("Validate_dB_instrument() entered", 1);
 
@@ -1686,145 +1864,22 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 	else
 		difftype=1;	//Track that this is is an Easy difficulty
 
+//Create and initialize the instrument structure
+	chart=malloc_err(sizeof(struct dbTrack));	//Allocate memory
+	*chart=emptychart;							//Reliably set all member variables to 0/NULL
+
 //At this point, diffstring points to the character AFTER the matching difficulty string.  Verify that a valid instrument is specified
-	//Test for Single (Guitar)
-		inststring=strcasestr_spec(diffstring,"Single]");
-		if(inststring == NULL)
-		{
-	//Test for DoubleGuitar (Lead Guitar)
-			inststring=strcasestr_spec(diffstring,"DoubleGuitar]");
-			if(inststring == NULL)
-			{
-	//Test for DoubleBass (Bass)
-				inststring=strcasestr_spec(diffstring,"DoubleBass]");
-				if(inststring == NULL)
-				{
-	//Test for EnhancedGuitar
-					inststring=strcasestr_spec(diffstring,"EnhancedGuitar]");
-					if(inststring == NULL)
-					{
-	//Test for CoopLead
-						inststring=strcasestr_spec(diffstring,"CoopLead]");
-						if(inststring == NULL)
-						{
-	//Test for CoopBass
-							inststring=strcasestr_spec(diffstring,"CoopBass]");
-							if(inststring == NULL)
-							{
-	//Test for 10KeyGuitar
-								inststring=strcasestr_spec(diffstring,"10KeyGuitar]");
-								if(inststring == NULL)
-								{
-	//Test for DoubleDrums (Expert+ drums)
-									inststring=strcasestr_spec(diffstring,"DoubleDrums]");
-									if(inststring == NULL)
-									{
-	//Test for Drums
-										inststring=strcasestr_spec(diffstring,"Drums]");
-										if(inststring == NULL)
-										{
-	//Test for Vocals (Vocal Rhythm)
-											inststring=strcasestr_spec(diffstring,"Vocals]");
-											if(inststring == NULL)
-											{
-	//Test for Keyboard
-												inststring=strcasestr_spec(diffstring,"Keyboard]");
-												if(inststring == NULL)
-												{
-	//Test for SingleGuitar (Guitar)
-													inststring=strcasestr_spec(diffstring,"SingleGuitar]");	//This is another track name that can represent "Single"
-													if(inststring == NULL)
-													{
-	//Test for SingleRhythm (Bass)
-														inststring=strcasestr_spec(diffstring,"SingleRhythm]");	//This is another track name that can represent "DoubleBass"
-														if(inststring == NULL)
-														{
-	//Test for DoubleRhythm (Rhythm)
-															inststring=strcasestr_spec(diffstring,"DoubleRhythm]");
-															if(inststring == NULL)
-															{		//If none of the valid instrument names were found
-																return NULL;	//Return error
-															}
-
-															tracktype=6;	//Track that this is a "Rhythm" track
-															isguitar=1;
-														}
-														else
-														{
-															tracktype=3;	//Track that this is a "Bass" track
-															isguitar=1;
-														}
-													}
-													else
-													{
-														tracktype=1;	//Track that this is a "Guitar" track
-														isguitar=1;
-													}
-												}
-												else
-													tracktype=7;
-											}
-											else
-												tracktype=5;	//Track that this is a "Vocals" track
-										}
-										else
-										{
-											tracktype=4;	//Track that this is a "Drums" track
-											isdrums=1;
-										}
-									}
-									else
-									{
-										tracktype=4;	//Doubledrums is a drum track
-										isdrums=2;
-									}
-								}
-								else
-									isguitar=1;	//10KeyGuitar is a guitar track
-							}
-							else
-								isguitar=1;	//CoopBass is a guitar track
-						}
-						else
-							isguitar=1;	//CoopLead is a guitar track
-					}
-					else
-						isguitar=1;		//EnhancedGuitar is a guitar track
-				}
-				else
-				{
-					tracktype=3;	//Track that this is a "Bass" track
-					isguitar=1;
-				}
-			}
-			else
-			{
-				tracktype=2;	//Track that this is a "Lead Guitar" track
-				isguitar=1;
-			}
-		}
-		else
-		{
-			tracktype=1;	//Track that this is a "Guitar" track
-			isguitar=1;
-		}
-
-//Validate that the character immediately after the instrument substring is the NULL terminator
-	if(inststring[0] != '\0')
-		return NULL;
+	if(!eof_validate_db_track_diff_string(diffstring, chart))
+	{	//If the instrument difficulty is not recognized
+		return NULL;	//Return error
+	}
 
 //Create a new string containing the instrument name, minus the brackets
 	retstring=DuplicateString(&buffer[1]);
 	retstring[strlen(retstring)-1]='\0';	//Truncate the trailing bracket
 
-//Create and initialize the instrument structure
-	chart=malloc_err(sizeof(struct dbTrack));	//Allocate memory
-	*chart=emptychart;							//Reliably set all member variables to 0/NULL
 	chart->trackname=retstring;					//Store the instrument track name
-	chart->tracktype=tracktype;
 	chart->difftype=difftype;
-	chart->isguitar=isguitar;
-	chart->isdrums=isdrums;
 	return chart;
 }
 

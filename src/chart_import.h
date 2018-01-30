@@ -35,9 +35,10 @@ struct dbNote
 struct dbTrack
 {
 	char *trackname;
-	char tracktype;	//1 for guitar, 2 for lead guitar, 3 for for bass, 4 for drums, 5 for vocal rhythm, 0 for other
+	char tracktype;	//1 for guitar, 2 for lead guitar, 3 for for bass, 4 for drums, 5 for vocal rhythm, 6 for rhythm, 7 for keyboard, 0 for other
 	char difftype;	//1 for easy, 2 for medium, 3 for hard, 4 for expert
-	char isguitar;	//Nonzero if it is a guitar track, regardless of which one it is
+	char isguitar;	//Nonzero if it is a guitar track, set to 2 if it is a 6 lane guitar track
+	char isbass;	//Nonzero if it is a bass track, set to 2 if it is a 6 lane bass track
 	char isdrums;	//Nonzero if it is a drums track, 1 reflects the normal drum track and 2 reflects the double drums track
 	struct dbNote *notes;
 	struct dbTrack *next;
@@ -57,6 +58,9 @@ struct FeedbackChart
 	unsigned long linesprocessed;	//The number of lines in the file that were processed
 	unsigned long tracksloaded;	//The number of instrument tracks that were loaded
 
+	char guitartypes;	//Tracks the presence of 6 lane guitar (0 = no guitar parts, 1 = 5 lane guitar parts only, 2 = 6 lane guitar parts only, 3 = 5 and 6 lane guitar parts)
+	char basstypes;		//Tracks the presence of 6 lane bass (0 = no bass parts, 1 = 5 lane bass parts only, 2 = 6 lane bass parts only, 3 = 5 and 6 lane bass parts)
+
 	struct dBAnchor *anchors;	//Linked list of anchors
 	struct dbText *events;		//Linked list of text events
 	struct dbTrack *tracks;		//Linked list of note tracks
@@ -70,6 +74,10 @@ int Read_dB_string(char *source, char **str1, char **str2);
 	//that quotation mark up to the next are returned through str2
 	//Nonzero is returned upon success, or zero is returned if source did not contain two sets of non whitespace characters
 	//separated by an equal sign character, or if the closing quotation mark is missing.
+int eof_validate_db_track_diff_string(char *diffstring, struct dbTrack *chart);
+	//Compares the input string against all supported track difficulty names, setting values in *chart (ie. tracktype, isguitar, isdrums) accordingly
+	//chart->tracktype will be set to 0 if the string is a known instrument difficulty but isn't to be imported
+	//Returns 0 on error or if the string doesn't reflect a supported name
 struct dbTrack *Validate_dB_instrument(char *buffer);
 	//Validates that buffer contains a valid dB instrument track name enclosed in brackets []
 	//buffer is expected to point to the opening bracket
