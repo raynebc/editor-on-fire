@@ -5066,6 +5066,19 @@ void eof_log_notes(EOF_SONG *sp, unsigned long track)
 	}
 }
 
+void eof_log_cwd(void)
+{
+	char cwd[1024];
+	if(!getcwd(cwd, 1024))
+	{	//Couldn't obtain current working directory
+		eof_log("\tCould not detect working directory", 1);
+		return;
+	}
+	put_backslash(cwd);	//Append a file separator if necessary
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tDetected working directory:  %s", cwd);
+	eof_log(eof_log_string, 1);
+}
+
 #ifdef ALLEGRO_WINDOWS
 	int eof_initialize_windows(void)
 	{

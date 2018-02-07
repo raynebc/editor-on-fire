@@ -60,6 +60,8 @@ int eof_menu_help_keys(void)
 
 int eof_menu_help_manual(void)
 {
+	eof_log_cwd();
+
 	#ifdef ALLEGRO_WINDOWS
 		(void) eof_system("start manual\\index.htm");
 	#else
@@ -74,6 +76,8 @@ int eof_menu_help_manual(void)
 
 int eof_menu_help_tutorial(void)
 {
+	eof_log_cwd();
+
 	#ifdef ALLEGRO_WINDOWS
 		(void) eof_system("start tutorial\\index.htm");
 	#else
@@ -88,6 +92,8 @@ int eof_menu_help_tutorial(void)
 
 int eof_menu_help_vocals_tutorial(void)
 {
+	eof_log_cwd();
+
 	#ifdef ALLEGRO_WINDOWS
 		(void) eof_system("start vocaltutorial\\index.htm");
 	#else
@@ -102,6 +108,8 @@ int eof_menu_help_vocals_tutorial(void)
 
 int eof_menu_help_pro_guitar_tutorial(void)
 {
+	eof_log_cwd();
+
 	#ifdef ALLEGRO_WINDOWS
 		(void) eof_system("start proguitartutorial\\index.htm");
 	#else

@@ -662,6 +662,7 @@ extern char eof_log_string[2048];	//A string reserved for use with eof_log()
 extern unsigned int eof_log_id;
 	//This will be set to a random value when logging is started, so if multiple instances of EOF are writing to the same
 	//log file (Windows does not prevent this), each instance's log entries can be identified separately from each other.
+void eof_log_cwd(void);		//Logs the current working directory
 
 void eof_init_colors(void);		//Initializes the color structures, to be called after eof_load_data()
 void eof_set_color_set(void);	//Updates the eof_colors[] array with color data based on the current track and the user color set preference

@@ -135,7 +135,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	double solo_on = 0.0, solo_off = 0.0;
 	char solo_status = 0;	//0 = Off and awaiting a solo on marker, 1 = On and awaiting a solo off marker
 	unsigned long ctr, ctr2, ctr3, tracknum;
-	char importguitartypes = 1, importbasstypes = 1;	//Tracks whether 5 or 6 lane guitar and bass types are to be imported (default is 5 lane)
+	char importguitartypes = 0, importbasstypes = 0;	//Tracks whether 5 or 6 lane guitar and bass types are to be imported (default is whichever one type is encountered, otherwise user is prompted)
 
 	eof_log("\tImporting Feedback chart", 1);
 	eof_log("eof_import_chart() entered", 1);
@@ -335,31 +335,33 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 	eof_calculate_beats(sp);		//Set the beats' timestamps based on their tempo changes
 
-	/* check for the presence of both 5 and 6 lane guitar or bass tracks, prompt user which to import */
+	/* check for the presence of both normal and GHL guitar or bass tracks, prompt user which to import */
 	if(chart->guitartypes > 2)
-	{	//If the imported chart file has one or more each of 5 and 6 lane guitar tracks
+	{	//If the imported chart file has both normal AND GHL guitar tracks
 		eof_clear_input();
-		if(alert(NULL, "The imported file has both 5 and 6 lane guitar parts.  Import which parts??", NULL, "&5 lane", "&6 lane", '5', '6') == 2)
-		{	//If the user opts to import the 6 lane parts
-			eof_log("\t\tImporting 6 lane guitar and skipping 5 lane guitar", 1);
+		if(alert(NULL, "The imported file has both normal and GHL guitar parts.  Import which parts??", NULL, "&Normal", "&GHL", 'n', 'g') == 2)
+		{	//If the user opts to import the GHL parts
+			eof_log("\t\tImporting GHL guitar and skipping normal guitar", 1);
 			importguitartypes = 2;
 		}
 		else
 		{
-			eof_log("\t\tImporting 5 lane guitar and skipping 6 lane guitar", 1);
+			eof_log("\t\tImporting normal guitar and skipping GHL guitar", 1);
+			importguitartypes = 1;
 		}
 	}
 	if(chart->basstypes > 2)
-	{	//If the imported chart file has one or more each of 5 and 6 lane bass tracks
+	{	//If the imported chart file has both normal AND GHL bass tracks
 		eof_clear_input();
-		if(alert(NULL, "The imported file has both 5 and 6 lane bass parts.  Import which parts??", NULL, "&5 lane", "&6 lane", '5', '6') == 2)
-		{	//If the user opts to import the 6 lane parts
-			eof_log("\t\tImporting 6 lane bass and skipping 5 lane bass", 1);
+		if(alert(NULL, "The imported file has both normal and GHL bass parts.  Import which parts??", NULL, "&Normal", "&GHL", 'n', 'g') == 2)
+		{	//If the user opts to import the GHL parts
+			eof_log("\t\tImporting GHL bass and skipping normal bass", 1);
 			importbasstypes = 2;
 		}
 		else
 		{
-			eof_log("\t\tImporting 5 lane bass and skipping 6 lane bass", 1);
+			eof_log("\t\tImporting normal bass and skipping GHL bass", 1);
+			importbasstypes = 1;
 		}
 	}
 
@@ -367,20 +369,26 @@ EOF_SONG * eof_import_chart(const char * fn)
 	current_track = chart->tracks;
 	while(current_track)
 	{
-		if(current_track->isguitar && (current_track->isguitar != importguitartypes))
-		{	//If this is a guitar track, but not the type (5 or 6 lane) that the user opted to import
-			current_track = current_track->next;
-			lastchartpos = 0;	//Reset this value
-			eof_log("\t\tSkipping track difficulty as per selected 5/6 lane guitar import option", 1);
-			continue;	//Skip the track
+		if(current_track->isguitar && importguitartypes)
+		{	//If this is a guitar track and the user was prompted whether to import just the 5 or 6 note guitar track
+			if(current_track->isguitar != importguitartypes)
+			{	//But this is not the type that the user opted to import
+				current_track = current_track->next;
+				lastchartpos = 0;	//Reset this value
+				eof_log("\t\tSkipping track difficulty as per selected normal/GHL lane guitar import choice", 1);
+				continue;	//Skip the track
+			}
 		}
 
-		if(current_track->isbass && (current_track->isbass != importbasstypes))
-		{	//If this is a bass track, but not the type (5 or 6 lane) that the user opted to import
-			current_track = current_track->next;
-			lastchartpos = 0;	//Reset this value
-			eof_log("\t\tSkipping track difficulty as per selected 5/6 lane bass import option", 1);
-			continue;	//Skip the track
+		if(current_track->isbass && importbasstypes)
+		{	//If this is a bass track and the user was prompted whether to import just the 5 or 6 note bass track
+			if(current_track->isbass != importbasstypes)
+			{	//But this is not the type that the user opted to import
+				current_track = current_track->next;
+				lastchartpos = 0;	//Reset this value
+				eof_log("\t\tSkipping track difficulty as per selected normal/GHL lane bass import choice", 1);
+				continue;	//Skip the track
+			}
 		}
 
 		/* convert track number to EOF numbering scheme */
@@ -1757,9 +1765,17 @@ int eof_validate_db_track_diff_string(char *diffstring, struct dbTrack *chart)
 	//Check for 6 lane tracks, authored by MoonScraper for use in Clone Hero
 	ptr = strcasestr_spec(diffstring,"GHLGuitar]");
 	if(ptr && (ptr[0] == '\0'))
-	{	//If the string ends in "Single]"
+	{	//If the string ends in "GHLGuitar]"
 		chart->tracktype = 1;	//Track that this is a "Guitar" track
-		chart->isguitar = 2;	//This signals that this is a 6 lane track
+		chart->isguitar = 2;	//This signals that this is a 6 lane guitar track
+		return 1;	//Return success
+	}
+
+	ptr = strcasestr_spec(diffstring,"GHLBass]");
+	if(ptr && (ptr[0] == '\0'))
+	{	//If the string ends in "GHLBass]"
+		chart->tracktype = 3;	//Track that this is a "Bass" track
+		chart->isbass = 2;		//This signals that this is a 6 lane bass track
 		return 1;	//Return success
 	}
 
@@ -1871,6 +1887,7 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 //At this point, diffstring points to the character AFTER the matching difficulty string.  Verify that a valid instrument is specified
 	if(!eof_validate_db_track_diff_string(diffstring, chart))
 	{	//If the instrument difficulty is not recognized
+		free(chart);
 		return NULL;	//Return error
 	}
 

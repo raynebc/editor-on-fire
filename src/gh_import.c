@@ -282,7 +282,7 @@ unsigned long eof_crc32(const char *string)
 			crc32_lookup[x] = eof_crc32_reflect(x, 8) << 24;
 			for(y = 0; y < 8; y++)
 			{
-				crc32_lookup[x] = (crc32_lookup[x] << 1) ^ ((crc32_lookup[x] & (1 << 31)) ? polynomial : 0);
+				crc32_lookup[x] = (crc32_lookup[x] << 1) ^ ((crc32_lookup[x] & (1UL << 31)) ? polynomial : 0);
 			}
 			crc32_lookup[x] = eof_crc32_reflect(crc32_lookup[x], 32);
 		}
