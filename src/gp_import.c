@@ -1875,7 +1875,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 //					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSync point #%lu (time = %lums, measure = %f)", ctr, temp_sync_point.realtime_pos, temp_sync_point.measure + 1.0 + temp_sync_point.pos_in_measure);
 //					eof_log(eof_log_string, 1);
 					assert(sync_points != NULL);	//Unneeded check to resolve false positive in Splint
-					if(num_sync_points && ((temp_sync_point.measure + temp_sync_point.pos_in_measure <= sync_points[num_sync_points - 1].measure + sync_points[num_sync_points - 1].pos_in_measure) || (temp_sync_point.realtime_pos <= sync_points[num_sync_points - 1].realtime_pos)))
+					if(temp_sync_point.is_negative)
+					{	//If this sync point has a negative timestamp
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSync point #%lu (time = %lums, measure = %f) is before 0s, it will be skipped.", ctr, temp_sync_point.realtime_pos, temp_sync_point.measure + 1.0 + temp_sync_point.pos_in_measure);
+						eof_log(eof_log_string, 1);
+					}
+					else if(num_sync_points && ((temp_sync_point.measure + temp_sync_point.pos_in_measure <= sync_points[num_sync_points - 1].measure + sync_points[num_sync_points - 1].pos_in_measure) || (temp_sync_point.realtime_pos <= sync_points[num_sync_points - 1].realtime_pos)))
 					{	//If there was a previous sync point added, and this sync point isn't a later timestamp or measure position
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSync point #%lu (time = %lums, measure = %f) is out of chronological order, it will be skipped.", ctr, temp_sync_point.realtime_pos, temp_sync_point.measure + 1.0 + temp_sync_point.pos_in_measure);
 						eof_log(eof_log_string, 1);
@@ -4346,6 +4351,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								if(slide_in_from_warned == 1)
 								{	//If this is the first slide in from above/below technique encountered, warn user
 									allegro_message("Imported slide in from above/below notes will be highlighted, as Rocksmith does not directly support this technique.");
+									slide_in_from_warned++;	//Change the value so this prompt isn't immediately triggered on the next loop iteration
 								}
 							}//Slide
 							if(byte2 & 16)
@@ -5607,16 +5613,20 @@ char eof_copy_notes_in_beat_range(EOF_SONG *ssp, EOF_PRO_GUITAR_TRACK *source, u
 int eof_get_next_gpa_sync_point(char **buffer, struct eof_gpa_sync_point *ptr)
 {
 	unsigned long ctr, index;
-	char buffer2[41];
+	char buffer2[41], byte;
 	double value;
 
 	if(!buffer || !(*buffer) || !ptr)
 		return 0;	//Invalid parameters
 
 	//Examine the character at the specified position to see if it needs to be skipped
-	if(**buffer == '#')
+	byte = **buffer;
+	if(byte == '#')
+	{
 		(*buffer)++;	//Skip the timestamp delimiter
-	else if(!isdigit(**buffer))
+		byte = **buffer;
+	}
+	if(!isdigit(byte) && (byte != '-'))
 		return 0;	//Unexpected character was encountered
 
 	//Read a set of 4 delimited numbers
@@ -5644,8 +5654,8 @@ int eof_get_next_gpa_sync_point(char **buffer, struct eof_gpa_sync_point *ptr)
 				(*buffer)++;	//Increment to next character to read
 				break;	//Otherwise stop parsing this number
 			}
-			if(!isdigit(**buffer) && (**buffer != '.'))
-			{	//If the next character isn't a number or a period
+			if(!isdigit(**buffer) && (**buffer != '.') && (byte != '-'))
+			{	//If the next character isn't a number, a period or a hyphen
 				return 0;	//Malformed timestamp
 			}
 			buffer2[index] = **buffer;	//Read the next character
@@ -5661,7 +5671,16 @@ int eof_get_next_gpa_sync_point(char **buffer, struct eof_gpa_sync_point *ptr)
 		//Store the value into the appropriate structure element
 		if(!ctr)
 		{
-			ptr->realtime_pos = value + 0.5;	//Round up to nearest ms
+			if(value < 0)
+			{	//Sync points with negative timestamps will ultimately be ignored
+				ptr->is_negative = 1;
+				ptr->realtime_pos = 0;
+			}
+			else
+			{
+				ptr->is_negative = 0;
+				ptr->realtime_pos = value + 0.5;	//Round up to nearest ms
+			}
 		}
 		else if(ctr == 1)
 		{

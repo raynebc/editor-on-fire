@@ -37,8 +37,8 @@ struct dbTrack
 	char *trackname;
 	char tracktype;	//1 for guitar, 2 for lead guitar, 3 for for bass, 4 for drums, 5 for vocal rhythm, 6 for rhythm, 7 for keyboard, 0 for other
 	char difftype;	//1 for easy, 2 for medium, 3 for hard, 4 for expert
-	char isguitar;	//Nonzero if it is a guitar track, set to 2 if it is a 6 lane guitar track
-	char isbass;	//Nonzero if it is a bass track, set to 2 if it is a 6 lane bass track
+	char isguitar;	//Nonzero if it is a guitar track, set to 2 if it is a GHL guitar track
+	char isbass;	//Nonzero if it is a bass track, set to 2 if it is a GHL bass track
 	char isdrums;	//Nonzero if it is a drums track, 1 reflects the normal drum track and 2 reflects the double drums track
 	struct dbNote *notes;
 	struct dbTrack *next;

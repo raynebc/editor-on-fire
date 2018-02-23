@@ -63,6 +63,7 @@
 	struct eof_gpa_sync_point
 	{
 		unsigned long realtime_pos;		//The realtime position of the sync point in milliseconds
+		char is_negative;				//Tracks whether the imported timestamp is below 0 seconds
 		unsigned long measure;			//The measure at which this sync point exists, numbered starting from 0
 		double pos_in_measure;			//The position (from 0 to 1) in the measure at which the sync point exists
 		double qnote_length;			//The length of each quarter note from this sync point until the next

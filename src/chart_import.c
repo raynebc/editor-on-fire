@@ -370,23 +370,23 @@ EOF_SONG * eof_import_chart(const char * fn)
 	while(current_track)
 	{
 		if(current_track->isguitar && importguitartypes)
-		{	//If this is a guitar track and the user was prompted whether to import just the 5 or 6 note guitar track
+		{	//If this is a guitar track and the user was prompted whether to import just the normal or the GHL guitar track
 			if(current_track->isguitar != importguitartypes)
 			{	//But this is not the type that the user opted to import
 				current_track = current_track->next;
 				lastchartpos = 0;	//Reset this value
-				eof_log("\t\tSkipping track difficulty as per selected normal/GHL lane guitar import choice", 1);
+				eof_log("\t\tSkipping track difficulty as per selected normal/GHL guitar import choice", 1);
 				continue;	//Skip the track
 			}
 		}
 
 		if(current_track->isbass && importbasstypes)
-		{	//If this is a bass track and the user was prompted whether to import just the 5 or 6 note bass track
+		{	//If this is a bass track and the user was prompted whether to import just the normal or the GHL bass track
 			if(current_track->isbass != importbasstypes)
 			{	//But this is not the type that the user opted to import
 				current_track = current_track->next;
 				lastchartpos = 0;	//Reset this value
-				eof_log("\t\tSkipping track difficulty as per selected normal/GHL lane bass import choice", 1);
+				eof_log("\t\tSkipping track difficulty as per selected normal/GHL bass import choice", 1);
 				continue;	//Skip the track
 			}
 		}
@@ -470,6 +470,15 @@ EOF_SONG * eof_import_chart(const char * fn)
 			unsigned long threshold = (chart->resolution * 4.0 * (11.0 / 128.0)) + 0.5;	//This is the tick distance at which notes become forced strums instead of HOPOs (11/128 measure or further)
 
 			tracknum = sp->track[track]->tracknum;
+
+			if((current_track->isguitar > 1) || (current_track->isbass > 1))
+			{	//If this is a GHL guitar or bass track, configure the track accordingly
+				EOF_TRACK_ENTRY *ep = sp->track[track];		//Simplify
+				ep->flags |= EOF_TRACK_FLAG_GHL_MODE;
+				sp->legacy_track[tracknum]->numlanes = 6;
+				ep->flags |= EOF_TRACK_FLAG_SIX_LANES;		//Set the open strum flag
+			}
+
 			while(current_note)
 			{
 				/* import star power */
