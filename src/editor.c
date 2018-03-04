@@ -2601,18 +2601,31 @@ if(eof_key_code == KEY_PAUSE)
 		{	//If the active track is a pro guitar track
 	/* edit pro guitar note (N in a pro guitar track) */
 	/* toggle linknext status (SHIFT+N in a pro guitar track) */
-			if((eof_key_char == 'n') && !KEY_EITHER_CTRL)
+	/* toggle pre-bend status (CTRL+SHIFT+N in a pro guitar track) */
+			if(eof_key_char == 'n')
 			{
-				if(!KEY_EITHER_SHIFT)
-				{	//If SHIFT is not held
-					(void) eof_menu_note_edit_pro_guitar_note();
-					eof_use_key();
+				if(KEY_EITHER_CTRL)
+				{	//If CTRL is held
+					if(KEY_EITHER_SHIFT)
+					{	//If SHIFT is also held
+						eof_shift_used = 1;	//Track that the SHIFT key was used
+						(void) eof_menu_note_toggle_prebend();
+						eof_use_key();
+					}
 				}
 				else
-				{	//If SHIFT is held
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					(void) eof_menu_note_toggle_linknext();
-					eof_use_key();
+				{	//CTRL is not held
+					if(!KEY_EITHER_SHIFT)
+					{	//If SHIFT is not held
+						(void) eof_menu_note_edit_pro_guitar_note();
+						eof_use_key();
+					}
+					else
+					{	//If SHIFT is held
+						eof_shift_used = 1;	//Track that the SHIFT key was used
+						(void) eof_menu_note_toggle_linknext();
+						eof_use_key();
+					}
 				}
 			}
 

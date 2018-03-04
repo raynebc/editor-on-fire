@@ -1704,7 +1704,7 @@ BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, char *text, uns
 
 void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note, unsigned char sanitycheck)
 {
-	unsigned long index = 0, flags = 0, prevnoteflags = 0;
+	unsigned long index = 0, flags = 0, eflags = 0, prevnoteflags = 0;
 	char buffer2[5] = {0};
 	long prevnotenum;
 
@@ -1717,6 +1717,7 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		return;
 	}
 	flags = eof_get_note_flags(eof_song, track, note);
+	eflags = eof_get_note_eflags(eof_song, track, note);
 
 	prevnotenum = eof_get_prev_note_type_num(eof_song, track, note);	//Get the index of the previous note in this track difficulty
 	if(prevnotenum >= 0)
@@ -1745,7 +1746,14 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		}
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
 		{
-			buffer[index++] = 'a';	//In the symbols font, a is the bend character
+			if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND)
+			{	//If the note has pre-bend status
+				buffer[index++] = 'l';	//In the symbols font, l is the pre-bend character
+			}
+			else
+			{
+				buffer[index++] = 'a';	//In the symbols font, a is the bend character
+			}
 			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
 			{	//If the note defines the strength of its bend
 				unsigned char bendstrength = np->bendstrength & 0x7F;	//Mask out the MSB

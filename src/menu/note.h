@@ -141,7 +141,9 @@ int eof_menu_note_toggle_rimshot(void);			//Toggles the rimshot status for selec
 int eof_menu_note_remove_rimshot(void);			//Removes the rimshot status for selected red notes
 int eof_menu_note_toggle_tapping(void);			//Toggles the tapping status of all selected pro guitar notes
 int eof_menu_note_remove_tapping(void);			//Removes the tapping status of all selected pro guitar notes
-int eof_menu_note_toggle_bend(void);			//Toggles the bend status of all selected pro guitar notes
+int eof_menu_note_toggle_bend_logic(int function);	//Shared logic for toggling bend and pre-bend statuses, a function value of 0 toggles bend, otherwise the function toggles pre-bend
+int eof_menu_note_toggle_bend(void);			//Calls eof_menu_note_toggle_bend_logic() to toggle the bend status of all selected pro guitar notes
+int eof_menu_note_toggle_prebend(void);			//Calls eof_menu_note_toggle_bend_logic() to toggle the prebend status of all selected pro guitar notes
 int eof_menu_note_remove_bend(void);			//Removes the bend status of all selected pro guitar notes
 int eof_menu_note_toggle_harmonic(void);		//Toggles the harmonic status of all selected pro guitar notes
 int eof_menu_note_remove_harmonic(void);		//Removes the harmonic status of all selected pro guitar notes

@@ -5722,6 +5722,8 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 		}
 		else
 		{	//If there's at least one bend tech note that overlaps the note being exported
+			long pre_bend;
+
 			(void) snprintf(buffer, sizeof(buffer) - 1, "          %s<bendValues count=\"%lu\">\n", indentlevel, bendpoints);
 			(void) pack_fputs(buffer, fp);
 			nextnote = eof_fixup_next_pro_guitar_note(tp, notenum);
@@ -5732,6 +5734,35 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 					notelen--;	//Shorten the effective note length to ensure that a tech note at the next note's position is detected as affecting that note instead of this one
 				}
 			}
+
+			//If there is a pre-bend tech note, it must be written first and any other pre-bend tech notes or bend tech notes at the note's starting position are to be ignored
+			pre_bend = eof_pro_guitar_note_bitmask_has_pre_bend_tech_note(tp, notenum, bitmask);
+			if(pre_bend >= 0)
+			{	//If an applicable pre-bend tech note was found
+				flags = tp->technote[pre_bend]->flags;
+				if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
+				{	//If the tech note is a bend and has a bend strength defined
+					if(tp->technote[pre_bend]->bendstrength & 0x80)
+					{	//If this bend strength is defined in quarter steps
+						bendstrength_q = tp->technote[pre_bend]->bendstrength & 0x7F;	//Obtain the defined bend strength in quarter steps (mask out the MSB)
+					}
+					else
+					{	//The bend strength is defined in half steps
+						bendstrength_q = tp->technote[pre_bend]->bendstrength * 2;		//Obtain the defined bend strength in quarter steps
+					}
+				}
+				else
+				{	//The bend strength is not defined, use a default value of 1 half step
+					bendstrength_q = 2;
+				}
+
+				//Write the bend point explicitly at the note's start position regardless of the tech note's actual position
+				(void) snprintf(buffer, sizeof(buffer) - 1, "            %s<bendValue time=\"%.3f\" ", indentlevel, ((double)tp->pgnote[notenum]->pos / 1000.0));
+				eof_conditionally_append_xml_float(buffer, sizeof(buffer), "step", (double)bendstrength_q / 2.0, 0.0);
+				(void) strncat(buffer, "/>\n", sizeof(buffer) - strlen(buffer) - 1);	//Append the tag ending
+				(void) pack_fputs(buffer, fp);
+			}
+
 			for(ctr = firstbend; ctr < tp->technotes; ctr++)
 			{	//For all tech notes, starting with the first applicable bend tech note
 				if(tp->technote[ctr]->pos > notepos + notelen)
@@ -5742,6 +5773,10 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 					continue;	//If the tech note isn't in the same difficulty as the pro guitar single note being exported or if it doesn't use the same string, skip it
 				if((tp->technote[ctr]->pos < notepos) || (tp->technote[ctr]->pos > notepos + notelen))
 					continue;	//If this tech note does not overlap with the specified pro guitar regular note, skip it
+				if(tp->technote[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND)
+					continue;	//If this is a pre-bend tech note, skip it as there's only one valid pre-bend per string and it was written already
+				if((pre_bend >= 0) && (tp->technote[ctr]->pos == notepos))
+					continue;	//If a pre-bend tech note was written, and this tech note is at the note's start position, skip it as the pre-bend takes precedent in this conflict
 
 				flags = tp->technote[ctr]->flags;
 				if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))

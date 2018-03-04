@@ -97,21 +97,42 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	/* write difficulty tags */
 	for(i = 0; i < sp->tracks; i++)
 	{	//For each track in the chart
+		int guitar_ghl_diff_written = 0;
+		char *diff_tag;
+
 		if(i == 0)
 			continue;	//Until the band difficulty is implemented, skip this iteration
 		if(eof_difficulty_ini_tags[i][0] == '\0')
 			continue;	//If this track does not have a defined difficulty tag
 
+		diff_tag = eof_difficulty_ini_tags[i];	//By default, write a non GHL specific difficulty tag
+		if(eof_track_is_ghl_mode(sp, i))
+		{	//If this track has GHL mode enabled
+			if(i == EOF_TRACK_BASS)
+			{	//If this is the bass track
+				diff_tag = "diff_bassghl";	//Write the bass GHL difficulty tag
+			}
+			else
+			{	//This is a guitar track
+				if(guitar_ghl_diff_written)
+				{	//If a GHL mode guitar difficulty tag was already written
+					continue;	//Skip writing a tag for this track instead of writing a conflicting difficulty tag
+				}
+				diff_tag = "diff_guitarghl";	//Write the guitar GHL difficulty tag
+				guitar_ghl_diff_written = 1;
+			}
+		}
+
 		if(!eof_get_track_size_normal(sp, i))
 		{	//If this track is empty
-			(void) snprintf(buffer, sizeof(buffer) - 1, "\r\n%s = -1", eof_difficulty_ini_tags[i]);	//Write an "empty track" difficulty tag
+			(void) snprintf(buffer, sizeof(buffer) - 1, "\r\n%s = -1", diff_tag);	//Write an "empty track" difficulty tag
 			(void) ustrcat(ini_string, buffer);
 		}
 		else
 		{
 			if(sp->track[i]->difficulty != 0xFF)
 			{	//If the track's difficulty is defined
-				(void) snprintf(buffer, sizeof(buffer) - 1, "\r\n%s = %u", eof_difficulty_ini_tags[i], sp->track[i]->difficulty);
+				(void) snprintf(buffer, sizeof(buffer) - 1, "\r\n%s = %u", diff_tag, sp->track[i]->difficulty);
 				(void) ustrcat(ini_string, buffer);
 			}
 		}

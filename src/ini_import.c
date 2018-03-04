@@ -338,6 +338,9 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 		else if(!ustricmp(eof_import_ini_setting[i].type, "song_length"))
 		{	//Used by one or more unnamed rhythm games
 		}
+		else if(!ustricmp(eof_import_ini_setting[i].type, "diff_guitarghl") || !ustricmp(eof_import_ini_setting[i].type, "diff_bassghl"))
+		{	//Used by Clone Hero
+		}
 
 		/* for custom settings or difficulty strings */
 		else

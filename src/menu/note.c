@@ -344,6 +344,7 @@ MENU eof_note_proguitar_menu[] =
 	{"Toggle tapping\t" CTRL_NAME "+T", eof_menu_note_toggle_tapping, NULL, 0, NULL},
 	{"Remove &Tapping", eof_menu_note_remove_tapping, NULL, 0, NULL},
 	{"Toggle bend\t" CTRL_NAME "+B", eof_menu_note_toggle_bend, NULL, 0, NULL},
+	{"Toggle pre-bend\t" CTRL_NAME "+SHIFT+N", eof_menu_note_toggle_prebend, NULL, 0, NULL},
 	{"Remove &Bend", eof_menu_note_remove_bend, NULL, 0, NULL},
 	{"Set bend strength\tShift+B", eof_pro_guitar_note_bend_strength_save, NULL, 0, NULL},
 	{"Toggle palm muting\t" CTRL_NAME "+M", eof_menu_note_toggle_palm_muting, NULL, 0, NULL},
@@ -1001,10 +1002,12 @@ void eof_prepare_note_menu(void)
 				{	//If tech view is in effect
 					eof_note_rocksmith_menu[8].flags = 0;			//Note>Rocksmith>Move tech note to prev note
 					eof_note_rocksmith_menu[9].flags = D_DISABLED;	//Note>Rocksmith>Generate FHPs
+					eof_note_proguitar_menu[8].flags = 0;			//Note>Pro Guitar>Toggle pre-bend
 				}
 				else
 				{
 					eof_note_rocksmith_menu[8].flags = D_DISABLED;
+					eof_note_proguitar_menu[8].flags = D_DISABLED;	//Note>Pro Guitar>Toggle pre-bend
 					if(vselected > 1)
 					{	//If multiple notes are selected
 						eof_note_rocksmith_menu[9].flags = 0;		//Note>Rocksmith>Generate FHPs
@@ -3923,6 +3926,7 @@ DIALOG eof_pro_guitar_note_dialog[] =
 	{d_agup_check_proc,		154, 452, 48,  16, 2,   23,  0,    0,      0,         0,   "Split",      NULL,          NULL },
 	{d_agup_check_proc,		10,  312, 78,  16, 2,   23,  0,    0,      0,         0,   "Chordify",   NULL,          NULL },
 	{d_agup_check_proc,		10,  472, 80,  16, 2,   23,  0,    0,      0,         0,   "Fingerless", NULL,          NULL },
+	{d_agup_check_proc,		87,  472, 78,  16, 2,   23,  0,    0,      0,         0,   "Pre-bend",   NULL,          NULL },
 	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -4232,9 +4236,12 @@ int eof_menu_note_edit_pro_guitar_note(void)
 		{	//Clear "Fingerless"
 			eof_pro_guitar_note_dialog[76].flags = 0;
 		}
+
+		//The remaining statuses depend on whether tech view is in effect
 		if(!eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
 		{	//If tech view isn't in effect for the current track
 			eof_pro_guitar_note_dialog[71].flags = D_DISABLED;	//"Stop" status
+			eof_pro_guitar_note_dialog[77].flags = D_DISABLED;	//"Pre-bend" status
 			if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS)
 			{	//Select "Ghost HS"
 				eof_pro_guitar_note_dialog[72].flags = D_SELECTED;
@@ -4257,6 +4264,14 @@ int eof_menu_note_edit_pro_guitar_note(void)
 			}
 			eof_pro_guitar_note_dialog[72].flags = D_DISABLED;	//"Ghost HS" status
 			eof_pro_guitar_note_dialog[75].flags = D_DISABLED;	//"Chordify" status
+			if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND)
+			{	//Select "Pre-bend"
+				eof_pro_guitar_note_dialog[77].flags = D_SELECTED;
+			}
+			else
+			{	//Clear "Pre-bend"
+				eof_pro_guitar_note_dialog[77].flags = 0;
+			}
 		}
 
 		bitmask = 0;
@@ -4574,6 +4589,11 @@ int eof_menu_note_edit_pro_guitar_note(void)
 				if(eof_pro_guitar_note_dialog[76].flags == D_SELECTED)
 				{	//Fingerless is selected
 					eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS;
+				}
+				if(eof_pro_guitar_note_dialog[77].flags == D_SELECTED)
+				{	//Pre-bend is selected, apply the normal bend status in addition to the pre-bend status
+					eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND;
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
 				}
 
 				if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
@@ -5527,16 +5547,18 @@ int eof_menu_note_remove_tapping(void)
 	return 1;
 }
 
-int eof_menu_note_toggle_bend(void)
+int eof_menu_note_toggle_bend_logic(int function)
 {
 	unsigned long i;
 	long u = 0;
-	unsigned long flags, tracknum;
-	char bends_present = 0;		//Will be set to nonzero if any selected notes become bend notes
+	unsigned long flags, eflags, tracknum;
+	char bends_created = 0;		//Will be set to nonzero if any selected un-bent notes become bend notes
 	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+	if(function && !eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
+		return 1;	//Do not allow this function to toggle pre-bend status when tech view is not active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
@@ -5546,16 +5568,53 @@ int eof_menu_note_toggle_bend(void)
 			continue;	//If this note isn't selected, skip it
 
 		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-		flags ^= EOF_PRO_GUITAR_NOTE_FLAG_BEND;	//Toggle the bend flag
-		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
-		{	//If bend status was just enabled
-			bends_present = 1;
+		eflags = eof_get_note_eflags(eof_song, eof_selected_track, i);
+
+		if(!function)
+		{	//Toggle bend status
+			if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND)
+			{	//If the note is already a pre-bend
+				eflags ^= EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND;	//Toggle that status off
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;			//Ensure these flags are still set
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
+			}
+			else
+			{
+				flags ^= EOF_PRO_GUITAR_NOTE_FLAG_BEND;	//Toggle the bend flag
+				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+				{	//If bend status was just enabled
+					bends_created = 1;
+				}
+			}
 		}
 		else
-		{
+		{	//Toggle pre-bend status
+			if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && !(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND))
+			{	//If the note is already a bend but is not a pre-bend
+				eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND;	//Set the pre-bend status
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;			//Ensure these flags are still set
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
+			}
+			else
+			{
+				eflags ^= EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND;	//Toggle the pre-bend flag
+				if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND)
+				{	//If pre-bend status was just enabled on a non-bent note
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+					bends_created = 1;
+				}
+				else
+				{	//Pre-bend status was removed from a pre-bend note
+					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;	//Also remove bend status
+				}
+			}
+		}
+
+		if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
+		{	//If the note is no longer a bend note
 			if(!(((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)) && eof_song->pro_guitar_track[tracknum]->note[i]->slideend))
-			{	//If this is NOT also a slide note with a defined end of slide position
-				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag
+			{	//If it is also NOT a slide note with a defined end of slide position
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag because no applicable RS status remains
 			}
 		}
 		if(!u)
@@ -5564,12 +5623,13 @@ int eof_menu_note_toggle_bend(void)
 			u = 1;
 		}
 		eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		eof_set_note_eflags(eof_song, eof_selected_track, i, eflags);
 		if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
 		{	//If this is not a bend anymore
 			eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength = 0;	//Reset the strength of the bend
 		}
 	}
-	if((eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files) && bends_present)
+	if((eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files) && bends_created)
 	{	//If the user wants to save Rocksmith or Bandfuse capable files, prompt to set the strength of bend notes
 		(void) eof_pro_guitar_note_bend_strength_no_save();	//Don't make another undo state
 	}
@@ -5581,22 +5641,34 @@ int eof_menu_note_toggle_bend(void)
 	return 1;
 }
 
+int eof_menu_note_toggle_bend(void)
+{
+	return eof_menu_note_toggle_bend_logic(0);
+}
+
+int eof_menu_note_toggle_prebend(void)
+{
+	return eof_menu_note_toggle_bend_logic(1);
+}
+
 int eof_menu_note_remove_bend(void)
 {
 	unsigned long i;
 	long u = 0;
-	unsigned long flags;
+	unsigned long flags, eflags, tracknum;
 	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			eflags = eof_get_note_eflags(eof_song, eof_selected_track, i);
 			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
 			{	//If this note has bend status
 				if(!u)
@@ -5605,7 +5677,14 @@ int eof_menu_note_remove_bend(void)
 					u = 1;
 				}
 				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;	//Clear the bend flag
+				eflags &= ~EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND;	//Clear the pre-bend flag
+				if(!(((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)) && eof_song->pro_guitar_track[tracknum]->note[i]->slideend))
+				{	//If it is also NOT a slide note with a defined end of slide position
+					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag because no applicable RS status remains
+				}
 				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+				eof_set_note_eflags(eof_song, eof_selected_track, i, eflags);
+				eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength = 0;	//Reset the strength of the bend
 			}
 		}
 	}

@@ -107,6 +107,7 @@
 
 
 ///Extended note flags
+//Extended flags are track specific and should not be retained when copied to a track of a different format
 //The following extended flags pertain to pro guitar notes
 #define EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE      1	//This flag specifies a note that will export to RS2 format with the "ignore" status set to nonzero, for special uses
 #define EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN     2	//This flag specifies a note that will export to RS2 format with its sustain even when it's a chord without techniques that normally require chordNote tags
@@ -116,6 +117,7 @@
 												//	as if they all used the full chord's handshape in-game
 #define EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY   16	//This flag specifies a note with "chordify" status, affecting its export to RS2 XML as a chord tag with no chordnote subtags, and with ignored single notes if the chord uses sustain
 #define EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS 32	//This flag specifies that a chord has no defined fingering and will RS export reflecting as such
+#define EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND   64	//This flag specifies that a bend tech note is to be interpreted as a pre-bend even if it's not at the start position of the normal note it affects
 
 
 ///Beat flags
@@ -997,7 +999,12 @@ char eof_pro_guitar_note_has_open_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long n
 	//Returns zero on error or if the note does not have any open notes
 unsigned long eof_pro_guitar_note_bitmask_has_bend_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long mask, unsigned long *technote_num);
 	//Similar to eof_pro_guitar_note_has_tech_note(), but returns the number of overlapping tech notes that have bend technique
+	//Only the first applicable pre-bend tech note is included in the count
+	//If there is a bend tech note at the note's start position AND a pre-bend tech note, only the pre-bend note is included in the count
 	//If technote_num is not NULL, the index number of the first relevant bend tech note is returned through it
+long eof_pro_guitar_note_bitmask_has_pre_bend_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long pgnote, unsigned long mask);
+	//Similar to eof_pro_guitar_note_bitmask_has_bend_tech_note(), but returns the index of the first pre-bend tech note applicable for the note and bitmask
+	//Returns -1 if no applicable pre-bend tech note exists
 char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long technote, unsigned long mask, unsigned long *note_num);
 	//Looks for the last regular pro guitar note that is overlapped by the specified tech note and mask
 	//If the tech note is found to be at the start position of any overlapping notes, 1 is returned

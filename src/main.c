@@ -2067,7 +2067,7 @@ void eof_read_global_keys(void)
 	}
 
 	/* new chart (CTRL+N) */
-	if(KEY_EITHER_CTRL && (eof_key_char == 'n'))
+	if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && (eof_key_char == 'n'))
 	{
 		clear_keybuf();
 		eof_menu_file_new_wizard();

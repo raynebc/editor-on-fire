@@ -8615,12 +8615,16 @@ char eof_pro_guitar_note_bitmask_has_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigne
 
 unsigned long eof_pro_guitar_note_bitmask_has_bend_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned long mask, unsigned long *technote_num)
 {
-	unsigned long ctr, flags, notepos, notelen, matchctr = 0;
-	long nextnote;
+	unsigned long ctr, flags, eflags, notepos, notelen, matchctr = 0, firstmatch = 0;
+	long nextnote, pre_bend_ctr = 0;
 
 	if((tp == NULL) || (note >= tp->notes))
 		return 0;	//Return error
 
+	if(eof_pro_guitar_note_bitmask_has_pre_bend_tech_note(tp, note, mask) >= 0)
+	{	//If there is an appliable pre-bend tech note
+		pre_bend_ctr = 1;	//The combined count of all pre-bends and any tech note at the note's start position will be just one
+	}
 	notepos = tp->pgnote[note]->pos;
 	notelen = tp->pgnote[note]->length;
 	nextnote = eof_fixup_next_pro_guitar_note(tp, note);
@@ -8642,18 +8646,62 @@ unsigned long eof_pro_guitar_note_bitmask_has_bend_tech_note(EOF_PRO_GUITAR_TRAC
 			if((tp->technote[ctr]->pos >= notepos) && (tp->technote[ctr]->pos <= notepos + notelen))
 			{	//If this tech note overlaps with the specified pro guitar regular note
 				flags = tp->technote[ctr]->flags;
+				eflags = tp->technote[ctr]->eflags;
 				if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
 				{	//If the tech note is a bend and has a bend strength defined
-					if(technote_num && !matchctr)
+					if(technote_num && !firstmatch)
 					{	//If the calling function passed a non NULL address, and this is the first overlapping bend tech note found
 						*technote_num = ctr;	//Store the index number of the first tech note that overlaps with the specified note
+						firstmatch = 1;
 					}
-					matchctr++;	//Increment counter
+					if(!pre_bend_ctr || (!(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND) && (tp->technote[ctr]->pos != notepos)))
+					{	//If no pre-bend tech notes are in play, or if there are but this tech note isn't a pre-bend and isn't at the note's start position
+						matchctr++;	//Increment counter
+					}
 				}
 			}
 		}
 	}
-	return matchctr;	//Return the number of overlapping bend notes found
+	return matchctr + pre_bend_ctr;	//Return the number of overlapping bend notes found, plus one if there was a pre-bend
+}
+
+long eof_pro_guitar_note_bitmask_has_pre_bend_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long pgnote, unsigned long mask)
+{
+	unsigned long ctr, notepos, notelen;
+	long nextnote;
+
+	if(!tp || (pgnote >= tp->pgnotes))
+		return -1;	//Invalid parameters
+
+	notepos = tp->pgnote[pgnote]->pos;
+	notelen = tp->pgnote[pgnote]->length;
+	nextnote = eof_fixup_next_pro_guitar_note(tp, pgnote);
+	if(nextnote > 0)
+	{	//If there was a next note
+		if(notepos + notelen == tp->pgnote[nextnote]->pos)
+		{	//And this note extends all the way to it with no gap in between (this note has linkNext status)
+			notelen--;	//Shorten the effective note length to ensure that a tech note at the next note's position is detected as affecting that note instead of this one
+		}
+	}
+	for(ctr = 0; ctr < tp->technotes; ctr++)
+	{	//For each tech note in the track
+		if(tp->technote[ctr]->pos > notepos + notelen)
+		{	//If this tech note (and all those that follow) are after the end position of this note
+			break;	//Break from loop, no overlapping note will be found
+		}
+		if((tp->technote[ctr]->type == tp->pgnote[pgnote]->type) && (mask & tp->technote[ctr]->note))
+		{	//If the tech note is in the same difficulty as the pro guitar regular note and uses any of the specified strings
+			if((tp->technote[ctr]->pos >= notepos) && (tp->technote[ctr]->pos <= notepos + notelen))
+			{	//If this tech note overlaps with the specified pro guitar regular note
+				if(tp->technote[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND)
+				{	//If the tech note has pre-bend status
+					return ctr;
+				}
+			}
+		}
+	}
+
+	return -1;	//No applicable pre-bend tech notes were found
 }
 
 char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long technote, unsigned long mask, unsigned long *note_num)
