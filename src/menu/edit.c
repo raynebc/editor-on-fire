@@ -1624,6 +1624,11 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		np->bendstrength = temp_note.bendstrength;						//Copy the bend height to the last created pro guitar note
 		np->slideend = temp_note.slideend;								//Copy the slide end position to the last created pro guitar note
 		np->unpitchend = temp_note.unpitchend;							//Copy the slide end position to the last created pro guitar note
+		if(!eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
+		{	//If the active track does not have tech view enabled
+			temp_note.eflags &= ~EOF_PRO_GUITAR_NOTE_EFLAG_STOP;		//Clear these tech note only statuses
+			temp_note.eflags &= ~EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND;
+		}
 		np->eflags = temp_note.eflags;									//Copy the extended track flags
 		if(eof_song->track[sourcetrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a non pro guitar note is being pasted into a pro guitar track

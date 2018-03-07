@@ -774,6 +774,7 @@ int eof_song_qsort_pro_guitar_notes(const void * e1, const void * e2);	//The com
 void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
 long eof_fixup_previous_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Returns the note one before the specified note number that is in the same difficulty, or -1 if there is none
 long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Returns the note one after the specified note number that is in the same difficulty, or -1 if there is none
+long eof_fixup_next_pro_guitar_note_ptr(EOF_PRO_GUITAR_TRACK * tp, EOF_PRO_GUITAR_NOTE * np);	//Similar to eof_fixup_next_pro_guitar_note, but returns the index of the first note in tp that is AFTER the specified note's timestamp and is in the same difficulty
 long eof_fixup_next_pro_guitar_technote(EOF_PRO_GUITAR_TRACK * tp, unsigned long tnote);	//Returns the tech note one after the specified tech note number that is in the same difficulty, or -1 if there is none
 long eof_track_fixup_first_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned char diff);	//Returns the first note/lyric in the specified track difficulty, or -1 if there is none
 void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel);
@@ -1005,6 +1006,9 @@ unsigned long eof_pro_guitar_note_bitmask_has_bend_tech_note(EOF_PRO_GUITAR_TRAC
 long eof_pro_guitar_note_bitmask_has_pre_bend_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long pgnote, unsigned long mask);
 	//Similar to eof_pro_guitar_note_bitmask_has_bend_tech_note(), but returns the index of the first pre-bend tech note applicable for the note and bitmask
 	//Returns -1 if no applicable pre-bend tech note exists
+long eof_pro_guitar_note_bitmask_has_pre_bend_tech_note_ptr(EOF_PRO_GUITAR_TRACK *tp, EOF_PRO_GUITAR_NOTE *np, unsigned long mask);
+	//Similar to eof_pro_guitar_note_bitmask_has_pre_bend_tech_note(), but accepts a note pointer instead of an index
+	//and only checks for tech notes with normal bend status (instead of pre-bend) at the specified note's position, since this is used in RS import where pre-bend status hasn't been determined yet
 char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long technote, unsigned long mask, unsigned long *note_num);
 	//Looks for the last regular pro guitar note that is overlapped by the specified tech note and mask
 	//If the tech note is found to be at the start position of any overlapping notes, 1 is returned

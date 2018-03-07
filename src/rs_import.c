@@ -355,8 +355,11 @@ char eof_rs_import_process_chordnotes(EOF_PRO_GUITAR_TRACK *tp, EOF_PRO_GUITAR_N
 	unsigned long cflags;	//The flags that all the chordnotes have in common
 	unsigned long ceflags;	//The eflags that all the chordnotes have in common
 	unsigned neededtechnotes = 0;
-	unsigned long ctr;
+	unsigned long ctr, ctr2;
 	char error = 0;
+	unsigned char prebends[7] = {0};	//Tracks how many chordnotes use each of the valid pre-bend strengths
+	long prebend_index;
+	unsigned char dominant_prebend = 0, dominant_prebend_count = 0;	//Used to track the most commonly used pre-bend strength for the specified chord
 
 	if(!np || !chordnote || !chordnotectr || (chordnotectr >= 7))
 		return 1;	//Invalid parameters
@@ -383,7 +386,7 @@ char eof_rs_import_process_chordnotes(EOF_PRO_GUITAR_TRACK *tp, EOF_PRO_GUITAR_N
 			numtechnotes++;	//Track that a technote was added
 
 			///DEBUG
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tPlaced bend tech note at %lums", tnp->pos);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tPlaced stop tech note at %lums", tnp->pos);
 			eof_log(eof_log_string, 1);
 		}
 		if(!(chordnote[ctr]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE  | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO | EOF_NOTE_FLAG_IS_TREMOLO)))
@@ -429,6 +432,47 @@ char eof_rs_import_process_chordnotes(EOF_PRO_GUITAR_TRACK *tp, EOF_PRO_GUITAR_N
 			}
 		}
 
+		//Examine pre-bend information
+		//Determine which pre-bend strength is the most used one on this chordnote
+		eof_pro_guitar_track_sort_notes(tp);		//Ensure both note sets are sorted
+		eof_pro_guitar_track_sort_tech_notes(tp);
+		for(ctr = 0; ctr < chordnotectr; ctr++)
+		{	//For each of the chordnotes
+			prebend_index = eof_pro_guitar_note_bitmask_has_pre_bend_tech_note_ptr(tp, chordnote[ctr], chordnote[ctr]->note);
+			if(prebend_index >= 0)
+			{	//If this chordnote has an applicable pre-bend technote
+				unsigned char strength = tp->technote[prebend_index]->bendstrength;
+
+				if(strength > 6)
+					strength = 6;	//For the sake of this logic, cap the pre-bend at 6 quarter steps, which is the highest that Rocksmith supports
+				prebends[strength]++;	//Track how many times each of the bend strengths are used, in order to determine the strength used by the most chordnotes in this chord
+			}
+		}
+		for(ctr = 0; ctr < 7; ctr++)
+		{	//For each of the valid pre-bend strengths
+			if(prebends[ctr] > dominant_prebend_count)
+			{	//If this strength was used more than the previous one being tracked
+				dominant_prebend = ctr;					//Track the pre-bend strength used by a plurality of this chord's chordnotes
+				dominant_prebend_count = prebends[ctr];
+			}
+		}
+		//Any pre-bend that is different from the dominant pre-bend strength needs to be recorded as a pre-bend tech note
+		for(ctr = 0; ctr < chordnotectr; ctr++)
+		{	//For each of the chordnotes
+			prebend_index = eof_pro_guitar_note_bitmask_has_pre_bend_tech_note_ptr(tp, chordnote[ctr], chordnote[ctr]->note);
+			if(prebend_index >= 0)
+			{	//If this chordnote has an applicable pre-bend technote
+				unsigned char strength = tp->technote[prebend_index]->bendstrength;
+
+				prebends[ctr] = strength;	//Replace prebends[] with the strength of each pre-bend
+				if(strength != dominant_prebend)
+				{	//If this string will require a pre-bend tech note
+					chordnote[ctr]->eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND;
+					chordnote[ctr]->flags &= ~ EOF_PRO_GUITAR_NOTE_FLAG_BEND;	//Remove this flag so the normal bend logic doesn't interfere with pre-bend logic
+				}
+			}
+		}
+
 		//Move any flags that all chordnotes had in common from the chordnote flags to the chord itself
 		// and transfer leftover statuses to tech notes already applied to the chord where possible
 		np->flags |= cflags;
@@ -441,7 +485,6 @@ char eof_rs_import_process_chordnotes(EOF_PRO_GUITAR_TRACK *tp, EOF_PRO_GUITAR_N
 		{	//If an end of unpitched slide position is being transferred
 			np->unpitchend = eof_pro_guitar_note_lowest_fret_np(np) + uslideamount;
 		}
-		eof_pro_guitar_track_sort_tech_notes(tp);	//Ensure tech notes are in order
 		for(ctr = 0; ctr < chordnotectr; ctr++)
 		{	//For each chordnote that was parsed
 			chordnote[ctr]->flags &= ~cflags;	//Clear any of the flags that were moved to the chord
@@ -451,8 +494,8 @@ char eof_rs_import_process_chordnotes(EOF_PRO_GUITAR_TRACK *tp, EOF_PRO_GUITAR_N
 			{	//If any of this chordnote's flags are still set
 				unsigned long tnnum = 0;
 
-				if(eof_pro_guitar_note_bitmask_has_tech_note(tp, tp->notes - 1, chordnote[ctr]->note, &tnnum))
-				{	//If the chord being parsed already has a technote on this string due to having added bend or stop tech notes
+				if(eof_pro_guitar_note_bitmask_has_tech_note(tp, tp->notes - 1, chordnote[ctr]->note, &tnnum) && !(chordnote[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND))
+				{	//If the chord being parsed already has a technote on this string due to having added bend or stop tech notes, but only as long as pre-bend status isn't being applied
 					tp->technote[tnnum]->flags |= chordnote[ctr]->flags;	//Transfer the flags to it instead of creating another tech note
 					tp->technote[tnnum]->eflags |= chordnote[ctr]->eflags;
 					chordnote[ctr]->flags = chordnote[ctr]->eflags = 0;
@@ -468,11 +511,13 @@ char eof_rs_import_process_chordnotes(EOF_PRO_GUITAR_TRACK *tp, EOF_PRO_GUITAR_N
 		if(neededtechnotes)
 		{	//If there are technotes remaining to be placed
 			EOF_TECHNOTE_GAP *gaps;	//Stores information about the spacing between the hard-coded points of this chord (its start and end points and fixed position stop/bend tech notes)
+			EOF_TECHNOTE_GAP *gaps2;	//Used to rebuild the gaps array to remove zero sized gaps (caused by bend tech notes that can be at the same timestamp for multiple strings)
 			unsigned *solution;		//Stores a possible solution indicating which gap number each of the remaining technotes is to be placed into
 			unsigned long solutionval;	//The smallest amount of time between any technote in the solution and another obstacle (fixed position technote or chord start/end)
 			unsigned *bestsolution;		//Stores the solution that was evaluated with the largest buffer of time between each of the remaining technotes
 			unsigned long bestsolutionval;	//The value of the best evaluated solution (higher is better)
 			unsigned long numgaps = numtechnotes + 1;	//The number of gaps within which the remaining technotes may be placed
+			unsigned long numgaps2;	//The number of gaps existing when the gaps array is rebuilt
 			unsigned long tnnum = 0, lasttechpos;
 			int done = 0;
 
@@ -489,14 +534,17 @@ char eof_rs_import_process_chordnotes(EOF_PRO_GUITAR_TRACK *tp, EOF_PRO_GUITAR_N
 
 			//Build an array defining available spaces between the existing technotes on this chord
 			gaps = malloc(sizeof(EOF_TECHNOTE_GAP) * numgaps);
+			gaps2 = malloc(sizeof(EOF_TECHNOTE_GAP) * numgaps);
 
 			//Build one array each to store the solution currently being tested and the best examined solution
 			solution = malloc(sizeof(unsigned) * neededtechnotes);
 			bestsolution = malloc(sizeof(unsigned) * neededtechnotes);
-			if(!gaps || !solution || !bestsolution)
+			if(!gaps || !gaps2 || !solution || !bestsolution)
 			{	//If the array was not allocated
 				if(gaps)
 					free(gaps);
+				if(gaps2)
+					free(gaps2);
 				if(solution)
 					free(solution);
 				if(bestsolution)
@@ -507,6 +555,7 @@ char eof_rs_import_process_chordnotes(EOF_PRO_GUITAR_TRACK *tp, EOF_PRO_GUITAR_N
 			if(!error)
 			{	//If the solution arrays were created
 				memset(gaps, 0, sizeof(EOF_TECHNOTE_GAP) * numgaps);
+				memset(gaps2, 0, sizeof(EOF_TECHNOTE_GAP) * numgaps);
 				memset(solution, 0, sizeof(unsigned) * neededtechnotes);
 				memset(bestsolution, 0, sizeof(unsigned) * neededtechnotes);
 				lasttechpos = np->pos;	//The first gap will begin at the beginning of the chord
@@ -563,6 +612,20 @@ char eof_rs_import_process_chordnotes(EOF_PRO_GUITAR_TRACK *tp, EOF_PRO_GUITAR_N
 					{	//For each of the gaps in the array
 						gaps[ctr].size = gaps[ctr].stop - gaps[ctr].start;	//Set the gap size variable
 					}
+
+					//Rebuild the gaps array to remove all zero sized gaps
+					for(ctr = 0, ctr2 = 0, numgaps2 = 0; ctr < numgaps; ctr++)
+					{	//For each of the gaps in this array
+						if(gaps[ctr].size)
+						{	//If this gap size is nonzero
+							gaps2[ctr2++] = gaps[ctr];	//Copy this into the new gaps array
+							numgaps2++;					//Keep count of the new gaps array size
+						}
+					}
+					free(gaps);			//Destroy the old gaps array
+					gaps = gaps2;		//Use the new one instead
+					numgaps = numgaps2;
+					gaps2 = NULL;
 
 					//Test the default solution of all technotes being placed in the first gap
 					bestsolutionval = eof_evaluate_rs_import_gap_solution(gaps, numgaps, solution, neededtechnotes);
@@ -623,9 +686,16 @@ char eof_rs_import_process_chordnotes(EOF_PRO_GUITAR_TRACK *tp, EOF_PRO_GUITAR_N
 						tnp->pos = (double)gp->start + ((double)(gp->population + 1.0) * ((double)gp->size / (gp->capacity + 1.0))) + 0.5;	//Place this technote into the next available interval within this gap (round up to nearest ms)
 						gp->population++;		//This gap now has one more technote in it
 						tnp->type = np->type;
-						tnp->note = 1 << ctr;
+						///tnp->note = 1 << ctr;	//Not working?
+						tnp->note = chordnote[ctr]->note;
 						tnp->flags = chordnote[ctr]->flags;
 						tnp->eflags = chordnote[ctr]->eflags;
+						if(chordnote[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND)
+						{	//If this tech note is a pre-bend
+							tnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;		//Set the bend flag as well
+							tnp->bendstrength = chordnote[ctr]->bendstrength;	//And apply the correct bend strength for this pre-bend
+							tnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
+						}
 						tnp->slideend = chordnote[ctr]->slideend;
 						tnp->unpitchend = chordnote[ctr]->unpitchend;
 						if(tnp->slideend || tnp->unpitchend)

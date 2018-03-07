@@ -5017,6 +5017,26 @@ long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long not
 	return -1;
 }
 
+long eof_fixup_next_pro_guitar_note_ptr(EOF_PRO_GUITAR_TRACK * tp, EOF_PRO_GUITAR_NOTE * np)
+{
+	unsigned long i;
+
+	if(!tp || !np)
+		return -1;	//Invalid parameters
+
+	if(tp)
+	{
+		for(i = 0; i < tp->notes; i++)
+		{
+			if((tp->note[i]->pos > np->pos) && (tp->note[i]->type == np->type))
+			{
+				return i;
+			}
+		}
+	}
+	return -1;
+}
+
 long eof_fixup_next_pro_guitar_technote(EOF_PRO_GUITAR_TRACK * tp, unsigned long tnote)
 {
 	unsigned long i;
@@ -5402,6 +5422,13 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 
 			/* ensure that a note doesn't specify that an unused string is ghosted */
 			tp->note[i-1]->ghost &= tp->note[i-1]->note;	//Clear all lanes that are specified by the note bitmask as being used
+
+			/* ensure that non tech notes have statuses that only apply to tech notes */
+			if(!eof_menu_track_get_tech_view_state(sp, track))
+			{	//If the specified track does not have tech view enabled
+				tp->note[i-1]->eflags &= ~EOF_PRO_GUITAR_NOTE_EFLAG_STOP;		//Clear these tech note only statuses
+				tp->note[i-1]->eflags &= ~EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND;
+			}
 		}//If the note is valid, perform other cleanup
 	}//For each note in the track
 
@@ -8694,6 +8721,45 @@ long eof_pro_guitar_note_bitmask_has_pre_bend_tech_note(EOF_PRO_GUITAR_TRACK *tp
 			if((tp->technote[ctr]->pos >= notepos) && (tp->technote[ctr]->pos <= notepos + notelen))
 			{	//If this tech note overlaps with the specified pro guitar regular note
 				if(tp->technote[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND)
+				{	//If the tech note has pre-bend status
+					return ctr;
+				}
+			}
+		}
+	}
+
+	return -1;	//No applicable pre-bend tech notes were found
+}
+
+long eof_pro_guitar_note_bitmask_has_pre_bend_tech_note_ptr(EOF_PRO_GUITAR_TRACK *tp, EOF_PRO_GUITAR_NOTE *np, unsigned long mask)
+{
+	unsigned long ctr, notepos, notelen;
+	long nextnote;
+
+	if(!tp || !np)
+		return -1;	//Invalid parameters
+
+	notepos = np->pos;
+	notelen = np->length;
+	nextnote = eof_fixup_next_pro_guitar_note_ptr(tp, np);
+	if(nextnote > 0)
+	{	//If there was a next note
+		if(notepos + notelen == tp->pgnote[nextnote]->pos)
+		{	//And this note extends all the way to it with no gap in between (this note has linkNext status)
+			notelen--;	//Shorten the effective note length to ensure that a tech note at the next note's position is detected as affecting that note instead of this one
+		}
+	}
+	for(ctr = 0; ctr < tp->technotes; ctr++)
+	{	//For each tech note in the track
+		if(tp->technote[ctr]->pos > notepos + notelen)
+		{	//If this tech note (and all those that follow) are after the end position of this note
+			break;	//Break from loop, no overlapping note will be found
+		}
+		if((tp->technote[ctr]->type == np->type) && (mask & tp->technote[ctr]->note))
+		{	//If the tech note is in the same difficulty as the pro guitar regular note and uses any of the specified strings
+			if(tp->technote[ctr]->pos == notepos)
+			{	//If this tech note begins exactly at the same position as the specified pro guitar regular note
+				if(tp->technote[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
 				{	//If the tech note has pre-bend status
 					return ctr;
 				}
