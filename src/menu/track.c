@@ -5212,6 +5212,9 @@ int eof_track_menu_enable_ghl_mode(void)
 	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
 	eof_set_3D_lane_positions(eof_selected_track);	//Update xchart[] to reflect a different number of lanes being represented in the 3D preview window
 	eof_set_color_set();
+	eof_fix_window_title();
+	eof_prepare_track_menu();	///For some reason, it seems activating this menu function by keyboard and then immediately opening the track menu again by keyboard doesn't reflect the correct
+								///GHL status because the menu prepare logic doesn't get re-run before the menu launches
 	eof_render();
 	return 0;	//Success
 }

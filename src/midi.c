@@ -1197,9 +1197,17 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				char *exportname = sp->track[j]->name;	//By default, the track's regular name is used for export
 
 				if(isghl)
-				{	//GHL tracks export with a " GHL" suffix
+				{
 					(void) snprintf(ghlname, sizeof(ghlname) - 1, "%s GHL", exportname);
-					exportname = ghlname;
+
+					if((sp->track[j]->flags & EOF_TRACK_FLAG_ALT_NAME) && (sp->track[j]->altname[0] != '\0'))
+					{	//If the track has been renamed
+						exportname = sp->track[j]->altname;	//Allow that name to export for GHL format MIDI tracks
+					}
+					else
+					{	//Otherwise GHL tracks export with a " GHL" suffix by default
+						exportname = ghlname;
+					}
 				}
 
 				/* open the file */

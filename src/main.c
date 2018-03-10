@@ -1008,6 +1008,10 @@ void eof_fix_window_title(void)
 			}
 		}
 
+		if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
+		{	//If GHL mode is enabled for the active track
+			(void) ustrcat(eof_window_title, "(GHL)");
+		}
 		if(eof_song->tags->tempo_map_locked)
 		{	//If the tempo map is locked
 			(void) ustrcat(eof_window_title, "(Tempo map locked)");

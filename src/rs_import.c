@@ -642,7 +642,7 @@ char eof_rs_import_process_chordnotes(EOF_PRO_GUITAR_TRACK *tp, EOF_PRO_GUITAR_N
 							solution[elementnum] = 0;
 							elementnum++;	//Examine the next element
 							if(elementnum >= neededtechnotes)
-							{	//If all elements have been exhaused
+							{	//If all elements have been exhausted
 								done = 1;	//All permutations have been tested, set condition to break from outer while loop
 								break;		//Break from inner while loop
 							}
