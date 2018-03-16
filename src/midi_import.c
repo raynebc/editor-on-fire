@@ -379,6 +379,8 @@ EOF_SONG * eof_import_midi(const char * fn)
 	long b = -1;
 	unsigned long tp;
 	char powergig_hopo, powergig_sp;	//Track the HOPO and Star Power phrasing for Power Gig import
+	char guitar_present = 0, ghl_guitar_present = 0, bass_present = 0, ghl_bass_present = 0;	//Tracks whether each of these 4 tracks were imported
+	unsigned long guitar_track = 0, ghl_guitar_track = 0, bass_track = 0, ghl_bass_track = 0;	//Records the track index of each of those tracks
 
 	eof_log("eof_import_midi() entered", 1);
 
@@ -703,14 +705,80 @@ EOF_SONG * eof_import_midi(const char * fn)
 									eof_import_events[i]->game = 0;	//Note that this is a FoF/RB/GH style MIDI
 									eof_import_events[i]->diff = eof_midi_tracks[j].difficulty;
 									eof_import_events[i]->tracknum = j;
-									if(eof_midi_tracks[j].track_type == EOF_TRACK_GUITAR)
-									{	//If this is the guitar track
-										rbg = 1;	//Note that the track has been found
-									}
 									if(ustrstr(text," GHL"))
 									{	//If this is a GHL track name
-										sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags = EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES;
-										sp->legacy_track[sp->track[(unsigned)eof_midi_tracks[j].track_type]->tracknum]->numlanes = 6;
+										isghl = 1;
+									}
+									else
+									{
+										isghl = 0;
+									}
+									if(eof_import_events[i]->type == EOF_TRACK_GUITAR)
+									{	//If this is the guitar track
+										rbg = 1;	//Note that the normal guitar track has been found
+										if(isghl)
+										{
+											ghl_guitar_present = 1;	//Track that the GHL guitar track was imported
+											ghl_guitar_track = i;	//And record its track number
+											sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags = EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES;	//Configure the track as a GHL track
+											sp->legacy_track[sp->track[(unsigned)eof_midi_tracks[j].track_type]->tracknum]->numlanes = 6;
+										}
+										else
+										{
+											guitar_present = 1;	//Track that the normal guitar track was imported
+											guitar_track = i;	//And record its track number
+										}
+										if(guitar_present && ghl_guitar_present)
+										{	//If both a normal and a GHL guitar track have been encountered
+											eof_log("\t\tNormal AND GHL guitar tracks detected.", 1);
+											eof_clear_input();
+											if(alert("Both normal AND GHL guitar tracks were found.", "Import which one?", NULL, "&Normal", "&GHL", 'y', 'n') == 1)
+											{	//If the user opts to import the normal guitar track
+												eof_log("\t\tUser opted to import the normal guitar track.", 1);
+												eof_import_events[ghl_guitar_track]->type = -1;	//Mark the GHL guitar track as one to be skipped during note import
+												sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags &= ~(EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES);	//Reconfigure the guitar track accordingly
+												sp->legacy_track[sp->track[(unsigned)eof_midi_tracks[j].track_type]->tracknum]->numlanes = 5;
+											}
+											else
+											{	//The user opted to import the GHL guitar track
+												eof_log("\t\tUser opted to import the GHL guitar track.", 1);
+												eof_import_events[guitar_track]->type = -1;	//Mark the normal guitar track as one to be skipped during note import
+												sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags = EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES;	//Reconfigure the guitar track accordingly
+												sp->legacy_track[sp->track[(unsigned)eof_midi_tracks[j].track_type]->tracknum]->numlanes = 6;
+											}
+										}
+									}
+									if(eof_import_events[i]->type == EOF_TRACK_BASS)
+									{	//If this is the bass track
+										if(isghl)
+										{
+											ghl_bass_present = 1;	//Track that the GHL bass track was imported
+											ghl_bass_track = i;		//And record its track number
+										}
+										else
+										{
+											bass_present = 1;	//Track that the normal bass track was imported
+											bass_track = i;		//And record its track number
+										}
+										if(bass_present && ghl_bass_present)
+										{	//If both a normal and a GHL bass track have been encountered
+											eof_log("\t\tNormal AND GHL bass tracks detected.", 1);
+											eof_clear_input();
+											if(alert("Both normal AND GHL bass tracks were found.", "Import which one?", NULL, "&Normal", "&GHL", 'y', 'n') == 1)
+											{	//If the user opts to import the normal bass track
+												eof_log("\t\tUser opted to import the normal bass track.", 1);
+												eof_import_events[ghl_bass_track]->type = -1;	//Mark the GHL bass track as one to be skipped during note import
+												sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags &= ~(EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES);	//Reconfigure the bass track accordingly
+												sp->legacy_track[sp->track[(unsigned)eof_midi_tracks[j].track_type]->tracknum]->numlanes = 5;
+											}
+											else
+											{	//The user opted to import the GHL bass track
+												eof_log("\t\tUser opted to import the GHL bass track.", 1);
+												eof_import_events[bass_track]->type = -1;	//Mark the normal bass track as one to be skipped during note import
+												sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags = EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES;	//Reconfigure the bass track accordingly
+												sp->legacy_track[sp->track[(unsigned)eof_midi_tracks[j].track_type]->tracknum]->numlanes = 6;
+											}
+										}
 									}
 								}
 								if(eof_import_events[i]->type != 0)
