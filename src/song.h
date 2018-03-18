@@ -104,6 +104,7 @@
 #define EOF_NOTE_TFLAG_MINLENGTH 4096	//This flag will indicate that a temporary ignored note added for the chordnote mechanism needs to RS2 export with a minimum length of 1ms
 #define EOF_NOTE_TFLAG_LN        8192	//This flag will indicate that the affected chord has chordify status and the chord tag should RS2 export with the linknext tag overridden to be enabled, which will cause the chord to link to the temporary single notes written for the chord
 #define EOF_NOTE_TFLAG_HD       16384	//This flag will indicate that the affected chord should export with high density regardless of the value of the regular high density flag
+#define EOF_NOTE_TFLAG_GHL_B3   32768	//This flag will indicate that the affected note is a "N 8 #" black 3 note being imported from a Feedback file instead of "N 5 #" toggle HOPO notation
 
 
 ///Extended note flags

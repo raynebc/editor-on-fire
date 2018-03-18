@@ -520,7 +520,15 @@ EOF_SONG * eof_import_chart(const char * fn)
 						{
 							new_note->pos = chartpos_to_msec(chart, current_note->chartpos) + 0.5;	//Round up
 							new_note->length = chartpos_to_msec(chart, current_note->chartpos + current_note->duration) - (double)new_note->pos + 0.5;	//Round up
-							new_note->note = 1 << current_note->gemcolor;
+							if((sp->track[track]->flags & EOF_TRACK_FLAG_GHL_MODE) && (current_note->gemcolor == 8))
+							{	//If this is a black 3 GHL gem
+								new_note->note = 32;
+								new_note->tflags |= EOF_NOTE_TFLAG_GHL_B3;	//Track that this lane 6 note will be treated as a gem on that lane instead of as a toggle HOPO marker
+							}
+							else
+							{
+								new_note->note = 1 << current_note->gemcolor;
+							}
 							new_note->type = difficulty;
 							if(prev_note)
 							{	//If a previous gem was imported
@@ -682,9 +690,16 @@ EOF_SONG * eof_import_chart(const char * fn)
 			unsigned long pos = eof_get_note_pos(sp, ctr, ctr2);
 			long len = eof_get_note_length(sp, ctr, ctr2);
 			unsigned char type = eof_get_note_type(sp, ctr, ctr2);
+			unsigned long tflags;
 
 			if(!(eof_get_note_note(sp, ctr, ctr2) & 32))
 				continue;	//If this note does not use lane 6 (a "N 5 #" .chart entry), skip it
+			tflags = eof_get_note_tflags(sp, ctr, ctr2);
+			if(tflags & EOF_NOTE_TFLAG_GHL_B3)
+			{	//If this note is meant to be on lane 6 (a black 3 GHL note)
+				eof_set_note_tflags(sp, ctr, ctr2, tflags & ~EOF_NOTE_TFLAG_GHL_B3);	//Clear that flag
+				continue;	//And skip this note
+			}
 
 			for(ctr3 = 0; ctr3 < eof_get_track_size(sp, ctr); ctr3++)
 			{	//For each note in the track
@@ -773,7 +788,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 	}
 
-	/* check if unofficial open strum notation ("N 7 #" lane 8 note) was found */
+	/* check if Clone Hero's open strum notation ("N 7 #" lane 8 note) was found */
 	for(ctr = 1; ctr < sp->tracks; ctr++)
 	{	//For each track
 		if(sp->track[ctr]->track_format != EOF_LEGACY_TRACK_FORMAT)
@@ -788,6 +803,10 @@ EOF_SONG * eof_import_chart(const char * fn)
 				sp->track[ctr]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
 				sp->legacy_track[tracknum]->numlanes = 6;	//Set this track to have 6 lanes instead of 5
 				eof_set_note_note(sp, ctr, ctr2, 32);
+				if(eof_track_is_ghl_mode(sp, ctr))
+				{	//If this is a GHL track, open notes also require a status flag
+					eof_set_note_flags(sp, ctr, ctr2, eof_get_note_flags(sp, ctr, ctr2) | EOF_GUITAR_NOTE_FLAG_GHL_OPEN);	//Set that flag
+				}
 			}
 		}
 	}

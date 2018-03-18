@@ -4215,6 +4215,7 @@ int eof_menu_track_clone_track_number(EOF_SONG *sp, unsigned long sourcetrack, u
 	eof_erase_track(sp, desttrack);
 
 	//Clone the source track
+	memcpy(sp->track[desttrack]->altname, sp->track[sourcetrack]->altname, EOF_NAME_LENGTH + 1);
 	sp->track[desttrack]->difficulty = sp->track[sourcetrack]->difficulty;
 	sp->track[desttrack]->numdiffs = sp->track[sourcetrack]->numdiffs;
 	sp->track[desttrack]->flags = sp->track[sourcetrack]->flags;
@@ -4729,6 +4730,7 @@ int eof_menu_track_clone_track_to_clipboard(void)
 
 	//Write various track details
 	(void) pack_putc(eof_selected_track, fp);	//Write the source track number
+	(void) eof_save_song_string_pf(eof_song->track[eof_selected_track]->altname, fp);	//Write the track's alternate name
 	(void) pack_putc(eof_song->track[eof_selected_track]->difficulty, fp);	//Write the difficulty rating
 	(void) pack_putc(eof_song->track[eof_selected_track]->numdiffs, fp);	//Write the difficulty count
 	(void) pack_iputl(eof_song->track[eof_selected_track]->flags, fp);		//Write the track flags
@@ -4931,6 +4933,8 @@ int eof_menu_track_clone_track_from_clipboard(void)
 	}
 
 	//Read various track details
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	(void) eof_load_song_string_pf(eof_song->track[eof_selected_track]->altname, fp, sizeof(eof_song->track[eof_selected_track]->altname));	//Read the track's alternate name
 	difficulty = pack_getc(fp);
 	numdiffs = pack_getc(fp);
 	flags = pack_igetl(fp);
@@ -4952,7 +4956,6 @@ int eof_menu_track_clone_track_from_clipboard(void)
 	}
 
 	//Update various track details
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	eof_erase_track(eof_song, eof_selected_track);
 	eof_song->track[eof_selected_track]->difficulty = difficulty;
 	eof_song->track[eof_selected_track]->numdiffs = numdiffs;
