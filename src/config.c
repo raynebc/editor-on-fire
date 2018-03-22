@@ -175,6 +175,7 @@ void eof_load_config(char * fn)
 	eof_gp_import_replaces_track = get_config_int("preferences", "eof_gp_import_replaces_track", 1);
 	eof_gp_import_replaces_track = get_config_int("preferences", "eof_gp_import_nat_harmonics_only", 0);
 	eof_render_3d_rs_chords = get_config_int("preferences", "eof_render_3d_rs_chords", 0);
+	eof_render_2d_rs_piano_roll = get_config_int("preferences", "eof_render_2d_rs_piano_roll", 0);
 	eof_min_note_distance = get_config_int("preferences", "eof_min_note_distance", 3);
 	eof_enforce_chord_density = get_config_int("preferences", "eof_enforce_chord_density", 0);
 	eof_imports_recall_last_path = get_config_int("preferences", "eof_imports_recall_last_path", 0);
@@ -385,6 +386,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_gp_import_replaces_track", eof_gp_import_replaces_track);
 	set_config_int("preferences", "eof_gp_import_nat_harmonics_only", eof_gp_import_nat_harmonics_only);
 	set_config_int("preferences", "eof_render_3d_rs_chords", eof_render_3d_rs_chords);
+	set_config_int("preferences", "eof_render_2d_rs_piano_roll", eof_render_2d_rs_piano_roll);
 	set_config_int("preferences", "eof_min_note_length", eof_min_note_length);
 	set_config_int("preferences", "eof_enforce_chord_density", eof_enforce_chord_density);
 	set_config_int("preferences", "eof_chord_density_threshold", eof_chord_density_threshold);

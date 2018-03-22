@@ -154,6 +154,7 @@ int         eof_click_changes_dialog_focus = 1;	//If nonzero, eof_verified_proc 
 int         eof_stop_playback_leave_focus = 1;	//If nonzero, EOF stops playback when it is not in the foreground
 int         eof_inverted_chords_slash = 0;
 int         eof_render_3d_rs_chords = 0;		//If nonzero, the 3D rendering will draw a rectangle to represent chords that will export to XML as repeats (Rocksmith), and 3D chord tails will not be rendered
+int         eof_render_2d_rs_piano_roll = 0;	//If nonzero, the piano roll will display with some visual differences (thicker, colored measure markers, color-coded string lines)
 int         eof_imports_recall_last_path = 0;	//If nonzero, various import dialogs will initialize the dialog to the path containing the last chosen import, instead of initializing to the project's folder
 int         eof_rewind_at_end = 1;				//If nonzero, chart rewinds when the end of chart is reached during playback
 int         eof_disable_rs_wav = 0;				//If nonzero, a WAV file for use in Rocksmith will not be maintained during save even if Rocksmith file export is enabled

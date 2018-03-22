@@ -359,6 +359,7 @@ extern int         eof_inverted_chords_slash;
 extern int         eof_click_changes_dialog_focus;
 extern int         eof_stop_playback_leave_focus;
 extern int         eof_render_3d_rs_chords;
+extern int         eof_render_2d_rs_piano_roll;
 extern int         eof_imports_recall_last_path;
 extern int         eof_rewind_at_end;
 extern int         eof_disable_rs_wav;

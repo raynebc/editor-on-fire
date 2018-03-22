@@ -171,7 +171,8 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 362, 184, 16,  2,   23,  0,    0,      1,   0,   "Auto-Adjust sections/FHPs",NULL, NULL },
 	{ d_agup_check_proc, 248, 378, 168, 16,  2,   23,  0,    0,      1,   0,   "Auto-Adjust tech notes",NULL, NULL },
 	{ d_agup_check_proc, 248, 394, 216, 16,  2,   23,  0,    0,      1,   0,   "Fingering checks include mutes",NULL, NULL },
-	{ d_agup_check_proc, 248, 394, 230, 16,  2,   23,  0,    0,      1,   0,   "GHL conversion swaps B/W gems",NULL, NULL },
+	{ d_agup_check_proc, 248, 410, 230, 16,  2,   23,  0,    0,      1,   0,   "GHL conversion swaps B/W gems",NULL, NULL },
+	{ d_agup_check_proc, 248, 426, 230, 16,  2,   23,  0,    0,      1,   0,   "2D render RS piano roll",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1204,7 +1205,7 @@ int eof_menu_file_preferences(void)
 	original_input_mode = eof_input_mode;													//Store this value
 	eof_preferences_dialog[33].d1 = eof_color_set;											//Color set
 	eof_preferences_dialog[34].flags = eof_new_note_length_1ms ? D_SELECTED : 0;			//New notes are made 1ms long
-	eof_preferences_dialog[35].flags = eof_render_3d_rs_chords ? D_SELECTED : 0;			//3D render Rocksmith style chords
+	eof_preferences_dialog[35].flags = eof_render_3d_rs_chords ? D_SELECTED : 0;			//3D render RS style chords
 	eof_preferences_dialog[36].flags = eof_rewind_at_end ? D_SELECTED : 0;					//Rewind when playback is at end
 	eof_preferences_dialog[37].flags = eof_display_seek_pos_in_seconds ? D_SELECTED : 0;	//Display seek pos. in seconds
 	eof_preferences_dialog[38].flags = eof_add_new_notes_to_selection ? D_SELECTED : 0;		//Add new notes to selection
@@ -1218,6 +1219,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[48].flags = eof_technote_auto_adjust ? D_SELECTED : 0;			//Auto-Adjust tech notes
 	eof_preferences_dialog[49].flags = eof_fingering_checks_include_mutes ? D_SELECTED : 0;	//Fingering checks include mutes
 	eof_preferences_dialog[50].flags = eof_ghl_conversion_swaps_bw_gems ? D_SELECTED : 0;	//GHL conversion swaps B/W gems
+	eof_preferences_dialog[51].flags = eof_render_2d_rs_piano_roll ? D_SELECTED : 0;		//2D render RS piano roll
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1336,6 +1338,7 @@ int eof_menu_file_preferences(void)
 			eof_technote_auto_adjust = (eof_preferences_dialog[48].flags == D_SELECTED ? 1 : 0);
 			eof_fingering_checks_include_mutes = (eof_preferences_dialog[49].flags == D_SELECTED ? 1 : 0);
 			eof_ghl_conversion_swaps_bw_gems = (eof_preferences_dialog[50].flags == D_SELECTED ? 1 : 0);
+			eof_render_2d_rs_piano_roll = (eof_preferences_dialog[51].flags == D_SELECTED ? 1 : 0);
 			eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case eof_inverted_notes was changed
 			eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case eof_lefty_mode was changed
 		}//If the user clicked OK
@@ -1364,7 +1367,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[31].d1 = EOF_INPUT_PIANO_ROLL;	//Input method
 			eof_preferences_dialog[33].d1 = EOF_COLORS_DEFAULT;		//Color set
 			eof_preferences_dialog[34].flags = 0;					//New notes are made 1ms long
-			eof_preferences_dialog[35].flags = 0;					//3D render Rocksmith style chords
+			eof_preferences_dialog[35].flags = 0;					//3D render RS style chords
 			eof_preferences_dialog[36].flags = D_SELECTED;			//Rewind when playback is at end
 			eof_preferences_dialog[37].flags = 0;					//Display seek pos. in seconds
 			eof_preferences_dialog[38].flags = 0;					//Add new notes to selection
@@ -1379,6 +1382,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[48].flags = 1;					//Auto-Adjust tech notes
 			eof_preferences_dialog[49].flags = 0;					//Fingering checks include mutes
 			eof_preferences_dialog[50].flags = 0;					//GHL conversion swaps B/W gems
+			eof_preferences_dialog[51].flags = 0;					//2D render RS piano roll
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);

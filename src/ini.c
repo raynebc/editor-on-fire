@@ -24,6 +24,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	char slidesfound = 0;
 	char hihatmarkersfound = 0;
 	char rimshotmarkersfound = 0;
+	int guitar_ghl_diff_written = 0;
 
 	eof_log("eof_save_ini() entered", 1);
 
@@ -97,7 +98,6 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	/* write difficulty tags */
 	for(i = 0; i < sp->tracks; i++)
 	{	//For each track in the chart
-		int guitar_ghl_diff_written = 0;
 		char *diff_tag;
 
 		if(i == 0)

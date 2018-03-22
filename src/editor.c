@@ -5964,16 +5964,22 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			(void) eof_render_waveform(eof_waveform);
 	}
 
-	/* draw fretboard area */
+	/* draw fretboard strings */
 	for(i = 0; i < numlanes; i++)
 	{
+		int string_color = eof_color_white;
+
+		if(eof_render_2d_rs_piano_roll && !eof_vocals_selected)
+		{	//If the RS piano roll preference is enabled, draw the string color to match the gem color of that lane, but only if the vocal track isn't active
+			string_color = eof_colors[numlanes - i - 1].color;
+		}
 		if(!i || (i + 1 >= numlanes))
-		{	//Ensure the top and bottom lines extend to the left of the piano roll
+		{	//Ensure the top and bottom lines extend to the left of the piano roll, but are drawn in white
 			hline(window->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_chart_length) / eof_zoom, eof_color_white);
 		}
-		else if(eof_selected_track != EOF_TRACK_VOCALS)
-		{	//Otherwise, if not drawing the vocal editor, draw the other fret lines from the first beat marker to the end of the chart
-			hline(window->screen, lpos + eof_song->tags->ogg[eof_selected_ogg].midi_offset / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_chart_length) / eof_zoom, eof_color_white);
+		if(eof_selected_track != EOF_TRACK_VOCALS)
+		{	//If not drawing the vocal editor, draw the other fret lines from the first beat marker to the end of the chart
+			hline(window->screen, lpos + eof_song->tags->ogg[eof_selected_ogg].midi_offset / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_chart_length) / eof_zoom, string_color);
 		}
 	}
 	vline(window->screen, lpos + (eof_chart_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
@@ -6071,6 +6077,12 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			else
 			{	//Otherwise render it in gray (if it's not the start of a measure) or in white
 				beatlinecol = (eof_song->beat[i]->has_ts && (eof_song->beat[i]->beat_within_measure == 0)) ? eof_color_white : col;
+			}
+			if((eof_song->beat[i]->beat_within_measure == 0) && eof_render_2d_rs_piano_roll)
+			{	//This is the first beat in a measure, and if the RS piano roll preference is enabled, draw in a different color with a thicker line
+				beatlinecol = makecol(218, 165, 32);	//Goldenrod
+				vline(window->screen, xcoord - 1, EOF_EDITOR_RENDER_OFFSET + 35 + 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10 - 1, beatlinecol);
+				vline(window->screen, xcoord + 1, EOF_EDITOR_RENDER_OFFSET + 35 + 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10 - 1, beatlinecol);
 			}
 			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10 - 1, beatlinecol);
 			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + 34, eof_color_gray);
