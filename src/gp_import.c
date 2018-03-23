@@ -1803,7 +1803,19 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				{
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tError loading:  Cannot open GP file (%s) specified in XML file:  \"%s\"", eof_temp_filename, strerror(errno));	//Get the Operating System's reason for the failure
 					eof_log(eof_log_string, 1);
-					error = 1;
+
+					//Retry building the file path without converting escape sequences, in case Go PlayAlong did not correctly encode letters like ampersand
+					eof_log("\t\tRetrying without converting escape sequences in the GP5 file name", 1);
+					(void) replace_filename(eof_temp_filename, fn, "", 1024);
+					strncat(eof_temp_filename, buffer3, 1024 - strlen(eof_temp_filename) - 1);	//Build the path to the GP file, with the unaltered scoreUrl file name from the XML file
+					inf = pack_fopen(eof_temp_filename, "rb");
+					if(!inf)
+					{
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tError loading:  Cannot open GP file (%s) specified in XML file:  \"%s\"", eof_temp_filename, strerror(errno));	//Get the Operating System's reason for the failure
+						eof_log(eof_log_string, 1);
+
+						error = 1;
+					}
 				}
 				gpfile = eof_temp_filename;	//Point gpfile to the name of the GP file to parse
 			}
