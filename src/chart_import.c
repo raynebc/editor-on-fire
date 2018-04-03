@@ -130,12 +130,13 @@ EOF_SONG * eof_import_chart(const char * fn)
 	struct dbTrack * current_track;
 	int track;
 	int difficulty;
-	unsigned long lastchartpos = 0;	//Used to track HOPO notation
+	unsigned long lastchartpos = 0, lastlastchartpos = 0;	//Used to track HOPO notation
 	unsigned long b = 0;
 	double solo_on = 0.0, solo_off = 0.0;
 	char solo_status = 0;	//0 = Off and awaiting a solo on marker, 1 = On and awaiting a solo off marker
 	unsigned long ctr, ctr2, ctr3, tracknum;
 	char importguitartypes = 0, importbasstypes = 0;	//Tracks whether 5 or 6 lane guitar and bass types are to be imported (default is whichever one type is encountered, otherwise user is prompted)
+	unsigned long threshold;
 
 	eof_log("\tImporting Feedback chart", 1);
 	eof_log("eof_import_chart() entered", 1);
@@ -152,6 +153,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		(void) alert("Error:", NULL, eof_chart_import_return_code_list[err % 31], "OK", NULL, 0, KEY_ENTER);
 		return NULL;
 	}
+	threshold = (chart->resolution * (66.0 / 192.0)) + 0.5;	//This is the tick distance at which notes become forced strums instead of HOPOs (66/192 beat or further)
 
 	/* backup "song.ini" if it exists in the folder with the imported MIDI
 	as it will be overwritten upon save */
@@ -368,7 +370,9 @@ EOF_SONG * eof_import_chart(const char * fn)
 	/* fill in notes */
 	current_track = chart->tracks;
 	while(current_track)
-	{
+	{	//For each track
+		EOF_LEGACY_TRACK *tp;
+
 		if(current_track->isguitar && importguitartypes)
 		{	//If this is a guitar track and the user was prompted whether to import just the normal or the GHL guitar track
 			if(current_track->isguitar != importguitartypes)
@@ -461,26 +465,26 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 		/* if it is a valid track */
 		if(track > 0)
-		{
+		{	//If the track is valid
 			struct dbNote * current_note = current_track->notes;
 			unsigned long lastpos = -1;	//The position of the last imported note (not updated for sections that are parsed)
 			EOF_NOTE * new_note = NULL;
 			EOF_NOTE * prev_note = NULL;
 			char gemtype = 0, lastgemtype = 0;	//Tracks whether the current and previously added gems are normal notes or technique markers
-			unsigned long threshold = (chart->resolution * 4.0 * (11.0 / 128.0)) + 0.5;	//This is the tick distance at which notes become forced strums instead of HOPOs (11/128 measure or further)
 
 			tracknum = sp->track[track]->tracknum;
+			tp = sp->legacy_track[tracknum];
 
 			if((current_track->isguitar > 1) || (current_track->isbass > 1))
 			{	//If this is a GHL guitar or bass track, configure the track accordingly
 				EOF_TRACK_ENTRY *ep = sp->track[track];		//Simplify
 				ep->flags |= EOF_TRACK_FLAG_GHL_MODE;
-				sp->legacy_track[tracknum]->numlanes = 6;
+				tp->numlanes = 6;
 				ep->flags |= EOF_TRACK_FLAG_SIX_LANES;		//Set the open strum flag
 			}
 
 			while(current_note)
-			{
+			{	//For each note in the track
 				/* import star power */
 				if(current_note->gemcolor == '2')
 				{
@@ -488,7 +492,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 					{	//If this star power phrase is at least 3 ticks long and it ends on a beat marker, it's likely that the author of this .chart file improperly ended the phrase at another note's start position and didn't intend to mark that note
 						current_note->duration -= 2;	//Shorten the duration of the phrase
 					}
-					(void) eof_legacy_track_add_star_power(sp->legacy_track[tracknum], chartpos_to_msec(chart, current_note->chartpos), chartpos_to_msec(chart, current_note->chartpos + current_note->duration));
+					(void) eof_legacy_track_add_star_power(tp, chartpos_to_msec(chart, current_note->chartpos), chartpos_to_msec(chart, current_note->chartpos + current_note->duration));
 				}
 
 				/* skip face-off sections for now */
@@ -515,9 +519,10 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 					if((current_note->chartpos != lastpos) || (gemtype == 2) || (gemtype != lastgemtype))
 					{	//If this note was at a different position than the last, if it represents a technique marker or if it's a different gem type than the previous one
-						new_note = eof_legacy_track_add_note(sp->legacy_track[tracknum]);
+						new_note = eof_legacy_track_add_note(tp);
 						if(new_note)
 						{
+							new_note->midi_pos = current_note->chartpos;	//Track the note's original chart position to more reliably apply HOPO status
 							new_note->pos = chartpos_to_msec(chart, current_note->chartpos) + 0.5;	//Round up
 							new_note->length = chartpos_to_msec(chart, current_note->chartpos + current_note->duration) - (double)new_note->pos + 0.5;	//Round up
 							if((sp->track[track]->flags & EOF_TRACK_FLAG_GHL_MODE) && (current_note->gemcolor == 8))
@@ -532,25 +537,16 @@ EOF_SONG * eof_import_chart(const char * fn)
 							new_note->type = difficulty;
 							if(prev_note)
 							{	//If a previous gem was imported
-								if(current_note->chartpos != lastchartpos)
+								if(current_note->chartpos == lastchartpos)
 								{	//If this gem is at a different position than the last one that was imported
-									if((current_note->chartpos > lastchartpos) && (current_note->chartpos - lastchartpos < threshold))
-									{	//If the note starts less than 3/32 measure (one measure is 4 times the chart resolution, which represents one beat length) from the previous note's start position
-										if(!(prev_note->note & new_note->note))
-										{	//If this note and the previous one used different lanes
-											if(!current_track->isdrums)
-											{	//If it isn't a drum track being imported
-												new_note->flags |= EOF_NOTE_FLAG_F_HOPO;	//It is a hammer on note
-											}
-										}
-									}
-								}
-								else
-								{	//It's a gem at the same position as the last imported gem
 									new_note->flags = prev_note->flags;	//It will inherit the same flags in terms of HOPO status
 								}
 							}
-							prev_note = new_note;	//Track the last created note
+							prev_note = new_note;		//Track the last created note
+							if(lastlastchartpos != lastchartpos)
+							{	//If this gem was at a different timestamp
+								lastlastchartpos = lastchartpos;		//Track information for HOPO purposes
+							}
 							lastchartpos = current_note->chartpos;	//Track the position of the gem for HOPO tracking
 						}
 					}
@@ -565,16 +561,46 @@ EOF_SONG * eof_import_chart(const char * fn)
 					lastgemtype = gemtype;
 				}
 				current_note = current_note->next;
+			}//For each note in the track
+
+			//Apply HOPO status to notes within the threshold
+			for(ctr = 0, prev_note = NULL; ctr < tp->notes; ctr++)
+			{	//For each note in the track that was added to
+				if(tp->note[ctr]->type != difficulty)
+				{	//If this note isn't in the difficulty that was just parsed
+					continue;	//Skip it
+				}
+				if(!prev_note)
+				{	//If this is the first note in this track difficulty
+					prev_note = tp->note[ctr];
+				}
+				else
+				{	//This isn't the first note in this track difficulty
+					if(prev_note->midi_pos < tp->note[ctr]->midi_pos)
+					{	//Verify this note is after the previous one in this difficulty
+						if(tp->note[ctr]->midi_pos - prev_note->midi_pos < threshold)
+						{	//If the later of the two notes is within the HOPO threshold
+							if(tp->note[ctr]->note != prev_note->note)
+							{	//If the previous note and the one before it aren't identical in which lanes they use, GH3's HOPO criteria have been met
+								if(!current_track->isdrums)
+								{	//If it isn't a drum track being imported
+									tp->note[ctr]->flags |= EOF_NOTE_FLAG_F_HOPO;	//The note is a hammer on note
+								}
+							}
+						}
+					}
+				}
+				prev_note = tp->note[ctr];
 			}
-		}
+		}//If the track is valid
 		current_track = current_track->next;
 		lastchartpos = 0;	//Reset this value
-	}
+	}//For each track
 
 	/* load text events */
 	current_event = chart->events;
 	while(current_event)
-	{
+	{	//For each text event from the chart file
 		b = current_event->chartpos / chart->resolution;
 		if(b >= sp->beats)
 		{
@@ -615,7 +641,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			(void) eof_song_add_text_event(sp, b, current_event->text, 0, 0, 0);
 		}
 		current_event = current_event->next;	//Iterate to the next text event
-	}
+	}//For each event from the chart file
 
 	DestroyFeedbackChart(chart, 1);	//Free memory used by Feedback chart before exiting function
 	eof_selected_ogg = 0;
@@ -631,50 +657,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 			sp->legacy_track[tracknum]->numlanes = 6;	//Enable lane 6 for the drum track
 			sp->track[EOF_TRACK_DRUM]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the sixth lane flag
 			break;
-		}
-	}
-
-	/* remove forced HOPO notation that may have been added to chords or to repeated single notes of the same gem, these can only gain that status via use of the toggle HOPO notation */
-	eof_sort_notes(sp);
-	for(ctr = 1; ctr < sp->tracks; ctr++)
-	{	//For each track
-		long prevnote;
-
-		if(ctr == EOF_TRACK_DRUM)
-		{	//If this is the drum track
-			continue;	//Skip it, lane 6 for the drum track indicates a sixth lane and not HOPO
-		}
-		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
-		{	//For each note in the track
-			if(eof_note_count_colors(sp, ctr, ctr2) > 1)
-			{	//If this note is a chord (Note:  Any technique markers will have been imported as single notes so it's not possible for them to be part of any chord at this point)
-				eof_set_note_flags(sp, ctr, ctr2, (eof_get_note_flags(sp, ctr, ctr2) & (~EOF_NOTE_FLAG_F_HOPO)));	//Clear the forced HOPO flag for this note
-			}
-
-			if(!(eof_get_note_note(sp, ctr, ctr2) & (31 | 128)))
-				continue;	//If this is not a normal gem (one which uses lanes 1 through 5, or bitmask value 128 which is an open strum), skip it.
-
-			//Otherwise perform other checks to enforce proper forced HOPO rules
-			prevnote = ctr2;
-			do{
-				prevnote = eof_track_fixup_previous_note(sp, ctr, prevnote);			//Keep reviewing previous notes in this track difficulty
-				if(prevnote >= 0)
-				{	//If there was a previous note
-					if((eof_get_note_pos(sp, ctr, prevnote) == eof_get_note_pos(sp, ctr, ctr2)) && (eof_get_note_note(sp, ctr, prevnote) & 31))
-					{	//If that previous note is at the same timestamp and is a normal gem (using lanes 1 through 5), it will become a chord when fixup logic runs
-						eof_set_note_flags(sp, ctr, ctr2, (eof_get_note_flags(sp, ctr, ctr2) & (~EOF_NOTE_FLAG_F_HOPO)));			//Clear the forced HOPO flag for both single notes in the chord
-						eof_set_note_flags(sp, ctr, prevnote, (eof_get_note_flags(sp, ctr, prevnote) & (~EOF_NOTE_FLAG_F_HOPO)));
-					}
-				}
-			}while((prevnote >= 0) && (eof_get_note_note(sp, ctr, prevnote) & ~(31 | 128)));	//until there are no more notes using lanes higher than lane 6
-
-			if(prevnote >= 0)
-			{	//If a previous note gem was found for this track difficulty
-				if((eof_get_note_note(sp, ctr, prevnote) & (31 | 128)) == (eof_get_note_note(sp, ctr, ctr2) & (31 | 128)))
-				{	//If this note is a repeat of that note (only considering the standard 5 gems and open strum, and ignoring any other unrecognized markers)
-					eof_set_note_flags(sp, ctr, ctr2, (eof_get_note_flags(sp, ctr, ctr2) & (~EOF_NOTE_FLAG_F_HOPO)));	//Clear the forced HOPO flag for this note
-				}
-			}
 		}
 	}
 
