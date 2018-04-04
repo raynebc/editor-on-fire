@@ -153,6 +153,7 @@ int eof_menu_edit_hopo_rf(void);
 int eof_menu_edit_hopo_fof(void);
 int eof_menu_edit_hopo_off(void);
 int eof_menu_edit_hopo_manual(void);			//A HOPO preview mode that only displays forced HOPO notes as HOPOs
+int eof_menu_edit_hopo_gh3(void);
 int eof_menu_edit_hopo_helper(int hopo_view);	//Sets the specified HOPO preview mode
 
 #define EOF_NUM_ZOOM_LEVELS 10

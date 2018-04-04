@@ -89,6 +89,7 @@ MENU eof_edit_hopo_menu[] =
 	{"&FOF", eof_menu_edit_hopo_fof, NULL, 0, NULL},
 	{"&Off", eof_menu_edit_hopo_off, NULL, 0, NULL},
 	{"&Manual", eof_menu_edit_hopo_manual, NULL, 0, NULL},
+	{"&GH3", eof_menu_edit_hopo_gh3, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -433,11 +434,11 @@ void eof_prepare_edit_menu(void)
 		}
 
 		/* hopo */
-		for(i = 0; i < 3; i++)
+		for(i = 0; i < EOF_NUM_HOPO_MODES; i++)
 		{
 			eof_edit_hopo_menu[i].flags = 0;
 		}
-		eof_edit_hopo_menu[(int)eof_hopo_view].flags = D_SELECTED;
+		eof_edit_hopo_menu[(unsigned)eof_hopo_view].flags = D_SELECTED;
 
 		/* speed */
 		eof_edit_playback_menu[0].flags = 0;
@@ -2173,6 +2174,11 @@ int eof_menu_edit_hopo_off(void)
 int eof_menu_edit_hopo_manual(void)
 {
 	return eof_menu_edit_hopo_helper(EOF_HOPO_MANUAL);
+}
+
+int eof_menu_edit_hopo_gh3(void)
+{
+	return eof_menu_edit_hopo_helper(EOF_HOPO_GH3);
 }
 
 int eof_menu_edit_hopo_helper(int hopo_view)

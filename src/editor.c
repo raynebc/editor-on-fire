@@ -3370,6 +3370,7 @@ if(eof_key_code == KEY_PAUSE)
 								(void) eof_detect_difficulties(eof_song, eof_selected_track);
 							}
 						}
+						eof_determine_phrase_status(eof_song, eof_selected_track);	//Update HOPO statuses
 					}//If user has pressed any key from 1 through 6
 				}//If a vocal track is not active
 			}//If the mouse is in the fretboard area
@@ -3872,6 +3873,7 @@ void eof_editor_logic(void)
 						flags = eof_get_note_flags(eof_song, eof_selected_track, eof_hover_note) | EOF_GUITAR_NOTE_FLAG_GHL_OPEN;
 						eof_set_note_flags(eof_song, eof_selected_track, eof_hover_note, flags);	//Set the GHL open note flag
 					}
+					eof_determine_phrase_status(eof_song, eof_selected_track);	//Update HOPO statuses
 				}
 			}
 			else
@@ -4206,6 +4208,7 @@ void eof_editor_logic(void)
 							}
 						}
 					}
+					eof_determine_phrase_status(eof_song, eof_selected_track);	//Update HOPO statuses
 				}
 			}//If neither full screen 3D view is in use nor is click and drag disabled, the left mouse button is being held and the mouse is right of the left edge of the piano roll
 			if(!eof_full_screen_3d && ((mouse_b & 2) || eof_key_code == KEY_INSERT) && eof_rclick_released && eof_pen_note.note && (eof_pen_note.pos < eof_chart_length))
@@ -4354,6 +4357,7 @@ void eof_editor_logic(void)
 							(void) eof_detect_difficulties(eof_song, eof_selected_track);
 						}
 					}
+					eof_determine_phrase_status(eof_song, eof_selected_track);	//Update HOPO statuses
 				}
 			}//Full screen 3D view is not in effect, right mouse click or Insert key pressed, and the pen note is valid
 			if(!(mouse_b & 2) && !(eof_key_code == KEY_INSERT))
@@ -6761,6 +6765,7 @@ void eof_editor_logic_common(void)
 							}
 						}
 						eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
+						eof_determine_phrase_status(eof_song, eof_selected_track);	//Update HOPO statuses
 					}//If moving the first beat marker
 					else if((eof_mouse_drug > 10) && !eof_blclick_released && (eof_beat_num_valid(eof_song, eof_selected_beat)) && (eof_mickeys_x != 0) && ((eof_beat_is_anchor(eof_song, eof_hover_beat) || eof_anchor_all_beats || (eof_moving_anchor && (eof_hover_beat == eof_selected_beat)))))
 					{	//If moving a beat marker other than the first
@@ -6794,6 +6799,7 @@ void eof_editor_logic_common(void)
 							}
 							eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
 							eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+							eof_determine_phrase_status(eof_song, eof_selected_track);	//Update HOPO statuses
 						}//If the tempo map is not locked
 					}//If moving a beat marker other than the first
 				}//If click and drag isn't disabled, check whether a beat marker is being moved

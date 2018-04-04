@@ -42,7 +42,8 @@
 #define EOF_HOPO_FOF           1
 #define EOF_HOPO_OFF           2
 #define EOF_HOPO_MANUAL        3
-#define EOF_NUM_HOPO_MODES     4
+#define EOF_HOPO_GH3           4
+#define EOF_NUM_HOPO_MODES     5
 
 #define EOF_INPUT_CLASSIC      0
 #define EOF_INPUT_PIANO_ROLL   1

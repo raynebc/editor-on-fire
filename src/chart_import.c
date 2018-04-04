@@ -570,27 +570,29 @@ EOF_SONG * eof_import_chart(const char * fn)
 				{	//If this note isn't in the difficulty that was just parsed
 					continue;	//Skip it
 				}
-				if(!prev_note)
-				{	//If this is the first note in this track difficulty
-					prev_note = tp->note[ctr];
-				}
-				else
-				{	//This isn't the first note in this track difficulty
+				if(prev_note)
+				{	//If this isn't the first note in this track difficulty
 					if(prev_note->midi_pos < tp->note[ctr]->midi_pos)
 					{	//Verify this note is after the previous one in this difficulty
 						if(tp->note[ctr]->midi_pos - prev_note->midi_pos < threshold)
 						{	//If the later of the two notes is within the HOPO threshold
-							if(tp->note[ctr]->note != prev_note->note)
-							{	//If the previous note and the one before it aren't identical in which lanes they use, GH3's HOPO criteria have been met
-								if(!current_track->isdrums)
-								{	//If it isn't a drum track being imported
-									tp->note[ctr]->flags |= EOF_NOTE_FLAG_F_HOPO;	//The note is a hammer on note
+							if(eof_note_count_colors_bitmask(tp->note[ctr]->note) == 1)
+							{	//If the later of the two notes is not a chord
+								if(tp->note[ctr]->note != prev_note->note)
+								{	//If the previous note and the one before it aren't identical in which lanes they use, GH3's HOPO criteria have been met
+									if(!current_track->isdrums)
+									{	//If it isn't a drum track being imported
+										tp->note[ctr]->flags |= EOF_NOTE_FLAG_F_HOPO;	//The note is a hammer on note
+									}
 								}
 							}
 						}
 					}
 				}
-				prev_note = tp->note[ctr];
+				if(tp->note[ctr]->note != 32)
+				{	//Disregard the toggle HOPO marker for comparing a note bitmask to the previous one to determine if it's a HOPO
+					prev_note = tp->note[ctr];
+				}
 			}
 		}//If the track is valid
 		current_track = current_track->next;

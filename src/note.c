@@ -976,7 +976,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	unsigned long mask;	//Used to mask out colors in the for loop
 	unsigned long numlanes, tracknum;
 	long xoffset = 0;	//This will be used to draw bitmaps half a lane further left when the bass drum isn't rendering in a lane and drum gems render centered over fret lines instead of between them
-	int drawline;		//Set to nonzero if a bass drum style line is to be drawn for the gem
+	int drawline;		//Set to nonzero if a bass drum style line is to be drawn for the gem, set to 2 if a smaller rectangle is to be drawn in the center of the larger one, to denote HOPO open notes
 	int linecol = eof_color_red;		//The color of the line to be drawn
 
 	//These variables are used for the name rendering logic
@@ -1129,6 +1129,24 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			if((point[0] != -65536) && (point[1] != -65536) && (point[2] != -65536) && (point[3] != -65536) && (point[4] != -65536) && (point[6] != -65536))
 			{	//If none of the coordinate projections failed
 				polygon(eof_window_3d->screen, 4, point, linecol);
+			}
+			if(noteflags & EOF_NOTE_FLAG_HOPO)
+			{	//If the note is a HOPO, ie. open note, render a smaller black rectangle inside the first
+				rz = npos + 5;
+				ez = npos + 9;
+				point[0] = ocd3d_project_x(bx - 10 + 15, rz);
+				point[1] = ocd3d_project_y(200, rz);
+				point[2] = ocd3d_project_x(bx - 10 + 15, ez);
+				point[3] = ocd3d_project_y(200, ez);
+				point[4] = ocd3d_project_x(bx + 232 - 15, ez);
+				point[5] = point[3];
+				point[6] = ocd3d_project_x(bx + 232 - 15, rz);
+				point[7] = point[1];
+
+				if((point[0] != -65536) && (point[1] != -65536) && (point[2] != -65536) && (point[3] != -65536) && (point[4] != -65536) && (point[6] != -65536))
+				{	//If none of the coordinate projections failed
+					polygon(eof_window_3d->screen, 4, point, eof_color_black);
+				}
 			}
 		}
 		else
