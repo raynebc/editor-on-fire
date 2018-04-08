@@ -3892,7 +3892,6 @@ int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistp
 	struct Tempo_change *anchorlist = NULL, *temp = NULL;
 	struct eof_MIDI_data_event *eventptr;
 	EOF_MIDI_TS_LIST *tslist;
-	char stored_tempo_map = 0;	//Will be set to nonzero if the tempo and TS lists will be built from a stored tempo map
 	unsigned long eventindex, num, den, realden, bytes_used, ctr;
 	unsigned long lastppqn=0;	//Tracks the last anchor's PPQN value
 	unsigned char eventtype, lasteventtype = 0, meventtype;
@@ -3907,16 +3906,8 @@ int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistp
 	if(tslist == NULL)
 		return 0;
 
-	for(trackptr = sp->midi_data_head; trackptr != NULL; trackptr = trackptr->next)
-	{	//For each raw MIDI track
-		if(trackptr->timedivision && trackptr->trackname && !ustricmp(trackptr->trackname, "(TEMPO)"))
-		{	//If this is a stored tempo track
-			stored_tempo_map = 1;
-			break;
-		}
-	}
-
-	if(!stored_tempo_map)
+	trackptr = eof_song_has_stored_tempo_track(sp);	//Obtain a pointer to the stored tempo map if there is one
+	if(!trackptr)
 	{	//If building the tempo and TS lists from the active chart's native tempo map
 		eof_log("\tBuilding tempo and TS lists from project's tempo track", 1);
 		*timedivision = EOF_DEFAULT_TIME_DIVISION;

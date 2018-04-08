@@ -52,6 +52,14 @@ unsigned long eof_note_count_colors_bitmask(unsigned long notemask)
 	{
 		count++;
 	}
+	if(notemask & 64)
+	{
+		count++;
+	}
+	if(notemask & 128)
+	{
+		count++;
+	}
 	return count;
 }
 

@@ -9471,3 +9471,21 @@ void eof_convert_all_lyrics_from_extended_ascii(EOF_VOCAL_TRACK *tp)
 	}
 	eof_free_ucode_table();
 }
+
+struct eof_MIDI_data_track *eof_song_has_stored_tempo_track(EOF_SONG * sp)
+{
+	struct eof_MIDI_data_track *trackptr;
+
+	if(!sp)
+		return NULL;	//Invalid parameter
+
+	for(trackptr = sp->midi_data_head; trackptr != NULL; trackptr = trackptr->next)
+	{	//For each raw MIDI track
+		if(trackptr->timedivision && trackptr->trackname && !ustricmp(trackptr->trackname, "(TEMPO)"))
+		{	//If this is a stored tempo track
+			return trackptr;
+		}
+	}
+
+	return NULL;	//No stored tempo track was found
+}

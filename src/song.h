@@ -1072,4 +1072,8 @@ static inline int eof_beat_num_valid(EOF_SONG *sp, unsigned long beatnum)
 
 void eof_convert_all_lyrics_from_extended_ascii(EOF_VOCAL_TRACK *tp);	//Uses eof_convert_from_extended_ascii() to convert all lyrics in the specified chart
 
+struct eof_MIDI_data_track *eof_song_has_stored_tempo_track(EOF_SONG * sp);
+	//Returns a pointer to the specified chart's stored tempo track
+	//Returns NULL if no such track is stored or upon error
+
 #endif

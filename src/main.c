@@ -1029,6 +1029,10 @@ void eof_fix_window_title(void)
 		{	//If no chart audio is actually loaded
 			(void) ustrcat(eof_window_title, "(No audio loaded)");
 		}
+		if(eof_song_has_stored_tempo_track(eof_song))
+		{	//If the project has a stored tempo track
+			(void) ustrcat(eof_window_title, "(Stored tempo map)");
+		}
 	}
 	else
 	{
